@@ -9,8 +9,8 @@ Purpose: provide a layer-by-layer view of where AbarVa Source stands against MVP
 - Source has a strong foundation in product architecture, deterministic context validation, workflow validation, pattern IP, deterministic multi-agent briefings, deterministic agent missions, and a platform Agent Mission Model.
 - Source is not production-ready.
 - MVP readiness is improving, but the product still needs authenticated UI review, persistence, evidence/upload pipeline, auth/tenant hardening, and production validation.
-- Current foundation milestone: PR #270 merged deterministic Source event canvas shell smoke coverage for seeded `/source/events/[eventId]` rendering.
-- Current recommended next slice: capture authenticated `/source` and event canvas screenshot/manual review, then plan the Source data readiness panel implementation path.
+- Current foundation milestone: PR #278 merged deterministic Source data readiness panel smoke coverage inside the seeded event canvas shell.
+- Current recommended next slice: define the Admin/Setup-to-Source readiness contract, then capture authenticated `/source` and event canvas screenshot/manual review with the panel visible.
 
 ## Layer Summary
 
@@ -23,9 +23,9 @@ Purpose: provide a layer-by-layer view of where AbarVa Source stands against MVP
 | Workflow Validation Harness | 85% | Deterministic foundation complete | PR #204, PR #207, PR #210 | Preserve remaining defer until upload/evidence exists |
 | Multi-Agent Intelligence | 57% | Deterministic briefings, mission read model, mission report, dashboard preview, review packet, and route/component smoke exist; no runtime queue/scheduler/persistence/model layer | PR #227, PR #248, PR #254, PR #255, PR #259, PR #262, PR #264, `src/lib/source/multi-agent-briefing.ts`, `src/lib/source/agent-missions.ts`, `src/lib/source/agent-mission-report.ts` | Use mission report in the event canvas shell |
 | Source API / Runtime | 25% | Deterministic no-model API stub exists; production runtime not ready | PR #230, PR #245, `src/app/api/v1/source/[eventId]/nexus/ask/route.ts` | Keep route deterministic; do not add model calls until mission/readiness gates are ready |
-| Source UI / User Experience | 48% | Dashboard exists with deterministic mission preview, review baseline, route/component smoke, event canvas shell, and event canvas smoke; broader UI early | PR #212, PR #213, PR #218, PR #259, PR #262, PR #264, PR #265, PR #269, PR #270, Experience System | Authenticated dashboard/event canvas visual review |
-| Data / Evidence / Upload Pipeline | 12% | Not started beyond contracts/placeholders, but data readiness panel plan is refreshed for event canvas consumption | Attachment/context contracts, validation defers, PR #266 | Define Admin/Setup readiness contract before implementation |
-| Production Readiness | 14% | Deterministic Source dashboard and event canvas smoke are partial; authenticated/live production gates remain blocked | Production readiness tracker, PR #264, PR #270 | Authenticated live route smoke and screenshot review remain required |
+| Source UI / User Experience | 52% | Dashboard, deterministic mission preview, event canvas shell, data readiness panel, and route/component smoke exist; broader workflow UI still early | PR #212, PR #213, PR #218, PR #259, PR #262, PR #264, PR #265, PR #269, PR #270, PR #273, PR #277, PR #278, Experience System | Authenticated dashboard/event canvas visual review |
+| Data / Evidence / Upload Pipeline | 18% | Source now has a deterministic read-only data readiness panel; upload/parsing/Admin runtime integration is not started | Attachment/context contracts, validation defers, PR #266, PR #274, PR #277, PR #278 | Define Admin/Setup readiness contract before live integration |
+| Production Readiness | 15% | Deterministic Source dashboard, event canvas, and data readiness panel smoke are partial; authenticated/live production gates remain blocked | Production readiness tracker, PR #264, PR #270, PR #278 | Authenticated live route smoke and screenshot review remain required |
 
 ## Layer 1. Platform Design System
 
@@ -352,9 +352,9 @@ Next recommended slice:
 
 Purpose: make Source feel like a premium, decisive, table-forward sourcing command surface aligned with the AbarVa Experience System.
 
-Current status: dashboard exists with a tiny deterministic mission preview, review baseline, deterministic route/component smoke, event canvas shell, and deterministic event canvas smoke; broader UI is early and not production-ready.
+Current status: dashboard exists with a tiny deterministic mission preview, review baseline, deterministic route/component smoke, event canvas shell, deterministic data readiness panel, and deterministic event canvas smoke; broader workflow UI is early and not production-ready.
 
-Percent complete estimate: 48%.
+Percent complete estimate: 52%.
 
 Evidence / PRs / Files:
 
@@ -367,6 +367,9 @@ Evidence / PRs / Files:
 - PR #265: Source event canvas shell plan.
 - PR #269: Source event canvas shell implementation.
 - PR #270: Source event canvas shell smoke coverage.
+- PR #273: Source dashboard and event canvas minor polish.
+- PR #277: deterministic Source Data Readiness Panel.
+- PR #278: Source Data Readiness Panel smoke coverage.
 - `src/components/source/AbarVaSourceDashboard.tsx`
 - `src/components/source/NexusEngagementCanvas.tsx`
 - `src/components/source/SourcingEventTable.tsx`
@@ -386,11 +389,15 @@ Completed items:
 - Event canvas shell plan created for the existing `/source/events/[eventId]` and `NexusEngagementCanvas` boundary.
 - Event canvas shell implemented with event context, journey map, current-stage workspace, deterministic mission preview, data readiness placeholder, artifact/review placeholder, and compact Nexus guidance.
 - Deterministic event canvas shell smoke coverage added for seeded `/source/events/[eventId]` rendering.
+- Dashboard and event canvas minor polish addressed concrete review findings without adding product behavior.
+- Read-only data readiness panel added to the event canvas shell using seeded Source data.
+- Event canvas smoke now verifies the panel, missing/requested data, usable evidence distinction, and no upload/parsing/model/Admin setup imports.
 
 Remaining items:
 
 - Authenticated dashboard and event canvas screenshot/manual review after auth fix and mission preview merge.
 - Review event canvas shell visually before any larger event-canvas expansion.
+- Define the future Admin/Setup readiness contract that will replace seeded readiness rows.
 - Full event workbench, final journey map behavior, scorecard, artifact, value, vendor, and agent panels.
 - Screenshot-based visual QA.
 
@@ -400,15 +407,15 @@ Blockers:
 
 Next recommended slice:
 
-- Authenticated Source dashboard and event canvas review with mission preview and shell visible, if auth is confirmed working.
+- Authenticated Source dashboard and event canvas review with mission preview, shell, and data readiness panel visible, if auth is confirmed working.
 
 ## Layer 9. Data / Evidence / Upload Pipeline
 
 Purpose: make Source capable of accepting, parsing, validating, citing, and governing evidence and artifacts.
 
-Current status: not started beyond contracts and deterministic placeholders.
+Current status: deterministic Source consumption shell exists; production upload/evidence pipeline is not started.
 
-Percent complete estimate: 10%.
+Percent complete estimate: 18%.
 
 Evidence / PRs / Files:
 
@@ -416,6 +423,10 @@ Evidence / PRs / Files:
 - `src/lib/source/context-builder.ts`
 - `docs/abarva-source/build-pack/23_CHAT_EXPERIENCE_AND_INPUT_MODEL.md`
 - `docs/abarva-source/build-pack/26_ARTIFACT_REVIEW_AND_APPROVAL_MODEL.md`
+- PR #266: data readiness panel plan refresh.
+- PR #274: implementation path check.
+- PR #277: deterministic read-only Source Data Readiness Panel.
+- PR #278: data readiness panel smoke coverage.
 - Workflow validation defer: uploaded document cannot be cited before parsing/validation.
 
 Completed items:
@@ -423,6 +434,9 @@ Completed items:
 - Attachment and evidence concepts are documented.
 - Placeholder evidence states exist in deterministic context.
 - Workflow validation correctly defers uploaded-document citation until parsing/validation exists.
+- Seeded/read-only readiness rows exist for the Data and AI Modernization event.
+- The panel displays requirement level, readiness state, owner/source, last updated, confidence, workflow impact, agent recommendation, and Steward/Admin handoff label.
+- Smoke coverage verifies missing/requested data and usable evidence distinctions.
 
 Remaining items:
 
@@ -439,10 +453,11 @@ Blockers:
 
 - Upload/parsing implementation is explicitly not approved.
 - Evidence and artifact storage model must be planned first.
+- The panel is seeded/read-only and must not be mistaken for live evidence readiness.
 
 Next recommended slice:
 
-- Upload/evidence pipeline plan, later and separately from API/model/UI work.
+- Define Admin/Setup readiness contract before live integration or upload/parsing work.
 
 ## Layer 10. Production Readiness
 
@@ -450,7 +465,7 @@ Purpose: prepare Source for enterprise-grade deployment, security, observability
 
 Current status: early deterministic validation coverage exists; production readiness is still blocked beyond documentation and seeded route/component smoke.
 
-Percent complete estimate: 14%.
+Percent complete estimate: 15%.
 
 Evidence / PRs / Files:
 
@@ -460,12 +475,14 @@ Evidence / PRs / Files:
 - Multi-agent briefing review packet.
 - Source dashboard route/component smoke.
 - Source event canvas shell smoke.
+- Source data readiness panel smoke.
 
 Completed items:
 
 - Production readiness tracker exists.
 - Deterministic context and workflow validation foundations exist.
 - Deterministic seeded dashboard and event canvas route/component smoke coverage exists.
+- Deterministic Source data readiness panel smoke coverage exists inside the event canvas shell.
 - No-model/no-runtime guardrails are clear.
 
 Remaining items:
@@ -512,6 +529,9 @@ Next recommended slice:
 - Tiny deterministic Source dashboard mission preview.
 - Source event canvas shell.
 - Deterministic Source event canvas shell smoke coverage.
+- Source dashboard and event canvas minor polish.
+- Deterministic Source Data Readiness Panel.
+- Source Data Readiness Panel smoke coverage.
 
 ## What Is Not Done
 
@@ -536,9 +556,9 @@ Next recommended slice:
 
 1. Capture authenticated screenshot/manual review for dashboard and event canvas when a signed-in session is available.
 2. Define the Admin/Setup data readiness contract consumed by Source, no upload/parsing implementation.
-3. Plan data readiness panel implementation against the event canvas shell.
-4. Plan upload/evidence pipeline, no implementation.
-5. Plan the next pattern/runtime grounding step, such as pattern manifest planning or Data Platform Managed Services authoring.
+3. Plan upload/evidence pipeline, no implementation.
+4. Plan the next pattern/runtime grounding step, such as pattern manifest planning or Data Platform Managed Services authoring.
+5. Plan the next bounded Source workflow surface after authenticated review.
 
 ## What Not To Build Yet
 
@@ -562,21 +582,21 @@ Next recommended slice:
 
 ## Honest MVP Readiness Assessment
 
-Estimated MVP readiness: 54%.
+Estimated MVP readiness: 57%.
 
-Source is beyond a concept prototype because it has a route, dashboard, seeded domain context, validation harnesses, pattern IP, deterministic multi-agent behavior, a deterministic no-model Nexus API stub, deterministic mission reports, a tiny dashboard mission preview, a bounded event canvas shell, and deterministic dashboard/event canvas route-component smoke. It is not yet a usable MVP for real sourcing work because persistence, evidence pipeline, authenticated UI review, real tenant data, and practical user-facing workflow depth remain incomplete.
+Source is beyond a concept prototype because it has a route, dashboard, seeded domain context, validation harnesses, pattern IP, deterministic multi-agent behavior, a deterministic no-model Nexus API stub, deterministic mission reports, a tiny dashboard mission preview, a bounded event canvas shell, a read-only data readiness panel, and deterministic dashboard/event canvas route-component smoke. It is not yet a usable MVP for real sourcing work because persistence, evidence pipeline, authenticated UI review, real tenant data, and practical user-facing workflow depth remain incomplete.
 
 The fastest safe MVP path is deterministic-first:
 
 1. Review dashboard and event canvas with an authenticated screenshot/manual pass.
 2. Define data readiness contract consumption before any upload/parsing implementation.
-3. Plan the first data readiness panel implementation against the event canvas shell.
-4. Add evidence/upload planning before any citation or artifact generation.
-5. Add model calls only after context validation and runtime preflight are enforced.
+3. Add evidence/upload planning before any citation or artifact generation.
+4. Add model calls only after context validation and runtime preflight are enforced.
+5. Keep the data readiness panel read-only until Admin/Setup runtime state exists.
 
 ## Honest Production Readiness Assessment
 
-Estimated production readiness: 21%.
+Estimated production readiness: 22%.
 
 Production readiness remains low by design. The foundation is strong, but production Source needs persistent data, tenant safety, auth/role checks, evidence and citation pipeline, auditability, observability, error states, visual QA, and release validation. The current deterministic layers reduce product risk, but they do not substitute for runtime, data, security, and operational readiness.
 
