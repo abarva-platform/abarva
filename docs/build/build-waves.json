@@ -818,7 +818,7 @@
       ],
       "completedSlices": [
         "DEMODATA1",
-        "SHELL3"
+        "SHELL2"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
@@ -826,7 +826,7 @@
       "validationStatus": "tsc_clean",
       "productionReadinessUpdated": false,
       "currentBlockers": [],
-      "nextAction": "DEMODATA1 (Lane H) complete. Demo dataset registry and tenant richness model landed. 3 tenants, 5 surfaces, deterministic seed only. Remaining wave-20 lanes pending. SHELL3 (lane C) code_complete. Awaiting remaining lanes.",
+      "nextAction": "DEMODATA1 (Lane H) complete. Demo dataset registry and tenant richness model landed. 3 tenants, 5 surfaces, deterministic seed only. Remaining wave-20 lanes pending. SHELL2 complete. Continue with remaining wave-20 lanes.",
       "lastUpdated": "2026-04-26"
     },
     {
