@@ -6334,6 +6334,56 @@
         "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
       ],
       "notes": "Founder-facing operator-posture runbook for verifying enterprise deployment (SaaS pilot, dedicated tenant, private data plane, fully self-managed) plus Azure VNet lab, Docker packaging, dataset trust contract, agent data access, evidence manifest mode, model provider policy, runtime safety gate, unified audit, no-fabrication contract, CI / Vercel signal, security review checklist, and morning review / merge gates. Sibling runbook to QA8 (ENTERPRISE_DEPLOYMENT_TRUST_VERIFICATION_RUNBOOK): QA8 walks slice contracts as filed; CLOUD7 walks the operator posture an enterprise prospect or security review team would walk against the platform. Documentation only. Deterministic \u2014 does not exercise live retrieval, model calls, browser automation, or live cloud calls. TEN3 / TRUST3 / CLOUD3 / CLOUD4 / CLOUD5 / PROD4 / ADM6 are explicitly conditional: each row is verified only if the matching slice has landed in the batch under review and otherwise records deferred (not failed). production_deployment status is preserved (still blocked); the prod-deploy-verification blocker is preserved verbatim; no component is promoted; QA8 wording is preserved verbatim. Wave3 Lane G commits locally only; the integration agent owns the cherry-pick and merge."
+    },
+    {
+      "id": "SEC1",
+      "name": "Runtime Safety / Policy Gate Contract",
+      "category": "SEC",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Steward",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "TOOL2",
+        "TOOL3",
+        "TRUST2"
+      ],
+      "allowedFiles": [
+        "src/lib/architecture/runtime-policy-gate.ts",
+        "src/__tests__/integration/architecture/runtime-policy-gate.test.ts",
+        "docs/build/slices/SEC1_RUNTIME_SAFETY_POLICY_GATE_CONTRACT.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/architecture/runtime-policy-gate.ts exports the canonical POLICY_CHECK_KINDS tuple ('tenant_scope', 'tool_use', 'model_gateway_use', 'evidence_use', 'dataset_trust', 'export_download', 'agent_handoff') and POLICY_DECISIONS tuple ('allow', 'deny', 'require_waiver', 'require_review') in canonical order.",
+        "Module exports PolicyCheckKind, PolicyDecision, PolicyDenyReason, PolicyReviewerRole, PolicyCheckRequest, PolicyCheckResult, and PolicyGateSummary types with the contract-required fields, and helpers evaluatePolicyCheck, summarizePolicyChecks, getDenyReasons.",
+        "Every PolicyCheckResult emitted by evaluatePolicyCheck carries decision, rationale, policyBasis (shape 'runtime_policy_gate.v1.<kind>'), createdFrom 'deterministic_runtime_policy_gate_seed', and optional denyReason / reviewerRole when applicable.",
+        "tenant_scope returns deny with denyReason 'tenant_scope_mismatch' when subjectTenantKey differs from tenantKey (and neither is platform) or when tenantKey is empty; tool_use returns deny when toolRegistered === false or toolActorAllowed === false; model_gateway_use returns require_review unless modelGatewayLive === true; evidence_use returns deny on 'unusable' / require_review on 'unknown' / allow on 'usable'; dataset_trust denies L4 sensitive without explicit_approved, denies revoked / expired approvals at any level, and require_waiver for L3 without explicit_approved; export_download returns require_waiver unless approvalState === 'explicit_approved'; agent_handoff returns deny when handoffAuthorized === false / require_review when undefined / allow when true.",
+        "summarizePolicyChecks reconciles totals (byDecision and byKind sum to totalChecks); allowCount / denyCount / waiverCount / reviewCount mirror byDecision; empty input returns a zero-counted summary.",
+        "getDenyReasons returns only the deny-decision reasons in input order and an empty list when nothing is denied.",
+        "Module has no imports from @/lib/sentinel|atlas|nexus|agent|source|auth or supabase, no Date.now / Math.random / new Date( / fetch(, no anthropic / openai, no useState / useEffect, no Coming soon / TBD / Lorem ipsum placeholder language, and no await / shell exec / fs writes.",
+        "Test suite at src/__tests__/integration/architecture/runtime-policy-gate.test.ts is fully green and enforces all 7 check kinds, all 4 decisions, tenant_scope mismatch -> deny, export_download without approval -> require_waiver, byte-equal JSON determinism, and module hygiene.",
+        "Production readiness manifest is UNION-updated to acknowledge SEC1 under agent_runtime, audit_governance, and validation_qa with live enforcement at the dispatcher boundary deferred; all other manifest fields are preserved exactly."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/runtime-policy-gate.test.ts",
+        "npx eslint src/lib/architecture/runtime-policy-gate.ts src/__tests__/integration/architecture/runtime-policy-gate.test.ts --max-warnings=0",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Deterministic, file-pure contract that names the safety / policy checks the runtime must apply BEFORE any tool call, model call, evidence use, dataset access, export, or cross-agent handoff. Companion to TOOL2 (Tool Registry MVP) and TOOL3 (Tool Invocation Audit). 7 canonical check kinds, 4 canonical decisions, 9-element deny-reason closed set, 4-element reviewer-role closed set. No tool dispatch, no model calls, no audit-ledger persistence, no migrations, no UI."
     }
   ]
 }
