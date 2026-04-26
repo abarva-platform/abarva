@@ -7171,6 +7171,19 @@
         "src/__tests__/integration/source/source-commercial-summary-panel.test.ts"
       ],
       "completedAt": "2026-04-26"
+    },
+    {
+      "id": "SRC16",
+      "wave": "wave-14",
+      "title": "Source Control Tower Signals",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "Deterministic control tower signal types and builder for Source module \u2014 10 signal types, severity/status, bundled emission.",
+      "files": [
+        "src/lib/source/control-tower-signals.ts",
+        "src/__tests__/integration/source/control-tower-signals.test.ts"
+      ],
+      "completedAt": "2026-04-26"
     }
   ]
 }
