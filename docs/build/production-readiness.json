@@ -739,7 +739,7 @@
         },
         "route_smoke": {
           "status": "partial",
-          "evidence": "Deterministic Source dashboard route/component smoke passes with npx jest src/__tests__/integration/source/source-dashboard-route-smoke.test.ts; Source event canvas shell smoke passes with npx jest src/__tests__/integration/source/source-event-canvas-shell.test.ts. These server-render seeded routes/components only. Authenticated live route smoke and screenshot QA remain incomplete."
+          "evidence": "Deterministic Source dashboard route/component smoke passes with npx jest src/__tests__/integration/source/source-dashboard-route-smoke.test.ts; Source event canvas shell smoke passes with npx jest src/__tests__/integration/source/source-event-canvas-shell.test.ts and now verifies the data readiness panel appears in the seeded event canvas. These server-render seeded routes/components only. Authenticated live route smoke and screenshot QA remain incomplete."
         },
         "live_persona_walk": {
           "status": "not_automated",
@@ -788,7 +788,7 @@
           "unblocks": "pilot_ready"
         }
       ],
-      "nextAction": "Keep the deterministic Source data readiness panel read-only, add route smoke coverage for the event canvas panel integration, and defer upload/parsing, Admin/Setup runtime integration, and live evidence readiness.",
+      "nextAction": "Keep the deterministic Source data readiness panel read-only, plan the future Admin/Setup readiness contract, and defer upload/parsing, Admin/Setup runtime integration, and live evidence readiness.",
       "notes": [
         "PROD1 does not modify Source files.",
         "Covers Source dashboard / sourcing event portfolio.",
@@ -814,7 +814,8 @@
         "Deterministic Source event canvas shell added for /source/events/[eventId] with journey orientation, current-stage workspace summary, mission preview, data readiness placeholder, and compact Nexus guidance. This does not add chat, model calls, upload/parsing, workflow engine, approval engine, scorecard UI, artifact drawer behavior, vendor workflow, or value ledger UI.",
         "Focused Source event canvas shell smoke test passed: npx jest src/__tests__/integration/source/source-event-canvas-shell.test.ts. This is deterministic seeded-data coverage, not authenticated live route or persona validation.",
         "Deterministic Source data readiness panel added for the event canvas using seeded/read-model data. It distinguishes Missing, Requested, Loaded, Available, Usable Evidence, and Low Confidence states without adding upload/parsing, Admin/Setup runtime, API calls, persistence, or model behavior.",
-        "Focused Source data readiness panel integration test passed: npx jest src/__tests__/integration/source/source-data-readiness-panel.test.ts."
+        "Focused Source data readiness panel integration test passed: npx jest src/__tests__/integration/source/source-data-readiness-panel.test.ts.",
+        "Source event canvas shell smoke now verifies the deterministic data readiness panel appears in the shell, shows missing/requested data, preserves usable versus loaded/available evidence distinctions, and stays inside no-upload/no-parsing/no-model boundaries."
       ]
     },
     {
