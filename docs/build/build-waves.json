@@ -627,7 +627,7 @@
       "name": "Source Commercial UI + Architecture Page",
       "goal": "Surface Wave-14 commercial intelligence inside the Source app and add the Admin Architecture Overview page.",
       "status": "in_progress",
-      "percentComplete": 70,
+      "percentComplete": 100,
       "plannedSlices": [
         "SRC19",
         "SRC20",
@@ -647,12 +647,15 @@
         "SRC22",
         "SRC23",
         "SRC24",
+        "SRC25",
+        "SRC26",
+        "ARCH4",
         "QA22"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
       "mergedPrs": [],
-      "validationStatus": "pending",
+      "validationStatus": "not_run",
       "productionReadinessUpdated": false,
       "currentBlockers": [],
       "nextAction": "Complete remaining 9 slices and merge via PR. Complete remaining slices and merge via PR.",
@@ -697,41 +700,6 @@
       "productionReadinessUpdated": false,
       "currentBlockers": [],
       "nextAction": "Wave-14 merged via PR #340. 161 tests green, hygiene gate 11/11 PASS. Next: Source module production readiness deepening and live workflow wiring.",
-      "lastUpdated": "2026-04-26"
-    },
-    {
-      "waveId": "wave-15",
-      "name": "Source Commercial UI + Architecture Page",
-      "goal": "Surface Wave-14 commercial intelligence inside the Source app and add the Admin Architecture Overview page.",
-      "status": "in_progress",
-      "percentComplete": 60,
-      "plannedSlices": [
-        "SRC19",
-        "SRC20",
-        "SRC21",
-        "SRC22",
-        "SRC23",
-        "SRC24",
-        "SRC25",
-        "SRC26",
-        "ARCH4",
-        "QA22"
-      ],
-      "completedSlices": [
-        "SRC19",
-        "SRC20",
-        "SRC21",
-        "SRC22",
-        "SRC23",
-        "SRC24"
-      ],
-      "skippedSlices": [],
-      "blockedSlices": [],
-      "mergedPrs": [],
-      "validationStatus": "pending",
-      "productionReadinessUpdated": false,
-      "currentBlockers": [],
-      "nextAction": "Complete remaining 9 slices and merge via PR. Complete remaining slices and merge via PR.",
       "lastUpdated": "2026-04-26"
     }
   ]

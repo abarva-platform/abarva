@@ -67,6 +67,7 @@ const EXPECTED_WAVE_IDS = [
   'wave-12',
   'wave-13',
   'wave-14',
+  'wave-15',
 ] as const;
 
 // ---------------------------------------------------------------------
@@ -168,7 +169,7 @@ describe('build-waves.json - top-level shape', () => {
 // ---------------------------------------------------------------------
 
 describe('build-waves.json - canonical wave coverage', () => {
-  it('includes all 15 canonical waves (Wave 0 through Wave 14)', () => {
+  it('includes all 16 canonical waves (Wave 0 through Wave 15)', () => {
     const m = loadWaves();
     expect(m.waves.length).toBe(EXPECTED_WAVE_IDS.length);
     const ids = m.waves.map((w) => w.waveId);
@@ -579,6 +580,26 @@ describe('build-waves.json - wave-14 source commercial intelligence anchor', () 
     if (!wave14) return;
     expect(wave14.mergedPrs).toContain(340);
   });
+});
+
+// ---------------------------------------------------------------------
+// Wave 15 anchor
+// ---------------------------------------------------------------------
+
+describe('Wave-15 anchor', () => {
+  const waves = loadWaves().waves;
+  type WaveEntry = WaveRecord;
+  const w15 = waves.find((w: WaveEntry) => w.waveId === 'wave-15');
+  it('wave-15 exists', () => expect(w15).toBeDefined());
+  it('wave-15 has 10 plannedSlices', () => expect(w15?.plannedSlices).toHaveLength(10));
+  it('wave-15 completedSlices contains all 10 lane IDs', () => {
+    const ids = w15?.completedSlices ?? [];
+    ['SRC19','SRC20','SRC21','SRC22','SRC23','SRC24','SRC25','SRC26','ARCH4','QA22'].forEach(id => {
+      expect(ids).toContain(id);
+    });
+  });
+  it('wave-15 percentComplete is 100', () => expect(w15?.percentComplete).toBe(100));
+  it('wave-15 status is in_progress', () => expect(w15?.status).toBe('in_progress'));
 });
 
 // ---------------------------------------------------------------------
