@@ -4656,6 +4656,63 @@
         "npm run build"
       ],
       "notes": "Deterministic, file-pure read model over the OPS1 dispatch queue manifest. Normalizes on-disk shape (status / dependsOn / laneType) into a stable view-model (state / dependencies / sourceLane / targetAgent), exposes ready/blocked filters, a deterministic recommendNextBatch helper ordered by priority then conflict risk then dependency count then id, and a totals-reconciling summary. No agent runtime, no model providers, no shell, no spawning. The agent-dispatch-queue.json manifest itself is consumed as-is in this slice."
+    },
+    {
+      "id": "TRUST3",
+      "name": "Dataset Approval Workflow",
+      "category": "TRUST",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane F (parallel build pack)",
+      "dependsOn": [
+        "TRUST1",
+        "TRUST2"
+      ],
+      "lastUpdated": "2026-04-26",
+      "allowedFiles": [
+        "src/lib/admin/dataset-approval-workflow.ts",
+        "src/__tests__/integration/admin/dataset-approval-workflow.test.ts",
+        "docs/build/slices/TRUST3_DATASET_APPROVAL_WORKFLOW.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/admin/dataset-approval-workflow.ts exports the canonical 11-state DatasetApprovalState union ('requested' | 'owner_review' | 'security_review' | 'governance_review' | 'approved_for_summary' | 'approved_for_evidence' | 'approved_for_agent_use' | 'approved_for_deliverables' | 'rejected' | 'revoked' | 'expired') and the 5-role DatasetApprovalRole union ('data_owner' | 'security_review_lead' | 'governance_review_lead' | 'tenant_admin' | 'abarva_steward').",
+        "Module exports DatasetApprovalRequest, DatasetApprovalDecision, DatasetApprovalCondition, DatasetApprovalAuditBasis, DatasetApprovalBlockReason, DatasetApprovalStateDescriptor, DatasetApprovalRoleDescriptor, DatasetApprovalWorkflow, and DatasetApprovalWorkflowSummary types alongside helpers buildDatasetApprovalWorkflow, evaluateDatasetApprovalRequest, summarizeDatasetApprovals, and getRevokedOrExpiredDatasets.",
+        "buildDatasetApprovalWorkflow and evaluateDatasetApprovalRequest are byte-equal across repeated calls (JSON.stringify equality enforced).",
+        "Module takes a type-only import of DatasetTrustLevel from src/lib/admin/dataset-trust-model.ts and never imports a value from TRUST1.",
+        "Agent use requires explicit approved_for_agent_use; approved_for_summary does NOT confer agent use (block reason agent_use_not_explicitly_approved).",
+        "Deliverable use requires both approved_for_deliverables AND approved_for_evidence (encoded as state = approved_for_deliverables AND reviews include governance_review_lead); each missing prerequisite surfaces a distinct block reason.",
+        "L4_sensitive_raw_data requires reviews from BOTH data_owner AND governance_review_lead before any approval advances; each missing reviewer surfaces a distinct block reason and the audit-basis tag l4_requires_owner_and_governance is emitted for every L4 request.",
+        "revoked, expired, and rejected states block ALL use across every purpose regardless of trust level or prior reviews; each surfaces the matching state_revoked / state_expired / state_rejected block reason and *_blocks_all_use audit basis.",
+        "Every decision returns a non-empty rationale and at least one auditBasis tag; createdFrom 'deterministic_dataset_approval_workflow_seed' appears on every decision.",
+        "summarizeDatasetApprovals reconciles permittedTotal + blockedTotal = total and exposes byState / byPurpose buckets covering every canonical key.",
+        "Module imports nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch; no anthropic / openai / pinecone references."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/admin/dataset-approval-workflow.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic dataset approval workflow read model that defines how a dataset moves from `loaded` toward `agent-usable`, `evidence-usable`, and `decision-grade` use. 11 canonical states, 5 canonical roles, 4 canonical purposes (summary_use, evidence_use, agent_use, deliverable_use). Encoded rules: agent use requires explicit approved_for_agent_use (not derivable from approved_for_summary); deliverable use requires approved_for_deliverables AND approved_for_evidence (via governance review); L4 sensitive raw data requires both data_owner AND governance_review_lead reviews; revoked / expired / rejected blocks ALL use across every purpose regardless of prior approval; every decision returns rationale + audit basis. Type-only import of DatasetTrustLevel from TRUST1; no value imports from dataset-trust-model. No DB writes, no migrations, no live runtime, no audit ledger writes, no model invocation, no Steward runtime; the future Steward UI and runtime gateway will consume this read model."
     }
   ]
 }
