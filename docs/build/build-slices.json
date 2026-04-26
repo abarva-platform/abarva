@@ -3102,6 +3102,56 @@
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
       "notes": "Operationalizes dimension #1 (AI Portfolio Inventory) of the ACT1 AI Control Tower contract. Deterministic seed-only read model. No live integrations, no per-tenant inventory binding, no Atlas brief composition, no Tower UI \u2014 those land in ACT2.x, ACT9, and ACT10. Conservative manifest update: ai_control_tower component is not promoted."
+    },
+    {
+      "id": "QA5",
+      "name": "Route Smoke Inventory (Static, Deterministic)",
+      "category": "QA",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane G (parallel build pack)",
+      "dependsOn": [
+        "PROD2"
+      ],
+      "allowedFiles": [
+        "src/lib/qa/route-smoke-inventory.ts",
+        "src/__tests__/integration/qa/route-smoke-inventory.test.ts",
+        "docs/build/slices/QA5_ROUTE_SMOKE_HARNESS.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**",
+        "package.json",
+        "package-lock.json"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/qa/route-smoke-inventory.ts exports the canonical priority tuple ROUTE_SMOKE_PRIORITY ('critical', 'high', 'medium', 'low'); the public types RouteSmokePriority, RouteSmokeOwnerSurface, RouteSmokePrimaryAgent, RouteSmokeImplementationStatus, RouteSmokeTestStrategy, RouteSmokeExpectedGuard, RouteSmokeTarget, and RouteSmokeSummary; and the helpers listRouteSmokeTargets, summarizeRouteSmokeTargets, getHighPrioritySmokeTargets, and getRouteSmokeByOwnerSurface.",
+        "listRouteSmokeTargets() returns exactly eleven RouteSmokeTarget records in canonical order: /home, /platform/admin, /platform/admin/build-progress, /platform/admin/production-readiness, /tenant/[tenantSlug]/programs, /tenant/[tenantSlug]/programs/[programSlug], /tenant/[tenantSlug]/tower, /tenant/[tenantSlug]/intelligence, /tenant/[tenantSlug]/intelligence/patterns/[patternKey], /source, /source/events.",
+        "Every target has non-empty routePattern, ownerSurface, primaryAgent, expectedGuard, expectedReadModel, smokePriority, currentlyImplemented, testStrategy, and createdFrom = 'deterministic_route_smoke_inventory'.",
+        "The four critical-priority routes (/home, /platform/admin, /platform/admin/production-readiness, /tenant/[tenantSlug]/programs) are present in the inventory and tagged smokePriority = 'critical'.",
+        "getHighPrioritySmokeTargets() returns only targets with smokePriority in {'critical', 'high'}; getRouteSmokeByOwnerSurface(targets, 'source') returns exactly two targets ('/source' and '/source/events'); summarizeRouteSmokeTargets() reconciles totals across priority, owner surface, primary agent, and implementation status.",
+        "Inventory module imports nothing from @/lib/source, @/lib/nexus, @/lib/sentinel, @/lib/atlas, @/lib/agent, @/lib/auth, or supabase; has no Date.now / Math.random / new Date( / fetch( call form, no anthropic / openai imports, no useState / useEffect, no Coming soon / TBD / Lorem ipsum placeholder language, and no playwright / puppeteer / cypress imports.",
+        "src/__tests__/integration/qa/route-smoke-inventory.test.ts is fully green and asserts canonical order, critical-route coverage, the production-readiness route presence, helper behavior, summary reconciliation, byte-equal determinism across calls, and module-hygiene checks (no browser-automation imports, no banned APIs, no banned imports, no banned placeholders).",
+        "docs/build/slices/QA5_ROUTE_SMOKE_HARNESS.md documents the eleven canonical targets, the five-strategy test taxonomy, and what is explicitly out of scope (browser automation, real HTTP execution, persona crawler).",
+        "docs/build/production-readiness.json appends a note to validation_qa.notes acknowledging the QA5 inventory and updates validation_qa.testingGates.route_smoke.evidence to acknowledge that the inventory exists; the route_smoke gate's status is preserved (NOT promoted) because execution is not wired; no component is promoted; lastUpdated is bumped.",
+        "npx tsc --noEmit --pretty false passes, npx jest src/__tests__/integration/qa/route-smoke-inventory.test.ts passes, npm run build passes, and docs/build/build-slices.json plus docs/build/production-readiness.json parse as JSON."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/qa/route-smoke-inventory.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Deterministic, file-pure route smoke inventory and matching integration test. Lane G output of the parallel build pack. No HTTP, no browser, no server boot, no model calls, no migrations, no persistence, no UI. Inventory only catalogs canonical routes and the strategy taxonomy; execution remains deferred and validation_qa.testingGates.route_smoke status is preserved."
     }
   ]
 }

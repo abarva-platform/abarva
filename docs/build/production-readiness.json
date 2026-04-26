@@ -1221,7 +1221,7 @@
         },
         "route_smoke": {
           "status": "partial",
-          "evidence": "Playwright specs and canonical route crawler exist, but no single required CI gate is certified."
+          "evidence": "Playwright specs and canonical route crawler exist, but no single required CI gate is certified. QA5 adds a deterministic 11-route inventory at src/lib/qa/route-smoke-inventory.ts with strategy tagging; execution remains deferred so this gate stays not-promoted."
         },
         "live_persona_walk": {
           "status": "not_automated",
@@ -1259,7 +1259,8 @@
         "QA4 (Agent Mission Persona Verification Runbook) added at docs/build/AGENT_MISSION_PERSONA_VERIFICATION_RUNBOOK.md as the founder-facing companion to QA1 / QA2 / QA3, covering AG10 / AG11 / MG2 / TOOL2 / PROD2.",
         "OPS1 agent dispatch operating model added at docs/build/AGENT_DISPATCH_OPERATING_MODEL.md \u2014 codifies one slice = one worktree = one branch = one local commit, no push/merge/PR from lanes, morning review decision matrix, integration cherry-pick path, build-slices.json append-only conflict policy, production-readiness.json conservative-status / union-notes / no-false-promotion conflict policy, stale Claude Code task handling, and the deferred future automation path (CI/Vercel/persona crawler/security scan/observability).",
         "OPS1 dispatch queue added at docs/build/agent-dispatch-queue.json \u2014 20 items (AG12, CTX3, EVID3, MW4, ACT2, QA5 in_progress; PDEL6, ADM6, PAT1, DATA1, MG3, TOOL3, SOL10, I5, PROD3 ready; ACT3, PAT2, DATA2, SOL11, I6 proposed) with laneType, priority, conflictRisk, recommendedWorktree, recommendedBranch, allowedFiles, forbiddenFiles, validationCommands, productionReadinessImpact, and expectedFinalReportFields.",
-        "OPS1 batch template added at docs/build/AGENT_BATCH_TEMPLATE.md and slice report template at docs/build/AGENT_SLICE_REPORT_TEMPLATE.md \u2014 fill-in-the-blank per-batch and per-lane scaffolds with annotated placeholders."
+        "OPS1 batch template added at docs/build/AGENT_BATCH_TEMPLATE.md and slice report template at docs/build/AGENT_SLICE_REPORT_TEMPLATE.md \u2014 fill-in-the-blank per-batch and per-lane scaffolds with annotated placeholders.",
+        "QA5 deterministic route smoke inventory added (src/lib/qa/route-smoke-inventory.ts) \u2014 11 canonical routes catalogued across home / admin / programs / tower / intelligence / source with owner surface, primary agent, expected guard, expected read model, smoke priority, implementation status, and recommended test strategy; execution remains deferred (no browser, no automation, no real HTTP) and the route_smoke testing gate status is preserved."
       ]
     },
     {
