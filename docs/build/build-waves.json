@@ -742,9 +742,20 @@
       "name": "AbarVa Design + Workflow Canon Enforcement",
       "goal": "Bring the live AbarVa product together visually, structurally, and narratively across shell, navigation, Admin, Architecture, Production Readiness, and Source Commercial pages.",
       "status": "in_progress",
-      "percentComplete": 14,
-      "plannedSlices": ["DES7","DES8","ARCH5","PROD8","SRC31","QA24","DEMO5"],
-      "completedSlices": ["DES7"],
+      "percentComplete": 29,
+      "plannedSlices": [
+        "DES7",
+        "DES8",
+        "ARCH5",
+        "PROD8",
+        "SRC31",
+        "QA24",
+        "DEMO5"
+      ],
+      "completedSlices": [
+        "DES7",
+        "DES8"
+      ],
       "skippedSlices": [],
       "blockedSlices": [],
       "mergedPrs": [],

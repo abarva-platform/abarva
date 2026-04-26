@@ -734,7 +734,8 @@
         "PROD6 live CI status stub added (src/lib/admin/live-ci-status-stub.ts); honest stub for unified control plane; notTrueLiveMonitoring:true, remainDeferred:true; no real GitHub/Vercel API calls; createdFrom prod6_live_ci_status_stub.",
         "ADM7 admin surface completeness inventory added (src/lib/admin/admin-surface-completeness.ts); panel-by-panel breakdown of implemented/planned/deferred; completenessPercent; nextPanelToBuild; createdFrom adm7_admin_surface_completeness.",
         "ADM8: Agent readiness deep drill created; Nexus/Sentinel/Atlas/Steward readiness factors documented; deterministic static manifest source.",
-        "ARCH4 (wave-15): architecture-overview.ts data builder + ArchitectureOverviewPage component + /platform/admin/architecture Next.js page. 6 system layers, 15+ wave summaries. 9 tests green."
+        "ARCH4 (wave-15): architecture-overview.ts data builder + ArchitectureOverviewPage component + /platform/admin/architecture Next.js page. 6 system layers, 15+ wave summaries. 9 tests green.",
+        "DES8 (wave-17): AdminCanonShell primitive with workflow metadata (pageQuestion, primaryAgent, recommendedNextAction). Reusable across admin pages. 13 tests green."
       ],
       "lastUpdated": "2026-04-26"
     },

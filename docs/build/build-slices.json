@@ -7408,6 +7408,15 @@
       "status": "code_complete",
       "branch": "wave17/des7-app-shell-navigation-canon",
       "description": "AbarVaShellNav primitive with workflow-question metadata. Canon wordmark, off-white shell, navy accent, no teal/cyber. 13 tests."
+    },
+    {
+      "id": "DES8",
+      "wave": "wave-17",
+      "name": "Admin Page Shell + Workflow Canon Refresh",
+      "type": "admin-ui",
+      "status": "code_complete",
+      "branch": "wave17/des8-admin-shell-workflow-canon",
+      "description": "AdminCanonShell primitive with workflow metadata strip (anchor agent, primary question, next action, caveat). Off-white surface, navy accent. 13 tests."
     }
   ]
 }
