@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-04-26",
+  "lastUpdated": "2026-04-25",
   "lifecycle": [
     "ready",
     "in_progress",
@@ -3209,6 +3209,327 @@
         "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8'))\""
       ],
       "notes": "V1 internal API polling only. True GitHub/Vercel status ingestion, deploy event polling, route smoke execution, persona crawler, DB-backed readiness, and observability are deferred to PROD4 or later. Status is code_complete after local validation, not verified."
+    },
+    {
+      "id": "ACT3",
+      "name": "AI Adoption and Usage Read Model",
+      "category": "ACT",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane A (parallel build pack)",
+      "dependsOn": [
+        "ACT2"
+      ],
+      "allowedFiles": [
+        "src/lib/tower/ai-adoption-usage.ts",
+        "src/__tests__/integration/tower/ai-adoption-usage.test.ts",
+        "docs/build/slices/ACT3_AI_ADOPTION_USAGE_READ_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**",
+        "src/app/demo/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Module src/lib/tower/ai-adoption-usage.ts exports the canonical AI_TOOL_KEYS tuple ('github_copilot', 'claude_code', 'codex', 'cursor', 'servicenow_ai_agents', 'workday_ai_assistant', 'erp_agents_generic', 'salesforce_einstein', 'microsoft_copilot_m365', 'custom_internal_agents'), the AI_ADOPTION_HEALTH_STATES tuple ('not_started', 'piloting', 'partial_adoption', 'broad_adoption', 'declining', 'retired'), the AI_USAGE_VOLUME_BANDS tuple ('none', 'low', 'medium', 'high', 'very_high'), the AI_WORKFLOW_COVERAGE_STATUSES tuple ('not_covered', 'partial', 'fully_covered'), the AI_ADOPTION_GOVERNANCE_FLAGS tuple ('none', 'review_required', 'flagged'), the AiToolKey / AiAdoptionHealth / AiUsageVolumeBand / AiWorkflowCoverageStatus / AiAdoptionGovernanceFlag enum types, AiToolAdoptionRecord, AiAdoptionUsageSummary, and the helpers buildAiAdoptionUsageInventory, summarizeAiAdoptionUsage, getAiAdoptionByTool, getDecliningOrRetiredTools, and getUngovernedAdoption.",
+        "buildAiAdoptionUsageInventory returns at least 18 deterministic seed records, with at least 1 record per canonical tool (10 tools), at least 1 record per canonical health state (6 states), and at least 6 distinct business functions.",
+        "Every record carries at least 1 workflow covered; every record's adoptionRate equals activeUsers / potentialUsers (rounded to 4 decimals); every record carries createdFrom 'deterministic_ai_adoption_seed'; every record id matches the canonical 'ai-adopt-seed-{tool}-{n}' shape and ids are unique; activeUsers and potentialUsers are non-negative integers with active <= potential.",
+        "At least 2 records carry governanceFlag 'flagged'.",
+        "summarizeAiAdoptionUsage reconciles totals (byTool, byHealth, and byUsageVolume sum to totalRecords), exposes every canonical tool / health / usage-band key (zero allowed), reports totalActiveUsers and totalPotentialUsers that agree with their defining sums, and returns uniqueBusinessFunctions and uniqueWorkflows sorted ascending and de-duplicated.",
+        "getAiAdoptionByTool returns only records matching the requested tool; getDecliningOrRetiredTools returns exactly the records whose adoptionHealth is 'declining' or 'retired'; getUngovernedAdoption returns exactly the records whose governanceFlag is 'review_required' or 'flagged'.",
+        "Seed contains no invented dollar amounts (regex \\$\\s*\\d on JSON.stringify), no banned placeholder language ('Coming soon' / 'TBD' / 'Lorem ipsum'), and no endorsement-style framing ('recommended tool' / 'best-in-class' / 'industry leader' / 'we endorse' / 'our preferred' / 'guaranteed roi'); vendor names appear only as toolName / tool keys, never as recommendations; module source has no imports from src/lib/source / sentinel / atlas / nexus / agent / auth or supabase, and no Date.now / Math.random / new Date( / fetch( / anthropic / openai / useState / useEffect.",
+        "Test suite at src/__tests__/integration/tower/ai-adoption-usage.test.ts is green and enforces shape, determinism, tool coverage, health-state coverage, per-row invariants (including the adoptionRate = active / potential identity), distribution constraints, summary reconciliation, helper partition behavior, no-fabrication invariants, and module hygiene.",
+        "Production readiness manifest is updated with a note acknowledging the ACT3 AI adoption / usage dimension under ai_control_tower; ai_control_tower status is preserved (no promotion); manifest top-level lastUpdated reflects this change."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/tower/ai-adoption-usage.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Operationalizes dimension #2 (AI Adoption & Usage) of the ACT1 AI Control Tower contract. Deterministic seed-only read model. No live integrations, no per-tenant adoption telemetry binding, no Atlas brief composition, no Tower UI \u2014 those land in ACT3.x, ACT9, and ACT10. Conservative manifest update: ai_control_tower component is not promoted."
+    },
+    {
+      "id": "ACT4",
+      "name": "AI Value / Outcome Ledger Read Model",
+      "category": "ACT",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "ACT2"
+      ],
+      "allowedFiles": [
+        "src/lib/tower/ai-value-outcome-ledger.ts",
+        "src/__tests__/integration/tower/ai-value-outcome-ledger.test.ts",
+        "docs/build/slices/ACT4_VALUE_OUTCOME_LEDGER_READ_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**",
+        "src/app/demo/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Module src/lib/tower/ai-value-outcome-ledger.ts exports the canonical VALUE_LEDGER_CATEGORIES tuple ('cost_avoidance', 'productivity', 'revenue_lift', 'risk_reduction', 'customer_experience', 'employee_experience', 'compliance') plus the ValueLedgerCategory / ValueMeasurementUnit / ValueReadinessState / ValueCounterfactualConfidence / ValueGovernanceReviewStatus enum types, ValueLedgerEntry, ValueOutcomeLedgerSummary, and the helpers buildAiValueOutcomeLedger, summarizeAiValueOutcomeLedger, getMeasuredEntries, getProjectedOnlyEntries, getEntriesByCategory, computeVariance.",
+        "buildAiValueOutcomeLedger returns at least 16 deterministic seed entries with at least one entry per canonical category and at least one entry per canonical readiness state.",
+        "At least 4 entries carry realizedValue !== null with non-null computed varianceAbs and variancePercent; at least 2 entries carry governanceReviewStatus 'flagged'; at least 2 entries link a canonical programKey from mock.ts (contact-center-ai / unified-customer-data-platform / store-associate-productivity / demand-forecasting-ai); at least 2 entries link a canonical aiUseCaseKey of the form 'ai-use-case-seed-{n}'.",
+        "Every entry carries seed_value: true and createdFrom 'deterministic_value_outcome_ledger_seed'; every id matches the 'value-seed-{n}' shape and ids are unique; every dollar-denominated entry uses the 'usd_seed' measurement unit; linked claim ids use the canonical 'claim-seed-' prefix.",
+        "summarizeAiValueOutcomeLedger reconciles totals (byCategory, byReadiness, and byMeasurementUnit sum to totalEntries), exposes every canonical category / readiness / measurement-unit key (zero allowed), reports measuredCount as the sum of measured_in_pilot and measured_in_production rows, projectedOnlyCount equal to byReadiness.projected_only, flaggedGovernanceCount that agrees with the defining filter, and uniqueInitiatives sorted ascending and de-duplicated.",
+        "computeVariance returns null fields when realizedValue is null; returns realized - projected for varianceAbs and ((realized - projected) / projected) * 100 for variancePercent; returns null variancePercent when projectedValue is 0 and realizedValue is non-zero; returns 0 when both are 0; matches the precomputed seed varianceAbs / variancePercent fields field-by-field.",
+        "Seed contains no invented dollar amounts (regex \\$\\s*\\d on JSON.stringify), no branded vendor endorsements (deny-list OpenAI / Anthropic / Cohere / Mistral / Databricks / Snowflake / Microsoft Copilot / GitHub Copilot), and no banned placeholder language (Coming soon / TBD / Lorem ipsum); module source has no imports from src/lib/source / sentinel / atlas / nexus / agent / auth or supabase, and no Date.now / Math.random / new Date( / fetch( / anthropic / openai / useState / useEffect.",
+        "Test suite at src/__tests__/integration/tower/ai-value-outcome-ledger.test.ts is green and enforces shape, determinism, category and readiness coverage, per-row invariants, distribution constraints, computeVariance math, summary reconciliation, helper behaviors, no-fabrication invariants, and module hygiene.",
+        "Production readiness manifest is updated with notes acknowledging the ACT4 value / outcome ledger dimension under ai_control_tower and under audit_governance (since value claims need an audit trail); ai_control_tower and audit_governance statuses are preserved (no promotion); manifest top-level lastUpdated reflects this change."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/tower/ai-value-outcome-ledger.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Operationalizes the value-and-outcome dimension of the ACT1 AI Control Tower contract. Deterministic seed-only read model that builds on the ACT2 AI portfolio inventory by attaching value claims keyed by programKey and aiUseCaseKey. No live integrations, no per-tenant ledger binding, no Atlas brief composition, no Tower UI \u2014 those land in ACT4.x, ACT9, and ACT10. Conservative manifest update: ai_control_tower and audit_governance components are not promoted."
+    },
+    {
+      "id": "ACT5",
+      "name": "AI Risk & Governance Read Model",
+      "category": "ACT",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "ACT2"
+      ],
+      "allowedFiles": [
+        "src/lib/tower/ai-risk-governance.ts",
+        "src/__tests__/integration/tower/ai-risk-governance.test.ts",
+        "docs/build/slices/ACT5_AI_RISK_GOVERNANCE_READ_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**",
+        "src/app/demo/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Module src/lib/tower/ai-risk-governance.ts exports the canonical AI_RISK_GOVERNANCE_DIMENSIONS tuple ('responsible_ai_review', 'privacy_data_protection', 'security_red_team', 'legal_contractual', 'model_risk_management', 'human_in_the_loop', 'auditability_and_traceability', 'regulatory_compliance', 'third_party_vendor_risk', 'change_management_risk') plus the AiRiskGovernanceDimension / AiRiskSeverity / AiRiskStatus / GovernanceGateOutcome enum types, AiRiskGovernanceFinding, AiRiskGovernanceSummary, and the helpers buildAiRiskGovernanceFindings, summarizeAiRiskGovernance, getCriticalRiskFindings, getUnaddressedFindings, getHitlRequiredFindings.",
+        "buildAiRiskGovernanceFindings returns at least 20 deterministic seed findings, with every canonical dimension represented at least once, every canonical status represented at least once, every canonical severity represented at least once, at least 3 critical findings, at least 5 findings that require human-in-the-loop, and at least 4 findings with governanceGate 'fail'.",
+        "Every finding carries at least 1 mitigation entry; every finding id matches the canonical 'risk-seed-{n}' shape and ids are unique; every finding carries createdFrom 'deterministic_ai_risk_governance_seed'; auditableEvidenceIds entries match the canonical 'evidence-seed-{n}' shape; aiUseCaseKey entries (when present) match 'ai-use-case-seed-{n}'; at least 2 findings link to a programKey and at least 2 link to an aiUseCaseKey.",
+        "summarizeAiRiskGovernance reconciles totals (byDimension, bySeverity, and byStatus all sum to totalFindings), exposes every canonical dimension / severity / status key (zero allowed), reports unaddressedCount equal to byStatus.unaddressed, criticalCount equal to bySeverity.critical, hitlRequiredCount equal to the count of hitlRequired === true findings, and a governanceGatePassRate that equals (passing findings) / totalFindings, returns 0 for an empty input list, and is confined to [0, 1].",
+        "getCriticalRiskFindings returns only severity === 'critical' findings; getUnaddressedFindings returns only status === 'unaddressed' findings; getHitlRequiredFindings returns only hitlRequired === true findings; helper defaults match the canonical seed when called with no arguments.",
+        "Seed contains no invented dollar amounts (regex \\$\\s*\\d on JSON.stringify), no branded vendor endorsements (deny-list OpenAI / Anthropic / Cohere / Mistral / Databricks / Snowflake / Microsoft Copilot / GitHub Copilot), and no banned placeholder language (Coming soon / TBD / Lorem ipsum); module source has no imports from src/lib/source / sentinel / atlas / nexus / agent / auth or supabase, and no Date.now / Math.random / new Date( / fetch( / anthropic / openai / useState / useEffect.",
+        "Test suite at src/__tests__/integration/tower/ai-risk-governance.test.ts is green and enforces shape, determinism, dimension / status / severity coverage, per-row invariants, distribution constraints, summary reconciliation, governanceGatePassRate math, helper behaviors, no-fabrication invariants, and module hygiene.",
+        "Production readiness manifest is updated with notes on ai_control_tower and audit_governance acknowledging the ACT5 risk governance dimension; statuses are preserved (no promotion); manifest top-level lastUpdated reflects this change."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/tower/ai-risk-governance.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Operationalizes the AI Risk & Governance dimension of the ACT1 AI Control Tower contract. Deterministic seed-only read model. No live integrations, no per-tenant risk register binding, no Atlas brief composition, no Tower UI \u2014 those land in ACT5.x, ACT9, and ACT10. Conservative manifest update: ai_control_tower and audit_governance components are not promoted."
+    },
+    {
+      "id": "ACT7",
+      "name": "AI Productivity / DORA Read Model",
+      "category": "ACT",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "ACT2"
+      ],
+      "allowedFiles": [
+        "src/lib/tower/ai-productivity-dora.ts",
+        "src/__tests__/integration/tower/ai-productivity-dora.test.ts",
+        "docs/build/slices/ACT7_AI_PRODUCTIVITY_DORA_READ_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**",
+        "src/app/demo/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Module src/lib/tower/ai-productivity-dora.ts exports the canonical DORA_METRICS tuple ('deployment_frequency', 'lead_time_for_changes', 'change_failure_rate', 'mean_time_to_recovery') and PRODUCTIVITY_METRICS tuple ('pr_cycle_time', 'pr_merge_rate', 'review_turnaround', 'defect_leakage', 'rework_ratio', 'spike_to_ship_ratio') plus the DoraMetric / ProductivityMetric / MetricBand / MetricTrend / MetricMeasurementSource / MetricKind / MetricUnit enum types, ProductivityDoraEntry, ProductivityDoraSummary, and the helpers buildProductivityDoraEntries, summarizeProductivityDora, getDoraEntries, getProductivityEntries, getDecliningOrLowBandEntries.",
+        "buildProductivityDoraEntries returns at least 20 deterministic seed entries; all 4 DORA metrics and all 6 productivity metrics are covered with at least 1 entry each; all 4 bands (elite, high, medium, low) and all 4 trends (improving, flat, declining, unknown) are present with at least 1 entry each; at least 3 entries are declining; at least 5 unique team labels are present.",
+        "Every entry carries liveTelemetry: false and createdFrom 'deterministic_productivity_dora_seed'; every entry's measurementSource is one of 'seed_only', 'manual_capture', 'gh_actions_seed', 'jira_seed', or 'incident_report_seed'; every entry id matches the canonical 'dora-seed-{team}-{metric}' shape and ids are unique; every entry has at least one non-empty note; delta equals currentValue minus baselineValue.",
+        "summarizeProductivityDora reconciles totals (byBand and byTrend sum to totalEntries; doraCount + productivityCount equals totalEntries), exposes every canonical band and trend key (zero allowed), reports byMetric counts that sum to totalEntries and expose every metric present in the input, and returns uniqueTeams and uniquePrograms sorted ascending and de-duplicated.",
+        "getDoraEntries and getProductivityEntries partition the input by metricKind; getDecliningOrLowBandEntries returns only entries whose trend is 'declining' or whose band is 'low' and excludes entries that are improving and not in the low band; helpers default to summarizing the canonical seed when called with no arguments.",
+        "Seed contains no invented dollar amounts (regex \\$\\s*\\d on JSON.stringify), no branded vendor endorsements (deny-list OpenAI / Anthropic / Cohere / Mistral / Databricks / Snowflake / Microsoft Copilot / GitHub Copilot), no banned placeholder language (Coming soon / TBD / Lorem ipsum), and no positive live-telemetry claims; module source has no imports from src/lib/source / sentinel / atlas / nexus / agent / auth or supabase, and no Date.now / Math.random / new Date( / fetch( / anthropic / openai / useState / useEffect.",
+        "Test suite at src/__tests__/integration/tower/ai-productivity-dora.test.ts is green and enforces shape, determinism, metric coverage, band and trend coverage, per-row invariants (including liveTelemetry: false on every entry), distribution constraints, summary reconciliation, helper behaviors, no-fabrication invariants (including the no-positive-live-telemetry scan), and module hygiene.",
+        "Production readiness manifest is updated with a note acknowledging the ACT7 productivity / DORA dimension under ai_control_tower; ai_control_tower status is preserved (no promotion); manifest top-level lastUpdated reflects this change."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/tower/ai-productivity-dora.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Operationalizes the Productivity & DORA dimension of the ACT1 AI Control Tower contract. Deterministic seed-only read model. No live integrations, no per-tenant binding, no Atlas brief composition, no Tower UI \u2014 those land in ACT7.x, ACT9, and ACT10. Conservative manifest update: ai_control_tower component is not promoted."
+    },
+    {
+      "id": "I5",
+      "name": "Intelligence \u00b7 Canvas Mode Switching",
+      "category": "I",
+      "status": "code_complete",
+      "risk": "medium",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "I1"
+      ],
+      "allowedFiles": [
+        "src/lib/intelligence/intelligence-canvas-modes.ts",
+        "src/components/intelligence/IntelligenceCanvasModeTabs.tsx",
+        "src/app/(maestro)/tenant/[tenantSlug]/intelligence/patterns/[patternKey]/page.tsx",
+        "src/__tests__/integration/intelligence/intelligence-canvas-modes.test.ts",
+        "docs/build/slices/I5_INTELLIGENCE_CANVAS_MODES.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Canvas mode helper exposes the four canonical modes (summary, evidence, programs, actions) in canonical order.",
+        "buildIntelligenceCanvasView is pure: same inputs produce byte-equal JSON across calls.",
+        "parseCanvasModeFromSearchParam defaults to 'summary' for undefined, null, array, empty string, and any unknown value.",
+        "Each canvas mode tab href contains the pattern key and the ?canvas=<mode> query parameter.",
+        "Active tab is determined deterministically from the current mode; isActive is true on exactly one tab.",
+        "Body discriminated union matches mode (body.kind === mode) and each body content list is capped at 5 items.",
+        "IntelligenceCanvasModeTabs is a server component (no 'use client', no useState, no useEffect).",
+        "Tenant pattern detail page mounts IntelligenceCanvasModeTabs above SentinelPatternDetail for canonical Sentinel pattern keys.",
+        "Existing assertTenantAccess and notFound behavior on the route is preserved.",
+        "Helper module imports nothing from React, Next, UI components, Sentinel/Atlas/Nexus/agent runtime, or any model SDK.",
+        "No detection or rendering invents a dollar amount, citation, or live runtime claim.",
+        "No Date.now, Math.random, new Date(, fetch(, anthropic, openai, or placeholder copy is introduced."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/intelligence/intelligence-canvas-modes.test.ts",
+        "npm run build"
+      ],
+      "notes": "Canvas mode switching is pure URL state via ?canvas=<mode>. No client interactivity, no live Sentinel runtime, no Atlas / Nexus / Claude / OpenAI invocation. Live evidence rows, program enumeration in the canvas body, and persisted user preference are intentionally deferred."
+    },
+    {
+      "id": "I6",
+      "name": "Intelligence \u00b7 Evidence Dataset Drawer",
+      "category": "I",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "EVID2",
+        "EVID3"
+      ],
+      "allowedFiles": [
+        "src/lib/intelligence/evidence-dataset-drawer-view.ts",
+        "src/components/intelligence/EvidenceDatasetDrawer.tsx",
+        "src/components/intelligence/SentinelPatternDetail.tsx",
+        "src/__tests__/integration/intelligence/evidence-dataset-drawer.test.ts",
+        "docs/build/slices/I6_EVIDENCE_DATASET_DRAWER.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "buildEvidenceDatasetDrawerView returns deterministic, byte-equal views across repeated calls for each canonical I1 pattern key.",
+        "buildEvidenceDatasetDrawerSeedAll covers at least 3 canonical I1 pattern keys.",
+        "Every seeded pattern carries at least 4 entries, at least 2 internal entries, and at least 1 external entry.",
+        "Across the seed set, all 5 source kinds, all 4 freshness labels, and all 4 usability labels appear.",
+        "Every partial or blocked entry carries at least one missing citation row.",
+        "No https:// or http:// URL appears in any serialized view; no literal E-### citation tokens appear.",
+        "honestDisclaimer mentions deterministic seed and disclaims live external retrieval.",
+        "EvidenceDatasetDrawer is a server component, carries data-evidence-dataset-drawer=\"i6\" on its root, and reads tokens from @/lib/design/abarva-theme.",
+        "SentinelPatternDetail mounts EvidenceDatasetDrawer via EvidenceDatasetDrawerSection and renders nothing for pattern keys without seed coverage.",
+        "Module imports nothing from Sentinel runtime, Atlas / Nexus / agent runtime, Source UI, legacy /programs, mock.ts, auth, supabase, or model SDKs."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/intelligence/evidence-dataset-drawer.test.ts",
+        "npm run build"
+      ],
+      "notes": "Deterministic Evidence Dataset Drawer view + server component mounted on the canonical Sentinel pattern detail. Seed entries cover internal (tenant artifact, program evidence, dataset domain) and external (public pattern pack, industry benchmark) sources across 4 canonical I1 pattern keys. No live retrieval, no Claude / OpenAI invocation, no EVID2 / EVID3 live projection. Future slice can swap the seed for a live EVID2/EVID3 projection without changing the view contract."
     }
   ]
 }

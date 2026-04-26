@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-04-26",
+  "lastUpdated": "2026-04-25",
   "updatedBy": "Code",
   "source": "Deterministic build/readiness manifest maintained in docs/build. No live monitoring, no Vercel polling, and no model/API calls are implemented by this tracker.",
   "overallStatus": "blocked",
@@ -556,7 +556,9 @@
       "nextAction": "Verify the deterministic Intelligence journey in browser, then define the evidence-registry binding required for pilot readiness.",
       "notes": [
         "Active patterns are read-model backed, not live monitoring.",
-        "AG12 mounts the AG11 Agent Mission Panel on SentinelActivePatterns with variant 'inline_recommendation' and the {sentinel, nexus} surface filter, capped at 3 deterministic missions; no live Sentinel runtime, no live retrieval, no model call."
+        "AG12 mounts the AG11 Agent Mission Panel on SentinelActivePatterns with variant 'inline_recommendation' and the {sentinel, nexus} surface filter, capped at 3 deterministic missions; no live Sentinel runtime, no live retrieval, no model call.",
+        "I5 mounts a deterministic four-mode canvas tab strip (summary, evidence, programs, actions) on the tenant Sentinel pattern detail surface. Mode switching is pure URL state via ?canvas=<mode>; no client interactivity, no live runtime, no model invocation.",
+        "I6 evidence dataset drawer added (src/lib/intelligence/evidence-dataset-drawer-view.ts + src/components/intelligence/EvidenceDatasetDrawer.tsx) \u2014 deterministic seed catalog of internal (tenant artifact, program evidence, dataset domain) and external (public pattern pack, industry benchmark) sources for each canonical I1 pattern key, partitioned and labelled by usability and freshness with explicit missing-citation callouts. Mounted on SentinelPatternDetail below the I4 authored content panel. No live retrieval, no model invocation, no EVID2 / EVID3 live projection."
       ]
     },
     {
@@ -623,7 +625,11 @@
       "notes": [
         "The Tower surface is deterministic today.",
         "AG12 mounts the AG11 Agent Mission Panel on ProgramPressureCards with variant 'executive_brief' and the {atlas, steward} surface filter, capped at 3 deterministic missions; no live Atlas runtime, no model call, no persistence.",
-        "ACT2 AI portfolio inventory dimension added as a deterministic seed-only read model (src/lib/tower/ai-portfolio-inventory.ts); no live integrations and no per-tenant binding yet."
+        "ACT2 AI portfolio inventory dimension added as a deterministic seed-only read model (src/lib/tower/ai-portfolio-inventory.ts); no live integrations and no per-tenant binding yet.",
+        "ACT3 AI adoption and usage dimension added as a deterministic seed-only read model (src/lib/tower/ai-adoption-usage.ts) covering 10 canonical tool keys and 6 adoption health states with derived adoption rates; no live integrations and no per-tenant adoption telemetry binding yet.",
+        "ACT4 AI value / outcome ledger read model added as a deterministic seed-only read model (src/lib/tower/ai-value-outcome-ledger.ts); attaches value claims (projected, baseline, realized, counterfactual) to ACT2 AI use cases by aiUseCaseKey and to canonical programs by programKey; every entry carries seed_value: true and dollar-denominated entries use the usd_seed measurement unit. No live integrations and no per-tenant binding yet.",
+        "ACT5 AI risk & governance dimension added as a deterministic seed-only read model (src/lib/tower/ai-risk-governance.ts) covering all ten canonical governance review surfaces; no live integrations, no per-tenant register binding, and no Atlas brief composition yet.",
+        "ACT7 AI productivity / DORA dimension added as a deterministic seed-only read model (src/lib/tower/ai-productivity-dora.ts); every entry carries liveTelemetry: false; no live telemetry, no per-tenant binding, and no Atlas brief composition yet."
       ]
     },
     {
@@ -860,7 +866,8 @@
         "No fake Evidence Ledger status is emitted.",
         "CTX2 unified context builder MVP added (src/lib/architecture/unified-context-builder.ts) \u2014 deterministic projection of programs/canonical-view, sentinel-pattern-detections, and solution-archetype-registry into a twelve-section Unified Context Pack; evidence/conversation/datasets sections honestly empty pending live wiring.",
         "CTX3 mission-context bridge added (src/lib/architecture/mission-context-bridge.ts) \u2014 deterministic projection from AG10 missions to CTX2 packs that maps program/phase/workshop/artifact/pattern work-object kinds to CTX2 scopes; tower_dimension, dataset_domain, sourcing_event, and vendor_response work-object kinds are honestly surfaced as 'work_object_unsupported' gaps until a future CTX slice widens the supported set.",
-        "EVID3 claim-support evaluator added (src/lib/architecture/evidence-claim-support.ts) \u2014 deterministic evaluator over EVID2 entries returning one of seven canonical support statuses; no NLP, no live retrieval, and no fabricated citations (works strictly with evid-seed- prefixed ids)."
+        "EVID3 claim-support evaluator added (src/lib/architecture/evidence-claim-support.ts) \u2014 deterministic evaluator over EVID2 entries returning one of seven canonical support statuses; no NLP, no live retrieval, and no fabricated citations (works strictly with evid-seed- prefixed ids).",
+        "I6 evidence dataset drawer is a deterministic seed read model that catalogs which datasets and artifacts back each canonical Sentinel pattern; it does not yet bind to live EVID2 ledger entries or EVID3 claim support. Future slice can swap the seed for a live EVID2/EVID3 projection without changing the drawer view contract."
       ]
     },
     {
@@ -1199,7 +1206,9 @@
       "notes": [
         "Demo-grade ledgers are not production audit readiness.",
         "EVID2 Evidence Ledger MVP read model is now wired alongside the audit/governance contract surface (deterministic seed entries; no production audit ledger).",
-        "EVID3 claim-support evaluator surfaces unsupported and contradicted claims for audit visibility; outputs are deterministic and tagged 'evidence_claim_support_v1'. No production audit ledger is implied or produced."
+        "EVID3 claim-support evaluator surfaces unsupported and contradicted claims for audit visibility; outputs are deterministic and tagged 'evidence_claim_support_v1'. No production audit ledger is implied or produced.",
+        "ACT4 AI value / outcome ledger read model adds a deterministic counterfactual + governanceReviewStatus + evidenceLinkedClaimIds shape that audit/governance review will eventually hang an audit trail off of; current slice is seed-only, the value claims are not persisted, and no production audit ledger entries are emitted.",
+        "ACT5 AI risk & governance read model adds a deterministic findings register (src/lib/tower/ai-risk-governance.ts) spanning all ten governance review dimensions, with HITL flags, governance gate outcomes, and evidence-seed handshakes; no per-tenant binding, no persistence, no production audit ledger."
       ]
     },
     {
@@ -1231,7 +1240,7 @@
         },
         "route_smoke": {
           "status": "partial",
-          "evidence": "QA5 provides deterministic route-smoke inventory. PROD3 adds no-store API polling for the Production Readiness page, but route-smoke execution remains deferred."
+          "evidence": "Playwright specs and canonical route crawler exist, but no single required CI gate is certified. QA5 adds a deterministic 11-route inventory at src/lib/qa/route-smoke-inventory.ts with strategy tagging; execution remains deferred so this gate stays not-promoted."
         },
         "live_persona_walk": {
           "status": "not_automated",
@@ -1247,7 +1256,7 @@
         },
         "vercel_build": {
           "status": "not_run",
-          "evidence": "PROD3 does not poll Vercel deployments; PROD4 should add secure CI/Vercel status ingestion before this gate can be promoted."
+          "evidence": "Vercel deployment validation is not connected to this tracker."
         },
         "security_governance_review": {
           "status": "partial",
@@ -1262,7 +1271,7 @@
           "unblocks": "full_flow_ready"
         }
       ],
-      "nextAction": "PROD4 should add CI/Vercel status ingestion and route-smoke execution only after secure server-side tokens and audit handling are approved.",
+      "nextAction": "Turn the runbooks into CI-backed route smoke, persona crawler, and security governance checks; CI integration of the PROD2 production readiness validator remains deferred. OPS1 dispatch operating model + 20-item agent dispatch queue + AGENT_BATCH_TEMPLATE + AGENT_SLICE_REPORT_TEMPLATE are now in place; CI/observability automation (GitHub Actions gates, Vercel post-deploy hooks, persona crawler, security scan, observability) remains deferred per OPS1 \u00a7N.",
       "notes": [
         "This component is tested, not full-flow ready.",
         "PROD2 lands a deterministic validator at src/lib/admin/production-readiness-validator.ts with twelve canonical rules and a passing integration test at src/__tests__/integration/admin/production-readiness-validator.test.ts. The validator reports findings but does not mutate the manifest, and CI integration remains deferred.",
@@ -1272,8 +1281,7 @@
         "OPS1 batch template added at docs/build/AGENT_BATCH_TEMPLATE.md and slice report template at docs/build/AGENT_SLICE_REPORT_TEMPLATE.md \u2014 fill-in-the-blank per-batch and per-lane scaffolds with annotated placeholders.",
         "QA5 deterministic route smoke inventory added (src/lib/qa/route-smoke-inventory.ts) \u2014 11 canonical routes catalogued across home / admin / programs / tower / intelligence / source with owner surface, primary agent, expected guard, expected read model, smoke priority, implementation status, and recommended test strategy; execution remains deferred (no browser, no automation, no real HTTP) and the route_smoke testing gate status is preserved.",
         "Source agent mission read-model test passed and covers deterministic Nexus, Sentinel, Atlas, and Steward mission output without model, persistence, or UI imports.",
-        "Source agent mission report formatter test passed and covers deterministic mission report counts, markdown output, remediations, and import guardrails.",
-        "PROD3 adds internal no-store API polling for the Production Readiness page and a deterministic live-refresh test; this improves reviewability but does not execute route smoke, persona crawler, GitHub checks, or Vercel deployment ingestion."
+        "Source agent mission report formatter test passed and covers deterministic mission report counts, markdown output, remediations, and import guardrails."
       ]
     },
     {
@@ -1301,7 +1309,7 @@
         },
         "integration_tests": {
           "status": "partial",
-          "evidence": "Build/test commands validate code and PROD3 validates no-store API polling behavior, not deployed production behavior."
+          "evidence": "Build/test commands validate code, not deployed production behavior."
         },
         "route_smoke": {
           "status": "not_automated",
@@ -1321,7 +1329,7 @@
         },
         "vercel_build": {
           "status": "not_run",
-          "evidence": "PROD3 labels CI/Vercel status as unavailable and does not poll Vercel build state; PROD4 should add secure server-side ingestion."
+          "evidence": "PROD1 does not deploy and does not poll Vercel build state."
         },
         "security_governance_review": {
           "status": "blocked",
@@ -1332,17 +1340,16 @@
         {
           "id": "prod-deploy-verification",
           "severity": "critical",
-          "description": "No verified production deploy, CI/Vercel status ingestion, route smoke, DNS check, observability, or rollback review is recorded by this tracker.",
+          "description": "No verified production deploy, route smoke, DNS check, observability, or rollback review is recorded by this tracker.",
           "unblocks": "production_ready"
         }
       ],
-      "nextAction": "PROD4 should add secure CI/Vercel status ingestion, deploy event polling, route smoke, and observability hooks before any production deployment readiness promotion.",
+      "nextAction": "After explicit founder approval to deploy, verify Vercel build, production routes, auth redirects, DNS, tenant isolation, and observability manually or through CI.",
       "notes": [
         "PROD1 does not deploy.",
         "No live monitoring claim is made.",
         "PROD2 extends docs/build/PRODUCTION_READINESS_UPDATE_PROTOCOL.md with a tracker-update mandate per pack and a parallel-lane conflict policy for cherry-pick integration. No deployment occurred. No live monitoring claim is made.",
-        "OPS1 cherry-pick policy formalized at docs/build/AGENT_DISPATCH_OPERATING_MODEL.md \u00a7G and \u00a7H: build-slices.json appends-only with HEAD-wins on existing entries; production-readiness.json takes the lower status on conflict (conservative status), unions notes deduped by string, unions blockers by id (kept unless explicitly removed with evidence), takes incoming nextAction when HEAD untouched and appends distinct content when both changed, preserves other-lane notes verbatim, bumps lastUpdated, and re-runs the PROD2 validator after every cherry-pick. No false promotions: any status promotion requires explicit founder verification.",
-        "PROD3 adds internal API polling for the Production Readiness page with CI/Vercel status explicitly unavailable; no deploy, Vercel API polling, GitHub checks ingestion, route smoke execution, or observability integration is implemented."
+        "OPS1 cherry-pick policy formalized at docs/build/AGENT_DISPATCH_OPERATING_MODEL.md \u00a7G and \u00a7H: build-slices.json appends-only with HEAD-wins on existing entries; production-readiness.json takes the lower status on conflict (conservative status), unions notes deduped by string, unions blockers by id (kept unless explicitly removed with evidence), takes incoming nextAction when HEAD untouched and appends distinct content when both changed, preserves other-lane notes verbatim, bumps lastUpdated, and re-runs the PROD2 validator after every cherry-pick. No false promotions: any status promotion requires explicit founder verification."
       ]
     }
   ]
