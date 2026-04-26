@@ -2777,6 +2777,65 @@
         "npm run build"
       ],
       "notes": "Founder-facing checklist for verifying AG10, AG11, MG2, TOOL2, and PROD2 outputs land honestly before push or PR. Fourth companion to QA1 (Agentic Spine), QA2 (Solution / Workshop), and QA3 (Solution Intelligence) verification runbooks. Deterministic \u2014 does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
+    },
+    {
+      "id": "OPS1",
+      "name": "Agent Dispatch Operating Model + Queue + Templates",
+      "category": "OPS",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/build/AGENT_DISPATCH_OPERATING_MODEL.md",
+        "docs/build/agent-dispatch-queue.json",
+        "docs/build/AGENT_BATCH_TEMPLATE.md",
+        "docs/build/AGENT_SLICE_REPORT_TEMPLATE.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "docs/build/AGENT_DISPATCH_OPERATING_MODEL.md \u00a7A documents purpose: keep agents busy, prevent runaway scope, make hand-offs auditable, avoid false readiness promotion, integrate cleanly to main.",
+        "Operating model \u00a7B states the hard rule: one slice = one worktree = one branch = one local commit; worktree path /Users/anand/Projects/nexus-pack-<slug>; branch pack/<slice-id>-<slug>; no cross-pollination.",
+        "Operating model \u00a7C documents no push / merge / PR from lane worktrees; lanes commit locally; integrator alone owns push and PR after morning review.",
+        "Operating model \u00a7D documents the morning review per-worktree checklist (branch, status, log -3, show --stat HEAD, tsc, build) and the keep / amend / discard / cherry-pick / push-PR decision matrix.",
+        "Operating model \u00a7E documents the integration branch flow: switch to main, pull, create codex/<batch-name>, cherry-pick lane commits in dependency order, resolve manifest conflicts via \u00a7G and \u00a7H, validate, push, open one PR.",
+        "Operating model \u00a7F documents cherry-pick order: read-models before UI, stubs before validators, validators after baseline, docs runbook last; ties broken by priority then alphabetical slice id.",
+        "Operating model \u00a7G documents build-slices.json conflict policy: take HEAD's existing entries, append the new entry from cherry source, JSON parse must pass, bump lastUpdated, no reordering, no silent mutation of other lanes' entries.",
+        "Operating model \u00a7H documents production-readiness.json conflict policy: conservative status (lower wins), no false promotions, union notes deduped by string, keep blockers unless explicitly removed with evidence (union by id), nextAction take incoming when HEAD untouched / append distinct content when both changed, preserve other-lane notes, bump lastUpdated, validator must pass after every cherry-pick.",
+        "Operating model \u00a7I documents stale Claude Code task handling: verify with ps aux | grep -E \"next build|tsc|jest\" | grep -v grep; if empty, dismiss the UI entries; do not assume work is in progress from the Task Panel alone.",
+        "Operating model \u00a7J documents no `git add .`: lanes stage by explicit path; pre-commit `git diff --cached --name-only` must show only the slice's allowedFiles.",
+        "Operating model \u00a7K documents no false readiness promotion: PROD2 validateProductionReadinessManifest must return passed: true after every cherry-pick; production_ready requires all gates pass and explicit founder approval.",
+        "Operating model \u00a7L documents failure handling: stop on validation failure; do not fix forward a broken slice; abort, report, ask.",
+        "Operating model \u00a7M documents branch instability mitigation: always run git branch --show-current before staging or committing.",
+        "Operating model \u00a7N documents future automation path: GitHub Actions for CI, Vercel deployment hooks, persona crawler, security scan, observability \u2014 currently deferred.",
+        "docs/build/agent-dispatch-queue.json parses as JSON; schemaVersion is 1; lastUpdated is 2026-04-25; items array has at least 20 entries.",
+        "Queue includes all 20 ids: AG12, CTX3, EVID3, MW4, ACT2, QA5, PDEL6, ACT3, ADM6, PAT1, PAT2, DATA1, DATA2, MG3, TOOL3, SOL10, SOL11, I5, I6, PROD3.",
+        "AG12 / CTX3 / EVID3 / MW4 / ACT2 / QA5 carry status 'in_progress'; the remaining items carry 'ready' or 'proposed' based on dependsOn satisfaction.",
+        "Every queue item carries laneType in {docs, read_model, ui, qa, runtime_stub, integration}, priority in {low, medium, high, critical}, status in {ready, blocked, proposed, in_progress, complete}, conflictRisk in {low, medium, high}, recommendedWorktree, recommendedBranch, allowedFiles, forbiddenFiles, validationCommands (tsc + targeted jest + npm build), productionReadinessImpact, and expectedFinalReportFields.",
+        "docs/build/AGENT_BATCH_TEMPLATE.md provides a fill-in template with sections for batch header (Goal/Theme/Base branch/Hard rules), preflight checklist with explicit git commands, safety branch creation, worktree creation table, integrator-side file inventory, per-lane spec, morning review template, cherry-pick worksheet, cleanup, and failure rollback; placeholders are annotated.",
+        "docs/build/AGENT_SLICE_REPORT_TEMPLATE.md provides a fill-in lane report with sections for slice header (id, branch, HEAD, parent, files staged count, test count, validation status), files staged listing, test count + suite breakdown, validation results, implementation notes, PRT update report (tracker updated, components changed, status changes, blockers added/removed, nextAction updated), hygiene confirmation, hard-rule audit, deferred items, and recommendation.",
+        "Documentation + JSON only; no application code, runtime, auth, supabase, or migrations are modified.",
+        "build-slices.json appends an OPS1 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn [], status code_complete, risk low, ownerAgent 'Builder + Reviewer'; manifest top-level lastUpdated is bumped to 2026-04-25.",
+        "production-readiness.json validation_qa and production_deployment components append notes acknowledging the OPS1 dispatch operating model, queue, and templates; status preserved (no promotion); manifest top-level lastUpdated is bumped to 2026-04-25."
+      ],
+      "validationCommands": [
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/agent-dispatch-queue.json','utf8'))\"",
+        "npx tsc --noEmit --pretty false",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "OPS1 codifies AbarVa's multi-lane batch operating model: one slice per worktree per branch per local commit, no push/merge/PR from lanes, conservative production-readiness status on cherry-pick, no false readiness promotions, deterministic conflict policies for build-slices.json and production-readiness.json, and a 20-item dispatch queue that keeps agent capacity busy. Companion to BUILD_OPERATING_MODEL.md and PRODUCTION_READINESS_UPDATE_PROTOCOL.md. CI/observability automation is intentionally deferred."
     }
   ]
 }

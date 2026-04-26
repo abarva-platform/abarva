@@ -1239,11 +1239,14 @@
           "unblocks": "full_flow_ready"
         }
       ],
-      "nextAction": "Turn the runbooks into CI-backed route smoke, persona crawler, and security governance checks; CI integration of the PROD2 production readiness validator remains deferred.",
+      "nextAction": "Turn the runbooks into CI-backed route smoke, persona crawler, and security governance checks; CI integration of the PROD2 production readiness validator remains deferred. OPS1 dispatch operating model + 20-item agent dispatch queue + AGENT_BATCH_TEMPLATE + AGENT_SLICE_REPORT_TEMPLATE are now in place; CI/observability automation (GitHub Actions gates, Vercel post-deploy hooks, persona crawler, security scan, observability) remains deferred per OPS1 §N.",
       "notes": [
         "This component is tested, not full-flow ready.",
         "PROD2 lands a deterministic validator at src/lib/admin/production-readiness-validator.ts with twelve canonical rules and a passing integration test at src/__tests__/integration/admin/production-readiness-validator.test.ts. The validator reports findings but does not mutate the manifest, and CI integration remains deferred.",
-        "QA4 (Agent Mission Persona Verification Runbook) added at docs/build/AGENT_MISSION_PERSONA_VERIFICATION_RUNBOOK.md as the founder-facing companion to QA1 / QA2 / QA3, covering AG10 / AG11 / MG2 / TOOL2 / PROD2."
+        "QA4 (Agent Mission Persona Verification Runbook) added at docs/build/AGENT_MISSION_PERSONA_VERIFICATION_RUNBOOK.md as the founder-facing companion to QA1 / QA2 / QA3, covering AG10 / AG11 / MG2 / TOOL2 / PROD2.",
+        "OPS1 agent dispatch operating model added at docs/build/AGENT_DISPATCH_OPERATING_MODEL.md — codifies one slice = one worktree = one branch = one local commit, no push/merge/PR from lanes, morning review decision matrix, integration cherry-pick path, build-slices.json append-only conflict policy, production-readiness.json conservative-status / union-notes / no-false-promotion conflict policy, stale Claude Code task handling, and the deferred future automation path (CI/Vercel/persona crawler/security scan/observability).",
+        "OPS1 dispatch queue added at docs/build/agent-dispatch-queue.json — 20 items (AG12, CTX3, EVID3, MW4, ACT2, QA5 in_progress; PDEL6, ADM6, PAT1, DATA1, MG3, TOOL3, SOL10, I5, PROD3 ready; ACT3, PAT2, DATA2, SOL11, I6 proposed) with laneType, priority, conflictRisk, recommendedWorktree, recommendedBranch, allowedFiles, forbiddenFiles, validationCommands, productionReadinessImpact, and expectedFinalReportFields.",
+        "OPS1 batch template added at docs/build/AGENT_BATCH_TEMPLATE.md and slice report template at docs/build/AGENT_SLICE_REPORT_TEMPLATE.md — fill-in-the-blank per-batch and per-lane scaffolds with annotated placeholders."
       ]
     },
     {
@@ -1310,7 +1313,8 @@
       "notes": [
         "PROD1 does not deploy.",
         "No live monitoring claim is made.",
-        "PROD2 extends docs/build/PRODUCTION_READINESS_UPDATE_PROTOCOL.md with a tracker-update mandate per pack and a parallel-lane conflict policy for cherry-pick integration. No deployment occurred. No live monitoring claim is made."
+        "PROD2 extends docs/build/PRODUCTION_READINESS_UPDATE_PROTOCOL.md with a tracker-update mandate per pack and a parallel-lane conflict policy for cherry-pick integration. No deployment occurred. No live monitoring claim is made.",
+        "OPS1 cherry-pick policy formalized at docs/build/AGENT_DISPATCH_OPERATING_MODEL.md §G and §H: build-slices.json appends-only with HEAD-wins on existing entries; production-readiness.json takes the lower status on conflict (conservative status), unions notes deduped by string, unions blockers by id (kept unless explicitly removed with evidence), takes incoming nextAction when HEAD untouched and appends distinct content when both changed, preserves other-lane notes verbatim, bumps lastUpdated, and re-runs the PROD2 validator after every cherry-pick. No false promotions: any status promotion requires explicit founder verification."
       ]
     }
   ]
