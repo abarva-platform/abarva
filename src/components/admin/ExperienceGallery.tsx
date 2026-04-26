@@ -166,20 +166,9 @@ const checklistItems = [
   'no generic chatbot wrapper',
 ];
 
-function MiniSymbol() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" role="img" aria-label="AbarVa symbol">
-      <circle cx="12" cy="12" r="9.5" fill="none" stroke={COLORS.skyBlue} strokeWidth="1.5" />
-      <path d="M4.5 12h15" stroke={COLORS.navy} strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M12 4.5c1.9 2.1 3 4.7 3 7.5s-1.1 5.4-3 7.5c-1.9-2.1-3-4.7-3-7.5s1.1-5.4 3-7.5Z" fill={COLORS.teal} opacity="0.2" />
-    </svg>
-  );
-}
-
 function Wordmark({ large = false }: { large?: boolean }) {
   return (
     <div style={{ display: 'inline-flex', alignItems: 'center', gap: large ? 12 : 8 }}>
-      <MiniSymbol />
       <span
         style={{
           fontSize: large ? 40 : 20,
@@ -206,7 +195,7 @@ export function ExperienceGallery() {
       <section style={sectionStyle}>
         <p style={eyebrowStyle}>Brand Lockup</p>
         <h2 style={sectionTitleStyle}>Approved AbarVa Direction</h2>
-        <p style={subtleStyle}>Abar in near-black, Va in dark sky blue, and a refined secondary symbol on the left.</p>
+        <p style={subtleStyle}>Abar in near-black, Va in dark sky blue. The prior symbol is deferred until the final logo asset is provided.</p>
         <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'center', marginTop: 16 }}>
           <div style={{ padding: '12px 14px', borderRadius: 10, border: `1px dashed ${COLORS.borderSoft}` }}>
             <div style={{ marginBottom: 8, fontSize: 12, color: COLORS.mutedText }}>Nav-size lockup</div>

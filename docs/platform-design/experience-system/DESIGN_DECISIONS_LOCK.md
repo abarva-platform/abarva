@@ -28,11 +28,16 @@ Avoid:
 
 ## 2. Logo And Wordmark Direction
 
-Use the approved Option 1 direction from the latest logo exploration.
+Current canonical direction is an interim, name-only wordmark while the final
+logo asset is finalized.
 
-The AbarVa wordmark uses `Abar` in near-black or black and `Va` in dark blue or dark sky blue. The opening `A` may be slightly more expressive and bolder than the rest of the wordmark, but it must remain clearly legible as an `A`.
+Use the approved Option 1 text direction from the latest logo exploration.
 
-The symbol sits to the left of the wordmark. It should be smaller than earlier explorations, roughly 80 percent of the prior intelligence mark size. It is secondary to the wordmark and should feel refined, intelligence-inspired, orbital, focused, and precise.
+The AbarVa wordmark uses `Abar` in near-black or black and `Va` in dark blue or
+dark sky blue. The opening `A` may be slightly more expressive and bolder than
+the rest of the wordmark, but it must remain clearly legible as an `A`.
+
+The prior symbol is deferred until a dedicated final logo asset is available.
 
 Do not use:
 
@@ -41,7 +46,8 @@ Do not use:
 - Oversized decorative marks.
 - Marks that overpower the wordmark.
 
-The symbol must work in navigation, favicon or app icon contexts, and large brand lockups.
+Until the final logo asset is delivered, no implementation should render the prior
+symbol.
 
 ## 3. Source Visual Direction
 

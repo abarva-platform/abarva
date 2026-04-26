@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { resolveSessionRole } from '@/lib/auth/access-routing'
 import { clearActiveClientContext } from '@/lib/auth/client-context-storage'
 import { useClientContext, ALL_CLIENTS } from '@/lib/use-client-context'
-import AbarvaMark from './AbarvaMark'
+import { AbarvaWordmark } from './abarva/AbarVaWordmark'
 
 const NAV_BG    = 'var(--color-page-bg)'
 const NAV_BORD  = 'rgba(255,255,255,0.08)'
@@ -15,7 +15,6 @@ const NAV_TEXT  = '#EFF6FF'
 const NAV_MUTE  = 'rgba(239,246,255,0.85)'
 const SANS      = 'DM Sans, sans-serif'
 const MONO      = 'JetBrains Mono, monospace'
-const SERIF     = 'Georgia, serif'
 const DROP_BG   = '#FFFFFF'
 const DROP_BORD = '#E5E7EB'
 const DROP_HEAD = '#0C0C0C'
@@ -248,11 +247,10 @@ function NavInner({ activePage, compact = false }: NavProps) {
 
         {/* ── Wordmark ─────────────────────────────────────────────────────── */}
         <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px', marginRight: '24px', flexShrink: 0 }}>
-          <AbarvaMark size={36} />
-          <div style={{ display: 'flex', alignItems: 'baseline', lineHeight: 1 }}>
-            <span style={{ fontFamily: SERIF, fontSize: '21px', fontWeight: 700, color: NAV_TEXT }}>Abar</span>
-            <span style={{ fontFamily: SERIF, fontSize: '26px', fontWeight: 900, color: TEAL }}>Va</span>
-          </div>
+          <AbarvaWordmark
+            size="sm"
+            inkColor={NAV_TEXT}
+          />
         </Link>
 
         {/* ══════════════════════════════════════════════════════════════════

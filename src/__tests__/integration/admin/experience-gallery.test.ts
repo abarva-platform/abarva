@@ -29,6 +29,7 @@ describe('ExperienceGallery', () => {
     expect(html).toContain('AbarVa');
     expect(html).toContain('Abar');
     expect(html).toContain('Va');
+    expect(html).toContain('symbol is deferred');
     expect(html).toContain('Dashboard');
     expect(html).toContain('Event Canvas');
     expect(html).toContain('RFP Readiness');
