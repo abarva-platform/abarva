@@ -7444,6 +7444,15 @@
       "status": "code_complete",
       "branch": "wave17/src31-source-commercial-hub-workflow-canon",
       "description": "SourceCommercialWorkflowCanvas \u2014 9-stage segmented commercial sourcing workflow (brief, pricing, comparison, risk, BAFO, readiness, missions, signals, decision). Prop-slot composition. AbarVa canon. 14 tests."
+    },
+    {
+      "id": "QA24",
+      "wave": "wave-17",
+      "name": "Design + Workflow Canon Regression Tests",
+      "type": "qa",
+      "status": "code_complete",
+      "branch": "wave17/qa24-design-workflow-canon-regression",
+      "description": "Manifest of banned visual tokens, required canon colors, workflow contract keywords, and 4 target pages. Static manifest tests + graceful banned-token scans across Wave-17 components. Target page existence enforced."
     }
   ]
 }
