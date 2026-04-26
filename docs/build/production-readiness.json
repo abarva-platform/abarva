@@ -873,7 +873,8 @@
         "SRC24 (wave-15): source-commercial-missions-view.ts view-model + SourceCommercialMissionsPanel component. 5-mission default cap with show-more. 9 tests green.",
         "SRC25 (wave-15): source-commercial-signals-preview.ts view-model + SourceCommercialSignalsPreview component. Top-3 signals and patterns preview. 9 tests green.",
         "SRC26 (wave-15): source-commercial-hub-view.ts (7-tab structure) + SourceCommercialHub component (prop-slot composition). 9 tests green.",
-        "SRC28 (wave-16): source-commercial-demo-scenario.ts deterministic seed. AMS outsourcing scenario: 4 vendors, 5 risks, 5 missions, 4 signals. 12 tests green."
+        "SRC28 (wave-16): source-commercial-demo-scenario.ts deterministic seed. AMS outsourcing scenario: 4 vendors, 5 risks, 5 missions, 4 signals. 12 tests green.",
+        "SRC27 (wave-16): SourceCommercialEventSection mounted in /source/events/[eventId]/page.tsx. Collapsible commercial intelligence section. Deterministic seed data, no live ingestion."
       ]
     },
     {

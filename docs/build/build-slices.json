@@ -7354,6 +7354,15 @@
       "status": "code_complete",
       "branch": "wave16/src28-source-commercial-demo-scenario",
       "description": "Deterministic AMS outsourcing demo scenario: 4 vendors, 5 risks, 5 missions, 4 signals, 3 BAFO opportunities. No real vendor names or pricing."
+    },
+    {
+      "id": "SRC27",
+      "wave": "wave-16",
+      "name": "Mount Source Commercial Hub",
+      "type": "source-ui",
+      "status": "code_complete",
+      "branch": "wave16/src27-mount-source-commercial-hub",
+      "description": "SourceCommercialEventSection wrapper + minimal event page mount. Collapsible commercial intelligence section in Source event experience."
     }
   ]
 }

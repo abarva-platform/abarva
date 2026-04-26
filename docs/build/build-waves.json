@@ -667,9 +667,19 @@
       "waveId": "wave-16",
       "title": "Source Commercial Route Mount + Demo Scenario",
       "status": "in_progress",
-      "plannedSlices": ["SRC27","SRC28","SRC29","SRC30","QA23","DEMO4"],
-      "completedSlices": ["SRC28"],
-      "percentComplete": 17,
+      "plannedSlices": [
+        "SRC27",
+        "SRC28",
+        "SRC29",
+        "SRC30",
+        "QA23",
+        "DEMO4"
+      ],
+      "completedSlices": [
+        "SRC28",
+        "SRC27"
+      ],
+      "percentComplete": 33,
       "validationStatus": "pending"
     },
     {
