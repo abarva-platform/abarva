@@ -6,11 +6,11 @@ Purpose: provide a layer-by-layer view of where AbarVa Source stands against MVP
 
 ## Executive Read
 
-- Source has a strong foundation in product architecture, deterministic context validation, workflow validation, pattern IP, and now deterministic multi-agent briefings.
+- Source has a strong foundation in product architecture, deterministic context validation, workflow validation, pattern IP, deterministic multi-agent briefings, and a platform Agent Mission Model.
 - Source is not production-ready.
 - MVP readiness is improving, but the product still needs a Source-specific runtime/API path, reviewed UI coverage, persistence, evidence/upload pipeline, auth/tenant hardening, and production validation.
-- Current foundation milestone: PR #227 merged the deterministic Source multi-agent briefing layer.
-- Current recommended next slice: plan the Source-specific Nexus API stub with no model calls.
+- Current foundation milestone: PR #248 merged the platform Agent Mission Model.
+- Current recommended next slice: merge the Source agent mission queue plan, then implement the deterministic Source agent mission read model.
 
 ## Layer Summary
 
@@ -21,8 +21,8 @@ Purpose: provide a layer-by-layer view of where AbarVa Source stands against MVP
 | Pattern / Workflow IP | 75% | Strong authored IP, runtime sectioning not wired | PR #202, PR #222, PR #223, PR #224, PR #225 | Convert selected sections into runtime manifest plan later |
 | Context Validation Harness | 85% | Deterministic foundation complete | PR #190, PR #192, PR #197 | Use as preflight for Source Nexus runtime |
 | Workflow Validation Harness | 85% | Deterministic foundation complete | PR #204, PR #207, PR #210 | Preserve remaining defer until upload/evidence exists |
-| Multi-Agent Intelligence | 35% | Deterministic briefings merged, no runtime/API/model | PR #227, `src/lib/source/multi-agent-briefing.ts` | Plan Source-specific Nexus API stub with no model calls |
-| Source API / Runtime | 15% | Mostly not started | Source context builder exists; no Source Nexus route | Plan API stub only, no model calls |
+| Multi-Agent Intelligence | 40% | Deterministic briefings merged; mission model canon exists; Source mission read model not built | PR #227, PR #248, `src/lib/source/multi-agent-briefing.ts` | Merge Source mission queue plan, then implement deterministic mission read model |
+| Source API / Runtime | 25% | Deterministic no-model API stub exists; production runtime not ready | PR #230, PR #245, `src/app/api/v1/source/[eventId]/nexus/ask/route.ts` | Keep route deterministic; do not add model calls until mission/readiness gates are ready |
 | Source UI / User Experience | 35% | Dashboard exists, broader UI early | PR #212, PR #213, PR #218, Experience System | Final authenticated review, then tiny visual polish if needed |
 | Data / Evidence / Upload Pipeline | 10% | Not started beyond contracts/placeholders | Attachment/context contracts and validation defers | Plan upload/evidence pipeline before implementation |
 | Production Readiness | 10% | Not started | Production readiness tracker and deterministic validations | Build readiness checklist after runtime/data/UI foundations |
@@ -244,15 +244,19 @@ Next recommended slice:
 
 Purpose: make Nexus, Sentinel, Atlas, and Steward produce distinct context-aware behavior from the same SourceAgentContextBundle without model calls or chat UI.
 
-Current status: deterministic library layer merged; no API, UI, or model runtime.
+Current status: deterministic briefing layer merged; platform mission model merged; no Source mission read model, mission UI, scheduler, persistence, or model runtime.
 
-Percent complete estimate: 35%.
+Percent complete estimate: 40%.
 
 Evidence / PRs / Files:
 
 - PR #227: deterministic Source multi-agent briefing layer.
+- PR #248: platform Agent Mission Model.
 - `src/lib/source/multi-agent-types.ts`
 - `src/lib/source/multi-agent-briefing.ts`
+- `docs/platform-architecture/runtime/13_AGENT_MISSION_MODEL.md`
+- `docs/platform-architecture/runtime/14_AGENT_WORK_QUEUE_AND_TRIGGERS.md`
+- `docs/platform-design/experience-system/16_AGENT_ACTIVITY_UI_PATTERN.md`
 - `docs/abarva-source/build-pack/implementation-reviews/18_SOURCE_MULTI_AGENT_BRIEFING_REVIEW.md`
 
 Completed items:
@@ -262,32 +266,35 @@ Completed items:
 - Atlas briefing for executive value/risk synthesis.
 - Steward briefing for gate integrity, blockers, and cannot-proceed reasons.
 - Deterministic markdown formatter and suggested actions.
+- Platform-level mission types, triggers, states, priorities, handoffs, and calm activity UI model.
 
 Remaining items:
 
-- API route stub plan.
+- Source agent mission queue plan.
+- Deterministic Source mission read model.
 - Runtime integration with Source event context.
-- Agent panel/UI binding.
+- Agent mission activity UI binding.
 - Model-assisted response layer later.
 - Pattern-grounded agent behavior later.
 
 Blockers:
 
-- No Source-specific Nexus API route exists yet.
+- No mission queue/read model exists yet.
 - No model calls are approved.
 - No chat UI is approved.
+- No scheduler/background jobs or persistence are approved.
 
 Next recommended slice:
 
-- Source-specific Nexus API stub plan with no model calls.
+- Merge Source mission queue plan, then build deterministic Source agent mission read model.
 
 ## Layer 7. Source API / Runtime
 
 Purpose: expose Source-specific deterministic behavior through a route that uses Source context, validation reports, and multi-agent briefing before any model integration.
 
-Current status: mostly not started.
+Current status: deterministic no-model API stub exists; production runtime not ready.
 
-Percent complete estimate: 15%.
+Percent complete estimate: 25%.
 
 Evidence / PRs / Files:
 
@@ -295,31 +302,35 @@ Evidence / PRs / Files:
 - `src/lib/source/agent-validation-report.ts`
 - `src/lib/source/workflow-validation-report.ts`
 - `src/lib/source/multi-agent-briefing.ts`
-- Planned future route: `POST /api/v1/source/[eventId]/nexus/ask`
+- PR #230: deterministic Source Nexus API stub.
+- PR #245: Source Nexus API stub contract tests.
+- `src/app/api/v1/source/[eventId]/nexus/ask/route.ts`
+- `src/lib/source/nexus-api.ts`
 
 Completed items:
 
 - Context builder exists.
 - Validation reports exist.
 - Deterministic multi-agent briefing exists.
+- Deterministic no-model Source Nexus API stub exists.
+- Contract tests cover no-model response shape and multi-agent briefing presence.
 
 Remaining items:
 
-- API stub plan.
-- API route implementation, only after planning approval.
 - Auth, tenant, and role checks.
+- Route smoke in authenticated/tenant context.
 - Error/failure response shape.
-- Model-free deterministic response mode.
+- Mission read-model integration.
 - Later model routing, only after context preflight is enforced.
 
 Blockers:
 
-- No API route should be created in this tracker slice.
-- Runtime route must remain Source-scoped and must not reuse program-scoped assumptions.
+- Route is deterministic and seeded; it is not production runtime readiness.
+- No model calls, persistence, upload/parsing, scheduler, or workflow engine is approved.
 
 Next recommended slice:
 
-- Write the Source-specific Nexus API stub plan.
+- Keep route deterministic and add mission read-model integration only after the Source mission queue plan is merged.
 
 ## Layer 8. Source UI / User Experience
 
@@ -460,10 +471,12 @@ Next recommended slice:
 - AMS Managed Services Sourcing pattern pack.
 - AMS pattern sectioning plan and 28 stable section IDs.
 - Deterministic multi-agent briefing layer for Nexus, Sentinel, Atlas, and Steward.
+- Platform Agent Mission Model for Nexus, Sentinel, Atlas, and Steward.
+- Deterministic Source Nexus API route stub and contract tests.
 
 ## What Is Not Done
 
-- Source-specific Nexus API route.
+- Source agent mission read model.
 - Model-assisted Nexus responses.
 - Chat UI.
 - Upload/parsing/evidence registry.
@@ -481,11 +494,11 @@ Next recommended slice:
 
 ## Next 5 Recommended Slices
 
-1. Source-specific Nexus API stub plan, no model calls.
-2. Final authenticated Source dashboard review, if `/source` auth is confirmed working.
-3. Source Nexus API stub implementation, deterministic only and only after plan approval.
-4. Upload/evidence pipeline plan, no implementation.
-5. Pattern manifest/runtime sectioning plan for AMS sections, no generated JSON or ingestion.
+1. Merge Source agent mission queue plan.
+2. Implement deterministic Source agent mission read model, no model calls or persistence.
+3. Plan Source agent mission activity UI, no implementation unless already merged.
+4. Final authenticated Source dashboard review, if `/source` auth is confirmed working.
+5. Upload/evidence pipeline plan, no implementation.
 
 ## What Not To Build Yet
 
@@ -509,15 +522,15 @@ Next recommended slice:
 
 ## Honest MVP Readiness Assessment
 
-Estimated MVP readiness: 45%.
+Estimated MVP readiness: 48%.
 
-Source is beyond a concept prototype because it has a route, dashboard, seeded domain context, validation harnesses, pattern IP, and deterministic multi-agent behavior. It is not yet a usable MVP for real sourcing work because the runtime route, persistence, evidence pipeline, authenticated UI review, and practical user-facing interaction layer remain incomplete.
+Source is beyond a concept prototype because it has a route, dashboard, seeded domain context, validation harnesses, pattern IP, deterministic multi-agent behavior, and a deterministic no-model Nexus API stub. It is not yet a usable MVP for real sourcing work because persistence, evidence pipeline, authenticated UI review, mission read model, and practical user-facing interaction layer remain incomplete.
 
 The fastest safe MVP path is deterministic-first:
 
-1. Plan the Source-specific Nexus API stub.
-2. Implement the stub without model calls.
-3. Bind a small reviewed UI affordance to deterministic briefing output.
+1. Merge the Source agent mission queue plan.
+2. Implement the deterministic mission read model.
+3. Bind a small reviewed UI affordance to deterministic mission/briefing output.
 4. Add evidence/upload planning before any citation or artifact generation.
 5. Add model calls only after context validation and runtime preflight are enforced.
 
