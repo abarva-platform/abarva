@@ -3787,6 +3787,59 @@
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
       "notes": "Pure deterministic scorer that grades a CTX2 Unified Context Pack across ten canonical dimensions and emits an overall band, risks, and recommendations. Reads only from @/lib/architecture/unified-context-builder; does not invoke any CTX2 runtime helper. No model calls, no migrations, no persistence, no live retrieval. Lane E output of the parallel build pack."
+    },
+    {
+      "id": "QA6",
+      "name": "Golden Prompt Harness Contract + Seed Library",
+      "category": "QA",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane F (parallel build pack)",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/build/GOLDEN_PROMPT_HARNESS_CONTRACT.md",
+        "docs/build/golden-prompts.seed.json",
+        "docs/build/slices/QA6_GOLDEN_PROMPT_HARNESS.md",
+        "src/__tests__/integration/qa/golden-prompts-seed.test.ts",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "docs/build/GOLDEN_PROMPT_HARNESS_CONTRACT.md documents sections A through P including purpose, prompt structure (12 required fields), pass/fail structure (7 result fields), no-fabrication checks (10 assertion classes), expected citation/evidence behavior, missing-input behavior, production-readiness wiring with golden_prompt_pass_rate metric and below-threshold blocker append, four validation modes (static_match, structured_match, behavior_assertion, manual_persona_review), deferred run cadence, run isolation, future automation composition with QA4/QA5/EVID2/AG10/PROD2, seed library shape with coverage requirements, explicit out-of-scope, why-it-is-safe, how-to-re-run, and readiness impact.",
+        "docs/build/golden-prompts.seed.json validates with top-level shape { schemaVersion: 1, lastUpdated, prompts } and contains at least 40 prompts spread across all 10 surfaces (programs >=5, program_workshop >=4, deliverables >=4, intelligence >=4, tower >=4, admin >=3, source >=3, solution_intelligence >=4, evidence >=4, agent_missions >=5).",
+        "Seed prompts cover all 4 expected agents (nexus, sentinel, atlas, steward) with at least 5 prompts each, all 4 validation modes appear at least once, and at least 6 prompts probe sparse-context handling (prompt or expectedBehavior matches /\\b(sparse|missing|without)\\b/i).",
+        "Every prompt has every required field with non-empty value (id, surface, persona, prompt, expectedBehavior, forbiddenBehavior, requiredContext, expectedAgent, validationMode, noFabricationChecks, readinessComponent, priority); every id matches /^gp-[a-z][a-z_-]*-\\d{3}$/ and is unique.",
+        "No string field of any prompt matches the fabricated-dollar regex /\\$[0-9]/ or the fake-citation regex /\\bE-\\d+\\b/; no banned placeholder phrase ('Coming soon' / 'TBD' / 'Lorem ipsum') appears anywhere in the JSON file.",
+        "src/__tests__/integration/qa/golden-prompts-seed.test.ts loads the seed via fs.readFileSync, parses as JSON, and asserts >=40 prompts, all 10 surfaces represented with minimums, all 4 expected agents with >=5 prompts each, all 4 validation modes, every required field non-empty, >=6 sparse-context probes, no fabricated dollar amounts, no fake E-### tokens, no banned phrases, every id unique and pattern-canonical, every prompt has >=1 noFabricationChecks entry, and forbiddenBehavior contains a negation verb with >=20 chars; the test does not invoke any agent runtime, does not import any model provider, and does not boot any server.",
+        "docs/build/slices/QA6_GOLDEN_PROMPT_HARNESS.md documents the slice purpose, what changed, coverage reconciliation table, what is explicitly out of scope, why it is safe, how to re-run, readiness impact, and deferred future work.",
+        "docs/build/production-readiness.json appends a note to validation_qa.notes acknowledging the QA6 contract and seed landing, with execution still deferred; the validation_qa component status is preserved (still tested, not promoted); no component is promoted; lastUpdated is bumped to today's ISO date.",
+        "Documentation + JSON + lightweight integration test only; no application code, runtime, auth, supabase, or migrations are modified; no model provider import (anthropic, openai); no browser-automation import (playwright, puppeteer, cypress); no banned phrase ('Coming soon' / 'TBD' / 'Lorem ipsum') in any new file."
+      ],
+      "validationCommands": [
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/golden-prompts.seed.json','utf8')); console.log('golden prompts json ok')\"",
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/qa/golden-prompts-seed.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Founder-facing golden prompt harness contract + 43-prompt deterministic seed library covering all 10 product surfaces, all 4 agents (nexus / sentinel / atlas / steward) plus the system bucket, all 4 validation modes, with 15 sparse-context probes. Lane F output of the parallel build pack. No model calls, no live prompt execution, no server boot, no browser, no network. Companion to QA1 (Agentic Spine), QA2 (Solution Workshop), QA3 (Solution Intelligence), QA4 (Agent Mission Persona), and QA5 (Route Smoke Inventory). Execution wiring (CI gate, persona crawler integration, route-smoke composition, evidence-ledger probe, mission-queue probe, production-readiness validator integration) remains deferred."
     }
   ]
 }
