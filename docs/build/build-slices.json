@@ -5332,6 +5332,65 @@
         "npm run build"
       ],
       "notes": "Safe, read-only worktree cleanup assistant. Lists pack/night/loop/enterprise/ops/big worktrees, classifies by branch prefix and 14-day staleness threshold, warns on dirty trees and missing-on-origin branches, and PRINTS recommended cleanup commands for human execution. NEVER deletes anything. Stdlib-only Python; no model providers, no shell except read-only git verbs (worktree list, log, status, ls-remote)."
+    },
+    {
+      "id": "CLOUD8",
+      "name": "Env Example Gitignore Policy",
+      "category": "CLOUD",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane F (parallel build pack)",
+      "dependsOn": [
+        "CLOUD4"
+      ],
+      "lastUpdated": "2026-04-26",
+      "allowedFiles": [
+        ".gitignore",
+        "docs/build/slices/CLOUD8_ENV_EXAMPLE_GITIGNORE_POLICY.md",
+        "docs/deployment/ENV_EXAMPLE_POLICY.md",
+        "src/__tests__/integration/deployment/env-example-policy.test.ts",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/app/**",
+        "src/components/**",
+        "src/lib/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md",
+        "infra/**",
+        "terraform/**",
+        "bicep/**",
+        ".github/workflows/**",
+        "azure.yaml",
+        "next.config.ts",
+        ".env",
+        ".env.local",
+        ".env.production",
+        ".env.development"
+      ],
+      "acceptanceCriteria": [
+        ".gitignore preserves all existing ignore rules (the .env* blanket rule and the .env*.local rule remain) and adds two explicit allow rules immediately under the .env* line: !.env.example and !.env.*.example, with a single-line comment marking them as safe placeholder templates.",
+        "docs/deployment/ENV_EXAMPLE_POLICY.md documents purpose, what is allowed (.env.example, .env.<role>.example), what is NEVER allowed (.env, .env.local, .env.production, .env.development), required content of .env.*.example files (header comment, placeholder values only, no real tokens / API keys / secrets, no real provider hostnames), how to add a future env example, and the verification contract.",
+        "docs/build/slices/CLOUD8_ENV_EXAMPLE_GITIGNORE_POLICY.md documents purpose, what changed, out of scope, why this is safe, how to re-run, readiness impact, and cross-references to CLOUD1 / CLOUD2 / CLOUD3 / CLOUD4 / CLOUD5.",
+        "src/__tests__/integration/deployment/env-example-policy.test.ts asserts the .gitignore still ignores real env files (.env* blanket rule plus .env*.local rule remain), the two CLOUD8 allow rules are present (!.env.example and !.env.*.example), the allow rules sit below the .env* ignore line, every .env.*.example file at the repo root contains the literal substring EXAMPLE or example, and no committed .env.*.example file matches any of four likely-secret regex patterns (ghp_ GitHub PATs, sk- and sk-ant- keys, eyJ.eyJ.* JWTs, AKIA AWS access keys).",
+        "docs/build/build-slices.json appends a CLOUD8 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn (CLOUD4), status code_complete, risk low, ownerAgent Lane F, and lastUpdated 2026-04-26.",
+        "docs/build/production-readiness.json UNION-updates production_deployment notes/nextAction acknowledging CLOUD8; status is preserved (still blocked); the prod-deploy-verification blocker is preserved verbatim; manifest top-level lastUpdated is set to 2026-04-26.",
+        "Policy + .gitignore + Jest contract only; no application code, no runtime, no auth, no supabase, no migrations, no package manifests, no infrastructure-as-code, no platform-design docs, no new env files, no real env files committed."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/deployment/env-example-policy.test.ts",
+        "npm run build",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Allow safe .env*.example placeholder templates to be committed without git add -f while keeping every real env file ignored. Adds two explicit allow rules (!.env.example and !.env.*.example) immediately under the existing .env* blanket rule in .gitignore; the .env*.local rule is left in place. Adds a founder-facing policy doc at docs/deployment/ENV_EXAMPLE_POLICY.md, a slice doc at docs/build/slices/CLOUD8_ENV_EXAMPLE_GITIGNORE_POLICY.md, and a deterministic file-pure Jest contract at src/__tests__/integration/deployment/env-example-policy.test.ts that locks the gitignore shape and scans every committed .env.*.example file for header markers and likely-secret regex shapes (GitHub PATs, sk-/sk-ant- keys, JWTs, AWS access keys). Direct response to CLOUD4 needing git add -f to commit .env.private-lab.example. No new env files are added by this slice. No real env files are committed. No application code, no runtime, no auth, no supabase, no migrations, no IaC, no model calls, no live cloud calls, no deploy. production_deployment status is preserved (still blocked); the prod-deploy-verification blocker is preserved verbatim."
     }
   ]
 }
