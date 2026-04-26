@@ -6868,6 +6868,21 @@
       ],
       "sliceDoc": "docs/build/slices/OPS12_INTEGRATION_STASH_SAFETY_CHECK.md",
       "createdAt": "2026-04-26"
+    },
+    {
+      "id": "PDEL9",
+      "name": "Download / Export Contract",
+      "category": "programs",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/programs/deliverable-export-contract.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/programs/deliverable-export-contract.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/PDEL9_DOWNLOAD_EXPORT_CONTRACT.md",
+      "createdAt": "2026-04-26"
     }
   ]
 }
