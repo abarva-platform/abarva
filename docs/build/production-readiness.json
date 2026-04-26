@@ -119,7 +119,7 @@
       {
         "id": "source_sourcing_product",
         "area": "Source / sourcing product",
-        "completed": "Source foundation, validation fixtures/runner/report concepts, and Source dashboard started.",
+        "completed": "Source foundation, validation fixtures/runner/report concepts, and Source dashboard started. SHELL5 (wave-20): SourceRouteShell orientation wrapper added; event detail route wired with pageMode='event_detail', tenantName, eventName. Deterministic seed caveat enforced. No teal colors. AbarVa canon compliant.",
         "pending": "Event detail canvas, vendor responses, scorecards, RFP artifacts, Source value ledger, and Source to Tower/Intelligence signals.",
         "percentLow": 25,
         "percentHigh": 25,

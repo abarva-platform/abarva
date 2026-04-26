@@ -7672,6 +7672,13 @@
       "status": "code_complete",
       "wave": "wave-20",
       "lane": "D"
+    },
+    {
+      "id": "SHELL5",
+      "title": "Source Route Shell Control",
+      "status": "code_complete",
+      "wave": "wave-20",
+      "lane": "E"
     }
   ]
 }
