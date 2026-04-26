@@ -1412,7 +1412,8 @@
         "OPS11: cherry_resolve.py extended with full build-waves.json merge support; waveId fix, mergedPrs union, validationStatus conservative merge, nextAction handling.",
         "OPS12: Integration stash safety check added; prevents accidental stash pop during cherry-pick integration.",
         "LIVE1: Founder live walk checklist created (12 steps, all surfaces, deterministic, evidence-backed caveats).",
-        "LIVE2: Demo tenant route verification manifest created (apex-retail + meridian, 10 routes, deterministic)."
+        "LIVE2: Demo tenant route verification manifest created (apex-retail + meridian, 10 routes, deterministic).",
+        "LIVE3: Production readiness page verification completed. Admin page and API routes checked. Static manifest caveat documented."
       ],
       "lastUpdated": "2026-04-26"
     },
@@ -1508,7 +1509,8 @@
         "DEMO1: Demo script documents enterprise trust narrative, Azure private data plane pitch, and close/ask framework.",
         "PROD7: Production readiness summary polish created; static read model surfaces real blockers, pilot/production narratives, and manifest freshness caveat. Never claims production_ready.",
         "AZLAB1: SaaS Control Plane + Private Data Plane lab blueprint created; Azure resource groups and boundary architecture documented; May 4 deployment path outlined.",
-        "AZLAB5: Azure lab deployment runbook created; covers VNet, Container Apps, PostgreSQL, Key Vault, cost guardrails, and simulation-vs-real distinctions."
+        "AZLAB5: Azure lab deployment runbook created; covers VNet, Container Apps, PostgreSQL, Key Vault, cost guardrails, and simulation-vs-real distinctions.",
+        "LIVE3: Production readiness page verification completed. Admin page and API routes checked. Static manifest caveat documented."
       ]
     }
   ]
