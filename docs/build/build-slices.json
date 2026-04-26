@@ -4713,6 +4713,66 @@
         "npm run build"
       ],
       "notes": "Pure deterministic dataset approval workflow read model that defines how a dataset moves from `loaded` toward `agent-usable`, `evidence-usable`, and `decision-grade` use. 11 canonical states, 5 canonical roles, 4 canonical purposes (summary_use, evidence_use, agent_use, deliverable_use). Encoded rules: agent use requires explicit approved_for_agent_use (not derivable from approved_for_summary); deliverable use requires approved_for_deliverables AND approved_for_evidence (via governance review); L4 sensitive raw data requires both data_owner AND governance_review_lead reviews; revoked / expired / rejected blocks ALL use across every purpose regardless of prior approval; every decision returns rationale + audit basis. Type-only import of DatasetTrustLevel from TRUST1; no value imports from dataset-trust-model. No DB writes, no migrations, no live runtime, no audit ledger writes, no model invocation, no Steward runtime; the future Steward UI and runtime gateway will consume this read model."
+    },
+    {
+      "id": "CLOUD3",
+      "name": "Docker Runtime Packaging",
+      "category": "CLOUD",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane B (parallel build pack)",
+      "dependsOn": [
+        "CLOUD1"
+      ],
+      "lastUpdated": "2026-04-26",
+      "allowedFiles": [
+        "Dockerfile",
+        ".dockerignore",
+        "scripts/verify-docker-build.sh",
+        "docs/deployment/DOCKER_RUNTIME_PACKAGING.md",
+        "docs/build/slices/CLOUD3_DOCKER_RUNTIME_PACKAGING.md",
+        "src/__tests__/integration/deployment/docker-runtime-packaging.test.ts",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/app/**",
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/lib/agents/**",
+        "supabase/**",
+        "db/**",
+        "next.config.ts",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md",
+        ".github/workflows/**"
+      ],
+      "acceptanceCriteria": [
+        "Dockerfile lands at the repo root with three explicit stages (deps, build, runtime), a node:24-bookworm-slim base, npm ci dependency install, npm run build during the build stage, a non-root USER directive (node user or 1001:1001), an EXPOSE 3000 directive, and a default CMD that runs npm run start; the file header documents required runtime env vars (DATABASE_URL, NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY, CLERK_SECRET_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, PINECONE_API_KEY, PINECONE_INDEX, NODE_ENV, PORT, HOSTNAME) by name only and bakes no secret value, no .env file, and no Vercel-runtime import.",
+        ".dockerignore at the repo root excludes node_modules, .next, .git, .env (with explicit allow for .env.example), coverage, reports/, .claude/, .codex-inbox/, *.log, **/.DS_Store, tests/, e2e/, playwright-report/, test-results/, tower-mockups/, updates/, docs/, and .github/, while leaving src/, public/, package.json, package-lock.json, and next.config.ts in the build context so next build can succeed.",
+        "scripts/verify-docker-build.sh starts with a bash shebang, sets set -euo pipefail at the top, exits 0 with the documented neutral message '[CLOUD3] Docker unavailable on this host. Skipping build validation; this is documented neutral status.' when command -v docker fails, and otherwise prints the canonical docker build / docker run command shapes, runs docker build --check (BuildKit Dockerfile linter) when supported, and exits 0 in both branches; the script does not push, does not deploy, and does not mutate any registry.",
+        "docs/deployment/DOCKER_RUNTIME_PACKAGING.md documents the multi-stage Dockerfile architecture (deps / build / runtime stages, node:24-bookworm-slim base, non-root user), the required runtime env vars (names only, no values), the canonical docker build -t abarva:local . and docker run --rm -p 3000:3000 --env-file .env.example abarva:local commands, the verify script contract, what the slice proves (non-Vercel runtime path exists, image runs as non-root, env contract documented, no secrets baked), what the slice does NOT prove (no production deployment, no scaling, no DR, no compliance certification, no live model gateway claim, no image scanning gate, no SBOM emission), and a CI integration section explicitly named as deferred.",
+        "src/__tests__/integration/deployment/docker-runtime-packaging.test.ts asserts the Dockerfile uses a node:24* base, declares a non-root USER, copies no .env file, declares all three named stages (deps, build, runtime), and contains no sk- / ghp_ / vercel_ / npm_ token shapes; asserts .dockerignore ignores node_modules, .env, reports, and .git while leaving src/ in context; and asserts scripts/verify-docker-build.sh starts with a bash shebang, uses set -euo pipefail, handles the Docker-missing case, and is executable on disk.",
+        "docs/build/slices/CLOUD3_DOCKER_RUNTIME_PACKAGING.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and readiness impact, and references the runbook and the static-check test by relative path.",
+        "docs/build/build-slices.json appends a CLOUD3 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn (CLOUD1), status code_complete, risk low, and ownerAgent Lane B; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "docs/build/production-readiness.json production_deployment component appends a note acknowledging that CLOUD3 lands the Docker runtime packaging artifacts (Dockerfile, .dockerignore, verify script, runbook, static checks); status is preserved (no promotion); production_deployment.nextAction is UNIONed conservatively without overwriting prior PROD1 / PROD2 / PROD3 / PROD4 / OPS1 / OPS2 / TEN1 / TEN2 / CLOUD1 / CLOUD2 wording; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "Runtime artifact + scripts + docs only; no application code, no runtime behavior change, no auth, no supabase, no migrations, no package.json / package-lock.json mutation, no next.config.ts mutation, no IaC, no model calls, no cloud calls, no registry push."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/deployment/docker-runtime-packaging.test.ts",
+        "bash scripts/verify-docker-build.sh",
+        "npm run build"
+      ],
+      "notes": "Multi-stage Dockerfile (node:24-bookworm-slim base; deps / build / runtime stages; non-root node user; npm run start default CMD; required runtime env vars documented in the file header by name only with no baked secret) plus .dockerignore (excludes node_modules, .next, .git, .env*, coverage, reports/, .claude/, .codex-inbox/, *.log, **/.DS_Store, tests/, e2e/, playwright-report/, test-results/, tower-mockups/, updates/, docs/, .github/; keeps src/, public/, package.json, package-lock.json, next.config.ts in the build context) plus scripts/verify-docker-build.sh (bash shebang; set -euo pipefail; exits 0 with documented neutral message when Docker is missing; prints canonical build / run shapes and runs docker build --check when Docker is present; never pushes; never deploys) plus docs/deployment/DOCKER_RUNTIME_PACKAGING.md runbook plus a static-check Jest test that locks Dockerfile / .dockerignore / verify-script shape against future drift. Proves a non-Vercel runtime path exists for AbarVa. Does NOT prove production deployment, scaling, DR, image scanning, SBOM emission, or compliance certification. production_deployment status is preserved (still blocked); the prod-deploy-verification blocker is preserved verbatim; CI integration is named in the runbook as deferred."
     }
   ]
 }

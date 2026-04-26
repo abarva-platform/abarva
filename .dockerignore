@@ -1,0 +1,56 @@
+# CLOUD3 · keep build context lean and secret-free.
+# IMPORTANT: src/ MUST NOT be ignored — `next build` requires it.
+
+# Dependencies (rebuilt inside Stage 1)
+node_modules
+.npm
+.pnp
+.pnp.js
+
+# Next build output (rebuilt inside Stage 2)
+.next
+out
+
+# Coverage and reports
+coverage
+reports/
+
+# Local env / secrets — never ship these into an image
+.env
+.env.*
+!.env.example
+
+# Git metadata
+.git
+.gitignore
+.gitattributes
+
+# Tooling and editor
+.vscode
+.idea
+.DS_Store
+**/.DS_Store
+*.log
+*.swp
+
+# Agent / harness scaffolding
+.claude/
+.codex-inbox/
+CLAUDE.md
+AGENTS.md
+CYCLE_STATE.md
+WAVE-2-AGENT-COORDINATION.md
+
+# Tests / e2e (not needed for production runtime)
+tests/
+e2e/
+playwright-report/
+test-results/
+
+# Docs (not shipped in the runtime image)
+docs/
+tower-mockups/
+updates/
+
+# CI metadata
+.github/
