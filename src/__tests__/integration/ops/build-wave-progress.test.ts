@@ -406,12 +406,12 @@ describe('build-waves.json - wave-8 build operations anchor', () => {
     expect(wave8.completedSlices).toContain('WAVE1');
   });
 
-  it('wave-8 status is in_progress (lane H is mid-flight)', () => {
+  it('wave-8 status is merged (build operations hardening completed via PR #291)', () => {
     const m = loadWaves();
     const wave8 = m.waves.find((w) => w.waveId === 'wave-8');
     expect(wave8).toBeDefined();
     if (!wave8) return;
-    expect(wave8.status).toBe('in_progress');
+    expect(wave8.status).toBe('merged');
   });
 });
 
