@@ -5901,6 +5901,52 @@
         "npx eslint --max-warnings=0 src/components/solutions/SolutionCanvas.tsx src/lib/solutions/solution-canvas-view.ts src/__tests__/integration/solutions/solution-canvas.test.ts"
       ],
       "notes": "Server Component renders a deterministic SolutionCanvasView produced by buildSolutionCanvasView. UI counterpart to SOL9 (recommendation engine) and SOL8 (canvas contract). No live runtime, no model call, no retrieval. Edit / Regenerate / Approve actions are present only as visibly disabled affordances naming a future slice. Lane B commits locally only; the integration agent owns the cherry-pick onto main."
+    },
+    {
+      "id": "QA14",
+      "name": "Solution / Workshop Verification Runbook (SOL10-SOL14 + MW7)",
+      "category": "QA",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane G (Wave2 parallel build pack)",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "QA3",
+        "SOL8"
+      ],
+      "allowedFiles": [
+        "docs/build/SOLUTION_WORKSHOP_VERIFICATION_RUNBOOK.md",
+        "docs/build/slices/QA14_SOLUTION_WORKSHOP_VERIFICATION.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/app/**",
+        "src/components/**",
+        "src/lib/**",
+        "src/__tests__/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "docs/build/SOLUTION_WORKSHOP_VERIFICATION_RUNBOOK.md is between 300 and 500 lines and covers SOL10 (Solution Canvas UI Shell), SOL11 (Solution Architecture Draft Read Model), SOL12 (Workshop-to-Architecture Refinement), SOL13 (Architecture Deliverable Renderer), SOL14 (Solution Canvas Versioning Layer), and MW7 (Workshop Deliverable Refinement Loop) verification steps; the runbook also includes branch hygiene, required validation commands, a live route walk on the canonical apex-retail demo tenant, no-fabrication audits, a design canon section, production readiness checks, a cherry-pick canonical order section, a morning review decision matrix, and a branch / worktree hygiene appendix.",
+        "docs/build/slices/QA14_SOLUTION_WORKSHOP_VERIFICATION.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and readiness impact, and references the runbook and the production-readiness manifest by relative path.",
+        "docs/build/build-slices.json appends a QA14 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn (QA3, SOL8), status code_complete, risk low, ownerAgent Lane G (Wave2 parallel build pack), and lastUpdated 2026-04-26; manifest top-level lastUpdated remains 2026-04-26.",
+        "docs/build/production-readiness.json validation_qa component appends a notes row acknowledging that QA14 lands as the fourth founder-facing runbook covering SOL10-SOL14 + MW7; status is preserved (no promotion); validation_qa.nextAction is UNIONed conservatively without overwriting prior QA1-QA13 / PROD1-PROD5 / OPS1-OPS8 / WAVE1 wording; manifest top-level lastUpdated is set to 2026-04-26.",
+        "Documentation only; no application code, runtime, auth, supabase, migrations, package manifests, infrastructure-as-code, platform-design docs, model providers, browser automation, persona crawlers, or live network calls are introduced or modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "QA14 lands the fourth founder-facing verification runbook covering the canvas implementation slices (SOL10 Canvas UI Shell, SOL11 Architecture Draft Read Model, SOL12 Workshop-to-Architecture Refinement, SOL13 Architecture Deliverable Renderer, SOL14 Canvas Versioning Layer) plus MW7 Workshop Deliverable Refinement Loop. Documentation only at the manifest level. Replaces the prior QA2 SOL1 / SOL2 / MW2 / PF2 contents at SOLUTION_WORKSHOP_VERIFICATION_RUNBOOK.md; the QA2 contents are preserved in spirit by SOLUTION_INTELLIGENCE_VERIFICATION_RUNBOOK.md sections A and I. Rows for SOL10-SOL14 / MW7 read as deferred until the corresponding implementation slice lands. validation_qa stays tested (not promoted); solution_intelligence is not promoted from this docs-only runbook. The runbook does not execute the verification it documents."
     }
   ]
 }
