@@ -24,6 +24,7 @@ import {
   SOURCE_WAITING_LIFECYCLE_STATUSES,
 } from './constants';
 import type { SourceVendorResponseSeed } from './vendor-response-types';
+import type { SourcePricingVendorInput } from './pricing-normalization-types';
 
 const events: SourcingEventDetail[] = [
   {
@@ -1324,6 +1325,121 @@ const SOURCE_VENDOR_RESPONSE_SEEDS: SourceVendorResponseSeed[] = [
 export function getSourceVendorResponseSeed(eventId: string): SourceVendorResponseSeed {
   const fallback: SourceVendorResponseSeed = { eventId, responses: [] };
   return SOURCE_VENDOR_RESPONSE_SEEDS.find((seed) => seed.eventId === eventId) ?? fallback;
+}
+
+export interface SourcePricingSeed {
+  eventId: string;
+  vendors: SourcePricingVendorInput[];
+}
+
+const SOURCE_PRICING_NORMALIZATION_SEEDS: SourcePricingSeed[] = [
+  {
+    eventId: SOURCE_GOLDEN_EVENT_IDS.digitalAppBuild,
+    vendors: [
+      {
+        vendorId: 'vendor-a',
+        vendorName: 'Vertex CloudOps',
+        currency: 'USD',
+        annualRunCostUsd: 540_000,
+        transitionCostUsd: 65_000,
+        oneTimeSetupCostUsd: 24_000,
+        optionalServicesUsd: 18_000,
+        excludedServicesUsd: 22_000,
+        changeOrderExposureUsd: 12_000,
+        optionals: [
+          'Monitoring dashboard access',
+          'Knowledge transfer workshops',
+          'Retained-team onboarding',
+        ],
+        exclusions: [
+          'Non-core legacy tooling support is excluded.',
+          'SLA breach credit exclusions above X%',
+        ],
+        supportHoursPerWeek: 165,
+        applicationCount: 52,
+        ticketVolumePerMonth: 1_250,
+        automationProductivityAssumptionPercent: 12,
+        rateEscalationPercent: 4,
+        offshorePercent: 25,
+        onshorePercent: 75,
+        assumptions: [
+          'Vendor assumes current support maturity and retention assumptions remain stable.',
+          'Pricing assumes average ticket severity mix matches current baseline.',
+        ],
+        securityComplianceNotes: [
+          'Security responsibilities and audit support included in base pricing.',
+        ],
+      },
+      {
+        vendorId: 'vendor-b',
+        vendorName: 'Nova Partner Group',
+        currency: 'USD',
+        annualRunCostUsd: 480_000,
+        transitionCostUsd: 0,
+        oneTimeSetupCostUsd: 0,
+        optionalServicesUsd: 10_000,
+        excludedServicesUsd: 34_000,
+        changeOrderExposureUsd: 28_000,
+        optionals: [
+          'Optional reporting add-on',
+        ],
+        exclusions: [
+          'Third-party API usage and change costs are excluded.',
+          'Security baseline audits are excluded.',
+        ],
+        supportHoursPerWeek: 140,
+        applicationCount: 48,
+        ticketVolumePerMonth: 1_050,
+        automationProductivityAssumptionPercent: 4,
+        rateEscalationPercent: 8,
+        offshorePercent: 15,
+        onshorePercent: 85,
+        assumptions: [
+          'Commercial model assumes current staffing model remains constant.',
+        ],
+        securityComplianceNotes: [
+          'Security exceptions are conditional upon client providing additional scope.',
+        ],
+      },
+      {
+        vendorId: 'vendor-c',
+        vendorName: 'Aegis Digital',
+        currency: 'USD',
+        annualRunCostUsd: 460_000,
+        transitionCostUsd: 52_000,
+        oneTimeSetupCostUsd: 31_000,
+        optionalServicesUsd: 26_000,
+        excludedServicesUsd: 15_000,
+        changeOrderExposureUsd: 20_000,
+        optionals: [
+          'Automation runbook and AIOps playbooks',
+          'SRE-style runbook automation',
+        ],
+        exclusions: [
+          'No change-overhead buffer included in pricing.',
+        ],
+        supportHoursPerWeek: 150,
+        applicationCount: 50,
+        ticketVolumePerMonth: 1_100,
+        automationProductivityAssumptionPercent: 22,
+        rateEscalationPercent: 9,
+        offshorePercent: 28,
+        onshorePercent: 72,
+        assumptions: [
+          'Vendor assumes 22% automation gain from service automation over 12 months.',
+          'Customer-owned release management retains critical controls.',
+        ],
+        securityComplianceNotes: [
+          'Automation and compliance claims require measurable commitments.',
+        ],
+      },
+    ],
+  },
+];
+
+export function getSourcePricingNormalizationSeed(eventId: string): SourcePricingSeed {
+  const fallback: SourcePricingSeed = { eventId, vendors: [] };
+  return SOURCE_PRICING_NORMALIZATION_SEEDS.find((seed) => seed.eventId === eventId) ?? fallback;
 }
 
 const SOURCE_RFP_READINESS_SEEDS: SourceRfpReadinessSeed[] = [
