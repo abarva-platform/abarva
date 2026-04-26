@@ -6663,6 +6663,21 @@
       ],
       "sliceDoc": "docs/build/slices/QA17_CROSS_SURFACE_CONSISTENCY.md",
       "createdAt": "2026-04-26"
+    },
+    {
+      "id": "PROD6",
+      "name": "Live CI Status Stub",
+      "category": "admin",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/admin/live-ci-status-stub.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/admin/live-ci-status-stub.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/PROD6_LIVE_CI_STATUS_STUB.md",
+      "createdAt": "2026-04-26"
     }
   ]
 }
