@@ -3320,6 +3320,60 @@
       "notes": "V1 internal API polling only. True GitHub/Vercel status ingestion, deploy event polling, route smoke execution, persona crawler, DB-backed readiness, and observability are deferred to PROD4 or later. Status is code_complete after local validation, not verified."
     },
     {
+      "id": "PROD4",
+      "name": "Production Readiness Freshness Layer",
+      "category": "PROD",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Steward",
+      "dependsOn": [
+        "PROD3"
+      ],
+      "allowedFiles": [
+        "docs/build/PRODUCTION_READINESS_UPDATE_PROTOCOL.md",
+        "docs/build/slices/PROD2_PRODUCTION_READINESS_LIVE_UPDATES.md",
+        "docs/build/build-slices.json",
+        "src/lib/admin/production-readiness.ts",
+        "src/components/admin/ProductionReadinessTracker.tsx",
+        "src/components/admin/ProductionReadinessLivePanel.tsx",
+        "src/__tests__/integration/admin/production-readiness-tracker.test.ts"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Production readiness view exposes lastUpdated, dataSource, updateMode, freshnessStatus, staleReason, and nextRefreshRecommendation.",
+        "Freshness status is deterministic and classifies fresh, aging, stale, and unknown manifest timestamps.",
+        "ProductionReadinessTracker displays manifest source, freshness status, stale reason, and an explicit not-live-monitoring disclaimer when repository-backed.",
+        "API response includes the same freshness fields without changing readiness scoring.",
+        "No GitHub, Vercel, model, Source, auth, migration, or persistence integration is added."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/admin/production-readiness-tracker.test.ts",
+        "npx jest src/__tests__/integration/admin/steward-setup-control-center.test.ts",
+        "npx jest src/__tests__/integration/design/abarva-ui-primitives.test.ts",
+        "npm run build",
+        "npm run build -- --webpack",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8'))\""
+      ],
+      "notes": "Freshness metadata only. The tracker remains repository-backed and explicitly says it is not live monitoring. True GitHub/Vercel/observability ingestion remains deferred."
+    },
+    {
       "id": "ACT3",
       "name": "AI Adoption and Usage Read Model",
       "category": "ACT",

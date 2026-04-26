@@ -109,6 +109,9 @@ export function ProductionReadinessLivePanel({
             <span style={mutedLabelStyle}>
               {response.refreshMode} - CI/Vercel status {response.liveCiStatus}
             </span>
+            <span style={mutedLabelStyle}>
+              {response.updateMode} - {response.freshnessStatus}
+            </span>
           </div>
           <button
             type="button"
