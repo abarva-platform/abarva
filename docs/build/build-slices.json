@@ -4773,6 +4773,70 @@
         "npm run build"
       ],
       "notes": "Multi-stage Dockerfile (node:24-bookworm-slim base; deps / build / runtime stages; non-root node user; npm run start default CMD; required runtime env vars documented in the file header by name only with no baked secret) plus .dockerignore (excludes node_modules, .next, .git, .env*, coverage, reports/, .claude/, .codex-inbox/, *.log, **/.DS_Store, tests/, e2e/, playwright-report/, test-results/, tower-mockups/, updates/, docs/, .github/; keeps src/, public/, package.json, package-lock.json, next.config.ts in the build context) plus scripts/verify-docker-build.sh (bash shebang; set -euo pipefail; exits 0 with documented neutral message when Docker is missing; prints canonical build / run shapes and runs docker build --check when Docker is present; never pushes; never deploys) plus docs/deployment/DOCKER_RUNTIME_PACKAGING.md runbook plus a static-check Jest test that locks Dockerfile / .dockerignore / verify-script shape against future drift. Proves a non-Vercel runtime path exists for AbarVa. Does NOT prove production deployment, scaling, DR, image scanning, SBOM emission, or compliance certification. production_deployment status is preserved (still blocked); the prod-deploy-verification blocker is preserved verbatim; CI integration is named in the runbook as deferred."
+    },
+    {
+      "id": "CLOUD4",
+      "name": "Local Private Deployment Lab",
+      "category": "CLOUD",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane C (parallel build pack)",
+      "dependsOn": [
+        "CLOUD1",
+        "CLOUD2"
+      ],
+      "lastUpdated": "2026-04-26",
+      "allowedFiles": [
+        "docker-compose.private-lab.yml",
+        ".env.private-lab.example",
+        "docs/deployment/LOCAL_PRIVATE_DEPLOYMENT_LAB.md",
+        "docs/build/slices/CLOUD4_LOCAL_PRIVATE_DEPLOYMENT_LAB.md",
+        "scripts/verify-private-lab-config.sh",
+        "src/__tests__/integration/deployment/private-lab-config.test.ts",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/app/**",
+        "src/components/**",
+        "src/lib/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md",
+        "infra/**",
+        "terraform/**",
+        "bicep/**",
+        ".github/workflows/**",
+        "azure.yaml",
+        "next.config.ts",
+        ".env",
+        ".env.local",
+        ".env.production"
+      ],
+      "acceptanceCriteria": [
+        "docker-compose.private-lab.yml declares the four expected services (app, postgres, minio, model-gateway-stub) on the abarva-private-lab private bridge network with healthchecks where practical, env_file pointing at .env.private-lab, named local volumes for postgres and minio, and a LAB-ONLY header comment; no service references a real model provider URL or production posture.",
+        ".env.private-lab.example carries placeholder values only (POSTGRES_USER=abarva_lab, POSTGRES_PASSWORD=lab_only_change_me, POSTGRES_DB=abarva_lab, MINIO_ROOT_USER=lab_only, MINIO_ROOT_PASSWORD=lab_only_change_me, DATABASE_URL=postgres://abarva_lab:lab_only_change_me@postgres:5432/abarva_lab, S3_ENDPOINT=http://minio:9000, MODEL_GATEWAY_URL=http://model-gateway-stub:8080), no real provider keys, no real provider hostnames, and a header comment instructing operators to copy the file and replace ALL values before any non-lab use.",
+        "docs/deployment/LOCAL_PRIVATE_DEPLOYMENT_LAB.md documents what the lab is, what it is NOT, prerequisites (Docker + Docker Compose), boot (cp .env.private-lab.example .env.private-lab && docker compose -f docker-compose.private-lab.yml up -d), health checks (psql, mc admin, app health endpoint), tear down (docker compose -f docker-compose.private-lab.yml down -v), and forward references to CLOUD2 (Azure VNet) and CLOUD5 (Azure IaC starter).",
+        "scripts/verify-private-lab-config.sh runs under set -euo pipefail, asserts both files exist, asserts the four services are declared as top-level keys, asserts the eight required env keys are present, rejects real-secret patterns (no sk-, no ghp_, no opaque alnum tokens >=40 chars mixing letters and digits), rejects real model provider hostnames, prints `[CLOUD4] private lab config OK` on success, and exits 1 only if config is genuinely broken.",
+        "src/__tests__/integration/deployment/private-lab-config.test.ts asserts existence, all 4 declared services, all 8 required env keys, no production_ready / production-ready claims in either file, no real-secret patterns, no real model provider hostnames, and that MODEL_GATEWAY_URL points at the in-network stub host only.",
+        "docs/build/slices/CLOUD4_LOCAL_PRIVATE_DEPLOYMENT_LAB.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and readiness impact, and references the runbook by relative path.",
+        "docs/build/build-slices.json appends a CLOUD4 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn (CLOUD1, CLOUD2), status code_complete, risk low, ownerAgent Lane C, and lastUpdated 2026-04-26; manifest top-level lastUpdated remains 2026-04-26.",
+        "docs/build/production-readiness.json appends one note row each on production_deployment and data_evidence_knowledge_fabric acknowledging that CLOUD4 lands a local docker-compose private deployment lab; both component statuses are preserved (no promotion); nextAction is UNIONed conservatively without overwriting prior PROD / OPS / TEN / TRUST / CLOUD wording; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "Lab only; no application code, no Vercel deploy, no real cloud provisioning, no real model calls, no real customer data, no real secrets, no migrations, no auth changes, no platform-design doc edits."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/deployment/private-lab-config.test.ts",
+        "bash scripts/verify-private-lab-config.sh",
+        "npm run build",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Local-only docker-compose lab simulating private-deployment dependencies on a developer laptop. Boots postgres:16-alpine (data plane stand-in), minio/minio:latest (object-storage stand-in for Azure Blob / GCS), and a busybox model-gateway-stub (no real model calls) on the abarva-private-lab private bridge network, plus a documented placeholder app service referencing the future CLOUD3 Dockerfile image (abarva:local). Uses .env.private-lab.example as a placeholder template - operators copy to .env.private-lab and replace all values before any non-lab use. Provides scripts/verify-private-lab-config.sh and src/__tests__/integration/deployment/private-lab-config.test.ts to assert the lab config shape. Does NOT deploy to any cloud, does NOT call any real model provider, does NOT run migrations, does NOT carry real customer data, does NOT promote production_deployment status. CLOUD2 (Azure VNet blueprint) is the documentation-only Azure-side counterpart; CLOUD5 (Azure IaC starter) is the deferred Terraform / Bicep / azd implementation."
     }
   ]
 }
