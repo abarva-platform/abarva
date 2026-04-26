@@ -140,15 +140,16 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
 - 2026-04-25 · Source-specific Nexus API route stub implemented locally: deterministic no-model `POST /api/v1/source/[eventId]/nexus/ask` response using SourceAgentContextBundle, context validation report, workflow validation report, and multi-agent briefing.
 
 ## Last status emission
+- 2026-04-26 - Source Agent Mission report batch complete - PR #255 mission report formatter, PR #256 mission activity UI plan, PR #257 dashboard mission preview plan, and PR #259 dashboard mission preview all merged; next safe step is authenticated `/source` review with the mission preview visible.
 - 2026-04-25 - Larger gated Source batch status update - Slice 1 pricing PR updated to remove per-slice CYCLE_STATE changes, Slice 5 data readiness panel plan opened, Slice 2 and Slice 4 already had open equivalent PRs, Slice 3 blocked by open PR #221 - no runtime/model/upload/parsing work in this state slice.
 - 2026-04-25 - Supervised Source Agent Mission batch state - Agent Mission Model is on main, architecture alignment reconciliation opened, Source agent mission queue plan opened, agent mission activity UI plan opened, deterministic mission read-model implementation skipped until the queue plan is merged.
 
 ## AbarVa Source Sidecar State
 
-- Current completed milestone: PR #248 merged - AbarVa Agent Mission Model.
+- Current completed milestone: PR #259 merged - tiny deterministic Source dashboard mission preview.
 - Dashboard decision: approve with minor polish, pending authenticated screenshot/review.
-- Current objective: complete Source agent mission planning, then wait for the queue plan to merge before implementing a deterministic Source mission read model.
-- Current item: Source Agent Mission batch state update.
+- Current objective: review the authenticated `/source` dashboard with the deterministic mission preview visible, then decide whether tiny mission UI polish is safe.
+- Current item: Source Agent Mission report batch state update.
 - Completed this cycle:
   - AbarVa Source Build Pack docs.
   - Context-awareness docs.
@@ -218,6 +219,11 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
   - Source Nexus API route stub merged via PR #230 and contract tests merged via PR #245. The route remains deterministic/no-model and is not a production-ready agent runtime.
   - AbarVa Agent Mission Model merged via PR #248. Nexus, Sentinel, Atlas, and Steward now have mission, trigger, handoff, queue-state, priority, and calm activity UI canon.
   - Source Agent Mission batch opened docs-only follow-up PRs: architecture alignment reconciliation, Source mission queue plan, and agent mission activity UI plan.
+  - Deterministic Source agent mission read model merged via PR #254. Source can now derive Nexus, Sentinel, Atlas, and Steward missions from seeded Source context plus context/workflow validation reports without model calls, persistence, API routes, scheduler, or UI.
+  - Deterministic Source agent mission report formatter merged via PR #255. Mission reports summarize 11 seeded missions, including 2 critical, 7 high, and 2 medium missions, with top mission and markdown reporting helpers.
+  - Agent mission activity UI plan merged via PR #256. The UI plan keeps agent activity calm, compact, and non-chat-first.
+  - Source dashboard mission preview plan merged via PR #257.
+  - Source dashboard mission preview merged via PR #259. The `/source` dashboard now shows a compact deterministic top-mission preview for the most exposed seeded event without API calls, model calls, chat input, persistence, upload/parsing, or new routes.
   - Larger gated Source batch ran with per-slice CYCLE_STATE updates disabled.
   - PR #235 opened for Pricing and Negotiation Intelligence Standard. Branch `codex/source-pricing-negotiation-intelligence`; latest commit removed CYCLE_STATE from the slice diff. Checks green at last poll.
   - PR #236 opened for Source Data Readiness Panel Plan. Branch `codex/source-data-readiness-panel-plan`; checks still pending at last poll.
@@ -229,5 +235,5 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
 - Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, quality assessment, validation runner output, and readable validation report output.
 - Blockers/do-not-build: no workflow engine code, approval engine, artifact versioning implementation, document export/import, event canvas, chat UI, model calls, API routes, upload/parsing, scorecard UI, artifact drawer UI, value ledger UI, vendor flow, AI/RFP generation, `/programs` integration, `/preview` or `/demo` surfaces, `ProgramSurface`, or `src/lib/programs/mock.ts`.
 - Notes and discoveries: Fixtures should stay as deterministic guardrails until workflow runtime work is explicitly approved. The uploaded-document citation scenario correctly DEFERs because parsing/validation is not implemented. PR #205 cleared the unrelated full-lint blocker. The workflow validation runner preserves healthy BLOCK outcomes instead of treating them as failures. The hardened report makes BLOCK outcomes readable as expected enforcement and preserves the intentional DEFER. The `/source` auth redirect issue is narrow: Source was missing from `authRequiredRoutes`, causing signed-out `/source` to fall through to Clerk generic `auth.protect()` instead of app-owned `/sign-in?redirect=/source`.
-- Next recommended item: review/merge the Source mission queue plan, then implement the deterministic Source agent mission read model only after the plan is on main.
-- Next planning artifact: no additional planning artifact is needed before the mission read-model implementation slice.
+- Next recommended item: capture authenticated `/source` screenshot/manual review with the mission preview visible; if approved, decide whether tiny mission activity polish or Source data/evidence planning should come next.
+- Next planning artifact: no additional planning artifact is needed before authenticated mission preview review.

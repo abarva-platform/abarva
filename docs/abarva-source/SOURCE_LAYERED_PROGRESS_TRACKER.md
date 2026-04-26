@@ -1,16 +1,16 @@
 # AbarVa Source Layered Progress Tracker
 
-Date: 2026-04-25
+Date: 2026-04-26
 
 Purpose: provide a layer-by-layer view of where AbarVa Source stands against MVP and production readiness. This tracker is intentionally candid. It separates strong deterministic foundations from runtime, UI, evidence, and enterprise-readiness work that has not started or is still early.
 
 ## Executive Read
 
-- Source has a strong foundation in product architecture, deterministic context validation, workflow validation, pattern IP, deterministic multi-agent briefings, and a platform Agent Mission Model.
+- Source has a strong foundation in product architecture, deterministic context validation, workflow validation, pattern IP, deterministic multi-agent briefings, deterministic agent missions, and a platform Agent Mission Model.
 - Source is not production-ready.
-- MVP readiness is improving, but the product still needs a Source-specific runtime/API path, reviewed UI coverage, persistence, evidence/upload pipeline, auth/tenant hardening, and production validation.
-- Current foundation milestone: PR #248 merged the platform Agent Mission Model.
-- Current recommended next slice: merge the Source agent mission queue plan, then implement the deterministic Source agent mission read model.
+- MVP readiness is improving, but the product still needs authenticated UI review, persistence, evidence/upload pipeline, auth/tenant hardening, and production validation.
+- Current foundation milestone: PR #259 merged a compact deterministic Source dashboard mission preview.
+- Current recommended next slice: authenticated `/source` dashboard review with mission preview visible, then decide whether tiny mission UI polish is safe.
 
 ## Layer Summary
 
@@ -21,9 +21,9 @@ Purpose: provide a layer-by-layer view of where AbarVa Source stands against MVP
 | Pattern / Workflow IP | 75% | Strong authored IP, runtime sectioning not wired | PR #202, PR #222, PR #223, PR #224, PR #225 | Convert selected sections into runtime manifest plan later |
 | Context Validation Harness | 85% | Deterministic foundation complete | PR #190, PR #192, PR #197 | Use as preflight for Source Nexus runtime |
 | Workflow Validation Harness | 85% | Deterministic foundation complete | PR #204, PR #207, PR #210 | Preserve remaining defer until upload/evidence exists |
-| Multi-Agent Intelligence | 40% | Deterministic briefings merged; mission model canon exists; Source mission read model not built | PR #227, PR #248, `src/lib/source/multi-agent-briefing.ts` | Merge Source mission queue plan, then implement deterministic mission read model |
+| Multi-Agent Intelligence | 55% | Deterministic briefings, mission read model, mission report, and dashboard preview exist; no runtime queue/scheduler/persistence/model layer | PR #227, PR #248, PR #254, PR #255, PR #259, `src/lib/source/multi-agent-briefing.ts`, `src/lib/source/agent-missions.ts`, `src/lib/source/agent-mission-report.ts` | Authenticated mission preview review, then decide tiny UI polish |
 | Source API / Runtime | 25% | Deterministic no-model API stub exists; production runtime not ready | PR #230, PR #245, `src/app/api/v1/source/[eventId]/nexus/ask/route.ts` | Keep route deterministic; do not add model calls until mission/readiness gates are ready |
-| Source UI / User Experience | 35% | Dashboard exists, broader UI early | PR #212, PR #213, PR #218, Experience System | Final authenticated review, then tiny visual polish if needed |
+| Source UI / User Experience | 40% | Dashboard exists with tiny deterministic mission preview; broader UI early | PR #212, PR #213, PR #218, PR #259, Experience System | Final authenticated review with mission preview visible |
 | Data / Evidence / Upload Pipeline | 10% | Not started beyond contracts/placeholders | Attachment/context contracts and validation defers | Plan upload/evidence pipeline before implementation |
 | Production Readiness | 10% | Not started | Production readiness tracker and deterministic validations | Build readiness checklist after runtime/data/UI foundations |
 
@@ -244,16 +244,24 @@ Next recommended slice:
 
 Purpose: make Nexus, Sentinel, Atlas, and Steward produce distinct context-aware behavior from the same SourceAgentContextBundle without model calls or chat UI.
 
-Current status: deterministic briefing layer merged; platform mission model merged; no Source mission read model, mission UI, scheduler, persistence, or model runtime.
+Current status: deterministic briefing layer, platform mission model, Source mission read model, mission report formatter, and tiny dashboard mission preview are merged. No runtime queue, scheduler, persistence, full mission UI, or model runtime exists.
 
-Percent complete estimate: 40%.
+Percent complete estimate: 55%.
 
 Evidence / PRs / Files:
 
 - PR #227: deterministic Source multi-agent briefing layer.
 - PR #248: platform Agent Mission Model.
+- PR #254: deterministic Source agent mission read model.
+- PR #255: deterministic Source agent mission report formatter.
+- PR #256: agent mission activity UI plan.
+- PR #257: Source dashboard mission preview plan.
+- PR #259: tiny deterministic Source dashboard mission preview.
 - `src/lib/source/multi-agent-types.ts`
 - `src/lib/source/multi-agent-briefing.ts`
+- `src/lib/source/agent-mission-types.ts`
+- `src/lib/source/agent-missions.ts`
+- `src/lib/source/agent-mission-report.ts`
 - `docs/platform-architecture/runtime/13_AGENT_MISSION_MODEL.md`
 - `docs/platform-architecture/runtime/14_AGENT_WORK_QUEUE_AND_TRIGGERS.md`
 - `docs/platform-design/experience-system/16_AGENT_ACTIVITY_UI_PATTERN.md`
@@ -267,26 +275,30 @@ Completed items:
 - Steward briefing for gate integrity, blockers, and cannot-proceed reasons.
 - Deterministic markdown formatter and suggested actions.
 - Platform-level mission types, triggers, states, priorities, handoffs, and calm activity UI model.
+- Source-specific mission queue plan.
+- Deterministic Source agent mission read model.
+- Deterministic mission report formatter with top missions, counts, blockers, defers, handoffs, and remediations.
+- Tiny Source dashboard mission preview for the most exposed seeded event.
 
 Remaining items:
 
-- Source agent mission queue plan.
-- Deterministic Source mission read model.
-- Runtime integration with Source event context.
-- Agent mission activity UI binding.
+- Authenticated screenshot/manual review of the mission preview.
+- Runtime integration beyond seeded/current Source context.
+- Full agent mission activity UI binding.
+- Mission queue persistence, scheduler, and background triggers later.
 - Model-assisted response layer later.
 - Pattern-grounded agent behavior later.
 
 Blockers:
 
-- No mission queue/read model exists yet.
+- No runtime mission queue, scheduler, persistence, or proactive background trigger exists yet.
 - No model calls are approved.
 - No chat UI is approved.
-- No scheduler/background jobs or persistence are approved.
+- No full mission activity UI is approved beyond the tiny dashboard preview.
 
 Next recommended slice:
 
-- Merge Source mission queue plan, then build deterministic Source agent mission read model.
+- Capture authenticated `/source` screenshot/manual review with the mission preview visible; if approved, decide whether tiny mission activity UI polish is safe.
 
 ## Layer 7. Source API / Runtime
 
@@ -336,15 +348,16 @@ Next recommended slice:
 
 Purpose: make Source feel like a premium, decisive, table-forward sourcing command surface aligned with the AbarVa Experience System.
 
-Current status: dashboard exists; broader UI is early and not production-ready.
+Current status: dashboard exists with a tiny deterministic mission preview; broader UI is early and not production-ready.
 
-Percent complete estimate: 35%.
+Percent complete estimate: 40%.
 
 Evidence / PRs / Files:
 
 - PR #212: Source dashboard front-door refinement.
 - PR #213: authenticated dashboard review packet, blocked by Clerk redirect at the time.
 - PR #218: Source auth redirect fix.
+- PR #259: tiny deterministic Source dashboard mission preview.
 - `src/components/source/AbarVaSourceDashboard.tsx`
 - `src/components/source/SourcingEventTable.tsx`
 - `src/components/source/SourceAlertPanel.tsx`
@@ -357,10 +370,11 @@ Completed items:
 - Executive pressure signals introduced.
 - Event table salience improved.
 - Auth redirect blocker was diagnosed and addressed in a later fix.
+- Compact deterministic top-mission preview added for the most exposed seeded event without API calls, model calls, chat input, persistence, upload/parsing, or new routes.
 
 Remaining items:
 
-- Final authenticated dashboard review after auth fix.
+- Final authenticated dashboard review after auth fix and mission preview merge.
 - Align dashboard visual language with off-white Experience System.
 - Event workbench, journey map behavior, scorecard, artifact, value, vendor, and agent panels.
 - Screenshot-based visual QA.
@@ -371,7 +385,7 @@ Blockers:
 
 Next recommended slice:
 
-- Final authenticated Source dashboard review, if auth is confirmed working.
+- Final authenticated Source dashboard review with mission preview visible, if auth is confirmed working.
 
 ## Layer 9. Data / Evidence / Upload Pipeline
 
@@ -473,12 +487,18 @@ Next recommended slice:
 - Deterministic multi-agent briefing layer for Nexus, Sentinel, Atlas, and Steward.
 - Platform Agent Mission Model for Nexus, Sentinel, Atlas, and Steward.
 - Deterministic Source Nexus API route stub and contract tests.
+- Deterministic Source agent mission read model.
+- Deterministic Source agent mission report formatter.
+- Agent mission activity UI plan.
+- Source dashboard mission preview plan.
+- Tiny deterministic Source dashboard mission preview.
 
 ## What Is Not Done
 
-- Source agent mission read model.
 - Model-assisted Nexus responses.
 - Chat UI.
+- Runtime mission queue, scheduler, persistence, and background triggers.
+- Full agent mission activity UI.
 - Upload/parsing/evidence registry.
 - Persistent Source data model.
 - Workflow engine.
@@ -494,11 +514,11 @@ Next recommended slice:
 
 ## Next 5 Recommended Slices
 
-1. Merge Source agent mission queue plan.
-2. Implement deterministic Source agent mission read model, no model calls or persistence.
-3. Plan Source agent mission activity UI, no implementation unless already merged.
-4. Final authenticated Source dashboard review, if `/source` auth is confirmed working.
-5. Upload/evidence pipeline plan, no implementation.
+1. Capture authenticated Source dashboard review with the mission preview visible.
+2. If review approves, implement only tiny mission activity UI polish grounded in the merged plan.
+3. Add authenticated route smoke coverage for the deterministic Source API and dashboard path.
+4. Plan upload/evidence pipeline, no implementation.
+5. Plan the next pattern/runtime grounding step, such as pattern manifest planning or Data Platform Managed Services authoring.
 
 ## What Not To Build Yet
 
@@ -522,15 +542,15 @@ Next recommended slice:
 
 ## Honest MVP Readiness Assessment
 
-Estimated MVP readiness: 48%.
+Estimated MVP readiness: 52%.
 
-Source is beyond a concept prototype because it has a route, dashboard, seeded domain context, validation harnesses, pattern IP, deterministic multi-agent behavior, and a deterministic no-model Nexus API stub. It is not yet a usable MVP for real sourcing work because persistence, evidence pipeline, authenticated UI review, mission read model, and practical user-facing interaction layer remain incomplete.
+Source is beyond a concept prototype because it has a route, dashboard, seeded domain context, validation harnesses, pattern IP, deterministic multi-agent behavior, a deterministic no-model Nexus API stub, deterministic mission reports, and a tiny dashboard mission preview. It is not yet a usable MVP for real sourcing work because persistence, evidence pipeline, authenticated UI review, real tenant data, and practical user-facing workflow depth remain incomplete.
 
 The fastest safe MVP path is deterministic-first:
 
-1. Merge the Source agent mission queue plan.
-2. Implement the deterministic mission read model.
-3. Bind a small reviewed UI affordance to deterministic mission/briefing output.
+1. Review the authenticated Source dashboard mission preview.
+2. If approved, tighten only the compact mission affordance.
+3. Add authenticated smoke coverage for the deterministic Source route/dashboard path.
 4. Add evidence/upload planning before any citation or artifact generation.
 5. Add model calls only after context validation and runtime preflight are enforced.
 
