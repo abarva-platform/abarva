@@ -6965,6 +6965,147 @@
       "testFiles": [],
       "sliceDoc": "docs/build/slices/AZLAB5_AZURE_LAB_DEPLOYMENT_RUNBOOK.md",
       "createdAt": "2026-04-26"
+    },
+    {
+      "id": "LIVE1",
+      "wave": "wave-13",
+      "status": "code_complete",
+      "title": "Founder Live Walk Checklist",
+      "description": "Deterministic step-by-step live demo checklist covering all major AbarVa surfaces with fallbacks and readiness caveats.",
+      "sliceType": "qa",
+      "owner": "qa",
+      "branch": "live/live1-founder-live-walk-checklist",
+      "createdAt": "2026-04-26",
+      "completedAt": "2026-04-26"
+    },
+    {
+      "id": "LIVE2",
+      "wave": "wave-13",
+      "status": "code_complete",
+      "title": "Demo Tenant Route Verification",
+      "description": "Deterministic route inventory read model for demo tenants (apex-retail, meridian) with validation status, caveats, and fallback routes.",
+      "sliceType": "qa",
+      "owner": "qa",
+      "branch": "live/live2-demo-tenant-route-verification",
+      "createdAt": "2026-04-26",
+      "completedAt": "2026-04-26"
+    },
+    {
+      "id": "LIVE3",
+      "name": "Production Readiness Page Verification",
+      "category": "qa",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/qa/production-readiness-page-verification.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/qa/production-readiness-page-verification.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/LIVE3_PRODUCTION_READINESS_PAGE_VERIFICATION.md",
+      "createdAt": "2026-04-26"
+    },
+    {
+      "id": "LIVE4",
+      "name": "Azure Lab Storyboard",
+      "category": "demo",
+      "status": "code_complete",
+      "risk": "low",
+      "wave": "wave-13",
+      "sourceFiles": [
+        "src/lib/qa/azure-lab-storyboard.ts",
+        "src/__tests__/integration/qa/azure-lab-storyboard.test.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/qa/azure-lab-storyboard.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/LIVE4_AZURE_LAB_STORYBOARD.md",
+      "createdAt": "2026-04-26"
+    },
+    {
+      "id": "DEMO3",
+      "name": "20-Minute Boardroom Demo Pack",
+      "category": "demo",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [],
+      "testFiles": [],
+      "sliceDoc": "docs/build/slices/DEMO3_20_MINUTE_BOARDROOM_DEMO_PACK.md",
+      "createdAt": "2026-04-26"
+    },
+    {
+      "id": "QA19",
+      "name": "E2E Smoke Result Capture",
+      "category": "qa",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/qa/e2e-smoke-result-capture.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/qa/e2e-smoke-result-capture.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/QA19_E2E_SMOKE_RESULT_CAPTURE.md",
+      "createdAt": "2026-04-26"
+    },
+    {
+      "id": "QA20",
+      "name": "Mandatory Hygiene Gate Runner Contract",
+      "category": "qa",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "scripts/integration/hygiene_gate.sh"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/ops/hygiene-gate-contract.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/QA20_MANDATORY_HYGIENE_GATE_RUNNER_CONTRACT.md",
+      "createdAt": "2026-04-26"
+    },
+    {
+      "id": "OPS13",
+      "name": "Demo Pack Validation / Final Report Standard",
+      "category": "ops",
+      "status": "code_complete",
+      "wave": "wave-13",
+      "risk": "low",
+      "ownerAgent": "Lane H",
+      "dependsOn": [
+        "OPS7",
+        "OPS11",
+        "OPS12"
+      ],
+      "allowedFiles": [
+        "scripts/integration/validate_demo_pack_report.py",
+        "src/__tests__/integration/ops/demo-pack-report-validator.test.ts",
+        "docs/build/DEMO_PACK_FINAL_REPORT_STANDARD.md",
+        "docs/build/slices/OPS13_DEMO_PACK_VALIDATION_STANDARD.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json",
+        "docs/build/build-waves.json"
+      ],
+      "forbiddenFiles": [
+        "src/**/*.tsx",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json"
+      ],
+      "acceptanceCriteria": [
+        "validate_demo_pack_report.py exits 0 on --help.",
+        "Validator detects all 11 required sections in final reports.",
+        "TypeScript test suite passes with npx jest --no-coverage.",
+        "npx tsc --noEmit --pretty false exits 0.",
+        "Python script is stdlib-only, read-only, no network calls.",
+        "Markdown spec defines required sections table and fill-in template."
+      ],
+      "validationCommands": [
+        "python3 scripts/integration/validate_demo_pack_report.py --help",
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/ops/demo-pack-report-validator.test.ts --no-coverage"
+      ],
+      "notes": "All future build packs (Wave 13+) must pass this validator before a pack is marked complete. Validator is read-only, deterministic, and stdlib-only."
     }
   ]
 }

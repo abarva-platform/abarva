@@ -584,6 +584,41 @@
       "currentBlockers": [],
       "nextAction": "Lane A complete. Awaiting OPS12, PDEL9, PDEL10, AZLAB1-5 integration. Lane B complete. Awaiting OPS11, PDEL9, PDEL10, AZLAB1-5 integration. Lane C complete. Awaiting OPS11, OPS12, PDEL10, AZLAB1-5 integration. Lane D complete. Awaiting OPS11, OPS12, PDEL9, AZLAB1-5 integration. Lane H complete. Awaiting OPS11, OPS12, PDEL9, PDEL10, AZLAB2-5 integration. Lane I complete. Awaiting OPS11, OPS12, PDEL9, PDEL10, AZLAB1, AZLAB3-5 integration. Lane J complete. Awaiting OPS11, OPS12, PDEL9, PDEL10, AZLAB1, AZLAB2, AZLAB4-5 integration. Lane K complete. Awaiting OPS11, OPS12, PDEL9, PDEL10, AZLAB1-3, AZLAB5 integration. Lane L complete. Awaiting OPS11, OPS12, PDEL9, PDEL10, AZLAB1-4 integration.",
       "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-13",
+      "name": "Live Demo Validation + Hygiene Enforcement",
+      "goal": "Validate AbarVa can be walked end-to-end cleanly and enforce mandatory hygiene gates before future builds.",
+      "status": "in_progress",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "LIVE1",
+        "LIVE2",
+        "LIVE3",
+        "LIVE4",
+        "DEMO3",
+        "QA19",
+        "QA20",
+        "OPS13"
+      ],
+      "completedSlices": [
+        "LIVE1",
+        "LIVE2",
+        "LIVE4",
+        "DEMO3",
+        "QA20",
+        "LIVE3",
+        "QA19",
+        "OPS13"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [],
+      "nextAction": "All 8 slices integrated. Integration branch ready for PR.",
+      "lastUpdated": "2026-04-26"
     }
   ]
 }
