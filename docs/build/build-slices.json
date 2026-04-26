@@ -6272,6 +6272,68 @@
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
       "notes": "Deterministic per-tenant model provider policy matrix. Read-only complement to MG3 (integration contract) and MG2 (deterministic stub). Names which providers each tenant has approved / blocked / deferred / requires_review for which canonical purposes, with the policy basis (data classification, tenant admin decision, security review, governance review, cost constraint) recorded for every decision. Seed is dense: 3 tenants x 7 providers = 21 entries. The live model gateway runtime (MG5) will consume this matrix when dispatching tenant requests. No live model invocation, no SDK import, no network, no Date.now, no randomness. model_gateway and agent_runtime statuses are intentionally not promoted by MG4."
+    },
+    {
+      "id": "CLOUD7",
+      "name": "Enterprise Deployment Verification Runbook",
+      "category": "CLOUD",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Wave3 Lane G",
+      "dependsOn": [
+        "CLOUD1",
+        "CLOUD2",
+        "TRUST1",
+        "TRUST2",
+        "TEN1",
+        "TEN2"
+      ],
+      "lastUpdated": "2026-04-26",
+      "allowedFiles": [
+        "docs/build/ENTERPRISE_DEPLOYMENT_VERIFICATION_RUNBOOK.md",
+        "docs/build/slices/CLOUD7_ENTERPRISE_DEPLOYMENT_VERIFICATION_RUNBOOK.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/app/**",
+        "src/components/**",
+        "src/lib/**",
+        "src/__tests__/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md",
+        "infra/**",
+        "terraform/**",
+        "bicep/**",
+        ".github/workflows/**",
+        "azure.yaml",
+        "next.config.ts",
+        ".env",
+        ".env.local",
+        ".env.production",
+        ".env.development",
+        ".gitignore",
+        "Dockerfile",
+        ".dockerignore"
+      ],
+      "acceptanceCriteria": [
+        "docs/build/ENTERPRISE_DEPLOYMENT_VERIFICATION_RUNBOOK.md documents \u00a7A SaaS pilot readiness (TEN1 SaaS tenancy architecture + TEN2 five canonical tenant isolation levels + MG2 shared egress posture for the pilot tier), \u00a7B dedicated tenant readiness (TEN3 conditional with DB / storage / vector / graph / audit / model gateway / SSO / tenant admin / onboarding / upgrade / backup paths), \u00a7C private data plane readiness (CLOUD1 four-tier strategy + control-plane / data-plane separation + dependency replacement matrix + per-tier model gateway posture + per-tier operational responsibility split), \u00a7D Azure VNet reference lab (CLOUD2 blueprint + CLOUD5 Bicep starter parses + parameters file uses <replace-me> placeholders + no hardcoded secrets + README marks STARTER / LAB / not production), \u00a7E Docker runtime packaging (CLOUD3 multi-stage Dockerfile + non-root user + no baked secrets + .dockerignore covers node_modules / .env / .git / reports/), \u00a7F dataset trust contract (TRUST1 five sharing levels L0\u2013L4 and five-state trust ladder loaded \u2192 metadata_only \u2192 sample_summary \u2192 audited_summary \u2192 decision_grade with L4 default-deny and revocation / expiration), \u00a7G agent data access policy (TRUST2 matrix covering all four canonical agents and all five sharing levels with default-deny and approval-evidence requirement), \u00a7H evidence manifest mode (EVID2 ledger + EVID3 claim/support + honest-unavailable posture), \u00a7I model provider policy (MG2 per-tier provider policy + egress allowlist + no direct SDK call from outside the gateway), \u00a7J runtime safety gate (deterministic guardrail before egress + tool manifest enforcement + TRUST2 level enforcement + audit emission + no-bypass posture), \u00a7K unified audit (AUD2 fifteen canonical event types + immutable / traceId / tenantKey / workObject / createdFrom on every event + three actor kinds + no live persistence claim), \u00a7L no-fabrication contract (no fake citations / approvals / dollar amounts / live model claim / live monitoring claim + honest-unavailable as the default), \u00a7M CI / Vercel signal + security checklist + morning review rules (PROD3 live refresh API + PROD4 honest unavailable + PROD5 DeploymentStatusCard honest chip + ESLint + routes-and-disclaimers + Vercel green + Supabase Preview skipping + secrets / GUID / auth / future-only / canon-chrome / dark-surface / .env.example checks + PR merge gated on PROD2 passed + conservative-status policy + canonical cherry-pick path + lane agents commit only + integration agent owns merges + founder owns push and merge decisions + conditional rows record deferred not failed), \u00a7N morning review note template.",
+        "docs/build/slices/CLOUD7_ENTERPRISE_DEPLOYMENT_VERIFICATION_RUNBOOK.md documents purpose (sibling runbook to QA8 walking operator-posture instead of slice contracts), what changed (new runbook + new slice contract + manifest updates), out of scope (no application code, no runtime, no migrations, no auth, no supabase, no IaC, no .github/workflows, no package manifests, no next.config.ts, no model call, no live cloud call, no live persona crawler, no CI integration, no new env file, no platform-design changes, no component promotion, no QA8 wording overwrite), why this is safe (documentation only; UNION manifest updates; conditional rows record deferred), how to re-run (tsc clean + JSON parse + line count sanity), readiness impact (production_deployment status preserved at blocked; validation_qa preserved at tested; prod-deploy-verification blocker preserved verbatim; no component promotion; lastUpdated bumped), and cross-references (QA8 sibling + CLOUD1 / CLOUD2 / CLOUD3 / CLOUD4 / CLOUD5 / CLOUD8 / TEN1 / TEN2 / TEN3 / TRUST1 / TRUST2 / TRUST3 / EVID2 / EVID3 / AUD2 / MG2 / PROD3 / PROD4 / PROD5).",
+        "docs/build/build-slices.json appends a CLOUD7 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn (CLOUD1, CLOUD2, TRUST1, TRUST2, TEN1, TEN2), status code_complete, risk low, ownerAgent Wave3 Lane G, and lastUpdated 2026-04-26; manifest top-level lastUpdated remains 2026-04-26.",
+        "docs/build/production-readiness.json UNION-updates validation_qa.notes / validation_qa.nextAction and production_deployment.notes / production_deployment.nextAction acknowledging CLOUD7 as a sibling operator-posture runbook to QA8; component statuses are preserved (no promotions); the prod-deploy-verification blocker is preserved verbatim; manifest top-level lastUpdated is set to 2026-04-26.",
+        "Documentation only; no application code, runtime, auth, supabase, migrations, package manifests, infrastructure-as-code, GitHub workflows, next.config.ts, env files, .gitignore, Dockerfile, .dockerignore, or platform-design docs are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Founder-facing operator-posture runbook for verifying enterprise deployment (SaaS pilot, dedicated tenant, private data plane, fully self-managed) plus Azure VNet lab, Docker packaging, dataset trust contract, agent data access, evidence manifest mode, model provider policy, runtime safety gate, unified audit, no-fabrication contract, CI / Vercel signal, security review checklist, and morning review / merge gates. Sibling runbook to QA8 (ENTERPRISE_DEPLOYMENT_TRUST_VERIFICATION_RUNBOOK): QA8 walks slice contracts as filed; CLOUD7 walks the operator posture an enterprise prospect or security review team would walk against the platform. Documentation only. Deterministic \u2014 does not exercise live retrieval, model calls, browser automation, or live cloud calls. TEN3 / TRUST3 / CLOUD3 / CLOUD4 / CLOUD5 / PROD4 / ADM6 are explicitly conditional: each row is verified only if the matching slice has landed in the batch under review and otherwise records deferred (not failed). production_deployment status is preserved (still blocked); the prod-deploy-verification blocker is preserved verbatim; no component is promoted; QA8 wording is preserved verbatim. Wave3 Lane G commits locally only; the integration agent owns the cherry-pick and merge."
     }
   ]
 }
