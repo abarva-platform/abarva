@@ -2682,6 +2682,53 @@
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
       "notes": "Pure deterministic type-only stub for the Model Gateway chokepoint named in ARCH1 section 6 ('the single chokepoint for every model call'). Names the request / response / audit / route / refusal contract types and exposes a routing function that NEVER calls a live provider: well-formed input returns decision dry_run with a typed audit record; malformed input returns decision block with a typed reason. The MG1 standalone contract may not have landed on this worktree's main; the slice doc summarizes the contract concepts inline so MG2 compiles and ships without taking a hard dependency on a doc that may be missing. Sets up MG3 live gateway integration without changing the stub contract."
+    },
+    {
+      "id": "TOOL2",
+      "name": "Tool Registry MVP",
+      "category": "TOOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Steward",
+      "dependsOn": [
+        "TOOL1"
+      ],
+      "allowedFiles": [
+        "src/lib/architecture/tool-registry-mvp.ts",
+        "src/__tests__/integration/architecture/tool-registry-mvp.test.ts",
+        "docs/build/slices/TOOL2_TOOL_REGISTRY_MVP.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/architecture/tool-registry-mvp.ts exports the canonical TOOL_REGISTRY_CATEGORIES tuple in canonical order ('search_vector', 'traverse_graph', 'read_artifact', 'read_evidence', 'read_program_state', 'write_program_action', 'create_deliverable_draft', 'export_artifact', 'update_gate_status', 'record_audit_event', 'fetch_dataset_summary', 'get_solution_archetype', 'get_pattern_content', 'build_context_pack', 'evaluate_readiness', 'create_agent_mission').",
+        "Module exports ToolMetadata, ToolRequiredInput, ToolForbiddenWhen, ToolInvocationRequest, ToolInvocationValidationResult, and ToolRegistrySummary types with the contract-required fields, and helpers listAgentTools, getAgentTool, listToolsForAgent, summarizeToolRegistry, and validateToolInvocationRequest.",
+        "listAgentTools() returns exactly 16 deterministic seed tools, one per canonical category, each tagged createdFrom: 'deterministic_tool_registry'.",
+        "Every tool has tenantScopeRequired: true except get_pattern_content and get_solution_archetype; every write or export tool has auditRequired: true; record_audit_event is audit_only and auditRequired with productionStatus: 'stub'; every other tool is productionStatus: 'mvp'; no tool is productionStatus: 'live'.",
+        "Each agent (nexus, sentinel, atlas, steward) is allowed by listToolsForAgent on at least three tools; update_gate_status is steward-only; read_evidence and record_audit_event are allowed for all four agents.",
+        "validateToolInvocationRequest blocks unknown tool ids, blocks empty tenantKey when tenantScopeRequired, blocks unknown agentKey, blocks known agents not in allowedAgents, blocks missing required inputs, blocks empty-string required inputs, and blocks requests whose inputs include a forbiddenWhen trigger key; well-formed read and write requests pass.",
+        "Module has no imports from @/lib/sentinel|atlas|nexus|agent|source|auth or supabase, no Date.now / Math.random / new Date( / fetch(, no anthropic / openai, no useState / useEffect, no Coming soon / TBD / Lorem ipsum placeholder language, and no await / shell exec / fs writes.",
+        "Test suite at src/__tests__/integration/architecture/tool-registry-mvp.test.ts is fully green and enforces determinism, category coverage, tenant-scope and audit invariants, per-agent visibility, validator behavior, summary reconciliation, and module hygiene.",
+        "Production readiness manifest is updated to acknowledge the TOOL2 seed-only tool registry under agent_runtime and model_gateway with runtime tool-dispatcher integration deferred; all other manifest fields are preserved exactly."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/tool-registry-mvp.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Deterministic, file-pure registry that names every canonical agent tool with allowed agents, read/write/export/audit mode, tenant scope, audit requirement, production status, required inputs, and forbiddenWhen preconditions. Companion to the TOOL1 contract concepts (summarized inline in the slice doc because TOOL1 is not yet on main). No tool dispatch, no model calls, no migrations. Lane E output of the parallel build pack."
     }
   ]
 }
