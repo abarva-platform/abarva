@@ -7,6 +7,8 @@ import type { ProductionReadinessApiResponse } from '@/lib/admin/production-read
 
 type RefreshStatus = 'refreshed' | 'refreshing' | 'error';
 
+const PRODUCTION_READINESS_UI_VERSION = 'ui-c2a81fd-control-plane';
+
 interface ProductionReadinessLivePanelProps {
   initialResponse: ProductionReadinessApiResponse;
   refreshIntervalMs?: number;
@@ -64,7 +66,10 @@ export function ProductionReadinessLivePanel({
     setErrorMessage(null);
 
     try {
-      const apiResponse = await fetch('/api/admin/production-readiness', {
+      const refreshUrl = `/api/admin/production-readiness?ui=${encodeURIComponent(
+        PRODUCTION_READINESS_UI_VERSION,
+      )}&t=${Date.now()}`;
+      const apiResponse = await fetch(refreshUrl, {
         cache: 'no-store',
         headers: { Accept: 'application/json' },
       });
@@ -112,6 +117,7 @@ export function ProductionReadinessLivePanel({
             <span style={mutedLabelStyle}>
               {response.updateMode} - {response.freshnessStatus}
             </span>
+            <span style={mutedLabelStyle}>{PRODUCTION_READINESS_UI_VERSION}</span>
           </div>
           <button
             type="button"

@@ -14,6 +14,7 @@ const readModelSource = readCode('src/lib/admin/production-readiness.ts');
 const livePanelSource = readCode('src/components/admin/ProductionReadinessLivePanel.tsx');
 const trackerSource = readCode('src/components/admin/ProductionReadinessTracker.tsx');
 const pageSource = readCode('src/app/(maestro)/platform/admin/production-readiness/page.tsx');
+const proxySource = readCode('src/proxy.ts');
 const combinedSource = stripComments(
   [routeSource, readModelSource, livePanelSource, trackerSource, pageSource].join('\n'),
 );
@@ -66,6 +67,7 @@ describe('PROD3 route and client refresh behavior', () => {
 
   it('page renders the live panel with request-time initial data', () => {
     expect(pageSource).toMatch(/connection\(/);
+    expect(pageSource).toMatch(/revalidate = 0/);
     expect(pageSource).toMatch(/ProductionReadinessLivePanel/);
     expect(pageSource).toMatch(/buildProductionReadinessApiResponse/);
   });
@@ -73,12 +75,24 @@ describe('PROD3 route and client refresh behavior', () => {
   it('client panel polls the internal API and exposes manual refresh', () => {
     expect(livePanelSource).toMatch(/useEffect/);
     expect(livePanelSource).toMatch(/setInterval/);
-    expect(livePanelSource).toMatch(/fetch\('\/api\/admin\/production-readiness'/);
+    expect(livePanelSource).toMatch(/PRODUCTION_READINESS_UI_VERSION/);
+    expect(livePanelSource).toMatch(/ui-c2a81fd-control-plane/);
+    expect(livePanelSource).toMatch(/\/api\/admin\/production-readiness\?ui=/);
+    expect(livePanelSource).toMatch(/Date\.now\(\)/);
     expect(livePanelSource).toMatch(/cache: 'no-store'/);
     expect(livePanelSource).toMatch(/Production Readiness Control Plane/);
     expect(livePanelSource).toMatch(/Last refreshed/);
     expect(livePanelSource).toMatch(/Refresh/);
     expect(livePanelSource).toMatch(/Showing the server-rendered manifest/);
+  });
+
+  it('proxy prevents the production readiness shell from being reused as a stale browser or edge response', () => {
+    expect(proxySource).toMatch(/PRODUCTION_READINESS_NO_STORE_PATHS/);
+    expect(proxySource).toMatch(/\/platform\/admin\/production-readiness/);
+    expect(proxySource).toMatch(/\/api\/admin\/production-readiness/);
+    expect(proxySource).toMatch(/withProductionReadinessNoStoreHeaders/);
+    expect(proxySource).toMatch(/Cache-Control/);
+    expect(proxySource).toMatch(/no-store, no-cache/);
   });
 });
 
