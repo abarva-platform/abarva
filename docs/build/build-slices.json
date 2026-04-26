@@ -5391,6 +5391,59 @@
         "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
       ],
       "notes": "Allow safe .env*.example placeholder templates to be committed without git add -f while keeping every real env file ignored. Adds two explicit allow rules (!.env.example and !.env.*.example) immediately under the existing .env* blanket rule in .gitignore; the .env*.local rule is left in place. Adds a founder-facing policy doc at docs/deployment/ENV_EXAMPLE_POLICY.md, a slice doc at docs/build/slices/CLOUD8_ENV_EXAMPLE_GITIGNORE_POLICY.md, and a deterministic file-pure Jest contract at src/__tests__/integration/deployment/env-example-policy.test.ts that locks the gitignore shape and scans every committed .env.*.example file for header markers and likely-secret regex shapes (GitHub PATs, sk-/sk-ant- keys, JWTs, AWS access keys). Direct response to CLOUD4 needing git add -f to commit .env.private-lab.example. No new env files are added by this slice. No real env files are committed. No application code, no runtime, no auth, no supabase, no migrations, no IaC, no model calls, no live cloud calls, no deploy. production_deployment status is preserved (still blocked); the prod-deploy-verification blocker is preserved verbatim."
+    },
+    {
+      "id": "PROD5",
+      "name": "CI / Vercel Status Surface Integration",
+      "category": "PROD",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane G",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "PROD3",
+        "PROD4"
+      ],
+      "allowedFiles": [
+        "src/components/admin/DeploymentStatusCard.tsx",
+        "src/__tests__/integration/admin/deployment-status-card.test.ts",
+        "docs/build/slices/PROD5_DEPLOYMENT_STATUS_SURFACE_INTEGRATION.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "DeploymentStatusCard is a Server Component (no 'use client', no React hooks) and consumes the PROD4 ProductionReadinessDeploymentSignal as a prop without making any external API call.",
+        "The card renders an honest unavailable display when tokens are absent: chip text 'unavailable', '\u2014' for last-checked, explicit limitation note, deterministic next action mentioning GITHUB_STATUS_TOKEN and VERCEL_STATUS_TOKEN, and the disclaimer 'No fake green. liveStatus reflects honest token presence.'.",
+        "Component imports COLORS, FONT, BORDER, RADIUS, SPACING, and TYPE from @/lib/design/abarva-theme; the source contains no local hex literals and no local 'const COLORS' declaration (canon \u00a7L acceptance gate #8).",
+        "Integration test asserts unavailable rendering, no fake 'live' chip text, no liveStatus 'live' in the serialized signal, no process.env.*TOKEN / SECRET / KEY reads in the component source, no fetch / api.github.com / api.vercel.com / anthropic / openai references in the component source, and no auth / source / sentinel / atlas / nexus / agent / supabase / clerk imports.",
+        "Slice documentation explains why the card lands as a server component, why mounting on the live panel is deferred to a follow-up slice, and that no provider polling is performed.",
+        "production-readiness.json validation_qa and production_deployment notes are UNION-updated conservatively without overwriting prior PROD1\u2013PROD4 wording; manifest top-level lastUpdated is 2026-04-26; no component status promotion."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/admin/deployment-status-card.test.ts",
+        "npx jest src/__tests__/integration/admin/production-readiness-live-refresh.test.ts",
+        "npm run build",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Surfaces the PROD4 deployment-status read model as a calm, Apple-like server component on the platform Admin Production Readiness page. UI-facing slice with strict canon hygiene (theme imports only, no local hex). Honest unavailable display when tokens are absent; chip uses a single dark-blue accent regardless of state because PROD5 cannot prove a green deploy. Mounting the card on the live panel is deferred to a follow-up slice; PROD5 lands the component and its honesty test only. No provider API polling, no model calls, no auth changes, no migrations, no tracker promotion."
     }
   ]
 }
