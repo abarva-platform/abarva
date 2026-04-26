@@ -741,7 +741,7 @@
       "waveId": "wave-17",
       "name": "AbarVa Design + Workflow Canon Enforcement",
       "goal": "Bring the live AbarVa product together visually, structurally, and narratively across shell, navigation, Admin, Architecture, Production Readiness, and Source Commercial pages.",
-      "status": "in_progress",
+      "status": "merged",
       "percentComplete": 100,
       "plannedSlices": [
         "DES7",
@@ -763,11 +763,13 @@
       ],
       "skippedSlices": [],
       "blockedSlices": [],
-      "mergedPrs": [],
-      "validationStatus": "not_run",
+      "mergedPrs": [
+        362
+      ],
+      "validationStatus": "tests_green",
       "productionReadinessUpdated": false,
       "currentBlockers": [],
-      "nextAction": "Watch CI and merge when green.",
+      "nextAction": "Status post-merge update.",
       "lastUpdated": "2026-04-26"
     }
   ]
