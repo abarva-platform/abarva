@@ -7686,6 +7686,13 @@
       "status": "code_complete",
       "wave": "wave-20",
       "lane": "E"
+    },
+    {
+      "id": "SHELL7",
+      "title": "Intelligence Tower Shell Control",
+      "status": "code_complete",
+      "wave": "wave-20",
+      "lane": "G"
     }
   ]
 }
