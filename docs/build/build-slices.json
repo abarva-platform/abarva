@@ -2729,6 +2729,54 @@
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
       "notes": "Deterministic, file-pure registry that names every canonical agent tool with allowed agents, read/write/export/audit mode, tenant scope, audit requirement, production status, required inputs, and forbiddenWhen preconditions. Companion to the TOOL1 contract concepts (summarized inline in the slice doc because TOOL1 is not yet on main). No tool dispatch, no model calls, no migrations. Lane E output of the parallel build pack."
+    },
+    {
+      "id": "QA4",
+      "name": "Agent Mission Persona Verification Runbook",
+      "category": "QA",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Reviewer",
+      "dependsOn": [
+        "AG10",
+        "AG11",
+        "MG2",
+        "TOOL2",
+        "PROD2"
+      ],
+      "allowedFiles": [
+        "docs/build/AGENT_MISSION_PERSONA_VERIFICATION_RUNBOOK.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Runbook \u00a7A documents purpose and scope as the founder-facing checklist for AG10 (mission queue read model), AG11 (mission UI panel), MG2 (model gateway stub), TOOL2 (tool registry MVP), and PROD2 (production-readiness validator), named as the fourth companion to QA1 (Agentic Spine), QA2 (Solution Workshop), and QA3 (Solution Intelligence) verification runbooks; explicitly out-of-scopes workshop dynamics, solution intelligence canvas walks, agentic spine internals, live retrieval, live model calls, scheduler/background mission triggers, mission persistence, exporter pipelines, and real evidence citations.",
+        "Runbook \u00a7B documents the branch hygiene checklist with exact git commands (git branch --show-current, git status --short, git status -sb, git log --oneline origin/main..HEAD, git log --oneline -3, git show --stat HEAD, git diff --cached --name-only, git ls-files --others --exclude-standard) and pass criteria for each, naming the QA4 staged set as exactly the three allowedFiles entries.",
+        "Runbook \u00a7C lists required validation commands (npx tsc --noEmit --pretty false, npm run build, npm run integrity:dom, the per-slice jest suites for AG10 / AG11 / MG2 / TOOL2 / PROD2, the production-readiness-tracker regression jest suite, and the python3 manifest parse) with pass criteria, and explains why MG2 / TOOL2 each get their own suite.",
+        "Runbook \u00a7D defines per-persona walks for Founder / Platform Operator (/platform/admin, /platform/admin/production-readiness, /platform/admin/build-progress), Client Maestro (/tenant/apex-retail/programs and /programs/{slug} and /phase/{n}), CIO / CTO (/tenant/apex-retail/tower), CFO / Value Office (/tenant/apex-retail/tower), Steward Admin (/platform/admin and /platform/admin/production-readiness), and Data Owner (/platform/admin Dataset Explorer); each persona walk has explicit expected mission rows and stop conditions, and AG11 mounting-deferred surfaces are marked as static-source assertions.",
+        "Runbook \u00a7E captures the route coverage table (route -> primary agent -> mission types expected -> current status) for /platform/admin, /platform/admin/production-readiness, /tenant/apex-retail/programs, /tenant/apex-retail/tower, /tenant/apex-retail/intelligence, and /tenant/apex-retail/intelligence/patterns/[patternKey], plus a cross-tenant note on Apex Retail vs Meridian and a mission-type to surface map.",
+        "Runbook \u00a7F defines per-agent mission verification rules for Nexus next_action, Sentinel evidence_gap, Atlas executive_brief, and Steward gate_check / data_readiness, with explicit rules on rationale (>=1 sentence), stopCondition (concrete observable event, never 'Wait' / 'TBD'), terminal-path closure (every state reaches completed / dismissed / escalated / deferred), valid handoff target, and UI visibility recommendation matching surface; includes a mission-state transition table and a priority-order assertion.",
+        "Runbook \u00a7G defines no-fabrication checks: no fake dollars regex (\\$\\s?\\d) on AG10 seed JSON, no fabricated E-### citations across src/lib/agents and AG10 / AG11 source, no fake live runtime claims (live monitoring / production observability / real-time feed / live connector / live retrieval) outside honest-disclaimer or PROD2-protocol context, no fake production readiness (overallReadinessPercent <= planned high band, no production_ready component without all gates), no banned placeholders (Coming soon / TBD / Lorem ipsum), honest disclaimers always present, no named-vendor endorsements, and no model / API call leakage.",
+        "Runbook \u00a7H defines production-readiness tracker verification: manifest parses, 15 canonical components present in canonical order, maturitySnapshot has 3 indicators + 20 areas, overallReadinessPercent within 20-25 (matches production_readiness indicator band), PROD2 validator returns passed: true and violations: [], lastUpdated reflects most recent change, no silent component promotion, and validation_qa.notes lists QA1/QA2/QA3/QA4.",
+        "Runbook \u00a7I defines the morning review decision matrix (keep / amend / discard / cherry-pick / push-PR) with default = wait for founder review, push only with explicit founder go-ahead, and the conflict resolution policy for production-readiness.json (conservative status, union blockers, latest nextAction wins or appends, preserve notes from both sides, bump lastUpdated) per PROD2 \u00a7I.",
+        "Runbook \u00a7J documents the canonical cherry-pick path off main (integration/agent-mission-batch, dependency order AG10 -> AG11 -> MG2 -> TOOL2 -> PROD2 -> QA4, keep both entries on build-slices.json conflict, apply \u00a7I conflict policy on production-readiness.json conflict, re-run \u00a7C validation, push only with founder go-ahead) and references QA1 / QA2 / QA3 by name as siblings; appendix on worktree hygiene reminds that staged set must equal the three allowedFiles entries verbatim.",
+        "Documentation only; no application code, runtime, auth, supabase, or migrations are modified.",
+        "build-slices.json appends a QA4 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn, status code_complete, risk low, and ownerAgent Reviewer; manifest top-level lastUpdated is bumped to today's ISO date.",
+        "production-readiness.json validation_qa component appends a note acknowledging that QA4 mission / persona verification runbook is added; status is preserved (no promotion); manifest top-level lastUpdated is bumped to today's ISO date."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build"
+      ],
+      "notes": "Founder-facing checklist for verifying AG10, AG11, MG2, TOOL2, and PROD2 outputs land honestly before push or PR. Fourth companion to QA1 (Agentic Spine), QA2 (Solution / Workshop), and QA3 (Solution Intelligence) verification runbooks. Deterministic \u2014 does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
     }
   ]
 }
