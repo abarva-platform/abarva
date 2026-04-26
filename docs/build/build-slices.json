@@ -7277,6 +7277,20 @@
         "src/__tests__/integration/source/source-bafo-negotiation-model-panel.test.ts"
       ],
       "completedAt": "2026-04-26"
+    },
+    {
+      "id": "SRC22",
+      "wave": "wave-15",
+      "title": "Commercial Risk Panel",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "Expandable risk exception list with severity chips, stats row, missing-input warnings.",
+      "files": [
+        "src/lib/source/source-commercial-risk-view.ts",
+        "src/components/source/SourceCommercialRiskPanel.tsx",
+        "src/__tests__/integration/source/source-commercial-risk-panel.test.ts"
+      ],
+      "completedAt": "2026-04-26"
     }
   ]
 }
