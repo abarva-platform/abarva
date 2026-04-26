@@ -4894,6 +4894,62 @@
         "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
       ],
       "notes": "Reference Bicep IaC starter for a private-VNet Azure Container Apps lab. Provides main.bicep (VNet + two subnets, Container Apps Environment + Container App with placeholder hello-world image, Postgres Flexible Server, Storage Account, Key Vault, Log Analytics workspace, three privatelink DNS zones; @description on every parameter; no embedded secrets, no subscription IDs, no tenant ID literals, no administratorLoginPassword; Postgres password sourced from Key Vault at deploy time), parameters.example.json (ARM deploymentParameters $schema; <replace-me> placeholders for all values except location which is the representative example eastus2), README.md (STARTER / LAB ONLY; documents az bicep build and az deployment group what-if as the only validation commands; az deployment group create is forward-only and marked NOT to be executed; cross-references CLOUD2 / CLOUD1 / CLOUD4), and a deterministic file-pure jest suite that asserts shape and absence of hardcoded secrets. No deploy is performed, no Azure credentials are required, no real subscription is touched. production_deployment status is preserved (still blocked); the prod-deploy-verification blocker is preserved verbatim; the deploy itself is deferred to a later slice."
+    },
+    {
+      "id": "TEN3",
+      "name": "Dedicated Tenant Deployment Blueprint",
+      "category": "TEN",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane E (controlled multi-agent build)",
+      "dependsOn": [
+        "TEN1",
+        "TEN2"
+      ],
+      "lastUpdated": "2026-04-26",
+      "allowedFiles": [
+        "src/lib/architecture/dedicated-tenant-blueprint.ts",
+        "src/__tests__/integration/architecture/dedicated-tenant-blueprint.test.ts",
+        "docs/build/slices/TEN3_DEDICATED_TENANT_DEPLOYMENT_BLUEPRINT.md",
+        "docs/architecture/TEN3_DEDICATED_TENANT_DEPLOYMENT_BLUEPRINT.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/auth/**",
+        "src/lib/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/architecture/dedicated-tenant-blueprint.ts exports DedicatedTenantDeploymentModel, DedicatedTenantDataStore, DedicatedTenantIsolationControl, DedicatedTenantOperationalResponsibility, DedicatedTenantReadinessChecklist (and DedicatedTenantReadinessChecklistItem), DedicatedTenantOnboardingStep, DedicatedTenantBlueprintFinding, DedicatedTenantReadinessSummary, the canonical tuples (DEDICATED_TENANT_READINESS_STATES, DEDICATED_TENANT_STORE_KINDS, DEDICATED_TENANT_ONBOARDING_STEP_KINDS, DEDICATED_TENANT_OPERATIONAL_SURFACES, DEDICATED_TENANT_CHECKLIST_CATEGORIES), and the helpers buildDedicatedTenantBlueprint, summarizeDedicatedTenantReadiness, validateDedicatedTenantBlueprint plus list-helpers for every canonical tuple.",
+        "Module references TEN2 isolation levels via a type-only import from @/lib/architecture/tenant-isolation-boundary; no runtime symbols cross the boundary; TEN2 boundary catalog is not duplicated.",
+        "Every emitted entity (envelope, data store, isolation control, onboarding step, operational responsibility, checklist item, checklist wrapper, blueprint root) carries createdFrom 'deterministic_dedicated_tenant_blueprint_seed'.",
+        "Seed dataStores cover all six canonical store kinds (database, storage, vector, graph, model_gateway, audit); seed isolationControls cover every canonical store kind; seed onboardingSequence is contiguous 1..9 with the nine canonical step kinds; seed operationalResponsibilities cover every canonical surface (upgrade_strategy, maintenance_windows, backup_retention, disaster_recovery, secret_rotation, cost_observability, tenant_offboarding, incident_response); seed readinessChecklist covers every canonical category (data_plane, identity, governance, operations, cost).",
+        "src/__tests__/integration/architecture/dedicated-tenant-blueprint.test.ts proves determinism (byte-equal blueprint, checklist, and summary across repeated calls), enforces every canonical tuple shape, asserts all required boundaries are present, asserts the validator detects missing store kinds, non-contiguous onboarding sequences, unknown isolation control storeKind values, missing operational surfaces, missing checklist blockers, and wrong createdFrom tags, asserts summary reconciles totals, and asserts module hygiene (no auth/source/sentinel/atlas/nexus/agent/supabase imports; no Date.now/Math.random/new Date(/fetch(; no anthropic/openai/cohere/databricks/pinecone references; no React state hooks; no placeholder language; no fabricated dollar amounts; no production_ready substring in serialized output).",
+        "docs/build/slices/TEN3_DEDICATED_TENANT_DEPLOYMENT_BLUEPRINT.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, readiness impact, validation commands, and references the architecture contract by relative path.",
+        "docs/architecture/TEN3_DEDICATED_TENANT_DEPLOYMENT_BLUEPRINT.md documents \u00a7A purpose / scope, \u00a7B Tier 2 deployment envelope, \u00a7C dedicated database options (per-tenant Postgres Flexible default, schema-per-tenant fallback), \u00a7D dedicated storage (per-tenant blob container default, S3-style bucket fallback), \u00a7E vector and graph namespaces per tenant, \u00a7F per-tenant model gateway policy (acceptable providers, key ownership, where calls originate, audit destination, allowlist, rate limit), \u00a7G audit log boundary (dedicated stream default, row-scoped fallback, retention, export), \u00a7H customer SSO integration (per-tenant IdP, no AbarVa platform admin sign-in as tenant user), \u00a7I tenant admin (named customer-side individual, separation from AbarVa platform admins), \u00a7J onboarding sequence (initialize tenant record \u2192 provision data stores \u2192 wire SSO \u2192 seed roles \u2192 register tenant admin \u2192 activate gateway policy \u2192 enable audit boundary \u2192 set up agents \u2192 verify smoke), \u00a7K rolling upgrade strategy with per-tenant maintenance windows, \u00a7L backup and retention, \u00a7M cost and ops considerations, \u00a7N risks (cross-tenant leak from shared client, gateway policy drift, tenant admin is also AbarVa employee, backup window misses a store, Tier 2 promised before V1 milestone), \u00a7O non-goals, \u00a7P cross-references to TEN1, TEN2, TRUST1, TRUST2, CLOUD1, CLOUD2, MG2, AUD2, ARCH1, and \u00a7Q acceptance criteria.",
+        "docs/build/build-slices.json appends a TEN3 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn (TEN1, TEN2), status code_complete, risk low, ownerAgent Lane E, and lastUpdated 2026-04-26; manifest top-level lastUpdated remains 2026-04-26.",
+        "docs/build/production-readiness.json updates production_deployment and admin_setup notes/nextAction (UNION; conservative; no promotion) and bumps top-level lastUpdated to 2026-04-26.",
+        "Read model only; no auth implementation changes, no RLS, no migrations, no live runtime claim; only the six allowed files are staged."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/dedicated-tenant-blueprint.test.ts",
+        "npm run build",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Deterministic, file-pure read model and architecture document for the AbarVa Tier 2 (Enterprise SaaS / Dedicated Tenant) deployment blueprint. Names dedicated database options (per-tenant Postgres Flexible default, schema-per-tenant fallback), dedicated storage (per-tenant blob container or S3-style bucket), per-tenant vector and graph namespaces, per-tenant model gateway policy (allowlist, rate limit, audit destination), audit log boundary (dedicated stream default), customer SSO integration, tenant admin separation, deterministic onboarding sequence (9 canonical steps), rolling per-tenant upgrade strategy with maintenance windows, backup / retention / DR / secret-rotation / cost-observability / offboarding / incident-response operational responsibilities, and a five-category readiness checklist. References TEN2 isolation levels via a type-only import; no runtime dependency on TEN2 and no duplication of the TEN2 boundary catalog. No application code outside the new module, no runtime, no auth, no supabase, no migrations, no provisioning automation, no live cloud calls, no model calls, no browser automation. production_deployment status is preserved at blocked; admin_setup status is preserved at code_complete; the prod-deploy-verification blocker is preserved verbatim; no other component is promoted."
     }
   ]
 }
