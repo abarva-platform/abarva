@@ -4077,6 +4077,70 @@
       "notes": "Pure deterministic projection of (tenant, program) seed state into a per-program resume-state record. Operationalizes the save / stop / resume lifecycle named in the PF2 Program Phase Workspace contract and the MW1 Maestro Workshop Intelligence contract WITHOUT persistence. No DB writes, no migrations, no model calls, no timestamps. Items the seed cannot derive surface as 'unknown' rather than fabricated progress. Future slice mounts the read model on the canonical Programs detail surface and the Workshop Mode shell; live save / stop / resume persistence lands once auth + audit + persistence slices land."
     },
     {
+      "id": "PROG8",
+      "name": "Phase Gate Advancement Flow Contract",
+      "category": "PROG",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "S9",
+        "S9C",
+        "PF2",
+        "PROG7"
+      ],
+      "allowedFiles": [
+        "src/lib/programs/phase-gate-advancement-flow.ts",
+        "src/__tests__/integration/programs/phase-gate-advancement-flow.test.ts",
+        "docs/build/slices/PROG8_PHASE_GATE_ADVANCEMENT_FLOW_CONTRACT.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Module exports buildPhaseGateAdvancementProposal, evaluatePhaseGateReadiness, summarizePhaseGateAdvancements, and getBlockedPhaseGates.",
+        "Module exports types PhaseGateAdvancementProposal, PhaseGateReadinessSignal, PhaseGateMissingInput, PhaseGateEvidenceRequirement, PhaseGateAuditRequirement, PhaseGateAdvancementFlowSummary, and PhaseGateAdvancementStatus ('ready' | 'partially_ready' | 'blocked' | 'requires_waiver' | 'requires_review').",
+        "Every proposal carries proposed: true; no proposal carries an applied / signed / transitioned literal field; no string field claims an applied / signed / transitioned transition.",
+        "Every proposal carries createdFrom: 'deterministic_phase_gate_advancement_seed' and id format 'phase-gate-advancement:<tenantKey>:<programSlug>:p<phase>-g<gate>' that is unique across the portfolio.",
+        "All 5 PhaseGateAdvancementStatus values are represented across the canonical demo portfolio.",
+        "Every proposal exposes stewardReadiness (signals + counts), missingInputs[] (id, label, reason, blocking), evidenceRequirements[] (id, label, reason, kind, evidenceRegistryWired: false), auditRequirement (requiredAuditEvents, signoffRole: 'steward', auditLogWired: false), and recommendedNextAction (label, routePath, reason, kind).",
+        "Blocked / requires_waiver proposals carry at least one blocking signal or blocking missing input; every requires_waiver proposal carries a non-empty waiverPathReason; non-waiver proposals have null waiverPathReason.",
+        "summarizePhaseGateAdvancements reconciles totalCount, byStatus, totalMissingInputs, totalBlockingMissingInputs, totalEvidenceRequirements, perTenant, and perGate against the input.",
+        "getBlockedPhaseGates returns only blocked or requires_waiver proposals and never promotes requires_review or partially_ready to blocked.",
+        "Every audit requirement names the canonical event types (gate_advancement_proposed, gate_advancement_evaluated, steward_signoff_recorded, evidence_capture_attached) and adds waiver_path_invoked when the gate strip status is blocked.",
+        "Module imports nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase; does not call Date.now / Math.random / new Date / fetch; does not invoke Anthropic or OpenAI.",
+        "No string field in any proposal invents a dollar amount or claims an E-### evidence citation.",
+        "Output is byte-equal across repeated builds (deterministic JSON.stringify check)."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/phase-gate-advancement-flow.test.ts",
+        "npx eslint --max-warnings=0 src/lib/programs/phase-gate-advancement-flow.ts src/__tests__/integration/programs/phase-gate-advancement-flow.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic projection of (tenant, program, canonical phase) seed state into a *proposed* phase gate advancement record. Operationalizes the proposed phase gate advancement flow named in the S9C Program Phase Gate Status, PF2 Program Phase Workspace, and MW1 Maestro Workshop Intelligence contracts WITHOUT performing any state transition. Every proposal is proposed: true (never applied), with a deterministic Steward readiness summary, missing inputs, evidence requirements (each with evidenceRegistryWired: false), audit requirement (auditLogWired: false), and recommended next action. No DB writes, no migrations, no model calls, no phase advance, no gate signoff, no waiver issuance. The advancement card lands in a follow-up slice; live phase gate state machine + audit log + Steward signoff persistence land once auth + audit + persistence slices land."
+    },
+    {
       "id": "MW6",
       "name": "SME Recommendation Panel",
       "category": "MW",
