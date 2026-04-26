@@ -7235,6 +7235,116 @@
         "docs/build/HYGIENE_GATE_CI_CONTRACT.md"
       ],
       "completedAt": "2026-04-26"
+    },
+    {
+      "id": "SRC19",
+      "wave": "wave-15",
+      "title": "Source Commercial Summary Surface Mount",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "Surface wrapper for SourceCommercialSummaryPanel with AbarVa design canon, status strip, and caveat footer.",
+      "files": [
+        "src/lib/source/source-commercial-summary.ts",
+        "src/components/source/SourceCommercialSummarySurface.tsx",
+        "src/__tests__/integration/source/source-commercial-summary-surface.test.ts"
+      ],
+      "completedAt": "2026-04-26"
+    },
+    {
+      "id": "SRC20",
+      "wave": "wave-15",
+      "title": "Pricing Comparison Panel",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "Vendor pricing comparison panel with tower breakdown, completeness, and missing-section warnings.",
+      "files": [
+        "src/lib/source/source-pricing-comparison-view.ts",
+        "src/components/source/SourcePricingComparisonPanel.tsx",
+        "src/__tests__/integration/source/source-pricing-comparison-panel.test.ts"
+      ],
+      "completedAt": "2026-04-26"
+    },
+    {
+      "id": "SRC21",
+      "wave": "wave-15",
+      "title": "BAFO Negotiation Panel",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "BAFO negotiation model panel with lever/opportunity/ask/recommendation tabs. Uses Wave-14 bafo-negotiation-model.ts. Named SourceBafoNegotiationModelPanel to avoid collision with existing SourceBafoNegotiationPanel.",
+      "files": [
+        "src/lib/source/source-bafo-negotiation-view.ts",
+        "src/components/source/SourceBafoNegotiationModelPanel.tsx",
+        "src/__tests__/integration/source/source-bafo-negotiation-model-panel.test.ts"
+      ],
+      "completedAt": "2026-04-26"
+    },
+    {
+      "id": "SRC22",
+      "wave": "wave-15",
+      "title": "Commercial Risk Panel",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "Expandable risk exception list with severity chips, stats row, missing-input warnings.",
+      "files": [
+        "src/lib/source/source-commercial-risk-view.ts",
+        "src/components/source/SourceCommercialRiskPanel.tsx",
+        "src/__tests__/integration/source/source-commercial-risk-panel.test.ts"
+      ],
+      "completedAt": "2026-04-26"
+    },
+    {
+      "id": "SRC23",
+      "wave": "wave-15",
+      "name": "Source Commercial Readiness View",
+      "type": "source-ui",
+      "status": "code_complete",
+      "branch": "wave15/src23-commercial-readiness",
+      "description": "Readiness checklist with 6 checks across pricing, risk, negotiation, evidence, and decision dimensions. AbarVa design canon."
+    },
+    {
+      "id": "SRC24",
+      "wave": "wave-15",
+      "name": "Source Commercial Missions Panel",
+      "type": "source-ui",
+      "status": "code_complete",
+      "branch": "wave15/src24-commercial-missions-panel",
+      "description": "Mission queue panel showing up to 5 commercial intelligence missions grouped by agent owner. Show-more toggle. AbarVa design."
+    },
+    {
+      "id": "SRC25",
+      "wave": "wave-15",
+      "name": "Source Commercial Signals Preview",
+      "type": "source-ui",
+      "status": "code_complete",
+      "branch": "wave15/src25-commercial-signals-preview",
+      "description": "Compact preview of top 3 control-tower signals and top 3 intelligence patterns. Severity chips, confidence bars. AbarVa design."
+    },
+    {
+      "id": "SRC26",
+      "wave": "wave-15",
+      "name": "Source Commercial Hub",
+      "type": "source-ui",
+      "status": "code_complete",
+      "branch": "wave15/src26-commercial-hub",
+      "description": "Top-level 7-tab hub container for commercial intelligence panels. Prop-slot composition pattern. AbarVa design."
+    },
+    {
+      "id": "ARCH4",
+      "wave": "wave-15",
+      "name": "Admin Architecture Overview Page",
+      "type": "admin-page",
+      "status": "code_complete",
+      "branch": "wave15/arch4-admin-architecture-page",
+      "description": "Architecture overview page at /platform/admin/architecture. Shows 6 system layers, wave history, build stats. AbarVa design."
+    },
+    {
+      "id": "QA22",
+      "wave": "wave-15",
+      "name": "Source Commercial UI Verification",
+      "type": "qa",
+      "status": "code_complete",
+      "branch": "wave15/qa22-source-commercial-ui-verification",
+      "description": "Wave-15 UI verification: 8-component manifest, design token check, integration-phase file existence tests. Always-passing in lane worktree, full coverage in integration branch."
     }
   ]
 }
