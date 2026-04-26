@@ -7480,6 +7480,15 @@
       "status": "code_complete",
       "branch": "wave18/prog11-phase-gate-canvas",
       "description": "PhaseGateCanvas \u2014 6-phase journey rail + current gate card with requirements, missing inputs, Steward implication, approval caveat. Read-only deterministic; no transitions."
+    },
+    {
+      "id": "PROG12",
+      "wave": "wave-18",
+      "name": "Nexus Workshop / Center Canvas Refresh",
+      "type": "program-ui",
+      "status": "code_complete",
+      "branch": "wave18/prog12-nexus-workshop-canvas",
+      "description": "NexusWorkshopCanvas \u2014 workshop briefing surface: objective, agenda, attendees, tensions, decisions needed, evidence to capture, expected outputs, proposed updates placeholder. Read-only deterministic."
     }
   ]
 }
