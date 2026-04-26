@@ -7,7 +7,7 @@ Status: implemented (planning spec complete; deterministic shell added in PR #31
 Scope: documentation and planning only. No UI, runtime, API routes, model calls, upload/parsing, evidence processing, workflow engine, approval engine, or persistence changes in this slice.
 
 Implementation note:
-- PR #319 (`feat(source): add RFP readiness panel`) now provides the first bounded Scope → RFP readiness UI surface and deterministic tier visibility in the event canvas. This plan remains the authoritative source for how those outputs should behave and what remains out-of-scope.
+- PR #319 (`feat(source): add RFP readiness panel`) now provides the first bounded Scope to RFP readiness UI surface and deterministic tier visibility in the event canvas. This plan remains the authoritative source for how those outputs should behave and what remains out-of-scope.
 
 ## 1. Purpose
 
