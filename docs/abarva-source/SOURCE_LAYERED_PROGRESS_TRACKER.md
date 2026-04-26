@@ -8,10 +8,10 @@ Purpose: provide a layer-by-layer view of where AbarVa Source stands against MVP
 
 - Source has a strong foundation in product architecture, deterministic context validation, workflow validation, pattern IP, deterministic multi-agent briefings, deterministic agent missions, and a platform Agent Mission Model.
 - Source is not production-ready.
-- MVP readiness is improving, but the product still needs authenticated UI review, persistence, evidence/upload pipeline, auth/tenant hardening, and production validation.
+- MVP readiness is improving after local authenticated Source review, but the product still needs production-domain authenticated review, persistence, evidence/upload pipeline, auth/tenant hardening, and production validation.
 - Current foundation milestone: PR #287 added the deterministic Admin/Setup-to-Source readiness contract model, PR #288 wired the event canvas data readiness panel to contract-shaped progress, and PR #289 added smoke coverage proving the contract projection renders even when event-local readiness rows are empty.
-- Current visible progress read: the seeded Data & AI Modernization event shows 34% event data readiness, 13% usable evidence coverage, and 3 of 5 required categories present. This is deterministic contract progress, not live Admin/Setup integration.
-- Current recommended next slice: unblock authenticated Source review, then rerun `/source` and `/source/events/evt-source-data-ai-si-selection` visual review with the contract-backed readiness progress visible.
+- Current visible progress read: the seeded Data & AI Modernization event shows 34% event data readiness, 13% usable evidence coverage, and 3 of 5 required categories present. Local authenticated review now confirms that progress is visible in the Source event canvas. This is deterministic contract progress, not live Admin/Setup integration.
+- Current recommended next slice: implement the bounded Scope stage workspace plan, then run production-domain authenticated visual review once deployed artifacts are available.
 
 ## Layer Summary
 
@@ -24,9 +24,9 @@ Purpose: provide a layer-by-layer view of where AbarVa Source stands against MVP
 | Workflow Validation Harness | 85% | Deterministic foundation complete | PR #204, PR #207, PR #210 | Preserve remaining defer until upload/evidence exists |
 | Multi-Agent Intelligence | 57% | Deterministic briefings, mission read model, mission report, dashboard preview, review packet, and route/component smoke exist; no runtime queue/scheduler/persistence/model layer | PR #227, PR #248, PR #254, PR #255, PR #259, PR #262, PR #264, `src/lib/source/multi-agent-briefing.ts`, `src/lib/source/agent-missions.ts`, `src/lib/source/agent-mission-report.ts` | Use mission report in the event canvas shell |
 | Source API / Runtime | 27% | Deterministic no-model API stub plus contract/mission consistency tests exist; production runtime not ready | PR #230, PR #245, PR #283, `src/app/api/v1/source/[eventId]/nexus/ask/route.ts` | Keep route deterministic; do not add model calls until mission/readiness gates are ready |
-| Source UI / User Experience | 54% | Dashboard, mission preview, event canvas shell, contract-backed data readiness progress, and route/component smoke exist; authenticated review remains blocked | PR #212, PR #213, PR #218, PR #259, PR #262, PR #264, PR #265, PR #269, PR #270, PR #273, PR #277, PR #278, PR #288, PR #289, PR #290, Experience System | Repair authenticated review path and rerun dashboard/event canvas visual review |
-| Data / Evidence / Upload Pipeline | 24% | Source now consumes a deterministic Admin/Setup readiness contract projection; upload/parsing/live Admin integration is not started | Attachment/context contracts, validation defers, PR #266, PR #274, PR #277, PR #278, PR #285, PR #287, PR #288, PR #289 | Plan live Admin/Setup readiness backing after authenticated review |
-| Production Readiness | 18% | Deterministic smoke and freshness metadata exist; authenticated review attempted but blocked by local demo sign-in 500 | Production readiness tracker, PR #264, PR #270, PR #278, PR #281, PR #283, PR #287, PR #288, PR #289, PR #290 | Authenticated live route smoke, CI/Vercel ingestion, and screenshot review remain required |
+| Source UI / User Experience | 58% | Dashboard, mission preview, event canvas shell, contract-backed data readiness progress, local authenticated visual review, tiny polish, and route/component smoke exist; production-domain review remains incomplete | PR #212, PR #213, PR #218, PR #259, PR #262, PR #264, PR #265, PR #269, PR #270, PR #273, PR #277, PR #278, PR #288, PR #289, PR #290, PR #295, PR #296, PR #297, PR #298, Experience System | Implement the bounded Scope stage workspace plan |
+| Data / Evidence / Upload Pipeline | 24% | Source consumes a deterministic Admin/Setup readiness contract projection; upload/parsing/live Admin integration is not started | Attachment/context contracts, validation defers, PR #266, PR #274, PR #277, PR #278, PR #285, PR #287, PR #288, PR #289 | Plan live Admin/Setup readiness backing after Scope stage workspace deepening |
+| Production Readiness | 20% | Deterministic smoke, freshness metadata, local authenticated Source review, and authenticated route smoke exist; production-domain visual QA remains required | Production readiness tracker, PR #264, PR #270, PR #278, PR #281, PR #283, PR #287, PR #288, PR #289, PR #290, PR #295, PR #296, PR #297, PR #298 | Production-domain authenticated visual QA, CI/Vercel ingestion, and screenshot review remain required |
 
 ## Layer 1. Platform Design System
 
@@ -374,7 +374,7 @@ Evidence / PRs / Files:
 - PR #278: Source Data Readiness Panel smoke coverage.
 - PR #288: Source data readiness panel wired to Admin/Setup contract projection.
 - PR #289: Source event canvas smoke coverage for contract-backed readiness.
-- PR #290: authenticated Source readiness visual review packet; review blocked by local demo sign-in failure.
+- PR #290: authenticated Source readiness visual review packet; review blocked by local demo sign-in failure. PR #295 isolated the blocker as local environment/account setup; PR #296 completed local authenticated Source visual review; PR #298 applied safe tiny polish.
 - PR #281: Production Readiness freshness layer.
 - PR #282: Data Platform Managed Services pattern plan.
 - PR #283: Source API and mission consistency coverage.
@@ -417,7 +417,7 @@ Blockers:
 
 Next recommended slice:
 
-- Repair or bypass the authenticated review blocker, then rerun Source dashboard and event canvas visual review with mission preview, shell, and contract-backed data readiness progress visible.
+- Use the completed local authenticated review and polish as the baseline, then run production-domain authenticated visual review after the next deployed Source slice.
 
 ## Layer 9. Data / Evidence / Upload Pipeline
 
@@ -481,7 +481,7 @@ Next recommended slice:
 
 Purpose: prepare Source for enterprise-grade deployment, security, observability, tenant safety, auditability, rollback, and live user trust.
 
-Current status: early deterministic validation coverage exists; production readiness is still blocked beyond documentation, seeded route/component smoke, and one blocked authenticated review attempt.
+Current status: early deterministic validation coverage exists; production readiness is still blocked beyond documentation, seeded route/component smoke, local authenticated review, and authenticated route smoke.
 
 Percent complete estimate: 18%.
 
@@ -576,11 +576,11 @@ Next recommended slice:
 
 ## Next 5 Recommended Slices
 
-1. Repair or bypass the demo-code sign-in blocker and rerun authenticated Source dashboard/event canvas review.
+1. Implement the bounded Scope stage workspace plan using the reviewed dashboard/event canvas baseline.
 2. Plan live Admin/Setup readiness backing for the deterministic Source readiness contract, no upload/parsing implementation.
 3. Plan upload/evidence pipeline, no implementation.
 4. Author the Data Platform Managed Services pattern pack in markdown, then plan pattern/runtime grounding later.
-5. Plan the next bounded Source workflow surface after authenticated review.
+5. Run production-domain authenticated visual review and screenshot capture after the next deployed Source slice.
 
 ## What Not To Build Yet
 
@@ -604,13 +604,13 @@ Next recommended slice:
 
 ## Honest MVP Readiness Assessment
 
-Estimated MVP readiness: 61%.
+Estimated MVP readiness: 63%.
 
-Source is beyond a concept prototype because it has a route, dashboard, seeded domain context, validation harnesses, pattern IP, deterministic multi-agent behavior, a deterministic no-model Nexus API stub, deterministic mission reports, a tiny dashboard mission preview, a bounded event canvas shell, a contract-backed read-only data readiness panel with visible progress against 100%, and deterministic dashboard/event canvas route-component smoke. It is not yet a usable MVP for real sourcing work because persistence, evidence pipeline, authenticated UI review, real tenant data, and practical user-facing workflow depth remain incomplete.
+Source is beyond a concept prototype because it has a route, dashboard, seeded domain context, validation harnesses, pattern IP, deterministic multi-agent behavior, a deterministic no-model Nexus API stub, deterministic mission reports, a tiny dashboard mission preview, a bounded event canvas shell, a contract-backed read-only data readiness panel with visible progress against 100%, deterministic route/component smoke, authenticated route smoke, and a local authenticated visual review. It is not yet a usable MVP for real sourcing work because persistence, evidence pipeline, production-domain authenticated review, real tenant data, and practical user-facing workflow depth remain incomplete.
 
 The fastest safe MVP path is deterministic-first:
 
-1. Repair authenticated review access, then review dashboard and event canvas with a signed-in screenshot/manual pass.
+1. Implement the Scope stage workspace so the reviewed event canvas answers whether Scope is pricing-ready.
 2. Back the deterministic readiness contract with live Admin/Setup state only after the review path is working.
 3. Add evidence/upload planning before any citation or artifact generation.
 4. Add model calls only after context validation and runtime preflight are enforced.
