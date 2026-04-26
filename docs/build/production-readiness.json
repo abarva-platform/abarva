@@ -1441,7 +1441,8 @@
         "QA19: E2E smoke result capture model created. 12-route fixture baseline established. Live run required for full validation.",
         "QA20: Mandatory hygiene gate script created (hygiene_gate.sh). All PR merges must pass gate.",
         "OPS13: Demo pack final report validator created at scripts/integration/validate_demo_pack_report.py. All future packs (Wave 13+) must pass validate_demo_pack_report.py before a pack is marked complete. Validator checks 11 required sections: PR number, merge commit, lanes completed, route, readiness, hygiene gate, CI, Vercel, build, Run Metrics, next. Read-only, stdlib-only, no network calls.",
-        "QA22 (wave-15): source-commercial-ui-verification.ts manifest (8 components) + integration verification test. Always-passing design: 10 static tests + 16 graceful integration-phase file checks."
+        "QA22 (wave-15): source-commercial-ui-verification.ts manifest (8 components) + integration verification test. Always-passing design: 10 static tests + 16 graceful integration-phase file checks.",
+        "QA23 (wave-16): source-commercial-route-smoke.ts manifest + smoke test. 10 static + graceful integration-phase file checks. Wave-15 file existence always verified."
       ],
       "lastUpdated": "2026-04-26"
     },

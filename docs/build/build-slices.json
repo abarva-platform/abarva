@@ -7381,6 +7381,15 @@
       "status": "code_complete",
       "branch": "wave16/src30-source-commercial-action-queue",
       "description": "8-action deterministic queue: 5 visible + show-more. State chips, priority dots, stop condition expand. Agent owner badges."
+    },
+    {
+      "id": "QA23",
+      "wave": "wave-16",
+      "name": "Source Commercial Route Smoke Verification",
+      "type": "qa",
+      "status": "code_complete",
+      "branch": "wave16/qa23-source-commercial-route-smoke",
+      "description": "Manifest-driven smoke verification for Wave-16 commercial route. Static tests + graceful integration file checks. No browser automation."
     }
   ]
 }

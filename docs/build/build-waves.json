@@ -676,11 +676,10 @@
         "DEMO4"
       ],
       "completedSlices": [
-        "SRC28",
-        "SRC27",
-        "SRC29"
+        "SRC30",
+        "QA23"
       ],
-      "percentComplete": 50,
+      "percentComplete": 33,
       "validationStatus": "pending"
     },
     {
