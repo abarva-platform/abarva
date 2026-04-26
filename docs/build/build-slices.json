@@ -5846,6 +5846,61 @@
         "npm run build"
       ],
       "notes": "Pure deterministic catalog of AbarVa workshop templates spanning the canonical Maestro arc \u2014 discovery, framing, value, governance, architecture, adoption, and executive review. Each template names purpose, prerequisite inputs, deterministic agenda, decision-to-land, and outputs. Server Component panel renders the catalog grouped by category with the calm AbarVa visual canon. No live agenda generation, no booking, no model calls, no persistence. Future Open-template action is wired in a later slice that lands the workshop-mode persistence path."
+    },
+    {
+      "id": "SOL11",
+      "name": "Solution Canvas UI",
+      "title": "Solution Canvas UI",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane B",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "SOL9",
+        "SOL10"
+      ],
+      "allowedFiles": [
+        "src/components/solutions/SolutionCanvas.tsx",
+        "src/lib/solutions/solution-canvas-view.ts",
+        "src/__tests__/integration/solutions/solution-canvas.test.ts",
+        "docs/build/slices/SOL11_SOLUTION_CANVAS_UI.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Module exports SolutionCanvasView, SolutionCanvasInput, SolutionCanvasSection, SolutionCanvasMissingInput, SolutionCanvasComponent, SolutionCanvasRisk, SolutionCanvasWorkshopRef, SolutionCanvasDeliverableRef and a single helper buildSolutionCanvasView(input).",
+        "buildSolutionCanvasView is byte-equal across repeated calls for the same input.",
+        "All nine canonical sections (brief, currentInputs, archetype, components, buildBuyGuidance, risks, recommendedWorkshops, recommendedDeliverables, missingInputs) are present in the view's sections list.",
+        "createdFrom equals 'deterministic_solution_canvas_seed'.",
+        "Server Component imports tokens only from @/lib/design/abarva-theme; no 'use client', no React hooks, no local hex literals, no DM Sans literals.",
+        "Footer reads 'Source \u00b7 deterministic solution canvas seed \u00b7 proposed only, not applied'.",
+        "View-model module contains no Date.now, Math.random, new Date, fetch, or anthropic/openai references."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/solutions/solution-canvas.test.ts",
+        "npx eslint --max-warnings=0 src/components/solutions/SolutionCanvas.tsx src/lib/solutions/solution-canvas-view.ts src/__tests__/integration/solutions/solution-canvas.test.ts"
+      ],
+      "notes": "Server Component renders a deterministic SolutionCanvasView produced by buildSolutionCanvasView. UI counterpart to SOL9 (recommendation engine) and SOL8 (canvas contract). No live runtime, no model call, no retrieval. Edit / Regenerate / Approve actions are present only as visibly disabled affordances naming a future slice. Lane B commits locally only; the integration agent owns the cherry-pick onto main."
     }
   ]
 }
