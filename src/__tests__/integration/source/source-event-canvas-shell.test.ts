@@ -71,6 +71,8 @@ describe('Source event canvas shell', () => {
     const html = renderToStaticMarkup(createElement(NexusEngagementCanvas, { event: event! }));
 
     expect(html).toContain('Journey map');
+    expect(html).toContain('Stage gate readiness');
+    expect(html).toContain('Current gate signal');
     expect(html).toContain('Scope stage workspace');
     expect(html).toContain('Data readiness');
     expect(html).toContain('Evidence posture for this stage');
@@ -112,7 +114,7 @@ describe('Source event canvas shell', () => {
     });
     const html = renderToStaticMarkup(page);
 
-    expect(html).toContain('Source event canvas shell led by Nexus');
+    expect(html).toContain('Source event canvas led by Nexus across pricing, risk, BAFO, readiness, mission, and signal workflow steps.');
     expect(html).toContain('Lead sourcing agent');
     expect(html).toContain('Top mission');
     expect(html).toContain('Stage gate check required');
