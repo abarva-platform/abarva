@@ -49,6 +49,9 @@ export * from './source-commercial-readiness';
 export * from './source-commercial-missions-view';
 export * from './source-commercial-signals-preview';
 export * from './source-commercial-hub-view';
+export * from './source-commercial-demo-scenario';
+export * from './source-commercial-executive-brief';
+export * from './source-commercial-action-queue';
 
 export type {
   SourceAgentContextBundle,

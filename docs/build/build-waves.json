@@ -664,26 +664,6 @@
       "lastUpdated": "2026-04-26"
     },
     {
-      "waveId": "wave-16",
-      "title": "Source Commercial Route Mount + Demo Scenario",
-      "status": "in_progress",
-      "plannedSlices": [
-        "SRC27",
-        "SRC28",
-        "SRC29",
-        "SRC30",
-        "QA23",
-        "DEMO4"
-      ],
-      "completedSlices": [
-        "SRC30",
-        "DEMO4"
-      ],
-      "percentComplete": 33,
-      "validationStatus": "pending",
-      "nextAction": "DEMO4 (demo script) complete. Remaining: SRC27 (hub mount), SRC28 (demo scenario seed), SRC29 (executive brief), SRC30 (action queue), QA23 (route smoke)."
-    },
-    {
       "waveId": "wave-14",
       "name": "Source Commercial Intelligence + Pricing Hardening",
       "goal": "Deliver comprehensive commercial intelligence models, pricing normalization, risk detection, vendor comparison, control tower signals, and mission queue for the Source module.",
@@ -726,8 +706,10 @@
     },
     {
       "waveId": "wave-16",
-      "title": "Source Commercial Route Mount + Demo Scenario",
+      "name": "Source Commercial Route Mount + Demo Scenario",
+      "goal": "Mount the Source commercial hub inside the Source event experience, add a deterministic AMS outsourcing demo scenario seed, deliver the commercial executive brief and action queue UI components, verify the route via smoke test, and ship the demo script.",
       "status": "in_progress",
+      "percentComplete": 100,
       "plannedSlices": [
         "SRC27",
         "SRC28",
@@ -737,10 +719,21 @@
         "DEMO4"
       ],
       "completedSlices": [
-        "SRC30"
+        "SRC27",
+        "SRC28",
+        "SRC29",
+        "SRC30",
+        "QA23",
+        "DEMO4"
       ],
-      "percentComplete": 17,
-      "validationStatus": "pending"
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "pending",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Integration branch ready. Run validation, push, and merge via PR.",
+      "lastUpdated": "2026-04-26"
     }
   ]
 }
