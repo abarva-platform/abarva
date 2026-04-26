@@ -867,7 +867,8 @@
         "2026-04-26 OPS14: Hygiene gate CI contract added: .github/workflows/hygiene-gate.yml runs hygiene_gate.sh on every PR to main. Non-destructive, exits 0 on pass. Artifacts uploaded on every run for 7-day audit trail.",
         "2026-04-26 SRC20: SourcePricingComparisonPanel added with tower breakdown, completeness indicator, missing-section warnings. Uses deterministic pricing-normalization-model.ts. No live FX, no live benchmarks.",
         "2026-04-26 SRC21: SourceBafoNegotiationModelPanel added (named to avoid collision with existing SourceBafoNegotiationPanel). Uses Wave-14 bafo-negotiation-model.ts types. Tabbed levers/opportunities/asks/recommendations UI. No model calls, not legal advice.",
-        "2026-04-26 SRC22: SourceCommercialRiskPanel added with expandable exception list, severity chips, stats row. Deterministic via commercial-risk-detection.ts. Not legal advice."
+        "2026-04-26 SRC22: SourceCommercialRiskPanel added with expandable exception list, severity chips, stats row. Deterministic via commercial-risk-detection.ts. Not legal advice.",
+        "SRC23 (wave-15): source-commercial-readiness.ts view-model builder + SourceCommercialReadinessView component. 6-check readiness assessment. 8 tests green."
       ]
     },
     {
