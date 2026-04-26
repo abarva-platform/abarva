@@ -5732,6 +5732,61 @@
         "npm run build"
       ],
       "notes": "Pure deterministic library that turns structured MW4 meeting note captures into proposed architecture refinements. Operationalizes the SOL8 Solution Intelligence Canvas section on dynamic refinement and the MW1 contract section on after-workshop synthesis, focused on architecture-level proposals. Library only \u2014 no UI renderer, no live retrieval, no model calls, no tenant runtime state. Every proposal is marked proposed: true and is never auto-applied; the Maestro confirms before any downstream architecture-draft module would consume a proposal. Lands ahead of SOL10 (architecture draft read model) and SOL12 (architecture deliverable renderer); when SOL10 lands the refinement loop will consume SOL13 proposals as the canonical refinement-input shape."
+    },
+    {
+      "id": "SOL14",
+      "name": "Vendor / Startup Intelligence Contract",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [],
+      "lastUpdated": "2026-04-26",
+      "allowedFiles": [
+        "src/lib/solutions/vendor-startup-intelligence.ts",
+        "src/__tests__/integration/solutions/vendor-startup-intelligence.test.ts",
+        "docs/build/slices/SOL14_VENDOR_STARTUP_INTELLIGENCE_CONTRACT.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Module exports VendorIntelligenceCategory ('cdp' | 'cx_ai' | 'ams' | 'data_fabric' | 'agent_platform' | 'observability' | 'security' | 'evaluation' | 'other'), VendorAssessment, VendorAssessmentReadiness ('unknown' | 'preliminary' | 'pilot_ready' | 'production_ready' | 'not_recommended'), VendorEvidenceBasis, and VendorIntelligenceSummary as the canonical contract.",
+        "Module exposes listVendorCategories(), buildVendorAssessmentSeed(), summarizeVendorAssessments(assessments), and getNotRecommendedVendors(assessments) helpers.",
+        "Pack contains exactly the 9 canonical vendor categories in canonical order.",
+        "Seed exposes all 5 canonical readiness states at least once.",
+        "Vendor placeholder ids follow the shape vendor_<category>_<NNN> and are unique across the seed; no real vendor names appear in the seed, the categories, or the source file (whole-word case-insensitive denylist scan covering Adobe / Salesforce / Twilio / Snowflake / Databricks / OpenAI / Anthropic / Google Cloud / Microsoft Azure / AWS Bedrock / Meta Llama / Cohere / Mistral / Pinecone / Weaviate / LangChain / LangSmith / HuggingFace / Datadog / New Relic / Splunk / WhyLabs / Fiddler / Vertex AI / Bedrock / Azure OpenAI / GitHub Copilot / IBM Watson / NVIDIA and similar known names).",
+        "Seed is tagged createdFrom: 'deterministic_vendor_startup_intelligence_seed'.",
+        "buildVendorAssessmentSeed and summarizeVendorAssessments are deterministic and byte-equal across repeated calls for the same input.",
+        "summarizeVendorAssessments totals reconcile against the seed length and against getNotRecommendedVendors.",
+        "not_recommended assessments carry a non-null notRecommendedReason; all other assessments carry null.",
+        "No string field invents a dollar amount.",
+        "Module imports nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, legacy /programs, mock.ts, auth, or supabase; no fetch( / axios / node-fetch / http / https imports; no Date.now / Math.random / new Date; no useState / useEffect; no Coming soon / TBD / Lorem ipsum placeholders."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx eslint --max-warnings=0 src/lib/solutions/vendor-startup-intelligence.ts src/__tests__/integration/solutions/vendor-startup-intelligence.test.ts",
+        "npx jest src/__tests__/integration/solutions/vendor-startup-intelligence.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic vendor / startup intelligence contract. Library only \u2014 does not generate live vendor briefs, invoke models, read tenant state, fetch external data, or call any external API. No real vendor names are used; all seed entries reference category-shaped placeholder ids (e.g. vendor_cdp_001, vendor_ams_002) so downstream surfaces never accidentally inherit a branded recommendation from the seed. Future composition with SOL6 (build / buy / partner evaluator) and SOL9 (recommendation engine) lands a single defensible vendor / startup brief per capability request without changing the SOL14 contract."
     }
   ]
 }
