@@ -812,13 +812,14 @@
       "name": "Tenant-Scoped Demo Data + Source Intelligence Hardening",
       "goal": "Scope the Source commercial demo scenario to Apex Retail, replace generic vendor labels with named representative vendors, add extended posture fields, and add deterministicSeed root-level field.",
       "status": "in_progress",
-      "percentComplete": 200,
+      "percentComplete": 300,
       "plannedSlices": [
         "SRC32"
       ],
       "completedSlices": [
         "SRC32",
-        "PROG15"
+        "PROG15",
+        "LINK1"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
@@ -826,7 +827,7 @@
       "validationStatus": "tests_green",
       "productionReadinessUpdated": false,
       "currentBlockers": [],
-      "nextAction": "SRC32 code complete (Lane A). Await integration and PR merge. Wave-19 Lane B complete. Awaiting integration merge.",
+      "nextAction": "SRC32 code complete (Lane A). Await integration and PR merge. Wave-19 Lane B complete. Awaiting integration merge. Lane C LINK1 complete. Awaiting integration and merge via PR.",
       "lastUpdated": "2026-04-26"
     }
   ]
