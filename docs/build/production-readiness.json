@@ -1404,7 +1404,8 @@
         "DEMO2: Founder demo route checklist created; 11 routes documented with talk tracks, readiness caveats, and fallbacks.",
         "QA18: E2E persona walk results created for 7 personas; honest pass/partial/deferred status; no fake live test claims.",
         "PROD7: Summary test suite validates no false production_ready claims, real blocker surfacing, and deterministic output.",
-        "OPS11: cherry_resolve.py extended with full build-waves.json merge support; waveId fix, mergedPrs union, validationStatus conservative merge, nextAction handling."
+        "OPS11: cherry_resolve.py extended with full build-waves.json merge support; waveId fix, mergedPrs union, validationStatus conservative merge, nextAction handling.",
+        "OPS12: Integration stash safety check added; prevents accidental stash pop during cherry-pick integration."
       ],
       "lastUpdated": "2026-04-26"
     },
