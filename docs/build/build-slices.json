@@ -7145,6 +7145,19 @@
         "src/__tests__/integration/source/commercial-risk-detection.test.ts"
       ],
       "completedAt": "2026-04-26"
+    },
+    {
+      "id": "SRC15",
+      "wave": "wave-14",
+      "title": "Vendor Pricing Comparison",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "Presentational React component for multi-vendor pricing comparison with tower breakdown, delta from lowest, and normalization confidence.",
+      "files": [
+        "src/components/source/VendorPricingComparison.tsx",
+        "src/__tests__/integration/source/vendor-pricing-comparison.test.ts"
+      ],
+      "completedAt": "2026-04-26"
     }
   ]
 }
