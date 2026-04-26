@@ -7363,6 +7363,15 @@
       "status": "code_complete",
       "branch": "wave16/src27-mount-source-commercial-hub",
       "description": "SourceCommercialEventSection wrapper + minimal event page mount. Collapsible commercial intelligence section in Source event experience."
+    },
+    {
+      "id": "SRC29",
+      "wave": "wave-16",
+      "name": "Source Commercial Executive Brief",
+      "type": "source-ui",
+      "status": "code_complete",
+      "branch": "wave16/src29-source-commercial-executive-brief",
+      "description": "Deterministic executive brief: posture badge, 3 risks, 3 BAFO levers, vendor comparability, recommended action. Dark-navy header panel."
     }
   ]
 }

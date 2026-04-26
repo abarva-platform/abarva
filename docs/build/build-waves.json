@@ -677,9 +677,10 @@
       ],
       "completedSlices": [
         "SRC28",
-        "SRC27"
+        "SRC27",
+        "SRC29"
       ],
-      "percentComplete": 33,
+      "percentComplete": 50,
       "validationStatus": "pending"
     },
     {
