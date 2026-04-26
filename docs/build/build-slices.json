@@ -4348,6 +4348,61 @@
         "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
       ],
       "notes": "Deterministic, file-pure read model that documents the canonical tenant isolation boundary stack across persistence (Postgres row + schema), vector indexes, graph stores, the Model Gateway, and unified audit events. Read-only complement to S7 (tenant isolation decision probes) and AUD2 / EVID2 / ADM3 read models. Documents shape only; does not authenticate, run RLS, migrate, or rewrite any guard helper. No promotion of production_deployment or data_evidence_knowledge_fabric to production_ready."
+    },
+    {
+      "id": "TRUST1",
+      "name": "Dataset Trust Model + Data Sharing Levels",
+      "category": "ADM",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Steward",
+      "dependsOn": [
+        "ADM3"
+      ],
+      "allowedFiles": [
+        "src/lib/admin/dataset-trust-model.ts",
+        "src/__tests__/integration/admin/dataset-trust-model.test.ts",
+        "docs/build/slices/TRUST1_DATASET_TRUST_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "buildDatasetTrustModel returns byte-equal output across repeated calls (JSON.stringify equality enforced).",
+        "Canonical sharing-level union is exactly ['L0_public_external', 'L1_metadata_only', 'L2_summary_aggregate', 'L3_redacted_extract', 'L4_sensitive_raw_data'] in this ordinal order.",
+        "Canonical trust ladder union is exactly ['loaded', 'available', 'usable_evidence', 'agent_usable', 'decision_grade'] in this ordinal order.",
+        "Only L4_sensitive_raw_data carries rawDataExposed=true and approvalRequired=true; all other levels are non-raw and non-approval-required by default.",
+        "Only agent_usable and decision_grade ladder states permit agent runtime use; only decision_grade permits decision-artifact citation.",
+        "evaluateDatasetTrustDecision blocks any L4 read without an explicit approved approval state, including denied / expired (rule_no_fake_approval), and blocks raw record reads at non-L4 levels (rule_raw_records_only_via_L4).",
+        "evaluateDatasetTrustDecision permits L1 metadata-only discovery without raw access or attached approval.",
+        "evaluateDatasetTrustDecision blocks agent use when no agent-use policy is attached, when ladder state is only available, or when ladder state is only loaded.",
+        "Every decision carries createdFrom 'deterministic_dataset_trust_seed'; permitted decisions carry an empty reasons list; blocked decisions carry a non-empty reasons list.",
+        "summarizeDatasetTrustReadiness reconciles permittedTotal + blockedTotal = total and exposes per-level / per-ladder-state / per-approval-state buckets that cover all canonical keys.",
+        "Module imports nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch / anthropic / openai / pinecone runtime."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/admin/dataset-trust-model.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic dataset trust read model that defines progressive client data sharing levels (L0 public/external \u2192 L4 sensitive raw data) and a five-state trust ladder (loaded \u2192 available \u2192 usable_evidence \u2192 agent_usable \u2192 decision_grade). Encodes canonical rules so clients can engage AbarVa without granting broad raw-data access: loaded \u2260 usable, available \u2260 agent-usable, raw data not required by default, evidence supplied via manifests, agent use denied by default, L4 requires explicit named approval, approval is never fabricated. No DB writes, no migrations, no live retrieval, no model invocation. Future TRUST2 attaches trust + ladder fields to ADM3 inventory items without a TRUST1 contract change."
     }
   ]
 }
