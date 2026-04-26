@@ -710,7 +710,7 @@
         },
         "integration_tests": {
           "status": "partial",
-          "evidence": "Focused deterministic Source tests pass for Nexus API stub and agent mission read model; full Source workflow, persistence, upload/evidence, route smoke, and live persona validation are not certified."
+          "evidence": "Focused deterministic Source tests pass for Nexus API stub, agent mission read model, and agent mission report formatter; full Source workflow, persistence, upload/evidence, route smoke, and live persona validation are not certified."
         },
         "route_smoke": {
           "status": "not_automated",
@@ -763,7 +763,7 @@
           "unblocks": "pilot_ready"
         }
       ],
-      "nextAction": "Review deterministic Source agent mission read model, then plan mission activity UI or live Source data/evidence readiness without adding model calls, persistence, or schedulers.",
+      "nextAction": "Review deterministic Source agent mission report, then plan mission activity UI or live Source data/evidence readiness without adding model calls, persistence, or schedulers.",
       "notes": [
         "PROD1 does not modify Source files.",
         "Covers Source dashboard / sourcing event portfolio.",
@@ -780,7 +780,9 @@
         "Not pilot_ready and not production_ready: Source still lacks full user-facing workflow, persistence, evidence/upload pipeline, model-assisted Nexus route, authenticated visual QA, and production-grade tenant/security validation.",
         "Deterministic Source agent mission read model added for Nexus, Sentinel, Atlas, and Steward; missions are read-only and generated from Source context plus validation reports.",
         "Focused Source agent mission integration test passed: npx jest src/__tests__/integration/source/source-agent-missions.test.ts.",
-        "Still not pilot_ready or production_ready: no scheduler, persistence, live mission queue, UI display, upload/parsing, or model-assisted Source runtime exists."
+        "Still not pilot_ready or production_ready: no scheduler, persistence, live mission queue, UI display, upload/parsing, or model-assisted Source runtime exists.",
+        "Deterministic Source agent mission report formatter added for reviewable mission counts, blockers, defers, handoffs, suggested actions, and context summary.",
+        "Focused Source agent mission report integration test passed: npx jest src/__tests__/integration/source/source-agent-mission-report.test.ts."
       ]
     },
     {
@@ -940,7 +942,7 @@
         },
         "integration_tests": {
           "status": "partial",
-          "evidence": "Deterministic Source agent mission read model has focused integration coverage; live cross-agent runtime, scheduling, persistence, gateway routing, and audit trail remain incomplete."
+          "evidence": "Deterministic Source agent mission read model and report formatter have focused integration coverage; live cross-agent runtime, scheduling, persistence, gateway routing, and audit trail remain incomplete."
         },
         "route_smoke": {
           "status": "partial",
@@ -983,7 +985,8 @@
         "AG11 agent mission UI panel added (src/components/agents/AgentMissionPanel.tsx + src/lib/agents/agent-mission-view.ts) \u2014 deterministic, server-only rendering of the AbarVa Agent Activity UI Pattern (experience-system File 16) across compact_strip, right_panel, inline_recommendation, executive_brief, and hidden_drawer variants. Source data comes from a frozen seed view; no live mission queue, no runtime trigger, no client state. Status is not promoted by AG11; UI/UX dimension acknowledgement only.",
         "TOOL2 tool registry MVP added (src/lib/architecture/tool-registry-mvp.ts) \u2014 deterministic registry of 16 canonical agent tools with allowed agents, read/write/export/audit mode, tenant scope, audit requirement, production status, required inputs, and forbiddenWhen preconditions; no live tool execution, no model or provider calls, no audit ledger persistence.",
         "Source agent mission read model added as deterministic read-only agent behavior for Nexus, Sentinel, Atlas, and Steward.",
-        "No live mission queue, scheduler, persistence, model gateway routing, or runtime audit trail was added by the Source mission read-model slice."
+        "No live mission queue, scheduler, persistence, model gateway routing, or runtime audit trail was added by the Source mission read-model slice.",
+        "Source agent mission report formatter added as deterministic read-only reporting over Source missions; no live queue, scheduler, persistence, API, or UI was added."
       ]
     },
     {
@@ -1209,7 +1212,7 @@
         },
         "integration_tests": {
           "status": "passing",
-          "evidence": "Broad deterministic integration coverage exists; this slice added passing focused coverage for src/__tests__/integration/source/source-agent-missions.test.ts. Full CI route smoke, persona crawler, and security gates are still incomplete."
+          "evidence": "Broad deterministic integration coverage exists; recent Source slices added passing focused coverage for src/__tests__/integration/source/source-agent-missions.test.ts and src/__tests__/integration/source/source-agent-mission-report.test.ts. Full CI route smoke, persona crawler, and security gates are still incomplete."
         },
         "route_smoke": {
           "status": "partial",
@@ -1249,7 +1252,8 @@
         "This component is tested, not full-flow ready.",
         "PROD2 lands a deterministic validator at src/lib/admin/production-readiness-validator.ts with twelve canonical rules and a passing integration test at src/__tests__/integration/admin/production-readiness-validator.test.ts. The validator reports findings but does not mutate the manifest, and CI integration remains deferred.",
         "QA4 (Agent Mission Persona Verification Runbook) added at docs/build/AGENT_MISSION_PERSONA_VERIFICATION_RUNBOOK.md as the founder-facing companion to QA1 / QA2 / QA3, covering AG10 / AG11 / MG2 / TOOL2 / PROD2.",
-        "Source agent mission read-model test passed and covers deterministic Nexus, Sentinel, Atlas, and Steward mission output without model, persistence, or UI imports."
+        "Source agent mission read-model test passed and covers deterministic Nexus, Sentinel, Atlas, and Steward mission output without model, persistence, or UI imports.",
+        "Source agent mission report formatter test passed and covers deterministic mission report counts, markdown output, remediations, and import guardrails."
       ]
     },
     {
