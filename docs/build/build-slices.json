@@ -3530,6 +3530,60 @@
         "npm run build"
       ],
       "notes": "Deterministic Evidence Dataset Drawer view + server component mounted on the canonical Sentinel pattern detail. Seed entries cover internal (tenant artifact, program evidence, dataset domain) and external (public pattern pack, industry benchmark) sources across 4 canonical I1 pattern keys. No live retrieval, no Claude / OpenAI invocation, no EVID2 / EVID3 live projection. Future slice can swap the seed for a live EVID2/EVID3 projection without changing the view contract."
+    },
+    {
+      "id": "MG3",
+      "name": "Model Gateway Safe Integration Contract",
+      "category": "MG",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "MG1",
+        "MG2"
+      ],
+      "allowedFiles": [
+        "src/lib/architecture/model-gateway-integration-contract.ts",
+        "src/__tests__/integration/architecture/model-gateway-integration-contract.test.ts",
+        "docs/build/slices/MG3_MODEL_GATEWAY_SAFE_INTEGRATION_CONTRACT.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/source/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/components/**",
+        "src/app/**"
+      ],
+      "acceptanceCriteria": [
+        "New module src/lib/architecture/model-gateway-integration-contract.ts exposes GatewayCaller, GatewayRequestClassification, GatewayModelTier, GatewayRoutingDecision, GatewaySafetyDecision, GatewayForbiddenPattern type unions and the GatewayCostPolicy, GatewayAuditRequirement, GatewayFallbackPolicy, GatewayIntegrationPolicy, GatewayRequestClassificationMetadata, GatewayCallerMetadata interfaces.",
+        "Module exports GATEWAY_CALLER_KINDS (all 6 callers: nexus, sentinel, atlas, steward, system, admin), GATEWAY_REQUEST_CLASSIFICATIONS (all 7: recommendation, synthesis, classification, extraction, evidence_check, audit, evaluation), GATEWAY_MODEL_TIERS (all 4: tier_a_premium, tier_b_balanced, tier_c_economy, tier_d_local_only), GATEWAY_FORBIDDEN_PATTERNS (8 canonical anti-pattern strings), GATEWAY_REQUEST_CLASSIFICATION_METADATA, GATEWAY_CALLER_METADATA, and GATEWAY_INTEGRATION_POLICY readonly constants.",
+        "GATEWAY_INTEGRATION_POLICY.liveExecution is the literal false; modelTiersAllowed includes all 4 tiers with tier_d_local_only reserved for redaction-required cases; callersAllowed names the 6 canonical callers; callersForbidden names integration shapes that bypass the gateway (page_component, agent_direct_provider_call, browser_runtime_with_secret, cross_tenant_caller, unaudited_caller, sdk_import_outside_gateway); redactionPoliciesRequired covers redact_pii, redact_secrets, redact_evidence_metadata, redact_tenant_isolation.",
+        "Cost policy provides perRequestBudgetCentsCap (50), perTenantDailyBudgetCentsCap (5000), and perAgentBudgetCentsCap (1500) hardcoded conservative defaults plus costEstimateRequired and costAuditRequired set true.",
+        "Audit requirements include at least 5 entries covering: every_request_audited (all classifications, blocking), evidence_check_requires_evidence_basis (evidence_check, blocking), recommendation_requires_rationale (recommendation, blocking), write_classifications_require_approval (recommendation + synthesis, blocking), model_selection_traced (all classifications, blocking).",
+        "Fallback policy enables fallback through the standard tier_a_premium -> tier_b_balanced -> tier_c_economy -> tier_d_local_only chain and lists blocked reasons that should downgrade rather than refuse.",
+        "GATEWAY_FORBIDDEN_PATTERNS contains exactly: agent_direct_provider_call, page_direct_provider_call, unaudited_model_call, sdk_import_outside_gateway, fetch_to_provider_endpoint, env_secret_exposed_to_browser, unredacted_pii_to_provider, cross_tenant_request.",
+        "GatewayRoutingDecision union covers allow / block / defer / route_to_fallback / dry_run states; GatewaySafetyDecision union covers safe / block_pii / block_secrets / block_evidence_leak / redact_required / tenant_violation states.",
+        "Pure accessors getGatewayCallerMetadata(caller) and getGatewayClassificationMetadata(kind) return the metadata record for known input and null for unknown / empty input; summarizeGatewayIntegrationPolicy() reconciles totalCallers, totalClassifications, totalTiers, auditRequirementsCount, and forbiddenPatternsCount with the canonical lists.",
+        "Module hygiene: no import of any provider SDK (no 'openai', no 'anthropic', no '@anthropic-ai/sdk', no '@openai/sdk'); no Date.now, no Math.random, no new Date(, no fetch(, no useState / useEffect, no 'Coming soon' / 'TBD' / 'Lorem ipsum'; no imports from src/lib/sentinel, src/lib/atlas, src/lib/nexus, src/lib/source, src/lib/agent, src/lib/auth, or supabase. The hygiene scanner strips comments and string literals before regex so the GATEWAY_FORBIDDEN_PATTERNS string-array literal does not produce false positives.",
+        "New integration test file src/__tests__/integration/architecture/model-gateway-integration-contract.test.ts asserts caller / classification / tier / audit / cost / fallback / forbidden-pattern coverage, the GatewayRoutingDecision union (regex on source), the pure accessors, the policy summary, and the no-provider-SDK-imports module-hygiene assertion.",
+        "docs/build/slices/MG3_MODEL_GATEWAY_SAFE_INTEGRATION_CONTRACT.md documents the slice (relationship to MG1 / MG2, what changed, caller surface, classification table, tier table, redaction policies, audit requirements, cost policy, fallback policy, forbidden patterns, routing / safety decision unions, what is intentionally not in v1, hygiene invariants, validation commands, future slices, acceptance criteria mapping). Cites MG1 and MG2 explicitly.",
+        "docs/build/build-slices.json appends the MG3 entry with category MG, dependsOn [MG1, MG2], status code_complete, risk low, allowedFiles, forbiddenFiles, acceptanceCriteria, validationCommands, and notes; manifest lastUpdated bumped.",
+        "docs/build/production-readiness.json updates the model_gateway component notes to record that MG3 contract is added, extends nextAction to mention live MG runtime is still deferred, keeps status not_started (no promotion), and reflects the no-live-model-invocation blocker; manifest lastUpdated bumped.",
+        "No application UI, runtime, auth, supabase, agent runtime, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/model-gateway-integration-contract.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Pure type-only contract module describing the safety boundary for the eventual live Model Gateway runtime. MG3 names the callers (6), request classifications (7), model tiers (4), redaction policies (4), audit requirements (>= 5 blocking), cost caps (per-request / per-tenant-daily / per-agent), fallback chain (tier_a -> tier_b -> tier_c -> tier_d), and forbidden integration patterns (8) the live gateway must enforce. liveExecution is the literal false. MG2 (the deterministic stub) remains the runtime placeholder until the live gateway slice ships; MG3 specifies WHAT the live runtime must enforce when it eventually replaces the stub. No SDK import. No network. No Date.now. No randomness. No agent / source / sentinel / atlas / auth imports. No UI."
     }
   ]
 }
