@@ -56,6 +56,66 @@ export interface DemoSignalItem {
   shortSummary: string;
 }
 
+export interface DemoStageGateSeed {
+  gateKey: string;
+  transition: string;
+  state: 'ready' | 'blocked' | 'waiting' | 'needs_approval' | 'waiver_required' | 'deferred';
+  blocker: string | null;
+  requiredArtifacts: string[];
+  requiredApprovals: string[];
+  evidenceGap: string | null;
+}
+
+export interface DemoArtifactMetadataSeed {
+  artifactKey: string;
+  artifactName: string;
+  status: 'not_started' | 'draft' | 'needs_inputs' | 'in_review' | 'changes_requested' | 'approved' | 'locked';
+  ownerAgent: 'Nexus' | 'Sentinel' | 'Atlas' | 'Steward';
+  version: string;
+  evidenceState: 'missing' | 'partial' | 'seeded';
+  approvalState: 'not_started' | 'in_review' | 'approved' | 'changes_requested';
+}
+
+export interface DemoReviewApprovalSeed {
+  reviewName: string;
+  ownerRole: string;
+  state: 'pending' | 'in_review' | 'approved' | 'changes_requested';
+  note: string;
+}
+
+export interface DemoVendorResponseStateSeed {
+  vendorLabel: string;
+  completeness: 'complete' | 'partial' | 'incomplete' | 'not_comparable';
+  pricingTemplateState: 'complete' | 'partial' | 'missing';
+  transitionPlanState: 'complete' | 'partial' | 'missing';
+  evidenceState: 'strong' | 'mixed' | 'weak';
+}
+
+export interface DemoPricingAssumptionSeed {
+  assumption: string;
+  state: 'validated' | 'needs_clarification' | 'unverified';
+  note: string;
+}
+
+export interface DemoBafoAskSeed {
+  vendorLabel: string;
+  ask: string;
+  rationale: string;
+  priority: 'high' | 'medium' | 'low';
+}
+
+export interface DemoTransitionReadinessSeed {
+  checkpoint: string;
+  state: 'not_started' | 'partial' | 'ready';
+  note: string;
+}
+
+export interface DemoValueRealizationSeed {
+  placeholder: string;
+  state: 'not_started' | 'partial';
+  note: string;
+}
+
 export interface SourceCommercialDemoScenario {
   scenarioId: string;
   tenantSlug: string;
@@ -71,6 +131,25 @@ export interface SourceCommercialDemoScenario {
   missions: DemoMissionItem[];   // 5 missions
   signals: DemoSignalItem[];     // 4 signals
   bafoOpportunities: string[];   // 3 top-level BAFO items
+  sourcingStrategy: {
+    objective: string;
+    strategyPosture: string;
+    primaryConstraint: string;
+    deterministicSeed: true;
+  };
+  stageGates: DemoStageGateSeed[];
+  artifactMetadata: DemoArtifactMetadataSeed[];
+  reviewApprovalStates: DemoReviewApprovalSeed[];
+  vendorResponseStates: DemoVendorResponseStateSeed[];
+  pricingAssumptions: DemoPricingAssumptionSeed[];
+  bafoAsks: DemoBafoAskSeed[];
+  executiveDecisionPosture: {
+    posture: 'proceed_to_bafo' | 'defer_pending_clarifications' | 'blocked_missing_pricing';
+    reason: string;
+    steeringQuestion: string;
+  };
+  transitionReadinessPlaceholders: DemoTransitionReadinessSeed[];
+  valueRealizationPlaceholders: DemoValueRealizationSeed[];
   caveats: string[];             // 3 caveats
   deterministicSeed: true;       // always true — marks scenario as seed
   generatedAt: string;
@@ -265,6 +344,272 @@ export function buildSourceCommercialDemoScenario(): SourceCommercialDemoScenari
     'SLA rebate commercial protection',
   ];
 
+  const stageGates: DemoStageGateSeed[] = [
+    {
+      gateKey: 'strategy_to_scope',
+      transition: 'Strategy -> Scope',
+      state: 'ready',
+      blocker: null,
+      requiredArtifacts: ['Sourcing Strategy Memo'],
+      requiredApprovals: ['Nexus lead review'],
+      evidenceGap: null,
+    },
+    {
+      gateKey: 'scope_to_rfp',
+      transition: 'Scope -> RFP',
+      state: 'needs_approval',
+      blocker: 'Retained role split still needs sponsor sign-off.',
+      requiredArtifacts: ['Scope Document', 'Minimum Data Request'],
+      requiredApprovals: ['Business sponsor'],
+      evidenceGap: 'Retained organization evidence remains partial.',
+    },
+    {
+      gateKey: 'rfp_to_responses',
+      transition: 'RFP -> Vendor Responses',
+      state: 'waiting',
+      blocker: 'Pricing template clarifications are open for two vendors.',
+      requiredArtifacts: ['RFP Package', 'Pricing Template'],
+      requiredApprovals: ['Procurement'],
+      evidenceGap: 'SLA baseline evidence is still mixed.',
+    },
+    {
+      gateKey: 'evaluation_to_bafo',
+      transition: 'Evaluation -> BAFO',
+      state: 'blocked',
+      blocker: 'Comparable pricing is unavailable for one vendor.',
+      requiredArtifacts: ['Vendor Response Checklist', 'Commercial Risk Log'],
+      requiredApprovals: ['Steering prep review'],
+      evidenceGap: 'Transition costs are incomplete for at least one response.',
+    },
+    {
+      gateKey: 'bafo_to_selection',
+      transition: 'BAFO -> Selection',
+      state: 'deferred',
+      blocker: 'Awaiting BAFO clarification pack closure.',
+      requiredArtifacts: ['BAFO Question Pack', 'Executive Decision Brief'],
+      requiredApprovals: ['Steward gate review'],
+      evidenceGap: 'Automation commitments are not contract-backed yet.',
+    },
+  ];
+
+  const artifactMetadata: DemoArtifactMetadataSeed[] = [
+    {
+      artifactKey: 'sourcing_strategy_memo',
+      artifactName: 'Sourcing Strategy Memo',
+      status: 'draft',
+      ownerAgent: 'Nexus',
+      version: 'v0.3',
+      evidenceState: 'partial',
+      approvalState: 'in_review',
+    },
+    {
+      artifactKey: 'minimum_data_request',
+      artifactName: 'Minimum Data Request',
+      status: 'locked',
+      ownerAgent: 'Steward',
+      version: 'v1.0',
+      evidenceState: 'seeded',
+      approvalState: 'approved',
+    },
+    {
+      artifactKey: 'scope_document',
+      artifactName: 'Scope Document',
+      status: 'in_review',
+      ownerAgent: 'Nexus',
+      version: 'v0.7',
+      evidenceState: 'partial',
+      approvalState: 'changes_requested',
+    },
+    {
+      artifactKey: 'rfp_package',
+      artifactName: 'RFP Package',
+      status: 'needs_inputs',
+      ownerAgent: 'Steward',
+      version: 'v0.2',
+      evidenceState: 'missing',
+      approvalState: 'not_started',
+    },
+    {
+      artifactKey: 'pricing_template',
+      artifactName: 'Pricing Template',
+      status: 'draft',
+      ownerAgent: 'Sentinel',
+      version: 'v0.4',
+      evidenceState: 'partial',
+      approvalState: 'in_review',
+    },
+    {
+      artifactKey: 'vendor_response_checklist',
+      artifactName: 'Vendor Response Checklist',
+      status: 'draft',
+      ownerAgent: 'Sentinel',
+      version: 'v0.5',
+      evidenceState: 'partial',
+      approvalState: 'in_review',
+    },
+    {
+      artifactKey: 'bafo_question_pack',
+      artifactName: 'BAFO Question Pack',
+      status: 'draft',
+      ownerAgent: 'Nexus',
+      version: 'v0.3',
+      evidenceState: 'partial',
+      approvalState: 'not_started',
+    },
+    {
+      artifactKey: 'executive_decision_brief',
+      artifactName: 'Executive Decision Brief',
+      status: 'needs_inputs',
+      ownerAgent: 'Atlas',
+      version: 'v0.1',
+      evidenceState: 'missing',
+      approvalState: 'not_started',
+    },
+    {
+      artifactKey: 'transition_readiness_checklist',
+      artifactName: 'Transition Readiness Checklist',
+      status: 'not_started',
+      ownerAgent: 'Steward',
+      version: 'v0.0',
+      evidenceState: 'missing',
+      approvalState: 'not_started',
+    },
+    {
+      artifactKey: 'value_ledger_assumptions',
+      artifactName: 'Value Ledger Assumptions',
+      status: 'draft',
+      ownerAgent: 'Atlas',
+      version: 'v0.2',
+      evidenceState: 'partial',
+      approvalState: 'in_review',
+    },
+  ];
+
+  const reviewApprovalStates: DemoReviewApprovalSeed[] = [
+    {
+      reviewName: 'Scope package review',
+      ownerRole: 'Business Sponsor',
+      state: 'changes_requested',
+      note: 'Retained role split and transition ownership need tighter wording.',
+    },
+    {
+      reviewName: 'RFP readiness review',
+      ownerRole: 'Procurement Lead',
+      state: 'in_review',
+      note: 'Pricing template rows are being normalized before release.',
+    },
+    {
+      reviewName: 'Executive steering pre-read',
+      ownerRole: 'Steering Committee',
+      state: 'pending',
+      note: 'Will start after BAFO clarifications close.',
+    },
+  ];
+
+  const vendorResponseStates: DemoVendorResponseStateSeed[] = vendors.map((vendor) => ({
+    vendorLabel: vendor.vendorLabel,
+    completeness:
+      vendor.pricingStatus === 'complete'
+        ? 'complete'
+        : vendor.pricingStatus === 'partial'
+          ? 'partial'
+          : 'not_comparable',
+    pricingTemplateState: vendor.pricingStatus,
+    transitionPlanState:
+      vendor.transitionTransparency === 'full'
+        ? 'complete'
+        : vendor.transitionTransparency === 'partial' || vendor.transitionTransparency === 'opaque'
+          ? 'partial'
+          : 'missing',
+    evidenceState:
+      vendor.productivityCommitmentPosture === 'committed'
+        ? 'strong'
+        : vendor.productivityCommitmentPosture === 'conditional'
+          ? 'mixed'
+          : 'weak',
+  }));
+
+  const pricingAssumptions: DemoPricingAssumptionSeed[] = [
+    {
+      assumption: 'Offshore mix held at 62 percent for steady-state scope',
+      state: 'needs_clarification',
+      note: 'Two vendors used lower offshore share in baseline calculations.',
+    },
+    {
+      assumption: 'Transition management included in year-1 pricing',
+      state: 'unverified',
+      note: 'One vendor excluded transition PM effort from base scope.',
+    },
+    {
+      assumption: 'Automation productivity gain is contract-backed',
+      state: 'needs_clarification',
+      note: 'Claims are present but commitment language is still conditional.',
+    },
+  ];
+
+  const bafoAsks: DemoBafoAskSeed[] = [
+    {
+      vendorLabel: 'Northstar Managed Services',
+      ask: 'Commit to explicit SLA rebate thresholds for severity-one incidents.',
+      rationale: 'Current rebate language is directional and weak on enforceability.',
+      priority: 'high',
+    },
+    {
+      vendorLabel: 'BluePeak Digital Operations',
+      ask: 'Submit missing L3 support rate card and knowledge-transfer costs.',
+      rationale: 'Comparability and transition risk remain blocked without these rows.',
+      priority: 'high',
+    },
+    {
+      vendorLabel: 'Horizon Application Services',
+      ask: 'Provide transition management and governance effort detail.',
+      rationale: 'Transition cost opacity currently suppresses confidence.',
+      priority: 'medium',
+    },
+    {
+      vendorLabel: 'Meridian Systems Partners',
+      ask: 'Submit complete pricing template with contractual assumptions and exclusions.',
+      rationale: 'Response is currently not comparable and blocks selection posture.',
+      priority: 'high',
+    },
+  ];
+
+  const transitionReadinessPlaceholders: DemoTransitionReadinessSeed[] = [
+    {
+      checkpoint: 'Runbook ownership split',
+      state: 'partial',
+      note: 'Draft owner matrix exists; business sign-off pending.',
+    },
+    {
+      checkpoint: 'Knowledge transfer wave plan',
+      state: 'not_started',
+      note: 'Awaiting final vendor transition commitments.',
+    },
+    {
+      checkpoint: 'Cutover risk rehearsal plan',
+      state: 'not_started',
+      note: 'Will be drafted after BAFO clarifications are closed.',
+    },
+  ];
+
+  const valueRealizationPlaceholders: DemoValueRealizationSeed[] = [
+    {
+      placeholder: 'Year-1 run-rate reduction tracker',
+      state: 'partial',
+      note: 'Baseline defined, evidence links still seed-only.',
+    },
+    {
+      placeholder: 'Productivity uplift checkpoint',
+      state: 'not_started',
+      note: 'Depends on contract-backed automation commitments.',
+    },
+    {
+      placeholder: 'Transition stabilization KPI pack',
+      state: 'not_started',
+      note: 'Will open after partner mobilization starts.',
+    },
+  ];
+
   const caveats: string[] = [
     'All pricing data in this scenario is deterministic seed data. Values are representative and do not reflect real market rates or vendor proposals.',
     'Vendor labels are representative names for demonstration purposes. No real vendor proprietary information is used.',
@@ -289,6 +634,25 @@ export function buildSourceCommercialDemoScenario(): SourceCommercialDemoScenari
     missions,
     signals,
     bafoOpportunities,
+    sourcingStrategy: {
+      objective: 'Consolidate AMS operations under a contractable, evidence-backed sourcing model.',
+      strategyPosture: 'Single-prime with retained governance guardrails.',
+      primaryConstraint: 'Baseline and transition assumptions are still partially evidenced.',
+      deterministicSeed: true,
+    },
+    stageGates,
+    artifactMetadata,
+    reviewApprovalStates,
+    vendorResponseStates,
+    pricingAssumptions,
+    bafoAsks,
+    executiveDecisionPosture: {
+      posture: 'proceed_to_bafo',
+      reason: 'Vendor comparability and evidence confidence are not yet strong enough for selection review.',
+      steeringQuestion: 'Can the committee approve BAFO clarification scope and timeline this week?',
+    },
+    transitionReadinessPlaceholders,
+    valueRealizationPlaceholders,
     caveats,
     deterministicSeed: true,
     generatedAt: '2026-04-26',
