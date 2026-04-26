@@ -769,7 +769,7 @@
       "validationStatus": "not_run",
       "productionReadinessUpdated": false,
       "currentBlockers": [],
-      "nextAction": "Status post-merge update. Watch CI and merge when green.",
+      "nextAction": "Wave-17 merged. Wave-17A route ownership and shell enforcement is tracked as an integration follow-through batch on a dedicated branch.",
       "lastUpdated": "2026-04-26"
     },
     {

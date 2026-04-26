@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { NexusEngagementCanvas, SourceFoundationShell } from '@/components/source';
+import { NexusEngagementCanvas, SourceCanonShell } from '@/components/source';
 import { getSourcingEvent } from '@/lib/source/queries';
 import { SourceCommercialEventSection } from '@/components/source/SourceCommercialEventSection';
 
@@ -15,10 +15,10 @@ export default async function SourceEventDetailPage({
   if (!event) notFound();
 
   return (
-    <SourceFoundationShell
+    <SourceCanonShell
       activeRoute="events"
       title={event.name}
-      summary={`${event.accountName} · ${event.code} · Source event canvas shell led by Nexus with deterministic mission, readiness, and journey context.`}
+      summary={`${event.accountName} · ${event.code} · Source event canvas led by Nexus across pricing, risk, BAFO, readiness, mission, and signal workflow steps.`}
     >
       <NexusEngagementCanvas event={event} />
       <SourceCommercialEventSection
@@ -26,6 +26,6 @@ export default async function SourceEventDetailPage({
         eventName={event.name}
         accountName={event.accountName}
       />
-    </SourceFoundationShell>
+    </SourceCanonShell>
   );
 }

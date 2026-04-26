@@ -9,6 +9,7 @@ export * from './SourcingEventTable';
 export * from './SourceActiveStageWorkspace';
 export * from './SourceAlertPanel';
 export * from './SourceArtifactDrawer';
+export * from './SourceCanonShell';
 export * from './SourceFoundationShell';
 export * from './SourceJourneyTracker';
 export * from './SourceStagePanel';

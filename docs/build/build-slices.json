@@ -7525,6 +7525,60 @@
       "status": "code_complete",
       "branch": "wave18/demo6-program-flagship-demo-script",
       "description": "10/20/45-minute Program Flagship demo scripts. Talk tracks, route sequence, what NOT to claim, three pilot ask versions, story arc summary."
+    },
+    {
+      "id": "DESROUTE1",
+      "wave": "wave-17a",
+      "name": "Active Route Ownership Map",
+      "type": "qa",
+      "status": "code_complete",
+      "branch": "wave17a/desroute1-active-route-ownership-map",
+      "description": "Deterministic map of active route files/components/shell ownership and remediation for admin, source, and tenant program routes."
+    },
+    {
+      "id": "DESROUTE2",
+      "wave": "wave-17a",
+      "name": "Legacy Shell / Nav Audit",
+      "type": "qa",
+      "status": "code_complete",
+      "branch": "wave17a/desroute2-legacy-shell-nav-audit",
+      "description": "Deterministic audit of legacy shell/nav/toolbar ownership, banned visual patterns, and safe replacement guidance. Audit-only; no route rewiring or deletions."
+    },
+    {
+      "id": "DESROUTE3",
+      "wave": "wave-17a",
+      "name": "Admin Shell Enforcement",
+      "type": "admin-ui",
+      "status": "code_complete",
+      "branch": "wave17a/desroute3-admin-shell-enforcement",
+      "description": "Enforce canonical Admin route shell/chrome for active admin routes while preserving auth guards and existing route content."
+    },
+    {
+      "id": "DESROUTE4",
+      "wave": "wave-17a",
+      "name": "Source Shell Enforcement",
+      "type": "source-ui",
+      "status": "code_complete",
+      "branch": "wave17a/desroute4-source-shell-enforcement",
+      "description": "Enforce canonical Source route shell ownership and expose deterministic commercial workflow stages on active Source routes."
+    },
+    {
+      "id": "DESROUTE5",
+      "wave": "wave-17a",
+      "name": "Program Shell Enforcement",
+      "type": "programs-ui",
+      "status": "code_complete",
+      "branch": "wave17a/desroute5-program-shell-enforcement",
+      "description": "Enforce canonical shell/workflow orientation on tenant program index/detail routes while preserving existing canonical program content."
+    },
+    {
+      "id": "QA26",
+      "wave": "wave-17a",
+      "name": "Route-to-Shell Design Verification",
+      "type": "qa",
+      "status": "code_complete",
+      "branch": "wave17a/qa26-route-shell-design-verification",
+      "description": "Deterministic route-to-shell verification for admin/source/program target routes. Verifies canonical shell markers, workflow markers, legacy imports, and explicit deferrals."
     }
   ]
 }

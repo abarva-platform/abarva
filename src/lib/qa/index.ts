@@ -1,2 +1,5 @@
 export * from './source-commercial-ui-verification';
 export * from './source-commercial-route-smoke';
+export * from './active-route-ownership-map';
+export * from './legacy-shell-nav-audit';
+export * from './route-shell-design-verification';
