@@ -7426,6 +7426,15 @@
       "status": "code_complete",
       "branch": "wave17/arch5-architecture-canvas-refresh",
       "description": "ArchitectureCanvas component + view-model. 10 workflow sections: brief, 9 planes, request flow, data flow, control plane model, Azure ref, gateway/registry, mission runtime, built/deferred, next actions. Selective dark hero panel only."
+    },
+    {
+      "id": "PROD8",
+      "wave": "wave-17",
+      "name": "Production Readiness Visual + Decision Flow Refresh",
+      "type": "admin-ui",
+      "status": "code_complete",
+      "branch": "wave17/prod8-production-readiness-visual-flow",
+      "description": "ProductionReadinessDecisionFlow with 8 sections: brief, demo, pilot, production blockers, component readiness pointer, evidence basis, live caveat, next 5 actions. Manifest-backed; not live monitoring."
     }
   ]
 }

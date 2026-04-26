@@ -742,7 +742,7 @@
       "name": "AbarVa Design + Workflow Canon Enforcement",
       "goal": "Bring the live AbarVa product together visually, structurally, and narratively across shell, navigation, Admin, Architecture, Production Readiness, and Source Commercial pages.",
       "status": "in_progress",
-      "percentComplete": 43,
+      "percentComplete": 57,
       "plannedSlices": [
         "DES7",
         "DES8",
@@ -755,7 +755,8 @@
       "completedSlices": [
         "DES7",
         "DES8",
-        "ARCH5"
+        "ARCH5",
+        "PROD8"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
@@ -763,7 +764,7 @@
       "validationStatus": "not_run",
       "productionReadinessUpdated": false,
       "currentBlockers": [],
-      "nextAction": "Complete remaining lanes and integrate. ARCH5 code-complete. Ready for validation and merge.",
+      "nextAction": "Complete remaining lanes and integrate. ARCH5 code-complete. Ready for validation and merge. Run validation, push, and merge via PR.",
       "lastUpdated": "2026-04-26"
     }
   ]

@@ -736,7 +736,8 @@
         "ADM8: Agent readiness deep drill created; Nexus/Sentinel/Atlas/Steward readiness factors documented; deterministic static manifest source.",
         "ARCH4 (wave-15): architecture-overview.ts data builder + ArchitectureOverviewPage component + /platform/admin/architecture Next.js page. 6 system layers, 15+ wave summaries. 9 tests green.",
         "DES8 (wave-17): AdminCanonShell primitive with workflow metadata (pageQuestion, primaryAgent, recommendedNextAction). Reusable across admin pages. 13 tests green.",
-        "ARCH5 (wave-17): ArchitectureCanvas with 10 workflow sections (brief, planes, request flow, data flow, control planes, Azure, gateway, missions, built/deferred, next actions). Mounted at /platform/admin/architecture. 14 tests."
+        "ARCH5 (wave-17): ArchitectureCanvas with 10 workflow sections (brief, planes, request flow, data flow, control planes, Azure, gateway, missions, built/deferred, next actions). Mounted at /platform/admin/architecture. 14 tests.",
+        "PROD8 (wave-17): ProductionReadinessDecisionFlow component (8-section flow). Mounted above existing tracker. Manifest-backed; explicit no-live-monitoring caveat. 12 tests."
       ],
       "lastUpdated": "2026-04-26"
     },
