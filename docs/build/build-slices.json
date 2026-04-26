@@ -7563,6 +7563,13 @@
       "description": "Enforce canonical Source route shell ownership and expose deterministic commercial workflow stages on active Source routes."
     },
     {
+      "id": "PROG16",
+      "title": "Source Event Chip on Program Action Strip",
+      "status": "code_complete",
+      "wave": "wave-19",
+      "lane": "E"
+    },
+    {
       "id": "DESROUTE5",
       "wave": "wave-17a",
       "name": "Program Shell Enforcement",
@@ -7579,6 +7586,57 @@
       "status": "code_complete",
       "branch": "wave17a/qa26-route-shell-design-verification",
       "description": "Deterministic route-to-shell verification for admin/source/program target routes. Verifies canonical shell markers, workflow markers, legacy imports, and explicit deferrals."
+    },
+    {
+      "id": "SRC32",
+      "title": "Tenant-Scoped Apex Retail AMS Scenario",
+      "status": "code_complete",
+      "wave": "wave-19",
+      "lane": "A"
+    },
+    {
+      "id": "PROG15",
+      "title": "Complete Future Phase Deliverables",
+      "status": "code_complete",
+      "wave": "wave-19",
+      "lane": "B"
+    },
+    {
+      "id": "LINK1",
+      "title": "Source Program Link Model",
+      "status": "code_complete",
+      "wave": "wave-19",
+      "lane": "C"
+    },
+    {
+      "id": "SRC33",
+      "title": "Linked Program Badge",
+      "status": "code_complete",
+      "wave": "wave-19",
+      "lane": "D"
+    },
+    {
+      "id": "MW9",
+      "title": "Workshop Five Outcome Seed + Gate Narrative",
+      "status": "code_complete",
+      "wave": "wave-19",
+      "lane": "F"
+    },
+    {
+      "id": "QA27",
+      "title": "Apex Retail Source Program Storyline Verification",
+      "status": "code_complete",
+      "wave": "wave-19",
+      "lane": "G"
+    },
+    {
+      "id": "DEMO7",
+      "wave": "wave-19",
+      "name": "Apex Retail 30-Minute Demo Storyline",
+      "type": "docs",
+      "status": "code_complete",
+      "branch": "wave19/demo7-apex-retail-demo-storyline",
+      "description": "Comprehensive demo guide for Apex Retail covering 10-minute, 30-minute, and 45-minute formats. Documents the Source commercial event to Programme flagship cross-surface narrative: AMS vendor consolidation informs CDP Activation programme gate. Grounded in SRC28 (source-commercial-demo-scenario.ts) and PROG10 (program-flagship-view.ts). Covers opening narrative, route sequence, talk tracks, what to show/not show, Workshop 5 outcomes, deliverables roadmap, commercial readiness, pilot ask, and routes reference."
     }
   ]
 }

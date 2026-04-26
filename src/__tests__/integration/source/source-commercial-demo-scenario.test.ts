@@ -1,4 +1,4 @@
-// Integration tests for SRC28: Source Commercial Demo Scenario Seed.
+// Integration tests for SRC32: Tenant-Scoped Apex Retail AMS Scenario.
 // Type-shape tests only — no React rendering, no jsdom.
 
 import {
@@ -20,6 +20,8 @@ const VALID_RISK_SEVERITIES: DemoRiskSeverity[] = [
 
 const VALID_AGENT_OWNERS = ['Nexus', 'Sentinel', 'Atlas', 'Steward'];
 
+const OLD_GENERIC_NAMES = ['Alpha', 'Beta', 'Gamma', 'Delta'];
+
 let scenario: SourceCommercialDemoScenario;
 
 beforeAll(() => {
@@ -27,15 +29,39 @@ beforeAll(() => {
 });
 
 // ---------------------------------------------------------------------------
-// 1. scenarioId
+// 1. tenantSlug
 // ---------------------------------------------------------------------------
 
-test('scenarioId is ams-outsourcing-demo-2026', () => {
-  expect(scenario.scenarioId).toBe('ams-outsourcing-demo-2026');
+test('scenario has tenantSlug "apex-retail"', () => {
+  expect(scenario.tenantSlug).toBe('apex-retail');
 });
 
 // ---------------------------------------------------------------------------
-// 2. vendors count
+// 2. linkedProgramCode
+// ---------------------------------------------------------------------------
+
+test('scenario has linkedProgramCode "APX-CDP-2026"', () => {
+  expect(scenario.linkedProgramCode).toBe('APX-CDP-2026');
+});
+
+// ---------------------------------------------------------------------------
+// 3. scenarioId
+// ---------------------------------------------------------------------------
+
+test('scenarioId is apex-retail-ams-outsourcing-2026', () => {
+  expect(scenario.scenarioId).toBe('apex-retail-ams-outsourcing-2026');
+});
+
+// ---------------------------------------------------------------------------
+// 4. deterministicSeed on scenario root
+// ---------------------------------------------------------------------------
+
+test('scenario root has deterministicSeed === true', () => {
+  expect(scenario.deterministicSeed).toBe(true);
+});
+
+// ---------------------------------------------------------------------------
+// 5. vendors count
 // ---------------------------------------------------------------------------
 
 test('vendors has exactly 4 items', () => {
@@ -43,7 +69,7 @@ test('vendors has exactly 4 items', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 3. All vendors have deterministicSeed === true
+// 6. All vendors have deterministicSeed === true
 // ---------------------------------------------------------------------------
 
 test('all vendors have deterministicSeed === true', () => {
@@ -53,7 +79,29 @@ test('all vendors have deterministicSeed === true', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 4. risks count
+// 7. All vendors have the caveat field
+// ---------------------------------------------------------------------------
+
+test('all vendors have caveat: "Deterministic seed data. Not an actual vendor response."', () => {
+  for (const vendor of scenario.vendors) {
+    expect(vendor.caveat).toBe('Deterministic seed data. Not an actual vendor response.');
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 8. No vendor name contains old generic names (Alpha, Beta, Gamma, Delta)
+// ---------------------------------------------------------------------------
+
+test('no vendor name contains "Alpha", "Beta", "Gamma", or "Delta"', () => {
+  for (const vendor of scenario.vendors) {
+    for (const oldName of OLD_GENERIC_NAMES) {
+      expect(vendor.vendorLabel).not.toContain(oldName);
+    }
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 9. risks count
 // ---------------------------------------------------------------------------
 
 test('risks has exactly 5 items', () => {
@@ -61,7 +109,7 @@ test('risks has exactly 5 items', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 5. All risk severities are valid
+// 10. All risk severities are valid
 // ---------------------------------------------------------------------------
 
 test('all risk severities are valid (critical | high | medium | low)', () => {
@@ -71,7 +119,15 @@ test('all risk severities are valid (critical | high | medium | low)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 6. missions count
+// 11. signals count
+// ---------------------------------------------------------------------------
+
+test('signals has exactly 4 items', () => {
+  expect(scenario.signals).toHaveLength(4);
+});
+
+// ---------------------------------------------------------------------------
+// 12. missions count
 // ---------------------------------------------------------------------------
 
 test('missions has exactly 5 items', () => {
@@ -79,7 +135,7 @@ test('missions has exactly 5 items', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 7. All mission agentOwners are valid
+// 13. All mission agentOwners are valid
 // ---------------------------------------------------------------------------
 
 test('all mission agentOwners are one of Nexus, Sentinel, Atlas, Steward', () => {
@@ -89,15 +145,7 @@ test('all mission agentOwners are one of Nexus, Sentinel, Atlas, Steward', () =>
 });
 
 // ---------------------------------------------------------------------------
-// 8. signals count
-// ---------------------------------------------------------------------------
-
-test('signals has exactly 4 items', () => {
-  expect(scenario.signals).toHaveLength(4);
-});
-
-// ---------------------------------------------------------------------------
-// 9. caveats count
+// 14. caveats count
 // ---------------------------------------------------------------------------
 
 test('caveats has exactly 3 items', () => {
@@ -105,7 +153,7 @@ test('caveats has exactly 3 items', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 10. generatedAt
+// 15. generatedAt
 // ---------------------------------------------------------------------------
 
 test('generatedAt is 2026-04-26', () => {
@@ -113,17 +161,15 @@ test('generatedAt is 2026-04-26', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 11. No vendor label contains a real company name
+// 16. sourceEventId matches scenarioId
 // ---------------------------------------------------------------------------
 
-test('all vendor labels start with "Vendor "', () => {
-  for (const vendor of scenario.vendors) {
-    expect(vendor.vendorLabel).toMatch(/^Vendor /);
-  }
+test('sourceEventId matches scenarioId', () => {
+  expect(scenario.sourceEventId).toBe(scenario.scenarioId);
 });
 
 // ---------------------------------------------------------------------------
-// 12. No vendor has deterministicSeed === false
+// 17. No vendor has deterministicSeed === false
 // ---------------------------------------------------------------------------
 
 test('no vendor has deterministicSeed === false', () => {

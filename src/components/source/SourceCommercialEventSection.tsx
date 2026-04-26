@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import SourceCommercialHub from './SourceCommercialHub';
+import { LinkedProgramBadge } from './LinkedProgramBadge';
+import { buildLinkedProgramBadgeView } from '@/lib/source/linked-program-badge-view';
 
 export interface SourceCommercialEventSectionProps {
   eventId: string;
@@ -96,9 +98,15 @@ export function SourceCommercialEventSection({
 }: SourceCommercialEventSectionProps) {
   const [expanded, setExpanded] = useState(false);
   const vendorList = deriveVendorList(eventId);
+  const badgeView = buildLinkedProgramBadgeView(eventId);
 
   return (
     <div style={sectionStyle}>
+      {badgeView && (
+        <div style={{ padding: '12px 24px 0 24px' }}>
+          <LinkedProgramBadge view={badgeView} />
+        </div>
+      )}
       <div style={headerRowStyle}>
         <h2 style={headingStyle}>Commercial Intelligence</h2>
         <button

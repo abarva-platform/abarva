@@ -773,6 +773,41 @@
       "lastUpdated": "2026-04-26"
     },
     {
+      "waveId": "wave-19",
+      "name": "Tenant-Scoped Demo Data + Source Intelligence Hardening",
+      "goal": "Scope the Source commercial demo scenario to Apex Retail, replace generic vendor labels with named representative vendors, add extended posture fields, and add deterministicSeed root-level field.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "SRC32",
+        "PROG15",
+        "LINK1",
+        "SRC33",
+        "PROG16",
+        "MW9",
+        "QA27",
+        "DEMO7"
+      ],
+      "completedSlices": [
+        "SRC32",
+        "PROG15",
+        "LINK1",
+        "SRC33",
+        "PROG16",
+        "MW9",
+        "QA27",
+        "DEMO7"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "tsc_clean",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Wave-19 all 8 lanes complete and merged. Next: live data ingestion, pilot client onboarding.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
       "waveId": "wave-18",
       "name": "Program Flagship Experience",
       "goal": "Make the Program detail page the flagship AbarVa experience: phase journey, workflow, approval gates, deliverables, evidence, actions, agent-driven.",

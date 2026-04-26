@@ -31,6 +31,8 @@ import {
   buildProgramFlagshipView,
   type ProgramFlagshipMissingRow,
 } from '@/lib/programs/program-flagship-view';
+import { SourceEventChip } from '@/components/programs/SourceEventChip';
+import { buildProgramSourceLinkView } from '@/lib/programs/program-source-link-view';
 
 // ----- canon tokens (inline so this shell never drifts) ---------------
 
@@ -365,6 +367,18 @@ export function ProgramFlagshipPage(props: ProgramFlagshipPageProps) {
             </span>
           </div>
         </section>
+
+        {/* Section 2b — Source event chip (PROG16) */}
+        {(() => {
+          const sourceLinkView = programCode
+            ? buildProgramSourceLinkView(programCode)
+            : null;
+          return sourceLinkView ? (
+            <section data-section="source-event-chip">
+              <SourceEventChip view={sourceLinkView} />
+            </section>
+          ) : null;
+        })()}
 
         {/* Section 3 — What the page knows / what's missing */}
         <section
