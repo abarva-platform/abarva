@@ -740,7 +740,7 @@
     },
     {
       "id": "I2",
-      "name": "Intelligence · Sentinel Brief + Active Patterns",
+      "name": "Intelligence \u00b7 Sentinel Brief + Active Patterns",
       "category": "I",
       "status": "code_complete",
       "risk": "medium",
@@ -797,7 +797,7 @@
     },
     {
       "id": "I3",
-      "name": "Intelligence · Pattern Detail / Evidence Trail",
+      "name": "Intelligence \u00b7 Pattern Detail / Evidence Trail",
       "category": "I",
       "status": "code_complete",
       "risk": "medium",
@@ -855,7 +855,7 @@
     },
     {
       "id": "ADM1",
-      "name": "Steward Setup/Admin · Apple-like Control Plane Contract",
+      "name": "Steward Setup/Admin \u00b7 Apple-like Control Plane Contract",
       "category": "ADM",
       "status": "code_complete",
       "risk": "low",
@@ -883,7 +883,7 @@
         "Contract defines the ten canonical Admin modules.",
         "Contract defines twelve canonical Enterprise Dataset Domains, each with example datasets, why-it-matters, agents, surfaces, readiness criteria, common missing inputs, and Steward guidance.",
         "Contract defines the Data Explorer field set and drawer behavior.",
-        "Contract defines the nine canonical evidence states (loaded → usable_as_evidence + blocked) and per-agent effect.",
+        "Contract defines the nine canonical evidence states (loaded \u2192 usable_as_evidence + blocked) and per-agent effect.",
         "Contract defines the Users & Access, Security & Governance, and Connector contracts.",
         "Contract defines the seven AI Control Tower dimensions and per-dimension agent role.",
         "Contract defines the Agent Readiness Matrix shape for Nexus, Sentinel, Atlas, Steward.",
@@ -952,7 +952,7 @@
         "npx jest src/__tests__/integration/admin/steward-setup-control-center.test.ts",
         "npm run build"
       ],
-      "notes": "First Apple-like Admin / Setup landing surface implementing ADM1 §F (zones), §G (modules), §H (12 dataset domains), §J (evidence states), §O (agent readiness), §P (Steward Brief). No live Steward runtime, no upload pipeline, no connector sync, no permission editor, no migrations. ADM3+ slices drill into the per-object detail."
+      "notes": "First Apple-like Admin / Setup landing surface implementing ADM1 \u00a7F (zones), \u00a7G (modules), \u00a7H (12 dataset domains), \u00a7J (evidence states), \u00a7O (agent readiness), \u00a7P (Steward Brief). No live Steward runtime, no upload pipeline, no connector sync, no permission editor, no migrations. ADM3+ slices drill into the per-object detail."
     },
     {
       "id": "ADM3",
@@ -992,7 +992,7 @@
       "acceptanceCriteria": [
         "summary.byDomain covers all 12 canonical Enterprise Dataset Domains.",
         "buildDatasetDomainInventoryForDomain returns non-empty items for active domains and empty list for not_started domains and unknown keys.",
-        "Every item carries the full ADM1 §I field set with deterministic seed-only data.",
+        "Every item carries the full ADM1 \u00a7I field set with deterministic seed-only data.",
         "Item ids are unique; every id matches the ds:<domainKey>:<slug> pattern.",
         "summary.loadedTotal / availableTotal / usableTotal reconcile to the canonical evidence progression (loaded >= available >= usable).",
         "byUsability covers all 9 canonical evidence states; byParseStatus covers all 4 parse states.",
@@ -1011,7 +1011,7 @@
     },
     {
       "id": "I4",
-      "name": "Intelligence · Pattern Content Renderer / Detail Enrichment",
+      "name": "Intelligence \u00b7 Pattern Content Renderer / Detail Enrichment",
       "category": "I",
       "status": "code_complete",
       "risk": "low",
@@ -1055,7 +1055,7 @@
         "relatedPatterns reference only canonical I1 pattern keys with no self-reference.",
         "Content does not invent a dollar amount in any string field.",
         "Content does not claim live retrieval / live model invocation.",
-        "SentinelPatternContentPanel renders source · deterministic seed chip and disclaims live retrieval in footer.",
+        "SentinelPatternContentPanel renders source \u00b7 deterministic seed chip and disclaims live retrieval in footer.",
         "SentinelPatternDetail integrates SentinelPatternContentPanel via PatternAuthoredContentSection.",
         "Module imports nothing from Sentinel runtime, Atlas / Nexus / agent runtime, Source UI, legacy /programs, mock.ts, auth, supabase, or model SDKs."
       ],
@@ -1100,7 +1100,7 @@
         "npx tsc --noEmit --pretty false",
         "npm run build"
       ],
-      "notes": "Founder-facing checklist for verifying the agentic spine before push, PR, or demo. Deterministic — does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
+      "notes": "Founder-facing checklist for verifying the agentic spine before push, PR, or demo. Deterministic \u2014 does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
     },
     {
       "id": "ACT1",
@@ -1519,9 +1519,9 @@
         "Contract defines a center-canvas, Nexus-led phase workspace with left journey rail (<=220px), center canvas (~70%), and right compact context panel (<=320px); not a left-rail nav and not a split-view dashboard.",
         "Contract enumerates exactly six mutually exclusive phase modes: phase overview, workshop preparation, live session support, notes synthesis, deliverable refinement, gate readiness.",
         "Contract names the Client Maestro as the only role that advances the phase and Nexus as the program mastermind; Atlas only speaks about the workshop, never in it.",
-        "Contract specifies Save / Stop / Resume affordances per MW1 §G with audit-row Save, paused-program Stop, and Context Bundle Resume.",
+        "Contract specifies Save / Stop / Resume affordances per MW1 \u00a7G with audit-row Save, paused-program Stop, and Context Bundle Resume.",
         "Contract specifies typed / pasted / uploaded ingestion only with deterministic extractors, raw-text persistence, Maestro confirmation, and source / createdFrom tagging; audio and meeting-bot ingestion are deferred.",
-        "Contract binds the workspace to PDEL render modes (html_render, markdown_render, note_list, pdf_preview) and the Stub → Outline → Rich promotion ladder per MW1 §J.",
+        "Contract binds the workspace to PDEL render modes (html_render, markdown_render, note_list, pdf_preview) and the Stub \u2192 Outline \u2192 Rich promotion ladder per MW1 \u00a7J.",
         "Contract requires evidence chip (NAVY / AMBER / RED / MUTED), value ledger reference, canonical gate caps in the journey rail, Steward gate readiness verdict in the right rail, and refusal of phase advancement when hard-gate inputs are missing.",
         "Contract specifies click-to-explore interaction, single-instance drawer overlay, 120ms fade-only animation, and a workshop notes pane that defaults open on the active phase.",
         "Contract forbids fabricated dollar amounts, fake E-### citations, and live-runtime claims; tags Maestro-captured records with source: 'maestro_capture' and createdFrom: 'deterministic_seed'.",
@@ -1568,7 +1568,7 @@
         "npx tsc --noEmit --pretty false",
         "npm run build"
       ],
-      "notes": "Founder-facing checklist for verifying SOL1, SOL2, MW2, and PF2 outputs land honestly before push or PR. Companion to QA1 Agentic Spine Verification Runbook. Deterministic — does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
+      "notes": "Founder-facing checklist for verifying SOL1, SOL2, MW2, and PF2 outputs land honestly before push or PR. Companion to QA1 Agentic Spine Verification Runbook. Deterministic \u2014 does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
     },
     {
       "id": "DES1",
@@ -1786,13 +1786,13 @@
         "Doc explicitly names anti-patterns including raw vector search without evidence binding, Claude / OpenAI as parser, direct provider import outside the gateway, artifacts without provenance, recommendations without missing-input disclosure, fabricated dollar amounts, and fake E-### citations.",
         "Doc explicitly forbids `import OpenAI` / `import Anthropic` (or any provider SDK import) anywhere outside the Model Gateway module.",
         "Doc states that Claude / OpenAI is NOT used as a parser; deterministic extractors only.",
-        "Doc names existing slices (S1, S2, S7, S9 / S9b–g, I1, PF1, SOL1 / SOL2, PDEL, MW1 / MW2, ACT1, ADM3, DES1 / DES2) as the source-of-truth contracts for each layer."
+        "Doc names existing slices (S1, S2, S7, S9 / S9b\u2013g, I1, PF1, SOL1 / SOL2, PDEL, MW1 / MW2, ACT1, ADM3, DES1 / DES2) as the source-of-truth contracts for each layer."
       ],
       "validationCommands": [
         "npx tsc --noEmit --pretty false",
         "npm run build"
       ],
-      "notes": "Architecture contract document only. Names what is enforced today (S7 tenant isolation, ADM3 dataset inventory, SOL2 PDLC pack, S9 / S9b–g spine, I1 / I2 / I3 / I4 intelligence, PF1 failure modes, PDEL deliverables, MW1 / MW2 workshops, ACT1 Tower contract, S1 / S2 context bundle, DES1 / DES2 design canon) vs aspirational (live Sentinel runtime, live evidence ledger ingest, live Model Gateway, live audit ledger, live Steward G1-G4 evaluator, export pipeline, SOL3 per-tenant solution draft, PF4 per-tenant failure-mode persistence)."
+      "notes": "Architecture contract document only. Names what is enforced today (S7 tenant isolation, ADM3 dataset inventory, SOL2 PDLC pack, S9 / S9b\u2013g spine, I1 / I2 / I3 / I4 intelligence, PF1 failure modes, PDEL deliverables, MW1 / MW2 workshops, ACT1 Tower contract, S1 / S2 context bundle, DES1 / DES2 design canon) vs aspirational (live Sentinel runtime, live evidence ledger ingest, live Model Gateway, live audit ledger, live Steward G1-G4 evaluator, export pipeline, SOL3 per-tenant solution draft, PF4 per-tenant failure-mode persistence)."
     },
     {
       "id": "ARCH2",
@@ -1818,7 +1818,7 @@
         "Doc declares each of the 16 numbered steps (user / Client Maestro input; identify work object; assemble context bundle; retrieve evidence; retrieve patterns; evaluate failure modes; evaluate solution archetypes; check governance / gates; assemble prompt via model gateway; call model THROUGH GATEWAY ONLY; render response; attach evidence + missing-input chips; create actions / artifacts; update program / workshop / deliverable state; emit Tower / Intelligence signals; audit / trace everything) in canonical order.",
         "Each step names inputs, outputs, owner contract / read model, and refusal conditions as required.",
         "Doc explicitly forbids direct provider imports (`import OpenAI` / `import Anthropic`) outside the Model Gateway module.",
-        "Doc names the canonical source-of-truth contract or read model for every step (S1, S2, S7, S9 / S9b–g, I1, PF1, SOL1 / SOL2 / SOL3, PDEL, MW1 / MW2, ACT1, ADM3 / ADM4, DES1 / DES2, evidence ledger, audit ledger, Model Gateway).",
+        "Doc names the canonical source-of-truth contract or read model for every step (S1, S2, S7, S9 / S9b\u2013g, I1, PF1, SOL1 / SOL2 / SOL3, PDEL, MW1 / MW2, ACT1, ADM3 / ADM4, DES1 / DES2, evidence ledger, audit ledger, Model Gateway).",
         "Doc names anti-patterns including raw vector hits surfaced as evidence, model-as-parser, direct provider call from a page component, and side effects outside the tool layer."
       ],
       "validationCommands": [
@@ -2032,7 +2032,7 @@
         "npx jest src/__tests__/integration/programs/program-artifact-canvas.test.ts",
         "npm run build"
       ],
-      "notes": "Deterministic single-deliverable viewer projected from the PDEL artifact inventory. Server component only; never injects raw HTML. No live edit, no live regenerate, no live download, no live approval — every future action is rendered disabled with a deferred reason. Companion to PDEL5 (two-region canvas) within the program canvas; future export / edit / regenerate / approval slices flip individual action enablement without contract changes. Versioning binding is deferred until deliverable-versioning lands on this branch."
+      "notes": "Deterministic single-deliverable viewer projected from the PDEL artifact inventory. Server component only; never injects raw HTML. No live edit, no live regenerate, no live download, no live approval \u2014 every future action is rendered disabled with a deferred reason. Companion to PDEL5 (two-region canvas) within the program canvas; future export / edit / regenerate / approval slices flip individual action enablement without contract changes. Versioning binding is deferred until deliverable-versioning lands on this branch."
     },
     {
       "id": "HOME1",
@@ -2189,7 +2189,7 @@
         "npx jest src/__tests__/integration/solutions/analytics-modernization-components.test.ts",
         "npm run build"
       ],
-      "notes": "Deterministic library only. Does not generate live architectures, invoke models, or read tenant state. relatedArchetypes references canonical SOL3 archetype keys (analytics_modernization, ai_led_pdlc_transformation) as documentation strings; this worktree does not import SOL3 and runtime cross-validation lands when SOL3 ships in the registry. Companion to SOL2 (AI-led PDLC) — components like ai_ready_feature_store and data_governance_operating_model cross-link both archetypes."
+      "notes": "Deterministic library only. Does not generate live architectures, invoke models, or read tenant state. relatedArchetypes references canonical SOL3 archetype keys (analytics_modernization, ai_led_pdlc_transformation) as documentation strings; this worktree does not import SOL3 and runtime cross-validation lands when SOL3 ships in the registry. Companion to SOL2 (AI-led PDLC) \u2014 components like ai_ready_feature_store and data_governance_operating_model cross-link both archetypes."
     },
     {
       "id": "SOL5",
@@ -2353,7 +2353,7 @@
         "npx jest src/__tests__/integration/solutions/solution-archetype-detail-view.test.ts",
         "npm run build"
       ],
-      "notes": "Pure deterministic projection of a canonical solution archetype into a canvas-ready detail view. SOL3's solution-archetype-registry is not yet present in this worktree, so SOL7 declares a local SolutionArchetypeLike structural type and a follow-up slice will wire the registry through to this read model. SOL7 is library-only — no UI renderer, no live retrieval, no model calls."
+      "notes": "Pure deterministic projection of a canonical solution archetype into a canvas-ready detail view. SOL3's solution-archetype-registry is not yet present in this worktree, so SOL7 declares a local SolutionArchetypeLike structural type and a follow-up slice will wire the registry through to this read model. SOL7 is library-only \u2014 no UI renderer, no live retrieval, no model calls."
     },
     {
       "id": "SOL8",
@@ -2389,7 +2389,7 @@
         "Section H defines handoff to deliverable renderer: Nexus produces an OUT1 html-mode deliverable when canvas reaches usable readiness AND a Steward approval lands; markdown / pdf / docx / ppt render modes are deferred per OUT1.",
         "Section I states no-live-model v1 rules: composition is deterministic from SOL3 / SOL2 / SOL4 / SOL5 / SOL6 / MW2 / PDEL; LLM enrichment per MG1 is deferred to v2 inside Nexus runtime; any 'Composed by Nexus' label clarifies 'deterministic seed' until model gateway is wired.",
         "Section J names future slices: SOL9 Solution Canvas UI on DES2 primitives, SOL10 Architecture Draft Read Model, SOL11 Workshop-to-Architecture Refinement (deterministic merge first, LLM-assisted later), SOL12 Architecture Deliverable Renderer.",
-        "Section K states no-fabrication rules: no fabricated dollar amounts, no fabricated E-### evidence citations outside EVID1 usable_as_evidence, no fabricated vendor endorsements, missing inputs surfaced explicitly, honest refusal language ('Steward refuses approval — N hard inputs missing').",
+        "Section K states no-fabrication rules: no fabricated dollar amounts, no fabricated E-### evidence citations outside EVID1 usable_as_evidence, no fabricated vendor endorsements, missing inputs surfaced explicitly, honest refusal language ('Steward refuses approval \u2014 N hard inputs missing').",
         "Documentation only; no application code, runtime, auth, supabase, agent runtime, or migrations are modified."
       ],
       "validationCommands": [
@@ -2440,10 +2440,10 @@
       "acceptanceCriteria": [
         "Module exports SolutionRecommendationInput, SolutionRecommendationScore, SolutionRecommendationReason, SolutionRecommendationMissingInput, SolutionRecommendationNextAction, SolutionRecommendation, SolutionRecommendationSummary, recommendSolutionArchetypesForContext, summarizeSolutionRecommendations, and getTopSolutionRecommendation as the canonical contract.",
         "recommendSolutionArchetypesForContext is byte-equal across repeated calls for the same input and is capped at five recommendations.",
-        "Scoring weights are industry_match 4, failure_mode_match 3 per match, pattern_match 3 per match, capability_match 2 per match, dataset_match 2 per match, preference_match 1; raw is normalized as min(1, raw / 24) with bands low (< 0.34), medium (< 0.67), high (≥ 0.67); confidence is high if normalized ≥ 0.67 and missing-input count ≤ 1, medium if normalized ≥ 0.34, else low.",
+        "Scoring weights are industry_match 4, failure_mode_match 3 per match, pattern_match 3 per match, capability_match 2 per match, dataset_match 2 per match, preference_match 1; raw is normalized as min(1, raw / 24) with bands low (< 0.34), medium (< 0.67), high (\u2265 0.67); confidence is high if normalized \u2265 0.67 and missing-input count \u2264 1, medium if normalized \u2265 0.34, else low.",
         "Special-case keyword priors bias healthcare archetypes (clinical / ambient / HCC / prior auth / payer / EHR), analytics_modernization (data / lakehouse / semantic / BI / warehouse / feature store), ai_led_pdlc_transformation (PDLC / DORA / code review / developer productivity / engineering or the ai_governance_operating_model_gap failure-mode marker), and kyc_customer_onboarding_ai (KYC / onboarding / customer due diligence / AML).",
         "Sparse input (no industry, no desiredOutcomes, no currentStateSignals, no detectedFailureModes, no detectedPatterns) returns one placeholder recommendation with missingInputs.length > 0 AND nextAction.kind === 'capture_inputs'.",
-        "Every recommendation carries buildBuyPartnerGuidance with recommendedOption ∈ {build, buy, partner}, derived deterministically from SOL6's evaluateBuildBuyPartnerScenario.",
+        "Every recommendation carries buildBuyPartnerGuidance with recommendedOption \u2208 {build, buy, partner}, derived deterministically from SOL6's evaluateBuildBuyPartnerScenario.",
         "summarizeSolutionRecommendations reconciles totalRecommendations, topArchetypeKey, highConfidenceCount, and totalMissingInputs against the recommendation list.",
         "Serialized recommendation list contains no fabricated dollar amounts.",
         "Module imports SOL3 (solution-archetype-registry) and SOL6 (build-buy-partner-framework); module imports nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, legacy /programs, mock.ts, auth, or supabase; contains no Math.random / clock reads / fetch / anthropic / openai / useState / useEffect; no Coming soon / TBD / Lorem ipsum placeholders."
@@ -2455,7 +2455,7 @@
         "npx jest src/__tests__/integration/solutions/build-buy-partner-framework.test.ts",
         "npm run build"
       ],
-      "notes": "Pure deterministic recommendation engine that unifies SOL3 archetypes, SOL4 / SOL5 component packs, the SOL6 build/buy/partner evaluator, and the SOL7 detail read model into a single Nexus-facing recommendation layer. Library only — no UI renderer, no live retrieval, no model calls, no tenant runtime state. Live Nexus integration is deferred to SOL10+."
+      "notes": "Pure deterministic recommendation engine that unifies SOL3 archetypes, SOL4 / SOL5 component packs, the SOL6 build/buy/partner evaluator, and the SOL7 detail read model into a single Nexus-facing recommendation layer. Library only \u2014 no UI renderer, no live retrieval, no model calls, no tenant runtime state. Live Nexus integration is deferred to SOL10+."
     },
     {
       "id": "QA3",
@@ -2485,25 +2485,25 @@
         "docs/CORE_APP_CONTEXT_PACK.md"
       ],
       "acceptanceCriteria": [
-        "Runbook §A documents purpose and scope as the founder-facing checklist for SOL3, SOL4, SOL5, SOL6, SOL7, and SOL8 outputs, named as the third companion to QA1 (Agentic Spine) and QA2 (Solution / Workshop) verification runbooks.",
-        "Runbook §B documents the branch hygiene checklist with exact git commands (git branch --show-current, git status --short, git log --oneline -3, git show --stat HEAD, git diff --cached --name-only) and pass criteria.",
-        "Runbook §C lists required validation commands (tsc, build, integrity:dom, the per-slice jest suites for SOL3-SOL7, and the docs-only file check for SOL8) with pass criteria.",
-        "Runbook §D defines per-slice verification checklists for SOL3 (12 archetypes in canonical order, 21 required fields, AI-led PDLC linkage, analytics modernization concepts, healthcare archetypes 3-5, build-buy-partner archetype, no invented dollars, module hygiene), SOL4 (15 components in canonical order, 13 required fields, four-pillar coverage, relatedArchetypes cross-reference), SOL5 (12 healthcare archetypes, ambient / HCC / prior auth / revenue integrity / denial prevention specifics, vendor deny-list), SOL6 (14 criteria, vendor / startup factors, enterprise readiness risks, deterministic build / buy / partner rules, governance warnings), SOL7 (byte-equal detail view, 12 canvas sections, readiness summary, missing-input prompts), and SOL8 (sections A through K, route candidates, agent roles, interaction model, versioning, handoff to deliverable renderer, no-live-model rules, future slices, no-fabrication rules).",
-        "Runbook §E captures the deferred route / canvas verification checklist for SOL9-SOL12 (solutions index, per-archetype canvas, click-to-open drawer with 120ms fade, versioning visible, Steward refusal language, deliverable handoff, build / buy / partner sub-canvas, honest empty states, disabled affordances).",
-        "Runbook §F defines no-fabrication checks (no fake dollars regex, no E-### citations, no branded vendor endorsements, no Coming soon / TBD / Lorem ipsum, honest fallbacks, deterministic-source captions).",
-        "Runbook §G defines build / buy / partner checks for the deterministic rule fixtures: high-differentiation + internal capability -> build, high time-to-value + mature market + non-high diff -> buy, fragmented market + non-low diff -> partner; confidence levels valid; vendor / startup checks populated when option != build; governance warnings populated when regulated OR high-risk-tagged.",
-        "Runbook §H defines healthcare archetype checks: >=3 data sources, >=2 SMEs, >=2 governance considerations per archetype; specific content checks for ambient, HCC, prior auth, revenue integrity, denial prevention; no branded vendor endorsements.",
-        "Runbook §I defines analytics modernization checks: all 15 components address AI readiness somewhere across their fields; semantic layer / data quality / governance / metadata catalog all represented.",
-        "Runbook §J defines AI-led PDLC component linkage: ai_led_pdlc_transformation.solutionComponents references at least one canonical SOL2 AiLedPdlcComponentKey; SOL4 components have relatedArchetypes referencing canonical SOL3 archetype keys.",
-        "Runbook §K defines workshop and deliverable linkage: every archetype names >=2 workshopsRequired and a recommendedFirstWorkshop; every archetype names >=2 deliverablesGenerated; cross-references resolve to canonical MW1 / MW2 and PDEL keys.",
-        "Runbook §L defines the morning review decision matrix (keep / amend / discard / cherry-pick / push / PR) with default = wait, push only with explicit founder go-ahead, and the canonical cherry-pick path off main with build-slices.json conflict resolution.",
+        "Runbook \u00a7A documents purpose and scope as the founder-facing checklist for SOL3, SOL4, SOL5, SOL6, SOL7, and SOL8 outputs, named as the third companion to QA1 (Agentic Spine) and QA2 (Solution / Workshop) verification runbooks.",
+        "Runbook \u00a7B documents the branch hygiene checklist with exact git commands (git branch --show-current, git status --short, git log --oneline -3, git show --stat HEAD, git diff --cached --name-only) and pass criteria.",
+        "Runbook \u00a7C lists required validation commands (tsc, build, integrity:dom, the per-slice jest suites for SOL3-SOL7, and the docs-only file check for SOL8) with pass criteria.",
+        "Runbook \u00a7D defines per-slice verification checklists for SOL3 (12 archetypes in canonical order, 21 required fields, AI-led PDLC linkage, analytics modernization concepts, healthcare archetypes 3-5, build-buy-partner archetype, no invented dollars, module hygiene), SOL4 (15 components in canonical order, 13 required fields, four-pillar coverage, relatedArchetypes cross-reference), SOL5 (12 healthcare archetypes, ambient / HCC / prior auth / revenue integrity / denial prevention specifics, vendor deny-list), SOL6 (14 criteria, vendor / startup factors, enterprise readiness risks, deterministic build / buy / partner rules, governance warnings), SOL7 (byte-equal detail view, 12 canvas sections, readiness summary, missing-input prompts), and SOL8 (sections A through K, route candidates, agent roles, interaction model, versioning, handoff to deliverable renderer, no-live-model rules, future slices, no-fabrication rules).",
+        "Runbook \u00a7E captures the deferred route / canvas verification checklist for SOL9-SOL12 (solutions index, per-archetype canvas, click-to-open drawer with 120ms fade, versioning visible, Steward refusal language, deliverable handoff, build / buy / partner sub-canvas, honest empty states, disabled affordances).",
+        "Runbook \u00a7F defines no-fabrication checks (no fake dollars regex, no E-### citations, no branded vendor endorsements, no Coming soon / TBD / Lorem ipsum, honest fallbacks, deterministic-source captions).",
+        "Runbook \u00a7G defines build / buy / partner checks for the deterministic rule fixtures: high-differentiation + internal capability -> build, high time-to-value + mature market + non-high diff -> buy, fragmented market + non-low diff -> partner; confidence levels valid; vendor / startup checks populated when option != build; governance warnings populated when regulated OR high-risk-tagged.",
+        "Runbook \u00a7H defines healthcare archetype checks: >=3 data sources, >=2 SMEs, >=2 governance considerations per archetype; specific content checks for ambient, HCC, prior auth, revenue integrity, denial prevention; no branded vendor endorsements.",
+        "Runbook \u00a7I defines analytics modernization checks: all 15 components address AI readiness somewhere across their fields; semantic layer / data quality / governance / metadata catalog all represented.",
+        "Runbook \u00a7J defines AI-led PDLC component linkage: ai_led_pdlc_transformation.solutionComponents references at least one canonical SOL2 AiLedPdlcComponentKey; SOL4 components have relatedArchetypes referencing canonical SOL3 archetype keys.",
+        "Runbook \u00a7K defines workshop and deliverable linkage: every archetype names >=2 workshopsRequired and a recommendedFirstWorkshop; every archetype names >=2 deliverablesGenerated; cross-references resolve to canonical MW1 / MW2 and PDEL keys.",
+        "Runbook \u00a7L defines the morning review decision matrix (keep / amend / discard / cherry-pick / push / PR) with default = wait, push only with explicit founder go-ahead, and the canonical cherry-pick path off main with build-slices.json conflict resolution.",
         "Documentation only; no application code, runtime, auth, supabase, or migrations are modified."
       ],
       "validationCommands": [
         "npx tsc --noEmit --pretty false",
         "npm run build"
       ],
-      "notes": "Founder-facing checklist for verifying SOL3, SOL4, SOL5, SOL6, SOL7, and SOL8 outputs land honestly before push or PR. Third companion to QA1 (Agentic Spine) and QA2 (Solution / Workshop) verification runbooks. Deterministic — does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
+      "notes": "Founder-facing checklist for verifying SOL3, SOL4, SOL5, SOL6, SOL7, and SOL8 outputs land honestly before push or PR. Third companion to QA1 (Agentic Spine) and QA2 (Solution / Workshop) verification runbooks. Deterministic \u2014 does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
     },
     {
       "id": "CTX2",
@@ -3027,16 +3027,16 @@
         "docs/CORE_APP_CONTEXT_PACK.md"
       ],
       "acceptanceCriteria": [
-        "Runbook §A documents purpose and scope as the founder-facing checklist for AG10 (mission queue read model), AG11 (mission UI panel), MG2 (model gateway stub), TOOL2 (tool registry MVP), and PROD2 (production-readiness validator), named as the fourth companion to QA1 (Agentic Spine), QA2 (Solution Workshop), and QA3 (Solution Intelligence) verification runbooks; explicitly out-of-scopes workshop dynamics, solution intelligence canvas walks, agentic spine internals, live retrieval, live model calls, scheduler/background mission triggers, mission persistence, exporter pipelines, and real evidence citations.",
-        "Runbook §B documents the branch hygiene checklist with exact git commands (git branch --show-current, git status --short, git status -sb, git log --oneline origin/main..HEAD, git log --oneline -3, git show --stat HEAD, git diff --cached --name-only, git ls-files --others --exclude-standard) and pass criteria for each, naming the QA4 staged set as exactly the three allowedFiles entries.",
-        "Runbook §C lists required validation commands (npx tsc --noEmit --pretty false, npm run build, npm run integrity:dom, the per-slice jest suites for AG10 / AG11 / MG2 / TOOL2 / PROD2, the production-readiness-tracker regression jest suite, and the python3 manifest parse) with pass criteria, and explains why MG2 / TOOL2 each get their own suite.",
-        "Runbook §D defines per-persona walks for Founder / Platform Operator (/platform/admin, /platform/admin/production-readiness, /platform/admin/build-progress), Client Maestro (/tenant/apex-retail/programs and /programs/{slug} and /phase/{n}), CIO / CTO (/tenant/apex-retail/tower), CFO / Value Office (/tenant/apex-retail/tower), Steward Admin (/platform/admin and /platform/admin/production-readiness), and Data Owner (/platform/admin Dataset Explorer); each persona walk has explicit expected mission rows and stop conditions, and AG11 mounting-deferred surfaces are marked as static-source assertions.",
-        "Runbook §E captures the route coverage table (route -> primary agent -> mission types expected -> current status) for /platform/admin, /platform/admin/production-readiness, /tenant/apex-retail/programs, /tenant/apex-retail/tower, /tenant/apex-retail/intelligence, and /tenant/apex-retail/intelligence/patterns/[patternKey], plus a cross-tenant note on Apex Retail vs Meridian and a mission-type to surface map.",
-        "Runbook §F defines per-agent mission verification rules for Nexus next_action, Sentinel evidence_gap, Atlas executive_brief, and Steward gate_check / data_readiness, with explicit rules on rationale (>=1 sentence), stopCondition (concrete observable event, never 'Wait' / 'TBD'), terminal-path closure (every state reaches completed / dismissed / escalated / deferred), valid handoff target, and UI visibility recommendation matching surface; includes a mission-state transition table and a priority-order assertion.",
-        "Runbook §G defines no-fabrication checks: no fake dollars regex (\\$\\s?\\d) on AG10 seed JSON, no fabricated E-### citations across src/lib/agents and AG10 / AG11 source, no fake live runtime claims (live monitoring / production observability / real-time feed / live connector / live retrieval) outside honest-disclaimer or PROD2-protocol context, no fake production readiness (overallReadinessPercent <= planned high band, no production_ready component without all gates), no banned placeholders (Coming soon / TBD / Lorem ipsum), honest disclaimers always present, no named-vendor endorsements, and no model / API call leakage.",
-        "Runbook §H defines production-readiness tracker verification: manifest parses, 15 canonical components present in canonical order, maturitySnapshot has 3 indicators + 20 areas, overallReadinessPercent within 20-25 (matches production_readiness indicator band), PROD2 validator returns passed: true and violations: [], lastUpdated reflects most recent change, no silent component promotion, and validation_qa.notes lists QA1/QA2/QA3/QA4.",
-        "Runbook §I defines the morning review decision matrix (keep / amend / discard / cherry-pick / push-PR) with default = wait for founder review, push only with explicit founder go-ahead, and the conflict resolution policy for production-readiness.json (conservative status, union blockers, latest nextAction wins or appends, preserve notes from both sides, bump lastUpdated) per PROD2 §I.",
-        "Runbook §J documents the canonical cherry-pick path off main (integration/agent-mission-batch, dependency order AG10 -> AG11 -> MG2 -> TOOL2 -> PROD2 -> QA4, keep both entries on build-slices.json conflict, apply §I conflict policy on production-readiness.json conflict, re-run §C validation, push only with founder go-ahead) and references QA1 / QA2 / QA3 by name as siblings; appendix on worktree hygiene reminds that staged set must equal the three allowedFiles entries verbatim.",
+        "Runbook \u00a7A documents purpose and scope as the founder-facing checklist for AG10 (mission queue read model), AG11 (mission UI panel), MG2 (model gateway stub), TOOL2 (tool registry MVP), and PROD2 (production-readiness validator), named as the fourth companion to QA1 (Agentic Spine), QA2 (Solution Workshop), and QA3 (Solution Intelligence) verification runbooks; explicitly out-of-scopes workshop dynamics, solution intelligence canvas walks, agentic spine internals, live retrieval, live model calls, scheduler/background mission triggers, mission persistence, exporter pipelines, and real evidence citations.",
+        "Runbook \u00a7B documents the branch hygiene checklist with exact git commands (git branch --show-current, git status --short, git status -sb, git log --oneline origin/main..HEAD, git log --oneline -3, git show --stat HEAD, git diff --cached --name-only, git ls-files --others --exclude-standard) and pass criteria for each, naming the QA4 staged set as exactly the three allowedFiles entries.",
+        "Runbook \u00a7C lists required validation commands (npx tsc --noEmit --pretty false, npm run build, npm run integrity:dom, the per-slice jest suites for AG10 / AG11 / MG2 / TOOL2 / PROD2, the production-readiness-tracker regression jest suite, and the python3 manifest parse) with pass criteria, and explains why MG2 / TOOL2 each get their own suite.",
+        "Runbook \u00a7D defines per-persona walks for Founder / Platform Operator (/platform/admin, /platform/admin/production-readiness, /platform/admin/build-progress), Client Maestro (/tenant/apex-retail/programs and /programs/{slug} and /phase/{n}), CIO / CTO (/tenant/apex-retail/tower), CFO / Value Office (/tenant/apex-retail/tower), Steward Admin (/platform/admin and /platform/admin/production-readiness), and Data Owner (/platform/admin Dataset Explorer); each persona walk has explicit expected mission rows and stop conditions, and AG11 mounting-deferred surfaces are marked as static-source assertions.",
+        "Runbook \u00a7E captures the route coverage table (route -> primary agent -> mission types expected -> current status) for /platform/admin, /platform/admin/production-readiness, /tenant/apex-retail/programs, /tenant/apex-retail/tower, /tenant/apex-retail/intelligence, and /tenant/apex-retail/intelligence/patterns/[patternKey], plus a cross-tenant note on Apex Retail vs Meridian and a mission-type to surface map.",
+        "Runbook \u00a7F defines per-agent mission verification rules for Nexus next_action, Sentinel evidence_gap, Atlas executive_brief, and Steward gate_check / data_readiness, with explicit rules on rationale (>=1 sentence), stopCondition (concrete observable event, never 'Wait' / 'TBD'), terminal-path closure (every state reaches completed / dismissed / escalated / deferred), valid handoff target, and UI visibility recommendation matching surface; includes a mission-state transition table and a priority-order assertion.",
+        "Runbook \u00a7G defines no-fabrication checks: no fake dollars regex (\\$\\s?\\d) on AG10 seed JSON, no fabricated E-### citations across src/lib/agents and AG10 / AG11 source, no fake live runtime claims (live monitoring / production observability / real-time feed / live connector / live retrieval) outside honest-disclaimer or PROD2-protocol context, no fake production readiness (overallReadinessPercent <= planned high band, no production_ready component without all gates), no banned placeholders (Coming soon / TBD / Lorem ipsum), honest disclaimers always present, no named-vendor endorsements, and no model / API call leakage.",
+        "Runbook \u00a7H defines production-readiness tracker verification: manifest parses, 15 canonical components present in canonical order, maturitySnapshot has 3 indicators + 20 areas, overallReadinessPercent within 20-25 (matches production_readiness indicator band), PROD2 validator returns passed: true and violations: [], lastUpdated reflects most recent change, no silent component promotion, and validation_qa.notes lists QA1/QA2/QA3/QA4.",
+        "Runbook \u00a7I defines the morning review decision matrix (keep / amend / discard / cherry-pick / push-PR) with default = wait for founder review, push only with explicit founder go-ahead, and the conflict resolution policy for production-readiness.json (conservative status, union blockers, latest nextAction wins or appends, preserve notes from both sides, bump lastUpdated) per PROD2 \u00a7I.",
+        "Runbook \u00a7J documents the canonical cherry-pick path off main (integration/agent-mission-batch, dependency order AG10 -> AG11 -> MG2 -> TOOL2 -> PROD2 -> QA4, keep both entries on build-slices.json conflict, apply \u00a7I conflict policy on production-readiness.json conflict, re-run \u00a7C validation, push only with founder go-ahead) and references QA1 / QA2 / QA3 by name as siblings; appendix on worktree hygiene reminds that staged set must equal the three allowedFiles entries verbatim.",
         "Documentation only; no application code, runtime, auth, supabase, or migrations are modified.",
         "build-slices.json appends a QA4 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn, status code_complete, risk low, and ownerAgent Reviewer; manifest top-level lastUpdated is bumped to today's ISO date.",
         "production-readiness.json validation_qa component appends a note acknowledging that QA4 mission / persona verification runbook is added; status is preserved (no promotion); manifest top-level lastUpdated is bumped to today's ISO date."
@@ -3045,7 +3045,7 @@
         "npx tsc --noEmit --pretty false",
         "npm run build"
       ],
-      "notes": "Founder-facing checklist for verifying AG10, AG11, MG2, TOOL2, and PROD2 outputs land honestly before push or PR. Fourth companion to QA1 (Agentic Spine), QA2 (Solution / Workshop), and QA3 (Solution Intelligence) verification runbooks. Deterministic — does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
+      "notes": "Founder-facing checklist for verifying AG10, AG11, MG2, TOOL2, and PROD2 outputs land honestly before push or PR. Fourth companion to QA1 (Agentic Spine), QA2 (Solution / Workshop), and QA3 (Solution Intelligence) verification runbooks. Deterministic \u2014 does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
     },
     {
       "id": "OPS1",
@@ -3074,20 +3074,20 @@
         "docs/CORE_APP_CONTEXT_PACK.md"
       ],
       "acceptanceCriteria": [
-        "docs/build/AGENT_DISPATCH_OPERATING_MODEL.md §A documents purpose: keep agents busy, prevent runaway scope, make hand-offs auditable, avoid false readiness promotion, integrate cleanly to main.",
-        "Operating model §B states the hard rule: one slice = one worktree = one branch = one local commit; worktree path /Users/anand/Projects/nexus-pack-<slug>; branch pack/<slice-id>-<slug>; no cross-pollination.",
-        "Operating model §C documents no push / merge / PR from lane worktrees; lanes commit locally; integrator alone owns push and PR after morning review.",
-        "Operating model §D documents the morning review per-worktree checklist (branch, status, log -3, show --stat HEAD, tsc, build) and the keep / amend / discard / cherry-pick / push-PR decision matrix.",
-        "Operating model §E documents the integration branch flow: switch to main, pull, create codex/<batch-name>, cherry-pick lane commits in dependency order, resolve manifest conflicts via §G and §H, validate, push, open one PR.",
-        "Operating model §F documents cherry-pick order: read-models before UI, stubs before validators, validators after baseline, docs runbook last; ties broken by priority then alphabetical slice id.",
-        "Operating model §G documents build-slices.json conflict policy: take HEAD's existing entries, append the new entry from cherry source, JSON parse must pass, bump lastUpdated, no reordering, no silent mutation of other lanes' entries.",
-        "Operating model §H documents production-readiness.json conflict policy: conservative status (lower wins), no false promotions, union notes deduped by string, keep blockers unless explicitly removed with evidence (union by id), nextAction take incoming when HEAD untouched / append distinct content when both changed, preserve other-lane notes, bump lastUpdated, validator must pass after every cherry-pick.",
-        "Operating model §I documents stale Claude Code task handling: verify with ps aux | grep -E \"next build|tsc|jest\" | grep -v grep; if empty, dismiss the UI entries; do not assume work is in progress from the Task Panel alone.",
-        "Operating model §J documents no `git add .`: lanes stage by explicit path; pre-commit `git diff --cached --name-only` must show only the slice's allowedFiles.",
-        "Operating model §K documents no false readiness promotion: PROD2 validateProductionReadinessManifest must return passed: true after every cherry-pick; production_ready requires all gates pass and explicit founder approval.",
-        "Operating model §L documents failure handling: stop on validation failure; do not fix forward a broken slice; abort, report, ask.",
-        "Operating model §M documents branch instability mitigation: always run git branch --show-current before staging or committing.",
-        "Operating model §N documents future automation path: GitHub Actions for CI, Vercel deployment hooks, persona crawler, security scan, observability — currently deferred.",
+        "docs/build/AGENT_DISPATCH_OPERATING_MODEL.md \u00a7A documents purpose: keep agents busy, prevent runaway scope, make hand-offs auditable, avoid false readiness promotion, integrate cleanly to main.",
+        "Operating model \u00a7B states the hard rule: one slice = one worktree = one branch = one local commit; worktree path /Users/anand/Projects/nexus-pack-<slug>; branch pack/<slice-id>-<slug>; no cross-pollination.",
+        "Operating model \u00a7C documents no push / merge / PR from lane worktrees; lanes commit locally; integrator alone owns push and PR after morning review.",
+        "Operating model \u00a7D documents the morning review per-worktree checklist (branch, status, log -3, show --stat HEAD, tsc, build) and the keep / amend / discard / cherry-pick / push-PR decision matrix.",
+        "Operating model \u00a7E documents the integration branch flow: switch to main, pull, create codex/<batch-name>, cherry-pick lane commits in dependency order, resolve manifest conflicts via \u00a7G and \u00a7H, validate, push, open one PR.",
+        "Operating model \u00a7F documents cherry-pick order: read-models before UI, stubs before validators, validators after baseline, docs runbook last; ties broken by priority then alphabetical slice id.",
+        "Operating model \u00a7G documents build-slices.json conflict policy: take HEAD's existing entries, append the new entry from cherry source, JSON parse must pass, bump lastUpdated, no reordering, no silent mutation of other lanes' entries.",
+        "Operating model \u00a7H documents production-readiness.json conflict policy: conservative status (lower wins), no false promotions, union notes deduped by string, keep blockers unless explicitly removed with evidence (union by id), nextAction take incoming when HEAD untouched / append distinct content when both changed, preserve other-lane notes, bump lastUpdated, validator must pass after every cherry-pick.",
+        "Operating model \u00a7I documents stale Claude Code task handling: verify with ps aux | grep -E \"next build|tsc|jest\" | grep -v grep; if empty, dismiss the UI entries; do not assume work is in progress from the Task Panel alone.",
+        "Operating model \u00a7J documents no `git add .`: lanes stage by explicit path; pre-commit `git diff --cached --name-only` must show only the slice's allowedFiles.",
+        "Operating model \u00a7K documents no false readiness promotion: PROD2 validateProductionReadinessManifest must return passed: true after every cherry-pick; production_ready requires all gates pass and explicit founder approval.",
+        "Operating model \u00a7L documents failure handling: stop on validation failure; do not fix forward a broken slice; abort, report, ask.",
+        "Operating model \u00a7M documents branch instability mitigation: always run git branch --show-current before staging or committing.",
+        "Operating model \u00a7N documents future automation path: GitHub Actions for CI, Vercel deployment hooks, persona crawler, security scan, observability \u2014 currently deferred.",
         "docs/build/agent-dispatch-queue.json parses as JSON; schemaVersion is 1; lastUpdated is 2026-04-25; items array has at least 20 entries.",
         "Queue includes all 20 ids: AG12, CTX3, EVID3, MW4, ACT2, QA5, PDEL6, ACT3, ADM6, PAT1, PAT2, DATA1, DATA2, MG3, TOOL3, SOL10, SOL11, I5, I6, PROD3.",
         "AG12 / CTX3 / EVID3 / MW4 / ACT2 / QA5 carry status 'in_progress'; the remaining items carry 'ready' or 'proposed' based on dependsOn satisfaction.",
@@ -3210,7 +3210,7 @@
         "npm run build",
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
-      "notes": "Operationalizes dimension #1 (AI Portfolio Inventory) of the ACT1 AI Control Tower contract. Deterministic seed-only read model. No live integrations, no per-tenant inventory binding, no Atlas brief composition, no Tower UI — those land in ACT2.x, ACT9, and ACT10. Conservative manifest update: ai_control_tower component is not promoted."
+      "notes": "Operationalizes dimension #1 (AI Portfolio Inventory) of the ACT1 AI Control Tower contract. Deterministic seed-only read model. No live integrations, no per-tenant inventory binding, no Atlas brief composition, no Tower UI \u2014 those land in ACT2.x, ACT9, and ACT10. Conservative manifest update: ai_control_tower component is not promoted."
     },
     {
       "id": "QA5",
@@ -3477,7 +3477,7 @@
         "npm run build",
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
-      "notes": "Operationalizes dimension #2 (AI Adoption & Usage) of the ACT1 AI Control Tower contract. Deterministic seed-only read model. No live integrations, no per-tenant adoption telemetry binding, no Atlas brief composition, no Tower UI — those land in ACT3.x, ACT9, and ACT10. Conservative manifest update: ai_control_tower component is not promoted."
+      "notes": "Operationalizes dimension #2 (AI Adoption & Usage) of the ACT1 AI Control Tower contract. Deterministic seed-only read model. No live integrations, no per-tenant adoption telemetry binding, no Atlas brief composition, no Tower UI \u2014 those land in ACT3.x, ACT9, and ACT10. Conservative manifest update: ai_control_tower component is not promoted."
     },
     {
       "id": "ACT4",
@@ -3529,7 +3529,7 @@
         "npm run build",
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
-      "notes": "Operationalizes the value-and-outcome dimension of the ACT1 AI Control Tower contract. Deterministic seed-only read model that builds on the ACT2 AI portfolio inventory by attaching value claims keyed by programKey and aiUseCaseKey. No live integrations, no per-tenant ledger binding, no Atlas brief composition, no Tower UI — those land in ACT4.x, ACT9, and ACT10. Conservative manifest update: ai_control_tower and audit_governance components are not promoted."
+      "notes": "Operationalizes the value-and-outcome dimension of the ACT1 AI Control Tower contract. Deterministic seed-only read model that builds on the ACT2 AI portfolio inventory by attaching value claims keyed by programKey and aiUseCaseKey. No live integrations, no per-tenant ledger binding, no Atlas brief composition, no Tower UI \u2014 those land in ACT4.x, ACT9, and ACT10. Conservative manifest update: ai_control_tower and audit_governance components are not promoted."
     },
     {
       "id": "ACT5",
@@ -3580,7 +3580,7 @@
         "npm run build",
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
-      "notes": "Operationalizes the AI Risk & Governance dimension of the ACT1 AI Control Tower contract. Deterministic seed-only read model. No live integrations, no per-tenant risk register binding, no Atlas brief composition, no Tower UI — those land in ACT5.x, ACT9, and ACT10. Conservative manifest update: ai_control_tower and audit_governance components are not promoted."
+      "notes": "Operationalizes the AI Risk & Governance dimension of the ACT1 AI Control Tower contract. Deterministic seed-only read model. No live integrations, no per-tenant risk register binding, no Atlas brief composition, no Tower UI \u2014 those land in ACT5.x, ACT9, and ACT10. Conservative manifest update: ai_control_tower and audit_governance components are not promoted."
     },
     {
       "id": "ACT7",
@@ -3631,11 +3631,11 @@
         "npm run build",
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
-      "notes": "Operationalizes the Productivity & DORA dimension of the ACT1 AI Control Tower contract. Deterministic seed-only read model. No live integrations, no per-tenant binding, no Atlas brief composition, no Tower UI — those land in ACT7.x, ACT9, and ACT10. Conservative manifest update: ai_control_tower component is not promoted."
+      "notes": "Operationalizes the Productivity & DORA dimension of the ACT1 AI Control Tower contract. Deterministic seed-only read model. No live integrations, no per-tenant binding, no Atlas brief composition, no Tower UI \u2014 those land in ACT7.x, ACT9, and ACT10. Conservative manifest update: ai_control_tower component is not promoted."
     },
     {
       "id": "I5",
-      "name": "Intelligence · Canvas Mode Switching",
+      "name": "Intelligence \u00b7 Canvas Mode Switching",
       "category": "I",
       "status": "code_complete",
       "risk": "medium",
@@ -3693,7 +3693,7 @@
     },
     {
       "id": "I6",
-      "name": "Intelligence · Evidence Dataset Drawer",
+      "name": "Intelligence \u00b7 Evidence Dataset Drawer",
       "category": "I",
       "status": "code_complete",
       "risk": "low",
@@ -4310,7 +4310,7 @@
         "npx jest src/__tests__/integration/programs/program-artifact-canvas.test.ts",
         "npm run build"
       ],
-      "notes": "Pure deterministic deliverable version read-model: types + helpers (buildDeliverableVersionHistory, summarizeDeliverableVersions, getCurrentDeliverableVersion, validateDeliverableVersionTransition, createDeterministicVersionSeed). Read-model only — does not generate deliverables, export files, or write to any database. Steward verdict (`approved`), edit/regenerate flow, persistence, and canvas timeline UI are deferred to PDEL7+ and to the production write-path slices."
+      "notes": "Pure deterministic deliverable version read-model: types + helpers (buildDeliverableVersionHistory, summarizeDeliverableVersions, getCurrentDeliverableVersion, validateDeliverableVersionTransition, createDeterministicVersionSeed). Read-model only \u2014 does not generate deliverables, export files, or write to any database. Steward verdict (`approved`), edit/regenerate flow, persistence, and canvas timeline UI are deferred to PDEL7+ and to the production write-path slices."
     },
     {
       "id": "PDEL8",
@@ -4402,14 +4402,14 @@
         "docs/CORE_APP_CONTEXT_PACK.md"
       ],
       "acceptanceCriteria": [
-        "docs/build/PROGRAM_CONTINUITY_DELIVERABLE_VERIFICATION_RUNBOOK.md documents §A purpose and scope (PW1, PDEL5 required; MW5, MW6, PROG7, PDEL6, PDEL7, PDEL8 conditional / deferred), §B branch hygiene (worktree per slice, lane agents commit only, integration agent merges), §C required validation commands (npx tsc --noEmit --pretty false, npm run build, JSON validity, plus per-slice jest paths), §D persona walks, §E route coverage table including /tenant/apex-retail/programs, /tenant/apex-retail/programs/[programSlug], and /platform/admin/production-readiness, §F program continuity verification, §G deliverable verification, §H no-fabrication checks, §I production-readiness tracker verification, §J morning review and PR merge rules, and §K branch hygiene appendix.",
+        "docs/build/PROGRAM_CONTINUITY_DELIVERABLE_VERIFICATION_RUNBOOK.md documents \u00a7A purpose and scope (PW1, PDEL5 required; MW5, MW6, PROG7, PDEL6, PDEL7, PDEL8 conditional / deferred), \u00a7B branch hygiene (worktree per slice, lane agents commit only, integration agent merges), \u00a7C required validation commands (npx tsc --noEmit --pretty false, npm run build, JSON validity, plus per-slice jest paths), \u00a7D persona walks, \u00a7E route coverage table including /tenant/apex-retail/programs, /tenant/apex-retail/programs/[programSlug], and /platform/admin/production-readiness, \u00a7F program continuity verification, \u00a7G deliverable verification, \u00a7H no-fabrication checks, \u00a7I production-readiness tracker verification, \u00a7J morning review and PR merge rules, and \u00a7K branch hygiene appendix.",
         "Program continuity checks include workshop mode shell visible (PW1), meeting notes update proposals deterministic (MW5 if installed), SME recommendations visible (MW6 if installed), resume state present (PROG7 if installed), no fake decisions, and no fake timestamps.",
         "Deliverable checks include artifact canvas visible (PDEL5), deliverable viewer visible (PDEL7 if installed), version state visible (PDEL6 if installed), evidence trace visible (PDEL8 if installed), and all future actions disabled (edit / regenerate / download / approve).",
         "No-fabrication checks include no fake citations, no fake approvals, no fake dollar amounts, and no live model claim (gateway is contract-only).",
         "Production readiness tracker checks list relevant components updated (programs, program_workshop_mode, deliverables_artifacts, data_evidence_knowledge_fabric, production_deployment, validation_qa) and confirm no false production_ready promotions.",
         "docs/build/slices/QA7_PROGRAM_CONTINUITY_DELIVERABLE_VERIFICATION.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and readiness impact, and references the runbook by relative path.",
         "docs/build/build-slices.json appends a QA7 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn, status code_complete, risk low, and ownerAgent Lane H; manifest top-level lastUpdated is bumped to 2026-04-26.",
-        "docs/build/production-readiness.json validation_qa component appends a note acknowledging that the QA7 program continuity + deliverable verification runbook is added; status is preserved (no promotion); validation_qa.nextAction is UNIONed conservatively without overwriting prior QA1–QA6 wording; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "docs/build/production-readiness.json validation_qa component appends a note acknowledging that the QA7 program continuity + deliverable verification runbook is added; status is preserved (no promotion); validation_qa.nextAction is UNIONed conservatively without overwriting prior QA1\u2013QA6 wording; manifest top-level lastUpdated is bumped to 2026-04-26.",
         "Documentation only; no application code, runtime, auth, supabase, migrations, package manifests, or platform-design docs are modified."
       ],
       "validationCommands": [
@@ -4417,7 +4417,7 @@
         "npm run build",
         "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
       ],
-      "notes": "Founder-facing checklist for verifying program continuity (PW1 workshop mode shell, MW4 meeting notes capture, MW5 update proposals, MW6 SME recommendations, PROG7 resume state) and deliverable surfaces (PDEL5 artifact canvas, PDEL7 viewer, PDEL6 version state, PDEL8 evidence trace) land honestly before push or PR. Seventh founder-facing runbook after QA1 (Agentic Spine), QA2 (Solution Workshop), QA3 (Solution Intelligence), QA4 (Agent Mission Persona), QA5 (Route Smoke Inventory), and QA6 (Golden Prompt Harness Contract + Seed). Documentation only. Deterministic — does not exercise live retrieval or model calls. MW5 / MW6 / PROG7 / PDEL6 / PDEL7 / PDEL8 are explicitly conditional: each row is verified only if the matching slice has landed in the batch under review. Default policy for unsupervised batch runs: lane agents commit only; integration agent owns cherry-picks and merges; founder owns the push and merge decisions."
+      "notes": "Founder-facing checklist for verifying program continuity (PW1 workshop mode shell, MW4 meeting notes capture, MW5 update proposals, MW6 SME recommendations, PROG7 resume state) and deliverable surfaces (PDEL5 artifact canvas, PDEL7 viewer, PDEL6 version state, PDEL8 evidence trace) land honestly before push or PR. Seventh founder-facing runbook after QA1 (Agentic Spine), QA2 (Solution Workshop), QA3 (Solution Intelligence), QA4 (Agent Mission Persona), QA5 (Route Smoke Inventory), and QA6 (Golden Prompt Harness Contract + Seed). Documentation only. Deterministic \u2014 does not exercise live retrieval or model calls. MW5 / MW6 / PROG7 / PDEL6 / PDEL7 / PDEL8 are explicitly conditional: each row is verified only if the matching slice has landed in the batch under review. Default policy for unsupervised batch runs: lane agents commit only; integration agent owns cherry-picks and merges; founder owns the push and merge decisions."
     },
     {
       "id": "TEN1",
@@ -4453,7 +4453,7 @@
         "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md names the tenant registry contract with required fields (tenantId, tenantSlug, displayName, tier, isolationMode, dataNamespace, gatewayProfile, idpProfile, governancePosture, lifecycleState, region, timestamps, notes) and explicitly forbids tenant content in the registry.",
         "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md names the tenant data namespace as the unit of isolation inside the data evidence plane and tabulates the per-mode shape matrix (relational, object, vector, graph, audit).",
         "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md names per-tier expectations for SSO, RBAC, audit, and the model gateway in explicit tables.",
-        "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md names the capability × tier feasibility matrix covering at least program execution, pattern detection, executive brief, solution composition, deliverable artifact generation, evidence ledger ingest (non-PII / PHI / SEC), BYOK, customer-controlled gateway, cross-tenant pattern aggregation, vector retrieval, graph queries, custom SAML, audit export, and strict-residency placement.",
+        "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md names the capability \u00d7 tier feasibility matrix covering at least program execution, pattern detection, executive brief, solution composition, deliverable artifact generation, evidence ledger ingest (non-PII / PHI / SEC), BYOK, customer-controlled gateway, cross-tenant pattern aggregation, vector retrieval, graph queries, custom SAML, audit export, and strict-residency placement.",
         "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md names the MVP / V1 / V2 progression and explicitly states that Tier 2+ is not yet provisionable today.",
         "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md names risks (cross-tenant leak, misclassified tier, provider lock-in, customer-cloud drift, implicit tenancy in code, knowledge fabric maturity) with at least one mitigation each, and explicit non-goals (no multi-region active-active, no real-time cross-tenant analytics, no tenant-content visibility from control plane, no sub-tenant hierarchy in MVP / V1, no on-prem in MVP / V1, no model-training over tenant content, no silent tier downgrade, no surface differences between tiers).",
         "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md cross-references TEN2 (isolation enforcement), CLOUD1 (deployment topology), TRUST1 (data trust posture), ARCH1, ARCH2, ADM1, MG2, AUD2, and EVID2 / EVID3.",
@@ -4469,7 +4469,7 @@
         "npm run build",
         "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
       ],
-      "notes": "Architecture contract that names the four canonical AbarVa tenancy tiers (Pilot, Enterprise / Dedicated, Private Data Plane, Self-Managed), the four canonical runtime planes (control, tenant runtime, data evidence, model gateway), the three canonical isolation modes (shared, dedicated, private), the tenant registry, the tenant data namespace, the per-tier SSO / RBAC / audit / gateway expectations, the capability × tier feasibility matrix, the MVP / V1 / V2 progression, the risks and non-goals, and the cross-references to TEN2 (isolation enforcement), CLOUD1 (deployment topology), and TRUST1 (data trust posture). Documentation only. No application code, no runtime, no migrations, no provisioning automation, no model calls, no browser automation. Tier 2 / Tier 3 / Tier 4 provisionability is explicitly deferred behind a production-grade data evidence plane and the matching isolation enforcement (TEN2), deployment topology (CLOUD1), and data trust posture (TRUST1) slices."
+      "notes": "Architecture contract that names the four canonical AbarVa tenancy tiers (Pilot, Enterprise / Dedicated, Private Data Plane, Self-Managed), the four canonical runtime planes (control, tenant runtime, data evidence, model gateway), the three canonical isolation modes (shared, dedicated, private), the tenant registry, the tenant data namespace, the per-tier SSO / RBAC / audit / gateway expectations, the capability \u00d7 tier feasibility matrix, the MVP / V1 / V2 progression, the risks and non-goals, and the cross-references to TEN2 (isolation enforcement), CLOUD1 (deployment topology), and TRUST1 (data trust posture). Documentation only. No application code, no runtime, no migrations, no provisioning automation, no model calls, no browser automation. Tier 2 / Tier 3 / Tier 4 provisionability is explicitly deferred behind a production-grade data evidence plane and the matching isolation enforcement (TEN2), deployment topology (CLOUD1), and data trust posture (TRUST1) slices."
     },
     {
       "id": "TEN2",
@@ -4574,7 +4574,7 @@
         "npx jest src/__tests__/integration/admin/dataset-trust-model.test.ts",
         "npm run build"
       ],
-      "notes": "Pure deterministic dataset trust read model that defines progressive client data sharing levels (L0 public/external → L4 sensitive raw data) and a five-state trust ladder (loaded → available → usable_evidence → agent_usable → decision_grade). Encodes canonical rules so clients can engage AbarVa without granting broad raw-data access: loaded ≠ usable, available ≠ agent-usable, raw data not required by default, evidence supplied via manifests, agent use denied by default, L4 requires explicit named approval, approval is never fabricated. No DB writes, no migrations, no live retrieval, no model invocation. Future TRUST2 attaches trust + ladder fields to ADM3 inventory items without a TRUST1 contract change."
+      "notes": "Pure deterministic dataset trust read model that defines progressive client data sharing levels (L0 public/external \u2192 L4 sensitive raw data) and a five-state trust ladder (loaded \u2192 available \u2192 usable_evidence \u2192 agent_usable \u2192 decision_grade). Encodes canonical rules so clients can engage AbarVa without granting broad raw-data access: loaded \u2260 usable, available \u2260 agent-usable, raw data not required by default, evidence supplied via manifests, agent use denied by default, L4 requires explicit named approval, approval is never fabricated. No DB writes, no migrations, no live retrieval, no model invocation. Future TRUST2 attaches trust + ladder fields to ADM3 inventory items without a TRUST1 contract change."
     },
     {
       "id": "TRUST2",
@@ -4630,7 +4630,7 @@
         "npx jest src/__tests__/integration/admin/agent-data-access-policy.test.ts",
         "npm run build"
       ],
-      "notes": "Pure deterministic agent data access policy matrix that defines which agents (Nexus / Sentinel / Atlas / Steward) may use which dataset sharing levels for which canonical purposes. Read model only — no live enforcement, no audit ledger writes, no model invocation, no DB persistence. Lane-isolated from TRUST1 (parallel build pack): redeclares DatasetTrustLevel and DatasetTrustLadderState locally and the integration agent reconciles duplicate type declarations during cherry-pick. Future TRUST slices wire the matrix into the Steward Setup UI and the runtime tool dispatcher / Model Gateway; per-tenant policy override and live enforcement remain deferred."
+      "notes": "Pure deterministic agent data access policy matrix that defines which agents (Nexus / Sentinel / Atlas / Steward) may use which dataset sharing levels for which canonical purposes. Read model only \u2014 no live enforcement, no audit ledger writes, no model invocation, no DB persistence. Lane-isolated from TRUST1 (parallel build pack): redeclares DatasetTrustLevel and DatasetTrustLadderState locally and the integration agent reconciles duplicate type declarations during cherry-pick. Future TRUST slices wire the matrix into the Steward Setup UI and the runtime tool dispatcher / Model Gateway; per-tenant policy override and live enforcement remain deferred."
     },
     {
       "id": "CLOUD1",
@@ -4662,7 +4662,7 @@
         "docs/CORE_APP_CONTEXT_PACK.md"
       ],
       "acceptanceCriteria": [
-        "docs/architecture/CLOUD1_ENTERPRISE_DEPLOYMENT_MODELS.md documents §1 four-tier vocabulary (AbarVa SaaS shared multi-tenant, Dedicated Tenant single-tenant on AbarVa infra, Private Data Plane data and compute in client cloud, Fully Self-Managed client operates entire stack), §2 control plane vs data plane separation including the trust boundary contract, §3 dependency replacement matrix (Vercel → Container Apps / Cloud Run, Supabase → Azure Postgres Flexible / Cloud SQL, Vercel Blob → Azure Blob / GCS, Clerk → Azure AD B2C / OIDC / Identity Platform, Anthropic / OpenAI direct → tenant model gateway with allowlisted egress), §4 client data trust implications per tier with cross-reference to TRUST1 / TRUST2, §5 model gateway strategy per tier (which providers acceptable, where calls originate, key ownership, audit destination), §6 operational responsibilities matrix (upgrades, migrations, backups, secret rotation, TLS, IdP, observability, incident response, pen-test, SLA), §7 Azure VNet lab path (forward-reference CLOUD2), §8 GCP VPC lab path (forward-reference CLOUD3), §9 MVP / V1 / V2 path, §10 testable-outside-client vs requires-client environment split, §11 cross-references to TEN1 / TEN2 / TRUST1 / TRUST2 / CLOUD2 / CLOUD3 / MG2 / ARCH1 / ARCH2.",
+        "docs/architecture/CLOUD1_ENTERPRISE_DEPLOYMENT_MODELS.md documents \u00a71 four-tier vocabulary (AbarVa SaaS shared multi-tenant, Dedicated Tenant single-tenant on AbarVa infra, Private Data Plane data and compute in client cloud, Fully Self-Managed client operates entire stack), \u00a72 control plane vs data plane separation including the trust boundary contract, \u00a73 dependency replacement matrix (Vercel \u2192 Container Apps / Cloud Run, Supabase \u2192 Azure Postgres Flexible / Cloud SQL, Vercel Blob \u2192 Azure Blob / GCS, Clerk \u2192 Azure AD B2C / OIDC / Identity Platform, Anthropic / OpenAI direct \u2192 tenant model gateway with allowlisted egress), \u00a74 client data trust implications per tier with cross-reference to TRUST1 / TRUST2, \u00a75 model gateway strategy per tier (which providers acceptable, where calls originate, key ownership, audit destination), \u00a76 operational responsibilities matrix (upgrades, migrations, backups, secret rotation, TLS, IdP, observability, incident response, pen-test, SLA), \u00a77 Azure VNet lab path (forward-reference CLOUD2), \u00a78 GCP VPC lab path (forward-reference CLOUD3), \u00a79 MVP / V1 / V2 path, \u00a710 testable-outside-client vs requires-client environment split, \u00a711 cross-references to TEN1 / TEN2 / TRUST1 / TRUST2 / CLOUD2 / CLOUD3 / MG2 / ARCH1 / ARCH2.",
         "docs/build/slices/CLOUD1_ENTERPRISE_PRIVATE_DEPLOYMENT_STRATEGY.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, readiness impact, and tier-vocabulary one-liners; it references the architecture document by relative path.",
         "docs/build/build-slices.json appends a CLOUD1 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn, status code_complete, risk low, ownerAgent Lane E, and lastUpdated 2026-04-26; manifest top-level lastUpdated remains 2026-04-26.",
         "docs/build/production-readiness.json production_deployment component appends a note acknowledging that CLOUD1 lands the four-tier deployment strategy contract plus control-plane / data-plane separation, dependency replacement matrix, per-tier model gateway posture, per-tier operational responsibility split, and the forward-reference Azure (CLOUD2) and GCP (CLOUD3) lab paths; status is preserved at blocked (no promotion); production_deployment.nextAction is UNIONed conservatively without overwriting prior PROD1 / PROD2 / PROD3 / PROD4 wording; manifest top-level lastUpdated is bumped to 2026-04-26.",
@@ -4674,7 +4674,7 @@
         "npm run build",
         "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
       ],
-      "notes": "Founder-facing strategy contract for AbarVa enterprise deployment across four tiers: SaaS (shared multi-tenant), Dedicated Tenant (single-tenant on AbarVa infra), Private Data Plane (data and compute in client cloud), and Fully Self-Managed (client operates the stack). Codifies control plane vs data plane separation, dependency replacement matrix (Vercel → Container Apps / Cloud Run; Supabase → Azure Postgres Flexible / Cloud SQL; Vercel Blob → Azure Blob / GCS; Clerk → Azure AD B2C / Identity Platform; Anthropic / OpenAI direct → tenant gateway), client data trust implications, model gateway provider posture, and operational responsibilities per tier. Forward-references CLOUD2 (Azure VNet lab path) and CLOUD3 (GCP VPC lab path); both are lab-only acceptance and do not deploy customers. MVP today is Tier 1 (SaaS) only; V1 lands TEN1 / TEN2 / TRUST1 / TRUST2 / CLOUD2 / CLOUD3 plus Tier 2 on demand; V2 is the first paid Tier 3 deployment. Documentation only — no application code, no IaC, no provisioning, no live cloud calls, no model calls. production_deployment status is preserved at blocked (no false promotions per AGENT_DISPATCH_OPERATING_MODEL §G / §H)."
+      "notes": "Founder-facing strategy contract for AbarVa enterprise deployment across four tiers: SaaS (shared multi-tenant), Dedicated Tenant (single-tenant on AbarVa infra), Private Data Plane (data and compute in client cloud), and Fully Self-Managed (client operates the stack). Codifies control plane vs data plane separation, dependency replacement matrix (Vercel \u2192 Container Apps / Cloud Run; Supabase \u2192 Azure Postgres Flexible / Cloud SQL; Vercel Blob \u2192 Azure Blob / GCS; Clerk \u2192 Azure AD B2C / Identity Platform; Anthropic / OpenAI direct \u2192 tenant gateway), client data trust implications, model gateway provider posture, and operational responsibilities per tier. Forward-references CLOUD2 (Azure VNet lab path) and CLOUD3 (GCP VPC lab path); both are lab-only acceptance and do not deploy customers. MVP today is Tier 1 (SaaS) only; V1 lands TEN1 / TEN2 / TRUST1 / TRUST2 / CLOUD2 / CLOUD3 plus Tier 2 on demand; V2 is the first paid Tier 3 deployment. Documentation only \u2014 no application code, no IaC, no provisioning, no live cloud calls, no model calls. production_deployment status is preserved at blocked (no false promotions per AGENT_DISPATCH_OPERATING_MODEL \u00a7G / \u00a7H)."
     },
     {
       "id": "CLOUD2",
@@ -4710,7 +4710,7 @@
         "azure.yaml"
       ],
       "acceptanceCriteria": [
-        "docs/architecture/CLOUD2_AZURE_VNET_REFERENCE_LAB.md documents §1 lab purpose (what the lab is, what it is NOT, what it proves, what it does NOT prove), §2 single Resource Group layout, §3 VNet CIDR plan with app / data / private-endpoint / ingress / bastion subnets and NSG posture, §4 compute tier (Azure Container Apps preferred, Azure App Service Premium with VNet integration as fallback), §5 Azure Database for PostgreSQL Flexible Server fronted by a private endpoint with public network access disabled, §6 Azure Blob Storage account fronted by a private endpoint with public network access disabled, §7 Azure Key Vault fronted by a private endpoint with managed-identity RBAC and public network access disabled, §8 Log Analytics workspace and Application Insights component bound to that workspace, §9 private ingress options (Front Door Premium with Private Link Service preferred, Application Gateway with WAF as fallback), §10 private DNS zones (privatelink.postgres.database.azure.com, privatelink.blob.core.windows.net, privatelink.vaultcore.azure.net) linked to the lab VNet, §11 lab validation contract (smoke / Postgres round-trip / Blob round-trip / Key Vault secret retrieval via managed identity / Application Insights log emission / private DNS resolution check), §12 model gateway stub posture (no live model calls, no provider keys), §13 environment variable contract naming static / vault / platform sources for each variable the App expects at startup, §14 progression path to Bicep / Terraform / azd implementation, §15 boundaries summary, and §16 safety rationale.",
+        "docs/architecture/CLOUD2_AZURE_VNET_REFERENCE_LAB.md documents \u00a71 lab purpose (what the lab is, what it is NOT, what it proves, what it does NOT prove), \u00a72 single Resource Group layout, \u00a73 VNet CIDR plan with app / data / private-endpoint / ingress / bastion subnets and NSG posture, \u00a74 compute tier (Azure Container Apps preferred, Azure App Service Premium with VNet integration as fallback), \u00a75 Azure Database for PostgreSQL Flexible Server fronted by a private endpoint with public network access disabled, \u00a76 Azure Blob Storage account fronted by a private endpoint with public network access disabled, \u00a77 Azure Key Vault fronted by a private endpoint with managed-identity RBAC and public network access disabled, \u00a78 Log Analytics workspace and Application Insights component bound to that workspace, \u00a79 private ingress options (Front Door Premium with Private Link Service preferred, Application Gateway with WAF as fallback), \u00a710 private DNS zones (privatelink.postgres.database.azure.com, privatelink.blob.core.windows.net, privatelink.vaultcore.azure.net) linked to the lab VNet, \u00a711 lab validation contract (smoke / Postgres round-trip / Blob round-trip / Key Vault secret retrieval via managed identity / Application Insights log emission / private DNS resolution check), \u00a712 model gateway stub posture (no live model calls, no provider keys), \u00a713 environment variable contract naming static / vault / platform sources for each variable the App expects at startup, \u00a714 progression path to Bicep / Terraform / azd implementation, \u00a715 boundaries summary, and \u00a716 safety rationale.",
         "docs/build/slices/CLOUD2_AZURE_VNET_REFERENCE_LAB_BLUEPRINT.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and readiness impact, and references the architecture doc by relative path.",
         "docs/build/build-slices.json appends a CLOUD2 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn (TEN1, CLOUD1), status code_complete, risk low, and ownerAgent Lane F; manifest top-level lastUpdated is bumped to 2026-04-26.",
         "docs/build/production-readiness.json production_deployment component appends a note acknowledging that the CLOUD2 Azure VNet reference lab blueprint is added; status is preserved (no promotion); production_deployment.nextAction is UNIONed conservatively without overwriting prior PROD1 / PROD2 / PROD3 / OPS1 wording; manifest top-level lastUpdated is bumped to 2026-04-26.",
@@ -5056,7 +5056,7 @@
         "Seed dataStores cover all six canonical store kinds (database, storage, vector, graph, model_gateway, audit); seed isolationControls cover every canonical store kind; seed onboardingSequence is contiguous 1..9 with the nine canonical step kinds; seed operationalResponsibilities cover every canonical surface (upgrade_strategy, maintenance_windows, backup_retention, disaster_recovery, secret_rotation, cost_observability, tenant_offboarding, incident_response); seed readinessChecklist covers every canonical category (data_plane, identity, governance, operations, cost).",
         "src/__tests__/integration/architecture/dedicated-tenant-blueprint.test.ts proves determinism (byte-equal blueprint, checklist, and summary across repeated calls), enforces every canonical tuple shape, asserts all required boundaries are present, asserts the validator detects missing store kinds, non-contiguous onboarding sequences, unknown isolation control storeKind values, missing operational surfaces, missing checklist blockers, and wrong createdFrom tags, asserts summary reconciles totals, and asserts module hygiene (no auth/source/sentinel/atlas/nexus/agent/supabase imports; no Date.now/Math.random/new Date(/fetch(; no anthropic/openai/cohere/databricks/pinecone references; no React state hooks; no placeholder language; no fabricated dollar amounts; no production_ready substring in serialized output).",
         "docs/build/slices/TEN3_DEDICATED_TENANT_DEPLOYMENT_BLUEPRINT.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, readiness impact, validation commands, and references the architecture contract by relative path.",
-        "docs/architecture/TEN3_DEDICATED_TENANT_DEPLOYMENT_BLUEPRINT.md documents §A purpose / scope, §B Tier 2 deployment envelope, §C dedicated database options (per-tenant Postgres Flexible default, schema-per-tenant fallback), §D dedicated storage (per-tenant blob container default, S3-style bucket fallback), §E vector and graph namespaces per tenant, §F per-tenant model gateway policy (acceptable providers, key ownership, where calls originate, audit destination, allowlist, rate limit), §G audit log boundary (dedicated stream default, row-scoped fallback, retention, export), §H customer SSO integration (per-tenant IdP, no AbarVa platform admin sign-in as tenant user), §I tenant admin (named customer-side individual, separation from AbarVa platform admins), §J onboarding sequence (initialize tenant record → provision data stores → wire SSO → seed roles → register tenant admin → activate gateway policy → enable audit boundary → set up agents → verify smoke), §K rolling upgrade strategy with per-tenant maintenance windows, §L backup and retention, §M cost and ops considerations, §N risks (cross-tenant leak from shared client, gateway policy drift, tenant admin is also AbarVa employee, backup window misses a store, Tier 2 promised before V1 milestone), §O non-goals, §P cross-references to TEN1, TEN2, TRUST1, TRUST2, CLOUD1, CLOUD2, MG2, AUD2, ARCH1, and §Q acceptance criteria.",
+        "docs/architecture/TEN3_DEDICATED_TENANT_DEPLOYMENT_BLUEPRINT.md documents \u00a7A purpose / scope, \u00a7B Tier 2 deployment envelope, \u00a7C dedicated database options (per-tenant Postgres Flexible default, schema-per-tenant fallback), \u00a7D dedicated storage (per-tenant blob container default, S3-style bucket fallback), \u00a7E vector and graph namespaces per tenant, \u00a7F per-tenant model gateway policy (acceptable providers, key ownership, where calls originate, audit destination, allowlist, rate limit), \u00a7G audit log boundary (dedicated stream default, row-scoped fallback, retention, export), \u00a7H customer SSO integration (per-tenant IdP, no AbarVa platform admin sign-in as tenant user), \u00a7I tenant admin (named customer-side individual, separation from AbarVa platform admins), \u00a7J onboarding sequence (initialize tenant record \u2192 provision data stores \u2192 wire SSO \u2192 seed roles \u2192 register tenant admin \u2192 activate gateway policy \u2192 enable audit boundary \u2192 set up agents \u2192 verify smoke), \u00a7K rolling upgrade strategy with per-tenant maintenance windows, \u00a7L backup and retention, \u00a7M cost and ops considerations, \u00a7N risks (cross-tenant leak from shared client, gateway policy drift, tenant admin is also AbarVa employee, backup window misses a store, Tier 2 promised before V1 milestone), \u00a7O non-goals, \u00a7P cross-references to TEN1, TEN2, TRUST1, TRUST2, CLOUD1, CLOUD2, MG2, AUD2, ARCH1, and \u00a7Q acceptance criteria.",
         "docs/build/build-slices.json appends a TEN3 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn (TEN1, TEN2), status code_complete, risk low, ownerAgent Lane E, and lastUpdated 2026-04-26; manifest top-level lastUpdated remains 2026-04-26.",
         "docs/build/production-readiness.json updates production_deployment and admin_setup notes/nextAction (UNION; conservative; no promotion) and bumps top-level lastUpdated to 2026-04-26.",
         "Read model only; no auth implementation changes, no RLS, no migrations, no live runtime claim; only the six allowed files are staged."
@@ -5109,22 +5109,22 @@
         "Users-access readiness view exposes all 7 canonical roles (platform_admin, tenant_admin, maestro, sponsor, investor, steward, observer).",
         "View createdFrom is the deterministic_users_access_readiness_seed label.",
         "summarizeUsersAccess totals reconcile against the role-count sum.",
-        "listRiskyPermissionFlags orders flags by severity (high → medium → low).",
+        "listRiskyPermissionFlags orders flags by severity (high \u2192 medium \u2192 low).",
         "Risky permission flags surface a reason and a suggested review.",
         "View serializes without claiming a live edit / invite / revoke verb in active voice; any invite mention is annotated as deferred / not wired.",
         "View never enumerates a real person name (no First Last pattern outside the canonical label allow-list).",
         "Component is a server component (no 'use client', no React hooks).",
         "Component imports COLORS / FONT / BORDER / RADIUS / SPACING / TYPE from @/lib/design/abarva-theme and contains no local hex literals or local DM Sans font literals.",
         "Component imports nothing from auth / source / sentinel / atlas / nexus / agent runtime.",
-        "Component renders the canonical eyebrow USERS & ACCESS · ADM6 and footer Source · deterministic users-access readiness seed · no live auth mutation.",
-        "Edit / Invite / Revoke render as disabled future · not yet wired pills."
+        "Component renders the canonical eyebrow USERS & ACCESS \u00b7 ADM6 and footer Source \u00b7 deterministic users-access readiness seed \u00b7 no live auth mutation.",
+        "Edit / Invite / Revoke render as disabled future \u00b7 not yet wired pills."
       ],
       "validationCommands": [
         "npx tsc --noEmit --pretty false",
         "npx jest src/__tests__/integration/admin/users-access-surface.test.ts",
         "npm run build"
       ],
-      "notes": "Lifts the user-facing posture out of the Steward brief. Read-only, roles-and-counts only — no real person names, no live auth mutation, no Clerk runtime read, no DB write, no API call. Admin page mount is deferred to ADM6.1 because the existing /platform/admin/page.tsx is a complex client-rendered admin portal; co-mounting a server component would expand blast radius beyond the ADM6 scope. The new component is exported from src/components/admin/UsersAccessSurface.tsx and is ready for either a dedicated server route or a parent refactor. Future invite / edit / revoke runtime is deferred."
+      "notes": "Lifts the user-facing posture out of the Steward brief. Read-only, roles-and-counts only \u2014 no real person names, no live auth mutation, no Clerk runtime read, no DB write, no API call. Admin page mount is deferred to ADM6.1 because the existing /platform/admin/page.tsx is a complex client-rendered admin portal; co-mounting a server component would expand blast radius beyond the ADM6 scope. The new component is exported from src/components/admin/UsersAccessSurface.tsx and is ready for either a dedicated server route or a parent refactor. Future invite / edit / revoke runtime is deferred."
     },
     {
       "id": "QA8",
@@ -5161,11 +5161,11 @@
         "docs/CORE_APP_CONTEXT_PACK.md"
       ],
       "acceptanceCriteria": [
-        "docs/build/ENTERPRISE_DEPLOYMENT_TRUST_VERIFICATION_RUNBOOK.md documents §A scope (TEN1, TEN2, TRUST1, TRUST2, CLOUD1, CLOUD2, PROD3 required; TEN3, TRUST3, CLOUD3, CLOUD4, CLOUD5, PROD4, ADM6 conditional / deferred), §B branch hygiene (worktree per slice, lane agents commit only, integration agent merges, no git add .), §C validation commands (npx tsc --noEmit --pretty false; per-slice jest paths for TEN2 / TRUST1 / TRUST2 plus conditional PROD3 / PROD4 / ADM6; npm run build; manifest JSON parse check; conflict-marker grep), §D SaaS pilot readiness checks (multi-tenant data plane working with logical_row_level isolation, tenant registry stub deterministic, tenant admin / platform admin separation visible, model gateway shared and contract-only), §E dedicated tenant readiness checks (TEN3 blueprint covers DB / storage / vector / graph / audit / model gateway / SSO / tenant admin; onboarding / upgrade / backup paths documented; no production-ready claim), §F private data plane readiness checks (CLOUD1 four-tier strategy; CLOUD2 Azure VNet architecture; CLOUD4 local lab boots clean when run; CLOUD5 Bicep starter parses), §G Azure VNet lab verification (resource list match: VNet, app subnet, PE subnet, Container Apps Env, Container App, Postgres Flexible, Storage, Key Vault, Log Analytics; Bicep lints clean; parameters file parses; no hardcoded secrets; README marks LAB / NOT PRODUCTION), §H Docker packaging verification (multi-stage Dockerfile, non-root user, no baked secrets, .dockerignore covers node_modules / .env / .git / reports/, verify-docker-build.sh exits 0 whether Docker is present or not), §I dataset trust + agent access checks (5 sharing levels L0–L4 honored; 5 trust ladder states loaded → decision_grade; L4 sensitive raw data BLOCKED unless explicitly approved; agent use requires explicit policy; approval workflow not derivable from summary; revoked / expired blocks use), §J users / access checks (surface renders deterministic seed; all 7 roles represented in fixture; no real person names; no live auth mutation claim; risky permission flags surface; imports from @/lib/design/abarva-theme canon), §K production readiness tracker checks (page renders; live panel polls every 60s; PROD4 deployment-status route returns liveStatus unavailable honestly when tokens absent; no fake green CI claim; blockers preserved; no false production_ready promotions), §L no-fabrication checks (no fake citations, no fake approvals, no fake dollar amounts, no live model claim, no fake live monitoring claim), §M CI / Vercel status checks (ESLint passes, routes-and-disclaimers passes, Vercel abarva green, Vercel nexus green, Supabase Preview skipping acceptable), §N client data sharing trust ladder walk (L1 → L2 → L3 → L4 transition with evidence required, reviewer, approver per step), §O security review checklist (secrets never in code or manifests; no hardcoded subscription / tenant IDs; auth not modified; future-only actions clearly disabled; hairline borders / canon-compliant chrome; dark surfaces only on Atlas Brief / pattern detail per canon §F), §P morning review / PR merge rules (merge gated on PROD2 passed: true; conservative-status policy preserved; canonical cherry-pick path TEN1 → TEN2 → TEN3 → TRUST1 → TRUST2 → TRUST3 → CLOUD1 → CLOUD2 → CLOUD3 → CLOUD4 → CLOUD5 → PROD4 → ADM6 → QA8; exact four-line QA8 staged set).",
+        "docs/build/ENTERPRISE_DEPLOYMENT_TRUST_VERIFICATION_RUNBOOK.md documents \u00a7A scope (TEN1, TEN2, TRUST1, TRUST2, CLOUD1, CLOUD2, PROD3 required; TEN3, TRUST3, CLOUD3, CLOUD4, CLOUD5, PROD4, ADM6 conditional / deferred), \u00a7B branch hygiene (worktree per slice, lane agents commit only, integration agent merges, no git add .), \u00a7C validation commands (npx tsc --noEmit --pretty false; per-slice jest paths for TEN2 / TRUST1 / TRUST2 plus conditional PROD3 / PROD4 / ADM6; npm run build; manifest JSON parse check; conflict-marker grep), \u00a7D SaaS pilot readiness checks (multi-tenant data plane working with logical_row_level isolation, tenant registry stub deterministic, tenant admin / platform admin separation visible, model gateway shared and contract-only), \u00a7E dedicated tenant readiness checks (TEN3 blueprint covers DB / storage / vector / graph / audit / model gateway / SSO / tenant admin; onboarding / upgrade / backup paths documented; no production-ready claim), \u00a7F private data plane readiness checks (CLOUD1 four-tier strategy; CLOUD2 Azure VNet architecture; CLOUD4 local lab boots clean when run; CLOUD5 Bicep starter parses), \u00a7G Azure VNet lab verification (resource list match: VNet, app subnet, PE subnet, Container Apps Env, Container App, Postgres Flexible, Storage, Key Vault, Log Analytics; Bicep lints clean; parameters file parses; no hardcoded secrets; README marks LAB / NOT PRODUCTION), \u00a7H Docker packaging verification (multi-stage Dockerfile, non-root user, no baked secrets, .dockerignore covers node_modules / .env / .git / reports/, verify-docker-build.sh exits 0 whether Docker is present or not), \u00a7I dataset trust + agent access checks (5 sharing levels L0\u2013L4 honored; 5 trust ladder states loaded \u2192 decision_grade; L4 sensitive raw data BLOCKED unless explicitly approved; agent use requires explicit policy; approval workflow not derivable from summary; revoked / expired blocks use), \u00a7J users / access checks (surface renders deterministic seed; all 7 roles represented in fixture; no real person names; no live auth mutation claim; risky permission flags surface; imports from @/lib/design/abarva-theme canon), \u00a7K production readiness tracker checks (page renders; live panel polls every 60s; PROD4 deployment-status route returns liveStatus unavailable honestly when tokens absent; no fake green CI claim; blockers preserved; no false production_ready promotions), \u00a7L no-fabrication checks (no fake citations, no fake approvals, no fake dollar amounts, no live model claim, no fake live monitoring claim), \u00a7M CI / Vercel status checks (ESLint passes, routes-and-disclaimers passes, Vercel abarva green, Vercel nexus green, Supabase Preview skipping acceptable), \u00a7N client data sharing trust ladder walk (L1 \u2192 L2 \u2192 L3 \u2192 L4 transition with evidence required, reviewer, approver per step), \u00a7O security review checklist (secrets never in code or manifests; no hardcoded subscription / tenant IDs; auth not modified; future-only actions clearly disabled; hairline borders / canon-compliant chrome; dark surfaces only on Atlas Brief / pattern detail per canon \u00a7F), \u00a7P morning review / PR merge rules (merge gated on PROD2 passed: true; conservative-status policy preserved; canonical cherry-pick path TEN1 \u2192 TEN2 \u2192 TEN3 \u2192 TRUST1 \u2192 TRUST2 \u2192 TRUST3 \u2192 CLOUD1 \u2192 CLOUD2 \u2192 CLOUD3 \u2192 CLOUD4 \u2192 CLOUD5 \u2192 PROD4 \u2192 ADM6 \u2192 QA8; exact four-line QA8 staged set).",
         "Conditional rows (TEN3 / TRUST3 / CLOUD3 / CLOUD4 / CLOUD5 / PROD4 / ADM6) are explicitly walked only if installed; the runbook records 'deferred' (not 'failed') when the matching slice has not landed in the batch.",
         "docs/build/slices/QA8_ENTERPRISE_DEPLOYMENT_TRUST_VERIFICATION.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and readiness impact, and references the runbook by relative path.",
         "docs/build/build-slices.json appends a QA8 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn, status code_complete, risk low, ownerAgent Lane H, and lastUpdated 2026-04-26; manifest top-level lastUpdated remains 2026-04-26.",
-        "docs/build/production-readiness.json validation_qa and production_deployment components append notes acknowledging that the QA8 enterprise deployment + trust verification runbook is added; statuses are preserved (no promotions); validation_qa.nextAction and production_deployment.nextAction are UNIONed conservatively without overwriting prior QA1–QA7 / TEN1 / TEN2 / TRUST1 / TRUST2 / CLOUD1 / CLOUD2 / PROD3 wording; manifest top-level lastUpdated is set to 2026-04-26.",
+        "docs/build/production-readiness.json validation_qa and production_deployment components append notes acknowledging that the QA8 enterprise deployment + trust verification runbook is added; statuses are preserved (no promotions); validation_qa.nextAction and production_deployment.nextAction are UNIONed conservatively without overwriting prior QA1\u2013QA7 / TEN1 / TEN2 / TRUST1 / TRUST2 / CLOUD1 / CLOUD2 / PROD3 wording; manifest top-level lastUpdated is set to 2026-04-26.",
         "Documentation only; no application code, runtime, auth, supabase, migrations, package manifests, infrastructure-as-code, or platform-design docs are modified."
       ],
       "validationCommands": [
@@ -5173,7 +5173,7 @@
         "npm run build",
         "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
       ],
-      "notes": "Founder-facing checklist for verifying enterprise deployment (TEN1 SaaS tenancy architecture, TEN2 tenant isolation data boundary, TEN3 dedicated tenant blueprint conditional, CLOUD1 four-tier deployment strategy, CLOUD2 Azure VNet reference lab, CLOUD3 Docker packaging conditional, CLOUD4 local lab conditional, CLOUD5 Bicep starter conditional) and client data trust (TRUST1 dataset trust model with five sharing levels L0–L4 and five-state trust ladder loaded → decision_grade, TRUST2 agent data access policy matrix, TRUST3 Steward setup TRUST surface wiring conditional) plus production readiness tracker (PROD3 live refresh, PROD4 CI / Vercel ingestion conditional) and users / access (ADM6 conditional) before push or PR. Eighth founder-facing runbook after QA1 (Agentic Spine), QA2 (Solution Workshop), QA3 (Solution Intelligence), QA4 (Agent Mission Persona), QA5 (Route Smoke Inventory), QA6 (Golden Prompt Harness Contract + Seed), and QA7 (Program Continuity + Deliverable Verification). Documentation only. Deterministic — does not exercise live retrieval, model calls, browser automation, or live cloud calls. TEN3 / TRUST3 / CLOUD3 / CLOUD4 / CLOUD5 / PROD4 / ADM6 are explicitly conditional: each row is verified only if the matching slice has landed in the batch under review. Default policy for unsupervised batch runs: lane agents commit only; integration agent owns cherry-picks and merges; founder owns the push and merge decisions. Canonical cherry-pick path: TEN1 → TEN2 → TEN3 → TRUST1 → TRUST2 → TRUST3 → CLOUD1 → CLOUD2 → CLOUD3 → CLOUD4 → CLOUD5 → PROD4 → ADM6 → QA8."
+      "notes": "Founder-facing checklist for verifying enterprise deployment (TEN1 SaaS tenancy architecture, TEN2 tenant isolation data boundary, TEN3 dedicated tenant blueprint conditional, CLOUD1 four-tier deployment strategy, CLOUD2 Azure VNet reference lab, CLOUD3 Docker packaging conditional, CLOUD4 local lab conditional, CLOUD5 Bicep starter conditional) and client data trust (TRUST1 dataset trust model with five sharing levels L0\u2013L4 and five-state trust ladder loaded \u2192 decision_grade, TRUST2 agent data access policy matrix, TRUST3 Steward setup TRUST surface wiring conditional) plus production readiness tracker (PROD3 live refresh, PROD4 CI / Vercel ingestion conditional) and users / access (ADM6 conditional) before push or PR. Eighth founder-facing runbook after QA1 (Agentic Spine), QA2 (Solution Workshop), QA3 (Solution Intelligence), QA4 (Agent Mission Persona), QA5 (Route Smoke Inventory), QA6 (Golden Prompt Harness Contract + Seed), and QA7 (Program Continuity + Deliverable Verification). Documentation only. Deterministic \u2014 does not exercise live retrieval, model calls, browser automation, or live cloud calls. TEN3 / TRUST3 / CLOUD3 / CLOUD4 / CLOUD5 / PROD4 / ADM6 are explicitly conditional: each row is verified only if the matching slice has landed in the batch under review. Default policy for unsupervised batch runs: lane agents commit only; integration agent owns cherry-picks and merges; founder owns the push and merge decisions. Canonical cherry-pick path: TEN1 \u2192 TEN2 \u2192 TEN3 \u2192 TRUST1 \u2192 TRUST2 \u2192 TRUST3 \u2192 CLOUD1 \u2192 CLOUD2 \u2192 CLOUD3 \u2192 CLOUD4 \u2192 CLOUD5 \u2192 PROD4 \u2192 ADM6 \u2192 QA8."
     },
     {
       "id": "QA13",
@@ -5220,7 +5220,7 @@
         "src/__tests__/integration/admin/production-readiness-live-refresh.test.ts adopts assertNoLikelySecretValues(JSON.stringify(buildProductionReadinessApiResponse(...))) for the response-side hygiene check, replacing the inline per-pattern not-toMatch list. The source-code substring guard against GITHUB_TOKEN|VERCEL_TOKEN|SECRET|SERVICE_ROLE on combinedSource is preserved verbatim because it guards application code from literal env-var-name usage, not honest documentation in serialized manifests.",
         "docs/build/slices/QA13_SECRET_HYGIENE_TEST_PATTERN_UPDATE.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and readiness impact, and references the helper, the test suites, and the production-readiness manifest by relative path.",
         "docs/build/build-slices.json appends a QA13 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn, status code_complete, risk low, ownerAgent Lane E, and lastUpdated 2026-04-26; manifest top-level lastUpdated remains 2026-04-26.",
-        "docs/build/production-readiness.json validation_qa component appends a notes row acknowledging that the QA13 deterministic secret hygiene helper is added and adopted by the PROD3 live-refresh test; status is preserved (no promotion); validation_qa.nextAction is UNIONed conservatively without overwriting prior QA1–QA8 / PROD3 / PROD4 wording; manifest top-level lastUpdated is set to 2026-04-26.",
+        "docs/build/production-readiness.json validation_qa component appends a notes row acknowledging that the QA13 deterministic secret hygiene helper is added and adopted by the PROD3 live-refresh test; status is preserved (no promotion); validation_qa.nextAction is UNIONed conservatively without overwriting prior QA1\u2013QA8 / PROD3 / PROD4 wording; manifest top-level lastUpdated is set to 2026-04-26.",
         "Helper module + test pattern only; no application code, runtime, auth, supabase, migrations, package manifests, infrastructure-as-code, platform-design docs, model providers, browser automation, or live network calls are introduced or modified."
       ],
       "validationCommands": [
@@ -5336,7 +5336,7 @@
         "src/__tests__/integration/ops/duplicate-slice-preflight.test.ts drives the script via child_process.spawnSync against fixture build-slices.json files written to os.tmpdir(); the suite covers --help (exit 0), code_complete duplicate detection (exit 2), verified duplicate detection (exit 2), blocked detection without --allow-blocked (exit 4), --allow-blocked override (exit 0), --json shape and keys (manifest / readyToRun / duplicates / missing / blocked / recommendedAction / exitCode), malformed manifest (exit 3), missing manifest path (exit 3), and a non-mutating sha256 round-trip on the fixture manifest.",
         "docs/build/slices/OPS6_DUPLICATE_SLICE_PREFLIGHT_SCRIPT.md documents purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and production readiness impact.",
         "docs/build/build-slices.json appends an OPS6 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn, status code_complete, risk low, ownerAgent Lane B, and lastUpdated 2026-04-26; manifest top-level lastUpdated remains 2026-04-26.",
-        "docs/build/production-readiness.json validation_qa notes are UNIONed with an entry acknowledging that OPS6 lands the deterministic duplicate-slice preflight script and an integration suite covering duplicate detection, blocked-state handling, --json shape, malformed-manifest exit code, and a non-mutating sha256 round-trip; status is preserved (no promotion); nextAction is conservatively appended without overwriting prior QA1–QA8 / OPS1 / OPS2 / PROD3 / PROD4 wording; manifest top-level lastUpdated is set to 2026-04-26.",
+        "docs/build/production-readiness.json validation_qa notes are UNIONed with an entry acknowledging that OPS6 lands the deterministic duplicate-slice preflight script and an integration suite covering duplicate detection, blocked-state handling, --json shape, malformed-manifest exit code, and a non-mutating sha256 round-trip; status is preserved (no promotion); nextAction is conservatively appended without overwriting prior QA1\u2013QA8 / OPS1 / OPS2 / PROD3 / PROD4 wording; manifest top-level lastUpdated is set to 2026-04-26.",
         "Documentation, scripts, and tests only; no application code, no runtime, no auth, no supabase, no migrations, no package manifests, no infrastructure-as-code, and no platform-design docs are modified."
       ],
       "validationCommands": [
@@ -5379,7 +5379,7 @@
       "acceptanceCriteria": [
         "scripts/integration/validate_lane_report.py is a Python 3 CLI accepting [--json] <REPORT_PATH> with --help / -h support, exit 0 on valid, exit 2 on missing required fields, exit 3 on unreadable file; required fields detected: LANE-SHA (7+ hex), slice id ([A-Z]+\\d+), branch line, Files staged / Files changed list with at least one entry, tests run (Jest count or docs only or N/A docs only), build result (npm run build pass/fail/skip), Tracker updated yes/no, Run Metrics section, guardrails confirmation (no push / no PR / local commit only); docs-only Jest waiver applies when 'docs only' is stated and zero .ts / .tsx files are staged; --json payload shape is { ok, missing[], present[], laneSha, sliceId }.",
         "docs/build/AGENT_SLICE_REPORT_TEMPLATE.md carries the canonical sections (slice header with Lane / Commit message rows, Files staged list, Tests run, TSC + Build, PRT updated yes/no with literal 'Tracker updated:' line, Hard-rule audit, Run Metrics, Blockers, and a final 'LANE-SHA: <abbrev>' line) and documents the docs-only Jest waiver.",
-        "src/__tests__/integration/ops/lane-report-validator.test.ts uses child_process.execFileSync to drive the Python validator over reports written into os.mkdtempSync; covers valid → exit 0, missing LANE-SHA → exit 2, missing tracker update → exit 2, docs-only acceptance, --json shape, non-mutating sha256 before/after, --help → exit 0, unreadable file → exit 3.",
+        "src/__tests__/integration/ops/lane-report-validator.test.ts uses child_process.execFileSync to drive the Python validator over reports written into os.mkdtempSync; covers valid \u2192 exit 0, missing LANE-SHA \u2192 exit 2, missing tracker update \u2192 exit 2, docs-only acceptance, --json shape, non-mutating sha256 before/after, --help \u2192 exit 0, unreadable file \u2192 exit 3.",
         "docs/build/slices/OPS7_LANE_REPORT_VALIDATOR.md documents purpose, what changed, out-of-scope, why-it-is-safe, and validation commands.",
         "Validator is read-only: imports only argparse / json / re / sys; opens reports with open(..., 'r'); no subprocess, no shell, no network, no filesystem mutation; identical inputs produce byte-equal outputs.",
         "build-slices.json appends the OPS7 entry with status code_complete and bumps top-level lastUpdated to 2026-04-26; production-readiness.json union-appends a validation_qa note and bumps lastUpdated to 2026-04-26 without promoting any status."
@@ -5548,11 +5548,11 @@
       ],
       "acceptanceCriteria": [
         "DeploymentStatusCard is a Server Component (no 'use client', no React hooks) and consumes the PROD4 ProductionReadinessDeploymentSignal as a prop without making any external API call.",
-        "The card renders an honest unavailable display when tokens are absent: chip text 'unavailable', '—' for last-checked, explicit limitation note, deterministic next action mentioning GITHUB_STATUS_TOKEN and VERCEL_STATUS_TOKEN, and the disclaimer 'No fake green. liveStatus reflects honest token presence.'.",
-        "Component imports COLORS, FONT, BORDER, RADIUS, SPACING, and TYPE from @/lib/design/abarva-theme; the source contains no local hex literals and no local 'const COLORS' declaration (canon §L acceptance gate #8).",
+        "The card renders an honest unavailable display when tokens are absent: chip text 'unavailable', '\u2014' for last-checked, explicit limitation note, deterministic next action mentioning GITHUB_STATUS_TOKEN and VERCEL_STATUS_TOKEN, and the disclaimer 'No fake green. liveStatus reflects honest token presence.'.",
+        "Component imports COLORS, FONT, BORDER, RADIUS, SPACING, and TYPE from @/lib/design/abarva-theme; the source contains no local hex literals and no local 'const COLORS' declaration (canon \u00a7L acceptance gate #8).",
         "Integration test asserts unavailable rendering, no fake 'live' chip text, no liveStatus 'live' in the serialized signal, no process.env.*TOKEN / SECRET / KEY reads in the component source, no fetch / api.github.com / api.vercel.com / anthropic / openai references in the component source, and no auth / source / sentinel / atlas / nexus / agent / supabase / clerk imports.",
         "Slice documentation explains why the card lands as a server component, why mounting on the live panel is deferred to a follow-up slice, and that no provider polling is performed.",
-        "production-readiness.json validation_qa and production_deployment notes are UNION-updated conservatively without overwriting prior PROD1–PROD4 wording; manifest top-level lastUpdated is 2026-04-26; no component status promotion."
+        "production-readiness.json validation_qa and production_deployment notes are UNION-updated conservatively without overwriting prior PROD1\u2013PROD4 wording; manifest top-level lastUpdated is 2026-04-26; no component status promotion."
       ],
       "validationCommands": [
         "npx tsc --noEmit --pretty false",
@@ -5621,7 +5621,7 @@
     },
     {
       "id": "SOL10",
-      "name": "Recommendation → Program Workshop Bridge",
+      "name": "Recommendation \u2192 Program Workshop Bridge",
       "category": "SOL",
       "status": "code_complete",
       "risk": "low",
@@ -5675,7 +5675,7 @@
         "npx eslint --max-warnings=0 src/lib/solutions/recommendation-workshop-bridge.ts src/__tests__/integration/solutions/recommendation-workshop-bridge.test.ts",
         "npm run build"
       ],
-      "notes": "Pure deterministic library that maps SOL9 solution recommendations onto recommended workshops, SME role bundles, evidence-need hints, and deliverable hints for future Program Workshop Mode surfaces. Library only — no UI renderer, no live retrieval, no model calls, no tenant runtime state, no live SME directory, no calendar/booking. The bridge keeps its input contract structural so it runs even when SOL9 is not present on the branch; SOL9 outputs match the contract directly. Status not promoted on agent_runtime or program_workshop_mode — production-readiness notes are UNION-updated conservatively."
+      "notes": "Pure deterministic library that maps SOL9 solution recommendations onto recommended workshops, SME role bundles, evidence-need hints, and deliverable hints for future Program Workshop Mode surfaces. Library only \u2014 no UI renderer, no live retrieval, no model calls, no tenant runtime state, no live SME directory, no calendar/booking. The bridge keeps its input contract structural so it runs even when SOL9 is not present on the branch; SOL9 outputs match the contract directly. Status not promoted on agent_runtime or program_workshop_mode \u2014 production-readiness notes are UNION-updated conservatively."
     },
     {
       "id": "SOL12",
@@ -5728,7 +5728,7 @@
         "npx jest src/__tests__/integration/solutions/architecture-draft-read-model.test.ts",
         "npx eslint --max-warnings=0 src/lib/solutions/architecture-draft-read-model.ts src/__tests__/integration/solutions/architecture-draft-read-model.test.ts"
       ],
-      "notes": "Pure deterministic architecture draft read model. Library only — no model-generated architecture, no fake citations, no live retrieval, no tenant runtime state, no persistence. The default seed names a generic cross-sector architecture draft so the contract stands alone; per-archetype seed packs are deferred and callers can already pass a populated ArchitectureDraftInput to override the seed verbatim. Consumed downstream by the future Solution Intelligence Canvas (SOL10+) and by Nexus when composing per-tenant architecture drafts. agent_runtime status is not promoted by this slice."
+      "notes": "Pure deterministic architecture draft read model. Library only \u2014 no model-generated architecture, no fake citations, no live retrieval, no tenant runtime state, no persistence. The default seed names a generic cross-sector architecture draft so the contract stands alone; per-archetype seed packs are deferred and callers can already pass a populated ArchitectureDraftInput to override the seed verbatim. Consumed downstream by the future Solution Intelligence Canvas (SOL10+) and by Nexus when composing per-tenant architecture drafts. agent_runtime status is not promoted by this slice."
     },
     {
       "id": "SOL13",
@@ -5785,7 +5785,7 @@
         "npx eslint --max-warnings=0 src/lib/solutions/workshop-architecture-refinement.ts src/__tests__/integration/solutions/workshop-architecture-refinement.test.ts",
         "npm run build"
       ],
-      "notes": "Pure deterministic library that turns structured MW4 meeting note captures into proposed architecture refinements. Operationalizes the SOL8 Solution Intelligence Canvas section on dynamic refinement and the MW1 contract section on after-workshop synthesis, focused on architecture-level proposals. Library only — no UI renderer, no live retrieval, no model calls, no tenant runtime state. Every proposal is marked proposed: true and is never auto-applied; the Maestro confirms before any downstream architecture-draft module would consume a proposal. Lands ahead of SOL10 (architecture draft read model) and SOL12 (architecture deliverable renderer); when SOL10 lands the refinement loop will consume SOL13 proposals as the canonical refinement-input shape."
+      "notes": "Pure deterministic library that turns structured MW4 meeting note captures into proposed architecture refinements. Operationalizes the SOL8 Solution Intelligence Canvas section on dynamic refinement and the MW1 contract section on after-workshop synthesis, focused on architecture-level proposals. Library only \u2014 no UI renderer, no live retrieval, no model calls, no tenant runtime state. Every proposal is marked proposed: true and is never auto-applied; the Maestro confirms before any downstream architecture-draft module would consume a proposal. Lands ahead of SOL10 (architecture draft read model) and SOL12 (architecture deliverable renderer); when SOL10 lands the refinement loop will consume SOL13 proposals as the canonical refinement-input shape."
     },
     {
       "id": "SOL14",
@@ -5840,7 +5840,7 @@
         "npx jest src/__tests__/integration/solutions/vendor-startup-intelligence.test.ts",
         "npm run build"
       ],
-      "notes": "Pure deterministic vendor / startup intelligence contract. Library only — does not generate live vendor briefs, invoke models, read tenant state, fetch external data, or call any external API. No real vendor names are used; all seed entries reference category-shaped placeholder ids (e.g. vendor_cdp_001, vendor_ams_002) so downstream surfaces never accidentally inherit a branded recommendation from the seed. Future composition with SOL6 (build / buy / partner evaluator) and SOL9 (recommendation engine) lands a single defensible vendor / startup brief per capability request without changing the SOL14 contract."
+      "notes": "Pure deterministic vendor / startup intelligence contract. Library only \u2014 does not generate live vendor briefs, invoke models, read tenant state, fetch external data, or call any external API. No real vendor names are used; all seed entries reference category-shaped placeholder ids (e.g. vendor_cdp_001, vendor_ams_002) so downstream surfaces never accidentally inherit a branded recommendation from the seed. Future composition with SOL6 (build / buy / partner evaluator) and SOL9 (recommendation engine) lands a single defensible vendor / startup brief per capability request without changing the SOL14 contract."
     },
     {
       "id": "MW7",
@@ -5883,13 +5883,13 @@
       ],
       "acceptanceCriteria": [
         "Module defines WorkshopTemplate, WorkshopTemplateCategory ('discovery' | 'framing' | 'value' | 'governance' | 'architecture' | 'adoption' | 'executive_review'), WorkshopTemplateAgenda, WorkshopTemplateInputs, and WorkshopTemplateLibrarySummary types with the canonical seven-category taxonomy.",
-        "buildWorkshopTemplateLibrary() returns at least seven deterministic templates with at least one template per canonical category; same input → identical output across calls.",
+        "buildWorkshopTemplateLibrary() returns at least seven deterministic templates with at least one template per canonical category; same input \u2192 identical output across calls.",
         "listWorkshopTemplateCategories() returns the seven canonical categories in display order.",
         "summarizeWorkshopTemplateLibrary reconciles byCategory counts to totalCount, sums per-template durations to totalDurationMinutes, and emits uniqueCategories in canonical order; empty input returns a zeroed summary.",
         "getTemplatesByCategory(category) filters to the named category only.",
         "Every template carries a non-empty title, purpose, decisionToLand, at least one required input, at least three contiguously numbered agenda steps with positive durations summing to the template duration, at least one output, and createdFrom: 'deterministic_workshop_template_library_seed'.",
         "No string field invents a dollar amount or claims a real E-### evidence citation.",
-        "src/components/programs/WorkshopTemplateLibrary.tsx is a Server Component (no 'use client', no useState / useEffect / useMemo / useReducer / useCallback) that renders templates grouped by canonical category with eyebrow 'WORKSHOP TEMPLATE LIBRARY · MW7', a hairline grid, and 'Open template' actions rendered as disabled future-only controls.",
+        "src/components/programs/WorkshopTemplateLibrary.tsx is a Server Component (no 'use client', no useState / useEffect / useMemo / useReducer / useCallback) that renders templates grouped by canonical category with eyebrow 'WORKSHOP TEMPLATE LIBRARY \u00b7 MW7', a hairline grid, and 'Open template' actions rendered as disabled future-only controls.",
         "Component imports color and font tokens from @/lib/design/abarva-theme only; no local hex literals, no local DM Sans font-family literal.",
         "Module + component import nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch; no anthropic / openai / pinecone references."
       ],
@@ -5899,7 +5899,7 @@
         "npx eslint --max-warnings=0 src/lib/programs/workshop-template-library.ts src/components/programs/WorkshopTemplateLibrary.tsx src/__tests__/integration/programs/workshop-template-library.test.ts",
         "npm run build"
       ],
-      "notes": "Pure deterministic catalog of AbarVa workshop templates spanning the canonical Maestro arc — discovery, framing, value, governance, architecture, adoption, and executive review. Each template names purpose, prerequisite inputs, deterministic agenda, decision-to-land, and outputs. Server Component panel renders the catalog grouped by category with the calm AbarVa visual canon. No live agenda generation, no booking, no model calls, no persistence. Future Open-template action is wired in a later slice that lands the workshop-mode persistence path."
+      "notes": "Pure deterministic catalog of AbarVa workshop templates spanning the canonical Maestro arc \u2014 discovery, framing, value, governance, architecture, adoption, and executive review. Each template names purpose, prerequisite inputs, deterministic agenda, decision-to-land, and outputs. Server Component panel renders the catalog grouped by category with the calm AbarVa visual canon. No live agenda generation, no booking, no model calls, no persistence. Future Open-template action is wired in a later slice that lands the workshop-mode persistence path."
     },
     {
       "id": "SOL11",
@@ -5946,7 +5946,7 @@
         "All nine canonical sections (brief, currentInputs, archetype, components, buildBuyGuidance, risks, recommendedWorkshops, recommendedDeliverables, missingInputs) are present in the view's sections list.",
         "createdFrom equals 'deterministic_solution_canvas_seed'.",
         "Server Component imports tokens only from @/lib/design/abarva-theme; no 'use client', no React hooks, no local hex literals, no DM Sans literals.",
-        "Footer reads 'Source · deterministic solution canvas seed · proposed only, not applied'.",
+        "Footer reads 'Source \u00b7 deterministic solution canvas seed \u00b7 proposed only, not applied'.",
         "View-model module contains no Date.now, Math.random, new Date, fetch, or anthropic/openai references."
       ],
       "validationCommands": [
@@ -6154,11 +6154,11 @@
       ],
       "acceptanceCriteria": [
         "src/lib/admin/evidence-manifest-model.ts exports EvidenceManifestEntry, EvidenceMetricKind ('count' | 'rate' | 'currency' | 'duration' | 'percentage' | 'category' | 'narrative'), EvidenceManifestSourceOwner, EvidenceManifestDateRange, EvidenceManifestSummary, and EvidenceManifestVerification ('self_attested' | 'owner_signed' | 'co_signed' | 'audited').",
-        "Each EvidenceManifestEntry carries metric, metricKind, value (string only — never raw data), unit?, sourceOwner (named ownerRole + sourceSystem), dateRange (ISO YYYY-MM-DD bounded), verification, rawDataLocation (free-form label pointing to client-side storage), and rawRetainedByClient: true (structurally enforced by the type literal).",
+        "Each EvidenceManifestEntry carries metric, metricKind, value (string only \u2014 never raw data), unit?, sourceOwner (named ownerRole + sourceSystem), dateRange (ISO YYYY-MM-DD bounded), verification, rawDataLocation (free-form label pointing to client-side storage), and rawRetainedByClient: true (structurally enforced by the type literal).",
         "Module exports buildEvidenceManifestSeed, summarizeEvidenceManifests, validateEvidenceManifestEntry, and getUnverifiedEvidence helpers; createdFrom 'deterministic_evidence_manifest_seed' appears on every seed entry.",
         "buildEvidenceManifestSeed is byte-equal across repeated calls (JSON.stringify equality enforced).",
         "Seed represents all 7 metric kinds and all 4 verification states at least once; every seed entry has rawRetainedByClient: true (test enforced).",
-        "No actual raw data values: regex enforced — no long alphanumeric strings (>= 32 chars without spaces or punctuation) and no http/https URLs in any value or rawDataLocation field across the seed.",
+        "No actual raw data values: regex enforced \u2014 no long alphanumeric strings (>= 32 chars without spaces or punctuation) and no http/https URLs in any value or rawDataLocation field across the seed.",
         "validateEvidenceManifestEntry rejects entries with raw payloads in value or rawDataLocation, inverted date ranges, missing source owner role/system, non-canonical metric kinds, non-canonical verification states, wrong createdFrom markers, and rawRetainedByClient !== true.",
         "Module imports nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch; no anthropic / openai / pinecone references; source contains zero embedded URLs (test enforced)."
       ],
@@ -6167,7 +6167,7 @@
         "npx jest src/__tests__/integration/admin/evidence-manifest-model.test.ts",
         "npx eslint src/lib/admin/evidence-manifest-model.ts src/__tests__/integration/admin/evidence-manifest-model.test.ts --max-warnings=0"
       ],
-      "notes": "Pure deterministic evidence manifest read model that defines how a client supplies evidence to AbarVa by manifest only — never by raw data copy. Each manifest entry names a metric, a labelled string value (never raw), the named source owner (role + system), a bounded ISO date range, the verification posture (self_attested / owner_signed / co_signed / audited), and a free-form label pointing to where the underlying data lives on the client side. rawRetainedByClient is structurally true on every entry. Seven canonical metric kinds (count, rate, currency, duration, percentage, category, narrative) and four canonical verification states. Validator rejects raw payloads (long alphanumeric blobs and http/https URLs), inverted date ranges, missing source owner, non-canonical kinds / verifications, and forced rawRetainedByClient overrides. No DB writes, no migrations, no live runtime, no audit ledger writes, no model invocation, no Steward runtime; the future Steward UI and runtime gateway will consume this read model before any client evidence is cited."
+      "notes": "Pure deterministic evidence manifest read model that defines how a client supplies evidence to AbarVa by manifest only \u2014 never by raw data copy. Each manifest entry names a metric, a labelled string value (never raw), the named source owner (role + system), a bounded ISO date range, the verification posture (self_attested / owner_signed / co_signed / audited), and a free-form label pointing to where the underlying data lives on the client side. rawRetainedByClient is structurally true on every entry. Seven canonical metric kinds (count, rate, currency, duration, percentage, category, narrative) and four canonical verification states. Validator rejects raw payloads (long alphanumeric blobs and http/https URLs), inverted date ranges, missing source owner, non-canonical kinds / verifications, and forced rawRetainedByClient overrides. No DB writes, no migrations, no live runtime, no audit ledger writes, no model invocation, no Steward runtime; the future Steward UI and runtime gateway will consume this read model before any client evidence is cited."
     },
     {
       "id": "DATA6",
@@ -6377,7 +6377,7 @@
         ".dockerignore"
       ],
       "acceptanceCriteria": [
-        "docs/build/ENTERPRISE_DEPLOYMENT_VERIFICATION_RUNBOOK.md documents §A SaaS pilot readiness (TEN1 SaaS tenancy architecture + TEN2 five canonical tenant isolation levels + MG2 shared egress posture for the pilot tier), §B dedicated tenant readiness (TEN3 conditional with DB / storage / vector / graph / audit / model gateway / SSO / tenant admin / onboarding / upgrade / backup paths), §C private data plane readiness (CLOUD1 four-tier strategy + control-plane / data-plane separation + dependency replacement matrix + per-tier model gateway posture + per-tier operational responsibility split), §D Azure VNet reference lab (CLOUD2 blueprint + CLOUD5 Bicep starter parses + parameters file uses <replace-me> placeholders + no hardcoded secrets + README marks STARTER / LAB / not production), §E Docker runtime packaging (CLOUD3 multi-stage Dockerfile + non-root user + no baked secrets + .dockerignore covers node_modules / .env / .git / reports/), §F dataset trust contract (TRUST1 five sharing levels L0–L4 and five-state trust ladder loaded → metadata_only → sample_summary → audited_summary → decision_grade with L4 default-deny and revocation / expiration), §G agent data access policy (TRUST2 matrix covering all four canonical agents and all five sharing levels with default-deny and approval-evidence requirement), §H evidence manifest mode (EVID2 ledger + EVID3 claim/support + honest-unavailable posture), §I model provider policy (MG2 per-tier provider policy + egress allowlist + no direct SDK call from outside the gateway), §J runtime safety gate (deterministic guardrail before egress + tool manifest enforcement + TRUST2 level enforcement + audit emission + no-bypass posture), §K unified audit (AUD2 fifteen canonical event types + immutable / traceId / tenantKey / workObject / createdFrom on every event + three actor kinds + no live persistence claim), §L no-fabrication contract (no fake citations / approvals / dollar amounts / live model claim / live monitoring claim + honest-unavailable as the default), §M CI / Vercel signal + security checklist + morning review rules (PROD3 live refresh API + PROD4 honest unavailable + PROD5 DeploymentStatusCard honest chip + ESLint + routes-and-disclaimers + Vercel green + Supabase Preview skipping + secrets / GUID / auth / future-only / canon-chrome / dark-surface / .env.example checks + PR merge gated on PROD2 passed + conservative-status policy + canonical cherry-pick path + lane agents commit only + integration agent owns merges + founder owns push and merge decisions + conditional rows record deferred not failed), §N morning review note template.",
+        "docs/build/ENTERPRISE_DEPLOYMENT_VERIFICATION_RUNBOOK.md documents \u00a7A SaaS pilot readiness (TEN1 SaaS tenancy architecture + TEN2 five canonical tenant isolation levels + MG2 shared egress posture for the pilot tier), \u00a7B dedicated tenant readiness (TEN3 conditional with DB / storage / vector / graph / audit / model gateway / SSO / tenant admin / onboarding / upgrade / backup paths), \u00a7C private data plane readiness (CLOUD1 four-tier strategy + control-plane / data-plane separation + dependency replacement matrix + per-tier model gateway posture + per-tier operational responsibility split), \u00a7D Azure VNet reference lab (CLOUD2 blueprint + CLOUD5 Bicep starter parses + parameters file uses <replace-me> placeholders + no hardcoded secrets + README marks STARTER / LAB / not production), \u00a7E Docker runtime packaging (CLOUD3 multi-stage Dockerfile + non-root user + no baked secrets + .dockerignore covers node_modules / .env / .git / reports/), \u00a7F dataset trust contract (TRUST1 five sharing levels L0\u2013L4 and five-state trust ladder loaded \u2192 metadata_only \u2192 sample_summary \u2192 audited_summary \u2192 decision_grade with L4 default-deny and revocation / expiration), \u00a7G agent data access policy (TRUST2 matrix covering all four canonical agents and all five sharing levels with default-deny and approval-evidence requirement), \u00a7H evidence manifest mode (EVID2 ledger + EVID3 claim/support + honest-unavailable posture), \u00a7I model provider policy (MG2 per-tier provider policy + egress allowlist + no direct SDK call from outside the gateway), \u00a7J runtime safety gate (deterministic guardrail before egress + tool manifest enforcement + TRUST2 level enforcement + audit emission + no-bypass posture), \u00a7K unified audit (AUD2 fifteen canonical event types + immutable / traceId / tenantKey / workObject / createdFrom on every event + three actor kinds + no live persistence claim), \u00a7L no-fabrication contract (no fake citations / approvals / dollar amounts / live model claim / live monitoring claim + honest-unavailable as the default), \u00a7M CI / Vercel signal + security checklist + morning review rules (PROD3 live refresh API + PROD4 honest unavailable + PROD5 DeploymentStatusCard honest chip + ESLint + routes-and-disclaimers + Vercel green + Supabase Preview skipping + secrets / GUID / auth / future-only / canon-chrome / dark-surface / .env.example checks + PR merge gated on PROD2 passed + conservative-status policy + canonical cherry-pick path + lane agents commit only + integration agent owns merges + founder owns push and merge decisions + conditional rows record deferred not failed), \u00a7N morning review note template.",
         "docs/build/slices/CLOUD7_ENTERPRISE_DEPLOYMENT_VERIFICATION_RUNBOOK.md documents purpose (sibling runbook to QA8 walking operator-posture instead of slice contracts), what changed (new runbook + new slice contract + manifest updates), out of scope (no application code, no runtime, no migrations, no auth, no supabase, no IaC, no .github/workflows, no package manifests, no next.config.ts, no model call, no live cloud call, no live persona crawler, no CI integration, no new env file, no platform-design changes, no component promotion, no QA8 wording overwrite), why this is safe (documentation only; UNION manifest updates; conditional rows record deferred), how to re-run (tsc clean + JSON parse + line count sanity), readiness impact (production_deployment status preserved at blocked; validation_qa preserved at tested; prod-deploy-verification blocker preserved verbatim; no component promotion; lastUpdated bumped), and cross-references (QA8 sibling + CLOUD1 / CLOUD2 / CLOUD3 / CLOUD4 / CLOUD5 / CLOUD8 / TEN1 / TEN2 / TEN3 / TRUST1 / TRUST2 / TRUST3 / EVID2 / EVID3 / AUD2 / MG2 / PROD3 / PROD4 / PROD5).",
         "docs/build/build-slices.json appends a CLOUD7 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn (CLOUD1, CLOUD2, TRUST1, TRUST2, TEN1, TEN2), status code_complete, risk low, ownerAgent Wave3 Lane G, and lastUpdated 2026-04-26; manifest top-level lastUpdated remains 2026-04-26.",
         "docs/build/production-readiness.json UNION-updates validation_qa.notes / validation_qa.nextAction and production_deployment.notes / production_deployment.nextAction acknowledging CLOUD7 as a sibling operator-posture runbook to QA8; component statuses are preserved (no promotions); the prod-deploy-verification blocker is preserved verbatim; manifest top-level lastUpdated is set to 2026-04-26.",
@@ -6387,7 +6387,7 @@
         "npx tsc --noEmit --pretty false",
         "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
       ],
-      "notes": "Founder-facing operator-posture runbook for verifying enterprise deployment (SaaS pilot, dedicated tenant, private data plane, fully self-managed) plus Azure VNet lab, Docker packaging, dataset trust contract, agent data access, evidence manifest mode, model provider policy, runtime safety gate, unified audit, no-fabrication contract, CI / Vercel signal, security review checklist, and morning review / merge gates. Sibling runbook to QA8 (ENTERPRISE_DEPLOYMENT_TRUST_VERIFICATION_RUNBOOK): QA8 walks slice contracts as filed; CLOUD7 walks the operator posture an enterprise prospect or security review team would walk against the platform. Documentation only. Deterministic — does not exercise live retrieval, model calls, browser automation, or live cloud calls. TEN3 / TRUST3 / CLOUD3 / CLOUD4 / CLOUD5 / PROD4 / ADM6 are explicitly conditional: each row is verified only if the matching slice has landed in the batch under review and otherwise records deferred (not failed). production_deployment status is preserved (still blocked); the prod-deploy-verification blocker is preserved verbatim; no component is promoted; QA8 wording is preserved verbatim. Wave3 Lane G commits locally only; the integration agent owns the cherry-pick and merge."
+      "notes": "Founder-facing operator-posture runbook for verifying enterprise deployment (SaaS pilot, dedicated tenant, private data plane, fully self-managed) plus Azure VNet lab, Docker packaging, dataset trust contract, agent data access, evidence manifest mode, model provider policy, runtime safety gate, unified audit, no-fabrication contract, CI / Vercel signal, security review checklist, and morning review / merge gates. Sibling runbook to QA8 (ENTERPRISE_DEPLOYMENT_TRUST_VERIFICATION_RUNBOOK): QA8 walks slice contracts as filed; CLOUD7 walks the operator posture an enterprise prospect or security review team would walk against the platform. Documentation only. Deterministic \u2014 does not exercise live retrieval, model calls, browser automation, or live cloud calls. TEN3 / TRUST3 / CLOUD3 / CLOUD4 / CLOUD5 / PROD4 / ADM6 are explicitly conditional: each row is verified only if the matching slice has landed in the batch under review and otherwise records deferred (not failed). production_deployment status is preserved (still blocked); the prod-deploy-verification blocker is preserved verbatim; no component is promoted; QA8 wording is preserved verbatim. Wave3 Lane G commits locally only; the integration agent owns the cherry-pick and merge."
     },
     {
       "id": "SEC1",
@@ -6438,6 +6438,29 @@
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
       "notes": "Deterministic, file-pure contract that names the safety / policy checks the runtime must apply BEFORE any tool call, model call, evidence use, dataset access, export, or cross-agent handoff. Companion to TOOL2 (Tool Registry MVP) and TOOL3 (Tool Invocation Audit). 7 canonical check kinds, 4 canonical decisions, 9-element deny-reason closed set, 4-element reviewer-role closed set. No tool dispatch, no model calls, no audit-ledger persistence, no migrations, no UI."
+    },
+    {
+      "id": "ACT6",
+      "name": "AI Cost / Consumption Read Model",
+      "owner": "Wave4 Lane A",
+      "status": "code_complete",
+      "risk": "low",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "MG2",
+        "MG3"
+      ],
+      "ownerAgent": "Wave4 Lane A",
+      "allowedFiles": [
+        "src/lib/tower/ai-cost-consumption.ts",
+        "src/__tests__/integration/tower/ai-cost-consumption.test.ts",
+        "docs/build/slices/ACT6_AI_COST_CONSUMPTION.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "notes": [
+        "Deterministic AI cost / consumption read model with scopes / units / utilization."
+      ]
     }
   ]
 }
