@@ -2,79 +2,141 @@
 
 ## 1. Purpose
 
-Plan how Source and the broader AbarVa product should display agent missions without building UI in this slice.
+Plan how deterministic agent missions should appear across AbarVa without creating clutter, chat-first behavior, or a noisy notification feed.
 
-The goal is to make Nexus, Sentinel, Atlas, and Steward visibly useful without turning the product into a generic chatbot, noisy feed, or avatar-led experience. Agent activity should show concrete mission work tied to workflow, evidence, validation, patterns, readiness, and user intent.
+The first implementation target should be Source because Source now has:
+
+- deterministic Source agent mission read model
+- deterministic Source agent mission report formatter
+- Source context validation report
+- Source workflow validation report
+- deterministic multi-agent briefing
+
+This plan is documentation only. It does not implement UI, API routes, model calls, persistence, upload/parsing, event canvas expansion, workflow engines, or approval engines.
 
 ## 2. Relationship To Experience System Agent Activity UI Pattern
 
-This plan follows `docs/platform-design/experience-system/16_AGENT_ACTIVITY_UI_PATTERN.md`.
+This plan applies the Experience System Agent Activity UI Pattern to Source and the broader platform.
 
-Binding rules:
+The governing rules remain:
 
-- Show agents only when they add decision value.
-- Use mission counts and next actions, not noisy feeds.
-- Keep agents visible but secondary to the work.
-- Keep primary canvas warm off-white and calm.
-- Avoid large avatars, excessive icons, decorative symbols, and generic chatbot prompts.
-- Show context used, owner, due date, confidence, and evidence state only when useful.
+- agent activity is visible only when it adds decision value
+- agents are visible but not dominant
+- activity is tied to context, workflow, evidence, validation, or patterns
+- mission counts and next actions matter more than activity feeds
+- no large avatars
+- no generic chatbot panels
+- no excessive badges or icons
+- default canvas remains warm off-white
+- dark panels are reserved for command reads, executive briefs, or high-impact agent pressure summaries
 
-## 3. Where Missions Appear
+## 3. Relationship To Source Agent Mission Report
+
+The Source agent mission report is the first safe data contract for UI planning.
+
+The UI should consume these report fields first:
+
+- `missionCount`
+- `countByAgent`
+- `countByPriority`
+- `countByState`
+- `topMissions`
+- `criticalMissions`
+- `blockers`
+- `defers`
+- `handoffs`
+- `recommendedNextAction`
+- `suggestedActions`
+- `contextUsedSummary`
+
+The UI should not consume raw mission internals unless the surface needs detail. The report gives enough structure to show compact activity, mission priority, recommended action, and context confidence without introducing chat behavior.
+
+## 4. Where Missions Appear
 
 ### Source Dashboard
 
-Use a compact agent activity strip or small Nexus mission preview.
+Use a compact mission preview near the existing command read and pressure signals.
 
-Show:
+Purpose:
 
-- Nexus next action for the most exposed event.
-- Sentinel evidence gap count.
-- Steward blocked gate count.
-- Atlas value-at-risk brief readiness.
+- show the top 2-3 missions for the most exposed event
+- make blockers and value/risk visible without crowding the event table
+- preserve table-forward dashboard behavior
 
-Do not show:
+Preferred variant:
 
-- Freeform chat input.
-- Long mission feed.
-- Event canvas expansion.
+- compact agent activity strip plus one small mission preview block
+
+Do not add:
+
+- chat input
+- freeform prompt
+- event canvas
+- full mission drawer
+- API calls
 
 ### Source Event Detail
 
-Use a right-side mission panel and inline recommendations near stage gates, data readiness, artifacts, vendor responses, and scorecard governance.
+Use a right-side agent mission panel when event detail exists.
 
-Show:
+Purpose:
 
-- Current stage mission.
-- Gate blocker/defer.
-- Missing inputs.
-- Evidence confidence.
-- Suggested actions.
+- show stage-specific missions
+- tie missions to journey stage, artifacts, missing data, and gate readiness
+- show handoff target when Sentinel, Atlas, or Steward should take lead
+
+Preferred variants:
+
+- right-side mission panel
+- inline recommendation near blocked gate, artifact, or vendor response
 
 ### Programs
 
-Use compact strip or inline recommendations near phase readiness, workshop preparation, artifact review, and approval gates.
+Use mission activity only where it maps to program phase readiness, workshop prep, artifact readiness, or executive escalation.
 
-Do not duplicate Source-specific sourcing logic.
+Preferred variants:
+
+- compact strip above phase/workshop context
+- inline recommendation near a phase gate or artifact row
+
+Do not duplicate the Source data readiness flow in Programs.
 
 ### Intelligence
 
-Use Sentinel-led inline recommendations for pattern signals, anti-signals, evidence gaps, and low-confidence findings.
+Use Sentinel-led activity for pattern signals, evidence confidence, unsupported claims, and low-context warnings.
+
+Preferred variants:
+
+- inline recommendation near a pattern or evidence object
+- hidden/background drawer for lower-priority validation findings
 
 ### Control Tower
 
-Use Atlas executive briefs and high-priority mission summaries only. Keep it concise and value/risk oriented.
+Use Atlas-led activity for executive synthesis and portfolio pressure.
+
+Preferred variants:
+
+- executive agent brief
+- compact strip for cross-agent pressure count
+
+Control Tower should not become a mission task board.
 
 ### Admin/Setup
 
-Use Steward-led readiness missions for data, connector, permissions, parsing status, and evidence usability.
+Use Steward-led activity for data readiness, connector readiness, tenant/security checks, and governance blockers.
 
-Do not create a duplicate Source setup process.
+Preferred variants:
 
-## 4. UI Variants
+- compact activity strip
+- inline recommendation near setup/readiness item
 
-### Compact Strip
+Admin/Setup remains the source of setup truth. Source should reference Admin/Setup readiness, not duplicate setup workflows.
 
-Best for dashboards and portfolio views.
+## 5. UI Variants
+
+### Compact Agent Activity Strip
+
+Use for first-viewport awareness.
 
 Example:
 
@@ -85,115 +147,167 @@ Steward: 1 blocked gate
 Atlas: executive brief ready
 ```
 
+Rules:
+
+- show count and mission type
+- use text-first labels
+- use small agent marks only when helpful
+- keep it short enough to sit near dashboard command read
+- collapse gracefully on narrow screens
+
 ### Right Mission Panel
 
-Best for event detail, program workbench, or deep workflow pages.
+Use for detail surfaces where the user needs to act.
 
-Panel should show:
+Content:
 
-- Primary mission.
-- Agent owner.
-- Context used.
-- Recommended next action.
-- Evidence/confidence state when relevant.
-- Owner/due date when relevant.
-- Three choices plus custom where useful.
+- primary mission
+- agent owner
+- priority and state
+- context/evidence status
+- recommended next action
+- three choices plus custom when action is useful
+
+Rules:
+
+- show no more than 3 active missions by default
+- hide lower-priority missions behind a drawer or "view all"
+- avoid chat history
 
 ### Inline Recommendation
 
-Best beside the object being affected:
+Use directly beside a workflow object:
 
-- Stage gate.
-- Artifact.
-- Vendor response.
-- Data readiness item.
-- Scorecard criterion.
-- Approval item.
+- journey stage
+- data readiness item
+- artifact row
+- vendor response
+- scorecard criterion
+- gate approval
 
-Keep to one finding, one reason, and one action.
+Shape:
+
+```text
+Steward - Gate blocked
+Scorecard must be locked before evaluation.
+Action: Lock scorecard or request waiver.
+```
 
 ### Executive Brief
 
-Best for Atlas and Control Tower.
+Use primarily for Atlas.
 
-Show:
+Content:
 
-- Decision needed.
-- Value at stake.
-- Risk.
-- Confidence caveat.
-- Recommended executive action.
-- Operational follow-up owner.
+- decision needed
+- value at stake
+- risk/blocker
+- confidence caveat
+- recommended action
+
+Keep it concise and executive-readable.
 
 ### Background Drawer
 
-Best for lower-priority missions, history, dismissed missions, deferred missions, and audit review.
+Use for:
 
-The drawer is not the primary experience.
+- lower-priority missions
+- deferred missions
+- handoff history
+- completed/dismissed missions later when persistence exists
 
-## 5. Rules For Minimalism
+Do not make the drawer the primary work surface.
 
-- Prefer text-first mission labels.
-- Use agent marks sparingly.
-- Show only active/high-value missions above the fold.
-- Collapse low-priority missions.
-- Do not show more than one primary mission per surface region.
-- Do not make every agent speak at once.
-- Avoid badge overload.
-- Avoid saturated risk colors unless something is truly blocked or high-risk.
+## 6. Rules For Minimalism
 
-## 6. Avoiding Agent Spam
+- show fewer missions, not more
+- start with top 2-3 missions
+- prefer text over icons
+- use badges only for priority/state
+- show one recommended action per mission
+- show context used only when trust or evidence matters
+- hide technical report details unless the user asks
+- never show a raw mission feed on the dashboard
 
-Agent activity should be hidden or collapsed when:
+## 7. Avoiding Agent Spam
 
-- Mission is low priority.
-- Mission is informational only.
-- Mission duplicates an already visible workflow state.
-- Mission is waiting on future infrastructure.
-- Mission does not change the user's next action.
-- User has dismissed it.
+Agent activity should be suppressed when:
 
-Agents should not produce a feed of every validation observation.
+- mission priority is low and no user action is needed
+- mission is duplicate of an already visible blocker
+- mission is purely informational
+- context is too weak to support action
+- user is already in a form/action flow
+- more than 3 missions would compete with the primary table/workflow
 
-## 7. When To Hide Missions
+Mission grouping rules:
+
+- group repeated evidence gaps under Sentinel
+- group repeated gate blockers under Steward
+- group related next actions under Nexus
+- group value/risk items under Atlas
+
+## 8. When To Hide Missions
 
 Hide or collapse missions when:
 
-- The page already clearly shows the state.
-- The mission is stale or superseded.
-- There is no owner/action.
-- Context is too weak and the only useful output is a low-context warning.
-- Multiple missions repeat the same blocker.
-- The mission is completed, dismissed, or intentionally deferred.
+- mission state is `completed` or `dismissed`
+- priority is `low`
+- mission is not tied to the current work object
+- source event is unknown
+- context report is unavailable
+- workflow validation report is unavailable for gate claims
+- mission would require UI that is not approved in the current slice
 
-## 8. How To Show Three Choices Plus Custom
+Low-context missions should not be hidden if they protect the user from over-trusting the system.
 
-Use three choices plus custom only when it helps move work forward.
+## 9. How To Show Three Choices Plus Custom
 
-Source examples:
+Use three choices plus custom only when a mission can move work forward.
 
-- Show missing inputs.
-- Generate minimum data request.
-- Explain scope readiness.
-- Ask something else.
+Good places:
 
-Workflow blocker examples:
+- Nexus next action mission
+- Nexus minimum data request mission
+- Steward gate blocker mission
+- Sentinel evidence gap mission
+- Atlas executive brief mission
 
-- Show gate blockers.
-- Show required approvals.
-- Explain waiver path.
-- Ask something else.
+Visual behavior:
 
-Do not show choices when:
+- show short verb labels
+- keep custom input visually secondary
+- do not create chat behavior in the preview slice
+- selected actions can be visual-only until runtime behavior is approved
 
-- There is only one valid action.
-- The output is purely informational.
-- The user is already in a form or approval flow.
-- Options would add clutter.
+Example for Source dashboard preview:
 
-## 9. Data Contract
+```text
+Show blockers
+Show missing inputs
+Explain readiness
+Ask something else
+```
 
-Future UI should consume a deterministic mission read model with fields such as:
+## 10. Data Contract
+
+The first UI implementation should consume a deterministic object equivalent to `SourceAgentMissionReport`.
+
+Minimum fields:
+
+- `reportVersion`
+- `generatedAt`
+- `sourceEventId`
+- `missionCount`
+- `countByAgent`
+- `countByPriority`
+- `topMissions`
+- `criticalMissions`
+- `recommendedNextAction`
+- `suggestedActions`
+- `contextUsedSummary`
+
+Mission fields needed for compact UI:
 
 - `missionId`
 - `agentName`
@@ -202,58 +316,81 @@ Future UI should consume a deterministic mission read model with fields such as:
 - `summary`
 - `priority`
 - `state`
-- `trigger`
-- `sourceEventId`
-- `stageId`
-- `relatedArtifactId`
 - `evidenceStatus`
 - `blockerReason`
 - `recommendedAction`
 - `suggestedActions`
 - `handoffTarget`
-- `contextUsed`
-- `createdAt`
 
-The UI must not infer mission truth from display copy. It should receive explicit state, priority, blocker, evidence, and action fields.
+Do not require:
 
-## 10. What Not To Build
+- persistence ids beyond deterministic mission id
+- API response ids
+- chat thread ids
+- uploaded file parsing state beyond context summary
+- model traces
 
-Do not build in this UI plan slice:
+## 11. Loading, Empty, And Low-Context States
 
-- UI components.
-- Chat UI.
-- API routes.
-- Model calls.
-- Scheduler/background jobs.
-- Persistence.
-- Upload/parsing.
-- Event canvas expansion.
-- Scorecard UI.
-- Artifact drawer UI.
-- Value ledger UI.
-- Vendor flow.
-- RFP generation.
-- Workflow engine.
-- Approval engine.
-- Artifact versioning.
-- Document export/import.
-- `/programs`, `/preview`, or `/demo` work.
+Loading:
 
-## 11. Acceptance Criteria
+- show a small skeleton or "checking missions" state only if async data is introduced later
+- dashboard preview should initially avoid async calls by using deterministic local helpers
 
-The future UI slice is acceptable only if:
+Empty:
 
-- It cites the Experience System Agent Activity UI Pattern.
-- It consumes deterministic mission data, not ad hoc copy.
-- It keeps the UI calm and premium.
-- It shows next action and context used where useful.
-- It avoids agent spam.
-- It avoids large avatars and decorative agent surfaces.
-- It does not create chat UI.
-- It does not create model calls.
-- It does not create new routes.
-- It does not expand Source event canvas, scorecard, artifact drawer, value ledger, vendor flow, or RFP generation.
+- show no mission panel when there are no medium/high/critical missions
+- optional quiet text: "No active agent missions"
 
-## Production Readiness Note
+Low context:
 
-No `production-readiness.json` update is recommended for this plan. It does not change runtime readiness, gates, blockers, test evidence, deployment evidence, or production status.
+- show Sentinel warning when context confidence is low
+- label guidance as pattern-level or seeded when needed
+- do not show decision-grade language
+
+Error:
+
+- show calm fallback and avoid blocking dashboard table
+- do not expose stack traces or internal report structure
+
+## 12. What Not To Build
+
+Do not build in the first UI slice:
+
+- chat UI
+- freeform prompt behavior
+- API route
+- model call
+- upload/parsing
+- event canvas
+- scorecard UI
+- artifact drawer UI
+- value ledger UI
+- vendor flow
+- scheduler/background job
+- persistence
+- workflow engine
+- approval engine
+- notification feed
+- full mission drawer
+- Programs integration
+- preview/demo work
+
+## 13. Acceptance Criteria
+
+The future UI implementation is acceptable only if:
+
+- it uses the deterministic mission report or equivalent local helper
+- it shows top 2-3 missions only
+- it keeps the Source dashboard table-forward
+- it preserves the off-white, premium visual direction
+- it shows agent name, mission title, priority/state, and recommended action
+- it includes context/evidence status only where useful
+- it does not introduce chat, model calls, API routes, persistence, or schedulers
+- it does not require product judgment beyond compact mission preview placement
+- it remains responsive without pushing the event table too far below the fold
+- it includes a review packet and validation results
+
+## 14. Recommended Next Slice
+
+Plan the Source dashboard mission preview, then implement a tiny deterministic preview only if the plan is merged and there is no overlapping dashboard PR.
