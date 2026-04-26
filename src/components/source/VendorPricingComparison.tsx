@@ -37,9 +37,15 @@ export interface VendorPricingComparisonProps {
 }
 
 const RANK_STYLES: Record<VendorPricingRank, string> = {
-  lowest: 'text-green-700 font-semibold',
-  mid: 'text-gray-700',
-  highest: 'text-red-700',
+  lowest: 'text-slate-900 font-semibold',
+  mid: 'text-slate-800',
+  highest: 'text-slate-800',
+};
+
+const RANK_LABELS: Record<VendorPricingRank, string> = {
+  lowest: 'Lowest',
+  mid: 'Middle',
+  highest: 'Highest',
 };
 
 const TOWER_LABELS: Record<VendorPricingComparisonTower, string> = {
@@ -71,6 +77,10 @@ export function VendorPricingComparison({
   generatedAt,
   className = '',
 }: VendorPricingComparisonProps): React.ReactElement {
+  const lowestVendorName = lowestCostVendorId
+    ? vendors.find((vendor) => vendor.vendorId === lowestCostVendorId)?.vendorName ?? lowestCostVendorId
+    : null;
+
   return (
     <div
       data-testid={`vendor-pricing-comparison-${eventId}`}
@@ -84,9 +94,9 @@ export function VendorPricingComparison({
           </h3>
           <p className="text-xs text-gray-500 mt-0.5">{eventName}</p>
         </div>
-        {lowestCostVendorId && (
-          <span className="text-xs text-green-700 font-medium">
-            Lowest: {vendors.find((v) => v.vendorId === lowestCostVendorId)?.vendorName ?? lowestCostVendorId}
+        {lowestVendorName && (
+          <span className="text-xs text-slate-700 font-medium">
+            Baseline: {lowestVendorName}
           </span>
         )}
       </div>
@@ -103,6 +113,7 @@ export function VendorPricingComparison({
                 <th className="text-left py-2 text-gray-500 font-medium">Vendor</th>
                 <th className="text-right py-2 text-gray-500 font-medium">Total</th>
                 <th className="text-right py-2 text-gray-500 font-medium">vs. Lowest</th>
+                <th className="text-left py-2 text-gray-500 font-medium">Cost position</th>
                 {towers.map((tower) => (
                   <th key={tower} className="text-right py-2 text-gray-500 font-medium">
                     {TOWER_LABELS[tower]}
@@ -117,7 +128,9 @@ export function VendorPricingComparison({
                   <td className={`py-2 ${RANK_STYLES[vendor.rank]}`}>
                     {vendor.vendorName}
                     {vendor.vendorId === lowestCostVendorId && (
-                      <span className="ml-1 text-green-600">★</span>
+                      <span className="ml-2 inline-flex rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-700">
+                        Baseline
+                      </span>
                     )}
                   </td>
                   <td className={`py-2 text-right ${RANK_STYLES[vendor.rank]}`}>
@@ -128,6 +141,11 @@ export function VendorPricingComparison({
                       ? '—'
                       : `+${vendor.deltaFromLowestPct.toFixed(1)}%`}
                   </td>
+                  <td className="py-2 text-left">
+                    <span className="inline-flex rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-700">
+                      {RANK_LABELS[vendor.rank]}
+                    </span>
+                  </td>
                   {towers.map((tower) => (
                     <td key={tower} className="py-2 text-right text-gray-700">
                       {vendor.towerCosts[tower] !== undefined
@@ -135,7 +153,11 @@ export function VendorPricingComparison({
                         : '—'}
                     </td>
                   ))}
-                  <td className="py-2 text-center text-gray-500">{vendor.normalizationConfidence}</td>
+                  <td className="py-2 text-center">
+                    <span className="inline-flex rounded-full border border-slate-300 bg-white px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-600">
+                      {vendor.normalizationConfidence}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -54,6 +54,9 @@ export function SourceExecutiveDecisionSummaryPanel({
       </div>
 
       <Card title="Vendor tradeoffs">
+        <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary, marginBottom: 8 }}>
+          {summary.vendorTradeoffs.length} vendors assessed · deterministic comparative view
+        </div>
         <div style={{ overflowX: 'auto' }}>
           <table style={TABLE}>
             <thead>
@@ -71,12 +74,24 @@ export function SourceExecutiveDecisionSummaryPanel({
               {summary.vendorTradeoffs.map((tradeoff) => (
                 <tr key={tradeoff.vendorId}>
                   <td style={TABLE_CELL}>{tradeoff.vendorName}</td>
-                  <td style={TABLE_CELL}>{tradeoff.viability}</td>
-                  <td style={TABLE_CELL}>{tradeoff.costPosition}</td>
-                  <td style={TABLE_CELL}>{tradeoff.valuePotential}</td>
-                  <td style={TABLE_CELL}>{tradeoff.commercialRisk}</td>
-                  <td style={TABLE_CELL}>{tradeoff.transitionRisk}</td>
-                  <td style={TABLE_CELL}>{tradeoff.evidenceConfidence}</td>
+                  <td style={TABLE_CELL}>
+                    <StatusPill>{tradeoff.viability}</StatusPill>
+                  </td>
+                  <td style={TABLE_CELL}>
+                    <StatusPill>{tradeoff.costPosition}</StatusPill>
+                  </td>
+                  <td style={TABLE_CELL}>
+                    <StatusPill>{tradeoff.valuePotential}</StatusPill>
+                  </td>
+                  <td style={TABLE_CELL}>
+                    <StatusPill>{tradeoff.commercialRisk}</StatusPill>
+                  </td>
+                  <td style={TABLE_CELL}>
+                    <StatusPill>{tradeoff.transitionRisk}</StatusPill>
+                  </td>
+                  <td style={TABLE_CELL}>
+                    <StatusPill>{tradeoff.evidenceConfidence}</StatusPill>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -151,6 +166,27 @@ function Card({ title, children }: { title: string; children: ReactNode }) {
       <div style={sourceSectionLabel}>{title}</div>
       <div>{children}</div>
     </div>
+  );
+}
+
+function StatusPill({ children }: { children: ReactNode }) {
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+        borderRadius: 999,
+        background: EXPERIENCE_COLORS.surfaceWarm,
+        padding: '2px 8px',
+        fontSize: 11,
+        fontWeight: 600,
+        color: EXPERIENCE_COLORS.textSecondary,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {children}
+    </span>
   );
 }
 
