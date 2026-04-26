@@ -1416,7 +1416,8 @@
         "LIVE3: Production readiness page verification completed. Admin page and API routes checked. Static manifest caveat documented.",
         "DEMO3: 20-minute boardroom demo script created with route sequence, talk track, fallback playbook, and Azure trust story.",
         "QA19: E2E smoke result capture model created. 12-route fixture baseline established. Live run required for full validation.",
-        "QA20: Mandatory hygiene gate script created (hygiene_gate.sh). All PR merges must pass gate."
+        "QA20: Mandatory hygiene gate script created (hygiene_gate.sh). All PR merges must pass gate.",
+        "OPS13: Demo pack final report validator created at scripts/integration/validate_demo_pack_report.py. All future packs (Wave 13+) must pass validate_demo_pack_report.py before a pack is marked complete. Validator checks 11 required sections: PR number, merge commit, lanes completed, route, readiness, hygiene gate, CI, Vercel, build, Run Metrics, next. Read-only, stdlib-only, no network calls."
       ],
       "lastUpdated": "2026-04-26"
     },

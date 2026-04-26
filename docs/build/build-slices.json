@@ -7062,6 +7062,50 @@
       ],
       "sliceDoc": "docs/build/slices/QA20_MANDATORY_HYGIENE_GATE_RUNNER_CONTRACT.md",
       "createdAt": "2026-04-26"
+    },
+    {
+      "id": "OPS13",
+      "name": "Demo Pack Validation / Final Report Standard",
+      "category": "ops",
+      "status": "code_complete",
+      "wave": "wave-13",
+      "risk": "low",
+      "ownerAgent": "Lane H",
+      "dependsOn": [
+        "OPS7",
+        "OPS11",
+        "OPS12"
+      ],
+      "allowedFiles": [
+        "scripts/integration/validate_demo_pack_report.py",
+        "src/__tests__/integration/ops/demo-pack-report-validator.test.ts",
+        "docs/build/DEMO_PACK_FINAL_REPORT_STANDARD.md",
+        "docs/build/slices/OPS13_DEMO_PACK_VALIDATION_STANDARD.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json",
+        "docs/build/build-waves.json"
+      ],
+      "forbiddenFiles": [
+        "src/**/*.tsx",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json"
+      ],
+      "acceptanceCriteria": [
+        "validate_demo_pack_report.py exits 0 on --help.",
+        "Validator detects all 11 required sections in final reports.",
+        "TypeScript test suite passes with npx jest --no-coverage.",
+        "npx tsc --noEmit --pretty false exits 0.",
+        "Python script is stdlib-only, read-only, no network calls.",
+        "Markdown spec defines required sections table and fill-in template."
+      ],
+      "validationCommands": [
+        "python3 scripts/integration/validate_demo_pack_report.py --help",
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/ops/demo-pack-report-validator.test.ts --no-coverage"
+      ],
+      "notes": "All future build packs (Wave 13+) must pass this validator before a pack is marked complete. Validator is read-only, deterministic, and stdlib-only."
     }
   ]
 }
