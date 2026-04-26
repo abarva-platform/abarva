@@ -1467,3 +1467,123 @@ const SOURCE_RFP_READINESS_SEEDS: SourceRfpReadinessSeed[] = [
 export function getSourceRfpReadinessSeed(eventId: string): SourceRfpReadinessSeed {
   return SOURCE_RFP_READINESS_SEEDS.find((seed) => seed.eventId === eventId) ?? { eventId, blockers: [] };
 }
+
+export interface SourceArtifactStatusStripSeedItem {
+  artifactName: string;
+  status: 'not_started' | 'draft' | 'needs_inputs' | 'in_review' | 'changes_requested' | 'approved' | 'locked';
+  ownerAgent: 'Nexus' | 'Sentinel' | 'Atlas' | 'Steward';
+  version: string;
+  evidenceState: 'missing' | 'partial' | 'seeded';
+  approvalState: 'not_started' | 'in_review' | 'approved' | 'changes_requested';
+}
+
+export interface SourceArtifactStatusStripSeed {
+  eventId: string;
+  artifacts: SourceArtifactStatusStripSeedItem[];
+}
+
+const DEFAULT_SOURCE_ARTIFACT_STATUS_STRIP_ITEMS: SourceArtifactStatusStripSeedItem[] = [
+  {
+    artifactName: 'Sourcing Strategy Memo',
+    status: 'draft',
+    ownerAgent: 'Nexus',
+    version: 'v0.3',
+    evidenceState: 'partial',
+    approvalState: 'in_review',
+  },
+  {
+    artifactName: 'Minimum Data Request',
+    status: 'locked',
+    ownerAgent: 'Steward',
+    version: 'v1.0',
+    evidenceState: 'seeded',
+    approvalState: 'approved',
+  },
+  {
+    artifactName: 'Scope Document',
+    status: 'in_review',
+    ownerAgent: 'Nexus',
+    version: 'v0.7',
+    evidenceState: 'partial',
+    approvalState: 'changes_requested',
+  },
+  {
+    artifactName: 'RFP Package',
+    status: 'needs_inputs',
+    ownerAgent: 'Steward',
+    version: 'v0.2',
+    evidenceState: 'missing',
+    approvalState: 'not_started',
+  },
+  {
+    artifactName: 'Pricing Template',
+    status: 'draft',
+    ownerAgent: 'Sentinel',
+    version: 'v0.4',
+    evidenceState: 'partial',
+    approvalState: 'in_review',
+  },
+  {
+    artifactName: 'Vendor Response Checklist',
+    status: 'draft',
+    ownerAgent: 'Sentinel',
+    version: 'v0.5',
+    evidenceState: 'partial',
+    approvalState: 'in_review',
+  },
+  {
+    artifactName: 'BAFO Question Pack',
+    status: 'draft',
+    ownerAgent: 'Nexus',
+    version: 'v0.3',
+    evidenceState: 'partial',
+    approvalState: 'not_started',
+  },
+  {
+    artifactName: 'Executive Decision Brief',
+    status: 'needs_inputs',
+    ownerAgent: 'Atlas',
+    version: 'v0.1',
+    evidenceState: 'missing',
+    approvalState: 'not_started',
+  },
+  {
+    artifactName: 'Transition Readiness Checklist',
+    status: 'not_started',
+    ownerAgent: 'Steward',
+    version: 'v0.0',
+    evidenceState: 'missing',
+    approvalState: 'not_started',
+  },
+  {
+    artifactName: 'Value Ledger Assumptions',
+    status: 'draft',
+    ownerAgent: 'Atlas',
+    version: 'v0.2',
+    evidenceState: 'partial',
+    approvalState: 'in_review',
+  },
+];
+
+const SOURCE_ARTIFACT_STATUS_STRIP_SEEDS: SourceArtifactStatusStripSeed[] = [
+  {
+    eventId: SOURCE_GOLDEN_EVENT_IDS.dataAiModernization,
+    artifacts: DEFAULT_SOURCE_ARTIFACT_STATUS_STRIP_ITEMS,
+  },
+  {
+    eventId: SOURCE_GOLDEN_EVENT_IDS.amsConsolidation,
+    artifacts: DEFAULT_SOURCE_ARTIFACT_STATUS_STRIP_ITEMS,
+  },
+  {
+    eventId: SOURCE_GOLDEN_EVENT_IDS.digitalAppBuild,
+    artifacts: DEFAULT_SOURCE_ARTIFACT_STATUS_STRIP_ITEMS,
+  },
+];
+
+export function getSourceArtifactStatusStripSeed(eventId: string): SourceArtifactStatusStripSeed {
+  const fallback: SourceArtifactStatusStripSeed = {
+    eventId,
+    artifacts: DEFAULT_SOURCE_ARTIFACT_STATUS_STRIP_ITEMS,
+  };
+  return SOURCE_ARTIFACT_STATUS_STRIP_SEEDS.find((seed) => seed.eventId === eventId) ?? fallback;
+}
