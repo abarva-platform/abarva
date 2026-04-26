@@ -2,6 +2,7 @@ export * from './agent-validation';
 export * from './agent-validation-fixtures';
 export * from './agent-validation-report';
 export * from './agent-validation-runner';
+export * from './agent-mission-report';
 export * from './agent-mission-types';
 export * from './agent-missions';
 export * from './attachments';
