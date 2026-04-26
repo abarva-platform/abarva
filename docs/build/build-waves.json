@@ -513,17 +513,33 @@
       "waveId": "wave-11",
       "name": "Demo Readiness + Architecture Overview",
       "goal": "Create demo scripts, architecture overview, persona walk results, readiness polish, and agent readiness deep drill for founder/boardroom demos.",
-      "status": "in_progress",
+      "status": "merged",
       "percentComplete": 100,
-      "plannedSlices": ["ARCH3", "DEMO1", "DEMO2", "QA18", "PROD7", "ADM8"],
-      "completedSlices": ["ARCH3", "DEMO1", "DEMO2", "QA18", "PROD7", "ADM8"],
+      "plannedSlices": [
+        "ARCH3",
+        "DEMO1",
+        "DEMO2",
+        "QA18",
+        "PROD7",
+        "ADM8"
+      ],
+      "completedSlices": [
+        "ARCH3",
+        "DEMO1",
+        "DEMO2",
+        "QA18",
+        "PROD7",
+        "ADM8"
+      ],
       "skippedSlices": [],
       "blockedSlices": [],
-      "mergedPrs": [],
+      "mergedPrs": [
+        316
+      ],
       "validationStatus": "tests_green",
       "productionReadinessUpdated": true,
       "currentBlockers": [],
-      "nextAction": "All 6 lanes integrated. Awaiting PR merge to update status to merged.",
+      "nextAction": "Wave-11 merged via PR #316. Demo readiness pack complete. Next: live agent wiring, real data ingestion, production deployment.",
       "lastUpdated": "2026-04-26"
     }
   ]
