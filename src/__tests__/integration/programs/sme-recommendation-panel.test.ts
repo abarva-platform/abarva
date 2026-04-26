@@ -537,4 +537,15 @@ describe('module hygiene · SmeRecommendationPanel.tsx', () => {
     expect(codeOnly).not.toMatch(/openai/i);
     expect(codeOnly).not.toMatch(/pinecone/i);
   });
+
+  it('imports tokens from the canonical AbarVa theme (no local color/font duplication)', () => {
+    // Per ABARVA_VISUAL_CANON §L acceptance gate #8: surfaces must use
+    // tokens from src/lib/design/abarva-theme.ts; hard-coded color or
+    // font duplication bypasses the canon and is forbidden.
+    expect(codeOnly).toMatch(/from '@\/lib\/design\/abarva-theme'/);
+    // No local hex literals — every color must come from the theme.
+    expect(codeOnly).not.toMatch(/['"]#[0-9A-Fa-f]{6}['"]/);
+    // No local DM Sans font-family literal — must read FONT.body.
+    expect(codeOnly).not.toMatch(/['"]DM Sans[^'"]*['"]/);
+  });
 });
