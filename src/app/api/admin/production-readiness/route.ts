@@ -10,7 +10,7 @@ const ADMIN_EMAIL_ALLOWLIST = new Set([
   'anand.sundaram@thesundaram.com',
 ]);
 
-export const PRODUCTION_READINESS_NO_STORE_HEADERS = {
+const PRODUCTION_READINESS_NO_STORE_HEADERS = {
   'Cache-Control': 'no-store, no-cache, max-age=0, must-revalidate',
   Pragma: 'no-cache',
   Expires: '0',

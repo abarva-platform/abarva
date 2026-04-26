@@ -201,7 +201,7 @@ describe('production readiness read model', () => {
     expect(source!.maturity).toBe('foundation_validation');
     expect(source!.productionRiskLevel).toBe('medium_high');
     expect(source!.nextAction).toBe(
-      'Capture authenticated Source dashboard screenshot for mission preview, then decide whether tiny visual polish or mission activity UI refinement is needed.',
+      'Use the dashboard route smoke as baseline coverage, complete authenticated Source screenshot review when credentials/session are available, and plan the Source event canvas shell without adding model calls or upload/parsing.',
     );
 
     const notes = source!.notes.join('\n').toLowerCase();
