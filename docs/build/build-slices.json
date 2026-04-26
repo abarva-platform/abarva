@@ -3473,6 +3473,63 @@
         "npm run build"
       ],
       "notes": "Canvas mode switching is pure URL state via ?canvas=<mode>. No client interactivity, no live Sentinel runtime, no Atlas / Nexus / Claude / OpenAI invocation. Live evidence rows, program enumeration in the canvas body, and persisted user preference are intentionally deferred."
+    },
+    {
+      "id": "I6",
+      "name": "Intelligence \u00b7 Evidence Dataset Drawer",
+      "category": "I",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "EVID2",
+        "EVID3"
+      ],
+      "allowedFiles": [
+        "src/lib/intelligence/evidence-dataset-drawer-view.ts",
+        "src/components/intelligence/EvidenceDatasetDrawer.tsx",
+        "src/components/intelligence/SentinelPatternDetail.tsx",
+        "src/__tests__/integration/intelligence/evidence-dataset-drawer.test.ts",
+        "docs/build/slices/I6_EVIDENCE_DATASET_DRAWER.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "buildEvidenceDatasetDrawerView returns deterministic, byte-equal views across repeated calls for each canonical I1 pattern key.",
+        "buildEvidenceDatasetDrawerSeedAll covers at least 3 canonical I1 pattern keys.",
+        "Every seeded pattern carries at least 4 entries, at least 2 internal entries, and at least 1 external entry.",
+        "Across the seed set, all 5 source kinds, all 4 freshness labels, and all 4 usability labels appear.",
+        "Every partial or blocked entry carries at least one missing citation row.",
+        "No https:// or http:// URL appears in any serialized view; no literal E-### citation tokens appear.",
+        "honestDisclaimer mentions deterministic seed and disclaims live external retrieval.",
+        "EvidenceDatasetDrawer is a server component, carries data-evidence-dataset-drawer=\"i6\" on its root, and reads tokens from @/lib/design/abarva-theme.",
+        "SentinelPatternDetail mounts EvidenceDatasetDrawer via EvidenceDatasetDrawerSection and renders nothing for pattern keys without seed coverage.",
+        "Module imports nothing from Sentinel runtime, Atlas / Nexus / agent runtime, Source UI, legacy /programs, mock.ts, auth, supabase, or model SDKs."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/intelligence/evidence-dataset-drawer.test.ts",
+        "npm run build"
+      ],
+      "notes": "Deterministic Evidence Dataset Drawer view + server component mounted on the canonical Sentinel pattern detail. Seed entries cover internal (tenant artifact, program evidence, dataset domain) and external (public pattern pack, industry benchmark) sources across 4 canonical I1 pattern keys. No live retrieval, no Claude / OpenAI invocation, no EVID2 / EVID3 live projection. Future slice can swap the seed for a live EVID2/EVID3 projection without changing the view contract."
     }
   ]
 }

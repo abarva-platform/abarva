@@ -557,7 +557,8 @@
       "notes": [
         "Active patterns are read-model backed, not live monitoring.",
         "AG12 mounts the AG11 Agent Mission Panel on SentinelActivePatterns with variant 'inline_recommendation' and the {sentinel, nexus} surface filter, capped at 3 deterministic missions; no live Sentinel runtime, no live retrieval, no model call.",
-        "I5 mounts a deterministic four-mode canvas tab strip (summary, evidence, programs, actions) on the tenant Sentinel pattern detail surface. Mode switching is pure URL state via ?canvas=<mode>; no client interactivity, no live runtime, no model invocation."
+        "I5 mounts a deterministic four-mode canvas tab strip (summary, evidence, programs, actions) on the tenant Sentinel pattern detail surface. Mode switching is pure URL state via ?canvas=<mode>; no client interactivity, no live runtime, no model invocation.",
+        "I6 evidence dataset drawer added (src/lib/intelligence/evidence-dataset-drawer-view.ts + src/components/intelligence/EvidenceDatasetDrawer.tsx) \u2014 deterministic seed catalog of internal (tenant artifact, program evidence, dataset domain) and external (public pattern pack, industry benchmark) sources for each canonical I1 pattern key, partitioned and labelled by usability and freshness with explicit missing-citation callouts. Mounted on SentinelPatternDetail below the I4 authored content panel. No live retrieval, no model invocation, no EVID2 / EVID3 live projection."
       ]
     },
     {
@@ -865,7 +866,8 @@
         "No fake Evidence Ledger status is emitted.",
         "CTX2 unified context builder MVP added (src/lib/architecture/unified-context-builder.ts) \u2014 deterministic projection of programs/canonical-view, sentinel-pattern-detections, and solution-archetype-registry into a twelve-section Unified Context Pack; evidence/conversation/datasets sections honestly empty pending live wiring.",
         "CTX3 mission-context bridge added (src/lib/architecture/mission-context-bridge.ts) \u2014 deterministic projection from AG10 missions to CTX2 packs that maps program/phase/workshop/artifact/pattern work-object kinds to CTX2 scopes; tower_dimension, dataset_domain, sourcing_event, and vendor_response work-object kinds are honestly surfaced as 'work_object_unsupported' gaps until a future CTX slice widens the supported set.",
-        "EVID3 claim-support evaluator added (src/lib/architecture/evidence-claim-support.ts) \u2014 deterministic evaluator over EVID2 entries returning one of seven canonical support statuses; no NLP, no live retrieval, and no fabricated citations (works strictly with evid-seed- prefixed ids)."
+        "EVID3 claim-support evaluator added (src/lib/architecture/evidence-claim-support.ts) \u2014 deterministic evaluator over EVID2 entries returning one of seven canonical support statuses; no NLP, no live retrieval, and no fabricated citations (works strictly with evid-seed- prefixed ids).",
+        "I6 evidence dataset drawer is a deterministic seed read model that catalogs which datasets and artifacts back each canonical Sentinel pattern; it does not yet bind to live EVID2 ledger entries or EVID3 claim support. Future slice can swap the seed for a live EVID2/EVID3 projection without changing the drawer view contract."
       ]
     },
     {

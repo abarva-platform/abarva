@@ -14,6 +14,8 @@ import type {
 } from '@/lib/intelligence/sentinel-pattern-view';
 import { buildSentinelPatternAuthoredContent } from '@/lib/intelligence/sentinel-pattern-content';
 import { SentinelPatternContentPanel } from '@/components/intelligence/SentinelPatternContentPanel';
+import { buildEvidenceDatasetDrawerView } from '@/lib/intelligence/evidence-dataset-drawer-view';
+import { EvidenceDatasetDrawer } from '@/components/intelligence/EvidenceDatasetDrawer';
 
 interface SentinelPatternDetailProps {
   view: SentinelPatternDetailView;
@@ -280,6 +282,8 @@ export function SentinelPatternDetail({ view }: SentinelPatternDetailProps) {
 
       <PatternAuthoredContentSection view={view} />
 
+      <EvidenceDatasetDrawerSection view={view} />
+
       <footer
         style={{
           fontSize: 11,
@@ -312,6 +316,12 @@ function PatternAuthoredContentSection({ view }: { view: SentinelPatternDetailVi
       }
     />
   );
+}
+
+function EvidenceDatasetDrawerSection({ view }: { view: SentinelPatternDetailView }) {
+  const drawer = buildEvidenceDatasetDrawerView(view.patternKey);
+  if (drawer.totalEntries === 0) return null;
+  return <EvidenceDatasetDrawer view={drawer} />;
 }
 
 function Block({
