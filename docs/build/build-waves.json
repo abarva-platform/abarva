@@ -723,6 +723,24 @@
       "currentBlockers": [],
       "nextAction": "Wave-14 merged via PR #340. 161 tests green, hygiene gate 11/11 PASS. Next: Source module production readiness deepening and live workflow wiring.",
       "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-16",
+      "title": "Source Commercial Route Mount + Demo Scenario",
+      "status": "in_progress",
+      "plannedSlices": [
+        "SRC27",
+        "SRC28",
+        "SRC29",
+        "SRC30",
+        "QA23",
+        "DEMO4"
+      ],
+      "completedSlices": [
+        "SRC30"
+      ],
+      "percentComplete": 17,
+      "validationStatus": "pending"
     }
   ]
 }

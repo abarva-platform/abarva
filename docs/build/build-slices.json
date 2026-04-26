@@ -7372,6 +7372,15 @@
       "status": "code_complete",
       "branch": "wave16/src29-source-commercial-executive-brief",
       "description": "Deterministic executive brief: posture badge, 3 risks, 3 BAFO levers, vendor comparability, recommended action. Dark-navy header panel."
+    },
+    {
+      "id": "SRC30",
+      "wave": "wave-16",
+      "name": "Source Commercial Action Queue",
+      "type": "source-ui",
+      "status": "code_complete",
+      "branch": "wave16/src30-source-commercial-action-queue",
+      "description": "8-action deterministic queue: 5 visible + show-more. State chips, priority dots, stop condition expand. Agent owner badges."
     }
   ]
 }
