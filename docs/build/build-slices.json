@@ -4254,8 +4254,12 @@
       "category": "programs",
       "status": "code_complete",
       "risk": "low",
-      "sourceFiles": ["src/lib/programs/program-health-scorecard.ts"],
-      "testFiles": ["src/__tests__/integration/programs/program-health-scorecard.test.ts"],
+      "sourceFiles": [
+        "src/lib/programs/program-health-scorecard.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/programs/program-health-scorecard.test.ts"
+      ],
       "sliceDoc": "docs/build/slices/PROG9_PROGRAM_HEALTH_SCORECARD.md",
       "createdAt": "2026-04-26"
     },
@@ -6621,9 +6625,88 @@
       "category": "solutions",
       "status": "code_complete",
       "risk": "low",
-      "sourceFiles": ["src/lib/solutions/pattern-playbook.ts"],
-      "testFiles": ["src/__tests__/integration/solutions/pattern-playbook.test.ts"],
+      "sourceFiles": [
+        "src/lib/solutions/pattern-playbook.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/solutions/pattern-playbook.test.ts"
+      ],
       "sliceDoc": "docs/build/slices/SOL15_SOLUTION_PATTERN_PLAYBOOK.md",
+      "createdAt": "2026-04-26"
+    },
+    {
+      "id": "QA16",
+      "name": "Production Readiness Promotion Gate",
+      "category": "qa",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/qa/production-readiness-promotion-gate.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/qa/production-readiness-promotion-gate.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/QA16_PRODUCTION_READINESS_PROMOTION_GATE.md",
+      "createdAt": "2026-04-26"
+    },
+    {
+      "id": "QA17",
+      "name": "Cross-Surface Consistency Validator",
+      "category": "qa",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/qa/cross-surface-consistency.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/qa/cross-surface-consistency.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/QA17_CROSS_SURFACE_CONSISTENCY.md",
+      "createdAt": "2026-04-26"
+    },
+    {
+      "id": "PROD6",
+      "name": "Live CI Status Stub",
+      "category": "admin",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/admin/live-ci-status-stub.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/admin/live-ci-status-stub.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/PROD6_LIVE_CI_STATUS_STUB.md",
+      "createdAt": "2026-04-26"
+    },
+    {
+      "id": "ADM7",
+      "name": "Admin Surface Completeness",
+      "category": "admin",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/admin/admin-surface-completeness.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/admin/admin-surface-completeness.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/ADM7_ADMIN_SURFACE_COMPLETENESS.md",
+      "createdAt": "2026-04-26"
+    },
+    {
+      "id": "OPS9",
+      "name": "Build Run Retrospective",
+      "category": "ops",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/ops/build-run-retrospective.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/ops/build-run-retrospective.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/OPS9_BUILD_RUN_RETROSPECTIVE.md",
       "createdAt": "2026-04-26"
     }
   ]
