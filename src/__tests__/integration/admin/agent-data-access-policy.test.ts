@@ -11,7 +11,6 @@ import {
   buildAgentDataAccessMatrix,
   evaluateAgentDataAccess,
   listAgentDataAccessPolicies,
-  summarizeAgentDataAccessMatrix,
   type AgentDataAccessAgent,
   type AgentDataUsePurpose,
   type AgentDatasetSharingLevel,
