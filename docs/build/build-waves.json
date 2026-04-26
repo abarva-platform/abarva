@@ -729,7 +729,7 @@
       "skippedSlices": [],
       "blockedSlices": [],
       "mergedPrs": [],
-      "validationStatus": "pending",
+      "validationStatus": "not_run",
       "productionReadinessUpdated": false,
       "currentBlockers": [],
       "nextAction": "Integration branch ready. Run validation, push, and merge via PR.",
