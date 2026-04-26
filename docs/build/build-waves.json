@@ -787,15 +787,15 @@
         "LINK1",
         "SRC33",
         "PROG16",
-        "MW9"
+        "QA27"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
       "mergedPrs": [],
-      "validationStatus": "tsc_clean",
+      "validationStatus": "not_run",
       "productionReadinessUpdated": false,
       "currentBlockers": [],
-      "nextAction": "SRC32 code complete (Lane A). Await integration and PR merge. Wave-19 Lane B complete. Awaiting integration merge. Lane C LINK1 complete. Awaiting integration and merge via PR. SRC33 Lane D complete. Awaiting integration merge. Wave-19 PROG16 code complete. Awaiting merge. Merge MW9 via integration PR. Gate narrative is seed-only; live value baseline, platform owner confirmation, and BAFO commercial evidence remain deferred.",
+      "nextAction": "SRC32 code complete (Lane A). Await integration and PR merge. Wave-19 Lane B complete. Awaiting integration merge. Lane C LINK1 complete. Awaiting integration and merge via PR. SRC33 Lane D complete. Awaiting integration merge. Wave-19 PROG16 code complete. Awaiting merge. Merge SRC32 first (Apex Source event seed), then LINK1 (Source-Program link contract), then SRC33/PROG15/PROG16, then MW9 to promote QA27 deferred checks to pass.",
       "lastUpdated": "2026-04-26"
     },
     {
