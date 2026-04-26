@@ -724,11 +724,11 @@
         },
         "integration_tests": {
           "status": "partial",
-          "evidence": "Focused deterministic Source tests pass for Nexus API stub, agent mission read model, agent mission report formatter, and Source dashboard mission preview route/component smoke. Full Source workflow, persistence, upload/evidence, authenticated route smoke, and live persona validation are not certified."
+          "evidence": "Focused deterministic Source tests pass for Nexus API stub, agent mission read model, agent mission report formatter, Source dashboard mission preview route/component smoke, and Source event canvas shell smoke. Full Source workflow, persistence, upload/evidence, authenticated route smoke, and live persona validation are not certified."
         },
         "route_smoke": {
           "status": "partial",
-          "evidence": "Deterministic Source dashboard route/component smoke passes with npx jest src/__tests__/integration/source/source-dashboard-route-smoke.test.ts; it server-renders the /source route module and mission preview from seeded data. Authenticated live route smoke and screenshot QA remain incomplete."
+          "evidence": "Deterministic Source dashboard route/component smoke passes with npx jest src/__tests__/integration/source/source-dashboard-route-smoke.test.ts; Source event canvas shell smoke passes with npx jest src/__tests__/integration/source/source-event-canvas-shell.test.ts. These server-render seeded routes/components only. Authenticated live route smoke and screenshot QA remain incomplete."
         },
         "live_persona_walk": {
           "status": "not_automated",
@@ -800,7 +800,8 @@
         "Tiny deterministic Source dashboard mission preview added using local mission/report helpers; no API route, model call, chat UI, persistence, or scheduler was added.",
         "Source dashboard mission preview still needs authenticated visual review before any broader dashboard polish or mission UI expansion.",
         "Focused Source dashboard route/component smoke test passed: npx jest src/__tests__/integration/source/source-dashboard-route-smoke.test.ts. This is deterministic seeded-data coverage, not authenticated live route or persona validation.",
-        "Deterministic Source event canvas shell added for /source/events/[eventId] with journey orientation, current-stage workspace summary, mission preview, data readiness placeholder, and compact Nexus guidance. This does not add chat, model calls, upload/parsing, workflow engine, approval engine, scorecard UI, artifact drawer behavior, vendor workflow, or value ledger UI."
+        "Deterministic Source event canvas shell added for /source/events/[eventId] with journey orientation, current-stage workspace summary, mission preview, data readiness placeholder, and compact Nexus guidance. This does not add chat, model calls, upload/parsing, workflow engine, approval engine, scorecard UI, artifact drawer behavior, vendor workflow, or value ledger UI.",
+        "Focused Source event canvas shell smoke test passed: npx jest src/__tests__/integration/source/source-event-canvas-shell.test.ts. This is deterministic seeded-data coverage, not authenticated live route or persona validation."
       ]
     },
     {
