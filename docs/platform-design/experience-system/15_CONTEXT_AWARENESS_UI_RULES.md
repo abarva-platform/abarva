@@ -2,43 +2,26 @@
 
 ## Purpose
 
-Define how AbarVa shows context awareness without exposing raw internals or overwhelming the user.
+Show why an agent response is valid without exposing raw internals or overwhelming users.
 
-## What Agent Responses Should Be Able to Show
+## Required Display Elements
 
-- Context used.
-- Confidence.
-- Missing context.
-- Evidence/citations.
-- Related artifact.
-- Related stage/gate.
-- Next action owner.
-- Due date or aging signal when relevant.
+If an agent response depends on context, it must include:
 
-## Context Used Strip
+- What context was used.
+- Confidence state (complete, partial, pattern-only, blocked, missing).
+- Missing context with a useful next step.
+- Related event/program/stage or artifact.
+- Evidence indicator when claims are decision-sensitive.
 
-The Context Used Strip should show "what I used" in plain language.
+## Core Rules
 
-Examples:
-
-- Source event.
-- Scope stage.
-- Missing inputs.
-- Pattern pack.
-- Scorecard defaults.
-- Uploaded file.
-- Value ledger.
-- Evidence citations.
-
-## Rules
-
-- Keep the strip compact.
-- Do not overload users with raw internal field names.
-- Distinguish pattern guidance from event-specific guidance.
-- If context is weak, show low confidence or missing context warning.
-- If an answer is pattern-level only, label it as pattern guidance.
-- Do not cite uploaded documents before parsing and validation.
-- Missing context should lead to a useful next action.
+- Keep context strip compact and scannable.
+- Distinguish pattern guidance from client-specific evidence.
+- Never display fake or unverified citations.
+- Missing context should trigger a safe next step, not a false yes/no.
+- Evidence claims must not appear before validation gates that support them.
+- If context is weak, response mode must switch to low-context guidance.
 
 ## Visual States
 
@@ -50,17 +33,26 @@ Examples:
 - Evidence blocked.
 - Citation pending.
 
-## Agent Behavior Tie-In
+## Enforcement for Workflow Stages
 
-- Low context triggers Low Context Mode.
-- Evidence requests trigger Evidence Mode.
-- Artifact requests trigger Artifact Mode.
-- Gate decisions trigger Decision Mode.
+Every workflow stage with recommendation content must show:
 
-## Acceptance Criteria
+- Current object and stage
+- Confidence or evidence state
+- Missing context and owner of missing item
+- Top blocker or gate dependency
+- Required next action
 
-- User can see why the agent said what it said.
-- Weak context is visible without being alarming.
-- Evidence is inspectable when claims matter.
-- Context UI supports action instead of becoming metadata clutter.
+Source-specific minimums include:
 
+- Can we release the RFP?
+- Can we cite this vendor response?
+- Can we move to Evaluation?
+- What should the steering committee know?
+
+## Anti-Patterns
+
+- Context strip hidden by decorative UI.
+- Response that can be reused unchanged across contexts.
+- Ignoring missing data and giving definitive claims.
+- Decorative confidence labels without missing-context pathways.

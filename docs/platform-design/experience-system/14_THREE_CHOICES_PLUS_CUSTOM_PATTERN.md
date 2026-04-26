@@ -2,101 +2,59 @@
 
 ## Purpose
 
-Give users a guided next step without trapping them in a rigid flow. The pattern is central to AbarVa, but it must be used intelligently rather than mechanically.
+Guide action without converting every surface into a generic task list or chatbot.
 
 ## Pattern
 
 - Three recommended actions.
 - One custom free-text option.
 
-## Use It When
+## Mandatory Use Conditions
 
-- The user needs to move workflow forward.
-- Multiple next actions are valid.
-- The agent has a recommendation but the user needs control.
-- The user is blocked, waiting, or needs approval.
-- The user is interacting with artifacts, scorecards, evidence, value ledger, or workflow gates.
+Use only when all are true:
 
-## Do Not Use It When
+- Context is present and specific to current event/program/stage.
+- At least two meaningful actions are valid.
+- Showing actions helps move work forward.
 
-- The answer is purely informational.
-- The user asked for a one-shot output.
-- There is only one valid action.
-- Showing options would add clutter.
-- The user is already inside a form/action flow.
+Hide the pattern when:
+
+- The answer is informational.
+- Only one valid action exists.
+- The surface is blocked by missing critical context.
+- The pattern would add clutter or noise.
 
 ## Choice Rules
 
-- Labels should be short.
-- Labels should start with verbs.
-- Choices should reflect current context.
-- Custom option should always feel available but not dominate.
-- Selected action must preserve context.
-- Options should not look like random chips.
-- Options must be accessible and keyboard reachable.
+- Labels should be verbs.
+- Choices should encode current stage context.
+- Custom option should be available but non-dominant.
+- Selected action should preserve workflow context.
+- Options must be keyboard-accessible and scan-friendly.
+- Avoid icon-heavy chips.
 
-## Surface Examples
+## Source Examples
 
-### Source / Scope
+- Can we release the RFP?
+  - Show release blockers
+  - Draft outline package path
+  - Explain required approvals
+  - Ask something else
 
-1. Show missing inputs.
-2. Generate minimum data request.
-3. Explain scope readiness.
-4. Ask something else.
+- Can we cite this vendor response?
+  - Show missing evidence
+  - Request missing artifact
+  - Mark at-risk response
+  - Ask something else
 
-### Source / Scorecard
+- Can we move to Evaluation?
+  - Validate response completion
+  - Validate pricing and exception states
+  - Schedule evaluation check
+  - Ask something else
 
-1. Show default weights.
-2. Explain tradeoffs.
-3. Add override rationale.
-4. Ask something else.
+## Enforcement Notes
 
-### Source / Vendor Response
-
-1. Show incomplete responses.
-2. Draft vendor reminder.
-3. Flag event at risk.
-4. Ask something else.
-
-### Programs / Workshop
-
-1. Generate workshop brief.
-2. Show decision points.
-3. Draft follow-up actions.
-4. Ask something else.
-
-### Intelligence / Pattern
-
-1. Explain pattern.
-2. Show evidence.
-3. Generate action plan.
-4. Ask something else.
-
-### Control Tower / Executive
-
-1. Show at-risk programs.
-2. Explain value gap.
-3. Prepare executive brief.
-4. Ask something else.
-
-### Admin / Setup
-
-1. Show missing datasets.
-2. Review connector issues.
-3. Check agent readiness.
-4. Ask something else.
-
-## Visual Rules
-
-- Prefer a compact action group below the agent response.
-- Do not make choices look like unrelated tags.
-- Custom input should be calm and secondary until focused.
-- Avoid icon-heavy options.
-
-## Acceptance Criteria
-
-- The user understands recommended next moves.
-- The pattern reduces cognitive load.
-- The pattern does not appear where it would add noise.
-- Custom input preserves the current context bundle.
-
+- If context is low or partial, the pattern can be paused and replaced with low-context guidance.
+- Do not force three choices for every response.
+- Do not surface pattern options as the primary UI when no context is available.

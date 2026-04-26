@@ -4,20 +4,43 @@
 
 Render a concise, context-aware agent response in the correct response mode.
 
+## Required Use
+
+Use in agent panels, command reads, and workflow guidance.
+
+## Mandatory Structure
+
+Every card should show:
+
+- Recommendation or status.
+- Response mode.
+- Source object and stage.
+- Context used.
+- Missing context (when applicable).
+- Confidence/readiness.
+- Recommended action.
+
 ## When to Use
 
-Use inside agent panels, command reads, drawers, and workflow guidance areas.
+- Direct status updates.
+- Workflow guidance.
+- Decision recommendations.
+- Low-context safety messaging.
+- Evidence requests.
 
 ## When Not to Use
 
-Do not use for generic static help text or uncited long-form essays.
+- Generic static help text.
+- Unscoped educational essays.
+- Claims without context evidence.
 
 ## Visual Rules
 
-- Lead with the answer or recommendation.
-- Keep text compact.
-- Show response mode implicitly through structure.
-- Support context used and missing context.
+- Lead with the answer and action.
+- Keep text compact and scannable.
+- Show context and confidence clearly without color-only encoding.
+- Avoid decorative chatbot bubble styling.
+- Keep choices grouped and secondary.
 
 ## Props / Conceptual Data
 
@@ -32,28 +55,16 @@ Do not use for generic static help text or uncited long-form essays.
 
 ## Interaction Behavior
 
-Can reveal context details or evidence drawer. Can pair with three choices plus custom.
+- Can reveal context details or evidence detail.
+- Can pair with 3 choices + custom when options are meaningful.
+- If context is insufficient, present low-context state and request safe next steps.
 
-## States
+## Anti-Patterns
 
-Direct, guidance, decision, low context, evidence, artifact, executive summary, loading, error.
-
-## Accessibility
-
-Use headings correctly. Do not encode confidence only by color.
-
-## Examples
-
-- Direct: current event status.
-- Guidance: current stage next action.
-- Decision: release/no-release recommendation.
-- Low context: missing inputs and safe next step.
-
-## Anti-patterns
-
-Long generic response, fake confidence, hidden missing data, decorative chat bubble styling.
+- Long, reusable generic replies.
+- Fake confidence tags.
+- Missing context hidden behind "insufficient data" only.
 
 ## Acceptance Criteria
 
-The card tells the user what matters and what to do next.
-
+- User can tell what matters, why it matters, and what to do next.
