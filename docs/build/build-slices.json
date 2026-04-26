@@ -7004,6 +7004,23 @@
       ],
       "sliceDoc": "docs/build/slices/LIVE3_PRODUCTION_READINESS_PAGE_VERIFICATION.md",
       "createdAt": "2026-04-26"
+    },
+    {
+      "id": "LIVE4",
+      "name": "Azure Lab Storyboard",
+      "category": "demo",
+      "status": "code_complete",
+      "risk": "low",
+      "wave": "wave-13",
+      "sourceFiles": [
+        "src/lib/qa/azure-lab-storyboard.ts",
+        "src/__tests__/integration/qa/azure-lab-storyboard.test.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/qa/azure-lab-storyboard.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/LIVE4_AZURE_LAB_STORYBOARD.md",
+      "createdAt": "2026-04-26"
     }
   ]
 }

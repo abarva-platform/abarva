@@ -1510,7 +1510,8 @@
         "PROD7: Production readiness summary polish created; static read model surfaces real blockers, pilot/production narratives, and manifest freshness caveat. Never claims production_ready.",
         "AZLAB1: SaaS Control Plane + Private Data Plane lab blueprint created; Azure resource groups and boundary architecture documented; May 4 deployment path outlined.",
         "AZLAB5: Azure lab deployment runbook created; covers VNet, Container Apps, PostgreSQL, Key Vault, cost guardrails, and simulation-vs-real distinctions.",
-        "LIVE3: Production readiness page verification completed. Admin page and API routes checked. Static manifest caveat documented."
+        "LIVE3: Production readiness page verification completed. Admin page and API routes checked. Static manifest caveat documented.",
+        "LIVE4: Azure private data plane lab storyboard created (8 slides, two-plane architecture, May 4 lab plan documented)."
       ]
     }
   ]
