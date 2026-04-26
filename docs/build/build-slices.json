@@ -4249,6 +4249,17 @@
       "notes": "Pure deterministic projection of (tenant, program, canonical phase) seed state into a *proposed* phase gate advancement record. Operationalizes the proposed phase gate advancement flow named in the S9C Program Phase Gate Status, PF2 Program Phase Workspace, and MW1 Maestro Workshop Intelligence contracts WITHOUT performing any state transition. Every proposal is proposed: true (never applied), with a deterministic Steward readiness summary, missing inputs, evidence requirements (each with evidenceRegistryWired: false), audit requirement (auditLogWired: false), and recommended next action. No DB writes, no migrations, no model calls, no phase advance, no gate signoff, no waiver issuance. The advancement card lands in a follow-up slice; live phase gate state machine + audit log + Steward signoff persistence land once auth + audit + persistence slices land."
     },
     {
+      "id": "PROG9",
+      "name": "Program Health Scorecard",
+      "category": "programs",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": ["src/lib/programs/program-health-scorecard.ts"],
+      "testFiles": ["src/__tests__/integration/programs/program-health-scorecard.test.ts"],
+      "sliceDoc": "docs/build/slices/PROG9_PROGRAM_HEALTH_SCORECARD.md",
+      "createdAt": "2026-04-26"
+    },
+    {
       "id": "MW6",
       "name": "SME Recommendation Panel",
       "category": "MW",
