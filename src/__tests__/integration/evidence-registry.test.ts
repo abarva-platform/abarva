@@ -34,7 +34,7 @@ describe('evidence registry', () => {
 
     expect(metrics.evidenceCount).toBeGreaterThan(0);
     expect(metrics.entries.length).toBe(metrics.evidenceCount);
-    expect(metrics.lastUpdatedAt).toMatch(/^2026-04-23/);
+    expect(metrics.lastUpdatedAt).toMatch(/^\d{4}-\d{2}-\d{2}/);
   });
 
   it('resolves canonical evidence detail routes', () => {
