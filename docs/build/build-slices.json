@@ -6730,6 +6730,21 @@
       "testFiles": [],
       "sliceDoc": "docs/build/slices/DEMO1_BOARDROOM_DEMO_WALKTHROUGH.md",
       "createdAt": "2026-04-26"
+    },
+    {
+      "id": "DEMO2",
+      "name": "Founder Demo Route Checklist",
+      "category": "demo",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/qa/founder-demo-route-checklist.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/qa/founder-demo-route-checklist.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/DEMO2_FOUNDER_DEMO_ROUTE_CHECKLIST.md",
+      "createdAt": "2026-04-26"
     }
   ]
 }
