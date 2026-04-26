@@ -710,7 +710,7 @@
         },
         "integration_tests": {
           "status": "partial",
-          "evidence": "Focused deterministic Source tests pass for Nexus API stub, agent mission read model, and agent mission report formatter; full Source workflow, persistence, upload/evidence, route smoke, and live persona validation are not certified."
+          "evidence": "Focused deterministic Source tests pass for Nexus API stub, agent mission read model, and agent mission report formatter; dashboard mission preview has local TypeScript/lint/build validation but no authenticated route smoke. Full Source workflow, persistence, upload/evidence, route smoke, and live persona validation are not certified."
         },
         "route_smoke": {
           "status": "not_automated",
@@ -763,7 +763,7 @@
           "unblocks": "pilot_ready"
         }
       ],
-      "nextAction": "Review deterministic Source agent mission report, then plan mission activity UI or live Source data/evidence readiness without adding model calls, persistence, or schedulers.",
+      "nextAction": "Capture authenticated Source dashboard screenshot for mission preview, then decide whether tiny visual polish or mission activity UI refinement is needed.",
       "notes": [
         "PROD1 does not modify Source files.",
         "Covers Source dashboard / sourcing event portfolio.",
@@ -782,7 +782,9 @@
         "Focused Source agent mission integration test passed: npx jest src/__tests__/integration/source/source-agent-missions.test.ts.",
         "Still not pilot_ready or production_ready: no scheduler, persistence, live mission queue, UI display, upload/parsing, or model-assisted Source runtime exists.",
         "Deterministic Source agent mission report formatter added for reviewable mission counts, blockers, defers, handoffs, suggested actions, and context summary.",
-        "Focused Source agent mission report integration test passed: npx jest src/__tests__/integration/source/source-agent-mission-report.test.ts."
+        "Focused Source agent mission report integration test passed: npx jest src/__tests__/integration/source/source-agent-mission-report.test.ts.",
+        "Tiny deterministic Source dashboard mission preview added using local mission/report helpers; no API route, model call, chat UI, persistence, or scheduler was added.",
+        "Source dashboard mission preview still needs authenticated visual review before any broader dashboard polish or mission UI expansion."
       ]
     },
     {
