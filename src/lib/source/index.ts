@@ -30,6 +30,7 @@ export * from './workflow-validation-report';
 export * from './workflow-validation-runner';
 export * from './vendor-response-completeness';
 export * from './bafo-negotiation';
+export * from './executive-decision-types';
 export * from './executive-decision-summary';
 export * from './bafo-negotiation-model';
 export * from './pricing-normalization-model';
