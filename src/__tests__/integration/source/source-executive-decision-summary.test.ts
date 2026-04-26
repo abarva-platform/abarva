@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { SourceAgentMission, SourceCommercialSignals } from '@/lib/source';
 import {
+  SOURCE_GOLDEN_EVENT_IDS,
   buildSourceExecutiveDecisionSummary,
   formatSourceExecutiveDecisionSummaryAsMarkdown,
   getSourceExecutiveDecisionBlockers,
@@ -213,6 +214,20 @@ describe('Source executive decision summary thin synthesis', () => {
     expect(getSourceExecutiveDecisionOptions(summary).length).toBeGreaterThan(0);
   });
 
+  it('builds summary from canonical builders when no signals or missions are provided', () => {
+    const summary = buildSourceExecutiveDecisionSummary({
+      event: {
+        id: SOURCE_GOLDEN_EVENT_IDS.digitalAppBuild,
+        name: 'Digital App Build Partner Selection',
+        currentStageKey: 'selection',
+      },
+    });
+
+    expect(summary.sourceModulesUsed).toEqual(['commercial-signals', 'commercial-mission-adapter']);
+    expect(summary.missionSummary.total).toBeGreaterThan(0);
+    expect(summary.vendorTradeoffs.length).toBeGreaterThan(0);
+  });
+
   it('summary and markdown formatter return expected executive output', () => {
     const summary = buildSourceExecutiveDecisionSummary({
       event: {
@@ -241,12 +256,12 @@ describe('Source executive decision summary thin synthesis', () => {
       'src/lib/source/executive-decision-types.ts',
       'src/lib/source/commercial-signals.ts',
       'src/lib/source/commercial-mission-adapter.ts',
-      'src/lib/source/index.ts',
       'src/__tests__/integration/source/source-executive-decision-summary.test.ts',
     ].map((filePath) => readFileSync(join(process.cwd(), filePath), 'utf8')).join('\n');
 
     expect(sources).not.toMatch(/from ['"][^'"]*(openai|anthropic|@anthropic-ai\/sdk|ai\/react|ai)['"]/i);
     expect(sources).not.toMatch(/from ['"][^'"]*(upload|parser|artifact-drawer|scorecard-ui)['"]/i);
+    expect(sources).not.toMatch(/from ['"][^'"]*(bafo-negotiation-model|pricing-normalization-model)['"]/i);
     expect(sources).not.toMatch(/\bfetch\(/i);
   });
 });

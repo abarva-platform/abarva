@@ -3,7 +3,9 @@ import { join } from 'node:path';
 import {
   adaptCommercialMissionsToSourceAgentMissions,
   buildCommercialMissionQueue,
+  buildSourceCommercialSignals,
   buildSourceCommercialAgentMissions,
+  buildSourceExecutiveDecisionSummary,
   formatSourceCommercialAgentMissionsAsMarkdown,
   summarizeSourceCommercialAgentMissions,
 } from '@/lib/source';
@@ -117,6 +119,30 @@ describe('Source commercial mission adapter', () => {
     expect(markdown).toContain('## By agent');
     expect(markdown).toContain('## By priority');
     expect(markdown).toContain('## Missions');
+  });
+
+  it('feeds adapted missions into executive decision summary without bypassing canonical contracts', () => {
+    const result = buildSeededResult();
+    const signals = buildSourceCommercialSignals({
+      event: {
+        id: 'event-commercial-adapter',
+        name: 'Commercial Adapter Validation Event',
+        currentStageKey: 'selection',
+      },
+    });
+    const summary = buildSourceExecutiveDecisionSummary({
+      event: {
+        id: 'event-commercial-adapter',
+        name: 'Commercial Adapter Validation Event',
+        currentStageKey: 'selection',
+      },
+      commercialSignals: signals,
+      unifiedMissions: result.adaptedMissions,
+    });
+
+    expect(summary.sourceModulesUsed).toEqual(['commercial-signals', 'commercial-mission-adapter']);
+    expect(summary.missionSummary.total).toBeGreaterThan(0);
+    expect(summary.recommendedDecisionPosture).not.toBe('ready_for_selection_review');
   });
 
   it('keeps adapter implementation free of model calls, UI imports, and persistence wiring', () => {
