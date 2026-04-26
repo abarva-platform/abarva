@@ -972,10 +972,13 @@
           "unblocks": "production_ready"
         }
       ],
-      "nextAction": "Route any future live agent composition through the Model Gateway contract and audit ledger before production promotion. Wire CTX3 live retrieval integration: replace CTX2 honest-empty evidence, conversation, and datasets sections with live EVID2 ledger ingest, conversation memory, and ADM3 dataset inventory bindings without changing the twelve-section pack shape.",
+      "nextAction": "Route any future live agent composition through the Model Gateway contract and audit ledger before production promotion. Wire CTX3 live retrieval integration: replace CTX2 honest-empty evidence, conversation, and datasets sections with live EVID2 ledger ingest, conversation memory, and ADM3 dataset inventory bindings without changing the twelve-section pack shape. AG10 deterministic mission queue read model is in place; mount the queue into the Agent Activity UI (AG11) and wire deterministic runtime triggers from agent work queue spec before promoting agent_runtime above code_complete. Route any future live agent composition through the Model Gateway contract and audit ledger before production promotion. Wire CTX3 live retrieval integration: replace CTX2 honest-empty evidence, conversation, and datasets sections with live EVID2 ledger ingest, conversation memory, and ADM3 dataset inventory bindings without changing the twelve-section pack shape. Wire AG11 mission UI panel to the AG10 live mission queue once AG10 lands; live runtime trigger integration (Sentinel detection, Atlas brief, Nexus next action, Steward gate check) remains deferred behind the Model Gateway and audit ledger. Route any future live agent composition through the Model Gateway contract and audit ledger before production promotion. Wire CTX3 live retrieval integration: replace CTX2 honest-empty evidence, conversation, and datasets sections with live EVID2 ledger ingest, conversation memory, and ADM3 dataset inventory bindings without changing the twelve-section pack shape. Runtime tool dispatcher integration is deferred: TOOL2 only lands the deterministic tool registry MVP (src/lib/architecture/tool-registry-mvp.ts) and explicitly does not dispatch any tool, call any model, or write any audit ledger entry.",
       "notes": [
         "PROD1 does not modify Nexus, Sentinel, Atlas, or Agent runtime files.",
-        "CTX2 unified context builder MVP added (src/lib/architecture/unified-context-builder.ts) \u2014 deterministic projection of programs/canonical-view, sentinel-pattern-detections, and solution-archetype-registry into a twelve-section Unified Context Pack; evidence/conversation/datasets sections honestly empty pending live wiring."
+        "CTX2 unified context builder MVP added (src/lib/architecture/unified-context-builder.ts) \u2014 deterministic projection of programs/canonical-view, sentinel-pattern-detections, and solution-archetype-registry into a twelve-section Unified Context Pack; evidence/conversation/datasets sections honestly empty pending live wiring.",
+        "AG10 deterministic agent mission queue read model added (src/lib/agents/agent-mission-queue.ts) \u2014 typed seed queue covering all four agents (Nexus, Sentinel, Atlas, Steward) and all five surfaces (Programs, Tower, Intelligence, Admin, Source) with handoff metadata; UI mounting (AG11) and runtime trigger wiring remain deferred.",
+        "AG11 agent mission UI panel added (src/components/agents/AgentMissionPanel.tsx + src/lib/agents/agent-mission-view.ts) \u2014 deterministic, server-only rendering of the AbarVa Agent Activity UI Pattern (experience-system File 16) across compact_strip, right_panel, inline_recommendation, executive_brief, and hidden_drawer variants. Source data comes from a frozen seed view; no live mission queue, no runtime trigger, no client state. Status is not promoted by AG11; UI/UX dimension acknowledgement only.",
+        "TOOL2 tool registry MVP added (src/lib/architecture/tool-registry-mvp.ts) \u2014 deterministic registry of 16 canonical agent tools with allowed agents, read/write/export/audit mode, tenant scope, audit requirement, production status, required inputs, and forbiddenWhen preconditions; no live tool execution, no model or provider calls, no audit ledger persistence."
       ]
     },
     {
@@ -1034,13 +1037,15 @@
         {
           "id": "gateway-not-implemented",
           "severity": "critical",
-          "description": "Model Gateway is not production-ready because the live gateway module and provider/audit path are not implemented.",
+          "description": "Model Gateway is not production-ready: MG2 ships a deterministic type-only stub (dry_run / block only); no live model invocation, no real provider SDK, no real cost tracking, no real prompt hash, no audit-ledger persistence are wired.",
           "unblocks": "production_ready"
         }
       ],
-      "nextAction": "Implement a typed Model Gateway slice before any live model/runtime production-readiness claim.",
+      "nextAction": "Live gateway integration (real provider SDK behind the gateway boundary, real cost tracking, real prompt hash, audit-ledger persistence) is deferred to a future runtime slice (MG3). MG2 ships the typed stub and the forbidden-pattern constant only.",
       "notes": [
-        "PROD1 does not call Claude, OpenAI, or any model provider."
+        "PROD1 does not call Claude, OpenAI, or any model provider.",
+        "MG2 model gateway stub added (src/lib/architecture/model-gateway-stub.ts): deterministic dry_run and block decisions only; type-only contract for ModelGatewayRequest / ModelGatewayResponse / ModelGatewayRoute / ModelGatewayAuditRecord; MODEL_GATEWAY_FORBIDDEN_PATTERNS constant names the SDK anti-patterns. No provider SDK imported anywhere.",
+        "TOOL2 tool registry MVP added (src/lib/architecture/tool-registry-mvp.ts) \u2014 registry-level metadata and request validation only; live gateway routing, provider boundary, cost tracking, and tool dispatch remain unimplemented and the gateway status is intentionally not promoted by this slice."
       ]
     },
     {
@@ -1234,9 +1239,11 @@
           "unblocks": "full_flow_ready"
         }
       ],
-      "nextAction": "Turn the runbooks into CI-backed route smoke, persona crawler, and security governance checks.",
+      "nextAction": "Turn the runbooks into CI-backed route smoke, persona crawler, and security governance checks; CI integration of the PROD2 production readiness validator remains deferred.",
       "notes": [
-        "This component is tested, not full-flow ready."
+        "This component is tested, not full-flow ready.",
+        "PROD2 lands a deterministic validator at src/lib/admin/production-readiness-validator.ts with twelve canonical rules and a passing integration test at src/__tests__/integration/admin/production-readiness-validator.test.ts. The validator reports findings but does not mutate the manifest, and CI integration remains deferred.",
+        "QA4 (Agent Mission Persona Verification Runbook) added at docs/build/AGENT_MISSION_PERSONA_VERIFICATION_RUNBOOK.md as the founder-facing companion to QA1 / QA2 / QA3, covering AG10 / AG11 / MG2 / TOOL2 / PROD2."
       ]
     },
     {
@@ -1302,7 +1309,8 @@
       "nextAction": "After explicit founder approval to deploy, verify Vercel build, production routes, auth redirects, DNS, tenant isolation, and observability manually or through CI.",
       "notes": [
         "PROD1 does not deploy.",
-        "No live monitoring claim is made."
+        "No live monitoring claim is made.",
+        "PROD2 extends docs/build/PRODUCTION_READINESS_UPDATE_PROTOCOL.md with a tracker-update mandate per pack and a parallel-lane conflict policy for cherry-pick integration. No deployment occurred. No live monitoring claim is made."
       ]
     }
   ]

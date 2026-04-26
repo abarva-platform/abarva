@@ -228,3 +228,110 @@ Later automation can update or validate the manifest through:
 
 Until those exist, the manifest remains deterministic and manually
 updated from verifiable evidence.
+
+## §H · Mandatory tracker update on every batch
+
+Every multi-lane build pack must:
+
+- Read `docs/build/production-readiness.json` if present.
+- Read this protocol if present.
+- If the slice changes readiness for any tracked component, update the
+  JSON manifest in the same slice (status, dimensions, gates, blockers,
+  notes, or `nextAction`).
+- The final report for the pack must explicitly state, in this order:
+  - `tracker updated: yes/no`
+  - components changed (component ids, comma separated)
+  - readiness/status changes (prior status -> new status, per component)
+  - blockers added or removed (blocker ids, with severity)
+  - `nextAction` updated (yes/no, per component)
+- If the slice did not change readiness, the report must say so with one
+  of the canonical `No production-readiness.json update:` justifications
+  and still include `tracker updated: no`.
+
+This applies to every lane in the pack, including documentation-only,
+contract-only, and read-model-only lanes. Lanes that do not touch the
+manifest must still report `tracker updated: no` and explain why.
+
+## §I · Parallel-lane conflict policy
+
+When N lanes touch `docs/build/production-readiness.json` in parallel
+and integrate via cherry-pick, conflicts are resolved by these rules:
+
+- **Conservative status**: when two lanes set different statuses for the
+  same component, keep the lower status by canonical readiness order
+  (`not_started` < `blocked` < `scaffolded` < `code_complete` < `tested`
+  < `full_flow_ready` < `pilot_ready` < `production_ready`). Never
+  auto-promote on merge.
+- **No false promotions**: if either lane wanted a promotion (a higher
+  status than currently recorded), require an explicit founder-marked
+  verification before applying the promotion. Land the lower status
+  during cherry-pick and follow up in a dedicated promotion slice.
+- **Union blockers**: combine both lanes' blockers and dedupe by blocker
+  `id`. If two lanes recorded the same blocker `id` with different
+  severities, keep the higher severity (`critical` > `high` > `medium` >
+  `low`).
+- **Latest `nextAction` wins** when both lanes touched the same component
+  and the prior `nextAction` is no longer relevant. When the prior
+  `nextAction` is still relevant, take the conservative path: union the
+  two `nextAction` strings with a newline separator rather than letting
+  one lane stomp the other.
+- **Preserve notes from both sides**: no note-stomping. If both lanes
+  appended a note, append both notes to the merged component. Order is
+  the order the lanes were cherry-picked.
+- **Manifest `lastUpdated`** is bumped to the latest cherry-pick date.
+- **`updatedBy`** can be a comma-separated list of pack lane ids that
+  touched the file (for example `"Lane A, Lane C"`). The list must be
+  human-readable and must not invent lane names.
+- **`overallReadinessPercent`** is recomputed from the merged component
+  list using the same scoring as the read model. It must remain inside
+  the `production_readiness` indicator's planned `percentLow` and
+  `percentHigh` range. If the merge would push the percent outside that
+  range, treat the merge as a status conflict and apply conservative
+  status.
+- **Maturity snapshot indicators and areas** are not auto-merged. If
+  both lanes change the snapshot, the pack's lead lane resolves the
+  conflict by hand and records the resolution in the lead-lane report.
+
+## §J · Validator usage (PROD2)
+
+PROD2 lands a deterministic validator at
+`src/lib/admin/production-readiness-validator.ts`. The validator imports
+canonical types from `@/lib/admin/production-readiness` and reports
+findings against the rules listed in
+`PRODUCTION_READINESS_VALIDATION_RULES`.
+
+Usage rules:
+
+- After every cherry-pick that touches
+  `docs/build/production-readiness.json`, run
+  `validateProductionReadinessManifest(loadProductionReadinessManifest())`
+  via the integration test
+  `src/__tests__/integration/admin/production-readiness-validator.test.ts`.
+- The validator test must pass before the pack is considered mergeable.
+  A failing validator finding is a hard stop, not a warning.
+- The validator does not promote, demote, or mutate the manifest. It
+  only reports findings. Manifest authorship remains the responsibility
+  of the agent or founder making the change.
+- CI integration is deferred. PROD2 only adds the deterministic library
+  and its integration test. A later slice will wire the validator into a
+  GitHub Action and into the schema-check step of the readiness gate.
+- Findings have severity `error`, `warning`, or `info`. The validator's
+  `passed` boolean is true only when `errorCount === 0`. Lanes must not
+  downgrade their own findings to `warning` to make the build green.
+- Rules covered today (canonical ids):
+  `manifest_parses`,
+  `all_required_components_exist`,
+  `all_statuses_valid`,
+  `all_dimensions_present`,
+  `all_testing_gates_present`,
+  `production_ready_requires_all_gates_pass`,
+  `pilot_ready_requires_route_smoke_or_persona_walk`,
+  `every_component_has_next_action`,
+  `every_blocker_has_severity_and_description`,
+  `no_live_monitoring_claim_unless_source_says_live`,
+  `overall_readiness_percent_within_planned_range`,
+  `maturity_snapshot_present`.
+- New rules added by future slices must be appended to
+  `PRODUCTION_READINESS_VALIDATION_RULES` in the order they were added,
+  with at least one negative test case in the validator integration
+  test, and named in this section.
