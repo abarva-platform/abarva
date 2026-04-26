@@ -10,7 +10,7 @@ AbarVa Source is not production-ready yet.
 
 The foundation and agent-context architecture are strong. The Source Build Pack, route family, domain scaffold, context-aware agent contracts, deterministic context builder, context validation foundation, and workflow validation foundation are now in place.
 
-The current work is still in the foundation and validation phase. Source now has deterministic guardrails for agent context grounding, workflow integrity, Source Nexus API stubbing, mission reporting, dashboard mission preview, dashboard route/component smoke, a bounded event canvas shell, a read-only data readiness panel, event canvas shell smoke coverage, and data readiness panel smoke coverage. It also has designed/spec-only standards for Admin/Setup data readiness consumption and pricing/negotiation intelligence. It does not yet have production UI completeness, persistence, upload/evidence processing, model-assisted responses, workflow engine enforcement, pricing engine implementation, approval engine behavior, artifact versioning, or document export/import.
+The current work is still in the foundation and validation phase. Source now has deterministic guardrails for agent context grounding, workflow integrity, Source Nexus API stubbing, mission reporting, API/mission consistency, dashboard mission preview, dashboard route/component smoke, a bounded event canvas shell, a read-only data readiness panel, event canvas shell smoke coverage, and data readiness panel smoke coverage. It also has designed/spec-only standards for Admin/Setup data readiness consumption, pricing/negotiation intelligence, and the next Data Platform Managed Services pattern. It does not yet have production UI completeness, persistence, upload/evidence processing, model-assisted responses, workflow engine enforcement, pricing engine implementation, approval engine behavior, artifact versioning, or document export/import.
 
 The next major product milestone is the Admin/Setup-to-Source readiness contract, followed by authenticated dashboard and event canvas screenshot/manual review with the data readiness panel visible. The workflow validation foundation remains a guardrail: Source should not permit unsafe sourcing workflow moves once workflow behavior is implemented.
 
@@ -40,6 +40,7 @@ The next major product milestone is the Admin/Setup-to-Source readiness contract
 | Remaining workflow defer | Intentional | `source-workflow-uploaded-document-parse-before-citation` | Uploaded documents cannot be cited before parsing/validation. | Build upload/evidence pipeline later, not in current slice. |
 | Source/Admin data readiness integration | Read-only Deterministic Shell | `docs/abarva-source/build-pack/32_SOURCE_DATA_READINESS_AND_ADMIN_SETUP_INTEGRATION.md`, `docs/abarva-source/NEXT_SLICE_PLAN_SOURCE_DATA_READINESS_PANEL.md`, PR #266, PR #274, PR #277, PR #278, `src/components/source/SourceDataReadinessPanel.tsx` | Clarifies Admin/Setup owns setup, data onboarding, connector setup, dataset readiness, permissions, parsing status, and evidence usability; Source now consumes seeded readiness state in the event canvas and displays workflow impact without upload/parsing/Admin runtime behavior. | Define runtime Admin/Setup readiness contract before live integration; upload/parsing and evidence ledger implementation are not started. |
 | Pricing and Negotiation Intelligence | Designed / Spec Only | `docs/abarva-source/build-pack/33_PRICING_AND_NEGOTIATION_INTELLIGENCE_STANDARD.md`, `docs/abarva-source/pattern-packs/AMS_MANAGED_SERVICES_SOURCING_PATTERN.md` | Defines how Source can normalize vendor pricing, identify commercial traps, recommend negotiation levers, prepare BAFO packs, connect scorecards, and update value confidence without requiring paid third-party benchmarks for MVP. | Runtime pricing engine, pricing database, benchmark database, UI, model-assisted analysis, and RFP generation implementation are not started. |
+| Data Platform Managed Services Pattern | Planned / Docs Only | PR #282, `docs/abarva-source/NEXT_SLICE_PLAN_DATA_PLATFORM_MANAGED_SERVICES_PATTERN.md` | Plans the next authored Source pattern pack across scope, data baseline, RFP sections, artifacts, scorecards, pricing, traps, negotiation, transition, value, failure modes, validation, and agent guidance. | Author the full pattern pack in markdown before any runtime manifest, generated JSON, ingestion, or retrieval work. |
 | Agent mission model | Designed / Deterministic Foundation | PR #248, PR #254, PR #255, PR #259, `docs/platform-architecture/runtime/13_AGENT_MISSION_MODEL.md`, `src/lib/source/agent-missions.ts`, `src/lib/source/agent-mission-report.ts` | Defines how Nexus, Sentinel, Atlas, and Steward own missions, triggers, handoffs, queue states, priority, and calm activity UI; Source now has a deterministic read model, report formatter, and tiny dashboard preview. | Runtime mission queue, schedulers, background jobs, persistence, model calls, and proactive mission UI are not implemented. |
 | Nexus Engagement Canvas | Built / Tested Deterministically | PR #265, PR #269, PR #270, PR #273, PR #277, PR #278, `docs/abarva-source/NEXT_SLICE_PLAN_SOURCE_EVENT_CANVAS_SHELL.md`, `/source/events/[eventId]`, `NexusEngagementCanvas` | The existing event canvas boundary is now a shell with current stage, journey map, Nexus guidance, mission preview, read-only data readiness panel, and artifact/review/approval placeholders. Smoke coverage is deterministic seeded-data only. | Capture authenticated event canvas screenshot/manual review before visual polish or broader event workflow expansion. |
 | Source Journey Tracker final behavior | Partial | `src/components/source/SourceJourneyTracker.tsx`, Build Pack docs | Component exists, final behavior not production validated. | Review lifecycle/state expectations. |
@@ -47,7 +48,7 @@ The next major product milestone is the Admin/Setup-to-Source readiness contract
 | Chat input model | Designed | `23_CHAT_EXPERIENCE_AND_INPUT_MODEL.md` | 3 choices plus custom model is specified. | Do not build until context validation is used by runtime. |
 | File attachment model | Designed | `src/lib/source/attachments.ts`, `23_CHAT_EXPERIENCE_AND_INPUT_MODEL.md` | Type contracts exist; upload/parsing does not. | Review attachment pipeline before implementation. |
 | Upload/evidence pipeline | Not Started | Attachment/context docs only | No upload, parsing, citation extraction, evidence registry, or client evidence usability exists. | Design implementation after attachment model review. |
-| Source-specific Nexus API route | Built / Tested Deterministically | PR #230, PR #245, `src/app/api/v1/source/[eventId]/nexus/ask/route.ts`, `src/lib/source/nexus-api.ts` | Deterministic no-model route stub exists and contract tests are merged. This is not model readiness, production runtime readiness, tenant readiness, or live workflow readiness. | Keep deterministic; add authenticated route smoke and tenant/auth review before any runtime promotion. |
+| Source-specific Nexus API route | Built / Tested Deterministically | PR #230, PR #245, PR #283, `src/app/api/v1/source/[eventId]/nexus/ask/route.ts`, `src/lib/source/nexus-api.ts` | Deterministic no-model route stub exists, contract tests are merged, and Source API/mission consistency coverage verifies alignment with the mission report. This is not model readiness, production runtime readiness, tenant readiness, or live workflow readiness. | Keep deterministic; add authenticated route smoke and tenant/auth review before any runtime promotion. |
 | Model-assisted Nexus response | Not Started | `16_AGENT_PER_TURN_CONTRACT.md`, `22_AGENT_CONTEXT_AWARENESS.md` | Model behavior is designed, not wired. | Do not start until context bundle enforcement is present. |
 | Scorecard governance UI | Not Started / Deferred | Build Pack scorecard docs | Scorecard governance is specified, UI not expanded. | Keep blocked until governance model is reviewed. |
 | Artifact drawer | Not Started / Deferred | Build Pack artifact docs | Artifact structure exists in plan, not production-ready. | Stabilize artifact model before generation. |
@@ -65,7 +66,7 @@ The next major product milestone is the Admin/Setup-to-Source readiness contract
 | Auth/permissions/tenant safety | Not Started for Source-specific depth | Existing app auth exists; Source-specific tenant rules not production validated. | Define Source auth and role matrix. |
 | Persona crawler validation | Designed | `17_CRAWLER_PERSONA_VERIFICATION.md`, `24_CONTEXT_VALIDATION_HARNESS.md` | Persona crawler model exists; executable crawler not built. | Build after deterministic validation stabilizes. |
 | UI completion | Early / Not Production-Ready | PR #262, PR #264, PR #265, PR #266, PR #269, PR #270, PR #273, PR #277, PR #278 | Dashboard baseline review, deterministic route/component smoke, event canvas shell plan, event canvas shell, event canvas shell smoke, data readiness panel, and data readiness panel smoke exist; full event workflow, live data readiness integration, scorecard/artifact/value surfaces remain incomplete. | Capture authenticated dashboard and event canvas screenshot/manual review; defer broader UI systems. |
-| Agent/model integration | Deterministic Only | PR #227, PR #230, PR #245, PR #254, PR #255 | Source has deterministic context, validation, multi-agent briefing, mission read model, mission report, and no-model route foundations. No model-assisted Source behavior exists. | Do not add model calls until Source context preflight, Model Gateway, audit, tenant, and evidence gates are ready. |
+| Agent/model integration | Deterministic Only | PR #227, PR #230, PR #245, PR #254, PR #255, PR #283 | Source has deterministic context, validation, multi-agent briefing, mission read model, mission report, no-model route foundations, and API/mission consistency coverage. No model-assisted Source behavior exists. | Do not add model calls until Source context preflight, Model Gateway, audit, tenant, and evidence gates are ready. |
 | Production deployment readiness | Not Started | No production readiness checklist passed for Source | Source is not production-ready. | Start only after UX, agent, data, and enterprise gates pass. |
 
 ## 3. Status Legend
@@ -199,7 +200,7 @@ Current assessment: not started for Source.
 - Source/Admin data readiness integration: designed with a seeded/read-only Source panel now in the event canvas. Source should consume Admin/Setup readiness and must not duplicate connector setup, dataset inventory, parsing, file management, access control, or evidence storage.
 - Pricing and negotiation intelligence: designed/spec only. Source can use client baseline data, AbarVa pattern intelligence, vendor proposals, normalization logic, trap detection, negotiation strategy, scorecard linkage, and value ledger linkage without requiring paid third-party benchmark subscriptions.
 - Agent mission model: deterministic foundation exists. Nexus, Sentinel, Atlas, and Steward now have a shared mission, trigger, handoff, and calm activity UI model plus Source mission read/report helpers, a tiny dashboard preview, and route/component smoke coverage. No runtime mission queue, scheduler, background job, persistence, proactive mission UI, or model behavior is implemented.
-- Agent/model integration: deterministic no-model API stub exists. Model-assisted Source behavior is not started and remains intentionally blocked.
+- Agent/model integration: deterministic no-model API stub exists and now has API/mission consistency coverage. Model-assisted Source behavior is not started and remains intentionally blocked.
 - Production readiness: not started. Source has not passed enterprise, deployment, security, persistence, runtime, or live persona validation gates.
 
 ## 6. Near-Term Roadmap
@@ -207,7 +208,7 @@ Current assessment: not started for Source.
 1. Define Admin/Setup readiness contract consumption before replacing seeded Source readiness rows.
 2. Capture authenticated dashboard and event canvas screenshot/manual review when a signed-in session is available.
 3. If continuing validation depth, plan upload/evidence pipeline contracts before implementing upload/parsing.
-4. If preparing pattern/runtime grounding, plan pattern manifest or section-to-context integration without generated JSON/runtime ingestion yet.
+4. Author the Data Platform Managed Services pattern pack in markdown, then plan pattern manifest or section-to-context integration without generated JSON/runtime ingestion yet.
 5. Plan the next bounded Source workflow surface only after authenticated review findings are concrete.
 
 ## 7. Explicit Do-Not-Build List
@@ -272,6 +273,9 @@ Keep active:
 - PR #274: Source data readiness panel implementation check.
 - PR #277: deterministic Source Data Readiness Panel.
 - PR #278: Source Data Readiness Panel smoke coverage.
+- PR #281: Production Readiness freshness layer.
+- PR #282: Data Platform Managed Services pattern plan.
+- PR #283: Source API and mission consistency coverage.
 
 Post-merge planning notes:
 
@@ -292,7 +296,7 @@ Post-merge planning notes:
 - Context quality still depends on richer client, pattern, scorecard, evidence, and attachment data.
 - File upload/evidence pipeline is not built.
 - Uploaded document citation remains intentionally deferred until parsing/validation exists.
-- Source-specific Nexus API route exists as a deterministic no-model stub, but production runtime, tenant checks, and model-assisted behavior are not ready.
+- Source-specific Nexus API route exists as a deterministic no-model stub with contract and mission-consistency tests, but production runtime, tenant checks, and model-assisted behavior are not ready.
 - Dashboard route/component smoke exists, but authenticated live route smoke and screenshot review remain incomplete.
 - No model validation exists yet.
 - Workflow validation foundation exists, but no runtime workflow engine enforcement exists.
