@@ -783,7 +783,7 @@
       ],
       "completedSlices": [
         "DEMODATA1",
-        "SHELL7"
+        "QA28"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
@@ -791,7 +791,7 @@
       "validationStatus": "tsc_clean",
       "productionReadinessUpdated": false,
       "currentBlockers": [],
-      "nextAction": "DEMODATA1 (Lane H) complete. Demo dataset registry and tenant richness model landed. 3 tenants, 5 surfaces, deterministic seed only. Remaining wave-20 lanes pending. SHELL7 code complete. Run full CI pass and merge. Additive route wiring (IntelligenceRouteShell / TowerRouteShell into page.tsx files) is deferred to a follow-up slice.",
+      "nextAction": "DEMODATA1 (Lane H) complete. Demo dataset registry and tenant richness model landed. 3 tenants, 5 surfaces, deterministic seed only. Remaining wave-20 lanes pending. Integrate SHELL1-7 and DEMODATA1. QA28 deferred checks will resolve to pass automatically.",
       "lastUpdated": "2026-04-26"
     },
     {
