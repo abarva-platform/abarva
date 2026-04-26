@@ -806,6 +806,27 @@
       "currentBlockers": [],
       "nextAction": "Wave-18 merged. No further action.",
       "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-19",
+      "name": "Tenant-Scoped Demo Data + Source Intelligence Hardening",
+      "goal": "Scope the Source commercial demo scenario to Apex Retail, replace generic vendor labels with named representative vendors, add extended posture fields, and add deterministicSeed root-level field.",
+      "status": "in_progress",
+      "percentComplete": 14,
+      "plannedSlices": [
+        "SRC32"
+      ],
+      "completedSlices": [
+        "SRC32"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "SRC32 code complete (Lane A). Await integration and PR merge.",
+      "lastUpdated": "2026-04-26"
     }
   ]
 }

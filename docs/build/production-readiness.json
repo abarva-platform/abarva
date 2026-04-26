@@ -891,7 +891,8 @@
         "SRC27 (wave-16): SourceCommercialEventSection mounted in /source/events/[eventId]/page.tsx. Collapsible commercial intelligence section. Deterministic seed data, no live ingestion.",
         "SRC29 (wave-16): source-commercial-executive-brief.ts + SourceCommercialExecutiveBrief component. Dark-navy header, 3 risks, 3 BAFO levers, posture badge. 11 tests green.",
         "SRC30 (wave-16): source-commercial-action-queue.ts + SourceCommercialActionQueue component. 8-action queue, 5-item cap with show-more, state/priority chips. 12 tests green.",
-        "SRC31 (wave-17): SourceCommercialWorkflowCanvas with 9 workflow stages (brief, pricing, comparison, risk, BAFO, readiness, missions, signals, decision). Thin segmented nav. Deterministic caveat. 14 tests."
+        "SRC31 (wave-17): SourceCommercialWorkflowCanvas with 9 workflow stages (brief, pricing, comparison, risk, BAFO, readiness, missions, signals, decision). Thin segmented nav. Deterministic caveat. 14 tests.",
+        "SRC32 (wave-19): source-commercial-demo-scenario.ts tenant-scoped to apex-retail (tenantSlug: apex-retail, linkedProgramCode: APX-CDP-2026, scenarioId: apex-retail-ams-outsourcing-2026). Generic Alpha/Beta/Gamma/Delta vendor labels replaced with named representative vendors: Northstar Managed Services, BluePeak Digital Operations, Horizon Application Services, Meridian Systems Partners. Extended vendor posture fields added. deterministicSeed: true on scenario root. 17 tests green. Status: code_complete. NOT promoted to production_ready."
       ]
     },
     {

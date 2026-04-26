@@ -1,6 +1,7 @@
-// SRC28 — Source Commercial Demo Scenario Seed
+// SRC32 — Tenant-Scoped Apex Retail AMS Scenario
 // Pure TypeScript, no React, no model calls, no network calls.
 // All data is deterministic seed data for demonstration purposes only.
+// tenantSlug: apex-retail | linkedProgramCode: APX-CDP-2026
 
 // ---------------------------------------------------------------------------
 // Shared types
@@ -18,11 +19,17 @@ export type DemoSignalSeverity = 'critical' | 'warning' | 'info';
 
 export interface DemoVendorSummary {
   vendorId: string;
-  vendorLabel: string;           // generic: "Vendor Alpha", "Vendor Beta", etc.
+  vendorLabel: string;
   pricingStatus: DemoVendorPricingStatus;
   missingSections: string[];
   bafoOpportunities: string[];
   commercialAssumptions: string[];
+  completenessState: string;
+  pricingResponsePosture: string;
+  assumptionClarity: string;
+  transitionTransparency: string;
+  productivityCommitmentPosture: string;
+  caveat: string;
   deterministicSeed: true;       // always true — marks data as seed
 }
 
@@ -50,8 +57,11 @@ export interface DemoSignalItem {
 }
 
 export interface SourceCommercialDemoScenario {
-  scenarioId: string;            // 'ams-outsourcing-demo-2026'
+  scenarioId: string;
+  tenantSlug: string;
+  linkedProgramCode: string;
   eventName: string;
+  sourceEventId: string;
   clientContext: string;
   sourcingScope: string;
   vendors: DemoVendorSummary[];  // 4 vendors
@@ -62,6 +72,7 @@ export interface SourceCommercialDemoScenario {
   signals: DemoSignalItem[];     // 4 signals
   bafoOpportunities: string[];   // 3 top-level BAFO items
   caveats: string[];             // 3 caveats
+  deterministicSeed: true;       // always true — marks scenario as seed
   generatedAt: string;
 }
 
@@ -72,35 +83,53 @@ export interface SourceCommercialDemoScenario {
 export function buildSourceCommercialDemoScenario(): SourceCommercialDemoScenario {
   const vendors: DemoVendorSummary[] = [
     {
-      vendorId: 'vendor-alpha',
-      vendorLabel: 'Vendor Alpha',
+      vendorId: 'vendor-northstar',
+      vendorLabel: 'Northstar Managed Services',
       pricingStatus: 'complete',
       missingSections: [],
       bafoOpportunities: ['Volume commitment discount', 'SLA rebate structure'],
       commercialAssumptions: ['FTE cost normalised to onshore equivalent'],
+      completenessState: 'full',
+      pricingResponsePosture: 'comprehensive',
+      assumptionClarity: 'high',
+      transitionTransparency: 'full',
+      productivityCommitmentPosture: 'committed',
+      caveat: 'Deterministic seed data. Not an actual vendor response.',
       deterministicSeed: true,
     },
     {
-      vendorId: 'vendor-beta',
-      vendorLabel: 'Vendor Beta',
+      vendorId: 'vendor-bluepeak',
+      vendorLabel: 'BluePeak Digital Operations',
       pricingStatus: 'partial',
       missingSections: ['L3 support rate card', 'Knowledge transfer costs'],
       bafoOpportunities: ['Offshore ratio optimisation'],
       commercialAssumptions: ['Offshore rate applied uniformly'],
+      completenessState: 'partial',
+      pricingResponsePosture: 'partial',
+      assumptionClarity: 'medium',
+      transitionTransparency: 'partial',
+      productivityCommitmentPosture: 'conditional',
+      caveat: 'Deterministic seed data. Not an actual vendor response.',
       deterministicSeed: true,
     },
     {
-      vendorId: 'vendor-gamma',
-      vendorLabel: 'Vendor Gamma',
+      vendorId: 'vendor-horizon',
+      vendorLabel: 'Horizon Application Services',
       pricingStatus: 'partial',
       missingSections: ['Transition management costs'],
       bafoOpportunities: ['Transition milestone payment deferral'],
       commercialAssumptions: ['Transition timeline assumes parallel run'],
+      completenessState: 'partial',
+      pricingResponsePosture: 'partial',
+      assumptionClarity: 'medium',
+      transitionTransparency: 'opaque',
+      productivityCommitmentPosture: 'conditional',
+      caveat: 'Deterministic seed data. Not an actual vendor response.',
       deterministicSeed: true,
     },
     {
-      vendorId: 'vendor-delta',
-      vendorLabel: 'Vendor Delta',
+      vendorId: 'vendor-meridian-systems',
+      vendorLabel: 'Meridian Systems Partners',
       pricingStatus: 'missing',
       missingSections: [
         'Full rate card',
@@ -109,6 +138,12 @@ export function buildSourceCommercialDemoScenario(): SourceCommercialDemoScenari
       ],
       bafoOpportunities: [],
       commercialAssumptions: [],
+      completenessState: 'missing',
+      pricingResponsePosture: 'non-responsive',
+      assumptionClarity: 'low',
+      transitionTransparency: 'absent',
+      productivityCommitmentPosture: 'uncommitted',
+      caveat: 'Deterministic seed data. Not an actual vendor response.',
       deterministicSeed: true,
     },
   ];
@@ -120,7 +155,7 @@ export function buildSourceCommercialDemoScenario(): SourceCommercialDemoScenari
       label: 'Incomplete rate card coverage',
       severity: 'high',
       detail:
-        'Vendor Delta has not submitted a complete rate card. Vendor Beta is missing L3 support rates.',
+        'Meridian Systems Partners has not submitted a complete rate card. BluePeak Digital Operations is missing L3 support rates.',
     },
     {
       riskId: 'risk-002',
@@ -136,7 +171,7 @@ export function buildSourceCommercialDemoScenario(): SourceCommercialDemoScenari
       label: 'Transition cost opacity',
       severity: 'high',
       detail:
-        'Vendor Gamma transition management costs not included in submission.',
+        'Horizon Application Services transition management costs not included in submission.',
     },
     {
       riskId: 'risk-004',
@@ -149,7 +184,7 @@ export function buildSourceCommercialDemoScenario(): SourceCommercialDemoScenari
     {
       riskId: 'risk-005',
       category: 'evidence',
-      label: 'Knowledge transfer cost unknown for Vendor Beta',
+      label: 'Knowledge transfer cost unknown for BluePeak Digital Operations',
       severity: 'low',
       detail:
         'Knowledge transfer costs not submitted; likely to surface in BAFO.',
@@ -160,13 +195,13 @@ export function buildSourceCommercialDemoScenario(): SourceCommercialDemoScenari
     {
       missionId: 'mission-001',
       agentOwner: 'Nexus',
-      label: 'Request complete rate card from Vendor Delta',
+      label: 'Request complete rate card from Meridian Systems Partners',
       priority: 'high',
     },
     {
       missionId: 'mission-002',
       agentOwner: 'Sentinel',
-      label: 'Validate L3 support rate card from Vendor Beta',
+      label: 'Validate L3 support rate card from BluePeak Digital Operations',
       priority: 'high',
     },
     {
@@ -178,13 +213,13 @@ export function buildSourceCommercialDemoScenario(): SourceCommercialDemoScenari
     {
       missionId: 'mission-004',
       agentOwner: 'Steward',
-      label: 'Confirm SLA rebate framework with Vendor Alpha and Gamma',
+      label: 'Confirm SLA rebate framework with Northstar Managed Services and Horizon Application Services',
       priority: 'medium',
     },
     {
       missionId: 'mission-005',
       agentOwner: 'Nexus',
-      label: 'Prepare executive decision brief pending Vendor Delta clarification',
+      label: 'Prepare executive decision brief pending Meridian Systems Partners clarification',
       priority: 'low',
     },
   ];
@@ -193,10 +228,10 @@ export function buildSourceCommercialDemoScenario(): SourceCommercialDemoScenari
     {
       signalId: 'signal-001',
       signalType: 'pricing_gap',
-      label: 'Rate card gap — Vendor Delta',
+      label: 'Rate card gap — Meridian Systems Partners',
       severity: 'critical',
       shortSummary:
-        'Vendor Delta rate card missing. Cannot proceed to normalised comparison without complete submission.',
+        'Meridian Systems Partners rate card missing. Cannot proceed to normalised comparison without complete submission.',
     },
     {
       signalId: 'signal-002',
@@ -212,7 +247,7 @@ export function buildSourceCommercialDemoScenario(): SourceCommercialDemoScenari
       label: 'BAFO scope partially confirmed',
       severity: 'warning',
       shortSummary:
-        'BAFO strategy confirmed for Vendor Alpha and Beta. Vendor Gamma and Delta pending.',
+        'BAFO strategy confirmed for Northstar Managed Services and BluePeak Digital Operations. Horizon Application Services and Meridian Systems Partners pending.',
     },
     {
       signalId: 'signal-004',
@@ -232,26 +267,30 @@ export function buildSourceCommercialDemoScenario(): SourceCommercialDemoScenari
 
   const caveats: string[] = [
     'All pricing data in this scenario is deterministic seed data. Values are representative and do not reflect real market rates or vendor proposals.',
-    'Vendor labels are generic identifiers. No real vendor names or proprietary information are used.',
+    'Vendor labels are representative names for demonstration purposes. No real vendor proprietary information is used.',
     'This scenario is for demonstration purposes only. Commercial decisions must be based on actual vendor submissions and independent legal review.',
   ];
 
   return {
-    scenarioId: 'ams-outsourcing-demo-2026',
+    scenarioId: 'apex-retail-ams-outsourcing-2026',
+    tenantSlug: 'apex-retail',
+    linkedProgramCode: 'APX-CDP-2026',
     eventName: 'Application Management Services — Vendor Consolidation 2026',
+    sourceEventId: 'apex-retail-ams-outsourcing-2026',
     clientContext:
-      'Large enterprise IT organisation seeking to consolidate three incumbent AMS providers into a preferred-supplier structure. Engagement scope includes application support, incident management, and platform operations across 40+ applications.',
+      'Apex Retail is consolidating three incumbent AMS providers into a preferred-supplier structure. Engagement scope includes application support, incident management, and platform operations across 40+ retail applications under the APX-CDP-2026 program.',
     sourcingScope:
       'Scope: Application Management Services (AMS), L1/L2/L3 support, incident SLAs, platform operations, knowledge transfer. 3-year initial term.',
     vendors,
     risks,
     readinessState: 'partial',
     readinessDetail:
-      'Pricing normalisation incomplete due to missing rate cards. Risk assessment partially complete. BAFO strategy available for Vendor Alpha and Beta only. Executive decision pending clarification from Vendor Delta.',
+      'Pricing normalisation incomplete due to missing rate cards. Risk assessment partially complete. BAFO strategy available for Northstar Managed Services and BluePeak Digital Operations only. Executive decision pending clarification from Meridian Systems Partners.',
     missions,
     signals,
     bafoOpportunities,
     caveats,
+    deterministicSeed: true,
     generatedAt: '2026-04-26',
   };
 }

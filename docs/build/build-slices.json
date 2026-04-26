@@ -7579,6 +7579,13 @@
       "status": "code_complete",
       "branch": "wave17a/qa26-route-shell-design-verification",
       "description": "Deterministic route-to-shell verification for admin/source/program target routes. Verifies canonical shell markers, workflow markers, legacy imports, and explicit deferrals."
+    },
+    {
+      "id": "SRC32",
+      "title": "Tenant-Scoped Apex Retail AMS Scenario",
+      "status": "code_complete",
+      "wave": "wave-19",
+      "lane": "A"
     }
   ]
 }
