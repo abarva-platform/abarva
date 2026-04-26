@@ -1,8 +1,8 @@
 # Next Slice Plan: Source Data Readiness Panel
 
-Date: 2026-04-25
+Date: 2026-04-26
 
-Status: planned only.
+Status: refreshed plan only after Source dashboard mission preview and Source event canvas shell planning.
 
 Scope: planning and documentation only. Do not implement UI, runtime APIs, Admin/Setup screens, connector setup, upload/parsing, evidence storage, workflow engine behavior, model calls, or Source-specific setup flows in this slice.
 
@@ -41,6 +41,25 @@ The intended handoff pattern is:
 3. Steward identifies the Admin/Setup action or owner.
 4. Admin/Setup resolves connector, upload, access, parsing, or evidence usability state.
 5. Source refreshes event readiness from platform state.
+
+## 2A. Relationship To Mission Preview And Event Canvas Shell
+
+The data readiness panel should become a Source event canvas input, not a dashboard replacement.
+
+Current direction:
+
+- The Source dashboard shows portfolio pressure and a compact deterministic agent mission preview.
+- The Source event canvas shell will show the current event, journey position, current-stage requirements, top agent missions, and placeholders for data readiness, artifacts, reviews, approvals, and value evidence.
+- The data readiness panel should appear inside the event canvas shell as a compact current-stage readiness zone or right-side detail section.
+
+Mission relationship:
+
+- Missing required data should create Nexus data-request missions.
+- Low-confidence or uncited evidence should create Sentinel evidence-gap missions.
+- Gate-blocking readiness gaps should create Steward gate-check missions.
+- Baseline gaps that affect value confidence should create Atlas value-risk missions.
+
+The panel should not introduce another agent feed. It should provide the evidence/readiness facts that agent missions already summarize.
 
 ## 3. Readiness States
 
@@ -123,6 +142,7 @@ Recommended zones:
 - Workflow impact strip: Rich / Outline / Stub readiness, stage-gate impact, scorecard confidence, vendor evaluation readiness, pricing normalization readiness, and value ledger confidence.
 - Agent guidance area: Nexus next action, Sentinel evidence caution, Atlas executive implication, and Steward/Admin handoff.
 - Resolve gap affordance: a future action that routes to Admin/Setup-owned work rather than implementing setup inside Source.
+- Event canvas placement: use a compact current-stage panel in the shell, with a drawer or expanded table later only if the shell becomes crowded.
 
 The table should make the most important gaps visible without creating a busy dashboard.
 
@@ -178,6 +198,7 @@ Expected behavior:
 - Usable Evidence can support Source claims, citations, scorecards, pricing normalization, and value assumptions.
 - Access Restricted data should show that evidence exists but is unavailable to the current user or agent.
 - Waived gaps should show owner, reason, date, and downstream impact.
+- Missing readiness should create deterministic agent missions only when it affects current-stage progress, gate readiness, evidence confidence, or executive value/risk. Do not create mission spam for every optional gap.
 
 Examples:
 
@@ -229,6 +250,19 @@ interface SourceEventDataReadinessItem {
 
 This is a planning shape, not an implementation contract. Final runtime types should align with the platform Admin/Setup readiness model when that model exists.
 
+## 8A. Event Canvas Shell Placement
+
+For the first event canvas shell implementation, the data readiness panel should be represented as a small shell zone:
+
+- title: Data readiness
+- readiness summary: current-stage readiness and evidence confidence
+- top gaps: no more than three
+- owner / handoff: Admin/Setup, data owner, procurement, legal, security, or waived
+- workflow impact: Rich / Outline / Stub, gate block, or caveat
+- agent tie-in: mission id or agent name when a mission exists
+
+The shell should avoid a full data inventory table until the Admin/Setup readiness contract exists. If the event canvas needs more detail, the first implementation can show a placeholder that points to the future panel rather than building the full panel early.
+
 ## 9. What Not To Build
 
 Do not build:
@@ -243,6 +277,7 @@ Do not build:
 - model calls
 - chat UI
 - event canvas expansion
+- full event canvas implementation
 - scorecard UI
 - artifact drawer UI
 - value ledger UI
@@ -260,7 +295,9 @@ The future Source Data Readiness panel slice is ready to implement only when:
 - Readiness states are mapped to Source workflow impact.
 - AMS, IMS, and Data Platform categories are included.
 - UI zones are table-forward and compact.
+- Event canvas shell placement is clear and does not crowd the first viewport.
 - Nexus, Sentinel, Atlas, and Steward behavior is defined.
+- Missing readiness creates missions only when it affects current action, evidence confidence, or stage gates.
 - Missing-data behavior prevents fake evidence claims.
 - Future data contract aligns to platform readiness rather than Source-local setup.
 - The implementation slice explicitly excludes upload/parsing, evidence storage, model calls, workflow engines, and duplicate setup flows.
