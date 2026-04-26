@@ -7222,6 +7222,19 @@
         "src/__tests__/integration/source/source-commercial-workflow-verification.test.ts"
       ],
       "completedAt": "2026-04-26"
+    },
+    {
+      "id": "OPS14",
+      "wave": "wave-14",
+      "title": "Hygiene Gate CI Contract",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "GitHub Actions workflow for hygiene_gate.sh on PRs, plus CI contract documentation.",
+      "files": [
+        ".github/workflows/hygiene-gate.yml",
+        "docs/build/HYGIENE_GATE_CI_CONTRACT.md"
+      ],
+      "completedAt": "2026-04-26"
     }
   ]
 }

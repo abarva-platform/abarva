@@ -1,0 +1,64 @@
+# Hygiene Gate CI Contract — OPS14
+# Runs hygiene_gate.sh on every PR to enforce integration hygiene.
+# Non-destructive: never modifies the working tree, never pushes, never pops stashes.
+
+name: Hygiene Gate
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
+  # Allow manual trigger for debugging
+  workflow_dispatch:
+    inputs:
+      skip_build:
+        description: 'Skip TypeScript build check (faster)'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  hygiene-gate:
+    name: Run hygiene_gate.sh
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Make hygiene gate executable
+        run: chmod +x scripts/integration/hygiene_gate.sh
+
+      - name: Run hygiene gate (full)
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.skip_build == 'false' }}
+        run: bash scripts/integration/hygiene_gate.sh
+
+      - name: Run hygiene gate (skip-build)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.skip_build == 'true' }}
+        run: bash scripts/integration/hygiene_gate.sh --skip-build
+
+      - name: Upload hygiene gate output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hygiene-gate-output
+          path: |
+            docs/build/build-slices.json
+            docs/build/build-waves.json
+            docs/build/production-readiness.json
+          retention-days: 7
+          if-no-files-found: warn
