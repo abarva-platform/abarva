@@ -6924,6 +6924,21 @@
       ],
       "sliceDoc": "docs/build/slices/AZLAB2_CONTROL_DATA_PLANE_BOUNDARY_CONTRACT.md",
       "createdAt": "2026-04-26"
+    },
+    {
+      "id": "AZLAB3",
+      "name": "Private Data Plane Connector Stub",
+      "category": "architecture",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/architecture/private-data-plane-connector-stub.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/architecture/private-data-plane-connector-stub.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/AZLAB3_PRIVATE_DATA_PLANE_CONNECTOR_STUB.md",
+      "createdAt": "2026-04-26"
     }
   ]
 }
