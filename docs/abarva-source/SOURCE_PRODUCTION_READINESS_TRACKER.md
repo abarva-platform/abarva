@@ -1,6 +1,6 @@
 # AbarVa Source Production Readiness Tracker
 
-Date: 2026-04-25
+Date: 2026-04-26
 
 Purpose: answer "Where are we in relation to getting AbarVa Source to production?"
 
@@ -22,7 +22,7 @@ The next major product milestone remains a validated context-aware Nexus foundat
 | Multi-file Build Pack | Merged | PR #188, PR #201, `docs/abarva-source/build-pack/**` | Inventory is reconciled with the anchor. | Keep updated as implementation decisions harden. |
 | Source route family | Built | `src/app/(maestro)/source/**` | Route family exists, but production behavior is incomplete. | Continue visual and workflow review before expansion. |
 | Source top-nav placement | Built | `src/components/AbarvaNav.tsx`, `src/components/chrome/PrimaryNav.tsx` | Source is first-class operator nav. | Preserve unless product review changes nav model. |
-| Source dashboard prototype | Built / Early | `src/components/source/AbarVaSourceDashboard.tsx` | Dashboard exists; approved with small refinements. | Refine only in a bounded dashboard slice. |
+| Source dashboard prototype | Built / Early | PR #212, PR #259, `src/components/source/AbarVaSourceDashboard.tsx` | Dashboard exists, approved with small refinements, and now includes a tiny deterministic top-mission preview for the most exposed seeded event. | Capture authenticated dashboard screenshot/manual review before any further mission UI polish. |
 | Dashboard component refactor | Reviewed | `docs/abarva-source/build-pack/implementation-reviews/01_DASHBOARD_REFACTOR_REVIEW.md` | Component boundaries documented. | Apply visual review findings only after approval. |
 | Agent context-awareness docs | Merged | PR #188, `22_AGENT_CONTEXT_AWARENESS.md` | Establishes context-first, not prompt-first, agent behavior. | Keep as binding agent design rule. |
 | Agent type contracts | Merged | PR #188, `src/lib/source/agent-context.ts`, `chat-types.ts`, `attachments.ts`, `agent-validation.ts` | SourceAgentContextBundle and response contracts exist. | Refine only when implementation proves naming gaps. |
@@ -40,14 +40,14 @@ The next major product milestone remains a validated context-aware Nexus foundat
 | Remaining workflow defer | Intentional | `source-workflow-uploaded-document-parse-before-citation` | Uploaded documents cannot be cited before parsing/validation. | Build upload/evidence pipeline later, not in current slice. |
 | Source/Admin data readiness integration | Designed / Spec Only | `docs/abarva-source/build-pack/32_SOURCE_DATA_READINESS_AND_ADMIN_SETUP_INTEGRATION.md`, runtime architecture docs | Clarifies Admin/Setup owns setup, data onboarding, connector setup, dataset readiness, permissions, parsing status, and evidence usability; Source consumes readiness state. | Runtime consumption, Source UI panel, Admin/Setup UI, upload/parsing, and evidence ledger implementation are not started. |
 | Pricing and Negotiation Intelligence | Designed / Spec Only | `docs/abarva-source/build-pack/33_PRICING_AND_NEGOTIATION_INTELLIGENCE_STANDARD.md`, `docs/abarva-source/pattern-packs/AMS_MANAGED_SERVICES_SOURCING_PATTERN.md` | Defines how Source can normalize vendor pricing, identify commercial traps, recommend negotiation levers, prepare BAFO packs, connect scorecards, and update value confidence without requiring paid third-party benchmarks for MVP. | Runtime pricing engine, pricing database, benchmark database, UI, model-assisted analysis, and RFP generation implementation are not started. |
-| Agent mission model | Designed / Spec Only | `docs/platform-architecture/runtime/13_AGENT_MISSION_MODEL.md`, `docs/platform-architecture/runtime/14_AGENT_WORK_QUEUE_AND_TRIGGERS.md`, `docs/platform-design/experience-system/16_AGENT_ACTIVITY_UI_PATTERN.md` | Defines how Nexus, Sentinel, Atlas, and Steward should own missions, triggers, handoffs, queue states, priority, and calm activity UI across Source and the broader platform. | Runtime mission queue, schedulers, background jobs, API routes, model calls, and proactive UI are not implemented. |
+| Agent mission model | Designed / Deterministic Foundation | PR #248, PR #254, PR #255, PR #259, `docs/platform-architecture/runtime/13_AGENT_MISSION_MODEL.md`, `src/lib/source/agent-missions.ts`, `src/lib/source/agent-mission-report.ts` | Defines how Nexus, Sentinel, Atlas, and Steward own missions, triggers, handoffs, queue states, priority, and calm activity UI; Source now has a deterministic read model, report formatter, and tiny dashboard preview. | Runtime mission queue, schedulers, background jobs, persistence, model calls, and proactive mission UI are not implemented. |
 | Nexus Engagement Canvas | Designed | Build Pack wireframes and component specs | Not implemented beyond allowed foundation. | Review spec before any build. |
 | Source Journey Tracker final behavior | Partial | `src/components/source/SourceJourneyTracker.tsx`, Build Pack docs | Component exists, final behavior not production validated. | Review lifecycle/state expectations. |
 | Persistent Nexus Panel | Designed | Build Pack docs, context-awareness docs | Chat/panel behavior is specified, not implemented. | Wait for SourceAgentContextBundle enforcement. |
 | Chat input model | Designed | `23_CHAT_EXPERIENCE_AND_INPUT_MODEL.md` | 3 choices plus custom model is specified. | Do not build until context validation is used by runtime. |
 | File attachment model | Designed | `src/lib/source/attachments.ts`, `23_CHAT_EXPERIENCE_AND_INPUT_MODEL.md` | Type contracts exist; upload/parsing does not. | Review attachment pipeline before implementation. |
 | Upload/evidence pipeline | Not Started | Attachment/context docs only | No upload, parsing, citation extraction, evidence registry, or client evidence usability exists. | Design implementation after attachment model review. |
-| Source-specific Nexus API route | Built / Tested Deterministically | PR #230, PR #245, `src/app/api/v1/source/[eventId]/nexus/ask/route.ts`, `src/lib/source/nexus-api.ts` | Deterministic no-model route stub exists and contract tests are merged. This is not model readiness, production runtime readiness, tenant readiness, or live workflow readiness. | Keep deterministic; integrate Source mission read model only after mission queue plan is merged. |
+| Source-specific Nexus API route | Built / Tested Deterministically | PR #230, PR #245, `src/app/api/v1/source/[eventId]/nexus/ask/route.ts`, `src/lib/source/nexus-api.ts` | Deterministic no-model route stub exists and contract tests are merged. This is not model readiness, production runtime readiness, tenant readiness, or live workflow readiness. | Keep deterministic; add authenticated route smoke and tenant/auth review before any runtime promotion. |
 | Model-assisted Nexus response | Not Started | `16_AGENT_PER_TURN_CONTRACT.md`, `22_AGENT_CONTEXT_AWARENESS.md` | Model behavior is designed, not wired. | Do not start until context bundle enforcement is present. |
 | Scorecard governance UI | Not Started / Deferred | Build Pack scorecard docs | Scorecard governance is specified, UI not expanded. | Keep blocked until governance model is reviewed. |
 | Artifact drawer | Not Started / Deferred | Build Pack artifact docs | Artifact structure exists in plan, not production-ready. | Stabilize artifact model before generation. |
@@ -65,7 +65,7 @@ The next major product milestone remains a validated context-aware Nexus foundat
 | Auth/permissions/tenant safety | Not Started for Source-specific depth | Existing app auth exists; Source-specific tenant rules not production validated. | Define Source auth and role matrix. |
 | Persona crawler validation | Designed | `17_CRAWLER_PERSONA_VERIFICATION.md`, `24_CONTEXT_VALIDATION_HARNESS.md` | Persona crawler model exists; executable crawler not built. | Build after deterministic validation stabilizes. |
 | UI completion | Early / Not Production-Ready | Dashboard exists; event canvas/panel/scorecard/artifact/value surfaces incomplete | Source does not yet have production UX coverage. | Continue bounded visual/refinement slices only. |
-| Agent/model integration | Not Started | No Source-specific Nexus route/model call | Intentional block remains active. | Wait until context bundle is enforced. |
+| Agent/model integration | Deterministic Only | PR #227, PR #230, PR #245, PR #254, PR #255 | Source has deterministic context, validation, multi-agent briefing, mission read model, mission report, and no-model route foundations. No model-assisted Source behavior exists. | Do not add model calls until Source context preflight, Model Gateway, audit, tenant, and evidence gates are ready. |
 | Production deployment readiness | Not Started | No production readiness checklist passed for Source | Source is not production-ready. | Start only after UX, agent, data, and enterprise gates pass. |
 
 ## 3. Status Legend
@@ -139,7 +139,7 @@ Required:
 - Responses pass validation harness.
 - No vanilla GPT responses.
 
-Current assessment: not satisfied. The architecture is strong, but no Source-specific Nexus API route or model-assisted response runtime exists yet.
+Current assessment: partially satisfied for deterministic foundation, not satisfied for production. Source has a deterministic no-model API stub, multi-agent briefing, mission read model, mission report, and tiny dashboard preview. Model-assisted response runtime, authenticated tenant route smoke, audit, persistence, and live workflow behavior do not exist yet.
 
 ### Gate 6: Data Ready
 
@@ -198,18 +198,17 @@ Current assessment: not started for Source.
 - Upload/evidence pipeline: not started. The remaining workflow defer correctly blocks uploaded document citation before parsing/validation.
 - Source/Admin data readiness integration: designed/spec only. Source should consume Admin/Setup readiness and must not duplicate connector setup, dataset inventory, parsing, file management, access control, or evidence storage.
 - Pricing and negotiation intelligence: designed/spec only. Source can use client baseline data, AbarVa pattern intelligence, vendor proposals, normalization logic, trap detection, negotiation strategy, scorecard linkage, and value ledger linkage without requiring paid third-party benchmark subscriptions.
-- Agent mission model: designed/spec only. Nexus, Sentinel, Atlas, and Steward now have a shared mission, trigger, handoff, and calm activity UI model, but no Source mission read model, runtime mission queue, scheduler, background job, proactive UI, or model behavior is implemented.
+- Agent mission model: deterministic foundation exists. Nexus, Sentinel, Atlas, and Steward now have a shared mission, trigger, handoff, and calm activity UI model plus Source mission read/report helpers and a tiny dashboard preview. No runtime mission queue, scheduler, background job, persistence, proactive mission UI, or model behavior is implemented.
 - Agent/model integration: deterministic no-model API stub exists. Model-assisted Source behavior is not started and remains intentionally blocked.
 - Production readiness: not started. Source has not passed enterprise, deployment, security, persistence, runtime, or live persona validation gates.
 
 ## 6. Near-Term Roadmap
 
-1. Review this production readiness tracker update after the workflow validation milestone.
-2. Decide the next approved Source slice without weakening the do-not-build list.
-3. If continuing validation depth, plan upload/evidence pipeline contracts before implementing upload/parsing.
-4. If returning to UX, run only bounded dashboard/front-door refinement, not event canvas expansion.
-5. If preparing runtime work, plan a Source-specific Nexus API route stub with no model call.
-6. If preparing data readiness work, implement the platform Admin/Setup readiness model before any Source readiness panel.
+1. Capture authenticated `/source` dashboard screenshot/manual review with the mission preview visible.
+2. If returning to UX, run only bounded mission preview polish or visual refinement, not event canvas expansion.
+3. Add authenticated route smoke coverage for the deterministic Source API and dashboard path.
+4. If continuing validation depth, plan upload/evidence pipeline contracts before implementing upload/parsing.
+5. If preparing pattern/runtime grounding, plan pattern manifest or section-to-context integration without generated JSON/runtime ingestion yet.
 
 ## 7. Explicit Do-Not-Build List
 
@@ -258,6 +257,11 @@ Keep active:
 - PR #249: Source architecture alignment reconciliation.
 - PR #250: Source agent mission queue plan.
 - PR #251: Agent mission activity UI plan.
+- PR #254: Deterministic Source agent mission read model.
+- PR #255: Source agent mission report formatter.
+- PR #256: Agent mission activity UI plan refresh.
+- PR #257: Source dashboard mission preview plan.
+- PR #259: Tiny deterministic Source dashboard mission preview.
 
 Post-merge planning notes:
 
