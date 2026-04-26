@@ -4551,6 +4551,57 @@
         "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
       ],
       "notes": "Documentation-only blueprint for a private-VNet, no-public-endpoint, secret-bounded Azure reference lab into which the AbarVa shell can later be deployed for validation. Defines Resource Group layout, VNet CIDR plan, app / data / private-endpoint / ingress / bastion subnets, Azure Container Apps (preferred) or App Service (fallback), Azure Database for PostgreSQL Flexible Server (private endpoint), Azure Blob Storage (private endpoint), Azure Key Vault (private endpoint, managed identity), Log Analytics + Application Insights, private ingress (Front Door Premium + Private Link Service or Application Gateway + WAF), private DNS zones for postgres / blob / vault privatelink hostnames, model gateway stub posture, environment variable contract, lab validation contract (smoke / DB round-trip / Blob round-trip / Key Vault secret retrieval / Application Insights log emission / private DNS resolution), and the progression path to a future Bicep / Terraform / azd slice. The lab proves private-VNet deployability, no public endpoints, secret-bounded operation, and observability path; it does NOT prove production scaling, DR, multi-region, live model gateway, production tenant isolation certification, or compliance. No IaC, no scripts, no application code, no model calls, no Azure ARM calls. production_deployment status is preserved (still blocked); the prod-deploy-verification blocker is preserved verbatim; lab build itself is deferred to a later Terraform / Bicep / azd slice."
+    },
+    {
+      "id": "OPS2",
+      "name": "Multi-Agent Dispatch Queue Automation Read Model",
+      "category": "OPS",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane G (parallel build pack)",
+      "dependsOn": [
+        "OPS1"
+      ],
+      "allowedFiles": [
+        "src/lib/ops/agent-dispatch-queue.ts",
+        "src/__tests__/integration/ops/agent-dispatch-queue.test.ts",
+        "docs/build/slices/OPS2_AGENT_DISPATCH_QUEUE_AUTOMATION_READ_MODEL.md",
+        "docs/build/agent-dispatch-queue.json",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/lib/agents/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/ops/agent-dispatch-queue.ts exports a canonical DISPATCH_QUEUE_STATES tuple covering all 7 lifecycle states (proposed, ready, blocked, in_progress, completed, failed, deferred), DispatchQueueItem / DispatchQueueState / DispatchQueueSummary / DispatchQueueRecommendation / DispatchQueueBlockReason types, and the helpers listDispatchQueueItems, getDispatchQueueItemsByState, getReadyDispatchItems, getBlockedDispatchItems, recommendNextBatch, and summarizeDispatchQueue.",
+        "The read model parses docs/build/agent-dispatch-queue.json synchronously through readFileSync + path.join(process.cwd(), ...) and normalizes the on-disk shape (status, dependsOn, laneType) into the stable view-model (state, dependencies, sourceLane, targetAgent).",
+        "Every emitted item carries createdFrom 'deterministic_dispatch_queue_read_model'; every recommendation carries the same provenance tag.",
+        "src/__tests__/integration/ops/agent-dispatch-queue.test.ts asserts the JSON parses, the canonical state vocabulary covers all 7 states, every item state in the seed is valid, getReadyDispatchItems returns only ready items, every blocked item carries a canonical blockReason, recommendNextBatch is deterministic and ordered by priority then conflict risk then dependency count then id, and summarizeDispatchQueue reconciles byState / byLane / byPriority / blockedReasonCounts totals against totalItems / readyCount / blockedCount.",
+        "Module hygiene asserted: no Sentinel / Atlas / Nexus / Agent / Source / Auth / Supabase imports; no Date.now / Math.random / new Date / fetch; no child_process / execSync / spawnSync; no spawn(/exec(/new Agent( patterns; no Anthropic / OpenAI runtime; no fabricated dollar amounts.",
+        "docs/build/slices/OPS2_AGENT_DISPATCH_QUEUE_AUTOMATION_READ_MODEL.md documents purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and production readiness impact.",
+        "docs/build/build-slices.json appends an OPS2 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn, status code_complete, risk low, and ownerAgent Lane G; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "docs/build/production-readiness.json validation_qa and production_deployment components append notes acknowledging that the OPS2 deterministic dispatch queue read model is added; statuses are preserved (no promotions); nextAction values are UNIONed conservatively without overwriting prior wording; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "No application code outside src/lib/ops/agent-dispatch-queue.ts and its companion test is modified; no runtime, auth, supabase, migrations, package manifests, or platform-design docs are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/ops/agent-dispatch-queue.test.ts",
+        "npm run build"
+      ],
+      "notes": "Deterministic, file-pure read model over the OPS1 dispatch queue manifest. Normalizes on-disk shape (status / dependsOn / laneType) into a stable view-model (state / dependencies / sourceLane / targetAgent), exposes ready/blocked filters, a deterministic recommendNextBatch helper ordered by priority then conflict risk then dependency count then id, and a totals-reconciling summary. No agent runtime, no model providers, no shell, no spawning. The agent-dispatch-queue.json manifest itself is consumed as-is in this slice."
     }
   ]
 }
