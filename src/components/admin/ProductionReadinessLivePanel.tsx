@@ -12,6 +12,8 @@ interface ProductionReadinessLivePanelProps {
   refreshIntervalMs?: number;
 }
 
+const DEFAULT_REFRESH_INTERVAL_MS = 60_000;
+
 const statusShellStyle: CSSProperties = {
   background: COLORS.surface,
   borderBottom: BORDER.hairline,
@@ -51,7 +53,7 @@ const mutedLabelStyle: CSSProperties = {
 
 export function ProductionReadinessLivePanel({
   initialResponse,
-  refreshIntervalMs = 30_000,
+  refreshIntervalMs = DEFAULT_REFRESH_INTERVAL_MS,
 }: ProductionReadinessLivePanelProps) {
   const [response, setResponse] = useState<ProductionReadinessApiResponse>(initialResponse);
   const [status, setStatus] = useState<RefreshStatus>('refreshed');

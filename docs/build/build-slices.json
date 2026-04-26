@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-04-25",
+  "lastUpdated": "2026-04-26",
   "lifecycle": [
     "ready",
     "in_progress",
@@ -1977,6 +1977,64 @@
       "notes": "Pure deterministic two-region canvas (left list + right preview) projected from the PDEL artifact inventory. No upload, no parse, no export, no model calls, no live download. PDEL5b/PDEL6 wire export and route-level selection state; PDEL7 wires edit / regenerate."
     },
     {
+      "id": "PDEL7",
+      "name": "HTML / Markdown Deliverable Viewer",
+      "category": "PDEL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "PDEL",
+        "PDEL5"
+      ],
+      "allowedFiles": [
+        "src/components/programs/DeliverableCanvasViewer.tsx",
+        "src/lib/programs/deliverable-canvas-view.ts",
+        "src/__tests__/integration/programs/deliverable-canvas-viewer.test.ts",
+        "docs/build/slices/PDEL7_DELIVERABLE_CANVAS_VIEWER.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "buildDeliverableCanvasView(programId, artifactId) is pure: JSON byte-equal across repeated calls for every (program, artifact) pair in the canonical demo seed.",
+        "Helper returns null when either programId or artifactId is unknown; never throws.",
+        "View carries title, phase, artifactType, renderMode in {html, markdown, rich_text_placeholder}, status, versionLabel (null today), evidenceStatus, missingInputs, generationLabel in {generated, uploaded}, previewBody (deterministic seed), disabledActions of length 4, honestDisclaimer, and createdFrom === 'deterministic_deliverable_view_seed'.",
+        "All three render modes (html, markdown, rich_text_placeholder) are observable across the canonical demo seed; no artifact resolves to a render mode outside this set.",
+        "All four canvas actions (edit, regenerate, download, approve) are returned with enabled === false, futureLabel === 'future', and a non-empty reason that includes 'not yet available' or 'deferred'.",
+        "Artifacts whose evidenceUsability !== 'usable' surface a missing-input entry naming evidence; every missing-input entry is a non-empty string.",
+        "Serialized view never contains http(s)://, blob:, data:application/, download?, /files/, .pdf path tokens, or E-### citation tokens.",
+        "DeliverableCanvasViewer.tsx is a server component (no 'use client', no useState, no useEffect, no useRef) and never uses dangerouslySetInnerHTML; root carries data-deliverable-canvas-viewer=\"pdel7\".",
+        "Action buttons render with disabled, aria-disabled=\"true\", and a sub-label naming the deferred destination.",
+        "View + component modules import nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch / anthropic / openai."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/deliverable-canvas-viewer.test.ts",
+        "npx jest src/__tests__/integration/programs/program-artifact-canvas.test.ts",
+        "npm run build"
+      ],
+      "notes": "Deterministic single-deliverable viewer projected from the PDEL artifact inventory. Server component only; never injects raw HTML. No live edit, no live regenerate, no live download, no live approval \u2014 every future action is rendered disabled with a deferred reason. Companion to PDEL5 (two-region canvas) within the program canvas; future export / edit / regenerate / approval slices flip individual action enablement without contract changes. Versioning binding is deferred until deliverable-versioning lands on this branch."
+    },
+    {
       "id": "HOME1",
       "name": "Agentic Executive Home / Entry Surface",
       "category": "HOME",
@@ -3840,6 +3898,354 @@
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
       "notes": "Founder-facing golden prompt harness contract + 43-prompt deterministic seed library covering all 10 product surfaces, all 4 agents (nexus / sentinel / atlas / steward) plus the system bucket, all 4 validation modes, with 15 sparse-context probes. Lane F output of the parallel build pack. No model calls, no live prompt execution, no server boot, no browser, no network. Companion to QA1 (Agentic Spine), QA2 (Solution Workshop), QA3 (Solution Intelligence), QA4 (Agent Mission Persona), and QA5 (Route Smoke Inventory). Execution wiring (CI gate, persona crawler integration, route-smoke composition, evidence-ledger probe, mission-queue probe, production-readiness validator integration) remains deferred."
+    },
+    {
+      "id": "MW5",
+      "name": "Meeting Notes to Program State Updates",
+      "category": "MW",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "MW1",
+        "MW2",
+        "MW4"
+      ],
+      "allowedFiles": [
+        "src/lib/programs/meeting-notes-to-program-updates.ts",
+        "src/__tests__/integration/programs/meeting-notes-to-program-updates.test.ts",
+        "docs/build/slices/MW5_MEETING_NOTES_TO_PROGRAM_UPDATES.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Module defines the canonical proposal-type union (action_proposal, risk_proposal, open_question_proposal, evidence_candidate_proposal, deliverable_update_proposal, gate_impact_proposal) and exports ProgramUpdateProposal as a discriminated union of those shapes.",
+        "Every proposal carries a source block with programKey, workshopType, workshopOrdinal, and noteId tying it back to the captured note.",
+        "Every proposal carries status: 'proposed' and createdFrom: 'deterministic_meeting_notes_seed'; no proposal is ever applied/committed/done.",
+        "deriveProgramUpdatesFromMeetingNotesCapture(notes) returns a deterministic byte-equal output across repeated calls and concatenates the per-type derivation helpers in canonical order.",
+        "deriveActionProposals emits one proposal per captured action item, preserving owner role, due-by label, and initial state.",
+        "deriveRiskProposals emits one proposal per captured risk and composes stronger rationale for high-impact risks.",
+        "deriveOpenQuestionProposals emits one proposal per blocking open question (skips questions whose blocks is unset or 'none').",
+        "deriveEvidenceCandidateProposals emits one proposal per captured evidence candidate, preserving the source label and needs-capture flag.",
+        "deriveDeliverableUpdateProposals emits draft_input_added / review_feedback / approval_blocked / rework_required proposals per the rules in the slice doc; falls back to a deterministic deliverable key when the source decision does not name one.",
+        "deriveGateImpactProposals emits gate_readiness_at_risk / gate_readiness_advanced / gate_signoff_blocked / gate_evidence_needed proposals mapped to the canonical G1-G4 gate by workshop type; every gate impact carries advisory: true.",
+        "summarizeProgramUpdateProposals reconciles totalProposals, byType, and per-type counts against the input list and always reports appliedProposals: 0.",
+        "Module is server-only (no 'use client', no React hooks) and uses no banned runtime APIs (no Date.now / Math.random / new Date / fetch / anthropic / openai imports).",
+        "Module imports nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/meeting-notes-to-program-updates.test.ts",
+        "npx jest src/__tests__/integration/programs/meeting-notes-capture.test.ts",
+        "npx jest src/__tests__/integration/programs/workshop-readiness.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic read model that turns the structured MW4 meeting note captures into proposed program-state updates the Maestro can review and confirm. Operationalizes MW1 section F (after-workshop synthesis) and section J (dynamic deliverable refinement loop). Proposals carry full provenance back to the source note + workshop, are always status 'proposed', never applied automatically. Gate impacts are advisory only and never advance, sign off, or block a gate by themselves. No model calls, no DB writes, no migrations, no audio, no transcription, no persistence. Apply-proposal flow lands when persistence + auth slices land."
+    },
+    {
+      "id": "PROG7",
+      "name": "Save / Stop / Resume Program State Read Model",
+      "category": "PROG",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "S9",
+        "MW2",
+        "MW4",
+        "PF2"
+      ],
+      "allowedFiles": [
+        "src/lib/programs/program-resume-state.ts",
+        "src/__tests__/integration/programs/program-resume-state.test.ts",
+        "docs/build/slices/PROG7_PROGRAM_RESUME_STATE.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Module exports buildProgramResumeState, buildAllProgramResumeStates, summarizeProgramResumeState, getNextResumeAction, and getBlockedResumeItems.",
+        "Module exports types ProgramResumeState, ProgramResumeCheckpoint, ProgramResumeSource, ProgramResumeRecommendation, ProgramResumeOpenItem, and ProgramResumeSummary.",
+        "Every demo program produces a deterministic resume state with id format 'prog-resume:<tenantKey>:<programSlug>' that is unique across the portfolio.",
+        "Every record carries createdFrom: 'deterministic_program_seed' and a non-empty nextRecommendedAction with label, routePath, and reason.",
+        "Resume state tracks lastActivePhase, lastActiveWorkshop, lastViewedArtifact, openActions, openQuestions, unresolvedEvidenceGaps, pendingGateChecks, draftDeliverables, nextRecommendedAction, and resumeConfidence (low/medium/high).",
+        "Items the seed cannot derive surface as openItems[].status === 'unknown' with an explicit honest reason; the test suite asserts at least one 'unknown' status appears across the portfolio.",
+        "Every active program records at least one open action OR open question, at least one unresolved evidence gap, and at least one pending gate check.",
+        "summarizeProgramResumeState reconciles totalCount, byConfidence, totalOpenActions, totalOpenQuestions, totalUnresolvedEvidenceGaps, totalPendingGateChecks, totalDraftDeliverables, and perTenant against the input.",
+        "getBlockedResumeItems returns only status === 'blocked' items and never promotes 'unknown' items to blocked.",
+        "Module imports nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase; does not call Date.now / Math.random / new Date / fetch; does not invoke Anthropic or OpenAI.",
+        "No string field in any resume state invents a dollar amount or claims an E-### evidence citation; no item carries a fake completed decision."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/program-resume-state.test.ts",
+        "npx jest src/__tests__/integration/programs/workshop-readiness.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic projection of (tenant, program) seed state into a per-program resume-state record. Operationalizes the save / stop / resume lifecycle named in the PF2 Program Phase Workspace contract and the MW1 Maestro Workshop Intelligence contract WITHOUT persistence. No DB writes, no migrations, no model calls, no timestamps. Items the seed cannot derive surface as 'unknown' rather than fabricated progress. Future slice mounts the read model on the canonical Programs detail surface and the Workshop Mode shell; live save / stop / resume persistence lands once auth + audit + persistence slices land."
+    },
+    {
+      "id": "MW6",
+      "name": "SME Recommendation Panel",
+      "category": "MW",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "MW1",
+        "MW2",
+        "PF1",
+        "SOL3"
+      ],
+      "allowedFiles": [
+        "src/lib/programs/sme-recommendations.ts",
+        "src/components/programs/SmeRecommendationPanel.tsx",
+        "src/__tests__/integration/programs/sme-recommendation-panel.test.ts",
+        "docs/build/slices/MW6_SME_RECOMMENDATION_PANEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Module defines SmeRole, SmeParticipationMode, SmeReadiness, SmeRecommendationReason, SmeRecommendation, SmeRecommendationSummary types and the canonical SME_ROLES_IN_ORDER list with twelve roles in canonical order.",
+        "buildSmeRecommendationsForWorkshop(workshop) returns at least three deterministic recommendations per workshop and always names client_maestro and abarva_maestro.",
+        "buildSmeRecommendationsForProgram(tenant, program) returns at least two deterministic recommendations per program and drops workshopId / workshopType to null.",
+        "Workshop-scoped recommendation ids match sme:<tenantKey>:<programSlug>:<workshopType>:<role> and are unique within a workshop set.",
+        "Roles are unique within a single workshop recommendation set; recommendation rosters differ across workshops within a single program (>=2 distinct rosters).",
+        "Every recommendation set carries at least one evidence-anchored reason and at least one failure-mode-anchored reason drawn from the PF1 pattern pack.",
+        "Every recommendation carries createdFrom: 'deterministic_sme_recommendation_seed' and a non-empty whyNeeded, phaseRationale, and suggestedFocus list.",
+        "summarizeSmeRecommendations reconciles byRole, byParticipationMode, and byReadiness counts to totalCount; empty input returns a zeroed summary.",
+        "No string field invents a real person-name token; only role labels, agent names, and AbarVa-prefixed proper nouns are allowed.",
+        "No string field invents a dollar amount or claims a real E-### evidence citation.",
+        "src/components/programs/SmeRecommendationPanel.tsx is a Server Component (no 'use client', no useState / useEffect / useMemo / useReducer / useCallback) and renders recommended SMEs, why needed, participation mode, workshop linkage, evidence/value/governance reason, and a deterministic-source caption.",
+        "Module + component import nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch; no anthropic / openai / pinecone references."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/sme-recommendation-panel.test.ts",
+        "npx jest src/__tests__/integration/programs/workshop-readiness.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic SME recommendation projection that consumes MW2 workshop readiness, PF1 failure modes, and the SOL3 archetype hint to compose a role-anchored shortlist for the next workshop. Server Component panel renders the recommendations with the calm AbarVa visual canon. No live SME directory, no calendar/booking, no real person names, no model calls. Future MW7 deliverable refinement loop wires this surface into the workshop-mode workflow; live SME directory and per-tenant SME library remain deferred."
+    },
+    {
+      "id": "PDEL6",
+      "name": "Deliverable Versioning MVP",
+      "category": "PDEL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "PDEL",
+        "PDEL5"
+      ],
+      "lastUpdated": "2026-04-26",
+      "allowedFiles": [
+        "src/lib/programs/deliverable-versioning.ts",
+        "src/__tests__/integration/programs/deliverable-versioning.test.ts",
+        "docs/build/slices/PDEL6_DELIVERABLE_VERSIONING_MVP.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "buildDeliverableVersionHistory is byte-equal across repeated calls for every canonical demo artifact.",
+        "Every version carries state, source, approvalState, changeReason, summary, honestFallback, evidenceBasis, and the canonical createdFrom = 'deterministic_deliverable_version_seed' marker.",
+        "Exactly one version is in the `current` state per artifact across every canonical demo program; getCurrentDeliverableVersion returns the unique row.",
+        "validateDeliverableVersionTransition returns true for canonical legal transitions (draft -> current/superseded/archived/rejected; current -> superseded/locked/archived/rejected; superseded/locked/rejected -> archived) and false for self-transitions, transitions out of `archived`, and resurrection paths back to `current`.",
+        "No version is emitted in the fully `approved` approval state in MVP; signed-off artifacts produce a v2 row with approvalState = 'approved_with_conditions' and changeReason = 'approval_promotion'.",
+        "evidenceBasis.evidenceCount is always 0 in MVP; hasEvidence is true only when the upstream artifact's evidenceUsability === 'usable'; otherwise missingEvidence has at least one entry.",
+        "No `https://`, no `E-###` citation tokens, and no `$<digit>` dollar fabrications appear anywhere in the serialized version history.",
+        "Module imports nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch / anthropic / openai / useState / useEffect."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/deliverable-versioning.test.ts",
+        "npx jest src/__tests__/integration/programs/program-artifact-inventory.test.ts",
+        "npx jest src/__tests__/integration/programs/program-artifact-canvas.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic deliverable version read-model: types + helpers (buildDeliverableVersionHistory, summarizeDeliverableVersions, getCurrentDeliverableVersion, validateDeliverableVersionTransition, createDeterministicVersionSeed). Read-model only \u2014 does not generate deliverables, export files, or write to any database. Steward verdict (`approved`), edit/regenerate flow, persistence, and canvas timeline UI are deferred to PDEL7+ and to the production write-path slices."
+    },
+    {
+      "id": "PDEL8",
+      "name": "Deliverable Evidence Trace Panel",
+      "category": "PDEL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "PDEL",
+        "EVID2",
+        "EVID3"
+      ],
+      "allowedFiles": [
+        "src/lib/programs/deliverable-evidence-trace.ts",
+        "src/components/programs/DeliverableEvidenceTracePanel.tsx",
+        "src/__tests__/integration/programs/deliverable-evidence-trace.test.ts",
+        "docs/build/slices/PDEL8_DELIVERABLE_EVIDENCE_TRACE_PANEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "buildDeliverableEvidenceTrace returns byte-equal output across repeated calls for any (artifact, ledger) pair.",
+        "Canonical trace status tuple is ['supported', 'partially_supported', 'unsupported', 'missing', 'stale', 'blocked'] in this order.",
+        "createdFrom is the canonical literal 'deterministic_evidence_trace_seed'.",
+        "Every supported claim resolves to an `evid-seed-` prefixed id from EVID2 whose state is usable_as_evidence (no fabricated citations).",
+        "Every blocked claim emits a non-empty blockReason carried verbatim from EVID2.",
+        "Stale-flagged matching entries downgrade the trace status; status is `stale` when only stale entries match and `partially_supported` when stale entries co-exist with usable entries.",
+        "Approval implication is advisory only (advisoryOnly === true) and never flips an artifact approval status.",
+        "Summary counts reconcile to the per-bucket claim arrays.",
+        "Server Component DeliverableEvidenceTracePanel renders supported / partial / unsupported / stale / blocked claim groups, source artifacts list, approval implication block, and a deterministic-source footer caption.",
+        "Component root carries data-deliverable-evidence-trace-panel=\"pdel8\" and data-trace-status={trace.status}.",
+        "View + component modules import nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch / anthropic / openai / useState / useEffect.",
+        "Serialized traces contain no `https://` URLs and no production-shaped `E-\\d{2,}` citation tokens."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/deliverable-evidence-trace.test.ts",
+        "npx jest src/__tests__/integration/architecture/evidence-claim-support.test.ts",
+        "npx jest src/__tests__/integration/programs/program-artifact-canvas.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic projection of a (program-deliverable artifact, EVID2 ledger) pair into a six-status trace with supported / partial / unsupported / stale / blocked claim groups, source artifact rollup, and an advisory approval implication. No DB writes, no live retrieval, no model invocation. Approval state machine and live evidence registry binding remain deferred to PDEL9 / PDEL10."
+    },
+    {
+      "id": "QA7",
+      "name": "Program Continuity + Deliverable Verification Runbook",
+      "category": "QA",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane H (parallel build pack)",
+      "dependsOn": [
+        "PW1",
+        "PDEL5"
+      ],
+      "allowedFiles": [
+        "docs/build/PROGRAM_CONTINUITY_DELIVERABLE_VERIFICATION_RUNBOOK.md",
+        "docs/build/slices/QA7_PROGRAM_CONTINUITY_DELIVERABLE_VERIFICATION.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "docs/build/PROGRAM_CONTINUITY_DELIVERABLE_VERIFICATION_RUNBOOK.md documents \u00a7A purpose and scope (PW1, PDEL5 required; MW5, MW6, PROG7, PDEL6, PDEL7, PDEL8 conditional / deferred), \u00a7B branch hygiene (worktree per slice, lane agents commit only, integration agent merges), \u00a7C required validation commands (npx tsc --noEmit --pretty false, npm run build, JSON validity, plus per-slice jest paths), \u00a7D persona walks, \u00a7E route coverage table including /tenant/apex-retail/programs, /tenant/apex-retail/programs/[programSlug], and /platform/admin/production-readiness, \u00a7F program continuity verification, \u00a7G deliverable verification, \u00a7H no-fabrication checks, \u00a7I production-readiness tracker verification, \u00a7J morning review and PR merge rules, and \u00a7K branch hygiene appendix.",
+        "Program continuity checks include workshop mode shell visible (PW1), meeting notes update proposals deterministic (MW5 if installed), SME recommendations visible (MW6 if installed), resume state present (PROG7 if installed), no fake decisions, and no fake timestamps.",
+        "Deliverable checks include artifact canvas visible (PDEL5), deliverable viewer visible (PDEL7 if installed), version state visible (PDEL6 if installed), evidence trace visible (PDEL8 if installed), and all future actions disabled (edit / regenerate / download / approve).",
+        "No-fabrication checks include no fake citations, no fake approvals, no fake dollar amounts, and no live model claim (gateway is contract-only).",
+        "Production readiness tracker checks list relevant components updated (programs, program_workshop_mode, deliverables_artifacts, data_evidence_knowledge_fabric, production_deployment, validation_qa) and confirm no false production_ready promotions.",
+        "docs/build/slices/QA7_PROGRAM_CONTINUITY_DELIVERABLE_VERIFICATION.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and readiness impact, and references the runbook by relative path.",
+        "docs/build/build-slices.json appends a QA7 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn, status code_complete, risk low, and ownerAgent Lane H; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "docs/build/production-readiness.json validation_qa component appends a note acknowledging that the QA7 program continuity + deliverable verification runbook is added; status is preserved (no promotion); validation_qa.nextAction is UNIONed conservatively without overwriting prior QA1\u2013QA6 wording; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "Documentation only; no application code, runtime, auth, supabase, migrations, package manifests, or platform-design docs are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Founder-facing checklist for verifying program continuity (PW1 workshop mode shell, MW4 meeting notes capture, MW5 update proposals, MW6 SME recommendations, PROG7 resume state) and deliverable surfaces (PDEL5 artifact canvas, PDEL7 viewer, PDEL6 version state, PDEL8 evidence trace) land honestly before push or PR. Seventh founder-facing runbook after QA1 (Agentic Spine), QA2 (Solution Workshop), QA3 (Solution Intelligence), QA4 (Agent Mission Persona), QA5 (Route Smoke Inventory), and QA6 (Golden Prompt Harness Contract + Seed). Documentation only. Deterministic \u2014 does not exercise live retrieval or model calls. MW5 / MW6 / PROG7 / PDEL6 / PDEL7 / PDEL8 are explicitly conditional: each row is verified only if the matching slice has landed in the batch under review. Default policy for unsupervised batch runs: lane agents commit only; integration agent owns cherry-picks and merges; founder owns the push and merge decisions."
     }
   ]
 }
