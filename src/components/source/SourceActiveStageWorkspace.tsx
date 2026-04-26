@@ -1,6 +1,10 @@
 import { SOURCE_ARTIFACT_STATUS_LABELS } from '@/lib/source/constants';
 import { getActiveStage, getStageStateLabel } from '@/lib/source/lifecycle';
-import type { SourceAgentMission, SourceAgentMissionReport } from '@/lib/source';
+import {
+  buildSourceDataReadinessProjectionFromAdminSetup,
+  type SourceAgentMission,
+  type SourceAgentMissionReport,
+} from '@/lib/source';
 import type { SourcingEventDetail } from '@/lib/source/types';
 import type { CSSProperties, ReactNode } from 'react';
 import { EXPERIENCE_COLORS, FONTS, TEXT } from '@/lib/design-system';
@@ -20,6 +24,13 @@ export function SourceActiveStageWorkspace({
   const requiredInputs = getRequiredInputsForStage(event);
   const missingInputs = getMissingInputsForStage(event);
   const artifactPlaceholders = event.artifacts.slice(0, 3);
+  const dataReadinessProjection = buildSourceDataReadinessProjectionFromAdminSetup({ eventId: event.id });
+  const dataReadinessItems = dataReadinessProjection.items.length > 0
+    ? dataReadinessProjection.items
+    : event.dataReadiness;
+  const dataReadinessSummary = dataReadinessProjection.items.length > 0
+    ? dataReadinessProjection.summary
+    : undefined;
 
   return (
     <section
@@ -100,7 +111,7 @@ export function SourceActiveStageWorkspace({
           </div>
         </div>
 
-        <SourceDataReadinessPanel items={event.dataReadiness} />
+        <SourceDataReadinessPanel items={dataReadinessItems} progressSummary={dataReadinessSummary} />
       </div>
 
       <div style={INSET}>

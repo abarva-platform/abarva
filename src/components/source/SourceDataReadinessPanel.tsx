@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { EXPERIENCE_COLORS, FONTS, TEXT } from '@/lib/design-system';
+import type { SourceDataReadinessProgressSummary } from '@/lib/source/admin-setup-readiness-contract';
 import type {
   SourceDataReadinessItem,
   SourceDataReadinessState,
@@ -8,7 +9,13 @@ import type {
 } from '@/lib/source/types';
 import { sourceMuted, sourceSectionLabel } from './foundationStyles';
 
-export function SourceDataReadinessPanel({ items }: { items: SourceDataReadinessItem[] }) {
+export function SourceDataReadinessPanel({
+  items,
+  progressSummary,
+}: {
+  items: SourceDataReadinessItem[];
+  progressSummary?: SourceDataReadinessProgressSummary;
+}) {
   const requiredItems = items.filter((item) => item.requirementLevel === 'required');
   const missingRequiredItems = requiredItems.filter((item) => item.evidenceUsability === 'not_available');
   const usableItems = items.filter((item) => item.evidenceUsability === 'usable');
@@ -28,11 +35,44 @@ export function SourceDataReadinessPanel({ items }: { items: SourceDataReadiness
           </div>
         </div>
         <div style={SUMMARY_STRIP} aria-label="Data readiness summary">
+          {progressSummary ? (
+            <SummaryMetric
+              label="progress"
+              value={`${progressSummary.readinessPercent}%`}
+              tone={progressSummary.missingRequiredItems > 0 ? 'watch' : 'default'}
+            />
+          ) : null}
           <SummaryMetric label="usable" value={usableItems.length} />
           <SummaryMetric label="required gaps" value={missingRequiredItems.length} tone="risk" />
           <SummaryMetric label="cautions" value={cautionItems.length} tone="watch" />
         </div>
       </div>
+
+      {progressSummary ? (
+        <div style={PROGRESS_PANEL} aria-label="Event data readiness progress">
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'baseline' }}>
+            <div style={{ display: 'grid', gap: 3 }}>
+              <div style={{ fontWeight: 800, color: EXPERIENCE_COLORS.textPrimary }}>
+                {progressSummary.progressLabel}
+              </div>
+              <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
+                Admin/Setup readiness contract projection. {progressSummary.progressBasis}
+              </div>
+            </div>
+            <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary, fontWeight: 800 }}>
+              {progressSummary.requiredItems - progressSummary.missingRequiredItems}/{progressSummary.requiredItems} required present
+            </div>
+          </div>
+          <div style={PROGRESS_TRACK} aria-hidden="true">
+            <div
+              style={{
+                ...PROGRESS_FILL,
+                width: `${Math.max(0, Math.min(100, progressSummary.readinessPercent))}%`,
+              }}
+            />
+          </div>
+        </div>
+      ) : null}
 
       <p style={{ ...sourceMuted, color: EXPERIENCE_COLORS.textSecondary, margin: 0 }}>
         Source consumes Admin/Setup readiness and turns data gaps into sourcing impact. Loaded and Available
@@ -115,7 +155,7 @@ function SummaryMetric({
   tone = 'default',
 }: {
   label: string;
-  value: number;
+  value: number | string;
   tone?: 'default' | 'risk' | 'watch';
 }) {
   return (
@@ -202,6 +242,28 @@ const SUMMARY_STRIP: CSSProperties = {
   flexWrap: 'wrap',
   gap: 8,
   justifyContent: 'flex-end',
+};
+
+const PROGRESS_PANEL: CSSProperties = {
+  display: 'grid',
+  gap: 8,
+  border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  borderRadius: 10,
+  background: EXPERIENCE_COLORS.surface,
+  padding: '10px 12px',
+};
+
+const PROGRESS_TRACK: CSSProperties = {
+  height: 7,
+  borderRadius: 999,
+  overflow: 'hidden',
+  background: 'rgba(27,44,70,0.08)',
+};
+
+const PROGRESS_FILL: CSSProperties = {
+  height: '100%',
+  borderRadius: 999,
+  background: EXPERIENCE_COLORS.accentBlue,
 };
 
 const SUMMARY_METRIC: CSSProperties = {
