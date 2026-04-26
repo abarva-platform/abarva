@@ -6114,6 +6114,58 @@
         "npx eslint src/lib/admin/evidence-manifest-model.ts src/__tests__/integration/admin/evidence-manifest-model.test.ts --max-warnings=0"
       ],
       "notes": "Pure deterministic evidence manifest read model that defines how a client supplies evidence to AbarVa by manifest only \u2014 never by raw data copy. Each manifest entry names a metric, a labelled string value (never raw), the named source owner (role + system), a bounded ISO date range, the verification posture (self_attested / owner_signed / co_signed / audited), and a free-form label pointing to where the underlying data lives on the client side. rawRetainedByClient is structurally true on every entry. Seven canonical metric kinds (count, rate, currency, duration, percentage, category, narrative) and four canonical verification states. Validator rejects raw payloads (long alphanumeric blobs and http/https URLs), inverted date ranges, missing source owner, non-canonical kinds / verifications, and forced rawRetainedByClient overrides. No DB writes, no migrations, no live runtime, no audit ledger writes, no model invocation, no Steward runtime; the future Steward UI and runtime gateway will consume this read model before any client evidence is cited."
+    },
+    {
+      "id": "DATA6",
+      "name": "Provider-Agnostic Vector / Search Contract",
+      "category": "DATA",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane D (wave3 data parallel pack)",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "TEN2"
+      ],
+      "allowedFiles": [
+        "src/lib/architecture/vector-search-provider-contract.ts",
+        "src/__tests__/integration/architecture/vector-search-provider-contract.test.ts",
+        "docs/build/slices/DATA6_PROVIDER_AGNOSTIC_VECTOR_SEARCH_CONTRACT.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "src/app/**",
+        "src/components/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Module exports VectorSearchProviderKind union over the 4 canonical provider kinds (pgvector, azure_ai_search, alloydb_cloud_sql_vector, pinecone_like_generic), VectorSearchCapability union over the 6 canonical capabilities (similarity_search, hybrid_search, metadata_filter, reranking, tenant_isolation, index_management), VectorSearchTenantIsolationModel union over the 3 canonical isolation models (logical_namespace, physical_separation, index_per_tenant), and the VectorSearchProviderProfile / VectorSearchAdapterContract / VectorSearchProviderSummary interfaces.",
+        "Every provider profile carries kind, description, capabilities (subset of the 6 canonical capabilities), tenantIsolationModel (one of the 3 canonical models), auditHooks (non-empty ReadonlyArray<string>), requiredEnvVars (non-empty ReadonlyArray<string>), and liveExecution === false; every adapter contract carries createdFrom === 'deterministic_vector_search_provider_seed' and liveBinding === false.",
+        "Helpers listVectorSearchProviders(), buildVectorSearchProviderRegistry(), and summarizeVectorSearchProviders() are byte-equal deterministic across consecutive invocations and reconcile with the canonical lists; getVectorSearchProviderProfile returns the canonical profile for a known kind and null for unknown / empty input.",
+        "Integration test asserts all 4 provider kinds present, all 6 capabilities representable, all 3 tenant-isolation models present, byte-equal determinism across calls, and module hygiene: no provider SDK imports (@pinecone-database, @azure/search-documents, pg, @google-cloud/*, openai, @anthropic-ai/*, axios), no fetch( / http( / axios runtime calls, no Date.now / Math.random / new Date(, no React hooks, no placeholder copy, no forbidden runtime imports (sentinel / atlas / nexus / source / agent / auth / supabase).",
+        "Slice documentation explains the contract scope, names the per-provider capabilities and tenant-isolation models, lists out-of-scope items (no live provider calls, no connector binding, no production-readiness promotion, no UI, no migrations), and lists the validation commands.",
+        "production-readiness.json data_evidence_knowledge_fabric notes / nextAction are UNION-updated conservatively without overwriting prior wording; no component status promotion; manifest top-level lastUpdated remains 2026-04-26."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/vector-search-provider-contract.test.ts",
+        "npx eslint --max-warnings=0 src/lib/architecture/vector-search-provider-contract.ts src/__tests__/integration/architecture/vector-search-provider-contract.test.ts",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Provider-agnostic vector / search contract. Pure type-only / data-only module: zero runtime, no provider SDK, no fetch / http / axios, no Date / random / live retrieval, no UI, no migrations, no auth / source / sentinel / atlas / nexus / agent / supabase imports. Names the providers (pgvector, Azure AI Search, AlloyDB / Cloud SQL vector, generic Pinecone-like), capabilities, tenant-isolation models, audit hooks, and env vars the live retrieval runtime must enforce regardless of which provider is wired up. data_evidence_knowledge_fabric status is preserved (still scaffolded); future live adapter binding is deferred to a follow-up slice."
     }
   ]
 }
