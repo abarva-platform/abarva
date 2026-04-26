@@ -848,7 +848,8 @@
       "notes": [
         "No fake Evidence Ledger status is emitted.",
         "CTX2 unified context builder MVP added (src/lib/architecture/unified-context-builder.ts) \u2014 deterministic projection of programs/canonical-view, sentinel-pattern-detections, and solution-archetype-registry into a twelve-section Unified Context Pack; evidence/conversation/datasets sections honestly empty pending live wiring.",
-        "CTX3 mission-context bridge added (src/lib/architecture/mission-context-bridge.ts) \u2014 deterministic projection from AG10 missions to CTX2 packs that maps program/phase/workshop/artifact/pattern work-object kinds to CTX2 scopes; tower_dimension, dataset_domain, sourcing_event, and vendor_response work-object kinds are honestly surfaced as 'work_object_unsupported' gaps until a future CTX slice widens the supported set."
+        "CTX3 mission-context bridge added (src/lib/architecture/mission-context-bridge.ts) \u2014 deterministic projection from AG10 missions to CTX2 packs that maps program/phase/workshop/artifact/pattern work-object kinds to CTX2 scopes; tower_dimension, dataset_domain, sourcing_event, and vendor_response work-object kinds are honestly surfaced as 'work_object_unsupported' gaps until a future CTX slice widens the supported set.",
+        "EVID3 claim-support evaluator added (src/lib/architecture/evidence-claim-support.ts) \u2014 deterministic evaluator over EVID2 entries returning one of seven canonical support statuses; no NLP, no live retrieval, and no fabricated citations (works strictly with evid-seed- prefixed ids)."
       ]
     },
     {
@@ -1183,7 +1184,8 @@
       "nextAction": "Promote audit ledger from contract/demo state to tenant-bound production persistence and review. Live evidence pipeline and persistence remain deferred (EVID2 is seed-only).",
       "notes": [
         "Demo-grade ledgers are not production audit readiness.",
-        "EVID2 Evidence Ledger MVP read model is now wired alongside the audit/governance contract surface (deterministic seed entries; no production audit ledger)."
+        "EVID2 Evidence Ledger MVP read model is now wired alongside the audit/governance contract surface (deterministic seed entries; no production audit ledger).",
+        "EVID3 claim-support evaluator surfaces unsupported and contradicted claims for audit visibility; outputs are deterministic and tagged 'evidence_claim_support_v1'. No production audit ledger is implied or produced."
       ]
     },
     {

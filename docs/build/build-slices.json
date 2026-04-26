@@ -2490,6 +2490,53 @@
       "notes": "Deterministic, file-pure read model that demonstrates the canonical Evidence Ledger usability lifecycle. Companion to EVID1 contract. No model calls, no migrations, no persistence, no live citation resolution. Lane D output of the parallel build pack."
     },
     {
+      "id": "EVID3",
+      "name": "Evidence Claim Support Model",
+      "category": "EVID",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Steward",
+      "dependsOn": [
+        "EVID2"
+      ],
+      "allowedFiles": [
+        "src/lib/architecture/evidence-claim-support.ts",
+        "src/__tests__/integration/architecture/evidence-claim-support.test.ts",
+        "docs/build/slices/EVID3_EVIDENCE_CLAIM_SUPPORT_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/architecture/evidence-claim-support.ts exports the canonical EVIDENCE_CLAIM_SUPPORT_STATUSES tuple in canonical order ('supported', 'partially_supported', 'unsupported', 'contradicted', 'missing_evidence', 'stale_evidence', 'out_of_scope').",
+        "Module exports EvidenceSupportedClaim, EvidenceClaimGap, EvidenceClaimContradiction, EvidenceClaimSupportResult, and EvidenceClaimSupportSummary types and helpers evaluateClaimSupport, evaluateClaimsForWorkObject, summarizeClaimSupport, and getUnsupportedClaims.",
+        "evaluateClaimSupport applies tenant filter, work-object filter, contradiction sweep, blocked-only check, stale-only check, intermediate-only check, and usable-with-expected-ids check in fixed order; every result carries basis.evaluator 'evidence_claim_support_v1' and createdFrom 'deterministic_seed'.",
+        "Linkage rule: program/phase/workshop/artifact -> linkedPrograms; pattern/tower_dimension -> linkedPatterns; dataset_domain -> linkedDatasetDomains. Stale signal: case-insensitive substring 'stale' in qualityNotes. Contradiction signal: substring 'contradicts <claimId>' in entry.claim.text or qualityNotes.",
+        "evaluateClaimsForWorkObject returns one result per claim in input order with byte-equal serialized output across repeated calls; summarizeClaimSupport reconciles totals, byStatus, unsupportedCount (unsupported + missing_evidence + stale_evidence), contradictedCount, and averageConfidenceLabel; getUnsupportedClaims returns only unsupported, missing_evidence, stale_evidence, and contradicted results.",
+        "Module has no imports from @/lib/sentinel|atlas|nexus|agent|source|auth or supabase, no Date.now / Math.random / new Date( / fetch(, no anthropic / openai, no useState / useEffect, no Coming soon / TBD / Lorem ipsum, and no production-shaped /E-\\d{2,}/ tokens in source or serialized results.",
+        "Test suite at src/__tests__/integration/architecture/evidence-claim-support.test.ts is fully green and covers all seven status branches, deterministic bulk evaluation, summary reconciliation including empty-input case, getUnsupportedClaims partition, no-fabrication serialized output, and module hygiene.",
+        "Production readiness manifest is updated to acknowledge the EVID3 claim-support evaluator under data_evidence_knowledge_fabric and audit_governance without promoting any component; all other manifest fields are preserved exactly."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/evidence-claim-support.test.ts",
+        "npx jest src/__tests__/integration/architecture/evidence-ledger-mvp.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Deterministic, file-pure evaluator over EVID2 entries that scores claim support with seven canonical statuses. Imports only from @/lib/architecture/evidence-ledger-mvp. No model calls, no NLP, no live retrieval, no fabricated citations. Lane D output of the parallel build pack."
+    },
+    {
       "id": "AG10",
       "name": "Agent Mission Queue Read Model",
       "category": "AG",
