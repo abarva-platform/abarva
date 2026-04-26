@@ -7563,6 +7563,13 @@
       "description": "Enforce canonical Source route shell ownership and expose deterministic commercial workflow stages on active Source routes."
     },
     {
+      "id": "PROG16",
+      "title": "Source Event Chip on Program Action Strip",
+      "status": "code_complete",
+      "wave": "wave-19",
+      "lane": "E"
+    },
+    {
       "id": "DESROUTE5",
       "wave": "wave-17a",
       "name": "Program Shell Enforcement",

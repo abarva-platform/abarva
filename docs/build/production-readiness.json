@@ -376,7 +376,8 @@
         "PROG11 (wave-18): PhaseGateCanvas + view-model. 6-phase rail (discovery\u2192operate), current gate card with requirements/missing inputs/Steward implication. No transitions performed. 14 tests.",
         "PROG12 (wave-18): NexusWorkshopCanvas \u2014 5-item agenda, 5-attendee roster, tensions, decisions needed, evidence to capture, expected outputs. No live notes. 15 tests.",
         "PROG13 (wave-18): ProgramDeliverablesEvidencePanel \u2014 14 deliverables across 6 phases, evidence coverage % bar, current deliverable highlight. No fake downloads/approvals. 16 tests.",
-        "PROG14 (wave-18): ProgramActionMissionStrip \u2014 resume action, top 3 next actions, 4 agent missions, blocked items. No live execution. 15 tests."
+        "PROG14 (wave-18): ProgramActionMissionStrip \u2014 resume action, top 3 next actions, 4 agent missions, blocked items. No live execution. 15 tests.",
+        "PROG16 (wave-19): SourceEventChip \u2014 compact chip on ProgramFlagshipPage surfacing linked Source AMS event for APX-CDP-2026. Shows commercial readiness state, top blocker, route hint. Deterministic seed. Wired additively in ProgramFlagshipPage Section 2b. 9 tests."
       ]
     },
     {
