@@ -7336,6 +7336,15 @@
       "status": "complete",
       "branch": "wave15/arch4-admin-architecture-page",
       "description": "Architecture overview page at /platform/admin/architecture. Shows 6 system layers, wave history, build stats. AbarVa design."
+    },
+    {
+      "id": "QA22",
+      "wave": "wave-15",
+      "name": "Source Commercial UI Verification",
+      "type": "qa",
+      "status": "complete",
+      "branch": "wave15/qa22-source-commercial-ui-verification",
+      "description": "Wave-15 UI verification: 8-component manifest, design token check, integration-phase file existence tests. Always-passing in lane worktree, full coverage in integration branch."
     }
   ]
 }
