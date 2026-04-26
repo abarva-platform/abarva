@@ -622,7 +622,8 @@
       "nextAction": "Complete a manual Tower walk and decide which production signal source should become the first persisted feed.",
       "notes": [
         "The Tower surface is deterministic today.",
-        "AG12 mounts the AG11 Agent Mission Panel on ProgramPressureCards with variant 'executive_brief' and the {atlas, steward} surface filter, capped at 3 deterministic missions; no live Atlas runtime, no model call, no persistence."
+        "AG12 mounts the AG11 Agent Mission Panel on ProgramPressureCards with variant 'executive_brief' and the {atlas, steward} surface filter, capped at 3 deterministic missions; no live Atlas runtime, no model call, no persistence.",
+        "ACT2 AI portfolio inventory dimension added as a deterministic seed-only read model (src/lib/tower/ai-portfolio-inventory.ts); no live integrations and no per-tenant binding yet."
       ]
     },
     {

@@ -3050,6 +3050,58 @@
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
       "notes": "Pure deterministic projection that joins AG10 missions to CTX2 unified context packs. Maps the five supported AG10 work-object kinds (program, phase, workshop, artifact, pattern) into CTX2's three v1 WorkObjectType values, and honestly surfaces the four unsupported kinds (tower_dimension, dataset_domain, sourcing_event, vendor_response) as 'work_object_unsupported' with an explanatory gap. No model calls, no migrations, no persistence, no live retrieval. Lane C output of the parallel build pack."
+    },
+    {
+      "id": "ACT2",
+      "name": "AI Portfolio Inventory Read Model",
+      "category": "ACT",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "ACT1"
+      ],
+      "allowedFiles": [
+        "src/lib/tower/ai-portfolio-inventory.ts",
+        "src/__tests__/integration/tower/ai-portfolio-inventory.test.ts",
+        "docs/build/slices/ACT2_AI_PORTFOLIO_INVENTORY_READ_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**",
+        "src/app/demo/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Module src/lib/tower/ai-portfolio-inventory.ts exports the canonical AI_USE_CASE_STAGES tuple ('idea', 'discovery', 'pilot', 'production', 'scaled', 'retired', 'blocked') plus the AiUseCaseStage / AiUseCaseRiskLevel / AiUseCaseValueReadiness / AiUseCaseAdoptionStatus / AiUseCaseDataReadiness / AiUseCaseGovernanceStatus enum types, AiUseCaseOwner, AiUseCaseInventoryItem, AiPortfolioInventorySummary, and the helpers buildAiPortfolioInventory, summarizeAiPortfolioInventory, getAiUseCasesByStage, getBlockedAiUseCases, getValueReadinessGaps.",
+        "buildAiPortfolioInventory returns at least 18 deterministic seed records, with at least 2 records per canonical stage and at least 6 unique business functions.",
+        "At least 2 production records carry valueReadiness 'measured_in_production'; at least 2 records carry governanceStatus 'flagged'.",
+        "Every blocked record carries a non-empty blockerReason; every record carries at least one technology stack entry; every record carries createdFrom 'deterministic_ai_portfolio_seed'; every record id matches the canonical 'ai-use-case-seed-{n}' shape and ids are unique.",
+        "summarizeAiPortfolioInventory reconciles totals (byStage and byRiskLevel sum to totalUseCases), exposes every canonical stage and risk-level key (zero allowed), reports blockedCount equal to byStage.blocked, reports measuredInProductionCount and ungovernedCount that agree with their defining filters, and returns uniqueBusinessFunctions and uniqueTechnologyStacks sorted ascending and de-duplicated.",
+        "getAiUseCasesByStage('blocked') matches getBlockedAiUseCases; getValueReadinessGaps returns only items whose valueReadiness is 'unmeasured' or 'declined' and excludes items whose readiness is measured / projected / in_pilot_measurement.",
+        "Seed contains no invented dollar amounts (regex \\$\\s*\\d on JSON.stringify), no branded vendor endorsements (deny-list OpenAI / Anthropic / Cohere / Mistral / Databricks / Snowflake / Microsoft Copilot / GitHub Copilot), and no banned placeholder language (Coming soon / TBD / Lorem ipsum); module source has no imports from src/lib/source / sentinel / atlas / nexus / agent / auth or supabase, and no Date.now / Math.random / new Date( / fetch( / anthropic / openai / useState / useEffect.",
+        "Test suite at src/__tests__/integration/tower/ai-portfolio-inventory.test.ts is green and enforces shape, determinism, stage coverage, per-row invariants, distribution constraints, summary reconciliation, helper behaviors, no-fabrication invariants, and module hygiene.",
+        "Production readiness manifest is updated with a note acknowledging the ACT2 AI portfolio inventory dimension under ai_control_tower; ai_control_tower status is preserved (no promotion); manifest top-level lastUpdated reflects this change."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/tower/ai-portfolio-inventory.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Operationalizes dimension #1 (AI Portfolio Inventory) of the ACT1 AI Control Tower contract. Deterministic seed-only read model. No live integrations, no per-tenant inventory binding, no Atlas brief composition, no Tower UI \u2014 those land in ACT2.x, ACT9, and ACT10. Conservative manifest update: ai_control_tower component is not promoted."
     }
   ]
 }
