@@ -5,6 +5,7 @@ import type { SourcingEventDetail } from '@/lib/source/types';
 import type { CSSProperties, ReactNode } from 'react';
 import { EXPERIENCE_COLORS, FONTS, TEXT } from '@/lib/design-system';
 import { sourceCard, sourceMuted, sourceSectionLabel } from './foundationStyles';
+import { SourceDataReadinessPanel } from './SourceDataReadinessPanel';
 
 export function SourceActiveStageWorkspace({
   event,
@@ -99,15 +100,7 @@ export function SourceActiveStageWorkspace({
           </div>
         </div>
 
-        <div style={{ ...INSET, alignSelf: 'start' }} aria-label="Data readiness placeholder">
-          <div style={{ ...sourceSectionLabel, color: EXPERIENCE_COLORS.accentTeal }}>Data readiness</div>
-          <p style={{ ...sourceMuted, color: EXPERIENCE_COLORS.textSecondary, margin: 0 }}>
-            Source consumes Admin/Setup readiness and translates data gaps into sourcing impact.
-          </p>
-          <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.riskAmber, fontWeight: 800 }}>
-            Current posture: baseline evidence missing.
-          </div>
-        </div>
+        <SourceDataReadinessPanel items={event.dataReadiness} />
       </div>
 
       <div style={INSET}>
