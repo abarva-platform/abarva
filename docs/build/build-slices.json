@@ -7197,6 +7197,19 @@
         "src/__tests__/integration/source/intelligence-patterns.test.ts"
       ],
       "completedAt": "2026-04-26"
+    },
+    {
+      "id": "SRC18",
+      "wave": "wave-14",
+      "title": "Source Commercial Mission Queue",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "Deterministic commercial mission queue with 10 mission types, 5 owner agents, priority ordering, and blocking relationships. No scheduler, no persistence.",
+      "files": [
+        "src/lib/source/commercial-mission-queue.ts",
+        "src/__tests__/integration/source/commercial-mission-queue.test.ts"
+      ],
+      "completedAt": "2026-04-26"
     }
   ]
 }
