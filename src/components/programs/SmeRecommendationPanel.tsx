@@ -10,6 +10,7 @@
 // src/lib/nexus/**, src/lib/agent/**, src/lib/source/**,
 // src/lib/auth/**, supabase/**, or src/lib/programs/mock.ts.
 
+import { COLORS, FONT } from '@/lib/design/abarva-theme';
 import type {
   SmeParticipationMode,
   SmeReadiness,
@@ -18,24 +19,8 @@ import type {
 } from '@/lib/programs/sme-recommendations';
 import { summarizeSmeRecommendations } from '@/lib/programs/sme-recommendations';
 
-const COLORS = {
-  ink: '#0A0C12',
-  body: '#1F2433',
-  muted: '#525866',
-  mutedSoft: '#8B91A1',
-  border: '#E8E6E1',
-  borderSoft: '#F0EEEA',
-  card: '#FFFFFF',
-  surface: '#FBFAF7',
-  surface2: '#F5F3EE',
-  navy: '#1B2B5C',
-  navySoft: 'rgba(27, 43, 92, 0.08)',
-  amber: '#B45309',
-  amberSoft: 'rgba(180, 83, 9, 0.10)',
-} as const;
-
-const FONT_BODY = 'DM Sans, -apple-system, BlinkMacSystemFont, sans-serif';
-const FONT_MONO = 'JetBrains Mono, SFMono-Regular, Menlo, monospace';
+const FONT_BODY = FONT.body;
+const FONT_MONO = FONT.mono;
 
 export interface SmeRecommendationPanelProps {
   recommendations?: ReadonlyArray<SmeRecommendation>;
