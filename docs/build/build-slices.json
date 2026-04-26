@@ -6836,6 +6836,22 @@
       ],
       "sliceDoc": "docs/build/slices/ADM8_AGENT_READINESS_DEEP_DRILL.md",
       "createdAt": "2026-04-26"
+    },
+    {
+      "id": "OPS11",
+      "name": "Build Waves Merge Support",
+      "category": "ops",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "scripts/integration/cherry_resolve.py",
+        "src/lib/ops/waves-merge-utils.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/ops/cherry-resolve-build-waves.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/OPS11_BUILD_WAVES_MERGE_SUPPORT.md",
+      "createdAt": "2026-04-26"
     }
   ]
 }
