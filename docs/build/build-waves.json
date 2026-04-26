@@ -812,12 +812,13 @@
       "name": "Demo Data Registry + Tenant Richness",
       "goal": "Create the canonical demo dataset registry encoding tenant richness tiers across all surfaces, enabling repeatable demo delivery with known data boundaries.",
       "status": "in_progress",
-      "percentComplete": 100,
+      "percentComplete": 200,
       "plannedSlices": [
         "DEMODATA1"
       ],
       "completedSlices": [
-        "DEMODATA1"
+        "DEMODATA1",
+        "SHELL3"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
@@ -825,7 +826,7 @@
       "validationStatus": "tsc_clean",
       "productionReadinessUpdated": false,
       "currentBlockers": [],
-      "nextAction": "DEMODATA1 (Lane H) complete. Demo dataset registry and tenant richness model landed. 3 tenants, 5 surfaces, deterministic seed only. Remaining wave-20 lanes pending.",
+      "nextAction": "DEMODATA1 (Lane H) complete. Demo dataset registry and tenant richness model landed. 3 tenants, 5 surfaces, deterministic seed only. Remaining wave-20 lanes pending. SHELL3 (lane C) code_complete. Awaiting remaining lanes.",
       "lastUpdated": "2026-04-26"
     },
     {
