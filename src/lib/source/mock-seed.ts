@@ -23,6 +23,7 @@ import {
   SOURCE_TOTAL_VALUE_AT_STAKE_USD,
   SOURCE_WAITING_LIFECYCLE_STATUSES,
 } from './constants';
+import type { SourceVendorResponseSeed } from './vendor-response-types';
 
 const events: SourcingEventDetail[] = [
   {
@@ -1195,6 +1196,134 @@ export function getSourceDashboardSeed(): AbarvaSourceDashboardData {
 export interface SourceRfpReadinessSeed {
   eventId: string;
   blockers: string[];
+}
+
+const SOURCE_VENDOR_RESPONSE_SEEDS: SourceVendorResponseSeed[] = [
+  {
+    eventId: SOURCE_GOLDEN_EVENT_IDS.digitalAppBuild,
+    responses: [
+      {
+        vendorId: 'vendor-a',
+        vendorName: 'Vertex CloudOps',
+        responseStatus: 'submitted',
+        receivedAt: '2026-04-22',
+        requiredSections: [
+          'Executive response',
+          'Scope confirmation',
+          'Pricing template',
+          'Assumptions and exclusions',
+          'Transition plan',
+          'Delivery model',
+          'SLA response',
+          'Security and compliance response',
+          'Automation / productivity roadmap',
+          'References and evidence',
+        ],
+        submittedSections: [
+          'Executive response',
+          'Scope confirmation',
+          'Pricing template',
+          'Assumptions and exclusions',
+          'Transition plan',
+          'Delivery model',
+          'SLA response',
+          'Security and compliance response',
+          'Automation / productivity roadmap',
+          'References and evidence',
+        ],
+        assumptions: ['Retained roles include 40% shared support for first quarter.', 'Automation savings depend on ticket mix stability.'],
+        exclusions: ['Non-core legacy tooling support is excluded.'],
+        pricingTemplateStatus: 'complete',
+        transitionPlanStatus: 'complete',
+        securityResponseStatus: 'complete',
+        automationRoadmapStatus: 'complete',
+        evidenceStatus: 'Usable Evidence',
+        evidenceUsability: 'usable',
+        responseRiskLevel: 'medium',
+      },
+      {
+        vendorId: 'vendor-b',
+        vendorName: 'Nova Partner Group',
+        responseStatus: 'submitted',
+        receivedAt: '2026-04-23',
+        requiredSections: [
+          'Executive response',
+          'Scope confirmation',
+          'Pricing template',
+          'Assumptions and exclusions',
+          'Transition plan',
+          'Delivery model',
+          'SLA response',
+          'Security and compliance response',
+          'Automation / productivity roadmap',
+          'References and evidence',
+        ],
+        submittedSections: [
+          'Executive response',
+          'Scope confirmation',
+          'Assumptions and exclusions',
+          'Delivery model',
+          'SLA response',
+          'Security and compliance response',
+          'Automation / productivity roadmap',
+          'References and evidence',
+        ],
+        assumptions: ['Commercial model assumes fixed run cost uplift in year 1.'],
+        exclusions: ['Third-party API usage and change costs are excluded.'],
+        pricingTemplateStatus: 'missing',
+        transitionPlanStatus: 'incomplete',
+        securityResponseStatus: 'incomplete',
+        automationRoadmapStatus: 'incomplete',
+        evidenceStatus: 'Available',
+        evidenceUsability: 'available_not_validated',
+        responseRiskLevel: 'high',
+      },
+      {
+        vendorId: 'vendor-c',
+        vendorName: 'Aegis Digital',
+        responseStatus: 'submitted',
+        receivedAt: '2026-04-24',
+        requiredSections: [
+          'Executive response',
+          'Scope confirmation',
+          'Pricing template',
+          'Assumptions and exclusions',
+          'Transition plan',
+          'Delivery model',
+          'SLA response',
+          'Security and compliance response',
+          'Automation / productivity roadmap',
+          'References and evidence',
+        ],
+        submittedSections: [
+          'Executive response',
+          'Scope confirmation',
+          'Pricing template',
+          'Assumptions and exclusions',
+          'Delivery model',
+          'SLA response',
+          'Security and compliance response',
+          'Automation / productivity roadmap',
+          'References and evidence',
+          'Transition plan',
+        ],
+        assumptions: ['Vendor assumes retained team provides runbooks in week 2.'],
+        exclusions: ['No change-overhead buffer included in pricing.'],
+        pricingTemplateStatus: 'complete',
+        transitionPlanStatus: 'complete',
+        securityResponseStatus: 'complete',
+        automationRoadmapStatus: 'complete',
+        evidenceStatus: 'Low Confidence',
+        evidenceUsability: 'low_confidence',
+        responseRiskLevel: 'high',
+      },
+    ],
+  },
+];
+
+export function getSourceVendorResponseSeed(eventId: string): SourceVendorResponseSeed {
+  const fallback: SourceVendorResponseSeed = { eventId, responses: [] };
+  return SOURCE_VENDOR_RESPONSE_SEEDS.find((seed) => seed.eventId === eventId) ?? fallback;
 }
 
 const SOURCE_RFP_READINESS_SEEDS: SourceRfpReadinessSeed[] = [

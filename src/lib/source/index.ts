@@ -14,6 +14,7 @@ export * from './constants';
 export * from './context-builder';
 export * from './context-quality';
 export * from './lifecycle';
+export * from './mock-seed';
 export * from './multi-agent-briefing';
 export * from './multi-agent-types';
 export * from './nexus-api';
@@ -25,6 +26,7 @@ export * from './workflow-validation';
 export * from './workflow-validation-fixtures';
 export * from './workflow-validation-report';
 export * from './workflow-validation-runner';
+export * from './vendor-response-completeness';
 
 export type {
   SourceAgentContextBundle,
