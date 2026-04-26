@@ -1399,7 +1399,8 @@
         "QA16 promotion gate added (src/lib/qa/production-readiness-promotion-gate.ts); advisory-only evaluation of 5 promotion criteria per component; blockingReasons array; advisoryOnly:true always; no manifest writes, no model calls.",
         "QA17 cross-surface consistency validator added (src/lib/qa/cross-surface-consistency.ts); static-manifest checks across programs/tower/intelligence/admin; \u22656 consistency checks; createdFrom qa17_cross_surface_consistency.",
         "DEMO1: Boardroom demo script created with 20/45/90-min versions; honest caveats about seed-only data documented.",
-        "DEMO2: Founder demo route checklist created; 11 routes documented with talk tracks, readiness caveats, and fallbacks."
+        "DEMO2: Founder demo route checklist created; 11 routes documented with talk tracks, readiness caveats, and fallbacks.",
+        "QA18: E2E persona walk results created for 7 personas; honest pass/partial/deferred status; no fake live test claims."
       ],
       "lastUpdated": "2026-04-26"
     },
