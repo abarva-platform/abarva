@@ -28,7 +28,6 @@
 
 import type {
   MeetingActionItem,
-  MeetingDecision,
   MeetingEvidenceCandidate,
   MeetingNoteCapture,
   MeetingOpenQuestion,
