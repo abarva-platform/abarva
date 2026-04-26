@@ -201,7 +201,7 @@ describe('production readiness read model', () => {
     expect(source!.maturity).toBe('foundation_validation');
     expect(source!.productionRiskLevel).toBe('medium_high');
     expect(source!.nextAction).toBe(
-      'Complete authenticated Source visual review, then add a Source-specific Nexus API stub and evidence/upload readiness path.',
+      'Capture authenticated Source dashboard screenshot for mission preview, then decide whether tiny visual polish or mission activity UI refinement is needed.',
     );
 
     const notes = source!.notes.join('\n').toLowerCase();
@@ -214,7 +214,7 @@ describe('production readiness read model', () => {
       'deterministic workflow validation',
       'pricing and negotiation intelligence',
       'source data readiness integration with admin/setup',
-      'future source-specific nexus api',
+      'future model-assisted source-specific nexus route',
       'future upload/evidence pipeline',
       'future event canvas, scorecard governance, artifact drawer, vendor evaluation, and value ledger ui',
       'not pilot_ready and not production_ready',
@@ -223,6 +223,9 @@ describe('production readiness read model', () => {
       'model-assisted nexus route',
       'authenticated visual qa',
       'production-grade tenant/security validation',
+      'deterministic source agent mission read model',
+      'deterministic source agent mission report formatter',
+      'tiny deterministic source dashboard mission preview',
     ]) {
       expect(notes).toContain(required);
     }
@@ -272,10 +275,16 @@ describe('production readiness update protocol', () => {
 describe('module hygiene', () => {
   const readModelSource = readCode('../../../lib/admin/production-readiness.ts');
   const componentSource = readCode('../../../components/admin/ProductionReadinessTracker.tsx');
+  const livePanelSource = readCode('../../../components/admin/ProductionReadinessLivePanel.tsx');
   const routeSource = readCode('../../../app/(maestro)/platform/admin/production-readiness/page.tsx');
+  const apiRouteSource = readCode('../../../app/api/admin/production-readiness/route.ts');
   const adminPageSource = readCode('../../../app/(maestro)/platform/admin/page.tsx');
-  const newSources = [readModelSource, componentSource, routeSource].map(stripComments).join('\n');
-  const adminSources = [readModelSource, componentSource, routeSource, adminPageSource].map(stripComments).join('\n');
+  const newSources = [readModelSource, componentSource, livePanelSource, routeSource, apiRouteSource]
+    .map(stripComments)
+    .join('\n');
+  const adminSources = [readModelSource, componentSource, livePanelSource, routeSource, apiRouteSource, adminPageSource]
+    .map(stripComments)
+    .join('\n');
 
   it('does not import forbidden product/runtime modules', () => {
     expect(newSources).not.toMatch(/from '@\/lib\/source\//);
@@ -294,27 +303,28 @@ describe('module hygiene', () => {
     expect(adminSources).not.toMatch(/migrations?/i);
   });
 
-  it('does not call models, external APIs, or non-deterministic clocks', () => {
+  it('does not call models or external APIs, and keeps scoring deterministic', () => {
     expect(newSources).not.toMatch(/anthropic/i);
     expect(newSources).not.toMatch(/openai/i);
     expect(newSources).not.toMatch(/pinecone/i);
-    expect(newSources).not.toMatch(/\bfetch\(/);
-    expect(newSources).not.toMatch(/Date\.now\(/);
-    expect(newSources).not.toMatch(/Math\.random\(/);
-    expect(newSources).not.toMatch(/new Date\(/);
+    expect(newSources).not.toMatch(/api\.github\.com/);
+    expect(newSources).not.toMatch(/api\.vercel\.com/);
+    expect(readModelSource).not.toMatch(/Date\.now\(/);
+    expect(readModelSource).not.toMatch(/Math\.random\(/);
+    expect(readModelSource).not.toMatch(/new Date\(/);
   });
 
   it('component and route wire the deterministic read model', () => {
-    expect(componentSource).toMatch(/buildProductionReadinessView/);
-    expect(componentSource).toMatch(/from '@\/lib\/admin\/production-readiness'/);
     expect(componentSource).toMatch(/Product maturity by area/);
     expect(componentSource).toMatch(/Readiness by segment/);
     expect(componentSource).toMatch(/Component progress table/);
     expect(componentSource).toMatch(/% done/);
     expect(componentSource).toMatch(/% pending/);
     expect(componentSource).toMatch(/Started/);
-    expect(routeSource).toMatch(/ProductionReadinessTracker/);
-    expect(routeSource).toMatch(/buildProductionReadinessView/);
+    expect(livePanelSource).toMatch(/ProductionReadinessTracker/);
+    expect(livePanelSource).toMatch(/\/api\/admin\/production-readiness/);
+    expect(routeSource).toMatch(/ProductionReadinessLivePanel/);
+    expect(routeSource).toMatch(/buildProductionReadinessApiResponse/);
     expect(adminPageSource).toMatch(/\/platform\/admin\/production-readiness/);
   });
 });

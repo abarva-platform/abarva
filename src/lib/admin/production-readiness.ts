@@ -1,4 +1,5 @@
-import productionReadinessManifestJson from '../../../docs/build/production-readiness.json';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 export const PRODUCTION_READINESS_STATUSES = [
   'not_started',
@@ -275,6 +276,22 @@ export interface ProductionReadinessView {
   lowestReadinessComponents: ReadonlyArray<ProductionReadinessComponent>;
 }
 
+export type ProductionReadinessRefreshMode = 'api_polling';
+export type ProductionReadinessLiveCiStatus = 'unavailable' | 'configured' | 'error';
+
+export interface ProductionReadinessRefreshMetadata {
+  generatedAt: string;
+  source: 'production_readiness_manifest';
+  refreshMode: ProductionReadinessRefreshMode;
+  liveCiStatus: ProductionReadinessLiveCiStatus;
+  note: string;
+}
+
+export interface ProductionReadinessApiResponse extends ProductionReadinessRefreshMetadata {
+  manifest: ProductionReadinessManifest;
+  view: ProductionReadinessView;
+}
+
 const STATUS_SCORE: Record<ProductionReadinessStatus, number> = {
   not_started: 5,
   scaffolded: 15,
@@ -304,14 +321,16 @@ const BLOCKER_SEVERITY_ORDER: Record<ProductionReadinessBlockerSeverity, number>
   low: 3,
 };
 
-const manifest = productionReadinessManifestJson as ProductionReadinessManifest;
+const PRODUCTION_READINESS_MANIFEST_PATH = join(process.cwd(), 'docs/build/production-readiness.json');
 
 export function loadProductionReadinessManifest(): ProductionReadinessManifest {
-  return manifest;
+  return JSON.parse(readFileSync(PRODUCTION_READINESS_MANIFEST_PATH, 'utf8')) as ProductionReadinessManifest;
 }
 
-export function buildProductionReadinessView(): ProductionReadinessView {
-  const loadedManifest = loadProductionReadinessManifest();
+export function buildProductionReadinessView(
+  manifestInput: ProductionReadinessManifest = loadProductionReadinessManifest(),
+): ProductionReadinessView {
+  const loadedManifest = manifestInput;
   const components = loadedManifest.components;
   const summary = summarizeProductionReadiness(components);
   const componentProgress = getProductionReadinessComponentProgress(components);
@@ -332,6 +351,28 @@ export function buildProductionReadinessView(): ProductionReadinessView {
     segments,
     recommendedActions: getProductionReadinessNextActions(components),
     lowestReadinessComponents: getLowestReadinessComponents(components),
+  };
+}
+
+export function getProductionReadinessRefreshMetadata(
+  generatedAt: string,
+): ProductionReadinessRefreshMetadata {
+  return {
+    generatedAt,
+    source: 'production_readiness_manifest',
+    refreshMode: 'api_polling',
+    liveCiStatus: 'unavailable',
+    note:
+      'V1 refresh reads the production-readiness manifest through an internal no-store API. GitHub checks, Vercel deployments, route smoke, persona crawler, and observability ingestion are not configured yet.',
+  };
+}
+
+export function buildProductionReadinessApiResponse(generatedAt: string): ProductionReadinessApiResponse {
+  const manifest = loadProductionReadinessManifest();
+  return {
+    ...getProductionReadinessRefreshMetadata(generatedAt),
+    manifest,
+    view: buildProductionReadinessView(manifest),
   };
 }
 
