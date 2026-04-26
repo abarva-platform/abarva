@@ -7132,6 +7132,19 @@
         "src/__tests__/integration/source/bafo-negotiation-model.test.ts"
       ],
       "completedAt": "2026-04-26"
+    },
+    {
+      "id": "SRC13",
+      "wave": "wave-14",
+      "title": "Commercial Risk Exception Detection",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "Deterministic commercial risk exception detection with 8 risk categories, severity/status types, pattern library, and detectCommercialRisks() builder.",
+      "files": [
+        "src/lib/source/commercial-risk-detection.ts",
+        "src/__tests__/integration/source/commercial-risk-detection.test.ts"
+      ],
+      "completedAt": "2026-04-26"
     }
   ]
 }
