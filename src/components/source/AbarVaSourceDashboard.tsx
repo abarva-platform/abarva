@@ -28,18 +28,18 @@ import { SourcingEventTable } from './SourcingEventTable';
 const KPI_CARD: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: 8,
-  minHeight: 96,
+  gap: 6,
+  minHeight: 86,
   justifyContent: 'space-between',
   border: '1px solid rgba(20, 32, 48, 0.10)',
   borderRadius: 12,
-  padding: '14px 15px',
+  padding: '12px 14px',
   background: 'rgba(255,255,255,0.82)',
 };
 
 const KPI_VALUE: CSSProperties = {
   ...sourceMetricValue,
-  fontSize: '27px',
+  fontSize: '25px',
   color: '#111827',
 };
 
@@ -89,12 +89,12 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
     <div
       style={{
         display: 'grid',
-        gap: 12,
+        gap: 10,
         background: LIGHT.page,
         border: `1px solid ${LIGHT.line}`,
         borderRadius: 20,
-        padding: 14,
-        boxShadow: '0 20px 70px rgba(0,0,0,0.18)',
+        padding: 12,
+        boxShadow: '0 16px 44px rgba(0,0,0,0.13)',
         color: LIGHT.ink,
         maxWidth: '100%',
         overflow: 'hidden',
@@ -103,8 +103,8 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
       <section
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
-          gap: 14,
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))',
+          gap: 12,
           alignItems: 'stretch',
           minWidth: 0,
         }}
@@ -112,11 +112,12 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
         <div
           style={{
             ...sourceCard,
-            gap: 12,
+            gap: 10,
             minHeight: 'auto',
             background: LIGHT.navy,
             border: '1px solid rgba(255,255,255,0.10)',
-            boxShadow: '0 14px 32px rgba(7,17,31,0.20)',
+            boxShadow: '0 12px 24px rgba(7,17,31,0.16)',
+            padding: 14,
             minWidth: 0,
           }}
         >
@@ -125,10 +126,10 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
             <div
               style={{
                 fontFamily: FONTS.serif,
-                fontSize: 'clamp(22px, 2.6vw, 28px)',
+                fontSize: 'clamp(20px, 2.2vw, 25px)',
                 lineHeight: 1.18,
                 color: '#F8FAFC',
-                maxWidth: 760,
+                maxWidth: 720,
               }}
             >
               {data.metrics.atRiskEvents} at-risk event, {waitingOrBlockedEvents.length} waiting or blocked states,{' '}
@@ -245,7 +246,7 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
         />
       </section>
 
-      <section style={{ ...sourceGrid, gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 170px), 1fr))', gap: 12 }}>
+      <section style={{ ...sourceGrid, gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 165px), 1fr))', gap: 10 }}>
         <div style={KPI_CARD}>
           <div style={{ display: 'grid', gap: 8 }}>
             <div style={{ ...sourceMetricLabel, color: LIGHT.muted }}>Active Events</div>
@@ -273,7 +274,7 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
         <div style={KPI_CARD}>
           <div style={{ display: 'grid', gap: 8 }}>
             <div style={{ ...sourceMetricLabel, color: LIGHT.muted }}>Value At Stake</div>
-            <div style={{ ...KPI_VALUE, fontSize: '26px' }}>{formatUsd(data.metrics.valueAtStakeUsd)}</div>
+            <div style={{ ...KPI_VALUE, fontSize: '24px' }}>{formatUsd(data.metrics.valueAtStakeUsd)}</div>
           </div>
           <div style={{ ...sourceMetricDetail, color: LIGHT.muted }}>
             {formatUsd(valueInWaitingOrBlocked)} sits in waiting or blocked events.
