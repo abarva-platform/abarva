@@ -7345,6 +7345,15 @@
       "status": "code_complete",
       "branch": "wave15/qa22-source-commercial-ui-verification",
       "description": "Wave-15 UI verification: 8-component manifest, design token check, integration-phase file existence tests. Always-passing in lane worktree, full coverage in integration branch."
+    },
+    {
+      "id": "SRC28",
+      "wave": "wave-16",
+      "name": "Source Commercial Demo Scenario Seed",
+      "type": "source-lib",
+      "status": "code_complete",
+      "branch": "wave16/src28-source-commercial-demo-scenario",
+      "description": "Deterministic AMS outsourcing demo scenario: 4 vendors, 5 risks, 5 missions, 4 signals, 3 BAFO opportunities. No real vendor names or pricing."
     }
   ]
 }
