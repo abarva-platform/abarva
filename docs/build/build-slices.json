@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-04-25",
+  "lastUpdated": "2026-04-26",
   "lifecycle": [
     "ready",
     "in_progress",
@@ -3840,6 +3840,67 @@
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
       "notes": "Founder-facing golden prompt harness contract + 43-prompt deterministic seed library covering all 10 product surfaces, all 4 agents (nexus / sentinel / atlas / steward) plus the system bucket, all 4 validation modes, with 15 sparse-context probes. Lane F output of the parallel build pack. No model calls, no live prompt execution, no server boot, no browser, no network. Companion to QA1 (Agentic Spine), QA2 (Solution Workshop), QA3 (Solution Intelligence), QA4 (Agent Mission Persona), and QA5 (Route Smoke Inventory). Execution wiring (CI gate, persona crawler integration, route-smoke composition, evidence-ledger probe, mission-queue probe, production-readiness validator integration) remains deferred."
+    },
+    {
+      "id": "MW5",
+      "name": "Meeting Notes to Program State Updates",
+      "category": "MW",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "MW1",
+        "MW2",
+        "MW4"
+      ],
+      "allowedFiles": [
+        "src/lib/programs/meeting-notes-to-program-updates.ts",
+        "src/__tests__/integration/programs/meeting-notes-to-program-updates.test.ts",
+        "docs/build/slices/MW5_MEETING_NOTES_TO_PROGRAM_UPDATES.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Module defines the canonical proposal-type union (action_proposal, risk_proposal, open_question_proposal, evidence_candidate_proposal, deliverable_update_proposal, gate_impact_proposal) and exports ProgramUpdateProposal as a discriminated union of those shapes.",
+        "Every proposal carries a source block with programKey, workshopType, workshopOrdinal, and noteId tying it back to the captured note.",
+        "Every proposal carries status: 'proposed' and createdFrom: 'deterministic_meeting_notes_seed'; no proposal is ever applied/committed/done.",
+        "deriveProgramUpdatesFromMeetingNotesCapture(notes) returns a deterministic byte-equal output across repeated calls and concatenates the per-type derivation helpers in canonical order.",
+        "deriveActionProposals emits one proposal per captured action item, preserving owner role, due-by label, and initial state.",
+        "deriveRiskProposals emits one proposal per captured risk and composes stronger rationale for high-impact risks.",
+        "deriveOpenQuestionProposals emits one proposal per blocking open question (skips questions whose blocks is unset or 'none').",
+        "deriveEvidenceCandidateProposals emits one proposal per captured evidence candidate, preserving the source label and needs-capture flag.",
+        "deriveDeliverableUpdateProposals emits draft_input_added / review_feedback / approval_blocked / rework_required proposals per the rules in the slice doc; falls back to a deterministic deliverable key when the source decision does not name one.",
+        "deriveGateImpactProposals emits gate_readiness_at_risk / gate_readiness_advanced / gate_signoff_blocked / gate_evidence_needed proposals mapped to the canonical G1-G4 gate by workshop type; every gate impact carries advisory: true.",
+        "summarizeProgramUpdateProposals reconciles totalProposals, byType, and per-type counts against the input list and always reports appliedProposals: 0.",
+        "Module is server-only (no 'use client', no React hooks) and uses no banned runtime APIs (no Date.now / Math.random / new Date / fetch / anthropic / openai imports).",
+        "Module imports nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/meeting-notes-to-program-updates.test.ts",
+        "npx jest src/__tests__/integration/programs/meeting-notes-capture.test.ts",
+        "npx jest src/__tests__/integration/programs/workshop-readiness.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic read model that turns the structured MW4 meeting note captures into proposed program-state updates the Maestro can review and confirm. Operationalizes MW1 section F (after-workshop synthesis) and section J (dynamic deliverable refinement loop). Proposals carry full provenance back to the source note + workshop, are always status 'proposed', never applied automatically. Gate impacts are advisory only and never advance, sign off, or block a gate by themselves. No model calls, no DB writes, no migrations, no audio, no transcription, no persistence. Apply-proposal flow lands when persistence + auth slices land."
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-04-25",
+  "lastUpdated": "2026-04-26",
   "updatedBy": "Code",
   "source": "Deterministic build/readiness manifest maintained in docs/build. No live monitoring, no Vercel polling, and no model/API calls are implemented by this tracker.",
   "overallStatus": "blocked",
@@ -353,12 +353,13 @@
           "unblocks": "pilot_ready"
         }
       ],
-      "nextAction": "Run and record the canonical Programs persona walk, then close the evidence/value seed gaps that block gate promotion.",
+      "nextAction": "Run and record the canonical Programs persona walk, close the evidence/value seed gaps that block gate promotion, and design the apply-proposal flow that promotes MW5 deterministic proposals into audited program-state mutations.",
       "notes": [
         "Code complete is not production ready.",
         "No legacy /programs route is extended by PROD1.",
         "AG12 mounts the AG11 Agent Mission Panel on ProgramCanonicalDetail with variant 'right_panel' and the {nexus, sentinel, steward} surface filter, capped at 3 deterministic missions; no live runtime, no model call, no persistence.",
-        "MW4 meeting notes capture read model added; deterministic templates + seed (eight canonical note types). No live capture, audio, upload, or model summarization."
+        "MW4 meeting notes capture read model added; deterministic templates + seed (eight canonical note types). No live capture, audio, upload, or model summarization.",
+        "MW5 derives program update proposals (actions, risks, open questions, evidence candidates, deliverable update hints, advisory gate impacts) deterministically from MW4 captures; every proposal preserves source note id + workshop id and is marked 'proposed' (never applied). No DB writes, no model calls."
       ]
     },
     {
@@ -421,10 +422,11 @@
           "unblocks": "pilot_ready"
         }
       ],
-      "nextAction": "Add a verified manual walk for workshop preparation and document the deferred live capture path before pilot consideration.",
+      "nextAction": "Add a verified manual walk for workshop preparation, document the deferred live capture path before pilot consideration, and wire the MW5 proposal review surface so the Maestro can confirm derived program updates before they apply.",
       "notes": [
         "No meeting bot, audio transcription, or live model synthesis is implemented.",
-        "MW4 meeting notes capture read model added; deterministic templates + seed for eight canonical note types. No live capture is wired."
+        "MW4 meeting notes capture read model added; deterministic templates + seed for eight canonical note types. No live capture is wired.",
+        "MW5 turns MW4 captures into proposed action / risk / open question / evidence / deliverable / gate-impact updates with full source provenance; gate impacts are advisory only, every proposal is 'proposed' (never applied), and no DB writes / phase advances / gate signoffs are triggered. Apply-proposal flow lands with persistence."
       ]
     },
     {
@@ -487,10 +489,11 @@
           "unblocks": "pilot_ready"
         }
       ],
-      "nextAction": "Choose the first production artifact workflow to promote from disabled seed state to audited runtime behavior.",
+      "nextAction": "Choose the first production artifact workflow to promote from disabled seed state to audited runtime behavior, and design how MW5 deliverable update proposals (draft_input_added / review_feedback / approval_blocked / rework_required) flow into the artifact review surface for Maestro confirmation.",
       "notes": [
         "Readable canvas is present; production artifact operations are not.",
-        "MW4 meeting-notes derivations feed deliverable updates (draft_input_added / review_feedback / approval_blocked / rework_required) deterministically; no live capture."
+        "MW4 meeting-notes derivations feed deliverable updates (draft_input_added / review_feedback / approval_blocked / rework_required) deterministically; no live capture.",
+        "MW5 emits ProgramDeliverableUpdateProposal rows with full source provenance (programKey + workshopType + noteId) and status 'proposed'; consumers must decide whether to apply each proposal. No live state mutation."
       ]
     },
     {
