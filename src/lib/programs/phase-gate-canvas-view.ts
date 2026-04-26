@@ -135,7 +135,8 @@ export function buildPhaseGateCanvasView(
         requirementId: 'req-synthesis-workshop',
         label: 'Synthesis workshop completed',
         satisfied: false,
-        detail: 'Workshop 5 not yet scheduled',
+        detail:
+          'Workshop 5 held on 2026-04-18 (Value Hypothesis Validation). Three decisions reached; gate narrative captured. Value baseline and platform owner confirmation still pending.',
       },
       {
         requirementId: 'req-value-hypothesis-trace',

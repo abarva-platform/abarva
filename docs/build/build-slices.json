@@ -7614,6 +7614,13 @@
       "status": "code_complete",
       "wave": "wave-19",
       "lane": "D"
+    },
+    {
+      "id": "MW9",
+      "title": "Workshop Five Outcome Seed + Gate Narrative",
+      "status": "code_complete",
+      "wave": "wave-19",
+      "lane": "F"
     }
   ]
 }
