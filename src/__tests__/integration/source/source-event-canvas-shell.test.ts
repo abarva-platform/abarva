@@ -7,6 +7,7 @@ import { NexusEngagementCanvas } from '@/components/source/NexusEngagementCanvas
 import {
   SOURCE_GOLDEN_EVENT_IDS,
   getSourcingEvent,
+  buildSourceRfpReadiness,
 } from '@/lib/source';
 
 describe('Source event canvas shell', () => {
@@ -26,10 +27,13 @@ describe('Source event canvas shell', () => {
     expect(html).toContain('Artifact placeholders');
     expect(html).toContain('Top mission signal');
     expect(html).toContain('Nexus guidance');
+    expect(html).toContain('Event RFP readiness snapshot');
+    expect(html).toContain('Overall tier');
   });
 
   it('keeps Scope visible as the current blocked stage with required baseline inputs', async () => {
     const event = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.dataAiModernization);
+    const readiness = buildSourceRfpReadiness({ event: event! });
     const html = renderToStaticMarkup(createElement(NexusEngagementCanvas, { event: event! }));
 
     expect(html).toContain('Scope');
@@ -45,6 +49,8 @@ describe('Source event canvas shell', () => {
     expect(html).toContain('Requested');
     expect(html).toContain('Blocks Rich-tier Scope and makes pricing normalization unsafe.');
     expect(html).toContain('Blocks clear scope split and transition responsibility language.');
+    expect(readiness.overallTier).not.toBe('Rich');
+    expect(html).toContain(readiness.overallTier);
   });
 
   it('renders deterministic Nexus and mission content without API calls', async () => {
