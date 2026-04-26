@@ -4200,6 +4200,52 @@
         "npm run build"
       ],
       "notes": "Pure deterministic projection of a (program-deliverable artifact, EVID2 ledger) pair into a six-status trace with supported / partial / unsupported / stale / blocked claim groups, source artifact rollup, and an advisory approval implication. No DB writes, no live retrieval, no model invocation. Approval state machine and live evidence registry binding remain deferred to PDEL9 / PDEL10."
+    },
+    {
+      "id": "QA7",
+      "name": "Program Continuity + Deliverable Verification Runbook",
+      "category": "QA",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane H (parallel build pack)",
+      "dependsOn": [
+        "PW1",
+        "PDEL5"
+      ],
+      "allowedFiles": [
+        "docs/build/PROGRAM_CONTINUITY_DELIVERABLE_VERIFICATION_RUNBOOK.md",
+        "docs/build/slices/QA7_PROGRAM_CONTINUITY_DELIVERABLE_VERIFICATION.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "docs/build/PROGRAM_CONTINUITY_DELIVERABLE_VERIFICATION_RUNBOOK.md documents \u00a7A purpose and scope (PW1, PDEL5 required; MW5, MW6, PROG7, PDEL6, PDEL7, PDEL8 conditional / deferred), \u00a7B branch hygiene (worktree per slice, lane agents commit only, integration agent merges), \u00a7C required validation commands (npx tsc --noEmit --pretty false, npm run build, JSON validity, plus per-slice jest paths), \u00a7D persona walks, \u00a7E route coverage table including /tenant/apex-retail/programs, /tenant/apex-retail/programs/[programSlug], and /platform/admin/production-readiness, \u00a7F program continuity verification, \u00a7G deliverable verification, \u00a7H no-fabrication checks, \u00a7I production-readiness tracker verification, \u00a7J morning review and PR merge rules, and \u00a7K branch hygiene appendix.",
+        "Program continuity checks include workshop mode shell visible (PW1), meeting notes update proposals deterministic (MW5 if installed), SME recommendations visible (MW6 if installed), resume state present (PROG7 if installed), no fake decisions, and no fake timestamps.",
+        "Deliverable checks include artifact canvas visible (PDEL5), deliverable viewer visible (PDEL7 if installed), version state visible (PDEL6 if installed), evidence trace visible (PDEL8 if installed), and all future actions disabled (edit / regenerate / download / approve).",
+        "No-fabrication checks include no fake citations, no fake approvals, no fake dollar amounts, and no live model claim (gateway is contract-only).",
+        "Production readiness tracker checks list relevant components updated (programs, program_workshop_mode, deliverables_artifacts, data_evidence_knowledge_fabric, production_deployment, validation_qa) and confirm no false production_ready promotions.",
+        "docs/build/slices/QA7_PROGRAM_CONTINUITY_DELIVERABLE_VERIFICATION.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and readiness impact, and references the runbook by relative path.",
+        "docs/build/build-slices.json appends a QA7 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn, status code_complete, risk low, and ownerAgent Lane H; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "docs/build/production-readiness.json validation_qa component appends a note acknowledging that the QA7 program continuity + deliverable verification runbook is added; status is preserved (no promotion); validation_qa.nextAction is UNIONed conservatively without overwriting prior QA1\u2013QA6 wording; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "Documentation only; no application code, runtime, auth, supabase, migrations, package manifests, or platform-design docs are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Founder-facing checklist for verifying program continuity (PW1 workshop mode shell, MW4 meeting notes capture, MW5 update proposals, MW6 SME recommendations, PROG7 resume state) and deliverable surfaces (PDEL5 artifact canvas, PDEL7 viewer, PDEL6 version state, PDEL8 evidence trace) land honestly before push or PR. Seventh founder-facing runbook after QA1 (Agentic Spine), QA2 (Solution Workshop), QA3 (Solution Intelligence), QA4 (Agent Mission Persona), QA5 (Route Smoke Inventory), and QA6 (Golden Prompt Harness Contract + Seed). Documentation only. Deterministic \u2014 does not exercise live retrieval or model calls. MW5 / MW6 / PROG7 / PDEL6 / PDEL7 / PDEL8 are explicitly conditional: each row is verified only if the matching slice has landed in the batch under review. Default policy for unsupervised batch runs: lane agents commit only; integration agent owns cherry-picks and merges; founder owns the push and merge decisions."
     }
   ]
 }
