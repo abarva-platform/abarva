@@ -288,7 +288,8 @@
       "Active route ownership and shell enforcement for admin/source/program routes is not fully canonical yet.",
       "Active route shell enforcement remains incomplete across Source and Program surfaces.",
       "Program route shell enforcement and final route-to-shell verification remain open.",
-      "Route-to-shell verification must still certify no legacy shell ownership remains on target surfaces."
+      "Route-to-shell verification must still certify no legacy shell ownership remains on target surfaces.",
+      "Route ownership and shell enforcement reconciliation is still pending integration validation."
     ]
   },
   "components": [

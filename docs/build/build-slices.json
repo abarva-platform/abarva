@@ -7570,6 +7570,15 @@
       "status": "code_complete",
       "branch": "wave17a/desroute5-program-shell-enforcement",
       "description": "Enforce canonical shell/workflow orientation on tenant program index/detail routes while preserving existing canonical program content."
+    },
+    {
+      "id": "QA26",
+      "wave": "wave-17a",
+      "name": "Route-to-Shell Design Verification",
+      "type": "qa",
+      "status": "code_complete",
+      "branch": "wave17a/qa26-route-shell-design-verification",
+      "description": "Deterministic route-to-shell verification for admin/source/program target routes. Verifies canonical shell markers, workflow markers, legacy imports, and explicit deferrals."
     }
   ]
 }

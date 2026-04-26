@@ -944,6 +944,34 @@
       ],
       "nextAction": "Integrate lane outputs and run QA26 route-to-shell verification to certify active route ownership.",
       "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-17a",
+      "name": "Route Ownership + Legacy Shell/Nav Enforcement",
+      "goal": "Identify active route ownership and enforce approved AbarVa route shell/navigation canon across admin, source, and program surfaces.",
+      "status": "in_progress",
+      "percentComplete": 83,
+      "plannedSlices": [
+        "DESROUTE1",
+        "DESROUTE2",
+        "DESROUTE3",
+        "DESROUTE4",
+        "DESROUTE5",
+        "QA26"
+      ],
+      "completedSlices": [
+        "QA26"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "pending",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [
+        "Integration branch must reconcile all lane updates and clear full hygiene gate."
+      ],
+      "nextAction": "Cherry-pick all lane commits into integration branch and run mandatory hygiene gate before PR.",
+      "lastUpdated": "2026-04-26"
     }
   ]
 }
