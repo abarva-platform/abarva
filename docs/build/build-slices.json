@@ -4950,6 +4950,63 @@
         "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
       ],
       "notes": "Deterministic, file-pure read model and architecture document for the AbarVa Tier 2 (Enterprise SaaS / Dedicated Tenant) deployment blueprint. Names dedicated database options (per-tenant Postgres Flexible default, schema-per-tenant fallback), dedicated storage (per-tenant blob container or S3-style bucket), per-tenant vector and graph namespaces, per-tenant model gateway policy (allowlist, rate limit, audit destination), audit log boundary (dedicated stream default), customer SSO integration, tenant admin separation, deterministic onboarding sequence (9 canonical steps), rolling per-tenant upgrade strategy with maintenance windows, backup / retention / DR / secret-rotation / cost-observability / offboarding / incident-response operational responsibilities, and a five-category readiness checklist. References TEN2 isolation levels via a type-only import; no runtime dependency on TEN2 and no duplication of the TEN2 boundary catalog. No application code outside the new module, no runtime, no auth, no supabase, no migrations, no provisioning automation, no live cloud calls, no model calls, no browser automation. production_deployment status is preserved at blocked; admin_setup status is preserved at code_complete; the prod-deploy-verification blocker is preserved verbatim; no other component is promoted."
+    },
+    {
+      "id": "ADM6",
+      "name": "Users & Access Surface",
+      "category": "ADM",
+      "status": "code_complete",
+      "lastUpdated": "2026-04-26",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "ADM2"
+      ],
+      "allowedFiles": [
+        "src/lib/admin/users-access-readiness.ts",
+        "src/components/admin/UsersAccessSurface.tsx",
+        "src/__tests__/integration/admin/users-access-surface.test.ts",
+        "docs/build/slices/ADM6_USERS_ACCESS_SURFACE.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/auth/**",
+        "src/lib/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Users-access readiness view exposes all 7 canonical roles (platform_admin, tenant_admin, maestro, sponsor, investor, steward, observer).",
+        "View createdFrom is the deterministic_users_access_readiness_seed label.",
+        "summarizeUsersAccess totals reconcile against the role-count sum.",
+        "listRiskyPermissionFlags orders flags by severity (high \u2192 medium \u2192 low).",
+        "Risky permission flags surface a reason and a suggested review.",
+        "View serializes without claiming a live edit / invite / revoke verb in active voice; any invite mention is annotated as deferred / not wired.",
+        "View never enumerates a real person name (no First Last pattern outside the canonical label allow-list).",
+        "Component is a server component (no 'use client', no React hooks).",
+        "Component imports COLORS / FONT / BORDER / RADIUS / SPACING / TYPE from @/lib/design/abarva-theme and contains no local hex literals or local DM Sans font literals.",
+        "Component imports nothing from auth / source / sentinel / atlas / nexus / agent runtime.",
+        "Component renders the canonical eyebrow USERS & ACCESS \u00b7 ADM6 and footer Source \u00b7 deterministic users-access readiness seed \u00b7 no live auth mutation.",
+        "Edit / Invite / Revoke render as disabled future \u00b7 not yet wired pills."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/admin/users-access-surface.test.ts",
+        "npm run build"
+      ],
+      "notes": "Lifts the user-facing posture out of the Steward brief. Read-only, roles-and-counts only \u2014 no real person names, no live auth mutation, no Clerk runtime read, no DB write, no API call. Admin page mount is deferred to ADM6.1 because the existing /platform/admin/page.tsx is a complex client-rendered admin portal; co-mounting a server component would expand blast radius beyond the ADM6 scope. The new component is exported from src/components/admin/UsersAccessSurface.tsx and is ready for either a dedicated server route or a parent refactor. Future invite / edit / revoke runtime is deferred."
     }
   ]
 }
