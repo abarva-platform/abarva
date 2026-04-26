@@ -106,8 +106,7 @@ test('generatedAt is exactly "2026-04-26"', () => {
 // 9. Component exports SourceCommercialSignalsPreview as a function
 // ---------------------------------------------------------------------------
 
-test('SourceCommercialSignalsPreview is exported as a function from the component module', () => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const mod = require('../../../components/source/SourceCommercialSignalsPreview');
+test('SourceCommercialSignalsPreview is exported as a function from the component module', async () => {
+  const mod = await import('../../../components/source/SourceCommercialSignalsPreview');
   expect(typeof mod.SourceCommercialSignalsPreview).toBe('function');
 });
