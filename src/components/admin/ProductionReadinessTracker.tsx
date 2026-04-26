@@ -143,7 +143,7 @@ export function ProductionReadinessTracker({
           }}
         >
           <div style={{ display: 'grid', gap: SPACING.lg }}>
-            <div style={TYPE.eyebrow}>Steward Production Readiness Brief</div>
+            <div style={TYPE.eyebrow}>Canonical Readiness Spine</div>
             <div style={{ display: 'grid', gap: SPACING.sm }}>
               <h1
                 style={{
@@ -153,7 +153,7 @@ export function ProductionReadinessTracker({
                   letterSpacing: 0,
                 }}
               >
-                Production readiness is visible, but still blocked.
+                {view.stewardBrief.title}
               </h1>
               <p style={{ ...TYPE.body, margin: 0, maxWidth: 880 }}>{view.stewardBrief.summary}</p>
             </div>
@@ -199,8 +199,8 @@ export function ProductionReadinessTracker({
               {view.freshness.updateMode === 'static_manifest'
                 || view.freshness.updateMode === 'repository_snapshot' ? (
                   <div style={{ ...TYPE.caption, color: COLORS.amber, fontWeight: 700 }}>
-                    This is not live monitoring; GitHub, Vercel, route smoke, persona crawler, and observability
-                    ingestion remain deferred.
+                    This is the unified readiness spine, not live monitoring; GitHub, Vercel, route smoke,
+                    persona crawler, and observability ingestion remain deferred.
                   </div>
                 ) : null}
             </div>

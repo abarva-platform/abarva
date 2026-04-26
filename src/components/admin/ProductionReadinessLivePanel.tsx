@@ -103,7 +103,7 @@ export function ProductionReadinessLivePanel({
       <div style={statusShellStyle}>
         <div style={statusInnerStyle}>
           <div style={{ display: 'flex', alignItems: 'center', gap: SPACING.md, flexWrap: 'wrap' }}>
-            <span style={{ ...TYPE.eyebrow, color: COLORS.navy }}>Production Readiness Live Refresh</span>
+            <span style={{ ...TYPE.eyebrow, color: COLORS.navy }}>Production Readiness Control Plane</span>
             <span style={mutedLabelStyle}>Last refreshed {lastRefreshedLabel}</span>
             <span style={mutedLabelStyle}>{statusLabel}</span>
             <span style={mutedLabelStyle}>

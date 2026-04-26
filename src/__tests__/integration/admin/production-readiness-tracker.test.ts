@@ -68,6 +68,8 @@ describe('production-readiness.json manifest', () => {
 
   it('uses only valid readiness and gate statuses', () => {
     const manifest = loadProductionReadinessManifest();
+    expect(manifest.stewardBrief.title).toBe('Unified Production Readiness Control Plane');
+    expect(manifest.stewardBrief.summary).toContain('one canonical production-readiness spine');
     expect(PRODUCTION_READINESS_STATUSES).toContain(manifest.overallStatus);
     expect(PRODUCTION_READINESS_STATUSES).toContain(manifest.stewardBrief.fullFlowTestingReadiness);
     expect(PRODUCTION_READINESS_STATUSES).toContain(manifest.stewardBrief.pilotReadinessStatus);
@@ -167,6 +169,7 @@ describe('production readiness read model', () => {
     expect(apiResponse.updateMode).toBe('repository_snapshot');
     expect(apiResponse.freshnessStatus).toBe('fresh');
     expect(apiResponse.view.overallReadinessPercent).toBe(view.overallReadinessPercent);
+    expect(apiResponse.view.stewardBrief.title).toBe('Unified Production Readiness Control Plane');
   });
 
   it('classifies fresh, aging, stale, and unknown manifests deterministically', () => {
@@ -201,7 +204,8 @@ describe('production readiness read model', () => {
     expect(apiResponse.dataSource).toBe('docs/build/production-readiness.json');
     expect(apiResponse.updateMode).toBe('repository_snapshot');
     expect(apiResponse.liveCiStatus).toBe('unavailable');
-    expect(apiResponse.note.toLowerCase()).toContain('not configured yet');
+    expect(apiResponse.note.toLowerCase()).toContain('unified control plane');
+    expect(apiResponse.note.toLowerCase()).toContain('not true live monitoring');
     expect(apiResponse.note.toLowerCase()).not.toMatch(/github.*enabled|vercel.*enabled|live monitoring enabled/);
   });
 
@@ -456,15 +460,18 @@ describe('module hygiene', () => {
   });
 
   it('component and route wire the deterministic read model', () => {
+    expect(componentSource).toMatch(/Canonical Readiness Spine/);
+    expect(componentSource).toMatch(/view\.stewardBrief\.title/);
     expect(componentSource).toMatch(/Product maturity by area/);
     expect(componentSource).toMatch(/Readiness by segment/);
     expect(componentSource).toMatch(/Tracker freshness/);
-    expect(componentSource).toMatch(/This is not live monitoring/);
+    expect(componentSource).toMatch(/unified readiness spine, not live monitoring/);
     expect(componentSource).toMatch(/Component progress table/);
     expect(componentSource).toMatch(/% done/);
     expect(componentSource).toMatch(/% pending/);
     expect(componentSource).toMatch(/Started/);
     expect(livePanelSource).toMatch(/ProductionReadinessTracker/);
+    expect(livePanelSource).toMatch(/Production Readiness Control Plane/);
     expect(livePanelSource).toMatch(/\/api\/admin\/production-readiness/);
     expect(livePanelSource).toMatch(/freshnessStatus/);
     expect(routeSource).toMatch(/ProductionReadinessLivePanel/);

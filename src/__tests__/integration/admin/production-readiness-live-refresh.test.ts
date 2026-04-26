@@ -36,7 +36,9 @@ describe('PROD3 production readiness live refresh API response', () => {
     expect(metadata.liveCiStatus).toBe('unavailable');
     expect(metadata.note.toLowerCase()).toContain('github checks');
     expect(metadata.note.toLowerCase()).toContain('vercel deployments');
-    expect(metadata.note.toLowerCase()).toContain('not configured yet');
+    expect(metadata.note.toLowerCase()).toContain('unified control plane');
+    expect(metadata.note.toLowerCase()).toContain('not true live monitoring');
+    expect(metadata.note.toLowerCase()).toContain('remain deferred');
   });
 
   it('keeps the read model deterministic except for explicit refresh metadata', () => {
@@ -73,6 +75,7 @@ describe('PROD3 route and client refresh behavior', () => {
     expect(livePanelSource).toMatch(/setInterval/);
     expect(livePanelSource).toMatch(/fetch\('\/api\/admin\/production-readiness'/);
     expect(livePanelSource).toMatch(/cache: 'no-store'/);
+    expect(livePanelSource).toMatch(/Production Readiness Control Plane/);
     expect(livePanelSource).toMatch(/Last refreshed/);
     expect(livePanelSource).toMatch(/Refresh/);
     expect(livePanelSource).toMatch(/Showing the server-rendered manifest/);
