@@ -368,7 +368,8 @@
         "MW8 workshop outcome synthesis added (src/lib/programs/workshop-outcome-synthesis.ts); classifies captures into decisions/actions/questions/evidence-gaps/risks; synthesisQuality scoring; proposed:true always; honestDisclaimer on every output; no model calls, no DB writes.",
         "PROG10 (wave-18): ProgramFlagshipPage shell + view-model. Executive brief, workflow orientation, knows/missing, slot props for phase gate, workshop canvas, deliverables evidence, action mission strip. 15 tests.",
         "PROG11 (wave-18): PhaseGateCanvas + view-model. 6-phase rail (discovery\u2192operate), current gate card with requirements/missing inputs/Steward implication. No transitions performed. 14 tests.",
-        "PROG12 (wave-18): NexusWorkshopCanvas \u2014 5-item agenda, 5-attendee roster, tensions, decisions needed, evidence to capture, expected outputs. No live notes. 15 tests."
+        "PROG12 (wave-18): NexusWorkshopCanvas \u2014 5-item agenda, 5-attendee roster, tensions, decisions needed, evidence to capture, expected outputs. No live notes. 15 tests.",
+        "PROG13 (wave-18): ProgramDeliverablesEvidencePanel \u2014 14 deliverables across 6 phases, evidence coverage % bar, current deliverable highlight. No fake downloads/approvals. 16 tests."
       ]
     },
     {

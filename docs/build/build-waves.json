@@ -777,20 +777,21 @@
       "name": "Program Flagship Experience",
       "goal": "Land the Program Flagship surface: a workshop-led, deterministic Nexus center canvas plus supporting program-flagship slices that frame the next workshop, agenda, attendees, decisions, evidence to capture, and expected outputs without live notes ingestion.",
       "status": "in_progress",
-      "percentComplete": 100,
+      "percentComplete": 200,
       "plannedSlices": [
         "PROG12"
       ],
       "completedSlices": [
-        "PROG12"
+        "PROG12",
+        "PROG13"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
       "mergedPrs": [],
-      "validationStatus": "tests_green",
+      "validationStatus": "not_run",
       "productionReadinessUpdated": true,
       "currentBlockers": [],
-      "nextAction": "PROG12 NexusWorkshopCanvas landed. Wire the canvas onto the canonical Programs detail surface and stage downstream Program Flagship slices.",
+      "nextAction": "PROG12 NexusWorkshopCanvas landed. Wire the canvas onto the canonical Programs detail surface and stage downstream Program Flagship slices. PROG13 code complete; add additional Program flagship slices as scoped.",
       "lastUpdated": "2026-04-26"
     },
     {

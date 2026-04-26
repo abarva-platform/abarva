@@ -7489,6 +7489,15 @@
       "status": "code_complete",
       "branch": "wave18/prog12-nexus-workshop-canvas",
       "description": "NexusWorkshopCanvas \u2014 workshop briefing surface: objective, agenda, attendees, tensions, decisions needed, evidence to capture, expected outputs, proposed updates placeholder. Read-only deterministic."
+    },
+    {
+      "id": "PROG13",
+      "wave": "wave-18",
+      "name": "Deliverables by Phase + Evidence Trace Panel",
+      "type": "program-ui",
+      "status": "code_complete",
+      "branch": "wave18/prog13-deliverables-evidence-panel",
+      "description": "ProgramDeliverablesEvidencePanel \u2014 6-phase grouping, version state chips, evidence state chips, current deliverable highlight, missing inputs. Read-only; no downloads, no approvals."
     }
   ]
 }
