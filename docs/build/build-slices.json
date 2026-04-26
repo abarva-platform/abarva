@@ -6461,6 +6461,27 @@
       "notes": [
         "Deterministic AI cost / consumption read model with scopes / units / utilization."
       ]
+    },
+    {
+      "id": "ACT8",
+      "name": "Tech & Data Readiness Read Model",
+      "status": "code_complete",
+      "risk": "low",
+      "lastUpdated": "2026-04-26",
+      "ownerAgent": "Wave4 Lane B",
+      "dependsOn": [
+        "ACT5"
+      ],
+      "allowedFiles": [
+        "src/lib/tower/tech-data-readiness.ts",
+        "src/__tests__/integration/tower/tech-data-readiness.test.ts",
+        "docs/build/slices/ACT8_TECH_DATA_READINESS.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "notes": [
+        "Deterministic tech & data readiness signals."
+      ]
     }
   ]
 }
