@@ -7158,6 +7158,19 @@
         "src/__tests__/integration/source/vendor-pricing-comparison.test.ts"
       ],
       "completedAt": "2026-04-26"
+    },
+    {
+      "id": "SRC14",
+      "wave": "wave-14",
+      "title": "Commercial Summary Panel",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "Presentational React component for commercial intelligence summary showing vendor rows, risk level, exceptions, and top opportunity.",
+      "files": [
+        "src/components/source/SourceCommercialSummaryPanel.tsx",
+        "src/__tests__/integration/source/source-commercial-summary-panel.test.ts"
+      ],
+      "completedAt": "2026-04-26"
     }
   ]
 }
