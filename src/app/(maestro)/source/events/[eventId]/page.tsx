@@ -17,7 +17,7 @@ export default async function SourceEventDetailPage({
     <SourceFoundationShell
       activeRoute="events"
       title={event.name}
-      summary={`${event.accountName} · ${event.code} · canonical Source event workspace led by Nexus. This page establishes the event canvas boundary only.`}
+      summary={`${event.accountName} · ${event.code} · Source event canvas shell led by Nexus with deterministic mission, readiness, and journey context.`}
     >
       <NexusEngagementCanvas event={event} />
     </SourceFoundationShell>

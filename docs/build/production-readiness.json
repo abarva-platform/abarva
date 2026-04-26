@@ -767,7 +767,7 @@
         {
           "id": "source-user-workflow-persistence",
           "severity": "high",
-          "description": "Source still lacks full user-facing workflow, persistence, event canvas, scorecard governance, artifact drawer, vendor evaluation, and value ledger UI.",
+          "description": "Source has a deterministic event canvas shell, but still lacks full user-facing workflow persistence, scorecard governance, artifact drawer, vendor evaluation, value ledger UI, and production workflow execution.",
           "unblocks": "pilot_ready"
         },
         {
@@ -799,7 +799,8 @@
         "Focused Source agent mission report integration test passed: npx jest src/__tests__/integration/source/source-agent-mission-report.test.ts.",
         "Tiny deterministic Source dashboard mission preview added using local mission/report helpers; no API route, model call, chat UI, persistence, or scheduler was added.",
         "Source dashboard mission preview still needs authenticated visual review before any broader dashboard polish or mission UI expansion.",
-        "Focused Source dashboard route/component smoke test passed: npx jest src/__tests__/integration/source/source-dashboard-route-smoke.test.ts. This is deterministic seeded-data coverage, not authenticated live route or persona validation."
+        "Focused Source dashboard route/component smoke test passed: npx jest src/__tests__/integration/source/source-dashboard-route-smoke.test.ts. This is deterministic seeded-data coverage, not authenticated live route or persona validation.",
+        "Deterministic Source event canvas shell added for /source/events/[eventId] with journey orientation, current-stage workspace summary, mission preview, data readiness placeholder, and compact Nexus guidance. This does not add chat, model calls, upload/parsing, workflow engine, approval engine, scorecard UI, artifact drawer behavior, vendor workflow, or value ledger UI."
       ]
     },
     {
