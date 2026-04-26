@@ -364,11 +364,8 @@
         "MW6 SME Recommendation Panel added (src/lib/programs/sme-recommendations.ts + src/components/programs/SmeRecommendationPanel.tsx). Pure deterministic projection that consumes MW2 workshop readiness, PF1 failure modes, and the SOL3 archetype hint to compose a role-anchored SME shortlist. Server Component, calm UI, roles only (no real person names), no live SME directory, no calendar/booking, no model calls.",
         "PROG8 phase gate advancement flow contract added (src/lib/programs/phase-gate-advancement-flow.ts). Pure deterministic *proposed* advancement projection per (tenant, program, canonical phase): every proposal carries proposed: true, deterministic stewardReadiness, missingInputs[] (id/label/reason/blocking), evidenceRequirements[] (each with evidenceRegistryWired: false), auditRequirement (signoffRole: 'steward', auditLogWired: false), advancementStatus across all 5 canonical labels (ready / partially_ready / blocked / requires_waiver / requires_review), waiverPathReason for requires_waiver proposals, and recommendedNextAction. No DB writes, no migrations, no model calls, no phase advance, no gate signoff, no waiver issuance \u2014 live phase gate state machine + audit log + Steward signoff persistence remain deferred to the auth + audit + persistence slices.",
         "MW7 Workshop Template Library added (src/lib/programs/workshop-template-library.ts + src/components/programs/WorkshopTemplateLibrary.tsx). Pure deterministic catalog of seven canonical workshop templates spanning discovery, framing, value, governance, architecture, adoption, and executive review. Each template names purpose, prerequisite inputs, deterministic agenda with per-step durations summing to the template duration, decision-to-land, and outputs. Server Component, calm UI, future-only Open-template action rendered disabled. No live agenda generation, no booking, no model calls.",
-<<<<<<< HEAD
-        "PROG9 program health scorecard added (src/lib/programs/program-health-scorecard.ts); 5-dimension scoring (phase gate, workshop coverage, evidence quality, deliverable completion, risk posture); letter grades A–F; honestDisclaimer on every output; no model calls, no DB writes."
-=======
+        "PROG9 program health scorecard added (src/lib/programs/program-health-scorecard.ts); 5-dimension scoring (phase gate, workshop coverage, evidence quality, deliverable completion, risk posture); letter grades A–F; honestDisclaimer on every output; no model calls, no DB writes.",
         "MW8 workshop outcome synthesis added (src/lib/programs/workshop-outcome-synthesis.ts); classifies captures into decisions/actions/questions/evidence-gaps/risks; synthesisQuality scoring; proposed:true always; honestDisclaimer on every output; no model calls, no DB writes."
->>>>>>> d6cfb84 (feat(programs): add workshop outcome synthesis)
       ]
     },
     {
@@ -995,20 +992,13 @@
           "unblocks": "pilot_ready"
         }
       ],
-<<<<<<< HEAD
-      "nextAction": "Wire SOL9 deterministic recommendation engine into live Nexus per-tenant solution drafts (SOL10+) and verify against SOL1 / SOL2 / SOL3 contracts. SOL15 pattern playbook landed; live coverage scoring deferred.",
-      "notes": [
-        "No model-generated solution architecture is invoked by PROD1.",
-        "SOL9 deterministic recommendation engine is added as a pure library that unifies SOL3 archetypes, SOL4 / SOL5 component packs, and the SOL6 build/buy/partner evaluator into a Nexus-facing recommendation layer.",
-        "SOL15 pattern playbook added (src/lib/solutions/pattern-playbook.ts); deterministic archetype\u2192workshop\u2192deliverable\u2192risk mapping; coverageScore in [0,1]; createdFrom sol15_pattern_playbook; no model calls, no DB writes."
-=======
-      "nextAction": "Wire SOL9 deterministic recommendation engine into live Nexus per-tenant solution drafts (SOL10+) and verify against SOL1 / SOL2 / SOL3 contracts. SOL16 pattern coverage summary landed; live ingestion deferred.",
+      "nextAction": "Wire SOL9 deterministic recommendation engine into live Nexus per-tenant solution drafts (SOL10+) and verify against SOL1 / SOL2 / SOL3 contracts. SOL15 pattern playbook landed; live coverage scoring deferred. SOL16 pattern coverage summary landed; live ingestion deferred.",
       "lastUpdated": "2026-04-26",
       "notes": [
         "No model-generated solution architecture is invoked by PROD1.",
         "SOL9 deterministic recommendation engine is added as a pure library that unifies SOL3 archetypes, SOL4 / SOL5 component packs, and the SOL6 build/buy/partner evaluator into a Nexus-facing recommendation layer.",
+        "SOL15 pattern playbook added (src/lib/solutions/pattern-playbook.ts); deterministic archetype\u2192workshop\u2192deliverable\u2192risk mapping; coverageScore in [0,1]; createdFrom sol15_pattern_playbook; no model calls, no DB writes.",
         "SOL16 pattern coverage summary added (src/lib/solutions/pattern-coverage-summary.ts); deterministic coverage scoring for all archetypes; rows sorted descending by overallScore; no model calls, no DB writes."
->>>>>>> c2569d2 (feat(solutions): add pattern coverage summary)
       ]
     },
     {
