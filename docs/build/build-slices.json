@@ -4246,6 +4246,58 @@
         "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
       ],
       "notes": "Founder-facing checklist for verifying program continuity (PW1 workshop mode shell, MW4 meeting notes capture, MW5 update proposals, MW6 SME recommendations, PROG7 resume state) and deliverable surfaces (PDEL5 artifact canvas, PDEL7 viewer, PDEL6 version state, PDEL8 evidence trace) land honestly before push or PR. Seventh founder-facing runbook after QA1 (Agentic Spine), QA2 (Solution Workshop), QA3 (Solution Intelligence), QA4 (Agent Mission Persona), QA5 (Route Smoke Inventory), and QA6 (Golden Prompt Harness Contract + Seed). Documentation only. Deterministic \u2014 does not exercise live retrieval or model calls. MW5 / MW6 / PROG7 / PDEL6 / PDEL7 / PDEL8 are explicitly conditional: each row is verified only if the matching slice has landed in the batch under review. Default policy for unsupervised batch runs: lane agents commit only; integration agent owns cherry-picks and merges; founder owns the push and merge decisions."
+    },
+    {
+      "id": "TEN1",
+      "name": "SaaS Tenancy Architecture Contract",
+      "category": "ARCH",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane A (controlled multi-agent build)",
+      "dependsOn": [
+        "ARCH1"
+      ],
+      "allowedFiles": [
+        "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md",
+        "docs/build/slices/TEN1_SAAS_TENANCY_ARCHITECTURE_CONTRACT.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md names the four canonical AbarVa tenancy tiers (AbarVa SaaS Pilot, AbarVa Enterprise SaaS / Dedicated Tenant, AbarVa Private Data Plane, AbarVa Self-Managed) and tabulates per-tier isolation mode, data plane, model gateway, SSO, RBAC, audit, governance posture, and operator.",
+        "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md names the four canonical runtime planes (control plane, tenant runtime plane, data evidence plane, model gateway plane) and includes the canonical composition diagram.",
+        "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md names the three canonical tenant isolation modes (shared, dedicated, private) and tabulates the mode + tier matrix across database / storage / vector / graph / audit.",
+        "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md names the tenant registry contract with required fields (tenantId, tenantSlug, displayName, tier, isolationMode, dataNamespace, gatewayProfile, idpProfile, governancePosture, lifecycleState, region, timestamps, notes) and explicitly forbids tenant content in the registry.",
+        "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md names the tenant data namespace as the unit of isolation inside the data evidence plane and tabulates the per-mode shape matrix (relational, object, vector, graph, audit).",
+        "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md names per-tier expectations for SSO, RBAC, audit, and the model gateway in explicit tables.",
+        "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md names the capability \u00d7 tier feasibility matrix covering at least program execution, pattern detection, executive brief, solution composition, deliverable artifact generation, evidence ledger ingest (non-PII / PHI / SEC), BYOK, customer-controlled gateway, cross-tenant pattern aggregation, vector retrieval, graph queries, custom SAML, audit export, and strict-residency placement.",
+        "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md names the MVP / V1 / V2 progression and explicitly states that Tier 2+ is not yet provisionable today.",
+        "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md names risks (cross-tenant leak, misclassified tier, provider lock-in, customer-cloud drift, implicit tenancy in code, knowledge fabric maturity) with at least one mitigation each, and explicit non-goals (no multi-region active-active, no real-time cross-tenant analytics, no tenant-content visibility from control plane, no sub-tenant hierarchy in MVP / V1, no on-prem in MVP / V1, no model-training over tenant content, no silent tier downgrade, no surface differences between tiers).",
+        "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md cross-references TEN2 (isolation enforcement), CLOUD1 (deployment topology), TRUST1 (data trust posture), ARCH1, ARCH2, ADM1, MG2, AUD2, and EVID2 / EVID3.",
+        "docs/build/slices/TEN1_SAAS_TENANCY_ARCHITECTURE_CONTRACT.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, readiness impact, validation commands, and references the architecture contract by relative path.",
+        "docs/build/build-slices.json appends a TEN1 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn, status code_complete, risk low, and ownerAgent Lane A; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "docs/build/production-readiness.json production_deployment component appends a note acknowledging that the TEN1 SaaS tenancy architecture contract is added; status is preserved (no promotion); production_deployment.nextAction is UNIONed conservatively without overwriting prior PROD1 / PROD2 / PROD3 / OPS1 wording.",
+        "docs/build/production-readiness.json data_evidence_knowledge_fabric component appends a note acknowledging that TEN1 names the data evidence plane and the tenant data namespace shape; status is preserved (no promotion); data_evidence_knowledge_fabric.nextAction is left untouched (HEAD wins) because the existing wording covers the load-bearing live EVID2 ingest binding.",
+        "docs/build/production-readiness.json manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "Documentation only; no application code, runtime, auth, supabase, migrations, package manifests, abarva-source, or platform-design docs are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Architecture contract that names the four canonical AbarVa tenancy tiers (Pilot, Enterprise / Dedicated, Private Data Plane, Self-Managed), the four canonical runtime planes (control, tenant runtime, data evidence, model gateway), the three canonical isolation modes (shared, dedicated, private), the tenant registry, the tenant data namespace, the per-tier SSO / RBAC / audit / gateway expectations, the capability \u00d7 tier feasibility matrix, the MVP / V1 / V2 progression, the risks and non-goals, and the cross-references to TEN2 (isolation enforcement), CLOUD1 (deployment topology), and TRUST1 (data trust posture). Documentation only. No application code, no runtime, no migrations, no provisioning automation, no model calls, no browser automation. Tier 2 / Tier 3 / Tier 4 provisionability is explicitly deferred behind a production-grade data evidence plane and the matching isolation enforcement (TEN2), deployment topology (CLOUD1), and data trust posture (TRUST1) slices."
     }
   ]
 }
