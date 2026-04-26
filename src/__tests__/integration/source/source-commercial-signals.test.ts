@@ -5,8 +5,10 @@ import {
   adaptBafoNegotiationToCommercialSignals,
   adaptCommercialRisksToCommercialSignals,
   adaptPricingNormalizationToCommercialSignals,
+  buildSourceCommercialAgentMissions,
   buildSourceBafoNegotiationPlan,
   buildSourceCommercialSignals,
+  buildSourceExecutiveDecisionSummary,
   buildSourcePricingNormalization,
   detectCommercialRisks,
   formatSourceCommercialSignalsAsMarkdown,
@@ -91,6 +93,36 @@ describe('Source commercial signals adapter', () => {
     expect(markdown).toContain('## BAFO signals');
     expect(markdown).toContain('## Risk signals');
     expect(markdown).toContain('Source modules used: pricing-normalization, bafo-negotiation, commercial-risk-detection');
+  });
+
+  it('feeds executive decision summary through canonical commercial signal contract', () => {
+    const signals = buildSeededSignals();
+    const missions = buildSourceCommercialAgentMissions({
+      queueInput: {
+        eventId: SOURCE_GOLDEN_EVENT_IDS.digitalAppBuild,
+        eventName: 'Digital App Build Partner Selection',
+        stage: 'selection',
+        vendorIds: signals.vendorTradeoffs.map((vendor) => vendor.vendorId),
+        needsPriceBenchmark: signals.pricingSignals.status !== 'comparable',
+        needsScopeClarification: true,
+        needsEvidenceCollection: true,
+        needsGovernanceReview: true,
+        isBafoPhase: true,
+      },
+    });
+    const summary = buildSourceExecutiveDecisionSummary({
+      event: {
+        id: SOURCE_GOLDEN_EVENT_IDS.digitalAppBuild,
+        name: 'Digital App Build Partner Selection',
+        currentStageKey: 'selection',
+      },
+      commercialSignals: signals,
+      unifiedMissions: missions.adaptedMissions,
+    });
+
+    expect(summary.sourceModulesUsed).toEqual(['commercial-signals', 'commercial-mission-adapter']);
+    expect(summary.vendorTradeoffs.length).toBeGreaterThan(0);
+    expect(summary.blockers.length).toBeGreaterThan(0);
   });
 
   it('keeps adapter files free of model/upload imports and duplicate model logic wiring', () => {
