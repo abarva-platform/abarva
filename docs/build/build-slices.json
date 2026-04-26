@@ -4264,6 +4264,36 @@
       "createdAt": "2026-04-26"
     },
     {
+      "id": "QA15",
+      "name": "Integration Test Coverage Audit",
+      "category": "qa",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/qa/integration-test-coverage-audit.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/qa/integration-test-coverage-audit.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/QA15_INTEGRATION_TEST_COVERAGE_AUDIT.md",
+      "createdAt": "2026-04-26"
+    },
+    {
+      "id": "MW8",
+      "name": "Workshop Outcome Synthesis",
+      "category": "programs",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/programs/workshop-outcome-synthesis.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/programs/workshop-outcome-synthesis.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/MW8_WORKSHOP_OUTCOME_SYNTHESIS.md",
+      "createdAt": "2026-04-26"
+    },
+    {
       "id": "MW6",
       "name": "SME Recommendation Panel",
       "category": "MW",
@@ -6632,6 +6662,21 @@
         "src/__tests__/integration/solutions/pattern-playbook.test.ts"
       ],
       "sliceDoc": "docs/build/slices/SOL15_SOLUTION_PATTERN_PLAYBOOK.md",
+      "createdAt": "2026-04-26"
+    },
+    {
+      "id": "SOL16",
+      "name": "Pattern Coverage Summary",
+      "category": "solutions",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/solutions/pattern-coverage-summary.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/solutions/pattern-coverage-summary.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/SOL16_PATTERN_COVERAGE_SUMMARY.md",
       "createdAt": "2026-04-26"
     },
     {

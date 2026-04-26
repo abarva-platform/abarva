@@ -61,6 +61,9 @@ const EXPECTED_WAVE_IDS = [
   'wave-6',
   'wave-7',
   'wave-8',
+  'wave-9',
+  'wave-10',
+  'wave-11',
 ] as const;
 
 // ---------------------------------------------------------------------
@@ -162,7 +165,7 @@ describe('build-waves.json - top-level shape', () => {
 // ---------------------------------------------------------------------
 
 describe('build-waves.json - canonical wave coverage', () => {
-  it('includes all 9 canonical waves (Wave 0 through Wave 8)', () => {
+  it('includes all 12 canonical waves (Wave 0 through Wave 11)', () => {
     const m = loadWaves();
     expect(m.waves.length).toBe(EXPECTED_WAVE_IDS.length);
     const ids = m.waves.map((w) => w.waveId);
