@@ -861,7 +861,8 @@
         "2026-04-26 SRC15: Presentational VendorPricingComparison React component added with tower breakdown table, delta from lowest, rank indicator, and normalization confidence. No API calls, no model calls.",
         "2026-04-26 SRC14: Presentational SourceCommercialSummaryPanel React component added with vendor table, risk badge, exception counter, and top opportunity display. No API calls, no model calls, no data fetching. Display-only.",
         "2026-04-26 SRC17: Deterministic Source intelligence pattern detection added with 10 pattern categories (pricing_compression, scope_anchor, evidence_leverage, timeline_pressure, bundling_trap, governance_avoidance, champion_dependency, reference_manipulation, pricing_opacity, scope_creep_setup). No model calls, no network calls.",
-        "2026-04-26 SRC18: Deterministic commercial mission queue added with 10 mission types, 5 agent owners (nexus, sentinel, atlas, steward, buyer_team), priority ordering, and blocking relationship model. No scheduler, no persistence, no model calls."
+        "2026-04-26 SRC18: Deterministic commercial mission queue added with 10 mission types, 5 agent owners (nexus, sentinel, atlas, steward, buyer_team), priority ordering, and blocking relationship model. No scheduler, no persistence, no model calls.",
+        "2026-04-26 QA21: Cross-module commercial workflow verification test added covering bafo-negotiation-model, pricing-normalization-model, commercial-risk-detection, control-tower-signals, intelligence-patterns, and commercial-mission-queue. Verifies export shapes, builder correctness, cross-module importability, and generatedAt determinism."
       ]
     },
     {

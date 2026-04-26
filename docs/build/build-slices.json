@@ -7210,6 +7210,18 @@
         "src/__tests__/integration/source/commercial-mission-queue.test.ts"
       ],
       "completedAt": "2026-04-26"
+    },
+    {
+      "id": "QA21",
+      "wave": "wave-14",
+      "title": "Source Commercial Workflow Verification",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "Cross-module QA verification for Wave-14 commercial intelligence layer: bafo-negotiation-model, pricing-normalization-model, commercial-risk-detection, control-tower-signals, intelligence-patterns, commercial-mission-queue.",
+      "files": [
+        "src/__tests__/integration/source/source-commercial-workflow-verification.test.ts"
+      ],
+      "completedAt": "2026-04-26"
     }
   ]
 }

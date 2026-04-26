@@ -627,7 +627,7 @@
       "name": "Source Commercial Intelligence + Pricing Hardening",
       "goal": "Deliver comprehensive commercial intelligence models, pricing normalization, risk detection, vendor comparison, control tower signals, and mission queue for the Source module.",
       "status": "in_progress",
-      "percentComplete": 80,
+      "percentComplete": 90,
       "plannedSlices": [
         "SRC11",
         "SRC12",
@@ -648,7 +648,8 @@
         "SRC14",
         "SRC16",
         "SRC17",
-        "SRC18"
+        "SRC18",
+        "QA21"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
