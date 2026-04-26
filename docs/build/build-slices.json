@@ -7507,6 +7507,15 @@
       "status": "code_complete",
       "branch": "wave18/prog14-actions-missions-resume-strip",
       "description": "ProgramActionMissionStrip \u2014 resume callout, top 3 next actions, 4 agent missions (Nexus/Sentinel/Atlas/Steward), blocked items. Read-only deterministic; no live execution."
+    },
+    {
+      "id": "QA25",
+      "wave": "wave-18",
+      "name": "Program Flagship E2E Verification",
+      "type": "qa",
+      "status": "code_complete",
+      "branch": "wave18/qa25-program-flagship-verification",
+      "description": "Manifest of 5 PROG10\u2013PROG14 components, 9 workflow sections, 3 design canon rules. Static + graceful integration-phase file/content/banned-token scans."
     }
   ]
 }

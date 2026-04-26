@@ -1453,7 +1453,8 @@
         "QA22 (wave-15): source-commercial-ui-verification.ts manifest (8 components) + integration verification test. Always-passing design: 10 static tests + 16 graceful integration-phase file checks.",
         "QA23 (wave-16): source-commercial-route-smoke.ts manifest + smoke test. 10 static + graceful integration-phase file checks. Wave-15 file existence always verified.",
         "DEMO4 (wave-16): SOURCE_COMMERCIAL_INTELLIGENCE_DEMO_SCRIPT.md \u2014 10/20/45-minute demo scripts with talk tracks, pilot ask, what-not-to-claim guidance.",
-        "QA24 (wave-17): design-workflow-canon-regression manifest (10 banned tokens, 4 required canon rules, 10 workflow contracts, 4 target pages). Static + graceful integration scan."
+        "QA24 (wave-17): design-workflow-canon-regression manifest (10 banned tokens, 4 required canon rules, 10 workflow contracts, 4 target pages). Static + graceful integration scan.",
+        "QA25 (wave-18): program-flagship-verification manifest (5 components, 9 workflow sections, 3 canon rules). Static + graceful banned-token + workflow-keyword scans. Route existence asserted."
       ],
       "lastUpdated": "2026-04-26"
     },
