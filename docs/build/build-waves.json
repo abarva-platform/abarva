@@ -777,9 +777,16 @@
       "name": "Tenant-Scoped Demo Data + Source Intelligence Hardening",
       "goal": "Scope the Source commercial demo scenario to Apex Retail, replace generic vendor labels with named representative vendors, add extended posture fields, and add deterministicSeed root-level field.",
       "status": "merged",
-      "percentComplete": 600,
+      "percentComplete": 100,
       "plannedSlices": [
-        "SRC32"
+        "SRC32",
+        "PROG15",
+        "LINK1",
+        "SRC33",
+        "PROG16",
+        "MW9",
+        "QA27",
+        "DEMO7"
       ],
       "completedSlices": [
         "SRC32",
@@ -833,34 +840,6 @@
       "productionReadinessUpdated": false,
       "currentBlockers": [],
       "nextAction": "Wave-18 merged. No further action.",
-      "lastUpdated": "2026-04-26"
-    },
-    {
-      "waveId": "wave-19",
-      "name": "Tenant-Scoped Demo Data + Source Intelligence Hardening",
-      "goal": "Scope the Source commercial demo scenario to Apex Retail, replace generic vendor labels with named representative vendors, add extended posture fields, and add deterministicSeed root-level field.",
-      "status": "in_progress",
-      "percentComplete": 500,
-      "plannedSlices": [
-        "SRC32"
-      ],
-      "completedSlices": [
-        "SRC32",
-        "PROG15",
-        "LINK1",
-        "SRC33",
-        "PROG16",
-        "MW9",
-        "QA27",
-        "DEMO7"
-      ],
-      "skippedSlices": [],
-      "blockedSlices": [],
-      "mergedPrs": [],
-      "validationStatus": "tsc_clean",
-      "productionReadinessUpdated": false,
-      "currentBlockers": [],
-      "nextAction": "Wave-19 all 8 lanes complete and merged. Next: live data ingestion, pilot client onboarding.",
       "lastUpdated": "2026-04-26"
     }
   ]
