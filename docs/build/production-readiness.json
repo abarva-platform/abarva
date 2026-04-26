@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-04-26",
+  "lastUpdated": "2026-04-25",
   "updatedBy": "Code",
   "source": "Deterministic build/readiness manifest maintained in docs/build. No live monitoring, no Vercel polling, and no model/API calls are implemented by this tracker.",
   "overallStatus": "blocked",
@@ -353,13 +353,14 @@
           "unblocks": "pilot_ready"
         }
       ],
-      "nextAction": "Run and record the canonical Programs persona walk, close the evidence/value seed gaps that block gate promotion, and design the apply-proposal flow that promotes MW5 deterministic proposals into audited program-state mutations.",
+      "nextAction": "Run and record the canonical Programs persona walk, close the evidence/value seed gaps that block gate promotion, and design the apply-proposal flow that promotes MW5 deterministic proposals into audited program-state mutations. Run and record the canonical Programs persona walk, close the evidence/value seed gaps that block gate promotion, and mount the PROG7 resume-state read model on the canonical Programs detail surface.",
       "notes": [
         "Code complete is not production ready.",
         "No legacy /programs route is extended by PROD1.",
         "AG12 mounts the AG11 Agent Mission Panel on ProgramCanonicalDetail with variant 'right_panel' and the {nexus, sentinel, steward} surface filter, capped at 3 deterministic missions; no live runtime, no model call, no persistence.",
         "MW4 meeting notes capture read model added; deterministic templates + seed (eight canonical note types). No live capture, audio, upload, or model summarization.",
-        "MW5 derives program update proposals (actions, risks, open questions, evidence candidates, deliverable update hints, advisory gate impacts) deterministically from MW4 captures; every proposal preserves source note id + workshop id and is marked 'proposed' (never applied). No DB writes, no model calls."
+        "MW5 derives program update proposals (actions, risks, open questions, evidence candidates, deliverable update hints, advisory gate impacts) deterministically from MW4 captures; every proposal preserves source note id + workshop id and is marked 'proposed' (never applied). No DB writes, no model calls.",
+        "PROG7 program-resume-state read model added; deterministic per-program save/stop/resume projection (lastActivePhase, lastActiveWorkshop, lastViewedArtifact, openActions, openQuestions, unresolvedEvidenceGaps, pendingGateChecks, draftDeliverables, nextRecommendedAction, resumeConfidence). No persistence, no live save trigger, no model synthesis; items the seed cannot derive surface as status: 'unknown'."
       ]
     },
     {
@@ -422,11 +423,12 @@
           "unblocks": "pilot_ready"
         }
       ],
-      "nextAction": "Add a verified manual walk for workshop preparation, document the deferred live capture path before pilot consideration, and wire the MW5 proposal review surface so the Maestro can confirm derived program updates before they apply.",
+      "nextAction": "Add a verified manual walk for workshop preparation, document the deferred live capture path before pilot consideration, and wire the MW5 proposal review surface so the Maestro can confirm derived program updates before they apply. Add a verified manual walk for workshop preparation, document the deferred live capture path, and mount the PROG7 resume-state record on the Workshop Mode shell before pilot consideration.",
       "notes": [
         "No meeting bot, audio transcription, or live model synthesis is implemented.",
         "MW4 meeting notes capture read model added; deterministic templates + seed for eight canonical note types. No live capture is wired.",
-        "MW5 turns MW4 captures into proposed action / risk / open question / evidence / deliverable / gate-impact updates with full source provenance; gate impacts are advisory only, every proposal is 'proposed' (never applied), and no DB writes / phase advances / gate signoffs are triggered. Apply-proposal flow lands with persistence."
+        "MW5 turns MW4 captures into proposed action / risk / open question / evidence / deliverable / gate-impact updates with full source provenance; gate impacts are advisory only, every proposal is 'proposed' (never applied), and no DB writes / phase advances / gate signoffs are triggered. Apply-proposal flow lands with persistence.",
+        "PROG7 program-resume-state read model added; deterministic save/stop/resume projection consumed by the Workshop Mode shell. Live save trigger, persistence, and model-backed synthesis remain deferred."
       ]
     },
     {

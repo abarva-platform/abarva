@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-04-26",
+  "lastUpdated": "2026-04-25",
   "lifecycle": [
     "ready",
     "in_progress",
@@ -3901,6 +3901,68 @@
         "npm run build"
       ],
       "notes": "Pure deterministic read model that turns the structured MW4 meeting note captures into proposed program-state updates the Maestro can review and confirm. Operationalizes MW1 section F (after-workshop synthesis) and section J (dynamic deliverable refinement loop). Proposals carry full provenance back to the source note + workshop, are always status 'proposed', never applied automatically. Gate impacts are advisory only and never advance, sign off, or block a gate by themselves. No model calls, no DB writes, no migrations, no audio, no transcription, no persistence. Apply-proposal flow lands when persistence + auth slices land."
+    },
+    {
+      "id": "PROG7",
+      "name": "Save / Stop / Resume Program State Read Model",
+      "category": "PROG",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "S9",
+        "MW2",
+        "MW4",
+        "PF2"
+      ],
+      "allowedFiles": [
+        "src/lib/programs/program-resume-state.ts",
+        "src/__tests__/integration/programs/program-resume-state.test.ts",
+        "docs/build/slices/PROG7_PROGRAM_RESUME_STATE.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Module exports buildProgramResumeState, buildAllProgramResumeStates, summarizeProgramResumeState, getNextResumeAction, and getBlockedResumeItems.",
+        "Module exports types ProgramResumeState, ProgramResumeCheckpoint, ProgramResumeSource, ProgramResumeRecommendation, ProgramResumeOpenItem, and ProgramResumeSummary.",
+        "Every demo program produces a deterministic resume state with id format 'prog-resume:<tenantKey>:<programSlug>' that is unique across the portfolio.",
+        "Every record carries createdFrom: 'deterministic_program_seed' and a non-empty nextRecommendedAction with label, routePath, and reason.",
+        "Resume state tracks lastActivePhase, lastActiveWorkshop, lastViewedArtifact, openActions, openQuestions, unresolvedEvidenceGaps, pendingGateChecks, draftDeliverables, nextRecommendedAction, and resumeConfidence (low/medium/high).",
+        "Items the seed cannot derive surface as openItems[].status === 'unknown' with an explicit honest reason; the test suite asserts at least one 'unknown' status appears across the portfolio.",
+        "Every active program records at least one open action OR open question, at least one unresolved evidence gap, and at least one pending gate check.",
+        "summarizeProgramResumeState reconciles totalCount, byConfidence, totalOpenActions, totalOpenQuestions, totalUnresolvedEvidenceGaps, totalPendingGateChecks, totalDraftDeliverables, and perTenant against the input.",
+        "getBlockedResumeItems returns only status === 'blocked' items and never promotes 'unknown' items to blocked.",
+        "Module imports nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase; does not call Date.now / Math.random / new Date / fetch; does not invoke Anthropic or OpenAI.",
+        "No string field in any resume state invents a dollar amount or claims an E-### evidence citation; no item carries a fake completed decision."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/program-resume-state.test.ts",
+        "npx jest src/__tests__/integration/programs/workshop-readiness.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic projection of (tenant, program) seed state into a per-program resume-state record. Operationalizes the save / stop / resume lifecycle named in the PF2 Program Phase Workspace contract and the MW1 Maestro Workshop Intelligence contract WITHOUT persistence. No DB writes, no migrations, no model calls, no timestamps. Items the seed cannot derive surface as 'unknown' rather than fabricated progress. Future slice mounts the read model on the canonical Programs detail surface and the Workshop Mode shell; live save / stop / resume persistence lands once auth + audit + persistence slices land."
     }
   ]
 }
