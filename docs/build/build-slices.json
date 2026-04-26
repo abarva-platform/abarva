@@ -6648,6 +6648,21 @@
       ],
       "sliceDoc": "docs/build/slices/QA16_PRODUCTION_READINESS_PROMOTION_GATE.md",
       "createdAt": "2026-04-26"
+    },
+    {
+      "id": "QA17",
+      "name": "Cross-Surface Consistency Validator",
+      "category": "qa",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/qa/cross-surface-consistency.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/qa/cross-surface-consistency.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/QA17_CROSS_SURFACE_CONSISTENCY.md",
+      "createdAt": "2026-04-26"
     }
   ]
 }
