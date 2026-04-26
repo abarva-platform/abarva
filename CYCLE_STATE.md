@@ -140,6 +140,7 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
 - 2026-04-25 · Source-specific Nexus API route stub implemented locally: deterministic no-model `POST /api/v1/source/[eventId]/nexus/ask` response using SourceAgentContextBundle, context validation report, workflow validation report, and multi-agent briefing.
 
 ## Last status emission
+- 2026-04-26 - Wave-14 Source Commercial Intelligence merged - PR #340 merged deterministic BAFO model variant, pricing normalization model variant, commercial risk exception detection, Source control-tower signals, Source intelligence patterns, commercial mission queue, two commercial presentation components, cross-module commercial workflow verification, and hygiene gate CI wiring; PR #342 marked wave-14 merged in build wave tracking. Reconciliation required before deeper Source runtime/UI integration because several Wave-14 modules overlap existing pricing/BAFO/mission contracts.
 - 2026-04-26 - Executive decision summary foundation batch complete - PR #339 merged deterministic executive decision summary read model, PR #341 merged the bounded executive decision summary panel in the Source event canvas, and PR #343 merged executive decision smoke coverage. Source remains deterministic/read-only and not production-ready; production-domain authenticated visual QA, persistence, upload/parsing, live Admin/Setup integration, model runtime, workflow engine, and approval engine remain deferred.
 - 2026-04-26 - BAFO and executive-decision foundation batch advanced - PR #331 merged deterministic BAFO negotiation model, PR #333 merged the bounded BAFO panel in the Source event canvas, PR #335 merged the executive decision summary plan, PR #336 merged the vendor selection readiness plan, and PR #337 merged BAFO smoke coverage. Source remains deterministic/read-only and not production-ready; production-domain authenticated visual QA, persistence, upload/parsing, live Admin/Setup integration, model runtime, workflow engine, and approval engine remain deferred.
 - 2026-04-26 - Authenticated Source review stabilization batch complete - PR #293 planned RFP readiness, PR #294 planned the Scope stage workspace, PR #295 documented the demo sign-in blocker as environment/account setup rather than Source code, PR #296 completed local authenticated review for `/source` and `/source/events/evt-source-data-ai-si-selection`, PR #297 added authenticated route smoke coverage, and PR #298 applied safe tiny Source UI polish. Source event data readiness remains visibly tracked against 100% in the event canvas (34% event data readiness, 13% usable evidence coverage in the seeded projection). Source remains scaffolded and not production-ready; production-domain visual QA, persistence, upload/parsing, connectors, live Admin/Setup integration, model calls, workflow engine, and production workflow execution remain deferred.
@@ -154,10 +155,10 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
 
 ## AbarVa Source Sidecar State
 
-- Current completed milestone: PR #343 merged - deterministic executive decision summary model/panel/smoke is now on main after BAFO and pricing foundations.
+- Current completed milestone: PR #343 and PR #340 are merged - executive decision summary plus Wave-14 commercial intelligence foundations are on main.
 - Dashboard decision: approve with tiny polish completed locally. Event canvas decision: approve as baseline locally. Production-domain authenticated screenshot review remains incomplete.
-- Current objective: move from deterministic executive decision visibility into explicit vendor-selection readiness gating while keeping Source deterministic and read-only.
-- Current item: vendor-selection readiness deterministic plan-to-model handoff without approval automation or final-selection runtime.
+- Current objective: reconcile Wave-14 commercial intelligence with the existing Source workflow so pricing/BAFO/mission logic converges into a single deterministic authority before vendor-selection readiness runtime work.
+- Current item: docs-first convergence and sequencing decision for commercial-risk/control-tower/pattern/mission outputs into the executive decision path without approval automation or final-selection runtime.
 - Completed this cycle:
   - AbarVa Source Build Pack docs.
   - Context-awareness docs.

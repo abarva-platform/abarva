@@ -9,9 +9,9 @@ Purpose: provide a layer-by-layer view of where AbarVa Source stands against MVP
 - Source has a strong foundation in product architecture, deterministic context validation, workflow validation, pattern IP, deterministic multi-agent briefings, deterministic agent missions, and a platform Agent Mission Model.
 - Source is not production-ready.
 - MVP readiness is improving after local authenticated Source review, but the product still needs production-domain authenticated review, persistence, evidence/upload pipeline, auth/tenant hardening, and production validation.
-- Current foundation milestone: deterministic Scope, RFP, vendor-response, pricing normalization, BAFO negotiation, and executive decision summary surfaces are now merged with smoke coverage (PR #319, PR #321, PR #323, PR #327, PR #328, PR #331, PR #333, PR #337, PR #339, PR #341, PR #343).
+- Current foundation milestone: deterministic Scope, RFP, vendor-response, pricing normalization, BAFO negotiation, executive decision summary, and Wave-14 commercial intelligence modules are merged on main (PR #319, PR #321, PR #323, PR #327, PR #328, PR #331, PR #333, PR #337, PR #339, PR #340, PR #341, PR #342, PR #343).
 - Current visible progress read: the seeded Data & AI Modernization event shows 34% event data readiness, 13% usable evidence coverage, and 3 of 5 required categories present. Local authenticated review now confirms that progress is visible in the Source event canvas. This is deterministic contract progress, not live Admin/Setup integration.
-- Current recommended next slice: run production-domain authenticated visual review, then implement deterministic vendor-selection readiness and decision-gate linkage using existing executive decision outputs.
+- Current recommended next slice: run production-domain authenticated visual review, then converge Wave-14 commercial models into the existing executive-decision and mission contracts before adding any new Source UI.
 
 ## Layer Summary
 
@@ -22,11 +22,11 @@ Purpose: provide a layer-by-layer view of where AbarVa Source stands against MVP
 | Pattern / Workflow IP | 76% | Strong authored IP and next Data Platform pattern plan; runtime sectioning not wired | PR #202, PR #222, PR #223, PR #224, PR #225, PR #282 | Author Data Platform Managed Services pattern pack, docs only |
 | Context Validation Harness | 85% | Deterministic foundation complete | PR #190, PR #192, PR #197 | Use as preflight for Source Nexus runtime |
 | Workflow Validation Harness | 85% | Deterministic foundation complete | PR #204, PR #207, PR #210 | Preserve remaining defer until upload/evidence exists |
-| Multi-Agent Intelligence | 57% | Deterministic briefings, mission read model, mission report, dashboard preview, review packet, and route/component smoke exist; no runtime queue/scheduler/persistence/model layer | PR #227, PR #248, PR #254, PR #255, PR #259, PR #262, PR #264, `src/lib/source/multi-agent-briefing.ts`, `src/lib/source/agent-missions.ts`, `src/lib/source/agent-mission-report.ts` | Use mission report in the event canvas shell |
+| Multi-Agent Intelligence | 58% | Deterministic briefings, mission read model, mission report, dashboard preview, review packet, route/component smoke, and a parallel Wave-14 commercial mission queue read model exist; no unified runtime queue/scheduler/persistence/model layer | PR #227, PR #248, PR #254, PR #255, PR #259, PR #262, PR #264, PR #340, `src/lib/source/multi-agent-briefing.ts`, `src/lib/source/agent-missions.ts`, `src/lib/source/agent-mission-report.ts`, `src/lib/source/commercial-mission-queue.ts` | Converge commercial mission queue into the existing mission contract before runtime wiring |
 | Source API / Runtime | 27% | Deterministic no-model API stub plus contract/mission consistency tests exist; production runtime not ready | PR #230, PR #245, PR #283, `src/app/api/v1/source/[eventId]/nexus/ask/route.ts` | Keep route deterministic; do not add model calls until mission/readiness gates are ready |
-| Source UI / User Experience | 71% | Dashboard, mission preview, event canvas shell, Scope and RFP readiness surfaces, vendor response and pricing normalization panels, BAFO negotiation panel, executive decision summary panel, contract-backed data readiness progress, local authenticated visual review, tiny polish, and route/component smoke exist; production-domain review remains incomplete | PR #212, PR #213, PR #218, PR #259, PR #262, PR #264, PR #265, PR #269, PR #270, PR #273, PR #277, PR #278, PR #288, PR #289, PR #290, PR #295, PR #296, PR #297, PR #298, PR #311, PR #312, PR #315, PR #319, PR #321, PR #327, PR #328, PR #331, PR #333, PR #337, PR #341, PR #343, Experience System | Capture production-domain visual review and then begin persistence/runtime work. |
+| Source UI / User Experience | 72% | Dashboard, mission preview, event canvas shell, Scope and RFP readiness surfaces, vendor response and pricing normalization panels, BAFO negotiation panel, executive decision summary panel, Wave-14 commercial summary components (currently not integrated in active stage workspace), contract-backed data readiness progress, local authenticated visual review, tiny polish, and route/component smoke exist; production-domain review remains incomplete | PR #212, PR #213, PR #218, PR #259, PR #262, PR #264, PR #265, PR #269, PR #270, PR #273, PR #277, PR #278, PR #288, PR #289, PR #290, PR #295, PR #296, PR #297, PR #298, PR #311, PR #312, PR #315, PR #319, PR #321, PR #327, PR #328, PR #331, PR #333, PR #337, PR #340, PR #341, PR #343, Experience System | Keep current UI stable; integrate Wave-14 outputs through existing panels before adding new surfaces. |
 | Data / Evidence / Upload Pipeline | 24% | Source consumes a deterministic Admin/Setup readiness contract projection; upload/parsing/live Admin integration is not started | Attachment/context contracts, validation defers, PR #266, PR #274, PR #277, PR #278, PR #285, PR #287, PR #288, PR #289 | Plan live Admin/Setup readiness backing and runtime evidential tracing next |
-| Production Readiness | 22% | Deterministic smoke, freshness metadata, local authenticated Source review, authenticated route smoke, and executive decision smoke coverage exist; production-domain visual QA remains required | Production readiness tracker, PR #264, PR #270, PR #278, PR #281, PR #283, PR #287, PR #288, PR #289, PR #290, PR #295, PR #296, PR #297, PR #298, PR #343 | Production-domain authenticated visual QA, CI/Vercel ingestion, and screenshot review remain required |
+| Production Readiness | 23% | Deterministic smoke, freshness metadata, local authenticated Source review, authenticated route smoke, executive decision smoke coverage, and Wave-14 hygiene gate CI contract exist; production-domain visual QA remains required | Production readiness tracker, PR #264, PR #270, PR #278, PR #281, PR #283, PR #287, PR #288, PR #289, PR #290, PR #295, PR #296, PR #297, PR #298, PR #340, PR #342, PR #343 | Production-domain authenticated visual QA, CI/Vercel ingestion hardening, and screenshot review remain required |
 
 ## Layer 1. Platform Design System
 
@@ -266,6 +266,7 @@ Evidence / PRs / Files:
 - `src/lib/source/agent-mission-types.ts`
 - `src/lib/source/agent-missions.ts`
 - `src/lib/source/agent-mission-report.ts`
+- `src/lib/source/commercial-mission-queue.ts`
 - `docs/platform-architecture/runtime/13_AGENT_MISSION_MODEL.md`
 - `docs/platform-architecture/runtime/14_AGENT_WORK_QUEUE_AND_TRIGGERS.md`
 - `docs/platform-design/experience-system/16_AGENT_ACTIVITY_UI_PATTERN.md`
@@ -285,6 +286,7 @@ Completed items:
 - Tiny Source dashboard mission preview for the most exposed seeded event.
 - Baseline review decision for the dashboard mission preview.
 - Deterministic route/component smoke for `/source` route rendering and the mission preview path.
+- Wave-14 deterministic commercial mission queue model is merged as a parallel planning primitive.
 
 Remaining items:
 
@@ -298,6 +300,7 @@ Remaining items:
 Blockers:
 
 - No runtime mission queue, scheduler, persistence, or proactive background trigger exists yet.
+- Source now has two deterministic mission abstractions (`agent-missions` and `commercial-mission-queue`) that should be converged before runtime wiring.
 - No model calls are approved.
 - No chat UI is approved.
 - No full mission activity UI is approved beyond the tiny dashboard preview.
@@ -527,6 +530,7 @@ Blockers:
 Next recommended slice:
 
 - Keep production readiness honest; do not mark production-ready until runtime/data/UI/security gates pass.
+- Run reconciliation-driven convergence so Wave-14 commercial signals feed existing executive and mission contracts without duplicating runtime paths.
 
 ## What Is Done
 
@@ -558,6 +562,8 @@ Next recommended slice:
 - Source Scope Stage smoke review coverage.
 - Source RFP readiness read model.
 - Source RFP readiness panel implementation.
+- Wave-14 commercial intelligence modules: BAFO/pricing model variants, commercial risk detection, control tower signals, intelligence patterns, and commercial mission queue.
+- Wave-14 presentation components: SourceCommercialSummaryPanel and VendorPricingComparison (currently unintegrated into active stage workspace).
 - Source vendor response completeness model.
 - Source vendor response completeness panel implementation.
 - Source pricing normalization model.
