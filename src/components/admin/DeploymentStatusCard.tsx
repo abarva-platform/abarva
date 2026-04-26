@@ -127,8 +127,10 @@ const disclaimerStyle: CSSProperties = {
   fontStyle: 'italic',
 };
 
-function chipStyleFor(_liveStatus: DeploymentStatusLiveStatus): CSSProperties {
+function chipStyleFor(): CSSProperties {
   // Single dark-blue accent for chips; no green, no fake-live coloring.
+  // Intentionally not parameterized — the status difference is conveyed
+  // through the chip text (unavailable / configured / error), not color.
   return {
     ...chipBaseStyle,
     color: COLORS.navy,
@@ -201,7 +203,7 @@ export function DeploymentStatusCard({ signal }: DeploymentStatusCardProps) {
                 Last checked {formatCheckedAt(result.checkedAt)}
               </span>
             </div>
-            <span style={chipStyleFor(result.liveStatus)} aria-label={`${PROVIDER_LABELS[result.provider]} live status`}>
+            <span style={chipStyleFor()} aria-label={`${PROVIDER_LABELS[result.provider]} live status`}>
               {LIVE_STATUS_LABELS[result.liveStatus]}
             </span>
           </li>

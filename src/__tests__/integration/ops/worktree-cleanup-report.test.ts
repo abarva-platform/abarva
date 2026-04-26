@@ -10,8 +10,6 @@
 //   - emit valid JSON in --json mode
 //   - exit 0 for --help
 
-/* eslint-disable @typescript-eslint/no-require-imports */
-
 import { execFileSync } from 'child_process';
 import { mkdtempSync, readFileSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
