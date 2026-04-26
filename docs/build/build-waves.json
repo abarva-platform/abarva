@@ -677,10 +677,11 @@
       ],
       "completedSlices": [
         "SRC30",
-        "QA23"
+        "DEMO4"
       ],
       "percentComplete": 33,
-      "validationStatus": "pending"
+      "validationStatus": "pending",
+      "nextAction": "DEMO4 (demo script) complete. Remaining: SRC27 (hub mount), SRC28 (demo scenario seed), SRC29 (executive brief), SRC30 (action queue), QA23 (route smoke)."
     },
     {
       "waveId": "wave-14",

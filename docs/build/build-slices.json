@@ -7390,6 +7390,15 @@
       "status": "code_complete",
       "branch": "wave16/qa23-source-commercial-route-smoke",
       "description": "Manifest-driven smoke verification for Wave-16 commercial route. Static tests + graceful integration file checks. No browser automation."
+    },
+    {
+      "id": "DEMO4",
+      "wave": "wave-16",
+      "name": "Source Commercial Demo Script",
+      "type": "demo",
+      "status": "code_complete",
+      "branch": "wave16/demo4-source-commercial-demo-script",
+      "description": "10/20/45-minute demo scripts for Source commercial intelligence. Talk tracks, what-to-show, what-not-to-claim, pilot ask. No fake savings or live-data claims."
     }
   ]
 }
