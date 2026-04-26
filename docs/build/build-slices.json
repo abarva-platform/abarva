@@ -5056,6 +5056,450 @@
         "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
       ],
       "notes": "Founder-facing checklist for verifying enterprise deployment (TEN1 SaaS tenancy architecture, TEN2 tenant isolation data boundary, TEN3 dedicated tenant blueprint conditional, CLOUD1 four-tier deployment strategy, CLOUD2 Azure VNet reference lab, CLOUD3 Docker packaging conditional, CLOUD4 local lab conditional, CLOUD5 Bicep starter conditional) and client data trust (TRUST1 dataset trust model with five sharing levels L0\u2013L4 and five-state trust ladder loaded \u2192 decision_grade, TRUST2 agent data access policy matrix, TRUST3 Steward setup TRUST surface wiring conditional) plus production readiness tracker (PROD3 live refresh, PROD4 CI / Vercel ingestion conditional) and users / access (ADM6 conditional) before push or PR. Eighth founder-facing runbook after QA1 (Agentic Spine), QA2 (Solution Workshop), QA3 (Solution Intelligence), QA4 (Agent Mission Persona), QA5 (Route Smoke Inventory), QA6 (Golden Prompt Harness Contract + Seed), and QA7 (Program Continuity + Deliverable Verification). Documentation only. Deterministic \u2014 does not exercise live retrieval, model calls, browser automation, or live cloud calls. TEN3 / TRUST3 / CLOUD3 / CLOUD4 / CLOUD5 / PROD4 / ADM6 are explicitly conditional: each row is verified only if the matching slice has landed in the batch under review. Default policy for unsupervised batch runs: lane agents commit only; integration agent owns cherry-picks and merges; founder owns the push and merge decisions. Canonical cherry-pick path: TEN1 \u2192 TEN2 \u2192 TEN3 \u2192 TRUST1 \u2192 TRUST2 \u2192 TRUST3 \u2192 CLOUD1 \u2192 CLOUD2 \u2192 CLOUD3 \u2192 CLOUD4 \u2192 CLOUD5 \u2192 PROD4 \u2192 ADM6 \u2192 QA8."
+    },
+    {
+      "id": "QA13",
+      "name": "Secret Hygiene Test Pattern Update",
+      "category": "QA",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane E (parallel build pack)",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "PROD3",
+        "PROD4"
+      ],
+      "allowedFiles": [
+        "src/lib/qa/secret-hygiene-patterns.ts",
+        "src/__tests__/integration/qa/secret-hygiene-patterns.test.ts",
+        "src/__tests__/integration/admin/production-readiness-live-refresh.test.ts",
+        "docs/build/slices/QA13_SECRET_HYGIENE_TEST_PATTERN_UPDATE.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/app/**",
+        "src/components/**",
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "src/lib/supabase/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/qa/secret-hygiene-patterns.ts exports LIKELY_SECRET_VALUE_PATTERNS as a ReadonlyArray of { name, pattern, description } covering github_pat_classic (ghp_), github_pat_fine_grained (github_pat_), github_app_token (ghs_), vercel_api_token (vercel_), openai_or_anthropic_key (sk- / sk-ant-), slack_bot_token (xoxb-), slack_user_token (xoxp-), aws_access_key_id (AKIA), jwt (three eyJ-prefixed base64url segments), and env_var_assignment_with_long_opaque (KEY|TOKEN|SECRET|PASSWORD = \"long_opaque\"). The module exports CREATED_FROM_DETERMINISTIC_SECRET_HYGIENE_SEED = 'deterministic_secret_hygiene_seed' for provenance. containsLikelySecretValue(text) returns true iff any pattern matches. listLikelySecretFindings(text) returns { patternName, match, index }[] with match truncated to 8 chars + ellipsis so a leaked secret is never persisted. assertNoLikelySecretValues(text) throws an Error with a structured patternName@index=truncated_match summary. The module imports nothing from anthropic / openai / agent / source / nexus / sentinel / atlas / auth / supabase, never uses Date.now, Math.random, new Date(...), or fetch(...).",
+        "src/__tests__/integration/qa/secret-hygiene-patterns.test.ts asserts: (a) the public surface (every documented pattern name is exposed; every entry carries non-empty name + description and a RegExp; CREATED_FROM_DETERMINISTIC_SECRET_HYGIENE_SEED equals 'deterministic_secret_hygiene_seed'); (b) positive cases must flag canonical real-shape tokens (ghp_ classic PAT, sk-ant-api03 Anthropic, sk- OpenAI, xoxb- Slack bot, JWT three-segment, KEY=\"ghp_...\" assignment, AKIA AWS access key); (c) negative cases must NOT flag honest documentation (bare SUPABASE_SERVICE_ROLE_KEY, api.github.com URL substring, GITHUB_STATUS_TOKEN env var name string, liveStatus configuration note, <replace-me>, lab_only_change_me, sk-not-a-real-key); (d) listLikelySecretFindings truncates the match field and records the match index; (e) assertNoLikelySecretValues throws with patternName included and never echoes the full untruncated secret; (f) module hygiene (no live runtime / model / auth / source / supabase imports; no Date.now / Math.random / new Date(...) / fetch(...) call sites).",
+        "src/__tests__/integration/admin/production-readiness-live-refresh.test.ts adopts assertNoLikelySecretValues(JSON.stringify(buildProductionReadinessApiResponse(...))) for the response-side hygiene check, replacing the inline per-pattern not-toMatch list. The source-code substring guard against GITHUB_TOKEN|VERCEL_TOKEN|SECRET|SERVICE_ROLE on combinedSource is preserved verbatim because it guards application code from literal env-var-name usage, not honest documentation in serialized manifests.",
+        "docs/build/slices/QA13_SECRET_HYGIENE_TEST_PATTERN_UPDATE.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and readiness impact, and references the helper, the test suites, and the production-readiness manifest by relative path.",
+        "docs/build/build-slices.json appends a QA13 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn, status code_complete, risk low, ownerAgent Lane E, and lastUpdated 2026-04-26; manifest top-level lastUpdated remains 2026-04-26.",
+        "docs/build/production-readiness.json validation_qa component appends a notes row acknowledging that the QA13 deterministic secret hygiene helper is added and adopted by the PROD3 live-refresh test; status is preserved (no promotion); validation_qa.nextAction is UNIONed conservatively without overwriting prior QA1\u2013QA8 / PROD3 / PROD4 wording; manifest top-level lastUpdated is set to 2026-04-26.",
+        "Helper module + test pattern only; no application code, runtime, auth, supabase, migrations, package manifests, infrastructure-as-code, platform-design docs, model providers, browser automation, or live network calls are introduced or modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/qa/secret-hygiene-patterns.test.ts",
+        "npx jest src/__tests__/integration/admin/production-readiness-live-refresh.test.ts",
+        "npm run build",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Deterministic, file-pure secret VALUE hygiene helper consumed by integration tests. Catches real GitHub PAT (ghp_), GitHub fine-grained PAT (github_pat_), GitHub App (ghs_), Vercel (vercel_), OpenAI / Anthropic (sk- / sk-ant-), Slack (xoxb-, xoxp-), AWS (AKIA), JWT (eyJ.eyJ.X), and KEY=long_opaque env-var assignments. Honest documentation (bare env var names, api.github.com URL substrings, <replace-me> / lab placeholders, short non-real shapes like sk-not-a-real-key) is explicitly NOT flagged. listLikelySecretFindings truncates every match to 8 chars + ellipsis so a leaked secret is never persisted to test logs or CI output. The PROD3 production-readiness live-refresh test adopts the helper for its response-side check; the source-code-side substring guard is preserved verbatim. Documentation only at the manifest level. validation_qa stays tested (not promoted) because the helper is read-only and CI integration of route smoke / persona crawlers / security scan remains deferred."
+    },
+    {
+      "id": "OPS5",
+      "name": "Integration Cherry-Pick Field Merge Helper",
+      "category": "OPS",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane A (parallel build pack)",
+      "dependsOn": [
+        "OPS1"
+      ],
+      "allowedFiles": [
+        "scripts/integration/cherry_resolve.py",
+        "src/__tests__/integration/ops/cherry-resolve-helper.test.ts",
+        "docs/build/slices/OPS5_INTEGRATION_CHERRY_RESOLVE_HELPER.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/lib/agents/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "scripts/integration/cherry_resolve.py is a Python 3 script (shebang #!/usr/bin/env python3) and is executable.",
+        "CLI accepts CHERRY_SHA and SLICE_ID positional args, --dry-run, --summary-json, --date, --repo-root, --main-ref, --help, and -h.",
+        "build-slices.json merge preserves existing entries, appends the cherry source's slice if SLICE_ID not already present, never duplicates ids, bumps top-level lastUpdated, and JSON-parse-validates before and after.",
+        "production-readiness.json merge preserves existing components; status conservatively merges (never replaces HEAD with a higher rank from src; rank order not_started < scaffolded < code_complete < tested < full_flow_ready < pilot_ready < production_ready); notes UNION dedupe by string equality; blockers UNION dedupe by id then description; nextAction takes src when HEAD == main and src diverged, else append-distinct; bumps lastUpdated.",
+        "build-waves.json merge (when present) preserves existing waves, UNIONs completedSlices / skippedSlices / blockedSlices, and recalculates percentComplete deterministically as round(len(completedSlices) / len(plannedSlices) * 100).",
+        "Defensive: detects actual <<<<<<< HEAD / ======= conflict markers before running git checkout --ours; never destroys auto-merged content.",
+        "Defensive: exits 3 with a clear stderr message when any JSON is malformed.",
+        "Defensive: --dry-run prints what would change but writes nothing; --summary-json emits a structured JSON summary on stdout.",
+        "Constraint: only stdlib imports (json, subprocess, sys, argparse, pathlib, datetime); no third-party Python deps.",
+        "Constraint: no destructive git commands (no reset, push, rebase, branch -D); only git show <sha>:<path> read-only and git checkout --ours <path> when markers detected.",
+        "Constraint: no network calls, no model providers, no shell pipelines.",
+        "src/__tests__/integration/ops/cherry-resolve-helper.test.ts spawns the Python script via child_process.execFileSync against synthetic fixtures in a per-test os.tmpdir() directory; tests do not require a real git repo.",
+        "Tests cover: --help and -h exit 0 with usage text; build-slices duplicate prevention; build-slices fresh-slice append; conservative status merge (HEAD tested + src full_flow_ready -> tested); conservative status demotion (HEAD tested + src code_complete -> code_complete); blockers UNION by id; notes UNION without dupes; nextAction append-distinct when both diverged from main; malformed JSON -> exit 3; --dry-run does not mutate files; --summary-json emits valid JSON with the expected shape.",
+        "docs/build/slices/OPS5_INTEGRATION_CHERRY_RESOLVE_HELPER.md documents purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and production readiness impact.",
+        "build-slices.json appends an OPS5 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn ['OPS1'], status code_complete, risk low, ownerAgent Lane A; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "production-readiness.json validation_qa and production_deployment components UNION notes acknowledging that the OPS5 cherry-resolve helper is now repo-supported, tested, and dry-run-capable; nextAction values are conservatively appended without overwriting prior wording; statuses are preserved (no promotions); manifest top-level lastUpdated is bumped to 2026-04-26."
+      ],
+      "validationCommands": [
+        "python3 scripts/integration/cherry_resolve.py --help",
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/ops/cherry-resolve-helper.test.ts",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "OPS5 productizes the v2 cherry-resolve logic that has been used manually across multiple integration packs into a repo-supported, tested, dry-run-capable Python script. Encodes the OPS1 conflict policies (sections G and H) deterministically: build-slices.json append-only with no duplicate ids, production-readiness.json conservative status / notes UNION / blockers UNION / nextAction append-distinct, and optional build-waves.json UNION + deterministic percentComplete recalculation. Hidden fixture flags allow the Jest suite to run the real script against synthetic JSON without a real git repo, so the contract under test is exactly what integrators execute. No CI hookup, no agent runtime, no model providers."
+    },
+    {
+      "id": "OPS6",
+      "name": "Duplicate Slice Preflight Script",
+      "category": "OPS",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane B (parallel build pack)",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "OPS1",
+        "OPS2"
+      ],
+      "allowedFiles": [
+        "scripts/integration/check_duplicate_slices.py",
+        "docs/build/slices/OPS6_DUPLICATE_SLICE_PREFLIGHT_SCRIPT.md",
+        "src/__tests__/integration/ops/duplicate-slice-preflight.test.ts",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/lib/agents/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "scripts/integration/check_duplicate_slices.py is executable, starts with the shebang #!/usr/bin/env python3, and exposes the CLI 'check_duplicate_slices.py [--json] [--manifest=PATH] [--allow-blocked] <SLICE_ID> [<SLICE_ID> ...]' with --help / -h support.",
+        "The script reads docs/build/build-slices.json by default (relative to Path.cwd()) and supports --manifest=PATH to redirect to a fixture manifest; it never modifies the manifest or any other file.",
+        "Text-mode output prints readyToRun, duplicates, missing (alias of readyToRun), blocked, and a single-line recommendedAction; --json mode emits a JSON object with the same keys plus manifest, recommendedAction, and exitCode.",
+        "Statuses code_complete and verified are classified as duplicates (BLOCKING, exit 2); statuses blocked and in_progress are classified as blocked (exit 4 unless --allow-blocked is set); slice ids absent from the manifest are classified as readyToRun and treated as exit 0.",
+        "Exit codes are: 0 when all targets are ready (or blocked-but-allowed) and no duplicates exist; 2 when one or more targets are duplicates; 3 when the manifest is missing, unreadable, or malformed JSON; 4 when one or more targets are blocked / in_progress and --allow-blocked was not supplied.",
+        "Module imports are restricted to Python's standard library (argparse, json, sys, pathlib, typing, __future__); the script makes no network calls and does not invoke subprocess, os.system, shutil, urllib, requests, http.client, or socket; the script never opens a file in write mode.",
+        "src/__tests__/integration/ops/duplicate-slice-preflight.test.ts drives the script via child_process.spawnSync against fixture build-slices.json files written to os.tmpdir(); the suite covers --help (exit 0), code_complete duplicate detection (exit 2), verified duplicate detection (exit 2), blocked detection without --allow-blocked (exit 4), --allow-blocked override (exit 0), --json shape and keys (manifest / readyToRun / duplicates / missing / blocked / recommendedAction / exitCode), malformed manifest (exit 3), missing manifest path (exit 3), and a non-mutating sha256 round-trip on the fixture manifest.",
+        "docs/build/slices/OPS6_DUPLICATE_SLICE_PREFLIGHT_SCRIPT.md documents purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and production readiness impact.",
+        "docs/build/build-slices.json appends an OPS6 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn, status code_complete, risk low, ownerAgent Lane B, and lastUpdated 2026-04-26; manifest top-level lastUpdated remains 2026-04-26.",
+        "docs/build/production-readiness.json validation_qa notes are UNIONed with an entry acknowledging that OPS6 lands the deterministic duplicate-slice preflight script and an integration suite covering duplicate detection, blocked-state handling, --json shape, malformed-manifest exit code, and a non-mutating sha256 round-trip; status is preserved (no promotion); nextAction is conservatively appended without overwriting prior QA1\u2013QA8 / OPS1 / OPS2 / PROD3 / PROD4 wording; manifest top-level lastUpdated is set to 2026-04-26.",
+        "Documentation, scripts, and tests only; no application code, no runtime, no auth, no supabase, no migrations, no package manifests, no infrastructure-as-code, and no platform-design docs are modified."
+      ],
+      "validationCommands": [
+        "python3 scripts/integration/check_duplicate_slices.py --help",
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/ops/duplicate-slice-preflight.test.ts",
+        "npm run build"
+      ],
+      "notes": "Read-only Python 3 preflight script that classifies one or more candidate slice ids against docs/build/build-slices.json and bails out with a non-zero exit code when a target is already code_complete / verified (BLOCKING) or in a blocked / in_progress state (caution unless --allow-blocked). Imports only stdlib (argparse, json, sys, pathlib, typing, __future__); no subprocess, no shell, no network, no file mutation. The companion Jest suite drives the script through child_process.spawnSync against fixture manifests in os.tmpdir() and asserts the script does not modify the manifest via a sha256 round-trip. No package.json change; the script is invoked directly via python3 and is not registered as an npm run target in this slice."
+    },
+    {
+      "id": "OPS7",
+      "name": "Lane SHA / Final Report Validator",
+      "category": "OPS",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane C (parallel build pack)",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "OPS1"
+      ],
+      "allowedFiles": [
+        "scripts/integration/validate_lane_report.py",
+        "docs/build/AGENT_SLICE_REPORT_TEMPLATE.md",
+        "docs/build/slices/OPS7_LANE_REPORT_VALIDATOR.md",
+        "src/__tests__/integration/ops/lane-report-validator.test.ts",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "scripts/integration/validate_lane_report.py is a Python 3 CLI accepting [--json] <REPORT_PATH> with --help / -h support, exit 0 on valid, exit 2 on missing required fields, exit 3 on unreadable file; required fields detected: LANE-SHA (7+ hex), slice id ([A-Z]+\\d+), branch line, Files staged / Files changed list with at least one entry, tests run (Jest count or docs only or N/A docs only), build result (npm run build pass/fail/skip), Tracker updated yes/no, Run Metrics section, guardrails confirmation (no push / no PR / local commit only); docs-only Jest waiver applies when 'docs only' is stated and zero .ts / .tsx files are staged; --json payload shape is { ok, missing[], present[], laneSha, sliceId }.",
+        "docs/build/AGENT_SLICE_REPORT_TEMPLATE.md carries the canonical sections (slice header with Lane / Commit message rows, Files staged list, Tests run, TSC + Build, PRT updated yes/no with literal 'Tracker updated:' line, Hard-rule audit, Run Metrics, Blockers, and a final 'LANE-SHA: <abbrev>' line) and documents the docs-only Jest waiver.",
+        "src/__tests__/integration/ops/lane-report-validator.test.ts uses child_process.execFileSync to drive the Python validator over reports written into os.mkdtempSync; covers valid \u2192 exit 0, missing LANE-SHA \u2192 exit 2, missing tracker update \u2192 exit 2, docs-only acceptance, --json shape, non-mutating sha256 before/after, --help \u2192 exit 0, unreadable file \u2192 exit 3.",
+        "docs/build/slices/OPS7_LANE_REPORT_VALIDATOR.md documents purpose, what changed, out-of-scope, why-it-is-safe, and validation commands.",
+        "Validator is read-only: imports only argparse / json / re / sys; opens reports with open(..., 'r'); no subprocess, no shell, no network, no filesystem mutation; identical inputs produce byte-equal outputs.",
+        "build-slices.json appends the OPS7 entry with status code_complete and bumps top-level lastUpdated to 2026-04-26; production-readiness.json union-appends a validation_qa note and bumps lastUpdated to 2026-04-26 without promoting any status."
+      ],
+      "validationCommands": [
+        "python3 scripts/integration/validate_lane_report.py --help",
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/ops/lane-report-validator.test.ts",
+        "npm run build"
+      ],
+      "notes": "OPS7 standardizes lane final reports so the integration agent can mechanically scrape LANE-SHA + validation metadata at morning review. Read-only Python validator + canonical markdown template + Jest harness using execFileSync. Live integration into a GitHub Actions step is deferred to a later OPS slice."
+    },
+    {
+      "id": "OPS8",
+      "name": "Worktree Cleanup Assistant",
+      "category": "OPS",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane D (parallel build pack)",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "OPS1"
+      ],
+      "allowedFiles": [
+        "scripts/integration/worktree_cleanup_report.py",
+        "docs/build/WORKTREE_CLEANUP_RUNBOOK.md",
+        "docs/build/slices/OPS8_WORKTREE_CLEANUP_ASSISTANT.md",
+        "src/__tests__/integration/ops/worktree-cleanup-report.test.ts",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/lib/agents/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "scripts/integration/worktree_cleanup_report.py is a Python 3 script with shebang #!/usr/bin/env python3, executable mode 0755, stdlib-only imports (argparse, json, subprocess, sys, pathlib, datetime).",
+        "CLI supports `--json`, `--fixture=PATH`, `--help`, and `-h`. `--help` and `-h` exit 0 and print usage.",
+        "Default mode runs `git worktree list --porcelain` via subprocess. `--fixture=PATH` mode reads porcelain text plus optional `last_commit_ts`/`dirty`/`on_origin` metadata from a fixture file for deterministic tests.",
+        "Classifier emits one of: active-main (branch == main), active-integration (branch starts with codex/), lane-worktree (branch starts with pack/, night/, loop/, enterprise/, ops/, or big/), stale-lane (lane prefix AND lastCommitDays > 14), unknown (anything else).",
+        "Each row carries { path, branch, classification, isDirty, lastCommitDays, onOrigin, recommendedCommand, createdFrom: 'ops8_worktree_cleanup_report' }.",
+        "Recommended commands are PRINTED ONLY. Stale-lane clean trees emit `git worktree remove --force <path> && git branch -D <branch>`. Dirty trees emit a stash-or-commit warning with NO removal command. Active-main / active-integration emit `do not remove (active branch)`. Lanes missing from origin append a `would lose work` warning.",
+        "`--json` mode emits envelope `{ schemaVersion: 1, createdFrom: 'ops8_worktree_cleanup_report', destructive: false, rows: [...] }`.",
+        "Script never invokes `git worktree remove`, `git branch -D`, `git push`, `git reset`, or `rm` from any subprocess call.",
+        "src/__tests__/integration/ops/worktree-cleanup-report.test.ts drives the script via child_process.execFileSync, covering parsing of porcelain output, stale classification (lane branch + age > 14 days), dirty-worktree warning, missing-on-origin warning, JSON envelope shape, text-mode rendering, `--help` exit 0, and a static assertion that the script never executes destructive git verbs.",
+        "docs/build/WORKTREE_CLEANUP_RUNBOOK.md documents when to run, how to interpret each classification, manual cleanup steps, and the safety contract (never auto-delete; require explicit user execution).",
+        "docs/build/slices/OPS8_WORKTREE_CLEANUP_ASSISTANT.md documents purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and production readiness impact.",
+        "docs/build/build-slices.json appends the OPS8 entry with status code_complete, risk low, ownerAgent Lane D, lastUpdated 2026-04-26; manifest top-level lastUpdated bumped to 2026-04-26.",
+        "docs/build/production-readiness.json validation_qa and production_deployment notes/nextAction UNIONed conservatively (no promotions); manifest top-level lastUpdated bumped to 2026-04-26.",
+        "No application code outside scripts/integration/worktree_cleanup_report.py and its companion test is modified; no runtime, auth, supabase, migrations, package manifests, or platform-design docs are modified."
+      ],
+      "validationCommands": [
+        "python3 scripts/integration/worktree_cleanup_report.py --help",
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/ops/worktree-cleanup-report.test.ts",
+        "npm run build"
+      ],
+      "notes": "Safe, read-only worktree cleanup assistant. Lists pack/night/loop/enterprise/ops/big worktrees, classifies by branch prefix and 14-day staleness threshold, warns on dirty trees and missing-on-origin branches, and PRINTS recommended cleanup commands for human execution. NEVER deletes anything. Stdlib-only Python; no model providers, no shell except read-only git verbs (worktree list, log, status, ls-remote)."
+    },
+    {
+      "id": "CLOUD8",
+      "name": "Env Example Gitignore Policy",
+      "category": "CLOUD",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane F (parallel build pack)",
+      "dependsOn": [
+        "CLOUD4"
+      ],
+      "lastUpdated": "2026-04-26",
+      "allowedFiles": [
+        ".gitignore",
+        "docs/build/slices/CLOUD8_ENV_EXAMPLE_GITIGNORE_POLICY.md",
+        "docs/deployment/ENV_EXAMPLE_POLICY.md",
+        "src/__tests__/integration/deployment/env-example-policy.test.ts",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/app/**",
+        "src/components/**",
+        "src/lib/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md",
+        "infra/**",
+        "terraform/**",
+        "bicep/**",
+        ".github/workflows/**",
+        "azure.yaml",
+        "next.config.ts",
+        ".env",
+        ".env.local",
+        ".env.production",
+        ".env.development"
+      ],
+      "acceptanceCriteria": [
+        ".gitignore preserves all existing ignore rules (the .env* blanket rule and the .env*.local rule remain) and adds two explicit allow rules immediately under the .env* line: !.env.example and !.env.*.example, with a single-line comment marking them as safe placeholder templates.",
+        "docs/deployment/ENV_EXAMPLE_POLICY.md documents purpose, what is allowed (.env.example, .env.<role>.example), what is NEVER allowed (.env, .env.local, .env.production, .env.development), required content of .env.*.example files (header comment, placeholder values only, no real tokens / API keys / secrets, no real provider hostnames), how to add a future env example, and the verification contract.",
+        "docs/build/slices/CLOUD8_ENV_EXAMPLE_GITIGNORE_POLICY.md documents purpose, what changed, out of scope, why this is safe, how to re-run, readiness impact, and cross-references to CLOUD1 / CLOUD2 / CLOUD3 / CLOUD4 / CLOUD5.",
+        "src/__tests__/integration/deployment/env-example-policy.test.ts asserts the .gitignore still ignores real env files (.env* blanket rule plus .env*.local rule remain), the two CLOUD8 allow rules are present (!.env.example and !.env.*.example), the allow rules sit below the .env* ignore line, every .env.*.example file at the repo root contains the literal substring EXAMPLE or example, and no committed .env.*.example file matches any of four likely-secret regex patterns (ghp_ GitHub PATs, sk- and sk-ant- keys, eyJ.eyJ.* JWTs, AKIA AWS access keys).",
+        "docs/build/build-slices.json appends a CLOUD8 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn (CLOUD4), status code_complete, risk low, ownerAgent Lane F, and lastUpdated 2026-04-26.",
+        "docs/build/production-readiness.json UNION-updates production_deployment notes/nextAction acknowledging CLOUD8; status is preserved (still blocked); the prod-deploy-verification blocker is preserved verbatim; manifest top-level lastUpdated is set to 2026-04-26.",
+        "Policy + .gitignore + Jest contract only; no application code, no runtime, no auth, no supabase, no migrations, no package manifests, no infrastructure-as-code, no platform-design docs, no new env files, no real env files committed."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/deployment/env-example-policy.test.ts",
+        "npm run build",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Allow safe .env*.example placeholder templates to be committed without git add -f while keeping every real env file ignored. Adds two explicit allow rules (!.env.example and !.env.*.example) immediately under the existing .env* blanket rule in .gitignore; the .env*.local rule is left in place. Adds a founder-facing policy doc at docs/deployment/ENV_EXAMPLE_POLICY.md, a slice doc at docs/build/slices/CLOUD8_ENV_EXAMPLE_GITIGNORE_POLICY.md, and a deterministic file-pure Jest contract at src/__tests__/integration/deployment/env-example-policy.test.ts that locks the gitignore shape and scans every committed .env.*.example file for header markers and likely-secret regex shapes (GitHub PATs, sk-/sk-ant- keys, JWTs, AWS access keys). Direct response to CLOUD4 needing git add -f to commit .env.private-lab.example. No new env files are added by this slice. No real env files are committed. No application code, no runtime, no auth, no supabase, no migrations, no IaC, no model calls, no live cloud calls, no deploy. production_deployment status is preserved (still blocked); the prod-deploy-verification blocker is preserved verbatim."
+    },
+    {
+      "id": "PROD5",
+      "name": "CI / Vercel Status Surface Integration",
+      "category": "PROD",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane G",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "PROD3",
+        "PROD4"
+      ],
+      "allowedFiles": [
+        "src/components/admin/DeploymentStatusCard.tsx",
+        "src/__tests__/integration/admin/deployment-status-card.test.ts",
+        "docs/build/slices/PROD5_DEPLOYMENT_STATUS_SURFACE_INTEGRATION.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "DeploymentStatusCard is a Server Component (no 'use client', no React hooks) and consumes the PROD4 ProductionReadinessDeploymentSignal as a prop without making any external API call.",
+        "The card renders an honest unavailable display when tokens are absent: chip text 'unavailable', '\u2014' for last-checked, explicit limitation note, deterministic next action mentioning GITHUB_STATUS_TOKEN and VERCEL_STATUS_TOKEN, and the disclaimer 'No fake green. liveStatus reflects honest token presence.'.",
+        "Component imports COLORS, FONT, BORDER, RADIUS, SPACING, and TYPE from @/lib/design/abarva-theme; the source contains no local hex literals and no local 'const COLORS' declaration (canon \u00a7L acceptance gate #8).",
+        "Integration test asserts unavailable rendering, no fake 'live' chip text, no liveStatus 'live' in the serialized signal, no process.env.*TOKEN / SECRET / KEY reads in the component source, no fetch / api.github.com / api.vercel.com / anthropic / openai references in the component source, and no auth / source / sentinel / atlas / nexus / agent / supabase / clerk imports.",
+        "Slice documentation explains why the card lands as a server component, why mounting on the live panel is deferred to a follow-up slice, and that no provider polling is performed.",
+        "production-readiness.json validation_qa and production_deployment notes are UNION-updated conservatively without overwriting prior PROD1\u2013PROD4 wording; manifest top-level lastUpdated is 2026-04-26; no component status promotion."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/admin/deployment-status-card.test.ts",
+        "npx jest src/__tests__/integration/admin/production-readiness-live-refresh.test.ts",
+        "npm run build",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Surfaces the PROD4 deployment-status read model as a calm, Apple-like server component on the platform Admin Production Readiness page. UI-facing slice with strict canon hygiene (theme imports only, no local hex). Honest unavailable display when tokens are absent; chip uses a single dark-blue accent regardless of state because PROD5 cannot prove a green deploy. Mounting the card on the live panel is deferred to a follow-up slice; PROD5 lands the component and its honesty test only. No provider API polling, no model calls, no auth changes, no migrations, no tracker promotion."
+    },
+    {
+      "id": "WAVE1",
+      "name": "Build Wave Progress Tracker",
+      "category": "OPS",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane H (build-operations parallel pack)",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "OPS1",
+        "OPS2",
+        "PROD2",
+        "PROD4"
+      ],
+      "allowedFiles": [
+        "docs/build/build-waves.json",
+        "docs/build/BUILD_WAVE_PROGRESS_PROTOCOL.md",
+        "docs/build/slices/WAVE1_BUILD_WAVE_PROGRESS_TRACKER.md",
+        "src/__tests__/integration/ops/build-wave-progress.test.ts",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/app/**",
+        "src/components/**",
+        "src/lib/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "docs/build/build-waves.json declares schemaVersion 1, lastUpdated 2026-04-26, a non-empty source string, a lifecycle vocabulary covering planned / in_progress / merged / blocked / deferred, and a validationLifecycle vocabulary covering not_run / tsc_clean / tests_green / build_green / ci_green / full_pass / partial / failing.",
+        "docs/build/build-waves.json seeds nine canonical waves (Wave 0 Agentic Spine Foundation, Wave 1 Runtime Safety + Agent Mission + Context/Evidence Backbone, Wave 2 AI Control Tower + Intelligence Depth, Wave 3 Enterprise SaaS + Data Trust + Deployment Foundations, Wave 4 Program Continuity + Deliverable Loop, Wave 5 Solution-to-Workshop / Architecture Canvas, Wave 6 Production Hardening / Route Smoke / Persona Crawler, Wave 7 Private Azure/GCP Deployment Lab, Wave 8 Build Operations Hardening), each carrying waveId / name / goal / status / percentComplete / plannedSlices / completedSlices / skippedSlices / blockedSlices / mergedPrs / validationStatus / productionReadinessUpdated / currentBlockers / nextAction / lastUpdated.",
+        "Every wave's percentComplete reconciles with round(len(completedSlices) / len(plannedSlices) * 100) within plus or minus 1; the empty-wave case (Wave 7) is recorded as 0.",
+        "Every slice ID in completedSlices exists in build-slices.json at status code_complete or verified; future-only IDs in plannedSlices for non-merged waves are accepted as planned-but-not-yet-shipped.",
+        "Wave 8 plannedSlices includes OPS5, OPS6, OPS7, OPS8, QA13, CLOUD8, PROD5, and WAVE1; Wave 8 completedSlices includes WAVE1; Wave 8 status is in_progress.",
+        "docs/build/BUILD_WAVE_PROGRESS_PROTOCOL.md documents when to update build-waves.json, the percentComplete formula, the skipped / blocked / deferred slice rules, the PR merge binding, the run metrics requirement, the conservative-status rule, the OPS1 conflict policy, and the relationship to build-slices.json and production-readiness.json.",
+        "docs/build/slices/WAVE1_BUILD_WAVE_PROGRESS_TRACKER.md documents the slice purpose, what changed, what is explicitly out of scope, validation commands, and acceptance criteria.",
+        "src/__tests__/integration/ops/build-wave-progress.test.ts asserts: build-waves.json parses; all 9 waves present; every required field on every wave; no duplicate waveId; every status in canonical set; every validationStatus in canonical set; percentComplete reconciliation within plus or minus 1; completedSlices subset of code_complete / verified entries in build-slices.json; plannedSlices either in build-slices.json or in slice contracts directory or accepted as future-only on non-merged waves; every mergedPrs entry is a positive integer; module hygiene (no Date.now / Math.random / new Date references; no conflict markers).",
+        "docs/build/build-slices.json appends a WAVE1 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn, status code_complete, risk low, ownerAgent Lane H, and lastUpdated 2026-04-26; manifest top-level lastUpdated remains 2026-04-26.",
+        "docs/build/production-readiness.json validation_qa and production_deployment notes / nextAction are UNION-updated conservatively without overwriting prior wording; statuses are preserved (no promotions); manifest top-level lastUpdated is set to 2026-04-26.",
+        "Documentation, manifest, and deterministic test only; no application code, runtime, auth, supabase, migrations, package manifests, or platform-design docs are modified."
+      ],
+      "validationCommands": [
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-waves.json','utf8')); console.log('waves json ok')\"",
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/ops/build-wave-progress.test.ts",
+        "npm run build"
+      ],
+      "notes": "Deterministic wave-level rollup over the slice manifest. Read-only. Does not deploy, does not poll Vercel or GitHub, does not call any model provider, does not promote any production-readiness component, does not modify auth / supabase / migrations / runtime code. Wave membership is best-effort honest mapping inferred from slice ID prefix, slice name, and merged-PR commit messages on main. Future-only slice IDs (OPS5, OPS6, OPS7, OPS8, QA13, CLOUD8, PROD5) are listed in Wave 8 plannedSlices to carry roadmap intent without inventing slice contracts. Lane H commits locally only; the integration agent owns the cherry-pick and merge."
     }
   ]
 }

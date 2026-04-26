@@ -33,6 +33,9 @@ reports/test-users/*.local.json
 
 # env files (can opt-in for committing if needed)
 .env*
+# Env examples are safe to commit — placeholders only, no real secrets.
+!.env.example
+!.env.*.example
 
 # vercel
 .vercel
