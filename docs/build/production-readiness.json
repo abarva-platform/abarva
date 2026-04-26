@@ -870,7 +870,8 @@
         "2026-04-26 SRC22: SourceCommercialRiskPanel added with expandable exception list, severity chips, stats row. Deterministic via commercial-risk-detection.ts. Not legal advice.",
         "SRC23 (wave-15): source-commercial-readiness.ts view-model builder + SourceCommercialReadinessView component. 6-check readiness assessment. 8 tests green.",
         "SRC24 (wave-15): source-commercial-missions-view.ts view-model + SourceCommercialMissionsPanel component. 5-mission default cap with show-more. 9 tests green.",
-        "SRC25 (wave-15): source-commercial-signals-preview.ts view-model + SourceCommercialSignalsPreview component. Top-3 signals and patterns preview. 9 tests green."
+        "SRC25 (wave-15): source-commercial-signals-preview.ts view-model + SourceCommercialSignalsPreview component. Top-3 signals and patterns preview. 9 tests green.",
+        "SRC26 (wave-15): source-commercial-hub-view.ts (7-tab structure) + SourceCommercialHub component (prop-slot composition). 9 tests green."
       ]
     },
     {

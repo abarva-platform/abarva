@@ -7318,6 +7318,15 @@
       "status": "complete",
       "branch": "wave15/src25-commercial-signals-preview",
       "description": "Compact preview of top 3 control-tower signals and top 3 intelligence patterns. Severity chips, confidence bars. AbarVa design."
+    },
+    {
+      "id": "SRC26",
+      "wave": "wave-15",
+      "name": "Source Commercial Hub",
+      "type": "source-ui",
+      "status": "complete",
+      "branch": "wave15/src26-commercial-hub",
+      "description": "Top-level 7-tab hub container for commercial intelligence panels. Prop-slot composition pattern. AbarVa design."
     }
   ]
 }
