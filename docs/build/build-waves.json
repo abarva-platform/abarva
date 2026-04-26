@@ -808,6 +808,27 @@
       "lastUpdated": "2026-04-26"
     },
     {
+      "waveId": "wave-20",
+      "name": "Canonical App Shell Ownership",
+      "goal": "Establish a canonical, version-controlled AbarVa app shell configuration, component set, and banned-token enforcement so all new routes compose from a single source of truth.",
+      "status": "in_progress",
+      "percentComplete": 14,
+      "plannedSlices": [
+        "SHELL1"
+      ],
+      "completedSlices": [
+        "SHELL1"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "tsc_clean",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "SHELL1 (Lane A) complete. Remaining lanes pending.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
       "waveId": "wave-18",
       "name": "Program Flagship Experience",
       "goal": "Make the Program detail page the flagship AbarVa experience: phase journey, workflow, approval gates, deliverables, evidence, actions, agent-driven.",
