@@ -7525,6 +7525,15 @@
       "status": "code_complete",
       "branch": "wave18/demo6-program-flagship-demo-script",
       "description": "10/20/45-minute Program Flagship demo scripts. Talk tracks, route sequence, what NOT to claim, three pilot ask versions, story arc summary."
+    },
+    {
+      "id": "DESROUTE1",
+      "wave": "wave-17a",
+      "name": "Active Route Ownership Map",
+      "type": "qa",
+      "status": "code_complete",
+      "branch": "wave17a/desroute1-active-route-ownership-map",
+      "description": "Deterministic map of active route files/components/shell ownership and remediation for admin, source, and tenant program routes."
     }
   ]
 }

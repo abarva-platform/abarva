@@ -283,7 +283,8 @@
       "Live Model Gateway and gateway audit trail are contract-defined but not implemented as production infrastructure.",
       "Evidence ledger, ingestion/parsing, and production audit/governance persistence are not production-ready.",
       "Vercel production deploy health is not polled by this tracker and must be verified manually after deploy.",
-      "Security/governance review is partial and must be completed before pilot or production readiness."
+      "Security/governance review is partial and must be completed before pilot or production readiness.",
+      "Active route ownership and shell enforcement for admin/source/program routes is not fully canonical yet."
     ]
   },
   "components": [
