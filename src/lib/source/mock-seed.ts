@@ -1191,3 +1191,34 @@ export function getSourceDashboardSeed(): AbarvaSourceDashboardData {
     events: summaries,
   };
 }
+
+export interface SourceRfpReadinessSeed {
+  eventId: string;
+  blockers: string[];
+}
+
+const SOURCE_RFP_READINESS_SEEDS: SourceRfpReadinessSeed[] = [
+  {
+    eventId: SOURCE_GOLDEN_EVENT_IDS.dataAiModernization,
+    blockers: [
+      'Ticket history is not available for transition-cost profiling.',
+      'SLA baseline is missing for service-level commitments.',
+    ],
+  },
+  {
+    eventId: SOURCE_GOLDEN_EVENT_IDS.amsConsolidation,
+    blockers: [
+      'Use event-specific RFP sections once scope transition is approved.',
+    ],
+  },
+  {
+    eventId: SOURCE_GOLDEN_EVENT_IDS.digitalAppBuild,
+    blockers: [
+      'Scope and operating model must define who handles platform operations.',
+    ],
+  },
+];
+
+export function getSourceRfpReadinessSeed(eventId: string): SourceRfpReadinessSeed {
+  return SOURCE_RFP_READINESS_SEEDS.find((seed) => seed.eventId === eventId) ?? { eventId, blockers: [] };
+}
