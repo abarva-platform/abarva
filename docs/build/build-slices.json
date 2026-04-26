@@ -6505,6 +6505,27 @@
       "notes": [
         "Deterministic correlation pairings \u2014 no statistics."
       ]
+    },
+    {
+      "id": "ACT12",
+      "name": "AI Tool Waste / License Utilization Signals",
+      "status": "code_complete",
+      "risk": "low",
+      "lastUpdated": "2026-04-26",
+      "ownerAgent": "Wave4 Lane F",
+      "dependsOn": [
+        "ACT6"
+      ],
+      "allowedFiles": [
+        "src/lib/tower/ai-tool-waste-signals.ts",
+        "src/__tests__/integration/tower/ai-tool-waste-signals.test.ts",
+        "docs/build/slices/ACT12_AI_TOOL_WASTE_SIGNALS.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "notes": [
+        "Deterministic AI tool waste/license utilization signals."
+      ]
     }
   ]
 }
