@@ -79,6 +79,18 @@ describe('Source BAFO negotiation model', () => {
     expect(getSourceBafoPriorities(plan)).toEqual(expect.arrayContaining([expect.any(String)]));
   });
 
+  it('keeps excluded scope and commercial trap output deterministic for smoke posture', () => {
+    const event = getSeededEvent();
+    const plan = buildSourceBafoNegotiationPlan({ event });
+
+    expect(plan.excludedScopeList.length).toBeGreaterThan(0);
+    expect(plan.excludedScopeList.join(' ').toLowerCase()).toMatch(/release|tooling|minor/);
+    expect(plan.commercialTrapSummary.length).toBeGreaterThan(0);
+    expect(plan.commercialTrapSummary.map((trap) => trap.category)).toEqual(
+      expect.arrayContaining(['Pricing template']),
+    );
+  });
+
   it('renders markdown output with vendor-level negotiation rows', () => {
     const event = getSeededEvent();
     const plan = buildSourceBafoNegotiationPlan({ event });

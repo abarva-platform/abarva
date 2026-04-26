@@ -8,7 +8,35 @@ import {
   SOURCE_GOLDEN_EVENT_IDS,
   getSourcingEvent,
   buildSourceRfpReadiness,
+  SOURCE_STAGE_LABELS,
 } from '@/lib/source';
+import type { SourceStageStatus, StageGateStatus, WorkflowStage } from '@/lib/source/types';
+
+type SourcingEvent = NonNullable<Awaited<ReturnType<typeof getSourcingEvent>>>;
+
+function buildOralsBafoEvent(event: SourcingEvent) {
+  const oralsBafoStage: WorkflowStage = {
+    key: 'orals_bafo',
+    label: SOURCE_STAGE_LABELS.orals_bafo,
+    status: 'active',
+    summary: 'Procurement is ready to run BAFO and close commercial conditions.',
+    gate: {
+      id: 'gate-source-bafo',
+      label: 'BAFO package complete',
+      status: 'in_review' as StageGateStatus,
+      ownerRole: 'Procurement Lead',
+      requiredArtifacts: ['Decision memo', 'Commercial exception log'],
+      blocker: null,
+    },
+  };
+
+  return {
+    ...event,
+    stages: [...event.stages.map((stage) => ({ ...stage, status: 'complete' as SourceStageStatus })), oralsBafoStage],
+    currentStageKey: 'orals_bafo' as const,
+    currentStageLabel: SOURCE_STAGE_LABELS.orals_bafo,
+  };
+}
 
 describe('Source event canvas shell', () => {
   it('renders the seeded event canvas shell deterministically', async () => {
@@ -64,6 +92,18 @@ describe('Source event canvas shell', () => {
     expect(html).toContain('Top mission');
     expect(html).toContain('Stage gate check required');
     expect(html).toContain('Deterministic guidance only');
+  });
+
+  it('surfaces BAFO negotiation panel signals in event canvas when orals/BAFO is active', async () => {
+    const sourceEvent = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.digitalAppBuild);
+    const event = buildOralsBafoEvent(sourceEvent!);
+    const html = renderToStaticMarkup(createElement(NexusEngagementCanvas, { event }));
+
+    expect(html).toContain('BAFO negotiation');
+    expect(html).toContain('Overall negotiation readiness');
+    expect(html).toContain('Top BAFO priorities');
+    expect(html).toContain('Vendor BAFO questions');
+    expect(html).toContain('Vertex CloudOps');
   });
 
   it('includes the deterministic data readiness panel with missing and usable evidence states', async () => {
