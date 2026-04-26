@@ -1411,7 +1411,8 @@
         "PROD7: Summary test suite validates no false production_ready claims, real blocker surfacing, and deterministic output.",
         "OPS11: cherry_resolve.py extended with full build-waves.json merge support; waveId fix, mergedPrs union, validationStatus conservative merge, nextAction handling.",
         "OPS12: Integration stash safety check added; prevents accidental stash pop during cherry-pick integration.",
-        "LIVE1: Founder live walk checklist created (12 steps, all surfaces, deterministic, evidence-backed caveats)."
+        "LIVE1: Founder live walk checklist created (12 steps, all surfaces, deterministic, evidence-backed caveats).",
+        "LIVE2: Demo tenant route verification manifest created (apex-retail + meridian, 10 routes, deterministic)."
       ],
       "lastUpdated": "2026-04-26"
     },

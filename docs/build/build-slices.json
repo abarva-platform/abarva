@@ -6977,6 +6977,18 @@
       "branch": "live/live1-founder-live-walk-checklist",
       "createdAt": "2026-04-26",
       "completedAt": "2026-04-26"
+    },
+    {
+      "id": "LIVE2",
+      "wave": "wave-13",
+      "status": "code_complete",
+      "title": "Demo Tenant Route Verification",
+      "description": "Deterministic route inventory read model for demo tenants (apex-retail, meridian) with validation status, caveats, and fallback routes.",
+      "sliceType": "qa",
+      "owner": "qa",
+      "branch": "live/live2-demo-tenant-route-verification",
+      "createdAt": "2026-04-26",
+      "completedAt": "2026-04-26"
     }
   ]
 }
