@@ -4459,6 +4459,50 @@
         "npm run build"
       ],
       "notes": "Pure deterministic agent data access policy matrix that defines which agents (Nexus / Sentinel / Atlas / Steward) may use which dataset sharing levels for which canonical purposes. Read model only \u2014 no live enforcement, no audit ledger writes, no model invocation, no DB persistence. Lane-isolated from TRUST1 (parallel build pack): redeclares DatasetTrustLevel and DatasetTrustLadderState locally and the integration agent reconciles duplicate type declarations during cherry-pick. Future TRUST slices wire the matrix into the Steward Setup UI and the runtime tool dispatcher / Model Gateway; per-tenant policy override and live enforcement remain deferred."
+    },
+    {
+      "id": "CLOUD1",
+      "name": "Enterprise Private Deployment Strategy Contract",
+      "category": "CLOUD",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane E (parallel build pack)",
+      "dependsOn": [
+        "ARCH1",
+        "ARCH2"
+      ],
+      "lastUpdated": "2026-04-26",
+      "allowedFiles": [
+        "docs/build/slices/CLOUD1_ENTERPRISE_PRIVATE_DEPLOYMENT_STRATEGY.md",
+        "docs/architecture/CLOUD1_ENTERPRISE_DEPLOYMENT_MODELS.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "docs/architecture/CLOUD1_ENTERPRISE_DEPLOYMENT_MODELS.md documents \u00a71 four-tier vocabulary (AbarVa SaaS shared multi-tenant, Dedicated Tenant single-tenant on AbarVa infra, Private Data Plane data and compute in client cloud, Fully Self-Managed client operates entire stack), \u00a72 control plane vs data plane separation including the trust boundary contract, \u00a73 dependency replacement matrix (Vercel \u2192 Container Apps / Cloud Run, Supabase \u2192 Azure Postgres Flexible / Cloud SQL, Vercel Blob \u2192 Azure Blob / GCS, Clerk \u2192 Azure AD B2C / OIDC / Identity Platform, Anthropic / OpenAI direct \u2192 tenant model gateway with allowlisted egress), \u00a74 client data trust implications per tier with cross-reference to TRUST1 / TRUST2, \u00a75 model gateway strategy per tier (which providers acceptable, where calls originate, key ownership, audit destination), \u00a76 operational responsibilities matrix (upgrades, migrations, backups, secret rotation, TLS, IdP, observability, incident response, pen-test, SLA), \u00a77 Azure VNet lab path (forward-reference CLOUD2), \u00a78 GCP VPC lab path (forward-reference CLOUD3), \u00a79 MVP / V1 / V2 path, \u00a710 testable-outside-client vs requires-client environment split, \u00a711 cross-references to TEN1 / TEN2 / TRUST1 / TRUST2 / CLOUD2 / CLOUD3 / MG2 / ARCH1 / ARCH2.",
+        "docs/build/slices/CLOUD1_ENTERPRISE_PRIVATE_DEPLOYMENT_STRATEGY.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, readiness impact, and tier-vocabulary one-liners; it references the architecture document by relative path.",
+        "docs/build/build-slices.json appends a CLOUD1 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn, status code_complete, risk low, ownerAgent Lane E, and lastUpdated 2026-04-26; manifest top-level lastUpdated remains 2026-04-26.",
+        "docs/build/production-readiness.json production_deployment component appends a note acknowledging that CLOUD1 lands the four-tier deployment strategy contract plus control-plane / data-plane separation, dependency replacement matrix, per-tier model gateway posture, per-tier operational responsibility split, and the forward-reference Azure (CLOUD2) and GCP (CLOUD3) lab paths; status is preserved at blocked (no promotion); production_deployment.nextAction is UNIONed conservatively without overwriting prior PROD1 / PROD2 / PROD3 / PROD4 wording; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "Documentation only; no application code, runtime, auth, supabase, migrations, package manifests, infrastructure-as-code, or platform-design docs are modified.",
+        "No tier description fabricates a customer name, contract value, deploy date, region SLA, or live cloud claim; every cross-reference is a relative path."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Founder-facing strategy contract for AbarVa enterprise deployment across four tiers: SaaS (shared multi-tenant), Dedicated Tenant (single-tenant on AbarVa infra), Private Data Plane (data and compute in client cloud), and Fully Self-Managed (client operates the stack). Codifies control plane vs data plane separation, dependency replacement matrix (Vercel \u2192 Container Apps / Cloud Run; Supabase \u2192 Azure Postgres Flexible / Cloud SQL; Vercel Blob \u2192 Azure Blob / GCS; Clerk \u2192 Azure AD B2C / Identity Platform; Anthropic / OpenAI direct \u2192 tenant gateway), client data trust implications, model gateway provider posture, and operational responsibilities per tier. Forward-references CLOUD2 (Azure VNet lab path) and CLOUD3 (GCP VPC lab path); both are lab-only acceptance and do not deploy customers. MVP today is Tier 1 (SaaS) only; V1 lands TEN1 / TEN2 / TRUST1 / TRUST2 / CLOUD2 / CLOUD3 plus Tier 2 on demand; V2 is the first paid Tier 3 deployment. Documentation only \u2014 no application code, no IaC, no provisioning, no live cloud calls, no model calls. production_deployment status is preserved at blocked (no false promotions per AGENT_DISPATCH_OPERATING_MODEL \u00a7G / \u00a7H)."
     }
   ]
 }
