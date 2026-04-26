@@ -5564,6 +5564,389 @@
         "npm run build"
       ],
       "notes": "Deterministic wave-level rollup over the slice manifest. Read-only. Does not deploy, does not poll Vercel or GitHub, does not call any model provider, does not promote any production-readiness component, does not modify auth / supabase / migrations / runtime code. Wave membership is best-effort honest mapping inferred from slice ID prefix, slice name, and merged-PR commit messages on main. Future-only slice IDs (OPS5, OPS6, OPS7, OPS8, QA13, CLOUD8, PROD5) are listed in Wave 8 plannedSlices to carry roadmap intent without inventing slice contracts. Lane H commits locally only; the integration agent owns the cherry-pick and merge."
+    },
+    {
+      "id": "SOL10",
+      "name": "Recommendation \u2192 Program Workshop Bridge",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Wave2 Lane A",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "SOL3",
+        "SOL9"
+      ],
+      "allowedFiles": [
+        "src/lib/solutions/recommendation-workshop-bridge.ts",
+        "src/__tests__/integration/solutions/recommendation-workshop-bridge.test.ts",
+        "docs/build/slices/SOL10_RECOMMENDATION_WORKSHOP_BRIDGE.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Module exports RecommendationInputForBridge, RecommendedWorkshopBundle, RecommendedSmeRoleBundle, EvidenceNeedHint, DeliverableHint, RecommendationWorkshopMap, WorkshopBridgeSummary, buildRecommendationWorkshopMap, summarizeWorkshopBridge, and getMissingEvidenceForBridge as the canonical contract.",
+        "buildRecommendationWorkshopMap is byte-equal across repeated calls for the same input and emits exactly one RecommendationWorkshopMap per input recommendation.",
+        "Every emitted map has at least one workshop bundle, one SME bundle, one evidence-need hint, and one deliverable hint; every map carries createdFrom 'deterministic_recommendation_workshop_bridge_seed'.",
+        "Exactly one workshop per map is marked as the recommended first workshop (isFirstWorkshop true) and the marker matches recommendedFirstWorkshopKey.",
+        "Sparse recommendations (no workshops, no SMEs, no building blocks, no deliverables) fall back to current_state_discovery as the first workshop and emit the default archetype_solution_brief deliverable hint.",
+        "Deliverables are routed onto deliverable_synthesis when that workshop is recommended, else onto the last canonical workshop; SME role hints anchor archetype.smesRequired to the first workshop and layer per-workshop default role hints with deduplication on (roleKey, workshopKey).",
+        "Evidence hints carry one of three canonical kinds (current_state_input / architecture_building_block / governance_review) and one of three canonical severities (must_capture / should_capture / nice_to_have); the first architecture building block is must_capture, subsequent entries are should_capture, and a governance_review nice_to_have is always appended so every map has at least one evidence hint.",
+        "summarizeWorkshopBridge reconciles totalMaps, totalWorkshops, totalSmes, totalEvidenceNeeds, totalDeliverables, archetypeKeys, and firstWorkshopKeys against the supplied bridge map list.",
+        "getMissingEvidenceForBridge returns only must_capture and should_capture hints in canonical (map, evidence) order.",
+        "Module imports nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, programs runtime, legacy /programs, mock.ts, auth, or supabase; contains no Math.random / Date.now / new Date / fetch / anthropic / openai / useState / useEffect / Coming soon / TBD / Lorem ipsum tokens."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/solutions/recommendation-workshop-bridge.test.ts",
+        "npx eslint --max-warnings=0 src/lib/solutions/recommendation-workshop-bridge.ts src/__tests__/integration/solutions/recommendation-workshop-bridge.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic library that maps SOL9 solution recommendations onto recommended workshops, SME role bundles, evidence-need hints, and deliverable hints for future Program Workshop Mode surfaces. Library only \u2014 no UI renderer, no live retrieval, no model calls, no tenant runtime state, no live SME directory, no calendar/booking. The bridge keeps its input contract structural so it runs even when SOL9 is not present on the branch; SOL9 outputs match the contract directly. Status not promoted on agent_runtime or program_workshop_mode \u2014 production-readiness notes are UNION-updated conservatively."
+    },
+    {
+      "id": "SOL12",
+      "name": "Architecture Draft Read Model",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [],
+      "allowedFiles": [
+        "src/lib/solutions/architecture-draft-read-model.ts",
+        "src/__tests__/integration/solutions/architecture-draft-read-model.test.ts",
+        "docs/build/slices/SOL12_ARCHITECTURE_DRAFT_READ_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Module exports ArchitectureDraft, ArchitectureDraftSection, ArchitectureAssumption, ArchitectureComponent, ArchitectureRisk, ArchitectureEvidenceGap, ArchitectureDraftSummary, and ArchitectureDraftStatus as the canonical contract.",
+        "ArchitectureDraftStatus is a string-literal union of exactly 'draft' | 'reviewed' | 'approved' | 'requires_workshop' | 'blocked'.",
+        "ArchitectureDraftSectionKey is a string-literal union of exactly 'context' | 'capabilities' | 'data_model' | 'integration' | 'security' | 'governance' | 'observability' | 'rollout'.",
+        "buildArchitectureDraft returns a draft whose sections contain exactly the eight canonical section keys in canonical order.",
+        "buildArchitectureDraft is byte-equal across repeated calls for the same input (no input and populated input both verified).",
+        "Default seed surfaces at least one assumption, component, risk, and evidence gap per canonical section, each with a unique id.",
+        "summarizeArchitectureDraft reconciles totals against the draft (sections, assumptions, components, risks, evidence gaps, blocker counts, workshop-gated assumption count).",
+        "getArchitectureBlockers returns approval-blocking risks and approval-blocking evidence gaps; returns an empty list when the caller supplies no blocking content.",
+        "Serialised draft contains no fabricated dollar amounts, no 'https://' / 'http://' URLs (no fake citations), and no banned placeholder phrases ('Coming soon', 'TBD', 'Lorem ipsum').",
+        "createdFrom equals 'deterministic_architecture_draft_seed' on every draft and basis.source equals 'deterministic_architecture_draft_seed'.",
+        "Module imports nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, legacy /programs, mock.ts, auth, or supabase; contains no Math.random, clock reads, fetch, anthropic, openai, useState, useEffect."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/solutions/architecture-draft-read-model.test.ts",
+        "npx eslint --max-warnings=0 src/lib/solutions/architecture-draft-read-model.ts src/__tests__/integration/solutions/architecture-draft-read-model.test.ts"
+      ],
+      "notes": "Pure deterministic architecture draft read model. Library only \u2014 no model-generated architecture, no fake citations, no live retrieval, no tenant runtime state, no persistence. The default seed names a generic cross-sector architecture draft so the contract stands alone; per-archetype seed packs are deferred and callers can already pass a populated ArchitectureDraftInput to override the seed verbatim. Consumed downstream by the future Solution Intelligence Canvas (SOL10+) and by Nexus when composing per-tenant architecture drafts. agent_runtime status is not promoted by this slice."
+    },
+    {
+      "id": "SOL13",
+      "name": "Workshop-to-Architecture Refinement",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "MW1",
+        "MW4",
+        "MW5",
+        "SOL8"
+      ],
+      "allowedFiles": [
+        "src/lib/solutions/workshop-architecture-refinement.ts",
+        "src/__tests__/integration/solutions/workshop-architecture-refinement.test.ts",
+        "docs/build/slices/SOL13_WORKSHOP_ARCHITECTURE_REFINEMENT.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Module exports ArchitectureRefinementProposal, ArchitectureRefinementType, ArchitectureRefinementSource, ArchitectureRefinementSummary, ArchitectureTargetSection, ARCHITECTURE_REFINEMENT_TYPES, ARCHITECTURE_TARGET_SECTIONS, deriveArchitectureRefinementsFromMeetingNotes, and summarizeArchitectureRefinements as the canonical contract.",
+        "ArchitectureRefinementType union contains exactly seven members: 'add_component', 'remove_component', 'modify_component', 'add_assumption', 'add_risk', 'add_evidence_gap', 'change_section'; all seven are representable on the public union and are produced by a single deterministic fixture.",
+        "Every emitted proposal carries proposed: true, status: 'proposed', sourceNoteId, sourceWorkshopType, targetSection, rationale, and createdFrom: 'deterministic_workshop_architecture_refinement_seed'; summarizeArchitectureRefinements always reports appliedProposals: 0.",
+        "Structured notes produce the expected proposals: add-component keyword in a decision -> add_component (targets components); remove-component keyword -> remove_component (targets components); decision affecting a deliverable key (or modify-component keyword) -> modify_component (targets components); aligned or pending stakeholder alignment -> add_assumption (targets assumptions); every captured risk -> add_risk (targets risks); open question blocking gate_signoff or deliverable_approval and evidence candidate with needsCapture: true -> add_evidence_gap (targets evidence_gaps); decision in data_foundation_assessment / governance_risk_review / operating_model_alignment / value_framing / architecture_solution_design workshop type -> change_section with the canonical mapping.",
+        "deriveArchitectureRefinementsFromMeetingNotes is byte-equal across repeated calls for the same input list and proposal IDs are stable.",
+        "summarizeArchitectureRefinements reconciles totalProposals, byRefinementType counts, byTargetSection counts, and the appliedProposals: 0 invariant against the proposal list.",
+        "Module imports MW4 meeting-notes-capture types and nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, legacy /programs, mock.ts, auth, or supabase; module contains no Math.random / clock reads / fetch / anthropic / openai / useState / useEffect; no Coming soon / TBD / Lorem ipsum placeholders.",
+        "Module source contains no DB writes: no 'await db.', no prisma references, no supabase references, no SQL INSERT INTO / UPDATE ... SET / DELETE FROM patterns; serialized proposal list contains no fabricated dollar amounts."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/solutions/workshop-architecture-refinement.test.ts",
+        "npx eslint --max-warnings=0 src/lib/solutions/workshop-architecture-refinement.ts src/__tests__/integration/solutions/workshop-architecture-refinement.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic library that turns structured MW4 meeting note captures into proposed architecture refinements. Operationalizes the SOL8 Solution Intelligence Canvas section on dynamic refinement and the MW1 contract section on after-workshop synthesis, focused on architecture-level proposals. Library only \u2014 no UI renderer, no live retrieval, no model calls, no tenant runtime state. Every proposal is marked proposed: true and is never auto-applied; the Maestro confirms before any downstream architecture-draft module would consume a proposal. Lands ahead of SOL10 (architecture draft read model) and SOL12 (architecture deliverable renderer); when SOL10 lands the refinement loop will consume SOL13 proposals as the canonical refinement-input shape."
+    },
+    {
+      "id": "SOL14",
+      "name": "Vendor / Startup Intelligence Contract",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [],
+      "lastUpdated": "2026-04-26",
+      "allowedFiles": [
+        "src/lib/solutions/vendor-startup-intelligence.ts",
+        "src/__tests__/integration/solutions/vendor-startup-intelligence.test.ts",
+        "docs/build/slices/SOL14_VENDOR_STARTUP_INTELLIGENCE_CONTRACT.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Module exports VendorIntelligenceCategory ('cdp' | 'cx_ai' | 'ams' | 'data_fabric' | 'agent_platform' | 'observability' | 'security' | 'evaluation' | 'other'), VendorAssessment, VendorAssessmentReadiness ('unknown' | 'preliminary' | 'pilot_ready' | 'production_ready' | 'not_recommended'), VendorEvidenceBasis, and VendorIntelligenceSummary as the canonical contract.",
+        "Module exposes listVendorCategories(), buildVendorAssessmentSeed(), summarizeVendorAssessments(assessments), and getNotRecommendedVendors(assessments) helpers.",
+        "Pack contains exactly the 9 canonical vendor categories in canonical order.",
+        "Seed exposes all 5 canonical readiness states at least once.",
+        "Vendor placeholder ids follow the shape vendor_<category>_<NNN> and are unique across the seed; no real vendor names appear in the seed, the categories, or the source file (whole-word case-insensitive denylist scan covering Adobe / Salesforce / Twilio / Snowflake / Databricks / OpenAI / Anthropic / Google Cloud / Microsoft Azure / AWS Bedrock / Meta Llama / Cohere / Mistral / Pinecone / Weaviate / LangChain / LangSmith / HuggingFace / Datadog / New Relic / Splunk / WhyLabs / Fiddler / Vertex AI / Bedrock / Azure OpenAI / GitHub Copilot / IBM Watson / NVIDIA and similar known names).",
+        "Seed is tagged createdFrom: 'deterministic_vendor_startup_intelligence_seed'.",
+        "buildVendorAssessmentSeed and summarizeVendorAssessments are deterministic and byte-equal across repeated calls for the same input.",
+        "summarizeVendorAssessments totals reconcile against the seed length and against getNotRecommendedVendors.",
+        "not_recommended assessments carry a non-null notRecommendedReason; all other assessments carry null.",
+        "No string field invents a dollar amount.",
+        "Module imports nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, legacy /programs, mock.ts, auth, or supabase; no fetch( / axios / node-fetch / http / https imports; no Date.now / Math.random / new Date; no useState / useEffect; no Coming soon / TBD / Lorem ipsum placeholders."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx eslint --max-warnings=0 src/lib/solutions/vendor-startup-intelligence.ts src/__tests__/integration/solutions/vendor-startup-intelligence.test.ts",
+        "npx jest src/__tests__/integration/solutions/vendor-startup-intelligence.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic vendor / startup intelligence contract. Library only \u2014 does not generate live vendor briefs, invoke models, read tenant state, fetch external data, or call any external API. No real vendor names are used; all seed entries reference category-shaped placeholder ids (e.g. vendor_cdp_001, vendor_ams_002) so downstream surfaces never accidentally inherit a branded recommendation from the seed. Future composition with SOL6 (build / buy / partner evaluator) and SOL9 (recommendation engine) lands a single defensible vendor / startup brief per capability request without changing the SOL14 contract."
+    },
+    {
+      "id": "MW7",
+      "name": "Workshop Template Library UI",
+      "category": "MW",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "MW1",
+        "MW2",
+        "MW6"
+      ],
+      "allowedFiles": [
+        "src/lib/programs/workshop-template-library.ts",
+        "src/components/programs/WorkshopTemplateLibrary.tsx",
+        "src/__tests__/integration/programs/workshop-template-library.test.ts",
+        "docs/build/slices/MW7_WORKSHOP_TEMPLATE_LIBRARY_UI.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Module defines WorkshopTemplate, WorkshopTemplateCategory ('discovery' | 'framing' | 'value' | 'governance' | 'architecture' | 'adoption' | 'executive_review'), WorkshopTemplateAgenda, WorkshopTemplateInputs, and WorkshopTemplateLibrarySummary types with the canonical seven-category taxonomy.",
+        "buildWorkshopTemplateLibrary() returns at least seven deterministic templates with at least one template per canonical category; same input \u2192 identical output across calls.",
+        "listWorkshopTemplateCategories() returns the seven canonical categories in display order.",
+        "summarizeWorkshopTemplateLibrary reconciles byCategory counts to totalCount, sums per-template durations to totalDurationMinutes, and emits uniqueCategories in canonical order; empty input returns a zeroed summary.",
+        "getTemplatesByCategory(category) filters to the named category only.",
+        "Every template carries a non-empty title, purpose, decisionToLand, at least one required input, at least three contiguously numbered agenda steps with positive durations summing to the template duration, at least one output, and createdFrom: 'deterministic_workshop_template_library_seed'.",
+        "No string field invents a dollar amount or claims a real E-### evidence citation.",
+        "src/components/programs/WorkshopTemplateLibrary.tsx is a Server Component (no 'use client', no useState / useEffect / useMemo / useReducer / useCallback) that renders templates grouped by canonical category with eyebrow 'WORKSHOP TEMPLATE LIBRARY \u00b7 MW7', a hairline grid, and 'Open template' actions rendered as disabled future-only controls.",
+        "Component imports color and font tokens from @/lib/design/abarva-theme only; no local hex literals, no local DM Sans font-family literal.",
+        "Module + component import nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch; no anthropic / openai / pinecone references."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/workshop-template-library.test.ts",
+        "npx eslint --max-warnings=0 src/lib/programs/workshop-template-library.ts src/components/programs/WorkshopTemplateLibrary.tsx src/__tests__/integration/programs/workshop-template-library.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic catalog of AbarVa workshop templates spanning the canonical Maestro arc \u2014 discovery, framing, value, governance, architecture, adoption, and executive review. Each template names purpose, prerequisite inputs, deterministic agenda, decision-to-land, and outputs. Server Component panel renders the catalog grouped by category with the calm AbarVa visual canon. No live agenda generation, no booking, no model calls, no persistence. Future Open-template action is wired in a later slice that lands the workshop-mode persistence path."
+    },
+    {
+      "id": "SOL11",
+      "name": "Solution Canvas UI",
+      "title": "Solution Canvas UI",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane B",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "SOL9",
+        "SOL10"
+      ],
+      "allowedFiles": [
+        "src/components/solutions/SolutionCanvas.tsx",
+        "src/lib/solutions/solution-canvas-view.ts",
+        "src/__tests__/integration/solutions/solution-canvas.test.ts",
+        "docs/build/slices/SOL11_SOLUTION_CANVAS_UI.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Module exports SolutionCanvasView, SolutionCanvasInput, SolutionCanvasSection, SolutionCanvasMissingInput, SolutionCanvasComponent, SolutionCanvasRisk, SolutionCanvasWorkshopRef, SolutionCanvasDeliverableRef and a single helper buildSolutionCanvasView(input).",
+        "buildSolutionCanvasView is byte-equal across repeated calls for the same input.",
+        "All nine canonical sections (brief, currentInputs, archetype, components, buildBuyGuidance, risks, recommendedWorkshops, recommendedDeliverables, missingInputs) are present in the view's sections list.",
+        "createdFrom equals 'deterministic_solution_canvas_seed'.",
+        "Server Component imports tokens only from @/lib/design/abarva-theme; no 'use client', no React hooks, no local hex literals, no DM Sans literals.",
+        "Footer reads 'Source \u00b7 deterministic solution canvas seed \u00b7 proposed only, not applied'.",
+        "View-model module contains no Date.now, Math.random, new Date, fetch, or anthropic/openai references."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/solutions/solution-canvas.test.ts",
+        "npx eslint --max-warnings=0 src/components/solutions/SolutionCanvas.tsx src/lib/solutions/solution-canvas-view.ts src/__tests__/integration/solutions/solution-canvas.test.ts"
+      ],
+      "notes": "Server Component renders a deterministic SolutionCanvasView produced by buildSolutionCanvasView. UI counterpart to SOL9 (recommendation engine) and SOL8 (canvas contract). No live runtime, no model call, no retrieval. Edit / Regenerate / Approve actions are present only as visibly disabled affordances naming a future slice. Lane B commits locally only; the integration agent owns the cherry-pick onto main."
+    },
+    {
+      "id": "QA14",
+      "name": "Solution / Workshop Verification Runbook (SOL10-SOL14 + MW7)",
+      "category": "QA",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane G (Wave2 parallel build pack)",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "QA3",
+        "SOL8"
+      ],
+      "allowedFiles": [
+        "docs/build/SOLUTION_WORKSHOP_VERIFICATION_RUNBOOK.md",
+        "docs/build/slices/QA14_SOLUTION_WORKSHOP_VERIFICATION.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/app/**",
+        "src/components/**",
+        "src/lib/**",
+        "src/__tests__/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "docs/build/SOLUTION_WORKSHOP_VERIFICATION_RUNBOOK.md is between 300 and 500 lines and covers SOL10 (Solution Canvas UI Shell), SOL11 (Solution Architecture Draft Read Model), SOL12 (Workshop-to-Architecture Refinement), SOL13 (Architecture Deliverable Renderer), SOL14 (Solution Canvas Versioning Layer), and MW7 (Workshop Deliverable Refinement Loop) verification steps; the runbook also includes branch hygiene, required validation commands, a live route walk on the canonical apex-retail demo tenant, no-fabrication audits, a design canon section, production readiness checks, a cherry-pick canonical order section, a morning review decision matrix, and a branch / worktree hygiene appendix.",
+        "docs/build/slices/QA14_SOLUTION_WORKSHOP_VERIFICATION.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and readiness impact, and references the runbook and the production-readiness manifest by relative path.",
+        "docs/build/build-slices.json appends a QA14 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn (QA3, SOL8), status code_complete, risk low, ownerAgent Lane G (Wave2 parallel build pack), and lastUpdated 2026-04-26; manifest top-level lastUpdated remains 2026-04-26.",
+        "docs/build/production-readiness.json validation_qa component appends a notes row acknowledging that QA14 lands as the fourth founder-facing runbook covering SOL10-SOL14 + MW7; status is preserved (no promotion); validation_qa.nextAction is UNIONed conservatively without overwriting prior QA1-QA13 / PROD1-PROD5 / OPS1-OPS8 / WAVE1 wording; manifest top-level lastUpdated is set to 2026-04-26.",
+        "Documentation only; no application code, runtime, auth, supabase, migrations, package manifests, infrastructure-as-code, platform-design docs, model providers, browser automation, persona crawlers, or live network calls are introduced or modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "QA14 lands the fourth founder-facing verification runbook covering the canvas implementation slices (SOL10 Canvas UI Shell, SOL11 Architecture Draft Read Model, SOL12 Workshop-to-Architecture Refinement, SOL13 Architecture Deliverable Renderer, SOL14 Canvas Versioning Layer) plus MW7 Workshop Deliverable Refinement Loop. Documentation only at the manifest level. Replaces the prior QA2 SOL1 / SOL2 / MW2 / PF2 contents at SOLUTION_WORKSHOP_VERIFICATION_RUNBOOK.md; the QA2 contents are preserved in spirit by SOLUTION_INTELLIGENCE_VERIFICATION_RUNBOOK.md sections A and I. Rows for SOL10-SOL14 / MW7 read as deferred until the corresponding implementation slice lands. validation_qa stays tested (not promoted); solution_intelligence is not promoted from this docs-only runbook. The runbook does not execute the verification it documents."
     }
   ]
 }
