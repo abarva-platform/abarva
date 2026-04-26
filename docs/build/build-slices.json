@@ -2534,6 +2534,51 @@
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
       "notes": "Deterministic, file-pure read model that seeds the agent mission queue across Programs, Tower, Intelligence, Admin, and Source surfaces. Companion to runtime/13_AGENT_MISSION_MODEL.md, runtime/14_AGENT_WORK_QUEUE_AND_TRIGGERS.md, and experience-system/16_AGENT_ACTIVITY_UI_PATTERN.md. No model calls, no migrations, no persistence, no live triggers, no UI mounting. UI mounting (AG11) and runtime trigger wiring deferred. Lane A output of the parallel build pack."
+    },
+    {
+      "id": "AG11",
+      "name": "Agent Mission UI Strip / Panel",
+      "category": "AG",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Steward + Builder",
+      "dependsOn": [],
+      "allowedFiles": [
+        "src/components/agents/AgentMissionPanel.tsx",
+        "src/lib/agents/agent-mission-view.ts",
+        "src/__tests__/integration/agents/agent-mission-panel.test.ts",
+        "docs/build/slices/AG11_AGENT_MISSION_UI_PANEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/agents/agent-mission-view.ts exports AGENT_MISSION_PANEL_AGENTS in canonical order ('nexus', 'sentinel', 'atlas', 'steward') and AGENT_MISSION_PANEL_VARIANTS in canonical order ('compact_strip', 'right_panel', 'inline_recommendation', 'executive_brief', 'hidden_drawer').",
+        "Module exports AgentMissionPanelAgent, AgentMissionPanelType, AgentMissionPanelState, AgentMissionPanelPriority, AgentMissionPanelVariant, AgentMissionPanelMission, and AgentMissionPanelView types, plus helpers buildAgentMissionPanelSeedView, summarizeAgentMissionPanelView, agentDisplayLabel, priorityChipLabel, and stateChipLabel.",
+        "buildAgentMissionPanelSeedView returns a deterministic seed view per variant with at least one mission per variant; right_panel, executive_brief, and compact_strip seeds cover all four canonical agents; every mission id starts with 'ag11-seed-' and has non-empty rationale, recommendedAction, and stopCondition.",
+        "buildAgentMissionPanelSeedView always carries the canonical honest disclaimer string 'Mission queue is deterministic seed; runtime triggers deferred.' on every view.",
+        "src/components/agents/AgentMissionPanel.tsx is a server component that renders five variants. Root carries data-agent-mission-panel=\"ag11\" and data-agent-mission-panel-variant=\"<variant>\"; hidden_drawer renders aria-expanded=\"false\".",
+        "Component reuses AgentBadge from @/components/abarva/AgentBadge and COLORS / FONT / SPACING / RADIUS / BORDER tokens from @/lib/design/abarva-theme; no avatars, no <img tags, no emoji, no chat / ask me language.",
+        "Component and helper have no imports from @/lib/source|nexus|sentinel|atlas|auth or supabase, no Date.now / Math.random / new Date( / fetch(, no anthropic / openai, no useState / useEffect / 'use client', and no Coming soon / TBD / Lorem ipsum placeholder language.",
+        "Test suite at src/__tests__/integration/agents/agent-mission-panel.test.ts is fully green and enforces determinism, variant + agent ordering, seed coverage, summary reconciliation, display-label canon, component source attribute coverage, File 16 hygiene, and server-only constraints.",
+        "Production readiness manifest is updated to acknowledge AG11 under agent_runtime with a deferred-runtime next action; status is not promoted; all other manifest fields are preserved exactly."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/agents/agent-mission-panel.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Deterministic, server-only UI primitive for the AbarVa Agent Activity UI Pattern (experience-system File 16). Companion to AG10 (live mission queue). AG11 defines a minimum-compatible mission prop type locally so it can render without AG10; live runtime trigger integration is deferred. Lane B output of the parallel build pack."
     }
   ]
 }
