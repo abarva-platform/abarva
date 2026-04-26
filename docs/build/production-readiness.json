@@ -1546,7 +1546,8 @@
         "AZLAB1: SaaS Control Plane + Private Data Plane lab blueprint created; Azure resource groups and boundary architecture documented; May 4 deployment path outlined.",
         "AZLAB5: Azure lab deployment runbook created; covers VNet, Container Apps, PostgreSQL, Key Vault, cost guardrails, and simulation-vs-real distinctions.",
         "LIVE3: Production readiness page verification completed. Admin page and API routes checked. Static manifest caveat documented.",
-        "LIVE4: Azure private data plane lab storyboard created (8 slides, two-plane architecture, May 4 lab plan documented)."
+        "LIVE4: Azure private data plane lab storyboard created (8 slides, two-plane architecture, May 4 lab plan documented).",
+        "DEMO5 (wave-17): ABARVA_VISUAL_WORKFLOW_WALKTHROUGH_CHECKLIST.md \u2014 10-route founder review checklist with pass/fail/deferred capture per route. Docs-only; no code change, no production_ready promotion."
       ]
     }
   ]

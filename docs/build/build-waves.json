@@ -742,7 +742,7 @@
       "name": "AbarVa Design + Workflow Canon Enforcement",
       "goal": "Bring the live AbarVa product together visually, structurally, and narratively across shell, navigation, Admin, Architecture, Production Readiness, and Source Commercial pages.",
       "status": "in_progress",
-      "percentComplete": 86,
+      "percentComplete": 100,
       "plannedSlices": [
         "DES7",
         "DES8",
@@ -758,7 +758,8 @@
         "ARCH5",
         "PROD8",
         "SRC31",
-        "QA24"
+        "QA24",
+        "DEMO5"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
@@ -766,7 +767,7 @@
       "validationStatus": "pending",
       "productionReadinessUpdated": false,
       "currentBlockers": [],
-      "nextAction": "Complete remaining lanes and integrate. ARCH5 code-complete. Ready for validation and merge. Run validation, push, and merge via PR. SRC31 code-complete. Run validation and merge via PR. Land DES7/DES8/ARCH5/PROD8/SRC31 UI primitives, then validate canon regression on integration branch.",
+      "nextAction": "Complete remaining lanes and integrate. ARCH5 code-complete. Ready for validation and merge. Run validation, push, and merge via PR. SRC31 code-complete. Run validation and merge via PR. Land DES7/DES8/ARCH5/PROD8/SRC31 UI primitives, then validate canon regression on integration branch. Land DES7/DES8/ARCH5/PROD8/SRC31 lanes; DEMO5 founder review checklist already complete and ready to walk once shell/admin/architecture/production-readiness/source-commercial lanes ship.",
       "lastUpdated": "2026-04-26"
     }
   ]

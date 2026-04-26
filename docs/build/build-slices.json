@@ -7453,6 +7453,15 @@
       "status": "code_complete",
       "branch": "wave17/qa24-design-workflow-canon-regression",
       "description": "Manifest of banned visual tokens, required canon colors, workflow contract keywords, and 4 target pages. Static manifest tests + graceful banned-token scans across Wave-17 components. Target page existence enforced."
+    },
+    {
+      "id": "DEMO5",
+      "wave": "wave-17",
+      "name": "Visual + Workflow Founder Review Checklist",
+      "type": "demo",
+      "status": "code_complete",
+      "branch": "wave17/demo5-visual-workflow-review-checklist",
+      "description": "Founder review checklist for visual + workflow canon across 10 routes (shell, home, admin, architecture, production-readiness, source event, commercial hub, agents, caveat audit, Azure/private data plane). Pass/fail/deferred capture per route."
     }
   ]
 }
