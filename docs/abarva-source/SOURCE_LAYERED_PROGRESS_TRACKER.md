@@ -9,9 +9,9 @@ Purpose: provide a layer-by-layer view of where AbarVa Source stands against MVP
 - Source has a strong foundation in product architecture, deterministic context validation, workflow validation, pattern IP, deterministic multi-agent briefings, deterministic agent missions, and a platform Agent Mission Model.
 - Source is not production-ready.
 - MVP readiness is improving after local authenticated Source review, but the product still needs production-domain authenticated review, persistence, evidence/upload pipeline, auth/tenant hardening, and production validation.
-- Current foundation milestone: PR #287 added the deterministic Admin/Setup-to-Source readiness contract model, PR #288 wired the event canvas data readiness panel to contract-shaped progress, and PR #289 added smoke coverage proving the contract projection renders even when event-local readiness rows are empty.
+- Current foundation milestone: deterministic Scope, RFP, vendor-response, pricing normalization, and BAFO negotiation surfaces are now merged with smoke coverage (PR #319, PR #321, PR #323, PR #327, PR #328, PR #331, PR #333, PR #337).
 - Current visible progress read: the seeded Data & AI Modernization event shows 34% event data readiness, 13% usable evidence coverage, and 3 of 5 required categories present. Local authenticated review now confirms that progress is visible in the Source event canvas. This is deterministic contract progress, not live Admin/Setup integration.
-- Current recommended next slice: run production-domain authenticated visual review and then execute the next Source runtime readiness batch.
+- Current recommended next slice: run production-domain authenticated visual review, then implement the deterministic executive decision summary model/panel foundation.
 
 ## Layer Summary
 
@@ -24,7 +24,7 @@ Purpose: provide a layer-by-layer view of where AbarVa Source stands against MVP
 | Workflow Validation Harness | 85% | Deterministic foundation complete | PR #204, PR #207, PR #210 | Preserve remaining defer until upload/evidence exists |
 | Multi-Agent Intelligence | 57% | Deterministic briefings, mission read model, mission report, dashboard preview, review packet, and route/component smoke exist; no runtime queue/scheduler/persistence/model layer | PR #227, PR #248, PR #254, PR #255, PR #259, PR #262, PR #264, `src/lib/source/multi-agent-briefing.ts`, `src/lib/source/agent-missions.ts`, `src/lib/source/agent-mission-report.ts` | Use mission report in the event canvas shell |
 | Source API / Runtime | 27% | Deterministic no-model API stub plus contract/mission consistency tests exist; production runtime not ready | PR #230, PR #245, PR #283, `src/app/api/v1/source/[eventId]/nexus/ask/route.ts` | Keep route deterministic; do not add model calls until mission/readiness gates are ready |
-| Source UI / User Experience | 64% | Dashboard, mission preview, event canvas shell, Scope and RFP readiness surfaces, vendor response and pricing normalization panels, contract-backed data readiness progress, local authenticated visual review, tiny polish, and route/component smoke exist; production-domain review remains incomplete | PR #212, PR #213, PR #218, PR #259, PR #262, PR #264, PR #265, PR #269, PR #270, PR #273, PR #277, PR #278, PR #288, PR #289, PR #290, PR #295, PR #296, PR #297, PR #298, PR #311, PR #312, PR #315, PR #319, PR #321, PR #327, PR #328, Experience System | Capture production-domain visual review and then begin persistence/runtime work. |
+| Source UI / User Experience | 68% | Dashboard, mission preview, event canvas shell, Scope and RFP readiness surfaces, vendor response and pricing normalization panels, BAFO negotiation panel, contract-backed data readiness progress, local authenticated visual review, tiny polish, and route/component smoke exist; production-domain review remains incomplete | PR #212, PR #213, PR #218, PR #259, PR #262, PR #264, PR #265, PR #269, PR #270, PR #273, PR #277, PR #278, PR #288, PR #289, PR #290, PR #295, PR #296, PR #297, PR #298, PR #311, PR #312, PR #315, PR #319, PR #321, PR #327, PR #328, PR #331, PR #333, PR #337, Experience System | Capture production-domain visual review and then begin persistence/runtime work. |
 | Data / Evidence / Upload Pipeline | 24% | Source consumes a deterministic Admin/Setup readiness contract projection; upload/parsing/live Admin integration is not started | Attachment/context contracts, validation defers, PR #266, PR #274, PR #277, PR #278, PR #285, PR #287, PR #288, PR #289 | Plan live Admin/Setup readiness backing and runtime evidential tracing next |
 | Production Readiness | 20% | Deterministic smoke, freshness metadata, local authenticated Source review, and authenticated route smoke exist; production-domain visual QA remains required | Production readiness tracker, PR #264, PR #270, PR #278, PR #281, PR #283, PR #287, PR #288, PR #289, PR #290, PR #295, PR #296, PR #297, PR #298 | Production-domain authenticated visual QA, CI/Vercel ingestion, and screenshot review remain required |
 
@@ -588,7 +588,7 @@ Next recommended slice:
 2. Plan live Admin/Setup readiness backing for the deterministic Source readiness contract, no upload/parsing implementation.
 3. Validate scorecard and attachment foundations before full vendor evaluation expansion.
 4. Author the Data Platform Managed Services pattern pack in markdown, then plan pattern/runtime grounding later.
-5. Prepare BAFO/negotiation question plan only after comparability and pricing foundations remain stable in runtime checks.
+5. Build deterministic executive decision summary foundation (read model + bounded panel) after BAFO smoke is stable.
 
 ## What Not To Build Yet
 
@@ -612,9 +612,9 @@ Next recommended slice:
 
 ## Honest MVP Readiness Assessment
 
-Estimated MVP readiness: 64%.
+Estimated MVP readiness: 68%.
 
-Source is beyond a concept prototype because it has a route, dashboard, seeded domain context, validation harnesses, pattern IP, deterministic multi-agent behavior, a deterministic no-model Nexus API stub, deterministic mission reports, a tiny dashboard mission preview, a bounded event canvas shell, Scope-to-RFP, vendor-response, and pricing readiness surfaces, and a local authenticated visual review. It is not yet a usable MVP for real sourcing work because persistence, evidence pipeline, production-domain authenticated review, real tenant data, and practical user-facing workflow depth remain incomplete.
+Source is beyond a concept prototype because it has a route, dashboard, seeded domain context, validation harnesses, pattern IP, deterministic multi-agent behavior, a deterministic no-model Nexus API stub, deterministic mission reports, a tiny dashboard mission preview, a bounded event canvas shell, Scope-to-RFP, vendor-response, pricing normalization, and BAFO readiness surfaces, plus local authenticated visual review. It is not yet a usable MVP for real sourcing work because persistence, evidence pipeline, production-domain authenticated review, real tenant data, and practical user-facing workflow depth remain incomplete.
 
 The fastest safe MVP path is deterministic-first:
 
