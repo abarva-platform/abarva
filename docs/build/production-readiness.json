@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "lastUpdated": "2026-04-26",
-  "updatedBy": "Code",
+  "updatedBy": "Codex",
   "source": "Deterministic build/readiness manifest maintained in docs/build. No live monitoring, no Vercel polling, and no model/API calls are implemented by this tracker.",
   "overallStatus": "blocked",
   "overallReadinessPercent": 24,
@@ -735,7 +735,7 @@
         },
         "integration_tests": {
           "status": "partial",
-          "evidence": "Focused deterministic Source tests pass for Nexus API stub, agent mission read model, agent mission report formatter, Source dashboard mission preview route/component smoke, and Source event canvas shell smoke. Full Source workflow, persistence, upload/evidence, authenticated route smoke, and live persona validation are not certified."
+          "evidence": "Focused deterministic Source tests pass for Nexus API stub, agent mission read model, agent mission report formatter, Source dashboard mission preview route/component smoke, Source event canvas shell smoke, and Source data readiness panel coverage. Full Source workflow, persistence, upload/evidence, authenticated route smoke, and live persona validation are not certified."
         },
         "route_smoke": {
           "status": "partial",
@@ -788,7 +788,7 @@
           "unblocks": "pilot_ready"
         }
       ],
-      "nextAction": "Use the dashboard route smoke as baseline coverage, complete authenticated Source screenshot review when credentials/session are available, and plan the Source event canvas shell without adding model calls or upload/parsing.",
+      "nextAction": "Keep the deterministic Source data readiness panel read-only, add route smoke coverage for the event canvas panel integration, and defer upload/parsing, Admin/Setup runtime integration, and live evidence readiness.",
       "notes": [
         "PROD1 does not modify Source files.",
         "Covers Source dashboard / sourcing event portfolio.",
@@ -812,7 +812,9 @@
         "Source dashboard mission preview still needs authenticated visual review before any broader dashboard polish or mission UI expansion.",
         "Focused Source dashboard route/component smoke test passed: npx jest src/__tests__/integration/source/source-dashboard-route-smoke.test.ts. This is deterministic seeded-data coverage, not authenticated live route or persona validation.",
         "Deterministic Source event canvas shell added for /source/events/[eventId] with journey orientation, current-stage workspace summary, mission preview, data readiness placeholder, and compact Nexus guidance. This does not add chat, model calls, upload/parsing, workflow engine, approval engine, scorecard UI, artifact drawer behavior, vendor workflow, or value ledger UI.",
-        "Focused Source event canvas shell smoke test passed: npx jest src/__tests__/integration/source/source-event-canvas-shell.test.ts. This is deterministic seeded-data coverage, not authenticated live route or persona validation."
+        "Focused Source event canvas shell smoke test passed: npx jest src/__tests__/integration/source/source-event-canvas-shell.test.ts. This is deterministic seeded-data coverage, not authenticated live route or persona validation.",
+        "Deterministic Source data readiness panel added for the event canvas using seeded/read-model data. It distinguishes Missing, Requested, Loaded, Available, Usable Evidence, and Low Confidence states without adding upload/parsing, Admin/Setup runtime, API calls, persistence, or model behavior.",
+        "Focused Source data readiness panel integration test passed: npx jest src/__tests__/integration/source/source-data-readiness-panel.test.ts."
       ]
     },
     {
