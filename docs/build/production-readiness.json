@@ -989,10 +989,11 @@
           "unblocks": "pilot_ready"
         }
       ],
-      "nextAction": "Wire SOL9 deterministic recommendation engine into live Nexus per-tenant solution drafts (SOL10+) and verify against SOL1 / SOL2 / SOL3 contracts.",
+      "nextAction": "Wire SOL9 deterministic recommendation engine into live Nexus per-tenant solution drafts (SOL10+) and verify against SOL1 / SOL2 / SOL3 contracts. SOL15 pattern playbook landed; live coverage scoring deferred.",
       "notes": [
         "No model-generated solution architecture is invoked by PROD1.",
-        "SOL9 deterministic recommendation engine is added as a pure library that unifies SOL3 archetypes, SOL4 / SOL5 component packs, and the SOL6 build/buy/partner evaluator into a Nexus-facing recommendation layer."
+        "SOL9 deterministic recommendation engine is added as a pure library that unifies SOL3 archetypes, SOL4 / SOL5 component packs, and the SOL6 build/buy/partner evaluator into a Nexus-facing recommendation layer.",
+        "SOL15 pattern playbook added (src/lib/solutions/pattern-playbook.ts); deterministic archetype\u2192workshop\u2192deliverable\u2192risk mapping; coverageScore in [0,1]; createdFrom sol15_pattern_playbook; no model calls, no DB writes."
       ]
     },
     {
