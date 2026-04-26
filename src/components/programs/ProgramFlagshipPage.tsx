@@ -22,6 +22,9 @@
 //   - NAVY accent #1B2B5C — no teal, no purple, no neon
 //   - One selective dark navy panel (#0F1E3F) for the executive brief
 //   - DM Sans body face. Calm hierarchy.
+//
+// Workflow contract: this surface is deterministic, seed-backed,
+// and read-only. No mutations, no live model calls, no transitions.
 
 import * as React from 'react';
 import {
