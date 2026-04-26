@@ -4503,6 +4503,54 @@
         "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
       ],
       "notes": "Founder-facing strategy contract for AbarVa enterprise deployment across four tiers: SaaS (shared multi-tenant), Dedicated Tenant (single-tenant on AbarVa infra), Private Data Plane (data and compute in client cloud), and Fully Self-Managed (client operates the stack). Codifies control plane vs data plane separation, dependency replacement matrix (Vercel \u2192 Container Apps / Cloud Run; Supabase \u2192 Azure Postgres Flexible / Cloud SQL; Vercel Blob \u2192 Azure Blob / GCS; Clerk \u2192 Azure AD B2C / Identity Platform; Anthropic / OpenAI direct \u2192 tenant gateway), client data trust implications, model gateway provider posture, and operational responsibilities per tier. Forward-references CLOUD2 (Azure VNet lab path) and CLOUD3 (GCP VPC lab path); both are lab-only acceptance and do not deploy customers. MVP today is Tier 1 (SaaS) only; V1 lands TEN1 / TEN2 / TRUST1 / TRUST2 / CLOUD2 / CLOUD3 plus Tier 2 on demand; V2 is the first paid Tier 3 deployment. Documentation only \u2014 no application code, no IaC, no provisioning, no live cloud calls, no model calls. production_deployment status is preserved at blocked (no false promotions per AGENT_DISPATCH_OPERATING_MODEL \u00a7G / \u00a7H)."
+    },
+    {
+      "id": "CLOUD2",
+      "name": "Azure VNet Reference Lab Blueprint",
+      "category": "CLOUD",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane F (parallel build pack)",
+      "dependsOn": [
+        "TEN1",
+        "CLOUD1"
+      ],
+      "allowedFiles": [
+        "docs/build/slices/CLOUD2_AZURE_VNET_REFERENCE_LAB_BLUEPRINT.md",
+        "docs/architecture/CLOUD2_AZURE_VNET_REFERENCE_LAB.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md",
+        "infra/**",
+        "terraform/**",
+        "bicep/**",
+        ".github/workflows/**",
+        "azure.yaml"
+      ],
+      "acceptanceCriteria": [
+        "docs/architecture/CLOUD2_AZURE_VNET_REFERENCE_LAB.md documents \u00a71 lab purpose (what the lab is, what it is NOT, what it proves, what it does NOT prove), \u00a72 single Resource Group layout, \u00a73 VNet CIDR plan with app / data / private-endpoint / ingress / bastion subnets and NSG posture, \u00a74 compute tier (Azure Container Apps preferred, Azure App Service Premium with VNet integration as fallback), \u00a75 Azure Database for PostgreSQL Flexible Server fronted by a private endpoint with public network access disabled, \u00a76 Azure Blob Storage account fronted by a private endpoint with public network access disabled, \u00a77 Azure Key Vault fronted by a private endpoint with managed-identity RBAC and public network access disabled, \u00a78 Log Analytics workspace and Application Insights component bound to that workspace, \u00a79 private ingress options (Front Door Premium with Private Link Service preferred, Application Gateway with WAF as fallback), \u00a710 private DNS zones (privatelink.postgres.database.azure.com, privatelink.blob.core.windows.net, privatelink.vaultcore.azure.net) linked to the lab VNet, \u00a711 lab validation contract (smoke / Postgres round-trip / Blob round-trip / Key Vault secret retrieval via managed identity / Application Insights log emission / private DNS resolution check), \u00a712 model gateway stub posture (no live model calls, no provider keys), \u00a713 environment variable contract naming static / vault / platform sources for each variable the App expects at startup, \u00a714 progression path to Bicep / Terraform / azd implementation, \u00a715 boundaries summary, and \u00a716 safety rationale.",
+        "docs/build/slices/CLOUD2_AZURE_VNET_REFERENCE_LAB_BLUEPRINT.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and readiness impact, and references the architecture doc by relative path.",
+        "docs/build/build-slices.json appends a CLOUD2 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn (TEN1, CLOUD1), status code_complete, risk low, and ownerAgent Lane F; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "docs/build/production-readiness.json production_deployment component appends a note acknowledging that the CLOUD2 Azure VNet reference lab blueprint is added; status is preserved (no promotion); production_deployment.nextAction is UNIONed conservatively without overwriting prior PROD1 / PROD2 / PROD3 / OPS1 wording; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "Documentation only; no application code, runtime, IaC (Bicep / Terraform / ARM / azd), scripts, CI workflow files, auth, supabase, migrations, package manifests, or platform-design docs are modified.",
+        "Cross-references to TEN1 (logical tenant isolation), CLOUD1 (generic deployable shape), MG2 / MG3 (Model Gateway stub and safe integration), AUD2 (audit events), and PROD3 / PROD4 (production-readiness live panel and deferred external CI / Vercel ingestion) are present in the architecture doc."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Documentation-only blueprint for a private-VNet, no-public-endpoint, secret-bounded Azure reference lab into which the AbarVa shell can later be deployed for validation. Defines Resource Group layout, VNet CIDR plan, app / data / private-endpoint / ingress / bastion subnets, Azure Container Apps (preferred) or App Service (fallback), Azure Database for PostgreSQL Flexible Server (private endpoint), Azure Blob Storage (private endpoint), Azure Key Vault (private endpoint, managed identity), Log Analytics + Application Insights, private ingress (Front Door Premium + Private Link Service or Application Gateway + WAF), private DNS zones for postgres / blob / vault privatelink hostnames, model gateway stub posture, environment variable contract, lab validation contract (smoke / DB round-trip / Blob round-trip / Key Vault secret retrieval / Application Insights log emission / private DNS resolution), and the progression path to a future Bicep / Terraform / azd slice. The lab proves private-VNet deployability, no public endpoints, secret-bounded operation, and observability path; it does NOT prove production scaling, DR, multi-region, live model gateway, production tenant isolation certification, or compliance. No IaC, no scripts, no application code, no model calls, no Azure ARM calls. production_deployment status is preserved (still blocked); the prod-deploy-verification blocker is preserved verbatim; lab build itself is deferred to a later Terraform / Bicep / azd slice."
     }
   ]
 }
