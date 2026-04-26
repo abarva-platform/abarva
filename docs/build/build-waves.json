@@ -764,10 +764,10 @@
       "skippedSlices": [],
       "blockedSlices": [],
       "mergedPrs": [],
-      "validationStatus": "pending",
+      "validationStatus": "not_run",
       "productionReadinessUpdated": false,
       "currentBlockers": [],
-      "nextAction": "Complete remaining lanes and integrate. ARCH5 code-complete. Ready for validation and merge. Run validation, push, and merge via PR. SRC31 code-complete. Run validation and merge via PR. Land DES7/DES8/ARCH5/PROD8/SRC31 UI primitives, then validate canon regression on integration branch. Land DES7/DES8/ARCH5/PROD8/SRC31 lanes; DEMO5 founder review checklist already complete and ready to walk once shell/admin/architecture/production-readiness/source-commercial lanes ship.",
+      "nextAction": "Watch CI and merge when green.",
       "lastUpdated": "2026-04-26"
     }
   ]
