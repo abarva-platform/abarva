@@ -140,9 +140,12 @@ describe('Source event canvas shell', () => {
     expect(html).toContain('Executive decision summary');
     expect(html).toContain('Selection-readiness decision brief');
     expect(html).toContain('Decision posture');
+    expect(html).toContain('Viable vendors');
+    expect(html).toContain('Vendor tradeoffs');
     expect(html).toContain('Decision options');
     expect(summary.recommendedDecisionPosture).not.toBe('ready_for_selection_review');
     expect(summary.blockers.length).toBeGreaterThan(0);
+    expect(html).not.toContain('Finalize vendor selection');
   });
 
   it('includes the deterministic data readiness panel with missing and usable evidence states', async () => {
