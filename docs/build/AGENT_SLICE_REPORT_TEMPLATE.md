@@ -18,12 +18,14 @@ The integrator reads this report during morning review (`AGENT_BATCH_TEMPLATE.md
 ## A. Slice header
 
 ```
+Lane ................. <LANE_LABEL>
 Slice id ............. <SLICE_ID>
 Slice name ........... <SLICE_NAME>
 Branch ............... pack/<SLICE_ID>-<SLUG>
 HEAD sha ............. <HEAD_SHA>
 Parent sha ........... <PARENT_SHA>
 Worktree ............. <WORKTREE_PATH>
+Commit message ....... <COMMIT_MESSAGE_LITERAL>
 Files staged count ... <STAGED_COUNT>
 Test count ........... <TEST_COUNT>
 Validation status .... <ALL_PASS | <SUITE_NAME>_FAILED>
@@ -32,12 +34,14 @@ Lane agent ........... <AGENT_DESCRIPTOR>
 ```
 
 Placeholders:
+- `<LANE_LABEL>` — short lane label (e.g. `Lane C`).
 - `<SLICE_ID>` — uppercase slice id (e.g. `OPS1`).
 - `<SLICE_NAME>` — human-readable slice name.
 - `<SLUG>` — lowercase slug used in the branch path.
 - `<HEAD_SHA>` — `git rev-parse HEAD` after the lane's commit.
 - `<PARENT_SHA>` — `git rev-parse HEAD~1`. Should match the integrator's main HEAD captured during preflight.
 - `<WORKTREE_PATH>` — full absolute path to the lane's worktree.
+- `<COMMIT_MESSAGE_LITERAL>` — the literal commit message used (must equal the message specified in the dispatch prompt).
 - `<STAGED_COUNT>` — exact number of files in the commit.
 - `<TEST_COUNT>` — number of `it()` cases in the suite the lane authored or modified, sum across suites if multiple.
 - `<ALL_PASS | <SUITE_NAME>_FAILED>` — `ALL_PASS` if every validation command exited 0, else name the failed command.
@@ -106,6 +110,11 @@ Command: <CMD_1>
 Command: <CMD_2>
   ...
 
+Tests run: <JEST_TEST_COUNT | docs only | N/A docs only>
+TSC + Build:
+  npx tsc --noEmit --pretty false: <PASS | FAIL | SKIP — reason>
+  npm run build: <PASS | FAIL | SKIP — reason>
+
 JSON parse:
   build-slices.json: <PASS_OR_FAIL>
   production-readiness.json: <PASS_OR_FAIL>
@@ -117,6 +126,8 @@ PROD2 validator:
 ```
 
 If any command failed, the lane MUST stop, NOT commit, and report the failure. A failed validation in this section indicates the lane should have aborted before staging.
+
+Lanes that are documentation / JSON only and stage zero `.ts` / `.tsx` files MAY waive the Jest test count by reporting `Tests run: docs only` (or `N/A docs only`); the OPS7 lane report validator honors this waiver.
 
 ---
 
@@ -273,6 +284,48 @@ Reason: <ONE_SENTENCE>
 ```
 
 The integrator may override the recommendation. The lane's recommendation is advisory; the integrator's decision is authoritative.
+
+---
+
+## K. Run Metrics
+
+Quantitative footprint of the lane's run. The integrator scrapes this section to track lane-level cost and to spot anomalies.
+
+```
+Wall time ............ <MM:SS or seconds>
+Tool calls ........... <COUNT>
+Files read ........... <COUNT>
+Files written ........ <COUNT>
+Tokens (approx) ...... <COUNT or "n/a">
+Bash commands ........ <COUNT>
+Retries / aborts ..... <COUNT or "none">
+```
+
+If any metric is unavailable in the lane's environment, write `n/a` rather than guessing.
+
+---
+
+## L. Blockers
+
+If the lane hit a blocker that prevented full slice completion, list it here. If none, say so explicitly.
+
+```
+Blockers: <NONE | <SHORT_DESCRIPTION>>
+```
+
+A blocker entry should name (a) the symptom, (b) the file or command involved, and (c) the recommended next step (retry, escalate, defer, abandon).
+
+---
+
+## M. Final SHA line
+
+Conclude the report with the abbreviated commit sha on its own line, prefixed with the literal `LANE-SHA:` label. The integration agent uses this line as the mechanical anchor when collecting the lane's commit.
+
+```
+LANE-SHA: <abbrev>
+```
+
+`<abbrev>` is the 7+ hex character abbreviated git sha printed by `git rev-parse --short HEAD` after the lane's local commit.
 
 ---
 
