@@ -79,6 +79,23 @@ describe('Source event canvas shell', () => {
     expect(html).toContain('Steward to Admin/Setup intake');
   });
 
+  it('renders contract-backed readiness even when event-local readiness rows are empty', async () => {
+    const event = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.dataAiModernization);
+    expect(event).toBeDefined();
+
+    const eventWithoutLocalReadiness = {
+      ...event!,
+      dataReadiness: [],
+    };
+    const html = renderToStaticMarkup(createElement(NexusEngagementCanvas, { event: eventWithoutLocalReadiness }));
+
+    expect(html).toContain('34% toward event data readiness');
+    expect(html).toContain('Admin/Setup readiness contract projection');
+    expect(html).toContain('Workload Baseline');
+    expect(html).toContain('Retained Roles');
+    expect(html).toContain('3/5 required present');
+  });
+
   it('keeps the event canvas shell inside the approved Source boundary', () => {
     const sources = [
       'src/app/(maestro)/source/events/[eventId]/page.tsx',
