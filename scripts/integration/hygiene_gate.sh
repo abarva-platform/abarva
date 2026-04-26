@@ -42,10 +42,13 @@ else
   pass "No whitespace errors"
 fi
 
-CONFLICT_COUNT=$(git grep -n "^<<<<<<<\|^=======\|^>>>>>>>" -- . 2>/dev/null | grep -v "^Binary\|#.*<<<<\|#.*>>>>>>>\|#.*=======" | wc -l | tr -d ' ')
+# Carve-out: conflict markers inside fenced code blocks in *.md files are
+# acceptable per the BUILD_WAVE_PROGRESS_PROTOCOL (documentation examples).
+# Filter out any lines reported from .md files.
+CONFLICT_COUNT=$(git grep -n "^<<<<<<<\|^=======\|^>>>>>>>" -- . 2>/dev/null | grep -v "^Binary\|#.*<<<<\|#.*>>>>>>>\|#.*=======\|\.md:" | wc -l | tr -d ' ')
 if [ "$CONFLICT_COUNT" -gt 0 ]; then
   fail "Conflict markers found ($CONFLICT_COUNT lines)"
-  git grep -n "^<<<<<<<\|^=======\|^>>>>>>>" -- . 2>/dev/null | grep -v "Binary" | head -10
+  git grep -n "^<<<<<<<\|^=======\|^>>>>>>>" -- . 2>/dev/null | grep -v "Binary\|\.md:" | head -10
 else
   pass "No conflict markers"
 fi

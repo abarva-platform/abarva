@@ -7106,6 +7106,135 @@
         "npx jest src/__tests__/integration/ops/demo-pack-report-validator.test.ts --no-coverage"
       ],
       "notes": "All future build packs (Wave 13+) must pass this validator before a pack is marked complete. Validator is read-only, deterministic, and stdlib-only."
+    },
+    {
+      "id": "SRC12",
+      "wave": "wave-14",
+      "title": "Pricing Normalization Model",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "Richer pricing model with PricingTower, PricingRole, NormalizedPricingLine, PricingVendorSnapshot, and PricingComparisonMatrix. Complements existing pricing-normalization.ts.",
+      "files": [
+        "src/lib/source/pricing-normalization-model.ts",
+        "src/__tests__/integration/source/pricing-normalization-model.test.ts"
+      ],
+      "completedAt": "2026-04-26"
+    },
+    {
+      "id": "SRC11",
+      "wave": "wave-14",
+      "title": "BAFO Negotiation Model",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "Rich BAFO negotiation model with 12 lever types, opportunity/scenario/risk types, and deterministic summary builder.",
+      "files": [
+        "src/lib/source/bafo-negotiation-model.ts",
+        "src/__tests__/integration/source/bafo-negotiation-model.test.ts"
+      ],
+      "completedAt": "2026-04-26"
+    },
+    {
+      "id": "SRC13",
+      "wave": "wave-14",
+      "title": "Commercial Risk Exception Detection",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "Deterministic commercial risk exception detection with 8 risk categories, severity/status types, pattern library, and detectCommercialRisks() builder.",
+      "files": [
+        "src/lib/source/commercial-risk-detection.ts",
+        "src/__tests__/integration/source/commercial-risk-detection.test.ts"
+      ],
+      "completedAt": "2026-04-26"
+    },
+    {
+      "id": "SRC15",
+      "wave": "wave-14",
+      "title": "Vendor Pricing Comparison",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "Presentational React component for multi-vendor pricing comparison with tower breakdown, delta from lowest, and normalization confidence.",
+      "files": [
+        "src/components/source/VendorPricingComparison.tsx",
+        "src/__tests__/integration/source/vendor-pricing-comparison.test.ts"
+      ],
+      "completedAt": "2026-04-26"
+    },
+    {
+      "id": "SRC14",
+      "wave": "wave-14",
+      "title": "Commercial Summary Panel",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "Presentational React component for commercial intelligence summary showing vendor rows, risk level, exceptions, and top opportunity.",
+      "files": [
+        "src/components/source/SourceCommercialSummaryPanel.tsx",
+        "src/__tests__/integration/source/source-commercial-summary-panel.test.ts"
+      ],
+      "completedAt": "2026-04-26"
+    },
+    {
+      "id": "SRC16",
+      "wave": "wave-14",
+      "title": "Source Control Tower Signals",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "Deterministic control tower signal types and builder for Source module \u2014 10 signal types, severity/status, bundled emission.",
+      "files": [
+        "src/lib/source/control-tower-signals.ts",
+        "src/__tests__/integration/source/control-tower-signals.test.ts"
+      ],
+      "completedAt": "2026-04-26"
+    },
+    {
+      "id": "SRC17",
+      "wave": "wave-14",
+      "title": "Source Intelligence Patterns",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "Deterministic intelligence pattern detection with 10 pattern categories, strength/source types, and detectIntelligencePatterns() builder.",
+      "files": [
+        "src/lib/source/intelligence-patterns.ts",
+        "src/__tests__/integration/source/intelligence-patterns.test.ts"
+      ],
+      "completedAt": "2026-04-26"
+    },
+    {
+      "id": "SRC18",
+      "wave": "wave-14",
+      "title": "Source Commercial Mission Queue",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "Deterministic commercial mission queue with 10 mission types, 5 owner agents, priority ordering, and blocking relationships. No scheduler, no persistence.",
+      "files": [
+        "src/lib/source/commercial-mission-queue.ts",
+        "src/__tests__/integration/source/commercial-mission-queue.test.ts"
+      ],
+      "completedAt": "2026-04-26"
+    },
+    {
+      "id": "QA21",
+      "wave": "wave-14",
+      "title": "Source Commercial Workflow Verification",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "Cross-module QA verification for Wave-14 commercial intelligence layer: bafo-negotiation-model, pricing-normalization-model, commercial-risk-detection, control-tower-signals, intelligence-patterns, commercial-mission-queue.",
+      "files": [
+        "src/__tests__/integration/source/source-commercial-workflow-verification.test.ts"
+      ],
+      "completedAt": "2026-04-26"
+    },
+    {
+      "id": "OPS14",
+      "wave": "wave-14",
+      "title": "Hygiene Gate CI Contract",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "GitHub Actions workflow for hygiene_gate.sh on PRs, plus CI contract documentation.",
+      "files": [
+        ".github/workflows/hygiene-gate.yml",
+        "docs/build/HYGIENE_GATE_CI_CONTRACT.md"
+      ],
+      "completedAt": "2026-04-26"
     }
   ]
 }
