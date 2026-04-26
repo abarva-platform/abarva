@@ -2579,6 +2579,55 @@
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
       "notes": "Deterministic, server-only UI primitive for the AbarVa Agent Activity UI Pattern (experience-system File 16). Companion to AG10 (live mission queue). AG11 defines a minimum-compatible mission prop type locally so it can render without AG10; live runtime trigger integration is deferred. Lane B output of the parallel build pack."
+    },
+    {
+      "id": "PROD2",
+      "name": "Production Readiness Tracker Update Rules and Validator",
+      "category": "PROD",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane C (parallel build pack)",
+      "dependsOn": [
+        "PROD1"
+      ],
+      "allowedFiles": [
+        "src/lib/admin/production-readiness-validator.ts",
+        "src/__tests__/integration/admin/production-readiness-validator.test.ts",
+        "docs/build/PRODUCTION_READINESS_UPDATE_PROTOCOL.md",
+        "docs/build/slices/PROD2_READINESS_TRACKER_UPDATE_RULES.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**",
+        "package.json",
+        "package-lock.json"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/admin/production-readiness-validator.ts exports PRODUCTION_READINESS_VALIDATION_RULES (canonical, ordered tuple of twelve rule ids), the public types ProductionReadinessValidationSeverity, ProductionReadinessValidationFinding, ProductionReadinessValidationResult, and ProductionReadinessValidationRule, and the helpers validateProductionReadinessManifest, validateProductionReadinessComponent, and summarizeProductionReadinessValidation.",
+        "validateProductionReadinessManifest(loadProductionReadinessManifest()) returns passed: true with zero error findings on the real docs/build/production-readiness.json manifest.",
+        "Each canonical rule (manifest_parses, all_required_components_exist, all_statuses_valid, all_dimensions_present, all_testing_gates_present, production_ready_requires_all_gates_pass, pilot_ready_requires_route_smoke_or_persona_walk, every_component_has_next_action, every_blocker_has_severity_and_description, no_live_monitoring_claim_unless_source_says_live, overall_readiness_percent_within_planned_range, maturity_snapshot_present) has at least one negative test case that mutates a deep clone of the real manifest and asserts the matching finding is produced.",
+        "Validator module imports only types and constants from @/lib/admin/production-readiness, has no imports from @/lib/source|nexus|sentinel|atlas|agent|auth or supabase, has no Date.now / Math.random / new Date( / fetch(, no anthropic / openai, no useState / useEffect, and no Coming soon / TBD / Lorem ipsum placeholder language.",
+        "docs/build/PRODUCTION_READINESS_UPDATE_PROTOCOL.md is extended (append-only) with section H Mandatory tracker update on every batch, section I Parallel-lane conflict policy, and section J Validator usage (PROD2). No prior section is removed or rewritten.",
+        "docs/build/production-readiness.json appends notes to validation_qa and production_deployment acknowledging the PROD2 validator and the protocol mandate, updates validation_qa.nextAction to call out deferred CI integration, bumps lastUpdated, and does not promote any component status.",
+        "Validator integration test src/__tests__/integration/admin/production-readiness-validator.test.ts is fully green, the existing tracker integration test src/__tests__/integration/admin/production-readiness-tracker.test.ts remains green, npx tsc --noEmit --pretty false passes, npm run build passes, and docs/build/build-slices.json plus docs/build/production-readiness.json parse as JSON."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/admin/production-readiness-validator.test.ts",
+        "npx jest src/__tests__/integration/admin/production-readiness-tracker.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Deterministic, file-pure validator and protocol update for the production readiness manifest. Lane C output of the PROD2 parallel build pack. No model calls, no migrations, no persistence, no UI, no CI wiring. Validator only reports findings; manifest authorship remains the responsibility of the agent or founder making the change."
     }
   ]
 }

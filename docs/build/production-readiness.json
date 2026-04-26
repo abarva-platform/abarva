@@ -1236,9 +1236,10 @@
           "unblocks": "full_flow_ready"
         }
       ],
-      "nextAction": "Turn the runbooks into CI-backed route smoke, persona crawler, and security governance checks.",
+      "nextAction": "Turn the runbooks into CI-backed route smoke, persona crawler, and security governance checks; CI integration of the PROD2 production readiness validator remains deferred.",
       "notes": [
-        "This component is tested, not full-flow ready."
+        "This component is tested, not full-flow ready.",
+        "PROD2 lands a deterministic validator at src/lib/admin/production-readiness-validator.ts with twelve canonical rules and a passing integration test at src/__tests__/integration/admin/production-readiness-validator.test.ts. The validator reports findings but does not mutate the manifest, and CI integration remains deferred."
       ]
     },
     {
@@ -1304,7 +1305,8 @@
       "nextAction": "After explicit founder approval to deploy, verify Vercel build, production routes, auth redirects, DNS, tenant isolation, and observability manually or through CI.",
       "notes": [
         "PROD1 does not deploy.",
-        "No live monitoring claim is made."
+        "No live monitoring claim is made.",
+        "PROD2 extends docs/build/PRODUCTION_READINESS_UPDATE_PROTOCOL.md with a tracker-update mandate per pack and a parallel-lane conflict policy for cherry-pick integration. No deployment occurred. No live monitoring claim is made."
       ]
     }
   ]
