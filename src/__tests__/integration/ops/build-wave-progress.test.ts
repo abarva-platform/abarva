@@ -599,7 +599,8 @@ describe('Wave-15 anchor', () => {
     });
   });
   it('wave-15 percentComplete is 100', () => expect(w15?.percentComplete).toBe(100));
-  it('wave-15 status is in_progress', () => expect(w15?.status).toBe('in_progress'));
+  it('wave-15 status is merged', () => expect(w15?.status).toBe('merged'));
+  it('wave-15 mergedPrs contains 351', () => expect(w15?.mergedPrs).toContain(351));
 });
 
 // ---------------------------------------------------------------------
