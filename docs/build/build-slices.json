@@ -5947,6 +5947,59 @@
         "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
       ],
       "notes": "QA14 lands the fourth founder-facing verification runbook covering the canvas implementation slices (SOL10 Canvas UI Shell, SOL11 Architecture Draft Read Model, SOL12 Workshop-to-Architecture Refinement, SOL13 Architecture Deliverable Renderer, SOL14 Canvas Versioning Layer) plus MW7 Workshop Deliverable Refinement Loop. Documentation only at the manifest level. Replaces the prior QA2 SOL1 / SOL2 / MW2 / PF2 contents at SOLUTION_WORKSHOP_VERIFICATION_RUNBOOK.md; the QA2 contents are preserved in spirit by SOLUTION_INTELLIGENCE_VERIFICATION_RUNBOOK.md sections A and I. Rows for SOL10-SOL14 / MW7 read as deferred until the corresponding implementation slice lands. validation_qa stays tested (not promoted); solution_intelligence is not promoted from this docs-only runbook. The runbook does not execute the verification it documents."
+    },
+    {
+      "id": "TEN4",
+      "name": "Data Plane Adapter Contract",
+      "category": "TEN",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane A (Wave3 controlled multi-agent build)",
+      "dependsOn": [
+        "TEN1",
+        "TEN2",
+        "TEN3"
+      ],
+      "lastUpdated": "2026-04-26",
+      "allowedFiles": [
+        "src/lib/architecture/data-plane-adapter-contract.ts",
+        "src/__tests__/integration/architecture/data-plane-adapter-contract.test.ts",
+        "docs/build/slices/TEN4_DATA_PLANE_ADAPTER_CONTRACT.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/auth/**",
+        "src/lib/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/architecture/data-plane-adapter-contract.ts exports the seven canonical adapter interfaces (RelationalStoreAdapter, ObjectStoreAdapter, VectorSearchAdapter, GraphProviderAdapter, EvidenceLedgerAdapter, ModelGatewayProviderAdapter, AuditStoreAdapter); each declares provider: string, capabilities: ReadonlyArray<string>, requiredEnvVars: ReadonlyArray<string>, safetyConstraints: ReadonlyArray<string>; module also exports the canonical tuples (DATA_PLANE_ADAPTER_KINDS, DATA_PLANE_DEPLOYMENT_MODES) and helpers buildDataPlaneAdapterContractSeed, summarizeDataPlaneAdapters, validateDataPlaneAdapter.",
+        "Every emitted adapter carries createdFrom 'deterministic_data_plane_adapter_contract_seed'; buildDataPlaneAdapterContractSeed returns a seed with exactly one entry per canonical adapter kind.",
+        "src/__tests__/integration/architecture/data-plane-adapter-contract.test.ts asserts all seven adapter shapes are representable, proves byte-equal determinism (JSON.stringify-equal across repeated buildDataPlaneAdapterContractSeed and summarizeDataPlaneAdapters calls), asserts the validator rejects empty provider / capabilities / requiredEnvVars / safetyConstraints / wrong createdFrom, asserts the summary reconciles totals, and asserts module hygiene with a stripStringLiterals pass: no Date.now / Math.random / new Date( / fetch( in code; no openai / anthropic / @anthropic-ai/* / @openai/* / aws-sdk / @azure/* / @google-cloud/* / pg / pinecone / neo4j-driver imports; no imports from @/lib/auth / source / sentinel / atlas / nexus / agent; no supabase reference.",
+        "docs/build/slices/TEN4_DATA_PLANE_ADAPTER_CONTRACT.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, readiness impact, validation commands, and acceptance criteria.",
+        "docs/build/build-slices.json appends a TEN4 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn (TEN1, TEN2, TEN3), status code_complete, risk low, ownerAgent Lane A, and lastUpdated 2026-04-26; manifest top-level lastUpdated is 2026-04-26.",
+        "docs/build/production-readiness.json UNION-updates data_evidence_knowledge_fabric and production_deployment notes / nextAction (conservative; no promotion) and bumps top-level lastUpdated to 2026-04-26.",
+        "Read model only; no auth implementation changes, no RLS, no migrations, no live runtime claim; only the five allowed files are staged."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/data-plane-adapter-contract.test.ts",
+        "npx eslint --max-warnings=0 src/lib/architecture/data-plane-adapter-contract.ts src/__tests__/integration/architecture/data-plane-adapter-contract.test.ts",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Deterministic, file-pure read model that defines the provider-agnostic adapter shapes for every component of the AbarVa data plane (relational store, object store, vector search, graph provider, evidence ledger, model gateway provider, audit store). Each adapter interface declares provider, capabilities, requiredEnvVars, and safetyConstraints so AbarVa can run on shared SaaS, dedicated tenant, or private (customer-owned) deployments without changing the runtime contract. Type-only module - no provider SDK import, no fetch, no Date, no randomness, no UI, no persistence. Companion test (16 cases) proves all seven shapes representable, byte-equal determinism, validator rejects bad input, summary reconciles totals, and module hygiene. Read model only; data_evidence_knowledge_fabric status is preserved at scaffolded; production_deployment status is preserved at blocked; no other component is promoted. The live adapter implementations and the tenant adapter registry runtime land in later slices behind this shape contract."
     }
   ]
 }
