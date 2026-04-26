@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { execSync } from 'child_process';
 
 const repoRoot = path.resolve(__dirname, '../../../../');
 const scriptPath = path.join(repoRoot, 'scripts/integration/hygiene_gate.sh');
@@ -69,7 +70,6 @@ describe('hygiene_gate.sh - contract', () => {
 
 describe('hygiene_gate.sh - invocation: --help', () => {
   it('--help exits 0 and prints usage', () => {
-    const { execSync } = require('child_process');
     const result = execSync(`bash "${scriptPath}" --help`, { encoding: 'utf8' });
     expect(result).toContain('Usage');
     expect(result).toContain('--skip-build');
