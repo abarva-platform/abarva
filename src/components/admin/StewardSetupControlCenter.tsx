@@ -25,6 +25,54 @@ import {
   type StewardBrief,
   type StewardSetupReadinessView,
 } from '@/lib/admin/steward-setup-readiness';
+import { AgentMissionPanel } from '@/components/agents/AgentMissionPanel';
+import {
+  buildAgentMissionsForSurface,
+  getTopAgentMissions,
+  type AgentMission,
+} from '@/lib/agents/agent-mission-queue';
+import type {
+  AgentMissionPanelMission,
+  AgentMissionPanelView,
+} from '@/lib/agents/agent-mission-view';
+
+// AG12 · Admin surface mission projection.
+//
+// Pulls the AG10 deterministic queue filtered to the Admin surface,
+// keeps only Steward missions per AG12 spec, sorts by priority via
+// getTopAgentMissions, caps at 3, and maps the AG10 AgentMission shape
+// onto the AG11 panel mission shape.
+const ADMIN_SURFACE_AGENTS = new Set(['steward']);
+
+function mapAdminMissionToPanel(mission: AgentMission): AgentMissionPanelMission {
+  return {
+    id: mission.id,
+    agent: mission.agent,
+    type: mission.type,
+    state: mission.state,
+    priority: mission.priority,
+    workObjectLabel: mission.workObject.label,
+    rationale: mission.rationale,
+    recommendedAction: mission.recommendedAction,
+    handoffTo: mission.handoff ? mission.handoff.toAgent : null,
+    stopCondition: mission.stopCondition,
+  };
+}
+
+function buildAdminAgentMissionView(): AgentMissionPanelView {
+  const surfaceMissions = buildAgentMissionsForSurface('admin');
+  const filtered = surfaceMissions.filter((mission) =>
+    ADMIN_SURFACE_AGENTS.has(mission.agent),
+  );
+  const top = getTopAgentMissions(filtered, 3).slice(0, 3);
+  return {
+    variant: 'compact_strip',
+    missions: top.map(mapAdminMissionToPanel),
+    surfaceLabel: 'Admin Setup',
+    honestDisclaimer:
+      'Mission queue is deterministic seed; runtime triggers deferred.',
+  };
+}
 
 interface StewardSetupControlCenterProps {
   view?: StewardSetupReadinessView;
@@ -130,6 +178,9 @@ export function StewardSetupControlCenter({ view }: StewardSetupControlCenterPro
           />
         </div>
       </header>
+
+      {/* AG12 · Agent mission panel · projected from AG10 deterministic queue (top 3) */}
+      <AgentMissionPanel view={buildAdminAgentMissionView()} />
 
       {/* Zone B · Steward Brief */}
       <StewardBriefPanel brief={brief} />

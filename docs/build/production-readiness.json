@@ -356,7 +356,8 @@
       "nextAction": "Run and record the canonical Programs persona walk, then close the evidence/value seed gaps that block gate promotion.",
       "notes": [
         "Code complete is not production ready.",
-        "No legacy /programs route is extended by PROD1."
+        "No legacy /programs route is extended by PROD1.",
+        "AG12 mounts the AG11 Agent Mission Panel on ProgramCanonicalDetail with variant 'right_panel' and the {nexus, sentinel, steward} surface filter, capped at 3 deterministic missions; no live runtime, no model call, no persistence."
       ]
     },
     {
@@ -551,7 +552,8 @@
       ],
       "nextAction": "Verify the deterministic Intelligence journey in browser, then define the evidence-registry binding required for pilot readiness.",
       "notes": [
-        "Active patterns are read-model backed, not live monitoring."
+        "Active patterns are read-model backed, not live monitoring.",
+        "AG12 mounts the AG11 Agent Mission Panel on SentinelActivePatterns with variant 'inline_recommendation' and the {sentinel, nexus} surface filter, capped at 3 deterministic missions; no live Sentinel runtime, no live retrieval, no model call."
       ]
     },
     {
@@ -616,7 +618,8 @@
       ],
       "nextAction": "Complete a manual Tower walk and decide which production signal source should become the first persisted feed.",
       "notes": [
-        "The Tower surface is deterministic today."
+        "The Tower surface is deterministic today.",
+        "AG12 mounts the AG11 Agent Mission Panel on ProgramPressureCards with variant 'executive_brief' and the {atlas, steward} surface filter, capped at 3 deterministic missions; no live Atlas runtime, no model call, no persistence."
       ]
     },
     {
@@ -681,7 +684,8 @@
       ],
       "nextAction": "Use the production-readiness tracker in morning review and update the manifest after each validation event.",
       "notes": [
-        "PROD1 adds a read-only admin page and manifest only."
+        "PROD1 adds a read-only admin page and manifest only.",
+        "AG12 mounts the AG11 Agent Mission Panel on StewardSetupControlCenter with variant 'compact_strip' and the steward-only surface filter, capped at 3 deterministic missions; no live Steward runtime, no model call, no persistence."
       ]
     },
     {
@@ -978,7 +982,8 @@
         "CTX2 unified context builder MVP added (src/lib/architecture/unified-context-builder.ts) \u2014 deterministic projection of programs/canonical-view, sentinel-pattern-detections, and solution-archetype-registry into a twelve-section Unified Context Pack; evidence/conversation/datasets sections honestly empty pending live wiring.",
         "AG10 deterministic agent mission queue read model added (src/lib/agents/agent-mission-queue.ts) \u2014 typed seed queue covering all four agents (Nexus, Sentinel, Atlas, Steward) and all five surfaces (Programs, Tower, Intelligence, Admin, Source) with handoff metadata; UI mounting (AG11) and runtime trigger wiring remain deferred.",
         "AG11 agent mission UI panel added (src/components/agents/AgentMissionPanel.tsx + src/lib/agents/agent-mission-view.ts) \u2014 deterministic, server-only rendering of the AbarVa Agent Activity UI Pattern (experience-system File 16) across compact_strip, right_panel, inline_recommendation, executive_brief, and hidden_drawer variants. Source data comes from a frozen seed view; no live mission queue, no runtime trigger, no client state. Status is not promoted by AG11; UI/UX dimension acknowledgement only.",
-        "TOOL2 tool registry MVP added (src/lib/architecture/tool-registry-mvp.ts) \u2014 deterministic registry of 16 canonical agent tools with allowed agents, read/write/export/audit mode, tenant scope, audit requirement, production status, required inputs, and forbiddenWhen preconditions; no live tool execution, no model or provider calls, no audit ledger persistence."
+        "TOOL2 tool registry MVP added (src/lib/architecture/tool-registry-mvp.ts) \u2014 deterministic registry of 16 canonical agent tools with allowed agents, read/write/export/audit mode, tenant scope, audit requirement, production status, required inputs, and forbiddenWhen preconditions; no live tool execution, no model or provider calls, no audit ledger persistence.",
+        "AG12 agent mission surface wiring added \u2014 AG11 AgentMissionPanel mounted in Programs (right_panel, agents nexus/sentinel/steward), Tower (executive_brief, agents atlas/steward), Intelligence (inline_recommendation, agents sentinel/nexus), and Admin Setup (compact_strip, agent steward). Each surface caps at 3 missions via getTopAgentMissions and projects AG10's deterministic queue field-by-field through inline mappers; server-component-only, no live runtime, no model calls, no persistence."
       ]
     },
     {

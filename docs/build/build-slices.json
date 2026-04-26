@@ -2581,6 +2581,61 @@
       "notes": "Deterministic, server-only UI primitive for the AbarVa Agent Activity UI Pattern (experience-system File 16). Companion to AG10 (live mission queue). AG11 defines a minimum-compatible mission prop type locally so it can render without AG10; live runtime trigger integration is deferred. Lane B output of the parallel build pack."
     },
     {
+      "id": "AG12",
+      "name": "Agent Mission Surface Wiring",
+      "category": "AG",
+      "status": "code_complete",
+      "risk": "medium",
+      "ownerAgent": "Builder",
+      "dependsOn": [
+        "AG10",
+        "AG11"
+      ],
+      "allowedFiles": [
+        "src/components/programs/ProgramCanonicalDetail.tsx",
+        "src/components/tower/ProgramPressureCards.tsx",
+        "src/components/intelligence/SentinelActivePatterns.tsx",
+        "src/components/admin/StewardSetupControlCenter.tsx",
+        "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
+        "docs/build/slices/AG12_AGENT_MISSION_SURFACE_WIRING.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**",
+        "package.json",
+        "package-lock.json"
+      ],
+      "acceptanceCriteria": [
+        "src/components/programs/ProgramCanonicalDetail.tsx imports AgentMissionPanel from @/components/agents/AgentMissionPanel and references buildAgentMissionsForSurface from @/lib/agents/agent-mission-queue, builds an inline view filtered to surface 'programs' and agents in {nexus, sentinel, steward}, caps at 3 via getTopAgentMissions(_, 3) and slice(0, 3), and mounts <AgentMissionPanel> with variant 'right_panel' and surfaceLabel 'Program detail' adjacent to the existing PW1/PDEL5 mounts (positioned before them).",
+        "src/components/tower/ProgramPressureCards.tsx imports AgentMissionPanel and buildAgentMissionsForSurface, builds an inline view filtered to surface 'tower' and agents in {atlas, steward}, caps at 3, and mounts <AgentMissionPanel> with variant 'executive_brief' and surfaceLabel 'AI Control Tower' before the Atlas executive brief panel.",
+        "src/components/intelligence/SentinelActivePatterns.tsx imports AgentMissionPanel and buildAgentMissionsForSurface, builds an inline view filtered to surface 'intelligence' and agents in {sentinel, nexus}, caps at 3, and mounts <AgentMissionPanel> with variant 'inline_recommendation' and surfaceLabel 'Sentinel Brief' before the Sentinel brief panel.",
+        "src/components/admin/StewardSetupControlCenter.tsx imports AgentMissionPanel and buildAgentMissionsForSurface, builds an inline view filtered to surface 'admin' and agent === 'steward', caps at 3, and mounts <AgentMissionPanel> with variant 'compact_strip' and surfaceLabel 'Admin Setup' before the Steward brief panel.",
+        "Each surface defines a small inline mapper that converts AG10 AgentMission to AG11 AgentMissionPanelMission field-by-field (id, agent, type, state, priority, workObject.label -> workObjectLabel, rationale, recommendedAction, handoff -> handoffTo, stopCondition); no new module under src/lib is added by AG12.",
+        "All four mounts are server-component-only: no 'use client' directive, no useState, no useEffect, no Date.now / Math.random / new Date( / fetch( introduced in executable code by AG12 changes, no anthropic / openai imports, and no Coming soon / TBD / Lorem ipsum placeholder language.",
+        "Module hygiene: no new imports from src/lib/source, src/lib/nexus, src/lib/sentinel, src/lib/atlas, src/lib/auth, or supabase are introduced by AG12; the AG10 import (@/lib/agents/agent-mission-queue) and AG11 import (@/components/agents/AgentMissionPanel) are the only new agent-system imports.",
+        "Test suite at src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts is fully green and enforces import coverage, buildAgentMissionsForSurface usage, cap-at-3 grep, variant + surface label correctness, exactly-one-mount per surface, AG10 surface filter sanity (top three missions per surface within allowed agents), and module hygiene across all four files (with comment + string-literal stripping for the dynamic-runtime checks).",
+        "AG10 (agent-mission-queue) and AG11 (agent-mission-panel) test suites remain fully green after AG12 wiring.",
+        "Production readiness manifest is updated to acknowledge AG12 surface wiring under agent_runtime and append surface-level notes on programs, ai_control_tower, intelligence, and admin_setup; status is not promoted on any component; manifest top-level lastUpdated is bumped."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
+        "npx jest src/__tests__/integration/agents/agent-mission-queue.test.ts",
+        "npx jest src/__tests__/integration/agents/agent-mission-panel.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Mounts the AG11 Agent Mission Panel into the four canonical surfaces (Programs, AI Control Tower, Intelligence, Admin Setup) and projects the AG10 deterministic mission queue into each mount. Cap of 3 missions per surface keeps the panel from flooding already-dense surfaces and follows experience-system File 16 calm/data-forward density guidance. Server-component-only; no model calls, no live runtime, no persistence, no auth changes. Lane B follow-up to the AG10 / AG11 parallel build pack."
+    },
+    {
       "id": "PROD2",
       "name": "Production Readiness Tracker Update Rules and Validator",
       "category": "PROD",
