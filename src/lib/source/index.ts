@@ -37,6 +37,8 @@ export * from './commercial-risk-detection';
 export * from './control-tower-signals';
 export * from './intelligence-patterns';
 export * from './commercial-mission-queue';
+export * from './commercial-signal-types';
+export * from './commercial-signals';
 
 export type {
   SourceAgentContextBundle,
