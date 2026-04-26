@@ -6719,6 +6719,17 @@
       "testFiles": [],
       "sliceDoc": "docs/build/slices/ARCH3_ABARVA_ARCHITECTURE_OVERVIEW_PACK.md",
       "createdAt": "2026-04-26"
+    },
+    {
+      "id": "DEMO1",
+      "name": "Boardroom Demo Script / Walkthrough",
+      "category": "demo",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [],
+      "testFiles": [],
+      "sliceDoc": "docs/build/slices/DEMO1_BOARDROOM_DEMO_WALKTHROUGH.md",
+      "createdAt": "2026-04-26"
     }
   ]
 }
