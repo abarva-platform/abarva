@@ -7462,6 +7462,15 @@
       "status": "code_complete",
       "branch": "wave17/demo5-visual-workflow-review-checklist",
       "description": "Founder review checklist for visual + workflow canon across 10 routes (shell, home, admin, architecture, production-readiness, source event, commercial hub, agents, caveat audit, Azure/private data plane). Pass/fail/deferred capture per route."
+    },
+    {
+      "id": "PROG10",
+      "wave": "wave-18",
+      "name": "Program Flagship Page Shell",
+      "type": "program-ui",
+      "status": "code_complete",
+      "branch": "wave18/prog10-program-flagship-shell",
+      "description": "ProgramFlagshipPage shell + view-model with executive brief panel, workflow orientation strip, knows/missing two-column, slot props for PROG11–14. Deterministic seed-backed."
     }
   ]
 }
