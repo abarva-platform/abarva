@@ -7119,6 +7119,19 @@
         "src/__tests__/integration/source/pricing-normalization-model.test.ts"
       ],
       "completedAt": "2026-04-26"
+    },
+    {
+      "id": "SRC11",
+      "wave": "wave-14",
+      "title": "BAFO Negotiation Model",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "Rich BAFO negotiation model with 12 lever types, opportunity/scenario/risk types, and deterministic summary builder.",
+      "files": [
+        "src/lib/source/bafo-negotiation-model.ts",
+        "src/__tests__/integration/source/bafo-negotiation-model.test.ts"
+      ],
+      "completedAt": "2026-04-26"
     }
   ]
 }
