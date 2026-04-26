@@ -2488,6 +2488,52 @@
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
       "notes": "Deterministic, file-pure read model that demonstrates the canonical Evidence Ledger usability lifecycle. Companion to EVID1 contract. No model calls, no migrations, no persistence, no live citation resolution. Lane D output of the parallel build pack."
+    },
+    {
+      "id": "AG10",
+      "name": "Agent Mission Queue Read Model",
+      "category": "AG",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [],
+      "allowedFiles": [
+        "src/lib/agents/agent-mission-queue.ts",
+        "src/__tests__/integration/agents/agent-mission-queue.test.ts",
+        "docs/build/slices/AG10_AGENT_MISSION_QUEUE_READ_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/agents/agent-mission-queue.ts exports the canonical AGENT_MISSION_AGENTS, AGENT_MISSION_TYPES, and AGENT_MISSION_STATES tuples in canonical order, plus public types AgentMissionAgent, AgentMissionType, AgentMissionState, AgentMissionPriority, AgentMissionSource, AgentMissionUiVisibility, AgentMissionWorkObjectKind, AgentMissionSurface, AgentMissionWorkObject, AgentMissionHandoffTrigger, AgentMissionHandoff, AgentMission, and AgentMissionQueueSummary.",
+        "Module exports helpers buildAgentMissionQueue, buildAgentMissionsForSurface, buildAgentMissionsForAgent, summarizeAgentMissionQueue, getTopAgentMissions, and getAgentMissionHandoffs.",
+        "buildAgentMissionQueue() returns at least 12 deterministic seed missions covering all four agents, all five surfaces (programs, tower, intelligence, admin, source), and at least one mission each of low_context_warning, validation_defer, and approval_follow_up types.",
+        "Every seed mission id matches /^mission-seed-[a-z0-9-]+$/, every mission carries createdFrom 'deterministic_seed', and every mission has non-empty rationale, recommendedAction, and stopCondition.",
+        "Atlas executive_brief missions use uiVisibility 'executive_brief'; Sentinel evidence_gap missions hand off to Nexus; every handoff toAgent is a valid AgentMissionAgent and every trigger is one of evidence_weak, gate_blocked, executive_decision_needed, workflow_allowed, follow_up_needed, missing_inputs.",
+        "getTopAgentMissions orders missions by priority (critical > high > medium > low) and breaks ties by ascending mission id, returning byte-equal output for the same input.",
+        "summarizeAgentMissionQueue reconciles totalMissions with byAgent, byState, and bySurface counts, and reports highestPriorityCount and handoffCount accurately.",
+        "Serialized queue contains no https:// or http:// URLs and no production-shaped /E-\\d+/ citation ids.",
+        "Module has no imports from @/lib/source|nexus|sentinel|atlas|auth or supabase, no Date.now / Math.random / new Date( / fetch(, no anthropic / openai, no useState / useEffect, and no Coming soon / TBD / Lorem ipsum placeholder language.",
+        "Test suite at src/__tests__/integration/agents/agent-mission-queue.test.ts is fully green and enforces determinism, agent / type / state / surface coverage, mission shape, handoff validity, ordering, summary reconciliation, serialized hygiene, and module hygiene.",
+        "Production readiness manifest is updated to acknowledge the AG10 deterministic mission queue read model under agent_runtime with a deferred-UI/runtime-trigger next action; component status is preserved exactly."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/agents/agent-mission-queue.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Deterministic, file-pure read model that seeds the agent mission queue across Programs, Tower, Intelligence, Admin, and Source surfaces. Companion to runtime/13_AGENT_MISSION_MODEL.md, runtime/14_AGENT_WORK_QUEUE_AND_TRIGGERS.md, and experience-system/16_AGENT_ACTIVITY_UI_PATTERN.md. No model calls, no migrations, no persistence, no live triggers, no UI mounting. UI mounting (AG11) and runtime trigger wiring deferred. Lane A output of the parallel build pack."
     }
   ]
 }

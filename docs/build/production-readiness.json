@@ -972,10 +972,11 @@
           "unblocks": "production_ready"
         }
       ],
-      "nextAction": "Route any future live agent composition through the Model Gateway contract and audit ledger before production promotion. Wire CTX3 live retrieval integration: replace CTX2 honest-empty evidence, conversation, and datasets sections with live EVID2 ledger ingest, conversation memory, and ADM3 dataset inventory bindings without changing the twelve-section pack shape.",
+      "nextAction": "Route any future live agent composition through the Model Gateway contract and audit ledger before production promotion. Wire CTX3 live retrieval integration: replace CTX2 honest-empty evidence, conversation, and datasets sections with live EVID2 ledger ingest, conversation memory, and ADM3 dataset inventory bindings without changing the twelve-section pack shape. AG10 deterministic mission queue read model is in place; mount the queue into the Agent Activity UI (AG11) and wire deterministic runtime triggers from agent work queue spec before promoting agent_runtime above code_complete.",
       "notes": [
         "PROD1 does not modify Nexus, Sentinel, Atlas, or Agent runtime files.",
-        "CTX2 unified context builder MVP added (src/lib/architecture/unified-context-builder.ts) \u2014 deterministic projection of programs/canonical-view, sentinel-pattern-detections, and solution-archetype-registry into a twelve-section Unified Context Pack; evidence/conversation/datasets sections honestly empty pending live wiring."
+        "CTX2 unified context builder MVP added (src/lib/architecture/unified-context-builder.ts) \u2014 deterministic projection of programs/canonical-view, sentinel-pattern-detections, and solution-archetype-registry into a twelve-section Unified Context Pack; evidence/conversation/datasets sections honestly empty pending live wiring.",
+        "AG10 deterministic agent mission queue read model added (src/lib/agents/agent-mission-queue.ts) \u2014 typed seed queue covering all four agents (Nexus, Sentinel, Atlas, Steward) and all five surfaces (Programs, Tower, Intelligence, Admin, Source) with handoff metadata; UI mounting (AG11) and runtime trigger wiring remain deferred."
       ]
     },
     {
