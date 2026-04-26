@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-04-25",
+  "lastUpdated": "2026-04-26",
   "lifecycle": [
     "ready",
     "in_progress",
@@ -3963,6 +3963,68 @@
         "npm run build"
       ],
       "notes": "Pure deterministic projection of (tenant, program) seed state into a per-program resume-state record. Operationalizes the save / stop / resume lifecycle named in the PF2 Program Phase Workspace contract and the MW1 Maestro Workshop Intelligence contract WITHOUT persistence. No DB writes, no migrations, no model calls, no timestamps. Items the seed cannot derive surface as 'unknown' rather than fabricated progress. Future slice mounts the read model on the canonical Programs detail surface and the Workshop Mode shell; live save / stop / resume persistence lands once auth + audit + persistence slices land."
+    },
+    {
+      "id": "MW6",
+      "name": "SME Recommendation Panel",
+      "category": "MW",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "MW1",
+        "MW2",
+        "PF1",
+        "SOL3"
+      ],
+      "allowedFiles": [
+        "src/lib/programs/sme-recommendations.ts",
+        "src/components/programs/SmeRecommendationPanel.tsx",
+        "src/__tests__/integration/programs/sme-recommendation-panel.test.ts",
+        "docs/build/slices/MW6_SME_RECOMMENDATION_PANEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Module defines SmeRole, SmeParticipationMode, SmeReadiness, SmeRecommendationReason, SmeRecommendation, SmeRecommendationSummary types and the canonical SME_ROLES_IN_ORDER list with twelve roles in canonical order.",
+        "buildSmeRecommendationsForWorkshop(workshop) returns at least three deterministic recommendations per workshop and always names client_maestro and abarva_maestro.",
+        "buildSmeRecommendationsForProgram(tenant, program) returns at least two deterministic recommendations per program and drops workshopId / workshopType to null.",
+        "Workshop-scoped recommendation ids match sme:<tenantKey>:<programSlug>:<workshopType>:<role> and are unique within a workshop set.",
+        "Roles are unique within a single workshop recommendation set; recommendation rosters differ across workshops within a single program (>=2 distinct rosters).",
+        "Every recommendation set carries at least one evidence-anchored reason and at least one failure-mode-anchored reason drawn from the PF1 pattern pack.",
+        "Every recommendation carries createdFrom: 'deterministic_sme_recommendation_seed' and a non-empty whyNeeded, phaseRationale, and suggestedFocus list.",
+        "summarizeSmeRecommendations reconciles byRole, byParticipationMode, and byReadiness counts to totalCount; empty input returns a zeroed summary.",
+        "No string field invents a real person-name token; only role labels, agent names, and AbarVa-prefixed proper nouns are allowed.",
+        "No string field invents a dollar amount or claims a real E-### evidence citation.",
+        "src/components/programs/SmeRecommendationPanel.tsx is a Server Component (no 'use client', no useState / useEffect / useMemo / useReducer / useCallback) and renders recommended SMEs, why needed, participation mode, workshop linkage, evidence/value/governance reason, and a deterministic-source caption.",
+        "Module + component import nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch; no anthropic / openai / pinecone references."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/sme-recommendation-panel.test.ts",
+        "npx jest src/__tests__/integration/programs/workshop-readiness.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic SME recommendation projection that consumes MW2 workshop readiness, PF1 failure modes, and the SOL3 archetype hint to compose a role-anchored shortlist for the next workshop. Server Component panel renders the recommendations with the calm AbarVa visual canon. No live SME directory, no calendar/booking, no real person names, no model calls. Future MW7 deliverable refinement loop wires this surface into the workshop-mode workflow; live SME directory and per-tenant SME library remain deferred."
     }
   ]
 }
