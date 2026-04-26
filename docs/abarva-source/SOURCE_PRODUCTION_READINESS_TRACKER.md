@@ -12,7 +12,7 @@ The foundation and agent-context architecture are strong. The Source Build Pack,
 
 The current work is still in the foundation and validation phase. Source now has deterministic guardrails for agent context grounding, workflow integrity, Source Nexus API stubbing, mission reporting, API/mission consistency, dashboard mission preview, dashboard route/component smoke, a bounded event canvas shell, a read-only data readiness panel, event canvas shell smoke coverage, data readiness panel smoke coverage, and a deterministic Admin/Setup-to-Source readiness contract. The event canvas now shows progress against 100% for the seeded Data & AI Modernization event: 34% event data readiness, 13% usable evidence coverage, and 3 of 5 required categories present. It also has designed/spec-only standards for pricing/negotiation intelligence and the next Data Platform Managed Services pattern. It does not yet have production UI completeness, persistence, upload/evidence processing, model-assisted responses, workflow engine enforcement, pricing engine implementation, approval engine behavior, artifact versioning, or document export/import.
 
-The next major product milestone is unblocking authenticated dashboard and event canvas screenshot/manual review with the contract-backed data readiness progress visible. The latest local review attempt was blocked because demo-code sign-in returned 500 and did not complete. The workflow validation foundation remains a guardrail: Source should not permit unsafe sourcing workflow moves once workflow behavior is implemented.
+The next major product milestone is deepening the Scope stage workspace while preserving the reviewed dashboard/event canvas baseline. Local authenticated dashboard and event canvas review now succeeds with the contract-backed data readiness progress visible; production-domain authenticated visual QA and persisted screenshots remain incomplete. The workflow validation foundation remains a guardrail: Source should not permit unsafe sourcing workflow moves once workflow behavior is implemented.
 
 ## 2. Current Milestone Status
 
@@ -22,7 +22,7 @@ The next major product milestone is unblocking authenticated dashboard and event
 | Multi-file Build Pack | Merged | PR #188, PR #201, `docs/abarva-source/build-pack/**` | Inventory is reconciled with the anchor. | Keep updated as implementation decisions harden. |
 | Source route family | Built | `src/app/(maestro)/source/**` | Route family exists, but production behavior is incomplete. | Continue visual and workflow review before expansion. |
 | Source top-nav placement | Built | `src/components/AbarvaNav.tsx`, `src/components/chrome/PrimaryNav.tsx` | Source is first-class operator nav. | Preserve unless product review changes nav model. |
-| Source dashboard prototype | Built / Tested Deterministically | PR #212, PR #259, PR #262, PR #264, `src/components/source/AbarVaSourceDashboard.tsx` | Dashboard exists, includes a tiny deterministic top-mission preview, is approved as current baseline, and has deterministic route/component smoke coverage. Authenticated screenshot remains unavailable in Codex. | Capture authenticated screenshot when a signed-in session is available. |
+| Source dashboard prototype | Built / Tested Deterministically / Locally Auth Reviewed | PR #212, PR #259, PR #262, PR #264, PR #296, PR #298, `src/components/source/AbarVaSourceDashboard.tsx` | Dashboard exists, includes a tiny deterministic top-mission preview, has deterministic route/component smoke coverage, completed local authenticated review, and received narrow visual polish. Production-domain screenshot QA remains incomplete. | Capture production-domain authenticated screenshot after the next deployed Source slice. |
 | Dashboard component refactor | Reviewed | `docs/abarva-source/build-pack/implementation-reviews/01_DASHBOARD_REFACTOR_REVIEW.md` | Component boundaries documented. | Apply visual review findings only after approval. |
 | Agent context-awareness docs | Merged | PR #188, `22_AGENT_CONTEXT_AWARENESS.md` | Establishes context-first, not prompt-first, agent behavior. | Keep as binding agent design rule. |
 | Agent type contracts | Merged | PR #188, `src/lib/source/agent-context.ts`, `chat-types.ts`, `attachments.ts`, `agent-validation.ts` | SourceAgentContextBundle and response contracts exist. | Refine only when implementation proves naming gaps. |
@@ -38,17 +38,17 @@ The next major product milestone is unblocking authenticated dashboard and event
 | Workflow validation report formatter | Merged / Complete | PR #210, `src/lib/source/workflow-validation-report.ts` | Current outcome: 12 total, 11 BLOCK, 1 DEFER, 0 mismatches; suite verdict: defer. | Preserve remaining intentional defer until upload parsing/evidence exists. |
 | Workflow validation foundation | Complete | PR #204, PR #207, PR #210 | Deterministic fixtures, runner, and readable report exist. | Do not build workflow engine until these semantics are reviewed. |
 | Remaining workflow defer | Intentional | `source-workflow-uploaded-document-parse-before-citation` | Uploaded documents cannot be cited before parsing/validation. | Build upload/evidence pipeline later, not in current slice. |
-| Source/Admin data readiness integration | Deterministic Contract Projection | `docs/abarva-source/build-pack/32_SOURCE_DATA_READINESS_AND_ADMIN_SETUP_INTEGRATION.md`, `docs/abarva-source/NEXT_SLICE_PLAN_SOURCE_DATA_READINESS_PANEL.md`, PR #266, PR #274, PR #277, PR #278, PR #285, PR #287, PR #288, PR #289, `src/lib/source/admin-setup-readiness-contract.ts`, `src/components/source/SourceDataReadinessPanel.tsx` | Clarifies Admin/Setup owns setup, data onboarding, connector setup, dataset readiness, permissions, parsing status, and evidence usability; Source now consumes a deterministic contract projection in the event canvas and displays progress against 100% without upload/parsing/Admin runtime behavior. Seeded Data & AI event: 34% event data readiness, 13% usable evidence coverage, 3 of 5 required categories present. | Plan live Admin/Setup readiness backing after authenticated review is unblocked; upload/parsing and evidence ledger implementation are not started. |
+| Source/Admin data readiness integration | Deterministic Contract Projection / Locally Auth Reviewed | `docs/abarva-source/build-pack/32_SOURCE_DATA_READINESS_AND_ADMIN_SETUP_INTEGRATION.md`, `docs/abarva-source/NEXT_SLICE_PLAN_SOURCE_DATA_READINESS_PANEL.md`, PR #266, PR #274, PR #277, PR #278, PR #285, PR #287, PR #288, PR #289, PR #296, `src/lib/source/admin-setup-readiness-contract.ts`, `src/components/source/SourceDataReadinessPanel.tsx` | Clarifies Admin/Setup owns setup, data onboarding, connector setup, dataset readiness, permissions, parsing status, and evidence usability; Source consumes a deterministic contract projection in the event canvas and displays progress against 100% without upload/parsing/Admin runtime behavior. Seeded Data & AI event: 34% event data readiness, 13% usable evidence coverage, 3 of 5 required categories present. Local authenticated review confirmed the panel is visible. | Plan live Admin/Setup readiness backing after Scope stage workspace deepening; upload/parsing and evidence ledger implementation are not started. |
 | Pricing and Negotiation Intelligence | Designed / Spec Only | `docs/abarva-source/build-pack/33_PRICING_AND_NEGOTIATION_INTELLIGENCE_STANDARD.md`, `docs/abarva-source/pattern-packs/AMS_MANAGED_SERVICES_SOURCING_PATTERN.md` | Defines how Source can normalize vendor pricing, identify commercial traps, recommend negotiation levers, prepare BAFO packs, connect scorecards, and update value confidence without requiring paid third-party benchmarks for MVP. | Runtime pricing engine, pricing database, benchmark database, UI, model-assisted analysis, and RFP generation implementation are not started. |
 | Data Platform Managed Services Pattern | Planned / Docs Only | PR #282, `docs/abarva-source/NEXT_SLICE_PLAN_DATA_PLATFORM_MANAGED_SERVICES_PATTERN.md` | Plans the next authored Source pattern pack across scope, data baseline, RFP sections, artifacts, scorecards, pricing, traps, negotiation, transition, value, failure modes, validation, and agent guidance. | Author the full pattern pack in markdown before any runtime manifest, generated JSON, ingestion, or retrieval work. |
 | Agent mission model | Designed / Deterministic Foundation | PR #248, PR #254, PR #255, PR #259, `docs/platform-architecture/runtime/13_AGENT_MISSION_MODEL.md`, `src/lib/source/agent-missions.ts`, `src/lib/source/agent-mission-report.ts` | Defines how Nexus, Sentinel, Atlas, and Steward own missions, triggers, handoffs, queue states, priority, and calm activity UI; Source now has a deterministic read model, report formatter, and tiny dashboard preview. | Runtime mission queue, schedulers, background jobs, persistence, model calls, and proactive mission UI are not implemented. |
-| Nexus Engagement Canvas | Built / Tested Deterministically | PR #265, PR #269, PR #270, PR #273, PR #277, PR #278, PR #288, PR #289, PR #290, `docs/abarva-source/NEXT_SLICE_PLAN_SOURCE_EVENT_CANVAS_SHELL.md`, `/source/events/[eventId]`, `NexusEngagementCanvas` | The existing event canvas boundary is now a shell with current stage, journey map, Nexus guidance, mission preview, contract-backed read-only data readiness panel, visible readiness progress, and artifact/review/approval placeholders. Smoke coverage is deterministic seeded-data only. Authenticated local visual review was attempted but blocked by demo-code sign-in 500. | Repair authenticated review path and recapture event canvas screenshot/manual review before visual polish or broader event workflow expansion. |
+| Nexus Engagement Canvas | Built / Tested Deterministically / Locally Auth Reviewed | PR #265, PR #269, PR #270, PR #273, PR #277, PR #278, PR #288, PR #289, PR #290, PR #296, PR #298, `docs/abarva-source/NEXT_SLICE_PLAN_SOURCE_EVENT_CANVAS_SHELL.md`, `/source/events/[eventId]`, `NexusEngagementCanvas` | The event canvas shell has current stage, journey map, Nexus guidance, mission preview, contract-backed read-only data readiness panel, visible readiness progress, and artifact/review/approval placeholders. Smoke coverage is deterministic seeded-data only. Local authenticated review approved it as baseline; production-domain screenshot QA remains incomplete. | Implement the bounded Scope stage workspace next; defer broader workflow expansion. |
 | Source Journey Tracker final behavior | Partial | `src/components/source/SourceJourneyTracker.tsx`, Build Pack docs | Component exists, final behavior not production validated. | Review lifecycle/state expectations. |
 | Persistent Nexus Panel | Designed | Build Pack docs, context-awareness docs | Chat/panel behavior is specified, not implemented. | Wait for SourceAgentContextBundle enforcement. |
 | Chat input model | Designed | `23_CHAT_EXPERIENCE_AND_INPUT_MODEL.md` | 3 choices plus custom model is specified. | Do not build until context validation is used by runtime. |
 | File attachment model | Designed | `src/lib/source/attachments.ts`, `23_CHAT_EXPERIENCE_AND_INPUT_MODEL.md` | Type contracts exist; upload/parsing does not. | Review attachment pipeline before implementation. |
 | Upload/evidence pipeline | Not Started | Attachment/context docs only | No upload, parsing, citation extraction, evidence registry, or client evidence usability exists. | Design implementation after attachment model review. |
-| Source-specific Nexus API route | Built / Tested Deterministically | PR #230, PR #245, PR #283, `src/app/api/v1/source/[eventId]/nexus/ask/route.ts`, `src/lib/source/nexus-api.ts` | Deterministic no-model route stub exists, contract tests are merged, and Source API/mission consistency coverage verifies alignment with the mission report. This is not model readiness, production runtime readiness, tenant readiness, or live workflow readiness. | Keep deterministic; add authenticated route smoke and tenant/auth review before any runtime promotion. |
+| Source-specific Nexus API route | Built / Tested Deterministically | PR #230, PR #245, PR #283, PR #297, `src/app/api/v1/source/[eventId]/nexus/ask/route.ts`, `src/lib/source/nexus-api.ts` | Deterministic no-model route stub exists, contract tests are merged, Source API/mission consistency coverage verifies alignment with the mission report, and authenticated route smoke now covers the protected Source matcher plus deterministic route render paths. This is not model readiness, production runtime readiness, tenant readiness, or live workflow readiness. | Keep deterministic; defer model calls until Source context, tenant, audit, and evidence gates are ready. |
 | Model-assisted Nexus response | Not Started | `16_AGENT_PER_TURN_CONTRACT.md`, `22_AGENT_CONTEXT_AWARENESS.md` | Model behavior is designed, not wired. | Do not start until context bundle enforcement is present. |
 | Scorecard governance UI | Not Started / Deferred | Build Pack scorecard docs | Scorecard governance is specified, UI not expanded. | Keep blocked until governance model is reviewed. |
 | Artifact drawer | Not Started / Deferred | Build Pack artifact docs | Artifact structure exists in plan, not production-ready. | Stabilize artifact model before generation. |
@@ -65,7 +65,7 @@ The next major product milestone is unblocking authenticated dashboard and event
 | Data persistence | Not Production-Ready | Seed data and docs only | No production Source data model, storage, migrations, or evidence persistence exists. | Plan persistence separately. |
 | Auth/permissions/tenant safety | Not Started for Source-specific depth | Existing app auth exists; Source-specific tenant rules not production validated. | Define Source auth and role matrix. |
 | Persona crawler validation | Designed | `17_CRAWLER_PERSONA_VERIFICATION.md`, `24_CONTEXT_VALIDATION_HARNESS.md` | Persona crawler model exists; executable crawler not built. | Build after deterministic validation stabilizes. |
-| UI completion | Early / Not Production-Ready | PR #262, PR #264, PR #265, PR #266, PR #269, PR #270, PR #273, PR #277, PR #278, PR #288, PR #289, PR #290 | Dashboard baseline review, deterministic route/component smoke, event canvas shell plan, event canvas shell, event canvas shell smoke, contract-backed data readiness panel, and data readiness panel smoke exist; full event workflow, live data readiness integration, scorecard/artifact/value surfaces remain incomplete. Authenticated review is blocked by demo-code sign-in failure. | Repair authenticated review path; defer broader UI systems. |
+| UI completion | Early / Not Production-Ready | PR #262, PR #264, PR #265, PR #266, PR #269, PR #270, PR #273, PR #277, PR #278, PR #288, PR #289, PR #290, PR #296, PR #297, PR #298 | Dashboard baseline review, local authenticated visual review, deterministic route/component smoke, authenticated route smoke, event canvas shell, contract-backed data readiness panel, and tiny polish exist; full event workflow, live data readiness integration, scorecard/artifact/value surfaces remain incomplete. | Implement bounded Scope stage workspace; defer broader UI systems. |
 | Agent/model integration | Deterministic Only | PR #227, PR #230, PR #245, PR #254, PR #255, PR #283 | Source has deterministic context, validation, multi-agent briefing, mission read model, mission report, no-model route foundations, and API/mission consistency coverage. No model-assisted Source behavior exists. | Do not add model calls until Source context preflight, Model Gateway, audit, tenant, and evidence gates are ready. |
 | Production deployment readiness | Not Started | No production readiness checklist passed for Source | Source is not production-ready. | Start only after UX, agent, data, and enterprise gates pass. |
 
@@ -94,7 +94,7 @@ Required:
 - Build Pack exists.
 - Source domain types exist.
 
-Current assessment: mostly satisfied. The foundation exists, but production readiness still depends on visual approval, persistence, enterprise controls, and runtime integration.
+Current assessment: mostly satisfied. The foundation exists, and local authenticated Source review now passes, but production readiness still depends on production-domain visual approval, persistence, enterprise controls, and runtime integration.
 
 ### Gate 2: Context Ready
 
@@ -140,7 +140,7 @@ Required:
 - Responses pass validation harness.
 - No vanilla GPT responses.
 
-Current assessment: partially satisfied for deterministic foundation, not satisfied for production. Source has a deterministic no-model API stub, multi-agent briefing, mission read model, mission report, and tiny dashboard preview. Model-assisted response runtime, authenticated tenant route smoke, audit, persistence, and live workflow behavior do not exist yet.
+Current assessment: partially satisfied for deterministic foundation, not satisfied for production. Source has a deterministic no-model API stub, multi-agent briefing, mission read model, mission report, tiny dashboard preview, and authenticated route smoke. Model-assisted response runtime, production tenant route smoke, audit, persistence, and live workflow behavior do not exist yet.
 
 ### Gate 6: Data Ready
 
@@ -194,7 +194,7 @@ Current assessment: not started for Source.
 - Agent architecture: strong and improving. Context-first design is documented, typed, and backed by deterministic context validation.
 - Context validation foundation: complete. Fixtures, runner, and readable report formatter are merged.
 - Workflow validation foundation: complete. Fixtures, runner, and readable report formatter are merged.
-- UI completeness: early / not production-ready. Dashboard exists, is approved as baseline, has deterministic route/component smoke, and the event canvas shell plus contract-backed data readiness panel have deterministic smoke; broader Source UX is incomplete. Authenticated review remains blocked by demo-code sign-in failure.
+- UI completeness: early / not production-ready. Dashboard exists, local authenticated review completed, deterministic route/component and authenticated route smoke exist, and the event canvas shell plus contract-backed data readiness panel have deterministic smoke. Broader Source UX is incomplete and production-domain review remains required.
 - Data persistence: not production-ready. Current behavior is seeded and deterministic.
 - Upload/evidence pipeline: not started. The remaining workflow defer correctly blocks uploaded document citation before parsing/validation.
 - Source/Admin data readiness integration: deterministic contract foundation exists with a read-only Source panel now in the event canvas. Source should consume Admin/Setup readiness and must not duplicate connector setup, dataset inventory, parsing, file management, access control, or evidence storage.
@@ -205,11 +205,11 @@ Current assessment: not started for Source.
 
 ## 6. Near-Term Roadmap
 
-1. Repair or bypass the local demo-code sign-in blocker and rerun authenticated dashboard/event canvas visual review.
+1. Implement the bounded Scope stage workspace using the reviewed dashboard/event canvas baseline.
 2. Plan live Admin/Setup readiness backing for the deterministic contract before replacing seeded projections.
 3. If continuing validation depth, plan upload/evidence pipeline contracts before implementing upload/parsing.
 4. Author the Data Platform Managed Services pattern pack in markdown, then plan pattern manifest or section-to-context integration without generated JSON/runtime ingestion yet.
-5. Plan the next bounded Source workflow surface only after authenticated review findings are concrete.
+5. Run production-domain authenticated visual review and screenshot capture after the next deployed Source slice.
 
 ## 7. Explicit Do-Not-Build List
 
@@ -280,7 +280,7 @@ Keep active:
 - PR #287: deterministic Admin/Setup-to-Source readiness contract model.
 - PR #288: Source data readiness panel contract projection.
 - PR #289: Source data readiness contract smoke coverage.
-- PR #290: authenticated Source readiness visual review packet, blocked by local demo-code sign-in 500.
+- PR #290: authenticated Source readiness visual review packet, blocked by local demo-code sign-in 500. PR #295 isolated the blocker, PR #296 completed local authenticated review, PR #297 added authenticated route smoke, and PR #298 applied tiny visual polish.
 
 Post-merge planning notes:
 
@@ -302,8 +302,8 @@ Post-merge planning notes:
 - File upload/evidence pipeline is not built.
 - Uploaded document citation remains intentionally deferred until parsing/validation exists.
 - Source-specific Nexus API route exists as a deterministic no-model stub with contract and mission-consistency tests, but production runtime, tenant checks, and model-assisted behavior are not ready.
-- Dashboard route/component smoke exists, but authenticated live route smoke and screenshot review remain incomplete.
-- Latest authenticated Source review attempt is documented, but blocked by local demo-code sign-in returning 500.
+- Dashboard route/component smoke and authenticated route smoke exist, but production-domain authenticated browser smoke and screenshot review remain incomplete.
+- Latest authenticated Source review is documented and completed locally; production-domain review and screenshot artifacts remain incomplete.
 - No model validation exists yet.
 - Workflow validation foundation exists, but no runtime workflow engine enforcement exists.
 - Artifact versioning, export/re-upload, review comments, approvals, and waivers are not implemented.
