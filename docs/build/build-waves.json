@@ -775,36 +775,26 @@
     {
       "waveId": "wave-18",
       "name": "Program Flagship Experience",
-      "goal": "Land the Program Flagship surface: a workshop-led, deterministic Nexus center canvas plus supporting program-flagship slices that frame the next workshop, agenda, attendees, decisions, evidence to capture, and expected outputs without live notes ingestion.",
-      "status": "in_progress",
-      "percentComplete": 200,
-      "plannedSlices": [
-        "PROG12"
-      ],
-      "completedSlices": [
-        "PROG12",
-        "DEMO6"
-      ],
-      "skippedSlices": [],
-      "blockedSlices": [],
-      "mergedPrs": [],
-      "validationStatus": "not_run",
-      "productionReadinessUpdated": true,
-      "currentBlockers": [],
-      "nextAction": "PROG12 NexusWorkshopCanvas landed. Wire the canvas onto the canonical Programs detail surface and stage downstream Program Flagship slices. DEMO6 docs-only lane code_complete. PROG10-PROG14 component lanes pending.",
-      "lastUpdated": "2026-04-26"
-    },
-    {
-      "waveId": "wave-18",
-      "name": "Program Flagship Experience",
-      "goal": "Deliver the program flagship experience: deterministic phase-journey + approval gate canvas, plus follow-on program flagship surfaces. Read-only, deterministic, no transitions or persistence.",
+      "goal": "Make the Program detail page the flagship AbarVa experience: phase journey, workflow, approval gates, deliverables, evidence, actions, agent-driven.",
       "status": "in_progress",
       "percentComplete": 100,
       "plannedSlices": [
-        "PROG11"
+        "PROG10",
+        "PROG11",
+        "PROG12",
+        "PROG13",
+        "PROG14",
+        "QA25",
+        "DEMO6"
       ],
       "completedSlices": [
-        "PROG11"
+        "PROG10",
+        "PROG11",
+        "PROG12",
+        "PROG13",
+        "PROG14",
+        "QA25",
+        "DEMO6"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
@@ -813,27 +803,6 @@
       "productionReadinessUpdated": false,
       "currentBlockers": [],
       "nextAction": "Watch CI and merge when green.",
-      "lastUpdated": "2026-04-26"
-    },
-    {
-      "waveId": "wave-18",
-      "name": "Program Flagship Experience",
-      "goal": "Land the Program Flagship surface: a workshop-led, deterministic Nexus center canvas plus supporting program-flagship slices that frame the next workshop, agenda, attendees, decisions, evidence to capture, and expected outputs without live notes ingestion.",
-      "status": "in_progress",
-      "percentComplete": 0,
-      "plannedSlices": [
-        "PROG12"
-      ],
-      "completedSlices": [
-        "PROG12"
-      ],
-      "skippedSlices": [],
-      "blockedSlices": [],
-      "mergedPrs": [],
-      "validationStatus": "tests_green",
-      "productionReadinessUpdated": true,
-      "currentBlockers": [],
-      "nextAction": "PROG12 NexusWorkshopCanvas landed. Wire the canvas onto the canonical Programs detail surface and stage downstream Program Flagship slices.",
       "lastUpdated": "2026-04-26"
     }
   ]
