@@ -73,6 +73,8 @@ describe('Source event canvas shell', () => {
     expect(html).toContain('Journey map');
     expect(html).toContain('Stage gate readiness');
     expect(html).toContain('Current gate signal');
+    expect(html).toContain('Artifacts and deliverables');
+    expect(html).toContain('Deterministic artifact status strip');
     expect(html).toContain('Scope stage workspace');
     expect(html).toContain('Data readiness');
     expect(html).toContain('Evidence posture for this stage');

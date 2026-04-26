@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react';
 import { EXPERIENCE_COLORS, FONTS, TEXT } from '@/lib/design-system';
 import {
   buildSourceStageGateReadiness,
+  getSourceArtifactStatusStripSeed,
   buildSourceAgentContextBundle,
   buildSourceMultiAgentBriefing,
   createSourceAgentMissionReport,
@@ -18,6 +19,7 @@ import { SourceJourneyTracker } from './SourceJourneyTracker';
 import { SourceStagePanel } from './SourceStagePanel';
 import { PersistentNexusPanel } from './PersistentNexusPanel';
 import { SourceStageGatePanel } from './SourceStageGatePanel';
+import { SourceArtifactStatusStrip } from './SourceArtifactStatusStrip';
 
 const EVENT_CANVAS_MISSION_GENERATED_AT = '2026-04-26T00:00:00.000Z';
 
@@ -58,6 +60,7 @@ export function NexusEngagementCanvas({ event }: { event: SourcingEventDetail })
   const missionReport = buildEventCanvasMissionReport(event);
   const missionPreviewMissions = getEventCanvasMissionPreviewMissions(missionReport);
   const stageGateReadiness = buildSourceStageGateReadiness({ event });
+  const artifactStatusStrip = getSourceArtifactStatusStripSeed(event.id);
 
   return (
     <section style={CANVAS}>
@@ -66,6 +69,7 @@ export function NexusEngagementCanvas({ event }: { event: SourcingEventDetail })
         <div style={{ display: 'grid', gap: 16, minWidth: 0 }}>
           <SourceJourneyTracker stages={event.stages} />
           <SourceStageGatePanel readiness={stageGateReadiness} />
+          <SourceArtifactStatusStrip artifacts={artifactStatusStrip.artifacts} />
           <SourceActiveStageWorkspace
             event={event}
             missionReport={missionReport}
