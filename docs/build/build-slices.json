@@ -3750,7 +3750,7 @@
     },
     {
       "id": "I7",
-      "name": "Intelligence · Internal / External Source Basis",
+      "name": "Intelligence \u00b7 Internal / External Source Basis",
       "category": "I",
       "status": "code_complete",
       "risk": "low",
@@ -6579,6 +6579,29 @@
       ],
       "notes": [
         "Deterministic AI tool waste/license utilization signals."
+      ]
+    },
+    {
+      "id": "I8",
+      "name": "Sentinel Interaction Rail",
+      "status": "code_complete",
+      "risk": "low",
+      "lastUpdated": "2026-04-26",
+      "ownerAgent": "Wave4 Lane H",
+      "dependsOn": [
+        "I3",
+        "I7"
+      ],
+      "allowedFiles": [
+        "src/lib/intelligence/sentinel-interaction-rail-view.ts",
+        "src/components/intelligence/SentinelInteractionRail.tsx",
+        "src/__tests__/integration/intelligence/sentinel-interaction-rail.test.ts",
+        "docs/build/slices/I8_SENTINEL_INTERACTION_RAIL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "notes": [
+        "Sentinel interaction rail server component (canon-compliant)."
       ]
     }
   ]
