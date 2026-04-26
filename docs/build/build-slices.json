@@ -7263,6 +7263,20 @@
         "src/__tests__/integration/source/source-pricing-comparison-panel.test.ts"
       ],
       "completedAt": "2026-04-26"
+    },
+    {
+      "id": "SRC21",
+      "wave": "wave-15",
+      "title": "BAFO Negotiation Panel",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "BAFO negotiation model panel with lever/opportunity/ask/recommendation tabs. Uses Wave-14 bafo-negotiation-model.ts. Named SourceBafoNegotiationModelPanel to avoid collision with existing SourceBafoNegotiationPanel.",
+      "files": [
+        "src/lib/source/source-bafo-negotiation-view.ts",
+        "src/components/source/SourceBafoNegotiationModelPanel.tsx",
+        "src/__tests__/integration/source/source-bafo-negotiation-model-panel.test.ts"
+      ],
+      "completedAt": "2026-04-26"
     }
   ]
 }
