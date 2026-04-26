@@ -7552,6 +7552,15 @@
       "status": "code_complete",
       "branch": "wave17a/desroute3-admin-shell-enforcement",
       "description": "Enforce canonical Admin route shell/chrome for active admin routes while preserving auth guards and existing route content."
+    },
+    {
+      "id": "DESROUTE4",
+      "wave": "wave-17a",
+      "name": "Source Shell Enforcement",
+      "type": "source-ui",
+      "status": "code_complete",
+      "branch": "wave17a/desroute4-source-shell-enforcement",
+      "description": "Enforce canonical Source route shell ownership and expose deterministic commercial workflow stages on active Source routes."
     }
   ]
 }

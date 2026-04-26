@@ -286,7 +286,8 @@
       "Security/governance review is partial and must be completed before pilot or production readiness.",
       "Legacy route shell/nav bindings remain active on key operator surfaces and must be canon-enforced.",
       "Active route ownership and shell enforcement for admin/source/program routes is not fully canonical yet.",
-      "Active route shell enforcement remains incomplete across Source and Program surfaces."
+      "Active route shell enforcement remains incomplete across Source and Program surfaces.",
+      "Program route shell enforcement and final route-to-shell verification remain open."
     ]
   },
   "components": [

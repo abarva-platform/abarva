@@ -888,6 +888,34 @@
       ],
       "nextAction": "Apply canonical route shell enforcement to Source and Program target routes, then run QA26 verification.",
       "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-17a",
+      "name": "Route Ownership + Legacy Shell/Nav Enforcement",
+      "goal": "Identify active route ownership and enforce approved AbarVa route shell/navigation canon across admin, source, and program surfaces.",
+      "status": "in_progress",
+      "percentComplete": 50,
+      "plannedSlices": [
+        "DESROUTE1",
+        "DESROUTE2",
+        "DESROUTE3",
+        "DESROUTE4",
+        "DESROUTE5",
+        "QA26"
+      ],
+      "completedSlices": [
+        "DESROUTE4"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "pending",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [
+        "Program shell enforcement and route-wide verification are still pending."
+      ],
+      "nextAction": "Apply program route shell enforcement and finalize QA26 route-to-shell verification.",
+      "lastUpdated": "2026-04-26"
     }
   ]
 }
