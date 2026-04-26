@@ -625,7 +625,8 @@
         "AG12 mounts the AG11 Agent Mission Panel on ProgramPressureCards with variant 'executive_brief' and the {atlas, steward} surface filter, capped at 3 deterministic missions; no live Atlas runtime, no model call, no persistence.",
         "ACT2 AI portfolio inventory dimension added as a deterministic seed-only read model (src/lib/tower/ai-portfolio-inventory.ts); no live integrations and no per-tenant binding yet.",
         "ACT3 AI adoption and usage dimension added as a deterministic seed-only read model (src/lib/tower/ai-adoption-usage.ts) covering 10 canonical tool keys and 6 adoption health states with derived adoption rates; no live integrations and no per-tenant adoption telemetry binding yet.",
-        "ACT4 AI value / outcome ledger read model added as a deterministic seed-only read model (src/lib/tower/ai-value-outcome-ledger.ts); attaches value claims (projected, baseline, realized, counterfactual) to ACT2 AI use cases by aiUseCaseKey and to canonical programs by programKey; every entry carries seed_value: true and dollar-denominated entries use the usd_seed measurement unit. No live integrations and no per-tenant binding yet."
+        "ACT4 AI value / outcome ledger read model added as a deterministic seed-only read model (src/lib/tower/ai-value-outcome-ledger.ts); attaches value claims (projected, baseline, realized, counterfactual) to ACT2 AI use cases by aiUseCaseKey and to canonical programs by programKey; every entry carries seed_value: true and dollar-denominated entries use the usd_seed measurement unit. No live integrations and no per-tenant binding yet.",
+        "ACT5 AI risk & governance dimension added as a deterministic seed-only read model (src/lib/tower/ai-risk-governance.ts) covering all ten canonical governance review surfaces; no live integrations, no per-tenant register binding, and no Atlas brief composition yet."
       ]
     },
     {

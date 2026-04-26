@@ -3313,6 +3313,57 @@
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
       "notes": "Operationalizes the value-and-outcome dimension of the ACT1 AI Control Tower contract. Deterministic seed-only read model that builds on the ACT2 AI portfolio inventory by attaching value claims keyed by programKey and aiUseCaseKey. No live integrations, no per-tenant ledger binding, no Atlas brief composition, no Tower UI \u2014 those land in ACT4.x, ACT9, and ACT10. Conservative manifest update: ai_control_tower and audit_governance components are not promoted."
+    },
+    {
+      "id": "ACT5",
+      "name": "AI Risk & Governance Read Model",
+      "category": "ACT",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "ACT2"
+      ],
+      "allowedFiles": [
+        "src/lib/tower/ai-risk-governance.ts",
+        "src/__tests__/integration/tower/ai-risk-governance.test.ts",
+        "docs/build/slices/ACT5_AI_RISK_GOVERNANCE_READ_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**",
+        "src/app/demo/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Module src/lib/tower/ai-risk-governance.ts exports the canonical AI_RISK_GOVERNANCE_DIMENSIONS tuple ('responsible_ai_review', 'privacy_data_protection', 'security_red_team', 'legal_contractual', 'model_risk_management', 'human_in_the_loop', 'auditability_and_traceability', 'regulatory_compliance', 'third_party_vendor_risk', 'change_management_risk') plus the AiRiskGovernanceDimension / AiRiskSeverity / AiRiskStatus / GovernanceGateOutcome enum types, AiRiskGovernanceFinding, AiRiskGovernanceSummary, and the helpers buildAiRiskGovernanceFindings, summarizeAiRiskGovernance, getCriticalRiskFindings, getUnaddressedFindings, getHitlRequiredFindings.",
+        "buildAiRiskGovernanceFindings returns at least 20 deterministic seed findings, with every canonical dimension represented at least once, every canonical status represented at least once, every canonical severity represented at least once, at least 3 critical findings, at least 5 findings that require human-in-the-loop, and at least 4 findings with governanceGate 'fail'.",
+        "Every finding carries at least 1 mitigation entry; every finding id matches the canonical 'risk-seed-{n}' shape and ids are unique; every finding carries createdFrom 'deterministic_ai_risk_governance_seed'; auditableEvidenceIds entries match the canonical 'evidence-seed-{n}' shape; aiUseCaseKey entries (when present) match 'ai-use-case-seed-{n}'; at least 2 findings link to a programKey and at least 2 link to an aiUseCaseKey.",
+        "summarizeAiRiskGovernance reconciles totals (byDimension, bySeverity, and byStatus all sum to totalFindings), exposes every canonical dimension / severity / status key (zero allowed), reports unaddressedCount equal to byStatus.unaddressed, criticalCount equal to bySeverity.critical, hitlRequiredCount equal to the count of hitlRequired === true findings, and a governanceGatePassRate that equals (passing findings) / totalFindings, returns 0 for an empty input list, and is confined to [0, 1].",
+        "getCriticalRiskFindings returns only severity === 'critical' findings; getUnaddressedFindings returns only status === 'unaddressed' findings; getHitlRequiredFindings returns only hitlRequired === true findings; helper defaults match the canonical seed when called with no arguments.",
+        "Seed contains no invented dollar amounts (regex \\$\\s*\\d on JSON.stringify), no branded vendor endorsements (deny-list OpenAI / Anthropic / Cohere / Mistral / Databricks / Snowflake / Microsoft Copilot / GitHub Copilot), and no banned placeholder language (Coming soon / TBD / Lorem ipsum); module source has no imports from src/lib/source / sentinel / atlas / nexus / agent / auth or supabase, and no Date.now / Math.random / new Date( / fetch( / anthropic / openai / useState / useEffect.",
+        "Test suite at src/__tests__/integration/tower/ai-risk-governance.test.ts is green and enforces shape, determinism, dimension / status / severity coverage, per-row invariants, distribution constraints, summary reconciliation, governanceGatePassRate math, helper behaviors, no-fabrication invariants, and module hygiene.",
+        "Production readiness manifest is updated with notes on ai_control_tower and audit_governance acknowledging the ACT5 risk governance dimension; statuses are preserved (no promotion); manifest top-level lastUpdated reflects this change."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/tower/ai-risk-governance.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Operationalizes the AI Risk & Governance dimension of the ACT1 AI Control Tower contract. Deterministic seed-only read model. No live integrations, no per-tenant risk register binding, no Atlas brief composition, no Tower UI \u2014 those land in ACT5.x, ACT9, and ACT10. Conservative manifest update: ai_control_tower and audit_governance components are not promoted."
     }
   ]
 }
