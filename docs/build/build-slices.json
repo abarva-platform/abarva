@@ -7309,6 +7309,15 @@
       "status": "complete",
       "branch": "wave15/src24-commercial-missions-panel",
       "description": "Mission queue panel showing up to 5 commercial intelligence missions grouped by agent owner. Show-more toggle. AbarVa design."
+    },
+    {
+      "id": "SRC25",
+      "wave": "wave-15",
+      "name": "Source Commercial Signals Preview",
+      "type": "source-ui",
+      "status": "complete",
+      "branch": "wave15/src25-commercial-signals-preview",
+      "description": "Compact preview of top 3 control-tower signals and top 3 intelligence patterns. Severity chips, confidence bars. AbarVa design."
     }
   ]
 }
