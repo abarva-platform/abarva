@@ -31,6 +31,12 @@ export * from './workflow-validation-runner';
 export * from './vendor-response-completeness';
 export * from './bafo-negotiation';
 export * from './executive-decision-summary';
+export * from './bafo-negotiation-model';
+export * from './pricing-normalization-model';
+export * from './commercial-risk-detection';
+export * from './control-tower-signals';
+export * from './intelligence-patterns';
+export * from './commercial-mission-queue';
 
 export type {
   SourceAgentContextBundle,
