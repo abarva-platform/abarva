@@ -7498,6 +7498,15 @@
       "status": "code_complete",
       "branch": "wave18/prog13-deliverables-evidence-panel",
       "description": "ProgramDeliverablesEvidencePanel \u2014 6-phase grouping, version state chips, evidence state chips, current deliverable highlight, missing inputs. Read-only; no downloads, no approvals."
+    },
+    {
+      "id": "PROG14",
+      "wave": "wave-18",
+      "name": "Program Actions / Agent Missions / Resume Strip",
+      "type": "program-ui",
+      "status": "code_complete",
+      "branch": "wave18/prog14-actions-missions-resume-strip",
+      "description": "ProgramActionMissionStrip \u2014 resume callout, top 3 next actions, 4 agent missions (Nexus/Sentinel/Atlas/Steward), blocked items. Read-only deterministic; no live execution."
     }
   ]
 }

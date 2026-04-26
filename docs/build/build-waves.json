@@ -783,7 +783,7 @@
       ],
       "completedSlices": [
         "PROG12",
-        "PROG13"
+        "PROG14"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
@@ -791,7 +791,7 @@
       "validationStatus": "not_run",
       "productionReadinessUpdated": true,
       "currentBlockers": [],
-      "nextAction": "PROG12 NexusWorkshopCanvas landed. Wire the canvas onto the canonical Programs detail surface and stage downstream Program Flagship slices. PROG13 code complete; add additional Program flagship slices as scoped.",
+      "nextAction": "PROG12 NexusWorkshopCanvas landed. Wire the canvas onto the canonical Programs detail surface and stage downstream Program Flagship slices. Run validation, push branch, open PR.",
       "lastUpdated": "2026-04-26"
     },
     {
