@@ -9,8 +9,8 @@ Purpose: provide a layer-by-layer view of where AbarVa Source stands against MVP
 - Source has a strong foundation in product architecture, deterministic context validation, workflow validation, pattern IP, deterministic multi-agent briefings, deterministic agent missions, and a platform Agent Mission Model.
 - Source is not production-ready.
 - MVP readiness is improving, but the product still needs authenticated UI review, persistence, evidence/upload pipeline, auth/tenant hardening, and production validation.
-- Current foundation milestone: PR #259 merged a compact deterministic Source dashboard mission preview.
-- Current recommended next slice: authenticated `/source` dashboard review with mission preview visible, then decide whether tiny mission UI polish is safe.
+- Current foundation milestone: PR #264 merged deterministic Source dashboard route/component smoke for the mission preview path.
+- Current recommended next slice: implement the Source event canvas shell as a bounded shell-only slice.
 
 ## Layer Summary
 
@@ -21,11 +21,11 @@ Purpose: provide a layer-by-layer view of where AbarVa Source stands against MVP
 | Pattern / Workflow IP | 75% | Strong authored IP, runtime sectioning not wired | PR #202, PR #222, PR #223, PR #224, PR #225 | Convert selected sections into runtime manifest plan later |
 | Context Validation Harness | 85% | Deterministic foundation complete | PR #190, PR #192, PR #197 | Use as preflight for Source Nexus runtime |
 | Workflow Validation Harness | 85% | Deterministic foundation complete | PR #204, PR #207, PR #210 | Preserve remaining defer until upload/evidence exists |
-| Multi-Agent Intelligence | 55% | Deterministic briefings, mission read model, mission report, and dashboard preview exist; no runtime queue/scheduler/persistence/model layer | PR #227, PR #248, PR #254, PR #255, PR #259, `src/lib/source/multi-agent-briefing.ts`, `src/lib/source/agent-missions.ts`, `src/lib/source/agent-mission-report.ts` | Authenticated mission preview review, then decide tiny UI polish |
+| Multi-Agent Intelligence | 57% | Deterministic briefings, mission read model, mission report, dashboard preview, review packet, and route/component smoke exist; no runtime queue/scheduler/persistence/model layer | PR #227, PR #248, PR #254, PR #255, PR #259, PR #262, PR #264, `src/lib/source/multi-agent-briefing.ts`, `src/lib/source/agent-missions.ts`, `src/lib/source/agent-mission-report.ts` | Use mission report in the event canvas shell |
 | Source API / Runtime | 25% | Deterministic no-model API stub exists; production runtime not ready | PR #230, PR #245, `src/app/api/v1/source/[eventId]/nexus/ask/route.ts` | Keep route deterministic; do not add model calls until mission/readiness gates are ready |
-| Source UI / User Experience | 40% | Dashboard exists with tiny deterministic mission preview; broader UI early | PR #212, PR #213, PR #218, PR #259, Experience System | Final authenticated review with mission preview visible |
-| Data / Evidence / Upload Pipeline | 10% | Not started beyond contracts/placeholders | Attachment/context contracts and validation defers | Plan upload/evidence pipeline before implementation |
-| Production Readiness | 10% | Not started | Production readiness tracker and deterministic validations | Build readiness checklist after runtime/data/UI foundations |
+| Source UI / User Experience | 43% | Dashboard exists with deterministic mission preview, review baseline, route/component smoke, and event canvas shell plan; broader UI early | PR #212, PR #213, PR #218, PR #259, PR #262, PR #264, PR #265, Experience System | Implement Source event canvas shell only |
+| Data / Evidence / Upload Pipeline | 12% | Not started beyond contracts/placeholders, but data readiness panel plan is refreshed for event canvas consumption | Attachment/context contracts, validation defers, PR #266 | Define Admin/Setup readiness contract before implementation |
+| Production Readiness | 12% | Deterministic Source route/component smoke is partial; authenticated/live production gates remain blocked | Production readiness tracker, PR #264 | Authenticated live route smoke and screenshot review remain required |
 
 ## Layer 1. Platform Design System
 
@@ -244,9 +244,9 @@ Next recommended slice:
 
 Purpose: make Nexus, Sentinel, Atlas, and Steward produce distinct context-aware behavior from the same SourceAgentContextBundle without model calls or chat UI.
 
-Current status: deterministic briefing layer, platform mission model, Source mission read model, mission report formatter, and tiny dashboard mission preview are merged. No runtime queue, scheduler, persistence, full mission UI, or model runtime exists.
+Current status: deterministic briefing layer, platform mission model, Source mission read model, mission report formatter, tiny dashboard mission preview, review packet, and route/component smoke are merged. No runtime queue, scheduler, persistence, full mission UI, or model runtime exists.
 
-Percent complete estimate: 55%.
+Percent complete estimate: 57%.
 
 Evidence / PRs / Files:
 
@@ -257,6 +257,8 @@ Evidence / PRs / Files:
 - PR #256: agent mission activity UI plan.
 - PR #257: Source dashboard mission preview plan.
 - PR #259: tiny deterministic Source dashboard mission preview.
+- PR #262: Source dashboard mission preview visual review packet.
+- PR #264: Source dashboard route/component smoke coverage.
 - `src/lib/source/multi-agent-types.ts`
 - `src/lib/source/multi-agent-briefing.ts`
 - `src/lib/source/agent-mission-types.ts`
@@ -279,10 +281,12 @@ Completed items:
 - Deterministic Source agent mission read model.
 - Deterministic mission report formatter with top missions, counts, blockers, defers, handoffs, and remediations.
 - Tiny Source dashboard mission preview for the most exposed seeded event.
+- Baseline review decision for the dashboard mission preview.
+- Deterministic route/component smoke for `/source` route rendering and the mission preview path.
 
 Remaining items:
 
-- Authenticated screenshot/manual review of the mission preview.
+- Authenticated screenshot/manual review of the mission preview remains needed because Codex lacked a signed-in browser session.
 - Runtime integration beyond seeded/current Source context.
 - Full agent mission activity UI binding.
 - Mission queue persistence, scheduler, and background triggers later.
@@ -298,7 +302,7 @@ Blockers:
 
 Next recommended slice:
 
-- Capture authenticated `/source` screenshot/manual review with the mission preview visible; if approved, decide whether tiny mission activity UI polish is safe.
+- Feed the mission report and top missions into the Source event canvas shell.
 
 ## Layer 7. Source API / Runtime
 
@@ -348,9 +352,9 @@ Next recommended slice:
 
 Purpose: make Source feel like a premium, decisive, table-forward sourcing command surface aligned with the AbarVa Experience System.
 
-Current status: dashboard exists with a tiny deterministic mission preview; broader UI is early and not production-ready.
+Current status: dashboard exists with a tiny deterministic mission preview, review baseline, deterministic route/component smoke, and event canvas shell plan; broader UI is early and not production-ready.
 
-Percent complete estimate: 40%.
+Percent complete estimate: 43%.
 
 Evidence / PRs / Files:
 
@@ -358,6 +362,9 @@ Evidence / PRs / Files:
 - PR #213: authenticated dashboard review packet, blocked by Clerk redirect at the time.
 - PR #218: Source auth redirect fix.
 - PR #259: tiny deterministic Source dashboard mission preview.
+- PR #262: dashboard mission preview visual review, approved as baseline with authenticated screenshot unavailable.
+- PR #264: dashboard route/component smoke coverage.
+- PR #265: Source event canvas shell plan.
 - `src/components/source/AbarVaSourceDashboard.tsx`
 - `src/components/source/SourcingEventTable.tsx`
 - `src/components/source/SourceAlertPanel.tsx`
@@ -371,12 +378,15 @@ Completed items:
 - Event table salience improved.
 - Auth redirect blocker was diagnosed and addressed in a later fix.
 - Compact deterministic top-mission preview added for the most exposed seeded event without API calls, model calls, chat input, persistence, upload/parsing, or new routes.
+- Dashboard mission preview approved as baseline; no tiny polish was implemented because screenshot evidence was unavailable.
+- Deterministic route/component smoke coverage added for the `/source` dashboard path.
+- Event canvas shell plan created for the existing `/source/events/[eventId]` and `NexusEngagementCanvas` boundary.
 
 Remaining items:
 
-- Final authenticated dashboard review after auth fix and mission preview merge.
-- Align dashboard visual language with off-white Experience System.
-- Event workbench, journey map behavior, scorecard, artifact, value, vendor, and agent panels.
+- Authenticated dashboard screenshot/manual review after auth fix and mission preview merge.
+- Implement event canvas shell only, then review visually.
+- Full event workbench, final journey map behavior, scorecard, artifact, value, vendor, and agent panels.
 - Screenshot-based visual QA.
 
 Blockers:
@@ -514,9 +524,9 @@ Next recommended slice:
 
 ## Next 5 Recommended Slices
 
-1. Capture authenticated Source dashboard review with the mission preview visible.
-2. If review approves, implement only tiny mission activity UI polish grounded in the merged plan.
-3. Add authenticated route smoke coverage for the deterministic Source API and dashboard path.
+1. Implement the Source event canvas shell only, using existing event route, journey, deterministic mission report, and data readiness placeholder guidance.
+2. Capture authenticated screenshot/manual review for dashboard and event canvas when a signed-in session is available.
+3. Define the Admin/Setup data readiness contract consumed by Source, no upload/parsing implementation.
 4. Plan upload/evidence pipeline, no implementation.
 5. Plan the next pattern/runtime grounding step, such as pattern manifest planning or Data Platform Managed Services authoring.
 
@@ -542,21 +552,21 @@ Next recommended slice:
 
 ## Honest MVP Readiness Assessment
 
-Estimated MVP readiness: 52%.
+Estimated MVP readiness: 54%.
 
-Source is beyond a concept prototype because it has a route, dashboard, seeded domain context, validation harnesses, pattern IP, deterministic multi-agent behavior, a deterministic no-model Nexus API stub, deterministic mission reports, and a tiny dashboard mission preview. It is not yet a usable MVP for real sourcing work because persistence, evidence pipeline, authenticated UI review, real tenant data, and practical user-facing workflow depth remain incomplete.
+Source is beyond a concept prototype because it has a route, dashboard, seeded domain context, validation harnesses, pattern IP, deterministic multi-agent behavior, a deterministic no-model Nexus API stub, deterministic mission reports, a tiny dashboard mission preview, and deterministic dashboard route/component smoke. It is not yet a usable MVP for real sourcing work because persistence, evidence pipeline, authenticated UI review, real tenant data, and practical user-facing workflow depth remain incomplete.
 
 The fastest safe MVP path is deterministic-first:
 
-1. Review the authenticated Source dashboard mission preview.
-2. If approved, tighten only the compact mission affordance.
-3. Add authenticated smoke coverage for the deterministic Source route/dashboard path.
+1. Implement the Source event canvas shell only.
+2. Review dashboard and event canvas with an authenticated screenshot/manual pass.
+3. Define data readiness contract consumption before any upload/parsing implementation.
 4. Add evidence/upload planning before any citation or artifact generation.
 5. Add model calls only after context validation and runtime preflight are enforced.
 
 ## Honest Production Readiness Assessment
 
-Estimated production readiness: 20%.
+Estimated production readiness: 21%.
 
 Production readiness remains low by design. The foundation is strong, but production Source needs persistent data, tenant safety, auth/role checks, evidence and citation pipeline, auditability, observability, error states, visual QA, and release validation. The current deterministic layers reduce product risk, but they do not substitute for runtime, data, security, and operational readiness.
 
