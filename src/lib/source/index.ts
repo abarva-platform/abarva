@@ -29,6 +29,7 @@ export * from './workflow-validation-fixtures';
 export * from './workflow-validation-report';
 export * from './workflow-validation-runner';
 export * from './vendor-response-completeness';
+export * from './bafo-negotiation';
 
 export type {
   SourceAgentContextBundle,
