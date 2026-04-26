@@ -7047,6 +7047,21 @@
       ],
       "sliceDoc": "docs/build/slices/QA19_E2E_SMOKE_RESULT_CAPTURE.md",
       "createdAt": "2026-04-26"
+    },
+    {
+      "id": "QA20",
+      "name": "Mandatory Hygiene Gate Runner Contract",
+      "category": "qa",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "scripts/integration/hygiene_gate.sh"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/ops/hygiene-gate-contract.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/QA20_MANDATORY_HYGIENE_GATE_RUNNER_CONTRACT.md",
+      "createdAt": "2026-04-26"
     }
   ]
 }
