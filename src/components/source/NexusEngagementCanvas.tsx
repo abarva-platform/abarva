@@ -49,6 +49,7 @@ const BODY_GRID: CSSProperties = {
   gridTemplateColumns: 'minmax(0, 1.55fr) minmax(300px, 0.72fr)',
   gap: 16,
   alignItems: 'start',
+  minWidth: 0,
 };
 
 export function NexusEngagementCanvas({ event }: { event: SourcingEventDetail }) {
@@ -60,7 +61,7 @@ export function NexusEngagementCanvas({ event }: { event: SourcingEventDetail })
       <EventContextStrip event={event} missionReport={missionReport} />
       <div style={BODY_GRID}>
         <div style={{ display: 'grid', gap: 16, minWidth: 0 }}>
-        <SourceJourneyTracker stages={event.stages} />
+          <SourceJourneyTracker stages={event.stages} />
           <SourceActiveStageWorkspace
             event={event}
             missionReport={missionReport}

@@ -89,31 +89,35 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
     <div
       style={{
         display: 'grid',
-        gap: 14,
+        gap: 12,
         background: LIGHT.page,
         border: `1px solid ${LIGHT.line}`,
         borderRadius: 20,
-        padding: 16,
+        padding: 14,
         boxShadow: '0 20px 70px rgba(0,0,0,0.18)',
         color: LIGHT.ink,
+        maxWidth: '100%',
+        overflow: 'hidden',
       }}
     >
       <section
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
           gap: 14,
           alignItems: 'stretch',
+          minWidth: 0,
         }}
       >
         <div
           style={{
             ...sourceCard,
-            gap: 14,
+            gap: 12,
             minHeight: 'auto',
             background: LIGHT.navy,
             border: '1px solid rgba(255,255,255,0.10)',
-            boxShadow: '0 18px 45px rgba(7,17,31,0.26)',
+            boxShadow: '0 14px 32px rgba(7,17,31,0.20)',
+            minWidth: 0,
           }}
         >
           <div style={{ display: 'grid', gap: 7 }}>
@@ -121,7 +125,7 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
             <div
               style={{
                 fontFamily: FONTS.serif,
-                fontSize: 'clamp(24px, 3vw, 31px)',
+                fontSize: 'clamp(22px, 2.6vw, 28px)',
                 lineHeight: 1.18,
                 color: '#F8FAFC',
                 maxWidth: 760,
@@ -199,14 +203,20 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
                         style={{
                           display: 'grid',
                           gap: 5,
-                          border: '1px solid rgba(255,255,255,0.10)',
+                          border: mission.agentName === 'nexus'
+                            ? '1px solid rgba(94,234,212,0.30)'
+                            : '1px solid rgba(255,255,255,0.10)',
                           borderRadius: 10,
-                          background: 'rgba(255,255,255,0.055)',
+                          background: mission.agentName === 'nexus'
+                            ? 'rgba(94,234,212,0.10)'
+                            : 'rgba(255,255,255,0.045)',
                           padding: '9px 10px',
                         }}
                       >
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-                          <span style={{ ...sourceMetricLabel, color: '#5EEAD4' }}>{agentLabel(mission.agentName)}</span>
+                          <span style={{ ...sourceMetricLabel, color: '#5EEAD4' }}>
+                            {mission.agentName === 'nexus' ? 'Nexus lead' : agentLabel(mission.agentName)}
+                          </span>
                           <span style={{ ...sourceMetricDetail, color: 'rgba(248,250,252,0.70)', fontWeight: 800 }}>
                             {mission.priority} / {mission.state}
                           </span>
@@ -351,6 +361,12 @@ function buildDashboardMissionReport(event: SourceDashboardEvent): SourceAgentMi
 function getDashboardMissionPreviewMissions(report: SourceAgentMissionReport): SourceAgentMission[] {
   const selected: SourceAgentMission[] = [];
   const seenAgents = new Set<string>();
+  const nexusMission = report.topMissions.find((mission) => mission.agentName === 'nexus');
+
+  if (nexusMission) {
+    selected.push(nexusMission);
+    seenAgents.add(nexusMission.agentName);
+  }
 
   for (const mission of report.topMissions) {
     if (!seenAgents.has(mission.agentName)) {

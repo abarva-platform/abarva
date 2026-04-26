@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react';
 import { EXPERIENCE_COLORS, FONTS, TEXT } from '@/lib/design-system';
 import type { SourceAgentMissionReport } from '@/lib/source';
 import type { SourcingEventDetail } from '@/lib/source/types';
-import { sourceCard, sourceInsetCard, sourceMuted, sourceSectionLabel } from './foundationStyles';
+import { sourceCard, sourceMuted, sourceSectionLabel } from './foundationStyles';
 
 export function PersistentNexusPanel({
   event,
@@ -31,10 +31,10 @@ export function PersistentNexusPanel({
         </div>
       </div>
       <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
-        {event.leadAgent} / {event.currentStageLabel} / no model calls
+        {event.leadAgent} / {event.currentStageLabel} / current context
       </div>
 
-      <div style={LIGHT_INSET}>
+      <div style={LIGHT_INSET} data-boundary="Deterministic guidance only">
         <div style={{ fontWeight: 800, color: EXPERIENCE_COLORS.textPrimary }}>What matters now</div>
         <div style={{ ...sourceMuted, color: EXPERIENCE_COLORS.textSecondary }}>
           {event.blocker ?? event.nextDecision}
@@ -79,7 +79,7 @@ export function PersistentNexusPanel({
           ))}
         </div>
         <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
-          Visual guidance only. This shell does not create chat, freeform input, or workflow mutation.
+          Actions stay grounded in the current stage context.
         </div>
       </div>
 
@@ -90,27 +90,21 @@ export function PersistentNexusPanel({
         </div>
       </div>
 
-      <div
-        style={{
-          ...sourceInsetCard,
-          background: EXPERIENCE_COLORS.darkPanel,
-          border: '1px solid rgba(255,255,255,0.10)',
-        }}
-      >
+      <div style={LIGHT_INSET}>
         <div
           style={{
             fontFamily: FONTS.mono,
             fontSize: '10px',
             letterSpacing: '0.08em',
             textTransform: 'uppercase',
-            color: '#5EEAD4',
+            color: EXPERIENCE_COLORS.accentTeal,
           }}
         >
-          Shell boundary
+          Context used
         </div>
-        <div style={{ color: '#F8FAFC', fontWeight: 800 }}>Deterministic guidance only</div>
-        <div style={{ ...sourceMuted, color: 'rgba(248,250,252,0.72)' }}>
-          No model calls, chat UI, upload parsing, scorecard UI, approval engine, or artifact drawer behavior.
+        <div style={{ color: EXPERIENCE_COLORS.textPrimary, fontWeight: 800 }}>Event, stage, gate, and mission state</div>
+        <div style={{ ...sourceMuted, color: EXPERIENCE_COLORS.textSecondary }}>
+          Nexus guidance is limited to the current event context and readiness signals.
         </div>
       </div>
     </aside>
