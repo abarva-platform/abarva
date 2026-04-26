@@ -357,7 +357,8 @@
       "notes": [
         "Code complete is not production ready.",
         "No legacy /programs route is extended by PROD1.",
-        "AG12 mounts the AG11 Agent Mission Panel on ProgramCanonicalDetail with variant 'right_panel' and the {nexus, sentinel, steward} surface filter, capped at 3 deterministic missions; no live runtime, no model call, no persistence."
+        "AG12 mounts the AG11 Agent Mission Panel on ProgramCanonicalDetail with variant 'right_panel' and the {nexus, sentinel, steward} surface filter, capped at 3 deterministic missions; no live runtime, no model call, no persistence.",
+        "MW4 meeting notes capture read model added; deterministic templates + seed (eight canonical note types). No live capture, audio, upload, or model summarization."
       ]
     },
     {
@@ -422,7 +423,8 @@
       ],
       "nextAction": "Add a verified manual walk for workshop preparation and document the deferred live capture path before pilot consideration.",
       "notes": [
-        "No meeting bot, audio transcription, or live model synthesis is implemented."
+        "No meeting bot, audio transcription, or live model synthesis is implemented.",
+        "MW4 meeting notes capture read model added; deterministic templates + seed for eight canonical note types. No live capture is wired."
       ]
     },
     {
@@ -487,7 +489,8 @@
       ],
       "nextAction": "Choose the first production artifact workflow to promote from disabled seed state to audited runtime behavior.",
       "notes": [
-        "Readable canvas is present; production artifact operations are not."
+        "Readable canvas is present; production artifact operations are not.",
+        "MW4 meeting-notes derivations feed deliverable updates (draft_input_added / review_feedback / approval_blocked / rework_required) deterministically; no live capture."
       ]
     },
     {

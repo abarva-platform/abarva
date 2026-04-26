@@ -1237,6 +1237,64 @@
       "notes": "Pure deterministic projection of (tenant, program) seed into per-workshop readiness records. Operationalizes the MW1 contract. No meeting notes ingestion, no live LLM-driven brief composition, no calendar/booking integration. Future MW3 Maestro Brief UI renders these records; MW4 captures notes; MW5 generates agenda templates; MW6 surfaces SME recommendations; MW7 wires the deliverable refinement loop."
     },
     {
+      "id": "MW4",
+      "name": "Meeting Notes Capture Read Model",
+      "category": "MW",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "MW1",
+        "MW2"
+      ],
+      "allowedFiles": [
+        "src/lib/programs/meeting-notes-capture.ts",
+        "src/__tests__/integration/programs/meeting-notes-capture.test.ts",
+        "docs/build/slices/MW4_MEETING_NOTES_CAPTURE_READ_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Module defines the eight canonical meeting note types: workshop_observation, decision, action_item, risk, open_question, evidence_candidate, stakeholder_alignment, follow_up_meeting.",
+        "buildMeetingNoteCaptureTemplate(workshopType) returns an empty template with all arrays empty, observation '', and the canonical workshop type recorded.",
+        "buildMeetingNoteCaptureSeed(programKey, workshopType) returns at least two deterministic notes per pair, each with at least one decision, action item, risk, open question, and evidence candidate.",
+        "Every id matches /^mtg-seed-[a-z0-9-]+$/.",
+        "Every note carries createdFrom: 'deterministic_seed' and an honestDisclaimer containing both 'deterministic seed' and 'not wired' substrings.",
+        "summarizeMeetingNotesCapture reconciles totalNotes, byType, totalDecisions, totalActionItems, totalEvidenceCandidates against the input.",
+        "deriveProgramUpdatesFromMeetingNotes emits phase_advance_request / gate_readiness_change / risk_register_update / value_at_stake_update only for notes implying that update.",
+        "deriveDeliverableUpdatesFromMeetingNotes emits draft_input_added / review_feedback / approval_blocked / rework_required only for notes mentioning deliverables.",
+        "deriveEvidenceCandidatesFromMeetingNotes returns the union of every evidence candidate across the input notes.",
+        "synthesizeMeetingNotes is deterministic and caps topDecisions at three, topActionItems at five, topRisks at three.",
+        "Seed contains no real person names (only role labels) and no E-### literal tokens.",
+        "Module imports nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase; does not call Date.now / Math.random / new Date / fetch."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/meeting-notes-capture.test.ts",
+        "npx jest src/__tests__/integration/programs/workshop-readiness.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic read model for the during/after-workshop capture surface. Operationalizes MW1 section E (notes, decisions, risks, objections, missing inputs, stakeholder alignment, follow-up actions) plus the section H deterministic-extractor contract. No audio capture, no file upload, no live transcription, no model summarization, no persistence. Future MW UI surface renders these records and lets the Maestro confirm extractor output before filing."
+    },
+    {
       "id": "PF1",
       "name": "AI Program Failure Modes Pattern Pack",
       "category": "PF",
