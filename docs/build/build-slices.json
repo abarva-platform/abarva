@@ -5564,6 +5564,64 @@
         "npm run build"
       ],
       "notes": "Deterministic wave-level rollup over the slice manifest. Read-only. Does not deploy, does not poll Vercel or GitHub, does not call any model provider, does not promote any production-readiness component, does not modify auth / supabase / migrations / runtime code. Wave membership is best-effort honest mapping inferred from slice ID prefix, slice name, and merged-PR commit messages on main. Future-only slice IDs (OPS5, OPS6, OPS7, OPS8, QA13, CLOUD8, PROD5) are listed in Wave 8 plannedSlices to carry roadmap intent without inventing slice contracts. Lane H commits locally only; the integration agent owns the cherry-pick and merge."
+    },
+    {
+      "id": "SOL10",
+      "name": "Recommendation \u2192 Program Workshop Bridge",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Wave2 Lane A",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "SOL3",
+        "SOL9"
+      ],
+      "allowedFiles": [
+        "src/lib/solutions/recommendation-workshop-bridge.ts",
+        "src/__tests__/integration/solutions/recommendation-workshop-bridge.test.ts",
+        "docs/build/slices/SOL10_RECOMMENDATION_WORKSHOP_BRIDGE.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Module exports RecommendationInputForBridge, RecommendedWorkshopBundle, RecommendedSmeRoleBundle, EvidenceNeedHint, DeliverableHint, RecommendationWorkshopMap, WorkshopBridgeSummary, buildRecommendationWorkshopMap, summarizeWorkshopBridge, and getMissingEvidenceForBridge as the canonical contract.",
+        "buildRecommendationWorkshopMap is byte-equal across repeated calls for the same input and emits exactly one RecommendationWorkshopMap per input recommendation.",
+        "Every emitted map has at least one workshop bundle, one SME bundle, one evidence-need hint, and one deliverable hint; every map carries createdFrom 'deterministic_recommendation_workshop_bridge_seed'.",
+        "Exactly one workshop per map is marked as the recommended first workshop (isFirstWorkshop true) and the marker matches recommendedFirstWorkshopKey.",
+        "Sparse recommendations (no workshops, no SMEs, no building blocks, no deliverables) fall back to current_state_discovery as the first workshop and emit the default archetype_solution_brief deliverable hint.",
+        "Deliverables are routed onto deliverable_synthesis when that workshop is recommended, else onto the last canonical workshop; SME role hints anchor archetype.smesRequired to the first workshop and layer per-workshop default role hints with deduplication on (roleKey, workshopKey).",
+        "Evidence hints carry one of three canonical kinds (current_state_input / architecture_building_block / governance_review) and one of three canonical severities (must_capture / should_capture / nice_to_have); the first architecture building block is must_capture, subsequent entries are should_capture, and a governance_review nice_to_have is always appended so every map has at least one evidence hint.",
+        "summarizeWorkshopBridge reconciles totalMaps, totalWorkshops, totalSmes, totalEvidenceNeeds, totalDeliverables, archetypeKeys, and firstWorkshopKeys against the supplied bridge map list.",
+        "getMissingEvidenceForBridge returns only must_capture and should_capture hints in canonical (map, evidence) order.",
+        "Module imports nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, programs runtime, legacy /programs, mock.ts, auth, or supabase; contains no Math.random / Date.now / new Date / fetch / anthropic / openai / useState / useEffect / Coming soon / TBD / Lorem ipsum tokens."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/solutions/recommendation-workshop-bridge.test.ts",
+        "npx eslint --max-warnings=0 src/lib/solutions/recommendation-workshop-bridge.ts src/__tests__/integration/solutions/recommendation-workshop-bridge.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic library that maps SOL9 solution recommendations onto recommended workshops, SME role bundles, evidence-need hints, and deliverable hints for future Program Workshop Mode surfaces. Library only \u2014 no UI renderer, no live retrieval, no model calls, no tenant runtime state, no live SME directory, no calendar/booking. The bridge keeps its input contract structural so it runs even when SOL9 is not present on the branch; SOL9 outputs match the contract directly. Status not promoted on agent_runtime or program_workshop_mode \u2014 production-readiness notes are UNION-updated conservatively."
     }
   ]
 }
