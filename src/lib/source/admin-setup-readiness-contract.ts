@@ -1,0 +1,627 @@
+import { SOURCE_GOLDEN_EVENT_IDS } from './constants';
+import type {
+  SourceDataReadinessItem,
+  SourceDataReadinessState,
+  SourceDataRequirementLevel,
+  SourceEvidenceUsability,
+  SourceStageKey,
+  ValueConfidence,
+} from './types';
+
+export const SOURCE_ADMIN_SETUP_READINESS_CONTRACT_VERSION =
+  'source-admin-setup-readiness-contract/v1';
+
+export type SourceAdminSetupReadinessAccessState =
+  | 'allowed'
+  | 'restricted'
+  | 'pending_approval'
+  | 'not_applicable';
+
+export type SourceAdminSetupReadinessSourceType =
+  | 'system'
+  | 'file'
+  | 'manual_request'
+  | 'repository'
+  | 'derived'
+  | 'unknown';
+
+export type SourceAdminSetupHandoffTarget =
+  | 'admin_setup'
+  | 'data_owner'
+  | 'procurement'
+  | 'legal'
+  | 'security'
+  | 'operations'
+  | 'waiver_owner';
+
+export type SourceReadinessFreshnessStatus =
+  | 'current'
+  | 'aging'
+  | 'stale'
+  | 'unknown';
+
+export interface SourceAdminSetupReadinessWaiver {
+  owner: string;
+  reason: string;
+  approvedAt: string;
+  downstreamImpact: string;
+}
+
+export interface SourceAdminSetupReadinessRecord {
+  recordId: string;
+  tenantId: string;
+  datasetId: string;
+  datasetDomain: string;
+  categoryKey: string;
+  categoryLabel: string;
+  readinessState: SourceDataReadinessState;
+  evidenceUsability: SourceEvidenceUsability;
+  ownerName: string;
+  ownerRole: string;
+  sourceSystem: string;
+  sourceType: SourceAdminSetupReadinessSourceType;
+  lastUpdated: string | null;
+  confidence: ValueConfidence;
+  accessState: SourceAdminSetupReadinessAccessState;
+  freshnessStatus: SourceReadinessFreshnessStatus;
+  provenance: string;
+  waiver?: SourceAdminSetupReadinessWaiver;
+}
+
+export interface SourceEventDataRequirement {
+  eventId: string;
+  categoryKey: string;
+  categoryLabel: string;
+  requirementLevel: SourceDataRequirementLevel;
+  requiredStages: SourceStageKey[];
+  datasetDomain: string;
+  defaultOwnerRole: string;
+  workflowImpact: string;
+  agentRecommendation: string;
+  handoffTarget: SourceAdminSetupHandoffTarget;
+  rfpTierImpact: 'rich_blocker' | 'outline_caveat' | 'stub_only' | 'no_impact';
+  stageGateImpact: 'blocks_current_stage' | 'creates_caveat' | 'watch_only' | 'none';
+  scorecardImpact: 'blocks_defaulting' | 'lowers_confidence' | 'none';
+  pricingImpact: 'blocks_normalization' | 'requires_caveat' | 'none';
+  valueImpact: 'lowers_confidence' | 'none';
+}
+
+export interface SourceDataReadinessProgressSummary {
+  contractVersion: typeof SOURCE_ADMIN_SETUP_READINESS_CONTRACT_VERSION;
+  eventId: string;
+  generatedFrom: 'admin_setup_contract_seed';
+  totalItems: number;
+  requiredItems: number;
+  recommendedItems: number;
+  optionalItems: number;
+  usableEvidenceItems: number;
+  missingRequiredItems: number;
+  cautionItems: number;
+  readinessPercent: number;
+  usableEvidencePercent: number;
+  progressLabel: string;
+  progressBasis: string;
+  blockers: string[];
+  defers: string[];
+}
+
+export interface SourceDataReadinessProjection {
+  eventId: string;
+  contractVersion: typeof SOURCE_ADMIN_SETUP_READINESS_CONTRACT_VERSION;
+  generatedFrom: 'admin_setup_contract_seed';
+  items: SourceDataReadinessItem[];
+  summary: SourceDataReadinessProgressSummary;
+}
+
+export interface BuildSourceDataReadinessProjectionInput {
+  eventId: string;
+  requirements?: SourceEventDataRequirement[];
+  platformRecords?: SourceAdminSetupReadinessRecord[];
+}
+
+const DEFAULT_TENANT_ID = 'tenant-source-seed';
+
+export function buildSourceDataReadinessProjectionFromAdminSetup(
+  input: BuildSourceDataReadinessProjectionInput,
+): SourceDataReadinessProjection {
+  const requirements = input.requirements ?? getSourceEventDataRequirements(input.eventId);
+  const platformRecords = input.platformRecords
+    ?? getSeededAdminSetupReadinessRecordsForSourceEvent(input.eventId);
+  const recordByCategory = new Map(platformRecords.map((record) => [record.categoryKey, record]));
+  const items = requirements.map((requirement) => (
+    mapAdminSetupReadinessToSourceItem({
+      requirement,
+      record: recordByCategory.get(requirement.categoryKey),
+    })
+  ));
+
+  return {
+    eventId: input.eventId,
+    contractVersion: SOURCE_ADMIN_SETUP_READINESS_CONTRACT_VERSION,
+    generatedFrom: 'admin_setup_contract_seed',
+    items,
+    summary: summarizeSourceDataReadinessProgress(input.eventId, items),
+  };
+}
+
+export function mapAdminSetupReadinessToSourceItem(input: {
+  requirement: SourceEventDataRequirement;
+  record?: SourceAdminSetupReadinessRecord;
+}): SourceDataReadinessItem {
+  const { requirement, record } = input;
+  const readinessState = record?.readinessState ?? 'Missing';
+  const evidenceUsability = record?.evidenceUsability ?? 'not_available';
+  const owner = record ? `${record.ownerName} (${record.ownerRole})` : requirement.defaultOwnerRole;
+  const sourceSystemOrFile = record?.sourceSystem ?? 'Admin/Setup readiness request';
+
+  return {
+    id: `source-data-contract:${requirement.eventId}:${requirement.categoryKey}`,
+    category: requirement.categoryLabel,
+    requirementLevel: requirement.requirementLevel,
+    readinessState,
+    evidenceUsability,
+    owner,
+    sourceSystemOrFile,
+    lastUpdated: record?.lastUpdated ?? null,
+    confidence: record?.confidence ?? 'low',
+    workflowImpact: getWorkflowImpact(requirement, readinessState, evidenceUsability),
+    agentRecommendation: getAgentRecommendation(requirement, readinessState, evidenceUsability),
+    stewardAdminHandoffLabel: getHandoffLabel(requirement, record),
+  };
+}
+
+export function summarizeSourceDataReadinessProgress(
+  eventId: string,
+  items: SourceDataReadinessItem[],
+): SourceDataReadinessProgressSummary {
+  const totalWeight = items.reduce((total, item) => total + requirementWeight(item.requirementLevel), 0);
+  const weightedScore = items.reduce((total, item) => (
+    total + readinessScore(item) * requirementWeight(item.requirementLevel)
+  ), 0);
+  const readinessPercent = totalWeight > 0 ? Math.round((weightedScore / totalWeight) * 100) : 0;
+  const usableEvidenceItems = items.filter((item) => item.evidenceUsability === 'usable').length;
+  const usableEvidencePercent = items.length > 0
+    ? Math.round((usableEvidenceItems / items.length) * 100)
+    : 0;
+  const missingRequired = items.filter((item) => (
+    item.requirementLevel === 'required' && item.evidenceUsability === 'not_available'
+  ));
+  const cautionItems = items.filter((item) => (
+    item.evidenceUsability === 'loaded_not_usable'
+    || item.evidenceUsability === 'available_not_validated'
+    || item.evidenceUsability === 'low_confidence'
+    || item.evidenceUsability === 'restricted'
+  ));
+
+  return {
+    contractVersion: SOURCE_ADMIN_SETUP_READINESS_CONTRACT_VERSION,
+    eventId,
+    generatedFrom: 'admin_setup_contract_seed',
+    totalItems: items.length,
+    requiredItems: items.filter((item) => item.requirementLevel === 'required').length,
+    recommendedItems: items.filter((item) => item.requirementLevel === 'recommended').length,
+    optionalItems: items.filter((item) => item.requirementLevel === 'optional').length,
+    usableEvidenceItems,
+    missingRequiredItems: missingRequired.length,
+    cautionItems: cautionItems.length,
+    readinessPercent,
+    usableEvidencePercent,
+    progressLabel: `${readinessPercent}% toward event data readiness`,
+    progressBasis: 'Weighted by requirement level and evidence usability. Seeded contract only; not live monitoring.',
+    blockers: missingRequired.map((item) => `${item.category}: ${item.workflowImpact}`),
+    defers: cautionItems.map((item) => `${item.category}: ${item.evidenceUsability}`),
+  };
+}
+
+export function getSourceEventDataRequirements(eventId: string): SourceEventDataRequirement[] {
+  if (eventId !== SOURCE_GOLDEN_EVENT_IDS.dataAiModernization) {
+    return [];
+  }
+
+  return DATA_AI_MODERNIZATION_REQUIREMENTS.map((requirement) => ({ ...requirement }));
+}
+
+export function getSeededAdminSetupReadinessRecordsForSourceEvent(
+  eventId: string,
+): SourceAdminSetupReadinessRecord[] {
+  if (eventId !== SOURCE_GOLDEN_EVENT_IDS.dataAiModernization) {
+    return [];
+  }
+
+  return DATA_AI_MODERNIZATION_ADMIN_SETUP_RECORDS.map((record) => ({ ...record }));
+}
+
+function getWorkflowImpact(
+  requirement: SourceEventDataRequirement,
+  readinessState: SourceDataReadinessState,
+  evidenceUsability: SourceEvidenceUsability,
+): string {
+  if (evidenceUsability === 'usable') {
+    return requirement.workflowImpact;
+  }
+
+  if (evidenceUsability === 'loaded_not_usable') {
+    return 'Loaded in Admin/Setup, but not usable evidence until parsing and validation complete.';
+  }
+
+  if (evidenceUsability === 'available_not_validated') {
+    return 'Available to Source, but not validated enough for confident claims or decisions.';
+  }
+
+  if (evidenceUsability === 'low_confidence') {
+    return 'Evidence exists, but confidence is too low for approval-grade Source language.';
+  }
+
+  if (evidenceUsability === 'restricted') {
+    return 'Evidence exists, but access restrictions prevent Source agents from using it.';
+  }
+
+  if (readinessState === 'Waived' || evidenceUsability === 'waived') {
+    return 'Gap is waived; Source must show waiver owner, reason, and downstream impact.';
+  }
+
+  return requirement.workflowImpact;
+}
+
+function getAgentRecommendation(
+  requirement: SourceEventDataRequirement,
+  readinessState: SourceDataReadinessState,
+  evidenceUsability: SourceEvidenceUsability,
+): string {
+  if (evidenceUsability === 'usable') return requirement.agentRecommendation;
+  if (evidenceUsability === 'loaded_not_usable') {
+    return 'Sentinel should keep this out of citations until Admin/Setup marks it usable evidence.';
+  }
+  if (evidenceUsability === 'available_not_validated' || evidenceUsability === 'low_confidence') {
+    return 'Sentinel should flag low evidence confidence and Nexus should caveat downstream outputs.';
+  }
+  if (evidenceUsability === 'restricted') {
+    return 'Steward should route an access review before Source uses this data.';
+  }
+  if (readinessState === 'Waived' || evidenceUsability === 'waived') {
+    return 'Steward should preserve the waiver rationale and Nexus should explain downstream caveats.';
+  }
+
+  return requirement.agentRecommendation;
+}
+
+function getHandoffLabel(
+  requirement: SourceEventDataRequirement,
+  record?: SourceAdminSetupReadinessRecord,
+): string {
+  if (record?.waiver) return `Waived by ${record.waiver.owner}`;
+  if (record?.accessState === 'restricted' || record?.accessState === 'pending_approval') {
+    return 'Steward to access owner';
+  }
+
+  const labelByTarget: Record<SourceAdminSetupHandoffTarget, string> = {
+    admin_setup: 'Steward to Admin/Setup intake',
+    data_owner: 'Steward to data owner',
+    procurement: 'Steward to procurement owner',
+    legal: 'Steward to legal owner',
+    security: 'Steward to security owner',
+    operations: 'Steward to operations owner',
+    waiver_owner: 'Steward to waiver owner',
+  };
+
+  return labelByTarget[requirement.handoffTarget];
+}
+
+function readinessScore(item: SourceDataReadinessItem): number {
+  if (item.readinessState === 'Not Applicable') return 1;
+  if (item.readinessState === 'Waived' || item.evidenceUsability === 'waived') return 0.5;
+
+  const scores: Record<SourceEvidenceUsability, number> = {
+    not_available: 0,
+    loaded_not_usable: 0.4,
+    available_not_validated: 0.65,
+    usable: 1,
+    low_confidence: 0.45,
+    restricted: 0.2,
+    waived: 0.5,
+  };
+
+  return scores[item.evidenceUsability];
+}
+
+function requirementWeight(level: SourceDataRequirementLevel): number {
+  if (level === 'required') return 3;
+  if (level === 'recommended') return 2;
+  return 1;
+}
+
+const DATA_AI_EVENT_ID = SOURCE_GOLDEN_EVENT_IDS.dataAiModernization;
+
+const DATA_AI_MODERNIZATION_REQUIREMENTS: SourceEventDataRequirement[] = [
+  {
+    eventId: DATA_AI_EVENT_ID,
+    categoryKey: 'application_inventory',
+    categoryLabel: 'Application Inventory',
+    requirementLevel: 'required',
+    requiredStages: ['scope', 'rfp_rfi_package'],
+    datasetDomain: 'application_portfolio',
+    defaultOwnerRole: 'Client PMO Lead',
+    workflowImpact: 'Can support Scope framing and RFP application portfolio language.',
+    agentRecommendation: 'Nexus can use this as scope evidence, but should still caveat workload sizing.',
+    handoffTarget: 'admin_setup',
+    rfpTierImpact: 'outline_caveat',
+    stageGateImpact: 'creates_caveat',
+    scorecardImpact: 'none',
+    pricingImpact: 'requires_caveat',
+    valueImpact: 'none',
+  },
+  {
+    eventId: DATA_AI_EVENT_ID,
+    categoryKey: 'workload_baseline',
+    categoryLabel: 'Workload Baseline',
+    requirementLevel: 'required',
+    requiredStages: ['scope'],
+    datasetDomain: 'analytics_workload_baseline',
+    defaultOwnerRole: 'Data Platform Lead',
+    workflowImpact: 'Blocks Rich-tier Scope and makes pricing normalization unsafe.',
+    agentRecommendation: 'Nexus should request workload volumes before strategy design expands.',
+    handoffTarget: 'data_owner',
+    rfpTierImpact: 'rich_blocker',
+    stageGateImpact: 'blocks_current_stage',
+    scorecardImpact: 'lowers_confidence',
+    pricingImpact: 'blocks_normalization',
+    valueImpact: 'lowers_confidence',
+  },
+  {
+    eventId: DATA_AI_EVENT_ID,
+    categoryKey: 'ticket_history',
+    categoryLabel: 'Ticket History',
+    requirementLevel: 'recommended',
+    requiredStages: ['scope', 'sourcing_strategy'],
+    datasetDomain: 'service_management',
+    defaultOwnerRole: 'Service Management Lead',
+    workflowImpact: 'Limits support sizing and weakens vendor run-cost comparison.',
+    agentRecommendation: 'Nexus should include ticket history in the minimum data request.',
+    handoffTarget: 'admin_setup',
+    rfpTierImpact: 'outline_caveat',
+    stageGateImpact: 'creates_caveat',
+    scorecardImpact: 'lowers_confidence',
+    pricingImpact: 'requires_caveat',
+    valueImpact: 'lowers_confidence',
+  },
+  {
+    eventId: DATA_AI_EVENT_ID,
+    categoryKey: 'vendor_spend',
+    categoryLabel: 'Vendor Spend',
+    requirementLevel: 'required',
+    requiredStages: ['scope', 'sourcing_strategy'],
+    datasetDomain: 'finance_cost_baseline',
+    defaultOwnerRole: 'Procurement Lead',
+    workflowImpact: 'Supports directional value framing but should not be treated as validated baseline.',
+    agentRecommendation: 'Sentinel should keep spend claims caveated until evidence is validated.',
+    handoffTarget: 'procurement',
+    rfpTierImpact: 'outline_caveat',
+    stageGateImpact: 'creates_caveat',
+    scorecardImpact: 'lowers_confidence',
+    pricingImpact: 'requires_caveat',
+    valueImpact: 'lowers_confidence',
+  },
+  {
+    eventId: DATA_AI_EVENT_ID,
+    categoryKey: 'sla_baseline',
+    categoryLabel: 'SLA Baseline',
+    requirementLevel: 'recommended',
+    requiredStages: ['sourcing_strategy', 'rfp_rfi_package'],
+    datasetDomain: 'service_level_baseline',
+    defaultOwnerRole: 'Operations Lead',
+    workflowImpact: 'Prevents confident service-level requirements and transition risk sizing.',
+    agentRecommendation: 'Nexus should request current SLA performance before RFP release.',
+    handoffTarget: 'operations',
+    rfpTierImpact: 'outline_caveat',
+    stageGateImpact: 'creates_caveat',
+    scorecardImpact: 'lowers_confidence',
+    pricingImpact: 'none',
+    valueImpact: 'lowers_confidence',
+  },
+  {
+    eventId: DATA_AI_EVENT_ID,
+    categoryKey: 'vendor_contracts',
+    categoryLabel: 'Vendor Contracts',
+    requirementLevel: 'recommended',
+    requiredStages: ['sourcing_strategy', 'rfp_rfi_package'],
+    datasetDomain: 'contract_repository',
+    defaultOwnerRole: 'Legal / Procurement',
+    workflowImpact: 'Shows contract presence, but exclusions and termination terms are not citeable yet.',
+    agentRecommendation: 'Sentinel should not cite contract terms until parsing and validation complete.',
+    handoffTarget: 'legal',
+    rfpTierImpact: 'outline_caveat',
+    stageGateImpact: 'creates_caveat',
+    scorecardImpact: 'none',
+    pricingImpact: 'requires_caveat',
+    valueImpact: 'none',
+  },
+  {
+    eventId: DATA_AI_EVENT_ID,
+    categoryKey: 'security_compliance',
+    categoryLabel: 'Security / Compliance Requirements',
+    requirementLevel: 'required',
+    requiredStages: ['scope', 'rfp_rfi_package'],
+    datasetDomain: 'security_compliance',
+    defaultOwnerRole: 'Security Lead',
+    workflowImpact: 'Security requirements can be outlined, but approval-grade language needs validation.',
+    agentRecommendation: 'Steward should route security requirements back for owner confirmation.',
+    handoffTarget: 'security',
+    rfpTierImpact: 'outline_caveat',
+    stageGateImpact: 'creates_caveat',
+    scorecardImpact: 'lowers_confidence',
+    pricingImpact: 'none',
+    valueImpact: 'lowers_confidence',
+  },
+  {
+    eventId: DATA_AI_EVENT_ID,
+    categoryKey: 'retained_roles',
+    categoryLabel: 'Retained Roles',
+    requirementLevel: 'required',
+    requiredStages: ['scope'],
+    datasetDomain: 'organization_ownership',
+    defaultOwnerRole: 'Client PMO Lead',
+    workflowImpact: 'Blocks clear scope split and transition responsibility language.',
+    agentRecommendation: 'Nexus should ask the client to confirm retained roles before RFP drafting.',
+    handoffTarget: 'data_owner',
+    rfpTierImpact: 'rich_blocker',
+    stageGateImpact: 'blocks_current_stage',
+    scorecardImpact: 'lowers_confidence',
+    pricingImpact: 'none',
+    valueImpact: 'lowers_confidence',
+  },
+];
+
+const DATA_AI_MODERNIZATION_ADMIN_SETUP_RECORDS: SourceAdminSetupReadinessRecord[] = [
+  {
+    recordId: 'admin-source-readiness-application-inventory',
+    tenantId: DEFAULT_TENANT_ID,
+    datasetId: 'dataset-application-inventory',
+    datasetDomain: 'application_portfolio',
+    categoryKey: 'application_inventory',
+    categoryLabel: 'Application Inventory',
+    readinessState: 'Usable Evidence',
+    evidenceUsability: 'usable',
+    ownerName: 'Client PMO Lead',
+    ownerRole: 'Portfolio owner',
+    sourceSystem: 'Application inventory workbook',
+    sourceType: 'file',
+    lastUpdated: '2026-04-24',
+    confidence: 'high',
+    accessState: 'allowed',
+    freshnessStatus: 'current',
+    provenance: 'Seeded Admin/Setup readiness contract fixture.',
+  },
+  {
+    recordId: 'admin-source-readiness-workload-baseline',
+    tenantId: DEFAULT_TENANT_ID,
+    datasetId: 'dataset-workload-baseline',
+    datasetDomain: 'analytics_workload_baseline',
+    categoryKey: 'workload_baseline',
+    categoryLabel: 'Workload Baseline',
+    readinessState: 'Requested',
+    evidenceUsability: 'not_available',
+    ownerName: 'Data Platform Lead',
+    ownerRole: 'Data owner',
+    sourceSystem: 'Minimum data request',
+    sourceType: 'manual_request',
+    lastUpdated: null,
+    confidence: 'low',
+    accessState: 'allowed',
+    freshnessStatus: 'unknown',
+    provenance: 'Seeded Admin/Setup readiness request.',
+  },
+  {
+    recordId: 'admin-source-readiness-ticket-history',
+    tenantId: DEFAULT_TENANT_ID,
+    datasetId: 'dataset-ticket-history',
+    datasetDomain: 'service_management',
+    categoryKey: 'ticket_history',
+    categoryLabel: 'Ticket History',
+    readinessState: 'Missing',
+    evidenceUsability: 'not_available',
+    ownerName: 'Service Management Lead',
+    ownerRole: 'Data owner',
+    sourceSystem: 'ITSM export',
+    sourceType: 'system',
+    lastUpdated: null,
+    confidence: 'low',
+    accessState: 'allowed',
+    freshnessStatus: 'unknown',
+    provenance: 'Seeded missing platform readiness record.',
+  },
+  {
+    recordId: 'admin-source-readiness-vendor-spend',
+    tenantId: DEFAULT_TENANT_ID,
+    datasetId: 'dataset-vendor-spend',
+    datasetDomain: 'finance_cost_baseline',
+    categoryKey: 'vendor_spend',
+    categoryLabel: 'Vendor Spend',
+    readinessState: 'Available',
+    evidenceUsability: 'available_not_validated',
+    ownerName: 'Procurement Lead',
+    ownerRole: 'Procurement owner',
+    sourceSystem: 'Spend cube extract',
+    sourceType: 'system',
+    lastUpdated: '2026-04-23',
+    confidence: 'medium',
+    accessState: 'allowed',
+    freshnessStatus: 'current',
+    provenance: 'Seeded available-not-validated platform readiness record.',
+  },
+  {
+    recordId: 'admin-source-readiness-sla-baseline',
+    tenantId: DEFAULT_TENANT_ID,
+    datasetId: 'dataset-sla-baseline',
+    datasetDomain: 'service_level_baseline',
+    categoryKey: 'sla_baseline',
+    categoryLabel: 'SLA Baseline',
+    readinessState: 'Missing',
+    evidenceUsability: 'not_available',
+    ownerName: 'Operations Lead',
+    ownerRole: 'Operations owner',
+    sourceSystem: 'Service report',
+    sourceType: 'system',
+    lastUpdated: null,
+    confidence: 'low',
+    accessState: 'allowed',
+    freshnessStatus: 'unknown',
+    provenance: 'Seeded missing platform readiness record.',
+  },
+  {
+    recordId: 'admin-source-readiness-vendor-contracts',
+    tenantId: DEFAULT_TENANT_ID,
+    datasetId: 'dataset-vendor-contracts',
+    datasetDomain: 'contract_repository',
+    categoryKey: 'vendor_contracts',
+    categoryLabel: 'Vendor Contracts',
+    readinessState: 'Loaded',
+    evidenceUsability: 'loaded_not_usable',
+    ownerName: 'Legal / Procurement',
+    ownerRole: 'Contract owner',
+    sourceSystem: 'Contract repository, parsing pending',
+    sourceType: 'repository',
+    lastUpdated: '2026-04-22',
+    confidence: 'medium',
+    accessState: 'allowed',
+    freshnessStatus: 'aging',
+    provenance: 'Seeded loaded-not-usable platform readiness record.',
+  },
+  {
+    recordId: 'admin-source-readiness-security-compliance',
+    tenantId: DEFAULT_TENANT_ID,
+    datasetId: 'dataset-security-compliance',
+    datasetDomain: 'security_compliance',
+    categoryKey: 'security_compliance',
+    categoryLabel: 'Security / Compliance Requirements',
+    readinessState: 'Low Confidence',
+    evidenceUsability: 'low_confidence',
+    ownerName: 'Security Lead',
+    ownerRole: 'Security owner',
+    sourceSystem: 'Security requirements notes',
+    sourceType: 'file',
+    lastUpdated: '2026-04-24',
+    confidence: 'low',
+    accessState: 'allowed',
+    freshnessStatus: 'current',
+    provenance: 'Seeded low-confidence platform readiness record.',
+  },
+  {
+    recordId: 'admin-source-readiness-retained-roles',
+    tenantId: DEFAULT_TENANT_ID,
+    datasetId: 'dataset-retained-roles',
+    datasetDomain: 'organization_ownership',
+    categoryKey: 'retained_roles',
+    categoryLabel: 'Retained Roles',
+    readinessState: 'Requested',
+    evidenceUsability: 'not_available',
+    ownerName: 'Client PMO Lead',
+    ownerRole: 'Organization owner',
+    sourceSystem: 'Retained organization worksheet',
+    sourceType: 'manual_request',
+    lastUpdated: null,
+    confidence: 'low',
+    accessState: 'allowed',
+    freshnessStatus: 'unknown',
+    provenance: 'Seeded requested platform readiness record.',
+  },
+];
