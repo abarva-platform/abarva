@@ -5444,6 +5444,62 @@
         "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
       ],
       "notes": "Surfaces the PROD4 deployment-status read model as a calm, Apple-like server component on the platform Admin Production Readiness page. UI-facing slice with strict canon hygiene (theme imports only, no local hex). Honest unavailable display when tokens are absent; chip uses a single dark-blue accent regardless of state because PROD5 cannot prove a green deploy. Mounting the card on the live panel is deferred to a follow-up slice; PROD5 lands the component and its honesty test only. No provider API polling, no model calls, no auth changes, no migrations, no tracker promotion."
+    },
+    {
+      "id": "WAVE1",
+      "name": "Build Wave Progress Tracker",
+      "category": "OPS",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane H (build-operations parallel pack)",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "OPS1",
+        "OPS2",
+        "PROD2",
+        "PROD4"
+      ],
+      "allowedFiles": [
+        "docs/build/build-waves.json",
+        "docs/build/BUILD_WAVE_PROGRESS_PROTOCOL.md",
+        "docs/build/slices/WAVE1_BUILD_WAVE_PROGRESS_TRACKER.md",
+        "src/__tests__/integration/ops/build-wave-progress.test.ts",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/app/**",
+        "src/components/**",
+        "src/lib/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "docs/build/build-waves.json declares schemaVersion 1, lastUpdated 2026-04-26, a non-empty source string, a lifecycle vocabulary covering planned / in_progress / merged / blocked / deferred, and a validationLifecycle vocabulary covering not_run / tsc_clean / tests_green / build_green / ci_green / full_pass / partial / failing.",
+        "docs/build/build-waves.json seeds nine canonical waves (Wave 0 Agentic Spine Foundation, Wave 1 Runtime Safety + Agent Mission + Context/Evidence Backbone, Wave 2 AI Control Tower + Intelligence Depth, Wave 3 Enterprise SaaS + Data Trust + Deployment Foundations, Wave 4 Program Continuity + Deliverable Loop, Wave 5 Solution-to-Workshop / Architecture Canvas, Wave 6 Production Hardening / Route Smoke / Persona Crawler, Wave 7 Private Azure/GCP Deployment Lab, Wave 8 Build Operations Hardening), each carrying waveId / name / goal / status / percentComplete / plannedSlices / completedSlices / skippedSlices / blockedSlices / mergedPrs / validationStatus / productionReadinessUpdated / currentBlockers / nextAction / lastUpdated.",
+        "Every wave's percentComplete reconciles with round(len(completedSlices) / len(plannedSlices) * 100) within plus or minus 1; the empty-wave case (Wave 7) is recorded as 0.",
+        "Every slice ID in completedSlices exists in build-slices.json at status code_complete or verified; future-only IDs in plannedSlices for non-merged waves are accepted as planned-but-not-yet-shipped.",
+        "Wave 8 plannedSlices includes OPS5, OPS6, OPS7, OPS8, QA13, CLOUD8, PROD5, and WAVE1; Wave 8 completedSlices includes WAVE1; Wave 8 status is in_progress.",
+        "docs/build/BUILD_WAVE_PROGRESS_PROTOCOL.md documents when to update build-waves.json, the percentComplete formula, the skipped / blocked / deferred slice rules, the PR merge binding, the run metrics requirement, the conservative-status rule, the OPS1 conflict policy, and the relationship to build-slices.json and production-readiness.json.",
+        "docs/build/slices/WAVE1_BUILD_WAVE_PROGRESS_TRACKER.md documents the slice purpose, what changed, what is explicitly out of scope, validation commands, and acceptance criteria.",
+        "src/__tests__/integration/ops/build-wave-progress.test.ts asserts: build-waves.json parses; all 9 waves present; every required field on every wave; no duplicate waveId; every status in canonical set; every validationStatus in canonical set; percentComplete reconciliation within plus or minus 1; completedSlices subset of code_complete / verified entries in build-slices.json; plannedSlices either in build-slices.json or in slice contracts directory or accepted as future-only on non-merged waves; every mergedPrs entry is a positive integer; module hygiene (no Date.now / Math.random / new Date references; no conflict markers).",
+        "docs/build/build-slices.json appends a WAVE1 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn, status code_complete, risk low, ownerAgent Lane H, and lastUpdated 2026-04-26; manifest top-level lastUpdated remains 2026-04-26.",
+        "docs/build/production-readiness.json validation_qa and production_deployment notes / nextAction are UNION-updated conservatively without overwriting prior wording; statuses are preserved (no promotions); manifest top-level lastUpdated is set to 2026-04-26.",
+        "Documentation, manifest, and deterministic test only; no application code, runtime, auth, supabase, migrations, package manifests, or platform-design docs are modified."
+      ],
+      "validationCommands": [
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-waves.json','utf8')); console.log('waves json ok')\"",
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/ops/build-wave-progress.test.ts",
+        "npm run build"
+      ],
+      "notes": "Deterministic wave-level rollup over the slice manifest. Read-only. Does not deploy, does not poll Vercel or GitHub, does not call any model provider, does not promote any production-readiness component, does not modify auth / supabase / migrations / runtime code. Wave membership is best-effort honest mapping inferred from slice ID prefix, slice name, and merged-PR commit messages on main. Future-only slice IDs (OPS5, OPS6, OPS7, OPS8, QA13, CLOUD8, PROD5) are listed in Wave 8 plannedSlices to carry roadmap intent without inventing slice contracts. Lane H commits locally only; the integration agent owns the cherry-pick and merge."
     }
   ]
 }
