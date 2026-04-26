@@ -141,13 +141,14 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
 
 ## Last status emission
 - 2026-04-25 - Larger gated Source batch status update - Slice 1 pricing PR updated to remove per-slice CYCLE_STATE changes, Slice 5 data readiness panel plan opened, Slice 2 and Slice 4 already had open equivalent PRs, Slice 3 blocked by open PR #221 - no runtime/model/upload/parsing work in this state slice.
+- 2026-04-25 - Supervised Source Agent Mission batch state - Agent Mission Model is on main, architecture alignment reconciliation opened, Source agent mission queue plan opened, agent mission activity UI plan opened, deterministic mission read-model implementation skipped until the queue plan is merged.
 
 ## AbarVa Source Sidecar State
 
-- Current completed milestone: PR #229 merged · Source Nexus API stub plan.
+- Current completed milestone: PR #248 merged - AbarVa Agent Mission Model.
 - Dashboard decision: approve with minor polish, pending authenticated screenshot/review.
-- Current objective: complete larger gated Source batch bookkeeping without per-slice CYCLE_STATE churn.
-- Current item: Batch State Update.
+- Current objective: complete Source agent mission planning, then wait for the queue plan to merge before implementing a deterministic Source mission read model.
+- Current item: Source Agent Mission batch state update.
 - Completed this cycle:
   - AbarVa Source Build Pack docs.
   - Context-awareness docs.
@@ -214,6 +215,9 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
   - Source layered progress tracker merged via PR #228 to show Source progress across platform design system, product foundation, pattern/workflow IP, validation harnesses, multi-agent intelligence, API/runtime, UI, evidence pipeline, and production readiness.
   - Source Nexus API stub plan drafted for `POST /api/v1/source/[eventId]/nexus/ask`, no-model first behavior, SourceAgentContextBundle usage, deterministic multi-agent briefing integration, context/workflow validation integration, request/response shape, failure states, and auth/tenant considerations.
   - Source data readiness and Admin/Setup integration spec created. Admin/Setup owns data onboarding, connector setup, dataset readiness, permissions, parsing status, and evidence usability; Source consumes readiness state for event workflow impact.
+  - Source Nexus API route stub merged via PR #230 and contract tests merged via PR #245. The route remains deterministic/no-model and is not a production-ready agent runtime.
+  - AbarVa Agent Mission Model merged via PR #248. Nexus, Sentinel, Atlas, and Steward now have mission, trigger, handoff, queue-state, priority, and calm activity UI canon.
+  - Source Agent Mission batch opened docs-only follow-up PRs: architecture alignment reconciliation, Source mission queue plan, and agent mission activity UI plan.
   - Larger gated Source batch ran with per-slice CYCLE_STATE updates disabled.
   - PR #235 opened for Pricing and Negotiation Intelligence Standard. Branch `codex/source-pricing-negotiation-intelligence`; latest commit removed CYCLE_STATE from the slice diff. Checks green at last poll.
   - PR #236 opened for Source Data Readiness Panel Plan. Branch `codex/source-data-readiness-panel-plan`; checks still pending at last poll.
@@ -225,5 +229,5 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
 - Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, quality assessment, validation runner output, and readable validation report output.
 - Blockers/do-not-build: no workflow engine code, approval engine, artifact versioning implementation, document export/import, event canvas, chat UI, model calls, API routes, upload/parsing, scorecard UI, artifact drawer UI, value ledger UI, vendor flow, AI/RFP generation, `/programs` integration, `/preview` or `/demo` surfaces, `ProgramSurface`, or `src/lib/programs/mock.ts`.
 - Notes and discoveries: Fixtures should stay as deterministic guardrails until workflow runtime work is explicitly approved. The uploaded-document citation scenario correctly DEFERs because parsing/validation is not implemented. PR #205 cleared the unrelated full-lint blocker. The workflow validation runner preserves healthy BLOCK outcomes instead of treating them as failures. The hardened report makes BLOCK outcomes readable as expected enforcement and preserves the intentional DEFER. The `/source` auth redirect issue is narrow: Source was missing from `authRequiredRoutes`, causing signed-out `/source` to fall through to Clerk generic `auth.protect()` instead of app-owned `/sign-in?redirect=/source`.
-- Next recommended item: review and merge green open PRs in dependency order, then re-run the token bridge gate after PR #221 is merged.
-- Next planning artifact: post-merge state refresh after #235/#236 land, plus a decision between dashboard/UI refinement and Source Nexus API route follow-through based on the already open PR queue.
+- Next recommended item: review/merge the Source mission queue plan, then implement the deterministic Source agent mission read model only after the plan is on main.
+- Next planning artifact: no additional planning artifact is needed before the mission read-model implementation slice.

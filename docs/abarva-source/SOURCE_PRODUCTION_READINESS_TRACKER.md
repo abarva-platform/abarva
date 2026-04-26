@@ -47,7 +47,7 @@ The next major product milestone remains a validated context-aware Nexus foundat
 | Chat input model | Designed | `23_CHAT_EXPERIENCE_AND_INPUT_MODEL.md` | 3 choices plus custom model is specified. | Do not build until context validation is used by runtime. |
 | File attachment model | Designed | `src/lib/source/attachments.ts`, `23_CHAT_EXPERIENCE_AND_INPUT_MODEL.md` | Type contracts exist; upload/parsing does not. | Review attachment pipeline before implementation. |
 | Upload/evidence pipeline | Not Started | Attachment/context docs only | No upload, parsing, citation extraction, evidence registry, or client evidence usability exists. | Design implementation after attachment model review. |
-| Source-specific Nexus API route | Not Started | Planned future route, likely `/api/v1/source/[eventId]/nexus/ask` | Existing program-scoped Nexus routes should not be reused directly. | Build stub only when approved. |
+| Source-specific Nexus API route | Built / Tested Deterministically | PR #230, PR #245, `src/app/api/v1/source/[eventId]/nexus/ask/route.ts`, `src/lib/source/nexus-api.ts` | Deterministic no-model route stub exists and contract tests are merged. This is not model readiness, production runtime readiness, tenant readiness, or live workflow readiness. | Keep deterministic; integrate Source mission read model only after mission queue plan is merged. |
 | Model-assisted Nexus response | Not Started | `16_AGENT_PER_TURN_CONTRACT.md`, `22_AGENT_CONTEXT_AWARENESS.md` | Model behavior is designed, not wired. | Do not start until context bundle enforcement is present. |
 | Scorecard governance UI | Not Started / Deferred | Build Pack scorecard docs | Scorecard governance is specified, UI not expanded. | Keep blocked until governance model is reviewed. |
 | Artifact drawer | Not Started / Deferred | Build Pack artifact docs | Artifact structure exists in plan, not production-ready. | Stabilize artifact model before generation. |
@@ -198,8 +198,8 @@ Current assessment: not started for Source.
 - Upload/evidence pipeline: not started. The remaining workflow defer correctly blocks uploaded document citation before parsing/validation.
 - Source/Admin data readiness integration: designed/spec only. Source should consume Admin/Setup readiness and must not duplicate connector setup, dataset inventory, parsing, file management, access control, or evidence storage.
 - Pricing and negotiation intelligence: designed/spec only. Source can use client baseline data, AbarVa pattern intelligence, vendor proposals, normalization logic, trap detection, negotiation strategy, scorecard linkage, and value ledger linkage without requiring paid third-party benchmark subscriptions.
-- Agent mission model: designed/spec only. Nexus, Sentinel, Atlas, and Steward now have a shared mission, trigger, handoff, and calm activity UI model, but no runtime mission queue, scheduler, background job, proactive UI, or model behavior is implemented.
-- Agent/model integration: not started. This is intentional and remains blocked.
+- Agent mission model: designed/spec only. Nexus, Sentinel, Atlas, and Steward now have a shared mission, trigger, handoff, and calm activity UI model, but no Source mission read model, runtime mission queue, scheduler, background job, proactive UI, or model behavior is implemented.
+- Agent/model integration: deterministic no-model API stub exists. Model-assisted Source behavior is not started and remains intentionally blocked.
 - Production readiness: not started. Source has not passed enterprise, deployment, security, persistence, runtime, or live persona validation gates.
 
 ## 6. Near-Term Roadmap
@@ -217,7 +217,7 @@ Keep active:
 
 - No chat UI until context validation is enforced by runtime.
 - No model calls until SourceAgentContextBundle is enforced.
-- No API routes until the route stub is explicitly approved.
+- No additional API routes beyond the deterministic Source Nexus stub unless explicitly approved.
 - No file upload/parsing until attachment and evidence pipeline contracts are reviewed.
 - No Source-specific setup workflow that duplicates Admin/Setup readiness.
 - No workflow engine until workflow validation semantics are reviewed.
@@ -252,6 +252,12 @@ Keep active:
 - PR #207: Deterministic workflow validation runner.
 - PR #209: Workflow validation report hardening plan.
 - PR #210: Workflow validation report formatter.
+- PR #230: Deterministic Source Nexus API stub.
+- PR #245: Source Nexus API stub contract tests.
+- PR #248: AbarVa Agent Mission Model.
+- PR #249: Source architecture alignment reconciliation.
+- PR #250: Source agent mission queue plan.
+- PR #251: Agent mission activity UI plan.
 
 Post-merge planning notes:
 
@@ -272,7 +278,7 @@ Post-merge planning notes:
 - Context quality still depends on richer client, pattern, scorecard, evidence, and attachment data.
 - File upload/evidence pipeline is not built.
 - Uploaded document citation remains intentionally deferred until parsing/validation exists.
-- No Source-specific Nexus API route exists yet.
+- Source-specific Nexus API route exists as a deterministic no-model stub, but production runtime, tenant checks, and model-assisted behavior are not ready.
 - No model validation exists yet.
 - Workflow validation foundation exists, but no runtime workflow engine enforcement exists.
 - Artifact versioning, export/re-upload, review comments, approvals, and waivers are not implemented.
