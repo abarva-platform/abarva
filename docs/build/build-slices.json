@@ -7032,6 +7032,21 @@
       "testFiles": [],
       "sliceDoc": "docs/build/slices/DEMO3_20_MINUTE_BOARDROOM_DEMO_PACK.md",
       "createdAt": "2026-04-26"
+    },
+    {
+      "id": "QA19",
+      "name": "E2E Smoke Result Capture",
+      "category": "qa",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/qa/e2e-smoke-result-capture.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/qa/e2e-smoke-result-capture.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/QA19_E2E_SMOKE_RESULT_CAPTURE.md",
+      "createdAt": "2026-04-26"
     }
   ]
 }
