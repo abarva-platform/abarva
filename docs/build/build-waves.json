@@ -788,7 +788,8 @@
         "SHELL6",
         "SHELL7",
         "QA28",
-        "DEMO8"
+        "DEMO8",
+        "AGENTX"
       ],
       "completedSlices": [
         "SHELL1",
@@ -800,7 +801,8 @@
         "SHELL6",
         "SHELL7",
         "QA28",
-        "DEMO8"
+        "DEMO8",
+        "AGENTX"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
@@ -808,7 +810,7 @@
       "validationStatus": "tests_green",
       "productionReadinessUpdated": true,
       "currentBlockers": [],
-      "nextAction": "Wave 20 complete. All 10 slices landed: SHELL1-7, DEMODATA1, QA28, DEMO8.",
+      "nextAction": "Wave 20 complete. All 11 slices landed: SHELL1-7, DEMODATA1, QA28, DEMO8, AGENTX.",
       "lastUpdated": "2026-04-26"
     },
     {

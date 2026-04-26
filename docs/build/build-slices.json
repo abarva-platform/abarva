@@ -7707,6 +7707,13 @@
       "status": "code_complete",
       "wave": "wave-20",
       "lane": "J"
+    },
+    {
+      "id": "AGENTX",
+      "title": "Agent-Centric Enforcement Review Standard",
+      "status": "code_complete",
+      "wave": "wave-20",
+      "lane": "AGENTX"
     }
   ]
 }
