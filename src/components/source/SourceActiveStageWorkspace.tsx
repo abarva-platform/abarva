@@ -31,7 +31,7 @@ export function SourceActiveStageWorkspace({
       <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12 }}>
         <div>
           <div style={{ ...sourceSectionLabel, color: EXPERIENCE_COLORS.accentTeal }}>Current-stage workspace</div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: EXPERIENCE_COLORS.textPrimary }}>
+          <div style={{ fontSize: 20, fontWeight: 800, color: EXPERIENCE_COLORS.textPrimary }}>
             {activeStage.label}
           </div>
         </div>
@@ -74,6 +74,7 @@ export function SourceActiveStageWorkspace({
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 230px), 1fr))',
           gap: 12,
+          alignItems: 'start',
         }}
       >
         <div style={INSET}>
@@ -98,14 +99,13 @@ export function SourceActiveStageWorkspace({
           </div>
         </div>
 
-        <div style={INSET}>
-          <div style={{ ...sourceSectionLabel, color: EXPERIENCE_COLORS.accentTeal }}>Data readiness placeholder</div>
+        <div style={{ ...INSET, alignSelf: 'start' }} aria-label="Data readiness placeholder">
+          <div style={{ ...sourceSectionLabel, color: EXPERIENCE_COLORS.accentTeal }}>Data readiness</div>
           <p style={{ ...sourceMuted, color: EXPERIENCE_COLORS.textSecondary, margin: 0 }}>
-            Source consumes future Admin/Setup readiness state here. The shell does not create a duplicate setup
-            process or parse uploads.
+            Source consumes Admin/Setup readiness and translates data gaps into sourcing impact.
           </p>
           <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.riskAmber, fontWeight: 800 }}>
-            Current posture: missing client baseline evidence.
+            Current posture: baseline evidence missing.
           </div>
         </div>
       </div>

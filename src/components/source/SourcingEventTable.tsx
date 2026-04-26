@@ -14,9 +14,10 @@ import {
 import { EventLifecycleStatusBadge } from './EventLifecycleStatusBadge';
 
 const TABLE_CELL: CSSProperties = {
-  padding: '18px 14px',
+  padding: '16px 12px',
   borderBottom: `1px solid ${COLORS.border}`,
   verticalAlign: 'top',
+  overflowWrap: 'anywhere',
 };
 
 const STATUS_META: CSSProperties = {
@@ -86,6 +87,7 @@ export function SourcingEventTable({
         background: lightMode ? LIGHT.card : sourceCard.background,
         border: `1px solid ${lightMode ? LIGHT.border : COLORS.border}`,
         gap: lightMode ? 10 : sourceCard.gap,
+        minWidth: 0,
       }}
     >
       <div
@@ -109,8 +111,8 @@ export function SourcingEventTable({
         </p>
       </div>
 
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: lightMode ? 980 : 1040 }}>
+      <div style={{ maxWidth: '100%', overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: lightMode ? 880 : 960 }}>
           <thead>
             <tr style={{ textAlign: 'left' }}>
               <th style={headerCell}>Event</th>

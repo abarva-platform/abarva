@@ -1,4 +1,3 @@
-import { SOURCE_STAGE_ORDER } from '@/lib/source/constants';
 import { getStageStateLabel } from '@/lib/source/lifecycle';
 import type { WorkflowStage } from '@/lib/source/types';
 import { EXPERIENCE_COLORS, FONTS, TEXT } from '@/lib/design-system';
@@ -48,7 +47,7 @@ export function SourceJourneyTracker({ stages }: { stages: WorkflowStage[] }) {
             }}
           >
             <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
-              Stage {sourceStageNumber(stage.key, index)}
+              Step {index + 1}
             </div>
             <div style={{ fontWeight: 800, color: EXPERIENCE_COLORS.textPrimary }}>{stage.label}</div>
             <div
@@ -72,11 +71,6 @@ export function SourceJourneyTracker({ stages }: { stages: WorkflowStage[] }) {
       </div>
     </section>
   );
-}
-
-function sourceStageNumber(stageKey: WorkflowStage['key'], fallbackIndex: number): number {
-  const index = SOURCE_STAGE_ORDER.indexOf(stageKey);
-  return index >= 0 ? index + 1 : fallbackIndex + 1;
 }
 
 function stageColor(stage: WorkflowStage): string {

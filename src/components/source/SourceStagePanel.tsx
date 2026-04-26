@@ -34,7 +34,7 @@ export function SourceStagePanel({ event }: { event: SourcingEventDetail }) {
               <div key={artifact.id} style={LIGHT_ROW}>
                 <div style={{ fontWeight: 800, color: EXPERIENCE_COLORS.textPrimary }}>{artifact.title}</div>
                 <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
-                  {SOURCE_ARTIFACT_STATUS_LABELS[artifact.status]} / no drawer in this slice
+                  {SOURCE_ARTIFACT_STATUS_LABELS[artifact.status]} / read-only summary
                 </div>
               </div>
             ))}

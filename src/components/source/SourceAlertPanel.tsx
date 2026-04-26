@@ -80,6 +80,8 @@ export function SourceAlertPanel({
         background: 'rgba(255,255,255,0.86)',
         borderRadius: 14,
         padding: 14,
+        minWidth: 0,
+        maxWidth: '100%',
       }
     : sourceCard;
   const textPrimary = lightMode ? LIGHT.ink : COLORS.textPrimary;
@@ -135,10 +137,14 @@ export function SourceAlertPanel({
                   <div style={{ ...TEXT.small, color: textMuted }}>Status - {alert.status}</div>
                 ) : null}
               </div>
-              <div style={{ fontSize: '14px', fontWeight: 800, color: textPrimary }}>{alert.title}</div>
+              <div style={{ fontSize: '14px', fontWeight: 800, color: textPrimary, overflowWrap: 'anywhere' }}>
+                {alert.title}
+              </div>
               {eventContext ? (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  <span style={{ ...TEXT.small, color: textSecondary, fontWeight: 700 }}>{eventContext.name}</span>
+                  <span style={{ ...TEXT.small, color: textSecondary, fontWeight: 700, minWidth: 0 }}>
+                    {eventContext.name}
+                  </span>
                   {alert.owner ? (
                     <span style={{ ...TEXT.small, color: textMuted }}>Owner - {alert.owner}</span>
                   ) : null}
