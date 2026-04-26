@@ -49,7 +49,7 @@
       {
         "id": "programs",
         "area": "Programs",
-        "completed": "Canonical programs index/detail, phase/gate rendering, Nexus rail, evidence/value readiness, workshop readiness, workshop mode shell, artifact canvas shell, and named future phase deliverable seeds for Design/Build/Activate/Operate phases (PROG15).",
+        "completed": "Canonical programs index/detail, phase/gate rendering, Nexus rail, evidence/value readiness, workshop readiness, workshop mode shell, artifact canvas shell, named future phase deliverable seeds for Design/Build/Activate/Operate phases (PROG15), and ProgramRouteShell orientation wrapper (SHELL4 wave-20).",
         "pending": "Full save/resume state, live meeting notes ingestion, real deliverable generation, and gate transition workflows.",
         "percentLow": 55,
         "percentHigh": 55,

@@ -7665,6 +7665,13 @@
       "status": "code_complete",
       "wave": "wave-20",
       "lane": "B"
+    },
+    {
+      "id": "SHELL4",
+      "title": "Programs Route Shell Control",
+      "status": "code_complete",
+      "wave": "wave-20",
+      "lane": "D"
     }
   ]
 }
