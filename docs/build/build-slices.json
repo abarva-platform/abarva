@@ -5675,6 +5675,63 @@
         "npx eslint --max-warnings=0 src/lib/solutions/architecture-draft-read-model.ts src/__tests__/integration/solutions/architecture-draft-read-model.test.ts"
       ],
       "notes": "Pure deterministic architecture draft read model. Library only \u2014 no model-generated architecture, no fake citations, no live retrieval, no tenant runtime state, no persistence. The default seed names a generic cross-sector architecture draft so the contract stands alone; per-archetype seed packs are deferred and callers can already pass a populated ArchitectureDraftInput to override the seed verbatim. Consumed downstream by the future Solution Intelligence Canvas (SOL10+) and by Nexus when composing per-tenant architecture drafts. agent_runtime status is not promoted by this slice."
+    },
+    {
+      "id": "SOL13",
+      "name": "Workshop-to-Architecture Refinement",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "MW1",
+        "MW4",
+        "MW5",
+        "SOL8"
+      ],
+      "allowedFiles": [
+        "src/lib/solutions/workshop-architecture-refinement.ts",
+        "src/__tests__/integration/solutions/workshop-architecture-refinement.test.ts",
+        "docs/build/slices/SOL13_WORKSHOP_ARCHITECTURE_REFINEMENT.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Module exports ArchitectureRefinementProposal, ArchitectureRefinementType, ArchitectureRefinementSource, ArchitectureRefinementSummary, ArchitectureTargetSection, ARCHITECTURE_REFINEMENT_TYPES, ARCHITECTURE_TARGET_SECTIONS, deriveArchitectureRefinementsFromMeetingNotes, and summarizeArchitectureRefinements as the canonical contract.",
+        "ArchitectureRefinementType union contains exactly seven members: 'add_component', 'remove_component', 'modify_component', 'add_assumption', 'add_risk', 'add_evidence_gap', 'change_section'; all seven are representable on the public union and are produced by a single deterministic fixture.",
+        "Every emitted proposal carries proposed: true, status: 'proposed', sourceNoteId, sourceWorkshopType, targetSection, rationale, and createdFrom: 'deterministic_workshop_architecture_refinement_seed'; summarizeArchitectureRefinements always reports appliedProposals: 0.",
+        "Structured notes produce the expected proposals: add-component keyword in a decision -> add_component (targets components); remove-component keyword -> remove_component (targets components); decision affecting a deliverable key (or modify-component keyword) -> modify_component (targets components); aligned or pending stakeholder alignment -> add_assumption (targets assumptions); every captured risk -> add_risk (targets risks); open question blocking gate_signoff or deliverable_approval and evidence candidate with needsCapture: true -> add_evidence_gap (targets evidence_gaps); decision in data_foundation_assessment / governance_risk_review / operating_model_alignment / value_framing / architecture_solution_design workshop type -> change_section with the canonical mapping.",
+        "deriveArchitectureRefinementsFromMeetingNotes is byte-equal across repeated calls for the same input list and proposal IDs are stable.",
+        "summarizeArchitectureRefinements reconciles totalProposals, byRefinementType counts, byTargetSection counts, and the appliedProposals: 0 invariant against the proposal list.",
+        "Module imports MW4 meeting-notes-capture types and nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, legacy /programs, mock.ts, auth, or supabase; module contains no Math.random / clock reads / fetch / anthropic / openai / useState / useEffect; no Coming soon / TBD / Lorem ipsum placeholders.",
+        "Module source contains no DB writes: no 'await db.', no prisma references, no supabase references, no SQL INSERT INTO / UPDATE ... SET / DELETE FROM patterns; serialized proposal list contains no fabricated dollar amounts."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/solutions/workshop-architecture-refinement.test.ts",
+        "npx eslint --max-warnings=0 src/lib/solutions/workshop-architecture-refinement.ts src/__tests__/integration/solutions/workshop-architecture-refinement.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic library that turns structured MW4 meeting note captures into proposed architecture refinements. Operationalizes the SOL8 Solution Intelligence Canvas section on dynamic refinement and the MW1 contract section on after-workshop synthesis, focused on architecture-level proposals. Library only \u2014 no UI renderer, no live retrieval, no model calls, no tenant runtime state. Every proposal is marked proposed: true and is never auto-applied; the Maestro confirms before any downstream architecture-draft module would consume a proposal. Lands ahead of SOL10 (architecture draft read model) and SOL12 (architecture deliverable renderer); when SOL10 lands the refinement loop will consume SOL13 proposals as the canonical refinement-input shape."
     }
   ]
 }
