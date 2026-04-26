@@ -20,6 +20,8 @@ describe('Source event canvas shell', () => {
     expect(html).toContain('Current-stage workspace');
     expect(html).toContain('Data readiness');
     expect(html).toContain('Evidence posture for this stage');
+    expect(html).toContain('34% toward event data readiness');
+    expect(html).toContain('Admin/Setup readiness contract projection');
     expect(html).toContain('Source consumes Admin/Setup readiness');
     expect(html).toContain('Artifacts / reviews placeholder');
     expect(html).toContain('Nexus guidance');
@@ -86,6 +88,7 @@ describe('Source event canvas shell', () => {
       'src/components/source/SourceActiveStageWorkspace.tsx',
       'src/components/source/SourceDataReadinessPanel.tsx',
       'src/components/source/PersistentNexusPanel.tsx',
+      'src/lib/source/admin-setup-readiness-contract.ts',
     ].map((filePath) => readFileSync(join(process.cwd(), filePath), 'utf8')).join('\n');
 
     expect(sources).not.toMatch(/from ['"][^'"]*(openai|anthropic|@anthropic-ai\/sdk|ai\/react|ai)['"]/i);

@@ -5,17 +5,23 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { SourceDataReadinessPanel } from '@/components/source/SourceDataReadinessPanel';
 import {
   SOURCE_GOLDEN_EVENT_IDS,
-  getSourcingEvent,
+  buildSourceDataReadinessProjectionFromAdminSetup,
 } from '@/lib/source';
 
 describe('Source data readiness panel', () => {
   it('renders seeded readiness categories deterministically', async () => {
-    const event = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.dataAiModernization);
-    expect(event).toBeDefined();
+    const projection = buildSourceDataReadinessProjectionFromAdminSetup({
+      eventId: SOURCE_GOLDEN_EVENT_IDS.dataAiModernization,
+    });
 
-    const html = renderToStaticMarkup(createElement(SourceDataReadinessPanel, { items: event!.dataReadiness }));
+    const html = renderToStaticMarkup(createElement(SourceDataReadinessPanel, {
+      items: projection.items,
+      progressSummary: projection.summary,
+    }));
 
     expect(html).toContain('Data readiness');
+    expect(html).toContain('34% toward event data readiness');
+    expect(html).toContain('Admin/Setup readiness contract projection');
     expect(html).toContain('Application Inventory');
     expect(html).toContain('Workload Baseline');
     expect(html).toContain('Ticket History');
@@ -27,18 +33,29 @@ describe('Source data readiness panel', () => {
   });
 
   it('makes required missing categories visible', async () => {
-    const event = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.dataAiModernization);
-    const html = renderToStaticMarkup(createElement(SourceDataReadinessPanel, { items: event!.dataReadiness }));
+    const projection = buildSourceDataReadinessProjectionFromAdminSetup({
+      eventId: SOURCE_GOLDEN_EVENT_IDS.dataAiModernization,
+    });
+    const html = renderToStaticMarkup(createElement(SourceDataReadinessPanel, {
+      items: projection.items,
+      progressSummary: projection.summary,
+    }));
 
     expect(html).toContain('Requested');
     expect(html).toContain('Missing');
+    expect(html).toContain('3/5 required present');
     expect(html).toContain('Blocks Rich-tier Scope and makes pricing normalization unsafe.');
     expect(html).toContain('Blocks clear scope split and transition responsibility language.');
   });
 
   it('distinguishes usable evidence from loaded and available records', async () => {
-    const event = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.dataAiModernization);
-    const html = renderToStaticMarkup(createElement(SourceDataReadinessPanel, { items: event!.dataReadiness }));
+    const projection = buildSourceDataReadinessProjectionFromAdminSetup({
+      eventId: SOURCE_GOLDEN_EVENT_IDS.dataAiModernization,
+    });
+    const html = renderToStaticMarkup(createElement(SourceDataReadinessPanel, {
+      items: projection.items,
+      progressSummary: projection.summary,
+    }));
 
     expect(html).toContain('Usable Evidence');
     expect(html).toContain('usable evidence');
@@ -49,12 +66,17 @@ describe('Source data readiness panel', () => {
   });
 
   it('renders workflow impact and agent guidance labels', async () => {
-    const event = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.dataAiModernization);
-    const html = renderToStaticMarkup(createElement(SourceDataReadinessPanel, { items: event!.dataReadiness }));
+    const projection = buildSourceDataReadinessProjectionFromAdminSetup({
+      eventId: SOURCE_GOLDEN_EVENT_IDS.dataAiModernization,
+    });
+    const html = renderToStaticMarkup(createElement(SourceDataReadinessPanel, {
+      items: projection.items,
+      progressSummary: projection.summary,
+    }));
 
     expect(html).toContain('Workflow Impact');
     expect(html).toContain('Nexus should request workload volumes before strategy design expands.');
-    expect(html).toContain('Sentinel should not cite contract terms until parsing and validation complete.');
+    expect(html).toContain('Sentinel should keep this out of citations until Admin/Setup marks it usable evidence.');
     expect(html).toContain('Steward to Admin/Setup intake');
   });
 
@@ -62,6 +84,7 @@ describe('Source data readiness panel', () => {
     const sources = [
       'src/components/source/SourceDataReadinessPanel.tsx',
       'src/components/source/SourceActiveStageWorkspace.tsx',
+      'src/lib/source/admin-setup-readiness-contract.ts',
       'src/lib/source/mock-seed.ts',
       'src/lib/source/types.ts',
     ].map((filePath) => readFileSync(join(process.cwd(), filePath), 'utf8')).join('\n');
