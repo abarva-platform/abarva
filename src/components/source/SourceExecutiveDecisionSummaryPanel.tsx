@@ -8,6 +8,8 @@ export function SourceExecutiveDecisionSummaryPanel({
 }: {
   summary: SourceExecutiveDecisionSummary;
 }) {
+  const posture = summary.decisionPosture ?? summary.recommendedDecisionPosture;
+
   return (
     <section style={PANEL} aria-label="Executive decision summary panel">
       <div style={HEADER}>
@@ -20,8 +22,8 @@ export function SourceExecutiveDecisionSummaryPanel({
         </div>
         <div style={POSTURE_BADGE}>
           <div style={sourceSectionLabel}>Decision posture</div>
-          <div style={{ ...TEXT.small, color: postureColor(summary.recommendedDecisionPosture) }}>
-            {summary.recommendedDecisionPosture}
+          <div style={{ ...TEXT.small, color: postureColor(posture) }}>
+            {posture}
           </div>
         </div>
       </div>
@@ -29,6 +31,8 @@ export function SourceExecutiveDecisionSummaryPanel({
       <div style={GRID_TWO}>
         <Card title="Decision needed">
           <div style={{ color: EXPERIENCE_COLORS.textPrimary, fontWeight: 700 }}>{summary.decisionNeeded}</div>
+          <div style={{ ...sourceSectionLabel, marginTop: 8 }}>Nexus recommended next action</div>
+          <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>{summary.recommendedNextAction}</div>
           <div style={{ ...sourceSectionLabel, marginTop: 8 }}>Nexus recommendation</div>
           <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>{summary.nexusRecommendation}</div>
         </Card>
@@ -134,6 +138,9 @@ export function SourceExecutiveDecisionSummaryPanel({
       <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
         Recommended next action: {summary.recommendedNextAction}
       </div>
+      <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
+        Source modules used: {summary.sourceModulesUsed.join(', ')}
+      </div>
     </section>
   );
 }
@@ -147,7 +154,7 @@ function Card({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-function postureColor(posture: SourceExecutiveDecisionSummary['recommendedDecisionPosture']): string {
+function postureColor(posture: SourceExecutiveDecisionSummary['decisionPosture']): string {
   if (posture === 'ready_for_selection_review') return EXPERIENCE_COLORS.journeyComplete;
   if (posture === 'proceed_to_bafo') return EXPERIENCE_COLORS.accentBlue;
   if (posture === 'defer_pending_clarifications') return EXPERIENCE_COLORS.riskAmber;
