@@ -626,7 +626,8 @@
         "ACT2 AI portfolio inventory dimension added as a deterministic seed-only read model (src/lib/tower/ai-portfolio-inventory.ts); no live integrations and no per-tenant binding yet.",
         "ACT3 AI adoption and usage dimension added as a deterministic seed-only read model (src/lib/tower/ai-adoption-usage.ts) covering 10 canonical tool keys and 6 adoption health states with derived adoption rates; no live integrations and no per-tenant adoption telemetry binding yet.",
         "ACT4 AI value / outcome ledger read model added as a deterministic seed-only read model (src/lib/tower/ai-value-outcome-ledger.ts); attaches value claims (projected, baseline, realized, counterfactual) to ACT2 AI use cases by aiUseCaseKey and to canonical programs by programKey; every entry carries seed_value: true and dollar-denominated entries use the usd_seed measurement unit. No live integrations and no per-tenant binding yet.",
-        "ACT5 AI risk & governance dimension added as a deterministic seed-only read model (src/lib/tower/ai-risk-governance.ts) covering all ten canonical governance review surfaces; no live integrations, no per-tenant register binding, and no Atlas brief composition yet."
+        "ACT5 AI risk & governance dimension added as a deterministic seed-only read model (src/lib/tower/ai-risk-governance.ts) covering all ten canonical governance review surfaces; no live integrations, no per-tenant register binding, and no Atlas brief composition yet.",
+        "ACT7 AI productivity / DORA dimension added as a deterministic seed-only read model (src/lib/tower/ai-productivity-dora.ts); every entry carries liveTelemetry: false; no live telemetry, no per-tenant binding, and no Atlas brief composition yet."
       ]
     },
     {
@@ -1203,7 +1204,8 @@
         "Demo-grade ledgers are not production audit readiness.",
         "EVID2 Evidence Ledger MVP read model is now wired alongside the audit/governance contract surface (deterministic seed entries; no production audit ledger).",
         "EVID3 claim-support evaluator surfaces unsupported and contradicted claims for audit visibility; outputs are deterministic and tagged 'evidence_claim_support_v1'. No production audit ledger is implied or produced.",
-        "ACT4 AI value / outcome ledger read model adds a deterministic counterfactual + governanceReviewStatus + evidenceLinkedClaimIds shape that audit/governance review will eventually hang an audit trail off of; current slice is seed-only, the value claims are not persisted, and no production audit ledger entries are emitted."
+        "ACT4 AI value / outcome ledger read model adds a deterministic counterfactual + governanceReviewStatus + evidenceLinkedClaimIds shape that audit/governance review will eventually hang an audit trail off of; current slice is seed-only, the value claims are not persisted, and no production audit ledger entries are emitted.",
+        "ACT5 AI risk & governance read model adds a deterministic findings register (src/lib/tower/ai-risk-governance.ts) spanning all ten governance review dimensions, with HITL flags, governance gate outcomes, and evidence-seed handshakes; no per-tenant binding, no persistence, no production audit ledger."
       ]
     },
     {

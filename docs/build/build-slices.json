@@ -3364,6 +3364,57 @@
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
       "notes": "Operationalizes the AI Risk & Governance dimension of the ACT1 AI Control Tower contract. Deterministic seed-only read model. No live integrations, no per-tenant risk register binding, no Atlas brief composition, no Tower UI \u2014 those land in ACT5.x, ACT9, and ACT10. Conservative manifest update: ai_control_tower and audit_governance components are not promoted."
+    },
+    {
+      "id": "ACT7",
+      "name": "AI Productivity / DORA Read Model",
+      "category": "ACT",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "ACT2"
+      ],
+      "allowedFiles": [
+        "src/lib/tower/ai-productivity-dora.ts",
+        "src/__tests__/integration/tower/ai-productivity-dora.test.ts",
+        "docs/build/slices/ACT7_AI_PRODUCTIVITY_DORA_READ_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**",
+        "src/app/demo/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Module src/lib/tower/ai-productivity-dora.ts exports the canonical DORA_METRICS tuple ('deployment_frequency', 'lead_time_for_changes', 'change_failure_rate', 'mean_time_to_recovery') and PRODUCTIVITY_METRICS tuple ('pr_cycle_time', 'pr_merge_rate', 'review_turnaround', 'defect_leakage', 'rework_ratio', 'spike_to_ship_ratio') plus the DoraMetric / ProductivityMetric / MetricBand / MetricTrend / MetricMeasurementSource / MetricKind / MetricUnit enum types, ProductivityDoraEntry, ProductivityDoraSummary, and the helpers buildProductivityDoraEntries, summarizeProductivityDora, getDoraEntries, getProductivityEntries, getDecliningOrLowBandEntries.",
+        "buildProductivityDoraEntries returns at least 20 deterministic seed entries; all 4 DORA metrics and all 6 productivity metrics are covered with at least 1 entry each; all 4 bands (elite, high, medium, low) and all 4 trends (improving, flat, declining, unknown) are present with at least 1 entry each; at least 3 entries are declining; at least 5 unique team labels are present.",
+        "Every entry carries liveTelemetry: false and createdFrom 'deterministic_productivity_dora_seed'; every entry's measurementSource is one of 'seed_only', 'manual_capture', 'gh_actions_seed', 'jira_seed', or 'incident_report_seed'; every entry id matches the canonical 'dora-seed-{team}-{metric}' shape and ids are unique; every entry has at least one non-empty note; delta equals currentValue minus baselineValue.",
+        "summarizeProductivityDora reconciles totals (byBand and byTrend sum to totalEntries; doraCount + productivityCount equals totalEntries), exposes every canonical band and trend key (zero allowed), reports byMetric counts that sum to totalEntries and expose every metric present in the input, and returns uniqueTeams and uniquePrograms sorted ascending and de-duplicated.",
+        "getDoraEntries and getProductivityEntries partition the input by metricKind; getDecliningOrLowBandEntries returns only entries whose trend is 'declining' or whose band is 'low' and excludes entries that are improving and not in the low band; helpers default to summarizing the canonical seed when called with no arguments.",
+        "Seed contains no invented dollar amounts (regex \\$\\s*\\d on JSON.stringify), no branded vendor endorsements (deny-list OpenAI / Anthropic / Cohere / Mistral / Databricks / Snowflake / Microsoft Copilot / GitHub Copilot), no banned placeholder language (Coming soon / TBD / Lorem ipsum), and no positive live-telemetry claims; module source has no imports from src/lib/source / sentinel / atlas / nexus / agent / auth or supabase, and no Date.now / Math.random / new Date( / fetch( / anthropic / openai / useState / useEffect.",
+        "Test suite at src/__tests__/integration/tower/ai-productivity-dora.test.ts is green and enforces shape, determinism, metric coverage, band and trend coverage, per-row invariants (including liveTelemetry: false on every entry), distribution constraints, summary reconciliation, helper behaviors, no-fabrication invariants (including the no-positive-live-telemetry scan), and module hygiene.",
+        "Production readiness manifest is updated with a note acknowledging the ACT7 productivity / DORA dimension under ai_control_tower; ai_control_tower status is preserved (no promotion); manifest top-level lastUpdated reflects this change."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/tower/ai-productivity-dora.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Operationalizes the Productivity & DORA dimension of the ACT1 AI Control Tower contract. Deterministic seed-only read model. No live integrations, no per-tenant binding, no Atlas brief composition, no Tower UI \u2014 those land in ACT7.x, ACT9, and ACT10. Conservative manifest update: ai_control_tower component is not promoted."
     }
   ]
 }
