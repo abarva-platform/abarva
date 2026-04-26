@@ -862,9 +862,10 @@
         "2026-04-26 SRC14: Presentational SourceCommercialSummaryPanel React component added with vendor table, risk badge, exception counter, and top opportunity display. No API calls, no model calls, no data fetching. Display-only.",
         "2026-04-26 SRC17: Deterministic Source intelligence pattern detection added with 10 pattern categories (pricing_compression, scope_anchor, evidence_leverage, timeline_pressure, bundling_trap, governance_avoidance, champion_dependency, reference_manipulation, pricing_opacity, scope_creep_setup). No model calls, no network calls.",
         "2026-04-26 SRC18: Deterministic commercial mission queue added with 10 mission types, 5 agent owners (nexus, sentinel, atlas, steward, buyer_team), priority ordering, and blocking relationship model. No scheduler, no persistence, no model calls.",
-        "2026-04-26 SRC19: SourceCommercialSummarySurface added — wraps SourceCommercialSummaryPanel with AbarVa design canon compliance, status strip, and deterministic-data caveat. No live model calls, no fake savings claims.",
+        "2026-04-26 SRC19: SourceCommercialSummarySurface added \u2014 wraps SourceCommercialSummaryPanel with AbarVa design canon compliance, status strip, and deterministic-data caveat. No live model calls, no fake savings claims.",
         "2026-04-26 QA21: Cross-module commercial workflow verification test added covering bafo-negotiation-model, pricing-normalization-model, commercial-risk-detection, control-tower-signals, intelligence-patterns, and commercial-mission-queue. Verifies export shapes, builder correctness, cross-module importability, and generatedAt determinism.",
-        "2026-04-26 OPS14: Hygiene gate CI contract added: .github/workflows/hygiene-gate.yml runs hygiene_gate.sh on every PR to main. Non-destructive, exits 0 on pass. Artifacts uploaded on every run for 7-day audit trail."
+        "2026-04-26 OPS14: Hygiene gate CI contract added: .github/workflows/hygiene-gate.yml runs hygiene_gate.sh on every PR to main. Non-destructive, exits 0 on pass. Artifacts uploaded on every run for 7-day audit trail.",
+        "2026-04-26 SRC20: SourcePricingComparisonPanel added with tower breakdown, completeness indicator, missing-section warnings. Uses deterministic pricing-normalization-model.ts. No live FX, no live benchmarks."
       ]
     },
     {

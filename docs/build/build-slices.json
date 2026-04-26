@@ -7243,7 +7243,25 @@
       "status": "code_complete",
       "owner": "Codex",
       "description": "Surface wrapper for SourceCommercialSummaryPanel with AbarVa design canon, status strip, and caveat footer.",
-      "files": ["src/lib/source/source-commercial-summary.ts", "src/components/source/SourceCommercialSummarySurface.tsx", "src/__tests__/integration/source/source-commercial-summary-surface.test.ts"],
+      "files": [
+        "src/lib/source/source-commercial-summary.ts",
+        "src/components/source/SourceCommercialSummarySurface.tsx",
+        "src/__tests__/integration/source/source-commercial-summary-surface.test.ts"
+      ],
+      "completedAt": "2026-04-26"
+    },
+    {
+      "id": "SRC20",
+      "wave": "wave-15",
+      "title": "Pricing Comparison Panel",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "Vendor pricing comparison panel with tower breakdown, completeness, and missing-section warnings.",
+      "files": [
+        "src/lib/source/source-pricing-comparison-view.ts",
+        "src/components/source/SourcePricingComparisonPanel.tsx",
+        "src/__tests__/integration/source/source-pricing-comparison-panel.test.ts"
+      ],
       "completedAt": "2026-04-26"
     }
   ]
