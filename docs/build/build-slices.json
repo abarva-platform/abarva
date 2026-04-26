@@ -3584,6 +3584,54 @@
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
       "notes": "Pure type-only contract module describing the safety boundary for the eventual live Model Gateway runtime. MG3 names the callers (6), request classifications (7), model tiers (4), redaction policies (4), audit requirements (>= 5 blocking), cost caps (per-request / per-tenant-daily / per-agent), fallback chain (tier_a -> tier_b -> tier_c -> tier_d), and forbidden integration patterns (8) the live gateway must enforce. liveExecution is the literal false. MG2 (the deterministic stub) remains the runtime placeholder until the live gateway slice ships; MG3 specifies WHAT the live runtime must enforce when it eventually replaces the stub. No SDK import. No network. No Date.now. No randomness. No agent / source / sentinel / atlas / auth imports. No UI."
+    },
+    {
+      "id": "TOOL3",
+      "name": "Tool Invocation Audit Read Model",
+      "category": "TOOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Steward",
+      "dependsOn": [
+        "TOOL2"
+      ],
+      "allowedFiles": [
+        "src/lib/architecture/tool-invocation-audit.ts",
+        "src/__tests__/integration/architecture/tool-invocation-audit.test.ts",
+        "docs/build/slices/TOOL3_TOOL_INVOCATION_AUDIT_READ_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/architecture/tool-invocation-audit.ts exports the canonical TOOL_INVOCATION_DECISIONS tuple ('proposed', 'allowed', 'blocked', 'deferred', 'completed', 'failed', 'dismissed') and TOOL_INVOCATION_ACTORS tuple ('nexus', 'sentinel', 'atlas', 'steward', 'system', 'admin') in canonical order.",
+        "Module exports ToolInvocationDecision, ToolInvocationActor, ToolInvocationScope, ToolInvocationRisk, ToolInvocationEvidenceBasis, ToolInvocationAuditRecord, and ToolInvocationAuditSummary types with the contract-required fields, and helpers buildToolInvocationAuditSeed, validateToolInvocationAudit, summarizeToolInvocationAudits, getBlockedToolInvocations, getToolInvocationsByAgent.",
+        "buildToolInvocationAuditSeed returns at least 24 deterministic seed records, each tagged createdFrom 'deterministic_tool_invocation_audit_seed' and id matching 'tool-audit-seed-{n}'.",
+        "Seed covers all 7 decisions with at least 2 records each, all 6 actors at least once, all 16 canonical TOOL2 tool ids at least once, all 3 scopes (platform / tenant / workspace), and all 4 risk levels with at least 4 records at high or critical risk.",
+        "Every blocked record carries a non-empty blockedReason; every deferred record carries a non-empty deferredReason; every failed record carries a non-empty failureReason; every write-shaped tool invocation (TOOL2 readWriteMode === 'write' | 'export') carries a non-null evidenceBasis with non-empty evidenceIds, rationale, and policyReferenceKey.",
+        "validateToolInvocationAudit rejects empty tenantKey, missing blocked/deferred/failed reasons, write-shaped tools with null or empty evidenceBasis, malformed id or toolId shapes, unknown actors or decisions, empty auditEventId or policyMatched, and wrong createdFrom sentinel; passes every seed record.",
+        "summarizeToolInvocationAudits reconciles totals (byDecision, byActor, byRisk all sum to totalRecords); blockedCount equals byDecision.blocked; failedCount equals byDecision.failed; uniqueTools is sorted ascending and contains at least 16 entries; uniqueTenants is sorted and de-duplicated; empty input returns a zero-counted summary.",
+        "Module has no imports from @/lib/sentinel|atlas|nexus|agent|source|auth or supabase, no Date.now / Math.random / new Date( / fetch(, no anthropic / openai, no useState / useEffect, no Coming soon / TBD / Lorem ipsum placeholder language, and no await / shell exec / fs writes.",
+        "Test suite at src/__tests__/integration/architecture/tool-invocation-audit.test.ts is fully green and enforces determinism, decision / actor / tool / scope / risk coverage, per-record invariants, validator behavior, summary reconciliation, helper behavior, and module hygiene.",
+        "Production readiness manifest is updated to acknowledge the TOOL3 audit-shape read model under agent_runtime and model_gateway with runtime tool-dispatcher and audit-ledger integration deferred; all other manifest fields are preserved exactly."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/tool-invocation-audit.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Deterministic, file-pure read model that names the audit shape every future tool dispatcher must produce. Companion to TOOL2 (Tool Registry MVP, #253). Seed contains 26 records covering all 16 canonical tool ids, all 7 decisions (>= 2 each), all 6 actors, all 3 scopes, and all 4 risk levels. No tool dispatch, no model calls, no audit-ledger persistence, no migrations."
     }
   ]
 }
