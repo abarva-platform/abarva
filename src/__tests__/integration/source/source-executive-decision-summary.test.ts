@@ -54,6 +54,17 @@ describe('Source executive decision summary model', () => {
     expect(getSourceExecutiveDecisionBlockers(summary)).toEqual(summary.blockers);
   });
 
+  it('keeps deterministic posture gated while seeded blockers remain', () => {
+    const event = getSeededEvent();
+    const summary = buildSourceExecutiveDecisionSummary({ event });
+    const blockers = getSourceExecutiveDecisionBlockers(summary);
+
+    expect(blockers.length).toBeGreaterThan(0);
+    expect(summary.recommendedDecisionPosture).toMatch(
+      /proceed_to_bafo|defer_pending_clarifications|blocked_missing_pricing|blocked_low_evidence|waiver_required/,
+    );
+  });
+
   it('formats markdown output for executive decision summary', () => {
     const event = getSeededEvent();
     const summary = buildSourceExecutiveDecisionSummary({ event });
@@ -81,4 +92,3 @@ describe('Source executive decision summary model', () => {
     expect(sources).not.toMatch(/\bfetch\(/i);
   });
 });
-
