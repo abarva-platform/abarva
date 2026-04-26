@@ -2891,6 +2891,60 @@
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
       "notes": "OPS1 codifies AbarVa's multi-lane batch operating model: one slice per worktree per branch per local commit, no push/merge/PR from lanes, conservative production-readiness status on cherry-pick, no false readiness promotions, deterministic conflict policies for build-slices.json and production-readiness.json, and a 20-item dispatch queue that keeps agent capacity busy. Companion to BUILD_OPERATING_MODEL.md and PRODUCTION_READINESS_UPDATE_PROTOCOL.md. CI/observability automation is intentionally deferred."
+    },
+    {
+      "id": "CTX3",
+      "name": "Mission Context Bridge",
+      "category": "CTX",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane C (parallel build pack)",
+      "dependsOn": [
+        "CTX2",
+        "AG10"
+      ],
+      "allowedFiles": [
+        "src/lib/architecture/mission-context-bridge.ts",
+        "src/__tests__/integration/architecture/mission-context-bridge.test.ts",
+        "docs/build/slices/CTX3_MISSION_CONTEXT_BRIDGE.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/architecture/mission-context-bridge.ts exports MissionContextReadiness, MissionContextGap, MissionContextBuildRequest, MissionContextBridgeResult, and MissionContextReadinessSummary types plus helpers buildContextForAgentMission, buildMissionContextBatch, buildMissionContextBatchForAllSeededMissions, summarizeMissionContextReadiness, and getMissionContextReadinessOrder.",
+        "buildContextForAgentMission(request) is pure and deterministic: same request input produces byte-equal output across calls; bridgeVersion is 'ctx3.v1' and createdFrom is 'deterministic_seed' on every result.",
+        "Work-object kind mapping is canonical: 'program' / 'phase' / 'workshop' / 'artifact' map to CTX2 'program'; 'pattern' maps to CTX2 'intelligence_pattern'; 'tower_dimension' / 'dataset_domain' / 'sourcing_event' / 'vendor_response' return contextResult: null with readiness 'work_object_unsupported' and at least one explanatory MissionContextGap whose reason names the unsupported kind.",
+        "For supported kinds the bridge calls buildUnifiedContextPack and produces a non-null contextResult; UnifiedContextQuality maps 1:1 to MissionContextReadiness ('usable' to 'usable', 'partial' to 'partial', 'weak' to 'weak', 'refused' to 'refused').",
+        "CTX2 missingInputs are promoted 1:1 into the bridge result's gaps array preserving kind, impact, and reason in order.",
+        "buildMissionContextBatch preserves caller mission order verbatim; buildMissionContextBatchForAllSeededMissions returns one result per seeded AG10 mission, in canonical seed order.",
+        "summarizeMissionContextReadiness reconciles total with byReadiness counts (sum equals total), totalGaps equals the sum of per-result gap counts, and unsupportedWorkObjectKinds is sorted ascending and deduplicated.",
+        "Serialized bridge results contain no /E-\\d+/ citation patterns; basis.source is always 'mission_context_bridge' on every result.",
+        "Module has no imports from @/lib/sentinel|atlas|nexus|source|auth or supabase, no Date.now / Math.random / new Date( / fetch(, no anthropic / openai, no useState / useEffect, and no Coming soon / TBD / Lorem ipsum placeholder language; only allowed cross-imports are @/lib/architecture/unified-context-builder and @/lib/agents/agent-mission-queue.",
+        "Test suite at src/__tests__/integration/architecture/mission-context-bridge.test.ts is fully green and enforces seed coverage, determinism, supported / unsupported work-object handling, gap promotion, summary reconciliation, fake-citation hygiene, basis invariants, and module hygiene.",
+        "docs/build/slices/CTX3_MISSION_CONTEXT_BRIDGE.md documents the slice, the work-object kind mapping table, unsupported-kind handling, readiness mapping, gap promotion, audit basis, hygiene invariants, validation commands, and future slices.",
+        "docs/build/build-slices.json appends the CTX3 entry with category CTX, dependsOn [CTX2, AG10], status code_complete, risk low, allowedFiles, forbiddenFiles, acceptanceCriteria, validationCommands, and notes; manifest lastUpdated bumped.",
+        "docs/build/production-readiness.json appends notes to data_evidence_knowledge_fabric and agent_runtime acknowledging the CTX3 mission context bridge; status is not promoted; manifest lastUpdated bumped.",
+        "No application UI, runtime, auth, supabase, agent runtime, migrations, or persistence are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/mission-context-bridge.test.ts",
+        "npx jest src/__tests__/integration/architecture/unified-context-builder.test.ts",
+        "npx jest src/__tests__/integration/agents/agent-mission-queue.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Pure deterministic projection that joins AG10 missions to CTX2 unified context packs. Maps the five supported AG10 work-object kinds (program, phase, workshop, artifact, pattern) into CTX2's three v1 WorkObjectType values, and honestly surfaces the four unsupported kinds (tower_dimension, dataset_domain, sourcing_event, vendor_response) as 'work_object_unsupported' with an explanatory gap. No model calls, no migrations, no persistence, no live retrieval. Lane C output of the parallel build pack."
     }
   ]
 }
