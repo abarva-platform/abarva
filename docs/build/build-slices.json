@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-04-26",
+  "lastUpdated": "2026-04-25",
   "lifecycle": [
     "ready",
     "in_progress",
@@ -3209,6 +3209,58 @@
         "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8'))\""
       ],
       "notes": "V1 internal API polling only. True GitHub/Vercel status ingestion, deploy event polling, route smoke execution, persona crawler, DB-backed readiness, and observability are deferred to PROD4 or later. Status is code_complete after local validation, not verified."
+    },
+    {
+      "id": "ACT3",
+      "name": "AI Adoption and Usage Read Model",
+      "category": "ACT",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane A (parallel build pack)",
+      "dependsOn": [
+        "ACT2"
+      ],
+      "allowedFiles": [
+        "src/lib/tower/ai-adoption-usage.ts",
+        "src/__tests__/integration/tower/ai-adoption-usage.test.ts",
+        "docs/build/slices/ACT3_AI_ADOPTION_USAGE_READ_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**",
+        "src/app/demo/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Module src/lib/tower/ai-adoption-usage.ts exports the canonical AI_TOOL_KEYS tuple ('github_copilot', 'claude_code', 'codex', 'cursor', 'servicenow_ai_agents', 'workday_ai_assistant', 'erp_agents_generic', 'salesforce_einstein', 'microsoft_copilot_m365', 'custom_internal_agents'), the AI_ADOPTION_HEALTH_STATES tuple ('not_started', 'piloting', 'partial_adoption', 'broad_adoption', 'declining', 'retired'), the AI_USAGE_VOLUME_BANDS tuple ('none', 'low', 'medium', 'high', 'very_high'), the AI_WORKFLOW_COVERAGE_STATUSES tuple ('not_covered', 'partial', 'fully_covered'), the AI_ADOPTION_GOVERNANCE_FLAGS tuple ('none', 'review_required', 'flagged'), the AiToolKey / AiAdoptionHealth / AiUsageVolumeBand / AiWorkflowCoverageStatus / AiAdoptionGovernanceFlag enum types, AiToolAdoptionRecord, AiAdoptionUsageSummary, and the helpers buildAiAdoptionUsageInventory, summarizeAiAdoptionUsage, getAiAdoptionByTool, getDecliningOrRetiredTools, and getUngovernedAdoption.",
+        "buildAiAdoptionUsageInventory returns at least 18 deterministic seed records, with at least 1 record per canonical tool (10 tools), at least 1 record per canonical health state (6 states), and at least 6 distinct business functions.",
+        "Every record carries at least 1 workflow covered; every record's adoptionRate equals activeUsers / potentialUsers (rounded to 4 decimals); every record carries createdFrom 'deterministic_ai_adoption_seed'; every record id matches the canonical 'ai-adopt-seed-{tool}-{n}' shape and ids are unique; activeUsers and potentialUsers are non-negative integers with active <= potential.",
+        "At least 2 records carry governanceFlag 'flagged'.",
+        "summarizeAiAdoptionUsage reconciles totals (byTool, byHealth, and byUsageVolume sum to totalRecords), exposes every canonical tool / health / usage-band key (zero allowed), reports totalActiveUsers and totalPotentialUsers that agree with their defining sums, and returns uniqueBusinessFunctions and uniqueWorkflows sorted ascending and de-duplicated.",
+        "getAiAdoptionByTool returns only records matching the requested tool; getDecliningOrRetiredTools returns exactly the records whose adoptionHealth is 'declining' or 'retired'; getUngovernedAdoption returns exactly the records whose governanceFlag is 'review_required' or 'flagged'.",
+        "Seed contains no invented dollar amounts (regex \\$\\s*\\d on JSON.stringify), no banned placeholder language ('Coming soon' / 'TBD' / 'Lorem ipsum'), and no endorsement-style framing ('recommended tool' / 'best-in-class' / 'industry leader' / 'we endorse' / 'our preferred' / 'guaranteed roi'); vendor names appear only as toolName / tool keys, never as recommendations; module source has no imports from src/lib/source / sentinel / atlas / nexus / agent / auth or supabase, and no Date.now / Math.random / new Date( / fetch( / anthropic / openai / useState / useEffect.",
+        "Test suite at src/__tests__/integration/tower/ai-adoption-usage.test.ts is green and enforces shape, determinism, tool coverage, health-state coverage, per-row invariants (including the adoptionRate = active / potential identity), distribution constraints, summary reconciliation, helper partition behavior, no-fabrication invariants, and module hygiene.",
+        "Production readiness manifest is updated with a note acknowledging the ACT3 AI adoption / usage dimension under ai_control_tower; ai_control_tower status is preserved (no promotion); manifest top-level lastUpdated reflects this change."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/tower/ai-adoption-usage.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Operationalizes dimension #2 (AI Adoption & Usage) of the ACT1 AI Control Tower contract. Deterministic seed-only read model. No live integrations, no per-tenant adoption telemetry binding, no Atlas brief composition, no Tower UI \u2014 those land in ACT3.x, ACT9, and ACT10. Conservative manifest update: ai_control_tower component is not promoted."
     }
   ]
 }
