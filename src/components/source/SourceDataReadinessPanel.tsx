@@ -229,11 +229,11 @@ function confidenceColor(confidence: ValueConfidence): string {
 
 const PANEL: CSSProperties = {
   display: 'grid',
-  gap: 12,
+  gap: 10,
   border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
   borderRadius: 12,
   background: EXPERIENCE_COLORS.surfaceWarm,
-  padding: 13,
+  padding: 12,
   minWidth: 0,
 };
 
@@ -269,7 +269,7 @@ const PROGRESS_FILL: CSSProperties = {
 const SUMMARY_METRIC: CSSProperties = {
   display: 'grid',
   gap: 1,
-  minWidth: 76,
+  minWidth: 68,
   border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
   borderRadius: 10,
   background: EXPERIENCE_COLORS.surface,
@@ -278,7 +278,7 @@ const SUMMARY_METRIC: CSSProperties = {
 
 const TABLE: CSSProperties = {
   width: '100%',
-  minWidth: 760,
+  minWidth: 700,
   borderCollapse: 'collapse',
   background: EXPERIENCE_COLORS.surface,
   border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,

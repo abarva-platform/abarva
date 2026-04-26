@@ -46,7 +46,7 @@ const CONTEXT_TILE: CSSProperties = {
 
 const BODY_GRID: CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'minmax(0, 1.55fr) minmax(300px, 0.72fr)',
+  gridTemplateColumns: 'minmax(0, 1.55fr) minmax(280px, 0.72fr)',
   gap: 16,
   alignItems: 'start',
   minWidth: 0,
