@@ -1214,7 +1214,8 @@
         "EVID2 Evidence Ledger MVP read model is now wired alongside the audit/governance contract surface (deterministic seed entries; no production audit ledger).",
         "EVID3 claim-support evaluator surfaces unsupported and contradicted claims for audit visibility; outputs are deterministic and tagged 'evidence_claim_support_v1'. No production audit ledger is implied or produced.",
         "ACT4 AI value / outcome ledger read model adds a deterministic counterfactual + governanceReviewStatus + evidenceLinkedClaimIds shape that audit/governance review will eventually hang an audit trail off of; current slice is seed-only, the value claims are not persisted, and no production audit ledger entries are emitted.",
-        "ACT5 AI risk & governance read model adds a deterministic findings register (src/lib/tower/ai-risk-governance.ts) spanning all ten governance review dimensions, with HITL flags, governance gate outcomes, and evidence-seed handshakes; no per-tenant binding, no persistence, no production audit ledger."
+        "ACT5 AI risk & governance read model adds a deterministic findings register (src/lib/tower/ai-risk-governance.ts) spanning all ten governance review dimensions, with HITL flags, governance gate outcomes, and evidence-seed handshakes; no per-tenant binding, no persistence, no production audit ledger.",
+        "AUD2 unified audit event read model added at src/lib/architecture/unified-audit-events.ts \u2014 deterministic 30-event seed across all 15 canonical event types (agent_recommendation, agent_handoff, evidence_used, evidence_blocked, tool_invocation, model_gateway_decision, gate_check, gate_transition, deliverable_generated, deliverable_approved, deliverable_superseded, user_action, readiness_update, route_smoke_result, governance_decision), all 3 actor kinds, all 4 agents, three tenants, and eleven trace ids; every event carries immutable: true, traceId, tenantKey, workObject, and createdFrom 'deterministic_unified_audit_seed'. Read-only companion to the AUD1 contract. No persistence, no signing/chaining, no live capture, no audit UI, no per-tenant binding, no model invocation. Production audit ledger remains deferred."
       ]
     },
     {
@@ -1288,7 +1289,8 @@
         "QA5 deterministic route smoke inventory added (src/lib/qa/route-smoke-inventory.ts) \u2014 11 canonical routes catalogued across home / admin / programs / tower / intelligence / source with owner surface, primary agent, expected guard, expected read model, smoke priority, implementation status, and recommended test strategy; execution remains deferred (no browser, no automation, no real HTTP) and the route_smoke testing gate status is preserved.",
         "Source agent mission read-model test passed and covers deterministic Nexus, Sentinel, Atlas, and Steward mission output without model, persistence, or UI imports.",
         "Source agent mission report formatter test passed and covers deterministic mission report counts, markdown output, remediations, and import guardrails.",
-        "Source dashboard route/component smoke test added for deterministic /source route rendering and mission preview coverage; authenticated live route smoke remains deferred."
+        "Source dashboard route/component smoke test added for deterministic /source route rendering and mission preview coverage; authenticated live route smoke remains deferred.",
+        "AUD2 unified audit event read model added a deterministic 30-event seed and validateAuditEvent helper at src/lib/architecture/unified-audit-events.ts with a passing 44-test suite at src/__tests__/integration/architecture/unified-audit-events.test.ts (shape, determinism, event-type and actor coverage, per-event invariants, validation rejections, summary reconciliation, helper partitioning, module hygiene). Read-only deterministic surface; replay, integrity, and CI gating remain deferred."
       ]
     },
     {

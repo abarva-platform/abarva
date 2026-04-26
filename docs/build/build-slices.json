@@ -3632,6 +3632,58 @@
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
       "notes": "Deterministic, file-pure read model that names the audit shape every future tool dispatcher must produce. Companion to TOOL2 (Tool Registry MVP, #253). Seed contains 26 records covering all 16 canonical tool ids, all 7 decisions (>= 2 each), all 6 actors, all 3 scopes, and all 4 risk levels. No tool dispatch, no model calls, no audit-ledger persistence, no migrations."
+    },
+    {
+      "id": "AUD2",
+      "name": "Unified Audit Event Read Model",
+      "category": "AUD",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "AUD1"
+      ],
+      "allowedFiles": [
+        "src/lib/architecture/unified-audit-events.ts",
+        "src/__tests__/integration/architecture/unified-audit-events.test.ts",
+        "docs/build/slices/AUD2_UNIFIED_AUDIT_EVENT_READ_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**",
+        "src/app/demo/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Module src/lib/architecture/unified-audit-events.ts exports the canonical UNIFIED_AUDIT_EVENT_TYPES tuple of 15 event types in canonical order, the UNIFIED_AUDIT_AGENTS and UNIFIED_AUDIT_ACTOR_KINDS tuples, the EVIDENCE_USING_EVENT_TYPES / DECISION_BEARING_EVENT_TYPES / STATE_CHANGE_EVENT_TYPES subtype groupings, the public types (UnifiedAuditActor, UnifiedAuditAgent, UnifiedAuditEventWorkObject, UnifiedAuditEventEvidenceBasis, UnifiedAuditEventBeforeAfter, UnifiedAuditEvent, UnifiedAuditSummary), and the helpers buildUnifiedAuditEventSeed, summarizeUnifiedAuditEvents, getAuditEventsByWorkObject, getAuditEventsByType, getAuditEventsByTrace, validateAuditEvent.",
+        "buildUnifiedAuditEventSeed returns at least 30 deterministic events; all 15 event types are covered with at least one event each; all 3 actor kinds (user/agent/system) are present; all 4 agents (nexus/sentinel/atlas/steward) are present in events that carry an agent; every event id is unique and prefixed audit-seed-; every traceId is prefixed trace-seed-; every event carries immutable: true and createdFrom 'deterministic_unified_audit_seed'.",
+        "Every event has non-empty traceId, tenantKey, workObject.id, and workObject.label; every event has an allowed timestampSource (monotonic_clock or persisted_event_time); evidence-using event types (agent_recommendation, evidence_used, evidence_blocked, deliverable_generated, gate_check, governance_decision) have non-null evidenceBasis with non-empty rationale; decision-bearing event types (agent_recommendation, agent_handoff, gate_check, gate_transition, governance_decision, model_gateway_decision) have non-null and non-empty decisionRationale; state-change event types (gate_transition, deliverable_approved, deliverable_superseded, readiness_update, user_action) have non-null beforeAfter with fieldsChanged.length > 0.",
+        "validateAuditEvent rejects events missing tenantKey, missing traceId, evidence-using event types without evidenceBasis, decision-bearing event types without decisionRationale, and state-change event types without beforeAfter or with empty fieldsChanged; every seed event passes validation.",
+        "summarizeUnifiedAuditEvents reconciles totalEvents (byEventType and byActorKind sum to totalEvents; byAgent counts only events with an agent and never exceeds totalEvents); exposes every canonical event type, actor kind, and agent key; reports uniqueTenants and uniqueTraceIds sorted ascending and deduplicated; reports eventsWithEvidenceBasis and eventsWithBeforeAfter equal to the count of non-null occurrences in the input; defaults to summarizing the canonical seed when called with no arguments.",
+        "Helpers (getAuditEventsByType, getAuditEventsByWorkObject, getAuditEventsByTrace) partition the input by the requested key and default to the canonical seed when called with no events argument.",
+        "Seed contains no invented dollar amounts (regex \\$\\s*\\d on JSON.stringify), no branded vendor references (deny-list OpenAI / Anthropic / Cohere / Databricks), no banned placeholder language (Coming soon / TBD / Lorem ipsum); module source has no imports from src/lib/source / sentinel / atlas / nexus / agent / auth or supabase, and no Date.now / Math.random / new Date( / fetch( / anthropic / openai / useState / useEffect.",
+        "Test suite at src/__tests__/integration/architecture/unified-audit-events.test.ts is green and enforces shape, determinism, event-type coverage, actor and agent coverage, per-event invariants (including immutable: true on every event), validation behavior, summary reconciliation, helper partitioning, and module hygiene.",
+        "Production readiness manifest is updated with notes acknowledging the AUD2 unified audit event read model under audit_governance and validation_qa; both component statuses are preserved (no promotion); manifest top-level lastUpdated reflects this change."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/unified-audit-events.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Operationalizes the read-side of the AUD1 unified audit event contract. Deterministic seed-only read model: 30 events across all 15 event types, all 3 actor kinds, all 4 agents, three tenants, eleven traces. No persistence, no signing/chaining, no live capture, no audit UI, no per-tenant binding, no model invocation. AUD3 (Steward audit log surface), AUD4 (replay/integrity test), AUD5 (bridge to EVID2 ledger), and AUD6 (persisted ledger) remain deferred. Conservative manifest update: audit_governance and validation_qa components are not promoted."
     }
   ]
 }
