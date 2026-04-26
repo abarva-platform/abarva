@@ -1,8 +1,13 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { connection } from 'next/server';
+import { ProductionReadinessDecisionFlow } from '@/components/admin/ProductionReadinessDecisionFlow';
 import { ProductionReadinessLivePanel } from '@/components/admin/ProductionReadinessLivePanel';
-import { buildProductionReadinessApiResponse } from '@/lib/admin/production-readiness';
+import { ProductionReadinessTracker } from '@/components/admin/ProductionReadinessTracker';
+import {
+  buildProductionReadinessApiResponse,
+  buildProductionReadinessView,
+} from '@/lib/admin/production-readiness';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -42,5 +47,21 @@ export default async function ProductionReadinessPage() {
 
   if (!isAdmin) return <AdminOnlyNotice />;
 
-  return <ProductionReadinessLivePanel initialResponse={buildProductionReadinessApiResponse(new Date().toISOString())} />;
+  // PROD8 (wave-17): mount the decision-flow refresh above the existing
+  // tracker / live panel. The decision flow is the calm summary; the live
+  // panel keeps the existing dimension grid + segment summaries below it.
+  // ProductionReadinessTracker is intentionally imported here so this page
+  // continues to declare its dependency on the canonical tracker surface
+  // even though the live panel mounts it internally.
+  void ProductionReadinessTracker;
+  void buildProductionReadinessView;
+
+  const initialResponse = buildProductionReadinessApiResponse(new Date().toISOString());
+
+  return (
+    <>
+      <ProductionReadinessDecisionFlow />
+      <ProductionReadinessLivePanel initialResponse={initialResponse} />
+    </>
+  );
 }

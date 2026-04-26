@@ -237,10 +237,10 @@
       {
         "id": "visual_design_system",
         "area": "Visual design system",
-        "completed": "Visual canon, UI primitives, and logo/color direction mostly locked.",
+        "completed": "Visual canon, UI primitives, and logo/color direction mostly locked. DES7 (wave-17): AbarVaShellNav primitive with workflow-question metadata. Canon wordmark, navy accent. Legacy chrome unchanged for backward compatibility.",
         "pending": "Apply consistently across all pages and finalize logo asset/SVG system.",
-        "percentLow": 50,
-        "percentHigh": 50,
+        "percentLow": 52,
+        "percentHigh": 52,
         "relatedComponentIds": [
           "admin_setup",
           "validation_qa"
@@ -734,7 +734,10 @@
         "PROD6 live CI status stub added (src/lib/admin/live-ci-status-stub.ts); honest stub for unified control plane; notTrueLiveMonitoring:true, remainDeferred:true; no real GitHub/Vercel API calls; createdFrom prod6_live_ci_status_stub.",
         "ADM7 admin surface completeness inventory added (src/lib/admin/admin-surface-completeness.ts); panel-by-panel breakdown of implemented/planned/deferred; completenessPercent; nextPanelToBuild; createdFrom adm7_admin_surface_completeness.",
         "ADM8: Agent readiness deep drill created; Nexus/Sentinel/Atlas/Steward readiness factors documented; deterministic static manifest source.",
-        "ARCH4 (wave-15): architecture-overview.ts data builder + ArchitectureOverviewPage component + /platform/admin/architecture Next.js page. 6 system layers, 15+ wave summaries. 9 tests green."
+        "ARCH4 (wave-15): architecture-overview.ts data builder + ArchitectureOverviewPage component + /platform/admin/architecture Next.js page. 6 system layers, 15+ wave summaries. 9 tests green.",
+        "DES8 (wave-17): AdminCanonShell primitive with workflow metadata (pageQuestion, primaryAgent, recommendedNextAction). Reusable across admin pages. 13 tests green.",
+        "ARCH5 (wave-17): ArchitectureCanvas with 10 workflow sections (brief, planes, request flow, data flow, control planes, Azure, gateway, missions, built/deferred, next actions). Mounted at /platform/admin/architecture. 14 tests.",
+        "PROD8 (wave-17): ProductionReadinessDecisionFlow component (8-section flow). Mounted above existing tracker. Manifest-backed; explicit no-live-monitoring caveat. 12 tests."
       ],
       "lastUpdated": "2026-04-26"
     },
@@ -876,7 +879,8 @@
         "SRC28 (wave-16): source-commercial-demo-scenario.ts deterministic seed. AMS outsourcing scenario: 4 vendors, 5 risks, 5 missions, 4 signals. 12 tests green.",
         "SRC27 (wave-16): SourceCommercialEventSection mounted in /source/events/[eventId]/page.tsx. Collapsible commercial intelligence section. Deterministic seed data, no live ingestion.",
         "SRC29 (wave-16): source-commercial-executive-brief.ts + SourceCommercialExecutiveBrief component. Dark-navy header, 3 risks, 3 BAFO levers, posture badge. 11 tests green.",
-        "SRC30 (wave-16): source-commercial-action-queue.ts + SourceCommercialActionQueue component. 8-action queue, 5-item cap with show-more, state/priority chips. 12 tests green."
+        "SRC30 (wave-16): source-commercial-action-queue.ts + SourceCommercialActionQueue component. 8-action queue, 5-item cap with show-more, state/priority chips. 12 tests green.",
+        "SRC31 (wave-17): SourceCommercialWorkflowCanvas with 9 workflow stages (brief, pricing, comparison, risk, BAFO, readiness, missions, signals, decision). Thin segmented nav. Deterministic caveat. 14 tests."
       ]
     },
     {
@@ -1443,7 +1447,8 @@
         "OPS13: Demo pack final report validator created at scripts/integration/validate_demo_pack_report.py. All future packs (Wave 13+) must pass validate_demo_pack_report.py before a pack is marked complete. Validator checks 11 required sections: PR number, merge commit, lanes completed, route, readiness, hygiene gate, CI, Vercel, build, Run Metrics, next. Read-only, stdlib-only, no network calls.",
         "QA22 (wave-15): source-commercial-ui-verification.ts manifest (8 components) + integration verification test. Always-passing design: 10 static tests + 16 graceful integration-phase file checks.",
         "QA23 (wave-16): source-commercial-route-smoke.ts manifest + smoke test. 10 static + graceful integration-phase file checks. Wave-15 file existence always verified.",
-        "DEMO4 (wave-16): SOURCE_COMMERCIAL_INTELLIGENCE_DEMO_SCRIPT.md \u2014 10/20/45-minute demo scripts with talk tracks, pilot ask, what-not-to-claim guidance."
+        "DEMO4 (wave-16): SOURCE_COMMERCIAL_INTELLIGENCE_DEMO_SCRIPT.md \u2014 10/20/45-minute demo scripts with talk tracks, pilot ask, what-not-to-claim guidance.",
+        "QA24 (wave-17): design-workflow-canon-regression manifest (10 banned tokens, 4 required canon rules, 10 workflow contracts, 4 target pages). Static + graceful integration scan."
       ],
       "lastUpdated": "2026-04-26"
     },
@@ -1541,7 +1546,8 @@
         "AZLAB1: SaaS Control Plane + Private Data Plane lab blueprint created; Azure resource groups and boundary architecture documented; May 4 deployment path outlined.",
         "AZLAB5: Azure lab deployment runbook created; covers VNet, Container Apps, PostgreSQL, Key Vault, cost guardrails, and simulation-vs-real distinctions.",
         "LIVE3: Production readiness page verification completed. Admin page and API routes checked. Static manifest caveat documented.",
-        "LIVE4: Azure private data plane lab storyboard created (8 slides, two-plane architecture, May 4 lab plan documented)."
+        "LIVE4: Azure private data plane lab storyboard created (8 slides, two-plane architecture, May 4 lab plan documented).",
+        "DEMO5 (wave-17): ABARVA_VISUAL_WORKFLOW_WALKTHROUGH_CHECKLIST.md \u2014 10-route founder review checklist with pass/fail/deferred capture per route. Docs-only; no code change, no production_ready promotion."
       ]
     }
   ]

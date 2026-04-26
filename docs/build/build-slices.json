@@ -7399,6 +7399,69 @@
       "status": "code_complete",
       "branch": "wave16/demo4-source-commercial-demo-script",
       "description": "10/20/45-minute demo scripts for Source commercial intelligence. Talk tracks, what-to-show, what-not-to-claim, pilot ask. No fake savings or live-data claims."
+    },
+    {
+      "id": "DES7",
+      "wave": "wave-17",
+      "name": "AbarVa App Shell Navigation Canon Refresh",
+      "type": "design",
+      "status": "code_complete",
+      "branch": "wave17/des7-app-shell-navigation-canon",
+      "description": "AbarVaShellNav primitive with workflow-question metadata. Canon wordmark, off-white shell, navy accent, no teal/cyber. 13 tests."
+    },
+    {
+      "id": "DES8",
+      "wave": "wave-17",
+      "name": "Admin Page Shell + Workflow Canon Refresh",
+      "type": "admin-ui",
+      "status": "code_complete",
+      "branch": "wave17/des8-admin-shell-workflow-canon",
+      "description": "AdminCanonShell primitive with workflow metadata strip (anchor agent, primary question, next action, caveat). Off-white surface, navy accent. 13 tests."
+    },
+    {
+      "id": "ARCH5",
+      "wave": "wave-17",
+      "name": "Architecture Canvas Visual + Workflow Refresh",
+      "type": "admin-ui",
+      "status": "code_complete",
+      "branch": "wave17/arch5-architecture-canvas-refresh",
+      "description": "ArchitectureCanvas component + view-model. 10 workflow sections: brief, 9 planes, request flow, data flow, control plane model, Azure ref, gateway/registry, mission runtime, built/deferred, next actions. Selective dark hero panel only."
+    },
+    {
+      "id": "PROD8",
+      "wave": "wave-17",
+      "name": "Production Readiness Visual + Decision Flow Refresh",
+      "type": "admin-ui",
+      "status": "code_complete",
+      "branch": "wave17/prod8-production-readiness-visual-flow",
+      "description": "ProductionReadinessDecisionFlow with 8 sections: brief, demo, pilot, production blockers, component readiness pointer, evidence basis, live caveat, next 5 actions. Manifest-backed; not live monitoring."
+    },
+    {
+      "id": "SRC31",
+      "wave": "wave-17",
+      "name": "Source Commercial Hub Visual + Workflow Canon Refresh",
+      "type": "source-ui",
+      "status": "code_complete",
+      "branch": "wave17/src31-source-commercial-hub-workflow-canon",
+      "description": "SourceCommercialWorkflowCanvas \u2014 9-stage segmented commercial sourcing workflow (brief, pricing, comparison, risk, BAFO, readiness, missions, signals, decision). Prop-slot composition. AbarVa canon. 14 tests."
+    },
+    {
+      "id": "QA24",
+      "wave": "wave-17",
+      "name": "Design + Workflow Canon Regression Tests",
+      "type": "qa",
+      "status": "code_complete",
+      "branch": "wave17/qa24-design-workflow-canon-regression",
+      "description": "Manifest of banned visual tokens, required canon colors, workflow contract keywords, and 4 target pages. Static manifest tests + graceful banned-token scans across Wave-17 components. Target page existence enforced."
+    },
+    {
+      "id": "DEMO5",
+      "wave": "wave-17",
+      "name": "Visual + Workflow Founder Review Checklist",
+      "type": "demo",
+      "status": "code_complete",
+      "branch": "wave17/demo5-visual-workflow-review-checklist",
+      "description": "Founder review checklist for visual + workflow canon across 10 routes (shell, home, admin, architecture, production-readiness, source event, commercial hub, agents, caveat audit, Azure/private data plane). Pass/fail/deferred capture per route."
     }
   ]
 }
