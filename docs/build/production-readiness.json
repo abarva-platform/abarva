@@ -237,10 +237,10 @@
       {
         "id": "visual_design_system",
         "area": "Visual design system",
-        "completed": "Visual canon, UI primitives, and logo/color direction mostly locked.",
+        "completed": "Visual canon, UI primitives, and logo/color direction mostly locked. DES7 (wave-17): AbarVaShellNav primitive with workflow-question metadata. Canon wordmark, navy accent. Legacy chrome unchanged for backward compatibility.",
         "pending": "Apply consistently across all pages and finalize logo asset/SVG system.",
-        "percentLow": 50,
-        "percentHigh": 50,
+        "percentLow": 52,
+        "percentHigh": 52,
         "relatedComponentIds": [
           "admin_setup",
           "validation_qa"

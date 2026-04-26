@@ -736,6 +736,23 @@
       "currentBlockers": [],
       "nextAction": "Integration branch ready. Run validation, push, and merge via PR.",
       "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-17",
+      "name": "AbarVa Design + Workflow Canon Enforcement",
+      "goal": "Bring the live AbarVa product together visually, structurally, and narratively across shell, navigation, Admin, Architecture, Production Readiness, and Source Commercial pages.",
+      "status": "in_progress",
+      "percentComplete": 14,
+      "plannedSlices": ["DES7","DES8","ARCH5","PROD8","SRC31","QA24","DEMO5"],
+      "completedSlices": ["DES7"],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "not_run",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Complete remaining lanes and integrate.",
+      "lastUpdated": "2026-04-26"
     }
   ]
 }

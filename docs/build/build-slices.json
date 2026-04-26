@@ -7399,6 +7399,15 @@
       "status": "code_complete",
       "branch": "wave16/demo4-source-commercial-demo-script",
       "description": "10/20/45-minute demo scripts for Source commercial intelligence. Talk tracks, what-to-show, what-not-to-claim, pilot ask. No fake savings or live-data claims."
+    },
+    {
+      "id": "DES7",
+      "wave": "wave-17",
+      "name": "AbarVa App Shell Navigation Canon Refresh",
+      "type": "design",
+      "status": "code_complete",
+      "branch": "wave17/des7-app-shell-navigation-canon",
+      "description": "AbarVaShellNav primitive with workflow-question metadata. Canon wordmark, off-white shell, navy accent, no teal/cyber. 13 tests."
     }
   ]
 }
