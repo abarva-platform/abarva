@@ -2628,6 +2628,60 @@
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
       "notes": "Deterministic, file-pure validator and protocol update for the production readiness manifest. Lane C output of the PROD2 parallel build pack. No model calls, no migrations, no persistence, no UI, no CI wiring. Validator only reports findings; manifest authorship remains the responsibility of the agent or founder making the change."
+    },
+    {
+      "id": "MG2",
+      "name": "Model Gateway Stub",
+      "category": "MG",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "MG1"
+      ],
+      "allowedFiles": [
+        "src/lib/architecture/model-gateway-stub.ts",
+        "src/__tests__/integration/architecture/model-gateway-stub.test.ts",
+        "docs/build/slices/MG2_MODEL_GATEWAY_STUB.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/source/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/components/**",
+        "src/app/**"
+      ],
+      "acceptanceCriteria": [
+        "New module src/lib/architecture/model-gateway-stub.ts exposes ModelGatewayDecision, ModelGatewayBlockedReason, ModelGatewayTier, ModelGatewayPolicy, ModelGatewayAgentKey, ModelGatewayRequest, ModelGatewayRoute, ModelGatewayAuditRecord, ModelGatewayResponse, ModelGatewayForbiddenPattern types and the MODEL_GATEWAY_FORBIDDEN_PATTERNS readonly tuple constant.",
+        "createModelGatewayRequest(input) fills deterministic defaults (tier_b_balanced when modelTier is unknown, [] policies, 0 cost budget, redactionRequested false) without throwing on minimal input.",
+        "routeModelGatewayRequest(request) is pure and deterministic: same request input produces byte-equal output across calls; well-formed requests return decision: 'dry_run' with a typed route (canonical modelName, tier, fallbackChain) and a fully populated audit record.",
+        "Validation gates produce typed block decisions: empty tenantKey -> tenant_scope_invalid; non-canonical agentKey -> tenant_scope_invalid; empty intent -> context_pack_missing; empty contextPackRef -> context_pack_missing; redactionRequested true -> redaction_required_but_not_supported; unknown modelTier -> model_tier_unavailable; estimatedCost > positive costBudgetCents -> cost_budget_exceeded.",
+        "blockModelGatewayRequest(request, reason) records a caller-driven block under any ModelGatewayBlockedReason and returns a fully audited response.",
+        "Audit record is fully populated on every response (both dry_run and block branches): requestId starts with 'mgw-stub-', trace.gatewayVersion is 'mg2.stub.v1', trace.promptHashSeed is a non-empty deterministic hash string, policiesApplied is the deduped + lexicographically sorted policies array, estimatedCostCents is per the hardcoded tier table.",
+        "Cost estimate is deterministic per (tier x intent): same (tier, intent) yields the same estimatedCostCents across calls; intent length seed contributes deterministically.",
+        "response.honestNote is always present and mentions 'Live gateway not implemented' along with a reference to the MG1 model gateway contract.",
+        "MODEL_GATEWAY_FORBIDDEN_PATTERNS includes 'import_openai_outside_gateway', 'import_anthropic_outside_gateway', 'page_level_provider_call', 'agent_direct_provider_call', and 'unaudited_model_call'.",
+        "summarizeModelGatewayDecision(response) renders a deterministic single-line summary that includes the tenant, agent, decision, optional typed reason, optional canonical modelName, and the audit requestId.",
+        "Module hygiene: no import of any provider SDK (no 'openai', no 'anthropic', no '@anthropic-ai/sdk', no '@openai/sdk'); no Date.now, no Math.random, no new Date(, no fetch(, no useState / useEffect, no 'Coming soon' / 'TBD' / 'Lorem ipsum'; no imports from src/lib/sentinel, src/lib/atlas, src/lib/nexus, src/lib/source, src/lib/agent, src/lib/auth, or supabase. The hygiene scanner strips comments and string literals before regex so the MODEL_GATEWAY_FORBIDDEN_PATTERNS string-array literal does not produce false positives.",
+        "New integration test file src/__tests__/integration/architecture/model-gateway-stub.test.ts asserts byte-equal determinism, dry_run on well-formed input, typed block on each malformed-input gate, audit-record completeness on both branches, deterministic cost estimate, summarizer output shape, the forbidden-pattern constant contents, and the no-provider-SDK-imports module-hygiene assertion.",
+        "docs/build/slices/MG2_MODEL_GATEWAY_STUB.md documents the slice (why a stub before a live gateway, what changed, decision flow, decision/reason vocabulary, tier table, audit-record schema, honest note, forbidden-pattern constant, what is intentionally not in v1, hygiene invariants, validation commands, future slices, acceptance criteria mapping). Cites or summarizes the MG1 contract.",
+        "docs/build/build-slices.json appends the MG2 entry with category MG, dependsOn [MG1], status code_complete, risk low, allowedFiles, forbiddenFiles, acceptanceCriteria, validationCommands, and notes; manifest lastUpdated bumped.",
+        "docs/build/production-readiness.json updates the model_gateway component with a note that MG2 stub is added (deterministic dry_run + block decisions only), keeps status not_started (no promotion), updates nextAction to mention live gateway integration deferred to a future runtime slice, and reflects the no-live-model-invocation blocker; manifest lastUpdated bumped.",
+        "No application UI, runtime, auth, supabase, agent runtime, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/model-gateway-stub.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Pure deterministic type-only stub for the Model Gateway chokepoint named in ARCH1 section 6 ('the single chokepoint for every model call'). Names the request / response / audit / route / refusal contract types and exposes a routing function that NEVER calls a live provider: well-formed input returns decision dry_run with a typed audit record; malformed input returns decision block with a typed reason. The MG1 standalone contract may not have landed on this worktree's main; the slice doc summarizes the contract concepts inline so MG2 compiles and ships without taking a hard dependency on a doc that may be missing. Sets up MG3 live gateway integration without changing the stub contract."
     }
   ]
 }
