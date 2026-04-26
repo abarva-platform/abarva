@@ -5273,6 +5273,65 @@
         "npm run build"
       ],
       "notes": "OPS7 standardizes lane final reports so the integration agent can mechanically scrape LANE-SHA + validation metadata at morning review. Read-only Python validator + canonical markdown template + Jest harness using execFileSync. Live integration into a GitHub Actions step is deferred to a later OPS slice."
+    },
+    {
+      "id": "OPS8",
+      "name": "Worktree Cleanup Assistant",
+      "category": "OPS",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane D (parallel build pack)",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "OPS1"
+      ],
+      "allowedFiles": [
+        "scripts/integration/worktree_cleanup_report.py",
+        "docs/build/WORKTREE_CLEANUP_RUNBOOK.md",
+        "docs/build/slices/OPS8_WORKTREE_CLEANUP_ASSISTANT.md",
+        "src/__tests__/integration/ops/worktree-cleanup-report.test.ts",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/lib/agents/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "scripts/integration/worktree_cleanup_report.py is a Python 3 script with shebang #!/usr/bin/env python3, executable mode 0755, stdlib-only imports (argparse, json, subprocess, sys, pathlib, datetime).",
+        "CLI supports `--json`, `--fixture=PATH`, `--help`, and `-h`. `--help` and `-h` exit 0 and print usage.",
+        "Default mode runs `git worktree list --porcelain` via subprocess. `--fixture=PATH` mode reads porcelain text plus optional `last_commit_ts`/`dirty`/`on_origin` metadata from a fixture file for deterministic tests.",
+        "Classifier emits one of: active-main (branch == main), active-integration (branch starts with codex/), lane-worktree (branch starts with pack/, night/, loop/, enterprise/, ops/, or big/), stale-lane (lane prefix AND lastCommitDays > 14), unknown (anything else).",
+        "Each row carries { path, branch, classification, isDirty, lastCommitDays, onOrigin, recommendedCommand, createdFrom: 'ops8_worktree_cleanup_report' }.",
+        "Recommended commands are PRINTED ONLY. Stale-lane clean trees emit `git worktree remove --force <path> && git branch -D <branch>`. Dirty trees emit a stash-or-commit warning with NO removal command. Active-main / active-integration emit `do not remove (active branch)`. Lanes missing from origin append a `would lose work` warning.",
+        "`--json` mode emits envelope `{ schemaVersion: 1, createdFrom: 'ops8_worktree_cleanup_report', destructive: false, rows: [...] }`.",
+        "Script never invokes `git worktree remove`, `git branch -D`, `git push`, `git reset`, or `rm` from any subprocess call.",
+        "src/__tests__/integration/ops/worktree-cleanup-report.test.ts drives the script via child_process.execFileSync, covering parsing of porcelain output, stale classification (lane branch + age > 14 days), dirty-worktree warning, missing-on-origin warning, JSON envelope shape, text-mode rendering, `--help` exit 0, and a static assertion that the script never executes destructive git verbs.",
+        "docs/build/WORKTREE_CLEANUP_RUNBOOK.md documents when to run, how to interpret each classification, manual cleanup steps, and the safety contract (never auto-delete; require explicit user execution).",
+        "docs/build/slices/OPS8_WORKTREE_CLEANUP_ASSISTANT.md documents purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and production readiness impact.",
+        "docs/build/build-slices.json appends the OPS8 entry with status code_complete, risk low, ownerAgent Lane D, lastUpdated 2026-04-26; manifest top-level lastUpdated bumped to 2026-04-26.",
+        "docs/build/production-readiness.json validation_qa and production_deployment notes/nextAction UNIONed conservatively (no promotions); manifest top-level lastUpdated bumped to 2026-04-26.",
+        "No application code outside scripts/integration/worktree_cleanup_report.py and its companion test is modified; no runtime, auth, supabase, migrations, package manifests, or platform-design docs are modified."
+      ],
+      "validationCommands": [
+        "python3 scripts/integration/worktree_cleanup_report.py --help",
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/ops/worktree-cleanup-report.test.ts",
+        "npm run build"
+      ],
+      "notes": "Safe, read-only worktree cleanup assistant. Lists pack/night/loop/enterprise/ops/big worktrees, classifies by branch prefix and 14-day staleness threshold, warns on dirty trees and missing-on-origin branches, and PRINTS recommended cleanup commands for human execution. NEVER deletes anything. Stdlib-only Python; no model providers, no shell except read-only git verbs (worktree list, log, status, ls-remote)."
     }
   ]
 }
