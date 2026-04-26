@@ -4246,6 +4246,362 @@
         "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
       ],
       "notes": "Founder-facing checklist for verifying program continuity (PW1 workshop mode shell, MW4 meeting notes capture, MW5 update proposals, MW6 SME recommendations, PROG7 resume state) and deliverable surfaces (PDEL5 artifact canvas, PDEL7 viewer, PDEL6 version state, PDEL8 evidence trace) land honestly before push or PR. Seventh founder-facing runbook after QA1 (Agentic Spine), QA2 (Solution Workshop), QA3 (Solution Intelligence), QA4 (Agent Mission Persona), QA5 (Route Smoke Inventory), and QA6 (Golden Prompt Harness Contract + Seed). Documentation only. Deterministic \u2014 does not exercise live retrieval or model calls. MW5 / MW6 / PROG7 / PDEL6 / PDEL7 / PDEL8 are explicitly conditional: each row is verified only if the matching slice has landed in the batch under review. Default policy for unsupervised batch runs: lane agents commit only; integration agent owns cherry-picks and merges; founder owns the push and merge decisions."
+    },
+    {
+      "id": "TEN1",
+      "name": "SaaS Tenancy Architecture Contract",
+      "category": "ARCH",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane A (controlled multi-agent build)",
+      "dependsOn": [
+        "ARCH1"
+      ],
+      "allowedFiles": [
+        "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md",
+        "docs/build/slices/TEN1_SAAS_TENANCY_ARCHITECTURE_CONTRACT.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md names the four canonical AbarVa tenancy tiers (AbarVa SaaS Pilot, AbarVa Enterprise SaaS / Dedicated Tenant, AbarVa Private Data Plane, AbarVa Self-Managed) and tabulates per-tier isolation mode, data plane, model gateway, SSO, RBAC, audit, governance posture, and operator.",
+        "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md names the four canonical runtime planes (control plane, tenant runtime plane, data evidence plane, model gateway plane) and includes the canonical composition diagram.",
+        "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md names the three canonical tenant isolation modes (shared, dedicated, private) and tabulates the mode + tier matrix across database / storage / vector / graph / audit.",
+        "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md names the tenant registry contract with required fields (tenantId, tenantSlug, displayName, tier, isolationMode, dataNamespace, gatewayProfile, idpProfile, governancePosture, lifecycleState, region, timestamps, notes) and explicitly forbids tenant content in the registry.",
+        "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md names the tenant data namespace as the unit of isolation inside the data evidence plane and tabulates the per-mode shape matrix (relational, object, vector, graph, audit).",
+        "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md names per-tier expectations for SSO, RBAC, audit, and the model gateway in explicit tables.",
+        "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md names the capability \u00d7 tier feasibility matrix covering at least program execution, pattern detection, executive brief, solution composition, deliverable artifact generation, evidence ledger ingest (non-PII / PHI / SEC), BYOK, customer-controlled gateway, cross-tenant pattern aggregation, vector retrieval, graph queries, custom SAML, audit export, and strict-residency placement.",
+        "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md names the MVP / V1 / V2 progression and explicitly states that Tier 2+ is not yet provisionable today.",
+        "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md names risks (cross-tenant leak, misclassified tier, provider lock-in, customer-cloud drift, implicit tenancy in code, knowledge fabric maturity) with at least one mitigation each, and explicit non-goals (no multi-region active-active, no real-time cross-tenant analytics, no tenant-content visibility from control plane, no sub-tenant hierarchy in MVP / V1, no on-prem in MVP / V1, no model-training over tenant content, no silent tier downgrade, no surface differences between tiers).",
+        "docs/architecture/TEN1_SAAS_TENANCY_ARCHITECTURE.md cross-references TEN2 (isolation enforcement), CLOUD1 (deployment topology), TRUST1 (data trust posture), ARCH1, ARCH2, ADM1, MG2, AUD2, and EVID2 / EVID3.",
+        "docs/build/slices/TEN1_SAAS_TENANCY_ARCHITECTURE_CONTRACT.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, readiness impact, validation commands, and references the architecture contract by relative path.",
+        "docs/build/build-slices.json appends a TEN1 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn, status code_complete, risk low, and ownerAgent Lane A; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "docs/build/production-readiness.json production_deployment component appends a note acknowledging that the TEN1 SaaS tenancy architecture contract is added; status is preserved (no promotion); production_deployment.nextAction is UNIONed conservatively without overwriting prior PROD1 / PROD2 / PROD3 / OPS1 wording.",
+        "docs/build/production-readiness.json data_evidence_knowledge_fabric component appends a note acknowledging that TEN1 names the data evidence plane and the tenant data namespace shape; status is preserved (no promotion); data_evidence_knowledge_fabric.nextAction is left untouched (HEAD wins) because the existing wording covers the load-bearing live EVID2 ingest binding.",
+        "docs/build/production-readiness.json manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "Documentation only; no application code, runtime, auth, supabase, migrations, package manifests, abarva-source, or platform-design docs are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Architecture contract that names the four canonical AbarVa tenancy tiers (Pilot, Enterprise / Dedicated, Private Data Plane, Self-Managed), the four canonical runtime planes (control, tenant runtime, data evidence, model gateway), the three canonical isolation modes (shared, dedicated, private), the tenant registry, the tenant data namespace, the per-tier SSO / RBAC / audit / gateway expectations, the capability \u00d7 tier feasibility matrix, the MVP / V1 / V2 progression, the risks and non-goals, and the cross-references to TEN2 (isolation enforcement), CLOUD1 (deployment topology), and TRUST1 (data trust posture). Documentation only. No application code, no runtime, no migrations, no provisioning automation, no model calls, no browser automation. Tier 2 / Tier 3 / Tier 4 provisionability is explicitly deferred behind a production-grade data evidence plane and the matching isolation enforcement (TEN2), deployment topology (CLOUD1), and data trust posture (TRUST1) slices."
+    },
+    {
+      "id": "TEN2",
+      "name": "Tenant Isolation Data Boundary Model",
+      "category": "TEN",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane B (parallel build pack)",
+      "dependsOn": [
+        "S7"
+      ],
+      "allowedFiles": [
+        "src/lib/architecture/tenant-isolation-boundary.ts",
+        "src/__tests__/integration/architecture/tenant-isolation-boundary.test.ts",
+        "docs/build/slices/TEN2_TENANT_ISOLATION_DATA_BOUNDARY_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/auth/**",
+        "src/lib/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/architecture/tenant-isolation-boundary.ts exports TenantIsolationLevel, TenantDataBoundary, TenantStorageBoundary, TenantVectorBoundary, TenantGraphBoundary, TenantModelGatewayBoundary, TenantAuditBoundary, TenantIsolationFinding, listTenantIsolationLevels, buildTenantDataBoundaryModel, validateTenantBoundary, summarizeTenantIsolationBoundaries.",
+        "TenantIsolationLevel covers exactly 'logical_row_level', 'schema_isolated', 'database_isolated', 'environment_isolated', and 'customer_private_data_plane', and every value appears at least once in the seed.",
+        "Every seed boundary defines non-empty risk, mitigation, and auditRequirement, and every boundary is tagged createdFrom 'deterministic_tenant_isolation_seed'.",
+        "src/__tests__/integration/architecture/tenant-isolation-boundary.test.ts proves determinism (byte-equal output across calls), all 5 isolation levels present, every boundary has risk/mitigation/auditRequirement, validateTenantBoundary rejects missing fields, summarizeTenantIsolationBoundaries reconciles to totalBoundaries, and module hygiene regex blocks Date.now / Math.random / new Date( / fetch( / anthropic / openai and forbids imports from auth/source/sentinel/atlas/nexus/agent/supabase.",
+        "docs/build/slices/TEN2_TENANT_ISOLATION_DATA_BOUNDARY_MODEL.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and readiness impact.",
+        "docs/build/build-slices.json appends a TEN2 entry with allowedFiles, forbiddenFiles, validationCommands, dependsOn S7, status code_complete, risk low, ownerAgent Lane B; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "docs/build/production-readiness.json updates production_deployment, admin_setup, and data_evidence_knowledge_fabric notes/nextAction (UNION; conservative; no promotion) and bumps top-level lastUpdated to 2026-04-26.",
+        "Read model only; no auth implementation changes, no RLS, no migrations, no live runtime claim; only the five allowed files are staged."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/tenant-isolation-boundary.test.ts",
+        "npm run build",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Deterministic, file-pure read model that documents the canonical tenant isolation boundary stack across persistence (Postgres row + schema), vector indexes, graph stores, the Model Gateway, and unified audit events. Read-only complement to S7 (tenant isolation decision probes) and AUD2 / EVID2 / ADM3 read models. Documents shape only; does not authenticate, run RLS, migrate, or rewrite any guard helper. No promotion of production_deployment or data_evidence_knowledge_fabric to production_ready."
+    },
+    {
+      "id": "TRUST1",
+      "name": "Dataset Trust Model + Data Sharing Levels",
+      "category": "ADM",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Steward",
+      "dependsOn": [
+        "ADM3"
+      ],
+      "allowedFiles": [
+        "src/lib/admin/dataset-trust-model.ts",
+        "src/__tests__/integration/admin/dataset-trust-model.test.ts",
+        "docs/build/slices/TRUST1_DATASET_TRUST_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "buildDatasetTrustModel returns byte-equal output across repeated calls (JSON.stringify equality enforced).",
+        "Canonical sharing-level union is exactly ['L0_public_external', 'L1_metadata_only', 'L2_summary_aggregate', 'L3_redacted_extract', 'L4_sensitive_raw_data'] in this ordinal order.",
+        "Canonical trust ladder union is exactly ['loaded', 'available', 'usable_evidence', 'agent_usable', 'decision_grade'] in this ordinal order.",
+        "Only L4_sensitive_raw_data carries rawDataExposed=true and approvalRequired=true; all other levels are non-raw and non-approval-required by default.",
+        "Only agent_usable and decision_grade ladder states permit agent runtime use; only decision_grade permits decision-artifact citation.",
+        "evaluateDatasetTrustDecision blocks any L4 read without an explicit approved approval state, including denied / expired (rule_no_fake_approval), and blocks raw record reads at non-L4 levels (rule_raw_records_only_via_L4).",
+        "evaluateDatasetTrustDecision permits L1 metadata-only discovery without raw access or attached approval.",
+        "evaluateDatasetTrustDecision blocks agent use when no agent-use policy is attached, when ladder state is only available, or when ladder state is only loaded.",
+        "Every decision carries createdFrom 'deterministic_dataset_trust_seed'; permitted decisions carry an empty reasons list; blocked decisions carry a non-empty reasons list.",
+        "summarizeDatasetTrustReadiness reconciles permittedTotal + blockedTotal = total and exposes per-level / per-ladder-state / per-approval-state buckets that cover all canonical keys.",
+        "Module imports nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch / anthropic / openai / pinecone runtime."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/admin/dataset-trust-model.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic dataset trust read model that defines progressive client data sharing levels (L0 public/external \u2192 L4 sensitive raw data) and a five-state trust ladder (loaded \u2192 available \u2192 usable_evidence \u2192 agent_usable \u2192 decision_grade). Encodes canonical rules so clients can engage AbarVa without granting broad raw-data access: loaded \u2260 usable, available \u2260 agent-usable, raw data not required by default, evidence supplied via manifests, agent use denied by default, L4 requires explicit named approval, approval is never fabricated. No DB writes, no migrations, no live retrieval, no model invocation. Future TRUST2 attaches trust + ladder fields to ADM3 inventory items without a TRUST1 contract change."
+    },
+    {
+      "id": "TRUST2",
+      "name": "Agent Data Access Policy Matrix",
+      "category": "TRUST",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane D (parallel build pack)",
+      "dependsOn": [
+        "ADM3"
+      ],
+      "lastUpdated": "2026-04-26",
+      "allowedFiles": [
+        "src/lib/admin/agent-data-access-policy.ts",
+        "src/__tests__/integration/admin/agent-data-access-policy.test.ts",
+        "docs/build/slices/TRUST2_AGENT_DATA_ACCESS_POLICY_MATRIX.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/lib/admin/dataset-trust-model.ts",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Module declares the canonical agent string-literal union 'nexus' | 'sentinel' | 'atlas' | 'steward' and the AgentDataUsePurpose union covering summarize, recommend, cite_as_evidence, generate_deliverable, evaluate_governance, create_mission, produce_executive_brief.",
+        "Module redeclares the sharing-level union locally as AgentDatasetSharingLevel ('L0_public_external' | 'L1_metadata_only' | 'L2_summary_aggregate' | 'L3_redacted_extract' | 'L4_sensitive_raw_data') and the approval-state union locally as AgentEvidenceApprovalState; does NOT import from src/lib/admin/dataset-trust-model.ts (lane isolation).",
+        "listAgentDataAccessPolicies and buildAgentDataAccessMatrix are byte-equal across repeated calls and only emit (agent, purpose) entries for which the agent is authorized for that purpose.",
+        "Each of the four agents has policy entries for at least 4 of the seven canonical purposes.",
+        "Steward policies cover policy / readiness purposes only (envelope is L0 / L1 / L2); Atlas policies cover aggregate / approved executive signals only (envelope is L0 / L1 / L2); Sentinel policies cover evidence candidates + patterns; Nexus policies cover agent-approved program / workshop / deliverable purposes.",
+        "evaluateAgentDataAccess blocks every L4_sensitive_raw_data request unless approvalState === 'explicit_approved'; blocks cite_as_evidence unless the approval state is conditionally_approved or explicit_approved; refuses produce_executive_brief at L3 / L4 either via the level-outside-envelope check (Atlas, Steward) or the executive_brief_prefers_aggregate reason if the level is in envelope.",
+        "Every policy carries permissions for all 5 canonical sharing levels in canonical order, every permission carries a non-empty rationale, and every decision returned by evaluateAgentDataAccess populates a non-empty rationale (and a non-null blockReason when allowed === false).",
+        "Every policy and decision carries createdFrom: 'deterministic_agent_data_access_seed'.",
+        "summarizeAgentDataAccessMatrix reconciles byAgent, byPurpose, permissionsRequiringExplicitApproval, and preferredAggregateForExecutiveBrief counts to the policy list.",
+        "Module imports nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, src/lib/admin/dataset-trust-model.ts, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch; no anthropic / openai / pinecone references."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/admin/agent-data-access-policy.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic agent data access policy matrix that defines which agents (Nexus / Sentinel / Atlas / Steward) may use which dataset sharing levels for which canonical purposes. Read model only \u2014 no live enforcement, no audit ledger writes, no model invocation, no DB persistence. Lane-isolated from TRUST1 (parallel build pack): redeclares DatasetTrustLevel and DatasetTrustLadderState locally and the integration agent reconciles duplicate type declarations during cherry-pick. Future TRUST slices wire the matrix into the Steward Setup UI and the runtime tool dispatcher / Model Gateway; per-tenant policy override and live enforcement remain deferred."
+    },
+    {
+      "id": "CLOUD1",
+      "name": "Enterprise Private Deployment Strategy Contract",
+      "category": "CLOUD",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane E (parallel build pack)",
+      "dependsOn": [
+        "ARCH1",
+        "ARCH2"
+      ],
+      "lastUpdated": "2026-04-26",
+      "allowedFiles": [
+        "docs/build/slices/CLOUD1_ENTERPRISE_PRIVATE_DEPLOYMENT_STRATEGY.md",
+        "docs/architecture/CLOUD1_ENTERPRISE_DEPLOYMENT_MODELS.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "docs/architecture/CLOUD1_ENTERPRISE_DEPLOYMENT_MODELS.md documents \u00a71 four-tier vocabulary (AbarVa SaaS shared multi-tenant, Dedicated Tenant single-tenant on AbarVa infra, Private Data Plane data and compute in client cloud, Fully Self-Managed client operates entire stack), \u00a72 control plane vs data plane separation including the trust boundary contract, \u00a73 dependency replacement matrix (Vercel \u2192 Container Apps / Cloud Run, Supabase \u2192 Azure Postgres Flexible / Cloud SQL, Vercel Blob \u2192 Azure Blob / GCS, Clerk \u2192 Azure AD B2C / OIDC / Identity Platform, Anthropic / OpenAI direct \u2192 tenant model gateway with allowlisted egress), \u00a74 client data trust implications per tier with cross-reference to TRUST1 / TRUST2, \u00a75 model gateway strategy per tier (which providers acceptable, where calls originate, key ownership, audit destination), \u00a76 operational responsibilities matrix (upgrades, migrations, backups, secret rotation, TLS, IdP, observability, incident response, pen-test, SLA), \u00a77 Azure VNet lab path (forward-reference CLOUD2), \u00a78 GCP VPC lab path (forward-reference CLOUD3), \u00a79 MVP / V1 / V2 path, \u00a710 testable-outside-client vs requires-client environment split, \u00a711 cross-references to TEN1 / TEN2 / TRUST1 / TRUST2 / CLOUD2 / CLOUD3 / MG2 / ARCH1 / ARCH2.",
+        "docs/build/slices/CLOUD1_ENTERPRISE_PRIVATE_DEPLOYMENT_STRATEGY.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, readiness impact, and tier-vocabulary one-liners; it references the architecture document by relative path.",
+        "docs/build/build-slices.json appends a CLOUD1 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn, status code_complete, risk low, ownerAgent Lane E, and lastUpdated 2026-04-26; manifest top-level lastUpdated remains 2026-04-26.",
+        "docs/build/production-readiness.json production_deployment component appends a note acknowledging that CLOUD1 lands the four-tier deployment strategy contract plus control-plane / data-plane separation, dependency replacement matrix, per-tier model gateway posture, per-tier operational responsibility split, and the forward-reference Azure (CLOUD2) and GCP (CLOUD3) lab paths; status is preserved at blocked (no promotion); production_deployment.nextAction is UNIONed conservatively without overwriting prior PROD1 / PROD2 / PROD3 / PROD4 wording; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "Documentation only; no application code, runtime, auth, supabase, migrations, package manifests, infrastructure-as-code, or platform-design docs are modified.",
+        "No tier description fabricates a customer name, contract value, deploy date, region SLA, or live cloud claim; every cross-reference is a relative path."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Founder-facing strategy contract for AbarVa enterprise deployment across four tiers: SaaS (shared multi-tenant), Dedicated Tenant (single-tenant on AbarVa infra), Private Data Plane (data and compute in client cloud), and Fully Self-Managed (client operates the stack). Codifies control plane vs data plane separation, dependency replacement matrix (Vercel \u2192 Container Apps / Cloud Run; Supabase \u2192 Azure Postgres Flexible / Cloud SQL; Vercel Blob \u2192 Azure Blob / GCS; Clerk \u2192 Azure AD B2C / Identity Platform; Anthropic / OpenAI direct \u2192 tenant gateway), client data trust implications, model gateway provider posture, and operational responsibilities per tier. Forward-references CLOUD2 (Azure VNet lab path) and CLOUD3 (GCP VPC lab path); both are lab-only acceptance and do not deploy customers. MVP today is Tier 1 (SaaS) only; V1 lands TEN1 / TEN2 / TRUST1 / TRUST2 / CLOUD2 / CLOUD3 plus Tier 2 on demand; V2 is the first paid Tier 3 deployment. Documentation only \u2014 no application code, no IaC, no provisioning, no live cloud calls, no model calls. production_deployment status is preserved at blocked (no false promotions per AGENT_DISPATCH_OPERATING_MODEL \u00a7G / \u00a7H)."
+    },
+    {
+      "id": "CLOUD2",
+      "name": "Azure VNet Reference Lab Blueprint",
+      "category": "CLOUD",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane F (parallel build pack)",
+      "dependsOn": [
+        "TEN1",
+        "CLOUD1"
+      ],
+      "allowedFiles": [
+        "docs/build/slices/CLOUD2_AZURE_VNET_REFERENCE_LAB_BLUEPRINT.md",
+        "docs/architecture/CLOUD2_AZURE_VNET_REFERENCE_LAB.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md",
+        "infra/**",
+        "terraform/**",
+        "bicep/**",
+        ".github/workflows/**",
+        "azure.yaml"
+      ],
+      "acceptanceCriteria": [
+        "docs/architecture/CLOUD2_AZURE_VNET_REFERENCE_LAB.md documents \u00a71 lab purpose (what the lab is, what it is NOT, what it proves, what it does NOT prove), \u00a72 single Resource Group layout, \u00a73 VNet CIDR plan with app / data / private-endpoint / ingress / bastion subnets and NSG posture, \u00a74 compute tier (Azure Container Apps preferred, Azure App Service Premium with VNet integration as fallback), \u00a75 Azure Database for PostgreSQL Flexible Server fronted by a private endpoint with public network access disabled, \u00a76 Azure Blob Storage account fronted by a private endpoint with public network access disabled, \u00a77 Azure Key Vault fronted by a private endpoint with managed-identity RBAC and public network access disabled, \u00a78 Log Analytics workspace and Application Insights component bound to that workspace, \u00a79 private ingress options (Front Door Premium with Private Link Service preferred, Application Gateway with WAF as fallback), \u00a710 private DNS zones (privatelink.postgres.database.azure.com, privatelink.blob.core.windows.net, privatelink.vaultcore.azure.net) linked to the lab VNet, \u00a711 lab validation contract (smoke / Postgres round-trip / Blob round-trip / Key Vault secret retrieval via managed identity / Application Insights log emission / private DNS resolution check), \u00a712 model gateway stub posture (no live model calls, no provider keys), \u00a713 environment variable contract naming static / vault / platform sources for each variable the App expects at startup, \u00a714 progression path to Bicep / Terraform / azd implementation, \u00a715 boundaries summary, and \u00a716 safety rationale.",
+        "docs/build/slices/CLOUD2_AZURE_VNET_REFERENCE_LAB_BLUEPRINT.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and readiness impact, and references the architecture doc by relative path.",
+        "docs/build/build-slices.json appends a CLOUD2 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn (TEN1, CLOUD1), status code_complete, risk low, and ownerAgent Lane F; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "docs/build/production-readiness.json production_deployment component appends a note acknowledging that the CLOUD2 Azure VNet reference lab blueprint is added; status is preserved (no promotion); production_deployment.nextAction is UNIONed conservatively without overwriting prior PROD1 / PROD2 / PROD3 / OPS1 wording; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "Documentation only; no application code, runtime, IaC (Bicep / Terraform / ARM / azd), scripts, CI workflow files, auth, supabase, migrations, package manifests, or platform-design docs are modified.",
+        "Cross-references to TEN1 (logical tenant isolation), CLOUD1 (generic deployable shape), MG2 / MG3 (Model Gateway stub and safe integration), AUD2 (audit events), and PROD3 / PROD4 (production-readiness live panel and deferred external CI / Vercel ingestion) are present in the architecture doc."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Documentation-only blueprint for a private-VNet, no-public-endpoint, secret-bounded Azure reference lab into which the AbarVa shell can later be deployed for validation. Defines Resource Group layout, VNet CIDR plan, app / data / private-endpoint / ingress / bastion subnets, Azure Container Apps (preferred) or App Service (fallback), Azure Database for PostgreSQL Flexible Server (private endpoint), Azure Blob Storage (private endpoint), Azure Key Vault (private endpoint, managed identity), Log Analytics + Application Insights, private ingress (Front Door Premium + Private Link Service or Application Gateway + WAF), private DNS zones for postgres / blob / vault privatelink hostnames, model gateway stub posture, environment variable contract, lab validation contract (smoke / DB round-trip / Blob round-trip / Key Vault secret retrieval / Application Insights log emission / private DNS resolution), and the progression path to a future Bicep / Terraform / azd slice. The lab proves private-VNet deployability, no public endpoints, secret-bounded operation, and observability path; it does NOT prove production scaling, DR, multi-region, live model gateway, production tenant isolation certification, or compliance. No IaC, no scripts, no application code, no model calls, no Azure ARM calls. production_deployment status is preserved (still blocked); the prod-deploy-verification blocker is preserved verbatim; lab build itself is deferred to a later Terraform / Bicep / azd slice."
+    },
+    {
+      "id": "OPS2",
+      "name": "Multi-Agent Dispatch Queue Automation Read Model",
+      "category": "OPS",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane G (parallel build pack)",
+      "dependsOn": [
+        "OPS1"
+      ],
+      "allowedFiles": [
+        "src/lib/ops/agent-dispatch-queue.ts",
+        "src/__tests__/integration/ops/agent-dispatch-queue.test.ts",
+        "docs/build/slices/OPS2_AGENT_DISPATCH_QUEUE_AUTOMATION_READ_MODEL.md",
+        "docs/build/agent-dispatch-queue.json",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/lib/agents/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/ops/agent-dispatch-queue.ts exports a canonical DISPATCH_QUEUE_STATES tuple covering all 7 lifecycle states (proposed, ready, blocked, in_progress, completed, failed, deferred), DispatchQueueItem / DispatchQueueState / DispatchQueueSummary / DispatchQueueRecommendation / DispatchQueueBlockReason types, and the helpers listDispatchQueueItems, getDispatchQueueItemsByState, getReadyDispatchItems, getBlockedDispatchItems, recommendNextBatch, and summarizeDispatchQueue.",
+        "The read model parses docs/build/agent-dispatch-queue.json synchronously through readFileSync + path.join(process.cwd(), ...) and normalizes the on-disk shape (status, dependsOn, laneType) into the stable view-model (state, dependencies, sourceLane, targetAgent).",
+        "Every emitted item carries createdFrom 'deterministic_dispatch_queue_read_model'; every recommendation carries the same provenance tag.",
+        "src/__tests__/integration/ops/agent-dispatch-queue.test.ts asserts the JSON parses, the canonical state vocabulary covers all 7 states, every item state in the seed is valid, getReadyDispatchItems returns only ready items, every blocked item carries a canonical blockReason, recommendNextBatch is deterministic and ordered by priority then conflict risk then dependency count then id, and summarizeDispatchQueue reconciles byState / byLane / byPriority / blockedReasonCounts totals against totalItems / readyCount / blockedCount.",
+        "Module hygiene asserted: no Sentinel / Atlas / Nexus / Agent / Source / Auth / Supabase imports; no Date.now / Math.random / new Date / fetch; no child_process / execSync / spawnSync; no spawn(/exec(/new Agent( patterns; no Anthropic / OpenAI runtime; no fabricated dollar amounts.",
+        "docs/build/slices/OPS2_AGENT_DISPATCH_QUEUE_AUTOMATION_READ_MODEL.md documents purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and production readiness impact.",
+        "docs/build/build-slices.json appends an OPS2 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn, status code_complete, risk low, and ownerAgent Lane G; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "docs/build/production-readiness.json validation_qa and production_deployment components append notes acknowledging that the OPS2 deterministic dispatch queue read model is added; statuses are preserved (no promotions); nextAction values are UNIONed conservatively without overwriting prior wording; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "No application code outside src/lib/ops/agent-dispatch-queue.ts and its companion test is modified; no runtime, auth, supabase, migrations, package manifests, or platform-design docs are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/ops/agent-dispatch-queue.test.ts",
+        "npm run build"
+      ],
+      "notes": "Deterministic, file-pure read model over the OPS1 dispatch queue manifest. Normalizes on-disk shape (status / dependsOn / laneType) into a stable view-model (state / dependencies / sourceLane / targetAgent), exposes ready/blocked filters, a deterministic recommendNextBatch helper ordered by priority then conflict risk then dependency count then id, and a totals-reconciling summary. No agent runtime, no model providers, no shell, no spawning. The agent-dispatch-queue.json manifest itself is consumed as-is in this slice."
     }
   ]
 }
