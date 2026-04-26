@@ -66,6 +66,7 @@ const EXPECTED_WAVE_IDS = [
   'wave-11',
   'wave-12',
   'wave-13',
+  'wave-14',
 ] as const;
 
 // ---------------------------------------------------------------------
@@ -167,7 +168,7 @@ describe('build-waves.json - top-level shape', () => {
 // ---------------------------------------------------------------------
 
 describe('build-waves.json - canonical wave coverage', () => {
-  it('includes all 14 canonical waves (Wave 0 through Wave 13)', () => {
+  it('includes all 15 canonical waves (Wave 0 through Wave 14)', () => {
     const m = loadWaves();
     expect(m.waves.length).toBe(EXPECTED_WAVE_IDS.length);
     const ids = m.waves.map((w) => w.waveId);
@@ -525,6 +526,58 @@ describe('build-waves.json - wave-13 live demo validation anchor', () => {
     expect(wave13).toBeDefined();
     if (!wave13) return;
     expect(wave13.productionReadinessUpdated).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------
+// Wave 14 anchor
+// ---------------------------------------------------------------------
+
+describe('build-waves.json - wave-14 source commercial intelligence anchor', () => {
+  it('wave-14 lists all 10 slices as planned', () => {
+    const m = loadWaves();
+    const wave14 = m.waves.find((w) => w.waveId === 'wave-14');
+    expect(wave14).toBeDefined();
+    if (!wave14) return;
+    const expected = ['SRC11', 'SRC12', 'SRC13', 'SRC14', 'SRC15', 'SRC16', 'SRC17', 'SRC18', 'QA21', 'OPS14'];
+    for (const id of expected) {
+      expect(wave14.plannedSlices).toContain(id);
+    }
+  });
+
+  it('wave-14 lists all 10 slices as completed', () => {
+    const m = loadWaves();
+    const wave14 = m.waves.find((w) => w.waveId === 'wave-14');
+    expect(wave14).toBeDefined();
+    if (!wave14) return;
+    const expected = ['SRC11', 'SRC12', 'SRC13', 'SRC14', 'SRC15', 'SRC16', 'SRC17', 'SRC18', 'QA21', 'OPS14'];
+    for (const id of expected) {
+      expect(wave14.completedSlices).toContain(id);
+    }
+  });
+
+  it('wave-14 percentComplete is 100', () => {
+    const m = loadWaves();
+    const wave14 = m.waves.find((w) => w.waveId === 'wave-14');
+    expect(wave14).toBeDefined();
+    if (!wave14) return;
+    expect(wave14.percentComplete).toBe(100);
+  });
+
+  it('wave-14 status is merged (source commercial intelligence merged via PR #340)', () => {
+    const m = loadWaves();
+    const wave14 = m.waves.find((w) => w.waveId === 'wave-14');
+    expect(wave14).toBeDefined();
+    if (!wave14) return;
+    expect(wave14.status).toBe('merged');
+  });
+
+  it('wave-14 mergedPrs contains 340', () => {
+    const m = loadWaves();
+    const wave14 = m.waves.find((w) => w.waveId === 'wave-14');
+    expect(wave14).toBeDefined();
+    if (!wave14) return;
+    expect(wave14.mergedPrs).toContain(340);
   });
 });
 
