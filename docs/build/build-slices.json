@@ -4264,6 +4264,36 @@
       "createdAt": "2026-04-26"
     },
     {
+      "id": "QA15",
+      "name": "Integration Test Coverage Audit",
+      "category": "qa",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/qa/integration-test-coverage-audit.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/qa/integration-test-coverage-audit.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/QA15_INTEGRATION_TEST_COVERAGE_AUDIT.md",
+      "createdAt": "2026-04-26"
+    },
+    {
+      "id": "MW8",
+      "name": "Workshop Outcome Synthesis",
+      "category": "programs",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/programs/workshop-outcome-synthesis.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/programs/workshop-outcome-synthesis.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/MW8_WORKSHOP_OUTCOME_SYNTHESIS.md",
+      "createdAt": "2026-04-26"
+    },
+    {
       "id": "MW6",
       "name": "SME Recommendation Panel",
       "category": "MW",
@@ -6635,6 +6665,21 @@
       "createdAt": "2026-04-26"
     },
     {
+      "id": "SOL16",
+      "name": "Pattern Coverage Summary",
+      "category": "solutions",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/solutions/pattern-coverage-summary.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/solutions/pattern-coverage-summary.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/SOL16_PATTERN_COVERAGE_SUMMARY.md",
+      "createdAt": "2026-04-26"
+    },
+    {
       "id": "QA16",
       "name": "Production Readiness Promotion Gate",
       "category": "qa",
@@ -6707,6 +6752,89 @@
         "src/__tests__/integration/ops/build-run-retrospective.test.ts"
       ],
       "sliceDoc": "docs/build/slices/OPS9_BUILD_RUN_RETROSPECTIVE.md",
+      "createdAt": "2026-04-26"
+    },
+    {
+      "id": "ARCH3",
+      "name": "AbarVa Architecture Overview Pack",
+      "category": "architecture",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [],
+      "testFiles": [],
+      "sliceDoc": "docs/build/slices/ARCH3_ABARVA_ARCHITECTURE_OVERVIEW_PACK.md",
+      "createdAt": "2026-04-26"
+    },
+    {
+      "id": "DEMO1",
+      "name": "Boardroom Demo Script / Walkthrough",
+      "category": "demo",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [],
+      "testFiles": [],
+      "sliceDoc": "docs/build/slices/DEMO1_BOARDROOM_DEMO_WALKTHROUGH.md",
+      "createdAt": "2026-04-26"
+    },
+    {
+      "id": "DEMO2",
+      "name": "Founder Demo Route Checklist",
+      "category": "demo",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/qa/founder-demo-route-checklist.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/qa/founder-demo-route-checklist.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/DEMO2_FOUNDER_DEMO_ROUTE_CHECKLIST.md",
+      "createdAt": "2026-04-26"
+    },
+    {
+      "id": "QA18",
+      "name": "E2E Persona Walk Results",
+      "category": "qa",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/qa/persona-walk-results.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/qa/persona-walk-results.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/QA18_E2E_PERSONA_WALK_RESULTS.md",
+      "createdAt": "2026-04-26"
+    },
+    {
+      "id": "PROD7",
+      "name": "Production Readiness Summary Polish",
+      "category": "admin",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/admin/production-readiness-summary.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/admin/production-readiness-summary.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/PROD7_PRODUCTION_READINESS_SUMMARY_POLISH.md",
+      "createdAt": "2026-04-26"
+    },
+    {
+      "id": "ADM8",
+      "name": "Agent Readiness Deep Drill",
+      "category": "admin",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/admin/agent-readiness-deep-drill.ts",
+        "src/components/admin/AgentReadinessDeepDrill.tsx"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/admin/agent-readiness-deep-drill.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/ADM8_AGENT_READINESS_DEEP_DRILL.md",
       "createdAt": "2026-04-26"
     }
   ]

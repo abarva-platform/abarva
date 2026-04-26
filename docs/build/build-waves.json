@@ -508,6 +508,23 @@
       "currentBlockers": [],
       "nextAction": "All 6 session waves complete. Real GitHub/Vercel polling, live surface scanning, and manifest promotion deferred to next run.",
       "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-11",
+      "name": "Demo Readiness + Architecture Overview",
+      "goal": "Create demo scripts, architecture overview, persona walk results, readiness polish, and agent readiness deep drill for founder/boardroom demos.",
+      "status": "in_progress",
+      "percentComplete": 100,
+      "plannedSlices": ["ARCH3", "DEMO1", "DEMO2", "QA18", "PROD7", "ADM8"],
+      "completedSlices": ["ARCH3", "DEMO1", "DEMO2", "QA18", "PROD7", "ADM8"],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [],
+      "nextAction": "All 6 lanes integrated. Awaiting PR merge to update status to merged.",
+      "lastUpdated": "2026-04-26"
     }
   ]
 }
