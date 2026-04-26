@@ -6965,6 +6965,18 @@
       "testFiles": [],
       "sliceDoc": "docs/build/slices/AZLAB5_AZURE_LAB_DEPLOYMENT_RUNBOOK.md",
       "createdAt": "2026-04-26"
+    },
+    {
+      "id": "LIVE1",
+      "wave": "wave-13",
+      "status": "code_complete",
+      "title": "Founder Live Walk Checklist",
+      "description": "Deterministic step-by-step live demo checklist covering all major AbarVa surfaces with fallbacks and readiness caveats.",
+      "sliceType": "qa",
+      "owner": "qa",
+      "branch": "live/live1-founder-live-walk-checklist",
+      "createdAt": "2026-04-26",
+      "completedAt": "2026-04-26"
     }
   ]
 }
