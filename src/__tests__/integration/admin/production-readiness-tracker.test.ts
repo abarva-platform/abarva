@@ -20,6 +20,8 @@ import {
 
 const manifestPath = resolve(__dirname, '../../../../docs/build/production-readiness.json');
 const protocolPath = resolve(__dirname, '../../../../docs/build/PRODUCTION_READINESS_UPDATE_PROTOCOL.md');
+const componentMapPath = resolve(__dirname, '../../../../docs/build/PRODUCTION_READINESS_COMPONENT_MAP.md');
+const buildSlicesPath = resolve(__dirname, '../../../../docs/build/build-slices.json');
 
 describe('production-readiness.json manifest', () => {
   it('parses as JSON', () => {
@@ -31,6 +33,23 @@ describe('production-readiness.json manifest', () => {
   it('matches the expected product component IDs in canonical order', () => {
     const manifest = loadProductionReadinessManifest();
     expect(manifest.components.map((component) => component.id)).toEqual([...PRODUCTION_READINESS_COMPONENT_IDS]);
+    expect(manifest.components.map((component) => component.name)).toEqual([
+      'Programs',
+      'Program Workshop Mode',
+      'Deliverables / Artifacts',
+      'Intelligence',
+      'AI Control Tower',
+      'Admin / Setup',
+      'Source / Outsourcing',
+      'Data / Evidence / Knowledge Fabric',
+      'Solution Intelligence',
+      'Agent Runtime',
+      'Model Gateway',
+      'Ingestion / Parsing',
+      'Audit / Governance',
+      'Validation / QA',
+      'Production / Deployment',
+    ]);
   });
 
   it('includes all readiness dimensions for every component', () => {
@@ -271,8 +290,14 @@ describe('production readiness read model', () => {
     const notes = source!.notes.join('\n').toLowerCase();
     for (const required of [
       'source dashboard / sourcing event portfolio',
+      'source dashboard',
+      'source event canvas',
+      'source data readiness panel',
+      'deterministic source nexus api stub',
+      'deterministic multi-agent mission preview',
       'source event journey',
       'outsourcing / ams pattern intelligence',
+      'ams pattern intelligence',
       'context-aware nexus foundation',
       'deterministic context validation',
       'deterministic workflow validation',
@@ -290,6 +315,9 @@ describe('production readiness read model', () => {
       'deterministic source agent mission read model',
       'deterministic source agent mission report formatter',
       'tiny deterministic source dashboard mission preview',
+      'unified production-readiness.json manifest',
+      'seeded/deterministic readiness only',
+      'no scorecard/artifact/value/vendor workflow implementation',
     ]) {
       expect(notes).toContain(required);
     }
@@ -333,6 +361,55 @@ describe('production readiness update protocol', () => {
     expect(protocol).toContain('blockers removed');
     expect(protocol).toContain('next recommended readiness action');
     expect(protocol).toContain('if the tracker is not updated');
+    expect(protocol).toContain('cross-session update rule');
+    expect(protocol).toContain('do not create local readiness trackers');
+    expect(protocol).toContain('source work updates `source / outsourcing`');
+    expect(protocol).toContain('production-readiness.json updated');
+    expect(protocol).toContain('components changed');
+    expect(protocol).toContain('gates changed');
+  });
+});
+
+describe('production readiness component map and PROD4B slice', () => {
+  it('maps every canonical component through one readiness spine', () => {
+    const componentMap = readFileSync(componentMapPath, 'utf8');
+
+    for (const name of loadProductionReadinessManifest().components.map((component) => component.name)) {
+      expect(componentMap).toContain(name);
+    }
+
+    expect(componentMap).toContain('docs/build/production-readiness.json');
+    expect(componentMap).toContain('/platform/admin/production-readiness');
+    expect(componentMap).toContain('Source / Outsourcing');
+    expect(componentMap).toContain('docs/abarva-source/SOURCE_PRODUCTION_READINESS_TRACKER.md');
+    expect(componentMap).toContain('docs/abarva-source/SOURCE_LAYERED_PROGRESS_TRACKER.md');
+    expect(componentMap).toContain('src/components/source/AbarVaSourceDashboard.tsx');
+    expect(componentMap).toContain('src/components/source/NexusEngagementCanvas.tsx');
+    expect(componentMap).toContain('src/components/source/SourceDataReadinessPanel.tsx');
+    expect(componentMap).toContain('src/lib/source/nexus-api.ts');
+    expect(componentMap).toContain('src/lib/source/context-builder.ts');
+    expect(componentMap).toContain('src/lib/source/agent-validation-report.ts');
+    expect(componentMap).toContain('src/lib/source/workflow-validation-report.ts');
+    expect(componentMap).toContain('docs/abarva-source/pattern-packs/AMS_MANAGED_SERVICES_SOURCING_PATTERN.md');
+  });
+
+  it('records PROD4B without duplicating PROD4 or claiming live monitoring', () => {
+    const buildSlices = JSON.parse(readFileSync(buildSlicesPath, 'utf8')) as {
+      slices: ReadonlyArray<{ id: string; name: string; status: string; notes?: string }>;
+    };
+    const ids = buildSlices.slices.map((slice) => slice.id);
+    const duplicateIds = ids.filter((id, index) => ids.indexOf(id) !== index);
+    const prod4b = buildSlices.slices.find((slice) => slice.id === 'PROD4B');
+
+    expect(duplicateIds).toEqual([]);
+    expect(ids.filter((id) => id === 'PROD4')).toHaveLength(1);
+    expect(prod4b).toEqual(
+      expect.objectContaining({
+        name: 'Unified Production Readiness Control Plane',
+        status: 'code_complete',
+      }),
+    );
+    expect(prod4b?.notes?.toLowerCase()).toContain('does not add live monitoring');
   });
 });
 
