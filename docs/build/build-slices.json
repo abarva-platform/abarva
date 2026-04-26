@@ -7630,6 +7630,13 @@
       "lane": "G"
     },
     {
+      "id": "SHELL6",
+      "title": "Admin Architecture Readiness Shell Control",
+      "status": "code_complete",
+      "wave": "wave-20",
+      "lane": "F"
+    },
+    {
       "id": "DEMO7",
       "wave": "wave-19",
       "name": "Apex Retail 30-Minute Demo Storyline",
