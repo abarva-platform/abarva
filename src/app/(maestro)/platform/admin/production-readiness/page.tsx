@@ -5,6 +5,7 @@ import { ProductionReadinessLivePanel } from '@/components/admin/ProductionReadi
 import { buildProductionReadinessApiResponse } from '@/lib/admin/production-readiness';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 const ADMIN_EMAIL_ALLOWLIST = new Set([
   'anand+clerk_test@abarva.com',
