@@ -278,6 +278,7 @@ function QualityOpsJumpView() {
             { href: '/platform/admin/connectors', label: 'Connectors · health' },
             { href: '/platform/admin/audit', label: 'Audit · cross-ledger' },
             { href: '/platform/admin/quality', label: 'Quality · ops' },
+            { href: '/platform/admin/experience-gallery', label: 'Experience Gallery · visual canon' },
             { href: '/platform/admin/build-progress', label: 'Build Progress · backlog' },
             { href: '/platform/admin/production-readiness', label: 'Production Readiness · tracker' },
             { href: '/home/queue', label: 'Queue · your assignments' },
