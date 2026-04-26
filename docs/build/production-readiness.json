@@ -272,8 +272,8 @@
     ]
   },
   "stewardBrief": {
-    "title": "Steward Production Readiness Brief",
-    "summary": "AbarVa has meaningful deterministic surfaces and read models, but full-system testing, live persona walks, Model Gateway wiring, evidence ledger productionization, ingestion/parsing, Vercel deployment verification, and production observability are still blockers.",
+    "title": "Unified Production Readiness Control Plane",
+    "summary": "AbarVa now has one canonical production-readiness spine for Programs, Source / Outsourcing, Intelligence, Control Tower, Admin / Setup, runtime, validation, and deployment. The tracker is repository-backed and refreshed through the internal no-store API, while full-system testing, live persona walks, Model Gateway wiring, evidence ledger productionization, ingestion/parsing, CI/Vercel status ingestion, and production observability remain blockers.",
     "fullFlowTestingReadiness": "blocked",
     "pilotReadinessStatus": "blocked",
     "productionReadinessStatus": "blocked",

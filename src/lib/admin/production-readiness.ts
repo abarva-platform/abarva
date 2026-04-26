@@ -389,7 +389,7 @@ export function getProductionReadinessRefreshMetadata(
     refreshMode: 'api_polling',
     liveCiStatus: 'unavailable',
     note:
-      'V1 refresh reads the production-readiness manifest through an internal no-store API. GitHub checks, Vercel deployments, route smoke, persona crawler, and observability ingestion are not configured yet.',
+      'Unified control plane refresh reads the canonical production-readiness manifest through an internal no-store API. This is a repository-backed readiness spine, not true live monitoring; GitHub checks, Vercel deployments, route smoke, persona crawler, and observability ingestion remain deferred.',
   };
 }
 
