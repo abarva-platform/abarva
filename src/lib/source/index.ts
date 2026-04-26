@@ -54,6 +54,7 @@ export * from './source-commercial-demo-scenario';
 export * from './source-commercial-executive-brief';
 export * from './source-commercial-action-queue';
 export * from './source-program-link';
+export * from './linked-program-badge-view';
 
 export type {
   SourceAgentContextBundle,

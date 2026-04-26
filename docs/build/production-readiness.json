@@ -1562,7 +1562,8 @@
         "LIVE4: Azure private data plane lab storyboard created (8 slides, two-plane architecture, May 4 lab plan documented).",
         "DEMO5 (wave-17): ABARVA_VISUAL_WORKFLOW_WALKTHROUGH_CHECKLIST.md \u2014 10-route founder review checklist with pass/fail/deferred capture per route. Docs-only; no code change, no production_ready promotion.",
         "DEMO6 (wave-18): PROGRAM_FLAGSHIP_DEMO_SCRIPT.md \u2014 10/20/45-minute scripts with talk tracks, story arc, and three pilot-ask versions.",
-        "LINK1 (wave-19, lane-C): Source Program Link Model lands deterministic data bridge types and functions between Apex Retail Source AMS outsourcing event (apex-retail-ams-outsourcing-2026) and Apex Retail Program (APX-CDP-2026). Read model only; no live procurement decision, no model calls, no network calls. production_deployment status preserved (still blocked)."
+        "LINK1 (wave-19, lane-C): Source Program Link Model lands deterministic data bridge types and functions between Apex Retail Source AMS outsourcing event (apex-retail-ams-outsourcing-2026) and Apex Retail Program (APX-CDP-2026). Read model only; no live procurement decision, no model calls, no network calls. production_deployment status preserved (still blocked).",
+        "SRC33 (wave-19): Linked Program Badge on Source Commercial Event \u2014 deterministic seed badge linking apex-retail-ams-outsourcing-2026 to APX-CDP-2026 (CDP Activation). View model, badge component, wiring in SourceCommercialEventSection, and integration tests. No live procurement decisions."
       ]
     }
   ]
