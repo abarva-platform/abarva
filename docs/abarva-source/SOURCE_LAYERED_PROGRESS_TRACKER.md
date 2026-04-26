@@ -9,7 +9,7 @@ Purpose: provide a layer-by-layer view of where AbarVa Source stands against MVP
 - Source has a strong foundation in product architecture, deterministic context validation, workflow validation, pattern IP, deterministic multi-agent briefings, deterministic agent missions, and a platform Agent Mission Model.
 - Source is not production-ready.
 - MVP readiness is improving, but the product still needs authenticated UI review, persistence, evidence/upload pipeline, auth/tenant hardening, and production validation.
-- Current foundation milestone: PR #278 merged deterministic Source data readiness panel smoke coverage inside the seeded event canvas shell.
+- Current foundation milestone: PR #283 merged deterministic Source API and mission consistency coverage; PR #281 added production readiness freshness metadata; PR #282 planned the next Data Platform Managed Services pattern.
 - Current recommended next slice: define the Admin/Setup-to-Source readiness contract, then capture authenticated `/source` and event canvas screenshot/manual review with the panel visible.
 
 ## Layer Summary
@@ -18,14 +18,14 @@ Purpose: provide a layer-by-layer view of where AbarVa Source stands against MVP
 |---|---:|---|---|---|
 | Platform Design System | 65% | Foundation complete, adoption not wired | PR #220, `docs/platform-design/experience-system/**` | Token bridge or visual adoption bridge implementation plan |
 | Source Product Foundation | 70% | Strong docs/types/seed foundation | PR #188, PR #201, `docs/abarva-source/build-pack/**`, `src/lib/source/**` | Keep foundation stable while runtime is planned |
-| Pattern / Workflow IP | 75% | Strong authored IP, runtime sectioning not wired | PR #202, PR #222, PR #223, PR #224, PR #225 | Convert selected sections into runtime manifest plan later |
+| Pattern / Workflow IP | 76% | Strong authored IP and next Data Platform pattern plan; runtime sectioning not wired | PR #202, PR #222, PR #223, PR #224, PR #225, PR #282 | Author Data Platform Managed Services pattern pack, docs only |
 | Context Validation Harness | 85% | Deterministic foundation complete | PR #190, PR #192, PR #197 | Use as preflight for Source Nexus runtime |
 | Workflow Validation Harness | 85% | Deterministic foundation complete | PR #204, PR #207, PR #210 | Preserve remaining defer until upload/evidence exists |
 | Multi-Agent Intelligence | 57% | Deterministic briefings, mission read model, mission report, dashboard preview, review packet, and route/component smoke exist; no runtime queue/scheduler/persistence/model layer | PR #227, PR #248, PR #254, PR #255, PR #259, PR #262, PR #264, `src/lib/source/multi-agent-briefing.ts`, `src/lib/source/agent-missions.ts`, `src/lib/source/agent-mission-report.ts` | Use mission report in the event canvas shell |
-| Source API / Runtime | 25% | Deterministic no-model API stub exists; production runtime not ready | PR #230, PR #245, `src/app/api/v1/source/[eventId]/nexus/ask/route.ts` | Keep route deterministic; do not add model calls until mission/readiness gates are ready |
+| Source API / Runtime | 27% | Deterministic no-model API stub plus contract/mission consistency tests exist; production runtime not ready | PR #230, PR #245, PR #283, `src/app/api/v1/source/[eventId]/nexus/ask/route.ts` | Keep route deterministic; do not add model calls until mission/readiness gates are ready |
 | Source UI / User Experience | 52% | Dashboard, deterministic mission preview, event canvas shell, data readiness panel, and route/component smoke exist; broader workflow UI still early | PR #212, PR #213, PR #218, PR #259, PR #262, PR #264, PR #265, PR #269, PR #270, PR #273, PR #277, PR #278, Experience System | Authenticated dashboard/event canvas visual review |
 | Data / Evidence / Upload Pipeline | 18% | Source now has a deterministic read-only data readiness panel; upload/parsing/Admin runtime integration is not started | Attachment/context contracts, validation defers, PR #266, PR #274, PR #277, PR #278 | Define Admin/Setup readiness contract before live integration |
-| Production Readiness | 15% | Deterministic Source dashboard, event canvas, and data readiness panel smoke are partial; authenticated/live production gates remain blocked | Production readiness tracker, PR #264, PR #270, PR #278 | Authenticated live route smoke and screenshot review remain required |
+| Production Readiness | 17% | Deterministic smoke and freshness metadata exist; authenticated/live production gates remain blocked | Production readiness tracker, PR #264, PR #270, PR #278, PR #281, PR #283 | Authenticated live route smoke, CI/Vercel ingestion, and screenshot review remain required |
 
 ## Layer 1. Platform Design System
 
@@ -254,6 +254,7 @@ Evidence / PRs / Files:
 - PR #248: platform Agent Mission Model.
 - PR #254: deterministic Source agent mission read model.
 - PR #255: deterministic Source agent mission report formatter.
+- PR #283: deterministic Source API and mission consistency coverage.
 - PR #256: agent mission activity UI plan.
 - PR #257: Source dashboard mission preview plan.
 - PR #259: tiny deterministic Source dashboard mission preview.
@@ -370,6 +371,9 @@ Evidence / PRs / Files:
 - PR #273: Source dashboard and event canvas minor polish.
 - PR #277: deterministic Source Data Readiness Panel.
 - PR #278: Source Data Readiness Panel smoke coverage.
+- PR #281: Production Readiness freshness layer.
+- PR #282: Data Platform Managed Services pattern plan.
+- PR #283: Source API and mission consistency coverage.
 - `src/components/source/AbarVaSourceDashboard.tsx`
 - `src/components/source/NexusEngagementCanvas.tsx`
 - `src/components/source/SourcingEventTable.tsx`
@@ -557,7 +561,7 @@ Next recommended slice:
 1. Capture authenticated screenshot/manual review for dashboard and event canvas when a signed-in session is available.
 2. Define the Admin/Setup data readiness contract consumed by Source, no upload/parsing implementation.
 3. Plan upload/evidence pipeline, no implementation.
-4. Plan the next pattern/runtime grounding step, such as pattern manifest planning or Data Platform Managed Services authoring.
+4. Author the Data Platform Managed Services pattern pack in markdown, then plan pattern/runtime grounding later.
 5. Plan the next bounded Source workflow surface after authenticated review.
 
 ## What Not To Build Yet
@@ -582,7 +586,7 @@ Next recommended slice:
 
 ## Honest MVP Readiness Assessment
 
-Estimated MVP readiness: 57%.
+Estimated MVP readiness: 58%.
 
 Source is beyond a concept prototype because it has a route, dashboard, seeded domain context, validation harnesses, pattern IP, deterministic multi-agent behavior, a deterministic no-model Nexus API stub, deterministic mission reports, a tiny dashboard mission preview, a bounded event canvas shell, a read-only data readiness panel, and deterministic dashboard/event canvas route-component smoke. It is not yet a usable MVP for real sourcing work because persistence, evidence pipeline, authenticated UI review, real tenant data, and practical user-facing workflow depth remain incomplete.
 
@@ -596,7 +600,7 @@ The fastest safe MVP path is deterministic-first:
 
 ## Honest Production Readiness Assessment
 
-Estimated production readiness: 22%.
+Estimated production readiness: 23%.
 
 Production readiness remains low by design. The foundation is strong, but production Source needs persistent data, tenant safety, auth/role checks, evidence and citation pipeline, auditability, observability, error states, visual QA, and release validation. The current deterministic layers reduce product risk, but they do not substitute for runtime, data, security, and operational readiness.
 
