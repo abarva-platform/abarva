@@ -4025,6 +4025,62 @@
         "npm run build"
       ],
       "notes": "Pure deterministic SME recommendation projection that consumes MW2 workshop readiness, PF1 failure modes, and the SOL3 archetype hint to compose a role-anchored shortlist for the next workshop. Server Component panel renders the recommendations with the calm AbarVa visual canon. No live SME directory, no calendar/booking, no real person names, no model calls. Future MW7 deliverable refinement loop wires this surface into the workshop-mode workflow; live SME directory and per-tenant SME library remain deferred."
+    },
+    {
+      "id": "PDEL6",
+      "name": "Deliverable Versioning MVP",
+      "category": "PDEL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "PDEL",
+        "PDEL5"
+      ],
+      "lastUpdated": "2026-04-26",
+      "allowedFiles": [
+        "src/lib/programs/deliverable-versioning.ts",
+        "src/__tests__/integration/programs/deliverable-versioning.test.ts",
+        "docs/build/slices/PDEL6_DELIVERABLE_VERSIONING_MVP.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "buildDeliverableVersionHistory is byte-equal across repeated calls for every canonical demo artifact.",
+        "Every version carries state, source, approvalState, changeReason, summary, honestFallback, evidenceBasis, and the canonical createdFrom = 'deterministic_deliverable_version_seed' marker.",
+        "Exactly one version is in the `current` state per artifact across every canonical demo program; getCurrentDeliverableVersion returns the unique row.",
+        "validateDeliverableVersionTransition returns true for canonical legal transitions (draft -> current/superseded/archived/rejected; current -> superseded/locked/archived/rejected; superseded/locked/rejected -> archived) and false for self-transitions, transitions out of `archived`, and resurrection paths back to `current`.",
+        "No version is emitted in the fully `approved` approval state in MVP; signed-off artifacts produce a v2 row with approvalState = 'approved_with_conditions' and changeReason = 'approval_promotion'.",
+        "evidenceBasis.evidenceCount is always 0 in MVP; hasEvidence is true only when the upstream artifact's evidenceUsability === 'usable'; otherwise missingEvidence has at least one entry.",
+        "No `https://`, no `E-###` citation tokens, and no `$<digit>` dollar fabrications appear anywhere in the serialized version history.",
+        "Module imports nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch / anthropic / openai / useState / useEffect."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/deliverable-versioning.test.ts",
+        "npx jest src/__tests__/integration/programs/program-artifact-inventory.test.ts",
+        "npx jest src/__tests__/integration/programs/program-artifact-canvas.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic deliverable version read-model: types + helpers (buildDeliverableVersionHistory, summarizeDeliverableVersions, getCurrentDeliverableVersion, validateDeliverableVersionTransition, createDeterministicVersionSeed). Read-model only \u2014 does not generate deliverables, export files, or write to any database. Steward verdict (`approved`), edit/regenerate flow, persistence, and canvas timeline UI are deferred to PDEL7+ and to the production write-path slices."
     }
   ]
 }
