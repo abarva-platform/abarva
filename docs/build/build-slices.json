@@ -6000,6 +6000,67 @@
         "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
       ],
       "notes": "Deterministic, file-pure read model that defines the provider-agnostic adapter shapes for every component of the AbarVa data plane (relational store, object store, vector search, graph provider, evidence ledger, model gateway provider, audit store). Each adapter interface declares provider, capabilities, requiredEnvVars, and safetyConstraints so AbarVa can run on shared SaaS, dedicated tenant, or private (customer-owned) deployments without changing the runtime contract. Type-only module - no provider SDK import, no fetch, no Date, no randomness, no UI, no persistence. Companion test (16 cases) proves all seven shapes representable, byte-equal determinism, validator rejects bad input, summary reconciles totals, and module hygiene. Read model only; data_evidence_knowledge_fabric status is preserved at scaffolded; production_deployment status is preserved at blocked; no other component is promoted. The live adapter implementations and the tenant adapter registry runtime land in later slices behind this shape contract."
+    },
+    {
+      "id": "CLOUD6",
+      "name": "Enterprise Dependency Matrix",
+      "category": "CLOUD",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Wave3 Lane B (parallel build pack)",
+      "dependsOn": [
+        "CLOUD1",
+        "CLOUD2",
+        "CLOUD5",
+        "TEN3"
+      ],
+      "allowedFiles": [
+        "docs/architecture/CLOUD6_ENTERPRISE_DEPENDENCY_MATRIX.md",
+        "src/lib/architecture/enterprise-dependency-matrix.ts",
+        "src/__tests__/integration/architecture/enterprise-dependency-matrix.test.ts",
+        "docs/build/slices/CLOUD6_ENTERPRISE_DEPENDENCY_MATRIX.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/app/**",
+        "src/components/**",
+        "src/lib/auth/**",
+        "src/lib/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md",
+        ".github/workflows/**",
+        "azure.yaml",
+        "terraform/**",
+        "infra/**"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/architecture/enterprise-dependency-matrix.ts exports DEPLOYMENT_TARGETS (5 entries: vercel_saas, azure_vnet, gcp_vpc, aws_private, on_prem_air_gapped), DEPENDENCY_CAPABILITIES (11 entries: frontend_hosting, compute, postgres, blob, secrets, idp, observability, vector_search, graph, model_gateway, ci_cd), DEPENDENCY_READINESS_STATES (4 entries: available, preview, deferred, not_supported), and the corresponding union types DeploymentTarget / DependencyCapability / DependencyReadiness, plus the interfaces DependencyMatrixEntry, EnterpriseDependencyMatrix, and DependencyMatrixSummary.",
+        "src/lib/architecture/enterprise-dependency-matrix.ts exports buildEnterpriseDependencyMatrix(), summarizeEnterpriseDependencyMatrix(matrix?), and getNotSupportedCombinations(matrix?); the matrix contains exactly 55 entries (11 capabilities x 5 targets) with stable ids of the form matrix-{capability}-{target}; every entry carries createdFrom 'deterministic_enterprise_dependency_matrix_seed'.",
+        "src/__tests__/integration/architecture/enterprise-dependency-matrix.test.ts asserts: all 5 deployment targets present and ordered; all 11 capabilities present and ordered; all 4 readiness states representable and ordered; byte-equal determinism for buildEnterpriseDependencyMatrix / summarizeEnterpriseDependencyMatrix / getNotSupportedCombinations across repeated calls; coverage (every capability x target pair appears exactly once, ids are stable, every cell carries non-empty defaultOption / fallbackOption / notes / followUp / label); summary reconciliation (entriesByTarget / entriesByCapability / entriesByReadiness sum to totalEntries; per-target counts equal capability count; per-capability counts equal target count); getNotSupportedCombinations returns only not_supported rows; module hygiene (no Date.now / Math.random / new Date / fetch; no auth / supabase / source / sentinel / atlas / nexus / agent imports; no vendor model names; no useState / useEffect; no placeholder language; no dollar amounts; no production_ready / production-ready claims).",
+        "docs/architecture/CLOUD6_ENTERPRISE_DEPENDENCY_MATRIX.md documents the 11x5 matrix shape, axes, readiness states, what is explicitly out of scope, why it is safe, forward use, and how to re-run; cross-references CLOUD1, CLOUD2, CLOUD5, TEN3, ARCH1, MG2, MG3.",
+        "docs/build/slices/CLOUD6_ENTERPRISE_DEPENDENCY_MATRIX.md documents purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and readiness impact.",
+        "docs/build/build-slices.json appends a CLOUD6 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn (CLOUD1, CLOUD2, CLOUD5, TEN3), status code_complete, risk low, ownerAgent Wave3 Lane B, and lastUpdated 2026-04-26; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "docs/build/production-readiness.json production_deployment component appends a note acknowledging that the CLOUD6 enterprise dependency matrix has landed as a deterministic read model covering 55 cells; status is preserved (no promotion); production_deployment.nextAction is UNIONed conservatively without overwriting prior PROD1 / PROD2 / PROD3 / PROD4 / OPS1 / TEN1 / TEN2 / CLOUD1 / CLOUD2 / OPS2 / CLOUD5 wording; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "Read model only; no application code, no runtime, no cloud SDK call, no deploy, no auth, no supabase, no migrations, no package manifest, no IaC, no platform-design doc is modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/enterprise-dependency-matrix.test.ts",
+        "npx eslint src/lib/architecture/enterprise-dependency-matrix.ts src/__tests__/integration/architecture/enterprise-dependency-matrix.test.ts --max-warnings=0",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Deterministic, file-pure read model that maps the 11 canonical AbarVa dependency capabilities (frontend hosting, compute, postgres, blob, secrets, idp, observability, vector_search, graph, model_gateway, ci_cd) onto the 5 canonical deployment targets (vercel_saas, azure_vnet, gcp_vpc, aws_private, on_prem_air_gapped). 55 cells; every cell records readiness (available / preview / deferred / not_supported), defaultOption, fallbackOption, notes, and followUp. The single not_supported cell is model_gateway x on_prem_air_gapped; the matrix records the honest reason. CLOUD6 does not deploy, does not authenticate, does not call any cloud SDK or vendor model provider. production_deployment status is preserved (still blocked); nextAction is UNIONed conservatively. Wave3 Lane B commits locally only; the integration agent owns the cherry-pick and merge."
     }
   ]
 }
