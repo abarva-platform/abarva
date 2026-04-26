@@ -6221,6 +6221,57 @@
         "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
       ],
       "notes": "Deterministic, file-pure read model that names the canonical graph provider kinds (Neo4j, Cosmos DB Gremlin, Neptune, Postgres relationship-table fallback), the six query capabilities each provider must advertise, and the typed shape of the Postgres relationship-table fallback (graph_fallback_nodes, graph_fallback_edges, graph_fallback_edge_versions). Read-only complement to TEN2 graph boundary kind. Documents shape only; does not connect to any graph database, does not run any traversal, does not generate or execute SQL, does not migrate, does not promote data_evidence_knowledge_fabric. The fallback schema is a typed description, not a CREATE TABLE statement; the migration slice is a separate follow-up. Lane E commits locally only; the integration agent owns the cherry-pick and merge."
+    },
+    {
+      "id": "MG4",
+      "name": "Tenant Model Provider Policy Matrix",
+      "category": "MG",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Wave3 Lane F",
+      "dependsOn": [
+        "MG2",
+        "MG3"
+      ],
+      "allowedFiles": [
+        "src/lib/architecture/tenant-model-provider-policy.ts",
+        "src/__tests__/integration/architecture/tenant-model-provider-policy.test.ts",
+        "docs/build/slices/MG4_TENANT_MODEL_PROVIDER_POLICY_MATRIX.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/source/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/components/**",
+        "src/app/**"
+      ],
+      "acceptanceCriteria": [
+        "New module src/lib/architecture/tenant-model-provider-policy.ts exposes ModelProviderKind ('provider_alpha' | 'provider_beta' | 'provider_gamma' | 'on_prem_open_weight' | 'azure_oai' | 'vertex_ai' | 'bedrock'), TenantModelPolicyDecision ('approved' | 'blocked' | 'deferred' | 'requires_review'), TenantModelPolicyBasis ('data_classification' | 'tenant_admin_decision' | 'security_review' | 'governance_review' | 'cost_constraint'), TenantModelPolicyPurpose, TenantModelPolicyEntry, TenantModelPolicyMatrixSummary, and TenantModelAccessEvaluation types.",
+        "Module exports MODEL_PROVIDER_KINDS (7 kinds in canonical order), TENANT_MODEL_POLICY_DECISIONS (4 decisions in canonical order), TENANT_MODEL_POLICY_BASES (5 basis values in canonical order), TENANT_MODEL_POLICY_PURPOSES (7 purposes), and TENANT_MODEL_POLICY_TENANT_KEYS readonly constants.",
+        "buildTenantModelPolicyMatrix() returns a deterministic seed covering 3 tenants x 7 providers = 21 entries; every entry is tagged createdFrom 'deterministic_tenant_model_provider_policy_seed' and id formatted as 'tmpp-{tenantKey}-{provider}'.",
+        "Seed covers all 7 provider kinds, all 4 decisions, and all 5 basis values at least once; every approved entry carries a non-empty basis and an empty nextReviewStep; every non-approved entry carries a non-empty basis and a non-empty nextReviewStep; every entry has at least one purpose and a non-empty rationale.",
+        "evaluateTenantModelAccess(tenantKey, provider, purpose) returns blocked decision for empty tenantKey, requires_review decision with matchedEntryId null for unknown (tenant, provider) pair, requires_review decision with the entry id when entry exists but does not cover the requested purpose, and the matched entry's decision and basis otherwise.",
+        "summarizeTenantModelPolicyMatrix reconciles totalProviders === 7, totalTenants === uniqueTenants.length, byDecision sums to totalEntries, byProvider sums to totalEntries, uniqueTenants is sorted ascending and de-duplicated, approvedCount / blockedCount / deferredCount / requiresReviewCount mirror byDecision, empty input returns a zero-counted summary.",
+        "Module hygiene: no provider SDK import (no 'openai', no 'anthropic', no '@anthropic-ai/sdk', no '@openai/sdk', no 'cohere-ai'); no Date.now, no Math.random, no new Date(, no fetch(, no useState / useEffect, no 'Coming soon' / 'TBD' / 'Lorem ipsum'; no imports from src/lib/sentinel, src/lib/atlas, src/lib/nexus, src/lib/source, src/lib/agent, src/lib/auth, or supabase. The hygiene scanner strips comments and string literals before regex.",
+        "New integration test src/__tests__/integration/architecture/tenant-model-provider-policy.test.ts asserts canonical vocabularies, full coverage, approved-requires-basis invariant, byte-equal determinism, evaluator behavior, summary reconciliation, and module hygiene; no anthropic / openai SDK imports.",
+        "docs/build/slices/MG4_TENANT_MODEL_PROVIDER_POLICY_MATRIX.md documents the slice (relationship to MG2 / MG3, what changed, provider kinds table, decisions, basis values, coverage, evaluator behavior, what is intentionally not in v1, hygiene invariants, validation commands, future slices, acceptance criteria mapping). Cites MG2 and MG3 explicitly.",
+        "docs/build/build-slices.json appends the MG4 entry with category MG, dependsOn [MG2, MG3], status code_complete, risk low, allowedFiles, forbiddenFiles, acceptanceCriteria, validationCommands, and notes; manifest lastUpdated remains 2026-04-26.",
+        "docs/build/production-readiness.json UNION-updates the model_gateway and agent_runtime notes / nextAction to acknowledge the MG4 tenant model provider policy matrix; statuses are preserved (no promotions); manifest lastUpdated remains 2026-04-26.",
+        "No application UI, runtime, auth, supabase, agent runtime, or migrations are modified. No live model invocation."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/tenant-model-provider-policy.test.ts",
+        "npx eslint src/lib/architecture/tenant-model-provider-policy.ts src/__tests__/integration/architecture/tenant-model-provider-policy.test.ts --max-warnings=0",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Deterministic per-tenant model provider policy matrix. Read-only complement to MG3 (integration contract) and MG2 (deterministic stub). Names which providers each tenant has approved / blocked / deferred / requires_review for which canonical purposes, with the policy basis (data classification, tenant admin decision, security review, governance review, cost constraint) recorded for every decision. Seed is dense: 3 tenants x 7 providers = 21 entries. The live model gateway runtime (MG5) will consume this matrix when dispatching tenant requests. No live model invocation, no SDK import, no network, no Date.now, no randomness. model_gateway and agent_runtime statuses are intentionally not promoted by MG4."
     }
   ]
 }
