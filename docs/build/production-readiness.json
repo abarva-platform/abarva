@@ -1570,5 +1570,8 @@
         "SRC33 (wave-19): Linked Program Badge on Source Commercial Event \u2014 deterministic seed badge linking apex-retail-ams-outsourcing-2026 to APX-CDP-2026 (CDP Activation). View model, badge component, wiring in SourceCommercialEventSection, and integration tests. No live procurement decisions."
       ]
     }
+  ],
+  "waveNotes": [
+    "DEMODATA1 (wave-20, lane-H): Demo Dataset Registry and Tenant Richness Model created. Deterministic seed only. 3 tenants encoded: apex-retail (rich), meridian (thin), arcturus (shell_only). 5 surfaces covered per tenant. Source-Program linkage documented. No live data, no model calls. production_deployment status preserved (still blocked)."
   ]
 }

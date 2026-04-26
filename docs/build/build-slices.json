@@ -7644,6 +7644,13 @@
       "status": "code_complete",
       "wave": "wave-20",
       "lane": "A"
+    },
+    {
+      "id": "DEMODATA1",
+      "title": "Demo Dataset Registry and Tenant Richness Model",
+      "status": "code_complete",
+      "wave": "wave-20",
+      "lane": "H"
     }
   ]
 }

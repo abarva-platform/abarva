@@ -809,15 +809,15 @@
     },
     {
       "waveId": "wave-20",
-      "name": "Canonical App Shell Ownership",
-      "goal": "Establish a canonical, version-controlled AbarVa app shell configuration, component set, and banned-token enforcement so all new routes compose from a single source of truth.",
+      "name": "Demo Data Registry + Tenant Richness",
+      "goal": "Create the canonical demo dataset registry encoding tenant richness tiers across all surfaces, enabling repeatable demo delivery with known data boundaries.",
       "status": "in_progress",
-      "percentComplete": 14,
+      "percentComplete": 100,
       "plannedSlices": [
-        "SHELL1"
+        "DEMODATA1"
       ],
       "completedSlices": [
-        "SHELL1"
+        "DEMODATA1"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
@@ -825,7 +825,7 @@
       "validationStatus": "tsc_clean",
       "productionReadinessUpdated": false,
       "currentBlockers": [],
-      "nextAction": "SHELL1 (Lane A) complete. Remaining lanes pending.",
+      "nextAction": "DEMODATA1 (Lane H) complete. Demo dataset registry and tenant richness model landed. 3 tenants, 5 surfaces, deterministic seed only. Remaining wave-20 lanes pending.",
       "lastUpdated": "2026-04-26"
     },
     {
@@ -861,6 +861,27 @@
       "productionReadinessUpdated": false,
       "currentBlockers": [],
       "nextAction": "Wave-18 merged. No further action.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-20",
+      "name": "Demo Data Registry + Tenant Richness",
+      "goal": "Create the canonical demo dataset registry encoding tenant richness tiers across all surfaces, enabling repeatable demo delivery with known data boundaries.",
+      "status": "in_progress",
+      "percentComplete": 14,
+      "plannedSlices": [
+        "DEMODATA1"
+      ],
+      "completedSlices": [
+        "DEMODATA1"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "tsc_clean",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "DEMODATA1 (Lane H) complete. Demo dataset registry and tenant richness model landed. 3 tenants, 5 surfaces, deterministic seed only. Remaining wave-20 lanes pending.",
       "lastUpdated": "2026-04-26"
     }
   ]
