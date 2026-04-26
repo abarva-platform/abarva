@@ -1,134 +1,155 @@
 # Next Slice: BAFO Negotiation Questions
 
 Date: 2026-04-26
-Scope: deterministic BAFO preparation plan after pricing normalization
+Scope: deterministic BAFO and negotiation planning after vendor response completeness and pricing normalization
 Status: planned
 
 ## 1. Purpose
 
-Define how Source will stage vendor-specific BAFO negotiation questions without writing scorecards or selection engines.
+Source needs deterministic negotiation planning before selection decisions. BAFO questions and commercial guidance in this slice are intended to prepare vendors and internal reviewers for final comparison, not to replace procurement systems.
 
-BAFO planning should:
+This slice stays bounded to planning logic only.
 
-- close assumption ambiguity before award,
-- force commercial consistency before approval,
-- preserve evidence discipline,
-- remain fully deterministic in V1.
+## 2. Relationship to Vendor Response Completeness
 
-## 2. Relationship to Pricing Normalization
+BAFO planning consumes vendor-response completeness output:
 
-Pricing normalization provides the baseline financial normalization and trap detections.
-BAFO questions should follow that signal structure and should not introduce new commercial logic.
+- Vendors with missing sections get targeted follow-up questions.
+- Comparability blockers appear in the negotiation plan as high-priority asks.
+- Incomplete evidence lowers readiness and changes commercial ask priority.
 
-Rules:
+BAFO does not define a new completeness model; it uses seeded completeness signals.
 
-- BAFO questions are not a scoring model.
-- BAFO questions are not a contract template generator.
-- BAFO questions should be deterministic and based on seeded/computed normalization outputs.
+## 3. Relationship to Pricing Normalization
 
-## 3. Vendor-Specific Negotiation Questions
+BAFO must align with normalized pricing outputs:
 
-For each vendor, BAFO should ask for:
+- year-over-year cost behavior,
+- escalation assumptions,
+- commercial trap findings,
+- transition and excluded-service assumptions.
 
-- scope and assumption confirmation,
-- transition and takeover obligations,
-- commercial exception handling,
-- evidence for quantitative claims,
-- risk mitigation language.
+It asks vendors to confirm and lock these points.
 
-Examples:
+## 4. Relationship to Pricing/Negotiation Intelligence Standard
 
-- "Confirm the fixed price covers the baseline ticket volume and criticality mix in this packet."
-- "List all commercial items currently treated as out-of-scope and confirm re-pricing if any are required."
-- "Which automation or productivity claims are contractually committed and what is the fallback if delivery falls short?"
+This slice applies the pricing and negotiation standard as deterministic guidance rules:
 
-## 4. Assumption Lock List
+- normalized commercial comparison posture,
+- trap taxonomy,
+- assumption lock behavior,
+- transition/compliance guardrails.
 
-BAFO should require explicit locking of:
+BAFO outputs convert those rules into concrete vendor asks.
 
-- volume assumptions,
-- escalation terms,
-- included/excluded support hours,
-- security/compliance obligations,
-- transition ownership,
-- tooling responsibility.
+## 5. Vendor-Specific Negotiation Questions
 
-No final comparison should proceed while these assumptions remain unconfirmed.
+Each vendor receives a deterministic set of questions based on completeness and pricing outputs.
 
-## 5. Excluded Scope List
+Required question groups:
 
-BAFO should confirm:
+- scope and exclusion confirmation,
+- transition plan and ownership confirmation,
+- commercial term confirmation,
+- evidence and proof of claims.
 
-- all required services that were previously treated as optional,
-- release support and hypercare handling,
-- change-order boundaries,
-- retained team obligations,
-- post-stabilization support scope.
+## 6. Assumption Lock List
 
-## 6. Commercial Risk Summary
+Assumptions to lock before recommendation:
 
-BAFO output should include a clear risk summary with:
+- ticket and workload baseline,
+- pricing curve and escalation rules,
+- retained support and staffing,
+- transition timeline and ownership,
+- security and compliance obligations,
+- tooling/infrastructure coverage.
 
-- trap remediations completed,
-- trap remediations still open,
-- evidence strength and confidence risk,
-- estimated adjustment if assumptions are fixed.
+Progress remains blocked until critical locks are complete.
 
-## 7. BAFO Priorities
+## 7. Excluded Scope List
 
-Priorities should be deterministic and fixed:
+BAFO records at least:
 
-1. Close missing assumptions,
-2. Resolve comparability blockers,
-3. Clarify transition and tooling scope,
-4. Confirm security/compliance obligations,
-5. Validate pricing with committed volume and escalation terms.
+- optional vs required services,
+- release support boundary,
+- minor enhancements and change-order controls,
+- support-window obligations,
+- transition exclusions.
 
-## 8. Recommended Asks
+## 8. Commercial Risk Summary
 
-Default asks for BAFO:
+BAFO risk summary should include:
 
-- clarify exclusions,
-- provide transition cost confirmation,
-- confirm year-2 and year-3 price behavior,
-- provide measurable automation and productivity commitments,
-- confirm governance and stewardship handoff model.
+- blocker count and severity,
+- transition risk,
+- evidence risk,
+- commercial trap status,
+- what remains to move to evaluation-readiness.
 
-## 9. Executive Tradeoff View
+## 9. BAFO Priorities
 
-BAFO should preserve an executive view of:
+Priority order:
 
-- cheapest comparable vendor,
-- safest comparable vendor,
-- highest-confidence commercial commitment,
-- risks that remain unmitigated.
+1. lock assumptions and exclusions,
+2. clear missing pricing/completeness blockers,
+3. resolve transition ownership gaps,
+4. tighten evidence-backed claims,
+5. stabilize high-risk commercial traps.
 
-BAFO does not decide the winner. It prepares decision-grade questions and assumption locks.
+## 10. Recommended Asks
 
-## 10. Nexus / Sentinel / Steward / Atlas Behavior
+Default asks include:
 
-- Nexus: presents deterministic BAFO package and required follow-up queue.
-- Sentinel: flags unsupported claims and weak evidence before approval.
-- Steward: blocks downstream selection progression if assumption lock is incomplete.
-- Atlas: summarizes tradeoff impact and risk posture for executives.
+- request missing pricing template or transition sections,
+- confirm excluded-item treatment,
+- ask for measurable evidence for automation/value claims,
+- request commercial adjustment language,
+- confirm remediation timeline for unresolved blockers.
 
-## 11. What Not to Build Here
+## 11. Executive Tradeoff View
 
-This plan does not include:
+Executive view should show cost, transition, and evidence tradeoffs side by side, plus risk posture. It is advisory only and does not issue final selection decisions.
 
-- live document generation,
-- BAFO scoring,
-- signature workflow,
-- contract drafting,
-- model routing.
+## 12. Nexus Behavior
 
-## 12. Acceptance Criteria
+Nexus surfaces a structured negotiation readiness summary:
 
-This plan is complete when it defines:
+- overall readiness,
+- vendor-specific questions,
+- blockers and blockers impact,
+- top priorities.
 
-- BAFO scope and ordering,
-- the assumption lock and exclusion model,
-- vendor-specific question structure,
-- risk and tradeoff summary behavior,
-- governance guardrails,
-- explicit deferrals for unscoped implementation.
+## 13. Sentinel Behavior
+
+Sentinel provides evidence caution by surfacing weak proof, unsupported claims, and unresolved risk language.
+
+## 14. Steward Behavior
+
+Steward marks vendors not ready for downstream selection if assumptions and blockers are not addressed.
+
+## 15. Atlas Behavior
+
+Atlas presents executive tradeoffs and readiness posture in a board-level language for decision conferences.
+
+## 16. What Not to Build
+
+- model calls,
+- scorecard UI,
+- chat/BAFO messaging workflow,
+- approval engine,
+- final vendor selection automation,
+- workflow engine,
+- document export/import,
+- value ledger UI.
+
+## 17. Acceptance Criteria
+
+The plan is acceptable when it:
+
+- defines the BAFO purpose and scope boundaries,
+- ties directly to vendor response completeness and pricing normalization,
+- lists deterministic vendor-specific asks,
+- lists assumption locks and exclusion boundaries,
+- includes executive tradeoff and readiness language,
+- specifies Nexus/Sentinel/Steward/Atlas behavior,
+- explicitly excludes out-of-scope implementation work.
