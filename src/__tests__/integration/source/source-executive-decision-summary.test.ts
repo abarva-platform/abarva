@@ -175,7 +175,8 @@ describe('Source executive decision summary thin synthesis', () => {
 
     expect(first).toEqual(second);
     expect(first.vendorTradeoffs).toHaveLength(3);
-    expect(first.sourceModulesUsed).toEqual(['commercial-signals', 'unified-agent-missions']);
+    expect(first.sourceModulesUsed).toEqual(['commercial-signals', 'commercial-mission-adapter']);
+    expect(first.missionSummary.total).toBeGreaterThanOrEqual(input.unifiedMissions.length);
     expect(first.atlasExecutiveBrief.length).toBeGreaterThan(0);
   });
 
@@ -231,7 +232,7 @@ describe('Source executive decision summary thin synthesis', () => {
     expect(markdown).toContain('# Source Executive Decision Summary');
     expect(markdown).toContain('Decision posture:');
     expect(markdown).toContain('Vendor tradeoffs');
-    expect(markdown).toContain('Source modules used: commercial-signals, unified-agent-missions');
+    expect(markdown).toContain('Source modules used: commercial-signals, commercial-mission-adapter');
   });
 
   it('keeps thin synthesis implementation free of model and upload/parsing imports', () => {
