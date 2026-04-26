@@ -7516,6 +7516,15 @@
       "status": "code_complete",
       "branch": "wave18/qa25-program-flagship-verification",
       "description": "Manifest of 5 PROG10\u2013PROG14 components, 9 workflow sections, 3 design canon rules. Static + graceful integration-phase file/content/banned-token scans."
+    },
+    {
+      "id": "DEMO6",
+      "wave": "wave-18",
+      "name": "Program Flagship Demo Script",
+      "type": "demo",
+      "status": "code_complete",
+      "branch": "wave18/demo6-program-flagship-demo-script",
+      "description": "10/20/45-minute Program Flagship demo scripts. Talk tracks, route sequence, what NOT to claim, three pilot ask versions, story arc summary."
     }
   ]
 }

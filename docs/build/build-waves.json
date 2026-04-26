@@ -783,7 +783,7 @@
       ],
       "completedSlices": [
         "PROG12",
-        "QA25"
+        "DEMO6"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
@@ -791,7 +791,7 @@
       "validationStatus": "not_run",
       "productionReadinessUpdated": true,
       "currentBlockers": [],
-      "nextAction": "PROG12 NexusWorkshopCanvas landed. Wire the canvas onto the canonical Programs detail surface and stage downstream Program Flagship slices. QA25 manifest + 31 tests landed. Awaiting PROG10\u2013PROG14 lane integration; QA25 graceful suites become hard assertions once lane files merge.",
+      "nextAction": "PROG12 NexusWorkshopCanvas landed. Wire the canvas onto the canonical Programs detail surface and stage downstream Program Flagship slices. DEMO6 docs-only lane code_complete. PROG10-PROG14 component lanes pending.",
       "lastUpdated": "2026-04-26"
     },
     {
