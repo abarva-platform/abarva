@@ -7106,6 +7106,19 @@
         "npx jest src/__tests__/integration/ops/demo-pack-report-validator.test.ts --no-coverage"
       ],
       "notes": "All future build packs (Wave 13+) must pass this validator before a pack is marked complete. Validator is read-only, deterministic, and stdlib-only."
+    },
+    {
+      "id": "SRC12",
+      "wave": "wave-14",
+      "title": "Pricing Normalization Model",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "Richer pricing model with PricingTower, PricingRole, NormalizedPricingLine, PricingVendorSnapshot, and PricingComparisonMatrix. Complements existing pricing-normalization.ts.",
+      "files": [
+        "src/lib/source/pricing-normalization-model.ts",
+        "src/__tests__/integration/source/pricing-normalization-model.test.ts"
+      ],
+      "completedAt": "2026-04-26"
     }
   ]
 }

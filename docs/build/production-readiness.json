@@ -853,7 +853,8 @@
         "2026-04-26: Authenticated Source visual review was attempted after the contract panel landed, but local demo-code sign-in returned 500 and did not complete; visual approval remains blocked.",
         "2026-04-26: PROD4B confirms Source / Outsourcing is tracked in the unified production-readiness.json manifest only; Source-specific trackers remain supporting detail and must not conflict with the canonical admin Production Readiness page.",
         "PROD4B Source readiness inventory includes Source dashboard, Source event canvas, Source data readiness panel, deterministic Source Nexus API stub, deterministic multi-agent mission preview and mission report, context validation, workflow validation, AMS pattern intelligence, pricing and negotiation intelligence, and Admin/Setup data readiness integration.",
-        "PROD4B Source readiness limits remain: not pilot_ready, not production_ready, seeded/deterministic readiness only, no live upload/evidence pipeline, no model-assisted Nexus runtime, no full workflow engine, no production persistence, and no scorecard/artifact/value/vendor workflow implementation."
+        "PROD4B Source readiness limits remain: not pilot_ready, not production_ready, seeded/deterministic readiness only, no live upload/evidence pipeline, no model-assisted Nexus runtime, no full workflow engine, no production persistence, and no scorecard/artifact/value/vendor workflow implementation.",
+        "2026-04-26 SRC12: Deterministic pricing normalization model added with PricingTower, PricingRole, NormalizedPricingLine, PricingVendorSnapshot, and PricingComparisonMatrix types. Complements existing pricing-normalization.ts without modification. No model calls, no network calls."
       ]
     },
     {
