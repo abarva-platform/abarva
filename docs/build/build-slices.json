@@ -5007,6 +5007,55 @@
         "npm run build"
       ],
       "notes": "Lifts the user-facing posture out of the Steward brief. Read-only, roles-and-counts only \u2014 no real person names, no live auth mutation, no Clerk runtime read, no DB write, no API call. Admin page mount is deferred to ADM6.1 because the existing /platform/admin/page.tsx is a complex client-rendered admin portal; co-mounting a server component would expand blast radius beyond the ADM6 scope. The new component is exported from src/components/admin/UsersAccessSurface.tsx and is ready for either a dedicated server route or a parent refactor. Future invite / edit / revoke runtime is deferred."
+    },
+    {
+      "id": "QA8",
+      "name": "Enterprise Deployment + Trust Verification Runbook",
+      "category": "QA",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane H (parallel build pack)",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "TEN1",
+        "TEN2",
+        "TRUST1",
+        "TRUST2",
+        "CLOUD1",
+        "CLOUD2",
+        "PROD3"
+      ],
+      "allowedFiles": [
+        "docs/build/ENTERPRISE_DEPLOYMENT_TRUST_VERIFICATION_RUNBOOK.md",
+        "docs/build/slices/QA8_ENTERPRISE_DEPLOYMENT_TRUST_VERIFICATION.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "docs/build/ENTERPRISE_DEPLOYMENT_TRUST_VERIFICATION_RUNBOOK.md documents \u00a7A scope (TEN1, TEN2, TRUST1, TRUST2, CLOUD1, CLOUD2, PROD3 required; TEN3, TRUST3, CLOUD3, CLOUD4, CLOUD5, PROD4, ADM6 conditional / deferred), \u00a7B branch hygiene (worktree per slice, lane agents commit only, integration agent merges, no git add .), \u00a7C validation commands (npx tsc --noEmit --pretty false; per-slice jest paths for TEN2 / TRUST1 / TRUST2 plus conditional PROD3 / PROD4 / ADM6; npm run build; manifest JSON parse check; conflict-marker grep), \u00a7D SaaS pilot readiness checks (multi-tenant data plane working with logical_row_level isolation, tenant registry stub deterministic, tenant admin / platform admin separation visible, model gateway shared and contract-only), \u00a7E dedicated tenant readiness checks (TEN3 blueprint covers DB / storage / vector / graph / audit / model gateway / SSO / tenant admin; onboarding / upgrade / backup paths documented; no production-ready claim), \u00a7F private data plane readiness checks (CLOUD1 four-tier strategy; CLOUD2 Azure VNet architecture; CLOUD4 local lab boots clean when run; CLOUD5 Bicep starter parses), \u00a7G Azure VNet lab verification (resource list match: VNet, app subnet, PE subnet, Container Apps Env, Container App, Postgres Flexible, Storage, Key Vault, Log Analytics; Bicep lints clean; parameters file parses; no hardcoded secrets; README marks LAB / NOT PRODUCTION), \u00a7H Docker packaging verification (multi-stage Dockerfile, non-root user, no baked secrets, .dockerignore covers node_modules / .env / .git / reports/, verify-docker-build.sh exits 0 whether Docker is present or not), \u00a7I dataset trust + agent access checks (5 sharing levels L0\u2013L4 honored; 5 trust ladder states loaded \u2192 decision_grade; L4 sensitive raw data BLOCKED unless explicitly approved; agent use requires explicit policy; approval workflow not derivable from summary; revoked / expired blocks use), \u00a7J users / access checks (surface renders deterministic seed; all 7 roles represented in fixture; no real person names; no live auth mutation claim; risky permission flags surface; imports from @/lib/design/abarva-theme canon), \u00a7K production readiness tracker checks (page renders; live panel polls every 60s; PROD4 deployment-status route returns liveStatus unavailable honestly when tokens absent; no fake green CI claim; blockers preserved; no false production_ready promotions), \u00a7L no-fabrication checks (no fake citations, no fake approvals, no fake dollar amounts, no live model claim, no fake live monitoring claim), \u00a7M CI / Vercel status checks (ESLint passes, routes-and-disclaimers passes, Vercel abarva green, Vercel nexus green, Supabase Preview skipping acceptable), \u00a7N client data sharing trust ladder walk (L1 \u2192 L2 \u2192 L3 \u2192 L4 transition with evidence required, reviewer, approver per step), \u00a7O security review checklist (secrets never in code or manifests; no hardcoded subscription / tenant IDs; auth not modified; future-only actions clearly disabled; hairline borders / canon-compliant chrome; dark surfaces only on Atlas Brief / pattern detail per canon \u00a7F), \u00a7P morning review / PR merge rules (merge gated on PROD2 passed: true; conservative-status policy preserved; canonical cherry-pick path TEN1 \u2192 TEN2 \u2192 TEN3 \u2192 TRUST1 \u2192 TRUST2 \u2192 TRUST3 \u2192 CLOUD1 \u2192 CLOUD2 \u2192 CLOUD3 \u2192 CLOUD4 \u2192 CLOUD5 \u2192 PROD4 \u2192 ADM6 \u2192 QA8; exact four-line QA8 staged set).",
+        "Conditional rows (TEN3 / TRUST3 / CLOUD3 / CLOUD4 / CLOUD5 / PROD4 / ADM6) are explicitly walked only if installed; the runbook records 'deferred' (not 'failed') when the matching slice has not landed in the batch.",
+        "docs/build/slices/QA8_ENTERPRISE_DEPLOYMENT_TRUST_VERIFICATION.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and readiness impact, and references the runbook by relative path.",
+        "docs/build/build-slices.json appends a QA8 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn, status code_complete, risk low, ownerAgent Lane H, and lastUpdated 2026-04-26; manifest top-level lastUpdated remains 2026-04-26.",
+        "docs/build/production-readiness.json validation_qa and production_deployment components append notes acknowledging that the QA8 enterprise deployment + trust verification runbook is added; statuses are preserved (no promotions); validation_qa.nextAction and production_deployment.nextAction are UNIONed conservatively without overwriting prior QA1\u2013QA7 / TEN1 / TEN2 / TRUST1 / TRUST2 / CLOUD1 / CLOUD2 / PROD3 wording; manifest top-level lastUpdated is set to 2026-04-26.",
+        "Documentation only; no application code, runtime, auth, supabase, migrations, package manifests, infrastructure-as-code, or platform-design docs are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Founder-facing checklist for verifying enterprise deployment (TEN1 SaaS tenancy architecture, TEN2 tenant isolation data boundary, TEN3 dedicated tenant blueprint conditional, CLOUD1 four-tier deployment strategy, CLOUD2 Azure VNet reference lab, CLOUD3 Docker packaging conditional, CLOUD4 local lab conditional, CLOUD5 Bicep starter conditional) and client data trust (TRUST1 dataset trust model with five sharing levels L0\u2013L4 and five-state trust ladder loaded \u2192 decision_grade, TRUST2 agent data access policy matrix, TRUST3 Steward setup TRUST surface wiring conditional) plus production readiness tracker (PROD3 live refresh, PROD4 CI / Vercel ingestion conditional) and users / access (ADM6 conditional) before push or PR. Eighth founder-facing runbook after QA1 (Agentic Spine), QA2 (Solution Workshop), QA3 (Solution Intelligence), QA4 (Agent Mission Persona), QA5 (Route Smoke Inventory), QA6 (Golden Prompt Harness Contract + Seed), and QA7 (Program Continuity + Deliverable Verification). Documentation only. Deterministic \u2014 does not exercise live retrieval, model calls, browser automation, or live cloud calls. TEN3 / TRUST3 / CLOUD3 / CLOUD4 / CLOUD5 / PROD4 / ADM6 are explicitly conditional: each row is verified only if the matching slice has landed in the batch under review. Default policy for unsupervised batch runs: lane agents commit only; integration agent owns cherry-picks and merges; founder owns the push and merge decisions. Canonical cherry-pick path: TEN1 \u2192 TEN2 \u2192 TEN3 \u2192 TRUST1 \u2192 TRUST2 \u2192 TRUST3 \u2192 CLOUD1 \u2192 CLOUD2 \u2192 CLOUD3 \u2192 CLOUD4 \u2192 CLOUD5 \u2192 PROD4 \u2192 ADM6 \u2192 QA8."
     }
   ]
 }
