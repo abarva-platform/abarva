@@ -70,6 +70,44 @@ Every final report for a future slice must include:
 5. blockers added or removed
 6. next recommended readiness action
 
+## Cross-session Update Rule
+
+Any GPT, Codex, Claude Code, or other agent session that changes
+readiness must update the canonical `docs/build/production-readiness.json`
+manifest. Do not create local readiness trackers, duplicate readiness
+JSON files, or alternate admin readiness pages that conflict with the
+canonical manifest.
+
+Component ownership for future sessions:
+
+- Source work updates `Source / Outsourcing`.
+- Programs work updates `Programs`, `Program Workshop Mode`, and
+  `Deliverables / Artifacts` as appropriate.
+- Intelligence work updates `Intelligence` and
+  `Data / Evidence / Knowledge Fabric` as appropriate.
+- Control Tower work updates `AI Control Tower`.
+- Admin/Setup work updates `Admin / Setup`.
+- Runtime, API, or Model Gateway work updates `Agent Runtime`,
+  `Model Gateway`, and `Validation / QA` as appropriate.
+- Ingestion, parsing, evidence, or trust work updates
+  `Ingestion / Parsing`, `Data / Evidence / Knowledge Fabric`, and
+  `Audit / Governance` as appropriate.
+- Deployment, CI, route smoke, observability, or release work updates
+  `Production / Deployment` and `Validation / QA` as appropriate.
+
+If no readiness change occurred, the final report must explicitly state
+why `production-readiness.json` was not updated.
+
+Every future work order final report must include this readiness section:
+
+- `production-readiness.json updated`: yes/no
+- `components changed`: component ids or none
+- `prior status`: previous status by component or unchanged
+- `new status`: new status by component or unchanged
+- `gates changed`: gate names or none
+- `blockers added/removed`: blocker ids or none
+- `next readiness action`: updated action or unchanged
+
 Do not overstate readiness:
 
 - Docs/spec completion is not runtime readiness.
