@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "lastUpdated": "2026-04-26",
-  "updatedBy": "Codex",
+  "updatedBy": "SHELL2 wave-20 lane-B",
   "source": "Canonical deterministic production readiness manifest maintained in docs/build. This is the single machine-readable readiness spine for all AbarVa components. No live monitoring, no Vercel polling, no GitHub polling, no database-backed readiness, and no model/API calls are implemented by this tracker.",
   "overallStatus": "blocked",
   "overallReadinessPercent": 24,
@@ -49,7 +49,7 @@
       {
         "id": "programs",
         "area": "Programs",
-        "completed": "Canonical programs index/detail, phase/gate rendering, Nexus rail, evidence/value readiness, workshop readiness, workshop mode shell, artifact canvas shell, and named future phase deliverable seeds for Design/Build/Activate/Operate phases (PROG15).",
+        "completed": "Canonical programs index/detail, phase/gate rendering, Nexus rail, evidence/value readiness, workshop readiness, workshop mode shell, artifact canvas shell, named future phase deliverable seeds for Design/Build/Activate/Operate phases (PROG15), and ProgramRouteShell orientation wrapper (SHELL4 wave-20).",
         "pending": "Full save/resume state, live meeting notes ingestion, real deliverable generation, and gate transition workflows.",
         "percentLow": 55,
         "percentHigh": 55,
@@ -119,7 +119,7 @@
       {
         "id": "source_sourcing_product",
         "area": "Source / sourcing product",
-        "completed": "Source foundation, validation fixtures/runner/report concepts, and Source dashboard started.",
+        "completed": "Source foundation, validation fixtures/runner/report concepts, and Source dashboard started. SHELL5 (wave-20): SourceRouteShell orientation wrapper added; event detail route wired with pageMode='event_detail', tenantName, eventName. Deterministic seed caveat enforced. No teal colors. AbarVa canon compliant.",
         "pending": "Event detail canvas, vendor responses, scorecards, RFP artifacts, Source value ledger, and Source to Tower/Intelligence signals.",
         "percentLow": 25,
         "percentHigh": 25,
@@ -237,8 +237,8 @@
       {
         "id": "visual_design_system",
         "area": "Visual design system",
-        "completed": "Visual canon, UI primitives, and logo/color direction mostly locked. DES7 (wave-17): AbarVaShellNav primitive with workflow-question metadata. Canon wordmark, navy accent. Legacy chrome unchanged for backward compatibility.",
-        "pending": "Apply consistently across all pages and finalize logo asset/SVG system.",
+        "completed": "Visual canon, UI primitives, and logo/color direction mostly locked. DES7 (wave-17): AbarVaShellNav primitive with workflow-question metadata. Canon wordmark, navy accent. Legacy chrome unchanged for backward compatibility. SHELL1 (wave-20): Canonical AbarVaShellConfig type, ABARVA_SHELL_CONFIG constant, AbarVaAppShell wrapper component, AbarVaTenantBadge, and banned-token enforcement in tests.",
+        "pending": "Apply AbarVaAppShell consistently across all routes and finalize logo asset/SVG system.",
         "percentLow": 52,
         "percentHigh": 52,
         "relatedComponentIds": [
@@ -290,6 +290,9 @@
       "Program route shell enforcement and final route-to-shell verification remain open.",
       "Route-to-shell verification must still certify no legacy shell ownership remains on target surfaces.",
       "Route ownership and shell enforcement reconciliation is still pending integration validation."
+    ],
+    "notes": [
+      "SHELL2 (wave-20): Main Route Ownership Map and Legacy Shell Retirement Plan added. 10 of 13 primary routes confirmed canonical. TopBar.tsx and PrimaryNav.tsx identified as unused legacy components \u2014 safe to retire. Intelligence and Tower tenant pages are deferred (no named page-level canon shell). Source events list page needs verification. Read model only; no application code changed, no production_deployment promotion."
     ]
   },
   "components": [
@@ -378,7 +381,8 @@
         "PROG13 (wave-18): ProgramDeliverablesEvidencePanel \u2014 14 deliverables across 6 phases, evidence coverage % bar, current deliverable highlight. No fake downloads/approvals. 16 tests.",
         "PROG14 (wave-18): ProgramActionMissionStrip \u2014 resume action, top 3 next actions, 4 agent missions, blocked items. No live execution. 15 tests.",
         "PROG16 (wave-19): SourceEventChip \u2014 compact chip on ProgramFlagshipPage surfacing linked Source AMS event for APX-CDP-2026. Shows commercial readiness state, top blocker, route hint. Deterministic seed. Wired additively in ProgramFlagshipPage Section 2b. 9 tests.",
-        "DEMO7 (wave-19): Apex Retail 30-minute demo guide created. /tenant/apex-retail/programs and CDP Activation programme flagship are the primary programme surfaces in the DEMO7 storyline."
+        "DEMO7 (wave-19): Apex Retail 30-minute demo guide created. /tenant/apex-retail/programs and CDP Activation programme flagship are the primary programme surfaces in the DEMO7 storyline.",
+        "DEMO8 (wave-20): Founder Live Route Review Checklist created at docs/demo/FOUNDER_LIVE_ROUTE_REVIEW_CHECKLIST.md. Covers 7 routes (programs portfolio, programme detail, source commercial event, admin architecture, admin production readiness, intelligence, tower) with pass/fail/deferred capture, expected headings, data levels, shell/nav checks, what-not-to-claim guardrails, and pilot ask cues. Docs only; no code change, no production_ready promotion."
       ]
     },
     {
@@ -1567,8 +1571,15 @@
         "DEMO5 (wave-17): ABARVA_VISUAL_WORKFLOW_WALKTHROUGH_CHECKLIST.md \u2014 10-route founder review checklist with pass/fail/deferred capture per route. Docs-only; no code change, no production_ready promotion.",
         "DEMO6 (wave-18): PROGRAM_FLAGSHIP_DEMO_SCRIPT.md \u2014 10/20/45-minute scripts with talk tracks, story arc, and three pilot-ask versions.",
         "LINK1 (wave-19, lane-C): Source Program Link Model lands deterministic data bridge types and functions between Apex Retail Source AMS outsourcing event (apex-retail-ams-outsourcing-2026) and Apex Retail Program (APX-CDP-2026). Read model only; no live procurement decision, no model calls, no network calls. production_deployment status preserved (still blocked).",
-        "SRC33 (wave-19): Linked Program Badge on Source Commercial Event \u2014 deterministic seed badge linking apex-retail-ams-outsourcing-2026 to APX-CDP-2026 (CDP Activation). View model, badge component, wiring in SourceCommercialEventSection, and integration tests. No live procurement decisions."
+        "SRC33 (wave-19): Linked Program Badge on Source Commercial Event \u2014 deterministic seed badge linking apex-retail-ams-outsourcing-2026 to APX-CDP-2026 (CDP Activation). View model, badge component, wiring in SourceCommercialEventSection, and integration tests. No live procurement decisions.",
+        "SHELL3 (wave-20, lane-C): Demo tenant data tier system lands deterministic read model encoding surface availability (rich/thin/shell_only) for apex-retail, meridian, and arcturus. TenantDataTierBadge component renders richness tier. No live data, no model calls, no network calls. production_deployment status preserved (still blocked).",
+        "SHELL6 (wave-20, lane-F): AdminRouteShell canonical lightweight orientation strip created at src/components/admin/AdminRouteShell.tsx. Provides PAGE_LABELS for index / architecture / production_readiness / build_progress / quality. All existing admin routes already use AdminCanonShell with full workflow orientation; AdminRouteShell is available for future admin surfaces. No live monitoring, no teal (#14B8A6), no production_ready promotion.",
+        "SHELL7 (wave-20, lane-G): Intelligence and Control Tower orientation shell components landed. IntelligenceRouteShell and TowerRouteShell provide deterministic-data caveat strips and route identity labels. No live signals, no model calls, no production_ready promotion. Route shell wiring deferred additively.",
+        "QA28 (wave-20, lane-I): Active Route Shell Verification \u2014 20 deterministic filesystem checks verifying canonical route page files, flagship components, and Wave-20 shell components (SHELL1-7 deferred pre-integration). Checks cover tenant/programs, source/events, platform/admin routes, ProgramFlagshipPage, SourceCommercialEventSection, legacy TopBar tracking, chrome-import hygiene, Wave-19 LINK1/SRC32 integration, and build-slices.json validity. Tests pass now with graceful deferrals; all deferred items resolve to pass after Wave-20 integration. No code changes, no model calls, no production_deployment promotion."
       ]
     }
+  ],
+  "waveNotes": [
+    "DEMODATA1 (wave-20, lane-H): Demo Dataset Registry and Tenant Richness Model created. Deterministic seed only. 3 tenants encoded: apex-retail (rich), meridian (thin), arcturus (shell_only). 5 surfaces covered per tenant. Source-Program linkage documented. No live data, no model calls. production_deployment status preserved (still blocked)."
   ]
 }

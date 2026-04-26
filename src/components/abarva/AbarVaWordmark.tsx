@@ -13,3 +13,6 @@
 //   • Sizes: sm = 16px base · md = 20px base · lg = 28px base.
 
 export { AbarvaWordmark } from './AbarVaTopNav';
+
+// SHELL1: canonical PascalCase alias for new shell consumers
+export { AbarvaWordmark as AbarVaWordmark } from './AbarVaTopNav';

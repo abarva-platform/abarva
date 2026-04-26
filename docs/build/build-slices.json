@@ -7630,6 +7630,13 @@
       "lane": "G"
     },
     {
+      "id": "SHELL6",
+      "title": "Admin Architecture Readiness Shell Control",
+      "status": "code_complete",
+      "wave": "wave-20",
+      "lane": "F"
+    },
+    {
       "id": "DEMO7",
       "wave": "wave-19",
       "name": "Apex Retail 30-Minute Demo Storyline",
@@ -7637,6 +7644,69 @@
       "status": "code_complete",
       "branch": "wave19/demo7-apex-retail-demo-storyline",
       "description": "Comprehensive demo guide for Apex Retail covering 10-minute, 30-minute, and 45-minute formats. Documents the Source commercial event to Programme flagship cross-surface narrative: AMS vendor consolidation informs CDP Activation programme gate. Grounded in SRC28 (source-commercial-demo-scenario.ts) and PROG10 (program-flagship-view.ts). Covers opening narrative, route sequence, talk tracks, what to show/not show, Workshop 5 outcomes, deliverables roadmap, commercial readiness, pilot ask, and routes reference."
+    },
+    {
+      "id": "SHELL1",
+      "title": "Canonical AbarVa App Shell Ownership",
+      "status": "code_complete",
+      "wave": "wave-20",
+      "lane": "A"
+    },
+    {
+      "id": "DEMODATA1",
+      "title": "Demo Dataset Registry and Tenant Richness Model",
+      "status": "code_complete",
+      "wave": "wave-20",
+      "lane": "H"
+    },
+    {
+      "id": "SHELL3",
+      "title": "Tenant-Aware Navigation and Demo Data Tier Badges",
+      "status": "code_complete",
+      "wave": "wave-20",
+      "lane": "C"
+    },
+    {
+      "id": "SHELL2",
+      "title": "Main Route Ownership Map and Legacy Shell Retirement Plan",
+      "status": "code_complete",
+      "wave": "wave-20",
+      "lane": "B"
+    },
+    {
+      "id": "SHELL4",
+      "title": "Programs Route Shell Control",
+      "status": "code_complete",
+      "wave": "wave-20",
+      "lane": "D"
+    },
+    {
+      "id": "SHELL5",
+      "title": "Source Route Shell Control",
+      "status": "code_complete",
+      "wave": "wave-20",
+      "lane": "E"
+    },
+    {
+      "id": "SHELL7",
+      "title": "Intelligence Tower Shell Control",
+      "status": "code_complete",
+      "wave": "wave-20",
+      "lane": "G"
+    },
+    {
+      "id": "QA28",
+      "title": "Active Route Shell Verification",
+      "status": "code_complete",
+      "wave": "wave-20",
+      "lane": "I"
+    },
+    {
+      "id": "DEMO8",
+      "title": "Founder Live Route Review Checklist",
+      "status": "code_complete",
+      "wave": "wave-20",
+      "lane": "J"
     }
   ]
 }
