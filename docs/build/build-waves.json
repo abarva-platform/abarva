@@ -703,6 +703,37 @@
       "currentBlockers": [],
       "nextAction": "Wave-14 merged via PR #340. 161 tests green, hygiene gate 11/11 PASS. Next: Source module production readiness deepening and live workflow wiring.",
       "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-16",
+      "name": "Source Commercial Route Mount + Demo Scenario",
+      "goal": "Mount the Source commercial hub inside the Source event experience, add a deterministic AMS outsourcing demo scenario seed, deliver the commercial executive brief and action queue UI components, verify the route via smoke test, and ship the demo script.",
+      "status": "in_progress",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "SRC27",
+        "SRC28",
+        "SRC29",
+        "SRC30",
+        "QA23",
+        "DEMO4"
+      ],
+      "completedSlices": [
+        "SRC27",
+        "SRC28",
+        "SRC29",
+        "SRC30",
+        "QA23",
+        "DEMO4"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "not_run",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Integration branch ready. Run validation, push, and merge via PR.",
+      "lastUpdated": "2026-04-26"
     }
   ]
 }

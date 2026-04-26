@@ -872,7 +872,11 @@
         "SRC23 (wave-15): source-commercial-readiness.ts view-model builder + SourceCommercialReadinessView component. 6-check readiness assessment. 8 tests green.",
         "SRC24 (wave-15): source-commercial-missions-view.ts view-model + SourceCommercialMissionsPanel component. 5-mission default cap with show-more. 9 tests green.",
         "SRC25 (wave-15): source-commercial-signals-preview.ts view-model + SourceCommercialSignalsPreview component. Top-3 signals and patterns preview. 9 tests green.",
-        "SRC26 (wave-15): source-commercial-hub-view.ts (7-tab structure) + SourceCommercialHub component (prop-slot composition). 9 tests green."
+        "SRC26 (wave-15): source-commercial-hub-view.ts (7-tab structure) + SourceCommercialHub component (prop-slot composition). 9 tests green.",
+        "SRC28 (wave-16): source-commercial-demo-scenario.ts deterministic seed. AMS outsourcing scenario: 4 vendors, 5 risks, 5 missions, 4 signals. 12 tests green.",
+        "SRC27 (wave-16): SourceCommercialEventSection mounted in /source/events/[eventId]/page.tsx. Collapsible commercial intelligence section. Deterministic seed data, no live ingestion.",
+        "SRC29 (wave-16): source-commercial-executive-brief.ts + SourceCommercialExecutiveBrief component. Dark-navy header, 3 risks, 3 BAFO levers, posture badge. 11 tests green.",
+        "SRC30 (wave-16): source-commercial-action-queue.ts + SourceCommercialActionQueue component. 8-action queue, 5-item cap with show-more, state/priority chips. 12 tests green."
       ]
     },
     {
@@ -1437,7 +1441,9 @@
         "QA19: E2E smoke result capture model created. 12-route fixture baseline established. Live run required for full validation.",
         "QA20: Mandatory hygiene gate script created (hygiene_gate.sh). All PR merges must pass gate.",
         "OPS13: Demo pack final report validator created at scripts/integration/validate_demo_pack_report.py. All future packs (Wave 13+) must pass validate_demo_pack_report.py before a pack is marked complete. Validator checks 11 required sections: PR number, merge commit, lanes completed, route, readiness, hygiene gate, CI, Vercel, build, Run Metrics, next. Read-only, stdlib-only, no network calls.",
-        "QA22 (wave-15): source-commercial-ui-verification.ts manifest (8 components) + integration verification test. Always-passing design: 10 static tests + 16 graceful integration-phase file checks."
+        "QA22 (wave-15): source-commercial-ui-verification.ts manifest (8 components) + integration verification test. Always-passing design: 10 static tests + 16 graceful integration-phase file checks.",
+        "QA23 (wave-16): source-commercial-route-smoke.ts manifest + smoke test. 10 static + graceful integration-phase file checks. Wave-15 file existence always verified.",
+        "DEMO4 (wave-16): SOURCE_COMMERCIAL_INTELLIGENCE_DEMO_SCRIPT.md \u2014 10/20/45-minute demo scripts with talk tracks, pilot ask, what-not-to-claim guidance."
       ],
       "lastUpdated": "2026-04-26"
     },

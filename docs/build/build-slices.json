@@ -7345,6 +7345,60 @@
       "status": "code_complete",
       "branch": "wave15/qa22-source-commercial-ui-verification",
       "description": "Wave-15 UI verification: 8-component manifest, design token check, integration-phase file existence tests. Always-passing in lane worktree, full coverage in integration branch."
+    },
+    {
+      "id": "SRC28",
+      "wave": "wave-16",
+      "name": "Source Commercial Demo Scenario Seed",
+      "type": "source-lib",
+      "status": "code_complete",
+      "branch": "wave16/src28-source-commercial-demo-scenario",
+      "description": "Deterministic AMS outsourcing demo scenario: 4 vendors, 5 risks, 5 missions, 4 signals, 3 BAFO opportunities. No real vendor names or pricing."
+    },
+    {
+      "id": "SRC27",
+      "wave": "wave-16",
+      "name": "Mount Source Commercial Hub",
+      "type": "source-ui",
+      "status": "code_complete",
+      "branch": "wave16/src27-mount-source-commercial-hub",
+      "description": "SourceCommercialEventSection wrapper + minimal event page mount. Collapsible commercial intelligence section in Source event experience."
+    },
+    {
+      "id": "SRC29",
+      "wave": "wave-16",
+      "name": "Source Commercial Executive Brief",
+      "type": "source-ui",
+      "status": "code_complete",
+      "branch": "wave16/src29-source-commercial-executive-brief",
+      "description": "Deterministic executive brief: posture badge, 3 risks, 3 BAFO levers, vendor comparability, recommended action. Dark-navy header panel."
+    },
+    {
+      "id": "SRC30",
+      "wave": "wave-16",
+      "name": "Source Commercial Action Queue",
+      "type": "source-ui",
+      "status": "code_complete",
+      "branch": "wave16/src30-source-commercial-action-queue",
+      "description": "8-action deterministic queue: 5 visible + show-more. State chips, priority dots, stop condition expand. Agent owner badges."
+    },
+    {
+      "id": "QA23",
+      "wave": "wave-16",
+      "name": "Source Commercial Route Smoke Verification",
+      "type": "qa",
+      "status": "code_complete",
+      "branch": "wave16/qa23-source-commercial-route-smoke",
+      "description": "Manifest-driven smoke verification for Wave-16 commercial route. Static tests + graceful integration file checks. No browser automation."
+    },
+    {
+      "id": "DEMO4",
+      "wave": "wave-16",
+      "name": "Source Commercial Demo Script",
+      "type": "demo",
+      "status": "code_complete",
+      "branch": "wave16/demo4-source-commercial-demo-script",
+      "description": "10/20/45-minute demo scripts for Source commercial intelligence. Talk tracks, what-to-show, what-not-to-claim, pilot ask. No fake savings or live-data claims."
     }
   ]
 }
