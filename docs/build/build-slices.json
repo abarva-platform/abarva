@@ -6708,6 +6708,17 @@
       ],
       "sliceDoc": "docs/build/slices/OPS9_BUILD_RUN_RETROSPECTIVE.md",
       "createdAt": "2026-04-26"
+    },
+    {
+      "id": "ARCH3",
+      "name": "AbarVa Architecture Overview Pack",
+      "category": "architecture",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [],
+      "testFiles": [],
+      "sliceDoc": "docs/build/slices/ARCH3_ABARVA_ARCHITECTURE_OVERVIEW_PACK.md",
+      "createdAt": "2026-04-26"
     }
   ]
 }
