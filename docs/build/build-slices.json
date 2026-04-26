@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-04-25",
+  "lastUpdated": "2026-04-26",
   "lifecycle": [
     "ready",
     "in_progress",
@@ -3152,6 +3152,63 @@
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
       "notes": "Deterministic, file-pure route smoke inventory and matching integration test. Lane G output of the parallel build pack. No HTTP, no browser, no server boot, no model calls, no migrations, no persistence, no UI. Inventory only catalogs canonical routes and the strategy taxonomy; execution remains deferred and validation_qa.testingGates.route_smoke status is preserved."
+    },
+    {
+      "id": "PROD3",
+      "name": "Production Readiness Live Refresh MVP",
+      "category": "PROD",
+      "status": "code_complete",
+      "risk": "medium",
+      "ownerAgent": "Steward",
+      "dependsOn": [
+        "PROD1",
+        "PROD2",
+        "QA5"
+      ],
+      "allowedFiles": [
+        "src/app/api/admin/production-readiness/route.ts",
+        "src/lib/admin/production-readiness.ts",
+        "src/components/admin/ProductionReadinessLivePanel.tsx",
+        "src/components/admin/ProductionReadinessTracker.tsx",
+        "src/app/(maestro)/platform/admin/production-readiness/page.tsx",
+        "src/__tests__/integration/admin/production-readiness-live-refresh.test.ts",
+        "docs/build/slices/PROD3_PRODUCTION_READINESS_LIVE_REFRESH.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "GET /api/admin/production-readiness returns the current manifest plus derived view data with generatedAt, source production_readiness_manifest, refreshMode api_polling, liveCiStatus, and an explicit note.",
+        "API route sets no-store/no-cache headers and does not call GitHub, Vercel, Claude, OpenAI, or any model.",
+        "Production readiness scoring remains deterministic; generatedAt is request-time metadata only.",
+        "ProductionReadinessLivePanel fetches the internal API on mount, refreshes on an interval, exposes a manual Refresh button, shows last refreshed status, and keeps the server-rendered data as fallback on API errors.",
+        "Production readiness manifest updates Validation / QA and Production Deployment notes and next actions without promoting any component to pilot_ready or production_ready.",
+        "Slice documentation explains that GitHub checks, Vercel deployments, DB-backed readiness, route smoke execution, persona crawler, and observability remain deferred to PROD4 or later."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/admin/production-readiness-live-refresh.test.ts",
+        "npx jest src/__tests__/integration/admin/production-readiness-tracker.test.ts",
+        "npm run build",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8'))\""
+      ],
+      "notes": "V1 internal API polling only. True GitHub/Vercel status ingestion, deploy event polling, route smoke execution, persona crawler, DB-backed readiness, and observability are deferred to PROD4 or later. Status is code_complete after local validation, not verified."
     }
   ]
 }

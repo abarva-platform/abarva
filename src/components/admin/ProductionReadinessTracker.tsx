@@ -1,9 +1,6 @@
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
 import {
-  buildProductionReadinessView,
-  PRODUCTION_READINESS_DIMENSIONS,
-  PRODUCTION_READINESS_GATES,
   type ProductMaturityArea,
   type ProductMaturityIndicator,
   type ProductionReadinessComponent,
@@ -16,6 +13,29 @@ import {
   type ProductionReadinessView,
 } from '@/lib/admin/production-readiness';
 import { BORDER, COLORS, FONT, RADIUS, SPACING, TYPE } from '@/lib/design/abarva-theme';
+
+const PRODUCTION_READINESS_DIMENSION_COLUMNS: ReadonlyArray<ProductionReadinessDimension> = [
+  'functionality',
+  'data_readiness',
+  'agent_readiness',
+  'evidence_audit_readiness',
+  'ui_ux_readiness',
+  'tenant_isolation',
+  'test_coverage',
+  'build_deploy_health',
+  'production_risk',
+];
+
+const PRODUCTION_READINESS_GATE_COLUMNS: ReadonlyArray<ProductionReadinessGate> = [
+  'unit_tests',
+  'integration_tests',
+  'route_smoke',
+  'live_persona_walk',
+  'no_fabrication_check',
+  'tenant_isolation_check',
+  'vercel_build',
+  'security_governance_review',
+];
 
 const pageStyle: CSSProperties = {
   minHeight: '100vh',
@@ -92,9 +112,9 @@ const gateLabels: Record<ProductionReadinessGate, string> = {
 };
 
 export function ProductionReadinessTracker({
-  view = buildProductionReadinessView(),
+  view,
 }: {
-  view?: ProductionReadinessView;
+  view: ProductionReadinessView;
 }) {
   const startedCount = view.componentProgress.filter((component) => component.started).length;
   const fullFlowReady = view.summary.fullFlowReadyCount;
@@ -665,7 +685,7 @@ function StatusMatrix({
   components: ReadonlyArray<ProductionReadinessComponent>;
   mode: 'dimensions' | 'gates';
 }) {
-  const columns = mode === 'dimensions' ? PRODUCTION_READINESS_DIMENSIONS : PRODUCTION_READINESS_GATES;
+  const columns = mode === 'dimensions' ? PRODUCTION_READINESS_DIMENSION_COLUMNS : PRODUCTION_READINESS_GATE_COLUMNS;
 
   return (
     <div style={tableWrapStyle}>

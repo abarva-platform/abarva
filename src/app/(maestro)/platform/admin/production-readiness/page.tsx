@@ -1,7 +1,8 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import { ProductionReadinessTracker } from '@/components/admin/ProductionReadinessTracker';
-import { buildProductionReadinessView } from '@/lib/admin/production-readiness';
+import { connection } from 'next/server';
+import { ProductionReadinessLivePanel } from '@/components/admin/ProductionReadinessLivePanel';
+import { buildProductionReadinessApiResponse } from '@/lib/admin/production-readiness';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +23,8 @@ function AdminOnlyNotice() {
 }
 
 export default async function ProductionReadinessPage() {
+  await connection();
+
   const session = await auth();
   if (!session.userId) redirect('/sign-in');
 
@@ -38,5 +41,5 @@ export default async function ProductionReadinessPage() {
 
   if (!isAdmin) return <AdminOnlyNotice />;
 
-  return <ProductionReadinessTracker view={buildProductionReadinessView()} />;
+  return <ProductionReadinessLivePanel initialResponse={buildProductionReadinessApiResponse(new Date().toISOString())} />;
 }

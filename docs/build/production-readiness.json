@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-04-25",
+  "lastUpdated": "2026-04-26",
   "updatedBy": "Code",
   "source": "Deterministic build/readiness manifest maintained in docs/build. No live monitoring, no Vercel polling, and no model/API calls are implemented by this tracker.",
   "overallStatus": "blocked",
@@ -1231,7 +1231,7 @@
         },
         "route_smoke": {
           "status": "partial",
-          "evidence": "Playwright specs and canonical route crawler exist, but no single required CI gate is certified. QA5 adds a deterministic 11-route inventory at src/lib/qa/route-smoke-inventory.ts with strategy tagging; execution remains deferred so this gate stays not-promoted."
+          "evidence": "QA5 provides deterministic route-smoke inventory. PROD3 adds no-store API polling for the Production Readiness page, but route-smoke execution remains deferred."
         },
         "live_persona_walk": {
           "status": "not_automated",
@@ -1247,7 +1247,7 @@
         },
         "vercel_build": {
           "status": "not_run",
-          "evidence": "Vercel deployment validation is not connected to this tracker."
+          "evidence": "PROD3 does not poll Vercel deployments; PROD4 should add secure CI/Vercel status ingestion before this gate can be promoted."
         },
         "security_governance_review": {
           "status": "partial",
@@ -1262,7 +1262,7 @@
           "unblocks": "full_flow_ready"
         }
       ],
-      "nextAction": "Turn the runbooks into CI-backed route smoke, persona crawler, and security governance checks; CI integration of the PROD2 production readiness validator remains deferred. OPS1 dispatch operating model + 20-item agent dispatch queue + AGENT_BATCH_TEMPLATE + AGENT_SLICE_REPORT_TEMPLATE are now in place; CI/observability automation (GitHub Actions gates, Vercel post-deploy hooks, persona crawler, security scan, observability) remains deferred per OPS1 \u00a7N.",
+      "nextAction": "PROD4 should add CI/Vercel status ingestion and route-smoke execution only after secure server-side tokens and audit handling are approved.",
       "notes": [
         "This component is tested, not full-flow ready.",
         "PROD2 lands a deterministic validator at src/lib/admin/production-readiness-validator.ts with twelve canonical rules and a passing integration test at src/__tests__/integration/admin/production-readiness-validator.test.ts. The validator reports findings but does not mutate the manifest, and CI integration remains deferred.",
@@ -1272,7 +1272,8 @@
         "OPS1 batch template added at docs/build/AGENT_BATCH_TEMPLATE.md and slice report template at docs/build/AGENT_SLICE_REPORT_TEMPLATE.md \u2014 fill-in-the-blank per-batch and per-lane scaffolds with annotated placeholders.",
         "QA5 deterministic route smoke inventory added (src/lib/qa/route-smoke-inventory.ts) \u2014 11 canonical routes catalogued across home / admin / programs / tower / intelligence / source with owner surface, primary agent, expected guard, expected read model, smoke priority, implementation status, and recommended test strategy; execution remains deferred (no browser, no automation, no real HTTP) and the route_smoke testing gate status is preserved.",
         "Source agent mission read-model test passed and covers deterministic Nexus, Sentinel, Atlas, and Steward mission output without model, persistence, or UI imports.",
-        "Source agent mission report formatter test passed and covers deterministic mission report counts, markdown output, remediations, and import guardrails."
+        "Source agent mission report formatter test passed and covers deterministic mission report counts, markdown output, remediations, and import guardrails.",
+        "PROD3 adds internal no-store API polling for the Production Readiness page and a deterministic live-refresh test; this improves reviewability but does not execute route smoke, persona crawler, GitHub checks, or Vercel deployment ingestion."
       ]
     },
     {
@@ -1300,7 +1301,7 @@
         },
         "integration_tests": {
           "status": "partial",
-          "evidence": "Build/test commands validate code, not deployed production behavior."
+          "evidence": "Build/test commands validate code and PROD3 validates no-store API polling behavior, not deployed production behavior."
         },
         "route_smoke": {
           "status": "not_automated",
@@ -1320,7 +1321,7 @@
         },
         "vercel_build": {
           "status": "not_run",
-          "evidence": "PROD1 does not deploy and does not poll Vercel build state."
+          "evidence": "PROD3 labels CI/Vercel status as unavailable and does not poll Vercel build state; PROD4 should add secure server-side ingestion."
         },
         "security_governance_review": {
           "status": "blocked",
@@ -1331,16 +1332,17 @@
         {
           "id": "prod-deploy-verification",
           "severity": "critical",
-          "description": "No verified production deploy, route smoke, DNS check, observability, or rollback review is recorded by this tracker.",
+          "description": "No verified production deploy, CI/Vercel status ingestion, route smoke, DNS check, observability, or rollback review is recorded by this tracker.",
           "unblocks": "production_ready"
         }
       ],
-      "nextAction": "After explicit founder approval to deploy, verify Vercel build, production routes, auth redirects, DNS, tenant isolation, and observability manually or through CI.",
+      "nextAction": "PROD4 should add secure CI/Vercel status ingestion, deploy event polling, route smoke, and observability hooks before any production deployment readiness promotion.",
       "notes": [
         "PROD1 does not deploy.",
         "No live monitoring claim is made.",
         "PROD2 extends docs/build/PRODUCTION_READINESS_UPDATE_PROTOCOL.md with a tracker-update mandate per pack and a parallel-lane conflict policy for cherry-pick integration. No deployment occurred. No live monitoring claim is made.",
-        "OPS1 cherry-pick policy formalized at docs/build/AGENT_DISPATCH_OPERATING_MODEL.md \u00a7G and \u00a7H: build-slices.json appends-only with HEAD-wins on existing entries; production-readiness.json takes the lower status on conflict (conservative status), unions notes deduped by string, unions blockers by id (kept unless explicitly removed with evidence), takes incoming nextAction when HEAD untouched and appends distinct content when both changed, preserves other-lane notes verbatim, bumps lastUpdated, and re-runs the PROD2 validator after every cherry-pick. No false promotions: any status promotion requires explicit founder verification."
+        "OPS1 cherry-pick policy formalized at docs/build/AGENT_DISPATCH_OPERATING_MODEL.md \u00a7G and \u00a7H: build-slices.json appends-only with HEAD-wins on existing entries; production-readiness.json takes the lower status on conflict (conservative status), unions notes deduped by string, unions blockers by id (kept unless explicitly removed with evidence), takes incoming nextAction when HEAD untouched and appends distinct content when both changed, preserves other-lane notes verbatim, bumps lastUpdated, and re-runs the PROD2 validator after every cherry-pick. No false promotions: any status promotion requires explicit founder verification.",
+        "PROD3 adds internal API polling for the Production Readiness page with CI/Vercel status explicitly unavailable; no deploy, Vercel API polling, GitHub checks ingestion, route smoke execution, or observability integration is implemented."
       ]
     }
   ]
