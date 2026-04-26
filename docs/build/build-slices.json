@@ -1237,6 +1237,64 @@
       "notes": "Pure deterministic projection of (tenant, program) seed into per-workshop readiness records. Operationalizes the MW1 contract. No meeting notes ingestion, no live LLM-driven brief composition, no calendar/booking integration. Future MW3 Maestro Brief UI renders these records; MW4 captures notes; MW5 generates agenda templates; MW6 surfaces SME recommendations; MW7 wires the deliverable refinement loop."
     },
     {
+      "id": "MW4",
+      "name": "Meeting Notes Capture Read Model",
+      "category": "MW",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "MW1",
+        "MW2"
+      ],
+      "allowedFiles": [
+        "src/lib/programs/meeting-notes-capture.ts",
+        "src/__tests__/integration/programs/meeting-notes-capture.test.ts",
+        "docs/build/slices/MW4_MEETING_NOTES_CAPTURE_READ_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Module defines the eight canonical meeting note types: workshop_observation, decision, action_item, risk, open_question, evidence_candidate, stakeholder_alignment, follow_up_meeting.",
+        "buildMeetingNoteCaptureTemplate(workshopType) returns an empty template with all arrays empty, observation '', and the canonical workshop type recorded.",
+        "buildMeetingNoteCaptureSeed(programKey, workshopType) returns at least two deterministic notes per pair, each with at least one decision, action item, risk, open question, and evidence candidate.",
+        "Every id matches /^mtg-seed-[a-z0-9-]+$/.",
+        "Every note carries createdFrom: 'deterministic_seed' and an honestDisclaimer containing both 'deterministic seed' and 'not wired' substrings.",
+        "summarizeMeetingNotesCapture reconciles totalNotes, byType, totalDecisions, totalActionItems, totalEvidenceCandidates against the input.",
+        "deriveProgramUpdatesFromMeetingNotes emits phase_advance_request / gate_readiness_change / risk_register_update / value_at_stake_update only for notes implying that update.",
+        "deriveDeliverableUpdatesFromMeetingNotes emits draft_input_added / review_feedback / approval_blocked / rework_required only for notes mentioning deliverables.",
+        "deriveEvidenceCandidatesFromMeetingNotes returns the union of every evidence candidate across the input notes.",
+        "synthesizeMeetingNotes is deterministic and caps topDecisions at three, topActionItems at five, topRisks at three.",
+        "Seed contains no real person names (only role labels) and no E-### literal tokens.",
+        "Module imports nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase; does not call Date.now / Math.random / new Date / fetch."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/meeting-notes-capture.test.ts",
+        "npx jest src/__tests__/integration/programs/workshop-readiness.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic read model for the during/after-workshop capture surface. Operationalizes MW1 section E (notes, decisions, risks, objections, missing inputs, stakeholder alignment, follow-up actions) plus the section H deterministic-extractor contract. No audio capture, no file upload, no live transcription, no model summarization, no persistence. Future MW UI surface renders these records and lets the Maestro confirm extractor output before filing."
+    },
+    {
       "id": "PF1",
       "name": "AI Program Failure Modes Pattern Pack",
       "category": "PF",
@@ -2490,6 +2548,53 @@
       "notes": "Deterministic, file-pure read model that demonstrates the canonical Evidence Ledger usability lifecycle. Companion to EVID1 contract. No model calls, no migrations, no persistence, no live citation resolution. Lane D output of the parallel build pack."
     },
     {
+      "id": "EVID3",
+      "name": "Evidence Claim Support Model",
+      "category": "EVID",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Steward",
+      "dependsOn": [
+        "EVID2"
+      ],
+      "allowedFiles": [
+        "src/lib/architecture/evidence-claim-support.ts",
+        "src/__tests__/integration/architecture/evidence-claim-support.test.ts",
+        "docs/build/slices/EVID3_EVIDENCE_CLAIM_SUPPORT_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/architecture/evidence-claim-support.ts exports the canonical EVIDENCE_CLAIM_SUPPORT_STATUSES tuple in canonical order ('supported', 'partially_supported', 'unsupported', 'contradicted', 'missing_evidence', 'stale_evidence', 'out_of_scope').",
+        "Module exports EvidenceSupportedClaim, EvidenceClaimGap, EvidenceClaimContradiction, EvidenceClaimSupportResult, and EvidenceClaimSupportSummary types and helpers evaluateClaimSupport, evaluateClaimsForWorkObject, summarizeClaimSupport, and getUnsupportedClaims.",
+        "evaluateClaimSupport applies tenant filter, work-object filter, contradiction sweep, blocked-only check, stale-only check, intermediate-only check, and usable-with-expected-ids check in fixed order; every result carries basis.evaluator 'evidence_claim_support_v1' and createdFrom 'deterministic_seed'.",
+        "Linkage rule: program/phase/workshop/artifact -> linkedPrograms; pattern/tower_dimension -> linkedPatterns; dataset_domain -> linkedDatasetDomains. Stale signal: case-insensitive substring 'stale' in qualityNotes. Contradiction signal: substring 'contradicts <claimId>' in entry.claim.text or qualityNotes.",
+        "evaluateClaimsForWorkObject returns one result per claim in input order with byte-equal serialized output across repeated calls; summarizeClaimSupport reconciles totals, byStatus, unsupportedCount (unsupported + missing_evidence + stale_evidence), contradictedCount, and averageConfidenceLabel; getUnsupportedClaims returns only unsupported, missing_evidence, stale_evidence, and contradicted results.",
+        "Module has no imports from @/lib/sentinel|atlas|nexus|agent|source|auth or supabase, no Date.now / Math.random / new Date( / fetch(, no anthropic / openai, no useState / useEffect, no Coming soon / TBD / Lorem ipsum, and no production-shaped /E-\\d{2,}/ tokens in source or serialized results.",
+        "Test suite at src/__tests__/integration/architecture/evidence-claim-support.test.ts is fully green and covers all seven status branches, deterministic bulk evaluation, summary reconciliation including empty-input case, getUnsupportedClaims partition, no-fabrication serialized output, and module hygiene.",
+        "Production readiness manifest is updated to acknowledge the EVID3 claim-support evaluator under data_evidence_knowledge_fabric and audit_governance without promoting any component; all other manifest fields are preserved exactly."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/evidence-claim-support.test.ts",
+        "npx jest src/__tests__/integration/architecture/evidence-ledger-mvp.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Deterministic, file-pure evaluator over EVID2 entries that scores claim support with seven canonical statuses. Imports only from @/lib/architecture/evidence-ledger-mvp. No model calls, no NLP, no live retrieval, no fabricated citations. Lane D output of the parallel build pack."
+    },
+    {
       "id": "AG10",
       "name": "Agent Mission Queue Read Model",
       "category": "AG",
@@ -2579,6 +2684,61 @@
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
       "notes": "Deterministic, server-only UI primitive for the AbarVa Agent Activity UI Pattern (experience-system File 16). Companion to AG10 (live mission queue). AG11 defines a minimum-compatible mission prop type locally so it can render without AG10; live runtime trigger integration is deferred. Lane B output of the parallel build pack."
+    },
+    {
+      "id": "AG12",
+      "name": "Agent Mission Surface Wiring",
+      "category": "AG",
+      "status": "code_complete",
+      "risk": "medium",
+      "ownerAgent": "Builder",
+      "dependsOn": [
+        "AG10",
+        "AG11"
+      ],
+      "allowedFiles": [
+        "src/components/programs/ProgramCanonicalDetail.tsx",
+        "src/components/tower/ProgramPressureCards.tsx",
+        "src/components/intelligence/SentinelActivePatterns.tsx",
+        "src/components/admin/StewardSetupControlCenter.tsx",
+        "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
+        "docs/build/slices/AG12_AGENT_MISSION_SURFACE_WIRING.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**",
+        "package.json",
+        "package-lock.json"
+      ],
+      "acceptanceCriteria": [
+        "src/components/programs/ProgramCanonicalDetail.tsx imports AgentMissionPanel from @/components/agents/AgentMissionPanel and references buildAgentMissionsForSurface from @/lib/agents/agent-mission-queue, builds an inline view filtered to surface 'programs' and agents in {nexus, sentinel, steward}, caps at 3 via getTopAgentMissions(_, 3) and slice(0, 3), and mounts <AgentMissionPanel> with variant 'right_panel' and surfaceLabel 'Program detail' adjacent to the existing PW1/PDEL5 mounts (positioned before them).",
+        "src/components/tower/ProgramPressureCards.tsx imports AgentMissionPanel and buildAgentMissionsForSurface, builds an inline view filtered to surface 'tower' and agents in {atlas, steward}, caps at 3, and mounts <AgentMissionPanel> with variant 'executive_brief' and surfaceLabel 'AI Control Tower' before the Atlas executive brief panel.",
+        "src/components/intelligence/SentinelActivePatterns.tsx imports AgentMissionPanel and buildAgentMissionsForSurface, builds an inline view filtered to surface 'intelligence' and agents in {sentinel, nexus}, caps at 3, and mounts <AgentMissionPanel> with variant 'inline_recommendation' and surfaceLabel 'Sentinel Brief' before the Sentinel brief panel.",
+        "src/components/admin/StewardSetupControlCenter.tsx imports AgentMissionPanel and buildAgentMissionsForSurface, builds an inline view filtered to surface 'admin' and agent === 'steward', caps at 3, and mounts <AgentMissionPanel> with variant 'compact_strip' and surfaceLabel 'Admin Setup' before the Steward brief panel.",
+        "Each surface defines a small inline mapper that converts AG10 AgentMission to AG11 AgentMissionPanelMission field-by-field (id, agent, type, state, priority, workObject.label -> workObjectLabel, rationale, recommendedAction, handoff -> handoffTo, stopCondition); no new module under src/lib is added by AG12.",
+        "All four mounts are server-component-only: no 'use client' directive, no useState, no useEffect, no Date.now / Math.random / new Date( / fetch( introduced in executable code by AG12 changes, no anthropic / openai imports, and no Coming soon / TBD / Lorem ipsum placeholder language.",
+        "Module hygiene: no new imports from src/lib/source, src/lib/nexus, src/lib/sentinel, src/lib/atlas, src/lib/auth, or supabase are introduced by AG12; the AG10 import (@/lib/agents/agent-mission-queue) and AG11 import (@/components/agents/AgentMissionPanel) are the only new agent-system imports.",
+        "Test suite at src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts is fully green and enforces import coverage, buildAgentMissionsForSurface usage, cap-at-3 grep, variant + surface label correctness, exactly-one-mount per surface, AG10 surface filter sanity (top three missions per surface within allowed agents), and module hygiene across all four files (with comment + string-literal stripping for the dynamic-runtime checks).",
+        "AG10 (agent-mission-queue) and AG11 (agent-mission-panel) test suites remain fully green after AG12 wiring.",
+        "Production readiness manifest is updated to acknowledge AG12 surface wiring under agent_runtime and append surface-level notes on programs, ai_control_tower, intelligence, and admin_setup; status is not promoted on any component; manifest top-level lastUpdated is bumped."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
+        "npx jest src/__tests__/integration/agents/agent-mission-queue.test.ts",
+        "npx jest src/__tests__/integration/agents/agent-mission-panel.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Mounts the AG11 Agent Mission Panel into the four canonical surfaces (Programs, AI Control Tower, Intelligence, Admin Setup) and projects the AG10 deterministic mission queue into each mount. Cap of 3 missions per surface keeps the panel from flooding already-dense surfaces and follows experience-system File 16 calm/data-forward density guidance. Server-component-only; no model calls, no live runtime, no persistence, no auth changes. Lane B follow-up to the AG10 / AG11 parallel build pack."
     },
     {
       "id": "PROD2",
@@ -2777,6 +2937,221 @@
         "npm run build"
       ],
       "notes": "Founder-facing checklist for verifying AG10, AG11, MG2, TOOL2, and PROD2 outputs land honestly before push or PR. Fourth companion to QA1 (Agentic Spine), QA2 (Solution / Workshop), and QA3 (Solution Intelligence) verification runbooks. Deterministic \u2014 does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
+    },
+    {
+      "id": "OPS1",
+      "name": "Agent Dispatch Operating Model + Queue + Templates",
+      "category": "OPS",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/build/AGENT_DISPATCH_OPERATING_MODEL.md",
+        "docs/build/agent-dispatch-queue.json",
+        "docs/build/AGENT_BATCH_TEMPLATE.md",
+        "docs/build/AGENT_SLICE_REPORT_TEMPLATE.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "docs/build/AGENT_DISPATCH_OPERATING_MODEL.md \u00a7A documents purpose: keep agents busy, prevent runaway scope, make hand-offs auditable, avoid false readiness promotion, integrate cleanly to main.",
+        "Operating model \u00a7B states the hard rule: one slice = one worktree = one branch = one local commit; worktree path /Users/anand/Projects/nexus-pack-<slug>; branch pack/<slice-id>-<slug>; no cross-pollination.",
+        "Operating model \u00a7C documents no push / merge / PR from lane worktrees; lanes commit locally; integrator alone owns push and PR after morning review.",
+        "Operating model \u00a7D documents the morning review per-worktree checklist (branch, status, log -3, show --stat HEAD, tsc, build) and the keep / amend / discard / cherry-pick / push-PR decision matrix.",
+        "Operating model \u00a7E documents the integration branch flow: switch to main, pull, create codex/<batch-name>, cherry-pick lane commits in dependency order, resolve manifest conflicts via \u00a7G and \u00a7H, validate, push, open one PR.",
+        "Operating model \u00a7F documents cherry-pick order: read-models before UI, stubs before validators, validators after baseline, docs runbook last; ties broken by priority then alphabetical slice id.",
+        "Operating model \u00a7G documents build-slices.json conflict policy: take HEAD's existing entries, append the new entry from cherry source, JSON parse must pass, bump lastUpdated, no reordering, no silent mutation of other lanes' entries.",
+        "Operating model \u00a7H documents production-readiness.json conflict policy: conservative status (lower wins), no false promotions, union notes deduped by string, keep blockers unless explicitly removed with evidence (union by id), nextAction take incoming when HEAD untouched / append distinct content when both changed, preserve other-lane notes, bump lastUpdated, validator must pass after every cherry-pick.",
+        "Operating model \u00a7I documents stale Claude Code task handling: verify with ps aux | grep -E \"next build|tsc|jest\" | grep -v grep; if empty, dismiss the UI entries; do not assume work is in progress from the Task Panel alone.",
+        "Operating model \u00a7J documents no `git add .`: lanes stage by explicit path; pre-commit `git diff --cached --name-only` must show only the slice's allowedFiles.",
+        "Operating model \u00a7K documents no false readiness promotion: PROD2 validateProductionReadinessManifest must return passed: true after every cherry-pick; production_ready requires all gates pass and explicit founder approval.",
+        "Operating model \u00a7L documents failure handling: stop on validation failure; do not fix forward a broken slice; abort, report, ask.",
+        "Operating model \u00a7M documents branch instability mitigation: always run git branch --show-current before staging or committing.",
+        "Operating model \u00a7N documents future automation path: GitHub Actions for CI, Vercel deployment hooks, persona crawler, security scan, observability \u2014 currently deferred.",
+        "docs/build/agent-dispatch-queue.json parses as JSON; schemaVersion is 1; lastUpdated is 2026-04-25; items array has at least 20 entries.",
+        "Queue includes all 20 ids: AG12, CTX3, EVID3, MW4, ACT2, QA5, PDEL6, ACT3, ADM6, PAT1, PAT2, DATA1, DATA2, MG3, TOOL3, SOL10, SOL11, I5, I6, PROD3.",
+        "AG12 / CTX3 / EVID3 / MW4 / ACT2 / QA5 carry status 'in_progress'; the remaining items carry 'ready' or 'proposed' based on dependsOn satisfaction.",
+        "Every queue item carries laneType in {docs, read_model, ui, qa, runtime_stub, integration}, priority in {low, medium, high, critical}, status in {ready, blocked, proposed, in_progress, complete}, conflictRisk in {low, medium, high}, recommendedWorktree, recommendedBranch, allowedFiles, forbiddenFiles, validationCommands (tsc + targeted jest + npm build), productionReadinessImpact, and expectedFinalReportFields.",
+        "docs/build/AGENT_BATCH_TEMPLATE.md provides a fill-in template with sections for batch header (Goal/Theme/Base branch/Hard rules), preflight checklist with explicit git commands, safety branch creation, worktree creation table, integrator-side file inventory, per-lane spec, morning review template, cherry-pick worksheet, cleanup, and failure rollback; placeholders are annotated.",
+        "docs/build/AGENT_SLICE_REPORT_TEMPLATE.md provides a fill-in lane report with sections for slice header (id, branch, HEAD, parent, files staged count, test count, validation status), files staged listing, test count + suite breakdown, validation results, implementation notes, PRT update report (tracker updated, components changed, status changes, blockers added/removed, nextAction updated), hygiene confirmation, hard-rule audit, deferred items, and recommendation.",
+        "Documentation + JSON only; no application code, runtime, auth, supabase, or migrations are modified.",
+        "build-slices.json appends an OPS1 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn [], status code_complete, risk low, ownerAgent 'Builder + Reviewer'; manifest top-level lastUpdated is bumped to 2026-04-25.",
+        "production-readiness.json validation_qa and production_deployment components append notes acknowledging the OPS1 dispatch operating model, queue, and templates; status preserved (no promotion); manifest top-level lastUpdated is bumped to 2026-04-25."
+      ],
+      "validationCommands": [
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/agent-dispatch-queue.json','utf8'))\"",
+        "npx tsc --noEmit --pretty false",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "OPS1 codifies AbarVa's multi-lane batch operating model: one slice per worktree per branch per local commit, no push/merge/PR from lanes, conservative production-readiness status on cherry-pick, no false readiness promotions, deterministic conflict policies for build-slices.json and production-readiness.json, and a 20-item dispatch queue that keeps agent capacity busy. Companion to BUILD_OPERATING_MODEL.md and PRODUCTION_READINESS_UPDATE_PROTOCOL.md. CI/observability automation is intentionally deferred."
+    },
+    {
+      "id": "CTX3",
+      "name": "Mission Context Bridge",
+      "category": "CTX",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane C (parallel build pack)",
+      "dependsOn": [
+        "CTX2",
+        "AG10"
+      ],
+      "allowedFiles": [
+        "src/lib/architecture/mission-context-bridge.ts",
+        "src/__tests__/integration/architecture/mission-context-bridge.test.ts",
+        "docs/build/slices/CTX3_MISSION_CONTEXT_BRIDGE.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/architecture/mission-context-bridge.ts exports MissionContextReadiness, MissionContextGap, MissionContextBuildRequest, MissionContextBridgeResult, and MissionContextReadinessSummary types plus helpers buildContextForAgentMission, buildMissionContextBatch, buildMissionContextBatchForAllSeededMissions, summarizeMissionContextReadiness, and getMissionContextReadinessOrder.",
+        "buildContextForAgentMission(request) is pure and deterministic: same request input produces byte-equal output across calls; bridgeVersion is 'ctx3.v1' and createdFrom is 'deterministic_seed' on every result.",
+        "Work-object kind mapping is canonical: 'program' / 'phase' / 'workshop' / 'artifact' map to CTX2 'program'; 'pattern' maps to CTX2 'intelligence_pattern'; 'tower_dimension' / 'dataset_domain' / 'sourcing_event' / 'vendor_response' return contextResult: null with readiness 'work_object_unsupported' and at least one explanatory MissionContextGap whose reason names the unsupported kind.",
+        "For supported kinds the bridge calls buildUnifiedContextPack and produces a non-null contextResult; UnifiedContextQuality maps 1:1 to MissionContextReadiness ('usable' to 'usable', 'partial' to 'partial', 'weak' to 'weak', 'refused' to 'refused').",
+        "CTX2 missingInputs are promoted 1:1 into the bridge result's gaps array preserving kind, impact, and reason in order.",
+        "buildMissionContextBatch preserves caller mission order verbatim; buildMissionContextBatchForAllSeededMissions returns one result per seeded AG10 mission, in canonical seed order.",
+        "summarizeMissionContextReadiness reconciles total with byReadiness counts (sum equals total), totalGaps equals the sum of per-result gap counts, and unsupportedWorkObjectKinds is sorted ascending and deduplicated.",
+        "Serialized bridge results contain no /E-\\d+/ citation patterns; basis.source is always 'mission_context_bridge' on every result.",
+        "Module has no imports from @/lib/sentinel|atlas|nexus|source|auth or supabase, no Date.now / Math.random / new Date( / fetch(, no anthropic / openai, no useState / useEffect, and no Coming soon / TBD / Lorem ipsum placeholder language; only allowed cross-imports are @/lib/architecture/unified-context-builder and @/lib/agents/agent-mission-queue.",
+        "Test suite at src/__tests__/integration/architecture/mission-context-bridge.test.ts is fully green and enforces seed coverage, determinism, supported / unsupported work-object handling, gap promotion, summary reconciliation, fake-citation hygiene, basis invariants, and module hygiene.",
+        "docs/build/slices/CTX3_MISSION_CONTEXT_BRIDGE.md documents the slice, the work-object kind mapping table, unsupported-kind handling, readiness mapping, gap promotion, audit basis, hygiene invariants, validation commands, and future slices.",
+        "docs/build/build-slices.json appends the CTX3 entry with category CTX, dependsOn [CTX2, AG10], status code_complete, risk low, allowedFiles, forbiddenFiles, acceptanceCriteria, validationCommands, and notes; manifest lastUpdated bumped.",
+        "docs/build/production-readiness.json appends notes to data_evidence_knowledge_fabric and agent_runtime acknowledging the CTX3 mission context bridge; status is not promoted; manifest lastUpdated bumped.",
+        "No application UI, runtime, auth, supabase, agent runtime, migrations, or persistence are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/mission-context-bridge.test.ts",
+        "npx jest src/__tests__/integration/architecture/unified-context-builder.test.ts",
+        "npx jest src/__tests__/integration/agents/agent-mission-queue.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Pure deterministic projection that joins AG10 missions to CTX2 unified context packs. Maps the five supported AG10 work-object kinds (program, phase, workshop, artifact, pattern) into CTX2's three v1 WorkObjectType values, and honestly surfaces the four unsupported kinds (tower_dimension, dataset_domain, sourcing_event, vendor_response) as 'work_object_unsupported' with an explanatory gap. No model calls, no migrations, no persistence, no live retrieval. Lane C output of the parallel build pack."
+    },
+    {
+      "id": "ACT2",
+      "name": "AI Portfolio Inventory Read Model",
+      "category": "ACT",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "ACT1"
+      ],
+      "allowedFiles": [
+        "src/lib/tower/ai-portfolio-inventory.ts",
+        "src/__tests__/integration/tower/ai-portfolio-inventory.test.ts",
+        "docs/build/slices/ACT2_AI_PORTFOLIO_INVENTORY_READ_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**",
+        "src/app/demo/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Module src/lib/tower/ai-portfolio-inventory.ts exports the canonical AI_USE_CASE_STAGES tuple ('idea', 'discovery', 'pilot', 'production', 'scaled', 'retired', 'blocked') plus the AiUseCaseStage / AiUseCaseRiskLevel / AiUseCaseValueReadiness / AiUseCaseAdoptionStatus / AiUseCaseDataReadiness / AiUseCaseGovernanceStatus enum types, AiUseCaseOwner, AiUseCaseInventoryItem, AiPortfolioInventorySummary, and the helpers buildAiPortfolioInventory, summarizeAiPortfolioInventory, getAiUseCasesByStage, getBlockedAiUseCases, getValueReadinessGaps.",
+        "buildAiPortfolioInventory returns at least 18 deterministic seed records, with at least 2 records per canonical stage and at least 6 unique business functions.",
+        "At least 2 production records carry valueReadiness 'measured_in_production'; at least 2 records carry governanceStatus 'flagged'.",
+        "Every blocked record carries a non-empty blockerReason; every record carries at least one technology stack entry; every record carries createdFrom 'deterministic_ai_portfolio_seed'; every record id matches the canonical 'ai-use-case-seed-{n}' shape and ids are unique.",
+        "summarizeAiPortfolioInventory reconciles totals (byStage and byRiskLevel sum to totalUseCases), exposes every canonical stage and risk-level key (zero allowed), reports blockedCount equal to byStage.blocked, reports measuredInProductionCount and ungovernedCount that agree with their defining filters, and returns uniqueBusinessFunctions and uniqueTechnologyStacks sorted ascending and de-duplicated.",
+        "getAiUseCasesByStage('blocked') matches getBlockedAiUseCases; getValueReadinessGaps returns only items whose valueReadiness is 'unmeasured' or 'declined' and excludes items whose readiness is measured / projected / in_pilot_measurement.",
+        "Seed contains no invented dollar amounts (regex \\$\\s*\\d on JSON.stringify), no branded vendor endorsements (deny-list OpenAI / Anthropic / Cohere / Mistral / Databricks / Snowflake / Microsoft Copilot / GitHub Copilot), and no banned placeholder language (Coming soon / TBD / Lorem ipsum); module source has no imports from src/lib/source / sentinel / atlas / nexus / agent / auth or supabase, and no Date.now / Math.random / new Date( / fetch( / anthropic / openai / useState / useEffect.",
+        "Test suite at src/__tests__/integration/tower/ai-portfolio-inventory.test.ts is green and enforces shape, determinism, stage coverage, per-row invariants, distribution constraints, summary reconciliation, helper behaviors, no-fabrication invariants, and module hygiene.",
+        "Production readiness manifest is updated with a note acknowledging the ACT2 AI portfolio inventory dimension under ai_control_tower; ai_control_tower status is preserved (no promotion); manifest top-level lastUpdated reflects this change."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/tower/ai-portfolio-inventory.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Operationalizes dimension #1 (AI Portfolio Inventory) of the ACT1 AI Control Tower contract. Deterministic seed-only read model. No live integrations, no per-tenant inventory binding, no Atlas brief composition, no Tower UI \u2014 those land in ACT2.x, ACT9, and ACT10. Conservative manifest update: ai_control_tower component is not promoted."
+    },
+    {
+      "id": "QA5",
+      "name": "Route Smoke Inventory (Static, Deterministic)",
+      "category": "QA",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane G (parallel build pack)",
+      "dependsOn": [
+        "PROD2"
+      ],
+      "allowedFiles": [
+        "src/lib/qa/route-smoke-inventory.ts",
+        "src/__tests__/integration/qa/route-smoke-inventory.test.ts",
+        "docs/build/slices/QA5_ROUTE_SMOKE_HARNESS.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**",
+        "package.json",
+        "package-lock.json"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/qa/route-smoke-inventory.ts exports the canonical priority tuple ROUTE_SMOKE_PRIORITY ('critical', 'high', 'medium', 'low'); the public types RouteSmokePriority, RouteSmokeOwnerSurface, RouteSmokePrimaryAgent, RouteSmokeImplementationStatus, RouteSmokeTestStrategy, RouteSmokeExpectedGuard, RouteSmokeTarget, and RouteSmokeSummary; and the helpers listRouteSmokeTargets, summarizeRouteSmokeTargets, getHighPrioritySmokeTargets, and getRouteSmokeByOwnerSurface.",
+        "listRouteSmokeTargets() returns exactly eleven RouteSmokeTarget records in canonical order: /home, /platform/admin, /platform/admin/build-progress, /platform/admin/production-readiness, /tenant/[tenantSlug]/programs, /tenant/[tenantSlug]/programs/[programSlug], /tenant/[tenantSlug]/tower, /tenant/[tenantSlug]/intelligence, /tenant/[tenantSlug]/intelligence/patterns/[patternKey], /source, /source/events.",
+        "Every target has non-empty routePattern, ownerSurface, primaryAgent, expectedGuard, expectedReadModel, smokePriority, currentlyImplemented, testStrategy, and createdFrom = 'deterministic_route_smoke_inventory'.",
+        "The four critical-priority routes (/home, /platform/admin, /platform/admin/production-readiness, /tenant/[tenantSlug]/programs) are present in the inventory and tagged smokePriority = 'critical'.",
+        "getHighPrioritySmokeTargets() returns only targets with smokePriority in {'critical', 'high'}; getRouteSmokeByOwnerSurface(targets, 'source') returns exactly two targets ('/source' and '/source/events'); summarizeRouteSmokeTargets() reconciles totals across priority, owner surface, primary agent, and implementation status.",
+        "Inventory module imports nothing from @/lib/source, @/lib/nexus, @/lib/sentinel, @/lib/atlas, @/lib/agent, @/lib/auth, or supabase; has no Date.now / Math.random / new Date( / fetch( call form, no anthropic / openai imports, no useState / useEffect, no Coming soon / TBD / Lorem ipsum placeholder language, and no playwright / puppeteer / cypress imports.",
+        "src/__tests__/integration/qa/route-smoke-inventory.test.ts is fully green and asserts canonical order, critical-route coverage, the production-readiness route presence, helper behavior, summary reconciliation, byte-equal determinism across calls, and module-hygiene checks (no browser-automation imports, no banned APIs, no banned imports, no banned placeholders).",
+        "docs/build/slices/QA5_ROUTE_SMOKE_HARNESS.md documents the eleven canonical targets, the five-strategy test taxonomy, and what is explicitly out of scope (browser automation, real HTTP execution, persona crawler).",
+        "docs/build/production-readiness.json appends a note to validation_qa.notes acknowledging the QA5 inventory and updates validation_qa.testingGates.route_smoke.evidence to acknowledge that the inventory exists; the route_smoke gate's status is preserved (NOT promoted) because execution is not wired; no component is promoted; lastUpdated is bumped.",
+        "npx tsc --noEmit --pretty false passes, npx jest src/__tests__/integration/qa/route-smoke-inventory.test.ts passes, npm run build passes, and docs/build/build-slices.json plus docs/build/production-readiness.json parse as JSON."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/qa/route-smoke-inventory.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Deterministic, file-pure route smoke inventory and matching integration test. Lane G output of the parallel build pack. No HTTP, no browser, no server boot, no model calls, no migrations, no persistence, no UI. Inventory only catalogs canonical routes and the strategy taxonomy; execution remains deferred and validation_qa.testingGates.route_smoke status is preserved."
     }
   ]
 }

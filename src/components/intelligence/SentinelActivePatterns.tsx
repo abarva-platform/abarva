@@ -18,6 +18,56 @@ import {
   type SentinelPatternCard,
 } from '@/lib/intelligence/sentinel-pattern-view';
 import type { TenantSeedPlan } from '@/lib/programs/enhancement-seed-planner';
+import { AgentMissionPanel } from '@/components/agents/AgentMissionPanel';
+import {
+  buildAgentMissionsForSurface,
+  getTopAgentMissions,
+  type AgentMission,
+} from '@/lib/agents/agent-mission-queue';
+import type {
+  AgentMissionPanelMission,
+  AgentMissionPanelView,
+} from '@/lib/agents/agent-mission-view';
+
+// AG12 · Intelligence surface mission projection.
+//
+// Pulls the AG10 deterministic queue filtered to the Intelligence
+// surface, keeps only Sentinel / Nexus missions per AG12 spec, sorts
+// by priority via getTopAgentMissions, caps at 3, and maps the AG10
+// AgentMission shape onto the AG11 panel mission shape.
+const INTELLIGENCE_SURFACE_AGENTS = new Set(['sentinel', 'nexus']);
+
+function mapIntelligenceMissionToPanel(
+  mission: AgentMission,
+): AgentMissionPanelMission {
+  return {
+    id: mission.id,
+    agent: mission.agent,
+    type: mission.type,
+    state: mission.state,
+    priority: mission.priority,
+    workObjectLabel: mission.workObject.label,
+    rationale: mission.rationale,
+    recommendedAction: mission.recommendedAction,
+    handoffTo: mission.handoff ? mission.handoff.toAgent : null,
+    stopCondition: mission.stopCondition,
+  };
+}
+
+function buildIntelligenceAgentMissionView(): AgentMissionPanelView {
+  const surfaceMissions = buildAgentMissionsForSurface('intelligence');
+  const filtered = surfaceMissions.filter((mission) =>
+    INTELLIGENCE_SURFACE_AGENTS.has(mission.agent),
+  );
+  const top = getTopAgentMissions(filtered, 3).slice(0, 3);
+  return {
+    variant: 'inline_recommendation',
+    missions: top.map(mapIntelligenceMissionToPanel),
+    surfaceLabel: 'Sentinel Brief',
+    honestDisclaimer:
+      'Mission queue is deterministic seed; runtime triggers deferred.',
+  };
+}
 
 interface SentinelActivePatternsProps {
   tenant: TenantSeedPlan;
@@ -88,6 +138,9 @@ export function SentinelActivePatterns({ tenant, view }: SentinelActivePatternsP
           Active pattern detections
         </h2>
       </header>
+
+      {/* AG12 · Agent mission panel · projected from AG10 deterministic queue (top 3) */}
+      <AgentMissionPanel view={buildIntelligenceAgentMissionView()} />
 
       <SentinelBriefPanel brief={brief} />
 

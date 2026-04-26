@@ -26,6 +26,16 @@ import { NexusProgramRail } from '@/components/deliverables/NexusProgramRail';
 import { ProgramArtifactCanvas } from '@/components/programs/ProgramArtifactCanvas';
 import { buildProgramArtifactCanvasView } from '@/lib/programs/program-artifact-canvas-view';
 import { ProgramWorkshopMode } from '@/components/programs/ProgramWorkshopMode';
+import { AgentMissionPanel } from '@/components/agents/AgentMissionPanel';
+import {
+  buildAgentMissionsForSurface,
+  getTopAgentMissions,
+  type AgentMission,
+} from '@/lib/agents/agent-mission-queue';
+import type {
+  AgentMissionPanelMission,
+  AgentMissionPanelView,
+} from '@/lib/agents/agent-mission-view';
 import {
   phaseMeta,
   tenantProgramPath,
@@ -57,6 +67,44 @@ import type {
 interface ProgramCanonicalDetailProps {
   tenant: TenantSeedPlan;
   program: ProgramSeedPlan;
+}
+
+// AG12 · Programs surface mission projection.
+//
+// Pulls the AG10 deterministic queue filtered to the Programs surface,
+// keeps only Nexus / Sentinel / Steward missions per AG12 spec, sorts
+// by priority via getTopAgentMissions, caps the visible list at 3, and
+// maps the AG10 AgentMission shape onto the AG11 panel mission shape.
+const PROGRAMS_SURFACE_AGENTS = new Set(['nexus', 'sentinel', 'steward']);
+
+function mapMissionToPanelMission(mission: AgentMission): AgentMissionPanelMission {
+  return {
+    id: mission.id,
+    agent: mission.agent,
+    type: mission.type,
+    state: mission.state,
+    priority: mission.priority,
+    workObjectLabel: mission.workObject.label,
+    rationale: mission.rationale,
+    recommendedAction: mission.recommendedAction,
+    handoffTo: mission.handoff ? mission.handoff.toAgent : null,
+    stopCondition: mission.stopCondition,
+  };
+}
+
+function buildProgramsAgentMissionView(): AgentMissionPanelView {
+  const surfaceMissions = buildAgentMissionsForSurface('programs');
+  const filtered = surfaceMissions.filter((mission) =>
+    PROGRAMS_SURFACE_AGENTS.has(mission.agent),
+  );
+  const top = getTopAgentMissions(filtered, 3).slice(0, 3);
+  return {
+    variant: 'right_panel',
+    missions: top.map(mapMissionToPanelMission),
+    surfaceLabel: 'Program detail',
+    honestDisclaimer:
+      'Mission queue is deterministic seed; runtime triggers deferred.',
+  };
 }
 
 const COLORS = {
@@ -219,6 +267,9 @@ export function ProgramCanonicalDetail({ tenant, program }: ProgramCanonicalDeta
 
             {/* Evidence + value readiness summary (S9d) */}
             <EvidenceValueReadinessSummary tenant={tenant} program={program} />
+
+            {/* AG12 · Agent mission panel · projected from AG10 deterministic queue (top 3) */}
+            <AgentMissionPanel view={buildProgramsAgentMissionView()} />
 
             {/* PW1 · Program Workshop Mode shell */}
             <ProgramWorkshopMode view={buildProgramWorkshopModeView(program.programSlug)} />

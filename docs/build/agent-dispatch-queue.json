@@ -1,0 +1,863 @@
+{
+  "schemaVersion": 1,
+  "lastUpdated": "2026-04-25",
+  "source": "Deterministic dispatch queue for AbarVa multi-lane build batches. Owned jointly by Builder and Reviewer. Items listed here are recommended slices; the founder remains the sole authority on what actually ships.",
+  "lifecycle": [
+    "proposed",
+    "ready",
+    "blocked",
+    "in_progress",
+    "complete"
+  ],
+  "items": [
+    {
+      "id": "AG12",
+      "title": "Agent Mission Surface Wiring",
+      "laneType": "ui",
+      "priority": "high",
+      "status": "in_progress",
+      "dependsOn": ["AG10", "AG11"],
+      "conflictRisk": "medium",
+      "recommendedWorktree": "/Users/anand/Projects/nexus-pack-ag12",
+      "recommendedBranch": "pack/ag12-mission-surface-wiring",
+      "allowedFiles": [
+        "src/components/programs/ProgramCanonicalDetail.tsx",
+        "src/components/programs/ProgramSurface.tsx",
+        "src/components/admin/AdminMissionStrip.tsx",
+        "src/lib/agents/agent-mission-surface-binding.ts",
+        "src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
+        "docs/build/slices/AG12_AGENT_MISSION_SURFACE_WIRING.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/agents/agent-mission-surface-wiring.test.ts",
+        "npm run build"
+      ],
+      "productionReadinessImpact": "agent_runtime notes appended; no status promotion",
+      "expectedFinalReportFields": [
+        "tracker updated",
+        "components changed",
+        "status changes",
+        "blockers added/removed",
+        "nextAction updated",
+        "files staged count",
+        "test count"
+      ]
+    },
+    {
+      "id": "CTX3",
+      "title": "Unified Context Builder Live Retrieval Wiring",
+      "laneType": "read_model",
+      "priority": "high",
+      "status": "in_progress",
+      "dependsOn": ["CTX2", "EVID2", "ADM3"],
+      "conflictRisk": "medium",
+      "recommendedWorktree": "/Users/anand/Projects/nexus-pack-ctx3",
+      "recommendedBranch": "pack/ctx3-unified-context-live-retrieval",
+      "allowedFiles": [
+        "src/lib/architecture/unified-context-builder.ts",
+        "src/lib/architecture/unified-context-evidence-binding.ts",
+        "src/lib/architecture/unified-context-conversation-binding.ts",
+        "src/lib/architecture/unified-context-dataset-binding.ts",
+        "src/__tests__/integration/architecture/unified-context-live-retrieval.test.ts",
+        "docs/build/slices/CTX3_UNIFIED_CONTEXT_LIVE_RETRIEVAL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/unified-context-live-retrieval.test.ts",
+        "npm run build"
+      ],
+      "productionReadinessImpact": "data_evidence_knowledge_fabric notes appended; agent_runtime nextAction trimmed",
+      "expectedFinalReportFields": [
+        "tracker updated",
+        "components changed",
+        "status changes",
+        "blockers added/removed",
+        "nextAction updated",
+        "files staged count",
+        "test count"
+      ]
+    },
+    {
+      "id": "EVID3",
+      "title": "Evidence Ledger Tenant-Bound Persistence Stub",
+      "laneType": "read_model",
+      "priority": "high",
+      "status": "in_progress",
+      "dependsOn": ["EVID2"],
+      "conflictRisk": "low",
+      "recommendedWorktree": "/Users/anand/Projects/nexus-pack-evid3",
+      "recommendedBranch": "pack/evid3-evidence-ledger-tenant-stub",
+      "allowedFiles": [
+        "src/lib/architecture/evidence-ledger-tenant-stub.ts",
+        "src/__tests__/integration/architecture/evidence-ledger-tenant-stub.test.ts",
+        "docs/build/slices/EVID3_EVIDENCE_LEDGER_TENANT_STUB.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/evidence-ledger-tenant-stub.test.ts",
+        "npm run build"
+      ],
+      "productionReadinessImpact": "audit_governance notes appended; no status promotion",
+      "expectedFinalReportFields": [
+        "tracker updated",
+        "components changed",
+        "status changes",
+        "blockers added/removed",
+        "nextAction updated",
+        "files staged count",
+        "test count"
+      ]
+    },
+    {
+      "id": "MW4",
+      "title": "Mission Workflow Cross-Agent Handoff Contract",
+      "laneType": "read_model",
+      "priority": "high",
+      "status": "in_progress",
+      "dependsOn": ["AG10", "AG11"],
+      "conflictRisk": "low",
+      "recommendedWorktree": "/Users/anand/Projects/nexus-pack-mw4",
+      "recommendedBranch": "pack/mw4-mission-workflow-handoff",
+      "allowedFiles": [
+        "src/lib/agents/mission-workflow-handoff.ts",
+        "src/__tests__/integration/agents/mission-workflow-handoff.test.ts",
+        "docs/build/slices/MW4_MISSION_WORKFLOW_HANDOFF.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/agents/mission-workflow-handoff.test.ts",
+        "npm run build"
+      ],
+      "productionReadinessImpact": "agent_runtime notes appended; no status promotion",
+      "expectedFinalReportFields": [
+        "tracker updated",
+        "components changed",
+        "status changes",
+        "blockers added/removed",
+        "nextAction updated",
+        "files staged count",
+        "test count"
+      ]
+    },
+    {
+      "id": "ACT2",
+      "title": "Agent Activity Inline Recommendation Variant",
+      "laneType": "ui",
+      "priority": "medium",
+      "status": "in_progress",
+      "dependsOn": ["AG11"],
+      "conflictRisk": "low",
+      "recommendedWorktree": "/Users/anand/Projects/nexus-pack-act2",
+      "recommendedBranch": "pack/act2-agent-activity-inline-recommendation",
+      "allowedFiles": [
+        "src/components/agents/AgentInlineRecommendation.tsx",
+        "src/lib/agents/agent-inline-recommendation-view.ts",
+        "src/__tests__/integration/agents/agent-inline-recommendation.test.ts",
+        "docs/build/slices/ACT2_AGENT_ACTIVITY_INLINE_RECOMMENDATION.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/agents/agent-inline-recommendation.test.ts",
+        "npm run build"
+      ],
+      "productionReadinessImpact": "agent_runtime notes appended (UI/UX dimension acknowledgement only)",
+      "expectedFinalReportFields": [
+        "tracker updated",
+        "components changed",
+        "status changes",
+        "blockers added/removed",
+        "nextAction updated",
+        "files staged count",
+        "test count"
+      ]
+    },
+    {
+      "id": "QA5",
+      "title": "Operating Model Verification Runbook",
+      "laneType": "qa",
+      "priority": "medium",
+      "status": "in_progress",
+      "dependsOn": ["OPS1"],
+      "conflictRisk": "low",
+      "recommendedWorktree": "/Users/anand/Projects/nexus-pack-qa5",
+      "recommendedBranch": "pack/qa5-operating-model-verification",
+      "allowedFiles": [
+        "docs/build/OPERATING_MODEL_VERIFICATION_RUNBOOK.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "productionReadinessImpact": "validation_qa notes appended; no status promotion",
+      "expectedFinalReportFields": [
+        "tracker updated",
+        "components changed",
+        "status changes",
+        "blockers added/removed",
+        "nextAction updated",
+        "files staged count",
+        "test count"
+      ]
+    },
+    {
+      "id": "PDEL6",
+      "title": "Program Deliverables Library Filter View",
+      "laneType": "ui",
+      "priority": "medium",
+      "status": "ready",
+      "dependsOn": [],
+      "conflictRisk": "low",
+      "recommendedWorktree": "/Users/anand/Projects/nexus-pack-pdel6",
+      "recommendedBranch": "pack/pdel6-deliverables-library-filter",
+      "allowedFiles": [
+        "src/components/programs/ProgramDeliverablesLibrary.tsx",
+        "src/lib/programs/deliverables-library-view.ts",
+        "src/__tests__/integration/programs/deliverables-library-filter.test.ts",
+        "docs/build/slices/PDEL6_DELIVERABLES_LIBRARY_FILTER.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/deliverables-library-filter.test.ts",
+        "npm run build"
+      ],
+      "productionReadinessImpact": "deliverables_artifacts notes appended; no status promotion",
+      "expectedFinalReportFields": [
+        "tracker updated",
+        "components changed",
+        "status changes",
+        "blockers added/removed",
+        "nextAction updated",
+        "files staged count",
+        "test count"
+      ]
+    },
+    {
+      "id": "ACT3",
+      "title": "Agent Activity Hidden Drawer Variant",
+      "laneType": "ui",
+      "priority": "medium",
+      "status": "proposed",
+      "dependsOn": ["AG11", "ACT2"],
+      "conflictRisk": "low",
+      "recommendedWorktree": "/Users/anand/Projects/nexus-pack-act3",
+      "recommendedBranch": "pack/act3-agent-activity-hidden-drawer",
+      "allowedFiles": [
+        "src/components/agents/AgentHiddenDrawer.tsx",
+        "src/lib/agents/agent-hidden-drawer-view.ts",
+        "src/__tests__/integration/agents/agent-hidden-drawer.test.ts",
+        "docs/build/slices/ACT3_AGENT_ACTIVITY_HIDDEN_DRAWER.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/agents/agent-hidden-drawer.test.ts",
+        "npm run build"
+      ],
+      "productionReadinessImpact": "agent_runtime notes appended (UI/UX dimension acknowledgement only)",
+      "expectedFinalReportFields": [
+        "tracker updated",
+        "components changed",
+        "status changes",
+        "blockers added/removed",
+        "nextAction updated",
+        "files staged count",
+        "test count"
+      ]
+    },
+    {
+      "id": "ADM6",
+      "title": "Admin Setup Connector Health Read Model",
+      "laneType": "read_model",
+      "priority": "medium",
+      "status": "ready",
+      "dependsOn": [],
+      "conflictRisk": "low",
+      "recommendedWorktree": "/Users/anand/Projects/nexus-pack-adm6",
+      "recommendedBranch": "pack/adm6-admin-connector-health",
+      "allowedFiles": [
+        "src/lib/admin/connector-health-read-model.ts",
+        "src/__tests__/integration/admin/connector-health-read-model.test.ts",
+        "docs/build/slices/ADM6_ADMIN_CONNECTOR_HEALTH.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/admin/connector-health-read-model.test.ts",
+        "npm run build"
+      ],
+      "productionReadinessImpact": "admin_setup notes appended; no status promotion",
+      "expectedFinalReportFields": [
+        "tracker updated",
+        "components changed",
+        "status changes",
+        "blockers added/removed",
+        "nextAction updated",
+        "files staged count",
+        "test count"
+      ]
+    },
+    {
+      "id": "PAT1",
+      "title": "Pattern Registry Lifecycle Contract",
+      "laneType": "read_model",
+      "priority": "medium",
+      "status": "ready",
+      "dependsOn": [],
+      "conflictRisk": "low",
+      "recommendedWorktree": "/Users/anand/Projects/nexus-pack-pat1",
+      "recommendedBranch": "pack/pat1-pattern-registry-lifecycle",
+      "allowedFiles": [
+        "src/lib/sentinel/pattern-registry-lifecycle.ts",
+        "src/__tests__/integration/sentinel/pattern-registry-lifecycle.test.ts",
+        "docs/build/slices/PAT1_PATTERN_REGISTRY_LIFECYCLE.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/sentinel/pattern-registry-lifecycle.test.ts",
+        "npm run build"
+      ],
+      "productionReadinessImpact": "intelligence notes appended; no status promotion",
+      "expectedFinalReportFields": [
+        "tracker updated",
+        "components changed",
+        "status changes",
+        "blockers added/removed",
+        "nextAction updated",
+        "files staged count",
+        "test count"
+      ]
+    },
+    {
+      "id": "PAT2",
+      "title": "Pattern Promotion Linter",
+      "laneType": "qa",
+      "priority": "medium",
+      "status": "proposed",
+      "dependsOn": ["PAT1"],
+      "conflictRisk": "low",
+      "recommendedWorktree": "/Users/anand/Projects/nexus-pack-pat2",
+      "recommendedBranch": "pack/pat2-pattern-promotion-linter",
+      "allowedFiles": [
+        "src/lib/sentinel/pattern-promotion-linter.ts",
+        "src/__tests__/integration/sentinel/pattern-promotion-linter.test.ts",
+        "docs/build/slices/PAT2_PATTERN_PROMOTION_LINTER.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/sentinel/pattern-promotion-linter.test.ts",
+        "npm run build"
+      ],
+      "productionReadinessImpact": "intelligence notes appended; no status promotion",
+      "expectedFinalReportFields": [
+        "tracker updated",
+        "components changed",
+        "status changes",
+        "blockers added/removed",
+        "nextAction updated",
+        "files staged count",
+        "test count"
+      ]
+    },
+    {
+      "id": "DATA1",
+      "title": "Data Lineage Read Model",
+      "laneType": "read_model",
+      "priority": "medium",
+      "status": "ready",
+      "dependsOn": [],
+      "conflictRisk": "low",
+      "recommendedWorktree": "/Users/anand/Projects/nexus-pack-data1",
+      "recommendedBranch": "pack/data1-data-lineage-read-model",
+      "allowedFiles": [
+        "src/lib/admin/data-lineage-read-model.ts",
+        "src/__tests__/integration/admin/data-lineage-read-model.test.ts",
+        "docs/build/slices/DATA1_DATA_LINEAGE_READ_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/admin/data-lineage-read-model.test.ts",
+        "npm run build"
+      ],
+      "productionReadinessImpact": "data_evidence_knowledge_fabric notes appended; no status promotion",
+      "expectedFinalReportFields": [
+        "tracker updated",
+        "components changed",
+        "status changes",
+        "blockers added/removed",
+        "nextAction updated",
+        "files staged count",
+        "test count"
+      ]
+    },
+    {
+      "id": "DATA2",
+      "title": "Data Lineage Inspector UI",
+      "laneType": "ui",
+      "priority": "medium",
+      "status": "proposed",
+      "dependsOn": ["DATA1"],
+      "conflictRisk": "low",
+      "recommendedWorktree": "/Users/anand/Projects/nexus-pack-data2",
+      "recommendedBranch": "pack/data2-data-lineage-inspector-ui",
+      "allowedFiles": [
+        "src/components/admin/DataLineageInspector.tsx",
+        "src/lib/admin/data-lineage-inspector-view.ts",
+        "src/__tests__/integration/admin/data-lineage-inspector-ui.test.ts",
+        "docs/build/slices/DATA2_DATA_LINEAGE_INSPECTOR_UI.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/admin/data-lineage-inspector-ui.test.ts",
+        "npm run build"
+      ],
+      "productionReadinessImpact": "data_evidence_knowledge_fabric notes appended (UI/UX dimension acknowledgement only)",
+      "expectedFinalReportFields": [
+        "tracker updated",
+        "components changed",
+        "status changes",
+        "blockers added/removed",
+        "nextAction updated",
+        "files staged count",
+        "test count"
+      ]
+    },
+    {
+      "id": "MG3",
+      "title": "Model Gateway Live Provider Stub",
+      "laneType": "runtime_stub",
+      "priority": "high",
+      "status": "ready",
+      "dependsOn": ["MG2"],
+      "conflictRisk": "medium",
+      "recommendedWorktree": "/Users/anand/Projects/nexus-pack-mg3",
+      "recommendedBranch": "pack/mg3-model-gateway-live-provider-stub",
+      "allowedFiles": [
+        "src/lib/architecture/model-gateway-live-provider-stub.ts",
+        "src/__tests__/integration/architecture/model-gateway-live-provider-stub.test.ts",
+        "docs/build/slices/MG3_MODEL_GATEWAY_LIVE_PROVIDER_STUB.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/model-gateway-live-provider-stub.test.ts",
+        "npm run build"
+      ],
+      "productionReadinessImpact": "model_gateway notes appended; no status promotion (still not_started until live provider lands)",
+      "expectedFinalReportFields": [
+        "tracker updated",
+        "components changed",
+        "status changes",
+        "blockers added/removed",
+        "nextAction updated",
+        "files staged count",
+        "test count"
+      ]
+    },
+    {
+      "id": "TOOL3",
+      "title": "Tool Dispatcher Stub",
+      "laneType": "runtime_stub",
+      "priority": "high",
+      "status": "ready",
+      "dependsOn": ["TOOL2", "MG2"],
+      "conflictRisk": "medium",
+      "recommendedWorktree": "/Users/anand/Projects/nexus-pack-tool3",
+      "recommendedBranch": "pack/tool3-tool-dispatcher-stub",
+      "allowedFiles": [
+        "src/lib/architecture/tool-dispatcher-stub.ts",
+        "src/__tests__/integration/architecture/tool-dispatcher-stub.test.ts",
+        "docs/build/slices/TOOL3_TOOL_DISPATCHER_STUB.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/tool-dispatcher-stub.test.ts",
+        "npm run build"
+      ],
+      "productionReadinessImpact": "agent_runtime notes appended; no status promotion (dispatcher remains stub)",
+      "expectedFinalReportFields": [
+        "tracker updated",
+        "components changed",
+        "status changes",
+        "blockers added/removed",
+        "nextAction updated",
+        "files staged count",
+        "test count"
+      ]
+    },
+    {
+      "id": "SOL10",
+      "title": "Solution Canvas UI Shell",
+      "laneType": "ui",
+      "priority": "medium",
+      "status": "ready",
+      "dependsOn": ["SOL8", "SOL9"],
+      "conflictRisk": "low",
+      "recommendedWorktree": "/Users/anand/Projects/nexus-pack-sol10",
+      "recommendedBranch": "pack/sol10-solution-canvas-ui-shell",
+      "allowedFiles": [
+        "src/components/solutions/SolutionCanvasShell.tsx",
+        "src/lib/solutions/solution-canvas-shell-view.ts",
+        "src/__tests__/integration/solutions/solution-canvas-shell.test.ts",
+        "docs/build/slices/SOL10_SOLUTION_CANVAS_UI_SHELL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/solutions/solution-canvas-shell.test.ts",
+        "npm run build"
+      ],
+      "productionReadinessImpact": "solution_intelligence notes appended (UI/UX dimension acknowledgement only)",
+      "expectedFinalReportFields": [
+        "tracker updated",
+        "components changed",
+        "status changes",
+        "blockers added/removed",
+        "nextAction updated",
+        "files staged count",
+        "test count"
+      ]
+    },
+    {
+      "id": "SOL11",
+      "title": "Solution Architecture Draft Read Model",
+      "laneType": "read_model",
+      "priority": "medium",
+      "status": "proposed",
+      "dependsOn": ["SOL9", "SOL10"],
+      "conflictRisk": "low",
+      "recommendedWorktree": "/Users/anand/Projects/nexus-pack-sol11",
+      "recommendedBranch": "pack/sol11-solution-architecture-draft",
+      "allowedFiles": [
+        "src/lib/solutions/solution-architecture-draft.ts",
+        "src/__tests__/integration/solutions/solution-architecture-draft.test.ts",
+        "docs/build/slices/SOL11_SOLUTION_ARCHITECTURE_DRAFT.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/solutions/solution-architecture-draft.test.ts",
+        "npm run build"
+      ],
+      "productionReadinessImpact": "solution_intelligence notes appended; no status promotion",
+      "expectedFinalReportFields": [
+        "tracker updated",
+        "components changed",
+        "status changes",
+        "blockers added/removed",
+        "nextAction updated",
+        "files staged count",
+        "test count"
+      ]
+    },
+    {
+      "id": "I5",
+      "title": "Intelligence Pattern Graph Read Model",
+      "laneType": "read_model",
+      "priority": "medium",
+      "status": "ready",
+      "dependsOn": ["PAT1"],
+      "conflictRisk": "low",
+      "recommendedWorktree": "/Users/anand/Projects/nexus-pack-i5",
+      "recommendedBranch": "pack/i5-intelligence-pattern-graph",
+      "allowedFiles": [
+        "src/lib/sentinel/pattern-graph-read-model.ts",
+        "src/__tests__/integration/sentinel/pattern-graph-read-model.test.ts",
+        "docs/build/slices/I5_INTELLIGENCE_PATTERN_GRAPH.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/sentinel/pattern-graph-read-model.test.ts",
+        "npm run build"
+      ],
+      "productionReadinessImpact": "intelligence notes appended; no status promotion",
+      "expectedFinalReportFields": [
+        "tracker updated",
+        "components changed",
+        "status changes",
+        "blockers added/removed",
+        "nextAction updated",
+        "files staged count",
+        "test count"
+      ]
+    },
+    {
+      "id": "I6",
+      "title": "Intelligence Pattern Graph UI Shell",
+      "laneType": "ui",
+      "priority": "medium",
+      "status": "proposed",
+      "dependsOn": ["I5"],
+      "conflictRisk": "low",
+      "recommendedWorktree": "/Users/anand/Projects/nexus-pack-i6",
+      "recommendedBranch": "pack/i6-intelligence-pattern-graph-ui",
+      "allowedFiles": [
+        "src/components/intelligence/PatternGraphShell.tsx",
+        "src/lib/sentinel/pattern-graph-shell-view.ts",
+        "src/__tests__/integration/sentinel/pattern-graph-shell-ui.test.ts",
+        "docs/build/slices/I6_INTELLIGENCE_PATTERN_GRAPH_UI.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/sentinel/pattern-graph-shell-ui.test.ts",
+        "npm run build"
+      ],
+      "productionReadinessImpact": "intelligence notes appended (UI/UX dimension acknowledgement only)",
+      "expectedFinalReportFields": [
+        "tracker updated",
+        "components changed",
+        "status changes",
+        "blockers added/removed",
+        "nextAction updated",
+        "files staged count",
+        "test count"
+      ]
+    },
+    {
+      "id": "PROD3",
+      "title": "Production Readiness Validator CI Gate",
+      "laneType": "integration",
+      "priority": "high",
+      "status": "ready",
+      "dependsOn": ["PROD2"],
+      "conflictRisk": "medium",
+      "recommendedWorktree": "/Users/anand/Projects/nexus-pack-prod3",
+      "recommendedBranch": "pack/prod3-production-readiness-ci-gate",
+      "allowedFiles": [
+        ".github/workflows/production-readiness-gate.yml",
+        "docs/build/slices/PROD3_PRODUCTION_READINESS_CI_GATE.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "productionReadinessImpact": "validation_qa and production_deployment notes appended; no status promotion (CI gate is initial wiring)",
+      "expectedFinalReportFields": [
+        "tracker updated",
+        "components changed",
+        "status changes",
+        "blockers added/removed",
+        "nextAction updated",
+        "files staged count",
+        "test count"
+      ]
+    }
+  ]
+}

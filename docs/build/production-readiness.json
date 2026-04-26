@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-04-26",
+  "lastUpdated": "2026-04-25",
   "updatedBy": "Code",
   "source": "Deterministic build/readiness manifest maintained in docs/build. No live monitoring, no Vercel polling, and no model/API calls are implemented by this tracker.",
   "overallStatus": "blocked",
@@ -356,7 +356,9 @@
       "nextAction": "Run and record the canonical Programs persona walk, then close the evidence/value seed gaps that block gate promotion.",
       "notes": [
         "Code complete is not production ready.",
-        "No legacy /programs route is extended by PROD1."
+        "No legacy /programs route is extended by PROD1.",
+        "AG12 mounts the AG11 Agent Mission Panel on ProgramCanonicalDetail with variant 'right_panel' and the {nexus, sentinel, steward} surface filter, capped at 3 deterministic missions; no live runtime, no model call, no persistence.",
+        "MW4 meeting notes capture read model added; deterministic templates + seed (eight canonical note types). No live capture, audio, upload, or model summarization."
       ]
     },
     {
@@ -421,7 +423,8 @@
       ],
       "nextAction": "Add a verified manual walk for workshop preparation and document the deferred live capture path before pilot consideration.",
       "notes": [
-        "No meeting bot, audio transcription, or live model synthesis is implemented."
+        "No meeting bot, audio transcription, or live model synthesis is implemented.",
+        "MW4 meeting notes capture read model added; deterministic templates + seed for eight canonical note types. No live capture is wired."
       ]
     },
     {
@@ -486,7 +489,8 @@
       ],
       "nextAction": "Choose the first production artifact workflow to promote from disabled seed state to audited runtime behavior.",
       "notes": [
-        "Readable canvas is present; production artifact operations are not."
+        "Readable canvas is present; production artifact operations are not.",
+        "MW4 meeting-notes derivations feed deliverable updates (draft_input_added / review_feedback / approval_blocked / rework_required) deterministically; no live capture."
       ]
     },
     {
@@ -551,7 +555,8 @@
       ],
       "nextAction": "Verify the deterministic Intelligence journey in browser, then define the evidence-registry binding required for pilot readiness.",
       "notes": [
-        "Active patterns are read-model backed, not live monitoring."
+        "Active patterns are read-model backed, not live monitoring.",
+        "AG12 mounts the AG11 Agent Mission Panel on SentinelActivePatterns with variant 'inline_recommendation' and the {sentinel, nexus} surface filter, capped at 3 deterministic missions; no live Sentinel runtime, no live retrieval, no model call."
       ]
     },
     {
@@ -616,7 +621,9 @@
       ],
       "nextAction": "Complete a manual Tower walk and decide which production signal source should become the first persisted feed.",
       "notes": [
-        "The Tower surface is deterministic today."
+        "The Tower surface is deterministic today.",
+        "AG12 mounts the AG11 Agent Mission Panel on ProgramPressureCards with variant 'executive_brief' and the {atlas, steward} surface filter, capped at 3 deterministic missions; no live Atlas runtime, no model call, no persistence.",
+        "ACT2 AI portfolio inventory dimension added as a deterministic seed-only read model (src/lib/tower/ai-portfolio-inventory.ts); no live integrations and no per-tenant binding yet."
       ]
     },
     {
@@ -681,7 +688,8 @@
       ],
       "nextAction": "Use the production-readiness tracker in morning review and update the manifest after each validation event.",
       "notes": [
-        "PROD1 adds a read-only admin page and manifest only."
+        "PROD1 adds a read-only admin page and manifest only.",
+        "AG12 mounts the AG11 Agent Mission Panel on StewardSetupControlCenter with variant 'compact_strip' and the steward-only surface filter, capped at 3 deterministic missions; no live Steward runtime, no model call, no persistence."
       ]
     },
     {
@@ -848,7 +856,9 @@
       "nextAction": "Implement and verify tenant-bound evidence ledger ingest before any production-ready claim. Wire CTX3 live retrieval integration: replace CTX2 honest-empty evidence, conversation, and datasets sections with live EVID2 ledger ingest, conversation memory, and ADM3 dataset inventory bindings without changing the twelve-section pack shape.",
       "notes": [
         "No fake Evidence Ledger status is emitted.",
-        "CTX2 unified context builder MVP added (src/lib/architecture/unified-context-builder.ts) \u2014 deterministic projection of programs/canonical-view, sentinel-pattern-detections, and solution-archetype-registry into a twelve-section Unified Context Pack; evidence/conversation/datasets sections honestly empty pending live wiring."
+        "CTX2 unified context builder MVP added (src/lib/architecture/unified-context-builder.ts) \u2014 deterministic projection of programs/canonical-view, sentinel-pattern-detections, and solution-archetype-registry into a twelve-section Unified Context Pack; evidence/conversation/datasets sections honestly empty pending live wiring.",
+        "CTX3 mission-context bridge added (src/lib/architecture/mission-context-bridge.ts) \u2014 deterministic projection from AG10 missions to CTX2 packs that maps program/phase/workshop/artifact/pattern work-object kinds to CTX2 scopes; tower_dimension, dataset_domain, sourcing_event, and vendor_response work-object kinds are honestly surfaced as 'work_object_unsupported' gaps until a future CTX slice widens the supported set.",
+        "EVID3 claim-support evaluator added (src/lib/architecture/evidence-claim-support.ts) \u2014 deterministic evaluator over EVID2 entries returning one of seven canonical support statuses; no NLP, no live retrieval, and no fabricated citations (works strictly with evid-seed- prefixed ids)."
       ]
     },
     {
@@ -984,6 +994,8 @@
         "AG10 deterministic agent mission queue read model added (src/lib/agents/agent-mission-queue.ts) \u2014 typed seed queue covering all four agents (Nexus, Sentinel, Atlas, Steward) and all five surfaces (Programs, Tower, Intelligence, Admin, Source) with handoff metadata; UI mounting (AG11) and runtime trigger wiring remain deferred.",
         "AG11 agent mission UI panel added (src/components/agents/AgentMissionPanel.tsx + src/lib/agents/agent-mission-view.ts) \u2014 deterministic, server-only rendering of the AbarVa Agent Activity UI Pattern (experience-system File 16) across compact_strip, right_panel, inline_recommendation, executive_brief, and hidden_drawer variants. Source data comes from a frozen seed view; no live mission queue, no runtime trigger, no client state. Status is not promoted by AG11; UI/UX dimension acknowledgement only.",
         "TOOL2 tool registry MVP added (src/lib/architecture/tool-registry-mvp.ts) \u2014 deterministic registry of 16 canonical agent tools with allowed agents, read/write/export/audit mode, tenant scope, audit requirement, production status, required inputs, and forbiddenWhen preconditions; no live tool execution, no model or provider calls, no audit ledger persistence.",
+        "AG12 agent mission surface wiring added \u2014 AG11 AgentMissionPanel mounted in Programs (right_panel, agents nexus/sentinel/steward), Tower (executive_brief, agents atlas/steward), Intelligence (inline_recommendation, agents sentinel/nexus), and Admin Setup (compact_strip, agent steward). Each surface caps at 3 missions via getTopAgentMissions and projects AG10's deterministic queue field-by-field through inline mappers; server-component-only, no live runtime, no model calls, no persistence.",
+        "CTX3 mission-context bridge added (src/lib/architecture/mission-context-bridge.ts) \u2014 enables deterministic context per mission by projecting AG10 missions into CTX2 unified context packs; readiness verdict and honest gap list per mission, with unsupported work-object kinds explicitly surfaced rather than silently dropped. No live retrieval, no model calls, no scheduling, no persistence; runtime trigger wiring remains deferred behind the Model Gateway and audit ledger.",
         "Source agent mission read model added as deterministic read-only agent behavior for Nexus, Sentinel, Atlas, and Steward.",
         "No live mission queue, scheduler, persistence, model gateway routing, or runtime audit trail was added by the Source mission read-model slice.",
         "Source agent mission report formatter added as deterministic read-only reporting over Source missions; no live queue, scheduler, persistence, API, or UI was added."
@@ -1184,7 +1196,8 @@
       "nextAction": "Promote audit ledger from contract/demo state to tenant-bound production persistence and review. Live evidence pipeline and persistence remain deferred (EVID2 is seed-only).",
       "notes": [
         "Demo-grade ledgers are not production audit readiness.",
-        "EVID2 Evidence Ledger MVP read model is now wired alongside the audit/governance contract surface (deterministic seed entries; no production audit ledger)."
+        "EVID2 Evidence Ledger MVP read model is now wired alongside the audit/governance contract surface (deterministic seed entries; no production audit ledger).",
+        "EVID3 claim-support evaluator surfaces unsupported and contradicted claims for audit visibility; outputs are deterministic and tagged 'evidence_claim_support_v1'. No production audit ledger is implied or produced."
       ]
     },
     {
@@ -1212,11 +1225,11 @@
         },
         "integration_tests": {
           "status": "passing",
-          "evidence": "Broad deterministic integration coverage exists; recent Source slices added passing focused coverage for src/__tests__/integration/source/source-agent-missions.test.ts and src/__tests__/integration/source/source-agent-mission-report.test.ts. Full CI route smoke, persona crawler, and security gates are still incomplete."
+          "evidence": "Broad deterministic integration coverage exists across Programs, Admin, Intelligence, Tower, and solution packs."
         },
         "route_smoke": {
           "status": "partial",
-          "evidence": "Playwright specs and canonical route crawler exist, but no single required CI gate is certified."
+          "evidence": "Playwright specs and canonical route crawler exist, but no single required CI gate is certified. QA5 adds a deterministic 11-route inventory at src/lib/qa/route-smoke-inventory.ts with strategy tagging; execution remains deferred so this gate stays not-promoted."
         },
         "live_persona_walk": {
           "status": "not_automated",
@@ -1247,11 +1260,15 @@
           "unblocks": "full_flow_ready"
         }
       ],
-      "nextAction": "Turn the runbooks into CI-backed route smoke, persona crawler, and security governance checks; CI integration of the PROD2 production readiness validator remains deferred.",
+      "nextAction": "Turn the runbooks into CI-backed route smoke, persona crawler, and security governance checks; CI integration of the PROD2 production readiness validator remains deferred. OPS1 dispatch operating model + 20-item agent dispatch queue + AGENT_BATCH_TEMPLATE + AGENT_SLICE_REPORT_TEMPLATE are now in place; CI/observability automation (GitHub Actions gates, Vercel post-deploy hooks, persona crawler, security scan, observability) remains deferred per OPS1 \u00a7N.",
       "notes": [
         "This component is tested, not full-flow ready.",
         "PROD2 lands a deterministic validator at src/lib/admin/production-readiness-validator.ts with twelve canonical rules and a passing integration test at src/__tests__/integration/admin/production-readiness-validator.test.ts. The validator reports findings but does not mutate the manifest, and CI integration remains deferred.",
         "QA4 (Agent Mission Persona Verification Runbook) added at docs/build/AGENT_MISSION_PERSONA_VERIFICATION_RUNBOOK.md as the founder-facing companion to QA1 / QA2 / QA3, covering AG10 / AG11 / MG2 / TOOL2 / PROD2.",
+        "OPS1 agent dispatch operating model added at docs/build/AGENT_DISPATCH_OPERATING_MODEL.md \u2014 codifies one slice = one worktree = one branch = one local commit, no push/merge/PR from lanes, morning review decision matrix, integration cherry-pick path, build-slices.json append-only conflict policy, production-readiness.json conservative-status / union-notes / no-false-promotion conflict policy, stale Claude Code task handling, and the deferred future automation path (CI/Vercel/persona crawler/security scan/observability).",
+        "OPS1 dispatch queue added at docs/build/agent-dispatch-queue.json \u2014 20 items (AG12, CTX3, EVID3, MW4, ACT2, QA5 in_progress; PDEL6, ADM6, PAT1, DATA1, MG3, TOOL3, SOL10, I5, PROD3 ready; ACT3, PAT2, DATA2, SOL11, I6 proposed) with laneType, priority, conflictRisk, recommendedWorktree, recommendedBranch, allowedFiles, forbiddenFiles, validationCommands, productionReadinessImpact, and expectedFinalReportFields.",
+        "OPS1 batch template added at docs/build/AGENT_BATCH_TEMPLATE.md and slice report template at docs/build/AGENT_SLICE_REPORT_TEMPLATE.md \u2014 fill-in-the-blank per-batch and per-lane scaffolds with annotated placeholders.",
+        "QA5 deterministic route smoke inventory added (src/lib/qa/route-smoke-inventory.ts) \u2014 11 canonical routes catalogued across home / admin / programs / tower / intelligence / source with owner surface, primary agent, expected guard, expected read model, smoke priority, implementation status, and recommended test strategy; execution remains deferred (no browser, no automation, no real HTTP) and the route_smoke testing gate status is preserved.",
         "Source agent mission read-model test passed and covers deterministic Nexus, Sentinel, Atlas, and Steward mission output without model, persistence, or UI imports.",
         "Source agent mission report formatter test passed and covers deterministic mission report counts, markdown output, remediations, and import guardrails."
       ]
@@ -1320,7 +1337,8 @@
       "notes": [
         "PROD1 does not deploy.",
         "No live monitoring claim is made.",
-        "PROD2 extends docs/build/PRODUCTION_READINESS_UPDATE_PROTOCOL.md with a tracker-update mandate per pack and a parallel-lane conflict policy for cherry-pick integration. No deployment occurred. No live monitoring claim is made."
+        "PROD2 extends docs/build/PRODUCTION_READINESS_UPDATE_PROTOCOL.md with a tracker-update mandate per pack and a parallel-lane conflict policy for cherry-pick integration. No deployment occurred. No live monitoring claim is made.",
+        "OPS1 cherry-pick policy formalized at docs/build/AGENT_DISPATCH_OPERATING_MODEL.md \u00a7G and \u00a7H: build-slices.json appends-only with HEAD-wins on existing entries; production-readiness.json takes the lower status on conflict (conservative status), unions notes deduped by string, unions blockers by id (kept unless explicitly removed with evidence), takes incoming nextAction when HEAD untouched and appends distinct content when both changed, preserves other-lane notes verbatim, bumps lastUpdated, and re-runs the PROD2 validator after every cherry-pick. No false promotions: any status promotion requires explicit founder verification."
       ]
     }
   ]
