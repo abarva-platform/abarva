@@ -5113,6 +5113,64 @@
         "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
       ],
       "notes": "Deterministic, file-pure secret VALUE hygiene helper consumed by integration tests. Catches real GitHub PAT (ghp_), GitHub fine-grained PAT (github_pat_), GitHub App (ghs_), Vercel (vercel_), OpenAI / Anthropic (sk- / sk-ant-), Slack (xoxb-, xoxp-), AWS (AKIA), JWT (eyJ.eyJ.X), and KEY=long_opaque env-var assignments. Honest documentation (bare env var names, api.github.com URL substrings, <replace-me> / lab placeholders, short non-real shapes like sk-not-a-real-key) is explicitly NOT flagged. listLikelySecretFindings truncates every match to 8 chars + ellipsis so a leaked secret is never persisted to test logs or CI output. The PROD3 production-readiness live-refresh test adopts the helper for its response-side check; the source-code-side substring guard is preserved verbatim. Documentation only at the manifest level. validation_qa stays tested (not promoted) because the helper is read-only and CI integration of route smoke / persona crawlers / security scan remains deferred."
+    },
+    {
+      "id": "OPS5",
+      "name": "Integration Cherry-Pick Field Merge Helper",
+      "category": "OPS",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane A (parallel build pack)",
+      "dependsOn": [
+        "OPS1"
+      ],
+      "allowedFiles": [
+        "scripts/integration/cherry_resolve.py",
+        "src/__tests__/integration/ops/cherry-resolve-helper.test.ts",
+        "docs/build/slices/OPS5_INTEGRATION_CHERRY_RESOLVE_HELPER.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/lib/agents/**",
+        "supabase/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "scripts/integration/cherry_resolve.py is a Python 3 script (shebang #!/usr/bin/env python3) and is executable.",
+        "CLI accepts CHERRY_SHA and SLICE_ID positional args, --dry-run, --summary-json, --date, --repo-root, --main-ref, --help, and -h.",
+        "build-slices.json merge preserves existing entries, appends the cherry source's slice if SLICE_ID not already present, never duplicates ids, bumps top-level lastUpdated, and JSON-parse-validates before and after.",
+        "production-readiness.json merge preserves existing components; status conservatively merges (never replaces HEAD with a higher rank from src; rank order not_started < scaffolded < code_complete < tested < full_flow_ready < pilot_ready < production_ready); notes UNION dedupe by string equality; blockers UNION dedupe by id then description; nextAction takes src when HEAD == main and src diverged, else append-distinct; bumps lastUpdated.",
+        "build-waves.json merge (when present) preserves existing waves, UNIONs completedSlices / skippedSlices / blockedSlices, and recalculates percentComplete deterministically as round(len(completedSlices) / len(plannedSlices) * 100).",
+        "Defensive: detects actual <<<<<<< HEAD / ======= conflict markers before running git checkout --ours; never destroys auto-merged content.",
+        "Defensive: exits 3 with a clear stderr message when any JSON is malformed.",
+        "Defensive: --dry-run prints what would change but writes nothing; --summary-json emits a structured JSON summary on stdout.",
+        "Constraint: only stdlib imports (json, subprocess, sys, argparse, pathlib, datetime); no third-party Python deps.",
+        "Constraint: no destructive git commands (no reset, push, rebase, branch -D); only git show <sha>:<path> read-only and git checkout --ours <path> when markers detected.",
+        "Constraint: no network calls, no model providers, no shell pipelines.",
+        "src/__tests__/integration/ops/cherry-resolve-helper.test.ts spawns the Python script via child_process.execFileSync against synthetic fixtures in a per-test os.tmpdir() directory; tests do not require a real git repo.",
+        "Tests cover: --help and -h exit 0 with usage text; build-slices duplicate prevention; build-slices fresh-slice append; conservative status merge (HEAD tested + src full_flow_ready -> tested); conservative status demotion (HEAD tested + src code_complete -> code_complete); blockers UNION by id; notes UNION without dupes; nextAction append-distinct when both diverged from main; malformed JSON -> exit 3; --dry-run does not mutate files; --summary-json emits valid JSON with the expected shape.",
+        "docs/build/slices/OPS5_INTEGRATION_CHERRY_RESOLVE_HELPER.md documents purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and production readiness impact.",
+        "build-slices.json appends an OPS5 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn ['OPS1'], status code_complete, risk low, ownerAgent Lane A; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "production-readiness.json validation_qa and production_deployment components UNION notes acknowledging that the OPS5 cherry-resolve helper is now repo-supported, tested, and dry-run-capable; nextAction values are conservatively appended without overwriting prior wording; statuses are preserved (no promotions); manifest top-level lastUpdated is bumped to 2026-04-26."
+      ],
+      "validationCommands": [
+        "python3 scripts/integration/cherry_resolve.py --help",
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/ops/cherry-resolve-helper.test.ts",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "OPS5 productizes the v2 cherry-resolve logic that has been used manually across multiple integration packs into a repo-supported, tested, dry-run-capable Python script. Encodes the OPS1 conflict policies (sections G and H) deterministically: build-slices.json append-only with no duplicate ids, production-readiness.json conservative status / notes UNION / blockers UNION / nextAction append-distinct, and optional build-waves.json UNION + deterministic percentComplete recalculation. Hidden fixture flags allow the Jest suite to run the real script against synthetic JSON without a real git repo, so the contract under test is exactly what integrators execute. No CI hookup, no agent runtime, no model providers."
     }
   ]
 }
