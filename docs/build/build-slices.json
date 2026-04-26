@@ -5787,6 +5787,65 @@
         "npm run build"
       ],
       "notes": "Pure deterministic vendor / startup intelligence contract. Library only \u2014 does not generate live vendor briefs, invoke models, read tenant state, fetch external data, or call any external API. No real vendor names are used; all seed entries reference category-shaped placeholder ids (e.g. vendor_cdp_001, vendor_ams_002) so downstream surfaces never accidentally inherit a branded recommendation from the seed. Future composition with SOL6 (build / buy / partner evaluator) and SOL9 (recommendation engine) lands a single defensible vendor / startup brief per capability request without changing the SOL14 contract."
+    },
+    {
+      "id": "MW7",
+      "name": "Workshop Template Library UI",
+      "category": "MW",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "MW1",
+        "MW2",
+        "MW6"
+      ],
+      "allowedFiles": [
+        "src/lib/programs/workshop-template-library.ts",
+        "src/components/programs/WorkshopTemplateLibrary.tsx",
+        "src/__tests__/integration/programs/workshop-template-library.test.ts",
+        "docs/build/slices/MW7_WORKSHOP_TEMPLATE_LIBRARY_UI.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Module defines WorkshopTemplate, WorkshopTemplateCategory ('discovery' | 'framing' | 'value' | 'governance' | 'architecture' | 'adoption' | 'executive_review'), WorkshopTemplateAgenda, WorkshopTemplateInputs, and WorkshopTemplateLibrarySummary types with the canonical seven-category taxonomy.",
+        "buildWorkshopTemplateLibrary() returns at least seven deterministic templates with at least one template per canonical category; same input \u2192 identical output across calls.",
+        "listWorkshopTemplateCategories() returns the seven canonical categories in display order.",
+        "summarizeWorkshopTemplateLibrary reconciles byCategory counts to totalCount, sums per-template durations to totalDurationMinutes, and emits uniqueCategories in canonical order; empty input returns a zeroed summary.",
+        "getTemplatesByCategory(category) filters to the named category only.",
+        "Every template carries a non-empty title, purpose, decisionToLand, at least one required input, at least three contiguously numbered agenda steps with positive durations summing to the template duration, at least one output, and createdFrom: 'deterministic_workshop_template_library_seed'.",
+        "No string field invents a dollar amount or claims a real E-### evidence citation.",
+        "src/components/programs/WorkshopTemplateLibrary.tsx is a Server Component (no 'use client', no useState / useEffect / useMemo / useReducer / useCallback) that renders templates grouped by canonical category with eyebrow 'WORKSHOP TEMPLATE LIBRARY \u00b7 MW7', a hairline grid, and 'Open template' actions rendered as disabled future-only controls.",
+        "Component imports color and font tokens from @/lib/design/abarva-theme only; no local hex literals, no local DM Sans font-family literal.",
+        "Module + component import nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch; no anthropic / openai / pinecone references."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/workshop-template-library.test.ts",
+        "npx eslint --max-warnings=0 src/lib/programs/workshop-template-library.ts src/components/programs/WorkshopTemplateLibrary.tsx src/__tests__/integration/programs/workshop-template-library.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic catalog of AbarVa workshop templates spanning the canonical Maestro arc \u2014 discovery, framing, value, governance, architecture, adoption, and executive review. Each template names purpose, prerequisite inputs, deterministic agenda, decision-to-land, and outputs. Server Component panel renders the catalog grouped by category with the calm AbarVa visual canon. No live agenda generation, no booking, no model calls, no persistence. Future Open-template action is wired in a later slice that lands the workshop-mode persistence path."
     }
   ]
 }
