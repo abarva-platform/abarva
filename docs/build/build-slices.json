@@ -7628,6 +7628,15 @@
       "status": "code_complete",
       "wave": "wave-19",
       "lane": "G"
+    },
+    {
+      "id": "DEMO7",
+      "wave": "wave-19",
+      "name": "Apex Retail 30-Minute Demo Storyline",
+      "type": "docs",
+      "status": "code_complete",
+      "branch": "wave19/demo7-apex-retail-demo-storyline",
+      "description": "Comprehensive demo guide for Apex Retail covering 10-minute, 30-minute, and 45-minute formats. Documents the Source commercial event to Programme flagship cross-surface narrative: AMS vendor consolidation informs CDP Activation programme gate. Grounded in SRC28 (source-commercial-demo-scenario.ts) and PROG10 (program-flagship-view.ts). Covers opening narrative, route sequence, talk tracks, what to show/not show, Workshop 5 outcomes, deliverables roadmap, commercial readiness, pilot ask, and routes reference."
     }
   ]
 }

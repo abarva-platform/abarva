@@ -776,7 +776,7 @@
       "waveId": "wave-19",
       "name": "Tenant-Scoped Demo Data + Source Intelligence Hardening",
       "goal": "Scope the Source commercial demo scenario to Apex Retail, replace generic vendor labels with named representative vendors, add extended posture fields, and add deterministicSeed root-level field.",
-      "status": "in_progress",
+      "status": "merged",
       "percentComplete": 600,
       "plannedSlices": [
         "SRC32"
@@ -787,15 +787,15 @@
         "LINK1",
         "SRC33",
         "PROG16",
-        "QA27"
+        "DEMO7"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
       "mergedPrs": [],
-      "validationStatus": "not_run",
+      "validationStatus": "tsc_clean",
       "productionReadinessUpdated": false,
       "currentBlockers": [],
-      "nextAction": "SRC32 code complete (Lane A). Await integration and PR merge. Wave-19 Lane B complete. Awaiting integration merge. Lane C LINK1 complete. Awaiting integration and merge via PR. SRC33 Lane D complete. Awaiting integration merge. Wave-19 PROG16 code complete. Awaiting merge. Merge SRC32 first (Apex Source event seed), then LINK1 (Source-Program link contract), then SRC33/PROG15/PROG16, then MW9 to promote QA27 deferred checks to pass.",
+      "nextAction": "SRC32 code complete (Lane A). Await integration and PR merge. Wave-19 Lane B complete. Awaiting integration merge. Lane C LINK1 complete. Awaiting integration and merge via PR. SRC33 Lane D complete. Awaiting integration merge. Wave-19 PROG16 code complete. Awaiting merge. Wave-19 merged. DEMO7 demo guide complete. Next: live data ingestion, pilot client onboarding.",
       "lastUpdated": "2026-04-26"
     },
     {

@@ -377,7 +377,8 @@
         "PROG12 (wave-18): NexusWorkshopCanvas \u2014 5-item agenda, 5-attendee roster, tensions, decisions needed, evidence to capture, expected outputs. No live notes. 15 tests.",
         "PROG13 (wave-18): ProgramDeliverablesEvidencePanel \u2014 14 deliverables across 6 phases, evidence coverage % bar, current deliverable highlight. No fake downloads/approvals. 16 tests.",
         "PROG14 (wave-18): ProgramActionMissionStrip \u2014 resume action, top 3 next actions, 4 agent missions, blocked items. No live execution. 15 tests.",
-        "PROG16 (wave-19): SourceEventChip \u2014 compact chip on ProgramFlagshipPage surfacing linked Source AMS event for APX-CDP-2026. Shows commercial readiness state, top blocker, route hint. Deterministic seed. Wired additively in ProgramFlagshipPage Section 2b. 9 tests."
+        "PROG16 (wave-19): SourceEventChip \u2014 compact chip on ProgramFlagshipPage surfacing linked Source AMS event for APX-CDP-2026. Shows commercial readiness state, top blocker, route hint. Deterministic seed. Wired additively in ProgramFlagshipPage Section 2b. 9 tests.",
+        "DEMO7 (wave-19): Apex Retail 30-minute demo guide created. /tenant/apex-retail/programs and CDP Activation programme flagship are the primary programme surfaces in the DEMO7 storyline."
       ]
     },
     {
@@ -894,7 +895,8 @@
         "SRC29 (wave-16): source-commercial-executive-brief.ts + SourceCommercialExecutiveBrief component. Dark-navy header, 3 risks, 3 BAFO levers, posture badge. 11 tests green.",
         "SRC30 (wave-16): source-commercial-action-queue.ts + SourceCommercialActionQueue component. 8-action queue, 5-item cap with show-more, state/priority chips. 12 tests green.",
         "SRC31 (wave-17): SourceCommercialWorkflowCanvas with 9 workflow stages (brief, pricing, comparison, risk, BAFO, readiness, missions, signals, decision). Thin segmented nav. Deterministic caveat. 14 tests.",
-        "SRC32 (wave-19): source-commercial-demo-scenario.ts tenant-scoped to apex-retail (tenantSlug: apex-retail, linkedProgramCode: APX-CDP-2026, scenarioId: apex-retail-ams-outsourcing-2026). Generic Alpha/Beta/Gamma/Delta vendor labels replaced with named representative vendors: Northstar Managed Services, BluePeak Digital Operations, Horizon Application Services, Meridian Systems Partners. Extended vendor posture fields added. deterministicSeed: true on scenario root. 17 tests green. Status: code_complete. NOT promoted to production_ready."
+        "SRC32 (wave-19): source-commercial-demo-scenario.ts tenant-scoped to apex-retail (tenantSlug: apex-retail, linkedProgramCode: APX-CDP-2026, scenarioId: apex-retail-ams-outsourcing-2026). Generic Alpha/Beta/Gamma/Delta vendor labels replaced with named representative vendors: Northstar Managed Services, BluePeak Digital Operations, Horizon Application Services, Meridian Systems Partners. Extended vendor posture fields added. deterministicSeed: true on scenario root. 17 tests green. Status: code_complete. NOT promoted to production_ready.",
+        "DEMO7 (wave-19): Apex Retail 30-minute demo guide created covering the Source commercial event to Programme flagship cross-surface narrative. Route /source/events/apex-retail-ams-outsourcing-2026 is the primary Source surface in the DEMO7 storyline. Linked programme badge APX-CDP-2026 demonstrates the Source \u2192 Programme dependency chain."
       ]
     },
     {
