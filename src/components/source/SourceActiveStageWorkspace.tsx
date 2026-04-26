@@ -10,6 +10,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { EXPERIENCE_COLORS, FONTS, TEXT } from '@/lib/design-system';
 import { sourceCard, sourceMuted, sourceSectionLabel } from './foundationStyles';
 import { SourceDataReadinessPanel } from './SourceDataReadinessPanel';
+import { SourceScopeStageWorkspace } from './SourceScopeStageWorkspace';
 
 export function SourceActiveStageWorkspace({
   event,
@@ -31,6 +32,16 @@ export function SourceActiveStageWorkspace({
   const dataReadinessSummary = dataReadinessProjection.items.length > 0
     ? dataReadinessProjection.summary
     : undefined;
+
+  if (activeStage.key === 'scope') {
+    return (
+      <SourceScopeStageWorkspace
+        event={event}
+        missionReport={missionReport}
+        missionPreviewMissions={missionPreviewMissions}
+      />
+    );
+  }
 
   return (
     <section

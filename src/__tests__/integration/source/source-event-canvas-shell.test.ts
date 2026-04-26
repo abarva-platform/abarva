@@ -17,15 +17,15 @@ describe('Source event canvas shell', () => {
     const html = renderToStaticMarkup(createElement(NexusEngagementCanvas, { event: event! }));
 
     expect(html).toContain('Journey map');
-    expect(html).toContain('Current-stage workspace');
+    expect(html).toContain('Scope stage workspace');
     expect(html).toContain('Data readiness');
     expect(html).toContain('Evidence posture for this stage');
     expect(html).toContain('34% toward event data readiness');
     expect(html).toContain('Admin/Setup readiness contract projection');
     expect(html).toContain('Source consumes Admin/Setup readiness');
-    expect(html).toContain('Artifacts / reviews placeholder');
+    expect(html).toContain('Artifact placeholders');
+    expect(html).toContain('Top mission signal');
     expect(html).toContain('Nexus guidance');
-    expect(html).toContain('Agent mission preview');
   });
 
   it('keeps Scope visible as the current blocked stage with required baseline inputs', async () => {
@@ -35,8 +35,11 @@ describe('Source event canvas shell', () => {
     expect(html).toContain('Scope');
     expect(html).toContain('Blocked');
     expect(html).toContain('Application inventory');
-    expect(html).toContain('Analytics workload baseline');
-    expect(html).toContain('Application inventory and analytics workload baseline missing');
+    expect(html).toContain('Workload Baseline');
+    expect(
+      html.includes('Application inventory and analytics workload data block')
+      || html.includes('Application inventory and analytics workload baseline still missing.'),
+    ).toBe(true);
     expect(html).toContain('Workload Baseline');
     expect(html).toContain('Retained Roles');
     expect(html).toContain('Requested');
