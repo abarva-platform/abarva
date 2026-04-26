@@ -589,7 +589,7 @@
       "waveId": "wave-13",
       "name": "Live Demo Validation + Hygiene Enforcement",
       "goal": "Validate AbarVa can be walked end-to-end cleanly and enforce mandatory hygiene gates before future builds.",
-      "status": "in_progress",
+      "status": "merged",
       "percentComplete": 100,
       "plannedSlices": [
         "LIVE1",
@@ -613,7 +613,9 @@
       ],
       "skippedSlices": [],
       "blockedSlices": [],
-      "mergedPrs": [],
+      "mergedPrs": [
+        332
+      ],
       "validationStatus": "tests_green",
       "productionReadinessUpdated": true,
       "currentBlockers": [],
