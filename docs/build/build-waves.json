@@ -863,7 +863,9 @@
         "BRAND1",
         "BRAND2",
         "DES9",
-        "PX2"
+        "PX2",
+        "INTEL1",
+        "INTEL2"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
@@ -871,7 +873,7 @@
       "validationStatus": "tests_green",
       "productionReadinessUpdated": true,
       "currentBlockers": [],
-      "nextAction": "BRAND1, BRAND2, DES9, PX2 complete. Proceed to INTEL1-3, TOWER1-3, QA29, DEMO9.",
+      "nextAction": "BRAND1, BRAND2, DES9, PX2, INTEL1, INTEL2 complete. Proceed to INTEL3, TOWER1-3, QA29, DEMO9.",
       "lastUpdated": "2026-04-26"
     },
     {

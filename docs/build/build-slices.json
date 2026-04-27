@@ -7756,6 +7756,13 @@
       "status": "code_complete",
       "wave": "wave-21",
       "lane": "E"
+    },
+    {
+      "id": "INTEL2",
+      "title": "Intelligence Sentinel Workflow Canvas",
+      "status": "code_complete",
+      "wave": "wave-21",
+      "lane": "F"
     }
   ]
 }
