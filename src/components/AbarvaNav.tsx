@@ -7,17 +7,18 @@ import { resolveSessionRole } from '@/lib/auth/access-routing'
 import { clearActiveClientContext } from '@/lib/auth/client-context-storage'
 import { useClientContext } from '@/lib/use-client-context'
 import { AbarvaWordmark } from './abarva/AbarVaWordmark'
+import { COLORS, FONT, TYPE, BORDER, SPACING, RADIUS } from '@/lib/design/abarva-theme'
 
-const NAV_BG    = '#FFFCF7'
-const NAV_BORD  = '#E5DCD2'
-const TEAL      = '#0B4A91'
-const NAV_TEXT  = '#171412'
-const NAV_MUTE  = '#6D625A'
-const SANS      = 'DM Sans, sans-serif'
-const MONO      = 'JetBrains Mono, monospace'
-const DROP_BG   = '#FFFFFF'
-const DROP_BORD = '#E5DCD2'
-const DROP_HEAD = '#171412'
+const NAV_BG = COLORS.surface
+const NAV_BORD = COLORS.border
+const NAVY = COLORS.navy
+const NAV_TEXT = COLORS.ink
+const NAV_MUTE = COLORS.muted
+const SANS = FONT.body
+const MONO = FONT.mono
+const DROP_BG = '#FFFFFF'
+const DROP_BORD = BORDER.hairline
+const DROP_HEAD = COLORS.inkDark
 
 interface NavProps {
   activePage?: string;
@@ -92,9 +93,9 @@ function NavInner({ activePage, compact = false }: NavProps) {
       fontSize: '15px',
       fontWeight: active ? 700 : 500,
       letterSpacing: '-0.01em',
-      color: active ? TEAL : NAV_TEXT,
+      color: active ? NAVY : NAV_TEXT,
       padding: '8px 20px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
-      borderBottom: active ? `2px solid ${TEAL}` : '2px solid transparent',
+      borderBottom: active ? `2px solid ${NAVY}` : '2px solid transparent',
       transition: 'color 150ms cubic-bezier(0, 0, 0.2, 1), border-color 150ms cubic-bezier(0, 0, 0.2, 1)',
       borderRadius: '6px',
     }}>
@@ -132,9 +133,9 @@ function NavInner({ activePage, compact = false }: NavProps) {
         fontSize: '15px',
         fontWeight: isAdmin && adminActive ? 700 : 600,
         letterSpacing: '-0.01em',
-        color: isAdmin ? (adminActive ? TEAL : NAV_TEXT) : '#B7ADA2',
+        color: isAdmin ? (adminActive ? NAVY : NAV_TEXT) : NAV_MUTE,
         padding: '8px 20px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
-        borderBottom: isAdmin && adminActive ? `1px solid ${TEAL}` : '1px solid transparent',
+        borderBottom: isAdmin && adminActive ? `1px solid ${NAVY}` : '1px solid transparent',
         pointerEvents: isAdmin ? 'auto' : 'none' as React.CSSProperties['pointerEvents'],
         cursor: isAdmin ? 'pointer' : 'default',
       }}
@@ -143,25 +144,76 @@ function NavInner({ activePage, compact = false }: NavProps) {
     </a>
   )
 
-  // Static client label for all roles. Account switching is disabled in the
-  // active shell so users stay hard-locked to the current account context.
+  // Static client label for all roles.
   const staticClientLabel = () => (
     <div
-      aria-label={`Current account ${currentClient.shortName}. Account switching is disabled.`}
+      aria-label={`Current account ${currentClient.name}. Account switching is disabled.`}
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '7px',
+        gap: '10px',
+        border: `1px solid ${COLORS.border}`,
+        background: '#F5F3EE',
+        borderRadius: `${RADIUS.lg}px`,
+        padding: `${SPACING.xs}px ${SPACING.md}px`,
         marginRight: '16px',
-        padding: '6px 10px',
-        borderRadius: '999px',
-        border: `1px solid ${NAV_BORD}`,
-        background: '#FBF7F0',
+        boxSizing: 'border-box',
+        minWidth: '226px',
       }}
     >
-      <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: currentClient.color, flexShrink: 0 }} />
-      <span style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 600, color: NAV_TEXT }}>{currentClient.shortName}</span>
-      <span style={{ fontFamily: MONO, fontSize: '9px', color: NAV_MUTE }}>locked</span>
+      <div
+        style={{
+          width: '8px',
+          height: '8px',
+          borderRadius: '50%',
+          background: currentClient.color,
+          boxShadow: `0 0 0 2px ${COLORS.surface}`,
+          flexShrink: 0,
+        }}
+      />
+      <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, lineHeight: 1.05 }}>
+        <span
+          style={{
+            fontFamily: TYPE.eyebrow.fontFamily,
+            fontSize: `${TYPE.eyebrow.fontSize}px`,
+            letterSpacing: TYPE.eyebrow.letterSpacing,
+            color: NAV_MUTE,
+            textTransform: TYPE.eyebrow.textTransform,
+            marginBottom: '2px',
+          }}
+        >
+          Account
+        </span>
+        <span
+          title={currentClient.name}
+          style={{
+            fontFamily: SANS,
+            fontSize: '12px',
+            fontWeight: 600,
+            color: NAV_TEXT,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            display: 'block',
+            maxWidth: '170px',
+          }}
+        >
+          {currentClient.name}
+        </span>
+      </div>
+      <span
+        style={{
+          marginLeft: 'auto',
+          fontFamily: MONO,
+          fontSize: '10px',
+          color: NAV_MUTE,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        locked
+      </span>
     </div>
   )
 
@@ -171,25 +223,25 @@ function NavInner({ activePage, compact = false }: NavProps) {
           behavior changes. Honors prefers-reduced-motion. */}
       <style jsx global>{`
         .abarva-nav-link:not(.abarva-nav-link--active):hover {
-          color: #0B4A91;
+          color: ${NAVY};
         }
         .abarva-nav-link:focus-visible {
           outline: none;
-          box-shadow: 0 0 0 2px #FFFCF7, 0 0 0 4px #0B4A91;
+          box-shadow: 0 0 0 2px ${COLORS.surface}, 0 0 0 4px ${NAVY};
         }
         .abarva-avatar-btn:focus-visible,
         .abarva-client-btn:focus-visible {
           outline: none;
-          box-shadow: 0 0 0 2px #FFFCF7, 0 0 0 4px #0B4A91;
+          box-shadow: 0 0 0 2px ${COLORS.surface}, 0 0 0 4px ${NAVY};
           border-radius: 8px;
         }
         .abarva-menu-item:hover {
-          background: #FBF7F0 !important;
+          background: #F5F3EE !important;
         }
         .abarva-menu-item:focus-visible {
           outline: none;
-          background: #FBF7F0 !important;
-          box-shadow: inset 2px 0 0 #0B4A91;
+          background: #F5F3EE !important;
+          box-shadow: inset 2px 0 0 ${NAVY};
         }
         @media (prefers-reduced-motion: reduce) {
           .abarva-nav-link {
@@ -198,14 +250,15 @@ function NavInner({ activePage, compact = false }: NavProps) {
         }
       `}</style>
       <div id="abarva-nav" style={{
-        height: '60px', background: NAV_BG,
-        borderBottom: `1px solid ${NAV_BORD}`,
-        display: 'flex', alignItems: 'center', padding: '0 24px', gap: '2px',
+        height: '56px', background: NAV_BG,
+        borderBottom: BORDER.hairline,
+        display: 'flex', alignItems: 'center', padding: `0 ${SPACING.xxl}px`, gap: `${SPACING.sm}px`,
         boxSizing: 'border-box',
+        boxShadow: '0 6px 18px rgba(27, 43, 92, 0.06)',
       }}>
 
         {/* ── Wordmark ─────────────────────────────────────────────────────── */}
-        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px', marginRight: '24px', flexShrink: 0 }}>
+        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: `${SPACING.md}px`, marginRight: `${SPACING.xl}px`, flexShrink: 0 }}>
           <AbarvaWordmark
             size="md"
             inkColor={NAV_TEXT}
@@ -257,7 +310,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
         )}
 
         {/* ── Right side: Admin portal shortcut + user avatar ─── */}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: `${SPACING.xs}px` }}>
           {signedIn && (isAdmin || isInvestor) && navLink('Investor', '/investor', investorActive)}
           {signedIn && isAdmin && adminNavItem()}
           <div style={{ width: '12px' }} />
@@ -274,11 +327,11 @@ function NavInner({ activePage, compact = false }: NavProps) {
               >
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '12px', fontWeight: 500, color: NAV_TEXT, fontFamily: SANS }}>{firstName}</div>
-                  <div style={{ fontSize: '9px', color: TEAL, fontFamily: MONO }}>
+                  <div style={{ fontSize: '9px', color: NAVY, fontFamily: MONO }}>
                     {isAdmin ? 'Admin' : isMaestro ? 'Maestro' : isInvestor ? 'Investor' : isClient ? 'Client' : isExternal ? 'External' : ''}
                   </div>
                 </div>
-                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'rgba(11,74,145,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: TEAL, fontFamily: MONO, flexShrink: 0 }}>
+                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'rgba(27, 43, 92, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: NAVY, fontFamily: MONO, flexShrink: 0 }}>
                   {initials}
                 </div>
               </button>
@@ -321,7 +374,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
                 Login
               </Link>
               {/* dom-integrity-ignore-line */}
-              <span title="Demo temporarily unavailable — new version coming soon" style={{ fontSize: '12px', fontWeight: 600, color: NAV_MUTE, background: '#FBF7F0', padding: '5px 14px', borderRadius: '6px', flexShrink: 0, fontFamily: SANS, border: `1px solid ${NAV_BORD}`, cursor: 'default' }}>
+              <span title="Demo temporarily unavailable — new version coming soon" style={{ fontSize: '12px', fontWeight: 600, color: NAV_MUTE, background: '#F5F3EE', padding: '5px 14px', borderRadius: '6px', flexShrink: 0, fontFamily: SANS, border: `1px solid ${NAV_BORD}`, cursor: 'default' }}>
                 Demo soon
               </span>
             </>
@@ -335,7 +388,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
 
 export default function AbarvaNav(props: NavProps) {
   return (
-    <Suspense fallback={<div style={{ height: '60px', background: NAV_BG, borderBottom: `1px solid ${NAV_BORD}` }} />}>
+    <Suspense fallback={<div style={{ height: '56px', background: NAV_BG, borderBottom: BORDER.hairline }} />}>
       <NavInner {...props} />
     </Suspense>
   )
