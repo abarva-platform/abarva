@@ -15,6 +15,11 @@ Escalate only for:
 - auth/security/tenant-related ambiguity
 - API/runtime boundary ambiguity
 
+Autonomous startup source:
+
+- `docs/planning/abarva-master-backlog/AUTONOMOUS_ORCHESTRATION_START_PROMPT.md`
+- checkpoint handoff file: `docs/planning/abarva-master-backlog/BACKLOG_CURRENT_STATE.md`
+
 ## 2. Scope Discipline
 
 Allowed:
@@ -106,6 +111,10 @@ Every report includes:
 - elapsed effort
 - remaining risk
 
+Autonomous runs must also update:
+
+- `docs/planning/abarva-master-backlog/BACKLOG_CURRENT_STATE.md`
+
 ## 9. Conflict Rule for Shared Track Files
 
 When two items require the same plan file:
@@ -129,3 +138,7 @@ An item is complete only when:
 - registry fields updated,
 - required validations pass,
 - no follow-up execution blockers remain hidden by status.
+
+Escalation policy reference:
+
+- `docs/planning/abarva-master-backlog/BACKLOG_ESCALATION_POLICY.md`

@@ -16,23 +16,36 @@ Codex must treat these as a coupled pair:
 
 No other file should define execution order without a registry record.
 
+## 1A. Control Files
+
+Autonomous runs must use these files together:
+
+- `docs/planning/abarva-master-backlog/backlog-registry.json`
+- `docs/planning/abarva-master-backlog/CODEX_ORCHESTRATION_RUNBOOK.md`
+- `docs/planning/abarva-master-backlog/12_CODEX_OPERATING_MODEL_AND_WORK_ORDER_STANDARDS.md`
+- `docs/planning/abarva-master-backlog/BACKLOG_ESCALATION_POLICY.md`
+- `docs/planning/abarva-master-backlog/BACKLOG_CURRENT_STATE.md`
+- `docs/planning/abarva-master-backlog/AUTONOMOUS_ORCHESTRATION_START_PROMPT.md`
+
 ## 2. Execution Loop
 
 Canonical loop:
 
-1. Read `docs/planning/abarva-master-backlog/backlog-registry.json`.
-2. Validate registry schema and resolve dependency graph.
-3. Compute executable items.
-4. Group non-conflicting items into a wave-safe execution batch.
-5. Launch one branch per executable item.
-6. Run item validation on branch.
-7. Open PR for each item.
-8. Monitor check status.
-9. Fix scoped failures.
-10. Merge when in-scope checks are green.
-11. Update completed item metadata in registry.
-12. Update readiness trackers only when justified.
-13. Repeat until no eligible items remain.
+1. Read `docs/planning/abarva-master-backlog/BACKLOG_CURRENT_STATE.md`.
+2. Read `docs/planning/abarva-master-backlog/backlog-registry.json`.
+3. Validate registry schema and resolve dependency graph.
+4. Compute executable items.
+5. Group non-conflicting items into a wave-safe execution batch.
+6. Launch one branch per executable item.
+7. Run item validation on branch.
+8. Open PR for each item.
+9. Monitor check status.
+10. Fix scoped failures.
+11. Merge when in-scope checks are green.
+12. Update completed item metadata in registry.
+13. Update readiness trackers only when justified.
+14. Write checkpoint updates to `BACKLOG_CURRENT_STATE.md`.
+15. Repeat until no eligible items remain.
 
 ## 3. Executable Item Rules
 
@@ -173,6 +186,10 @@ Codex must stop and ask for explicit user approval when:
 - CI failures are outside the item scope
 - unexpected file edits appear
 
+Escalation handling must follow:
+
+- `docs/planning/abarva-master-backlog/BACKLOG_ESCALATION_POLICY.md`
+
 ## 11. Merge Policy
 
 Codex may merge without user approval only when all are true:
@@ -265,6 +282,11 @@ Codex shall not:
 - call external model APIs
 - perform migrations
 - treat seeded/demo content as production evidence
+
+Codex shall always:
+
+- update `BACKLOG_CURRENT_STATE.md` at the end of an autonomous run
+- include blocker and next-item details in the checkpoint
 
 ## 18. Conflict Safety for File Overlap
 
