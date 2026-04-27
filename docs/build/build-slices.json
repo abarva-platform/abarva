@@ -8203,6 +8203,91 @@
       "wave": "wave-26",
       "completedAt": "2026-04-26",
       "prBranch": "codex/wave-26-enterprise-pilot-package"
+    },
+    {
+      "id": "PAT1_W27",
+      "name": "Data Platform Managed Services Pattern Pack",
+      "category": "K",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "AbarVa Autonomous Orchestration",
+      "dependsOn": [],
+      "allowedFiles": [
+        "src/lib/solutions/data-platform-managed-services-pack.ts",
+        "src/__tests__/integration/solutions/pattern-library-packs.test.ts",
+        "docs/build/slices/PAT1_DATA_PLATFORM_MANAGED_SERVICES_PACK.md"
+      ],
+      "wave": "wave-27",
+      "completedAt": "2026-04-26",
+      "prBranch": "codex/wave-27-pattern-library-expansion"
+    },
+    {
+      "id": "PAT2_W27",
+      "name": "Infrastructure Managed Services Pattern Pack",
+      "category": "K",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "AbarVa Autonomous Orchestration",
+      "dependsOn": [],
+      "allowedFiles": [
+        "src/lib/solutions/ims-managed-services-pack.ts",
+        "src/__tests__/integration/solutions/pattern-library-packs.test.ts",
+        "docs/build/slices/PAT2_IMS_MANAGED_SERVICES_PACK.md"
+      ],
+      "wave": "wave-27",
+      "completedAt": "2026-04-26",
+      "prBranch": "codex/wave-27-pattern-library-expansion"
+    },
+    {
+      "id": "PAT3_W27",
+      "name": "Vendor Evaluation Scorecard Pattern",
+      "category": "K",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "AbarVa Autonomous Orchestration",
+      "dependsOn": [],
+      "allowedFiles": [
+        "src/lib/solutions/vendor-evaluation-pattern.ts",
+        "src/__tests__/integration/solutions/pattern-library-packs.test.ts",
+        "docs/build/slices/PAT3_VENDOR_EVALUATION_PATTERN.md"
+      ],
+      "wave": "wave-27",
+      "completedAt": "2026-04-26",
+      "prBranch": "codex/wave-27-pattern-library-expansion"
+    },
+    {
+      "id": "PAT4_W27",
+      "name": "AI Program Failure Modes → Solution Pattern Runtime Map",
+      "category": "K",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "AbarVa Autonomous Orchestration",
+      "dependsOn": ["PAT1_W27", "PAT2_W27", "PAT3_W27"],
+      "allowedFiles": [
+        "src/lib/solutions/ai-failure-modes-solution-map.ts",
+        "src/__tests__/integration/solutions/pattern-library-packs.test.ts",
+        "docs/build/slices/PAT4_AI_FAILURE_MODES_SOLUTION_MAP.md"
+      ],
+      "wave": "wave-27",
+      "completedAt": "2026-04-26",
+      "prBranch": "codex/wave-27-pattern-library-expansion"
+    },
+    {
+      "id": "PAT5_W27",
+      "name": "Solution Pattern Manifest",
+      "category": "K",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "AbarVa Autonomous Orchestration",
+      "dependsOn": ["PAT1_W27", "PAT2_W27", "PAT3_W27", "PAT4_W27"],
+      "allowedFiles": [
+        "src/lib/solutions/pattern-manifest.ts",
+        "src/__tests__/integration/solutions/pattern-library-packs.test.ts",
+        "docs/build/slices/PAT5_PATTERN_MANIFEST.md"
+      ],
+      "wave": "wave-27",
+      "completedAt": "2026-04-26",
+      "prBranch": "codex/wave-27-pattern-library-expansion"
     }
   ]
 }

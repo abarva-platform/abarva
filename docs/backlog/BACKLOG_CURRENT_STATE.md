@@ -2,32 +2,40 @@
 
 > This file is written by the orchestration agent at the end of each wave.
 > The next autonomous session reads this file first.
-> Last updated by: orchestration agent (Wave 26 complete)
+> Last updated by: orchestration agent (Wave 27 complete)
 > Last updated: 2026-04-26
 
 ## Last completed wave
-- waveId: wave-26
-- waveTitle: Enterprise Pilot Package
-- prNumber: 408
-- mergeSHA: 64465b2c
-- completedSlices: [PROD10, PROD11, PROD12, DEMO10, DEMO11, DEMO12]
+- waveId: wave-27
+- waveTitle: Pattern Library Expansion
+- prNumber: (pending merge)
+- mergeSHA: (pending merge)
+- completedSlices: [PAT1_W27, PAT2_W27, PAT3_W27, PAT4_W27, PAT5_W27]
 - completedAt: 2026-04-26
-- testsGreen: docs-only wave; no test suite impact
+- testsGreen: 91 new tests pass; 5985 total integration tests pass; 5 pre-existing failures unchanged
 
 ## Previous waves (for reference)
+- wave-26: PR #408, SHA 64465b2c, slices [PROD10, PROD11, PROD12, DEMO10, DEMO11, DEMO12]
 - wave-25: PR #405, SHA ef52bebf, slices [PROD9, QA30, QA31, QA32]
 - wave-24: PR #402, SHA bfc00082, slices [AZLAB6, AZLAB7, AZLAB8]
 - wave-23: PR #397, SHA 537f4f94, slices [SRC34, SRC35, SRC36, SRC37, SRC38, LINK2, DEMO10]
 - wave-22: PR #396, SHA 493ec888, slices [INTEL4, TOWER4]
 
 ## Next wave to execute
-- waveId: wave-27
-- waveTitle: Pattern Library Expansion
-- slices: [PAT1, PAT2, PAT3, PAT4, PAT5]
-- waveFile: docs/planning/abarva-master-backlog/waves/WAVE-27-PATTERN-LIBRARY-EXPANSION.md
+- waveId: wave-28
+- waveTitle: (to be determined — read WAVE_ROADMAP.md for next wave spec)
+- waveFile: docs/planning/abarva-master-backlog/waves/ (check for WAVE-28 file)
 - blockedSlices: none
 
-## Wave 26 deliverables produced
+## Wave 27 deliverables produced
+- PAT1_W27: Data Platform Managed Services pack — `src/lib/solutions/data-platform-managed-services-pack.ts` (2 patterns, 7 criteria, 4 failure modes, BAFO signals, gates; createdFrom: pat1_data_platform_managed_services)
+- PAT2_W27: IMS Managed Services pack — `src/lib/solutions/ims-managed-services-pack.ts` (1 pattern, 5 criteria, 3 failure modes, P1-P4 SLA structure; createdFrom: pat2_ims_managed_services)
+- PAT3_W27: Vendor Evaluation Scorecard — `src/lib/solutions/vendor-evaluation-pattern.ts` (10 weighted criteria, 8 dimensions, buildVendorScorecard(), BAFO threshold 55/100; createdFrom: pat3_vendor_evaluation)
+- PAT4_W27: AI Failure Modes → Solution Map — `src/lib/solutions/ai-failure-modes-solution-map.ts` (16 mappings across 12 failure mode keys → PAT1-PAT3; createdFrom: pat4_ai_failure_modes_solution_map)
+- PAT5_W27: Pattern Manifest — `src/lib/solutions/pattern-manifest.ts` (4-pack manifest, 5 slugs, full accessor API; createdFrom: pat5_pattern_manifest)
+- Tests: `src/__tests__/integration/solutions/pattern-library-packs.test.ts` (91 tests, all pass)
+
+## Wave 26 deliverables produced (reference)
 - PROD10: Security posture documentation — `docs/pilot/SECURITY_POSTURE.md` (23-gap honest assessment) + `docs/pilot/SECURITY_CONTROLS_MATRIX.md` (SOC2 TSC + ISO 27001:2022 Annex A mapping)
 - PROD11: Tenant setup runbook — `docs/pilot/TENANT_SETUP_RUNBOOK.md` (5-day onboarding, 7 steps, pre-flight checklist, 4 known gaps)
 - PROD12: Onboarding package — `docs/pilot/ONBOARDING_GUIDE.md` + `docs/pilot/ADVISOR_QUICK_START.md` + `docs/pilot/EXECUTIVE_QUICK_START.md` + `docs/pilot/FAQ.md` (14 questions)
@@ -55,7 +63,7 @@
 (Set to true only if Anand explicitly instructs continuous autonomous execution)
 
 ## Session summary
-Wave 26 complete — Enterprise Pilot Package delivering 6 slices (PROD10, PROD11, PROD12, DEMO10, DEMO11, DEMO12). All docs-only: security posture (23 gaps documented honestly), tenant setup runbook (5-day, 7-step), 4-document onboarding package, 45-min enterprise deep dive script, 15-min investor package, and 15-min advisor script. No fabricated metrics, no SOC2 claims, no pen-test claims. Wave 27 (Pattern Library Expansion — PAT1-PAT5) is next.
+Wave 27 complete — Pattern Library Expansion delivering 5 slices (PAT1_W27-PAT5_W27). All TypeScript deterministic modules: Data Platform Managed Services pack (PAT1), IMS Managed Services pack (PAT2), Vendor Evaluation Scorecard with buildVendorScorecard() (PAT3), AI Failure Modes → Solution Map bridging PF1 to PAT1-PAT3 (PAT4), Pattern Manifest registry (PAT5). 91 new integration tests, 5985 total pass, 5 pre-existing failures unchanged. Wave 28 spec needed before proceeding.
 
 ## Route health (last verified 2026-04-26)
 - /tenant/apex-retail/programs → ACTIVE
