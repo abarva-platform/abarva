@@ -18,7 +18,11 @@ describe('AGENT1B — Admin pages wired to agent foundation', () => {
     ['Agent Readiness', buildAgentReadinessPageView],
     ['Build Progress', buildBuildProgressPageView],
   ] as const)('%s page', (label, builder) => {
-    const view = builder();
+    type AnyView = ReturnType<typeof buildArchitecturePageView>;
+    let view: AnyView;
+    beforeAll(async () => {
+      view = (await builder()) as AnyView;
+    });
 
     it('exposes agentChoices array', () => {
       expect(Array.isArray(view.agentChoices)).toBe(true);

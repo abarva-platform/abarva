@@ -34,7 +34,9 @@ interface BasePageView {
   deterministicSeed: true;
 }
 
-const builders: ReadonlyArray<readonly [string, () => BasePageView]> = [
+type Builder = () => BasePageView | Promise<BasePageView>;
+
+const builders: ReadonlyArray<readonly [string, Builder]> = [
   ['Overview', buildOverviewPageView],
   ['Data Trust', buildDataTrustPageView],
   ['Connectors', buildConnectorsPageView],
@@ -45,7 +47,10 @@ const builders: ReadonlyArray<readonly [string, () => BasePageView]> = [
 
 describe('ADMIN6 — Remaining sub-pages', () => {
   describe.each(builders)('%s page view', (label, builder) => {
-    const view = builder();
+    let view: BasePageView;
+    beforeAll(async () => {
+      view = await builder();
+    });
 
     it('returns deterministicSeed: true', () => {
       expect(view.deterministicSeed).toBe(true);
