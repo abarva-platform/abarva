@@ -1,5 +1,12 @@
 import type { ContextLiveStatus } from '@/components/admin/ContextBar';
 import type { EvidenceStrength } from '@/components/admin/EvidenceStrengthPill';
+import { buildAgentContext } from '@/lib/agent/context-bundle';
+import {
+  computeAllPostures,
+  type AgentPosture as AgentFoundationPosture,
+} from '@/lib/agent/posture';
+import { generateStewardEditorial } from '@/lib/agent/editorial';
+import { buildAgentChoices, type AgentChoice } from '@/lib/agent/choices';
 
 export type OverviewSetupStatus = 'done' | 'in_progress' | 'pending';
 
@@ -35,6 +42,8 @@ export interface OverviewPageView {
   primaryActionLabel: string;
   primaryActionHref: string;
   deterministicSeed: true;
+  agentChoices?: ReadonlyArray<AgentChoice>;
+  agentPostures?: ReadonlyArray<AgentFoundationPosture>;
 }
 
 const SETUP_ITEMS: ReadonlyArray<OverviewSetupItem> = [
@@ -77,13 +86,18 @@ const SETUP_ITEMS: ReadonlyArray<OverviewSetupItem> = [
 ];
 
 export function buildOverviewPageView(): OverviewPageView {
+  const ctx = buildAgentContext('apex-retail', 'admin', 'overview');
+  const editorial = generateStewardEditorial(ctx);
+  const choices = buildAgentChoices(ctx, 3);
+  const postures = computeAllPostures(ctx);
+
   return {
     eyebrow: 'Steward-led control plane orientation',
     title: 'Setup overview',
     subtitle:
       'What needs setup before AbarVa can run a tenant in pilot. The Steward holds this control plane.',
     context: {
-      tenant: 'Apex Retail',
+      tenant: ctx.tenant.name,
       mode: 'Setup/Admin',
       agent: 'Steward',
       data: 'Manifest + seeds',
@@ -91,17 +105,19 @@ export function buildOverviewPageView(): OverviewPageView {
       liveStatusKind: 'deferred',
     },
     editorial: {
-      title: 'Steward editorial · What needs setup',
-      body:
-        'Demo posture is strong. Pilot requires data trust loaded, connectors configured, users granted, agent readiness reviewed, and production readiness assessed. None of these are claimed live in this environment.',
-      contextUsed: ['admin shell config', 'readiness manifest', 'connector readiness'],
-      evidenceStrength: 'partial',
-      primaryAction: { label: 'Review Production Readiness', href: '/admin/production-readiness' },
+      title: editorial.title,
+      body: editorial.body,
+      contextUsed: editorial.contextUsed,
+      evidenceStrength: editorial.evidenceStrength,
+      blocker: editorial.blocker ?? undefined,
+      primaryAction: editorial.primaryAction,
     },
     setupItems: SETUP_ITEMS,
     primaryAgentLabel: 'Steward',
     primaryActionLabel: 'Open Production Readiness',
     primaryActionHref: '/admin/production-readiness',
     deterministicSeed: true,
+    agentChoices: choices,
+    agentPostures: postures,
   };
 }

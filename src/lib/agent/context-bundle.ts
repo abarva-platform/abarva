@@ -523,3 +523,302 @@ function makeBundleId(
   const workObject = input.workObjectId ?? 'no-object';
   return `cb_${input.tenantId}_${route}_${workObject}_${assembledAt}`;
 }
+
+// --- AGENT1B foundation: lightweight agent context for read-models ----
+//
+// The types and helpers below are the simplified, deterministic
+// agent-context contract consumed by admin/programs/source/etc page
+// read-models. They sit alongside the platform-wide ContextBundle and
+// surface enough state for posture/editorial/choices generators.
+
+export type AgentSurface =
+  | 'admin'
+  | 'programs'
+  | 'source'
+  | 'intelligence'
+  | 'tower'
+  | 'home';
+
+export type TenantTier = 'rich' | 'thin' | 'shell_only';
+
+export type EvidenceStrength = 'strong' | 'partial' | 'thin';
+
+export interface AgentContextBlocker {
+  id: string;
+  label: string;
+  severity: 'critical' | 'high' | 'medium' | 'low';
+}
+
+export interface AgentContextDecision {
+  id: string;
+  label: string;
+}
+
+export interface AgentContextSource {
+  id: string;
+  label: string;
+  lastUpdated: string;
+}
+
+/**
+ * Lightweight per-page agent context. Deterministic; does not retrieve
+ * live data. Generators (editorial / posture / choices) consume this.
+ */
+export interface AgentContextBundle {
+  tenant: { slug: string; name: string; tier: TenantTier };
+  surface: AgentSurface;
+  page: string;
+  stage: string | null;
+  evidence: {
+    strength: EvidenceStrength;
+    sources: number;
+    lastUpdated: string | null;
+  };
+  blockers: ReadonlyArray<AgentContextBlocker>;
+  pendingDecisions: ReadonlyArray<AgentContextDecision>;
+  contextSources: ReadonlyArray<AgentContextSource>;
+  deterministicSeed: true;
+}
+
+interface AgentContextSeed {
+  stage: string | null;
+  evidence: AgentContextBundle['evidence'];
+  blockers: ReadonlyArray<AgentContextBlocker>;
+  pendingDecisions: ReadonlyArray<AgentContextDecision>;
+  contextSources: ReadonlyArray<AgentContextSource>;
+}
+
+const APEX_TENANT = {
+  slug: 'apex-retail',
+  name: 'Apex Retail',
+  tier: 'rich' as TenantTier,
+};
+
+const PLATFORM_TENANT = {
+  slug: 'abarva-platform',
+  name: 'AbarVa platform',
+  tier: 'rich' as TenantTier,
+};
+
+const ADMIN_PAGE_SEEDS: Record<string, AgentContextSeed> = {
+  architecture: {
+    stage: 'documented',
+    evidence: {
+      strength: 'strong',
+      sources: 3,
+      lastUpdated: '2026-04-20T00:00:00.000Z',
+    },
+    blockers: [
+      {
+        id: 'lab-not-deployed',
+        label: 'lab not deployed',
+        severity: 'high',
+      },
+    ],
+    pendingDecisions: [
+      { id: 'azure-private-plane', label: 'Azure private data-plane proof' },
+    ],
+    contextSources: [
+      {
+        id: 'architecture-docs',
+        label: 'architecture docs',
+        lastUpdated: '2026-04-20T00:00:00.000Z',
+      },
+      {
+        id: 'azure-lab-blueprint',
+        label: 'Azure lab blueprint',
+        lastUpdated: '2026-04-20T00:00:00.000Z',
+      },
+      {
+        id: 'data-trust-model',
+        label: 'data trust model',
+        lastUpdated: '2026-04-20T00:00:00.000Z',
+      },
+    ],
+  },
+  'production-readiness': {
+    stage: 'demo-ready',
+    evidence: {
+      strength: 'partial',
+      sources: 3,
+      lastUpdated: '2026-04-20T00:00:00.000Z',
+    },
+    blockers: [
+      { id: 'production-controls', label: 'production controls', severity: 'critical' },
+      { id: 'live-audit', label: 'live audit', severity: 'critical' },
+      { id: 'model-gateway-execution', label: 'model gateway execution', severity: 'critical' },
+      { id: 'tenant-security-review', label: 'tenant security review', severity: 'high' },
+      { id: 'azure-private-plane-proof', label: 'Azure private data-plane proof', severity: 'high' },
+    ],
+    pendingDecisions: [
+      { id: 'pilot-cutover', label: 'pilot cutover criteria' },
+    ],
+    contextSources: [
+      { id: 'readiness-manifest', label: 'readiness manifest', lastUpdated: '2026-04-20T00:00:00.000Z' },
+      { id: 'ci-vercel-status', label: 'CI/Vercel status', lastUpdated: '2026-04-20T00:00:00.000Z' },
+      { id: 'wireframe-audit', label: 'wireframe audit', lastUpdated: '2026-04-20T00:00:00.000Z' },
+    ],
+  },
+  overview: {
+    stage: 'setup',
+    evidence: {
+      strength: 'partial',
+      sources: 3,
+      lastUpdated: '2026-04-20T00:00:00.000Z',
+    },
+    blockers: [],
+    pendingDecisions: [
+      { id: 'pilot-readiness', label: 'pilot readiness assessment' },
+    ],
+    contextSources: [
+      { id: 'admin-shell-config', label: 'admin shell config', lastUpdated: '2026-04-20T00:00:00.000Z' },
+      { id: 'readiness-manifest', label: 'readiness manifest', lastUpdated: '2026-04-20T00:00:00.000Z' },
+      { id: 'connector-readiness', label: 'connector readiness', lastUpdated: '2026-04-20T00:00:00.000Z' },
+    ],
+  },
+  'data-trust': {
+    stage: 'partial-trust',
+    evidence: {
+      strength: 'partial',
+      sources: 3,
+      lastUpdated: '2026-04-20T00:00:00.000Z',
+    },
+    blockers: [
+      {
+        id: 'decision-grade-approvals',
+        label: 'Decision-grade approvals pending',
+        severity: 'high',
+      },
+    ],
+    pendingDecisions: [
+      { id: 'dataset-approvals', label: 'dataset approvals' },
+    ],
+    contextSources: [
+      { id: 'evidence-manifest', label: 'evidence manifest', lastUpdated: '2026-04-20T00:00:00.000Z' },
+      { id: 'dataset-approval-model', label: 'dataset approval model', lastUpdated: '2026-04-20T00:00:00.000Z' },
+      { id: 'no-raw-copy-enforcement', label: 'no-raw-copy enforcement', lastUpdated: '2026-04-20T00:00:00.000Z' },
+    ],
+  },
+  connectors: {
+    stage: 'stub-only',
+    evidence: {
+      strength: 'thin',
+      sources: 3,
+      lastUpdated: '2026-04-20T00:00:00.000Z',
+    },
+    blockers: [],
+    pendingDecisions: [
+      { id: 'connector-config', label: 'connector configuration' },
+    ],
+    contextSources: [
+      { id: 'connector-readiness-model', label: 'connector readiness model', lastUpdated: '2026-04-20T00:00:00.000Z' },
+      { id: 'admin-shell-config', label: 'admin shell config', lastUpdated: '2026-04-20T00:00:00.000Z' },
+      { id: 'data-sharing-enforcement', label: 'data sharing enforcement', lastUpdated: '2026-04-20T00:00:00.000Z' },
+    ],
+  },
+  'users-access': {
+    stage: 'roles-seeded',
+    evidence: {
+      strength: 'partial',
+      sources: 3,
+      lastUpdated: '2026-04-20T00:00:00.000Z',
+    },
+    blockers: [
+      { id: 'no-sso', label: 'No SSO configured', severity: 'high' },
+    ],
+    pendingDecisions: [
+      { id: 'sso-config', label: 'SSO configuration' },
+    ],
+    contextSources: [
+      { id: 'users-access-readiness', label: 'users-access readiness', lastUpdated: '2026-04-20T00:00:00.000Z' },
+      { id: 'tenant-isolation-guard', label: 'tenant isolation guard', lastUpdated: '2026-04-20T00:00:00.000Z' },
+      { id: 'admin-shell-config', label: 'admin shell config', lastUpdated: '2026-04-20T00:00:00.000Z' },
+    ],
+  },
+  'agent-readiness': {
+    stage: 'inventory',
+    evidence: {
+      strength: 'partial',
+      sources: 3,
+      lastUpdated: '2026-04-20T00:00:00.000Z',
+    },
+    blockers: [],
+    pendingDecisions: [
+      { id: 'agent-posture-review', label: 'agent posture review' },
+    ],
+    contextSources: [
+      { id: 'agent-readiness-deep-drill', label: 'agent readiness deep drill', lastUpdated: '2026-04-20T00:00:00.000Z' },
+      { id: 'admin-shell-config', label: 'admin shell config', lastUpdated: '2026-04-20T00:00:00.000Z' },
+      { id: 'mission-queue-model', label: 'mission queue model', lastUpdated: '2026-04-20T00:00:00.000Z' },
+    ],
+  },
+  'build-progress': {
+    stage: 'in-flight',
+    evidence: {
+      strength: 'partial',
+      sources: 3,
+      lastUpdated: '2026-04-20T00:00:00.000Z',
+    },
+    blockers: [],
+    pendingDecisions: [
+      { id: 'wave-cutover', label: 'wave cutover order' },
+    ],
+    contextSources: [
+      { id: 'build-manifest-snapshot', label: 'build manifest snapshot', lastUpdated: '2026-04-20T00:00:00.000Z' },
+      { id: 'wave-lifecycle-catalog', label: 'wave lifecycle catalog', lastUpdated: '2026-04-20T00:00:00.000Z' },
+      { id: 'admin-shell-config', label: 'admin shell config', lastUpdated: '2026-04-20T00:00:00.000Z' },
+    ],
+  },
+};
+
+const PAGE_SEEDS: Record<AgentSurface, Record<string, AgentContextSeed>> = {
+  admin: ADMIN_PAGE_SEEDS,
+  programs: {},
+  source: {},
+  intelligence: {},
+  tower: {},
+  home: {},
+};
+
+const EMPTY_SEED: AgentContextSeed = {
+  stage: null,
+  evidence: { strength: 'thin', sources: 0, lastUpdated: null },
+  blockers: [],
+  pendingDecisions: [],
+  contextSources: [],
+};
+
+function resolveTenant(tenantSlug: string, surface: AgentSurface, page: string) {
+  // Build progress is platform-scoped (no per-tenant content).
+  if (surface === 'admin' && page === 'build-progress') return PLATFORM_TENANT;
+  if (tenantSlug === 'apex-retail') return APEX_TENANT;
+  return {
+    slug: tenantSlug,
+    name: tenantSlug,
+    tier: 'shell_only' as TenantTier,
+  };
+}
+
+/**
+ * Build a deterministic agent context for the given (tenant, surface,
+ * page) triple. No live model calls, no live data retrieval.
+ */
+export function buildAgentContext(
+  tenantSlug: string,
+  surface: AgentSurface,
+  page: string,
+): AgentContextBundle {
+  const tenant = resolveTenant(tenantSlug, surface, page);
+  const seed = PAGE_SEEDS[surface]?.[page] ?? EMPTY_SEED;
+  return {
+    tenant,
+    surface,
+    page,
+    stage: seed.stage,
+    evidence: seed.evidence,
+    blockers: seed.blockers,
+    pendingDecisions: seed.pendingDecisions,
+    contextSources: seed.contextSources,
+    deterministicSeed: true,
+  };
+}

@@ -8874,6 +8874,28 @@
       "track": "06-admin-readiness-architecture",
       "completedAt": "2026-04-26",
       "notes": "Consolidate /admin tree as the single canonical admin path. /platform/admin, /platform/admin/architecture, and /platform/admin/production-readiness now redirect to /admin equivalents. Added /admin/layout.tsx with Clerk admin allowlist auth gate (lifted from ADMIN5). Top nav Admin link points to /admin. WIRE2B compliance routes updated to /admin/*. ADMIN7 regression guard extended to assert legacy /platform/admin/* are redirect-only. No business-logic changes; URL consolidation only."
+    },
+    {
+      "id": "AGENT1A",
+      "title": "Agent foundation — context bundle + posture + editorial + choices",
+      "status": "code_complete",
+      "type": "qa",
+      "wave": "wave-agent1",
+      "track": "07-agent-reasoning-foundation",
+      "completedAt": "2026-04-27",
+      "risk": "medium",
+      "notes": "Pure read-model agent reasoning foundation. Appended AgentContextBundle / buildAgentContext to platform context-bundle.ts; new posture.ts (Steward/Nexus/Sentinel/Atlas), editorial.ts (per-surface/page templates), choices.ts (3 + custom). No live model calls. Deterministic."
+    },
+    {
+      "id": "AGENT1B",
+      "title": "Agent foundation wired to 8 admin page read-models",
+      "status": "code_complete",
+      "type": "qa",
+      "wave": "wave-agent1",
+      "track": "07-agent-reasoning-foundation",
+      "completedAt": "2026-04-27",
+      "risk": "medium",
+      "notes": "Replaces hardcoded editorial copy with template-generated copy from agent context bundle. All 8 admin page-views consume buildAgentContext + generateStewardEditorial + computeAllPostures + buildAgentChoices. agentChoices and agentPostures exposed (optional, backward compatible). 1098 admin regression tests pass; 67 wiring tests + 113 foundation tests."
     }
   ]
 }

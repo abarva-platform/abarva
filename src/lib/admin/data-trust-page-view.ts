@@ -1,5 +1,12 @@
 import type { ContextLiveStatus } from '@/components/admin/ContextBar';
 import type { EvidenceStrength } from '@/components/admin/EvidenceStrengthPill';
+import { buildAgentContext } from '@/lib/agent/context-bundle';
+import {
+  computeAllPostures,
+  type AgentPosture as AgentFoundationPosture,
+} from '@/lib/agent/posture';
+import { generateStewardEditorial } from '@/lib/agent/editorial';
+import { buildAgentChoices, type AgentChoice } from '@/lib/agent/choices';
 
 export interface TrustLadderRung {
   id: string;
@@ -33,6 +40,8 @@ export interface DataTrustPageView {
   primaryActionLabel: string;
   primaryActionHref: string;
   deterministicSeed: true;
+  agentChoices?: ReadonlyArray<AgentChoice>;
+  agentPostures?: ReadonlyArray<AgentFoundationPosture>;
 }
 
 const TRUST_LADDER: ReadonlyArray<TrustLadderRung> = [
@@ -44,13 +53,18 @@ const TRUST_LADDER: ReadonlyArray<TrustLadderRung> = [
 ];
 
 export function buildDataTrustPageView(): DataTrustPageView {
+  const ctx = buildAgentContext('apex-retail', 'admin', 'data-trust');
+  const editorial = generateStewardEditorial(ctx);
+  const choices = buildAgentChoices(ctx, 3);
+  const postures = computeAllPostures(ctx);
+
   return {
     eyebrow: 'Data trust posture',
     title: 'Data Trust',
     subtitle:
       'How loaded data becomes usable evidence — and what is not yet usable. Counts trace to the deterministic evidence manifest.',
     context: {
-      tenant: 'Apex Retail',
+      tenant: ctx.tenant.name,
       mode: 'Setup/Admin',
       agent: 'Steward',
       data: 'Manifest + seeds',
@@ -58,18 +72,19 @@ export function buildDataTrustPageView(): DataTrustPageView {
       liveStatusKind: 'deferred',
     },
     editorial: {
-      title: 'Steward editorial · Trust ladder',
-      body:
-        'Loaded artifacts are present from seed. Usable evidence is partial. Decision-grade evidence requires approved datasets and source-of-truth confirmations not yet in place.',
-      contextUsed: ['evidence manifest', 'dataset approval model', 'no-raw-copy enforcement'],
-      evidenceStrength: 'partial',
-      blocker: 'Decision-grade approvals pending',
-      primaryAction: { label: 'Review datasets', href: '/admin/data-trust#datasets' },
+      title: editorial.title,
+      body: editorial.body,
+      contextUsed: editorial.contextUsed,
+      evidenceStrength: editorial.evidenceStrength,
+      blocker: editorial.blocker ?? undefined,
+      primaryAction: editorial.primaryAction,
     },
     ladder: TRUST_LADDER,
     primaryAgentLabel: 'Steward',
     primaryActionLabel: 'Open evidence ledger',
     primaryActionHref: '/admin/data-trust#evidence',
     deterministicSeed: true,
+    agentChoices: choices,
+    agentPostures: postures,
   };
 }

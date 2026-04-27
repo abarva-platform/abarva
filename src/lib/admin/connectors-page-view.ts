@@ -1,5 +1,12 @@
 import type { ContextLiveStatus } from '@/components/admin/ContextBar';
 import type { EvidenceStrength } from '@/components/admin/EvidenceStrengthPill';
+import { buildAgentContext } from '@/lib/agent/context-bundle';
+import {
+  computeAllPostures,
+  type AgentPosture as AgentFoundationPosture,
+} from '@/lib/agent/posture';
+import { generateStewardEditorial } from '@/lib/agent/editorial';
+import { buildAgentChoices, type AgentChoice } from '@/lib/agent/choices';
 import {
   buildConnectorsReadinessView,
   type ConnectorReadiness,
@@ -34,10 +41,24 @@ export interface ConnectorsPageView {
   primaryActionLabel: string;
   primaryActionHref: string;
   deterministicSeed: true;
+  agentChoices?: ReadonlyArray<AgentChoice>;
+  agentPostures?: ReadonlyArray<AgentFoundationPosture>;
 }
 
 export function buildConnectorsPageView(): ConnectorsPageView {
+  const ctx = buildAgentContext('apex-retail', 'admin', 'connectors');
+  const editorial = generateStewardEditorial(ctx);
+  const choices = buildAgentChoices(ctx, 3);
+  const postures = computeAllPostures(ctx);
+
   const readiness = buildConnectorsReadinessView('apex-retail');
+
+  // Connector body is data-dependent on the connector readiness loader.
+  // The foundation editorial template provides title + contextUsed +
+  // primaryAction; the body is composed against live counts.
+  const connectorBody =
+    `${readiness.configuredCount} of ${readiness.totalCount} connectors configured as stubs. ` +
+    'None are live in this environment. Pilot cannot proceed until pilot-required connectors clear Steward review.';
 
   const blockerLabel =
     readiness.pilotBlockers.length > 0
@@ -50,7 +71,7 @@ export function buildConnectorsPageView(): ConnectorsPageView {
     subtitle:
       'Which external systems are configured, blocked, or deferred. None are live in this environment — all show stub or deferred status.',
     context: {
-      tenant: 'Apex Retail',
+      tenant: ctx.tenant.name,
       mode: 'Setup/Admin',
       agent: 'Steward',
       data: 'Manifest + seeds',
@@ -58,14 +79,12 @@ export function buildConnectorsPageView(): ConnectorsPageView {
       liveStatusKind: 'deferred',
     },
     editorial: {
-      title: 'Steward editorial · Connector readiness',
-      body:
-        `${readiness.configuredCount} of ${readiness.totalCount} connectors configured as stubs. ` +
-        'None are live in this environment. Pilot cannot proceed until pilot-required connectors clear Steward review.',
-      contextUsed: ['connector readiness model', 'admin shell config', 'data sharing enforcement'],
-      evidenceStrength: 'thin',
+      title: editorial.title,
+      body: connectorBody,
+      contextUsed: editorial.contextUsed,
+      evidenceStrength: editorial.evidenceStrength,
       blocker: blockerLabel,
-      primaryAction: { label: 'Configure connectors', href: '/admin/connectors#config' },
+      primaryAction: editorial.primaryAction,
     },
     connectors: readiness.connectors,
     pilotBlockers: readiness.pilotBlockers,
@@ -76,5 +95,7 @@ export function buildConnectorsPageView(): ConnectorsPageView {
     primaryActionLabel: 'Resolve connector blockers',
     primaryActionHref: '/admin/connectors#blockers',
     deterministicSeed: true,
+    agentChoices: choices,
+    agentPostures: postures,
   };
 }

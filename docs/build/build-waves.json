@@ -1363,6 +1363,29 @@
       "currentBlockers": [],
       "nextAction": "Founder review at /admin (now canonical); pick next wave from WAVE_ROADMAP.md.",
       "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-agent1",
+      "name": "Agent Reasoning Foundation",
+      "goal": "Replace hardcoded agent UI copy across the 8 admin pages with deterministic, context-aware reasoning. AGENT1A introduces the foundation (AgentContextBundle, posture, editorial, choices); AGENT1B wires it through every admin page-view. Pure read-model. No live model calls.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "AGENT1A",
+        "AGENT1B"
+      ],
+      "completedSlices": [
+        "AGENT1A",
+        "AGENT1B"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "not_run",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Agent reasoning foundation merged. Live model gateway / audit log / write actions deferred to a later wave.",
+      "lastUpdated": "2026-04-27"
     }
   ]
 }

@@ -11,6 +11,13 @@
 
 import type { ContextLiveStatus } from '@/components/admin/ContextBar';
 import type { EvidenceStrength } from '@/components/admin/EvidenceStrengthPill';
+import { buildAgentContext } from '@/lib/agent/context-bundle';
+import {
+  computeAllPostures,
+  type AgentPosture as AgentFoundationPosture,
+} from '@/lib/agent/posture';
+import { generateStewardEditorial } from '@/lib/agent/editorial';
+import { buildAgentChoices, type AgentChoice } from '@/lib/agent/choices';
 import {
   getAllBlockerDetails,
   getCriticalBlockers,
@@ -54,11 +61,18 @@ export interface ProductionReadinessPageView {
   primaryActionLabel: string;
   primaryActionHref: string;
   deterministicSeed: true;
+  agentChoices?: ReadonlyArray<AgentChoice>;
+  agentPostures?: ReadonlyArray<AgentFoundationPosture>;
 }
 
 export function buildProductionReadinessPageView(
   tenantSlug: string = 'apex-retail',
 ): ProductionReadinessPageView {
+  const ctx = buildAgentContext(tenantSlug, 'admin', 'production-readiness');
+  const editorial = generateStewardEditorial(ctx);
+  const choices = buildAgentChoices(ctx, 3);
+  const postures = computeAllPostures(ctx);
+
   const allBlockers = getAllBlockerDetails(tenantSlug);
   const criticalBlockers = getCriticalBlockers(tenantSlug);
   const productionImpactCount = allBlockers.filter((b) => b.productionImpact).length;
@@ -113,7 +127,7 @@ export function buildProductionReadinessPageView(
     subtitle:
       'The canvas tells whether AbarVa can be demoed, piloted, or productionized — and what blocks each step.',
     context: {
-      tenant: 'Apex Retail',
+      tenant: ctx.tenant.name,
       mode: 'Setup/Admin',
       agent: 'Steward',
       data: 'Manifest + seeds',
@@ -121,15 +135,12 @@ export function buildProductionReadinessPageView(
       liveStatusKind: 'deferred',
     },
     editorial: {
-      title: 'Steward editorial · Readiness decision',
-      body: 'Demo readiness is strong for Apex Retail. Pilot is partial. Production is blocked by live audit, model gateway execution, tenant security review, and Azure private data-plane proof.',
-      contextUsed: ['readiness manifest', 'CI/Vercel status', 'wireframe audit'],
-      evidenceStrength: 'partial',
-      blocker: 'production controls',
-      primaryAction: {
-        label: 'Open blockers',
-        href: '/admin/production-readiness#blockers',
-      },
+      title: editorial.title,
+      body: editorial.body,
+      contextUsed: editorial.contextUsed,
+      evidenceStrength: editorial.evidenceStrength,
+      blocker: editorial.blocker ?? undefined,
+      primaryAction: editorial.primaryAction,
     },
     tiles,
     topBlockers,
@@ -137,5 +148,7 @@ export function buildProductionReadinessPageView(
     primaryActionLabel: 'Open blocker drawer',
     primaryActionHref: '/admin/production-readiness#drawer',
     deterministicSeed: true,
+    agentChoices: choices,
+    agentPostures: postures,
   };
 }
