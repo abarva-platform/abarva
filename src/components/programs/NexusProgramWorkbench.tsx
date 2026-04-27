@@ -141,6 +141,26 @@ function PhaseNode({ phase }: { phase: NexusWorkbenchPhaseNode }) {
   );
 }
 
+function JourneyArrow() {
+  return (
+    <span
+      aria-hidden="true"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: NAVY,
+        fontSize: 20,
+        fontWeight: 800,
+        opacity: 0.62,
+        marginTop: 26,
+      }}
+    >
+      →
+    </span>
+  );
+}
+
 function agentTone(state: NexusWorkbenchAgentHandoff['state']) {
   if (state === 'active') return { bg: NAVY, fg: '#FFFFFF', chip: 'Active' };
   if (state === 'blocker') return { bg: RED_SOFT, fg: RED, chip: 'Blocker' };
@@ -200,6 +220,9 @@ function AgentHandoffCard({ handoff }: { handoff: NexusWorkbenchAgentHandoff }) 
 
 export function NexusProgramWorkbench(props: NexusProgramWorkbenchProps) {
   const view = buildNexusProgramWorkbenchView(props);
+  const currentIndex = Math.max(0, view.phaseJourney.findIndex((phase) => phase.state === 'current'));
+  const nextPhase = view.phaseJourney[currentIndex + 1];
+  const journeyPath = `Phase Journey: ${view.phaseJourney.map((phase) => phase.label).join(' → ')}`;
 
   return (
     <section
@@ -257,6 +280,7 @@ export function NexusProgramWorkbench(props: NexusProgramWorkbenchProps) {
           }}
         >
           <Chip tone="blue">{view.currentPhase}</Chip>
+          <Chip tone="blue">{view.currentWorkflowStage}</Chip>
           <Chip tone="amber">{view.currentGateState}</Chip>
         </div>
       </div>
@@ -264,16 +288,67 @@ export function NexusProgramWorkbench(props: NexusProgramWorkbenchProps) {
       <div
         aria-label="Phase Journey"
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+          marginBottom: 8,
+          color: NAVY,
+          fontSize: 11,
+          fontWeight: 800,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+        }}
+      >
+        {journeyPath}
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'stretch',
           gap: 10,
+          overflowX: 'auto',
+          paddingBottom: 6,
           marginBottom: 20,
         }}
       >
-        {view.phaseJourney.map((phase) => (
-          <PhaseNode key={phase.key} phase={phase} />
+        {view.phaseJourney.map((phase, index) => (
+          <div
+            key={phase.key}
+            style={{
+              display: 'flex',
+              alignItems: 'stretch',
+              gap: 10,
+            }}
+          >
+            <div
+              style={{
+                minWidth: 168,
+                maxWidth: 198,
+                flex: '0 0 178px',
+              }}
+            >
+              <PhaseNode phase={phase} />
+            </div>
+            {index < view.phaseJourney.length - 1 ? <JourneyArrow /> : null}
+          </div>
         ))}
       </div>
+
+      {nextPhase ? (
+        <div
+          style={{
+            margin: '0 0 16px',
+            borderRadius: 12,
+            background: NAVY_SOFT,
+            border: '1px dashed #B9D3F1',
+            padding: '10px 14px',
+            color: BODY,
+            fontSize: 12,
+            lineHeight: 1.4,
+          }}
+        >
+          Maestro trail: complete blocker and evidence work in <strong>Synthesis</strong> to unlock{' '}
+          <strong>{nextPhase.label}</strong>.
+        </div>
+      ) : null}
 
       <div
         style={{
