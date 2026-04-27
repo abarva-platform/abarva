@@ -2,21 +2,22 @@
 
 > This file is written by the orchestration agent at the end of each wave.
 > The next autonomous session reads this file first.
-> Last updated by: orchestration agent (NAV1 complete)
+> Last updated by: orchestration agent (ADMIN0 complete)
 > Last updated: 2026-04-27
 
-## Last completed wave
-- waveId: nav1
-- waveTitle: Canonical AbarVa Navigation and Active Shell Alignment
-- prNumbers: 428, 430, 431, 432, 433, 434 (NAV1A–NAV1F); NAV1G this commit
-- mergeSHAs: 8cd827aa, 39c10695, b21a82c3, f638d59a, 72b0b021, bb697a63
-- completedSlices: [NAV1A, NAV1B, NAV1C, NAV1D, NAV1E, NAV1F, NAV1G]
+## Last completed wave / slice
+- sliceId: ADMIN0
+- waveId: wave-admin-redesign (registration only — wave itself remains `planned`)
+- title: Admin Redesign Backlog Registration
+- prNumber: 436
+- mergeSHA: 2f0ba3ba
 - completedAt: 2026-04-27
-- testsGreen: 16 new NAV1B tests + 129 new NAV1F regression tests = 145 new pure-TypeScript Jest tests; 0 regressions
+- testsGreen: docs only — 0 new tests, 0 regressions
 - skippedSlices: none
-- note: 7 sequential PRs. Docs + tests only — no app code, runtime, auth, routing, API, or migration changes. Global nav migration (AbarvaNav → AbarVaShellNav) deferred to NAV2 because it embeds Clerk avatar + client-switcher logic.
+- note: Docs-only registration of Admin Surface Canonical Redesign wave (ADMIN1–ADMIN7). Wave spec, 8 slice docs, 4 manifest updates. Founder source: abarva_logo_lockup_v2.svg + 5 wireframe screenshots shared 2026-04-27. ADMIN1–7 are now `status: backlog` in build-slices.json and ready to execute.
 
 ## Previous waves (for reference)
+- nav1: PRs 428, 430, 431, 432, 433, 434, 435; slices [NAV1A, NAV1B, NAV1C, NAV1D, NAV1E, NAV1F, NAV1G]
 - wave-32: PR #425, SHA ed36ef38, slices [W32A, W32B, W32C, W32D, W32E, W32F, W32QA]
 - wave-31: PR #420, SHA 8b6a8659, slices [SEC3, SEC4]
 - wave-30: PR #418, SHA 362abe59, slices [PAT1, PAT2, PAT3]
@@ -30,12 +31,12 @@
 - wave-22: PR #396, SHA 493ec888, slices [INTEL4, TOWER4]
 
 ## Next wave to execute
-- waveId: wave-33
-- waveTitle: TBD — determine from backlog-registry.json
-- waveFile: docs/backlog/waves/ (synthesise from backlog-registry.json + track BACKLOG.md if no file)
+- waveId: wave-admin-redesign
+- waveTitle: Admin Surface Canonical Redesign
+- waveFile: docs/backlog/waves/WAVE-ADMIN-REDESIGN.md
 - blockedSlices: none
-- primarySlices: confirm from backlog-registry.json (wave-33 entries)
-- note: Wave 32 raised avgWireframeScore 69.5 → 74.4 (13 safeFixesApplied); remaining deviations target Wave 33 (Architecture page at 58 is lowest priority)
+- primarySlices: ADMIN1, ADMIN2, ADMIN3, ADMIN4, ADMIN5, ADMIN6, ADMIN7 (all backlog-registered)
+- note: Wave registered via ADMIN0 (PR #436, merged 2026-04-27, SHA 2f0ba3ba). Founder shared abarva_logo_lockup_v2.svg + 5 wireframes. Lifts WIRE2B admin compliance 72→92. Recommended start: ADMIN1 (foundation: logo + tokens) + ADMIN2 (3-zone shell) sequentially for proof, then ADMIN3 unblocks ADMIN4–6 page wiring in parallel, then ADMIN7 locks visual regression.
 
 ## Wave 32 deliverables produced
 - W32A: Programs Phase Filter — `src/lib/programs/phase-filter-view.ts`
