@@ -12,7 +12,7 @@ import { buildBuildProgressPageView } from '@/lib/admin/build-progress-page-view
 type AnyBuilder = () => unknown | Promise<unknown>;
 const toAsync =
   (fn: AnyBuilder) => async (): Promise<ReturnType<typeof buildArchitecturePageView>> =>
-    Promise.resolve(fn()) as Promise<ReturnType<typeof buildArchitecturePageView>>;
+    (await Promise.resolve(fn())) as ReturnType<typeof buildArchitecturePageView>;
 
 describe('AGENT1B — Admin pages wired to agent foundation', () => {
   describe.each([
@@ -55,12 +55,12 @@ describe('AGENT1B — Admin pages wired to agent foundation', () => {
       expect(view.subtitle).toBeDefined();
       expect(view.context).toBeDefined();
       expect(view.editorial).toBeDefined();
-      expect(view.editorial.title).toBeDefined();
-      expect(view.editorial.body).toBeDefined();
+      expect(view.editorial?.title).toBeDefined();
+      expect(view.editorial?.body).toBeDefined();
       expect(view.deterministicSeed).toBe(true);
     });
     it('editorial body is non-empty', () => {
-      expect(view.editorial.body.length).toBeGreaterThan(20);
+      expect((view.editorial?.body ?? '').length).toBeGreaterThan(20);
     });
     it('editorial does not claim production_ready: true', () => {
       const json = JSON.stringify(view).toLowerCase();
@@ -72,13 +72,13 @@ describe('AGENT1B — Admin pages wired to agent foundation', () => {
   });
 
   describe('Production Readiness page specifically', () => {
-    it('Steward posture is BLOCKED (apex-retail has critical blockers)', () => {
-      const view = buildProductionReadinessPageView();
+    it('Steward posture is BLOCKED (apex-retail has critical blockers)', async () => {
+      const view = await buildProductionReadinessPageView();
       const steward = view.agentPostures?.find((p) => p.agent === 'steward');
       expect(steward?.state).toBe('BLOCKED');
     });
-    it('agentChoices includes blocker resolutions', () => {
-      const view = buildProductionReadinessPageView();
+    it('agentChoices includes blocker resolutions', async () => {
+      const view = await buildProductionReadinessPageView();
       expect(view.agentChoices?.length).toBeGreaterThan(0);
       expect(view.agentChoices?.some((c) => c.category === 'resolve_blocker')).toBe(true);
     });

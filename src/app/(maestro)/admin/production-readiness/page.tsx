@@ -42,7 +42,7 @@ export default async function AdminProductionReadinessPage({
   // calls connection() but we keep the call here so PROD3 freshness contract
   // is asserted on the page itself.
   await connection();
-  const view = buildProductionReadinessPageView();
+  const view = await buildProductionReadinessPageView();
   const resolved = searchParams ? await searchParams : undefined;
   const activeTab = resolveProductionReadinessTab(resolved?.tab);
   const expandedTile = resolveExpandedTile(resolved?.expand);

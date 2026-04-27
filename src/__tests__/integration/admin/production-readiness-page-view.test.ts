@@ -1,13 +1,20 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { buildProductionReadinessPageView } from '@/lib/admin/production-readiness-page-view';
+import {
+  buildProductionReadinessPageView,
+  type ProductionReadinessPageView,
+} from '@/lib/admin/production-readiness-page-view';
 
 const root = process.cwd();
 
 describe('ADMIN5 — Production Readiness page view', () => {
   describe('buildProductionReadinessPageView', () => {
-    const view = buildProductionReadinessPageView();
+    let view: ProductionReadinessPageView;
+
+    beforeAll(async () => {
+      view = await buildProductionReadinessPageView();
+    });
 
     it('returns deterministicSeed: true', () => expect(view.deterministicSeed).toBe(true));
     it('title is "Production Readiness"', () => expect(view.title).toBe('Production Readiness'));
@@ -66,8 +73,8 @@ describe('ADMIN5 — Production Readiness page view', () => {
       const tile = view.tiles.find((t) => t.id === 'production');
       expect(tile?.blockerCount).toBeGreaterThanOrEqual(0);
     });
-    it('empty tenant returns empty topBlockers list', () => {
-      const empty = buildProductionReadinessPageView('does-not-exist');
+    it('empty tenant returns empty topBlockers list', async () => {
+      const empty = await buildProductionReadinessPageView('does-not-exist');
       expect(empty.topBlockers.length).toBe(0);
     });
     it('primaryAgentLabel is Steward', () => expect(view.primaryAgentLabel).toBe('Steward'));

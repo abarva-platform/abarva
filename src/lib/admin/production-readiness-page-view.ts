@@ -2,11 +2,13 @@
  * ADMIN5 — Production Readiness page read-model.
  * ADMIN16 — Depth extension: per-tile expand, blocker drawer, gate criteria,
  *           history strip, sub-nav tabs, action strip.
+ * ADMIN-DATA8 — Tiles, blockers, gate criteria, and history strip now sourced
+ *               from `admin-production-readiness-adapter` + `admin-blockers-adapter`.
+ *               Builder is async; output shape preserved.
  *
  * Pure TypeScript read-model that drives the Production Readiness page wired
  * to AdminCanonShellV2. Demo READY / Pilot PARTIAL / Production BLOCKED is
- * the deterministic posture for the Apex Retail seed. Top blockers are
- * sourced from the W32F blocker-detail-view (do not mutate that file).
+ * the deterministic posture for the Apex Retail seed (in fixture mode).
  *
  * Never sets production_ready: true. Honestly says production is blocked.
  */
@@ -21,10 +23,15 @@ import {
 import { generateStewardEditorial } from '@/lib/agent/editorial';
 import { buildAgentChoices, type AgentChoice } from '@/lib/agent/choices';
 import {
-  getAllBlockerDetails,
-  getCriticalBlockers,
+  mapBlockerRowToDetail,
   type BlockerDetail,
 } from './blocker-detail-view';
+import {
+  getAdminBlockers,
+  getAdminCriticalBlockers,
+} from './data/admin-blockers-adapter';
+import { getAdminProductionReadinessSnapshot } from './data/admin-production-readiness-adapter';
+import type { AdminReadinessHistoryEntry } from './data/admin-production-readiness-adapter-types';
 
 export type ReadinessTileStatus = 'ready' | 'partial' | 'blocked';
 
@@ -138,7 +145,7 @@ export interface ProductionReadinessPageView {
 }
 
 // ---------------------------------------------------------------------------
-// Deterministic depth seeds
+// Deterministic depth seeds (tab metadata + action strip — UI-only, not data)
 // ---------------------------------------------------------------------------
 
 const TABS: ReadonlyArray<ProductionReadinessTabMeta> = [
@@ -161,49 +168,6 @@ const TABS: ReadonlyArray<ProductionReadinessTabMeta> = [
     key: 'history',
     label: 'History',
     description: 'Recent readiness state transitions (deterministic seed).',
-  },
-];
-
-const HISTORY_STRIP: ReadonlyArray<ReadinessHistoryEntry> = [
-  {
-    id: 'h-1',
-    timestamp: '2026-04-27',
-    who: 'Steward',
-    from: 'Pilot: Partial',
-    to: 'Pilot: Partial',
-    note: 'Connector blockers added (W32F seed expansion).',
-  },
-  {
-    id: 'h-2',
-    timestamp: '2026-04-21',
-    who: 'Steward',
-    from: 'Production: Blocked',
-    to: 'Production: Blocked',
-    note: 'SOC2 audit not initiated — production stays blocked.',
-  },
-  {
-    id: 'h-3',
-    timestamp: '2026-04-14',
-    who: 'Founder',
-    from: 'Demo: Partial',
-    to: 'Demo: Ready',
-    note: 'Apex Retail rich seed approved; guided demo cleared.',
-  },
-  {
-    id: 'h-4',
-    timestamp: '2026-04-07',
-    who: 'Steward',
-    from: 'Pilot: Blocked',
-    to: 'Pilot: Partial',
-    note: 'Identity connector verified; access path unblocked.',
-  },
-  {
-    id: 'h-5',
-    timestamp: '2026-03-31',
-    who: 'Steward',
-    from: 'Demo: Blocked',
-    to: 'Demo: Partial',
-    note: 'Initial Apex seed staged; guided demo provisional.',
   },
 ];
 
@@ -331,19 +295,56 @@ function buildActionStrip(): ReadonlyArray<ProductionReadinessActionRow> {
 }
 
 // ---------------------------------------------------------------------------
-// View-model builder
+// History mapping — adapter `AdminReadinessHistoryEntry` → page-view `ReadinessHistoryEntry`
 // ---------------------------------------------------------------------------
 
-export function buildProductionReadinessPageView(
+function titleCase(s: string): string {
+  return s.length === 0 ? s : s[0].toUpperCase() + s.slice(1);
+}
+
+function ownerForScope(scope: string, status: string): string {
+  // Founder approvals show up on the demo→ready transition; everything else
+  // is steward-driven in the deterministic seed.
+  if (scope === 'demo' && status === 'ready') return 'Founder';
+  return 'Steward';
+}
+
+function mapHistoryEntry(
+  entry: AdminReadinessHistoryEntry,
+  index: number,
+): ReadinessHistoryEntry {
+  const label = `${titleCase(entry.scope)}: ${titleCase(entry.status)}`;
+  return {
+    id: `h-${index + 1}`,
+    timestamp: entry.at,
+    who: ownerForScope(entry.scope, entry.status),
+    from: label,
+    to: label,
+    note: entry.note,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// View-model builder — async; consumes admin-data adapters.
+// ---------------------------------------------------------------------------
+
+export async function buildProductionReadinessPageView(
   tenantSlug: string = 'apex-retail',
-): ProductionReadinessPageView {
+): Promise<ProductionReadinessPageView> {
   const ctx = buildAgentContext(tenantSlug, 'admin', 'production-readiness');
   const editorial = generateStewardEditorial(ctx);
   const choices = buildAgentChoices(ctx, 3);
   const postures = computeAllPostures(ctx);
 
-  const allBlockers = getAllBlockerDetails(tenantSlug);
-  const criticalBlockers = getCriticalBlockers(tenantSlug);
+  const [allBlockerRows, criticalBlockerRows, snapshot] = await Promise.all([
+    getAdminBlockers(tenantSlug),
+    getAdminCriticalBlockers(tenantSlug),
+    getAdminProductionReadinessSnapshot(tenantSlug),
+  ]);
+
+  const allBlockers = allBlockerRows.map(mapBlockerRowToDetail);
+  const criticalBlockers = criticalBlockerRows.map(mapBlockerRowToDetail);
+
   const productionImpactCount = allBlockers.filter((b) => b.productionImpact).length;
   const pilotImpactCount = allBlockers.filter((b) => b.pilotImpact).length;
 
@@ -424,6 +425,10 @@ export function buildProductionReadinessPageView(
   const blockerDetailMap: Record<string, BlockerDetail> = {};
   for (const b of allBlockers) blockerDetailMap[b.id] = b;
 
+  const historyStrip: ReadonlyArray<ReadinessHistoryEntry> = snapshot.history.map(
+    (entry, idx) => mapHistoryEntry(entry, idx),
+  );
+
   return {
     eyebrow: 'Demo, pilot, and production decision flow',
     title: 'Production Readiness',
@@ -457,7 +462,7 @@ export function buildProductionReadinessPageView(
     defaultTab: 'decision',
     tileDetailMap,
     gateCriteria,
-    historyStrip: HISTORY_STRIP,
+    historyStrip,
     blockerDetailMap,
     actionStrip: buildActionStrip(),
   };

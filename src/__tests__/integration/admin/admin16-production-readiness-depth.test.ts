@@ -29,8 +29,8 @@ const root = process.cwd();
 describe('ADMIN16 — Production Readiness page-view depth', () => {
   let view: ProductionReadinessPageView;
 
-  beforeEach(() => {
-    view = buildProductionReadinessPageView();
+  beforeEach(async () => {
+    view = await buildProductionReadinessPageView();
   });
 
   it('still returns deterministicSeed: true', () => {
@@ -259,7 +259,11 @@ describe('ADMIN16 — resolveExpandedTile', () => {
 });
 
 describe('ADMIN16 — findBlockerDetail', () => {
-  const view = buildProductionReadinessPageView();
+  let view: ProductionReadinessPageView;
+
+  beforeAll(async () => {
+    view = await buildProductionReadinessPageView();
+  });
 
   it('returns null for undefined id', () => {
     expect(findBlockerDetail(view, undefined)).toBeNull();
@@ -411,8 +415,8 @@ describe('ADMIN16 — page-view module hygiene', () => {
     expect(s).not.toContain('#d946ef');
   });
 
-  it('view-model never returns production_ready: true at runtime', () => {
-    const v = buildProductionReadinessPageView();
+  it('view-model never returns production_ready: true at runtime', async () => {
+    const v = await buildProductionReadinessPageView();
     const s = JSON.stringify(v).toLowerCase();
     expect(s).not.toContain('"production_ready":true');
   });
