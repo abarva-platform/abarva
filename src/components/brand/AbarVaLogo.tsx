@@ -31,9 +31,10 @@ export function AbarVaLogo({
 }: AbarVaLogoProps) {
   const computedHeight = height ?? SIZE_TO_HEIGHT[size]
   const computedWidth =
-    width ?? `calc(${typeof computedHeight === 'number' ? `${computedHeight}px` : computedHeight} * 2.6)`
+    width ?? `calc(${typeof computedHeight === 'number' ? `${computedHeight}px` : computedHeight} * 3.1)`
 
   return (
+    // eslint-disable-next-line @next/next/no-img-element
     <img
       {...imgProps}
       src="/brand/abarva-logo.svg"
