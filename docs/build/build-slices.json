@@ -7825,6 +7825,50 @@
       "wave": "wave-21",
       "track": "12-build-ops-orchestration",
       "notes": "Context handoff, escalation policy, orchestration prompt, wave runner script. Docs + shell only, no runtime changes."
+    },
+    {
+      "id": "INTEL4",
+      "name": "Intelligence Lens Tabs",
+      "category": "K",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "AbarVa Autonomous Orchestration",
+      "dependsOn": [
+        "INTEL1",
+        "INTEL2",
+        "INTEL3"
+      ],
+      "allowedFiles": [
+        "src/lib/intelligence/intelligence-lens-tabs-view.ts",
+        "src/components/intelligence/IntelligenceLensTabs.tsx",
+        "src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx",
+        "src/__tests__/integration/intelligence/intel4-lens-tabs.test.ts"
+      ],
+      "wave": "wave-22",
+      "completedAt": "2026-04-26",
+      "prBranch": "codex/wave-22-intel4-tower4-lens-tabs"
+    },
+    {
+      "id": "TOWER4",
+      "name": "Tower Lens Tabs",
+      "category": "K",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "AbarVa Autonomous Orchestration",
+      "dependsOn": [
+        "TOWER1",
+        "TOWER2",
+        "TOWER3"
+      ],
+      "allowedFiles": [
+        "src/lib/tower/tower-lens-tabs-view.ts",
+        "src/components/tower/TowerLensTabs.tsx",
+        "src/app/(maestro)/tenant/[tenantSlug]/tower/page.tsx",
+        "src/__tests__/integration/tower/tower4-lens-tabs.test.ts"
+      ],
+      "wave": "wave-22",
+      "completedAt": "2026-04-26",
+      "prBranch": "codex/wave-22-intel4-tower4-lens-tabs"
     }
   ]
 }
