@@ -1,28 +1,47 @@
-import { ArchitectureOverviewPage } from '@/components/admin/ArchitectureOverviewPage'
-import { ArchitectureCanvas } from '@/components/admin/ArchitectureCanvas'
-import { AdminCanonShell } from '@/components/admin/AdminCanonShell'
+import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
+import { EditorialCanvas } from '@/components/admin/EditorialCanvas';
+import { AgentRail } from '@/components/admin/AgentRail';
+import { ContextBar } from '@/components/admin/ContextBar';
+import { StewardEditorial } from '@/components/admin/StewardEditorial';
+import { ArchitecturePlaneStack } from '@/components/admin/ArchitecturePlaneStack';
+import { buildArchitecturePageView } from '@/lib/admin/architecture-page-view';
 
 export const metadata = {
   title: 'Architecture Overview | Nexus Admin',
 }
 
 export default function ArchitecturePage() {
+  const view = buildArchitecturePageView();
+
   return (
-    <AdminCanonShell
-      eyebrow="Platform · Architecture"
-      title="Architecture Overview"
-      description="System composition, trust boundaries, and integration surfaces for AbarVa. ATLAS · ARCHITECTURE LEAD"
-      workflow={{
-        primaryAgent: 'atlas',
-        pageQuestion: 'How does AbarVa work end to end, and how does it support SaaS plus private data plane?',
-        whatIsKnown: 'App, context, knowledge, and data planes are built. ARCH5 manifest — 9 planes documented.',
-        whatIsMissing: 'Live model gateway routing, live tool execution, Azure private data plane deployment.',
-        recommendedNextAction: 'Wire model gateway for live agent routing. Deploy Azure private data plane lab.',
-        caveat: 'ARCH5 manifest — static documentation. Not live topology scan.',
-      }}
+    <AdminCanonShellV2
+      agentRail={
+        <AgentRail
+          primaryAgentLabel={view.primaryAgentLabel}
+          primaryActionLabel={view.primaryActionLabel}
+          primaryActionHref={view.primaryActionHref}
+        />
+      }
     >
-      <ArchitectureCanvas />
-      <ArchitectureOverviewPage />
-    </AdminCanonShell>
-  )
+      <EditorialCanvas eyebrow={view.eyebrow} title={view.title} subtitle={view.subtitle}>
+        <ContextBar
+          tenant={view.context.tenant}
+          mode={view.context.mode}
+          agent={view.context.agent}
+          data={view.context.data}
+          liveStatus={view.context.liveStatus}
+          liveStatusKind={view.context.liveStatusKind}
+        />
+        <StewardEditorial
+          title={view.editorial.title}
+          body={view.editorial.body}
+          contextUsed={view.editorial.contextUsed}
+          evidenceStrength={view.editorial.evidenceStrength}
+          blocker={view.editorial.blocker}
+          primaryAction={view.editorial.primaryAction}
+        />
+        <ArchitecturePlaneStack planes={view.planes} />
+      </EditorialCanvas>
+    </AdminCanonShellV2>
+  );
 }
