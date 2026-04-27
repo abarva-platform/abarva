@@ -228,9 +228,6 @@ export function SourceEventsPortfolio({
             <ChoiceChip href={buildChoiceHref({ stage: 'orals_bafo' })} label="Review BAFO events" />
             <ChoiceChip href={buildChoiceHref({ stage: 'evaluation' })} label="Review evaluation queue" />
             <ChoiceChip href={buildChoiceHref({ status: 'at_risk' })} label="Review at-risk events" />
-            {topEvent ? (
-              <ChoiceChip href={`/source/events/${topEvent.id}`} label={`Open ${topEvent.code}`} />
-            ) : null}
           </div>
           <div
             style={{
@@ -245,6 +242,35 @@ export function SourceEventsPortfolio({
             <div style={{ ...sourceMuted, fontSize: '13px' }}>
               Seeded event list, stage labels, alert counts, value-at-stake, and linked-program hints. Vendor counts and live bid timelines are not surfaced at the portfolio layer yet.
             </div>
+            <label htmlFor="source-events-custom-input" style={{ display: 'grid', gap: 6 }}>
+              <div style={{ ...FILTER_LABEL, marginTop: 8 }}>Ask Nexus (deferred)</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  id="source-events-custom-input"
+                  type="text"
+                  readOnly
+                  placeholder="Ask Nexus about this event portfolio, stage priorities, blockers, or evidence..."
+                  style={{
+                    ...sourceSectionLabel,
+                    background: '#FFFFFF',
+                    border: '1px solid #D0D8E8',
+                    borderRadius: 8,
+                    color: '#6B7280',
+                    fontFamily: FONTS.sans,
+                    padding: '8px 10px',
+                    fontWeight: 500,
+                    fontSize: 12,
+                    width: '100%',
+                  }}
+                />
+                <span style={{
+                  ...sourceActionLink('secondary'),
+                  whiteSpace: 'nowrap',
+                }}>
+                  Submit (disabled until runtime)
+                </span>
+              </div>
+            </label>
           </div>
         </article>
 

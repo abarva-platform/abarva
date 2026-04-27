@@ -16,11 +16,23 @@ export default async function SourceEventDetailPage({
   if (!event) notFound();
 
   return (
-    <SourceRouteShell
-      pageMode="event_detail"
-      eventName={event.name}
-      tenantName={event.accountName}
-    >
+      <SourceRouteShell
+        pageMode="event_detail"
+        eventName={event.name}
+        tenantName={event.accountName}
+        contextUsed={[
+          `Program: ${event.name}`,
+          `Current stage: ${event.currentStageLabel}`,
+          `Gate state: ${event.stages.find((stage) => stage.key === event.currentStageKey)?.status ?? 'unknown'}`,
+          `Linked program: ${event.code}`
+        ]}
+        suggestedActions={[
+          { label: 'Review Design gate blockers', href: '#source-route-gate-blockers', description: 'View stage blockers and next gate requirements.' },
+          { label: 'Open Workshop 5 outcomes', href: '#source-route-workshop-5', description: 'Open workshop-linked evidence and notes.' },
+          { label: 'Inspect deliverable evidence', href: '#source-route-evidence', description: 'Inspect staged artifacts before moving to BAFO.' },
+        ]}
+        customAskPrompt="Ask Nexus about this program, gate, workshop, or evidence..."
+      >
       <SourceCanonShell
         activeRoute="events"
         title={event.name}

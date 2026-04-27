@@ -68,19 +68,25 @@ export function NexusEngagementCanvas({ event }: { event: SourcingEventDetail })
       <div style={BODY_GRID}>
         <div style={{ display: 'grid', gap: 16, minWidth: 0 }}>
           <SourceJourneyTracker stages={event.stages} />
-          <SourceStageGatePanel readiness={stageGateReadiness} />
+          <div id="source-route-gate-blockers">
+            <SourceStageGatePanel readiness={stageGateReadiness} />
+          </div>
           <SourceArtifactStatusStrip artifacts={artifactStatusStrip.artifacts} />
-          <SourceActiveStageWorkspace
-            event={event}
-            missionReport={missionReport}
-            missionPreviewMissions={missionPreviewMissions}
-          />
-          <SourceAlertPanel
-            alerts={event.alerts}
-            title="Event pressure signals"
-            emptyLabel="No open event alerts. Nexus will keep this shell focused on the current stage."
-            variant="light"
-          />
+          <div id="source-route-workflow-checklist">
+            <SourceActiveStageWorkspace
+              event={event}
+              missionReport={missionReport}
+              missionPreviewMissions={missionPreviewMissions}
+            />
+          </div>
+          <div id="source-route-evidence-gaps">
+            <SourceAlertPanel
+              alerts={event.alerts}
+              title="Event pressure signals"
+              emptyLabel="No open event alerts. Nexus will keep this shell focused on the current stage."
+              variant="light"
+            />
+          </div>
           <SourceStagePanel event={event} />
         </div>
         <PersistentNexusPanel event={event} missionReport={missionReport} />
