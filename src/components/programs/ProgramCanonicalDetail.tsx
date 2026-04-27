@@ -23,6 +23,7 @@
 
 import Link from 'next/link';
 import { NexusProgramWorkbench } from '@/components/programs/NexusProgramWorkbench';
+import { buildNexusProgramWorkbenchView } from '@/lib/programs/nexus-program-workbench-view';
 import { ProgramArtifactCanvas } from '@/components/programs/ProgramArtifactCanvas';
 import { buildProgramArtifactCanvasView } from '@/lib/programs/program-artifact-canvas-view';
 import { ProgramWorkshopMode } from '@/components/programs/ProgramWorkshopMode';
@@ -119,6 +120,22 @@ const COLORS = {
 } as const;
 
 export function ProgramCanonicalDetail({ tenant, program }: ProgramCanonicalDetailProps) {
+  // Build the workbench view once so the page-level B-1 context strip
+  // and the workbench itself stay in lockstep on phase / gate / source-
+  // event copy. The workbench also calls buildNexusProgramWorkbenchView
+  // internally — both calls are pure and cheap.
+  const workbenchView = buildNexusProgramWorkbenchView({
+    programCode: program.code,
+    programName: program.name,
+    tenantLabel: tenant.displayName,
+    currentPhaseSpec: program.currentPhaseSpec,
+    deliverableCount: program.deliverables.length,
+    evidenceBackedDeliverables: program.deliverables.filter(
+      (deliverable) => deliverable.renderTier === 'rich',
+    ).length,
+  });
+  const strip = workbenchView.contextStrip;
+
   return (
     <main
       style={{
@@ -187,17 +204,17 @@ export function ProgramCanonicalDetail({ tenant, program }: ProgramCanonicalDeta
               fontWeight: 700,
             }}
           >
-            {tenant.displayName} · Rich
+            {strip.tenantBadgeLabel}
           </span>
-          <span style={{ color: COLORS.muted }}>{program.code}</span>
+          <span style={{ color: COLORS.muted }}>{strip.programCode}</span>
           <span style={{ color: COLORS.mutedSoft }}>·</span>
-          <span style={{ color: '#0B4A91', fontWeight: 700 }}>P2 · Synthesis</span>
+          <span style={{ color: '#0B4A91', fontWeight: 700 }}>{strip.phaseLabel}</span>
           <span style={{ color: COLORS.mutedSoft }}>·</span>
-          <span style={{ color: '#A65F00', fontWeight: 700 }}>Gate: Pending</span>
+          <span style={{ color: '#A65F00', fontWeight: 700 }}>{strip.gateLabel}</span>
           <span style={{ color: COLORS.mutedSoft }}>·</span>
-          <span style={{ color: COLORS.mutedSoft, fontStyle: 'italic' }}>Seed-backed · deterministic</span>
+          <span style={{ color: COLORS.mutedSoft, fontStyle: 'italic' }}>{strip.caveat}</span>
           <Link
-            href="/source/events/apex-retail-ams-outsourcing-2026"
+            href={strip.sourceEventHref}
             style={{
               marginLeft: 'auto',
               padding: '4px 12px',
