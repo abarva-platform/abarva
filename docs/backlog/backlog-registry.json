@@ -1,0 +1,1173 @@
+{
+  "version": "1.0.0",
+  "updatedAt": "2026-04-26",
+  "updatedBy": "wave-28 orchestration agent",
+  "description": "AbarVa Master Backlog Registry \u2014 all tracks, waves, and slices",
+  "tracks": [
+    {
+      "id": "00",
+      "name": "Executive Summary + Master Roadmap",
+      "sliceCount": 0,
+      "file": "tracks/00-executive-summary/BACKLOG.md"
+    },
+    {
+      "id": "01",
+      "name": "Brand + Design System",
+      "sliceCount": 6,
+      "file": "tracks/01-brand-design-system/BACKLOG.md"
+    },
+    {
+      "id": "02",
+      "name": "Page Experience + Shell",
+      "sliceCount": 11,
+      "file": "tracks/02-page-experience-shell/BACKLOG.md"
+    },
+    {
+      "id": "03",
+      "name": "Programs Flagship",
+      "sliceCount": 10,
+      "file": "tracks/03-programs-flagship/BACKLOG.md"
+    },
+    {
+      "id": "04",
+      "name": "Source Commercial",
+      "sliceCount": 15,
+      "file": "tracks/04-source-commercial/BACKLOG.md"
+    },
+    {
+      "id": "05",
+      "name": "Intelligence + Control Tower",
+      "sliceCount": 10,
+      "file": "tracks/05-intelligence-control-tower/BACKLOG.md"
+    },
+    {
+      "id": "06",
+      "name": "Admin + Readiness + Architecture",
+      "sliceCount": 23,
+      "file": "tracks/06-admin-readiness-architecture/BACKLOG.md"
+    },
+    {
+      "id": "07",
+      "name": "Data Trust + Evidence",
+      "sliceCount": 10,
+      "file": "tracks/07-data-trust-evidence/BACKLOG.md"
+    },
+    {
+      "id": "08",
+      "name": "Agent Runtime + Model Gateway + Tools",
+      "sliceCount": 14,
+      "file": "tracks/08-agent-runtime-model-gateway-tools/BACKLOG.md"
+    },
+    {
+      "id": "09",
+      "name": "SaaS + Azure + Private Data Plane",
+      "sliceCount": 11,
+      "file": "tracks/09-saas-azure-private-data-plane/BACKLOG.md"
+    },
+    {
+      "id": "10",
+      "name": "Demo + QA + Production Hardening",
+      "sliceCount": 17,
+      "file": "tracks/10-demo-qa-production-hardening/BACKLOG.md"
+    },
+    {
+      "id": "11",
+      "name": "Solution Intelligence + Pattern Library",
+      "sliceCount": 8,
+      "file": "tracks/11-solution-intelligence-pattern-library/BACKLOG.md"
+    },
+    {
+      "id": "12",
+      "name": "Build Ops + Orchestration",
+      "sliceCount": 8,
+      "file": "tracks/12-build-ops-orchestration/BACKLOG.md"
+    }
+  ],
+  "waves": [
+    {
+      "id": "wave-20",
+      "status": "merged",
+      "file": "waves/WAVE-20-ACTIVE-SHELL-ROUTE-CONTROL.md"
+    },
+    {
+      "id": "wave-21",
+      "status": "merged",
+      "file": "waves/WAVE-21-BRAND-BLUEPRINT-INTELLIGENCE-TOWER.md"
+    },
+    {
+      "id": "wave-22",
+      "status": "merged",
+      "file": "waves/WAVE-22-PROGRAM-POLISH-REFERENCE-IMPLEMENTATION.md"
+    },
+    {
+      "id": "wave-23",
+      "status": "planning",
+      "file": "waves/WAVE-23-SOURCE-PROGRAM-STORYLINE-DEMO.md"
+    },
+    {
+      "id": "wave-24",
+      "status": "planning",
+      "blocked": true,
+      "blockedReason": "May 4 founder checkpoint required",
+      "file": "waves/WAVE-24-AZURE-SAAS-PRIVATE-DATA-PLANE-LAB.md"
+    },
+    {
+      "id": "wave-25",
+      "status": "planning",
+      "file": "waves/WAVE-25-PRODUCTION-HARDENING-E2E-VALIDATION.md"
+    },
+    {
+      "id": "wave-26",
+      "status": "planning",
+      "file": "waves/WAVE-26-ENTERPRISE-PILOT-PACKAGE.md"
+    },
+    {
+      "id": "wave-27",
+      "status": "backlog",
+      "note": "Runtime Gateway \u2014 AG2, AG3, AG4, MG1, TOOL1, AUD1"
+    },
+    {
+      "id": "wave-28",
+      "status": "merged",
+      "note": "Data Trust \u2014 TRUST4, EVID1, DATA1-3"
+    },
+    {
+      "id": "wave-29",
+      "status": "backlog",
+      "note": "Cleanup \u2014 SHELL8-9, OPS2-4, BLG2"
+    },
+    {
+      "id": "wave-30",
+      "status": "merged",
+      "note": "Solution Intelligence \u2014 PAT1-3, SOL patterns",
+      "mergedPrNumber": 418
+    },
+    {
+      "id": "wave-admin-redesign",
+      "status": "planned",
+      "title": "Admin Surface Canonical Redesign",
+      "file": "waves/WAVE-ADMIN-REDESIGN.md",
+      "note": "ADMIN1-7 \u2014 3-zone editorial layout, new logo lockup, Cormorant Garamond, Steward editorial, agent rail. Lifts WIRE2B admin 72 -> 92."
+    },
+    {
+      "id": "wave-admin-completion",
+      "status": "planned",
+      "title": "Admin Completion \u00b7 depth + legacy consolidation",
+      "file": "tracks/06-admin-readiness-architecture/BACKLOG.md",
+      "note": "ADMIN9 audit + ADMIN10\u2013ADMIN19. Closes out admin tree: legacy /platform/admin/* consolidation + per-page depth + visual lock update. HARD-GATED interactions defer to Wave 27+."
+    },
+    {
+      "id": "wave-admin-data",
+      "status": "planned",
+      "title": "Native Admin Data Layer",
+      "file": "tracks/06-admin-readiness-architecture/BACKLOG.md",
+      "note": "ADMIN-DATA1 audit + ADMIN-DATA2\u2013ADMIN-DATA13. Replaces hardcoded TypeScript constants in admin page-views with real Supabase data via adapter pattern. Closes ADMIN18 deferral. 7 new admin tables (admin_connectors, admin_datasets, admin_dataset_approvals, admin_dataset_quality, admin_blockers, admin_audit_log, admin_setup_progress). Read-only; writes stay HARD-GATED."
+    }
+  ],
+  "slices": [
+    {
+      "id": "BRAND1",
+      "track": "01",
+      "status": "completed",
+      "wave": "wave-21",
+      "title": "AbarVa Brand Identity Lock"
+    },
+    {
+      "id": "BRAND2",
+      "track": "01",
+      "status": "completed",
+      "wave": "wave-21",
+      "title": "Logo Usage Enforcement"
+    },
+    {
+      "id": "DES9",
+      "track": "01",
+      "status": "completed",
+      "wave": "wave-21",
+      "title": "App Shell Brand Lock"
+    },
+    {
+      "id": "PX1",
+      "track": "02",
+      "status": "completed",
+      "wave": "wave-1",
+      "title": "Page Blueprint Architecture"
+    },
+    {
+      "id": "PX2",
+      "track": "02",
+      "status": "completed",
+      "wave": "wave-21",
+      "title": "Blueprint Compliance Validator"
+    },
+    {
+      "id": "SHELL1",
+      "track": "02",
+      "status": "completed",
+      "wave": "wave-20",
+      "title": "Route Registration + Shell Wiring"
+    },
+    {
+      "id": "SHELL2",
+      "track": "02",
+      "status": "completed",
+      "wave": "wave-20",
+      "title": "TenantShell Component"
+    },
+    {
+      "id": "SHELL3",
+      "track": "02",
+      "status": "completed",
+      "wave": "wave-20",
+      "title": "AdminShell Component"
+    },
+    {
+      "id": "SHELL4",
+      "track": "02",
+      "status": "completed",
+      "wave": "wave-20",
+      "title": "SecondarySubNav Component"
+    },
+    {
+      "id": "SHELL5",
+      "track": "02",
+      "status": "completed",
+      "wave": "wave-20",
+      "title": "Active Route Highlighting"
+    },
+    {
+      "id": "SHELL6",
+      "track": "02",
+      "status": "completed",
+      "wave": "wave-20",
+      "title": "Blueprint Compliance Script"
+    },
+    {
+      "id": "SHELL7",
+      "track": "02",
+      "status": "completed",
+      "wave": "wave-20",
+      "title": "Shell Verification Test Suite"
+    },
+    {
+      "id": "SHELL8",
+      "track": "02",
+      "status": "completed",
+      "wave": "wave-29",
+      "title": "Legacy Shell Code Retirement",
+      "completedWave": "wave-29"
+    },
+    {
+      "id": "SHELL9",
+      "track": "02",
+      "status": "completed",
+      "wave": "wave-29",
+      "title": "Route Registry Automation",
+      "completedWave": "wave-29"
+    },
+    {
+      "id": "PROG10",
+      "track": "03",
+      "status": "backlog",
+      "wave": "wave-22",
+      "title": "APX-CDP-2026 Workshop Canvas Data"
+    },
+    {
+      "id": "PROG11",
+      "track": "03",
+      "status": "backlog",
+      "wave": "wave-22",
+      "title": "APX-CDP-2026 Deliverables Library"
+    },
+    {
+      "id": "PROG12",
+      "track": "03",
+      "status": "backlog",
+      "wave": "wave-22",
+      "title": "APX-CDP-2026 Evidence Panel"
+    },
+    {
+      "id": "PROG13",
+      "track": "03",
+      "status": "backlog",
+      "wave": "wave-22",
+      "title": "APX-CDP-2026 Intelligence Tab"
+    },
+    {
+      "id": "PROG14",
+      "track": "03",
+      "status": "backlog",
+      "wave": "wave-22",
+      "title": "APX-CDP-2026 Missions Tab"
+    },
+    {
+      "id": "PROG15",
+      "track": "03",
+      "status": "backlog",
+      "wave": "wave-22",
+      "title": "3 Remaining Apex Programs Data"
+    },
+    {
+      "id": "MW9",
+      "track": "03",
+      "status": "backlog",
+      "wave": "wave-22",
+      "title": "Workshop Canvas Format"
+    },
+    {
+      "id": "INTEL4",
+      "track": "05",
+      "status": "completed",
+      "wave": "wave-22",
+      "title": "Intelligence Lens Tabs"
+    },
+    {
+      "id": "INTEL1",
+      "track": "05",
+      "status": "completed",
+      "wave": "wave-21",
+      "title": "Intelligence Route Shell Wiring"
+    },
+    {
+      "id": "INTEL2",
+      "track": "05",
+      "status": "completed",
+      "wave": "wave-21",
+      "title": "Intelligence Workflow Canvas"
+    },
+    {
+      "id": "INTEL3",
+      "track": "05",
+      "status": "completed",
+      "wave": "wave-21",
+      "title": "Sentinel Evidence Brief"
+    },
+    {
+      "id": "TOWER1",
+      "track": "05",
+      "status": "completed",
+      "wave": "wave-21",
+      "title": "Control Tower Route Shell Wiring"
+    },
+    {
+      "id": "TOWER2",
+      "track": "05",
+      "status": "completed",
+      "wave": "wave-21",
+      "title": "Atlas Executive Brief Canvas"
+    },
+    {
+      "id": "TOWER3",
+      "track": "05",
+      "status": "completed",
+      "wave": "wave-21",
+      "title": "Control Tower Active Lens Refresh"
+    },
+    {
+      "id": "TOWER4",
+      "track": "05",
+      "status": "completed",
+      "wave": "wave-22",
+      "title": "Tower Lens Tabs"
+    },
+    {
+      "id": "ARCH4",
+      "track": "06",
+      "status": "completed",
+      "wave": "wave-15",
+      "title": "Architecture Page Route + Content"
+    },
+    {
+      "id": "ARCH5",
+      "track": "06",
+      "status": "completed",
+      "wave": "wave-17",
+      "title": "Architecture Canvas Refresh"
+    },
+    {
+      "id": "PROD7",
+      "track": "06",
+      "status": "completed",
+      "wave": "wave-11",
+      "title": "Production Readiness Summary Polish"
+    },
+    {
+      "id": "PROD8",
+      "track": "06",
+      "status": "completed",
+      "wave": "wave-17",
+      "title": "Production Readiness Visual Flow"
+    },
+    {
+      "id": "PROD9",
+      "track": "06",
+      "status": "completed",
+      "wave": "wave-25",
+      "title": "Production Readiness Blocker Badge Enforcement",
+      "completedAt": "2026-04-26"
+    },
+    {
+      "id": "PROD10",
+      "track": "06",
+      "status": "completed",
+      "wave": "wave-26",
+      "title": "Pilot Security Posture Documentation"
+    },
+    {
+      "id": "PROD11",
+      "track": "06",
+      "status": "completed",
+      "wave": "wave-26",
+      "title": "Pilot Tenant Setup Runbook"
+    },
+    {
+      "id": "PROD12",
+      "track": "06",
+      "status": "completed",
+      "wave": "wave-26",
+      "title": "Pilot Onboarding Package"
+    },
+    {
+      "id": "ADM6",
+      "track": "06",
+      "status": "completed",
+      "wave": "wave-3",
+      "title": "Users and Access Surface"
+    },
+    {
+      "id": "ADM7",
+      "track": "06",
+      "status": "completed",
+      "wave": "wave-10",
+      "title": "Admin Surface Completeness Inventory"
+    },
+    {
+      "id": "ADM8",
+      "track": "06",
+      "status": "completed",
+      "wave": "wave-11",
+      "title": "Agent Readiness Deep Drill"
+    },
+    {
+      "id": "TRUST1",
+      "track": "07",
+      "status": "completed",
+      "wave": "wave-3",
+      "title": "Tenant Trust Model Documentation"
+    },
+    {
+      "id": "TRUST2",
+      "track": "07",
+      "status": "completed",
+      "wave": "wave-3",
+      "title": "Dataset Trust Ladder"
+    },
+    {
+      "id": "TRUST3",
+      "track": "07",
+      "status": "completed",
+      "wave": "wave-3",
+      "title": "Agent Data Access Policy Matrix"
+    },
+    {
+      "id": "TRUST4",
+      "track": "07",
+      "status": "backlog",
+      "wave": "wave-28",
+      "title": "Trust Ladder Runtime Enforcement"
+    },
+    {
+      "id": "EVID1",
+      "track": "07",
+      "status": "completed",
+      "wave": "wave-28",
+      "title": "Evidence Manifest Schema",
+      "completedAt": "2026-04-26"
+    },
+    {
+      "id": "EVID2",
+      "track": "07",
+      "status": "completed",
+      "wave": "wave-1",
+      "title": "Evidence Ledger Read Model"
+    },
+    {
+      "id": "EVID3",
+      "track": "07",
+      "status": "completed",
+      "wave": "wave-1",
+      "title": "Evidence Claim Support"
+    },
+    {
+      "id": "DATA1",
+      "track": "07",
+      "status": "completed",
+      "wave": "wave-28",
+      "title": "Data Sharing Levels L0-L4 Enforcement",
+      "completedAt": "2026-04-26"
+    },
+    {
+      "id": "DATA2",
+      "track": "07",
+      "status": "completed",
+      "wave": "wave-28",
+      "title": "Dataset Approval Model",
+      "completedAt": "2026-04-26"
+    },
+    {
+      "id": "DATA3",
+      "track": "07",
+      "status": "completed",
+      "wave": "wave-28",
+      "title": "No-Raw-Copy Mode Implementation",
+      "completedAt": "2026-04-26"
+    },
+    {
+      "id": "AG1",
+      "track": "08",
+      "status": "completed",
+      "wave": "wave-1",
+      "title": "Agent Mission Queue Read Model"
+    },
+    {
+      "id": "AG2",
+      "track": "08",
+      "status": "backlog",
+      "wave": "wave-27",
+      "title": "Agent Context Builder Live Wire"
+    },
+    {
+      "id": "AG3",
+      "track": "08",
+      "status": "backlog",
+      "wave": "wave-27",
+      "title": "Agent Dispatch Live Routing"
+    },
+    {
+      "id": "AG4",
+      "track": "08",
+      "status": "backlog",
+      "wave": "wave-27",
+      "title": "Agent Safety Policy Gate"
+    },
+    {
+      "id": "MG1",
+      "track": "08",
+      "status": "backlog",
+      "wave": "wave-27",
+      "title": "Model Gateway Live Provider Routing"
+    },
+    {
+      "id": "MG2",
+      "track": "08",
+      "status": "completed",
+      "wave": "wave-1",
+      "title": "Model Gateway Safety Gate Stub"
+    },
+    {
+      "id": "MG3",
+      "track": "08",
+      "status": "completed",
+      "wave": "wave-2",
+      "title": "Model Gateway Audit Log"
+    },
+    {
+      "id": "TOOL1",
+      "track": "08",
+      "status": "backlog",
+      "wave": "wave-27",
+      "title": "Tool Registry Allowed Actions Enforcement"
+    },
+    {
+      "id": "TOOL2",
+      "track": "08",
+      "status": "completed",
+      "wave": "wave-1",
+      "title": "Tool Registry Stub"
+    },
+    {
+      "id": "TOOL3",
+      "track": "08",
+      "status": "completed",
+      "wave": "wave-2",
+      "title": "Tool Invocation Audit"
+    },
+    {
+      "id": "AUD1",
+      "track": "08",
+      "status": "backlog",
+      "wave": "wave-27",
+      "title": "Unified Audit Events Live Wire"
+    },
+    {
+      "id": "AUD2",
+      "track": "08",
+      "status": "completed",
+      "wave": "wave-2",
+      "title": "Unified Audit Events Schema"
+    },
+    {
+      "id": "SEC1",
+      "track": "08",
+      "status": "code_complete",
+      "wave": "wave-31",
+      "title": "Security Posture Hardening"
+    },
+    {
+      "id": "SEC2",
+      "track": "08",
+      "status": "code_complete",
+      "wave": "wave-31",
+      "title": "Incident Response Runbook"
+    },
+    {
+      "id": "TEN1",
+      "track": "09",
+      "status": "completed",
+      "wave": "wave-3",
+      "title": "Tenant Isolation Boundary Docs"
+    },
+    {
+      "id": "TEN2",
+      "track": "09",
+      "status": "completed",
+      "wave": "wave-3",
+      "title": "Dedicated Tenant Blueprint"
+    },
+    {
+      "id": "TEN3",
+      "track": "09",
+      "status": "completed",
+      "wave": "wave-3",
+      "title": "Tenant Isolation Probe Scripts"
+    },
+    {
+      "id": "CLOUD1",
+      "track": "09",
+      "status": "completed",
+      "wave": "wave-3",
+      "title": "Four-Tier Enterprise Deployment Strategy"
+    },
+    {
+      "id": "CLOUD2",
+      "track": "09",
+      "status": "completed",
+      "wave": "wave-3",
+      "title": "Azure VNet Reference Lab Blueprint"
+    },
+    {
+      "id": "CLOUD3",
+      "track": "09",
+      "status": "completed",
+      "wave": "wave-3",
+      "title": "Private Deployment Lab Documentation"
+    },
+    {
+      "id": "AZLAB1",
+      "track": "09",
+      "status": "completed",
+      "wave": "wave-12",
+      "title": "Azure SaaS + Private Data Plane Blueprint"
+    },
+    {
+      "id": "AZLAB2",
+      "track": "09",
+      "status": "completed",
+      "wave": "wave-12",
+      "title": "Azure Control + Data Plane Boundary"
+    },
+    {
+      "id": "AZLAB3",
+      "track": "09",
+      "status": "completed",
+      "wave": "wave-12",
+      "title": "Azure Private Data Plane Connector Stub"
+    },
+    {
+      "id": "AZLAB4",
+      "track": "09",
+      "status": "completed",
+      "wave": "wave-12",
+      "title": "Azure Private Evidence Manifest Demo"
+    },
+    {
+      "id": "AZLAB5",
+      "track": "09",
+      "status": "completed",
+      "wave": "wave-12",
+      "title": "Azure Lab Deployment Runbook"
+    },
+    {
+      "id": "AZLAB6",
+      "track": "09",
+      "status": "completed",
+      "wave": "wave-24",
+      "title": "Azure Lab Docs Package \u2014 ADRs + Architecture + Naming + Cost + Bicep Stubs"
+    },
+    {
+      "id": "AZLAB7",
+      "track": "09",
+      "status": "completed",
+      "wave": "wave-24",
+      "title": "Private Data Plane Design \u2014 Fortune 500 Deployment"
+    },
+    {
+      "id": "AZLAB8",
+      "track": "09",
+      "status": "completed",
+      "wave": "wave-24",
+      "title": "Multi-Provider Model Gateway Design \u2014 Azure OpenAI + Anthropic Switchable Routing"
+    },
+    {
+      "id": "LIVE1",
+      "track": "10",
+      "status": "completed",
+      "wave": "wave-13",
+      "title": "Founder Walk Checklist"
+    },
+    {
+      "id": "LIVE2",
+      "track": "10",
+      "status": "completed",
+      "wave": "wave-13",
+      "title": "Tenant Route Verification"
+    },
+    {
+      "id": "LIVE3",
+      "track": "10",
+      "status": "completed",
+      "wave": "wave-13",
+      "title": "Production Readiness Verification"
+    },
+    {
+      "id": "QA28",
+      "track": "10",
+      "status": "completed",
+      "wave": "wave-20",
+      "title": "Shell Verification Test Suite"
+    },
+    {
+      "id": "QA29",
+      "track": "10",
+      "status": "completed",
+      "wave": "wave-21",
+      "title": "Intelligence + Tower Verification"
+    },
+    {
+      "id": "QA25",
+      "track": "10",
+      "status": "backlog",
+      "wave": "wave-22",
+      "title": "Programs Verification Suite"
+    },
+    {
+      "id": "QA30",
+      "track": "10",
+      "status": "completed",
+      "wave": "wave-25",
+      "title": "No-Fabrication Regression Suite",
+      "completedAt": "2026-04-26"
+    },
+    {
+      "id": "QA31",
+      "track": "10",
+      "status": "completed",
+      "wave": "wave-25",
+      "title": "Production Smoke Test \u2014 16 Routes",
+      "completedAt": "2026-04-26"
+    },
+    {
+      "id": "QA32",
+      "track": "10",
+      "status": "completed",
+      "wave": "wave-25",
+      "title": "Evidence Trust Audit \u2014 Dataset Trust Model Enforcement Tests",
+      "completedAt": "2026-04-26"
+    },
+    {
+      "id": "DEMO6",
+      "track": "10",
+      "status": "backlog",
+      "wave": "wave-22",
+      "title": "Programs Demo Script"
+    },
+    {
+      "id": "DEMO7",
+      "track": "10",
+      "status": "backlog",
+      "wave": "wave-22",
+      "title": "Apex Retail 30-Min Storyline"
+    },
+    {
+      "id": "DEMO8",
+      "track": "10",
+      "status": "completed",
+      "wave": "wave-20",
+      "title": "Founder Live Route Review Script"
+    },
+    {
+      "id": "DEMO9",
+      "track": "10",
+      "status": "completed",
+      "wave": "wave-21",
+      "title": "Intelligence + Tower Review Checklist"
+    },
+    {
+      "id": "DEMO10",
+      "track": "10",
+      "status": "completed",
+      "wave": "wave-26",
+      "title": "Enterprise Pilot Demo Script"
+    },
+    {
+      "id": "DEMO11",
+      "track": "10",
+      "status": "completed",
+      "wave": "wave-26",
+      "title": "Investor Demo Package"
+    },
+    {
+      "id": "DEMO12",
+      "track": "10",
+      "status": "completed",
+      "wave": "wave-26",
+      "title": "45-Minute Deep Dive Script"
+    },
+    {
+      "id": "SOL1",
+      "track": "11",
+      "status": "completed",
+      "wave": "wave-0",
+      "title": "Solution Architecture Contract"
+    },
+    {
+      "id": "SOL2",
+      "track": "11",
+      "status": "completed",
+      "wave": "wave-0",
+      "title": "AI-Led PDLC Components"
+    },
+    {
+      "id": "SOL3",
+      "track": "11",
+      "status": "completed",
+      "wave": "wave-5",
+      "title": "Solution Archetype Registry"
+    },
+    {
+      "id": "SOL4",
+      "track": "11",
+      "status": "completed",
+      "wave": "wave-5",
+      "title": "Analytics Modernization Pack"
+    },
+    {
+      "id": "PAT1",
+      "track": "11",
+      "status": "completed",
+      "wave": "wave-30",
+      "title": "Pattern Registry Format",
+      "completedWave": "wave-30"
+    },
+    {
+      "id": "PAT2",
+      "track": "11",
+      "status": "completed",
+      "wave": "wave-30",
+      "title": "Pattern Authoring Workflow",
+      "completedWave": "wave-30"
+    },
+    {
+      "id": "PAT3",
+      "track": "11",
+      "status": "completed",
+      "wave": "wave-30",
+      "title": "Vertical Pack \u2014 Retail",
+      "completedWave": "wave-30"
+    },
+    {
+      "id": "OPS1",
+      "track": "12",
+      "status": "completed",
+      "wave": "wave-0",
+      "title": "Hygiene Gate Script"
+    },
+    {
+      "id": "OPS2",
+      "track": "12",
+      "status": "backlog",
+      "wave": "wave-29",
+      "title": "Duplicate Scan Integration"
+    },
+    {
+      "id": "OPS3",
+      "track": "12",
+      "status": "completed",
+      "wave": "wave-29",
+      "title": "Automated Wave Runner v1",
+      "completedWave": "wave-29"
+    },
+    {
+      "id": "OPS4",
+      "track": "12",
+      "status": "completed",
+      "wave": "wave-29",
+      "title": "Pack Spec Validator",
+      "completedWave": "wave-29"
+    },
+    {
+      "id": "WAVE1",
+      "track": "12",
+      "status": "completed",
+      "wave": "wave-3",
+      "title": "Wave Prompt Templates"
+    },
+    {
+      "id": "WAVE2",
+      "track": "12",
+      "status": "completed",
+      "wave": "wave-21",
+      "title": "Wave Roadmap Documentation"
+    },
+    {
+      "id": "BLG1",
+      "track": "12",
+      "status": "completed",
+      "wave": "wave-21",
+      "title": "Master Backlog System"
+    },
+    {
+      "id": "BLG2",
+      "track": "12",
+      "status": "backlog",
+      "wave": "wave-29",
+      "title": "Backlog Registry Automation"
+    },
+    {
+      "id": "ADMIN0",
+      "track": "06",
+      "status": "code_complete",
+      "wave": "wave-admin-redesign",
+      "title": "Admin Redesign Backlog Registration",
+      "completedAt": "2026-04-27"
+    },
+    {
+      "id": "ADMIN1",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-redesign",
+      "title": "Foundation: Logo + Token Lock"
+    },
+    {
+      "id": "ADMIN2",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-redesign",
+      "title": "Admin Shell 3-Zone Canonical Layout"
+    },
+    {
+      "id": "ADMIN3",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-redesign",
+      "title": "Steward Editorial Component"
+    },
+    {
+      "id": "ADMIN4",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-redesign",
+      "title": "Architecture Page Wired to AdminCanonShellV2"
+    },
+    {
+      "id": "ADMIN5",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-redesign",
+      "title": "Production Readiness Page Wired to AdminCanonShellV2"
+    },
+    {
+      "id": "ADMIN6",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-redesign",
+      "title": "Remaining 6 Admin Sub-Pages Wired"
+    },
+    {
+      "id": "ADMIN7",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-redesign",
+      "title": "Admin Visual Lock + Regression Guard"
+    },
+    {
+      "id": "ADMIN9",
+      "track": "06",
+      "status": "code_complete",
+      "wave": "wave-admin-completion",
+      "title": "Admin Completion Audit + Plan"
+    },
+    {
+      "id": "ADMIN10",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-completion",
+      "title": "Legacy /platform/admin/* route consolidation (REDIRECT/DEPRECATE/MERGE prep)"
+    },
+    {
+      "id": "ADMIN11",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-completion",
+      "title": "Users & Access depth — tabs + user table + role detail drawer + invite stub"
+    },
+    {
+      "id": "ADMIN12",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-completion",
+      "title": "Agent Readiness depth — per-agent expandable cards + capability matrix + reasoning trace drawer"
+    },
+    {
+      "id": "ADMIN13",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-completion",
+      "title": "Connectors depth — per-connector detail drawer + config stub + requirements matrix"
+    },
+    {
+      "id": "ADMIN14",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-completion",
+      "title": "Data Trust depth — per-rung dataset list + drawer + approval stub + promotion + quality tabs"
+    },
+    {
+      "id": "ADMIN15",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-completion",
+      "title": "Build Progress depth — wave timeline + slice drilldown + CI mini-strip"
+    },
+    {
+      "id": "ADMIN16",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-completion",
+      "title": "Production Readiness depth — per-tile expandable + per-blocker drawer + promotion gate"
+    },
+    {
+      "id": "ADMIN17",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-completion",
+      "title": "Architecture depth — per-plane drilldown + component drawer + plane health summary"
+    },
+    {
+      "id": "ADMIN18",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-completion",
+      "title": "Overview depth — setup timeline + recent activity + cross-page CTAs"
+    },
+    {
+      "id": "ADMIN19",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-completion",
+      "title": "Visual lock + regression update for completion wave"
+    },
+    {
+      "id": "ADMIN-DATA1",
+      "track": "06",
+      "status": "code_complete",
+      "wave": "wave-admin-data",
+      "title": "Native Admin Data Layer Audit + Wave Registration"
+    },
+    {
+      "id": "ADMIN-DATA2",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-data",
+      "title": "Adapter contracts + types + fixture mode (foundation)"
+    },
+    {
+      "id": "ADMIN-DATA3",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-data",
+      "title": "/admin/users-access wired to admin-users-adapter"
+    },
+    {
+      "id": "ADMIN-DATA4",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-data",
+      "title": "/admin/connectors wired to admin-connectors-adapter"
+    },
+    {
+      "id": "ADMIN-DATA5",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-data",
+      "title": "/admin/data-trust wired to admin-datasets-adapter"
+    },
+    {
+      "id": "ADMIN-DATA6",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-data",
+      "title": "/admin/agent-readiness wired to admin-agent-readiness-adapter"
+    },
+    {
+      "id": "ADMIN-DATA7",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-data",
+      "title": "/admin/build-progress audit (manifest-backed verified)"
+    },
+    {
+      "id": "ADMIN-DATA8",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-data",
+      "title": "/admin/production-readiness wired to admin-production-readiness-adapter"
+    },
+    {
+      "id": "ADMIN-DATA9",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-data",
+      "title": "/admin/architecture audit (deterministic-only confirmed)"
+    },
+    {
+      "id": "ADMIN-DATA10",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-data",
+      "title": "Admin tables migrations + Apex/Meridian seed"
+    },
+    {
+      "id": "ADMIN-DATA11",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-data",
+      "title": "AGENT1 context bundle wired to real DB"
+    },
+    {
+      "id": "ADMIN-DATA12",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-data",
+      "title": "ADMIN18 Overview pull-through (live data)"
+    },
+    {
+      "id": "ADMIN-DATA13",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-data",
+      "title": "Visual + data regression lock"
+    }
+  ],
+  "lastUpdated": "2026-04-27"
+}
