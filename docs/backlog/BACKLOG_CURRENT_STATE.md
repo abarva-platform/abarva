@@ -8,8 +8,8 @@
 ## Last completed wave
 - waveId: wave-24
 - waveTitle: Azure SaaS + Simulated Private Data Plane Lab — Docs + Architecture
-- prNumber: (pending merge)
-- mergeSHA: (pending merge)
+- prNumber: 402
+- mergeSHA: bfc00082
 - completedSlices: [AZLAB6, AZLAB7, AZLAB8]
 - completedAt: 2026-04-26
 
