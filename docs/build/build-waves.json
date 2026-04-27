@@ -1392,21 +1392,21 @@
       "name": "Admin Completion · depth + legacy consolidation",
       "goal": "Close out the admin tree. ADMIN10 retires/redirects/deprecates the 16 live legacy /platform/admin/* sub-routes per ADMIN9 audit. ADMIN11–ADMIN17 add per-page depth (sub-tabs, drill-down drawers, action strips, per-row detail) to the 7 content-bearing canonical /admin/* pages. ADMIN18 pulls Overview through with a setup-progress timeline + recent-activity strip + cross-page CTAs. ADMIN19 extends ADMIN7's regression suite to cover the new canvas widgets. All write actions and live model calls remain HARD-GATED for Wave 27+.",
       "status": "planned",
-      "percentComplete": 9,
+      "percentComplete": 50,
       "plannedSlices": [
-        "ADMIN10",
-        "ADMIN11",
         "ADMIN12",
-        "ADMIN13",
         "ADMIN14",
         "ADMIN15",
         "ADMIN16",
-        "ADMIN17",
         "ADMIN18",
         "ADMIN19"
       ],
       "completedSlices": [
-        "ADMIN9"
+        "ADMIN9",
+        "ADMIN10",
+        "ADMIN11",
+        "ADMIN13",
+        "ADMIN17"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
@@ -1414,7 +1414,7 @@
       "validationStatus": "not_run",
       "productionReadinessUpdated": false,
       "currentBlockers": [],
-      "nextAction": "Run ADMIN10 (Tier 1, blocks others) first; then ADMIN11–ADMIN17 in parallel batches; ADMIN18 + ADMIN19 last.",
+      "nextAction": "Batch 1 merged (ADMIN10/11/13/17). Run batch 2 — ADMIN12 + ADMIN14 + ADMIN15 + ADMIN16 in parallel; ADMIN18 + ADMIN19 last.",
       "lastUpdated": "2026-04-27"
     }
   ]
