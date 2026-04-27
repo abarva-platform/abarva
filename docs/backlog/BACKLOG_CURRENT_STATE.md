@@ -2,26 +2,30 @@
 
 > This file is written by the orchestration agent at the end of each wave.
 > The next autonomous session reads this file first.
-> Last updated by: orchestration agent (ALL WAVES COMPLETE — wave-admin-data + wave-admin-completion closed; 335/335 slices code_complete)
+> Last updated by: orchestration agent (wave-clean1 complete — repo drift cleanup; next: wave-programs-redesign)
 > Last updated: 2026-04-27
 
-## 🎉 BACKLOG COMPLETE — All 39 waves merged, 335 slices code_complete
+## Current state: wave-clean1 complete — entering wave-programs-redesign
 
-No pending slices remain. wave-admin-data and wave-admin-completion are the final waves,
-both at 100%. The admin data layer now reads natively from Supabase via adapter pattern.
-Set `ADMIN_DATA_MODE=live` and apply migrations (20260426120000–20260426130000) to activate.
+All 39 original waves merged. wave-admin-data and wave-admin-completion are 100% complete.
+wave-clean1 (hygiene) is now merged. Next surface wave is wave-programs-redesign.
 
 ## Last completed slices
-- sliceIds: ADMIN-DATA12, ADMIN-DATA13
-- waveId: wave-admin-data (complete, 100% — 13 of 13 slices done)
-- title: DATA12+DATA13 — overview pull-through + regression lock
-- prNumber: pending
+- sliceIds: CLEAN1-1, CLEAN1-2, CLEAN1-3, CLEAN1-4
+- waveId: wave-clean1 (complete, 100% — 4 of 4 slices done)
+- title: Repo Drift Cleanup
+- prNumber: 476
 - completedAt: 2026-04-27
-- testsGreen: 6 new DATA13 regression tests pass; tsc clean; eslint clean (pre-existing buildAgentContext warning only)
+- testsGreen: canonical-paths.test.ts 4/4; tsc clean; lint clean
 - skippedSlices: none
-- note: DATA12 replaced hardcoded SETUP_ITEMS constant in buildOverviewPageView() with getAdminOverviewSnapshot() adapter call. Added recentActivity + crossPageCounts to OverviewPageView interface. New CrossPageCountsBar + RecentActivityList components. admin/page.tsx renders all three. dataMode field reflects fixture vs live. ADMIN18 work fully delivered as DATA12. DATA13 added 6 regression tests in data13-overview-regression.test.ts locking canonical step IDs, recentActivity shape, crossPageCounts keys, dataMode validity, status values, and context.data/liveStatusKind consistency. wave-admin-data promoted to complete.
-- wave-admin-data: 100% complete
-- wave-admin-completion: 100% complete (ADMIN18 shipped as DATA12)
+- note: CLEAN1-1 merged duplicate doc trees (docs/product, docs/planning, docs/design archived to design-canon/archive). CLEAN1-2 collapsed stale dirs — components/agents→agent, components/brand+identity→abarva, lib/agents→lib/agent; redirect stubs replaced with next.config.ts entries. CLEAN1-3 archived tower-mockups + nexora data, cleared .codex-inbox, pruned 11 stale worktrees. CLEAN1-4 added ESLint no-restricted-imports + Jest canonical-path hygiene test. ~41 files deleted, ~46 archived, ~25 import sites updated.
+
+## Next: wave-programs-redesign
+- Target: Programs Index (WIRE2B 76 → 90) + Program Detail (72 → 90)
+- Pattern: extend admin canon (AdminCanonShellV2 + EditorialCanvas + AgentRail)
+- Priority: highest WIRE2B gap among remaining surfaces
+
+## Previous completed slices
 
 ## Previous completed slices
 - sliceIds: ADMIN-DATA3, ADMIN-DATA4, ADMIN-DATA5, ADMIN-DATA6, ADMIN-DATA7, ADMIN-DATA8, ADMIN-DATA9

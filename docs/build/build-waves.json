@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-04-27 (DATA11 code_complete — all 9 admin adapters wired to live Supabase · 85%)",
+  "lastUpdated": "2026-04-27 (wave-clean1 100% · PR #476 merged · repo drift cleanup complete)",
   "source": "Deterministic build wave manifest. Updated by integration agent after each wave merge.",
   "lifecycle": [
     "planned",
@@ -1446,6 +1446,23 @@
       "currentBlockers": [],
       "nextAction": "wave-admin-data 100% complete. DATA12+DATA13 code_complete.",
       "lastUpdated": "2026-04-27 (DATA12+DATA13 code_complete · wave-admin-data 100%)"
+    },
+    {
+      "waveId": "wave-clean1",
+      "title": "Repo Drift Cleanup",
+      "goal": "Hygiene pass — collapse stale duplicate directories, clear loose ends, archive legacy docs, add canonical-path drift guard. No feature work, no DB changes. CLEAN1-1: doc tree consolidation (docs/product, docs/planning, docs/design). CLEAN1-2: component+lib collapse (agents→agent, brand+identity→abarva, lib/agents→lib/agent, redirect stubs→next.config). CLEAN1-3: loose ends (tower-mockups, nexora data, codex-inbox, 11 stale worktrees). CLEAN1-4: ESLint no-restricted-imports + Jest canonical-path hygiene test.",
+      "status": "complete",
+      "percentComplete": 100,
+      "plannedSlices": ["CLEAN1-1", "CLEAN1-2", "CLEAN1-3", "CLEAN1-4"],
+      "completedSlices": ["CLEAN1-1", "CLEAN1-2", "CLEAN1-3", "CLEAN1-4"],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [476],
+      "validationStatus": "passed",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "wave-programs-redesign — extend admin canon pattern to Programs surface (WIRE2B gap: Index 76, Detail 72).",
+      "lastUpdated": "2026-04-27 (CLEAN1 100% · PR #476 merged · 4/4 slices code_complete)"
     }
   ]
 }
