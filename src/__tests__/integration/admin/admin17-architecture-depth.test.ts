@@ -21,7 +21,10 @@ import {
 const root = process.cwd();
 
 describe('ADMIN17 — Architecture depth', () => {
-  const view = buildArchitecturePageView();
+  let view: Awaited<ReturnType<typeof buildArchitecturePageView>>;
+  beforeAll(async () => {
+    view = await buildArchitecturePageView();
+  });
 
   // --- 1. PLANE_COMPONENTS manifest ----------------------------------------
   describe('PLANE_COMPONENTS manifest', () => {

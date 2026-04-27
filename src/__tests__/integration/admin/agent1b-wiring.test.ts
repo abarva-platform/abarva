@@ -25,6 +25,8 @@ describe('AGENT1B — Admin pages wired to agent foundation', () => {
     ['Agent Readiness', toAsync(buildAgentReadinessPageView)],
     ['Build Progress', toAsync(buildBuildProgressPageView)],
   ] as const)('%s page', (label, builder) => {
+    // Some builders are async (ADMIN-DATA8 made production-readiness async,
+    // ADMIN-DATA9 made architecture async). Await/resolve uniformly.
     type AnyView = ReturnType<typeof buildArchitecturePageView>;
     let view: AnyView;
     beforeAll(async () => {
@@ -85,8 +87,8 @@ describe('AGENT1B — Admin pages wired to agent foundation', () => {
   });
 
   describe('Architecture page specifically', () => {
-    it('editorial label is Atlas + Steward', () => {
-      const view = buildArchitecturePageView();
+    it('editorial label is Atlas + Steward', async () => {
+      const view = await buildArchitecturePageView();
       expect(view.editorial.title).toContain('Atlas');
     });
   });
