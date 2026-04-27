@@ -773,6 +773,27 @@
       "lastUpdated": "2026-04-26"
     },
     {
+      "waveId": "wave-21",
+      "name": "Control Tower Depth + Active Lens",
+      "goal": "Deliver the Control Tower active lens read model and component refresh, enabling lens-switching across 7 dimensions with scorecard strip, pressure cards, and Ask Atlas as a deferred secondary affordance.",
+      "status": "in_progress",
+      "percentComplete": 50,
+      "plannedSlices": [
+        "TOWER3"
+      ],
+      "completedSlices": [
+        "TOWER3"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "tsc_clean",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [],
+      "nextAction": "BRAND1-TOWER3 complete. Proceed to QA29, DEMO9.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
       "waveId": "wave-20",
       "name": "Demo Data Registry + Tenant Richness",
       "goal": "Create the canonical demo dataset registry encoding tenant richness tiers across all surfaces, enabling repeatable demo delivery with known data boundaries.",
@@ -844,7 +865,8 @@
         "INTEL2",
         "INTEL3",
         "TOWER1",
-        "TOWER2"
+        "TOWER2",
+        "TOWER3"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
@@ -852,7 +874,7 @@
       "validationStatus": "tests_green",
       "productionReadinessUpdated": true,
       "currentBlockers": [],
-      "nextAction": "BRAND1-TOWER2 complete. Proceed to TOWER3, QA29, DEMO9.",
+      "nextAction": "BRAND1-TOWER3 complete. Proceed to QA29, DEMO9.",
       "lastUpdated": "2026-04-26"
     },
     {
@@ -935,7 +957,8 @@
         "TOWER2"
       ],
       "completedSlices": [
-        "TOWER2"
+        "TOWER2",
+        "TOWER3"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
@@ -943,7 +966,7 @@
       "validationStatus": "tests_green",
       "productionReadinessUpdated": true,
       "currentBlockers": [],
-      "nextAction": "BRAND1-TOWER2 complete. Proceed to TOWER3, QA29, DEMO9.",
+      "nextAction": "BRAND1-TOWER3 complete. Proceed to QA29, DEMO9.",
       "lastUpdated": "2026-04-26"
     }
   ]

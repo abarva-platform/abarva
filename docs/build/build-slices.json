@@ -7784,6 +7784,13 @@
       "status": "code_complete",
       "wave": "wave-21",
       "lane": "I"
+    },
+    {
+      "id": "TOWER3",
+      "title": "Control Tower Active Lens Refresh",
+      "status": "code_complete",
+      "wave": "wave-21",
+      "lane": "J"
     }
   ]
 }
