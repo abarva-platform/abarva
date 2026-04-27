@@ -26,6 +26,7 @@ import {
   VENDOR_EVALUATION_PATTERN,
   buildVendorScorecard,
   getVendorEvaluationCriteriaByDimension,
+  type VendorEvaluationDimension,
   type VendorEvaluationPattern,
   type VendorScoreRating,
 } from '@/lib/solutions/vendor-evaluation-pattern';
@@ -51,6 +52,7 @@ import {
   getManifestEntriesForAgent,
   getPatternManifestEntry,
   listPatternManifestEntries,
+  type PatternManifestPackId,
 } from '@/lib/solutions/pattern-manifest';
 
 // ---------------------------------------------------------------------------
@@ -312,7 +314,7 @@ describe('PAT3 · VendorEvaluationPattern', () => {
 
     it('returns empty array for unknown dimension cast', () => {
       // TypeScript won't normally allow this, but test the runtime guard
-      const criteria = getVendorEvaluationCriteriaByDimension('nonexistent' as any);
+      const criteria = getVendorEvaluationCriteriaByDimension('nonexistent' as unknown as VendorEvaluationDimension);
       expect(criteria).toEqual([]);
     });
   });
@@ -585,7 +587,7 @@ describe('PAT5 · PatternManifest', () => {
 
     it('getPatternManifestEntry returns null for unknown id', () => {
       // TypeScript would complain, so cast
-      expect(getPatternManifestEntry('unknown_pack' as any)).toBeNull();
+      expect(getPatternManifestEntry('unknown_pack' as unknown as PatternManifestPackId)).toBeNull();
     });
 
     it('findManifestEntriesBySlug returns entry for known slug', () => {

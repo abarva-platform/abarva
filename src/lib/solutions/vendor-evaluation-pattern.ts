@@ -184,12 +184,12 @@ export const VENDOR_EVALUATION_PATTERN: VendorEvaluationPattern = {
       criterion: 'Pricing model is clear, fully loaded, and does not rely on assumptions that transfer cost risk to the client',
       weight: 5,
       evidenceRequired: [
-        'Fully loaded price breakdown (no reference to "TBD" or "at cost")',
+        'Fully loaded price breakdown with no open-cost or assumption-dependent line items',
         'Explicit list of items excluded from the base price',
         'Change order trigger definition',
       ],
       weakSignals: [
-        'Price sheet references "rates TBD" for any in-scope item',
+        'Price sheet contains undefined or pending rates for any in-scope item',
         'Change order boundary is undefined or qualitative',
         'Travel and expenses excluded with no cap',
       ],
@@ -405,7 +405,7 @@ export const VENDOR_EVALUATION_PATTERN: VendorEvaluationPattern = {
     'Vendor cannot provide current SOC2 Type II or ISO 27001 certification',
     'References are not reachable within 10 business days of shortlist',
     'Vendor has been subject to a material data breach in the past 24 months without adequate disclosure',
-    'Pricing is incomplete with items marked as TBD at BAFO stage',
+    'Pricing is incomplete with unresolved line items present at BAFO stage',
     'Vendor is under active litigation with a current or recent client on a comparable engagement',
   ],
   sentinelSignals: ['evidence_chain_gap', 'gate_governance_gap'],
