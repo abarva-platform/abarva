@@ -1,6 +1,6 @@
 import type { ContextLiveStatus } from '@/components/admin/ContextBar';
 import type { EvidenceStrength } from '@/components/admin/EvidenceStrengthPill';
-import { buildAgentContext } from '@/lib/agent/context-bundle';
+import { buildAgentContextAsync } from '@/lib/agent/context-bundle';
 import {
   computeAllPostures,
   type AgentPosture as AgentFoundationPosture,
@@ -428,7 +428,7 @@ function buildActionStrip(): BuildProgressAction[] {
 // ---------------------------------------------------------------------------
 
 export async function buildBuildProgressPageView(): Promise<BuildProgressPageView> {
-  const ctx = buildAgentContext('apex-retail', 'admin', 'build-progress');
+  const ctx = await buildAgentContextAsync('apex-retail', 'admin', 'build-progress');
   const editorial = generateStewardEditorial(ctx);
   const choices = buildAgentChoices(ctx, 3);
   const postures = computeAllPostures(ctx);

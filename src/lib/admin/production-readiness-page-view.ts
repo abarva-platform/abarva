@@ -15,7 +15,7 @@
 
 import type { ContextLiveStatus } from '@/components/admin/ContextBar';
 import type { EvidenceStrength } from '@/components/admin/EvidenceStrengthPill';
-import { buildAgentContext } from '@/lib/agent/context-bundle';
+import { buildAgentContextAsync } from '@/lib/agent/context-bundle';
 import {
   computeAllPostures,
   type AgentPosture as AgentFoundationPosture,
@@ -331,7 +331,7 @@ function mapHistoryEntry(
 export async function buildProductionReadinessPageView(
   tenantSlug: string = 'apex-retail',
 ): Promise<ProductionReadinessPageView> {
-  const ctx = buildAgentContext(tenantSlug, 'admin', 'production-readiness');
+  const ctx = await buildAgentContextAsync(tenantSlug, 'admin', 'production-readiness');
   const editorial = generateStewardEditorial(ctx);
   const choices = buildAgentChoices(ctx, 3);
   const postures = computeAllPostures(ctx);

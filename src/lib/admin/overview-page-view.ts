@@ -1,6 +1,6 @@
 import type { ContextLiveStatus } from '@/components/admin/ContextBar';
 import type { EvidenceStrength } from '@/components/admin/EvidenceStrengthPill';
-import { buildAgentContext } from '@/lib/agent/context-bundle';
+import { buildAgentContext, buildAgentContextAsync } from '@/lib/agent/context-bundle';
 import {
   computeAllPostures,
   type AgentPosture as AgentFoundationPosture,
@@ -85,8 +85,8 @@ const SETUP_ITEMS: ReadonlyArray<OverviewSetupItem> = [
   },
 ];
 
-export function buildOverviewPageView(): OverviewPageView {
-  const ctx = buildAgentContext('apex-retail', 'admin', 'overview');
+export async function buildOverviewPageView(): Promise<OverviewPageView> {
+  const ctx = await buildAgentContextAsync('apex-retail', 'admin', 'overview');
   const editorial = generateStewardEditorial(ctx);
   const choices = buildAgentChoices(ctx, 3);
   const postures = computeAllPostures(ctx);

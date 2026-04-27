@@ -1,6 +1,6 @@
 import type { ContextLiveStatus } from '@/components/admin/ContextBar';
 import type { EvidenceStrength } from '@/components/admin/EvidenceStrengthPill';
-import { buildAgentContext } from '@/lib/agent/context-bundle';
+import { buildAgentContextAsync } from '@/lib/agent/context-bundle';
 import {
   computeAllPostures,
   type AgentPosture as AgentFoundationPosture,
@@ -711,7 +711,7 @@ function buildActions(pilotBlockerCount: number): ConnectorAction[] {
 export async function buildConnectorsPageView(
   tenantSlug: string = 'apex-retail',
 ): Promise<ConnectorsPageView> {
-  const ctx = buildAgentContext(tenantSlug, 'admin', 'connectors');
+  const ctx = await buildAgentContextAsync(tenantSlug, 'admin', 'connectors');
   const editorial = generateStewardEditorial(ctx);
   const choices = buildAgentChoices(ctx, 3);
   const postures = computeAllPostures(ctx);

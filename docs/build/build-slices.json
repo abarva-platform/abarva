@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-04-27 (ADMIN-DATA1 audit + wave-admin-data backlog registered)",
+  "lastUpdated": "2026-04-27 (DATA11 code_complete · all 9 admin adapters wired to live Supabase)",
   "lifecycle": [
     "ready",
     "in_progress",
@@ -9130,12 +9130,12 @@
     {
       "id": "ADMIN-DATA11",
       "title": "AGENT1 context bundle wired to real DB",
-      "status": "backlog",
+      "status": "code_complete",
       "type": "code",
       "wave": "wave-admin-data",
       "track": "06-admin-readiness-architecture",
       "risk": "medium",
-      "notes": "Tier 3 · buildAgentContext source: hardcoded constants → live DB. Bundle shape unchanged. Feature flag AGENT_CONTEXT_LIVE_DB; default off in this slice."
+      "notes": "Tier 3 · All 9 admin adapters wired to live Supabase queries. AdminDataMigrationPendingError throws replaced. admin-db-helpers.ts with resolveClientId + mapDbRung + mapDbConnectorKind. buildAgentContextAsync added to context-bundle.ts. Users + agent-readiness adapters gracefully fall back to fixture. Migration 20260426130000_clients_add_slug.sql adds slug column."
     },
     {
       "id": "ADMIN-DATA12",
