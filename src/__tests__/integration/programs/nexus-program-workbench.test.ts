@@ -267,12 +267,22 @@ describe('NexusProgramWorkbench · component contract', () => {
     expect(componentSource).toContain('data-region="journey-hero"');
   });
 
-  it('renders the journey card with six PhaseTile buttons (no raised pop)', () => {
-    expect(componentSource).toContain('PhaseTile');
-    // The mockup uses uniform tinted tiles, not a translateY-raised card.
+  it('renders the slim journey strip + horizontal agent strip (agents lead)', () => {
+    // Slim journey: a compact stepper with phase markers, not the
+    // earlier 6-tile card. The marker symbol uses dots/checks instead
+    // of a translateY-raised tile.
+    expect(componentSource).toContain('SlimJourneyStrip');
+    expect(componentSource).toContain('SlimPhaseMarker');
     expect(componentSource).not.toContain("transform: 'translateY");
     // No floating "Maestro is here" tag — selection is the only emphasis.
     expect(componentSource).not.toContain('Maestro is here');
+    // Agents lead — a full-width horizontal AgentStrip is mounted
+    // immediately after the journey, with one card per agent.
+    expect(componentSource).toContain('AgentStrip');
+    expect(componentSource).toContain('AgentStripCard');
+    // The right-side AgentRail is gone; the strip carries the agents
+    // across the full width instead.
+    expect(componentSource).not.toContain('function AgentRail');
   });
 
   it('renders a single dark-navy Nexus brief panel', () => {

@@ -40,8 +40,6 @@ const RED_SOFT = '#FCE8E4';
 const GREEN = '#0F766E';
 const GREEN_TINT = '#EAF5EE';
 
-const LOCK_TINT = '#F2EFEA';
-
 const FONT =
   '"DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 const SERIF = 'Georgia, "Times New Roman", "Iowan Old Style", serif';
@@ -76,42 +74,48 @@ function Eyebrow({
 
 // --- journey card --------------------------------------------------------
 
-function phaseTileStyle(
+// Slim phase journey: a compact horizontal stepper. Each phase is a
+// small dot + label; connectors mark progress. Total height ~56px so
+// the visual spine of the page is the agents, not the bar.
+
+function phaseDotStyle(
   state: NexusWorkbenchPhaseNode['state'],
   isSelected: boolean,
 ): React.CSSProperties {
   const palette =
     state === 'done'
-      ? { bg: GREEN_TINT, border: 'rgba(15,118,110,0.30)' }
+      ? { bg: GREEN, fg: '#FFFFFF', ring: 'rgba(15,118,110,0.18)' }
       : state === 'current'
-        ? { bg: BLUE_TINT, border: 'rgba(11,74,145,0.40)' }
+        ? { bg: NAVY, fg: '#FFFFFF', ring: 'rgba(19,43,79,0.20)' }
         : state === 'gate-pending'
-          ? { bg: AMBER_TINT, border: 'rgba(166,95,0,0.40)' }
-          : { bg: LOCK_TINT, border: BORDER };
+          ? { bg: AMBER, fg: '#FFFFFF', ring: 'rgba(166,95,0,0.20)' }
+          : { bg: '#FFFFFF', fg: MUTED_SOFT, ring: BORDER };
   return {
-    flex: '1 1 0',
-    minWidth: 144,
-    padding: '14px 14px 16px',
-    borderRadius: 14,
+    width: 22,
+    height: 22,
+    borderRadius: 999,
     background: palette.bg,
-    border: `${isSelected ? 2 : 1}px solid ${isSelected ? NAVY : palette.border}`,
-    boxShadow: isSelected ? '0 14px 30px rgba(19,43,79,0.10)' : 'none',
-    transition: 'border-color 160ms ease, box-shadow 160ms ease',
-    cursor: 'pointer',
-    textAlign: 'left',
-    font: 'inherit',
-    color: 'inherit',
+    color: palette.fg,
+    border: `${isSelected ? 2 : 1}px solid ${isSelected ? NAVY : palette.ring}`,
+    boxShadow: isSelected ? '0 0 0 4px rgba(19,43,79,0.10)' : 'none',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 10,
+    fontWeight: 800,
+    letterSpacing: 0.2,
+    flex: '0 0 auto',
   };
 }
 
-function phaseStateTextColor(state: NexusWorkbenchPhaseNode['state']): string {
+function phaseLabelColor(state: NexusWorkbenchPhaseNode['state']): string {
   if (state === 'done') return GREEN;
-  if (state === 'current') return BLUE;
+  if (state === 'current') return INK;
   if (state === 'gate-pending') return AMBER;
   return MUTED_SOFT;
 }
 
-function PhaseTile({
+function SlimPhaseMarker({
   phase,
   isSelected,
   onSelect,
@@ -120,6 +124,7 @@ function PhaseTile({
   isSelected: boolean;
   onSelect: (key: string) => void;
 }) {
+  const dotGlyph = phase.state === 'done' ? '✓' : phase.state === 'current' ? `${phase.index}` : phase.state === 'gate-pending' ? 'G' : `${phase.index}`;
   return (
     <button
       type="button"
@@ -128,37 +133,35 @@ function PhaseTile({
       aria-pressed={isSelected}
       aria-label={`Focus Nexus workbench on ${phase.label} (${phase.stateLabel})`}
       onClick={() => onSelect(phase.key)}
-      style={phaseTileStyle(phase.state, isSelected)}
+      style={{
+        display: 'inline-flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 6,
+        padding: '4px 8px',
+        background: 'transparent',
+        border: 0,
+        cursor: 'pointer',
+        font: 'inherit',
+        color: 'inherit',
+      }}
     >
-      <div style={{ color: MUTED_SOFT, fontSize: 10.5, fontWeight: 800, letterSpacing: '0.14em' }}>
-        P{phase.index}
-      </div>
-      <div
+      <span style={phaseDotStyle(phase.state, isSelected)}>{dotGlyph}</span>
+      <span
         style={{
-          marginTop: 8,
-          fontFamily: SERIF,
-          fontSize: 18,
-          color: INK,
-          lineHeight: 1.15,
+          color: phaseLabelColor(phase.state),
+          fontSize: 11,
+          fontWeight: phase.state === 'current' ? 700 : 600,
+          letterSpacing: 0.1,
         }}
       >
         {phase.label}
-      </div>
-      <div
-        style={{
-          marginTop: 8,
-          color: phaseStateTextColor(phase.state),
-          fontSize: 11.5,
-          fontWeight: 600,
-        }}
-      >
-        {phase.stateLabel}
-      </div>
+      </span>
     </button>
   );
 }
 
-function JourneyCard({
+function SlimJourneyStrip({
   programIdentity,
   subtitle,
   phases,
@@ -177,57 +180,83 @@ function JourneyCard({
       data-region="journey-hero"
       aria-label="Program journey"
       style={{
-        padding: '22px 22px 20px',
-        borderRadius: 18,
+        padding: '12px 18px',
+        borderRadius: 999,
         background: CARD,
         border: `1px solid ${BORDER}`,
-        boxShadow: '0 12px 28px rgba(19,43,79,0.04)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 14,
+        flexWrap: 'wrap',
       }}
     >
-      <h2
+      <span
         style={{
-          margin: 0,
-          fontFamily: SERIF,
-          fontSize: 26,
-          fontWeight: 600,
-          color: INK,
-          lineHeight: 1.16,
+          color: NAVY,
+          fontSize: 10.5,
+          fontWeight: 800,
+          letterSpacing: '0.16em',
+          textTransform: 'uppercase',
+          flex: '0 0 auto',
         }}
       >
         Program journey
-      </h2>
-      <p
-        style={{
-          margin: '6px 0 16px',
-          color: MUTED,
-          fontSize: 13.5,
-          lineHeight: 1.5,
-        }}
-      >
-        {subtitle}
-      </p>
+      </span>
       <span aria-hidden style={{ display: 'none' }}>
-        {/* Keep the legacy "Phase Journey" marker text in source for the
-         *  contract test, even though the visible heading is now "Program
+        {/* Keep the canon "Phase Journey" marker text in source for the
+         *  contract test even though the visible label says "Program
          *  journey". */}
         {journeyText} · for {programIdentity}
       </span>
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(6, minmax(0, 1fr))',
-          gap: 10,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 4,
+          flex: '1 1 auto',
+          flexWrap: 'wrap',
         }}
       >
-        {phases.map((phase) => (
-          <PhaseTile
-            key={phase.key}
-            phase={phase}
-            isSelected={phase.key === selectedPhaseKey}
-            onSelect={onSelect}
-          />
-        ))}
+        {phases.map((phase, index) => {
+          const next = phases[index + 1];
+          const connectorTone =
+            phase.state === 'done' ? GREEN : phase.state === 'current' ? NAVY : 'rgba(19,43,79,0.16)';
+          return (
+            <span
+              key={phase.key}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+            >
+              <SlimPhaseMarker
+                phase={phase}
+                isSelected={phase.key === selectedPhaseKey}
+                onSelect={onSelect}
+              />
+              {next ? (
+                <span
+                  aria-hidden
+                  style={{
+                    width: 28,
+                    height: 2,
+                    background: connectorTone,
+                    borderRadius: 2,
+                    opacity: phase.state === 'locked' ? 0.55 : 1,
+                  }}
+                />
+              ) : null}
+            </span>
+          );
+        })}
       </div>
+      <span
+        style={{
+          color: MUTED,
+          fontSize: 11.5,
+          flex: '0 1 auto',
+          marginLeft: 'auto',
+        }}
+      >
+        {subtitle}
+      </span>
     </section>
   );
 }
@@ -843,7 +872,12 @@ function MissingInputsPanel({ inputs }: { inputs: NexusWorkbenchMissingInput[] }
   );
 }
 
-// --- agent rail (right) --------------------------------------------------
+// --- agent strip ---------------------------------------------------------
+//
+// Promoted to a full-width horizontal lane immediately after the slim
+// journey. Lead with the agents: each one gets a prominent card so the
+// page reads "here's what each agent is doing" before any other
+// workspace content.
 
 function agentStateTone(state: NexusWorkbenchAgentHandoff['state']): { fg: string; bg: string } {
   if (state === 'active') return { fg: BLUE, bg: BLUE_SOFT };
@@ -852,56 +886,94 @@ function agentStateTone(state: NexusWorkbenchAgentHandoff['state']): { fg: strin
   return { fg: MUTED, bg: '#F4EFE6' };
 }
 
-function AgentRow({ handoff }: { handoff: NexusWorkbenchAgentHandoff }) {
+function AgentStripCard({ handoff }: { handoff: NexusWorkbenchAgentHandoff }) {
   const tone = agentStateTone(handoff.state);
   const isActive = handoff.state === 'active';
+  const accentBar =
+    handoff.state === 'active'
+      ? NAVY
+      : handoff.state === 'blocked'
+        ? RED
+        : handoff.state === 'partial'
+          ? AMBER
+          : BORDER;
   return (
-    <div
+    <article
+      data-agent={handoff.agent}
       style={{
-        padding: '12px 14px',
+        flex: '1 1 0',
+        minWidth: 200,
+        padding: '16px 16px 14px',
         borderRadius: 14,
         background: isActive ? BLUE_TINT : CARD,
         border: `1px solid ${isActive ? 'rgba(11,74,145,0.30)' : BORDER}`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 10,
+        boxShadow: isActive ? '0 14px 28px rgba(11,74,145,0.10)' : 'none',
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
-      <div>
-        <div
+      <span
+        aria-hidden
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 4,
+          background: accentBar,
+        }}
+      />
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 10,
+          marginBottom: 8,
+        }}
+      >
+        <h4
           style={{
+            margin: 0,
             fontFamily: SERIF,
-            fontSize: 16,
+            fontSize: 20,
             fontWeight: 600,
             color: INK,
-            lineHeight: 1.2,
+            lineHeight: 1.15,
           }}
         >
           {handoff.label}
-        </div>
-        <div style={{ marginTop: 4, color: MUTED, fontSize: 12, lineHeight: 1.45 }}>
-          {handoff.role}
-        </div>
+        </h4>
+        <span
+          style={{
+            padding: '4px 10px',
+            borderRadius: 999,
+            background: tone.bg,
+            color: tone.fg,
+            fontSize: 10.5,
+            fontWeight: 800,
+            letterSpacing: '0.14em',
+            flex: '0 0 auto',
+          }}
+        >
+          {handoff.stateLabel}
+        </span>
       </div>
-      <span
+      <p
         style={{
-          padding: '4px 10px',
-          borderRadius: 999,
-          background: tone.bg,
-          color: tone.fg,
-          fontSize: 10.5,
-          fontWeight: 800,
-          letterSpacing: '0.14em',
+          margin: 0,
+          color: MUTED,
+          fontSize: 12.5,
+          lineHeight: 1.45,
         }}
       >
-        {handoff.stateLabel}
-      </span>
-    </div>
+        {handoff.role}
+      </p>
+    </article>
   );
 }
 
-function AgentRail({
+function AgentStrip({
   agentHandoffs,
   threeChoicesRule,
 }: {
@@ -909,60 +981,73 @@ function AgentRail({
   threeChoicesRule: string;
 }) {
   return (
-    <aside
+    <section
       aria-label="Agent rail"
       style={{
-        padding: '20px 20px 18px',
+        padding: '18px 20px 18px',
         borderRadius: 18,
-        background: CARD,
+        background: SURFACE,
         border: `1px solid ${BORDER}`,
         display: 'flex',
         flexDirection: 'column',
-        gap: 12,
-        alignSelf: 'flex-start',
+        gap: 14,
       }}
     >
-      <div>
-        <h3
-          style={{
-            margin: 0,
-            fontFamily: SERIF,
-            fontSize: 20,
-            fontWeight: 600,
-            color: INK,
-          }}
-        >
-          Agent handoff rail
-        </h3>
-        <p
-          style={{
-            margin: '6px 0 6px',
-            color: MUTED,
-            fontSize: 12.5,
-            lineHeight: 1.5,
-          }}
-        >
-          Agents appear because they have a job in the current program state, not as decorative chat personas.
-        </p>
-      </div>
-      {agentHandoffs.map((handoff) => (
-        <AgentRow key={handoff.agent} handoff={handoff} />
-      ))}
       <div
         style={{
-          marginTop: 4,
-          padding: '10px 12px',
-          borderRadius: 12,
-          background: SURFACE,
-          border: `1px solid ${BORDER}`,
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          gap: 12,
+          flexWrap: 'wrap',
         }}
       >
-        <Eyebrow>3 choices + custom</Eyebrow>
-        <div style={{ marginTop: 6, color: MUTED, fontSize: 12, lineHeight: 1.45 }}>
-          {threeChoicesRule}
+        <div>
+          <h3
+            style={{
+              margin: 0,
+              fontFamily: SERIF,
+              fontSize: 22,
+              fontWeight: 600,
+              color: INK,
+              lineHeight: 1.2,
+            }}
+          >
+            Agent handoff rail
+          </h3>
+          <p
+            style={{
+              margin: '4px 0 0',
+              color: MUTED,
+              fontSize: 13,
+              lineHeight: 1.5,
+            }}
+          >
+            Agents appear because they have a job in the current program state, not as decorative chat personas.
+          </p>
         </div>
+        <span
+          style={{
+            color: MUTED_SOFT,
+            fontSize: 11,
+            fontStyle: 'italic',
+          }}
+        >
+          3 choices + custom · {threeChoicesRule}
+        </span>
       </div>
-    </aside>
+      <div
+        style={{
+          display: 'flex',
+          gap: 12,
+          flexWrap: 'wrap',
+        }}
+      >
+        {agentHandoffs.map((handoff) => (
+          <AgentStripCard key={handoff.agent} handoff={handoff} />
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -1010,8 +1095,10 @@ export function NexusProgramWorkbench(props: NexusProgramWorkbenchProps) {
         </p>
       </header>
 
-      <div style={{ marginBottom: 22 }}>
-        <JourneyCard
+      {/* Slim journey strip — single line, ~56px tall. The visual spine
+       *  of the page is the agents below, not this bar. */}
+      <div style={{ marginBottom: 16 }}>
+        <SlimJourneyStrip
           programIdentity={view.programIdentity}
           subtitle={view.journeySubtitle}
           phases={view.phaseJourney}
@@ -1020,116 +1107,112 @@ export function NexusProgramWorkbench(props: NexusProgramWorkbenchProps) {
         />
       </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) minmax(280px, 320px)',
-          gap: 18,
-          alignItems: 'start',
-        }}
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-          <NexusBriefCard
-            brief={selectedFocus.brief}
-            cta={selectedFocus.cta}
-            contextUsed={selectedFocus.contextUsed}
-            confidenceLabel={selectedFocus.confidenceLabel}
-            blockerLabel={selectedFocus.blockerLabel}
-          />
+      {/* Agents lead — full-width agent strip immediately after the
+       *  journey. The page reads "here's what each agent is doing"
+       *  before the workspace content. */}
+      <div style={{ marginBottom: 18 }}>
+        <AgentStrip
+          agentHandoffs={selectedFocus.agentHandoffs}
+          threeChoicesRule={view.threeChoicesRule}
+        />
+      </div>
 
-          <SubnavTabsBar
-            tabs={view.subnavTabs}
-            activeKey={activeTab}
-            onSelect={setActiveTab}
-          />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+        <NexusBriefCard
+          brief={selectedFocus.brief}
+          cta={selectedFocus.cta}
+          contextUsed={selectedFocus.contextUsed}
+          confidenceLabel={selectedFocus.confidenceLabel}
+          blockerLabel={selectedFocus.blockerLabel}
+        />
 
-          {activeTab === 'overview' ? (
-            <>
-              <SuggestedActionsCard
-                actions={selectedFocus.suggestedActions}
-                customAskPlaceholder={view.customAskPlaceholder}
-              />
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-                  gap: 14,
-                }}
-              >
-                <CurrentGateCard
-                  gateLabel={view.currentGateLabel}
-                  description={view.currentGateDescription}
-                />
-                <EvidenceCoverageCard
-                  slices={view.evidenceCoverage}
-                  note={view.evidenceCoverageNote}
-                />
-              </div>
-            </>
-          ) : null}
+        <SubnavTabsBar
+          tabs={view.subnavTabs}
+          activeKey={activeTab}
+          onSelect={setActiveTab}
+        />
 
-          {activeTab === 'workshop' ? (
-            <WorkshopCanvas workshop={selectedFocus.workshop} />
-          ) : null}
-
-          {activeTab === 'evidence' ? (
-            <>
-              <MissingInputsPanel inputs={selectedFocus.missingInputs} />
-              <EvidenceCoverageCard
-                slices={view.evidenceCoverage}
-                note={view.evidenceCoverageNote}
-              />
-            </>
-          ) : null}
-
-          {activeTab === 'gate' ? (
-            <>
-              <CurrentGateCard
-                gateLabel={view.currentGateLabel}
-                description={view.currentGateDescription}
-              />
-              <MissingInputsPanel inputs={selectedFocus.missingInputs} />
-            </>
-          ) : null}
-
-          {activeTab === 'actions' ? (
+        {activeTab === 'overview' ? (
+          <>
             <SuggestedActionsCard
               actions={selectedFocus.suggestedActions}
               customAskPlaceholder={view.customAskPlaceholder}
             />
-          ) : null}
-
-          {activeTab === 'deliverables' ? (
-            <section
-              aria-label="Deliverables scoped panel"
+            <div
               style={{
-                padding: '20px 22px 18px',
-                borderRadius: 18,
-                background: CARD,
-                border: `1px solid ${BORDER}`,
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                gap: 14,
               }}
             >
-              <Eyebrow>Deliverables</Eyebrow>
-              <p
-                style={{
-                  margin: '8px 0 0',
-                  color: BODY,
-                  fontSize: 13,
-                  lineHeight: 1.5,
-                }}
-              >
-                The full deliverables-by-phase table renders below the workbench (C-7).
-                Click a row in that table to open the Deliverable Detail Drawer once the
-                drawer wave lands.
-              </p>
-            </section>
-          ) : null}
-        </div>
+              <CurrentGateCard
+                gateLabel={view.currentGateLabel}
+                description={view.currentGateDescription}
+              />
+              <EvidenceCoverageCard
+                slices={view.evidenceCoverage}
+                note={view.evidenceCoverageNote}
+              />
+            </div>
+          </>
+        ) : null}
 
-        <AgentRail
-          agentHandoffs={selectedFocus.agentHandoffs}
-          threeChoicesRule={view.threeChoicesRule}
-        />
+        {activeTab === 'workshop' ? (
+          <WorkshopCanvas workshop={selectedFocus.workshop} />
+        ) : null}
+
+        {activeTab === 'evidence' ? (
+          <>
+            <MissingInputsPanel inputs={selectedFocus.missingInputs} />
+            <EvidenceCoverageCard
+              slices={view.evidenceCoverage}
+              note={view.evidenceCoverageNote}
+            />
+          </>
+        ) : null}
+
+        {activeTab === 'gate' ? (
+          <>
+            <CurrentGateCard
+              gateLabel={view.currentGateLabel}
+              description={view.currentGateDescription}
+            />
+            <MissingInputsPanel inputs={selectedFocus.missingInputs} />
+          </>
+        ) : null}
+
+        {activeTab === 'actions' ? (
+          <SuggestedActionsCard
+            actions={selectedFocus.suggestedActions}
+            customAskPlaceholder={view.customAskPlaceholder}
+          />
+        ) : null}
+
+        {activeTab === 'deliverables' ? (
+          <section
+            aria-label="Deliverables scoped panel"
+            style={{
+              padding: '20px 22px 18px',
+              borderRadius: 18,
+              background: CARD,
+              border: `1px solid ${BORDER}`,
+            }}
+          >
+            <Eyebrow>Deliverables</Eyebrow>
+            <p
+              style={{
+                margin: '8px 0 0',
+                color: BODY,
+                fontSize: 13,
+                lineHeight: 1.5,
+              }}
+            >
+              The full deliverables-by-phase table renders below the workbench (C-7).
+              Click a row in that table to open the Deliverable Detail Drawer once the
+              drawer wave lands.
+            </p>
+          </section>
+        ) : null}
       </div>
 
       <p
