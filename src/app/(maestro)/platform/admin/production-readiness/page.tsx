@@ -7,8 +7,8 @@ import { ProductionReadinessTracker } from '@/components/admin/ProductionReadine
 import { AdminCanonShell } from '@/components/admin/AdminCanonShell';
 import {
   buildProductionReadinessApiResponse,
-  buildProductionReadinessView,
-} from '@/lib/admin/production-readiness';
+  buildProductionReadinessViewFromDisk as buildProductionReadinessView,
+} from '@/lib/admin/production-readiness-loader';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

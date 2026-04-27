@@ -1,6 +1,6 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
-import { buildProductionReadinessApiResponse } from '@/lib/admin/production-readiness';
+import { buildProductionReadinessApiResponse } from '@/lib/admin/production-readiness-loader';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

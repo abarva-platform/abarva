@@ -1,10 +1,12 @@
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import {
-  buildProductionReadinessApiResponse,
-  buildProductionReadinessView,
   getProductionReadinessRefreshMetadata,
 } from '@/lib/admin/production-readiness';
+import {
+  buildProductionReadinessApiResponse,
+  buildProductionReadinessViewFromDisk as buildProductionReadinessView,
+} from '@/lib/admin/production-readiness-loader';
 import { assertNoLikelySecretValues } from '@/lib/qa/secret-hygiene-patterns';
 
 const fixedGeneratedAt = '2026-04-26T00:00:00.000Z';

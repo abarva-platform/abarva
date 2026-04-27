@@ -1,5 +1,3 @@
-import { readFileSync } from 'fs';
-import { join } from 'path';
 
 export const PRODUCTION_READINESS_STATUSES = [
   'not_started',
@@ -344,14 +342,14 @@ const BLOCKER_SEVERITY_ORDER: Record<ProductionReadinessBlockerSeverity, number>
   low: 3,
 };
 
-const PRODUCTION_READINESS_MANIFEST_PATH = join(process.cwd(), 'docs/build/production-readiness.json');
-
-export function loadProductionReadinessManifest(): ProductionReadinessManifest {
-  return JSON.parse(readFileSync(PRODUCTION_READINESS_MANIFEST_PATH, 'utf8')) as ProductionReadinessManifest;
-}
+// loadProductionReadinessManifest is intentionally excluded from this file.
+// It uses Node.js 'fs' and must only be called from server-side code.
+// Import it from '@/lib/admin/production-readiness-loader' in API routes and
+// Server Components. This file (production-readiness.ts) is safe for client
+// component import because it contains only types, constants, and pure functions.
 
 export function buildProductionReadinessView(
-  manifestInput: ProductionReadinessManifest = loadProductionReadinessManifest(),
+  manifestInput: ProductionReadinessManifest,
   generatedAt: string = manifestInput.lastUpdated,
 ): ProductionReadinessView {
   const loadedManifest = manifestInput;
@@ -393,16 +391,9 @@ export function getProductionReadinessRefreshMetadata(
   };
 }
 
-export function buildProductionReadinessApiResponse(generatedAt: string): ProductionReadinessApiResponse {
-  const manifest = loadProductionReadinessManifest();
-  const view = buildProductionReadinessView(manifest, generatedAt);
-  return {
-    ...getProductionReadinessRefreshMetadata(generatedAt),
-    ...view.freshness,
-    manifest,
-    view,
-  };
-}
+// buildProductionReadinessApiResponse is intentionally excluded from this file.
+// It requires loadProductionReadinessManifest (Node.js fs). Import it from
+// '@/lib/admin/production-readiness-loader' in API routes and Server Components.
 
 export function getProductionReadinessFreshnessMetadata(
   manifest: ProductionReadinessManifest,

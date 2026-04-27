@@ -2,12 +2,10 @@ import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import {
   buildProductionReadinessView,
-  buildProductionReadinessApiResponse,
   computeOverallReadinessPercent,
   getProductionReadinessFreshnessMetadata,
   getProductionReadinessComponentProgress,
   getProductionReadinessSegments,
-  loadProductionReadinessManifest,
   PRODUCTION_READINESS_COMPONENT_IDS,
   PRODUCTION_READINESS_DIMENSIONS,
   PRODUCTION_READINESS_GATES,
@@ -17,6 +15,11 @@ import {
   summarizeProductionReadiness,
   type ProductionReadinessManifest,
 } from '@/lib/admin/production-readiness';
+import {
+  buildProductionReadinessApiResponse,
+  buildProductionReadinessViewFromDisk,
+  loadProductionReadinessManifest,
+} from '@/lib/admin/production-readiness-loader';
 
 const manifestPath = resolve(__dirname, '../../../../docs/build/production-readiness.json');
 const protocolPath = resolve(__dirname, '../../../../docs/build/PRODUCTION_READINESS_UPDATE_PROTOCOL.md');
@@ -148,7 +151,7 @@ describe('production-readiness.json manifest', () => {
 
 describe('production readiness read model', () => {
   it('is deterministic across repeated calls', () => {
-    expect(buildProductionReadinessView()).toEqual(buildProductionReadinessView());
+    expect(buildProductionReadinessViewFromDisk()).toEqual(buildProductionReadinessViewFromDisk());
   });
 
   it('exposes freshness metadata without changing deterministic scoring', () => {
@@ -261,7 +264,7 @@ describe('production readiness read model', () => {
   });
 
   it('exposes top blockers and next recommended actions', () => {
-    const view = buildProductionReadinessView();
+    const view = buildProductionReadinessViewFromDisk();
     expect(view.summary.topBlockers.length).toBeGreaterThan(0);
     expect(view.summary.topBlockers.some((blocker) => blocker.severity === 'critical')).toBe(true);
     expect(view.recommendedActions.length).toBeGreaterThan(0);
