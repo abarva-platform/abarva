@@ -1032,6 +1032,42 @@
       "currentBlockers": [],
       "nextAction": "Wave 24 docs complete. Check Wave 25 gate conditions before proceeding.",
       "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-25",
+      "name": "Production Hardening + E2E Validation",
+      "goal": "Ship production readiness enforcer (PROD9), no-fabrication regression suite (QA30), production smoke test (QA31), and evidence trust audit (QA32). LANE-E (LIVE4 auth) deferred pending founder auth provider decision.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "PROD9",
+        "QA30",
+        "QA31",
+        "QA32"
+      ],
+      "completedSlices": [
+        "PROD9",
+        "QA30",
+        "QA31",
+        "QA32"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [
+        "LIVE4"
+      ],
+      "mergedPrs": [],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [
+        {
+          "id": "LIVE4",
+          "tier": 3,
+          "reason": "Auth provider decision required before live auth integration can proceed",
+          "deferredTo": "wave-26"
+        }
+      ],
+      "nextAction": "Wave 25 complete. LIVE4 (live auth integration) deferred to wave-26 pending founder auth provider decision.",
+      "lastUpdated": "2026-04-26"
     }
   ]
 }

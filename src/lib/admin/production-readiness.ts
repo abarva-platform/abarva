@@ -688,3 +688,43 @@ function createGateStatusCounts(): Record<ProductionReadinessGateStatus, number>
     not_run: 0,
   };
 }
+
+// ---------------------------------------------------------------------------
+// PROD9: Blocker badge enforcement
+//
+// A component's effective display status for badge/pill rendering must be
+// 'blocked' if the component has any active blockers, regardless of the
+// component's status field. This prevents a green badge from appearing on
+// a component that has open blockers.
+// ---------------------------------------------------------------------------
+
+/**
+ * The statuses that appear "passing" or "green" in the UI.
+ * If a component with one of these statuses has active blockers,
+ * its effective display status is overridden to 'blocked'.
+ */
+const PASSING_STATUSES: ReadonlySet<ProductionReadinessStatus> = new Set<ProductionReadinessStatus>([
+  'tested',
+  'full_flow_ready',
+  'pilot_ready',
+  'production_ready',
+]);
+
+/**
+ * Returns the effective display status for a component.
+ * If the component has active blockers and its status is in PASSING_STATUSES,
+ * returns 'blocked' to prevent a green badge from being shown.
+ * Otherwise returns the component's status unchanged.
+ *
+ * Use this function in the UI wherever a status badge/pill is rendered for
+ * a ProductionReadinessComponent or ProductionReadinessComponentProgress.
+ */
+export function getEffectiveDisplayStatus(
+  status: ProductionReadinessStatus,
+  blockerCount: number,
+): ProductionReadinessStatus {
+  if (blockerCount > 0 && PASSING_STATUSES.has(status)) {
+    return 'blocked';
+  }
+  return status;
+}

@@ -8041,6 +8041,69 @@
       "wave": "wave-23",
       "completedAt": "2026-04-26",
       "prBranch": "codex/wave-23-source-program-storyline-demo"
+    },
+    {
+      "id": "PROD9",
+      "name": "Production Readiness Blocker Badge Enforcement",
+      "category": "admin",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "AbarVa Autonomous Orchestration",
+      "dependsOn": [],
+      "allowedFiles": [
+        "src/lib/admin/production-readiness.ts",
+        "src/components/admin/ProductionReadinessTracker.tsx",
+        "src/__tests__/integration/qa/production-readiness-blocker-gate.test.ts"
+      ],
+      "wave": "wave-25",
+      "completedAt": "2026-04-26",
+      "sliceDoc": "docs/build/slices/PROD9_PRODUCTION_READINESS_BLOCKER_GATE.md"
+    },
+    {
+      "id": "QA30",
+      "name": "No-Fabrication Regression Suite",
+      "category": "qa",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "AbarVa Autonomous Orchestration",
+      "dependsOn": [],
+      "allowedFiles": [
+        "src/__tests__/integration/qa/no-fabrication-regression.test.ts"
+      ],
+      "wave": "wave-25",
+      "completedAt": "2026-04-26",
+      "sliceDoc": "docs/build/slices/QA30_NO_FABRICATION_SUITE.md"
+    },
+    {
+      "id": "QA31",
+      "name": "Production Smoke Test — 16 Routes",
+      "category": "qa",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "AbarVa Autonomous Orchestration",
+      "dependsOn": [],
+      "allowedFiles": [
+        "src/__tests__/integration/qa/production-smoke-test.test.ts",
+        "scripts/smoke-test.sh"
+      ],
+      "wave": "wave-25",
+      "completedAt": "2026-04-26",
+      "sliceDoc": "docs/build/slices/QA31_PRODUCTION_SMOKE_TEST.md"
+    },
+    {
+      "id": "QA32",
+      "name": "Evidence Trust Audit — Dataset Trust Model Enforcement Tests",
+      "category": "qa",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "AbarVa Autonomous Orchestration",
+      "dependsOn": [],
+      "allowedFiles": [
+        "src/__tests__/integration/qa/evidence-trust-audit.test.ts"
+      ],
+      "wave": "wave-25",
+      "completedAt": "2026-04-26",
+      "sliceDoc": "docs/build/slices/QA32_EVIDENCE_TRUST_AUDIT.md"
     }
   ]
 }
