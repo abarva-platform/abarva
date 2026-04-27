@@ -7,16 +7,23 @@ import { buildUsersAccessPageView } from '@/lib/admin/users-access-page-view';
 import { buildAgentReadinessPageView } from '@/lib/admin/agent-readiness-page-view';
 import { buildBuildProgressPageView } from '@/lib/admin/build-progress-page-view';
 
+// ADMIN-DATA3+: builders are progressively migrated to async. Wrap each
+// builder so the describe.each table is homogenous regardless of sync/async.
+type AnyBuilder = () => unknown | Promise<unknown>;
+const toAsync =
+  (fn: AnyBuilder) => async (): Promise<ReturnType<typeof buildArchitecturePageView>> =>
+    Promise.resolve(fn()) as Promise<ReturnType<typeof buildArchitecturePageView>>;
+
 describe('AGENT1B — Admin pages wired to agent foundation', () => {
   describe.each([
-    ['Architecture', buildArchitecturePageView],
-    ['Production Readiness', buildProductionReadinessPageView],
-    ['Overview', buildOverviewPageView],
-    ['Data Trust', buildDataTrustPageView],
-    ['Connectors', buildConnectorsPageView],
-    ['Users & Access', buildUsersAccessPageView],
-    ['Agent Readiness', buildAgentReadinessPageView],
-    ['Build Progress', buildBuildProgressPageView],
+    ['Architecture', toAsync(buildArchitecturePageView)],
+    ['Production Readiness', toAsync(buildProductionReadinessPageView)],
+    ['Overview', toAsync(buildOverviewPageView)],
+    ['Data Trust', toAsync(buildDataTrustPageView)],
+    ['Connectors', toAsync(buildConnectorsPageView)],
+    ['Users & Access', toAsync(buildUsersAccessPageView)],
+    ['Agent Readiness', toAsync(buildAgentReadinessPageView)],
+    ['Build Progress', toAsync(buildBuildProgressPageView)],
   ] as const)('%s page', (label, builder) => {
     type AnyView = ReturnType<typeof buildArchitecturePageView>;
     let view: AnyView;

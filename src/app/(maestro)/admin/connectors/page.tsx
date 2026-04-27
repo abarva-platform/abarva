@@ -63,7 +63,7 @@ export default async function ConnectorsPage({
 }: {
   searchParams: Promise<ConnectorsSearchParams>;
 }) {
-  const view = buildConnectorsPageView();
+  const view = await buildConnectorsPageView();
   const params = await searchParams;
   const activeTab = parseTab(params.tab, view.defaultTab);
   const selectedId = params.connector;

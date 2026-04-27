@@ -34,15 +34,20 @@ interface BasePageView {
   deterministicSeed: true;
 }
 
+// ADMIN-DATA3+: builders are progressively migrated to async; normalize all
+// builders to a uniform async-returning shape so describe.each is homogenous.
 type Builder = () => BasePageView | Promise<BasePageView>;
 
-const builders: ReadonlyArray<readonly [string, Builder]> = [
-  ['Overview', buildOverviewPageView],
-  ['Data Trust', buildDataTrustPageView],
-  ['Connectors', buildConnectorsPageView],
-  ['Users & Access', buildUsersAccessPageView],
-  ['Agent Readiness', buildAgentReadinessPageView],
-  ['Build Progress', buildBuildProgressPageView],
+const toAsync =
+  (fn: Builder) => async (): Promise<BasePageView> => Promise.resolve(fn());
+
+const builders: ReadonlyArray<readonly [string, () => Promise<BasePageView>]> = [
+  ['Overview', toAsync(buildOverviewPageView)],
+  ['Data Trust', toAsync(buildDataTrustPageView)],
+  ['Connectors', toAsync(buildConnectorsPageView)],
+  ['Users & Access', toAsync(buildUsersAccessPageView)],
+  ['Agent Readiness', toAsync(buildAgentReadinessPageView)],
+  ['Build Progress', toAsync(buildBuildProgressPageView)],
 ];
 
 describe('ADMIN6 — Remaining sub-pages', () => {
