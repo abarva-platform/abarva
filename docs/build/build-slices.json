@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-04-27",
+  "lastUpdated": "2026-04-26",
   "lifecycle": [
     "ready",
     "in_progress",
@@ -8722,6 +8722,15 @@
       "wave": "wave-32",
       "track": "10-demo-qa-production-hardening",
       "notes": "Updated wireframe-compliance-audit.ts scores reflecting W32A-W32F view model fixes. avgScore 69.5 -> 74.4, safeFixesApplied 6 -> 13."
+    },
+    {
+      "id": "NAV1A",
+      "title": "Nav and Shell Inventory Audit",
+      "status": "code_complete",
+      "type": "docs",
+      "wave": "nav1",
+      "track": "01-brand-design-system",
+      "notes": "Audit document for nav/shell/logo usage across all active routes. Inventory of 100 page files, identifies legacy AbarvaNav as the dominant gap, defers global-nav migration to NAV2."
     }
   ]
 }
