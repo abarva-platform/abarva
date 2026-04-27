@@ -2,12 +2,33 @@
 
 > This file is written by the orchestration agent at the end of each wave.
 > The next autonomous session reads this file first.
-> Last updated by: orchestration agent (wave-admin-completion batch 2 merged)
+> Last updated by: orchestration agent (ADMIN19 merged · ADMIN18 deferred to ADMIN-DATA wave)
 > Last updated: 2026-04-27
 
-## Last completed slices
+## Last completed slice
+- sliceId: ADMIN19
+- waveId: wave-admin-completion (partially_merged, 91% — 10 of 11 slices done; ADMIN18 deferred)
+- title: ADMIN19 visual lock + regression guard for completion wave
+- prNumber: 461
+- mergeSHA: 4289b2ce
+- completedAt: 2026-04-27
+- testsGreen: admin7-visual-lock 209/209 (was ~70 — 30+ assertions added across 32 batch 1+2 depth components + 7 admin pages); full admin regression 1737/1737; hygiene gate 11/11; ESLint clean; TypeScript clean; build clean; hex audit PASS
+- skippedSlices: ADMIN18 (deferred — see "Deferral note" below)
+- note: Locked the visual canon and regression guards across wave-admin-completion's batch 1+2 depth surfaces. Verified all 32 new components (drawers, tabs, action strips, matrices, expanded tiles) import from @/lib/design/design-tokens with no banned hex tokens. Verified 7 of 8 admin pages read URL searchParams for sub-nav/drawer state (Overview exempt until ADMIN18 ships). WIRE2B compliance scores updated honestly: Production Readiness 92→96 (gate matrix + blocker drawer + readiness tile expansion), Architecture 90→94 (Azure sub-tab + ComponentDetailDrawer closes the open WIRE2 component-drawer deviation), Admin Overview unchanged at 92 (ADMIN18 deferred — no Overview depth shipped). safeFixesApplied: 15 → 16.
+
+## Deferral note · ADMIN18
+ADMIN18 (Overview pull-through · setup timeline + recent activity strip + cross-page CTAs) was scoped to use deterministic seed for both timeline and activity. Founder asked for native data flow from real DB tables. ADMIN18 is therefore **deferred** to a follow-up wave, **ADMIN-DATA**, so it ships with live `admin_setup_progress` + `admin_audit_log` tables instead of seed. ADMIN18 remains in `plannedSlices` of wave-admin-completion and is **not** silently dropped.
+
+## Next wave
+- waveId: ADMIN-DATA (not yet registered — needs a planning slice)
+- status: planning required
+- nextSlices: [ADMIN-DATA1 (admin data layer audit), then re-scoped ADMIN18]
+- recommendedSequence: Run **ADMIN-DATA1 — admin data layer audit** to register the wave + design admin_setup_progress + admin_audit_log schemas. Then re-scoped ADMIN18 ships Overview pull-through against real DB tables.
+- estimatedWallClock: ADMIN-DATA1 ~1 hour (audit + schema design + slice registration). Re-scoped ADMIN18 ~2 hours after schemas land.
+
+## Previous completed slices
 - sliceIds: ADMIN12, ADMIN14, ADMIN15, ADMIN16
-- waveId: wave-admin-completion (planned, 82% — ADMIN9/10/11/12/13/14/15/16/17 done, ADMIN18/19 backlog)
+- waveId: wave-admin-completion
 - title: wave-admin-completion batch 2 — Agent Readiness + Data Trust + Build Progress + Production Readiness depth
 - prNumber: 459
 - mergeSHA: 9be0fddb
@@ -16,13 +37,6 @@
 - testsGreen: 283 new lane tests (66 + 70 + 73 + 74) + full admin regression 1618/1618; hygiene gate 11/11; ESLint clean; TypeScript clean; build clean; hex audit PASS
 - skippedSlices: none
 - note: ADMIN12 added Agent Readiness depth — 5 URL-driven sub-tabs (Overview / Steward / Nexus / Sentinel / Atlas), per-agent expandable cards with canDo / cannotDo / unblockedBy chips, 4×5 context coverage matrix, HARD-GATED runtime config (Wave 27). ADMIN14 added Data Trust depth + legacy MERGE absorption — 5 sub-tabs (Trust Ladder / Loaded Files / Promotion Queue / Quality Scorecard / Audit Trail) absorbing /platform/admin/data + /platform/admin/data-governance + /platform/admin/quality content, per-rung dataset list with detail drawer, HARD-GATED Approve / Reject / Add policy. Mapped tabs differently than spec (content-driven not rung-named) — cleaner and absorbs legacy pages. ADMIN15 added Build Progress depth — 3 URL-driven sub-tabs (Waves / Slices / CI Status), wave timeline reading docs/build/build-waves.json server-side, per-slice drilldown drawer, deterministic CI mini-strip, banned-token scrub on manifest text via string concatenation (intentional — protects historical references). ADMIN16 added Production Readiness depth — 4 sub-tabs (Decision / Blockers / Gates / History), per-tile expandable (Demo / Pilot / Production), full W32F BlockerDetail drawer, gate criteria matrix (Demo all-pass / Pilot mixed / Production fails on model gateway + SOC2 — honest), 5-entry history strip, production_ready never set true. Plus: scripts/integration/wave_progress.sh tracker script committed in this batch. AGENT1 wiring preserved on every page. All write actions and live model calls remain HARD-GATED for Wave 27+.
-
-## Next wave
-- waveId: wave-admin-completion
-- status: planned (82% — 9 of 11 slices done)
-- nextSlices: [ADMIN18, ADMIN19]
-- recommendedSequence: Run final batch — ADMIN18 + ADMIN19 (Tier 3) to close wave-admin-completion.
-- estimatedWallClock: ~1–2 hours; ADMIN18 (Overview pull-through) and ADMIN19 (Visual lock update) are the last two Tier 3 slices.
 
 ## Previous completed slices
 - sliceIds: ADMIN10, ADMIN11, ADMIN13, ADMIN17
