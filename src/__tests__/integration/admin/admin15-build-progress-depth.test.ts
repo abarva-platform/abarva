@@ -55,8 +55,8 @@ function read(rel: string): string {
 describe('ADMIN15 — buildBuildProgressPageView contract', () => {
   let view: BuildProgressPageView;
 
-  beforeAll(() => {
-    view = buildBuildProgressPageView();
+  beforeAll(async () => {
+    view = await buildBuildProgressPageView();
   });
 
   it('keeps deterministicSeed: true', () => {
@@ -164,8 +164,8 @@ describe('ADMIN15 — buildBuildProgressPageView contract', () => {
 
 describe('ADMIN15 — CI snapshot is deterministic and exactly 5 rows', () => {
   let view: BuildProgressPageView;
-  beforeAll(() => {
-    view = buildBuildProgressPageView();
+  beforeAll(async () => {
+    view = await buildBuildProgressPageView();
   });
 
   it('exposes exactly 5 CI runs', () => {
@@ -184,9 +184,9 @@ describe('ADMIN15 — CI snapshot is deterministic and exactly 5 rows', () => {
     }
   });
 
-  it('CI snapshot is stable across calls', () => {
-    const a = buildBuildProgressPageView();
-    const b = buildBuildProgressPageView();
+  it('CI snapshot is stable across calls', async () => {
+    const a = await buildBuildProgressPageView();
+    const b = await buildBuildProgressPageView();
     expect(a.ciSnapshot).toEqual(b.ciSnapshot);
   });
 
@@ -211,8 +211,8 @@ describe('ADMIN15 — CI snapshot is deterministic and exactly 5 rows', () => {
 
 describe('ADMIN15 — findSliceDetail helper', () => {
   let view: BuildProgressPageView;
-  beforeAll(() => {
-    view = buildBuildProgressPageView();
+  beforeAll(async () => {
+    view = await buildBuildProgressPageView();
   });
 
   it('returns null for unknown slice id', () => {
@@ -241,9 +241,9 @@ describe('ADMIN15 — findSliceDetail helper', () => {
     }
   });
 
-  it('PR hrefs are deterministic across two calls', () => {
-    const a = buildBuildProgressPageView();
-    const b = buildBuildProgressPageView();
+  it('PR hrefs are deterministic across two calls', async () => {
+    const a = await buildBuildProgressPageView();
+    const b = await buildBuildProgressPageView();
     for (const s of a.slicesIndex.slice(0, 8)) {
       expect(b.findSliceDetail(s.id)?.prHref).toBe(a.findSliceDetail(s.id)?.prHref);
     }
@@ -256,8 +256,8 @@ describe('ADMIN15 — findSliceDetail helper', () => {
 
 describe('ADMIN15 — backlog preview shows next 3 planned waves', () => {
   let view: BuildProgressPageView;
-  beforeAll(() => {
-    view = buildBuildProgressPageView();
+  beforeAll(async () => {
+    view = await buildBuildProgressPageView();
   });
 
   it('backlog length is at most 3', () => {
@@ -284,14 +284,14 @@ describe('ADMIN15 — page-view reflects manifest counts', () => {
     expect(existsSync(resolve(root, 'docs/build/build-slices.json'))).toBe(true);
   });
 
-  it('view.waves length equals manifest waves length', () => {
-    const view = buildBuildProgressPageView();
+  it('view.waves length equals manifest waves length', async () => {
+    const view = await buildBuildProgressPageView();
     const raw = JSON.parse(read('docs/build/build-waves.json')) as { waves?: unknown[] };
     expect(view.waves.length).toBe((raw.waves ?? []).length);
   });
 
-  it('view.slicesIndex length equals manifest slices length', () => {
-    const view = buildBuildProgressPageView();
+  it('view.slicesIndex length equals manifest slices length', async () => {
+    const view = await buildBuildProgressPageView();
     const raw = JSON.parse(read('docs/build/build-slices.json')) as { slices?: unknown[] };
     expect(view.slicesIndex.length).toBe((raw.slices ?? []).length);
   });
