@@ -843,7 +843,8 @@
         "INTEL1",
         "INTEL2",
         "INTEL3",
-        "TOWER1"
+        "TOWER1",
+        "TOWER2"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
@@ -851,7 +852,7 @@
       "validationStatus": "tests_green",
       "productionReadinessUpdated": true,
       "currentBlockers": [],
-      "nextAction": "BRAND1-INTEL3 + TOWER1 complete. Proceed to TOWER2, TOWER3, QA29, DEMO9.",
+      "nextAction": "BRAND1-TOWER2 complete. Proceed to TOWER3, QA29, DEMO9.",
       "lastUpdated": "2026-04-26"
     },
     {
@@ -922,6 +923,27 @@
       "productionReadinessUpdated": false,
       "currentBlockers": [],
       "nextAction": "Wave-18 merged. No further action.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-21",
+      "name": "Tower2 Atlas Executive Brief Canvas",
+      "goal": "Land the Atlas Executive Brief Canvas view model and component for the Control Tower surface. Deterministic read model only. Rich experience for apex-retail; honest thin-data disclosure for all other tenants.",
+      "status": "in_progress",
+      "percentComplete": 14,
+      "plannedSlices": [
+        "TOWER2"
+      ],
+      "completedSlices": [
+        "TOWER2"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [],
+      "nextAction": "BRAND1-TOWER2 complete. Proceed to TOWER3, QA29, DEMO9.",
       "lastUpdated": "2026-04-26"
     }
   ]
