@@ -1,4 +1,10 @@
 import React from 'react';
+// BRAND1-dependent: AbarVaLogo will be replaced by the canonical SVG-backed implementation
+// from the BRAND1 lane. The stub at src/components/brand/AbarVaLogo.tsx satisfies TypeScript
+// until BRAND1 lands. Wiring is additive — no other shell behaviour changes.
+import { AbarVaLogo } from '@/components/brand/AbarVaLogo';
+// FALLBACK: AbarVaWordmark kept as a clearly-labelled fallback for direct wordmark-only usage.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { AbarVaWordmark } from './AbarVaWordmark';
 import { AbarVaTenantBadge } from './AbarVaTenantBadge';
 import { ABARVA_SHELL_CONFIG } from '@/lib/design/abarva-shell';
@@ -30,7 +36,9 @@ export function AbarVaAppShell({
         alignItems: 'center',
         gap: '16px',
       }}>
-        <AbarVaWordmark />
+        {/* BRAND1: canonical logo — BRAND1 lane will replace the stub with real SVG */}
+        <AbarVaLogo variant="compact" ariaLabel="AbarVa" />
+        {/* FALLBACK (unused by default): <AbarVaWordmark /> */}
         {tenantName && (
           <AbarVaTenantBadge tenantName={tenantName} richness={tenantRichness} />
         )}
