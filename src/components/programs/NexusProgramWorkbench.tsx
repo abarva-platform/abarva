@@ -24,6 +24,8 @@ const RED = '#9F2E25';
 const RED_SOFT = '#FCE8E4';
 const GREEN = '#0F766E';
 const GREEN_SOFT = '#DFF4EE';
+const CONV_USER = 'rgba(19, 43, 79, 0.86)';
+const CONV_NEXUS = '#FFFFFF';
 
 const FONT =
   '"DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
@@ -66,6 +68,36 @@ function Chip({
     >
       {children}
     </span>
+  );
+}
+
+function ContextChips({ labels }: { labels: string[] }) {
+  return (
+    <div
+      aria-label="Context used"
+      style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 8,
+      }}
+    >
+      <span
+        style={{
+          width: '100%',
+          color: NAVY,
+          fontSize: 11,
+          fontWeight: 800,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          marginBottom: 3,
+        }}
+      >
+        Context used
+      </span>
+      {labels.map((label) => (
+        <Chip key={label}>{label}</Chip>
+      ))}
+    </div>
   );
 }
 
@@ -161,6 +193,166 @@ function JourneyArrow() {
   );
 }
 
+function ConversationThread({
+  customAskPlaceholder,
+  customAskDeferredState,
+}: {
+  customAskPlaceholder: string;
+  customAskDeferredState: string;
+}) {
+  const thread = [
+    {
+      speaker: 'You',
+      tone: CONV_USER,
+      text: 'Can we move this program to Build?',
+    },
+    {
+      speaker: 'Nexus',
+      tone: CONV_NEXUS,
+      text: 'Hold until Design gate blockers are resolved: value evidence, workshop outcomes, and stakeholder alignment.',
+    },
+  ];
+
+  return (
+    <div
+      aria-label="Nexus conversation"
+      style={{
+        position: 'relative',
+        padding: 16,
+        border: `1px solid ${BORDER}`,
+        borderRadius: 16,
+        background: 'linear-gradient(180deg, #F4F8FF 0%, #FFFFFF 100%)',
+      }}
+    >
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          top: 0,
+          height: 2,
+          background: 'linear-gradient(90deg, rgba(11,74,145,0.05), rgba(11,74,145,0.22), rgba(11,74,145,0.05))',
+        }}
+      />
+      <div
+        style={{
+          color: NAVY,
+          fontSize: 11,
+          fontWeight: 800,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          marginBottom: 10,
+        }}
+      >
+        Nexus conversation
+      </div>
+      <div style={{ display: 'grid', gap: 8 }}>
+        {thread.map((entry) => (
+          <div
+            key={entry.text}
+            style={{
+              padding: '10px 12px',
+              borderRadius: 12,
+              background: entry.speaker === 'You' ? '#F7F8FB' : NAVY_SOFT,
+              color: entry.speaker === 'You' ? CONV_USER : BODY,
+              fontSize: 12,
+              lineHeight: 1.45,
+            }}
+          >
+            <span
+              style={{
+                display: 'inline-block',
+                fontWeight: 800,
+                color: NAVY,
+                fontSize: 11,
+                marginBottom: 6,
+              }}
+            >
+              {entry.speaker}
+            </span>
+            <span
+              style={{
+                display: 'block',
+                color: entry.speaker === 'You' ? CONV_USER : BODY,
+              }}
+            >
+              {entry.text}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <div
+        style={{
+          marginTop: 10,
+          borderTop: `1px solid ${BORDER}`,
+          paddingTop: 12,
+        }}
+      >
+        <label
+          htmlFor="nexus-program-custom-ask"
+          style={{
+            display: 'block',
+            color: NAVY,
+            fontSize: 11,
+            fontWeight: 750,
+            marginBottom: 8,
+          }}
+        >
+          Ask Nexus
+        </label>
+        <textarea
+          id="nexus-program-custom-ask"
+          disabled
+          rows={3}
+          placeholder={customAskPlaceholder}
+          style={{
+            width: '100%',
+            resize: 'vertical',
+            border: `1px solid ${BORDER}`,
+            borderRadius: 12,
+            background: '#FFFFFF',
+            color: BODY,
+            padding: 12,
+            fontFamily: FONT,
+            fontSize: 12,
+            lineHeight: 1.4,
+          }}
+        />
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            marginTop: 10,
+          }}
+        >
+          <span style={{ color: MUTED, fontSize: 10, lineHeight: 1.35 }}>
+            {customAskDeferredState}
+          </span>
+          <button
+            type="button"
+            disabled
+            style={{
+              border: 0,
+              borderRadius: 999,
+              background: '#D9D5CC',
+              color: '#72695F',
+              padding: '8px 12px',
+              fontSize: 11,
+              fontWeight: 800,
+            }}
+          >
+            Submit deferred
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function agentTone(state: NexusWorkbenchAgentHandoff['state']) {
   if (state === 'active') return { bg: NAVY, fg: '#FFFFFF', chip: 'Active' };
   if (state === 'blocker') return { bg: RED_SOFT, fg: RED, chip: 'Blocker' };
@@ -173,11 +365,12 @@ function AgentHandoffCard({ handoff }: { handoff: NexusWorkbenchAgentHandoff }) 
   return (
     <div
       style={{
-        padding: 14,
+        padding: 11,
         border: `1px solid ${BORDER}`,
         borderRadius: 14,
-        background: handoff.state === 'active' ? NAVY : CARD,
+        background: handoff.state === 'active' ? NAVY : '#FFFFFF',
         color: handoff.state === 'active' ? '#FFFFFF' : BODY,
+        boxShadow: handoff.state === 'active' ? '0 14px 30px rgba(19,43,79,0.16)' : 'none',
       }}
     >
       <div
@@ -188,7 +381,7 @@ function AgentHandoffCard({ handoff }: { handoff: NexusWorkbenchAgentHandoff }) 
           gap: 12,
         }}
       >
-        <strong style={{ fontSize: 13 }}>{handoff.label}</strong>
+        <strong style={{ fontSize: 12, letterSpacing: '0.01em' }}>{handoff.label}</strong>
         <span
           style={{
             display: 'inline-flex',
@@ -206,9 +399,9 @@ function AgentHandoffCard({ handoff }: { handoff: NexusWorkbenchAgentHandoff }) 
       </div>
       <p
         style={{
-          margin: '8px 0 0',
+          margin: '7px 0 0',
           color: handoff.state === 'active' ? 'rgba(255,255,255,0.76)' : MUTED,
-          fontSize: 11,
+          fontSize: 10.5,
           lineHeight: 1.4,
         }}
       >
@@ -353,14 +546,13 @@ export function NexusProgramWorkbench(props: NexusProgramWorkbenchProps) {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-          gap: 18,
-          alignItems: 'stretch',
+          gridTemplateColumns: 'minmax(0, 1.7fr) minmax(300px, 1fr)',
+          gap: 16,
         }}
       >
         <article
           style={{
-            padding: 22,
+            padding: 20,
             border: `1px solid ${BORDER}`,
             borderRadius: 18,
             background: CARD,
@@ -370,7 +562,7 @@ export function NexusProgramWorkbench(props: NexusProgramWorkbenchProps) {
             style={{
               display: 'grid',
               gridTemplateColumns: 'minmax(0, 1fr) auto',
-              gap: 18,
+              gap: 14,
               alignItems: 'start',
             }}
           >
@@ -398,160 +590,56 @@ export function NexusProgramWorkbench(props: NexusProgramWorkbenchProps) {
                 {view.nexusBrief}
               </p>
             </div>
-            <Chip tone="amber">{view.confidenceState}</Chip>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-end',
+                gap: 8,
+              }}
+            >
+              <Chip tone="amber">{view.confidenceState}</Chip>
+              <Chip tone="blue">Evidence • {view.evidenceState}</Chip>
+            </div>
+          </div>
+
+          <div style={{ marginTop: 14 }}>
+            <ContextChips labels={view.contextUsed} />
           </div>
 
           <div
             style={{
+              marginTop: 14,
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
               gap: 10,
-              marginTop: 18,
             }}
           >
-            <div style={{ padding: 14, borderRadius: 14, background: NAVY_SOFT }}>
-              <strong style={{ color: NAVY, fontSize: 12 }}>Workflow stage</strong>
-              <p style={{ margin: '6px 0 0', color: MUTED, fontSize: 12, lineHeight: 1.4 }}>
-                {view.currentWorkflowStage}
-              </p>
-            </div>
-            <div style={{ padding: 14, borderRadius: 14, background: AMBER_SOFT }}>
+            <div
+              style={{
+                padding: 12,
+                borderRadius: 12,
+                border: `1px solid ${AMBER}`,
+                background: AMBER_SOFT,
+              }}
+            >
               <strong style={{ color: AMBER, fontSize: 12 }}>Blocker</strong>
               <p style={{ margin: '6px 0 0', color: MUTED, fontSize: 12, lineHeight: 1.4 }}>
                 {view.blocker}
               </p>
             </div>
-            <div style={{ padding: 14, borderRadius: 14, background: GREEN_SOFT }}>
+            <div
+              style={{
+                padding: 12,
+                borderRadius: 12,
+                border: `1px solid ${GREEN}`,
+                background: GREEN_SOFT,
+              }}
+            >
               <strong style={{ color: GREEN, fontSize: 12 }}>Recommended next action</strong>
               <p style={{ margin: '6px 0 0', color: MUTED, fontSize: 12, lineHeight: 1.4 }}>
                 {view.recommendedNextAction}
               </p>
-            </div>
-          </div>
-
-          <div style={{ marginTop: 18 }}>
-            <div
-              style={{
-                color: NAVY,
-                fontSize: 11,
-                fontWeight: 800,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                marginBottom: 8,
-              }}
-            >
-              Context used
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {view.contextUsed.map((context) => (
-                <Chip key={context} tone="blue">
-                  {context}
-                </Chip>
-              ))}
-              <Chip tone="amber">{view.evidenceState}</Chip>
-            </div>
-          </div>
-
-          <div style={{ marginTop: 20 }}>
-            <div
-              style={{
-                color: NAVY,
-                fontSize: 11,
-                fontWeight: 800,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                marginBottom: 9,
-              }}
-            >
-              Suggested next actions
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 9 }}>
-              {view.suggestedActions.map((action) => (
-                <button
-                  key={action.label}
-                  type="button"
-                  aria-label={action.description}
-                  style={{
-                    border: `1px solid #B7D6F7`,
-                    borderRadius: 999,
-                    background: BLUE_SOFT,
-                    color: NAVY,
-                    padding: '9px 13px',
-                    fontSize: 12,
-                    fontWeight: 800,
-                  }}
-                >
-                  {action.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div
-            style={{
-              marginTop: 18,
-              padding: 14,
-              border: `1px solid ${BORDER}`,
-              borderRadius: 16,
-              background: '#FFFCF5',
-            }}
-          >
-            <label
-              htmlFor="nexus-program-custom-ask"
-              style={{
-                display: 'block',
-                color: NAVY,
-                fontSize: 12,
-                fontWeight: 850,
-                marginBottom: 8,
-              }}
-            >
-              Ask Nexus
-            </label>
-            <textarea
-              id="nexus-program-custom-ask"
-              disabled
-              rows={3}
-              placeholder={view.customAskPlaceholder}
-              style={{
-                width: '100%',
-                resize: 'vertical',
-                border: `1px solid ${BORDER}`,
-                borderRadius: 12,
-                background: '#FFFFFF',
-                color: BODY,
-                padding: 12,
-                fontFamily: FONT,
-                fontSize: 13,
-              }}
-            />
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 12,
-                marginTop: 10,
-              }}
-            >
-              <span style={{ color: MUTED, fontSize: 11, lineHeight: 1.35 }}>
-                {view.customAskDeferredState}
-              </span>
-              <button
-                type="button"
-                disabled
-                style={{
-                  border: 0,
-                  borderRadius: 999,
-                  background: '#D9D5CC',
-                  color: '#72695F',
-                  padding: '9px 13px',
-                  fontSize: 12,
-                  fontWeight: 800,
-                }}
-              >
-                Submit deferred
-              </button>
             </div>
           </div>
 
@@ -576,9 +664,78 @@ export function NexusProgramWorkbench(props: NexusProgramWorkbenchProps) {
             gap: 10,
           }}
         >
-          {view.agentHandoffs.map((handoff) => (
-            <AgentHandoffCard key={handoff.agent} handoff={handoff} />
-          ))}
+          <ConversationThread
+            customAskPlaceholder={view.customAskPlaceholder}
+            customAskDeferredState={view.customAskDeferredState}
+          />
+
+          <div
+            style={{
+              padding: 14,
+              border: `1px solid ${BORDER}`,
+              borderRadius: 16,
+              background: '#FFFCF5',
+            }}
+          >
+            <div
+              style={{
+                color: NAVY,
+                fontSize: 11,
+                fontWeight: 800,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                marginBottom: 10,
+              }}
+            >
+              Suggested next actions
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 9 }}>
+              {view.suggestedActions.map((action) => (
+                <button
+                  key={action.label}
+                  type="button"
+                  aria-label={action.description}
+                  style={{
+                    border: `1px solid ${BORDER}`,
+                    borderRadius: 999,
+                    background: BLUE_SOFT,
+                    color: NAVY,
+                    padding: '8px 12px',
+                    fontSize: 11,
+                    fontWeight: 800,
+                  }}
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gap: 8,
+              border: `1px solid ${BORDER}`,
+              borderRadius: 14,
+              padding: '10px 12px',
+              background: '#F7F9FD',
+            }}
+          >
+            <div
+              style={{
+                color: NAVY,
+                fontSize: 11,
+                fontWeight: 800,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+              }}
+            >
+              Agent signals
+            </div>
+            {view.agentHandoffs.map((handoff) => (
+              <AgentHandoffCard key={handoff.agent} handoff={handoff} />
+            ))}
+          </div>
         </aside>
       </div>
     </section>
