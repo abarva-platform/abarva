@@ -8731,6 +8731,15 @@
       "wave": "nav1",
       "track": "01-brand-design-system",
       "notes": "Audit document for nav/shell/logo usage across all active routes. Inventory of 100 page files, identifies legacy AbarvaNav as the dominant gap, defers global-nav migration to NAV2."
+    },
+    {
+      "id": "NAV1B",
+      "title": "Canonical Brand and Nav Component Alignment",
+      "status": "code_complete",
+      "type": "test",
+      "wave": "nav1",
+      "track": "01-brand-design-system",
+      "notes": "Locks canonical AbarVa brand/nav invariants with 16 new pure-TypeScript Jest tests across abarva-logo and abarva-ui-primitives suites. Removes stale chrome/TopBar.tsx reference."
     }
   ]
 }
