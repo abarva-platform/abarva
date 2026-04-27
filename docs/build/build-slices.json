@@ -8467,6 +8467,85 @@
         "npx eslint src/lib/data-trust/no-raw-copy-enforcement.ts --max-warnings=0"
       ],
       "notes": "Pure deterministic no-raw-copy enforcement gate. Structurally rejects raw payloads (PII, connection strings, base64, large JSON, URLs, empty values) crossing the client-to-AbarVa boundary."
+    },
+    {
+      "id": "SHELL8",
+      "name": "Legacy Shell Code Retirement",
+      "category": "SHELL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Wave 29 \u2014 codex/wave-29-cleanup-shell-ops",
+      "dependsOn": [],
+      "allowedFiles": [
+        "src/components/chrome/TopBar.tsx",
+        "src/components/chrome/PrimaryNav.tsx",
+        "src/lib/qa/active-route-shell-verification.ts",
+        "src/lib/qa/logo-usage-enforcement.ts",
+        "src/__tests__/integration/qa/shell8-legacy-retirement.test.ts"
+      ],
+      "forbiddenFiles": [],
+      "validationCommands": [
+        "node_modules/.bin/tsc --noEmit --pretty false",
+        "node_modules/.bin/jest src/__tests__/integration/qa/shell8-legacy-retirement.test.ts --no-coverage"
+      ],
+      "notes": "Deleted TopBar.tsx and PrimaryNav.tsx (confirmed dead code, not imported by any active route). Inverted QA check logic: absence is now pass, presence is fail. BRAND2-C4 and QA28-C15 both pass after deletion."
+    },
+    {
+      "id": "SHELL9",
+      "name": "Route Registry Read Model",
+      "category": "SHELL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Wave 29 \u2014 codex/wave-29-cleanup-shell-ops",
+      "dependsOn": [],
+      "allowedFiles": [
+        "src/lib/routes/registry.ts",
+        "src/__tests__/integration/ops/route-registry.test.ts"
+      ],
+      "forbiddenFiles": [],
+      "validationCommands": [
+        "node_modules/.bin/tsc --noEmit --pretty false",
+        "node_modules/.bin/jest src/__tests__/integration/ops/route-registry.test.ts --no-coverage"
+      ],
+      "notes": "Canonical deterministic route registry with 16 routes. Defines RouteShellKind, RouteSurface, RouteAgent types. Exports getRouteRegistry, getActiveRoutes, getRoutesByShellKind, getRoutesBySurface, getRouteById, getAuthenticatedRoutes, getRoutesByAgent, summarizeRouteRegistry."
+    },
+    {
+      "id": "OPS3",
+      "name": "Automated Wave Runner Protocol Model v1",
+      "category": "OPS",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Wave 29 \u2014 codex/wave-29-cleanup-shell-ops",
+      "dependsOn": [],
+      "allowedFiles": [
+        "src/lib/ops/wave-runner-model.ts",
+        "src/__tests__/integration/ops/wave-runner-model.test.ts"
+      ],
+      "forbiddenFiles": [],
+      "validationCommands": [
+        "node_modules/.bin/tsc --noEmit --pretty false",
+        "node_modules/.bin/jest src/__tests__/integration/ops/wave-runner-model.test.ts --no-coverage"
+      ],
+      "notes": "17-step canonical wave execution protocol read model. Defines WaveRunnerStepKind (17 values), WaveRunnerGateResult, EscalationTier. Exports getWaveRunnerProtocol, getAllTier3Conditions, getBlockingSteps, getStepsByKind."
+    },
+    {
+      "id": "OPS4",
+      "name": "Pack Spec Validator",
+      "category": "OPS",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Wave 29 \u2014 codex/wave-29-cleanup-shell-ops",
+      "dependsOn": [],
+      "allowedFiles": [
+        "src/lib/ops/pack-spec-validator.ts",
+        "src/__tests__/integration/ops/pack-spec-validator.test.ts"
+      ],
+      "forbiddenFiles": [],
+      "validationCommands": [
+        "node_modules/.bin/tsc --noEmit --pretty false",
+        "node_modules/.bin/jest src/__tests__/integration/ops/pack-spec-validator.test.ts --no-coverage"
+      ],
+      "notes": "Deterministic pack spec validation read model. Validates solution pack entries against canonical schema rules: identity (id/slug/name), content quality, structure (criteria/failureModes arrays), provenance (createdFrom), relations (relatedPatternSlugs). Exports validatePackSpecEntry, validatePackSpec, flattenPackSpecViolations, summarizePackValidation."
     }
   ]
 }
