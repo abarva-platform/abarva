@@ -42,7 +42,7 @@ import {
   type AgentMission,
   type AgentMissionWorkObject,
   type AgentMissionWorkObjectKind,
-} from '@/lib/agents/agent-mission-queue';
+} from '@/lib/agent/agent-mission-queue';
 
 // ---------------------------------------------------------------------
 // Public types

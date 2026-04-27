@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { AbarVaLogo } from '@/components/brand';
+import { AbarVaLogo } from '@/components/abarva/AbarVaLogo';
 import { getCurrentPerson } from '@/lib/auth/maestro';
 import { getServerSupabase } from '@/lib/supabase-server';
 

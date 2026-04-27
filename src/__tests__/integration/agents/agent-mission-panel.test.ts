@@ -21,7 +21,7 @@ import {
   summarizeAgentMissionPanelView,
   type AgentMissionPanelAgent,
   type AgentMissionPanelVariant,
-} from '@/lib/agents/agent-mission-view';
+} from '@/lib/agent/agent-mission-view';
 
 // ---------------------------------------------------------------------
 // Helper: load source files for regex assertions

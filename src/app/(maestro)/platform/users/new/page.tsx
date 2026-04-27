@@ -1,4 +1,4 @@
-import { IdentityConsole } from '@/components/identity/IdentityConsole';
+import { IdentityConsole } from '@/components/abarva/IdentityConsole';
 
 export default function NewUserPage() {
   return <IdentityConsole />;

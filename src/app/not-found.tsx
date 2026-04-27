@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { headers } from 'next/headers'
-import { AbarVaLogo } from '@/components/brand'
+import { AbarVaLogo } from '@/components/abarva/AbarVaLogo'
 
 // Production 404 monitoring · §3.5 of page-agent-coherence-work-order.md.
 // Logs every 404 via console.error so Vercel runtime captures it.

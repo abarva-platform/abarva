@@ -16,7 +16,7 @@ import {
   type CrossAgentHandoffAgent,
   type CrossAgentHandoffReason,
   type CrossAgentHandoffState,
-} from '@/lib/agents/cross-agent-handoff';
+} from '@/lib/agent/cross-agent-handoff';
 
 const ID_PATTERN = /^handoff-seed-\d+$/;
 

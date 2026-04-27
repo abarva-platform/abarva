@@ -12,7 +12,7 @@ import { resolve } from 'node:path';
 import {
   buildAgentMissionsForSurface,
   getTopAgentMissions,
-} from '@/lib/agents/agent-mission-queue';
+} from '@/lib/agent/agent-mission-queue';
 
 // ---------------------------------------------------------------------
 // Helpers

@@ -25,16 +25,16 @@ import {
   type StewardBrief,
   type StewardSetupReadinessView,
 } from '@/lib/admin/steward-setup-readiness';
-import { AgentMissionPanel } from '@/components/agents/AgentMissionPanel';
+import { AgentMissionPanel } from '@/components/agent/AgentMissionPanel';
 import {
   buildAgentMissionsForSurface,
   getTopAgentMissions,
   type AgentMission,
-} from '@/lib/agents/agent-mission-queue';
+} from '@/lib/agent/agent-mission-queue';
 import type {
   AgentMissionPanelMission,
   AgentMissionPanelView,
-} from '@/lib/agents/agent-mission-view';
+} from '@/lib/agent/agent-mission-view';
 
 // AG12 · Admin surface mission projection.
 //

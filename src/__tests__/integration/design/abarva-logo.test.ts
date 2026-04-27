@@ -3,7 +3,7 @@ import { existsSync } from 'fs';
 import { resolve } from 'path';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { AbarVaLogo } from '@/components/brand';
+import { AbarVaLogo } from '@/components/abarva/AbarVaLogo';
 
 const logoPath = resolve(process.cwd(), 'public/brand/abarva-logo.svg');
 const shellPaths = [

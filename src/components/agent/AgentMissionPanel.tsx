@@ -35,7 +35,7 @@ import {
   type AgentMissionPanelMission,
   type AgentMissionPanelPriority,
   type AgentMissionPanelView,
-} from '@/lib/agents/agent-mission-view';
+} from '@/lib/agent/agent-mission-view';
 
 export interface AgentMissionPanelProps {
   view: AgentMissionPanelView;

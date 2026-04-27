@@ -22,7 +22,7 @@ import {
   buildAgentMissionQueue,
   type AgentMission,
   type AgentMissionWorkObjectKind,
-} from '@/lib/agents/agent-mission-queue';
+} from '@/lib/agent/agent-mission-queue';
 import {
   buildContextForAgentMission,
   buildMissionContextBatch,

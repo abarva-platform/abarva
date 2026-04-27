@@ -34,7 +34,7 @@ export const BANNED_LOGO_PATTERNS = [
 ];
 
 export const CANONICAL_LOGO_ASSET = 'public/brand/abarva-logo.svg';
-export const CANONICAL_LOGO_COMPONENT = 'src/components/brand/AbarVaLogo.tsx';
+export const CANONICAL_LOGO_COMPONENT = 'src/components/abarva/AbarVaLogo.tsx';
 
 const ROOT = process.cwd();
 
