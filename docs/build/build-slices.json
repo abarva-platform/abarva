@@ -7791,6 +7791,13 @@
       "status": "code_complete",
       "wave": "wave-21",
       "lane": "J"
+    },
+    {
+      "id": "QA29",
+      "title": "Intelligence Tower Blueprint Verification",
+      "status": "code_complete",
+      "wave": "wave-21",
+      "lane": "K"
     }
   ]
 }

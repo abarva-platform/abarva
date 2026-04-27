@@ -773,27 +773,6 @@
       "lastUpdated": "2026-04-26"
     },
     {
-      "waveId": "wave-21",
-      "name": "Control Tower Depth + Active Lens",
-      "goal": "Deliver the Control Tower active lens read model and component refresh, enabling lens-switching across 7 dimensions with scorecard strip, pressure cards, and Ask Atlas as a deferred secondary affordance.",
-      "status": "in_progress",
-      "percentComplete": 50,
-      "plannedSlices": [
-        "TOWER3"
-      ],
-      "completedSlices": [
-        "TOWER3"
-      ],
-      "skippedSlices": [],
-      "blockedSlices": [],
-      "mergedPrs": [],
-      "validationStatus": "tsc_clean",
-      "productionReadinessUpdated": true,
-      "currentBlockers": [],
-      "nextAction": "BRAND1-TOWER3 complete. Proceed to QA29, DEMO9.",
-      "lastUpdated": "2026-04-26"
-    },
-    {
       "waveId": "wave-20",
       "name": "Demo Data Registry + Tenant Richness",
       "goal": "Create the canonical demo dataset registry encoding tenant richness tiers across all surfaces, enabling repeatable demo delivery with known data boundaries.",
@@ -866,7 +845,8 @@
         "INTEL3",
         "TOWER1",
         "TOWER2",
-        "TOWER3"
+        "TOWER3",
+        "QA29"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
@@ -874,7 +854,7 @@
       "validationStatus": "tests_green",
       "productionReadinessUpdated": true,
       "currentBlockers": [],
-      "nextAction": "BRAND1-TOWER3 complete. Proceed to QA29, DEMO9.",
+      "nextAction": "BRAND1-QA29 complete. Proceed to DEMO9.",
       "lastUpdated": "2026-04-26"
     },
     {
@@ -945,28 +925,6 @@
       "productionReadinessUpdated": false,
       "currentBlockers": [],
       "nextAction": "Wave-18 merged. No further action.",
-      "lastUpdated": "2026-04-26"
-    },
-    {
-      "waveId": "wave-21",
-      "name": "Tower2 Atlas Executive Brief Canvas",
-      "goal": "Land the Atlas Executive Brief Canvas view model and component for the Control Tower surface. Deterministic read model only. Rich experience for apex-retail; honest thin-data disclosure for all other tenants.",
-      "status": "in_progress",
-      "percentComplete": 14,
-      "plannedSlices": [
-        "TOWER2"
-      ],
-      "completedSlices": [
-        "TOWER2",
-        "TOWER3"
-      ],
-      "skippedSlices": [],
-      "blockedSlices": [],
-      "mergedPrs": [],
-      "validationStatus": "tests_green",
-      "productionReadinessUpdated": true,
-      "currentBlockers": [],
-      "nextAction": "BRAND1-TOWER3 complete. Proceed to QA29, DEMO9.",
       "lastUpdated": "2026-04-26"
     }
   ]
