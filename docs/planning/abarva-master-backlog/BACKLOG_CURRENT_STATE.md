@@ -4,36 +4,37 @@ This file is the persistent handoff between autonomous Codex sessions.
 
 ## 1. Last Completed Loop
 
-- Run timestamp: `YYYY-MM-DD HH:MM TZ`
-- Last completed wave: `WAVE-XX`
+- Run timestamp: `2026-04-26 22:35 America/Chicago`
+- Last completed wave: `WAVE-22`
 - Last merged PRs:
-  - `#NNN` - `<title>` - `<merge_commit>`
+  - `#396` - `feat: Wave 22 — INTEL4 + TOWER4 lens tabs` - `493ec888`
+  - `#395` - `docs(planning): add autonomous backlog orchestration controls` - `1de8dabc`
 - Registry updates applied:
-  - Item IDs moved to `done`: `<id1, id2, ...>`
-  - Item IDs moved to `blocked`: `<id3, id4, ...>`
+  - Item IDs moved to `done`: `INTEL4`, `TOWER4`
+  - Item IDs moved to `blocked`: `none recorded in planning registry`
 
 ## 2. Current Queue Snapshot
 
-- Next wave candidate: `WAVE-XX`
-- Ready item IDs: `<id list>`
-- Blocked item IDs: `<id list>`
-- Items requiring human approval: `<id list>`
-- Items deferred due to conflict: `<id list>`
+- Next wave candidate: `WAVE-21`
+- Ready item IDs: `ROAD1`, `ROAD2`, `ROAD3`
+- Blocked item IDs: `VIS4`, `DESIGN1`
+- Items requiring human approval: `none in current WAVE-21 queue`
+- Items deferred due to conflict: `future wave reconciliation outside current docs-only bridge`
 
 ## 3. Current Risk and Blockers
 
-- CI health summary: `<green | unstable | blocked>`
-- Open blocker 1: `<description>`
-- Open blocker 2: `<description>`
-- Scope boundary risk: `<none | details>`
-- Merge risk: `<none | details>`
+- CI health summary: `recovering - GitHub Actions runs now start again after billing change`
+- Open blocker 1: `Planning-path backlog source docs were not fully merged on main and required a bridge reconciliation`
+- Open blocker 2: `VIS4 and DESIGN1 still need narrower execution contracts before autonomous runtime work`
+- Scope boundary risk: `low after current docs-only bridge`
+- Merge risk: `normal if green checks continue to run`
 
 ## 4. Execution Decisions Made
 
-- Parallel lanes launched: `<lane summary>`
-- Sequential items forced by overlap: `<id list and reason>`
-- Stop conditions checked: `<pass | fail>`
-- Human approvals requested: `<yes/no + details>`
+- Parallel lanes launched: `none yet in this loop`
+- Sequential items forced by overlap: `ROAD1 -> ROAD2 -> ROAD3 because they share one track file and wave file`
+- Stop conditions checked: `pass after user approved reconciliation-first path`
+- Human approvals requested: `yes - docs-only reconciliation approved; normal green-check gating restored after GitHub Actions billing recovery`
 
 ## 5. Next Step Contract
 
@@ -54,12 +55,10 @@ Codex must perform the next run in this order:
 - Record remaining blockers.
 - Record next recommended wave and item IDs.
 
-## 7. Current Placeholder State
+## 7. Current Working State
 
-This section is intentionally explicit until the next autonomous run writes real values.
+The planning-path orchestration loop is now being reconciled to actual merged mainline state.
 
-- Run timestamp: `not yet recorded`
-- Last completed wave: `unknown`
-- Next wave candidate: `derive from registry priority and dependency checks`
-- Ready item IDs: `derive from executable-item rules`
-- Blocked item IDs: `derive from dependency and blocker fields`
+- BRAND1, SRC39, SRC40, and SRC41 are already merged on main and should not be re-executed.
+- ROAD1 is the first true pending WAVE-21 slice after reconciliation.
+- The next autonomous action after this checkpoint update is to execute `ROAD1`.

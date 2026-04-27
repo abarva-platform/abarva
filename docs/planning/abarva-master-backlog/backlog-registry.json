@@ -21,7 +21,8 @@
         "docs/planning/abarva-master-backlog/backlog-registry.json",
         "docs/planning/abarva-master-backlog/README.md",
         "docs/planning/abarva-master-backlog/CODEX_ORCHESTRATION_RUNBOOK.md",
-        "docs/planning/abarva-master-backlog/12_CODEX_OPERATING_MODEL_AND_WORK_ORDER_STANDARDS.md"
+        "docs/planning/abarva-master-backlog/12_CODEX_OPERATING_MODEL_AND_WORK_ORDER_STANDARDS.md",
+        "docs/planning/abarva-master-backlog/MASTER_PRODUCT_READINESS_MAP.md"
       ],
       "forbiddenFiles": [
         "src/**",
@@ -73,7 +74,8 @@
         "docs/planning/abarva-master-backlog/backlog-registry.json",
         "docs/planning/abarva-master-backlog/README.md",
         "docs/planning/abarva-master-backlog/CODEX_ORCHESTRATION_RUNBOOK.md",
-        "docs/planning/abarva-master-backlog/12_CODEX_OPERATING_MODEL_AND_WORK_ORDER_STANDARDS.md"
+        "docs/planning/abarva-master-backlog/12_CODEX_OPERATING_MODEL_AND_WORK_ORDER_STANDARDS.md",
+        "docs/planning/abarva-master-backlog/EIGHT_HOUR_THREE_DAY_PILOT_ROADMAP.md"
       ],
       "forbiddenFiles": [
         "src/**",
@@ -125,7 +127,8 @@
         "docs/planning/abarva-master-backlog/backlog-registry.json",
         "docs/planning/abarva-master-backlog/README.md",
         "docs/planning/abarva-master-backlog/CODEX_ORCHESTRATION_RUNBOOK.md",
-        "docs/planning/abarva-master-backlog/12_CODEX_OPERATING_MODEL_AND_WORK_ORDER_STANDARDS.md"
+        "docs/planning/abarva-master-backlog/12_CODEX_OPERATING_MODEL_AND_WORK_ORDER_STANDARDS.md",
+        "docs/planning/abarva-master-backlog/OPEN_RISK_AND_DEPENDENCY_REGISTER.md"
       ],
       "forbiddenFiles": [
         "src/**",
@@ -163,7 +166,7 @@
       "title": "Canonical name-only AbarVa wordmark",
       "track": "01-brand-design-system",
       "priority": "P0",
-      "status": "pending",
+      "status": "done",
       "ownerAgent": "Steward",
       "productArea": "Brand and interface foundations",
       "recommendedWave": "WAVE-21",
@@ -205,10 +208,10 @@
         "Validation commands documented and executed by Codex worker.",
         "Merge decision recorded with completion metadata in registry."
       ],
-      "executionNotes": "Wave WAVE-21 execution for track 01-brand-design-system. Owner validates design and sequencing before work starts.",
-      "completedPr": null,
-      "completedCommit": null,
-      "completedAt": null
+      "executionNotes": "Completed on main in PR #385; retained in WAVE-21 for historical traceability.",
+      "completedPr": 385,
+      "completedCommit": "4cc5846d",
+      "completedAt": "2026-04-26"
     },
     {
       "id": "VIS2",
@@ -267,12 +270,14 @@
       "title": "Design compliance CI/checklist enforcement",
       "track": "01-brand-design-system",
       "priority": "P1",
-      "status": "pending",
+      "status": "blocked",
       "ownerAgent": "Steward",
       "productArea": "Brand and interface foundations",
       "recommendedWave": "WAVE-21",
       "dependencies": [],
-      "blockers": [],
+      "blockers": [
+        "Execution contract still needs runtime/file-scope reconciliation before autonomous execution."
+      ],
       "canRunInParallelWith": [],
       "cannotRunWith": [],
       "allowedFiles": [
@@ -319,12 +324,14 @@
       "title": "Experience Gallery screenshot polish",
       "track": "01-brand-design-system",
       "priority": "P1",
-      "status": "pending",
+      "status": "blocked",
       "ownerAgent": "Steward",
       "productArea": "Brand and interface foundations",
       "recommendedWave": "WAVE-21",
       "dependencies": [],
-      "blockers": [],
+      "blockers": [
+        "Execution contract still needs runtime/file-scope reconciliation before autonomous execution."
+      ],
       "canRunInParallelWith": [],
       "cannotRunWith": [],
       "allowedFiles": [
@@ -371,17 +378,17 @@
       "title": "Vendor selection readiness model",
       "track": "02-source-commercial",
       "priority": "P0",
-      "status": "pending",
+      "status": "done",
       "ownerAgent": "Atlas",
       "productArea": "Source and commercial intelligence",
-      "recommendedWave": "WAVE-22",
+      "recommendedWave": "WAVE-21",
       "dependencies": [],
       "blockers": [],
       "canRunInParallelWith": [],
       "cannotRunWith": [],
       "allowedFiles": [
         "docs/planning/abarva-master-backlog/tracks/02-source-commercial/BACKLOG.md",
-        "docs/planning/abarva-master-backlog/waves/WAVE-22-DEMO-STORYLINE-VISUAL-QA.md",
+        "docs/planning/abarva-master-backlog/waves/WAVE-21-BRAND-SELECTION-READINESS.md",
         "docs/planning/abarva-master-backlog/backlog-registry.json",
         "docs/planning/abarva-master-backlog/README.md",
         "docs/planning/abarva-master-backlog/CODEX_ORCHESTRATION_RUNBOOK.md",
@@ -403,7 +410,7 @@
         "rg -n \"TODO|TBD|coming soon|placeholder\" docs/planning/abarva-master-backlog || true"
       ],
       "readinessImpact": "Source readiness and selection-readiness posture signaling",
-      "requiresHumanApproval": true,
+      "requiresHumanApproval": false,
       "mergePolicy": "Merge when local validation passes, checks are green, and no unexpected files are touched.",
       "sourceFile": "docs/planning/abarva-master-backlog/tracks/02-source-commercial/BACKLOG.md",
       "definitionOfDone": [
@@ -413,27 +420,27 @@
         "Validation commands documented and executed by Codex worker.",
         "Merge decision recorded with completion metadata in registry."
       ],
-      "executionNotes": "Wave WAVE-22 execution for track 02-source-commercial. Owner validates design and sequencing before work starts.",
-      "completedPr": null,
-      "completedCommit": null,
-      "completedAt": null
+      "executionNotes": "Completed on main in PR #384; retained in WAVE-21 for historical traceability.",
+      "completedPr": 384,
+      "completedCommit": "8f335106",
+      "completedAt": "2026-04-26"
     },
     {
       "id": "SRC40",
       "title": "Vendor selection readiness panel",
       "track": "02-source-commercial",
       "priority": "P0",
-      "status": "pending",
+      "status": "done",
       "ownerAgent": "Atlas",
       "productArea": "Source and commercial intelligence",
-      "recommendedWave": "WAVE-22",
+      "recommendedWave": "WAVE-21",
       "dependencies": [],
       "blockers": [],
       "canRunInParallelWith": [],
       "cannotRunWith": [],
       "allowedFiles": [
         "docs/planning/abarva-master-backlog/tracks/02-source-commercial/BACKLOG.md",
-        "docs/planning/abarva-master-backlog/waves/WAVE-22-DEMO-STORYLINE-VISUAL-QA.md",
+        "docs/planning/abarva-master-backlog/waves/WAVE-21-BRAND-SELECTION-READINESS.md",
         "docs/planning/abarva-master-backlog/backlog-registry.json",
         "docs/planning/abarva-master-backlog/README.md",
         "docs/planning/abarva-master-backlog/CODEX_ORCHESTRATION_RUNBOOK.md",
@@ -465,27 +472,27 @@
         "Validation commands documented and executed by Codex worker.",
         "Merge decision recorded with completion metadata in registry."
       ],
-      "executionNotes": "Wave WAVE-22 execution for track 02-source-commercial. Owner validates design and sequencing before work starts.",
-      "completedPr": null,
-      "completedCommit": null,
-      "completedAt": null
+      "executionNotes": "Completed on main in PR #387; retained in WAVE-21 for historical traceability.",
+      "completedPr": 387,
+      "completedCommit": "a92a51fa",
+      "completedAt": "2026-04-26"
     },
     {
       "id": "SRC41",
       "title": "Vendor selection readiness smoke coverage",
       "track": "02-source-commercial",
       "priority": "P0",
-      "status": "pending",
+      "status": "done",
       "ownerAgent": "Steward",
       "productArea": "Source and commercial intelligence",
-      "recommendedWave": "WAVE-22",
+      "recommendedWave": "WAVE-21",
       "dependencies": [],
       "blockers": [],
       "canRunInParallelWith": [],
       "cannotRunWith": [],
       "allowedFiles": [
         "docs/planning/abarva-master-backlog/tracks/02-source-commercial/BACKLOG.md",
-        "docs/planning/abarva-master-backlog/waves/WAVE-22-DEMO-STORYLINE-VISUAL-QA.md",
+        "docs/planning/abarva-master-backlog/waves/WAVE-21-BRAND-SELECTION-READINESS.md",
         "docs/planning/abarva-master-backlog/backlog-registry.json",
         "docs/planning/abarva-master-backlog/README.md",
         "docs/planning/abarva-master-backlog/CODEX_ORCHESTRATION_RUNBOOK.md",
@@ -517,10 +524,10 @@
         "Validation commands documented and executed by Codex worker.",
         "Merge decision recorded with completion metadata in registry."
       ],
-      "executionNotes": "Wave WAVE-22 execution for track 02-source-commercial. Owner validates design and sequencing before work starts.",
-      "completedPr": null,
-      "completedCommit": null,
-      "completedAt": null
+      "executionNotes": "Completed on main in PR #388; retained in WAVE-21 for historical traceability.",
+      "completedPr": 388,
+      "completedCommit": "b8216da9",
+      "completedAt": "2026-04-26"
     },
     {
       "id": "SRC42",
