@@ -129,6 +129,24 @@ describe('AGENTUI1 · buildNexusProgramWorkbenchView', () => {
       expect(focus.brief).not.toBe(synthesis.brief);
     }
   });
+
+  it('exposes requiredInputs per phase for the left phase-requirements rail', () => {
+    for (const phase of view.phaseJourney) {
+      const focus = view.phaseFocusByKey[phase.key]!;
+      expect(focus.requiredInputs.length).toBeGreaterThanOrEqual(3);
+      for (const input of focus.requiredInputs) {
+        expect(['satisfied', 'in-progress', 'open']).toContain(input.state);
+        expect(input.label.length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('exposes requiredInputs at the top level mirroring the default phase focus', () => {
+    const synthesis = view.phaseFocusByKey[view.defaultPhaseKey]!;
+    expect(view.requiredInputs.map((i) => i.label)).toEqual(
+      synthesis.requiredInputs.map((i) => i.label),
+    );
+  });
 });
 
 describe('AGENTUI1 · NexusProgramWorkbench component contract', () => {
@@ -191,5 +209,35 @@ describe('AGENTUI1 · NexusProgramWorkbench component contract', () => {
     expect(componentSource).toContain('aria-pressed={isSelected}');
     expect(componentSource).toContain('data-phase-selected');
     expect(componentSource).toContain('onSelect(phase.key)');
+  });
+
+  it('lays out the canon wireframe: journey hero + phase requirements + Nexus brief + agent rail', () => {
+    expect(componentSource).toContain('data-region="journey-hero"');
+    expect(componentSource).toContain('Phase requirements');
+    expect(componentSource).toContain('Required inputs');
+    expect(componentSource).toContain('Nexus brief');
+    expect(componentSource).toContain('Agent rail');
+    expect(componentSource).toContain('Latest Nexus exchange');
+    expect(componentSource).toContain('Maestro is here');
+  });
+
+  it('removes the competing Nexus surfaces from above the fold on the canonical Program detail page', () => {
+    // Canon restructure: the workbench owns the page spine. The prior
+    // above-the-fold duplicates — separate Nexus editorial lead, six-phase
+    // PhaseTimeline, and the legacy NexusProgramRail — are removed because
+    // they repeated content the workbench already shows.
+    expect(canonicalDetailSource).not.toContain('<NexusProgramRail');
+    expect(canonicalDetailSource).not.toContain('<PhaseTimeline');
+    expect(canonicalDetailSource).not.toContain('Nexus · program editorial · deterministic');
+  });
+
+  it('keeps the AG12 AgentMissionPanel mounted but positions it after the workbench', () => {
+    // AG12 surface wiring still requires the mission panel. To honor "less
+    // clutter" the panel is moved below all useful below-the-fold sections,
+    // so the workbench remains the visual spine.
+    const workbenchIndex = canonicalDetailSource.indexOf('<NexusProgramWorkbench');
+    const missionPanelIndex = canonicalDetailSource.indexOf('<AgentMissionPanel');
+    expect(workbenchIndex).toBeGreaterThan(-1);
+    expect(missionPanelIndex).toBeGreaterThan(workbenchIndex);
   });
 });
