@@ -2,20 +2,22 @@
 
 > This file is written by the orchestration agent at the end of each wave.
 > The next autonomous session reads this file first.
-> Last updated by: orchestration agent (Wave 30 complete)
+> Last updated by: orchestration agent (Wave 31 complete)
 > Last updated: 2026-04-26
 
 ## Last completed wave
-- waveId: wave-30
-- waveTitle: Solution Intelligence Expansion
-- prNumber: 418
-- mergeSHA: 362abe59
-- completedSlices: [PAT1, PAT2, PAT3]
+- waveId: wave-31
+- waveTitle: Security Posture Hardening
+- prNumber: 420
+- mergeSHA: 8b6a8659
+- completedSlices: [SEC3, SEC4]
 - completedAt: 2026-04-26
-- testsGreen: 106 new tests pass; 799 solutions tests pass; 0 regressions
+- testsGreen: 98 new tests pass (56 SEC3 + 42 SEC4); 0 regressions on Wave 31 code
 - skippedSlices: none
+- note: backlog-registry IDs SEC1/SEC2 belong to older architecture slices; Wave 31 slices registered as SEC3/SEC4 in build-slices.json
 
 ## Previous waves (for reference)
+- wave-30: PR #418, SHA 362abe59, slices [PAT1, PAT2, PAT3]
 - wave-29: PR #416, SHA 613a1d7c, slices [SHELL8, SHELL9, OPS3, OPS4]
 - wave-28: PR #414, SHA f7f8b196, slices [EVID1, DATA1, DATA2, DATA3]
 - wave-27: PR #413, SHA 8b135aac, slices [PAT1_W27, PAT2_W27, PAT3_W27, PAT4_W27, PAT5_W27]
@@ -26,11 +28,25 @@
 - wave-22: PR #396, SHA 493ec888, slices [INTEL4, TOWER4]
 
 ## Next wave to execute
-- waveId: wave-31
-- waveTitle: Security Posture Hardening
+- waveId: wave-32
+- waveTitle: TBD — determine from backlog-registry.json
 - waveFile: docs/backlog/waves/ (synthesise from backlog-registry.json + track BACKLOG.md if no file)
 - blockedSlices: none
-- primarySlices: [SEC1, SEC2 — confirm from backlog-registry.json]
+- primarySlices: confirm from backlog-registry.json (wave-32 entries)
+
+## Wave 31 deliverables produced
+- SEC3: Security Posture Model — `src/lib/security/security-posture-model.ts`
+  (canonical 10-family control framework: authentication, authorisation, data-at-rest, data-in-transit,
+   supply-chain, secrets-management, audit-logging, vulnerability-management, incident-response,
+   data-residency; 22 controls with maturity levels; evaluateSecurityPostureGate 5-gate evaluator
+   (PG1–PG5); getPilotBlockerControls; summarizeSecurityPosture; SECURITY_THREAT_CATEGORIES_IN_ORDER;
+   CONTROL_MATURITY_LEVELS_IN_ORDER)
+- SEC4: Incident Response Runbook — `src/lib/security/incident-response-runbook.ts`
+  (canonical SEV1–SEV4 playbook; 6 response phases: detect→triage→contain→investigate→recover→review;
+   13 response steps; 4-level escalation matrix with maxResponseTimeMinutes per severity;
+   post-incident review template; queryRunbook, getStepsByPhase, getStepsBySeverity,
+   getEscalationEntry; INCIDENT_SEVERITIES_IN_ORDER; INCIDENT_RESPONSE_PHASES_IN_ORDER)
+- Tests: 98 new tests across 2 test files; all pass
 
 ## Wave 30 deliverables produced
 - PAT1: Pattern Registry Format — `src/lib/solutions/pattern-registry-format.ts`
@@ -88,7 +104,7 @@
 (Set to true only if Anand explicitly instructs continuous autonomous execution)
 
 ## Session summary
-Wave 30 complete — Solution Intelligence Expansion delivering 3 slices (PAT1, PAT2, PAT3). PAT1 created the canonical pattern registry format schema with 10-gate readiness validator covering all 9 categories, 13 domains, 4 maturities, 4 agents. PAT2 codified the 8-stage authoring lifecycle with stage advancement gates and artefact requirements. PAT3 delivered the retail vertical pack with 2 patterns (data platform sourcing + AI failure modes), critical criteria for holiday season capacity, BAFO readiness signals, and Sentinel risk signals — both registry entries pass all 10 readiness gates. 106 new tests, 799 solutions tests green, 0 regressions. CI: ESLint pass, Routes pass, Hygiene pass, Vercel pass. Wave 31 next: Security Posture Hardening (SEC1, SEC2).
+Wave 31 complete — Security Posture Hardening delivering 2 slices (SEC3, SEC4). SEC3 codified the AbarVa security posture framework as a 10-family, 22-control model with maturity tracking and a 5-gate readiness evaluator — pilot blocker controls, critical-risk gaps, and coverage threshold are all gated. SEC4 produced the canonical incident response runbook covering SEV1–SEV4 severity levels across 6 phases (detect→triage→contain→investigate→recover→review) with 13 response steps, a 4-level escalation matrix, and a 6-section post-incident review template. Note: ID collision with older SEC1/SEC2 architecture slices required Wave 31 slices to be registered as SEC3/SEC4 in build-slices.json. 98 new tests, CI all pass. Wave 32 next.
 
 ## Route health (last verified 2026-04-26)
 - /tenant/apex-retail/programs → ACTIVE
@@ -110,6 +126,7 @@ Wave 30 complete — Solution Intelligence Expansion delivering 3 slices (PAT1, 
 - Page blueprints: docs/platform-design/page-blueprints/
 - Azure architecture docs: docs/architecture/azure/
 - Pilot docs: docs/pilot/
+- Wave 31 modules: src/lib/security/ (security-posture-model, incident-response-runbook)
 - Wave 30 modules: src/lib/solutions/ (pattern-registry-format, pattern-authoring-workflow, vertical-pack-retail)
 - Wave 29 modules: src/lib/routes/, src/lib/ops/ (wave-runner-model, pack-spec-validator)
 - Wave 28 modules: src/lib/data-trust/
