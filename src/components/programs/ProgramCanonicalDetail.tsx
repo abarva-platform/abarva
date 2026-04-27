@@ -153,12 +153,65 @@ export function ProgramCanonicalDetail({ tenant, program }: ProgramCanonicalDeta
           <span style={{ color: COLORS.muted }}>{program.code}</span>
         </nav>
 
-        {/* Canon trim: the route shell already shows the program identity
-         * and workflow orientation. The Nexus workbench below shows the
-         * current phase, gate state, and workflow stage as chips. So the
-         * inner duplicate header (Zone A) and the 5-metric Zone B context
-         * strip have been removed — the journey map is the first thing
-         * the user sees after the breadcrumb. */}
+        {/* Zone B · context strip (canon spec 03b §B-1, B-2). Sticky thin
+         *  pill row with tenant tier, program code, phase, gate, and
+         *  linked Source event chip. Click target for B-2 routes to the
+         *  Source event detail; the dedicated drawer lands with the Zone E
+         *  drawers wave. */}
+        <section
+          aria-label="Program context strip"
+          style={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 5,
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 8,
+            alignItems: 'center',
+            padding: '8px 12px',
+            marginBottom: 18,
+            background: 'rgba(248,247,244,0.92)',
+            backdropFilter: 'saturate(140%) blur(6px)',
+            border: `1px solid ${COLORS.border}`,
+            borderRadius: 999,
+            fontSize: 12,
+          }}
+        >
+          <span
+            style={{
+              padding: '4px 10px',
+              borderRadius: 999,
+              background: '#EAF5EE',
+              color: '#0F766E',
+              fontSize: 11,
+              fontWeight: 700,
+            }}
+          >
+            {tenant.displayName} · Rich
+          </span>
+          <span style={{ color: COLORS.muted }}>{program.code}</span>
+          <span style={{ color: COLORS.mutedSoft }}>·</span>
+          <span style={{ color: '#0B4A91', fontWeight: 700 }}>P2 · Synthesis</span>
+          <span style={{ color: COLORS.mutedSoft }}>·</span>
+          <span style={{ color: '#A65F00', fontWeight: 700 }}>Gate: Pending</span>
+          <span style={{ color: COLORS.mutedSoft }}>·</span>
+          <span style={{ color: COLORS.mutedSoft, fontStyle: 'italic' }}>Seed-backed · deterministic</span>
+          <Link
+            href="/source/events/apex-retail-ams-outsourcing-2026"
+            style={{
+              marginLeft: 'auto',
+              padding: '4px 12px',
+              borderRadius: 999,
+              border: `1px solid #0B4A91`,
+              color: '#0B4A91',
+              fontSize: 11,
+              fontWeight: 700,
+              textDecoration: 'none',
+            }}
+          >
+            Linked Source event ↗
+          </Link>
+        </section>
 
         <NexusProgramWorkbench
           programCode={program.code}

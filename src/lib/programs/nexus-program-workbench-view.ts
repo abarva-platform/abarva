@@ -41,6 +41,20 @@ export interface NexusWorkbenchAgentHandoff {
   role: string;
 }
 
+export interface NexusWorkbenchWorkshop {
+  title: string;
+  agenda: string[];
+  questions: string[];
+  evidenceToCapture: string[];
+  attendees: string[];
+}
+
+export interface NexusWorkbenchMissingInput {
+  label: string;
+  state: 'open' | 'in-progress' | 'satisfied';
+  sourceLabel: string;
+}
+
 export interface NexusWorkbenchPhaseFocus {
   key: string;
   brief: string;
@@ -50,6 +64,8 @@ export interface NexusWorkbenchPhaseFocus {
   blockerLabel: string;
   suggestedActions: NexusWorkbenchSuggestedAction[];
   agentHandoffs: NexusWorkbenchAgentHandoff[];
+  workshop: NexusWorkbenchWorkshop;
+  missingInputs: NexusWorkbenchMissingInput[];
 }
 
 export interface NexusWorkbenchEvidenceSlice {
@@ -59,12 +75,28 @@ export interface NexusWorkbenchEvidenceSlice {
   tone: 'strong' | 'partial' | 'draft' | 'staged' | 'planned';
 }
 
+export interface NexusWorkbenchSubnavTab {
+  key: 'overview' | 'workshop' | 'deliverables' | 'evidence' | 'actions' | 'gate';
+  label: string;
+}
+
+export interface NexusWorkbenchContextStrip {
+  tenantBadgeLabel: string;
+  programCode: string;
+  phaseLabel: string;
+  gateLabel: string;
+  caveat: string;
+  sourceEventLabel: string;
+  sourceEventHref: string;
+}
+
 export interface NexusWorkbenchView {
   programCode: string;
   programName: string;
   tenantLabel: string;
   programIdentity: string;
   headerSubtitle: string;
+  contextStrip: NexusWorkbenchContextStrip;
   phaseJourney: NexusWorkbenchPhaseNode[];
   journeySubtitle: string;
   defaultPhaseKey: string;
@@ -76,6 +108,9 @@ export interface NexusWorkbenchView {
   blockerLabel: string;
   suggestedActions: NexusWorkbenchSuggestedAction[];
   agentHandoffs: NexusWorkbenchAgentHandoff[];
+  workshop: NexusWorkbenchWorkshop;
+  missingInputs: NexusWorkbenchMissingInput[];
+  subnavTabs: NexusWorkbenchSubnavTab[];
   currentGateLabel: string;
   currentGateDescription: string;
   evidenceCoverage: NexusWorkbenchEvidenceSlice[];
@@ -129,6 +164,18 @@ const PHASE_FOCUS_TEMPLATES: ReadonlyArray<NexusWorkbenchPhaseFocus> = [
       { agent: 'sentinel', label: 'Sentinel', state: 'partial', stateLabel: 'PARTIAL', role: 'No evidence gaps' },
       { agent: 'atlas',    label: 'Atlas',    state: 'partial', stateLabel: 'PARTIAL', role: 'Baseline value hypothesis captured' },
     ],
+    workshop: {
+      title: 'Discovery debrief (closed)',
+      agenda: ['Review framing decisions', 'Confirm sponsor and scope', 'Hand off to Synthesis'],
+      questions: ['Does Synthesis have everything it needs?', 'Any framing gaps surfaced post-sign-off?'],
+      evidenceToCapture: ['Sponsor commitment minutes', 'Stakeholder map version'],
+      attendees: ['Sponsor', 'Client Maestro', 'Program Manager'],
+    },
+    missingInputs: [
+      { label: 'Sponsor confirmation', state: 'satisfied', sourceLabel: 'Sponsor brief' },
+      { label: 'Stakeholder map sign-off', state: 'satisfied', sourceLabel: 'Stakeholder map' },
+      { label: 'Source AMS event link', state: 'satisfied', sourceLabel: 'Source event registry' },
+    ],
   },
   {
     key: 'synthesis',
@@ -148,6 +195,31 @@ const PHASE_FOCUS_TEMPLATES: ReadonlyArray<NexusWorkbenchPhaseFocus> = [
       { agent: 'steward',  label: 'Steward',  state: 'blocked', stateLabel: 'BLOCKED', role: 'Gate/readiness' },
       { agent: 'sentinel', label: 'Sentinel', state: 'partial', stateLabel: 'PARTIAL', role: 'Evidence gaps' },
       { agent: 'atlas',    label: 'Atlas',    state: 'partial', stateLabel: 'PARTIAL', role: 'Executive value/risk under-evidenced' },
+    ],
+    workshop: {
+      title: 'Workshop 5 · Design Readiness',
+      agenda: [
+        'Review value hypothesis evidence',
+        'Confirm Workshop 5 outputs',
+        'Stakeholder readiness check',
+        'Define gate-decision criteria',
+      ],
+      questions: [
+        'What evidence still needs an owner?',
+        'Are commercial readiness conditions visible to the steering group?',
+        'What would unblock the platform owner sign-off?',
+      ],
+      evidenceToCapture: [
+        'Value hypothesis evidence pack',
+        'Platform owner confirmation',
+        'Workshop 5 decision log',
+      ],
+      attendees: ['Sponsor', 'Client Maestro', 'Platform Owner', 'Value Office', 'Steward'],
+    },
+    missingInputs: [
+      { label: 'Value hypothesis evidence', state: 'open', sourceLabel: 'Evidence ledger' },
+      { label: 'Platform owner confirmation', state: 'in-progress', sourceLabel: 'Stakeholder roster' },
+      { label: 'Workshop 5 outputs captured', state: 'in-progress', sourceLabel: 'Workshop 5 log' },
     ],
   },
   {
@@ -169,6 +241,27 @@ const PHASE_FOCUS_TEMPLATES: ReadonlyArray<NexusWorkbenchPhaseFocus> = [
       { agent: 'sentinel', label: 'Sentinel', state: 'partial', stateLabel: 'PARTIAL', role: 'Evidence pack incomplete' },
       { agent: 'atlas',    label: 'Atlas',    state: 'partial', stateLabel: 'PARTIAL', role: 'Value at stake under-evidenced' },
     ],
+    workshop: {
+      title: 'Design gate review',
+      agenda: [
+        'Walk the gate checklist',
+        'Inspect outstanding value evidence',
+        'Vendor evaluation summary',
+        'Capture gate-decision conditions',
+      ],
+      questions: [
+        'Which gate items will be waived vs resolved?',
+        'Who owns the remaining evidence pack?',
+        'When is the next gate review window?',
+      ],
+      evidenceToCapture: ['Gate checklist completion', 'Solution match rationale', 'Vendor scorecard'],
+      attendees: ['Sponsor', 'Steward', 'Vendor lead', 'Value Office'],
+    },
+    missingInputs: [
+      { label: 'Gate checklist completion', state: 'open', sourceLabel: 'Gate checklist' },
+      { label: 'Solution match rationale', state: 'open', sourceLabel: 'Solution match' },
+      { label: 'Vendor evaluation summary', state: 'in-progress', sourceLabel: 'Vendor evaluation' },
+    ],
   },
   {
     key: 'build',
@@ -188,6 +281,18 @@ const PHASE_FOCUS_TEMPLATES: ReadonlyArray<NexusWorkbenchPhaseFocus> = [
       { agent: 'steward',  label: 'Steward',  state: 'partial', stateLabel: 'PARTIAL', role: 'Awaiting gate clearance' },
       { agent: 'sentinel', label: 'Sentinel', state: 'partial', stateLabel: 'PARTIAL', role: 'Capacity not yet validated' },
       { agent: 'atlas',    label: 'Atlas',    state: 'partial', stateLabel: 'PARTIAL', role: 'Timeline at risk' },
+    ],
+    workshop: {
+      title: 'Build readiness review (locked)',
+      agenda: ['Walk implementation plan', 'Confirm capacity allocation', 'Inspect change-management plan'],
+      questions: ['Is capacity validated end-to-end?', 'Who owns each change-management workstream?'],
+      evidenceToCapture: ['Capacity sign-off', 'Sequencing plan', 'Risk register'],
+      attendees: ['Implementation lead', 'Change lead', 'Vendor lead'],
+    },
+    missingInputs: [
+      { label: 'Design gate approval', state: 'open', sourceLabel: 'Gate registry' },
+      { label: 'Capacity allocation sign-off', state: 'in-progress', sourceLabel: 'Capacity plan' },
+      { label: 'Change-management plan', state: 'in-progress', sourceLabel: 'Change plan' },
     ],
   },
   {
@@ -209,6 +314,18 @@ const PHASE_FOCUS_TEMPLATES: ReadonlyArray<NexusWorkbenchPhaseFocus> = [
       { agent: 'sentinel', label: 'Sentinel', state: 'partial', stateLabel: 'PARTIAL', role: 'Adoption signals not yet wired' },
       { agent: 'atlas',    label: 'Atlas',    state: 'partial', stateLabel: 'PARTIAL', role: 'Adoption risk staged' },
     ],
+    workshop: {
+      title: 'Activation readiness preview (locked)',
+      agenda: ['Cutover plan walkthrough', 'Training rollout', 'Adoption playbook stress test'],
+      questions: ['Are training assets ready?', 'Where are adoption risks concentrated?'],
+      evidenceToCapture: ['Cutover sign-off', 'Training completion', 'Adoption signal wiring'],
+      attendees: ['Adoption lead', 'Training lead', 'Change lead'],
+    },
+    missingInputs: [
+      { label: 'Build delivery confirmation', state: 'open', sourceLabel: 'Delivery log' },
+      { label: 'Cutover plan authorized', state: 'in-progress', sourceLabel: 'Cutover plan' },
+      { label: 'Training plan ready', state: 'in-progress', sourceLabel: 'Training plan' },
+    ],
   },
   {
     key: 'operate',
@@ -228,6 +345,18 @@ const PHASE_FOCUS_TEMPLATES: ReadonlyArray<NexusWorkbenchPhaseFocus> = [
       { agent: 'steward',  label: 'Steward',  state: 'partial', stateLabel: 'PARTIAL', role: 'Close-out gate' },
       { agent: 'sentinel', label: 'Sentinel', state: 'partial', stateLabel: 'PARTIAL', role: 'Outcome evidence pending' },
       { agent: 'atlas',    label: 'Atlas',    state: 'partial', stateLabel: 'PARTIAL', role: 'Sponsor outcome staged' },
+    ],
+    workshop: {
+      title: 'Outcome close-out preview (locked)',
+      agenda: ['Outcome KPI review', 'Sponsor sign-off pattern', 'Risk close-out walkthrough'],
+      questions: ['Which KPIs prove the realized outcome?', 'Who signs off and when?'],
+      evidenceToCapture: ['Outcome KPI evidence', 'Sponsor sign-off', 'Risk close-out memo'],
+      attendees: ['Sponsor', 'Value Office', 'Steward'],
+    },
+    missingInputs: [
+      { label: 'Activate cutover complete', state: 'open', sourceLabel: 'Cutover registry' },
+      { label: 'Outcome KPI measurement', state: 'open', sourceLabel: 'Outcome KPIs' },
+      { label: 'Sponsor sign-off pattern', state: 'in-progress', sourceLabel: 'Sponsor pattern' },
     ],
   },
 ];
@@ -253,8 +382,25 @@ function clonePhaseFocus(focus: NexusWorkbenchPhaseFocus): NexusWorkbenchPhaseFo
     blockerLabel: focus.blockerLabel,
     suggestedActions: focus.suggestedActions.map((action) => ({ ...action })),
     agentHandoffs: focus.agentHandoffs.map((handoff) => ({ ...handoff })),
+    workshop: {
+      title: focus.workshop.title,
+      agenda: [...focus.workshop.agenda],
+      questions: [...focus.workshop.questions],
+      evidenceToCapture: [...focus.workshop.evidenceToCapture],
+      attendees: [...focus.workshop.attendees],
+    },
+    missingInputs: focus.missingInputs.map((input) => ({ ...input })),
   };
 }
+
+const SUBNAV_TABS: ReadonlyArray<NexusWorkbenchSubnavTab> = [
+  { key: 'overview',     label: 'Overview' },
+  { key: 'workshop',     label: 'Workshop' },
+  { key: 'deliverables', label: 'Deliverables' },
+  { key: 'evidence',     label: 'Evidence' },
+  { key: 'actions',      label: 'Actions' },
+  { key: 'gate',         label: 'Gate' },
+];
 
 function buildPhaseFocusByKey(): Record<string, NexusWorkbenchPhaseFocus> {
   const map: Record<string, NexusWorkbenchPhaseFocus> = {};
@@ -284,6 +430,15 @@ export function buildNexusProgramWorkbenchView(
     programIdentity: `${programCode} · ${programName}`,
     headerSubtitle:
       'Active Program workspace. Phase journey appears first; Nexus anchors the conversation and moves the Client Maestro toward the next gate decision.',
+    contextStrip: {
+      tenantBadgeLabel: `${tenantLabel} · Rich`,
+      programCode,
+      phaseLabel: 'P2 · Synthesis',
+      gateLabel: 'Gate: Pending',
+      caveat: 'Seed-backed · deterministic',
+      sourceEventLabel: 'Linked Source event · apex-retail-ams-outsourcing-2026',
+      sourceEventHref: '/source/events/apex-retail-ams-outsourcing-2026',
+    },
     phaseJourney,
     journeySubtitle:
       'P2 is active. P3 Design is gated by Workshop 5 outcomes and value hypothesis evidence.',
@@ -296,6 +451,15 @@ export function buildNexusProgramWorkbenchView(
     blockerLabel: defaultFocus.blockerLabel,
     suggestedActions: defaultFocus.suggestedActions.map((action) => ({ ...action })),
     agentHandoffs: defaultFocus.agentHandoffs.map((handoff) => ({ ...handoff })),
+    workshop: {
+      title: defaultFocus.workshop.title,
+      agenda: [...defaultFocus.workshop.agenda],
+      questions: [...defaultFocus.workshop.questions],
+      evidenceToCapture: [...defaultFocus.workshop.evidenceToCapture],
+      attendees: [...defaultFocus.workshop.attendees],
+    },
+    missingInputs: defaultFocus.missingInputs.map((input) => ({ ...input })),
+    subnavTabs: SUBNAV_TABS.map((tab) => ({ ...tab })),
     currentGateLabel: 'Synthesis → Design · Pending',
     currentGateDescription:
       'Steward blocks approval until Workshop 5 outcomes, value baseline, and platform owner confirmation are captured.',

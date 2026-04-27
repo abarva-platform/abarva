@@ -7,8 +7,11 @@ import {
   type NexusProgramWorkbenchInput,
   type NexusWorkbenchAgentHandoff,
   type NexusWorkbenchEvidenceSlice,
+  type NexusWorkbenchMissingInput,
   type NexusWorkbenchPhaseNode,
+  type NexusWorkbenchSubnavTab,
   type NexusWorkbenchSuggestedAction,
+  type NexusWorkbenchWorkshop,
 } from '@/lib/programs/nexus-program-workbench-view';
 
 // --- design tokens (AbarVa locked palette) -------------------------------
@@ -621,6 +624,225 @@ function EvidenceCoverageCard({
   );
 }
 
+// --- subnav (C-6) --------------------------------------------------------
+
+function SubnavTabsBar({
+  tabs,
+  activeKey,
+  onSelect,
+}: {
+  tabs: NexusWorkbenchSubnavTab[];
+  activeKey: string;
+  onSelect: (key: NexusWorkbenchSubnavTab['key']) => void;
+}) {
+  return (
+    <nav
+      aria-label="Program subnav"
+      style={{
+        display: 'flex',
+        gap: 6,
+        flexWrap: 'wrap',
+        padding: '6px',
+        borderRadius: 999,
+        background: SURFACE,
+        border: `1px solid ${BORDER}`,
+        width: 'max-content',
+        maxWidth: '100%',
+      }}
+    >
+      {tabs.map((tab) => {
+        const isActive = tab.key === activeKey;
+        return (
+          <button
+            key={tab.key}
+            type="button"
+            data-tab={tab.key}
+            data-tab-active={isActive ? 'true' : 'false'}
+            aria-pressed={isActive}
+            onClick={() => onSelect(tab.key)}
+            style={{
+              border: 0,
+              borderRadius: 999,
+              padding: '7px 14px',
+              background: isActive ? NAVY : 'transparent',
+              color: isActive ? '#FFFFFF' : NAVY,
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: 'pointer',
+              fontFamily: FONT,
+            }}
+          >
+            {tab.label}
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+// --- C-5 workshop canvas -------------------------------------------------
+
+function WorkshopColumn({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div
+      style={{
+        flex: '1 1 0',
+        minWidth: 200,
+        padding: 14,
+        borderRadius: 14,
+        background: '#FCFCFA',
+        border: `1px solid ${BORDER}`,
+      }}
+    >
+      <Eyebrow>{title}</Eyebrow>
+      <ul style={{ margin: '8px 0 0', paddingLeft: 18, color: BODY, fontSize: 12.5, lineHeight: 1.6 }}>
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function WorkshopCanvas({ workshop }: { workshop: NexusWorkbenchWorkshop }) {
+  return (
+    <section
+      aria-label="Nexus workshop canvas"
+      style={{
+        padding: '20px 22px 18px',
+        borderRadius: 18,
+        background: CARD,
+        border: `1px solid ${BORDER}`,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 14,
+      }}
+    >
+      <div>
+        <Eyebrow>Nexus workshop canvas</Eyebrow>
+        <h4
+          style={{
+            margin: '6px 0 0',
+            fontFamily: SERIF,
+            fontSize: 20,
+            fontWeight: 600,
+            color: INK,
+          }}
+        >
+          {workshop.title}
+        </h4>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+        <WorkshopColumn title="Agenda" items={workshop.agenda} />
+        <WorkshopColumn title="Questions to capture" items={workshop.questions} />
+        <WorkshopColumn title="Evidence to capture" items={workshop.evidenceToCapture} />
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+        <Eyebrow>Attendees</Eyebrow>
+        {workshop.attendees.map((attendee) => (
+          <span
+            key={attendee}
+            style={{
+              padding: '4px 10px',
+              borderRadius: 999,
+              background: BLUE_SOFT,
+              color: NAVY,
+              fontSize: 11.5,
+              fontWeight: 700,
+            }}
+          >
+            {attendee}
+          </span>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// --- C-8 missing inputs / evidence panel --------------------------------
+
+function MissingInputRow({ input }: { input: NexusWorkbenchMissingInput }) {
+  const tone =
+    input.state === 'satisfied'
+      ? { bg: GREEN_TINT, fg: GREEN, mark: '✓', label: 'Satisfied' }
+      : input.state === 'in-progress'
+        ? { bg: BLUE_SOFT, fg: NAVY, mark: '◐', label: 'In progress' }
+        : { bg: AMBER_SOFT, fg: AMBER, mark: '○', label: 'Open' };
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 10,
+        padding: '10px 12px',
+        borderRadius: 12,
+        background: '#FFFFFF',
+        border: `1px solid ${BORDER}`,
+      }}
+    >
+      <span
+        aria-label={tone.label}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: 22,
+          height: 22,
+          borderRadius: 999,
+          background: tone.bg,
+          color: tone.fg,
+          fontSize: 12,
+          fontWeight: 800,
+          flex: '0 0 auto',
+        }}
+      >
+        {tone.mark}
+      </span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ color: INK, fontSize: 13, fontWeight: 600, lineHeight: 1.35 }}>{input.label}</div>
+        <div style={{ marginTop: 2, color: MUTED, fontSize: 11.5 }}>Source: {input.sourceLabel}</div>
+      </div>
+    </div>
+  );
+}
+
+function MissingInputsPanel({ inputs }: { inputs: NexusWorkbenchMissingInput[] }) {
+  return (
+    <section
+      aria-label="Evidence and missing inputs"
+      style={{
+        padding: '20px 22px 18px',
+        borderRadius: 18,
+        background: CARD,
+        border: `1px solid ${BORDER}`,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+      }}
+    >
+      <div>
+        <Eyebrow>Evidence · missing inputs</Eyebrow>
+        <h4
+          style={{
+            margin: '6px 0 0',
+            fontFamily: SERIF,
+            fontSize: 20,
+            fontWeight: 600,
+            color: INK,
+          }}
+        >
+          What still needs to land for this gate
+        </h4>
+      </div>
+      <div style={{ display: 'grid', gap: 8 }}>
+        {inputs.map((input) => (
+          <MissingInputRow key={input.label} input={input} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 // --- agent rail (right) --------------------------------------------------
 
 function agentStateTone(state: NexusWorkbenchAgentHandoff['state']): { fg: string; bg: string } {
@@ -750,6 +972,7 @@ export function NexusProgramWorkbench(props: NexusProgramWorkbenchProps) {
   const view = buildNexusProgramWorkbenchView(props);
 
   const [selectedPhaseKey, setSelectedPhaseKey] = useState<string>(view.defaultPhaseKey);
+  const [activeTab, setActiveTab] = useState<NexusWorkbenchSubnavTab['key']>('overview');
   const selectedFocus =
     view.phaseFocusByKey[selectedPhaseKey] ?? view.phaseFocusByKey[view.defaultPhaseKey]!;
 
@@ -813,26 +1036,94 @@ export function NexusProgramWorkbench(props: NexusProgramWorkbenchProps) {
             confidenceLabel={selectedFocus.confidenceLabel}
             blockerLabel={selectedFocus.blockerLabel}
           />
-          <SuggestedActionsCard
-            actions={selectedFocus.suggestedActions}
-            customAskPlaceholder={view.customAskPlaceholder}
+
+          <SubnavTabsBar
+            tabs={view.subnavTabs}
+            activeKey={activeTab}
+            onSelect={setActiveTab}
           />
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-              gap: 14,
-            }}
-          >
-            <CurrentGateCard
-              gateLabel={view.currentGateLabel}
-              description={view.currentGateDescription}
+
+          {activeTab === 'overview' ? (
+            <>
+              <SuggestedActionsCard
+                actions={selectedFocus.suggestedActions}
+                customAskPlaceholder={view.customAskPlaceholder}
+              />
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                  gap: 14,
+                }}
+              >
+                <CurrentGateCard
+                  gateLabel={view.currentGateLabel}
+                  description={view.currentGateDescription}
+                />
+                <EvidenceCoverageCard
+                  slices={view.evidenceCoverage}
+                  note={view.evidenceCoverageNote}
+                />
+              </div>
+            </>
+          ) : null}
+
+          {activeTab === 'workshop' ? (
+            <WorkshopCanvas workshop={selectedFocus.workshop} />
+          ) : null}
+
+          {activeTab === 'evidence' ? (
+            <>
+              <MissingInputsPanel inputs={selectedFocus.missingInputs} />
+              <EvidenceCoverageCard
+                slices={view.evidenceCoverage}
+                note={view.evidenceCoverageNote}
+              />
+            </>
+          ) : null}
+
+          {activeTab === 'gate' ? (
+            <>
+              <CurrentGateCard
+                gateLabel={view.currentGateLabel}
+                description={view.currentGateDescription}
+              />
+              <MissingInputsPanel inputs={selectedFocus.missingInputs} />
+            </>
+          ) : null}
+
+          {activeTab === 'actions' ? (
+            <SuggestedActionsCard
+              actions={selectedFocus.suggestedActions}
+              customAskPlaceholder={view.customAskPlaceholder}
             />
-            <EvidenceCoverageCard
-              slices={view.evidenceCoverage}
-              note={view.evidenceCoverageNote}
-            />
-          </div>
+          ) : null}
+
+          {activeTab === 'deliverables' ? (
+            <section
+              aria-label="Deliverables scoped panel"
+              style={{
+                padding: '20px 22px 18px',
+                borderRadius: 18,
+                background: CARD,
+                border: `1px solid ${BORDER}`,
+              }}
+            >
+              <Eyebrow>Deliverables</Eyebrow>
+              <p
+                style={{
+                  margin: '8px 0 0',
+                  color: BODY,
+                  fontSize: 13,
+                  lineHeight: 1.5,
+                }}
+              >
+                The full deliverables-by-phase table renders below the workbench (C-7).
+                Click a row in that table to open the Deliverable Detail Drawer once the
+                drawer wave lands.
+              </p>
+            </section>
+          ) : null}
         </div>
 
         <AgentRail

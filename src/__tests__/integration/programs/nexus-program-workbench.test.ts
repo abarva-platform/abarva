@@ -121,6 +121,57 @@ describe('NexusProgramWorkbench · view model', () => {
     expect(view.threeChoicesRule).toContain('Only shown when it moves work forward');
   });
 
+  it('exposes a context strip (B-1) with tenant, program, phase, gate, caveat, source event', () => {
+    expect(view.contextStrip.tenantBadgeLabel).toContain('Apex Retail');
+    expect(view.contextStrip.programCode).toBe('APX-CDP-2026');
+    expect(view.contextStrip.phaseLabel).toContain('P2');
+    expect(view.contextStrip.gateLabel).toContain('Pending');
+    expect(view.contextStrip.caveat.toLowerCase()).toContain('seed');
+    expect(view.contextStrip.sourceEventLabel).toContain('apex-retail-ams-outsourcing-2026');
+    expect(view.contextStrip.sourceEventHref).toContain('/source/events/');
+  });
+
+  it('exposes the canonical six-tab subnav (C-6)', () => {
+    expect(view.subnavTabs.map((tab) => tab.key)).toEqual([
+      'overview',
+      'workshop',
+      'deliverables',
+      'evidence',
+      'actions',
+      'gate',
+    ]);
+  });
+
+  it('synthesis workshop (C-5) carries title + agenda + questions + evidence + attendees', () => {
+    const workshop = view.phaseFocusByKey['synthesis']!.workshop;
+    expect(workshop.title).toContain('Workshop 5');
+    expect(workshop.agenda.length).toBeGreaterThanOrEqual(3);
+    expect(workshop.questions.length).toBeGreaterThanOrEqual(2);
+    expect(workshop.evidenceToCapture.length).toBeGreaterThanOrEqual(2);
+    expect(workshop.attendees.length).toBeGreaterThanOrEqual(3);
+    expect(view.workshop.title).toBe(workshop.title);
+  });
+
+  it('synthesis missing inputs (C-8) carry state + source label per item', () => {
+    const inputs = view.phaseFocusByKey['synthesis']!.missingInputs;
+    expect(inputs.length).toBeGreaterThanOrEqual(3);
+    for (const input of inputs) {
+      expect(['open', 'in-progress', 'satisfied']).toContain(input.state);
+      expect(input.label.length).toBeGreaterThan(0);
+      expect(input.sourceLabel.length).toBeGreaterThan(0);
+    }
+    expect(inputs.some((i) => i.state === 'open')).toBe(true);
+  });
+
+  it('every phase carries a workshop and missing-inputs payload', () => {
+    for (const phase of view.phaseJourney) {
+      const focus = view.phaseFocusByKey[phase.key]!;
+      expect(focus.workshop.title.length).toBeGreaterThan(0);
+      expect(focus.workshop.agenda.length).toBeGreaterThanOrEqual(2);
+      expect(focus.missingInputs.length).toBeGreaterThanOrEqual(3);
+    }
+  });
+
   it('exposes a per-phase focus map with cta + brief + 3 actions + 4 agents', () => {
     for (const phase of view.phaseJourney) {
       const focus = view.phaseFocusByKey[phase.key];
@@ -240,5 +291,38 @@ describe('NexusProgramWorkbench · component contract', () => {
     const missionPanelIndex = canonicalDetailSource.indexOf('<AgentMissionPanel');
     expect(workbenchIndex).toBeGreaterThan(-1);
     expect(missionPanelIndex).toBeGreaterThan(workbenchIndex);
+  });
+
+  it('renders the canon-spec C-6 subnav and per-tab panels', () => {
+    expect(componentSource).toContain('SubnavTabsBar');
+    expect(componentSource).toContain('aria-label="Program subnav"');
+    expect(componentSource).toContain("useState<NexusWorkbenchSubnavTab['key']>('overview')");
+    expect(componentSource).toContain("activeTab === 'workshop'");
+    expect(componentSource).toContain("activeTab === 'evidence'");
+    expect(componentSource).toContain("activeTab === 'gate'");
+    expect(componentSource).toContain("activeTab === 'actions'");
+    expect(componentSource).toContain("activeTab === 'deliverables'");
+  });
+
+  it('renders the canon-spec C-5 Workshop Canvas with agenda / questions / evidence / attendees', () => {
+    expect(componentSource).toContain('WorkshopCanvas');
+    expect(componentSource).toContain('Agenda');
+    expect(componentSource).toContain('Questions to capture');
+    expect(componentSource).toContain('Evidence to capture');
+    expect(componentSource).toContain('Attendees');
+  });
+
+  it('renders the canon-spec C-8 Missing Inputs panel', () => {
+    expect(componentSource).toContain('MissingInputsPanel');
+    expect(componentSource).toContain('Evidence · missing inputs');
+  });
+
+  it('renders the canon-spec B-1 sticky context strip on the page', () => {
+    expect(canonicalDetailSource).toContain('Program context strip');
+    expect(canonicalDetailSource).toContain("position: 'sticky'");
+    expect(canonicalDetailSource).toContain('Linked Source event');
+    expect(canonicalDetailSource).toContain('/source/events/apex-retail-ams-outsourcing-2026');
+    expect(canonicalDetailSource).toContain('P2 · Synthesis');
+    expect(canonicalDetailSource).toContain('Gate: Pending');
   });
 });
