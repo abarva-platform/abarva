@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-04-27",
+  "lastUpdated": "2026-04-26",
   "source": "Deterministic build wave manifest. Updated by integration agent after each wave merge.",
   "lifecycle": [
     "planned",
@@ -1342,6 +1342,27 @@
       "currentBlockers": [],
       "nextAction": "wave-admin-redesign complete (7/7 slices). ADMIN7 visual lock guards all future admin tree changes. Pick next wave from WAVE_ROADMAP.md.",
       "lastUpdated": "2026-04-27"
+    },
+    {
+      "waveId": "wave-admin-redesign-followup",
+      "name": "Admin Redesign Follow-up \u00b7 Single Source of Truth",
+      "goal": "Consolidate the admin tree to a single canonical path at /admin/*, retire /platform/admin/* via redirects, and enforce a single auth gate at /admin/layout.tsx. No content or business logic changes.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "ADMIN8"
+      ],
+      "completedSlices": [
+        "ADMIN8"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "not_run",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Founder review at /admin (now canonical); pick next wave from WAVE_ROADMAP.md.",
+      "lastUpdated": "2026-04-26"
     }
   ]
 }

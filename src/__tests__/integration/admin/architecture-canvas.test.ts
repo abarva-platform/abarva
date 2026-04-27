@@ -97,7 +97,8 @@ describe('ArchitectureCanvas component', () => {
   // disk for other consumers / future cleanup, but the page itself now imports
   // the new plane stack instead.
   it('architecture page imports ArchitecturePlaneStack (new wiring)', () => {
-    const pagePath = path.join(repoRoot, 'src/app/(maestro)/platform/admin/architecture/page.tsx')
+    // ADMIN8 — admin tree consolidated; canonical Architecture page lives at /admin/architecture.
+    const pagePath = path.join(repoRoot, 'src/app/(maestro)/admin/architecture/page.tsx')
     const source = fs.readFileSync(pagePath, 'utf8')
     expect(source).toContain('ArchitecturePlaneStack')
     expect(source).toMatch(/import\s*\{[^}]*ArchitecturePlaneStack[^}]*\}\s*from/)

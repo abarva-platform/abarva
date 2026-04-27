@@ -72,13 +72,17 @@ const CANONICAL_SOURCE_PAGES = [
   'src/app/(maestro)/source/value/page.tsx',
 ];
 
-// Admin pages that adopt AdminCanonShell today.
+// ADMIN8 — admin tree consolidated under /admin/*. The legacy /platform/admin
+// pages for {root, architecture, production-readiness} are now thin redirects
+// (covered by ADMIN7 visual lock). Experience Gallery + the legacy
+// /platform/admin/build-progress remain canonical pages on the legacy tree.
 const CANONICAL_ADMIN_PAGES = [
-  'src/app/(maestro)/platform/admin/page.tsx',
-  'src/app/(maestro)/platform/admin/architecture/page.tsx',
+  'src/app/(maestro)/admin/page.tsx',
+  'src/app/(maestro)/admin/architecture/page.tsx',
+  'src/app/(maestro)/admin/build-progress/page.tsx',
+  'src/app/(maestro)/admin/production-readiness/page.tsx',
   'src/app/(maestro)/platform/admin/build-progress/page.tsx',
   'src/app/(maestro)/platform/admin/experience-gallery/page.tsx',
-  'src/app/(maestro)/platform/admin/production-readiness/page.tsx',
 ];
 
 const ALL_IN_SCOPE_FILES = [
@@ -360,8 +364,10 @@ describe('NAV1F · sanity counts', () => {
     expect(CANONICAL_SOURCE_PAGES.length).toBe(6);
   });
 
-  it('inspects all 5 AdminCanonShell-using pages', () => {
-    expect(CANONICAL_ADMIN_PAGES.length).toBe(5);
+  it('inspects all 6 AdminCanonShell-using pages', () => {
+    // ADMIN8: 4 canonical /admin/* pages + 2 legacy /platform/admin/* pages
+    // (build-progress, experience-gallery) that still render the canonical shell.
+    expect(CANONICAL_ADMIN_PAGES.length).toBe(6);
   });
 
   it('declares at least 4 banned tokens', () => {

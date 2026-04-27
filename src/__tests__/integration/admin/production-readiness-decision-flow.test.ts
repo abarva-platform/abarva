@@ -13,10 +13,11 @@ const componentSource = fs.readFileSync(
   ),
   'utf8',
 );
+// ADMIN8 — canonical Production Readiness page is /admin/production-readiness.
 const pageSource = fs.readFileSync(
   path.join(
     repoRoot,
-    'src/app/(maestro)/platform/admin/production-readiness/page.tsx',
+    'src/app/(maestro)/admin/production-readiness/page.tsx',
   ),
   'utf8',
 );

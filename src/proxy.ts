@@ -5,7 +5,10 @@ import { isExternalOnlyRole, resolveSessionClientKey, resolveSessionRole, should
 
 const MOBILE_UA = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
 const ACTIVE_CLIENT_COOKIE = 'abarva_active_client'
+// ADMIN8 — canonical path is /admin/production-readiness; the /platform/admin/*
+// variant is preserved for the legacy redirect's pre-redirect response.
 const PRODUCTION_READINESS_NO_STORE_PATHS = new Set([
+  '/admin/production-readiness',
   '/platform/admin/production-readiness',
   '/api/admin/production-readiness',
 ])

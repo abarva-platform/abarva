@@ -27,7 +27,7 @@ export const ABARVA_TOP_NAV_SURFACES: ReadonlyArray<AbarvaTopNavSurface> = [
   { key: 'tower', label: 'Control Tower', href: '/tower' },
   { key: 'intelligence', label: 'Intelligence', href: '/intelligence' },
   { key: 'source', label: 'Source', href: '/source' },
-  { key: 'admin', label: 'Admin', href: '/platform/admin' },
+  { key: 'admin', label: 'Admin', href: '/admin' },
 ];
 
 // ---------------------------------------------------------------------

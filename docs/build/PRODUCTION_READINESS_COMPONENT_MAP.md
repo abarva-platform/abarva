@@ -3,7 +3,7 @@
 Status: active reference
 Owner: Steward
 Canonical manifest: `docs/build/production-readiness.json`
-Canonical admin page: `/platform/admin/production-readiness`
+Canonical admin page: `/admin/production-readiness` (legacy `/platform/admin/production-readiness` 308 redirects here, ADMIN8)
 
 ## Purpose
 

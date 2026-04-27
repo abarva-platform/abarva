@@ -44,8 +44,8 @@ export const ABARVA_SHELL_CONFIG: AbarVaShellConfig = {
     { surface: 'source', label: 'Source', href: '/source' },
     { surface: 'intelligence', label: 'Intelligence', href: '/tenant/apex-retail/intelligence' },
     { surface: 'control_tower', label: 'Control Tower', href: '/tenant/apex-retail/tower' },
-    { surface: 'platform', label: 'Platform', href: '/platform/admin' },
-    { surface: 'admin', label: 'Admin', href: '/platform/admin', isAdminOnly: true },
+    { surface: 'platform', label: 'Platform', href: '/admin' },
+    { surface: 'admin', label: 'Admin', href: '/admin', isAdminOnly: true },
   ],
   bannedTokens: ['#14B8A6', 'teal', 'cyber', 'neon', 'sparkle', 'ॐ', 'Sanskrit'],
 };
