@@ -1,56 +1,322 @@
-import type { SourceValueLedgerSnapshot } from '@/lib/source/types';
+import { COLORS, FONTS, TEXT } from '@/lib/design-system';
+import type { CSSProperties } from 'react';
+import type { SourceValueLedgerSnapshot, ValueLedgerEntry, ValueConfidence } from '@/lib/source/types';
 import { formatUsd, getLedgerRollup } from '@/lib/source/value-ledger';
-import { sourceCard, sourceTableCell } from './foundationStyles';
+import {
+  sourceCard,
+  sourceInsetCard,
+  sourceTableCell,
+  sourceTableHeaderCell,
+} from './foundationStyles';
+
+type RowPerspective = 'projected' | 'committed' | 'measuring' | 'realized';
+
+interface ValueLedgerRowView {
+  entry: ValueLedgerEntry;
+  perspective: RowPerspective;
+}
+
+const SUMMARY_PANEL: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+  gap: 12,
+  alignItems: 'start',
+};
+
+const PANEL_CARD: CSSProperties = {
+  ...sourceInsetCard,
+  borderRadius: 12,
+  background: '#FFFFFF',
+  border: '1px solid #E8E6E1',
+};
+
+const PERSPECTIVE_LABEL: CSSProperties = {
+  ...TEXT.small,
+  textTransform: 'uppercase',
+  letterSpacing: '0.08em',
+  color: COLORS.textSecondary,
+};
+
+const VALUE_TEXT: CSSProperties = {
+  ...TEXT.metricValue,
+  color: COLORS.textPrimary,
+  fontSize: 26,
+};
+
+const CHIP_ROW: CSSProperties = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: 8,
+  marginTop: 8,
+};
+
+const CHIPS: CSSProperties = {
+  ...TEXT.small,
+  borderRadius: 14,
+  border: '1px solid #D7DEE9',
+  padding: '5px 10px',
+  background: '#F5F8FD',
+  color: COLORS.textPrimary,
+};
+
+const TWO_COL: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'minmax(0, 1.2fr) minmax(280px, 0.8fr)',
+  gap: 16,
+  alignItems: 'start',
+};
+
+const SECTION_GRID: CSSProperties = {
+  display: 'grid',
+  gap: 12,
+};
+
+const ACTION_LINK: CSSProperties = {
+  ...sourceCard,
+  textDecoration: 'none',
+  display: 'inline-flex',
+  justifyContent: 'center',
+  padding: '8px 12px',
+  borderRadius: 999,
+  border: '1px solid #1B2B5C',
+  background: '#F6F9FF',
+  color: COLORS.textPrimary,
+  fontFamily: FONTS.sans,
+  fontSize: 12,
+  fontWeight: 600,
+};
+
+function toPerspectiveLabel(perspective: RowPerspective): string {
+  if (perspective === 'projected') return 'Projected';
+  if (perspective === 'committed') return 'Committed';
+  if (perspective === 'measuring') return 'Measuring';
+  return 'Realized';
+}
+
+function confidenceTone(confidence: ValueConfidence): 'high' | 'medium' | 'low' {
+  if (confidence === 'high') return 'high';
+  if (confidence === 'medium') return 'medium';
+  return 'low';
+}
+
+function confidenceColor(confidence: ValueConfidence): string {
+  return confidenceTone(confidence) === 'high'
+    ? '#0B5FA5'
+    : confidenceTone(confidence) === 'medium'
+      ? '#D97706'
+      : '#B91C1C';
+}
+
+function deriveRows(snapshot: SourceValueLedgerSnapshot): {
+  rows: ValueLedgerRowView[];
+  projected: ValueLedgerEntry[];
+  committed: ValueLedgerEntry[];
+  measuring: ValueLedgerEntry[];
+  realized: ValueLedgerEntry[];
+} {
+  const projected = [...snapshot.projected];
+  const realized = [...snapshot.realized];
+  const committed = projected.filter((entry) => entry.confidence === 'high' && entry.evidenceCount > 0);
+  const measuring = projected.filter((entry) => !(entry.confidence === 'high' && entry.evidenceCount > 0));
+  const rows: ValueLedgerRowView[] = [
+    ...projected.map((entry) => ({ entry, perspective: 'projected' as const })),
+    ...committed.map((entry) => ({ entry, perspective: 'committed' as const })),
+    ...measuring.map((entry) => ({ entry, perspective: 'measuring' as const })),
+    ...realized.map((entry) => ({ entry, perspective: 'realized' as const })),
+  ];
+  return { rows, projected, committed, measuring, realized };
+}
+
+function buildAssumptions(snapshot: SourceValueLedgerSnapshot): string[] {
+  const assumptionSet = new Set<string>();
+
+  [...snapshot.projected, ...snapshot.realized].forEach((entry) => {
+    if (entry.note) {
+      assumptionSet.add(entry.note);
+    }
+  });
+
+  if (assumptionSet.size > 0) {
+    return [...assumptionSet].slice(0, 6);
+  }
+  return ['No detailed assumptions are seeded for current ledger entries.'];
+}
 
 export function SourceValueLedger({ snapshot }: { snapshot: SourceValueLedgerSnapshot }) {
   const rollup = getLedgerRollup(snapshot);
+  const { rows, projected, committed, measuring, realized } = deriveRows(snapshot);
+  const assumptions = buildAssumptions(snapshot);
+  const events = [...new Set(rows.map(({ entry }) => entry.eventName))];
+  const lowConfidenceRows = rows.filter(({ entry }) => entry.confidence === 'low' || entry.evidenceCount === 0);
+  const assumptionCount = assumptions.length;
+  const totalLowConfidenceAmount = lowConfidenceRows.reduce((sum, row) => sum + Math.abs(row.entry.amountUsd), 0);
 
   return (
-    <section style={sourceCard}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
-        <div>
-          <div style={{ fontSize: 20, fontWeight: 700 }}>Source value ledger</div>
-          <div style={{ fontSize: 13, opacity: 0.72 }}>Updated {snapshot.updatedAt}</div>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12, minWidth: 360 }}>
+    <section style={SECTION_GRID}>
+      <section style={sourceCard} aria-label="Atlas value ledger shell">
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
           <div>
-            <div style={{ fontSize: 11, opacity: 0.72 }}>Projected</div>
-            <div style={{ fontSize: 22, fontWeight: 700 }}>{formatUsd(rollup.projectedUsd)}</div>
+            <div style={{ ...PERSPECTIVE_LABEL, color: '#1D4F8C', marginBottom: 6 }}>Atlas value ledger lead</div>
+            <h2 style={{ fontFamily: FONTS.serif, color: COLORS.textPrimary, fontSize: 30, margin: 0 }}>
+              Source value ledger
+            </h2>
+            <p style={{ ...TEXT.small, marginTop: 8, marginBottom: 0, maxWidth: 720 }}>
+              Atlas is monitoring value intent, measurability, and risk posture for the seeded Source program set.
+            </p>
           </div>
-          <div>
-            <div style={{ fontSize: 11, opacity: 0.72 }}>Realized</div>
-            <div style={{ fontSize: 22, fontWeight: 700 }}>{formatUsd(rollup.realizedUsd)}</div>
+          <div style={{ ...TEXT.small, textAlign: 'right', color: '#576074' }}>
+            Updated {snapshot.updatedAt}<br />
+            Deterministic seeded input only.
           </div>
         </div>
+
+        <div style={SUMMARY_PANEL}>
+          <article style={PANEL_CARD}>
+            <div style={PERSPECTIVE_LABEL}>Projected</div>
+            <div style={VALUE_TEXT}>{formatUsd(rollup.projectedUsd)}</div>
+            <div style={{ ...TEXT.small, color: '#576074' }}>{projected.length} line items from seeded event contracts.</div>
+          </article>
+          <article style={PANEL_CARD}>
+            <div style={PERSPECTIVE_LABEL}>Committed</div>
+            <div style={VALUE_TEXT}>{formatUsd(committed.reduce((sum, entry) => sum + entry.amountUsd, 0))}</div>
+            <div style={{ ...TEXT.small, color: '#576074' }}>Evidence-backed high-confidence line items.</div>
+          </article>
+          <article style={PANEL_CARD}>
+            <div style={PERSPECTIVE_LABEL}>Measuring</div>
+            <div style={VALUE_TEXT}>{formatUsd(measuring.reduce((sum, entry) => sum + entry.amountUsd, 0))}</div>
+            <div style={{ ...TEXT.small, color: '#576074' }}>{measuring.length} items not yet confirmed.</div>
+          </article>
+          <article style={PANEL_CARD}>
+            <div style={PERSPECTIVE_LABEL}>Realized</div>
+            <div style={VALUE_TEXT}>{formatUsd(rollup.realizedUsd)}</div>
+            <div style={{ ...TEXT.small, color: '#576074' }}>{realized.length} realized entries with seeded status only.</div>
+          </article>
+        </div>
+      </section>
+
+      <div style={TWO_COL}>
+        <section style={sourceCard}>
+          <div style={{ ...PERSPECTIVE_LABEL, color: '#1D4F8C' }}>Value ledger line items</div>
+          <div style={{ overflowX: 'auto', marginTop: 8 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }} aria-label="Source value line item table">
+              <thead>
+                <tr>
+                  <th style={sourceTableHeaderCell}>Perspective</th>
+                  <th style={sourceTableHeaderCell}>Event</th>
+                  <th style={sourceTableHeaderCell}>Line item</th>
+                  <th style={sourceTableHeaderCell}>Stage</th>
+                  <th style={sourceTableHeaderCell}>Amount</th>
+                  <th style={sourceTableHeaderCell}>Evidence</th>
+                  <th style={sourceTableHeaderCell}>Confidence</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row, index) => (
+                  <tr key={`${row.entry.id}-${row.perspective}-${index}`}>
+                    <td style={sourceTableCell}>{toPerspectiveLabel(row.perspective)}</td>
+                    <td style={sourceTableCell}>{row.entry.eventName}</td>
+                    <td style={sourceTableCell}>
+                      <div style={{ fontWeight: 700 }}>{row.entry.label}</div>
+                      <div style={{ ...TEXT.small, color: '#576074', marginTop: 4 }}>{row.entry.note}</div>
+                    </td>
+                    <td style={sourceTableCell}>{row.entry.stageKey ?? 'n/a'}</td>
+                    <td style={sourceTableCell}>{formatUsd(row.entry.amountUsd)}</td>
+                    <td style={sourceTableCell}>{row.entry.evidenceCount}</td>
+                    <td style={sourceTableCell}>
+                      <span style={{ color: confidenceColor(row.entry.confidence) }}>
+                        {row.entry.confidence}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <aside style={SECTION_GRID}>
+        <section style={sourceCard}>
+            <div style={PERSPECTIVE_LABEL}>Context used</div>
+            <div style={CHIP_ROW} aria-label="context used">
+              <span style={CHIPS}>Event set: {events.length}</span>
+              <span style={CHIPS}>Source context: seeded only</span>
+              <span style={CHIPS}>Confidence model: high / medium / low</span>
+              <span style={CHIPS}>Measurement owner: Source Value Office</span>
+            </div>
+          </section>
+
+          <section id="value-confidence" style={sourceCard}>
+            <div style={PERSPECTIVE_LABEL}>Evidence confidence summary</div>
+            <p style={{ ...TEXT.small, marginTop: 8 }}>
+              Confidence is deterministic from seeded evidence depth and stage assumptions. We treat low confidence and zero-evidence items as
+              variance risk for executive review.
+            </p>
+            <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 6 }}>
+              {lowConfidenceRows.length > 0 ? (
+                lowConfidenceRows.slice(0, 5).map((row) => (
+                  <li key={`${row.entry.id}-conf`} style={TEXT.small}>
+                    {toPerspectiveLabel(row.perspective)} item “{row.entry.label}” remains at {row.entry.confidence} confidence.
+                  </li>
+                ))
+              ) : (
+                <li style={TEXT.small}>No low-confidence or missing-evidence items are seeded.</li>
+              )}
+            </ul>
+          </section>
+
+          <section id="value-assumptions" style={sourceCard}>
+            <div style={PERSPECTIVE_LABEL}>Assumptions & variance notes</div>
+            <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 8 }}>
+              {assumptions.map((assumption, index) => (
+                <li key={`assumption-${index}`} style={TEXT.small}>
+                  {assumption}
+                </li>
+              ))}
+            </ul>
+            <div style={{ ...TEXT.small, color: '#9B5F17', marginTop: 8 }}>
+              Variance watch: {assumptionCount} assumption anchors, {formatUsd(totalLowConfidenceAmount)} currently in low-confidence posture.
+            </div>
+          </section>
+
+          <section id="value-actions" style={sourceCard}>
+            <div style={PERSPECTIVE_LABEL}>Action layer</div>
+            <div style={{ display: 'grid', gap: 8, marginTop: 8 }}>
+              <a href="#value-assumptions" style={ACTION_LINK}>Show assumptions</a>
+              <a href="#value-confidence" style={ACTION_LINK}>Show evidence gaps</a>
+              <a href="#value-caveat" style={ACTION_LINK}>Explain value confidence</a>
+              <label htmlFor="value-custom-input" style={{ ...TEXT.small, color: '#3B4453', display: 'grid', gap: 6 }}>
+                Ask custom
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    id="value-custom-input"
+                    type="text"
+                    readOnly
+                    placeholder="Ask Atlas about this value ledger, gate, event, or evidence..."
+                    style={{
+                      ...TEXT.body,
+                      flex: 1,
+                      border: '1px solid #C9D2E1',
+                      borderRadius: 8,
+                      background: '#F4F7FB',
+                      color: '#7B8598',
+                      padding: '8px 10px',
+                    }}
+                  />
+                  <span style={{ ...ACTION_LINK, whiteSpace: 'nowrap' }}>
+                    Submit (disabled until runtime)
+                  </span>
+                </div>
+              </label>
+            </div>
+          </section>
+        </aside>
       </div>
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ textAlign: 'left', fontSize: 12, opacity: 0.72 }}>
-              <th style={{ padding: '0 14px 12px' }}>Kind</th>
-              <th style={{ padding: '0 14px 12px' }}>Event</th>
-              <th style={{ padding: '0 14px 12px' }}>Line item</th>
-              <th style={{ padding: '0 14px 12px' }}>Stage</th>
-              <th style={{ padding: '0 14px 12px' }}>Amount</th>
-              <th style={{ padding: '0 14px 12px' }}>Confidence</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[...snapshot.projected, ...snapshot.realized].map((entry) => (
-              <tr key={entry.id}>
-                <td style={sourceTableCell}>{entry.kind}</td>
-                <td style={sourceTableCell}>{entry.eventName}</td>
-                <td style={sourceTableCell}>
-                  <div style={{ fontWeight: 700 }}>{entry.label}</div>
-                  <div style={{ fontSize: 12, opacity: 0.72, marginTop: 4 }}>{entry.note}</div>
-                </td>
-                <td style={sourceTableCell}>{entry.stageKey ?? 'n/a'}</td>
-                <td style={sourceTableCell}>{formatUsd(entry.amountUsd)}</td>
-                <td style={sourceTableCell}>{entry.confidence}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+
+      <div style={{ ...sourceCard, padding: '12px 16px', background: '#F8FAFF' }} id="value-caveat">
+        <div style={{ ...TEXT.small, color: '#576074' }}>
+          Atlas ledger values are deterministic, seed-backed, and for execution planning. This is not a live realized-savings
+          claim unless downstream evidence and measurement gates are explicitly marked as usable.
+        </div>
       </div>
     </section>
   );
