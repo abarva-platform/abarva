@@ -140,6 +140,8 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
 - 2026-04-25 · Source-specific Nexus API route stub implemented locally: deterministic no-model `POST /api/v1/source/[eventId]/nexus/ask` response using SourceAgentContextBundle, context validation report, workflow validation report, and multi-agent briefing.
 
 ## Last status emission
+
+- 2026-04-27 - Wave-21 brand and vendor-selection readiness completion - PR #385 merged canonical name-only AbarVa logo stabilization, PR #384 added vendor-selection readiness model, PR #386/#387 added readiness panel plan and panel implementation, PR #388 added selection readiness smoke coverage, and PR #389 added production-domain visual QA plan. Source visual and readiness surfaces now include the selection-readiness layer and deterministic blocking logic, while production-domain screenshot verification remains pending.
 - 2026-04-26 - Wave-20 design and gate foundation batch complete - PR #373 (Source design compliance audit), PR #374 (Apex Source demo data enrichment), PR #375 (deterministic stage gate readiness model), PR #376 (stage gate readiness panel), PR #377 (artifact status strip integration), PR #379 (vendor/executive decision table polish), and PR #380 (stage + artifact smoke coverage) are merged. Source event canvas now presents deterministic stage gates, artifact lifecycle metadata, enriched Apex sourcing narrative seeds, and improved executive table scanability without adding model calls, workflow engine behavior, or approval automation.
 - 2026-04-26 - Executive decision panel integration and smoke hardening batch complete - PR #358 merged bounded executive decision panel integration refinements (posture fallback visibility, Nexus next action prominence, module provenance display, and panel assertions), and PR #359 merged deterministic executive decision panel smoke hardening in event canvas tests. Scope remained UI integration/test/docs only with no model calls, no final-selection automation, and no approval workflow.
 - 2026-04-26 - Wave-14 Source Commercial Intelligence merged - PR #340 merged deterministic BAFO model variant, pricing normalization model variant, commercial risk exception detection, Source control-tower signals, Source intelligence patterns, commercial mission queue, two commercial presentation components, cross-module commercial workflow verification, and hygiene gate CI wiring; PR #342 marked wave-14 merged in build wave tracking. Reconciliation required before deeper Source runtime/UI integration because several Wave-14 modules overlap existing pricing/BAFO/mission contracts.
@@ -159,8 +161,8 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
 
 - Current completed milestone: PR #358 and PR #359 are merged on top of PR #343 and PR #340 - executive decision summary panel integration and deterministic smoke coverage are now aligned with the Wave-14 commercial intelligence foundation.
 - Dashboard decision: approve with tiny polish completed locally. Event canvas decision: approve as baseline locally. Production-domain authenticated screenshot review remains incomplete.
-- Current objective: reconcile Wave-14 commercial intelligence with the existing Source workflow so pricing/BAFO/mission logic converges into a single deterministic authority before vendor-selection readiness runtime work.
-- Current item: docs-first convergence and sequencing decision for commercial-risk/control-tower/pattern/mission outputs into the executive decision path without approval automation or final-selection runtime.
+- Current objective: continue deterministic Source advancement with no workflow expansion until production-domain visual QA and tenant-safe auth/route behavior are verified.
+- Current item: source-state tracker consolidation and visual-domain QA execution remain outstanding for Wave-21.
 - Completed this cycle:
   - AbarVa Source Build Pack docs.
   - Context-awareness docs.
