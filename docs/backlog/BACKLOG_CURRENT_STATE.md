@@ -8,9 +8,10 @@
 ## Last completed wave
 - waveId: wave-25
 - waveTitle: Production Hardening + E2E Validation
+- prNumber: 405
+- mergeSHA: ef52bebf
 - completedSlices: [PROD9, QA30, QA31, QA32]
 - completedAt: 2026-04-26
-- prBranch: codex/wave-25-production-hardening-e2e
 - testsGreen: 834 passed, 0 failed
 
 ## Previous waves (for reference)
