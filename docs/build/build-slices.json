@@ -8668,6 +8668,15 @@
       "wave": "wave-32",
       "track": "03-programs-flagship",
       "notes": "Pure TypeScript phase filter read-model for Programs Index. src/lib/programs/phase-filter-view.ts."
+    },
+    {
+      "id": "W32B",
+      "title": "Intelligence Programs and Actions Mode View Models",
+      "status": "code_complete",
+      "type": "view-model",
+      "wave": "wave-32",
+      "track": "07-intelligence-control-tower",
+      "notes": "Programs+Actions mode view models for Intelligence canvas tabs. src/lib/intelligence/intelligence-programs-mode-view.ts + intelligence-actions-mode-view.ts."
     }
   ]
 }
