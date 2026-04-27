@@ -12,6 +12,7 @@ import {
   type ProductionReadinessSegmentSummary,
   type ProductionReadinessStatus,
   type ProductionReadinessView,
+  getEffectiveDisplayStatus,
 } from '@/lib/admin/production-readiness';
 import { BORDER, COLORS, FONT, RADIUS, SPACING, TYPE } from '@/lib/design/abarva-theme';
 
@@ -453,7 +454,10 @@ export function ProductionReadinessTracker({
                   }}
                 >
                   <div style={{ ...TYPE.h3, margin: 0, letterSpacing: 0 }}>{component.name}</div>
-                  <StatusPill status={component.status} />
+                  {/* PROD9: effective status enforces red badge when blockers > 0 */}
+                  <StatusPill
+                    status={getEffectiveDisplayStatus(component.status, component.blockers.length)}
+                  />
                 </div>
                 <div style={TYPE.caption}>{component.maturity}</div>
                 <div style={{ display: 'grid', gap: SPACING.xs }}>
@@ -690,7 +694,10 @@ function ComponentProgressTable({ components }: { components: ReadonlyArray<Prod
                 <PercentCell percent={component.percentPending} pending />
               </td>
               <td style={tdStyle}>
-                <StatusPill status={component.status} />
+                {/* PROD9: effective status enforces red badge when blockers > 0 */}
+                <StatusPill
+                  status={getEffectiveDisplayStatus(component.status, component.blockerCount)}
+                />
               </td>
               <td style={tdStyle}>
                 <span style={{ ...TYPE.caption, fontFamily: FONT.mono }}>

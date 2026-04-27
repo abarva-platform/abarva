@@ -377,9 +377,10 @@
     {
       "id": "PROD9",
       "track": "06",
-      "status": "backlog",
+      "status": "completed",
       "wave": "wave-25",
-      "title": "Production Readiness Live Gate Enforcement"
+      "title": "Production Readiness Blocker Badge Enforcement",
+      "completedAt": "2026-04-26"
     },
     {
       "id": "PROD10",
@@ -734,23 +735,26 @@
     {
       "id": "QA30",
       "track": "10",
-      "status": "backlog",
+      "status": "completed",
       "wave": "wave-25",
-      "title": "No-Fabrication Regression Suite"
+      "title": "No-Fabrication Regression Suite",
+      "completedAt": "2026-04-26"
     },
     {
       "id": "QA31",
       "track": "10",
-      "status": "backlog",
+      "status": "completed",
       "wave": "wave-25",
-      "title": "Vercel Production Smoke Test"
+      "title": "Production Smoke Test — 16 Routes",
+      "completedAt": "2026-04-26"
     },
     {
       "id": "QA32",
       "track": "10",
-      "status": "backlog",
+      "status": "completed",
       "wave": "wave-25",
-      "title": "Evidence Trust Audit"
+      "title": "Evidence Trust Audit — Dataset Trust Model Enforcement Tests",
+      "completedAt": "2026-04-26"
     },
     {
       "id": "DEMO6",
