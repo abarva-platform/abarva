@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-04-27",
+  "lastUpdated": "2026-04-27 (ADMIN9 audit + wave-admin-completion backlog registered)",
   "lifecycle": [
     "ready",
     "in_progress",
@@ -8896,6 +8896,117 @@
       "completedAt": "2026-04-27",
       "risk": "medium",
       "notes": "Replaces hardcoded editorial copy with template-generated copy from agent context bundle. All 8 admin page-views consume buildAgentContext + generateStewardEditorial + computeAllPostures + buildAgentChoices. agentChoices and agentPostures exposed (optional, backward compatible). 1098 admin regression tests pass; 67 wiring tests + 113 foundation tests."
+    },
+    {
+      "id": "ADMIN9",
+      "title": "Admin Completion Audit + Plan",
+      "status": "code_complete",
+      "type": "docs",
+      "wave": "wave-admin-completion",
+      "track": "06-admin-readiness-architecture",
+      "completedAt": "2026-04-27",
+      "risk": "low",
+      "notes": "Three-audit deliverable: legacy /platform/admin/* route disposition (KEEP/MERGE/DEPRECATE/REDIRECT), per-page depth blueprints for the 8 canonical /admin/* pages, and SAFE/STUB/HARD-GATED interaction-safety classification. Registers wave-admin-completion with ADMIN10–ADMIN19 backlog. No app code touched."
+    },
+    {
+      "id": "ADMIN10",
+      "title": "Legacy /platform/admin/* route consolidation (REDIRECT/DEPRECATE/MERGE prep)",
+      "status": "backlog",
+      "type": "docs+ops",
+      "wave": "wave-admin-completion",
+      "track": "06-admin-readiness-architecture",
+      "risk": "low",
+      "notes": "Tier 1 · blocks ADMIN11–17. Deletes 6 DEPRECATE routes, redirects 2 (intelligence, users), retargets AbarvaNav.tsx. Preserves 5 MERGE routes for Tier-2 consumption."
+    },
+    {
+      "id": "ADMIN11",
+      "title": "Users & Access depth — tabs + user table + role detail drawer + invite stub",
+      "status": "backlog",
+      "type": "ui",
+      "wave": "wave-admin-completion",
+      "track": "06-admin-readiness-architecture",
+      "risk": "medium",
+      "notes": "Tier 2 · promotes /platform/admin/users content into canonical shell. Invite/Suspend/ChangeRole render as HARD-GATED stubs."
+    },
+    {
+      "id": "ADMIN12",
+      "title": "Agent Readiness depth — per-agent expandable cards + capability matrix + reasoning trace drawer",
+      "status": "backlog",
+      "type": "ui",
+      "wave": "wave-admin-completion",
+      "track": "06-admin-readiness-architecture",
+      "risk": "low",
+      "notes": "Tier 2 · inspection surface for AGENT1 read-model. No live model calls."
+    },
+    {
+      "id": "ADMIN13",
+      "title": "Connectors depth — per-connector detail drawer + config stub + requirements matrix",
+      "status": "backlog",
+      "type": "ui",
+      "wave": "wave-admin-completion",
+      "track": "06-admin-readiness-architecture",
+      "risk": "medium",
+      "notes": "Tier 2 · lifts vendor/docsHref/error detail from legacy /platform/admin/connectors. Test/Configure HARD-GATED."
+    },
+    {
+      "id": "ADMIN14",
+      "title": "Data Trust depth — per-rung dataset list + drawer + approval stub + promotion + quality tabs",
+      "status": "backlog",
+      "type": "ui",
+      "wave": "wave-admin-completion",
+      "track": "06-admin-readiness-architecture",
+      "risk": "medium",
+      "notes": "Tier 2 · absorbs /platform/admin/data, /platform/admin/data-governance, /platform/admin/quality content as tabs. Approval HARD-GATED."
+    },
+    {
+      "id": "ADMIN15",
+      "title": "Build Progress depth — wave timeline + slice drilldown + CI mini-strip",
+      "status": "backlog",
+      "type": "ui",
+      "wave": "wave-admin-completion",
+      "track": "06-admin-readiness-architecture",
+      "risk": "low",
+      "notes": "Tier 2 · absorbs orphan BuildProgressDashboard from legacy /platform/admin/build-progress. CI mini-strip deterministic seed only."
+    },
+    {
+      "id": "ADMIN16",
+      "title": "Production Readiness depth — per-tile expandable + per-blocker drawer + promotion gate",
+      "status": "backlog",
+      "type": "ui",
+      "wave": "wave-admin-completion",
+      "track": "06-admin-readiness-architecture",
+      "risk": "medium",
+      "notes": "Tier 2 · NEVER flips production_ready:true. Mark resolved is HARD-GATED."
+    },
+    {
+      "id": "ADMIN17",
+      "title": "Architecture depth — per-plane drilldown + component drawer + plane health summary",
+      "status": "backlog",
+      "type": "ui",
+      "wave": "wave-admin-completion",
+      "track": "06-admin-readiness-architecture",
+      "risk": "low",
+      "notes": "Tier 2 · closes the open ADMIN7 architecture deviation (component drawer)."
+    },
+    {
+      "id": "ADMIN18",
+      "title": "Overview depth — setup timeline + recent activity + cross-page CTAs",
+      "status": "backlog",
+      "type": "ui",
+      "wave": "wave-admin-completion",
+      "track": "06-admin-readiness-architecture",
+      "risk": "low",
+      "notes": "Tier 3 · pulls state through from ADMIN11–17 page-views. Recent activity is deterministic seed (real audit defers to Wave 27)."
+    },
+    {
+      "id": "ADMIN19",
+      "title": "Visual lock + regression update for completion wave",
+      "status": "backlog",
+      "type": "qa",
+      "wave": "wave-admin-completion",
+      "track": "06-admin-readiness-architecture",
+      "risk": "low",
+      "notes": "Tier 3 · extends ADMIN7 70-test suite + hex audit script + WIRE2B rescore for the new ADMIN11–18 components."
     }
   ]
 }
