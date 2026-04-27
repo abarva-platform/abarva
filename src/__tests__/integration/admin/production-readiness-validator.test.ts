@@ -1,10 +1,10 @@
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import {
-  loadProductionReadinessManifest,
   type ProductionReadinessComponent,
   type ProductionReadinessManifest,
 } from '@/lib/admin/production-readiness';
+import { loadProductionReadinessManifest } from '@/lib/admin/production-readiness-loader';
 import {
   PRODUCTION_READINESS_VALIDATION_RULES,
   summarizeProductionReadinessValidation,
