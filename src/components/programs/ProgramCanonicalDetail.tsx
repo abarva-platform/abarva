@@ -48,7 +48,6 @@ import {
   buildCanonicalHardGateStrip,
   buildProgramReadinessSummary,
   buildStewardReadinessNote,
-  summarizeProgram,
   type CanonicalHardGateRenderStatus,
   type ReadinessSignal,
 } from '@/lib/programs/programs-canonical-view';
@@ -120,8 +119,6 @@ const COLORS = {
 } as const;
 
 export function ProgramCanonicalDetail({ tenant, program }: ProgramCanonicalDetailProps) {
-  const view = summarizeProgram(program);
-
   return (
     <main
       style={{
@@ -156,54 +153,12 @@ export function ProgramCanonicalDetail({ tenant, program }: ProgramCanonicalDeta
           <span style={{ color: COLORS.muted }}>{program.code}</span>
         </nav>
 
-        {/* Zone A · Header */}
-        <header style={{ marginBottom: 16 }}>
-          <div
-            style={{
-              fontFamily: 'JetBrains Mono, monospace',
-              fontSize: 11,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: COLORS.mutedSoft,
-              fontWeight: 700,
-              marginBottom: 6,
-            }}
-          >
-            {program.code} · {view.archetypeCode} · canonical program
-          </div>
-          <h1
-            style={{
-              fontFamily: 'Georgia, "Times New Roman", serif',
-              fontSize: 28,
-              fontWeight: 600,
-              margin: 0,
-              lineHeight: 1.25,
-            }}
-          >
-            {program.name}
-          </h1>
-        </header>
-
-        {/* Zone B · Context strip */}
-        <section
-          aria-label="Program context strip"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: 12,
-            marginBottom: 22,
-            padding: '14px 18px',
-            background: COLORS.card,
-            border: `1px solid ${COLORS.border}`,
-            borderRadius: 10,
-          }}
-        >
-          <ContextMetric label="Current phase" value={`P${view.currentCanonicalPhase.index} · ${view.currentCanonicalPhase.label}`} />
-          <ContextMetric label="Spec phase" value={`P${view.currentPhaseSpec} · ${phaseMeta(view.currentPhaseSpec).name}`} />
-          <ContextMetric label="Status" value={view.status} />
-          <ContextMetric label="Deliverables" value={String(view.deliverableTiers.total)} />
-          <ContextMetric label="Rich tier" value={String(view.deliverableTiers.rich)} />
-        </section>
+        {/* Canon trim: the route shell already shows the program identity
+         * and workflow orientation. The Nexus workbench below shows the
+         * current phase, gate state, and workflow stage as chips. So the
+         * inner duplicate header (Zone A) and the 5-metric Zone B context
+         * strip have been removed — the journey map is the first thing
+         * the user sees after the breadcrumb. */}
 
         <NexusProgramWorkbench
           programCode={program.code}
@@ -1029,23 +984,3 @@ function TierBadge({ tier }: { tier: DeliverableSeedPlan['renderTier'] }) {
   );
 }
 
-function ContextMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <div
-        style={{
-          fontFamily: 'JetBrains Mono, monospace',
-          fontSize: 10,
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase',
-          color: COLORS.mutedSoft,
-          fontWeight: 700,
-          marginBottom: 2,
-        }}
-      >
-        {label}
-      </div>
-      <div style={{ fontSize: 14, fontWeight: 600, color: COLORS.ink }}>{value}</div>
-    </div>
-  );
-}

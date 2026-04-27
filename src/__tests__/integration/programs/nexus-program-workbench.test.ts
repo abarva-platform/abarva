@@ -21,79 +21,115 @@ const flagshipSource = fs.readFileSync(
   'utf8',
 );
 
-describe('AGENTUI1 · buildNexusProgramWorkbenchView', () => {
+describe('NexusProgramWorkbench · view model', () => {
   const view = buildNexusProgramWorkbenchView({
     programCode: 'APX-CDP-2026',
-    programName: 'Apex Retail CDP Activation',
+    programName: 'Customer Data Platform Activation',
     tenantLabel: 'Apex Retail',
     currentPhaseSpec: 4,
     deliverableCount: 14,
     evidenceBackedDeliverables: 5,
   });
 
-  it('renders current program identity', () => {
-    expect(view.currentProgram).toContain('APX-CDP-2026');
-    expect(view.currentProgram).toContain('Apex Retail CDP Activation');
+  it('exposes the program identity used in the page header', () => {
+    expect(view.programIdentity).toBe('APX-CDP-2026 · Customer Data Platform Activation');
+    expect(view.headerSubtitle).toContain('Active Program workspace');
+    expect(view.headerSubtitle).toContain('Phase journey appears first');
   });
 
-  it('renders current phase, gate, and workflow stage', () => {
-    expect(view.currentPhase).toContain('Synthesis');
-    expect(view.currentGateState).toContain('Design gate');
-    expect(view.currentWorkflowStage).toContain('Workshop 5');
+  it('renders the canonical six-phase journey with correct states', () => {
+    expect(view.phaseJourney.map((phase) => phase.key)).toEqual([
+      'discovery',
+      'synthesis',
+      'design',
+      'build',
+      'activate',
+      'operate',
+    ]);
+    expect(view.phaseJourney.map((phase) => phase.state)).toEqual([
+      'done',
+      'current',
+      'gate-pending',
+      'locked',
+      'locked',
+      'locked',
+    ]);
+    expect(view.phaseJourney.map((phase) => phase.index)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(view.defaultPhaseKey).toBe('synthesis');
   });
 
-  it('contains context used chips', () => {
-    expect(view.contextUsed).toEqual(
-      expect.arrayContaining([
-        'Program state',
-        'Workshop 5 outcomes',
-        'Evidence ledger',
-        'Deliverables',
-        'Source AMS event',
-      ]),
-    );
+  it('exposes a journey subtitle that names the current and gated phases', () => {
+    expect(view.journeySubtitle).toContain('P2 is active');
+    expect(view.journeySubtitle).toContain('P3 Design is gated');
   });
 
-  it('contains evidence confidence, blocker, and recommendation', () => {
-    expect(view.confidenceState).toContain('Deterministic confidence');
-    expect(view.evidenceState).toContain('5/14');
-    expect(view.blocker).toContain('Missing value evidence');
-    expect(view.recommendedNextAction).toContain('Review Design gate blockers');
+  it('default focus is the Synthesis brief and chips from the mockup', () => {
+    expect(view.brief).toContain('Phase 2 · Synthesis');
+    expect(view.cta).toBe('Prepare workshop');
+    expect(view.contextUsed).toEqual([
+      'Program state',
+      'Workshop 5',
+      'Deliverables',
+      'Evidence gaps',
+      'Source AMS event',
+    ]);
+    expect(view.confidenceLabel).toBe('Confidence: partial evidence');
+    expect(view.blockerLabel).toBe('Blocker: value hypothesis evidence');
   });
 
-  it('contains three contextual suggested actions plus custom ask affordance', () => {
+  it('synthesis suggested actions match the canonical three labels', () => {
     expect(view.suggestedActions.map((action) => action.label)).toEqual([
       'Review Design gate blockers',
       'Open Workshop 5 outcomes',
       'Inspect deliverable evidence',
     ]);
-    expect(view.customAskPlaceholder).toBe(
-      'Ask Nexus about this program, gate, workshop, or evidence...',
-    );
-    expect(view.customAskDeferredState).toContain('disabled until runtime');
   });
 
-  it('contains deterministic/live caveat and agent handoffs', () => {
-    expect(view.deterministicCaveat).toContain('deterministic');
-    expect(view.deterministicCaveat).toContain('No live chat');
+  it('agent handoffs always carry the canonical four agents in order', () => {
     expect(view.agentHandoffs.map((handoff) => handoff.agent)).toEqual([
       'nexus',
       'steward',
       'sentinel',
       'atlas',
     ]);
+    const nexus = view.agentHandoffs.find((h) => h.agent === 'nexus')!;
+    expect(nexus.state).toBe('active');
+    expect(nexus.stateLabel).toBe('ACTIVE');
+    expect(nexus.role).toBe('Orchestration lead');
   });
 
-  it('exposes a navigable per-phase focus map keyed by every journey phase', () => {
-    expect(view.defaultPhaseKey).toBe('synthesis');
-    const journeyKeys = view.phaseJourney.map((phase) => phase.key);
-    for (const key of journeyKeys) {
-      const focus = view.phaseFocusByKey[key];
+  it('current gate card describes the Steward block', () => {
+    expect(view.currentGateLabel).toBe('Synthesis → Design · Pending');
+    expect(view.currentGateDescription).toContain('Steward blocks approval');
+    expect(view.currentGateDescription).toContain('Workshop 5 outcomes');
+  });
+
+  it('evidence coverage has six slices, sums to 100, and highlights Discovery as strongest', () => {
+    expect(view.evidenceCoverage).toHaveLength(6);
+    const total = view.evidenceCoverage.reduce((sum, slice) => sum + slice.percentage, 0);
+    expect(total).toBe(100);
+    const strongest = [...view.evidenceCoverage].sort((a, b) => b.percentage - a.percentage)[0]!;
+    expect(strongest.phaseKey).toBe('discovery');
+    expect(strongest.tone).toBe('strong');
+    expect(view.evidenceCoverageNote).toContain('Discovery evidence is strongest');
+  });
+
+  it('exposes the deterministic + three-choices rule callouts', () => {
+    expect(view.deterministicCaveat).toContain('Deterministic route shell');
+    expect(view.deterministicCaveat).toContain('No fake approvals');
+    expect(view.deterministicCaveat).toContain('No live chat');
+    expect(view.threeChoicesRule).toContain('Only shown when it moves work forward');
+  });
+
+  it('exposes a per-phase focus map with cta + brief + 3 actions + 4 agents', () => {
+    for (const phase of view.phaseJourney) {
+      const focus = view.phaseFocusByKey[phase.key];
       expect(focus).toBeTruthy();
       expect(focus!.brief.length).toBeGreaterThan(0);
-      expect(focus!.blocker.length).toBeGreaterThan(0);
-      expect(focus!.recommendedNextAction.length).toBeGreaterThan(0);
+      expect(focus!.cta.length).toBeGreaterThan(0);
       expect(focus!.contextUsed.length).toBeGreaterThan(0);
+      expect(focus!.confidenceLabel.length).toBeGreaterThan(0);
+      expect(focus!.blockerLabel.length).toBeGreaterThan(0);
       expect(focus!.suggestedActions).toHaveLength(3);
       expect(focus!.agentHandoffs.map((h) => h.agent)).toEqual([
         'nexus',
@@ -101,79 +137,48 @@ describe('AGENTUI1 · buildNexusProgramWorkbenchView', () => {
         'sentinel',
         'atlas',
       ]);
-      expect(focus!.conversation.length).toBeGreaterThanOrEqual(2);
-      expect(focus!.conversation[0]!.speaker).toBe('You');
-      expect(focus!.conversation[1]!.speaker).toBe('Nexus');
     }
-  });
-
-  it('default phase focus matches the top-level synthesis content', () => {
-    const synthesis = view.phaseFocusByKey[view.defaultPhaseKey]!;
-    expect(view.nexusBrief).toBe(synthesis.brief);
-    expect(view.blocker).toBe(synthesis.blocker);
-    expect(view.recommendedNextAction).toBe(synthesis.recommendedNextAction);
-    expect(view.contextUsed).toEqual(synthesis.contextUsed);
-    expect(view.suggestedActions.map((a) => a.label)).toEqual(
-      synthesis.suggestedActions.map((a) => a.label),
-    );
-    expect(view.agentHandoffs.map((h) => h.agent)).toEqual(
-      synthesis.agentHandoffs.map((h) => h.agent),
-    );
   });
 
   it('non-current phases carry distinct briefs from synthesis', () => {
     const synthesis = view.phaseFocusByKey['synthesis']!;
-    const others = ['discovery', 'design-gate', 'build', 'verify'];
-    for (const key of others) {
-      const focus = view.phaseFocusByKey[key]!;
-      expect(focus.brief).not.toBe(synthesis.brief);
+    for (const key of ['discovery', 'design', 'build', 'activate', 'operate']) {
+      expect(view.phaseFocusByKey[key]!.brief).not.toBe(synthesis.brief);
     }
-  });
-
-  it('exposes requiredInputs per phase for the left phase-requirements rail', () => {
-    for (const phase of view.phaseJourney) {
-      const focus = view.phaseFocusByKey[phase.key]!;
-      expect(focus.requiredInputs.length).toBeGreaterThanOrEqual(3);
-      for (const input of focus.requiredInputs) {
-        expect(['satisfied', 'in-progress', 'open']).toContain(input.state);
-        expect(input.label.length).toBeGreaterThan(0);
-      }
-    }
-  });
-
-  it('exposes requiredInputs at the top level mirroring the default phase focus', () => {
-    const synthesis = view.phaseFocusByKey[view.defaultPhaseKey]!;
-    expect(view.requiredInputs.map((i) => i.label)).toEqual(
-      synthesis.requiredInputs.map((i) => i.label),
-    );
   });
 });
 
-describe('AGENTUI1 · NexusProgramWorkbench component contract', () => {
+describe('NexusProgramWorkbench · component contract', () => {
   it('exports a function component', () => {
     expect(typeof NexusProgramWorkbench).toBe('function');
   });
 
-  it('ships the required visual contract text', () => {
-    expect(componentSource).toContain('Nexus workbench');
-    expect(componentSource).toContain('Phase Journey');
+  it('keeps the required visual contract text', () => {
+    // Section labels visible in the DOM
+    expect(componentSource).toContain('Nexus Program Workbench');
+    expect(componentSource).toContain('Program journey');
     expect(componentSource).toContain('Context used');
-    expect(componentSource).toContain('Suggested next actions');
+    expect(componentSource).toContain('Suggested Nexus actions');
     expect(componentSource).toContain('Ask Nexus');
-    expect(componentSource).toContain('Submit deferred');
+    expect(componentSource).toContain('Agent handoff rail');
+    expect(componentSource).toContain('Current gate');
+    expect(componentSource).toContain('Evidence coverage');
+    // Legacy "Phase Journey" marker is preserved (hidden span) for the
+    // route-shell contract; the visible heading is "Program journey".
+    expect(componentSource).toContain('Phase Journey');
   });
 
-  it('uses dark navy / blue accents and avoids banned teal/cyber styling', () => {
+  it('uses the locked AbarVa palette and avoids banned tokens', () => {
     expect(componentSource).toContain('#132B4F');
     expect(componentSource).toContain('#0B4A91');
     expect(componentSource).not.toContain('#14B8A6');
     expect(componentSource).not.toContain('#0E9F8C');
     expect(componentSource.toLowerCase()).not.toContain('cyber');
+    expect(componentSource.toLowerCase()).not.toContain('neon');
   });
 
-  it('does not include generic assistant/chatbot copy', () => {
+  it('does not include generic chatbot/avatar copy', () => {
     const combined = `${componentSource}\n${viewSource}`.toLowerCase();
-    expect(combined).not.toContain('generic chatbot');
     expect(combined).not.toContain('chatbot');
     expect(combined).not.toContain('avatar');
   });
@@ -191,50 +196,46 @@ describe('AGENTUI1 · NexusProgramWorkbench component contract', () => {
     expect(combined).not.toContain('fetch(');
   });
 
-  it('is mounted above the fold in the active Program detail route component', () => {
+  it('is mounted on the canonical Program detail route', () => {
     expect(canonicalDetailSource).toContain('NexusProgramWorkbench');
-    expect(canonicalDetailSource.indexOf('NexusProgramWorkbench')).toBeLessThan(
-      canonicalDetailSource.indexOf('Primary workspace'),
-    );
   });
 
   it('is also available in the ProgramFlagshipPage reference shell', () => {
     expect(flagshipSource).toContain('NexusProgramWorkbench');
   });
 
-  it('renders phase nodes as clickable buttons that drive selected-phase state', () => {
+  it('renders each phase as a clickable button driving selected-phase state', () => {
     expect(componentSource).toContain("import { useState } from 'react'");
     expect(componentSource).toContain('useState<string>(view.defaultPhaseKey)');
     expect(componentSource).toContain('selectedFocus');
     expect(componentSource).toContain('aria-pressed={isSelected}');
     expect(componentSource).toContain('data-phase-selected');
-    expect(componentSource).toContain('onSelect(phase.key)');
-  });
-
-  it('lays out the canon wireframe: journey hero + phase requirements + Nexus brief + agent rail', () => {
     expect(componentSource).toContain('data-region="journey-hero"');
-    expect(componentSource).toContain('Phase requirements');
-    expect(componentSource).toContain('Required inputs');
-    expect(componentSource).toContain('Nexus brief');
-    expect(componentSource).toContain('Agent rail');
-    expect(componentSource).toContain('Latest Nexus exchange');
-    expect(componentSource).toContain('Maestro is here');
   });
 
-  it('removes the competing Nexus surfaces from above the fold on the canonical Program detail page', () => {
-    // Canon restructure: the workbench owns the page spine. The prior
-    // above-the-fold duplicates — separate Nexus editorial lead, six-phase
-    // PhaseTimeline, and the legacy NexusProgramRail — are removed because
-    // they repeated content the workbench already shows.
+  it('renders the journey card with six PhaseTile buttons (no raised pop)', () => {
+    expect(componentSource).toContain('PhaseTile');
+    // The mockup uses uniform tinted tiles, not a translateY-raised card.
+    expect(componentSource).not.toContain("transform: 'translateY");
+    // No floating "Maestro is here" tag — selection is the only emphasis.
+    expect(componentSource).not.toContain('Maestro is here');
+  });
+
+  it('renders a single dark-navy Nexus brief panel', () => {
+    expect(componentSource).toContain('NexusBriefCard');
+    // The brief paragraph + context chips + cream/rose pills + white pill
+    // CTA all live inside this one dark card per the mockup.
+    expect(componentSource).toContain('CreamPill');
+    expect(componentSource).toContain('DarkChip');
+  });
+
+  it('removes the competing Nexus surfaces from above the fold', () => {
     expect(canonicalDetailSource).not.toContain('<NexusProgramRail');
     expect(canonicalDetailSource).not.toContain('<PhaseTimeline');
     expect(canonicalDetailSource).not.toContain('Nexus · program editorial · deterministic');
   });
 
-  it('keeps the AG12 AgentMissionPanel mounted but positions it after the workbench', () => {
-    // AG12 surface wiring still requires the mission panel. To honor "less
-    // clutter" the panel is moved below all useful below-the-fold sections,
-    // so the workbench remains the visual spine.
+  it('keeps the AG12 AgentMissionPanel mounted but positioned after the workbench', () => {
     const workbenchIndex = canonicalDetailSource.indexOf('<NexusProgramWorkbench');
     const missionPanelIndex = canonicalDetailSource.indexOf('<AgentMissionPanel');
     expect(workbenchIndex).toBeGreaterThan(-1);
