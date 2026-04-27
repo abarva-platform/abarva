@@ -2,10 +2,21 @@
 
 > This file is written by the orchestration agent at the end of each wave.
 > The next autonomous session reads this file first.
-> Last updated by: orchestration agent (ADMIN7 complete · wave-admin-redesign 100%)
-> Last updated: 2026-04-27
+> Last updated by: orchestration agent (ADMIN8 complete · wave-admin-redesign-followup 100%)
+> Last updated: 2026-04-26
 
 ## Last completed wave / slice
+- sliceId: ADMIN8
+- waveId: wave-admin-redesign-followup (merged, 100%)
+- title: Admin Single Source of Truth · /admin canonical tree
+- prNumber: 452
+- mergeSHA: 1c06caa2
+- completedAt: 2026-04-26
+- testsGreen: 1031/1031 admin integration tests; 7357 passing in full integration suite (was 7339 on origin/main, net +18 / -1 failure)
+- skippedSlices: none
+- note: Consolidates admin tree into a single canonical path at /admin/*. /platform/admin, /platform/admin/architecture, /platform/admin/production-readiness now redirect to /admin equivalents. Adds /admin/layout.tsx with Clerk admin allowlist auth gate (lifted from ADMIN5 — same allowlist values). Top nav (AbarVaTopNav, AbarVaShellNav, abarva-shell.ts) Admin link → /admin. Retired the inverse `/admin → /platform` redirect in next.config.ts. ADMIN7 visual lock test extended with redirect-only regression block. WIRE2B routes retargeted to /admin/*. Other /platform/admin/* sub-routes (approvals, audit, brief, build-progress, connectors, context, data, data-governance, data-guide, experience-gallery, intelligence, new-client, outcomes, playbook, quality, revenue, users) preserved (out of ADMIN8 scope). All CI green: ESLint, Routes and disclaimers, hygiene_gate.sh, Vercel × 2. Hex audit shell PASS — admin tree banned-token-free.
+
+## Previous completed slice
 - sliceId: ADMIN7
 - waveId: wave-admin-redesign (merged, 100%)
 - title: Admin Visual Lock + Regression Guard
@@ -28,7 +39,10 @@
 TBD from `docs/planning/abarva-master-backlog/WAVE_ROADMAP.md`. The admin
 surface canon is now locked behind a CI regression guard — any future drift
 will fail `admin7-visual-lock.test.ts` or
-`scripts/integration/check_admin_design_tokens.sh`.
+`scripts/integration/check_admin_design_tokens.sh`. ADMIN8 also extended
+that guard to assert legacy `/platform/admin/{,architecture,production-readiness}`
+remain redirect-only. Founder review at `/admin` (now canonical) is the
+recommended next user-facing step.
 
 ## Previously completed (this wave)
 - sliceIds: ADMIN5, ADMIN6
