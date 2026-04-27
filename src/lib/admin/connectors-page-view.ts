@@ -424,7 +424,7 @@ const APEX_DETAIL_SEEDS: Readonly<Record<string, DetailSeed>> = {
         label: 'Allowed redirect origins',
         type: 'string',
         required: true,
-        maskedValue: 'https://nexus-vert-kappa.vercel.app',
+        maskedValue: 'https://app.example.com',
         helpText: 'Pilot URL allowlist.',
       },
     ],
