@@ -8933,10 +8933,11 @@
     {
       "id": "ADMIN12",
       "title": "Agent Readiness depth — per-agent expandable cards + capability matrix + reasoning trace drawer",
-      "status": "backlog",
+      "status": "code_complete",
       "type": "ui",
       "wave": "wave-admin-completion",
       "track": "06-admin-readiness-architecture",
+      "completedAt": "2026-04-27",
       "risk": "low",
       "notes": "Tier 2 · inspection surface for AGENT1 read-model. No live model calls."
     },
@@ -8954,30 +8955,33 @@
     {
       "id": "ADMIN14",
       "title": "Data Trust depth — per-rung dataset list + drawer + approval stub + promotion + quality tabs",
-      "status": "backlog",
+      "status": "code_complete",
       "type": "ui",
       "wave": "wave-admin-completion",
       "track": "06-admin-readiness-architecture",
+      "completedAt": "2026-04-27",
       "risk": "medium",
       "notes": "Tier 2 · absorbs /platform/admin/data, /platform/admin/data-governance, /platform/admin/quality content as tabs. Approval HARD-GATED."
     },
     {
       "id": "ADMIN15",
       "title": "Build Progress depth — wave timeline + slice drilldown + CI mini-strip",
-      "status": "backlog",
+      "status": "code_complete",
       "type": "ui",
       "wave": "wave-admin-completion",
       "track": "06-admin-readiness-architecture",
+      "completedAt": "2026-04-27",
       "risk": "low",
       "notes": "Tier 2 · absorbs orphan BuildProgressDashboard from legacy /platform/admin/build-progress. CI mini-strip deterministic seed only."
     },
     {
       "id": "ADMIN16",
       "title": "Production Readiness depth — per-tile expandable + per-blocker drawer + promotion gate",
-      "status": "backlog",
+      "status": "code_complete",
       "type": "ui",
       "wave": "wave-admin-completion",
       "track": "06-admin-readiness-architecture",
+      "completedAt": "2026-04-27",
       "risk": "medium",
       "notes": "Tier 2 · NEVER flips production_ready:true. Mark resolved is HARD-GATED."
     },
