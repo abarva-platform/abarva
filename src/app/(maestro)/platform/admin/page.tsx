@@ -359,7 +359,7 @@ function ProductionReadinessJumpView() {
   )
 }
 
-// ── Admin Portal — standalone, no maestro imports ─────────────────────────
+// ── Admin Setup — standalone, no maestro imports ──────────────────────────
 export default function AdminPortal() {
   const { isLoaded, user } = useUser()
   const [active, setActive] = useState<Section>('control-center')
@@ -380,14 +380,14 @@ export default function AdminPortal() {
     return (
       <AdminCanonShell
         eyebrow="Platform · Admin"
-        title="Admin Portal"
-        description="Platform operator workspace for setup, governance, and readiness."
+        title="Admin Setup"
+        description="Steward control center for setup, governance, and readiness."
         workflow={{
           primaryAgent: 'steward',
-          pageQuestion: 'What must be true for this tenant to run AbarVa safely and reliably?',
+          pageQuestion: 'Is AbarVa ready to use this tenant data, users, agents, and governance safely?',
           whatIsKnown: 'Admin surfaces are deterministic and route-backed.',
-          whatIsMissing: 'Live governance and readiness signals still require verification.',
-          recommendedNextAction: 'Review setup, then inspect build and production readiness.',
+          whatIsMissing: 'Live governance, dataset approvals, and readiness telemetry still require verification.',
+          recommendedNextAction: 'Review setup blockers, then inspect build and production readiness.',
           caveat: 'Deterministic internal surface; no live readiness polling in this page.',
         }}
       >
@@ -423,14 +423,14 @@ export default function AdminPortal() {
   return (
     <AdminCanonShell
       eyebrow="Platform · Admin"
-      title="Admin Portal"
-      description="Steward workspace for setup, governance, and route-level readiness across AbarVa."
+      title="Admin Setup"
+      description="Steward setup control center for governance, access, and route-level readiness across AbarVa."
       workflow={{
         primaryAgent: 'steward',
-        pageQuestion: 'What is known, what is missing, and what must happen next to operate safely?',
+        pageQuestion: 'Is AbarVa ready to use this tenant data, users, agents, and governance safely?',
         whatIsKnown: 'Setup controls, quality jump, build progress, and production readiness routes are available.',
-        whatIsMissing: 'Full live governance and production telemetry are still blocked.',
-        recommendedNextAction: 'Use the platform section to validate readiness blockers before pilot decisions.',
+        whatIsMissing: 'Full live governance, dataset approval workflows, and production telemetry are still blocked.',
+        recommendedNextAction: 'Use the setup control center and platform surfaces to validate readiness blockers before pilot decisions.',
         caveat: 'Deterministic operator shell. No fake live readiness claims.',
       }}
     >
@@ -442,9 +442,9 @@ export default function AdminPortal() {
           {/* Portal header */}
           <div style={{ padding: '20px 18px 16px', borderBottom: `1px solid ${BORDER}`, marginBottom: '4px' }}>
             <div style={{ fontSize: '10px', fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: MONO, marginBottom: '4px' }}>
-              Portal
+              Setup
             </div>
-            <div style={{ fontSize: '15px', fontWeight: 600, color: DARK, marginBottom: '2px' }}>Admin Portal</div>
+            <div style={{ fontSize: '15px', fontWeight: 600, color: DARK, marginBottom: '2px' }}>Setup Control Center</div>
             <div style={{ fontSize: '11px', color: MUTED, fontFamily: MONO, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Platform governance
             </div>

@@ -10,10 +10,10 @@ export default function ArchitecturePage() {
   return (
     <AdminCanonShell
       eyebrow="Platform · Architecture"
-      title="Architecture Overview"
+      title="Architecture"
       description="System composition, trust boundaries, and integration surfaces for AbarVa."
       workflow={{
-        primaryAgent: 'steward',
+        primaryAgent: 'atlas',
         pageQuestion: 'How do the major planes integrate safely and where are the current boundary risks?',
         whatIsKnown: 'Architecture sections and contracts are documented and route-mounted.',
         whatIsMissing: 'Live infra telemetry is outside this deterministic architecture surface.',
