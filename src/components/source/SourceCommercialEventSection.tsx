@@ -4,12 +4,21 @@ import React, { useState } from 'react';
 import SourceCommercialHub from './SourceCommercialHub';
 import { LinkedProgramBadge } from './LinkedProgramBadge';
 import { buildLinkedProgramBadgeView } from '@/lib/source/linked-program-badge-view';
+import { AmsVendorStorylinePanel } from './AmsVendorStorylinePanel';
+import { AmsIntelligenceSignalsPanel } from './AmsIntelligenceSignalsPanel';
+import { AmsBafoPanel } from './AmsBafoPanel';
+import { buildAmsVendorStoryline, AMS_OUTSOURCING_2026_EVENT_ID } from '@/lib/source/ams-outsourcing-2026-view';
+import { buildAmsIntelligenceSignals } from '@/lib/source/ams-intelligence-signals-view';
+import { buildAmsBafoView } from '@/lib/source/ams-bafo-view';
 
 export interface SourceCommercialEventSectionProps {
   eventId: string;
   eventName: string;
   accountName: string;
 }
+
+// SRC34/SRC35/SRC36/SRC37 — Active tabs for the AMS Outsourcing 2026 event
+type AmsTab = 'vendors' | 'intelligence' | 'bafo';
 
 const VENDOR_POOL = [
   'Vendor Alpha',
@@ -92,6 +101,95 @@ const caveatBannerStyle: React.CSSProperties = {
   lineHeight: 1.5,
 };
 
+// AMS Outsourcing 2026 — tabbed commercial intelligence surface (SRC34-37)
+function AmsOutsourcingCommercialSection({ badgeView }: { badgeView: ReturnType<typeof buildLinkedProgramBadgeView> }) {
+  const [activeTab, setActiveTab] = useState<AmsTab>('vendors');
+  const storyline = buildAmsVendorStoryline();
+  const signals = buildAmsIntelligenceSignals();
+  const bafo = buildAmsBafoView();
+
+  const tabs: Array<{ id: AmsTab; label: string; count?: number }> = [
+    { id: 'vendors',       label: 'Vendors',          count: storyline.vendors.length },
+    { id: 'intelligence',  label: 'Intelligence',      count: signals.signals.length },
+    { id: 'bafo',          label: 'BAFO',              count: bafo.invitedVendors.length },
+  ];
+
+  return (
+    <div style={sectionStyle}>
+      {badgeView && (
+        <div style={{ padding: '12px 24px 0 24px' }}>
+          <LinkedProgramBadge view={badgeView} />
+        </div>
+      )}
+      <div style={headerRowStyle}>
+        <h2 style={headingStyle}>Commercial Intelligence</h2>
+      </div>
+      {/* Tab bar */}
+      <div style={{
+        display: 'flex',
+        gap: '0',
+        borderBottom: '1px solid #E5DCD2',
+        paddingLeft: '24px',
+      }}>
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            style={{
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === tab.id ? '2px solid #1B2B5C' : '2px solid transparent',
+              cursor: 'pointer',
+              fontFamily: 'DM Sans, sans-serif',
+              fontSize: '13px',
+              fontWeight: activeTab === tab.id ? 600 : 400,
+              color: activeTab === tab.id ? '#1B2B5C' : '#706D66',
+              padding: '10px 16px',
+              marginBottom: '-1px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              outline: 'none',
+              transition: 'color 0.15s, border-color 0.15s',
+            }}
+            aria-selected={activeTab === tab.id}
+          >
+            {tab.label}
+            {tab.count !== undefined && (
+              <span style={{
+                fontFamily: 'DM Sans, sans-serif',
+                fontSize: '11px',
+                fontWeight: 600,
+                color: activeTab === tab.id ? '#1B2B5C' : '#9CA3AF',
+                backgroundColor: activeTab === tab.id ? '#EFF6FF' : '#F3F4F6',
+                borderRadius: '10px',
+                padding: '1px 6px',
+              }}>
+                {tab.count}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+      {/* Tab content */}
+      <div style={{ padding: '20px 24px' }}>
+        {activeTab === 'vendors' && (
+          <AmsVendorStorylinePanel storyline={storyline} />
+        )}
+        {activeTab === 'intelligence' && (
+          <AmsIntelligenceSignalsPanel bundle={signals} />
+        )}
+        {activeTab === 'bafo' && (
+          <AmsBafoPanel round={bafo} />
+        )}
+      </div>
+      <div style={caveatBannerStyle}>
+        Commercial intelligence is deterministic seed-backed. Live vendor response ingestion not yet wired.
+      </div>
+    </div>
+  );
+}
+
 export function SourceCommercialEventSection({
   eventId,
   eventName,
@@ -99,6 +197,11 @@ export function SourceCommercialEventSection({
   const [expanded, setExpanded] = useState(false);
   const vendorList = deriveVendorList(eventId);
   const badgeView = buildLinkedProgramBadgeView(eventId);
+
+  // SRC34-37: Use rich tabbed view for the Apex Retail AMS Outsourcing 2026 event
+  if (eventId === AMS_OUTSOURCING_2026_EVENT_ID) {
+    return <AmsOutsourcingCommercialSection badgeView={badgeView} />;
+  }
 
   return (
     <div style={sectionStyle}>

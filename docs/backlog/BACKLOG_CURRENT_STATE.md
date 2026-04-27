@@ -2,51 +2,51 @@
 
 > This file is written by the orchestration agent at the end of each wave.
 > The next autonomous session reads this file first.
-> Last updated by: BLG2 initialization
+> Last updated by: autonomous orchestration agent
 > Last updated: 2026-04-26
 
 ## Last completed wave
-- waveId: wave-21
-- waveTitle: Brand Lock + Blueprint Enforcement + Intelligence/Control Tower Completion
-- prNumber: 391
-- mergeSHA: a07d0d06
-- completedSlices: [BRAND1, BRAND2, DES9, PX2, INTEL1, INTEL2, INTEL3, TOWER1, TOWER2, TOWER3, QA29, DEMO9, BLG1, BLG2]
+- waveId: wave-22
+- waveTitle: Program Polish + Reference Implementation (INTEL4 + TOWER4 lens tabs)
+- prNumber: 396
+- mergeSHA: 493ec888
+- completedSlices: [INTEL4, TOWER4]
 - completedAt: 2026-04-26
 
 ## Next wave to execute
-- waveId: wave-22
-- waveTitle: Demo Storyline + Visual QA
-- waveFile: docs/backlog/waves/WAVE-22-DEMO-STORYLINE-VISUAL-QA.md
-- primaryTrack: 03-programs-flagship
-- primaryTrackFile: docs/backlog/tracks/03-programs-flagship/BACKLOG.md
+- waveId: wave-23
+- waveTitle: Source + Program Storyline Demo
+- waveFile: docs/backlog/waves/WAVE-23-SOURCE-PROGRAM-STORYLINE-DEMO.md
+- primaryTrack: source-commercial
 - estimatedLanes: 6
 - estimatedComplexity: M
+- sliceIdsAssigned: [SRC34, SRC35, SRC36, SRC37, SRC38, LINK2, DEMO10]
 
 ## Blocker conditions
-(List any conditions that must be resolved before wave-22 can start)
 - none
 
 ## Pending decisions
-(List any decisions that came up but were deferred)
-- Programs list page default sort: by priority or by phase? → defer to wave-22 PROG11 spec
+- Programs list page default sort: by priority or by phase? → defer to later wave
 - Workshop canvas default tab: Overview vs Workshop? → documented as "Overview" in track BACKLOG.md
 
 ## Known deferred items
 - TopBar.tsx and PrimaryNav.tsx confirmed dead code — removal deferred to Wave 29 cleanup
 - Programs route shell wiring deferred in SHELL7 — will be completed in PROG10
+- Wave 23 slice IDs SRC11-SRC30, LINK1, DEMO7 are already code_complete; Wave 23 uses SRC34-SRC38, LINK2, DEMO10
 
 ## Auto loop enabled
-- autoLoopEnabled: false
+- autoLoopEnabled: true
 (Set to true only if Anand explicitly instructs continuous autonomous execution)
 
 ## Session summary
-Waves 19–21 are merged and verified on main. The backlog system (BLG1) and autonomous orchestration wiring (BLG2) are now in place. Wave 22 (Demo Storyline + Visual QA) is the next execution target — consult docs/backlog/WAVE_ROADMAP.md for the full slice list and docs/backlog/tracks/03-programs-flagship/BACKLOG.md for the Programs track context.
+Wave 22 (PR #396) merged at SHA 493ec888. Vercel checks passed (abarva + nexus). GitHub Actions failures were billing-quota non-code failures. Build clean (42 routes, TypeScript clean). Wave 23 (Source + Program Storyline Demo) is now executing — adds AMS Outsourcing 2026 event seed for Apex Retail with 4 vendors, BAFO tab, intelligence signals (PAT-AMS-001/002), CDP reverse link chip, and 30-min demo script update.
 
 ## Route health (last verified 2026-04-26)
 - /tenant/apex-retail/programs → ACTIVE
 - /tenant/apex-retail/programs/apex-cdp-2026 → ACTIVE
-- /tenant/apex-retail/intelligence → ACTIVE (INTEL1-3 wired)
-- /tenant/apex-retail/tower → ACTIVE (TOWER1-3 wired)
+- /tenant/apex-retail/intelligence → ACTIVE (INTEL1-4 wired)
+- /tenant/apex-retail/tower → ACTIVE (TOWER1-4 wired)
+- /source/events/apex-retail-ams-outsourcing-2026 → PLANNED (Wave 23 target)
 - /admin → ACTIVE
 - /admin/architecture → ACTIVE
 

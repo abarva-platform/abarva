@@ -7869,6 +7869,139 @@
       "wave": "wave-22",
       "completedAt": "2026-04-26",
       "prBranch": "codex/wave-22-intel4-tower4-lens-tabs"
+    },
+    {
+      "id": "SRC34",
+      "name": "AMS Outsourcing 2026 Vendor Storyline View Model",
+      "category": "K",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "AbarVa Autonomous Orchestration",
+      "dependsOn": [
+        "LINK1",
+        "SRC33"
+      ],
+      "allowedFiles": [
+        "src/lib/source/ams-outsourcing-2026-view.ts",
+        "src/components/source/AmsVendorStorylinePanel.tsx"
+      ],
+      "wave": "wave-23",
+      "completedAt": "2026-04-26",
+      "prBranch": "codex/wave-23-source-program-storyline-demo"
+    },
+    {
+      "id": "SRC35",
+      "name": "AMS Intelligence Bridge Signals View Model",
+      "category": "K",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "AbarVa Autonomous Orchestration",
+      "dependsOn": [
+        "SRC34"
+      ],
+      "allowedFiles": [
+        "src/lib/source/ams-intelligence-signals-view.ts",
+        "src/components/source/AmsIntelligenceSignalsPanel.tsx"
+      ],
+      "wave": "wave-23",
+      "completedAt": "2026-04-26",
+      "prBranch": "codex/wave-23-source-program-storyline-demo"
+    },
+    {
+      "id": "SRC36",
+      "name": "AMS Vendor Storyline Panel UI",
+      "category": "K",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "AbarVa Autonomous Orchestration",
+      "dependsOn": [
+        "SRC34",
+        "SRC35"
+      ],
+      "allowedFiles": [
+        "src/components/source/AmsVendorStorylinePanel.tsx",
+        "src/components/source/AmsIntelligenceSignalsPanel.tsx",
+        "src/components/source/SourceCommercialEventSection.tsx"
+      ],
+      "wave": "wave-23",
+      "completedAt": "2026-04-26",
+      "prBranch": "codex/wave-23-source-program-storyline-demo"
+    },
+    {
+      "id": "SRC37",
+      "name": "AMS BAFO Tab View Model and Panel",
+      "category": "K",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "AbarVa Autonomous Orchestration",
+      "dependsOn": [
+        "SRC34"
+      ],
+      "allowedFiles": [
+        "src/lib/source/ams-bafo-view.ts",
+        "src/components/source/AmsBafoPanel.tsx"
+      ],
+      "wave": "wave-23",
+      "completedAt": "2026-04-26",
+      "prBranch": "codex/wave-23-source-program-storyline-demo"
+    },
+    {
+      "id": "SRC38",
+      "name": "AMS Outsourcing 2026 Event Seed Entry",
+      "category": "K",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "AbarVa Autonomous Orchestration",
+      "dependsOn": [
+        "SRC34"
+      ],
+      "allowedFiles": [
+        "src/lib/source/constants.ts",
+        "src/lib/source/mock-seed.ts"
+      ],
+      "wave": "wave-23",
+      "completedAt": "2026-04-26",
+      "prBranch": "codex/wave-23-source-program-storyline-demo"
+    },
+    {
+      "id": "LINK2",
+      "name": "CDP Program Reverse Source Event Link View Model",
+      "category": "K",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "AbarVa Autonomous Orchestration",
+      "dependsOn": [
+        "LINK1",
+        "SRC38"
+      ],
+      "allowedFiles": [
+        "src/lib/source/cdp-source-reverse-link-view.ts"
+      ],
+      "wave": "wave-23",
+      "completedAt": "2026-04-26",
+      "prBranch": "codex/wave-23-source-program-storyline-demo"
+    },
+    {
+      "id": "DEMO10",
+      "name": "30-Minute AMS CDP Storyline Demo Script Update",
+      "category": "K",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "AbarVa Autonomous Orchestration",
+      "dependsOn": [
+        "SRC34",
+        "SRC35",
+        "SRC36",
+        "SRC37",
+        "SRC38",
+        "LINK2"
+      ],
+      "allowedFiles": [
+        "docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md"
+      ],
+      "wave": "wave-23",
+      "completedAt": "2026-04-26",
+      "prBranch": "codex/wave-23-source-program-storyline-demo"
     }
   ]
 }

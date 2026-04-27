@@ -109,15 +109,18 @@ export const SOURCE_GOLDEN_EVENT_IDS = {
   dataAiModernization: 'evt-source-data-ai-si-selection',
   amsConsolidation: 'evt-source-ams-consolidation-assessment',
   digitalAppBuild: 'evt-source-digital-app-build-partner-selection',
+  // SRC38 — Apex Retail AMS Outsourcing 2026 demo storyline event
+  apexRetailAmsOutsourcing2026: 'apex-retail-ams-outsourcing-2026',
 } as const;
 
 export const SOURCE_GOLDEN_EVENT_VALUES_USD = {
   [SOURCE_GOLDEN_EVENT_IDS.dataAiModernization]: 18_500_000,
   [SOURCE_GOLDEN_EVENT_IDS.amsConsolidation]: 42_000_000,
   [SOURCE_GOLDEN_EVENT_IDS.digitalAppBuild]: 2_800_000,
+  [SOURCE_GOLDEN_EVENT_IDS.apexRetailAmsOutsourcing2026]: 35_000_000,
 } as const;
 
-export const SOURCE_TOTAL_VALUE_AT_STAKE_USD = 63_300_000;
+export const SOURCE_TOTAL_VALUE_AT_STAKE_USD = 98_300_000;
 
 export const SOURCE_FOUNDATIONS: SourcePlatformFoundation[] = [
   {
