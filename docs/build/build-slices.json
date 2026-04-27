@@ -7770,6 +7770,13 @@
       "status": "code_complete",
       "wave": "wave-21",
       "lane": "G"
+    },
+    {
+      "id": "TOWER1",
+      "title": "Control Tower Route Shell Wiring",
+      "status": "code_complete",
+      "wave": "wave-21",
+      "lane": "H"
     }
   ]
 }
