@@ -71,10 +71,11 @@ export type CanonicalPhaseName = typeof CANONICAL_SIX_PHASES[number]['name'];
 // view to a single client (used by the tenant-scoped index at
 // /tenant/[tenantSlug]/programs).
 
-export interface ProgramsIndexFilters extends PortfolioFilters {
-  // PortfolioFilters already covers search, phase, archetype, status,
-  // sponsor, pattern, myRole, shape.  No additional fields needed yet.
-}
+// PortfolioFilters already covers search, phase, archetype, status,
+// sponsor, pattern, myRole, shape. No additional fields needed yet,
+// so we alias rather than declare an empty interface (which fails
+// @typescript-eslint/no-empty-object-type).
+export type ProgramsIndexFilters = PortfolioFilters;
 
 export interface ProgramsIndexView {
   // Viewer identity
