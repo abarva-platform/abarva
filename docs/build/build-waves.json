@@ -1220,6 +1220,29 @@
       "currentBlockers": [],
       "nextAction": "Wave 31 next",
       "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-31",
+      "name": "Security Posture Hardening",
+      "goal": "Codify the AbarVa security posture framework with a control-family model and readiness gate, and produce a canonical incident response runbook covering all 4 severity levels.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "SEC1",
+        "SEC2"
+      ],
+      "completedSlices": [
+        "SEC1",
+        "SEC2"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Wave 32 next",
+      "lastUpdated": "2026-04-26"
     }
   ]
 }
