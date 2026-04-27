@@ -7,6 +7,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import { AbarVaLogo } from '@/components/brand';
 import type { ProgramFullState } from '@/lib/programs/types.ui';
 
 type TabKey = 'portfolio' | 'p0' | 'p1' | 'p2' | 'p3' | 'p4';
@@ -185,7 +186,14 @@ export function ProgramsCanonShell({ programs }: { programs: ProgramFullState[] 
 
       {/* Dark navbar */}
       <nav className="pcs-navbar">
-        <div className="pcs-wordmark"><span className="abar">Abar</span><span className="va">Va</span></div>
+        <AbarVaLogo
+          size="sm"
+          width={112}
+          height={20}
+          aria-hidden={false}
+          label="AbarVa"
+          style={{ filter: 'brightness(0) invert(1)' }}
+        />
         <div className="pcs-tenant-switcher">{selectedProgram?.clientName ?? 'Pick a tenant'}</div>
         <div className="pcs-nav-links">
           <Link href="/home">Home</Link>
@@ -551,9 +559,6 @@ const canonCss = `
     gap: 24px;
     border-bottom: 1px solid rgba(255,255,255,0.06);
   }
-  .pcs-wordmark { font-family: 'Georgia', serif; color: white; display: flex; align-items: baseline; }
-  .pcs-wordmark .abar { font-weight: 800; font-size: 18px; }
-  .pcs-wordmark .va { font-weight: 900; font-size: 24px; color: var(--pcs-teal); }
   .pcs-tenant-switcher {
     background: rgba(255,255,255,0.05);
     color: white;

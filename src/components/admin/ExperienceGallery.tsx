@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { AbarVaLogo } from '@/components/brand';
 
 const COLORS = {
   canvas: '#F7F4EE',
@@ -166,24 +167,6 @@ const checklistItems = [
   'no generic chatbot wrapper',
 ];
 
-function Wordmark({ large = false }: { large?: boolean }) {
-  return (
-    <div style={{ display: 'inline-flex', alignItems: 'center', gap: large ? 12 : 8 }}>
-      <span
-        style={{
-          fontSize: large ? 40 : 20,
-          fontWeight: 700,
-          letterSpacing: large ? '-0.02em' : '-0.01em',
-          color: COLORS.charcoal,
-        }}
-      >
-        Abar
-        <span style={{ color: COLORS.skyBlue, fontSize: large ? 43 : 22 }}>Va</span>
-      </span>
-    </div>
-  );
-}
-
 export function ExperienceGallery() {
   return (
     <div
@@ -199,11 +182,24 @@ export function ExperienceGallery() {
         <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'center', marginTop: 16 }}>
           <div style={{ padding: '12px 14px', borderRadius: 10, border: `1px dashed ${COLORS.borderSoft}` }}>
             <div style={{ marginBottom: 8, fontSize: 12, color: COLORS.mutedText }}>Nav-size lockup</div>
-            <Wordmark />
+            <AbarVaLogo
+              size="sm"
+              width={120}
+              height={22}
+              style={{ maxWidth: '120px', width: '120px', height: '22px' }}
+              aria-hidden={false}
+              label="AbarVa wordmark"
+            />
           </div>
           <div style={{ padding: '16px 18px', borderRadius: 10, border: `1px dashed ${COLORS.borderSoft}` }}>
             <div style={{ marginBottom: 8, fontSize: 12, color: COLORS.mutedText }}>Hero lockup</div>
-            <Wordmark large />
+            <AbarVaLogo
+              size="lg"
+              width={240}
+              height={44}
+              aria-hidden={false}
+              label="AbarVa hero wordmark"
+            />
           </div>
         </div>
       </section>

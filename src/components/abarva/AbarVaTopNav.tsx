@@ -10,6 +10,7 @@
 
 import Link from 'next/link';
 import { COLORS, FONT, BORDER, SPACING } from '@/lib/design/abarva-theme';
+import { AbarvaWordmark as AbarVaWordmarkPrimitive } from '@/components/abarva/AbarVaWordmark';
 
 // ---------------------------------------------------------------------
 // SURFACE LIST  (canonical order)
@@ -33,60 +34,18 @@ export const ABARVA_TOP_NAV_SURFACES: ReadonlyArray<AbarvaTopNavSurface> = [
 // WORDMARK
 // ---------------------------------------------------------------------
 
-type WordmarkSize = 'sm' | 'md' | 'lg';
-
 interface AbarvaWordmarkProps {
-  size?: WordmarkSize;
-  /**
-   * Override base color of the "Abar" half. Defaults to near-black ink.
-   * The "Va" half always renders in NAVY at 1.05–1.10× the "Abar" size.
-   */
+  size?: 'sm' | 'md' | 'lg';
   inkColor?: string;
 }
 
-const WORDMARK_BASE_FONT_SIZE: Record<WordmarkSize, number> = {
-  sm: 16,
-  md: 20,
-  lg: 28,
-};
-
-export function AbarvaWordmark({
-  size = 'md',
-  inkColor = COLORS.ink,
-}: AbarvaWordmarkProps) {
-  const baseSize = WORDMARK_BASE_FONT_SIZE[size];
-  const vaSize = Math.round(baseSize * 1.08);
+export function AbarvaWordmark({ size = 'md', inkColor = COLORS.ink }: AbarvaWordmarkProps) {
   return (
-    <span
-      aria-label="AbarVa"
-      style={{
-        display: 'inline-flex',
-        alignItems: 'baseline',
-        gap: 0,
-        fontFamily: FONT.body,
-        lineHeight: 1,
-        letterSpacing: '-0.01em',
-      }}
-    >
-      <span
-        style={{
-          fontSize: baseSize,
-          fontWeight: 700,
-          color: inkColor,
-        }}
-      >
-        Abar
-      </span>
-      <span
-        style={{
-          fontSize: vaSize,
-          fontWeight: 700,
-          color: COLORS.navy,
-        }}
-      >
-        Va
-      </span>
-    </span>
+    <AbarVaWordmarkPrimitive
+      size={size}
+      inkColor={inkColor}
+      aria-hidden={false}
+    />
   );
 }
 

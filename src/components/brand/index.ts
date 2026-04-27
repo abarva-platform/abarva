@@ -1,0 +1,2 @@
+export { AbarVaLogo } from './AbarVaLogo'
+
