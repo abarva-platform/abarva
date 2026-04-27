@@ -6,21 +6,20 @@
 > Last updated: 2026-04-26
 
 ## Last completed wave
-- waveId: wave-22
-- waveTitle: Program Polish + Reference Implementation (INTEL4 + TOWER4 lens tabs)
-- prNumber: 396
-- mergeSHA: 493ec888
-- completedSlices: [INTEL4, TOWER4]
+- waveId: wave-23
+- waveTitle: AMS Outsourcing 2026 Storyline Demo (Source + Program Storyline)
+- prNumber: 397
+- mergeSHA: 537f4f94
+- completedSlices: [SRC34, SRC35, SRC36, SRC37, SRC38, LINK2, DEMO10]
 - completedAt: 2026-04-26
 
+## Previous waves (for reference)
+- wave-22: PR #396, SHA 493ec888, slices [INTEL4, TOWER4]
+
 ## Next wave to execute
-- waveId: wave-23
-- waveTitle: Source + Program Storyline Demo
-- waveFile: docs/backlog/waves/WAVE-23-SOURCE-PROGRAM-STORYLINE-DEMO.md
-- primaryTrack: source-commercial
-- estimatedLanes: 6
-- estimatedComplexity: M
-- sliceIdsAssigned: [SRC34, SRC35, SRC36, SRC37, SRC38, LINK2, DEMO10]
+- waveId: wave-24
+- waveTitle: TBD
+- waveFile: docs/backlog/waves/WAVE-24-*.md (check for file)
 
 ## Blocker conditions
 - none
@@ -39,7 +38,7 @@
 (Set to true only if Anand explicitly instructs continuous autonomous execution)
 
 ## Session summary
-Wave 22 (PR #396) merged at SHA 493ec888. Vercel checks passed (abarva + nexus). GitHub Actions failures were billing-quota non-code failures. Build clean (42 routes, TypeScript clean). Wave 23 (Source + Program Storyline Demo) is now executing — adds AMS Outsourcing 2026 event seed for Apex Retail with 4 vendors, BAFO tab, intelligence signals (PAT-AMS-001/002), CDP reverse link chip, and 30-min demo script update.
+Wave 23 complete — AMS Outsourcing 2026 storyline (4 vendors, BAFO round 1, Sentinel signals, CDP reverse link, 30-min demo script updated). PR #397 merged at SHA 537f4f94. Vercel checks passed (abarva + nexus). GitHub Actions failures were billing-quota non-code failures. Build clean (TypeScript clean, hygiene gate PASS 11/11). Wave 24 status: pending check of wave spec file.
 
 ## Route health (last verified 2026-04-26)
 - /tenant/apex-retail/programs → ACTIVE
