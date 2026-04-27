@@ -2,10 +2,22 @@
 
 > This file is written by the orchestration agent at the end of each wave.
 > The next autonomous session reads this file first.
-> Last updated by: orchestration agent (ADMIN8 complete · wave-admin-redesign-followup 100%)
-> Last updated: 2026-04-26
+> Last updated by: orchestration agent (AGENT1 complete · wave-agent1 100%)
+> Last updated: 2026-04-27
 
 ## Last completed wave / slice
+- sliceIds: AGENT1A + AGENT1B
+- waveId: wave-agent1 (merged, 100%)
+- title: Agent Reasoning Foundation — context bundle + posture + editorial + choices, wired to admin pages
+- prNumber: 454
+- mergeSHA: f2b49958
+- completedAt: 2026-04-27
+- laneSHAs: AGENT1A = edea354f ; AGENT1B = 3e3ed39c
+- testsGreen: 113 foundation tests + 67 wiring tests + 1098 admin regression + 954 programs + 18 nexus + 744 architecture; full hygiene gate 11/11; ESLint clean; build clean
+- skippedSlices: none
+- note: AGENT1A appended `AgentContextBundle` / `buildAgentContext(tenant, surface, page)` to the platform-wide `src/lib/agent/context-bundle.ts` (525 → 824 lines), plus three new modules: `posture.ts` (Steward / Nexus / Sentinel / Atlas posture computers), `editorial.ts` (per-surface/page template generator), `choices.ts` ("3 choices + custom" builder). AGENT1B refactored all 8 admin page-views (architecture, production-readiness, overview, data-trust, connectors, users-access, agent-readiness, build-progress) to consume the foundation. Editorial copy is now generated from deterministic templates over the context bundle; posture cards reflect actual blockers + evidence; choices populate from `ctx.blockers` + `ctx.pendingDecisions` + evidence gaps. Pure read-model — no live model calls, no audit log, no write actions (deferred). Integration: both lanes appended different content to the existing platform-wide context-bundle.ts; took AGENT1B's superset because AGENT1B's wiring required AGENT1B's API. AGENT1A's foundation test file was rewritten to validate the integrated AGENT1B-superset API (89 → 113 assertions, same intent). Platform-wide ContextBundle consumers (programs / nexus / architecture) untouched and all green.
+
+## Previous completed slice
 - sliceId: ADMIN8
 - waveId: wave-admin-redesign-followup (merged, 100%)
 - title: Admin Single Source of Truth · /admin canonical tree
@@ -36,13 +48,16 @@
 - ADMIN7 (PR 449) — Visual lock regression guard + WIRE2B rescore
 
 ## Next wave
-TBD from `docs/planning/abarva-master-backlog/WAVE_ROADMAP.md`. The admin
-surface canon is now locked behind a CI regression guard — any future drift
-will fail `admin7-visual-lock.test.ts` or
-`scripts/integration/check_admin_design_tokens.sh`. ADMIN8 also extended
-that guard to assert legacy `/platform/admin/{,architecture,production-readiness}`
-remain redirect-only. Founder review at `/admin` (now canonical) is the
-recommended next user-facing step.
+TBD from `docs/planning/abarva-master-backlog/WAVE_ROADMAP.md`. With the
+agent reasoning foundation merged, the next high-leverage candidates are:
+- **ADMIN9** — legacy admin migration audit (post wave-admin-redesign-followup follow-up)
+- **Live model gateway / audit log** wave — promote AGENT1's pure read-model into a runtime-callable agent loop
+- Continue with the next planned wave from the roadmap.
+
+The admin surface canon remains locked behind ADMIN7's regression guards
+(hex/font/shell/logo). AGENT1's editorial templates produce identical
+strings to the previous hardcoded copy, so no admin visual lock test was
+loosened.
 
 ## Previously completed (this wave)
 - sliceIds: ADMIN5, ADMIN6
