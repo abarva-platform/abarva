@@ -1322,10 +1322,8 @@
       "name": "Admin Surface Canonical Redesign",
       "goal": "Make admin pages render the canonical 3-zone editorial layout (sidebar / canvas / agent rail) with the new abarva-logo-lockup-v2 asset, locked color palette (#070707 / #0b4a91 / #FBFAF7 + soft mint/amber/coral), Cormorant Garamond serif titles, 8-item sub-sidebar, Steward editorial card, 5-cell context bar, agent rail with honest posture, and the permanent Live caveat pill. Lift WIRE2B admin compliance 72 -> 92.",
       "status": "in_progress",
-      "percentComplete": 62.5,
+      "percentComplete": 87.5,
       "plannedSlices": [
-        "ADMIN5",
-        "ADMIN6",
         "ADMIN7"
       ],
       "completedSlices": [
@@ -1333,7 +1331,9 @@
         "ADMIN1",
         "ADMIN2",
         "ADMIN3",
-        "ADMIN4"
+        "ADMIN4",
+        "ADMIN5",
+        "ADMIN6"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
@@ -1341,7 +1341,7 @@
       "validationStatus": "not_run",
       "productionReadinessUpdated": false,
       "currentBlockers": [],
-      "nextAction": "Execute ADMIN5 (Production Readiness page) and ADMIN6 (6 remaining sub-pages) — can parallelize. ADMIN7 (visual lock) runs last after all pages wired.",
+      "nextAction": "Execute ADMIN7 — Visual lock + regression guard (hex-scan, font-family scan, logo-presence test, WIRE2B compliance score 72->92). Final wave-admin-redesign slice.",
       "lastUpdated": "2026-04-27"
     }
   ]
