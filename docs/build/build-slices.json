@@ -8659,6 +8659,15 @@
       "wave": "wave-32",
       "track": "10-demo-qa-production-hardening",
       "notes": "TypeScript read-model + test suite encoding WIRE2 compliance findings. src/lib/qa/wireframe-compliance-audit.ts."
+    },
+    {
+      "id": "W32A",
+      "title": "Programs Phase Filter View Model",
+      "status": "code_complete",
+      "type": "view-model",
+      "wave": "wave-32",
+      "track": "03-programs-flagship",
+      "notes": "Pure TypeScript phase filter read-model for Programs Index. src/lib/programs/phase-filter-view.ts."
     }
   ]
 }
