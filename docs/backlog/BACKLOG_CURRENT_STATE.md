@@ -2,22 +2,28 @@
 
 > This file is written by the orchestration agent at the end of each wave.
 > The next autonomous session reads this file first.
-> Last updated by: orchestration agent (ADMIN1 + ADMIN2 complete)
+> Last updated by: orchestration agent (ADMIN3 + ADMIN4 complete)
 > Last updated: 2026-04-27
 
 ## Last completed wave / slice
+- sliceIds: ADMIN3, ADMIN4
+- waveId: wave-admin-redesign (in_progress, 62.5%)
+- title: Steward Editorial Component (ADMIN3) + Architecture Page Wired to AdminCanonShellV2 (ADMIN4)
+- prNumber: 442
+- mergeSHA: ed159dd9
+- completedAt: 2026-04-27
+- testsGreen: 95 new tests pass (56 ADMIN3 + 39 ADMIN4); 761 admin integration tests all pass; 277 design integration tests all pass
+- skippedSlices: none
+- laneSHAs: ADMIN3 = 8cec9c78 ; ADMIN4 = 23b0153d
+- note: ADMIN3 lands StewardEditorial canonical card (title + body + Context-used chips + EvidenceStrengthPill + BlockerPill + primary action), ContextBar 5-cell strip (Tenant / Mode / Agent / Data / Live status), EvidenceStrengthPill (strong/partial/thin with mint/amber/coral soft fills), BlockerPill (coral, conditional render). ADMIN4 lands architecture-page-view.ts deterministic read-model (7 planes: App / Agent / Context / Evidence / Data / Gateway+Tools / Deployment), ArchitecturePlaneStack 7-row component, /admin/architecture route fully rewired from legacy AdminCanonShell v1 + ArchitectureCanvas to AdminCanonShellV2 + EditorialCanvas + ContextBar + StewardEditorial + ArchitecturePlaneStack + AgentRail. Preserved metadata export. ArchitectureCanvas component remains on disk (legacy cleanup deferred). One legacy ARCH5 test (architecture-canvas.test.ts) updated minimally — assertion was that page imports ArchitectureCanvas; now asserts ArchitecturePlaneStack import (new wiring). Cherry-picks both clean — ADMIN4 lane was branched off ADMIN3 so the 4 shared components landed without conflict. Hygiene gate 11/11 PASS. CI green (ESLint, Routes/disclaimers, hygiene_gate, Vercel × 2). First admin route to render the new design.
+
+## Previously completed (this wave)
 - sliceIds: ADMIN1, ADMIN2
-- waveId: wave-admin-redesign (in_progress, 37.5%)
-- title: Foundation: Logo + Tokens (ADMIN1) + Admin Shell 3-Zone Canonical Layout (ADMIN2)
 - prNumber: 438
 - mergeSHA: 364de098
 - completedAt: 2026-04-27
-- testsGreen: 70 new tests pass (17 ADMIN1 + 53 ADMIN2); 277 design integration tests all pass
-- skippedSlices: none
-- laneSHAs: ADMIN1 = 60c4c3c7 ; ADMIN2 = 72b12feb
-- note: ADMIN1 lands abarva-logo-lockup-v2.svg, AbarVaLogo variant prop, design-tokens.ts (COLORS / TYPOGRAPHY / SPACING / RADIUS / ADMIN_LAYOUT / BANNED_TOKENS), Cormorant Garamond next/font/google import. ADMIN2 lands AdminCanonShellV2 (CSS grid 280/flex/320), AdminSidebar (8 sub-sections + Live caveat), EditorialCanvas, AgentRail (Steward BLOCKED / Nexus PARTIAL / Sentinel THIN / Atlas THIN + 3 choices + custom), admin-shell-config. Cherry-pick conflict on design-tokens.ts resolved by accepting either side (identical exports, ours retains richer comments). Hygiene gate 11/11 PASS. CI green (ESLint, Routes/disclaimers, hygiene_gate, Vercel × 2).
+- note: ADMIN1 lands abarva-logo-lockup-v2.svg, AbarVaLogo variant prop, design-tokens.ts (COLORS / TYPOGRAPHY / SPACING / RADIUS / ADMIN_LAYOUT / BANNED_TOKENS), Cormorant Garamond next/font/google import. ADMIN2 lands AdminCanonShellV2 (CSS grid 280/flex/320), AdminSidebar (8 sub-sections + Live caveat), EditorialCanvas, AgentRail (Steward BLOCKED / Nexus PARTIAL / Sentinel THIN / Atlas THIN + 3 choices + custom), admin-shell-config.
 
-## Previously completed (this wave)
 - sliceId: ADMIN0
 - prNumber: 436
 - mergeSHA: 2f0ba3ba
@@ -40,12 +46,13 @@
 
 ## Next wave to execute
 - waveId: wave-admin-redesign
-- waveTitle: Admin Surface Canonical Redesign (in_progress, 37.5%)
+- waveTitle: Admin Surface Canonical Redesign (in_progress, 62.5%)
 - waveFile: docs/backlog/waves/WAVE-ADMIN-REDESIGN.md
 - blockedSlices: none
-- completedSlices: ADMIN0, ADMIN1, ADMIN2
-- primarySlices: ADMIN3, ADMIN4, ADMIN5, ADMIN6, ADMIN7 (remaining)
-- note: ADMIN1 + ADMIN2 merged 2026-04-27 (PR #438, SHA 364de098). Foundation tokens locked, 3-zone shell shipped as standalone components — no admin route wired yet. Recommended next: ADMIN3 (Steward Editorial Component) — pure presentational components consumed by ADMIN4/ADMIN5/ADMIN6 page wiring. ADMIN7 locks visual regression at the end.
+- completedSlices: ADMIN0, ADMIN1, ADMIN2, ADMIN3, ADMIN4
+- primarySlices: ADMIN5, ADMIN6, ADMIN7 (remaining)
+- nextSlices: ADMIN5, ADMIN6, ADMIN7
+- note: ADMIN3 + ADMIN4 merged 2026-04-27 (PR #442, SHA ed159dd9). Architecture page is the first admin route rendering the new 3-zone canonical layout. Recommended next: ADMIN5 (Production Readiness page) + ADMIN6 (6 remaining sub-pages) — can parallelize. ADMIN7 (visual lock) runs last after all pages wired.
 
 ## Wave 32 deliverables produced
 - W32A: Programs Phase Filter — `src/lib/programs/phase-filter-view.ts`
