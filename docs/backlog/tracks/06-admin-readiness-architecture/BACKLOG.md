@@ -400,3 +400,47 @@ Implement the slice described above with the allowed files only. Do not add mode
 
 Final report must include PR link, merge commit, files changed, validation results, production-readiness impact, and exclusions.
 ```
+
+
+---
+
+## Wave: Admin Surface Canonical Redesign (`wave-admin-redesign`)
+
+### Why
+Current admin compliance score is 72/100 (WIRE2B). The audit measured "imports canonical shell" and "no banned tokens in shell file" but the rendered pixels still violate the canon — teal accents, purple chips, missing agent rail, no Steward editorial, no context bar. Wireframes shared 2026-04-27 lock the canonical 3-zone editorial layout. New logo lockup-v2 + token palette adopted. This wave makes admin pages demonstrably match the wireframe.
+
+### Founder source (2026-04-27)
+- `abarva_logo_lockup_v2.svg` — refined orbital symbol + Cormorant Garamond wordmark
+- 5 wireframe screenshots — Overview, Production Readiness, Architecture, plus 2 supporting variants
+- Color palette: `#070707` ink, `#0b4a91` navy, `#FBFAF7` cream, soft mint/amber/coral status pills
+- Top nav: 6 surfaces (Home / Programs / Source / Intelligence / Control Tower / Platform pill)
+- 8-item admin sub-sidebar: Overview, Data Trust, Connectors, Users & Access, Agent Readiness, Production Readiness, Build Progress, Architecture
+
+### Slices
+
+| ID | Title | Type | Depends on |
+|---|---|---|---|
+| ADMIN0 | Backlog registration (this) | docs | — |
+| ADMIN1 | Foundation: logo + tokens | ui | ADMIN0 |
+| ADMIN2 | Admin shell 3-zone layout | ui | ADMIN1 |
+| ADMIN3 | Steward editorial component | ui | ADMIN1, ADMIN2 |
+| ADMIN4 | Architecture page wired | ui | ADMIN3 |
+| ADMIN5 | Production Readiness page wired | ui | ADMIN3 |
+| ADMIN6 | Remaining 6 sub-pages | ui | ADMIN3 |
+| ADMIN7 | Visual lock + regression guard | qa | ADMIN1–6 |
+
+### Acceptance
+- Admin compliance score (WIRE2B) lifts 72 → 92
+- Banned tokens on admin pages 11 → 0
+- All 8 admin pages render the 3-zone shell
+- All 8 admin pages show Steward editorial card
+- All 8 admin pages show context bar
+- All 8 admin pages show agent rail with honest posture
+- Live caveat permanent on every admin page
+- Logo lockup v2 rendered (not stub)
+- New design tokens used (no hex literals in admin tree)
+- 200+ new tests passing
+- No `production_ready` promotion
+
+### Wave file
+- `docs/backlog/waves/WAVE-ADMIN-REDESIGN.md`

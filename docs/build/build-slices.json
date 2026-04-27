@@ -8785,6 +8785,78 @@
       "wave": "nav1",
       "track": "01-brand-design-system",
       "notes": "State manifest update after NAV1A-NAV1F merge. Updates production-readiness.json visual_design_system field, build-waves.json with nav1 wave entry, and BACKLOG_CURRENT_STATE.md. No production_ready promotion."
+    },
+    {
+      "id": "ADMIN0",
+      "title": "Admin Redesign Backlog Registration",
+      "status": "code_complete",
+      "type": "docs",
+      "wave": "wave-admin-redesign",
+      "track": "06-admin-readiness-architecture",
+      "notes": "Registers ADMIN1-7 wave spec, slice docs, registry entries, and track BACKLOG update for the Admin Surface Canonical Redesign. Docs only. Founder source: abarva_logo_lockup_v2.svg + 5 wireframe screenshots shared 2026-04-27."
+    },
+    {
+      "id": "ADMIN1",
+      "title": "Foundation: Logo + Token Lock",
+      "status": "backlog",
+      "type": "ui",
+      "wave": "wave-admin-redesign",
+      "track": "06-admin-readiness-architecture",
+      "notes": "Lands abarva-logo-lockup-v2.svg, AbarVaLogo variant prop, design-tokens.ts (INK/NAVY/CREAM/SKY_PALE/MINT_SOFT/AMBER_SOFT/CORAL_SOFT), Cormorant Garamond import, banned-token list extension."
+    },
+    {
+      "id": "ADMIN2",
+      "title": "Admin Shell 3-Zone Canonical Layout",
+      "status": "backlog",
+      "type": "ui",
+      "wave": "wave-admin-redesign",
+      "track": "06-admin-readiness-architecture",
+      "notes": "AdminCanonShellV2 (sidebar 280 / canvas flex / agent rail 320), AdminSidebar (8 items), EditorialCanvas, AgentRail (4 cards). Consumes ADMIN1 tokens; no hex literals."
+    },
+    {
+      "id": "ADMIN3",
+      "title": "Steward Editorial Component",
+      "status": "backlog",
+      "type": "ui",
+      "wave": "wave-admin-redesign",
+      "track": "06-admin-readiness-architecture",
+      "notes": "StewardEditorial + ContextBar + EvidenceStrengthPill + BlockerPill. Pure presentational components consumed by ADMIN4/ADMIN5/ADMIN6 pages."
+    },
+    {
+      "id": "ADMIN4",
+      "title": "Architecture Page Wired to AdminCanonShellV2",
+      "status": "backlog",
+      "type": "ui",
+      "wave": "wave-admin-redesign",
+      "track": "06-admin-readiness-architecture",
+      "notes": "/admin/architecture renders new shell + Steward editorial + 7-row plane stack (App/Agent/Context/Evidence/Data/Gateway+Tools/Deployment) + agent rail with Steward BLOCKED."
+    },
+    {
+      "id": "ADMIN5",
+      "title": "Production Readiness Page Wired to AdminCanonShellV2",
+      "status": "backlog",
+      "type": "ui",
+      "wave": "wave-admin-redesign",
+      "track": "06-admin-readiness-architecture",
+      "notes": "/admin/production-readiness renders new shell + Demo READY/Pilot PARTIAL/Production BLOCKED tiles + top blockers table backed by W32F view-model. No production_ready promotion."
+    },
+    {
+      "id": "ADMIN6",
+      "title": "Remaining 6 Admin Sub-Pages Wired",
+      "status": "backlog",
+      "type": "ui",
+      "wave": "wave-admin-redesign",
+      "track": "06-admin-readiness-architecture",
+      "notes": "Overview, Data Trust, Connectors (W32D), Users & Access (ADM6 ground), Agent Readiness, Build Progress wired to AdminCanonShellV2. All 8 admin routes match canonical wireframe after this slice."
+    },
+    {
+      "id": "ADMIN7",
+      "title": "Admin Visual Lock + Regression Guard",
+      "status": "backlog",
+      "type": "qa",
+      "wave": "wave-admin-redesign",
+      "track": "06-admin-readiness-architecture",
+      "notes": "Hex-scan test, font-family scan, logo-presence test, WIRE2B compliance score update 72->92 in wireframe-compliance-audit.ts. Optional Playwright snapshot stubs."
     }
   ]
 }
