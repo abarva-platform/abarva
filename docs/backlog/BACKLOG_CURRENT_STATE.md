@@ -2,26 +2,26 @@
 
 > This file is written by the orchestration agent at the end of each wave.
 > The next autonomous session reads this file first.
-> Last updated by: orchestration agent (ADMIN-DATA1 audit + wave-admin-data registered)
+> Last updated by: orchestration agent (wave-admin-data phase 1 merged — DATA2 + DATA10)
 > Last updated: 2026-04-27
 
-## Last completed slice
-- sliceId: ADMIN-DATA1
-- waveId: wave-admin-data (planned, 8% — 1 of 13 slices done)
-- title: Native Admin Data Layer Audit + Wave Registration
-- prNumber: TBD (this PR)
-- mergeSHA: TBD
+## Last completed slices
+- sliceIds: ADMIN-DATA2, ADMIN-DATA10
+- waveId: wave-admin-data (in_progress, 23% — 3 of 13 slices done)
+- title: wave-admin-data phase 1 — adapter contracts + migrations
+- prNumber: 465
+- mergeSHA: 4e39b4e6
 - completedAt: 2026-04-27
-- testsGreen: docs-only slice; hygiene gate 11/11; tsc clean; build clean; no app code touched
+- testsGreen: 227+ new tests (88 DATA2 adapter + 139 DATA10 migration); admin regression 1964/1964; tsc clean; eslint clean; hygiene gate 11/11; hex audit PASS; build clean
 - skippedSlices: none
-- note: Comprehensive audit producing wave-admin-data backlog. Audit doc ships at `docs/build/ADMIN_DATA_LAYER_AUDIT.md` (~700 lines): per-page mapping for all 8 admin pages, DDL specs for 7 new admin tables (admin_connectors, admin_datasets, admin_dataset_approvals, admin_dataset_quality, admin_blockers, admin_audit_log, admin_setup_progress), 9 adapter contract signatures, parallelization plan (Tier 1: DATA2 foundation; Tier 2: DATA3-9 + DATA10 in parallel; Tier 3: DATA11-12; Tier 4: DATA13 lock), sequencing rationale (fixture mode lets page-wiring lanes run before migrations land). All write actions, live model calls, audit-event emission remain HARD-GATED for Wave 27+. Existing Supabase infrastructure catalogued (persons / teams / clients / audit_log / data_integrations / integration_health all reusable). ADMIN18 (deferred from wave-admin-completion) folds into ADMIN-DATA12 (Overview pull-through against real data).
+- note: First parallel batch of wave-admin-data. ADMIN-DATA2 ships 9 adapter domains under `src/lib/admin/data/` with dual-mode (fixture default; live throws AdminDataMigrationPendingError). ADMIN-DATA10 ships 7 admin schema migrations + idempotent demo seed (Apex Retail mirrors fixtures; Meridian thin; Arcturus shell-only). Migrations NOT yet applied — applied via `supabase migrate` when DATA11 wires AGENT1 to live. Pages don't change yet — DATA3-9 swap consumption.
 
 ## Next wave
 - waveId: wave-admin-data
-- status: planned
-- nextSlices: [ADMIN-DATA2 (adapter contracts foundation), then DATA3-9 + DATA10 in parallel, then DATA11-12, then DATA13 lock]
-- recommendedSequence: Run **ADMIN-DATA2 — adapter contracts + types + fixture mode** next. After DATA2 merges, kick off DATA3, DATA4, DATA5, DATA6, DATA7, DATA8, DATA9, DATA10 as parallel lanes. After DATA10 merges, run DATA11 + DATA12 sequentially. DATA13 is the final lock.
-- estimatedWallClock: ~7-8 hours wall-clock with 4-lane parallelization across Tier 2.
+- status: in_progress (23%)
+- nextSlices: [ADMIN-DATA3, ADMIN-DATA4, ADMIN-DATA5, ADMIN-DATA6, ADMIN-DATA7, ADMIN-DATA8, ADMIN-DATA9 — 7 parallel page-wiring lanes against the adapter foundation; then DATA11-12; then DATA13 lock]
+- recommendedSequence: Launch **Phase 2 — DATA3-9 in parallel (7 page-wiring lanes)**. All consume the DATA2 adapter contracts via fixture mode; no DB dependency yet. After all 7 merge, run DATA11 + DATA12 sequentially. DATA13 is the final lock.
+- estimatedWallClock: ~3-4 hours wall-clock with 7-lane parallelization across Phase 2.
 
 ## Previous deferral note · ADMIN18
 ADMIN18 (Overview pull-through · setup timeline + recent activity strip + cross-page CTAs) was scoped to use deterministic seed for both timeline and activity. Founder asked for native data flow from real DB tables. ADMIN18 is **subsumed** by ADMIN-DATA12 in wave-admin-data — same UI scope, but reads from `admin_setup_progress` + `admin_audit_log` (DATA10). ADMIN18 remains in `plannedSlices` of wave-admin-completion historically and is **not** silently dropped — its work ships as ADMIN-DATA12.
