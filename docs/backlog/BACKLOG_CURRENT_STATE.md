@@ -8,8 +8,8 @@
 ## Last completed wave
 - waveId: wave-26
 - waveTitle: Enterprise Pilot Package
-- prNumber: TBD (PR open, pending merge)
-- mergeSHA: TBD (post-merge)
+- prNumber: 408
+- mergeSHA: 64465b2c
 - completedSlices: [PROD10, PROD11, PROD12, DEMO10, DEMO11, DEMO12]
 - completedAt: 2026-04-26
 - testsGreen: docs-only wave; no test suite impact
@@ -42,7 +42,7 @@
 - Programs list page default sort: by priority or by phase? → defer to later wave
 - Workshop canvas default tab: Overview vs Workshop? → documented as "Overview" in track BACKLOG.md
 - Production auth provider: CUSTOM / DEFER — LIVE4 permanently deferred; Clerk remains as-is until custom auth is scoped
-- Wave 26 PR merge SHA: update after merge
+- Wave 26 PR #408 merged SHA 64465b2c — build fix (fs loader extraction) included in same PR
 
 ## Known deferred items
 - TopBar.tsx and PrimaryNav.tsx confirmed dead code — removal deferred to Wave 29 cleanup
