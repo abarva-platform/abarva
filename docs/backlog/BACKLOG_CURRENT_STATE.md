@@ -2,12 +2,31 @@
 
 > This file is written by the orchestration agent at the end of each wave.
 > The next autonomous session reads this file first.
-> Last updated by: orchestration agent (wave-admin-completion batch 1 merged)
+> Last updated by: orchestration agent (wave-admin-completion batch 2 merged)
 > Last updated: 2026-04-27
 
 ## Last completed slices
+- sliceIds: ADMIN12, ADMIN14, ADMIN15, ADMIN16
+- waveId: wave-admin-completion (planned, 82% — ADMIN9/10/11/12/13/14/15/16/17 done, ADMIN18/19 backlog)
+- title: wave-admin-completion batch 2 — Agent Readiness + Data Trust + Build Progress + Production Readiness depth
+- prNumber: 459
+- mergeSHA: 9be0fddb
+- completedAt: 2026-04-27
+- laneSHAs: ADMIN12 = 6e27afc3 ; ADMIN14 = dbc0ac83 ; ADMIN15 = 75c97a6e ; ADMIN16 = 1121a827
+- testsGreen: 283 new lane tests (66 + 70 + 73 + 74) + full admin regression 1618/1618; hygiene gate 11/11; ESLint clean; TypeScript clean; build clean; hex audit PASS
+- skippedSlices: none
+- note: ADMIN12 added Agent Readiness depth — 5 URL-driven sub-tabs (Overview / Steward / Nexus / Sentinel / Atlas), per-agent expandable cards with canDo / cannotDo / unblockedBy chips, 4×5 context coverage matrix, HARD-GATED runtime config (Wave 27). ADMIN14 added Data Trust depth + legacy MERGE absorption — 5 sub-tabs (Trust Ladder / Loaded Files / Promotion Queue / Quality Scorecard / Audit Trail) absorbing /platform/admin/data + /platform/admin/data-governance + /platform/admin/quality content, per-rung dataset list with detail drawer, HARD-GATED Approve / Reject / Add policy. Mapped tabs differently than spec (content-driven not rung-named) — cleaner and absorbs legacy pages. ADMIN15 added Build Progress depth — 3 URL-driven sub-tabs (Waves / Slices / CI Status), wave timeline reading docs/build/build-waves.json server-side, per-slice drilldown drawer, deterministic CI mini-strip, banned-token scrub on manifest text via string concatenation (intentional — protects historical references). ADMIN16 added Production Readiness depth — 4 sub-tabs (Decision / Blockers / Gates / History), per-tile expandable (Demo / Pilot / Production), full W32F BlockerDetail drawer, gate criteria matrix (Demo all-pass / Pilot mixed / Production fails on model gateway + SOC2 — honest), 5-entry history strip, production_ready never set true. Plus: scripts/integration/wave_progress.sh tracker script committed in this batch. AGENT1 wiring preserved on every page. All write actions and live model calls remain HARD-GATED for Wave 27+.
+
+## Next wave
+- waveId: wave-admin-completion
+- status: planned (82% — 9 of 11 slices done)
+- nextSlices: [ADMIN18, ADMIN19]
+- recommendedSequence: Run final batch — ADMIN18 + ADMIN19 (Tier 3) to close wave-admin-completion.
+- estimatedWallClock: ~1–2 hours; ADMIN18 (Overview pull-through) and ADMIN19 (Visual lock update) are the last two Tier 3 slices.
+
+## Previous completed slices
 - sliceIds: ADMIN10, ADMIN11, ADMIN13, ADMIN17
-- waveId: wave-admin-completion (planned, 50% — ADMIN9/10/11/13/17 done, ADMIN12/14/15/16/18/19 backlog)
+- waveId: wave-admin-completion
 - title: wave-admin-completion batch 1 — legacy + Users + Connectors + Architecture depth
 - prNumber: 457
 - mergeSHA: c14f5421
@@ -16,13 +35,6 @@
 - testsGreen: 229 new lane tests (35 + 61 + 70 + 63) + full admin regression 1335/1335; hygiene gate 11/11; ESLint clean; TypeScript clean; build clean; hex audit PASS
 - skippedSlices: none
 - note: ADMIN10 deleted 6 deprecated `/platform/admin/*` routes (brief, context, data-guide, outcomes, playbook, revenue), promoted 2 server-side redirects (intelligence → /intelligence; users → /admin/users-access), and retargeted AbarvaNav.tsx admin link to /admin (drops one redirect hop). ADMIN11 added Users & Access depth: URL-driven sub-tabs (All Users / Roles / Permissions / Invites), per-user detail drawer, action strip with SAFE Export + HARD-GATED Invite/Configure SSO/Resend/Revoke. ADMIN13 added Connectors depth: per-connector detail drawer (config schema with masked secrets, recent sync attempts, error log, deterministic 24-point health trend), 4 URL-driven sub-tabs, pilot blocker drilldown, category groups (ERP open by default), action strip with SAFE Export config + Open docs / HARD-GATED Add/Test/Configure/Remove. ADMIN17 added Architecture depth: per-plane drilldown (7 planes × 28 components), URL-state component detail drawer, Azure architecture sub-tab (6 services from Wave 24, deferred state), action strip with HARD-GATED Export — closes the WIRE2 component drawer deviation. One narrow integration fix during CI: replaced `nexus-vert-kappa.vercel.app` pre-canon URL in connectors seed with `app.example.com` placeholder. AGENT1 wiring preserved on every page. All write actions and live model calls remain HARD-GATED for Wave 27+.
-
-## Next wave
-- waveId: wave-admin-completion
-- status: planned (50% — ADMIN9/10/11/13/17 done)
-- nextSlices: [ADMIN12, ADMIN14, ADMIN15, ADMIN16, ADMIN18, ADMIN19]
-- recommendedSequence: Run batch 2 — ADMIN12 + ADMIN14 + ADMIN15 + ADMIN16 in parallel (Tier 2 remainder). ADMIN18 + ADMIN19 last (Tier 3).
-- estimatedWallClock: ~3–4 hours with multi-agent parallelization across remaining Tier 2.
 
 ## Previous completed slice
 - sliceId: ADMIN9
