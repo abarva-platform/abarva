@@ -43,6 +43,7 @@ function snapshot(overrides: Partial<TestSnapshot> = {}): TestSnapshot {
     sessionRole: 'client',
     pinnedClientKey: null,
     membershipClientKeys: [],
+    inferredClientKey: null,
     ...overrides,
   };
 }
@@ -136,6 +137,17 @@ describe('Probe 1 · canAccessTenantClient · cross-tenant access denial', () =>
     });
     expect(canAccessTenantClient(pinnedOnlyUser, 'keystone')).toBe(true);
     expect(canAccessTenantClient(pinnedOnlyUser, 'meridian')).toBe(false);
+  });
+
+  it('prefers email-inferred tenant when no memberships are present for client users', () => {
+    const inferredTenantUser = snapshot({
+      sessionRole: 'client',
+      pinnedClientKey: 'meridian',
+      inferredClientKey: 'apexretail',
+      membershipClientKeys: [],
+    });
+    expect(canAccessTenantClient(inferredTenantUser, 'apexretail')).toBe(true);
+    expect(canAccessTenantClient(inferredTenantUser, 'meridian')).toBe(false);
   });
 
   it('blocks a client with no pinned tenant and no membership', () => {
