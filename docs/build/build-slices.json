@@ -8740,6 +8740,15 @@
       "wave": "nav1",
       "track": "01-brand-design-system",
       "notes": "Locks canonical AbarVa brand/nav invariants with 16 new pure-TypeScript Jest tests across abarva-logo and abarva-ui-primitives suites. Removes stale chrome/TopBar.tsx reference."
+    },
+    {
+      "id": "NAV1C",
+      "title": "Admin / Platform Nav Alignment",
+      "status": "code_complete",
+      "type": "docs",
+      "wave": "nav1",
+      "track": "01-brand-design-system",
+      "notes": "Audit of 25 admin/platform routes. Confirms AdminCanonShell is canonical, 5 routes adopt it today, no legacy chrome remains. Banned tokens in 7 page bodies recorded as deferred to NAV2 / banned-token-sweep wave."
     }
   ]
 }
