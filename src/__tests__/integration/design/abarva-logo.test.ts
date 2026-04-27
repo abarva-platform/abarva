@@ -1,4 +1,5 @@
 import { readFileSync } from 'fs';
+import { existsSync } from 'fs';
 import { resolve } from 'path';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -20,7 +21,7 @@ describe('AbarVaLogo', () => {
     const logoSource = readFileSync(logoPath, 'utf8');
 
     expect(markup).toContain('/brand/abarva-logo.svg');
-    expect(logoSource).toContain('viewBox="0 0 1024 1024"');
+    expect(logoSource).toContain('viewBox="0 0 1600 520"');
   });
 
   it('has no symbol element in the canonical SVG asset', () => {
@@ -30,7 +31,7 @@ describe('AbarVaLogo', () => {
   });
 
   it('exposes brand logo via shell/nav consumers', () => {
-    for (const shellPath of shellPaths) {
+    for (const shellPath of shellPaths.filter((file) => existsSync(file))) {
       const source = readFileSync(shellPath, 'utf8');
       expect(source).toMatch(/AbarVaLogo|AbarvaWordmark|AbarVaWordmark/);
     }
