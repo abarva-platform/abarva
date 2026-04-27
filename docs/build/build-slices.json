@@ -6968,7 +6968,7 @@
     },
     {
       "id": "AZLAB6",
-      "name": "Azure Lab Docs Package — ADRs + Architecture + Naming + Cost + Bicep Stubs",
+      "name": "Azure Lab Docs Package \u2014 ADRs + Architecture + Naming + Cost + Bicep Stubs",
       "category": "architecture",
       "wave": "wave-24",
       "status": "code_complete",
@@ -6981,7 +6981,7 @@
     },
     {
       "id": "AZLAB7",
-      "name": "Private Data Plane Design — Fortune 500 Deployment",
+      "name": "Private Data Plane Design \u2014 Fortune 500 Deployment",
       "category": "architecture",
       "wave": "wave-24",
       "status": "code_complete",
@@ -6994,7 +6994,7 @@
     },
     {
       "id": "AZLAB8",
-      "name": "Multi-Provider Model Gateway Design — Azure OpenAI + Anthropic Switchable Routing",
+      "name": "Multi-Provider Model Gateway Design \u2014 Azure OpenAI + Anthropic Switchable Routing",
       "category": "architecture",
       "wave": "wave-24",
       "status": "code_complete",
@@ -8076,7 +8076,7 @@
     },
     {
       "id": "QA31",
-      "name": "Production Smoke Test — 16 Routes",
+      "name": "Production Smoke Test \u2014 16 Routes",
       "category": "qa",
       "status": "code_complete",
       "risk": "low",
@@ -8092,7 +8092,7 @@
     },
     {
       "id": "QA32",
-      "name": "Evidence Trust Audit — Dataset Trust Model Enforcement Tests",
+      "name": "Evidence Trust Audit \u2014 Dataset Trust Model Enforcement Tests",
       "category": "qa",
       "status": "code_complete",
       "risk": "low",
@@ -8104,6 +8104,105 @@
       "wave": "wave-25",
       "completedAt": "2026-04-26",
       "sliceDoc": "docs/build/slices/QA32_EVIDENCE_TRUST_AUDIT.md"
+    },
+    {
+      "id": "PROD10",
+      "name": "Pilot Security Posture Documentation",
+      "category": "K",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "AbarVa Autonomous Orchestration",
+      "dependsOn": [
+        "AZLAB7",
+        "QA32"
+      ],
+      "allowedFiles": [
+        "docs/pilot/SECURITY_POSTURE.md",
+        "docs/pilot/SECURITY_CONTROLS_MATRIX.md"
+      ],
+      "wave": "wave-26",
+      "completedAt": "2026-04-26",
+      "prBranch": "codex/wave-26-enterprise-pilot-package"
+    },
+    {
+      "id": "PROD11",
+      "name": "Pilot Tenant Setup Runbook",
+      "category": "K",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "AbarVa Autonomous Orchestration",
+      "dependsOn": [
+        "AZLAB7"
+      ],
+      "allowedFiles": [
+        "docs/pilot/TENANT_SETUP_RUNBOOK.md"
+      ],
+      "wave": "wave-26",
+      "completedAt": "2026-04-26",
+      "prBranch": "codex/wave-26-enterprise-pilot-package"
+    },
+    {
+      "id": "PROD12",
+      "name": "Pilot Onboarding Package",
+      "category": "K",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "AbarVa Autonomous Orchestration",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/pilot/ONBOARDING_GUIDE.md",
+        "docs/pilot/ADVISOR_QUICK_START.md",
+        "docs/pilot/EXECUTIVE_QUICK_START.md",
+        "docs/pilot/FAQ.md"
+      ],
+      "wave": "wave-26",
+      "completedAt": "2026-04-26",
+      "prBranch": "codex/wave-26-enterprise-pilot-package"
+    },
+    {
+      "id": "DEMO10_W26",
+      "name": "Enterprise Pilot Deep Dive Demo Script (45 min)",
+      "category": "K",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "AbarVa Autonomous Orchestration",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/demo/DEMO10_ENTERPRISE_PILOT_DEEP_DIVE.md"
+      ],
+      "wave": "wave-26",
+      "completedAt": "2026-04-26",
+      "prBranch": "codex/wave-26-enterprise-pilot-package"
+    },
+    {
+      "id": "DEMO11",
+      "name": "Investor Package (15 min)",
+      "category": "K",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "AbarVa Autonomous Orchestration",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/demo/DEMO11_INVESTOR_PACKAGE.md"
+      ],
+      "wave": "wave-26",
+      "completedAt": "2026-04-26",
+      "prBranch": "codex/wave-26-enterprise-pilot-package"
+    },
+    {
+      "id": "DEMO12",
+      "name": "Advisor 15-Minute Demo Script",
+      "category": "K",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "AbarVa Autonomous Orchestration",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/demo/DEMO12_ADVISOR_15_MIN.md"
+      ],
+      "wave": "wave-26",
+      "completedAt": "2026-04-26",
+      "prBranch": "codex/wave-26-enterprise-pilot-package"
     }
   ]
 }

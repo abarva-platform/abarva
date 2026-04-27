@@ -1001,7 +1001,9 @@
       ],
       "skippedSlices": [],
       "blockedSlices": [],
-      "mergedPrs": [397],
+      "mergedPrs": [
+        397
+      ],
       "validationStatus": "tests_green",
       "productionReadinessUpdated": false,
       "currentBlockers": [],
@@ -1010,8 +1012,8 @@
     },
     {
       "waveId": "wave-24",
-      "name": "Azure SaaS + Simulated Private Data Plane Lab — Docs + Architecture",
-      "goal": "Produce the architecture decision records, Azure target architecture diagram, resource naming convention, cost breakdown, Bicep scaffold stubs, private data plane design, and multi-provider model gateway design for the AbarVa Azure lab. Docs only — no live Azure provisioning.",
+      "name": "Azure SaaS + Simulated Private Data Plane Lab \u2014 Docs + Architecture",
+      "goal": "Produce the architecture decision records, Azure target architecture diagram, resource naming convention, cost breakdown, Bicep scaffold stubs, private data plane design, and multi-provider model gateway design for the AbarVa Azure lab. Docs only \u2014 no live Azure provisioning.",
       "status": "merged",
       "percentComplete": 100,
       "plannedSlices": [
@@ -1067,6 +1069,37 @@
         }
       ],
       "nextAction": "Wave 25 complete. LIVE4 (live auth integration) deferred to wave-26 pending founder auth provider decision.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-26",
+      "name": "Enterprise Pilot Package",
+      "goal": "Produce the complete package for an enterprise pilot client: security posture documentation, pilot tenant setup runbook, client onboarding materials, demo scripts for enterprise stakeholders, and investor materials.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "PROD10",
+        "PROD11",
+        "PROD12",
+        "DEMO10",
+        "DEMO11",
+        "DEMO12"
+      ],
+      "completedSlices": [
+        "PROD10",
+        "PROD11",
+        "PROD12",
+        "DEMO10",
+        "DEMO11",
+        "DEMO12"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "full_pass",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Wave 26 complete. Proceed to Wave 27.",
       "lastUpdated": "2026-04-26"
     }
   ]

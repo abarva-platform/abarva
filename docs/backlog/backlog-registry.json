@@ -385,21 +385,21 @@
     {
       "id": "PROD10",
       "track": "06",
-      "status": "backlog",
+      "status": "completed",
       "wave": "wave-26",
       "title": "Pilot Security Posture Documentation"
     },
     {
       "id": "PROD11",
       "track": "06",
-      "status": "backlog",
+      "status": "completed",
       "wave": "wave-26",
       "title": "Pilot Tenant Setup Runbook"
     },
     {
       "id": "PROD12",
       "track": "06",
-      "status": "backlog",
+      "status": "completed",
       "wave": "wave-26",
       "title": "Pilot Onboarding Package"
     },
@@ -674,21 +674,21 @@
       "track": "09",
       "status": "completed",
       "wave": "wave-24",
-      "title": "Azure Lab Docs Package — ADRs + Architecture + Naming + Cost + Bicep Stubs"
+      "title": "Azure Lab Docs Package \u2014 ADRs + Architecture + Naming + Cost + Bicep Stubs"
     },
     {
       "id": "AZLAB7",
       "track": "09",
       "status": "completed",
       "wave": "wave-24",
-      "title": "Private Data Plane Design — Fortune 500 Deployment"
+      "title": "Private Data Plane Design \u2014 Fortune 500 Deployment"
     },
     {
       "id": "AZLAB8",
       "track": "09",
       "status": "completed",
       "wave": "wave-24",
-      "title": "Multi-Provider Model Gateway Design — Azure OpenAI + Anthropic Switchable Routing"
+      "title": "Multi-Provider Model Gateway Design \u2014 Azure OpenAI + Anthropic Switchable Routing"
     },
     {
       "id": "LIVE1",
@@ -745,7 +745,7 @@
       "track": "10",
       "status": "completed",
       "wave": "wave-25",
-      "title": "Production Smoke Test — 16 Routes",
+      "title": "Production Smoke Test \u2014 16 Routes",
       "completedAt": "2026-04-26"
     },
     {
@@ -753,7 +753,7 @@
       "track": "10",
       "status": "completed",
       "wave": "wave-25",
-      "title": "Evidence Trust Audit — Dataset Trust Model Enforcement Tests",
+      "title": "Evidence Trust Audit \u2014 Dataset Trust Model Enforcement Tests",
       "completedAt": "2026-04-26"
     },
     {
@@ -787,21 +787,21 @@
     {
       "id": "DEMO10",
       "track": "10",
-      "status": "backlog",
+      "status": "completed",
       "wave": "wave-26",
       "title": "Enterprise Pilot Demo Script"
     },
     {
       "id": "DEMO11",
       "track": "10",
-      "status": "backlog",
+      "status": "completed",
       "wave": "wave-26",
       "title": "Investor Demo Package"
     },
     {
       "id": "DEMO12",
       "track": "10",
-      "status": "backlog",
+      "status": "completed",
       "wave": "wave-26",
       "title": "45-Minute Deep Dive Script"
     },
