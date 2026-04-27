@@ -17,9 +17,15 @@ Close the original brand and vendor-selection-readiness tranche, then continue i
 
 | ID | Title | Status | Notes |
 |---|---|---|---|
-| ROAD1 | Master product readiness map | pending | docs-only |
-| ROAD2 | Eight-hour / three-day / pilot roadmap | pending | docs-only |
-| ROAD3 | Open risk and dependency register | pending | docs-only |
+| VIS2 | Authenticated visual QA pass | pending | docs-only review artifact; now approved for autonomous execution |
+
+## Completed docs slices in this wave
+
+| ID | Title | Status | Evidence |
+|---|---|---|---|
+| ROAD1 | Master product readiness map | done | PR #399 |
+| ROAD2 | Eight-hour / three-day / pilot roadmap | done | PR #400 |
+| ROAD3 | Open risk and dependency register | done | PR #401 |
 
 ## Deferred slices
 

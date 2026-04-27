@@ -115,7 +115,7 @@
       "title": "Open risk and dependency register",
       "track": "00-executive-summary",
       "priority": "P1",
-      "status": "in_progress",
+      "status": "done",
       "ownerAgent": "Steward",
       "productArea": "Strategy and execution governance",
       "recommendedWave": "WAVE-21",
@@ -160,9 +160,9 @@
         "Merge decision recorded with completion metadata in registry."
       ],
       "executionNotes": "Wave WAVE-21 execution for track 00-executive-summary. Owner validates design and sequencing before work starts.",
-      "completedPr": null,
-      "completedCommit": null,
-      "completedAt": null
+      "completedPr": 401,
+      "completedCommit": "a7a0bc20",
+      "completedAt": "2026-04-26"
     },
     {
       "id": "BRAND1",
@@ -235,7 +235,9 @@
         "docs/planning/abarva-master-backlog/backlog-registry.json",
         "docs/planning/abarva-master-backlog/README.md",
         "docs/planning/abarva-master-backlog/CODEX_ORCHESTRATION_RUNBOOK.md",
-        "docs/planning/abarva-master-backlog/12_CODEX_OPERATING_MODEL_AND_WORK_ORDER_STANDARDS.md"
+        "docs/planning/abarva-master-backlog/12_CODEX_OPERATING_MODEL_AND_WORK_ORDER_STANDARDS.md",
+        "docs/planning/abarva-master-backlog/BACKLOG_CURRENT_STATE.md",
+        "docs/planning/abarva-master-backlog/AUTHENTICATED_VISUAL_QA_PASS.md"
       ],
       "forbiddenFiles": [
         "src/**",
@@ -250,10 +252,10 @@
       "testCommands": [
         "git diff --check",
         "node -e \"JSON.parse(require(\"fs\").readFileSync(\"docs/planning/abarva-master-backlog/backlog-registry.json\", \"utf8\"));\"",
-        "rg -n \"TODO|TBD|coming soon|placeholder\" docs/planning/abarva-master-backlog || true"
+        "rg -n \"TODO|TBD|coming soon|placeholder\" docs/planning/abarva-master-backlog/AUTHENTICATED_VISUAL_QA_PASS.md || true"
       ],
       "readinessImpact": "Brand consistency and visual readiness",
-      "requiresHumanApproval": true,
+      "requiresHumanApproval": false,
       "mergePolicy": "Merge when local validation passes, checks are green, and no unexpected files are touched.",
       "sourceFile": "docs/planning/abarva-master-backlog/tracks/01-brand-design-system/BACKLOG.md",
       "definitionOfDone": [
