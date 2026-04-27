@@ -1,6 +1,6 @@
 # Apex Retail — Source + Program 30-Minute Demo Guide
 
-Wave 19 · DEMO7 | 2026-04-26
+Wave 23 · DEMO10 | 2026-04-26 (updated from DEMO7)
 
 ---
 
@@ -58,9 +58,9 @@ Open the CDP Activation programme detail page.
 Open `/source/events/apex-retail-ams-outsourcing-2026`.
 
 - Point to the **linked programme badge**: APX-CDP-2026. "AbarVa knows this event informs that programme."
-- Point to the **vendor comparison**: four vendors — Vendor Alpha (complete), Vendor Beta (partial), Vendor Gamma (partial), Vendor Delta (missing rate card).
-- Point to the **top risk**: "Rate card gap — Vendor Delta. Cannot proceed to normalised comparison without a complete submission."
-- "The BAFO cannot close until Vendor Delta responds. The programme gate cannot advance until the BAFO provides commercial evidence for the value hypothesis."
+- Point to the **vendor comparison**: four vendors — Northstar Managed Services (BAFO invited), BlueMaster Operations (below-market, excluded from BAFO — transition plan quality gap), DataPeak Services (excluded — onboarding timeline risk to CDP Q3), ArcVault Managed (BAFO invited).
+- Point to the **top risk**: "BAFO deadline May 15 — two vendors invited. Selection slip past June compresses the CDP Q3 integration window."
+- "Two vendors are in BAFO. Two were excluded. Northstar and ArcVault responses are due May 15. The programme gate cannot advance until the BAFO provides commercial evidence for the value hypothesis."
 
 ### Step 4: Close (1 min)
 
@@ -148,40 +148,44 @@ This is the control layer. Let me take you into the flagship programme."
 
 Four vendors in the AMS consolidation:
 
-| Vendor | Pricing Status | Missing Sections |
-|--------|---------------|-----------------|
-| Vendor Alpha (Northstar) | Complete | None |
-| Vendor Beta (BluePeak) | Partial | L3 support rate card, knowledge transfer costs |
-| Vendor Gamma (Horizon) | Partial | Transition management costs |
-| Vendor Delta (Meridian Systems) | Missing | Full rate card, SLA commercial framework, rebate structure |
+| Vendor | Pricing Band | Proposal Status | Key Note |
+|--------|-------------|-----------------|----------|
+| Northstar Managed Services | Mid-range | BAFO Requested | Strong retail track record; SLA scope risk flagged by Sentinel (PAT-AMS-002) |
+| BlueMaster Operations | Below-market | Under Review (excluded from BAFO) | Transition plan quality insufficient — 6 pages vs 25–40 page expectation |
+| DataPeak Services | Premium | Under Review (excluded from BAFO) | 16-week onboarding conflicts with CDP Q3 migration window |
+| ArcVault Managed | Mid-range | BAFO Requested | Hybrid model; governance framework incomplete — no steering committee defined |
 
-- "Vendor Alpha is complete. Vendors Beta and Gamma are partial — missing specific line items. Vendor Delta has not submitted a complete rate card. The BAFO cannot close until Vendor Delta responds."
-- Point to the **commercial assumptions** divergence: "Different vendors have applied different offshore ratios, making direct comparison impossible until normalisation is done. That is Atlas's job."
+- "Two vendors are in BAFO: Northstar and ArcVault. BlueMaster was excluded due to an inadequate transition plan. DataPeak was excluded because their 16-week onboarding timeline creates unacceptable risk to the CDP Q3 integration window."
+- Point to the **pricing band visualisation**: "Significant spread observed across proposals. Relative bands — low, medium, high — not absolute figures. Live pricing has not been confirmed."
+- Point to the **Sentinel intelligence signals**: PAT-AMS-001 (pricing divergence, high confidence, 4 evidence docs), PAT-AMS-002 (SLA scope creep, medium confidence, 2 evidence docs), PAT-AMS-CROSS-001 (AMS scope and CDP integration timeline are correlated, medium confidence).
 
-#### 3c. Commercial Risks (2 min)
+#### 3c. Sentinel Intelligence Signals (2 min)
 
-Five risks surfaced:
+Three intelligence signals detected by Sentinel:
 
-| Risk | Severity | Category |
-|------|----------|----------|
-| Incomplete rate card coverage | High | Pricing |
-| Assumption divergence across vendors | Medium | Commercial |
-| Transition cost opacity | High | Transition |
-| SLA rebate structure absent for two vendors | Medium | Governance |
-| Knowledge transfer cost unknown for Vendor Beta | Low | Evidence |
+| Pattern | Category | Confidence | Evidence Docs |
+|---------|----------|------------|---------------|
+| PAT-AMS-001: Vendor Pricing Divergence | Pricing divergence | High | 4 |
+| PAT-AMS-002: SLA Scope Creep in SLAs | Scope creep risk | Medium | 2 |
+| PAT-AMS-CROSS-001: AMS Scope and CDP Timeline Correlation | Cross-programme | Medium | 3 |
 
-- "Two high-severity risks, two medium, one low. The pricing gap and the transition opacity are the blockers. The governance gap and the evidence gap will surface at BAFO if not resolved now."
+- "PAT-AMS-001 is the headline: significant pricing spread across all four proposals — not typical bid variation. BAFO normalisation is required before selection can proceed."
+- "PAT-AMS-002: Two vendors contain SLA language broader than the defined scope. Sentinel has flagged this as a scope creep risk — broad SLA framing at award typically expands the managed footprint in Year 1-2."
+- "The cross-programme correlation signal is the key connection to the CDP programme: delayed AMS selection or a vendor with extended onboarding compresses the CDP Q3 integration window below the minimum threshold."
 
-#### 3d. BAFO Readiness Signals (2 min)
+#### 3d. BAFO Round Status (2 min)
 
-Four signals:
+BAFO Round 1 in progress:
 
-1. **Rate card gap — Vendor Delta** (critical): Cannot proceed to normalised comparison.
-2. **Offshore ratio divergence** (warning): Normalisation required before BAFO.
-3. **BAFO scope partially confirmed** (warning): Confirmed for Vendor Alpha and Beta only. Vendor Gamma and Delta pending.
-4. **Rebate framework absent** (info): Two vendors have not provided SLA rebate structures.
+| Vendor | BAFO Status | Key Negotiation Points |
+|--------|-------------|----------------------|
+| Northstar Managed Services | Invited — Awaiting Response (due May 15) | Itemise tier-2 pricing; clarify SLA scope boundary; confirm dedicated staffing |
+| ArcVault Managed | Invited — Awaiting Response (due May 15) | Complete Year 1 governance framework; confirm nearshore Q3 capacity; separate rationalisation advisory from AMS base |
 
-- "BAFO readiness is partial. Two vendors are not ready. The critical signal is Vendor Delta's missing rate card. Until that arrives, the BAFO cannot close, and the programme gate cannot advance."
+Selection committee: Priya Mehta (CIO, chair), Marcus Chen (Head of Procurement), Fiona Wallace (VP Technology Operations).
+
+- "Two vendors in BAFO. Responses due May 15. The selection committee has three named members. Award recommendation is targeted for May 30."
+- "This is the BAFO tab — it shows who is in the negotiation round, what is being negotiated, and who owns the decision. The committee and the deadline are seeded and visible."
 
 #### 3e. Agent Mission Queue (2 min)
 
@@ -189,13 +193,13 @@ Five missions in queue:
 
 | Agent | Mission | Priority |
 |-------|---------|----------|
-| Nexus | Request complete rate card from Vendor Delta | High |
-| Sentinel | Validate L3 support rate card from Vendor Beta | High |
-| Atlas | Normalise offshore cost assumptions across all vendors | Medium |
-| Steward | Confirm SLA rebate framework with Vendor Alpha and Gamma | Medium |
-| Nexus | Prepare executive decision brief pending Vendor Delta clarification | Low |
+| Nexus | Monitor BAFO response receipt from Northstar and ArcVault | High |
+| Sentinel | Validate SLA scope in BAFO responses against PAT-AMS-002 | High |
+| Atlas | Normalise BAFO pricing bands across vendor towers | Medium |
+| Steward | Confirm selection committee meeting scheduled for May 22 | Medium |
+| Nexus | Prepare award recommendation brief pending BAFO close | Low |
 
-- "Nexus is orchestrating the response. Sentinel is validating the submissions. Atlas is normalising the assumptions. Steward is chasing the governance gaps. This is the agent model — not a single AI doing everything, but a coordinated agent team each working their lane."
+- "Nexus is orchestrating the BAFO response flow. Sentinel is flagged to validate the SLA scope in whatever BAFO responses arrive. Atlas will normalise pricing. Steward is tracking the governance calendar. This is the agent model — coordinated, not siloed."
 
 ---
 
@@ -205,11 +209,11 @@ Five missions in queue:
 
 "What happens when the BAFO completes?
 
-Vendor Delta submits their rate card. Sentinel validates it. Atlas normalises it alongside the other three vendors. Nexus prepares the executive decision brief. The programme sponsor records their BAFO position. The evidence trace for the value hypothesis deliverable gets populated. Two of the three gate items resolve.
+Northstar or ArcVault submits their final response. Sentinel validates SLA scope against PAT-AMS-002. Atlas normalises the BAFO pricing. Nexus prepares the award recommendation brief. The selection committee meets May 22. The CIO signs off on the preferred partner by May 30.
 
-The programme gate advances to Design.
+The programme sponsor records their BAFO outcome. The evidence trace for the CDP value hypothesis deliverable gets populated. The AMS commercial readiness gate resolves. The CDP programme gate advances to Design.
 
-That is not a series of manual updates across three different systems. That is one connected decision chain with agents tracking every dependency. That is AbarVa.
+That is not a series of manual updates across three different systems. That is one connected decision chain — AMS sourcing event feeding CDP programme gate, agents tracking every dependency, evidence moving automatically when the procurement decision lands.
 
 Today you are seeing the demonstration layer — deterministic seed data that represents that chain accurately. What a pilot engagement unlocks is live procurement data: real BAFO submissions, real programme gate evidence, real value hypothesis validation."
 

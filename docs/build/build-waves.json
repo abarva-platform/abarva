@@ -974,6 +974,39 @@
       "currentBlockers": [],
       "nextAction": "All wave-22 slices complete. Wave-22 merged.",
       "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-23",
+      "name": "Source + Program Storyline Demo",
+      "goal": "Complete the AMS sourcing event to CDP programme demo storyline with 4 vendors, BAFO tab, intelligence signals, and updated demo script.",
+      "status": "in_progress",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "SRC34",
+        "SRC35",
+        "SRC36",
+        "SRC37",
+        "SRC38",
+        "LINK2",
+        "DEMO10"
+      ],
+      "completedSlices": [
+        "SRC34",
+        "SRC35",
+        "SRC36",
+        "SRC37",
+        "SRC38",
+        "LINK2",
+        "DEMO10"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "tests_pending",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Run typecheck, build, tests, then push PR.",
+      "lastUpdated": "2026-04-26"
     }
   ]
 }
