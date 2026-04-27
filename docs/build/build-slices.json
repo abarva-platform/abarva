@@ -8818,7 +8818,8 @@
     {
       "id": "ADMIN3",
       "title": "Steward Editorial Component",
-      "status": "backlog",
+      "status": "code_complete",
+      "completedAt": "2026-04-27",
       "type": "ui",
       "wave": "wave-admin-redesign",
       "track": "06-admin-readiness-architecture",
@@ -8827,7 +8828,8 @@
     {
       "id": "ADMIN4",
       "title": "Architecture Page Wired to AdminCanonShellV2",
-      "status": "backlog",
+      "status": "code_complete",
+      "completedAt": "2026-04-27",
       "type": "ui",
       "wave": "wave-admin-redesign",
       "track": "06-admin-readiness-architecture",
