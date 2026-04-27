@@ -1,5 +1,12 @@
 import type { ContextLiveStatus } from '@/components/admin/ContextBar';
 import type { EvidenceStrength } from '@/components/admin/EvidenceStrengthPill';
+import { buildAgentContext } from '@/lib/agent/context-bundle';
+import {
+  computeAllPostures,
+  type AgentPosture as AgentFoundationPosture,
+} from '@/lib/agent/posture';
+import { generateStewardEditorial } from '@/lib/agent/editorial';
+import { buildAgentChoices, type AgentChoice } from '@/lib/agent/choices';
 
 export type BuildWaveStatus = 'merged' | 'in_progress' | 'planned' | 'blocked' | 'deferred';
 
@@ -38,6 +45,8 @@ export interface BuildProgressPageView {
   primaryActionLabel: string;
   primaryActionHref: string;
   deterministicSeed: true;
+  agentChoices?: ReadonlyArray<AgentChoice>;
+  agentPostures?: ReadonlyArray<AgentFoundationPosture>;
 }
 
 const WAVES: ReadonlyArray<BuildWaveRow> = [
@@ -72,7 +81,18 @@ const WAVES: ReadonlyArray<BuildWaveRow> = [
 ];
 
 export function buildBuildProgressPageView(): BuildProgressPageView {
+  const ctx = buildAgentContext('abarva-platform', 'admin', 'build-progress');
+  const editorial = generateStewardEditorial(ctx);
+  const choices = buildAgentChoices(ctx, 3);
+  const postures = computeAllPostures(ctx);
+
   const merged = WAVES.filter((w) => w.status === 'merged').length;
+
+  // Build-progress body is data-dependent on the wave manifest. Foundation
+  // editorial provides title + contextUsed + primaryAction.
+  const buildBody =
+    `${merged} waves merged. Admin redesign in progress. ` +
+    'The page does not poll CI or Vercel; it reflects the canonical build manifest only.';
 
   return {
     eyebrow: 'Build orchestration',
@@ -80,7 +100,7 @@ export function buildBuildProgressPageView(): BuildProgressPageView {
     subtitle:
       'Waves shipped, slices completed, blockers active. Deterministic snapshot — not a live deploy monitor.',
     context: {
-      tenant: 'AbarVa platform',
+      tenant: ctx.tenant.name,
       mode: 'Setup/Admin',
       agent: 'Steward',
       data: 'Build manifest',
@@ -88,12 +108,12 @@ export function buildBuildProgressPageView(): BuildProgressPageView {
       liveStatusKind: 'deferred',
     },
     editorial: {
-      title: 'Steward editorial · Build posture',
-      body:
-        `${merged} waves merged. Admin redesign in progress. The page does not poll CI or Vercel; it reflects the canonical build manifest only.`,
-      contextUsed: ['build manifest snapshot', 'wave lifecycle catalog', 'admin shell config'],
-      evidenceStrength: 'partial',
-      primaryAction: { label: 'Open build dashboard', href: '/platform/admin/build-progress' },
+      title: editorial.title,
+      body: buildBody,
+      contextUsed: editorial.contextUsed,
+      evidenceStrength: editorial.evidenceStrength,
+      blocker: editorial.blocker ?? undefined,
+      primaryAction: editorial.primaryAction,
     },
     waves: WAVES,
     slicesShipped: 5,
@@ -102,5 +122,7 @@ export function buildBuildProgressPageView(): BuildProgressPageView {
     primaryActionLabel: 'Open build dashboard',
     primaryActionHref: '/platform/admin/build-progress',
     deterministicSeed: true,
+    agentChoices: choices,
+    agentPostures: postures,
   };
 }

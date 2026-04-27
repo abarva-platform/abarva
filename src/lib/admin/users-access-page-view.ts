@@ -1,5 +1,12 @@
 import type { ContextLiveStatus } from '@/components/admin/ContextBar';
 import type { EvidenceStrength } from '@/components/admin/EvidenceStrengthPill';
+import { buildAgentContext } from '@/lib/agent/context-bundle';
+import {
+  computeAllPostures,
+  type AgentPosture as AgentFoundationPosture,
+} from '@/lib/agent/posture';
+import { generateStewardEditorial } from '@/lib/agent/editorial';
+import { buildAgentChoices, type AgentChoice } from '@/lib/agent/choices';
 
 export interface RoleAccessRow {
   id: string;
@@ -36,6 +43,8 @@ export interface UsersAccessPageView {
   primaryActionLabel: string;
   primaryActionHref: string;
   deterministicSeed: true;
+  agentChoices?: ReadonlyArray<AgentChoice>;
+  agentPostures?: ReadonlyArray<AgentFoundationPosture>;
 }
 
 const ROLES: ReadonlyArray<RoleAccessRow> = [
@@ -84,13 +93,18 @@ const ROLES: ReadonlyArray<RoleAccessRow> = [
 ];
 
 export function buildUsersAccessPageView(): UsersAccessPageView {
+  const ctx = buildAgentContext('apex-retail', 'admin', 'users-access');
+  const editorial = generateStewardEditorial(ctx);
+  const choices = buildAgentChoices(ctx, 3);
+  const postures = computeAllPostures(ctx);
+
   return {
     eyebrow: 'Roles, scope, and access posture',
     title: 'Users & Access',
     subtitle:
       'Role inventory and access posture. No live invite API, no permission editor, no SSO yet — read-only for now.',
     context: {
-      tenant: 'Apex Retail',
+      tenant: ctx.tenant.name,
       mode: 'Setup/Admin',
       agent: 'Steward',
       data: 'Manifest + seeds',
@@ -98,13 +112,12 @@ export function buildUsersAccessPageView(): UsersAccessPageView {
       liveStatusKind: 'deferred',
     },
     editorial: {
-      title: 'Steward editorial · Access posture',
-      body:
-        'Roles and seat counts are seeded deterministically. SSO is not yet configured. Invite, revoke, and permission edit pipelines are not wired in this environment.',
-      contextUsed: ['users-access readiness', 'tenant isolation guard', 'admin shell config'],
-      evidenceStrength: 'partial',
-      blocker: 'No SSO configured',
-      primaryAction: { label: 'Review roles', href: '/admin/users-access#roles' },
+      title: editorial.title,
+      body: editorial.body,
+      contextUsed: editorial.contextUsed,
+      evidenceStrength: editorial.evidenceStrength,
+      blocker: editorial.blocker ?? undefined,
+      primaryAction: editorial.primaryAction,
     },
     roles: ROLES,
     pendingInvitesCount: 0,
@@ -113,5 +126,7 @@ export function buildUsersAccessPageView(): UsersAccessPageView {
     primaryActionLabel: 'Configure SSO',
     primaryActionHref: '/admin/users-access#sso',
     deterministicSeed: true,
+    agentChoices: choices,
+    agentPostures: postures,
   };
 }

@@ -1,6 +1,13 @@
+// AGENT1A/AGENT1B foundation: per-agent posture computed from agent context.
+//
+// Each of the four agents (Steward / Nexus / Sentinel / Atlas) gets a
+// posture: BLOCKED / PARTIAL / THIN / READY. Computed deterministically
+// from the AgentContextBundle. No live calls.
+
 import type { AgentContextBundle } from './context-bundle';
 
 export type AgentRole = 'steward' | 'nexus' | 'sentinel' | 'atlas';
+
 export type AgentPostureState = 'BLOCKED' | 'PARTIAL' | 'THIN' | 'READY';
 
 export interface AgentPosture {
@@ -10,140 +17,153 @@ export interface AgentPosture {
   unblockBy: string | null;
 }
 
+function hasCriticalBlocker(ctx: AgentContextBundle): boolean {
+  return ctx.blockers.some((b) => b.severity === 'critical');
+}
+
+function hasAnyBlocker(ctx: AgentContextBundle): boolean {
+  return ctx.blockers.length > 0;
+}
+
+function evidenceTier(ctx: AgentContextBundle): AgentPostureState {
+  if (ctx.evidence.strength === 'strong') return 'READY';
+  if (ctx.evidence.strength === 'partial') return 'PARTIAL';
+  return 'THIN';
+}
+
 export function computeStewardPosture(ctx: AgentContextBundle): AgentPosture {
-  if (ctx.tenant.tier === 'shell_only') {
-    return {
-      agent: 'steward',
-      state: 'THIN',
-      reason: 'Shell-only tenant has no setup data to govern.',
-      unblockBy: 'Promote tenant tier or load setup manifest.',
-    };
-  }
-  const productionBlocker = ctx.blockers.find(
-    (b) => b.productionImpact && b.severity === 'critical',
-  );
-  if (productionBlocker) {
+  if (hasCriticalBlocker(ctx)) {
+    const blocker = ctx.blockers.find((b) => b.severity === 'critical');
     return {
       agent: 'steward',
       state: 'BLOCKED',
-      reason: `Critical production blocker: ${productionBlocker.title}`,
-      unblockBy: `Resolve: ${productionBlocker.impactedComponent}`,
+      reason: blocker ? `Steward blocked by ${blocker.label}` : 'Steward blocked',
+      unblockBy: blocker?.label ?? null,
     };
   }
-  const pilotBlocker = ctx.blockers.find((b) => b.pilotImpact);
-  if (pilotBlocker) {
+  if (hasAnyBlocker(ctx)) {
+    const blocker = ctx.blockers[0];
     return {
       agent: 'steward',
       state: 'PARTIAL',
-      reason: `Pilot-impact blocker: ${pilotBlocker.title}`,
-      unblockBy: `Resolve: ${pilotBlocker.impactedComponent}`,
+      reason: `Steward partial: ${blocker.label}`,
+      unblockBy: blocker.label,
     };
   }
-  if (ctx.evidence.strength === 'thin') {
-    return {
-      agent: 'steward',
-      state: 'THIN',
-      reason: 'Evidence is thin — cannot fully gate readiness.',
-      unblockBy: 'Load decision-grade evidence.',
-    };
-  }
+  const tier = evidenceTier(ctx);
   return {
     agent: 'steward',
-    state: 'READY',
-    reason: 'Setup posture is clean.',
+    state: tier,
+    reason:
+      tier === 'READY'
+        ? 'Steward ready: evidence strong'
+        : tier === 'PARTIAL'
+          ? 'Steward partial: evidence partial'
+          : 'Steward thin: evidence thin',
     unblockBy: null,
   };
 }
 
 export function computeNexusPosture(ctx: AgentContextBundle): AgentPosture {
-  if (ctx.tenant.tier === 'shell_only') {
+  // Nexus needs decisions to orchestrate.
+  if (hasCriticalBlocker(ctx)) {
     return {
       agent: 'nexus',
-      state: 'THIN',
-      reason: 'No workflow to orchestrate.',
-      unblockBy: 'Onboard tenant.',
+      state: 'BLOCKED',
+      reason: 'Nexus cannot orchestrate while critical blockers are open',
+      unblockBy: ctx.blockers.find((b) => b.severity === 'critical')?.label ?? null,
     };
   }
-  if (ctx.tenant.tier === 'thin') {
+  if (ctx.pendingDecisions.length === 0 && ctx.blockers.length === 0) {
     return {
       agent: 'nexus',
-      state: 'THIN',
-      reason: 'Thin tenant — limited workflow context.',
-      unblockBy: 'Promote to rich tier.',
+      state: evidenceTier(ctx) === 'THIN' ? 'THIN' : 'READY',
+      reason: 'Nexus has no open work',
+      unblockBy: null,
     };
   }
-  if (ctx.surface === 'programs' || ctx.surface === 'source') {
+  if (hasAnyBlocker(ctx)) {
     return {
       agent: 'nexus',
       state: 'PARTIAL',
-      reason:
-        'Workflow orchestration available for demo; live runtime deferred.',
-      unblockBy: 'Wire model gateway (Wave 27).',
+      reason: 'Nexus partial: open blockers',
+      unblockBy: ctx.blockers[0].label,
     };
   }
   return {
     agent: 'nexus',
     state: 'PARTIAL',
-    reason: 'Orchestration model defined; runtime deferred.',
-    unblockBy: 'Wire model gateway.',
+    reason: 'Nexus partial: pending decisions',
+    unblockBy: ctx.pendingDecisions[0]?.label ?? null,
   };
 }
 
 export function computeSentinelPosture(ctx: AgentContextBundle): AgentPosture {
-  if (ctx.tenant.tier === 'shell_only') {
+  // Sentinel is gated on evidence quality.
+  const tier = evidenceTier(ctx);
+  if (tier === 'THIN') {
     return {
       agent: 'sentinel',
       state: 'THIN',
-      reason: 'No evidence to scan.',
-      unblockBy: 'Load evidence manifest.',
+      reason: 'Sentinel thin: evidence not yet decision-grade',
+      unblockBy: 'evidence approvals',
     };
   }
-  if (ctx.evidence.strength === 'thin') {
+  if (hasCriticalBlocker(ctx)) {
     return {
       agent: 'sentinel',
-      state: 'THIN',
-      reason: 'Evidence is thin.',
-      unblockBy: 'Load decision-grade evidence.',
+      state: 'BLOCKED',
+      reason: 'Sentinel blocked: critical evidence/audit gap',
+      unblockBy: ctx.blockers.find((b) => b.severity === 'critical')?.label ?? null,
     };
   }
-  if (ctx.evidence.strength === 'partial') {
+  if (tier === 'PARTIAL') {
     return {
       agent: 'sentinel',
       state: 'PARTIAL',
-      reason: 'Some evidence; missing approvals.',
-      unblockBy: 'Approve datasets.',
+      reason: 'Sentinel partial: evidence partial',
+      unblockBy: 'decision-grade approvals',
     };
   }
   return {
     agent: 'sentinel',
-    state: 'PARTIAL',
-    reason: 'Evidence strong; live signal deferred.',
-    unblockBy: 'Wire live signal feed.',
+    state: 'READY',
+    reason: 'Sentinel ready',
+    unblockBy: null,
   };
 }
 
 export function computeAtlasPosture(ctx: AgentContextBundle): AgentPosture {
-  if (ctx.tenant.tier === 'shell_only') {
+  // Atlas summarizes posture for executives; needs context sources.
+  if (ctx.contextSources.length === 0) {
     return {
       agent: 'atlas',
       state: 'THIN',
-      reason: 'No portfolio to assess.',
-      unblockBy: 'Onboard tenant.',
+      reason: 'Atlas thin: no context sources',
+      unblockBy: 'context loaded',
     };
   }
-  if (ctx.tenant.tier === 'thin') {
+  if (hasCriticalBlocker(ctx)) {
     return {
       agent: 'atlas',
-      state: 'THIN',
-      reason: 'Thin tenant — no live KPIs.',
-      unblockBy: 'Promote to rich tier with metrics feed.',
+      state: 'PARTIAL',
+      reason: 'Atlas partial: critical blockers in scope',
+      unblockBy: ctx.blockers.find((b) => b.severity === 'critical')?.label ?? null,
+    };
+  }
+  if (hasAnyBlocker(ctx)) {
+    return {
+      agent: 'atlas',
+      state: 'PARTIAL',
+      reason: 'Atlas partial: open blockers',
+      unblockBy: ctx.blockers[0].label,
     };
   }
   return {
     agent: 'atlas',
-    state: 'THIN',
-    reason: 'Executive metrics deferred to live data plane.',
-    unblockBy: 'Wire metrics gateway.',
+    state: evidenceTier(ctx) === 'THIN' ? 'PARTIAL' : 'READY',
+    reason: 'Atlas ready',
+    unblockBy: null,
   };
 }
 

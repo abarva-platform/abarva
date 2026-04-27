@@ -1,68 +1,113 @@
-import type { AgentContextBundle } from './context-bundle';
+// AGENT1A/AGENT1B foundation: deterministic guided choices over agent context.
+//
+// Builds the "3 choices + custom" set from blockers, pending decisions, and
+// evidence gaps. No live model calls. Ranking is deterministic.
 
-export type ChoiceCategory =
-  | 'resolve_blocker'
-  | 'open_evidence'
-  | 'review_decision'
-  | 'configure';
+import type { AgentContextBundle } from './context-bundle';
 
 export interface AgentChoice {
   id: string;
-  category: ChoiceCategory;
+  category: 'resolve_blocker' | 'pending_decision' | 'evidence_gap' | 'explore' | 'custom';
   label: string;
   href: string;
   why: string;
 }
 
-const SEVERITY_ORDER: Record<string, number> = {
-  critical: 0,
-  high: 1,
-  medium: 2,
-  low: 3,
-};
+function blockerHrefFor(ctx: AgentContextBundle, blockerId: string): string {
+  if (ctx.surface === 'admin') {
+    return `/admin/${ctx.page}#${blockerId}`;
+  }
+  return `#${blockerId}`;
+}
 
+function decisionHrefFor(ctx: AgentContextBundle, decisionId: string): string {
+  if (ctx.surface === 'admin') {
+    return `/admin/${ctx.page}#decision-${decisionId}`;
+  }
+  return `#decision-${decisionId}`;
+}
+
+/**
+ * Build the deterministic set of guided choices for the current context.
+ *
+ * Ranking:
+ *   1. Critical blockers
+ *   2. Other blockers
+ *   3. Pending decisions
+ *   4. Evidence gap nudges (when evidence is thin/partial)
+ *   5. Generic "explore" fallback
+ *
+ * Always appends a "custom" affordance at the end so the user is not boxed in.
+ */
 export function buildAgentChoices(
   ctx: AgentContextBundle,
   max: number = 3,
 ): ReadonlyArray<AgentChoice> {
   const choices: AgentChoice[] = [];
 
-  // Choice 1+: top blockers
-  const sortedBlockers = [...ctx.blockers].sort(
-    (a, b) =>
-      (SEVERITY_ORDER[a.severity] ?? 99) - (SEVERITY_ORDER[b.severity] ?? 99),
-  );
-  for (const b of sortedBlockers) {
+  const sortedBlockers = [...ctx.blockers].sort((a, b) => {
+    const order: Record<string, number> = {
+      critical: 0,
+      high: 1,
+      medium: 2,
+      low: 3,
+    };
+    return (order[a.severity] ?? 9) - (order[b.severity] ?? 9);
+  });
+
+  for (const blocker of sortedBlockers) {
+    if (choices.length >= max) break;
     choices.push({
-      id: `resolve-${b.id}`,
+      id: `blocker-${blocker.id}`,
       category: 'resolve_blocker',
-      label: `Resolve blocker: ${b.title}`,
-      href: `/admin/production-readiness#${b.id}`,
-      why: `${b.severity} severity — impacts ${b.impactedComponent}`,
+      label: `Resolve ${blocker.label}`,
+      href: blockerHrefFor(ctx, blocker.id),
+      why: `Severity: ${blocker.severity}`,
     });
   }
 
-  // Choice: pending decisions
-  for (const d of ctx.pendingDecisions) {
+  for (const decision of ctx.pendingDecisions) {
+    if (choices.length >= max) break;
     choices.push({
-      id: `decide-${d.id}`,
-      category: 'review_decision',
-      label: d.label,
-      href: `/admin/production-readiness#decision-${d.id}`,
-      why: `Owner: ${d.owner}`,
+      id: `decision-${decision.id}`,
+      category: 'pending_decision',
+      label: `Decide ${decision.label}`,
+      href: decisionHrefFor(ctx, decision.id),
+      why: 'Pending decision',
     });
   }
 
-  // Choice: evidence if thin
-  if (ctx.evidence.strength === 'thin' && ctx.tenant.tier !== 'shell_only') {
+  if (
+    choices.length < max
+    && (ctx.evidence.strength === 'thin' || ctx.evidence.strength === 'partial')
+  ) {
     choices.push({
-      id: 'load-evidence',
-      category: 'open_evidence',
-      label: 'Load decision-grade evidence',
-      href: '/admin/data-trust',
-      why: 'Evidence is thin — Sentinel cannot reason without sources.',
+      id: 'evidence-strengthen',
+      category: 'evidence_gap',
+      label: 'Strengthen evidence',
+      href: ctx.surface === 'admin' ? '/admin/data-trust' : '#evidence',
+      why: `Evidence is ${ctx.evidence.strength}`,
     });
   }
 
-  return choices.slice(0, max);
+  if (choices.length === 0) {
+    choices.push({
+      id: 'explore',
+      category: 'explore',
+      label: 'Explore this surface',
+      href: ctx.surface === 'admin' ? `/admin/${ctx.page}` : '#',
+      why: 'No open blockers or decisions',
+    });
+  }
+
+  // Always append a custom affordance.
+  choices.push({
+    id: 'custom',
+    category: 'custom',
+    label: 'Ask Steward something else',
+    href: '#ask',
+    why: 'Open-ended prompt',
+  });
+
+  return choices;
 }

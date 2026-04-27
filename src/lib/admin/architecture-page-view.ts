@@ -1,5 +1,12 @@
 import type { EvidenceStrength } from '@/components/admin/EvidenceStrengthPill';
 import type { ContextLiveStatus } from '@/components/admin/ContextBar';
+import { buildAgentContext } from '@/lib/agent/context-bundle';
+import {
+  computeAllPostures,
+  type AgentPosture as AgentFoundationPosture,
+} from '@/lib/agent/posture';
+import { generateStewardEditorial } from '@/lib/agent/editorial';
+import { buildAgentChoices, type AgentChoice } from '@/lib/agent/choices';
 
 export interface ArchitecturePlane {
   id: string;
@@ -32,6 +39,8 @@ export interface ArchitecturePageView {
   primaryActionLabel: string;
   primaryActionHref: string;
   deterministicSeed: true;
+  agentChoices?: ReadonlyArray<AgentChoice>;
+  agentPostures?: ReadonlyArray<AgentFoundationPosture>;
 }
 
 export const ARCHITECTURE_PLANES: ReadonlyArray<ArchitecturePlane> = [
@@ -45,13 +54,18 @@ export const ARCHITECTURE_PLANES: ReadonlyArray<ArchitecturePlane> = [
 ];
 
 export function buildArchitecturePageView(): ArchitecturePageView {
+  const ctx = buildAgentContext('apex-retail', 'admin', 'architecture');
+  const editorial = generateStewardEditorial(ctx);
+  const choices = buildAgentChoices(ctx, 3);
+  const postures = computeAllPostures(ctx);
+
   return {
     eyebrow: 'How AbarVa works end to end',
     title: 'Architecture',
     subtitle:
       'The canvas explains the app, agents, context, evidence, data plane, gateway, tools, governance, and Azure/private data-plane target.',
     context: {
-      tenant: 'Apex Retail',
+      tenant: ctx.tenant.name,
       mode: 'Setup/Admin',
       agent: 'Steward',
       data: 'Manifest + seeds',
@@ -59,17 +73,19 @@ export function buildArchitecturePageView(): ArchitecturePageView {
       liveStatusKind: 'deferred',
     },
     editorial: {
-      title: 'Atlas + Steward editorial · Architecture posture',
-      body: 'The architecture is credible as a SaaS operating experience with optional private data plane. The lab is planned, not deployed; do not claim customer-tenant operation yet.',
-      contextUsed: ['architecture docs', 'Azure lab blueprint', 'data trust model'],
-      evidenceStrength: 'strong',
-      blocker: 'lab not deployed',
-      primaryAction: { label: 'Review lab', href: '/admin/architecture#lab' },
+      title: editorial.title,
+      body: editorial.body,
+      contextUsed: editorial.contextUsed,
+      evidenceStrength: editorial.evidenceStrength,
+      blocker: editorial.blocker ?? undefined,
+      primaryAction: editorial.primaryAction,
     },
     planes: ARCHITECTURE_PLANES,
     primaryAgentLabel: 'Steward',
     primaryActionLabel: 'Open Azure story',
     primaryActionHref: '/admin/architecture#azure',
     deterministicSeed: true,
+    agentChoices: choices,
+    agentPostures: postures,
   };
 }

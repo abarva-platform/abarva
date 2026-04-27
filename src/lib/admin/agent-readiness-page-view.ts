@@ -1,5 +1,12 @@
 import type { ContextLiveStatus } from '@/components/admin/ContextBar';
 import type { EvidenceStrength } from '@/components/admin/EvidenceStrengthPill';
+import { buildAgentContext } from '@/lib/agent/context-bundle';
+import {
+  computeAllPostures,
+  type AgentPosture as AgentFoundationPosture,
+} from '@/lib/agent/posture';
+import { generateStewardEditorial } from '@/lib/agent/editorial';
+import { buildAgentChoices, type AgentChoice } from '@/lib/agent/choices';
 import { DEFAULT_AGENT_CARDS, type AgentCardModel, type AgentPosture } from './admin-shell-config';
 
 export interface AgentPostureRow extends AgentCardModel {
@@ -32,6 +39,8 @@ export interface AgentReadinessPageView {
   primaryActionLabel: string;
   primaryActionHref: string;
   deterministicSeed: true;
+  agentChoices?: ReadonlyArray<AgentChoice>;
+  agentPostures?: ReadonlyArray<AgentFoundationPosture>;
 }
 
 const AGENT_DETAIL: Record<AgentCardModel['id'], { summary: string; topGap: string }> = {
@@ -58,6 +67,11 @@ function postureBlocker(posture: AgentPosture): boolean {
 }
 
 export function buildAgentReadinessPageView(): AgentReadinessPageView {
+  const ctx = buildAgentContext('apex-retail', 'admin', 'agent-readiness');
+  const editorial = generateStewardEditorial(ctx);
+  const choices = buildAgentChoices(ctx, 3);
+  const postures = computeAllPostures(ctx);
+
   const agents: ReadonlyArray<AgentPostureRow> = DEFAULT_AGENT_CARDS.map((agent) => ({
     ...agent,
     summary: AGENT_DETAIL[agent.id].summary,
@@ -65,6 +79,8 @@ export function buildAgentReadinessPageView(): AgentReadinessPageView {
   }));
 
   const blockedCount = agents.filter((a) => postureBlocker(a.posture)).length;
+  const blockerLabel =
+    editorial.blocker ?? (blockedCount > 0 ? `${blockedCount} agent blocked` : undefined);
 
   return {
     eyebrow: 'Agent posture across the four agents',
@@ -72,7 +88,7 @@ export function buildAgentReadinessPageView(): AgentReadinessPageView {
     subtitle:
       'Steward / Nexus / Sentinel / Atlas posture. Static manifest — not live agent execution.',
     context: {
-      tenant: 'Apex Retail',
+      tenant: ctx.tenant.name,
       mode: 'Setup/Admin',
       agent: 'Steward',
       data: 'Manifest + seeds',
@@ -80,18 +96,19 @@ export function buildAgentReadinessPageView(): AgentReadinessPageView {
       liveStatusKind: 'deferred',
     },
     editorial: {
-      title: 'Steward editorial · Agent posture',
-      body:
-        'Each agent is reviewed against mission queue, context injection, evidence integration, and audit trail readiness. Posture is honest — no agent claims live operation in this environment.',
-      contextUsed: ['agent readiness deep drill', 'admin shell config', 'mission queue model'],
-      evidenceStrength: 'partial',
-      blocker: blockedCount > 0 ? `${blockedCount} agent blocked` : undefined,
-      primaryAction: { label: 'Open agent readiness drill', href: '/admin/agent-readiness#drill' },
+      title: editorial.title,
+      body: editorial.body,
+      contextUsed: editorial.contextUsed,
+      evidenceStrength: editorial.evidenceStrength,
+      blocker: blockerLabel,
+      primaryAction: editorial.primaryAction,
     },
     agents,
     primaryAgentLabel: 'Steward',
     primaryActionLabel: 'Open Steward posture',
     primaryActionHref: '/admin/agent-readiness#steward',
     deterministicSeed: true,
+    agentChoices: choices,
+    agentPostures: postures,
   };
 }

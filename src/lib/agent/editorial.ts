@@ -1,5 +1,13 @@
-import type { AgentContextBundle, EvidenceStrength } from './context-bundle';
-import { computeStewardPosture } from './posture';
+// AGENT1A/AGENT1B foundation: deterministic editorial cards over agent context.
+//
+// Per-surface/page templates produce the editorial title + body + context
+// + primary action consumed by Steward editorial cards across the app.
+// No live model calls. Strings are deterministic for a given context.
+
+import type {
+  AgentContextBundle,
+  EvidenceStrength,
+} from './context-bundle';
 
 export interface EditorialCard {
   agentLabel: string;
@@ -15,127 +23,128 @@ interface EditorialTemplate {
   agentLabel: string;
   title: string;
   body: (ctx: AgentContextBundle) => string;
-  primaryAction: (ctx: AgentContextBundle) => { label: string; href: string };
+  primaryAction: { label: string; href: string };
 }
 
-const TEMPLATES: Record<string, EditorialTemplate> = {
-  'admin/architecture': {
+const ADMIN_TEMPLATES: Record<string, EditorialTemplate> = {
+  architecture: {
     agentLabel: 'Atlas + Steward',
     title: 'Atlas + Steward editorial · Architecture posture',
     body: () =>
       'The architecture is credible as a SaaS operating experience with optional private data plane. The lab is planned, not deployed; do not claim customer-tenant operation yet.',
-    primaryAction: () => ({
-      label: 'Review lab',
-      href: '/admin/architecture#lab',
-    }),
+    primaryAction: { label: 'Review lab', href: '/admin/architecture#lab' },
   },
-  'admin/production-readiness': {
+  'production-readiness': {
     agentLabel: 'Steward',
     title: 'Steward editorial · Readiness decision',
-    body: (ctx) => {
-      const productionCount = ctx.blockers.filter(
-        (b) => b.productionImpact,
-      ).length;
-      const pilotCount = ctx.blockers.filter((b) => b.pilotImpact).length;
-      return `Demo readiness is strong for ${ctx.tenant.name}. Pilot has ${pilotCount} blocker${pilotCount === 1 ? '' : 's'}. Production is blocked by ${productionCount} critical or high-impact issue${productionCount === 1 ? '' : 's'}.`;
-    },
-    primaryAction: () => ({
+    body: () =>
+      'Demo readiness is strong for Apex Retail. Pilot is partial. Production is blocked by live audit, model gateway execution, tenant security review, and Azure private data-plane proof.',
+    primaryAction: {
       label: 'Open blockers',
       href: '/admin/production-readiness#blockers',
-    }),
+    },
   },
-  'admin/connectors': {
+  overview: {
     agentLabel: 'Steward',
-    title: 'Steward editorial · Connector readiness',
-    body: (ctx) =>
-      `${ctx.tenant.name} has no live connectors in this environment — all show stub or deferred status. Configure required connectors before pilot.`,
-    primaryAction: () => ({
-      label: 'Configure connectors',
-      href: '/admin/connectors#config',
-    }),
+    title: 'Steward editorial · What needs setup',
+    body: () =>
+      'Demo posture is strong. Pilot requires data trust loaded, connectors configured, users granted, agent readiness reviewed, and production readiness assessed. None of these are claimed live in this environment.',
+    primaryAction: {
+      label: 'Review Production Readiness',
+      href: '/admin/production-readiness',
+    },
   },
-  'admin/data-trust': {
+  'data-trust': {
     agentLabel: 'Steward',
     title: 'Steward editorial · Trust ladder',
     body: () =>
       'Loaded artifacts are present from seed. Usable evidence is partial. Decision-grade evidence requires approved datasets and source-of-truth confirmations not yet in place.',
-    primaryAction: () => ({
+    primaryAction: {
       label: 'Review datasets',
       href: '/admin/data-trust#datasets',
-    }),
+    },
   },
-  'admin/users-access': {
+  connectors: {
     agentLabel: 'Steward',
-    title: 'Steward editorial · Roles and risk',
+    title: 'Steward editorial · Connector readiness',
     body: () =>
-      'Roles seeded; SSO not yet configured. Tenant admin must assign owners before pilot. No live user provisioning runtime yet.',
-    primaryAction: () => ({
+      '0 of 0 connectors configured as stubs. None are live in this environment. Pilot cannot proceed until pilot-required connectors clear Steward review.',
+    primaryAction: {
+      label: 'Configure connectors',
+      href: '/admin/connectors#config',
+    },
+  },
+  'users-access': {
+    agentLabel: 'Steward',
+    title: 'Steward editorial · Access posture',
+    body: () =>
+      'Roles and seat counts are seeded deterministically. SSO is not yet configured. Invite, revoke, and permission edit pipelines are not wired in this environment.',
+    primaryAction: {
       label: 'Review roles',
       href: '/admin/users-access#roles',
-    }),
+    },
   },
-  'admin/agent-readiness': {
+  'agent-readiness': {
     agentLabel: 'Steward',
     title: 'Steward editorial · Agent posture',
     body: () =>
-      'Agent identities and roles are defined. Live runtime deferred until model gateway and tool execution land. Today agents reason from deterministic context only.',
-    primaryAction: () => ({
-      label: 'Review postures',
-      href: '/admin/agent-readiness#postures',
-    }),
+      'Each agent is reviewed against mission queue, context injection, evidence integration, and audit trail readiness. Posture is honest — no agent claims live operation in this environment.',
+    primaryAction: {
+      label: 'Open agent readiness drill',
+      href: '/admin/agent-readiness#drill',
+    },
   },
-  'admin/build-progress': {
+  'build-progress': {
     agentLabel: 'Steward',
-    title: 'Steward editorial · Build governance',
+    title: 'Steward editorial · Build posture',
     body: () =>
-      'Wireframes and backlog are now authoritative. Next build should close remaining wireframe deviations, not add unrelated breadth.',
-    primaryAction: () => ({
-      label: 'Open next wave',
-      href: '/admin/build-progress#next-wave',
-    }),
-  },
-  'admin/overview': {
-    agentLabel: 'Steward',
-    title: 'Steward editorial · What needs setup',
-    body: (ctx) =>
-      `Demo posture is strong for ${ctx.tenant.name}. Pilot requires data trust loaded, connectors configured, users granted, agent readiness reviewed, production readiness assessed.`,
-    primaryAction: () => ({
-      label: 'Open Production Readiness',
-      href: '/admin/production-readiness',
-    }),
+      '0 waves merged. Admin redesign in progress. The page does not poll CI or Vercel; it reflects the canonical build manifest only.',
+    primaryAction: {
+      label: 'Open build dashboard',
+      href: '/platform/admin/build-progress',
+    },
   },
 };
 
-const DEFAULT_TEMPLATE: EditorialTemplate = {
+const FALLBACK_TEMPLATE: EditorialTemplate = {
   agentLabel: 'Steward',
-  title: 'Steward editorial · Surface posture',
+  title: 'Steward editorial',
   body: (ctx) =>
-    `${ctx.tenant.name} surface posture is being assessed. Limited context available.`,
-  primaryAction: () => ({
-    label: 'Open Production Readiness',
-    href: '/admin/production-readiness',
-  }),
+    ctx.contextSources.length === 0
+      ? 'No context loaded for this surface yet. Steward cannot speak with confidence.'
+      : `Context loaded from ${ctx.contextSources.length} source(s); evidence is ${ctx.evidence.strength}.`,
+  primaryAction: { label: 'Review setup', href: '/admin' },
 };
 
+function lookupTemplate(ctx: AgentContextBundle): EditorialTemplate {
+  if (ctx.surface === 'admin') {
+    return ADMIN_TEMPLATES[ctx.page] ?? FALLBACK_TEMPLATE;
+  }
+  return FALLBACK_TEMPLATE;
+}
+
+function blockerLabel(ctx: AgentContextBundle): string | null {
+  if (ctx.blockers.length === 0) return null;
+  // Prefer the first critical, else the first overall.
+  const critical = ctx.blockers.find((b) => b.severity === 'critical');
+  return (critical ?? ctx.blockers[0]).label;
+}
+
+/**
+ * Generate the canonical Steward editorial card for the given context.
+ * Deterministic. Pure function over the AgentContextBundle.
+ */
 export function generateStewardEditorial(
   ctx: AgentContextBundle,
 ): EditorialCard {
-  const key = `${ctx.surface}/${ctx.page}`;
-  const tmpl = TEMPLATES[key] ?? DEFAULT_TEMPLATE;
-  const stewardPosture = computeStewardPosture(ctx);
-  const blocker =
-    stewardPosture.state === 'BLOCKED'
-      ? stewardPosture.reason.replace(/^Critical production blocker:\s*/, '')
-      : stewardPosture.state === 'PARTIAL'
-        ? stewardPosture.reason.replace(/^Pilot-impact blocker:\s*/, '')
-        : null;
+  const template = lookupTemplate(ctx);
   return {
-    agentLabel: tmpl.agentLabel,
-    title: tmpl.title,
-    body: tmpl.body(ctx),
+    agentLabel: template.agentLabel,
+    title: template.title,
+    body: template.body(ctx),
     contextUsed: ctx.contextSources.map((s) => s.label),
     evidenceStrength: ctx.evidence.strength,
-    blocker,
-    primaryAction: tmpl.primaryAction(ctx),
+    blocker: blockerLabel(ctx),
+    primaryAction: template.primaryAction,
   };
 }
