@@ -1421,12 +1421,9 @@
       "waveId": "wave-admin-data",
       "name": "Native Admin Data Layer",
       "goal": "Replace hardcoded TypeScript constants in admin page-views with real data flowing from Supabase via the existing adapter pattern. Closes the founder-flagged gap that deferred ADMIN18 from wave-admin-completion. ADMIN-DATA1 audit + wave registration; ADMIN-DATA2 ships adapter contracts foundation; ADMIN-DATA3-9 wire each admin page (parallel lanes) against typed adapters; ADMIN-DATA10 ships 7 new admin tables (admin_connectors, admin_datasets, admin_dataset_approvals, admin_dataset_quality, admin_blockers, admin_audit_log, admin_setup_progress) + Apex/Meridian seed; ADMIN-DATA11 swaps AGENT1 context bundle source from constants to live DB; ADMIN-DATA12 ships ADMIN18 Overview pull-through against real data; ADMIN-DATA13 locks visual + data regression. All write actions, live model calls, and audit-event emission remain HARD-GATED for Wave 27+.",
-      "status": "in_progress",
-      "percentComplete": 85,
-      "plannedSlices": [
-        "ADMIN-DATA12",
-        "ADMIN-DATA13"
-      ],
+      "status": "complete",
+      "percentComplete": 100,
+      "plannedSlices": [],
       "completedSlices": [
         "ADMIN-DATA1",
         "ADMIN-DATA2",
@@ -1438,7 +1435,9 @@
         "ADMIN-DATA8",
         "ADMIN-DATA9",
         "ADMIN-DATA10",
-        "ADMIN-DATA11"
+        "ADMIN-DATA11",
+        "ADMIN-DATA12",
+        "ADMIN-DATA13"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
@@ -1446,8 +1445,8 @@
       "validationStatus": "not_run",
       "productionReadinessUpdated": false,
       "currentBlockers": [],
-      "nextAction": "DATA11 code_complete. Next: DATA12 — ADMIN18 Overview pull-through (live data).",
-      "lastUpdated": "2026-04-27 (DATA11 code_complete · all 9 adapters wired to live Supabase · 85%)"
+      "nextAction": "wave-admin-data 100% complete. DATA12+DATA13 code_complete.",
+      "lastUpdated": "2026-04-27 (DATA12+DATA13 code_complete · wave-admin-data 100%)"
     }
   ]
 }

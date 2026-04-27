@@ -4,6 +4,8 @@ import { AgentRail } from '@/components/admin/AgentRail';
 import { ContextBar } from '@/components/admin/ContextBar';
 import { StewardEditorial } from '@/components/admin/StewardEditorial';
 import { SetupItemsList } from '@/components/admin/SetupItemsList';
+import { RecentActivityList } from '@/components/admin/RecentActivityList';
+import { CrossPageCountsBar } from '@/components/admin/CrossPageCountsBar';
 import { buildOverviewPageView } from '@/lib/admin/overview-page-view';
 
 export const metadata = {
@@ -40,7 +42,9 @@ export default async function AdminOverviewPage() {
           blocker={view.editorial.blocker}
           primaryAction={view.editorial.primaryAction}
         />
+        <CrossPageCountsBar counts={view.crossPageCounts} />
         <SetupItemsList items={view.setupItems} />
+        <RecentActivityList items={view.recentActivity} />
       </EditorialCanvas>
     </AdminCanonShellV2>
   );
