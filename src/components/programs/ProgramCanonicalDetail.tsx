@@ -22,7 +22,6 @@
 // as informational placeholders rather than fabricating data.
 
 import Link from 'next/link';
-import { NexusProgramRail } from '@/components/deliverables/NexusProgramRail';
 import { NexusProgramWorkbench } from '@/components/programs/NexusProgramWorkbench';
 import { ProgramArtifactCanvas } from '@/components/programs/ProgramArtifactCanvas';
 import { buildProgramArtifactCanvasView } from '@/lib/programs/program-artifact-canvas-view';
@@ -40,7 +39,6 @@ import type {
 import {
   phaseMeta,
   tenantProgramPath,
-  tenantProgramPhasePath,
   tenantProgramsPath,
   tenantDashboardPath,
   tenantDeliverablePath,
@@ -48,13 +46,10 @@ import {
 import {
   HONEST_FALLBACK_LABELS,
   buildCanonicalHardGateStrip,
-  buildCanonicalPhaseTimeline,
-  buildProgramEditorial,
   buildProgramReadinessSummary,
   buildStewardReadinessNote,
   summarizeProgram,
   type CanonicalHardGateRenderStatus,
-  type CanonicalPhaseRenderStatus,
   type ReadinessSignal,
 } from '@/lib/programs/programs-canonical-view';
 import { buildProgramWorkshopModeView } from '@/lib/programs/program-workshop-mode-view';
@@ -72,10 +67,11 @@ interface ProgramCanonicalDetailProps {
 
 // AG12 · Programs surface mission projection.
 //
-// Pulls the AG10 deterministic queue filtered to the Programs surface,
-// keeps only Nexus / Sentinel / Steward missions per AG12 spec, sorts
-// by priority via getTopAgentMissions, caps the visible list at 3, and
-// maps the AG10 AgentMission shape onto the AG11 panel mission shape.
+// The Nexus workbench above owns the per-phase agent rail (Nexus active
+// state, Steward gate, Sentinel evidence, Atlas impact) tied to the
+// selected phase. This panel surfaces the AG10 mission queue at the very
+// bottom of the page so AG12 surface wiring stays satisfied without
+// competing with the workbench above.
 const PROGRAMS_SURFACE_AGENTS = new Set(['nexus', 'sentinel', 'steward']);
 
 function mapMissionToPanelMission(mission: AgentMission): AgentMissionPanelMission {
@@ -125,7 +121,6 @@ const COLORS = {
 
 export function ProgramCanonicalDetail({ tenant, program }: ProgramCanonicalDetailProps) {
   const view = summarizeProgram(program);
-  const editorial = buildProgramEditorial(view);
 
   return (
     <main
@@ -222,56 +217,15 @@ export function ProgramCanonicalDetail({ tenant, program }: ProgramCanonicalDeta
         />
 
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 22 }}>
-          {/* Zone C · Primary workspace */}
+          {/* Zone C · Primary workspace
+           *
+           * Canon restructure: the Nexus workbench above owns the page spine
+           * (journey + brief + agent rail). Below-fold panels carry data the
+           * workbench does not surface (gates, deliverables, evidence). The
+           * prior duplicates — Nexus editorial lead, six-phase timeline,
+           * AgentMissionPanel, NexusProgramRail — were removed because they
+           * repeated content the workbench already shows. */}
           <section aria-label="Primary workspace" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-            {/* Nexus editorial lead */}
-            <article
-              style={{
-                padding: '18px 22px',
-                background: COLORS.card,
-                border: `1px solid ${COLORS.border}`,
-                borderLeft: `3px solid ${COLORS.accent}`,
-                borderRadius: 10,
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: 'JetBrains Mono, monospace',
-                  fontSize: 10,
-                  letterSpacing: '0.14em',
-                  textTransform: 'uppercase',
-                  color: COLORS.accent,
-                  fontWeight: 700,
-                  marginBottom: 8,
-                }}
-              >
-                Nexus · program editorial · deterministic
-              </div>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: 14,
-                  lineHeight: 1.65,
-                  color: COLORS.ink,
-                }}
-              >
-                {editorial}
-              </p>
-              <div
-                style={{
-                  marginTop: 10,
-                  fontSize: 11,
-                  color: COLORS.mutedSoft,
-                  fontStyle: 'italic',
-                }}
-              >
-                Editorial composed deterministically from seed state. Live agent binding lands in S9b.
-              </div>
-            </article>
-
-            {/* Six-phase timeline */}
-            <PhaseTimeline tenant={tenant} program={program} />
-
             {/* Four hard-gate strip */}
             <HardGateStrip program={program} />
 
@@ -280,9 +234,6 @@ export function ProgramCanonicalDetail({ tenant, program }: ProgramCanonicalDeta
 
             {/* Evidence + value readiness summary (S9d) */}
             <EvidenceValueReadinessSummary tenant={tenant} program={program} />
-
-            {/* AG12 · Agent mission panel · projected from AG10 deterministic queue (top 3) */}
-            <AgentMissionPanel view={buildProgramsAgentMissionView()} />
 
             {/* PW1 · Program Workshop Mode shell */}
             <ProgramWorkshopMode view={buildProgramWorkshopModeView(program.programSlug)} />
@@ -297,10 +248,11 @@ export function ProgramCanonicalDetail({ tenant, program }: ProgramCanonicalDeta
             <ProgramArtifactCanvas
               view={buildProgramArtifactCanvasView(program.programSlug)}
             />
-          </section>
 
-          {/* Zone D · Nexus rail (existing component, do not rewrite — S9b owns it) */}
-          <NexusProgramRail tenant={tenant} program={program} />
+            {/* AG12 · Mission queue projection (positioned at the very bottom
+             *  so the workbench above remains the visual spine). */}
+            <AgentMissionPanel view={buildProgramsAgentMissionView()} />
+          </section>
         </div>
 
         <footer
@@ -316,145 +268,6 @@ export function ProgramCanonicalDetail({ tenant, program }: ProgramCanonicalDeta
       </div>
     </main>
   );
-}
-
-// --- Phase timeline ---------------------------------------------------
-
-function PhaseTimeline({
-  tenant,
-  program,
-}: {
-  tenant: TenantSeedPlan;
-  program: ProgramSeedPlan;
-}) {
-  const entries = buildCanonicalPhaseTimeline(program);
-  return (
-    <section
-      aria-label="Canonical six-phase timeline"
-      style={{
-        padding: '16px 18px',
-        background: COLORS.card,
-        border: `1px solid ${COLORS.border}`,
-        borderRadius: 10,
-      }}
-    >
-      <div
-        style={{
-          fontFamily: 'JetBrains Mono, monospace',
-          fontSize: 10,
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase',
-          color: COLORS.mutedSoft,
-          fontWeight: 700,
-          marginBottom: 12,
-        }}
-      >
-        Canonical six-phase model
-      </div>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(6, 1fr)',
-          gap: 6,
-        }}
-      >
-        {entries.map((entry) => {
-          const tile = phaseTileColors(entry.status);
-          const tileBody = (
-            <div
-              style={{
-                padding: '10px 12px',
-                background: tile.bg,
-                border: `1px solid ${tile.border}`,
-                borderRadius: 8,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 4,
-                minHeight: 104,
-              }}
-              title={entry.reason}
-              data-canonical-phase={entry.phase.key}
-              data-status={entry.status}
-            >
-              <span
-                style={{
-                  fontFamily: 'JetBrains Mono, monospace',
-                  fontSize: 10,
-                  letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
-                  color: tile.accent,
-                  fontWeight: 700,
-                }}
-              >
-                P{entry.phase.index} · {phaseRenderStatusLabel(entry.status)}
-              </span>
-              <span style={{ fontSize: 14, fontWeight: 600, color: COLORS.ink }}>
-                {entry.phase.label}
-              </span>
-              <span style={{ fontSize: 11, color: COLORS.muted, lineHeight: 1.4 }}>
-                {entry.phase.summary}
-              </span>
-            </div>
-          );
-          return entry.specPhase !== null ? (
-            <Link
-              key={entry.phase.key}
-              href={tenantProgramPhasePath(tenant, program, entry.specPhase)}
-              style={{ textDecoration: 'none' }}
-            >
-              {tileBody}
-            </Link>
-          ) : (
-            <div key={entry.phase.key}>{tileBody}</div>
-          );
-        })}
-      </div>
-      <div
-        style={{
-          marginTop: 10,
-          fontSize: 11,
-          color: COLORS.mutedSoft,
-          fontStyle: 'italic',
-        }}
-      >
-        {HONEST_FALLBACK_LABELS.origination}
-      </div>
-    </section>
-  );
-}
-
-function phaseTileColors(status: CanonicalPhaseRenderStatus) {
-  switch (status) {
-    case 'current':
-      return { bg: COLORS.accentSoft, border: 'rgba(14,159,140,0.3)', accent: COLORS.accent };
-    case 'complete':
-      return { bg: 'rgba(26,22,18,0.04)', border: COLORS.border, accent: COLORS.muted };
-    case 'not_started':
-      return { bg: 'rgba(26,22,18,0.02)', border: COLORS.borderSoft, accent: COLORS.mutedSoft };
-    case 'informational':
-      return { bg: 'rgba(26,22,18,0.02)', border: COLORS.borderSoft, accent: COLORS.mutedSoft };
-    case 'blocked':
-      return { bg: COLORS.amberSoft, border: 'rgba(217,119,6,0.3)', accent: COLORS.amber };
-    case 'not_seeded':
-      return { bg: 'rgba(26,22,18,0.02)', border: COLORS.borderSoft, accent: COLORS.mutedSoft };
-  }
-}
-
-function phaseRenderStatusLabel(status: CanonicalPhaseRenderStatus): string {
-  switch (status) {
-    case 'current':
-      return 'Current';
-    case 'complete':
-      return 'Complete';
-    case 'not_started':
-      return 'Not started';
-    case 'informational':
-      return 'Informational';
-    case 'blocked':
-      return 'Blocked';
-    case 'not_seeded':
-      return 'Not seeded';
-  }
 }
 
 // --- Hard-gate strip --------------------------------------------------

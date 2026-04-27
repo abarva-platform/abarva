@@ -34,12 +34,20 @@ export interface NexusWorkbenchConversationTurn {
   text: string;
 }
 
+export type NexusWorkbenchRequiredInputState = 'satisfied' | 'in-progress' | 'open';
+
+export interface NexusWorkbenchRequiredInput {
+  label: string;
+  state: NexusWorkbenchRequiredInputState;
+}
+
 export interface NexusWorkbenchPhaseFocus {
   key: string;
   brief: string;
   blocker: string;
   recommendedNextAction: string;
   contextUsed: string[];
+  requiredInputs: NexusWorkbenchRequiredInput[];
   suggestedActions: NexusWorkbenchSuggestedAction[];
   agentHandoffs: NexusWorkbenchAgentHandoff[];
   conversation: NexusWorkbenchConversationTurn[];
@@ -58,6 +66,7 @@ export interface NexusProgramWorkbenchView {
   phaseFocusByKey: Record<string, NexusWorkbenchPhaseFocus>;
   nexusBrief: string;
   contextUsed: string[];
+  requiredInputs: NexusWorkbenchRequiredInput[];
   confidenceState: string;
   evidenceState: string;
   blocker: string;
@@ -164,6 +173,11 @@ const PHASE_FOCUS_TEMPLATES: ReadonlyArray<NexusWorkbenchPhaseFocus> = [
       'Source AMS event',
       'Constraints register',
     ],
+    requiredInputs: [
+      { label: 'Sponsor confirmed', state: 'satisfied' },
+      { label: 'Stakeholder map signed off', state: 'satisfied' },
+      { label: 'Source AMS event captured', state: 'satisfied' },
+    ],
     suggestedActions: [
       {
         label: 'Open Discovery brief',
@@ -230,6 +244,11 @@ const PHASE_FOCUS_TEMPLATES: ReadonlyArray<NexusWorkbenchPhaseFocus> = [
       'Deliverables',
       'Source AMS event',
     ],
+    requiredInputs: [
+      { label: 'Workshop 5 outcomes captured', state: 'satisfied' },
+      { label: 'Value evidence pack', state: 'open' },
+      { label: 'Stakeholder readiness signal', state: 'in-progress' },
+    ],
     suggestedActions: [
       {
         label: 'Review Design gate blockers',
@@ -270,6 +289,11 @@ const PHASE_FOCUS_TEMPLATES: ReadonlyArray<NexusWorkbenchPhaseFocus> = [
       'Workshop 5 outcomes',
       'Stakeholder roster',
       'Commercial readiness pack',
+    ],
+    requiredInputs: [
+      { label: 'Value evidence pack', state: 'open' },
+      { label: 'Stakeholder sign-off', state: 'open' },
+      { label: 'Commercial readiness confirmation', state: 'open' },
     ],
     suggestedActions: [
       {
@@ -330,6 +354,11 @@ const PHASE_FOCUS_TEMPLATES: ReadonlyArray<NexusWorkbenchPhaseFocus> = [
     recommendedNextAction:
       'Hold Build planning until the Design gate clears.',
     contextUsed: ['Gate dependency', 'Capacity plan', 'Sequencing plan'],
+    requiredInputs: [
+      { label: 'Design gate clearance', state: 'open' },
+      { label: 'Capacity plan authorized', state: 'in-progress' },
+      { label: 'Sequencing plan authorized', state: 'in-progress' },
+    ],
     suggestedActions: [
       {
         label: 'View Build readiness checklist',
@@ -389,6 +418,11 @@ const PHASE_FOCUS_TEMPLATES: ReadonlyArray<NexusWorkbenchPhaseFocus> = [
     recommendedNextAction:
       'Pre-load outcome KPIs and the sponsor sign-off pattern so Verify is ready when Build closes.',
     contextUsed: ['Outcome KPIs', 'Sponsor pattern', 'Risk close-out'],
+    requiredInputs: [
+      { label: 'Build delivery confirmation', state: 'open' },
+      { label: 'Outcome KPIs measured', state: 'open' },
+      { label: 'Sponsor sign-off pattern staged', state: 'in-progress' },
+    ],
     suggestedActions: [
       {
         label: 'Pre-load outcome KPIs',
@@ -448,6 +482,7 @@ function buildPhaseFocusByKey(): Record<string, NexusWorkbenchPhaseFocus> {
     map[focus.key] = {
       ...focus,
       contextUsed: [...focus.contextUsed],
+      requiredInputs: focus.requiredInputs.map((input) => ({ ...input })),
       suggestedActions: focus.suggestedActions.map((action) => ({ ...action })),
       agentHandoffs: focus.agentHandoffs.map((handoff) => ({ ...handoff })),
       conversation: focus.conversation.map((turn) => ({ ...turn })),
@@ -488,6 +523,7 @@ export function buildNexusProgramWorkbenchView(
     phaseFocusByKey,
     nexusBrief: defaultFocus.brief,
     contextUsed: [...defaultFocus.contextUsed],
+    requiredInputs: defaultFocus.requiredInputs.map((input) => ({ ...input })),
     confidenceState: 'Deterministic confidence: partial',
     evidenceState,
     blocker: defaultFocus.blocker,
