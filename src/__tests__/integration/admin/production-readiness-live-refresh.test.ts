@@ -67,11 +67,17 @@ describe('PROD3 route and client refresh behavior', () => {
     expect(routeSource).toMatch(/Expires/);
   });
 
-  it('page renders the live panel with request-time initial data', () => {
+  // ADMIN5 (wave-33) replaced the route with the AdminCanonShellV2 shell wired
+  // to buildProductionReadinessPageView. The legacy ProductionReadinessLivePanel
+  // remains in the codebase but is no longer mounted on this page (the live
+  // refresh API + secret hygiene + manifest determinism assertions in this
+  // suite still cover the read-model contract). The route still calls
+  // connection() and disables ISR caching for request-time freshness.
+  it('page opts out of static caching for request-time freshness', () => {
     expect(pageSource).toMatch(/connection\(/);
     expect(pageSource).toMatch(/revalidate = 0/);
-    expect(pageSource).toMatch(/ProductionReadinessLivePanel/);
-    expect(pageSource).toMatch(/buildProductionReadinessApiResponse/);
+    expect(pageSource).toMatch(/AdminCanonShellV2/);
+    expect(pageSource).toMatch(/buildProductionReadinessPageView/);
   });
 
   it('client panel polls the internal API and exposes manual refresh', () => {

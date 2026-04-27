@@ -8838,7 +8838,8 @@
     {
       "id": "ADMIN5",
       "title": "Production Readiness Page Wired to AdminCanonShellV2",
-      "status": "backlog",
+      "status": "code_complete",
+      "completedAt": "2026-04-27",
       "type": "ui",
       "wave": "wave-admin-redesign",
       "track": "06-admin-readiness-architecture",
@@ -8847,7 +8848,8 @@
     {
       "id": "ADMIN6",
       "title": "Remaining 6 Admin Sub-Pages Wired",
-      "status": "backlog",
+      "status": "code_complete",
+      "completedAt": "2026-04-27",
       "type": "ui",
       "wave": "wave-admin-redesign",
       "track": "06-admin-readiness-architecture",

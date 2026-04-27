@@ -463,6 +463,9 @@ describe('module hygiene', () => {
   });
 
   it('component and route wire the deterministic read model', () => {
+    // Legacy ProductionReadinessTracker component (still in repo, used by
+    // alternate dashboards / future re-introduction) preserves its content
+    // contract.
     expect(componentSource).toMatch(/Canonical Readiness Spine/);
     expect(componentSource).toMatch(/view\.stewardBrief\.title/);
     expect(componentSource).toMatch(/Product maturity by area/);
@@ -473,12 +476,17 @@ describe('module hygiene', () => {
     expect(componentSource).toMatch(/% done/);
     expect(componentSource).toMatch(/% pending/);
     expect(componentSource).toMatch(/Started/);
+    // Legacy ProductionReadinessLivePanel (still exported, used by API
+    // explorers / fallback flows) keeps its API wiring contract.
     expect(livePanelSource).toMatch(/ProductionReadinessTracker/);
     expect(livePanelSource).toMatch(/Production Readiness Control Plane/);
     expect(livePanelSource).toMatch(/\/api\/admin\/production-readiness/);
     expect(livePanelSource).toMatch(/freshnessStatus/);
-    expect(routeSource).toMatch(/ProductionReadinessLivePanel/);
-    expect(routeSource).toMatch(/buildProductionReadinessApiResponse/);
+    // ADMIN5 (wave-33) rewired the route to AdminCanonShellV2 +
+    // buildProductionReadinessPageView. The legacy ProductionReadinessLivePanel
+    // is no longer mounted on the route — that mount is intentionally retired.
+    expect(routeSource).toMatch(/AdminCanonShellV2/);
+    expect(routeSource).toMatch(/buildProductionReadinessPageView/);
     expect(adminPageSource).toMatch(/\/platform\/admin\/production-readiness/);
   });
 });
