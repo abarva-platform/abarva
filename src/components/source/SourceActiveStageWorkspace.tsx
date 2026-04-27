@@ -3,7 +3,7 @@ import { getActiveStage, getStageStateLabel } from '@/lib/source/lifecycle';
 import {
   buildSourceDataReadinessProjectionFromAdminSetup,
   buildSourceBafoNegotiationPlan,
-  buildSourceExecutiveDecisionSummary,
+  buildSourceVendorSelectionReadiness,
   buildSourceVendorResponseCompleteness,
   type SourceAgentMission,
   type SourceAgentMissionReport,
@@ -15,7 +15,7 @@ import { sourceCard, sourceMuted, sourceSectionLabel } from './foundationStyles'
 import { SourceDataReadinessPanel } from './SourceDataReadinessPanel';
 import { SourceScopeStageWorkspace } from './SourceScopeStageWorkspace';
 import { SourceBafoNegotiationPanel } from './SourceBafoNegotiationPanel';
-import { SourceExecutiveDecisionSummaryPanel } from './SourceExecutiveDecisionSummaryPanel';
+import { SourceVendorSelectionReadinessPanel } from './SourceVendorSelectionReadinessPanel';
 import { SourceVendorResponseCompletenessPanel } from './SourceVendorResponseCompletenessPanel';
 
 export function SourceActiveStageWorkspace({
@@ -96,7 +96,7 @@ export function SourceActiveStageWorkspace({
   }
 
   if (activeStage.key === 'selection') {
-    const executiveSummary = buildSourceExecutiveDecisionSummary({
+    const selectionReadiness = buildSourceVendorSelectionReadiness({
       event: {
         ...event,
         currentStageKey: 'selection',
@@ -115,7 +115,7 @@ export function SourceActiveStageWorkspace({
             Gate status: {getStageStateLabel(activeStage.status)}
           </div>
         </div>
-        <SourceExecutiveDecisionSummaryPanel summary={executiveSummary} />
+        <SourceVendorSelectionReadinessPanel readiness={selectionReadiness} />
       </section>
     );
   }
