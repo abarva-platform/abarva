@@ -17,7 +17,7 @@ Merged on `main` through PR `#385`.
 ## VIS2 - Authenticated visual QA pass
 
 **Priority:** P0
-**Status:** pending
+**Status:** in_progress
 **Type:** docs
 **Primary agent:** Atlas
 
