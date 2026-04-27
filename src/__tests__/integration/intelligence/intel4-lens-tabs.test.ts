@@ -18,15 +18,16 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('INTELLIGENCE_TABS', () => {
-  it('declares exactly four canonical tabs', () => {
-    expect(INTELLIGENCE_TABS).toHaveLength(4);
+  it('declares exactly five canonical tabs', () => {
+    expect(INTELLIGENCE_TABS).toHaveLength(5);
   });
 
-  it('contains overview, patterns, evidence, signals in that order', () => {
+  it('contains summary, evidence, programs, actions, signals in that order', () => {
     expect(INTELLIGENCE_TABS.map((t) => t.key)).toEqual([
-      'overview',
-      'patterns',
+      'summary',
       'evidence',
+      'programs',
+      'actions',
       'signals',
     ]);
   });
@@ -50,24 +51,30 @@ describe('INTELLIGENCE_TABS', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('resolveIntelligenceTab', () => {
-  it('returns "overview" for undefined', () => {
-    expect(resolveIntelligenceTab(undefined)).toBe('overview');
+  it('returns "summary" for undefined', () => {
+    expect(resolveIntelligenceTab(undefined)).toBe('summary');
   });
 
-  it('returns "overview" for null', () => {
-    expect(resolveIntelligenceTab(null)).toBe('overview');
+  it('returns "summary" for null', () => {
+    expect(resolveIntelligenceTab(null)).toBe('summary');
   });
 
-  it('returns "overview" for empty string', () => {
-    expect(resolveIntelligenceTab('')).toBe('overview');
+  it('returns "summary" for empty string', () => {
+    expect(resolveIntelligenceTab('')).toBe('summary');
   });
 
-  it('returns "overview" for unknown key', () => {
-    expect(resolveIntelligenceTab('signals2')).toBe('overview');
-    expect(resolveIntelligenceTab('not_a_tab')).toBe('overview');
+  it('returns "summary" for unknown key', () => {
+    expect(resolveIntelligenceTab('signals2')).toBe('summary');
+    expect(resolveIntelligenceTab('not_a_tab')).toBe('summary');
   });
 
-  const VALID: IntelligenceLensTab[] = ['overview', 'patterns', 'evidence', 'signals'];
+  const VALID: IntelligenceLensTab[] = [
+    'summary',
+    'evidence',
+    'programs',
+    'actions',
+    'signals',
+  ];
   for (const key of VALID) {
     it(`accepts valid key "${key}"`, () => {
       expect(resolveIntelligenceTab(key)).toBe(key);
@@ -81,29 +88,36 @@ describe('resolveIntelligenceTab', () => {
 
 describe('buildIntelligenceLensTabsView', () => {
   it('returns deterministicSeed: true', () => {
-    const view = buildIntelligenceLensTabsView('overview');
+    const view = buildIntelligenceLensTabsView('summary');
     expect(view.deterministicSeed).toBe(true);
   });
 
   it('echoes the active tab', () => {
-    const tabs: IntelligenceLensTab[] = ['overview', 'patterns', 'evidence', 'signals'];
+    const tabs: IntelligenceLensTab[] = [
+      'summary',
+      'evidence',
+      'programs',
+      'actions',
+      'signals',
+    ];
     for (const tab of tabs) {
       expect(buildIntelligenceLensTabsView(tab).activeTab).toBe(tab);
     }
   });
 
-  it('always includes all four tabs', () => {
+  it('always includes all five tabs', () => {
     const view = buildIntelligenceLensTabsView('evidence');
-    expect(view.tabs).toHaveLength(4);
-    expect(view.tabs.map((t) => t.key)).toContain('overview');
-    expect(view.tabs.map((t) => t.key)).toContain('patterns');
+    expect(view.tabs).toHaveLength(5);
+    expect(view.tabs.map((t) => t.key)).toContain('summary');
     expect(view.tabs.map((t) => t.key)).toContain('evidence');
+    expect(view.tabs.map((t) => t.key)).toContain('programs');
+    expect(view.tabs.map((t) => t.key)).toContain('actions');
     expect(view.tabs.map((t) => t.key)).toContain('signals');
   });
 
   it('is pure — same input yields identical output', () => {
-    const a = buildIntelligenceLensTabsView('patterns');
-    const b = buildIntelligenceLensTabsView('patterns');
+    const a = buildIntelligenceLensTabsView('actions');
+    const b = buildIntelligenceLensTabsView('actions');
     expect(a).toEqual(b);
   });
 });
@@ -127,11 +141,17 @@ describe('INTEL4 component file probe', () => {
     expect(src).toMatch(/export function IntelligenceLensTabs/);
   });
 
-  it('references all four tab keys in the component source', () => {
+  it('references all five tab keys in the component source', () => {
     const src = fs.readFileSync(componentPath, 'utf8');
-    for (const key of ['overview', 'patterns', 'evidence', 'signals']) {
+    for (const key of ['summary', 'evidence', 'programs', 'actions', 'signals']) {
       expect(src).toContain(key);
     }
+  });
+
+  it('does not treat overview or patterns as canonical tab keys anymore', () => {
+    const src = fs.readFileSync(componentPath, 'utf8');
+    expect(src).not.toContain("tab.key === 'overview'");
+    expect(src).not.toContain("activeTab === 'patterns'");
   });
 
   it('does not import from src/lib/source', () => {
