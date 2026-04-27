@@ -9,6 +9,7 @@ import {
   getSourcingEvent,
   buildSourceRfpReadiness,
   buildSourceExecutiveDecisionSummary,
+  buildSourceVendorSelectionReadiness,
   SOURCE_STAGE_LABELS,
 } from '@/lib/source';
 import type { SourceStageStatus, StageGateStatus, WorkflowStage } from '@/lib/source/types';
@@ -140,16 +141,35 @@ describe('Source event canvas shell', () => {
     const event = buildSelectionEvent(sourceEvent!);
     const summary = buildSourceExecutiveDecisionSummary({ event });
     const html = renderToStaticMarkup(createElement(NexusEngagementCanvas, { event }));
+    const selectionReadiness = buildSourceVendorSelectionReadiness({ event });
 
-    expect(html).toContain('Executive decision summary');
-    expect(html).toContain('Selection-readiness decision brief');
-    expect(html).toContain('Decision posture');
+    expect(html).toContain('Vendor selection readiness');
+    expect(html).toContain(selectionReadiness.selectionPosture);
     expect(html).toContain('Viable vendors');
-    expect(html).toContain('Vendor tradeoffs');
-    expect(html).toContain('Decision options');
+    expect(html).toContain('Blocked vendors');
     expect(summary.recommendedDecisionPosture).not.toBe('ready_for_selection_review');
     expect(summary.blockers.length).toBeGreaterThan(0);
     expect(html).not.toContain('Finalize vendor selection');
+  });
+
+  it('surfaces selection readiness blocked state in selection stage without selecting vendor', async () => {
+    const sourceEvent = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.digitalAppBuild);
+    const event = buildSelectionEvent(sourceEvent!);
+    const readiness = buildSourceVendorSelectionReadiness({ event: event });
+
+    expect(readiness.selectionReviewReady).toBe(false);
+    expect(readiness.selectionPosture).not.toBe('ready_for_selection_review');
+
+    const html = renderToStaticMarkup(createElement(NexusEngagementCanvas, { event }));
+
+    expect(html).toContain('Vendor selection readiness');
+    expect(html).toContain('Selection posture');
+    expect(html).toContain(readiness.selectionPosture);
+    expect(html).toContain('Selection ready: no');
+    expect(readiness.blockedVendors.length).toBeGreaterThan(0);
+    expect(html).toContain(readiness.blockedVendors[0]);
+    expect(html).toContain('Selection-readiness readiness signal');
+    expect(html).toContain(readiness.recommendedNextAction);
   });
 
   it('includes the deterministic data readiness panel with missing and usable evidence states', async () => {
