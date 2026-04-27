@@ -26,7 +26,7 @@ Create a single founder-readable map of product maturity by surface and runtime 
 ## ROAD2 - Eight-hour / three-day / pilot roadmap
 
 **Priority:** P0
-**Status:** in_progress
+**Status:** done
 **Type:** docs
 **Primary agent:** Atlas
 
@@ -49,7 +49,7 @@ Define the next 8-hour, 3-day, and pilot-oriented build sequencing plan after cu
 ## ROAD3 - Open risk and dependency register
 
 **Priority:** P1
-**Status:** pending
+**Status:** in_progress
 **Type:** docs
 **Primary agent:** Steward
 

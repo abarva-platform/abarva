@@ -61,7 +61,7 @@
       "title": "Eight-hour / three-day / pilot roadmap",
       "track": "00-executive-summary",
       "priority": "P0",
-      "status": "pending",
+      "status": "done",
       "ownerAgent": "Atlas",
       "productArea": "Strategy and execution governance",
       "recommendedWave": "WAVE-21",
@@ -106,16 +106,16 @@
         "Merge decision recorded with completion metadata in registry."
       ],
       "executionNotes": "Wave WAVE-21 execution for track 00-executive-summary. Owner validates design and sequencing before work starts.",
-      "completedPr": null,
-      "completedCommit": null,
-      "completedAt": null
+      "completedPr": 400,
+      "completedCommit": "5bb500a6",
+      "completedAt": "2026-04-26"
     },
     {
       "id": "ROAD3",
       "title": "Open risk and dependency register",
       "track": "00-executive-summary",
       "priority": "P1",
-      "status": "pending",
+      "status": "in_progress",
       "ownerAgent": "Steward",
       "productArea": "Strategy and execution governance",
       "recommendedWave": "WAVE-21",
