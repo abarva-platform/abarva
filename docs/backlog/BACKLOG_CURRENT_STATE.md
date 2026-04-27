@@ -2,7 +2,7 @@
 
 > This file is written by the orchestration agent at the end of each wave.
 > The next autonomous session reads this file first.
-> Last updated by: orchestration agent (DATA12+DATA13 code_complete — wave-admin-data 100%)
+> Last updated by: orchestration agent (wave-admin-data 100% + wave-admin-completion 100% — both waves closed)
 > Last updated: 2026-04-27
 
 ## Last completed slices
