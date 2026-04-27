@@ -865,7 +865,8 @@
         "DES9",
         "PX2",
         "INTEL1",
-        "INTEL2"
+        "INTEL2",
+        "INTEL3"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
@@ -873,7 +874,7 @@
       "validationStatus": "tests_green",
       "productionReadinessUpdated": true,
       "currentBlockers": [],
-      "nextAction": "BRAND1, BRAND2, DES9, PX2, INTEL1, INTEL2 complete. Proceed to INTEL3, TOWER1-3, QA29, DEMO9.",
+      "nextAction": "BRAND1, BRAND2, DES9, PX2, INTEL1, INTEL2, INTEL3 complete. Proceed to TOWER1-3, QA29, DEMO9.",
       "lastUpdated": "2026-04-26"
     },
     {
@@ -967,31 +968,5 @@
       "nextAction": "Wave-18 merged. No further action.",
       "lastUpdated": "2026-04-26"
     },
-    {
-      "waveId": "wave-21",
-      "name": "Brand Enforcement + Logo Canon",
-      "goal": "Land the canonical AbarVa logo asset and component (BRAND1), enforce logo usage and retire legacy symbols across all product surfaces (BRAND2), and lock the app shell to the canonical brand mark (DES9).",
-      "status": "in_progress",
-      "percentComplete": 33,
-      "plannedSlices": [
-        "BRAND1",
-        "BRAND2",
-        "DES9"
-      ],
-      "completedSlices": [
-        "BRAND2"
-      ],
-      "skippedSlices": [],
-      "blockedSlices": [],
-      "mergedPrs": [],
-      "validationStatus": "tests_green",
-      "productionReadinessUpdated": false,
-      "currentBlockers": [
-        "BRAND1 must land before BRAND2-C1/C2/C3/C6 checks resolve",
-        "DES9 must land before BRAND2-C8 check resolves"
-      ],
-      "nextAction": "BRAND1 lane to land canonical logo SVG asset and AbarVaLogo component. DES9 lane to wire AbarVaLogo into AbarVaAppShell.",
-      "lastUpdated": "2026-04-26"
-    }
   ]
 }

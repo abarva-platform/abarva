@@ -7763,6 +7763,13 @@
       "status": "code_complete",
       "wave": "wave-21",
       "lane": "F"
+    },
+    {
+      "id": "INTEL3",
+      "title": "Sentinel Evidence Source Basis Brief",
+      "status": "code_complete",
+      "wave": "wave-21",
+      "lane": "G"
     }
   ]
 }
