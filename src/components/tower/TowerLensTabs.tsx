@@ -457,7 +457,6 @@ function severityColor(severity: ProgramPressureSeverity): string {
     case 'high': return C.amber;
     case 'medium': return '#6366F1';
     case 'low': return C.mutedSoft;
-    case 'none': return C.mutedSoft;
     default: return C.mutedSoft;
   }
 }
