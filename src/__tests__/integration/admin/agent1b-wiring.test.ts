@@ -7,18 +7,32 @@ import { buildUsersAccessPageView } from '@/lib/admin/users-access-page-view';
 import { buildAgentReadinessPageView } from '@/lib/admin/agent-readiness-page-view';
 import { buildBuildProgressPageView } from '@/lib/admin/build-progress-page-view';
 
+// ADMIN-DATA3+: builders are progressively migrated to async. Wrap each
+// builder so the describe.each table is homogenous regardless of sync/async.
+type ArchitectureView = Awaited<ReturnType<typeof buildArchitecturePageView>>;
+type AnyBuilder = () => unknown | Promise<unknown>;
+const toAsync =
+  (fn: AnyBuilder) => async (): Promise<ArchitectureView> =>
+    (await Promise.resolve(fn())) as ArchitectureView;
+
 describe('AGENT1B — Admin pages wired to agent foundation', () => {
   describe.each([
-    ['Architecture', buildArchitecturePageView],
-    ['Production Readiness', buildProductionReadinessPageView],
-    ['Overview', buildOverviewPageView],
-    ['Data Trust', buildDataTrustPageView],
-    ['Connectors', buildConnectorsPageView],
-    ['Users & Access', buildUsersAccessPageView],
-    ['Agent Readiness', buildAgentReadinessPageView],
-    ['Build Progress', buildBuildProgressPageView],
+    ['Architecture', toAsync(buildArchitecturePageView)],
+    ['Production Readiness', toAsync(buildProductionReadinessPageView)],
+    ['Overview', toAsync(buildOverviewPageView)],
+    ['Data Trust', toAsync(buildDataTrustPageView)],
+    ['Connectors', toAsync(buildConnectorsPageView)],
+    ['Users & Access', toAsync(buildUsersAccessPageView)],
+    ['Agent Readiness', toAsync(buildAgentReadinessPageView)],
+    ['Build Progress', toAsync(buildBuildProgressPageView)],
   ] as const)('%s page', (label, builder) => {
-    const view = builder();
+    // Some builders are async (ADMIN-DATA8 made production-readiness async,
+    // ADMIN-DATA9 made architecture async). Await/resolve uniformly.
+    type AnyView = ArchitectureView;
+    let view: AnyView;
+    beforeAll(async () => {
+      view = (await builder()) as AnyView;
+    });
 
     it('exposes agentChoices array', () => {
       expect(Array.isArray(view.agentChoices)).toBe(true);
@@ -44,12 +58,12 @@ describe('AGENT1B — Admin pages wired to agent foundation', () => {
       expect(view.subtitle).toBeDefined();
       expect(view.context).toBeDefined();
       expect(view.editorial).toBeDefined();
-      expect(view.editorial.title).toBeDefined();
-      expect(view.editorial.body).toBeDefined();
+      expect(view.editorial?.title).toBeDefined();
+      expect(view.editorial?.body).toBeDefined();
       expect(view.deterministicSeed).toBe(true);
     });
     it('editorial body is non-empty', () => {
-      expect(view.editorial.body.length).toBeGreaterThan(20);
+      expect((view.editorial?.body ?? '').length).toBeGreaterThan(20);
     });
     it('editorial does not claim production_ready: true', () => {
       const json = JSON.stringify(view).toLowerCase();
@@ -61,21 +75,21 @@ describe('AGENT1B — Admin pages wired to agent foundation', () => {
   });
 
   describe('Production Readiness page specifically', () => {
-    it('Steward posture is BLOCKED (apex-retail has critical blockers)', () => {
-      const view = buildProductionReadinessPageView();
+    it('Steward posture is BLOCKED (apex-retail has critical blockers)', async () => {
+      const view = await buildProductionReadinessPageView();
       const steward = view.agentPostures?.find((p) => p.agent === 'steward');
       expect(steward?.state).toBe('BLOCKED');
     });
-    it('agentChoices includes blocker resolutions', () => {
-      const view = buildProductionReadinessPageView();
+    it('agentChoices includes blocker resolutions', async () => {
+      const view = await buildProductionReadinessPageView();
       expect(view.agentChoices?.length).toBeGreaterThan(0);
       expect(view.agentChoices?.some((c) => c.category === 'resolve_blocker')).toBe(true);
     });
   });
 
   describe('Architecture page specifically', () => {
-    it('editorial label is Atlas + Steward', () => {
-      const view = buildArchitecturePageView();
+    it('editorial label is Atlas + Steward', async () => {
+      const view = await buildArchitecturePageView();
       expect(view.editorial.title).toContain('Atlas');
     });
   });

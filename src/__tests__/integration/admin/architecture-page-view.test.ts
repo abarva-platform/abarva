@@ -10,7 +10,10 @@ const root = process.cwd();
 
 describe('ADMIN4 — Architecture page view model', () => {
   describe('buildArchitecturePageView', () => {
-    const view = buildArchitecturePageView();
+    let view: Awaited<ReturnType<typeof buildArchitecturePageView>>;
+    beforeAll(async () => {
+      view = await buildArchitecturePageView();
+    });
 
     it('returns a deterministic seed', () => expect(view.deterministicSeed).toBe(true));
     it('eyebrow is set', () => expect(view.eyebrow.length).toBeGreaterThan(0));

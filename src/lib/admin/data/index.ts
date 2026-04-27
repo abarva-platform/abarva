@@ -22,6 +22,8 @@ export type * from './admin-audit-log-adapter-types';
 export type * from './admin-setup-progress-adapter-types';
 export type * from './admin-agent-readiness-adapter-types';
 export type * from './admin-production-readiness-adapter-types';
+export type * from './admin-build-progress-adapter-types';
+export type * from './admin-architecture-adapter-types';
 
 // Adapters
 export * from './admin-overview-adapter';
@@ -33,3 +35,5 @@ export * from './admin-audit-log-adapter';
 export * from './admin-setup-progress-adapter';
 export * from './admin-agent-readiness-adapter';
 export * from './admin-production-readiness-adapter';
+export * from './admin-build-progress-adapter';
+export * from './admin-architecture-adapter';

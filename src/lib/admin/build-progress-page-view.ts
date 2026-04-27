@@ -1,6 +1,3 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-
 import type { ContextLiveStatus } from '@/components/admin/ContextBar';
 import type { EvidenceStrength } from '@/components/admin/EvidenceStrengthPill';
 import { buildAgentContext } from '@/lib/agent/context-bundle';
@@ -10,6 +7,14 @@ import {
 } from '@/lib/agent/posture';
 import { generateStewardEditorial } from '@/lib/agent/editorial';
 import { buildAgentChoices, type AgentChoice } from '@/lib/agent/choices';
+import {
+  getAdminSlices,
+  getAdminWaves,
+} from '@/lib/admin/data';
+import type {
+  AdminBuildSliceRaw,
+  AdminBuildWaveRaw,
+} from '@/lib/admin/data/admin-build-progress-adapter-types';
 
 // ---------------------------------------------------------------------------
 // ADMIN15 — Build progress depth view-model
@@ -198,68 +203,21 @@ const CI_SNAPSHOT: ReadonlyArray<CIRunRow> = [
 ];
 
 // ---------------------------------------------------------------------------
-// Manifest readers
+// Manifest normalization
 // ---------------------------------------------------------------------------
+//
+// Raw wave/slice records are sourced from the admin-build-progress adapter
+// (`@/lib/admin/data`). The page-view layer is responsible for shape
+// normalization, banned-token scrubbing, and view-model assembly.
 
-interface RawWave {
-  waveId?: string;
-  name?: string;
-  goal?: string;
-  status?: string;
-  percentComplete?: number;
-  plannedSlices?: ReadonlyArray<string>;
-  completedSlices?: ReadonlyArray<string>;
-  blockedSlices?: ReadonlyArray<string>;
-  mergedPrs?: ReadonlyArray<number>;
-  validationStatus?: string;
-  lastUpdated?: string;
-  nextAction?: string;
-}
-
-interface RawSlice {
-  id?: string;
-  name?: string;
-  title?: string;
-  status?: string;
-  category?: string;
-  risk?: string;
-  ownerAgent?: string;
-  dependsOn?: ReadonlyArray<string>;
-  wave?: string;
-  notes?: string | ReadonlyArray<string>;
-  completedAt?: string;
-}
+type RawWave = AdminBuildWaveRaw;
+type RawSlice = AdminBuildSliceRaw;
 
 function normalizeNotes(notes: RawSlice['notes']): string | null {
   if (!notes) return null;
   if (typeof notes === 'string') return notes;
   if (Array.isArray(notes)) return notes.filter((n) => typeof n === 'string').join('\n');
   return null;
-}
-
-function safeReadJson(rel: string): unknown {
-  try {
-    const path = resolve(process.cwd(), rel);
-    return JSON.parse(readFileSync(path, 'utf8'));
-  } catch {
-    return null;
-  }
-}
-
-function readRawWaves(): ReadonlyArray<RawWave> {
-  const data = safeReadJson('docs/build/build-waves.json');
-  if (!data) return [];
-  if (Array.isArray(data)) return data as ReadonlyArray<RawWave>;
-  const obj = data as { waves?: ReadonlyArray<RawWave> };
-  return obj.waves ?? [];
-}
-
-function readRawSlices(): ReadonlyArray<RawSlice> {
-  const data = safeReadJson('docs/build/build-slices.json');
-  if (!data) return [];
-  if (Array.isArray(data)) return data as ReadonlyArray<RawSlice>;
-  const obj = data as { slices?: ReadonlyArray<RawSlice> };
-  return obj.slices ?? [];
 }
 
 function normalizeWaveStatus(raw: string | undefined): BuildWaveStatus {
@@ -469,14 +427,16 @@ function buildActionStrip(): BuildProgressAction[] {
 // Public builder
 // ---------------------------------------------------------------------------
 
-export function buildBuildProgressPageView(): BuildProgressPageView {
+export async function buildBuildProgressPageView(): Promise<BuildProgressPageView> {
   const ctx = buildAgentContext('apex-retail', 'admin', 'build-progress');
   const editorial = generateStewardEditorial(ctx);
   const choices = buildAgentChoices(ctx, 3);
   const postures = computeAllPostures(ctx);
 
-  const rawWaves = readRawWaves();
-  const rawSlices = readRawSlices();
+  const [rawWaves, rawSlices] = await Promise.all([
+    getAdminWaves('apex-retail'),
+    getAdminSlices('apex-retail'),
+  ]);
 
   const waves = buildWaveRows(rawWaves);
   const waveDetailMap = buildWaveDetailMap(rawWaves);

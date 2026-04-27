@@ -7,6 +7,18 @@ import {
 } from '@/lib/agent/posture';
 import { generateStewardEditorial } from '@/lib/agent/editorial';
 import { buildAgentChoices, type AgentChoice } from '@/lib/agent/choices';
+import {
+  getAdminDatasetApprovals,
+  getAdminDatasetDetail,
+  getAdminDatasetQualityScores,
+  getAdminDatasetsByRung,
+} from '@/lib/admin/data/admin-datasets-adapter';
+import type {
+  AdminDatasetApprovalRow,
+  AdminDatasetDetail as AdminDatasetDetailRow,
+  AdminDatasetRow,
+  AdminDatasetRung,
+} from '@/lib/admin/data/admin-datasets-adapter-types';
 
 export interface TrustLadderRung {
   id: string;
@@ -194,208 +206,127 @@ const TABS: ReadonlyArray<DataTrustTabMeta> = [
   },
 ];
 
-const DATASETS_BY_RUNG: Readonly<Record<TrustRungKey, ReadonlyArray<DatasetSummary>>> = {
-  loaded: [
-    {
-      id: 'apex_pos_raw',
-      name: 'Apex POS · raw export 2026-Q1',
-      rung: 'loaded',
-      owner: 'Apex IT',
-      lastUpdated: '2026-04-22T10:14:00.000Z',
-      segment: 'Business',
-      evidenceUsable: false,
-      approvalState: 'unapproved',
-    },
-    {
-      id: 'apex_store_assoc_raw',
-      name: 'Apex store-associate roster · raw',
-      rung: 'loaded',
-      owner: 'Apex HR',
-      lastUpdated: '2026-04-21T08:02:00.000Z',
-      segment: 'Business',
-      evidenceUsable: false,
-      approvalState: 'unapproved',
-    },
-    {
-      id: 'apex_demand_logs_raw',
-      name: 'Apex demand-forecast model logs',
-      rung: 'loaded',
-      owner: 'Apex Data Eng',
-      lastUpdated: '2026-04-20T16:33:00.000Z',
-      segment: 'IT & Technology',
-      evidenceUsable: false,
-      approvalState: 'unapproved',
-    },
-  ],
-  available: [
-    {
-      id: 'apex_pos_indexed',
-      name: 'Apex POS · indexed 2026-Q1',
-      rung: 'available',
-      owner: 'AbarVa Stewards',
-      lastUpdated: '2026-04-22T12:00:00.000Z',
-      segment: 'Business',
-      evidenceUsable: false,
-      approvalState: 'requested',
-    },
-    {
-      id: 'apex_vendor_inventory',
-      name: 'Apex vendor inventory · parsed',
-      rung: 'available',
-      owner: 'AbarVa Stewards',
-      lastUpdated: '2026-04-19T11:20:00.000Z',
-      segment: 'Business',
-      evidenceUsable: false,
-      approvalState: 'requested',
-    },
-    {
-      id: 'apex_outcome_baseline',
-      name: 'Apex outcome baseline lock',
-      rung: 'available',
-      owner: 'AbarVa Stewards',
-      lastUpdated: '2026-04-18T09:45:00.000Z',
-      segment: 'Business',
-      evidenceUsable: false,
-      approvalState: 'requested',
-    },
-    {
-      id: 'apex_tech_inventory',
-      name: 'Apex technology inventory',
-      rung: 'available',
-      owner: 'Apex CIO',
-      lastUpdated: '2026-04-17T15:10:00.000Z',
-      segment: 'IT & Technology',
-      evidenceUsable: false,
-      approvalState: 'requested',
-    },
-  ],
-  usable: [
-    {
-      id: 'apex_demand_forecast_eval',
-      name: 'Apex demand-forecast evaluation pack',
-      rung: 'usable',
-      owner: 'AbarVa Stewards',
-      lastUpdated: '2026-04-23T07:30:00.000Z',
-      segment: 'Business',
-      evidenceUsable: true,
-      approvalState: 'requested',
-    },
-    {
-      id: 'apex_cdp_data_audit',
-      name: 'Apex CDP data audit',
-      rung: 'usable',
-      owner: 'Apex Marketing',
-      lastUpdated: '2026-04-22T18:11:00.000Z',
-      segment: 'Business',
-      evidenceUsable: true,
-      approvalState: 'requested',
-    },
-    {
-      id: 'apex_contact_center_kpis',
-      name: 'Apex contact-center KPI deck',
-      rung: 'usable',
-      owner: 'Apex Ops',
-      lastUpdated: '2026-04-21T13:55:00.000Z',
-      segment: 'Business',
-      evidenceUsable: true,
-      approvalState: 'requested',
-    },
-  ],
-  agent_usable: [
-    {
-      id: 'apex_master_program_brief',
-      name: 'Apex master program brief',
-      rung: 'agent_usable',
-      owner: 'AbarVa Maestro',
-      lastUpdated: '2026-04-24T10:01:00.000Z',
-      segment: 'Business',
-      evidenceUsable: true,
-      approvalState: 'approved',
-    },
-    {
-      id: 'apex_steward_evidence_pack',
-      name: 'Apex Steward evidence pack',
-      rung: 'agent_usable',
-      owner: 'AbarVa Stewards',
-      lastUpdated: '2026-04-23T16:42:00.000Z',
-      segment: 'Business',
-      evidenceUsable: true,
-      approvalState: 'approved',
-    },
-    {
-      id: 'apex_atlas_pressure_index',
-      name: 'Apex Atlas pressure index',
-      rung: 'agent_usable',
-      owner: 'AbarVa Atlas',
-      lastUpdated: '2026-04-22T19:18:00.000Z',
-      segment: 'Business',
-      evidenceUsable: true,
-      approvalState: 'approved',
-    },
-  ],
-  decision_grade: [
-    {
-      id: 'apex_outcome_lock_v1',
-      name: 'Apex outcome lock (v1, signed)',
-      rung: 'decision_grade',
-      owner: 'Apex CFO + AbarVa Steward',
-      lastUpdated: '2026-04-25T09:00:00.000Z',
-      segment: 'Business',
-      evidenceUsable: true,
-      approvalState: 'approved',
-    },
-    {
-      id: 'apex_program_gate_pack',
-      name: 'Apex program-gate decision pack',
-      rung: 'decision_grade',
-      owner: 'Apex CIO + AbarVa Maestro',
-      lastUpdated: '2026-04-24T14:20:00.000Z',
-      segment: 'Business',
-      evidenceUsable: true,
-      approvalState: 'approved',
-    },
-  ],
-};
+const TENANT_SLUG = 'apex-retail';
 
-function buildDatasetDetail(s: DatasetSummary): DatasetDetail {
-  const provenance: Array<{ at: string; label: string }> = [
-    { at: '2026-04-15T08:00:00.000Z', label: 'Ingested into workspace' },
-    { at: '2026-04-17T11:00:00.000Z', label: 'Parsed + indexed by Steward' },
-  ];
-  if (s.evidenceUsable) {
-    provenance.push({
-      at: '2026-04-19T15:00:00.000Z',
-      label: 'Cited in Steward editorial card',
-    });
-  }
-  if (s.approvalState === 'approved') {
-    provenance.push({
-      at: s.lastUpdated,
-      label: 'Approval recorded (deterministic stub)',
-    });
-  }
+// ---------------------------------------------------------------------------
+// Adapter row → page-view transformers
+// ---------------------------------------------------------------------------
 
+function rowToSummary(row: AdminDatasetRow): DatasetSummary {
   return {
-    ...s,
-    provenance,
-    approvalOwner:
-      s.approvalState === 'approved'
-        ? 'Sundaram (Maestro)'
-        : s.approvalState === 'requested'
-          ? 'Pending — Sundaram (Maestro)'
-          : 'Not yet requested',
-    notes:
-      s.approvalState === 'approved'
-        ? 'Approved for agent context and decision-grade use.'
-        : 'Live approval requires the audit-event store landing in Wave 27.',
+    id: row.id,
+    name: row.label,
+    rung: row.rung as TrustRungKey,
+    owner: ownerLabelFor(row),
+    lastUpdated: row.lastUpdatedAt,
+    segment: row.segment,
+    evidenceUsable: row.evidenceUsable,
+    approvalState: row.approvalState,
   };
 }
 
-const DATASET_DETAIL_MAP: Readonly<Record<string, DatasetDetail>> = Object.fromEntries(
-  Object.values(DATASETS_BY_RUNG)
-    .flat()
-    .map((s) => [s.id, buildDatasetDetail(s)] as const),
-);
+/**
+ * Owner label preserves the human-readable strings from the legacy view.
+ * Adapter rows expose `ownerPersonId`; we re-derive the display label from
+ * the well-known seed map. When the live API lands, this map is replaced
+ * with a `getAdminPerson(personId)` lookup.
+ */
+const OWNER_LABEL_BY_PERSON_ID: Readonly<Record<string, string>> = {
+  'team:apex-it': 'Apex IT',
+  'team:apex-hr': 'Apex HR',
+  'team:apex-data-eng': 'Apex Data Eng',
+  'agent:steward': 'AbarVa Stewards',
+  'team:apex-cio': 'Apex CIO',
+  'team:apex-marketing': 'Apex Marketing',
+  'team:apex-ops': 'Apex Ops',
+  'agent:maestro': 'AbarVa Maestro',
+  'agent:atlas': 'AbarVa Atlas',
+};
+
+const OWNER_OVERRIDE_BY_DATASET_ID: Readonly<Record<string, string>> = {
+  apex_outcome_lock_v1: 'Apex CFO + AbarVa Steward',
+  apex_program_gate_pack: 'Apex CIO + AbarVa Maestro',
+};
+
+function ownerLabelFor(row: AdminDatasetRow): string {
+  const override = OWNER_OVERRIDE_BY_DATASET_ID[row.id];
+  if (override) return override;
+  if (row.ownerPersonId && OWNER_LABEL_BY_PERSON_ID[row.ownerPersonId]) {
+    return OWNER_LABEL_BY_PERSON_ID[row.ownerPersonId];
+  }
+  return row.ownerPersonId ?? '—';
+}
+
+function detailRowToDetail(detail: AdminDatasetDetailRow): DatasetDetail {
+  const summary = rowToSummary(detail);
+  return {
+    ...summary,
+    provenance: detail.provenance,
+    approvalOwner: detail.approvalOwner,
+    notes: detail.notes,
+  };
+}
+
+const PROMOTION_DOCUMENT_BY_APPROVAL: Readonly<Record<string, {
+  document: string;
+  engagement: string;
+  category: string;
+}>> = {
+  promo_apex_demand_v2: {
+    document: 'Apex Demand-Forecast Roadmap v2',
+    engagement: 'Apex Retail — Demand Intelligence',
+    category: 'Strategic Plans',
+  },
+  promo_apex_cdp_audit: {
+    document: 'Apex CDP Data Audit (final)',
+    engagement: 'Apex Retail — CDP Migration',
+    category: 'Vendor Contracts',
+  },
+  promo_apex_baseline_lock: {
+    document: 'Apex Outcome Baseline Day-0 Lock',
+    engagement: 'Apex Retail — Demand Intelligence',
+    category: 'Outcomes',
+  },
+  promo_apex_program_brief: {
+    document: 'Apex Master Program Brief',
+    engagement: 'Apex Retail — Portfolio Coordination',
+    category: 'Strategic Plans',
+  },
+  promo_apex_internal_notes: {
+    document: 'Apex internal negotiation notes',
+    engagement: 'Apex Retail — CDP Migration',
+    category: 'Strategic Plans',
+  },
+};
+
+function approvalToPromotion(row: AdminDatasetApprovalRow): PromotionRequestRow {
+  const meta = PROMOTION_DOCUMENT_BY_APPROVAL[row.id] ?? {
+    document: row.datasetId,
+    engagement: 'Apex Retail',
+    category: 'Strategic Plans',
+  };
+  return {
+    id: row.id,
+    document: meta.document,
+    engagement: meta.engagement,
+    org: 'Apex Retail Group',
+    category: meta.category,
+    requestedAt: row.requestedAt,
+    status: row.status,
+    note: row.reason ?? undefined,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Loaded Files / Quality Scorecard / Audit Trail
+//
+// These three surfaces remain seed-derived in the page-view: the adapter
+// shapes for `getAdminLoadedFiles` and `getAdminAuditEvents` will land in
+// later wiring lanes (DATA10 + audit-event store, Wave 27). The 4×4 tenant
+// quality grid is separate from per-dataset quality scores and ships from
+// the legacy /platform/admin/quality merge. ADMIN-DATA5 keeps these
+// constants intact while wiring datasets / approvals / dataset quality.
+// ---------------------------------------------------------------------------
 
 const LOADED_FILES: ReadonlyArray<LoadedFileRow> = [
   {
@@ -487,57 +418,6 @@ const LOADED_FILES: ReadonlyArray<LoadedFileRow> = [
     status: 'missing',
     owner: 'Apex Strategy',
     lastUpdated: '—',
-  },
-];
-
-const PROMOTION_REQUESTS: ReadonlyArray<PromotionRequestRow> = [
-  {
-    id: 'promo_apex_demand_v2',
-    document: 'Apex Demand-Forecast Roadmap v2',
-    engagement: 'Apex Retail — Demand Intelligence',
-    org: 'Apex Retail Group',
-    category: 'Strategic Plans',
-    requestedAt: '2026-04-22T11:00:00.000Z',
-    status: 'pending',
-    note: 'Maestro requested promotion to master after Apex CFO sign-off.',
-  },
-  {
-    id: 'promo_apex_cdp_audit',
-    document: 'Apex CDP Data Audit (final)',
-    engagement: 'Apex Retail — CDP Migration',
-    org: 'Apex Retail Group',
-    category: 'Vendor Contracts',
-    requestedAt: '2026-04-21T16:30:00.000Z',
-    status: 'pending',
-    note: 'Awaiting CIO confirmation before promotion.',
-  },
-  {
-    id: 'promo_apex_baseline_lock',
-    document: 'Apex Outcome Baseline Day-0 Lock',
-    engagement: 'Apex Retail — Demand Intelligence',
-    org: 'Apex Retail Group',
-    category: 'Outcomes',
-    requestedAt: '2026-04-18T09:45:00.000Z',
-    status: 'approved',
-  },
-  {
-    id: 'promo_apex_program_brief',
-    document: 'Apex Master Program Brief',
-    engagement: 'Apex Retail — Portfolio Coordination',
-    org: 'Apex Retail Group',
-    category: 'Strategic Plans',
-    requestedAt: '2026-04-15T13:20:00.000Z',
-    status: 'approved',
-  },
-  {
-    id: 'promo_apex_internal_notes',
-    document: 'Apex internal negotiation notes',
-    engagement: 'Apex Retail — CDP Migration',
-    org: 'Apex Retail Group',
-    category: 'Strategic Plans',
-    requestedAt: '2026-04-10T10:00:00.000Z',
-    status: 'rejected',
-    note: 'Engagement-only — keep out of master intelligence.',
   },
 ];
 
@@ -659,11 +539,28 @@ const ACTION_STRIP: ReadonlyArray<DataTrustActionRow> = [
   },
 ];
 
-export function buildDataTrustPageView(): DataTrustPageView {
+export async function buildDataTrustPageView(
+  tenantSlug: string = TENANT_SLUG,
+): Promise<DataTrustPageView> {
   const ctx = buildAgentContext('apex-retail', 'admin', 'data-trust');
   const editorial = generateStewardEditorial(ctx);
   const choices = buildAgentChoices(ctx, 3);
   const postures = computeAllPostures(ctx);
+
+  // Parallel adapter fan-out (Promise.all per spec § Implementation 2).
+  const [datasetsByRungRaw, approvalRows, qualityScores] = await Promise.all([
+    getAdminDatasetsByRung(tenantSlug),
+    getAdminDatasetApprovals(tenantSlug),
+    getAdminDatasetQualityScores(tenantSlug),
+  ]);
+
+  const datasetsByRung = mapDatasetsByRung(datasetsByRungRaw);
+  const datasetDetailMap = await buildDatasetDetailMap(tenantSlug, datasetsByRungRaw);
+  const promotionRequests = approvalRows.map(approvalToPromotion);
+
+  // qualityScores currently used for parity checks; per-dataset scores
+  // surface in the dataset drawer + DATA6 quality drilldown.
+  void qualityScores;
 
   return {
     eyebrow: 'Data trust posture',
@@ -695,15 +592,51 @@ export function buildDataTrustPageView(): DataTrustPageView {
     agentPostures: postures,
     tabs: TABS,
     defaultTab: 'trust_ladder',
-    datasetsByRung: DATASETS_BY_RUNG,
-    datasetDetailMap: DATASET_DETAIL_MAP,
+    datasetsByRung,
+    datasetDetailMap,
     loadedFiles: LOADED_FILES,
-    promotionRequests: PROMOTION_REQUESTS,
+    promotionRequests,
     qualityScorecard: QUALITY_SCORECARD,
     auditTrail: AUDIT_TRAIL,
     trustProgression: TRUST_PROGRESSION,
     actionStrip: ACTION_STRIP,
   };
+}
+
+function mapDatasetsByRung(
+  raw: Readonly<Record<AdminDatasetRung, ReadonlyArray<AdminDatasetRow>>>,
+): Readonly<Record<TrustRungKey, ReadonlyArray<DatasetSummary>>> {
+  return {
+    loaded: raw.loaded.map(rowToSummary),
+    available: raw.available.map(rowToSummary),
+    usable: raw.usable.map(rowToSummary),
+    agent_usable: raw.agent_usable.map(rowToSummary),
+    decision_grade: raw.decision_grade.map(rowToSummary),
+  };
+}
+
+async function buildDatasetDetailMap(
+  tenantSlug: string,
+  datasetsByRung: Readonly<Record<AdminDatasetRung, ReadonlyArray<AdminDatasetRow>>>,
+): Promise<Readonly<Record<string, DatasetDetail>>> {
+  const allRows: AdminDatasetRow[] = [
+    ...datasetsByRung.loaded,
+    ...datasetsByRung.available,
+    ...datasetsByRung.usable,
+    ...datasetsByRung.agent_usable,
+    ...datasetsByRung.decision_grade,
+  ];
+
+  const details = await Promise.all(
+    allRows.map((row) => getAdminDatasetDetail(tenantSlug, row.id)),
+  );
+
+  const map: Record<string, DatasetDetail> = {};
+  details.forEach((detail) => {
+    if (!detail) return;
+    map[detail.id] = detailRowToDetail(detail);
+  });
+  return map;
 }
 
 const TAB_KEYS: ReadonlyArray<DataTrustTabKey> = [

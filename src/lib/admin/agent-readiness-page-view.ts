@@ -9,6 +9,14 @@ import {
 import { generateStewardEditorial } from '@/lib/agent/editorial';
 import { buildAgentChoices, type AgentChoice } from '@/lib/agent/choices';
 import { DEFAULT_AGENT_CARDS, type AgentCardModel, type AgentPosture } from './admin-shell-config';
+import { getAdminAgentReadiness } from './data/admin-agent-readiness-adapter';
+import type {
+  AdminAgentCoverageCell,
+  AdminAgentId,
+  AdminAgentReadinessSnapshot,
+  AdminAgentSurface,
+  AdminAgentTopGap,
+} from './data/admin-agent-readiness-adapter-types';
 
 export interface AgentPostureRow extends AgentCardModel {
   summary: string;
@@ -117,23 +125,15 @@ export interface AgentReadinessPageView {
   actionStrip: ReadonlyArray<AgentReadinessActionRow>;
 }
 
-const AGENT_DETAIL: Record<AgentCardModel['id'], { summary: string; topGap: string }> = {
-  steward: {
-    summary: 'Holds the gate, access, and readiness posture across the tenant.',
-    topGap: 'Live access mutation pipeline not wired',
-  },
-  nexus: {
-    summary: 'Workflow orchestration over deterministic mission queue.',
-    topGap: 'Live mission queue not connected',
-  },
-  sentinel: {
-    summary: 'Pattern detection over evidence ledger.',
-    topGap: 'Confidence scoring not wired to live evidence',
-  },
-  atlas: {
-    summary: 'Executive tradeoff briefing across portfolio.',
-    topGap: 'Pressure cards run on seed data only',
-  },
+// ---------------------------------------------------------------------------
+// Concept-level constants — deterministic, NOT data
+// ---------------------------------------------------------------------------
+
+const AGENT_SUMMARIES: Record<AgentCardModel['id'], string> = {
+  steward: 'Holds the gate, access, and readiness posture across the tenant.',
+  nexus: 'Workflow orchestration over deterministic mission queue.',
+  sentinel: 'Pattern detection over evidence ledger.',
+  atlas: 'Executive tradeoff briefing across portfolio.',
 };
 
 const AGENT_LABELS: Record<AgentRole, string> = {
@@ -268,49 +268,6 @@ const AGENT_CAPABILITIES: Record<
   },
 };
 
-// ---------------------------------------------------------------------------
-// Context coverage matrix (deterministic per agent × surface)
-// ---------------------------------------------------------------------------
-
-interface CoverageCellSeed {
-  level: ContextCoverageLevel;
-  note: string;
-}
-
-const COVERAGE: Record<
-  AgentRole,
-  Record<AgentReadinessSurfaceKey, CoverageCellSeed>
-> = {
-  steward: {
-    admin: { level: 'decision_grade', note: 'Manifest + posture + blockers fully wired' },
-    programs: { level: 'partial', note: 'Phase gate posture wired; access mutation deferred' },
-    source: { level: 'partial', note: 'Evidence strength visible; approval pipeline deferred' },
-    intelligence: { level: 'thin', note: 'Read posture only; no scoring access' },
-    tower: { level: 'thin', note: 'Read posture only; no executive write path' },
-  },
-  nexus: {
-    programs: { level: 'decision_grade', note: 'Mission slate + pending decisions wired' },
-    source: { level: 'partial', note: 'Reads dataset state; cannot dispatch ingest jobs' },
-    intelligence: { level: 'partial', note: 'Reads pattern queue; cannot orchestrate runs' },
-    tower: { level: 'thin', note: 'No live workflow context — pressure cards only' },
-    admin: { level: 'thin', note: 'No orchestration scope on admin surfaces' },
-  },
-  sentinel: {
-    intelligence: { level: 'decision_grade', note: 'Pattern library + evidence ledger fully wired' },
-    source: { level: 'partial', note: 'Evidence ledger wired; live connector signal deferred' },
-    programs: { level: 'partial', note: 'Pattern triggers per phase wired; live confidence deferred' },
-    tower: { level: 'thin', note: 'Read-only signal surfacing for pressure cards' },
-    admin: { level: 'none', note: 'Sentinel has no admin surface scope today' },
-  },
-  atlas: {
-    tower: { level: 'decision_grade', note: 'Portfolio brief + pressure cards fully wired' },
-    programs: { level: 'partial', note: 'Reads portfolio posture; no per-program brief writes' },
-    intelligence: { level: 'thin', note: 'Read scoring only; no tradeoff synthesis' },
-    source: { level: 'thin', note: 'Read evidence summary; no raw-dataset reach' },
-    admin: { level: 'none', note: 'Atlas has no admin surface scope today' },
-  },
-};
-
 const SURFACE_ORDER: ReadonlyArray<AgentReadinessSurfaceKey> = [
   'programs',
   'source',
@@ -321,15 +278,62 @@ const SURFACE_ORDER: ReadonlyArray<AgentReadinessSurfaceKey> = [
 
 const AGENT_ORDER: ReadonlyArray<AgentRole> = ['steward', 'nexus', 'sentinel', 'atlas'];
 
-function buildCoverageRow(agent: AgentRole): ContextCoverageMatrixRow {
+// ---------------------------------------------------------------------------
+// Adapter coverage projection helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Project the adapter level onto the page-view's narrower coverage level.
+ * Adapter additionally exposes `full` and `absent` for live-DB derivation
+ * (DATA11+); for the four canonical levels we use today, this is identity.
+ */
+function projectCoverageLevel(level: AdminAgentCoverageCell['level']): ContextCoverageLevel {
+  if (level === 'full') return 'decision_grade';
+  if (level === 'absent') return 'none';
+  return level;
+}
+
+interface CoverageLookup {
+  level: ContextCoverageLevel;
+  note: string;
+}
+
+function buildCoverageLookup(
+  cells: ReadonlyArray<AdminAgentCoverageCell>,
+): Record<AgentRole, Record<AgentReadinessSurfaceKey, CoverageLookup>> {
+  const out: Partial<Record<AgentRole, Partial<Record<AgentReadinessSurfaceKey, CoverageLookup>>>> = {};
+  for (const cell of cells) {
+    const agent = cell.agent as AgentRole;
+    const surface = cell.surface as AgentReadinessSurfaceKey;
+    if (!out[agent]) out[agent] = {};
+    out[agent]![surface] = {
+      level: projectCoverageLevel(cell.level),
+      note: cell.note,
+    };
+  }
+  return out as Record<AgentRole, Record<AgentReadinessSurfaceKey, CoverageLookup>>;
+}
+
+function topGapFor(
+  agents: ReadonlyArray<AdminAgentTopGap>,
+  agentId: AgentRole,
+): string {
+  const found = agents.find((a) => (a.agentId as AgentRole) === agentId);
+  return found?.topGap ?? '';
+}
+
+function buildCoverageRow(
+  agent: AgentRole,
+  lookup: Record<AgentRole, Record<AgentReadinessSurfaceKey, CoverageLookup>>,
+): ContextCoverageMatrixRow {
   return {
     agent,
     agentLabel: AGENT_LABELS[agent],
     cells: SURFACE_ORDER.map((surface) => ({
       surface,
       surfaceLabel: SURFACE_LABELS[surface],
-      level: COVERAGE[agent][surface].level,
-      note: COVERAGE[agent][surface].note,
+      level: lookup[agent][surface].level,
+      note: lookup[agent][surface].note,
     })),
   };
 }
@@ -367,6 +371,7 @@ function lookupPosture(
 function buildAgentDetailMap(
   postures: ReadonlyArray<AgentFoundationPosture>,
   agentRows: ReadonlyArray<AgentPostureRow>,
+  coverageLookup: Record<AgentRole, Record<AgentReadinessSurfaceKey, CoverageLookup>>,
 ): Record<AgentRole, AgentDetailModel> {
   const out: Partial<Record<AgentRole, AgentDetailModel>> = {};
   for (const agent of AGENT_ORDER) {
@@ -384,8 +389,8 @@ function buildAgentDetailMap(
       contextCoverage: SURFACE_ORDER.map((surface) => ({
         surface,
         surfaceLabel: SURFACE_LABELS[surface],
-        level: COVERAGE[agent][surface].level,
-        note: COVERAGE[agent][surface].note,
+        level: coverageLookup[agent][surface].level,
+        note: coverageLookup[agent][surface].note,
       })),
       canDo: AGENT_CAPABILITIES[agent].canDo,
       cannotDo: AGENT_CAPABILITIES[agent].cannotDo,
@@ -404,25 +409,30 @@ export function findAgentDetail(
   return view.agentDetailMap[agentId as AgentRole] ?? null;
 }
 
-export function buildAgentReadinessPageView(): AgentReadinessPageView {
-  const ctx = buildAgentContext('apex-retail', 'admin', 'agent-readiness');
+export async function buildAgentReadinessPageView(
+  tenantSlug: string = 'apex-retail',
+): Promise<AgentReadinessPageView> {
+  const ctx = buildAgentContext(tenantSlug, 'admin', 'agent-readiness');
   const editorial = generateStewardEditorial(ctx);
   const choices = buildAgentChoices(ctx, 3);
   const postures = computeAllPostures(ctx);
 
+  const snapshot: AdminAgentReadinessSnapshot = await getAdminAgentReadiness(tenantSlug);
+  const coverageLookup = buildCoverageLookup(snapshot.coverageMatrix);
+
   const agents: ReadonlyArray<AgentPostureRow> = DEFAULT_AGENT_CARDS.map((agent) => ({
     ...agent,
-    summary: AGENT_DETAIL[agent.id].summary,
-    topGap: AGENT_DETAIL[agent.id].topGap,
+    summary: AGENT_SUMMARIES[agent.id],
+    topGap: topGapFor(snapshot.agents, agent.id as AgentRole),
   }));
 
   const blockedCount = agents.filter((a) => postureBlocker(a.posture)).length;
   const blockerLabel =
     editorial.blocker ?? (blockedCount > 0 ? `${blockedCount} agent blocked` : undefined);
 
-  const agentDetailMap = buildAgentDetailMap(postures, agents);
+  const agentDetailMap = buildAgentDetailMap(postures, agents, coverageLookup);
   const contextCoverageMatrix: ReadonlyArray<ContextCoverageMatrixRow> = AGENT_ORDER.map(
-    (agent) => buildCoverageRow(agent),
+    (agent) => buildCoverageRow(agent, coverageLookup),
   );
 
   return {
@@ -460,3 +470,6 @@ export function buildAgentReadinessPageView(): AgentReadinessPageView {
     actionStrip: SEED_ACTION_STRIP,
   };
 }
+
+// Re-exports kept available for narrow consumers.
+export type { AdminAgentId, AdminAgentSurface };

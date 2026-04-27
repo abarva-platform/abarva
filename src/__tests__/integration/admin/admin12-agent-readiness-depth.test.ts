@@ -27,8 +27,8 @@ const root = process.cwd();
 describe('ADMIN12 — Agent Readiness page-view depth', () => {
   let view: AgentReadinessPageView;
 
-  beforeEach(() => {
-    view = buildAgentReadinessPageView();
+  beforeEach(async () => {
+    view = await buildAgentReadinessPageView();
   });
 
   it('still returns deterministicSeed: true', () => {
@@ -239,7 +239,11 @@ describe('ADMIN12 — resolveAgentReadinessTab', () => {
 });
 
 describe('ADMIN12 — findAgentDetail', () => {
-  const view = buildAgentReadinessPageView();
+  let view: AgentReadinessPageView;
+
+  beforeAll(async () => {
+    view = await buildAgentReadinessPageView();
+  });
 
   it('returns null for undefined id', () => {
     expect(findAgentDetail(view, undefined)).toBeNull();

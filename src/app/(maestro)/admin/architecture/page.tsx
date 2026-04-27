@@ -37,7 +37,7 @@ export default async function AdminArchitecturePage({
   searchParams?: Promise<ArchitecturePageSearchParams>;
 }) {
   const params = (await searchParams) ?? {};
-  const view = buildArchitecturePageView();
+  const view = await buildArchitecturePageView();
   const activeView = normalizeView(params.view);
   const expandedPlaneId = params.expand;
   const componentId = params.component;

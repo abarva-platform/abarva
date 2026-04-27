@@ -27,8 +27,8 @@ const root = process.cwd();
 describe('ADMIN11 — Users & Access page-view depth', () => {
   let view: UsersAccessPageView;
 
-  beforeEach(() => {
-    view = buildUsersAccessPageView();
+  beforeEach(async () => {
+    view = await buildUsersAccessPageView();
   });
 
   it('still returns deterministicSeed: true', () => {
@@ -210,7 +210,11 @@ describe('ADMIN11 — resolveUsersAccessTab', () => {
 });
 
 describe('ADMIN11 — findUsersAccessUser', () => {
-  const view = buildUsersAccessPageView();
+  let view: UsersAccessPageView;
+
+  beforeAll(async () => {
+    view = await buildUsersAccessPageView();
+  });
 
   it('returns null for undefined id', () => {
     expect(findUsersAccessUser(view, undefined)).toBeNull();

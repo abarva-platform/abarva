@@ -8,13 +8,23 @@ import {
 import { generateStewardEditorial } from '@/lib/agent/editorial';
 import { buildAgentChoices, type AgentChoice } from '@/lib/agent/choices';
 import {
-  buildConnectorsReadinessView,
+  getAdminConnectors,
+  getAdminConnectorDetail,
+} from './data/admin-connectors-adapter';
+import type {
+  AdminConnectorRow,
+  AdminConnectorDetail as AdapterConnectorDetail,
+  AdminConnectorKind,
+} from './data/admin-connectors-adapter-types';
+import {
   type ConnectorReadiness,
   type ConnectorKind,
+  type ConnectorStatus,
 } from './connectors-readiness-view';
 
 // ---------------------------------------------------------------------------
 // ADMIN13 — Connectors depth view-model
+// ADMIN-DATA4 — Wired to admin-connectors-adapter
 // ---------------------------------------------------------------------------
 
 export type ConnectorTab = 'health' | 'requirements' | 'configuration' | 'logs';
@@ -156,6 +166,10 @@ const CATEGORY_ORDER: ConnectorKind[] = [
 const HARD_GATE_REASON =
   'Live connector adapter available in Wave 27. Hard-gated in this environment.';
 
+const DETERMINISTIC_CAVEAT =
+  'Connector statuses are deterministic seed data — not live connectivity checks. ' +
+  'No connector claims production-ready status until Steward validates live data flow.';
+
 // ---------------------------------------------------------------------------
 // Deterministic seed helpers
 // ---------------------------------------------------------------------------
@@ -194,55 +208,108 @@ function seedTimestamp(seedKey: string, hoursAgoBase: number): string {
 }
 
 // ---------------------------------------------------------------------------
-// Per-connector detail builders
+// Adapter row → page-view ConnectorReadiness translator
 // ---------------------------------------------------------------------------
 
-interface DetailSeed {
-  vendor: string;
-  docsHref: string;
-  configFields: ReadonlyArray<ConnectorConfigField>;
+/**
+ * Adapter rows expose `AdminConnectorKind` (which includes data_warehouse + crm)
+ * and `AdminConnectorStatus` (which includes 'active'). The page-view
+ * `ConnectorKind`/`ConnectorStatus` are narrower — we never seed adapter rows
+ * with kinds/statuses outside the page-view's whitelist, so the cast is safe.
+ * If the live adapter ever returns a wider kind/status, the connector is
+ * skipped (defensive — page-view today only renders the narrower taxonomy).
+ */
+function isPageViewKind(kind: AdminConnectorKind): kind is ConnectorKind {
+  return (
+    kind === 'erp' ||
+    kind === 'spend_analytics' ||
+    kind === 'contract_management' ||
+    kind === 'market_intelligence' ||
+    kind === 'vendor_portal' ||
+    kind === 'identity'
+  );
+}
+
+function adapterStatusToPageView(
+  status: AdminConnectorRow['status'],
+): ConnectorStatus {
+  if (status === 'active') return 'configured_stub'; // narrow safety; not used today
+  return status;
+}
+
+function rowToReadiness(row: AdminConnectorRow): ConnectorReadiness | null {
+  if (!isPageViewKind(row.kind)) return null;
+  const status = adapterStatusToPageView(row.status);
+  const deferredReason =
+    status === 'deferred'
+      ? row.stewardGuidance ??
+        'Deferred — manual workaround approved as interim path.'
+      : null;
+  return {
+    id: row.id,
+    kind: row.kind,
+    label: row.label,
+    status,
+    stewardGuidance: row.stewardGuidance ?? '',
+    blockerReason: row.blockerReason,
+    deferredReason,
+    requiredForPilot: row.requiredForPilot,
+    requiredForProduction: row.requiredForProduction,
+    deterministicSeed: true,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Per-connector enrichment (UI-shaped detail kept here until DATA10
+// widens the adapter contract).
+// ---------------------------------------------------------------------------
+//
+// The adapter detail (`AdapterConnectorDetail`) supplies vendor, configSchema
+// (key list + docsHref), recentSyncAttempts, healthTrend. The page-view layer
+// adds UI-only fields: configField labels/help-text/maskedValue, requirement
+// surface mappings, and human-readable error log seeds.
+
+interface ConfigFieldUiSeed {
+  label: string;
+  type: ConnectorConfigField['type'];
+  maskedValue: string | null;
+  helpText: string;
+}
+
+interface ConnectorEnrichment {
+  configFieldDetails: Readonly<Record<string, ConfigFieldUiSeed>>;
   requirements: ReadonlyArray<ConnectorRequirement>;
   errorLog: ReadonlyArray<ConnectorLogEvent>;
 }
 
-const APEX_DETAIL_SEEDS: Readonly<Record<string, DetailSeed>> = {
+const CONNECTOR_ENRICHMENT: Readonly<Record<string, ConnectorEnrichment>> = {
   'conn-apex-erp': {
-    vendor: 'SAP S/4HANA (planned)',
-    docsHref: 'https://help.sap.com/docs/SAP_S4HANA_CLOUD',
-    configFields: [
-      {
-        key: 'apiBaseUrl',
+    configFieldDetails: {
+      apiBaseUrl: {
         label: 'API base URL',
         type: 'url',
-        required: true,
         maskedValue: null,
         helpText: 'Tenant-specific S/4HANA OData endpoint.',
       },
-      {
-        key: 'clientId',
+      clientId: {
         label: 'OAuth client id',
         type: 'string',
-        required: true,
         maskedValue: null,
         helpText: 'Issued by IT Security after consent approval.',
       },
-      {
-        key: 'clientSecret',
+      clientSecret: {
         label: 'OAuth client secret',
         type: 'secret',
-        required: true,
         maskedValue: null,
         helpText: 'Stored in Vault. Never displayed.',
       },
-      {
-        key: 'dataDomains',
+      dataDomains: {
         label: 'In-scope data domains',
         type: 'enum',
-        required: true,
         maskedValue: null,
         helpText: 'Spend, Vendors, Contracts, Invoices.',
       },
-    ],
+    },
     requirements: [
       { surface: 'Programs · Source ingest', required: true, notes: 'Spend + vendor master.' },
       { surface: 'Intelligence · Vendor patterns', required: true, notes: 'Trend signals.' },
@@ -257,26 +324,20 @@ const APEX_DETAIL_SEEDS: Readonly<Record<string, DetailSeed>> = {
     ],
   },
   'conn-apex-spend-analytics': {
-    vendor: 'Coupa Spend Analytics (deferred)',
-    docsHref: 'https://success.coupa.com/Implement/Coupa_Connectors',
-    configFields: [
-      {
-        key: 'tenantId',
+    configFieldDetails: {
+      tenantId: {
         label: 'Coupa tenant id',
         type: 'string',
-        required: true,
         maskedValue: null,
         helpText: 'Provided by Coupa onboarding team.',
       },
-      {
-        key: 'apiKey',
+      apiKey: {
         label: 'API key',
         type: 'secret',
-        required: true,
         maskedValue: null,
         helpText: 'Never displayed. Vault-managed.',
       },
-    ],
+    },
     requirements: [
       { surface: 'Programs · BAFO analysis', required: false, notes: 'Manual export is the interim path.' },
     ],
@@ -289,34 +350,26 @@ const APEX_DETAIL_SEEDS: Readonly<Record<string, DetailSeed>> = {
     ],
   },
   'conn-apex-contract-mgmt': {
-    vendor: 'Icertis Contract Intelligence',
-    docsHref: 'https://docs.icertis.com',
-    configFields: [
-      {
-        key: 'apiBaseUrl',
+    configFieldDetails: {
+      apiBaseUrl: {
         label: 'Icertis API base URL',
         type: 'url',
-        required: true,
         maskedValue: 'https://••••.icertis.com/api',
         helpText: 'Tenant-specific endpoint.',
       },
-      {
-        key: 'apiKey',
+      apiKey: {
         label: 'API key',
         type: 'secret',
-        required: true,
         maskedValue: '••••••••',
         helpText: 'Stub credential — not validated against live service.',
       },
-      {
-        key: 'fieldMapVersion',
+      fieldMapVersion: {
         label: 'Field map version',
         type: 'enum',
-        required: true,
         maskedValue: 'v2024.07',
         helpText: 'Contract field mapping version pinned for the pilot.',
       },
-    ],
+    },
     requirements: [
       { surface: 'Programs · Contract lifecycle', required: true, notes: 'Primary surface for pilot.' },
       { surface: 'Intelligence · Risk patterns', required: true, notes: 'Renewal + expiry signals.' },
@@ -336,26 +389,20 @@ const APEX_DETAIL_SEEDS: Readonly<Record<string, DetailSeed>> = {
     ],
   },
   'conn-apex-market-intel': {
-    vendor: 'Beroe LiVE.Ai',
-    docsHref: 'https://www.beroeinc.com/live/',
-    configFields: [
-      {
-        key: 'subscriptionTier',
+    configFieldDetails: {
+      subscriptionTier: {
         label: 'Subscription tier',
         type: 'enum',
-        required: true,
         maskedValue: null,
         helpText: 'Tier dictates available category coverage.',
       },
-      {
-        key: 'apiKey',
+      apiKey: {
         label: 'API key',
         type: 'secret',
-        required: true,
         maskedValue: null,
         helpText: 'Provisioned post-procurement.',
       },
-    ],
+    },
     requirements: [
       { surface: 'Intelligence · Category outlooks', required: false, notes: 'Optional — qualitative briefs only.' },
     ],
@@ -368,26 +415,20 @@ const APEX_DETAIL_SEEDS: Readonly<Record<string, DetailSeed>> = {
     ],
   },
   'conn-apex-vendor-portal': {
-    vendor: 'Internal vendor portal (deferred)',
-    docsHref: 'https://example.com/docs/vendor-portal',
-    configFields: [
-      {
-        key: 'portalBaseUrl',
+    configFieldDetails: {
+      portalBaseUrl: {
         label: 'Portal base URL',
         type: 'url',
-        required: true,
         maskedValue: null,
         helpText: 'Internal portal endpoint.',
       },
-      {
-        key: 'webhookSecret',
+      webhookSecret: {
         label: 'Webhook secret',
         type: 'secret',
-        required: true,
         maskedValue: null,
         helpText: 'For BAFO callback verification.',
       },
-    ],
+    },
     requirements: [
       { surface: 'Programs · Vendor portfolio', required: false, notes: 'Manual BAFO intake covers pilot.' },
     ],
@@ -400,34 +441,26 @@ const APEX_DETAIL_SEEDS: Readonly<Record<string, DetailSeed>> = {
     ],
   },
   'conn-apex-identity': {
-    vendor: 'Clerk (test users)',
-    docsHref: 'https://clerk.com/docs',
-    configFields: [
-      {
-        key: 'publishableKey',
+    configFieldDetails: {
+      publishableKey: {
         label: 'Clerk publishable key',
         type: 'string',
-        required: true,
         maskedValue: 'pk_test_••••••••',
         helpText: 'Test environment key.',
       },
-      {
-        key: 'secretKey',
+      secretKey: {
         label: 'Clerk secret key',
         type: 'secret',
-        required: true,
         maskedValue: '••••••••',
         helpText: 'Server-only. Vault-managed.',
       },
-      {
-        key: 'allowedRedirectOrigins',
+      allowedRedirectOrigins: {
         label: 'Allowed redirect origins',
         type: 'string',
-        required: true,
         maskedValue: 'https://app.example.com',
         helpText: 'Pilot URL allowlist.',
       },
-    ],
+    },
     requirements: [
       { surface: 'Admin · Users & access', required: true, notes: 'All admin gating relies on Clerk metadata.' },
       { surface: 'Programs · Audit', required: true, notes: 'User attribution.' },
@@ -445,30 +478,21 @@ const APEX_DETAIL_SEEDS: Readonly<Record<string, DetailSeed>> = {
       },
     ],
   },
-};
-
-const MERIDIAN_DETAIL_SEEDS: Readonly<Record<string, DetailSeed>> = {
   'conn-meridian-identity': {
-    vendor: 'Clerk (test users)',
-    docsHref: 'https://clerk.com/docs',
-    configFields: [
-      {
-        key: 'publishableKey',
+    configFieldDetails: {
+      publishableKey: {
         label: 'Clerk publishable key',
         type: 'string',
-        required: true,
         maskedValue: 'pk_test_••••••••',
         helpText: 'Test environment key.',
       },
-      {
-        key: 'secretKey',
+      secretKey: {
         label: 'Clerk secret key',
         type: 'secret',
-        required: true,
         maskedValue: '••••••••',
         helpText: 'Server-only.',
       },
-    ],
+    },
     requirements: [
       { surface: 'Admin · Users & access', required: true, notes: 'Tenant gate.' },
     ],
@@ -481,26 +505,20 @@ const MERIDIAN_DETAIL_SEEDS: Readonly<Record<string, DetailSeed>> = {
     ],
   },
   'conn-meridian-erp': {
-    vendor: 'Workday Financials (planned)',
-    docsHref: 'https://doc.workday.com',
-    configFields: [
-      {
-        key: 'apiBaseUrl',
+    configFieldDetails: {
+      apiBaseUrl: {
         label: 'API base URL',
         type: 'url',
-        required: true,
         maskedValue: null,
         helpText: 'Tenant-specific endpoint.',
       },
-      {
-        key: 'apiKey',
+      apiKey: {
         label: 'API key',
         type: 'secret',
-        required: true,
         maskedValue: null,
         helpText: 'Provisioned post-IT-Security review.',
       },
-    ],
+    },
     requirements: [
       { surface: 'Programs · Source ingest', required: false, notes: 'Manual export covers Meridian pilot.' },
     ],
@@ -514,8 +532,46 @@ const MERIDIAN_DETAIL_SEEDS: Readonly<Record<string, DetailSeed>> = {
   },
 };
 
-function seedsFor(tenantSlug: string): Readonly<Record<string, DetailSeed>> {
-  return tenantSlug === 'meridian' ? MERIDIAN_DETAIL_SEEDS : APEX_DETAIL_SEEDS;
+// ---------------------------------------------------------------------------
+// Detail builders
+// ---------------------------------------------------------------------------
+
+/**
+ * Build the page-view config-field array from the adapter's configSchema +
+ * the page-view enrichment seed. Returns [] if no schema fields available.
+ */
+function buildConfigFields(
+  connectorId: string,
+  adapterDetail: AdapterConnectorDetail | null,
+): ReadonlyArray<ConnectorConfigField> {
+  const schema = adapterDetail?.configSchema;
+  const fieldKeys = Array.isArray(schema?.fields)
+    ? (schema!.fields as string[])
+    : [];
+  const enrichment = CONNECTOR_ENRICHMENT[connectorId];
+  if (!enrichment) return [];
+
+  return fieldKeys.map((key) => {
+    const ui = enrichment.configFieldDetails[key];
+    if (!ui) {
+      return {
+        key,
+        label: key,
+        type: 'string' as const,
+        required: true,
+        maskedValue: null,
+        helpText: '',
+      };
+    }
+    return {
+      key,
+      label: ui.label,
+      type: ui.type,
+      required: true, // all known fields are required in fixture seed
+      maskedValue: ui.maskedValue,
+      helpText: ui.helpText,
+    };
+  });
 }
 
 function buildSyncAttempts(connector: ConnectorReadiness): {
@@ -556,24 +612,40 @@ function buildSyncAttempts(connector: ConnectorReadiness): {
 
 function buildDetail(
   connector: ConnectorReadiness,
-  seed: DetailSeed,
+  adapterDetail: AdapterConnectorDetail | null,
 ): ConnectorDetail {
   const baseline =
     connector.status === 'configured_stub' ? 88
       : connector.status === 'deferred' ? 60
         : 45;
   const { last, recent } = buildSyncAttempts(connector);
+  const enrichment = CONNECTOR_ENRICHMENT[connector.id];
+  const schema = adapterDetail?.configSchema;
+  const docsHref =
+    typeof schema?.docsHref === 'string' ? (schema.docsHref as string) : '';
   return {
     id: connector.id,
-    vendor: seed.vendor,
-    docsHref: seed.docsHref,
-    configFields: seed.configFields,
+    vendor: adapterDetail?.vendor ?? '',
+    docsHref,
+    configFields: buildConfigFields(connector.id, adapterDetail),
     lastSyncAttempt: last,
     recentAttempts: recent,
-    errorLog: seed.errorLog,
-    requirements: seed.requirements,
+    errorLog: enrichment?.errorLog ?? [],
+    requirements: enrichment?.requirements ?? [],
     healthTrend: buildHealthTrend(`${connector.id}:trend`, baseline),
   };
+}
+
+// ---------------------------------------------------------------------------
+// Helper: locate detail entry by id (preserved across the refactor for
+// component callers that need a typed lookup).
+// ---------------------------------------------------------------------------
+
+export function findConnectorDetail(
+  view: ConnectorsPageView,
+  connectorId: string,
+): ConnectorDetail | null {
+  return view.connectorDetailMap[connectorId] ?? null;
 }
 
 // ---------------------------------------------------------------------------
@@ -636,33 +708,47 @@ function buildActions(pilotBlockerCount: number): ConnectorAction[] {
   ];
 }
 
-export function buildConnectorsPageView(): ConnectorsPageView {
-  const tenantSlug = 'apex-retail';
+export async function buildConnectorsPageView(
+  tenantSlug: string = 'apex-retail',
+): Promise<ConnectorsPageView> {
   const ctx = buildAgentContext(tenantSlug, 'admin', 'connectors');
   const editorial = generateStewardEditorial(ctx);
   const choices = buildAgentChoices(ctx, 3);
   const postures = computeAllPostures(ctx);
 
-  const readiness = buildConnectorsReadinessView(tenantSlug);
-  const seeds = seedsFor(tenantSlug);
+  // ADMIN-DATA4: source connectors + per-connector detail from the adapter.
+  const adapterRows = await getAdminConnectors(tenantSlug);
 
-  const detailMap: Record<string, ConnectorDetail> = {};
-  for (const conn of readiness.connectors) {
-    const seed = seeds[conn.id];
-    if (!seed) continue;
-    detailMap[conn.id] = buildDetail(conn, seed);
+  const connectors: ConnectorReadiness[] = [];
+  for (const row of adapterRows) {
+    const r = rowToReadiness(row);
+    if (r) connectors.push(r);
   }
 
-  const categories = buildCategories(readiness.connectors);
-  const actions = buildActions(readiness.pilotBlockers.length);
+  const detailMap: Record<string, ConnectorDetail> = {};
+  for (const conn of connectors) {
+    const adapterDetail = await getAdminConnectorDetail(tenantSlug, conn.id);
+    detailMap[conn.id] = buildDetail(conn, adapterDetail);
+  }
+
+  const pilotBlockers = connectors.filter(
+    (c) => c.requiredForPilot && c.status !== 'configured_stub',
+  );
+  const configuredCount = connectors.filter(
+    (c) => c.status === 'configured_stub',
+  ).length;
+  const totalCount = connectors.length;
+
+  const categories = buildCategories(connectors);
+  const actions = buildActions(pilotBlockers.length);
 
   const connectorBody =
-    `${readiness.configuredCount} of ${readiness.totalCount} connectors configured as stubs. ` +
+    `${configuredCount} of ${totalCount} connectors configured as stubs. ` +
     'None are live in this environment. Pilot cannot proceed until pilot-required connectors clear Steward review.';
 
   const blockerLabel =
-    readiness.pilotBlockers.length > 0
-      ? `${readiness.pilotBlockers.length} pilot blocker${readiness.pilotBlockers.length === 1 ? '' : 's'}`
+    pilotBlockers.length > 0
+      ? `${pilotBlockers.length} pilot blocker${pilotBlockers.length === 1 ? '' : 's'}`
       : undefined;
 
   return {
@@ -686,11 +772,11 @@ export function buildConnectorsPageView(): ConnectorsPageView {
       blocker: blockerLabel,
       primaryAction: editorial.primaryAction,
     },
-    connectors: readiness.connectors,
-    pilotBlockers: readiness.pilotBlockers,
-    configuredCount: readiness.configuredCount,
-    totalCount: readiness.totalCount,
-    caveat: readiness.caveat,
+    connectors,
+    pilotBlockers,
+    configuredCount,
+    totalCount,
+    caveat: DETERMINISTIC_CAVEAT,
     primaryAgentLabel: 'Steward',
     primaryActionLabel: 'Resolve connector blockers',
     primaryActionHref: '/admin/connectors#blockers',

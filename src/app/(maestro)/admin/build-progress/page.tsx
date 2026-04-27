@@ -62,7 +62,7 @@ export default async function BuildProgressPage({
 }: {
   searchParams: Promise<BuildProgressSearchParams>;
 }) {
-  const view = buildBuildProgressPageView();
+  const view = await buildBuildProgressPageView();
   const params = await searchParams;
   const activeTab = parseTab(params.tab, view.defaultTab);
   const expandedWaveId = params.wave ?? null;

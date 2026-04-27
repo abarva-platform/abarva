@@ -34,18 +34,28 @@ interface BasePageView {
   deterministicSeed: true;
 }
 
-const builders: ReadonlyArray<readonly [string, () => BasePageView]> = [
-  ['Overview', buildOverviewPageView],
-  ['Data Trust', buildDataTrustPageView],
-  ['Connectors', buildConnectorsPageView],
-  ['Users & Access', buildUsersAccessPageView],
-  ['Agent Readiness', buildAgentReadinessPageView],
-  ['Build Progress', buildBuildProgressPageView],
+// ADMIN-DATA3+: builders are progressively migrated to async; normalize all
+// builders to a uniform async-returning shape so describe.each is homogenous.
+type Builder = () => BasePageView | Promise<BasePageView>;
+
+const toAsync =
+  (fn: Builder) => async (): Promise<BasePageView> => Promise.resolve(fn());
+
+const builders: ReadonlyArray<readonly [string, () => Promise<BasePageView>]> = [
+  ['Overview', toAsync(buildOverviewPageView)],
+  ['Data Trust', toAsync(buildDataTrustPageView)],
+  ['Connectors', toAsync(buildConnectorsPageView)],
+  ['Users & Access', toAsync(buildUsersAccessPageView)],
+  ['Agent Readiness', toAsync(buildAgentReadinessPageView)],
+  ['Build Progress', toAsync(buildBuildProgressPageView)],
 ];
 
 describe('ADMIN6 — Remaining sub-pages', () => {
   describe.each(builders)('%s page view', (label, builder) => {
-    const view = builder();
+    let view: BasePageView;
+    beforeAll(async () => {
+      view = await builder();
+    });
 
     it('returns deterministicSeed: true', () => {
       expect(view.deterministicSeed).toBe(true);

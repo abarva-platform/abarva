@@ -26,7 +26,7 @@ export default async function AgentReadinessPage({
 }: {
   searchParams?: Promise<{ agent?: string }>;
 }) {
-  const view = buildAgentReadinessPageView();
+  const view = await buildAgentReadinessPageView();
   const resolved = searchParams ? await searchParams : undefined;
   const activeTab = resolveAgentReadinessTab(resolved?.agent);
   const activeDetail =

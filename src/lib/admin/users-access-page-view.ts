@@ -7,6 +7,18 @@ import {
 } from '@/lib/agent/posture';
 import { generateStewardEditorial } from '@/lib/agent/editorial';
 import { buildAgentChoices, type AgentChoice } from '@/lib/agent/choices';
+import {
+  getAdminInvites,
+  getAdminRoleMatrix,
+  getAdminUserDetail,
+  getAdminUsers,
+} from '@/lib/admin/data/admin-users-adapter';
+import type {
+  AdminInviteRow,
+  AdminRoleSummary,
+  AdminUserDetail,
+  AdminUserRow,
+} from '@/lib/admin/data/admin-users-adapter-types';
 
 export interface RoleAccessRow {
   id: string;
@@ -125,6 +137,14 @@ export interface UsersAccessPageView {
   actionStrip: ReadonlyArray<UsersAccessActionRow>;
 }
 
+// ---------------------------------------------------------------------------
+// Deterministic concept-level constants (NOT data — these are surface affordances).
+// ADMIN-DATA3 keeps these in-module since they describe permission semantics
+// and tab affordances rather than tenant-scoped records. The data that DOES
+// flow through the adapter (users, invites, role summary) lives in the
+// fixtures/live adapter.
+// ---------------------------------------------------------------------------
+
 const ROLES: ReadonlyArray<RoleAccessRow> = [
   {
     id: 'platform_admin',
@@ -170,10 +190,6 @@ const ROLES: ReadonlyArray<RoleAccessRow> = [
   },
 ];
 
-// ---------------------------------------------------------------------------
-// ADMIN11 — Deterministic seed data for depth surfaces
-// ---------------------------------------------------------------------------
-
 const TABS: ReadonlyArray<UsersAccessTabMeta> = [
   {
     key: 'all',
@@ -212,192 +228,92 @@ export function resolveUsersAccessTab(input: string | undefined): UsersAccessTab
   return found ?? DEFAULT_TAB;
 }
 
-const SEED_USER_DETAILS: ReadonlyArray<UsersAccessUserDetail> = [
-  {
-    id: 'usr_001',
-    name: 'Anand Sundaram',
-    email: 'anand@abarva.io',
-    roleId: 'platform_admin',
-    roleLabel: 'Platform admin',
-    tenant: 'AbarVa Platform',
-    lastSignIn: '2026-04-26T09:18:00Z',
-    status: 'active',
-    permissions: ['platform.read', 'platform.write', 'tenant.read', 'tenant.write'],
-    inviteStatus: 'accepted',
-    recentActivity: [
-      { at: '2026-04-26T09:18:00Z', label: 'Signed in via Clerk OTP' },
-      { at: '2026-04-25T17:42:00Z', label: 'Reviewed admin readiness audit' },
-    ],
-  },
-  {
-    id: 'usr_002',
-    name: 'Maya Iyer',
-    email: 'maya@apex-retail.demo',
-    roleId: 'tenant_admin',
-    roleLabel: 'Tenant admin',
-    tenant: 'Apex Retail',
-    lastSignIn: '2026-04-25T14:02:00Z',
-    status: 'active',
-    permissions: ['tenant.read', 'tenant.write', 'programs.read'],
-    inviteStatus: 'accepted',
-    recentActivity: [
-      { at: '2026-04-25T14:02:00Z', label: 'Approved Phase 3 dataset' },
-      { at: '2026-04-24T11:30:00Z', label: 'Updated tenant SSO posture' },
-    ],
-  },
-  {
-    id: 'usr_003',
-    name: 'Daniel Cho',
-    email: 'daniel@apex-retail.demo',
-    roleId: 'maestro',
-    roleLabel: 'Maestro',
-    tenant: 'Apex Retail',
-    lastSignIn: '2026-04-26T08:05:00Z',
-    status: 'active',
-    permissions: ['programs.read', 'programs.write', 'deliverables.read'],
-    inviteStatus: 'accepted',
-    recentActivity: [
-      { at: '2026-04-26T08:05:00Z', label: 'Composed deliverable for Contact Center AI' },
-    ],
-  },
-  {
-    id: 'usr_004',
-    name: 'Priya Rao',
-    email: 'priya@meridian.demo',
-    roleId: 'maestro',
-    roleLabel: 'Maestro',
-    tenant: 'Meridian',
-    lastSignIn: '2026-04-23T16:20:00Z',
-    status: 'active',
-    permissions: ['programs.read', 'programs.write', 'deliverables.read'],
-    inviteStatus: 'accepted',
-    recentActivity: [
-      { at: '2026-04-23T16:20:00Z', label: 'Authored Intelligence brief' },
-    ],
-  },
-  {
-    id: 'usr_005',
-    name: 'Eli Park',
-    email: 'eli@apex-retail.demo',
-    roleId: 'sponsor',
-    roleLabel: 'Sponsor',
-    tenant: 'Apex Retail',
-    lastSignIn: '2026-04-22T10:14:00Z',
-    status: 'active',
-    permissions: ['tower.read', 'scorecard.read'],
-    inviteStatus: 'accepted',
-    recentActivity: [
-      { at: '2026-04-22T10:14:00Z', label: 'Reviewed pressure cards' },
-    ],
-  },
-  {
-    id: 'usr_006',
-    name: 'Naomi Stein',
-    email: 'naomi@meridian.demo',
-    roleId: 'sponsor',
-    roleLabel: 'Sponsor',
-    tenant: 'Meridian',
-    lastSignIn: '2026-04-20T18:55:00Z',
-    status: 'active',
-    permissions: ['tower.read', 'scorecard.read'],
-    inviteStatus: 'accepted',
-    recentActivity: [
-      { at: '2026-04-20T18:55:00Z', label: 'Read executive brief' },
-    ],
-  },
-  {
-    id: 'usr_007',
-    name: 'Karim Bell',
-    email: 'karim@investors.demo',
-    roleId: 'investor',
-    roleLabel: 'Investor',
-    tenant: 'AbarVa Platform',
-    lastSignIn: '2026-04-18T07:33:00Z',
-    status: 'active',
-    permissions: ['portfolio.read'],
-    inviteStatus: 'accepted',
-    recentActivity: [
-      { at: '2026-04-18T07:33:00Z', label: 'Viewed portfolio brief' },
-    ],
-  },
-];
+const ROLE_LABELS: Record<string, string> = {
+  platform_admin: 'Platform admin',
+  tenant_admin: 'Tenant admin',
+  maestro: 'Maestro',
+  sponsor: 'Sponsor',
+  investor: 'Investor',
+  observer: 'Observer',
+  client_viewer: 'Client viewer',
+};
 
-const SEED_INVITES: ReadonlyArray<UsersAccessInviteRow> = [
-  {
-    id: 'inv_001',
-    email: 'sasha@apex-retail.demo',
-    invitedRoleId: 'maestro',
-    invitedRoleLabel: 'Maestro',
-    invitedBy: 'Anand Sundaram',
-    sentAt: '2026-04-24T10:00:00Z',
-    status: 'pending',
-  },
-  {
-    id: 'inv_002',
-    email: 'lee@meridian.demo',
-    invitedRoleId: 'sponsor',
-    invitedRoleLabel: 'Sponsor',
-    invitedBy: 'Priya Rao',
-    sentAt: '2026-04-22T14:30:00Z',
-    status: 'pending',
-  },
-  {
-    id: 'inv_003',
-    email: 'expired@example.demo',
-    invitedRoleId: 'observer',
-    invitedRoleLabel: 'Observer',
-    invitedBy: 'Anand Sundaram',
-    sentAt: '2026-03-30T08:15:00Z',
-    status: 'expired',
-  },
-];
+const TENANT_LABELS: Record<string, string> = {
+  'abarva-platform': 'AbarVa Platform',
+  'apex-retail': 'Apex Retail',
+  meridian: 'Meridian',
+};
 
-const SEED_ROLE_SUMMARY: ReadonlyArray<UsersAccessRoleSummaryRow> = [
-  {
-    id: 'platform_admin',
-    label: 'Platform admin',
-    members: 1,
-    scope: 'Full platform scope · read-only on live mutation',
-    permissionCount: 4,
-  },
-  {
-    id: 'tenant_admin',
-    label: 'Tenant admin',
-    members: 2,
-    scope: 'Single-tenant scope · no cross-tenant reach',
-    permissionCount: 3,
-  },
-  {
-    id: 'maestro',
-    label: 'Maestro',
-    members: 3,
-    scope: 'Engagement owner · composes deliverables, drives Programs',
-    permissionCount: 3,
-  },
-  {
-    id: 'sponsor',
-    label: 'Sponsor',
-    members: 2,
-    scope: 'Tower brief, scorecards, pressure cards · no edit',
-    permissionCount: 2,
-  },
-  {
-    id: 'investor',
-    label: 'Investor',
-    members: 1,
-    scope: 'Portfolio brief read-only · no raw datasets',
-    permissionCount: 1,
-  },
-  {
-    id: 'observer',
-    label: 'Observer',
-    members: 0,
-    scope: 'Reserved · no seats today',
-    permissionCount: 0,
-  },
-];
+function tenantLabel(slug: string): string {
+  return (
+    TENANT_LABELS[slug] ??
+    slug
+      .split('-')
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ')
+  );
+}
 
-const SEED_PERMISSION_MATRIX: ReadonlyArray<UsersAccessPermissionMatrixRow> = [
+function pickPrimaryRoleId(adminRow: AdminUserRow): string {
+  const first = adminRow.tenantRoles[0];
+  return first?.role ?? adminRow.primaryRole;
+}
+
+function pickTenantSlug(adminRow: AdminUserRow): string {
+  return adminRow.tenantRoles[0]?.tenantSlug ?? '';
+}
+
+function adminUserToRow(row: AdminUserRow): UsersAccessUserRow {
+  const roleId = pickPrimaryRoleId(row);
+  return {
+    id: row.id,
+    name: row.displayName,
+    email: row.email,
+    roleId,
+    roleLabel: ROLE_LABELS[roleId] ?? roleId,
+    tenant: tenantLabel(pickTenantSlug(row)),
+    lastSignIn: row.lastSignIn ?? '',
+    status: row.status,
+  };
+}
+
+function adminUserDetailToView(detail: AdminUserDetail): UsersAccessUserDetail {
+  const base = adminUserToRow(detail);
+  return {
+    ...base,
+    permissions: detail.permissions,
+    // Adapter contract doesn't surface invite status — fixture users are all accepted.
+    inviteStatus: detail.status === 'invited' ? 'pending' : 'accepted',
+    recentActivity: detail.recentActivity.map((entry) => ({
+      at: entry.at,
+      label: entry.action,
+    })),
+  };
+}
+
+function adminInviteToRow(row: AdminInviteRow): UsersAccessInviteRow {
+  return {
+    id: row.id,
+    email: row.email,
+    invitedRoleId: row.invitedRoleId,
+    invitedRoleLabel: row.invitedRoleLabel,
+    invitedBy: row.invitedBy,
+    sentAt: row.sentAt,
+    status: row.status,
+  };
+}
+
+function adminRoleSummaryToRow(row: AdminRoleSummary): UsersAccessRoleSummaryRow {
+  return {
+    id: row.roleId,
+    label: row.label,
+    members: row.memberCount,
+    scope: row.scope,
+    permissionCount: row.permissionCount,
+  };
+}
+
+const PERMISSION_MATRIX: ReadonlyArray<UsersAccessPermissionMatrixRow> = [
   {
     id: 'platform.read',
     label: 'Platform read',
@@ -448,7 +364,7 @@ const SEED_PERMISSION_MATRIX: ReadonlyArray<UsersAccessPermissionMatrixRow> = [
   },
 ];
 
-const SEED_ACTION_STRIP: ReadonlyArray<UsersAccessActionRow> = [
+const ACTION_STRIP: ReadonlyArray<UsersAccessActionRow> = [
   {
     id: 'invite_user',
     label: 'Invite user',
@@ -477,26 +393,37 @@ export function findUsersAccessUser(
   return view.userDetails.find((u) => u.id === userId) ?? null;
 }
 
-export function buildUsersAccessPageView(): UsersAccessPageView {
-  const ctx = buildAgentContext('apex-retail', 'admin', 'users-access');
+export async function buildUsersAccessPageView(
+  tenantSlug: string = 'apex-retail',
+): Promise<UsersAccessPageView> {
+  const ctx = buildAgentContext(tenantSlug, 'admin', 'users-access');
   const editorial = generateStewardEditorial(ctx);
   const choices = buildAgentChoices(ctx, 3);
   const postures = computeAllPostures(ctx);
 
-  const userList: ReadonlyArray<UsersAccessUserRow> = SEED_USER_DETAILS.map(
-    (detail) => ({
-      id: detail.id,
-      name: detail.name,
-      email: detail.email,
-      roleId: detail.roleId,
-      roleLabel: detail.roleLabel,
-      tenant: detail.tenant,
-      lastSignIn: detail.lastSignIn,
-      status: detail.status,
-    }),
-  );
+  // ADMIN-DATA3 — consume the admin-users-adapter rather than hardcoded seeds.
+  const [adminUsers, adminInvites, adminRoleMatrix] = await Promise.all([
+    getAdminUsers(tenantSlug),
+    getAdminInvites(tenantSlug),
+    getAdminRoleMatrix(tenantSlug),
+  ]);
 
-  const pendingInvitesCount = SEED_INVITES.filter((i) => i.status === 'pending').length;
+  // Pull full per-user details (permissions + recent activity) by id.
+  const adminUserDetails = (
+    await Promise.all(
+      adminUsers.map((row) => getAdminUserDetail(tenantSlug, row.id)),
+    )
+  ).filter((d): d is AdminUserDetail => d !== null);
+
+  const userList: ReadonlyArray<UsersAccessUserRow> = adminUsers.map(adminUserToRow);
+  const userDetails: ReadonlyArray<UsersAccessUserDetail> =
+    adminUserDetails.map(adminUserDetailToView);
+  const inviteList: ReadonlyArray<UsersAccessInviteRow> =
+    adminInvites.map(adminInviteToRow);
+  const roleSummary: ReadonlyArray<UsersAccessRoleSummaryRow> =
+    adminRoleMatrix.map(adminRoleSummaryToRow);
+
+  const pendingInvitesCount = inviteList.filter((i) => i.status === 'pending').length;
 
   return {
     eyebrow: 'Roles, scope, and access posture',
@@ -531,10 +458,10 @@ export function buildUsersAccessPageView(): UsersAccessPageView {
     tabs: TABS,
     defaultTab: DEFAULT_TAB,
     userList,
-    userDetails: SEED_USER_DETAILS,
-    inviteList: SEED_INVITES,
-    roleSummary: SEED_ROLE_SUMMARY,
-    permissionMatrix: SEED_PERMISSION_MATRIX,
-    actionStrip: SEED_ACTION_STRIP,
+    userDetails,
+    inviteList,
+    roleSummary,
+    permissionMatrix: PERMISSION_MATRIX,
+    actionStrip: ACTION_STRIP,
   };
 }

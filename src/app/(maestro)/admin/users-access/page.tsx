@@ -27,7 +27,7 @@ export default async function UsersAccessPage({
 }: {
   searchParams?: Promise<{ tab?: string; user?: string }>;
 }) {
-  const view = buildUsersAccessPageView();
+  const view = await buildUsersAccessPageView();
   const resolved = searchParams ? await searchParams : undefined;
   const activeTab = resolveUsersAccessTab(resolved?.tab);
   const activeUser = findUsersAccessUser(view, resolved?.user);
