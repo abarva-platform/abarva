@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-04-26",
+  "lastUpdated": "2026-04-27",
   "lifecycle": [
     "ready",
     "in_progress",
@@ -8776,6 +8776,15 @@
       "wave": "nav1",
       "track": "01-brand-design-system",
       "notes": "Pure-TypeScript Jest regression suite locking NAV1A-NAV1E invariants. 129 tests across 11 describe blocks. Catches legacy chrome imports, hand-coded wordmarks, banned tokens in canonical surface, and dropped canonical-shell imports."
+    },
+    {
+      "id": "NAV1G",
+      "title": "Nav Alignment State Update",
+      "status": "code_complete",
+      "type": "docs",
+      "wave": "nav1",
+      "track": "01-brand-design-system",
+      "notes": "State manifest update after NAV1A-NAV1F merge. Updates production-readiness.json visual_design_system field, build-waves.json with nav1 wave entry, and BACKLOG_CURRENT_STATE.md. No production_ready promotion."
     }
   ]
 }

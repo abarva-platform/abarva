@@ -2,21 +2,22 @@
 
 > This file is written by the orchestration agent at the end of each wave.
 > The next autonomous session reads this file first.
-> Last updated by: orchestration agent (Wave 32 complete)
+> Last updated by: orchestration agent (NAV1 complete)
 > Last updated: 2026-04-27
 
 ## Last completed wave
-- waveId: wave-32
-- waveTitle: Agent Surface Completion
-- prNumber: 425
-- mergeSHA: ed36ef38
-- completedSlices: [W32A, W32B, W32C, W32D, W32E, W32F, W32QA]
+- waveId: nav1
+- waveTitle: Canonical AbarVa Navigation and Active Shell Alignment
+- prNumbers: 428, 430, 431, 432, 433, 434 (NAV1A–NAV1F); NAV1G this commit
+- mergeSHAs: 8cd827aa, 39c10695, b21a82c3, f638d59a, 72b0b021, bb697a63
+- completedSlices: [NAV1A, NAV1B, NAV1C, NAV1D, NAV1E, NAV1F, NAV1G]
 - completedAt: 2026-04-27
-- testsGreen: 220 new tests across 6 new test suites; 811 integration tests passing; 0 regressions
+- testsGreen: 16 new NAV1B tests + 129 new NAV1F regression tests = 145 new pure-TypeScript Jest tests; 0 regressions
 - skippedSlices: none
-- note: 7 parallel lanes (A–F + QA) executed in worktrees /tmp/nexus-w32a through /tmp/nexus-w32qa; cherry-picked onto codex/wave32-agent-surface-completion; build-slices.json conflicts resolved via cherry_resolve.py
+- note: 7 sequential PRs. Docs + tests only — no app code, runtime, auth, routing, API, or migration changes. Global nav migration (AbarvaNav → AbarVaShellNav) deferred to NAV2 because it embeds Clerk avatar + client-switcher logic.
 
 ## Previous waves (for reference)
+- wave-32: PR #425, SHA ed36ef38, slices [W32A, W32B, W32C, W32D, W32E, W32F, W32QA]
 - wave-31: PR #420, SHA 8b6a8659, slices [SEC3, SEC4]
 - wave-30: PR #418, SHA 362abe59, slices [PAT1, PAT2, PAT3]
 - wave-29: PR #416, SHA 613a1d7c, slices [SHELL8, SHELL9, OPS3, OPS4]
