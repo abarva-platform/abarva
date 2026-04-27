@@ -9,10 +9,11 @@ import { buildBuildProgressPageView } from '@/lib/admin/build-progress-page-view
 
 // ADMIN-DATA3+: builders are progressively migrated to async. Wrap each
 // builder so the describe.each table is homogenous regardless of sync/async.
+type ArchitectureView = Awaited<ReturnType<typeof buildArchitecturePageView>>;
 type AnyBuilder = () => unknown | Promise<unknown>;
 const toAsync =
-  (fn: AnyBuilder) => async (): Promise<ReturnType<typeof buildArchitecturePageView>> =>
-    (await Promise.resolve(fn())) as ReturnType<typeof buildArchitecturePageView>;
+  (fn: AnyBuilder) => async (): Promise<ArchitectureView> =>
+    (await Promise.resolve(fn())) as ArchitectureView;
 
 describe('AGENT1B — Admin pages wired to agent foundation', () => {
   describe.each([
@@ -27,7 +28,7 @@ describe('AGENT1B — Admin pages wired to agent foundation', () => {
   ] as const)('%s page', (label, builder) => {
     // Some builders are async (ADMIN-DATA8 made production-readiness async,
     // ADMIN-DATA9 made architecture async). Await/resolve uniformly.
-    type AnyView = ReturnType<typeof buildArchitecturePageView>;
+    type AnyView = ArchitectureView;
     let view: AnyView;
     beforeAll(async () => {
       view = (await builder()) as AnyView;
