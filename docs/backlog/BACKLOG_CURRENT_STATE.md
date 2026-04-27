@@ -2,22 +2,28 @@
 
 > This file is written by the orchestration agent at the end of each wave.
 > The next autonomous session reads this file first.
-> Last updated by: orchestration agent (ADMIN3 + ADMIN4 complete)
+> Last updated by: orchestration agent (ADMIN5 + ADMIN6 complete)
 > Last updated: 2026-04-27
 
 ## Last completed wave / slice
+- sliceIds: ADMIN5, ADMIN6
+- waveId: wave-admin-redesign (in_progress, 87.5%)
+- title: Production Readiness Page (ADMIN5) + Remaining 6 Admin Sub-Pages Wired (ADMIN6)
+- prNumber: 447
+- mergeSHA: f6fc060b
+- completedAt: 2026-04-27
+- testsGreen: 188 new tests pass (38 ADMIN5 + 150 ADMIN6); 948 admin integration tests all pass; 277 design integration tests all pass
+- skippedSlices: none
+- laneSHAs: ADMIN5 = d3c2e05f ; ADMIN6 = 6cc9a885
+- note: ADMIN5 lands production-readiness-page-view.ts (Demo READY / Pilot PARTIAL / Production BLOCKED tiles + top blockers from W32F + Steward editorial copy), DemoPilotProductionTiles + TopBlockersTable components, /platform/admin/production-readiness fully rewired from legacy ProductionReadinessLivePanel/Tracker/DecisionFlow stack to AdminCanonShellV2 + EditorialCanvas + ContextBar + StewardEditorial + DemoPilotProductionTiles + TopBlockersTable. Clerk auth-gate preserved with AdminOnlyNotice fallback also using canonical shell. Production tile honestly states "Do not claim production readiness". ADMIN6 lands 6 NEW additive routes at /admin/* (overview, data-trust, connectors, users-access, agent-readiness, build-progress) — does NOT modify the auth-gated /platform/admin/* pages. 6 page-views in src/lib/admin/*-page-view.ts, 6 components (SetupItemsList, TrustLadder, ConnectorsList, RoleAccessMatrix, AgentPostureGrid, WaveProgressList). Routing fix added in this PR: /admin/architecture and /admin/production-readiness alias pages (inline-render of canonical shell, no auth on /admin/*) so AdminSidebar links resolve. /platform/admin/* variants remain unchanged. Three pre-existing PROD3/PROD8/tracker tests asserted the old route wiring — surgically updated their route-level assertions to the new shell while preserving all component- and read-model-level assertions; legacy ProductionReadinessTracker / ProductionReadinessLivePanel components remain in repo. Both cherry-picks clean. Hygiene gate 11/11 PASS. CI green (ESLint, Routes/disclaimers, hygiene_gate, Vercel × 2). All 8 /admin/* routes resolve in production build.
+
+## Previously completed (this wave)
 - sliceIds: ADMIN3, ADMIN4
-- waveId: wave-admin-redesign (in_progress, 62.5%)
-- title: Steward Editorial Component (ADMIN3) + Architecture Page Wired to AdminCanonShellV2 (ADMIN4)
 - prNumber: 442
 - mergeSHA: ed159dd9
 - completedAt: 2026-04-27
-- testsGreen: 95 new tests pass (56 ADMIN3 + 39 ADMIN4); 761 admin integration tests all pass; 277 design integration tests all pass
-- skippedSlices: none
-- laneSHAs: ADMIN3 = 8cec9c78 ; ADMIN4 = 23b0153d
-- note: ADMIN3 lands StewardEditorial canonical card (title + body + Context-used chips + EvidenceStrengthPill + BlockerPill + primary action), ContextBar 5-cell strip (Tenant / Mode / Agent / Data / Live status), EvidenceStrengthPill (strong/partial/thin with mint/amber/coral soft fills), BlockerPill (coral, conditional render). ADMIN4 lands architecture-page-view.ts deterministic read-model (7 planes: App / Agent / Context / Evidence / Data / Gateway+Tools / Deployment), ArchitecturePlaneStack 7-row component, /admin/architecture route fully rewired from legacy AdminCanonShell v1 + ArchitectureCanvas to AdminCanonShellV2 + EditorialCanvas + ContextBar + StewardEditorial + ArchitecturePlaneStack + AgentRail. Preserved metadata export. ArchitectureCanvas component remains on disk (legacy cleanup deferred). One legacy ARCH5 test (architecture-canvas.test.ts) updated minimally — assertion was that page imports ArchitectureCanvas; now asserts ArchitecturePlaneStack import (new wiring). Cherry-picks both clean — ADMIN4 lane was branched off ADMIN3 so the 4 shared components landed without conflict. Hygiene gate 11/11 PASS. CI green (ESLint, Routes/disclaimers, hygiene_gate, Vercel × 2). First admin route to render the new design.
+- note: ADMIN3 lands StewardEditorial canonical card + ContextBar 5-cell + EvidenceStrengthPill + BlockerPill. ADMIN4 lands architecture-page-view.ts (7 planes) + ArchitecturePlaneStack + /admin/architecture rewired to AdminCanonShellV2.
 
-## Previously completed (this wave)
 - sliceIds: ADMIN1, ADMIN2
 - prNumber: 438
 - mergeSHA: 364de098
@@ -46,13 +52,13 @@
 
 ## Next wave to execute
 - waveId: wave-admin-redesign
-- waveTitle: Admin Surface Canonical Redesign (in_progress, 62.5%)
+- waveTitle: Admin Surface Canonical Redesign (in_progress, 87.5%)
 - waveFile: docs/backlog/waves/WAVE-ADMIN-REDESIGN.md
 - blockedSlices: none
-- completedSlices: ADMIN0, ADMIN1, ADMIN2, ADMIN3, ADMIN4
-- primarySlices: ADMIN5, ADMIN6, ADMIN7 (remaining)
-- nextSlices: ADMIN5, ADMIN6, ADMIN7
-- note: ADMIN3 + ADMIN4 merged 2026-04-27 (PR #442, SHA ed159dd9). Architecture page is the first admin route rendering the new 3-zone canonical layout. Recommended next: ADMIN5 (Production Readiness page) + ADMIN6 (6 remaining sub-pages) — can parallelize. ADMIN7 (visual lock) runs last after all pages wired.
+- completedSlices: ADMIN0, ADMIN1, ADMIN2, ADMIN3, ADMIN4, ADMIN5, ADMIN6
+- primarySlices: ADMIN7 (remaining)
+- nextSlices: ADMIN7
+- note: ADMIN5 + ADMIN6 merged 2026-04-27 (PR #447, SHA f6fc060b). All 8 admin sub-pages now render the canonical 3-zone layout (overview, data-trust, connectors, users-access, agent-readiness, production-readiness, build-progress, architecture). Recommended next: ADMIN7 — Visual lock + regression guard (hex-scan, font-family scan, logo-presence test, WIRE2B compliance score 72->92 in wireframe-compliance-audit.ts; optional Playwright snapshot stubs). After ADMIN7 the wave is complete and ready for founder review of all 8 admin pages.
 
 ## Wave 32 deliverables produced
 - W32A: Programs Phase Filter — `src/lib/programs/phase-filter-view.ts`
