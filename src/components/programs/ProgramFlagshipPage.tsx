@@ -31,6 +31,7 @@ import {
   buildProgramFlagshipView,
   type ProgramFlagshipMissingRow,
 } from '@/lib/programs/program-flagship-view';
+import { NexusProgramWorkbench } from '@/components/programs/NexusProgramWorkbench';
 import { SourceEventChip } from '@/components/programs/SourceEventChip';
 import { buildProgramSourceLinkView } from '@/lib/programs/program-source-link-view';
 
@@ -320,6 +321,13 @@ export function ProgramFlagshipPage(props: ProgramFlagshipPageProps) {
             </span>
           </div>
         </section>
+
+        {/* Section 1b — Nexus workbench anchor */}
+        <NexusProgramWorkbench
+          programCode={view.brief.programCode}
+          programName={view.brief.programName}
+          tenantLabel={view.brief.tenantLabel}
+        />
 
         {/* Section 2 — Workflow orientation strip */}
         <section
