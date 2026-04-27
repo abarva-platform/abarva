@@ -1153,7 +1153,9 @@
         "TRUST4"
       ],
       "blockedSlices": [],
-      "mergedPrs": [],
+      "mergedPrs": [
+        414
+      ],
       "validationStatus": "tests_green",
       "productionReadinessUpdated": false,
       "currentBlockers": [],
