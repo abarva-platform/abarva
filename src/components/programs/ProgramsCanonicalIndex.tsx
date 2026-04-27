@@ -38,8 +38,9 @@ const COLORS = {
   border: 'rgba(26,22,18,0.08)',
   card: '#FFFFFF',
   surface: '#F8F7F4',
-  accent: '#0E9F8C',
-  accentSoft: 'rgba(14,159,140,0.08)',
+  // WIRE2: replaced #0E9F8C (teal-adjacent banned token) with AbarVa canonical navy
+  accent: '#1B2B5C',
+  accentSoft: 'rgba(27,43,92,0.08)',
 } as const;
 
 export function ProgramsCanonicalIndex({ tenant }: ProgramsCanonicalIndexProps) {
@@ -123,7 +124,7 @@ export function ProgramsCanonicalIndex({ tenant }: ProgramsCanonicalIndexProps) 
                 key={phase.key}
                 style={{
                   background: populated ? COLORS.accentSoft : 'rgba(26,22,18,0.03)',
-                  border: `1px solid ${populated ? 'rgba(14,159,140,0.2)' : COLORS.border}`,
+                  border: `1px solid ${populated ? 'rgba(27,43,92,0.2)' : COLORS.border}`,
                   borderRadius: 8,
                   padding: '8px 10px',
                   display: 'flex',
@@ -295,7 +296,7 @@ export function ProgramsCanonicalIndex({ tenant }: ProgramsCanonicalIndexProps) 
                 color: COLORS.accent,
                 padding: '6px 10px',
                 borderRadius: 999,
-                border: `1px solid rgba(14,159,140,0.3)`,
+                border: `1px solid rgba(27,43,92,0.3)`,
                 textDecoration: 'none',
                 fontWeight: 700,
               }}

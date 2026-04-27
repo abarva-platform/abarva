@@ -179,7 +179,7 @@ function MaestrosView() {
                 <td style={{ ...tdStyle, color: TEXT }}>{m.clients}</td>
                 <td style={{ ...tdStyle, fontWeight: m.engagements ? 600 : 400, color: m.engagements ? DARK : MUTED }}>{m.engagements || '—'}</td>
                 <td style={tdStyle}><StatusPill status={m.status} /></td>
-                <td style={{ ...tdStyle, fontSize: '13px', fontWeight: 500, color: TEAL, cursor: 'pointer', whiteSpace: 'nowrap' }}>{m.action}</td>
+                <td style={{ ...tdStyle, fontSize: '13px', fontWeight: 500, color: NAVY, cursor: 'pointer', whiteSpace: 'nowrap' }}>{m.action}</td>
               </tr>
             ))}
           </tbody>
@@ -213,8 +213,10 @@ function MaestrosView() {
                 <td style={{ ...tdStyle, fontSize: '13px', color: MUTED }}>{r.when}</td>
                 <td style={tdStyle}>
                   <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    {/* TODO: wire Approve click behavior (dataset approval workflow deferred) */}
                     <span style={{ fontSize: '13px', fontWeight: 600, color: GREEN, cursor: 'pointer' }}>Approve</span>
                     <span style={{ color: BORDER }}>|</span>
+                    {/* TODO: wire Reject click behavior (dataset approval workflow deferred) */}
                     <span style={{ fontSize: '13px', fontWeight: 600, color: RED, cursor: 'pointer' }}>Reject</span>
                   </div>
                 </td>
