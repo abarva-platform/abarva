@@ -1012,8 +1012,8 @@
     },
     {
       "waveId": "wave-24",
-      "name": "Azure SaaS + Simulated Private Data Plane Lab \u2014 Docs + Architecture",
-      "goal": "Produce the architecture decision records, Azure target architecture diagram, resource naming convention, cost breakdown, Bicep scaffold stubs, private data plane design, and multi-provider model gateway design for the AbarVa Azure lab. Docs only \u2014 no live Azure provisioning.",
+      "name": "Azure SaaS + Simulated Private Data Plane Lab — Docs + Architecture",
+      "goal": "Produce the architecture decision records, Azure target architecture diagram, resource naming convention, cost breakdown, Bicep scaffold stubs, private data plane design, and multi-provider model gateway design for the AbarVa Azure lab. Docs only — no live Azure provisioning.",
       "status": "merged",
       "percentComplete": 100,
       "plannedSlices": [
@@ -1105,7 +1105,7 @@
     {
       "waveId": "wave-27",
       "name": "Pattern Library Expansion",
-      "goal": "Deliver the first five solution pattern packs: Data Platform Managed Services (PAT1), Infrastructure Managed Services (PAT2), Vendor Evaluation Scorecard (PAT3), AI Failure Modes \u2192 Solution Map (PAT4), and the Pattern Manifest registry (PAT5). All deterministic TypeScript modules \u2014 no model calls, no migrations, no UI.",
+      "goal": "Deliver the first five solution pattern packs: Data Platform Managed Services (PAT1), Infrastructure Managed Services (PAT2), Vendor Evaluation Scorecard (PAT3), AI Failure Modes → Solution Map (PAT4), and the Pattern Manifest registry (PAT5). All deterministic TypeScript modules — no model calls, no migrations, no UI.",
       "status": "merged",
       "percentComplete": 100,
       "plannedSlices": [
@@ -1134,7 +1134,7 @@
     {
       "waveId": "wave-28",
       "name": "Data Trust Enforcement Layer",
-      "goal": "Deliver the data trust enforcement layer: Evidence Manifest Schema (EVID1), Data Sharing Levels L0-L4 Enforcement (DATA1), Dataset Approval Model (DATA2), and No-Raw-Copy Mode Enforcement (DATA3). All deterministic TypeScript modules \u2014 no model calls, no migrations, no UI.",
+      "goal": "Deliver the data trust enforcement layer: Evidence Manifest Schema (EVID1), Data Sharing Levels L0-L4 Enforcement (DATA1), Dataset Approval Model (DATA2), and No-Raw-Copy Mode Enforcement (DATA3). All deterministic TypeScript modules — no model calls, no migrations, no UI.",
       "status": "merged",
       "percentComplete": 100,
       "plannedSlices": [
@@ -1164,7 +1164,7 @@
     },
     {
       "waveId": "wave-29",
-      "name": "Cleanup \u2014 Legacy Shell + Route Registry + Build Ops",
+      "name": "Cleanup — Legacy Shell + Route Registry + Build Ops",
       "status": "merged",
       "percentComplete": 100,
       "plannedSlices": [
@@ -1314,7 +1314,7 @@
       "validationStatus": "ci_green",
       "productionReadinessUpdated": true,
       "currentBlockers": [],
-      "nextAction": "NAV2 \u2014 migrate global nav from legacy AbarvaNav (Clerk avatar + client-switcher) to AbarVaShellNav. Sweep banned tokens (#14B8A6 / #0E9F8C) from non-tenant page bodies.",
+      "nextAction": "NAV2 — migrate global nav from legacy AbarvaNav (Clerk avatar + client-switcher) to AbarVaShellNav. Sweep banned tokens (#14B8A6 / #0E9F8C) from non-tenant page bodies.",
       "lastUpdated": "2026-04-27"
     },
     {
@@ -1345,7 +1345,7 @@
     },
     {
       "waveId": "wave-admin-redesign-followup",
-      "name": "Admin Redesign Follow-up \u00b7 Single Source of Truth",
+      "name": "Admin Redesign Follow-up · Single Source of Truth",
       "goal": "Consolidate the admin tree to a single canonical path at /admin/*, retire /platform/admin/* via redirects, and enforce a single auth gate at /admin/layout.tsx. No content or business logic changes.",
       "status": "merged",
       "percentComplete": 100,
@@ -1391,11 +1391,9 @@
       "waveId": "wave-admin-completion",
       "name": "Admin Completion · depth + legacy consolidation",
       "goal": "Close out the admin tree. ADMIN10 retires/redirects/deprecates the 16 live legacy /platform/admin/* sub-routes per ADMIN9 audit. ADMIN11–ADMIN17 add per-page depth (sub-tabs, drill-down drawers, action strips, per-row detail) to the 7 content-bearing canonical /admin/* pages. ADMIN18 pulls Overview through with a setup-progress timeline + recent-activity strip + cross-page CTAs. ADMIN19 extends ADMIN7's regression suite to cover the new canvas widgets. All write actions and live model calls remain HARD-GATED for Wave 27+.",
-      "status": "partially_merged",
-      "percentComplete": 91,
-      "plannedSlices": [
-        "ADMIN18"
-      ],
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [],
       "completedSlices": [
         "ADMIN9",
         "ADMIN10",
@@ -1406,7 +1404,8 @@
         "ADMIN15",
         "ADMIN16",
         "ADMIN17",
-        "ADMIN19"
+        "ADMIN19",
+        "ADMIN18"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
