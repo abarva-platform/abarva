@@ -46,9 +46,14 @@ type AuthSessionClaims = {
   publicMetadata?: {
     role?: string;
     clientId?: string;
+    defaultClientId?: string | null;
   };
-  emailAddress?: string;
+  emailAddress?: string | null;
 } | null;
+
+function extractClaimEmail(claims: AuthSessionClaims): string | null {
+  return claims?.emailAddress ?? null;
+}
 
 function getMembershipClientKeys(user: CurrentUser): ClientKey[] {
   if (user.primaryRole === 'maestro') {
@@ -61,10 +66,11 @@ function getMembershipClientKeys(user: CurrentUser): ClientKey[] {
 }
 
 function buildTenantAccessSnapshot(user: CurrentUser, claims: AuthSessionClaims): TenantAccessSnapshot {
-  const email = claims?.emailAddress ?? user.email;
+  const email = extractClaimEmail(claims) ?? user.email;
   const sessionRole = resolveSessionRole(claims?.publicMetadata?.role ?? null, email);
   const pinnedClientKey = resolvePinnedSessionClientKey({
     clientId: claims?.publicMetadata?.clientId ?? null,
+    defaultClientId: claims?.publicMetadata?.defaultClientId ?? user.defaultClientId,
     email,
   });
 

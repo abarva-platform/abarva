@@ -35,13 +35,22 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   const claims = sessionClaims as
     | {
         publicMetadata?: { person_id?: string; role?: string; clientId?: string };
+        email_addresses?: Array<{ emailAddress: string }>;
+        emailAddresses?: Array<{ emailAddress: string }>;
+        email?: string;
         firstName?: string;
         lastName?: string;
         emailAddress?: string;
       }
     | undefined;
+
   const personIdFromClaims = claims?.publicMetadata?.person_id ?? null;
-  const fallbackEmail = claims?.emailAddress ?? null;
+  const fallbackEmail =
+    claims?.emailAddress ??
+    claims?.email ??
+    claims?.emailAddresses?.[0]?.emailAddress ??
+    claims?.email_addresses?.[0]?.emailAddress ??
+    null;
   const legacyRole = resolveSessionRole(claims?.publicMetadata?.role ?? null, fallbackEmail);
   const metadataClientKey = claims?.publicMetadata?.clientId ?? null;
   const fallbackName =
