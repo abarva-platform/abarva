@@ -30,8 +30,8 @@ const root = process.cwd();
 describe('ADMIN14 — Data Trust page-view depth', () => {
   let view: DataTrustPageView;
 
-  beforeEach(() => {
-    view = buildDataTrustPageView();
+  beforeEach(async () => {
+    view = await buildDataTrustPageView();
   });
 
   it('returns deterministicSeed: true', () => {
@@ -328,7 +328,11 @@ describe('ADMIN14 — resolveDataTrustTab', () => {
 });
 
 describe('ADMIN14 — findDataTrustDataset', () => {
-  const view = buildDataTrustPageView();
+  let view: DataTrustPageView;
+
+  beforeAll(async () => {
+    view = await buildDataTrustPageView();
+  });
 
   it('returns null for undefined id', () => {
     expect(findDataTrustDataset(view, undefined)).toBeNull();
@@ -436,8 +440,8 @@ describe('ADMIN14 — Page integration', () => {
 });
 
 describe('ADMIN14 — Legacy MERGE absorption', () => {
-  it('promotion-queue tab content is absorbed (legacy /platform/admin/data-governance type)', () => {
-    const view = buildDataTrustPageView();
+  it('promotion-queue tab content is absorbed (legacy /platform/admin/data-governance type)', async () => {
+    const view = await buildDataTrustPageView();
     // Type/shape from legacy: id, document, engagement, org, category, status
     const r = view.promotionRequests[0];
     expect(r).toHaveProperty('id');
@@ -448,14 +452,14 @@ describe('ADMIN14 — Legacy MERGE absorption', () => {
     expect(r).toHaveProperty('status');
   });
 
-  it('quality-scorecard tab content is absorbed (legacy /platform/admin/quality 4×4 grid)', () => {
-    const view = buildDataTrustPageView();
+  it('quality-scorecard tab content is absorbed (legacy /platform/admin/quality 4×4 grid)', async () => {
+    const view = await buildDataTrustPageView();
     expect(view.qualityScorecard.length).toBe(4); // 4 tenants
     expect(view.qualityScorecard[0].pillars.length).toBe(4); // 4 pillars
   });
 
-  it('loaded-files tab content is absorbed (legacy /platform/admin/data file list)', () => {
-    const view = buildDataTrustPageView();
+  it('loaded-files tab content is absorbed (legacy /platform/admin/data file list)', async () => {
+    const view = await buildDataTrustPageView();
     // Type/shape from legacy: name, owner, segment, category, status
     const f = view.loadedFiles[0];
     expect(f).toHaveProperty('name');

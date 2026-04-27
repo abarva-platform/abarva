@@ -33,7 +33,7 @@ function formatDate(iso: string): string {
 }
 
 export default async function DataTrustPage({ searchParams }: DataTrustPageProps) {
-  const view = buildDataTrustPageView();
+  const view = await buildDataTrustPageView();
   const params = (await searchParams) ?? {};
   const activeTab = resolveDataTrustTab(params.tab);
   const activeDataset = findDataTrustDataset(view, params.dataset);
@@ -117,7 +117,7 @@ function statusToneFor(status: 'approved' | 'missing' | 'processing') {
 function LoadedFilesPanel({
   files,
 }: {
-  files: ReturnType<typeof buildDataTrustPageView>['loadedFiles'];
+  files: Awaited<ReturnType<typeof buildDataTrustPageView>>['loadedFiles'];
 }) {
   const segments: ReadonlyArray<'Business' | 'IT & Technology' | 'Third Party'> = [
     'Business',
@@ -262,7 +262,7 @@ function LoadedFilesPanel({
 function AuditTrailPanel({
   entries,
 }: {
-  entries: ReturnType<typeof buildDataTrustPageView>['auditTrail'];
+  entries: Awaited<ReturnType<typeof buildDataTrustPageView>>['auditTrail'];
 }) {
   return (
     <section
