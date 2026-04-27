@@ -3,22 +3,33 @@
 // ProgramJourneyRail · PROG-B
 // Status indicator + navigator — thin 36px chips on full, 4px segments on mini.
 // Pop via contrast only: active phase uses border+shadow+fill, NOT size change.
+//
+// Phase model: 6 canonical phases (indices 1-6):
+//   1 · Origination  2 · Charter  3 · Diagnose
+//   4 · Design       5 · Execute  6 · Verify
+//
+// Source of truth: CANONICAL_SIX_PHASES in
+//   src/lib/programs/programs-canonical-view.ts
+// Callers should build ProgramPhaseSlot[] from that constant directly.
 
 import type { CSSProperties } from 'react';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export interface ProgramPhaseSlot {
-  id: number;       // 0-6
-  label: string;    // 'Originate' | 'Discovery' | etc.
+  /** Canonical phase index 1-6 (Origination=1 … Verify=6). */
+  id: 1 | 2 | 3 | 4 | 5 | 6;
+  /** Phase label — one of: 'Origination' | 'Charter' | 'Diagnose' | 'Design' | 'Execute' | 'Verify'. */
+  label: string;
   state: 'done' | 'current' | 'pending' | 'locked';
   gateStatus?: 'open' | 'pending' | 'approved';
 }
 
 export interface ProgramJourneyRailProps {
   phases: ProgramPhaseSlot[];
-  viewingPhase: number;         // currently selected phase
-  onPhaseSelect: (phase: number) => void;
+  /** Canonical phase index (1-6) of the phase currently being viewed. */
+  viewingPhase: 1 | 2 | 3 | 4 | 5 | 6;
+  onPhaseSelect: (phase: 1 | 2 | 3 | 4 | 5 | 6) => void;
   variant?: 'full' | 'mini';   // 'full' = 36px chips, 'mini' = 4px segments
 }
 
