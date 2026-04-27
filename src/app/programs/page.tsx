@@ -1,17 +1,16 @@
-import { redirect } from 'next/navigation';
-import { getActiveClientKey } from '@/lib/active-client';
-import { isClientKey } from '@/lib/client-config';
-import { getSeedProgramsIndexPath } from '@/lib/deliverables/legacy-route-resolver';
+// PROG-C — Programs Index page (wave-programs-redesign)
+// Server Component: calls buildProgramsIndexView and passes view to client.
+// Replaces the legacy redirect that was here.
 
-export const dynamic = 'force-dynamic';
+import { buildProgramsIndexView } from '@/lib/programs/programs-page-view';
+import { ProgramsIndexPage } from '@/components/programs/ProgramsIndexPage';
 
-export default async function ProgramsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ client?: string }>;
-}) {
-  const params = await searchParams;
-  const requestedClient = isClientKey(params.client) ? params.client : null;
-  const clientKey = await getActiveClientKey(requestedClient);
-  redirect(getSeedProgramsIndexPath(clientKey));
+export const metadata = {
+  title: 'Programs | Apex Retail Group',
+};
+
+export default async function ProgramsPage() {
+  const view = buildProgramsIndexView('apex-retail');
+
+  return <ProgramsIndexPage view={view} />;
 }
