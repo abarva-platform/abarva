@@ -8,6 +8,10 @@
  * W32QA update: expectations updated to reflect Wave 32 score improvements.
  * Before: avgScore 69.5, safeFixesApplied 6, 21 remaining deviations
  * After:  avgScore 74.4, safeFixesApplied 13, remaining deviations reduced
+ *
+ * wave-admin-redesign update (ADMIN7): admin tree pages rebuilt on
+ * AdminCanonShellV2; scores raised — Admin 72→92, Production Readiness 80→92,
+ * Architecture 58→90; safeFixesApplied 13 → 15 (only honest deltas applied).
  */
 
 import {
@@ -197,14 +201,14 @@ describe('wireframe-compliance-audit', () => {
       expect(a).not.toBe(b);
     });
 
-    it('Architecture page has the lowest score (58)', () => {
+    it('Architecture page is at 90 after ADMIN4 (was 58 in WIRE2)', () => {
       const results = getPageComplianceResults();
       const arch = results.find((r) => r.route === '/platform/admin/architecture');
       expect(arch).toBeDefined();
-      expect(arch!.overallScore).toBe(58);
+      expect(arch!.overallScore).toBe(90);
     });
 
-    it('Intelligence page has the highest score after Wave 32 (84)', () => {
+    it('Intelligence page held at 84 after Wave 32', () => {
       const results = getPageComplianceResults();
       const intel = results.find((r) => r.route === '/tenant/[tenantSlug]/intelligence');
       expect(intel).toBeDefined();
@@ -221,9 +225,19 @@ describe('wireframe-compliance-audit', () => {
       expect(result!.overallScore).toBe(82);
     });
 
-    it('Wave 32 score improvements: Production Readiness 74 → 80', () => {
+    it('wave-admin-redesign: Production Readiness 80 → 92', () => {
       const result = getPageComplianceResult('/platform/admin/production-readiness');
-      expect(result!.overallScore).toBe(80);
+      expect(result!.overallScore).toBe(92);
+    });
+
+    it('wave-admin-redesign: Admin 72 → 92', () => {
+      const result = getPageComplianceResult('/platform/admin');
+      expect(result!.overallScore).toBe(92);
+    });
+
+    it('wave-admin-redesign: Architecture 58 → 90', () => {
+      const result = getPageComplianceResult('/platform/admin/architecture');
+      expect(result!.overallScore).toBe(90);
     });
   });
 
@@ -236,7 +250,7 @@ describe('wireframe-compliance-audit', () => {
       const result = getPageComplianceResult('/platform/admin');
       expect(result).not.toBeNull();
       expect(result!.page).toBe('Admin');
-      expect(result!.overallScore).toBe(72);
+      expect(result!.overallScore).toBe(92);
     });
 
     it('returns null for an unknown route', () => {
@@ -277,9 +291,9 @@ describe('wireframe-compliance-audit', () => {
       expect(summary.highSeverityDeviations).toBeGreaterThanOrEqual(0);
     });
 
-    it('safeFixesApplied equals 13 after Wave 32 fixes (was 6 before W32)', () => {
+    it('safeFixesApplied equals 15 after wave-admin-redesign fixes (was 13 after W32)', () => {
       const summary = getWireframeComplianceSummary();
-      expect(summary.safeFixesApplied).toBe(13);
+      expect(summary.safeFixesApplied).toBe(15);
     });
 
     it('createdFrom is wire2b_wireframe_compliance_ts', () => {
@@ -287,19 +301,19 @@ describe('wireframe-compliance-audit', () => {
       expect(summary.createdFrom).toBe('wire2b_wireframe_compliance_ts');
     });
 
-    it('no pages are in the passing bucket (all scores < 90)', () => {
+    it('three admin pages are in the passing bucket after wave-admin-redesign', () => {
       const summary = getWireframeComplianceSummary();
-      expect(summary.passing).toBe(0);
+      expect(summary.passing).toBe(3);
     });
 
-    it('the Architecture page (score 58) is in the failing bucket', () => {
+    it('no page is in the failing bucket after wave-admin-redesign (Architecture was 58 → 90)', () => {
       const summary = getWireframeComplianceSummary();
-      expect(summary.failing).toBe(1);
+      expect(summary.failing).toBe(0);
     });
 
-    it('the remaining 7 pages are in the partial bucket (scores 60–89)', () => {
+    it('five remaining pages are in the partial bucket (scores 60–89)', () => {
       const summary = getWireframeComplianceSummary();
-      expect(summary.partial).toBe(7);
+      expect(summary.partial).toBe(5);
     });
 
     it('remainingDeviations is a non-negative integer', () => {
@@ -413,9 +427,9 @@ describe('wireframe-compliance-audit', () => {
       });
     });
 
-    it('returns all 8 pages (all scores are < 90)', () => {
+    it('returns 5 pages after wave-admin-redesign (3 admin pages now >= 90)', () => {
       const pages = getPagesRequiringWave32();
-      expect(pages).toHaveLength(8);
+      expect(pages).toHaveLength(5);
     });
 
     it('returns a new array each call', () => {
