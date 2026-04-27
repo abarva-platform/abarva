@@ -1,16 +1,15 @@
 // INTEL4 · Intelligence Lens Tabs.
 //
-// Server component. Renders a tab bar (Overview · Patterns · Evidence · Signals)
-// and the content panel for the active tab. Tab switching is URL-param-driven:
-// ?tab=<key>. No client state, no hydration.
+// Server component. Renders the blueprint-aligned five-mode lens surface
+// (Summary · Evidence · Programs · Actions · Signals) and the content panel
+// for the active tab. Tab switching is URL-param-driven: ?tab=<key>.
+// No client state, no hydration.
 //
 // Allowed imports:
 //   - @/lib/intelligence/intelligence-lens-tabs-view (INTEL4 view-model)
 //   - @/lib/intelligence/intelligence-workflow-canvas-view
 //   - @/lib/intelligence/sentinel-brief-evidence-view
 //   - @/lib/intelligence/sentinel-pattern-view
-//   - @/components/intelligence/SentinelActivePatterns (re-used for Overview)
-//   - @/components/intelligence/SentinelEvidenceBrief  (re-used for Evidence)
 //   - @/components/intelligence/IntelligenceWorkflowCanvas (re-used for Signals)
 //   - next/link
 //
@@ -21,7 +20,6 @@
 import Link from 'next/link';
 import {
   buildIntelligenceLensTabsView,
-  INTELLIGENCE_TABS,
   type IntelligenceLensTab,
 } from '@/lib/intelligence/intelligence-lens-tabs-view';
 import {
@@ -29,13 +27,14 @@ import {
 } from '@/lib/intelligence/intelligence-workflow-canvas-view';
 import {
   buildSentinelEvidenceBriefView,
+  type EvidenceItem,
 } from '@/lib/intelligence/sentinel-brief-evidence-view';
 import {
   buildSentinelIntelligenceView,
   type SentinelPatternCard,
 } from '@/lib/intelligence/sentinel-pattern-view';
+import type { SentinelPatternDetection } from '@/lib/intelligence/sentinel-pattern-detections';
 import { IntelligenceWorkflowCanvas } from '@/components/intelligence/IntelligenceWorkflowCanvas';
-import { SentinelEvidenceBrief } from '@/components/intelligence/SentinelEvidenceBrief';
 import type { TenantSeedPlan } from '@/lib/programs/enhancement-seed-planner';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -97,7 +96,7 @@ export function IntelligenceLensTabs({
       >
         {view.tabs.map((tab) => {
           const isActive = tab.key === activeTab;
-          const href = tab.key === 'overview'
+          const href = tab.key === 'summary'
             ? baseUrl
             : `${baseUrl}?tab=${tab.key}`;
           return (
@@ -129,14 +128,17 @@ export function IntelligenceLensTabs({
 
       {/* Content panel */}
       <div style={{ padding: '24px clamp(16px, 4vw, 40px)' }}>
-        {activeTab === 'overview' && (
-          <OverviewPanel tenant={tenant} />
-        )}
-        {activeTab === 'patterns' && (
-          <PatternsPanel tenantSlug={tenant.routeSlug} />
+        {activeTab === 'summary' && (
+          <SummaryPanel tenant={tenant} />
         )}
         {activeTab === 'evidence' && (
           <EvidencePanel tenantSlug={tenant.routeSlug} />
+        )}
+        {activeTab === 'programs' && (
+          <ProgramsPanel tenant={tenant} />
+        )}
+        {activeTab === 'actions' && (
+          <ActionsPanel tenant={tenant} />
         )}
         {activeTab === 'signals' && (
           <SignalsPanel tenantSlug={tenant.routeSlug} />
@@ -150,9 +152,16 @@ export function IntelligenceLensTabs({
 // Tab panels
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Overview — Sentinel brief + active patterns (existing SentinelActivePatterns logic) */
-function OverviewPanel({ tenant }: { tenant: TenantSeedPlan }) {
+/** Summary — Sentinel brief + active patterns + compact context framing */
+function SummaryPanel({ tenant }: { tenant: TenantSeedPlan }) {
   const view = buildSentinelIntelligenceView(tenant);
+  const topDetection = view.detections[0] ?? null;
+  const contextUsed = topDetection
+    ? [
+        `${topDetection.sourceSignalIds.length} seeded control-tower signals across ${topDetection.affectedPrograms.length} affected program routes`,
+        `${topDetection.evidenceSignals.length} evidence-linked signals inform the lead pattern`,
+      ]
+    : [];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 960 }}>
@@ -176,7 +185,7 @@ function OverviewPanel({ tenant }: { tenant: TenantSeedPlan }) {
             marginBottom: 6,
           }}
         >
-          SENTINEL · OVERVIEW · DETERMINISTIC SEED
+          SENTINEL · SUMMARY · DETERMINISTIC SEED
         </div>
         <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>
           {view.brief.topPattern}
@@ -216,6 +225,44 @@ function OverviewPanel({ tenant }: { tenant: TenantSeedPlan }) {
         </div>
       </section>
 
+      {topDetection && (
+        <section
+          aria-label="Summary context used"
+          style={{
+            padding: '12px 16px',
+            backgroundColor: C.card,
+            border: `1px solid ${C.border}`,
+            borderRadius: 6,
+            display: 'grid',
+            gap: 10,
+          }}
+        >
+          <SectionLabel>Context used</SectionLabel>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 4 }}>
+            {contextUsed.map((item) => (
+              <li key={item} style={{ fontSize: 12, color: C.ink }}>
+                <span style={{ color: C.navy, fontWeight: 600, marginRight: 6 }}>·</span>
+                {item}
+              </li>
+            ))}
+          </ul>
+          {topDetection.missingInputs.length > 0 && (
+            <div
+              style={{
+                padding: '10px 12px',
+                backgroundColor: C.amberSoft,
+                border: `1px solid ${C.amber}44`,
+                borderRadius: 6,
+                fontSize: 12,
+                color: C.ink,
+              }}
+            >
+              Missing inputs: {topDetection.missingInputs.slice(0, 3).join(' · ')}
+            </div>
+          )}
+        </section>
+      )}
+
       {/* Recommended action */}
       <section
         aria-label="Recommended action"
@@ -246,32 +293,33 @@ function OverviewPanel({ tenant }: { tenant: TenantSeedPlan }) {
       ) : (
         <EmptyState message="No pattern detections seeded for this tenant." />
       )}
+
+      <Caveat>
+        This Summary tab is deterministic and context-first. It does not open a live
+        Sentinel chat session and it does not invent unseen evidence.
+      </Caveat>
     </div>
   );
 }
 
-/** Patterns — full ranked pattern detections */
-function PatternsPanel({ tenantSlug }: { tenantSlug: string }) {
-  // buildSentinelIntelligenceView requires a full TenantSeedPlan; for this
-  // tab we only have the tenantSlug, so we delegate to the same helper
-  // used by SentinelActivePatterns by reconstructing a minimal plan stub.
-  // We only read .tenant, .cards — no deliverables needed.
-  const stub = { routeSlug: tenantSlug, displayName: tenantSlug } as TenantSeedPlan;
-  const view = buildSentinelIntelligenceView(stub);
+/** Programs — affected program map and deterministic cross-surface links */
+function ProgramsPanel({ tenant }: { tenant: TenantSeedPlan }) {
+  const view = buildSentinelIntelligenceView(tenant);
+  const programs = buildProgramRows(view.cards);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 960 }}>
       <SectionMeta
         agent="SENTINEL"
-        title="Pattern detections"
-        subtitle="Ranked by confidence and business impact. All patterns are deterministic seed data — not live intelligence."
+        title="Programs affected"
+        subtitle="Programs mapped from active pattern detections so operators can move from portfolio signal to program action without guessing."
       />
 
-      {view.cards.length > 0 ? (
+      {programs.length > 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {view.cards.map((card, idx) => (
+          {programs.map((program, idx) => (
             <article
-              key={card.detection.patternKey}
+              key={program.href}
               style={{
                 padding: '14px 18px',
                 backgroundColor: C.card,
@@ -299,17 +347,30 @@ function PatternsPanel({ tenantSlug }: { tenantSlug: string }) {
                     fontWeight: 700,
                   }}
                 >
-                  PAT-{String(idx + 1).padStart(3, '0')} · {card.detection.patternKey.replace(/_/g, ' ')}
+                  PRG-{String(idx + 1).padStart(3, '0')} · {program.patterns.map((pattern) => pattern.patternKey.replace(/_/g, ' ')).join(' · ')}
                 </span>
-                <ConfidenceBadge level={card.confidenceLabel} />
+                <ConfidenceBadge level={program.highestConfidence} />
               </div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: C.ink, marginBottom: 6 }}>
-                {card.detection.patternName}
+              <div style={{ display: 'grid', gap: 4 }}>
+                <Link
+                  href={program.href}
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: C.ink,
+                    textDecoration: 'none',
+                  }}
+                >
+                  {program.programCode} · {program.programName}
+                </Link>
+                <div style={{ fontSize: 12, color: C.muted }}>
+                  {program.patterns.length} active patterns · {program.totalMissingInputs} open input gaps
+                </div>
               </div>
               <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.55 }}>
-                {card.detection.whyItMatters}
+                {program.patterns.slice(0, 2).map((pattern) => pattern.patternName).join(' · ')}
               </div>
-              {card.detection.missingInputs.length > 0 && (
+              {program.patterns.length > 0 && (
                 <div
                   style={{
                     marginTop: 8,
@@ -321,22 +382,84 @@ function PatternsPanel({ tenantSlug }: { tenantSlug: string }) {
                     color: C.muted,
                   }}
                 >
-                  Missing: {card.detection.missingInputs.slice(0, 2).join(' · ')}
-                </div>
-              )}
-              {card.affectedProgramCount > 0 && (
-                <div style={{ marginTop: 6, fontSize: 11, color: C.mutedSoft }}>
-                  Programmes affected: {card.affectedProgramCount}
+                  Recommended focus: {program.patterns[0].recommendedAction}
                 </div>
               )}
             </article>
           ))}
         </div>
       ) : (
-        <EmptyState message="No pattern detections seeded for this tenant. Apex Retail demo data includes active patterns." />
+        <EmptyState message="No affected programs are currently mapped from deterministic pattern detections for this tenant." />
       )}
 
-      <Caveat>All pattern detections are deterministic seed data. No live Sentinel runtime. Same patterns shown on every render.</Caveat>
+      <Caveat>
+        Programs mode is deterministic and link-safe. It reuses canonical program routes and does not invent live portfolio telemetry.
+      </Caveat>
+    </div>
+  );
+}
+
+/** Actions — priority-ordered operator follow-through from seeded pattern detections */
+function ActionsPanel({ tenant }: { tenant: TenantSeedPlan }) {
+  const view = buildSentinelIntelligenceView(tenant);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 960 }}>
+      <SectionMeta
+        agent="SENTINEL"
+        title="Priority actions"
+        subtitle="Context-first follow-through for each active pattern. Actions are deterministic guidance, not executable automations."
+      />
+
+      {view.cards.length > 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {view.cards.map((card, idx) => (
+            <ActionRow key={card.detection.patternKey} card={card} order={idx + 1} />
+          ))}
+        </div>
+      ) : (
+        <EmptyState message="No active pattern actions are seeded for this tenant." />
+      )}
+
+      <section
+        aria-label="Three choices plus custom"
+        style={{
+          padding: '12px 16px',
+          backgroundColor: C.card,
+          border: `1px solid ${C.border}`,
+          borderRadius: 6,
+          display: 'grid',
+          gap: 10,
+        }}
+      >
+        <SectionLabel>Three choices plus custom</SectionLabel>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {[
+            'Show supporting evidence',
+            'Open affected programs',
+            'Explain confidence and blockers',
+            'Ask a narrower Sentinel question',
+          ].map((label) => (
+            <span
+              key={label}
+              style={{
+                fontSize: 12,
+                color: C.navy,
+                border: `1px solid ${C.border}`,
+                backgroundColor: C.surface,
+                borderRadius: 999,
+                padding: '6px 10px',
+              }}
+            >
+              {label}
+            </span>
+          ))}
+        </div>
+      </section>
+
+      <Caveat>
+        Actions mode discloses what is missing instead of pretending the system can execute work on your behalf today.
+      </Caveat>
     </div>
   );
 }
@@ -507,6 +630,180 @@ function SignalsPanel({ tenantSlug }: { tenantSlug: string }) {
 // Shared sub-components
 // ─────────────────────────────────────────────────────────────────────────────
 
+interface ProgramRowModel {
+  programCode: string;
+  programName: string;
+  href: string;
+  highestConfidence: string;
+  totalMissingInputs: number;
+  patterns: ReadonlyArray<SentinelPatternDetection>;
+}
+
+function buildProgramRows(
+  cards: ReadonlyArray<SentinelPatternCard>,
+): ReadonlyArray<ProgramRowModel> {
+  const map = new Map<string, ProgramRowModel>();
+
+  for (const card of cards) {
+    for (const program of card.detection.affectedPrograms) {
+      const existing = map.get(program.routeHref);
+      if (existing) {
+        const nextPatterns = [...existing.patterns, card.detection].sort(
+          compareDetections,
+        );
+        map.set(program.routeHref, {
+          ...existing,
+          highestConfidence: strongerConfidence(
+            existing.highestConfidence,
+            card.confidenceLabel,
+          ),
+          totalMissingInputs:
+            existing.totalMissingInputs + card.detection.missingInputs.length,
+          patterns: nextPatterns,
+        });
+        continue;
+      }
+
+      map.set(program.routeHref, {
+        programCode: program.programCode,
+        programName: program.programName,
+        href: program.routeHref,
+        highestConfidence: card.confidenceLabel,
+        totalMissingInputs: card.detection.missingInputs.length,
+        patterns: [card.detection],
+      });
+    }
+  }
+
+  return [...map.values()].sort((a, b) => compareProgramRows(a, b));
+}
+
+function compareProgramRows(a: ProgramRowModel, b: ProgramRowModel): number {
+  const byPatternCount = b.patterns.length - a.patterns.length;
+  if (byPatternCount !== 0) return byPatternCount;
+  const byConfidence = compareConfidence(a.highestConfidence, b.highestConfidence);
+  if (byConfidence !== 0) return byConfidence;
+  return a.programCode.localeCompare(b.programCode);
+}
+
+function compareDetections(a: SentinelPatternDetection, b: SentinelPatternDetection): number {
+  const byConfidence = compareConfidence(a.confidence, b.confidence);
+  if (byConfidence !== 0) return byConfidence;
+  return a.patternName.localeCompare(b.patternName);
+}
+
+function compareConfidence(left: string, right: string): number {
+  return confidenceRank(right) - confidenceRank(left);
+}
+
+function strongerConfidence(left: string, right: string): string {
+  return confidenceRank(left) >= confidenceRank(right) ? left : right;
+}
+
+function confidenceRank(value: string): number {
+  switch (value.toLowerCase()) {
+    case 'high':
+      return 3;
+    case 'medium':
+      return 2;
+    case 'low':
+      return 1;
+    default:
+      return 0;
+  }
+}
+
+function ActionRow({
+  card,
+  order,
+}: {
+  card: SentinelPatternCard;
+  order: number;
+}) {
+  const evidenceBasis = card.detection.evidenceSignals.length > 0
+    ? `${card.detection.evidenceSignals.length} evidence-linked signals`
+    : `${card.sourceSignalCount} seeded portfolio signals`;
+
+  return (
+    <article
+      style={{
+        padding: '14px 18px',
+        backgroundColor: C.card,
+        border: `1px solid ${C.border}`,
+        borderLeft: `3px solid ${C.navy}`,
+        borderRadius: 6,
+        display: 'grid',
+        gap: 10,
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: 12,
+        }}
+      >
+        <div style={{ display: 'grid', gap: 4 }}>
+          <span
+            style={{
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: 10,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: C.mutedSoft,
+              fontWeight: 700,
+            }}
+          >
+            ACT-{String(order).padStart(3, '0')} · {card.detection.patternKey.replace(/_/g, ' ')}
+          </span>
+          <span style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>
+            {card.detection.recommendedAction}
+          </span>
+        </div>
+        <ConfidenceBadge level={card.confidenceLabel} />
+      </div>
+
+      <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.55 }}>
+        {card.detection.whyItMatters}
+      </div>
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: 10,
+        }}
+      >
+        <ActionMeta label="Evidence basis" value={evidenceBasis} />
+        <ActionMeta
+          label="Affected programs"
+          value={card.detection.affectedPrograms.map((program) => program.programCode).join(' · ')}
+        />
+        <ActionMeta
+          label="Likely handoff"
+          value={card.detection.handoffTargets.length > 0 ? card.detection.handoffTargets.join(' · ') : 'Sentinel'}
+        />
+      </div>
+
+      {card.detection.missingInputs.length > 0 && (
+        <div
+          style={{
+            padding: '8px 10px',
+            backgroundColor: C.amberSoft,
+            border: `1px solid ${C.amber}44`,
+            borderRadius: 4,
+            fontSize: 11,
+            color: C.ink,
+          }}
+        >
+          Missing before action is reliable: {card.detection.missingInputs.slice(0, 3).join(' · ')}
+        </div>
+      )}
+    </article>
+  );
+}
+
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div
@@ -647,7 +944,34 @@ function PatternRow({ card }: { card: SentinelPatternCard }) {
   );
 }
 
-import type { EvidenceItem } from '@/lib/intelligence/sentinel-brief-evidence-view';
+function ActionMeta({ label, value }: { label: string; value: string }) {
+  return (
+    <div
+      style={{
+        padding: '10px 12px',
+        backgroundColor: C.surface,
+        borderRadius: 6,
+        border: `1px solid ${C.border}`,
+        display: 'grid',
+        gap: 2,
+      }}
+    >
+      <span
+        style={{
+          fontFamily: 'JetBrains Mono, monospace',
+          fontSize: 10,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: C.mutedSoft,
+          fontWeight: 700,
+        }}
+      >
+        {label}
+      </span>
+      <span style={{ fontSize: 12, color: C.ink }}>{value}</span>
+    </div>
+  );
+}
 
 function EvidenceRow({
   item,

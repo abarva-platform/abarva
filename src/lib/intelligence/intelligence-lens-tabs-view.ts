@@ -1,7 +1,8 @@
 // INTEL4 · Intelligence Lens Tabs view-model.
 //
-// Pure deterministic helper that returns metadata for the four lens tabs
-// on the Intelligence surface: Overview, Patterns, Evidence, Signals.
+// Pure deterministic helper that returns metadata for the five canonical
+// lens tabs on the Intelligence surface: Summary, Evidence, Programs,
+// Actions, Signals.
 //
 // No model calls, no fetch, no Date.now / Math.random / new Date,
 // no live data. Same input → identical output.
@@ -19,9 +20,10 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type IntelligenceLensTab =
-  | 'overview'
-  | 'patterns'
+  | 'summary'
   | 'evidence'
+  | 'programs'
+  | 'actions'
   | 'signals';
 
 export interface IntelligenceLensTabMeta {
@@ -47,21 +49,27 @@ export interface IntelligenceLensTabsView {
 
 export const INTELLIGENCE_TABS: ReadonlyArray<IntelligenceLensTabMeta> = [
   {
-    key: 'overview',
-    label: 'Overview',
-    description: 'Sentinel summary and active pattern brief',
-    hasApexRetailContent: true,
-  },
-  {
-    key: 'patterns',
-    label: 'Patterns',
-    description: 'Pattern detections ranked by confidence and impact',
+    key: 'summary',
+    label: 'Summary',
+    description: 'Sentinel summary, active patterns, and decision framing',
     hasApexRetailContent: true,
   },
   {
     key: 'evidence',
     label: 'Evidence',
     description: 'Evidence manifest — confirmed, missing, and deferred items',
+    hasApexRetailContent: true,
+  },
+  {
+    key: 'programs',
+    label: 'Programs',
+    description: 'Affected program map and linked operating risk surface',
+    hasApexRetailContent: true,
+  },
+  {
+    key: 'actions',
+    label: 'Actions',
+    description: 'Priority-ordered Sentinel follow-through actions',
     hasApexRetailContent: true,
   },
   {
@@ -80,7 +88,7 @@ const VALID_TAB_KEYS = new Set<string>(INTELLIGENCE_TABS.map((t) => t.key));
 
 /**
  * Resolve the active Intelligence lens tab from a raw searchParam value.
- * Falls back to 'overview' for any unknown or missing value.
+ * Falls back to 'summary' for any unknown or missing value.
  */
 export function resolveIntelligenceTab(
   raw: string | undefined | null,
@@ -88,7 +96,7 @@ export function resolveIntelligenceTab(
   if (raw && VALID_TAB_KEYS.has(raw)) {
     return raw as IntelligenceLensTab;
   }
-  return 'overview';
+  return 'summary';
 }
 
 /**

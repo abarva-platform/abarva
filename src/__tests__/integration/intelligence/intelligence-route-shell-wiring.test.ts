@@ -95,7 +95,15 @@ describe('INTEL1 — IntelligenceRouteShell wiring', () => {
     expect(routeSource).toContain('pageMode=');
   });
 
-  it('Route page preserves existing SentinelActivePatterns content', () => {
-    expect(routeSource).toContain('SentinelActivePatterns');
+  it('Route page imports IntelligenceLensTabs', () => {
+    expect(routeSource).toContain('IntelligenceLensTabs');
+  });
+
+  it('Route page resolves the active intelligence tab from search params', () => {
+    expect(routeSource).toContain('resolveIntelligenceTab');
+  });
+
+  it('Route page passes the active tab into IntelligenceLensTabs', () => {
+    expect(routeSource).toContain('activeTab={activeTab}');
   });
 });

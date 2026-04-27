@@ -1,7 +1,7 @@
 // INTEL4 · Intelligence Lens Tabs wired into tenant Intelligence page.
 //
 // Replaces the single-view SentinelActivePatterns render with a
-// four-tab lens surface: Overview · Patterns · Evidence · Signals.
+// five-tab lens surface: Summary · Evidence · Programs · Actions · Signals.
 //
 // Tab switching is URL-searchParam-driven (?tab=<key>).
 // No client state. Server component only.
