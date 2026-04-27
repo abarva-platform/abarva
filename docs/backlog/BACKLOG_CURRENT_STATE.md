@@ -2,25 +2,37 @@
 
 > This file is written by the orchestration agent at the end of each wave.
 > The next autonomous session reads this file first.
-> Last updated by: orchestration agent (ADMIN9 audit · wave-admin-completion registered)
+> Last updated by: orchestration agent (wave-admin-completion batch 1 merged)
 > Last updated: 2026-04-27
 
-## Last completed slice
+## Last completed slices
+- sliceIds: ADMIN10, ADMIN11, ADMIN13, ADMIN17
+- waveId: wave-admin-completion (planned, 50% — ADMIN9/10/11/13/17 done, ADMIN12/14/15/16/18/19 backlog)
+- title: wave-admin-completion batch 1 — legacy + Users + Connectors + Architecture depth
+- prNumber: 457
+- mergeSHA: c14f5421
+- completedAt: 2026-04-27
+- laneSHAs: ADMIN10 = 47db5001 ; ADMIN11 = 30255653 ; ADMIN13 = fe17683d ; ADMIN17 = 77045e2e
+- testsGreen: 229 new lane tests (35 + 61 + 70 + 63) + full admin regression 1335/1335; hygiene gate 11/11; ESLint clean; TypeScript clean; build clean; hex audit PASS
+- skippedSlices: none
+- note: ADMIN10 deleted 6 deprecated `/platform/admin/*` routes (brief, context, data-guide, outcomes, playbook, revenue), promoted 2 server-side redirects (intelligence → /intelligence; users → /admin/users-access), and retargeted AbarvaNav.tsx admin link to /admin (drops one redirect hop). ADMIN11 added Users & Access depth: URL-driven sub-tabs (All Users / Roles / Permissions / Invites), per-user detail drawer, action strip with SAFE Export + HARD-GATED Invite/Configure SSO/Resend/Revoke. ADMIN13 added Connectors depth: per-connector detail drawer (config schema with masked secrets, recent sync attempts, error log, deterministic 24-point health trend), 4 URL-driven sub-tabs, pilot blocker drilldown, category groups (ERP open by default), action strip with SAFE Export config + Open docs / HARD-GATED Add/Test/Configure/Remove. ADMIN17 added Architecture depth: per-plane drilldown (7 planes × 28 components), URL-state component detail drawer, Azure architecture sub-tab (6 services from Wave 24, deferred state), action strip with HARD-GATED Export — closes the WIRE2 component drawer deviation. One narrow integration fix during CI: replaced `nexus-vert-kappa.vercel.app` pre-canon URL in connectors seed with `app.example.com` placeholder. AGENT1 wiring preserved on every page. All write actions and live model calls remain HARD-GATED for Wave 27+.
+
+## Next wave
+- waveId: wave-admin-completion
+- status: planned (50% — ADMIN9/10/11/13/17 done)
+- nextSlices: [ADMIN12, ADMIN14, ADMIN15, ADMIN16, ADMIN18, ADMIN19]
+- recommendedSequence: Run batch 2 — ADMIN12 + ADMIN14 + ADMIN15 + ADMIN16 in parallel (Tier 2 remainder). ADMIN18 + ADMIN19 last (Tier 3).
+- estimatedWallClock: ~3–4 hours with multi-agent parallelization across remaining Tier 2.
+
+## Previous completed slice
 - sliceId: ADMIN9
-- waveId: wave-admin-completion (planned, 9% — ADMIN9 done, ADMIN10–19 backlog)
+- waveId: wave-admin-completion
 - title: Admin Completion Audit + Plan
-- prNumber: (pending merge)
+- prNumber: 456
 - completedAt: 2026-04-27
 - testsGreen: docs-only slice; hygiene gate 11/11; tsc clean; no app code touched
 - skippedSlices: none
 - note: Three audits produced in `docs/build/ADMIN_COMPLETION_AUDIT.md` — (1) legacy `/platform/admin/*` route disposition (4 KEEP / 5 MERGE / 2 REDIRECT / 6 DEPRECATE for the 16 live sub-routes), (2) per-page depth blueprints for the 8 canonical `/admin/*` pages, (3) SAFE / STUB / HARD-GATED interaction-safety classification. Backlog registered: `wave-admin-completion` with ADMIN10–ADMIN19 (10 slices, status: backlog). Tier 1 is ADMIN10 (legacy consolidation); Tier 2 is ADMIN11–17 parallelizable; Tier 3 is ADMIN18 + ADMIN19. HARD-GATED interactions (Invite, Approve, Test, Suspend, Configure, audit-write, model calls) all defer to Wave 27+.
-
-## Next wave
-- waveId: wave-admin-completion
-- status: planned (9% — ADMIN9 done)
-- nextSlices: [ADMIN10, ADMIN11, ADMIN12, ADMIN13, ADMIN14, ADMIN15, ADMIN16, ADMIN17, ADMIN18, ADMIN19]
-- recommendedSequence: Run ADMIN10 first (Tier 1, blocks others). Then ADMIN11–ADMIN17 in 2–3 parallel lanes (Tier 2). ADMIN18 + ADMIN19 last (Tier 3).
-- estimatedWallClock: ~5–6 hours with multi-agent parallelization across Tier 2.
 
 ## Previous completed wave / slice
 - sliceIds: AGENT1A + AGENT1B
