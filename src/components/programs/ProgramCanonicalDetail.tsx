@@ -23,6 +23,7 @@
 
 import Link from 'next/link';
 import { NexusProgramRail } from '@/components/deliverables/NexusProgramRail';
+import { NexusProgramWorkbench } from '@/components/programs/NexusProgramWorkbench';
 import { ProgramArtifactCanvas } from '@/components/programs/ProgramArtifactCanvas';
 import { buildProgramArtifactCanvasView } from '@/lib/programs/program-artifact-canvas-view';
 import { ProgramWorkshopMode } from '@/components/programs/ProgramWorkshopMode';
@@ -208,6 +209,17 @@ export function ProgramCanonicalDetail({ tenant, program }: ProgramCanonicalDeta
           <ContextMetric label="Deliverables" value={String(view.deliverableTiers.total)} />
           <ContextMetric label="Rich tier" value={String(view.deliverableTiers.rich)} />
         </section>
+
+        <NexusProgramWorkbench
+          programCode={program.code}
+          programName={program.name}
+          tenantLabel={tenant.displayName}
+          currentPhaseSpec={program.currentPhaseSpec}
+          deliverableCount={program.deliverables.length}
+          evidenceBackedDeliverables={program.deliverables.filter(
+            (deliverable) => deliverable.renderTier === 'rich',
+          ).length}
+        />
 
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 22 }}>
           {/* Zone C · Primary workspace */}
