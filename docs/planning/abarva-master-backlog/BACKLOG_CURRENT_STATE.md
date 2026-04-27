@@ -4,19 +4,19 @@ This file is the persistent handoff between autonomous Codex sessions.
 
 ## 1. Last Completed Loop
 
-- Run timestamp: `2026-04-26 23:08 America/Chicago`
-- Last completed wave: `WAVE-21 (final docs closeout underway)`
+- Run timestamp: `2026-04-26 23:19 America/Chicago`
+- Last completed wave: `WAVE-21 executive-summary tranche complete`
 - Last merged PRs:
+  - `#401` - `docs(planning): add risk and dependency register` - `a7a0bc20`
   - `#400` - `docs(planning): add execution roadmap` - `5bb500a6`
-  - `#399` - `docs(planning): add master product readiness map` - `29302584`
 - Registry updates applied:
-  - Item IDs moved to `done`: `ROAD1`, `ROAD2`
+  - Item IDs moved to `done`: `ROAD1`, `ROAD2`, `ROAD3`
   - Item IDs moved to `blocked`: `none newly added in this pass`
 
 ## 2. Current Queue Snapshot
 
 - Next wave candidate: `WAVE-21`
-- Ready item IDs: `ROAD3`
+- Ready item IDs: `VIS2`
 - Blocked item IDs: `VIS4`, `DESIGN1`
 - Items requiring human approval: `none in current WAVE-21 queue`
 - Items deferred due to conflict: `future wave reconciliation outside current docs-only bridge`
@@ -25,16 +25,16 @@ This file is the persistent handoff between autonomous Codex sessions.
 
 - CI health summary: `healthy enough for normal green-check gating; ROAD1 and ROAD2 both passed required checks before merge`
 - Open blocker 1: `VIS4 and DESIGN1 still need narrower execution contracts before autonomous runtime work`
-- Open blocker 2: `Production blockers still sit outside the docs-only closeout: evidence ingest, audit, gateway, tenant safety, and deploy truth`
+- Open blocker 2: `Production blockers still sit outside the current docs/review queue: evidence ingest, audit, gateway, tenant safety, and deploy truth`
 - Scope boundary risk: `low in the current docs-only lane`
 - Merge risk: `normal if green checks continue to run`
 
 ## 4. Execution Decisions Made
 
-- Parallel lanes launched: `none; current ROAD1 -> ROAD2 -> ROAD3 sequence remains intentionally serial because of shared control-plane files`
+- Parallel lanes launched: `none; ROAD1 -> ROAD2 -> ROAD3 remained intentionally serial because of shared control-plane files`
 - Sequential items forced by overlap: `ROAD1 -> ROAD2 -> ROAD3 because they share one track file, the registry, and the checkpoint file`
-- Stop conditions checked: `pass; ROAD1 and ROAD2 merged cleanly with green checks`
-- Human approvals requested: `yes - user approved reconciliation-first path; no further approvals required for current docs-only queue`
+- Stop conditions checked: `pass; ROAD1, ROAD2, and ROAD3 all merged cleanly with green checks`
+- Human approvals requested: `standing user approval is now recorded for future in-scope PR merge-and-continue behavior; mandatory stop conditions still apply`
 
 ## 5. Next Step Contract
 
@@ -60,6 +60,6 @@ Codex must perform the next run in this order:
 The planning-path orchestration loop is now functioning normally on clean mainline state.
 
 - BRAND1, SRC39, SRC40, and SRC41 are already merged on main and remain correctly marked as done.
-- ROAD1 and ROAD2 are merged and recorded.
-- ROAD3 is the active slice in the current branch.
-- The next autonomous action after this checkpoint update is to complete and merge `ROAD3`, which will finish the currently executable WAVE-21 queue.
+- ROAD1, ROAD2, and ROAD3 are merged and recorded.
+- VIS2 is the next executable WAVE-21 item and no longer needs a per-item approval stop.
+- The next autonomous action after this checkpoint update is to execute `VIS2`, then reassess the blocked WAVE-21 design items against their narrower contracts.

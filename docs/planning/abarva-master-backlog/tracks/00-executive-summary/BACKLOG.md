@@ -49,7 +49,7 @@ Define the next 8-hour, 3-day, and pilot-oriented build sequencing plan after cu
 ## ROAD3 - Open risk and dependency register
 
 **Priority:** P1
-**Status:** in_progress
+**Status:** done
 **Type:** docs
 **Primary agent:** Steward
 

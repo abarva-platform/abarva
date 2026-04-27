@@ -6,6 +6,7 @@ This policy defines when Codex continues autonomously and when Codex must stop a
 
 Codex may proceed without waiting for user input when all are true:
 
+- The user has already granted standing approval for in-scope PR creation, PR merge, and autonomous continuation.
 - Work is inside item `allowedFiles`.
 - No edits touch `forbiddenFiles`.
 - Local validation commands pass or failures are in-scope and fixable.
