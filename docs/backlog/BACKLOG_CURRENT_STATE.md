@@ -2,20 +2,21 @@
 
 > This file is written by the orchestration agent at the end of each wave.
 > The next autonomous session reads this file first.
-> Last updated by: orchestration agent (Wave 28 complete)
+> Last updated by: orchestration agent (Wave 29 complete)
 > Last updated: 2026-04-26
 
 ## Last completed wave
-- waveId: wave-28
-- waveTitle: Data Trust Enforcement Layer
-- prNumber: 414
-- mergeSHA: f7f8b196
-- completedSlices: [EVID1, DATA1, DATA2, DATA3]
+- waveId: wave-29
+- waveTitle: Cleanup — Legacy Shell + Route Registry + Build Ops
+- prNumber: 416
+- mergeSHA: 613a1d7c
+- completedSlices: [SHELL8, SHELL9, OPS3, OPS4]
 - completedAt: 2026-04-26
-- testsGreen: 158 new tests pass; 6296+ total integration tests pass; 5 pre-existing failures unchanged
-- skippedSlices: [TRUST4] — already code_complete from prior wave
+- testsGreen: 123 new tests pass; 1219 QA+OPS tests pass; 0 regressions
+- skippedSlices: [OPS2, BLG2] — already code_complete from prior waves
 
 ## Previous waves (for reference)
+- wave-28: PR #414, SHA f7f8b196, slices [EVID1, DATA1, DATA2, DATA3]
 - wave-27: PR #413, SHA 8b135aac, slices [PAT1_W27, PAT2_W27, PAT3_W27, PAT4_W27, PAT5_W27]
 - wave-26: PR #408, SHA 64465b2c, slices [PROD10, PROD11, PROD12, DEMO10, DEMO11, DEMO12]
 - wave-25: PR #405, SHA ef52bebf, slices [PROD9, QA30, QA31, QA32]
@@ -24,35 +25,34 @@
 - wave-22: PR #396, SHA 493ec888, slices [INTEL4, TOWER4]
 
 ## Next wave to execute
-- waveId: wave-29
-- waveTitle: Cleanup — Legacy Shell + Route Registry + Build Ops
-- waveFile: docs/backlog/waves/ (synthesise from WAVE_ROADMAP.md + track BACKLOG.md if no file)
+- waveId: wave-30
+- waveTitle: Solution Intelligence Expansion
+- waveFile: docs/backlog/waves/ (synthesise from backlog-registry.json + track BACKLOG.md if no file)
 - blockedSlices: none
-- primarySlices: [SHELL8, SHELL9, OPS2, OPS3, OPS4, BLG2]
+- primarySlices: [PAT1-3, SOL patterns — confirm from backlog-registry.json]
 
-## Wave 28 deliverables produced
+## Wave 29 deliverables produced
+- SHELL8: Legacy Shell Retirement — Deleted TopBar.tsx and PrimaryNav.tsx (dead code).
+  Inverted QA28-C15 and BRAND2-C4 check logic (absence = pass, presence = fail).
+- SHELL9: Route Registry Read Model — `src/lib/routes/registry.ts`
+  (16-route canonical registry, RouteShellKind/RouteSurface/RouteAgent types,
+   getRouteRegistry, getActiveRoutes, getRoutesByShellKind, getRoutesBySurface,
+   getRouteById, getAuthenticatedRoutes, getRoutesByAgent, summarizeRouteRegistry)
+- OPS3: Wave Runner Protocol Model — `src/lib/ops/wave-runner-model.ts`
+  (17-step canonical execution protocol, WaveRunnerStepKind×17, EscalationTier,
+   WaveRunnerGateCondition, getWaveRunnerProtocol, getAllTier3Conditions, getBlockingSteps)
+- OPS4: Pack Spec Validator — `src/lib/ops/pack-spec-validator.ts`
+  (deterministic schema validator for solution pack entries, identity/content/
+   structure/provenance/relations checks, validatePackSpecEntry, validatePackSpec,
+   flattenPackSpecViolations, summarizePackValidation)
+- Tests: 123 new tests across 4 test files; 1219 QA+OPS integration tests all pass
+
+## Wave 28 deliverables produced (reference)
 - EVID1: Evidence Manifest Schema — `src/lib/data-trust/evidence-manifest-schema.ts`
-  (EvidenceClaimSchema, confidence tiers high/medium/low/stale/missing/blocked,
-   provenance records, freshness rules, citation display with disclosure caveats;
-   buildEvidenceClaimSchemaSeed, resolveConfidenceTier, summarizeEvidenceClaimSchema)
-- DATA1: Data Sharing Levels L0-L4 Enforcement — `src/lib/data-trust/data-sharing-enforcement.ts`
-  (7 DataSharingRequestActions, minimum level per action, raw read requires L4 + named approval,
-   agent context requires agent-use policy, decision citation requires co_signed or audited)
+- DATA1: Data Sharing L0-L4 Enforcement — `src/lib/data-trust/data-sharing-enforcement.ts`
 - DATA2: Dataset Approval Model — `src/lib/data-trust/dataset-approval-model.ts`
-  (8-state lifecycle, 5 approval scopes → permitted actions, expiry enforcement,
-   named approver requirements, evaluateApprovalGate, validateDatasetApprovalRecord)
 - DATA3: No-Raw-Copy Mode Enforcement — `src/lib/data-trust/no-raw-copy-enforcement.ts`
-  (7 violation categories, PII/connection strings/base64/large JSON always blocked,
-   URL schemes/long tokens conditionally blocked unless L4 named approval)
 - Tests: `src/__tests__/integration/data-trust/` (158 tests, all pass)
-
-## Wave 27 deliverables produced (reference)
-- PAT1_W27: Data Platform Managed Services pack — `src/lib/solutions/data-platform-managed-services-pack.ts`
-- PAT2_W27: IMS Managed Services pack — `src/lib/solutions/ims-managed-services-pack.ts`
-- PAT3_W27: Vendor Evaluation Scorecard — `src/lib/solutions/vendor-evaluation-pattern.ts`
-- PAT4_W27: AI Failure Modes → Solution Map — `src/lib/solutions/ai-failure-modes-solution-map.ts`
-- PAT5_W27: Pattern Manifest — `src/lib/solutions/pattern-manifest.ts`
-- Tests: `src/__tests__/integration/solutions/pattern-library-packs.test.ts` (91 tests, all pass)
 
 ## Blocker conditions
 - none
@@ -63,7 +63,6 @@
 - Production auth provider: CUSTOM / DEFER — LIVE4 permanently deferred; Clerk remains as-is until custom auth is scoped
 
 ## Known deferred items
-- TopBar.tsx and PrimaryNav.tsx confirmed dead code — removal deferred to Wave 29 cleanup (SHELL8)
 - Programs route shell wiring deferred in SHELL7 — will be completed in PROG10
 - Azure lab actual provisioning — deferred until subscription is active (founder creates subscription)
 - LIVE4 auth hardening — permanently deferred pending founder auth provider decision
@@ -73,7 +72,7 @@
 (Set to true only if Anand explicitly instructs continuous autonomous execution)
 
 ## Session summary
-Wave 28 complete — Data Trust Enforcement Layer delivering 4 slices (EVID1, DATA1, DATA2, DATA3). All pure deterministic TypeScript modules in src/lib/data-trust/: Evidence Manifest Schema with 6 confidence tiers and provenance records (EVID1), Data Sharing L0-L4 enforcement gate over 7 request action types (DATA1), Dataset Approval Model with 8-state lifecycle and 5 approval scopes (DATA2), No-Raw-Copy Mode enforcement blocking PII/connection strings/base64/large JSON unconditionally (DATA3). 158 new integration tests, 6296+ total pass, 5 pre-existing failures unchanged. TRUST4 skipped (already code_complete). Wave 29 next: SHELL8, SHELL9, OPS2-4, BLG2.
+Wave 29 complete — Cleanup: Legacy Shell + Route Registry + Build Ops delivering 4 slices (SHELL8, SHELL9, OPS3, OPS4). SHELL8 deleted dead-code TopBar.tsx and PrimaryNav.tsx; inverted QA check logic so absence = pass. SHELL9 created canonical 16-route registry read model with full query helper API. OPS3 codified 17-step wave runner execution protocol with tier1/2/3 gate conditions. OPS4 created deterministic pack spec validator for solution pack schema enforcement. 123 new tests, 1219 QA+OPS tests green, 0 regressions. CI: ESLint pass, Routes pass, Hygiene pass, Vercel pass. Wave 30 next: Solution Intelligence Expansion (PAT-series, SOL patterns).
 
 ## Route health (last verified 2026-04-26)
 - /tenant/apex-retail/programs → ACTIVE
@@ -95,5 +94,6 @@ Wave 28 complete — Data Trust Enforcement Layer delivering 4 slices (EVID1, DA
 - Page blueprints: docs/platform-design/page-blueprints/
 - Azure architecture docs: docs/architecture/azure/
 - Pilot docs: docs/pilot/
+- Wave 29 modules: src/lib/routes/, src/lib/ops/ (wave-runner-model, pack-spec-validator)
 - Wave 28 modules: src/lib/data-trust/
 - Wave 27 spec: docs/planning/abarva-master-backlog/waves/WAVE-27-PATTERN-LIBRARY-EXPANSION.md
