@@ -92,15 +92,23 @@ describe('ArchitectureCanvas component', () => {
     expect(source).not.toMatch(/require\(['"]mermaid['"]\)/)
   })
 
-  // ADMIN4: the /admin/architecture route was rewired to AdminCanonShellV2 +
-  // EditorialCanvas + ArchitecturePlaneStack. ArchitectureCanvas remains on
-  // disk for other consumers / future cleanup, but the page itself now imports
-  // the new plane stack instead.
-  it('architecture page imports ArchitecturePlaneStack (new wiring)', () => {
+  // ADMIN4 → ADMIN17: the /admin/architecture route was rewired to
+  // AdminCanonShellV2 + EditorialCanvas + ArchitecturePlaneDrilldown
+  // (ADMIN17 swapped ArchitecturePlaneStack for the drillable variant).
+  // ArchitectureCanvas + ArchitecturePlaneStack remain on disk for other
+  // consumers / future cleanup, but the page itself now imports the new
+  // drilldown instead.
+  it('architecture page imports a plane stack/drilldown component (new wiring)', () => {
     // ADMIN8 — admin tree consolidated; canonical Architecture page lives at /admin/architecture.
     const pagePath = path.join(repoRoot, 'src/app/(maestro)/admin/architecture/page.tsx')
     const source = fs.readFileSync(pagePath, 'utf8')
-    expect(source).toContain('ArchitecturePlaneStack')
-    expect(source).toMatch(/import\s*\{[^}]*ArchitecturePlaneStack[^}]*\}\s*from/)
+    // ADMIN17 — accept either the original stack or the new drilldown.
+    const usesStack =
+      source.includes('ArchitecturePlaneStack') &&
+      /import\s*\{[^}]*ArchitecturePlaneStack[^}]*\}\s*from/.test(source)
+    const usesDrilldown =
+      source.includes('ArchitecturePlaneDrilldown') &&
+      /import\s*\{[^}]*ArchitecturePlaneDrilldown[^}]*\}\s*from/.test(source)
+    expect(usesStack || usesDrilldown).toBe(true)
   })
 })

@@ -1,5 +1,7 @@
 'use client'
 
+// LEGACY · being migrated to /admin/approvals in a follow-up wave (post-wave-admin-completion).
+
 const S = {
   page: { minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Inter, -apple-system, sans-serif' } as React.CSSProperties,
   card: { background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '24px' } as React.CSSProperties,

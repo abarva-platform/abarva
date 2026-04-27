@@ -8911,20 +8911,22 @@
     {
       "id": "ADMIN10",
       "title": "Legacy /platform/admin/* route consolidation (REDIRECT/DEPRECATE/MERGE prep)",
-      "status": "backlog",
+      "status": "code_complete",
       "type": "docs+ops",
       "wave": "wave-admin-completion",
       "track": "06-admin-readiness-architecture",
+      "completedAt": "2026-04-27",
       "risk": "low",
       "notes": "Tier 1 · blocks ADMIN11–17. Deletes 6 DEPRECATE routes, redirects 2 (intelligence, users), retargets AbarvaNav.tsx. Preserves 5 MERGE routes for Tier-2 consumption."
     },
     {
       "id": "ADMIN11",
       "title": "Users & Access depth — tabs + user table + role detail drawer + invite stub",
-      "status": "backlog",
+      "status": "code_complete",
       "type": "ui",
       "wave": "wave-admin-completion",
       "track": "06-admin-readiness-architecture",
+      "completedAt": "2026-04-27",
       "risk": "medium",
       "notes": "Tier 2 · promotes /platform/admin/users content into canonical shell. Invite/Suspend/ChangeRole render as HARD-GATED stubs."
     },
@@ -8941,10 +8943,11 @@
     {
       "id": "ADMIN13",
       "title": "Connectors depth — per-connector detail drawer + config stub + requirements matrix",
-      "status": "backlog",
+      "status": "code_complete",
       "type": "ui",
       "wave": "wave-admin-completion",
       "track": "06-admin-readiness-architecture",
+      "completedAt": "2026-04-27",
       "risk": "medium",
       "notes": "Tier 2 · lifts vendor/docsHref/error detail from legacy /platform/admin/connectors. Test/Configure HARD-GATED."
     },
@@ -8981,10 +8984,11 @@
     {
       "id": "ADMIN17",
       "title": "Architecture depth — per-plane drilldown + component drawer + plane health summary",
-      "status": "backlog",
+      "status": "code_complete",
       "type": "ui",
       "wave": "wave-admin-completion",
       "track": "06-admin-readiness-architecture",
+      "completedAt": "2026-04-27",
       "risk": "low",
       "notes": "Tier 2 · closes the open ADMIN7 architecture deviation (component drawer)."
     },

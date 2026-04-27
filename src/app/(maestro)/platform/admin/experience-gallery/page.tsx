@@ -1,3 +1,4 @@
+// LEGACY · being migrated to /admin/experience-gallery in a follow-up wave (post-wave-admin-completion).
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { AdminCanonShell } from '@/components/admin/AdminCanonShell';

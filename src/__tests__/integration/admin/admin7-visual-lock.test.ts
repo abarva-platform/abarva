@@ -165,14 +165,19 @@ const ADMIN_PAGE_PATHS = [
   'src/app/(maestro)/admin/architecture/page.tsx',
 ];
 
-// ADMIN8 — legacy /platform/admin/* pages are now thin redirects to /admin/*.
+// ADMIN8 + ADMIN10 — legacy /platform/admin/* pages are now thin redirects.
 // Regression guard: these files MUST import `redirect` from 'next/navigation'
-// and call it with the matching /admin destination — they MUST NOT render
-// the canonical shell directly.
+// and call it with the expected destination — they MUST NOT render the
+// canonical shell directly.
+//
+// ADMIN8 retired: root, architecture, production-readiness (→ /admin/...).
+// ADMIN10 retired: intelligence (→ /intelligence), users (→ /admin/users-access).
 const LEGACY_REDIRECT_PAGES: Array<{ path: string; expectedTarget: string }> = [
   { path: 'src/app/(maestro)/platform/admin/page.tsx', expectedTarget: '/admin' },
   { path: 'src/app/(maestro)/platform/admin/architecture/page.tsx', expectedTarget: '/admin/architecture' },
   { path: 'src/app/(maestro)/platform/admin/production-readiness/page.tsx', expectedTarget: '/admin/production-readiness' },
+  { path: 'src/app/(maestro)/platform/admin/intelligence/page.tsx', expectedTarget: '/intelligence' },
+  { path: 'src/app/(maestro)/platform/admin/users/page.tsx', expectedTarget: '/admin/users-access' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -257,7 +262,7 @@ describe('ADMIN7 — Visual lock & regression guard', () => {
   // ADMIN8 — Legacy /platform/admin pages are redirects, not full canonical pages
   // -------------------------------------------------------------------------
 
-  describe('ADMIN8 — Legacy /platform/admin/* are thin redirects to /admin/*', () => {
+  describe('ADMIN8 + ADMIN10 — Legacy /platform/admin/* are thin redirects', () => {
     LEGACY_REDIRECT_PAGES.forEach(({ path, expectedTarget }) => {
       describe(path, () => {
         it('file exists', () => {
