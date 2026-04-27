@@ -15,7 +15,8 @@ const routeSource = readCode('src/app/api/admin/production-readiness/route.ts');
 const readModelSource = readCode('src/lib/admin/production-readiness.ts');
 const livePanelSource = readCode('src/components/admin/ProductionReadinessLivePanel.tsx');
 const trackerSource = readCode('src/components/admin/ProductionReadinessTracker.tsx');
-const pageSource = readCode('src/app/(maestro)/platform/admin/production-readiness/page.tsx');
+// ADMIN8 — canonical Production Readiness page is /admin/production-readiness.
+const pageSource = readCode('src/app/(maestro)/admin/production-readiness/page.tsx');
 const proxySource = readCode('src/proxy.ts');
 const combinedSource = stripComments(
   [routeSource, readModelSource, livePanelSource, trackerSource, pageSource].join('\n'),

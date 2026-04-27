@@ -1,6 +1,5 @@
-// /admin/architecture — canonical alias of /platform/admin/architecture.
-// AdminSidebar links to this path; the /platform/admin/architecture variant
-// remains for legacy admin portal flows. Both paths render the same shell.
+// ADMIN8 — /admin/architecture is the canonical Architecture page.
+// /platform/admin/architecture redirects here for backward compatibility.
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { EditorialCanvas } from '@/components/admin/EditorialCanvas';
 import { AgentRail } from '@/components/admin/AgentRail';
@@ -10,7 +9,7 @@ import { ArchitecturePlaneStack } from '@/components/admin/ArchitecturePlaneStac
 import { buildArchitecturePageView } from '@/lib/admin/architecture-page-view';
 
 export const metadata = {
-  title: 'Architecture | AbarVa Admin',
+  title: 'Architecture Overview | Nexus Admin',
 };
 
 export default function AdminArchitecturePage() {

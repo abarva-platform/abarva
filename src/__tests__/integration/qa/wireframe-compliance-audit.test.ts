@@ -185,9 +185,10 @@ describe('wireframe-compliance-audit', () => {
     it('the 8 expected routes are all present', () => {
       const results = getPageComplianceResults();
       const routes = results.map((r) => r.route);
-      expect(routes).toContain('/platform/admin');
-      expect(routes).toContain('/platform/admin/production-readiness');
-      expect(routes).toContain('/platform/admin/architecture');
+      // ADMIN8 — admin tree consolidated under /admin/* (legacy /platform/admin/* now redirects).
+      expect(routes).toContain('/admin');
+      expect(routes).toContain('/admin/production-readiness');
+      expect(routes).toContain('/admin/architecture');
       expect(routes).toContain('/tenant/[tenantSlug]/programs');
       expect(routes).toContain('/tenant/[tenantSlug]/programs/[programSlug]');
       expect(routes).toContain('/source/events/[eventId]');
@@ -203,7 +204,7 @@ describe('wireframe-compliance-audit', () => {
 
     it('Architecture page is at 90 after ADMIN4 (was 58 in WIRE2)', () => {
       const results = getPageComplianceResults();
-      const arch = results.find((r) => r.route === '/platform/admin/architecture');
+      const arch = results.find((r) => r.route === '/admin/architecture');
       expect(arch).toBeDefined();
       expect(arch!.overallScore).toBe(90);
     });
@@ -226,17 +227,17 @@ describe('wireframe-compliance-audit', () => {
     });
 
     it('wave-admin-redesign: Production Readiness 80 → 92', () => {
-      const result = getPageComplianceResult('/platform/admin/production-readiness');
+      const result = getPageComplianceResult('/admin/production-readiness');
       expect(result!.overallScore).toBe(92);
     });
 
     it('wave-admin-redesign: Admin 72 → 92', () => {
-      const result = getPageComplianceResult('/platform/admin');
+      const result = getPageComplianceResult('/admin');
       expect(result!.overallScore).toBe(92);
     });
 
     it('wave-admin-redesign: Architecture 58 → 90', () => {
-      const result = getPageComplianceResult('/platform/admin/architecture');
+      const result = getPageComplianceResult('/admin/architecture');
       expect(result!.overallScore).toBe(90);
     });
   });
@@ -247,7 +248,7 @@ describe('wireframe-compliance-audit', () => {
 
   describe('getPageComplianceResult', () => {
     it('returns the correct result for a known route', () => {
-      const result = getPageComplianceResult('/platform/admin');
+      const result = getPageComplianceResult('/admin');
       expect(result).not.toBeNull();
       expect(result!.page).toBe('Admin');
       expect(result!.overallScore).toBe(92);
@@ -258,9 +259,14 @@ describe('wireframe-compliance-audit', () => {
       expect(result).toBeNull();
     });
 
+    it('returns null for the legacy /platform/admin path (ADMIN8 consolidated to /admin)', () => {
+      const result = getPageComplianceResult('/platform/admin');
+      expect(result).toBeNull();
+    });
+
     it('returns a copy (not a shared reference)', () => {
-      const a = getPageComplianceResult('/platform/admin');
-      const b = getPageComplianceResult('/platform/admin');
+      const a = getPageComplianceResult('/admin');
+      const b = getPageComplianceResult('/admin');
       expect(a).not.toBe(b);
     });
   });

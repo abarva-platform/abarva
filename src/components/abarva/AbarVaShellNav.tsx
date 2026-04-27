@@ -76,7 +76,7 @@ export const ABARVA_SHELL_SURFACES: ReadonlyArray<AbarVaShellNavSurface> = [
   {
     key: 'admin',
     label: 'Admin',
-    href: '/platform/admin',
+    href: '/admin',
     workflowQuestion: 'Is the platform ready?',
   },
 ];

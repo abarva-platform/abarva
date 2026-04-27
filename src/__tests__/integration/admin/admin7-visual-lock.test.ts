@@ -165,6 +165,16 @@ const ADMIN_PAGE_PATHS = [
   'src/app/(maestro)/admin/architecture/page.tsx',
 ];
 
+// ADMIN8 — legacy /platform/admin/* pages are now thin redirects to /admin/*.
+// Regression guard: these files MUST import `redirect` from 'next/navigation'
+// and call it with the matching /admin destination — they MUST NOT render
+// the canonical shell directly.
+const LEGACY_REDIRECT_PAGES: Array<{ path: string; expectedTarget: string }> = [
+  { path: 'src/app/(maestro)/platform/admin/page.tsx', expectedTarget: '/admin' },
+  { path: 'src/app/(maestro)/platform/admin/architecture/page.tsx', expectedTarget: '/admin/architecture' },
+  { path: 'src/app/(maestro)/platform/admin/production-readiness/page.tsx', expectedTarget: '/admin/production-readiness' },
+];
+
 // ---------------------------------------------------------------------------
 // Scanner helpers
 // ---------------------------------------------------------------------------
@@ -238,6 +248,33 @@ describe('ADMIN7 — Visual lock & regression guard', () => {
         it('imports AgentRail', () => {
           const src = readFileSync(resolve(root, p), 'utf8');
           expect(src).toContain('AgentRail');
+        });
+      });
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // ADMIN8 — Legacy /platform/admin pages are redirects, not full canonical pages
+  // -------------------------------------------------------------------------
+
+  describe('ADMIN8 — Legacy /platform/admin/* are thin redirects to /admin/*', () => {
+    LEGACY_REDIRECT_PAGES.forEach(({ path, expectedTarget }) => {
+      describe(path, () => {
+        it('file exists', () => {
+          expect(existsSync(resolve(root, path))).toBe(true);
+        });
+        it("imports `redirect` from 'next/navigation'", () => {
+          const src = readFileSync(resolve(root, path), 'utf8');
+          expect(src).toMatch(/from\s+['"]next\/navigation['"]/);
+          expect(src).toContain('redirect');
+        });
+        it(`calls redirect('${expectedTarget}')`, () => {
+          const src = readFileSync(resolve(root, path), 'utf8');
+          expect(src).toContain(`redirect('${expectedTarget}')`);
+        });
+        it('does NOT import AdminCanonShellV2 (no canonical shell render)', () => {
+          const src = readFileSync(resolve(root, path), 'utf8');
+          expect(src).not.toContain('AdminCanonShellV2');
         });
       });
     });

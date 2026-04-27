@@ -85,13 +85,14 @@ const AUDIT_DATE = '2026-04-27';
 
 const PAGE_RESULTS: PageComplianceResult[] = [
   // -------------------------------------------------------------------------
-  // Page 1: Admin (/platform/admin)
+  // Page 1: Admin (/admin) — ADMIN8 consolidated canonical path
+  // (was /platform/admin pre-ADMIN8; legacy URL now redirects here.)
   // Overall score: 62 → 72 (Wave 32) → 92 (wave-admin-redesign ADMIN1–6)
   // -------------------------------------------------------------------------
   {
     page: 'Admin',
-    route: '/platform/admin',
-    routeFile: 'src/app/(maestro)/platform/admin/page.tsx',
+    route: '/admin',
+    routeFile: 'src/app/(maestro)/admin/page.tsx',
     wireframePath: 'not_found',
     blueprintPath: 'docs/platform-design/page-blueprints/ADMIN_PAGE_BLUEPRINT.md',
     overallScore: 92,
@@ -156,13 +157,14 @@ const PAGE_RESULTS: PageComplianceResult[] = [
   },
 
   // -------------------------------------------------------------------------
-  // Page 2: Production Readiness (/platform/admin/production-readiness)
+  // Page 2: Production Readiness (/admin/production-readiness) — ADMIN8
+  // (was /platform/admin/production-readiness pre-ADMIN8; legacy URL redirects here.)
   // Overall score: 74 → 80 (Wave 32) → 92 (ADMIN5)
   // -------------------------------------------------------------------------
   {
     page: 'Production Readiness',
-    route: '/platform/admin/production-readiness',
-    routeFile: 'src/app/(maestro)/platform/admin/production-readiness/page.tsx',
+    route: '/admin/production-readiness',
+    routeFile: 'src/app/(maestro)/admin/production-readiness/page.tsx',
     wireframePath: 'not_found',
     blueprintPath: 'docs/platform-design/page-blueprints/PRODUCTION_READINESS_BLUEPRINT.md',
     overallScore: 92,
@@ -211,13 +213,14 @@ const PAGE_RESULTS: PageComplianceResult[] = [
   },
 
   // -------------------------------------------------------------------------
-  // Page 3: Architecture (/platform/admin/architecture)
+  // Page 3: Architecture (/admin/architecture) — ADMIN8
+  // (was /platform/admin/architecture pre-ADMIN8; legacy URL redirects here.)
   // Overall score: 58 → 90 (ADMIN4) — component drawer remains open
   // -------------------------------------------------------------------------
   {
     page: 'Architecture',
-    route: '/platform/admin/architecture',
-    routeFile: 'src/app/(maestro)/platform/admin/architecture/page.tsx',
+    route: '/admin/architecture',
+    routeFile: 'src/app/(maestro)/admin/architecture/page.tsx',
     wireframePath: 'not_found',
     blueprintPath: 'docs/platform-design/page-blueprints/ARCHITECTURE_BLUEPRINT.md',
     overallScore: 90,

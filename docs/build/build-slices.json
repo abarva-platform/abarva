@@ -8864,6 +8864,16 @@
       "track": "06-admin-readiness-architecture",
       "completedAt": "2026-04-27",
       "notes": "70-test regression suite locks hex/font/shell/logo. Shell guard script gates banned tokens in CI. WIRE2B scores: Admin 72->92, Production Readiness 80->92, Architecture 58->90; safeFixesApplied 13->15."
+    },
+    {
+      "id": "ADMIN8",
+      "title": "Admin Single Source of Truth \u00b7 /admin canonical tree",
+      "status": "code_complete",
+      "type": "consolidation",
+      "wave": "wave-admin-redesign-followup",
+      "track": "06-admin-readiness-architecture",
+      "completedAt": "2026-04-26",
+      "notes": "Consolidate /admin tree as the single canonical admin path. /platform/admin, /platform/admin/architecture, and /platform/admin/production-readiness now redirect to /admin equivalents. Added /admin/layout.tsx with Clerk admin allowlist auth gate (lifted from ADMIN5). Top nav Admin link points to /admin. WIRE2B compliance routes updated to /admin/*. ADMIN7 regression guard extended to assert legacy /platform/admin/* are redirect-only. No business-logic changes; URL consolidation only."
     }
   ]
 }

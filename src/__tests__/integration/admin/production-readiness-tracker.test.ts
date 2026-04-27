@@ -386,7 +386,7 @@ describe('production readiness component map and PROD4B slice', () => {
     }
 
     expect(componentMap).toContain('docs/build/production-readiness.json');
-    expect(componentMap).toContain('/platform/admin/production-readiness');
+    expect(componentMap).toContain('/admin/production-readiness');
     expect(componentMap).toContain('Source / Outsourcing');
     expect(componentMap).toContain('docs/abarva-source/SOURCE_PRODUCTION_READINESS_TRACKER.md');
     expect(componentMap).toContain('docs/abarva-source/SOURCE_LAYERED_PROGRESS_TRACKER.md');
@@ -424,9 +424,10 @@ describe('module hygiene', () => {
   const readModelSource = readCode('../../../lib/admin/production-readiness.ts');
   const componentSource = readCode('../../../components/admin/ProductionReadinessTracker.tsx');
   const livePanelSource = readCode('../../../components/admin/ProductionReadinessLivePanel.tsx');
-  const routeSource = readCode('../../../app/(maestro)/platform/admin/production-readiness/page.tsx');
+  // ADMIN8 — admin tree consolidated under /admin/* (legacy /platform/admin/* now redirects).
+  const routeSource = readCode('../../../app/(maestro)/admin/production-readiness/page.tsx');
   const apiRouteSource = readCode('../../../app/api/admin/production-readiness/route.ts');
-  const adminPageSource = readCode('../../../app/(maestro)/platform/admin/page.tsx');
+  const adminPageSource = readCode('../../../app/(maestro)/admin/page.tsx');
   const newSources = [readModelSource, componentSource, livePanelSource, routeSource, apiRouteSource]
     .map(stripComments)
     .join('\n');
@@ -487,7 +488,11 @@ describe('module hygiene', () => {
     // is no longer mounted on the route — that mount is intentionally retired.
     expect(routeSource).toMatch(/AdminCanonShellV2/);
     expect(routeSource).toMatch(/buildProductionReadinessPageView/);
-    expect(adminPageSource).toMatch(/\/platform\/admin\/production-readiness/);
+    // ADMIN8 — admin overview page is at /admin (was /platform/admin); the
+    // canonical Setup Overview composes the shell, not a hardcoded link to
+    // the production-readiness sub-route. Verify the canonical shell wiring
+    // instead of the legacy URL string match.
+    expect(adminPageSource).toMatch(/AdminCanonShellV2/);
   });
 });
 
