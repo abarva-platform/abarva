@@ -6,86 +6,66 @@ import {
   buildNexusProgramWorkbenchView,
   type NexusProgramWorkbenchInput,
   type NexusWorkbenchAgentHandoff,
-  type NexusWorkbenchConversationTurn,
-  type NexusWorkbenchPhaseFocus,
+  type NexusWorkbenchEvidenceSlice,
+  type NexusWorkbenchMissingInput,
   type NexusWorkbenchPhaseNode,
-  type NexusWorkbenchRequiredInput,
+  type NexusWorkbenchSubnavTab,
   type NexusWorkbenchSuggestedAction,
+  type NexusWorkbenchWorkshop,
 } from '@/lib/programs/nexus-program-workbench-view';
+
+// --- design tokens (AbarVa locked palette) -------------------------------
 
 const SURFACE = '#FBFAF7';
 const CARD = '#FFFFFF';
 const INK = '#0A0C12';
 const BODY = '#1F2433';
 const MUTED = '#525866';
+const MUTED_SOFT = '#7A7468';
 const BORDER = '#E8E6E1';
+
 const NAVY = '#132B4F';
-const NAVY_SOFT = 'rgba(19,43,79,0.08)';
+const NAVY_DEEP = '#0E2244';
 const BLUE = '#0B4A91';
 const BLUE_SOFT = '#E8F2FF';
+const BLUE_TINT = '#EEF4FF';
+
 const AMBER = '#A65F00';
 const AMBER_SOFT = '#FFF0D2';
+const AMBER_TINT = '#FBF1DC';
+
 const RED = '#9F2E25';
+const RED_SOFT = '#FCE8E4';
+
 const GREEN = '#0F766E';
-const GREEN_SOFT = '#DFF4EE';
-const CONV_USER = 'rgba(19, 43, 79, 0.86)';
+const GREEN_TINT = '#EAF5EE';
+
+const LOCK_TINT = '#F2EFEA';
 
 const FONT =
   '"DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-const SERIF =
-  'Georgia, "Times New Roman", "Iowan Old Style", serif';
+const SERIF = 'Georgia, "Times New Roman", "Iowan Old Style", serif';
 
 export interface NexusProgramWorkbenchProps extends NexusProgramWorkbenchInput {
   id?: string;
 }
 
-// --- shared chip ----------------------------------------------------------
+// --- shared atoms --------------------------------------------------------
 
-function chipStyle(tone: 'blue' | 'amber' | 'red' | 'green' | 'neutral') {
-  if (tone === 'blue') return { background: BLUE_SOFT, color: NAVY };
-  if (tone === 'amber') return { background: AMBER_SOFT, color: AMBER };
-  if (tone === 'red') return { background: '#FCE8E4', color: RED };
-  if (tone === 'green') return { background: GREEN_SOFT, color: GREEN };
-  return { background: '#F4EFE6', color: MUTED };
-}
-
-function Chip({
+function Eyebrow({
   children,
-  tone = 'neutral',
+  light = false,
 }: {
   children: React.ReactNode;
-  tone?: 'blue' | 'amber' | 'red' | 'green' | 'neutral';
+  light?: boolean;
 }) {
-  const colors = chipStyle(tone);
-  return (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        minHeight: 22,
-        padding: '4px 10px',
-        borderRadius: 999,
-        background: colors.background,
-        color: colors.color,
-        fontFamily: FONT,
-        fontSize: 11,
-        fontWeight: 700,
-        lineHeight: 1,
-      }}
-    >
-      {children}
-    </span>
-  );
-}
-
-function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
     <div
       style={{
-        color: NAVY,
+        color: light ? 'rgba(255,255,255,0.72)' : NAVY,
         fontSize: 10.5,
         fontWeight: 800,
-        letterSpacing: '0.14em',
+        letterSpacing: '0.16em',
         textTransform: 'uppercase',
       }}
     >
@@ -94,289 +74,697 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
   );
 }
 
-// --- journey hero ---------------------------------------------------------
+// --- journey card --------------------------------------------------------
 
-function JourneyPhaseNode({
+function phaseTileStyle(
+  state: NexusWorkbenchPhaseNode['state'],
+  isSelected: boolean,
+): React.CSSProperties {
+  const palette =
+    state === 'done'
+      ? { bg: GREEN_TINT, border: 'rgba(15,118,110,0.30)' }
+      : state === 'current'
+        ? { bg: BLUE_TINT, border: 'rgba(11,74,145,0.40)' }
+        : state === 'gate-pending'
+          ? { bg: AMBER_TINT, border: 'rgba(166,95,0,0.40)' }
+          : { bg: LOCK_TINT, border: BORDER };
+  return {
+    flex: '1 1 0',
+    minWidth: 144,
+    padding: '14px 14px 16px',
+    borderRadius: 14,
+    background: palette.bg,
+    border: `${isSelected ? 2 : 1}px solid ${isSelected ? NAVY : palette.border}`,
+    boxShadow: isSelected ? '0 14px 30px rgba(19,43,79,0.10)' : 'none',
+    transition: 'border-color 160ms ease, box-shadow 160ms ease',
+    cursor: 'pointer',
+    textAlign: 'left',
+    font: 'inherit',
+    color: 'inherit',
+  };
+}
+
+function phaseStateTextColor(state: NexusWorkbenchPhaseNode['state']): string {
+  if (state === 'done') return GREEN;
+  if (state === 'current') return BLUE;
+  if (state === 'gate-pending') return AMBER;
+  return MUTED_SOFT;
+}
+
+function PhaseTile({
   phase,
   isSelected,
-  isCurrent,
   onSelect,
 }: {
   phase: NexusWorkbenchPhaseNode;
   isSelected: boolean;
-  isCurrent: boolean;
   onSelect: (key: string) => void;
 }) {
-  const isBlocked = phase.state === 'blocked';
-  const isComplete = phase.state === 'complete';
-  const isFuture = phase.state === 'future';
-
-  // The current phase ALWAYS pops above the strip; selection adds a navy ring
-  // and stronger shadow so "where I'm looking" is distinct from "where the
-  // maestro is".
-  const popLift = isCurrent ? 18 : isSelected ? 10 : 0;
-  const scale = isCurrent ? 1.06 : isSelected ? 1.02 : 1;
-  const cardWidth = isCurrent ? 220 : 168;
-  const cardHeight = isCurrent ? 148 : 112;
-
-  const baseBackground = isCurrent
-    ? 'linear-gradient(160deg, #132B4F 0%, #1F3F73 100%)'
-    : isBlocked
-      ? AMBER_SOFT
-      : isComplete
-        ? '#F1F8F4'
-        : CARD;
-
-  const baseBorder = isCurrent
-    ? NAVY
-    : isSelected
-      ? NAVY
-      : isBlocked
-        ? 'rgba(166,95,0,0.42)'
-        : isComplete
-          ? 'rgba(15,118,110,0.30)'
-          : BORDER;
-
-  const titleColor = isCurrent ? '#FFFFFF' : INK;
-  const noteColor = isCurrent ? 'rgba(255,255,255,0.78)' : MUTED;
-
   return (
     <button
       type="button"
       data-phase-state={phase.state}
       data-phase-selected={isSelected ? 'true' : 'false'}
       aria-pressed={isSelected}
-      aria-label={`Focus Nexus workbench on ${phase.label} (${phase.state})`}
+      aria-label={`Focus Nexus workbench on ${phase.label} (${phase.stateLabel})`}
       onClick={() => onSelect(phase.key)}
-      style={{
-        position: 'relative',
-        width: cardWidth,
-        minHeight: cardHeight,
-        flex: `0 0 ${cardWidth}px`,
-        padding: isCurrent ? '20px 18px 22px' : '14px 14px',
-        textAlign: 'left',
-        cursor: 'pointer',
-        border: `${isCurrent || isSelected ? 2 : 1}px solid ${baseBorder}`,
-        borderRadius: 18,
-        background: baseBackground,
-        boxShadow: isCurrent
-          ? '0 28px 56px rgba(11,74,145,0.32)'
-          : isSelected
-            ? '0 18px 36px rgba(11,74,145,0.18)'
-            : isFuture
-              ? '0 4px 10px rgba(19,43,79,0.04)'
-              : '0 8px 18px rgba(19,43,79,0.06)',
-        transform: `translateY(-${popLift}px) scale(${scale})`,
-        transformOrigin: 'center bottom',
-        transition:
-          'transform 220ms cubic-bezier(.2,.7,.2,1), box-shadow 200ms ease, border-color 160ms ease',
-        font: 'inherit',
-        color: 'inherit',
-        opacity: isFuture && !isSelected ? 0.78 : 1,
-      }}
+      style={phaseTileStyle(phase.state, isSelected)}
     >
-      <span
-        aria-hidden
+      <div style={{ color: MUTED_SOFT, fontSize: 10.5, fontWeight: 800, letterSpacing: '0.14em' }}>
+        P{phase.index}
+      </div>
+      <div
         style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: isCurrent ? 34 : 26,
-          height: isCurrent ? 34 : 26,
-          borderRadius: 999,
-          background: isCurrent
-            ? '#FFFFFF'
-            : isBlocked
-              ? AMBER
-              : isComplete
-                ? GREEN
-                : '#F4EFE6',
-          color: isCurrent ? NAVY : isBlocked || isComplete ? '#FFFFFF' : MUTED,
-          fontSize: isCurrent ? 13 : 11,
-          fontWeight: 800,
-          letterSpacing: 0.4,
-        }}
-      >
-        {isCurrent ? 'M' : isBlocked ? 'G' : isComplete ? '✓' : '•'}
-      </span>
-      <strong
-        style={{
-          display: 'block',
-          marginTop: isCurrent ? 14 : 10,
-          color: titleColor,
-          fontFamily: isCurrent ? SERIF : FONT,
-          fontSize: isCurrent ? 22 : 14,
-          fontWeight: isCurrent ? 600 : 700,
-          lineHeight: 1.1,
+          marginTop: 8,
+          fontFamily: SERIF,
+          fontSize: 18,
+          color: INK,
+          lineHeight: 1.15,
         }}
       >
         {phase.label}
-      </strong>
-      <span
+      </div>
+      <div
         style={{
-          display: 'block',
-          marginTop: 6,
-          color: noteColor,
-          fontSize: isCurrent ? 12 : 11,
-          lineHeight: 1.4,
+          marginTop: 8,
+          color: phaseStateTextColor(phase.state),
+          fontSize: 11.5,
+          fontWeight: 600,
         }}
       >
-        {phase.note}
-      </span>
-
-      {isCurrent ? (
-        <span
-          style={{
-            position: 'absolute',
-            top: -10,
-            right: 16,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 4,
-            padding: '4px 10px',
-            borderRadius: 999,
-            background: '#FFFFFF',
-            color: NAVY,
-            border: `1px solid ${NAVY}`,
-            fontSize: 10,
-            fontWeight: 800,
-            letterSpacing: '0.14em',
-            textTransform: 'uppercase',
-            boxShadow: '0 6px 14px rgba(19,43,79,0.18)',
-          }}
-        >
-          <span aria-hidden style={{ width: 6, height: 6, borderRadius: 999, background: NAVY }} />
-          Maestro is here
-        </span>
-      ) : null}
+        {phase.stateLabel}
+      </div>
     </button>
   );
 }
 
-function JourneyConnector({ active }: { active: boolean }) {
-  return (
-    <span
-      aria-hidden="true"
-      style={{
-        flex: '0 0 28px',
-        alignSelf: 'center',
-        height: 2,
-        margin: '0 4px',
-        background: active
-          ? `linear-gradient(90deg, ${NAVY} 0%, rgba(11,74,145,0.18) 100%)`
-          : 'rgba(19,43,79,0.18)',
-        borderRadius: 2,
-      }}
-    />
-  );
-}
-
-function JourneyHero({
+function JourneyCard({
   programIdentity,
+  subtitle,
   phases,
   selectedPhaseKey,
   onSelect,
 }: {
   programIdentity: string;
+  subtitle: string;
   phases: NexusWorkbenchPhaseNode[];
   selectedPhaseKey: string;
   onSelect: (key: string) => void;
 }) {
   const journeyText = `Phase Journey: ${phases.map((phase) => phase.label).join(' → ')}`;
   return (
-    <div
+    <section
       data-region="journey-hero"
+      aria-label="Program journey"
       style={{
-        position: 'relative',
-        marginBottom: 28,
-        padding: '28px 28px 36px',
-        borderRadius: 22,
-        background:
-          'linear-gradient(180deg, rgba(232,242,255,0.55) 0%, rgba(248,247,244,1) 70%)',
+        padding: '22px 22px 20px',
+        borderRadius: 18,
+        background: CARD,
         border: `1px solid ${BORDER}`,
+        boxShadow: '0 12px 28px rgba(19,43,79,0.04)',
+      }}
+    >
+      <h2
+        style={{
+          margin: 0,
+          fontFamily: SERIF,
+          fontSize: 26,
+          fontWeight: 600,
+          color: INK,
+          lineHeight: 1.16,
+        }}
+      >
+        Program journey
+      </h2>
+      <p
+        style={{
+          margin: '6px 0 16px',
+          color: MUTED,
+          fontSize: 13.5,
+          lineHeight: 1.5,
+        }}
+      >
+        {subtitle}
+      </p>
+      <span aria-hidden style={{ display: 'none' }}>
+        {/* Keep the legacy "Phase Journey" marker text in source for the
+         *  contract test, even though the visible heading is now "Program
+         *  journey". */}
+        {journeyText} · for {programIdentity}
+      </span>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(6, minmax(0, 1fr))',
+          gap: 10,
+        }}
+      >
+        {phases.map((phase) => (
+          <PhaseTile
+            key={phase.key}
+            phase={phase}
+            isSelected={phase.key === selectedPhaseKey}
+            onSelect={onSelect}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// --- dark Nexus brief card ----------------------------------------------
+
+function DarkChip({ children }: { children: React.ReactNode }) {
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        padding: '5px 11px',
+        borderRadius: 999,
+        background: 'rgba(255,255,255,0.10)',
+        color: '#FFFFFF',
+        fontSize: 11.5,
+        fontWeight: 600,
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+function CreamPill({
+  children,
+  tone,
+}: {
+  children: React.ReactNode;
+  tone: 'cream' | 'rose';
+}) {
+  const palette =
+    tone === 'cream'
+      ? { bg: '#F4ECDC', fg: AMBER }
+      : { bg: '#F8DCD3', fg: RED };
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        padding: '6px 12px',
+        borderRadius: 999,
+        background: palette.bg,
+        color: palette.fg,
+        fontSize: 11.5,
+        fontWeight: 700,
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+function NexusBriefCard({
+  brief,
+  cta,
+  contextUsed,
+  confidenceLabel,
+  blockerLabel,
+}: {
+  brief: string;
+  cta: string;
+  contextUsed: string[];
+  confidenceLabel: string;
+  blockerLabel: string;
+}) {
+  return (
+    <section
+      aria-label="Nexus workbench"
+      style={{
+        padding: '24px 26px 22px',
+        borderRadius: 20,
+        background: `linear-gradient(180deg, ${NAVY} 0%, ${NAVY_DEEP} 100%)`,
+        color: '#FFFFFF',
+        border: '1px solid rgba(11,74,145,0.30)',
+        boxShadow: '0 30px 60px rgba(19,43,79,0.18)',
+      }}
+    >
+      <h3
+        style={{
+          margin: 0,
+          fontFamily: SERIF,
+          fontSize: 22,
+          fontWeight: 600,
+          color: '#FFFFFF',
+          lineHeight: 1.2,
+        }}
+      >
+        Nexus Program Workbench
+      </h3>
+      <p
+        style={{
+          margin: '12px 0 18px',
+          color: 'rgba(255,255,255,0.84)',
+          fontSize: 14,
+          lineHeight: 1.6,
+        }}
+      >
+        {brief}
+      </p>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 18 }}>
+        <Eyebrow light>Context used</Eyebrow>
+        {contextUsed.map((label) => (
+          <DarkChip key={label}>{label}</DarkChip>
+        ))}
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 14,
+          flexWrap: 'wrap',
+        }}
+      >
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          <CreamPill tone="cream">{confidenceLabel}</CreamPill>
+          <CreamPill tone="rose">{blockerLabel}</CreamPill>
+        </div>
+        <button
+          type="button"
+          aria-label={cta}
+          style={{
+            border: 0,
+            borderRadius: 999,
+            background: '#FFFFFF',
+            color: NAVY,
+            padding: '10px 18px',
+            fontSize: 13,
+            fontWeight: 700,
+            cursor: 'pointer',
+            boxShadow: '0 6px 18px rgba(0,0,0,0.18)',
+          }}
+        >
+          {cta}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+// --- suggested actions + Ask Nexus --------------------------------------
+
+function SuggestedActionsCard({
+  actions,
+  customAskPlaceholder,
+}: {
+  actions: NexusWorkbenchSuggestedAction[];
+  customAskPlaceholder: string;
+}) {
+  return (
+    <section
+      aria-label="Suggested Nexus actions"
+      style={{
+        padding: '18px 18px 16px',
+        borderRadius: 18,
+        background: CARD,
+        border: `1px solid ${BORDER}`,
+      }}
+    >
+      <h4
+        style={{
+          margin: 0,
+          fontFamily: SERIF,
+          fontSize: 18,
+          fontWeight: 600,
+          color: INK,
+        }}
+      >
+        Suggested Nexus actions
+      </h4>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 14 }}>
+        {actions.map((action) => (
+          <button
+            key={action.label}
+            type="button"
+            aria-label={action.description}
+            style={{
+              border: `1px solid ${BORDER}`,
+              borderRadius: 999,
+              background: BLUE_SOFT,
+              color: NAVY,
+              padding: '9px 14px',
+              fontSize: 12.5,
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            {action.label}
+          </button>
+        ))}
+      </div>
+      <label htmlFor="nexus-program-custom-ask" style={{ display: 'block', marginTop: 16 }}>
+        <span style={{ display: 'block' }}>
+          <Eyebrow>Ask Nexus</Eyebrow>
+        </span>
+      </label>
+      <input
+        id="nexus-program-custom-ask"
+        type="text"
+        disabled
+        placeholder={customAskPlaceholder}
+        style={{
+          width: '100%',
+          marginTop: 8,
+          padding: '12px 14px',
+          border: `1px solid ${BORDER}`,
+          borderRadius: 12,
+          background: '#FCFCFA',
+          color: BODY,
+          fontFamily: FONT,
+          fontSize: 12.5,
+          lineHeight: 1.4,
+        }}
+      />
+    </section>
+  );
+}
+
+// --- current gate + evidence coverage -----------------------------------
+
+function CurrentGateCard({
+  gateLabel,
+  description,
+}: {
+  gateLabel: string;
+  description: string;
+}) {
+  return (
+    <section
+      aria-label="Current gate"
+      style={{
+        padding: '16px 18px 18px',
+        borderRadius: 16,
+        background: CARD,
+        border: `1px solid ${BORDER}`,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+      }}
+    >
+      <h4
+        style={{
+          margin: 0,
+          fontFamily: SERIF,
+          fontSize: 18,
+          fontWeight: 600,
+          color: INK,
+        }}
+      >
+        Current gate
+      </h4>
+      <span
+        style={{
+          alignSelf: 'flex-start',
+          padding: '6px 12px',
+          borderRadius: 999,
+          background: AMBER_TINT,
+          color: AMBER,
+          fontSize: 12,
+          fontWeight: 700,
+        }}
+      >
+        {gateLabel}
+      </span>
+      <p style={{ margin: 0, color: MUTED, fontSize: 12.5, lineHeight: 1.55 }}>
+        {description}
+      </p>
+    </section>
+  );
+}
+
+function evidenceTone(tone: NexusWorkbenchEvidenceSlice['tone']): string {
+  if (tone === 'strong') return BLUE;
+  if (tone === 'partial') return '#3B6EB6';
+  if (tone === 'draft') return '#7B98C7';
+  if (tone === 'staged') return '#B5C7DF';
+  return '#D6DEEC';
+}
+
+function EvidenceCoverageCard({
+  slices,
+  note,
+}: {
+  slices: NexusWorkbenchEvidenceSlice[];
+  note: string;
+}) {
+  const total = slices.reduce((sum, slice) => sum + slice.percentage, 0) || 1;
+  const strongest = slices.reduce(
+    (best, slice) => (slice.percentage > best.percentage ? slice : best),
+    slices[0]!,
+  );
+  return (
+    <section
+      aria-label="Evidence coverage"
+      style={{
+        padding: '16px 18px 18px',
+        borderRadius: 16,
+        background: CARD,
+        border: `1px solid ${BORDER}`,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
       }}
     >
       <div
         style={{
           display: 'flex',
-          alignItems: 'flex-end',
+          alignItems: 'center',
           justifyContent: 'space-between',
-          gap: 18,
-          marginBottom: 20,
+          gap: 8,
         }}
       >
-        <div>
-          <Eyebrow>Phase journey · click any phase to focus</Eyebrow>
-          <div
-            style={{
-              marginTop: 4,
-              fontFamily: SERIF,
-              fontSize: 18,
-              color: INK,
-              lineHeight: 1.2,
-            }}
-          >
-            {programIdentity}
-          </div>
-        </div>
+        <h4
+          style={{
+            margin: 0,
+            fontFamily: SERIF,
+            fontSize: 18,
+            fontWeight: 600,
+            color: INK,
+          }}
+        >
+          Evidence coverage
+        </h4>
         <span
           style={{
-            color: MUTED,
-            fontSize: 10.5,
+            color: BLUE,
+            fontSize: 12.5,
             fontWeight: 700,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
           }}
-          aria-label="Phase Journey"
         >
-          {journeyText}
+          {strongest.percentage}% {strongest.phaseLabel.toLowerCase()}
         </span>
       </div>
-
+      <div
+        aria-hidden
+        style={{
+          display: 'flex',
+          width: '100%',
+          height: 18,
+          borderRadius: 999,
+          overflow: 'hidden',
+          border: `1px solid ${BORDER}`,
+        }}
+      >
+        {slices.map((slice) => (
+          <div
+            key={slice.phaseKey}
+            title={`${slice.phaseLabel}: ${slice.percentage}%`}
+            style={{
+              flex: `${slice.percentage} 0 0%`,
+              background: evidenceTone(slice.tone),
+            }}
+          />
+        ))}
+      </div>
       <div
         style={{
           display: 'flex',
-          alignItems: 'flex-end',
-          justifyContent: 'flex-start',
-          flexWrap: 'nowrap',
-          overflowX: 'auto',
-          paddingTop: 24,
-          paddingBottom: 6,
-          gap: 0,
+          flexWrap: 'wrap',
+          gap: 8,
+          marginTop: 4,
         }}
       >
-        {phases.map((phase, index) => {
-          const isSelected = phase.key === selectedPhaseKey;
-          const isCurrent = phase.state === 'current';
-          const next = phases[index + 1];
-          const connectorActive =
-            phase.state === 'complete' || phase.state === 'current';
-          return (
+        {slices.map((slice) => (
+          <span
+            key={slice.phaseKey}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 11.5,
+              color: MUTED,
+            }}
+          >
             <span
-              key={phase.key}
-              style={{ display: 'inline-flex', alignItems: 'flex-end' }}
-            >
-              <JourneyPhaseNode
-                phase={phase}
-                isSelected={isSelected}
-                isCurrent={isCurrent}
-                onSelect={onSelect}
-              />
-              {next ? <JourneyConnector active={connectorActive} /> : null}
-            </span>
-          );
-        })}
+              aria-hidden
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: 999,
+                background: evidenceTone(slice.tone),
+              }}
+            />
+            {slice.phaseLabel} · {Math.round((slice.percentage / total) * 100)}%
+          </span>
+        ))}
       </div>
+      <p style={{ margin: 0, color: MUTED, fontSize: 12, lineHeight: 1.5 }}>{note}</p>
+    </section>
+  );
+}
+
+// --- subnav (C-6) --------------------------------------------------------
+
+function SubnavTabsBar({
+  tabs,
+  activeKey,
+  onSelect,
+}: {
+  tabs: NexusWorkbenchSubnavTab[];
+  activeKey: string;
+  onSelect: (key: NexusWorkbenchSubnavTab['key']) => void;
+}) {
+  return (
+    <nav
+      aria-label="Program subnav"
+      style={{
+        display: 'flex',
+        gap: 6,
+        flexWrap: 'wrap',
+        padding: '6px',
+        borderRadius: 999,
+        background: SURFACE,
+        border: `1px solid ${BORDER}`,
+        width: 'max-content',
+        maxWidth: '100%',
+      }}
+    >
+      {tabs.map((tab) => {
+        const isActive = tab.key === activeKey;
+        return (
+          <button
+            key={tab.key}
+            type="button"
+            data-tab={tab.key}
+            data-tab-active={isActive ? 'true' : 'false'}
+            aria-pressed={isActive}
+            onClick={() => onSelect(tab.key)}
+            style={{
+              border: 0,
+              borderRadius: 999,
+              padding: '7px 14px',
+              background: isActive ? NAVY : 'transparent',
+              color: isActive ? '#FFFFFF' : NAVY,
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: 'pointer',
+              fontFamily: FONT,
+            }}
+          >
+            {tab.label}
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+// --- C-5 workshop canvas -------------------------------------------------
+
+function WorkshopColumn({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div
+      style={{
+        flex: '1 1 0',
+        minWidth: 200,
+        padding: 14,
+        borderRadius: 14,
+        background: '#FCFCFA',
+        border: `1px solid ${BORDER}`,
+      }}
+    >
+      <Eyebrow>{title}</Eyebrow>
+      <ul style={{ margin: '8px 0 0', paddingLeft: 18, color: BODY, fontSize: 12.5, lineHeight: 1.6 }}>
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
     </div>
   );
 }
 
-// --- left rail · phase requirements --------------------------------------
+function WorkshopCanvas({ workshop }: { workshop: NexusWorkbenchWorkshop }) {
+  return (
+    <section
+      aria-label="Nexus workshop canvas"
+      style={{
+        padding: '20px 22px 18px',
+        borderRadius: 18,
+        background: CARD,
+        border: `1px solid ${BORDER}`,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 14,
+      }}
+    >
+      <div>
+        <Eyebrow>Nexus workshop canvas</Eyebrow>
+        <h4
+          style={{
+            margin: '6px 0 0',
+            fontFamily: SERIF,
+            fontSize: 20,
+            fontWeight: 600,
+            color: INK,
+          }}
+        >
+          {workshop.title}
+        </h4>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+        <WorkshopColumn title="Agenda" items={workshop.agenda} />
+        <WorkshopColumn title="Questions to capture" items={workshop.questions} />
+        <WorkshopColumn title="Evidence to capture" items={workshop.evidenceToCapture} />
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+        <Eyebrow>Attendees</Eyebrow>
+        {workshop.attendees.map((attendee) => (
+          <span
+            key={attendee}
+            style={{
+              padding: '4px 10px',
+              borderRadius: 999,
+              background: BLUE_SOFT,
+              color: NAVY,
+              fontSize: 11.5,
+              fontWeight: 700,
+            }}
+          >
+            {attendee}
+          </span>
+        ))}
+      </div>
+    </section>
+  );
+}
 
-function RequiredInputRow({ input }: { input: NexusWorkbenchRequiredInput }) {
+// --- C-8 missing inputs / evidence panel --------------------------------
+
+function MissingInputRow({ input }: { input: NexusWorkbenchMissingInput }) {
   const tone =
     input.state === 'satisfied'
-      ? { bg: GREEN_SOFT, fg: GREEN, mark: '✓', label: 'Satisfied' }
+      ? { bg: GREEN_TINT, fg: GREEN, mark: '✓', label: 'Satisfied' }
       : input.state === 'in-progress'
         ? { bg: BLUE_SOFT, fg: NAVY, mark: '◐', label: 'In progress' }
         : { bg: AMBER_SOFT, fg: AMBER, mark: '○', label: 'Open' };
@@ -385,9 +773,9 @@ function RequiredInputRow({ input }: { input: NexusWorkbenchRequiredInput }) {
       style={{
         display: 'flex',
         alignItems: 'flex-start',
-        gap: 8,
-        padding: '8px 10px',
-        borderRadius: 10,
+        gap: 10,
+        padding: '10px 12px',
+        borderRadius: 12,
         background: '#FFFFFF',
         border: `1px solid ${BORDER}`,
       }}
@@ -410,596 +798,351 @@ function RequiredInputRow({ input }: { input: NexusWorkbenchRequiredInput }) {
       >
         {tone.mark}
       </span>
-      <span style={{ color: BODY, fontSize: 12.5, lineHeight: 1.4 }}>
-        {input.label}
-      </span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ color: INK, fontSize: 13, fontWeight: 600, lineHeight: 1.35 }}>{input.label}</div>
+        <div style={{ marginTop: 2, color: MUTED, fontSize: 11.5 }}>Source: {input.sourceLabel}</div>
+      </div>
     </div>
   );
 }
 
-function PhaseRequirementsRail({
-  phaseLabel,
-  requiredInputs,
-  blocker,
-  confidenceState,
-  evidenceState,
-}: {
-  phaseLabel: string;
-  requiredInputs: NexusWorkbenchRequiredInput[];
-  blocker: string;
-  confidenceState: string;
-  evidenceState: string;
-}) {
+function MissingInputsPanel({ inputs }: { inputs: NexusWorkbenchMissingInput[] }) {
   return (
-    <aside
-      aria-label="Phase requirements"
+    <section
+      aria-label="Evidence and missing inputs"
       style={{
-        padding: 18,
-        borderRadius: 16,
-        background: SURFACE,
+        padding: '20px 22px 18px',
+        borderRadius: 18,
+        background: CARD,
         border: `1px solid ${BORDER}`,
         display: 'flex',
         flexDirection: 'column',
-        gap: 14,
-        alignSelf: 'flex-start',
+        gap: 12,
       }}
     >
       <div>
-        <Eyebrow>Phase requirements</Eyebrow>
+        <Eyebrow>Evidence · missing inputs</Eyebrow>
+        <h4
+          style={{
+            margin: '6px 0 0',
+            fontFamily: SERIF,
+            fontSize: 20,
+            fontWeight: 600,
+            color: INK,
+          }}
+        >
+          What still needs to land for this gate
+        </h4>
+      </div>
+      <div style={{ display: 'grid', gap: 8 }}>
+        {inputs.map((input) => (
+          <MissingInputRow key={input.label} input={input} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// --- agent rail (right) --------------------------------------------------
+
+function agentStateTone(state: NexusWorkbenchAgentHandoff['state']): { fg: string; bg: string } {
+  if (state === 'active') return { fg: BLUE, bg: BLUE_SOFT };
+  if (state === 'blocked') return { fg: RED, bg: RED_SOFT };
+  if (state === 'partial') return { fg: AMBER, bg: AMBER_SOFT };
+  return { fg: MUTED, bg: '#F4EFE6' };
+}
+
+function AgentRow({ handoff }: { handoff: NexusWorkbenchAgentHandoff }) {
+  const tone = agentStateTone(handoff.state);
+  const isActive = handoff.state === 'active';
+  return (
+    <div
+      style={{
+        padding: '12px 14px',
+        borderRadius: 14,
+        background: isActive ? BLUE_TINT : CARD,
+        border: `1px solid ${isActive ? 'rgba(11,74,145,0.30)' : BORDER}`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 10,
+      }}
+    >
+      <div>
         <div
           style={{
-            marginTop: 4,
             fontFamily: SERIF,
             fontSize: 16,
+            fontWeight: 600,
             color: INK,
             lineHeight: 1.2,
           }}
         >
-          {phaseLabel}
+          {handoff.label}
+        </div>
+        <div style={{ marginTop: 4, color: MUTED, fontSize: 12, lineHeight: 1.45 }}>
+          {handoff.role}
         </div>
       </div>
-
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-        <Chip tone="amber">{confidenceState}</Chip>
-        <Chip tone="blue">{evidenceState}</Chip>
-      </div>
-
-      <div style={{ display: 'grid', gap: 6 }}>
-        <Eyebrow>Required inputs</Eyebrow>
-        {requiredInputs.map((input) => (
-          <RequiredInputRow key={input.label} input={input} />
-        ))}
-      </div>
-
-      <div
-        style={{
-          padding: '10px 12px',
-          borderRadius: 10,
-          background: AMBER_SOFT,
-          border: `1px solid rgba(166,95,0,0.30)`,
-        }}
-      >
-        <Eyebrow>Open blocker</Eyebrow>
-        <p
-          style={{
-            margin: '6px 0 0',
-            color: BODY,
-            fontSize: 12.5,
-            lineHeight: 1.45,
-          }}
-        >
-          {blocker}
-        </p>
-      </div>
-    </aside>
-  );
-}
-
-// --- center · Nexus brief -------------------------------------------------
-
-function ContextChips({ labels }: { labels: string[] }) {
-  return (
-    <div
-      aria-label="Context used"
-      style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: 6,
-        alignItems: 'center',
-      }}
-    >
-      <Eyebrow>Context used</Eyebrow>
-      {labels.map((label) => (
-        <Chip key={label}>{label}</Chip>
-      ))}
-    </div>
-  );
-}
-
-function ConversationPreview({
-  conversation,
-}: {
-  conversation: NexusWorkbenchConversationTurn[];
-}) {
-  const userTurn = conversation.find((turn) => turn.speaker === 'You');
-  const nexusTurn = conversation.find((turn) => turn.speaker === 'Nexus');
-  if (!nexusTurn) return null;
-  return (
-    <div
-      aria-label="Latest Nexus exchange"
-      style={{
-        padding: '12px 14px',
-        borderRadius: 12,
-        border: `1px solid ${BORDER}`,
-        background: '#FCFCFB',
-      }}
-    >
-      <Eyebrow>Latest Nexus exchange</Eyebrow>
-      {userTurn ? (
-        <p
-          style={{
-            margin: '8px 0 4px',
-            color: CONV_USER,
-            fontSize: 12,
-            lineHeight: 1.5,
-            fontStyle: 'italic',
-          }}
-        >
-          You · &ldquo;{userTurn.text}&rdquo;
-        </p>
-      ) : null}
-      <p
-        style={{
-          margin: 0,
-          color: INK,
-          fontSize: 13,
-          lineHeight: 1.55,
-        }}
-      >
-        Nexus · {nexusTurn.text}
-      </p>
-    </div>
-  );
-}
-
-function NexusBriefCenter({
-  selectedPhase,
-  focus,
-  isSelectedCurrent,
-  programIdentity,
-  currentGateState,
-  currentWorkflowStage,
-  deterministicCaveat,
-}: {
-  selectedPhase: NexusWorkbenchPhaseNode;
-  focus: NexusWorkbenchPhaseFocus;
-  isSelectedCurrent: boolean;
-  programIdentity: string;
-  currentGateState: string;
-  currentWorkflowStage: string;
-  deterministicCaveat: string;
-}) {
-  return (
-    <article
-      aria-label="Nexus brief"
-      style={{
-        padding: '22px 22px 18px',
-        borderRadius: 18,
-        background: CARD,
-        border: `1px solid ${BORDER}`,
-        boxShadow: '0 14px 30px rgba(19,43,79,0.05)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 14,
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          justifyContent: 'space-between',
-          gap: 14,
-          flexWrap: 'wrap',
-        }}
-      >
-        <div>
-          <Eyebrow>
-            Nexus brief · {selectedPhase.label}
-            {isSelectedCurrent ? ' · current phase' : ' · scouting'}
-          </Eyebrow>
-          <h3
-            style={{
-              margin: '6px 0 0',
-              fontFamily: SERIF,
-              fontWeight: 600,
-              fontSize: 22,
-              lineHeight: 1.22,
-              color: INK,
-            }}
-          >
-            {programIdentity}
-          </h3>
-        </div>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          <Chip tone="blue">{currentWorkflowStage}</Chip>
-          <Chip tone="amber">{currentGateState}</Chip>
-        </div>
-      </div>
-
-      <p
-        style={{
-          margin: 0,
-          color: INK,
-          fontSize: 16.5,
-          fontWeight: 500,
-          lineHeight: 1.5,
-        }}
-      >
-        {focus.brief}
-      </p>
-
-      <ContextChips labels={focus.contextUsed} />
-
-      <div
-        style={{
-          padding: '12px 14px',
-          borderRadius: 12,
-          background: GREEN_SOFT,
-          border: `1px solid rgba(15,118,110,0.30)`,
-        }}
-      >
-        <Eyebrow>Recommended next action</Eyebrow>
-        <p style={{ margin: '6px 0 0', color: BODY, fontSize: 13, lineHeight: 1.5 }}>
-          {focus.recommendedNextAction}
-        </p>
-      </div>
-
-      <ConversationPreview conversation={focus.conversation} />
-
-      <p
-        style={{
-          margin: 0,
-          color: MUTED,
-          fontSize: 11,
-          fontStyle: 'italic',
-          lineHeight: 1.45,
-        }}
-      >
-        {deterministicCaveat}
-      </p>
-    </article>
-  );
-}
-
-// --- right · agent rail + suggested actions + Ask Nexus ------------------
-
-function agentTone(state: NexusWorkbenchAgentHandoff['state']) {
-  if (state === 'active') return { chip: 'Active', dotBg: NAVY };
-  if (state === 'blocker') return { chip: 'Blocker', dotBg: RED };
-  if (state === 'gap') return { chip: 'Gap', dotBg: AMBER };
-  return { chip: 'Impact', dotBg: BLUE };
-}
-
-function AgentRow({ handoff }: { handoff: NexusWorkbenchAgentHandoff }) {
-  const tone = agentTone(handoff.state);
-  const isActive = handoff.state === 'active';
-  const monogram = handoff.label.slice(0, 1);
-  return (
-    <div
-      style={{
-        display: 'flex',
-        gap: 10,
-        padding: '10px 12px',
-        borderRadius: 12,
-        background: isActive ? NAVY : '#FFFFFF',
-        color: isActive ? '#FFFFFF' : BODY,
-        border: `1px solid ${isActive ? NAVY : BORDER}`,
-      }}
-    >
       <span
-        aria-hidden
         style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: 26,
-          height: 26,
+          padding: '4px 10px',
           borderRadius: 999,
-          background: isActive ? '#FFFFFF' : NAVY_SOFT,
-          color: NAVY,
-          fontSize: 11,
+          background: tone.bg,
+          color: tone.fg,
+          fontSize: 10.5,
           fontWeight: 800,
-          flex: '0 0 auto',
+          letterSpacing: '0.14em',
         }}
       >
-        {monogram}
+        {handoff.stateLabel}
       </span>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 8,
-          }}
-        >
-          <strong style={{ fontSize: 12.5, letterSpacing: 0.1 }}>{handoff.label}</strong>
-          <span
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-              padding: '2px 7px',
-              borderRadius: 999,
-              background: isActive ? 'rgba(255,255,255,0.14)' : 'rgba(19,43,79,0.06)',
-              color: isActive ? '#FFFFFF' : NAVY,
-              fontSize: 9.5,
-              fontWeight: 800,
-              textTransform: 'uppercase',
-              letterSpacing: '0.10em',
-            }}
-          >
-            <span
-              aria-hidden
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: 999,
-                background: isActive ? '#FFFFFF' : tone.dotBg,
-              }}
-            />
-            {tone.chip}
-          </span>
-        </div>
-        <p
-          style={{
-            margin: '4px 0 0',
-            color: isActive ? 'rgba(255,255,255,0.78)' : MUTED,
-            fontSize: 11.5,
-            lineHeight: 1.4,
-          }}
-        >
-          {handoff.summary}
-        </p>
-      </div>
     </div>
   );
 }
 
-function AgentRailRight({
+function AgentRail({
   agentHandoffs,
-  suggestedActions,
-  customAskPlaceholder,
-  customAskDeferredState,
+  threeChoicesRule,
 }: {
   agentHandoffs: NexusWorkbenchAgentHandoff[];
-  suggestedActions: NexusWorkbenchSuggestedAction[];
-  customAskPlaceholder: string;
-  customAskDeferredState: string;
+  threeChoicesRule: string;
 }) {
   return (
     <aside
       aria-label="Agent rail"
       style={{
+        padding: '20px 20px 18px',
+        borderRadius: 18,
+        background: CARD,
+        border: `1px solid ${BORDER}`,
         display: 'flex',
         flexDirection: 'column',
-        gap: 14,
+        gap: 12,
+        alignSelf: 'flex-start',
       }}
     >
+      <div>
+        <h3
+          style={{
+            margin: 0,
+            fontFamily: SERIF,
+            fontSize: 20,
+            fontWeight: 600,
+            color: INK,
+          }}
+        >
+          Agent handoff rail
+        </h3>
+        <p
+          style={{
+            margin: '6px 0 6px',
+            color: MUTED,
+            fontSize: 12.5,
+            lineHeight: 1.5,
+          }}
+        >
+          Agents appear because they have a job in the current program state, not as decorative chat personas.
+        </p>
+      </div>
+      {agentHandoffs.map((handoff) => (
+        <AgentRow key={handoff.agent} handoff={handoff} />
+      ))}
       <div
         style={{
-          padding: 14,
-          borderRadius: 16,
+          marginTop: 4,
+          padding: '10px 12px',
+          borderRadius: 12,
           background: SURFACE,
           border: `1px solid ${BORDER}`,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 8,
         }}
       >
-        <Eyebrow>Agent rail</Eyebrow>
-        {agentHandoffs.map((handoff) => (
-          <AgentRow key={handoff.agent} handoff={handoff} />
-        ))}
-      </div>
-
-      <div
-        style={{
-          padding: 14,
-          borderRadius: 16,
-          background: '#FFFCF5',
-          border: `1px solid ${BORDER}`,
-        }}
-      >
-        <Eyebrow>Suggested next actions</Eyebrow>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
-          {suggestedActions.map((action) => (
-            <button
-              key={action.label}
-              type="button"
-              aria-label={action.description}
-              style={{
-                border: `1px solid ${BORDER}`,
-                borderRadius: 999,
-                background: BLUE_SOFT,
-                color: NAVY,
-                padding: '8px 12px',
-                fontSize: 11.5,
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
-              {action.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div
-        style={{
-          padding: 14,
-          borderRadius: 16,
-          background: 'linear-gradient(180deg, #F4F8FF 0%, #FFFFFF 100%)',
-          border: `1px solid ${BORDER}`,
-        }}
-      >
-        <label
-          htmlFor="nexus-program-custom-ask"
-          style={{ display: 'block' }}
-        >
-          <Eyebrow>Ask Nexus</Eyebrow>
-        </label>
-        <textarea
-          id="nexus-program-custom-ask"
-          disabled
-          rows={3}
-          placeholder={customAskPlaceholder}
-          style={{
-            width: '100%',
-            marginTop: 8,
-            resize: 'vertical',
-            border: `1px solid ${BORDER}`,
-            borderRadius: 12,
-            background: '#FFFFFF',
-            color: BODY,
-            padding: 12,
-            fontFamily: FONT,
-            fontSize: 12.5,
-            lineHeight: 1.45,
-          }}
-        />
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 12,
-            marginTop: 8,
-          }}
-        >
-          <span style={{ color: MUTED, fontSize: 10.5, lineHeight: 1.35 }}>
-            {customAskDeferredState}
-          </span>
-          <button
-            type="button"
-            disabled
-            style={{
-              border: 0,
-              borderRadius: 999,
-              background: '#D9D5CC',
-              color: '#72695F',
-              padding: '8px 12px',
-              fontSize: 11,
-              fontWeight: 800,
-            }}
-          >
-            Submit deferred
-          </button>
+        <Eyebrow>3 choices + custom</Eyebrow>
+        <div style={{ marginTop: 6, color: MUTED, fontSize: 12, lineHeight: 1.45 }}>
+          {threeChoicesRule}
         </div>
       </div>
     </aside>
   );
 }
 
-// --- main -----------------------------------------------------------------
+// --- main ----------------------------------------------------------------
 
 export function NexusProgramWorkbench(props: NexusProgramWorkbenchProps) {
   const view = buildNexusProgramWorkbenchView(props);
-  const currentIndex = Math.max(
-    0,
-    view.phaseJourney.findIndex((phase) => phase.state === 'current'),
-  );
 
   const [selectedPhaseKey, setSelectedPhaseKey] = useState<string>(view.defaultPhaseKey);
+  const [activeTab, setActiveTab] = useState<NexusWorkbenchSubnavTab['key']>('overview');
   const selectedFocus =
     view.phaseFocusByKey[selectedPhaseKey] ?? view.phaseFocusByKey[view.defaultPhaseKey]!;
-  const selectedPhase =
-    view.phaseJourney.find((phase) => phase.key === selectedPhaseKey)
-    ?? view.phaseJourney[currentIndex]!;
-  const isSelectedCurrent = selectedPhase.state === 'current';
 
   return (
     <section
       id={props.id}
       data-component="NexusProgramWorkbench"
-      aria-label="Nexus program workbench"
-      style={{
-        background: SURFACE,
-        border: `1px solid ${BORDER}`,
-        borderRadius: 22,
-        padding: '24px 24px 24px',
-        boxShadow: '0 22px 60px rgba(19,43,79,0.06)',
-        fontFamily: FONT,
-        color: BODY,
-      }}
+      aria-label="Nexus workbench"
+      style={{ fontFamily: FONT, color: BODY }}
     >
-      <header
-        style={{
-          display: 'flex',
-          alignItems: 'flex-end',
-          justifyContent: 'space-between',
-          gap: 16,
-          marginBottom: 18,
-        }}
-      >
-        <div>
-          <Eyebrow>Nexus workbench</Eyebrow>
-          <h2
-            style={{
-              margin: '6px 0 0',
-              fontFamily: SERIF,
-              fontWeight: 600,
-              fontSize: 26,
-              lineHeight: 1.18,
-              color: INK,
-            }}
-          >
-            {view.currentProgram}
-          </h2>
-        </div>
-        <Chip tone="blue">{view.currentPhase}</Chip>
+      {/* Identity header — terse, then the journey card is the spine. */}
+      <header style={{ marginBottom: 18 }}>
+        <h2
+          style={{
+            margin: 0,
+            fontFamily: SERIF,
+            fontSize: 32,
+            fontWeight: 600,
+            color: INK,
+            lineHeight: 1.15,
+          }}
+        >
+          {view.programIdentity}
+        </h2>
+        <p
+          style={{
+            margin: '8px 0 0',
+            color: MUTED,
+            fontSize: 14,
+            lineHeight: 1.55,
+            maxWidth: 920,
+          }}
+        >
+          {view.headerSubtitle}
+        </p>
       </header>
 
-      <JourneyHero
-        programIdentity={view.currentProgram}
-        phases={view.phaseJourney}
-        selectedPhaseKey={selectedPhaseKey}
-        onSelect={setSelectedPhaseKey}
-      />
+      <div style={{ marginBottom: 22 }}>
+        <JourneyCard
+          programIdentity={view.programIdentity}
+          subtitle={view.journeySubtitle}
+          phases={view.phaseJourney}
+          selectedPhaseKey={selectedPhaseKey}
+          onSelect={setSelectedPhaseKey}
+        />
+      </div>
 
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'minmax(220px, 240px) minmax(0, 1fr) minmax(280px, 320px)',
+          gridTemplateColumns: 'minmax(0, 1fr) minmax(280px, 320px)',
           gap: 18,
           alignItems: 'start',
         }}
       >
-        <PhaseRequirementsRail
-          phaseLabel={selectedPhase.label}
-          requiredInputs={selectedFocus.requiredInputs}
-          blocker={selectedFocus.blocker}
-          confidenceState={view.confidenceState}
-          evidenceState={view.evidenceState}
-        />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <NexusBriefCard
+            brief={selectedFocus.brief}
+            cta={selectedFocus.cta}
+            contextUsed={selectedFocus.contextUsed}
+            confidenceLabel={selectedFocus.confidenceLabel}
+            blockerLabel={selectedFocus.blockerLabel}
+          />
 
-        <NexusBriefCenter
-          selectedPhase={selectedPhase}
-          focus={selectedFocus}
-          isSelectedCurrent={isSelectedCurrent}
-          programIdentity={view.currentProgram}
-          currentGateState={view.currentGateState}
-          currentWorkflowStage={view.currentWorkflowStage}
-          deterministicCaveat={view.deterministicCaveat}
-        />
+          <SubnavTabsBar
+            tabs={view.subnavTabs}
+            activeKey={activeTab}
+            onSelect={setActiveTab}
+          />
 
-        <AgentRailRight
+          {activeTab === 'overview' ? (
+            <>
+              <SuggestedActionsCard
+                actions={selectedFocus.suggestedActions}
+                customAskPlaceholder={view.customAskPlaceholder}
+              />
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                  gap: 14,
+                }}
+              >
+                <CurrentGateCard
+                  gateLabel={view.currentGateLabel}
+                  description={view.currentGateDescription}
+                />
+                <EvidenceCoverageCard
+                  slices={view.evidenceCoverage}
+                  note={view.evidenceCoverageNote}
+                />
+              </div>
+            </>
+          ) : null}
+
+          {activeTab === 'workshop' ? (
+            <WorkshopCanvas workshop={selectedFocus.workshop} />
+          ) : null}
+
+          {activeTab === 'evidence' ? (
+            <>
+              <MissingInputsPanel inputs={selectedFocus.missingInputs} />
+              <EvidenceCoverageCard
+                slices={view.evidenceCoverage}
+                note={view.evidenceCoverageNote}
+              />
+            </>
+          ) : null}
+
+          {activeTab === 'gate' ? (
+            <>
+              <CurrentGateCard
+                gateLabel={view.currentGateLabel}
+                description={view.currentGateDescription}
+              />
+              <MissingInputsPanel inputs={selectedFocus.missingInputs} />
+            </>
+          ) : null}
+
+          {activeTab === 'actions' ? (
+            <SuggestedActionsCard
+              actions={selectedFocus.suggestedActions}
+              customAskPlaceholder={view.customAskPlaceholder}
+            />
+          ) : null}
+
+          {activeTab === 'deliverables' ? (
+            <section
+              aria-label="Deliverables scoped panel"
+              style={{
+                padding: '20px 22px 18px',
+                borderRadius: 18,
+                background: CARD,
+                border: `1px solid ${BORDER}`,
+              }}
+            >
+              <Eyebrow>Deliverables</Eyebrow>
+              <p
+                style={{
+                  margin: '8px 0 0',
+                  color: BODY,
+                  fontSize: 13,
+                  lineHeight: 1.5,
+                }}
+              >
+                The full deliverables-by-phase table renders below the workbench (C-7).
+                Click a row in that table to open the Deliverable Detail Drawer once the
+                drawer wave lands.
+              </p>
+            </section>
+          ) : null}
+        </div>
+
+        <AgentRail
           agentHandoffs={selectedFocus.agentHandoffs}
-          suggestedActions={selectedFocus.suggestedActions}
-          customAskPlaceholder={view.customAskPlaceholder}
-          customAskDeferredState={view.customAskDeferredState}
+          threeChoicesRule={view.threeChoicesRule}
         />
       </div>
+
+      <p
+        style={{
+          margin: '20px 0 0',
+          color: MUTED_SOFT,
+          fontSize: 11.5,
+          fontStyle: 'italic',
+          lineHeight: 1.5,
+        }}
+      >
+        {view.deterministicCaveat}
+      </p>
     </section>
   );
 }

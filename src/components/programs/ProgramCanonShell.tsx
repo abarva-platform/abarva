@@ -9,7 +9,7 @@ interface ProgramCanonShellProps {
 const rootStyle: CSSProperties = {
   background: '#FBFAF7',
   minHeight: '100vh',
-  padding: '24px 24px 48px',
+  padding: '20px 24px 48px',
   fontFamily: "'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
   color: '#0A0C12',
 };
@@ -19,80 +19,51 @@ const maxStyle: CSSProperties = {
   margin: '0 auto',
 };
 
-const eyebrowStyle: CSSProperties = {
-  fontSize: 11,
-  letterSpacing: '0.12em',
-  textTransform: 'uppercase',
-  color: '#525866',
-  fontWeight: 700,
-};
-
+// Compact shell header per mockup: serif h1 with the program identity
+// and a single subtitle line. No big eyebrow, no oversized workflow
+// orientation card — the workflow markers move to a small footer caveat
+// so the journey hero in the workbench is the first visible spine.
 const titleStyle: CSSProperties = {
-  margin: '8px 0 6px',
+  margin: '0',
+  fontFamily: 'Georgia, "Times New Roman", "Iowan Old Style", serif',
   fontSize: 30,
-  lineHeight: 1.2,
+  lineHeight: 1.18,
   fontWeight: 600,
+  color: '#0A0C12',
 };
 
 const summaryStyle: CSSProperties = {
-  margin: 0,
-  color: '#1F2433',
-  fontSize: 15,
-  lineHeight: 1.55,
+  margin: '6px 0 18px',
+  color: '#525866',
+  fontSize: 14,
+  lineHeight: 1.5,
   maxWidth: 920,
 };
 
-const stripStyle: CSSProperties = {
-  marginTop: 16,
-  marginBottom: 16,
-  background: '#FFFFFF',
-  border: '1px solid #E8E6E1',
-  borderRadius: 10,
-  padding: '12px 14px',
-  display: 'flex',
-  flexWrap: 'wrap',
-  gap: 10,
-  alignItems: 'center',
-};
-
-const stripLabelStyle: CSSProperties = {
+const footerCaveatStyle: CSSProperties = {
+  marginTop: 28,
   fontSize: 11,
-  textTransform: 'uppercase',
-  letterSpacing: '0.09em',
-  fontWeight: 700,
-  color: '#1B2B5C',
-};
-
-const stripTextStyle: CSSProperties = {
-  fontSize: 13,
-  color: '#1F2433',
-};
-
-const stripCaveatStyle: CSSProperties = {
-  marginLeft: 'auto',
-  fontSize: 12,
-  color: '#525866',
+  color: '#7A7468',
+  fontFamily: '"DM Sans", sans-serif',
+  letterSpacing: '0.02em',
 };
 
 export function ProgramCanonShell({ title, summary, children }: ProgramCanonShellProps) {
   return (
     <div style={rootStyle} data-canon="program-shell">
       <div style={maxStyle}>
-        <div style={eyebrowStyle}>Program workflow · Nexus-led</div>
         <h1 style={titleStyle}>{title}</h1>
         <p style={summaryStyle}>{summary}</p>
-        <div style={stripStyle}>
-          <span style={stripLabelStyle}>Workflow orientation</span>
-          <span style={stripTextStyle}>
-            Journey → Phase → Gate → Nexus next action → Deliverables/Evidence → Missions
-          </span>
-          <span style={stripCaveatStyle}>
-            Deterministic route shell. No fake approvals or live actions.
-          </span>
-        </div>
         {children}
+        {/* Workflow orientation marker — kept terse per the canon-trim
+         *  redesign so the page chrome above the workbench stays light.
+         *  Required marker text is preserved for the route-shell test:
+         *  Journey → Phase → Gate → Nexus next action → Deliverables/Evidence → Missions */}
+        <p style={footerCaveatStyle}>
+          Workflow orientation · Journey → Phase → Gate → Nexus next action → Deliverables/Evidence → Missions ·
+          Deterministic route shell. No fake approvals or live actions.
+        </p>
       </div>
     </div>
   );
 }
-

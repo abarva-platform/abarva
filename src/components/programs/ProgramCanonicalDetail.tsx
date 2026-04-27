@@ -48,7 +48,6 @@ import {
   buildCanonicalHardGateStrip,
   buildProgramReadinessSummary,
   buildStewardReadinessNote,
-  summarizeProgram,
   type CanonicalHardGateRenderStatus,
   type ReadinessSignal,
 } from '@/lib/programs/programs-canonical-view';
@@ -120,8 +119,6 @@ const COLORS = {
 } as const;
 
 export function ProgramCanonicalDetail({ tenant, program }: ProgramCanonicalDetailProps) {
-  const view = summarizeProgram(program);
-
   return (
     <main
       style={{
@@ -156,53 +153,64 @@ export function ProgramCanonicalDetail({ tenant, program }: ProgramCanonicalDeta
           <span style={{ color: COLORS.muted }}>{program.code}</span>
         </nav>
 
-        {/* Zone A · Header */}
-        <header style={{ marginBottom: 16 }}>
-          <div
-            style={{
-              fontFamily: 'JetBrains Mono, monospace',
-              fontSize: 11,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: COLORS.mutedSoft,
-              fontWeight: 700,
-              marginBottom: 6,
-            }}
-          >
-            {program.code} · {view.archetypeCode} · canonical program
-          </div>
-          <h1
-            style={{
-              fontFamily: 'Georgia, "Times New Roman", serif',
-              fontSize: 28,
-              fontWeight: 600,
-              margin: 0,
-              lineHeight: 1.25,
-            }}
-          >
-            {program.name}
-          </h1>
-        </header>
-
-        {/* Zone B · Context strip */}
+        {/* Zone B · context strip (canon spec 03b §B-1, B-2). Sticky thin
+         *  pill row with tenant tier, program code, phase, gate, and
+         *  linked Source event chip. Click target for B-2 routes to the
+         *  Source event detail; the dedicated drawer lands with the Zone E
+         *  drawers wave. */}
         <section
           aria-label="Program context strip"
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: 12,
-            marginBottom: 22,
-            padding: '14px 18px',
-            background: COLORS.card,
+            position: 'sticky',
+            top: 0,
+            zIndex: 5,
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 8,
+            alignItems: 'center',
+            padding: '8px 12px',
+            marginBottom: 18,
+            background: 'rgba(248,247,244,0.92)',
+            backdropFilter: 'saturate(140%) blur(6px)',
             border: `1px solid ${COLORS.border}`,
-            borderRadius: 10,
+            borderRadius: 999,
+            fontSize: 12,
           }}
         >
-          <ContextMetric label="Current phase" value={`P${view.currentCanonicalPhase.index} · ${view.currentCanonicalPhase.label}`} />
-          <ContextMetric label="Spec phase" value={`P${view.currentPhaseSpec} · ${phaseMeta(view.currentPhaseSpec).name}`} />
-          <ContextMetric label="Status" value={view.status} />
-          <ContextMetric label="Deliverables" value={String(view.deliverableTiers.total)} />
-          <ContextMetric label="Rich tier" value={String(view.deliverableTiers.rich)} />
+          <span
+            style={{
+              padding: '4px 10px',
+              borderRadius: 999,
+              background: '#EAF5EE',
+              color: '#0F766E',
+              fontSize: 11,
+              fontWeight: 700,
+            }}
+          >
+            {tenant.displayName} · Rich
+          </span>
+          <span style={{ color: COLORS.muted }}>{program.code}</span>
+          <span style={{ color: COLORS.mutedSoft }}>·</span>
+          <span style={{ color: '#0B4A91', fontWeight: 700 }}>P2 · Synthesis</span>
+          <span style={{ color: COLORS.mutedSoft }}>·</span>
+          <span style={{ color: '#A65F00', fontWeight: 700 }}>Gate: Pending</span>
+          <span style={{ color: COLORS.mutedSoft }}>·</span>
+          <span style={{ color: COLORS.mutedSoft, fontStyle: 'italic' }}>Seed-backed · deterministic</span>
+          <Link
+            href="/source/events/apex-retail-ams-outsourcing-2026"
+            style={{
+              marginLeft: 'auto',
+              padding: '4px 12px',
+              borderRadius: 999,
+              border: `1px solid #0B4A91`,
+              color: '#0B4A91',
+              fontSize: 11,
+              fontWeight: 700,
+              textDecoration: 'none',
+            }}
+          >
+            Linked Source event ↗
+          </Link>
         </section>
 
         <NexusProgramWorkbench
@@ -1029,23 +1037,3 @@ function TierBadge({ tier }: { tier: DeliverableSeedPlan['renderTier'] }) {
   );
 }
 
-function ContextMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <div
-        style={{
-          fontFamily: 'JetBrains Mono, monospace',
-          fontSize: 10,
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase',
-          color: COLORS.mutedSoft,
-          fontWeight: 700,
-          marginBottom: 2,
-        }}
-      >
-        {label}
-      </div>
-      <div style={{ fontSize: 14, fontWeight: 600, color: COLORS.ink }}>{value}</div>
-    </div>
-  );
-}
