@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-04-27 (wave-admin-data phase 1 merged — DATA2 + DATA10 code_complete · 23%)",
+  "lastUpdated": "2026-04-27 (wave-admin-data phase 2 merged — DATA3-9 code_complete · 77%)",
   "source": "Deterministic build wave manifest. Updated by integration agent after each wave merge.",
   "lifecycle": [
     "planned",
@@ -1422,15 +1422,8 @@
       "name": "Native Admin Data Layer",
       "goal": "Replace hardcoded TypeScript constants in admin page-views with real data flowing from Supabase via the existing adapter pattern. Closes the founder-flagged gap that deferred ADMIN18 from wave-admin-completion. ADMIN-DATA1 audit + wave registration; ADMIN-DATA2 ships adapter contracts foundation; ADMIN-DATA3-9 wire each admin page (parallel lanes) against typed adapters; ADMIN-DATA10 ships 7 new admin tables (admin_connectors, admin_datasets, admin_dataset_approvals, admin_dataset_quality, admin_blockers, admin_audit_log, admin_setup_progress) + Apex/Meridian seed; ADMIN-DATA11 swaps AGENT1 context bundle source from constants to live DB; ADMIN-DATA12 ships ADMIN18 Overview pull-through against real data; ADMIN-DATA13 locks visual + data regression. All write actions, live model calls, and audit-event emission remain HARD-GATED for Wave 27+.",
       "status": "in_progress",
-      "percentComplete": 23,
+      "percentComplete": 77,
       "plannedSlices": [
-        "ADMIN-DATA3",
-        "ADMIN-DATA4",
-        "ADMIN-DATA5",
-        "ADMIN-DATA6",
-        "ADMIN-DATA7",
-        "ADMIN-DATA8",
-        "ADMIN-DATA9",
         "ADMIN-DATA11",
         "ADMIN-DATA12",
         "ADMIN-DATA13"
@@ -1438,6 +1431,13 @@
       "completedSlices": [
         "ADMIN-DATA1",
         "ADMIN-DATA2",
+        "ADMIN-DATA3",
+        "ADMIN-DATA4",
+        "ADMIN-DATA5",
+        "ADMIN-DATA6",
+        "ADMIN-DATA7",
+        "ADMIN-DATA8",
+        "ADMIN-DATA9",
         "ADMIN-DATA10"
       ],
       "skippedSlices": [],
@@ -1446,8 +1446,8 @@
       "validationStatus": "not_run",
       "productionReadinessUpdated": false,
       "currentBlockers": [],
-      "nextAction": "Phase 1 merged (DATA2 + DATA10). Launch Phase 2 — DATA3-9 in parallel (7 page-wiring lanes against adapter foundation).",
-      "lastUpdated": "2026-04-27 (wave-admin-data phase 1 merged · DATA2 + DATA10 code_complete)"
+      "nextAction": "Phase 2 merged (DATA3-9 code_complete). Next: DATA11 — AGENT1 context bundle wired to live DB (sequential).",
+      "lastUpdated": "2026-04-27 (wave-admin-data phase 2 merged · DATA3-9 code_complete · 77%)"
     }
   ]
 }

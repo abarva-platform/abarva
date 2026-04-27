@@ -9042,7 +9042,8 @@
     {
       "id": "ADMIN-DATA3",
       "title": "/admin/users-access wired to admin-users-adapter",
-      "status": "backlog",
+      "status": "code_complete",
+      "completedAt": "2026-04-27",
       "type": "code",
       "wave": "wave-admin-data",
       "track": "06-admin-readiness-architecture",
@@ -9052,7 +9053,8 @@
     {
       "id": "ADMIN-DATA4",
       "title": "/admin/connectors wired to admin-connectors-adapter",
-      "status": "backlog",
+      "status": "code_complete",
+      "completedAt": "2026-04-27",
       "type": "code",
       "wave": "wave-admin-data",
       "track": "06-admin-readiness-architecture",
@@ -9062,7 +9064,8 @@
     {
       "id": "ADMIN-DATA5",
       "title": "/admin/data-trust wired to admin-datasets-adapter",
-      "status": "backlog",
+      "status": "code_complete",
+      "completedAt": "2026-04-27",
       "type": "code",
       "wave": "wave-admin-data",
       "track": "06-admin-readiness-architecture",
@@ -9072,7 +9075,8 @@
     {
       "id": "ADMIN-DATA6",
       "title": "/admin/agent-readiness wired to admin-agent-readiness-adapter",
-      "status": "backlog",
+      "status": "code_complete",
+      "completedAt": "2026-04-27",
       "type": "code",
       "wave": "wave-admin-data",
       "track": "06-admin-readiness-architecture",
@@ -9082,7 +9086,8 @@
     {
       "id": "ADMIN-DATA7",
       "title": "/admin/build-progress audit (manifest-backed verified)",
-      "status": "backlog",
+      "status": "code_complete",
+      "completedAt": "2026-04-27",
       "type": "code",
       "wave": "wave-admin-data",
       "track": "06-admin-readiness-architecture",
@@ -9092,7 +9097,8 @@
     {
       "id": "ADMIN-DATA8",
       "title": "/admin/production-readiness wired to admin-production-readiness-adapter",
-      "status": "backlog",
+      "status": "code_complete",
+      "completedAt": "2026-04-27",
       "type": "code",
       "wave": "wave-admin-data",
       "track": "06-admin-readiness-architecture",
@@ -9102,7 +9108,8 @@
     {
       "id": "ADMIN-DATA9",
       "title": "/admin/architecture audit (deterministic-only confirmed)",
-      "status": "backlog",
+      "status": "code_complete",
+      "completedAt": "2026-04-27",
       "type": "code",
       "wave": "wave-admin-data",
       "track": "06-admin-readiness-architecture",
