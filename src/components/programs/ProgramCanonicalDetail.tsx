@@ -24,6 +24,7 @@
 import Link from 'next/link';
 import { NexusProgramWorkbench } from '@/components/programs/NexusProgramWorkbench';
 import { buildNexusProgramWorkbenchView } from '@/lib/programs/nexus-program-workbench-view';
+import { AskAnythingBar } from '@/components/agent/AskAnythingBar';
 import { ProgramArtifactCanvas } from '@/components/programs/ProgramArtifactCanvas';
 import { buildProgramArtifactCanvasView } from '@/lib/programs/program-artifact-canvas-view';
 import { ProgramWorkshopMode } from '@/components/programs/ProgramWorkshopMode';
@@ -145,7 +146,7 @@ export function ProgramCanonicalDetail({ tenant, program }: ProgramCanonicalDeta
         minHeight: '100vh',
       }}
     >
-      <div style={{ maxWidth: 1180, margin: '0 auto', padding: '24px 28px 64px' }}>
+      <div style={{ maxWidth: 1180, margin: '0 auto', padding: '24px 28px 160px' }}>
         {/* Crumbs */}
         <nav
           aria-label="Breadcrumb"
@@ -291,6 +292,15 @@ export function ProgramCanonicalDetail({ tenant, program }: ProgramCanonicalDeta
           Canonical route · <code>{tenantProgramPath(tenant, program)}</code>
         </footer>
       </div>
+
+      {/* Universal Ask Anything bar — viewport-fixed at the bottom of every
+       *  agent surface. Auto-grow textarea, spell check, Enter submits
+       *  (Shift+Enter for newline). Page padding-bottom above leaves room
+       *  for the bar so the footer is not covered. */}
+      <AskAnythingBar
+        agent="nexus"
+        scopeLabel={`${program.code} · ${strip.phaseLabel}`}
+      />
     </main>
   );
 }
