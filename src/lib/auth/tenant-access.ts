@@ -28,7 +28,7 @@ import type { CurrentUser } from './current-user';
 import { resolvePinnedSessionClientKey, resolveSessionRole, type AppSessionRole } from './access-routing';
 import { findTenantByRouteSlug, getSeedPlan } from '@/lib/deliverables/seed-route-resolver';
 import type { TenantSeedPlan } from '@/lib/programs/enhancement-seed-planner';
-import { isClientKey, type ClientKey } from '@/lib/client-config';
+import { inferClientKeyFromEmail, isClientKey, type ClientKey } from '@/lib/client-config';
 
 export interface TenantAccessContext {
   user: CurrentUser;
@@ -40,6 +40,7 @@ interface TenantAccessSnapshot {
   sessionRole: AppSessionRole;
   pinnedClientKey: ClientKey | null;
   membershipClientKeys: ClientKey[];
+  inferredClientKey: ClientKey | null;
 }
 
 type AuthSessionClaims = {
@@ -77,16 +78,23 @@ function getMembershipClientKeys(user: CurrentUser): ClientKey[] {
 function buildTenantAccessSnapshot(user: CurrentUser, claims: AuthSessionClaims): TenantAccessSnapshot {
   const email = extractClaimEmail(claims) ?? user.email;
   const sessionRole = resolveSessionRole(claims?.publicMetadata?.role ?? null, email);
-  const pinnedClientKey = resolvePinnedSessionClientKey({
+  const membershipClientKeys = getMembershipClientKeys(user);
+  const inferredClientKey = inferClientKeyFromEmail(email);
+  const resolvedPinnedClientKey = resolvePinnedSessionClientKey({
     clientId: claims?.publicMetadata?.clientId ?? null,
     defaultClientId: claims?.publicMetadata?.defaultClientId ?? user.defaultClientId,
     email,
   });
+  const pinnedClientKey =
+    sessionRole === 'client' && membershipClientKeys.length === 0 && inferredClientKey
+      ? inferredClientKey
+      : resolvedPinnedClientKey;
 
   return {
     sessionRole,
     pinnedClientKey,
-    membershipClientKeys: getMembershipClientKeys(user),
+    membershipClientKeys,
+    inferredClientKey,
   };
 }
 
@@ -97,6 +105,14 @@ export function canAccessTenantClient(snapshot: TenantAccessSnapshot, clientKey:
 
   if (snapshot.membershipClientKeys.includes(clientKey)) {
     return true;
+  }
+
+  if (snapshot.sessionRole === 'client' && snapshot.membershipClientKeys.length === 0) {
+    if (snapshot.inferredClientKey) {
+      return snapshot.inferredClientKey === clientKey;
+    }
+
+    return snapshot.pinnedClientKey === clientKey;
   }
 
   return snapshot.pinnedClientKey === clientKey;
