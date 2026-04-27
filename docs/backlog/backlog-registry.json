@@ -141,6 +141,13 @@
       "status": "merged",
       "note": "Solution Intelligence \u2014 PAT1-3, SOL patterns",
       "mergedPrNumber": 418
+    },
+    {
+      "id": "wave-admin-redesign",
+      "status": "planned",
+      "title": "Admin Surface Canonical Redesign",
+      "file": "waves/WAVE-ADMIN-REDESIGN.md",
+      "note": "ADMIN1-7 \u2014 3-zone editorial layout, new logo lockup, Cormorant Garamond, Steward editorial, agent rail. Lifts WIRE2B admin 72 -> 92."
     }
   ],
   "slices": [
@@ -921,7 +928,64 @@
       "status": "backlog",
       "wave": "wave-29",
       "title": "Backlog Registry Automation"
+    },
+    {
+      "id": "ADMIN0",
+      "track": "06",
+      "status": "code_complete",
+      "wave": "wave-admin-redesign",
+      "title": "Admin Redesign Backlog Registration",
+      "completedAt": "2026-04-27"
+    },
+    {
+      "id": "ADMIN1",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-redesign",
+      "title": "Foundation: Logo + Token Lock"
+    },
+    {
+      "id": "ADMIN2",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-redesign",
+      "title": "Admin Shell 3-Zone Canonical Layout"
+    },
+    {
+      "id": "ADMIN3",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-redesign",
+      "title": "Steward Editorial Component"
+    },
+    {
+      "id": "ADMIN4",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-redesign",
+      "title": "Architecture Page Wired to AdminCanonShellV2"
+    },
+    {
+      "id": "ADMIN5",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-redesign",
+      "title": "Production Readiness Page Wired to AdminCanonShellV2"
+    },
+    {
+      "id": "ADMIN6",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-redesign",
+      "title": "Remaining 6 Admin Sub-Pages Wired"
+    },
+    {
+      "id": "ADMIN7",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-redesign",
+      "title": "Admin Visual Lock + Regression Guard"
     }
   ],
-  "lastUpdated": "2026-04-26"
+  "lastUpdated": "2026-04-27"
 }
