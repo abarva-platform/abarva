@@ -2,19 +2,27 @@
 
 > This file is written by the orchestration agent at the end of each wave.
 > The next autonomous session reads this file first.
-> Last updated by: orchestration agent (ADMIN0 complete)
+> Last updated by: orchestration agent (ADMIN1 + ADMIN2 complete)
 > Last updated: 2026-04-27
 
 ## Last completed wave / slice
+- sliceIds: ADMIN1, ADMIN2
+- waveId: wave-admin-redesign (in_progress, 37.5%)
+- title: Foundation: Logo + Tokens (ADMIN1) + Admin Shell 3-Zone Canonical Layout (ADMIN2)
+- prNumber: 438
+- mergeSHA: 364de098
+- completedAt: 2026-04-27
+- testsGreen: 70 new tests pass (17 ADMIN1 + 53 ADMIN2); 277 design integration tests all pass
+- skippedSlices: none
+- laneSHAs: ADMIN1 = 60c4c3c7 ; ADMIN2 = 72b12feb
+- note: ADMIN1 lands abarva-logo-lockup-v2.svg, AbarVaLogo variant prop, design-tokens.ts (COLORS / TYPOGRAPHY / SPACING / RADIUS / ADMIN_LAYOUT / BANNED_TOKENS), Cormorant Garamond next/font/google import. ADMIN2 lands AdminCanonShellV2 (CSS grid 280/flex/320), AdminSidebar (8 sub-sections + Live caveat), EditorialCanvas, AgentRail (Steward BLOCKED / Nexus PARTIAL / Sentinel THIN / Atlas THIN + 3 choices + custom), admin-shell-config. Cherry-pick conflict on design-tokens.ts resolved by accepting either side (identical exports, ours retains richer comments). Hygiene gate 11/11 PASS. CI green (ESLint, Routes/disclaimers, hygiene_gate, Vercel × 2).
+
+## Previously completed (this wave)
 - sliceId: ADMIN0
-- waveId: wave-admin-redesign (registration only — wave itself remains `planned`)
-- title: Admin Redesign Backlog Registration
 - prNumber: 436
 - mergeSHA: 2f0ba3ba
 - completedAt: 2026-04-27
-- testsGreen: docs only — 0 new tests, 0 regressions
-- skippedSlices: none
-- note: Docs-only registration of Admin Surface Canonical Redesign wave (ADMIN1–ADMIN7). Wave spec, 8 slice docs, 4 manifest updates. Founder source: abarva_logo_lockup_v2.svg + 5 wireframe screenshots shared 2026-04-27. ADMIN1–7 are now `status: backlog` in build-slices.json and ready to execute.
+- note: Docs-only registration of Admin Surface Canonical Redesign wave (ADMIN1–ADMIN7).
 
 ## Previous waves (for reference)
 - nav1: PRs 428, 430, 431, 432, 433, 434, 435; slices [NAV1A, NAV1B, NAV1C, NAV1D, NAV1E, NAV1F, NAV1G]
@@ -32,11 +40,12 @@
 
 ## Next wave to execute
 - waveId: wave-admin-redesign
-- waveTitle: Admin Surface Canonical Redesign
+- waveTitle: Admin Surface Canonical Redesign (in_progress, 37.5%)
 - waveFile: docs/backlog/waves/WAVE-ADMIN-REDESIGN.md
 - blockedSlices: none
-- primarySlices: ADMIN1, ADMIN2, ADMIN3, ADMIN4, ADMIN5, ADMIN6, ADMIN7 (all backlog-registered)
-- note: Wave registered via ADMIN0 (PR #436, merged 2026-04-27, SHA 2f0ba3ba). Founder shared abarva_logo_lockup_v2.svg + 5 wireframes. Lifts WIRE2B admin compliance 72→92. Recommended start: ADMIN1 (foundation: logo + tokens) + ADMIN2 (3-zone shell) sequentially for proof, then ADMIN3 unblocks ADMIN4–6 page wiring in parallel, then ADMIN7 locks visual regression.
+- completedSlices: ADMIN0, ADMIN1, ADMIN2
+- primarySlices: ADMIN3, ADMIN4, ADMIN5, ADMIN6, ADMIN7 (remaining)
+- note: ADMIN1 + ADMIN2 merged 2026-04-27 (PR #438, SHA 364de098). Foundation tokens locked, 3-zone shell shipped as standalone components — no admin route wired yet. Recommended next: ADMIN3 (Steward Editorial Component) — pure presentational components consumed by ADMIN4/ADMIN5/ADMIN6 page wiring. ADMIN7 locks visual regression at the end.
 
 ## Wave 32 deliverables produced
 - W32A: Programs Phase Filter — `src/lib/programs/phase-filter-view.ts`
