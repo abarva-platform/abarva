@@ -523,3 +523,256 @@ function makeBundleId(
   const workObject = input.workObjectId ?? 'no-object';
   return `cb_${input.tenantId}_${route}_${workObject}_${assembledAt}`;
 }
+
+// ---------------------------------------------------------------------------
+// AGENT1A — Foundation read-model
+// ---------------------------------------------------------------------------
+//
+// AgentContextBundle (distinct from the platform ContextBundle above): the
+// canonical context an agent sees when reasoning about a page.
+//
+// Pure read-model. No live data, no API calls, no model invocations.
+// Deterministic. Built from existing seeds + read-models: blocker-detail-view,
+// connectors-readiness-view, admin-shell-config, etc.
+//
+// Coexists with the platform ContextBundle contract above; the two have
+// disjoint export names and are consumed by different surfaces.
+
+import { getAllBlockerDetails } from '@/lib/admin/blocker-detail-view';
+
+export type AgentSurface =
+  | 'admin'
+  | 'programs'
+  | 'source'
+  | 'intelligence'
+  | 'tower'
+  | 'home';
+
+export type TenantTier = 'rich' | 'thin' | 'shell_only';
+
+export type EvidenceStrength = 'strong' | 'partial' | 'thin';
+
+export interface AgentContextBlocker {
+  id: string;
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  title: string;
+  impactedComponent: string;
+  pilotImpact: boolean;
+  productionImpact: boolean;
+}
+
+export interface AgentContextDecision {
+  id: string;
+  label: string;
+  owner: string;
+}
+
+export interface AgentContextSource {
+  id: string;
+  label: string;
+  lastUpdated: string;
+}
+
+export interface AgentContextEvidence {
+  strength: EvidenceStrength;
+  sources: number;
+  lastUpdated: string | null;
+}
+
+export interface AgentContextTenant {
+  slug: string;
+  name: string;
+  tier: TenantTier;
+}
+
+export interface AgentContextBundle {
+  tenant: AgentContextTenant;
+  surface: AgentSurface;
+  page: string;
+  stage: string | null;
+  evidence: AgentContextEvidence;
+  blockers: ReadonlyArray<AgentContextBlocker>;
+  pendingDecisions: ReadonlyArray<AgentContextDecision>;
+  contextSources: ReadonlyArray<AgentContextSource>;
+  deterministicSeed: true;
+}
+
+const TENANT_REGISTRY: Record<string, AgentContextTenant> = {
+  'apex-retail': { slug: 'apex-retail', name: 'Apex Retail', tier: 'rich' },
+  'meridian-health': {
+    slug: 'meridian-health',
+    name: 'Meridian Health System',
+    tier: 'thin',
+  },
+  arcturus: { slug: 'arcturus', name: 'Arcturus', tier: 'shell_only' },
+};
+
+const PAGE_CONTEXT_SOURCES: Record<string, ReadonlyArray<AgentContextSource>> =
+  {
+    'admin/architecture': [
+      { id: 'arch-docs', label: 'architecture docs', lastUpdated: '2026-04-26' },
+      {
+        id: 'azure-blueprint',
+        label: 'Azure lab blueprint',
+        lastUpdated: '2026-04-26',
+      },
+      {
+        id: 'data-trust-model',
+        label: 'data trust model',
+        lastUpdated: '2026-04-26',
+      },
+    ],
+    'admin/production-readiness': [
+      {
+        id: 'readiness-manifest',
+        label: 'readiness manifest',
+        lastUpdated: '2026-04-27',
+      },
+      { id: 'ci-vercel', label: 'CI/Vercel status', lastUpdated: '2026-04-27' },
+      {
+        id: 'wireframe-audit',
+        label: 'wireframe audit',
+        lastUpdated: '2026-04-27',
+      },
+    ],
+    'admin/connectors': [
+      {
+        id: 'connector-readiness',
+        label: 'connector readiness model',
+        lastUpdated: '2026-04-27',
+      },
+      {
+        id: 'admin-shell-config',
+        label: 'admin shell config',
+        lastUpdated: '2026-04-27',
+      },
+    ],
+    'admin/data-trust': [
+      {
+        id: 'evidence-manifest',
+        label: 'evidence manifest',
+        lastUpdated: '2026-04-27',
+      },
+      {
+        id: 'dataset-approval',
+        label: 'dataset approval model',
+        lastUpdated: '2026-04-27',
+      },
+      {
+        id: 'no-raw-copy',
+        label: 'no-raw-copy enforcement',
+        lastUpdated: '2026-04-27',
+      },
+    ],
+    'admin/users-access': [
+      { id: 'role-matrix', label: 'role matrix', lastUpdated: '2026-04-27' },
+      { id: 'access-policy', label: 'access policy', lastUpdated: '2026-04-27' },
+    ],
+    'admin/agent-readiness': [
+      {
+        id: 'agent-posture',
+        label: 'agent posture model',
+        lastUpdated: '2026-04-27',
+      },
+      {
+        id: 'context-coverage',
+        label: 'context coverage',
+        lastUpdated: '2026-04-27',
+      },
+    ],
+    'admin/build-progress': [
+      { id: 'build-waves', label: 'build waves', lastUpdated: '2026-04-27' },
+      {
+        id: 'slice-registry',
+        label: 'slice registry',
+        lastUpdated: '2026-04-27',
+      },
+    ],
+    'admin/overview': [
+      {
+        id: 'admin-shell-config',
+        label: 'admin shell config',
+        lastUpdated: '2026-04-27',
+      },
+      {
+        id: 'readiness-manifest',
+        label: 'readiness manifest',
+        lastUpdated: '2026-04-27',
+      },
+    ],
+  };
+
+function resolveTenant(slug: string): AgentContextTenant {
+  return TENANT_REGISTRY[slug] ?? { slug, name: slug, tier: 'shell_only' };
+}
+
+function resolveContextSources(
+  surface: AgentSurface,
+  page: string,
+): ReadonlyArray<AgentContextSource> {
+  return PAGE_CONTEXT_SOURCES[`${surface}/${page}`] ?? [];
+}
+
+function resolveEvidence(
+  surface: AgentSurface,
+  tier: TenantTier,
+  sources: ReadonlyArray<AgentContextSource>,
+): AgentContextEvidence {
+  if (tier === 'shell_only') {
+    return { strength: 'thin', sources: 0, lastUpdated: null };
+  }
+  if (sources.length === 0) {
+    return { strength: 'thin', sources: 0, lastUpdated: null };
+  }
+  if (tier === 'thin') {
+    return {
+      strength: 'thin',
+      sources: sources.length,
+      lastUpdated: sources[0].lastUpdated,
+    };
+  }
+  // rich tier
+  if (sources.length >= 3) {
+    return {
+      strength: 'strong',
+      sources: sources.length,
+      lastUpdated: sources[0].lastUpdated,
+    };
+  }
+  return {
+    strength: 'partial',
+    sources: sources.length,
+    lastUpdated: sources[0].lastUpdated,
+  };
+}
+
+export function buildAgentContext(
+  tenantSlug: string,
+  surface: AgentSurface,
+  page: string,
+): AgentContextBundle {
+  const tenant = resolveTenant(tenantSlug);
+  const contextSources = resolveContextSources(surface, page);
+  const evidence = resolveEvidence(surface, tenant.tier, contextSources);
+  const allBlockers =
+    tenant.tier === 'rich' ? getAllBlockerDetails(tenantSlug) : [];
+  const blockers: ReadonlyArray<AgentContextBlocker> = allBlockers.map((b) => ({
+    id: b.id,
+    severity: b.severity,
+    title: b.title,
+    impactedComponent: b.impactedComponent,
+    pilotImpact: b.pilotImpact,
+    productionImpact: b.productionImpact,
+  }));
+  return {
+    tenant,
+    surface,
+    page,
+    stage: null,
+    evidence,
+    blockers,
+    pendingDecisions: [],
+    contextSources,
+    deterministicSeed: true,
+  };
+}
