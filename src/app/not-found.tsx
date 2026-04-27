@@ -58,9 +58,6 @@ export default async function NotFound() {
           <Link href="/preview/programs" style={{ padding: '12px 24px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.16)', color: '#E6EDF3', fontSize: '14px', fontWeight: 600, textDecoration: 'none', background: 'transparent' }}>
             Programs
           </Link>
-          <Link href="/preview/intelligence" style={{ padding: '12px 24px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.16)', color: '#E6EDF3', fontSize: '14px', fontWeight: 600, textDecoration: 'none', background: 'transparent' }}>
-            Intelligence
-          </Link>
           <Link href="/preview/tower" style={{ padding: '12px 24px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.16)', color: '#E6EDF3', fontSize: '14px', fontWeight: 600, textDecoration: 'none', background: 'transparent' }}>
             Control Tower
           </Link>

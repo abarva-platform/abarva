@@ -1,4 +1,3 @@
-import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
@@ -71,24 +70,6 @@ export default async function DemoProgramsNewPage({
           <dd style={{ margin: 0 }}>{params.threadId ?? 'n/a'}</dd>
         </dl>
 
-        <div style={{ marginTop: 28 }}>
-          <Link
-            href="/demo/intelligence"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              minHeight: 42,
-              padding: '0 16px',
-              borderRadius: 999,
-              border: '0.5px solid rgba(94, 234, 212, 0.28)',
-              color: '#e2e8f0',
-              textDecoration: 'none',
-            }}
-          >
-            Back to Intelligence demo
-          </Link>
-        </div>
       </div>
     </main>
   )
