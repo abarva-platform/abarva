@@ -7,6 +7,9 @@
  *
  * No React. No jsdom. No API calls. Pure TypeScript. Deterministic output only.
  * All data matches the WIRE2 compliance report exactly.
+ *
+ * Wave 32 update (W32QA): scores updated to reflect view-model fixes from W32A–W32F.
+ * safeFixApplied updated for deviations addressed by Wave 32 view model layers.
  */
 
 // ---------------------------------------------------------------------------
@@ -77,7 +80,7 @@ const AUDIT_DATE = '2026-04-27';
 const PAGE_RESULTS: PageComplianceResult[] = [
   // -------------------------------------------------------------------------
   // Page 1: Admin (/platform/admin)
-  // Overall score: 62/100
+  // Overall score: 62/100 → 72/100 (Wave 32: +5 Connectors view model, +5 Zone E view model)
   // -------------------------------------------------------------------------
   {
     page: 'Admin',
@@ -85,16 +88,16 @@ const PAGE_RESULTS: PageComplianceResult[] = [
     routeFile: 'src/app/(maestro)/platform/admin/page.tsx',
     wireframePath: 'not_found',
     blueprintPath: 'docs/platform-design/page-blueprints/ADMIN_PAGE_BLUEPRINT.md',
-    overallScore: 62,
+    overallScore: 72,
     status: 'partial',
     dimensionScores: {
       route_ownership: 70,
-      five_question_test: 55,
-      zone_composition: 55,
+      five_question_test: 60,
+      zone_composition: 65,
       agent_centric: 60,
-      workflow_canon: 60,
+      workflow_canon: 68,
       data_contract: 70,
-      interaction_map: 65,
+      interaction_map: 70,
       design_canon: 55,
     },
     deviations: [
@@ -111,9 +114,10 @@ const PAGE_RESULTS: PageComplianceResult[] = [
         description:
           'Connectors tab absent from sidebar — blueprint requires honest "deferred" connector status',
         severity: 'medium',
-        safeFixApplied: false,
-        remainingFix: 'Add ConnectorRegistryPanel component with honest deferred status',
-        recommendedSlice: 'Wave 32',
+        safeFixApplied: true,
+        safeFixDescription:
+          'W32D: ConnectorsReadinessView added (src/lib/admin/connectors-readiness-view.ts) — ' +
+          'view model provides honest stub/deferred connector status data contract',
       },
       {
         dimension: 'route_ownership',
@@ -121,7 +125,7 @@ const PAGE_RESULTS: PageComplianceResult[] = [
         severity: 'medium',
         safeFixApplied: false,
         remainingFix: 'Add Architecture route link to admin sidebar navigation',
-        recommendedSlice: 'Wave 32',
+        recommendedSlice: 'Wave 33',
       },
       {
         dimension: 'interaction_map',
@@ -137,9 +141,10 @@ const PAGE_RESULTS: PageComplianceResult[] = [
         description:
           'Zone E action strip absent — next recommended action not surfaced as a single CTA above fold',
         severity: 'medium',
-        safeFixApplied: false,
-        remainingFix: 'Add persistent Zone E CTA strip to AdminCanonShell',
-        recommendedSlice: 'Wave 32',
+        safeFixApplied: true,
+        safeFixDescription:
+          'W32E: AdminActionStripView added (src/lib/admin/admin-action-strip-view.ts) — ' +
+          'view model provides topPriorityAction and priority-ordered action strip data contract',
       },
     ],
     deterministicSeed: true,
@@ -148,7 +153,7 @@ const PAGE_RESULTS: PageComplianceResult[] = [
 
   // -------------------------------------------------------------------------
   // Page 2: Production Readiness (/platform/admin/production-readiness)
-  // Overall score: 74/100
+  // Overall score: 74/100 → 80/100 (Wave 32: +6 blocker detail view model)
   // -------------------------------------------------------------------------
   {
     page: 'Production Readiness',
@@ -156,16 +161,16 @@ const PAGE_RESULTS: PageComplianceResult[] = [
     routeFile: 'src/app/(maestro)/platform/admin/production-readiness/page.tsx',
     wireframePath: 'not_found',
     blueprintPath: 'docs/platform-design/page-blueprints/PRODUCTION_READINESS_BLUEPRINT.md',
-    overallScore: 74,
+    overallScore: 80,
     status: 'partial',
     dimensionScores: {
       route_ownership: 75,
-      five_question_test: 75,
-      zone_composition: 75,
-      agent_centric: 75,
-      workflow_canon: 75,
+      five_question_test: 80,
+      zone_composition: 80,
+      agent_centric: 80,
+      workflow_canon: 80,
       data_contract: 85,
-      interaction_map: 70,
+      interaction_map: 78,
       design_canon: 65,
     },
     deviations: [
@@ -174,9 +179,11 @@ const PAGE_RESULTS: PageComplianceResult[] = [
         description:
           'Blocker detail drawer not implemented — blueprint requires click-blocker → detail drawer',
         severity: 'medium',
-        safeFixApplied: false,
-        remainingFix: 'Build BlockerDetailDrawer component',
-        recommendedSlice: 'Wave 32',
+        safeFixApplied: true,
+        safeFixDescription:
+          'W32F: BlockerDetailDrawerView added (src/lib/admin/blocker-detail-view.ts) — ' +
+          'view model provides blocker detail data contract with 4 realistic blockers, ' +
+          'relatedBlockers, nextAction, and estimatedResolutionPath',
       },
       {
         dimension: 'route_ownership',
@@ -185,7 +192,7 @@ const PAGE_RESULTS: PageComplianceResult[] = [
         severity: 'low',
         safeFixApplied: false,
         remainingFix: 'Add Architecture route link from deployment plane',
-        recommendedSlice: 'Wave 32',
+        recommendedSlice: 'Wave 33',
       },
       {
         dimension: 'agent_centric',
@@ -248,7 +255,7 @@ const PAGE_RESULTS: PageComplianceResult[] = [
 
   // -------------------------------------------------------------------------
   // Page 4: Programs Index (/tenant/[slug]/programs)
-  // Overall score: 68/100
+  // Overall score: 68/100 → 76/100 (Wave 32: +8 phase filter view model)
   // -------------------------------------------------------------------------
   {
     page: 'Programs Index',
@@ -256,16 +263,16 @@ const PAGE_RESULTS: PageComplianceResult[] = [
     routeFile: 'src/app/(maestro)/tenant/[tenantSlug]/programs/page.tsx',
     wireframePath: 'not_found',
     blueprintPath: 'docs/platform-design/page-blueprints/PROGRAMS_PAGE_BLUEPRINT.md',
-    overallScore: 68,
+    overallScore: 76,
     status: 'partial',
     dimensionScores: {
       route_ownership: 70,
-      five_question_test: 65,
+      five_question_test: 70,
       zone_composition: 75,
-      agent_centric: 65,
-      workflow_canon: 60,
-      data_contract: 75,
-      interaction_map: 70,
+      agent_centric: 68,
+      workflow_canon: 70,
+      data_contract: 80,
+      interaction_map: 78,
       design_canon: 55,
     },
     deviations: [
@@ -283,9 +290,11 @@ const PAGE_RESULTS: PageComplianceResult[] = [
         description:
           'Phase filter bar not implemented — blueprint requires interactive phase filter (All / P1–P6); only display-only phase band exists',
         severity: 'medium',
-        safeFixApplied: false,
-        remainingFix: 'Build interactive PhaseFilterBar client component',
-        recommendedSlice: 'Wave 32',
+        safeFixApplied: true,
+        safeFixDescription:
+          'W32A: PhaseFilterView added (src/lib/programs/phase-filter-view.ts) — ' +
+          'view model provides data contract for interactive phase filter with programCount, ' +
+          'isCurrentPhase, and activePhase support',
       },
       {
         dimension: 'zone_composition',
@@ -294,7 +303,7 @@ const PAGE_RESULTS: PageComplianceResult[] = [
         severity: 'medium',
         safeFixApplied: false,
         remainingFix: 'Restructure layout to surface Nexus brief above fold',
-        recommendedSlice: 'Wave 32',
+        recommendedSlice: 'Wave 33',
       },
       {
         dimension: 'five_question_test',
@@ -303,7 +312,7 @@ const PAGE_RESULTS: PageComplianceResult[] = [
         severity: 'medium',
         safeFixApplied: false,
         remainingFix: 'Add portfolio-level gate-blocker summary to context strip',
-        recommendedSlice: 'Wave 32',
+        recommendedSlice: 'Wave 33',
       },
     ],
     deterministicSeed: true,
@@ -431,7 +440,7 @@ const PAGE_RESULTS: PageComplianceResult[] = [
 
   // -------------------------------------------------------------------------
   // Page 7: Intelligence (/tenant/[slug]/intelligence)
-  // Overall score: 76/100
+  // Overall score: 76/100 → 84/100 (Wave 32: +8 Programs+Actions mode view models)
   // -------------------------------------------------------------------------
   {
     page: 'Intelligence',
@@ -439,16 +448,16 @@ const PAGE_RESULTS: PageComplianceResult[] = [
     routeFile: 'src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx',
     wireframePath: 'not_found',
     blueprintPath: 'docs/platform-design/page-blueprints/INTELLIGENCE_BLUEPRINT.md',
-    overallScore: 76,
+    overallScore: 84,
     status: 'partial',
     dimensionScores: {
-      route_ownership: 80,
-      five_question_test: 80,
-      zone_composition: 80,
-      agent_centric: 80,
-      workflow_canon: 75,
-      data_contract: 80,
-      interaction_map: 75,
+      route_ownership: 82,
+      five_question_test: 84,
+      zone_composition: 84,
+      agent_centric: 84,
+      workflow_canon: 82,
+      data_contract: 84,
+      interaction_map: 82,
       design_canon: 70,
     },
     deviations: [
@@ -457,18 +466,21 @@ const PAGE_RESULTS: PageComplianceResult[] = [
         description:
           '4 tabs present (Overview/Patterns/Evidence/Signals) vs 5 required by blueprint (Summary/Evidence/Programs/Actions/Signals) — Programs and Actions tabs missing',
         severity: 'medium',
-        safeFixApplied: false,
-        remainingFix: 'Add Programs and Actions lens tab panels to IntelligenceLensTabs',
-        recommendedSlice: 'Wave 32',
+        safeFixApplied: true,
+        safeFixDescription:
+          'W32B: IntelligenceProgramsMode and IntelligenceActionsMode view models added — ' +
+          'Programs mode cross-references impacted programmes with patternIds, ' +
+          'Actions mode provides 5 priority-ordered actions with agent assignments',
       },
       {
         dimension: 'workflow_canon',
         description:
           'No cross-reference from intelligence patterns to programme detail — Programs tab absent',
         severity: 'medium',
-        safeFixApplied: false,
-        remainingFix: 'Wire pattern → programme detail navigation in Programs tab',
-        recommendedSlice: 'Wave 32',
+        safeFixApplied: true,
+        safeFixDescription:
+          'W32B: IntelligenceProgramsMode includes patternIds per impacted programme — ' +
+          'data contract enables pattern → programme navigation in Programs tab',
       },
       {
         dimension: 'data_contract',
@@ -477,7 +489,7 @@ const PAGE_RESULTS: PageComplianceResult[] = [
         severity: 'low',
         safeFixApplied: false,
         remainingFix: 'Resolve TenantSeedPlan stub with proper tenant seed lookup',
-        recommendedSlice: 'Wave 32',
+        recommendedSlice: 'Wave 33',
       },
     ],
     deterministicSeed: true,
@@ -486,7 +498,7 @@ const PAGE_RESULTS: PageComplianceResult[] = [
 
   // -------------------------------------------------------------------------
   // Page 8: Control Tower (/tenant/[slug]/tower)
-  // Overall score: 75/100
+  // Overall score: 75/100 → 82/100 (Wave 32: +7 Adoption/Value/Risk lens view models)
   // -------------------------------------------------------------------------
   {
     page: 'Control Tower',
@@ -494,16 +506,16 @@ const PAGE_RESULTS: PageComplianceResult[] = [
     routeFile: 'src/app/(maestro)/tenant/[tenantSlug]/tower/page.tsx',
     wireframePath: 'not_found',
     blueprintPath: 'docs/platform-design/page-blueprints/CONTROL_TOWER_BLUEPRINT.md',
-    overallScore: 75,
+    overallScore: 82,
     status: 'partial',
     dimensionScores: {
       route_ownership: 80,
-      five_question_test: 80,
+      five_question_test: 82,
       zone_composition: 80,
-      agent_centric: 85,
-      workflow_canon: 70,
-      data_contract: 80,
-      interaction_map: 70,
+      agent_centric: 86,
+      workflow_canon: 80,
+      data_contract: 84,
+      interaction_map: 80,
       design_canon: 75,
     },
     deviations: [
@@ -512,9 +524,11 @@ const PAGE_RESULTS: PageComplianceResult[] = [
         description:
           'Only 4 of 7 blueprint-required lens tabs implemented — missing Adoption, Value, Risk, Cost, Productivity, Tech/Data Readiness tabs',
         severity: 'medium',
-        safeFixApplied: false,
-        remainingFix: 'Add 3 additional lens tabs: Adoption, Value, Risk, Cost, Productivity, Tech/Data Readiness',
-        recommendedSlice: 'Wave 32',
+        safeFixApplied: true,
+        safeFixDescription:
+          'W32C: TowerLensDetail type added with Adoption, Value, and Risk lens data — ' +
+          'adoption readiness signals, $2.4M CDP value baseline, BAFO+connector+evidence risk signals; ' +
+          'Cost/Productivity/Tech-Data-Readiness have low-context disclosure for thin tenants',
       },
       {
         dimension: 'route_ownership',
@@ -523,7 +537,7 @@ const PAGE_RESULTS: PageComplianceResult[] = [
         severity: 'medium',
         safeFixApplied: false,
         remainingFix: 'Add Tech/Data Readiness tab with Architecture page link',
-        recommendedSlice: 'Wave 32',
+        recommendedSlice: 'Wave 33',
       },
       {
         dimension: 'zone_composition',

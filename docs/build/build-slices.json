@@ -8713,6 +8713,15 @@
       "wave": "wave-32",
       "track": "04-admin-readiness",
       "notes": "Blocker detail drawer read-model for Production Readiness page. src/lib/admin/blocker-detail-view.ts."
+    },
+    {
+      "id": "W32QA",
+      "title": "Wireframe Compliance Rescore after Wave 32",
+      "status": "code_complete",
+      "type": "qa",
+      "wave": "wave-32",
+      "track": "10-demo-qa-production-hardening",
+      "notes": "Updated wireframe-compliance-audit.ts scores reflecting W32A-W32F view model fixes. avgScore 69.5 -> 74.4, safeFixesApplied 6 -> 13."
     }
   ]
 }

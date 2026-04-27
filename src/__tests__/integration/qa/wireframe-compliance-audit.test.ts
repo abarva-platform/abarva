@@ -4,6 +4,10 @@
  * Pure TypeScript Jest tests. No jsdom. No React rendering.
  * No fs.readFileSync of source files in tests.
  * All assertions are deterministic — same result every run.
+ *
+ * W32QA update: expectations updated to reflect Wave 32 score improvements.
+ * Before: avgScore 69.5, safeFixesApplied 6, 21 remaining deviations
+ * After:  avgScore 74.4, safeFixesApplied 13, remaining deviations reduced
  */
 
 import {
@@ -200,11 +204,26 @@ describe('wireframe-compliance-audit', () => {
       expect(arch!.overallScore).toBe(58);
     });
 
-    it('Intelligence page has the highest score (76)', () => {
+    it('Intelligence page has the highest score after Wave 32 (84)', () => {
       const results = getPageComplianceResults();
       const intel = results.find((r) => r.route === '/tenant/[tenantSlug]/intelligence');
       expect(intel).toBeDefined();
-      expect(intel!.overallScore).toBe(76);
+      expect(intel!.overallScore).toBe(84);
+    });
+
+    it('Wave 32 score improvements: Programs Index 68 → 76', () => {
+      const result = getPageComplianceResult('/tenant/[tenantSlug]/programs');
+      expect(result!.overallScore).toBe(76);
+    });
+
+    it('Wave 32 score improvements: Control Tower 75 → 82', () => {
+      const result = getPageComplianceResult('/tenant/[tenantSlug]/tower');
+      expect(result!.overallScore).toBe(82);
+    });
+
+    it('Wave 32 score improvements: Production Readiness 74 → 80', () => {
+      const result = getPageComplianceResult('/platform/admin/production-readiness');
+      expect(result!.overallScore).toBe(80);
     });
   });
 
@@ -217,7 +236,7 @@ describe('wireframe-compliance-audit', () => {
       const result = getPageComplianceResult('/platform/admin');
       expect(result).not.toBeNull();
       expect(result!.page).toBe('Admin');
-      expect(result!.overallScore).toBe(62);
+      expect(result!.overallScore).toBe(72);
     });
 
     it('returns null for an unknown route', () => {
@@ -258,9 +277,9 @@ describe('wireframe-compliance-audit', () => {
       expect(summary.highSeverityDeviations).toBeGreaterThanOrEqual(0);
     });
 
-    it('safeFixesApplied equals 6', () => {
+    it('safeFixesApplied equals 13 after Wave 32 fixes (was 6 before W32)', () => {
       const summary = getWireframeComplianceSummary();
-      expect(summary.safeFixesApplied).toBe(6);
+      expect(summary.safeFixesApplied).toBe(13);
     });
 
     it('createdFrom is wire2b_wireframe_compliance_ts', () => {
