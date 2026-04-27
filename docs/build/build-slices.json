@@ -8104,6 +8104,34 @@
       "wave": "wave-25",
       "completedAt": "2026-04-26",
       "sliceDoc": "docs/build/slices/QA32_EVIDENCE_TRUST_AUDIT.md"
+    },
+    {
+      "id": "WIRE1",
+      "name": "Page Wireframe Specification Library",
+      "category": "docs/design-authority",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Steward",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/platform-design/wireframes/README.md",
+        "docs/platform-design/wireframes/WIREFRAME_INDEX.md",
+        "docs/platform-design/wireframes/setup-admin/SETUP_ADMIN_WIREFRAME.md",
+        "docs/platform-design/wireframes/setup-admin/SETUP_ADMIN_WIREFRAME.docx",
+        "docs/platform-design/wireframes/programs/PROGRAM_DETAIL_WIREFRAME.md",
+        "docs/platform-design/wireframes/programs/PROGRAM_DETAIL_WIREFRAME.docx",
+        "docs/platform-design/wireframes/intelligence/INTELLIGENCE_WIREFRAME.md",
+        "docs/platform-design/wireframes/intelligence/INTELLIGENCE_WIREFRAME.docx",
+        "docs/platform-design/wireframes/control-tower/CONTROL_TOWER_WIREFRAME.md",
+        "docs/platform-design/wireframes/control-tower/CONTROL_TOWER_WIREFRAME.docx",
+        "docs/build/slices/WIRE1_PAGE_WIREFRAME_SPEC_LIBRARY.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "wave": "wave-25",
+      "completedAt": "2026-04-26",
+      "sliceDoc": "docs/build/slices/WIRE1_PAGE_WIREFRAME_SPEC_LIBRARY.md",
+      "notes": "adds implementation-grade page wireframes for Setup/Admin, Program Detail, Intelligence, and Control Tower"
     }
   ]
 }
