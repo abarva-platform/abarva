@@ -165,6 +165,65 @@ const ADMIN_PAGE_PATHS = [
   'src/app/(maestro)/admin/architecture/page.tsx',
 ];
 
+// ADMIN19 — Depth components added across batch 1+2 of wave-admin-completion.
+// Each must (a) exist on disk, (b) import from `@/lib/design/design-tokens`,
+// (c) contain no banned hex literals. The list is grouped by sub-page so
+// any future deletion is traceable to a specific surface.
+const ADMIN19_DEPTH_COMPONENTS: string[] = [
+  // Users & Access (batch 1)
+  'src/components/admin/UsersAccessTabs.tsx',
+  'src/components/admin/UserDetailDrawer.tsx',
+  'src/components/admin/UserListTable.tsx',
+  'src/components/admin/InviteList.tsx',
+  'src/components/admin/UsersAccessActionStrip.tsx',
+  // Connectors (batch 1)
+  'src/components/admin/connectors/ConnectorDetailDrawer.tsx',
+  'src/components/admin/connectors/ConnectorCategoryGroup.tsx',
+  // Architecture (batch 1) — closes WIRE2 component drawer deviation
+  'src/components/admin/ArchitecturePlaneDrilldown.tsx',
+  'src/components/admin/ComponentDetailDrawer.tsx',
+  'src/components/admin/AzureArchitectureCanvas.tsx',
+  'src/components/admin/ArchitectureActionStrip.tsx',
+  // Agent Readiness (batch 2)
+  'src/components/admin/AgentExpandableCard.tsx',
+  'src/components/admin/ContextCoverageMatrix.tsx',
+  'src/components/admin/AgentReadinessTabs.tsx',
+  'src/components/admin/AgentReadinessActionStrip.tsx',
+  // Data Trust (batch 2)
+  'src/components/admin/DataTrustTabs.tsx',
+  'src/components/admin/RungDatasetList.tsx',
+  'src/components/admin/DatasetDetailDrawer.tsx',
+  'src/components/admin/DataGovernancePanel.tsx',
+  'src/components/admin/DataQualityPanel.tsx',
+  'src/components/admin/DataTrustActionStrip.tsx',
+  // Build Progress (batch 2)
+  'src/components/admin/build-progress/WaveTimeline.tsx',
+  'src/components/admin/build-progress/SliceTable.tsx',
+  'src/components/admin/build-progress/SliceDetailDrawer.tsx',
+  'src/components/admin/build-progress/CIMiniStrip.tsx',
+  'src/components/admin/build-progress/BacklogPreview.tsx',
+  // Production Readiness (batch 2)
+  'src/components/admin/production-readiness/ProductionReadinessTabs.tsx',
+  'src/components/admin/production-readiness/ProductionReadinessActionStrip.tsx',
+  'src/components/admin/production-readiness/ReadinessTileExpanded.tsx',
+  'src/components/admin/production-readiness/BlockerDetailDrawer.tsx',
+  'src/components/admin/production-readiness/GateCriteriaMatrix.tsx',
+  'src/components/admin/production-readiness/ReadinessHistoryStrip.tsx',
+];
+
+// ADMIN19 — Admin pages that own a sub-nav or drawer interaction must accept
+// `searchParams` so the URL is the source of truth. The Overview (/admin)
+// is intentionally exempt until ADMIN18 lands.
+const ADMIN_PAGES_WITH_SEARCH_PARAMS: string[] = [
+  'src/app/(maestro)/admin/data-trust/page.tsx',
+  'src/app/(maestro)/admin/connectors/page.tsx',
+  'src/app/(maestro)/admin/users-access/page.tsx',
+  'src/app/(maestro)/admin/agent-readiness/page.tsx',
+  'src/app/(maestro)/admin/production-readiness/page.tsx',
+  'src/app/(maestro)/admin/build-progress/page.tsx',
+  'src/app/(maestro)/admin/architecture/page.tsx',
+];
+
 // ADMIN8 + ADMIN10 — legacy /platform/admin/* pages are now thin redirects.
 // Regression guard: these files MUST import `redirect` from 'next/navigation'
 // and call it with the expected destination — they MUST NOT render the
@@ -547,6 +606,76 @@ describe('ADMIN7 — Visual lock & regression guard', () => {
       for (const f of files) {
         expect(/\.(tsx?|jsx?)$/.test(f)).toBe(true);
       }
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // ADMIN19 — Depth components from batch 1+2 of wave-admin-completion
+  //
+  // For each new component:
+  //   1. file exists on disk
+  //   2. imports from `@/lib/design/design-tokens` (no hex literals inline)
+  //   3. contains no banned hex tokens
+  // -------------------------------------------------------------------------
+
+  describe('ADMIN19 — Depth components present and canon-compliant', () => {
+    it('the depth-component manifest covers all 32 batch 1+2 components', () => {
+      // Sanity: keep this list anchored so additions are intentional.
+      expect(ADMIN19_DEPTH_COMPONENTS.length).toBeGreaterThanOrEqual(32);
+    });
+
+    ADMIN19_DEPTH_COMPONENTS.forEach((rel) => {
+      describe(rel, () => {
+        it('file exists', () => {
+          expect(existsSync(resolve(root, rel))).toBe(true);
+        });
+
+        it('imports from @/lib/design/design-tokens', () => {
+          const src = readFileSync(resolve(root, rel), 'utf8');
+          expect(src).toMatch(/@\/lib\/design\/design-tokens/);
+        });
+
+        it('contains no banned hex tokens', () => {
+          const src = readFileSync(resolve(root, rel), 'utf8').toLowerCase();
+          const offenders = BANNED_HEX_LITERALS.filter((b) =>
+            src.includes(b.toLowerCase()),
+          );
+          expect(offenders).toEqual([]);
+        });
+      });
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // ADMIN19 — Admin pages with sub-nav/drawer state read URL `searchParams`
+  //
+  // Overview (/admin) is exempt until ADMIN18 ships. The other 7 pages all
+  // own a tab/drawer interaction and MUST accept `searchParams` so URL is
+  // the source of truth (deep-linkable, refresh-safe, agent-driveable).
+  // -------------------------------------------------------------------------
+
+  describe('ADMIN19 — Admin pages read searchParams for sub-nav/drawer state', () => {
+    it('the searchParams page manifest covers all 7 depth pages', () => {
+      expect(ADMIN_PAGES_WITH_SEARCH_PARAMS).toHaveLength(7);
+    });
+
+    ADMIN_PAGES_WITH_SEARCH_PARAMS.forEach((p) => {
+      describe(p, () => {
+        it('file exists', () => {
+          expect(existsSync(resolve(root, p))).toBe(true);
+        });
+
+        it('declares searchParams in its props/signature', () => {
+          const src = readFileSync(resolve(root, p), 'utf8');
+          expect(src).toMatch(/searchParams/);
+        });
+
+        it('awaits/reads searchParams (Next.js 15 async params contract)', () => {
+          const src = readFileSync(resolve(root, p), 'utf8');
+          // Either `await searchParams` or `searchParams ? await searchParams`.
+          expect(src).toMatch(/await\s+searchParams/);
+        });
+      });
     });
   });
 });

@@ -16,6 +16,15 @@
  * ADMIN1–6. Scores updated to reflect rendered pixels: Admin 72→92,
  * Production Readiness 80→92, Architecture 58→90. The Architecture component
  * drawer remains an open interaction_map deviation (Wave 33).
+ *
+ * wave-admin-completion update (ADMIN19): batch 1+2 shipped depth components
+ * across Production Readiness (gate matrix + blocker drawer + tile expansion)
+ * and Architecture (Azure sub-tab + ComponentDetailDrawer — closes the open
+ * WIRE2 component drawer deviation). Scores updated honestly:
+ *   - Production Readiness 92 → 96
+ *   - Architecture 90 → 94 (component drawer deviation flips to safeFixApplied)
+ *   - Admin Overview unchanged at 92 — ADMIN18 (Overview pull-through) is
+ *     deferred to ADMIN-DATA wave so it ships with real data, not seed.
  */
 
 // ---------------------------------------------------------------------------
@@ -159,7 +168,14 @@ const PAGE_RESULTS: PageComplianceResult[] = [
   // -------------------------------------------------------------------------
   // Page 2: Production Readiness (/admin/production-readiness) — ADMIN8
   // (was /platform/admin/production-readiness pre-ADMIN8; legacy URL redirects here.)
-  // Overall score: 74 → 80 (Wave 32) → 92 (ADMIN5)
+  // Overall score: 74 → 80 (Wave 32) → 92 (ADMIN5) → 96 (ADMIN19 batch 2)
+  //
+  // ADMIN19 honest deltas:
+  //   - interaction_map 88 → 96: rendered ProductionReadinessTabs +
+  //     BlockerDetailDrawer + GateCriteriaMatrix + ReadinessTileExpanded +
+  //     ReadinessHistoryStrip — drawer + tab state read from searchParams.
+  //   - zone_composition 92 → 96: Action strip + history strip rendered
+  //     persistently above-fold.
   // -------------------------------------------------------------------------
   {
     page: 'Production Readiness',
@@ -167,16 +183,16 @@ const PAGE_RESULTS: PageComplianceResult[] = [
     routeFile: 'src/app/(maestro)/admin/production-readiness/page.tsx',
     wireframePath: 'not_found',
     blueprintPath: 'docs/platform-design/page-blueprints/PRODUCTION_READINESS_BLUEPRINT.md',
-    overallScore: 92,
+    overallScore: 96,
     status: 'partial',
     dimensionScores: {
       route_ownership: 92,
       five_question_test: 92,
-      zone_composition: 92,
+      zone_composition: 96,
       agent_centric: 92,
       workflow_canon: 92,
       data_contract: 92,
-      interaction_map: 88,
+      interaction_map: 96,
       design_canon: 95,
     },
     deviations: [
@@ -187,7 +203,7 @@ const PAGE_RESULTS: PageComplianceResult[] = [
         severity: 'medium',
         safeFixApplied: true,
         safeFixDescription:
-          'W32F + ADMIN5: BlockerDetailDrawerView wired into production readiness page on AdminCanonShellV2',
+          'W32F + ADMIN5: BlockerDetailDrawerView wired into production readiness page on AdminCanonShellV2; ADMIN19 batch 2 added rendered BlockerDetailDrawer + GateCriteriaMatrix + ReadinessTileExpanded with searchParams-driven state',
       },
       {
         dimension: 'route_ownership',
@@ -215,7 +231,15 @@ const PAGE_RESULTS: PageComplianceResult[] = [
   // -------------------------------------------------------------------------
   // Page 3: Architecture (/admin/architecture) — ADMIN8
   // (was /platform/admin/architecture pre-ADMIN8; legacy URL redirects here.)
-  // Overall score: 58 → 90 (ADMIN4) — component drawer remains open
+  // Overall score: 58 → 90 (ADMIN4) → 94 (ADMIN19 batch 1)
+  //
+  // ADMIN19 honest deltas:
+  //   - interaction_map 80 → 90: ComponentDetailDrawer + AzureArchitectureCanvas
+  //     sub-tab + ArchitecturePlaneDrilldown shipped (closes the open WIRE2
+  //     component-drawer deviation).
+  //   - zone_composition 92 → 94: ArchitectureActionStrip rendered above-fold.
+  //   - workflow_canon 90 → 94: Azure sub-tab + plane drilldown surface the
+  //     atlas → steward escalation flow per blueprint.
   // -------------------------------------------------------------------------
   {
     page: 'Architecture',
@@ -223,16 +247,16 @@ const PAGE_RESULTS: PageComplianceResult[] = [
     routeFile: 'src/app/(maestro)/admin/architecture/page.tsx',
     wireframePath: 'not_found',
     blueprintPath: 'docs/platform-design/page-blueprints/ARCHITECTURE_BLUEPRINT.md',
-    overallScore: 90,
+    overallScore: 94,
     status: 'partial',
     dimensionScores: {
       route_ownership: 92,
       five_question_test: 90,
-      zone_composition: 92,
+      zone_composition: 94,
       agent_centric: 92,
-      workflow_canon: 90,
+      workflow_canon: 94,
       data_contract: 90,
-      interaction_map: 80,
+      interaction_map: 90,
       design_canon: 95,
     },
     deviations: [
@@ -249,9 +273,9 @@ const PAGE_RESULTS: PageComplianceResult[] = [
         dimension: 'interaction_map',
         description: 'Component detail drawer not implemented (blueprint requires it)',
         severity: 'low',
-        safeFixApplied: false,
-        remainingFix: 'Build ArchitectureComponentDetailDrawer',
-        recommendedSlice: 'Wave 33',
+        safeFixApplied: true,
+        safeFixDescription:
+          'ADMIN19 batch 1: ComponentDetailDrawer.tsx + ArchitecturePlaneDrilldown.tsx + AzureArchitectureCanvas.tsx + ArchitectureActionStrip.tsx wired into architecture page; drawer state read from searchParams',
       },
     ],
     deterministicSeed: true,
