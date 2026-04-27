@@ -1276,6 +1276,46 @@
       "currentBlockers": [],
       "nextAction": "Wave 33 next",
       "lastUpdated": "2026-04-27"
+    },
+    {
+      "waveId": "nav1",
+      "name": "Canonical AbarVa Navigation and Active Shell Alignment",
+      "goal": "Align AbarVa nav/shell/wordmark usage across all live routes WITHOUT changing page content, business logic, data models, or runtime behavior. Document the legacy global nav (AbarvaNav) deferral path to NAV2.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "NAV1A",
+        "NAV1B",
+        "NAV1C",
+        "NAV1D",
+        "NAV1E",
+        "NAV1F",
+        "NAV1G"
+      ],
+      "completedSlices": [
+        "NAV1A",
+        "NAV1B",
+        "NAV1C",
+        "NAV1D",
+        "NAV1E",
+        "NAV1F",
+        "NAV1G"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [
+        428,
+        430,
+        431,
+        432,
+        433,
+        434
+      ],
+      "validationStatus": "ci_green",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [],
+      "nextAction": "NAV2 \u2014 migrate global nav from legacy AbarvaNav (Clerk avatar + client-switcher) to AbarVaShellNav. Sweep banned tokens (#14B8A6 / #0E9F8C) from non-tenant page bodies.",
+      "lastUpdated": "2026-04-27"
     }
   ]
 }
