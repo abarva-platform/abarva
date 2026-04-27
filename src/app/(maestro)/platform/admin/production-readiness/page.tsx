@@ -1,14 +1,14 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { connection } from 'next/server';
-import { ProductionReadinessDecisionFlow } from '@/components/admin/ProductionReadinessDecisionFlow';
-import { ProductionReadinessLivePanel } from '@/components/admin/ProductionReadinessLivePanel';
-import { ProductionReadinessTracker } from '@/components/admin/ProductionReadinessTracker';
-import { AdminCanonShell } from '@/components/admin/AdminCanonShell';
-import {
-  buildProductionReadinessApiResponse,
-  buildProductionReadinessViewFromDisk as buildProductionReadinessView,
-} from '@/lib/admin/production-readiness-loader';
+import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
+import { EditorialCanvas } from '@/components/admin/EditorialCanvas';
+import { AgentRail } from '@/components/admin/AgentRail';
+import { ContextBar } from '@/components/admin/ContextBar';
+import { StewardEditorial } from '@/components/admin/StewardEditorial';
+import { DemoPilotProductionTiles } from '@/components/admin/DemoPilotProductionTiles';
+import { TopBlockersTable } from '@/components/admin/TopBlockersTable';
+import { buildProductionReadinessPageView } from '@/lib/admin/production-readiness-page-view';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -19,27 +19,32 @@ const ADMIN_EMAIL_ALLOWLIST = new Set([
 ]);
 
 function AdminOnlyNotice() {
+  const view = buildProductionReadinessPageView();
   return (
-    <AdminCanonShell
-      eyebrow="Platform · Production"
-      title="Production Readiness"
-      description="Steward decision surface for full-flow, pilot, and production readiness blockers."
-      workflow={{
-        primaryAgent: 'steward',
-        pageQuestion: 'What blocks pilot and production readiness today?',
-        whatIsKnown: 'Manifest-backed readiness components and blockers are available.',
-        whatIsMissing: 'Live CI/deploy polling remains intentionally deferred.',
-        recommendedNextAction: 'Resolve top blockers and re-run verification gates.',
-        caveat: 'Deterministic tracker surface. No live production monitoring claim.',
-      }}
+    <AdminCanonShellV2
+      agentRail={
+        <AgentRail
+          primaryAgentLabel={view.primaryAgentLabel}
+          primaryActionLabel={view.primaryActionLabel}
+          primaryActionHref={view.primaryActionHref}
+        />
+      }
     >
-      <main style={{ padding: 40, fontFamily: 'DM Sans, sans-serif' }}>
-        <h1 style={{ fontFamily: 'DM Sans, sans-serif', letterSpacing: 0 }}>
-          Admin access only
-        </h1>
-        <p>Production Readiness Tracker is restricted to platform administrators.</p>
-      </main>
-    </AdminCanonShell>
+      <EditorialCanvas
+        eyebrow={view.eyebrow}
+        title="Admin access only"
+        subtitle="Production Readiness is restricted to platform administrators."
+      >
+        <ContextBar
+          tenant={view.context.tenant}
+          mode={view.context.mode}
+          agent={view.context.agent}
+          data={view.context.data}
+          liveStatus={view.context.liveStatus}
+          liveStatusKind={view.context.liveStatusKind}
+        />
+      </EditorialCanvas>
+    </AdminCanonShellV2>
   );
 }
 
@@ -62,33 +67,38 @@ export default async function ProductionReadinessPage() {
 
   if (!isAdmin) return <AdminOnlyNotice />;
 
-  // PROD8 (wave-17): mount the decision-flow refresh above the existing
-  // tracker / live panel. The decision flow is the calm summary; the live
-  // panel keeps the existing dimension grid + segment summaries below it.
-  // ProductionReadinessTracker is intentionally imported here so this page
-  // continues to declare its dependency on the canonical tracker surface
-  // even though the live panel mounts it internally.
-  void ProductionReadinessTracker;
-  void buildProductionReadinessView;
-
-  const initialResponse = buildProductionReadinessApiResponse(new Date().toISOString());
+  const view = buildProductionReadinessPageView();
 
   return (
-    <AdminCanonShell
-      eyebrow="Platform · Production · STEWARD"
-      title="Production Readiness"
-      description="Decision-ready view of what is complete, what remains blocked, and what should happen next."
-      workflow={{
-        primaryAgent: 'steward',
-        pageQuestion: 'Is AbarVa ready for full-flow testing, pilot readiness, and production readiness?',
-        whatIsKnown: 'Readiness manifest and component-level gates are available in this route.',
-        whatIsMissing: 'Live polling for CI/Vercel and runtime telemetry is not included.',
-        recommendedNextAction: 'Use blocker list and testing gates to prioritize next remediation batch.',
-        caveat: 'Deterministic no-store read model, not an automated runtime monitor.',
-      }}
+    <AdminCanonShellV2
+      agentRail={
+        <AgentRail
+          primaryAgentLabel={view.primaryAgentLabel}
+          primaryActionLabel={view.primaryActionLabel}
+          primaryActionHref={view.primaryActionHref}
+        />
+      }
     >
-      <ProductionReadinessDecisionFlow />
-      <ProductionReadinessLivePanel initialResponse={initialResponse} />
-    </AdminCanonShell>
+      <EditorialCanvas eyebrow={view.eyebrow} title={view.title} subtitle={view.subtitle}>
+        <ContextBar
+          tenant={view.context.tenant}
+          mode={view.context.mode}
+          agent={view.context.agent}
+          data={view.context.data}
+          liveStatus={view.context.liveStatus}
+          liveStatusKind={view.context.liveStatusKind}
+        />
+        <StewardEditorial
+          title={view.editorial.title}
+          body={view.editorial.body}
+          contextUsed={view.editorial.contextUsed}
+          evidenceStrength={view.editorial.evidenceStrength}
+          blocker={view.editorial.blocker}
+          primaryAction={view.editorial.primaryAction}
+        />
+        <DemoPilotProductionTiles tiles={view.tiles} />
+        <TopBlockersTable blockers={view.topBlockers} />
+      </EditorialCanvas>
+    </AdminCanonShellV2>
   );
 }
