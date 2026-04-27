@@ -49,10 +49,19 @@ type AuthSessionClaims = {
     defaultClientId?: string | null;
   };
   emailAddress?: string | null;
+  email?: string | null;
+  emailAddresses?: Array<{ emailAddress: string }>;
+  email_addresses?: Array<{ emailAddress: string }>;
 } | null;
 
 function extractClaimEmail(claims: AuthSessionClaims): string | null {
-  return claims?.emailAddress ?? null;
+  return (
+    claims?.emailAddress ??
+    claims?.email ??
+    claims?.emailAddresses?.[0]?.emailAddress ??
+    claims?.email_addresses?.[0]?.emailAddress ??
+    null
+  );
 }
 
 function getMembershipClientKeys(user: CurrentUser): ClientKey[] {
