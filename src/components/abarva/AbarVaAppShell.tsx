@@ -37,7 +37,7 @@ export function AbarVaAppShell({
         gap: '16px',
       }}>
         {/* BRAND1: canonical logo — BRAND1 lane will replace the stub with real SVG */}
-        <AbarVaLogo variant="compact" ariaLabel="AbarVa" />
+        <AbarVaLogo size="sm" label="AbarVa" />
         {/* FALLBACK (unused by default): <AbarVaWordmark /> */}
         {tenantName && (
           <AbarVaTenantBadge tenantName={tenantName} richness={tenantRichness} />
