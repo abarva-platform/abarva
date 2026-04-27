@@ -822,3 +822,44 @@ export function buildAgentContext(
     deterministicSeed: true,
   };
 }
+
+/**
+ * Async variant of buildAgentContext that enriches with live DB data when
+ * ADMIN_DATA_MODE=live. Falls back to the deterministic base in fixture mode
+ * or on any DB error (safe degradation).
+ *
+ * DATA11: In live mode, pulls real blockers from admin_blockers and updates
+ * the evidence strength if critical blockers are present.
+ */
+export async function buildAgentContextAsync(
+  tenantSlug: string,
+  surface: AgentSurface,
+  page: string,
+): Promise<AgentContextBundle> {
+  const base = buildAgentContext(tenantSlug, surface, page);
+
+  // isFixtureMode is resolved at call time via admin-data-mode
+  const { isFixtureMode } = await import('@/lib/admin/data/admin-data-mode');
+  if (isFixtureMode()) return base;
+
+  // In live mode, enrich blockers and evidence from real DB
+  try {
+    const { getAdminBlockers } = await import('@/lib/admin/data/admin-blockers-adapter');
+    const liveBlockers = await getAdminBlockers(tenantSlug);
+    const pageBlockers = liveBlockers
+      .filter((b) => b.status === 'open' || b.status === 'in_progress')
+      .slice(0, 5)
+      .map((b) => ({ id: b.id, label: b.title, severity: b.severity }));
+    return {
+      ...base,
+      blockers: pageBlockers,
+      evidence: {
+        ...base.evidence,
+        sources: liveBlockers.length > 0 ? base.evidence.sources : 0,
+        strength: pageBlockers.some((b) => b.severity === 'critical') ? 'thin' : base.evidence.strength,
+      },
+    };
+  } catch {
+    return base; // safe fallback
+  }
+}

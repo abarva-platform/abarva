@@ -1,6 +1,6 @@
 import type { ContextLiveStatus } from '@/components/admin/ContextBar';
 import type { EvidenceStrength } from '@/components/admin/EvidenceStrengthPill';
-import { buildAgentContext } from '@/lib/agent/context-bundle';
+import { buildAgentContextAsync } from '@/lib/agent/context-bundle';
 import {
   computeAllPostures,
   type AgentPosture as AgentFoundationPosture,
@@ -542,7 +542,7 @@ const ACTION_STRIP: ReadonlyArray<DataTrustActionRow> = [
 export async function buildDataTrustPageView(
   tenantSlug: string = TENANT_SLUG,
 ): Promise<DataTrustPageView> {
-  const ctx = buildAgentContext('apex-retail', 'admin', 'data-trust');
+  const ctx = await buildAgentContextAsync('apex-retail', 'admin', 'data-trust');
   const editorial = generateStewardEditorial(ctx);
   const choices = buildAgentChoices(ctx, 3);
   const postures = computeAllPostures(ctx);

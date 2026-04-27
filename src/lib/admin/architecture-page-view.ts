@@ -1,6 +1,6 @@
 import type { EvidenceStrength } from '@/components/admin/EvidenceStrengthPill';
 import type { ContextLiveStatus } from '@/components/admin/ContextBar';
-import { buildAgentContext } from '@/lib/agent/context-bundle';
+import { buildAgentContextAsync } from '@/lib/agent/context-bundle';
 import {
   computeAllPostures,
   type AgentPosture as AgentFoundationPosture,
@@ -187,7 +187,7 @@ function buildComponentDetailMap(
 export async function buildArchitecturePageView(
   tenantSlug: string = DEFAULT_TENANT_SLUG,
 ): Promise<ArchitecturePageView> {
-  const ctx = buildAgentContext(tenantSlug, 'admin', 'architecture');
+  const ctx = await buildAgentContextAsync(tenantSlug, 'admin', 'architecture');
   const editorial = generateStewardEditorial(ctx);
   const choices = buildAgentChoices(ctx, 3);
   const postures = computeAllPostures(ctx);

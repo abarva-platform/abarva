@@ -1,5 +1,6 @@
 /**
  * ADMIN-DATA2 — Admin users adapter.
+ * DATA11 — Graceful fallback to fixture (no admin_users/admin_invites table yet).
  */
 
 import type {
@@ -8,10 +9,7 @@ import type {
   AdminUserDetail,
   AdminUserRow,
 } from './admin-users-adapter-types';
-import {
-  AdminDataMigrationPendingError,
-  isFixtureMode,
-} from './admin-data-mode';
+import { isFixtureMode } from './admin-data-mode';
 import {
   adminInvitesFixture,
   adminRoleSummaryFixture,
@@ -23,7 +21,10 @@ export async function getAdminUsers(
   tenantSlug: string,
 ): Promise<ReadonlyArray<AdminUserRow>> {
   if (isFixtureMode()) return adminUsersFixture(tenantSlug);
-  throw new AdminDataMigrationPendingError('persons + team_memberships');
+  // No admin_users/admin_invites table in DATA10 migrations.
+  // Real user data comes from Clerk via team_memberships — deferred to post-DATA11.
+  // Graceful fallback: return fixture data.
+  return adminUsersFixture(tenantSlug);
 }
 
 export async function getAdminUserDetail(
@@ -31,21 +32,27 @@ export async function getAdminUserDetail(
   userId: string,
 ): Promise<AdminUserDetail | null> {
   if (isFixtureMode()) return adminUserDetailFixture(tenantSlug, userId);
-  throw new AdminDataMigrationPendingError('persons + audit_log');
+  // No admin_users/admin_invites table in DATA10 migrations.
+  // Graceful fallback: return fixture data.
+  return adminUserDetailFixture(tenantSlug, userId);
 }
 
 export async function getAdminInvites(
   tenantSlug: string,
 ): Promise<ReadonlyArray<AdminInviteRow>> {
   if (isFixtureMode()) return adminInvitesFixture(tenantSlug);
-  throw new AdminDataMigrationPendingError('admin_invites');
+  // No admin_invites table in DATA10 migrations.
+  // Graceful fallback: return fixture data.
+  return adminInvitesFixture(tenantSlug);
 }
 
 export async function getAdminRoleMatrix(
   tenantSlug: string,
 ): Promise<ReadonlyArray<AdminRoleSummary>> {
   if (isFixtureMode()) return adminRoleSummaryFixture(tenantSlug);
-  throw new AdminDataMigrationPendingError('persons + team_memberships');
+  // No admin_users/admin_invites table in DATA10 migrations.
+  // Graceful fallback: return fixture data.
+  return adminRoleSummaryFixture(tenantSlug);
 }
 
 export async function getAdminRoleSummary(

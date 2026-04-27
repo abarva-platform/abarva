@@ -10,8 +10,8 @@ export const metadata = {
   title: 'Setup Overview | Nexus Admin',
 };
 
-export default function AdminOverviewPage() {
-  const view = buildOverviewPageView();
+export default async function AdminOverviewPage() {
+  const view = await buildOverviewPageView();
 
   return (
     <AdminCanonShellV2

@@ -17,7 +17,8 @@ export type AdminConnectorKind =
   | 'vendor_portal'
   | 'identity'
   | 'data_warehouse'
-  | 'crm';
+  | 'crm'
+  | 'other';
 
 export interface AdminConnectorRow {
   id: string;
