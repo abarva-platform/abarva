@@ -134,15 +134,50 @@ export interface NexusProgramWorkbenchInput {
 const DEFAULT_PROGRAM_CODE = 'APX-CDP-2026';
 const DEFAULT_PROGRAM_NAME = 'Customer Data Platform Activation';
 const DEFAULT_TENANT_LABEL = 'Apex Retail';
+const DEFAULT_CURRENT_SPEC: SpecPhaseNumber = 2;
 
-const PHASE_TEMPLATES: ReadonlyArray<NexusWorkbenchPhaseNode> = [
-  { key: 'discovery', index: 1, label: 'Discovery', state: 'done',         stateLabel: 'Done' },
-  { key: 'synthesis', index: 2, label: 'Synthesis', state: 'current',      stateLabel: 'Current' },
-  { key: 'design',    index: 3, label: 'Design',    state: 'gate-pending', stateLabel: 'Gate pending' },
-  { key: 'build',     index: 4, label: 'Build',     state: 'locked',       stateLabel: 'Locked' },
-  { key: 'activate',  index: 5, label: 'Activate',  state: 'locked',       stateLabel: 'Locked' },
-  { key: 'operate',   index: 6, label: 'Operate',   state: 'locked',       stateLabel: 'Locked' },
+// The seed model carries five spec phases (1-5). The workbench journey
+// shows six product-friendly phases. This map collapses the spec into
+// the workbench keys; "activate" is a transition phase between Build
+// (spec 4) and Operate (spec 5) that has no seed-side counterpart.
+const SPEC_TO_WORKBENCH_KEY: Record<SpecPhaseNumber, string> = {
+  1: 'discovery',
+  2: 'synthesis',
+  3: 'design',
+  4: 'build',
+  5: 'operate',
+};
+
+const PHASE_DEFINITIONS: ReadonlyArray<{ key: string; index: number; label: string }> = [
+  { key: 'discovery', index: 1, label: 'Discovery' },
+  { key: 'synthesis', index: 2, label: 'Synthesis' },
+  { key: 'design',    index: 3, label: 'Design'    },
+  { key: 'build',     index: 4, label: 'Build'     },
+  { key: 'activate',  index: 5, label: 'Activate'  },
+  { key: 'operate',   index: 6, label: 'Operate'   },
 ];
+
+function buildPhaseJourneyForCurrent(currentKey: string): NexusWorkbenchPhaseNode[] {
+  const currentIndex = PHASE_DEFINITIONS.findIndex((p) => p.key === currentKey);
+  return PHASE_DEFINITIONS.map((definition, idx) => {
+    let state: NexusWorkbenchPhaseState;
+    let stateLabel: string;
+    if (idx < currentIndex) {
+      state = 'done';
+      stateLabel = 'Done';
+    } else if (idx === currentIndex) {
+      state = 'current';
+      stateLabel = 'Current';
+    } else if (idx === currentIndex + 1) {
+      state = 'gate-pending';
+      stateLabel = 'Gate pending';
+    } else {
+      state = 'locked';
+      stateLabel = 'Locked';
+    }
+    return { ...definition, state, stateLabel };
+  });
+}
 
 const PHASE_FOCUS_TEMPLATES: ReadonlyArray<NexusWorkbenchPhaseFocus> = [
   {
@@ -410,18 +445,82 @@ function buildPhaseFocusByKey(): Record<string, NexusWorkbenchPhaseFocus> {
 
 // --- public --------------------------------------------------------------
 
+// Per-program copy for the strip + journey subtitle + gate card. Keyed
+// off the workbench phase derived from the seed's currentPhaseSpec.
+function buildContextStripFor(
+  tenantLabel: string,
+  programCode: string,
+  currentPhase: NexusWorkbenchPhaseNode,
+): NexusWorkbenchContextStrip {
+  const gateLabel =
+    currentPhase.state === 'current' && currentPhase.key !== 'operate'
+      ? 'Gate: Pending'
+      : currentPhase.key === 'operate'
+        ? 'Gate: Closed'
+        : 'Gate: Pending';
+  return {
+    tenantBadgeLabel: `${tenantLabel} · Rich`,
+    programCode,
+    phaseLabel: `P${currentPhase.index} · ${currentPhase.label}`,
+    gateLabel,
+    caveat: 'Seed-backed · deterministic',
+    sourceEventLabel: 'Linked Source event · apex-retail-ams-outsourcing-2026',
+    sourceEventHref: '/source/events/apex-retail-ams-outsourcing-2026',
+  };
+}
+
+function buildJourneySubtitleFor(
+  currentPhase: NexusWorkbenchPhaseNode,
+  nextPhase: NexusWorkbenchPhaseNode | undefined,
+): string {
+  const nextLabel = nextPhase?.label;
+  if (!nextLabel) {
+    return `P${currentPhase.index} ${currentPhase.label} is current. Outcome confirmation is the close-out gate.`;
+  }
+  return `P${currentPhase.index} ${currentPhase.label} is current. P${currentPhase.index + 1} ${nextLabel} is the next gate.`;
+}
+
+function buildGateCardFor(
+  currentPhase: NexusWorkbenchPhaseNode,
+  nextPhase: NexusWorkbenchPhaseNode | undefined,
+): { label: string; description: string } {
+  if (!nextPhase) {
+    return {
+      label: `${currentPhase.label} · Outcome close-out`,
+      description:
+        'Steward closes the program once outcome KPIs and sponsor sign-off are recorded.',
+    };
+  }
+  if (currentPhase.key === 'synthesis' && nextPhase.key === 'design') {
+    return {
+      label: 'Synthesis → Design · Pending',
+      description:
+        'Steward blocks approval until Workshop 5 outcomes, value baseline, and platform owner confirmation are captured.',
+    };
+  }
+  return {
+    label: `${currentPhase.label} → ${nextPhase.label} · Pending`,
+    description:
+      `Steward blocks ${nextPhase.label} approval until the ${currentPhase.label} gate readiness conditions are captured.`,
+  };
+}
+
 export function buildNexusProgramWorkbenchView(
   input: NexusProgramWorkbenchInput = {},
 ): NexusWorkbenchView {
   const programCode = input.programCode ?? DEFAULT_PROGRAM_CODE;
   const programName = input.programName ?? DEFAULT_PROGRAM_NAME;
   const tenantLabel = input.tenantLabel ?? DEFAULT_TENANT_LABEL;
+  const currentPhaseSpec = (input.currentPhaseSpec ?? DEFAULT_CURRENT_SPEC) as SpecPhaseNumber;
+  const defaultPhaseKey = SPEC_TO_WORKBENCH_KEY[currentPhaseSpec] ?? 'synthesis';
 
-  const phaseJourney = PHASE_TEMPLATES.map((phase) => ({ ...phase }));
+  const phaseJourney = buildPhaseJourneyForCurrent(defaultPhaseKey);
   const phaseFocusByKey = buildPhaseFocusByKey();
-  const defaultPhaseKey =
-    phaseJourney.find((phase) => phase.state === 'current')?.key ?? phaseJourney[0]!.key;
+  const currentPhase = phaseJourney.find((p) => p.state === 'current')!;
+  const currentIndex = phaseJourney.findIndex((p) => p.state === 'current');
+  const nextPhase = phaseJourney[currentIndex + 1];
   const defaultFocus = phaseFocusByKey[defaultPhaseKey] ?? phaseFocusByKey['synthesis']!;
+  const gate = buildGateCardFor(currentPhase, nextPhase);
 
   return {
     programCode,
@@ -430,18 +529,9 @@ export function buildNexusProgramWorkbenchView(
     programIdentity: `${programCode} · ${programName}`,
     headerSubtitle:
       'Active Program workspace. Phase journey appears first; Nexus anchors the conversation and moves the Client Maestro toward the next gate decision.',
-    contextStrip: {
-      tenantBadgeLabel: `${tenantLabel} · Rich`,
-      programCode,
-      phaseLabel: 'P2 · Synthesis',
-      gateLabel: 'Gate: Pending',
-      caveat: 'Seed-backed · deterministic',
-      sourceEventLabel: 'Linked Source event · apex-retail-ams-outsourcing-2026',
-      sourceEventHref: '/source/events/apex-retail-ams-outsourcing-2026',
-    },
+    contextStrip: buildContextStripFor(tenantLabel, programCode, currentPhase),
     phaseJourney,
-    journeySubtitle:
-      'P2 is active. P3 Design is gated by Workshop 5 outcomes and value hypothesis evidence.',
+    journeySubtitle: buildJourneySubtitleFor(currentPhase, nextPhase),
     defaultPhaseKey,
     phaseFocusByKey,
     brief: defaultFocus.brief,
@@ -460,9 +550,8 @@ export function buildNexusProgramWorkbenchView(
     },
     missingInputs: defaultFocus.missingInputs.map((input) => ({ ...input })),
     subnavTabs: SUBNAV_TABS.map((tab) => ({ ...tab })),
-    currentGateLabel: 'Synthesis → Design · Pending',
-    currentGateDescription:
-      'Steward blocks approval until Workshop 5 outcomes, value baseline, and platform owner confirmation are captured.',
+    currentGateLabel: gate.label,
+    currentGateDescription: gate.description,
     evidenceCoverage: EVIDENCE_COVERAGE.map((slice) => ({ ...slice })),
     evidenceCoverageNote:
       'Discovery evidence is strongest. Synthesis evidence is partial. Design deliverables remain draft until gate blockers clear.',

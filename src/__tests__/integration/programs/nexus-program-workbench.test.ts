@@ -22,11 +22,14 @@ const flagshipSource = fs.readFileSync(
 );
 
 describe('NexusProgramWorkbench · view model', () => {
+  // The reference fixture is the canon-spec example: APX-CDP-2026 in
+  // Synthesis with the Design gate pending. currentPhaseSpec = 2 maps
+  // to the Synthesis workbench phase.
   const view = buildNexusProgramWorkbenchView({
     programCode: 'APX-CDP-2026',
     programName: 'Customer Data Platform Activation',
     tenantLabel: 'Apex Retail',
-    currentPhaseSpec: 4,
+    currentPhaseSpec: 2,
     deliverableCount: 14,
     evidenceBackedDeliverables: 5,
   });
@@ -59,8 +62,8 @@ describe('NexusProgramWorkbench · view model', () => {
   });
 
   it('exposes a journey subtitle that names the current and gated phases', () => {
-    expect(view.journeySubtitle).toContain('P2 is active');
-    expect(view.journeySubtitle).toContain('P3 Design is gated');
+    expect(view.journeySubtitle).toContain('P2 Synthesis is current');
+    expect(view.journeySubtitle).toContain('P3 Design');
   });
 
   it('default focus is the Synthesis brief and chips from the mockup', () => {
@@ -321,8 +324,82 @@ describe('NexusProgramWorkbench · component contract', () => {
     expect(canonicalDetailSource).toContain('Program context strip');
     expect(canonicalDetailSource).toContain("position: 'sticky'");
     expect(canonicalDetailSource).toContain('Linked Source event');
-    expect(canonicalDetailSource).toContain('/source/events/apex-retail-ams-outsourcing-2026');
-    expect(canonicalDetailSource).toContain('P2 · Synthesis');
-    expect(canonicalDetailSource).toContain('Gate: Pending');
+    // Per-program data wiring: phase + gate labels read from the
+    // workbench view, not from hardcoded literals.
+    expect(canonicalDetailSource).toContain('buildNexusProgramWorkbenchView');
+    expect(canonicalDetailSource).toContain('strip.phaseLabel');
+    expect(canonicalDetailSource).toContain('strip.gateLabel');
+    expect(canonicalDetailSource).not.toContain("'P2 · Synthesis'");
+    expect(canonicalDetailSource).not.toContain("'Gate: Pending'");
+  });
+});
+
+describe('NexusProgramWorkbench · per-program journey wiring', () => {
+  // Bug fix: the workbench used to ignore currentPhaseSpec and always
+  // render P2 Synthesis as current for every program. Each program in
+  // the seed has its own phase, so the journey + context strip + gate
+  // card now reflect that.
+
+  function viewFor(spec: 1 | 2 | 3 | 4 | 5, code = 'TEST-01', name = 'Test Program') {
+    return buildNexusProgramWorkbenchView({
+      programCode: code,
+      programName: name,
+      tenantLabel: 'Test Tenant',
+      currentPhaseSpec: spec,
+    });
+  }
+
+  it('spec 1 (Intake & Framing) maps to Discovery as current', () => {
+    const v = viewFor(1);
+    expect(v.defaultPhaseKey).toBe('discovery');
+    expect(v.phaseJourney.find((p) => p.state === 'current')!.key).toBe('discovery');
+    expect(v.phaseJourney.find((p) => p.state === 'gate-pending')!.key).toBe('synthesis');
+    expect(v.contextStrip.phaseLabel).toBe('P1 · Discovery');
+  });
+
+  it('spec 3 (Design & Decision) maps MRD-01 to Design as current', () => {
+    const v = viewFor(3, 'MRD-01', 'Ambient Clinical Value Chain Activation');
+    expect(v.defaultPhaseKey).toBe('design');
+    expect(v.contextStrip.phaseLabel).toBe('P3 · Design');
+    expect(v.contextStrip.programCode).toBe('MRD-01');
+    expect(v.programIdentity).toBe('MRD-01 · Ambient Clinical Value Chain Activation');
+    expect(v.phaseJourney.map((p) => p.state)).toEqual([
+      'done', 'done', 'current', 'gate-pending', 'locked', 'locked',
+    ]);
+  });
+
+  it('spec 4 (Build & Deliver) maps to Build as current', () => {
+    const v = viewFor(4, 'MRD-02', 'Prior Authorization Automation');
+    expect(v.defaultPhaseKey).toBe('build');
+    expect(v.contextStrip.phaseLabel).toBe('P4 · Build');
+    expect(v.phaseJourney.map((p) => p.state)).toEqual([
+      'done', 'done', 'done', 'current', 'gate-pending', 'locked',
+    ]);
+  });
+
+  it('spec 5 (Outcome) maps MRD-05 to Operate as current with no further gate', () => {
+    const v = viewFor(5, 'MRD-05', 'Readmission Risk Model Refresh');
+    expect(v.defaultPhaseKey).toBe('operate');
+    expect(v.contextStrip.phaseLabel).toBe('P6 · Operate');
+    expect(v.phaseJourney.map((p) => p.state)).toEqual([
+      'done', 'done', 'done', 'done', 'done', 'current',
+    ]);
+    expect(v.currentGateLabel).toContain('Operate');
+  });
+
+  it('two programs at different phases produce distinct journeys + briefs + gates', () => {
+    const a = viewFor(2, 'MRD-04', 'Revenue Cycle AI Tool Rationalization');
+    const b = viewFor(5, 'MRD-05', 'Readmission Risk Model Refresh');
+    expect(a.defaultPhaseKey).toBe('synthesis');
+    expect(b.defaultPhaseKey).toBe('operate');
+    expect(a.brief).not.toBe(b.brief);
+    expect(a.contextStrip.phaseLabel).not.toBe(b.contextStrip.phaseLabel);
+    expect(a.currentGateLabel).not.toBe(b.currentGateLabel);
+  });
+
+  it('journey subtitle mentions the current and next phase', () => {
+    const v = viewFor(3);
+    expect(v.journeySubtitle).toContain('P3 Design is current');
+    expect(v.journeySubtitle).toContain('P4 Build is the next gate');
   });
 });
