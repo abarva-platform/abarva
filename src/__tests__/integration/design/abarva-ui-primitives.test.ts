@@ -313,6 +313,90 @@ describe('module hygiene · abarva primitives', () => {
 // Theme module hygiene
 // ---------------------------------------------------------------------
 
+// ---------------------------------------------------------------------
+// NAV1B · canonical nav primitives import the brand component
+// ---------------------------------------------------------------------
+
+describe('NAV1B · canonical nav primitives wire to canonical brand', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const fs = require('fs') as typeof import('fs');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const path = require('path') as typeof import('path');
+
+  function readAbarva(name: string): string {
+    return fs.readFileSync(
+      path.resolve(__dirname, '../../../components/abarva', name),
+      'utf8',
+    );
+  }
+
+  function readBrand(name: string): string {
+    return fs.readFileSync(
+      path.resolve(__dirname, '../../../components/brand', name),
+      'utf8',
+    );
+  }
+
+  it('AbarVaWordmark.tsx delegates to the canonical brand component', () => {
+    const src = readAbarva('AbarVaWordmark.tsx');
+    expect(src).toMatch(/from\s+['"]@\/components\/brand['"]/);
+    expect(src).toMatch(/AbarVaLogo/);
+  });
+
+  it('AbarVaTopNav.tsx renders the wordmark via the canonical primitive', () => {
+    const src = readAbarva('AbarVaTopNav.tsx');
+    expect(src).toMatch(/AbarVaWordmarkPrimitive|AbarvaWordmark|AbarVaLogo/);
+  });
+
+  it('AbarVaShellNav.tsx renders the wordmark via the canonical primitive', () => {
+    const src = readAbarva('AbarVaShellNav.tsx');
+    expect(src).toMatch(/AbarvaWordmark|AbarVaLogo/);
+  });
+
+  it('AbarVaAppShell.tsx imports AbarVaLogo from the canonical brand path', () => {
+    const src = readAbarva('AbarVaAppShell.tsx');
+    expect(src).toMatch(/from\s+['"]@\/components\/brand\/AbarVaLogo['"]/);
+  });
+
+  it('canonical nav primitives carry no banned tokens', () => {
+    const banned = ['#14B8A6', 'sparkle', 'ॐ'];
+    for (const file of ['AbarVaTopNav.tsx', 'AbarVaShellNav.tsx', 'AbarVaAppShell.tsx', 'AbarVaWordmark.tsx']) {
+      const src = readAbarva(file);
+      for (const token of banned) {
+        expect({ file, token, contains: src.toLowerCase().includes(token.toLowerCase()) }).toEqual({
+          file,
+          token,
+          contains: false,
+        });
+      }
+    }
+  });
+
+  it('AbarVaShellNav exposes the canonical 6-surface enum (home, programs, source, intelligence, tower, admin)', () => {
+    const src = readAbarva('AbarVaShellNav.tsx');
+    for (const key of ['home', 'programs', 'source', 'intelligence', 'tower', 'admin']) {
+      expect(src).toMatch(new RegExp(`key:\\s*['"]${key}['"]`));
+    }
+  });
+
+  it('AbarVaShellNav supports an activeKey prop for active-surface styling', () => {
+    const src = readAbarva('AbarVaShellNav.tsx');
+    expect(src).toMatch(/activeKey\??:\s*string/);
+    expect(src).toMatch(/data-active/);
+  });
+
+  it('AbarVaTopNav supports an active prop for active-surface styling', () => {
+    const src = readAbarva('AbarVaTopNav.tsx');
+    expect(src).toMatch(/active\??:/);
+    expect(src).toMatch(/data-active/);
+  });
+
+  it('canonical brand index exports AbarVaLogo (single source of truth)', () => {
+    const idx = readBrand('index.ts');
+    expect(idx).toMatch(/export\s*\{\s*AbarVaLogo\s*\}/);
+  });
+});
+
 describe('module hygiene · abarva-theme.ts', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const fs = require('fs') as typeof import('fs');
