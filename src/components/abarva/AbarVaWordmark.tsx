@@ -5,7 +5,7 @@
 // Legacy callers continue to use `AbarvaWordmark` and `AbarVaWordmark`
 // without any behavior change at import sites.
 
-import { AbarVaLogo } from '@/components/brand';
+import { AbarVaLogo } from '@/components/abarva/AbarVaLogo';
 import { COLORS } from '@/lib/design/abarva-theme';
 
 export interface AbarvaWordmarkProps {

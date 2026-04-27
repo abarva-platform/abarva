@@ -18,7 +18,7 @@ import {
   type AgentMissionPriority,
   type AgentMissionSurface,
   type AgentMissionUiVisibility,
-} from '@/lib/agents/agent-mission-queue';
+} from '@/lib/agent/agent-mission-queue';
 
 const ID_PATTERN = /^mission-seed-[a-z0-9-]+$/;
 

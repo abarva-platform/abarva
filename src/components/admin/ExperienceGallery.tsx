@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { AbarVaLogo } from '@/components/brand';
+import { AbarVaLogo } from '@/components/abarva/AbarVaLogo';
 
 const COLORS = {
   canvas: '#F7F4EE',

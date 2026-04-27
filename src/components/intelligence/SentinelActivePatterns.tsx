@@ -18,16 +18,16 @@ import {
   type SentinelPatternCard,
 } from '@/lib/intelligence/sentinel-pattern-view';
 import type { TenantSeedPlan } from '@/lib/programs/enhancement-seed-planner';
-import { AgentMissionPanel } from '@/components/agents/AgentMissionPanel';
+import { AgentMissionPanel } from '@/components/agent/AgentMissionPanel';
 import {
   buildAgentMissionsForSurface,
   getTopAgentMissions,
   type AgentMission,
-} from '@/lib/agents/agent-mission-queue';
+} from '@/lib/agent/agent-mission-queue';
 import type {
   AgentMissionPanelMission,
   AgentMissionPanelView,
-} from '@/lib/agents/agent-mission-view';
+} from '@/lib/agent/agent-mission-view';
 
 // AG12 · Intelligence surface mission projection.
 //

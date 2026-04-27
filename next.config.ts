@@ -47,6 +47,9 @@ const nextConfig: NextConfig = {
       // NOTE · /tower/projects, /tower/staff-aug, /tower/tech-stack,
       // /tower/volumetrics, /tower/preview, /tower/onboard/* are legitimate
       // Tower sub-surfaces with their own content and stay live.
+      // CLEAN1-2 · Redirect stubs replaced with config-level redirects.
+      { source: '/maestro', destination: '/home', permanent: true },
+      { source: '/investor', destination: '/investors', permanent: true },
     ];
   },
 };

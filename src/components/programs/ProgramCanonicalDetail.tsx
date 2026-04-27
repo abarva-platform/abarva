@@ -27,16 +27,16 @@ import { buildNexusProgramWorkbenchView } from '@/lib/programs/nexus-program-wor
 import { ProgramArtifactCanvas } from '@/components/programs/ProgramArtifactCanvas';
 import { buildProgramArtifactCanvasView } from '@/lib/programs/program-artifact-canvas-view';
 import { ProgramWorkshopMode } from '@/components/programs/ProgramWorkshopMode';
-import { AgentMissionPanel } from '@/components/agents/AgentMissionPanel';
+import { AgentMissionPanel } from '@/components/agent/AgentMissionPanel';
 import {
   buildAgentMissionsForSurface,
   getTopAgentMissions,
   type AgentMission,
-} from '@/lib/agents/agent-mission-queue';
+} from '@/lib/agent/agent-mission-queue';
 import type {
   AgentMissionPanelMission,
   AgentMissionPanelView,
-} from '@/lib/agents/agent-mission-view';
+} from '@/lib/agent/agent-mission-view';
 import {
   phaseMeta,
   tenantProgramPath,

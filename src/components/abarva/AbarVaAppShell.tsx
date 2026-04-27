@@ -2,7 +2,7 @@ import React from 'react';
 // BRAND1-dependent: AbarVaLogo will be replaced by the canonical SVG-backed implementation
 // from the BRAND1 lane. The stub at src/components/brand/AbarVaLogo.tsx satisfies TypeScript
 // until BRAND1 lands. Wiring is additive — no other shell behaviour changes.
-import { AbarVaLogo } from '@/components/brand/AbarVaLogo';
+import { AbarVaLogo } from '@/components/abarva/AbarVaLogo';
 // FALLBACK: AbarVaWordmark kept as a clearly-labelled fallback for direct wordmark-only usage.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { AbarVaWordmark } from './AbarVaWordmark';
