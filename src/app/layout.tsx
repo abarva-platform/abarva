@@ -1,10 +1,21 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { ClerkProvider } from '@clerk/nextjs'
+import { Cormorant_Garamond } from 'next/font/google'
 import './globals.css'
 import PostHogProvider from '@/components/PostHogProvider'
 import PostHogPageView from './posthog-pageview'
 import MobileGuard from '@/components/MobileGuard'
+
+// Cormorant Garamond — canonical AbarVa serif for wordmark + admin headings.
+// Application of the variable lands in ADMIN2; this slice only registers the
+// font so subsequent slices can opt in via `var(--font-cormorant)`.
+const cormorantGaramond = Cormorant_Garamond({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-cormorant',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'AbarVa',
@@ -25,7 +36,7 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider signInUrl="/sign-in" afterSignOutUrl="/" signInForceRedirectUrl="/auth-redirect" signUpForceRedirectUrl="/auth-redirect">
-      <html lang="en">
+      <html lang="en" className={cormorantGaramond.variable}>
         <body>
           <PostHogProvider>
             <Suspense fallback={null}>

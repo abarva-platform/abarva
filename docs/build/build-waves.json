@@ -1321,11 +1321,9 @@
       "waveId": "wave-admin-redesign",
       "name": "Admin Surface Canonical Redesign",
       "goal": "Make admin pages render the canonical 3-zone editorial layout (sidebar / canvas / agent rail) with the new abarva-logo-lockup-v2 asset, locked color palette (#070707 / #0b4a91 / #FBFAF7 + soft mint/amber/coral), Cormorant Garamond serif titles, 8-item sub-sidebar, Steward editorial card, 5-cell context bar, agent rail with honest posture, and the permanent Live caveat pill. Lift WIRE2B admin compliance 72 -> 92.",
-      "status": "planned",
-      "percentComplete": 12.5,
+      "status": "in_progress",
+      "percentComplete": 37.5,
       "plannedSlices": [
-        "ADMIN1",
-        "ADMIN2",
         "ADMIN3",
         "ADMIN4",
         "ADMIN5",
@@ -1333,7 +1331,9 @@
         "ADMIN7"
       ],
       "completedSlices": [
-        "ADMIN0"
+        "ADMIN0",
+        "ADMIN1",
+        "ADMIN2"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
@@ -1341,7 +1341,7 @@
       "validationStatus": "not_run",
       "productionReadinessUpdated": false,
       "currentBlockers": [],
-      "nextAction": "Execute ADMIN1 (foundation) and ADMIN2 (shell) sequentially; ADMIN3-7 follow per dependency graph in WAVE-ADMIN-REDESIGN.md.",
+      "nextAction": "Execute ADMIN3 (Steward Editorial Component) next; ADMIN4-7 follow per dependency graph in WAVE-ADMIN-REDESIGN.md.",
       "lastUpdated": "2026-04-27"
     }
   ]
