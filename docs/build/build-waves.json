@@ -910,6 +910,27 @@
       "lastUpdated": "2026-04-26"
     },
     {
+      "waveId": "wave-21",
+      "name": "Intelligence + Tower Route Shell Wiring",
+      "goal": "Wire canonical route orientation shells (IntelligenceRouteShell, TowerRouteShell) into the active intelligence and tower routes, satisfying the Page Experience Blueprint orientation-strip requirements.",
+      "status": "in_progress",
+      "percentComplete": 20,
+      "plannedSlices": [
+        "INTEL1"
+      ],
+      "completedSlices": [
+        "INTEL1"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "tsc_clean",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "INTEL1 (lane-E) complete. Remaining wave-21 lanes in progress.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
       "waveId": "wave-18",
       "name": "Program Flagship Experience",
       "goal": "Make the Program detail page the flagship AbarVa experience: phase journey, workflow, approval gates, deliverables, evidence, actions, agent-driven.",
