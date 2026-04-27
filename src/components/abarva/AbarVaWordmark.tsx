@@ -1,18 +1,31 @@
 // DES7 · Canonical AbarVa wordmark module.
 //
-// The wordmark implementation lives in `AbarVaTopNav.tsx` (DES2). This
-// module re-exports it under the canonical filename so new callers can
-// import from `'@/components/abarva/AbarVaWordmark'` without reaching
-// into the top-nav module. Existing DES2 callers remain valid.
-//
-// Wordmark rule (canon §B):
-//   • Inline-flex, baseline-aligned, no gap between halves.
-//   • "Abar" → near-black `#0A0C12`, weight 700, DM Sans.
-//   • "Va"   → NAVY `#1B2B5C`, weight 700, DM Sans, 1.05–1.10× larger.
-//   • Letter-spacing -0.01em, line-height 1.
-//   • Sizes: sm = 16px base · md = 20px base · lg = 28px base.
+// This module now resolves to the uploaded logo asset at:
+// `public/brand/abarva-logo.svg` through `AbarVaLogo`.
+// Legacy callers continue to use `AbarvaWordmark` and `AbarVaWordmark`
+// without any behavior change at import sites.
 
-export { AbarvaWordmark } from './AbarVaTopNav';
+import { AbarVaLogo } from '@/components/brand';
+import { COLORS } from '@/lib/design/abarva-theme';
 
-// SHELL1: canonical PascalCase alias for new shell consumers
-export { AbarvaWordmark as AbarVaWordmark } from './AbarVaTopNav';
+export interface AbarvaWordmarkProps {
+  size?: 'sm' | 'md' | 'lg';
+  /**
+   * Legacy color override is intentionally no-op while the canonical logo
+   * asset controls final glyph treatment.
+   */
+  inkColor?: string;
+}
+
+export function AbarvaWordmark({ size = 'md', inkColor }: AbarvaWordmarkProps) {
+  return (
+    <AbarVaLogo
+      size={size}
+      alt="AbarVa"
+      aria-hidden={false}
+      style={inkColor === COLORS.surface ? { filter: 'brightness(0) invert(1)' } : undefined}
+    />
+  );
+}
+
+export { AbarvaWordmark as AbarVaWordmark };

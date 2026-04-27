@@ -1,12 +1,11 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
+import { AbarVaLogo } from '@/components/brand';
 
 const BG = '#0A0A0A';
-const INK = '#F5F5F0';
 const TEAL = '#14B8A6';
 const MUTE = 'rgba(245, 245, 240, 0.72)';
-const FONT_SERIF = 'Georgia, serif';
 const FONT_BODY = 'DM Sans, -apple-system, sans-serif';
 
 function initials(name: string): string {
@@ -40,8 +39,13 @@ export function TopBar() {
         href="/home"
         style={{ textDecoration: 'none', display: 'flex', alignItems: 'baseline', lineHeight: 1 }}
       >
-        <span style={{ fontFamily: FONT_SERIF, color: INK, fontSize: 17, fontWeight: 800 }}>Abar</span>
-        <span style={{ fontFamily: FONT_SERIF, color: TEAL, fontSize: 23, fontWeight: 900 }}>Va</span>
+        <AbarVaLogo
+          size="sm"
+          height={22}
+          style={{ filter: 'brightness(0) invert(1)' }}
+          aria-hidden={false}
+          label="AbarVa logo"
+        />
       </a>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

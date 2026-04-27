@@ -42,4 +42,5 @@ Dark panels should not dominate the page. AbarVa is not a full dark-mode product
 - Dashboard filler.
 - Dark command-center dominance.
 - Decorative logo clutter.
-
+- Temporary symbol deprecation: do not render the prior logo symbol in UI surfaces
+  until the final logo asset is provided.
