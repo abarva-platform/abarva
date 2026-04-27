@@ -3,7 +3,7 @@
 ## ROAD1 - Master product readiness map
 
 **Priority:** P0
-**Status:** pending
+**Status:** done
 **Type:** docs
 **Primary agent:** Atlas
 
@@ -26,7 +26,7 @@ Create a single founder-readable map of product maturity by surface and runtime 
 ## ROAD2 - Eight-hour / three-day / pilot roadmap
 
 **Priority:** P0
-**Status:** pending
+**Status:** in_progress
 **Type:** docs
 **Primary agent:** Atlas
 
