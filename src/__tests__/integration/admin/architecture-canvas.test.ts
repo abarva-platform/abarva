@@ -92,10 +92,14 @@ describe('ArchitectureCanvas component', () => {
     expect(source).not.toMatch(/require\(['"]mermaid['"]\)/)
   })
 
-  it('architecture page imports ArchitectureCanvas', () => {
+  // ADMIN4: the /admin/architecture route was rewired to AdminCanonShellV2 +
+  // EditorialCanvas + ArchitecturePlaneStack. ArchitectureCanvas remains on
+  // disk for other consumers / future cleanup, but the page itself now imports
+  // the new plane stack instead.
+  it('architecture page imports ArchitecturePlaneStack (new wiring)', () => {
     const pagePath = path.join(repoRoot, 'src/app/(maestro)/platform/admin/architecture/page.tsx')
     const source = fs.readFileSync(pagePath, 'utf8')
-    expect(source).toContain('ArchitectureCanvas')
-    expect(source).toMatch(/import\s*\{[^}]*ArchitectureCanvas[^}]*\}\s*from/)
+    expect(source).toContain('ArchitecturePlaneStack')
+    expect(source).toMatch(/import\s*\{[^}]*ArchitecturePlaneStack[^}]*\}\s*from/)
   })
 })
