@@ -7721,6 +7721,13 @@
       "status": "code_complete",
       "wave": "wave-20",
       "lane": "PX1"
+    },
+    {
+      "id": "BRAND1",
+      "title": "Canonical AbarVa Logo Asset and Component",
+      "status": "code_complete",
+      "wave": "wave-21",
+      "lane": "A"
     }
   ]
 }

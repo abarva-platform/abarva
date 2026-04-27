@@ -816,6 +816,38 @@
       "lastUpdated": "2026-04-26"
     },
     {
+      "waveId": "wave-21",
+      "name": "Brand Lock + Blueprint Enforcement + Intelligence/Tower Completion",
+      "goal": "Lock the canonical AbarVa brand asset and component, enforce blueprint authority across remaining surfaces, and complete Intelligence and Control Tower depth slices.",
+      "status": "in_progress",
+      "percentComplete": 0,
+      "plannedSlices": [
+        "BRAND1",
+        "BRAND2",
+        "DES9",
+        "PX2",
+        "INTEL1",
+        "INTEL2",
+        "INTEL3",
+        "TOWER1",
+        "TOWER2",
+        "TOWER3",
+        "QA29",
+        "DEMO9"
+      ],
+      "completedSlices": [
+        "BRAND1"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [],
+      "nextAction": "BRAND1 (lane A) complete. Proceed to BRAND2, DES9, PX2, INTEL1-3, TOWER1-3, QA29, DEMO9.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
       "waveId": "wave-19",
       "name": "Tenant-Scoped Demo Data + Source Intelligence Hardening",
       "goal": "Scope the Source commercial demo scenario to Apex Retail, replace generic vendor labels with named representative vendors, add extended posture fields, and add deterministicSeed root-level field.",
