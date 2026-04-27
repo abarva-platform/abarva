@@ -7721,6 +7721,90 @@
       "status": "code_complete",
       "wave": "wave-20",
       "lane": "PX1"
+    },
+    {
+      "id": "BRAND1",
+      "title": "Canonical AbarVa Logo Asset and Component",
+      "status": "code_complete",
+      "wave": "wave-21",
+      "lane": "A"
+    },
+    {
+      "id": "BRAND2",
+      "title": "Logo Usage Enforcement Legacy Symbol Retirement",
+      "status": "code_complete",
+      "wave": "wave-21",
+      "lane": "B"
+    },
+    {
+      "id": "DES9",
+      "title": "App Shell Brand Lock",
+      "status": "code_complete",
+      "wave": "wave-21",
+      "lane": "C"
+    },
+    {
+      "id": "PX2",
+      "title": "Page Blueprint Compliance Validator",
+      "status": "code_complete",
+      "wave": "wave-21",
+      "lane": "D"
+    },
+    {
+      "id": "INTEL1",
+      "title": "Intelligence Route Shell Wiring",
+      "status": "code_complete",
+      "wave": "wave-21",
+      "lane": "E"
+    },
+    {
+      "id": "INTEL2",
+      "title": "Intelligence Sentinel Workflow Canvas",
+      "status": "code_complete",
+      "wave": "wave-21",
+      "lane": "F"
+    },
+    {
+      "id": "INTEL3",
+      "title": "Sentinel Evidence Source Basis Brief",
+      "status": "code_complete",
+      "wave": "wave-21",
+      "lane": "G"
+    },
+    {
+      "id": "TOWER1",
+      "title": "Control Tower Route Shell Wiring",
+      "status": "code_complete",
+      "wave": "wave-21",
+      "lane": "H"
+    },
+    {
+      "id": "TOWER2",
+      "title": "Atlas Executive Brief Canvas",
+      "status": "code_complete",
+      "wave": "wave-21",
+      "lane": "I"
+    },
+    {
+      "id": "TOWER3",
+      "title": "Control Tower Active Lens Refresh",
+      "status": "code_complete",
+      "wave": "wave-21",
+      "lane": "J"
+    },
+    {
+      "id": "QA29",
+      "title": "Intelligence Tower Blueprint Verification",
+      "status": "code_complete",
+      "wave": "wave-21",
+      "lane": "K"
+    },
+    {
+      "id": "DEMO9",
+      "title": "Intelligence Tower Founder Review Checklist",
+      "status": "code_complete",
+      "wave": "wave-21",
+      "lane": "L"
     }
   ]
 }
