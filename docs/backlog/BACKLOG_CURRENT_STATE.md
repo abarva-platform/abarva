@@ -2,12 +2,23 @@
 
 > This file is written by the orchestration agent at the end of each wave.
 > The next autonomous session reads this file first.
-> Last updated by: orchestration agent (wave-admin-data phase 1 merged — DATA2 + DATA10)
+> Last updated by: orchestration agent (wave-admin-data phase 2 merged — DATA3-9 wired)
 > Last updated: 2026-04-27
 
 ## Last completed slices
+- sliceIds: ADMIN-DATA3, ADMIN-DATA4, ADMIN-DATA5, ADMIN-DATA6, ADMIN-DATA7, ADMIN-DATA8, ADMIN-DATA9
+- waveId: wave-admin-data (in_progress, 77% — 10 of 13 slices done)
+- title: wave-admin-data phase 2 — 7 admin pages wired to adapters
+- prNumber: 467
+- mergeSHA: 41207957
+- completedAt: 2026-04-27
+- testsGreen: 195 new wiring tests (31+25+25+26+26+36+26); admin regression 2159/2159; tsc clean; eslint clean; hygiene gate 11/11; hex audit PASS; build clean
+- skippedSlices: none
+- note: Phase 2 of wave-admin-data. All 7 remaining admin page-views wired to consume from their respective adapters via async builders. DATA3 users-access; DATA4 connectors; DATA5 data-trust; DATA6 agent-readiness; DATA7 build-progress (new adapter); DATA8 production-readiness (replaces W32F hardcoded blocker list); DATA9 architecture (new adapter). All buildXPageView functions are now async; output shape preserved. AGENT1 wiring preserved. production_ready never claimed. Fixture mode default; live mode pluggable when DATA11 lands.
+
+## Previous completed slices
 - sliceIds: ADMIN-DATA2, ADMIN-DATA10
-- waveId: wave-admin-data (in_progress, 23% — 3 of 13 slices done)
+- waveId: wave-admin-data (phase 1)
 - title: wave-admin-data phase 1 — adapter contracts + migrations
 - prNumber: 465
 - mergeSHA: 4e39b4e6
@@ -18,10 +29,10 @@
 
 ## Next wave
 - waveId: wave-admin-data
-- status: in_progress (23%)
-- nextSlices: [ADMIN-DATA3, ADMIN-DATA4, ADMIN-DATA5, ADMIN-DATA6, ADMIN-DATA7, ADMIN-DATA8, ADMIN-DATA9 — 7 parallel page-wiring lanes against the adapter foundation; then DATA11-12; then DATA13 lock]
-- recommendedSequence: Launch **Phase 2 — DATA3-9 in parallel (7 page-wiring lanes)**. All consume the DATA2 adapter contracts via fixture mode; no DB dependency yet. After all 7 merge, run DATA11 + DATA12 sequentially. DATA13 is the final lock.
-- estimatedWallClock: ~3-4 hours wall-clock with 7-lane parallelization across Phase 2.
+- status: in_progress (77%)
+- nextSlices: [ADMIN-DATA11 — AGENT1 context bundle wired to live DB (sequential); then DATA12 (ADMIN18 rebuilt against admin_setup_progress + admin_audit_log); then DATA13 (regression lock)]
+- recommendedSequence: **DATA11 — AGENT1 wired live (sequential)**. After DATA10 migrations are applied via `supabase migrate`, DATA11 swaps AGENT1's source-of-truth from constants to the live DB through the existing adapter contracts. Sequential because DATA12/DATA13 both depend on DATA11. Then DATA12 ships ADMIN18 Overview pull-through against real data, and DATA13 locks visual + data regression to close the wave.
+- estimatedWallClock: ~2-3 hours wall-clock for DATA11; ~1-2 hours each for DATA12, DATA13.
 
 ## Previous deferral note · ADMIN18
 ADMIN18 (Overview pull-through · setup timeline + recent activity strip + cross-page CTAs) was scoped to use deterministic seed for both timeline and activity. Founder asked for native data flow from real DB tables. ADMIN18 is **subsumed** by ADMIN-DATA12 in wave-admin-data — same UI scope, but reads from `admin_setup_progress` + `admin_audit_log` (DATA10). ADMIN18 remains in `plannedSlices` of wave-admin-completion historically and is **not** silently dropped — its work ships as ADMIN-DATA12.
