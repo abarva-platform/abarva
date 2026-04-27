@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-04-26",
+  "lastUpdated": "2026-04-27",
   "source": "Deterministic build wave manifest. Updated by integration agent after each wave merge.",
   "lifecycle": [
     "planned",
@@ -1243,6 +1243,39 @@
       "currentBlockers": [],
       "nextAction": "Wave 32 next",
       "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-32",
+      "name": "Agent Surface Completion",
+      "goal": "Close 21 remaining WIRE2 wireframe compliance deviations across 5 surfaces by adding pure TypeScript view models for phase filter, intelligence modes, control tower lenses, admin connectors, admin action strip, and production readiness blocker detail.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "W32A",
+        "W32B",
+        "W32C",
+        "W32D",
+        "W32E",
+        "W32F",
+        "W32QA"
+      ],
+      "completedSlices": [
+        "W32A",
+        "W32B",
+        "W32C",
+        "W32D",
+        "W32E",
+        "W32F",
+        "W32QA"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Wave 33 next",
+      "lastUpdated": "2026-04-27"
     }
   ]
 }

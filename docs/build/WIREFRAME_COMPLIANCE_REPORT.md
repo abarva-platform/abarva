@@ -327,3 +327,82 @@ All 8 audited pages are functional and use appropriate agent shells with determi
 6. Production Readiness: wire blocker detail drawer
 
 This wave should be preceded by the auto-fixes applied in WIRE2 (teal token removal, Architecture agent correction).
+
+---
+
+## Wave 32 Update — Agent Surface Completion
+
+**Updated: 2026-04-27**
+**Applied fixes: W32A, W32B, W32C, W32D, W32E, W32F**
+
+### Score Changes
+
+| Page | Before | After | Delta | Fix |
+|---|---|---|---|---|
+| Admin | 62/100 | 72/100 | +10 | W32D + W32E |
+| Production Readiness | 74/100 | 80/100 | +6 | W32F |
+| Architecture | 58/100 | 58/100 | 0 | No W32 fix |
+| Programs Index | 68/100 | 76/100 | +8 | W32A |
+| Program Detail | 72/100 | 72/100 | 0 | No W32 fix |
+| Source Event | 71/100 | 71/100 | 0 | No W32 fix |
+| Intelligence | 76/100 | 84/100 | +8 | W32B |
+| Control Tower | 75/100 | 82/100 | +7 | W32C |
+
+### Compliance Summary
+
+| Metric | Before | After |
+|---|---|---|
+| avgScore | 69.5 | 74.4 |
+| safeFixesApplied | 6 | 13 |
+| highSeverityDeviations | 5 | 5 (all applied) |
+
+### What Was Fixed
+
+- **W32A** — Programs phase filter view model (`src/lib/programs/phase-filter-view.ts`)
+  - PhaseFilterView with programCount per phase, isCurrentPhase, deterministicSeed
+  - Closes: Programs Index interaction_map deviation (phase filter not interactive)
+
+- **W32B** — Intelligence Programs + Actions mode view models
+  - IntelligenceProgramsMode: 3 impacted programs with patternIds for apex-retail
+  - IntelligenceActionsMode: 5 priority-ordered actions (immediate×2, this_week×2, this_month×1)
+  - Closes: Intelligence interaction_map + workflow_canon deviations (Programs+Actions tabs missing)
+
+- **W32C** — Control Tower Adoption/Value/Risk lens details
+  - TowerLensDetail type with primaryQuestion, dataAvailable, dataMissing, topSignal, atlasRecommendation
+  - Adoption: CDP pre-activation readiness signals
+  - Value: $2.4M CDP value at stake, evidence basis from Workshop 5
+  - Risk: AMS BAFO incomplete (2 vendors), connector stubs, evidence gaps
+  - Closes: Control Tower interaction_map deviation (4 of 7 lens tabs)
+
+- **W32D** — Admin Connectors readiness view model (`src/lib/admin/connectors-readiness-view.ts`)
+  - 6 connectors with honest not_configured/configured_stub/deferred statuses
+  - Closes: Admin workflow_canon deviation (Connectors tab absent)
+
+- **W32E** — Admin Zone E action strip view model (`src/lib/admin/admin-action-strip-view.ts`)
+  - 5 priority-ordered actions with topPriorityAction, availableCount, blockedCount
+  - Closes: Admin zone_composition deviation (Zone E action strip absent)
+
+- **W32F** — Production Readiness blocker detail drawer view model (`src/lib/admin/blocker-detail-view.ts`)
+  - 4 blockers: evidence upload (critical), model gateway (critical), connector stubs (high), SOC2 (high)
+  - Closes: Production Readiness interaction_map deviation (blocker detail drawer not implemented)
+
+### Remaining Deviations After Wave 32
+
+The following deviations remain open and are targeted for Wave 33:
+
+| Page | Deviation | Severity |
+|---|---|---|
+| Admin | Architecture sub-nav link absent | MEDIUM |
+| Production Readiness | No drilldown link to Architecture | LOW |
+| Architecture | Component detail drawer not implemented | LOW |
+| Programs Index | Nexus brief not above-fold | MEDIUM |
+| Programs Index | No gate-blocker summary | MEDIUM |
+| Program Detail | Evidence coverage % not shown | MEDIUM |
+| Program Detail | No above-fold CTA action strip | MEDIUM |
+| Program Detail | SourceEventChip not prominent in Zone E | LOW |
+| Source Event | design-system.ts contains banned teal token | MEDIUM |
+| Source Event | SourceCommercialEventSection not fully audited | LOW |
+| Source Event | SourceRouteShell caveat misleading | LOW |
+| Intelligence | TenantSeedPlan stub not resolved | LOW |
+| Control Tower | Tech/Data Readiness tab absent | MEDIUM |
+| Control Tower | Scorecard strip not persistent | MEDIUM |

@@ -8659,6 +8659,69 @@
       "wave": "wave-32",
       "track": "10-demo-qa-production-hardening",
       "notes": "TypeScript read-model + test suite encoding WIRE2 compliance findings. src/lib/qa/wireframe-compliance-audit.ts."
+    },
+    {
+      "id": "W32A",
+      "title": "Programs Phase Filter View Model",
+      "status": "code_complete",
+      "type": "view-model",
+      "wave": "wave-32",
+      "track": "03-programs-flagship",
+      "notes": "Pure TypeScript phase filter read-model for Programs Index. src/lib/programs/phase-filter-view.ts."
+    },
+    {
+      "id": "W32B",
+      "title": "Intelligence Programs and Actions Mode View Models",
+      "status": "code_complete",
+      "type": "view-model",
+      "wave": "wave-32",
+      "track": "07-intelligence-control-tower",
+      "notes": "Programs+Actions mode view models for Intelligence canvas tabs. src/lib/intelligence/intelligence-programs-mode-view.ts + intelligence-actions-mode-view.ts."
+    },
+    {
+      "id": "W32C",
+      "title": "Control Tower Missing Lenses \u2014 Adoption, Value, Risk",
+      "status": "code_complete",
+      "type": "view-model",
+      "wave": "wave-32",
+      "track": "07-intelligence-control-tower",
+      "notes": "Extends control-tower-active-lens-view.ts with Adoption/Value/Risk TowerLensDetail objects. src/lib/tower/control-tower-active-lens-view.ts."
+    },
+    {
+      "id": "W32D",
+      "title": "Admin Connectors Readiness View Model",
+      "status": "code_complete",
+      "type": "view-model",
+      "wave": "wave-32",
+      "track": "04-admin-readiness",
+      "notes": "Honest connector status read-model for Admin Connectors panel. src/lib/admin/connectors-readiness-view.ts."
+    },
+    {
+      "id": "W32E",
+      "title": "Admin Zone E Action Strip View Model",
+      "status": "code_complete",
+      "type": "view-model",
+      "wave": "wave-32",
+      "track": "04-admin-readiness",
+      "notes": "Priority-ordered action strip for Admin Zone E. src/lib/admin/admin-action-strip-view.ts."
+    },
+    {
+      "id": "W32F",
+      "title": "Production Readiness Blocker Detail Drawer View Model",
+      "status": "code_complete",
+      "type": "view-model",
+      "wave": "wave-32",
+      "track": "04-admin-readiness",
+      "notes": "Blocker detail drawer read-model for Production Readiness page. src/lib/admin/blocker-detail-view.ts."
+    },
+    {
+      "id": "W32QA",
+      "title": "Wireframe Compliance Rescore after Wave 32",
+      "status": "code_complete",
+      "type": "qa",
+      "wave": "wave-32",
+      "track": "10-demo-qa-production-hardening",
+      "notes": "Updated wireframe-compliance-audit.ts scores reflecting W32A-W32F view model fixes. avgScore 69.5 -> 74.4, safeFixesApplied 6 -> 13."
     }
   ]
 }
