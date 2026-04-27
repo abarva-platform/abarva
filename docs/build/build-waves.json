@@ -979,7 +979,7 @@
       "waveId": "wave-23",
       "name": "Source + Program Storyline Demo",
       "goal": "Complete the AMS sourcing event to CDP programme demo storyline with 4 vendors, BAFO tab, intelligence signals, and updated demo script.",
-      "status": "in_progress",
+      "status": "merged",
       "percentComplete": 100,
       "plannedSlices": [
         "SRC34",
@@ -1001,11 +1001,36 @@
       ],
       "skippedSlices": [],
       "blockedSlices": [],
-      "mergedPrs": [],
-      "validationStatus": "tests_pending",
+      "mergedPrs": [397],
+      "validationStatus": "tests_green",
       "productionReadinessUpdated": false,
       "currentBlockers": [],
-      "nextAction": "Run typecheck, build, tests, then push PR.",
+      "nextAction": "Wave 23 merged via PR #397. Next: Wave 24.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-24",
+      "name": "Azure SaaS + Simulated Private Data Plane Lab — Docs + Architecture",
+      "goal": "Produce the architecture decision records, Azure target architecture diagram, resource naming convention, cost breakdown, Bicep scaffold stubs, private data plane design, and multi-provider model gateway design for the AbarVa Azure lab. Docs only — no live Azure provisioning.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "AZLAB6",
+        "AZLAB7",
+        "AZLAB8"
+      ],
+      "completedSlices": [
+        "AZLAB6",
+        "AZLAB7",
+        "AZLAB8"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Wave 24 docs complete. Check Wave 25 gate conditions before proceeding.",
       "lastUpdated": "2026-04-26"
     }
   ]
