@@ -2,22 +2,43 @@
 
 > This file is written by the orchestration agent at the end of each wave.
 > The next autonomous session reads this file first.
-> Last updated by: orchestration agent (ADMIN5 + ADMIN6 complete)
+> Last updated by: orchestration agent (ADMIN7 complete · wave-admin-redesign 100%)
 > Last updated: 2026-04-27
 
 ## Last completed wave / slice
+- sliceId: ADMIN7
+- waveId: wave-admin-redesign (merged, 100%)
+- title: Admin Visual Lock + Regression Guard
+- prNumber: 449
+- mergeSHA: 05733372
+- completedAt: 2026-04-27
+- testsGreen: 70 new ADMIN7 tests + 58 updated WIRE2B tests; 1018 admin integration tests all pass; 277 design integration tests all pass
+- skippedSlices: none
+- note: Locks the admin redesign with hex/font/shell/logo regression guards. 70-test Jest suite scans src/components/admin/**, src/lib/admin/**, and src/app/(maestro)/admin/** for banned hex tokens (#14B8A6 / #0E9F8C / #0D9488 / #06B6D4 / #7C3AED / #A855F7 / #9333EA / #D946EF / #EC4899) and asserts each /admin/* route imports AdminCanonShellV2 + EditorialCanvas + AgentRail. Shell-level CI gate at scripts/integration/check_admin_design_tokens.sh exits non-zero on any banned hex. WIRE2B scores updated honestly: Admin 72→92, Production Readiness 80→92, Architecture 58→90 (component drawer remains an open interaction_map deviation deferred to Wave 33). safeFixesApplied 13→15 (only honest deltas). Two source fixes during iteration: DatasetExplorerPanel and StewardSetupControlCenter accent: '#0E9F8C' replaced with '#0b4a91' navy. Hygiene gate 11/11 PASS. CI green (ESLint, Routes/disclaimers, hygiene_gate, Vercel × 2). wave-admin-redesign 87.5% → 100%.
+
+## Wave summary: wave-admin-redesign (complete)
+- All 7 lanes shipped + ADMIN0 registration
+- ADMIN0 (PR 436) — backlog registration
+- ADMIN1 + ADMIN2 (PR 438) — logo lockup + tokens + canon shell + sidebar + agent rail
+- ADMIN3 + ADMIN4 (PR 442) — Steward editorial card + Architecture page (7 planes)
+- ADMIN5 + ADMIN6 (PR 447) — Production Readiness page + 6 remaining admin sub-pages
+- ADMIN7 (PR 449) — Visual lock regression guard + WIRE2B rescore
+
+## Next wave
+TBD from `docs/planning/abarva-master-backlog/WAVE_ROADMAP.md`. The admin
+surface canon is now locked behind a CI regression guard — any future drift
+will fail `admin7-visual-lock.test.ts` or
+`scripts/integration/check_admin_design_tokens.sh`.
+
+## Previously completed (this wave)
 - sliceIds: ADMIN5, ADMIN6
-- waveId: wave-admin-redesign (in_progress, 87.5%)
-- title: Production Readiness Page (ADMIN5) + Remaining 6 Admin Sub-Pages Wired (ADMIN6)
 - prNumber: 447
 - mergeSHA: f6fc060b
 - completedAt: 2026-04-27
 - testsGreen: 188 new tests pass (38 ADMIN5 + 150 ADMIN6); 948 admin integration tests all pass; 277 design integration tests all pass
-- skippedSlices: none
 - laneSHAs: ADMIN5 = d3c2e05f ; ADMIN6 = 6cc9a885
-- note: ADMIN5 lands production-readiness-page-view.ts (Demo READY / Pilot PARTIAL / Production BLOCKED tiles + top blockers from W32F + Steward editorial copy), DemoPilotProductionTiles + TopBlockersTable components, /platform/admin/production-readiness fully rewired from legacy ProductionReadinessLivePanel/Tracker/DecisionFlow stack to AdminCanonShellV2 + EditorialCanvas + ContextBar + StewardEditorial + DemoPilotProductionTiles + TopBlockersTable. Clerk auth-gate preserved with AdminOnlyNotice fallback also using canonical shell. Production tile honestly states "Do not claim production readiness". ADMIN6 lands 6 NEW additive routes at /admin/* (overview, data-trust, connectors, users-access, agent-readiness, build-progress) — does NOT modify the auth-gated /platform/admin/* pages. 6 page-views in src/lib/admin/*-page-view.ts, 6 components (SetupItemsList, TrustLadder, ConnectorsList, RoleAccessMatrix, AgentPostureGrid, WaveProgressList). Routing fix added in this PR: /admin/architecture and /admin/production-readiness alias pages (inline-render of canonical shell, no auth on /admin/*) so AdminSidebar links resolve. /platform/admin/* variants remain unchanged. Three pre-existing PROD3/PROD8/tracker tests asserted the old route wiring — surgically updated their route-level assertions to the new shell while preserving all component- and read-model-level assertions; legacy ProductionReadinessTracker / ProductionReadinessLivePanel components remain in repo. Both cherry-picks clean. Hygiene gate 11/11 PASS. CI green (ESLint, Routes/disclaimers, hygiene_gate, Vercel × 2). All 8 /admin/* routes resolve in production build.
+- note: ADMIN5 lands production-readiness-page-view.ts (Demo READY / Pilot PARTIAL / Production BLOCKED tiles + top blockers from W32F + Steward editorial copy), DemoPilotProductionTiles + TopBlockersTable components, /platform/admin/production-readiness fully rewired from legacy ProductionReadinessLivePanel/Tracker/DecisionFlow stack to AdminCanonShellV2 + EditorialCanvas + ContextBar + StewardEditorial + DemoPilotProductionTiles + TopBlockersTable. ADMIN6 lands 6 NEW additive routes at /admin/* (overview, data-trust, connectors, users-access, agent-readiness, build-progress).
 
-## Previously completed (this wave)
 - sliceIds: ADMIN3, ADMIN4
 - prNumber: 442
 - mergeSHA: ed159dd9
