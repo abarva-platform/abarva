@@ -221,7 +221,7 @@
       "title": "Authenticated visual QA pass",
       "track": "01-brand-design-system",
       "priority": "P0",
-      "status": "pending",
+      "status": "in_progress",
       "ownerAgent": "Atlas",
       "productArea": "Brand and interface foundations",
       "recommendedWave": "WAVE-21",

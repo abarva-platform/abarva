@@ -16,7 +16,7 @@ This file is the persistent handoff between autonomous Codex sessions.
 ## 2. Current Queue Snapshot
 
 - Next wave candidate: `WAVE-21`
-- Ready item IDs: `VIS2`
+- Ready item IDs: `none`
 - Blocked item IDs: `VIS4`, `DESIGN1`
 - Items requiring human approval: `none in current WAVE-21 queue`
 - Items deferred due to conflict: `future wave reconciliation outside current docs-only bridge`
@@ -61,5 +61,5 @@ The planning-path orchestration loop is now functioning normally on clean mainli
 
 - BRAND1, SRC39, SRC40, and SRC41 are already merged on main and remain correctly marked as done.
 - ROAD1, ROAD2, and ROAD3 are merged and recorded.
-- VIS2 is the next executable WAVE-21 item and no longer needs a per-item approval stop.
-- The next autonomous action after this checkpoint update is to execute `VIS2`, then reassess the blocked WAVE-21 design items against their narrower contracts.
+- VIS2 is actively in progress on the current branch.
+- The next autonomous action after this checkpoint update is to merge `VIS2`, then reassess the blocked WAVE-21 design items against their narrower contracts.
