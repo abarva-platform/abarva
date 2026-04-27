@@ -8767,6 +8767,15 @@
       "wave": "nav1",
       "track": "01-brand-design-system",
       "notes": "Audit of Programs, Intelligence, and Tower routes. Canonical tenant tree fully aligned (ProgramCanonShell / IntelligenceRouteShell / TowerRouteShell + SeedRouteShell). Non-tenant routes have banned tokens in page-body styling \u2014 deferred to banned-token-sweep wave."
+    },
+    {
+      "id": "NAV1F",
+      "title": "Nav Regression Guard",
+      "status": "code_complete",
+      "type": "test",
+      "wave": "nav1",
+      "track": "01-brand-design-system",
+      "notes": "Pure-TypeScript Jest regression suite locking NAV1A-NAV1E invariants. 129 tests across 11 describe blocks. Catches legacy chrome imports, hand-coded wordmarks, banned tokens in canonical surface, and dropped canonical-shell imports."
     }
   ]
 }
