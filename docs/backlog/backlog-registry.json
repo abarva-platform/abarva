@@ -230,16 +230,18 @@
     {
       "id": "SHELL8",
       "track": "02",
-      "status": "backlog",
+      "status": "completed",
       "wave": "wave-29",
-      "title": "Legacy Shell Code Retirement"
+      "title": "Legacy Shell Code Retirement",
+      "completedWave": "wave-29"
     },
     {
       "id": "SHELL9",
       "track": "02",
-      "status": "backlog",
+      "status": "completed",
       "wave": "wave-29",
-      "title": "Route Registry Automation"
+      "title": "Route Registry Automation",
+      "completedWave": "wave-29"
     },
     {
       "id": "PROG10",
@@ -875,16 +877,18 @@
     {
       "id": "OPS3",
       "track": "12",
-      "status": "backlog",
+      "status": "completed",
       "wave": "wave-29",
-      "title": "Automated Wave Runner v1"
+      "title": "Automated Wave Runner v1",
+      "completedWave": "wave-29"
     },
     {
       "id": "OPS4",
       "track": "12",
-      "status": "backlog",
+      "status": "completed",
       "wave": "wave-29",
-      "title": "Pack Spec Validator"
+      "title": "Pack Spec Validator",
+      "completedWave": "wave-29"
     },
     {
       "id": "WAVE1",
@@ -914,5 +918,6 @@
       "wave": "wave-29",
       "title": "Backlog Registry Automation"
     }
-  ]
+  ],
+  "lastUpdated": "2026-04-26"
 }

@@ -87,16 +87,16 @@ export function runLogoUsageEnforcement(): LogoUsageEnforcementReport {
     });
   }
 
-  // Check 4: legacy TopBar.tsx does not export a logo symbol used in active routes
+  // Check 4: legacy TopBar.tsx retired (SHELL8) — absence is the expected state
   const topBarContent = readFileIfExists('src/components/chrome/TopBar.tsx');
   checks.push({
     checkId: 'BRAND2-C4',
     targetFile: 'src/components/chrome/TopBar.tsx',
-    description: 'Legacy TopBar.tsx identified (dead code — not imported by active routes)',
-    status: topBarContent ? 'pass' : 'not_applicable',
+    description: 'Legacy TopBar.tsx retired in SHELL8 — should be absent',
+    status: topBarContent ? 'fail' : 'pass',
     detail: topBarContent
-      ? 'TopBar.tsx exists. Confirmed dead code per SHELL2 audit — not imported by any active route.'
-      : 'TopBar.tsx not found',
+      ? 'TopBar.tsx still exists — expected to be absent after SHELL8 cleanup. Remove the file.'
+      : 'TopBar.tsx correctly absent — retired in Wave 29 SHELL8.',
     deterministicSeed: true,
   });
 
@@ -183,10 +183,10 @@ export function getBannedLogoPatterns(): string[] {
 }
 
 export function listLogoEnforcementTargetFiles(): string[] {
+  // TopBar.tsx removed from target list — retired in Wave 29 (SHELL8).
   return [
     CANONICAL_LOGO_ASSET,
     CANONICAL_LOGO_COMPONENT,
-    'src/components/chrome/TopBar.tsx',
     'src/components/abarva/AbarVaAppShell.tsx',
     'src/app/(maestro)/layout.tsx',
     'src/app/layout.tsx',

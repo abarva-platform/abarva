@@ -1161,6 +1161,38 @@
       "currentBlockers": [],
       "nextAction": "Wave 28 complete. Proceed to Wave 29.",
       "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-29",
+      "name": "Cleanup \u2014 Legacy Shell + Route Registry + Build Ops",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "SHELL8",
+        "SHELL9",
+        "OPS3",
+        "OPS4"
+      ],
+      "completedSlices": [
+        "SHELL8",
+        "SHELL9",
+        "OPS3",
+        "OPS4"
+      ],
+      "skippedSlices": [
+        "OPS2",
+        "BLG2"
+      ],
+      "blockedSlices": [],
+      "mergedPrs": [
+        415
+      ],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Wave 30 next",
+      "lastUpdated": "2026-04-26",
+      "goal": "Remove legacy shell dead code (TopBar/PrimaryNav), establish canonical route registry, codify wave runner protocol, and add pack spec validation."
     }
   ]
 }

@@ -310,18 +310,21 @@ export function runActiveRouteShellVerification(): ShellVerificationReport {
     ),
   );
 
-  // ---- Check 15: Legacy TopBar still present ------------------------------
+  // ---- Check 15: Legacy TopBar retired (SHELL8) ---------------------------
+  // TopBar.tsx and PrimaryNav.tsx were confirmed dead code (not imported by any
+  // active route per SHELL2 audit) and retired in Wave 29 (SHELL8). Absence is
+  // now the expected state — presence would indicate incomplete cleanup.
   {
     const topBarPath = repoPath('src/components/chrome/TopBar.tsx');
     const exists = fs.existsSync(topBarPath);
     checks.push({
       checkId: 'QA28-C15',
       route: 'src/components/chrome/TopBar.tsx',
-      description: 'Legacy TopBar.tsx still present in chrome/ (tracked, not deleted)',
-      status: exists ? 'pass' : 'fail',
+      description: 'Legacy TopBar.tsx retired in SHELL8 — should be absent',
+      status: exists ? 'fail' : 'pass',
       detail: exists
-        ? 'TopBar.tsx is present in src/components/chrome/ — expected legacy, tracked and intentionally retained'
-        : 'TopBar.tsx is MISSING from src/components/chrome/ — unexpected; legacy shell should be retained until Wave-20 shell fully replaces it',
+        ? 'TopBar.tsx still exists — expected to be removed in SHELL8 cleanup. Remove the file to complete SHELL8.'
+        : 'TopBar.tsx has been correctly retired (SHELL8) — confirmed dead code no longer present.',
       deterministicSeed: true,
     });
   }
