@@ -8798,19 +8798,21 @@
     {
       "id": "ADMIN1",
       "title": "Foundation: Logo + Token Lock",
-      "status": "backlog",
+      "status": "code_complete",
       "type": "ui",
       "wave": "wave-admin-redesign",
       "track": "06-admin-readiness-architecture",
+      "completedAt": "2026-04-27",
       "notes": "Lands abarva-logo-lockup-v2.svg, AbarVaLogo variant prop, design-tokens.ts (INK/NAVY/CREAM/SKY_PALE/MINT_SOFT/AMBER_SOFT/CORAL_SOFT), Cormorant Garamond import, banned-token list extension."
     },
     {
       "id": "ADMIN2",
       "title": "Admin Shell 3-Zone Canonical Layout",
-      "status": "backlog",
+      "status": "code_complete",
       "type": "ui",
       "wave": "wave-admin-redesign",
       "track": "06-admin-readiness-architecture",
+      "completedAt": "2026-04-27",
       "notes": "AdminCanonShellV2 (sidebar 280 / canvas flex / agent rail 320), AdminSidebar (8 items), EditorialCanvas, AgentRail (4 cards). Consumes ADMIN1 tokens; no hex literals."
     },
     {
