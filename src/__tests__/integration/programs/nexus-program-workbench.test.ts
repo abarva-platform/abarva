@@ -83,6 +83,52 @@ describe('AGENTUI1 · buildNexusProgramWorkbenchView', () => {
       'atlas',
     ]);
   });
+
+  it('exposes a navigable per-phase focus map keyed by every journey phase', () => {
+    expect(view.defaultPhaseKey).toBe('synthesis');
+    const journeyKeys = view.phaseJourney.map((phase) => phase.key);
+    for (const key of journeyKeys) {
+      const focus = view.phaseFocusByKey[key];
+      expect(focus).toBeTruthy();
+      expect(focus!.brief.length).toBeGreaterThan(0);
+      expect(focus!.blocker.length).toBeGreaterThan(0);
+      expect(focus!.recommendedNextAction.length).toBeGreaterThan(0);
+      expect(focus!.contextUsed.length).toBeGreaterThan(0);
+      expect(focus!.suggestedActions).toHaveLength(3);
+      expect(focus!.agentHandoffs.map((h) => h.agent)).toEqual([
+        'nexus',
+        'steward',
+        'sentinel',
+        'atlas',
+      ]);
+      expect(focus!.conversation.length).toBeGreaterThanOrEqual(2);
+      expect(focus!.conversation[0]!.speaker).toBe('You');
+      expect(focus!.conversation[1]!.speaker).toBe('Nexus');
+    }
+  });
+
+  it('default phase focus matches the top-level synthesis content', () => {
+    const synthesis = view.phaseFocusByKey[view.defaultPhaseKey]!;
+    expect(view.nexusBrief).toBe(synthesis.brief);
+    expect(view.blocker).toBe(synthesis.blocker);
+    expect(view.recommendedNextAction).toBe(synthesis.recommendedNextAction);
+    expect(view.contextUsed).toEqual(synthesis.contextUsed);
+    expect(view.suggestedActions.map((a) => a.label)).toEqual(
+      synthesis.suggestedActions.map((a) => a.label),
+    );
+    expect(view.agentHandoffs.map((h) => h.agent)).toEqual(
+      synthesis.agentHandoffs.map((h) => h.agent),
+    );
+  });
+
+  it('non-current phases carry distinct briefs from synthesis', () => {
+    const synthesis = view.phaseFocusByKey['synthesis']!;
+    const others = ['discovery', 'design-gate', 'build', 'verify'];
+    for (const key of others) {
+      const focus = view.phaseFocusByKey[key]!;
+      expect(focus.brief).not.toBe(synthesis.brief);
+    }
+  });
 });
 
 describe('AGENTUI1 · NexusProgramWorkbench component contract', () => {
@@ -136,5 +182,14 @@ describe('AGENTUI1 · NexusProgramWorkbench component contract', () => {
 
   it('is also available in the ProgramFlagshipPage reference shell', () => {
     expect(flagshipSource).toContain('NexusProgramWorkbench');
+  });
+
+  it('renders phase nodes as clickable buttons that drive selected-phase state', () => {
+    expect(componentSource).toContain("import { useState } from 'react'");
+    expect(componentSource).toContain('useState<string>(view.defaultPhaseKey)');
+    expect(componentSource).toContain('selectedFocus');
+    expect(componentSource).toContain('aria-pressed={isSelected}');
+    expect(componentSource).toContain('data-phase-selected');
+    expect(componentSource).toContain('onSelect(phase.key)');
   });
 });

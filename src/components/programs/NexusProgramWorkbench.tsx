@@ -1,10 +1,12 @@
 'use client';
 
 import type * as React from 'react';
+import { useState } from 'react';
 import {
   buildNexusProgramWorkbenchView,
   type NexusProgramWorkbenchInput,
   type NexusWorkbenchAgentHandoff,
+  type NexusWorkbenchConversationTurn,
   type NexusWorkbenchPhaseNode,
 } from '@/lib/programs/nexus-program-workbench-view';
 
@@ -101,28 +103,53 @@ function ContextChips({ labels }: { labels: string[] }) {
   );
 }
 
-function PhaseNode({ phase }: { phase: NexusWorkbenchPhaseNode }) {
+function PhaseNode({
+  phase,
+  isSelected,
+  onSelect,
+}: {
+  phase: NexusWorkbenchPhaseNode;
+  isSelected: boolean;
+  onSelect: (key: string) => void;
+}) {
   const isCurrent = phase.state === 'current';
   const isBlocked = phase.state === 'blocked';
   const isComplete = phase.state === 'complete';
 
+  const baseBackground = isCurrent ? BLUE_SOFT : isBlocked ? AMBER_SOFT : CARD;
+  const baseBorder = isCurrent
+    ? '#9CCBF4'
+    : isBlocked
+      ? 'rgba(166,95,0,0.34)'
+      : BORDER;
+
   return (
-    <div
+    <button
+      type="button"
       data-phase-state={phase.state}
+      data-phase-selected={isSelected ? 'true' : 'false'}
+      aria-pressed={isSelected}
+      aria-label={`Focus Nexus workbench on ${phase.label} (${phase.state})`}
+      onClick={() => onSelect(phase.key)}
       style={{
         position: 'relative',
-        minHeight: isCurrent ? 106 : 88,
-        padding: isCurrent ? '18px 18px 16px' : '14px 14px',
-        border: `1px solid ${
-          isCurrent ? '#9CCBF4' : isBlocked ? 'rgba(166,95,0,0.34)' : BORDER
-        }`,
+        textAlign: 'left',
+        cursor: 'pointer',
+        width: '100%',
+        minHeight: isSelected ? 112 : 92,
+        padding: isSelected ? '18px 18px 16px' : '14px 14px',
+        border: `${isSelected ? 2 : 1}px solid ${isSelected ? NAVY : baseBorder}`,
         borderRadius: 16,
-        background: isCurrent ? BLUE_SOFT : isBlocked ? AMBER_SOFT : CARD,
-        boxShadow: isCurrent
-          ? '0 18px 36px rgba(11,74,145,0.14)'
-          : 'none',
-        transform: isCurrent ? 'translateY(-8px)' : 'none',
-        transition: 'transform 160ms ease, box-shadow 160ms ease',
+        background: baseBackground,
+        boxShadow: isSelected
+          ? '0 22px 44px rgba(11,74,145,0.18)'
+          : isCurrent
+            ? '0 14px 28px rgba(11,74,145,0.10)'
+            : 'none',
+        transform: isSelected ? 'translateY(-10px)' : isCurrent ? 'translateY(-4px)' : 'none',
+        transition: 'transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease',
+        font: 'inherit',
+        color: 'inherit',
       }}
     >
       <span
@@ -152,7 +179,7 @@ function PhaseNode({ phase }: { phase: NexusWorkbenchPhaseNode }) {
           display: 'block',
           marginTop: 12,
           color: INK,
-          fontSize: isCurrent ? 18 : 14,
+          fontSize: isSelected ? 18 : 14,
           lineHeight: 1.1,
         }}
       >
@@ -169,7 +196,25 @@ function PhaseNode({ phase }: { phase: NexusWorkbenchPhaseNode }) {
       >
         {phase.note}
       </span>
-    </div>
+      {isCurrent ? (
+        <span
+          aria-hidden
+          style={{
+            position: 'absolute',
+            bottom: 8,
+            right: 10,
+            fontSize: 10,
+            fontWeight: 800,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: NAVY,
+            opacity: 0.7,
+          }}
+        >
+          Maestro
+        </span>
+      ) : null}
+    </button>
   );
 }
 
@@ -196,22 +241,17 @@ function JourneyArrow() {
 function ConversationThread({
   customAskPlaceholder,
   customAskDeferredState,
+  conversation,
 }: {
   customAskPlaceholder: string;
   customAskDeferredState: string;
+  conversation: NexusWorkbenchConversationTurn[];
 }) {
-  const thread = [
-    {
-      speaker: 'You',
-      tone: CONV_USER,
-      text: 'Can we move this program to Build?',
-    },
-    {
-      speaker: 'Nexus',
-      tone: CONV_NEXUS,
-      text: 'Hold until Design gate blockers are resolved: value evidence, workshop outcomes, and stakeholder alignment.',
-    },
-  ];
+  const thread = conversation.map((turn) => ({
+    speaker: turn.speaker,
+    tone: turn.speaker === 'You' ? CONV_USER : CONV_NEXUS,
+    text: turn.text,
+  }));
 
   return (
     <div
@@ -417,6 +457,13 @@ export function NexusProgramWorkbench(props: NexusProgramWorkbenchProps) {
   const nextPhase = view.phaseJourney[currentIndex + 1];
   const journeyPath = `Phase Journey: ${view.phaseJourney.map((phase) => phase.label).join(' → ')}`;
 
+  const [selectedPhaseKey, setSelectedPhaseKey] = useState<string>(view.defaultPhaseKey);
+  const selectedFocus =
+    view.phaseFocusByKey[selectedPhaseKey] ?? view.phaseFocusByKey[view.defaultPhaseKey]!;
+  const selectedPhase = view.phaseJourney.find((phase) => phase.key === selectedPhaseKey)
+    ?? view.phaseJourney[currentIndex];
+  const isSelectedCurrent = selectedPhase?.state === 'current';
+
   return (
     <section
       id={props.id}
@@ -518,7 +565,11 @@ export function NexusProgramWorkbench(props: NexusProgramWorkbenchProps) {
                 flex: '0 0 178px',
               }}
             >
-              <PhaseNode phase={phase} />
+              <PhaseNode
+                phase={phase}
+                isSelected={phase.key === selectedPhaseKey}
+                onSelect={setSelectedPhaseKey}
+              />
             </div>
             {index < view.phaseJourney.length - 1 ? <JourneyArrow /> : null}
           </div>
@@ -538,8 +589,17 @@ export function NexusProgramWorkbench(props: NexusProgramWorkbenchProps) {
             lineHeight: 1.4,
           }}
         >
-          Maestro trail: complete blocker and evidence work in <strong>Synthesis</strong> to unlock{' '}
-          <strong>{nextPhase.label}</strong>.
+          {isSelectedCurrent ? (
+            <>
+              Maestro trail: complete blocker and evidence work in <strong>Synthesis</strong> to unlock{' '}
+              <strong>{nextPhase.label}</strong>.
+            </>
+          ) : (
+            <>
+              Focused on <strong>{selectedPhase?.label ?? ''}</strong>. Maestro is in{' '}
+              <strong>{view.phaseJourney[currentIndex]?.label ?? 'Synthesis'}</strong> — return there to advance the program.
+            </>
+          )}
         </div>
       ) : null}
 
@@ -576,7 +636,7 @@ export function NexusProgramWorkbench(props: NexusProgramWorkbenchProps) {
                   textTransform: 'uppercase',
                 }}
               >
-                Nexus brief
+                Nexus brief · {selectedPhase?.label ?? 'Synthesis'}
               </div>
               <p
                 style={{
@@ -587,7 +647,7 @@ export function NexusProgramWorkbench(props: NexusProgramWorkbenchProps) {
                   lineHeight: 1.42,
                 }}
               >
-                {view.nexusBrief}
+                {selectedFocus.brief}
               </p>
             </div>
             <div
@@ -604,7 +664,7 @@ export function NexusProgramWorkbench(props: NexusProgramWorkbenchProps) {
           </div>
 
           <div style={{ marginTop: 14 }}>
-            <ContextChips labels={view.contextUsed} />
+            <ContextChips labels={selectedFocus.contextUsed} />
           </div>
 
           <div
@@ -625,7 +685,7 @@ export function NexusProgramWorkbench(props: NexusProgramWorkbenchProps) {
             >
               <strong style={{ color: AMBER, fontSize: 12 }}>Blocker</strong>
               <p style={{ margin: '6px 0 0', color: MUTED, fontSize: 12, lineHeight: 1.4 }}>
-                {view.blocker}
+                {selectedFocus.blocker}
               </p>
             </div>
             <div
@@ -638,7 +698,7 @@ export function NexusProgramWorkbench(props: NexusProgramWorkbenchProps) {
             >
               <strong style={{ color: GREEN, fontSize: 12 }}>Recommended next action</strong>
               <p style={{ margin: '6px 0 0', color: MUTED, fontSize: 12, lineHeight: 1.4 }}>
-                {view.recommendedNextAction}
+                {selectedFocus.recommendedNextAction}
               </p>
             </div>
           </div>
@@ -667,6 +727,7 @@ export function NexusProgramWorkbench(props: NexusProgramWorkbenchProps) {
           <ConversationThread
             customAskPlaceholder={view.customAskPlaceholder}
             customAskDeferredState={view.customAskDeferredState}
+            conversation={selectedFocus.conversation}
           />
 
           <div
@@ -690,7 +751,7 @@ export function NexusProgramWorkbench(props: NexusProgramWorkbenchProps) {
               Suggested next actions
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 9 }}>
-              {view.suggestedActions.map((action) => (
+              {selectedFocus.suggestedActions.map((action) => (
                 <button
                   key={action.label}
                   type="button"
@@ -732,7 +793,7 @@ export function NexusProgramWorkbench(props: NexusProgramWorkbenchProps) {
             >
               Agent signals
             </div>
-            {view.agentHandoffs.map((handoff) => (
+            {selectedFocus.agentHandoffs.map((handoff) => (
               <AgentHandoffCard key={handoff.agent} handoff={handoff} />
             ))}
           </div>
