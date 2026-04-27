@@ -8704,6 +8704,15 @@
       "wave": "wave-32",
       "track": "04-admin-readiness",
       "notes": "Priority-ordered action strip for Admin Zone E. src/lib/admin/admin-action-strip-view.ts."
+    },
+    {
+      "id": "W32F",
+      "title": "Production Readiness Blocker Detail Drawer View Model",
+      "status": "code_complete",
+      "type": "view-model",
+      "wave": "wave-32",
+      "track": "04-admin-readiness",
+      "notes": "Blocker detail drawer read-model for Production Readiness page. src/lib/admin/blocker-detail-view.ts."
     }
   ]
 }
