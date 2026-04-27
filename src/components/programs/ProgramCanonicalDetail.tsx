@@ -115,8 +115,9 @@ const COLORS = {
   borderSoft: 'rgba(26,22,18,0.04)',
   card: '#FFFFFF',
   surface: '#F8F7F4',
-  accent: '#0E9F8C',
-  accentSoft: 'rgba(14,159,140,0.08)',
+  // WIRE2: replaced #0E9F8C (teal-adjacent banned token) with AbarVa canonical navy
+  accent: '#1B2B5C',
+  accentSoft: 'rgba(27,43,92,0.08)',
   amber: '#D97706',
   amberSoft: 'rgba(217,119,6,0.08)',
 } as const;

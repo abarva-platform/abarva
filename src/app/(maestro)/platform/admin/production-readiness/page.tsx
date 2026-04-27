@@ -75,7 +75,7 @@ export default async function ProductionReadinessPage() {
 
   return (
     <AdminCanonShell
-      eyebrow="Platform · Production"
+      eyebrow="Platform · Production · STEWARD"
       title="Production Readiness"
       description="Decision-ready view of what is complete, what remains blocked, and what should happen next."
       workflow={{

@@ -11,14 +11,14 @@ export default function ArchitecturePage() {
     <AdminCanonShell
       eyebrow="Platform · Architecture"
       title="Architecture Overview"
-      description="System composition, trust boundaries, and integration surfaces for AbarVa."
+      description="System composition, trust boundaries, and integration surfaces for AbarVa. ATLAS · ARCHITECTURE LEAD"
       workflow={{
-        primaryAgent: 'steward',
-        pageQuestion: 'How do the major planes integrate safely and where are the current boundary risks?',
-        whatIsKnown: 'Architecture sections and contracts are documented and route-mounted.',
-        whatIsMissing: 'Live infra telemetry is outside this deterministic architecture surface.',
-        recommendedNextAction: 'Review control/data plane boundaries and map unresolved deployment dependencies.',
-        caveat: 'Deterministic architecture brief; not a runtime monitoring surface.',
+        primaryAgent: 'atlas',
+        pageQuestion: 'How does AbarVa work end to end, and how does it support SaaS plus private data plane?',
+        whatIsKnown: 'App, context, knowledge, and data planes are built. ARCH5 manifest — 9 planes documented.',
+        whatIsMissing: 'Live model gateway routing, live tool execution, Azure private data plane deployment.',
+        recommendedNextAction: 'Wire model gateway for live agent routing. Deploy Azure private data plane lab.',
+        caveat: 'ARCH5 manifest — static documentation. Not live topology scan.',
       }}
     >
       <ArchitectureCanvas />

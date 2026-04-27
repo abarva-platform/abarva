@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-04-26",
+  "lastUpdated": "2026-04-27",
   "lifecycle": [
     "ready",
     "in_progress",
@@ -8635,6 +8635,21 @@
         "src/lib/security/incident-response-runbook.ts",
         "src/__tests__/integration/security/incident-response-runbook.test.ts"
       ]
+    },
+    {
+      "id": "WIRE2",
+      "name": "Wireframe Compliance Audit",
+      "category": "QA",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "AbarVa Autonomous Orchestration",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/build/WIREFRAME_COMPLIANCE_REPORT.md"
+      ],
+      "wave": "wave-32",
+      "completedAt": "2026-04-26",
+      "notes": "8-page compliance audit. Report at docs/build/WIREFRAME_COMPLIANCE_REPORT.md."
     }
   ]
 }
