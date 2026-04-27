@@ -444,3 +444,46 @@ Current admin compliance score is 72/100 (WIRE2B). The audit measured "imports c
 
 ### Wave file
 - `docs/backlog/waves/WAVE-ADMIN-REDESIGN.md`
+
+---
+
+## Wave: Admin Completion (`wave-admin-completion`)
+
+### Why
+ADMIN1–8 + AGENT1 locked the canonical admin shell, visual canon, and deterministic agent reasoning across 8 `/admin/*` pages. What remains is depth, not chrome. Most canonical pages stop at the editorial card with thin or absent drill-downs. The legacy `/platform/admin/*` tree still hosts 16 live sub-routes — some duplicate canonical pages, some host real engagement-ops content, some are stubs. ADMIN9 audited every legacy route and every canonical page, classified every interaction SAFE / STUB / HARD-GATED, and produced this 10-slice plan. All write actions and live model calls remain HARD-GATED for Wave 27+ (Agent Runtime + Model Gateway).
+
+### Source documents
+- `docs/build/ADMIN_COMPLETION_AUDIT.md` — three audits + backlog plan + interaction-safety matrix
+- `docs/build/slices/ADMIN9_*.md` through `ADMIN19_*.md` — slice docs
+
+### Slices
+
+| ID | Title | Type | Tier | Depends on |
+|---|---|---|---|---|
+| ADMIN9 | Admin Completion Audit + Plan | docs | (this audit) | ADMIN1–8 + AGENT1 |
+| ADMIN10 | Legacy `/platform/admin/*` route consolidation | docs+ops | 1 (blocks others) | ADMIN9 |
+| ADMIN11 | Users & Access depth | ui | 2 (parallel) | ADMIN10 |
+| ADMIN12 | Agent Readiness depth | ui | 2 (parallel) | ADMIN10 |
+| ADMIN13 | Connectors depth | ui | 2 (parallel) | ADMIN10 |
+| ADMIN14 | Data Trust depth | ui | 2 (parallel) | ADMIN10 |
+| ADMIN15 | Build Progress depth | ui | 2 (parallel) | ADMIN10 |
+| ADMIN16 | Production Readiness depth | ui | 2 (parallel) | ADMIN10 |
+| ADMIN17 | Architecture depth | ui | 2 (parallel) | ADMIN10 |
+| ADMIN18 | Overview depth — pull-through | ui | 3 | ADMIN11–17 |
+| ADMIN19 | Visual lock + regression update | qa | 3 | ADMIN10–18 |
+
+### Acceptance
+- 16 live legacy `/platform/admin/*` sub-routes are honestly disposed (4 KEEP / 5 MERGE / 2 REDIRECT / 6 DEPRECATE per ADMIN9 audit).
+- 7 canonical `/admin/*` pages have rich canvas (sub-tabs, drill-down drawers, action strips, stub buttons with reason copy).
+- Overview pulls state through from all 7 sibling pages.
+- ADMIN7 regression suite extended to cover all new ADMIN11–18 components.
+- WIRE2B compliance scores rescore honestly (only where deviations close).
+- No `production_ready: true` promotion.
+- HARD-GATED interactions (Invite, Approve, Test connection, Mark resolved, Configure, Suspend, ChangeRole, audit-write) all render disabled with reason copy and defer to Wave 27+.
+
+### Estimated effort
+~5–6 hours wall-clock with 2–3 lane agents in parallel across Tier 2.
+
+### Wave file
+- `docs/build/ADMIN_COMPLETION_AUDIT.md`
+- `docs/build/slices/ADMIN9_*.md` through `ADMIN19_*.md`

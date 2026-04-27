@@ -43,7 +43,7 @@
     {
       "id": "06",
       "name": "Admin + Readiness + Architecture",
-      "sliceCount": 12,
+      "sliceCount": 23,
       "file": "tracks/06-admin-readiness-architecture/BACKLOG.md"
     },
     {
@@ -148,6 +148,13 @@
       "title": "Admin Surface Canonical Redesign",
       "file": "waves/WAVE-ADMIN-REDESIGN.md",
       "note": "ADMIN1-7 \u2014 3-zone editorial layout, new logo lockup, Cormorant Garamond, Steward editorial, agent rail. Lifts WIRE2B admin 72 -> 92."
+    },
+    {
+      "id": "wave-admin-completion",
+      "status": "planned",
+      "title": "Admin Completion \u00b7 depth + legacy consolidation",
+      "file": "tracks/06-admin-readiness-architecture/BACKLOG.md",
+      "note": "ADMIN9 audit + ADMIN10\u2013ADMIN19. Closes out admin tree: legacy /platform/admin/* consolidation + per-page depth + visual lock update. HARD-GATED interactions defer to Wave 27+."
     }
   ],
   "slices": [
@@ -985,6 +992,83 @@
       "status": "backlog",
       "wave": "wave-admin-redesign",
       "title": "Admin Visual Lock + Regression Guard"
+    },
+    {
+      "id": "ADMIN9",
+      "track": "06",
+      "status": "code_complete",
+      "wave": "wave-admin-completion",
+      "title": "Admin Completion Audit + Plan"
+    },
+    {
+      "id": "ADMIN10",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-completion",
+      "title": "Legacy /platform/admin/* route consolidation (REDIRECT/DEPRECATE/MERGE prep)"
+    },
+    {
+      "id": "ADMIN11",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-completion",
+      "title": "Users & Access depth — tabs + user table + role detail drawer + invite stub"
+    },
+    {
+      "id": "ADMIN12",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-completion",
+      "title": "Agent Readiness depth — per-agent expandable cards + capability matrix + reasoning trace drawer"
+    },
+    {
+      "id": "ADMIN13",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-completion",
+      "title": "Connectors depth — per-connector detail drawer + config stub + requirements matrix"
+    },
+    {
+      "id": "ADMIN14",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-completion",
+      "title": "Data Trust depth — per-rung dataset list + drawer + approval stub + promotion + quality tabs"
+    },
+    {
+      "id": "ADMIN15",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-completion",
+      "title": "Build Progress depth — wave timeline + slice drilldown + CI mini-strip"
+    },
+    {
+      "id": "ADMIN16",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-completion",
+      "title": "Production Readiness depth — per-tile expandable + per-blocker drawer + promotion gate"
+    },
+    {
+      "id": "ADMIN17",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-completion",
+      "title": "Architecture depth — per-plane drilldown + component drawer + plane health summary"
+    },
+    {
+      "id": "ADMIN18",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-completion",
+      "title": "Overview depth — setup timeline + recent activity + cross-page CTAs"
+    },
+    {
+      "id": "ADMIN19",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-completion",
+      "title": "Visual lock + regression update for completion wave"
     }
   ],
   "lastUpdated": "2026-04-27"

@@ -2,10 +2,27 @@
 
 > This file is written by the orchestration agent at the end of each wave.
 > The next autonomous session reads this file first.
-> Last updated by: orchestration agent (AGENT1 complete · wave-agent1 100%)
+> Last updated by: orchestration agent (ADMIN9 audit · wave-admin-completion registered)
 > Last updated: 2026-04-27
 
-## Last completed wave / slice
+## Last completed slice
+- sliceId: ADMIN9
+- waveId: wave-admin-completion (planned, 9% — ADMIN9 done, ADMIN10–19 backlog)
+- title: Admin Completion Audit + Plan
+- prNumber: (pending merge)
+- completedAt: 2026-04-27
+- testsGreen: docs-only slice; hygiene gate 11/11; tsc clean; no app code touched
+- skippedSlices: none
+- note: Three audits produced in `docs/build/ADMIN_COMPLETION_AUDIT.md` — (1) legacy `/platform/admin/*` route disposition (4 KEEP / 5 MERGE / 2 REDIRECT / 6 DEPRECATE for the 16 live sub-routes), (2) per-page depth blueprints for the 8 canonical `/admin/*` pages, (3) SAFE / STUB / HARD-GATED interaction-safety classification. Backlog registered: `wave-admin-completion` with ADMIN10–ADMIN19 (10 slices, status: backlog). Tier 1 is ADMIN10 (legacy consolidation); Tier 2 is ADMIN11–17 parallelizable; Tier 3 is ADMIN18 + ADMIN19. HARD-GATED interactions (Invite, Approve, Test, Suspend, Configure, audit-write, model calls) all defer to Wave 27+.
+
+## Next wave
+- waveId: wave-admin-completion
+- status: planned (9% — ADMIN9 done)
+- nextSlices: [ADMIN10, ADMIN11, ADMIN12, ADMIN13, ADMIN14, ADMIN15, ADMIN16, ADMIN17, ADMIN18, ADMIN19]
+- recommendedSequence: Run ADMIN10 first (Tier 1, blocks others). Then ADMIN11–ADMIN17 in 2–3 parallel lanes (Tier 2). ADMIN18 + ADMIN19 last (Tier 3).
+- estimatedWallClock: ~5–6 hours with multi-agent parallelization across Tier 2.
+
+## Previous completed wave / slice
 - sliceIds: AGENT1A + AGENT1B
 - waveId: wave-agent1 (merged, 100%)
 - title: Agent Reasoning Foundation — context bundle + posture + editorial + choices, wired to admin pages
