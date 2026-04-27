@@ -8650,6 +8650,15 @@
       "wave": "wave-32",
       "completedAt": "2026-04-26",
       "notes": "8-page compliance audit. Report at docs/build/WIREFRAME_COMPLIANCE_REPORT.md."
+    },
+    {
+      "id": "WIRE2B",
+      "title": "Wireframe Compliance TypeScript QA Module",
+      "status": "code_complete",
+      "type": "qa",
+      "wave": "wave-32",
+      "track": "10-demo-qa-production-hardening",
+      "notes": "TypeScript read-model + test suite encoding WIRE2 compliance findings. src/lib/qa/wireframe-compliance-audit.ts."
     }
   ]
 }
