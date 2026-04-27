@@ -1228,12 +1228,12 @@
       "status": "merged",
       "percentComplete": 100,
       "plannedSlices": [
-        "SEC1",
-        "SEC2"
+        "SEC3",
+        "SEC4"
       ],
       "completedSlices": [
-        "SEC1",
-        "SEC2"
+        "SEC3",
+        "SEC4"
       ],
       "skippedSlices": [],
       "blockedSlices": [],

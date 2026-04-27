@@ -299,7 +299,7 @@ describe('SEC1 — evaluateSecurityPostureGate()', () => {
           (c.maturity === 'not-implemented' || c.maturity === 'planned'),
       )
       .map((c) => c.controlId);
-    expect(result.criticalGaps.sort()).toEqual(expectedGaps.sort());
+    expect([...result.criticalGaps].sort()).toEqual(expectedGaps.sort());
   });
 });
 
