@@ -8607,6 +8607,34 @@
         "node_modules/.bin/jest src/__tests__/integration/solutions/vertical-pack-retail.test.ts --no-coverage"
       ],
       "notes": "Retail vertical pattern pack with 2 patterns: retail data platform sourcing (6 criteria incl. 2 critical, 3 failure modes, holiday season considerations) and retail AI program failure modes (2 criteria, 2 failure modes). All entries pass evaluatePatternReadinessGate. createdFrom: pat3_w30_vertical_pack_retail."
+    },
+    {
+      "id": "SEC3",
+      "name": "Security Posture Model",
+      "category": "SEC",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Wave 31 \u2014 codex/wave-31-security-posture",
+      "dependsOn": [],
+      "allowedFiles": [
+        "src/lib/security/security-posture-model.ts",
+        "src/__tests__/integration/security/security-posture-model.test.ts"
+      ]
+    },
+    {
+      "id": "SEC4",
+      "name": "Incident Response Runbook",
+      "category": "SEC",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Wave 31 \u2014 codex/wave-31-security-posture",
+      "dependsOn": [
+        "SEC3"
+      ],
+      "allowedFiles": [
+        "src/lib/security/incident-response-runbook.ts",
+        "src/__tests__/integration/security/incident-response-runbook.test.ts"
+      ]
     }
   ]
 }

@@ -588,14 +588,14 @@
     {
       "id": "SEC1",
       "track": "08",
-      "status": "backlog",
+      "status": "code_complete",
       "wave": "wave-31",
       "title": "Security Posture Hardening"
     },
     {
       "id": "SEC2",
       "track": "08",
-      "status": "backlog",
+      "status": "code_complete",
       "wave": "wave-31",
       "title": "Incident Response Runbook"
     },
