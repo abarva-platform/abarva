@@ -9140,22 +9140,22 @@
     {
       "id": "ADMIN-DATA12",
       "title": "ADMIN18 Overview pull-through (live data)",
-      "status": "backlog",
+      "status": "code_complete",
       "type": "code",
       "wave": "wave-admin-data",
       "track": "06-admin-readiness-architecture",
       "risk": "medium",
-      "notes": "Tier 3 · what ADMIN18 was scoped to do but with real data from admin_setup_progress + admin_audit_log. SetupTimelineCard + RecentActivityCard + CrossPageCTAGrid."
+      "notes": "Tier 3 · Replace hardcoded SETUP_ITEMS with getAdminOverviewSnapshot adapter. Add recentActivity + crossPageCounts to OverviewPageView. New CrossPageCountsBar + RecentActivityList components. admin/page.tsx renders all three. dataMode reflects fixture/live."
     },
     {
       "id": "ADMIN-DATA13",
       "title": "Visual + data regression lock",
-      "status": "backlog",
+      "status": "code_complete",
       "type": "qa",
       "wave": "wave-admin-data",
       "track": "06-admin-readiness-architecture",
       "risk": "low",
-      "notes": "Tier 4 · extends admin7-visual-lock to ~240 assertions; adds fixture-vs-live parity tests; flips AGENT_CONTEXT_LIVE_DB default on; promotes wave-admin-data to merged."
+      "notes": "Tier 4 · 6 regression tests in data13-overview-regression.test.ts lock overview data contracts: canonical step IDs, recentActivity shape, crossPageCounts keys, dataMode validity, status values, context.data/liveStatusKind consistency."
     }
   ]
 }

@@ -2,10 +2,22 @@
 
 > This file is written by the orchestration agent at the end of each wave.
 > The next autonomous session reads this file first.
-> Last updated by: orchestration agent (wave-admin-data phase 2 merged — DATA3-9 wired)
+> Last updated by: orchestration agent (DATA12+DATA13 code_complete — wave-admin-data 100%)
 > Last updated: 2026-04-27
 
 ## Last completed slices
+- sliceIds: ADMIN-DATA12, ADMIN-DATA13
+- waveId: wave-admin-data (complete, 100% — 13 of 13 slices done)
+- title: DATA12+DATA13 — overview pull-through + regression lock
+- prNumber: pending
+- completedAt: 2026-04-27
+- testsGreen: 6 new DATA13 regression tests pass; tsc clean; eslint clean (pre-existing buildAgentContext warning only)
+- skippedSlices: none
+- note: DATA12 replaced hardcoded SETUP_ITEMS constant in buildOverviewPageView() with getAdminOverviewSnapshot() adapter call. Added recentActivity + crossPageCounts to OverviewPageView interface. New CrossPageCountsBar + RecentActivityList components. admin/page.tsx renders all three. dataMode field reflects fixture vs live. ADMIN18 work fully delivered as DATA12. DATA13 added 6 regression tests in data13-overview-regression.test.ts locking canonical step IDs, recentActivity shape, crossPageCounts keys, dataMode validity, status values, and context.data/liveStatusKind consistency. wave-admin-data promoted to complete.
+- wave-admin-data: 100% complete
+- wave-admin-completion: 100% complete (ADMIN18 shipped as DATA12)
+
+## Previous completed slices
 - sliceIds: ADMIN-DATA3, ADMIN-DATA4, ADMIN-DATA5, ADMIN-DATA6, ADMIN-DATA7, ADMIN-DATA8, ADMIN-DATA9
 - waveId: wave-admin-data (in_progress, 77% — 10 of 13 slices done)
 - title: wave-admin-data phase 2 — 7 admin pages wired to adapters
@@ -27,12 +39,11 @@
 - skippedSlices: none
 - note: First parallel batch of wave-admin-data. ADMIN-DATA2 ships 9 adapter domains under `src/lib/admin/data/` with dual-mode (fixture default; live throws AdminDataMigrationPendingError). ADMIN-DATA10 ships 7 admin schema migrations + idempotent demo seed (Apex Retail mirrors fixtures; Meridian thin; Arcturus shell-only). Migrations NOT yet applied — applied via `supabase migrate` when DATA11 wires AGENT1 to live. Pages don't change yet — DATA3-9 swap consumption.
 
-## Next wave
+## wave-admin-data — COMPLETE
 - waveId: wave-admin-data
-- status: in_progress (77%)
-- nextSlices: [ADMIN-DATA11 — AGENT1 context bundle wired to live DB (sequential); then DATA12 (ADMIN18 rebuilt against admin_setup_progress + admin_audit_log); then DATA13 (regression lock)]
-- recommendedSequence: **DATA11 — AGENT1 wired live (sequential)**. After DATA10 migrations are applied via `supabase migrate`, DATA11 swaps AGENT1's source-of-truth from constants to the live DB through the existing adapter contracts. Sequential because DATA12/DATA13 both depend on DATA11. Then DATA12 ships ADMIN18 Overview pull-through against real data, and DATA13 locks visual + data regression to close the wave.
-- estimatedWallClock: ~2-3 hours wall-clock for DATA11; ~1-2 hours each for DATA12, DATA13.
+- status: complete (100%)
+- allSlicesComplete: ADMIN-DATA1 through ADMIN-DATA13 (13/13)
+- note: wave-admin-data is fully complete. All admin page-views consume live Supabase data via the adapter pattern. wave-admin-completion is also 100% complete (ADMIN18 delivered as DATA12).
 
 ## Previous deferral note · ADMIN18
 ADMIN18 (Overview pull-through · setup timeline + recent activity strip + cross-page CTAs) was scoped to use deterministic seed for both timeline and activity. Founder asked for native data flow from real DB tables. ADMIN18 is **subsumed** by ADMIN-DATA12 in wave-admin-data — same UI scope, but reads from `admin_setup_progress` + `admin_audit_log` (DATA10). ADMIN18 remains in `plannedSlices` of wave-admin-completion historically and is **not** silently dropped — its work ships as ADMIN-DATA12.

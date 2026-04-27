@@ -7,6 +7,8 @@ import {
 } from '@/lib/agent/posture';
 import { generateStewardEditorial } from '@/lib/agent/editorial';
 import { buildAgentChoices, type AgentChoice } from '@/lib/agent/choices';
+import { getAdminOverviewSnapshot } from '@/lib/admin/data/admin-overview-adapter';
+import { isFixtureMode } from '@/lib/admin/data/admin-data-mode';
 
 export type OverviewSetupStatus = 'done' | 'in_progress' | 'pending';
 
@@ -15,6 +17,22 @@ export interface OverviewSetupItem {
   label: string;
   status: OverviewSetupStatus;
   description: string;
+}
+
+export interface OverviewRecentActivityItem {
+  id: string;
+  category: string;
+  action: string;
+  summary: string;
+  createdAt: string;
+}
+
+export interface OverviewCrossPageCounts {
+  openBlockers: number;
+  datasetsPendingApproval: number;
+  connectorsNotConfigured: number;
+  invitesPending: number;
+  productionReadinessGatesFailing: number;
 }
 
 export interface OverviewPageView {
@@ -38,6 +56,9 @@ export interface OverviewPageView {
     primaryAction: { label: string; href: string };
   };
   setupItems: ReadonlyArray<OverviewSetupItem>;
+  recentActivity: ReadonlyArray<OverviewRecentActivityItem>;
+  crossPageCounts: OverviewCrossPageCounts;
+  dataMode: 'fixture' | 'live';
   primaryAgentLabel: string;
   primaryActionLabel: string;
   primaryActionHref: string;
@@ -46,50 +67,30 @@ export interface OverviewPageView {
   agentPostures?: ReadonlyArray<AgentFoundationPosture>;
 }
 
-const SETUP_ITEMS: ReadonlyArray<OverviewSetupItem> = [
-  {
-    id: 'data-trust',
-    label: 'Data Trust',
-    status: 'in_progress',
-    description: 'Loaded artifacts present; usable evidence partial.',
-  },
-  {
-    id: 'connectors',
-    label: 'Connectors',
-    status: 'pending',
-    description: '6 external systems, none live; stubs and deferred only.',
-  },
-  {
-    id: 'users-access',
-    label: 'Users & Access',
-    status: 'pending',
-    description: 'Roles seeded; live invite + SSO not wired.',
-  },
-  {
-    id: 'agent-readiness',
-    label: 'Agent Readiness',
-    status: 'in_progress',
-    description: 'Steward / Nexus / Sentinel / Atlas posture inventoried.',
-  },
-  {
-    id: 'production-readiness',
-    label: 'Production Readiness',
-    status: 'in_progress',
-    description: 'Demo ready; pilot partial; production blocked.',
-  },
-  {
-    id: 'architecture',
-    label: 'Architecture',
-    status: 'in_progress',
-    description: 'Planes documented; private data plane lab not deployed.',
-  },
-];
-
 export async function buildOverviewPageView(): Promise<OverviewPageView> {
   const ctx = await buildAgentContextAsync('apex-retail', 'admin', 'overview');
   const editorial = generateStewardEditorial(ctx);
   const choices = buildAgentChoices(ctx, 3);
   const postures = computeAllPostures(ctx);
+
+  // Fetch snapshot from adapter (fixture or live depending on ADMIN_DATA_MODE)
+  const snapshot = await getAdminOverviewSnapshot('apex-retail');
+  const dataMode = isFixtureMode() ? 'fixture' : 'live';
+
+  const setupItems: OverviewSetupItem[] = snapshot.setupSteps.map((step) => ({
+    id: step.id.replace(/_/g, '-'),
+    label: step.label,
+    status: step.status as OverviewSetupStatus,
+    description: step.description,
+  }));
+
+  const recentActivity: OverviewRecentActivityItem[] = snapshot.recentActivity.map((e) => ({
+    id: e.id,
+    category: e.category,
+    action: e.action,
+    summary: e.summary,
+    createdAt: e.createdAt,
+  }));
 
   return {
     eyebrow: 'Steward-led control plane orientation',
@@ -100,9 +101,9 @@ export async function buildOverviewPageView(): Promise<OverviewPageView> {
       tenant: ctx.tenant.name,
       mode: 'Setup/Admin',
       agent: 'Steward',
-      data: 'Manifest + seeds',
-      liveStatus: 'Deferred',
-      liveStatusKind: 'deferred',
+      data: dataMode === 'live' ? 'Live DB' : 'Manifest + seeds',
+      liveStatus: dataMode === 'live' ? 'Live' : 'Fixture',
+      liveStatusKind: dataMode === 'live' ? 'live' : 'deferred',
     },
     editorial: {
       title: editorial.title,
@@ -112,7 +113,10 @@ export async function buildOverviewPageView(): Promise<OverviewPageView> {
       blocker: editorial.blocker ?? undefined,
       primaryAction: editorial.primaryAction,
     },
-    setupItems: SETUP_ITEMS,
+    setupItems,
+    recentActivity,
+    crossPageCounts: snapshot.crossPageCounts,
+    dataMode,
     primaryAgentLabel: 'Steward',
     primaryActionLabel: 'Open Production Readiness',
     primaryActionHref: '/admin/production-readiness',
