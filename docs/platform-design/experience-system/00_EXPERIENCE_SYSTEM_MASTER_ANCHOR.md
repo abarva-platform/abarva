@@ -37,6 +37,8 @@ If a page or component lacks a spec or wireframe, the next step is to author the
 
 Then read the relevant files in `wireframes/` and `components/` for the target surface.
 
+For Source / Outsourcing page work, also read `wireframes/source-outsourcing/AbarVa_Source_Outsourcing_Wireframe_Specification_Pack_v1.docx`.
+
 ## Platform Defaults
 
 - Warm off-white is the default canvas.
