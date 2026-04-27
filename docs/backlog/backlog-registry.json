@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "updatedAt": "2026-04-26",
-  "updatedBy": "INTEL4+TOWER4 wave-22",
+  "updatedBy": "wave-28 orchestration agent",
   "description": "AbarVa Master Backlog Registry \u2014 all tracks, waves, and slices",
   "tracks": [
     {
@@ -128,7 +128,7 @@
     },
     {
       "id": "wave-28",
-      "status": "backlog",
+      "status": "merged",
       "note": "Data Trust \u2014 TRUST4, EVID1, DATA1-3"
     },
     {
@@ -455,9 +455,10 @@
     {
       "id": "EVID1",
       "track": "07",
-      "status": "backlog",
+      "status": "completed",
       "wave": "wave-28",
-      "title": "Evidence Manifest Schema"
+      "title": "Evidence Manifest Schema",
+      "completedAt": "2026-04-26"
     },
     {
       "id": "EVID2",
@@ -476,23 +477,26 @@
     {
       "id": "DATA1",
       "track": "07",
-      "status": "backlog",
+      "status": "completed",
       "wave": "wave-28",
-      "title": "Data Sharing Levels L0-L4 Enforcement"
+      "title": "Data Sharing Levels L0-L4 Enforcement",
+      "completedAt": "2026-04-26"
     },
     {
       "id": "DATA2",
       "track": "07",
-      "status": "backlog",
+      "status": "completed",
       "wave": "wave-28",
-      "title": "Dataset Approval Model"
+      "title": "Dataset Approval Model",
+      "completedAt": "2026-04-26"
     },
     {
       "id": "DATA3",
       "track": "07",
-      "status": "backlog",
+      "status": "completed",
       "wave": "wave-28",
-      "title": "No-Raw-Copy Mode Implementation"
+      "title": "No-Raw-Copy Mode Implementation",
+      "completedAt": "2026-04-26"
     },
     {
       "id": "AG1",
