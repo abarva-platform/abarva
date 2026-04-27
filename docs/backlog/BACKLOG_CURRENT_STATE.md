@@ -2,21 +2,22 @@
 
 > This file is written by the orchestration agent at the end of each wave.
 > The next autonomous session reads this file first.
-> Last updated by: orchestration agent (Wave 31 complete)
-> Last updated: 2026-04-26
+> Last updated by: orchestration agent (Wave 32 complete)
+> Last updated: 2026-04-27
 
 ## Last completed wave
-- waveId: wave-31
-- waveTitle: Security Posture Hardening
-- prNumber: 420
-- mergeSHA: 8b6a8659
-- completedSlices: [SEC3, SEC4]
-- completedAt: 2026-04-26
-- testsGreen: 98 new tests pass (56 SEC3 + 42 SEC4); 0 regressions on Wave 31 code
+- waveId: wave-32
+- waveTitle: Agent Surface Completion
+- prNumber: 425
+- mergeSHA: ed36ef38
+- completedSlices: [W32A, W32B, W32C, W32D, W32E, W32F, W32QA]
+- completedAt: 2026-04-27
+- testsGreen: 220 new tests across 6 new test suites; 811 integration tests passing; 0 regressions
 - skippedSlices: none
-- note: backlog-registry IDs SEC1/SEC2 belong to older architecture slices; Wave 31 slices registered as SEC3/SEC4 in build-slices.json
+- note: 7 parallel lanes (A–F + QA) executed in worktrees /tmp/nexus-w32a through /tmp/nexus-w32qa; cherry-picked onto codex/wave32-agent-surface-completion; build-slices.json conflicts resolved via cherry_resolve.py
 
 ## Previous waves (for reference)
+- wave-31: PR #420, SHA 8b6a8659, slices [SEC3, SEC4]
 - wave-30: PR #418, SHA 362abe59, slices [PAT1, PAT2, PAT3]
 - wave-29: PR #416, SHA 613a1d7c, slices [SHELL8, SHELL9, OPS3, OPS4]
 - wave-28: PR #414, SHA f7f8b196, slices [EVID1, DATA1, DATA2, DATA3]
@@ -28,11 +29,43 @@
 - wave-22: PR #396, SHA 493ec888, slices [INTEL4, TOWER4]
 
 ## Next wave to execute
-- waveId: wave-32
+- waveId: wave-33
 - waveTitle: TBD — determine from backlog-registry.json
 - waveFile: docs/backlog/waves/ (synthesise from backlog-registry.json + track BACKLOG.md if no file)
 - blockedSlices: none
-- primarySlices: confirm from backlog-registry.json (wave-32 entries)
+- primarySlices: confirm from backlog-registry.json (wave-33 entries)
+- note: Wave 32 raised avgWireframeScore 69.5 → 74.4 (13 safeFixesApplied); remaining deviations target Wave 33 (Architecture page at 58 is lowest priority)
+
+## Wave 32 deliverables produced
+- W32A: Programs Phase Filter — `src/lib/programs/phase-filter-view.ts`
+  (PhaseFilterView with 6-phase rail; buildPhaseFilterView, getPhaseLabel, getPhasesWithPrograms;
+   Apex Retail: 4 programs, CDP in build phase as isCurrentPhase; 33 tests)
+- W32B: Intelligence Modes — `src/lib/intelligence/intelligence-programs-mode-view.ts` + `intelligence-actions-mode-view.ts`
+  (Programs mode: impacted programs per signal pattern; Actions mode: 5 prioritized actions with agent/priority/affectedSurface;
+   Apex Retail: 3 programs linked to PAT-VENDOR-ASSUMPTION-DIVERGENCE/PAT-BAFO-READINESS-GAP/PAT-DESIGN-CRITERIA-GAP;
+   2 immediate actions + 2 this_week + 1 this_month; 40 tests)
+- W32C: Control Tower Lenses — `src/lib/tower/control-tower-active-lens-view.ts` (extended)
+  (TowerLensDetail interface; Adoption/Value/Risk lens details for Apex Retail;
+   Value lens: $2.4M CDP blocked by G3 gate; Risk lens: BAFO 2 vendors + connector stubs + evidence gaps;
+   buildLowContextLensDetail for thin tenants; 69 tests)
+- W32D: Connectors Readiness — `src/lib/admin/connectors-readiness-view.ts`
+  (ConnectorsReadinessView: 6 connectors, pilot-blocker projection, configuredCount/totalCount;
+   ConnectorStatus: not_configured|configured_stub|blocked|deferred;
+   buildConnectorsReadinessView, getPilotBlockerConnectors; 23 tests)
+- W32E: Admin Action Strip — `src/lib/admin/admin-action-strip-view.ts`
+  (AdminActionStripView: 5 admin actions, topPriorityAction, availableCount/blockedCount;
+   AdminActionStatus: available|disabled|deferred|blocked; AdminActionCategory: 5 types;
+   buildAdminActionStripView, getAvailableAdminActions, getBlockedAdminActions; 26 tests)
+- W32F: Blocker Detail Drawer — `src/lib/admin/blocker-detail-view.ts`
+  (BlockerDetailDrawerView: 4 Apex blockers with severity/owner/impact;
+   blk-apex-001 evidence upload (critical/engineering/pilotImpact), blk-apex-002 model gateway (critical/founder/productionImpact),
+   blk-apex-003 connector stubs (high/steward), blk-apex-004 SOC2 (high/founder);
+   buildBlockerDetailDrawerView, getAllBlockerDetails, getCriticalBlockers; 29 tests)
+- W32QA: Compliance Rescore — `src/lib/qa/wireframe-compliance-audit.ts` (updated)
+  (safeFixesApplied 6→13; Admin 62→72, Production Readiness 74→80, Programs Index 68→76,
+   Intelligence 76→84, Control Tower 75→82; avgScore 69.5→74.4; 56 tests total in updated suite)
+- Tests: 220 new tests; 811 integration tests all pass across 31 test suites
+- Compliance: WIRE2 wireframe compliance avgScore 69.5→74.4 (+4.9), safeFixesApplied 6→13
 
 ## Wave 31 deliverables produced
 - SEC3: Security Posture Model — `src/lib/security/security-posture-model.ts`
@@ -104,9 +137,9 @@
 (Set to true only if Anand explicitly instructs continuous autonomous execution)
 
 ## Session summary
-Wave 31 complete — Security Posture Hardening delivering 2 slices (SEC3, SEC4). SEC3 codified the AbarVa security posture framework as a 10-family, 22-control model with maturity tracking and a 5-gate readiness evaluator — pilot blocker controls, critical-risk gaps, and coverage threshold are all gated. SEC4 produced the canonical incident response runbook covering SEV1–SEV4 severity levels across 6 phases (detect→triage→contain→investigate→recover→review) with 13 response steps, a 4-level escalation matrix, and a 6-section post-incident review template. Note: ID collision with older SEC1/SEC2 architecture slices required Wave 31 slices to be registered as SEC3/SEC4 in build-slices.json. 98 new tests, CI all pass. Wave 32 next.
+Wave 32 complete — Agent Surface Completion delivering 7 slices (W32A–W32F + W32QA) addressing 21 WIRE2 wireframe compliance deviations across 5 surfaces. W32A added a 6-phase Programs filter view model for Apex Retail. W32B added Intelligence Programs + Actions mode view models (5 prioritized actions, 3 impacted programs per pattern). W32C extended Control Tower with Adoption/Value/Risk TowerLensDetail structs. W32D codified the Admin Connectors Readiness panel (6 connectors, pilot-blocker projection). W32E added the Admin Zone E action strip (5 actions, topPriorityAction dispatch). W32F modeled the Production Readiness blocker detail drawer (4 Apex blockers with severity/owner/impact). W32QA rescored all 8 compliance pages, lifting avgScore from 69.5 to 74.4 and safeFixesApplied from 6 to 13. 220 new tests, CI all pass (ESLint, Routes/disclaimers, hygiene gate, Vercel). Wave 33 next.
 
-## Route health (last verified 2026-04-26)
+## Route health (last verified 2026-04-27)
 - /tenant/apex-retail/programs → ACTIVE
 - /tenant/apex-retail/programs/apex-cdp-2026 → ACTIVE
 - /tenant/apex-retail/intelligence → ACTIVE (INTEL1-4 wired)
@@ -126,6 +159,7 @@ Wave 31 complete — Security Posture Hardening delivering 2 slices (SEC3, SEC4)
 - Page blueprints: docs/platform-design/page-blueprints/
 - Azure architecture docs: docs/architecture/azure/
 - Pilot docs: docs/pilot/
+- Wave 32 modules: src/lib/programs/phase-filter-view, src/lib/intelligence/intelligence-programs-mode-view, src/lib/intelligence/intelligence-actions-mode-view, src/lib/tower/control-tower-active-lens-view (extended), src/lib/admin/connectors-readiness-view, src/lib/admin/admin-action-strip-view, src/lib/admin/blocker-detail-view
 - Wave 31 modules: src/lib/security/ (security-posture-model, incident-response-runbook)
 - Wave 30 modules: src/lib/solutions/ (pattern-registry-format, pattern-authoring-workflow, vertical-pack-retail)
 - Wave 29 modules: src/lib/routes/, src/lib/ops/ (wave-runner-model, pack-spec-validator)
