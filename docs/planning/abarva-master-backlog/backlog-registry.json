@@ -221,7 +221,7 @@
       "title": "Authenticated visual QA pass",
       "track": "01-brand-design-system",
       "priority": "P0",
-      "status": "in_progress",
+      "status": "done",
       "ownerAgent": "Atlas",
       "productArea": "Brand and interface foundations",
       "recommendedWave": "WAVE-21",
@@ -266,9 +266,9 @@
         "Merge decision recorded with completion metadata in registry."
       ],
       "executionNotes": "Wave WAVE-21 execution for track 01-brand-design-system. Owner validates design and sequencing before work starts.",
-      "completedPr": null,
-      "completedCommit": null,
-      "completedAt": null
+      "completedPr": 404,
+      "completedCommit": "0810b99b",
+      "completedAt": "2026-04-26"
     },
     {
       "id": "VIS4",

@@ -26,10 +26,11 @@ Close the original brand and vendor-selection-readiness tranche, then continue i
 | ROAD1 | Master product readiness map | done | PR #399 |
 | ROAD2 | Eight-hour / three-day / pilot roadmap | done | PR #400 |
 | ROAD3 | Open risk and dependency register | done | PR #401 |
+| VIS2 | Authenticated visual QA pass | done | PR #404 |
 
 ## Deferred slices
 
 | ID | Title | Status | Reason |
 |---|---|---|---|
 | VIS4 | Design compliance CI/checklist enforcement | blocked | runtime/file-scope reconciliation still needed |
-| DESIGN1 | Experience Gallery screenshot polish | blocked | should follow authenticated visual QA planning |
+| DESIGN1 | Experience Gallery screenshot polish | blocked | should follow authenticated visual QA findings and admin-auth verification |
