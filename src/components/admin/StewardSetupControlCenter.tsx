@@ -88,8 +88,8 @@ const COLORS = {
   surface: '#FAFAF9',
   card: '#FFFFFF',
   surface2: '#F7F6F3',
-  accent: '#0E9F8C',
-  accentSoft: 'rgba(14,159,140,0.10)',
+  accent: '#0b4a91', // navy — replaced banned teal accent (ADMIN7)
+  accentSoft: 'rgba(11,74,145,0.10)',
   amber: '#B45309',
   amberSoft: 'rgba(180,83,9,0.10)',
   red: '#C53030',

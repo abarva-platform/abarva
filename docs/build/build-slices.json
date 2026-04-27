@@ -8858,11 +8858,12 @@
     {
       "id": "ADMIN7",
       "title": "Admin Visual Lock + Regression Guard",
-      "status": "backlog",
+      "status": "code_complete",
       "type": "qa",
       "wave": "wave-admin-redesign",
       "track": "06-admin-readiness-architecture",
-      "notes": "Hex-scan test, font-family scan, logo-presence test, WIRE2B compliance score update 72->92 in wireframe-compliance-audit.ts. Optional Playwright snapshot stubs."
+      "completedAt": "2026-04-27",
+      "notes": "70-test regression suite locks hex/font/shell/logo. Shell guard script gates banned tokens in CI. WIRE2B scores: Admin 72->92, Production Readiness 80->92, Architecture 58->90; safeFixesApplied 13->15."
     }
   ]
 }
