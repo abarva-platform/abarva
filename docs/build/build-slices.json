@@ -9031,7 +9031,8 @@
     {
       "id": "ADMIN-DATA2",
       "title": "Adapter contracts + types + fixture mode (foundation)",
-      "status": "backlog",
+      "status": "code_complete",
+      "completedAt": "2026-04-27",
       "type": "code",
       "wave": "wave-admin-data",
       "track": "06-admin-readiness-architecture",
@@ -9111,7 +9112,8 @@
     {
       "id": "ADMIN-DATA10",
       "title": "Admin tables migrations + Apex/Meridian seed",
-      "status": "backlog",
+      "status": "code_complete",
+      "completedAt": "2026-04-27",
       "type": "sql",
       "wave": "wave-admin-data",
       "track": "06-admin-readiness-architecture",
