@@ -1,20 +1,10 @@
-'use client'
-import { Suspense, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { redirect } from 'next/navigation';
 
-function Redirect() {
-  const searchParams = useSearchParams()
-  const client = searchParams.get('client') || 'meridian'
+// ADMIN10 · Legacy `/platform/admin/intelligence` is consolidated into the
+// canonical `/intelligence` surface. This route is a thin server-side
+// redirect; the prior client-side soft redirect was promoted to a server
+// `redirect()` for honest 308 behavior. Do not render UI here.
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.location.replace(`/intelligence?client=${client}`)
-    }
-  }, [client])
-
-  return <div style={{ minHeight: '100vh', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', color: '#3C3C3C' }}>Redirecting...</div>
-}
-
-export default function AdminIntelligence() {
-  return <Suspense fallback={<div>Loading...</div>}><Redirect /></Suspense>
+export default function PlatformAdminIntelligenceRedirect(): never {
+  redirect('/intelligence');
 }

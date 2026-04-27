@@ -127,7 +127,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
   // Admin nav item — clickable for admin, hidden visually-only for non-admin via disabled state
   const adminNavItem = () => (
     <a
-      href={isAdmin ? '/platform/admin' : undefined}
+      href={isAdmin ? '/admin' : undefined}
       key="admin-nav"
       style={{
         fontSize: '15px',
