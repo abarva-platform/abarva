@@ -8257,12 +8257,16 @@
     },
     {
       "id": "PAT4_W27",
-      "name": "AI Program Failure Modes → Solution Pattern Runtime Map",
+      "name": "AI Program Failure Modes \u2192 Solution Pattern Runtime Map",
       "category": "K",
       "status": "code_complete",
       "risk": "low",
       "ownerAgent": "AbarVa Autonomous Orchestration",
-      "dependsOn": ["PAT1_W27", "PAT2_W27", "PAT3_W27"],
+      "dependsOn": [
+        "PAT1_W27",
+        "PAT2_W27",
+        "PAT3_W27"
+      ],
       "allowedFiles": [
         "src/lib/solutions/ai-failure-modes-solution-map.ts",
         "src/__tests__/integration/solutions/pattern-library-packs.test.ts",
@@ -8279,7 +8283,12 @@
       "status": "code_complete",
       "risk": "low",
       "ownerAgent": "AbarVa Autonomous Orchestration",
-      "dependsOn": ["PAT1_W27", "PAT2_W27", "PAT3_W27", "PAT4_W27"],
+      "dependsOn": [
+        "PAT1_W27",
+        "PAT2_W27",
+        "PAT3_W27",
+        "PAT4_W27"
+      ],
       "allowedFiles": [
         "src/lib/solutions/pattern-manifest.ts",
         "src/__tests__/integration/solutions/pattern-library-packs.test.ts",
@@ -8288,6 +8297,176 @@
       "wave": "wave-27",
       "completedAt": "2026-04-26",
       "prBranch": "codex/wave-27-pattern-library-expansion"
+    },
+    {
+      "id": "EVID1",
+      "name": "Evidence Manifest Schema",
+      "category": "EVID",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Wave28 Data Trust",
+      "dependsOn": [
+        "TRUST4"
+      ],
+      "lastUpdated": "2026-04-26",
+      "allowedFiles": [
+        "src/lib/data-trust/evidence-manifest-schema.ts",
+        "src/__tests__/integration/data-trust/evidence-manifest-schema.test.ts",
+        "docs/build/slices/EVID1_EVIDENCE_MANIFEST_SCHEMA.md",
+        "docs/build/build-slices.json",
+        "docs/build/build-waves.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**"
+      ],
+      "acceptanceCriteria": [
+        "EvidenceClaimSchema type with claimId, anchorKey, claimKind, provenanceRecords, confidenceTier, sourceAbsent, sourceBlocked, citationDisplay",
+        "EvidenceConfidenceTier: high, medium, low, stale, missing, blocked",
+        "buildEvidenceClaimSchemaSeed() returns byte-equal seed across calls",
+        "resolveConfidenceTier() is pure and deterministic",
+        "summarizeEvidenceClaimSchema() aggregates correctly",
+        "No Date.now / Math.random / fetch / model calls",
+        "158 integration tests pass"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/data-trust/evidence-manifest-schema.test.ts",
+        "npx eslint src/lib/data-trust/evidence-manifest-schema.ts --max-warnings=0"
+      ],
+      "notes": "Pure deterministic evidence claim schema with confidence tiers, provenance records, freshness rules, and citation display contract. No model calls, no upload/parsing, no DB writes."
+    },
+    {
+      "id": "DATA1",
+      "name": "Data Sharing Levels L0-L4 Enforcement",
+      "category": "DATA",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Wave28 Data Trust",
+      "dependsOn": [
+        "TRUST1"
+      ],
+      "lastUpdated": "2026-04-26",
+      "allowedFiles": [
+        "src/lib/data-trust/data-sharing-enforcement.ts",
+        "src/__tests__/integration/data-trust/data-sharing-enforcement.test.ts",
+        "docs/build/build-slices.json",
+        "docs/build/build-waves.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**"
+      ],
+      "acceptanceCriteria": [
+        "DataSharingRequestAction type with 7 canonical actions",
+        "evaluateDataSharingEnforcement() blocks below minimum sharing level",
+        "Raw reads require L4 + named approval",
+        "Agent context build requires agent-use policy",
+        "Decision citation requires co_signed or audited verification",
+        "summarizeDataSharingEnforcement() aggregates correctly",
+        "All enforcement decisions carry createdFrom marker"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/data-trust/data-sharing-enforcement.test.ts",
+        "npx eslint src/lib/data-trust/data-sharing-enforcement.ts --max-warnings=0"
+      ],
+      "notes": "Pure deterministic enforcement layer for L0-L4 data sharing levels. Evaluates whether a request action is within the permitted boundary of a dataset sharing level."
+    },
+    {
+      "id": "DATA2",
+      "name": "Dataset Approval Model",
+      "category": "DATA",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Wave28 Data Trust",
+      "dependsOn": [
+        "TRUST3",
+        "DATA1"
+      ],
+      "lastUpdated": "2026-04-26",
+      "allowedFiles": [
+        "src/lib/data-trust/dataset-approval-model.ts",
+        "src/__tests__/integration/data-trust/dataset-approval-model.test.ts",
+        "docs/build/build-slices.json",
+        "docs/build/build-waves.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**"
+      ],
+      "acceptanceCriteria": [
+        "DatasetApprovalLifecycleState: 8 canonical states including not_requested, approved, rejected, revoked, expired",
+        "DatasetApprovalScope: 5 scopes mapping to permitted actions",
+        "validateDatasetApprovalRecord() rejects approvals without named approvers",
+        "evaluateApprovalGate() checks expiry, lifecycle state, and scope coverage",
+        "getRequiredApproverRoles() returns correct approver class per scope",
+        "No fabricated approvals; absence = denied",
+        "All approval decisions carry createdFrom marker"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/data-trust/dataset-approval-model.test.ts",
+        "npx eslint src/lib/data-trust/dataset-approval-model.ts --max-warnings=0"
+      ],
+      "notes": "Pure deterministic approval lifecycle model. State machine for dataset approvals with scope-to-action mapping, expiry enforcement, and named approver requirements."
+    },
+    {
+      "id": "DATA3",
+      "name": "No-Raw-Copy Mode Implementation",
+      "category": "DATA",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Wave28 Data Trust",
+      "dependsOn": [
+        "TRUST4"
+      ],
+      "lastUpdated": "2026-04-26",
+      "allowedFiles": [
+        "src/lib/data-trust/no-raw-copy-enforcement.ts",
+        "src/__tests__/integration/data-trust/no-raw-copy-enforcement.test.ts",
+        "docs/build/build-slices.json",
+        "docs/build/build-waves.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**"
+      ],
+      "acceptanceCriteria": [
+        "RawPayloadViolationCategory: 7 canonical violation types",
+        "inspectForRawPayload() detects URL schemes, long tokens, base64, connection strings, PII, large JSON blobs",
+        "evaluateNoRawCopyGate() blocks PII, connection strings, base64, large JSON always (even with L4 approval)",
+        "URL scheme and long token violations are override-able with L4 named approval",
+        "Empty values are always blocked",
+        "Clean labelled values pass the gate",
+        "All gate decisions carry createdFrom marker"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/data-trust/no-raw-copy-enforcement.test.ts",
+        "npx eslint src/lib/data-trust/no-raw-copy-enforcement.ts --max-warnings=0"
+      ],
+      "notes": "Pure deterministic no-raw-copy enforcement gate. Structurally rejects raw payloads (PII, connection strings, base64, large JSON, URLs, empty values) crossing the client-to-AbarVa boundary."
     }
   ]
 }

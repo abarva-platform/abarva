@@ -1105,7 +1105,7 @@
     {
       "waveId": "wave-27",
       "name": "Pattern Library Expansion",
-      "goal": "Deliver the first five solution pattern packs: Data Platform Managed Services (PAT1), Infrastructure Managed Services (PAT2), Vendor Evaluation Scorecard (PAT3), AI Failure Modes → Solution Map (PAT4), and the Pattern Manifest registry (PAT5). All deterministic TypeScript modules — no model calls, no migrations, no UI.",
+      "goal": "Deliver the first five solution pattern packs: Data Platform Managed Services (PAT1), Infrastructure Managed Services (PAT2), Vendor Evaluation Scorecard (PAT3), AI Failure Modes \u2192 Solution Map (PAT4), and the Pattern Manifest registry (PAT5). All deterministic TypeScript modules \u2014 no model calls, no migrations, no UI.",
       "status": "merged",
       "percentComplete": 100,
       "plannedSlices": [
@@ -1129,6 +1129,35 @@
       "productionReadinessUpdated": false,
       "currentBlockers": [],
       "nextAction": "Wave 27 complete. Proceed to Wave 28.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-28",
+      "name": "Data Trust Enforcement Layer",
+      "goal": "Deliver the data trust enforcement layer: Evidence Manifest Schema (EVID1), Data Sharing Levels L0-L4 Enforcement (DATA1), Dataset Approval Model (DATA2), and No-Raw-Copy Mode Enforcement (DATA3). All deterministic TypeScript modules \u2014 no model calls, no migrations, no UI.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "EVID1",
+        "DATA1",
+        "DATA2",
+        "DATA3"
+      ],
+      "completedSlices": [
+        "EVID1",
+        "DATA1",
+        "DATA2",
+        "DATA3"
+      ],
+      "skippedSlices": [
+        "TRUST4"
+      ],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Wave 28 complete. Proceed to Wave 29.",
       "lastUpdated": "2026-04-26"
     }
   ]
