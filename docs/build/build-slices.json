@@ -8758,6 +8758,15 @@
       "wave": "nav1",
       "track": "01-brand-design-system",
       "notes": "Audit of 6 Source routes. All use canonical SourceCanonShell / SourceRouteShell / SourceFoundationShell. No legacy chrome, no hand-coded wordmark, no banned tokens."
+    },
+    {
+      "id": "NAV1E",
+      "title": "Programs / Intelligence / Tower Nav Alignment",
+      "status": "code_complete",
+      "type": "docs",
+      "wave": "nav1",
+      "track": "01-brand-design-system",
+      "notes": "Audit of Programs, Intelligence, and Tower routes. Canonical tenant tree fully aligned (ProgramCanonShell / IntelligenceRouteShell / TowerRouteShell + SeedRouteShell). Non-tenant routes have banned tokens in page-body styling \u2014 deferred to banned-token-sweep wave."
     }
   ]
 }
