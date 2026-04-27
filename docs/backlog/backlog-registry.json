@@ -671,23 +671,23 @@
     {
       "id": "AZLAB6",
       "track": "09",
-      "status": "backlog",
+      "status": "completed",
       "wave": "wave-24",
-      "title": "Azure Lab Provisioning (actual)"
+      "title": "Azure Lab Docs Package — ADRs + Architecture + Naming + Cost + Bicep Stubs"
     },
     {
       "id": "AZLAB7",
       "track": "09",
-      "status": "backlog",
+      "status": "completed",
       "wave": "wave-24",
-      "title": "Azure Private Evidence Manifest Integration"
+      "title": "Private Data Plane Design — Fortune 500 Deployment"
     },
     {
       "id": "AZLAB8",
       "track": "09",
-      "status": "backlog",
+      "status": "completed",
       "wave": "wave-24",
-      "title": "Azure Cost Monitoring + Alerting"
+      "title": "Multi-Provider Model Gateway Design — Azure OpenAI + Anthropic Switchable Routing"
     },
     {
       "id": "LIVE1",

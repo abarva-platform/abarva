@@ -6967,6 +6967,45 @@
       "createdAt": "2026-04-26"
     },
     {
+      "id": "AZLAB6",
+      "name": "Azure Lab Docs Package — ADRs + Architecture + Naming + Cost + Bicep Stubs",
+      "category": "architecture",
+      "wave": "wave-24",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [],
+      "testFiles": [],
+      "sliceDoc": "docs/build/slices/AZLAB6_AZURE_LAB_DOCS.md",
+      "createdAt": "2026-04-26",
+      "completedAt": "2026-04-26"
+    },
+    {
+      "id": "AZLAB7",
+      "name": "Private Data Plane Design — Fortune 500 Deployment",
+      "category": "architecture",
+      "wave": "wave-24",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [],
+      "testFiles": [],
+      "sliceDoc": "docs/build/slices/AZLAB7_PRIVATE_DATA_PLANE_DESIGN.md",
+      "createdAt": "2026-04-26",
+      "completedAt": "2026-04-26"
+    },
+    {
+      "id": "AZLAB8",
+      "name": "Multi-Provider Model Gateway Design — Azure OpenAI + Anthropic Switchable Routing",
+      "category": "architecture",
+      "wave": "wave-24",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [],
+      "testFiles": [],
+      "sliceDoc": "docs/build/slices/AZLAB8_MULTI_PROVIDER_MODEL_GATEWAY_DESIGN.md",
+      "createdAt": "2026-04-26",
+      "completedAt": "2026-04-26"
+    },
+    {
       "id": "LIVE1",
       "wave": "wave-13",
       "status": "code_complete",
