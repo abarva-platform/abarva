@@ -7816,6 +7816,15 @@
       "type": "docs-only",
       "description": "Creates docs/backlog/ with 13 track BACKLOG.md files, 7 wave spec files, backlog-registry.json, and updates build JSON manifests.",
       "sliceDoc": "docs/build/slices/BLG1_MASTER_BACKLOG_SYSTEM.md"
+    },
+    {
+      "id": "BLG2",
+      "title": "Autonomous Orchestration Wiring",
+      "status": "code_complete",
+      "type": "ops",
+      "wave": "wave-21",
+      "track": "12-build-ops-orchestration",
+      "notes": "Context handoff, escalation policy, orchestration prompt, wave runner script. Docs + shell only, no runtime changes."
     }
   ]
 }

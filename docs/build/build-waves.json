@@ -412,7 +412,8 @@
         "TOWER3",
         "QA29",
         "DEMO9",
-        "BLG1"
+        "BLG1",
+        "BLG2"
       ],
       "completedSlices": [
         "BRAND1",
@@ -427,7 +428,8 @@
         "TOWER3",
         "QA29",
         "DEMO9",
-        "BLG1"
+        "BLG1",
+        "BLG2"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
@@ -435,7 +437,7 @@
       "validationStatus": "tests_green",
       "productionReadinessUpdated": true,
       "currentBlockers": [],
-      "nextAction": "All 13 wave-21 slices complete (including BLG1). Wave-21 merged.",
+      "nextAction": "All 14 wave-21 slices complete (including BLG1, BLG2). Wave-21 merged.",
       "lastUpdated": "2026-04-26"
     },
     {
