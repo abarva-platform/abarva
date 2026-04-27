@@ -138,8 +138,9 @@
     },
     {
       "id": "wave-30",
-      "status": "backlog",
-      "note": "Solution Intelligence \u2014 PAT1-3, SOL patterns"
+      "status": "merged",
+      "note": "Solution Intelligence \u2014 PAT1-3, SOL patterns",
+      "mergedPrNumber": 418
     }
   ],
   "slices": [
@@ -842,23 +843,26 @@
     {
       "id": "PAT1",
       "track": "11",
-      "status": "backlog",
+      "status": "completed",
       "wave": "wave-30",
-      "title": "Pattern Registry Format"
+      "title": "Pattern Registry Format",
+      "completedWave": "wave-30"
     },
     {
       "id": "PAT2",
       "track": "11",
-      "status": "backlog",
+      "status": "completed",
       "wave": "wave-30",
-      "title": "Pattern Authoring Workflow"
+      "title": "Pattern Authoring Workflow",
+      "completedWave": "wave-30"
     },
     {
       "id": "PAT3",
       "track": "11",
-      "status": "backlog",
+      "status": "completed",
       "wave": "wave-30",
-      "title": "Vertical Pack \u2014 Retail"
+      "title": "Vertical Pack \u2014 Retail",
+      "completedWave": "wave-30"
     },
     {
       "id": "OPS1",
