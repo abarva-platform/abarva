@@ -67,20 +67,15 @@ describe('ProductionReadinessDecisionFlow (PROD8)', () => {
     expect(/production_ready\s*:\s*true/i.test(componentSource)).toBe(false);
   });
 
-  it('page source imports ProductionReadinessDecisionFlow', () => {
-    expect(
-      /import\s*\{[^}]*ProductionReadinessDecisionFlow[^}]*\}\s*from/i.test(
-        pageSource,
-      ),
-    ).toBe(true);
-  });
-
-  it('page source still imports ProductionReadinessTracker', () => {
-    expect(
-      /import\s*\{[^}]*ProductionReadinessTracker[^}]*\}\s*from/i.test(
-        pageSource,
-      ),
-    ).toBe(true);
+  // ADMIN5 (wave-33) replaced the auth-gated page with the AdminCanonShellV2
+  // shell + DemoPilotProductionTiles + TopBlockersTable. The legacy
+  // ProductionReadinessDecisionFlow / ProductionReadinessTracker components
+  // remain in the codebase (and their own assertions still cover them above)
+  // but are no longer imported by the route. The route now wires the
+  // canonical read model via buildProductionReadinessPageView.
+  it('page source wires the canonical production readiness view', () => {
+    expect(pageSource).toMatch(/buildProductionReadinessPageView/);
+    expect(pageSource).toMatch(/AdminCanonShellV2/);
   });
 
   it('component source uses navy accent or imports from abarva-theme', () => {
