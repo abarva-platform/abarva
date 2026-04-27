@@ -155,6 +155,13 @@
       "title": "Admin Completion \u00b7 depth + legacy consolidation",
       "file": "tracks/06-admin-readiness-architecture/BACKLOG.md",
       "note": "ADMIN9 audit + ADMIN10\u2013ADMIN19. Closes out admin tree: legacy /platform/admin/* consolidation + per-page depth + visual lock update. HARD-GATED interactions defer to Wave 27+."
+    },
+    {
+      "id": "wave-admin-data",
+      "status": "planned",
+      "title": "Native Admin Data Layer",
+      "file": "tracks/06-admin-readiness-architecture/BACKLOG.md",
+      "note": "ADMIN-DATA1 audit + ADMIN-DATA2\u2013ADMIN-DATA13. Replaces hardcoded TypeScript constants in admin page-views with real Supabase data via adapter pattern. Closes ADMIN18 deferral. 7 new admin tables (admin_connectors, admin_datasets, admin_dataset_approvals, admin_dataset_quality, admin_blockers, admin_audit_log, admin_setup_progress). Read-only; writes stay HARD-GATED."
     }
   ],
   "slices": [
@@ -1069,6 +1076,97 @@
       "status": "backlog",
       "wave": "wave-admin-completion",
       "title": "Visual lock + regression update for completion wave"
+    },
+    {
+      "id": "ADMIN-DATA1",
+      "track": "06",
+      "status": "code_complete",
+      "wave": "wave-admin-data",
+      "title": "Native Admin Data Layer Audit + Wave Registration"
+    },
+    {
+      "id": "ADMIN-DATA2",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-data",
+      "title": "Adapter contracts + types + fixture mode (foundation)"
+    },
+    {
+      "id": "ADMIN-DATA3",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-data",
+      "title": "/admin/users-access wired to admin-users-adapter"
+    },
+    {
+      "id": "ADMIN-DATA4",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-data",
+      "title": "/admin/connectors wired to admin-connectors-adapter"
+    },
+    {
+      "id": "ADMIN-DATA5",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-data",
+      "title": "/admin/data-trust wired to admin-datasets-adapter"
+    },
+    {
+      "id": "ADMIN-DATA6",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-data",
+      "title": "/admin/agent-readiness wired to admin-agent-readiness-adapter"
+    },
+    {
+      "id": "ADMIN-DATA7",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-data",
+      "title": "/admin/build-progress audit (manifest-backed verified)"
+    },
+    {
+      "id": "ADMIN-DATA8",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-data",
+      "title": "/admin/production-readiness wired to admin-production-readiness-adapter"
+    },
+    {
+      "id": "ADMIN-DATA9",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-data",
+      "title": "/admin/architecture audit (deterministic-only confirmed)"
+    },
+    {
+      "id": "ADMIN-DATA10",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-data",
+      "title": "Admin tables migrations + Apex/Meridian seed"
+    },
+    {
+      "id": "ADMIN-DATA11",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-data",
+      "title": "AGENT1 context bundle wired to real DB"
+    },
+    {
+      "id": "ADMIN-DATA12",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-data",
+      "title": "ADMIN18 Overview pull-through (live data)"
+    },
+    {
+      "id": "ADMIN-DATA13",
+      "track": "06",
+      "status": "backlog",
+      "wave": "wave-admin-data",
+      "title": "Visual + data regression lock"
     }
   ],
   "lastUpdated": "2026-04-27"

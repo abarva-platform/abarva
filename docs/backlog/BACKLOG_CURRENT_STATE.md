@@ -2,29 +2,29 @@
 
 > This file is written by the orchestration agent at the end of each wave.
 > The next autonomous session reads this file first.
-> Last updated by: orchestration agent (ADMIN19 merged · ADMIN18 deferred to ADMIN-DATA wave)
+> Last updated by: orchestration agent (ADMIN-DATA1 audit + wave-admin-data registered)
 > Last updated: 2026-04-27
 
 ## Last completed slice
-- sliceId: ADMIN19
-- waveId: wave-admin-completion (partially_merged, 91% — 10 of 11 slices done; ADMIN18 deferred)
-- title: ADMIN19 visual lock + regression guard for completion wave
-- prNumber: 461
-- mergeSHA: 4289b2ce
+- sliceId: ADMIN-DATA1
+- waveId: wave-admin-data (planned, 8% — 1 of 13 slices done)
+- title: Native Admin Data Layer Audit + Wave Registration
+- prNumber: TBD (this PR)
+- mergeSHA: TBD
 - completedAt: 2026-04-27
-- testsGreen: admin7-visual-lock 209/209 (was ~70 — 30+ assertions added across 32 batch 1+2 depth components + 7 admin pages); full admin regression 1737/1737; hygiene gate 11/11; ESLint clean; TypeScript clean; build clean; hex audit PASS
-- skippedSlices: ADMIN18 (deferred — see "Deferral note" below)
-- note: Locked the visual canon and regression guards across wave-admin-completion's batch 1+2 depth surfaces. Verified all 32 new components (drawers, tabs, action strips, matrices, expanded tiles) import from @/lib/design/design-tokens with no banned hex tokens. Verified 7 of 8 admin pages read URL searchParams for sub-nav/drawer state (Overview exempt until ADMIN18 ships). WIRE2B compliance scores updated honestly: Production Readiness 92→96 (gate matrix + blocker drawer + readiness tile expansion), Architecture 90→94 (Azure sub-tab + ComponentDetailDrawer closes the open WIRE2 component-drawer deviation), Admin Overview unchanged at 92 (ADMIN18 deferred — no Overview depth shipped). safeFixesApplied: 15 → 16.
-
-## Deferral note · ADMIN18
-ADMIN18 (Overview pull-through · setup timeline + recent activity strip + cross-page CTAs) was scoped to use deterministic seed for both timeline and activity. Founder asked for native data flow from real DB tables. ADMIN18 is therefore **deferred** to a follow-up wave, **ADMIN-DATA**, so it ships with live `admin_setup_progress` + `admin_audit_log` tables instead of seed. ADMIN18 remains in `plannedSlices` of wave-admin-completion and is **not** silently dropped.
+- testsGreen: docs-only slice; hygiene gate 11/11; tsc clean; build clean; no app code touched
+- skippedSlices: none
+- note: Comprehensive audit producing wave-admin-data backlog. Audit doc ships at `docs/build/ADMIN_DATA_LAYER_AUDIT.md` (~700 lines): per-page mapping for all 8 admin pages, DDL specs for 7 new admin tables (admin_connectors, admin_datasets, admin_dataset_approvals, admin_dataset_quality, admin_blockers, admin_audit_log, admin_setup_progress), 9 adapter contract signatures, parallelization plan (Tier 1: DATA2 foundation; Tier 2: DATA3-9 + DATA10 in parallel; Tier 3: DATA11-12; Tier 4: DATA13 lock), sequencing rationale (fixture mode lets page-wiring lanes run before migrations land). All write actions, live model calls, audit-event emission remain HARD-GATED for Wave 27+. Existing Supabase infrastructure catalogued (persons / teams / clients / audit_log / data_integrations / integration_health all reusable). ADMIN18 (deferred from wave-admin-completion) folds into ADMIN-DATA12 (Overview pull-through against real data).
 
 ## Next wave
-- waveId: ADMIN-DATA (not yet registered — needs a planning slice)
-- status: planning required
-- nextSlices: [ADMIN-DATA1 (admin data layer audit), then re-scoped ADMIN18]
-- recommendedSequence: Run **ADMIN-DATA1 — admin data layer audit** to register the wave + design admin_setup_progress + admin_audit_log schemas. Then re-scoped ADMIN18 ships Overview pull-through against real DB tables.
-- estimatedWallClock: ADMIN-DATA1 ~1 hour (audit + schema design + slice registration). Re-scoped ADMIN18 ~2 hours after schemas land.
+- waveId: wave-admin-data
+- status: planned
+- nextSlices: [ADMIN-DATA2 (adapter contracts foundation), then DATA3-9 + DATA10 in parallel, then DATA11-12, then DATA13 lock]
+- recommendedSequence: Run **ADMIN-DATA2 — adapter contracts + types + fixture mode** next. After DATA2 merges, kick off DATA3, DATA4, DATA5, DATA6, DATA7, DATA8, DATA9, DATA10 as parallel lanes. After DATA10 merges, run DATA11 + DATA12 sequentially. DATA13 is the final lock.
+- estimatedWallClock: ~7-8 hours wall-clock with 4-lane parallelization across Tier 2.
+
+## Previous deferral note · ADMIN18
+ADMIN18 (Overview pull-through · setup timeline + recent activity strip + cross-page CTAs) was scoped to use deterministic seed for both timeline and activity. Founder asked for native data flow from real DB tables. ADMIN18 is **subsumed** by ADMIN-DATA12 in wave-admin-data — same UI scope, but reads from `admin_setup_progress` + `admin_audit_log` (DATA10). ADMIN18 remains in `plannedSlices` of wave-admin-completion historically and is **not** silently dropped — its work ships as ADMIN-DATA12.
 
 ## Previous completed slices
 - sliceIds: ADMIN12, ADMIN14, ADMIN15, ADMIN16

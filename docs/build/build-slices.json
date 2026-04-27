@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-04-27 (ADMIN9 audit + wave-admin-completion backlog registered)",
+  "lastUpdated": "2026-04-27 (ADMIN-DATA1 audit + wave-admin-data backlog registered)",
   "lifecycle": [
     "ready",
     "in_progress",
@@ -9016,6 +9016,137 @@
       "risk": "low",
       "completedAt": "2026-04-27",
       "notes": "Tier 3 · extends ADMIN7 regression suite to 209 tests covering 32 batch 1+2 depth components; verifies design-tokens import + banned-token sweep + searchParams contract on 7 admin pages. WIRE2B rescore: Production Readiness 92→96, Architecture 90→94 (closes WIRE2 component drawer deviation), Admin Overview unchanged at 92 (ADMIN18 deferred to ADMIN-DATA wave)."
+    },
+    {
+      "id": "ADMIN-DATA1",
+      "title": "Native Admin Data Layer Audit + Wave Registration",
+      "status": "code_complete",
+      "type": "docs",
+      "wave": "wave-admin-data",
+      "track": "06-admin-readiness-architecture",
+      "completedAt": "2026-04-27",
+      "risk": "low",
+      "notes": "Comprehensive audit producing wave-admin-data backlog (ADMIN-DATA2 through ADMIN-DATA13). Maps 8 admin page-views to data requirements; specs 7 new admin tables (DDL); designs 9 adapter contracts (TS signatures); plans wave with parallelization tiers. No app code touched."
+    },
+    {
+      "id": "ADMIN-DATA2",
+      "title": "Adapter contracts + types + fixture mode (foundation)",
+      "status": "backlog",
+      "type": "code",
+      "wave": "wave-admin-data",
+      "track": "06-admin-readiness-architecture",
+      "risk": "medium",
+      "notes": "Foundation. Ships 9 adapter modules under src/lib/admin/data/ with dual-mode (real DB / fixture). Blocks DATA3-9 page-wiring lanes."
+    },
+    {
+      "id": "ADMIN-DATA3",
+      "title": "/admin/users-access wired to admin-users-adapter",
+      "status": "backlog",
+      "type": "code",
+      "wave": "wave-admin-data",
+      "track": "06-admin-readiness-architecture",
+      "risk": "medium",
+      "notes": "Tier 2 · removes SEED_USER_DETAILS / SEED_ROLE_SUMMARY; reads persons + memberships via adapter. Pending invites stay deterministic."
+    },
+    {
+      "id": "ADMIN-DATA4",
+      "title": "/admin/connectors wired to admin-connectors-adapter",
+      "status": "backlog",
+      "type": "code",
+      "wave": "wave-admin-data",
+      "track": "06-admin-readiness-architecture",
+      "risk": "medium",
+      "notes": "Tier 2 · removes APEX_DETAIL_SEEDS / MERIDIAN_DETAIL_SEEDS; per-connector data flows through adapter."
+    },
+    {
+      "id": "ADMIN-DATA5",
+      "title": "/admin/data-trust wired to admin-datasets-adapter",
+      "status": "backlog",
+      "type": "code",
+      "wave": "wave-admin-data",
+      "track": "06-admin-readiness-architecture",
+      "risk": "medium",
+      "notes": "Tier 2 · largest lane. 5 sub-tabs (Trust Ladder / Loaded Files / Promotion Queue / Quality Scorecard / Audit Trail) all data-driven."
+    },
+    {
+      "id": "ADMIN-DATA6",
+      "title": "/admin/agent-readiness wired to admin-agent-readiness-adapter",
+      "status": "backlog",
+      "type": "code",
+      "wave": "wave-admin-data",
+      "track": "06-admin-readiness-architecture",
+      "risk": "low",
+      "notes": "Tier 2 · COVERAGE matrix + topGap derivation moves to adapter. AGENT_CAPABILITIES stays deterministic."
+    },
+    {
+      "id": "ADMIN-DATA7",
+      "title": "/admin/build-progress audit (manifest-backed verified)",
+      "status": "backlog",
+      "type": "code",
+      "wave": "wave-admin-data",
+      "track": "06-admin-readiness-architecture",
+      "risk": "low",
+      "notes": "Tier 2 · smallest lane. Build progress already manifest-backed; thin wrapper added for symmetry. No DB tables."
+    },
+    {
+      "id": "ADMIN-DATA8",
+      "title": "/admin/production-readiness wired to admin-production-readiness-adapter",
+      "status": "backlog",
+      "type": "code",
+      "wave": "wave-admin-data",
+      "track": "06-admin-readiness-architecture",
+      "risk": "medium",
+      "notes": "Tier 2 · HISTORY_STRIP + tile state + blocker drawer all from adapter. production_ready never promoted."
+    },
+    {
+      "id": "ADMIN-DATA9",
+      "title": "/admin/architecture audit (deterministic-only confirmed)",
+      "status": "backlog",
+      "type": "code",
+      "wave": "wave-admin-data",
+      "track": "06-admin-readiness-architecture",
+      "risk": "low",
+      "notes": "Tier 2 · smallest lane. Architecture is platform-level; banner comment locks deterministic-only contract. No adapter."
+    },
+    {
+      "id": "ADMIN-DATA10",
+      "title": "Admin tables migrations + Apex/Meridian seed",
+      "status": "backlog",
+      "type": "sql",
+      "wave": "wave-admin-data",
+      "track": "06-admin-readiness-architecture",
+      "risk": "high",
+      "notes": "Tier 2 (parallel with DATA3-9) · ships 7 new admin tables + demo seed for Apex Retail + Meridian Bank. After this lands, ADMIN_DATA_MODE=live functional."
+    },
+    {
+      "id": "ADMIN-DATA11",
+      "title": "AGENT1 context bundle wired to real DB",
+      "status": "backlog",
+      "type": "code",
+      "wave": "wave-admin-data",
+      "track": "06-admin-readiness-architecture",
+      "risk": "medium",
+      "notes": "Tier 3 · buildAgentContext source: hardcoded constants → live DB. Bundle shape unchanged. Feature flag AGENT_CONTEXT_LIVE_DB; default off in this slice."
+    },
+    {
+      "id": "ADMIN-DATA12",
+      "title": "ADMIN18 Overview pull-through (live data)",
+      "status": "backlog",
+      "type": "code",
+      "wave": "wave-admin-data",
+      "track": "06-admin-readiness-architecture",
+      "risk": "medium",
+      "notes": "Tier 3 · what ADMIN18 was scoped to do but with real data from admin_setup_progress + admin_audit_log. SetupTimelineCard + RecentActivityCard + CrossPageCTAGrid."
+    },
+    {
+      "id": "ADMIN-DATA13",
+      "title": "Visual + data regression lock",
+      "status": "backlog",
+      "type": "qa",
+      "wave": "wave-admin-data",
+      "track": "06-admin-readiness-architecture",
+      "risk": "low",
+      "notes": "Tier 4 · extends admin7-visual-lock to ~240 assertions; adds fixture-vs-live parity tests; flips AGENT_CONTEXT_LIVE_DB default on; promotes wave-admin-data to merged."
     }
   ]
 }

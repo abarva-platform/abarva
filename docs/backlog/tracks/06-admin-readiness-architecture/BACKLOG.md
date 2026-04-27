@@ -487,3 +487,57 @@ ADMIN1–8 + AGENT1 locked the canonical admin shell, visual canon, and determin
 ### Wave file
 - `docs/build/ADMIN_COMPLETION_AUDIT.md`
 - `docs/build/slices/ADMIN9_*.md` through `ADMIN19_*.md`
+
+---
+
+## Wave: Native Admin Data Layer (`wave-admin-data`)
+
+### Why
+After `wave-admin-completion` shipped (10 of 11 slices merged at 91%), the canonical `/admin/*` tree at `src/app/(maestro)/admin/*` is content-rich but every page reads from **hardcoded TypeScript constants** in `src/lib/admin/*-page-view.ts` — `SETUP_ITEMS`, `SEED_USER_DETAILS`, `APEX_DETAIL_SEEDS`, `LOADED_FILES`, `CI_SNAPSHOT`, etc. The founder rejected ADMIN18 (Overview pull-through) shipping with deterministic seed and called for native data flow from real DB tables. ADMIN18 was deferred from `wave-admin-completion` for exactly this reason. ADMIN-DATA1 audited the existing Supabase infrastructure (74 migrations, including `persons`, `teams`, `clients`, `audit_log`, `data_integrations`, `integration_health`), the canonical adapter pattern (`commercial-mission-adapter.ts`, `atlas/repository.ts`), and produced this 12-slice plan. All write actions, live model calls, and audit-event emission stay HARD-GATED for Wave 27+ — this wave is **READ-ONLY**.
+
+### Source documents
+- `docs/build/ADMIN_DATA_LAYER_AUDIT.md` — comprehensive audit + DDL specs + adapter contracts + sequencing
+- `docs/build/slices/ADMIN-DATA1_*.md` through `ADMIN-DATA13_*.md` — slice docs
+
+### Slices
+
+| ID | Title | Type | Tier | Depends on |
+|---|---|---|---|---|
+| ADMIN-DATA1 | Native Admin Data Layer Audit + Backlog Registration | docs | (this audit) | ADMIN9, ADMIN19 |
+| ADMIN-DATA2 | Adapter contracts + types + fixture mode | code | 1 (foundation) | DATA1 |
+| ADMIN-DATA3 | `/admin/users-access` wired | code | 2 (parallel) | DATA2 |
+| ADMIN-DATA4 | `/admin/connectors` wired | code | 2 (parallel) | DATA2 |
+| ADMIN-DATA5 | `/admin/data-trust` wired | code | 2 (parallel) | DATA2 |
+| ADMIN-DATA6 | `/admin/agent-readiness` wired | code | 2 (parallel) | DATA2 |
+| ADMIN-DATA7 | `/admin/build-progress` audit | code | 2 (parallel) | DATA2 |
+| ADMIN-DATA8 | `/admin/production-readiness` wired | code | 2 (parallel) | DATA2 |
+| ADMIN-DATA9 | `/admin/architecture` audit | code | 2 (parallel) | DATA2 |
+| ADMIN-DATA10 | Admin tables migrations + Apex/Meridian seed | sql | 2 (parallel) | DATA2 |
+| ADMIN-DATA11 | AGENT1 context bundle wired to real DB | code | 3 | DATA10 |
+| ADMIN-DATA12 | ADMIN18 Overview pull-through (live data) | code | 3 | DATA10 |
+| ADMIN-DATA13 | Visual + data regression lock | qa | 4 | DATA12 |
+
+### New tables (DATA10)
+- `admin_connectors` — per-tenant connector readiness (kind, vendor, status, required-for-pilot/prod, blocker reason, steward guidance)
+- `admin_datasets` — per-tenant dataset trust ladder (rung, lineage, schema)
+- `admin_dataset_approvals` — promotion request log (pending/approved/rejected)
+- `admin_dataset_quality` — quality scorecard pillar scores per dataset
+- `admin_blockers` — production-readiness blockers (severity, scope, status, owner)
+- `admin_audit_log` — admin-page interaction events (read-only in this wave)
+- `admin_setup_progress` — computed/cached setup-step status per tenant
+
+### Acceptance
+- 8 admin pages no longer read from hardcoded TypeScript constants (except platform-level concept data like `AGENT_CAPABILITIES`, `TRUST_LADDER` rungs, `ARCHITECTURE_PLANES`).
+- 7 new admin tables exist with RLS, indexes, seed for Apex Retail + Meridian Bank.
+- AGENT1 context bundle reads from live DB (DATA11).
+- ADMIN18 Overview pull-through ships with real `admin_setup_progress` + `admin_audit_log` data (DATA12).
+- WIRE2B Admin Overview score eligible to rescore from 92.
+- All write actions, live model calls, audit-event emission remain HARD-GATED for Wave 27+.
+- `production_ready: true` never promoted in this wave.
+
+### Estimated effort
+~7-8 hours wall-clock with 4-lane parallelization (Tier 2 has 8 lanes).
+
+### Wave file
+- `docs/build/ADMIN_DATA_LAYER_AUDIT.md`
+- `docs/build/slices/ADMIN-DATA1_*.md` through `ADMIN-DATA13_*.md`
