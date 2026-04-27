@@ -12,6 +12,13 @@
  * wave-admin-redesign update (ADMIN7): admin tree pages rebuilt on
  * AdminCanonShellV2; scores raised — Admin 72→92, Production Readiness 80→92,
  * Architecture 58→90; safeFixesApplied 13 → 15 (only honest deltas applied).
+ *
+ * wave-admin-completion update (ADMIN19): batch 1+2 depth components shipped —
+ * Production Readiness 92→96 (gate matrix + blocker drawer + tile expansion),
+ * Architecture 90→94 (Azure sub-tab + ComponentDetailDrawer closes open
+ * WIRE2 deviation); safeFixesApplied 15 → 16 (architecture component drawer
+ * flips to safeFixApplied: true). Admin Overview unchanged at 92 — ADMIN18
+ * deferred to ADMIN-DATA wave.
  */
 
 import {
@@ -202,11 +209,11 @@ describe('wireframe-compliance-audit', () => {
       expect(a).not.toBe(b);
     });
 
-    it('Architecture page is at 90 after ADMIN4 (was 58 in WIRE2)', () => {
+    it('Architecture page is at 94 after ADMIN19 (was 58 → 90 → 94)', () => {
       const results = getPageComplianceResults();
       const arch = results.find((r) => r.route === '/admin/architecture');
       expect(arch).toBeDefined();
-      expect(arch!.overallScore).toBe(90);
+      expect(arch!.overallScore).toBe(94);
     });
 
     it('Intelligence page held at 84 after Wave 32', () => {
@@ -226,19 +233,19 @@ describe('wireframe-compliance-audit', () => {
       expect(result!.overallScore).toBe(82);
     });
 
-    it('wave-admin-redesign: Production Readiness 80 → 92', () => {
+    it('ADMIN19: Production Readiness 92 → 96 (gate matrix + blocker drawer)', () => {
       const result = getPageComplianceResult('/admin/production-readiness');
-      expect(result!.overallScore).toBe(92);
+      expect(result!.overallScore).toBe(96);
     });
 
-    it('wave-admin-redesign: Admin 72 → 92', () => {
+    it('ADMIN19: Admin Overview unchanged at 92 (ADMIN18 deferred)', () => {
       const result = getPageComplianceResult('/admin');
       expect(result!.overallScore).toBe(92);
     });
 
-    it('wave-admin-redesign: Architecture 58 → 90', () => {
+    it('ADMIN19: Architecture 90 → 94 (Azure sub-tab + component drawer)', () => {
       const result = getPageComplianceResult('/admin/architecture');
-      expect(result!.overallScore).toBe(90);
+      expect(result!.overallScore).toBe(94);
     });
   });
 
@@ -251,6 +258,7 @@ describe('wireframe-compliance-audit', () => {
       const result = getPageComplianceResult('/admin');
       expect(result).not.toBeNull();
       expect(result!.page).toBe('Admin');
+      // Admin Overview unchanged at 92 — ADMIN18 deferred to ADMIN-DATA wave.
       expect(result!.overallScore).toBe(92);
     });
 
@@ -297,9 +305,9 @@ describe('wireframe-compliance-audit', () => {
       expect(summary.highSeverityDeviations).toBeGreaterThanOrEqual(0);
     });
 
-    it('safeFixesApplied equals 15 after wave-admin-redesign fixes (was 13 after W32)', () => {
+    it('safeFixesApplied equals 16 after ADMIN19 (was 15 after wave-admin-redesign)', () => {
       const summary = getWireframeComplianceSummary();
-      expect(summary.safeFixesApplied).toBe(15);
+      expect(summary.safeFixesApplied).toBe(16);
     });
 
     it('createdFrom is wire2b_wireframe_compliance_ts', () => {
