@@ -1193,6 +1193,33 @@
       "nextAction": "Wave 30 next",
       "lastUpdated": "2026-04-26",
       "goal": "Remove legacy shell dead code (TopBar/PrimaryNav), establish canonical route registry, codify wave runner protocol, and add pack spec validation."
+    },
+    {
+      "waveId": "wave-30",
+      "name": "Solution Intelligence Expansion",
+      "goal": "Expand the AbarVa pattern library with canonical registry format, pattern authoring lifecycle, and first retail vertical pack.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "PAT1",
+        "PAT2",
+        "PAT3"
+      ],
+      "completedSlices": [
+        "PAT1",
+        "PAT2",
+        "PAT3"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [
+        418
+      ],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Wave 31 next",
+      "lastUpdated": "2026-04-26"
     }
   ]
 }

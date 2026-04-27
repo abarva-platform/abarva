@@ -8546,6 +8546,67 @@
         "node_modules/.bin/jest src/__tests__/integration/ops/pack-spec-validator.test.ts --no-coverage"
       ],
       "notes": "Deterministic pack spec validation read model. Validates solution pack entries against canonical schema rules: identity (id/slug/name), content quality, structure (criteria/failureModes arrays), provenance (createdFrom), relations (relatedPatternSlugs). Exports validatePackSpecEntry, validatePackSpec, flattenPackSpecViolations, summarizePackValidation."
+    },
+    {
+      "id": "PAT1",
+      "name": "Pattern Registry Format",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Wave 30 \u2014 codex/wave-30-solution-intelligence",
+      "dependsOn": [],
+      "allowedFiles": [
+        "src/lib/solutions/pattern-registry-format.ts",
+        "src/__tests__/integration/solutions/pattern-registry-format.test.ts"
+      ],
+      "forbiddenFiles": [],
+      "validationCommands": [
+        "node_modules/.bin/tsc --noEmit --pretty false",
+        "node_modules/.bin/jest src/__tests__/integration/solutions/pattern-registry-format.test.ts --no-coverage"
+      ],
+      "notes": "Canonical schema and registry format for AbarVa solution patterns. Defines PatternCategory (9), PatternDomain (13), PatternMaturity (4), PatternOwnerAgent (4) types. 10-gate readiness gate (evaluatePatternReadinessGate). Registry helpers: getPatternsByCategory, getPatternsByDomain, getPatternsByMaturity, getCriticalSignalPatterns, getPatternBySlug, summarizePatternRegistry."
+    },
+    {
+      "id": "PAT2",
+      "name": "Pattern Authoring Workflow",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Wave 30 \u2014 codex/wave-30-solution-intelligence",
+      "dependsOn": [
+        "PAT1"
+      ],
+      "allowedFiles": [
+        "src/lib/solutions/pattern-authoring-workflow.ts",
+        "src/__tests__/integration/solutions/pattern-authoring-workflow.test.ts"
+      ],
+      "forbiddenFiles": [],
+      "validationCommands": [
+        "node_modules/.bin/tsc --noEmit --pretty false",
+        "node_modules/.bin/jest src/__tests__/integration/solutions/pattern-authoring-workflow.test.ts --no-coverage"
+      ],
+      "notes": "8-stage canonical authoring lifecycle (scoping\u2192criteria\u2192evidence\u2192signals\u2192review\u2192validated\u2192canonical\u2192deprecated). Per-stage required artefacts, blocking gates, evaluateStageAdvancement(). getAllBlockingGates() returns all cross-stage blocking conditions."
+    },
+    {
+      "id": "PAT3",
+      "name": "Vertical Pack \u2014 Retail",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Wave 30 \u2014 codex/wave-30-solution-intelligence",
+      "dependsOn": [
+        "PAT1"
+      ],
+      "allowedFiles": [
+        "src/lib/solutions/vertical-pack-retail.ts",
+        "src/__tests__/integration/solutions/vertical-pack-retail.test.ts"
+      ],
+      "forbiddenFiles": [],
+      "validationCommands": [
+        "node_modules/.bin/tsc --noEmit --pretty false",
+        "node_modules/.bin/jest src/__tests__/integration/solutions/vertical-pack-retail.test.ts --no-coverage"
+      ],
+      "notes": "Retail vertical pattern pack with 2 patterns: retail data platform sourcing (6 criteria incl. 2 critical, 3 failure modes, holiday season considerations) and retail AI program failure modes (2 criteria, 2 failure modes). All entries pass evaluatePatternReadinessGate. createdFrom: pat3_w30_vertical_pack_retail."
     }
   ]
 }
