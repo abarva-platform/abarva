@@ -12,6 +12,7 @@ import {
   summarizeBlockers,
   summarizeCascade,
   summarizeGates,
+  summarizePortfolio,
 } from '@/lib/reasoning/provenance-ribbon-helpers';
 import type {
   CascadeImpact,
@@ -161,5 +162,40 @@ describe('summarizeCascade', () => {
       cascadeContext: [cascade('informational'), cascade('accelerating')],
     });
     expect(view.hasBlockingImpact).toBe(false);
+  });
+});
+
+describe('summarizePortfolio', () => {
+  it('reads program / source counts from a Tower snapshot', () => {
+    const view = summarizePortfolio({
+      instanceSnapshot: { programCount: 4, sourceEventCount: 1, totalInstanceCount: 5 },
+    });
+    expect(view.programCount).toBe(4);
+    expect(view.sourceEventCount).toBe(1);
+    expect(view.totalInstanceCount).toBe(5);
+    expect(view.headline).toBe('4 programs · 1 source event');
+  });
+
+  it('falls back to zero when snapshot fields are missing', () => {
+    const view = summarizePortfolio({ instanceSnapshot: {} });
+    expect(view.programCount).toBe(0);
+    expect(view.sourceEventCount).toBe(0);
+    expect(view.totalInstanceCount).toBe(0);
+    expect(view.headline).toBe('0 programs · 0 source events');
+  });
+
+  it('ignores non-numeric or negative snapshot values', () => {
+    const view = summarizePortfolio({
+      instanceSnapshot: { programCount: 'two', sourceEventCount: -3 },
+    });
+    expect(view.programCount).toBe(0);
+    expect(view.sourceEventCount).toBe(0);
+  });
+
+  it('derives totalInstanceCount from programs + source events when absent', () => {
+    const view = summarizePortfolio({
+      instanceSnapshot: { programCount: 3, sourceEventCount: 2 },
+    });
+    expect(view.totalInstanceCount).toBe(5);
   });
 });
