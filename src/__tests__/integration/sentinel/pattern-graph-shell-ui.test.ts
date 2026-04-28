@@ -12,7 +12,7 @@
  *   - buildPatternGraphShellView('registry') → graph tab not active, registry tab active
  *   - getPatternGraphTabItem(view, 'graph') returns graph tab
  *   - getPatternGraphTabItem(view, 'registry') returns registry tab (disabled)
- *   - getPatternGraphTabItem(view, 'nonexistent' as any) returns null
+ *   - getPatternGraphTabItem(view, 'nonexistent' as PatternGraphShellTab) returns null
  *   - describePatternGraphShell includes totalPatterns and highDegreeCount
  *   - Determinism
  *   - deterministicSeed: true
@@ -27,8 +27,8 @@ import {
   buildPatternGraphShellView,
   getPatternGraphTabItem,
   describePatternGraphShell,
+  type PatternGraphShellTab,
   type PatternGraphShellView,
-  type PatternGraphShellTabItem,
 } from '@/lib/sentinel/pattern-graph-shell-view';
 
 const root = process.cwd();
@@ -228,7 +228,7 @@ describe('I6 — getPatternGraphTabItem', () => {
   });
 
   it('returns null for nonexistent tab key', () => {
-    const tab = getPatternGraphTabItem(view, 'nonexistent' as any);
+    const tab = getPatternGraphTabItem(view, 'nonexistent' as PatternGraphShellTab);
     expect(tab).toBeNull();
   });
 });
