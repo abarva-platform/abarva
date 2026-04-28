@@ -151,6 +151,67 @@ export interface ArtifactExpectation {
   patternRef: PatternRef;
 }
 
+/**
+ * Per-stage artifact tracking result.
+ *
+ * Returned by `ArtifactTracker.trackForStage()` and as elements of
+ * `ArtifactTracker.trackAll()`.  Each `ArtifactExpectation` is annotated with
+ * its current `present` flag derived from the instance's artifact list, so
+ * callers can render a stage-by-stage completeness view.
+ *
+ * The four mutually-exclusive buckets reflect the artifact's instance status:
+ * - `present`     — an artifact with this `expectedArtifactId` exists in
+ *                   the instance and is materially complete (e.g. status
+ *                   `'approved'` or `'locked'`).
+ * - `inProgress`  — an artifact is being produced but is not yet complete
+ *                   (e.g. status `'draft'`).
+ * - `missing`     — no artifact in the instance maps to this expectation.
+ * - `requiredMissingCount` — count of `missing` artifacts whose
+ *                   `requirement` is `'required'`.  Drives gate readiness.
+ */
+export interface StageArtifactTracking {
+  /** The stage these artifacts belong to. */
+  stageId: string;
+  /** Expected artifacts that are materially complete in the instance. */
+  present: ArtifactExpectation[];
+  /** Expected artifacts that are in progress but not yet complete. */
+  inProgress: ArtifactExpectation[];
+  /** Expected artifacts with no corresponding instance artifact. */
+  missing: ArtifactExpectation[];
+  /**
+   * Count of `missing` entries whose `requirement === 'required'`.
+   * If zero, the stage is artifact-ready (gate logic).
+   */
+  requiredMissingCount: number;
+}
+
+/**
+ * Tracks artifact completeness for an instance against the pattern's
+ * `expectedArtifacts`.  Pure: same inputs produce the same outputs.
+ *
+ * @template TInstance The concrete instance type (e.g. SourceEventInstance).
+ */
+export interface ArtifactTracker<TInstance> {
+  /**
+   * Compute artifact tracking for a single stage.
+   * Returns `present`, `inProgress`, and `missing` buckets along with
+   * `requiredMissingCount` for that stage.
+   */
+  trackForStage(stageId: string, instance: TInstance): StageArtifactTracking;
+
+  /**
+   * Compute artifact tracking for every stage that appears in the pattern's
+   * expected-artifact list, in pattern stage order.
+   */
+  trackAll(instance: TInstance): StageArtifactTracking[];
+
+  /**
+   * Returns `true` when no required artifacts are missing for the given
+   * stage.  Recommended/optional artifacts do not block readiness.
+   */
+  isStageReady(stageId: string, instance: TInstance): boolean;
+}
+
 // ─── Cross-instance reasoning ──────────────────────────────────────────────────
 
 /**

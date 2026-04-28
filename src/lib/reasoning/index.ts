@@ -21,6 +21,8 @@ export type {
 
   // Artifact tracking
   ArtifactExpectation,
+  ArtifactTracker,
+  StageArtifactTracking,
 
   // Cross-instance reasoning
   LinkType,
@@ -55,6 +57,9 @@ export { LifecycleGateEvaluator, createGateEvaluator, evaluateStageGates } from 
 
 // Contradiction detector — REASON-7
 export { LifecycleContradictionDetector, createContradictionDetector, detectContradictions } from './contradiction-detector';
+
+// Artifact tracker — REASON-8
+export { LifecycleArtifactTracker, createArtifactTracker, trackArtifacts } from './artifact-tracker';
 
 // Synthesis context builder — REASON-14
 export { buildSourceSynthesisContext, instanceStateHash } from './synthesis-context-builder';
