@@ -1,10 +1,12 @@
 import { notFound } from 'next/navigation';
 import { ConnectorDetailPage } from '@/components/setup/ConnectorDetailPage';
-import { SERVICENOW_CONNECTOR_DETAIL } from '@/lib/setup/shell-setup-fixture';
+import { SERVICENOW_CONNECTOR_DETAIL, SALESFORCE_CONNECTOR_DETAIL } from '@/lib/setup/shell-setup-fixture';
 import type { Metadata } from 'next';
+import type { ConnectorDetail } from '@/lib/setup/shell-setup-fixture';
 
-const CONNECTOR_MAP: Record<string, typeof SERVICENOW_CONNECTOR_DETAIL> = {
+const CONNECTOR_MAP: Record<string, ConnectorDetail> = {
   'sn': SERVICENOW_CONNECTOR_DETAIL,
+  'sfdc': SALESFORCE_CONNECTOR_DETAIL,
 };
 
 interface Props { params: Promise<{ connectorId: string }> }
