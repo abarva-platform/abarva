@@ -60,6 +60,7 @@ export interface EvidenceItem {
   excerpt: string;        // 1–2 sentence quote
   confidence: 'high' | 'medium' | 'low';
   hasContradiction?: boolean;  // true if a conflicting item exists
+  provenanceNote?: string;
 }
 
 export interface ProgramPhasePanel {

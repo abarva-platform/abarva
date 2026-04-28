@@ -373,6 +373,7 @@ function buildPhasePanel(
           source: 'Priya Sharma / Workshop',
           excerpt: 'CDP identity stitching is technically feasible with the existing Snowflake schema — 3-week implementation estimate confirmed by engineering lead.',
           confidence: 'high' as const,
+          provenanceNote: 'Deterministic workshop record · discovery archive',
         },
         {
           id: 'ev-2',
@@ -381,6 +382,7 @@ function buildPhasePanel(
           excerpt: 'Vendor B proposes a managed CDP layer that overlaps with the planned in-house implementation. Scope conflict unresolved.',
           confidence: 'medium' as const,
           hasContradiction: true,
+          provenanceNote: 'Deterministic source import · BAFO response',
         },
         {
           id: 'ev-3',
@@ -388,6 +390,7 @@ function buildPhasePanel(
           source: 'Marcus Webb / Discovery',
           excerpt: 'Privacy team confirmed that loyalty data can be included in the identity graph subject to a documented boundary policy — this policy is not yet written.',
           confidence: 'medium' as const,
+          provenanceNote: 'Deterministic interview note · sponsor packet',
         },
         {
           id: 'ev-4',
@@ -395,6 +398,7 @@ function buildPhasePanel(
           source: 'Atlas / Automated',
           excerpt: 'Evidence coverage for this phase is at 36% against a 70% target for gate readiness. 3 key items are outstanding.',
           confidence: 'high' as const,
+          provenanceNote: 'Deterministic audit snapshot · pre-gate baseline',
         },
       ],
     };
@@ -416,6 +420,7 @@ function buildPhasePanel(
           source: 'Steward / Gate Review',
           excerpt: 'Design gate (P2 → P3) approved. Workshop 5 findings accepted; privacy boundary policy filed. AMS BAFO outcome locked Vendor C.',
           confidence: 'high' as const,
+          provenanceNote: 'Deterministic gate record · approval ledger',
         },
         {
           id: 'ev-p3-2',
@@ -423,6 +428,7 @@ function buildPhasePanel(
           source: 'Source Event / APX-AMS-2026',
           excerpt: 'Vendor C selected as managed CDP layer provider. Reduces in-house build scope by ~40%. Integration contract in final review.',
           confidence: 'high' as const,
+          provenanceNote: 'Deterministic source link · apex-retail-ams-outsourcing-2026',
         },
         {
           id: 'ev-p3-3',
@@ -430,6 +436,7 @@ function buildPhasePanel(
           source: 'Sentinel / T3-H03',
           excerpt: 'Unified Loyalty Intelligence pattern validated for personalization layer. Sentinel recommends applying T3-H03 reference architecture to identity graph design.',
           confidence: 'high' as const,
+          provenanceNote: 'Deterministic intelligence citation · /intelligence/t3-h03',
         },
       ],
     };

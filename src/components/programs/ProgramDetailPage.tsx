@@ -868,17 +868,31 @@ function EvidenceSection({ items, onView }: EvidenceSectionProps) {
               }}
             />
             {/* Citation */}
-            <span
-              style={{
-                fontFamily: SHELL.SANS,
-                fontSize: 12,
-                color: SHELL.INK,
-                flex: 1,
-                lineHeight: 1.4,
-              }}
-            >
-              {item.citation}
-            </span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  fontFamily: SHELL.SANS,
+                  fontSize: 12,
+                  color: SHELL.INK,
+                  lineHeight: 1.4,
+                }}
+              >
+                {item.citation}
+              </div>
+              {item.provenanceNote ? (
+                <div
+                  style={{
+                    marginTop: 3,
+                    fontFamily: SHELL.MONO,
+                    fontSize: 9,
+                    color: SHELL.INK_MUTED,
+                    letterSpacing: '0.08em',
+                  }}
+                >
+                  {item.provenanceNote}
+                </div>
+              ) : null}
+            </div>
             {/* Conflict badge */}
             {item.hasContradiction && (
               <span
@@ -1025,6 +1039,26 @@ function EvidenceDrawer({ item, onClose, onResolveContradiction }: EvidenceDrawe
         >
           {item.source}
         </div>
+
+        {item.provenanceNote ? (
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              padding: '4px 8px',
+              marginBottom: 16,
+              borderRadius: 999,
+              background: SHELL.PAPER_SOFT,
+              border: `1px solid ${SHELL.CARD_LINE}`,
+              fontFamily: SHELL.MONO,
+              fontSize: 9,
+              color: SHELL.INK_MUTED,
+              letterSpacing: '0.06em',
+            }}
+          >
+            {item.provenanceNote}
+          </div>
+        ) : null}
 
         {/* Excerpt */}
         <div
