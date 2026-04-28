@@ -94,7 +94,7 @@ export default async function NotFound() {
         {/* Action links */}
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
           <Link
-            href="javascript:history.back()"
+            href="/"
             style={{
               fontFamily: SHELL.MONO,
               fontSize: 10,
@@ -108,7 +108,7 @@ export default async function NotFound() {
               textDecoration: 'none',
             }}
           >
-            ← Back
+            Go to root
           </Link>
           <Link
             href="/home"

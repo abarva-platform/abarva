@@ -13,17 +13,17 @@ export interface AdoptionMetric {
 }
 
 export const ADOPTION_METRICS: AdoptionMetric[] = [
-  { program: 'CDP Activation', displayId: 'APX-CDP-2026', phase: 3, phaseLabel: 'Design', adoptionRate: '—', activeUsers: '0', targetUsers: 'TBD (post-Build)', trainingComplete: false, lastActivity: 'Pre-build' },
+  { program: 'CDP Activation', displayId: 'APX-CDP-2026', phase: 3, phaseLabel: 'Design', adoptionRate: '—', activeUsers: '0', targetUsers: 'Post-Build baseline pending', trainingComplete: false, lastActivity: 'Pre-build' },
   { program: 'Contact Center AI', displayId: 'APX-CC-2026', phase: 4, phaseLabel: 'Build', adoptionRate: '—', activeUsers: '0', targetUsers: '200 agents', trainingComplete: false, lastActivity: 'Pre-launch' },
   { program: 'Demand Forecasting v2', displayId: 'APX-DFV2-2025', phase: 6, phaseLabel: 'Operate', adoptionRate: '94%', activeUsers: '47', targetUsers: '50 planners', trainingComplete: true, lastActivity: 'Today' },
-  { program: 'Store Associate Productivity', displayId: 'APX-SAP-2026', phase: 1, phaseLabel: 'Discovery', adoptionRate: '—', activeUsers: '0', targetUsers: 'TBD', trainingComplete: false, lastActivity: 'Pre-design' },
+  { program: 'Store Associate Productivity', displayId: 'APX-SAP-2026', phase: 1, phaseLabel: 'Discovery', adoptionRate: '—', activeUsers: '0', targetUsers: 'Discovery baseline pending', trainingComplete: false, lastActivity: 'Pre-design' },
 ];
 
 export const ADOPTION_AGENT_VOICE = {
   quote: 'Only Demand Forecasting v2 has live adoption data — 47 of 50 planners active (94%). CDP Activation and Contact Center AI are pre-launch; adoption targets set after Build gate approval. SAP adoption baseline not yet defined.',
   agentContext: 'Atlas · Adoption Lens',
   actions: [
-    { letter: 'A' as const, text: 'Define CDP adoption baseline', detail: 'Targets TBD after Build gate — scope once Vendor C contract signed' },
+    { letter: 'A' as const, text: 'Define CDP adoption baseline', detail: 'Set targets after Build gate once Vendor C contract is signed' },
     { letter: 'B' as const, text: 'Finalize CC-AI adoption plan', detail: 'Target: 200 agents in Phase 1 rollout (Week 1 of Activate)' },
     { letter: 'C' as const, text: 'Review DFv2 lagging 3 planners', detail: '47 of 50 active — identify and re-engage 3 non-users' },
   ],

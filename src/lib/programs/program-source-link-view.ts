@@ -11,9 +11,9 @@
 export interface ProgramSourceLinkView {
   sourceEventId: string;            // "apex-retail-ams-outsourcing-2026"
   sourceEventName: string;          // "Application Management Services — Vendor Consolidation 2026"
-  commercialReadinessState: string; // "pending_bafo_review"
-  topCommercialBlocker: string;     // "BAFO responses incomplete — 2 vendors require follow-up"
-  topBafoOpportunity: string;       // "Northstar Managed Services pricing gap: opportunity to negotiate managed services scope reduction"
+  commercialReadinessState: string; // "vendor_c_selected"
+  topCommercialBlocker: string;     // "Vendor C integration contract in final review"
+  topBafoOpportunity: string;       // "Managed CDP layer reduces in-house build scope"
   deterministicSeedCaveat: string;  // "Deterministic seed data. Not a live commercial signal."
   routeHint: string | null;         // "/source/events/apex-retail-ams-outsourcing-2026" or null
   deterministicSeed: true;
@@ -23,11 +23,11 @@ const APX_CDP_SOURCE_LINK: ProgramSourceLinkView = {
   sourceEventId: 'apex-retail-ams-outsourcing-2026',
   sourceEventName:
     'Application Management Services — Vendor Consolidation 2026',
-  commercialReadinessState: 'pending_bafo_review',
+  commercialReadinessState: 'vendor_c_selected',
   topCommercialBlocker:
-    'BAFO responses incomplete — 2 vendors require follow-up',
+    'Vendor C integration contract in final review — required for the P3 to P4 Build gate',
   topBafoOpportunity:
-    'Northstar Managed Services pricing gap: opportunity to negotiate managed services scope reduction',
+    'Managed CDP layer reduces in-house build scope and anchors the P3 Design architecture sprint',
   deterministicSeedCaveat:
     'Deterministic seed data. Not a live commercial signal.',
   routeHint: '/source/events/apex-retail-ams-outsourcing-2026',

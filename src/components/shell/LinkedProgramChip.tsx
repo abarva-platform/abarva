@@ -5,7 +5,7 @@ export interface LinkedProgramChipProps {
   direction: 'source-to-program' | 'program-to-source';
   linkedId: string;           // APX-CDP-2026 or SRC-AMS-2026
   linkedName: string;         // Short display name
-  linkedPhase?: string;       // e.g. 'P2 Synthesis' (for program link)
+  linkedPhase?: string;       // e.g. 'P3 Design' (for program link)
   linkedStage?: string;       // e.g. 'BAFO · Stage 7' (for source link)
   href: string;               // Link destination
 }

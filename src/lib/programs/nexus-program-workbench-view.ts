@@ -464,7 +464,7 @@ function buildContextStripFor(
     phaseLabel: `P${currentPhase.index} · ${currentPhase.label}`,
     gateLabel,
     caveat: 'Seed-backed · deterministic',
-    sourceEventLabel: 'Linked Source event · apex-retail-ams-outsourcing-2026',
+    sourceEventLabel: 'Linked Source event · Vendor C selected · apex-retail-ams-outsourcing-2026',
     sourceEventHref: '/source/events/apex-retail-ams-outsourcing-2026',
   };
 }

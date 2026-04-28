@@ -4,7 +4,7 @@ export interface KPICard {
   unit?: string;
   trend?: 'up' | 'down' | 'flat';
   trendNote?: string;
-  status: 'on-track' | 'at-risk' | 'off-track' | 'tbd';
+  status: 'on-track' | 'at-risk' | 'off-track' | 'not-set';
 }
 
 export interface TrendPoint { month: string; value: number; }
