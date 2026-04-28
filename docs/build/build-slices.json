@@ -9608,7 +9608,14 @@
       "name": "Gate + Approval Interaction Drawer",
       "category": "Programs",
       "status": "code_complete",
-      "notes": "GateApprovalDrawer slide-in panel added to ProgramDetailPage Gate section. buildGateApprovalDrawerView lib derives posture (ready/requires_override/blocked/waiver_needed), per-criterion status (known/missing/blocked), evidence linking, waiver caveat, honest disclaimer. Trigger testid gate-approval-drawer-trigger. 27 integration tests. PROG21 from track-03."
+      "notes": "GateApprovalDrawer slide-in panel added to ProgramDetailPage Gate section. buildGateApprovalDrawerView lib derives posture (ready/requires_override/blocked/waiver_needed), per-criterion status (known/missing/blocked), evidence linking, waiver caveat, honest disclaimer. Trigger testid gate-approval-drawer-trigger. 36 integration tests. PROG21 from track-03."
+    },
+    {
+      "id": "PROG22",
+      "name": "Deliverables Canvas Interaction Polish",
+      "category": "Programs",
+      "status": "code_complete",
+      "notes": "DeliverablesCanvas replaces DeliverablesList in Deliverables section. buildDeliverablesCanvasView lib derives per-item readiness (trustworthy/partial/missing_evidence/blocked), evidence citations, missing inputs, disabled approve+export actions, canvas summary, honest disclaimer. Items sorted blocked→pending→done. data-testid deliverables-canvas, deliverable-canvas-item, deliverable-approve-action, deliverable-export-action. 35 integration tests + PROG23 disclaimer fix. PROG22 from track-03."
     }
   ]
 }
