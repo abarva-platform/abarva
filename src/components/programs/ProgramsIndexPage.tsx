@@ -4,6 +4,7 @@
 // Receives ProgramsIndexViewV2 (alias for programs-types ProgramsIndexView).
 
 import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { AgentColumn } from '@/components/shell/AgentColumn';
 import { FilterPillStrip } from '@/components/shell/FilterPillStrip';
@@ -278,11 +279,47 @@ function ProgramsTable({ programs }: { programs: ProgramRow[] }) {
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const activeFilter = searchParams?.get('filter') ?? 'all';
+
+  const filtered = view.programs.filter((p) => {
+    if (activeFilter === 'all') return true;
+    if (activeFilter === 'active') return !p.isIdle;
+    if (activeFilter === 'idle') return p.isIdle;
+    if (activeFilter === 'gated') return p.gateStatus === 'pending';
+    return true;
+  });
+
   const filterPills = [
-    { key: 'all', label: 'All', active: true },
-    { key: 'active', label: 'Active' },
-    { key: 'idle', label: 'Idle' },
-    { key: 'gated', label: 'Gated', count: view.gatesPending },
+    {
+      key: 'all',
+      label: 'All',
+      active: activeFilter === 'all',
+      count: view.programs.length,
+      onClick: () => router.push('/programs', { scroll: false }),
+    },
+    {
+      key: 'active',
+      label: 'Active',
+      active: activeFilter === 'active',
+      count: view.programs.filter((p) => !p.isIdle).length,
+      onClick: () => router.push('/programs?filter=active', { scroll: false }),
+    },
+    {
+      key: 'idle',
+      label: 'Idle',
+      active: activeFilter === 'idle',
+      count: view.programs.filter((p) => p.isIdle).length,
+      onClick: () => router.push('/programs?filter=idle', { scroll: false }),
+    },
+    {
+      key: 'gated',
+      label: 'Gated',
+      active: activeFilter === 'gated',
+      count: view.gatesPending,
+      onClick: () => router.push('/programs?filter=gated', { scroll: false }),
+    },
   ];
 
   // Cast actions — fixture always uses 'A'|'B'|'C'; cast for AgentColumn type
@@ -368,8 +405,89 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
           </Link>
         </div>
 
-        {/* Programs table */}
-        <ProgramsTable programs={view.programs} />
+        {/* Programs table or empty state */}
+        {filtered.length === 0 ? (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '60px 40px',
+              textAlign: 'center',
+            }}
+          >
+            <div
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 12,
+                background: SHELL.PAPER_DEEP,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: 16,
+              }}
+            >
+              <span style={{ fontFamily: SHELL.SERIF, fontSize: 22, color: SHELL.INK_MUTED }}>∅</span>
+            </div>
+            <div style={{ fontFamily: SHELL.SERIF, fontSize: 18, color: SHELL.INK, marginBottom: 8 }}>
+              No programs match this filter
+            </div>
+            <div
+              style={{
+                fontFamily: SHELL.SANS,
+                fontSize: 13,
+                color: SHELL.INK_SOFT,
+                marginBottom: 20,
+                maxWidth: 320,
+                lineHeight: 1.5,
+              }}
+            >
+              {activeFilter === 'idle'
+                ? 'No programs are currently idle.'
+                : activeFilter === 'gated'
+                  ? 'No programs have pending gate reviews.'
+                  : 'No programs found.'}
+            </div>
+            <button
+              onClick={() => router.push('/programs', { scroll: false })}
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 11,
+                color: SHELL.INK_SOFT,
+                background: 'none',
+                border: `1px solid ${SHELL.CARD_LINE}`,
+                borderRadius: 6,
+                padding: '7px 16px',
+                cursor: 'pointer',
+              }}
+            >
+              Show all programs
+            </button>
+          </div>
+        ) : (
+          <ProgramsTable programs={filtered} />
+        )}
+
+        {/* Originate new program link */}
+        <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${SHELL.CARD_LINE}` }}>
+          <a
+            href="/programs/new"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              fontFamily: SHELL.MONO,
+              fontSize: 11,
+              color: SHELL.INK_SOFT,
+              textDecoration: 'none',
+            }}
+          >
+            <span>+</span>
+            <span>Originate new program</span>
+          </a>
+        </div>
       </div>
     </AppShell>
   );
