@@ -17,6 +17,10 @@ import { PatternChip } from '@/components/source/PatternChip';
 import { buildSourceStorylineContext, matchStorylinePatterns } from '@/lib/intelligence/storyline-matcher';
 import { buildPricingCompletenessView } from '@/lib/source/pricing-completeness-view';
 import { buildBafoScenarioCompareView } from '@/lib/source/bafo-scenario-compare-view';
+import { ContradictionDetailCardClient } from '@/components/_shared/ContradictionDetailCardClient';
+import { buildSourceSynthesisContext } from '@/lib/reasoning/synthesis-context-builder';
+import { PAT_SRC_AMS_001 } from '@/lib/intelligence/source-lifecycle-patterns';
+import { isResolved as isContradictionResolved } from '@/lib/reasoning/contradiction-resolution-state';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -141,6 +145,20 @@ function SummaryTab() {
 // ─── SRC42: Readiness tab ─────────────────────────────────────────────────────
 
 function ReadinessTab() {
+  // REASON-30 — Contradiction detail card sits below the readiness criteria
+  // panel so the user can see what to do about each detected contradiction
+  // alongside the gate criteria that drive readiness.
+  const synthesisContext = buildSourceSynthesisContext(
+    AMS_VENDOR_CONSOLIDATION_2026_INSTANCE,
+    PAT_SRC_AMS_001,
+  );
+  const activeContradictions = synthesisContext.activeContradictions.filter(
+    (c) =>
+      !isContradictionResolved(
+        `${AMS_VENDOR_CONSOLIDATION_2026_INSTANCE.id}::${c.templateId}`,
+      ),
+  );
+
   const criteria = [
     { label: 'All vendor BAFOs submitted', status: 'done' as const },
     { label: 'Pricing templates normalised (3/3 vendors)', status: 'done' as const },
@@ -192,6 +210,12 @@ function ReadinessTab() {
           </div>
         ))}
       </div>
+
+      {/* REASON-30 — Contradiction detail card */}
+      <ContradictionDetailCardClient
+        contradictions={activeContradictions}
+        instanceId={AMS_VENDOR_CONSOLIDATION_2026_INSTANCE.id}
+      />
 
       {/* Honest disclaimer */}
       <div

@@ -307,3 +307,40 @@ describe('AMS instance contradiction detection', () => {
     }
   });
 });
+
+// ─── 8. Template fields propagate onto the detection (severity + resolutionPath)
+//
+// The contradiction detail card relies on `severity` and `resolutionPath` being
+// surfaced verbatim from the matching ContradictionTemplate. These tests guard
+// the propagation contract so a future detector refactor does not silently drop
+// either field.
+
+describe('template field propagation onto ContradictionDetection', () => {
+  it('severity on each detection matches the source template severity', () => {
+    const evidenceMap = buildEvidenceMap(AMS_VENDOR_CONSOLIDATION_2026_INSTANCE);
+    const results = detectContradictions(PAT_SRC_AMS_001, evidenceMap);
+    expect(results.length).toBeGreaterThan(0);
+    for (const r of results) {
+      const template = PAT_SRC_AMS_001.contradictionTemplates.find(
+        (t) => t.id === r.templateId,
+      );
+      expect(template).toBeDefined();
+      expect(r.severity).toBe(template!.severity);
+    }
+  });
+
+  it('resolutionPath on each detection matches the source template resolutionPath', () => {
+    const evidenceMap = buildEvidenceMap(AMS_VENDOR_CONSOLIDATION_2026_INSTANCE);
+    const results = detectContradictions(PAT_SRC_AMS_001, evidenceMap);
+    expect(results.length).toBeGreaterThan(0);
+    for (const r of results) {
+      const template = PAT_SRC_AMS_001.contradictionTemplates.find(
+        (t) => t.id === r.templateId,
+      );
+      expect(template).toBeDefined();
+      expect(typeof r.resolutionPath).toBe('string');
+      expect(r.resolutionPath.length).toBeGreaterThan(0);
+      expect(r.resolutionPath).toBe(template!.resolutionPath);
+    }
+  });
+});
