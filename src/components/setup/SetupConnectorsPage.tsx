@@ -8,9 +8,9 @@ import { SETUP_INDEX_VIEW, type ConnectorItem } from '@/lib/setup/shell-setup-fi
 
 const SUB_NAV_ITEMS = [
   { key: 'connectors', label: 'Connectors', active: true, href: '/admin' },
-  { key: 'users', label: 'Users', href: '/admin/users-access' },
-  { key: 'audit', label: 'Audit log', href: '/admin' },
-  { key: 'policies', label: 'Policies', href: '/admin' },
+  { key: 'users', label: 'Users', href: '/admin/users' },
+  { key: 'audit', label: 'Audit log', href: '/admin/audit' },
+  { key: 'policies', label: 'Policies', href: '/admin/policies' },
   { key: 'architecture', label: 'Architecture', href: '/admin/architecture' },
 ];
 
