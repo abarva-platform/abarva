@@ -36,7 +36,8 @@ describe('QA33 Intelligence deterministic journey manifest', () => {
     const detailComponent = readWorkspaceFile('src/components/intelligence/SentinelPatternDetail.tsx');
     const canvasHelper = readWorkspaceFile('src/lib/intelligence/intelligence-canvas-modes.ts');
 
-    expect(landingRoute).toContain('IntelligenceRouteShell');
+    // I1: IntelligenceRouteShell retired — route directly renders IntelligenceLensTabs.
+    expect(landingRoute).not.toContain('IntelligenceRouteShell');
     expect(landingRoute).toContain('IntelligenceLensTabs');
     expect(detailRoute).toContain('SentinelPatternDetail');
     expect(detailRoute).toContain('IntelligenceCanvasModeTabs');

@@ -1,8 +1,12 @@
 /**
- * INTEL1 — Intelligence Route Shell Wiring
+ * I1 — Intelligence Route Shell Retirement
  * Deterministic filesystem checks (no jsdom, no network).
- * Verifies IntelligenceRouteShell is correctly structured and wired
- * into the intelligence route page.
+ *
+ * I1 retired IntelligenceRouteShell (per audit §1 gap G4).
+ * This suite now verifies:
+ *   - IntelligenceRouteShell.tsx does NOT exist (correctly deleted)
+ *   - Tenant intelligence route directly renders IntelligenceLensTabs
+ *   - Route resolves tab from searchParams (tab-driven navigation preserved)
  */
 
 import * as fs from 'fs';
@@ -23,87 +27,54 @@ const ROUTE_PAGE_PATH = path.join(
   'app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx',
 );
 
-describe('INTEL1 — IntelligenceRouteShell wiring', () => {
-  let shellSource: string;
+describe('I1 — IntelligenceRouteShell retirement', () => {
   let routeSource: string;
 
   beforeAll(() => {
-    shellSource = fs.readFileSync(SHELL_PATH, 'utf8');
     routeSource = fs.readFileSync(ROUTE_PAGE_PATH, 'utf8');
   });
 
-  // ── Existence checks ─────────────────────────────────────────────────────
+  // ── Retirement verification ───────────────────────────────────────────────
 
-  it('IntelligenceRouteShell.tsx exists', () => {
-    expect(fs.existsSync(SHELL_PATH)).toBe(true);
+  it('IntelligenceRouteShell.tsx has been deleted (I1 retirement)', () => {
+    expect(fs.existsSync(SHELL_PATH)).toBe(false);
   });
 
-  it('Intelligence route page file exists', () => {
+  it('Tenant intelligence route file exists', () => {
     expect(fs.existsSync(ROUTE_PAGE_PATH)).toBe(true);
   });
 
-  // ── Orientation strip / agent label ──────────────────────────────────────
-
-  it('IntelligenceRouteShell.tsx contains INTELLIGENCE orientation string', () => {
-    expect(shellSource).toContain('INTELLIGENCE');
+  it('Tenant intelligence route does NOT import IntelligenceRouteShell', () => {
+    expect(routeSource).not.toContain('IntelligenceRouteShell');
   });
 
-  it('IntelligenceRouteShell.tsx contains Sentinel or SENTINEL agent label', () => {
-    const hasSentinel =
-      shellSource.includes('Sentinel') || shellSource.includes('SENTINEL');
-    expect(hasSentinel).toBe(true);
+  it('Tenant intelligence route does NOT use <IntelligenceRouteShell', () => {
+    expect(routeSource).not.toContain('<IntelligenceRouteShell');
   });
 
-  // ── Deterministic caveat ─────────────────────────────────────────────────
+  // ── IntelligenceLensTabs wiring (preserved from INTEL4) ──────────────────
 
-  it('IntelligenceRouteShell.tsx contains Deterministic caveat', () => {
-    expect(shellSource).toContain('Deterministic');
-  });
-
-  // ── Design canon — no teal ───────────────────────────────────────────────
-
-  it('IntelligenceRouteShell.tsx does NOT contain forbidden teal color #14B8A6', () => {
-    expect(shellSource).not.toContain('#14B8A6');
-  });
-
-  // ── Tenant data tier ─────────────────────────────────────────────────────
-
-  it('IntelligenceRouteShell.tsx references tenant data tier or caveat system', () => {
-    const hasTierReference =
-      shellSource.includes('dataTier') ||
-      shellSource.includes('TenantDataTier') ||
-      shellSource.includes('thin') ||
-      shellSource.includes('data tier');
-    expect(hasTierReference).toBe(true);
-  });
-
-  // ── Route wiring ─────────────────────────────────────────────────────────
-
-  it('Route page imports IntelligenceRouteShell', () => {
-    expect(routeSource).toContain('IntelligenceRouteShell');
-  });
-
-  it('Route page wraps content with IntelligenceRouteShell', () => {
-    expect(routeSource).toContain('<IntelligenceRouteShell');
-  });
-
-  it('Route page passes tenantName to IntelligenceRouteShell', () => {
-    expect(routeSource).toContain('tenantName=');
-  });
-
-  it('Route page passes pageMode to IntelligenceRouteShell', () => {
-    expect(routeSource).toContain('pageMode=');
-  });
-
-  it('Route page imports IntelligenceLensTabs', () => {
+  it('Tenant intelligence route imports IntelligenceLensTabs', () => {
     expect(routeSource).toContain('IntelligenceLensTabs');
   });
 
-  it('Route page resolves the active intelligence tab from search params', () => {
+  it('Tenant intelligence route renders <IntelligenceLensTabs', () => {
+    expect(routeSource).toContain('<IntelligenceLensTabs');
+  });
+
+  it('Route resolves the active intelligence tab from search params', () => {
     expect(routeSource).toContain('resolveIntelligenceTab');
   });
 
-  it('Route page passes the active tab into IntelligenceLensTabs', () => {
+  it('Route passes activeTab to IntelligenceLensTabs', () => {
     expect(routeSource).toContain('activeTab={activeTab}');
+  });
+
+  it('Route passes tenant to IntelligenceLensTabs', () => {
+    expect(routeSource).toContain('tenant={tenant}');
+  });
+
+  it('Route passes baseUrl to IntelligenceLensTabs', () => {
+    expect(routeSource).toContain('baseUrl={baseUrl}');
   });
 });

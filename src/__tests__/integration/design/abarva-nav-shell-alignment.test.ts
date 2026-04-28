@@ -43,7 +43,8 @@ const CANONICAL_PAGE_SHELL_FILES = [
   'src/components/source/SentinelAgentColumn.tsx',
   'src/components/source/SourceWorkingPane.tsx',
   'src/components/programs/ProgramCanonShell.tsx',
-  'src/components/intelligence/IntelligenceRouteShell.tsx',
+  // I1: IntelligenceRouteShell.tsx retired — tenant intelligence page now renders
+  // IntelligenceLensTabs directly (AppChrome from (maestro) layout provides chrome).
   'src/components/tower/TowerRouteShell.tsx',
 ];
 
@@ -295,7 +296,8 @@ describe('NAV1F · canonical pages import a canonical shell', () => {
     'SentinelAgentColumn',
     'SourceIndexPage',
     'ProgramCanonShell',
-    'IntelligenceRouteShell',
+    // I1: IntelligenceRouteShell retired; tenant intelligence route now uses IntelligenceLensTabs.
+    'IntelligenceLensTabs',
     'TowerRouteShell',
     // SeedRouteShell helpers — used by the deeper tenant routes.
     'SeedTenantDashboard',
