@@ -2,6 +2,9 @@ import {
   buildProgramsIndexView,
   filterProgramRowsForIndex,
   getProgramsIndexEmptyStateCopy,
+  getProgramsIndexEmptyStateTitle,
+  getProgramsIndexFilterHref,
+  getProgramsIndexFilterSummary,
   normalizeProgramsIndexFilter,
 } from '@/lib/programs/programs-page-view';
 
@@ -49,6 +52,11 @@ describe('Programs index linked-state and filters', () => {
   });
 
   it('locks filter-specific empty-state copy', () => {
+    expect(getProgramsIndexEmptyStateTitle('all')).toBe('No programs yet');
+    expect(getProgramsIndexEmptyStateTitle('active')).toBe('No active programs');
+    expect(getProgramsIndexEmptyStateTitle('idle')).toBe('No idle programs');
+    expect(getProgramsIndexEmptyStateTitle('gated')).toBe('No gated programs');
+
     expect(getProgramsIndexEmptyStateCopy('all')).toBe(
       'No programs are in the canonical portfolio yet.',
     );
@@ -60,6 +68,24 @@ describe('Programs index linked-state and filters', () => {
     );
     expect(getProgramsIndexEmptyStateCopy('gated')).toBe(
       'No programs have pending gate reviews.',
+    );
+  });
+
+  it('locks canonical filter hrefs and visible-count summaries', () => {
+    expect(getProgramsIndexFilterHref('all')).toBe('/programs');
+    expect(getProgramsIndexFilterHref('active')).toBe('/programs?filter=active');
+    expect(getProgramsIndexFilterHref('idle')).toBe('/programs?filter=idle');
+    expect(getProgramsIndexFilterHref('gated')).toBe('/programs?filter=gated');
+
+    expect(getProgramsIndexFilterSummary('all', 6, 6)).toBe('6 programs shown');
+    expect(getProgramsIndexFilterSummary('active', 4, 6)).toBe(
+      '4 of 6 programs shown · active filter',
+    );
+    expect(getProgramsIndexFilterSummary('idle', 2, 6)).toBe(
+      '2 of 6 programs shown · idle filter',
+    );
+    expect(getProgramsIndexFilterSummary('gated', 1, 6)).toBe(
+      '1 of 6 programs shown · gated filter',
     );
   });
 });
