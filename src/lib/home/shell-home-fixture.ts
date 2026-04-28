@@ -9,7 +9,7 @@ export const HOME_VIEW = {
   stats: [
     { label: 'Active programs', value: '6', detail: '1 in Design sprint', detailColor: 'mint' as const },
     { label: 'Open pressures', value: '2', detail: '1 high severity', detailColor: 'peach' as const },
-    { label: 'Evidence coverage', value: '100%', detail: 'CDP Design gate cleared', detailColor: 'mint' as const },
+    { label: 'Evidence coverage', value: '100%', detail: 'CDP Build gate 2 of 5', detailColor: 'peach' as const, urgent: true },
     { label: 'Pattern library', value: '17', detail: '3 new this month', detailColor: 'mint' as const },
   ],
 
@@ -41,7 +41,7 @@ export const HOME_VIEW = {
   },
 
   // Agent voice (Nexus as home guide)
-  agentQuote: 'CDP Design gate is cleared — architecture sprint is active. Vendor C contract is in final review; that\'s the near-term critical path. AI Cloud Spend pressure needs a rate card decision. AMS BAFO award is unblocked and tied to CDP data layer.',
+  agentQuote: 'CDP is in P3 Design. Vendor C contract is the only near-term blocker to the Build gate. AI Cloud Spend and the AMS award are the linked decisions to watch today.',
   agentContext: 'Nexus · Executive summary',
   actions: [
     { letter: 'A' as const, text: 'Review CDP architecture sprint', detail: 'P3 Design · Vendor C contract in final review' },

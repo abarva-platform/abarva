@@ -44,14 +44,16 @@ interface StatCard {
   value: string;
   detail: string;
   detailColor: DetailColor;
+  urgent?: boolean;
 }
 
-function StatsCard({ label, value, detail, detailColor }: StatCard) {
+function StatsCard({ label, value, detail, detailColor, urgent = false }: StatCard) {
   return (
     <div
       style={{
         background: SHELL.CARD_WHITE,
         border: `1px solid ${SHELL.CARD_LINE}`,
+        borderLeft: urgent ? `4px solid ${SHELL.PEACH_LINE}` : `1px solid ${SHELL.CARD_LINE}`,
         borderRadius: 10,
         padding: '14px 16px',
       }}
@@ -446,6 +448,26 @@ export function HomeIndexPage() {
         context: 'Home',
         timeString: v.dateString,
       }}
+      middleStrip={
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            width: '100%',
+            fontFamily: SHELL.MONO,
+            fontSize: 10,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: SHELL.INK_SOFT,
+          }}
+        >
+          <span>Morning pulse</span>
+          <span style={{ color: SHELL.PEACH_TEXT }}>CDP build gate 2 of 5</span>
+          <span>AI spend high severity</span>
+          <span>AMS at BAFO</span>
+        </div>
+      }
     >
       {/* Agent column */}
       <AgentColumn
