@@ -282,6 +282,7 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const activeFilter = searchParams?.get('filter') ?? 'all';
+  const flagship = view.programs.find((program) => program.id === 'apx-cdp-2026') ?? view.programs[0];
 
   const filtered = view.programs.filter((p) => {
     if (activeFilter === 'all') return true;
@@ -381,6 +382,97 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
           <span style={{ color: SHELL.INK_MUTED }}>{view.capacityLabel}</span>
         </div>
 
+        {flagship ? (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 16,
+              padding: '12px 14px',
+              marginBottom: 16,
+              borderRadius: 10,
+              background: SHELL.CARD_WHITE,
+              border: `1px solid ${SHELL.CARD_LINE}`,
+            }}
+          >
+            <div style={{ minWidth: 0 }}>
+              <div
+                style={{
+                  fontFamily: SHELL.MONO,
+                  fontSize: 10,
+                  letterSpacing: '0.10em',
+                  textTransform: 'uppercase',
+                  color: SHELL.INK_MUTED,
+                  marginBottom: 4,
+                }}
+              >
+                Canonical route · /programs
+              </div>
+              <div
+                style={{
+                  fontFamily: SHELL.SERIF,
+                  fontSize: 17,
+                  color: SHELL.INK,
+                  marginBottom: 4,
+                }}
+              >
+                {flagship.displayId} is the flagship path through P3 Design
+              </div>
+              <div
+                style={{
+                  fontFamily: SHELL.SANS,
+                  fontSize: 13,
+                  color: SHELL.INK_SOFT,
+                  lineHeight: 1.5,
+                }}
+              >
+                {flagship.nexusNote} Source award status is linked to the AMS sourcing event and remains part of the Build gate story.
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              <Link
+                href={`/programs/${flagship.id}?phase=${flagship.currentPhase}`}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '6px 12px',
+                  borderRadius: 999,
+                  border: `1px solid ${SHELL.INK}`,
+                  color: SHELL.INK,
+                  textDecoration: 'none',
+                  fontFamily: SHELL.MONO,
+                  fontSize: 10,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Open flagship
+              </Link>
+              <Link
+                href="/source/events/apex-retail-ams-outsourcing-2026"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '6px 12px',
+                  borderRadius: 999,
+                  border: `1px solid ${SHELL.CARD_LINE}`,
+                  color: SHELL.INK_SOFT,
+                  textDecoration: 'none',
+                  fontFamily: SHELL.MONO,
+                  fontSize: 10,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  background: SHELL.PAPER_SOFT,
+                }}
+              >
+                Open linked source
+              </Link>
+            </div>
+          </div>
+        ) : null}
+
         {/* Originate button row */}
         <div
           style={{
@@ -452,9 +544,11 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
             >
               {activeFilter === 'idle'
                 ? 'No programs are currently idle.'
+                : activeFilter === 'active'
+                  ? 'No programs are currently active.'
                 : activeFilter === 'gated'
                   ? 'No programs have pending gate reviews.'
-                  : 'No programs found.'}
+                  : 'No programs are in the canonical portfolio yet.'}
             </div>
             <button
               onClick={() => router.push('/programs', { scroll: false })}
@@ -478,7 +572,7 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
 
         {/* Originate new program link */}
         <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${SHELL.CARD_LINE}` }}>
-          <a
+          <Link
             href="/programs/new"
             style={{
               display: 'inline-flex',
@@ -492,7 +586,18 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
           >
             <span>+</span>
             <span>Originate new program</span>
-          </a>
+          </Link>
+          <div
+            style={{
+              marginTop: 10,
+              fontFamily: SHELL.MONO,
+              fontSize: 10,
+              color: SHELL.INK_MUTED,
+              letterSpacing: '0.06em',
+            }}
+          >
+            Canonical route · /programs
+          </div>
         </div>
       </div>
     </AppShell>
