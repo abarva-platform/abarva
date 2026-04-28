@@ -427,11 +427,14 @@ export function HomeIndexPage() {
 
   function handleActionClick(letter: 'A' | 'B' | 'C') {
     if (letter === 'A') {
-      programsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else if (letter === 'B') {
+      // CDP architecture sprint — drill into the P3 Design detail
       router.push('/programs/apx-cdp-2026');
+    } else if (letter === 'B') {
+      // AI Cloud Spend pressure
+      router.push('/tower/pressures/twr-ai-cloud-spend');
     } else if (letter === 'C') {
-      router.push('/tower');
+      // AMS BAFO award — drill into the source event
+      router.push('/source/ams-vendor-2026');
     }
   }
 

@@ -27,7 +27,7 @@ export const HOME_VIEW = {
     heroStat: '$2.4M',
     heroLabel: 'vs $1.8M budget · +33%',
     atlasSentence: 'LLM inference is the top driver — a negotiated rate card would recover $180K annually.',
-    href: '/tower',
+    href: '/tower/pressures/twr-ai-cloud-spend',
   },
 
   // Source highlight
@@ -37,15 +37,15 @@ export const HOME_VIEW = {
     stage: 'BAFO',
     stageNumber: 7,
     linkedProgram: 'APX-CDP-2026',
-    href: '/source',
+    href: '/source/ams-vendor-2026',
   },
 
   // Agent voice (Nexus as home guide)
-  agentQuote: 'Workshop 5 is blocking the CDP Design gate — that\'s the highest-leverage action today. AI Cloud Spend needs a rate card decision by end of week. AMS BAFO and CDP are linked — a vendor architecture decision here constrains the CDP data layer.',
+  agentQuote: 'CDP Design gate is cleared — architecture sprint is active. Vendor C contract is in final review; that\'s the near-term critical path. AI Cloud Spend pressure needs a rate card decision. AMS BAFO award is unblocked and tied to CDP data layer.',
   agentContext: 'Nexus · Executive summary',
   actions: [
-    { letter: 'A' as const, text: 'Clear Workshop 5 blocker', detail: 'Unlocks CDP Design gate (P2 → P3)' },
-    { letter: 'B' as const, text: 'Review AI Cloud Spend', detail: 'Path B: LLM rate card — $180K/yr recovery' },
-    { letter: 'C' as const, text: 'Check AMS BAFO status', detail: 'Stage 7 decisions constrain CDP data layer' },
+    { letter: 'A' as const, text: 'Review CDP architecture sprint', detail: 'P3 Design · Vendor C contract in final review' },
+    { letter: 'B' as const, text: 'Review AI Cloud Spend', detail: 'LLM rate card — $180K/yr recovery available' },
+    { letter: 'C' as const, text: 'Check AMS BAFO award status', detail: 'Unblocked · Vendor C integration contract' },
   ],
 };
