@@ -2,6 +2,11 @@
 // Source-of-record for the data shapes defined in Packet 7 of the
 // Intelligence design spec (docs/design/abarva-intelligence-design-spec.md).
 
+import type { ContradictionSeed } from './seed-contradictions';
+import type { SignalSeed } from './seed-signals-manual';
+import type { SolutionSeed } from './seed-solutions';
+import type { PatternDomain, PatternSeed, PatternTier } from './seed-types';
+
 export type NexusMode = 'research' | 'grounded' | 'pivot';
 export type NexusFormat =
   | 'one_sentence'
@@ -192,4 +197,30 @@ export interface RetrievalPlan {
   dimensions: Array<'graph' | 'vector' | 'structured' | 'emergent'>;
   query: string;
   tenancy: TenancyCtx;
+}
+
+export type CorpusEntity = PatternSeed | SignalSeed | SolutionSeed | ContradictionSeed;
+
+export interface LoadedCorpus {
+  patterns: readonly PatternSeed[];
+  signals: readonly SignalSeed[];
+  solutions: readonly SolutionSeed[];
+  contradictions: readonly ContradictionSeed[];
+  byId: ReadonlyMap<string, CorpusEntity>;
+  byDomain: ReadonlyMap<PatternDomain, readonly PatternSeed[]>;
+  byTier: ReadonlyMap<PatternTier, readonly PatternSeed[]>;
+  patternsById: ReadonlyMap<string, PatternSeed>;
+  signalsById: ReadonlyMap<string, SignalSeed>;
+  solutionsById: ReadonlyMap<string, SolutionSeed>;
+  contradictionsById: ReadonlyMap<string, ContradictionSeed>;
+  loadedAt: string;
+}
+
+export interface LoaderConfig {
+  patterns?: readonly PatternSeed[];
+  signals?: readonly SignalSeed[];
+  solutions?: readonly SolutionSeed[];
+  contradictions?: readonly ContradictionSeed[];
+  validate?: boolean;
+  loadedAt?: string;
 }
