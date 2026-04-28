@@ -121,6 +121,38 @@ export function getMissionsForSourceEvent(
 }
 
 /**
+ * Returns the auto-derived portfolio mission queue across every program +
+ * source-event instance, filtered by `priorityFloor` and limited to the
+ * top-N rows. Sorted high → medium → low (with the canonical stable
+ * tie-breaker from `deriveAllMissions`).
+ *
+ * - `limit` defaults to 10. Pass 0 (or a negative value) to receive an
+ *   empty array.
+ * - `priorityFloor` defaults to `'medium'` so the Tower portfolio queue
+ *   only surfaces decisive (high + medium) missions. Pass `'low'` to
+ *   include every pending criterion.
+ *
+ * Pure: same module-level fixtures + same arguments → same output.
+ */
+export function getPortfolioMissions(
+  limit = 10,
+  options: { priorityFloor?: 'high' | 'medium' | 'low' } = {},
+): readonly DerivedMission[] {
+  const safeLimit = Math.max(0, Math.trunc(limit));
+  if (safeLimit === 0) return [];
+  const floor = options.priorityFloor ?? 'medium';
+  const PRIORITY_RANK: Record<'high' | 'medium' | 'low', number> = {
+    high: 0,
+    medium: 1,
+    low: 2,
+  };
+  const floorRank = PRIORITY_RANK[floor];
+  return deriveAllMissions(ALL_INSTANCES, ALL_PATTERNS)
+    .filter((m) => PRIORITY_RANK[m.priority] <= floorRank)
+    .slice(0, safeLimit);
+}
+
+/**
  * Returns the auto-derived missions for a single Apex Retail program by id.
  *
  * Match is case-insensitive on either `id` or `displayId` to tolerate
