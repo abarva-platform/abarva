@@ -113,7 +113,8 @@ function PressureCard({ item }: { item: PressureItem }) {
         >
           {item.severity}
         </span>
-        <span
+        <Link
+          href={`/tower/pressures/${item.id}`}
           style={{
             fontFamily: SHELL.SERIF,
             fontSize: 16,
@@ -121,10 +122,11 @@ function PressureCard({ item }: { item: PressureItem }) {
             color: SHELL.INK,
             flex: 1,
             lineHeight: 1.2,
+            textDecoration: 'none',
           }}
         >
           {item.title}
-        </span>
+        </Link>
         <StatusPill status={item.status} />
       </div>
 
@@ -193,18 +195,19 @@ function PressureCard({ item }: { item: PressureItem }) {
 
       {/* Action link */}
       <div style={{ marginTop: 14 }}>
-        <span
+        <Link
+          href={`/tower/pressures/${item.id}`}
           style={{
             fontFamily: SHELL.MONO,
             fontSize: 10,
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
             color: SHELL.INK_SOFT,
-            cursor: 'pointer',
+            textDecoration: 'none',
           }}
         >
           View detail →
-        </span>
+        </Link>
       </div>
     </div>
   );
