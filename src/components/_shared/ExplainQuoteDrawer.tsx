@@ -15,7 +15,7 @@
  * ContradictionDetailCard.
  */
 
-import { useEffect, useState } from 'react';
+import { startTransition, useEffect, useState } from 'react';
 
 import { PatternDoctrineLink } from '@/components/source/PatternDoctrineLink';
 import { SHELL } from '@/lib/shell/shell-tokens';
@@ -63,9 +63,13 @@ export function ExplainQuoteDrawer({
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    setLoading(true);
-    setError(null);
-    setPayload(null);
+    // Batch the reset into a transition so React handles it as a single
+    // lower-priority update rather than three cascading synchronous renders.
+    startTransition(() => {
+      setLoading(true);
+      setError(null);
+      setPayload(null);
+    });
 
     const url = `/api/reasoning/explain?surface=${encodeURIComponent(
       surface,
