@@ -547,7 +547,7 @@ function UsersAccessCard({ userSecurityRisk }: { userSecurityRisk: string }) {
 
 function ConnectorsCard({ connectorRisk }: { connectorRisk: string }) {
   return (
-    <Card title="Connectors" eyebrow="sync health" routeHref="/platform/admin/connectors">
+    <Card title="Connectors" eyebrow="sync health" routeHref="/admin/connectors">
       <p style={{ margin: 0, fontSize: 13, color: COLORS.body, lineHeight: 1.55 }}>
         {connectorRisk}
       </p>

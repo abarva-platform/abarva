@@ -304,6 +304,13 @@ describe('admin modules', () => {
     expect(users?.routeHref).toBe('/admin/users');
     expect(audit?.routeHref).toBe('/admin/audit');
   });
+
+  it('routes connector module to the canonical Setup connector page', () => {
+    const view = buildStewardSetupReadinessView();
+    const connectors = view.modules.find((m) => m.key === 'connectors');
+    expect(connectors?.routeHref).toBe('/admin/connectors');
+    expect(connectors?.routeHref).not.toBe('/platform/admin/connectors');
+  });
 });
 
 // ---------------------------------------------------------------------
@@ -333,6 +340,13 @@ describe('recommended actions', () => {
     expect(hrefs).toContain('/admin/audit');
     expect(hrefs).not.toContain('/platform/admin/users');
     expect(hrefs).not.toContain('/platform/admin/audit');
+  });
+
+  it('routes connector recommended actions to canonical Setup connector page', () => {
+    const view = buildStewardSetupReadinessView();
+    const hrefs = view.recommendedActions.map((a) => a.routeHref);
+    expect(hrefs).toContain('/admin/connectors');
+    expect(hrefs).not.toContain('/platform/admin/connectors');
   });
 });
 
@@ -426,6 +440,11 @@ describe('module hygiene · StewardSetupControlCenter.tsx', () => {
     expect(codeOnly).not.toMatch(/from '@\/app\/programs\//);
     expect(codeOnly).not.toMatch(/from '@\/lib\/programs\/mock'/);
     expect(codeOnly).not.toMatch(/from '@\/lib\/auth\//);
+  });
+
+  it('uses the canonical Setup connector route instead of the legacy platform connector route', () => {
+    expect(source).toContain('routeHref="/admin/connectors"');
+    expect(source).not.toContain('routeHref="/platform/admin/connectors"');
   });
 });
 
