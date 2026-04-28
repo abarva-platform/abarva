@@ -255,6 +255,48 @@ describe('canon hygiene · SentinelInteractionRail.tsx', () => {
   });
 });
 
+// ---------------------------------------------------------------------
+// Mount wiring · SentinelPatternDetail.tsx
+// ---------------------------------------------------------------------
+
+describe('SentinelPatternDetail · mounts SentinelInteractionRail', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const fs = require('fs') as typeof import('fs');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const path = require('path') as typeof import('path');
+
+  const sourcePath = path.resolve(
+    __dirname,
+    '../../../components/intelligence/SentinelPatternDetail.tsx',
+  );
+  const source = fs.readFileSync(sourcePath, 'utf8');
+
+  it('imports the rail component and deterministic rail view builder', () => {
+    expect(source).toMatch(
+      /from '@\/components\/intelligence\/SentinelInteractionRail'/,
+    );
+    expect(source).toMatch(
+      /from '@\/lib\/intelligence\/sentinel-interaction-rail-view'/,
+    );
+  });
+
+  it('anchors the rail to the current pattern detail view', () => {
+    expect(source).toContain('tenantDisplayName: view.tenant.displayName');
+    expect(source).toContain('anchorPatternKey: view.patternKey');
+    expect(source).toContain('anchorPatternName: view.patternName');
+    expect(source).toContain('observedProgramCount: view.affectedProgramRows.length');
+  });
+
+  it('mounts the rail after source basis and before Why it matters', () => {
+    const sourceBasisIndex = source.indexOf('IntelligenceSourceBasisPanel');
+    const railIndex = source.indexOf('<SentinelInteractionRail');
+    const whyIndex = source.indexOf('<Block heading="Why it matters">');
+    expect(sourceBasisIndex).toBeGreaterThan(-1);
+    expect(railIndex).toBeGreaterThan(sourceBasisIndex);
+    expect(whyIndex).toBeGreaterThan(railIndex);
+  });
+});
+
 function stripComments(src: string): string {
   const lineStripped = src
     .split('\n')
