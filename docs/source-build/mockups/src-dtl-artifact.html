@@ -11,7 +11,12 @@
         --card: #fffdf8;
         --ink: #0c1a3a;
         --ink-soft: #45556f;
+        --ink-muted: #8b95a8;
         --line: #d8d2c4;
+        --mint: #1f7a64;
+        --mint-bg: #e6f3ee;
+        --peach: #b45e2d;
+        --peach-bg: #fbeadd;
       }
       * { box-sizing: border-box; }
       body { margin: 0; background: var(--paper); color: var(--ink); font-family: "DM Sans", Arial, sans-serif; }
@@ -24,7 +29,7 @@
       .content { padding: 28px 32px; display: grid; gap: 18px; }
       .panel { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
       .hero { display: grid; grid-template-columns: 1.15fr .85fr; gap: 18px; }
-      .eyebrow { font: 600 10px/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .12em; color: var(--ink-soft); }
+      .eyebrow { font: 600 10px/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .12em; color: var(--ink-muted); }
       h1, h2 { margin: 0; font-family: Georgia, serif; }
       .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
       .chip { border: 1px solid var(--line); border-radius: 999px; padding: 5px 9px; font: 600 10px/1.4 ui-monospace, monospace; text-transform: uppercase; }
@@ -32,6 +37,21 @@
       .stack { display: grid; gap: 12px; }
       .inset { border: 1px solid var(--line); border-radius: 12px; background: var(--paper-soft); padding: 14px 16px; }
       ul { margin: 10px 0 0 18px; padding: 0; }
+      /* Tier indicator — S4 */
+      .tier-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 8px;
+        padding: 6px 10px;
+        font: 700 10px/1.4 ui-monospace, monospace;
+        text-transform: uppercase;
+        letter-spacing: .12em;
+      }
+      .tier-indicator .tier-value { font-size: 13px; }
+      .tier-rich  { border: 1px solid var(--mint);  background: var(--mint-bg);  color: var(--mint);  }
+      .tier-outline { border: 1px solid #45556f; background: var(--paper-soft); color: #45556f; }
+      .tier-stub  { border: 1px solid var(--peach); background: var(--peach-bg); color: var(--peach); }
     </style>
   </head>
   <body>
@@ -39,8 +59,8 @@
       <aside class="rail"></aside>
       <aside class="agent">
         <div class="eyebrow">Sentinel · Artifact</div>
-        <h2>Evidence is visible and bounded.</h2>
-        <p>This artifact is tiered as rich, carries deterministic provenance, and references four source inputs. Governance notes still flag one missing client confirmation.</p>
+        <h2>Artifact tier: rich. Status: needs review. Provenance: deterministic_seed. Evidence chain: 4 entries.</h2>
+        <p>Governance notes flag one missing client confirmation before promotion is safe. Evidence chain is bounded and seeded deterministically.</p>
       </aside>
       <main class="main">
         <div class="topbar">AbarVa · Apex Retail · Source · Decision memo</div>
@@ -49,35 +69,37 @@
           <section class="panel hero">
             <div>
               <div class="eyebrow">Artifact detail</div>
+              <div style="font-size:12px;color:var(--ink-soft);margin-top:4px">charter</div>
               <h1>Vendor C BAFO decision memo</h1>
-              <p>Deterministic artifact shell for the AMS Vendor Consolidation storyline. Artifact detail now exposes provenance directly instead of keeping it entirely implicit.</p>
+              <p style="margin:12px 0 0;font-size:14px;line-height:1.6;color:var(--ink-soft)">Deterministic artifact shell for the AMS Vendor Consolidation storyline. Artifact detail exposes provenance directly instead of keeping it entirely implicit.</p>
             </div>
-            <div class="chips">
-              <span class="chip">status: needs review</span>
-              <span class="chip">tier: rich</span>
-              <span class="chip">evidence entries: 4</span>
-              <span class="chip">source refs: 4</span>
+            <div style="display:grid;gap:8px;align-content:start;justify-items:end">
+              <!-- Tier indicator — rich tier -->
+              <div class="tier-indicator tier-rich">
+                <span>Tier</span>
+                <span class="tier-value">Rich</span>
+              </div>
+              <span class="chip" style="color:var(--ink-soft)">Status: needs review</span>
             </div>
           </section>
           <div class="grid">
             <section class="panel stack">
               <div class="inset">
                 <div class="eyebrow">Visible provenance</div>
-                <ul>
-                  <li>Created from: deterministic seed</li>
-                  <li>Store key: source-artifact:ams-vendor-2026:decision-memo</li>
-                  <li>Freshness: 2026-04-27T18:00:00Z</li>
-                  <li>Evidence ledger entry: artifact-decision-memo</li>
-                </ul>
+                <div style="display:grid;gap:6px;margin-top:10px;font-size:13px;line-height:1.5">
+                  <div><strong>Created from:</strong> deterministic_seed</div>
+                  <div><strong>Store key:</strong> source-artifact:ams-vendor-2026:decision-memo</div>
+                  <div><strong>Freshness:</strong> 2026-04-28</div>
+                  <div><strong>Evidence ledger entry:</strong> artifact-decision-memo</div>
+                </div>
               </div>
               <div class="inset">
-                <div class="eyebrow">Sections</div>
-                <h2>Executive summary</h2>
-                <p>Vendor C leads on managed CDP architecture, onboarding certainty, and response completeness. Final legal markup remains the main blocker before award confirmation.</p>
+                <div class="eyebrow">Executive summary</div>
+                <p style="margin:8px 0 0;font-size:14px;line-height:1.55">Vendor C leads on managed CDP architecture, onboarding certainty, and response completeness. Final legal markup remains the main blocker before award confirmation.</p>
               </div>
               <div class="inset">
-                <h2>Commercial delta</h2>
-                <p>BAFO pricing remains within benchmark band after transition support is normalized. Vendor B still trails on staffing assurance.</p>
+                <div class="eyebrow">Commercial delta</div>
+                <p style="margin:8px 0 0;font-size:14px;line-height:1.55">BAFO pricing remains within benchmark band after transition support is normalized. Vendor B still trails on staffing assurance.</p>
               </div>
             </section>
             <section class="panel stack">
@@ -87,6 +109,14 @@
                   <li>Procurement wants final markup attached before approval</li>
                   <li>Client confirmation on onboarding assumption still open</li>
                 </ul>
+              </div>
+              <div class="inset">
+                <div class="eyebrow">Tier variants reference (S4)</div>
+                <div style="display:grid;gap:8px;margin-top:10px">
+                  <div class="tier-indicator tier-rich"><span>Tier</span><span class="tier-value">Rich</span></div>
+                  <div class="tier-indicator tier-outline"><span>Tier</span><span class="tier-value">Outline</span></div>
+                  <div class="tier-indicator tier-stub"><span>Tier</span><span class="tier-value">Stub</span></div>
+                </div>
               </div>
               <div class="inset">
                 <div class="eyebrow">Linked patterns</div>

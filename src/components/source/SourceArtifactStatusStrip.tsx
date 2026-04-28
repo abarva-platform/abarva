@@ -1,3 +1,5 @@
+// SRC-S4 · SRC-DTL-ARTIFACT — Artifact status strip (paper aesthetic refresh).
+// Metadata-only. No artifact drawer, generation, export/import, or approval workflow execution.
 import type { CSSProperties } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourceArtifactStatusStripSeedItem } from '@/lib/source/mock-seed';
@@ -20,7 +22,7 @@ export function SourceArtifactStatusStrip({
   const needsAttentionCount = artifacts.filter((artifact) => artifact.status === 'changes_requested' || artifact.status === 'needs_inputs').length;
 
   return (
-    <section style={SECTION} aria-label="Source artifact status strip">
+    <section style={SECTION} aria-label="Source artifact status strip" data-testid="artifact-status-strip">
       <div style={HEADER}>
         <div>
           <div style={{ ...sourceSectionLabel, color: SHELL.INK_SOFT }}>Artifacts and deliverables</div>

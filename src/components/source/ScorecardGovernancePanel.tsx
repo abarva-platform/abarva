@@ -1,3 +1,5 @@
+// SRC-S4 · SRC-DTL-SCORECARD — Scorecard governance panel with 7-state lifecycle display.
+// No live approval, lock action, workflow automation, or score submission.
 import type { CSSProperties, ReactNode } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { summarizeApprovalState } from '@/lib/source/scorecard';
@@ -5,6 +7,7 @@ import type {
   ScorecardCriterion,
   ScorecardGovernance,
   ScorecardCriterionStatus,
+  ScorecardLifecycleState,
 } from '@/lib/source/types';
 
 type GovernanceShellStatus = 'draft' | 'in review' | 'locked' | 'blocked';
@@ -80,11 +83,25 @@ const CANONICAL_DIMENSIONS: Array<{
   },
 ];
 
-const SCORECARD_LIFECYCLE: ScorecardGovernance['approvalState'][] = [
+// Legacy 3-state approval arc (kept for backwards compat with older seeds).
+const LEGACY_LIFECYCLE: ScorecardGovernance['approvalState'][] = [
   'not_started',
   'in_review',
   'approved',
 ];
+
+// Full 7-state lifecycle introduced in Wave S4.
+const FULL_LIFECYCLE: ScorecardLifecycleState[] = [
+  'default_generated',
+  'client_edited',
+  'rationale_added',
+  'reviewed',
+  'approved',
+  'locked',
+  'used_for_vendor_evaluation',
+];
+
+const FULL_LIFECYCLE_SET = new Set<string>(FULL_LIFECYCLE);
 
 export function ScorecardGovernancePanel({
   scorecard,
@@ -99,7 +116,9 @@ export function ScorecardGovernancePanel({
   const missingRationaleRows = rows.filter((row) => row.rationaleMissing);
   const shellStatus = deriveShellStatus(scorecard.approvalState, rows);
   const readinessPercent = deriveReadinessPercent(rows, scorecard.approvalState);
-  const lifecycleIndex = SCORECARD_LIFECYCLE.indexOf(scorecard.approvalState);
+  const usingFullLifecycle = FULL_LIFECYCLE_SET.has(scorecard.approvalState);
+  const activeLifecycle = usingFullLifecycle ? FULL_LIFECYCLE : LEGACY_LIFECYCLE;
+  const lifecycleIndex = (activeLifecycle as string[]).indexOf(scorecard.approvalState);
   const stewardEditorial = buildStewardEditorial(
     eventName,
     currentStageLabel,
@@ -109,7 +128,7 @@ export function ScorecardGovernancePanel({
   );
 
   return (
-    <section style={SECTION} aria-label="Source scorecard governance shell">
+    <section style={SECTION} aria-label="Source scorecard governance shell" data-testid="scorecard-governance-panel">
       <div style={sourceCard}>
         <div style={HEADER}>
           <div style={{ minWidth: 0 }}>
@@ -133,8 +152,8 @@ export function ScorecardGovernancePanel({
             <div style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK_SOFT }}>
               Readiness meter: {readinessPercent}% deterministic completion
             </div>
-            <div style={LIFECYCLE_STRIP} aria-label="Scorecard lifecycle strip">
-              {SCORECARD_LIFECYCLE.map((state, index) => {
+            <div style={LIFECYCLE_STRIP} aria-label="Scorecard lifecycle strip" data-testid="lifecycle-strip">
+              {activeLifecycle.map((state, index) => {
                 const isCurrent = index === lifecycleIndex;
                 const isComplete = index < lifecycleIndex;
                 return (
@@ -159,7 +178,7 @@ export function ScorecardGovernancePanel({
                           : SHELL.INK_SOFT,
                     }}
                   >
-                    {state.replace('_', ' ')}
+                    {state.replaceAll('_', ' ')}
                   </div>
                 );
               })}

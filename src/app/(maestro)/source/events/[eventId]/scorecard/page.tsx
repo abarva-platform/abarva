@@ -42,7 +42,7 @@ export default async function SourceEventScorecardPage({
       }
     >
       <SentinelAgentColumn
-        quote={`Scorecard ${event.scorecard?.approvalState ?? 'default_generated'}. ${approvedCriteriaCount} criteria approved or ready, ${pendingCriteriaCount} still below threshold. ${evaluationToBafoGate.transitionLabel} remains ${evaluationToBafoGate.state}.`}
+        quote={`Scorecard at ${event.scorecard?.approvalState ?? 'default_generated'}. ${approvedCriteriaCount} criteria approved · ${pendingCriteriaCount} pending review. Locks when all criteria reach 'approved'.`}
         agentContext={`Sentinel · ${event.name} · Scorecard`}
         actions={[
           { letter: 'A', text: 'Review approval blockers', detail: 'Criteria pending approval or still carrying blocked status' },
