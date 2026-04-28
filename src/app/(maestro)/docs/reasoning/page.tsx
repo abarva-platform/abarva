@@ -7,6 +7,7 @@
 // the lifecycle pattern catalogues.
 
 import type { CSSProperties, ReactNode } from 'react';
+import Link from 'next/link';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { EditorialCanvas } from '@/components/admin/EditorialCanvas';
@@ -213,6 +214,22 @@ export default function ReasoningArchitectureDocPage() {
         title="AbarVa reasoning layer · architecture"
         subtitle="A static, hand-authored map of the four-layer reasoning model: pattern definitions, tenant instances, the pattern-application runtime, and the synthesis voices that read from it."
       >
+        <Section eyebrow="Quickstart" title="Wiring Layer 3 into a new surface?">
+          <p style={PROSE_STYLE}>
+            This page is the architectural map. If you want a working,
+            SDK-style walkthrough — install, hello-gates, hello-contradictions,
+            hello-synthesis, plus checklists for adding new patterns, new
+            instances, and a new surface — read the{' '}
+            <Link
+              href="/docs/reasoning/quickstart"
+              style={{ color: COLORS.navy, textDecoration: 'underline', textUnderlineOffset: '2px' }}
+            >
+              reasoning quickstart
+            </Link>
+            .
+          </p>
+        </Section>
+
         <Section eyebrow="Section 1" title="Why this exists">
           <p style={PROSE_STYLE}>
             Before the reasoning runtime, AbarVa had two halves of a brain that could not
