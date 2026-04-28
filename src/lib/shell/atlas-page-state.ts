@@ -99,4 +99,137 @@ export interface AtlasPageStateProviderProps {
   stage?: StageId | null;
   surfaceContext?: Record<string, unknown>;
   agentName?: string;
+  /** Full synthesis text stored as conversation turn 0. */
+  synthesisText?: string;
+  /** Initial action set shown by presentational Atlas consumers. */
+  suggestedActions?: SuggestedAction[];
+}
+
+export interface AtlasPageStateSeed extends AtlasPageStateProviderProps {
+  timestamp?: number;
+}
+
+export interface AppendAtlasTurnOptions {
+  id?: string;
+  timestamp?: number;
+  agentName?: string;
+}
+
+export const ATLAS_SYNTHESIS_TURN_ID = 'atlas-synthesis-turn-0';
+export const DEFAULT_ATLAS_AGENT_NAME = 'Atlas';
+export const DEFAULT_ATLAS_TENANT_NAME = 'Apex Retail Group';
+
+function normalizeTenantName(tenantName: string) {
+  const normalized = tenantName.trim();
+  return normalized.length > 0 ? normalized : DEFAULT_ATLAS_TENANT_NAME;
+}
+
+function createTurnId(role: ChatTurn['role'], timestamp: number, index: number) {
+  return `atlas-${role}-${timestamp}-${index}`;
+}
+
+function createDefaultSynthesis(seed: AtlasPageStateSeed) {
+  const tenantName = normalizeTenantName(seed.tenantName);
+  const agentName = seed.agentName ?? DEFAULT_ATLAS_AGENT_NAME;
+  const stageLabel = seed.stage ? ` at ${seed.stage}` : '';
+
+  return `${agentName} is initialized for ${tenantName} on ${seed.surface}${stageLabel}. Ask for the page context, current pressures, or next best action.`;
+}
+
+export function createAtlasPageState(seed: AtlasPageStateSeed): AtlasPageState {
+  const tenantName = normalizeTenantName(seed.tenantName);
+  const agentName = seed.agentName ?? DEFAULT_ATLAS_AGENT_NAME;
+  const timestamp = seed.timestamp ?? Date.now();
+  const synthesisText = seed.synthesisText?.trim() || createDefaultSynthesis({ ...seed, tenantName, agentName });
+
+  return {
+    tenantName,
+    surface: seed.surface,
+    stage: seed.stage ?? null,
+    surfaceContext: seed.surfaceContext ?? {},
+    agentName,
+    conversation: [
+      {
+        id: ATLAS_SYNTHESIS_TURN_ID,
+        role: 'agent',
+        text: synthesisText,
+        agentName,
+        timestamp,
+      },
+    ],
+    currentResponse: '',
+    isStreaming: false,
+    error: null,
+    suggestedActions: seed.suggestedActions ?? [],
+  };
+}
+
+export function resetAtlasPageState(seed: AtlasPageStateSeed): AtlasPageState {
+  return createAtlasPageState(seed);
+}
+
+export function appendAtlasUserTurn(
+  state: AtlasPageState,
+  text: string,
+  options: AppendAtlasTurnOptions = {},
+): AtlasPageState {
+  const cleanText = text.trim();
+  if (!cleanText) return state;
+
+  const timestamp = options.timestamp ?? Date.now();
+  const turn: ChatTurn = {
+    id: options.id ?? createTurnId('user', timestamp, state.conversation.length),
+    role: 'user',
+    text: cleanText,
+    agentName: options.agentName ?? state.agentName,
+    timestamp,
+  };
+
+  return {
+    ...state,
+    conversation: [...state.conversation, turn],
+    currentResponse: '',
+    isStreaming: false,
+    error: null,
+  };
+}
+
+export function appendAtlasAgentTurn(
+  state: AtlasPageState,
+  text: string,
+  options: AppendAtlasTurnOptions = {},
+): AtlasPageState {
+  const cleanText = text.trim();
+  if (!cleanText) return state;
+
+  const timestamp = options.timestamp ?? Date.now();
+  const turn: ChatTurn = {
+    id: options.id ?? createTurnId('agent', timestamp, state.conversation.length),
+    role: 'agent',
+    text: cleanText,
+    agentName: options.agentName ?? state.agentName,
+    timestamp,
+  };
+
+  return {
+    ...state,
+    conversation: [...state.conversation, turn],
+    currentResponse: '',
+    isStreaming: false,
+    error: null,
+  };
+}
+
+export function clearAtlasResponse(state: AtlasPageState): AtlasPageState {
+  return {
+    ...state,
+    currentResponse: '',
+    isStreaming: false,
+    error: null,
+  };
+}
+
+export function buildAtlasContextualReply(state: AtlasPageState, prompt: string) {
+  const stageLabel = state.stage ? `, stage ${state.stage}` : '';
+  return `${state.agentName} has ${state.tenantName} context for ${state.surface}${stageLabel}. I will use the page synthesis and ${Object.keys(state.surfaceContext).length} context fields to answer: "${prompt.trim()}".`;
 }
