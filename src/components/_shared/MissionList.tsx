@@ -30,6 +30,13 @@ export interface MissionListProps {
   readonly maxRows?: number;
   /** Custom empty-state node. When omitted, a default message is rendered. */
   readonly emptyState?: ReactNode;
+  /**
+   * When true, the stage badge is prefixed with the originating instance's
+   * `displayId` (e.g. `APX-CDP P3` instead of just `P3`). Useful on
+   * portfolio surfaces (Tower) where missions span multiple instances.
+   * Defaults to `false`; detail-page consumers see only the stage id.
+   */
+  readonly showInstancePrefix?: boolean;
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
@@ -154,11 +161,26 @@ function priorityAriaLabel(priority: DerivedMissionPriority): string {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
+/**
+ * Compress an instance displayId for use as a stage-badge prefix.
+ *
+ * The instance displayIds we render in the queue follow the pattern
+ * `<PROGRAM-PREFIX>-<NUMBER>` (e.g. `APX-CDP-2026`, `SRC-AMS-2026`). For a
+ * compact badge like `APX-CDP P3` we want only the leading two segments —
+ * the date suffix is noise in the executive scan.
+ */
+function shortInstanceTag(displayId: string): string {
+  const parts = displayId.split('-');
+  if (parts.length <= 2) return displayId;
+  return parts.slice(0, 2).join('-');
+}
+
 export function MissionList({
   missions,
   title,
   maxRows = 5,
   emptyState,
+  showInstancePrefix = false,
 }: MissionListProps) {
   const safeMax = Math.max(0, Math.trunc(maxRows));
   const visible = missions.slice(0, safeMax);
@@ -195,8 +217,17 @@ export function MissionList({
                   </span>
                 )}
               </span>
-              <span style={STAGE_BADGE} title={`Stage · ${mission.stageId}`}>
-                {mission.stageId}
+              <span
+                style={STAGE_BADGE}
+                title={
+                  showInstancePrefix
+                    ? `${mission.instanceDisplayId} · ${mission.stageId}`
+                    : `Stage · ${mission.stageId}`
+                }
+              >
+                {showInstancePrefix
+                  ? `${shortInstanceTag(mission.instanceDisplayId)} ${mission.stageId}`
+                  : mission.stageId}
               </span>
             </li>
           ))}

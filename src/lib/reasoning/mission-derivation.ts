@@ -27,6 +27,13 @@ export interface DerivedMission {
   readonly id: string;
   /** Identifier of the originating instance (program or source event). */
   readonly instanceId: string;
+  /**
+   * Short human-readable identifier for the originating instance — e.g.
+   * `APX-CDP-2026` for a program or `SRC-AMS-2026` for a source event.
+   * Surfaces (Tower portfolio queue) use this to prefix the stage badge so
+   * an executive can see which program a mission belongs to at a glance.
+   */
+  readonly instanceDisplayId: string;
   /** Human-readable label for the originating instance. */
   readonly instanceLabel: string;
   /** Pattern that authored the criterion. */
@@ -67,6 +74,12 @@ function isProgramInstance(
 
 function instanceLabel(instance: ReasoningInstance): string {
   return instance.name;
+}
+
+function instanceDisplayId(instance: ReasoningInstance): string {
+  // Both ProgramInstance and SourceEventInstance carry a `displayId`. Fall
+  // back to `id` defensively for any future instance type that might omit it.
+  return instance.displayId ?? instance.id;
 }
 
 function currentStageId(instance: ReasoningInstance): string {
@@ -204,6 +217,7 @@ export function deriveMissionsFromInstance(
       missions.push({
         id: `${instance.id}:${evaluation.criterionId}`,
         instanceId: instance.id,
+        instanceDisplayId: instanceDisplayId(instance),
         instanceLabel: instanceLabel(instance),
         patternId: pattern.patternId,
         stageId: evaluation.stageId,
