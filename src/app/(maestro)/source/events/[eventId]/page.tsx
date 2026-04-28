@@ -22,6 +22,14 @@ export default async function SourceEventDetailPage({
   return (
     <AppShell
       surface="source"
+      surfaceContext={{
+        eventId: event.id,
+        eventName: event.name,
+        eventCode: event.code ?? '',
+        currentStage: event.currentStageLabel ?? '',
+        blocker: event.blocker ?? null,
+        valueAtStakeUsd: event.valueAtStakeUsd ?? null,
+      }}
       topBarProps={{
         tenantName: event.accountName,
         showLocked: true,

@@ -99,6 +99,18 @@ export async function POST(request: Request) {
     }
   }
 
+  // If we have source event context, enrich with live event data
+  const sc = (body.surfaceContext ?? {}) as Record<string, unknown>;
+  if (sc.eventName) {
+    const eventContextLines = [
+      `Active source event: ${sc.eventName} (${sc.eventCode ?? ''})`,
+      sc.currentStage ? `Event current stage: ${sc.currentStage}` : '',
+      sc.blocker ? `Active blocker on this event: ${sc.blocker}` : 'No active blockers recorded on this event.',
+      sc.valueAtStakeUsd ? `Contract value at stake: $${(Number(sc.valueAtStakeUsd) / 1_000_000).toFixed(1)}M` : '',
+    ].filter(Boolean);
+    contextLines.push(...eventContextLines);
+  }
+
   const systemPrompt = [
     voiceLine,
     "",
