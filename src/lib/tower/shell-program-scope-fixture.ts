@@ -42,7 +42,7 @@ export const APX_CDP_SCOPE = {
 
   evidenceTrend: [
     { month: 'Jan', value: 8 }, { month: 'Feb', value: 14 }, { month: 'Mar', value: 22 },
-    { month: 'Apr', value: 29 }, { month: 'May', value: 36 },
+    { month: 'Apr-early', value: 36 }, { month: 'Apr 27', value: 100 },
   ] as TrendPoint[],
 
   phaseTimeline: [
