@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { SHELL } from '@/lib/shell/shell-tokens';
 import {
   buildCommercialSignalsPreviewViewModel,
   SourceSignalPreviewItem,
@@ -22,18 +23,18 @@ interface SourceCommercialSignalsPreviewProps {
 // ---------------------------------------------------------------------------
 
 const COLORS = {
-  bg: '#FAFAF9',
-  border: '#E8E6E3',
-  nearBlack: '#0F0E0D',
-  body: '#3D3B38',
-  muted: '#706D66',
-  accent: '#1E3A5F',
-  criticalBg: '#FEE2E2',
-  criticalText: '#991B1B',
-  warningBg: '#FEF9C3',
-  warningText: '#92400E',
-  infoBg: '#DBEAFE',
-  infoText: '#1E40AF',
+  bg: SHELL.PAPER,
+  border: SHELL.CARD_LINE,
+  nearBlack: SHELL.INK,
+  body: SHELL.INK_SOFT,
+  muted: SHELL.INK_MUTED,
+  accent: SHELL.INK_MID,
+  criticalBg: SHELL.RUST_BG,
+  criticalText: SHELL.RUST_TEXT,
+  warningBg: SHELL.PEACH_BG,
+  warningText: SHELL.PEACH_TEXT,
+  infoBg: SHELL.BLUE_BG,
+  infoText: SHELL.INK_MID,
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -120,7 +121,7 @@ function SignalCard({ signal }: { signal: SourceSignalPreviewItem }) {
         padding: '12px',
         border: `1px solid ${COLORS.border}`,
         borderRadius: '6px',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: SHELL.CARD_WHITE,
         display: 'flex',
         flexDirection: 'column',
         gap: '6px',
@@ -160,7 +161,7 @@ function PatternCard({ pattern }: { pattern: SourcePatternPreviewItem }) {
         padding: '12px',
         border: `1px solid ${COLORS.border}`,
         borderRadius: '6px',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: SHELL.CARD_WHITE,
         display: 'flex',
         flexDirection: 'column',
         gap: '6px',
@@ -221,7 +222,7 @@ export function SourceCommercialSignalsPreview({
         border: `1px solid ${COLORS.border}`,
         borderRadius: '8px',
         padding: '20px',
-        fontFamily: 'DM Sans, system-ui, sans-serif',
+        fontFamily: SHELL.SANS,
       }}
     >
       {/* Header */}

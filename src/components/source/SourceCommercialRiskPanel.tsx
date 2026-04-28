@@ -1,22 +1,23 @@
 'use client';
 
 import React, { useState } from 'react';
+import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourceCommercialRiskViewModel } from '@/lib/source/source-commercial-risk-view';
 import type { CommercialRiskSeverity } from '@/lib/source/commercial-risk-detection';
 
-const BG = '#FAFAF9';
-const DARK = '#0F0E0D';
-const TEXT = '#3D3B38';
-const MUTED = '#706D66';
-const BORDER = '#E8E6E3';
-const ACCENT = '#1E3A5F';
-const BG2 = '#F2F1F0';
+const BG = SHELL.PAPER;
+const DARK = SHELL.INK;
+const TEXT = SHELL.INK_SOFT;
+const MUTED = SHELL.INK_MUTED;
+const BORDER = SHELL.CARD_LINE;
+const ACCENT = SHELL.INK_MID;
+const BG2 = SHELL.PAPER_SOFT;
 
 const SEVERITY_CHIP: Record<CommercialRiskSeverity, { bg: string; color: string }> = {
-  critical: { bg: '#FEE2E2', color: '#991B1B' },
-  high: { bg: '#FFEDD5', color: '#9A3412' },
-  medium: { bg: '#FEF9C3', color: '#854D0E' },
-  low: { bg: '#DCFCE7', color: '#166534' },
+  critical: { bg: SHELL.RUST_BG, color: SHELL.RUST_TEXT },
+  high: { bg: SHELL.PEACH_BG, color: SHELL.PEACH_TEXT },
+  medium: { bg: SHELL.PEACH_BG, color: SHELL.PEACH_TEXT },
+  low: { bg: SHELL.MINT_BG, color: SHELL.MINT_TEXT },
 };
 
 export interface SourceCommercialRiskPanelProps {
