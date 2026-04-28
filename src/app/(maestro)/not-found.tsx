@@ -27,6 +27,7 @@ export default function MaestroNotFound() {
             detail: 'Reach the AbarVa support team',
           },
         ]}
+        surface="home"
       />
 
       {/* WorkPane */}

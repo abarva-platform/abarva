@@ -168,6 +168,7 @@ export function SetupUsersPage() {
         agent={{ initials: 'St', name: 'Steward', role: 'Setup Orchestrator' }}
         quote={USERS_AGENT_VOICE.quote}
         actions={USERS_AGENT_VOICE.actions}
+        surface="setup"
       />
 
       {/* Work pane */}

@@ -266,6 +266,7 @@ export function PatternDetailPage() {
         quote={pattern.agentQuote}
         agentContext={pattern.agentContext}
         actions={pattern.actions}
+        surface="intelligence"
       />
 
       {/* Main reading area */}

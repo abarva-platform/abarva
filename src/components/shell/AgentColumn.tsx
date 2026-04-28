@@ -1,5 +1,9 @@
+'use client';
+
 import type { ReactNode } from 'react';
+import { useRef } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
+import { useAgentStream } from '@/hooks/useAgentStream';
 
 export interface AgentAction {
   letter: 'A' | 'B' | 'C';
@@ -20,6 +24,10 @@ export interface AgentColumnProps {
   onActionClick?: (letter: 'A' | 'B' | 'C') => void;
   /** Slot rendered at the very bottom of the dark agent column panel, below action buttons and above the input box. */
   bottomSlot?: ReactNode;
+  /** Surface identifier for streaming context */
+  surface?: string;
+  /** Active program identifier for streaming context */
+  programId?: string;
 }
 
 export function AgentColumn({
@@ -30,8 +38,27 @@ export function AgentColumn({
   inputPlaceholder,
   onActionClick,
   bottomSlot,
+  surface,
+  programId,
 }: AgentColumnProps) {
   const placeholder = inputPlaceholder ?? `Ask ${agent.name}...`;
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const { ask, response, isStreaming, error, clear } = useAgentStream({
+    surface: surface ?? 'home',
+    programId,
+    agentName: agent.name,
+  });
+
+  const handleSubmit = () => {
+    const el = textareaRef.current;
+    if (!el) return;
+    const text = el.value.trim();
+    if (!text || isStreaming) return;
+    ask(text);
+    el.value = '';
+    el.style.height = 'auto';
+  };
 
   return (
     <div
@@ -200,6 +227,88 @@ export function AgentColumn({
 
       {/* Input box */}
       <div style={{ marginTop: 'auto', padding: '16px 0 24px' }}>
+        {/* Streaming response panel */}
+        {(response || isStreaming || error) && (
+          <div
+            style={{
+              padding: '10px 14px',
+              background: 'rgba(255,255,255,0.05)',
+              borderRadius: 6,
+              marginBottom: 8,
+              maxHeight: 200,
+              overflowY: 'auto',
+            }}
+          >
+            {isStreaming && !response && (
+              <span
+                style={{
+                  fontFamily: SHELL.SANS,
+                  fontSize: 12,
+                  color: 'rgba(255,255,255,0.4)',
+                  fontStyle: 'italic',
+                }}
+              >
+                {agent.initials} · thinking...
+              </span>
+            )}
+            {response && (
+              <div
+                style={{
+                  fontFamily: SHELL.SANS,
+                  fontSize: 13,
+                  color: SHELL.PAPER,
+                  lineHeight: 1.6,
+                  whiteSpace: 'pre-wrap',
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: SHELL.MONO,
+                    fontSize: 9,
+                    color: 'rgba(255,255,255,0.4)',
+                    display: 'block',
+                    marginBottom: 6,
+                  }}
+                >
+                  {agent.initials} · {agent.name}
+                </span>
+                {response}
+                {isStreaming && <span style={{ opacity: 0.5 }}>▊</span>}
+              </div>
+            )}
+            {error && (
+              <span
+                style={{
+                  fontFamily: SHELL.SANS,
+                  fontSize: 12,
+                  color: SHELL.PEACH_TEXT,
+                }}
+              >
+                {error}
+              </span>
+            )}
+            {response && !isStreaming && (
+              <button
+                onClick={clear}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontFamily: SHELL.MONO,
+                  fontSize: 9,
+                  color: 'rgba(255,255,255,0.3)',
+                  marginTop: 8,
+                  display: 'block',
+                  padding: 0,
+                }}
+              >
+                clear ×
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Textarea + send */}
         <div
           style={{
             background: 'rgba(250,247,241,0.08)',
@@ -209,33 +318,62 @@ export function AgentColumn({
             display: 'flex',
             flexDirection: 'row',
             gap: 12,
-            alignItems: 'center',
-            cursor: 'text',
+            alignItems: 'flex-end',
           }}
         >
-          <span
+          <textarea
+            ref={textareaRef}
+            rows={1}
+            spellCheck
+            placeholder={placeholder}
+            disabled={isStreaming}
             style={{
               fontFamily: SHELL.SANS,
               fontSize: 13,
-              color: 'rgba(250,247,241,0.45)',
+              color: 'rgba(250,247,241,0.85)',
               flex: 1,
+              background: 'transparent',
+              border: 'none',
+              outline: 'none',
+              resize: 'none',
+              lineHeight: 1.5,
+              maxHeight: 120,
+              overflowY: 'auto',
+              caretColor: SHELL.PAPER,
             }}
-          >
-            {placeholder}
-          </span>
-          <span
+            onInput={(e) => {
+              const el = e.currentTarget;
+              el.style.height = 'auto';
+              el.style.height = `${el.scrollHeight}px`;
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSubmit();
+              }
+            }}
+          />
+          <button
+            onClick={handleSubmit}
+            disabled={isStreaming}
             style={{
+              background: 'none',
+              border: 'none',
+              cursor: isStreaming ? 'default' : 'pointer',
               fontFamily: SHELL.MONO,
               fontSize: 10,
               letterSpacing: '0.14em',
               textTransform: 'uppercase',
-              color: 'rgba(250,247,241,0.6)',
+              color: isStreaming ? 'rgba(250,247,241,0.3)' : 'rgba(250,247,241,0.6)',
               fontWeight: 600,
               flexShrink: 0,
+              padding: 0,
+              lineHeight: 1,
+              marginBottom: 2,
             }}
           >
-            ↵ Send
-          </span>
+            {isStreaming ? '...' : '↵ Send'}
+          </button>
         </div>
       </div>
     </div>

@@ -277,6 +277,7 @@ export function IntelligenceIndexPage() {
         quote={view.agentQuote}
         agentContext={view.agentContext}
         actions={view.actions}
+        surface="intelligence"
       />
 
       {/* Main content */}

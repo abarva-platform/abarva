@@ -190,6 +190,7 @@ export function SolutionsIndexPage() {
         quote={view.agentQuote}
         agentContext={view.agentContext}
         actions={view.actions}
+        surface="intelligence"
       />
 
       {/* Main content */}
