@@ -46,6 +46,9 @@ export const T3_H01_PATTERN = {
     { id: 'APX-LPM-2026', name: 'Loyalty Platform Modernization', phase: 'P3 Design' },
   ],
 
+  // Programs applying this pattern
+  usingPrograms: [] as Array<{ id: string; displayId: string; name: string; phase: string; context: string; href: string; }>,
+
   // Sentinel agent voice for detail
   agentQuote: 'T3-H01 is the strongest validated signal in this library. Four active programs cite it, all with consistent positive evidence. The anti-patterns section is the most referenced section — maestros are using it to scope out Ambient AI proposals that lack outcome capture.',
   agentContext: 'Sentinel · T3-H01 · validated Apr 22 2026',

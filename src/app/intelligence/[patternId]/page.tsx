@@ -46,5 +46,6 @@ export default async function PatternDetailRoute({
     return <DeprecatedPatternDetailPage />;
   }
 
-  return <PatternDetailPage />;
+  const usingPrograms = 'usingPrograms' in pattern ? pattern.usingPrograms : undefined;
+  return <PatternDetailPage usingPrograms={usingPrograms} />;
 }
