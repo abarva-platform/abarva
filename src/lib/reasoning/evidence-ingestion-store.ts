@@ -15,6 +15,13 @@
 // SourceEventInstance.evidence (`EvidenceItem`) and ProgramInstance.evidence
 // (`ProgramEvidenceItem`) feed into this store, and the consumer
 // (`buildEvidenceMapWithIngestions`) shape-checks before merging.
+//
+// Each ingestion is also tagged with a sidecar ISO-8601 timestamp captured at
+// `addEvidence` time. The original item shape is left untouched (some callers
+// already include their own `recordedAt` field), and the sidecar timestamps
+// are exposed via `getEvidenceTimestampsFor` so the per-instance reasoning
+// timeline can show *when* a piece of evidence was ingested, even when the
+// caller did not embed a timestamp on the item itself.
 
 /**
  * Loose typing — the demo accepts items shaped like SourceEventInstance's
@@ -29,6 +36,14 @@ export type IngestedEvidenceItem = Record<string, unknown>;
 const store: Map<string, IngestedEvidenceItem[]> = new Map();
 
 /**
+ * Sidecar parallel-array of ingestion timestamps, indexed alongside `store`.
+ * `timestamps.get(instanceId)?.[i]` corresponds to `store.get(instanceId)?.[i]`.
+ * Captured at `addEvidence` time so callers do not have to embed their own
+ * recordedAt on the body.
+ */
+const timestamps: Map<string, string[]> = new Map();
+
+/**
  * Add a single evidence item for an instance. The item is appended to the
  * existing list (preserving insertion order so the UI can show "newest at
  * the bottom" if desired).
@@ -40,11 +55,14 @@ export function addEvidence(instanceId: string, item: IngestedEvidenceItem): voi
   if (!item || typeof item !== 'object') {
     throw new Error('addEvidence: item must be an object');
   }
+  const ingestedAt = new Date().toISOString();
   const existing = store.get(instanceId);
   if (existing) {
     existing.push(item);
+    timestamps.get(instanceId)!.push(ingestedAt);
   } else {
     store.set(instanceId, [item]);
+    timestamps.set(instanceId, [ingestedAt]);
   }
 }
 
@@ -58,9 +76,21 @@ export function getEvidenceFor(instanceId: string): IngestedEvidenceItem[] {
   return list.slice();
 }
 
+/**
+ * Return the parallel ISO-8601 ingestion timestamps for the instance.
+ * `getEvidenceFor(id)[i]` was ingested at `getEvidenceTimestampsFor(id)[i]`.
+ * Returns a fresh copy so callers can't mutate the internal array.
+ */
+export function getEvidenceTimestampsFor(instanceId: string): string[] {
+  const list = timestamps.get(instanceId);
+  if (!list) return [];
+  return list.slice();
+}
+
 /** Clear contributions for one instance. */
 export function clearEvidenceFor(instanceId: string): void {
   store.delete(instanceId);
+  timestamps.delete(instanceId);
 }
 
 /**
@@ -69,4 +99,5 @@ export function clearEvidenceFor(instanceId: string): void {
  */
 export function _resetForTests(): void {
   store.clear();
+  timestamps.clear();
 }

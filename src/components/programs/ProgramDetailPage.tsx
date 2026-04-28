@@ -29,7 +29,9 @@ import { summarizeFailureModes } from '@/lib/reasoning/provenance-ribbon-helpers
 import { FailureModeWarningChip } from '@/components/_shared/FailureModeWarningChip';
 import { ContradictionDetailCardClient } from '@/components/_shared/ContradictionDetailCardClient';
 import { CascadeImpactCard, ReverseCascadeCard } from '@/components/_shared/CascadeImpactCard';
+import { InstanceEventTimeline } from '@/components/_shared/InstanceEventTimeline';
 import { computeReverseCascade } from '@/lib/reasoning/cross-instance-reasoner';
+import { buildInstanceEventTimeline } from '@/lib/reasoning/instance-event-timeline';
 import { isResolved as isContradictionResolved } from '@/lib/reasoning/contradiction-resolution-state';
 import { buildProgramStorylineContext, matchStorylinePatterns } from '@/lib/intelligence/storyline-matcher';
 import { buildGateApprovalDrawerView } from '@/lib/programs/gate-approval-drawer-view';
@@ -3262,6 +3264,19 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
     return { instanceId: instance.id, currentPhase: instance.currentPhase };
   })();
 
+  // REASON-32 — Per-instance reasoning event timeline entries. Reads from
+  // the synthesis telemetry, evidence ingestion store, and contradiction
+  // resolution state, all keyed by the underlying program-instance id.
+  const timelineEntries = (() => {
+    const instance = APEX_RETAIL_PROGRAM_INSTANCES.find(
+      (i) =>
+        i.displayId === view.displayId ||
+        i.id.toLowerCase() === view.programId.toLowerCase(),
+    );
+    if (!instance) return null;
+    return { instanceId: instance.id, entries: buildInstanceEventTimeline(instance.id) };
+  })();
+
   return (
     <AppShell
       surface="programs-detail"
@@ -3581,6 +3596,10 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
                   />
                 )}
               </>
+            )}
+            {/* REASON-32 — Per-instance reasoning event timeline. */}
+            {timelineEntries && (
+              <InstanceEventTimeline entries={timelineEntries.entries} />
             )}
             {/* PRG-EVIDENCE-INGEST — demo form to POST evidence and watch
                 gates flip on next render via buildProgramEvidenceMapWithIngestions. */}
