@@ -49,3 +49,6 @@ export type {
   // Re-exported from intelligence layer
   PatternSeed,
 } from './types';
+
+// Gate evaluator — REASON-6
+export { LifecycleGateEvaluator, createGateEvaluator, evaluateStageGates } from './gate-evaluator';
