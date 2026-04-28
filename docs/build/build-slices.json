@@ -9602,6 +9602,13 @@
       "category": "Programs",
       "status": "code_complete",
       "notes": "SourceEventChip + buildProgramSourceLinkView wired into ProgramDetailPage Overview tab (program-source-context-card testid). Source LinkedProgramTab gets testid + honest-disclaimer. 16 integration tests. PROG23 from track-03."
+    },
+    {
+      "id": "PROG21",
+      "name": "Gate + Approval Interaction Drawer",
+      "category": "Programs",
+      "status": "code_complete",
+      "notes": "GateApprovalDrawer slide-in panel added to ProgramDetailPage Gate section. buildGateApprovalDrawerView lib derives posture (ready/requires_override/blocked/waiver_needed), per-criterion status (known/missing/blocked), evidence linking, waiver caveat, honest disclaimer. Trigger testid gate-approval-drawer-trigger. 27 integration tests. PROG21 from track-03."
     }
   ]
 }
