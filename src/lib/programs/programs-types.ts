@@ -25,7 +25,7 @@ export interface ProgramWorkbenchContent {
   title: string;
   prose: string;
   actionsLabel: string;
-  actions: Array<{ letter: string; text: string; detail: string }>;
+  actions: Array<{ letter: string; text: string; detail: string; href?: string }>;
 }
 
 export interface ProgramRow {
