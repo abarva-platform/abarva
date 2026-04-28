@@ -4,6 +4,20 @@ import {
 } from '@/lib/routes/registry';
 
 describe('Setup canonical route registry parity', () => {
+  it('registers /admin as the canonical Setup operator entry', () => {
+    const route = getRouteById('admin-index');
+
+    expect(route).toBeDefined();
+    expect(route!.pattern).toBe('/admin');
+    expect(route!.label).toBe('Admin Portal');
+    expect(route!.shellKind).toBe('admin');
+    expect(route!.surface).toBe('admin');
+    expect(route!.primaryAgent).toBe('Steward');
+    expect(route!.requiresAuth).toBe(true);
+    expect(route!.active).toBe(true);
+    expect(route!.notes).toContain('/platform/admin');
+  });
+
   it('registers canonical W6 Setup governance routes under /admin/*', () => {
     const expected = [
       ['admin-policies', '/admin/policies', 'Setup Policies'],
@@ -59,6 +73,7 @@ describe('Setup canonical route registry parity', () => {
   it('does not add legacy platform Setup routes as canonical connector/users/audit patterns', () => {
     const adminRoutes = getRoutesBySurface('admin').map((route) => route.pattern);
 
+    expect(adminRoutes).not.toContain('/platform/admin');
     expect(adminRoutes).not.toContain('/platform/admin/connectors');
     expect(adminRoutes).not.toContain('/platform/admin/users');
     expect(adminRoutes).not.toContain('/platform/admin/audit');
