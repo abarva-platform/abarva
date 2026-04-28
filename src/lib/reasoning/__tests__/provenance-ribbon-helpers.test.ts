@@ -11,12 +11,14 @@ import {
   formatCitations,
   summarizeBlockers,
   summarizeCascade,
+  summarizeFailureModes,
   summarizeGates,
   summarizePortfolio,
 } from '@/lib/reasoning/provenance-ribbon-helpers';
 import type {
   CascadeImpact,
   CitationPointer,
+  FailureModeDetection,
   GateCriterionResult,
 } from '@/lib/reasoning/types';
 
@@ -197,5 +199,66 @@ describe('summarizePortfolio', () => {
       instanceSnapshot: { programCount: 3, sourceEventCount: 2 },
     });
     expect(view.totalInstanceCount).toBe(5);
+  });
+});
+
+describe('summarizeFailureModes', () => {
+  const detection = (
+    id: string,
+    label: string,
+    confidence: number,
+  ): FailureModeDetection => ({
+    id,
+    failureModeId: id,
+    label,
+    description: label,
+    stages: [],
+    mitigations: [],
+    confidence,
+    matchedKeywords: [],
+    detectedFromKeys: [],
+  });
+
+  it('returns zeros and null label when no failure modes are detected', () => {
+    expect(summarizeFailureModes({ failureModes: [] })).toEqual({
+      count: 0,
+      highConfidence: 0,
+      topLabel: null,
+      topConfidence: 0,
+    });
+  });
+
+  it('counts detections at or above 0.6 confidence as high-confidence', () => {
+    const view = summarizeFailureModes({
+      failureModes: [
+        detection('fm1', 'Governance gap', 0.4),
+        detection('fm2', 'Transition risk', 0.6),
+        detection('fm3', 'Staffing shortfall', 0.85),
+      ],
+    });
+    expect(view.count).toBe(3);
+    expect(view.highConfidence).toBe(2);
+  });
+
+  it('selects the highest-confidence detection as top', () => {
+    const view = summarizeFailureModes({
+      failureModes: [
+        detection('fm1', 'Governance gap', 0.5),
+        detection('fm2', 'Staffing shortfall', 0.92),
+        detection('fm3', 'Transition risk', 0.7),
+      ],
+    });
+    expect(view.topLabel).toBe('Staffing shortfall');
+    expect(view.topConfidence).toBeCloseTo(0.92, 5);
+  });
+
+  it('detects failure modes on the AMS Vendor Consolidation 2026 source context', () => {
+    const view = summarizeFailureModes(ctx);
+    // PAT_SRC_AMS_001 declares failure modes that key off governance,
+    // transition, staffing — all present in the AMS evidence map. The
+    // detector should fire at least once on this canonical fixture.
+    expect(view.count).toBeGreaterThan(0);
+    expect(view.topLabel).not.toBeNull();
+    expect(view.topConfidence).toBeGreaterThan(0);
   });
 });

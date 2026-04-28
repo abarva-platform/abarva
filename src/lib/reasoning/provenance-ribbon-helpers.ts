@@ -178,3 +178,46 @@ function readNonNegativeInt(snap: Record<string, unknown>, key: string): number 
   if (typeof v !== 'number' || !Number.isFinite(v) || v < 0) return 0;
   return Math.floor(v);
 }
+
+export interface FailureModeSummaryView {
+  /** Total number of failure-mode detections in the context. */
+  count: number;
+  /** Detections whose `confidence` is at least 0.6. */
+  highConfidence: number;
+  /** Label of the highest-confidence detection, or `null` when empty. */
+  topLabel: string | null;
+  /** Confidence (0..1) of the highest-confidence detection, or `0` when empty. */
+  topConfidence: number;
+}
+
+/**
+ * Summarize the failure-mode detections attached to a SynthesisContext for
+ * the provenance ribbon. The "top" entry is the detection with the greatest
+ * `confidence`; ties resolve to the first occurrence in `failureModes`.
+ *
+ * Pure: deterministic over its inputs. An empty `failureModes` array yields
+ * zeros and `topLabel = null`.
+ */
+export function summarizeFailureModes(
+  context: Pick<SynthesisContext, 'failureModes'>,
+): FailureModeSummaryView {
+  const detections = context.failureModes ?? [];
+  const count = detections.length;
+  if (count === 0) {
+    return { count: 0, highConfidence: 0, topLabel: null, topConfidence: 0 };
+  }
+
+  let highConfidence = 0;
+  let top = detections[0];
+  for (const d of detections) {
+    if (d.confidence >= 0.6) highConfidence += 1;
+    if (d.confidence > top.confidence) top = d;
+  }
+
+  return {
+    count,
+    highConfidence,
+    topLabel: top.label,
+    topConfidence: top.confidence,
+  };
+}

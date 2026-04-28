@@ -18,6 +18,7 @@ import {
   formatCitations,
   summarizeBlockers,
   summarizeCascade,
+  summarizeFailureModes,
   summarizeGates,
 } from '@/lib/reasoning/provenance-ribbon-helpers';
 import { SHELL } from '@/lib/shell/shell-tokens';
@@ -35,10 +36,17 @@ export function ProgramProvenanceRibbon({ context }: ProgramProvenanceRibbonProp
   const gates = summarizeGates(context.gatesSummary);
   const blockers = summarizeBlockers(context);
   const cascade = summarizeCascade(context);
+  const failureModes = summarizeFailureModes(context);
 
   const hasCitations = cited.length > 0;
   const hasBlockers = blockers.count > 0;
   const hasCascade = cascade.count > 0;
+  const hasFailureModes = failureModes.count > 0;
+  const failureModeTopPct = Math.round(failureModes.topConfidence * 100);
+  const failureModeTitle =
+    failureModes.topLabel !== null
+      ? `${failureModes.topLabel} (${failureModeTopPct}% confidence)`
+      : 'No failure modes detected';
 
   return (
     <aside
@@ -143,15 +151,51 @@ export function ProgramProvenanceRibbon({ context }: ProgramProvenanceRibbonProp
           <Muted>No linked events</Muted>
         )}
       </Section>
+
+      <Divider />
+
+      <Section
+        label="Failure modes"
+        labelDotColor={failureModes.highConfidence > 0 ? SHELL.AMBER_DOT : null}
+      >
+        {hasFailureModes ? (
+          <span
+            title={failureModeTitle}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+          >
+            <span style={{ color: SHELL.INK }}>
+              {failureModes.count} detected
+            </span>
+            {failureModes.topLabel ? (
+              <span style={{ color: SHELL.INK_SOFT }}>
+                · top: {failureModes.topLabel} ({failureModeTopPct}%)
+              </span>
+            ) : null}
+          </span>
+        ) : (
+          <Muted>No failure modes detected</Muted>
+        )}
+      </Section>
     </aside>
   );
 }
 
-function Section({ label, children }: { label: string; children: React.ReactNode }) {
+function Section({
+  label,
+  labelDotColor,
+  children,
+}: {
+  label: string;
+  labelDotColor?: string | null;
+  children: React.ReactNode;
+}) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 24 }}>
       <span
         style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 5,
           fontFamily: SHELL.MONO,
           fontSize: 9,
           letterSpacing: '0.12em',
@@ -161,6 +205,18 @@ function Section({ label, children }: { label: string; children: React.ReactNode
         }}
       >
         {label}
+        {labelDotColor ? (
+          <span
+            aria-hidden
+            style={{
+              display: 'inline-block',
+              width: 6,
+              height: 6,
+              borderRadius: 999,
+              background: labelDotColor,
+            }}
+          />
+        ) : null}
       </span>
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{children}</span>
     </div>

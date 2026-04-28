@@ -7,6 +7,8 @@
  *   • gates: pending vs. cleared
  *   • contradictions: count + amber dot when any are active
  *   • cascade: count of linked downstream impacts
+ *   • failure modes: count + top detection (with amber dot when any
+ *     detection has confidence ≥ 0.6)
  *
  * Renders server-side from a SynthesisContext built by
  * buildSourceSynthesisContext. Visual-only, no client interactivity.
@@ -16,6 +18,7 @@ import type { SynthesisContext } from '@/lib/reasoning/types';
 import {
   formatCitations,
   summarizeCascade,
+  summarizeFailureModes,
   summarizeGates,
 } from '@/lib/reasoning/provenance-ribbon-helpers';
 import { SHELL } from '@/lib/shell/shell-tokens';
@@ -28,8 +31,14 @@ export function SourceProvenanceRibbon({ context }: SourceProvenanceRibbonProps)
   const cited = formatCitations(context.citations, 4);
   const gates = summarizeGates(context.gatesSummary);
   const cascade = summarizeCascade(context);
+  const failureModes = summarizeFailureModes(context);
   const contradictionCount = context.activeContradictions.length;
   const cascadeCount = cascade.count;
+  const failureModeTopPct = Math.round(failureModes.topConfidence * 100);
+  const failureModeTitle =
+    failureModes.topLabel !== null
+      ? `${failureModes.topLabel} (${failureModeTopPct}% confidence)`
+      : 'No failure modes detected';
 
   return (
     <div
@@ -157,6 +166,35 @@ export function SourceProvenanceRibbon({ context }: SourceProvenanceRibbonProps)
           <span style={{ color: SHELL.INK_MUTED }}>none</span>
         )}
       </RibbonSection>
+
+      <Separator />
+
+      {/* Failure modes section */}
+      <RibbonSection
+        label="Failure modes"
+        labelDotColor={failureModes.highConfidence > 0 ? SHELL.AMBER_DOT : null}
+      >
+        {failureModes.count > 0 ? (
+          <span
+            title={failureModeTitle}
+            style={{ fontFamily: SHELL.MONO, fontSize: 10.5, color: SHELL.INK }}
+          >
+            {failureModes.count} detected
+            {failureModes.topLabel ? (
+              <>
+                <span style={{ color: SHELL.INK_MUTED }}> · top: </span>
+                <span>{failureModes.topLabel}</span>
+                <span style={{ color: SHELL.INK_MUTED }}>
+                  {' '}
+                  ({failureModeTopPct}%)
+                </span>
+              </>
+            ) : null}
+          </span>
+        ) : (
+          <span style={{ color: SHELL.INK_MUTED }}>no failure modes detected</span>
+        )}
+      </RibbonSection>
     </div>
   );
 }
@@ -165,9 +203,11 @@ export function SourceProvenanceRibbon({ context }: SourceProvenanceRibbonProps)
 
 function RibbonSection({
   label,
+  labelDotColor,
   children,
 }: {
   label: string;
+  labelDotColor?: string | null;
   children: React.ReactNode;
 }) {
   return (
@@ -181,6 +221,9 @@ function RibbonSection({
     >
       <span
         style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 5,
           fontFamily: SHELL.MONO,
           fontSize: 9,
           textTransform: 'uppercase',
@@ -189,6 +232,18 @@ function RibbonSection({
         }}
       >
         {label}
+        {labelDotColor ? (
+          <span
+            aria-hidden
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              background: labelDotColor,
+              display: 'inline-block',
+            }}
+          />
+        ) : null}
       </span>
       {children}
     </div>
