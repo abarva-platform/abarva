@@ -9667,6 +9667,13 @@
       "notes": "New decisions tab added to Control Tower (6th tab, between Source Commercial and Executive Brief). buildExecutiveDecisionQueueView tower-domain lib provides 5 decisions across source/programs/cross_domain domains with urgency (immediate/this_week), status (open/blocked/pending_input), known/missing context, blockers, and Atlas recommendations. DecisionsPanel renders in TowerLensTabs.tsx. Critical blocker alert shown when immediate decision has unresolved blocker. Updated tower4-lens-tabs.test.ts (5→6 tabs). data-testid tower-decisions-panel, tower-decisions-executive-summary, tower-decisions-critical-blocker-alert, tower-decisions-disclaimer. 59 integration tests (tower2 + updated tower4). TOWER6/TOWER2-track05 from track-05."
     },
     {
+      "id": "SRC45",
+      "name": "Transition Readiness Placeholder Surface",
+      "category": "Source",
+      "status": "code_complete",
+      "notes": "New 'transition' tab (9th tab) added to SourceEventDetailPage. buildTransitionReadinessView source lib provides 3 vendor readiness profiles (Vendor A partial, Vendor B blocked/SOC-2, Vendor C scope-pending), 7 go/no-go criteria (all unmet at Stage 7 BAFO), 4 transition risk indicators (incumbent departure high, CDP integration high, parallel run cost medium, knowledge continuity medium), and Atlas guidance. TransitionReadinessTab renders vendor check cards, go/no-go criterion list, and risk indicator cards. data-testid source-transition-readiness-tab, transition-readiness-summary, transition-go-no-go, transition-risks, transition-vendor-{vendorId}, transition-risk-{riskId}, transition-readiness-disclaimer. 41 integration tests. SRC45 from track-04."
+    },
+    {
       "id": "TOWER7",
       "name": "Value at Risk Portfolio Lens in Control Tower",
       "category": "Intelligence",

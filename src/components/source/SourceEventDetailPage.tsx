@@ -17,6 +17,8 @@ import { PatternChip } from '@/components/source/PatternChip';
 import { buildSourceStorylineContext, matchStorylinePatterns } from '@/lib/intelligence/storyline-matcher';
 import { buildPricingCompletenessView } from '@/lib/source/pricing-completeness-view';
 import { buildBafoScenarioCompareView } from '@/lib/source/bafo-scenario-compare-view';
+import { buildTransitionReadinessView } from '@/lib/source/transition-readiness-view';
+import type { VendorTransitionReadiness, TransitionRiskItem, TransitionGoNoGoItem, TransitionReadinessStatus } from '@/lib/source/transition-readiness-view';
 import { ContradictionDetailCardClient } from '@/components/_shared/ContradictionDetailCardClient';
 import { CascadeImpactCard, ReverseCascadeCard } from '@/components/_shared/CascadeImpactCard';
 import { InstanceEventTimeline } from '@/components/_shared/InstanceEventTimeline';
@@ -59,7 +61,7 @@ const STEWARD_ACTIONS = [
 
 // ─── WorkPane tabs (SRC42 — 8-tab consolidated canvas) ───────────────────────
 
-type TabKey = 'summary' | 'pricing' | 'bafo' | 'risk' | 'readiness' | 'missions' | 'signals' | 'program';
+type TabKey = 'summary' | 'pricing' | 'bafo' | 'risk' | 'readiness' | 'missions' | 'signals' | 'program' | 'transition';
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: 'summary', label: 'Summary' },
@@ -70,6 +72,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'missions', label: 'Missions' },
   { key: 'signals', label: 'Signals' },
   { key: 'program', label: 'Linked Program' },
+  { key: 'transition', label: 'Transition' },
 ];
 
 // ─── Tab content components ───────────────────────────────────────────────────
@@ -1553,6 +1556,209 @@ function LinkedProgramTab() {
   );
 }
 
+// ─── SRC45: Transition Readiness tab ─────────────────────────────────────────
+
+function statusBadgeStyle(status: TransitionReadinessStatus): React.CSSProperties {
+  const base: React.CSSProperties = {
+    display: 'inline-block',
+    padding: '2px 7px',
+    borderRadius: 4,
+    fontFamily: SHELL.MONO,
+    fontSize: 9,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase' as const,
+    fontWeight: 600,
+  };
+  switch (status) {
+    case 'ready':
+      return { ...base, background: '#f0fdf4', color: '#166534' };
+    case 'partial':
+      return { ...base, background: '#fefce8', color: '#854d0e' };
+    case 'blocked':
+      return { ...base, background: '#fef2f2', color: '#991b1b' };
+    case 'not_started':
+      return { ...base, background: SHELL.PAPER, color: SHELL.INK_MUTED, border: `1px solid ${SHELL.CARD_LINE}` };
+    case 'deferred':
+      return { ...base, background: '#f5f3ff', color: '#5b21b6' };
+    default:
+      return base;
+  }
+}
+
+function statusLabel(status: TransitionReadinessStatus): string {
+  switch (status) {
+    case 'ready': return 'Ready';
+    case 'partial': return 'Partial';
+    case 'blocked': return 'Blocked';
+    case 'not_started': return 'Not started';
+    case 'deferred': return 'Deferred';
+    default: return status;
+  }
+}
+
+function riskSeverityStyle(severity: 'high' | 'medium' | 'low'): React.CSSProperties {
+  const base: React.CSSProperties = {
+    display: 'inline-block',
+    padding: '2px 7px',
+    borderRadius: 4,
+    fontFamily: SHELL.MONO,
+    fontSize: 9,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase' as const,
+    fontWeight: 600,
+  };
+  switch (severity) {
+    case 'high': return { ...base, background: '#fef2f2', color: '#991b1b' };
+    case 'medium': return { ...base, background: '#fefce8', color: '#854d0e' };
+    case 'low': return { ...base, background: '#f0fdf4', color: '#166534' };
+    default: return base;
+  }
+}
+
+function TransitionReadinessTab() {
+  const view = buildTransitionReadinessView();
+  const { summary, vendors, risks, goNoGoCriteria } = view;
+
+  return (
+    <div data-testid="source-transition-readiness-tab">
+      {/* Header */}
+      <div style={{ fontFamily: SHELL.MONO, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.14em', color: SHELL.INK_MUTED, marginBottom: 12 }}>
+        Transition Readiness · SRC-AMS-2026
+      </div>
+
+      {/* Summary banner */}
+      <div
+        data-testid="transition-readiness-summary"
+        style={{ background: SHELL.CARD_WHITE, border: `1px solid ${SHELL.CARD_LINE}`, borderRadius: 8, padding: '14px 16px', marginBottom: 16 }}
+      >
+        <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: SHELL.INK_MUTED, marginBottom: 10 }}>
+          Readiness snapshot
+        </div>
+        <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' as const, marginBottom: 10 }}>
+          {[
+            { label: 'Vendors tracked', value: vendors.length },
+            { label: 'Blocked', value: summary.blockedVendorCount },
+            { label: 'Go / No-Go', value: `${summary.goNoGoMetCount} / ${summary.goNoGoTotalCount}` },
+            { label: 'Transition clear', value: summary.transitionClearToBegin ? 'Yes' : 'Not yet' },
+          ].map((m, i) => (
+            <div key={`trm-${i}`} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.08em', color: SHELL.INK_MUTED, textTransform: 'uppercase' }}>{m.label}</span>
+              <span style={{ fontFamily: SHELL.SERIF, fontSize: 20, color: SHELL.INK, lineHeight: 1 }}>{m.value}</span>
+            </div>
+          ))}
+        </div>
+        <p style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK_SOFT, margin: 0, lineHeight: 1.5, fontStyle: 'italic', borderTop: `1px solid ${SHELL.CARD_LINE_SOFT}`, paddingTop: 10 }}>
+          {view.atlasGuidance}
+        </p>
+      </div>
+
+      {/* Per-vendor readiness */}
+      <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: SHELL.INK_MUTED, marginBottom: 8 }}>
+        Vendor transition readiness
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+        {vendors.map((vendor: VendorTransitionReadiness) => (
+          <div
+            key={vendor.vendorId}
+            data-testid={`transition-vendor-${vendor.vendorId}`}
+            style={{ background: SHELL.CARD_WHITE, border: `1px solid ${SHELL.CARD_LINE}`, borderRadius: 8, padding: '14px 16px' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: vendor.transitionBlocked ? 8 : 12 }}>
+              <span style={{ fontFamily: SHELL.SERIF, fontSize: 15, color: SHELL.INK }}>{vendor.vendorLabel}</span>
+              <span style={statusBadgeStyle(vendor.overallStatus)}>{statusLabel(vendor.overallStatus)}</span>
+            </div>
+            {vendor.blockerSummary && (
+              <div style={{ fontFamily: SHELL.SANS, fontSize: 11, color: '#991b1b', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 5, padding: '6px 10px', marginBottom: 10 }}>
+                {vendor.blockerSummary}
+              </div>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {vendor.checks.map((check) => (
+                <div key={check.checkId} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                  <span style={statusBadgeStyle(check.status)}>{statusLabel(check.status)}</span>
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK, lineHeight: 1.4 }}>{check.label}</span>
+                    {check.blockerNote && check.status !== 'ready' && (
+                      <div style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK_MUTED, marginTop: 2 }}>
+                        {check.blockerNote}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Go / No-Go criteria */}
+      <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: SHELL.INK_MUTED, marginBottom: 8 }}>
+        Go / No-Go criteria
+      </div>
+      <div
+        data-testid="transition-go-no-go"
+        style={{ background: SHELL.CARD_WHITE, border: `1px solid ${SHELL.CARD_LINE}`, borderRadius: 8, padding: '14px 16px', marginBottom: 16 }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {goNoGoCriteria.map((criterion: TransitionGoNoGoItem) => (
+            <div key={criterion.criterionId} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+              <span style={{ fontFamily: SHELL.MONO, fontSize: 12, color: criterion.met ? '#166534' : SHELL.INK_MUTED, flexShrink: 0, marginTop: 1 }}>
+                {criterion.met ? '✓' : '○'}
+              </span>
+              <div style={{ flex: 1 }}>
+                <span style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK, lineHeight: 1.4 }}>{criterion.label}</span>
+                <span style={{ fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, marginLeft: 8 }}>
+                  {criterion.owner}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Transition risks */}
+      <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: SHELL.INK_MUTED, marginBottom: 8 }}>
+        Transition risk indicators
+      </div>
+      <div
+        data-testid="transition-risks"
+        style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}
+      >
+        {risks.map((risk: TransitionRiskItem) => (
+          <div
+            key={risk.riskId}
+            data-testid={`transition-risk-${risk.riskId}`}
+            style={{ background: SHELL.CARD_WHITE, border: `1px solid ${SHELL.CARD_LINE}`, borderRadius: 8, padding: '12px 16px' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <span style={riskSeverityStyle(risk.severity)}>{risk.severity}</span>
+              <span style={{ fontFamily: SHELL.SANS, fontSize: 13, fontWeight: 600, color: SHELL.INK }}>{risk.label}</span>
+            </div>
+            <p style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK_SOFT, margin: '0 0 6px', lineHeight: 1.5 }}>
+              {risk.narrative}
+            </p>
+            <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: SHELL.INK_MUTED, marginBottom: 3 }}>
+              Mitigation
+            </div>
+            <p style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK_SOFT, margin: 0, lineHeight: 1.4, fontStyle: 'italic' }}>
+              {risk.mitigationNote}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* Disclaimer */}
+      <div
+        data-testid="transition-readiness-disclaimer"
+        data-honest-disclaimer="source-transition-readiness"
+        style={{ fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.08em', lineHeight: 1.5, borderTop: `1px solid ${SHELL.CARD_LINE_SOFT}`, paddingTop: 10, marginTop: 8 }}
+      >
+        Deterministic seed · Transition readiness reflects fixture data for SRC-AMS-2026 at Stage 7 (BAFO). Live transition tracking, vendor check submission, and go/no-go gate management are deferred to the Source transition module (post-selection).
+      </div>
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function SourceEventDetailPage() {
@@ -1707,6 +1913,7 @@ export function SourceEventDetailPage() {
           {activeTab === 'missions' && <MissionsTab />}
           {activeTab === 'signals' && <SignalsStreamTab />}
           {activeTab === 'program' && <LinkedProgramTab />}
+          {activeTab === 'transition' && <TransitionReadinessTab />}
         </div>
       </WorkingPaneContainer>
       </div>
