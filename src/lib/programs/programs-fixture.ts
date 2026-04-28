@@ -1,6 +1,14 @@
-// PROG-A — Canonical Apex Retail fixture data for the Programs surface.
+// CORR — Canonical Apex Retail fixture data aligned to the shell wave demo anchor.
 // Deterministic: no Date.now(), no random, no model calls.
-// These 7 programs are the demo anchor for the wave programs redesign.
+//
+// Demo anchor (pages.yaml §demo-data-baseline):
+//   Tenant:           Apex Retail Group · Locked
+//   Flagship program: APX-CDP-2026 · Apex Retail CDP Activation
+//   Current phase:    P2 Synthesis · Design gate (P2 → P3) pending under Steward
+//   Known blockers:   Workshop 5 incomplete · value hypothesis evidence missing
+//                     · privacy boundary confirmation gaps
+//   Evidence coverage: 36%
+//   Linked source:    AMS Vendor Consolidation 2026 · Stage 7 BAFO · linkedProgramCode APX-CDP-2026
 
 import type {
   ProgramPhaseId,
@@ -8,7 +16,7 @@ import type {
   ProgramRow,
 } from './programs-types';
 
-// ─── Phase label map ────────────────────────────────────────────────────────
+// ─── Phase label map (7-phase: P0–P6) ───────────────────────────────────────
 
 export const PHASE_LABEL_MAP: Record<ProgramPhaseId, string> = {
   0: 'Originate',
@@ -22,7 +30,7 @@ export const PHASE_LABEL_MAP: Record<ProgramPhaseId, string> = {
 
 // ─── Helper to build the 7-slot phase array for a given program ─────────────
 
-function buildPhaseSlots(
+export function buildPhaseSlots(
   currentPhase: ProgramPhaseId,
   gateOverrides?: Partial<Record<ProgramPhaseId, ProgramPhaseSlot['gateStatus']>>,
 ): ProgramPhaseSlot[] {
@@ -50,119 +58,105 @@ function buildPhaseSlots(
 
 // ─── Apex Retail fixture programs ───────────────────────────────────────────
 
-// APX-01: Morrison Owned Brand Margin Recovery
-// P2 Synthesis (current), P3 Design gate pending
-const apx01: ProgramRow = {
-  id: 'apx-01',
-  displayId: 'APX-01',
-  name: 'Morrison Owned Brand Margin Recovery',
+// APX-CDP-2026 · Apex Retail CDP Activation  ← FLAGSHIP
+// P2 Synthesis · Design gate pending · Workshop 5 incomplete · 36% evidence
+// Linked source: AMS Vendor Consolidation 2026 · Stage 7 BAFO
+const apxCdp2026: ProgramRow = {
+  id: 'apx-cdp-2026',
+  displayId: 'APX-CDP-2026',
+  name: 'Apex Retail CDP Activation',
   currentPhase: 2,
   phases: buildPhaseSlots(2, { 3: 'pending' }),
   gateStatus: 'pending',
   lastActiveLabel: '2h ago',
-  nexusNote: 'Anchoring the Design gate decision',
+  nexusNote: 'Workshop 5 incomplete · value hypothesis evidence missing · 36% evidence coverage',
   actionLabel: 'Continue',
   isIdle: false,
 };
 
-// APX-02: Pet Adjacency Bundle Optimization
-// P4 Build (current), gate open
-const apx02: ProgramRow = {
-  id: 'apx-02',
-  displayId: 'APX-02',
-  name: 'Pet Adjacency Bundle Optimization',
+// APX-CC-2026 · Contact Center AI Transformation
+// P4 Build · on track for Activate gate
+const apxCc2026: ProgramRow = {
+  id: 'apx-cc-2026',
+  displayId: 'APX-CC-2026',
+  name: 'Contact Center AI Transformation',
   currentPhase: 4,
   phases: buildPhaseSlots(4, { 4: 'open' }),
   gateStatus: 'open',
   lastActiveLabel: '4h ago',
-  nexusNote: 'Build artifacts 60% complete — on track for Activate gate',
+  nexusNote: 'Build artifacts 68% complete — on track for Activate gate',
   actionLabel: 'Continue',
   isIdle: false,
 };
 
-// APX-03: Loyalty Lift Diagnostic
-// P1 Discovery (current), gate open
-const apx03: ProgramRow = {
-  id: 'apx-03',
-  displayId: 'APX-03',
-  name: 'Loyalty Lift Diagnostic',
+// APX-SAP-2026 · Store Associate Productivity AI
+// P1 Discovery · evidence backlog growing
+const apxSap2026: ProgramRow = {
+  id: 'apx-sap-2026',
+  displayId: 'APX-SAP-2026',
+  name: 'Store Associate Productivity AI',
   currentPhase: 1,
   phases: buildPhaseSlots(1, { 1: 'open' }),
   gateStatus: 'open',
   lastActiveLabel: '5h ago',
-  nexusNote: 'Discovery interviews scheduled — evidence backlog growing',
+  nexusNote: 'Discovery interviews scheduled — data access requests pending IT',
   actionLabel: 'Continue',
   isIdle: false,
 };
 
-// APX-04: Markdown Cadence Reset
-// P3 Design (current), idle 12d, gate N/A
-const apx04: ProgramRow = {
-  id: 'apx-04',
-  displayId: 'APX-04',
-  name: 'Markdown Cadence Reset',
+// APX-LPM-2026 · Loyalty Platform Modernization
+// P3 Design · active
+const apxLpm2026: ProgramRow = {
+  id: 'apx-lpm-2026',
+  displayId: 'APX-LPM-2026',
+  name: 'Loyalty Platform Modernization',
+  currentPhase: 3,
+  phases: buildPhaseSlots(3, { 3: 'open' }),
+  gateStatus: 'open',
+  lastActiveLabel: '1d ago',
+  nexusNote: 'Design phase — solution options under Sentinel review',
+  actionLabel: 'Continue',
+  isIdle: false,
+};
+
+// APX-MRC-2025 · Markdown Revenue Capture
+// P3 Design · idle 9 days — sponsor engagement stalled
+const apxMrc2025: ProgramRow = {
+  id: 'apx-mrc-2025',
+  displayId: 'APX-MRC-2025',
+  name: 'Markdown Revenue Capture',
   currentPhase: 3,
   phases: buildPhaseSlots(3),
   gateStatus: 'na',
-  lastActiveLabel: '12d ago',
-  nexusNote: 'No activity in 12 days — sponsor engagement may need a nudge',
+  lastActiveLabel: '9d ago',
+  nexusNote: 'No activity in 9 days — sponsor re-engagement recommended',
   actionLabel: 'Resume',
   isIdle: true,
 };
 
-// APX-05: Store Replenishment Vision
-// P5 Activate (current), gate pending
-const apx05: ProgramRow = {
-  id: 'apx-05',
-  displayId: 'APX-05',
-  name: 'Store Replenishment Vision',
-  currentPhase: 5,
-  phases: buildPhaseSlots(5, { 5: 'pending' }),
-  gateStatus: 'pending',
-  lastActiveLabel: '3h ago',
-  nexusNote: 'Activate gate criteria partially met — 2 criteria outstanding',
-  actionLabel: 'Continue',
-  isIdle: false,
-};
-
-// APX-06: Customer Lifetime Value Renewal
-// P1 Discovery (current), gate open
-const apx06: ProgramRow = {
-  id: 'apx-06',
-  displayId: 'APX-06',
-  name: 'Customer Lifetime Value Renewal',
-  currentPhase: 1,
-  phases: buildPhaseSlots(1, { 1: 'open' }),
-  gateStatus: 'open',
-  lastActiveLabel: '1d ago',
-  nexusNote: 'Discovery phase — data access requests pending IT response',
-  actionLabel: 'Continue',
-  isIdle: false,
-};
-
-// APX-07: Demand Forecast v2
-// P6 Operate (current), idle 30d+
-const apx07: ProgramRow = {
-  id: 'apx-07',
-  displayId: 'APX-07',
-  name: 'Demand Forecast v2',
+// APX-DFV2-2025 · Demand Forecasting AI v2
+// P6 Operate · steady state · Atlas monitoring
+const apxDfv2: ProgramRow = {
+  id: 'apx-dfv2-2025',
+  displayId: 'APX-DFV2-2025',
+  name: 'Demand Forecasting AI v2',
   currentPhase: 6,
   phases: buildPhaseSlots(6),
   gateStatus: 'idle',
-  lastActiveLabel: 'Mar 26',
-  nexusNote: 'Operating in steady state — no maestro input required',
+  lastActiveLabel: 'Mar 28',
+  nexusNote: 'Operating in steady state — Atlas outcome tracking active',
   actionLabel: 'Review',
   isIdle: true,
 };
 
 // ─── Exported fixture array ──────────────────────────────────────────────────
+// Flagship first so APEX_PROGRAMS_FIXTURE[0] always resolves to APX-CDP-2026.
 
 export const APEX_PROGRAMS_FIXTURE: ProgramRow[] = [
-  apx01,
-  apx02,
-  apx03,
-  apx04,
-  apx05,
-  apx06,
-  apx07,
+  apxCdp2026,   // flagship — P2 Synthesis · gate pending
+  apxCc2026,    // P4 Build · active
+  apxSap2026,   // P1 Discovery · active
+  apxLpm2026,   // P3 Design · active
+  apxMrc2025,   // P3 Design · idle
+  apxDfv2,      // P6 Operate · steady state
 ];
