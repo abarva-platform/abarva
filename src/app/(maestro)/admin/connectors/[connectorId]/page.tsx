@@ -1,25 +1,21 @@
 import { notFound } from 'next/navigation';
-import { ConnectorDetailPage } from '@/components/setup/ConnectorDetailPage';
-import { SERVICENOW_CONNECTOR_DETAIL, SALESFORCE_CONNECTOR_DETAIL } from '@/lib/setup/shell-setup-fixture';
 import type { Metadata } from 'next';
-import type { ConnectorDetail } from '@/lib/setup/shell-setup-fixture';
+import { ConnectorDetailPage } from '@/components/setup/ConnectorDetailPage';
+import { getSetupConnectorDetail } from '@/lib/setup/shell-setup-fixture';
 
-const CONNECTOR_MAP: Record<string, ConnectorDetail> = {
-  'sn': SERVICENOW_CONNECTOR_DETAIL,
-  'sfdc': SALESFORCE_CONNECTOR_DETAIL,
-};
-
-interface Props { params: Promise<{ connectorId: string }> }
+interface Props {
+  params: Promise<{ connectorId: string }>;
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { connectorId } = await params;
-  const detail = CONNECTOR_MAP[connectorId];
+  const detail = getSetupConnectorDetail(connectorId);
   return { title: detail ? `${detail.name} · Setup` : 'Connector · Setup' };
 }
 
 export default async function Page({ params }: Props) {
   const { connectorId } = await params;
-  const detail = CONNECTOR_MAP[connectorId];
+  const detail = getSetupConnectorDetail(connectorId);
   if (!detail) notFound();
   return <ConnectorDetailPage detail={detail} />;
 }

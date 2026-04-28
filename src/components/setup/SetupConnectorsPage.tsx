@@ -46,15 +46,40 @@ function StatusPill({ status }: { status: ConnectorItem['status'] }) {
   );
 }
 
+function DataModePill({ dataMode }: { dataMode: ConnectorItem['dataMode'] }) {
+  const styles: Record<ConnectorItem['dataMode'], { bg: string; text: string; label: string }> = {
+    seeded: { bg: SHELL.GRAY_BG, text: SHELL.GRAY_TEXT, label: 'Seeded' },
+    live: { bg: SHELL.BLUE_BG, text: SHELL.INK_SOFT, label: 'Live' },
+  };
+  const s = styles[dataMode];
+  return (
+    <span
+      style={{
+        display: 'inline-block',
+        fontFamily: SHELL.MONO,
+        fontSize: 9,
+        fontWeight: 600,
+        letterSpacing: '0.10em',
+        textTransform: 'uppercase',
+        color: s.text,
+        background: s.bg,
+        borderRadius: 10,
+        padding: '3px 9px',
+        lineHeight: 1,
+      }}
+    >
+      {s.label}
+    </span>
+  );
+}
+
 function ConnectorCard({ item }: { item: ConnectorItem }) {
   const isDegraded = item.status === 'degraded';
   const isDisconnected = item.status === 'disconnected';
   const needsAction = isDegraded || isDisconnected;
   const actionLabel = isDegraded ? 'Reconnect' : 'Configure';
 
-  const cardBg = isDegraded
-    ? SHELL.PEACH_BG + '44'
-    : SHELL.CARD_WHITE;
+  const cardBg = isDegraded ? SHELL.PEACH_BG + '44' : SHELL.CARD_WHITE;
 
   return (
     <div
@@ -126,6 +151,7 @@ function ConnectorCard({ item }: { item: ConnectorItem }) {
             fontSize: 10,
             color: SHELL.INK_MUTED,
             lineHeight: 1.3,
+            marginTop: 4,
           }}
         >
           Last sync: {item.lastSync}
@@ -143,10 +169,39 @@ function ConnectorCard({ item }: { item: ConnectorItem }) {
           {item.statusNote}
         </div>
 
-        {needsAction && (
-          <button
-            type="button"
+        <div
+          style={{
+            display: 'flex',
+            gap: 6,
+            flexWrap: 'wrap',
+            marginTop: 10,
+          }}
+        >
+          <DataModePill dataMode={item.dataMode} />
+          <span
             style={{
+              display: 'inline-block',
+              fontFamily: SHELL.MONO,
+              fontSize: 9,
+              fontWeight: 600,
+              letterSpacing: '0.10em',
+              textTransform: 'uppercase',
+              color: SHELL.INK_MUTED,
+              background: SHELL.PAPER_SOFT,
+              borderRadius: 10,
+              padding: '3px 9px',
+              lineHeight: 1,
+            }}
+          >
+            {item.connectorClassLabel}
+          </span>
+        </div>
+
+        {needsAction && (
+          <Link
+            href={`/admin/connectors/${item.id}`}
+            style={{
+              display: 'inline-block',
               marginTop: 10,
               fontFamily: SHELL.MONO,
               fontSize: 10,
@@ -158,12 +213,12 @@ function ConnectorCard({ item }: { item: ConnectorItem }) {
               border: `1px solid ${SHELL.CARD_LINE}`,
               borderRadius: 14,
               padding: '4px 12px',
-              cursor: 'pointer',
               lineHeight: 1,
+              textDecoration: 'none',
             }}
           >
             {actionLabel}
-          </button>
+          </Link>
         )}
       </div>
     </div>
@@ -214,7 +269,7 @@ export function SetupConnectorsPage() {
       topBarProps={{
         tenantName: 'Apex Retail Group',
         showLocked: true,
-        context: 'Setup · Connectors · 1 degraded',
+        context: `Setup · Connectors · ${view.degradedCount} degraded · ${view.disconnectedCount} disconnected`,
       }}
       middleStrip={<SubNavStrip items={SUB_NAV_ITEMS} />}
     >
@@ -225,9 +280,9 @@ export function SetupConnectorsPage() {
         actions={view.actions}
         surface="setup"
         onActionClick={(letter) => {
-          if (letter === 'A') router.push('/admin/connectors/sn');
-          else if (letter === 'B') router.push('/admin/invite');
-          else if (letter === 'C') router.push('/admin/users');
+          if (letter === 'A') router.push('/admin/connectors/sn/reconnect');
+          else if (letter === 'B') router.push('/admin/connectors/anthropic/reconnect');
+          else if (letter === 'C') router.push('/admin/connectors/github');
         }}
       />
 
