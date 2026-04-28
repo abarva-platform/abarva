@@ -20,7 +20,7 @@ const morrisonProgram = apexTenant?.programs.find((program) => program.programSl
 const ambientProgram = meridianTenant?.programs.find((program) => program.programSlug === 'ambient-clinical-value-chain-activation') ?? null;
 const ambientPatternHref = meridianTenant
   ? `/tenant/${meridianTenant.routeSlug}/intelligence/patterns/ambient-clinical-value-chain`
-  : '/preview/intelligence?client=meridian&view=patterns&slug=ambient-clinical-value-chain';
+  : '/intelligence?client=meridian&view=patterns&slug=ambient-clinical-value-chain';
 
 export default function InvestorPreviewPage() {
   return (
@@ -101,14 +101,14 @@ export default function InvestorPreviewPage() {
               name="Transformation Genome"
               state={`${patternCount} patterns authored · target 50 by Series A`}
               evidence="Spec-depth content · 5 universal + 8 vertical · authored, not stubbed"
-              link={{ href: '/preview/intelligence', label: 'Browse patterns' }}
+              link={{ href: '/intelligence', label: 'Browse patterns' }}
             />
             <MoatRow
               num="02"
               name="Adaptive Strategy Intelligence"
               state="Cross-client reasoning graph · designed to compound"
               evidence="Graph schema + retrieval contract + prompting contract · will compound once tenants contribute"
-              link={{ href: '/preview/intelligence', label: 'See architecture' }}
+              link={{ href: '/intelligence', label: 'See architecture' }}
             />
             <MoatRow
               num="03"

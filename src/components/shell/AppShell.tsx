@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { AppRail } from './AppRail';
 import { AppTopBar } from './AppTopBar';
 import { AppMiddleStrip } from './AppMiddleStrip';
+import { CommandPalette } from './CommandPalette';
 
 interface AppShellProps {
   surface?: 'setup' | 'programs' | 'source' | 'intelligence' | 'tower';
@@ -65,6 +66,9 @@ export function AppShell({
           {children}
         </div>
       </div>
+
+      {/* Command palette · self-manages open state via Cmd+K listener */}
+      <CommandPalette />
     </div>
   );
 }

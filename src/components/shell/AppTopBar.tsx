@@ -96,6 +96,21 @@ export function AppTopBar({
             {context}
           </span>
         ) : null}
+
+        {/* ⌘K hint */}
+        <span
+          style={{
+            fontFamily: SHELL.MONO,
+            fontSize: 9,
+            letterSpacing: '0.12em',
+            color: SHELL.INK_MUTED,
+            background: SHELL.GRAY_BG,
+            padding: '3px 7px',
+            borderRadius: 4,
+          }}
+        >
+          ⌘K
+        </span>
       </div>
 
       {/* Right side */}

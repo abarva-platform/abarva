@@ -107,7 +107,7 @@ export default async function PersonProfilePage({
       <div style={{ display: 'flex', flexDirection: 'column', gap: 34 }}>
         <header style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
-            <EntityLink href="/intelligence/people" variant="ghost">
+            <EntityLink href="/intelligence" variant="ghost">
               ← People intelligence
             </EntityLink>
             <EyebrowLabel tone="teal" size="sm">

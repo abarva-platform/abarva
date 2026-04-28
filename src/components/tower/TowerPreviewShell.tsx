@@ -99,7 +99,7 @@ const FALLBACK_PRESSURE: PressureItem[] = [
     monthlyUsd: 42_000,
     title: 'VBC commitment vs. capability gap — 3 contracts at risk',
     programName: 'Clinical Documentation AI Governance',
-    programHref: '/engagements/meridian-ai-readiness',
+    programHref: '/engagements',
     severity: 'critical',
     unowned: true,
   },
@@ -117,7 +117,7 @@ const FALLBACK_PRESSURE: PressureItem[] = [
     monthlyUsd: 18_000,
     title: '3 ambient documentation tools running · no owner',
     programName: 'Ambient Documentation Vendor Strategy',
-    programHref: '/engagements/ambient-documentation-vendor-strategy',
+    programHref: '/engagements',
     severity: 'high',
     unowned: true,
   },
@@ -312,7 +312,7 @@ export function TowerPreviewShell({
 
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
           <Link
-            href="/preview/intelligence"
+            href="/intelligence"
             style={{
               padding: '10px 18px',
               background: 'transparent',
@@ -483,14 +483,14 @@ export function TowerPreviewShell({
                 Active programs
               </div>
               <div style={{ fontSize: 14, color: INK, marginTop: 4 }}>
-                <Link href="/engagements/meridian-ai-readiness" style={{ color: INK, textDecoration: 'underline' }}>
+                <Link href="/engagements" style={{ color: INK, textDecoration: 'underline' }}>
                   Clinical Documentation AI Governance
                 </Link>
                 <span style={{ color: INK_FAINT, fontFamily: MONO, fontSize: 11, marginLeft: 6 }}>
                   · Phase 1 · Diagnose
                 </span>
                 {' · '}
-                <Link href="/engagements/ambient-documentation-vendor-strategy" style={{ color: INK, textDecoration: 'underline' }}>
+                <Link href="/engagements" style={{ color: INK, textDecoration: 'underline' }}>
                   Ambient Clinical Value Chain Activation
                 </Link>
                 <span style={{ color: INK_FAINT, fontFamily: MONO, fontSize: 11, marginLeft: 6 }}>
