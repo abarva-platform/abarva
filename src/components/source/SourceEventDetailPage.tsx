@@ -639,7 +639,7 @@ function SignalsStreamTab() {
 
 function LinkedProgramTab() {
   return (
-    <div>
+    <div data-testid="source-linked-program-tab">
       <div
         style={{
           fontFamily: SHELL.MONO,
@@ -711,6 +711,18 @@ function LinkedProgramTab() {
           dependency graph between source events and program phases — gate transitions in either
           surface propagate signals to the linked entity.
         </p>
+        <div
+          data-honest-disclaimer="source-linked-program"
+          style={{
+            marginTop: 8,
+            fontFamily: SHELL.MONO,
+            fontSize: 9,
+            color: SHELL.INK_MUTED,
+            letterSpacing: '0.08em',
+          }}
+        >
+          Deterministic seed · APX-CDP-2026 P3 Design link reflects fixture context only
+        </div>
       </div>
     </div>
   );
