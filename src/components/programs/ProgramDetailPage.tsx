@@ -25,6 +25,8 @@ import { buildProgramSourceLinkView } from '@/lib/programs/program-source-link-v
 import { buildProgramStorylineContext, matchStorylinePatterns } from '@/lib/intelligence/storyline-matcher';
 import { buildGateApprovalDrawerView } from '@/lib/programs/gate-approval-drawer-view';
 import type { GateApprovalDrawerView } from '@/lib/programs/gate-approval-drawer-view';
+import { buildDeliverablesCanvasView } from '@/lib/programs/deliverable-canvas-polish-view';
+import type { DeliverablesCanvasView } from '@/lib/programs/deliverable-canvas-polish-view';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -578,6 +580,151 @@ function DeliverablesList({
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Deliverables canvas (PROG22) ─────────────────────────────────────────────
+
+function DeliverablesCanvas({ canvasView }: { canvasView: DeliverablesCanvasView }) {
+  function readinessDot(r: DeliverablesCanvasView['items'][number]['readiness']): string {
+    if (r === 'trustworthy') return SHELL.MINT_TEXT;
+    if (r === 'blocked') return SHELL.RUST_TEXT;
+    if (r === 'partial') return SHELL.AMBER_DOT;
+    return SHELL.INK_MUTED;
+  }
+
+  return (
+    <div data-testid="deliverables-canvas">
+      {/* Canvas header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: SHELL.INK_MUTED }}>
+          {canvasView.phaseLabel} Deliverables
+        </div>
+        <div style={{ fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.06em' }}>
+          {canvasView.canvasSummary}
+        </div>
+      </div>
+
+      {/* Items */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {canvasView.items.map((item, i) => (
+          <div
+            key={`del-canvas-${i}`}
+            data-testid="deliverable-canvas-item"
+            style={{
+              background: SHELL.CARD_WHITE,
+              border: `1px solid ${SHELL.CARD_LINE}`,
+              borderRadius: 8,
+              padding: '12px 14px',
+            }}
+          >
+            {/* Item header row */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: readinessDot(item.readiness),
+                  flexShrink: 0,
+                  marginTop: 4,
+                }}
+              />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK, lineHeight: 1.4, marginBottom: 3 }}>
+                  {item.label}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: readinessDot(item.readiness) }}>
+                    {item.readinessLabel}
+                  </span>
+                  <span style={{ fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.06em' }}>
+                    · {item.status}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Evidence citations */}
+            {item.evidenceCitations.length > 0 && (
+              <div style={{ marginBottom: 8, paddingTop: 8, borderTop: `1px solid ${SHELL.CARD_LINE}` }}>
+                <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.08em', color: SHELL.INK_MUTED, marginBottom: 4 }}>
+                  Evidence
+                </div>
+                {item.evidenceCitations.map((cite, j) => (
+                  <div key={`cite-${j}`} style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK_SOFT, lineHeight: 1.4, marginBottom: 2 }}>
+                    · {cite}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Missing inputs */}
+            {item.missingInputs.length > 0 && (
+              <div style={{ marginBottom: 8, paddingTop: 8, borderTop: `1px solid ${SHELL.CARD_LINE}` }}>
+                <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.08em', color: SHELL.INK_MUTED, marginBottom: 4 }}>
+                  Missing inputs
+                </div>
+                {item.missingInputs.map((input, j) => (
+                  <div key={`miss-${j}`} style={{ display: 'flex', gap: 6, fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.PEACH_TEXT, lineHeight: 1.4, marginBottom: 2 }}>
+                    <span style={{ flexShrink: 0 }}>✗</span>
+                    <span>{input}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Next action */}
+            <div style={{ marginBottom: 10, fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.08em' }}>
+              Next: {item.nextAction}
+            </div>
+
+            {/* Disabled actions — rendered explicitly so testids appear as static strings */}
+            <div style={{ display: 'flex', gap: 8, paddingTop: 8, borderTop: `1px solid ${SHELL.CARD_LINE}` }}>
+              {item.actions.find((a) => a.key === 'approve') && (
+                <button
+                  data-testid="deliverable-approve-action"
+                  disabled={true}
+                  title={item.actions.find((a) => a.key === 'approve')!.reason}
+                  style={{
+                    fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase',
+                    color: SHELL.INK_MUTED, background: SHELL.GRAY_BG,
+                    border: `1px solid ${SHELL.CARD_LINE}`, borderRadius: 4,
+                    padding: '5px 10px', cursor: 'not-allowed', opacity: 0.55,
+                  }}
+                >
+                  Approve
+                </button>
+              )}
+              {item.actions.find((a) => a.key === 'export') && (
+                <button
+                  data-testid="deliverable-export-action"
+                  disabled={true}
+                  title={item.actions.find((a) => a.key === 'export')!.reason}
+                  style={{
+                    fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase',
+                    color: SHELL.INK_MUTED, background: SHELL.GRAY_BG,
+                    border: `1px solid ${SHELL.CARD_LINE}`, borderRadius: 4,
+                    padding: '5px 10px', cursor: 'not-allowed', opacity: 0.55,
+                  }}
+                >
+                  Export
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Honest disclaimer */}
+      <div
+        data-testid="deliverables-canvas-disclaimer"
+        data-honest-disclaimer="deliverables-canvas"
+        style={{ marginTop: 16, fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.08em', lineHeight: 1.5 }}
+      >
+        {canvasView.honestDisclaimer}
       </div>
     </div>
   );
@@ -2721,6 +2868,8 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
   // PROG21 — Gate approval interaction drawer
   const [showGateApprovalDrawer, setShowGateApprovalDrawer] = useState(false);
   const gateApprovalDrawerView = buildGateApprovalDrawerView(view);
+  // PROG22 — Deliverables canvas polish
+  const deliverablesCanvasView = buildDeliverablesCanvasView(view);
   const [evidenceDrawerItem, setEvidenceDrawerItem] = useState<EvidenceItem | null>(null);
   const [contradictionItem, setContradictionItem] = useState<EvidenceItem | null>(null);
 
@@ -3177,7 +3326,11 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
         {/* ── Deliverables section ──────────────────────────────────── */}
         {activeSection === 'deliverables' && (
           <div data-testid="program-section-deliverables">
-            {view.phasePanel.deliverables && view.phasePanel.deliverables.length > 0 ? (
+            {deliverablesCanvasView ? (
+              <div style={{ marginBottom: 20 }}>
+                <DeliverablesCanvas canvasView={deliverablesCanvasView} />
+              </div>
+            ) : view.phasePanel.deliverables && view.phasePanel.deliverables.length > 0 ? (
               <div style={{ marginBottom: 20 }}>
                 <DeliverablesList deliverables={view.phasePanel.deliverables} />
               </div>

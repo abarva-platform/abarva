@@ -736,7 +736,7 @@ function LinkedProgramTab() {
             letterSpacing: '0.08em',
           }}
         >
-          Chip phase, blocker, and color resolved live from ProgramInstance via cross-instance reasoner
+          Deterministic seed · APX-CDP-2026 P3 Design link reflects fixture context only. Chip phase, blocker, and color resolved live from ProgramInstance via cross-instance reasoner
         </div>
       </div>
     </div>
