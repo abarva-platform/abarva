@@ -1,29 +1,37 @@
 import type { CSSProperties } from 'react';
-import { EXPERIENCE_COLORS, TEXT } from '@/lib/design-system';
-import { sourceSectionLabel } from './foundationStyles';
+import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourceVendorResponseCompleteness, SourceVendorResponseCompletenessRecord } from '@/lib/source/vendor-response-types';
+
+const sourceSectionLabel = {
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.14em',
+  color: SHELL.INK_MUTED,
+  marginBottom: 0,
+};
 
 function statusColor(status: SourceVendorResponseCompletenessRecord['completenessStatus']): string {
   if (status === 'complete') {
-    return EXPERIENCE_COLORS.journeyComplete;
+    return SHELL.MINT_TEXT;
   }
   if (status === 'partially_complete') {
-    return EXPERIENCE_COLORS.accentBlue;
+    return SHELL.INK_MID;
   }
   if (status === 'not_comparable' || status === 'blocked') {
-    return EXPERIENCE_COLORS.riskRed;
+    return SHELL.RUST_TEXT;
   }
-  return EXPERIENCE_COLORS.riskAmber;
+  return SHELL.PEACH_TEXT;
 }
 
 function comparabilityColor(status: SourceVendorResponseCompletenessRecord['comparabilityStatus']): string {
   if (status === 'comparable') {
-    return EXPERIENCE_COLORS.journeyComplete;
+    return SHELL.MINT_TEXT;
   }
   if (status === 'partially_comparable') {
-    return EXPERIENCE_COLORS.accentBlue;
+    return SHELL.INK_MID;
   }
-  return EXPERIENCE_COLORS.riskAmber;
+  return SHELL.PEACH_TEXT;
 }
 
 function blockerText(record: SourceVendorResponseCompletenessRecord): string {
@@ -43,20 +51,20 @@ export function SourceVendorResponseCompletenessPanel({
     <section style={SECTION} aria-label="Vendor response completeness panel">
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'baseline' }}>
         <div>
-          <div style={{ ...sourceSectionLabel, color: EXPERIENCE_COLORS.accentTeal }}>Vendor Response Completeness</div>
-          <h4 style={{ margin: '4px 0 0', color: EXPERIENCE_COLORS.textPrimary }}>
+          <div style={{ ...sourceSectionLabel, color: SHELL.INK_SOFT }}>Vendor Response Completeness</div>
+          <h4 style={{ margin: '4px 0 0', color: SHELL.INK }}>
             Event vendor response readiness
           </h4>
-          <p style={{ margin: '7px 0 0', ...sourceSectionLabel, color: EXPERIENCE_COLORS.textSecondary, textTransform: 'none' }}>
+          <p style={{ margin: '7px 0 0', ...sourceSectionLabel, color: SHELL.INK_MUTED, textTransform: 'none' }}>
             Deterministic completeness view of vendor responses before comparative evaluation.
           </p>
         </div>
         <div style={TOP_RIBBON}>
           <div style={RIBBON_LABEL}>Comparability readiness</div>
-          <div style={{ ...TEXT.small, color: STATUS_COLOR[readiness.comparabilityReadiness] }}>
+          <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: STATUS_COLOR[readiness.comparabilityReadiness] }}>
             {readiness.comparabilityReadiness}
           </div>
-          <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
+          <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>
             {summaryLine(readiness)}
           </div>
         </div>
@@ -64,10 +72,10 @@ export function SourceVendorResponseCompletenessPanel({
 
       <div style={GRID_TWO_COL}>
         <InfoCard title="Nexus guidance">
-          <div style={{ ...sourceSectionLabel, color: EXPERIENCE_COLORS.textSecondary }}>
+          <div style={{ ...sourceSectionLabel, color: SHELL.INK_MUTED }}>
             Recommended next action
           </div>
-          <div style={{ fontWeight: 700, color: EXPERIENCE_COLORS.textPrimary }}>
+          <div style={{ fontWeight: 700, color: SHELL.INK }}>
             {readiness.recommendedNextAction}
           </div>
         </InfoCard>
@@ -75,13 +83,13 @@ export function SourceVendorResponseCompletenessPanel({
           {readiness.blockers.length > 0 ? (
             <ul style={LIST}>
               {readiness.blockers.slice(0, 6).map((blocker) => (
-                <li key={blocker} style={{ marginBottom: 8, color: EXPERIENCE_COLORS.textSecondary }}>
+                <li key={blocker} style={{ marginBottom: 8, color: SHELL.INK_MUTED }}>
                   {blocker}
                 </li>
               ))}
             </ul>
           ) : (
-            <div style={{ ...sourceSectionLabel, color: EXPERIENCE_COLORS.textSecondary }}>
+            <div style={{ ...sourceSectionLabel, color: SHELL.INK_MUTED }}>
               No blockers are blocking comparison at this time.
             </div>
           )}
@@ -108,7 +116,7 @@ export function SourceVendorResponseCompletenessPanel({
                 {readiness.records.map((vendor) => (
                   <tr key={vendor.vendorId}>
                     <td style={TABLE_BODY_CELL}>
-                      <div style={{ fontWeight: 700, color: EXPERIENCE_COLORS.textPrimary }}>
+                      <div style={{ fontWeight: 700, color: SHELL.INK }}>
                         {vendor.vendorName}
                       </div>
                     </td>
@@ -138,7 +146,7 @@ export function SourceVendorResponseCompletenessPanel({
                     </td>
                     <td style={TABLE_BODY_CELL}>
                       <div>{vendor.evidenceStatus}</div>
-                      <div style={TEXT.small}>{blockerText(vendor)}</div>
+                      <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4 }}>{blockerText(vendor)}</div>
                     </td>
                   </tr>
                 ))}
@@ -179,9 +187,9 @@ function StatusPill({
 const SECTION: CSSProperties = {
   display: 'grid',
   gap: 10,
-  border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 12,
-  background: EXPERIENCE_COLORS.surface,
+  background: SHELL.CARD_WHITE,
   padding: 12,
 };
 
@@ -199,26 +207,28 @@ const GRID_FULL: CSSProperties = {
 const TOP_RIBBON: CSSProperties = {
   minWidth: 240,
   ...sourceSectionLabel,
-  border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 10,
-  background: EXPERIENCE_COLORS.surfaceWarm,
+  background: SHELL.PAPER_SOFT,
   padding: 10,
   textAlign: 'right',
 };
 
 const RIBBON_LABEL: CSSProperties = {
-  ...TEXT.small,
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  lineHeight: 1.4,
   textTransform: 'uppercase',
   letterSpacing: '0.07em',
-  color: EXPERIENCE_COLORS.textSecondary,
+  color: SHELL.INK_MUTED,
 };
 
 const CARD: CSSProperties = {
   display: 'grid',
   gap: 8,
-  border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 10,
-  background: EXPERIENCE_COLORS.surfaceWarm,
+  background: SHELL.PAPER_SOFT,
   padding: 12,
   minWidth: 0,
 };
@@ -228,21 +238,23 @@ const LIST: CSSProperties = {
   paddingLeft: 18,
   display: 'grid',
   gap: 3,
-  color: EXPERIENCE_COLORS.textSecondary,
+  color: SHELL.INK_MUTED,
 };
 
 const TABLE: CSSProperties = {
   width: '100%',
   borderCollapse: 'collapse',
   minWidth: 980,
-  color: EXPERIENCE_COLORS.textPrimary,
+  color: SHELL.INK,
 };
 
 const TABLE_CELL: CSSProperties = {
-  ...TEXT.small,
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  lineHeight: 1.4,
   textAlign: 'left',
-  borderBottom: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
-  color: EXPERIENCE_COLORS.textSecondary,
+  borderBottom: '1px solid ' + SHELL.CARD_LINE,
+  color: SHELL.INK_MUTED,
   textTransform: 'uppercase',
   letterSpacing: '0.08em',
   padding: '8px 10px',
@@ -250,11 +262,13 @@ const TABLE_CELL: CSSProperties = {
 };
 
 const TABLE_BODY_CELL: CSSProperties = {
-  ...TEXT.small,
-  borderBottom: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  lineHeight: 1.4,
+  borderBottom: '1px solid ' + SHELL.CARD_LINE,
   padding: '8px 10px',
   verticalAlign: 'top',
-  color: EXPERIENCE_COLORS.textPrimary,
+  color: SHELL.INK,
 };
 
 const PILL: CSSProperties = {
@@ -268,12 +282,11 @@ const PILL: CSSProperties = {
 };
 
 const STATUS_COLOR = {
-  ready: EXPERIENCE_COLORS.journeyComplete,
-  blocked: EXPERIENCE_COLORS.riskRed,
-  partial: EXPERIENCE_COLORS.accentBlue,
-  complete: EXPERIENCE_COLORS.journeyComplete,
-  partially_complete: EXPERIENCE_COLORS.accentBlue,
-  incomplete: EXPERIENCE_COLORS.riskAmber,
-  not_comparable: EXPERIENCE_COLORS.riskRed,
+  ready: SHELL.MINT_TEXT,
+  blocked: SHELL.RUST_TEXT,
+  partial: SHELL.INK_MID,
+  complete: SHELL.MINT_TEXT,
+  partially_complete: SHELL.INK_MID,
+  incomplete: SHELL.PEACH_TEXT,
+  not_comparable: SHELL.RUST_TEXT,
 };
-

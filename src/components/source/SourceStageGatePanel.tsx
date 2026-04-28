@@ -1,7 +1,15 @@
 import type { CSSProperties } from 'react';
-import { EXPERIENCE_COLORS, TEXT } from '@/lib/design-system';
+import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourceStageGateReadiness } from '@/lib/source/source-stage-gate-types';
-import { sourceSectionLabel } from './foundationStyles';
+
+const sourceSectionLabel = {
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.14em',
+  color: SHELL.INK_MUTED,
+  marginBottom: 0,
+};
 
 export function SourceStageGatePanel({ readiness }: { readiness: SourceStageGateReadiness }) {
   const currentGate = readiness.gates.find((gate) => gate.fromStageKey === readiness.currentStageKey) ?? readiness.gates[0];
@@ -10,36 +18,36 @@ export function SourceStageGatePanel({ readiness }: { readiness: SourceStageGate
     <section style={SECTION} aria-label="Source stage gate readiness panel">
       <div style={HEADER}>
         <div>
-          <div style={{ ...sourceSectionLabel, color: EXPERIENCE_COLORS.accentTeal }}>Stage gate readiness</div>
-          <h4 style={{ margin: '4px 0 0', color: EXPERIENCE_COLORS.textPrimary }}>Current gate signal</h4>
-          <p style={{ margin: '7px 0 0', ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
+          <div style={{ ...sourceSectionLabel, color: SHELL.INK_SOFT }}>Stage gate readiness</div>
+          <h4 style={{ margin: '4px 0 0', color: SHELL.INK }}>Current gate signal</h4>
+          <p style={{ margin: '7px 0 0', fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>
             Deterministic stage-gate view for progression clarity. No approval engine is executing actions.
           </p>
         </div>
         <div style={STATUS_CARD}>
           <div style={{ ...sourceSectionLabel }}>Overall state</div>
-          <div style={{ ...TEXT.small, color: stateColor(readiness.overallState), fontWeight: 800 }}>
+          <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: stateColor(readiness.overallState), fontWeight: 800 }}>
             {readiness.overallState}
           </div>
-          <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>{readiness.recommendedNextAction}</div>
+          <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>{readiness.recommendedNextAction}</div>
         </div>
       </div>
 
       <div style={GRID_TWO}>
         <Card title="Current gate">
-          <div style={{ color: EXPERIENCE_COLORS.textPrimary, fontWeight: 800 }}>{currentGate.transitionLabel}</div>
-          <div style={{ ...TEXT.small, color: stateColor(currentGate.state), fontWeight: 800, textTransform: 'uppercase' }}>
+          <div style={{ color: SHELL.INK, fontWeight: 800 }}>{currentGate.transitionLabel}</div>
+          <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: stateColor(currentGate.state), fontWeight: 800, textTransform: 'uppercase' }}>
             {currentGate.state}
           </div>
-          <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
+          <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>
             Blocker: {currentGate.blocker ?? 'none'}
           </div>
         </Card>
         <Card title="Nexus / Steward guidance">
-          <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
+          <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>
             Nexus next action: {readiness.recommendedNextAction}
           </div>
-          <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
+          <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>
             Steward gate posture: {readiness.blockers.length > 0 ? 'Resolve blockers before progression.' : 'No blocker escalation required.'}
           </div>
         </Card>
@@ -91,20 +99,20 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 }
 
 function stateColor(state: SourceStageGateReadiness['overallState']): string {
-  if (state === 'ready') return EXPERIENCE_COLORS.journeyComplete;
-  if (state === 'blocked') return EXPERIENCE_COLORS.riskRed;
-  if (state === 'waiting') return EXPERIENCE_COLORS.riskAmber;
-  if (state === 'needs_approval') return EXPERIENCE_COLORS.accentBlue;
-  if (state === 'waiver_required') return EXPERIENCE_COLORS.riskAmber;
-  return EXPERIENCE_COLORS.textSecondary;
+  if (state === 'ready') return SHELL.MINT_TEXT;
+  if (state === 'blocked') return SHELL.RUST_TEXT;
+  if (state === 'waiting') return SHELL.PEACH_TEXT;
+  if (state === 'needs_approval') return SHELL.INK_MID;
+  if (state === 'waiver_required') return SHELL.PEACH_TEXT;
+  return SHELL.INK_MUTED;
 }
 
 const SECTION: CSSProperties = {
   display: 'grid',
   gap: 10,
-  border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 12,
-  background: EXPERIENCE_COLORS.surface,
+  background: SHELL.CARD_WHITE,
   padding: 12,
 };
 
@@ -124,9 +132,9 @@ const GRID_TWO: CSSProperties = {
 
 const STATUS_CARD: CSSProperties = {
   minWidth: 240,
-  border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 10,
-  background: EXPERIENCE_COLORS.surfaceWarm,
+  background: SHELL.PAPER_SOFT,
   padding: 10,
   textAlign: 'right',
 };
@@ -134,9 +142,9 @@ const STATUS_CARD: CSSProperties = {
 const CARD: CSSProperties = {
   display: 'grid',
   gap: 8,
-  border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 10,
-  background: EXPERIENCE_COLORS.surfaceWarm,
+  background: SHELL.PAPER_SOFT,
   padding: 12,
 };
 
@@ -147,21 +155,25 @@ const TABLE: CSSProperties = {
 };
 
 const TABLE_HEAD: CSSProperties = {
-  ...TEXT.small,
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  lineHeight: 1.4,
   textAlign: 'left',
-  borderBottom: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
-  color: EXPERIENCE_COLORS.textSecondary,
+  borderBottom: '1px solid ' + SHELL.CARD_LINE,
+  color: SHELL.INK_MUTED,
   textTransform: 'uppercase',
   letterSpacing: '0.08em',
   padding: '8px 10px',
 };
 
 const TABLE_CELL: CSSProperties = {
-  ...TEXT.small,
-  borderBottom: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  lineHeight: 1.4,
+  borderBottom: '1px solid ' + SHELL.CARD_LINE,
   padding: '8px 10px',
   verticalAlign: 'top',
-  color: EXPERIENCE_COLORS.textPrimary,
+  color: SHELL.INK,
 };
 
 const pill: CSSProperties = {

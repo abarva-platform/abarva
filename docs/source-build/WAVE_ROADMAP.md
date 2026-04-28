@@ -4,8 +4,8 @@
 |---|---|---|---|---|---|
 | S0 | Audit & Plan | ✅ shipped | `source/wave-S0/audit-plan` | #531 | 2026-04-27 |
 | S1 | Shell convergence + token refresh | ✅ shipped | `source/wave-S1/shell-convergence` | #545 | 2026-04-28 |
-| S2 | Index pages refresh | 🟡 in-progress | — | — | — |
-| S3 | Event canvas refresh | ⬜ planned | — | — | — |
+| S2 | Index pages refresh | ✅ shipped | `source/wave-S2/index-pages-refresh` | #555 | 2026-04-27 |
+| S3 | Event canvas refresh | 🟡 in-progress | — | — | — |
 | S4 | Sub-routes refresh | ⬜ planned | — | — | — |
 | S5 | Commercial-intel convergence | ⬜ planned | — | — | — |
 | S6 | Cross-surface storyline + states | ⬜ planned | — | — | — |
@@ -16,7 +16,7 @@
 |---|---|
 | S0 | Docs only |
 | S1 | Chrome only — all routes wrapped in AppShell |
-| S2 | SRC-IDX-DEFAULT · SRC-IDX-EVENTS · SRC-IDX-VALUE |
+| S2 | SRC-IDX-DEFAULT · SRC-IDX-EVENTS · SRC-IDX-VALUE · AbarVaLogo stub · nav-shell test alignment |
 | S3 | SRC-DTL-CANVAS |
 | S4 | SRC-DTL-SCORECARD · SRC-DTL-ARTIFACT |
 | S5 | Internal — 12 Commercial* → 4 consolidated |

@@ -1,6 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { EXPERIENCE_COLORS, TEXT } from '@/lib/design-system';
-import { sourceInsetCard, sourceMuted, sourceSectionLabel } from '@/components/source/foundationStyles';
+import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourcingEventDetail } from '@/lib/source/types';
 import { buildSourceDataReadinessProjectionFromAdminSetup, buildSourceRfpReadiness } from '@/lib/source';
 import { SourceDataReadinessPanel } from './SourceDataReadinessPanel';
@@ -26,6 +25,32 @@ const OUT_SCOPE_DEFAULT = [
   'Enterprise security architecture redesign',
 ];
 
+const sourceSectionLabel = {
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.14em',
+  color: SHELL.INK_MUTED,
+  marginBottom: 0,
+};
+
+const sourceMuted = {
+  fontFamily: SHELL.SANS,
+  fontSize: 13,
+  color: SHELL.INK_MUTED,
+  lineHeight: 1.5,
+};
+
+const sourceInsetCard = {
+  background: SHELL.PAPER_SOFT,
+  border: '1px solid ' + SHELL.CARD_LINE_SOFT,
+  borderRadius: 8,
+  padding: '12px 14px',
+  display: 'flex',
+  flexDirection: 'column' as const,
+  gap: 10,
+};
+
 export function SourceScopeStageWorkspace({
   event,
   missionReport,
@@ -46,20 +71,20 @@ export function SourceScopeStageWorkspace({
     <section style={SECTION} aria-label="Scope stage workspace">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap' }}>
         <div>
-          <div style={{ ...sourceSectionLabel, color: EXPERIENCE_COLORS.accentTeal }}>Current stage workspace</div>
-          <h3 style={{ margin: 0, fontSize: 28, color: EXPERIENCE_COLORS.textPrimary }}>
+          <div style={{ ...sourceSectionLabel, color: SHELL.INK_SOFT }}>Current stage workspace</div>
+          <h3 style={{ margin: 0, fontSize: 28, color: SHELL.INK }}>
             Scope pricing readiness
           </h3>
-          <p style={{ margin: '8px 0 0', ...sourceMuted, color: EXPERIENCE_COLORS.textSecondary }}>
+          <p style={{ margin: '8px 0 0', ...sourceMuted, color: SHELL.INK_MUTED }}>
             Answer: {readyStatus.state}.
           </p>
         </div>
         <div style={READY_PANEL}>
           <div style={READINESS_BAND}>{readyStatus.state}</div>
-          <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary, fontWeight: 700 }}>
+          <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED, fontWeight: 700 }}>
             score {readyStatus.score}/10
           </div>
-          <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
+          <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>
             {readyStatus.reason}
           </div>
         </div>
@@ -67,11 +92,11 @@ export function SourceScopeStageWorkspace({
 
       <div style={GRID_TWO_COL}>
         <WorkspaceCard title="Stage goal" tone="teal">
-          <div style={{ color: EXPERIENCE_COLORS.textPrimary, fontWeight: 700 }}>{getScopeStageSummary(event)}</div>
+          <div style={{ color: SHELL.INK, fontWeight: 700 }}>{getScopeStageSummary(event)}</div>
           <div style={sourceMuted}>Goal: make scope and baseline clear enough for pricing teams to submit comparable response packages.</div>
         </WorkspaceCard>
         <WorkspaceCard title="Stage gate signal" tone="blue">
-          <div style={{ fontWeight: 800, color: EXPERIENCE_COLORS.textPrimary }}>{readyStatus.canMoveText}</div>
+          <div style={{ fontWeight: 800, color: SHELL.INK }}>{readyStatus.canMoveText}</div>
           <div style={sourceMuted}>{readyStatus.gateImpact}</div>
         </WorkspaceCard>
       </div>
@@ -100,7 +125,7 @@ export function SourceScopeStageWorkspace({
             items={readyStatus.missingInputs.map((item) => `${item.label} · ${item.impact}`)}
             tone="risk"
             />
-          <div style={{ ...sourceMuted, color: EXPERIENCE_COLORS.textSecondary, marginTop: 8 }}>
+          <div style={{ ...sourceMuted, color: SHELL.INK_MUTED, marginTop: 8 }}>
             Loaded and Available remain distinct from Usable Evidence.
           </div>
         </WorkspaceCard>
@@ -111,24 +136,24 @@ export function SourceScopeStageWorkspace({
           <div style={{ display: 'grid', gap: 8 }}>
             {artifactStatuses.map((artifact) => (
               <div key={artifact.title} style={ARTIFACT_ROW}>
-                <div style={{ fontWeight: 800, color: EXPERIENCE_COLORS.textPrimary }}>{artifact.title}</div>
-                <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>{artifact.status}</div>
+                <div style={{ fontWeight: 800, color: SHELL.INK }}>{artifact.title}</div>
+                <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>{artifact.status}</div>
               </div>
             ))}
           </div>
-          <div style={{ ...sourceMuted, color: EXPERIENCE_COLORS.textSecondary, marginTop: 10 }}>
+          <div style={{ ...sourceMuted, color: SHELL.INK_MUTED, marginTop: 10 }}>
             Placeholder state only. No artifact creation, drawer, or approval behavior in this slice.
           </div>
         </WorkspaceCard>
         <WorkspaceCard title="Nexus guidance" tone="teal">
-          <div style={{ color: EXPERIENCE_COLORS.textPrimary, fontWeight: 700 }}>{missionReport.recommendedNextAction}</div>
-          <p style={{ ...sourceMuted, color: EXPERIENCE_COLORS.textSecondary, margin: '6px 0 0' }}>
+          <div style={{ color: SHELL.INK, fontWeight: 700 }}>{missionReport.recommendedNextAction}</div>
+          <p style={{ ...sourceMuted, color: SHELL.INK_MUTED, margin: '6px 0 0' }}>
             Context used:{' '}
             {JSON.stringify(missionReport.contextUsedSummary, null, 1) ??
               'seeded event context and deterministic validation summary.'}
           </p>
           <ThreeChoiceStrip />
-          <div style={{ ...sourceMuted, color: EXPERIENCE_COLORS.textSecondary, marginTop: 8 }}>
+          <div style={{ ...sourceMuted, color: SHELL.INK_MUTED, marginTop: 8 }}>
             Custom action: add evidence owner + date + impact for any waived baseline category.
           </div>
         </WorkspaceCard>
@@ -157,7 +182,7 @@ function WorkspaceCard({
 
 function ListBlock({ items, tone }: { items: string[]; tone: 'neutral' | 'risk' }) {
   return (
-    <ul style={{ margin: 0, paddingLeft: 18, color: tone === 'risk' ? EXPERIENCE_COLORS.textPrimary : EXPERIENCE_COLORS.textSecondary }}>
+    <ul style={{ margin: 0, paddingLeft: 18, color: tone === 'risk' ? SHELL.INK : SHELL.INK_MUTED }}>
       {items.map((item) => (
         <li key={item} style={{ marginBottom: 8 }}>
           {item}
@@ -240,11 +265,11 @@ function MissionSummaryCard({ missionPreview }: { missionPreview: SourceAgentMis
 
   return (
     <WorkspaceCard title="Top mission signal" tone="blue">
-      <div style={{ fontWeight: 800, color: EXPERIENCE_COLORS.textPrimary }}>
+      <div style={{ fontWeight: 800, color: SHELL.INK }}>
         {missionPreview.title}
       </div>
-      <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>{missionPreview.agentName}</div>
-      <p style={{ margin: 0, ...sourceMuted, color: EXPERIENCE_COLORS.textSecondary }}>
+      <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>{missionPreview.agentName}</div>
+      <p style={{ margin: 0, ...sourceMuted, color: SHELL.INK_MUTED }}>
         {missionPreview.recommendedAction}
       </p>
     </WorkspaceCard>
@@ -396,24 +421,24 @@ function buildScopeArtifacts(event: SourcingEventDetail) {
 const SECTION: CSSProperties = {
   display: 'grid',
   gap: 12,
-  color: EXPERIENCE_COLORS.textPrimary,
+  color: SHELL.INK,
 };
 
 const READY_PANEL: CSSProperties = {
   ...sourceInsetCard,
   minWidth: 210,
-  borderColor: EXPERIENCE_COLORS.borderSoft,
+  borderColor: SHELL.CARD_LINE_SOFT,
   borderRadius: 12,
   padding: 12,
-  background: EXPERIENCE_COLORS.surfaceWarm,
+  background: SHELL.PAPER_SOFT,
 };
 
 const READINESS_BAND: CSSProperties = {
   borderRadius: 999,
   display: 'inline-block',
-  border: `1px solid ${EXPERIENCE_COLORS.accentBlue}`,
-  color: EXPERIENCE_COLORS.accentBlue,
-  background: 'rgba(46,111,216,0.08)',
+  border: '1px solid ' + SHELL.INK_MID,
+  color: SHELL.INK_MID,
+  background: SHELL.BLUE_BG,
   padding: '4px 10px',
   fontWeight: 800,
   fontSize: '12px',
@@ -429,19 +454,21 @@ const GRID_TWO_COL: CSSProperties = {
 
 const CARD: CSSProperties = {
   ...sourceSectionLabel,
-  border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 12,
-  background: EXPERIENCE_COLORS.surfaceWarm,
+  background: SHELL.PAPER_SOFT,
   padding: 12,
   display: 'grid',
   gap: 8,
 };
 
 const CHOICE_PILL: CSSProperties = {
-  ...TEXT.small,
-  border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
-  background: EXPERIENCE_COLORS.surface,
-  color: EXPERIENCE_COLORS.textPrimary,
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  lineHeight: 1.4,
+  border: '1px solid ' + SHELL.CARD_LINE,
+  background: SHELL.CARD_WHITE,
+  color: SHELL.INK,
   borderRadius: 999,
   padding: '7px 10px',
   fontWeight: 700,
@@ -449,13 +476,13 @@ const CHOICE_PILL: CSSProperties = {
 
 const BULLET_TITLE: CSSProperties = {
   ...sourceSectionLabel,
-  color: EXPERIENCE_COLORS.accentTeal,
+  color: SHELL.INK_SOFT,
 };
 
 const BULLET_LIST: CSSProperties = {
   margin: 0,
   paddingLeft: 16,
-  color: EXPERIENCE_COLORS.textSecondary,
+  color: SHELL.INK_MUTED,
   display: 'grid',
   gap: 5,
 };
@@ -463,20 +490,20 @@ const BULLET_LIST: CSSProperties = {
 const ARTIFACT_ROW: CSSProperties = {
   display: 'grid',
   gap: 4,
-  border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
-  background: EXPERIENCE_COLORS.surface,
+  border: '1px solid ' + SHELL.CARD_LINE,
+  background: SHELL.CARD_WHITE,
   padding: '8px 10px',
   borderRadius: 10,
 };
 
 function sectionToneLabel(tone: 'teal' | 'blue' | 'amber' | 'neutral') {
   const color = tone === 'teal'
-    ? EXPERIENCE_COLORS.accentTeal
+    ? SHELL.INK_SOFT
     : tone === 'blue'
-      ? EXPERIENCE_COLORS.accentBlue
+      ? SHELL.INK_MID
       : tone === 'amber'
-        ? EXPERIENCE_COLORS.riskAmber
-        : EXPERIENCE_COLORS.textSecondary;
+        ? SHELL.PEACH_TEXT
+        : SHELL.INK_MUTED;
   return {
     ...sourceSectionLabel,
     color,

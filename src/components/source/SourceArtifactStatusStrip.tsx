@@ -1,7 +1,15 @@
 import type { CSSProperties } from 'react';
-import { EXPERIENCE_COLORS, TEXT } from '@/lib/design-system';
+import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourceArtifactStatusStripSeedItem } from '@/lib/source/mock-seed';
-import { sourceSectionLabel } from './foundationStyles';
+
+const sourceSectionLabel = {
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.14em',
+  color: SHELL.INK_MUTED,
+  marginBottom: 0,
+};
 
 export function SourceArtifactStatusStrip({
   artifacts,
@@ -12,9 +20,9 @@ export function SourceArtifactStatusStrip({
     <section style={SECTION} aria-label="Source artifact status strip">
       <div style={HEADER}>
         <div>
-          <div style={{ ...sourceSectionLabel, color: EXPERIENCE_COLORS.accentTeal }}>Artifacts and deliverables</div>
-          <h4 style={{ margin: '4px 0 0', color: EXPERIENCE_COLORS.textPrimary }}>Deterministic artifact status strip</h4>
-          <p style={{ margin: '7px 0 0', ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
+          <div style={{ ...sourceSectionLabel, color: SHELL.INK_SOFT }}>Artifacts and deliverables</div>
+          <h4 style={{ margin: '4px 0 0', color: SHELL.INK }}>Deterministic artifact status strip</h4>
+          <p style={{ margin: '7px 0 0', fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>
             Metadata-only strip. No artifact drawer, generation, export/import, or approval workflow execution.
           </p>
         </div>
@@ -55,18 +63,18 @@ export function SourceArtifactStatusStrip({
 }
 
 function statusColor(status: SourceArtifactStatusStripSeedItem['status']): string {
-  if (status === 'approved' || status === 'locked') return EXPERIENCE_COLORS.journeyComplete;
-  if (status === 'changes_requested' || status === 'needs_inputs') return EXPERIENCE_COLORS.riskAmber;
-  if (status === 'not_started') return EXPERIENCE_COLORS.textSecondary;
-  return EXPERIENCE_COLORS.accentBlue;
+  if (status === 'approved' || status === 'locked') return SHELL.MINT_TEXT;
+  if (status === 'changes_requested' || status === 'needs_inputs') return SHELL.PEACH_TEXT;
+  if (status === 'not_started') return SHELL.INK_MUTED;
+  return SHELL.INK_MID;
 }
 
 const SECTION: CSSProperties = {
   display: 'grid',
   gap: 10,
-  border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 12,
-  background: EXPERIENCE_COLORS.surface,
+  background: SHELL.CARD_WHITE,
   padding: 12,
 };
 
@@ -84,21 +92,25 @@ const TABLE: CSSProperties = {
 };
 
 const TABLE_HEAD: CSSProperties = {
-  ...TEXT.small,
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  lineHeight: 1.4,
   textAlign: 'left',
-  borderBottom: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
-  color: EXPERIENCE_COLORS.textSecondary,
+  borderBottom: '1px solid ' + SHELL.CARD_LINE,
+  color: SHELL.INK_MUTED,
   textTransform: 'uppercase',
   letterSpacing: '0.08em',
   padding: '8px 10px',
 };
 
 const TABLE_CELL: CSSProperties = {
-  ...TEXT.small,
-  borderBottom: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  lineHeight: 1.4,
+  borderBottom: '1px solid ' + SHELL.CARD_LINE,
   padding: '8px 10px',
   verticalAlign: 'top',
-  color: EXPERIENCE_COLORS.textPrimary,
+  color: SHELL.INK,
 };
 
 const PILL: CSSProperties = {

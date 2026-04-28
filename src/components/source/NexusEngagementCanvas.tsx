@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { EXPERIENCE_COLORS, FONTS, TEXT } from '@/lib/design-system';
+import { SHELL } from '@/lib/shell/shell-tokens';
 import {
   buildSourceStageGateReadiness,
   getSourceArtifactStatusStripSeed,
@@ -26,25 +26,25 @@ const EVENT_CANVAS_MISSION_GENERATED_AT = '2026-04-26T00:00:00.000Z';
 const CANVAS: CSSProperties = {
   display: 'grid',
   gap: 16,
-  color: EXPERIENCE_COLORS.textPrimary,
+  color: SHELL.INK,
 };
 
 const CONTEXT_STRIP: CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))',
   gap: 10,
-  border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 16,
-  background: EXPERIENCE_COLORS.surface,
+  background: SHELL.CARD_WHITE,
   padding: 14,
 };
 
 const CONTEXT_TILE: CSSProperties = {
   display: 'grid',
   gap: 5,
-  border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 10,
-  background: EXPERIENCE_COLORS.surfaceWarm,
+  background: SHELL.PAPER_SOFT,
   padding: '10px 12px',
 };
 
@@ -119,16 +119,16 @@ function EventContextStrip({
         <div key={item.label} style={CONTEXT_TILE}>
           <div
             style={{
-              ...TEXT.small,
-              color: EXPERIENCE_COLORS.textSecondary,
+              fontFamily: SHELL.MONO,
+              fontSize: 9,
               textTransform: 'uppercase',
-              fontFamily: FONTS.mono,
               letterSpacing: '0.08em',
+              color: SHELL.INK_MUTED,
             }}
           >
             {item.label}
           </div>
-          <div style={{ fontSize: '13px', fontWeight: 800, color: EXPERIENCE_COLORS.textPrimary }}>
+          <div style={{ fontSize: '13px', fontWeight: 800, color: SHELL.INK }}>
             {item.value}
           </div>
         </div>
