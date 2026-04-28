@@ -30,7 +30,7 @@ export function AppTopBar({
       }}
     >
       {/* Left side */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
         {/* AbarVa logo */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -64,9 +64,9 @@ export function AppTopBar({
           <span
             style={{
               fontFamily: SHELL.SERIF,
-              fontSize: 13.5,
-              fontWeight: 400,
-              letterSpacing: '0.01em',
+              fontSize: 14,
+              fontWeight: 600,
+              letterSpacing: '0.015em',
               color: SHELL.INK,
               lineHeight: 1,
             }}
@@ -124,7 +124,7 @@ export function AppTopBar({
       </div>
 
       {/* Right side */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
         {/* Time string */}
         {timeString ? (
           <span

@@ -1,193 +1,393 @@
 'use client';
 
-import { useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react';
-
-// Universal "Ask Anything" bottom toolbar for every agent surface
-// (Programs detail, Intelligence, Control Tower, Source event detail).
-// GPT-style pattern: viewport-fixed bar at the bottom of the agent
-// surface with an auto-grow textarea, spell check, Enter to submit
-// (Shift+Enter for newline), and a scoped placeholder. Without this
-// bar the page does not feel like an agent interface.
+// AskAnythingBar · viewport-fixed bottom toolbar, present on every agent
+// surface. Claude-pattern: always visible, Enter to send, Shift+Enter for
+// newline, paperclip attach, live streaming response card above input.
 //
-// Deterministic / shell-only: the field is rendered but the Send
-// button is disabled and the caveat below explains why. Live runtime
-// ask wires in when the agent runtime lands.
+// Streams via useAgentStream (same hook powering AgentColumn / AgentRail).
+// For the full conversation history, open the AgentRail on the right edge.
 
-const SURFACE = 'rgba(248, 247, 244, 0.92)';
-const PANEL = '#FFFFFF';
-const INK = '#0A0C12';
-const NAVY = '#132B4F';
-const MUTED = '#525866';
-const MUTED_SOFT = '#7A7468';
-const BORDER = '#E8E6E1';
+import { useRef, useState, useCallback, type ChangeEvent, type KeyboardEvent } from 'react';
+import { useAgentStream } from '@/hooks/useAgentStream';
 
-const FONT = '"DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+// ── Agent profiles ─────────────────────────────────────────────────────────
 
-export type AskAnythingAgent = 'nexus' | 'sentinel' | 'atlas' | 'steward';
+const AGENT_CFG = {
+  nexus:    { name: 'Nexus',    glyph: '✱', accent: '#0E9F8C' },
+  sentinel: { name: 'Sentinel', glyph: '◈', accent: '#9B6DFF' },
+  atlas:    { name: 'Atlas',    glyph: '▲', accent: '#F59E0B' },
+  steward:  { name: 'Steward',  glyph: '◆', accent: '#3B82F6' },
+} as const;
 
-const AGENT_LABEL: Record<AskAnythingAgent, string> = {
-  nexus: 'Nexus',
-  sentinel: 'Sentinel',
-  atlas: 'Atlas',
-  steward: 'Steward',
-};
+export type AskAnythingAgent = keyof typeof AGENT_CFG;
+
+// ── Types ──────────────────────────────────────────────────────────────────
+
+interface BarFile {
+  id: string;
+  name: string;
+  sizeBytes: number;
+}
 
 export interface AskAnythingBarProps {
   agent: AskAnythingAgent;
-  /** Scope label rendered in the eyebrow, e.g. "MRD-01 · P3 Design". */
+  /** Scope label in the eyebrow, e.g. "APX-CDP-2026 · P3 Design" */
   scopeLabel: string;
-  /** Custom placeholder text. */
   placeholder?: string;
-  /** Override the deterministic-disabled caveat. */
-  caveat?: string;
+  /** Surface identifier forwarded to useAgentStream */
+  surface?: string;
+  programId?: string;
 }
 
-const MAX_HEIGHT_PX = 200;
+// ── Constants ──────────────────────────────────────────────────────────────
+
+const MAX_TA_HEIGHT = 180;
+const FONT = '"Inter", -apple-system, BlinkMacSystemFont, sans-serif';
+const RAIL_W = 76; // AppRail width — bar sits to the right of it
+
+// ── Component ──────────────────────────────────────────────────────────────
 
 export function AskAnythingBar({
   agent,
   scopeLabel,
   placeholder,
-  caveat,
+  surface,
+  programId,
 }: AskAnythingBarProps) {
+  const cfg = AGENT_CFG[agent];
   const [value, setValue] = useState('');
-  const ref = useRef<HTMLTextAreaElement>(null);
+  const [files, setFiles] = useState<BarFile[]>([]);
+  const [panelOpen, setPanelOpen] = useState(false);
 
-  const agentName = AGENT_LABEL[agent];
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { ask, response, isStreaming, error, clear } = useAgentStream({
+    surface: surface ?? agent,
+    programId,
+    agentName: cfg.name,
+  });
+
+  const hasResponse = !!(response || error);
+
+  // ── Auto-grow textarea ──────────────────────────────────────────────────
 
   function autoGrow(el: HTMLTextAreaElement) {
     el.style.height = 'auto';
-    const next = Math.min(el.scrollHeight, MAX_HEIGHT_PX);
-    el.style.height = `${next}px`;
+    el.style.height = `${Math.min(el.scrollHeight, MAX_TA_HEIGHT)}px`;
   }
 
-  function onChange(event: ChangeEvent<HTMLTextAreaElement>) {
-    setValue(event.target.value);
-    autoGrow(event.target);
+  function onChange(e: ChangeEvent<HTMLTextAreaElement>) {
+    setValue(e.target.value);
+    autoGrow(e.target);
   }
 
-  function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      // GPT pattern · Enter submits, Shift+Enter inserts a newline.
-      // Submit is currently deterministic-disabled; we still preventDefault
-      // so the field doesn't leak a stray newline.
-      event.preventDefault();
+  function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      submit();
     }
   }
 
+  // ── Submit ──────────────────────────────────────────────────────────────
+
+  const submit = useCallback(() => {
+    const text = value.trim();
+    if (!text || isStreaming) return;
+    setValue('');
+    setPanelOpen(true);
+    clear(); // clear previous response
+    if (textareaRef.current) textareaRef.current.style.height = 'auto';
+    ask(text);
+  }, [value, isStreaming, ask, clear]);
+
+  // ── File attach ─────────────────────────────────────────────────────────
+
+  function onFileChange(e: ChangeEvent<HTMLInputElement>) {
+    const picked = Array.from(e.target.files ?? []);
+    if (!picked.length) return;
+    setFiles(prev => [
+      ...prev,
+      ...picked.map((f, i) => ({ id: `${Date.now()}-${i}`, name: f.name, sizeBytes: f.size })),
+    ]);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
+  function removeFile(id: string) {
+    setFiles(prev => prev.filter(f => f.id !== id));
+  }
+
+  function dismissPanel() {
+    clear();
+    setPanelOpen(false);
+  }
+
+  const canSend = value.trim().length > 0 && !isStreaming;
+  const showPanel = panelOpen && (hasResponse || isStreaming);
+
   return (
-    <div
-      data-component="AskAnythingBar"
-      data-agent={agent}
-      role="region"
-      aria-label={`Ask ${agentName}`}
-      style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        zIndex: 50,
-        background: SURFACE,
-        backdropFilter: 'saturate(140%) blur(8px)',
-        WebkitBackdropFilter: 'saturate(140%) blur(8px)',
-        borderTop: `1px solid ${BORDER}`,
-        fontFamily: FONT,
-      }}
-    >
+    <>
+      <style>{STYLES}</style>
       <div
+        data-component="AskAnythingBar"
+        data-agent={agent}
         style={{
-          maxWidth: 1180,
-          margin: '0 auto',
-          padding: '10px 28px 14px',
+          position: 'fixed',
+          bottom: 0,
+          left: RAIL_W,
+          right: 0,
+          zIndex: 50,
+          fontFamily: FONT,
         }}
       >
-        <div
-          style={{
-            color: NAVY,
-            fontSize: 10.5,
-            letterSpacing: '0.16em',
-            textTransform: 'uppercase',
-            fontWeight: 800,
-            marginBottom: 6,
-          }}
-        >
-          Ask {agentName} · scoped to {scopeLabel}
-        </div>
+        {/* ── Response panel ─────────────────────────────────────────────── */}
+        {showPanel && (
+          <div style={{ padding: '0 28px' }}>
+            <div style={{
+              maxWidth: 860,
+              background: '#FFFFFF',
+              border: '1px solid #e6dfce',
+              borderBottom: 'none',
+              borderRadius: '12px 12px 0 0',
+              padding: '12px 16px 10px',
+              boxShadow: '0 -6px 24px rgba(12,26,58,0.09)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                {/* Agent avatar */}
+                <div style={{
+                  width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
+                  background: cfg.accent, color: '#fff',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 13, fontFamily: 'Georgia, serif',
+                }}>
+                  {cfg.glyph}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {/* Agent label + streaming indicator */}
+                  <div style={{
+                    fontSize: 10, fontWeight: 700, letterSpacing: '0.12em',
+                    textTransform: 'uppercase', color: cfg.accent, marginBottom: 5,
+                    display: 'flex', alignItems: 'center', gap: 6,
+                  }}>
+                    {cfg.name}
+                    {isStreaming && (
+                      <span style={{
+                        fontSize: 9, padding: '1px 6px', borderRadius: 999,
+                        background: cfg.accent, color: '#fff',
+                        letterSpacing: '0.1em', fontWeight: 700,
+                      }}>
+                        responding
+                      </span>
+                    )}
+                  </div>
+                  {/* Response text */}
+                  <div style={{
+                    fontSize: 13.5, lineHeight: 1.65, color: '#0c1a3a',
+                    maxHeight: 220, overflowY: 'auto',
+                    whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                  }}>
+                    {error
+                      ? <span style={{ color: '#c0392b' }}>Error: {error}</span>
+                      : response || <span style={{ opacity: 0.4 }}>…</span>
+                    }
+                    {isStreaming && (
+                      <span className="aab-cursor">▋</span>
+                    )}
+                  </div>
+                </div>
+                {/* Dismiss */}
+                <button
+                  type="button"
+                  onClick={dismissPanel}
+                  aria-label="Dismiss response"
+                  className="aab-dismiss"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'flex-end',
-            gap: 10,
-            padding: '10px 12px',
-            background: PANEL,
-            border: `1px solid ${BORDER}`,
-            borderRadius: 14,
-            boxShadow: '0 14px 32px rgba(19,43,79,0.08)',
-          }}
-        >
-          <textarea
-            ref={ref}
-            rows={1}
-            spellCheck
-            value={value}
-            onChange={onChange}
-            onKeyDown={onKeyDown}
-            placeholder={placeholder ?? `Ask ${agentName} anything about this work…`}
-            aria-label={`Ask ${agentName}`}
-            style={{
-              flex: 1,
-              minHeight: 24,
-              maxHeight: MAX_HEIGHT_PX,
-              border: 0,
-              outline: 'none',
-              resize: 'none',
-              background: 'transparent',
-              color: INK,
-              fontFamily: FONT,
-              fontSize: 14,
-              lineHeight: 1.5,
-              padding: 0,
-            }}
-          />
-          <button
-            type="button"
-            disabled
-            aria-label="Send"
-            data-action="ask-anything-submit"
-            style={{
-              flex: '0 0 auto',
-              padding: '8px 14px',
-              borderRadius: 999,
-              background: INK,
-              color: '#F8F7F4',
-              border: 0,
-              fontSize: 12,
-              fontWeight: 700,
-              cursor: 'not-allowed',
-              opacity: 0.45,
-            }}
-          >
-            Send →
-          </button>
-        </div>
+        {/* ── Main bar ──────────────────────────────────────────────────── */}
+        <div style={{
+          background: 'rgba(250,247,241,0.95)',
+          backdropFilter: 'saturate(160%) blur(12px)',
+          WebkitBackdropFilter: 'saturate(160%) blur(12px)',
+          borderTop: '1px solid #e6dfce',
+          padding: '10px 28px 14px',
+        }}>
+          {/* Eyebrow */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+            <div style={{
+              width: 16, height: 16, borderRadius: '50%',
+              background: cfg.accent, color: '#fff', flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 9, fontFamily: 'Georgia, serif',
+            }}>
+              {cfg.glyph}
+            </div>
+            <span style={{
+              fontSize: 10, fontWeight: 700, letterSpacing: '0.14em',
+              textTransform: 'uppercase', color: '#0c1a3a',
+            }}>
+              Ask {cfg.name}
+            </span>
+            <span style={{ fontSize: 10, color: '#8b95a8', letterSpacing: '0.04em' }}>
+              · {scopeLabel}
+            </span>
+          </div>
 
-        <div
-          style={{
-            marginTop: 6,
-            color: MUTED_SOFT,
-            fontSize: 11,
-            fontStyle: 'italic',
-          }}
-        >
-          {caveat ??
-            `Live ask deferred — context bundle is deterministic-only. Enter submits, Shift+Enter inserts a newline. Spell check on.`}
-          {' '}
-          <span style={{ color: MUTED, fontStyle: 'normal' }}>· {agentName} responds in this surface only.</span>
+          {/* Attachment chips */}
+          {files.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 7 }}>
+              {files.map(f => (
+                <span key={f.id} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  background: '#fff', border: '1px solid #e6dfce', borderRadius: 6,
+                  padding: '3px 8px', fontSize: 11.5, color: '#2a3a5e',
+                }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
+                  </svg>
+                  {f.name}
+                  <button type="button" onClick={() => removeFile(f.id)} style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: '#8b95a8', fontSize: 13, padding: 0, lineHeight: 1,
+                  }}>×</button>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Input row */}
+          <div style={{
+            maxWidth: 860,
+            display: 'flex', alignItems: 'flex-end', gap: 8,
+            padding: '9px 12px',
+            background: '#FFFFFF',
+            border: '1.5px solid #e6dfce',
+            borderRadius: showPanel ? '0 0 12px 12px' : 12,
+            boxShadow: '0 2px 14px rgba(12,26,58,0.07)',
+            transition: 'border-color 0.15s',
+          }}>
+            {/* Paperclip */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              style={{ display: 'none' }}
+              onChange={onFileChange}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              aria-label="Attach file"
+              className="aab-attach"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
+              </svg>
+            </button>
+
+            {/* Textarea */}
+            <textarea
+              ref={textareaRef}
+              rows={1}
+              spellCheck
+              value={value}
+              onChange={onChange}
+              onKeyDown={onKeyDown}
+              placeholder={placeholder ?? `Ask ${cfg.name} anything…`}
+              aria-label={`Ask ${cfg.name}`}
+              style={{
+                flex: 1, minHeight: 24, maxHeight: MAX_TA_HEIGHT,
+                border: 0, outline: 'none', resize: 'none',
+                background: 'transparent', color: '#0c1a3a',
+                fontFamily: FONT, fontSize: 14, lineHeight: 1.5, padding: 0,
+              }}
+            />
+
+            {/* Hint */}
+            {!value && (
+              <span style={{
+                fontSize: 9.5, color: '#b0a898', letterSpacing: '0.04em',
+                flexShrink: 0, paddingBottom: 2, whiteSpace: 'nowrap',
+              }}>
+                ⏎ send · ⇧⏎ newline
+              </span>
+            )}
+
+            {/* Send */}
+            <button
+              type="button"
+              disabled={!canSend}
+              onClick={submit}
+              aria-label="Send"
+              className={`aab-send ${canSend ? 'active' : ''}`}
+            >
+              {isStreaming
+                ? <span className="aab-spinner" />
+                : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+              }
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
+
+// ── Styles ─────────────────────────────────────────────────────────────────
+
+const STYLES = `
+  .aab-cursor {
+    display: inline-block; margin-left: 2px;
+    animation: aab-blink 1s steps(2) infinite;
+  }
+  @keyframes aab-blink { 0%,50%{opacity:1} 51%,100%{opacity:0} }
+
+  .aab-spinner {
+    display: inline-block; width: 12px; height: 12px; border-radius: 50%;
+    border: 2px solid currentColor; border-top-color: transparent;
+    animation: aab-spin 0.65s linear infinite;
+  }
+  @keyframes aab-spin { to { transform: rotate(360deg) } }
+
+  .aab-dismiss {
+    flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
+    border: 1px solid #e0ddd8; background: transparent;
+    cursor: pointer; font-size: 15px; line-height: 1;
+    color: #8b95a8; display: flex; align-items: center;
+    justify-content: center; transition: background 0.12s;
+  }
+  .aab-dismiss:hover { background: #f4f0e7; color: #0c1a3a; }
+
+  .aab-attach {
+    flex-shrink: 0; width: 30px; height: 30px; border-radius: 8px;
+    border: 1px solid #e6dfce; background: #f4f0e7;
+    cursor: pointer; color: #5b6c8a;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.12s, color 0.12s;
+  }
+  .aab-attach:hover { background: #ede7d5; color: #0c1a3a; }
+
+  .aab-send {
+    flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px;
+    border: 0; cursor: default;
+    background: #e6dfce; color: #b0a898;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, color 0.15s;
+  }
+  .aab-send.active {
+    background: #0c1a3a; color: #f8f7f4; cursor: pointer;
+  }
+  .aab-send.active:hover { background: #1a2d50; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .aab-cursor { animation: none; opacity: 1; }
+    .aab-spinner { animation: none; }
+  }
+`;
 
 export default AskAnythingBar;
