@@ -219,11 +219,16 @@ export function DecisionsIndexPage() {
 
         {/* Decision cards (chronological descending) */}
         {[...decisions].reverse().map((d) => (
-          <DecisionCard
+          <Link
             key={d.id}
-            decision={d}
-            isRecent={d.date >= RECENT_CUTOFF}
-          />
+            href={`/tower/decisions/${d.id}`}
+            style={{ textDecoration: 'none', display: 'block' }}
+          >
+            <DecisionCard
+              decision={d}
+              isRecent={d.date >= RECENT_CUTOFF}
+            />
+          </Link>
         ))}
 
         {/* Footer note */}
