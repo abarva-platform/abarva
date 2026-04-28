@@ -31,10 +31,10 @@ import {
   describeAgentHiddenDrawer,
   type AgentHiddenDrawerView,
   type AgentMissionPanelAgent,
-} from '@/lib/agents/agent-hidden-drawer-view';
+} from '@/lib/agent/agent-hidden-drawer-view';
 
 const root = process.cwd();
-const VIEW_SOURCE_PATH = 'src/lib/agents/agent-hidden-drawer-view.ts';
+const VIEW_SOURCE_PATH = 'src/lib/agent/agent-hidden-drawer-view.ts';
 const COMPONENT_SOURCE_PATH = 'src/components/agents/AgentHiddenDrawer.tsx';
 
 const CANONICAL_AGENTS: AgentMissionPanelAgent[] = ['nexus', 'sentinel', 'atlas', 'steward'];
@@ -313,8 +313,9 @@ describe('ACT3 — AgentHiddenDrawer component source checks', () => {
     expect(source).toMatch(/data-agent-hidden-drawer=["']act3["']/);
   });
 
-  it('has aria-expanded="false"', () => {
-    expect(source).toMatch(/aria-expanded=["']false["']/);
+  it('keeps collapsed state in data attributes without unsupported aria-expanded', () => {
+    expect(source).toMatch(/data-drawer-state={view.drawerState}/);
+    expect(source).not.toMatch(/aria-expanded=/);
   });
 
   it('has aria-label for the drawer', () => {

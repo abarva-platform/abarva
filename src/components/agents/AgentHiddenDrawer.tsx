@@ -9,7 +9,6 @@
 //   - Navy accent only (no red/amber unless a priority warrant is shown).
 //   - No avatars, no icons larger than 16×16, no emoji.
 //   - Honest disclaimer always visible.
-//   - aria-expanded="false" — drawer open/close is deferred to a future ACT4.
 //   - Server component only — no client directive, no React hooks.
 
 import {
@@ -23,7 +22,7 @@ import { AgentBadge } from '@/components/abarva/AgentBadge';
 import {
   buildAgentHiddenDrawerView,
   type AgentHiddenDrawerView,
-} from '@/lib/agents/agent-hidden-drawer-view';
+} from '@/lib/agent/agent-hidden-drawer-view';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -105,7 +104,6 @@ export function AgentHiddenDrawer({ view: viewProp }: AgentHiddenDrawerProps) {
       data-agent-hidden-drawer="act3"
       data-drawer-state={view.drawerState}
       aria-label="Agent activity drawer"
-      aria-expanded="false"
       style={{
         display: 'flex',
         alignItems: 'center',
