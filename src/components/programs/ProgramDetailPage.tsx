@@ -27,6 +27,8 @@ import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances'
 import { buildProgramSynthesisContext } from '@/lib/reasoning/program-synthesis-context-builder';
 import { summarizeFailureModes } from '@/lib/reasoning/provenance-ribbon-helpers';
 import { FailureModeWarningChip } from '@/components/_shared/FailureModeWarningChip';
+import { CompareWithDropdown } from '@/components/_shared/CompareWithDropdown';
+import { getAllInstanceIds } from '@/lib/reasoning/instance-resolver';
 import { ContradictionDetailCardClient } from '@/components/_shared/ContradictionDetailCardClient';
 import { CascadeImpactCard, ReverseCascadeCard } from '@/components/_shared/CascadeImpactCard';
 import { InstanceEventTimeline } from '@/components/_shared/InstanceEventTimeline';
@@ -3191,6 +3193,19 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
     }),
   );
 
+  // Compare-with-deeplink — resolve the canonical instance id for the
+  // current program (matches the same lookup used by the failure-mode chip
+  // and provenance ribbon) so the dropdown in the header can deep-link to
+  // `/source/compare?a={current}&b={selected}`.
+  const compareInstanceId = (() => {
+    const instance = APEX_RETAIL_PROGRAM_INSTANCES.find(
+      (i) =>
+        i.displayId === view.displayId ||
+        i.id.toLowerCase() === view.programId.toLowerCase(),
+    );
+    return instance?.id ?? null;
+  })();
+
   // REASON-29 — Header-level failure-mode warning chip for Programs detail.
   // Builds the same SynthesisContext used by the provenance ribbon so a
   // high-confidence detected anti-pattern is visible alongside the GatePill
@@ -3358,6 +3373,12 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
                 topConfidence={failureModeHeaderInfo.topConfidence}
                 highCount={failureModeHeaderInfo.highCount}
                 mitigations={failureModeHeaderInfo.mitigations}
+              />
+            )}
+            {compareInstanceId && (
+              <CompareWithDropdown
+                currentInstanceId={compareInstanceId}
+                allOtherIds={getAllInstanceIds()}
               />
             )}
             {/* Upload affordance */}
