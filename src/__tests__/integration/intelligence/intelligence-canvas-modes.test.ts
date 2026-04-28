@@ -17,6 +17,8 @@ import {
   type IntelligenceCanvasMode,
   type IntelligenceCanvasView,
 } from '@/lib/intelligence/intelligence-canvas-modes';
+import { buildIntelligenceActionsModeView } from '@/lib/intelligence/intelligence-actions-mode-view';
+import { buildIntelligenceProgramsModeView } from '@/lib/intelligence/intelligence-programs-mode-view';
 
 const PATTERN_KEY = 'value_ledger_incompleteness';
 
@@ -169,6 +171,60 @@ describe('buildIntelligenceCanvasView', () => {
     }
   });
 
+  it('programs mode projects deterministic tenant seed program rows', () => {
+    const view = buildIntelligenceCanvasView({
+      patternKey: PATTERN_KEY,
+      mode: 'programs',
+      tenantSlug: 'apex-retail',
+    });
+    const expected = buildIntelligenceProgramsModeView('apex-retail');
+
+    expect(view.body.kind).toBe('programs');
+    if (view.body.kind !== 'programs') throw new Error('Expected programs body');
+    expect(view.body.content.rows.length).toBeGreaterThan(0);
+    expect(view.body.content.rows.length).toBeLessThanOrEqual(5);
+    expect(view.body.content.rows[0].key).toBe(expected.impactedPrograms[0].programCode);
+    expect(view.body.content.rows[0].label).toContain(expected.impactedPrograms[0].programName);
+    expect(view.body.content.rows[0].label).toContain(expected.impactedPrograms[0].sentinelSignal);
+  });
+
+  it('actions mode projects deterministic tenant seed action rows', () => {
+    const view = buildIntelligenceCanvasView({
+      patternKey: PATTERN_KEY,
+      mode: 'actions',
+      tenantSlug: 'apex-retail',
+    });
+    const expected = buildIntelligenceActionsModeView('apex-retail');
+
+    expect(view.body.kind).toBe('actions');
+    if (view.body.kind !== 'actions') throw new Error('Expected actions body');
+    expect(view.body.content.rows.length).toBe(5);
+    expect(view.body.content.rows[0].key).toBe(expected.actions[0].id);
+    expect(view.body.content.rows[0].label).toContain(expected.actions[0].title);
+    expect(view.body.content.rows[0].label).toContain(expected.actions[0].affectedSurface);
+  });
+
+  it('thin tenants get thin-context deterministic rows instead of apex defaults', () => {
+    const apex = buildIntelligenceCanvasView({
+      patternKey: PATTERN_KEY,
+      mode: 'programs',
+      tenantSlug: 'apex-retail',
+    });
+    const meridian = buildIntelligenceCanvasView({
+      patternKey: PATTERN_KEY,
+      mode: 'programs',
+      tenantSlug: 'meridian',
+    });
+
+    expect(apex.body.kind).toBe('programs');
+    expect(meridian.body.kind).toBe('programs');
+    if (apex.body.kind !== 'programs' || meridian.body.kind !== 'programs') {
+      throw new Error('Expected programs bodies');
+    }
+    expect(apex.body.content.rows[0].key).not.toBe(meridian.body.content.rows[0].key);
+    expect(meridian.body.content.rows[0].label).toContain('MER-AI-2026');
+  });
+
   it('honest disclaimer never claims a live runtime', () => {
     const view = buildIntelligenceCanvasView({ patternKey: PATTERN_KEY });
     const lower = view.honestDisclaimer.toLowerCase();
@@ -293,6 +349,12 @@ describe('intelligence-canvas-modes module hygiene', () => {
     expect(/from '@\/lib\/atlas\//.test(src)).toBe(false);
     expect(/from '@\/lib\/nexus\//.test(src)).toBe(false);
     expect(/from '@\/lib\/agent\//.test(src)).toBe(false);
+  });
+
+  it('imports only deterministic Programs and Actions mode read models for tenant rows', () => {
+    expect(src).toContain("from './intelligence-programs-mode-view'");
+    expect(src).toContain("from './intelligence-actions-mode-view'");
+    expect(src).not.toMatch(/from '@\/lib\/programs\//);
   });
 
   it('does not contain forbidden non-determinism markers', () => {
