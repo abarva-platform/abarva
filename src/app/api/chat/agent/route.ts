@@ -39,6 +39,8 @@ export async function POST(request: Request) {
     stage?: string;
     surfaceContext?: Record<string, unknown>;
     programId?: string;
+    /** Prior conversation turns for multi-turn context. Capped at 10. */
+    conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
   };
 
   const message = body.message?.trim();
@@ -49,11 +51,12 @@ export async function POST(request: Request) {
     });
   }
 
-  const tenantName = body.tenantName ?? "Apex Retail Group";
-  const agentName  = body.agentName  ?? "Atlas";
-  const surface    = body.surface    ?? "";
-  const stage      = body.stage      ?? null;
-  const programId  = body.programId;
+  const tenantName          = body.tenantName ?? "Apex Retail Group";
+  const agentName           = body.agentName  ?? "Atlas";
+  const surface             = body.surface    ?? "";
+  const stage               = body.stage      ?? null;
+  const programId           = body.programId;
+  const conversationHistory = body.conversationHistory ?? [];
 
   // ── Build system prompt ─────────────────────────────────────────────────────
   //
@@ -117,7 +120,10 @@ export async function POST(request: Request) {
     model: "claude-sonnet-4-6",
     max_tokens: 512,
     system: systemPrompt,
-    messages: [{ role: "user", content: message }],
+    messages: [
+      ...conversationHistory.slice(-10),
+      { role: "user", content: message },
+    ],
   });
 
   const encoder = new TextEncoder();

@@ -27,6 +27,7 @@ import type {
   AtlasPageStateProviderProps,
   ChatTurn,
 } from '@/lib/shell/atlas-page-state';
+import { ATLAS_SYNTHESIS_TURN_ID } from '@/lib/shell/atlas-page-state';
 
 // ── Default surface-to-agent mapping ─────────────────────────────────────────
 
@@ -89,6 +90,17 @@ export function AtlasPageStateProvider({
       setIsStreaming(true);
 
       try {
+        // Build prior-turn history to give the model multi-turn context.
+        // Exclude the synthesis turn (it's in the system prompt already) and
+        // cap at the last 10 turns so the context window stays bounded.
+        const conversationHistory = conversation
+          .filter(t => t.id !== ATLAS_SYNTHESIS_TURN_ID)
+          .slice(-10)
+          .map(t => ({
+            role: t.role === 'user' ? ('user' as const) : ('assistant' as const),
+            content: t.text,
+          }));
+
         const res = await fetch('/api/chat/agent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -100,6 +112,7 @@ export function AtlasPageStateProvider({
             stage: stage ?? undefined,
             surfaceContext,
             agentName: resolvedAgentName,
+            conversationHistory,
             // Legacy compat — context string is built server-side from the
             // richer fields above, but we keep the field for API consumers
             // that haven't migrated.
@@ -140,7 +153,7 @@ export function AtlasPageStateProvider({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [surface, tenantName, stage, resolvedAgentName, isStreaming],
+    [surface, tenantName, stage, resolvedAgentName, isStreaming, conversation],
   );
 
   const clearResponse = useCallback(() => {
