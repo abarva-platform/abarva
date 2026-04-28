@@ -20,6 +20,8 @@ import { IntelligenceProvenanceRibbon } from '@/components/intelligence/Intellig
 import { buildPatternProvenanceRibbonView } from '@/lib/intelligence/intelligence-provenance-ribbon-view';
 import { IntelligenceSourceBasisPanel } from '@/components/intelligence/IntelligenceSourceBasisPanel';
 import { buildIntelligenceSourceBasisPanelView } from '@/lib/intelligence/intelligence-source-basis-panel-view';
+import { SentinelInteractionRail } from '@/components/intelligence/SentinelInteractionRail';
+import { buildSentinelInteractionRailView } from '@/lib/intelligence/sentinel-interaction-rail-view';
 
 interface SentinelPatternDetailProps {
   view: SentinelPatternDetailView;
@@ -139,6 +141,15 @@ export function SentinelPatternDetail({ view }: SentinelPatternDetailProps) {
       <IntelligenceProvenanceRibbon view={buildPatternProvenanceRibbonView(view)} />
 
       <IntelligenceSourceBasisPanel view={buildIntelligenceSourceBasisPanelView(view)} />
+
+      <SentinelInteractionRail
+        view={buildSentinelInteractionRailView({
+          tenantDisplayName: view.tenant.displayName,
+          anchorPatternKey: view.patternKey,
+          anchorPatternName: view.patternName,
+          observedProgramCount: view.affectedProgramRows.length,
+        })}
+      />
 
       <Block heading="Why it matters">
         <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, fontStyle: 'italic', color: COLORS.muted }}>
