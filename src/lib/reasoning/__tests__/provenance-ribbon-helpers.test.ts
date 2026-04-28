@@ -1,5 +1,5 @@
 /**
- * Provenance ribbon helper tests — REASON-27 / REASON-28
+ * Provenance ribbon helper tests — REASON-27
  *
  * Deterministic: pure functions over fixture inputs. No React, no network.
  */

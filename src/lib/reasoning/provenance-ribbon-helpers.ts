@@ -1,14 +1,9 @@
 /**
- * Provenance ribbon helpers — REASON-27 / REASON-28
+ * Provenance ribbon helpers — REASON-27
  *
  * Pure formatting helpers that derive the ribbon's display fields from a
  * SynthesisContext. Kept separate from the component so they can be tested
  * deterministically without React.
- *
- * Shared between the Source provenance ribbon (REASON-27) and the Programs
- * provenance ribbon (REASON-28). REASON-27 lands these same helpers on its
- * branch in parallel; whichever PR merges second will rebase out the
- * duplicate file in a trivial conflict resolution.
  */
 
 import type { CitationPointer, SynthesisContext } from '@/lib/reasoning/types';
@@ -105,9 +100,9 @@ export interface BlockerSummaryView {
 
 /**
  * Summarize blocker state from a SynthesisContext. Treats any unmet hard gate
- * (`gatesSummary.blocked`) as a blocker. `red` when count >= 2; `amber` when
- * exactly one blocker is open; `none` otherwise. Pure: deterministic over
- * its inputs.
+ * (`gatesSummary.blocked`) as a blocker. `red` when count >= 2 or any blocker
+ * has severity-equivalent semantics; `amber` when exactly one blocker is open;
+ * `none` otherwise. Pure: deterministic over its inputs.
  */
 export function summarizeBlockers(
   context: Pick<SynthesisContext, 'gatesSummary'>,
