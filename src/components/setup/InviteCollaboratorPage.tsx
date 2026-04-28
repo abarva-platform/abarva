@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import { AppShell } from '@/components/shell/AppShell';
+import { AgentColumn } from '@/components/shell/AgentColumn';
 import { SubNavStrip } from '@/components/shell/SubNavStrip';
 import { SHELL } from '@/lib/shell/shell-tokens';
 
 // ── Sub-nav (same as SetupUsersPage) ─────────────────────────────────────────
 
 const SUB_NAV_ITEMS = [
-  { key: 'connectors', label: 'Connectors', href: '/admin' },
+  { key: 'connectors', label: 'Connectors', href: '/admin/connectors' },
   { key: 'users', label: 'Users', active: true, href: '/admin/users' },
   { key: 'audit', label: 'Audit log', href: '/admin/audit' },
   { key: 'policies', label: 'Policies', href: '/admin/policies' },
@@ -735,7 +736,18 @@ export function InviteCollaboratorPage() {
       }}
       middleStrip={<SubNavStrip items={SUB_NAV_ITEMS} />}
     >
-      {/* Full-width work pane, no AgentColumn */}
+      <AgentColumn
+        agent={{ initials: 'St', name: 'Steward', role: 'Access Governor' }}
+        quote="Invite flow is deterministic and role-scoped. Admin grants all surfaces, collaborators stay bounded, and pending invites should be cleared quickly so audit posture stays current."
+        agentContext="Steward · Setup · invite collaborator"
+        actions={[
+          { letter: 'A', text: 'Invite collaborator', detail: 'Add a new operator to Programs and Source' },
+          { letter: 'B', text: 'Review pending invites', detail: 'Clear dormant invitations before role sprawl grows' },
+          { letter: 'C', text: 'Return to users', detail: 'Verify the membership ledger after sending' },
+        ]}
+        surface="setup"
+      />
+
       <div
         style={{
           flex: 1,
@@ -760,6 +772,20 @@ export function InviteCollaboratorPage() {
             ← Users
           </a>
 
+          <div
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 10,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: SHELL.PEACH_TEXT,
+              marginBottom: 12,
+              lineHeight: 1,
+            }}
+          >
+            Canonical route · /admin/invite
+          </div>
+
           {/* Heading */}
           <h1
             style={{
@@ -780,9 +806,9 @@ export function InviteCollaboratorPage() {
               color: SHELL.INK_SOFT,
               margin: '0 0 28px 0',
             }}
-          >
-            Add a team member to Apex Retail Group on AbarVa
-          </p>
+            >
+              Add a team member to Apex Retail Group on AbarVa
+            </p>
 
           {/* Step indicator */}
           <StepIndicator currentStep={step} />
