@@ -34,8 +34,6 @@ const SUBTLE  = 'rgba(27, 38, 50, 0.42)';
 const MINT    = '#0f766e';
 const BLUE    = '#2563eb';
 const BLUE_BG = 'rgba(37, 99, 235, 0.10)';
-const AMBER   = '#b7791f';
-
 const MONO  = SHELL.MONO;
 const SANS  = SHELL.SANS;
 
@@ -309,6 +307,7 @@ export interface ProgramOriginationPageProps {
 
 export function ProgramOriginationPage({ tenantSlug: _tenantSlug }: ProgramOriginationPageProps) {
   const router = useRouter();
+  void _tenantSlug;
 
   // Wizard step
   const [currentStep, setCurrentStep] = React.useState<StepNumber>(1);
@@ -329,10 +328,10 @@ export function ProgramOriginationPage({ tenantSlug: _tenantSlug }: ProgramOrigi
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [showSuccess, setShowSuccess]   = React.useState(false);
   const [submitError, setSubmitError]   = React.useState<string | null>(null);
+  const canonicalCreateHref = '/programs/new';
 
   // Step validity
   const step1Valid = programName.trim().length > 0 && objective.trim().length > 0;
-  const step2Valid = true; // both fields optional
   const step3Valid = sponsor !== '';
   const canOpen    = step1Valid && step3Valid;
 
@@ -596,9 +595,9 @@ export function ProgramOriginationPage({ tenantSlug: _tenantSlug }: ProgramOrigi
             ? isSubmitting
               ? 'Creating program record in Supabase…'
               : showSuccess
-                ? 'Program created. Redirecting to program workbench…'
+                ? 'Program created. Redirecting to the canonical program workbench…'
                 : canOpen
-                  ? 'Steward will begin classifying once the program opens.'
+                  ? 'Steward will complete origination, then hand the program to Nexus on the canonical /programs/[id] route.'
                   : 'Select an executive sponsor to continue.'
             : null}
         </div>
@@ -750,6 +749,17 @@ export function ProgramOriginationPage({ tenantSlug: _tenantSlug }: ProgramOrigi
               P0 · Originate
             </span>
           </div>
+          <div
+            style={{
+              marginTop: 8,
+              fontFamily: MONO,
+              fontSize: 10,
+              color: SUBTLE,
+              letterSpacing: '0.06em',
+            }}
+          >
+            Canonical route · <code>{canonicalCreateHref}</code>
+          </div>
         </div>
 
         {/* ── Wizard card ──────────────────────────────────────────── */}
@@ -769,6 +779,17 @@ export function ProgramOriginationPage({ tenantSlug: _tenantSlug }: ProgramOrigi
             }}
           >
             <StepIndicator currentStep={currentStep} />
+            <div
+              style={{
+                marginTop: 10,
+                fontFamily: SANS,
+                fontSize: 12,
+                color: MUTED,
+                lineHeight: 1.5,
+              }}
+            >
+              Steward frames the opportunity here. Once the record opens, Nexus takes over on the canonical program detail route and the phase workbench begins at the current phase.
+            </div>
           </div>
 
           {/* Step content */}
