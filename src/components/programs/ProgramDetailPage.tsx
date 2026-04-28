@@ -1826,6 +1826,280 @@ function AgentHandoffOverlay({
   );
 }
 
+// ─── CustomActionPanel (PRG-MOD-CUSTOM-ACTION) ────────────────────────────────
+
+interface CustomActionPanelProps {
+  placeholder?: string;
+  onSubmit: (text: string) => void;
+  onClose: () => void;
+}
+
+function CustomActionPanel({ placeholder, onSubmit, onClose }: CustomActionPanelProps) {
+  const [text, setText] = useState('');
+
+  const handleSubmit = () => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    onSubmit(trimmed);
+  };
+
+  return (
+    <div
+      style={{
+        background: SHELL.INK_MID,
+        borderRadius: 8,
+        padding: '12px 14px',
+      }}
+    >
+      <textarea
+        rows={3}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder={placeholder ?? 'Tell Nexus what to do...'}
+        style={{
+          background: 'rgba(255,255,255,0.08)',
+          border: '1px solid rgba(255,255,255,0.15)',
+          borderRadius: 6,
+          padding: '10px 12px',
+          color: SHELL.PAPER,
+          fontFamily: SHELL.SANS,
+          fontSize: 13,
+          width: '100%',
+          boxSizing: 'border-box',
+          resize: 'none',
+          outline: 'none',
+          lineHeight: 1.5,
+        }}
+      />
+      {/* Button row */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+        <button
+          onClick={onClose}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            fontFamily: SHELL.MONO,
+            fontSize: 10,
+            color: 'rgba(250,247,241,0.5)',
+            padding: '5px 0',
+            letterSpacing: '0.06em',
+          }}
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleSubmit}
+          style={{
+            background: SHELL.PAPER,
+            color: SHELL.INK,
+            border: 'none',
+            borderRadius: 5,
+            cursor: 'pointer',
+            fontFamily: SHELL.MONO,
+            fontSize: 10,
+            padding: '5px 12px',
+            letterSpacing: '0.06em',
+          }}
+        >
+          Send to Nexus
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── PhaseTransitionOverlay (PRG-STA-PHASE-TRANSITION) ────────────────────────
+
+interface PhaseTransitionOverlayProps {
+  fromPhase: number;
+  fromPhaseLabel: string;
+  toPhase: number;
+  toPhaseLabel: string;
+  programName: string;
+  onComplete: () => void;
+}
+
+function PhaseTransitionOverlay({
+  fromPhase,
+  fromPhaseLabel,
+  toPhase,
+  toPhaseLabel,
+  programName,
+  onComplete,
+}: PhaseTransitionOverlayProps) {
+  const [animState, setAnimState] = useState<'entering' | 'showing' | 'complete'>('entering');
+  const [barWidth, setBarWidth] = useState(0);
+
+  useEffect(() => {
+    // entering → showing at 300ms
+    const t1 = setTimeout(() => setAnimState('showing'), 300);
+    // start progress bar fill after showing begins
+    const t2 = setTimeout(() => setBarWidth(100), 350);
+    // complete at 2500ms
+    const t3 = setTimeout(() => {
+      setAnimState('complete');
+    }, 2500);
+    // call onComplete slightly after fade-out starts
+    const t4 = setTimeout(() => onComplete(), 2800);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      clearTimeout(t4);
+    };
+  }, [onComplete]);
+
+  const opacity = animState === 'entering' ? 0 : animState === 'complete' ? 0 : 1;
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: SHELL.INK,
+        zIndex: 1500,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        opacity,
+        transition: 'opacity 0.3s ease',
+      }}
+    >
+      {/* PHASE ADVANCE label */}
+      <div
+        style={{
+          fontFamily: SHELL.MONO,
+          fontSize: 9,
+          color: 'rgba(250,247,241,0.5)',
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
+          marginBottom: 32,
+        }}
+      >
+        Phase Advance
+      </div>
+
+      {/* Phase transition row */}
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          gap: 40,
+          alignItems: 'center',
+        }}
+      >
+        {/* From phase */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+          <div
+            style={{
+              width: 20,
+              height: 20,
+              borderRadius: '50%',
+              background: SHELL.MINT_BG,
+              border: `1px solid ${SHELL.MINT_LINE}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <span style={{ fontFamily: SHELL.MONO, fontSize: 10, color: SHELL.MINT_TEXT }}>
+              P{fromPhase}
+            </span>
+          </div>
+          <span style={{ fontFamily: SHELL.SERIF, fontSize: 16, color: SHELL.PAPER }}>
+            {fromPhaseLabel}
+          </span>
+          <span
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 9,
+              color: 'rgba(250,247,241,0.5)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+            }}
+          >
+            Complete
+          </span>
+        </div>
+
+        {/* Arrow */}
+        <span style={{ fontFamily: SHELL.SERIF, fontSize: 28, color: 'rgba(250,247,241,0.3)' }}>
+          →
+        </span>
+
+        {/* To phase */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+          <div
+            style={{
+              width: 24,
+              height: 24,
+              borderRadius: '50%',
+              background: SHELL.PAPER,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <span style={{ fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK }}>
+              P{toPhase}
+            </span>
+          </div>
+          <span style={{ fontFamily: SHELL.SERIF, fontSize: 20, color: SHELL.PAPER }}>
+            {toPhaseLabel}
+          </span>
+          <span
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 9,
+              color: SHELL.AMBER_DOT,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+            }}
+          >
+            Starting now
+          </span>
+        </div>
+      </div>
+
+      {/* Program name */}
+      <div
+        style={{
+          fontFamily: SHELL.SANS,
+          fontSize: 13,
+          color: 'rgba(250,247,241,0.5)',
+          marginTop: 24,
+        }}
+      >
+        {programName}
+      </div>
+
+      {/* Progress bar */}
+      <div
+        style={{
+          width: 200,
+          height: 4,
+          borderRadius: 2,
+          background: SHELL.CARD_LINE,
+          marginTop: 32,
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            height: '100%',
+            borderRadius: 2,
+            background: SHELL.MINT_TEXT,
+            width: `${barWidth}%`,
+            transition: 'width 2s linear',
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
@@ -1847,6 +2121,13 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
 
   // PRG-STA-AGENT-HANDOFF state
   const [showHandoff, setShowHandoff] = useState(false);
+
+  // PRG-MOD-CUSTOM-ACTION state
+  const [showCustomAction, setShowCustomAction] = useState(false);
+  const [customActionSent, setCustomActionSent] = useState(false);
+
+  // PRG-STA-PHASE-TRANSITION state
+  const [showPhaseTransition, setShowPhaseTransition] = useState(false);
 
   const phaseLabel = PHASE_LABEL_MAP[view.viewingPhase] ?? `Phase ${view.viewingPhase}`;
 
@@ -1898,6 +2179,45 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
         agentContext={view.workbench.title}
         actions={agentActions}
         onActionClick={handleActionClick}
+        bottomSlot={
+          <>
+            {!showCustomAction && !customActionSent && (
+              <button
+                onClick={() => setShowCustomAction(true)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontFamily: SHELL.MONO,
+                  fontSize: 10,
+                  color: 'rgba(250,247,241,0.4)',
+                  padding: '4px 0',
+                  textAlign: 'left',
+                  letterSpacing: '0.06em',
+                }}
+              >
+                + Custom action...
+              </button>
+            )}
+            {customActionSent && (
+              <span style={{ fontFamily: SHELL.MONO, fontSize: 10, color: SHELL.MINT_TEXT }}>
+                ✓ Sent to Nexus
+              </span>
+            )}
+            {showCustomAction && (
+              <CustomActionPanel
+                placeholder="Tell Nexus what to do..."
+                onSubmit={(text) => {
+                  console.log('Custom action:', text);
+                  setShowCustomAction(false);
+                  setCustomActionSent(true);
+                  setTimeout(() => setCustomActionSent(false), 2000);
+                }}
+                onClose={() => setShowCustomAction(false)}
+              />
+            )}
+          </>
+        }
       />
 
       {/* Work pane */}
@@ -1966,13 +2286,32 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
 
         {/* Gate ribbon — shown when gate is pending */}
         {view.gateStatus === 'pending' && view.phasePanel.gateCriteria && (
-          <GateRibbon
-            fromPhase={view.viewingPhase}
-            toPhase={view.viewingPhase + 1}
-            totalCriteria={view.phasePanel.gateCriteria.length}
-            metCriteria={view.phasePanel.gateCriteria.filter((c) => c.met).length}
-            onRequestApproval={() => setShowGateModal(true)}
-          />
+          <>
+            <GateRibbon
+              fromPhase={view.viewingPhase}
+              toPhase={view.viewingPhase + 1}
+              totalCriteria={view.phasePanel.gateCriteria.length}
+              metCriteria={view.phasePanel.gateCriteria.filter((c) => c.met).length}
+              onRequestApproval={() => setShowGateModal(true)}
+            />
+            {/* PRG-STA-PHASE-TRANSITION preview trigger */}
+            <div style={{ marginBottom: 8, textAlign: 'right' }}>
+              <button
+                onClick={() => setShowPhaseTransition(true)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontFamily: SHELL.MONO,
+                  fontSize: 9,
+                  color: SHELL.INK_MUTED,
+                  letterSpacing: '0.08em',
+                }}
+              >
+                Preview phase transition →
+              </button>
+            </div>
+          </>
         )}
 
         {/* Gate criteria */}
@@ -2121,6 +2460,18 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
           toAgent={{ initials: 'Sn', name: 'Sentinel' }}
           context={`${view.displayId} · P${view.viewingPhase} Synthesis evidence review`}
           onComplete={() => setShowHandoff(false)}
+        />
+      )}
+
+      {/* PRG-STA-PHASE-TRANSITION overlay */}
+      {showPhaseTransition && (
+        <PhaseTransitionOverlay
+          fromPhase={view.viewingPhase}
+          fromPhaseLabel={PHASE_LABEL_MAP[view.viewingPhase as ProgramPhaseId] ?? ''}
+          toPhase={view.viewingPhase + 1}
+          toPhaseLabel={PHASE_LABEL_MAP[(view.viewingPhase + 1) as ProgramPhaseId] ?? ''}
+          programName={view.name}
+          onComplete={() => setShowPhaseTransition(false)}
         />
       )}
     </AppShell>
