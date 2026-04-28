@@ -29,3 +29,12 @@
 | 2026-04-28 | 5O | shipped | +2/-2 | (pre-infra) | #562 | T3-H01 `usedByPrograms` now reflects APX-CDP-2026 at P3 rather than P2. |
 | 2026-04-28 | S3 | shipped | +697/-464 | (pre-infra) | #563 | Source Wave S3 refreshed the event canvas. |
 | 2026-04-28 | 5P | shipped | +1/-1 | (pre-infra) | #564 | Programs agent handoff overlay phase labels moved from P2 wording to P3 wording. |
+| 2026-04-28 | PUB-1 | shipped | +743/-0 | n/a | #647 | Public site shell: paper aesthetic, TopNav, Footer, PaperContainer, public-site CSS tokens, seo-defaults, layout. |
+| 2026-04-28 | PUB-1-fixup | shipped | +89/-3 | n/a | #658 | Canonical URL constants (canonical-urls.ts) + 27 tests + wire seo-defaults to use CANONICAL_URLS.origin. |
+| 2026-04-28 | PUB-2 | shipped | +620/-0 | n/a | #655 | MaestroHero + MaestroFigure + phases.ts; full-viewport animated hero with phase ticker. |
+| 2026-04-28 | PUB-3 | shipped | +580/-2 | n/a | #668 | Contradictions scoreboard (5 public contradictions) + /contradictions/[id] detail pages + public-corpus.ts filter. 17 tests. |
+| 2026-04-28 | PUB-4 | shipped | +1042/-0 | n/a | #671 | Pattern detail pages: 60-pattern index + /patterns/[slug]/ detail + PatternCard + PatternDetail + PatternMetadataSidebar + AskAtlasInline. 20 tests. |
+| 2026-04-28 | PUB-5 | shipped | +652/-0 | n/a | #653 | How-it-works scroll-jack tour with IntersectionObserver, sticky MaestroFigure sidebar, AnnotatedScreenshot. |
+| 2026-04-28 | PUB-6 | shipped | +890/-0 | n/a | #667 | Architecture diagrams (ElevenPlane, KnowledgeFabric, FourAgent, JwtDataPlane) + 6 architecture sub-pages. 18 tests. |
+| 2026-04-28 | PUB-7 | shipped | +1435/-0 | n/a | n/a | Public Atlas landing + 3 editorial pieces + editorial loader + atlas-public-scope.ts + homepage Layer 5. 24 tests. |
+| 2026-04-28 | PUB-8 | shipped | +740/-0 | n/a | #669 | Digest page + RSS/Atom/JSON feeds + sitemap.xml + robots.txt + /contact + ContactForm + work-email.ts. 17 tests. |
