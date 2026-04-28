@@ -239,7 +239,7 @@ export interface SynthesisContext {
   /** Identifier of the instance being synthesised. */
   instanceId: string;
   /** The type of instance being synthesised. */
-  instanceType: 'source-event' | 'program';
+  instanceType: 'source-event' | 'program' | 'tower';
   /** The pattern that governs this instance. */
   patternId: string;
   /** Semver of the pattern at the time this context was built. */

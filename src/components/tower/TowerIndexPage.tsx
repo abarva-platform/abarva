@@ -8,6 +8,7 @@ import { AgentColumn } from '@/components/shell/AgentColumn';
 import { FilterPillStrip } from '@/components/shell/FilterPillStrip';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { TOWER_INDEX_VIEW, type PressureItem } from '@/lib/tower/shell-tower-fixture';
+import { AtlasSynthesisQuote } from '@/components/tower/AtlasSynthesisQuote';
 
 // ---------------------------------------------------------------------------
 // Severity helpers
@@ -664,6 +665,7 @@ function NewPressureModal({ onClose }: NewPressureModalProps) {
 
 export function TowerIndexPage() {
   const [showNewPressure, setShowNewPressure] = useState(false);
+  const [synthesisQuote, setSynthesisQuote] = useState(TOWER_INDEX_VIEW.agentQuote);
   const searchParams = useSearchParams();
   const router = useRouter();
   const activeFilter = searchParams?.get('filter') ?? 'all';
@@ -697,7 +699,7 @@ export function TowerIndexPage() {
     >
       <AgentColumn
         agent={{ initials: 'At', name: 'Atlas', role: 'Cross-Program Synthesizer' }}
-        quote={TOWER_INDEX_VIEW.agentQuote}
+        quote={synthesisQuote}
         agentContext={TOWER_INDEX_VIEW.agentContext}
         actions={TOWER_INDEX_VIEW.actions}
         surface="tower"
@@ -707,6 +709,14 @@ export function TowerIndexPage() {
           else if (letter === 'C') setShowNewPressure(true);
         }}
       />
+
+      {/* REASON-17 — hidden synthesis node; streams live Atlas quote into AgentColumn */}
+      <div style={{ display: 'none' }} aria-hidden>
+        <AtlasSynthesisQuote
+          fallback={TOWER_INDEX_VIEW.agentQuote}
+          onLoaded={setSynthesisQuote}
+        />
+      </div>
 
       <div
         style={{

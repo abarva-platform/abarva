@@ -62,6 +62,9 @@ export { buildSourceSynthesisContext, instanceStateHash } from './synthesis-cont
 // Program synthesis context builder — REASON-15
 export { buildProgramSynthesisContext, programInstanceStateHash } from './program-synthesis-context-builder';
 
+// Tower (Atlas) portfolio synthesis context builder — REASON-17
+export { buildTowerSynthesisContext, towerStateHash } from './tower-synthesis-context-builder';
+
 // Cross-instance reasoner — REASON-18
 export {
   resolveLinkedProgram,
