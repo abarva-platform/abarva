@@ -22,6 +22,23 @@ export interface ProgramOutcome {
 
 export const OUTCOME_FIXTURE: ProgramOutcome[] = [
   {
+    id: 'apx-cdp-2026',
+    displayId: 'APX-CDP-2026',
+    name: 'CDP Activation',
+    phase: 3,
+    phaseLabel: 'Design',
+    launchDate: 'Q1 2027 projected',
+    status: 'projected',
+    metrics: [
+      { label: 'Personalization revenue lift', projected: '+$3.2M/yr', actual: '—', delta: 'Projected', deltaDir: 'neutral', phase: 3 },
+      { label: 'Email marketing ROI', projected: '+18%', actual: '—', delta: 'Projected', deltaDir: 'neutral', phase: 3 },
+      { label: 'Customer lifetime value', projected: '+$42/customer', actual: '—', delta: 'Projected', deltaDir: 'neutral', phase: 3 },
+      { label: 'Data platform cost reduction', projected: '–$280K/yr', actual: '—', delta: 'Projected', deltaDir: 'neutral', phase: 3 },
+    ],
+    atlasNote: 'CDP projections are based on P3 Design business case. Actuals available post-Q1 2027 launch. Build gate approval is the near-term critical path.',
+    href: '/programs/apx-cdp-2026',
+  },
+  {
     id: 'apx-dfv2-2025',
     displayId: 'APX-DFV2-2025',
     name: 'Demand Forecasting v2',
@@ -58,11 +75,11 @@ export const OUTCOME_FIXTURE: ProgramOutcome[] = [
 ];
 
 export const OUTCOME_AGENT_VOICE = {
-  quote: 'Demand Forecasting v2 is outperforming projections — inventory waste reduction is $200K ahead. Contact Center AI pre-launch projections remain strong. Combined projected value: $3.4M annually.',
+  quote: 'Demand Forecasting v2 is outperforming — inventory waste $200K ahead of projection. CDP Activation projects $3.2M/yr revenue lift post-launch. Combined portfolio value target: $6.8M annually.',
   agentContext: 'Atlas · Value Lens · outcome realization',
   actions: [
-    { letter: 'A' as const, text: 'Review DFv2 steady-state metrics', detail: 'Full 12-month actuals vs baseline available' },
-    { letter: 'B' as const, text: 'Update CC-AI outcome model', detail: 'NLP accuracy gain may lift handle time projection' },
-    { letter: 'C' as const, text: 'Brief CFO on value realization', detail: '$1.4M DFv2 savings is audit-ready' },
+    { letter: 'A' as const, text: 'Review DFv2 steady-state metrics', detail: 'Full 12-month actuals vs baseline — audit-ready' },
+    { letter: 'B' as const, text: 'Validate CDP business case', detail: '$3.2M/yr projection — confirm model assumptions for Build gate' },
+    { letter: 'C' as const, text: 'Update CC-AI outcome model', detail: 'NLP accuracy gain may lift handle time projection' },
   ],
 };
