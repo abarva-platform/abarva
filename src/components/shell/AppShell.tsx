@@ -4,10 +4,21 @@ import { AppTopBar } from './AppTopBar';
 import { AppMiddleStrip } from './AppMiddleStrip';
 import { CommandPaletteLoader } from './CommandPaletteLoader';
 import { AtlasPageStateProvider } from './AtlasPageStateProvider';
-import type { SurfaceId } from '@/lib/shell/atlas-page-state';
+import type { SurfaceId, StageId } from '@/lib/shell/atlas-page-state';
 
 interface AppShellProps {
   surface?: 'setup' | 'setup-detail' | 'programs' | 'programs-detail' | 'source' | 'source-detail' | 'intelligence' | 'tower' | 'home';
+  /**
+   * Workflow stage for stage-aware surfaces (Shell Layout Spec v2 §7).
+   * P0-P6 for Programs phases, S1-S7 for Source event stages.
+   * Pass null or omit for monitoring surfaces (Tower, Intelligence, Home).
+   */
+  stage?: StageId | null;
+  /**
+   * Surface-specific context injected into every agent turn.
+   * E.g. program metadata, pressure items, source event details.
+   */
+  surfaceContext?: Record<string, unknown>;
   topBarProps?: {
     tenantName?: string;
     showLocked?: boolean;
@@ -20,6 +31,8 @@ interface AppShellProps {
 
 export function AppShell({
   surface,
+  stage,
+  surfaceContext,
   topBarProps,
   middleStrip,
   children,
@@ -64,6 +77,8 @@ export function AppShell({
         <AtlasPageStateProvider
           surface={(surface as SurfaceId) ?? 'home'}
           tenantName={tenantName}
+          stage={stage ?? null}
+          surfaceContext={surfaceContext ?? {}}
         >
           <div
             style={{

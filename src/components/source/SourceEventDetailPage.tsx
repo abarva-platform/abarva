@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { AppShell } from '@/components/shell/AppShell';
 import { RibbonSynthesis } from '@/components/shell/RibbonSynthesis';
+import type { StageId } from '@/lib/shell/atlas-page-state';
 import { AtlasDrawer } from '@/components/shell/AtlasDrawer';
 import { StageTrackerStrip } from '@/components/shell/StageTrackerStrip';
 import { LinkedProgramChip } from '@/components/shell/LinkedProgramChip';
@@ -717,9 +718,22 @@ export function SourceEventDetailPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('bafo');
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  // Stage-aware pane contract (Shell Layout Spec v2 §7)
+  // BAFO = stage 7 of 10 → StageId S7
+  const currentStage: StageId = 'S7';
+  const sourceSurfaceContext: Record<string, unknown> = {
+    eventId: AMS_SOURCE_EVENT.displayId,
+    eventName: AMS_SOURCE_EVENT.name,
+    stage: 'BAFO',
+    stageIndex: 7,
+    vendorCount: AMS_SOURCE_EVENT.vendorCount,
+  };
+
   return (
     <AppShell
       surface="source-detail"
+      stage={currentStage}
+      surfaceContext={sourceSurfaceContext}
       topBarProps={{
         tenantName: 'Apex Retail Group',
         showLocked: true,
