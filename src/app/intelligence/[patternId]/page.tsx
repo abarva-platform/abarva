@@ -1,13 +1,18 @@
 // INT-DTL — Shell-native Intelligence pattern detail reading view.
-// Supports T3-H01 (validated) and T2-C03 (deprecated) via PATTERN_MAP.
+// Serves T3-H01 (validated), T3-H03 (in-review), T1-F02 (candidate),
+// and T2-C03 (deprecated) via fixture map.
 
 import { PatternDetailPage } from '@/components/intelligence/PatternDetailPage';
 import { DeprecatedPatternDetailPage } from '@/components/intelligence/DeprecatedPatternDetailPage';
 import { T3_H01_PATTERN } from '@/lib/intelligence/shell-pattern-detail-fixture';
+import { T3_H03_PATTERN } from '@/lib/intelligence/shell-pattern-detail-inreview-fixture';
+import { T1_F02_PATTERN } from '@/lib/intelligence/shell-pattern-detail-candidate-fixture';
 import { T2_C03_PATTERN } from '@/lib/intelligence/shell-pattern-detail-deprecated-fixture';
 
 const PATTERN_MAP = {
   't3-h01': T3_H01_PATTERN,
+  't3-h03': T3_H03_PATTERN,
+  't1-f02': T1_F02_PATTERN,
   't2-c03': T2_C03_PATTERN,
 } as const;
 

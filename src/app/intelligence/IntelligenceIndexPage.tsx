@@ -4,8 +4,6 @@
 // INT-IDX: AppShell + FilterPillStrip + Sentinel AgentColumn + pattern list.
 
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { AgentColumn } from '@/components/shell/AgentColumn';
 import { FilterPillStrip } from '@/components/shell/FilterPillStrip';
@@ -251,28 +249,7 @@ function PatternTable({ patterns }: { patterns: IntelligencePattern[] }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function IntelligenceIndexPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const activeFilter = searchParams?.get('filter') ?? 'all';
-
-  const filtered = INTELLIGENCE_INDEX_VIEW.patterns.filter(p => {
-    if (activeFilter === 'all') return true;
-    if (activeFilter === 't1') return p.tier === 'T1';
-    if (activeFilter === 't2') return p.tier === 'T2';
-    if (activeFilter === 't3') return p.tier === 'T3';
-    if (activeFilter === 'in-review') return p.status === 'in-review';
-    if (activeFilter === 'candidate') return p.status === 'candidate';
-    if (activeFilter === 'validated') return p.status === 'validated';
-    return true;
-  });
-
-  const filterPills = [
-    { key: 'all', label: 'All', active: activeFilter === 'all', count: INTELLIGENCE_INDEX_VIEW.patterns.length, href: '/intelligence' },
-    { key: 't3', label: 'T3 · Use-case', active: activeFilter === 't3', count: INTELLIGENCE_INDEX_VIEW.patterns.filter(p => p.tier === 'T3').length, href: '/intelligence?filter=t3' },
-    { key: 't2', label: 'T2 · Capability', active: activeFilter === 't2', count: INTELLIGENCE_INDEX_VIEW.patterns.filter(p => p.tier === 'T2').length, href: '/intelligence?filter=t2' },
-    { key: 't1', label: 'T1 · Foundation', active: activeFilter === 't1', count: INTELLIGENCE_INDEX_VIEW.patterns.filter(p => p.tier === 'T1').length, href: '/intelligence?filter=t1' },
-    { key: 'in-review', label: 'In review', active: activeFilter === 'in-review', count: INTELLIGENCE_INDEX_VIEW.patterns.filter(p => p.status === 'in-review').length, href: '/intelligence?filter=in-review' },
-  ];
+  const view = INTELLIGENCE_INDEX_VIEW;
 
   return (
     <AppShell
@@ -284,22 +261,22 @@ export function IntelligenceIndexPage() {
       }}
       middleStrip={
         <FilterPillStrip
-          pills={filterPills.map(pill => ({
-            key: pill.key,
-            label: pill.label,
-            active: pill.active,
-            count: pill.count,
-            onClick: () => router.push(pill.href),
-          }))}
+          pills={[
+            { key: 'all', label: 'All patterns', active: true },
+            { key: 't3', label: 'T3 · Use-case' },
+            { key: 't2', label: 'T2 · Capability' },
+            { key: 't1', label: 'T1 · Foundation' },
+            { key: 'validated', label: 'Validated' },
+          ]}
         />
       }
     >
       {/* Sentinel column */}
       <AgentColumn
         agent={{ initials: 'Sn', name: 'Sentinel', role: 'Pattern Validator' }}
-        quote={INTELLIGENCE_INDEX_VIEW.agentQuote}
-        agentContext={INTELLIGENCE_INDEX_VIEW.agentContext}
-        actions={INTELLIGENCE_INDEX_VIEW.actions}
+        quote={view.agentQuote}
+        agentContext={view.agentContext}
+        actions={view.actions}
       />
 
       {/* Main content */}
@@ -347,23 +324,12 @@ export function IntelligenceIndexPage() {
               lineHeight: 1.5,
             }}
           >
-            {filtered.length} pattern{filtered.length !== 1 ? 's' : ''} · validated and emerging signals for AI program design
+            {view.patterns.length} patterns · validated and emerging signals for AI program design
           </p>
         </div>
 
         {/* Pattern table */}
-        <PatternTable patterns={filtered} />
-
-        {/* Solutions link */}
-        <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${SHELL.CARD_LINE}` }}>
-          <a href="/intelligence/solutions" style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_SOFT, textDecoration: 'none',
-          }}>
-            <span>→</span>
-            <span>Solution archetypes · end-to-end blueprints</span>
-          </a>
-        </div>
+        <PatternTable patterns={view.patterns} />
       </div>
     </AppShell>
   );

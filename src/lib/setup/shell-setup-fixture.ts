@@ -63,6 +63,34 @@ export const SERVICENOW_CONNECTOR_DETAIL: ConnectorDetail = {
   ],
 };
 
+export const SALESFORCE_CONNECTOR_DETAIL: ConnectorDetail = {
+  id: 'sfdc',
+  name: 'Salesforce CRM',
+  logo: 'SF',
+  lastSync: '15:45 UTC · Apr 27',
+  status: 'healthy',
+  statusNote: 'CRM pipeline sync current',
+  vendor: 'Salesforce Inc.',
+  authType: 'OAuth 2.0',
+  endpoint: 'https://apex-retail.my.salesforce.com/services/data/v58.0',
+  connectorType: 'CRM',
+  description: 'CRM integration — customer records, account data, and opportunity pipeline for source event enrichment.',
+  lastSuccessfulSync: 'Apr 27 · 15:45 UTC',
+  syncFrequency: 'Every 15 minutes',
+  dataFlows: [
+    { direction: 'inbound', description: 'Account records → Source event enrichment', lastSynced: 'Apr 27 · 15:45 UTC' },
+    { direction: 'inbound', description: 'Opportunity pipeline → Program context', lastSynced: 'Apr 27 · 15:45 UTC' },
+    { direction: 'outbound', description: 'Program milestones → Salesforce opportunity stage', lastSynced: 'Apr 27 · 15:45 UTC' },
+  ],
+  agentQuote: 'Salesforce is healthy — last sync 15 minutes ago, 3 data flows active. OAuth token is valid for another 87 days. No action required.',
+  actions: [
+    { letter: 'A' as const, text: 'Review recent sync log', detail: 'View last 50 sync operations' },
+    { letter: 'B' as const, text: 'Test connection', detail: 'Run a live ping to confirm API health' },
+    { letter: 'C' as const, text: 'Update data flow mappings', detail: 'Add or remove fields from the sync' },
+  ],
+  reconnectSteps: [],
+};
+
 const CONNECTORS: ConnectorItem[] = [
   {
     id: 'sn',

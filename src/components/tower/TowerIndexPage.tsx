@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { AgentColumn } from '@/components/shell/AgentColumn';
@@ -290,17 +291,19 @@ function ActivityStrip() {
           gap: 10,
         }}
       >
-        <span
+        <Link
+          href="/tower/activity"
           style={{
             fontFamily: SHELL.MONO,
             fontSize: 9,
-            letterSpacing: '0.18em',
-            textTransform: 'uppercase',
             color: SHELL.INK_MUTED,
+            textDecoration: 'none',
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
           }}
         >
-          Cross-program activity
-        </span>
+          Cross-program activity →
+        </Link>
       </div>
 
       {/* Rows */}
@@ -381,10 +384,286 @@ function ActivityStrip() {
 }
 
 // ---------------------------------------------------------------------------
+// New pressure modal
+// ---------------------------------------------------------------------------
+
+type NewSeverity = 'High' | 'Medium' | 'Low watch' | null;
+
+interface NewPressureModalProps {
+  onClose: () => void;
+}
+
+function NewPressureModal({ onClose }: NewPressureModalProps) {
+  const [title, setTitle] = useState('');
+  const [severity, setSeverity] = useState<NewSeverity>(null);
+  const [driver, setDriver] = useState('');
+  const [heroValue, setHeroValue] = useState('');
+  const [heroLabel, setHeroLabel] = useState('');
+  const [relatedProgram, setRelatedProgram] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+
+  const isValid = title.trim().length > 0 && severity !== null && driver.trim().length > 0;
+
+  function handleAdd() {
+    if (!isValid) return;
+    setSubmitted(true);
+    setTimeout(() => {
+      onClose();
+    }, 1200);
+  }
+
+  const severityOptions: { label: NonNullable<NewSeverity>; activeBg: string; activeColor: string }[] = [
+    { label: 'High', activeBg: SHELL.RUST_BG, activeColor: SHELL.RUST_TEXT },
+    { label: 'Medium', activeBg: SHELL.PEACH_BG, activeColor: SHELL.PEACH_TEXT },
+    { label: 'Low watch', activeBg: SHELL.MINT_BG, activeColor: SHELL.MINT_TEXT },
+  ];
+
+  const inputStyle: React.CSSProperties = {
+    fontFamily: SHELL.SANS,
+    fontSize: 13,
+    color: SHELL.INK,
+    background: SHELL.CARD_WHITE,
+    border: `1px solid ${SHELL.CARD_LINE}`,
+    borderRadius: 6,
+    padding: '8px 12px',
+    width: '100%',
+    outline: 'none',
+    boxSizing: 'border-box',
+  };
+
+  const labelStyle: React.CSSProperties = {
+    fontFamily: SHELL.MONO,
+    fontSize: 9,
+    letterSpacing: '0.16em',
+    textTransform: 'uppercase',
+    color: SHELL.INK_MUTED,
+    marginBottom: 6,
+    display: 'block',
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.35)',
+        zIndex: 1000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        style={{
+          background: SHELL.PAPER,
+          borderRadius: 12,
+          padding: '28px 32px',
+          maxWidth: 520,
+          width: '90%',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 18,
+        }}
+      >
+        {/* Modal header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontFamily: SHELL.SERIF, fontSize: 18, fontWeight: 700, color: SHELL.INK }}>
+            Set new pressure
+          </span>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontFamily: SHELL.MONO,
+              fontSize: 14,
+              color: SHELL.INK_MUTED,
+              padding: '2px 6px',
+            }}
+          >
+            ×
+          </button>
+        </div>
+
+        {/* Field: Title */}
+        <div>
+          <label style={labelStyle}>Pressure Title</label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. Margin Compression"
+            style={inputStyle}
+          />
+        </div>
+
+        {/* Field: Severity */}
+        <div>
+          <label style={labelStyle}>Severity</label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {severityOptions.map((opt) => {
+              const isSelected = severity === opt.label;
+              return (
+                <button
+                  key={opt.label}
+                  onClick={() => setSeverity(opt.label)}
+                  style={{
+                    fontFamily: SHELL.MONO,
+                    fontSize: 11,
+                    letterSpacing: '0.08em',
+                    padding: '6px 14px',
+                    borderRadius: 20,
+                    border: `1px solid ${isSelected ? 'transparent' : SHELL.CARD_LINE}`,
+                    background: isSelected ? opt.activeBg : SHELL.CARD_WHITE,
+                    color: isSelected ? opt.activeColor : SHELL.INK_SOFT,
+                    cursor: 'pointer',
+                    transition: 'background 0.15s',
+                  }}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Field: Driver */}
+        <div>
+          <label style={labelStyle}>Top Driver</label>
+          <input
+            type="text"
+            value={driver}
+            onChange={(e) => setDriver(e.target.value)}
+            placeholder="One sentence describing the root cause"
+            style={inputStyle}
+          />
+        </div>
+
+        {/* Field: Hero stat (optional) */}
+        <div>
+          <label style={labelStyle}>Headline Metric (optional)</label>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <input
+              type="text"
+              value={heroValue}
+              onChange={(e) => setHeroValue(e.target.value)}
+              placeholder="$2.4M"
+              style={{ ...inputStyle, width: '40%', flex: '0 0 auto' }}
+            />
+            <input
+              type="text"
+              value={heroLabel}
+              onChange={(e) => setHeroLabel(e.target.value)}
+              placeholder="vs $1.8M budget"
+              style={{ ...inputStyle, flex: 1 }}
+            />
+          </div>
+        </div>
+
+        {/* Field: Related program (optional) */}
+        <div>
+          <label style={labelStyle}>Related Program (optional)</label>
+          <select
+            value={relatedProgram}
+            onChange={(e) => setRelatedProgram(e.target.value)}
+            style={{ ...inputStyle, appearance: 'none', WebkitAppearance: 'none' }}
+          >
+            <option value="">(none)</option>
+            <option value="APX-CDP-2026">APX-CDP-2026</option>
+            <option value="APX-CC-2026">APX-CC-2026</option>
+            <option value="APX-SAP-2026">APX-SAP-2026</option>
+            <option value="APX-LPM-2026">APX-LPM-2026</option>
+            <option value="APX-DFV2-2025">APX-DFV2-2025</option>
+          </select>
+        </div>
+
+        {/* Atlas note */}
+        <div
+          style={{
+            background: SHELL.PAPER_SOFT,
+            borderRadius: 6,
+            padding: '10px 14px',
+            marginTop: -4,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 3,
+          }}
+        >
+          <span style={{ fontFamily: SHELL.MONO, fontSize: 8, letterSpacing: '0.18em', textTransform: 'uppercase', color: SHELL.INK_MUTED }}>
+            Atlas
+          </span>
+          <span style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK_MUTED, lineHeight: 1.5 }}>
+            Atlas will begin monitoring this pressure and surface it in the Tower activity stream.
+          </span>
+        </div>
+
+        {/* Buttons */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 4 }}>
+          {submitted ? (
+            <span
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 11,
+                color: SHELL.MINT_TEXT,
+                letterSpacing: '0.08em',
+                alignSelf: 'center',
+              }}
+            >
+              ✓ Pressure added to Tower
+            </span>
+          ) : (
+            <>
+              <button
+                onClick={onClose}
+                style={{
+                  fontFamily: SHELL.MONO,
+                  fontSize: 11,
+                  letterSpacing: '0.08em',
+                  color: SHELL.INK,
+                  background: 'none',
+                  border: `1px solid ${SHELL.CARD_LINE}`,
+                  borderRadius: 6,
+                  padding: '8px 16px',
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAdd}
+                disabled={!isValid}
+                style={{
+                  fontFamily: SHELL.MONO,
+                  fontSize: 11,
+                  letterSpacing: '0.08em',
+                  color: SHELL.PAPER,
+                  background: isValid ? SHELL.INK : SHELL.INK_MUTED,
+                  border: 'none',
+                  borderRadius: 6,
+                  padding: '8px 16px',
+                  cursor: isValid ? 'pointer' : 'not-allowed',
+                  transition: 'background 0.15s',
+                }}
+              >
+                Add to Tower
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main page
 // ---------------------------------------------------------------------------
 
 export function TowerIndexPage() {
+  const [showNewPressure, setShowNewPressure] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
   const activeFilter = searchParams?.get('filter') ?? 'all';
@@ -435,51 +714,68 @@ export function TowerIndexPage() {
         <div
           style={{
             display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'baseline',
-            gap: 12,
+            alignItems: 'center',
+            justifyContent: 'space-between',
             marginBottom: 20,
           }}
         >
-          <span
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'baseline', gap: 12 }}>
+            <span
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 10,
+                letterSpacing: '0.18em',
+                textTransform: 'uppercase',
+                color: SHELL.INK_MUTED,
+              }}
+            >
+              Active pressures
+            </span>
+            <span
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 11,
+                fontWeight: 600,
+                color: SHELL.PAPER,
+                background: SHELL.RUST_TEXT,
+                padding: '2px 9px',
+                borderRadius: 10,
+                lineHeight: 1.4,
+              }}
+            >
+              {TOWER_INDEX_VIEW.highCount} high
+            </span>
+            <span
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 11,
+                fontWeight: 600,
+                color: SHELL.INK,
+                background: SHELL.PEACH_BG,
+                padding: '2px 9px',
+                borderRadius: 10,
+                lineHeight: 1.4,
+              }}
+            >
+              {TOWER_INDEX_VIEW.activeCount} total
+            </span>
+          </div>
+          <button
+            onClick={() => setShowNewPressure(true)}
             style={{
               fontFamily: SHELL.MONO,
               fontSize: 10,
-              letterSpacing: '0.18em',
-              textTransform: 'uppercase',
-              color: SHELL.INK_MUTED,
+              letterSpacing: '0.08em',
+              color: SHELL.INK_SOFT,
+              background: 'none',
+              border: `1px solid ${SHELL.CARD_LINE}`,
+              borderRadius: 5,
+              padding: '4px 10px',
+              cursor: 'pointer',
             }}
           >
-            Active pressures
-          </span>
-          <span
-            style={{
-              fontFamily: SHELL.MONO,
-              fontSize: 11,
-              fontWeight: 600,
-              color: SHELL.PAPER,
-              background: SHELL.RUST_TEXT,
-              padding: '2px 9px',
-              borderRadius: 10,
-              lineHeight: 1.4,
-            }}
-          >
-            {TOWER_INDEX_VIEW.highCount} high
-          </span>
-          <span
-            style={{
-              fontFamily: SHELL.MONO,
-              fontSize: 11,
-              fontWeight: 600,
-              color: SHELL.INK,
-              background: SHELL.PEACH_BG,
-              padding: '2px 9px',
-              borderRadius: 10,
-              lineHeight: 1.4,
-            }}
-          >
-            {TOWER_INDEX_VIEW.activeCount} total
-          </span>
+            + Set new pressure
+          </button>
         </div>
 
         {/* Pressure cards grid */}
@@ -530,6 +826,10 @@ export function TowerIndexPage() {
           </a>
         </div>
       </div>
+
+      {showNewPressure && (
+        <NewPressureModal onClose={() => setShowNewPressure(false)} />
+      )}
     </AppShell>
   );
 }
