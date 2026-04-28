@@ -42,6 +42,7 @@ import {
   type SentinelPatternCard,
 } from '@/lib/intelligence/sentinel-pattern-view';
 import { IntelligenceWorkflowCanvas } from '@/components/intelligence/IntelligenceWorkflowCanvas';
+import { KnowledgeFabricHealthPanel } from '@/components/intelligence/KnowledgeFabricHealthPanel';
 import type { TenantSeedPlan } from '@/lib/programs/enhancement-seed-planner';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -269,6 +270,8 @@ function SummaryPanel({ tenant }: { tenant: TenantSeedPlan }) {
           )}
         </section>
       )}
+
+      <KnowledgeFabricHealthPanel />
 
       {/* Recommended action */}
       <section
@@ -524,6 +527,8 @@ function EvidencePanel({ tenantSlug }: { tenantSlug: string }) {
           </ul>
         </section>
       )}
+
+      <KnowledgeFabricHealthPanel />
 
       {/* Recommended action */}
       <section
