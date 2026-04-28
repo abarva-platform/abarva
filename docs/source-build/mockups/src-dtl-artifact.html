@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SRC-DTL-ARTIFACT</title>
+    <style>
+      :root {
+        --paper: #faf7f1;
+        --paper-soft: #f3efe6;
+        --card: #fffdf8;
+        --ink: #0c1a3a;
+        --ink-soft: #45556f;
+        --line: #d8d2c4;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--paper); color: var(--ink); font-family: "DM Sans", Arial, sans-serif; }
+      .app { display: grid; grid-template-columns: 76px 480px 1fr; min-height: 100vh; }
+      .rail { background: #0c1a3a; }
+      .agent { background: #102247; color: #faf7f1; padding: 28px; display: grid; gap: 18px; align-content: start; }
+      .main { display: grid; grid-template-rows: 48px 44px 1fr; }
+      .topbar, .strip { display: flex; align-items: center; padding: 0 24px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.55); }
+      .strip { font-size: 12px; color: var(--ink-soft); }
+      .content { padding: 28px 32px; display: grid; gap: 18px; }
+      .panel { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
+      .hero { display: grid; grid-template-columns: 1.15fr .85fr; gap: 18px; }
+      .eyebrow { font: 600 10px/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .12em; color: var(--ink-soft); }
+      h1, h2 { margin: 0; font-family: Georgia, serif; }
+      .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+      .chip { border: 1px solid var(--line); border-radius: 999px; padding: 5px 9px; font: 600 10px/1.4 ui-monospace, monospace; text-transform: uppercase; }
+      .grid { display: grid; grid-template-columns: 1.35fr .95fr; gap: 18px; }
+      .stack { display: grid; gap: 12px; }
+      .inset { border: 1px solid var(--line); border-radius: 12px; background: var(--paper-soft); padding: 14px 16px; }
+      ul { margin: 10px 0 0 18px; padding: 0; }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="rail"></aside>
+      <aside class="agent">
+        <div class="eyebrow">Sentinel · Artifact</div>
+        <h2>Evidence is visible and bounded.</h2>
+        <p>This artifact is tiered as rich, carries deterministic provenance, and references four source inputs. Governance notes still flag one missing client confirmation.</p>
+      </aside>
+      <main class="main">
+        <div class="topbar">AbarVa · Apex Retail · Source · Decision memo</div>
+        <div class="strip">Plan · RFI · Shortlist · RFP · Q&amp;A · Initial-Bid · BAFO · Selection · Award · Onboard</div>
+        <div class="content">
+          <section class="panel hero">
+            <div>
+              <div class="eyebrow">Artifact detail</div>
+              <h1>Vendor C BAFO decision memo</h1>
+              <p>Deterministic artifact shell for the AMS Vendor Consolidation storyline. Artifact detail now exposes provenance directly instead of keeping it entirely implicit.</p>
+            </div>
+            <div class="chips">
+              <span class="chip">status: needs review</span>
+              <span class="chip">tier: rich</span>
+              <span class="chip">evidence entries: 4</span>
+              <span class="chip">source refs: 4</span>
+            </div>
+          </section>
+          <div class="grid">
+            <section class="panel stack">
+              <div class="inset">
+                <div class="eyebrow">Visible provenance</div>
+                <ul>
+                  <li>Created from: deterministic seed</li>
+                  <li>Store key: source-artifact:ams-vendor-2026:decision-memo</li>
+                  <li>Freshness: 2026-04-27T18:00:00Z</li>
+                  <li>Evidence ledger entry: artifact-decision-memo</li>
+                </ul>
+              </div>
+              <div class="inset">
+                <div class="eyebrow">Sections</div>
+                <h2>Executive summary</h2>
+                <p>Vendor C leads on managed CDP architecture, onboarding certainty, and response completeness. Final legal markup remains the main blocker before award confirmation.</p>
+              </div>
+              <div class="inset">
+                <h2>Commercial delta</h2>
+                <p>BAFO pricing remains within benchmark band after transition support is normalized. Vendor B still trails on staffing assurance.</p>
+              </div>
+            </section>
+            <section class="panel stack">
+              <div class="inset">
+                <div class="eyebrow">Governance notes</div>
+                <ul>
+                  <li>Procurement wants final markup attached before approval</li>
+                  <li>Client confirmation on onboarding assumption still open</li>
+                </ul>
+              </div>
+              <div class="inset">
+                <div class="eyebrow">Linked patterns</div>
+                <div class="chips">
+                  <span class="chip">T3-H03</span>
+                  <span class="chip">Vendor architecture</span>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

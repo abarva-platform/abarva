@@ -22,6 +22,9 @@ export default async function SourceEventScorecardPage({
   const evaluationToBafoGate =
     stageReadiness.gates.find((gate) => gate.transitionId === 'gate-evaluation-bafo') ??
     stageReadiness.gates[0];
+  const approvedCriteriaCount =
+    event.scorecard?.criteria?.filter((c) => c.status === 'approved' || c.status === 'ready').length ?? 0;
+  const pendingCriteriaCount = Math.max((event.scorecard?.criteria?.length ?? 0) - approvedCriteriaCount, 0);
 
   return (
     <AppShell
@@ -39,12 +42,12 @@ export default async function SourceEventScorecardPage({
       }
     >
       <SentinelAgentColumn
-        quote={`Scorecard ${event.scorecard?.approvalState ?? 'default_generated'}. ${event.scorecard?.criteria?.filter((c) => c.status === 'approved' || c.status === 'ready').length ?? 0} criteria scored. Gate impact: ${evaluationToBafoGate.transitionLabel}.`}
+        quote={`Scorecard ${event.scorecard?.approvalState ?? 'default_generated'}. ${approvedCriteriaCount} criteria approved or ready, ${pendingCriteriaCount} still below threshold. ${evaluationToBafoGate.transitionLabel} remains ${evaluationToBafoGate.state}.`}
         agentContext={`Sentinel · ${event.name} · Scorecard`}
         actions={[
-          { letter: 'A', text: 'Review blockers', detail: 'Criteria pending approval or missing rationale' },
-          { letter: 'B', text: 'Show evidence gaps', detail: 'Criteria where evidence confidence is below threshold' },
-          { letter: 'C', text: 'Explain gate impact', detail: `How scorecard state affects ${evaluationToBafoGate.transitionLabel}` },
+          { letter: 'A', text: 'Review approval blockers', detail: 'Criteria pending approval or still carrying blocked status' },
+          { letter: 'B', text: 'Inspect rationale gaps', detail: 'Criteria where deterministic rationale is still incomplete' },
+          { letter: 'C', text: 'Explain BAFO gate impact', detail: `How scorecard state affects ${evaluationToBafoGate.transitionLabel}` },
         ]}
       />
       <SourceWorkingPane>

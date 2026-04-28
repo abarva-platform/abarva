@@ -80,6 +80,16 @@ const CANONICAL_DIMENSIONS: Array<{
   },
 ];
 
+const SCORECARD_LIFECYCLE: ScorecardGovernance['approvalState'][] = [
+  'default_generated',
+  'client_edited',
+  'rationale_added',
+  'reviewed',
+  'approved',
+  'locked',
+  'used_for_vendor_evaluation',
+];
+
 export function ScorecardGovernancePanel({
   scorecard,
   eventName,
@@ -93,6 +103,7 @@ export function ScorecardGovernancePanel({
   const missingRationaleRows = rows.filter((row) => row.rationaleMissing);
   const shellStatus = deriveShellStatus(scorecard.approvalState, rows);
   const readinessPercent = deriveReadinessPercent(rows, scorecard.approvalState);
+  const lifecycleIndex = SCORECARD_LIFECYCLE.indexOf(scorecard.approvalState);
   const stewardEditorial = buildStewardEditorial(
     eventName,
     currentStageLabel,
@@ -109,7 +120,7 @@ export function ScorecardGovernancePanel({
             <div style={{ ...sourceSectionLabel, color: SHELL.MINT_TEXT }}>
               Steward governance lead
             </div>
-            <h2 style={TITLE}>Scorecard governance shell</h2>
+            <h2 style={TITLE}>Scorecard governance</h2>
             <p style={INTRO}>{stewardEditorial}</p>
           </div>
           <div style={STATUS_CARD}>
@@ -125,6 +136,37 @@ export function ScorecardGovernancePanel({
             </div>
             <div style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK_SOFT }}>
               Readiness meter: {readinessPercent}% deterministic completion
+            </div>
+            <div style={LIFECYCLE_STRIP} aria-label="Scorecard lifecycle strip">
+              {SCORECARD_LIFECYCLE.map((state, index) => {
+                const isCurrent = index === lifecycleIndex;
+                const isComplete = index < lifecycleIndex;
+                return (
+                  <div
+                    key={state}
+                    style={{
+                      ...LIFECYCLE_PILL,
+                      borderColor: isCurrent
+                        ? SHELL.INK
+                        : isComplete
+                          ? SHELL.MINT_TEXT
+                          : SHELL.CARD_LINE,
+                      background: isCurrent
+                        ? SHELL.INK
+                        : isComplete
+                          ? SHELL.MINT_BG
+                          : SHELL.CARD_WHITE,
+                      color: isCurrent
+                        ? SHELL.PAPER
+                        : isComplete
+                          ? SHELL.MINT_TEXT
+                          : SHELL.INK_SOFT,
+                    }}
+                  >
+                    {formatStatus(state)}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -551,6 +593,22 @@ const STATUS_CARD: CSSProperties = {
   gap: 10,
   minWidth: 260,
   maxWidth: 320,
+};
+
+const LIFECYCLE_STRIP: CSSProperties = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: 6,
+};
+
+const LIFECYCLE_PILL: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  border: '1px solid ' + SHELL.CARD_LINE,
+  borderRadius: 999,
+  padding: '4px 8px',
 };
 
 const METER_TRACK: CSSProperties = {

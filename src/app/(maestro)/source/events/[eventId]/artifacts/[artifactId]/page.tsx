@@ -37,7 +37,7 @@ export default async function SourceArtifactPage({
       }
     >
       <SentinelAgentColumn
-        quote={`Artifact tier: ${artifact.tier ?? 'unclassified'}. Status: ${artifact.status}. ${artifact.sourceCount} source references.`}
+        quote={`Artifact ${artifact.kind.replaceAll('_', ' ')} at tier ${artifact.tier ?? 'unclassified'}. Status ${artifact.status}. ${artifact.sourceCount} source references with deterministic provenance visible.`}
         agentContext={`Sentinel · ${artifact.title} · ${event.name}`}
         actions={[
           { letter: 'A', text: 'Show evidence', detail: 'Review evidence references for this artifact' },
@@ -46,7 +46,15 @@ export default async function SourceArtifactPage({
         ]}
       />
       <SourceWorkingPane>
-        <SourceArtifactDrawer artifact={artifact} />
+        <SourceArtifactDrawer
+          artifact={artifact}
+          provenance={{
+            createdFrom: 'deterministic_seed',
+            storeKey: `source-artifact:${eventId}:${artifactId}`,
+            freshness: artifact.updatedAt,
+            evidenceLedgerEntryId: artifact.id,
+          }}
+        />
       </SourceWorkingPane>
     </AppShell>
   );
