@@ -45,7 +45,7 @@ export function AppRail(_props: AppRailProps) {
       }}
     >
       {/* Brand mark */}
-      <Link href="/" style={{ textDecoration: 'none', flexShrink: 0, marginBottom: 18 }}>
+      <Link href="/home" style={{ textDecoration: 'none', flexShrink: 0, marginBottom: 18 }}>
         <div
           style={{
             width: 36,
