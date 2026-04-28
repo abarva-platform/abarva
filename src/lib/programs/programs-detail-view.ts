@@ -83,6 +83,58 @@ function buildAgentRail(
   return [nexus, sentinel, atlas, steward];
 }
 
+// ─── APX-SAP-2026 specific workbench (P1 Discovery · Active) ─────────────────
+
+const APX_SAP_2026_P1_WORKBENCH: ProgramWorkbenchContent = {
+  title: 'P1 Discovery · Active',
+  prose:
+    'Discovery phase is tracking well — 6 interviews scheduled across store operations and HR. Data access requests for the Point-of-Sale and scheduling systems are pending IT approval. The value hypothesis is strong but needs validation from field supervisors before Synthesis entry.',
+  actionsLabel: 'Nexus recommends',
+  actions: [
+    {
+      letter: 'A',
+      text: 'Complete store ops interviews',
+      detail: 'Weeks of Mar 18–29 · 4 interviews confirmed',
+    },
+    {
+      letter: 'B',
+      text: 'Resolve IT data access requests',
+      detail: 'POS + scheduling systems · IT ticket ITS-2291',
+    },
+    {
+      letter: 'C',
+      text: 'Draft value hypothesis',
+      detail: 'Needs field supervisor input before Synthesis gate',
+    },
+  ],
+};
+
+// ─── APX-CC-2026 specific workbench (P4 Build · Active — 68% Complete) ───────
+
+const APX_CC_2026_P4_WORKBENCH: ProgramWorkbenchContent = {
+  title: 'P4 Build · Active — 68% Complete',
+  prose:
+    'Build is on track. The NLP intent classifier is deployed to staging with 94% accuracy. CRM integration is passing all smoke tests. The remaining 32% covers IVR routing rules and the operator dashboard. Activate gate target is May 15.',
+  actionsLabel: 'Nexus recommends',
+  actions: [
+    {
+      letter: 'A',
+      text: 'Complete IVR routing rules',
+      detail: 'Remaining build artifact — 2 sprints remaining',
+    },
+    {
+      letter: 'B',
+      text: 'Ship operator dashboard MVP',
+      detail: 'Required for Activate gate — UX review Apr 30',
+    },
+    {
+      letter: 'C',
+      text: 'Schedule Activate gate review',
+      detail: 'Sponsor + IT sign-off · target May 15',
+    },
+  ],
+};
+
 // ─── APX-CDP-2026 specific workbench (demo flagship) ─────────────────────────
 // P2 Synthesis · Design gate pending · Workshop 5 incomplete · 36% evidence
 // Linked source: AMS Vendor Consolidation 2026 · Stage 7 BAFO
@@ -121,6 +173,13 @@ function buildWorkbenchContent(
   viewingPhaseState: ProgramPhaseSlot['state'],
   programId?: string,
 ): ProgramWorkbenchContent {
+  // Demo program overrides — specific phase workbench content
+  if (programId === 'apx-sap-2026' && viewingPhase === 1 && viewingPhaseState === 'current') {
+    return APX_SAP_2026_P1_WORKBENCH;
+  }
+  if (programId === 'apx-cc-2026' && viewingPhase === 4 && viewingPhaseState === 'current') {
+    return APX_CC_2026_P4_WORKBENCH;
+  }
   // Demo flagship override — P2 Synthesis active view
   if (programId === 'apx-cdp-2026' && viewingPhase === 2 && viewingPhaseState === 'current') {
     return APX_CDP_2026_P2_WORKBENCH;
@@ -185,6 +244,31 @@ function buildPhasePanel(
   currentPhase: ProgramPhaseId,
   programId?: string,
 ): ProgramPhasePanel {
+  // APX-SAP-2026 P1 gate criteria
+  if (programId === 'apx-sap-2026' && viewingPhase === 1 && viewingPhaseState === 'current') {
+    return {
+      gateCriteria: [
+        { criterion: 'Discovery interviews completed (4 of 6)', met: false },
+        { criterion: 'Value hypothesis drafted', met: false },
+        { criterion: 'Data access confirmed for all source systems', met: false },
+        { criterion: 'Stakeholder alignment documented', met: true },
+        { criterion: 'Discovery brief reviewed by sponsor', met: false },
+      ],
+    };
+  }
+  // APX-CC-2026 P4 gate criteria
+  if (programId === 'apx-cc-2026' && viewingPhase === 4 && viewingPhaseState === 'current') {
+    return {
+      gateCriteria: [
+        { criterion: 'NLP intent classifier deployed to staging', met: true },
+        { criterion: 'CRM integration smoke tests passing', met: true },
+        { criterion: 'IVR routing rules complete', met: false },
+        { criterion: 'Operator dashboard MVP complete', met: false },
+        { criterion: 'Load test passing at 2× peak traffic', met: false },
+        { criterion: 'Sponsor sign-off on Activate criteria', met: false },
+      ],
+    };
+  }
   // APX-CDP-2026 P2 gate — real blockers surfaced from demo anchor
   if (programId === 'apx-cdp-2026' && viewingPhase === 2 && viewingPhaseState === 'current') {
     return {
