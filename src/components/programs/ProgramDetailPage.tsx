@@ -16,6 +16,7 @@ import type { ProgramDetailView, ProgramPhaseId, EvidenceItem } from '@/lib/prog
 import { PHASE_LABEL_MAP } from '@/lib/programs/programs-fixture';
 import type { StageId } from '@/lib/shell/atlas-page-state';
 import { LinkedProgramChip } from '@/components/shell/LinkedProgramChip';
+import { SubNavStrip } from '@/components/shell/SubNavStrip';
 import { useToast } from '@/components/shell/Toast';
 import { PatternChip } from '@/components/programs/PatternChip';
 import { buildProgramStorylineContext, matchStorylinePatterns } from '@/lib/intelligence/storyline-matcher';
@@ -2529,6 +2530,10 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
   // Mode B — AtlasDrawer open state (Shell Layout Spec v2 §5)
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  // PROG20 — Section tab navigation
+  type SectionKey = 'overview' | 'gate' | 'evidence' | 'deliverables' | 'workshop' | 'actions' | 'decisions';
+  const [activeSection, setActiveSection] = useState<SectionKey>('overview');
+
   const phaseLabel = PHASE_LABEL_MAP[view.viewingPhase] ?? `Phase ${view.viewingPhase}`;
   const currentScore =
     view.programId === 'apx-cdp-2026' && view.viewingPhase === 2
@@ -2558,7 +2563,9 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
 
   const handleActionClick = (letter: 'A' | 'B' | 'C') => {
     if (letter === 'A') {
-      gateSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Switch to Gate tab so the gate criteria section is visible
+      setActiveSection('gate');
+      setTimeout(() => gateSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
       return;
     }
     if (letter === 'B') {
@@ -2703,7 +2710,7 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
               display: 'flex',
               flexWrap: 'wrap',
               gap: 8,
-              margin: '-8px 0 20px',
+              margin: '-8px 0 16px',
             }}
           >
             {storylineMatches.map((pattern) => (
@@ -2712,136 +2719,434 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
           </div>
         )}
 
-        {/* Gate ribbon — shown when gate is pending */}
-        <div data-testid="program-gate-ribbon">
-        {view.gateStatus === 'pending' && view.phasePanel.gateCriteria && (
-          <>
-            <GateRibbon
-              fromPhase={view.viewingPhase}
-              toPhase={view.viewingPhase + 1}
-              totalCriteria={view.phasePanel.gateCriteria.length}
-              metCriteria={view.phasePanel.gateCriteria.filter((c) => c.met).length}
-              onRequestApproval={() => setShowGateModal(true)}
-            />
-            {/* PRG-STA-PHASE-TRANSITION preview trigger */}
-            <div style={{ marginBottom: 8, textAlign: 'right' }}>
-              <button
-                onClick={() => setShowPhaseTransition(true)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontFamily: SHELL.MONO,
-                  fontSize: 9,
-                  color: SHELL.INK_MUTED,
-                  letterSpacing: '0.08em',
-                }}
-              >
-                Preview phase transition →
-              </button>
-            </div>
-          </>
-        )}
+        {/* PROG20 — Section tab strip */}
+        <div
+          data-testid="program-section-tabs"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            borderBottom: `1px solid ${SHELL.CARD_LINE}`,
+            marginBottom: 20,
+            gap: 0,
+          }}
+        >
+          <SubNavStrip
+            items={[
+              { key: 'overview', label: 'Overview', active: activeSection === 'overview', onClick: () => setActiveSection('overview') },
+              { key: 'gate', label: 'Gate', count: view.phasePanel.gateCriteria?.length, active: activeSection === 'gate', onClick: () => setActiveSection('gate') },
+              { key: 'evidence', label: 'Evidence', count: view.phasePanel.evidenceItems?.length, active: activeSection === 'evidence', onClick: () => setActiveSection('evidence') },
+              { key: 'deliverables', label: 'Deliverables', count: view.phasePanel.deliverables?.length, active: activeSection === 'deliverables', onClick: () => setActiveSection('deliverables') },
+              { key: 'workshop', label: 'Workshop', active: activeSection === 'workshop', onClick: () => setActiveSection('workshop') },
+              { key: 'actions', label: 'Actions', count: view.workbench.actions.length, active: activeSection === 'actions', onClick: () => setActiveSection('actions') },
+              { key: 'decisions', label: 'Decisions', active: activeSection === 'decisions', onClick: () => setActiveSection('decisions') },
+            ]}
+          />
         </div>
 
-        {/* Gate criteria */}
-        {view.phasePanel.gateCriteria && view.phasePanel.gateCriteria.length > 0 && (
-          <div ref={gateSectionRef} style={{ marginBottom: 20 }}>
-            <GateCriteriaList criteria={view.phasePanel.gateCriteria} />
+        {/* ── Overview section ──────────────────────────────────────── */}
+        {activeSection === 'overview' && (
+          <div data-testid="program-section-overview">
+            {view.phasePanel.summary && (
+              <div
+                style={{
+                  marginBottom: 16,
+                  padding: '10px 14px',
+                  background: SHELL.PAPER_DEEP,
+                  borderRadius: 7,
+                  fontFamily: SHELL.SANS,
+                  fontSize: 13,
+                  color: SHELL.INK,
+                  lineHeight: 1.7,
+                }}
+              >
+                {view.phasePanel.summary}
+              </div>
+            )}
+            {view.phasePanel.blockerNote && (
+              <div
+                style={{
+                  marginBottom: 16,
+                  padding: '10px 14px',
+                  background: SHELL.PEACH_BG,
+                  border: `1px solid ${SHELL.PEACH_LINE}`,
+                  borderRadius: 7,
+                  fontFamily: SHELL.SANS,
+                  fontSize: 12,
+                  color: SHELL.PEACH_TEXT,
+                  lineHeight: 1.5,
+                }}
+              >
+                {view.phasePanel.blockerNote}
+              </div>
+            )}
+            {view.linkedSourceEvent && (
+              <div data-testid="program-linked-source-chip" style={{ marginBottom: 20 }}>
+                <LinkedProgramChip
+                  direction="program-to-source"
+                  linkedId="SRC-AMS-2026"
+                  linkedName="AMS Vendor Consolidation 2026"
+                  linkedStage="BAFO · Stage 7"
+                  href="/source/events/apex-retail-ams-outsourcing-2026"
+                />
+              </div>
+            )}
+            {!view.phasePanel.summary && !view.phasePanel.blockerNote && !view.linkedSourceEvent && (
+              <div
+                style={{
+                  padding: '20px 0',
+                  fontFamily: SHELL.SANS,
+                  fontSize: 13,
+                  color: SHELL.INK_MUTED,
+                }}
+              >
+                No phase summary available for P{view.viewingPhase}.
+              </div>
+            )}
           </div>
         )}
 
-        {/* Evidence */}
-        {view.phasePanel.evidenceItems && view.phasePanel.evidenceItems.length > 0 && (
-          <div style={{ marginBottom: 20 }}>
-            <EvidenceSection
-              items={view.phasePanel.evidenceItems}
-              onView={(item) => setEvidenceDrawerItem(item)}
-            />
+        {/* ── Gate section ──────────────────────────────────────────── */}
+        {activeSection === 'gate' && (
+          <div data-testid="program-section-gate">
+            <div data-testid="program-gate-ribbon">
+            {view.gateStatus === 'pending' && view.phasePanel.gateCriteria && (
+              <>
+                <GateRibbon
+                  fromPhase={view.viewingPhase}
+                  toPhase={view.viewingPhase + 1}
+                  totalCriteria={view.phasePanel.gateCriteria.length}
+                  metCriteria={view.phasePanel.gateCriteria.filter((c) => c.met).length}
+                  onRequestApproval={() => setShowGateModal(true)}
+                />
+                {/* PRG-STA-PHASE-TRANSITION preview trigger */}
+                <div style={{ marginBottom: 8, textAlign: 'right' }}>
+                  <button
+                    onClick={() => setShowPhaseTransition(true)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontFamily: SHELL.MONO,
+                      fontSize: 9,
+                      color: SHELL.INK_MUTED,
+                      letterSpacing: '0.08em',
+                    }}
+                  >
+                    Preview phase transition →
+                  </button>
+                </div>
+              </>
+            )}
+            </div>
+            {view.phasePanel.gateCriteria && view.phasePanel.gateCriteria.length > 0 && (
+              <div ref={gateSectionRef} style={{ marginBottom: 20 }}>
+                <GateCriteriaList criteria={view.phasePanel.gateCriteria} />
+              </div>
+            )}
+            {!view.phasePanel.gateCriteria && (
+              <div style={{ padding: '20px 0', fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK_MUTED }}>
+                Gate criteria not defined for P{view.viewingPhase}.
+              </div>
+            )}
           </div>
         )}
 
-        {/* Override coverage score trigger */}
-        {view.phasePanel.evidenceItems && view.phasePanel.evidenceItems.length > 0 && (
-          <div style={{ marginBottom: 12 }}>
-            <button
-              onClick={() => setShowScorecardOverride(true)}
+        {/* ── Evidence section ──────────────────────────────────────── */}
+        {activeSection === 'evidence' && (
+          <div data-testid="program-section-evidence">
+            {view.phasePanel.evidenceItems && view.phasePanel.evidenceItems.length > 0 ? (
+              <>
+                <div style={{ marginBottom: 20 }}>
+                  <EvidenceSection
+                    items={view.phasePanel.evidenceItems}
+                    onView={(item) => setEvidenceDrawerItem(item)}
+                  />
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                  <button
+                    onClick={() => setShowScorecardOverride(true)}
+                    style={{
+                      fontFamily: SHELL.MONO,
+                      fontSize: 9,
+                      letterSpacing: '0.1em',
+                      color: SHELL.INK_MUTED,
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                      padding: 0,
+                    }}
+                  >
+                    Ste · Override coverage score →
+                  </button>
+                </div>
+                <div style={{ marginBottom: 20 }}>
+                  <button
+                    onClick={() => setShowHandoff(true)}
+                    style={{
+                      fontFamily: SHELL.MONO,
+                      fontSize: 10,
+                      color: SHELL.INK_SOFT,
+                      background: 'none',
+                      border: `1px solid ${SHELL.CARD_LINE}`,
+                      borderRadius: 5,
+                      padding: '5px 12px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Sn · Request Sentinel evidence review →
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div style={{ padding: '20px 0', fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK_MUTED }}>
+                No evidence citations logged for P{view.viewingPhase}.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Deliverables section ──────────────────────────────────── */}
+        {activeSection === 'deliverables' && (
+          <div data-testid="program-section-deliverables">
+            {view.phasePanel.deliverables && view.phasePanel.deliverables.length > 0 ? (
+              <div style={{ marginBottom: 20 }}>
+                <DeliverablesList deliverables={view.phasePanel.deliverables} />
+              </div>
+            ) : (
+              <div style={{ padding: '20px 0', fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK_MUTED }}>
+                No deliverables logged for P{view.viewingPhase}.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Workshop section ──────────────────────────────────────── */}
+        {activeSection === 'workshop' && (
+          <div data-testid="program-section-workshop">
+            <div
               style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 9,
-                letterSpacing: '0.1em',
-                color: SHELL.INK_MUTED,
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                textDecoration: 'underline',
-                padding: 0,
+                marginBottom: 16,
+                padding: '12px 16px',
+                background: SHELL.MINT_BG,
+                borderRadius: 8,
+                border: `1px solid ${SHELL.MINT_LINE}`,
               }}
             >
-              Ste · Override coverage score →
-            </button>
-          </div>
-        )}
-
-        {/* Request Sentinel review trigger */}
-        {view.phasePanel.evidenceItems && view.phasePanel.evidenceItems.length > 0 && (
-          <div style={{ marginBottom: 20 }}>
-            <button
-              onClick={() => setShowHandoff(true)}
+              <div
+                style={{
+                  fontFamily: SHELL.MONO,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: SHELL.MINT_TEXT,
+                  marginBottom: 8,
+                }}
+              >
+                Nexus · {view.workbench.title}
+              </div>
+              <p style={{ fontFamily: SHELL.SANS, fontSize: 13, lineHeight: 1.7, color: SHELL.INK, margin: 0 }}>
+                {view.workbench.prose}
+              </p>
+            </div>
+            <div
               style={{
                 fontFamily: SHELL.MONO,
                 fontSize: 10,
-                color: SHELL.INK_SOFT,
-                background: 'none',
-                border: `1px solid ${SHELL.CARD_LINE}`,
-                borderRadius: 5,
-                padding: '5px 12px',
-                cursor: 'pointer',
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: SHELL.INK_MUTED,
+                marginBottom: 10,
               }}
             >
-              Sn · Request Sentinel evidence review →
-            </button>
+              {view.workbench.actionsLabel}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {view.workbench.actions.map((a) => (
+                <div
+                  key={a.letter}
+                  style={{
+                    padding: '10px 14px',
+                    background: SHELL.PAPER_DEEP,
+                    borderRadius: 7,
+                    display: 'flex',
+                    gap: 12,
+                    alignItems: 'flex-start',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: SHELL.MONO,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: SHELL.INK,
+                      minWidth: 16,
+                    }}
+                  >
+                    {a.letter}
+                  </span>
+                  <div>
+                    <div style={{ fontFamily: SHELL.SANS, fontSize: 13, fontWeight: 600, color: SHELL.INK, marginBottom: 2 }}>
+                      {a.text}
+                    </div>
+                    <div style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK_SOFT, lineHeight: 1.5 }}>
+                      {a.detail}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Deliverables */}
-        {view.phasePanel.deliverables && view.phasePanel.deliverables.length > 0 && (
-          <div style={{ marginBottom: 20 }}>
-            <DeliverablesList deliverables={view.phasePanel.deliverables} />
+        {/* ── Actions section ───────────────────────────────────────── */}
+        {activeSection === 'actions' && (
+          <div data-testid="program-section-actions">
+            <div
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: SHELL.INK_MUTED,
+                marginBottom: 12,
+              }}
+            >
+              Nexus · Next actions · P{view.viewingPhase} {phaseLabel}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {view.workbench.actions.map((a) => (
+                <button
+                  key={a.letter}
+                  onClick={() => handleActionClick(a.letter as 'A' | 'B' | 'C')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '10px 14px',
+                    background: SHELL.PAPER,
+                    border: `1px solid ${SHELL.CARD_LINE}`,
+                    borderRadius: 7,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    width: '100%',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: SHELL.MONO,
+                      fontSize: 10,
+                      fontWeight: 700,
+                      color: SHELL.INK,
+                      background: SHELL.PAPER_DEEP,
+                      borderRadius: 4,
+                      padding: '2px 7px',
+                      minWidth: 22,
+                      textAlign: 'center',
+                    }}
+                  >
+                    {a.letter}
+                  </span>
+                  <span style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK }}>
+                    {a.text}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Blocker note */}
-        {view.phasePanel.blockerNote && (
-          <div
-            style={{
-              marginBottom: 20,
-              padding: '10px 14px',
-              background: SHELL.PEACH_BG,
-              border: `1px solid ${SHELL.PEACH_LINE}`,
-              borderRadius: 7,
-              fontFamily: SHELL.SANS,
-              fontSize: 12,
-              color: SHELL.PEACH_TEXT,
-              lineHeight: 1.5,
-            }}
-          >
-            {view.phasePanel.blockerNote}
+        {/* ── Decisions section ─────────────────────────────────────── */}
+        {activeSection === 'decisions' && (
+          <div data-testid="program-section-decisions">
+            <div
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: SHELL.INK_MUTED,
+                marginBottom: 12,
+              }}
+            >
+              Decisions · P{view.viewingPhase} {phaseLabel}
+            </div>
+            {[
+              {
+                id: 'DEC-01',
+                label: 'Data architecture vendor',
+                status: view.linkedSourceEvent ? 'pending' : 'open',
+                note: view.linkedSourceEvent
+                  ? 'Pending AMS BAFO outcome (Stage 7) — Vendor C preferred'
+                  : 'No linked sourcing event',
+              },
+              {
+                id: 'DEC-02',
+                label: 'AI Cloud Spend rate card',
+                status: 'pending',
+                note: 'Rate card recovery option available · spend 33% over budget',
+              },
+              {
+                id: 'DEC-03',
+                label: 'Gate approval authority',
+                status: view.gateStatus === 'approved' ? 'closed' : 'open',
+                note: view.gateStatus === 'approved'
+                  ? 'Gate approved — next phase unlocked'
+                  : `Gate ${view.gateStatus} — Steward review required`,
+              },
+            ].map((dec) => (
+              <div
+                key={dec.id}
+                style={{
+                  marginBottom: 10,
+                  padding: '10px 14px',
+                  background: SHELL.PAPER_DEEP,
+                  borderRadius: 7,
+                  display: 'flex',
+                  gap: 12,
+                  alignItems: 'flex-start',
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: SHELL.MONO,
+                    fontSize: 9,
+                    fontWeight: 700,
+                    color: dec.status === 'closed' ? SHELL.MINT_TEXT : SHELL.PEACH_TEXT,
+                    background: dec.status === 'closed' ? SHELL.MINT_BG : SHELL.PEACH_BG,
+                    borderRadius: 4,
+                    padding: '2px 6px',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    minWidth: 48,
+                    textAlign: 'center',
+                  }}
+                >
+                  {dec.status}
+                </span>
+                <div>
+                  <div style={{ fontFamily: SHELL.SANS, fontSize: 13, fontWeight: 600, color: SHELL.INK, marginBottom: 2 }}>
+                    {dec.label}
+                  </div>
+                  <div style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK_SOFT, lineHeight: 1.5 }}>
+                    {dec.note}
+                  </div>
+                </div>
+              </div>
+            ))}
+            <div
+              style={{ marginTop: 8, fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.08em' }}
+              data-honest-disclaimer="programs-decisions"
+            >
+              Deterministic seed · decisions reflect fixture context only
+            </div>
           </div>
         )}
 
-        {/* Linked source event */}
-        {view.linkedSourceEvent && (
-          <div data-testid="program-linked-source-chip" style={{ marginBottom: 20 }}>
-            <LinkedProgramChip
-              direction="program-to-source"
-              linkedId="SRC-AMS-2026"
-              linkedName="AMS Vendor Consolidation 2026"
-              linkedStage="BAFO · Stage 7"
-              href="/source/events/apex-retail-ams-outsourcing-2026"
-            />
-          </div>
-        )}
         </div>
       </WorkingPaneContainer>
       </div>
