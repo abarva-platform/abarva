@@ -9665,6 +9665,13 @@
       "category": "Intelligence",
       "status": "code_complete",
       "notes": "New decisions tab added to Control Tower (6th tab, between Source Commercial and Executive Brief). buildExecutiveDecisionQueueView tower-domain lib provides 5 decisions across source/programs/cross_domain domains with urgency (immediate/this_week), status (open/blocked/pending_input), known/missing context, blockers, and Atlas recommendations. DecisionsPanel renders in TowerLensTabs.tsx. Critical blocker alert shown when immediate decision has unresolved blocker. Updated tower4-lens-tabs.test.ts (5→6 tabs). data-testid tower-decisions-panel, tower-decisions-executive-summary, tower-decisions-critical-blocker-alert, tower-decisions-disclaimer. 59 integration tests (tower2 + updated tower4). TOWER6/TOWER2-track05 from track-05."
+    },
+    {
+      "id": "TOWER7",
+      "name": "Value at Risk Portfolio Lens in Control Tower",
+      "category": "Intelligence",
+      "status": "code_complete",
+      "notes": "New value_at_risk tab added to Control Tower (7th tab, between Decisions and Executive Brief). buildValueAtRiskPortfolioView tower-domain lib provides 5 portfolio items covering AMS savings ($300K high/at_risk), AMS transition ($530K medium/at_risk), CDP gate (high/blocked), CDP programme (medium/on_track), BAFO leverage ($150K medium/at_risk). PortfolioValueSummary aggregates totalValueAtStakeUsd, atRiskValueUsd, blockedValueUsd, highRiskItemCount, blockedItemCount. ValueAtRiskPanel renders in TowerLensTabs.tsx — does NOT import from src/lib/source. tower-lens-tabs-view TowerTabKey updated to include value_at_risk (7 total). Updated tower4-lens-tabs.test.ts (6→7 tabs). data-testid tower-value-at-risk-panel, tower-value-at-risk-summary, tower-var-item-{itemId}, tower-value-at-risk-disclaimer. 45 integration tests (tower3 + updated tower4). TOWER7/TOWER3-track05 from track-05."
     }
   ]
 }
