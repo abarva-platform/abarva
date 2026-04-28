@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { ClerkProvider } from '@clerk/nextjs'
-import { Cormorant_Garamond } from 'next/font/google'
+import { Cormorant_Garamond, Fraunces, Inter } from 'next/font/google'
 import './globals.css'
 import PostHogProvider from '@/components/PostHogProvider'
 import PostHogPageView from './posthog-pageview'
@@ -14,6 +14,23 @@ const cormorantGaramond = Cormorant_Garamond({
   subsets: ['latin'],
   weight: ['400', '700'],
   variable: '--font-cormorant',
+  display: 'swap',
+})
+
+// Fraunces — shell serif for agent quotes, badges, and surface headings.
+const fraunces = Fraunces({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  style: ['normal', 'italic'],
+  variable: '--font-fraunces',
+  display: 'swap',
+})
+
+// Inter — shell sans-serif for body and UI labels.
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-inter',
   display: 'swap',
 })
 
@@ -36,7 +53,7 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider signInUrl="/sign-in" afterSignOutUrl="/" signInForceRedirectUrl="/auth-redirect" signUpForceRedirectUrl="/auth-redirect">
-      <html lang="en" className={cormorantGaramond.variable}>
+      <html lang="en" className={`${cormorantGaramond.variable} ${fraunces.variable} ${inter.variable}`}>
         <body>
           <PostHogProvider>
             <Suspense fallback={null}>
