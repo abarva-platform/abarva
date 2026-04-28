@@ -70,12 +70,21 @@ export { buildProgramSynthesisContext, programInstanceStateHash } from './progra
 // Tower (Atlas) portfolio synthesis context builder — REASON-17
 export { buildTowerSynthesisContext, towerStateHash } from './tower-synthesis-context-builder';
 
-// Cross-instance reasoner — REASON-18
+// Cross-instance reasoner — REASON-18 + REASON-9
 export {
   resolveLinkedProgram,
+  resolveLinkedSourceEvent,
+  resolveLinkedInstance,
   buildLinkedProgramChip,
+  computeCascadeImpacts,
+  computeReverseCascade,
+  scoreImpactSeverity,
+  traceMultiHop,
 } from './cross-instance-reasoner';
 export type {
   LinkedProgramChipData,
   LinkedProgramChipStatus,
+  CascadeGraph,
+  CascadeGraphNode,
+  CascadeGraphEdge,
 } from './cross-instance-reasoner';

@@ -270,6 +270,21 @@ export interface CascadeImpact {
    * - `informational`  — awareness only, no action required.
    */
   severity: 'blocking' | 'accelerating' | 'informational';
+  /**
+   * Risk-tier severity of the impact computed by the cross-instance reasoner
+   * (REASON-9). Independent of the directional `severity` field above.
+   *
+   * - `high`   — target has an open blocker AND the link timing implicates the
+   *              current/upcoming phase or stage.
+   * - `medium` — target has an open blocker OR a known dependency block.
+   * - `low`    — instances are simply linked; no active issue on the target.
+   */
+  impactSeverity?: 'low' | 'medium' | 'high';
+  /**
+   * Human-readable name of the target instance, when known. Populated by the
+   * cross-instance reasoner; legacy builders may omit it.
+   */
+  targetInstanceName?: string;
 }
 
 // ─── Synthesis context ─────────────────────────────────────────────────────────

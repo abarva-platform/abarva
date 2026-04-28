@@ -36,6 +36,12 @@ describe('buildSourceSynthesisContext', () => {
     expect(ctx.cascadeContext.length).toBeGreaterThan(0);
   });
 
+  it('cascadeContext references APX-CDP-2026 with impactSeverity high (REASON-9)', () => {
+    const cdpLink = ctx.cascadeContext.find(c => c.targetInstanceId === 'APX-CDP-2026');
+    expect(cdpLink).toBeDefined();
+    expect(cdpLink?.impactSeverity).toBe('high');
+  });
+
   it('instanceSnapshot.name equals the AMS instance name', () => {
     expect(ctx.instanceSnapshot['name']).toBe(AMS_VENDOR_CONSOLIDATION_2026_INSTANCE.name);
   });
