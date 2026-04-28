@@ -651,7 +651,7 @@ function LinkedProgramTab() {
         direction="source-to-program"
         linkedId="APX-CDP-2026"
         linkedName="Apex Retail CDP Activation"
-        linkedPhase="P2 Synthesis"
+        linkedPhase="P3 Design"
         href="/programs/apx-cdp-2026"
       />
 
@@ -665,9 +665,9 @@ function LinkedProgramTab() {
           maxWidth: 600,
         }}
       >
-        This sourcing event is directly linked to the CDP program&apos;s Design phase. Vendor architecture
-        decisions made during AMS Vendor Consolidation 2026 will constrain or enable the data platform
-        topology choices in APX-CDP-2026 P3 Design. Award must not be made before the Design gate confirms scope.
+        This sourcing event is directly linked to the CDP program&apos;s Design phase. The Design gate (P2 → P3)
+        has been cleared — Vendor C was selected as the managed CDP layer. AMS Vendor Consolidation award is
+        now unblocked; integration contract with Vendor C is in final review.
       </p>
 
       <div
