@@ -5,6 +5,8 @@ import { AppShell } from '@/components/shell/AppShell';
 import { RibbonSynthesis } from '@/components/shell/RibbonSynthesis';
 import type { StageId } from '@/lib/shell/atlas-page-state';
 import { AtlasDrawer } from '@/components/shell/AtlasDrawer';
+import { WorkingPaneContainer } from '@/components/shell/WorkingPaneContainer';
+import { sourceShapeResolver } from '@/lib/source/source-shape-resolver';
 import { StageTrackerStrip } from '@/components/shell/StageTrackerStrip';
 import { LinkedProgramChip } from '@/components/shell/LinkedProgramChip';
 import { SHELL } from '@/lib/shell/shell-tokens';
@@ -756,16 +758,11 @@ export function SourceEventDetailPage() {
           onToggle={() => setDrawerOpen((v) => !v)}
         />
 
-        {/* Work pane (scrollable) */}
-        <div
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            background: SHELL.PAPER,
-            display: 'flex',
-            flexDirection: 'column',
-            minWidth: 0,
-          }}
+        {/* Work pane — WorkingPaneContainer adds stage label strip + gate badge
+            for Source event stages (Shell Layout Spec v2 §7) */}
+        <WorkingPaneContainer
+          shapeResolver={sourceShapeResolver}
+          style={{ background: SHELL.PAPER }}
         >
         {/* Event header */}
         <div
@@ -852,7 +849,7 @@ export function SourceEventDetailPage() {
           {activeTab === 'signals' && <SignalsStreamTab />}
           {activeTab === 'program' && <LinkedProgramTab />}
         </div>
-      </div>
+      </WorkingPaneContainer>
       </div>
 
       {/* Mode B — AtlasDrawer (Shell Layout Spec v2 §5.1) */}
