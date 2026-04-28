@@ -10,7 +10,7 @@
 // callers and tests for instances with placeholder pattern ids continue to work.
 
 import type { ProgramInstance, ProgramDeliverable } from '@/lib/programs/program-instance';
-import { buildProgramEvidenceMap } from '@/lib/programs/program-instance';
+import { buildProgramEvidenceMapWithIngestions } from '@/lib/programs/program-instance';
 import { computeCascadeImpacts } from '@/lib/reasoning/cross-instance-reasoner';
 import { createGateEvaluator } from '@/lib/reasoning/gate-evaluator';
 import { createContradictionDetector } from '@/lib/reasoning/contradiction-detector';
@@ -107,7 +107,7 @@ export function buildProgramSynthesisContext(
   instance: ProgramInstance,
   pattern?: LifecyclePatternSeed,
 ): SynthesisContext {
-  const evidenceMap = buildProgramEvidenceMap(instance);
+  const evidenceMap = buildProgramEvidenceMapWithIngestions(instance);
 
   const currentPhaseDef = instance.phases.find((p) => p.phaseId === instance.currentPhase);
   const prevPhase = instance.phases.find((p) => p.phaseId === instance.currentPhase - 1);

@@ -41,6 +41,7 @@ import { buildWorkshopNotesActionPlanView } from '@/lib/programs/workshop-notes-
 import { WorkshopNotesActionPlanPanel } from '@/components/programs/WorkshopNotesActionPlanPanel';
 import { MissionList } from '@/components/_shared/MissionList';
 import { getMissionsForProgram } from '@/lib/agent/agent-mission-derived';
+import { AddProgramEvidenceForm } from '@/components/programs/AddProgramEvidenceForm';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -3248,6 +3249,19 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
     };
   })();
 
+  // PRG-EVIDENCE-INGEST — Resolve the underlying program-instance id +
+  // currentPhase so the demo evidence-ingestion form can POST against the
+  // shared in-memory store (mirrors the Source detail page).
+  const evidenceIngestionInfo = (() => {
+    const instance = APEX_RETAIL_PROGRAM_INSTANCES.find(
+      (i) =>
+        i.displayId === view.displayId ||
+        i.id.toLowerCase() === view.programId.toLowerCase(),
+    );
+    if (!instance) return null;
+    return { instanceId: instance.id, currentPhase: instance.currentPhase };
+  })();
+
   return (
     <AppShell
       surface="programs-detail"
@@ -3567,6 +3581,16 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
                   />
                 )}
               </>
+            )}
+            {/* PRG-EVIDENCE-INGEST — demo form to POST evidence and watch
+                gates flip on next render via buildProgramEvidenceMapWithIngestions. */}
+            {evidenceIngestionInfo && (
+              <div style={{ marginTop: 12 }}>
+                <AddProgramEvidenceForm
+                  instanceId={evidenceIngestionInfo.instanceId}
+                  currentPhase={evidenceIngestionInfo.currentPhase}
+                />
+              </div>
             )}
             {/* PROG21 — Gate approval interaction drawer trigger */}
             {gateApprovalDrawerView && (

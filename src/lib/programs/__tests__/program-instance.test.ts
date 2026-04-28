@@ -2,7 +2,14 @@
 //
 // REASON-13 — ProgramInstance type + Apex Retail program instances tests
 
-import { buildProgramEvidenceMap } from '../program-instance';
+import {
+  buildProgramEvidenceMap,
+  buildProgramEvidenceMapWithIngestions,
+} from '../program-instance';
+import {
+  addEvidence,
+  _resetForTests,
+} from '@/lib/reasoning/evidence-ingestion-store';
 import {
   APX_CDP_2026_INSTANCE,
   APX_LPM_2026_INSTANCE,
@@ -130,6 +137,78 @@ describe('APX-CDP-2026 linked source events', () => {
     expect(APX_LPM_2026_INSTANCE.linkedSourceEvents).toHaveLength(0);
     expect(APX_SAP_2026_INSTANCE.linkedSourceEvents).toHaveLength(0);
     expect(APX_DFV2_INSTANCE.linkedSourceEvents).toHaveLength(0);
+  });
+});
+
+// ── 4b. buildProgramEvidenceMapWithIngestions ────────────────────────────────
+
+describe('buildProgramEvidenceMapWithIngestions', () => {
+  beforeEach(() => {
+    _resetForTests();
+  });
+
+  it('matches buildProgramEvidenceMap when no items have been ingested', () => {
+    const base = buildProgramEvidenceMap(APX_CDP_2026_INSTANCE);
+    const merged = buildProgramEvidenceMapWithIngestions(APX_CDP_2026_INSTANCE);
+    expect(merged).toEqual(base);
+    expect(merged['evidence-ingested-count']).toBeUndefined();
+    expect(merged['evidence-uploaded-since-baseline']).toBeUndefined();
+  });
+
+  it('exposes evidence-ingested-count and evidence-uploaded-since-baseline once an item is added', () => {
+    addEvidence(APX_CDP_2026_INSTANCE.id, {
+      id: 'ev-test-1',
+      field: 'dpia-signed',
+      value: 'true',
+      phase: 3,
+    });
+    const merged = buildProgramEvidenceMapWithIngestions(APX_CDP_2026_INSTANCE);
+    expect(merged['evidence-ingested-count']).toBe(1);
+    const arr = merged['evidence-uploaded-since-baseline'] as unknown[];
+    expect(Array.isArray(arr)).toBe(true);
+    expect(arr).toHaveLength(1);
+  });
+
+  it('overwrites typed field/value into the map (last-write-wins parity)', () => {
+    addEvidence(APX_CDP_2026_INSTANCE.id, {
+      id: 'ev-test-2',
+      field: 'arch-review-signoff',
+      value: 'approved',
+    });
+    const merged = buildProgramEvidenceMapWithIngestions(APX_CDP_2026_INSTANCE);
+    expect(merged['arch-review-signoff']).toBe('approved');
+  });
+
+  it('flips evidence-phase-${n} when an item carries a numeric phase', () => {
+    addEvidence(APX_LPM_2026_INSTANCE.id, {
+      id: 'ev-test-3',
+      field: 'segment-research',
+      value: 'on file',
+      phase: 4,
+    });
+    const merged = buildProgramEvidenceMapWithIngestions(APX_LPM_2026_INSTANCE);
+    expect(merged['evidence-phase-4']).toBe(true);
+  });
+
+  it('isolates contributions across instances (no cross-bleed)', () => {
+    addEvidence(APX_CDP_2026_INSTANCE.id, { id: 'ev-iso-A', field: 'a', value: '1' });
+    addEvidence(APX_SAP_2026_INSTANCE.id, { id: 'ev-iso-B', field: 'b', value: '2' });
+    const cdp = buildProgramEvidenceMapWithIngestions(APX_CDP_2026_INSTANCE);
+    const sap = buildProgramEvidenceMapWithIngestions(APX_SAP_2026_INSTANCE);
+    expect(cdp['evidence-ingested-count']).toBe(1);
+    expect(sap['evidence-ingested-count']).toBe(1);
+    expect(cdp['a']).toBe('1');
+    expect(cdp['b']).toBeUndefined();
+    expect(sap['b']).toBe('2');
+    expect(sap['a']).toBeUndefined();
+  });
+
+  it('bumps evidence-count by the number of ingested items', () => {
+    const baseCount = buildProgramEvidenceMap(APX_DFV2_INSTANCE)['evidence-count'] as number;
+    addEvidence(APX_DFV2_INSTANCE.id, { id: 'ev-c-1', field: 'metric', value: 'x' });
+    addEvidence(APX_DFV2_INSTANCE.id, { id: 'ev-c-2', field: 'metric2', value: 'y' });
+    const merged = buildProgramEvidenceMapWithIngestions(APX_DFV2_INSTANCE);
+    expect(merged['evidence-count']).toBe(baseCount + 2);
   });
 });
 
