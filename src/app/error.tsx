@@ -1,25 +1,14 @@
+'use client'
+
 import Link from 'next/link'
-import { headers } from 'next/headers'
 import { SHELL } from '@/lib/shell/shell-tokens'
 
-// Production 404 monitoring · §3.5 of page-agent-coherence-work-order.md.
-// Logs every 404 via console.error so Vercel runtime captures it.
-// Alert thresholds (>3 distinct 404s / 10 min) configured in Vercel's
-// observability UI, not here.
-
-export const dynamic = 'force-dynamic'
-
-export default async function NotFound() {
-  try {
-    const h = await headers()
-    const referrer = h.get('referer') ?? 'direct'
-    const ua = (h.get('user-agent') ?? 'unknown').slice(0, 80)
-    const path = h.get('x-nextjs-route') ?? h.get('x-matched-path') ?? 'unknown'
-    console.error(`[404] path=${path} referrer=${referrer} ua=${ua} ts=${new Date().toISOString()}`)
-  } catch {
-    // silent if headers() unavailable
-  }
-
+export default function GlobalError({
+  reset,
+}: {
+  error: Error & { digest?: string }
+  reset: () => void
+}) {
   return (
     <div
       style={{
@@ -32,7 +21,7 @@ export default async function NotFound() {
         fontFamily: SHELL.SANS,
       }}
     >
-      <div style={{ textAlign: 'center', maxWidth: 480, padding: '40px 24px', position: 'relative' }}>
+      <div style={{ textAlign: 'center', maxWidth: 480, padding: '40px 24px' }}>
         {/* Brand mark */}
         <div
           style={{
@@ -47,21 +36,30 @@ export default async function NotFound() {
           AbarVa
         </div>
 
-        {/* Decorative 404 */}
+        {/* Error icon */}
         <div
           style={{
-            fontFamily: SHELL.SERIF,
-            fontSize: 72,
-            fontWeight: 700,
-            color: SHELL.INK,
-            opacity: 0.12,
-            lineHeight: 1,
-            marginBottom: 24,
-            userSelect: 'none',
+            width: 52,
+            height: 52,
+            borderRadius: '50%',
+            background: SHELL.RUST_BG,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 24px',
           }}
-          aria-hidden
         >
-          404
+          <span
+            style={{
+              fontFamily: SHELL.SERIF,
+              fontSize: 22,
+              fontWeight: 700,
+              color: SHELL.RUST_TEXT,
+              lineHeight: 1,
+            }}
+          >
+            !
+          </span>
         </div>
 
         {/* Heading */}
@@ -75,7 +73,7 @@ export default async function NotFound() {
             letterSpacing: '-0.01em',
           }}
         >
-          Page not found
+          Something went wrong
         </div>
 
         {/* Sub-copy */}
@@ -88,30 +86,13 @@ export default async function NotFound() {
             lineHeight: 1.6,
           }}
         >
-          The page you&apos;re looking for doesn&apos;t exist or has been moved.
+          An unexpected error occurred. The team has been notified.
         </div>
 
-        {/* Action links */}
+        {/* Actions */}
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Link
-            href="javascript:history.back()"
-            style={{
-              fontFamily: SHELL.MONO,
-              fontSize: 10,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: SHELL.INK,
-              border: `1px solid ${SHELL.CARD_LINE}`,
-              background: 'transparent',
-              padding: '9px 18px',
-              borderRadius: 20,
-              textDecoration: 'none',
-            }}
-          >
-            ← Back
-          </Link>
-          <Link
-            href="/home"
+          <button
+            onClick={reset}
             style={{
               fontFamily: SHELL.MONO,
               fontSize: 10,
@@ -120,6 +101,23 @@ export default async function NotFound() {
               color: SHELL.PAPER,
               background: SHELL.INK,
               border: `1px solid ${SHELL.INK}`,
+              padding: '9px 18px',
+              borderRadius: 20,
+              cursor: 'pointer',
+            }}
+          >
+            Try again
+          </button>
+          <Link
+            href="/home"
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 10,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: SHELL.INK,
+              border: `1px solid ${SHELL.CARD_LINE}`,
+              background: 'transparent',
               padding: '9px 18px',
               borderRadius: 20,
               textDecoration: 'none',
@@ -142,7 +140,7 @@ export default async function NotFound() {
           textTransform: 'uppercase',
         }}
       >
-        At · Atlas · Route not found
+        Nx · Nexus · Unhandled error
       </div>
     </div>
   )
