@@ -334,6 +334,37 @@ function buildPhasePanel(
         { criterion: 'AMS vendor architecture alignment noted', met: true },
         { criterion: 'Sponsor sign-off on Synthesis findings', met: false },
       ],
+      evidenceItems: [
+        {
+          id: 'ev-1',
+          citation: 'Workshop 4 output · Apr 14 2026',
+          source: 'Priya Sharma / Workshop',
+          excerpt: 'CDP identity stitching is technically feasible with the existing Snowflake schema — 3-week implementation estimate confirmed by engineering lead.',
+          confidence: 'high' as const,
+        },
+        {
+          id: 'ev-2',
+          citation: 'Vendor RFP response · Apr 18 2026',
+          source: 'Vendor B / AMS BAFO',
+          excerpt: 'Vendor B proposes a managed CDP layer that overlaps with the planned in-house implementation. Scope conflict unresolved.',
+          confidence: 'medium' as const,
+          hasContradiction: true,
+        },
+        {
+          id: 'ev-3',
+          citation: 'Stakeholder interview · Apr 20 2026',
+          source: 'Marcus Webb / Discovery',
+          excerpt: 'Privacy team confirmed that loyalty data can be included in the identity graph subject to a documented boundary policy — this policy is not yet written.',
+          confidence: 'medium' as const,
+        },
+        {
+          id: 'ev-4',
+          citation: 'AI usage audit · Apr 22 2026',
+          source: 'Atlas / Automated',
+          excerpt: 'Evidence coverage for this phase is at 36% against a 70% target for gate readiness. 3 key items are outstanding.',
+          confidence: 'high' as const,
+        },
+      ],
     };
   }
   switch (viewingPhaseState) {
