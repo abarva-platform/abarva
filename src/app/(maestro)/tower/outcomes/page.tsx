@@ -1,8 +1,8 @@
-import { Metadata } from 'next';
-import { OutcomePage } from '@/components/tower/OutcomePage';
+import type { Metadata } from 'next';
+import { AiOutcomePage } from '@/components/tower/AiOutcomePage';
 
-export const metadata: Metadata = { title: 'Outcome Realization · Control Tower' };
+export const metadata: Metadata = { title: 'Outcome Realization · AI Control Tower' };
 
 export default function Page() {
-  return <OutcomePage />;
+  return <AiOutcomePage />;
 }
