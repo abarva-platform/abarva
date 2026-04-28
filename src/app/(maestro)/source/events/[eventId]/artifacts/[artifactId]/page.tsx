@@ -37,7 +37,7 @@ export default async function SourceArtifactPage({
       }
     >
       <SentinelAgentColumn
-        quote={`Artifact ${artifact.kind.replaceAll('_', ' ')} at tier ${artifact.tier ?? 'unclassified'}. Status ${artifact.status}. ${artifact.sourceCount} source references with deterministic provenance visible.`}
+        quote={`Artifact tier: ${artifact.tier ?? 'stub'}. Status: ${artifact.status.replaceAll('_', ' ')}. Provenance: deterministic_seed. Evidence chain: ${artifact.sections.length} entries.`}
         agentContext={`Sentinel · ${artifact.title} · ${event.name}`}
         actions={[
           { letter: 'A', text: 'Show evidence', detail: 'Review evidence references for this artifact' },

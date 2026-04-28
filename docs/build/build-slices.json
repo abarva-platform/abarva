@@ -9406,6 +9406,54 @@
       ],
       "acceptanceCriteria": "npx tsc clean; intelligence-i3 all 67 tests pass; both server components NOT use client; ProvenanceRibbon wired with primitive='Signal'; signal rows link to detail pages; unknown signalId redirects to /intelligence/signals",
       "deterministicSeed": true
+    },
+    {
+      "id": "SRC-S4",
+      "name": "Source Sub-routes Refresh",
+      "status": "code_complete",
+      "type": "ui",
+      "wave": "SRC-S4",
+      "description": "Refresh scorecard and artifact sub-route pages to paper aesthetic. 7-state lifecycle strip on ScorecardGovernancePanel. Tier indicator (rich/outline/stub) on SourceArtifactDrawer. Sentinel voice updated to spec. 2 new component test files. 2 mockup HTML files updated.",
+      "allowedFiles": [
+        "src/components/source/ScorecardGovernancePanel.tsx",
+        "src/components/source/EvaluationCriteriaEditor.tsx",
+        "src/components/source/SourceArtifactDrawer.tsx",
+        "src/components/source/SourceArtifactStatusStrip.tsx",
+        "src/components/source/__tests__/ScorecardGovernancePanel.test.tsx",
+        "src/components/source/__tests__/SourceArtifactDrawer.test.tsx",
+        "src/app/(maestro)/source/events/[eventId]/scorecard/page.tsx",
+        "src/app/(maestro)/source/events/[eventId]/artifacts/[artifactId]/page.tsx",
+        "docs/source-build/mockups/src-dtl-scorecard.html",
+        "docs/source-build/mockups/src-dtl-artifact.html",
+        "src/__tests__/integration/source/source-scorecard-governance.test.ts",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit",
+        "npx jest source/__tests__/ScorecardGovernancePanel",
+        "npx jest source/__tests__/SourceArtifactDrawer"
+      ],
+      "dependsOn": [
+        "SRC-S3"
+      ],
+      "notes": [
+        "ScorecardGovernancePanel: 7-state ScorecardLifecycleState strip (default_generated → used_for_vendor_evaluation); backwards-compat with legacy 3-state arc",
+        "EvaluationCriteriaEditor: paper aesthetic refresh — colored left-border per status, status pill uses status color, data-testid added",
+        "SourceArtifactDrawer: TierIndicator component (rich=MINT, outline=INK_MID, stub=PEACH); data-testid on tier indicator and provenance panel",
+        "SourceArtifactStatusStrip: SRC-S4 comment header, data-testid on section",
+        "Scorecard page Sentinel voice: 'Scorecard at {lifecycleState}. {N} criteria approved · {M} pending review. Locks when all criteria reach approved.'",
+        "Artifact page Sentinel voice: 'Artifact tier: {tier}. Status: {status}. Provenance: deterministic_seed. Evidence chain: {N} entries.'",
+        "Mockups updated: src-dtl-artifact.html with tier indicator CSS + 3 tier variants reference; src-dtl-scorecard.html Sentinel voice updated to spec format",
+        "Fixed pre-existing test failure in source-scorecard-governance.test.ts (incorrect case in 'Scorecard governance shell' assertion)"
+      ],
+      "acceptanceCriteria": "npx tsc clean; ScorecardGovernancePanel tests 13 pass; SourceArtifactDrawer tests 11 pass; lifecycle strip renders all 7 states; tier indicator has data-tier attribute",
+      "deterministicSeed": true
     }
   ]
 }

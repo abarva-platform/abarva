@@ -1,3 +1,5 @@
+// SRC-S4 · SRC-DTL-ARTIFACT — Artifact drawer with tier indicator (rich/outline/stub).
+// No upload, parsing, workflow automation, or approval runtime.
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourceArtifactDetail } from '@/lib/source/types';
 
@@ -7,6 +9,12 @@ interface ArtifactProvenance {
   freshness: string;
   evidenceLedgerEntryId?: string;
 }
+
+const TIER_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+  rich: { label: 'Rich', color: SHELL.MINT_TEXT, bg: SHELL.MINT_BG },
+  outline: { label: 'Outline', color: SHELL.INK_MID, bg: SHELL.PAPER_SOFT },
+  stub: { label: 'Stub', color: SHELL.PEACH_TEXT, bg: SHELL.PEACH_BG },
+};
 
 const sourceCard = {
   background: SHELL.CARD_WHITE,
@@ -67,6 +75,33 @@ const ACTION_LINK = {
   marginBottom: 8,
 };
 
+function TierIndicator({ tier }: { tier: string | undefined }) {
+  const tierKey = tier ?? 'stub';
+  const cfg = TIER_CONFIG[tierKey] ?? TIER_CONFIG.stub;
+  return (
+    <div
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        border: `1px solid ${cfg.color}`,
+        borderRadius: 8,
+        padding: '6px 10px',
+        background: cfg.bg,
+      }}
+      data-testid="tier-indicator"
+      data-tier={tierKey}
+    >
+      <span style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: cfg.color, fontWeight: 700 }}>
+        Tier
+      </span>
+      <span style={{ fontFamily: SHELL.MONO, fontSize: 13, fontWeight: 700, color: cfg.color }}>
+        {cfg.label}
+      </span>
+    </div>
+  );
+}
+
 export function SourceArtifactDrawer({
   artifact,
   provenance,
@@ -77,7 +112,7 @@ export function SourceArtifactDrawer({
   const sectionCount = artifact.sections.length;
 
   return (
-    <section style={sourceCard}>
+    <section style={sourceCard} data-testid="source-artifact-drawer">
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <div>
           <div style={sourceSectionLabel}>Artifact detail</div>
@@ -86,9 +121,11 @@ export function SourceArtifactDrawer({
             {artifact.title}
           </div>
         </div>
-        <div style={{ display: 'grid', gap: 8, justifyItems: 'end' }}>
-          <span style={CHIP}>Status: {artifact.status.replaceAll('_', ' ')}</span>
-          <span style={CHIP}>Tier: {artifact.tier ?? 'unclassified'}</span>
+        <div style={{ display: 'grid', gap: 8, justifyItems: 'end', alignContent: 'start' }}>
+          <TierIndicator tier={artifact.tier} />
+          <span style={{ ...CHIP, color: SHELL.INK_SOFT }}>
+            Status: {artifact.status.replaceAll('_', ' ')}
+          </span>
         </div>
       </div>
 
@@ -106,9 +143,9 @@ export function SourceArtifactDrawer({
         {artifact.summary}
       </div>
       {provenance ? (
-        <div style={sourceInsetCard}>
+        <div style={sourceInsetCard} data-testid="provenance-panel">
           <div style={sourceSectionLabel}>Visible provenance</div>
-          <div style={{ display: 'grid', gap: 8 }}>
+          <div style={{ display: 'grid', gap: 8, fontFamily: SHELL.SANS, fontSize: 13, lineHeight: 1.5, color: SHELL.INK }}>
             <div><strong>Created from:</strong> {provenance.createdFrom}</div>
             <div><strong>Store key:</strong> {provenance.storeKey}</div>
             <div><strong>Freshness:</strong> {provenance.freshness}</div>
@@ -120,7 +157,7 @@ export function SourceArtifactDrawer({
       ) : null}
       <div id="artifact-evidence">
         {artifact.sections.map((section) => (
-          <div key={section.label} style={sourceInsetCard}>
+          <div key={section.label} style={{ ...sourceInsetCard, marginBottom: 8 }}>
             <div style={{ fontWeight: 700, color: SHELL.INK }}>{section.label}</div>
             <div style={{ fontFamily: SHELL.SANS, fontSize: 14, lineHeight: 1.55, color: SHELL.INK }}>
               {section.body}
@@ -130,7 +167,7 @@ export function SourceArtifactDrawer({
       </div>
       <div id="artifact-missing-inputs" style={sourceInsetCard}>
         <div style={{ fontWeight: 700, color: SHELL.INK }}>Governance notes</div>
-        <ul style={{ margin: 0, paddingLeft: 18 }}>
+        <ul style={{ margin: 0, paddingLeft: 18, fontFamily: SHELL.SANS, fontSize: 13, lineHeight: 1.55, color: SHELL.INK }}>
           {artifact.governanceNotes.map((note) => (
             <li key={note}>{note}</li>
           ))}

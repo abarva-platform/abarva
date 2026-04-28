@@ -30,7 +30,8 @@ describe('Source scorecard governance shell', () => {
       },
     }));
 
-    expect(html).toContain('Scorecard governance shell');
+    expect(html).toContain('scorecard governance shell'); // aria-label (lowercase)
+    expect(html).toContain('Scorecard governance'); // h2 heading
     expect(html).toContain('Steward governance lead');
     expect(html).toContain('Review blockers');
     expect(html).toContain('Show evidence gaps');
