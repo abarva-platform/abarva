@@ -290,7 +290,7 @@ export function PatternSelector({ value, onChange }: PatternSelectorProps) {
             key={pattern.patternId}
             pattern={pattern}
             selected={value === pattern.patternId}
-            onSelect={() => onChange(pattern.patternId)}
+            onSelect={() => onChange(pattern.patternId as SourceEventPatternId)}
           />
         ))}
       </div>

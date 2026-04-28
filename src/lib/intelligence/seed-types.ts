@@ -33,6 +33,25 @@ export type SourceEventPatternId =
   | 'PAT-SRC-DECOM-001'
   | 'PAT-SRC-EMERGENCY-001';
 
+/**
+ * Branded pattern IDs for typed program lifecycle patterns.
+ *
+ * Mirrors the union exported from `@/lib/programs/program-instance` but is
+ * declared locally here to avoid a circular dependency: program-instance.ts
+ * imports from `@/lib/reasoning`, which transitively reaches the intelligence
+ * layer. Keeping this declaration local keeps the seed-types module pure.
+ */
+export type ProgramLifecyclePatternId =
+  | 'PAT-PRG-CDP-001'
+  | 'PAT-PRG-AI-CODING-001'
+  | 'PAT-PRG-COPILOT-001'
+  | 'PAT-PRG-LOYALTY-001'
+  | 'PAT-PRG-CC-AI-001'
+  | 'PAT-PRG-DATA-FAB-001';
+
+/** Either universe of lifecycle pattern IDs (source-events or programs). */
+export type LifecyclePatternId = SourceEventPatternId | ProgramLifecyclePatternId;
+
 /** Identifies a discrete phase within a lifecycle pattern. */
 export type StageId = string; // e.g. 'Plan', 'RFI', 'BAFO'
 
@@ -90,7 +109,7 @@ export interface FailureMode {
 
 export interface LifecyclePatternSeed extends PatternSeed {
   kind: 'lifecycle';
-  patternId: SourceEventPatternId;
+  patternId: LifecyclePatternId;
   stages: LifecycleStage[];
   gateCriteria: GateCriterion[];
   expectedArtifacts: ExpectedArtifact[];
