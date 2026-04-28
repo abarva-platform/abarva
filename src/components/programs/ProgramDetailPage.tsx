@@ -23,6 +23,8 @@ import { NexusSynthesisQuote } from '@/components/programs/NexusSynthesisQuote';
 import { SourceEventChip } from '@/components/programs/SourceEventChip';
 import { buildProgramSourceLinkView } from '@/lib/programs/program-source-link-view';
 import { buildProgramStorylineContext, matchStorylinePatterns } from '@/lib/intelligence/storyline-matcher';
+import { buildGateApprovalDrawerView } from '@/lib/programs/gate-approval-drawer-view';
+import type { GateApprovalDrawerView } from '@/lib/programs/gate-approval-drawer-view';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -2219,7 +2221,221 @@ function AgentHandoffOverlay({
   );
 }
 
-// ─── CustomActionPanel (PRG-MOD-CUSTOM-ACTION) ────────────────────────────────
+// ─── Gate approval drawer (PROG21) ────────────────���──────────────────────────
+
+interface GateApprovalDrawerProps {
+  drawerView: GateApprovalDrawerView;
+  onClose: () => void;
+}
+
+function GateApprovalDrawer({ drawerView, onClose }: GateApprovalDrawerProps) {
+  function statusDot(status: GateApprovalDrawerView['criteriaRows'][number]['status']): string {
+    if (status === 'known') return SHELL.MINT_TEXT;
+    if (status === 'blocked') return SHELL.RUST_TEXT;
+    return SHELL.AMBER_DOT;
+  }
+
+  function statusLabel(status: GateApprovalDrawerView['criteriaRows'][number]['status']): string {
+    if (status === 'known') return 'Known';
+    if (status === 'blocked') return 'Blocked';
+    return 'Missing';
+  }
+
+  function postureBg(posture: GateApprovalDrawerView['approvalPosture']): string {
+    if (posture === 'ready') return SHELL.MINT_BG;
+    if (posture === 'blocked' || posture === 'waiver_needed') return SHELL.PEACH_BG;
+    return SHELL.PEACH_BG;
+  }
+
+  function postureText(posture: GateApprovalDrawerView['approvalPosture']): string {
+    if (posture === 'ready') return SHELL.MINT_TEXT;
+    return SHELL.PEACH_TEXT;
+  }
+
+  return (
+    <div
+      data-testid="gate-approval-drawer"
+      style={{
+        position: 'fixed',
+        top: 0,
+        right: 0,
+        bottom: 0,
+        width: 480,
+        background: SHELL.PAPER,
+        borderLeft: `1px solid ${SHELL.CARD_LINE}`,
+        zIndex: 900,
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: '-4px 0 24px rgba(0,0,0,0.10)',
+      }}
+    >
+      {/* Header */}
+      <div
+        style={{
+          height: 52,
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          padding: '0 20px',
+          borderBottom: `1px solid ${SHELL.CARD_LINE}`,
+          flexShrink: 0,
+        }}
+      >
+        <div>
+          <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: SHELL.INK_MUTED, marginBottom: 2 }}>
+            Gate Review
+          </div>
+          <div style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK, fontWeight: 500 }}>
+            {drawerView.transitionLabel}
+          </div>
+        </div>
+        <div style={{ flex: 1 }} />
+        <button
+          onClick={onClose}
+          style={{ fontFamily: SHELL.SANS, fontSize: 20, color: SHELL.INK_SOFT, cursor: 'pointer', background: 'none', border: 'none', lineHeight: 1, padding: 0 }}
+        >
+          ×
+        </button>
+      </div>
+
+      {/* Body */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 0' }}>
+
+        {/* Posture badge */}
+        <div
+          data-testid="gate-approval-posture-badge"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            background: postureBg(drawerView.approvalPosture),
+            borderRadius: 4,
+            padding: '5px 10px',
+            marginBottom: 20,
+          }}
+        >
+          <span style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: postureText(drawerView.approvalPosture) }}>
+            {drawerView.postureLabel}
+          </span>
+        </div>
+
+        {/* Gate summary */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: SHELL.INK_MUTED, marginBottom: 8 }}>
+            Gate Summary
+          </div>
+          <div style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK }}>
+            {drawerView.gateSummary}
+          </div>
+        </div>
+
+        {/* Criteria rows */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: SHELL.INK_MUTED, marginBottom: 10 }}>
+            Gate Criteria
+          </div>
+          <div data-testid="gate-approval-criteria-list" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {drawerView.criteriaRows.map((row, i) => (
+              <div
+                key={`gate-criterion-${i}`}
+                style={{
+                  background: SHELL.CARD_WHITE,
+                  border: `1px solid ${SHELL.CARD_LINE}`,
+                  borderRadius: 8,
+                  padding: '12px 14px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 6 }}>
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      background: statusDot(row.status),
+                      flexShrink: 0,
+                      marginTop: 4,
+                    }}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK, lineHeight: 1.4, marginBottom: 4 }}>
+                      {row.criterion}
+                    </div>
+                    <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: statusDot(row.status) }}>
+                      {statusLabel(row.status)}
+                    </div>
+                  </div>
+                </div>
+                {row.linkedEvidence.length > 0 && (
+                  <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${SHELL.CARD_LINE}` }}>
+                    <div style={{ fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.08em', marginBottom: 4 }}>
+                      Evidence
+                    </div>
+                    {row.linkedEvidence.map((cite, j) => (
+                      <div key={`cite-${j}`} style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK_SOFT, lineHeight: 1.4, marginBottom: 2 }}>
+                        · {cite}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div style={{ marginTop: 8, fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.08em' }}>
+                  Next: {row.nextAction}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Approval authority */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: SHELL.INK_MUTED, marginBottom: 6 }}>
+            Approval Authority
+          </div>
+          <div style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK }}>
+            {drawerView.approvalAuthority}
+          </div>
+        </div>
+
+        {/* Waiver caveat */}
+        <div
+          data-testid="gate-approval-waiver-caveat"
+          style={{
+            background: SHELL.PEACH_BG,
+            border: `1px solid ${SHELL.PEACH_LINE}`,
+            borderRadius: 8,
+            padding: '12px 14px',
+            marginBottom: 20,
+          }}
+        >
+          <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: SHELL.PEACH_TEXT, marginBottom: 6 }}>
+            Waiver caveat
+          </div>
+          <div style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.PEACH_TEXT, lineHeight: 1.5 }}>
+            {drawerView.waiverCaveat}
+          </div>
+        </div>
+      </div>
+
+      {/* Footer — honest disclaimer */}
+      <div
+        style={{
+          borderTop: `1px solid ${SHELL.CARD_LINE}`,
+          padding: '12px 20px',
+          flexShrink: 0,
+        }}
+      >
+        <div
+          data-testid="gate-approval-drawer-disclaimer"
+          data-honest-disclaimer="gate-approval"
+          style={{ fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.08em', lineHeight: 1.5 }}
+        >
+          {drawerView.honestDisclaimer}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── CustomActionPanel (PRG-MOD-CUSTOM-ACTION) ──────────────────────────────���─
 
 interface CustomActionPanelProps {
   placeholder?: string;
@@ -2502,6 +2718,9 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
   const [showGateModal, setShowGateModal] = useState(false);
   const [gateApproveError, setGateApproveError] = useState<string | null>(null);
   const [isApprovingGate, setIsApprovingGate] = useState(false);
+  // PROG21 — Gate approval interaction drawer
+  const [showGateApprovalDrawer, setShowGateApprovalDrawer] = useState(false);
+  const gateApprovalDrawerView = buildGateApprovalDrawerView(view);
   const [evidenceDrawerItem, setEvidenceDrawerItem] = useState<EvidenceItem | null>(null);
   const [contradictionItem, setContradictionItem] = useState<EvidenceItem | null>(null);
 
@@ -2872,6 +3091,29 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
             {!view.phasePanel.gateCriteria && (
               <div style={{ padding: '20px 0', fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK_MUTED }}>
                 Gate criteria not defined for P{view.viewingPhase}.
+              </div>
+            )}
+            {/* PROG21 — Gate approval interaction drawer trigger */}
+            {gateApprovalDrawerView && (
+              <div style={{ marginTop: 12 }}>
+                <button
+                  data-testid="gate-approval-drawer-trigger"
+                  onClick={() => setShowGateApprovalDrawer(true)}
+                  style={{
+                    fontFamily: SHELL.MONO,
+                    fontSize: 9,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: SHELL.INK_MUTED,
+                    background: 'none',
+                    border: `1px solid ${SHELL.CARD_LINE}`,
+                    borderRadius: 4,
+                    padding: '6px 12px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Review gate readiness →
+                </button>
               </div>
             )}
           </div>
@@ -3323,6 +3565,14 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
           toPhaseLabel={PHASE_LABEL_MAP[(view.viewingPhase + 1) as ProgramPhaseId] ?? ''}
           programName={view.name}
           onComplete={() => setShowPhaseTransition(false)}
+        />
+      )}
+
+      {/* PROG21 — Gate approval interaction drawer */}
+      {showGateApprovalDrawer && gateApprovalDrawerView && (
+        <GateApprovalDrawer
+          drawerView={gateApprovalDrawerView}
+          onClose={() => setShowGateApprovalDrawer(false)}
         />
       )}
     </AppShell>
