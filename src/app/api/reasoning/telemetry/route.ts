@@ -6,6 +6,9 @@
 
 import { getRecentSynthesisEvents } from '@/lib/reasoning/synthesis-telemetry';
 import { summarizeTelemetry } from '@/lib/reasoning/synthesis-telemetry-stats';
+// Side-effect import: installs the in-memory-extended backend once per
+// server boot. Stub today; real persistence backend will replace this file.
+import '@/lib/reasoning/telemetry-init';
 
 export const dynamic = 'force-dynamic';
 
