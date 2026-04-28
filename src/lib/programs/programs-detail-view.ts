@@ -530,13 +530,16 @@ export function buildProgramDetailView(
     phases: railPhases,
     gateStatus: program.gateStatus,
     linkedSourceEvent: program.linkedSourceEvent ?? undefined,
+    // Use `programId` (the caller's actual ID) — not `program.id` (which may be the
+    // fallback 'apx-cdp-2026'). A new program at P3 should get generic workbench
+    // content, not APX-CDP-2026's P3-specific architecture sprint content.
     workbench: buildWorkbenchContent(
       program.name,
       clampedCurrent,
       viewingPhase,
       viewingPhaseLabel,
       viewingPhaseState,
-      program.id,
+      programId,
     ),
     agentRail: buildAgentRail(clampedCurrent, viewingPhase),
     phasePanel: buildPhasePanel(
@@ -544,7 +547,7 @@ export function buildProgramDetailView(
       viewingPhaseLabel,
       viewingPhaseState,
       clampedCurrent,
-      program.id,
+      programId,
     ),
     deterministicSeed: true,
   };
