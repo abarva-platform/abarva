@@ -31,10 +31,10 @@ interface StewardAdminRailProps {
 }
 
 const CHIP_ROUTES: Record<string, string> = {
-  'invite-user': '/platform/admin/users',
+  'invite-user': '/admin/invite',
   'connector-health': '/platform/admin/connectors',
-  'audit-log': '/platform/admin/audit',
-  'entitlement-report': '/platform/admin/users',
+  'audit-log': '/admin/audit',
+  'entitlement-report': '/admin/users-access?tab=permissions',
 };
 
 export function StewardAdminRail({
@@ -90,7 +90,7 @@ export function StewardAdminRail({
           {
             id: 'invite-user',
             label: 'Invite user',
-            sub: '→ /platform/admin/users',
+            sub: '→ /admin/invite',
           },
           {
             id: 'connector-health',

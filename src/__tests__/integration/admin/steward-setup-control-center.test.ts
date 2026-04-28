@@ -296,6 +296,14 @@ describe('admin modules', () => {
       expect(m.routeHref.startsWith('/')).toBe(true);
     }
   });
+
+  it('routes users and audit modules to canonical Setup W5 pages', () => {
+    const view = buildStewardSetupReadinessView();
+    const users = view.modules.find((m) => m.key === 'users_access');
+    const audit = view.modules.find((m) => m.key === 'audit_activity');
+    expect(users?.routeHref).toBe('/admin/users');
+    expect(audit?.routeHref).toBe('/admin/audit');
+  });
 });
 
 // ---------------------------------------------------------------------
@@ -316,6 +324,15 @@ describe('recommended actions', () => {
   it('the brief recommendedNextAction matches the first ranked action', () => {
     const view = buildStewardSetupReadinessView();
     expect(view.brief.recommendedNextAction).toEqual(view.recommendedActions[0]);
+  });
+
+  it('routes users and audit recommended actions to canonical Setup W5 pages', () => {
+    const view = buildStewardSetupReadinessView();
+    const hrefs = view.recommendedActions.map((a) => a.routeHref);
+    expect(hrefs).toContain('/admin/users');
+    expect(hrefs).toContain('/admin/audit');
+    expect(hrefs).not.toContain('/platform/admin/users');
+    expect(hrefs).not.toContain('/platform/admin/audit');
   });
 });
 
@@ -394,13 +411,15 @@ describe('module hygiene · StewardSetupControlCenter.tsx', () => {
     expect(codeOnly).toMatch(/from '@\/lib\/admin\/steward-setup-readiness'/);
   });
 
-  it('does not import Source UI, Nexus, Sentinel, Atlas, or Agent runtime', () => {
+  it('does not import Source UI, Nexus, Sentinel, Atlas, or live Agent runtime', () => {
     expect(codeOnly).not.toMatch(/from '@\/lib\/source\//);
     expect(codeOnly).not.toMatch(/from '@\/lib\/nexus\//);
     expect(codeOnly).not.toMatch(/from '@\/lib\/sentinel\//);
     expect(codeOnly).not.toMatch(/from '@\/lib\/atlas\//);
-    expect(codeOnly).not.toMatch(/from '@\/lib\/agent\//);
-    expect(codeOnly).not.toMatch(/from '@\/components\/agent\//);
+    expect(codeOnly).toMatch(/from '@\/lib\/agent\/agent-mission-queue'/);
+    expect(codeOnly).toMatch(/from '@\/components\/agent\/AgentMissionPanel'/);
+    expect(codeOnly).not.toMatch(/from '@\/lib\/agent\/runtime/);
+    expect(codeOnly).not.toMatch(/from '@\/components\/agent\/AskAnythingBar'/);
   });
 
   it('does not import legacy /programs routes, mock.ts, or auth', () => {
