@@ -9625,6 +9625,13 @@
       "notes": "MaestroNextActionComposer added to Workshop section. buildMaestroNextActionView lib derives 3 contextual choices (gate/evidence/stakeholder/execution/phase focus) from program gate status and phase state, plus custom free-text option, disabled submit with honest reason. data-testid maestro-next-action-composer, maestro-action-choice-A/B/C, maestro-action-choice-custom, maestro-action-submit, maestro-action-composer-disclaimer. 36 integration tests. PROG24 from track-03."
     },
     {
+      "id": "PROG25",
+      "name": "Workshop Notes to Actions/Deliverables Plan",
+      "category": "Programs",
+      "status": "code_complete",
+      "notes": "WorkshopNotesActionPlanPanel added to ProgramDetailPage Workshop section. buildWorkshopNotesActionPlanView deterministically maps workshop-note seeds + phase panel state into known/missing/blocked lanes and next-action guidance, with explicit deterministic-vs-live caveat. data-testid workshop-notes-plan-panel, workshop-notes-plan-known, workshop-notes-plan-missing, workshop-notes-plan-blocked, workshop-notes-plan-next-action, workshop-notes-plan-disclaimer. Focused PROG25 integration tests added."
+    },
+    {
       "id": "SRC42",
       "name": "Commercial Active Canvas Tab Consolidation",
       "category": "Source",
