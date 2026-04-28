@@ -470,6 +470,7 @@ const PAGE_RESULTS: PageComplianceResult[] = [
   // -------------------------------------------------------------------------
   // Page 7: Intelligence (/tenant/[slug]/intelligence)
   // Overall score: 76/100 → 84/100 (Wave 32: +8 Programs+Actions mode view models)
+  // → 86/100 (Wave 33: canvas Programs/Actions rows now use deterministic tenant seed rows)
   // -------------------------------------------------------------------------
   {
     page: 'Intelligence',
@@ -477,7 +478,7 @@ const PAGE_RESULTS: PageComplianceResult[] = [
     routeFile: 'src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx',
     wireframePath: 'not_found',
     blueprintPath: 'docs/platform-design/page-blueprints/INTELLIGENCE_BLUEPRINT.md',
-    overallScore: 84,
+    overallScore: 86,
     status: 'partial',
     dimensionScores: {
       route_ownership: 82,
@@ -485,8 +486,8 @@ const PAGE_RESULTS: PageComplianceResult[] = [
       zone_composition: 84,
       agent_centric: 84,
       workflow_canon: 82,
-      data_contract: 84,
-      interaction_map: 82,
+      data_contract: 88,
+      interaction_map: 86,
       design_canon: 70,
     },
     deviations: [
@@ -514,10 +515,14 @@ const PAGE_RESULTS: PageComplianceResult[] = [
       {
         dimension: 'data_contract',
         description:
-          'Patterns mode tab uses tenantSlug stub for TenantSeedPlan (workaround with stub plan) — minor correctness concern',
+          'Canvas Programs and Actions bodies previously ignored tenantSlug and rendered empty body rows',
         severity: 'low',
-        safeFixApplied: false,
-        remainingFix: 'Resolve TenantSeedPlan stub with proper tenant seed lookup',
+        safeFixApplied: true,
+        safeFixDescription:
+          'Wave 33: Intelligence canvas Programs and Actions body rows now read from ' +
+          'buildIntelligenceProgramsModeView(tenantSlug) and buildIntelligenceActionsModeView(tenantSlug), ' +
+          'capped at 5 rows and still deterministic.',
+        remainingFix: 'Resolve remaining TenantSeedPlan stub usage in the broader Patterns tab route composition',
         recommendedSlice: 'Wave 33',
       },
     ],

@@ -16,6 +16,9 @@
 // invocation, no wall-clock reads, no random IDs, no constructed
 // dates, no network access, no model SDK imports.
 
+import { buildIntelligenceActionsModeView } from './intelligence-actions-mode-view';
+import { buildIntelligenceProgramsModeView } from './intelligence-programs-mode-view';
+
 // ---------------------------------------------------------------------
 // Public types
 // ---------------------------------------------------------------------
@@ -234,7 +237,7 @@ export function buildIntelligenceCanvasView(
       isActive: key === mode,
     }));
 
-  const body = buildCanvasBody(mode, patternKey);
+  const body = buildCanvasBody(mode, patternKey, tenantSlug);
 
   return {
     mode,
@@ -261,6 +264,7 @@ function capList<T>(items: ReadonlyArray<T>): ReadonlyArray<T> {
 function buildCanvasBody(
   mode: IntelligenceCanvasMode,
   patternKey: string,
+  tenantSlug: string,
 ): IntelligenceCanvasBody {
   switch (mode) {
     case 'summary':
@@ -288,21 +292,33 @@ function buildCanvasBody(
         },
       };
     case 'programs':
+      const programsView = buildIntelligenceProgramsModeView(tenantSlug);
       return {
         kind: 'programs',
         content: {
           title: `Affected programs · ${patternKey}`,
-          rows: capList([]),
+          rows: capList(
+            programsView.impactedPrograms.map((program) => ({
+              key: program.programCode,
+              label: `${program.programCode} · ${program.programName} — ${program.sentinelSignal}`,
+            })),
+          ),
           helperText:
             'Each affected program row links to its canonical /tenant/.../programs/<programSlug> detail; no programs are duplicated.',
         },
       };
     case 'actions':
+      const actionsView = buildIntelligenceActionsModeView(tenantSlug);
       return {
         kind: 'actions',
         content: {
           title: `Recommended actions · ${patternKey}`,
-          rows: capList([]),
+          rows: capList(
+            actionsView.actions.map((action) => ({
+              key: action.id,
+              label: `${action.title} · ${action.agent.toUpperCase()} · ${action.affectedSurface}`,
+            })),
+          ),
           helperText:
             'Action handoffs (Nexus, Atlas, Steward, Sentinel) are visible-but-disabled today; live action wiring is deferred.',
         },
