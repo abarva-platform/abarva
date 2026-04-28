@@ -153,6 +153,229 @@ function KpiBand({ kpis }: { kpis: AiPortfolioKpis }) {
 }
 
 // ---------------------------------------------------------------------------
+// Program portfolio matrix (bubble chart)
+// ---------------------------------------------------------------------------
+
+const BUBBLE_COLORS = {
+  critical: '#B91C1C',
+  high: '#F59E0B',
+  medium: '#6366F1',
+  low: '#9AA3B2',
+  none: '#16A34A',
+} as const;
+
+function bubbleColor(program: AiProgram): string {
+  const worst = program.pressures.reduce<'critical' | 'high' | 'medium' | 'low' | 'none'>(
+    (acc, p) => {
+      const order: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1, none: 0 };
+      return (order[p.severity] ?? 0) > (order[acc] ?? 0)
+        ? (p.severity as typeof acc)
+        : acc;
+    },
+    'none',
+  );
+  return BUBBLE_COLORS[worst];
+}
+
+function ProgramBubbleChart({ programs }: { programs: readonly AiProgram[] }) {
+  const W = 560;
+  const H = 280;
+  const PAD = { top: 24, right: 24, bottom: 44, left: 72 };
+  const iW = W - PAD.left - PAD.right;
+  const iH = H - PAD.top - PAD.bottom;
+
+  const maxValue = Math.max(...programs.map((p) => p.valueCaptures));
+  const maxSpend = Math.max(...programs.map((p) => p.annualSpend));
+  const MAX_R = 36;
+  const MIN_R = 10;
+
+  function cx(p: AiProgram) {
+    return PAD.left + (p.adoptionPct ?? 0) * iW;
+  }
+  function cy(p: AiProgram) {
+    return PAD.top + (1 - p.valueCaptures / maxValue) * iH;
+  }
+  function radius(p: AiProgram) {
+    return MIN_R + (p.annualSpend / maxSpend) * (MAX_R - MIN_R);
+  }
+
+  const gridXs = [0, 0.25, 0.5, 0.75, 1];
+  const gridYVals = [0, maxValue / 2, maxValue];
+
+  function fmt$(n: number) {
+    if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
+    return `$${(n / 1_000).toFixed(0)}K`;
+  }
+
+  const abbrev: Record<string, string> = {
+    'twr-prog-m365-copilot': 'M365',
+    'twr-prog-claude-code': 'Claude',
+    'twr-prog-now-assist': 'Now Assist',
+    'twr-prog-sap-joule': 'Joule',
+    'twr-prog-fow': 'FoW',
+  };
+
+  return (
+    <div
+      style={{
+        background: SHELL.CARD_WHITE,
+        border: `1px solid ${SHELL.CARD_LINE}`,
+        borderRadius: 12,
+        padding: '16px 20px',
+        marginBottom: 28,
+      }}
+    >
+      {/* Section header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <span
+          style={{
+            fontFamily: SHELL.MONO,
+            fontSize: 9,
+            letterSpacing: '0.16em',
+            textTransform: 'uppercase',
+            color: SHELL.INK_MUTED,
+          }}
+        >
+          Program portfolio matrix · adoption vs value
+        </span>
+        <div style={{ display: 'flex', gap: 10 }}>
+          {Object.entries(BUBBLE_COLORS).map(([k, c]) => (
+            <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: c }} />
+              <span style={{ fontFamily: SHELL.SANS, fontSize: 9, color: SHELL.INK_MUTED, textTransform: 'capitalize' as const }}>
+                {k}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        style={{ width: '100%', maxWidth: W, display: 'block' }}
+        role="img"
+        aria-label="Program portfolio matrix: adoption (x) vs value captured (y), bubble size = annual spend"
+      >
+        {/* Grid lines */}
+        {gridXs.map((x) => {
+          const px = PAD.left + x * iW;
+          return (
+            <line
+              key={x}
+              x1={px} y1={PAD.top}
+              x2={px} y2={PAD.top + iH}
+              stroke="#E8E6E1"
+              strokeWidth={1}
+              strokeDasharray="3 3"
+            />
+          );
+        })}
+        {gridYVals.map((v, i) => {
+          const py = PAD.top + (1 - v / maxValue) * iH;
+          return (
+            <line
+              key={i}
+              x1={PAD.left} y1={py}
+              x2={PAD.left + iW} y2={py}
+              stroke="#E8E6E1"
+              strokeWidth={1}
+              strokeDasharray="3 3"
+            />
+          );
+        })}
+
+        {/* Axes */}
+        <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={PAD.top + iH} stroke="#D1CAB8" strokeWidth={1} />
+        <line x1={PAD.left} y1={PAD.top + iH} x2={PAD.left + iW} y2={PAD.top + iH} stroke="#D1CAB8" strokeWidth={1} />
+
+        {/* X-axis labels */}
+        {gridXs.map((x) => (
+          <text
+            key={x}
+            x={PAD.left + x * iW}
+            y={H - 8}
+            textAnchor="middle"
+            fontSize={9}
+            fontFamily="JetBrains Mono, monospace"
+            fill="#9AA3B2"
+          >
+            {(x * 100).toFixed(0)}%
+          </text>
+        ))}
+
+        {/* Y-axis labels */}
+        {gridYVals.map((v, i) => (
+          <text
+            key={i}
+            x={PAD.left - 6}
+            y={PAD.top + (1 - v / maxValue) * iH + 4}
+            textAnchor="end"
+            fontSize={9}
+            fontFamily="JetBrains Mono, monospace"
+            fill="#9AA3B2"
+          >
+            {fmt$(v)}
+          </text>
+        ))}
+
+        {/* Axis labels */}
+        <text x={PAD.left + iW / 2} y={H - 28} textAnchor="middle" fontSize={9} fontFamily="JetBrains Mono, monospace" fill="#9AA3B2" letterSpacing="0.12em">
+          ADOPTION RATE →
+        </text>
+        <text
+          transform={`translate(12, ${PAD.top + iH / 2}) rotate(-90)`}
+          textAnchor="middle"
+          fontSize={9}
+          fontFamily="JetBrains Mono, monospace"
+          fill="#9AA3B2"
+          letterSpacing="0.12em"
+        >
+          VALUE CAPTURED →
+        </text>
+
+        {/* Bubbles */}
+        {programs.map((p) => {
+          const x = cx(p);
+          const y = cy(p);
+          const r = radius(p);
+          const color = bubbleColor(p);
+          const label = abbrev[p.id] ?? p.name.slice(0, 6);
+          return (
+            <g key={p.id}>
+              <a href={`/tower/programs/${p.id}`}>
+                <circle
+                  cx={x} cy={y} r={r}
+                  fill={color}
+                  fillOpacity={0.18}
+                  stroke={color}
+                  strokeWidth={1.5}
+                  style={{ cursor: 'pointer' }}
+                />
+                <text
+                  x={x} y={y + 4}
+                  textAnchor="middle"
+                  fontSize={9}
+                  fontFamily="DM Sans, sans-serif"
+                  fontWeight={600}
+                  fill={color}
+                  style={{ cursor: 'pointer', pointerEvents: 'none' }}
+                >
+                  {label}
+                </text>
+              </a>
+            </g>
+          );
+        })}
+      </svg>
+
+      <p style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK_MUTED, margin: '8px 0 0', fontStyle: 'italic' }}>
+        Bubble size = annual spend. X = adoption rate. Y = value captured trailing 12-mo. Click any bubble to open program detail.
+      </p>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Pressure summary row (inline within program row)
 // ---------------------------------------------------------------------------
 
@@ -559,6 +782,9 @@ export function TowerIndexPage() {
         {/* KPI band */}
         <KpiBand kpis={kpis} />
 
+        {/* Portfolio matrix — bubble chart */}
+        <ProgramBubbleChart programs={programs} />
+
         {/* AI program portfolio table */}
         <ProgramTable programs={filteredPrograms} />
 
@@ -612,6 +838,19 @@ export function TowerIndexPage() {
             }}
           >
             Risk lens →
+          </Link>
+          <Link
+            href="/tower/lens/cost"
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 10,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: SHELL.INK_SOFT,
+              textDecoration: 'none',
+            }}
+          >
+            Cost lens →
           </Link>
           <Link
             href="/tower/activity"

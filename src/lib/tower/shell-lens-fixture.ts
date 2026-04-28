@@ -59,3 +59,125 @@ export const RISK_AGENT_VOICE = {
     { letter: 'C' as const, text: 'Review IVR migration sprint status', detail: 'Medium · APX-CC-2026 critical path · no buffer' },
   ],
 };
+
+// ─── Cost Lens ────────────────────────────────────────────────────────────────
+
+export interface CostItem {
+  id: string;
+  program: string;
+  vendor: string;
+  programType: string;
+  annualSpend: number;
+  spendVariancePct: number;     // +/- vs plan; positive = over budget
+  pctOfAiBudget: number;        // 0–1
+  effectivePerUserCostMo: number | null; // USD/user/month; null if no active users
+  topDept: string;
+  deptAllocation: ReadonlyArray<{ dept: string; pct: number }>;
+  trajectory: 'up' | 'flat' | 'down';
+  renewalInDays: number | null;
+}
+
+export const COST_ITEMS: readonly CostItem[] = [
+  {
+    id: 'cost-m365',
+    program: 'M365 Copilot',
+    vendor: 'Microsoft',
+    programType: 'Productivity agent',
+    annualSpend: 5_000_000,
+    spendVariancePct: 0,
+    pctOfAiBudget: 0.432,
+    effectivePerUserCostMo: Math.round(5_000_000 / 2976 / 12),
+    topDept: 'Enterprise-wide',
+    deptAllocation: [
+      { dept: 'Engineering', pct: 0.31 },
+      { dept: 'Finance', pct: 0.14 },
+      { dept: 'Legal', pct: 0.12 },
+      { dept: 'Operations', pct: 0.24 },
+      { dept: 'Other', pct: 0.19 },
+    ],
+    trajectory: 'flat',
+    renewalInDays: 47,
+  },
+  {
+    id: 'cost-claude',
+    program: 'Claude Code',
+    vendor: 'Anthropic',
+    programType: 'Coding agent',
+    annualSpend: 400_000,
+    spendVariancePct: -0.05,
+    pctOfAiBudget: 0.035,
+    effectivePerUserCostMo: Math.round(400_000 / 176 / 12),
+    topDept: 'Engineering',
+    deptAllocation: [
+      { dept: 'Engineering', pct: 0.92 },
+      { dept: 'Platform', pct: 0.08 },
+    ],
+    trajectory: 'up',
+    renewalInDays: 214,
+  },
+  {
+    id: 'cost-now',
+    program: 'ServiceNow Now Assist',
+    vendor: 'ServiceNow',
+    programType: 'Service desk AI',
+    annualSpend: 2_800_000,
+    spendVariancePct: 0.12,
+    pctOfAiBudget: 0.242,
+    effectivePerUserCostMo: null,
+    topDept: 'IT Operations',
+    deptAllocation: [
+      { dept: 'IT Operations', pct: 0.78 },
+      { dept: 'HR', pct: 0.22 },
+    ],
+    trajectory: 'flat',
+    renewalInDays: 112,
+  },
+  {
+    id: 'cost-joule',
+    program: 'SAP Joule',
+    vendor: 'SAP',
+    programType: 'ERP agent',
+    annualSpend: 1_500_000,
+    spendVariancePct: 0.03,
+    pctOfAiBudget: 0.130,
+    effectivePerUserCostMo: null,
+    topDept: 'Finance',
+    deptAllocation: [
+      { dept: 'Finance', pct: 0.55 },
+      { dept: 'Procurement', pct: 0.28 },
+      { dept: 'Supply Chain', pct: 0.17 },
+    ],
+    trajectory: 'flat',
+    renewalInDays: 548,
+  },
+  {
+    id: 'cost-fow',
+    program: 'AI Fluency Program',
+    vendor: 'Internal',
+    programType: 'Future-of-work',
+    annualSpend: 2_000_000,
+    spendVariancePct: 0.08,
+    pctOfAiBudget: 0.173,
+    effectivePerUserCostMo: Math.round(2_000_000 / 3040 / 12),
+    topDept: 'All departments',
+    deptAllocation: [
+      { dept: 'Engineering', pct: 0.22 },
+      { dept: 'Operations', pct: 0.28 },
+      { dept: 'Finance', pct: 0.18 },
+      { dept: 'HR', pct: 0.16 },
+      { dept: 'Other', pct: 0.16 },
+    ],
+    trajectory: 'up',
+    renewalInDays: null,
+  },
+];
+
+export const COST_AGENT_VOICE = {
+  quote: 'Total AI spend $11.7M annualized. Microsoft concentration risk: 43.2% of budget across M365 Copilot. Claude Code is the highest ROI at $140/user/mo effective — expand before Microsoft renewal (47 days). Now Assist is 12% over plan with no active-user denominator to absorb cost.',
+  agentContext: 'Nexus · Cost Lens',
+  actions: [
+    { letter: 'A' as const, text: 'Prepare Microsoft renewal brief', detail: '47 days · $5M at stake · Copilot + M365 bundle leverage' },
+    { letter: 'B' as const, text: 'Review Now Assist cost overrun', detail: '+12% vs plan · $336K annualized variance · no user base to dilute' },
+    { letter: 'C' as const, text: 'Model Claude Code expansion ROI', detail: '280 → 350 seats · $57K incremental spend · $570K projected lift' },
+  ],
+};
