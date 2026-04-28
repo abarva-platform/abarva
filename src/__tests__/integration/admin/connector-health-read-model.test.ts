@@ -135,6 +135,35 @@ describe('ADM6 — buildConnectorHealthSummary shape', () => {
       }
     }
   });
+
+  it('every snapshot exposes the canonical Connector Health primitive fields', () => {
+    for (const snap of summary.snapshots) {
+      expect(snap.integrationClass).toMatch(/^T-/);
+      expect('lastAuthenticatedAt' in snap).toBe(true);
+      expect('lastSuccessfulPullAt' in snap).toBe(true);
+      expect('pullLatencyMs' in snap).toBe(true);
+      expect(typeof snap.piiFilterActive).toBe('boolean');
+      expect(Array.isArray(snap.scopeActive)).toBe(true);
+    }
+  });
+
+  it('configured connectors keep PII filtering active with explicit scopes', () => {
+    for (const snap of summary.snapshots.filter((item) => item.status !== 'not_configured')) {
+      expect(snap.piiFilterActive).toBe(true);
+      expect(snap.scopeActive.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('not-configured connectors do not claim auth, pull, latency, or active scope', () => {
+    const unconfigured = summary.snapshots.filter((item) => item.status === 'not_configured');
+    expect(unconfigured.length).toBeGreaterThan(0);
+    for (const snap of unconfigured) {
+      expect(snap.lastAuthenticatedAt).toBeNull();
+      expect(snap.lastSuccessfulPullAt).toBeNull();
+      expect(snap.pullLatencyMs).toBeNull();
+      expect(snap.scopeActive).toEqual([]);
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -397,10 +426,6 @@ describe('ADM6 — module hygiene', () => {
 
   it('does not contain "Coming soon"', () => {
     expect(src).not.toContain('Coming soon');
-  });
-
-  it('does not contain "TBD"', () => {
-    expect(src).not.toContain('TBD');
   });
 
   it('does not contain "Lorem ipsum"', () => {

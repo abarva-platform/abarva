@@ -14,6 +14,15 @@ export type ConnectorHealthStatus =
   | 'unreachable_stub'
   | 'not_configured';
 
+export type ConnectorIntegrationClass =
+  | 'T-MS-GRAPH'
+  | 'T-GITHUB'
+  | 'T-ANTHROPIC'
+  | 'T-SERVICENOW'
+  | 'T-SAP'
+  | 'T-RSS'
+  | 'T-CUSTOM';
+
 export type ConnectorHealthCheckKind =
   | 'connectivity'
   | 'auth'
@@ -32,11 +41,17 @@ export interface ConnectorHealthCheck {
 export interface ConnectorHealthSnapshot {
   connectorId: string;
   connectorLabel: string;
+  integrationClass: ConnectorIntegrationClass;
   status: ConnectorHealthStatus;
   healthChecks: readonly ConnectorHealthCheck[];
   overallPassed: number;
   totalChecks: number;
   lastSyncAtStub: string;
+  lastAuthenticatedAt: string | null;
+  lastSuccessfulPullAt: string | null;
+  pullLatencyMs: number | null;
+  piiFilterActive: boolean;
+  scopeActive: readonly string[];
   healthNote: string;
   deterministicSeed: true;
 }
@@ -59,6 +74,7 @@ const CONNECTOR_SNAPSHOTS: readonly ConnectorHealthSnapshot[] = [
   {
     connectorId: 'conn-erp',
     connectorLabel: 'ERP / Finance System',
+    integrationClass: 'T-SAP',
     status: 'unreachable_stub',
     healthChecks: [
       {
@@ -79,6 +95,11 @@ const CONNECTOR_SNAPSHOTS: readonly ConnectorHealthSnapshot[] = [
     overallPassed: 0,
     totalChecks: 2,
     lastSyncAtStub: 'never',
+    lastAuthenticatedAt: null,
+    lastSuccessfulPullAt: null,
+    pullLatencyMs: null,
+    piiFilterActive: true,
+    scopeActive: ['finance.purchase_orders', 'finance.invoices'],
     healthNote:
       'ERP connector is unreachable. Connectivity and authentication checks failed. ' +
       'Verify API endpoint and network configuration before retrying.',
@@ -87,6 +108,7 @@ const CONNECTOR_SNAPSHOTS: readonly ConnectorHealthSnapshot[] = [
   {
     connectorId: 'conn-spend-analytics',
     connectorLabel: 'Spend Analytics Platform',
+    integrationClass: 'T-CUSTOM',
     status: 'degraded_stub',
     healthChecks: [
       {
@@ -116,6 +138,11 @@ const CONNECTOR_SNAPSHOTS: readonly ConnectorHealthSnapshot[] = [
     overallPassed: 2,
     totalChecks: 3,
     lastSyncAtStub: '2026-04-25T02:00:00Z',
+    lastAuthenticatedAt: '2026-04-28T05:42:00Z',
+    lastSuccessfulPullAt: '2026-04-25T02:00:00Z',
+    pullLatencyMs: 1840,
+    piiFilterActive: true,
+    scopeActive: ['spend.suppliers', 'spend.categories', 'spend.amounts'],
     healthNote:
       'Spend Analytics connector is reachable and authenticated but the last sync ' +
       'is overdue. Data freshness is degraded — investigate batch scheduler.',
@@ -124,6 +151,7 @@ const CONNECTOR_SNAPSHOTS: readonly ConnectorHealthSnapshot[] = [
   {
     connectorId: 'conn-contract-mgmt',
     connectorLabel: 'Contract Management System',
+    integrationClass: 'T-CUSTOM',
     status: 'not_configured',
     healthChecks: [
       {
@@ -151,6 +179,11 @@ const CONNECTOR_SNAPSHOTS: readonly ConnectorHealthSnapshot[] = [
     overallPassed: 0,
     totalChecks: 3,
     lastSyncAtStub: 'never',
+    lastAuthenticatedAt: null,
+    lastSuccessfulPullAt: null,
+    pullLatencyMs: null,
+    piiFilterActive: false,
+    scopeActive: [],
     healthNote:
       'Contract Management connector has not been configured. ' +
       'Provide endpoint URL and API credentials to enable health checks.',
@@ -159,6 +192,7 @@ const CONNECTOR_SNAPSHOTS: readonly ConnectorHealthSnapshot[] = [
   {
     connectorId: 'conn-market-intel',
     connectorLabel: 'Market Intelligence Feed',
+    integrationClass: 'T-RSS',
     status: 'healthy_stub',
     healthChecks: [
       {
@@ -200,12 +234,18 @@ const CONNECTOR_SNAPSHOTS: readonly ConnectorHealthSnapshot[] = [
     overallPassed: 5,
     totalChecks: 5,
     lastSyncAtStub: '2026-04-20T09:00:00Z',
+    lastAuthenticatedAt: '2026-04-28T06:10:00Z',
+    lastSuccessfulPullAt: '2026-04-20T09:00:00Z',
+    pullLatencyMs: 620,
+    piiFilterActive: true,
+    scopeActive: ['rss.vendor_announcements', 'rss.market_signals'],
     healthNote: 'Market Intelligence connector is healthy. All 5 checks passed.',
     deterministicSeed: true,
   },
   {
     connectorId: 'conn-identity',
     connectorLabel: 'Identity / SSO',
+    integrationClass: 'T-MS-GRAPH',
     status: 'healthy_stub',
     healthChecks: [
       {
@@ -247,6 +287,11 @@ const CONNECTOR_SNAPSHOTS: readonly ConnectorHealthSnapshot[] = [
     overallPassed: 5,
     totalChecks: 5,
     lastSyncAtStub: '2026-04-28T06:00:00Z',
+    lastAuthenticatedAt: '2026-04-28T06:00:00Z',
+    lastSuccessfulPullAt: '2026-04-28T06:00:00Z',
+    pullLatencyMs: 410,
+    piiFilterActive: true,
+    scopeActive: ['identity.users', 'identity.groups', 'm365.copilot_usage'],
     healthNote: 'Identity connector is healthy. All 5 checks passed.',
     deterministicSeed: true,
   },
