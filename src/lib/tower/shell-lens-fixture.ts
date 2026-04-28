@@ -48,14 +48,15 @@ export const RISK_ITEMS: RiskItem[] = [
   { id: 'r2', title: 'Vendor B SOC-2 report pending', program: 'AMS Vendor Consolidation 2026', displayId: 'AMS-2026', riskType: 'vendor', severity: 'medium', status: 'open', description: 'Vendor B has not submitted SOC-2 Type II report. BAFO evaluation cannot be fully completed without it.', mitigation: 'Escalate to Vendor B procurement contact — deadline Apr 30', owner: 'Priya Sharma' },
   { id: 'r3', title: 'AI Cloud Spend over budget', program: 'Multiple programs', displayId: 'Cross-program', riskType: 'budget', severity: 'high', status: 'open', description: 'LLM inference spend at $2.4M vs $1.8M budget (+33%). Rate card negotiation is the highest-leverage action.', mitigation: 'Negotiate LLM provider rate card — estimated $180K/yr recovery', owner: 'David Chen' },
   { id: 'r4', title: 'IVR migration dependency risk', program: 'Contact Center AI', displayId: 'APX-CC-2026', riskType: 'execution', severity: 'medium', status: 'watching', description: 'IVR migration is on the critical path for Build gate. 3 sprints remaining — no buffer.', mitigation: 'Weekly sprint review tracking. Escalate if slips.', owner: 'Marcus Webb' },
+  { id: 'r5', title: 'Vendor C integration contract unsigned', program: 'Apex Retail CDP Activation', displayId: 'APX-CDP-2026', riskType: 'vendor', severity: 'medium', status: 'open', description: 'Integration contract with Vendor C is unsigned — a required criterion for the P3→P4 Build gate. Architecture sprint is active but contract sign-off is blocking gate approval.', mitigation: 'Legal review in progress. Target signature May 2 to maintain architecture sprint velocity.', owner: 'David Chen' },
 ];
 
 export const RISK_AGENT_VOICE = {
-  quote: '3 open risk items — 1 high, 2 medium. AI Cloud Spend is the most urgent. CDP privacy boundary resolved with Design gate approval on Apr 27.',
+  quote: '4 open risk items — 1 high, 3 medium. AI Cloud Spend and Vendor C contract are the most urgent. CDP privacy boundary was resolved at the Design gate on Apr 27.',
   agentContext: 'Atlas · Risk Lens',
   actions: [
     { letter: 'A' as const, text: 'Negotiate LLM rate card', detail: 'High severity · $180K/yr recovery potential' },
-    { letter: 'B' as const, text: 'Chase Vendor B SOC-2', detail: 'Medium · BAFO evaluation blocked' },
-    { letter: 'C' as const, text: 'Review IVR migration sprint status', detail: 'Medium · APX-CC-2026 critical path · no buffer' },
+    { letter: 'B' as const, text: 'Close Vendor C contract', detail: 'CDP Build gate blocked · target signature May 2' },
+    { letter: 'C' as const, text: 'Chase Vendor B SOC-2', detail: 'Medium · BAFO evaluation blocked until Apr 30' },
   ],
 };
