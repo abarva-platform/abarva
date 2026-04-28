@@ -9,7 +9,7 @@
 | S4 | Sub-routes refresh | ✅ shipped | `source/wave-S4/sub-routes-refresh` | #565 | 2026-04-27 |
 | S5 | Commercial-intel convergence | ✅ shipped | `source/wave-S5/commercial-intel-convergence` | #567 | 2026-04-27 |
 | S6a | Cross-surface storyline + states | ✅ shipped | `source/wave-S6a/cross-surface-states` | #568 | 2026-04-27 |
-| S6b | Intake flow wizard | 🟡 in-progress | `source/wave-S6b/intake-flow` | — | — |
+| S6b | Intake flow wizard | ✅ shipped | `source/wave-S6b/intake-flow` | #569 | 2026-04-27 |
 
 ## Catalog entries shipped per wave
 
@@ -28,4 +28,4 @@
 
 Wave N+1 may not begin until Wave N is merged, CI green, and S-SMOKE-AMS passes.
 
-_Last updated: 2026-04-27 · Wave S6b in-progress_
+_Last updated: 2026-04-27 · All waves shipped ✅_
