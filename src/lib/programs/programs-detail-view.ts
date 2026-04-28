@@ -188,6 +188,61 @@ const APX_LPM_2026_P2_WORKBENCH: ProgramWorkbenchContent = {
   ],
 };
 
+// ─── Generic P5 Activate workbench — intentional locked/preview copy ─────────
+// Shown when viewing P5 for any program that doesn't have a flagship override.
+// Covers both: a program at P4 peeking ahead, and a program at P1–P3 seeing P5.
+
+const GENERIC_P5_ACTIVATE_WORKBENCH: ProgramWorkbenchContent = {
+  title: 'P5 Activate · Preview',
+  prose:
+    'Activate is the controlled rollout phase. When Build gate clears, the program enters a structured launch runway — typically 3–6 weeks covering phased rollout, change management, and early signal capture. Atlas begins tracking value realization metrics here. No action is required until P4 Build gate approval.',
+  actionsLabel: 'Preview path',
+  actions: [
+    {
+      letter: 'A',
+      text: 'Clear Build gate first',
+      detail: 'Activate unlocks automatically when all P4 gate criteria are met',
+    },
+    {
+      letter: 'B',
+      text: 'Preview Activate criteria',
+      detail: 'Phased rollout plan, change management sign-off, early signal baseline',
+    },
+    {
+      letter: 'C',
+      text: 'Prepare launch readiness',
+      detail: 'Stakeholder comms, training plan, and rollback criteria',
+    },
+  ],
+};
+
+// ─── Generic P6 Operate workbench — intentional locked/preview copy ───────────
+// Shown when viewing P6 for any program that doesn't have a flagship override.
+
+const GENERIC_P6_OPERATE_WORKBENCH: ProgramWorkbenchContent = {
+  title: 'P6 Operate · Preview',
+  prose:
+    'Operate is the steady-state phase. When a program reaches Operate, Atlas tracks ongoing value realization, model performance (if applicable), and quarterly review cycles. Sentinel monitors for drift and risk signals. This phase has no defined end-gate — it continues until program retirement or material scope change.',
+  actionsLabel: 'Preview path',
+  actions: [
+    {
+      letter: 'A',
+      text: 'Complete Activate phase first',
+      detail: 'Operate unlocks when Activate gate is approved and live signal is stable',
+    },
+    {
+      letter: 'B',
+      text: 'Preview value metrics plan',
+      detail: 'Atlas will track forecast accuracy, cost savings, or adoption KPIs',
+    },
+    {
+      letter: 'C',
+      text: 'See operating model template',
+      detail: 'Quarterly review cadence, drift thresholds, and escalation criteria',
+    },
+  ],
+};
+
 // ─── APX-CDP-2026 P3 Design · post-gate-approval view ────────────────────────
 
 const APX_CDP_2026_P3_WORKBENCH: ProgramWorkbenchContent = {
@@ -269,6 +324,16 @@ function buildWorkbenchContent(
   // APX-LPM-2026 P2 Synthesis — solution options under review
   if (programId === 'apx-lpm-2026' && viewingPhase === 2 && viewingPhaseState === 'current') {
     return APX_LPM_2026_P2_WORKBENCH;
+  }
+  // Generic P5 Activate preview — for any program without a flagship P5 override.
+  // APX-CC-2026 has its own P5 workbench and is already handled above.
+  if (viewingPhase === 5 && viewingPhaseState !== 'current') {
+    return GENERIC_P5_ACTIVATE_WORKBENCH;
+  }
+  // Generic P6 Operate preview — for any program without a flagship P6 override.
+  // APX-DFV2-2025 has its own P6 workbench and is already handled above.
+  if (viewingPhase === 6 && viewingPhaseState !== 'current') {
+    return GENERIC_P6_OPERATE_WORKBENCH;
   }
   // Demo flagship override — P2 Synthesis active view
   if (programId === 'apx-cdp-2026' && viewingPhase === 2 && viewingPhaseState === 'current') {
@@ -414,6 +479,34 @@ function buildPhasePanel(
           hasContradiction: true,
           provenanceNote: 'Deterministic cost model · pre-synthesis baseline',
         },
+      ],
+    };
+  }
+  // Generic P5 Activate phase panel — intentional locked/pending copy
+  // APX-CC-2026 P5 is handled above; this covers all other programs.
+  if (viewingPhase === 5 && viewingPhaseState !== 'current') {
+    return {
+      blockerNote:
+        'P5 Activate entry requires P4 Build gate approval. The gate criteria are managed in the active Build phase.',
+      gateCriteria: [
+        { criterion: 'P4 Build gate formally approved', met: false },
+        { criterion: 'Activate launch plan reviewed by sponsor', met: false },
+        { criterion: 'Change management plan filed', met: false },
+        { criterion: 'Rollback criteria documented', met: false },
+      ],
+    };
+  }
+  // Generic P6 Operate phase panel — intentional locked/pending copy
+  // APX-DFV2-2025 P6 is handled above; this covers all other programs.
+  if (viewingPhase === 6 && viewingPhaseState !== 'current') {
+    return {
+      blockerNote:
+        'P6 Operate entry requires P5 Activate gate approval. Programs enter Operate once live signal is stable and value baseline is confirmed.',
+      gateCriteria: [
+        { criterion: 'P5 Activate gate formally approved', met: false },
+        { criterion: 'Live signal stable for 2+ weeks', met: false },
+        { criterion: 'Value baseline confirmed by Atlas', met: false },
+        { criterion: 'Operating runbook filed', met: false },
       ],
     };
   }
