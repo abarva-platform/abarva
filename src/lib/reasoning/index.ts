@@ -110,3 +110,10 @@ export type {
   CascadeGraphNode,
   CascadeGraphEdge,
 } from './cross-instance-reasoner';
+
+// Mission derivation — auto-derives mission queue entries from pending gates
+export {
+  deriveMissionsFromInstance,
+  deriveAllMissions,
+} from './mission-derivation';
+export type { DerivedMission, DerivedMissionPriority } from './mission-derivation';
