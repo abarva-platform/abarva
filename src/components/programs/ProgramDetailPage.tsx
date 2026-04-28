@@ -9,7 +9,7 @@ import { AgentColumn } from '@/components/shell/AgentColumn';
 import { PhaseStrip } from '@/components/shell/PhaseStrip';
 import type { PhaseStripSlot } from '@/components/shell/PhaseStrip';
 import { SHELL } from '@/lib/shell/shell-tokens';
-import type { ProgramDetailView, ProgramPhaseId } from '@/lib/programs/programs-types';
+import type { ProgramDetailView, ProgramPhaseId, EvidenceItem } from '@/lib/programs/programs-types';
 import { PHASE_LABEL_MAP } from '@/lib/programs/programs-fixture';
 import { LinkedProgramChip } from '@/components/shell/LinkedProgramChip';
 
@@ -544,11 +544,500 @@ function DeliverablesList({
   );
 }
 
+// ─── Evidence section ─────────────────────────────────────────────────────────
+
+interface EvidenceSectionProps {
+  items: EvidenceItem[];
+  onView: (item: EvidenceItem) => void;
+}
+
+function EvidenceSection({ items, onView }: EvidenceSectionProps) {
+  function confidenceDotColor(confidence: EvidenceItem['confidence']): string {
+    if (confidence === 'high') return SHELL.MINT_TEXT;
+    if (confidence === 'medium') return SHELL.AMBER_DOT;
+    return SHELL.RUST_TEXT;
+  }
+
+  return (
+    <div>
+      <div
+        style={{
+          fontFamily: SHELL.MONO,
+          fontSize: 9,
+          fontWeight: 700,
+          letterSpacing: '0.14em',
+          textTransform: 'uppercase',
+          color: SHELL.INK_MUTED,
+          marginBottom: 8,
+        }}
+      >
+        Evidence · {items.length} citations
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {items.map((item) => (
+          <div
+            key={item.id}
+            onClick={() => onView(item)}
+            style={{
+              padding: '8px 12px',
+              borderRadius: 6,
+              border: `1px solid ${SHELL.CARD_LINE}`,
+              background: SHELL.CARD_WHITE,
+              marginBottom: 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              cursor: 'pointer',
+            }}
+          >
+            {/* Confidence dot */}
+            <div
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                background: confidenceDotColor(item.confidence),
+                flexShrink: 0,
+              }}
+            />
+            {/* Citation */}
+            <span
+              style={{
+                fontFamily: SHELL.SANS,
+                fontSize: 12,
+                color: SHELL.INK,
+                flex: 1,
+                lineHeight: 1.4,
+              }}
+            >
+              {item.citation}
+            </span>
+            {/* Conflict badge */}
+            {item.hasContradiction && (
+              <span
+                style={{
+                  background: SHELL.PEACH_BG,
+                  color: SHELL.PEACH_TEXT,
+                  fontFamily: SHELL.MONO,
+                  fontSize: 9,
+                  padding: '2px 7px',
+                  borderRadius: 4,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                ⚠ conflict
+              </span>
+            )}
+            {/* View arrow */}
+            <span
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 10,
+                color: SHELL.INK_MUTED,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              View →
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Evidence drawer ──────────────────────────────────────────────────────────
+
+interface EvidenceDrawerProps {
+  item: EvidenceItem;
+  onClose: () => void;
+  onResolveContradiction: (item: EvidenceItem) => void;
+}
+
+function EvidenceDrawer({ item, onClose, onResolveContradiction }: EvidenceDrawerProps) {
+  function confidenceDotColor(confidence: EvidenceItem['confidence']): string {
+    if (confidence === 'high') return SHELL.MINT_TEXT;
+    if (confidence === 'medium') return SHELL.AMBER_DOT;
+    return SHELL.RUST_TEXT;
+  }
+
+  function confidenceLabel(confidence: EvidenceItem['confidence']): string {
+    if (confidence === 'high') return 'High confidence';
+    if (confidence === 'medium') return 'Medium confidence';
+    return 'Low confidence';
+  }
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        right: 0,
+        bottom: 0,
+        width: 420,
+        background: SHELL.PAPER,
+        borderLeft: `1px solid ${SHELL.CARD_LINE}`,
+        zIndex: 900,
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: '-4px 0 24px rgba(0,0,0,0.10)',
+      }}
+    >
+      {/* Header */}
+      <div
+        style={{
+          height: 48,
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          padding: '0 20px',
+          borderBottom: `1px solid ${SHELL.CARD_LINE}`,
+          flexShrink: 0,
+        }}
+      >
+        <span
+          style={{
+            fontFamily: SHELL.MONO,
+            fontSize: 10,
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            color: SHELL.INK_MUTED,
+          }}
+        >
+          Evidence Citation
+        </span>
+        <div style={{ flex: 1 }} />
+        <button
+          onClick={onClose}
+          style={{
+            fontFamily: SHELL.SANS,
+            fontSize: 20,
+            color: SHELL.INK_SOFT,
+            cursor: 'pointer',
+            background: 'none',
+            border: 'none',
+            lineHeight: 1,
+            padding: 0,
+          }}
+        >
+          ×
+        </button>
+      </div>
+
+      {/* Body */}
+      <div
+        style={{
+          flex: 1,
+          overflow: 'auto',
+          padding: '24px 24px',
+        }}
+      >
+        {/* Citation */}
+        <div
+          style={{
+            fontFamily: SHELL.SERIF,
+            fontSize: 16,
+            color: SHELL.INK,
+            fontWeight: 'bold',
+            marginBottom: 4,
+          }}
+        >
+          {item.citation}
+        </div>
+
+        {/* Source */}
+        <div
+          style={{
+            fontFamily: SHELL.MONO,
+            fontSize: 9,
+            color: SHELL.INK_MUTED,
+            textTransform: 'uppercase',
+            letterSpacing: '0.12em',
+            marginBottom: 16,
+          }}
+        >
+          {item.source}
+        </div>
+
+        {/* Excerpt */}
+        <div
+          style={{
+            fontFamily: SHELL.SANS,
+            fontSize: 14,
+            color: SHELL.INK,
+            lineHeight: 1.7,
+            borderLeft: `3px solid ${SHELL.CARD_LINE}`,
+            paddingLeft: 14,
+            marginBottom: 20,
+          }}
+        >
+          {item.excerpt}
+        </div>
+
+        {/* Confidence */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            marginBottom: item.hasContradiction ? 20 : 0,
+          }}
+        >
+          <div
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: confidenceDotColor(item.confidence),
+              flexShrink: 0,
+            }}
+          />
+          <span
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 9,
+              textTransform: 'uppercase',
+              letterSpacing: '0.12em',
+              color: SHELL.INK_MUTED,
+            }}
+          >
+            {confidenceLabel(item.confidence)}
+          </span>
+        </div>
+
+        {/* Contradiction box */}
+        {item.hasContradiction && (
+          <div
+            style={{
+              background: SHELL.PEACH_BG,
+              border: `1px solid ${SHELL.PEACH_LINE}`,
+              borderRadius: 8,
+              padding: '12px 14px',
+            }}
+          >
+            <div
+              style={{
+                fontFamily: SHELL.SANS,
+                fontSize: 13,
+                color: SHELL.PEACH_TEXT,
+                marginBottom: 10,
+              }}
+            >
+              ⚠ Conflicting evidence detected
+            </div>
+            <button
+              onClick={() => {
+                onClose();
+                onResolveContradiction(item);
+              }}
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 10,
+                color: SHELL.INK,
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                letterSpacing: '0.06em',
+              }}
+            >
+              Resolve contradiction →
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Contradiction modal ──────────────────────────────────────────────────────
+
+interface ContradictionModalProps {
+  item: EvidenceItem;
+  onResolve: (resolution: string) => void;
+  onClose: () => void;
+}
+
+function ContradictionModal({ item, onResolve, onClose }: ContradictionModalProps) {
+  const [selected, setSelected] = useState<number | null>(null);
+  const [note, setNote] = useState('');
+
+  const options = [
+    'Accept this evidence — discard conflicting item',
+    'Accept conflicting item — flag this as superseded',
+    'Defer — flag both items for sponsor review',
+  ];
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.35)',
+        zIndex: 1100,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <div
+        style={{
+          background: SHELL.PAPER,
+          borderRadius: 12,
+          padding: '28px 32px',
+          maxWidth: 500,
+          width: '90%',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+        }}
+      >
+        {/* Header */}
+        <div style={{ marginBottom: 20 }}>
+          <div
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 10,
+              color: SHELL.INK_MUTED,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              marginBottom: 6,
+            }}
+          >
+            Contradiction
+          </div>
+          <div
+            style={{
+              fontFamily: SHELL.SERIF,
+              fontSize: 20,
+              color: SHELL.INK,
+              lineHeight: 1.25,
+            }}
+          >
+            Conflicting evidence detected
+          </div>
+        </div>
+
+        {/* Description */}
+        <div
+          style={{
+            fontFamily: SHELL.SANS,
+            fontSize: 13,
+            color: SHELL.INK,
+            marginBottom: 20,
+            lineHeight: 1.5,
+          }}
+        >
+          {item.citation}
+        </div>
+
+        {/* Resolution options */}
+        <div style={{ marginBottom: 20 }}>
+          {options.map((opt, i) => (
+            <div
+              key={`opt-${i}`}
+              onClick={() => setSelected(i)}
+              style={{
+                padding: '10px 14px',
+                borderRadius: 6,
+                border: `1.5px solid ${selected === i ? SHELL.INK : SHELL.CARD_LINE}`,
+                background: selected === i ? SHELL.PAPER_DEEP : SHELL.CARD_WHITE,
+                cursor: 'pointer',
+                marginBottom: 6,
+                fontFamily: SHELL.SANS,
+                fontSize: 13,
+                color: SHELL.INK,
+                lineHeight: 1.4,
+              }}
+            >
+              {opt}
+            </div>
+          ))}
+        </div>
+
+        {/* Note textarea */}
+        <div style={{ marginBottom: 24 }}>
+          <div
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 9,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: SHELL.INK_MUTED,
+              marginBottom: 6,
+            }}
+          >
+            Resolution Note (optional)
+          </div>
+          <textarea
+            rows={4}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            style={{
+              fontFamily: SHELL.SANS,
+              fontSize: 13,
+              background: SHELL.CARD_WHITE,
+              border: `1px solid ${SHELL.CARD_LINE}`,
+              borderRadius: 6,
+              padding: 10,
+              width: '100%',
+              boxSizing: 'border-box',
+              resize: 'vertical',
+              color: SHELL.INK,
+              outline: 'none',
+              lineHeight: 1.5,
+            }}
+            placeholder="Optional note about this resolution…"
+          />
+        </div>
+
+        {/* Buttons */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+          <button
+            onClick={onClose}
+            style={{
+              border: `1px solid ${SHELL.CARD_LINE}`,
+              background: 'transparent',
+              fontFamily: SHELL.SANS,
+              fontSize: 12,
+              padding: '8px 16px',
+              borderRadius: 6,
+              cursor: 'pointer',
+              color: SHELL.INK,
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              const resolution = selected !== null ? options[selected] : '';
+              onResolve(resolution + (note ? ` — ${note}` : ''));
+            }}
+            style={{
+              background: SHELL.INK,
+              color: SHELL.PAPER,
+              fontFamily: SHELL.SANS,
+              fontSize: 12,
+              padding: '8px 16px',
+              borderRadius: 6,
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            Record resolution
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
   const router = useRouter();
   const [showGateModal, setShowGateModal] = useState(false);
+  const [evidenceDrawerItem, setEvidenceDrawerItem] = useState<EvidenceItem | null>(null);
+  const [contradictionItem, setContradictionItem] = useState<EvidenceItem | null>(null);
 
   const phaseLabel = PHASE_LABEL_MAP[view.viewingPhase] ?? `Phase ${view.viewingPhase}`;
 
@@ -655,6 +1144,16 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
           </div>
         )}
 
+        {/* Evidence */}
+        {view.phasePanel.evidenceItems && view.phasePanel.evidenceItems.length > 0 && (
+          <div style={{ marginBottom: 20 }}>
+            <EvidenceSection
+              items={view.phasePanel.evidenceItems}
+              onView={(item) => setEvidenceDrawerItem(item)}
+            />
+          </div>
+        )}
+
         {/* Deliverables */}
         {view.phasePanel.deliverables && view.phasePanel.deliverables.length > 0 && (
           <div style={{ marginBottom: 20 }}>
@@ -708,6 +1207,30 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
             setShowGateModal(false);
           }}
           onClose={() => setShowGateModal(false)}
+        />
+      )}
+
+      {/* Evidence drawer */}
+      {evidenceDrawerItem && (
+        <EvidenceDrawer
+          item={evidenceDrawerItem}
+          onClose={() => setEvidenceDrawerItem(null)}
+          onResolveContradiction={(item) => {
+            setEvidenceDrawerItem(null);
+            setContradictionItem(item);
+          }}
+        />
+      )}
+
+      {/* Contradiction modal */}
+      {contradictionItem && (
+        <ContradictionModal
+          item={contradictionItem}
+          onResolve={(res) => {
+            console.log('Resolved', res);
+            setContradictionItem(null);
+          }}
+          onClose={() => setContradictionItem(null)}
         />
       )}
     </AppShell>
