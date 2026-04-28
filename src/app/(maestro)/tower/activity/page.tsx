@@ -1,10 +1,10 @@
-import { ActivityPage } from '@/components/tower/ActivityPage';
+import { DecisionsIndexPage } from '@/components/tower/DecisionsIndexPage';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Cross-program activity · Tower',
+  title: 'Decisions log · AI Control Tower',
 };
 
 export default function Page() {
-  return <ActivityPage />;
+  return <DecisionsIndexPage />;
 }
