@@ -412,6 +412,7 @@ export function ProgramScopePage() {
         quote={scope.agentQuote}
         agentContext={scope.agentContext}
         actions={scope.actions}
+        surface="tower"
       />
 
       <div

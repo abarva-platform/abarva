@@ -235,6 +235,7 @@ export function ProgramOriginationPage({ tenantSlug: _tenantSlug }: ProgramOrigi
         agentContext="Origination Brief · Steward active"
         actions={stewardActions}
         inputPlaceholder="Ask Steward..."
+        surface="programs"
       />
 
       <div

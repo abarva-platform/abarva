@@ -201,6 +201,7 @@ export function ActivityPage() {
         quote={ACTIVITY_AGENT_VOICE.quote}
         agentContext={ACTIVITY_AGENT_VOICE.agentContext}
         actions={ACTIVITY_AGENT_VOICE.actions}
+        surface="tower"
       />
 
       {/* Work pane */}

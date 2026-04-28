@@ -315,6 +315,7 @@ export function OutcomePage() {
         quote={OUTCOME_AGENT_VOICE.quote}
         agentContext={OUTCOME_AGENT_VOICE.agentContext}
         actions={OUTCOME_AGENT_VOICE.actions}
+        surface="tower"
       />
 
       <div

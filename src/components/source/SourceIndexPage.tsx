@@ -402,6 +402,7 @@ function SourceEmptyState() {
           { letter: 'B', text: 'Browse event templates', detail: 'Pre-configured event structures for common source types' },
           { letter: 'C', text: 'Import from prior system', detail: 'Link existing procurement records from ServiceNow or SAP' },
         ]}
+        surface="source"
       />
       <div
         style={{
@@ -505,6 +506,7 @@ export function SourceIndexPage() {
         quote={SOURCE_INDEX_VIEW.agentQuote}
         agentContext={SOURCE_INDEX_VIEW.agentContext}
         actions={SOURCE_INDEX_VIEW.actions}
+        surface="source"
         onActionClick={(letter) => {
           if (letter === 'A') {
             firstEventRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -588,7 +590,7 @@ export function SourceIndexPage() {
         </div>
 
         {/* Vendor summary */}
-        <div style={{ marginBottom: 24 }}>
+        <div ref={firstEventRowRef} style={{ marginBottom: 24 }}>
           <div
             style={{
               fontFamily: SHELL.MONO,

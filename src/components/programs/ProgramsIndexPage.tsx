@@ -344,6 +344,12 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
         quote={view.portfolioWorkbench.prose}
         agentContext={view.portfolioWorkbench.title}
         actions={agentActions}
+        surface="programs"
+        onActionClick={(letter) => {
+          if (letter === 'A') router.push('/programs?filter=active');
+          else if (letter === 'B') router.push('/programs/new');
+          else if (letter === 'C') router.push('/programs?filter=gated');
+        }}
       />
 
       {/* Work pane */}

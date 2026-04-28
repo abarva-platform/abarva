@@ -34,6 +34,7 @@ export default function MaestroError({
             detail: 'Reach the AbarVa support team',
           },
         ]}
+        surface="home"
         onActionClick={(letter) => {
           if (letter === 'A') reset()
         }}

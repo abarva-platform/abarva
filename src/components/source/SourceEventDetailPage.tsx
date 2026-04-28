@@ -737,6 +737,7 @@ export function SourceEventDetailPage() {
         agentContext={STEWARD_CONTEXT}
         actions={STEWARD_ACTIONS}
         inputPlaceholder="Ask Steward about this event..."
+        surface="source"
       />
 
       {/* Work pane */}

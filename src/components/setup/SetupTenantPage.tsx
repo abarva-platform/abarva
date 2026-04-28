@@ -77,6 +77,7 @@ export function SetupTenantPage() {
         quote={TENANT_AGENT_VOICE.quote}
         agentContext={TENANT_AGENT_VOICE.agentContext}
         actions={TENANT_AGENT_VOICE.actions}
+        surface="setup"
       />
 
       {/* Work pane */}

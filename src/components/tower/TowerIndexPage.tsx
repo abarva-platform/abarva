@@ -700,6 +700,12 @@ export function TowerIndexPage() {
         quote={TOWER_INDEX_VIEW.agentQuote}
         agentContext={TOWER_INDEX_VIEW.agentContext}
         actions={TOWER_INDEX_VIEW.actions}
+        surface="tower"
+        onActionClick={(letter) => {
+          if (letter === 'A') router.push('/tower?filter=high');
+          else if (letter === 'B') router.push('/tower/programs/apx-cdp-2026');
+          else if (letter === 'C') setShowNewPressure(true);
+        }}
       />
 
       <div

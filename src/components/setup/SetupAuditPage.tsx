@@ -155,6 +155,7 @@ export function SetupAuditPage() {
         agent={{ initials: 'St', name: 'Steward', role: 'Setup Orchestrator' }}
         quote={AUDIT_AGENT_VOICE.quote}
         actions={AUDIT_AGENT_VOICE.actions}
+        surface="setup"
       />
 
       {/* Work pane */}

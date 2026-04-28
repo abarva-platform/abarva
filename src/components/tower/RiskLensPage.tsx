@@ -283,6 +283,7 @@ export function RiskLensPage() {
         quote={RISK_AGENT_VOICE.quote}
         agentContext={RISK_AGENT_VOICE.agentContext}
         actions={RISK_AGENT_VOICE.actions}
+        surface="tower"
       />
 
       <div

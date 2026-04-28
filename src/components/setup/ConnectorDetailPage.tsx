@@ -42,6 +42,7 @@ export function ConnectorDetailPage({ detail }: ConnectorDetailPageProps) {
         quote={detail.agentQuote}
         agentContext="Steward · Setup · connector health and OAuth flows"
         actions={detail.actions}
+        surface="setup"
       />
 
       {/* Work pane */}

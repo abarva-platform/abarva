@@ -166,6 +166,7 @@ export function PressureDetailPage({ detail }: PressureDetailPageProps) {
         quote={detail.agentQuote}
         agentContext={detail.agentContext}
         actions={detail.actions}
+        surface="tower"
       />
 
       {/* Work pane */}

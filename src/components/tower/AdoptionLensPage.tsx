@@ -257,6 +257,7 @@ export function AdoptionLensPage() {
         quote={ADOPTION_AGENT_VOICE.quote}
         agentContext={ADOPTION_AGENT_VOICE.agentContext}
         actions={ADOPTION_AGENT_VOICE.actions}
+        surface="tower"
       />
 
       <div
