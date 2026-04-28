@@ -1,5 +1,5 @@
 import type { SourceEventInstance } from '@/lib/source/source-event-instance';
-import { buildEvidenceMap } from '@/lib/source/source-event-instance';
+import { buildEvidenceMap, buildEvidenceMapWithIngestions } from '@/lib/source/source-event-instance';
 import { createGateEvaluator } from '@/lib/reasoning/gate-evaluator';
 import { createContradictionDetector } from '@/lib/reasoning/contradiction-detector';
 import { createFailureModeDetector } from '@/lib/reasoning/failure-mode-detector';
@@ -15,7 +15,13 @@ export function buildSourceSynthesisContext(
   instance: SourceEventInstance,
   pattern: LifecyclePatternSeed,
 ): SynthesisContext {
-  const evidenceMap = buildEvidenceMap(instance);
+  // Use the ingestion-aware evidence map so gate state reflects any
+  // demo-side evidence contributions; falls back to the base map when
+  // the helper is unavailable (defensive — both helpers live in the
+  // same module today).
+  const evidenceMap = typeof buildEvidenceMapWithIngestions === 'function'
+    ? buildEvidenceMapWithIngestions(instance)
+    : buildEvidenceMap(instance);
   const evaluator = createGateEvaluator(pattern);
   const gateEvals: GateEvaluation[] = evaluator.evaluateStage(instance.currentStage, evidenceMap);
   evaluator.evaluateAllStages(instance.currentStage, evidenceMap);
