@@ -1,5 +1,7 @@
 'use client';
 
+// Stateless fallback — no history. Use AtlasPageStateProvider for multi-turn.
+
 import { useState, useCallback } from 'react';
 
 interface UseAgentStreamOptions {
