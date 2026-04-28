@@ -353,6 +353,17 @@ export function IntelligenceIndexPage() {
 
         {/* Pattern table */}
         <PatternTable patterns={filtered} />
+
+        {/* Solutions link */}
+        <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${SHELL.CARD_LINE}` }}>
+          <a href="/intelligence/solutions" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_SOFT, textDecoration: 'none',
+          }}>
+            <span>→</span>
+            <span>Solution archetypes · end-to-end blueprints</span>
+          </a>
+        </div>
       </div>
     </AppShell>
   );
