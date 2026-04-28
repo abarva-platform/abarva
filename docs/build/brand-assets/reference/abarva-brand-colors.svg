@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+<rect width="1200" height="800" fill="#faf7f1"/>
+
+<text x="80" y="80" font-family="Georgia, serif" font-size="40" font-weight="500" fill="#0c1a3a">AbarVa brand colors</text>
+<text x="80" y="110" font-family="-apple-system, system-ui, sans-serif" font-size="16" fill="#888780">Locked April 2026 &#183; Use these exact values everywhere</text>
+
+<rect x="80" y="160" width="240" height="240" fill="#000000" rx="8"/>
+<text x="80" y="430" font-family="-apple-system, system-ui, sans-serif" font-size="18" font-weight="500" fill="#0c1a3a">Ink black</text>
+<text x="80" y="455" font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#5F5E5A">HEX  #000000</text>
+<text x="80" y="475" font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#5F5E5A">RGB  0, 0, 0</text>
+<text x="80" y="495" font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#5F5E5A">CMYK 0, 0, 0, 100</text>
+<text x="80" y="515" font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#5F5E5A">HSL  0, 0%, 0%</text>
+<text x="80" y="545" font-family="-apple-system, system-ui, sans-serif" font-size="13" fill="#888780">For "Abar" wordmark, body text,</text>
+<text x="80" y="563" font-family="-apple-system, system-ui, sans-serif" font-size="13" fill="#888780">primary headings, dark UI fills</text>
+
+<rect x="400" y="160" width="240" height="240" fill="#0066CC" rx="8"/>
+<text x="400" y="430" font-family="-apple-system, system-ui, sans-serif" font-size="18" font-weight="500" fill="#0c1a3a">Signal blue</text>
+<text x="400" y="455" font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#5F5E5A">HEX  #0066CC</text>
+<text x="400" y="475" font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#5F5E5A">RGB  0, 102, 204</text>
+<text x="400" y="495" font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#5F5E5A">CMYK 100, 50, 0, 20</text>
+<text x="400" y="515" font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#5F5E5A">HSL  210, 100%, 40%</text>
+<text x="400" y="545" font-family="-apple-system, system-ui, sans-serif" font-size="13" fill="#888780">For "Va" accent, links, primary</text>
+<text x="400" y="563" font-family="-apple-system, system-ui, sans-serif" font-size="13" fill="#888780">action buttons, brand highlights</text>
+
+<rect x="720" y="160" width="240" height="240" fill="#faf7f1" stroke="#888780" stroke-width="0.5" rx="8"/>
+<text x="720" y="430" font-family="-apple-system, system-ui, sans-serif" font-size="18" font-weight="500" fill="#0c1a3a">Paper</text>
+<text x="720" y="455" font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#5F5E5A">HEX  #faf7f1</text>
+<text x="720" y="475" font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#5F5E5A">RGB  250, 247, 241</text>
+<text x="720" y="495" font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#5F5E5A">CMYK 0, 1, 4, 2</text>
+<text x="720" y="515" font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#5F5E5A">HSL  40, 56%, 96%</text>
+<text x="720" y="545" font-family="-apple-system, system-ui, sans-serif" font-size="13" fill="#888780">App background, cards, public</text>
+<text x="720" y="563" font-family="-apple-system, system-ui, sans-serif" font-size="13" fill="#888780">site canvas, paper aesthetic</text>
+
+<rect x="80" y="600" width="240" height="120" fill="#0c1a3a" rx="8"/>
+<text x="80" y="745" font-family="-apple-system, system-ui, sans-serif" font-size="15" font-weight="500" fill="#0c1a3a">Navy ink</text>
+<text x="80" y="765" font-family="ui-monospace, Menlo, monospace" font-size="13" fill="#5F5E5A">#0c1a3a</text>
+<text x="80" y="783" font-family="-apple-system, system-ui, sans-serif" font-size="12" fill="#888780">AgentColumn, dark variants</text>
+
+<rect x="400" y="600" width="240" height="120" fill="#888780" rx="8"/>
+<text x="400" y="745" font-family="-apple-system, system-ui, sans-serif" font-size="15" font-weight="500" fill="#0c1a3a">Stone</text>
+<text x="400" y="765" font-family="ui-monospace, Menlo, monospace" font-size="13" fill="#5F5E5A">#888780</text>
+<text x="400" y="783" font-family="-apple-system, system-ui, sans-serif" font-size="12" fill="#888780">Borders, dividers, secondary</text>
+
+<rect x="720" y="600" width="240" height="120" fill="#5F5E5A" rx="8"/>
+<text x="720" y="745" font-family="-apple-system, system-ui, sans-serif" font-size="15" font-weight="500" fill="#0c1a3a">Slate</text>
+<text x="720" y="765" font-family="ui-monospace, Menlo, monospace" font-size="13" fill="#5F5E5A">#5F5E5A</text>
+<text x="720" y="783" font-family="-apple-system, system-ui, sans-serif" font-size="12" fill="#888780">Body text on paper, captions</text>
+</svg>

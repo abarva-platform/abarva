@@ -1,0 +1,27 @@
+/* AbarVa brand tokens — CSS custom properties */
+/* Locked: April 28, 2026 */
+
+:root {
+  /* Primary brand */
+  --abarva-ink-black: #000000;
+  --abarva-signal-blue: #0066CC;
+  --abarva-paper: #faf7f1;
+
+  /* Supporting palette */
+  --abarva-navy-ink: #0c1a3a;
+  --abarva-stone: #888780;
+  --abarva-slate: #5F5E5A;
+
+  /* Typography */
+  --abarva-font-serif: Fraunces, Georgia, "Times New Roman", serif;
+  --abarva-font-sans: Inter, -apple-system, system-ui, sans-serif;
+  --abarva-font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+
+/* Optional dark-mode variant — invert paper/ink only */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --abarva-paper-effective: var(--abarva-navy-ink);
+    --abarva-ink-effective: var(--abarva-paper);
+  }
+}
