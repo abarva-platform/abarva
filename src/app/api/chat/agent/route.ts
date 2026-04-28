@@ -16,6 +16,7 @@ import { getEngagementWithPhaseData } from "@/lib/programs/db-phase-queries";
 import { PHASE_LABEL_MAP } from "@/lib/programs/programs-fixture";
 import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
 import { getStagePlaybook } from "@/lib/agent/stage-playbooks";
+import { getCategoryPlaybook } from "@/lib/agent/service-category-playbooks";
 
 // ── Agent voice map ────────────────────────────────────────────────────────────
 
@@ -138,6 +139,11 @@ export async function POST(request: Request) {
     }
   }
 
+  const categoryPlaybook = getCategoryPlaybook(
+    (body.surfaceContext?.eventName as string) ?? '',
+    (body.surfaceContext?.eventType as string) ?? undefined,
+  );
+
   const stagePlaybook = getStagePlaybook(stage);
 
 
@@ -146,6 +152,7 @@ export async function POST(request: Request) {
     "",
     "Page context:",
     ...contextLines,
+    categoryPlaybook ? `\nService category context:\n${categoryPlaybook}` : "",
     stagePlaybook ? `\nCurrent stage guidance:\n${stagePlaybook}` : "",
     "",
     "Response guidelines:",
