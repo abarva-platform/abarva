@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
+import { CANONICAL_URLS } from './canonical-urls';
 
-const SITE_URL = 'https://abarva.ai';
+const SITE_URL = CANONICAL_URLS.origin;
 const SITE_NAME = 'AbarVa';
 const DEFAULT_TITLE = 'AbarVa — A knowledge layer for AI programs';
 const DEFAULT_DESCRIPTION =
