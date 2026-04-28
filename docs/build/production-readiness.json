@@ -986,7 +986,8 @@
         "ARCH3: Architecture overview pack created; all planes documented with Mermaid diagrams.",
         "AZLAB2: Control/data plane boundary contract defined; raw data always blocked, metadata-only crossing, audit events required.",
         "AZLAB3: Private data plane connector stub created; dry-run/simulation mode only, no real credentials, raw data blocked at all stub operations.",
-        "AZLAB4: Private evidence manifest demo created; no-raw-copy confirmed, simulated approval states, governance flags, citation locator placeholders."
+        "AZLAB4: Private evidence manifest demo created; no-raw-copy confirmed, simulated approval states, governance flags, citation locator placeholders.",
+        "EVID3: evidence-ledger-tenant-stub read model added at src/lib/architecture/evidence-ledger-tenant-stub.ts. Tenant-bound ledger view with per-tenant summaries, stub bind operations, filter helpers, and describeTenantLedgerView. 91 tests. Imports only from evidence-ledger-mvp; deterministicSeed: true. Status preserved (scaffolded); no live persistence."
       ]
     },
     {
@@ -1474,7 +1475,8 @@
         "QA25 (wave-18): program-flagship-verification manifest (5 components, 9 workflow sections, 3 canon rules). Static + graceful banned-token + workflow-keyword scans. Route existence asserted.",
         "AGENTX (wave-20): Agent-Centric Enforcement Review enforcement rule catalog (9 rules, 11 checks, 7 surfaces) added at src/lib/qa/agent-centric-enforcement-review.ts. Runtime-verifiable enforcement standard for agent panels across programs, source, intelligence, control_tower, admin_setup, production_readiness, and architecture surfaces. All checks are deterministic seed-based; no live model calls. 9 checks passing, 2 deferred (intelligence + control_tower context-specificity to QA29). No production_ready promotion.",
         "QA29 (wave-21, lane-K): Intelligence Tower Blueprint Verification \u2014 15 deterministic filesystem checks verifying Intelligence and Control Tower page blueprints, route files, shell components (INTEL1/TOWER1 via SHELL7 \u2014 pass now), view-model contracts (INTEL2-3/TOWER2-3 \u2014 deferred pre-integration), AGENTX enforcement doc, and build-slices.json validity. Resolves the 2 deferred AGENTX context-specificity checks for intelligence + control_tower surfaces. No application code changes, no model calls, no production_ready promotion. validation_qa status preserved at tested.",
-        "PROD3 wires the production-readiness CI gate at .github/workflows/production-readiness-gate.yml. The gate runs on every PR to main: (1) validates production-readiness.json and build-slices.json parse as valid JSON with required top-level fields, (2) reports the current readiness percent as a GitHub step summary, (3) runs production-readiness-validator.test.ts and production-readiness-tracker.test.ts, and (4) runs npx tsc --noEmit. Route smoke execution, persona crawler, Vercel deploy polling, and DB-backed readiness remain deferred to PROD4 or later."
+        "PROD3 wires the production-readiness CI gate at .github/workflows/production-readiness-gate.yml. The gate runs on every PR to main: (1) validates production-readiness.json and build-slices.json parse as valid JSON with required top-level fields, (2) reports the current readiness percent as a GitHub step summary, (3) runs production-readiness-validator.test.ts and production-readiness-tracker.test.ts, and (4) runs npx tsc --noEmit. Route smoke execution, persona crawler, Vercel deploy polling, and DB-backed readiness remain deferred to PROD4 or later.",
+        "QA5 (dispatch): OPERATING_MODEL_VERIFICATION_RUNBOOK.md added at docs/build/. Covers queue integrity, slice boundary adherence, manifest conflict policy, no-fabrication checks, branch hygiene, and morning review decision matrix. Documentation only; no status promotion."
       ],
       "lastUpdated": "2026-04-26"
     },
