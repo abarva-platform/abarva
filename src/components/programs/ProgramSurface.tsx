@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { advancePhase, answerCxoTakeover, getCxoQuestionBank, getModuleName } from '@/lib/programs/mock';
 import type { ProgramDetailProps, ProgramFullState, ViewerRole } from '@/lib/programs/types.ui';
 import { ActivityFeed, DeliverableList, MetricCard, ProgressSegments } from '@/components/programs/common';
@@ -146,7 +145,6 @@ export function ProgramShell({
 }
 
 export function ProgramSurface(props: ProgramDetailProps) {
-  const router = useRouter();
   const program = props.program;
 
   async function handleAdvance() {
@@ -225,7 +223,7 @@ export function ProgramSurface(props: ProgramDetailProps) {
         </div>
       </div>
       <div className="programs-hero-note">
-        TODO(Packet 8 §8.4, Packet 8 §8.5): Nexus Mode B drafting and Mode C interactive takeover remain typed stubs on this branch, per the frontend-only scope.
+        Nexus Mode B drafting and Mode C takeover are preview surfaces in this release. Live drafting, interview capture, and synthesis will activate through the shared Nexus interaction layer.
       </div>
     </ProgramShell>
   );
