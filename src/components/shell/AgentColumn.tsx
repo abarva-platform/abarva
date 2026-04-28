@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { useRef } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { useAgentStream } from '@/hooks/useAgentStream';
+import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
 
 export interface AgentAction {
   letter: 'A' | 'B' | 'C';
@@ -44,11 +45,21 @@ export function AgentColumn({
   const placeholder = inputPlaceholder ?? `Ask ${agent.name}...`;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const { ask, response, isStreaming, error, clear } = useAgentStream({
+  // Prefer shared AtlasPageState (Shell Layout Spec v2 §6) — falls back to
+  // local useAgentStream for components not yet wrapped in AppShell.
+  const pageState = useAtlasPageState();
+
+  const localStream = useAgentStream({
     surface: surface ?? 'home',
     programId,
     agentName: agent.name,
   });
+
+  const ask        = pageState?.ask        ?? localStream.ask;
+  const response   = pageState?.currentResponse ?? localStream.response;
+  const isStreaming = pageState?.isStreaming    ?? localStream.isStreaming;
+  const error      = pageState?.error          ?? localStream.error;
+  const clear      = pageState?.clearResponse  ?? localStream.clear;
 
   const handleSubmit = () => {
     const el = textareaRef.current;

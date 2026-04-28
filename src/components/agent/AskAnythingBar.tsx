@@ -9,6 +9,7 @@
 
 import { useRef, useState, useCallback, type ChangeEvent, type KeyboardEvent } from 'react';
 import { useAgentStream } from '@/hooks/useAgentStream';
+import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
 
 // ── Agent profiles ─────────────────────────────────────────────────────────
 
@@ -62,11 +63,21 @@ export function AskAnythingBar({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { ask, response, isStreaming, error, clear } = useAgentStream({
+  // Prefer shared AtlasPageState (Shell Layout Spec v2 §6) — falls back to
+  // local useAgentStream for components not yet wrapped in AppShell.
+  const pageState = useAtlasPageState();
+
+  const localStream = useAgentStream({
     surface: surface ?? agent,
     programId,
     agentName: cfg.name,
   });
+
+  const ask         = pageState?.ask           ?? localStream.ask;
+  const response    = pageState?.currentResponse ?? localStream.response;
+  const isStreaming  = pageState?.isStreaming     ?? localStream.isStreaming;
+  const error       = pageState?.error            ?? localStream.error;
+  const clearLocal  = pageState?.clearResponse    ?? localStream.clear;
 
   const hasResponse = !!(response || error);
 
@@ -96,10 +107,10 @@ export function AskAnythingBar({
     if (!text || isStreaming) return;
     setValue('');
     setPanelOpen(true);
-    clear(); // clear previous response
+    clearLocal(); // clear previous response
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
     ask(text);
-  }, [value, isStreaming, ask, clear]);
+  }, [value, isStreaming, ask, clearLocal]);
 
   // ── File attach ─────────────────────────────────────────────────────────
 
@@ -118,7 +129,7 @@ export function AskAnythingBar({
   }
 
   function dismissPanel() {
-    clear();
+    clearLocal();
     setPanelOpen(false);
   }
 
