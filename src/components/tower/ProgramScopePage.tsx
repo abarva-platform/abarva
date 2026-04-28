@@ -625,7 +625,7 @@ export function ProgramScopePage() {
               return (
                 <Link
                   key={pressure.id}
-                  href="/tower"
+                  href={`/tower/pressures/${pressure.id}`}
                   style={{
                     display: 'flex',
                     flexDirection: 'row',
