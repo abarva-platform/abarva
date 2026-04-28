@@ -9523,6 +9523,39 @@
       ],
       "acceptanceCriteria": "npx tsc clean; program-route-shell-enforcement tests all pass; no forbidden patterns in route files",
       "deterministicSeed": false
+    },
+    {
+      "id": "PROG-P2",
+      "name": "Programs Portfolio Index — Canonical Shell Alignment",
+      "status": "code_complete",
+      "type": "ui",
+      "wave": "PROG-P2",
+      "description": "Aligns ProgramsIndexPage to canonical shell spec. Removes dev annotations ('Canonical route · /programs'), adds data-testid markers for P-SMOKE-CDP test targeting, replaces flagship card dev label with 'Spotlight · {displayId}', adds data-honest-disclaimer footer. 9 new P2 source-audit tests.",
+      "allowedFiles": [
+        "src/components/programs/ProgramsIndexPage.tsx",
+        "src/__tests__/integration/programs/programs-index-p2-source-audit.test.ts",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit",
+        "npx jest integration/programs/"
+      ],
+      "dependsOn": ["PROG-P1"],
+      "notes": [
+        "Flagship card label changed from 'Canonical route · /programs' to 'Spotlight · {flagship.displayId}'",
+        "Footer label changed from 'Canonical route · /programs' to 'Deterministic seed · Apex Retail Group'",
+        "data-testid markers: programs-index-page, programs-flagship-card, programs-empty-state, programs-table",
+        "data-honest-disclaimer='programs-index' added to footer",
+        "9 new source-audit tests in programs-index-p2-source-audit.test.ts"
+      ],
+      "acceptanceCriteria": "npx tsc clean; 1166 programs integration tests pass; flagship card shows Spotlight label; no dev annotations; data-testid markers present",
+      "deterministicSeed": true
     }
   ]
 }
