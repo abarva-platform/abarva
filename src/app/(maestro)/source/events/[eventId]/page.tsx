@@ -10,6 +10,7 @@ import { NexusEngagementCanvas } from '@/components/source/NexusEngagementCanvas
 import { SourceCommercialEventSection } from '@/components/source/SourceCommercialEventSection';
 import { GateCriteriaPanel } from '@/components/source/GateCriteriaPanel';
 import { FailureModeWarningChip } from '@/components/_shared/FailureModeWarningChip';
+import { CompareWithDropdown } from '@/components/_shared/CompareWithDropdown';
 import { MissionList } from '@/components/_shared/MissionList';
 import { deriveMissionsFromInstance } from '@/lib/reasoning/mission-derivation';
 import { getSourcingEvent } from '@/lib/source/queries';
@@ -20,6 +21,7 @@ import { AddEvidenceForm } from '@/components/source/AddEvidenceForm';
 import { PAT_SRC_AMS_001 } from '@/lib/intelligence/source-lifecycle-patterns';
 import { createGateEvaluator } from '@/lib/reasoning/gate-evaluator';
 import { buildSourceSynthesisContext } from '@/lib/reasoning/synthesis-context-builder';
+import { getAllInstanceIds } from '@/lib/reasoning/instance-resolver';
 import { summarizeFailureModes } from '@/lib/reasoning/provenance-ribbon-helpers';
 import type { GateEvaluation } from '@/lib/reasoning/types';
 
@@ -137,16 +139,30 @@ export default async function SourceEventDetailPage({
         ]}
       />
       <SourceWorkingPane>
-        {failureModeSummary && (
-          <div style={{ marginBottom: 12 }}>
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            gap: 8,
+            marginBottom: 12,
+          }}
+        >
+          {failureModeSummary && (
             <FailureModeWarningChip
               topLabel={failureModeSummary.topLabel}
               topConfidence={failureModeSummary.topConfidence}
               highCount={failureModeSummary.highConfidence}
               mitigations={failureModeTopMitigations}
             />
-          </div>
-        )}
+          )}
+          {matchedInstance && (
+            <CompareWithDropdown
+              currentInstanceId={matchedInstance.id}
+              allOtherIds={getAllInstanceIds()}
+            />
+          )}
+        </div>
         <NexusEngagementCanvas event={event} />
         {matchedInstance && nextGateEvaluations.length > 0 && (
           <GateCriteriaPanel
