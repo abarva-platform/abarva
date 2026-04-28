@@ -35,6 +35,7 @@ import type {
   AgentMissionPanelMission,
   AgentMissionPanelView,
 } from '@/lib/agent/agent-mission-view';
+import { getTopDerivedPanelMissions } from '@/lib/agent/agent-mission-derived';
 
 // AG12 · Admin surface mission projection.
 //
@@ -64,13 +65,23 @@ function buildAdminAgentMissionView(): AgentMissionPanelView {
   const filtered = surfaceMissions.filter((mission) =>
     ADMIN_SURFACE_AGENTS.has(mission.agent),
   );
-  const top = getTopAgentMissions(filtered, 3).slice(0, 3);
+  const seedTop = getTopAgentMissions(filtered, 3)
+    .slice(0, 3)
+    .map(mapAdminMissionToPanel);
+
+  // AG13 · Append top derived missions (auto-derived from pending gate
+  // criteria via the reasoning layer) to the seed list. The derivation is
+  // wrapped in `@/lib/agent/agent-mission-derived` so this surface
+  // component does not import from `@/lib/source` or `@/lib/programs`
+  // directly (AG12 module-hygiene rule).
+  const derived = getTopDerivedPanelMissions(3);
+
   return {
     variant: 'compact_strip',
-    missions: top.map(mapAdminMissionToPanel),
+    missions: [...seedTop, ...derived],
     surfaceLabel: 'Admin Setup',
     honestDisclaimer:
-      'Mission queue is deterministic seed; runtime triggers deferred.',
+      'Mission queue blends deterministic seed + gate-derived missions; runtime triggers deferred.',
   };
 }
 
