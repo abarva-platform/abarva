@@ -443,6 +443,18 @@ export function TowerIndexPage() {
 
         {/* Cross-program activity strip */}
         <ActivityStrip />
+
+        {/* Value lens link */}
+        <div style={{ marginTop: 24, paddingTop: 16, borderTop: `1px solid ${SHELL.CARD_LINE}` }}>
+          <a href="/tower/outcomes" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_SOFT,
+            textDecoration: 'none',
+          }}>
+            <span>→</span>
+            <span>Value lens · outcome realization</span>
+          </a>
+        </div>
       </div>
     </AppShell>
   );
