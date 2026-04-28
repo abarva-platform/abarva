@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { AgentColumn } from '@/components/shell/AgentColumn';
 import { StageTrackerStrip } from '@/components/shell/StageTrackerStrip';
@@ -379,10 +380,107 @@ function VendorResponseModal({ onClose }: VendorResponseModalProps) {
   );
 }
 
+// ─── SourceEmptyState ─────────────────────────────────────────────────────────
+
+function SourceEmptyState() {
+  return (
+    <AppShell
+      surface="source"
+      topBarProps={{
+        tenantName: 'Apex Retail Group',
+        showLocked: true,
+        context: 'Source · No active events',
+      }}
+    >
+      <AgentColumn
+        agent={{ initials: 'St', name: 'Steward', role: 'Source Coordinator' }}
+        quote="No source events have been created for this tenant yet. Source events track structured procurement and vendor activity — from initial planning through award and onboarding."
+        agentContext="Steward · Source · No events · Apr 27 2026"
+        actions={[
+          { letter: 'A', text: 'Originate a source event', detail: 'Start a new vendor consolidation or procurement exercise' },
+          { letter: 'B', text: 'Browse event templates', detail: 'Pre-configured event structures for common source types' },
+          { letter: 'C', text: 'Import from prior system', detail: 'Link existing procurement records from ServiceNow or SAP' },
+        ]}
+      />
+      <div
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          background: SHELL.PAPER,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '64px 48px',
+        }}
+      >
+        <div
+          style={{
+            fontFamily: SHELL.MONO,
+            fontSize: 9,
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            color: SHELL.INK_MUTED,
+            marginBottom: 12,
+          }}
+        >
+          Source
+        </div>
+        <h2
+          style={{
+            fontFamily: SHELL.SERIF,
+            fontSize: 24,
+            fontWeight: 700,
+            color: SHELL.INK,
+            margin: '0 0 12px',
+            textAlign: 'center',
+          }}
+        >
+          No source events yet
+        </h2>
+        <p
+          style={{
+            fontFamily: SHELL.SANS,
+            fontSize: 14,
+            color: SHELL.INK_MUTED,
+            margin: '0 0 28px',
+            textAlign: 'center',
+            maxWidth: 400,
+            lineHeight: 1.6,
+          }}
+        >
+          Source events track vendor consolidation, RFP processes, and procurement exercises from plan through award.
+        </p>
+        <a
+          href="/source/originate"
+          style={{
+            fontFamily: SHELL.MONO,
+            fontSize: 11,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: SHELL.PAPER,
+            background: SHELL.INK,
+            padding: '10px 20px',
+            borderRadius: 6,
+            textDecoration: 'none',
+            display: 'inline-block',
+          }}
+        >
+          + Originate source event
+        </a>
+      </div>
+    </AppShell>
+  );
+}
+
 // ─── SourceIndexPage ──────────────────────────────────────────────────────────
 
 export function SourceIndexPage() {
+  const searchParams = useSearchParams();
+  const isDemoEmpty = searchParams?.get('demo') === 'empty';
   const [showVendorResponse, setShowVendorResponse] = useState(false);
+
+  if (isDemoEmpty) return <SourceEmptyState />;
 
   return (
     <AppShell
