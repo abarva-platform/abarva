@@ -19,6 +19,10 @@ export type {
   // Contradiction detection
   ContradictionDetection,
 
+  // Failure mode detection
+  FailureModeDetection,
+  FailureModeDetector,
+
   // Artifact tracking
   ArtifactExpectation,
   ArtifactTracker,
@@ -57,6 +61,9 @@ export { LifecycleGateEvaluator, createGateEvaluator, evaluateStageGates } from 
 
 // Contradiction detector — REASON-7
 export { LifecycleContradictionDetector, createContradictionDetector, detectContradictions } from './contradiction-detector';
+
+// Failure mode detector — REASON-19
+export { LifecycleFailureModeDetector, createFailureModeDetector, detectFailureModes } from './failure-mode-detector';
 
 // Artifact tracker — REASON-8
 export { LifecycleArtifactTracker, createArtifactTracker, trackArtifacts } from './artifact-tracker';

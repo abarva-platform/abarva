@@ -2,6 +2,7 @@ import type { SourceEventInstance } from '@/lib/source/source-event-instance';
 import { buildEvidenceMap } from '@/lib/source/source-event-instance';
 import { createGateEvaluator } from '@/lib/reasoning/gate-evaluator';
 import { createContradictionDetector } from '@/lib/reasoning/contradiction-detector';
+import { createFailureModeDetector } from '@/lib/reasoning/failure-mode-detector';
 import { computeCascadeImpacts } from '@/lib/reasoning/cross-instance-reasoner';
 import type { LifecyclePatternSeed } from '@/lib/intelligence/seed-types';
 import type { SynthesisContext, GateEvaluation } from '@/lib/reasoning/types';
@@ -78,6 +79,7 @@ export function buildSourceSynthesisContext(
       blocked: hardBlockers,
     },
     activeContradictions: createContradictionDetector(pattern).detect(evidenceMap),
+    failureModes: createFailureModeDetector(pattern).detect(evidenceMap),
     missingArtifacts,
     cascadeContext,
     citations,

@@ -125,6 +125,64 @@ export interface ContradictionDetection {
   detectedAt: number;
 }
 
+// ─── Failure mode detection ───────────────────────────────────────────────────
+
+/**
+ * A typical failure mode (from the pattern's `failureModes` declarations) that
+ * an instance's current evidence appears to match. Mirrors the keyword-match
+ * shape of `ContradictionDetection`, but anchored on `FailureMode` rather than
+ * `ContradictionTemplate`.
+ *
+ * Surfaces as a deterministic Layer 3 signal that a known anti-pattern may be
+ * forming on this instance — feeding the synthesis prompt with mitigation
+ * suggestions authored by the pattern writer.
+ */
+export interface FailureModeDetection {
+  /** Stable identifier for this detection (mirrors failureModeId for now). */
+  id: string;
+  /** Identifier of the source FailureMode entry inside the pattern. */
+  failureModeId: string;
+  /** Short human-readable label for the failure mode. */
+  label: string;
+  /** Prose description authored by the pattern writer. */
+  description: string;
+  /** Stages where this failure mode commonly manifests (from the pattern). */
+  stages: string[];
+  /** Mitigation strategies authored by the pattern writer. */
+  mitigations: string[];
+  /**
+   * Model confidence that this failure mode applies to the instance.
+   * Floating point in the range [0, 1].
+   */
+  confidence: number;
+  /** Keywords from the description that matched the evidence map. */
+  matchedKeywords: string[];
+  /** Evidence-map keys whose key or value triggered a keyword match. */
+  detectedFromKeys: string[];
+}
+
+/**
+ * Detects failure modes within an instance using the typical-failure-mode
+ * declarations on the governing pattern. Pure: same inputs → same outputs.
+ *
+ * @template TPattern The specific pattern type (e.g. LifecyclePatternSeed).
+ */
+export interface FailureModeDetector<TPattern> {
+  /**
+   * Scan the evidence map for signals matching any failure mode description.
+   * Returns one `FailureModeDetection` per failure mode that fires.
+   */
+  detect(evidenceMap: Record<string, unknown>): FailureModeDetection[];
+  /**
+   * Filter `detect()` output to failure modes whose `stages` array includes
+   * the supplied `stageId`.
+   */
+  detectForStage(
+    stageId: string,
+    evidenceMap: Record<string, unknown>,
+  ): FailureModeDetection[];
+}
+
 // ─── Artifact tracking ─────────────────────────────────────────────────────────
 
 /**
@@ -337,6 +395,14 @@ export interface SynthesisContext {
 
   /** All active contradiction detections for this instance. */
   activeContradictions: ContradictionDetection[];
+
+  /**
+   * Failure mode detections — typical anti-patterns whose pattern-authored
+   * description keywords match the instance's evidence map. Empty when the
+   * pattern has no failure modes or no detection fires. Existing callers can
+   * safely ignore this field; it is purely additive context for synthesis.
+   */
+  failureModes: FailureModeDetection[];
 
   /** Artifacts that are absent but expected for the current stage. */
   missingArtifacts: ArtifactExpectation[];
