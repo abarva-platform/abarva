@@ -10,6 +10,11 @@ import { AgentColumn } from '@/components/shell/AgentColumn';
 import { FilterPillStrip } from '@/components/shell/FilterPillStrip';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { ProgramRow, ProgramsIndexView as ProgramsIndexViewV2 } from '@/lib/programs/programs-types';
+import {
+  filterProgramRowsForIndex,
+  getProgramsIndexEmptyStateCopy,
+  normalizeProgramsIndexFilter,
+} from '@/lib/programs/programs-page-view';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -281,16 +286,10 @@ function ProgramsTable({ programs }: { programs: ProgramRow[] }) {
 export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const activeFilter = searchParams?.get('filter') ?? 'all';
+  const activeFilter = normalizeProgramsIndexFilter(searchParams?.get('filter') ?? null);
   const flagship = view.programs.find((program) => program.id === 'apx-cdp-2026') ?? view.programs[0];
-
-  const filtered = view.programs.filter((p) => {
-    if (activeFilter === 'all') return true;
-    if (activeFilter === 'active') return !p.isIdle;
-    if (activeFilter === 'idle') return p.isIdle;
-    if (activeFilter === 'gated') return p.gateStatus === 'pending';
-    return true;
-  });
+  const filtered = filterProgramRowsForIndex(view.programs, activeFilter);
+  const emptyStateCopy = getProgramsIndexEmptyStateCopy(activeFilter);
 
   const filterPills = [
     {
@@ -427,7 +426,7 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
                   lineHeight: 1.5,
                 }}
               >
-                {flagship.nexusNote} Source award status is linked to the AMS sourcing event and remains part of the Build gate story.
+                {flagship.nexusNote} {flagship.linkedSourceEvent ? `${flagship.linkedSourceEventState ?? 'Source event linked'} · ${flagship.linkedSourceEvent}.` : 'No linked Source event is attached yet.'}
               </div>
             </div>
 
@@ -450,25 +449,27 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
               >
                 Open flagship
               </Link>
-              <Link
-                href="/source/events/apex-retail-ams-outsourcing-2026"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  padding: '6px 12px',
-                  borderRadius: 999,
-                  border: `1px solid ${SHELL.CARD_LINE}`,
-                  color: SHELL.INK_SOFT,
-                  textDecoration: 'none',
-                  fontFamily: SHELL.MONO,
-                  fontSize: 10,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  background: SHELL.PAPER_SOFT,
-                }}
-              >
-                Open linked source
-              </Link>
+              {flagship.linkedSourceEventHref ? (
+                <Link
+                  href={flagship.linkedSourceEventHref}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    padding: '6px 12px',
+                    borderRadius: 999,
+                    border: `1px solid ${SHELL.CARD_LINE}`,
+                    color: SHELL.INK_SOFT,
+                    textDecoration: 'none',
+                    fontFamily: SHELL.MONO,
+                    fontSize: 10,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    background: SHELL.PAPER_SOFT,
+                  }}
+                >
+                  Open linked source
+                </Link>
+              ) : null}
             </div>
           </div>
         ) : null}
@@ -542,13 +543,7 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
                 lineHeight: 1.5,
               }}
             >
-              {activeFilter === 'idle'
-                ? 'No programs are currently idle.'
-                : activeFilter === 'active'
-                  ? 'No programs are currently active.'
-                : activeFilter === 'gated'
-                  ? 'No programs have pending gate reviews.'
-                  : 'No programs are in the canonical portfolio yet.'}
+              {emptyStateCopy}
             </div>
             <button
               onClick={() => router.push('/programs', { scroll: false })}

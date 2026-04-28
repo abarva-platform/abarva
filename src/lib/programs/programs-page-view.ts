@@ -266,7 +266,32 @@ import type {
 } from './programs-types';
 import { APEX_PROGRAMS_FIXTURE } from './programs-fixture';
 
-export function buildProgramsIndexView(_tenant: 'apex-retail'): ProgramsIndexViewV2 {
+export type ProgramsIndexFilterKey = 'all' | 'active' | 'idle' | 'gated';
+
+export function normalizeProgramsIndexFilter(value: string | null): ProgramsIndexFilterKey {
+  if (value === 'active' || value === 'idle' || value === 'gated') return value;
+  return 'all';
+}
+
+export function filterProgramRowsForIndex(
+  programs: ReadonlyArray<ProgramRow>,
+  filter: ProgramsIndexFilterKey,
+): ProgramRow[] {
+  if (filter === 'active') return programs.filter((p) => !p.isIdle);
+  if (filter === 'idle') return programs.filter((p) => p.isIdle);
+  if (filter === 'gated') return programs.filter((p) => p.gateStatus === 'pending');
+  return [...programs];
+}
+
+export function getProgramsIndexEmptyStateCopy(filter: ProgramsIndexFilterKey): string {
+  if (filter === 'idle') return 'No programs are currently idle.';
+  if (filter === 'active') return 'No programs are currently active.';
+  if (filter === 'gated') return 'No programs have pending gate reviews.';
+  return 'No programs are in the canonical portfolio yet.';
+}
+
+export function buildProgramsIndexView(tenant: 'apex-retail'): ProgramsIndexViewV2 {
+  const tenantLabel = tenant === 'apex-retail' ? 'Apex Retail Group' : 'Apex Retail Group';
   const programs: ProgramRow[] = APEX_PROGRAMS_FIXTURE;
 
   const totalActive = programs.filter((p) => !p.isIdle).length;
@@ -325,7 +350,7 @@ export function buildProgramsIndexView(_tenant: 'apex-retail'): ProgramsIndexVie
   ];
 
   return {
-    tenant: 'Apex Retail Group',
+    tenant: tenantLabel,
     totalActive,
     gatesPending,
     idleCount,
