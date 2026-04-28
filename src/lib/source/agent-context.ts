@@ -183,7 +183,7 @@ export interface SourceArtifactSnapshot {
 
 export interface SourceScorecardSnapshot {
   lifecycleState?: ScorecardLifecycleState;
-  approvalState: ScorecardApprovalState;
+  approvalState: ScorecardApprovalState | ScorecardLifecycleState;
   criteria: ScorecardCriterion[];
   defaultWeights: Array<{
     criterionId: string;

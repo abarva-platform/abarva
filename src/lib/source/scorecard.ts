@@ -2,6 +2,7 @@ import type {
   ScorecardApprovalState,
   ScorecardCriterion,
   ScorecardGovernance,
+  ScorecardLifecycleState,
 } from './types';
 
 export function countRequiredCriteria(criteria: ScorecardCriterion[]): number {
@@ -26,7 +27,7 @@ export function summarizeApprovalState(scorecard: ScorecardGovernance): {
   };
 }
 
-export function approvalStateLabel(state: ScorecardApprovalState): string {
+export function approvalStateLabel(state: ScorecardApprovalState | ScorecardLifecycleState): string {
   switch (state) {
     case 'approved':
       return 'Approved';
