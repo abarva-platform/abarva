@@ -9644,6 +9644,13 @@
       "category": "Source",
       "status": "code_complete",
       "notes": "PricingCompletenessDrilldown section added to PricingNormalizationTab. buildPricingCompletenessView lib provides per-vendor completeness (comparabilityStatus, gaps, blockerCount, exclusions, assumptions) and cross-vendor gaps. Vendor B: 1 blocker (SOC-2 holdback) + 2 risks. Vendor C: 1 blocker (below-median pricing). 2 cross-vendor gaps (application count variance, transition period mismatch). data-testid pricing-completeness-drilldown, pricing-completeness-summary, pricing-clarification-send, pricing-completeness-disclaimer. 40 integration tests. SRC43 from track-04."
+    },
+    {
+      "id": "SRC44",
+      "name": "BAFO Scenario Compare",
+      "category": "Source",
+      "status": "code_complete",
+      "notes": "BafoScenarioCompare section added to BafoStrategyTab. buildBafoScenarioCompareView lib provides per-vendor conservative/base/stretch scenarios with levers, estimated savings, caveats, and next actions. Vendor A: no blocker, quantified savings in conservative ($75K) and base ($165K). Vendor B: active SOC-2 blocker — all scenarios contingent. Vendor C: below-median pricing blocker — scenarios contingent on scope validation. data-testid bafo-scenario-compare, bafo-scenario-compare-action, bafo-scenario-compare-disclaimer. 45 integration tests. SRC44 from track-04."
     }
   ]
 }

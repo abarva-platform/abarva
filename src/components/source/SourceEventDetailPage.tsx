@@ -16,6 +16,7 @@ import { AMS_SOURCE_EVENT } from '@/lib/source/shell-source-fixture';
 import { PatternChip } from '@/components/source/PatternChip';
 import { buildSourceStorylineContext, matchStorylinePatterns } from '@/lib/intelligence/storyline-matcher';
 import { buildPricingCompletenessView } from '@/lib/source/pricing-completeness-view';
+import { buildBafoScenarioCompareView } from '@/lib/source/bafo-scenario-compare-view';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -478,6 +479,223 @@ function BafoStrategyTab() {
         >
           ⚠ Steward flag: Vendor B SOC-2 Type II attestation gap · must resolve before Award stage
         </span>
+      </div>
+
+      {/* SRC44 — BAFO scenario compare */}
+      <BafoScenarioCompare />
+    </div>
+  );
+}
+
+// ─── SRC44: BAFO scenario compare ────────────────────────────────────────────
+
+function BafoScenarioCompare() {
+  const scenarioView = buildBafoScenarioCompareView();
+  const { vendorSets } = scenarioView;
+
+  const scenarioBg = (t: string) =>
+    t === 'conservative' ? SHELL.MINT_BG : t === 'base' ? SHELL.BLUE_BG : `${SHELL.PEACH_BG}44`;
+  const scenarioText = (t: string) =>
+    t === 'conservative' ? SHELL.MINT_TEXT : t === 'base' ? SHELL.INK_SOFT : SHELL.PEACH_TEXT;
+  const riskText = (r: string) =>
+    r === 'low' ? SHELL.MINT_TEXT : r === 'medium' ? SHELL.INK_SOFT : SHELL.PEACH_TEXT;
+
+  return (
+    <div data-testid="bafo-scenario-compare" style={{ marginTop: 28 }}>
+      {/* Section header */}
+      <div
+        style={{
+          fontFamily: SHELL.MONO,
+          fontSize: 9,
+          textTransform: 'uppercase',
+          letterSpacing: '0.14em',
+          color: SHELL.INK_MUTED,
+          marginBottom: 12,
+        }}
+      >
+        BAFO SCENARIO COMPARE · {scenarioView.headline}
+      </div>
+
+      {/* Per-vendor scenario sets */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {vendorSets.map((vs) => (
+          <div
+            key={vs.vendorId}
+            data-testid={`bafo-vendor-scenario-${vs.vendorId}`}
+            style={{
+              border: `1px solid ${SHELL.CARD_LINE}`,
+              borderRadius: 6,
+              overflow: 'hidden',
+            }}
+          >
+            {/* Vendor header */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '10px 14px',
+                background: vs.hasActiveBlocker ? `${SHELL.PEACH_BG}44` : SHELL.PAPER_SOFT,
+                borderBottom: `1px solid ${SHELL.CARD_LINE}`,
+              }}
+            >
+              <span style={{ fontFamily: SHELL.SANS, fontSize: 13, fontWeight: 600, color: SHELL.INK }}>
+                {vs.vendorName}
+              </span>
+              <span style={{ fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_SOFT }}>
+                YR2+ ${(vs.currentAnnualRunCostUsd / 1_000_000).toFixed(1)}M current
+              </span>
+            </div>
+
+            {/* Blocker note */}
+            {vs.hasActiveBlocker && vs.blockerNote && (
+              <div
+                style={{
+                  padding: '6px 14px',
+                  background: `${SHELL.PEACH_BG}33`,
+                  borderBottom: `1px solid ${SHELL.CARD_LINE}`,
+                  fontFamily: SHELL.SANS,
+                  fontSize: 11,
+                  color: SHELL.PEACH_TEXT,
+                }}
+              >
+                ⚠ {vs.blockerNote}
+              </div>
+            )}
+
+            {/* Three scenario cards */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr 1fr',
+                borderTop: 'none',
+              }}
+            >
+              {vs.scenarios.map((scenario, idx) => (
+                <div
+                  key={scenario.scenarioType}
+                  data-testid={`bafo-scenario-${vs.vendorId}-${scenario.scenarioType}`}
+                  style={{
+                    padding: '10px 12px',
+                    borderLeft: idx > 0 ? `1px solid ${SHELL.CARD_LINE}` : undefined,
+                    background: SHELL.CARD_WHITE,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 6,
+                  }}
+                >
+                  {/* Scenario label */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span
+                      style={{
+                        fontFamily: SHELL.MONO,
+                        fontSize: 9,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.1em',
+                        color: scenarioText(scenario.scenarioType),
+                        background: scenarioBg(scenario.scenarioType),
+                        padding: '2px 6px',
+                        borderRadius: 3,
+                      }}
+                    >
+                      {scenario.label}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: SHELL.MONO,
+                        fontSize: 9,
+                        color: riskText(scenario.riskLevel),
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      {scenario.riskLevel} risk
+                    </span>
+                  </div>
+
+                  {/* Description */}
+                  <div style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK, lineHeight: 1.4 }}>
+                    {scenario.description}
+                  </div>
+
+                  {/* Saving */}
+                  {scenario.totalEstimatedSavingUsd > 0 ? (
+                    <div style={{ fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.MINT_TEXT }}>
+                      ~${(scenario.totalEstimatedSavingUsd / 1000).toFixed(0)}K saving
+                    </div>
+                  ) : (
+                    <div style={{ fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_MUTED }}>
+                      Not quantified
+                    </div>
+                  )}
+
+                  {/* Levers */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {scenario.levers.map((lever) => (
+                      <div key={lever.leverId} style={{ fontFamily: SHELL.SANS, fontSize: 10, color: SHELL.INK_SOFT }}>
+                        · {lever.label}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Next action */}
+                  <div
+                    style={{
+                      fontFamily: SHELL.SANS,
+                      fontSize: 10,
+                      color: SHELL.INK_MUTED,
+                      fontStyle: 'italic',
+                      borderTop: `1px solid ${SHELL.CARD_LINE_SOFT}`,
+                      paddingTop: 6,
+                      marginTop: 2,
+                    }}
+                  >
+                    → {scenario.nextAction}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Compare action button */}
+      <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button
+          data-testid="bafo-scenario-compare-action"
+          disabled={true}
+          title={scenarioView.compareActionDisabledReason}
+          style={{
+            fontFamily: SHELL.SANS,
+            fontSize: 11,
+            padding: '6px 14px',
+            border: `1px solid ${SHELL.CARD_LINE}`,
+            borderRadius: 4,
+            background: SHELL.GRAY_BG,
+            color: SHELL.INK_MUTED,
+            cursor: 'not-allowed',
+            opacity: 0.6,
+          }}
+        >
+          {scenarioView.compareActionLabel}
+        </button>
+        <span style={{ fontFamily: SHELL.SANS, fontSize: 10, color: SHELL.INK_MUTED, fontStyle: 'italic' }}>
+          {scenarioView.compareActionDisabledReason.split('.')[0]}.
+        </span>
+      </div>
+
+      {/* Honest disclaimer */}
+      <div
+        data-testid="bafo-scenario-compare-disclaimer"
+        data-honest-disclaimer="source-bafo-scenario-compare"
+        style={{
+          marginTop: 14,
+          fontFamily: SHELL.SANS,
+          fontSize: 10,
+          color: SHELL.INK_MUTED,
+          fontStyle: 'italic',
+        }}
+      >
+        Deterministic seed · SRC-AMS-2026 BAFO scenarios reflect fixture context only. Saving estimates are directional and deterministic — not live predictions. Vendor B and Vendor C scenarios are contingent on active blocker resolution.
       </div>
     </div>
   );
