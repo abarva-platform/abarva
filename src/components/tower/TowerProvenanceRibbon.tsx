@@ -26,6 +26,8 @@ import {
   summarizeGates,
   summarizePortfolio,
 } from '@/lib/reasoning/provenance-ribbon-helpers';
+import { isLifecyclePatternId } from '@/lib/reasoning/lifecycle-pattern-lookup';
+import { PatternDoctrineLink } from '@/components/source/PatternDoctrineLink';
 import { SHELL } from '@/lib/shell/shell-tokens';
 
 interface TowerProvenanceRibbonProps {
@@ -88,24 +90,33 @@ export function TowerProvenanceRibbon({ context }: TowerProvenanceRibbonProps) {
       <Section label="Patterns">
         {hasCitations ? (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {cited.map((c) => (
-              <span
-                key={c.patternId}
-                title={`${c.patternId} — ${c.section}`}
-                style={{
-                  fontFamily: SHELL.SANS,
-                  fontSize: 11,
-                  color: SHELL.INK,
-                  background: SHELL.CARD_WHITE,
-                  border: `1px solid ${SHELL.CARD_LINE}`,
-                  borderRadius: 999,
-                  padding: '2px 9px',
-                  lineHeight: 1.4,
-                }}
-              >
-                {c.title}
-              </span>
-            ))}
+            {cited.map((c) =>
+              isLifecyclePatternId(c.patternId) ? (
+                <PatternDoctrineLink
+                  key={c.patternId}
+                  patternId={c.patternId}
+                  title={c.title}
+                  hoverTitle={`${c.patternId} — ${c.section}`}
+                />
+              ) : (
+                <span
+                  key={c.patternId}
+                  title={`${c.patternId} — ${c.section}`}
+                  style={{
+                    fontFamily: SHELL.SANS,
+                    fontSize: 11,
+                    color: SHELL.INK,
+                    background: SHELL.CARD_WHITE,
+                    border: `1px solid ${SHELL.CARD_LINE}`,
+                    borderRadius: 999,
+                    padding: '2px 9px',
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {c.title}
+                </span>
+              )
+            )}
           </div>
         ) : (
           <Muted>No pattern citations yet</Muted>

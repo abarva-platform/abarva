@@ -1,5 +1,6 @@
 import { TowerIndexPage } from '@/components/tower/TowerIndexPage';
 import { TowerProvenanceRibbon } from '@/components/tower/TowerProvenanceRibbon';
+import { TowerTopPatternsTile } from '@/components/tower/TowerTopPatternsTile';
 import { buildTowerSynthesisContext } from '@/lib/reasoning/tower-synthesis-context-builder';
 import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances';
 import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
@@ -17,7 +18,12 @@ export default function TowerPage() {
 
   return (
     <TowerIndexPage
-      provenanceSlot={<TowerProvenanceRibbon context={synthesisContext} />}
+      provenanceSlot={
+        <>
+          <TowerProvenanceRibbon context={synthesisContext} />
+          <TowerTopPatternsTile />
+        </>
+      }
     />
   );
 }
