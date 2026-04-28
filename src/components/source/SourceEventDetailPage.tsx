@@ -9,6 +9,8 @@ import { WorkingPaneContainer } from '@/components/shell/WorkingPaneContainer';
 import { sourceShapeResolver } from '@/lib/source/source-shape-resolver';
 import { StageTrackerStrip } from '@/components/shell/StageTrackerStrip';
 import { LinkedProgramChip } from '@/components/shell/LinkedProgramChip';
+import { SourceLinkedProgramChip } from '@/components/source/LinkedProgramChip';
+import { AMS_VENDOR_CONSOLIDATION_2026_INSTANCE } from '@/lib/source/source-event-instances';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { AMS_SOURCE_EVENT } from '@/lib/source/shell-source-fixture';
 import { PatternChip } from '@/components/source/PatternChip';
@@ -638,6 +640,11 @@ function SignalsStreamTab() {
 }
 
 function LinkedProgramTab() {
+  // REASON-18 — chip contents are derived live from APX_CDP_2026_INSTANCE
+  // via buildLinkedProgramChip. If the linked program advances a phase or
+  // clears its blocker, this chip updates without a code change.
+  const primaryLink = AMS_VENDOR_CONSOLIDATION_2026_INSTANCE.linkedPrograms[0];
+
   return (
     <div data-testid="source-linked-program-tab">
       <div
@@ -653,13 +660,21 @@ function LinkedProgramTab() {
         LINKED PROGRAM
       </div>
 
-      <LinkedProgramChip
-        direction="source-to-program"
-        linkedId="APX-CDP-2026"
-        linkedName="Apex Retail CDP Activation"
-        linkedPhase="P3 Design"
-        href="/programs/apx-cdp-2026"
-      />
+      {primaryLink ? (
+        <SourceLinkedProgramChip
+          linkedProgramId={primaryLink.programId}
+          linkType={primaryLink.linkType}
+          href={`/programs/${primaryLink.programId.toLowerCase()}`}
+        />
+      ) : (
+        <LinkedProgramChip
+          direction="source-to-program"
+          linkedId="APX-CDP-2026"
+          linkedName="Apex Retail CDP Activation"
+          linkedPhase="P3 Design"
+          href="/programs/apx-cdp-2026"
+        />
+      )}
 
       <p
         style={{
@@ -721,7 +736,7 @@ function LinkedProgramTab() {
             letterSpacing: '0.08em',
           }}
         >
-          Deterministic seed · APX-CDP-2026 P3 Design link reflects fixture context only
+          Chip phase, blocker, and color resolved live from ProgramInstance via cross-instance reasoner
         </div>
       </div>
     </div>

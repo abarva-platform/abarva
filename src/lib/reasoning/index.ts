@@ -61,3 +61,13 @@ export { buildSourceSynthesisContext, instanceStateHash } from './synthesis-cont
 
 // Program synthesis context builder — REASON-15
 export { buildProgramSynthesisContext, programInstanceStateHash } from './program-synthesis-context-builder';
+
+// Cross-instance reasoner — REASON-18
+export {
+  resolveLinkedProgram,
+  buildLinkedProgramChip,
+} from './cross-instance-reasoner';
+export type {
+  LinkedProgramChipData,
+  LinkedProgramChipStatus,
+} from './cross-instance-reasoner';
