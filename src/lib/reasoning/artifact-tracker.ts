@@ -34,6 +34,25 @@ import type {
   SourceEventInstance,
 } from '@/lib/source/source-event-instance';
 
+/**
+ * Status bucket an artifact match resolves to.
+ *   - `present`     — the artifact is materially complete (e.g. approved/locked).
+ *   - `in-progress` — the artifact exists but is not yet complete (e.g. draft).
+ *   - `missing`     — no artifact maps to the expectation.
+ */
+export type ArtifactMatchStatus = 'present' | 'in-progress' | 'missing';
+
+/**
+ * Adapter that resolves an `ExpectedArtifact` against a concrete instance type
+ * to its match status. Lets the tracker stay generic across instance shapes
+ * (SourceEventInstance, ProgramInstance, etc.) while keeping the bucketing
+ * rules identical.
+ */
+export type ArtifactMatchResolver<TInstance> = (
+  expectation: ExpectedArtifact,
+  instance: TInstance,
+) => ArtifactMatchStatus;
+
 // ─── Internal helpers ──────────────────────────────────────────────────────────
 
 /**
@@ -99,11 +118,29 @@ function toExpectation(
   };
 }
 
+/**
+ * Default match resolver for `SourceEventInstance` — preserves the original
+ * bucketing rules (approved/locked → present, draft → in-progress, otherwise
+ * → in-progress when matched at all, missing when not).
+ */
+const sourceEventMatchResolver: ArtifactMatchResolver<SourceEventInstance> = (
+  expectation,
+  instance,
+) => {
+  const matched = findMatchingArtifact(expectation, instance);
+  if (matched === undefined) return 'missing';
+  if (COMPLETE_STATUSES.has(matched.status)) return 'present';
+  if (IN_PROGRESS_STATUSES.has(matched.status)) return 'in-progress';
+  // Unknown status — treat as in-progress (artifact exists but cannot be
+  // relied on for gate clearance).
+  return 'in-progress';
+};
+
 // ─── LifecycleArtifactTracker ──────────────────────────────────────────────────
 
 /**
- * Tracks artifact completeness for a `SourceEventInstance` against a
- * `LifecyclePatternSeed`'s `expectedArtifacts` list.
+ * Tracks artifact completeness for an instance (Source, Program, etc.) against
+ * a `LifecyclePatternSeed`'s `expectedArtifacts` list.
  *
  * Per-stage output buckets each expectation as `present` (instance has a
  * complete artifact), `inProgress` (instance has a draft), or `missing`
@@ -113,20 +150,32 @@ function toExpectation(
  * Stage readiness (`isStageReady`) is true iff zero `required` artifacts
  * are missing for that stage.  Recommended and optional artifacts do not
  * block readiness.
+ *
+ * Generic over `TInstance`: a match resolver translates `(expectation, instance)`
+ * into a `present | in-progress | missing` bucket, so the tracker can serve
+ * Source events, Programs, and future surfaces without per-surface duplication.
+ * The default resolver is provided for `SourceEventInstance`.
  */
-export class LifecycleArtifactTracker
-  implements ArtifactTracker<SourceEventInstance>
+export class LifecycleArtifactTracker<TInstance = SourceEventInstance>
+  implements ArtifactTracker<TInstance>
 {
   private readonly pattern: LifecyclePatternSeed;
   private readonly patternRef: PatternRef;
+  private readonly resolver: ArtifactMatchResolver<TInstance>;
 
-  constructor(pattern: LifecyclePatternSeed) {
+  constructor(
+    pattern: LifecyclePatternSeed,
+    resolver?: ArtifactMatchResolver<TInstance>,
+  ) {
     this.pattern = pattern;
     this.patternRef = {
       patternId: pattern.patternId,
       patternVersion: pattern.version,
       section: '§ Expected artifacts',
     };
+    // Default to the SourceEventInstance resolver when none is supplied so
+    // existing callers (`createArtifactTracker(pattern)`) keep working unchanged.
+    this.resolver = (resolver ?? (sourceEventMatchResolver as ArtifactMatchResolver<TInstance>));
   }
 
   // ─── Private helpers ─────────────────────────────────────────────────────────
@@ -161,7 +210,7 @@ export class LifecycleArtifactTracker
    */
   trackForStage(
     stageId: string,
-    instance: SourceEventInstance,
+    instance: TInstance,
   ): StageArtifactTracking {
     const expectations = this.expectationsForStage(stageId);
     const present: ArtifactExpectation[] = [];
@@ -169,21 +218,14 @@ export class LifecycleArtifactTracker
     const missing: ArtifactExpectation[] = [];
 
     for (const expectation of expectations) {
-      const matched = findMatchingArtifact(expectation, instance);
+      const status = this.resolver(expectation, instance);
 
-      if (matched === undefined) {
-        missing.push(toExpectation(expectation, false, this.patternRef));
-        continue;
-      }
-
-      if (COMPLETE_STATUSES.has(matched.status)) {
+      if (status === 'present') {
         present.push(toExpectation(expectation, true, this.patternRef));
-      } else if (IN_PROGRESS_STATUSES.has(matched.status)) {
+      } else if (status === 'in-progress') {
         inProgress.push(toExpectation(expectation, false, this.patternRef));
       } else {
-        // Unknown status — be conservative and treat as in-progress so callers
-        // see the artifact exists but cannot rely on it for gate clearance.
-        inProgress.push(toExpectation(expectation, false, this.patternRef));
+        missing.push(toExpectation(expectation, false, this.patternRef));
       }
     }
 
@@ -204,7 +246,7 @@ export class LifecycleArtifactTracker
    * Compute artifact tracking for every artifact-bearing stage in pattern
    * stage order.  Stages with no expectations are skipped.
    */
-  trackAll(instance: SourceEventInstance): StageArtifactTracking[] {
+  trackAll(instance: TInstance): StageArtifactTracking[] {
     return this.orderedStageIdsWithArtifacts().map((stageId) =>
       this.trackForStage(stageId, instance),
     );
@@ -217,7 +259,7 @@ export class LifecycleArtifactTracker
    * complete, but the question this method answers is "can the gate clear?",
    * which only `present` (approved/locked) artifacts can satisfy.
    */
-  isStageReady(stageId: string, instance: SourceEventInstance): boolean {
+  isStageReady(stageId: string, instance: TInstance): boolean {
     const tracking = this.trackForStage(stageId, instance);
     if (tracking.requiredMissingCount > 0) return false;
 
@@ -235,11 +277,16 @@ export class LifecycleArtifactTracker
  * Creates a `LifecycleArtifactTracker` for the given lifecycle pattern.
  * Prefer this over `new LifecycleArtifactTracker(...)` so consumers do not
  * need to import the class directly.
+ *
+ * Pass an `ArtifactMatchResolver` to use the tracker with non-Source instance
+ * shapes (e.g. `ProgramInstance`). Without a resolver the tracker defaults to
+ * the `SourceEventInstance` resolver for backward compatibility.
  */
-export function createArtifactTracker(
+export function createArtifactTracker<TInstance = SourceEventInstance>(
   pattern: LifecyclePatternSeed,
-): LifecycleArtifactTracker {
-  return new LifecycleArtifactTracker(pattern);
+  resolver?: ArtifactMatchResolver<TInstance>,
+): LifecycleArtifactTracker<TInstance> {
+  return new LifecycleArtifactTracker<TInstance>(pattern, resolver);
 }
 
 /**

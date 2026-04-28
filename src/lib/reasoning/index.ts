@@ -67,6 +67,7 @@ export { LifecycleFailureModeDetector, createFailureModeDetector, detectFailureM
 
 // Artifact tracker — REASON-8
 export { LifecycleArtifactTracker, createArtifactTracker, trackArtifacts } from './artifact-tracker';
+export type { ArtifactMatchResolver, ArtifactMatchStatus } from './artifact-tracker';
 
 // Synthesis context builder — REASON-14
 export { buildSourceSynthesisContext, instanceStateHash } from './synthesis-context-builder';
