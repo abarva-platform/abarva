@@ -11,7 +11,6 @@ import { AppShell } from '@/components/shell/AppShell';
 import { AgentColumn } from '@/components/shell/AgentColumn';
 import { FilterPillStrip } from '@/components/shell/FilterPillStrip';
 import { SHELL } from '@/lib/shell/shell-tokens';
-import { AskAnythingBar } from '@/components/agent/AskAnythingBar';
 import { INTELLIGENCE_INDEX_VIEW, type IntelligencePattern } from '@/lib/intelligence/shell-intelligence-fixture';
 
 // ─── INT-MOD-SUBMIT: Pattern submission modal ─────────────────────────────────
@@ -553,7 +552,7 @@ export function IntelligenceIndexPage() {
           flex: 1,
           overflowY: 'auto',
           background: SHELL.PAPER,
-          padding: '32px 48px 100px',
+          padding: '32px 48px 32px',
         }}
       >
         {/* Page header */}
@@ -613,12 +612,6 @@ export function IntelligenceIndexPage() {
 
       {/* INT-MOD-SUBMIT: Pattern submission modal */}
       {showSubmitModal && <PatternSubmitModal onClose={() => setShowSubmitModal(false)} />}
-
-      <AskAnythingBar
-        agent="sentinel"
-        scopeLabel="Intelligence · Apex Retail"
-        surface="intelligence"
-      />
     </AppShell>
   );
 }

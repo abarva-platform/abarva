@@ -7,7 +7,6 @@ import { AppShell } from '@/components/shell/AppShell';
 import { AgentColumn } from '@/components/shell/AgentColumn';
 import { FilterPillStrip } from '@/components/shell/FilterPillStrip';
 import { SHELL } from '@/lib/shell/shell-tokens';
-import { AskAnythingBar } from '@/components/agent/AskAnythingBar';
 import { TOWER_INDEX_VIEW, type PressureItem } from '@/lib/tower/shell-tower-fixture';
 
 // ---------------------------------------------------------------------------
@@ -714,7 +713,7 @@ export function TowerIndexPage() {
           flex: 1,
           overflowY: 'auto',
           background: SHELL.PAPER,
-          padding: '24px 32px 100px',
+          padding: '24px 32px 32px',
         }}
       >
         {/* Header row */}
@@ -837,12 +836,6 @@ export function TowerIndexPage() {
       {showNewPressure && (
         <NewPressureModal onClose={() => setShowNewPressure(false)} />
       )}
-
-      <AskAnythingBar
-        agent="atlas"
-        scopeLabel="Control Tower · Apex Retail"
-        surface="tower"
-      />
     </AppShell>
   );
 }
