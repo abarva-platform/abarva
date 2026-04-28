@@ -9325,6 +9325,50 @@
       ],
       "acceptanceCriteria": "npx tsc clean; intelligence-i5 all 78 tests pass; SolutionsIndexPage.tsx deleted; all 3 server components NOT use client; ProvenanceRibbon wired on Solutions + Contradiction; contradiction detail has Party A + Party B panels",
       "deterministicSeed": true
+    },
+    {
+      "id": "INT-I3",
+      "name": "Intelligence Signal Stream — I3",
+      "status": "code_complete",
+      "type": "ui",
+      "wave": "INT-I3",
+      "description": "I3: INT-IDX-SIGNALS + INT-DTL-SIGNAL — Signal stream index and signal detail surfaces. Two view models bridge the 30 manual signal seeds (seed-signals-manual.ts) deterministically. IntelligenceSignalsIndexPage server component with ProvenanceRibbon and source-type breakdown; IntelligenceSignalDetailPage server component with confidence badge, affected-patterns chips, and metadata panel.",
+      "allowedFiles": [
+        "src/lib/intelligence/intelligence-signals-index-view.ts",
+        "src/lib/intelligence/intelligence-signal-detail-view.ts",
+        "src/components/intelligence/IntelligenceSignalsIndexPage.tsx",
+        "src/components/intelligence/IntelligenceSignalDetailPage.tsx",
+        "src/components/intelligence/IntelligenceSignalsSentinel.tsx",
+        "src/components/intelligence/IntelligenceSignalDetailSentinel.tsx",
+        "src/app/intelligence/signals/page.tsx",
+        "src/app/intelligence/signals/[signalId]/page.tsx",
+        "src/__tests__/integration/intelligence/intelligence-i3.test.ts",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit",
+        "npx jest intelligence-i3"
+      ],
+      "dependsOn": [
+        "INT-I1"
+      ],
+      "notes": [
+        "New: intelligence-signals-index-view.ts — bridges MANUAL_SIGNALS (30 seeds) with source-type breakdown and ProvenanceRibbon",
+        "New: intelligence-signal-detail-view.ts — per-signal detail with confidence label, affected patterns, agent quote by source type",
+        "New: IntelligenceSignalsIndexPage.tsx — server component with ProvenanceRibbon + signal rows linking to detail pages",
+        "New: IntelligenceSignalDetailPage.tsx — server component with confidence badge, source metadata, affected patterns/programs panels",
+        "New: IntelligenceSignalsSentinel.tsx + IntelligenceSignalDetailSentinel.tsx — client islands",
+        "New: /intelligence/signals route + /intelligence/signals/[signalId] route",
+        "ProvenanceRibbon.primitive = 'Signal' — first use of the Signal primitive"
+      ],
+      "acceptanceCriteria": "npx tsc clean; intelligence-i3 all 67 tests pass; both server components NOT use client; ProvenanceRibbon wired with primitive='Signal'; signal rows link to detail pages; unknown signalId redirects to /intelligence/signals",
+      "deterministicSeed": true
     }
   ]
 }
