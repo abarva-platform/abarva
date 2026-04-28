@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { AgentColumn } from '@/components/shell/AgentColumn';
 import type { AgentAction } from '@/components/shell/AgentColumn';
 
@@ -23,6 +24,8 @@ const DEFAULT_ACTIONS: AgentAction[] = [
 
 interface SentinelAgentColumnProps {
   quote?: string;
+  /** When provided, renders in place of the static quote string. */
+  synthesisNode?: ReactNode;
   agentContext?: string;
   actions?: AgentAction[];
   surface?: string;
@@ -31,6 +34,7 @@ interface SentinelAgentColumnProps {
 
 export function SentinelAgentColumn({
   quote = 'Source workspace ready. Paper aesthetic active. Sentinel listening.',
+  synthesisNode,
   agentContext,
   actions = DEFAULT_ACTIONS,
   surface = 'source',
@@ -40,6 +44,7 @@ export function SentinelAgentColumn({
     <AgentColumn
       agent={SENTINEL}
       quote={quote}
+      synthesisNode={synthesisNode}
       agentContext={agentContext}
       actions={actions}
       surface={surface}

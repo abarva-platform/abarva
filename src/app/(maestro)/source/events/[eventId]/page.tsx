@@ -2,11 +2,13 @@ import { notFound } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { StageTrackerStrip } from '@/components/shell/StageTrackerStrip';
 import { SentinelAgentColumn } from '@/components/source/SentinelAgentColumn';
+import { SentinelSynthesisQuote } from '@/components/source/SentinelSynthesisQuote';
 import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
 import { NexusEngagementCanvas } from '@/components/source/NexusEngagementCanvas';
 import { SourceCommercialEventSection } from '@/components/source/SourceCommercialEventSection';
 import { getSourcingEvent } from '@/lib/source/queries';
 import { AMS_SOURCE_EVENT } from '@/lib/source/shell-source-fixture';
+import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +20,11 @@ export default async function SourceEventDetailPage({
   const { eventId } = await params;
   const event = await getSourcingEvent(eventId);
   if (!event) notFound();
+
+  // Resolve typed instance for live synthesis. Fallback to AMS instance when
+  // other events don't have a typed SourceEventInstance yet.
+  const matchedInstance = SOURCE_EVENT_INSTANCES.find(i => i.id === eventId)
+    ?? SOURCE_EVENT_INSTANCES[0];
 
   return (
     <AppShell
@@ -43,7 +50,13 @@ export default async function SourceEventDetailPage({
       }
     >
       <SentinelAgentColumn
-        quote={`${event.name} at ${event.currentStageLabel}. ${event.blocker ? `Blocker: ${event.blocker}.` : 'No active blockers.'} Linked to ${event.code}.`}
+        synthesisNode={
+          <SentinelSynthesisQuote
+            instanceId={matchedInstance?.id ?? 'ams-vendor-consolidation-2026'}
+            fallback={`${event.name} at ${event.currentStageLabel}.${event.blocker ? ` Blocker: ${event.blocker}.` : ''}`}
+          />
+        }
+        quote={`${event.name} at ${event.currentStageLabel}.`}
         agentContext={`Sentinel · ${event.name} · ${event.currentStageLabel}`}
         actions={[
           { letter: 'A', text: 'Review BAFO award status', detail: 'Vendor C selected — award and integration contract in final review' },

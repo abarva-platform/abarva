@@ -46,6 +46,12 @@ export interface AgentColumnProps {
   surface?: string;
   /** Program identifier passed to local useAgentStream fallback. */
   programId?: string;
+  /**
+   * When provided, renders in place of the static `quote` string in the
+   * synthesis block. Allows a streaming ReactNode (e.g. SentinelSynthesisQuote)
+   * while keeping `quote` as the compact-header fallback string.
+   */
+  synthesisNode?: ReactNode;
 }
 
 // ── AgentColumn ───────────────────────────────────────────────────────────────
@@ -60,6 +66,7 @@ export function AgentColumn({
   bottomSlot,
   surface,
   programId,
+  synthesisNode,
 }: AgentColumnProps) {
   const placeholder = inputPlaceholder ?? `Ask ${agent.name}…`;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -203,7 +210,7 @@ export function AgentColumn({
       {/* ── Synthesis block (pinned, collapses when thread is open) ── */}
       {!hasThread && (
         <div style={{ flexShrink: 0 }}>
-          {/* Quote */}
+          {/* Quote — uses synthesisNode when provided, otherwise static string */}
           <p
             style={{
               fontFamily: SHELL.SERIF,
@@ -214,8 +221,9 @@ export function AgentColumn({
               letterSpacing: '-0.008em',
               margin: '0 0 6px 0',
             }}
-            dangerouslySetInnerHTML={{ __html: quote }}
-          />
+          >
+            {synthesisNode ?? quote}
+          </p>
 
           {/* Agent context */}
           {agentContext && (

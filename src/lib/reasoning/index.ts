@@ -52,3 +52,6 @@ export type {
 
 // Gate evaluator — REASON-6
 export { LifecycleGateEvaluator, createGateEvaluator, evaluateStageGates } from './gate-evaluator';
+
+// Synthesis context builder — REASON-14
+export { buildSourceSynthesisContext, instanceStateHash } from './synthesis-context-builder';
