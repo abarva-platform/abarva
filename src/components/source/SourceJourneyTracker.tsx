@@ -1,27 +1,52 @@
 import { getStageStateLabel } from '@/lib/source/lifecycle';
 import type { WorkflowStage } from '@/lib/source/types';
-import { EXPERIENCE_COLORS, FONTS, TEXT } from '@/lib/design-system';
-import { sourceCard, sourceMuted, sourceSectionLabel } from './foundationStyles';
+import { SHELL } from '@/lib/shell/shell-tokens';
+
+const sourceCard = {
+  background: SHELL.CARD_WHITE,
+  border: '1px solid ' + SHELL.CARD_LINE,
+  borderRadius: 10,
+  padding: '16px 18px',
+  display: 'flex',
+  flexDirection: 'column' as const,
+  gap: 12,
+};
+
+const sourceSectionLabel = {
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.14em',
+  color: SHELL.INK_MUTED,
+  marginBottom: 0,
+};
+
+const sourceMuted = {
+  fontFamily: SHELL.SANS,
+  fontSize: 13,
+  color: SHELL.INK_MUTED,
+  lineHeight: 1.5,
+};
 
 export function SourceJourneyTracker({ stages }: { stages: WorkflowStage[] }) {
   return (
     <section
       style={{
         ...sourceCard,
-        background: EXPERIENCE_COLORS.surface,
-        border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+        background: SHELL.CARD_WHITE,
+        border: '1px solid ' + SHELL.CARD_LINE,
         gap: 14,
       }}
       aria-label="Source journey tracker"
     >
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'space-between' }}>
         <div>
-          <div style={{ ...sourceSectionLabel, color: EXPERIENCE_COLORS.accentTeal }}>Journey map</div>
-          <div style={{ fontSize: 18, fontWeight: 800, color: EXPERIENCE_COLORS.textPrimary }}>
+          <div style={{ ...sourceSectionLabel, color: SHELL.INK_SOFT }}>Journey map</div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: SHELL.INK }}>
             Current workflow position
           </div>
         </div>
-        <div style={{ ...sourceMuted, maxWidth: 360, color: EXPERIENCE_COLORS.textSecondary }}>
+        <div style={{ ...sourceMuted, maxWidth: 360, color: SHELL.INK_MUTED }}>
           Stages are read-only in this shell. Blocked and waiting states explain what Nexus needs before movement.
         </div>
       </div>
@@ -37,7 +62,7 @@ export function SourceJourneyTracker({ stages }: { stages: WorkflowStage[] }) {
           <div
             key={stage.key}
             style={{
-              border: `1px solid ${stageBorder(stage)}`,
+              border: '1px solid ' + stageBorder(stage),
               borderRadius: 12,
               padding: '12px 13px',
               background: stageBackground(stage),
@@ -46,13 +71,13 @@ export function SourceJourneyTracker({ stages }: { stages: WorkflowStage[] }) {
               gap: 7,
             }}
           >
-            <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
+            <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>
               Step {index + 1}
             </div>
-            <div style={{ fontWeight: 800, color: EXPERIENCE_COLORS.textPrimary }}>{stage.label}</div>
+            <div style={{ fontWeight: 800, color: SHELL.INK }}>{stage.label}</div>
             <div
               style={{
-                fontFamily: FONTS.mono,
+                fontFamily: SHELL.MONO,
                 fontSize: '10px',
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
@@ -62,7 +87,7 @@ export function SourceJourneyTracker({ stages }: { stages: WorkflowStage[] }) {
               {getStageStateLabel(stage.status)}
             </div>
             {stage.gate.blocker ? (
-              <div style={{ ...sourceMuted, color: EXPERIENCE_COLORS.riskRed, fontSize: '12px' }}>
+              <div style={{ ...sourceMuted, color: SHELL.RUST_TEXT, fontSize: '12px' }}>
                 {stage.gate.blocker}
               </div>
             ) : null}
@@ -74,25 +99,25 @@ export function SourceJourneyTracker({ stages }: { stages: WorkflowStage[] }) {
 }
 
 function stageColor(stage: WorkflowStage): string {
-  if (stage.status === 'blocked') return EXPERIENCE_COLORS.journeyBlocked;
-  if (stage.status === 'needs_approval') return EXPERIENCE_COLORS.journeyWaiting;
-  if (stage.status === 'complete') return EXPERIENCE_COLORS.journeyComplete;
-  if (stage.status === 'active' || stage.status === 'reopened') return EXPERIENCE_COLORS.journeyActive;
-  return EXPERIENCE_COLORS.textSecondary;
+  if (stage.status === 'blocked') return SHELL.RUST_TEXT;
+  if (stage.status === 'needs_approval') return SHELL.PEACH_TEXT;
+  if (stage.status === 'complete') return SHELL.MINT_TEXT;
+  if (stage.status === 'active' || stage.status === 'reopened') return SHELL.INK_MID;
+  return SHELL.INK_MUTED;
 }
 
 function stageBorder(stage: WorkflowStage): string {
-  if (stage.status === 'blocked') return 'rgba(181,69,47,0.36)';
-  if (stage.status === 'active' || stage.status === 'reopened') return 'rgba(46,111,216,0.36)';
-  if (stage.status === 'complete') return 'rgba(47,138,94,0.28)';
-  if (stage.status === 'needs_approval') return 'rgba(184,107,18,0.32)';
-  return EXPERIENCE_COLORS.borderSoft;
+  if (stage.status === 'blocked') return SHELL.PEACH_LINE;
+  if (stage.status === 'active' || stage.status === 'reopened') return SHELL.BLUE_LINE;
+  if (stage.status === 'complete') return SHELL.MINT_LINE;
+  if (stage.status === 'needs_approval') return SHELL.PEACH_LINE;
+  return SHELL.CARD_LINE;
 }
 
 function stageBackground(stage: WorkflowStage): string {
-  if (stage.status === 'blocked') return 'rgba(181,69,47,0.07)';
-  if (stage.status === 'active' || stage.status === 'reopened') return 'rgba(46,111,216,0.07)';
-  if (stage.status === 'complete') return 'rgba(47,138,94,0.06)';
-  if (stage.status === 'needs_approval') return 'rgba(184,107,18,0.07)';
-  return EXPERIENCE_COLORS.surfaceWarm;
+  if (stage.status === 'blocked') return SHELL.RUST_BG;
+  if (stage.status === 'active' || stage.status === 'reopened') return SHELL.BLUE_BG;
+  if (stage.status === 'complete') return SHELL.MINT_BG;
+  if (stage.status === 'needs_approval') return SHELL.PEACH_BG;
+  return SHELL.PAPER_SOFT;
 }

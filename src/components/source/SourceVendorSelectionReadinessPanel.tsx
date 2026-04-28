@@ -1,22 +1,30 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { EXPERIENCE_COLORS, TEXT } from '@/lib/design-system';
+import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourceVendorSelectionReadiness } from '@/lib/source/vendor-selection-readiness-types';
-import { sourceSectionLabel } from './foundationStyles';
+
+const sourceSectionLabel = {
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.14em',
+  color: SHELL.INK_MUTED,
+  marginBottom: 0,
+};
 
 function readinessColor(status: SourceVendorSelectionReadiness['readinessStatus']): string {
   if (status === 'ready_for_selection_review') {
-    return EXPERIENCE_COLORS.journeyComplete;
+    return SHELL.MINT_TEXT;
   }
 
   if (status === 'proceed_to_bafo') {
-    return EXPERIENCE_COLORS.accentBlue;
+    return SHELL.INK_MID;
   }
 
   if (status === 'defer_pending_clarifications') {
-    return EXPERIENCE_COLORS.riskAmber;
+    return SHELL.PEACH_TEXT;
   }
 
-  return EXPERIENCE_COLORS.riskRed;
+  return SHELL.RUST_TEXT;
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -37,22 +45,22 @@ export function SourceVendorSelectionReadinessPanel({
     <section style={PANEL} aria-label="Vendor selection readiness panel">
       <div style={HEADER}>
         <div>
-          <div style={{ ...sourceSectionLabel, color: EXPERIENCE_COLORS.accentTeal }}>
+          <div style={{ ...sourceSectionLabel, color: SHELL.INK_SOFT }}>
             Vendor selection readiness
           </div>
-          <h4 style={{ margin: '4px 0 0', color: EXPERIENCE_COLORS.textPrimary }}>
+          <h4 style={{ margin: '4px 0 0', color: SHELL.INK }}>
             Selection-readiness readiness signal
           </h4>
-          <p style={{ margin: '7px 0 0', ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
+          <p style={{ margin: '7px 0 0', fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>
             Deterministic synthesis for steering review. This panel does not finalize vendor selection.
           </p>
         </div>
         <div style={POSTURE_BADGE}>
           <div style={sourceSectionLabel}>Selection posture</div>
-          <div style={{ ...TEXT.small, color: readinessColor(readiness.readinessStatus) }}>
+          <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: readinessColor(readiness.readinessStatus) }}>
             {readiness.selectionPosture}
           </div>
-          <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
+          <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>
             Selection ready: {readiness.selectionReviewReady ? 'yes' : 'no'}
           </div>
         </div>
@@ -60,10 +68,10 @@ export function SourceVendorSelectionReadinessPanel({
 
       <div style={GRID_TWO}>
         <Section title="Readiness status">
-          <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
+          <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>
             Event: {readiness.eventName}
           </div>
-          <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
+          <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>
             Event ID: {readiness.eventId}
           </div>
           <div style={{ ...sourceSectionLabel, marginTop: 8 }}>Required approvals</div>
@@ -100,7 +108,7 @@ export function SourceVendorSelectionReadinessPanel({
               : <li>No required artifacts are currently tracked.</li>}
           </ul>
           <div style={sourceSectionLabel}>Recommendation</div>
-          <div style={{ color: EXPERIENCE_COLORS.textPrimary }}>
+          <div style={{ color: SHELL.INK }}>
             {readiness.recommendedNextAction}
           </div>
         </Section>
@@ -124,7 +132,7 @@ export function SourceVendorSelectionReadinessPanel({
 
         <Section title="Guardrails">
           <div style={sourceSectionLabel}>Atlas executive implication</div>
-          <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
+          <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>
             {readiness.atlasExecutiveImplication}
           </div>
           <div style={sourceSectionLabel}>Steward gate notes</div>
@@ -143,11 +151,11 @@ export function SourceVendorSelectionReadinessPanel({
 
         <Section title="Nexus guidance">
           <div style={sourceSectionLabel}>Nexus recommendation</div>
-          <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
+          <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>
             {readiness.nexusRecommendation}
           </div>
           <div style={sourceSectionLabel}>Modules used</div>
-          <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
+          <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>
             {readiness.sourceModulesUsed.join(', ')}
           </div>
         </Section>
@@ -159,9 +167,9 @@ export function SourceVendorSelectionReadinessPanel({
 const PANEL: CSSProperties = {
   display: 'grid',
   gap: 12,
-  border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 12,
-  background: EXPERIENCE_COLORS.surface,
+  background: SHELL.CARD_WHITE,
   padding: 12,
 };
 
@@ -175,9 +183,9 @@ const HEADER: CSSProperties = {
 const POSTURE_BADGE: CSSProperties = {
   minWidth: 220,
   ...sourceSectionLabel,
-  border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 10,
-  background: EXPERIENCE_COLORS.surfaceWarm,
+  background: SHELL.PAPER_SOFT,
   padding: 10,
   textAlign: 'right',
 };
@@ -197,9 +205,9 @@ const GRID_THREE: CSSProperties = {
 const CARD: CSSProperties = {
   display: 'grid',
   gap: 8,
-  border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 10,
-  background: EXPERIENCE_COLORS.surfaceWarm,
+  background: SHELL.PAPER_SOFT,
   padding: 12,
   minWidth: 0,
 };
@@ -207,7 +215,7 @@ const CARD: CSSProperties = {
 const LIST: CSSProperties = {
   margin: 0,
   paddingLeft: 18,
-  color: EXPERIENCE_COLORS.textSecondary,
+  color: SHELL.INK_MUTED,
   display: 'grid',
   gap: 4,
 };

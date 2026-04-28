@@ -10,13 +10,38 @@ import {
 } from '@/lib/source';
 import type { SourcingEventDetail } from '@/lib/source/types';
 import type { CSSProperties, ReactNode } from 'react';
-import { EXPERIENCE_COLORS, FONTS, TEXT } from '@/lib/design-system';
-import { sourceCard, sourceMuted, sourceSectionLabel } from './foundationStyles';
+import { SHELL } from '@/lib/shell/shell-tokens';
 import { SourceDataReadinessPanel } from './SourceDataReadinessPanel';
 import { SourceScopeStageWorkspace } from './SourceScopeStageWorkspace';
 import { SourceBafoNegotiationPanel } from './SourceBafoNegotiationPanel';
 import { SourceVendorSelectionReadinessPanel } from './SourceVendorSelectionReadinessPanel';
 import { SourceVendorResponseCompletenessPanel } from './SourceVendorResponseCompletenessPanel';
+
+const sourceCard = {
+  background: SHELL.CARD_WHITE,
+  border: '1px solid ' + SHELL.CARD_LINE,
+  borderRadius: 10,
+  padding: '16px 18px',
+  display: 'flex',
+  flexDirection: 'column' as const,
+  gap: 12,
+};
+
+const sourceSectionLabel = {
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.14em',
+  color: SHELL.INK_MUTED,
+  marginBottom: 0,
+};
+
+const sourceMuted = {
+  fontFamily: SHELL.SANS,
+  fontSize: 13,
+  color: SHELL.INK_MUTED,
+  lineHeight: 1.5,
+};
 
 export function SourceActiveStageWorkspace({
   event,
@@ -52,16 +77,16 @@ export function SourceActiveStageWorkspace({
 
   if (activeStage.key === 'vendor_responses') {
     return (
-      <section style={{ ...sourceCard, background: EXPERIENCE_COLORS.surface, border: `1px solid ${EXPERIENCE_COLORS.borderSoft}` }}>
+      <section style={{ ...sourceCard, background: SHELL.CARD_WHITE, border: '1px solid ' + SHELL.CARD_LINE }}>
         <div style={{ marginBottom: 10 }}>
-          <div style={{ ...sourceSectionLabel, color: EXPERIENCE_COLORS.accentTeal }}>Current-stage workspace</div>
-          <h4 style={{ margin: '4px 0 0', color: EXPERIENCE_COLORS.textPrimary }}>
+          <div style={{ ...sourceSectionLabel, color: SHELL.INK_SOFT }}>Current-stage workspace</div>
+          <h4 style={{ margin: '4px 0 0', color: SHELL.INK }}>
             {event.currentStageLabel}
           </h4>
-          <div style={{ ...sourceMuted, color: EXPERIENCE_COLORS.textSecondary }}>
+          <div style={{ ...sourceMuted, color: SHELL.INK_MUTED }}>
             {activeStage.summary}
           </div>
-          <div style={{ ...TEXT.small, marginTop: 6, color: EXPERIENCE_COLORS.riskAmber }}>
+          <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, marginTop: 6, color: SHELL.PEACH_TEXT }}>
             Gate status: {getStageStateLabel(activeStage.status)}
           </div>
         </div>
@@ -79,14 +104,14 @@ export function SourceActiveStageWorkspace({
     });
 
     return (
-      <section style={{ ...sourceCard, background: EXPERIENCE_COLORS.surface, border: `1px solid ${EXPERIENCE_COLORS.borderSoft}` }}>
+      <section style={{ ...sourceCard, background: SHELL.CARD_WHITE, border: '1px solid ' + SHELL.CARD_LINE }}>
         <div style={{ marginBottom: 10 }}>
-          <div style={{ ...sourceSectionLabel, color: EXPERIENCE_COLORS.accentTeal }}>Current-stage workspace</div>
-          <h4 style={{ margin: '4px 0 0', color: EXPERIENCE_COLORS.textPrimary }}>{event.currentStageLabel}</h4>
-          <div style={{ ...sourceMuted, color: EXPERIENCE_COLORS.textSecondary }}>
+          <div style={{ ...sourceSectionLabel, color: SHELL.INK_SOFT }}>Current-stage workspace</div>
+          <h4 style={{ margin: '4px 0 0', color: SHELL.INK }}>{event.currentStageLabel}</h4>
+          <div style={{ ...sourceMuted, color: SHELL.INK_MUTED }}>
             {activeStage.summary}
           </div>
-          <div style={{ ...TEXT.small, marginTop: 6, color: EXPERIENCE_COLORS.riskAmber }}>
+          <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, marginTop: 6, color: SHELL.PEACH_TEXT }}>
             Gate status: {getStageStateLabel(activeStage.status)}
           </div>
         </div>
@@ -104,14 +129,14 @@ export function SourceActiveStageWorkspace({
     });
 
     return (
-      <section style={{ ...sourceCard, background: EXPERIENCE_COLORS.surface, border: `1px solid ${EXPERIENCE_COLORS.borderSoft}` }}>
+      <section style={{ ...sourceCard, background: SHELL.CARD_WHITE, border: '1px solid ' + SHELL.CARD_LINE }}>
         <div style={{ marginBottom: 10 }}>
-          <div style={{ ...sourceSectionLabel, color: EXPERIENCE_COLORS.accentTeal }}>Current-stage workspace</div>
-          <h4 style={{ margin: '4px 0 0', color: EXPERIENCE_COLORS.textPrimary }}>{event.currentStageLabel}</h4>
-          <div style={{ ...sourceMuted, color: EXPERIENCE_COLORS.textSecondary }}>
+          <div style={{ ...sourceSectionLabel, color: SHELL.INK_SOFT }}>Current-stage workspace</div>
+          <h4 style={{ margin: '4px 0 0', color: SHELL.INK }}>{event.currentStageLabel}</h4>
+          <div style={{ ...sourceMuted, color: SHELL.INK_MUTED }}>
             {activeStage.summary}
           </div>
-          <div style={{ ...TEXT.small, marginTop: 6, color: EXPERIENCE_COLORS.riskAmber }}>
+          <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, marginTop: 6, color: SHELL.PEACH_TEXT }}>
             Gate status: {getStageStateLabel(activeStage.status)}
           </div>
         </div>
@@ -124,37 +149,37 @@ export function SourceActiveStageWorkspace({
     <section
       style={{
         ...sourceCard,
-        background: EXPERIENCE_COLORS.surface,
-        border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+        background: SHELL.CARD_WHITE,
+        border: '1px solid ' + SHELL.CARD_LINE,
       }}
     >
       <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12 }}>
         <div>
-          <div style={{ ...sourceSectionLabel, color: EXPERIENCE_COLORS.accentTeal }}>Current-stage workspace</div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: EXPERIENCE_COLORS.textPrimary }}>
+          <div style={{ ...sourceSectionLabel, color: SHELL.INK_SOFT }}>Current-stage workspace</div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: SHELL.INK }}>
             {activeStage.label}
           </div>
         </div>
         <div
           style={{
             alignSelf: 'start',
-            border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+            border: '1px solid ' + SHELL.CARD_LINE,
             borderRadius: 999,
-            background: EXPERIENCE_COLORS.surfaceWarm,
+            background: SHELL.PAPER_SOFT,
             padding: '7px 10px',
-            fontFamily: FONTS.mono,
+            fontFamily: SHELL.MONO,
             fontSize: '10px',
             letterSpacing: '0.08em',
             textTransform: 'uppercase',
             color: activeStage.status === 'blocked'
-              ? EXPERIENCE_COLORS.riskRed
-              : EXPERIENCE_COLORS.accentBlue,
+              ? SHELL.RUST_TEXT
+              : SHELL.INK_MID,
           }}
         >
           {getStageStateLabel(activeStage.status)}
         </div>
       </div>
-      <p style={{ ...sourceMuted, color: EXPERIENCE_COLORS.textSecondary, margin: 0 }}>{activeStage.summary}</p>
+      <p style={{ ...sourceMuted, color: SHELL.INK_MUTED, margin: 0 }}>{activeStage.summary}</p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 12 }}>
         <WorkspaceBlock title="Stage goal">
@@ -178,20 +203,20 @@ export function SourceActiveStageWorkspace({
         }}
       >
         <div style={INSET}>
-          <div style={{ ...sourceSectionLabel, color: EXPERIENCE_COLORS.accentTeal }}>Agent mission preview</div>
+          <div style={{ ...sourceSectionLabel, color: SHELL.INK_SOFT }}>Agent mission preview</div>
           <div style={{ display: 'grid', gap: 8 }}>
             {missionPreviewMissions.map((mission) => (
               <div key={mission.missionId} style={MISSION_ROW}>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-                  <span style={{ ...TEXT.small, color: EXPERIENCE_COLORS.accentTeal, fontWeight: 800 }}>
+                  <span style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MID, fontWeight: 800 }}>
                     {agentLabel(mission.agentName)}
                   </span>
-                  <span style={{ ...TEXT.small, color: priorityColor(mission.priority), fontWeight: 800 }}>
+                  <span style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: priorityColor(mission.priority), fontWeight: 800 }}>
                     {mission.priority}
                   </span>
                 </div>
-                <div style={{ fontWeight: 800, color: EXPERIENCE_COLORS.textPrimary }}>{mission.title}</div>
-                <div style={{ ...sourceMuted, color: EXPERIENCE_COLORS.textSecondary, fontSize: '12px' }}>
+                <div style={{ fontWeight: 800, color: SHELL.INK }}>{mission.title}</div>
+                <div style={{ ...sourceMuted, color: SHELL.INK_MUTED, fontSize: '12px' }}>
                   {mission.recommendedAction}
                 </div>
               </div>
@@ -203,18 +228,18 @@ export function SourceActiveStageWorkspace({
       </div>
 
       <div style={INSET}>
-        <div style={{ ...sourceSectionLabel, color: EXPERIENCE_COLORS.accentTeal }}>Artifacts / reviews placeholder</div>
+        <div style={{ ...sourceSectionLabel, color: SHELL.INK_SOFT }}>Artifacts / reviews placeholder</div>
         <div style={{ display: 'grid', gap: 8 }}>
           {artifactPlaceholders.map((artifact) => (
             <div key={artifact.id} style={ARTIFACT_ROW}>
-              <div style={{ fontWeight: 800, color: EXPERIENCE_COLORS.textPrimary }}>{artifact.title}</div>
-              <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
+              <div style={{ fontWeight: 800, color: SHELL.INK }}>{artifact.title}</div>
+              <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>
                 {SOURCE_ARTIFACT_STATUS_LABELS[artifact.status]} / sources {artifact.sourceCount} / updated {artifact.updatedAt}
               </div>
             </div>
           ))}
         </div>
-        <div style={{ ...sourceMuted, color: EXPERIENCE_COLORS.textSecondary, fontSize: '12px' }}>
+        <div style={{ ...sourceMuted, color: SHELL.INK_MUTED, fontSize: '12px' }}>
           Read-only shell state only. Drawer behavior, versioning, approvals, generation, and re-upload remain deferred.
         </div>
       </div>
@@ -225,35 +250,35 @@ export function SourceActiveStageWorkspace({
 const INSET: CSSProperties = {
   display: 'grid',
   gap: 10,
-  border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 12,
-  background: EXPERIENCE_COLORS.surfaceWarm,
+  background: SHELL.PAPER_SOFT,
   padding: 13,
 };
 
 const MISSION_ROW: CSSProperties = {
   display: 'grid',
   gap: 5,
-  border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 10,
-  background: EXPERIENCE_COLORS.surface,
+  background: SHELL.CARD_WHITE,
   padding: '9px 10px',
 };
 
 const ARTIFACT_ROW: CSSProperties = {
   display: 'grid',
   gap: 4,
-  border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 10,
-  background: EXPERIENCE_COLORS.surface,
+  background: SHELL.CARD_WHITE,
   padding: '9px 10px',
 };
 
 function WorkspaceBlock({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div style={INSET}>
-      <div style={{ ...sourceSectionLabel, color: EXPERIENCE_COLORS.accentTeal }}>{title}</div>
-      <div style={{ color: EXPERIENCE_COLORS.textPrimary, fontWeight: 700 }}>{children}</div>
+      <div style={{ fontFamily: SHELL.MONO, fontSize: 9, textTransform: 'uppercase' as const, letterSpacing: '0.14em', color: SHELL.INK_SOFT, marginBottom: 0 }}>{title}</div>
+      <div style={{ color: SHELL.INK, fontWeight: 700 }}>{children}</div>
     </div>
   );
 }
@@ -269,10 +294,10 @@ function ListBlock({
 }) {
   return (
     <div style={INSET}>
-      <div style={{ ...sourceSectionLabel, color: tone === 'risk' ? EXPERIENCE_COLORS.riskAmber : EXPERIENCE_COLORS.accentTeal }}>
+      <div style={{ fontFamily: SHELL.MONO, fontSize: 9, textTransform: 'uppercase' as const, letterSpacing: '0.14em', color: tone === 'risk' ? SHELL.PEACH_TEXT : SHELL.INK_SOFT, marginBottom: 0 }}>
         {title}
       </div>
-      <ul style={{ margin: 0, paddingLeft: 18, color: EXPERIENCE_COLORS.textSecondary }}>
+      <ul style={{ margin: 0, paddingLeft: 18, color: SHELL.INK_MUTED }}>
         {items.map((item) => (
           <li key={item} style={{ marginBottom: 5 }}>{item}</li>
         ))}
@@ -308,8 +333,8 @@ function agentLabel(agentName: SourceAgentMission['agentName']): string {
 }
 
 function priorityColor(priority: SourceAgentMission['priority']): string {
-  if (priority === 'critical') return EXPERIENCE_COLORS.riskRed;
-  if (priority === 'high') return EXPERIENCE_COLORS.riskAmber;
-  if (priority === 'medium') return EXPERIENCE_COLORS.accentBlue;
-  return EXPERIENCE_COLORS.textSecondary;
+  if (priority === 'critical') return SHELL.RUST_TEXT;
+  if (priority === 'high') return SHELL.PEACH_TEXT;
+  if (priority === 'medium') return SHELL.INK_MID;
+  return SHELL.INK_MUTED;
 }

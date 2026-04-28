@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { EXPERIENCE_COLORS, FONTS, TEXT } from '@/lib/design-system';
+import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourceDataReadinessProgressSummary } from '@/lib/source/admin-setup-readiness-contract';
 import type {
   SourceDataReadinessItem,
@@ -7,7 +7,22 @@ import type {
   SourceEvidenceUsability,
   ValueConfidence,
 } from '@/lib/source/types';
-import { sourceMuted, sourceSectionLabel } from './foundationStyles';
+
+const sourceSectionLabel = {
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.14em',
+  color: SHELL.INK_MUTED,
+  marginBottom: 0,
+};
+
+const sourceMuted = {
+  fontFamily: SHELL.SANS,
+  fontSize: 13,
+  color: SHELL.INK_MUTED,
+  lineHeight: 1.5,
+};
 
 export function SourceDataReadinessPanel({
   items,
@@ -29,8 +44,8 @@ export function SourceDataReadinessPanel({
     <section style={PANEL} aria-label="Source data readiness panel" data-legacy-label="Data readiness placeholder">
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <div style={{ display: 'grid', gap: 5 }}>
-          <div style={{ ...sourceSectionLabel, color: EXPERIENCE_COLORS.accentTeal }}>Data readiness</div>
-          <div style={{ fontSize: 18, fontWeight: 800, color: EXPERIENCE_COLORS.textPrimary }}>
+          <div style={{ ...sourceSectionLabel, color: SHELL.INK_SOFT }}>Data readiness</div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: SHELL.INK }}>
             Evidence posture for this stage
           </div>
         </div>
@@ -52,14 +67,14 @@ export function SourceDataReadinessPanel({
         <div style={PROGRESS_PANEL} aria-label="Event data readiness progress">
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'baseline' }}>
             <div style={{ display: 'grid', gap: 3 }}>
-              <div style={{ fontWeight: 800, color: EXPERIENCE_COLORS.textPrimary }}>
+              <div style={{ fontWeight: 800, color: SHELL.INK }}>
                 {progressSummary.progressLabel}
               </div>
-              <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
+              <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>
                 Admin/Setup readiness contract projection. {progressSummary.progressBasis}
               </div>
             </div>
-            <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary, fontWeight: 800 }}>
+            <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED, fontWeight: 800 }}>
               {progressSummary.requiredItems - progressSummary.missingRequiredItems}/{progressSummary.requiredItems} required present
             </div>
           </div>
@@ -74,7 +89,7 @@ export function SourceDataReadinessPanel({
         </div>
       ) : null}
 
-      <p style={{ ...sourceMuted, color: EXPERIENCE_COLORS.textSecondary, margin: 0 }}>
+      <p style={{ ...sourceMuted, color: SHELL.INK_MUTED, margin: 0 }}>
         Source consumes Admin/Setup readiness and turns data gaps into sourcing impact. Loaded and Available
         records stay separate from Usable Evidence.
       </p>
@@ -100,10 +115,10 @@ export function SourceDataReadinessPanel({
                 <tr key={item.id}>
                   <td style={BODY_CELL}>
                     <div style={{ display: 'grid', gap: 6 }}>
-                      <div style={{ fontWeight: 800, color: EXPERIENCE_COLORS.textPrimary }}>{item.category}</div>
+                      <div style={{ fontWeight: 800, color: SHELL.INK }}>{item.category}</div>
                       <div style={META_ROW}>
                         <span style={CHIP}>{item.requirementLevel}</span>
-                        <span style={{ ...TEXT.small, color: confidenceColor(item.confidence), fontWeight: 800 }}>
+                        <span style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: confidenceColor(item.confidence), fontWeight: 800 }}>
                           {item.confidence} confidence
                         </span>
                       </div>
@@ -112,28 +127,28 @@ export function SourceDataReadinessPanel({
                   <td style={BODY_CELL}>
                     <div style={{ display: 'grid', gap: 6 }}>
                       <span style={stateChip(item.readinessState)}>{item.readinessState}</span>
-                      <span style={{ ...TEXT.small, color: usabilityColor(item.evidenceUsability), fontWeight: 800 }}>
+                      <span style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: usabilityColor(item.evidenceUsability), fontWeight: 800 }}>
                         {usabilityLabel(item.evidenceUsability)}
                       </span>
                     </div>
                   </td>
                   <td style={BODY_CELL}>
                     <div style={{ display: 'grid', gap: 5 }}>
-                      <div style={{ color: EXPERIENCE_COLORS.textPrimary, fontWeight: 700 }}>{item.owner}</div>
-                      <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
+                      <div style={{ color: SHELL.INK, fontWeight: 700 }}>{item.owner}</div>
+                      <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>
                         {item.sourceSystemOrFile}
                       </div>
-                      <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
+                      <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>
                         Updated: {item.lastUpdated ?? 'not received'}
                       </div>
                     </div>
                   </td>
                   <td style={BODY_CELL}>
                     <div style={{ display: 'grid', gap: 7 }}>
-                      <div style={{ color: EXPERIENCE_COLORS.textPrimary, fontWeight: 700 }}>
+                      <div style={{ color: SHELL.INK, fontWeight: 700 }}>
                         {item.workflowImpact}
                       </div>
-                      <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
+                      <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>
                         {item.agentRecommendation}
                       </div>
                       <div style={HANDOFF_LABEL}>{item.stewardAdminHandoffLabel}</div>
@@ -163,16 +178,16 @@ function SummaryMetric({
       <div
         style={{
           color: tone === 'risk'
-            ? EXPERIENCE_COLORS.riskRed
+            ? SHELL.RUST_TEXT
             : tone === 'watch'
-              ? EXPERIENCE_COLORS.riskAmber
-              : EXPERIENCE_COLORS.accentTeal,
+              ? SHELL.PEACH_TEXT
+              : SHELL.INK_SOFT,
           fontWeight: 900,
         }}
       >
         {value}
       </div>
-      <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>{label}</div>
+      <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>{label}</div>
     </div>
   );
 }
@@ -187,21 +202,21 @@ function stateChip(state: SourceDataReadinessState): CSSProperties {
 }
 
 function stateColor(state: SourceDataReadinessState): string {
-  if (state === 'Missing' || state === 'Access Restricted') return EXPERIENCE_COLORS.riskRed;
+  if (state === 'Missing' || state === 'Access Restricted') return SHELL.RUST_TEXT;
   if (state === 'Requested' || state === 'Loaded' || state === 'Low Confidence' || state === 'Stale') {
-    return EXPERIENCE_COLORS.riskAmber;
+    return SHELL.PEACH_TEXT;
   }
-  if (state === 'Usable Evidence') return EXPERIENCE_COLORS.journeyComplete;
-  return EXPERIENCE_COLORS.accentBlue;
+  if (state === 'Usable Evidence') return SHELL.MINT_TEXT;
+  return SHELL.INK_MID;
 }
 
 function stateBackground(state: SourceDataReadinessState): string {
-  if (state === 'Missing' || state === 'Access Restricted') return 'rgba(181,69,47,0.08)';
+  if (state === 'Missing' || state === 'Access Restricted') return SHELL.RUST_BG;
   if (state === 'Requested' || state === 'Loaded' || state === 'Low Confidence' || state === 'Stale') {
-    return 'rgba(184,107,18,0.08)';
+    return SHELL.PEACH_BG;
   }
-  if (state === 'Usable Evidence') return 'rgba(47,138,94,0.08)';
-  return 'rgba(46,111,216,0.08)';
+  if (state === 'Usable Evidence') return SHELL.MINT_BG;
+  return SHELL.BLUE_BG;
 }
 
 function usabilityLabel(usability: SourceEvidenceUsability): string {
@@ -215,24 +230,24 @@ function usabilityLabel(usability: SourceEvidenceUsability): string {
 }
 
 function usabilityColor(usability: SourceEvidenceUsability): string {
-  if (usability === 'usable') return EXPERIENCE_COLORS.journeyComplete;
-  if (usability === 'not_available' || usability === 'restricted') return EXPERIENCE_COLORS.riskRed;
-  if (usability === 'waived') return EXPERIENCE_COLORS.textSecondary;
-  return EXPERIENCE_COLORS.riskAmber;
+  if (usability === 'usable') return SHELL.MINT_TEXT;
+  if (usability === 'not_available' || usability === 'restricted') return SHELL.RUST_TEXT;
+  if (usability === 'waived') return SHELL.INK_MUTED;
+  return SHELL.PEACH_TEXT;
 }
 
 function confidenceColor(confidence: ValueConfidence): string {
-  if (confidence === 'high') return EXPERIENCE_COLORS.journeyComplete;
-  if (confidence === 'medium') return EXPERIENCE_COLORS.accentBlue;
-  return EXPERIENCE_COLORS.riskAmber;
+  if (confidence === 'high') return SHELL.MINT_TEXT;
+  if (confidence === 'medium') return SHELL.INK_MID;
+  return SHELL.PEACH_TEXT;
 }
 
 const PANEL: CSSProperties = {
   display: 'grid',
   gap: 10,
-  border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 12,
-  background: EXPERIENCE_COLORS.surfaceWarm,
+  background: SHELL.PAPER_SOFT,
   padding: 12,
   minWidth: 0,
 };
@@ -247,9 +262,9 @@ const SUMMARY_STRIP: CSSProperties = {
 const PROGRESS_PANEL: CSSProperties = {
   display: 'grid',
   gap: 8,
-  border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 10,
-  background: EXPERIENCE_COLORS.surface,
+  background: SHELL.CARD_WHITE,
   padding: '10px 12px',
 };
 
@@ -257,22 +272,22 @@ const PROGRESS_TRACK: CSSProperties = {
   height: 7,
   borderRadius: 999,
   overflow: 'hidden',
-  background: 'rgba(27,44,70,0.08)',
+  background: SHELL.GRAY_BG,
 };
 
 const PROGRESS_FILL: CSSProperties = {
   height: '100%',
   borderRadius: 999,
-  background: EXPERIENCE_COLORS.accentBlue,
+  background: SHELL.INK_MID,
 };
 
 const SUMMARY_METRIC: CSSProperties = {
   display: 'grid',
   gap: 1,
   minWidth: 68,
-  border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 10,
-  background: EXPERIENCE_COLORS.surface,
+  background: SHELL.CARD_WHITE,
   padding: '7px 9px',
 };
 
@@ -280,24 +295,24 @@ const TABLE: CSSProperties = {
   width: '100%',
   minWidth: 700,
   borderCollapse: 'collapse',
-  background: EXPERIENCE_COLORS.surface,
-  border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  background: SHELL.CARD_WHITE,
+  border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 10,
 };
 
 const HEADER_CELL: CSSProperties = {
-  ...TEXT.small,
-  fontFamily: FONTS.mono,
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
   textTransform: 'uppercase',
   letterSpacing: '0.08em',
-  color: EXPERIENCE_COLORS.textSecondary,
+  color: SHELL.INK_MUTED,
   padding: '9px 10px',
-  borderBottom: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  borderBottom: '1px solid ' + SHELL.CARD_LINE,
 };
 
 const BODY_CELL: CSSProperties = {
   padding: '10px',
-  borderBottom: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  borderBottom: '1px solid ' + SHELL.CARD_LINE,
   verticalAlign: 'top',
   overflowWrap: 'anywhere',
 };
@@ -313,32 +328,34 @@ const CHIP: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   width: 'fit-content',
-  border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 999,
   padding: '3px 7px',
-  fontFamily: FONTS.mono,
+  fontFamily: SHELL.MONO,
   fontSize: '10px',
   textTransform: 'uppercase',
   letterSpacing: '0.08em',
-  color: EXPERIENCE_COLORS.textSecondary,
-  background: EXPERIENCE_COLORS.surfaceWarm,
+  color: SHELL.INK_MUTED,
+  background: SHELL.PAPER_SOFT,
 };
 
 const HANDOFF_LABEL: CSSProperties = {
-  ...TEXT.small,
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  lineHeight: 1.4,
   width: 'fit-content',
-  border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 999,
-  background: EXPERIENCE_COLORS.surfaceWarm,
-  color: EXPERIENCE_COLORS.textSecondary,
+  background: SHELL.PAPER_SOFT,
+  color: SHELL.INK_MUTED,
   fontWeight: 800,
   padding: '4px 8px',
 };
 
 const EMPTY_STATE: CSSProperties = {
-  border: `1px solid ${EXPERIENCE_COLORS.borderSoft}`,
+  border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 10,
-  background: EXPERIENCE_COLORS.surface,
-  color: EXPERIENCE_COLORS.textSecondary,
+  background: SHELL.CARD_WHITE,
+  color: SHELL.INK_MUTED,
   padding: 12,
 };
