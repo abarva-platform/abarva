@@ -94,11 +94,6 @@ export function CommandPalette() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, filteredRoutes, selectedIndex, navigate]);
 
-  // Reset selection when query changes
-  useEffect(() => {
-    setSelectedIndex(0);
-  }, [query]);
-
   // Auto-focus input when opened
   useEffect(() => {
     if (isOpen) {
@@ -149,7 +144,10 @@ export function CommandPalette() {
           ref={inputRef}
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setSelectedIndex(0);
+          }}
           placeholder="Go to…"
           autoComplete="off"
           spellCheck={true}

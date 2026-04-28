@@ -11,6 +11,7 @@
 // Colors drawn from the AbarVa canon.
 
 import React from 'react';
+import Link from 'next/link';
 import { type ProgramSourceLinkView } from '@/lib/programs/program-source-link-view';
 
 interface SourceEventChipProps {
@@ -60,12 +61,12 @@ export function SourceEventChip({ view }: SourceEventChipProps) {
         {view.topCommercialBlocker}
       </div>
       {view.routeHint ? (
-        <a
+        <Link
           href={view.routeHint}
           style={{ color: '#1B2B5C', fontSize: '11px', textDecoration: 'underline' }}
         >
           View commercial event →
-        </a>
+        </Link>
       ) : (
         <span style={{ color: '#525866', fontSize: '10px' }}>
           {view.deterministicSeedCaveat}

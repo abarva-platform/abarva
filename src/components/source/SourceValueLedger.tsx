@@ -295,7 +295,7 @@ export function SourceValueLedger({ snapshot }: { snapshot: SourceValueLedgerSna
               {lowConfidenceRows.length > 0 ? (
                 lowConfidenceRows.slice(0, 5).map((row) => (
                   <li key={`${row.entry.id}-conf`} style={TEXT_SMALL}>
-                    {toPerspectiveLabel(row.perspective)} item "{row.entry.label}" remains at {row.entry.confidence} confidence.
+                    {toPerspectiveLabel(row.perspective)} item &quot;{row.entry.label}&quot; remains at {row.entry.confidence} confidence.
                   </li>
                 ))
               ) : (

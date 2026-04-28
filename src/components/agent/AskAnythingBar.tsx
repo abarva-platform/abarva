@@ -7,7 +7,7 @@
 // Streams via useAgentStream (same hook powering AgentColumn / AgentRail).
 // For the full conversation history, open the AgentRail on the right edge.
 
-import { useRef, useState, useCallback, type ChangeEvent, type KeyboardEvent } from 'react';
+import { useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react';
 import { useAgentStream } from '@/hooks/useAgentStream';
 import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
 
@@ -102,7 +102,7 @@ export function AskAnythingBar({
 
   // ── Submit ──────────────────────────────────────────────────────────────
 
-  const submit = useCallback(() => {
+  function submit() {
     const text = value.trim();
     if (!text || isStreaming) return;
     setValue('');
@@ -110,7 +110,7 @@ export function AskAnythingBar({
     clearLocal(); // clear previous response
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
     ask(text);
-  }, [value, isStreaming, ask, clearLocal]);
+  }
 
   // ── File attach ─────────────────────────────────────────────────────────
 
