@@ -193,19 +193,39 @@ export function SetupUsersPage() {
           >
             Setup
           </div>
-          <h1
+          <div
             style={{
-              fontFamily: SHELL.SERIF,
-              fontSize: 24,
-              fontWeight: 700,
-              color: SHELL.INK,
-              margin: 0,
-              lineHeight: 1.2,
-              letterSpacing: '-0.01em',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
             }}
           >
-            Users · 5 members
-          </h1>
+            <h1
+              style={{
+                fontFamily: SHELL.SERIF,
+                fontSize: 24,
+                fontWeight: 700,
+                color: SHELL.INK,
+                margin: 0,
+                lineHeight: 1.2,
+                letterSpacing: '-0.01em',
+              }}
+            >
+              Users · 5 members
+            </h1>
+            <a
+              href="/admin/invite"
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 10,
+                color: SHELL.INK_SOFT,
+                textDecoration: 'none',
+                flexShrink: 0,
+              }}
+            >
+              + Invite collaborator
+            </a>
+          </div>
         </div>
 
         {/* User list */}
