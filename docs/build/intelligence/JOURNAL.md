@@ -11,3 +11,4 @@
 | 2026-04-28 | KP-4 | shipped | +479/-0 | 10 patterns | PR #594 | merged at 13:31Z via server-side squash; CDP domain seeded with APX-CDP-2026 and CON-001 timeline-realism linkage. |
 | 2026-04-28 | KP-5a | shipped | +277/-0 | 6 patterns | PR #595 | merged at 13:34Z via server-side squash; AI-programs total reached 11 entries; CI baseline failures remained outside the seeded files touched in this wave. |
 | 2026-04-28 | KP-5b | shipped | +139/-0 | 3 patterns | PR #596 | merged at 13:37Z via server-side squash; AI-programs total reached 14 entries for the end of the Tower/talent extension wave. |
+| 2026-04-28 | KP-6 | shipped | +469/-0 | 10 patterns | PR #597 | merged at 13:41Z via server-side squash; architecture domain seeded with plane decomposition, provenance, private-data separation, and iceberg UX patterns. |
