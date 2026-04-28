@@ -580,7 +580,7 @@ const ADMIN_MODULES: ReadonlyArray<AdminModuleReadiness> = [
     key: 'users_access',
     name: 'Users & Access',
     status: 'partial',
-    routeHref: '/platform/admin/users',
+    routeHref: '/admin/users',
     description:
       'User roster, role policy, tenant scope. Surface evolves to ADM5 contract.',
   },
@@ -604,7 +604,7 @@ const ADMIN_MODULES: ReadonlyArray<AdminModuleReadiness> = [
     key: 'audit_activity',
     name: 'Audit & Activity',
     status: 'partial',
-    routeHref: '/platform/admin/audit',
+    routeHref: '/admin/audit',
     description:
       'Activity log + cross-ledger trace. Drilldown evolves with ADM9.',
   },
@@ -662,7 +662,7 @@ const RECOMMENDED_ACTIONS: ReadonlyArray<AdminRecommendedAction> = [
     label: 'Assign business owners on the top 10 critical apps',
     reason:
       'Domain #4 (Application Portfolio) lacks owners on 8 critical apps; Steward cannot mark them usable as evidence.',
-    routeHref: '/platform/admin/users',
+    routeHref: '/admin/users',
   },
   {
     id: 'approve-evidence-usability',
@@ -676,7 +676,7 @@ const RECOMMENDED_ACTIONS: ReadonlyArray<AdminRecommendedAction> = [
     label: 'Re-run the tenant-isolation probe before the next demo',
     reason:
       'The S7 probe set is a hard precondition for cross-tenant safety; surfacing the verdict belongs in Audit.',
-    routeHref: '/platform/admin/audit',
+    routeHref: '/admin/audit',
   },
 ];
 

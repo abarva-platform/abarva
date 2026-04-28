@@ -537,7 +537,7 @@ function EvidenceReadinessCard({ evidence }: { evidence: EvidenceReadinessAggreg
 
 function UsersAccessCard({ userSecurityRisk }: { userSecurityRisk: string }) {
   return (
-    <Card title="Users & access" eyebrow="posture" routeHref="/platform/admin/users">
+    <Card title="Users & access" eyebrow="posture" routeHref="/admin/users">
       <p style={{ margin: 0, fontSize: 13, color: COLORS.body, lineHeight: 1.55 }}>
         {userSecurityRisk}
       </p>
