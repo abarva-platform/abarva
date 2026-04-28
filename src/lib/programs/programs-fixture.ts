@@ -154,7 +154,7 @@ const apxDfv2: ProgramRow = {
 // Flagship first so APEX_PROGRAMS_FIXTURE[0] always resolves to APX-CDP-2026.
 
 export const APEX_PROGRAMS_FIXTURE: ProgramRow[] = [
-  apxCdp2026,   // flagship — P2 Synthesis · gate pending
+  apxCdp2026,   // flagship — P3 Design · Build gate pending (2/5 criteria)
   apxCc2026,    // P4 Build · active
   apxSap2026,   // P1 Discovery · active
   apxLpm2026,   // P3 Design · active
