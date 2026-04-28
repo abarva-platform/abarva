@@ -15,6 +15,7 @@ import { SHELL } from '@/lib/shell/shell-tokens';
 import { AMS_SOURCE_EVENT } from '@/lib/source/shell-source-fixture';
 import { PatternChip } from '@/components/source/PatternChip';
 import { buildSourceStorylineContext, matchStorylinePatterns } from '@/lib/intelligence/storyline-matcher';
+import { buildPricingCompletenessView } from '@/lib/source/pricing-completeness-view';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -608,6 +609,309 @@ function PricingNormalizationTab() {
         }}
       >
         All pricing normalized to Apex Retail reference towers. Year 1 transition costs are one-off. Figures are deterministic seed data for demonstration.
+      </div>
+
+      {/* SRC43 — Pricing completeness drilldown */}
+      <PricingCompletenessDrilldown />
+    </div>
+  );
+}
+
+// ─── SRC43: Pricing completeness drilldown ────────────────────────────────────
+
+function PricingCompletenessDrilldown() {
+  const completenessView = buildPricingCompletenessView();
+  const { summary, vendors } = completenessView;
+
+  const statusBg = (s: string) => {
+    if (s === 'not_comparable') return `${SHELL.PEACH_BG}99`;
+    if (s === 'partially_comparable') return `${SHELL.PEACH_BG}44`;
+    if (s === 'comparable') return SHELL.MINT_BG;
+    return SHELL.GRAY_BG;
+  };
+  const statusText = (s: string) => {
+    if (s === 'not_comparable') return SHELL.PEACH_TEXT;
+    if (s === 'partially_comparable') return SHELL.PEACH_TEXT;
+    if (s === 'comparable') return SHELL.MINT_TEXT;
+    return SHELL.INK_MUTED;
+  };
+  const statusLabel = (s: string) => {
+    if (s === 'not_comparable') return 'Not comparable';
+    if (s === 'partially_comparable') return 'Partially comparable';
+    if (s === 'comparable') return 'Comparable';
+    return 'Blocked';
+  };
+  const severityBg = (s: string) =>
+    s === 'blocker' ? `${SHELL.PEACH_BG}99` : s === 'risk' ? `${SHELL.PEACH_BG}44` : SHELL.GRAY_BG;
+  const severityText = (s: string) =>
+    s === 'blocker' ? SHELL.PEACH_TEXT : s === 'risk' ? SHELL.PEACH_TEXT : SHELL.INK_MUTED;
+  const severityLabel = (s: string) =>
+    s === 'blocker' ? 'BLOCKER' : s === 'risk' ? 'RISK' : 'ADVISORY';
+
+  return (
+    <div data-testid="pricing-completeness-drilldown" style={{ marginTop: 28 }}>
+      {/* Section header */}
+      <div
+        style={{
+          fontFamily: SHELL.MONO,
+          fontSize: 9,
+          textTransform: 'uppercase',
+          letterSpacing: '0.14em',
+          color: SHELL.INK_MUTED,
+          marginBottom: 12,
+        }}
+      >
+        PRICING COMPLETENESS DRILLDOWN · {completenessView.headline}
+      </div>
+
+      {/* Summary banner */}
+      <div
+        data-testid="pricing-completeness-summary"
+        style={{
+          background: SHELL.PAPER_SOFT,
+          border: `1px solid ${SHELL.CARD_LINE}`,
+          borderRadius: 6,
+          padding: '12px 14px',
+          marginBottom: 16,
+        }}
+      >
+        <div style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK, marginBottom: 4, fontWeight: 500 }}>
+          {summary.overallReason}
+        </div>
+        <div style={{ fontFamily: SHELL.MONO, fontSize: 10, color: SHELL.INK_MUTED }}>
+          {summary.comparableVendorCount} of {summary.totalVendorCount} vendors fully comparable ·{' '}
+          {summary.crossVendorGaps.length} cross-vendor gaps
+        </div>
+      </div>
+
+      {/* Per-vendor completeness cards */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {vendors.map((vendor) => (
+          <div
+            key={vendor.vendorId}
+            data-testid={`pricing-vendor-completeness-${vendor.vendorId}`}
+            style={{
+              border: `1px solid ${SHELL.CARD_LINE}`,
+              borderRadius: 6,
+              overflow: 'hidden',
+            }}
+          >
+            {/* Vendor header */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '10px 14px',
+                background: statusBg(vendor.comparabilityStatus),
+                borderBottom: `1px solid ${SHELL.CARD_LINE}`,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontFamily: SHELL.SANS, fontSize: 13, fontWeight: 600, color: SHELL.INK }}>
+                  {vendor.vendorName}
+                </span>
+                <span
+                  style={{
+                    fontFamily: SHELL.MONO,
+                    fontSize: 9,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                    color: statusText(vendor.comparabilityStatus),
+                  }}
+                >
+                  {statusLabel(vendor.comparabilityStatus)}
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: 16 }}>
+                <span style={{ fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_SOFT }}>
+                  YR2+ ${(vendor.annualRunCostUsd / 1_000_000).toFixed(1)}M
+                </span>
+                {vendor.blockerCount > 0 && (
+                  <span style={{ fontFamily: SHELL.MONO, fontSize: 10, color: SHELL.PEACH_TEXT }}>
+                    {vendor.blockerCount} blocker
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Comparability reason */}
+            <div style={{ padding: '8px 14px', background: SHELL.CARD_WHITE, borderBottom: `1px solid ${SHELL.CARD_LINE}` }}>
+              <span style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK_SOFT }}>
+                {vendor.comparabilityReason}
+              </span>
+            </div>
+
+            {/* Gaps */}
+            {vendor.gaps.length > 0 && (
+              <div style={{ padding: '10px 14px', background: SHELL.CARD_WHITE }}>
+                <div
+                  style={{
+                    fontFamily: SHELL.MONO,
+                    fontSize: 9,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                    color: SHELL.INK_MUTED,
+                    marginBottom: 8,
+                  }}
+                >
+                  GAPS · {vendor.gaps.length}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {vendor.gaps.map((gap) => (
+                    <div
+                      key={gap.gapId}
+                      data-testid={`pricing-gap-${gap.gapId}`}
+                      style={{
+                        background: severityBg(gap.severity),
+                        borderRadius: 4,
+                        padding: '8px 10px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 3,
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span
+                          style={{
+                            fontFamily: SHELL.MONO,
+                            fontSize: 8,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.1em',
+                            color: severityText(gap.severity),
+                          }}
+                        >
+                          {severityLabel(gap.severity)}
+                        </span>
+                        <span style={{ fontFamily: SHELL.SANS, fontSize: 11, fontWeight: 500, color: SHELL.INK }}>
+                          {gap.label}
+                        </span>
+                      </div>
+                      <div style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK_SOFT }}>
+                        {gap.detail}
+                      </div>
+                      <div style={{ fontFamily: SHELL.SANS, fontSize: 10, color: SHELL.INK_MUTED, fontStyle: 'italic' }}>
+                        → {gap.nextAction}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Exclusions */}
+            {vendor.exclusions.length > 0 && (
+              <div
+                style={{
+                  padding: '8px 14px',
+                  background: SHELL.GRAY_BG,
+                  borderTop: `1px solid ${SHELL.CARD_LINE}`,
+                }}
+              >
+                <span style={{ fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                  EXCLUDED FROM SCOPE:{' '}
+                </span>
+                <span style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK_SOFT }}>
+                  {vendor.exclusions.join(' · ')}
+                </span>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Cross-vendor gaps */}
+      <div style={{ marginTop: 16 }}>
+        <div
+          style={{
+            fontFamily: SHELL.MONO,
+            fontSize: 9,
+            textTransform: 'uppercase',
+            letterSpacing: '0.14em',
+            color: SHELL.INK_MUTED,
+            marginBottom: 8,
+          }}
+        >
+          CROSS-VENDOR GAPS · {summary.crossVendorGaps.length}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {summary.crossVendorGaps.map((gap) => (
+            <div
+              key={gap.gapId}
+              data-testid={`pricing-gap-${gap.gapId}`}
+              style={{
+                background: severityBg(gap.severity),
+                border: `1px solid ${SHELL.CARD_LINE}`,
+                borderRadius: 4,
+                padding: '8px 10px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 3,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span
+                  style={{
+                    fontFamily: SHELL.MONO,
+                    fontSize: 8,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                    color: severityText(gap.severity),
+                  }}
+                >
+                  {severityLabel(gap.severity)}
+                </span>
+                <span style={{ fontFamily: SHELL.SANS, fontSize: 11, fontWeight: 500, color: SHELL.INK }}>
+                  {gap.label}
+                </span>
+              </div>
+              <div style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK_SOFT }}>{gap.detail}</div>
+              <div style={{ fontFamily: SHELL.SANS, fontSize: 10, color: SHELL.INK_MUTED, fontStyle: 'italic' }}>
+                → {gap.nextAction}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Clarification action */}
+      <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button
+          data-testid="pricing-clarification-send"
+          disabled={true}
+          title={completenessView.clarificationDisabledReason}
+          style={{
+            fontFamily: SHELL.SANS,
+            fontSize: 11,
+            padding: '6px 14px',
+            border: `1px solid ${SHELL.CARD_LINE}`,
+            borderRadius: 4,
+            background: SHELL.GRAY_BG,
+            color: SHELL.INK_MUTED,
+            cursor: 'not-allowed',
+            opacity: 0.6,
+          }}
+        >
+          {completenessView.clarificationLabel}
+        </button>
+        <span style={{ fontFamily: SHELL.SANS, fontSize: 10, color: SHELL.INK_MUTED, fontStyle: 'italic' }}>
+          {completenessView.clarificationDisabledReason.split('.')[0]}.
+        </span>
+      </div>
+
+      {/* Honest disclaimer */}
+      <div
+        data-testid="pricing-completeness-disclaimer"
+        data-honest-disclaimer="source-pricing-completeness"
+        style={{
+          marginTop: 14,
+          fontFamily: SHELL.SANS,
+          fontSize: 10,
+          color: SHELL.INK_MUTED,
+          fontStyle: 'italic',
+        }}
+      >
+        Deterministic seed · SRC-AMS-2026 pricing completeness reflects fixture context only. Live vendor submissions, SOC-2 attestation status, and scope reconfirmation are deferred.
       </div>
     </div>
   );

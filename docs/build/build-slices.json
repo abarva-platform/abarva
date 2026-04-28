@@ -9630,6 +9630,13 @@
       "category": "Source",
       "status": "code_complete",
       "notes": "SourceEventDetailPage expanded from 5 tabs to 8. New tabs: SummaryTab (source-summary-tab testid, event facts + status roll-up), ReadinessTab (source-readiness-tab testid, 6 criteria with 4 done/1 pending/1 blocked + next actions), MissionsTab (source-missions-tab testid, 4 agent missions Sentinel/Nexus/Steward/Atlas). Default active tab changed from bafo to summary. All three new tabs have data-honest-disclaimer with Deterministic seed prefix. 29 integration tests. SRC42 from track-04."
+    },
+    {
+      "id": "SRC43",
+      "name": "Pricing Completeness Drilldown",
+      "category": "Source",
+      "status": "code_complete",
+      "notes": "PricingCompletenessDrilldown section added to PricingNormalizationTab. buildPricingCompletenessView lib provides per-vendor completeness (comparabilityStatus, gaps, blockerCount, exclusions, assumptions) and cross-vendor gaps. Vendor B: 1 blocker (SOC-2 holdback) + 2 risks. Vendor C: 1 blocker (below-median pricing). 2 cross-vendor gaps (application count variance, transition period mismatch). data-testid pricing-completeness-drilldown, pricing-completeness-summary, pricing-clarification-send, pricing-completeness-disclaimer. 40 integration tests. SRC43 from track-04."
     }
   ]
 }
