@@ -544,6 +544,246 @@ function DeliverablesList({
   );
 }
 
+// ─── PRG-MOD-SCORECARD-OVERRIDE: Scorecard override modal ────────────────────
+
+interface ScorecardOverrideModalProps {
+  onClose: () => void;
+  currentScore: string;
+}
+
+function ScorecardOverrideModal({ onClose, currentScore }: ScorecardOverrideModalProps) {
+  const [selectedScore, setSelectedScore] = useState<string | null>(null);
+  const [customMode, setCustomMode] = useState(false);
+  const [customValue, setCustomValue] = useState('');
+  const [rationale, setRationale] = useState('');
+  const [confirmed, setConfirmed] = useState(false);
+
+  const presetScores = ['20%', '40%', '60%', '80%'];
+
+  function handleConfirm() {
+    if (rationale.trim() === '') return;
+    setConfirmed(true);
+    setTimeout(() => onClose(), 2000);
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    border: `1px solid ${SHELL.CARD_LINE}`,
+    borderRadius: 6,
+    padding: '8px 12px',
+    fontFamily: SHELL.SANS,
+    fontSize: 13,
+    background: SHELL.PAPER,
+    color: SHELL.INK,
+    boxSizing: 'border-box',
+    outline: 'none',
+    resize: 'none',
+  };
+
+  const labelStyle: React.CSSProperties = {
+    fontFamily: SHELL.MONO,
+    fontSize: 9,
+    letterSpacing: '0.12em',
+    textTransform: 'uppercase',
+    color: SHELL.INK_MUTED,
+    display: 'block',
+    marginBottom: 5,
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 1300,
+        background: 'rgba(12,26,58,0.6)',
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+      }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        style={{
+          background: SHELL.PAPER,
+          borderRadius: 12,
+          padding: 32,
+          maxWidth: 480,
+          width: '100%',
+          margin: '10vh auto',
+          boxShadow: '0 8px 40px rgba(0,0,0,0.18)',
+        }}
+      >
+        {/* Header */}
+        <div style={{ marginBottom: 24 }}>
+          <div
+            style={{
+              fontFamily: SHELL.SERIF,
+              fontSize: 18,
+              fontWeight: 700,
+              color: SHELL.INK,
+              lineHeight: 1.2,
+              marginBottom: 4,
+            }}
+          >
+            Override Coverage Score
+          </div>
+          <div
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 9,
+              color: SHELL.INK_MUTED,
+              letterSpacing: '0.1em',
+            }}
+          >
+            Ste · Steward override · rationale required
+          </div>
+        </div>
+
+        {confirmed ? (
+          <div>
+            <div
+              style={{
+                padding: '14px 16px',
+                background: SHELL.PEACH_BG,
+                border: `1px solid ${SHELL.PEACH_LINE}`,
+                borderRadius: 8,
+                fontFamily: SHELL.SANS,
+                fontSize: 13,
+                color: SHELL.PEACH_TEXT,
+              }}
+            >
+              Override logged — score will update in next gate review cycle
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* Current score */}
+            <div>
+              <label style={labelStyle}>Current assessed score</label>
+              <div
+                style={{
+                  fontFamily: SHELL.SERIF,
+                  fontSize: 32,
+                  fontWeight: 700,
+                  color: SHELL.INK,
+                  lineHeight: 1,
+                }}
+              >
+                {currentScore}
+              </div>
+            </div>
+
+            {/* New score pills */}
+            <div>
+              <label style={labelStyle}>New score</label>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {presetScores.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => { setSelectedScore(s); setCustomMode(false); setCustomValue(''); }}
+                    style={{
+                      padding: '5px 14px',
+                      borderRadius: 999,
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontFamily: SHELL.MONO,
+                      fontSize: 10,
+                      fontWeight: 600,
+                      letterSpacing: '0.08em',
+                      background: selectedScore === s && !customMode ? SHELL.PEACH_BG : SHELL.GRAY_BG,
+                      color: selectedScore === s && !customMode ? SHELL.PEACH_TEXT : SHELL.INK_SOFT,
+                      transition: 'background 120ms ease, color 120ms ease',
+                    }}
+                  >
+                    {s}
+                  </button>
+                ))}
+                <button
+                  onClick={() => { setCustomMode(true); setSelectedScore(null); }}
+                  style={{
+                    padding: '5px 14px',
+                    borderRadius: 999,
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontFamily: SHELL.MONO,
+                    fontSize: 10,
+                    fontWeight: 600,
+                    letterSpacing: '0.08em',
+                    background: customMode ? SHELL.PEACH_BG : SHELL.GRAY_BG,
+                    color: customMode ? SHELL.PEACH_TEXT : SHELL.INK_SOFT,
+                    transition: 'background 120ms ease, color 120ms ease',
+                  }}
+                >
+                  Custom
+                </button>
+              </div>
+              {customMode && (
+                <input
+                  type="text"
+                  value={customValue}
+                  onChange={(e) => { setCustomValue(e.target.value); setSelectedScore(e.target.value); }}
+                  placeholder="e.g. 55%"
+                  style={{ ...inputStyle, marginTop: 8 }}
+                />
+              )}
+            </div>
+
+            {/* Rationale */}
+            <div>
+              <label style={labelStyle}>Rationale (required)</label>
+              <textarea
+                rows={4}
+                value={rationale}
+                onChange={(e) => setRationale(e.target.value)}
+                style={inputStyle}
+                placeholder="Explain the basis for this score override…"
+              />
+            </div>
+
+            {/* Buttons */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+              <button
+                onClick={onClose}
+                style={{
+                  fontFamily: SHELL.MONO,
+                  fontSize: 10,
+                  letterSpacing: '0.08em',
+                  color: SHELL.INK_SOFT,
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirm}
+                disabled={rationale.trim() === ''}
+                style={{
+                  fontFamily: SHELL.MONO,
+                  fontSize: 10,
+                  letterSpacing: '0.08em',
+                  background: rationale.trim() === '' ? SHELL.GRAY_BG : SHELL.INK,
+                  color: rationale.trim() === '' ? SHELL.INK_MUTED : SHELL.PAPER,
+                  border: 'none',
+                  borderRadius: 6,
+                  padding: '9px 18px',
+                  cursor: rationale.trim() === '' ? 'not-allowed' : 'pointer',
+                  transition: 'background 120ms ease, color 120ms ease',
+                }}
+              >
+                Confirm override
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Evidence section ─────────────────────────────────────────────────────────
 
 interface EvidenceSectionProps {
@@ -2129,6 +2369,9 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
   // PRG-STA-PHASE-TRANSITION state
   const [showPhaseTransition, setShowPhaseTransition] = useState(false);
 
+  // PRG-MOD-SCORECARD-OVERRIDE state
+  const [showScorecardOverride, setShowScorecardOverride] = useState(false);
+
   const phaseLabel = PHASE_LABEL_MAP[view.viewingPhase] ?? `Phase ${view.viewingPhase}`;
 
   // Map ProgramPhaseSlot to PhaseStripSlot
@@ -2331,6 +2574,28 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
           </div>
         )}
 
+        {/* Override coverage score trigger */}
+        {view.phasePanel.evidenceItems && view.phasePanel.evidenceItems.length > 0 && (
+          <div style={{ marginBottom: 12 }}>
+            <button
+              onClick={() => setShowScorecardOverride(true)}
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 9,
+                letterSpacing: '0.1em',
+                color: SHELL.INK_MUTED,
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                padding: 0,
+              }}
+            >
+              Ste · Override coverage score →
+            </button>
+          </div>
+        )}
+
         {/* Request Sentinel review trigger */}
         {view.phasePanel.evidenceItems && view.phasePanel.evidenceItems.length > 0 && (
           <div style={{ marginBottom: 20 }}>
@@ -2405,6 +2670,14 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
             setShowGateModal(false);
           }}
           onClose={() => setShowGateModal(false)}
+        />
+      )}
+
+      {/* PRG-MOD-SCORECARD-OVERRIDE modal */}
+      {showScorecardOverride && (
+        <ScorecardOverrideModal
+          currentScore="36%"
+          onClose={() => setShowScorecardOverride(false)}
         />
       )}
 
