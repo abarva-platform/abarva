@@ -1,5 +1,8 @@
 import type { ReactNode } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
+
+const CANNED_RESPONSE = "I've reviewed the context. Based on current data, I recommend focusing on the highest-priority gate criteria first. Let me know if you'd like a deeper analysis of any specific area.";
 
 export interface AgentAction {
   letter: 'A' | 'B' | 'C';
@@ -20,6 +23,12 @@ export interface AgentColumnProps {
   onActionClick?: (letter: 'A' | 'B' | 'C') => void;
   /** Slot rendered at the very bottom of the dark agent column panel, below action buttons and above the input box. */
   bottomSlot?: ReactNode;
+  /** Whether to show the Ask Anything interactive toolbar. Default: true. */
+  showAskAnything?: boolean;
+  /** Surface hint for context */
+  surface?: string;
+  /** Program ID for context */
+  programId?: string;
 }
 
 export function AgentColumn({
@@ -30,8 +39,25 @@ export function AgentColumn({
   inputPlaceholder,
   onActionClick,
   bottomSlot,
+  showAskAnything = true,
 }: AgentColumnProps) {
   const placeholder = inputPlaceholder ?? `Ask ${agent.name}...`;
+  const [inputValue, setInputValue] = useState('');
+  const [isThinking, setIsThinking] = useState(false);
+  const [response, setResponse] = useState<string | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleAsk = useCallback((text: string) => {
+    if (!text.trim()) return;
+    setInputValue('');
+    setIsThinking(true);
+    setResponse(null);
+    setTimeout(() => {
+      setIsThinking(false);
+      setResponse(CANNED_RESPONSE);
+      setTimeout(() => setResponse(null), 4000);
+    }, 1200);
+  }, []);
 
   return (
     <div
@@ -198,46 +224,96 @@ export function AgentColumn({
         </div>
       )}
 
-      {/* Input box */}
-      <div style={{ marginTop: 'auto', padding: '16px 0 24px' }}>
-        <div
-          style={{
-            background: 'rgba(250,247,241,0.08)',
-            border: '1px solid rgba(250,247,241,0.20)',
-            borderRadius: 22,
-            padding: '11px 16px 11px 18px',
-            display: 'flex',
-            flexDirection: 'row',
-            gap: 12,
-            alignItems: 'center',
-            cursor: 'text',
-          }}
-        >
-          <span
+      {/* Ask Anything toolbar */}
+      {showAskAnything && (
+        <div style={{ marginTop: 'auto', padding: '16px 0 24px' }}>
+          {/* Response / thinking bubble */}
+          {(isThinking || response) && (
+            <div
+              style={{
+                background: 'rgba(250,247,241,0.08)',
+                border: '1px solid rgba(250,247,241,0.15)',
+                borderRadius: 10,
+                padding: '10px 14px',
+                marginBottom: 10,
+                fontFamily: SHELL.SANS,
+                fontSize: 12,
+                color: 'rgba(250,247,241,0.80)',
+                lineHeight: 1.5,
+              }}
+            >
+              <span style={{ fontFamily: SHELL.MONO, fontSize: 10, color: 'rgba(250,247,241,0.45)', marginRight: 6 }}>
+                {agent.initials}
+              </span>
+              {isThinking ? '...' : response}
+            </div>
+          )}
+          {/* Input row */}
+          <div
             style={{
-              fontFamily: SHELL.SANS,
-              fontSize: 13,
-              color: 'rgba(250,247,241,0.45)',
-              flex: 1,
+              background: 'rgba(250,247,241,0.08)',
+              border: '1px solid rgba(250,247,241,0.20)',
+              borderRadius: 22,
+              padding: '10px 16px 10px 18px',
+              display: 'flex',
+              flexDirection: 'row',
+              gap: 12,
+              alignItems: 'flex-end',
             }}
           >
-            {placeholder}
-          </span>
-          <span
-            style={{
-              fontFamily: SHELL.MONO,
-              fontSize: 10,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: 'rgba(250,247,241,0.6)',
-              fontWeight: 600,
-              flexShrink: 0,
-            }}
-          >
-            ↵ Send
-          </span>
+            <textarea
+              ref={textareaRef}
+              value={inputValue}
+              onChange={(e) => {
+                setInputValue(e.target.value);
+                e.target.style.height = 'auto';
+                e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleAsk(inputValue);
+                  if (textareaRef.current) textareaRef.current.style.height = 'auto';
+                }
+              }}
+              placeholder={placeholder}
+              rows={1}
+              spellCheck
+              style={{
+                flex: 1,
+                background: 'transparent',
+                border: 'none',
+                outline: 'none',
+                resize: 'none',
+                fontFamily: SHELL.SANS,
+                fontSize: 13,
+                color: 'rgba(250,247,241,0.9)',
+                lineHeight: 1.4,
+                overflow: 'hidden',
+              }}
+            />
+            <span
+              onClick={() => {
+                handleAsk(inputValue);
+                if (textareaRef.current) textareaRef.current.style.height = 'auto';
+              }}
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 10,
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                color: inputValue.trim() ? 'rgba(250,247,241,0.85)' : 'rgba(250,247,241,0.35)',
+                fontWeight: 600,
+                flexShrink: 0,
+                cursor: inputValue.trim() ? 'pointer' : 'default',
+                paddingBottom: 2,
+              }}
+            >
+              ↵ Send
+            </span>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

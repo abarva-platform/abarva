@@ -2374,6 +2374,8 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
 
   const phaseLabel = PHASE_LABEL_MAP[view.viewingPhase] ?? `Phase ${view.viewingPhase}`;
 
+  const gateSectionRef = useRef<HTMLDivElement>(null);
+
   // Map ProgramPhaseSlot to PhaseStripSlot
   const stripPhases: PhaseStripSlot[] = view.phases.map((s) => ({
     id: s.id as PhaseStripSlot['id'],
@@ -2393,6 +2395,15 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
   }));
 
   const handleActionClick = (letter: 'A' | 'B' | 'C') => {
+    if (letter === 'A') {
+      gateSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    if (letter === 'B') {
+      setShowHandoff(true);
+      return;
+    }
+    // C → SuggestedActionOverlay
     const action = view.workbench.actions.find((a) => a.letter === letter);
     if (action) {
       setSuggestedAction({
@@ -2559,7 +2570,7 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
 
         {/* Gate criteria */}
         {view.phasePanel.gateCriteria && view.phasePanel.gateCriteria.length > 0 && (
-          <div style={{ marginBottom: 20 }}>
+          <div ref={gateSectionRef} style={{ marginBottom: 20 }}>
             <GateCriteriaList criteria={view.phasePanel.gateCriteria} />
           </div>
         )}

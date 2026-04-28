@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState, useRef } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { AgentColumn } from '@/components/shell/AgentColumn';
 import { StageTrackerStrip } from '@/components/shell/StageTrackerStrip';
@@ -477,8 +477,10 @@ function SourceEmptyState() {
 
 export function SourceIndexPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const isDemoEmpty = searchParams?.get('demo') === 'empty';
   const [showVendorResponse, setShowVendorResponse] = useState(false);
+  const firstEventRowRef = useRef<HTMLDivElement>(null);
 
   if (isDemoEmpty) return <SourceEmptyState />;
 
@@ -502,7 +504,11 @@ export function SourceIndexPage() {
         quote={SOURCE_INDEX_VIEW.agentQuote}
         agentContext={SOURCE_INDEX_VIEW.agentContext}
         actions={SOURCE_INDEX_VIEW.actions}
-        inputPlaceholder="Ask Nexus about this event..."
+        onActionClick={(letter) => {
+          if (letter === 'A') firstEventRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          else if (letter === 'B') router.push('/source/originate');
+          else if (letter === 'C') router.push('/source/ams-vendor-2026');
+        }}
       />
 
       {/* Work pane */}
@@ -570,7 +576,7 @@ export function SourceIndexPage() {
         </div>
 
         {/* Vendor summary */}
-        <div style={{ marginBottom: 24 }}>
+        <div ref={firstEventRowRef} style={{ marginBottom: 24 }}>
           <div
             style={{
               fontFamily: SHELL.MONO,

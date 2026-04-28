@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { AgentColumn } from '@/components/shell/AgentColumn';
 import { SubNavStrip } from '@/components/shell/SubNavStrip';
@@ -211,6 +212,7 @@ function HealthChip({
 
 export function SetupConnectorsPage() {
   const view = SETUP_INDEX_VIEW;
+  const router = useRouter();
 
   return (
     <AppShell
@@ -227,6 +229,11 @@ export function SetupConnectorsPage() {
         quote={view.agentQuote}
         agentContext={view.agentContext}
         actions={view.actions}
+        onActionClick={(letter) => {
+          if (letter === 'A') router.push('/admin/connectors/sn');
+          else if (letter === 'B') router.push('/admin/invite');
+          else if (letter === 'C') router.push('/admin/users');
+        }}
       />
 
       {/* Work pane */}

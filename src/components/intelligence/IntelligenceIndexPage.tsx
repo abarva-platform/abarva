@@ -538,7 +538,11 @@ export function IntelligenceIndexPage() {
         quote={INTELLIGENCE_INDEX_VIEW.agentQuote}
         agentContext={INTELLIGENCE_INDEX_VIEW.agentContext}
         actions={INTELLIGENCE_INDEX_VIEW.actions}
-        onActionClick={(letter) => { if (letter === 'C') setShowSubmitModal(true); }}
+        onActionClick={(letter) => {
+          if (letter === 'A') router.push('/intelligence?filter=validated');
+          else if (letter === 'B') router.push('/intelligence?filter=in-review');
+          else if (letter === 'C') setShowSubmitModal(true);
+        }}
       />
 
       {/* Main content */}

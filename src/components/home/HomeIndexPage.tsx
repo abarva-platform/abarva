@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { AgentColumn } from '@/components/shell/AgentColumn';
 import { SHELL } from '@/lib/shell/shell-tokens';
@@ -417,6 +419,18 @@ function SectionHeader({ title, viewAllHref }: { title: string; viewAllHref: str
 
 export function HomeIndexPage() {
   const v = HOME_VIEW;
+  const router = useRouter();
+  const programsSectionRef = useRef<HTMLDivElement>(null);
+
+  function handleActionClick(letter: 'A' | 'B' | 'C') {
+    if (letter === 'A') {
+      programsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else if (letter === 'B') {
+      router.push('/programs/apx-cdp-2026');
+    } else if (letter === 'C') {
+      router.push('/tower');
+    }
+  }
 
   return (
     <AppShell
@@ -433,7 +447,7 @@ export function HomeIndexPage() {
         quote={v.agentQuote}
         agentContext={v.agentContext}
         actions={v.actions}
-        inputPlaceholder="Ask Nexus anything..."
+        onActionClick={handleActionClick}
       />
 
       {/* Work pane */}
@@ -494,7 +508,7 @@ export function HomeIndexPage() {
           }}
         >
           {/* Left col: Active programs */}
-          <div style={{ flex: 1.4, minWidth: 0 }}>
+          <div ref={programsSectionRef} style={{ flex: 1.4, minWidth: 0 }}>
             <SectionHeader title="Active programs" viewAllHref="/programs" />
             {v.topPrograms.map((prog) => (
               <ProgramRow key={prog.id} {...prog} />
