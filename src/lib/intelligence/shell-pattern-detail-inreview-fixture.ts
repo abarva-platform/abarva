@@ -44,6 +44,18 @@ export const T3_H03_PATTERN = {
     { id: 'apx-lpm-2026', displayId: 'APX-LPM-2026', name: 'Loyalty Program Migration', phase: 3, phaseLabel: 'Design', href: '/programs/apx-lpm-2026' },
   ],
 
+  // Programs applying this pattern
+  usingPrograms: [
+    {
+      id: 'apx-cdp-2026',
+      displayId: 'APX-CDP-2026',
+      name: 'Apex Retail CDP Activation',
+      phase: 'P3 Design',
+      context: 'Sentinel applying T3-H03 as reference architecture for CDP personalization layer',
+      href: '/programs/apx-cdp-2026',
+    },
+  ],
+
   // Sentinel agent voice for detail
   agentQuote: 'T3-H03 is under active review with strong early signal. Two programs are running against it with 64% evidence coverage. Promotion to Validated is expected post Q2.',
   agentContext: 'Sentinel · T3-H03 · in-review Apr 25 2026',

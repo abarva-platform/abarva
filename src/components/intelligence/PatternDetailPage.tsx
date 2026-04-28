@@ -238,10 +238,141 @@ function UsedByPrograms() {
   );
 }
 
+// ─── Applied in programs ──────────────────────────────────────────────────────
+
+function AppliedInPrograms({ programs }: { programs: Array<{ id: string; displayId: string; name: string; phase: string; context: string; href: string; }> }) {
+  if (programs.length === 0) return null;
+  return (
+    <div style={{ marginTop: 40, maxWidth: 720 }}>
+      {/* Eyebrow */}
+      <div
+        style={{
+          fontFamily: SHELL.MONO,
+          fontSize: 9,
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
+          color: SHELL.INK_MUTED,
+          marginBottom: 12,
+        }}
+      >
+        Applied in {programs.length} program{programs.length !== 1 ? 's' : ''}
+      </div>
+
+      {/* Program rows */}
+      <div
+        style={{
+          borderRadius: 8,
+          border: `1px solid ${SHELL.CARD_LINE}`,
+          background: SHELL.CARD_WHITE,
+          overflow: 'hidden',
+        }}
+      >
+        {programs.map((prog, i) => (
+          <Link
+            key={prog.id}
+            href={prog.href}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '100px 1fr 110px 24px',
+              alignItems: 'center',
+              padding: '12px 16px',
+              borderBottom: i < programs.length - 1 ? `1px solid ${SHELL.CARD_LINE_SOFT}` : 'none',
+              textDecoration: 'none',
+              color: SHELL.INK,
+              gap: 12,
+              cursor: 'pointer',
+              transition: 'background 100ms ease',
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLAnchorElement).style.background = SHELL.PAPER_SOFT;
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLAnchorElement).style.background = 'transparent';
+            }}
+          >
+            {/* Display ID */}
+            <span
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 10,
+                color: SHELL.INK_MUTED,
+                letterSpacing: '0.04em',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {prog.displayId}
+            </span>
+
+            {/* Program name + context note */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span
+                style={{
+                  fontFamily: SHELL.SERIF,
+                  fontSize: 13,
+                  color: SHELL.INK,
+                  fontWeight: 500,
+                }}
+              >
+                {prog.name}
+              </span>
+              <span
+                style={{
+                  fontFamily: SHELL.SANS,
+                  fontSize: 11,
+                  color: SHELL.INK_MUTED,
+                  lineHeight: 1.4,
+                }}
+              >
+                {prog.context}
+              </span>
+            </div>
+
+            {/* Phase pill */}
+            <span
+              style={{
+                display: 'inline-block',
+                padding: '2px 8px',
+                borderRadius: 999,
+                background: SHELL.PEACH_BG,
+                color: SHELL.PEACH_TEXT,
+                fontFamily: SHELL.MONO,
+                fontSize: 9.5,
+                fontWeight: 600,
+                letterSpacing: '0.04em',
+                whiteSpace: 'nowrap',
+                textAlign: 'center',
+              }}
+            >
+              {prog.phase}
+            </span>
+
+            {/* Arrow */}
+            <span
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 11,
+                color: SHELL.INK_MUTED,
+                textAlign: 'right',
+              }}
+            >
+              →
+            </span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export function PatternDetailPage() {
+type UsingProgram = { id: string; displayId: string; name: string; phase: string; context: string; href: string; };
+
+export function PatternDetailPage({ usingPrograms }: { usingPrograms?: UsingProgram[] }) {
   const pattern = T3_H01_PATTERN;
+  const appliedPrograms = usingPrograms ?? pattern.usingPrograms;
 
   return (
     <AppShell
@@ -439,6 +570,9 @@ export function PatternDetailPage() {
 
         {/* Used by programs */}
         <UsedByPrograms />
+
+        {/* Applied in programs */}
+        <AppliedInPrograms programs={appliedPrograms} />
       </div>
     </AppShell>
   );
