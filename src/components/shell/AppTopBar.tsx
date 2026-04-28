@@ -31,6 +31,24 @@ export function AppTopBar({
     >
       {/* Left side */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        {/* AbarVa logo */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo.svg"
+          alt="AbarVa"
+          style={{ height: 18, width: 'auto', display: 'block', flexShrink: 0 }}
+        />
+
+        {/* Divider */}
+        <div
+          style={{
+            width: 1,
+            height: 18,
+            background: SHELL.CARD_LINE_SOFT,
+            flexShrink: 0,
+          }}
+        />
+
         {/* Tenant badge */}
         <div
           style={{
