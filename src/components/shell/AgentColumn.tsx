@@ -18,7 +18,8 @@ import type { ReactNode } from 'react';
 import { useRef, useEffect } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { useAgentStream } from '@/hooks/useAgentStream';
-import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
+import { ATLAS_SYNTHESIS_TURN_ID } from '@/lib/shell/atlas-page-state';
+import { useAtlasPageState } from '@/hooks/useAtlasPageState';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -78,7 +79,9 @@ export function AgentColumn({
   const isStreaming  = pageState?.isStreaming      ?? localStream.isStreaming;
   const error        = pageState?.error            ?? localStream.error;
   const clearLocal   = pageState?.clearResponse    ?? localStream.clear;
-  const conversation = pageState?.conversation     ?? [];
+  const conversation = pageState
+    ? pageState.conversation.filter((turn) => turn.id !== ATLAS_SYNTHESIS_TURN_ID)
+    : [];
 
   const hasThread = conversation.length > 0 || isStreaming || !!response || !!error;
 
