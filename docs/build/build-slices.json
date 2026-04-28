@@ -9588,6 +9588,13 @@
       "category": "Programs",
       "status": "code_complete",
       "notes": "Suggested action overlay view model (3-frame state machine); P-SMOKE-CDP action C: href /intelligence/t3-h03; 35 tests. PR #636."
+    },
+    {
+      "id": "PROG20",
+      "name": "Program Subnav + Workflow Canvas Interaction",
+      "category": "Programs",
+      "status": "code_complete",
+      "notes": "Seven-tab SubNavStrip (Overview, Gate, Evidence, Deliverables, Workshop, Actions, Decisions) added to ProgramDetailPage. Section content gated by active tab. Action A switches to Gate tab. 27 integration tests. PROG20 from track-03."
     }
   ]
 }
