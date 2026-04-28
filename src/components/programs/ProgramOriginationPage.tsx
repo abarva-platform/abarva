@@ -129,12 +129,66 @@ export function ProgramOriginationPage({ tenantSlug: _tenantSlug }: ProgramOrigi
   const [sourceEvent, setSourceEvent]       = React.useState('');
   const [clientMaestro, setClientMaestro]   = React.useState('');
 
+  // Submission state
+  const [isSubmitting, setIsSubmitting]     = React.useState(false);
+  const [showSuccess, setShowSuccess]       = React.useState(false);
+  const [submitError, setSubmitError]       = React.useState<string | null>(null);
+
   const canOpen = programName.trim().length > 0 && objective.trim().length > 0 && sponsor !== '';
 
-  const handleOpen = () => {
-    if (!canOpen) return;
-    // Demo anchor: always routes to apx-01 (Contact Center AI)
-    router.push('/programs/apx-01?phase=1');
+  const handleOpen = async () => {
+    if (!canOpen || isSubmitting) return;
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const response = await fetch('/api/v1/programs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          originationFormResult: {
+            name: programName.trim(),
+            useCase: objective.trim(),
+            targetOutcome: targetOutcome.trim(),
+            sponsorPersonId: sponsor,
+            leadPersonId: clientMaestro || sponsor,
+          },
+          originSource: sourceEvent
+            ? (sourceEvent.startsWith('thread') ? 'intelligence_thread' : 'tower_signal')
+            : 'user_initiated',
+          originSourceRef: sourceEvent || null,
+        }),
+      });
+
+      if (response.status === 401) {
+        throw new Error('Session expired — please sign in again');
+      }
+      if (response.status === 403) {
+        throw new Error('No active client for this account — contact your administrator');
+      }
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(
+          (err as { detail?: string; error?: string }).detail ??
+          (err as { detail?: string; error?: string }).error ??
+          'Failed to create program'
+        );
+      }
+
+      const data = (await response.json()) as { programId?: string; redirectTo?: string };
+      const newProgramId = data.programId;
+
+      if (!newProgramId) {
+        throw new Error('No program ID returned — please try again');
+      }
+
+      setShowSuccess(true);
+      await new Promise<void>((resolve) => setTimeout(resolve, 800));
+      router.push(`/programs/${newProgramId}`);
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : 'Something went wrong');
+      setIsSubmitting(false);
+    }
   };
 
   // PhaseStrip slots for origination (P0 done implied, show P1-P6)
@@ -434,51 +488,92 @@ export function ProgramOriginationPage({ tenantSlug: _tenantSlug }: ProgramOrigi
               maxWidth: 440,
             }}
           >
-            {canOpen
-              ? 'Steward will begin classifying once the program opens. Charter gate activates after scope review.'
-              : 'Fill in program name, objective, and executive sponsor to continue.'}
+            {isSubmitting
+              ? 'Creating program record in Supabase…'
+              : showSuccess
+                ? 'Program created. Redirecting to program workbench…'
+                : canOpen
+                  ? 'Steward will begin classifying once the program opens. Charter gate activates after scope review.'
+                  : 'Fill in program name, objective, and executive sponsor to continue.'}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Link
-              href="/programs"
-              style={{
-                fontFamily: SANS,
-                fontSize: 12,
-                fontWeight: 500,
-                color: MUTED,
-                textDecoration: 'none',
-                padding: '8px 14px',
-                borderRadius: 6,
-                border: `1px solid ${BORDER}`,
-                background: CARD,
-              }}
-            >
-              Cancel
-            </Link>
-            <button
-              onClick={handleOpen}
-              disabled={!canOpen}
-              style={{
-                fontFamily: SANS,
-                fontSize: 12,
-                fontWeight: 700,
-                color: canOpen ? '#fff' : SUBTLE,
-                background: canOpen ? INK : 'rgba(27,38,50,0.07)',
-                border: `1px solid ${canOpen ? INK : BORDER}`,
-                borderRadius: 6,
-                padding: '8px 18px',
-                cursor: canOpen ? 'pointer' : 'not-allowed',
-                transition: 'background 0.15s, color 0.15s',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                letterSpacing: '0.01em',
-              }}
-            >
-              Open Program
-              <span style={{ fontSize: 14, lineHeight: 1 }}>→</span>
-            </button>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Link
+                href="/programs"
+                style={{
+                  fontFamily: SANS,
+                  fontSize: 12,
+                  fontWeight: 500,
+                  color: MUTED,
+                  textDecoration: 'none',
+                  padding: '8px 14px',
+                  borderRadius: 6,
+                  border: `1px solid ${BORDER}`,
+                  background: CARD,
+                  pointerEvents: isSubmitting ? 'none' : undefined,
+                  opacity: isSubmitting ? 0.5 : 1,
+                }}
+              >
+                Cancel
+              </Link>
+              <button
+                onClick={handleOpen}
+                disabled={!canOpen || isSubmitting}
+                style={{
+                  fontFamily: SANS,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: (canOpen && !isSubmitting) ? '#fff' : SUBTLE,
+                  background: showSuccess
+                    ? MINT
+                    : (canOpen && !isSubmitting)
+                      ? INK
+                      : 'rgba(27,38,50,0.07)',
+                  border: `1px solid ${showSuccess ? MINT : (canOpen && !isSubmitting) ? INK : BORDER}`,
+                  borderRadius: 6,
+                  padding: '8px 18px',
+                  cursor: (canOpen && !isSubmitting) ? 'pointer' : 'not-allowed',
+                  transition: 'background 0.15s, color 0.15s, border-color 0.15s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  letterSpacing: '0.01em',
+                  minWidth: 148,
+                  justifyContent: 'center',
+                }}
+              >
+                {showSuccess
+                  ? 'Program created ✓'
+                  : isSubmitting
+                    ? 'Creating program…'
+                    : (
+                      <>
+                        Open Program
+                        <span style={{ fontSize: 14, lineHeight: 1 }}>→</span>
+                      </>
+                    )
+                }
+              </button>
+            </div>
+
+            {submitError && (
+              <div
+                style={{
+                  padding: '7px 12px',
+                  background: 'rgba(185, 28, 28, 0.07)',
+                  border: '1px solid rgba(185, 28, 28, 0.35)',
+                  borderRadius: 6,
+                  fontFamily: SANS,
+                  fontSize: 12,
+                  color: '#b91c1c',
+                  maxWidth: 340,
+                  textAlign: 'right',
+                }}
+              >
+                {submitError}
+              </div>
+            )}
           </div>
         </div>
       </div>
