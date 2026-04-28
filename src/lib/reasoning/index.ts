@@ -64,3 +64,13 @@ export { buildProgramSynthesisContext, programInstanceStateHash } from './progra
 
 // Tower (Atlas) portfolio synthesis context builder — REASON-17
 export { buildTowerSynthesisContext, towerStateHash } from './tower-synthesis-context-builder';
+
+// Cross-instance reasoner — REASON-18
+export {
+  resolveLinkedProgram,
+  buildLinkedProgramChip,
+} from './cross-instance-reasoner';
+export type {
+  LinkedProgramChipData,
+  LinkedProgramChipStatus,
+} from './cross-instance-reasoner';
