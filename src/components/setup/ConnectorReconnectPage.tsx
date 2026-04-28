@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { AppShell } from '@/components/shell/AppShell';
+import { AgentColumn } from '@/components/shell/AgentColumn';
 import { SubNavStrip } from '@/components/shell/SubNavStrip';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { ConnectorDetail } from '@/lib/setup/shell-setup-fixture';
 
 const SUB_NAV_ITEMS = [
-  { key: 'connectors', label: 'Connectors', active: true, href: '/admin' },
+  { key: 'connectors', label: 'Connectors', active: true, href: '/admin/connectors' },
   { key: 'users', label: 'Users', href: '/admin/users' },
   { key: 'audit', label: 'Audit log', href: '/admin/audit' },
   { key: 'policies', label: 'Policies', href: '/admin/policies' },
@@ -32,7 +33,18 @@ export function ConnectorReconnectPage({ detail }: ConnectorReconnectPageProps) 
       }}
       middleStrip={<SubNavStrip items={SUB_NAV_ITEMS} />}
     >
-      {/* Full-width work pane — no AgentColumn */}
+      <AgentColumn
+        agent={{ initials: 'St', name: 'Steward', role: 'Auth Governor' }}
+        quote={`Reconnect flow for ${detail.name}. Current state: ${detail.status}. Re-authorize first, then confirm queued data flows resume from ${detail.lastSuccessfulSync ?? detail.lastSync}.`}
+        agentContext="Steward · Setup · reconnect auth flow"
+        actions={[
+          { letter: 'A', text: `Authorize ${detail.name}`, detail: 'Open the consent path and refresh the token' },
+          { letter: 'B', text: 'Review queued flows', detail: 'Confirm inbound and outbound sync scope before reconnecting' },
+          { letter: 'C', text: 'Return to connector detail', detail: 'Verify health once re-auth completes' },
+        ]}
+        surface="setup"
+      />
+
       <div
         style={{
           flex: 1,
@@ -80,9 +92,9 @@ export function ConnectorReconnectPage({ detail }: ConnectorReconnectPageProps) 
               margin: '0 0 28px 0',
               lineHeight: 1.5,
             }}
-          >
-            OAuth re-authorization · estimated 60 seconds
-          </p>
+            >
+              OAuth re-authorization on the canonical route · estimated 60 seconds
+            </p>
 
           {/* Steps list */}
           <div style={{ marginBottom: 0 }}>
@@ -170,7 +182,7 @@ export function ConnectorReconnectPage({ detail }: ConnectorReconnectPageProps) 
                 lineHeight: 1.3,
               }}
             >
-              {detail.endpoint}
+              Canonical return: /admin/connectors/{detail.id} · {detail.endpoint}
             </div>
           </div>
 
@@ -197,7 +209,7 @@ export function ConnectorReconnectPage({ detail }: ConnectorReconnectPageProps) 
                 lineHeight: 1,
               }}
             >
-              Authorize ServiceNow →
+              Authorize {detail.name} →
             </button>
           ) : (
             <div>
@@ -223,7 +235,7 @@ export function ConnectorReconnectPage({ detail }: ConnectorReconnectPageProps) 
               </div>
               <div>
                 <Link
-                  href="/admin"
+                  href={`/admin/connectors/${detail.id}`}
                   style={{
                     fontFamily: SHELL.MONO,
                     fontSize: 10,
@@ -232,7 +244,7 @@ export function ConnectorReconnectPage({ detail }: ConnectorReconnectPageProps) 
                     letterSpacing: '0.08em',
                   }}
                 >
-                  → Return to Setup
+                  → Return to connector detail
                 </Link>
               </div>
             </div>
