@@ -39,6 +39,7 @@ export interface ProgramRow {
   nexusNote: string;        // one-line Nexus annotation
   actionLabel: 'Continue' | 'Resume' | 'Review';
   isIdle: boolean;
+  linkedSourceEvent?: string; // e.g. 'SRC-AMS-2026 · AMS Vendor Consolidation 2026 · Stage 7 BAFO'
 }
 
 export interface ProgramsIndexView {
@@ -52,11 +53,21 @@ export interface ProgramsIndexView {
   programs: ProgramRow[];
 }
 
+export interface EvidenceItem {
+  id: string;
+  citation: string;       // e.g. "Workshop 4 output · Apr 14 2026"
+  source: string;         // e.g. "Priya Sharma / Workshop"
+  excerpt: string;        // 1–2 sentence quote
+  confidence: 'high' | 'medium' | 'low';
+  hasContradiction?: boolean;  // true if a conflicting item exists
+}
+
 export interface ProgramPhasePanel {
   summary?: string;
   deliverables?: Array<{ label: string; status: 'done' | 'pending' | 'blocked' }>;
   gateCriteria?: Array<{ criterion: string; met: boolean }>;
   blockerNote?: string;
+  evidenceItems?: EvidenceItem[];
 }
 
 export interface ProgramDetailView {

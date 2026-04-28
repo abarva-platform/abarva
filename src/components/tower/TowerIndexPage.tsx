@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { AgentColumn } from '@/components/shell/AgentColumn';
 import { FilterPillStrip } from '@/components/shell/FilterPillStrip';
@@ -214,6 +215,43 @@ function PressureCard({ item }: { item: PressureItem }) {
 }
 
 // ---------------------------------------------------------------------------
+// Empty state
+// ---------------------------------------------------------------------------
+
+function EmptyState() {
+  return (
+    <div
+      style={{
+        background: SHELL.GRAY_BG,
+        borderRadius: 10,
+        padding: '32px 24px',
+        textAlign: 'center',
+      }}
+    >
+      <div
+        style={{
+          fontFamily: SHELL.SERIF,
+          fontSize: 15,
+          color: SHELL.INK_MUTED,
+          marginBottom: 6,
+        }}
+      >
+        No pressures in this filter
+      </div>
+      <div
+        style={{
+          fontFamily: SHELL.SANS,
+          fontSize: 12,
+          color: SHELL.INK_MUTED,
+        }}
+      >
+        Try a different filter to see pressure items
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Cross-program activity row
 // ---------------------------------------------------------------------------
 
@@ -346,15 +384,28 @@ function ActivityStrip() {
 // Main page
 // ---------------------------------------------------------------------------
 
-const FILTER_PILLS = [
-  { key: 'all', label: 'All', active: true, count: 3 },
-  { key: 'high', label: 'High', count: 1 },
-  { key: 'medium', label: 'Medium', count: 1 },
-  { key: 'low', label: 'Low watch', count: 1 },
-  { key: 'resolved', label: 'Resolved', count: 0 },
-];
-
 export function TowerIndexPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const activeFilter = searchParams?.get('filter') ?? 'all';
+
+  const filtered = TOWER_INDEX_VIEW.pressures.filter(p => {
+    if (activeFilter === 'all') return true;
+    if (activeFilter === 'high') return p.severity === 'high';
+    if (activeFilter === 'medium') return p.severity === 'medium';
+    if (activeFilter === 'low') return p.severity === 'low';
+    if (activeFilter === 'resolved') return p.status === 'resolved';
+    return true;
+  });
+
+  const filterPills = [
+    { key: 'all', label: 'All', active: activeFilter === 'all', count: TOWER_INDEX_VIEW.pressures.length, onClick: () => router.push('/tower') },
+    { key: 'high', label: 'High', active: activeFilter === 'high', count: TOWER_INDEX_VIEW.pressures.filter(p => p.severity === 'high').length, onClick: () => router.push('/tower?filter=high') },
+    { key: 'medium', label: 'Medium', active: activeFilter === 'medium', count: TOWER_INDEX_VIEW.pressures.filter(p => p.severity === 'medium').length, onClick: () => router.push('/tower?filter=medium') },
+    { key: 'low', label: 'Low watch', active: activeFilter === 'low', count: TOWER_INDEX_VIEW.pressures.filter(p => p.severity === 'low').length, onClick: () => router.push('/tower?filter=low') },
+    { key: 'resolved', label: 'Resolved', active: activeFilter === 'resolved', count: 0, onClick: () => router.push('/tower?filter=resolved') },
+  ];
+
   return (
     <AppShell
       surface="tower"
@@ -363,7 +414,7 @@ export function TowerIndexPage() {
         showLocked: true,
         context: 'Control Tower · 3 active pressures',
       }}
-      middleStrip={<FilterPillStrip pills={FILTER_PILLS} />}
+      middleStrip={<FilterPillStrip pills={filterPills} />}
     >
       <AgentColumn
         agent={{ initials: 'At', name: 'Atlas', role: 'Cross-Program Synthesizer' }}
@@ -432,20 +483,52 @@ export function TowerIndexPage() {
         </div>
 
         {/* Pressure cards grid */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 16,
-          }}
-        >
-          {TOWER_INDEX_VIEW.pressures.map((item) => (
-            <PressureCard key={item.id} item={item} />
-          ))}
-        </div>
+        {filtered.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: 16,
+            }}
+          >
+            {filtered.map((item) => (
+              <PressureCard key={item.id} item={item} />
+            ))}
+          </div>
+        )}
 
         {/* Cross-program activity strip */}
         <ActivityStrip />
+
+        {/* Lens links */}
+        <div style={{ marginTop: 24, paddingTop: 16, borderTop: `1px solid ${SHELL.CARD_LINE}`, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <a href="/tower/outcomes" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_SOFT,
+            textDecoration: 'none',
+          }}>
+            <span>→</span>
+            <span>Value lens · outcome realization</span>
+          </a>
+          <a href="/tower/lens/adoption" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_SOFT,
+            textDecoration: 'none',
+          }}>
+            <span>→</span>
+            <span>Adoption lens · usage tracking</span>
+          </a>
+          <a href="/tower/lens/risk" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_SOFT,
+            textDecoration: 'none',
+          }}>
+            <span>→</span>
+            <span>Risk lens · open risk items</span>
+          </a>
+        </div>
       </div>
     </AppShell>
   );

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
 import { AgentColumn } from '@/components/shell/AgentColumn';
 import { SubNavStrip } from '@/components/shell/SubNavStrip';
@@ -8,9 +9,9 @@ import { SETUP_INDEX_VIEW, type ConnectorItem } from '@/lib/setup/shell-setup-fi
 
 const SUB_NAV_ITEMS = [
   { key: 'connectors', label: 'Connectors', active: true, href: '/admin' },
-  { key: 'users', label: 'Users', href: '/admin/users-access' },
-  { key: 'audit', label: 'Audit log', href: '/admin' },
-  { key: 'policies', label: 'Policies', href: '/admin' },
+  { key: 'users', label: 'Users', href: '/admin/users' },
+  { key: 'audit', label: 'Audit log', href: '/admin/audit' },
+  { key: 'policies', label: 'Policies', href: '/admin/policies' },
   { key: 'architecture', label: 'Architecture', href: '/admin/architecture' },
 ];
 
@@ -104,17 +105,19 @@ function ConnectorCard({ item }: { item: ConnectorItem }) {
             marginBottom: 4,
           }}
         >
-          <span
+          <Link
+            href={`/admin/connectors/${item.id}`}
             style={{
               fontFamily: SHELL.SERIF,
               fontSize: 14,
               fontWeight: 700,
               color: SHELL.INK,
               lineHeight: 1.2,
+              textDecoration: 'none',
             }}
           >
             {item.name}
-          </span>
+          </Link>
           <StatusPill status={item.status} />
         </div>
 

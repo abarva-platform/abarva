@@ -72,6 +72,7 @@ const apxCdp2026: ProgramRow = {
   nexusNote: 'Workshop 5 incomplete · value hypothesis evidence missing · 36% evidence coverage',
   actionLabel: 'Continue',
   isIdle: false,
+  linkedSourceEvent: 'SRC-AMS-2026 · AMS Vendor Consolidation 2026 · Stage 7 BAFO',
 };
 
 // APX-CC-2026 · Contact Center AI Transformation

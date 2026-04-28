@@ -83,6 +83,84 @@ function buildAgentRail(
   return [nexus, sentinel, atlas, steward];
 }
 
+// ─── APX-SAP-2026 specific workbench (P1 Discovery · Active) ─────────────────
+
+const APX_SAP_2026_P1_WORKBENCH: ProgramWorkbenchContent = {
+  title: 'P1 Discovery · Active',
+  prose:
+    'Discovery phase is tracking well — 6 interviews scheduled across store operations and HR. Data access requests for the Point-of-Sale and scheduling systems are pending IT approval. The value hypothesis is strong but needs validation from field supervisors before Synthesis entry.',
+  actionsLabel: 'Nexus recommends',
+  actions: [
+    {
+      letter: 'A',
+      text: 'Complete store ops interviews',
+      detail: 'Weeks of Mar 18–29 · 4 interviews confirmed',
+    },
+    {
+      letter: 'B',
+      text: 'Resolve IT data access requests',
+      detail: 'POS + scheduling systems · IT ticket ITS-2291',
+    },
+    {
+      letter: 'C',
+      text: 'Draft value hypothesis',
+      detail: 'Needs field supervisor input before Synthesis gate',
+    },
+  ],
+};
+
+// ─── APX-CC-2026 specific workbench (P4 Build · Active — 68% Complete) ───────
+
+const APX_CC_2026_P4_WORKBENCH: ProgramWorkbenchContent = {
+  title: 'P4 Build · Active — 68% Complete',
+  prose:
+    'Build is on track. The NLP intent classifier is deployed to staging with 94% accuracy. CRM integration is passing all smoke tests. The remaining 32% covers IVR routing rules and the operator dashboard. Activate gate target is May 15.',
+  actionsLabel: 'Nexus recommends',
+  actions: [
+    {
+      letter: 'A',
+      text: 'Complete IVR routing rules',
+      detail: 'Remaining build artifact — 2 sprints remaining',
+    },
+    {
+      letter: 'B',
+      text: 'Ship operator dashboard MVP',
+      detail: 'Required for Activate gate — UX review Apr 30',
+    },
+    {
+      letter: 'C',
+      text: 'Schedule Activate gate review',
+      detail: 'Sponsor + IT sign-off · target May 15',
+    },
+  ],
+};
+
+// ─── APX-CC-2026 specific workbench (P5 Activate — locked/pending from P4 Build) ──
+
+const APX_CC_2026_P5_WORKBENCH: ProgramWorkbenchContent = {
+  title: 'P5 Activate · Activation Pending',
+  prose: 'P5 Activate is locked until Build gate clears. IVR migration and dashboard delivery are the remaining Build blockers. Once cleared, the Activate phase opens a 4-week launch runway with phased contact center rollout and early churn monitoring.',
+  actionsLabel: 'Unlock path',
+  actions: [
+    { letter: 'A', text: 'Complete IVR migration', detail: 'Last Build blocker — 3 sprints remaining' },
+    { letter: 'B', text: 'Deliver supervisor dashboard', detail: 'Final build deliverable — UX review pending' },
+    { letter: 'C', text: 'Preview Activate launch plan', detail: 'Phased rollout: 200 agents in Week 1' },
+  ],
+};
+
+// ─── APX-DFV2-2025 specific workbench (P6 Operate — steady state, live) ──────
+
+const APX_DFV2_P6_WORKBENCH: ProgramWorkbenchContent = {
+  title: 'P6 Operate · Steady State',
+  prose: 'Demand Forecasting v2 has been live since November 2025. Forecast accuracy is at 87% — 5pp above the 82% target. Inventory waste reduction is running $1.4M/yr against a $1.2M projection. Atlas is monitoring weekly model drift and seasonal retraining cycles.',
+  actionsLabel: 'Atlas monitors',
+  actions: [
+    { letter: 'A', text: 'Review outcome actuals', detail: '$1.4M/yr savings vs $1.2M projection — 17% ahead' },
+    { letter: 'B', text: 'Check model drift report', detail: 'Q2 retraining cycle due in 3 weeks' },
+    { letter: 'C', text: 'View full outcome report', detail: 'Tower value lens · APX-DFV2 deep-dive' },
+  ],
+};
+
 // ─── APX-CDP-2026 specific workbench (demo flagship) ─────────────────────────
 // P2 Synthesis · Design gate pending · Workshop 5 incomplete · 36% evidence
 // Linked source: AMS Vendor Consolidation 2026 · Stage 7 BAFO
@@ -121,6 +199,19 @@ function buildWorkbenchContent(
   viewingPhaseState: ProgramPhaseSlot['state'],
   programId?: string,
 ): ProgramWorkbenchContent {
+  // Demo program overrides — specific phase workbench content
+  if (programId === 'apx-sap-2026' && viewingPhase === 1 && viewingPhaseState === 'current') {
+    return APX_SAP_2026_P1_WORKBENCH;
+  }
+  if (programId === 'apx-cc-2026' && viewingPhase === 4 && viewingPhaseState === 'current') {
+    return APX_CC_2026_P4_WORKBENCH;
+  }
+  if (programId === 'apx-cc-2026' && viewingPhase === 5) {
+    return APX_CC_2026_P5_WORKBENCH;
+  }
+  if (programId === 'apx-dfv2-2025' && viewingPhase === 6 && viewingPhaseState === 'current') {
+    return APX_DFV2_P6_WORKBENCH;
+  }
   // Demo flagship override — P2 Synthesis active view
   if (programId === 'apx-cdp-2026' && viewingPhase === 2 && viewingPhaseState === 'current') {
     return APX_CDP_2026_P2_WORKBENCH;
@@ -185,6 +276,54 @@ function buildPhasePanel(
   currentPhase: ProgramPhaseId,
   programId?: string,
 ): ProgramPhasePanel {
+  // APX-SAP-2026 P1 gate criteria
+  if (programId === 'apx-sap-2026' && viewingPhase === 1 && viewingPhaseState === 'current') {
+    return {
+      gateCriteria: [
+        { criterion: 'Discovery interviews completed (4 of 6)', met: false },
+        { criterion: 'Value hypothesis drafted', met: false },
+        { criterion: 'Data access confirmed for all source systems', met: false },
+        { criterion: 'Stakeholder alignment documented', met: true },
+        { criterion: 'Discovery brief reviewed by sponsor', met: false },
+      ],
+    };
+  }
+  // APX-CC-2026 P4 gate criteria
+  if (programId === 'apx-cc-2026' && viewingPhase === 4 && viewingPhaseState === 'current') {
+    return {
+      gateCriteria: [
+        { criterion: 'NLP intent classifier deployed to staging', met: true },
+        { criterion: 'CRM integration smoke tests passing', met: true },
+        { criterion: 'IVR routing rules complete', met: false },
+        { criterion: 'Operator dashboard MVP complete', met: false },
+        { criterion: 'Load test passing at 2× peak traffic', met: false },
+        { criterion: 'Sponsor sign-off on Activate criteria', met: false },
+      ],
+    };
+  }
+  // APX-CC-2026 P5 gate — locked/pending view from P4 Build perspective
+  if (programId === 'apx-cc-2026' && viewingPhase === 5) {
+    return {
+      gateCriteria: [
+        { criterion: 'IVR migration complete', met: false },
+        { criterion: 'Supervisor dashboard delivered', met: false },
+        { criterion: 'Load test passed (500 concurrent)', met: false },
+        { criterion: 'Sponsor sign-off on Build gate', met: false },
+      ],
+      blockerNote: 'P5 Activate entry requires clearing the Build gate (P4). Two blockers remain: IVR migration and dashboard delivery.',
+    };
+  }
+  // APX-DFV2-2025 P6 gate — steady state operating view
+  if (programId === 'apx-dfv2-2025' && viewingPhase === 6) {
+    return {
+      deliverables: [
+        { label: 'Weekly demand forecast run', status: 'done' as const },
+        { label: 'Q1 outcome report published', status: 'done' as const },
+        { label: 'Q2 seasonal retraining', status: 'pending' as const },
+        { label: 'Model drift monitoring (Atlas)', status: 'done' as const },
+      ],
+    };
+  }
   // APX-CDP-2026 P2 gate — real blockers surfaced from demo anchor
   if (programId === 'apx-cdp-2026' && viewingPhase === 2 && viewingPhaseState === 'current') {
     return {
@@ -194,6 +333,37 @@ function buildPhasePanel(
         { criterion: 'Privacy boundary confirmed', met: false },
         { criterion: 'AMS vendor architecture alignment noted', met: true },
         { criterion: 'Sponsor sign-off on Synthesis findings', met: false },
+      ],
+      evidenceItems: [
+        {
+          id: 'ev-1',
+          citation: 'Workshop 4 output · Apr 14 2026',
+          source: 'Priya Sharma / Workshop',
+          excerpt: 'CDP identity stitching is technically feasible with the existing Snowflake schema — 3-week implementation estimate confirmed by engineering lead.',
+          confidence: 'high' as const,
+        },
+        {
+          id: 'ev-2',
+          citation: 'Vendor RFP response · Apr 18 2026',
+          source: 'Vendor B / AMS BAFO',
+          excerpt: 'Vendor B proposes a managed CDP layer that overlaps with the planned in-house implementation. Scope conflict unresolved.',
+          confidence: 'medium' as const,
+          hasContradiction: true,
+        },
+        {
+          id: 'ev-3',
+          citation: 'Stakeholder interview · Apr 20 2026',
+          source: 'Marcus Webb / Discovery',
+          excerpt: 'Privacy team confirmed that loyalty data can be included in the identity graph subject to a documented boundary policy — this policy is not yet written.',
+          confidence: 'medium' as const,
+        },
+        {
+          id: 'ev-4',
+          citation: 'AI usage audit · Apr 22 2026',
+          source: 'Atlas / Automated',
+          excerpt: 'Evidence coverage for this phase is at 36% against a 70% target for gate readiness. 3 key items are outstanding.',
+          confidence: 'high' as const,
+        },
       ],
     };
   }
@@ -277,7 +447,7 @@ export function buildProgramDetailView(
     viewingPhase,
     phases: railPhases,
     gateStatus: program.gateStatus,
-    linkedSourceEvent: program.nexusNote,
+    linkedSourceEvent: program.linkedSourceEvent ?? undefined,
     workbench: buildWorkbenchContent(
       program.name,
       clampedCurrent,

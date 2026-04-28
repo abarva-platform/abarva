@@ -8,6 +8,7 @@ import AbarvaNav from '@/components/AbarvaNav';
 // Entries are startsWith-matched so /admin/connectors also passes through.
 const SHELL_SURFACE_PREFIXES = [
   '/admin',
+  '/home',
   '/tower',
   '/source',
   '/intelligence',
