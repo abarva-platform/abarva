@@ -290,6 +290,25 @@ export function getProgramsIndexEmptyStateCopy(filter: ProgramsIndexFilterKey): 
   return 'No programs are in the canonical portfolio yet.';
 }
 
+export function getProgramsIndexEmptyStateTitle(filter: ProgramsIndexFilterKey): string {
+  if (filter === 'all') return 'No programs yet';
+  return `No ${filter} programs`;
+}
+
+export function getProgramsIndexFilterHref(filter: ProgramsIndexFilterKey): string {
+  if (filter === 'all') return '/programs';
+  return `/programs?filter=${filter}`;
+}
+
+export function getProgramsIndexFilterSummary(
+  filter: ProgramsIndexFilterKey,
+  visibleCount: number,
+  totalCount: number,
+): string {
+  if (filter === 'all') return `${totalCount} programs shown`;
+  return `${visibleCount} of ${totalCount} programs shown · ${filter} filter`;
+}
+
 export function buildProgramsIndexView(tenant: 'apex-retail'): ProgramsIndexViewV2 {
   const tenantLabel = tenant === 'apex-retail' ? 'Apex Retail Group' : 'Apex Retail Group';
   const programs: ProgramRow[] = APEX_PROGRAMS_FIXTURE;

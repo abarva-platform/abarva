@@ -13,6 +13,9 @@ import type { ProgramRow, ProgramsIndexView as ProgramsIndexViewV2 } from '@/lib
 import {
   filterProgramRowsForIndex,
   getProgramsIndexEmptyStateCopy,
+  getProgramsIndexEmptyStateTitle,
+  getProgramsIndexFilterHref,
+  getProgramsIndexFilterSummary,
   normalizeProgramsIndexFilter,
 } from '@/lib/programs/programs-page-view';
 
@@ -290,6 +293,8 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
   const flagship = view.programs.find((program) => program.id === 'apx-cdp-2026') ?? view.programs[0];
   const filtered = filterProgramRowsForIndex(view.programs, activeFilter);
   const emptyStateCopy = getProgramsIndexEmptyStateCopy(activeFilter);
+  const emptyStateTitle = getProgramsIndexEmptyStateTitle(activeFilter);
+  const filteredSummary = getProgramsIndexFilterSummary(activeFilter, filtered.length, view.programs.length);
 
   const filterPills = [
     {
@@ -297,28 +302,28 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
       label: 'All',
       active: activeFilter === 'all',
       count: view.programs.length,
-      onClick: () => router.push('/programs', { scroll: false }),
+      onClick: () => router.push(getProgramsIndexFilterHref('all'), { scroll: false }),
     },
     {
       key: 'active',
       label: 'Active',
       active: activeFilter === 'active',
       count: view.programs.filter((p) => !p.isIdle).length,
-      onClick: () => router.push('/programs?filter=active', { scroll: false }),
+      onClick: () => router.push(getProgramsIndexFilterHref('active'), { scroll: false }),
     },
     {
       key: 'idle',
       label: 'Idle',
       active: activeFilter === 'idle',
       count: view.programs.filter((p) => p.isIdle).length,
-      onClick: () => router.push('/programs?filter=idle', { scroll: false }),
+      onClick: () => router.push(getProgramsIndexFilterHref('idle'), { scroll: false }),
     },
     {
       key: 'gated',
       label: 'Gated',
       active: activeFilter === 'gated',
       count: view.gatesPending,
-      onClick: () => router.push('/programs?filter=gated', { scroll: false }),
+      onClick: () => router.push(getProgramsIndexFilterHref('gated'), { scroll: false }),
     },
   ];
 
@@ -379,6 +384,8 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
           {view.idleCount} idle
           <span style={{ margin: '0 8px', opacity: 0.4 }}>·</span>
           <span style={{ color: SHELL.INK_MUTED }}>{view.capacityLabel}</span>
+          <span style={{ margin: '0 8px', opacity: 0.4 }}>·</span>
+          <span style={{ color: SHELL.INK_MUTED }}>{filteredSummary}</span>
         </div>
 
         {flagship ? (
@@ -531,7 +538,7 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
               <span style={{ fontFamily: SHELL.SERIF, fontSize: 22, color: SHELL.INK_MUTED }}>∅</span>
             </div>
             <div style={{ fontFamily: SHELL.SERIF, fontSize: 18, color: SHELL.INK, marginBottom: 8 }}>
-              No programs match this filter
+              {emptyStateTitle}
             </div>
             <div
               style={{
