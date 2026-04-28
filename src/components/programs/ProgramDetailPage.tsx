@@ -2055,7 +2055,7 @@ function AgentHandoffOverlay({
           {[
             '4 evidence citations → Evidence ledger',
             'Gate criteria status → Readiness assessment',
-            'Program context → P2 Synthesis review',
+            'Program context → P3 Design review',
           ].map((row, i) => (
             <div
               key={`tr-${i}`}
