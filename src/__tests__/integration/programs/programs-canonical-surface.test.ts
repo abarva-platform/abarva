@@ -306,4 +306,23 @@ describe('Canonical view module hygiene', () => {
       expect(content).not.toMatch(/from '@\/lib\/agent\/runtime/);
     }
   });
+
+  it('does not expose implementation TODO or stub copy in rendered Programs surfaces', () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const fs = require('fs') as typeof import('fs');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const path = require('path') as typeof import('path');
+    const sources = [
+      path.resolve(__dirname, '../../../components/programs/NexusPanel.tsx'),
+      path.resolve(__dirname, '../../../components/programs/ProgramSurface.tsx'),
+    ];
+
+    for (const src of sources) {
+      const content = fs.readFileSync(src, 'utf8');
+      expect(content).not.toMatch(/TODO\(Packet/i);
+      expect(content).not.toMatch(/intentionally stubbed/i);
+      expect(content).not.toMatch(/typed stubs/i);
+      expect(content).not.toMatch(/frontend-only scope/i);
+    }
+  });
 });

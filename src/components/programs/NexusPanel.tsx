@@ -176,7 +176,7 @@ export function CxoTakeover(props: CxoTakeoverProps) {
         {props.mode === 'phase_3_interview' ? 'Phase 3 CXO interview takeover' : 'Phase 6 verification takeover'}
       </div>
       <div className="programs-muted" style={{ marginTop: 8 }}>
-        Static shell only. The structured pacing, question bank, and transcript layout are in place, but the live interaction logic is intentionally stubbed.
+        Preview mode. The structured pacing, question bank, and transcript layout are ready; live interview orchestration remains deferred until the shared Nexus interaction layer ships.
       </div>
       <div className="programs-takeover-preview" style={{ marginTop: 18 }}>
         <div className="programs-stack">
@@ -200,7 +200,7 @@ export function CxoTakeover(props: CxoTakeoverProps) {
             </div>
           ))}
           <div className="programs-hero-note">
-            TODO(Packet 8 §8.5, Packet 12 §12.3): replace this preview with the real takeover interaction flow once shared Nexus interview infrastructure ships.
+            Next activation step: connect this preview to the shared Nexus interview layer for live turn-taking, capture, and synthesis.
           </div>
           <button className="programs-button" type="button" onClick={handleClose}>
             {closed ? 'Static synthesis closed' : 'Close preview'}
