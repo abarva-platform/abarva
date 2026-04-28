@@ -25,6 +25,8 @@ import { SourceEventChip } from '@/components/programs/SourceEventChip';
 import { buildProgramSourceLinkView } from '@/lib/programs/program-source-link-view';
 import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances';
 import { buildProgramSynthesisContext } from '@/lib/reasoning/program-synthesis-context-builder';
+import { summarizeFailureModes } from '@/lib/reasoning/provenance-ribbon-helpers';
+import { FailureModeWarningChip } from '@/components/_shared/FailureModeWarningChip';
 import { buildProgramStorylineContext, matchStorylinePatterns } from '@/lib/intelligence/storyline-matcher';
 import { buildGateApprovalDrawerView } from '@/lib/programs/gate-approval-drawer-view';
 import type { GateApprovalDrawerView } from '@/lib/programs/gate-approval-drawer-view';
@@ -3180,6 +3182,31 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
     }),
   );
 
+  // REASON-29 — Header-level failure-mode warning chip for Programs detail.
+  // Builds the same SynthesisContext used by the provenance ribbon so a
+  // high-confidence detected anti-pattern is visible alongside the GatePill
+  // without scrolling.
+  const failureModeHeaderInfo = (() => {
+    const instance = APEX_RETAIL_PROGRAM_INSTANCES.find(
+      (i) =>
+        i.displayId === view.displayId ||
+        i.id.toLowerCase() === view.programId.toLowerCase(),
+    );
+    if (!instance) return null;
+    const ctx = buildProgramSynthesisContext(instance);
+    const summary = summarizeFailureModes(ctx);
+    if (summary.topLabel === null || summary.highConfidence === 0) return null;
+    const topDetection = ctx.failureModes.find(
+      (d) => d.label === summary.topLabel,
+    );
+    return {
+      topLabel: summary.topLabel,
+      topConfidence: summary.topConfidence,
+      highCount: summary.highConfidence,
+      mitigations: topDetection?.mitigations,
+    };
+  })();
+
   return (
     <AppShell
       surface="programs-detail"
@@ -3255,6 +3282,14 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
               {view.displayId}
             </span>
             <GatePill status={view.gateStatus} />
+            {failureModeHeaderInfo && (
+              <FailureModeWarningChip
+                topLabel={failureModeHeaderInfo.topLabel}
+                topConfidence={failureModeHeaderInfo.topConfidence}
+                highCount={failureModeHeaderInfo.highCount}
+                mitigations={failureModeHeaderInfo.mitigations}
+              />
+            )}
             {/* Upload affordance */}
             <button
               onClick={() => setShowFileUpload(true)}

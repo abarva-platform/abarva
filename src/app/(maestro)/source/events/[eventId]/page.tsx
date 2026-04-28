@@ -9,6 +9,7 @@ import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
 import { NexusEngagementCanvas } from '@/components/source/NexusEngagementCanvas';
 import { SourceCommercialEventSection } from '@/components/source/SourceCommercialEventSection';
 import { GateCriteriaPanel } from '@/components/source/GateCriteriaPanel';
+import { FailureModeWarningChip } from '@/components/_shared/FailureModeWarningChip';
 import { getSourcingEvent } from '@/lib/source/queries';
 import { AMS_SOURCE_EVENT } from '@/lib/source/shell-source-fixture';
 import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
@@ -16,6 +17,7 @@ import { buildEvidenceMap } from '@/lib/source/source-event-instance';
 import { PAT_SRC_AMS_001 } from '@/lib/intelligence/source-lifecycle-patterns';
 import { createGateEvaluator } from '@/lib/reasoning/gate-evaluator';
 import { buildSourceSynthesisContext } from '@/lib/reasoning/synthesis-context-builder';
+import { summarizeFailureModes } from '@/lib/reasoning/provenance-ribbon-helpers';
 import type { GateEvaluation } from '@/lib/reasoning/types';
 
 export const dynamic = 'force-dynamic';
@@ -67,6 +69,22 @@ export default async function SourceEventDetailPage({
     ? buildSourceSynthesisContext(matchedInstance, PAT_SRC_AMS_001)
     : null;
 
+  // REASON-29 — Header-level failure-mode warning chip. Pulls the same
+  // SynthesisContext used by the provenance ribbon so high-confidence
+  // anti-pattern matches are visible without scrolling the agent column.
+  const failureModeSummary = synthesisContext
+    ? summarizeFailureModes(synthesisContext)
+    : null;
+  const failureModeTopMitigations = (() => {
+    if (!synthesisContext || !failureModeSummary || failureModeSummary.topLabel === null) {
+      return undefined;
+    }
+    const top = synthesisContext.failureModes.find(
+      (d) => d.label === failureModeSummary.topLabel,
+    );
+    return top?.mitigations;
+  })();
+
   return (
     <AppShell
       surface="source"
@@ -108,6 +126,16 @@ export default async function SourceEventDetailPage({
         ]}
       />
       <SourceWorkingPane>
+        {failureModeSummary && (
+          <div style={{ marginBottom: 12 }}>
+            <FailureModeWarningChip
+              topLabel={failureModeSummary.topLabel}
+              topConfidence={failureModeSummary.topConfidence}
+              highCount={failureModeSummary.highConfidence}
+              mitigations={failureModeTopMitigations}
+            />
+          </div>
+        )}
         <NexusEngagementCanvas event={event} />
         {matchedInstance && nextGateEvaluations.length > 0 && (
           <GateCriteriaPanel
