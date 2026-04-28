@@ -47,19 +47,260 @@ const STEWARD_ACTIONS = [
   },
 ];
 
-// ─── WorkPane tabs ─────────────────────────────────────────────────────────────
+// ─── WorkPane tabs (SRC42 — 8-tab consolidated canvas) ───────────────────────
 
-type TabKey = 'bafo' | 'pricing' | 'risk' | 'signals' | 'program';
+type TabKey = 'summary' | 'pricing' | 'bafo' | 'risk' | 'readiness' | 'missions' | 'signals' | 'program';
 
 const TABS: { key: TabKey; label: string }[] = [
-  { key: 'bafo', label: 'BAFO Strategy' },
-  { key: 'pricing', label: 'Pricing Normalization' },
-  { key: 'risk', label: 'Risk Detection' },
-  { key: 'signals', label: 'Signals Stream' },
+  { key: 'summary', label: 'Summary' },
+  { key: 'pricing', label: 'Pricing' },
+  { key: 'bafo', label: 'BAFO' },
+  { key: 'risk', label: 'Risks' },
+  { key: 'readiness', label: 'Readiness' },
+  { key: 'missions', label: 'Missions' },
+  { key: 'signals', label: 'Signals' },
   { key: 'program', label: 'Linked Program' },
 ];
 
 // ─── Tab content components ───────────────────────────────────────────────────
+
+// ─── SRC42: Summary tab ──────────────────────────────────────────────────────
+
+function SummaryTab() {
+  const summaryItems = [
+    { label: 'Event', value: 'SRC-AMS-2026 · AMS Vendor Consolidation 2026' },
+    { label: 'Active stage', value: 'Stage 7 — BAFO' },
+    { label: 'Vendors active', value: '3 (Vendor A, Vendor B, Vendor C)' },
+    { label: 'Risk flag', value: 'Vendor B · SOC-2 Type II attestation gap' },
+    { label: 'Linked program', value: 'APX-CDP-2026 · P3 Design · gate pending' },
+    { label: 'Last activity', value: '2h ago' },
+  ];
+
+  const statusItems = [
+    { label: 'BAFO status', value: 'All 3 vendors submitted', ok: true },
+    { label: 'Pricing spread', value: '−14% to +9.5% vs baseline', ok: true },
+    { label: 'Gate readiness', value: 'Contract review outstanding (Vendor C)', ok: false },
+    { label: 'Evidence', value: 'Stage gate approval record on file', ok: true },
+    { label: 'CDP program gate', value: 'Privacy sign-off and vendor contract pending', ok: false },
+  ];
+
+  return (
+    <div data-testid="source-summary-tab">
+      <div style={{ fontFamily: SHELL.MONO, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.14em', color: SHELL.INK_MUTED, marginBottom: 12 }}>
+        Commercial Event Summary · SRC-AMS-2026
+      </div>
+
+      {/* Key facts */}
+      <div style={{ background: SHELL.CARD_WHITE, border: `1px solid ${SHELL.CARD_LINE}`, borderRadius: 8, padding: '14px 16px', marginBottom: 16 }}>
+        <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: SHELL.INK_MUTED, marginBottom: 10 }}>
+          Event facts
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {summaryItems.map((item, i) => (
+            <div key={`sf-${i}`} style={{ display: 'flex', gap: 12 }}>
+              <span style={{ fontFamily: SHELL.MONO, fontSize: 10, color: SHELL.INK_MUTED, minWidth: 120, flexShrink: 0 }}>{item.label}</span>
+              <span style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK, lineHeight: 1.4 }}>{item.value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Status roll-up */}
+      <div style={{ background: SHELL.CARD_WHITE, border: `1px solid ${SHELL.CARD_LINE}`, borderRadius: 8, padding: '14px 16px', marginBottom: 16 }}>
+        <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: SHELL.INK_MUTED, marginBottom: 10 }}>
+          Status roll-up
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {statusItems.map((item, i) => (
+            <div key={`ss-${i}`} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+              <span style={{ fontFamily: SHELL.MONO, fontSize: 10, color: item.ok ? SHELL.MINT_TEXT : SHELL.PEACH_TEXT, flexShrink: 0, marginTop: 1 }}>
+                {item.ok ? '✓' : '✗'}
+              </span>
+              <div>
+                <span style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.06em', color: SHELL.INK_MUTED, marginRight: 6 }}>{item.label}</span>
+                <span style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK, lineHeight: 1.4 }}>{item.value}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Honest disclaimer */}
+      <div
+        data-honest-disclaimer="source-summary"
+        style={{ fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.08em', lineHeight: 1.5 }}
+      >
+        Deterministic seed · SRC-AMS-2026 summary reflects fixture context only. Live event state, vendor submissions, and gate signals are deferred.
+      </div>
+    </div>
+  );
+}
+
+// ─── SRC42: Readiness tab ─────────────────────────────────────────────────────
+
+function ReadinessTab() {
+  const criteria = [
+    { label: 'All vendor BAFOs submitted', status: 'done' as const },
+    { label: 'Pricing templates normalised (3/3 vendors)', status: 'done' as const },
+    { label: 'Risk assessment complete (SOC-2 gap flagged)', status: 'done' as const },
+    { label: 'Integration contract finalised (Vendor C)', status: 'pending' as const },
+    { label: 'Steward selection approval obtained', status: 'pending' as const },
+    { label: 'CDP program privacy sign-off linked', status: 'blocked' as const },
+  ];
+
+  const nextActions = [
+    'Finalise integration contract with Vendor C',
+    'Obtain Steward selection approval',
+    'Confirm CDP program privacy sign-off is on track',
+  ];
+
+  const doneCount = criteria.filter((c) => c.status === 'done').length;
+
+  return (
+    <div data-testid="source-readiness-tab">
+      <div style={{ fontFamily: SHELL.MONO, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.14em', color: SHELL.INK_MUTED, marginBottom: 12 }}>
+        Vendor Selection Readiness · {doneCount} of {criteria.length} criteria met
+      </div>
+
+      {/* Criteria list */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+        {criteria.map((c, i) => {
+          const dotColor = c.status === 'done' ? SHELL.MINT_TEXT : c.status === 'blocked' ? SHELL.RUST_TEXT : SHELL.AMBER_DOT;
+          const statusLabel = c.status === 'done' ? 'Met' : c.status === 'blocked' ? 'Blocked' : 'Pending';
+          return (
+            <div key={`rc-${i}`} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', background: SHELL.CARD_WHITE, border: `1px solid ${SHELL.CARD_LINE}`, borderRadius: 7 }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: dotColor, flexShrink: 0, marginTop: 4 }} />
+              <div style={{ flex: 1 }}>
+                <span style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK, lineHeight: 1.4 }}>{c.label}</span>
+              </div>
+              <span style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: dotColor, flexShrink: 0 }}>{statusLabel}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Next actions */}
+      <div style={{ background: SHELL.CARD_WHITE, border: `1px solid ${SHELL.CARD_LINE}`, borderRadius: 8, padding: '12px 14px', marginBottom: 16 }}>
+        <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: SHELL.INK_MUTED, marginBottom: 8 }}>
+          Required next actions
+        </div>
+        {nextActions.map((action, i) => (
+          <div key={`rna-${i}`} style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK, lineHeight: 1.5, marginBottom: 4 }}>
+            → {action}
+          </div>
+        ))}
+      </div>
+
+      {/* Honest disclaimer */}
+      <div
+        data-honest-disclaimer="source-readiness"
+        style={{ fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.08em', lineHeight: 1.5 }}
+      >
+        Deterministic seed · SRC-AMS-2026 readiness criteria reflect fixture context only. Live gate state machine and Steward sign-off persistence are deferred.
+      </div>
+    </div>
+  );
+}
+
+// ─── SRC42: Missions tab ──────────────────────────────────────────────────────
+
+function MissionsTab() {
+  const missions = [
+    {
+      id: 'M-01',
+      agent: 'Sentinel',
+      agentInitials: 'Sn',
+      label: 'Validate Vendor B SOC-2 gap',
+      detail: 'Confirm attestation status and assess risk if waived',
+      priority: 'critical' as const,
+      state: 'active' as const,
+    },
+    {
+      id: 'M-02',
+      agent: 'Nexus',
+      agentInitials: 'Nx',
+      label: 'Align CDP integration contract scope',
+      detail: 'Vendor C contract must reflect CDP data layer requirements',
+      priority: 'high' as const,
+      state: 'active' as const,
+    },
+    {
+      id: 'M-03',
+      agent: 'Steward',
+      agentInitials: 'St',
+      label: 'Obtain selection approval',
+      detail: 'Steward sign-off gates final award to Vendor C',
+      priority: 'high' as const,
+      state: 'pending' as const,
+    },
+    {
+      id: 'M-04',
+      agent: 'Atlas',
+      agentInitials: 'At',
+      label: 'Model post-selection cost projection',
+      detail: 'Update Executive lens with final Vendor C pricing',
+      priority: 'medium' as const,
+      state: 'pending' as const,
+    },
+  ];
+
+  function priorityColor(p: 'critical' | 'high' | 'medium' | 'low'): string {
+    if (p === 'critical') return SHELL.RUST_TEXT;
+    if (p === 'high') return SHELL.PEACH_TEXT;
+    if (p === 'medium') return SHELL.AMBER_DOT;
+    return SHELL.INK_MUTED;
+  }
+
+  function stateLabel(s: 'active' | 'pending'): string {
+    return s === 'active' ? 'Active' : 'Pending';
+  }
+
+  return (
+    <div data-testid="source-missions-tab">
+      <div style={{ fontFamily: SHELL.MONO, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.14em', color: SHELL.INK_MUTED, marginBottom: 12 }}>
+        Agent Missions · {missions.filter((m) => m.state === 'active').length} active
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+        {missions.map((m) => (
+          <div key={m.id} style={{ background: SHELL.CARD_WHITE, border: `1px solid ${SHELL.CARD_LINE}`, borderRadius: 8, padding: '12px 14px' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+              {/* Agent badge */}
+              <div style={{ width: 28, height: 28, borderRadius: 6, background: SHELL.PAPER_DEEP, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <span style={{ fontFamily: SHELL.MONO, fontSize: 9, fontWeight: 700, color: SHELL.INK }}>{m.agentInitials}</span>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+                  <span style={{ fontFamily: SHELL.SANS, fontSize: 13, fontWeight: 600, color: SHELL.INK }}>{m.label}</span>
+                  <span style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: priorityColor(m.priority) }}>{m.priority}</span>
+                </div>
+                <div style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK_SOFT, lineHeight: 1.4, marginBottom: 6 }}>
+                  {m.detail}
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <span style={{ fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.06em' }}>
+                    {m.agent} · {m.id}
+                  </span>
+                  <span style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.06em', color: m.state === 'active' ? SHELL.MINT_TEXT : SHELL.INK_MUTED }}>
+                    {stateLabel(m.state)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Honest disclaimer */}
+      <div
+        data-honest-disclaimer="source-missions"
+        style={{ fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.08em', lineHeight: 1.5 }}
+      >
+        Deterministic seed · SRC-AMS-2026 agent missions reflect fixture context only. Live mission dispatch, state tracking, and agent session management are deferred.
+      </div>
+    </div>
+  );
+}
 
 function BafoStrategyTab() {
   const vendors = [
@@ -746,7 +987,7 @@ function LinkedProgramTab() {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function SourceEventDetailPage() {
-  const [activeTab, setActiveTab] = useState<TabKey>('bafo');
+  const [activeTab, setActiveTab] = useState<TabKey>('summary');
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Stage-aware pane contract (Shell Layout Spec v2 §7)
@@ -889,9 +1130,12 @@ export function SourceEventDetailPage() {
 
         {/* Tab content */}
         <div style={{ padding: '24px 28px', flex: 1 }}>
-          {activeTab === 'bafo' && <BafoStrategyTab />}
+          {activeTab === 'summary' && <SummaryTab />}
           {activeTab === 'pricing' && <PricingNormalizationTab />}
+          {activeTab === 'bafo' && <BafoStrategyTab />}
           {activeTab === 'risk' && <RiskDetectionTab />}
+          {activeTab === 'readiness' && <ReadinessTab />}
+          {activeTab === 'missions' && <MissionsTab />}
           {activeTab === 'signals' && <SignalsStreamTab />}
           {activeTab === 'program' && <LinkedProgramTab />}
         </div>
