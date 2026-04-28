@@ -1463,28 +1463,52 @@ function SuggestedActionOverlay({ action, onAdvance, onDismiss }: SuggestedActio
 
 interface FileUploadOverlayProps {
   programName: string;
+  programId: string;
   onClose: () => void;
 }
 
-function FileUploadOverlay({ programName: _programName, onClose }: FileUploadOverlayProps) {
+function formatFileSize(bytes: number): string {
+  return bytes < 1024 * 1024
+    ? `${(bytes / 1024).toFixed(0)} KB`
+    : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function FileUploadOverlay({ programName: _programName, programId: _programId, onClose }: FileUploadOverlayProps) {
   const [uploadState, setUploadState] = useState<{
     name: string;
     size: string;
     stage: 'uploading' | 'parsing' | 'done';
   } | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const simulateUpload = () => {
-    if (uploadState) return;
-    const fileName = 'Workshop-5-Output-Apr2026.pdf';
-    setUploadState({ name: fileName, size: '1.2 MB', stage: 'uploading' });
-    setTimeout(
-      () => setUploadState((s) => (s ? { ...s, stage: 'parsing' } : null)),
-      1200,
-    );
-    setTimeout(
-      () => setUploadState((s) => (s ? { ...s, stage: 'done' } : null)),
-      2800,
-    );
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || uploadState) return;
+
+    setUploadError(null);
+    setUploadState({ name: file.name, size: formatFileSize(file.size), stage: 'uploading' });
+
+    const form = new FormData();
+    form.append('file', file);
+    form.append('sessionId', `prog-${Date.now()}`);
+
+    try {
+      const res = await fetch('/api/v1/nexus/upload', { method: 'POST', body: form });
+      if (!res.ok) {
+        const msg = await res.text().catch(() => 'Upload failed');
+        setUploadState(null);
+        setUploadError(msg || 'Upload failed');
+        return;
+      }
+    } catch {
+      setUploadState(null);
+      setUploadError('Upload failed — network error');
+      return;
+    }
+
+    setUploadState((s) => (s ? { ...s, stage: 'parsing' } : null));
+    setTimeout(() => setUploadState((s) => (s ? { ...s, stage: 'done' } : null)), 1000);
   };
 
   const progressPct =
@@ -1559,9 +1583,16 @@ function FileUploadOverlay({ programName: _programName, onClose }: FileUploadOve
 
       {/* Upload zone / progress */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '0 0 16px' }}>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pdf,.png,.jpg,.jpeg,.docx"
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
+        />
         {!uploadState ? (
           <div
-            onClick={simulateUpload}
+            onClick={() => fileInputRef.current?.click()}
             style={{
               margin: 24,
               border: `2px dashed ${SHELL.CARD_LINE}`,
@@ -1592,6 +1623,18 @@ function FileUploadOverlay({ programName: _programName, onClose }: FileUploadOve
               or click to browse · PDF, DOCX, PPTX up to 25MB
             </div>
           </div>
+          {uploadError && (
+            <div
+              style={{
+                margin: '0 24px',
+                fontFamily: SHELL.SANS,
+                fontSize: 12,
+                color: '#c0392b',
+              }}
+            >
+              {uploadError}
+            </div>
+          )}
         ) : (
           <div style={{ padding: '24px 24px 0' }}>
             {/* File info */}
@@ -2734,6 +2777,7 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
       {showFileUpload && (
         <FileUploadOverlay
           programName={view.name}
+          programId={view.programId}
           onClose={() => setShowFileUpload(false)}
         />
       )}
