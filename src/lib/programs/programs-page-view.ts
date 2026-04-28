@@ -12,11 +12,11 @@
 // Build / Activate / Operate) per the shell wave canonical model.
 //
 // Demo anchor (CORR — aligned to pages.yaml §demo-data-baseline):
-//   Flagship: APX-CDP-2026 · Apex Retail CDP Activation · P2 Synthesis
-//   Gate:     Design gate (P2 → P3) pending under Steward
-//   Blockers: Workshop 5 incomplete · value hypothesis evidence missing
-//   Evidence: 36% coverage
-//   Source:   AMS Vendor Consolidation 2026 · Stage 7 BAFO
+//   Flagship: APX-CDP-2026 · Apex Retail CDP Activation · P3 Design
+//   Gate:     Design gate cleared Apr 27 · Build gate (P3→P4) pending 2/5 criteria
+//   Blockers: Vendor C contract · privacy architecture sign-off · build brief
+//   Evidence: 100% (Design gate cleared)
+//   Source:   AMS Vendor Consolidation 2026 · Stage 7 BAFO · Vendor C selected
 //
 // Do NOT modify types.ui.ts solely to accommodate these types.
 
@@ -276,13 +276,13 @@ export function buildProgramsIndexView(_tenant: 'apex-retail'): ProgramsIndexVie
   const portfolioWorkbench: ProgramWorkbenchContent = {
     title: 'Nexus Portfolio Workbench',
     prose:
-      'Six programs in flight across the Apex Retail portfolio. APX-CDP-2026 is the critical path — Design gate pending at P2 Synthesis with Workshop 5 incomplete and 36% evidence coverage. APX-MRC-2025 has been idle 9 days; sponsor re-engagement recommended before the Q3 cadence review.',
+      'Six programs in flight across the Apex Retail portfolio. APX-CDP-2026 is the critical path — Design gate cleared Apr 27, now in P3 Design with Build gate 2 of 5 criteria met. Vendor C contract is the near-term blocker. APX-MRC-2025 has been idle 9 days; sponsor re-engagement recommended before the Q3 cadence review.',
     actionsLabel: 'Nexus recommends',
     actions: [
       {
         letter: 'A',
-        text: 'Clear APX-CDP-2026 Design gate',
-        detail: 'Complete Workshop 5 · close value hypothesis gap · confirm privacy boundary',
+        text: 'Advance APX-CDP-2026 Build gate',
+        detail: 'Close Vendor C contract · privacy architecture sign-off · build brief scoping',
       },
       {
         letter: 'B',
@@ -292,7 +292,7 @@ export function buildProgramsIndexView(_tenant: 'apex-retail'): ProgramsIndexVie
       {
         letter: 'C',
         text: 'Review APX-CC-2026 Build progress',
-        detail: 'Activate gate approaching — Atlas brief ready',
+        detail: 'Activate gate approaching — IVR migration critical path',
       },
     ],
   };
