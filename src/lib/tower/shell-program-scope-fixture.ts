@@ -57,6 +57,7 @@ export const APX_CDP_SCOPE = {
 
   connectedPressures: [
     { id: 'twr-vendor-risk', title: 'Vendor Risk', severity: 'medium', relevance: 'AMS BAFO decision affects P4 data layer scope' },
+    { id: 'twr-ai-cloud-spend', title: 'AI Cloud Spend', severity: 'high', relevance: 'CDP personalization layer is a top LLM inference driver — +18% spike on deployment' },
   ] as ConnectedPressure[],
 
   activityLog: [
