@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { buildPageMetadata } from '@/lib/public-site/seo-defaults';
 import { MaestroHero } from '@/components/public-site/MaestroHero';
+import { ContradictionsScoreboard } from '@/components/public-site/ContradictionsScoreboard';
 import { HowItWorks } from '@/components/public-site/HowItWorks';
 
 export const metadata: Metadata = buildPageMetadata({
@@ -13,6 +14,7 @@ export default function HomePage() {
   return (
     <>
       <MaestroHero />
+      <ContradictionsScoreboard />
       <HowItWorks />
     </>
   );
