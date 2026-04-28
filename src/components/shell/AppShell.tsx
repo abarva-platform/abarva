@@ -1,13 +1,8 @@
 import type { ReactNode } from 'react';
-import dynamic from 'next/dynamic';
 import { AppRail } from './AppRail';
 import { AppTopBar } from './AppTopBar';
 import { AppMiddleStrip } from './AppMiddleStrip';
-
-const CommandPalette = dynamic(
-  () => import('./CommandPalette').then((m) => ({ default: m.CommandPalette })),
-  { ssr: false, loading: () => null },
-);
+import { CommandPaletteLoader } from './CommandPaletteLoader';
 
 interface AppShellProps {
   surface?: 'setup' | 'programs' | 'source' | 'intelligence' | 'tower';
@@ -73,7 +68,7 @@ export function AppShell({
       </div>
 
       {/* Command palette · self-manages open state via Cmd+K listener */}
-      <CommandPalette />
+      <CommandPaletteLoader />
     </div>
   );
 }

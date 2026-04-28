@@ -425,8 +425,8 @@ function buildStewardEditorial(
   return `Steward view: ${eventName} has a partial scorecard posture for ${currentStageLabel}. The route is in ${status}, and governance rationale still needs review before BAFO progression is trusted.`;
 }
 
-function formatStatus(status: ScorecardCriterionStatus): string {
-  return status.replace('_', ' ');
+function formatStatus(status: string): string {
+  return status.replace(/_/g, ' ');
 }
 
 function statusColor(status: GovernanceShellStatus | ScorecardCriterionStatus): string {

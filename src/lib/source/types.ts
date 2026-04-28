@@ -185,7 +185,10 @@ export interface ScorecardCriterion {
 export interface ScorecardGovernance {
   decisionOwner: string;
   reviewCadence: string;
-  approvalState: ScorecardApprovalState;
+  // ScorecardLifecycleState covers the full governance workflow introduced in
+  // Wave S4; ScorecardApprovalState is the legacy 3-value union kept for
+  // backwards compat with pre-S4 seed data.
+  approvalState: ScorecardApprovalState | ScorecardLifecycleState;
   criteria: ScorecardCriterion[];
 }
 
