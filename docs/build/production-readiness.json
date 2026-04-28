@@ -1622,6 +1622,7 @@
       "date": "2026-04-26"
     },
     "BLG1 (wave-21, lane-K): Master Backlog System created. Docs-only slice \u2014 creates docs/backlog/ with 13 track BACKLOG.md files, 7 wave spec files, backlog-registry.json, and BLG1 slice doc. Updates build-slices.json, build-waves.json, and production-readiness.json. No runtime impact. No app code changed, no routes modified, no migrations touched, no seeds added. Production readiness score unchanged (still 24%). No deployment promotion.",
-    "BLG2 (wave-21, lane-ops): Autonomous orchestration wiring installed. Context handoff (BACKLOG_CURRENT_STATE.md), escalation policy (BACKLOG_ESCALATION_POLICY.md), orchestration prompt (BACKLOG_ORCHESTRATION_PROMPT.md), and wave runner script (scripts/orchestration/run_next_wave.sh) created. Docs + shell only, no runtime changes. No behavior changes. No readiness promotion."
+    "BLG2 (wave-21, lane-ops): Autonomous orchestration wiring installed. Context handoff (BACKLOG_CURRENT_STATE.md), escalation policy (BACKLOG_ESCALATION_POLICY.md), orchestration prompt (BACKLOG_ORCHESTRATION_PROMPT.md), and wave runner script (scripts/orchestration/run_next_wave.sh) created. Docs + shell only, no runtime changes. No behavior changes. No readiness promotion.",
+    "HOME-POLISH (2026-04-28): Three HomeIndexPage polish moves complete. (1) agentQuote tightened from 40 to 19 words — same 3 linked decisions but telegraphic. (2) StatsCard urgent border upgraded from SHELL.PEACH_LINE to SHELL.PEACH_TEXT for visible urgency accent. (3) data-testid='home-middle-strip' added to middle strip div. 28 integration tests pass (10 new + 18 existing). Fixed pre-existing failure in agentic-home-entry.test.ts (AgenticHomeEntry → HomeIndexPage)."
   ]
 }

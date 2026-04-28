@@ -40,8 +40,8 @@ export const HOME_VIEW = {
     href: '/source/events/apex-retail-ams-outsourcing-2026',
   },
 
-  // Agent voice (Nexus as home guide)
-  agentQuote: 'CDP is in P3 Design. Vendor C contract is the only near-term blocker to the Build gate. AI Cloud Spend and the AMS award are the linked decisions to watch today.',
+  // Agent voice (Nexus as home guide) — HOME-POLISH: tighter voice density
+  agentQuote: 'CDP Build gate waits on Vendor C contract. AI spend 33% over budget — rate card recovery available. AMS BAFO unblocked.',
   agentContext: 'Nexus · Executive summary',
   actions: [
     { letter: 'A' as const, text: 'Review CDP architecture sprint', detail: 'P3 Design · Vendor C contract in final review' },

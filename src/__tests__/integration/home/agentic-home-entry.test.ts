@@ -144,14 +144,14 @@ describe('HOME1 · AgenticHomeEntry · module hygiene', () => {
   });
 });
 
-describe('HOME1 · home page mounts AgenticHomeEntry', () => {
-  it('imports AgenticHomeEntry from the canonical module path', () => {
+describe('HOME1 · home page mounts HomeIndexPage', () => {
+  it('imports HomeIndexPage from the canonical module path', () => {
     expect(pageSource).toMatch(
-      /import\s*\{\s*AgenticHomeEntry\s*\}\s*from\s*['"]@\/components\/home\/AgenticHomeEntry['"]/,
+      /import\s*\{\s*HomeIndexPage\s*\}\s*from\s*['"]@\/components\/home\/HomeIndexPage['"]/,
     );
   });
 
-  it('renders <AgenticHomeEntry /> in the page tree', () => {
-    expect(pageSource).toMatch(/<AgenticHomeEntry\b/);
+  it('renders <HomeIndexPage /> in the page tree', () => {
+    expect(pageSource).toMatch(/<HomeIndexPage\b/);
   });
 });
