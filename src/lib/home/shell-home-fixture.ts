@@ -9,13 +9,13 @@ export const HOME_VIEW = {
   stats: [
     { label: 'Active programs', value: '6', detail: '1 in Design sprint', detailColor: 'mint' as const },
     { label: 'Open pressures', value: '2', detail: '1 high severity', detailColor: 'peach' as const },
-    { label: 'Evidence coverage', value: '100%', detail: 'APX-CDP-2026 gate cleared', detailColor: 'mint' as const },
+    { label: 'Evidence coverage', value: '100%', detail: 'CDP Design gate cleared', detailColor: 'mint' as const },
     { label: 'Pattern library', value: '17', detail: '3 new this month', detailColor: 'mint' as const },
   ],
 
   // Top program digest (3 programs from fixture)
   topPrograms: [
-    { id: 'apx-cdp-2026', displayId: 'APX-CDP-2026', name: 'Apex Retail CDP Activation', phase: 3, phaseLabel: 'Design', gateStatus: 'cleared' as const, href: '/programs/apx-cdp-2026' },
+    { id: 'apx-cdp-2026', displayId: 'APX-CDP-2026', name: 'Apex Retail CDP Activation', phase: 3, phaseLabel: 'Design', gateStatus: 'pending' as const, href: '/programs/apx-cdp-2026' },
     { id: 'apx-cc-2026', displayId: 'APX-CC-2026', name: 'Contact Center AI', phase: 4, phaseLabel: 'Build', gateStatus: 'open' as const, href: '/programs/apx-cc-2026' },
     { id: 'apx-sap-2026', displayId: 'APX-SAP-2026', name: 'Store Associate Productivity', phase: 1, phaseLabel: 'Discovery', gateStatus: 'open' as const, href: '/programs/apx-sap-2026' },
   ],
@@ -37,7 +37,7 @@ export const HOME_VIEW = {
     stage: 'BAFO',
     stageNumber: 7,
     linkedProgram: 'APX-CDP-2026',
-    href: '/source/ams-vendor-2026',
+    href: '/source/events/apex-retail-ams-outsourcing-2026',
   },
 
   // Agent voice (Nexus as home guide)

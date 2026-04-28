@@ -22,8 +22,8 @@ export function buildLinkedProgramBadgeView(sourceEventId: string): LinkedProgra
       tenantSlug: 'apex-retail',
       relationship: 'Supports programme commercial readiness',
       status: 'deterministic_seed',
-      ctaLabel: 'View linked programme',
-      routeHint: '/tenant/apex-retail/programs/apx-cdp-2026',
+      ctaLabel: 'View program →',
+      routeHint: '/programs/apx-cdp-2026',
       evidenceCaveat: 'Deterministic seed. No live procurement decision.',
       deterministicSeed: true,
     };

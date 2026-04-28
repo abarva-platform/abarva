@@ -59,7 +59,7 @@ export function buildPhaseSlots(
 
 // APX-CDP-2026 · Apex Retail CDP Activation  ← FLAGSHIP
 // P3 Design · Design gate cleared Apr 27 · Architecture sprint active
-// Vendor C selected as managed CDP layer · AMS BAFO award unblocked
+// Build gate (P3→P4) pending: 2 of 5 criteria met · Vendor C contract in final review
 // Linked source: AMS Vendor Consolidation 2026 · Stage 7 BAFO
 const apxCdp2026: ProgramRow = {
   id: 'apx-cdp-2026',
@@ -67,9 +67,9 @@ const apxCdp2026: ProgramRow = {
   name: 'Apex Retail CDP Activation',
   currentPhase: 3,
   phases: buildPhaseSlots(3, { 4: 'pending' }),
-  gateStatus: 'open',
+  gateStatus: 'pending',
   lastActiveLabel: '2h ago',
-  nexusNote: 'P3 Design · Architecture sprint active · Vendor C contract in final review',
+  nexusNote: 'P3 Design · Build gate 2 of 5 criteria met · Vendor C contract in final review',
   actionLabel: 'Continue',
   isIdle: false,
   linkedSourceEvent: 'SRC-AMS-2026 · AMS Vendor Consolidation 2026 · Stage 7 BAFO',
