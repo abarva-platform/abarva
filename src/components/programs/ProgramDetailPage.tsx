@@ -2,7 +2,7 @@
 
 // SHELL-B — Program Detail Page adapted to AppShell.
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { AgentColumn } from '@/components/shell/AgentColumn';
@@ -1537,6 +1537,295 @@ function FileUploadOverlay({ programName: _programName, onClose }: FileUploadOve
   );
 }
 
+// ─── Agent handoff overlay (PRG-STA-AGENT-HANDOFF) ───────────────────────────
+
+interface AgentHandoffOverlayProps {
+  fromAgent: { initials: string; name: string };
+  toAgent: { initials: string; name: string };
+  context: string;
+  onComplete: () => void;
+}
+
+function AgentHandoffOverlay({
+  fromAgent,
+  toAgent,
+  context,
+  onComplete,
+}: AgentHandoffOverlayProps) {
+  const [status, setStatus] = useState<'idle' | 'transferring' | 'complete'>('idle');
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setStatus('transferring'), 600);
+    const t2 = setTimeout(() => setStatus('complete'), 2200);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, []);
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(12,26,58,0.85)',
+        zIndex: 1200,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <div
+        style={{
+          background: SHELL.INK,
+          borderRadius: 16,
+          padding: '40px 48px',
+          maxWidth: 460,
+          width: '90%',
+          textAlign: 'center',
+        }}
+      >
+        {/* Top label */}
+        <div
+          style={{
+            fontFamily: SHELL.MONO,
+            fontSize: 9,
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            color: 'rgba(250,247,241,0.5)',
+          }}
+        >
+          Agent Handoff
+        </div>
+
+        {/* Agent transfer visualization */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 20,
+            margin: '24px 0',
+          }}
+        >
+          {/* From-agent circle */}
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: '50%',
+              background: SHELL.PAPER_DEEP,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <span
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 14,
+                fontWeight: 700,
+                color: SHELL.INK,
+              }}
+            >
+              {fromAgent.initials}
+            </span>
+          </div>
+
+          {/* Arrow */}
+          <span
+            style={{
+              fontFamily: SHELL.SERIF,
+              fontSize: 20,
+              color: 'rgba(250,247,241,0.4)',
+            }}
+          >
+            →
+          </span>
+
+          {/* To-agent circle */}
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: '50%',
+              background: SHELL.MINT_BG,
+              border: `2px solid ${SHELL.MINT_LINE}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <span
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 14,
+                color: SHELL.MINT_TEXT,
+              }}
+            >
+              {toAgent.initials}
+            </span>
+          </div>
+        </div>
+
+        {/* Handoff title */}
+        <div
+          style={{
+            fontFamily: SHELL.SERIF,
+            fontSize: 20,
+            color: 'rgba(250,247,241,1)',
+            fontWeight: 600,
+            marginBottom: 8,
+          }}
+        >
+          {fromAgent.name} → {toAgent.name}
+        </div>
+
+        {/* Context */}
+        <div
+          style={{
+            fontFamily: SHELL.SANS,
+            fontSize: 13,
+            color: 'rgba(250,247,241,0.65)',
+            marginBottom: 24,
+          }}
+        >
+          {context}
+        </div>
+
+        {/* Transfer items box */}
+        <div
+          style={{
+            background: 'rgba(237,231,213,0.10)',
+            borderRadius: 8,
+            padding: '12px 16px',
+            textAlign: 'left',
+          }}
+        >
+          <div
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 8,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: 'rgba(250,247,241,0.5)',
+              marginBottom: 8,
+            }}
+          >
+            Transferring
+          </div>
+          {[
+            '4 evidence citations → Evidence ledger',
+            'Gate criteria status → Readiness assessment',
+            'Program context → P2 Synthesis review',
+          ].map((row, i) => (
+            <div
+              key={`tr-${i}`}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                marginBottom: i < 2 ? 6 : 0,
+              }}
+            >
+              <div
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  background: SHELL.MINT_BG,
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{
+                  fontFamily: SHELL.SANS,
+                  fontSize: 12,
+                  color: 'rgba(250,247,241,0.8)',
+                }}
+              >
+                {row}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Status line */}
+        {status !== 'idle' && (
+          <div
+            style={{
+              marginTop: 20,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+            }}
+          >
+            <div
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                background: status === 'complete' ? SHELL.MINT_TEXT : SHELL.AMBER_DOT,
+                flexShrink: 0,
+              }}
+            />
+            <span
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 9,
+                color: status === 'complete' ? SHELL.MINT_TEXT : SHELL.AMBER_DOT,
+              }}
+            >
+              {status === 'complete'
+                ? '✓ Sentinel has received the handoff'
+                : 'Transferring context...'}
+            </span>
+          </div>
+        )}
+
+        {/* Action button */}
+        <div style={{ marginTop: 24 }}>
+          {status !== 'complete' ? (
+            <button
+              disabled
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 11,
+                background: SHELL.GRAY_BG,
+                color: SHELL.GRAY_TEXT,
+                border: 'none',
+                borderRadius: 6,
+                padding: '10px 24px',
+                cursor: 'not-allowed',
+              }}
+            >
+              Please wait...
+            </button>
+          ) : (
+            <button
+              onClick={onComplete}
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 11,
+                background: SHELL.MINT_BG,
+                color: SHELL.MINT_TEXT,
+                border: `1px solid ${SHELL.MINT_LINE}`,
+                borderRadius: 6,
+                padding: '10px 24px',
+                cursor: 'pointer',
+              }}
+            >
+              Open Sentinel review →
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
@@ -1555,6 +1844,9 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
 
   // PRG-STA-FILE-UPLOAD state
   const [showFileUpload, setShowFileUpload] = useState(false);
+
+  // PRG-STA-AGENT-HANDOFF state
+  const [showHandoff, setShowHandoff] = useState(false);
 
   const phaseLabel = PHASE_LABEL_MAP[view.viewingPhase] ?? `Phase ${view.viewingPhase}`;
 
@@ -1700,6 +1992,27 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
           </div>
         )}
 
+        {/* Request Sentinel review trigger */}
+        {view.phasePanel.evidenceItems && view.phasePanel.evidenceItems.length > 0 && (
+          <div style={{ marginBottom: 20 }}>
+            <button
+              onClick={() => setShowHandoff(true)}
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 10,
+                color: SHELL.INK_SOFT,
+                background: 'none',
+                border: `1px solid ${SHELL.CARD_LINE}`,
+                borderRadius: 5,
+                padding: '5px 12px',
+                cursor: 'pointer',
+              }}
+            >
+              Sn · Request Sentinel evidence review →
+            </button>
+          </div>
+        )}
+
         {/* Deliverables */}
         {view.phasePanel.deliverables && view.phasePanel.deliverables.length > 0 && (
           <div style={{ marginBottom: 20 }}>
@@ -1798,6 +2111,16 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
         <FileUploadOverlay
           programName={view.name}
           onClose={() => setShowFileUpload(false)}
+        />
+      )}
+
+      {/* PRG-STA-AGENT-HANDOFF overlay */}
+      {showHandoff && (
+        <AgentHandoffOverlay
+          fromAgent={{ initials: 'Nx', name: 'Nexus' }}
+          toAgent={{ initials: 'Sn', name: 'Sentinel' }}
+          context={`${view.displayId} · P${view.viewingPhase} Synthesis evidence review`}
+          onComplete={() => setShowHandoff(false)}
         />
       )}
     </AppShell>
