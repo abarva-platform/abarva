@@ -225,7 +225,7 @@ describe('SHELL9 — Route Registry', () => {
     it('returns the correct route for a known routeId', () => {
       const route = getRouteById('admin-architecture');
       expect(route).toBeDefined();
-      expect(route!.pattern).toBe('/platform/admin/architecture');
+      expect(route!.pattern).toBe('/admin/architecture');
     });
   });
 
