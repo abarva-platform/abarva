@@ -3,9 +3,28 @@
 import { usePathname } from 'next/navigation';
 import AbarvaNav from '@/components/AbarvaNav';
 
+// Shell-native surfaces render AppShell themselves — these routes bypass
+// MaestroChrome so AbarvaNav doesn't double-render with the AppRail.
+// Entries are startsWith-matched so /admin/connectors also passes through.
+const SHELL_SURFACE_PREFIXES = [
+  '/admin',
+  '/tower',
+  '/source',
+  '/intelligence',
+] as const;
+
 export function MaestroChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? '';
-  const activePage = pathname.startsWith('/admin') || pathname.startsWith('/platform/admin') ? 'admin' : 'dashboard';
+
+  // Pass-through for shell-native surfaces (they render AppShell themselves)
+  if (SHELL_SURFACE_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+    return <>{children}</>;
+  }
+
+  const activePage =
+    pathname.startsWith('/admin') || pathname.startsWith('/platform/admin')
+      ? 'admin'
+      : 'dashboard';
 
   return (
     <div style={{ minHeight: '100vh', background: '#F7F2EA', color: '#171412' }}>
