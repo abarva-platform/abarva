@@ -2766,7 +2766,7 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
               linkedId="SRC-AMS-2026"
               linkedName="AMS Vendor Consolidation 2026"
               linkedStage="BAFO · Stage 7"
-              href="/source"
+              href="/source/ams-vendor-2026"
             />
           </div>
         )}
