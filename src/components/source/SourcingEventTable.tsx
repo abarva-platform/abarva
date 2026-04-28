@@ -1,52 +1,132 @@
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
-import { COLORS, COMPONENTS, FONTS, TEXT } from '@/lib/design-system';
+import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourceRigorLevel, SourcingEventSummary } from '@/lib/source/types';
 import { formatUsd } from '@/lib/source/value-ledger';
-import {
-  sourceActionLink,
-  sourceCard,
-  sourceMetricDetail,
-  sourceMuted,
-  sourceSectionLabel,
-  sourceTableHeaderCell,
-} from './foundationStyles';
 import { EventLifecycleStatusBadge } from './EventLifecycleStatusBadge';
+
+const SOURCE_CARD: CSSProperties = {
+  background: SHELL.CARD_WHITE,
+  border: '1px solid ' + SHELL.CARD_LINE,
+  borderRadius: 10,
+  padding: '16px 18px',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 12,
+};
+
+const SOURCE_SECTION_LABEL: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.14em',
+  color: SHELL.INK_MUTED,
+  marginBottom: 0,
+};
+
+const SOURCE_MUTED: CSSProperties = {
+  fontFamily: SHELL.SANS,
+  fontSize: 13,
+  color: SHELL.INK_MUTED,
+  lineHeight: 1.5,
+};
+
+const SOURCE_METRIC_DETAIL: CSSProperties = {
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  color: SHELL.INK_MUTED,
+};
+
+const SOURCE_TABLE_HEADER_CELL: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.08em',
+  padding: '0 14px 10px',
+  borderBottom: '1px solid ' + SHELL.CARD_LINE,
+};
+
+const SOURCE_ACTION_LINK_PRIMARY: CSSProperties = {
+  textDecoration: 'none',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: '9px 12px',
+  borderRadius: 999,
+  border: '1px solid ' + SHELL.INK,
+  background: SHELL.INK,
+  color: SHELL.CARD_WHITE,
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  fontWeight: 600,
+};
+
+const RISK_PILL_HIGH: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  padding: '3px 8px',
+  borderRadius: 20,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.06em',
+  background: SHELL.RUST_BG,
+  color: SHELL.RUST_TEXT,
+  border: '1px solid ' + SHELL.PEACH_LINE,
+  display: 'inline-flex',
+  alignItems: 'center',
+  width: 'fit-content',
+};
+
+const RISK_PILL_MEDIUM: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  padding: '3px 8px',
+  borderRadius: 20,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.06em',
+  background: SHELL.PEACH_BG,
+  color: SHELL.PEACH_TEXT,
+  border: '1px solid ' + SHELL.PEACH_LINE,
+  display: 'inline-flex',
+  alignItems: 'center',
+  width: 'fit-content',
+};
 
 const TABLE_CELL: CSSProperties = {
   padding: '14px 11px',
-  borderBottom: `1px solid ${COLORS.border}`,
+  borderBottom: `1px solid ${SHELL.CARD_LINE}`,
   verticalAlign: 'top',
   overflowWrap: 'anywhere',
 };
 
 const STATUS_META: CSSProperties = {
-  ...TEXT.small,
-  color: COLORS.textMuted,
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  lineHeight: 1.4,
+  color: SHELL.INK_MUTED,
 };
 
 const EVENT_NAME: CSSProperties = {
   fontSize: '17px',
   fontWeight: 800,
-  color: COLORS.textPrimary,
+  color: SHELL.INK,
   lineHeight: 1.25,
 };
 
 const LIGHT = {
-  card: '#FFFFFF',
-  ink: '#101827',
-  muted: '#5F6673',
-  border: 'rgba(20, 32, 48, 0.12)',
-  row: '#FBFAF7',
+  card: SHELL.CARD_WHITE,
+  ink: SHELL.INK,
+  muted: SHELL.INK_MUTED,
+  border: SHELL.CARD_LINE,
+  row: SHELL.PAPER_SOFT,
   teal: '#0F766E',
-  red: '#B91C1C',
-  green: '#047857',
+  red: SHELL.RUST_TEXT,
+  green: SHELL.MINT_TEXT,
 } as const;
 
 type SourcingEventTableVariant = 'dark' | 'light';
 
 const LIGHT_ACTION_LINK: CSSProperties = {
-  ...sourceActionLink('primary'),
+  ...SOURCE_ACTION_LINK_PRIMARY,
   color: LIGHT.ink,
   background: 'rgba(15,118,110,0.10)',
   border: '1px solid rgba(15,118,110,0.24)',
@@ -66,27 +146,27 @@ export function SourcingEventTable({
   variant?: SourcingEventTableVariant;
 }) {
   const lightMode = variant === 'light';
-  const textPrimary = lightMode ? LIGHT.ink : COLORS.textPrimary;
-  const textSecondary = lightMode ? '#384152' : COLORS.textSecondary;
-  const textMuted = lightMode ? LIGHT.muted : COLORS.textMuted;
+  const textPrimary = lightMode ? LIGHT.ink : SHELL.INK;
+  const textSecondary = lightMode ? '#384152' : SHELL.INK_SOFT;
+  const textMuted = lightMode ? LIGHT.muted : SHELL.INK_MUTED;
   const tableCell: CSSProperties = {
     ...TABLE_CELL,
-    borderBottom: `1px solid ${lightMode ? LIGHT.border : COLORS.border}`,
+    borderBottom: `1px solid ${lightMode ? LIGHT.border : SHELL.CARD_LINE}`,
     padding: lightMode ? '12px 11px' : TABLE_CELL.padding,
   };
   const headerCell: CSSProperties = {
-    ...sourceTableHeaderCell,
-    color: lightMode ? LIGHT.muted : sourceTableHeaderCell.color,
-    borderBottom: `1px solid ${lightMode ? LIGHT.border : COLORS.border}`,
+    ...SOURCE_TABLE_HEADER_CELL,
+    color: lightMode ? LIGHT.muted : SOURCE_TABLE_HEADER_CELL.color,
+    borderBottom: `1px solid ${lightMode ? LIGHT.border : SHELL.CARD_LINE}`,
   };
 
   return (
     <section
       style={{
-        ...sourceCard,
-        background: lightMode ? LIGHT.card : sourceCard.background,
-        border: `1px solid ${lightMode ? LIGHT.border : COLORS.border}`,
-        gap: lightMode ? 10 : sourceCard.gap,
+        ...SOURCE_CARD,
+        background: lightMode ? LIGHT.card : SOURCE_CARD.background,
+        border: `1px solid ${lightMode ? LIGHT.border : SHELL.CARD_LINE}`,
+        gap: lightMode ? 10 : SOURCE_CARD.gap,
         minWidth: 0,
       }}
     >
@@ -101,12 +181,12 @@ export function SourcingEventTable({
         }}
       >
         <div style={{ display: 'grid', gap: 5 }}>
-          <div style={{ ...sourceSectionLabel, color: lightMode ? LIGHT.teal : COLORS.teal }}>Live Sourcing Events</div>
+          <div style={{ ...SOURCE_SECTION_LABEL, color: lightMode ? LIGHT.teal : SHELL.MINT_TEXT }}>Live Sourcing Events</div>
           <div style={{ fontSize: lightMode ? '22px' : '24px', fontWeight: 800, color: textPrimary }}>
             Event operating queue
           </div>
         </div>
-        <p style={{ ...sourceMuted, margin: 0, maxWidth: 640, color: textMuted }}>
+        <p style={{ ...SOURCE_MUTED, margin: 0, maxWidth: 640, color: textMuted }}>
           Compare each event by status, stage, owner, aging, value, blocker, and next operating move.
         </p>
       </div>
@@ -134,15 +214,17 @@ export function SourcingEventTable({
                     {event.blocker ? (
                       <div
                         style={{
-                          ...TEXT.bodySecondary,
-                          color: event.isAtRisk ? (lightMode ? LIGHT.red : '#F5B4B4') : textSecondary,
+                          fontFamily: SHELL.SANS,
+                          fontSize: 13,
+                          color: event.isAtRisk ? (lightMode ? LIGHT.red : SHELL.RUST_TEXT) : textSecondary,
+                          lineHeight: 1.5,
                           maxWidth: 280,
                         }}
                       >
                         Blocker - {event.blocker}
                       </div>
                     ) : (
-                      <div style={{ ...TEXT.bodySecondary, color: lightMode ? LIGHT.green : COLORS.green }}>No active blocker</div>
+                      <div style={{ fontFamily: SHELL.SANS, fontSize: 13, lineHeight: 1.5, color: lightMode ? LIGHT.green : SHELL.MINT_TEXT }}>No active blocker</div>
                     )}
                   </div>
                 </td>
@@ -159,9 +241,9 @@ export function SourcingEventTable({
                     <div style={{ color: textPrimary, fontWeight: 600 }}>{event.currentStageLabel}</div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                       <EventLifecycleStatusBadge status={event.status} label={event.statusLabel} variant={variant} />
-                      {event.isAtRisk ? <span style={COMPONENTS.riskPill('high')}>At Risk</span> : null}
+                      {event.isAtRisk ? <span style={RISK_PILL_HIGH}>At Risk</span> : null}
                       {event.openAlerts > 0 ? (
-                        <span style={COMPONENTS.riskPill(event.isAtRisk ? 'high' : 'medium')}>
+                        <span style={event.isAtRisk ? RISK_PILL_HIGH : RISK_PILL_MEDIUM}>
                           {event.openAlerts} alert{event.openAlerts === 1 ? '' : 's'}
                         </span>
                       ) : null}
@@ -184,14 +266,14 @@ export function SourcingEventTable({
                     style={{
                       display: 'grid',
                       gap: 6,
-                      borderLeft: `2px solid ${event.isAtRisk ? (lightMode ? LIGHT.red : COLORS.red) : (lightMode ? LIGHT.teal : COLORS.teal)}`,
+                      borderLeft: `2px solid ${event.isAtRisk ? (lightMode ? LIGHT.red : SHELL.RUST_TEXT) : (lightMode ? LIGHT.teal : SHELL.MINT_TEXT)}`,
                       paddingLeft: 10,
                     }}
                   >
-                    <div style={{ fontFamily: FONTS.serif, fontSize: lightMode ? '24px' : '25px', color: textPrimary }}>
+                    <div style={{ fontFamily: SHELL.SERIF, fontSize: lightMode ? '24px' : '25px', color: textPrimary }}>
                       {formatUsd(event.valueAtStakeUsd)}
                     </div>
-                    <div style={{ ...sourceMetricDetail, color: textMuted }}>
+                    <div style={{ ...SOURCE_METRIC_DETAIL, color: textMuted }}>
                       {event.isAtRisk ? 'Exposed projected value' : 'Projected sourcing value'}
                     </div>
                   </div>
@@ -199,14 +281,14 @@ export function SourcingEventTable({
 
                 <td style={tableCell}>
                   <div style={{ display: 'grid', gap: 7, minWidth: 190 }}>
-                    <div style={{ ...sourceMetricDetail, color: textMuted }}>Recommended next move</div>
+                    <div style={{ ...SOURCE_METRIC_DETAIL, color: textMuted }}>Recommended next move</div>
                     <div style={{ color: textPrimary, fontWeight: 600 }}>{event.nextAction}</div>
-                    <div style={{ ...sourceMuted, maxWidth: 260, color: textMuted }}>{event.nextDecision}</div>
+                    <div style={{ ...SOURCE_MUTED, maxWidth: 260, color: textMuted }}>{event.nextDecision}</div>
                   </div>
                 </td>
 
                 <td style={{ ...tableCell, textAlign: 'right' }}>
-                  <Link href={`/source/events/${event.id}`} style={lightMode ? LIGHT_ACTION_LINK : sourceActionLink('primary')}>
+                  <Link href={`/source/events/${event.id}`} style={lightMode ? LIGHT_ACTION_LINK : SOURCE_ACTION_LINK_PRIMARY}>
                     Open event
                   </Link>
                 </td>

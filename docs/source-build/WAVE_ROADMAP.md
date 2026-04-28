@@ -2,9 +2,9 @@
 
 | Wave | Title | Status | Branch | PR | Merged |
 |---|---|---|---|---|---|
-| S0 | Audit & Plan | 🟡 in-progress | `source/wave-S0/audit-plan` | — | — |
-| S1 | Shell convergence + token refresh | ⬜ planned | — | — | — |
-| S2 | Index pages refresh | ⬜ planned | — | — | — |
+| S0 | Audit & Plan | ✅ shipped | `source/wave-S0/audit-plan` | #531 | 2026-04-27 |
+| S1 | Shell convergence + token refresh | ✅ shipped | `source/wave-S1/shell-convergence` | #545 | 2026-04-28 |
+| S2 | Index pages refresh | 🟡 in-progress | — | — | — |
 | S3 | Event canvas refresh | ⬜ planned | — | — | — |
 | S4 | Sub-routes refresh | ⬜ planned | — | — | — |
 | S5 | Commercial-intel convergence | ⬜ planned | — | — | — |

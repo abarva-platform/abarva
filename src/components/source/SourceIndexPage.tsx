@@ -7,6 +7,7 @@ import { AppShell } from '@/components/shell/AppShell';
 import { AgentColumn } from '@/components/shell/AgentColumn';
 import { StageTrackerStrip } from '@/components/shell/StageTrackerStrip';
 import { LinkedProgramChip } from '@/components/shell/LinkedProgramChip';
+import { SentinelAgentColumn } from '@/components/source/SentinelAgentColumn';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { SOURCE_INDEX_VIEW, AMS_SOURCE_EVENT } from '@/lib/source/shell-source-fixture';
 
@@ -501,12 +502,10 @@ export function SourceIndexPage() {
         />
       }
     >
-      <AgentColumn
-        agent={{ initials: 'Nx', name: 'Nexus', role: 'Commercial Intelligence' }}
+      <SentinelAgentColumn
         quote={SOURCE_INDEX_VIEW.agentQuote}
         agentContext={SOURCE_INDEX_VIEW.agentContext}
         actions={SOURCE_INDEX_VIEW.actions}
-        surface="source"
         onActionClick={(letter) => {
           if (letter === 'A') {
             firstEventRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -584,7 +583,7 @@ export function SourceIndexPage() {
             direction="source-to-program"
             linkedId="APX-CDP-2026"
             linkedName="Apex Retail CDP Activation"
-            linkedPhase="P2 Synthesis"
+            linkedPhase="P3 Design"
             href="/programs/apx-cdp-2026"
           />
         </div>
@@ -692,7 +691,7 @@ export function SourceIndexPage() {
             direction="source-to-program"
             linkedId="APX-CDP-2026"
             linkedName="Apex Retail CDP Activation"
-            linkedPhase="P2 Synthesis"
+            linkedPhase="P3 Design"
             href="/programs/apx-cdp-2026"
           />
         </div>

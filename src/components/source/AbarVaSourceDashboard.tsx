@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
-import { COMPONENTS, FONTS } from '@/lib/design-system';
+import { SHELL } from '@/lib/shell/shell-tokens';
 import {
   buildSourceAgentContextBundle,
   buildSourceMultiAgentBriefing,
@@ -12,18 +12,89 @@ import {
 } from '@/lib/source';
 import type { AbarvaSourceDashboardData } from '@/lib/source/types';
 import { formatUsd } from '@/lib/source/value-ledger';
-import {
-  sourceActionLink,
-  sourceCard,
-  sourceGrid,
-  sourceMetricDetail,
-  sourceMetricLabel,
-  sourceMetricValue,
-  sourceMuted,
-  sourceSectionLabel,
-} from './foundationStyles';
 import { SourceAlertPanel, type SourceAlertEventContext } from './SourceAlertPanel';
 import { SourcingEventTable } from './SourcingEventTable';
+
+const SOURCE_CARD: CSSProperties = {
+  background: SHELL.CARD_WHITE,
+  border: '1px solid ' + SHELL.CARD_LINE,
+  borderRadius: 10,
+  padding: '16px 18px',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 12,
+};
+
+const SOURCE_GRID: CSSProperties = {
+  display: 'grid',
+  gap: 16,
+};
+
+const SOURCE_SECTION_LABEL: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.14em',
+  color: SHELL.INK_MUTED,
+  marginBottom: 0,
+};
+
+const SOURCE_MUTED: CSSProperties = {
+  fontFamily: SHELL.SANS,
+  fontSize: 13,
+  color: SHELL.INK_MUTED,
+  lineHeight: 1.5,
+};
+
+const SOURCE_METRIC_LABEL: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.08em',
+  color: SHELL.INK_MUTED,
+};
+
+const SOURCE_METRIC_VALUE: CSSProperties = {
+  fontFamily: SHELL.SERIF,
+  fontSize: 24,
+  color: SHELL.INK,
+};
+
+const SOURCE_METRIC_DETAIL: CSSProperties = {
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  color: SHELL.INK_MUTED,
+};
+
+const RISK_PILL_HIGH: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  padding: '3px 8px',
+  borderRadius: 20,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.06em',
+  background: SHELL.RUST_BG,
+  color: SHELL.RUST_TEXT,
+  border: '1px solid ' + SHELL.PEACH_LINE,
+  display: 'inline-flex',
+  alignItems: 'center',
+  width: 'fit-content',
+};
+
+const RISK_PILL_MEDIUM: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  padding: '3px 8px',
+  borderRadius: 20,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.06em',
+  background: SHELL.PEACH_BG,
+  color: SHELL.PEACH_TEXT,
+  border: '1px solid ' + SHELL.PEACH_LINE,
+  display: 'inline-flex',
+  alignItems: 'center',
+  width: 'fit-content',
+};
 
 const KPI_CARD: CSSProperties = {
   display: 'flex',
@@ -38,23 +109,38 @@ const KPI_CARD: CSSProperties = {
 };
 
 const KPI_VALUE: CSSProperties = {
-  ...sourceMetricValue,
+  ...SOURCE_METRIC_VALUE,
   fontSize: '25px',
-  color: '#111827',
+  color: SHELL.INK,
 };
 
 const LIGHT = {
-  page: '#F7F4EF',
-  card: '#FFFFFF',
-  line: 'rgba(20, 32, 48, 0.12)',
-  ink: '#101827',
+  page: SHELL.PAPER_SOFT,
+  card: SHELL.CARD_WHITE,
+  line: SHELL.CARD_LINE,
+  ink: SHELL.INK,
   navy: '#07111F',
-  muted: '#5F6673',
+  muted: SHELL.INK_MUTED,
   teal: '#0F766E',
 } as const;
 
+const SOURCE_ACTION_LINK_PRIMARY: CSSProperties = {
+  textDecoration: 'none',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: '9px 12px',
+  borderRadius: 999,
+  border: '1px solid ' + SHELL.INK,
+  background: SHELL.INK,
+  color: SHELL.CARD_WHITE,
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  fontWeight: 600,
+};
+
 const LIGHT_ACTION_LINK: CSSProperties = {
-  ...sourceActionLink('primary'),
+  ...SOURCE_ACTION_LINK_PRIMARY,
   color: LIGHT.ink,
   background: 'rgba(15,118,110,0.10)',
   border: '1px solid rgba(15,118,110,0.24)',
@@ -111,7 +197,7 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
       >
         <div
           style={{
-            ...sourceCard,
+            ...SOURCE_CARD,
             gap: 10,
             minHeight: 'auto',
             background: LIGHT.navy,
@@ -122,10 +208,10 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
           }}
         >
           <div style={{ display: 'grid', gap: 7 }}>
-            <div style={{ ...sourceSectionLabel, color: '#5EEAD4' }}>Source command read</div>
+            <div style={{ ...SOURCE_SECTION_LABEL, color: '#5EEAD4' }}>Source command read</div>
             <div
               style={{
-                fontFamily: FONTS.serif,
+                fontFamily: SHELL.SERIF,
                 fontSize: 'clamp(20px, 2.2vw, 25px)',
                 lineHeight: 1.18,
                 color: '#F8FAFC',
@@ -135,7 +221,7 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
               {data.metrics.atRiskEvents} at-risk event, {waitingOrBlockedEvents.length} waiting or blocked states,{' '}
               {formatUsd(data.metrics.valueAtStakeUsd)} under management.
             </div>
-            <p style={{ ...sourceMuted, margin: 0, maxWidth: 760, color: 'rgba(248,250,252,0.72)' }}>
+            <p style={{ ...SOURCE_MUTED, margin: 0, maxWidth: 760, color: 'rgba(248,250,252,0.72)' }}>
               {data.nexusSummary}
             </p>
           </div>
@@ -150,10 +236,10 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
               }}
             >
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={COMPONENTS.riskPill(mostExposedEvent.isAtRisk ? 'high' : 'medium')}>
+                <span style={mostExposedEvent.isAtRisk ? RISK_PILL_HIGH : RISK_PILL_MEDIUM}>
                   Most exposed
                 </span>
-                <span style={{ ...sourceMetricDetail, color: 'rgba(248,250,252,0.78)', fontWeight: 700 }}>
+                <span style={{ ...SOURCE_METRIC_DETAIL, color: 'rgba(248,250,252,0.78)', fontWeight: 700 }}>
                   {mostExposedEvent.name}
                 </span>
               </div>
@@ -165,21 +251,21 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
                 }}
               >
                 <div>
-                  <div style={{ ...sourceMetricLabel, color: 'rgba(248,250,252,0.58)' }}>Owner</div>
+                  <div style={{ ...SOURCE_METRIC_LABEL, color: 'rgba(248,250,252,0.58)' }}>Owner</div>
                   <div style={{ color: '#F8FAFC', fontWeight: 700 }}>{mostExposedEvent.owner}</div>
                 </div>
                 <div>
-                  <div style={{ ...sourceMetricLabel, color: 'rgba(248,250,252,0.58)' }}>Aging</div>
+                  <div style={{ ...SOURCE_METRIC_LABEL, color: 'rgba(248,250,252,0.58)' }}>Aging</div>
                   <div style={{ color: '#F8FAFC', fontWeight: 700 }}>{mostExposedEvent.agingDays} days</div>
                 </div>
                 <div>
-                  <div style={{ ...sourceMetricLabel, color: 'rgba(248,250,252,0.58)' }}>Value exposed</div>
+                  <div style={{ ...SOURCE_METRIC_LABEL, color: 'rgba(248,250,252,0.58)' }}>Value exposed</div>
                   <div style={{ color: '#F8FAFC', fontWeight: 700 }}>
                     {formatUsd(mostExposedEvent.valueAtStakeUsd)}
                   </div>
                 </div>
               </div>
-              <div style={{ ...sourceMuted, margin: 0, color: 'rgba(248,250,252,0.76)' }}>
+              <div style={{ ...SOURCE_MUTED, margin: 0, color: 'rgba(248,250,252,0.76)' }}>
                 Next action: {mostExposedEvent.nextAction}
               </div>
               {missionPreviewMissions.length > 0 && missionReport ? (
@@ -192,8 +278,8 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
                   }}
                 >
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'space-between' }}>
-                    <span style={{ ...sourceSectionLabel, color: '#5EEAD4' }}>Agent missions</span>
-                    <span style={{ ...sourceMetricDetail, color: 'rgba(248,250,252,0.66)' }}>
+                    <span style={{ ...SOURCE_SECTION_LABEL, color: '#5EEAD4' }}>Agent missions</span>
+                    <span style={{ ...SOURCE_METRIC_DETAIL, color: 'rgba(248,250,252,0.66)' }}>
                       {missionReport.countByPriority.critical} critical / {missionReport.countByPriority.high} high
                     </span>
                   </div>
@@ -215,18 +301,18 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
                         }}
                       >
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-                          <span style={{ ...sourceMetricLabel, color: '#5EEAD4' }}>
+                          <span style={{ ...SOURCE_METRIC_LABEL, color: '#5EEAD4' }}>
                             {mission.agentName === 'nexus' ? 'Nexus lead' : agentLabel(mission.agentName)}
                           </span>
-                          <span style={{ ...sourceMetricDetail, color: 'rgba(248,250,252,0.70)', fontWeight: 800 }}>
+                          <span style={{ ...SOURCE_METRIC_DETAIL, color: 'rgba(248,250,252,0.70)', fontWeight: 800 }}>
                             {mission.priority} / {mission.state}
                           </span>
-                          <span style={{ ...sourceMetricDetail, color: 'rgba(248,250,252,0.58)' }}>
+                          <span style={{ ...SOURCE_METRIC_DETAIL, color: 'rgba(248,250,252,0.58)' }}>
                             evidence: {mission.evidenceStatus}
                           </span>
                         </div>
                         <div style={{ color: '#F8FAFC', fontWeight: 800, fontSize: '13px' }}>{mission.title}</div>
-                        <div style={{ ...sourceMuted, margin: 0, color: 'rgba(248,250,252,0.72)', fontSize: '12px' }}>
+                        <div style={{ ...SOURCE_MUTED, margin: 0, color: 'rgba(248,250,252,0.72)', fontSize: '12px' }}>
                           {mission.recommendedAction}
                         </div>
                       </div>
@@ -246,37 +332,37 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
         />
       </section>
 
-      <section style={{ ...sourceGrid, gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 165px), 1fr))', gap: 10 }}>
+      <section style={{ ...SOURCE_GRID, gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 165px), 1fr))', gap: 10 }}>
         <div style={KPI_CARD}>
           <div style={{ display: 'grid', gap: 8 }}>
-            <div style={{ ...sourceMetricLabel, color: LIGHT.muted }}>Active Events</div>
+            <div style={{ ...SOURCE_METRIC_LABEL, color: LIGHT.muted }}>Active Events</div>
             <div style={KPI_VALUE}>{data.metrics.activeEvents}</div>
           </div>
-          <div style={{ ...sourceMetricDetail, color: LIGHT.muted }}>Open sourcing events under active Source governance.</div>
+          <div style={{ ...SOURCE_METRIC_DETAIL, color: LIGHT.muted }}>Open sourcing events under active Source governance.</div>
         </div>
 
         <div style={KPI_CARD}>
           <div style={{ display: 'grid', gap: 8 }}>
-            <div style={{ ...sourceMetricLabel, color: LIGHT.muted }}>Waiting / Blocked</div>
+            <div style={{ ...SOURCE_METRIC_LABEL, color: LIGHT.muted }}>Waiting / Blocked</div>
             <div style={KPI_VALUE}>{waitingOrBlockedEvents.length}</div>
           </div>
-          <div style={{ ...sourceMetricDetail, color: LIGHT.muted }}>Client, vendor, or blocker states that need owner action.</div>
+          <div style={{ ...SOURCE_METRIC_DETAIL, color: LIGHT.muted }}>Client, vendor, or blocker states that need owner action.</div>
         </div>
 
         <div style={KPI_CARD}>
           <div style={{ display: 'grid', gap: 8 }}>
-            <div style={{ ...sourceMetricLabel, color: LIGHT.muted }}>At Risk</div>
+            <div style={{ ...SOURCE_METRIC_LABEL, color: LIGHT.muted }}>At Risk</div>
             <div style={KPI_VALUE}>{data.metrics.atRiskEvents}</div>
           </div>
-          <div style={{ ...sourceMetricDetail, color: LIGHT.muted }}>Events outside tolerance due to aging, blockers, or readiness drift.</div>
+          <div style={{ ...SOURCE_METRIC_DETAIL, color: LIGHT.muted }}>Events outside tolerance due to aging, blockers, or readiness drift.</div>
         </div>
 
         <div style={KPI_CARD}>
           <div style={{ display: 'grid', gap: 8 }}>
-            <div style={{ ...sourceMetricLabel, color: LIGHT.muted }}>Value At Stake</div>
+            <div style={{ ...SOURCE_METRIC_LABEL, color: LIGHT.muted }}>Value At Stake</div>
             <div style={{ ...KPI_VALUE, fontSize: '24px' }}>{formatUsd(data.metrics.valueAtStakeUsd)}</div>
           </div>
-          <div style={{ ...sourceMetricDetail, color: LIGHT.muted }}>
+          <div style={{ ...SOURCE_METRIC_DETAIL, color: LIGHT.muted }}>
             {formatUsd(valueInWaitingOrBlocked)} sits in waiting or blocked events.
           </div>
         </div>
@@ -286,13 +372,13 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
 
       <section
         style={{
-          ...sourceCard,
+          ...SOURCE_CARD,
           gap: 10,
           background: LIGHT.card,
           border: `1px solid ${LIGHT.line}`,
         }}
       >
-        <div style={{ ...sourceSectionLabel, color: LIGHT.teal }}>Portfolio operating posture</div>
+        <div style={{ ...SOURCE_SECTION_LABEL, color: LIGHT.teal }}>Portfolio operating posture</div>
         <div
           style={{
             display: 'flex',
@@ -302,7 +388,7 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
             justifyContent: 'space-between',
           }}
         >
-          <div style={{ ...sourceMuted, margin: 0, maxWidth: 720, color: LIGHT.muted }}>
+          <div style={{ ...SOURCE_MUTED, margin: 0, maxWidth: 720, color: LIGHT.muted }}>
             {data.description} {data.metrics.decisionsNeeded} decisions need attention before downstream sourcing work expands.
           </div>
           <Link href="/source/value" style={LIGHT_ACTION_LINK}>

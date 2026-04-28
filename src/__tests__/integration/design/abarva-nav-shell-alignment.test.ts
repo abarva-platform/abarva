@@ -39,9 +39,9 @@ const CANONICAL_NAV_FILES = [
 
 const CANONICAL_PAGE_SHELL_FILES = [
   'src/components/admin/AdminCanonShell.tsx',
-  'src/components/source/SourceCanonShell.tsx',
-  'src/components/source/SourceFoundationShell.tsx',
-  'src/components/source/SourceRouteShell.tsx',
+  // Source shell migrated to AppShell + SentinelAgentColumn in Wave S1/S2
+  'src/components/source/SentinelAgentColumn.tsx',
+  'src/components/source/SourceWorkingPane.tsx',
   'src/components/programs/ProgramCanonShell.tsx',
   'src/components/intelligence/IntelligenceRouteShell.tsx',
   'src/components/tower/TowerRouteShell.tsx',
@@ -61,8 +61,7 @@ const CANONICAL_TENANT_PAGES = [
   'src/app/(maestro)/tenant/[tenantSlug]/tower/[surface]/page.tsx',
 ];
 
-// Canonical Source pages — all use SourceCanonShell / SourceFoundationShell /
-// SourceRouteShell.
+// Canonical Source pages — Wave S1/S2 migrated to AppShell + SentinelAgentColumn.
 const CANONICAL_SOURCE_PAGES = [
   'src/app/(maestro)/source/page.tsx',
   'src/app/(maestro)/source/events/page.tsx',
@@ -291,9 +290,10 @@ describe('NAV1F · canonical pages import a canonical shell', () => {
   // page accidentally drops its shell import during a refactor.
   const CANONICAL_SHELL_SYMBOLS = [
     'AdminCanonShell',
-    'SourceCanonShell',
-    'SourceRouteShell',
-    'SourceFoundationShell',
+    // Source shell (Wave S1/S2 — AppShell migration)
+    'AppShell',
+    'SentinelAgentColumn',
+    'SourceIndexPage',
     'ProgramCanonShell',
     'IntelligenceRouteShell',
     'TowerRouteShell',
@@ -309,6 +309,9 @@ describe('NAV1F · canonical pages import a canonical shell', () => {
     'AbarVaAppShell',
     'AbarVaShellNav',
     'AbarvaTopNav',
+    // Admin route shells admin/page.tsx via component wrappers
+    'SetupConnectorsPage',
+    'AdminCanonShell',
   ];
 
   it.each([...CANONICAL_TENANT_PAGES, ...CANONICAL_SOURCE_PAGES, ...CANONICAL_ADMIN_PAGES])(

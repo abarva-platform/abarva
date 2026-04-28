@@ -1,13 +1,7 @@
-import { COLORS, FONTS, TEXT } from '@/lib/design-system';
+import { SHELL } from '@/lib/shell/shell-tokens';
 import type { CSSProperties } from 'react';
 import type { SourceValueLedgerSnapshot, ValueLedgerEntry, ValueConfidence } from '@/lib/source/types';
 import { formatUsd, getLedgerRollup } from '@/lib/source/value-ledger';
-import {
-  sourceCard,
-  sourceInsetCard,
-  sourceTableCell,
-  sourceTableHeaderCell,
-} from './foundationStyles';
 
 type RowPerspective = 'projected' | 'committed' | 'measuring' | 'realized';
 
@@ -15,6 +9,41 @@ interface ValueLedgerRowView {
   entry: ValueLedgerEntry;
   perspective: RowPerspective;
 }
+
+const SOURCE_CARD: CSSProperties = {
+  background: SHELL.CARD_WHITE,
+  border: '1px solid ' + SHELL.CARD_LINE,
+  borderRadius: 10,
+  padding: '16px 18px',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 12,
+};
+
+const SOURCE_INSET_CARD: CSSProperties = {
+  background: SHELL.PAPER_SOFT,
+  border: '1px solid ' + SHELL.CARD_LINE_SOFT,
+  borderRadius: 8,
+  padding: '12px 14px',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 10,
+};
+
+const SOURCE_TABLE_HEADER_CELL: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.08em',
+  padding: '0 14px 10px',
+  borderBottom: '1px solid ' + SHELL.CARD_LINE,
+};
+
+const SOURCE_TABLE_CELL: CSSProperties = {
+  padding: '12px 14px',
+  borderTop: '1px solid ' + SHELL.CARD_LINE,
+  verticalAlign: 'top' as const,
+};
 
 const SUMMARY_PANEL: CSSProperties = {
   display: 'grid',
@@ -24,23 +53,26 @@ const SUMMARY_PANEL: CSSProperties = {
 };
 
 const PANEL_CARD: CSSProperties = {
-  ...sourceInsetCard,
+  ...SOURCE_INSET_CARD,
   borderRadius: 12,
   background: '#FFFFFF',
   border: '1px solid #E8E6E1',
 };
 
 const PERSPECTIVE_LABEL: CSSProperties = {
-  ...TEXT.small,
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  lineHeight: 1.4,
   textTransform: 'uppercase',
   letterSpacing: '0.08em',
-  color: COLORS.textSecondary,
+  color: SHELL.INK_SOFT,
 };
 
 const VALUE_TEXT: CSSProperties = {
-  ...TEXT.metricValue,
-  color: COLORS.textPrimary,
+  fontFamily: SHELL.SERIF,
   fontSize: 26,
+  lineHeight: 1,
+  color: SHELL.INK,
 };
 
 const CHIP_ROW: CSSProperties = {
@@ -51,12 +83,14 @@ const CHIP_ROW: CSSProperties = {
 };
 
 const CHIPS: CSSProperties = {
-  ...TEXT.small,
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  lineHeight: 1.4,
   borderRadius: 14,
   border: '1px solid #D7DEE9',
   padding: '5px 10px',
   background: '#F5F8FD',
-  color: COLORS.textPrimary,
+  color: SHELL.INK,
 };
 
 const TWO_COL: CSSProperties = {
@@ -72,7 +106,7 @@ const SECTION_GRID: CSSProperties = {
 };
 
 const ACTION_LINK: CSSProperties = {
-  ...sourceCard,
+  ...SOURCE_CARD,
   textDecoration: 'none',
   display: 'inline-flex',
   justifyContent: 'center',
@@ -80,10 +114,16 @@ const ACTION_LINK: CSSProperties = {
   borderRadius: 999,
   border: '1px solid #1B2B5C',
   background: '#F6F9FF',
-  color: COLORS.textPrimary,
-  fontFamily: FONTS.sans,
+  color: SHELL.INK,
+  fontFamily: SHELL.SANS,
   fontSize: 12,
   fontWeight: 600,
+};
+
+const TEXT_SMALL: CSSProperties = {
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  lineHeight: 1.4,
 };
 
 function toPerspectiveLabel(perspective: RowPerspective): string {
@@ -153,18 +193,18 @@ export function SourceValueLedger({ snapshot }: { snapshot: SourceValueLedgerSna
 
   return (
     <section style={SECTION_GRID}>
-      <section style={sourceCard} aria-label="Atlas value ledger shell">
+      <section style={SOURCE_CARD} aria-label="Atlas value ledger shell">
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
           <div>
             <div style={{ ...PERSPECTIVE_LABEL, color: '#1D4F8C', marginBottom: 6 }}>Atlas value ledger lead</div>
-            <h2 style={{ fontFamily: FONTS.serif, color: COLORS.textPrimary, fontSize: 30, margin: 0 }}>
+            <h2 style={{ fontFamily: SHELL.SERIF, color: SHELL.INK, fontSize: 30, margin: 0 }}>
               Source value ledger
             </h2>
-            <p style={{ ...TEXT.small, marginTop: 8, marginBottom: 0, maxWidth: 720 }}>
+            <p style={{ ...TEXT_SMALL, marginTop: 8, marginBottom: 0, maxWidth: 720 }}>
               Atlas is monitoring value intent, measurability, and risk posture for the seeded Source program set.
             </p>
           </div>
-          <div style={{ ...TEXT.small, textAlign: 'right', color: '#576074' }}>
+          <div style={{ ...TEXT_SMALL, textAlign: 'right', color: '#576074' }}>
             Updated {snapshot.updatedAt}<br />
             Deterministic seeded input only.
           </div>
@@ -174,55 +214,55 @@ export function SourceValueLedger({ snapshot }: { snapshot: SourceValueLedgerSna
           <article style={PANEL_CARD}>
             <div style={PERSPECTIVE_LABEL}>Projected</div>
             <div style={VALUE_TEXT}>{formatUsd(rollup.projectedUsd)}</div>
-            <div style={{ ...TEXT.small, color: '#576074' }}>{projected.length} line items from seeded event contracts.</div>
+            <div style={{ ...TEXT_SMALL, color: '#576074' }}>{projected.length} line items from seeded event contracts.</div>
           </article>
           <article style={PANEL_CARD}>
             <div style={PERSPECTIVE_LABEL}>Committed</div>
             <div style={VALUE_TEXT}>{formatUsd(committed.reduce((sum, entry) => sum + entry.amountUsd, 0))}</div>
-            <div style={{ ...TEXT.small, color: '#576074' }}>Evidence-backed high-confidence line items.</div>
+            <div style={{ ...TEXT_SMALL, color: '#576074' }}>Evidence-backed high-confidence line items.</div>
           </article>
           <article style={PANEL_CARD}>
             <div style={PERSPECTIVE_LABEL}>Measuring</div>
             <div style={VALUE_TEXT}>{formatUsd(measuring.reduce((sum, entry) => sum + entry.amountUsd, 0))}</div>
-            <div style={{ ...TEXT.small, color: '#576074' }}>{measuring.length} items not yet confirmed.</div>
+            <div style={{ ...TEXT_SMALL, color: '#576074' }}>{measuring.length} items not yet confirmed.</div>
           </article>
           <article style={PANEL_CARD}>
             <div style={PERSPECTIVE_LABEL}>Realized</div>
             <div style={VALUE_TEXT}>{formatUsd(rollup.realizedUsd)}</div>
-            <div style={{ ...TEXT.small, color: '#576074' }}>{realized.length} realized entries with seeded status only.</div>
+            <div style={{ ...TEXT_SMALL, color: '#576074' }}>{realized.length} realized entries with seeded status only.</div>
           </article>
         </div>
       </section>
 
       <div style={TWO_COL}>
-        <section style={sourceCard}>
+        <section style={SOURCE_CARD}>
           <div style={{ ...PERSPECTIVE_LABEL, color: '#1D4F8C' }}>Value ledger line items</div>
           <div style={{ overflowX: 'auto', marginTop: 8 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }} aria-label="Source value line item table">
               <thead>
                 <tr>
-                  <th style={sourceTableHeaderCell}>Perspective</th>
-                  <th style={sourceTableHeaderCell}>Event</th>
-                  <th style={sourceTableHeaderCell}>Line item</th>
-                  <th style={sourceTableHeaderCell}>Stage</th>
-                  <th style={sourceTableHeaderCell}>Amount</th>
-                  <th style={sourceTableHeaderCell}>Evidence</th>
-                  <th style={sourceTableHeaderCell}>Confidence</th>
+                  <th style={SOURCE_TABLE_HEADER_CELL}>Perspective</th>
+                  <th style={SOURCE_TABLE_HEADER_CELL}>Event</th>
+                  <th style={SOURCE_TABLE_HEADER_CELL}>Line item</th>
+                  <th style={SOURCE_TABLE_HEADER_CELL}>Stage</th>
+                  <th style={SOURCE_TABLE_HEADER_CELL}>Amount</th>
+                  <th style={SOURCE_TABLE_HEADER_CELL}>Evidence</th>
+                  <th style={SOURCE_TABLE_HEADER_CELL}>Confidence</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((row, index) => (
                   <tr key={`${row.entry.id}-${row.perspective}-${index}`}>
-                    <td style={sourceTableCell}>{toPerspectiveLabel(row.perspective)}</td>
-                    <td style={sourceTableCell}>{row.entry.eventName}</td>
-                    <td style={sourceTableCell}>
+                    <td style={SOURCE_TABLE_CELL}>{toPerspectiveLabel(row.perspective)}</td>
+                    <td style={SOURCE_TABLE_CELL}>{row.entry.eventName}</td>
+                    <td style={SOURCE_TABLE_CELL}>
                       <div style={{ fontWeight: 700 }}>{row.entry.label}</div>
-                      <div style={{ ...TEXT.small, color: '#576074', marginTop: 4 }}>{row.entry.note}</div>
+                      <div style={{ ...TEXT_SMALL, color: '#576074', marginTop: 4 }}>{row.entry.note}</div>
                     </td>
-                    <td style={sourceTableCell}>{row.entry.stageKey ?? 'n/a'}</td>
-                    <td style={sourceTableCell}>{formatUsd(row.entry.amountUsd)}</td>
-                    <td style={sourceTableCell}>{row.entry.evidenceCount}</td>
-                    <td style={sourceTableCell}>
+                    <td style={SOURCE_TABLE_CELL}>{row.entry.stageKey ?? 'n/a'}</td>
+                    <td style={SOURCE_TABLE_CELL}>{formatUsd(row.entry.amountUsd)}</td>
+                    <td style={SOURCE_TABLE_CELL}>{row.entry.evidenceCount}</td>
+                    <td style={SOURCE_TABLE_CELL}>
                       <span style={{ color: confidenceColor(row.entry.confidence) }}>
                         {row.entry.confidence}
                       </span>
@@ -235,7 +275,7 @@ export function SourceValueLedger({ snapshot }: { snapshot: SourceValueLedgerSna
         </section>
 
         <aside style={SECTION_GRID}>
-        <section style={sourceCard}>
+        <section style={SOURCE_CARD}>
             <div style={PERSPECTIVE_LABEL}>Context used</div>
             <div style={CHIP_ROW} aria-label="context used">
               <span style={CHIPS}>Event set: {events.length}</span>
@@ -245,46 +285,46 @@ export function SourceValueLedger({ snapshot }: { snapshot: SourceValueLedgerSna
             </div>
           </section>
 
-          <section id="value-confidence" style={sourceCard}>
+          <section id="value-confidence" style={SOURCE_CARD}>
             <div style={PERSPECTIVE_LABEL}>Evidence confidence summary</div>
-            <p style={{ ...TEXT.small, marginTop: 8 }}>
+            <p style={{ ...TEXT_SMALL, marginTop: 8 }}>
               Confidence is deterministic from seeded evidence depth and stage assumptions. We treat low confidence and zero-evidence items as
               variance risk for executive review.
             </p>
             <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 6 }}>
               {lowConfidenceRows.length > 0 ? (
                 lowConfidenceRows.slice(0, 5).map((row) => (
-                  <li key={`${row.entry.id}-conf`} style={TEXT.small}>
-                    {toPerspectiveLabel(row.perspective)} item “{row.entry.label}” remains at {row.entry.confidence} confidence.
+                  <li key={`${row.entry.id}-conf`} style={TEXT_SMALL}>
+                    {toPerspectiveLabel(row.perspective)} item "{row.entry.label}" remains at {row.entry.confidence} confidence.
                   </li>
                 ))
               ) : (
-                <li style={TEXT.small}>No low-confidence or missing-evidence items are seeded.</li>
+                <li style={TEXT_SMALL}>No low-confidence or missing-evidence items are seeded.</li>
               )}
             </ul>
           </section>
 
-          <section id="value-assumptions" style={sourceCard}>
+          <section id="value-assumptions" style={SOURCE_CARD}>
             <div style={PERSPECTIVE_LABEL}>Assumptions & variance notes</div>
             <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 8 }}>
               {assumptions.map((assumption, index) => (
-                <li key={`assumption-${index}`} style={TEXT.small}>
+                <li key={`assumption-${index}`} style={TEXT_SMALL}>
                   {assumption}
                 </li>
               ))}
             </ul>
-            <div style={{ ...TEXT.small, color: '#9B5F17', marginTop: 8 }}>
+            <div style={{ ...TEXT_SMALL, color: '#9B5F17', marginTop: 8 }}>
               Variance watch: {assumptionCount} assumption anchors, {formatUsd(totalLowConfidenceAmount)} currently in low-confidence posture.
             </div>
           </section>
 
-          <section id="value-actions" style={sourceCard}>
+          <section id="value-actions" style={SOURCE_CARD}>
             <div style={PERSPECTIVE_LABEL}>Action layer</div>
             <div style={{ display: 'grid', gap: 8, marginTop: 8 }}>
               <a href="#value-assumptions" style={ACTION_LINK}>Show assumptions</a>
               <a href="#value-confidence" style={ACTION_LINK}>Show evidence gaps</a>
               <a href="#value-caveat" style={ACTION_LINK}>Explain value confidence</a>
-              <label htmlFor="value-custom-input" style={{ ...TEXT.small, color: '#3B4453', display: 'grid', gap: 6 }}>
+              <label htmlFor="value-custom-input" style={{ ...TEXT_SMALL, color: '#3B4453', display: 'grid', gap: 6 }}>
                 Ask custom
                 <div style={{ display: 'flex', gap: 8 }}>
                   <input
@@ -293,7 +333,9 @@ export function SourceValueLedger({ snapshot }: { snapshot: SourceValueLedgerSna
                     readOnly
                     placeholder="Ask Atlas about this value ledger, gate, event, or evidence..."
                     style={{
-                      ...TEXT.body,
+                      fontFamily: SHELL.SANS,
+                      fontSize: 14,
+                      lineHeight: 1.6,
                       flex: 1,
                       border: '1px solid #C9D2E1',
                       borderRadius: 8,
@@ -312,8 +354,8 @@ export function SourceValueLedger({ snapshot }: { snapshot: SourceValueLedgerSna
         </aside>
       </div>
 
-      <div style={{ ...sourceCard, padding: '12px 16px', background: '#F8FAFF' }} id="value-caveat">
-        <div style={{ ...TEXT.small, color: '#576074' }}>
+      <div style={{ ...SOURCE_CARD, padding: '12px 16px', background: '#F8FAFF' }} id="value-caveat">
+        <div style={{ ...TEXT_SMALL, color: '#576074' }}>
           Atlas ledger values are deterministic, seed-backed, and for execution planning. This is not a live realized-savings
           claim unless downstream evidence and measurement gates are explicitly marked as usable.
         </div>

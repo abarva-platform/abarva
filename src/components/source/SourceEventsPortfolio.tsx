@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
-import { COLORS, FONTS, TEXT } from '@/lib/design-system';
+import { SHELL } from '@/lib/shell/shell-tokens';
 import { buildLinkedProgramBadgeView } from '@/lib/source/linked-program-badge-view';
 import type {
   SourceLifecycleStatus,
@@ -11,20 +11,15 @@ import type {
 import { formatUsd } from '@/lib/source/value-ledger';
 import { SourceAlertPanel } from './SourceAlertPanel';
 import { SourcingEventTable } from './SourcingEventTable';
-import {
-  sourceActionLink,
-  sourceCard,
-  sourceMetricDetail,
-  sourceMetricLabel,
-  sourceMetricValue,
-  sourceMuted,
-  sourceSectionLabel,
-} from './foundationStyles';
 
 const SURFACE_CARD: CSSProperties = {
-  ...sourceCard,
-  background: '#FFFFFF',
-  border: '1px solid rgba(17, 24, 39, 0.08)',
+  background: SHELL.CARD_WHITE,
+  border: '1px solid ' + SHELL.CARD_LINE,
+  borderRadius: 10,
+  padding: '16px 18px',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 12,
 };
 
 const CONTEXT_GRID: CSSProperties = {
@@ -57,9 +52,10 @@ const FILTER_GROUP: CSSProperties = {
 };
 
 const FILTER_LABEL: CSSProperties = {
-  ...TEXT.small,
-  color: COLORS.textSecondary,
-  fontFamily: FONTS.mono,
+  fontFamily: SHELL.MONO,
+  fontSize: 12,
+  lineHeight: 1.4,
+  color: SHELL.INK_SOFT,
   letterSpacing: '0.08em',
   textTransform: 'uppercase',
 };
@@ -106,6 +102,72 @@ const STATUS_LABELS: Array<{ key: SourceLifecycleStatus; label: string }> = [
   { key: 'waiting_on_vendor', label: 'Waiting on Vendor' },
   { key: 'waiting_on_client', label: 'Waiting on Client' },
 ];
+
+const SOURCE_SECTION_LABEL: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.14em',
+  color: SHELL.INK_MUTED,
+  marginBottom: 0,
+};
+
+const SOURCE_MUTED: CSSProperties = {
+  fontFamily: SHELL.SANS,
+  fontSize: 13,
+  color: SHELL.INK_MUTED,
+  lineHeight: 1.5,
+};
+
+const SOURCE_METRIC_LABEL: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.08em',
+  color: SHELL.INK_MUTED,
+};
+
+const SOURCE_METRIC_VALUE: CSSProperties = {
+  fontFamily: SHELL.SERIF,
+  fontSize: 24,
+  color: SHELL.INK,
+};
+
+const SOURCE_METRIC_DETAIL: CSSProperties = {
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  color: SHELL.INK_MUTED,
+};
+
+const SOURCE_ACTION_LINK_PRIMARY: CSSProperties = {
+  textDecoration: 'none',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: '9px 12px',
+  borderRadius: 999,
+  border: '1px solid ' + SHELL.INK,
+  background: SHELL.INK,
+  color: SHELL.CARD_WHITE,
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  fontWeight: 600,
+};
+
+const SOURCE_ACTION_LINK_SECONDARY: CSSProperties = {
+  textDecoration: 'none',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: '8px 11px',
+  borderRadius: 999,
+  border: '1px solid ' + SHELL.CARD_LINE,
+  background: 'transparent',
+  color: SHELL.INK,
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  fontWeight: 600,
+};
 
 type Props = {
   events: SourcingEventSummary[];
@@ -177,7 +239,7 @@ export function SourceEventsPortfolio({
   return (
     <div style={STACK}>
       <section style={SURFACE_CARD}>
-        <div style={{ ...sourceSectionLabel, color: '#1B2B5C' }}>Source event portfolio</div>
+        <div style={{ ...SOURCE_SECTION_LABEL, color: '#1B2B5C' }}>Source event portfolio</div>
         <div style={CONTEXT_GRID}>
           <ContextTile
             label="Portfolio posture"
@@ -209,19 +271,19 @@ export function SourceEventsPortfolio({
 
       <div style={TWO_COL}>
         <article style={BRIEF_CARD}>
-          <div style={{ ...sourceSectionLabel, color: '#1B2B5C' }}>Nexus brief</div>
+          <div style={{ ...SOURCE_SECTION_LABEL, color: '#1B2B5C' }}>Nexus brief</div>
           <h2
             style={{
               margin: '2px 0 8px',
-              fontFamily: FONTS.serif,
+              fontFamily: SHELL.SERIF,
               fontSize: '28px',
               lineHeight: 1.2,
-              color: COLORS.textPrimary,
+              color: SHELL.INK,
             }}
           >
             {buildBriefHeadline(filteredEvents, topEvent)}
           </h2>
-          <p style={{ ...sourceMuted, margin: 0, maxWidth: 720 }}>
+          <p style={{ ...SOURCE_MUTED, margin: 0, maxWidth: 720 }}>
             {buildBriefBody(filteredEvents, activeStage, activeStatus)}
           </p>
           <div style={{ marginTop: 12, ...CHIP_ROW }}>
@@ -239,7 +301,7 @@ export function SourceEventsPortfolio({
             }}
           >
             <div style={FILTER_LABEL}>Context used</div>
-            <div style={{ ...sourceMuted, fontSize: '13px' }}>
+            <div style={{ ...SOURCE_MUTED, fontSize: '13px' }}>
               Seeded event list, stage labels, alert counts, value-at-stake, and linked-program hints. Vendor counts and live bid timelines are not surfaced at the portfolio layer yet.
             </div>
             <label htmlFor="source-events-custom-input" style={{ display: 'grid', gap: 6 }}>
@@ -251,12 +313,12 @@ export function SourceEventsPortfolio({
                   readOnly
                   placeholder="Ask Nexus about this event portfolio, stage priorities, blockers, or evidence..."
                   style={{
-                    ...sourceSectionLabel,
+                    ...SOURCE_SECTION_LABEL,
                     background: '#FFFFFF',
                     border: '1px solid #D0D8E8',
                     borderRadius: 8,
                     color: '#6B7280',
-                    fontFamily: FONTS.sans,
+                    fontFamily: SHELL.SANS,
                     padding: '8px 10px',
                     fontWeight: 500,
                     fontSize: 12,
@@ -264,7 +326,7 @@ export function SourceEventsPortfolio({
                   }}
                 />
                 <span style={{
-                  ...sourceActionLink('secondary'),
+                  ...SOURCE_ACTION_LINK_SECONDARY,
                   whiteSpace: 'nowrap',
                 }}>
                   Submit (disabled until runtime)
@@ -275,7 +337,7 @@ export function SourceEventsPortfolio({
         </article>
 
         <aside style={RAIL_CARD}>
-          <div style={{ ...sourceSectionLabel, color: '#1B2B5C' }}>What is missing</div>
+          <div style={{ ...SOURCE_SECTION_LABEL, color: '#1B2B5C' }}>What is missing</div>
           <div style={{ display: 'grid', gap: 10 }}>
             <MissingItem
               title="Vendor counts at portfolio level"
@@ -297,13 +359,13 @@ export function SourceEventsPortfolio({
         <div style={{ display: 'grid', gap: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'start' }}>
             <div style={{ display: 'grid', gap: 4 }}>
-              <div style={{ ...sourceSectionLabel, color: '#1B2B5C' }}>Filter posture</div>
-              <div style={{ ...sourceMuted, margin: 0, maxWidth: 760 }}>
+              <div style={{ ...SOURCE_SECTION_LABEL, color: '#1B2B5C' }}>Filter posture</div>
+              <div style={{ ...SOURCE_MUTED, margin: 0, maxWidth: 760 }}>
                 Narrow the seeded queue by sourcing stage or lifecycle posture. Filters are deterministic and update the portfolio in place through route query params.
               </div>
             </div>
             {(activeStage || activeStatus) ? (
-              <Link href="/source/events" style={sourceActionLink('secondary')}>
+              <Link href="/source/events" style={SOURCE_ACTION_LINK_SECONDARY}>
                 Reset filters
               </Link>
             ) : null}
@@ -351,15 +413,15 @@ export function SourceEventsPortfolio({
         <SourcingEventTable events={filteredEvents} variant="light" />
       ) : (
         <section style={SURFACE_CARD}>
-          <div style={{ ...sourceSectionLabel, color: '#1B2B5C' }}>Event queue</div>
-          <div style={{ fontSize: '22px', fontWeight: 800, color: COLORS.textPrimary }}>
+          <div style={{ ...SOURCE_SECTION_LABEL, color: '#1B2B5C' }}>Event queue</div>
+          <div style={{ fontSize: '22px', fontWeight: 800, color: SHELL.INK }}>
             No events match the current filter posture.
           </div>
-          <div style={sourceMuted}>
+          <div style={SOURCE_MUTED}>
             Reset the portfolio filters to return to the seeded Source queue. Vendor and BAFO detail remain available inside each event canvas rather than this portfolio surface.
           </div>
           <div>
-            <Link href="/source/events" style={sourceActionLink('primary')}>
+            <Link href="/source/events" style={SOURCE_ACTION_LINK_PRIMARY}>
               Reset filters
             </Link>
           </div>
@@ -376,7 +438,7 @@ export function SourceEventsPortfolio({
         />
 
         <section style={RAIL_CARD}>
-          <div style={{ ...sourceSectionLabel, color: '#1B2B5C' }}>Portfolio workflow guidance</div>
+          <div style={{ ...SOURCE_SECTION_LABEL, color: '#1B2B5C' }}>Portfolio workflow guidance</div>
           <div style={{ display: 'grid', gap: 10 }}>
             <MetricLine
               label="Where am I?"
@@ -455,9 +517,9 @@ function ContextTile({
 }) {
   return (
     <div style={CONTEXT_TILE}>
-      <div style={sourceMetricLabel}>{label}</div>
-      <div style={sourceMetricValue}>{value}</div>
-      <div style={sourceMetricDetail}>{detail}</div>
+      <div style={SOURCE_METRIC_LABEL}>{label}</div>
+      <div style={SOURCE_METRIC_VALUE}>{value}</div>
+      <div style={SOURCE_METRIC_DETAIL}>{detail}</div>
     </div>
   );
 }
@@ -483,8 +545,8 @@ function FilterLink({
         borderRadius: 999,
         border: `1px solid ${active ? '#1B2B5C' : 'rgba(17, 24, 39, 0.10)'}`,
         background: active ? 'rgba(27, 43, 92, 0.08)' : '#FFFFFF',
-        color: active ? '#0F172A' : COLORS.textSecondary,
-        fontFamily: FONTS.sans,
+        color: active ? '#0F172A' : SHELL.INK_SOFT,
+        fontFamily: SHELL.SANS,
         fontSize: '12px',
         fontWeight: 700,
       }}
@@ -496,7 +558,7 @@ function FilterLink({
 
 function ChoiceChip({ href, label }: { href: string; label: string }) {
   return (
-    <Link href={href} style={sourceActionLink('primary')}>
+    <Link href={href} style={SOURCE_ACTION_LINK_PRIMARY}>
       {label}
     </Link>
   );
@@ -514,8 +576,8 @@ function MissingItem({ title, detail }: { title: string; detail: string }) {
         gap: 5,
       }}
     >
-      <div style={{ fontSize: '13px', fontWeight: 700, color: COLORS.textPrimary }}>{title}</div>
-      <div style={{ ...sourceMuted, fontSize: '12px' }}>{detail}</div>
+      <div style={{ fontSize: '13px', fontWeight: 700, color: SHELL.INK }}>{title}</div>
+      <div style={{ ...SOURCE_MUTED, fontSize: '12px' }}>{detail}</div>
     </div>
   );
 }
@@ -524,7 +586,7 @@ function MetricLine({ label, detail }: { label: string; detail: string }) {
   return (
     <div style={{ display: 'grid', gap: 4 }}>
       <div style={FILTER_LABEL}>{label}</div>
-      <div style={{ ...sourceMuted, fontSize: '13px', color: COLORS.textPrimary }}>{detail}</div>
+      <div style={{ ...SOURCE_MUTED, fontSize: '13px', color: SHELL.INK }}>{detail}</div>
     </div>
   );
 }
