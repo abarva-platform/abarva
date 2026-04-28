@@ -12,6 +12,7 @@ import { SHELL } from '@/lib/shell/shell-tokens';
 import type { ProgramDetailView, ProgramPhaseId, EvidenceItem } from '@/lib/programs/programs-types';
 import { PHASE_LABEL_MAP } from '@/lib/programs/programs-fixture';
 import { LinkedProgramChip } from '@/components/shell/LinkedProgramChip';
+import { useToast } from '@/components/shell/Toast';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -1499,6 +1500,7 @@ function formatFileSize(bytes: number): string {
 }
 
 function FileUploadOverlay({ programName: _programName, programId: _programId, onClose }: FileUploadOverlayProps) {
+  const { toast } = useToast();
   const [uploadState, setUploadState] = useState<{
     name: string;
     size: string;
@@ -1533,7 +1535,10 @@ function FileUploadOverlay({ programName: _programName, programId: _programId, o
     }
 
     setUploadState((s) => (s ? { ...s, stage: 'parsing' } : null));
-    setTimeout(() => setUploadState((s) => (s ? { ...s, stage: 'done' } : null)), 1000);
+    setTimeout(() => {
+      setUploadState((s) => (s ? { ...s, stage: 'done' } : null));
+      toast({ type: 'success', title: 'Evidence uploaded', message: 'File received · ingestion in progress' });
+    }, 1000);
   };
 
   const progressPct =
@@ -2414,6 +2419,7 @@ function PhaseTransitionOverlay({
 
 export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const gateSectionRef = useRef<HTMLDivElement>(null);
   const [showGateModal, setShowGateModal] = useState(false);
   const [gateApproveError, setGateApproveError] = useState<string | null>(null);
@@ -2767,20 +2773,29 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
               const data = await res.json();
               if (data.ok) {
                 setShowGateModal(false);
+                toast({ type: 'success', title: 'Gate approved', message: 'APX-CDP-2026 advancing to P3 Design' });
                 setShowPhaseTransition(true);
                 setTimeout(() => {
                   setShowPhaseTransition(false);
                   router.push(`/programs/${view.programId}?phase=${data.newPhase}`);
                 }, 2500);
               } else if (data.error === 'gate_blocked') {
-                setGateApproveError('Gate blocked — hard gate criteria must be met before advancing');
+                const errMsg = 'Gate blocked — hard gate criteria must be met before advancing';
+                setGateApproveError(errMsg);
+                toast({ type: 'error', title: 'Gate approval failed', message: errMsg });
               } else if (data.error === 'approval_required') {
-                setGateApproveError('Approval request created — waiting for founder sign-off');
+                const errMsg = 'Approval request created — waiting for founder sign-off';
+                setGateApproveError(errMsg);
+                toast({ type: 'error', title: 'Gate approval failed', message: errMsg });
               } else {
-                setGateApproveError(data.detail ?? data.message ?? 'Phase advance failed — please try again');
+                const errMsg = data.detail ?? data.message ?? 'Phase advance failed — please try again';
+                setGateApproveError(errMsg);
+                toast({ type: 'error', title: 'Gate approval failed', message: errMsg });
               }
             } catch {
-              setGateApproveError('Network error — please try again');
+              const errMsg = 'Network error — please try again';
+              setGateApproveError(errMsg);
+              toast({ type: 'error', title: 'Gate approval failed', message: errMsg });
             } finally {
               setIsApprovingGate(false);
             }

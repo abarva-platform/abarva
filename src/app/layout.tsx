@@ -6,6 +6,7 @@ import './globals.css'
 import PostHogProvider from '@/components/PostHogProvider'
 import PostHogPageView from './posthog-pageview'
 import MobileGuard from '@/components/MobileGuard'
+import { ToastProvider } from '@/components/shell/Toast'
 
 // Cormorant Garamond — canonical AbarVa serif for wordmark + admin headings.
 // Application of the variable lands in ADMIN2; this slice only registers the
@@ -60,7 +61,9 @@ export default function RootLayout({
               <PostHogPageView />
             </Suspense>
             <MobileGuard>
-              {children}
+              <ToastProvider>
+                {children}
+              </ToastProvider>
             </MobileGuard>
           </PostHogProvider>
         </body>
