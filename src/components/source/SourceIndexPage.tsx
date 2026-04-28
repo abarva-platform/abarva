@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
 import { AgentColumn } from '@/components/shell/AgentColumn';
 import { StageTrackerStrip } from '@/components/shell/StageTrackerStrip';
@@ -477,8 +478,10 @@ function SourceEmptyState() {
 
 export function SourceIndexPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const isDemoEmpty = searchParams?.get('demo') === 'empty';
   const [showVendorResponse, setShowVendorResponse] = useState(false);
+  const firstEventRowRef = useRef<HTMLDivElement>(null);
 
   if (isDemoEmpty) return <SourceEmptyState />;
 
@@ -502,7 +505,15 @@ export function SourceIndexPage() {
         quote={SOURCE_INDEX_VIEW.agentQuote}
         agentContext={SOURCE_INDEX_VIEW.agentContext}
         actions={SOURCE_INDEX_VIEW.actions}
-        inputPlaceholder="Ask Nexus about this event..."
+        onActionClick={(letter) => {
+          if (letter === 'A') {
+            firstEventRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          } else if (letter === 'B') {
+            router.push('/source/originate');
+          } else if (letter === 'C') {
+            router.push('/source/ams-vendor-2026');
+          }
+        }}
       />
 
       {/* Work pane */}
@@ -533,7 +544,14 @@ export function SourceIndexPage() {
               letterSpacing: '-0.01em',
             }}
           >
-            {AMS_SOURCE_EVENT.name}
+            <Link
+              href={`/source/${AMS_SOURCE_EVENT.id}`}
+              style={{ color: 'inherit', textDecoration: 'none' }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = 'underline'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = 'none'; }}
+            >
+              {AMS_SOURCE_EVENT.name}
+            </Link>
           </h1>
           <p
             style={{

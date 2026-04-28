@@ -14,3 +14,4 @@ export * from './SourceFoundationShell';
 export * from './SourceJourneyTracker';
 export * from './SourceStagePanel';
 export * from './SourceValueLedger';
+export * from './SourceEventDetailPage';
