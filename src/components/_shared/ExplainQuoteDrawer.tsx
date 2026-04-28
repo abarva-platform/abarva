@@ -63,34 +63,38 @@ export function ExplainQuoteDrawer({
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    setLoading(true);
-    setError(null);
-    setPayload(null);
 
     const url = `/api/reasoning/explain?surface=${encodeURIComponent(
       surface,
     )}&instanceId=${encodeURIComponent(instanceId)}`;
 
-    fetch(url, { method: 'GET', cache: 'no-store' })
-      .then(async (res) => {
-        if (!res.ok) {
-          const body = (await res.json().catch(() => null)) as { error?: string } | null;
-          throw new Error(body?.error ?? `explain ${res.status}`);
-        }
-        return res.json() as Promise<ExplanationPayload>;
-      })
-      .then((data) => {
-        if (cancelled) return;
-        setPayload(data);
-      })
-      .catch((e: unknown) => {
-        if (cancelled) return;
-        setError(e instanceof Error ? e.message : 'failed to load explanation');
-      })
-      .finally(() => {
-        if (cancelled) return;
-        setLoading(false);
-      });
+    void Promise.resolve().then(() => {
+      if (cancelled) return;
+      setLoading(true);
+      setError(null);
+      setPayload(null);
+
+      fetch(url, { method: 'GET', cache: 'no-store' })
+        .then(async (res) => {
+          if (!res.ok) {
+            const body = (await res.json().catch(() => null)) as { error?: string } | null;
+            throw new Error(body?.error ?? `explain ${res.status}`);
+          }
+          return res.json() as Promise<ExplanationPayload>;
+        })
+        .then((data) => {
+          if (cancelled) return;
+          setPayload(data);
+        })
+        .catch((e: unknown) => {
+          if (cancelled) return;
+          setError(e instanceof Error ? e.message : 'failed to load explanation');
+        })
+        .finally(() => {
+          if (cancelled) return;
+          setLoading(false);
+        });
+    });
 
     return () => {
       cancelled = true;
