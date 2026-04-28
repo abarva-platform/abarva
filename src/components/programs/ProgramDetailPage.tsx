@@ -1458,7 +1458,7 @@ function SuggestedActionOverlay({ action, onAdvance, onDismiss }: SuggestedActio
               lineHeight: 1.5,
             }}
           >
-            This will be logged in the program activity stream.
+            This will queue a deterministic follow-up on the current program surface.
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button style={ghostBtn} onClick={onDismiss}>← Back</button>
@@ -1511,7 +1511,7 @@ function SuggestedActionOverlay({ action, onAdvance, onDismiss }: SuggestedActio
               lineHeight: 1.5,
             }}
           >
-            Added to the program activity stream. Nexus will follow up.
+            Action queued in the current preview state. Nexus follow-up remains seeded until runtime automation is wired.
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {action.href && (
@@ -1556,10 +1556,8 @@ function formatFileSize(bytes: number): string {
     : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function FileUploadOverlay({ programName: _programName, programId: _programId, onClose }: FileUploadOverlayProps) {
+function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverlayProps) {
   const { toast } = useToast();
-  void _programName;
-  void _programId;
   const [uploadState, setUploadState] = useState<{
     name: string;
     size: string;
@@ -1608,9 +1606,9 @@ function FileUploadOverlay({ programName: _programName, programId: _programId, o
       : 100;
 
   const insightChips: Array<{ label: string; bg: string }> = [
-    { label: 'Value hypothesis gap identified', bg: SHELL.PEACH_BG },
-    { label: 'Workshop 5 completion criteria confirmed', bg: SHELL.MINT_BG },
-    { label: 'Privacy boundary reference found', bg: SHELL.BLUE_BG },
+    { label: 'Evidence candidate extracted', bg: SHELL.PEACH_BG },
+    { label: 'Gate-readiness reference detected', bg: SHELL.MINT_BG },
+    { label: 'Cross-surface citation available', bg: SHELL.BLUE_BG },
   ];
 
   return (
@@ -1652,6 +1650,18 @@ function FileUploadOverlay({ programName: _programName, programId: _programId, o
         >
           Upload document
         </span>
+        <div
+          style={{
+            marginLeft: 12,
+            marginRight: 'auto',
+            fontFamily: SHELL.MONO,
+            fontSize: 9,
+            color: SHELL.INK_MUTED,
+            letterSpacing: '0.08em',
+          }}
+        >
+          {programId}
+        </div>
         <button
           onClick={onClose}
           aria-label="Close"
@@ -1710,7 +1720,7 @@ function FileUploadOverlay({ programName: _programName, programId: _programId, o
                   color: SHELL.INK_MUTED,
                 }}
               >
-                or click to browse · PDF, DOCX, PPTX up to 25MB
+                {programName} · click to browse · PDF, DOCX, PPTX up to 25MB
               </div>
             </div>
             {uploadError && (
@@ -1865,7 +1875,7 @@ function FileUploadOverlay({ programName: _programName, programId: _programId, o
                     letterSpacing: '0.06em',
                   }}
                 >
-                  Add to program evidence →
+                  Return to program evidence →
                 </button>
               </>
             )}
@@ -1903,8 +1913,7 @@ function FileUploadOverlay({ programName: _programName, programId: _programId, o
             lineHeight: 1.5,
           }}
         >
-          Documents are parsed for evidence and linked to the current phase. Nexus will flag
-          relevant gate criteria.
+          Documents are parsed for evidence and linked to {programName}. This is a deterministic extraction preview; Nexus highlights likely gate criteria without mutating the program record here.
         </div>
       </div>
     </div>
@@ -2090,9 +2099,9 @@ function AgentHandoffOverlay({
             Transferring
           </div>
           {[
-            '4 evidence citations → Evidence ledger',
+            'Evidence citations → Evidence ledger',
             'Gate criteria status → Readiness assessment',
-            'Program context → P3 Design review',
+            `${context} → Active review`,
           ].map((row, i) => (
             <div
               key={`tr-${i}`}
@@ -2153,7 +2162,7 @@ function AgentHandoffOverlay({
               }}
             >
               {status === 'complete'
-                ? '✓ Sentinel has received the handoff'
+                ? '✓ Sentinel review is ready'
                 : 'Transferring context...'}
             </span>
           </div>
@@ -2603,10 +2612,10 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
             )}
             {customActionSent && (
               <span style={{ fontFamily: SHELL.MONO, fontSize: 10, color: SHELL.MINT_TEXT }}>
-                ✓ Sent to Nexus
+                ✓ Queued for Nexus
               </span>
             )}
-            {showCustomAction && (
+          {showCustomAction && (
               <CustomActionPanel
                 placeholder="Tell Nexus what to do..."
                 onSubmit={(text) => {
