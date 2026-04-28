@@ -29,3 +29,4 @@
 | 2026-04-28 | 5O | shipped | +2/-2 | (pre-infra) | #562 | T3-H01 `usedByPrograms` now reflects APX-CDP-2026 at P3 rather than P2. |
 | 2026-04-28 | S3 | shipped | +697/-464 | (pre-infra) | #563 | Source Wave S3 refreshed the event canvas. |
 | 2026-04-28 | 5P | shipped | +1/-1 | (pre-infra) | #564 | Programs agent handoff overlay phase labels moved from P2 wording to P3 wording. |
+| 2026-04-28 | PUB-5 | shipped | +972/-75 | tsc clean · 16 tests pass | #653 | How-it-works scroll-jack tour with maestro advance. |
