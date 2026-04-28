@@ -1,3 +1,10 @@
+// PROG-P1 FREEZE — This evidence detail page renders unique content from
+// the evidence registry. It cannot be redirected until a canonical
+// /programs/[id]/evidence/[evidenceId] route exists.
+// Status: frozen until PROG-P7 (cross-surface integration + legacy retirement).
+// Do NOT add new feature logic here. Read-only preserve.
+// Note: uses pre-shell styling — visual refresh deferred to P7.
+
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {

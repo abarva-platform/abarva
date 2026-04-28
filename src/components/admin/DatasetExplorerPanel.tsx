@@ -337,7 +337,7 @@ function DatasetRow({ item }: { item: DatasetInventoryItem }) {
             <span key={p}>
               {i > 0 ? ', ' : ''}
               <Link
-                href={`/tenant/${item.tenantScope}/programs`}
+                href="/programs"
                 style={{ color: COLORS.accent, textDecoration: 'none' }}
                 data-dataset-program-link={p}
               >

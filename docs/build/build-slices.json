@@ -9489,6 +9489,40 @@
       ],
       "acceptanceCriteria": "npx tsc clean; integration/home all 28 tests pass; agentQuote under 30 words; urgent left border uses PEACH_TEXT; middle strip has data-testid",
       "deterministicSeed": true
+    },
+    {
+      "id": "PROG-P1",
+      "name": "Programs Route Family Convergence",
+      "status": "code_complete",
+      "type": "route",
+      "wave": "PROG-P1",
+      "description": "Formalizes route-family convergence for Programs module. Legacy /tenant/[slug]/programs/** routes already redirected in #583; this wave (1) updates the shell-enforcement test to match redirect architecture, (2) fixes DatasetExplorerPanel canonical link, (3) adds freeze declarations to deliverables + evidence legacy routes, (4) verifies redirect chain with integration tests.",
+      "allowedFiles": [
+        "src/__tests__/integration/programs/program-route-shell-enforcement.test.ts",
+        "src/components/admin/DatasetExplorerPanel.tsx",
+        "src/app/(maestro)/tenant/[tenantSlug]/programs/[programSlug]/deliverables/[deliverableCode]/page.tsx",
+        "src/app/tenant/[tenantSlug]/programs/[programSlug]/evidence/[evidenceId]/page.tsx",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit",
+        "npx jest integration/programs/program-route-shell-enforcement"
+      ],
+      "dependsOn": ["PROG-P0"],
+      "notes": [
+        "Legacy tenant routes already redirected in PR #583 — this wave formalizes the enforcement contract",
+        "DatasetExplorerPanel linked-programs href updated from /tenant/${scope}/programs to /programs",
+        "Deliverables route frozen with PROG-P1 comment; evidence route frozen with PROG-P1 comment",
+        "Pre-existing test failures in program-route-shell-enforcement.test.ts fixed (assertions updated to redirect architecture)"
+      ],
+      "acceptanceCriteria": "npx tsc clean; program-route-shell-enforcement tests all pass; no forbidden patterns in route files",
+      "deterministicSeed": false
     }
   ]
 }
