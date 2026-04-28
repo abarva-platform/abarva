@@ -18,6 +18,8 @@ import { buildEvidenceDatasetDrawerView } from '@/lib/intelligence/evidence-data
 import { EvidenceDatasetDrawer } from '@/components/intelligence/EvidenceDatasetDrawer';
 import { IntelligenceProvenanceRibbon } from '@/components/intelligence/IntelligenceProvenanceRibbon';
 import { buildPatternProvenanceRibbonView } from '@/lib/intelligence/intelligence-provenance-ribbon-view';
+import { IntelligenceSourceBasisPanel } from '@/components/intelligence/IntelligenceSourceBasisPanel';
+import { buildIntelligenceSourceBasisPanelView } from '@/lib/intelligence/intelligence-source-basis-panel-view';
 
 interface SentinelPatternDetailProps {
   view: SentinelPatternDetailView;
@@ -135,6 +137,8 @@ export function SentinelPatternDetail({ view }: SentinelPatternDetailProps) {
       </p>
 
       <IntelligenceProvenanceRibbon view={buildPatternProvenanceRibbonView(view)} />
+
+      <IntelligenceSourceBasisPanel view={buildIntelligenceSourceBasisPanelView(view)} />
 
       <Block heading="Why it matters">
         <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, fontStyle: 'italic', color: COLORS.muted }}>
