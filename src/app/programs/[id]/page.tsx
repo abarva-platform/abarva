@@ -37,6 +37,13 @@ export default async function ProgramDetailRoute({
   // Build view from fixture (always as base)
   const view = buildProgramDetailView(id, viewingPhase);
 
+  // Always ensure the view uses the requested programId, not the fixture fallback id.
+  // This matters when the program is not in the fixture set (e.g. newly created programs).
+  if (view.programId !== id) {
+    view.programId = id;
+    view.displayId = id.toUpperCase().slice(0, 12);
+  }
+
   // Merge real DB fields into the fixture view if available
   if (dbData?.engagement) {
     const eng = dbData.engagement;
