@@ -119,3 +119,172 @@ describe('buildLinkedProgramChip — determinism', () => {
     expect(buildLinkedProgramChip('APX-DFV2-2025', 'feeds').label).toBe('LINKED PROGRAM');
   });
 });
+
+// ─── REASON-9 — cross-instance cascade impact computation ─────────────────────
+
+import {
+  computeCascadeImpacts,
+  computeReverseCascade,
+  resolveLinkedSourceEvent,
+  resolveLinkedInstance,
+  scoreImpactSeverity,
+  traceMultiHop,
+} from '@/lib/reasoning/cross-instance-reasoner';
+import { AMS_VENDOR_CONSOLIDATION_2026_INSTANCE } from '@/lib/source/source-event-instances';
+import { APX_LPM_2026_INSTANCE } from '@/lib/programs/program-instances';
+
+describe('resolveLinkedSourceEvent', () => {
+  test('resolves by full id', () => {
+    const s = resolveLinkedSourceEvent('apex-retail-ams-outsourcing-2026');
+    expect(s?.id).toBe('apex-retail-ams-outsourcing-2026');
+  });
+
+  test('resolves by displayId (SRC-AMS-2026)', () => {
+    const s = resolveLinkedSourceEvent('SRC-AMS-2026');
+    expect(s?.displayId).toBe('SRC-AMS-2026');
+  });
+
+  test('returns null for unknown id', () => {
+    expect(resolveLinkedSourceEvent('SRC-NOPE-9999')).toBeNull();
+  });
+});
+
+describe('resolveLinkedInstance', () => {
+  test('returns kind=program for a program id', () => {
+    const r = resolveLinkedInstance('APX-CDP-2026');
+    expect(r?.kind).toBe('program');
+  });
+
+  test('returns kind=source-event for SRC-AMS-2026', () => {
+    const r = resolveLinkedInstance('SRC-AMS-2026');
+    expect(r?.kind).toBe('source-event');
+  });
+
+  test('returns null for unknown id', () => {
+    expect(resolveLinkedInstance('NOPE-XXX')).toBeNull();
+  });
+});
+
+describe('computeCascadeImpacts — AMS source event', () => {
+  test('returns one impact pointing at APX-CDP-2026', () => {
+    const impacts = computeCascadeImpacts(AMS_VENDOR_CONSOLIDATION_2026_INSTANCE);
+    expect(impacts).toHaveLength(1);
+    expect(impacts[0].targetInstanceId).toBe('APX-CDP-2026');
+    expect(impacts[0].linkType).toBe('unblocks');
+  });
+
+  test('AMS impact on CDP is scored impactSeverity=high (blocker + timing conflict at P3)', () => {
+    const impacts = computeCascadeImpacts(AMS_VENDOR_CONSOLIDATION_2026_INSTANCE);
+    const cdp = impacts.find((i) => i.targetInstanceId === 'APX-CDP-2026');
+    expect(cdp?.impactSeverity).toBe('high');
+  });
+
+  test('preserves existing severity field for backward compatibility', () => {
+    const impacts = computeCascadeImpacts(AMS_VENDOR_CONSOLIDATION_2026_INSTANCE);
+    // unblocks → blocking under existing wire semantics.
+    expect(impacts[0].severity).toBe('blocking');
+  });
+});
+
+describe('computeCascadeImpacts — CDP program', () => {
+  test('returns one reverse-source impact from SRC-AMS-2026', () => {
+    const impacts = computeCascadeImpacts(APX_CDP_2026_INSTANCE);
+    expect(impacts).toHaveLength(1);
+    expect(impacts[0].sourceInstanceId).toBe('SRC-AMS-2026');
+    expect(impacts[0].targetInstanceId).toBe('APX-CDP-2026');
+  });
+});
+
+describe('computeCascadeImpacts — empty link case', () => {
+  test('returns [] for a program with no linked instances (LPM)', () => {
+    expect(APX_LPM_2026_INSTANCE.linkedSourceEvents).toHaveLength(0);
+    expect(APX_LPM_2026_INSTANCE.linkedPrograms).toHaveLength(0);
+    const impacts = computeCascadeImpacts(APX_LPM_2026_INSTANCE);
+    expect(impacts).toHaveLength(0);
+  });
+});
+
+describe('computeReverseCascade — CDP program', () => {
+  test('returns one LinkedInstance entry for AMS', () => {
+    const reverse = computeReverseCascade(APX_CDP_2026_INSTANCE);
+    expect(reverse).toHaveLength(1);
+    expect(reverse[0].instanceId).toBe('SRC-AMS-2026');
+    expect(reverse[0].instanceType).toBe('source-event');
+    expect(reverse[0].linkType).toBe('depends-on');
+  });
+});
+
+describe('computeReverseCascade — empty input', () => {
+  test('returns [] for a program with no upstream dependencies', () => {
+    expect(computeReverseCascade(APX_LPM_2026_INSTANCE)).toEqual([]);
+  });
+});
+
+describe('scoreImpactSeverity', () => {
+  test('escalates to high when target has blocker + timing conflict', () => {
+    const sev = scoreImpactSeverity(APX_CDP_2026_INSTANCE, {
+      linkType: 'unblocks',
+      blockedAtPhase: 3,
+    });
+    expect(sev).toBe('high');
+  });
+
+  test('downgrades to medium when target has blocker but no timing conflict', () => {
+    const sev = scoreImpactSeverity(APX_CDP_2026_INSTANCE, {
+      linkType: 'unblocks',
+      blockedAtPhase: 6, // future phase, beyond current
+    });
+    expect(sev).toBe('medium');
+  });
+
+  test('falls back to low when target has no blocker', () => {
+    const sev = scoreImpactSeverity(APX_DFV2_INSTANCE, { linkType: 'feeds' });
+    expect(sev).toBe('low');
+  });
+});
+
+describe('traceMultiHop', () => {
+  test('walks AMS → CDP within depth 1', () => {
+    const graph = traceMultiHop('SRC-AMS-2026', 1);
+    const ids = graph.nodes.map((n) => n.instanceId);
+    expect(ids).toContain('SRC-AMS-2026');
+    expect(ids).toContain('APX-CDP-2026');
+    // Root node has depth 0, hop neighbours depth 1.
+    expect(graph.nodes.find((n) => n.instanceId === 'SRC-AMS-2026')?.depth).toBe(0);
+    expect(graph.nodes.find((n) => n.instanceId === 'APX-CDP-2026')?.depth).toBe(1);
+    // At least one edge between the two.
+    expect(graph.edges.length).toBeGreaterThan(0);
+  });
+
+  test('returns empty graph for unknown root', () => {
+    const graph = traceMultiHop('NOT-A-REAL-ID', 2);
+    expect(graph).toEqual({ nodes: [], edges: [] });
+  });
+
+  test('depth=0 yields just the root node and no edges', () => {
+    const graph = traceMultiHop('SRC-AMS-2026', 0);
+    expect(graph.nodes).toHaveLength(1);
+    expect(graph.nodes[0].instanceId).toBe('SRC-AMS-2026');
+    expect(graph.edges).toHaveLength(0);
+  });
+});
+
+describe('determinism — same input → same output (stable ordering)', () => {
+  test('computeCascadeImpacts is stable across calls', () => {
+    const a = computeCascadeImpacts(AMS_VENDOR_CONSOLIDATION_2026_INSTANCE);
+    const b = computeCascadeImpacts(AMS_VENDOR_CONSOLIDATION_2026_INSTANCE);
+    expect(a).toEqual(b);
+  });
+
+  test('computeReverseCascade is stable across calls', () => {
+    const a = computeReverseCascade(APX_CDP_2026_INSTANCE);
+    const b = computeReverseCascade(APX_CDP_2026_INSTANCE);
+    expect(a).toEqual(b);
+  });
+
+  test('traceMultiHop is stable across calls', () => {
+    const a = traceMultiHop('SRC-AMS-2026', 2);
+    const b = traceMultiHop('SRC-AMS-2026', 2);
+    expect(a).toEqual(b);
+  });
+});

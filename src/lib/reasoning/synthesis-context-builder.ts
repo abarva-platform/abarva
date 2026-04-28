@@ -2,6 +2,7 @@ import type { SourceEventInstance } from '@/lib/source/source-event-instance';
 import { buildEvidenceMap } from '@/lib/source/source-event-instance';
 import { createGateEvaluator } from '@/lib/reasoning/gate-evaluator';
 import { createContradictionDetector } from '@/lib/reasoning/contradiction-detector';
+import { computeCascadeImpacts } from '@/lib/reasoning/cross-instance-reasoner';
 import type { LifecyclePatternSeed } from '@/lib/intelligence/seed-types';
 import type { SynthesisContext, GateEvaluation } from '@/lib/reasoning/types';
 
@@ -45,14 +46,10 @@ export function buildSourceSynthesisContext(
       },
     }));
 
-  // Cascade impacts from linked programs
-  const cascadeContext = instance.linkedPrograms.map(lp => ({
-    sourceInstanceId: instance.id,
-    targetInstanceId: lp.programId,
-    linkType: lp.linkType,
-    impact: lp.description,
-    severity: (lp.linkType === 'unblocks' ? 'blocking' : 'informational') as 'blocking' | 'informational',
-  }));
+  // Cascade impacts — delegated to the cross-instance reasoner so cascade
+  // logic is computed in one place and severity scoring is consistent
+  // across Source / Programs / Tower surfaces.
+  const cascadeContext = computeCascadeImpacts(instance);
 
   // Citations: pattern stage guidance + gate criteria
   const citations = [

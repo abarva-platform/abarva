@@ -11,6 +11,7 @@
 
 import type { ProgramInstance } from '@/lib/programs/program-instance';
 import type { SourceEventInstance } from '@/lib/source/source-event-instance';
+import { computeCascadeImpacts } from '@/lib/reasoning/cross-instance-reasoner';
 import type {
   CascadeImpact,
   CitationPointer,
@@ -93,40 +94,22 @@ export function buildTowerSynthesisContext(
     }
   }
 
-  // ── Cascade context — aggregate cross-instance links ──────────────────────
+  // ── Cascade context — aggregate cross-instance links via the reasoner ────
+  // Each per-instance call returns a normalised, severity-scored set of
+  // CascadeImpacts. We then dedupe across the portfolio by (source,target,
+  // linkType) so source-event ↔ program pairs aren't double-counted from
+  // both sides of the link.
+  const allImpacts: CascadeImpact[] = [
+    ...programInstances.flatMap(p => computeCascadeImpacts(p)),
+    ...sourceEventInstances.flatMap(s => computeCascadeImpacts(s)),
+  ];
+  const seen = new Set<string>();
   const cascadeContext: CascadeImpact[] = [];
-
-  for (const p of programInstances) {
-    for (const link of p.linkedSourceEvents) {
-      cascadeContext.push({
-        sourceInstanceId: link.sourceEventId,
-        targetInstanceId: p.id,
-        linkType: link.linkType,
-        impact: link.description,
-        severity: link.linkType === 'depends-on' ? 'blocking' : 'informational',
-      });
-    }
-    for (const link of p.linkedPrograms) {
-      cascadeContext.push({
-        sourceInstanceId: p.id,
-        targetInstanceId: link.programId,
-        linkType: link.linkType,
-        impact: link.description,
-        severity: link.linkType === 'depends-on' ? 'blocking' : 'informational',
-      });
-    }
-  }
-
-  for (const s of sourceEventInstances) {
-    for (const link of s.linkedPrograms) {
-      cascadeContext.push({
-        sourceInstanceId: s.id,
-        targetInstanceId: link.programId,
-        linkType: link.linkType,
-        impact: link.description,
-        severity: link.linkType === 'unblocks' ? 'blocking' : 'informational',
-      });
-    }
+  for (const imp of allImpacts) {
+    const key = `${imp.sourceInstanceId}::${imp.targetInstanceId}::${imp.linkType}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    cascadeContext.push(imp);
   }
 
   // ── Citations — top patterns + top blocker hints ──────────────────────────

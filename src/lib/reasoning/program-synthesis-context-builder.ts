@@ -1,5 +1,6 @@
 import type { ProgramInstance } from '@/lib/programs/program-instance';
 import { buildProgramEvidenceMap } from '@/lib/programs/program-instance';
+import { computeCascadeImpacts } from '@/lib/reasoning/cross-instance-reasoner';
 import type { SynthesisContext } from '@/lib/reasoning/types';
 
 /**
@@ -30,14 +31,10 @@ export function buildProgramSynthesisContext(instance: ProgramInstance): Synthes
     evaluatedAt: Date.now(),
   }));
 
-  // Cross-instance cascade
-  const cascadeContext = instance.linkedSourceEvents.map(link => ({
-    sourceInstanceId: link.sourceEventId,
-    targetInstanceId: instance.id,
-    linkType: link.linkType,
-    impact: link.description,
-    severity: (link.linkType === 'depends-on' ? 'blocking' : 'informational') as 'blocking' | 'informational',
-  }));
+  // Cross-instance cascade — delegated to the reasoner. Same wire format as
+  // before plus the new `impactSeverity` tier (low/medium/high) added in
+  // REASON-9.
+  const cascadeContext = computeCascadeImpacts(instance);
 
   const patternRef = { patternId: instance.patternId, patternVersion: instance.patternVersion, section: `§ Phase P${instance.currentPhase}` };
 
