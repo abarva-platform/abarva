@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { SHELL } from '@/lib/shell/shell-tokens';
 
 interface StageTrackerStripProps {
@@ -15,6 +16,26 @@ const PIPE_AFTER = new Set([1, 4, 6, 8]);
 
 export function StageTrackerStrip({ stages, activeStage, onStageSelect }: StageTrackerStripProps) {
   const activeIndex = stages.indexOf(activeStage);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  function handleStageClick(stage: string) {
+    if (onStageSelect) {
+      onStageSelect(stage);
+      return;
+    }
+    // Default: toggle ?stage= query param so the page can filter/highlight.
+    // Clicking the already-active stage clears the filter.
+    const params = new URLSearchParams(searchParams.toString());
+    if (stage === activeStage) {
+      params.delete('stage');
+    } else {
+      params.set('stage', stage);
+    }
+    const query = params.toString();
+    router.push(query ? `${pathname}?${query}` : pathname);
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 0 }}>
@@ -38,8 +59,8 @@ export function StageTrackerStrip({ stages, activeStage, onStageSelect }: StageT
             <div
               role="button"
               tabIndex={0}
-              onClick={() => onStageSelect?.(stage)}
-              onKeyDown={(e) => { if (e.key === 'Enter') onStageSelect?.(stage); }}
+              onClick={() => handleStageClick(stage)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleStageClick(stage); }}
               style={{
                 display: 'flex',
                 flexDirection: 'column',

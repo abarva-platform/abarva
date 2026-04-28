@@ -27,7 +27,9 @@ export function useAgentStream({ surface, programId, agentName }: UseAgentStream
         const res = await fetch('/api/chat/agent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message, context, programId, surface }),
+          // agentName passed as a top-level field so the API uses the correct
+          // agent voice (Sentinel/Nexus/etc.) rather than defaulting to Atlas.
+          body: JSON.stringify({ message, context, programId, surface, agentName }),
         });
 
         if (!res.ok) {
