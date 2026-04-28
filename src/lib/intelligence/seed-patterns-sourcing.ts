@@ -47,7 +47,10 @@ The pattern fails when BAFO is treated as an unstructured pricing chase, when th
 - AMS Vendor Consolidation 2026: two-vendor BAFO with responses due May 15 2026
 - Selection committee: Priya Mehta, Marcus Chen, Fiona Wallace
 - Award recommendation target: May 30 2026
-- Programme dependency: APX-CDP-2026 gate waits on BAFO evidence`,
+- Programme dependency: APX-CDP-2026 gate waits on BAFO evidence
+
+## Stage doctrine — BAFO
+Issue BAFO invitation letter to 2–3 vendors (down-selecting from initial-bid field); include: specific areas for improvement (price levers, SLA uplifts, commercial term changes), a revised pricing template, and a firm deadline — no extensions. Conduct bilateral negotiation sessions before BAFO close: use competitive tension explicitly ("another vendor has addressed X, we expect you to match or exceed"); push on: unit pricing, implementation risk transfer, payment milestones, warranty periods, exit provisions. Identify price levers: volume commitments, payment terms acceleration, multi-year lock-in in exchange for rate card reduction, reduced scope optionality. Evaluate BAFO responses against the updated scorecard; re-run TCO model with final pricing; document final technical and commercial scores. Gate criteria before advancing: BAFO responses received by all invited vendors; evaluation panel scores finalised, documented, and signed by panel members; recommended vendor identified with full rationale; approval authority notified. Outputs: BAFO invitation letters, bilateral negotiation records, updated TCO model, BAFO evaluation report, panel scoring sign-off sheet.`,
   },
   {
     id: 'PAT-SRC-002',
@@ -513,7 +516,10 @@ The pattern fails when sourcing assumes approval will materialize after analysis
 ## Instances
 - Selection committee members listed for AMS: Priya Mehta, Marcus Chen, Fiona Wallace
 - Steward mission includes confirming the May 22 committee meeting
-- Award recommendation target is May 30 2026`,
+- Award recommendation target is May 30 2026
+
+## Stage doctrine — Selection
+Prepare Award Recommendation Paper: summarise evaluation methodology, scoring outcomes, BAFO results, TCO comparison, and a clear recommendation with supporting rationale; include risk assessment of the recommended vendor. Present to the approval authority (CPO, CFO, board committee, or delegated approver per the Scheme of Delegation); obtain written approval before communicating to vendors. Initiate legal review of Heads of Terms and preferred contractual framework; identify material negotiation points (liability caps, IP ownership, data protection schedules, termination rights). Issue standstill notification to unsuccessful vendors (mandatory in regulated procurement; best practice in commercial); document debrief availability. Gate criteria before advancing: written award approval obtained from required authority; standstill period complete (or explicitly waived with legal sign-off); Heads of Terms agreed; contract negotiation formally commenced. Outputs: Award Recommendation Paper, approval authority sign-off, standstill notification letters, Heads of Terms, Negotiation Issues Log.`,
   },
   {
     id: 'PAT-SRC-012',
@@ -560,7 +566,526 @@ Teams often treat timeline claims as negotiable optimism and only discover the c
 ## Instances
 - DataPeak Services excluded because 16-week onboarding conflicts with APX-CDP-2026 Q3 integration timing
 - Source demo warns that selection slip past June compresses the CDP window
-- Programme gate remains pending until BAFO evidence resolves the commercial dependency`,
+- Programme gate remains pending until BAFO evidence resolves the commercial dependency
+
+## Stage doctrine — Award
+Execute the contract: ensure all schedules (SLA schedule, data processing agreement, pricing schedule, change control procedure) are final, initialled, and signed by authorised signatories on both sides; store executed copies in the contract management system. Confirm implementation timeline, project governance structure (steering committee, operational cadence, escalation path), and first milestone dates in writing. Set SLA baselines: document initial performance benchmarks, measurement methodology, reporting cadence, and remedies framework (service credits, step-in rights, termination for cause triggers). Notify the incumbent supplier per contractual notice requirements; activate transition and exit plan; confirm data return/destruction obligations. Issue internal award announcement and activate the contract management framework; assign a named contract manager. Gate criteria before advancing: contract fully executed by both parties (wet or digital signatures confirmed); implementation timeline agreed in writing; SLA baselines documented; incumbent notified; contract registered in contract management system. Outputs: executed contract (all schedules), implementation timeline, SLA baseline register, incumbent notification letter, contract management framework activation record.`,
+  },
+
+  // ── Stage doctrine patterns (PAT-SRC-013 through PAT-SRC-019) ────────────────
+  //
+  // These patterns carry the full stage-level procurement doctrine for the ten
+  // stages of the sourcing lifecycle. They supersede the freestanding
+  // src/lib/agent/stage-playbooks.ts file and are retrieved via
+  // src/lib/intelligence/agent-retrieval.ts.
+  //
+  // Placement decisions:
+  //   Plan       → PAT-SRC-013  (new — no prior pattern covered early scoping)
+  //   RFI        → PAT-SRC-014  (new — market engagement not previously covered)
+  //   Shortlist  → PAT-SRC-015  (new — down-selection not previously covered)
+  //   RFP        → PAT-SRC-016  (new — formal tender governance not previously covered)
+  //   Q&A        → PAT-SRC-017  (new — clarification period not previously covered)
+  //   Initial-Bid→ PAT-SRC-018  (new — first-round evaluation not previously covered;
+  //                               PAT-SRC-002 covers completeness threshold only)
+  //   BAFO       → PAT-SRC-001  body extended below with stage doctrine
+  //   Selection  → PAT-SRC-011  body extended below with stage doctrine
+  //   Award      → PAT-SRC-012  body extended below with stage doctrine
+  //   Onboard    → PAT-SRC-019  (new — hypercare / go-live not previously covered)
+  //
+  // Service category patterns (PAT-SRC-020 through PAT-SRC-024) follow.
+  //   AMS            → PAT-SRC-020 (new; PAT-SRC-005 covers consolidation event only)
+  //   SaaS           → PAT-SRC-021 (new)
+  //   Infrastructure → PAT-SRC-022 (new)
+  //   Implementation → PAT-SRC-023 (new)
+  //   Consulting     → PAT-SRC-024 (new)
+
+  {
+    id: 'PAT-SRC-013',
+    slug: 'procurement-strategy-and-scoping',
+    title: 'Procurement Strategy and Scoping (Plan Stage)',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Strategic sourcing outcomes improve when the Plan stage transforms a business need into an approved mandate with documented make-vs-buy rationale, cross-functional requirements, and a fixed procurement timeline before any supplier engagement.',
+    applicability:
+      'Apply at the outset of any sourcing programme, before RFI issue, to ensure mandate, budget, and requirements have been signed off and the evaluation team is resourced.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.84,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-28',
+    instanceCount: 10,
+    sourceDocuments: ['docs/build/SOURCE_BUILD_SPEC.md'],
+    regulatoryChips: [],
+    relatedPatternIds: ['PAT-SRC-003', 'PAT-SRC-014'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    body: `## Summary
+Establish the strategic foundation before any supplier engagement. This stage transforms a business need into a structured procurement programme with approved mandate, budget, and timeline.
+
+## Key buyer activities
+- Conduct make-vs-buy analysis and document the case for external supply; confirm category ownership and escalation paths
+- Run stakeholder alignment workshops to capture requirements from technical, commercial, legal, and business owners
+- Execute market sounding (desk research, analyst briefings, informal supplier conversations) to validate feasibility and baseline pricing
+- Define category strategy: preferred route to market (open tender, direct award, framework call-off), sustainability criteria, and diversity targets
+- Secure budget approval and sign-off on a Requirements Document that is version-controlled and traceable
+
+## Risks to watch
+Scope creep before RFI launch; under-resourced evaluation team; legal not engaged early enough; requirements authored by a single stakeholder without cross-functional review.
+
+## Gate criteria before advancing
+Board-approved budget line confirmed in writing; Requirements Document signed off by all functional owners; Procurement timeline published; make-vs-buy decision documented and accepted.
+
+## Outputs
+Requirements Document v1.0, Procurement Strategy Brief, stakeholder RACI, indicative budget envelope, high-level timeline.`,
+  },
+
+  {
+    id: 'PAT-SRC-014',
+    slug: 'rfi-market-engagement',
+    title: 'RFI Market Engagement (RFI Stage)',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'A structured RFI stage builds a qualified long list before any competitive tender, reducing the risk of advancing unqualified or financially fragile vendors into the RFP round.',
+    applicability:
+      'Apply after Plan sign-off when the market is not fully mapped. Skip when the vendor landscape is already known and a direct-to-RFP approach is defensible.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.82,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-28',
+    instanceCount: 6,
+    sourceDocuments: ['docs/build/SOURCE_BUILD_SPEC.md'],
+    regulatoryChips: [],
+    relatedPatternIds: ['PAT-SRC-013', 'PAT-SRC-015'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    body: `## Summary
+A no-commitment market intelligence exercise to map the supplier landscape, assess capability maturity, and build a qualified long list before issuing any competitive tender.
+
+## Key buyer activities
+- Issue structured RFI questionnaire covering: company profile, financial health (last 2 years accounts), relevant reference clients, technical capability, implementation methodology, data security posture, and indicative pricing ranges
+- Conduct analyst briefings (Gartner, Forrester, IDC) and peer-reference calls to supplement vendor self-reporting
+- Assess financial viability: Dun & Bradstreet scores, credit ratings, ownership structure, key-person dependency
+- Complete a Capability Matrix scoring each respondent across agreed dimensions (usually 5–8 criteria weighted by strategic priority)
+- Long-list 6–10 vendors; exclude non-compliant or financially marginal respondents with a written rationale
+
+## Risks to watch
+Receiving low-quality RFI responses due to poor question design; over-relying on brand recognition instead of evidence; failing to include emerging challengers who may outperform incumbents.
+
+## Gate criteria before advancing
+Capability Matrix populated and peer-reviewed; shortlisting criteria agreed and documented by stakeholder panel; minimum 6 qualified respondents assessed.
+
+## Outputs
+Supplier Capability Matrix, long list of 6–10 vendors with scoring summary, shortlisting criteria document.`,
+  },
+
+  {
+    id: 'PAT-SRC-015',
+    slug: 'vendor-qualification-down-selection',
+    title: 'Vendor Qualification and Down-Selection (Shortlist Stage)',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Protects the evaluation team\'s bandwidth and signals market seriousness by rigorously narrowing the long list to 3–5 vendors capable of responding meaningfully to a full RFP.',
+    applicability:
+      'Apply after RFI scoring to produce a written, approved shortlist with documented inclusion and exclusion rationale before issuing the RFP.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.83,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-28',
+    instanceCount: 5,
+    sourceDocuments: ['docs/build/SOURCE_BUILD_SPEC.md'],
+    regulatoryChips: [],
+    relatedPatternIds: ['PAT-SRC-014', 'PAT-SRC-016'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    body: `## Summary
+Rigorous evaluation of RFI responses to narrow the field to 3–5 vendors capable of responding meaningfully to a full RFP.
+
+## Key buyer activities
+- Score each long-listed vendor against the agreed Capability Matrix using a blind or panel-reviewed process; document scoring rationale for audit trail
+- Conduct structured reference checks: minimum 2 client references per vendor, covering implementation quality, support responsiveness, and commercial relationship
+- Run financial viability screening: review audited accounts, check for change-of-control risk, confirm insurance levels meet minimum thresholds
+- Issue preliminary Due Diligence questionnaires where data security or regulatory compliance is material (e.g., GDPR, FedRAMP, ISO 27001)
+- Hold shortlist rationale review with stakeholder panel; document and approve final shortlist of 3–5 vendors
+
+## Risks to watch
+Panel bias toward known incumbents; reference check fatigue (all references are pre-selected wins); financial screening missed for smaller challengers.
+
+## Gate criteria before advancing
+Shortlist of 3–5 vendors formally approved by stakeholder panel; written rationale documented for each inclusion and exclusion; legal and procurement director sign-off obtained.
+
+## Outputs
+Scored Capability Matrix with shortlist rationale, vendor shortlist approval memo, due diligence summaries.`,
+  },
+
+  {
+    id: 'PAT-SRC-016',
+    slug: 'request-for-proposal-governance',
+    title: 'Request for Proposal Governance (RFP Stage)',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Comparable, decision-grade proposals require the evaluation scorecard to be locked before any proposals are received — scoring criteria changed after receipt constitutes manipulation.',
+    applicability:
+      'Apply to any formal competitive tender where shortlisted vendors will submit binding technical and commercial proposals.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.85,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-28',
+    instanceCount: 8,
+    sourceDocuments: ['docs/build/SOURCE_BUILD_SPEC.md'],
+    regulatoryChips: [],
+    relatedPatternIds: ['PAT-SRC-015', 'PAT-SRC-017', 'PAT-SRC-002'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    body: `## Summary
+The formal competitive tender stage. A fully specified RFP document invites shortlisted vendors to submit binding technical and commercial proposals against a consistent evaluation framework.
+
+## Key buyer activities
+- Draft a detailed Requirements Document translated into RFP Sections: company background, scope of work, functional and non-functional requirements, implementation approach, SLA specifications, pricing template (fixed, T&M, or outcome-based), and contractual terms summary
+- Design the Evaluation Scorecard: define mandatory (pass/fail) criteria, weighted technical categories, and commercial scoring methodology before RFP issue to prevent post-hoc scoring manipulation
+- Establish submission format and compliance checklist: page limits, mandatory appendices, pricing template lock (no deviations accepted), and submission portal/deadline
+- Issue RFP to shortlisted vendors with a cover letter confirming the procurement timetable, evaluation process, and no-collusion declaration requirement
+- Conduct RFP review and approval internally before issue — legal, commercial, and technical sign-off required
+
+## Risks to watch
+Ambiguous requirements leading to non-comparable proposals; pricing template flexibility enabling comparison difficulties; evaluation scorecard not finalised before proposals received (manipulation risk).
+
+## Gate criteria before advancing
+RFP document approved by legal, commercial, and technical stakeholders; evaluation scorecard locked and stored in sealed record before any proposals received.
+
+## Outputs
+RFP document (final issued version), evaluation scorecard, no-collusion declaration template, RFP issue confirmation log.`,
+  },
+
+  {
+    id: 'PAT-SRC-017',
+    slug: 'clarification-period-management',
+    title: 'Clarification Period Management (Q&A Stage)',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Competitive fairness requires all Q&A responses to be shared simultaneously with all bidders — bilateral verbal clarifications create information asymmetry that invalidates the evaluation.',
+    applicability:
+      'Apply in the window between RFP issue and proposal deadline to manage vendor questions through a governed, auditable process.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.84,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-28',
+    instanceCount: 7,
+    sourceDocuments: ['docs/build/SOURCE_BUILD_SPEC.md'],
+    regulatoryChips: [],
+    relatedPatternIds: ['PAT-SRC-016', 'PAT-SRC-018'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    body: `## Summary
+A structured window for shortlisted vendors to seek clarification on RFP requirements. All questions and answers are shared simultaneously with all bidders to maintain competitive fairness and prevent information asymmetry.
+
+## Key buyer activities
+- Publish a Q&A submission deadline and confirm all questions must be submitted in writing via the procurement portal (no verbal clarifications accepted)
+- Triage incoming questions: categorise as (a) genuine scope ambiguity requiring a formal answer, (b) commercially sensitive fishing requiring deflection, or (c) out-of-scope requiring no response
+- Draft answers collaboratively with technical, legal, and commercial owners; obtain sign-off before publishing
+- Issue all Q&A responses simultaneously to all shortlisted vendors in a numbered Q&A log; update the RFP document or issue a formal addendum if scope is materially clarified
+- Close the Q&A log formally on the published deadline; confirm final clarifications constitute the definitive tender specification
+
+## Risks to watch
+Allowing verbal or bilateral clarifications that give one vendor an information advantage; scope changes introduced through Q&A that materially alter the original requirement; Q&A log not maintained creating audit gaps.
+
+## Gate criteria before advancing
+Q&A log formally closed and communicated to all vendors; any scope changes documented as formal addenda with version control; all vendors confirm receipt of final clarification pack.
+
+## Outputs
+Numbered Q&A log (all questions and answers), any RFP addenda, final clarification confirmation letter issued to all vendors.`,
+  },
+
+  {
+    id: 'PAT-SRC-018',
+    slug: 'initial-bid-evaluation-and-triage',
+    title: 'Initial Bid Evaluation and Non-Conformance Triage (Initial-Bid Stage)',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'The Initial-Bid stage is diagnostic, not decisional — its purpose is to establish a commercial baseline, surface non-conformances, and validate TCO comparability before any negotiation begins.',
+    applicability:
+      'Apply on receipt of first-round proposals to establish compliance, independent scoring, and total cost of ownership baseline before the BAFO round.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.83,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-28',
+    instanceCount: 4,
+    sourceDocuments: ['docs/build/SOURCE_BUILD_SPEC.md', 'docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md'],
+    regulatoryChips: [],
+    relatedPatternIds: ['PAT-SRC-002', 'PAT-SRC-008', 'PAT-SRC-017'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    body: `## Summary
+Receipt and initial evaluation of first-round vendor proposals. This is a diagnostic stage — the goal is to understand the commercial landscape, identify non-conformances, and establish a baseline before negotiation.
+
+## Key buyer activities
+- Receive proposals by the submission deadline; log receipt and confirm acknowledgement to all vendors immediately
+- Run compliance check against the mandatory criteria and submission format checklist: non-compliant proposals are scored zero on affected criteria or excluded if a mandatory requirement is missed
+- Evaluate technical proposals against the locked evaluation scorecard; use panel scoring to reduce individual bias; log non-conformances and deviations from requirements
+- Analyse pricing submissions: decompose total cost of ownership (TCO) across implementation, licence/subscription, integration, support, and exit/transition; normalise to a common comparison basis
+- Produce an Initial-Bid Evaluation Report summarising technical scores, commercial ranges, and key non-conformances per vendor
+
+## Risks to watch
+Evaluators sharing scores between themselves before independent scoring is complete; non-conformances logged but not followed up; pricing comparison based on headline number rather than TCO.
+
+## Gate criteria before advancing
+All proposals received; compliance check complete and documented; panel scoring independently completed and consolidated; non-conformances formally notified to relevant vendors.
+
+## Outputs
+Compliance check log, scored evaluation matrix (initial), TCO comparison model, Initial-Bid Evaluation Report, non-conformance notification letters.`,
+  },
+
+  {
+    id: 'PAT-SRC-019',
+    slug: 'vendor-onboarding-and-hypercare',
+    title: 'Vendor Onboarding and Hypercare (Onboard Stage)',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Hypercare must be a formally bounded period with an explicit exit sign-off, because undefined hypercare end points create SLA ambiguity and undermine the governance baseline established during award.',
+    applicability:
+      'Apply after contract execution to validate go-live readiness, manage the elevated-support period, and confirm steady-state transition through a post-implementation review.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.81,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-28',
+    instanceCount: 3,
+    sourceDocuments: ['docs/build/SOURCE_BUILD_SPEC.md'],
+    regulatoryChips: [],
+    relatedPatternIds: ['PAT-SRC-012', 'PAT-SRC-006'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    body: `## Summary
+The operational phase begins. The vendor delivers initial integration and knowledge transfer; the buyer validates technical and commercial readiness; a hypercare period provides elevated support before steady-state operations are confirmed.
+
+## Key buyer activities
+- Execute the go-live checklist: confirm system integration testing (SIT) and user acceptance testing (UAT) sign-off, data migration validation, user training completion, and rollback plan readiness before production cutover
+- Run hypercare period (typically 30–90 days post go-live): elevated support SLA, daily stand-ups between buyer and vendor delivery teams, accelerated issue triage and resolution
+- Validate first invoice against contract pricing schedule and milestone acceptance criteria; reject non-compliant invoices promptly and document the basis for rejection
+- Establish relationship governance cadence: operational review (monthly), service review (quarterly), strategic review (annually); confirm attendees, agenda templates, and action log ownership
+- Conduct a post-implementation review (PIR) at hypercare exit: measure outcomes against business case KPIs, document lessons learned, and identify improvement actions for the steady-state relationship
+
+## Risks to watch
+Hypercare period ending without formal sign-off (leaving ambiguity about when steady-state SLAs apply); invoice validation deferred creating accruals uncertainty; governance cadence agreed but not activated.
+
+## Gate criteria for steady-state transition
+Hypercare period formally signed off by buyer and vendor; all critical go-live checklist items resolved; first invoice validated and approved; governance cadence first cycle completed; PIR documented and shared.
+
+## Outputs
+Go-live checklist sign-off, hypercare exit report, first invoice validation record, governance cadence schedule, post-implementation review.`,
+  },
+
+  // ── Service category patterns (PAT-SRC-020 through PAT-SRC-024) ───────────────
+  //
+  // These patterns carry the full service-category procurement playbook content,
+  // superseding src/lib/agent/service-category-playbooks.ts.
+  // Retrieved by keyword match in src/lib/intelligence/agent-retrieval.ts.
+  //
+  // Placement decisions:
+  //   AMS            → PAT-SRC-020 (new; PAT-SRC-005 covers consolidation event
+  //                                 architecture only, not the AMS procurement playbook)
+  //   SaaS           → PAT-SRC-021 (new — no prior coverage)
+  //   Infrastructure → PAT-SRC-022 (new — no prior coverage)
+  //   Implementation → PAT-SRC-023 (new — no prior coverage)
+  //   Consulting     → PAT-SRC-024 (new — no prior coverage)
+
+  {
+    id: 'PAT-SRC-020',
+    slug: 'ams-procurement-playbook',
+    title: 'AMS Procurement Playbook',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'AMS procurement decisions are durable when evaluation dimensions, contract terms, and pricing benchmarks are treated as a category-specific framework rather than adapted generically from commodity purchasing.',
+    applicability:
+      'Apply to sourcing events for Application Managed Services, including vendor consolidation, re-tender, and operating-model transformation.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.85,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-28',
+    instanceCount: 4,
+    sourceDocuments: ['docs/demo/APEX_RETAIL_SOURCE_PROGRAM_30_MINUTE_DEMO.md', 'docs/build/SOURCE_BUILD_SPEC.md'],
+    regulatoryChips: [],
+    relatedPatternIds: ['PAT-SRC-005', 'PAT-SRC-006', 'PAT-SRC-012'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    body: `## Summary
+AMS (Application Managed Services) is a long-term engagement where a vendor takes operational responsibility for running, maintaining, and evolving applications. Scope typically covers: incident management (P1 <1hr, P2 <4hr, P3 <24hr response SLAs), change request process and backlog ownership, enhancement pipeline governance, tooling and access management, knowledge transfer obligations.
+
+## Evaluation dimensions
+Offshore/onshore mix and location risk, tooling compatibility with client stack, reference customers in same industry, SLA penalty structure and credit caps, minimum commitment terms (typically 3–5 years), exit assistance obligations.
+
+## Red flags
+Vague scope definitions that allow scope creep charges, uncapped T&M change clauses, weak transition-out provisions (should be 6–12 months minimum), SLA credits that don't reflect actual business loss, no benchmarking rights.
+
+## Contract terms to negotiate hard
+Minimum notice period for key resource changes (90 days), benchmarking rights every 2 years, open book pricing model, service credit caps (10–15% of annual fees), exit assistance at no cost, IP ownership of client-funded enhancements.
+
+## Pricing benchmarks
+AMS contracts typically 15–40% of application development cost per year. Offshore-heavy models: 12–18%. Nearshore-balanced: 20–28%. Premium onshore-led: 30–40%. Volume discounts kick in at >$5M ACV.`,
+  },
+
+  {
+    id: 'PAT-SRC-021',
+    slug: 'saas-procurement-playbook',
+    title: 'SaaS Procurement Playbook',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'SaaS procurement value is preserved through negotiated renewal caps, explicit data portability rights, and AI/ML training data opt-outs — terms that are far harder to obtain after signature than before.',
+    applicability:
+      'Apply to sourcing events for SaaS platforms, cloud software, CRM/ERP systems, and subscription-based tooling.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.83,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-28',
+    instanceCount: 5,
+    sourceDocuments: ['docs/build/SOURCE_BUILD_SPEC.md'],
+    regulatoryChips: ['GDPR', 'CCPA'],
+    relatedPatternIds: ['PAT-SRC-010'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    body: `## Summary
+SaaS procurement key dimensions: data residency and sovereignty requirements, user provisioning and SSO integration, API access and rate limits, renewal escalator caps (negotiate max 3–5% annual), data portability on exit (insist on full export rights), security certifications required (SOC-2 Type II minimum, ISO 27001 preferred).
+
+## Negotiation leverage
+Multi-year commits (2–3yr) for 15–25% discount, user volume commitments, additional module bundling.
+
+## Red flags
+Auto-renewal clauses without adequate notice windows (require 90-day notice minimum), vague data deletion timelines post-offboarding (insist on 30-day confirmed deletion), unclear AI/ML training data rights (require explicit opt-out of model training on client data).
+
+## Contract terms to negotiate hard
+Data portability in open formats at any time, DPA and GDPR/CCPA schedules, SLA uptime credits tied to actual business impact, right to audit security certifications annually, escrow provisions for source code if vendor is sub-scale.`,
+  },
+
+  {
+    id: 'PAT-SRC-022',
+    slug: 'infrastructure-cloud-procurement-playbook',
+    title: 'Infrastructure and Cloud Procurement Playbook',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Cloud infrastructure procurement decisions consistently underestimate egress costs by 3–5x; modelling worst-case egress before signature is the single highest-value pre-award action.',
+    applicability:
+      'Apply to sourcing events for IaaS, PaaS, cloud platforms, hosting, and data centre services.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.82,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-28',
+    instanceCount: 3,
+    sourceDocuments: ['docs/build/SOURCE_BUILD_SPEC.md'],
+    regulatoryChips: ['FedRAMP', 'ISO-27001'],
+    relatedPatternIds: ['PAT-SRC-008'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    body: `## Summary
+IaaS/PaaS procurement key dimensions: committed use discounts vs on-demand (1yr: ~20–37%, 3yr: ~45–55% savings), egress cost exposure (often underestimated by 3–5x — model worst-case before signing), multi-cloud risk and portability, SLA uptime tiers (99.9% = ~8.7hr/yr downtime vs 99.99% = ~52min/yr — quantify business cost of each), DR/BCP provisions, data sovereignty and residency controls, security and compliance certifications (FedRAMP, ISO 27001, SOC-2), FinOps governance requirements.
+
+## Red flags
+Egress fees buried in pricing schedules, lock-in via proprietary APIs with no migration tooling, SLA credits capped at monthly spend (not proportional to business loss), no right to audit billing calculations.
+
+## Contract terms to negotiate hard
+Committed use discount with flex-up rights, egress fee caps or waiver for competitive migrations, FinOps reporting and cost anomaly alerting as baseline service, DPA and data residency schedules, exit migration assistance obligations.`,
+  },
+
+  {
+    id: 'PAT-SRC-023',
+    slug: 'implementation-si-procurement-playbook',
+    title: 'Implementation and Systems Integration Procurement Playbook',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Fixed-price engagement models are preferable for well-defined SI scope because they transfer delivery risk to the vendor — T&M should be reserved for genuinely exploratory phases with clear governance checkpoints.',
+    applicability:
+      'Apply to sourcing events for systems integration, implementation programmes, digital transformation delivery, and bespoke build engagements.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.82,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-28',
+    instanceCount: 4,
+    sourceDocuments: ['docs/build/SOURCE_BUILD_SPEC.md'],
+    regulatoryChips: [],
+    relatedPatternIds: ['PAT-SRC-006', 'PAT-SRC-010'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    body: `## Summary
+SI engagements key dimensions: fixed-price vs T&M trade-offs (fixed-price preferred for well-defined scope — reduces client risk; T&M appropriate for exploratory phases with clear governance), milestone structure and payment tied to acceptance, detailed acceptance criteria in SOW (not just delivery of artefacts but demonstrated functionality), IP ownership of custom code (insist on client ownership of all bespoke deliverables), warranty period (minimum 90 days post go-live), staffing approval rights for key roles, right to reject named resources, subcontractor disclosure requirements.
+
+## Red flags
+Vague acceptance criteria that leave pass/fail in vendor hands, payment milestones tied to delivery not acceptance, no key-person clauses for critical resources, broad subcontracting rights without client approval, no warranty on defects post go-live.
+
+## Contract terms to negotiate hard
+Change control process with quantified impact assessment before approval, liquidated damages for critical milestone slippage, escrow of all source code and configuration, knowledge transfer and documentation obligations, right to insource or re-bid post-completion without restriction.`,
+  },
+
+  {
+    id: 'PAT-SRC-024',
+    slug: 'consulting-advisory-procurement-playbook',
+    title: 'Consulting and Advisory Procurement Playbook',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Consulting engagements produce measurable value when scoped as output-based deliverables rather than time-based retainers — specifying what documents, frameworks, or decisions will be produced prevents scope drift.',
+    applicability:
+      'Apply to sourcing events for strategy, advisory, assessment, and consulting engagements where the primary output is intellectual rather than operational.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.80,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-28',
+    instanceCount: 3,
+    sourceDocuments: ['docs/build/SOURCE_BUILD_SPEC.md'],
+    regulatoryChips: [],
+    relatedPatternIds: ['PAT-SRC-010'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    body: `## Summary
+SOW-based consulting key dimensions: deliverable definition is critical — output-based not time-based (specify what documents, frameworks, or decisions will be produced, not just hours spent), rate benchmarking by grade (Partner/Director: $350–600/hr; Manager: $200–350/hr; Analyst: $100–200/hr for tier-1 firms), right-to-audit timesheets for T&M engagements, IP ownership of all work product (insist on full assignment, not licence), conflict of interest disclosure (especially where the firm also advises vendors), confidentiality scope, non-solicitation clauses (both directions).
+
+## Red flags
+Broad T&M engagements without milestone checkpoints, rate cards that allow grade substitution without client consent, vague deliverables that enable scope expansion, IP licence (not assignment) for work product, no obligation to disclose competing client relationships.
+
+## Contract terms to negotiate hard
+Fixed-fee or capped T&M with monthly not-to-exceed, explicit deliverable acceptance criteria with revision rounds, IP full assignment for all bespoke work product, conflict of interest disclosure obligations, 12-month non-solicitation on key client staff.`,
   },
 ];
 
