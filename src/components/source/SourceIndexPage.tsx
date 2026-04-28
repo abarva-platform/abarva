@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { AppShell } from '@/components/shell/AppShell';
 import { AgentColumn } from '@/components/shell/AgentColumn';
 import { StageTrackerStrip } from '@/components/shell/StageTrackerStrip';
@@ -7,7 +8,382 @@ import { LinkedProgramChip } from '@/components/shell/LinkedProgramChip';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { SOURCE_INDEX_VIEW, AMS_SOURCE_EVENT } from '@/lib/source/shell-source-fixture';
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type VendorKey = 'A' | 'B' | 'C';
+type ResponseType = 'full' | 'pricing' | 'technical' | 'withdrawal';
+type Soc2Status = 'submitted' | 'pending';
+
+interface VendorResponseModalProps {
+  onClose: () => void;
+}
+
+// ─── VendorResponseModal ──────────────────────────────────────────────────────
+
+function VendorResponseModal({ onClose }: VendorResponseModalProps) {
+  const [vendor, setVendor] = useState<VendorKey | null>(null);
+  const [responseType, setResponseType] = useState<ResponseType | null>(null);
+  const [price, setPrice] = useState('');
+  const [priceUnit, setPriceUnit] = useState('');
+  const [keyTerms, setKeyTerms] = useState('');
+  const [soc2, setSoc2] = useState<Soc2Status | null>(null);
+  const [submitted, setSubmitted] = useState(false);
+
+  const vendors: { key: VendorKey; label: string }[] = [
+    { key: 'A', label: 'Vendor A · TechCorp' },
+    { key: 'B', label: 'Vendor B · DataStream' },
+    { key: 'C', label: 'Vendor C · CloudBase' },
+  ];
+
+  const responseTypes: { key: ResponseType; label: string }[] = [
+    { key: 'full', label: 'Full BAFO response' },
+    { key: 'pricing', label: 'Pricing only' },
+    { key: 'technical', label: 'Technical clarification' },
+    { key: 'withdrawal', label: 'Withdrawal' },
+  ];
+
+  const vendorName = vendor === 'A' ? 'Vendor A · TechCorp'
+    : vendor === 'B' ? 'Vendor B · DataStream'
+    : vendor === 'C' ? 'Vendor C · CloudBase'
+    : '';
+
+  const isWithdrawal = responseType === 'withdrawal';
+  const isVendorB = vendor === 'B';
+  const canSubmit = vendor !== null && responseType !== null;
+
+  function handleSubmit() {
+    if (!canSubmit) return;
+    console.log('BAFO response recorded', { vendor, responseType, price, priceUnit, keyTerms, soc2 });
+    setSubmitted(true);
+    setTimeout(() => onClose(), 1500);
+  }
+
+  // Pill button style helpers
+  function pillStyle(selected: boolean): React.CSSProperties {
+    return {
+      fontFamily: SHELL.SANS,
+      fontSize: 12,
+      color: selected ? SHELL.CARD_WHITE : SHELL.INK_SOFT,
+      background: selected ? SHELL.INK : SHELL.CARD_WHITE,
+      border: `1px solid ${selected ? SHELL.INK : SHELL.CARD_LINE}`,
+      borderRadius: 5,
+      padding: '5px 12px',
+      cursor: 'pointer',
+      transition: 'all 0.1s',
+      whiteSpace: 'nowrap' as const,
+    };
+  }
+
+  function labelStyle(): React.CSSProperties {
+    return {
+      fontFamily: SHELL.MONO,
+      fontSize: 9,
+      textTransform: 'uppercase' as const,
+      letterSpacing: '0.14em',
+      color: SHELL.INK_MUTED,
+      marginBottom: 6,
+      display: 'block',
+    };
+  }
+
+  function inputStyle(): React.CSSProperties {
+    return {
+      fontFamily: SHELL.SANS,
+      fontSize: 13,
+      color: SHELL.INK,
+      background: SHELL.CARD_WHITE,
+      border: `1px solid ${SHELL.CARD_LINE}`,
+      borderRadius: 5,
+      padding: '7px 10px',
+      width: '100%',
+      boxSizing: 'border-box' as const,
+      outline: 'none',
+    };
+  }
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 1000,
+        background: 'rgba(12,26,58,0.35)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+      }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        style={{
+          background: SHELL.PAPER,
+          border: `1px solid ${SHELL.CARD_LINE}`,
+          borderRadius: 10,
+          maxWidth: 540,
+          width: '100%',
+          padding: '24px 28px',
+          boxShadow: '0 8px 32px rgba(12,26,58,0.18)',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+        }}
+      >
+        {/* Header */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontFamily: SHELL.MONO, fontSize: 10, color: SHELL.INK_MUTED, letterSpacing: '0.14em', marginBottom: 4 }}>
+            BAFO RESPONSE
+          </div>
+          <div style={{ fontFamily: SHELL.SERIF, fontSize: 20, color: SHELL.INK, fontWeight: 400, lineHeight: 1.2 }}>
+            Record vendor response
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div style={{ height: 1, background: SHELL.CARD_LINE, marginBottom: 20 }} />
+
+        {/* Field: Vendor */}
+        <div style={{ marginBottom: 18 }}>
+          <label style={labelStyle()}>VENDOR</label>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {vendors.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setVendor(key)}
+                style={pillStyle(vendor === key)}
+              >
+                {label}
+                {key === 'B' && vendor === 'B' && (
+                  <span style={{ marginLeft: 5, color: SHELL.PEACH_TEXT }}>⚠</span>
+                )}
+              </button>
+            ))}
+          </div>
+          {isVendorB && (
+            <div
+              style={{
+                marginTop: 8,
+                background: `${SHELL.PEACH_BG}`,
+                border: `1px solid ${SHELL.PEACH_LINE}`,
+                borderRadius: 5,
+                padding: '7px 10px',
+                fontFamily: SHELL.SANS,
+                fontSize: 11,
+                color: SHELL.PEACH_TEXT,
+              }}
+            >
+              ⚠ Vendor B has an open SOC-2 attestation gap — steward flag active
+            </div>
+          )}
+        </div>
+
+        {/* Field: Response type */}
+        <div style={{ marginBottom: 18 }}>
+          <label style={labelStyle()}>RESPONSE TYPE</label>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {responseTypes.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setResponseType(key)}
+                style={pillStyle(responseType === key)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {isWithdrawal && vendor && (
+            <div
+              style={{
+                marginTop: 8,
+                background: SHELL.PEACH_BG,
+                border: `1px solid ${SHELL.PEACH_LINE}`,
+                borderRadius: 5,
+                padding: '7px 10px',
+                fontFamily: SHELL.SANS,
+                fontSize: 11,
+                color: SHELL.PEACH_TEXT,
+              }}
+            >
+              Marking {vendorName} as withdrawn from BAFO. This cannot be undone.
+            </div>
+          )}
+        </div>
+
+        {/* Field: Price summary (hide if withdrawal) */}
+        {!isWithdrawal && (
+          <div style={{ marginBottom: 18 }}>
+            <label style={labelStyle()}>HEADLINE PRICE</label>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{ flex: 1 }}>
+                <input
+                  type="text"
+                  placeholder="e.g. $1.2M"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  style={inputStyle()}
+                />
+              </div>
+              <div style={{ flex: 2 }}>
+                <input
+                  type="text"
+                  placeholder="e.g. per year · 3-year contract"
+                  value={priceUnit}
+                  onChange={(e) => setPriceUnit(e.target.value)}
+                  style={inputStyle()}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Field: Key terms */}
+        {!isWithdrawal && (
+          <div style={{ marginBottom: 18 }}>
+            <label style={labelStyle()}>KEY TERMS SUMMARY (optional)</label>
+            <textarea
+              rows={3}
+              placeholder="Summarise key commercial terms, SLAs, exclusions..."
+              value={keyTerms}
+              onChange={(e) => setKeyTerms(e.target.value)}
+              style={{
+                ...inputStyle(),
+                resize: 'vertical',
+                lineHeight: 1.5,
+              }}
+            />
+          </div>
+        )}
+
+        {/* Field: SOC-2 status (Vendor B only) */}
+        {isVendorB && (
+          <div style={{ marginBottom: 18 }}>
+            <label style={labelStyle()}>SOC-2 STATUS</label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => setSoc2('submitted')}
+                style={pillStyle(soc2 === 'submitted')}
+              >
+                Report submitted ✓
+              </button>
+              <button
+                onClick={() => setSoc2('pending')}
+                style={pillStyle(soc2 === 'pending')}
+              >
+                Still pending
+              </button>
+            </div>
+            {soc2 === 'submitted' && (
+              <div
+                style={{
+                  marginTop: 8,
+                  background: SHELL.MINT_BG,
+                  border: `1px solid ${SHELL.MINT_LINE}`,
+                  borderRadius: 5,
+                  padding: '7px 10px',
+                  fontFamily: SHELL.SANS,
+                  fontSize: 11,
+                  color: SHELL.MINT_TEXT,
+                }}
+              >
+                SOC-2 gap resolved — Vendor B evaluation can proceed
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Nexus parsing note */}
+        <div
+          style={{
+            background: SHELL.PAPER_SOFT,
+            borderRadius: 6,
+            padding: '10px 14px',
+            marginBottom: 22,
+          }}
+        >
+          <span
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 8,
+              color: SHELL.INK_MUTED,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              marginRight: 8,
+            }}
+          >
+            NEXUS
+          </span>
+          <span
+            style={{
+              fontFamily: SHELL.SANS,
+              fontSize: 11,
+              color: SHELL.INK_MUTED,
+            }}
+          >
+            Nexus will extract scoring signals from this response and update the vendor comparison matrix.
+          </span>
+        </div>
+
+        {/* Success message */}
+        {submitted && (
+          <div
+            style={{
+              marginBottom: 16,
+              fontFamily: SHELL.MONO,
+              fontSize: 11,
+              color: SHELL.MINT_TEXT,
+              letterSpacing: '0.04em',
+            }}
+          >
+            ✓ {vendorName} response recorded · Nexus will process and update rankings
+          </div>
+        )}
+
+        {/* Buttons */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+          <button
+            onClick={onClose}
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 11,
+              color: SHELL.INK_SOFT,
+              background: 'none',
+              border: `1px solid ${SHELL.CARD_LINE}`,
+              borderRadius: 5,
+              padding: '8px 18px',
+              cursor: 'pointer',
+              letterSpacing: '0.04em',
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={!canSubmit || submitted}
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 11,
+              color: (!canSubmit || submitted) ? SHELL.INK_MUTED : SHELL.CARD_WHITE,
+              background: (!canSubmit || submitted) ? SHELL.GRAY_BG : SHELL.INK,
+              border: `1px solid ${(!canSubmit || submitted) ? SHELL.GRAY_LINE : SHELL.INK}`,
+              borderRadius: 5,
+              padding: '8px 18px',
+              cursor: (!canSubmit || submitted) ? 'default' : 'pointer',
+              letterSpacing: '0.04em',
+              transition: 'all 0.1s',
+            }}
+          >
+            Submit response
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── SourceIndexPage ──────────────────────────────────────────────────────────
+
 export function SourceIndexPage() {
+  const [showVendorResponse, setShowVendorResponse] = useState(false);
+
   return (
     <AppShell
       surface="source"
@@ -159,6 +535,24 @@ export function SourceIndexPage() {
           >
             Vendor C — pricing $1.8M/yr · 14% below median
           </div>
+
+          {/* Record BAFO response trigger */}
+          <button
+            onClick={() => setShowVendorResponse(true)}
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 10,
+              color: SHELL.INK_SOFT,
+              background: 'none',
+              border: `1px solid ${SHELL.CARD_LINE}`,
+              borderRadius: 5,
+              padding: '5px 12px',
+              cursor: 'pointer',
+              marginTop: 12,
+            }}
+          >
+            + Record BAFO response
+          </button>
         </div>
 
         {/* Program impact cross-link */}
@@ -226,7 +620,23 @@ export function SourceIndexPage() {
           </span>
         </div>
 
+        {/* Originate new event link */}
+        <div style={{ marginTop: 24, paddingTop: 16, borderTop: `1px solid ${SHELL.CARD_LINE}` }}>
+          <a href="/source/new" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_SOFT, textDecoration: 'none',
+          }}>
+            <span>+</span>
+            <span>Originate new source event</span>
+          </a>
+        </div>
+
       </div>
+
+      {/* VendorResponseModal */}
+      {showVendorResponse && (
+        <VendorResponseModal onClose={() => setShowVendorResponse(false)} />
+      )}
     </AppShell>
   );
 }
