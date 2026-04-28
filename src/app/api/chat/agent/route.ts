@@ -15,6 +15,8 @@ import { requireTenancy } from "@/app/api/v1/programs/_auth";
 import { getEngagementWithPhaseData } from "@/lib/programs/db-phase-queries";
 import { PHASE_LABEL_MAP } from "@/lib/programs/programs-fixture";
 import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
+import { getCategoryPlaybook } from "@/lib/agent/service-category-playbooks";
+import { getStagePlaybook } from "@/lib/agent/stage-playbooks";
 
 // ── Agent voice map ────────────────────────────────────────────────────────────
 
@@ -111,11 +113,20 @@ export async function POST(request: Request) {
     contextLines.push(...eventContextLines);
   }
 
+  const categoryPlaybook = getCategoryPlaybook(
+    (body.surfaceContext?.eventName as string) ?? '',
+    (body.surfaceContext?.eventType as string) ?? undefined,
+  );
+
+  const stagePlaybook = getStagePlaybook(stage);
+
   const systemPrompt = [
     voiceLine,
     "",
     "Page context:",
     ...contextLines,
+    categoryPlaybook ? `\nService category context:\n${categoryPlaybook}` : "",
+    stagePlaybook ? `\nCurrent stage guidance:\n${stagePlaybook}` : "",
     "",
     "Response guidelines:",
     "- Keep responses under 200 words. Be direct, specific, actionable.",
