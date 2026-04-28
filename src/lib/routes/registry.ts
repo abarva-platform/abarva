@@ -28,7 +28,7 @@
  *
  * - tenant  → TenantShell / ProgramCanonShell (per-tenant product surfaces)
  * - admin   → AdminShell / AdminCanonShell (platform admin surfaces)
- * - source  → SourceCanonShell (commercial sourcing surfaces)
+ * - source  → AppShell + SentinelAgentColumn (commercial sourcing surfaces)
  * - public  → No shell (marketing / unauthenticated)
  */
 export type RouteShellKind = 'tenant' | 'admin' | 'source' | 'public';

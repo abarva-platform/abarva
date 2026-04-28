@@ -62,11 +62,10 @@ describe('Source executive decision summary panel', () => {
     const event = buildSelectionEvent(sourceEvent!);
     const html = renderToStaticMarkup(createElement(NexusEngagementCanvas, { event }));
 
-    expect(html).toContain('Executive decision summary');
-    expect(html).toContain('Selection-readiness decision brief');
-    expect(html).toContain('Decision options');
-    expect(html).toContain('Atlas executive brief');
-    expect(html).toContain('Nexus recommended next action');
+    expect(html).toContain('Vendor selection readiness');
+    expect(html).toContain('Selection posture');
+    expect(html).toContain('Selection-readiness readiness signal');
+    expect(html).toContain('Lead sourcing agent');
   });
 
   it('renders deterministic non-final decision posture with visible blockers for seeded data', async () => {

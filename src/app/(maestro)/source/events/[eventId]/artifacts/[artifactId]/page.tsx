@@ -1,6 +1,11 @@
 import { notFound } from 'next/navigation';
-import { SourceArtifactDrawer, SourceFoundationShell } from '@/components/source';
+import { AppShell } from '@/components/shell/AppShell';
+import { StageTrackerStrip } from '@/components/shell/StageTrackerStrip';
+import { SentinelAgentColumn } from '@/components/source/SentinelAgentColumn';
+import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
+import { SourceArtifactDrawer } from '@/components/source/SourceArtifactDrawer';
 import { getSourcingEvent, getSourcingEventArtifact } from '@/lib/source/queries';
+import { AMS_SOURCE_EVENT } from '@/lib/source/shell-source-fixture';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,24 +22,32 @@ export default async function SourceArtifactPage({
   if (!event || !artifact) notFound();
 
   return (
-    <SourceFoundationShell
-      activeRoute="events"
-      title={`${event.name} · ${artifact.title}`}
-      summary="Canonical artifact route for Source. This is where Artifact Studio should attach, separate from seeded deliverable routes."
-      contextUsed={[
-        `Event: ${event.name}`,
-        `Artifact: ${artifact.kind.replace('_', ' ')}`,
-        `Owner: ${event.owner || 'sourcing owner not yet set'}`,
-        `Status: ${artifact.status}`,
-      ]}
-      customAskPrompt="Ask Nexus about this artifact status, version, or missing inputs..."
-      actionLinks={[
-        { label: 'Show evidence', href: '#artifact-evidence', description: 'Review seeded evidence references for this artifact.' },
-        { label: 'Show version history', href: '#artifact-history', description: 'Open artifact version provenance for context.' },
-        { label: 'Explain missing inputs', href: '#artifact-missing-inputs', description: 'See which evidence items are still needed.' },
-      ]}
+    <AppShell
+      surface="source"
+      topBarProps={{
+        tenantName: event.accountName,
+        showLocked: true,
+        context: `Source · ${event.name} · ${artifact.title}`,
+      }}
+      middleStrip={
+        <StageTrackerStrip
+          stages={AMS_SOURCE_EVENT.stages}
+          activeStage={event.currentStageLabel === 'Orals/BAFO' ? 'BAFO' : event.currentStageLabel}
+        />
+      }
     >
-      <SourceArtifactDrawer artifact={artifact} />
-    </SourceFoundationShell>
+      <SentinelAgentColumn
+        quote={`Artifact tier: ${artifact.tier ?? 'unclassified'}. Status: ${artifact.status}. ${artifact.sourceCount} source references.`}
+        agentContext={`Sentinel · ${artifact.title} · ${event.name}`}
+        actions={[
+          { letter: 'A', text: 'Show evidence', detail: 'Review evidence references for this artifact' },
+          { letter: 'B', text: 'Show version history', detail: 'Open artifact version provenance for context' },
+          { letter: 'C', text: 'Explain missing inputs', detail: 'See which evidence items are still needed' },
+        ]}
+      />
+      <SourceWorkingPane>
+        <SourceArtifactDrawer artifact={artifact} />
+      </SourceWorkingPane>
+    </AppShell>
   );
 }

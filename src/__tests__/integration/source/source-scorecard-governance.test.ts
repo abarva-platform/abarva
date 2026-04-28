@@ -58,7 +58,7 @@ describe('Source scorecard governance shell', () => {
       'utf8',
     );
 
-    expect(routeSource).toContain('SourceCanonShell');
+    expect(routeSource).toContain('AppShell');
     expect(componentSource).toContain('Custom follow-up is deferred');
 
     for (const source of [routeSource, componentSource]) {

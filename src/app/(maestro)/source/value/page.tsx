@@ -1,4 +1,7 @@
-import { SourceFoundationShell, SourceValueLedger } from '@/components/source';
+import { AppShell } from '@/components/shell/AppShell';
+import { SentinelAgentColumn } from '@/components/source/SentinelAgentColumn';
+import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
+import { SourceValueLedger } from '@/components/source/SourceValueLedger';
 import { getSourceValueLedger } from '@/lib/source/queries';
 
 export const dynamic = 'force-dynamic';
@@ -7,19 +10,26 @@ export default async function SourceValuePage() {
   const snapshot = await getSourceValueLedger();
 
   return (
-    <SourceFoundationShell
-      activeRoute="value"
-      title="Source value ledger"
-      summary="Canonical projected and realized value surface for AbarVa Source. This is intentionally separate from Control Tower summaries and legacy chat-only value narratives."
-      contextUsed={[
-        'Seeded Source value ledger snapshot',
-        'Perspective: projected, committed, measuring, realized',
-        'Evidence: confidence + source marker per line item',
-        'Measurement owner: Source Value Office',
-      ]}
-      customAskPrompt="Ask Atlas about this value ledger, gate, event, or evidence..."
+    <AppShell
+      surface="source"
+      topBarProps={{
+        tenantName: 'Apex Retail Group',
+        showLocked: true,
+        context: 'Source · Value ledger',
+      }}
     >
-      <SourceValueLedger snapshot={snapshot} />
-    </SourceFoundationShell>
+      <SentinelAgentColumn
+        quote="$2.1M sourcing-attributed value confirmed · $890K asserted by vendors, pending audit. AMS contributes $1.4M of confirmed total."
+        agentContext="Sentinel · Source value ledger · Apex Retail Group"
+        actions={[
+          { letter: 'A', text: 'Show assumptions', detail: 'Value projections and their evidence basis' },
+          { letter: 'B', text: 'Show evidence gaps', detail: 'Value claims missing audit confirmation' },
+          { letter: 'C', text: 'Explain value confidence', detail: 'Confidence breakdown by source and tier' },
+        ]}
+      />
+      <SourceWorkingPane>
+        <SourceValueLedger snapshot={snapshot} />
+      </SourceWorkingPane>
+    </AppShell>
   );
 }

@@ -17,7 +17,8 @@ const NAV_ITEMS = [
 
 type SurfaceKey = 'setup' | 'programs' | 'source' | 'intelligence' | 'tower';
 
-function detectSurface(pathname: string): SurfaceKey | null {
+function detectSurface(pathname: string | null): SurfaceKey | null {
+  if (!pathname) return null;
   if (pathname.startsWith('/programs')) return 'programs';
   if (pathname.startsWith('/intelligence')) return 'intelligence';
   if (pathname.startsWith('/tower')) return 'tower';

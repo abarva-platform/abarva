@@ -43,8 +43,8 @@ describe('Source value ledger shell', () => {
       'utf8',
     );
 
-    expect(routeSource).toContain('SourceFoundationShell');
-    expect(routeSource).toContain('activeRoute="value"');
+    expect(routeSource).toContain('AppShell');
+    expect(routeSource).toContain('surface="source"');
     expect(routeSource).toContain('SourceValueLedger');
     expect(componentSource).toContain('Atlas value ledger lead');
 

@@ -1,8 +1,13 @@
 import type { ReactNode } from 'react';
+import dynamic from 'next/dynamic';
 import { AppRail } from './AppRail';
 import { AppTopBar } from './AppTopBar';
 import { AppMiddleStrip } from './AppMiddleStrip';
-import { CommandPalette } from './CommandPalette';
+
+const CommandPalette = dynamic(
+  () => import('./CommandPalette').then((m) => ({ default: m.CommandPalette })),
+  { ssr: false, loading: () => null },
+);
 
 interface AppShellProps {
   surface?: 'setup' | 'programs' | 'source' | 'intelligence' | 'tower';

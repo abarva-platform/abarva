@@ -9,14 +9,19 @@ function read(filePath: string): string {
   return fs.readFileSync(path.join(process.cwd(), filePath), 'utf8');
 }
 
-describe('SHELL5 source route shell control', () => {
-  const sourceRouteShell = 'src/components/source/SourceRouteShell.tsx';
+describe('SHELL5 source route shell control (Wave S1 — AppShell migration)', () => {
+  const sentinelAgentColumn = 'src/components/source/SentinelAgentColumn.tsx';
+  const sourceWorkingPane = 'src/components/source/SourceWorkingPane.tsx';
   const sourceCommercialEventSection = 'src/components/source/SourceCommercialEventSection.tsx';
   const sourceIndexRoute = 'src/app/(maestro)/source/page.tsx';
   const sourceEventDetailRoute = 'src/app/(maestro)/source/events/[eventId]/page.tsx';
 
-  it('SourceRouteShell.tsx exists', () => {
-    expect(exists(sourceRouteShell)).toBe(true);
+  it('SentinelAgentColumn.tsx exists (Wave S1 shell replacement)', () => {
+    expect(exists(sentinelAgentColumn)).toBe(true);
+  });
+
+  it('SourceWorkingPane.tsx exists (Wave S1 working pane wrapper)', () => {
+    expect(exists(sourceWorkingPane)).toBe(true);
   });
 
   it('SourceCommercialEventSection.tsx exists', () => {
@@ -24,7 +29,6 @@ describe('SHELL5 source route shell control', () => {
   });
 
   it('source index route file exists', () => {
-    // Source index route is handled by SourceCanonShell; SourceRouteShell is additive on event detail
     expect(exists(sourceIndexRoute)).toBe(true);
   });
 
@@ -32,20 +36,23 @@ describe('SHELL5 source route shell control', () => {
     expect(exists(sourceEventDetailRoute)).toBe(true);
   });
 
-  it('SourceRouteShell.tsx does not contain teal color #14B8A6', () => {
-    const source = read(sourceRouteShell);
+  it('SentinelAgentColumn.tsx does not contain dark teal color #14B8A6', () => {
+    const source = read(sentinelAgentColumn);
     expect(source).not.toContain('#14B8A6');
-    expect(source.toLowerCase()).not.toContain('teal');
+    expect(source).not.toContain('#14b8a6');
   });
 
-  it('SourceRouteShell.tsx contains SOURCE orientation string', () => {
-    const source = read(sourceRouteShell);
-    expect(source).toContain('SOURCE');
+  it('SourceWorkingPane.tsx uses SHELL tokens, not hardcoded legacy colors', () => {
+    const source = read(sourceWorkingPane);
+    expect(source).toContain('SHELL');
+    expect(source).not.toContain('#FBFAF7');
+    expect(source).not.toContain('#060a12');
   });
 
-  it('SourceRouteShell.tsx contains Deterministic caveat', () => {
-    const source = read(sourceRouteShell);
-    expect(source).toContain('Deterministic');
+  it('SentinelAgentColumn.tsx contains SOURCE orientation (Sentinel identity)', () => {
+    const source = read(sentinelAgentColumn);
+    expect(source).toContain('Sentinel');
+    expect(source).toContain('Validator');
   });
 
   it('SourceCommercialEventSection.tsx exists and is non-empty (importable)', () => {
@@ -54,8 +61,8 @@ describe('SHELL5 source route shell control', () => {
     expect(source.length).toBeGreaterThan(0);
   });
 
-  it('event detail route wires SourceRouteShell', () => {
+  it('event detail route wires SentinelAgentColumn', () => {
     const source = read(sourceEventDetailRoute);
-    expect(source).toContain('SourceRouteShell');
+    expect(source).toContain('SentinelAgentColumn');
   });
 });

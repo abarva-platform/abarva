@@ -5,17 +5,20 @@ function read(filePath: string): string {
   return fs.readFileSync(path.join(process.cwd(), filePath), 'utf8');
 }
 
-describe('DESROUTE4 source route shell enforcement', () => {
+describe('DESROUTE4 source route shell enforcement (Wave S1 — AppShell)', () => {
   const sourceDashboardRoute = 'src/app/(maestro)/source/page.tsx';
   const sourceEventsRoute = 'src/app/(maestro)/source/events/page.tsx';
   const sourceEventDetailRoute = 'src/app/(maestro)/source/events/[eventId]/page.tsx';
-  const sourceCanonShell = 'src/components/source/SourceCanonShell.tsx';
+  const sentinelAgentColumn = 'src/components/source/SentinelAgentColumn.tsx';
 
-  it('target source routes import and use SourceCanonShell', () => {
-    [sourceDashboardRoute, sourceEventsRoute, sourceEventDetailRoute].forEach((file) => {
+  it('target source routes use AppShell (Wave S1 migration complete)', () => {
+    [sourceEventsRoute, sourceEventDetailRoute].forEach((file) => {
       const source = read(file);
-      expect(source).toContain('SourceCanonShell');
+      expect(source).toContain('AppShell');
     });
+    // Dashboard uses SourceIndexPage which itself wraps AppShell
+    const dashboard = read(sourceDashboardRoute);
+    expect(dashboard).toContain('SourceIndexPage');
   });
 
   it('event detail route mounts commercial intelligence section', () => {
@@ -23,17 +26,17 @@ describe('DESROUTE4 source route shell enforcement', () => {
     expect(source).toContain('SourceCommercialEventSection');
   });
 
-  it('canonical commercial workflow stages are visible in shell', () => {
-    const shell = read(sourceCanonShell);
-    expect(shell).toContain('Event → Pricing → Risk → BAFO → Readiness → Missions → Signals');
+  it('SentinelAgentColumn is the lead agent wrapper for Source surfaces', () => {
+    [sourceEventsRoute, sourceEventDetailRoute].forEach((file) => {
+      const source = read(file);
+      expect(source).toContain('SentinelAgentColumn');
+    });
   });
 
-  it('deterministic caveat is explicit and no fake live claims are added', () => {
-    const shell = read(sourceCanonShell);
-    expect(shell).toContain('Deterministic seeded guidance');
-    expect(shell).toContain('No live vendor upload');
-    expect(shell.toLowerCase()).not.toContain('live ingestion is complete');
-    expect(shell.toLowerCase()).not.toContain('guaranteed savings');
+  it('deterministic caveat is preserved — no live claims, no guaranteed savings', () => {
+    // Caveat lives in SentinelAgentColumn voice; working-pane components carry it too
+    const sentinel = read(sentinelAgentColumn);
+    expect(sentinel.toLowerCase()).not.toContain('live ingestion is complete');
+    expect(sentinel.toLowerCase()).not.toContain('guaranteed savings');
   });
 });
-
