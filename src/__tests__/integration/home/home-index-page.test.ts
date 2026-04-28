@@ -42,8 +42,9 @@ describe('HOME-POLISH · Nexus voice density', () => {
 describe('HOME-POLISH · Peach urgency accent on gate-pending KPI', () => {
   it('urgent stats card uses PEACH_TEXT for left border accent', () => {
     expect(componentSrc).toContain('SHELL.PEACH_TEXT');
-    // The StatsCard urgent branch should use PEACH_TEXT not PEACH_LINE
-    expect(componentSrc).toMatch(/urgent.*PEACH_TEXT|PEACH_TEXT.*urgent/s);
+    // The StatsCard urgent branch should use PEACH_TEXT — check both tokens present in component
+    expect(componentSrc).toContain('urgent');
+    expect(componentSrc).toContain('SHELL.PEACH_TEXT');
   });
 
   it('does not use PEACH_LINE for the urgent border', () => {
