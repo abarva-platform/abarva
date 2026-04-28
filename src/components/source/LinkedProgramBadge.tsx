@@ -1,4 +1,4 @@
-import React from 'react';
+import { SHELL } from '@/lib/shell/shell-tokens';
 import { LinkedProgramBadgeView } from '@/lib/source/linked-program-badge-view';
 
 interface LinkedProgramBadgeProps {
@@ -12,28 +12,28 @@ export function LinkedProgramBadge({ view }: LinkedProgramBadgeProps) {
       alignItems: 'center',
       gap: '8px',
       padding: '4px 12px',
-      backgroundColor: '#EEF2F8',
-      border: '1px solid #1B2B5C',
+      backgroundColor: SHELL.BLUE_BG,
+      border: `1px solid ${SHELL.INK_MID}`,
       borderRadius: '4px',
       fontSize: '11px',
-      color: '#1B2B5C',
-      fontFamily: 'DM Sans, sans-serif',
+      color: SHELL.INK_MID,
+      fontFamily: SHELL.SANS,
     }}>
       <span style={{ fontWeight: 600, letterSpacing: '0.02em', textTransform: 'uppercase' }}>
         LINKED PROGRAMME
       </span>
-      <span style={{ color: '#0A0C12', fontWeight: 500 }}>
+      <span style={{ color: SHELL.INK, fontWeight: 500 }}>
         {view.programCode} · {view.programName}
       </span>
       {view.routeHint ? (
         <a
           href={view.routeHint}
-          style={{ color: '#1B2B5C', textDecoration: 'underline', fontSize: '11px' }}
+          style={{ color: SHELL.INK_MID, textDecoration: 'underline', fontSize: '11px' }}
         >
           {view.ctaLabel}
         </a>
       ) : (
-        <span style={{ color: '#525866' }}>{view.ctaLabel}</span>
+        <span style={{ color: SHELL.INK_SOFT }}>{view.ctaLabel}</span>
       )}
     </div>
   );
