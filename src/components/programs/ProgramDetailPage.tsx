@@ -30,6 +30,7 @@ import { buildGateApprovalDrawerView } from '@/lib/programs/gate-approval-drawer
 import type { GateApprovalDrawerView } from '@/lib/programs/gate-approval-drawer-view';
 import { buildDeliverablesCanvasView } from '@/lib/programs/deliverable-canvas-polish-view';
 import type { DeliverablesCanvasView } from '@/lib/programs/deliverable-canvas-polish-view';
+import { buildMaestroNextActionView } from '@/lib/programs/maestro-next-action-view';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -2585,6 +2586,194 @@ function GateApprovalDrawer({ drawerView, onClose }: GateApprovalDrawerProps) {
   );
 }
 
+// ─── Maestro next action composer (PROG24) ────────────────────────────────────
+
+interface MaestroNextActionComposerProps {
+  composerView: ReturnType<typeof buildMaestroNextActionView>;
+  selectedChoice: 'A' | 'B' | 'C' | 'custom' | null;
+  customText: string;
+  onSelectChoice: (key: 'A' | 'B' | 'C' | 'custom') => void;
+  onCustomTextChange: (text: string) => void;
+}
+
+function MaestroNextActionComposer({
+  composerView,
+  selectedChoice,
+  customText,
+  onSelectChoice,
+  onCustomTextChange,
+}: MaestroNextActionComposerProps) {
+  const canSubmit =
+    selectedChoice !== null &&
+    (selectedChoice !== 'custom' || customText.trim().length > 5);
+
+  return (
+    <div
+      data-testid="maestro-next-action-composer"
+      style={{
+        marginTop: 24,
+        background: SHELL.PAPER_SOFT,
+        border: `1px solid ${SHELL.CARD_LINE}`,
+        borderRadius: 10,
+        padding: '16px 18px',
+      }}
+    >
+      {/* Header */}
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: SHELL.INK_MUTED, marginBottom: 4 }}>
+          Client Maestro
+        </div>
+        <div style={{ fontFamily: SHELL.SERIF, fontSize: 16, color: SHELL.INK, marginBottom: 4 }}>
+          {composerView.headline}
+        </div>
+        <div style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK_SOFT, lineHeight: 1.4 }}>
+          {composerView.contextLine}
+        </div>
+      </div>
+
+      {/* 3 Choices — explicit static testids required by integration tests */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 10 }}>
+        {/* Choice A */}
+        <button
+          data-testid="maestro-action-choice-A"
+          onClick={() => onSelectChoice('A')}
+          style={{
+            display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 14px',
+            background: selectedChoice === 'A' ? SHELL.MINT_BG : SHELL.CARD_WHITE,
+            border: `1px solid ${selectedChoice === 'A' ? SHELL.MINT_LINE : SHELL.CARD_LINE}`,
+            borderRadius: 8, cursor: 'pointer', textAlign: 'left', width: '100%',
+          }}
+        >
+          <span style={{ fontFamily: SHELL.MONO, fontSize: 10, fontWeight: 700, color: selectedChoice === 'A' ? SHELL.MINT_TEXT : SHELL.INK_MUTED, background: selectedChoice === 'A' ? SHELL.MINT_BG : SHELL.PAPER_DEEP, borderRadius: 4, padding: '2px 7px', minWidth: 22, textAlign: 'center', flexShrink: 0 }}>A</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: SHELL.SANS, fontSize: 13, fontWeight: 600, color: SHELL.INK, marginBottom: 2 }}>{composerView.choices[0].label}</div>
+            <div style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK_SOFT, lineHeight: 1.4 }}>{composerView.choices[0].detail}</div>
+          </div>
+        </button>
+        {/* Choice B */}
+        <button
+          data-testid="maestro-action-choice-B"
+          onClick={() => onSelectChoice('B')}
+          style={{
+            display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 14px',
+            background: selectedChoice === 'B' ? SHELL.MINT_BG : SHELL.CARD_WHITE,
+            border: `1px solid ${selectedChoice === 'B' ? SHELL.MINT_LINE : SHELL.CARD_LINE}`,
+            borderRadius: 8, cursor: 'pointer', textAlign: 'left', width: '100%',
+          }}
+        >
+          <span style={{ fontFamily: SHELL.MONO, fontSize: 10, fontWeight: 700, color: selectedChoice === 'B' ? SHELL.MINT_TEXT : SHELL.INK_MUTED, background: selectedChoice === 'B' ? SHELL.MINT_BG : SHELL.PAPER_DEEP, borderRadius: 4, padding: '2px 7px', minWidth: 22, textAlign: 'center', flexShrink: 0 }}>B</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: SHELL.SANS, fontSize: 13, fontWeight: 600, color: SHELL.INK, marginBottom: 2 }}>{composerView.choices[1].label}</div>
+            <div style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK_SOFT, lineHeight: 1.4 }}>{composerView.choices[1].detail}</div>
+          </div>
+        </button>
+        {/* Choice C */}
+        <button
+          data-testid="maestro-action-choice-C"
+          onClick={() => onSelectChoice('C')}
+          style={{
+            display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 14px',
+            background: selectedChoice === 'C' ? SHELL.MINT_BG : SHELL.CARD_WHITE,
+            border: `1px solid ${selectedChoice === 'C' ? SHELL.MINT_LINE : SHELL.CARD_LINE}`,
+            borderRadius: 8, cursor: 'pointer', textAlign: 'left', width: '100%',
+          }}
+        >
+          <span style={{ fontFamily: SHELL.MONO, fontSize: 10, fontWeight: 700, color: selectedChoice === 'C' ? SHELL.MINT_TEXT : SHELL.INK_MUTED, background: selectedChoice === 'C' ? SHELL.MINT_BG : SHELL.PAPER_DEEP, borderRadius: 4, padding: '2px 7px', minWidth: 22, textAlign: 'center', flexShrink: 0 }}>C</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: SHELL.SANS, fontSize: 13, fontWeight: 600, color: SHELL.INK, marginBottom: 2 }}>{composerView.choices[2].label}</div>
+            <div style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK_SOFT, lineHeight: 1.4 }}>{composerView.choices[2].detail}</div>
+          </div>
+        </button>
+
+        {/* Custom option */}
+        <button
+          data-testid="maestro-action-choice-custom"
+          onClick={() => onSelectChoice('custom')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            padding: '9px 14px',
+            background: selectedChoice === 'custom' ? SHELL.MINT_BG : SHELL.CARD_WHITE,
+            border: `1px solid ${selectedChoice === 'custom' ? SHELL.MINT_LINE : SHELL.CARD_LINE}`,
+            borderRadius: 8,
+            cursor: 'pointer',
+            textAlign: 'left',
+            width: '100%',
+          }}
+        >
+          <span style={{ fontFamily: SHELL.MONO, fontSize: 10, fontWeight: 700, color: selectedChoice === 'custom' ? SHELL.MINT_TEXT : SHELL.INK_MUTED }}>
+            ✎
+          </span>
+          <span style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK_SOFT }}>
+            Write a custom action
+          </span>
+        </button>
+      </div>
+
+      {/* Custom text area (shown when custom selected) */}
+      {selectedChoice === 'custom' && (
+        <div style={{ marginBottom: 12 }}>
+          <textarea
+            rows={3}
+            value={customText}
+            onChange={(e) => onCustomTextChange(e.target.value)}
+            placeholder={composerView.customPlaceholder}
+            style={{
+              width: '100%',
+              fontFamily: SHELL.SANS,
+              fontSize: 13,
+              background: SHELL.CARD_WHITE,
+              border: `1px solid ${SHELL.CARD_LINE}`,
+              borderRadius: 6,
+              padding: 10,
+              boxSizing: 'border-box',
+              resize: 'vertical',
+              color: SHELL.INK,
+              outline: 'none',
+              lineHeight: 1.5,
+            }}
+          />
+        </div>
+      )}
+
+      {/* Submit row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+        <button
+          data-testid="maestro-action-submit"
+          disabled={true}
+          title={composerView.submitDisabledReason}
+          style={{
+            fontFamily: SHELL.SANS,
+            fontSize: 12,
+            padding: '8px 18px',
+            borderRadius: 6,
+            border: 'none',
+            background: canSubmit ? SHELL.INK : SHELL.GRAY_BG,
+            color: canSubmit ? SHELL.PAPER : SHELL.GRAY_TEXT,
+            cursor: 'not-allowed',
+            opacity: 0.6,
+          }}
+        >
+          {composerView.submitLabel}
+        </button>
+        <span style={{ fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.06em' }}>
+          Deferred · live dispatch not yet wired
+        </span>
+      </div>
+
+      {/* Honest disclaimer */}
+      <div
+        data-testid="maestro-action-composer-disclaimer"
+        data-honest-disclaimer="maestro-next-action"
+        style={{ fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.08em', lineHeight: 1.5 }}
+      >
+        {composerView.honestDisclaimer}
+      </div>
+    </div>
+  );
+}
+
 // ─── CustomActionPanel (PRG-MOD-CUSTOM-ACTION) ──────────────────────────────���─
 
 interface CustomActionPanelProps {
@@ -2873,6 +3062,10 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
   const gateApprovalDrawerView = buildGateApprovalDrawerView(view);
   // PROG22 — Deliverables canvas polish
   const deliverablesCanvasView = buildDeliverablesCanvasView(view);
+  // PROG24 — Maestro next action composer
+  const maestroActionView = buildMaestroNextActionView(view);
+  const [maestroSelectedChoice, setMaestroSelectedChoice] = useState<'A' | 'B' | 'C' | 'custom' | null>(null);
+  const [maestroCustomText, setMaestroCustomText] = useState('');
   const [evidenceDrawerItem, setEvidenceDrawerItem] = useState<EvidenceItem | null>(null);
   const [contradictionItem, setContradictionItem] = useState<EvidenceItem | null>(null);
 
@@ -3434,6 +3627,14 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
                 </div>
               ))}
             </div>
+            {/* PROG24 — Maestro next action composer */}
+            <MaestroNextActionComposer
+              composerView={maestroActionView}
+              selectedChoice={maestroSelectedChoice}
+              customText={maestroCustomText}
+              onSelectChoice={setMaestroSelectedChoice}
+              onCustomTextChange={setMaestroCustomText}
+            />
           </div>
         )}
 

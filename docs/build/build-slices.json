@@ -9616,6 +9616,13 @@
       "category": "Programs",
       "status": "code_complete",
       "notes": "DeliverablesCanvas replaces DeliverablesList in Deliverables section. buildDeliverablesCanvasView lib derives per-item readiness (trustworthy/partial/missing_evidence/blocked), evidence citations, missing inputs, disabled approve+export actions, canvas summary, honest disclaimer. Items sorted blocked→pending→done. data-testid deliverables-canvas, deliverable-canvas-item, deliverable-approve-action, deliverable-export-action. 35 integration tests + PROG23 disclaimer fix. PROG22 from track-03."
+    },
+    {
+      "id": "PROG24",
+      "name": "Client Maestro Next Action Composer",
+      "category": "Programs",
+      "status": "code_complete",
+      "notes": "MaestroNextActionComposer added to Workshop section. buildMaestroNextActionView lib derives 3 contextual choices (gate/evidence/stakeholder/execution/phase focus) from program gate status and phase state, plus custom free-text option, disabled submit with honest reason. data-testid maestro-next-action-composer, maestro-action-choice-A/B/C, maestro-action-choice-custom, maestro-action-submit, maestro-action-composer-disclaimer. 36 integration tests. PROG24 from track-03."
     }
   ]
 }
