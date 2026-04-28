@@ -1055,7 +1055,8 @@
         "No model-generated solution architecture is invoked by PROD1.",
         "SOL9 deterministic recommendation engine is added as a pure library that unifies SOL3 archetypes, SOL4 / SOL5 component packs, and the SOL6 build/buy/partner evaluator into a Nexus-facing recommendation layer.",
         "SOL15 pattern playbook added (src/lib/solutions/pattern-playbook.ts); deterministic archetype\u2192workshop\u2192deliverable\u2192risk mapping; coverageScore in [0,1]; createdFrom sol15_pattern_playbook; no model calls, no DB writes.",
-        "SOL16 pattern coverage summary added (src/lib/solutions/pattern-coverage-summary.ts); deterministic coverage scoring for all archetypes; rows sorted descending by overallScore; no model calls, no DB writes."
+        "SOL16 pattern coverage summary added (src/lib/solutions/pattern-coverage-summary.ts); deterministic coverage scoring for all archetypes; rows sorted descending by overallScore; no model calls, no DB writes.",
+        "SOL11 canvas-ready architecture draft view model added (src/lib/solutions/solution-architecture-draft.ts); wraps SOL12 ArchitectureDraft with section readiness, blocker aggregation, and canvas navigation helpers; 63 integration tests; no model calls, no DB writes; deterministicSeed: true."
       ]
     },
     {
