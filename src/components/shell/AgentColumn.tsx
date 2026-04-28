@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
 
 export interface AgentAction {
@@ -17,6 +18,8 @@ export interface AgentColumnProps {
   actions: AgentAction[];
   inputPlaceholder?: string;
   onActionClick?: (letter: 'A' | 'B' | 'C') => void;
+  /** Slot rendered at the very bottom of the dark agent column panel, below action buttons and above the input box. */
+  bottomSlot?: ReactNode;
 }
 
 export function AgentColumn({
@@ -26,6 +29,7 @@ export function AgentColumn({
   actions,
   inputPlaceholder,
   onActionClick,
+  bottomSlot,
 }: AgentColumnProps) {
   const placeholder = inputPlaceholder ?? `Ask ${agent.name}...`;
 
@@ -186,6 +190,13 @@ export function AgentColumn({
           <ActionItem key={action.letter} action={action} onActionClick={onActionClick} />
         ))}
       </div>
+
+      {/* Bottom slot — custom action panel or other caller-provided content */}
+      {bottomSlot && (
+        <div style={{ paddingTop: 12 }}>
+          {bottomSlot}
+        </div>
+      )}
 
       {/* Input box */}
       <div style={{ marginTop: 'auto', padding: '16px 0 24px' }}>
