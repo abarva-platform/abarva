@@ -53,5 +53,11 @@ export type {
 // Gate evaluator — REASON-6
 export { LifecycleGateEvaluator, createGateEvaluator, evaluateStageGates } from './gate-evaluator';
 
+// Contradiction detector — REASON-7
+export { LifecycleContradictionDetector, createContradictionDetector, detectContradictions } from './contradiction-detector';
+
 // Synthesis context builder — REASON-14
 export { buildSourceSynthesisContext, instanceStateHash } from './synthesis-context-builder';
+
+// Program synthesis context builder — REASON-15
+export { buildProgramSynthesisContext, programInstanceStateHash } from './program-synthesis-context-builder';
