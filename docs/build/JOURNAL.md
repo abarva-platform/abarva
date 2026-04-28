@@ -29,3 +29,4 @@
 | 2026-04-28 | 5O | shipped | +2/-2 | (pre-infra) | #562 | T3-H01 `usedByPrograms` now reflects APX-CDP-2026 at P3 rather than P2. |
 | 2026-04-28 | S3 | shipped | +697/-464 | (pre-infra) | #563 | Source Wave S3 refreshed the event canvas. |
 | 2026-04-28 | 5P | shipped | +1/-1 | (pre-infra) | #564 | Programs agent handoff overlay phase labels moved from P2 wording to P3 wording. |
+| 2026-04-28 | PUB-6 | shipped | +2961/-0 | 18/18 | #667 | Architecture diagrams + 6 sub-pages: ElevenPlaneDiagram, KnowledgeFabricDiagram, FourAgentDiagram, JwtDataPlaneDiagram, canonical-urls.ts, and architecture index + 5 sub-pages. |
