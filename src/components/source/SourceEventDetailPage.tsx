@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { AppShell } from '@/components/shell/AppShell';
-import { AgentColumn } from '@/components/shell/AgentColumn';
+import { RibbonSynthesis } from '@/components/shell/RibbonSynthesis';
+import { AtlasDrawer } from '@/components/shell/AtlasDrawer';
 import { StageTrackerStrip } from '@/components/shell/StageTrackerStrip';
 import { LinkedProgramChip } from '@/components/shell/LinkedProgramChip';
 import { SHELL } from '@/lib/shell/shell-tokens';
@@ -714,10 +715,11 @@ function LinkedProgramTab() {
 
 export function SourceEventDetailPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('bafo');
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
     <AppShell
-      surface="source"
+      surface="source-detail"
       topBarProps={{
         tenantName: 'Apex Retail Group',
         showLocked: true,
@@ -730,27 +732,27 @@ export function SourceEventDetailPage() {
         />
       }
     >
-      {/* Agent column */}
-      <AgentColumn
-        agent={{ initials: 'St', name: 'Steward', role: 'Source Coordinator' }}
-        quote={STEWARD_QUOTE}
-        agentContext={STEWARD_CONTEXT}
-        actions={STEWARD_ACTIONS}
-        inputPlaceholder="Ask Steward about this event..."
-        surface="source"
-      />
+      {/* Mode B: full-width canvas column with ribbon + scrollable work pane */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+        <RibbonSynthesis
+          agentInitials="St"
+          agentName="Steward"
+          quote={STEWARD_QUOTE}
+          isOpen={drawerOpen}
+          onToggle={() => setDrawerOpen((v) => !v)}
+        />
 
-      {/* Work pane */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          background: SHELL.PAPER,
-          display: 'flex',
-          flexDirection: 'column',
-          minWidth: 0,
-        }}
-      >
+        {/* Work pane (scrollable) */}
+        <div
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            background: SHELL.PAPER,
+            display: 'flex',
+            flexDirection: 'column',
+            minWidth: 0,
+          }}
+        >
         {/* Event header */}
         <div
           style={{
@@ -837,6 +839,16 @@ export function SourceEventDetailPage() {
           {activeTab === 'program' && <LinkedProgramTab />}
         </div>
       </div>
+      </div>
+
+      {/* Mode B — AtlasDrawer (Shell Layout Spec v2 §5.1) */}
+      <AtlasDrawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        agent={{ initials: 'St', name: 'Steward', role: 'Source Coordinator' }}
+        quote={STEWARD_QUOTE}
+        surface="source-detail"
+      />
     </AppShell>
   );
 }

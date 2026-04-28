@@ -7,7 +7,7 @@ import { AtlasPageStateProvider } from './AtlasPageStateProvider';
 import type { SurfaceId } from '@/lib/shell/atlas-page-state';
 
 interface AppShellProps {
-  surface?: 'setup' | 'programs' | 'source' | 'intelligence' | 'tower';
+  surface?: 'setup' | 'setup-detail' | 'programs' | 'programs-detail' | 'source' | 'source-detail' | 'intelligence' | 'tower' | 'home';
   topBarProps?: {
     tenantName?: string;
     showLocked?: boolean;
