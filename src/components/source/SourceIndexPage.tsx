@@ -684,8 +684,8 @@ export function SourceIndexPage() {
               maxWidth: 640,
             }}
           >
-            This sourcing event directly affects P3 Design scope for APX-CDP-2026. Vendor architecture
-            decisions must be aligned before the Design gate clears.
+            AMS Vendor Consolidation award confirms Vendor C as the managed CDP layer. This unlocks
+            the P3 Design architecture sprint and is a required criterion for the P3→P4 Build gate.
           </p>
           <LinkedProgramChip
             direction="source-to-program"
