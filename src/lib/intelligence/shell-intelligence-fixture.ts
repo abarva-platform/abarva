@@ -18,6 +18,53 @@ export interface IntelligenceIndexView {
   actions: Array<{ letter: 'A' | 'B' | 'C'; text: string; detail?: string }>;
 }
 
+export type IntelligenceLibraryFilterKey = 'all' | 'm' | 't1' | 't3' | 'in-review' | 'candidate' | 'validated';
+
+export interface IntelligenceLibraryFilter {
+  key: IntelligenceLibraryFilterKey;
+  label: string;
+  href: string;
+  catalogEntry: string;
+}
+
+export const INTELLIGENCE_LIBRARY_FILTERS: IntelligenceLibraryFilter[] = [
+  { key: 'all', label: 'All', href: '/intelligence', catalogEntry: 'INT-IDX-DEFAULT' },
+  { key: 'm', label: 'M · Meta', href: '/intelligence?filter=m', catalogEntry: 'INT-IDX-FILTERED-M' },
+  { key: 't1', label: 'T1 · Craft', href: '/intelligence?filter=t1', catalogEntry: 'INT-IDX-FILTERED-T1' },
+  { key: 't3', label: 'T3 · Use-case', href: '/intelligence?filter=t3', catalogEntry: 'INT-IDX-FILTERED-T3' },
+  { key: 'in-review', label: 'In review', href: '/intelligence?filter=in-review', catalogEntry: 'INT-IDX-FILTERED-INREVIEW' },
+  { key: 'candidate', label: 'Candidates', href: '/intelligence?filter=candidate', catalogEntry: 'INT-IDX-FILTERED-CANDIDATE' },
+];
+
+export function normalizeIntelligenceLibraryFilter(filter: string | null | undefined): IntelligenceLibraryFilterKey {
+  if (filter === 'm' || filter === 't2' || filter === 'meta') return 'm';
+  if (filter === 't1') return 't1';
+  if (filter === 't3') return 't3';
+  if (filter === 'in-review') return 'in-review';
+  if (filter === 'candidate' || filter === 'candidates') return 'candidate';
+  if (filter === 'validated') return 'validated';
+  return 'all';
+}
+
+export function filterIntelligencePatterns(
+  patterns: IntelligencePattern[],
+  filter: IntelligenceLibraryFilterKey,
+): IntelligencePattern[] {
+  if (filter === 'all') return patterns;
+  if (filter === 'm') return patterns.filter((pattern) => pattern.tier === 'T2');
+  if (filter === 't1') return patterns.filter((pattern) => pattern.tier === 'T1');
+  if (filter === 't3') return patterns.filter((pattern) => pattern.tier === 'T3');
+  if (filter === 'in-review') return patterns.filter((pattern) => pattern.status === 'in-review');
+  if (filter === 'candidate') return patterns.filter((pattern) => pattern.status === 'candidate');
+  if (filter === 'validated') return patterns.filter((pattern) => pattern.status === 'validated');
+  return patterns;
+}
+
+export function getIntelligenceLibraryFilterLabel(filter: IntelligenceLibraryFilterKey): string {
+  if (filter === 'validated') return 'Validated';
+  return INTELLIGENCE_LIBRARY_FILTERS.find((entry) => entry.key === filter)?.label ?? 'All';
+}
+
 export const INTELLIGENCE_INDEX_VIEW: IntelligenceIndexView = {
   patterns: [
     {

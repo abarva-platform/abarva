@@ -11,7 +11,14 @@
 import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
 import { SHELL } from '@/lib/shell/shell-tokens';
-import { INTELLIGENCE_INDEX_VIEW, type IntelligencePattern } from '@/lib/intelligence/shell-intelligence-fixture';
+import {
+  filterIntelligencePatterns,
+  getIntelligenceLibraryFilterLabel,
+  INTELLIGENCE_INDEX_VIEW,
+  INTELLIGENCE_LIBRARY_FILTERS,
+  normalizeIntelligenceLibraryFilter,
+  type IntelligencePattern,
+} from '@/lib/intelligence/shell-intelligence-fixture';
 import { IntelligenceIndexSentinelPanel } from '@/components/intelligence/IntelligenceIndexSentinelPanel';
 import { IntelligenceFilterLinks, type FilterLinkPill } from '@/components/intelligence/IntelligenceFilterLinks';
 
@@ -241,47 +248,23 @@ function PatternTable({ patterns }: { patterns: IntelligencePattern[] }) {
   );
 }
 
-// ─── Filter logic ─────────────────────────────────────────────────────────────
-
-function applyFilter(
-  patterns: IntelligencePattern[],
-  filter: string | undefined,
-): IntelligencePattern[] {
-  if (!filter || filter === 'all') return patterns;
-  if (filter === 't1') return patterns.filter((p) => p.tier === 'T1');
-  if (filter === 't2') return patterns.filter((p) => p.tier === 'T2');
-  if (filter === 't3') return patterns.filter((p) => p.tier === 'T3');
-  if (filter === 'in-review') return patterns.filter((p) => p.status === 'in-review');
-  if (filter === 'candidate') return patterns.filter((p) => p.status === 'candidate');
-  if (filter === 'validated') return patterns.filter((p) => p.status === 'validated');
-  return patterns;
-}
-
-function buildFilterPills(
-  patterns: IntelligencePattern[],
-  activeFilter: string,
-): FilterLinkPill[] {
-  return [
-    { key: 'all', label: 'All', active: activeFilter === 'all' || !activeFilter, count: patterns.length, href: '/intelligence' },
-    { key: 't3', label: 'T3 · Use-case', active: activeFilter === 't3', count: patterns.filter((p) => p.tier === 'T3').length, href: '/intelligence?filter=t3' },
-    { key: 't2', label: 'T2 · Capability', active: activeFilter === 't2', count: patterns.filter((p) => p.tier === 'T2').length, href: '/intelligence?filter=t2' },
-    { key: 't1', label: 'T1 · Foundation', active: activeFilter === 't1', count: patterns.filter((p) => p.tier === 'T1').length, href: '/intelligence?filter=t1' },
-    { key: 'in-review', label: 'In review', active: activeFilter === 'in-review', count: patterns.filter((p) => p.status === 'in-review').length, href: '/intelligence?filter=in-review' },
-  ];
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 interface IntelligenceIndexPageProps {
-  /** URL filter param — e.g. 'all', 't1', 't2', 't3', 'in-review'. */
+  /** URL filter param — e.g. 'all', 'm', 't1', 't3', 'in-review'. */
   filter?: string;
 }
 
 export function IntelligenceIndexPage({ filter }: IntelligenceIndexPageProps) {
-  const activeFilter = filter ?? 'all';
+  const activeFilter = normalizeIntelligenceLibraryFilter(filter);
   const allPatterns = INTELLIGENCE_INDEX_VIEW.patterns;
-  const filtered = applyFilter(allPatterns, activeFilter);
-  const filterPills = buildFilterPills(allPatterns, activeFilter);
+  const filtered = filterIntelligencePatterns(allPatterns, activeFilter);
+  const activeFilterLabel = getIntelligenceLibraryFilterLabel(activeFilter);
+  const filterPills = INTELLIGENCE_LIBRARY_FILTERS.map((filter) => ({
+    ...filter,
+    active: activeFilter === filter.key,
+    count: filterIntelligencePatterns(allPatterns, filter.key).length,
+  }));
 
   return (
     <AppShell
@@ -345,7 +328,7 @@ export function IntelligenceIndexPage({ filter }: IntelligenceIndexPageProps) {
               lineHeight: 1.5,
             }}
           >
-            {filtered.length} pattern{filtered.length !== 1 ? 's' : ''} · validated and emerging signals for AI program design
+            {activeFilterLabel} · {filtered.length} pattern{filtered.length !== 1 ? 's' : ''} · deterministic library state for AI program design
           </p>
         </div>
 
