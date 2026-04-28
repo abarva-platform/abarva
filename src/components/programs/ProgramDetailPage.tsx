@@ -212,6 +212,7 @@ function GateApproveModal({
 }: GateApproveModalProps) {
   const [rationale, setRationale] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  void fromPhase;
   const toPhaseLabel = PHASE_LABEL_MAP[toPhase as ProgramPhaseId] ?? `Phase ${toPhase}`;
 
   const canApprove = rationale.trim().length > 10;
@@ -1523,6 +1524,8 @@ function formatFileSize(bytes: number): string {
 
 function FileUploadOverlay({ programName: _programName, programId: _programId, onClose }: FileUploadOverlayProps) {
   const { toast } = useToast();
+  void _programName;
+  void _programId;
   const [uploadState, setUploadState] = useState<{
     name: string;
     size: string;
@@ -2475,6 +2478,13 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
   const [showScorecardOverride, setShowScorecardOverride] = useState(false);
 
   const phaseLabel = PHASE_LABEL_MAP[view.viewingPhase] ?? `Phase ${view.viewingPhase}`;
+  const canonicalDetailHref = `/programs/${view.programId}`;
+  const currentScore =
+    view.programId === 'apx-cdp-2026' && view.viewingPhase === 2
+      ? '36%'
+      : view.programId === 'apx-cdp-2026' && view.viewingPhase === 3
+        ? '100%'
+        : '—';
 
   // Map ProgramPhaseSlot to PhaseStripSlot
   const stripPhases: PhaseStripSlot[] = view.phases.map((s) => ({
@@ -2640,6 +2650,17 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
           >
             {view.name}
           </h1>
+          <div
+            style={{
+              marginTop: 8,
+              fontFamily: SHELL.MONO,
+              fontSize: 10,
+              color: SHELL.INK_MUTED,
+              letterSpacing: '0.06em',
+            }}
+          >
+            Canonical route · <code>{canonicalDetailHref}</code>
+          </div>
         </div>
 
         {/* Gate ribbon — shown when gate is pending */}
@@ -2798,7 +2819,13 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
               const data = await res.json();
               if (data.ok) {
                 setShowGateModal(false);
-                toast({ type: 'success', title: 'Gate approved', message: 'APX-CDP-2026 advancing to P3 Design' });
+                const advancedPhase = data.newPhase as ProgramPhaseId;
+                const advancedLabel = PHASE_LABEL_MAP[advancedPhase] ?? `Phase ${data.newPhase}`;
+                toast({
+                  type: 'success',
+                  title: 'Gate approved',
+                  message: `${view.displayId} advancing to P${data.newPhase} ${advancedLabel}`,
+                });
                 setShowPhaseTransition(true);
                 setTimeout(() => {
                   setShowPhaseTransition(false);
@@ -2832,7 +2859,7 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
       {/* PRG-MOD-SCORECARD-OVERRIDE modal */}
       {showScorecardOverride && (
         <ScorecardOverrideModal
-          currentScore="36%"
+          currentScore={currentScore}
           onClose={() => setShowScorecardOverride(false)}
         />
       )}
@@ -2888,7 +2915,7 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
         <AgentHandoffOverlay
           fromAgent={{ initials: 'Nx', name: 'Nexus' }}
           toAgent={{ initials: 'Sn', name: 'Sentinel' }}
-          context={`${view.displayId} · P${view.viewingPhase} Synthesis evidence review`}
+          context={`${view.displayId} · P${view.viewingPhase} ${phaseLabel} evidence review`}
           onComplete={() => setShowHandoff(false)}
         />
       )}
