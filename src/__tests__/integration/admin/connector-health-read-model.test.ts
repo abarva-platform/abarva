@@ -44,8 +44,8 @@ describe('ADM6 — buildConnectorHealthSummary shape', () => {
     expect(summary.totalCount).toBe(5);
   });
 
-  it('healthyCount is 2', () => {
-    expect(summary.healthyCount).toBe(2);
+  it('healthyCount is 1', () => {
+    expect(summary.healthyCount).toBe(1);
   });
 
   it('degradedCount is 1', () => {
@@ -56,8 +56,8 @@ describe('ADM6 — buildConnectorHealthSummary shape', () => {
     expect(summary.unreachableCount).toBe(1);
   });
 
-  it('notConfiguredCount is 1', () => {
-    expect(summary.notConfiguredCount).toBe(1);
+  it('notConfiguredCount is 2', () => {
+    expect(summary.notConfiguredCount).toBe(2);
   });
 
   it('counts sum to totalCount', () => {
@@ -280,23 +280,27 @@ describe('ADM6 — getConnectorHealthSnapshot: conn-contract-mgmt (not_configure
   });
 });
 
-describe('ADM6 — getConnectorHealthSnapshot: conn-identity (healthy)', () => {
+describe('ADM6 — getConnectorHealthSnapshot: conn-ms-graph (not configured)', () => {
   let snap: ConnectorHealthSnapshot;
 
   beforeAll(() => {
-    snap = getConnectorHealthSnapshot('conn-identity') as ConnectorHealthSnapshot;
+    snap = getConnectorHealthSnapshot('conn-ms-graph') as ConnectorHealthSnapshot;
   });
 
   it('returns a non-null value', () => {
     expect(snap).not.toBeNull();
   });
 
-  it('status is healthy_stub', () => {
-    expect(snap.status).toBe('healthy_stub');
+  it('status is not_configured', () => {
+    expect(snap.status).toBe('not_configured');
   });
 
-  it('overallPassed equals totalChecks', () => {
-    expect(snap.overallPassed).toBe(snap.totalChecks);
+  it('does not claim auth, pull, latency, or active scope', () => {
+    expect(snap.integrationClass).toBe('T-MS-GRAPH');
+    expect(snap.lastAuthenticatedAt).toBeNull();
+    expect(snap.lastSuccessfulPullAt).toBeNull();
+    expect(snap.pullLatencyMs).toBeNull();
+    expect(snap.scopeActive).toEqual([]);
   });
 
   it('deterministicSeed is true', () => {
@@ -368,8 +372,8 @@ describe('ADM6 — describeHealthSummary', () => {
     expect(desc.length).toBeGreaterThan(0);
   });
 
-  it('includes healthy count "2 healthy"', () => {
-    expect(describeHealthSummary(summary)).toContain('2 healthy');
+  it('includes healthy count "1 healthy"', () => {
+    expect(describeHealthSummary(summary)).toContain('1 healthy');
   });
 
   it('includes degraded count "1 degraded"', () => {
@@ -380,8 +384,8 @@ describe('ADM6 — describeHealthSummary', () => {
     expect(describeHealthSummary(summary)).toContain('1 unreachable');
   });
 
-  it('includes not-configured count "1 not configured"', () => {
-    expect(describeHealthSummary(summary)).toContain('1 not configured');
+  it('includes not-configured count "2 not configured"', () => {
+    expect(describeHealthSummary(summary)).toContain('2 not configured');
   });
 
   it('uses interpunct separator "·"', () => {

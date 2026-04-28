@@ -164,7 +164,7 @@ const CATEGORY_ORDER: ConnectorKind[] = [
 ];
 
 const HARD_GATE_REASON =
-  'Live connector adapter available in Wave 27. Hard-gated in this environment.';
+  'Live connector configure/test is blocked until Setup W4 implements the OAuth and steward validation boundary.';
 
 const DETERMINISTIC_CAVEAT =
   'Connector statuses are deterministic seed data — not live connectivity checks. ' +
@@ -475,6 +475,58 @@ const CONNECTOR_ENRICHMENT: Readonly<Record<string, ConnectorEnrichment>> = {
         timestamp: seedTimestamp('conn-apex-id:warn', 14),
         level: 'warn',
         message: 'Production SSO domain verification not started.',
+      },
+    ],
+  },
+  'conn-apex-ms-graph': {
+    configFieldDetails: {
+      tenantId: {
+        label: 'Microsoft Entra tenant id',
+        type: 'string',
+        maskedValue: 'tenant-****',
+        helpText: 'Required for W4 OAuth; masked in W3 and not validated live.',
+      },
+      clientId: {
+        label: 'Application client id',
+        type: 'string',
+        maskedValue: 'app-****',
+        helpText: 'Microsoft Graph app registration id; no live app lookup is performed.',
+      },
+      clientSecret: {
+        label: 'Client secret',
+        type: 'secret',
+        maskedValue: '••••••••',
+        helpText: 'Secret reference only. W3 does not store or exchange Graph credentials.',
+      },
+      redirectUri: {
+        label: 'Redirect URI',
+        type: 'url',
+        maskedValue: 'https://app.abarva.ai/api/setup/microsoft-graph/callback',
+        helpText: 'Planned W4 callback boundary; inactive in this deterministic seed.',
+      },
+      adminConsent: {
+        label: 'Admin consent',
+        type: 'enum',
+        maskedValue: 'not granted',
+        helpText: 'Tenant admin consent is required before any live Graph test.',
+      },
+      requiredScopes: {
+        label: 'Required scopes',
+        type: 'enum',
+        maskedValue: 'User.Read.All, Group.Read.All, Directory.Read.All, Calendars.Read, Mail.ReadBasic.All, Reports.Read.All',
+        helpText: 'Scope contract only. These scopes are not active in W3.',
+      },
+    },
+    requirements: [
+      { surface: 'Admin · Users & access', required: true, notes: 'Users and groups require W4 OAuth before use.' },
+      { surface: 'Setup · Connector health', required: true, notes: 'Health row must stay not configured until live consent exists.' },
+      { surface: 'Tower · Usage evidence', required: false, notes: 'Usage reports remain out of runtime scope in W3.' },
+    ],
+    errorLog: [
+      {
+        timestamp: seedTimestamp('conn-apex-ms-graph:block', 12),
+        level: 'warn',
+        message: 'Configure/test blocked until Setup W4 implements Microsoft Graph OAuth.',
       },
     ],
   },

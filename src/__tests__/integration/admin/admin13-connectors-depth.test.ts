@@ -83,8 +83,8 @@ describe('ADMIN13 — buildConnectorsPageView contract', () => {
     expect(view.defaultTab).toBe('health');
   });
 
-  it('hardGateReason mentions Wave 27', () => {
-    expect(view.hardGateReason).toMatch(/Wave 27/);
+  it('hardGateReason mentions Setup W4', () => {
+    expect(view.hardGateReason).toMatch(/Setup W4/);
   });
 
   it('total connectors in categories equals view.connectors.length', () => {
@@ -224,6 +224,16 @@ describe('ADMIN13 — per-connector detail map', () => {
       }
     }
   });
+
+  it('Microsoft Graph detail is masked and blocked for W4 OAuth', () => {
+    const graph = view.connectors.find((c) => c.id === 'conn-apex-ms-graph');
+    expect(graph?.status).toBe('blocked');
+    const detail = view.connectorDetailMap['conn-apex-ms-graph'];
+    expect(detail.vendor).toBe('Microsoft Graph');
+    expect(detail.configFields.map((field) => field.key)).toContain('requiredScopes');
+    expect(detail.configFields.find((field) => field.key === 'clientSecret')?.maskedValue).toBe('••••••••');
+    expect(detail.errorLog[0].message).toContain('Setup W4');
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -240,7 +250,7 @@ describe('ADMIN13 — action strip', () => {
     const add = view.actions.find((a) => a.id === 'add-connector') as ConnectorAction;
     expect(add).toBeDefined();
     expect(add.status).toBe('blocked');
-    expect(add.reason).toMatch(/Wave 27/);
+    expect(add.reason).toMatch(/Setup W4/);
   });
 
   it('Test all connections is blocked', () => {
