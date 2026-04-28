@@ -403,11 +403,11 @@ function buildPhasePanel(
   if (programId === 'apx-cdp-2026' && viewingPhase === 3 && viewingPhaseState === 'current') {
     return {
       gateCriteria: [
-        { criterion: 'Architecture blueprint reviewed by sponsor', met: false },
-        { criterion: 'Vendor integration contract signed (Vendor C)', met: false },
+        { criterion: 'Architecture blueprint reviewed by sponsor', met: true },
         { criterion: 'Data model approved by engineering lead', met: true },
-        { criterion: 'Privacy architecture signed off', met: false },
-        { criterion: 'Build brief approved and scoped', met: false },
+        { criterion: 'Vendor integration contract signed (Vendor C)', met: false },
+        { criterion: 'Privacy architecture signed off by Steward', met: false },
+        { criterion: 'Build brief scoped and sponsor-approved', met: false },
       ],
       evidenceItems: [
         {

@@ -38,9 +38,9 @@ export default async function SourceEventDetailPage({
         quote={`${event.name} at ${event.currentStageLabel}. ${event.blocker ? `Blocker: ${event.blocker}.` : 'No active blockers.'} Linked to ${event.code}.`}
         agentContext={`Sentinel · ${event.name} · ${event.currentStageLabel}`}
         actions={[
-          { letter: 'A', text: 'Review Design gate blockers', detail: 'Gate items blocking P2 → P3 advance for linked program' },
-          { letter: 'B', text: 'Open Workshop 5 outcomes', detail: 'Workshop 5 decisions and unresolved evidence gaps' },
-          { letter: 'C', text: 'Inspect deliverable evidence', detail: 'Review staged artifacts before moving to BAFO' },
+          { letter: 'A', text: 'Review BAFO award status', detail: 'Vendor C selected — award and integration contract in final review' },
+          { letter: 'B', text: 'Open CDP linked program', detail: 'APX-CDP-2026 P3 Design · Architecture sprint active' },
+          { letter: 'C', text: 'Inspect vendor evidence', detail: 'BAFO submissions and SOC-2 attestations on file' },
         ]}
       />
       <SourceWorkingPane>
