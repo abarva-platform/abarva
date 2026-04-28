@@ -43,7 +43,8 @@ import type { DeliverablesCanvasView } from '@/lib/programs/deliverable-canvas-p
 import { buildMaestroNextActionView } from '@/lib/programs/maestro-next-action-view';
 import { buildWorkshopNotesActionPlanView } from '@/lib/programs/workshop-notes-action-plan-view';
 import { WorkshopNotesActionPlanPanel } from '@/components/programs/WorkshopNotesActionPlanPanel';
-import { MissionList } from '@/components/_shared/MissionList';
+import { MissionListInteractive } from '@/components/_shared/MissionListInteractive';
+import { RecentMissionStates } from '@/components/_shared/RecentMissionStates';
 import { getMissionsForProgram } from '@/lib/agent/agent-mission-derived';
 import { AddProgramEvidenceForm } from '@/components/programs/AddProgramEvidenceForm';
 
@@ -3446,13 +3447,21 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
             TASK-oriented complement to the Gate section's STATUS view. */}
         {(() => {
           const missions = getMissionsForProgram(view.programId);
+          // Use the first mission's `instanceId` to anchor the
+          // "Recently completed" subsection — every mission for this
+          // program shares the same resolved instance id, so the first
+          // entry is a stable lookup key. Fall back to view.programId
+          // when there are no active missions (recent list will simply
+          // render nothing if no entries match).
+          const recentInstanceId = missions[0]?.instanceId ?? view.programId;
           return (
-            <div style={{ marginBottom: 20 }}>
-              <MissionList
+            <div style={{ marginBottom: 20, display: 'grid', gap: 8 }}>
+              <MissionListInteractive
                 missions={missions}
                 title="Pending gates · this program"
                 maxRows={6}
               />
+              <RecentMissionStates instanceId={recentInstanceId} limit={3} />
             </div>
           );
         })()}
