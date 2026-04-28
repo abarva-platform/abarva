@@ -25,8 +25,17 @@ export function ConnectorDetailPage({ detail }: ConnectorDetailPageProps) {
     degraded: { bg: SHELL.PEACH_BG, text: SHELL.PEACH_TEXT, label: 'Degraded' },
     disconnected: { bg: SHELL.GRAY_BG, text: SHELL.GRAY_TEXT, label: 'Disconnected' },
   };
+  const modeStyles: Record<ConnectorDetail['dataMode'], { bg: string; text: string; label: string }> = {
+    seeded: { bg: SHELL.GRAY_BG, text: SHELL.GRAY_TEXT, label: 'Seeded fixture' },
+    live: { bg: SHELL.BLUE_BG, text: SHELL.INK_SOFT, label: 'Live signal' },
+  };
   const ss = statusStyles[detail.status];
+  const mode = modeStyles[detail.dataMode];
   const health = deriveConnectorHealth(detail);
+  const modeNote =
+    detail.dataMode === 'seeded'
+      ? 'Deterministic setup profile. This surface mirrors the canonical /admin/connectors model and does not perform a live API call.'
+      : 'Live connector checkpoint. Steward still validates scope separately before any production-ready claim.';
 
   return (
     <AppShell
@@ -41,12 +50,11 @@ export function ConnectorDetailPage({ detail }: ConnectorDetailPageProps) {
       <AgentColumn
         agent={{ initials: 'St', name: 'Steward', role: 'Setup Orchestrator' }}
         quote={detail.agentQuote}
-        agentContext="Steward · Setup · connector health and OAuth flows"
+        agentContext="Steward · Setup · connector health and credential routing"
         actions={detail.actions}
         surface="setup"
       />
 
-      {/* Work pane */}
       <div
         style={{
           flex: 1,
@@ -55,7 +63,6 @@ export function ConnectorDetailPage({ detail }: ConnectorDetailPageProps) {
           padding: '28px 36px',
         }}
       >
-        {/* Back link */}
         <div style={{ marginBottom: 18 }}>
           <Link
             href="/admin/connectors"
@@ -71,7 +78,6 @@ export function ConnectorDetailPage({ detail }: ConnectorDetailPageProps) {
           </Link>
         </div>
 
-        {/* Header row: status pill + type tag */}
         <div
           style={{
             display: 'flex',
@@ -79,6 +85,7 @@ export function ConnectorDetailPage({ detail }: ConnectorDetailPageProps) {
             alignItems: 'center',
             gap: 8,
             marginBottom: 10,
+            flexWrap: 'wrap',
           }}
         >
           <span
@@ -111,6 +118,34 @@ export function ConnectorDetailPage({ detail }: ConnectorDetailPageProps) {
           </span>
           <span
             style={{
+              display: 'inline-block',
+              fontFamily: SHELL.MONO,
+              fontSize: 9.5,
+              fontWeight: 600,
+              letterSpacing: '0.10em',
+              textTransform: 'uppercase',
+              color: mode.text,
+              background: mode.bg,
+              borderRadius: 10,
+              padding: '3px 9px',
+              lineHeight: 1,
+            }}
+          >
+            {mode.label}
+          </span>
+          <span
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 9,
+              color: SHELL.INK_MUTED,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+            }}
+          >
+            {detail.connectorClassLabel}
+          </span>
+          <span
+            style={{
               fontFamily: SHELL.MONO,
               fontSize: 9,
               color: SHELL.INK_MUTED,
@@ -122,7 +157,39 @@ export function ConnectorDetailPage({ detail }: ConnectorDetailPageProps) {
           </span>
         </div>
 
-        {/* H1 */}
+        <div
+          style={{
+            background: SHELL.PAPER_SOFT,
+            border: `1px solid ${SHELL.CARD_LINE}`,
+            borderRadius: 8,
+            padding: '12px 14px',
+            marginBottom: 18,
+          }}
+        >
+          <div
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 9,
+              color: mode.text,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              marginBottom: 6,
+            }}
+          >
+            {mode.label}
+          </div>
+          <div
+            style={{
+              fontFamily: SHELL.SANS,
+              fontSize: 12,
+              color: SHELL.INK_SOFT,
+              lineHeight: 1.5,
+            }}
+          >
+            {modeNote}
+          </div>
+        </div>
+
         <h1
           style={{
             fontFamily: SHELL.SERIF,
@@ -137,21 +204,31 @@ export function ConnectorDetailPage({ detail }: ConnectorDetailPageProps) {
           {detail.name}
         </h1>
 
-        {/* Vendor + endpoint */}
         <div
           style={{
             fontFamily: SHELL.SANS,
             fontSize: 12,
             color: SHELL.INK_MUTED,
-            marginBottom: 20,
+            marginBottom: 8,
             lineHeight: 1.5,
           }}
         >
-          {detail.vendor} &nbsp;·&nbsp;{' '}
-          <span style={{ fontFamily: SHELL.MONO, fontSize: 11 }}>{detail.endpoint}</span>
+          {detail.vendor} · {detail.authType} · <span style={{ fontFamily: SHELL.MONO, fontSize: 11 }}>{detail.endpoint}</span>
         </div>
 
-        {/* Healthy status section */}
+        <p
+          style={{
+            fontFamily: SHELL.SANS,
+            fontSize: 13,
+            color: SHELL.INK_SOFT,
+            lineHeight: 1.5,
+            margin: '0 0 20px 0',
+            maxWidth: 760,
+          }}
+        >
+          {detail.description}
+        </p>
+
         {detail.status === 'healthy' && (
           <div
             style={{
@@ -185,7 +262,7 @@ export function ConnectorDetailPage({ detail }: ConnectorDetailPageProps) {
                   textTransform: 'uppercase',
                 }}
               >
-                HEALTHY
+                {detail.dataMode === 'seeded' ? 'Seeded status' : 'Live status'}
               </div>
               <div
                 style={{
@@ -195,13 +272,14 @@ export function ConnectorDetailPage({ detail }: ConnectorDetailPageProps) {
                   marginTop: 2,
                 }}
               >
-                Last sync {detail.lastSuccessfulSync} · OAuth valid for 87 days
+                {detail.dataMode === 'seeded'
+                  ? `Seeded checkpoint captured at ${detail.lastSuccessfulSync ?? detail.lastSync}. Live validation remains separate from this setup surface.`
+                  : `Last sync ${detail.lastSuccessfulSync ?? detail.lastSync}`}
               </div>
             </div>
           </div>
         )}
 
-        {/* Error banner */}
         {detail.errorCode && (
           <div
             style={{
@@ -212,7 +290,6 @@ export function ConnectorDetailPage({ detail }: ConnectorDetailPageProps) {
               marginBottom: 20,
             }}
           >
-            {/* Top row: dot + error code */}
             <div
               style={{
                 display: 'flex',
@@ -245,7 +322,6 @@ export function ConnectorDetailPage({ detail }: ConnectorDetailPageProps) {
               </span>
             </div>
 
-            {/* Error message */}
             <p
               style={{
                 fontFamily: SHELL.SANS,
@@ -258,14 +334,15 @@ export function ConnectorDetailPage({ detail }: ConnectorDetailPageProps) {
               {detail.errorMessage}
             </p>
 
-            {/* Bottom row: error time + last successful */}
             <div
               style={{
                 display: 'flex',
                 flexDirection: 'row',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: 12,
+                marginBottom: detail.reconnectProfile ? 12 : 0,
+                gap: 12,
+                flexWrap: 'wrap',
               }}
             >
               <span
@@ -290,32 +367,30 @@ export function ConnectorDetailPage({ detail }: ConnectorDetailPageProps) {
               )}
             </div>
 
-            {/* Reconnect button */}
-            <Link
-              href={`/admin/connectors/${detail.id}/reconnect`}
-              style={{
-                display: 'inline-block',
-                fontFamily: SHELL.MONO,
-                fontSize: 11,
-                fontWeight: 600,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                color: SHELL.PAPER,
-                background: SHELL.INK,
-                border: 'none',
-                borderRadius: 6,
-                padding: '8px 18px',
-                textDecoration: 'none',
-                cursor: 'pointer',
-                lineHeight: 1,
-              }}
-            >
-              Reconnect ServiceNow
-            </Link>
+            {detail.reconnectProfile && (
+              <Link
+                href={`/admin/connectors/${detail.id}/reconnect`}
+                style={{
+                  display: 'inline-block',
+                  fontFamily: SHELL.MONO,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: SHELL.PAPER,
+                  background: SHELL.INK,
+                  borderRadius: 6,
+                  padding: '8px 18px',
+                  textDecoration: 'none',
+                  lineHeight: 1,
+                }}
+              >
+                {detail.reconnectProfile.callToAction}
+              </Link>
+            )}
           </div>
         )}
 
-        {/* Data flows section */}
         <div style={{ marginBottom: 24 }}>
           <div
             style={{
@@ -350,7 +425,6 @@ export function ConnectorDetailPage({ detail }: ConnectorDetailPageProps) {
                   borderTop: idx === 0 ? 'none' : `1px solid ${SHELL.CARD_LINE_SOFT}`,
                 }}
               >
-                {/* Direction chip */}
                 <span
                   style={{
                     display: 'inline-block',
@@ -371,8 +445,6 @@ export function ConnectorDetailPage({ detail }: ConnectorDetailPageProps) {
                 >
                   {flow.direction}
                 </span>
-
-                {/* Description */}
                 <span
                   style={{
                     fontFamily: SHELL.SANS,
@@ -384,8 +456,6 @@ export function ConnectorDetailPage({ detail }: ConnectorDetailPageProps) {
                 >
                   {flow.description}
                 </span>
-
-                {/* Last synced */}
                 <span
                   style={{
                     fontFamily: SHELL.MONO,
@@ -401,7 +471,6 @@ export function ConnectorDetailPage({ detail }: ConnectorDetailPageProps) {
           </div>
         </div>
 
-        {/* Health contract: 3-col mini stat cards */}
         <div
           style={{
             display: 'grid',
@@ -410,101 +479,9 @@ export function ConnectorDetailPage({ detail }: ConnectorDetailPageProps) {
             marginBottom: 10,
           }}
         >
-          <div
-            style={{
-              background: SHELL.CARD_WHITE,
-              border: `1px solid ${SHELL.CARD_LINE}`,
-              borderRadius: 8,
-              padding: '12px 14px',
-            }}
-          >
-            <div
-              style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 9,
-                color: SHELL.INK_MUTED,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                marginBottom: 4,
-              }}
-            >
-              Last authenticated
-            </div>
-            <div
-              style={{
-                fontFamily: SHELL.SANS,
-                fontSize: 13,
-                color: SHELL.INK,
-                fontWeight: 600,
-              }}
-            >
-              {health.lastAuthenticatedAt}
-            </div>
-          </div>
-
-          <div
-            style={{
-              background: SHELL.CARD_WHITE,
-              border: `1px solid ${SHELL.CARD_LINE}`,
-              borderRadius: 8,
-              padding: '12px 14px',
-            }}
-          >
-            <div
-              style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 9,
-                color: SHELL.INK_MUTED,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                marginBottom: 4,
-              }}
-            >
-              Last successful pull
-            </div>
-            <div
-              style={{
-                fontFamily: SHELL.SANS,
-                fontSize: 13,
-                color: SHELL.INK,
-                fontWeight: 600,
-              }}
-            >
-              {health.lastSuccessfulPullAt}
-            </div>
-          </div>
-
-          <div
-            style={{
-              background: SHELL.CARD_WHITE,
-              border: `1px solid ${SHELL.CARD_LINE}`,
-              borderRadius: 8,
-              padding: '12px 14px',
-            }}
-          >
-            <div
-              style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 9,
-                color: SHELL.INK_MUTED,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                marginBottom: 4,
-              }}
-            >
-              Pull latency
-            </div>
-            <div
-              style={{
-                fontFamily: SHELL.SANS,
-                fontSize: 13,
-                color: SHELL.INK,
-                fontWeight: 600,
-              }}
-            >
-              {health.pullLatencyMs}
-            </div>
-          </div>
+          <MetricCard label="Last authenticated" value={health.lastAuthenticatedAt} />
+          <MetricCard label="Last successful pull" value={health.lastSuccessfulPullAt} />
+          <MetricCard label="Pull latency" value={health.pullLatencyMs} />
         </div>
 
         <div
@@ -514,89 +491,74 @@ export function ConnectorDetailPage({ detail }: ConnectorDetailPageProps) {
             gap: 10,
           }}
         >
-          <div
-            style={{
-              background: SHELL.CARD_WHITE,
-              border: `1px solid ${SHELL.CARD_LINE}`,
-              borderRadius: 8,
-              padding: '12px 14px',
-            }}
-          >
-            <div
-              style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 9,
-                color: SHELL.INK_MUTED,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                marginBottom: 4,
-              }}
-            >
-              PII filter
-            </div>
-            <div
-              style={{
-                fontFamily: SHELL.SANS,
-                fontSize: 13,
-                color: SHELL.INK,
-                fontWeight: 600,
-              }}
-            >
-              {health.piiFilterActive}
-            </div>
-          </div>
-
-          <div
-            style={{
-              background: SHELL.CARD_WHITE,
-              border: `1px solid ${SHELL.CARD_LINE}`,
-              borderRadius: 8,
-              padding: '12px 14px',
-            }}
-          >
-            <div
-              style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 9,
-                color: SHELL.INK_MUTED,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                marginBottom: 4,
-              }}
-            >
-              Scope active
-            </div>
-            <div
-              style={{
-                fontFamily: SHELL.SANS,
-                fontSize: 13,
-                color: SHELL.INK,
-                fontWeight: 600,
-              }}
-            >
-              {health.scopeActive}
-            </div>
-          </div>
+          <MetricCard label="PII filter" value={health.piiFilterActive} />
+          <MetricCard label="Scope active" value={health.scopeActive} />
         </div>
       </div>
     </AppShell>
   );
 }
 
+function MetricCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div
+      style={{
+        background: SHELL.CARD_WHITE,
+        border: `1px solid ${SHELL.CARD_LINE}`,
+        borderRadius: 8,
+        padding: '12px 14px',
+      }}
+    >
+      <div
+        style={{
+          fontFamily: SHELL.MONO,
+          fontSize: 9,
+          color: SHELL.INK_MUTED,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          marginBottom: 4,
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontFamily: SHELL.SANS,
+          fontSize: 13,
+          color: SHELL.INK,
+          fontWeight: 600,
+          lineHeight: 1.4,
+        }}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
 function deriveConnectorHealth(detail: ConnectorDetail) {
   const lastAuthenticatedAt =
-    detail.status === 'degraded'
-      ? detail.lastSuccessfulSync ?? detail.lastSync
-      : detail.lastSync;
+    detail.dataMode === 'seeded'
+      ? `Seeded checkpoint · ${detail.lastSync}`
+      : detail.status === 'degraded'
+        ? detail.lastSuccessfulSync ?? detail.lastSync
+        : detail.lastSync;
 
   return {
     lastAuthenticatedAt,
     lastSuccessfulPullAt: detail.lastSuccessfulSync ?? detail.lastSync,
     pullLatencyMs:
-      detail.status === 'healthy' ? '280 ms' :
-      detail.status === 'degraded' ? '910 ms' :
-      'not yet measured',
-    piiFilterActive: detail.connectorType === 'CRM' ? 'Active' : 'Active',
+      detail.dataMode === 'seeded'
+        ? 'seeded checkpoint'
+        : detail.status === 'healthy'
+          ? '280 ms'
+          : detail.status === 'degraded'
+            ? '910 ms'
+            : 'not yet measured',
+    piiFilterActive:
+      detail.connectorClass === 'crm' || detail.connectorClass === 'model_provider'
+        ? 'Active'
+        : 'Scoped',
     scopeActive:
       detail.dataFlows.length > 0
         ? detail.dataFlows.map((flow) => flow.description).slice(0, 2).join(' · ')

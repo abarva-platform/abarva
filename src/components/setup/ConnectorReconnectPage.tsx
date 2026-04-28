@@ -22,6 +22,12 @@ interface ConnectorReconnectPageProps {
 
 export function ConnectorReconnectPage({ detail }: ConnectorReconnectPageProps) {
   const [authorized, setAuthorized] = useState(false);
+  const reconnectProfile = detail.reconnectProfile;
+  const modeLabel = detail.dataMode === 'seeded' ? 'Seeded fixture' : 'Live signal';
+
+  if (!reconnectProfile) {
+    return null;
+  }
 
   return (
     <AppShell
@@ -35,10 +41,10 @@ export function ConnectorReconnectPage({ detail }: ConnectorReconnectPageProps) 
     >
       <AgentColumn
         agent={{ initials: 'St', name: 'Steward', role: 'Auth Governor' }}
-        quote={`Reconnect flow for ${detail.name}. Current state: ${detail.status}. Re-authorize first, then confirm queued data flows resume from ${detail.lastSuccessfulSync ?? detail.lastSync}.`}
+        quote={`${reconnectProfile.callToAction} for ${detail.name}. Current state: ${detail.status}. Record the credential handoff here, then validate the next live checkpoint separately from setup.`}
         agentContext="Steward · Setup · reconnect auth flow"
         actions={[
-          { letter: 'A', text: `Authorize ${detail.name}`, detail: 'Open the consent path and refresh the token' },
+          { letter: 'A', text: reconnectProfile.callToAction, detail: 'Open the canonical handoff step for this connector' },
           { letter: 'B', text: 'Review queued flows', detail: 'Confirm inbound and outbound sync scope before reconnecting' },
           { letter: 'C', text: 'Return to connector detail', detail: 'Verify health once re-auth completes' },
         ]}
@@ -54,7 +60,6 @@ export function ConnectorReconnectPage({ detail }: ConnectorReconnectPageProps) 
         }}
       >
         <div style={{ maxWidth: 600, margin: '0 auto' }}>
-          {/* Back link */}
           <div style={{ marginBottom: 22 }}>
             <Link
               href={`/admin/connectors/${detail.id}`}
@@ -70,7 +75,6 @@ export function ConnectorReconnectPage({ detail }: ConnectorReconnectPageProps) 
             </Link>
           </div>
 
-          {/* Header */}
           <h1
             style={{
               fontFamily: SHELL.SERIF,
@@ -92,13 +96,12 @@ export function ConnectorReconnectPage({ detail }: ConnectorReconnectPageProps) 
               margin: '0 0 28px 0',
               lineHeight: 1.5,
             }}
-            >
-              OAuth re-authorization on the canonical route · estimated 60 seconds
-            </p>
+          >
+            {reconnectProfile.summary} · {reconnectProfile.estimate.toLowerCase()}
+          </p>
 
-          {/* Steps list */}
           <div style={{ marginBottom: 0 }}>
-            {detail.reconnectSteps.map((step, idx) => (
+            {reconnectProfile.steps.map((step, idx) => (
               <div
                 key={idx}
                 style={{
@@ -110,7 +113,6 @@ export function ConnectorReconnectPage({ detail }: ConnectorReconnectPageProps) 
                   borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
                 }}
               >
-                {/* Number circle */}
                 <div
                   style={{
                     width: 28,
@@ -136,7 +138,6 @@ export function ConnectorReconnectPage({ detail }: ConnectorReconnectPageProps) 
                   </span>
                 </div>
 
-                {/* Step text */}
                 <span
                   style={{
                     fontFamily: SHELL.SANS,
@@ -152,7 +153,6 @@ export function ConnectorReconnectPage({ detail }: ConnectorReconnectPageProps) 
             ))}
           </div>
 
-          {/* Auth info box */}
           <div
             style={{
               background: SHELL.PAPER_SOFT,
@@ -184,9 +184,19 @@ export function ConnectorReconnectPage({ detail }: ConnectorReconnectPageProps) 
             >
               Canonical return: /admin/connectors/{detail.id} · {detail.endpoint}
             </div>
+            <div
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 10,
+                color: SHELL.INK_MUTED,
+                lineHeight: 1.3,
+                marginTop: 6,
+              }}
+            >
+              Mode: {modeLabel} · no live API call is made from this setup surface
+            </div>
           </div>
 
-          {/* CTA or success state */}
           {!authorized ? (
             <button
               type="button"
@@ -209,7 +219,7 @@ export function ConnectorReconnectPage({ detail }: ConnectorReconnectPageProps) 
                 lineHeight: 1,
               }}
             >
-              Authorize {detail.name} →
+              {reconnectProfile.callToAction} {'->'}
             </button>
           ) : (
             <div>
@@ -230,7 +240,7 @@ export function ConnectorReconnectPage({ detail }: ConnectorReconnectPageProps) 
                     lineHeight: 1.5,
                   }}
                 >
-                  ✓ ServiceNow reconnected — sync will resume within 60 seconds.
+                  {reconnectProfile.successMessage}
                 </span>
               </div>
               <div>
@@ -244,7 +254,7 @@ export function ConnectorReconnectPage({ detail }: ConnectorReconnectPageProps) 
                     letterSpacing: '0.08em',
                   }}
                 >
-                  → Return to connector detail
+                  {'->'} Return to connector detail
                 </Link>
               </div>
             </div>
