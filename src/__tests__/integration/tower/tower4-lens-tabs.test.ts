@@ -18,15 +18,16 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('TOWER_TABS', () => {
-  it('declares exactly four canonical tabs', () => {
-    expect(TOWER_TABS).toHaveLength(4);
+  it('declares exactly five canonical tabs (TOWER1 added source_commercial)', () => {
+    expect(TOWER_TABS).toHaveLength(5);
   });
 
-  it('contains portfolio, scorecards, pressure, executive_brief in that order', () => {
+  it('contains portfolio, scorecards, pressure, source_commercial, executive_brief in that order', () => {
     expect(TOWER_TABS.map((t) => t.key)).toEqual([
       'portfolio',
       'scorecards',
       'pressure',
+      'source_commercial',
       'executive_brief',
     ]);
   });
@@ -67,7 +68,7 @@ describe('resolveTowerTab', () => {
     expect(resolveTowerTab('not_a_tab')).toBe('portfolio');
   });
 
-  const VALID: TowerTabKey[] = ['portfolio', 'scorecards', 'pressure', 'executive_brief'];
+  const VALID: TowerTabKey[] = ['portfolio', 'scorecards', 'pressure', 'source_commercial', 'executive_brief'];
   for (const key of VALID) {
     it(`accepts valid key "${key}"`, () => {
       expect(resolveTowerTab(key)).toBe(key);
@@ -86,18 +87,19 @@ describe('buildTowerLensTabsView', () => {
   });
 
   it('echoes the active tab', () => {
-    const tabs: TowerTabKey[] = ['portfolio', 'scorecards', 'pressure', 'executive_brief'];
+    const tabs: TowerTabKey[] = ['portfolio', 'scorecards', 'pressure', 'source_commercial', 'executive_brief'];
     for (const tab of tabs) {
       expect(buildTowerLensTabsView(tab).activeTab).toBe(tab);
     }
   });
 
-  it('always includes all four tabs', () => {
+  it('always includes all five tabs', () => {
     const view = buildTowerLensTabsView('pressure');
-    expect(view.tabs).toHaveLength(4);
+    expect(view.tabs).toHaveLength(5);
     expect(view.tabs.map((t) => t.key)).toContain('portfolio');
     expect(view.tabs.map((t) => t.key)).toContain('scorecards');
     expect(view.tabs.map((t) => t.key)).toContain('pressure');
+    expect(view.tabs.map((t) => t.key)).toContain('source_commercial');
     expect(view.tabs.map((t) => t.key)).toContain('executive_brief');
   });
 
@@ -127,9 +129,9 @@ describe('TOWER4 component file probe', () => {
     expect(src).toMatch(/export function TowerLensTabs/);
   });
 
-  it('references all four tab keys in the component source', () => {
+  it('references all five tab keys in the component source', () => {
     const src = fs.readFileSync(componentPath, 'utf8');
-    for (const key of ['portfolio', 'scorecards', 'pressure', 'executive_brief']) {
+    for (const key of ['portfolio', 'scorecards', 'pressure', 'source_commercial', 'executive_brief']) {
       expect(src).toContain(key);
     }
   });

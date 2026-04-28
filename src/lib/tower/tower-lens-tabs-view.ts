@@ -1,7 +1,7 @@
-// TOWER4 · Tower Lens Tabs view-model.
+// TOWER4 + TOWER1 · Tower Lens Tabs view-model.
 //
-// Pure deterministic helper that returns metadata for the four lens tabs
-// on the Control Tower surface: Portfolio, Scorecards, Pressure, Executive Brief.
+// Pure deterministic helper that returns metadata for the five lens tabs
+// on the Control Tower surface: Portfolio, Scorecards, Pressure, Source Commercial, Executive Brief.
 //
 // No model calls, no fetch, no Date.now / Math.random / new Date,
 // no live data. Same input → identical output.
@@ -22,6 +22,7 @@ export type TowerTabKey =
   | 'portfolio'
   | 'scorecards'
   | 'pressure'
+  | 'source_commercial'
   | 'executive_brief';
 
 export interface TowerTabMeta {
@@ -62,6 +63,12 @@ export const TOWER_TABS: ReadonlyArray<TowerTabMeta> = [
     key: 'pressure',
     label: 'Pressure',
     description: 'Proactive pressure signals — blockers and at-risk indicators',
+    hasApexRetailContent: true,
+  },
+  {
+    key: 'source_commercial',
+    label: 'Source Commercial',
+    description: 'Source pricing, BAFO, and selection readiness signals — AMS Vendor Consolidation 2026',
     hasApexRetailContent: true,
   },
   {
