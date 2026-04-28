@@ -9658,6 +9658,13 @@
       "category": "Intelligence",
       "status": "code_complete",
       "notes": "New source_commercial tab added to Control Tower (5th tab, between Pressure and Executive Brief). buildSourceCommercialSignalsView tower-domain lib provides AMS event summary, 5 commercial signals (critical/high/medium/info), executive guidance, and selection readiness. SourceCommercialPanel renders in TowerLensTabs.tsx — does NOT import from src/lib/source. tower-lens-tabs-view TowerTabKey updated to include source_commercial. Updated tower4-lens-tabs.test.ts (4→5 tabs). data-testid tower-source-commercial-panel, tower-source-commercial-executive-guidance, tower-source-commercial-readiness, tower-source-commercial-disclaimer. 58 integration tests (tower1 + updated tower4). TOWER5/TOWER1-track05 from track-05."
+    },
+    {
+      "id": "TOWER6",
+      "name": "Executive Decision Queue in Control Tower",
+      "category": "Intelligence",
+      "status": "code_complete",
+      "notes": "New decisions tab added to Control Tower (6th tab, between Source Commercial and Executive Brief). buildExecutiveDecisionQueueView tower-domain lib provides 5 decisions across source/programs/cross_domain domains with urgency (immediate/this_week), status (open/blocked/pending_input), known/missing context, blockers, and Atlas recommendations. DecisionsPanel renders in TowerLensTabs.tsx. Critical blocker alert shown when immediate decision has unresolved blocker. Updated tower4-lens-tabs.test.ts (5→6 tabs). data-testid tower-decisions-panel, tower-decisions-executive-summary, tower-decisions-critical-blocker-alert, tower-decisions-disclaimer. 59 integration tests (tower2 + updated tower4). TOWER6/TOWER2-track05 from track-05."
     }
   ]
 }
