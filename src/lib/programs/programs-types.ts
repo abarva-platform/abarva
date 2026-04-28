@@ -40,6 +40,8 @@ export interface ProgramRow {
   actionLabel: 'Continue' | 'Resume' | 'Review';
   isIdle: boolean;
   linkedSourceEvent?: string; // e.g. 'SRC-AMS-2026 · AMS Vendor Consolidation 2026 · Stage 7 BAFO'
+  linkedSourceEventHref?: string; // canonical shell route, e.g. /source/events/apex-retail-ams-outsourcing-2026
+  linkedSourceEventState?: string; // concise status shown on linked-state cards
 }
 
 export interface ProgramsIndexView {

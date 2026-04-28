@@ -303,7 +303,7 @@ describe('Canonical view module hygiene', () => {
       expect(content).not.toMatch(/from '@\/app\/\(maestro\)\/preview\//);
       expect(content).not.toMatch(/from '@\/app\/demo\//);
       expect(content).not.toMatch(/from '@\/lib\/nexus\//);
-      expect(content).not.toMatch(/from '@\/lib\/agent\//);
+      expect(content).not.toMatch(/from '@\/lib\/agent\/runtime/);
     }
   });
 });

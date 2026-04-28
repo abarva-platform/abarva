@@ -73,6 +73,8 @@ const apxCdp2026: ProgramRow = {
   actionLabel: 'Continue',
   isIdle: false,
   linkedSourceEvent: 'SRC-AMS-2026 · AMS Vendor Consolidation 2026 · Stage 7 BAFO',
+  linkedSourceEventHref: '/source/events/apex-retail-ams-outsourcing-2026',
+  linkedSourceEventState: 'Vendor C selected · Build gate dependency',
 };
 
 // APX-CC-2026 · Contact Center AI Transformation
