@@ -26,6 +26,8 @@ interface SentinelAgentColumnProps {
   quote?: string;
   /** When provided, renders in place of the static quote string. */
   synthesisNode?: ReactNode;
+  /** Optional provenance ribbon rendered directly below the synthesis quote. */
+  provenanceSlot?: ReactNode;
   agentContext?: string;
   actions?: AgentAction[];
   surface?: string;
@@ -35,6 +37,7 @@ interface SentinelAgentColumnProps {
 export function SentinelAgentColumn({
   quote = 'Source workspace ready. Paper aesthetic active. Sentinel listening.',
   synthesisNode,
+  provenanceSlot,
   agentContext,
   actions = DEFAULT_ACTIONS,
   surface = 'source',
@@ -45,6 +48,7 @@ export function SentinelAgentColumn({
       agent={SENTINEL}
       quote={quote}
       synthesisNode={synthesisNode}
+      provenanceSlot={provenanceSlot}
       agentContext={agentContext}
       actions={actions}
       surface={surface}
