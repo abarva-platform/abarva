@@ -26,21 +26,51 @@ export default async function ProgramsPage() {
       const dbPrograms = await getProgramPortfolio(ctx);
 
       if (dbPrograms && dbPrograms.length > 0) {
+        // Build a name→fixture-index map so DB programs can update fixture entries
+        // when they match by name (DB IDs are UUIDs; fixture IDs are short strings).
+        const fixtureIdxByName = new Map<string, number>();
+        view.programs.forEach((p, i) => fixtureIdxByName.set(p.name.toLowerCase(), i));
+
         const fixtureIds = new Set(view.programs.map((p) => p.id));
-        const newPrograms: ProgramRow[] = dbPrograms
-          .filter((p) => !fixtureIds.has(p.id))
-          .map((p) => {
-            const rawPhase = p.currentPhase ?? 0;
-            const currentPhase = Math.max(0, Math.min(6, rawPhase)) as ProgramPhaseId;
-            const phaseLabel = PHASE_LABEL_MAP[currentPhase];
-            const isIdle = p.status === 'idle';
+        const newPrograms: ProgramRow[] = [];
+
+        for (const p of dbPrograms) {
+          const rawPhase = p.currentPhase ?? 0;
+          const currentPhase = Math.max(0, Math.min(6, rawPhase)) as ProgramPhaseId;
+          const phaseLabel = PHASE_LABEL_MAP[currentPhase];
+          const isIdle = p.status === 'idle';
+          const gateStatus = currentPhase === 0 ? ('pending' as const) : ('open' as const);
+
+          // If the DB program name matches a fixture program, update the fixture entry
+          // to reflect the real DB phase (e.g. APX-CDP-2026 after gate approval to P3)
+          const fixtureIdx = fixtureIdxByName.get(p.name.toLowerCase());
+          if (fixtureIdx !== undefined) {
+            const existing = view.programs[fixtureIdx];
+            view.programs[fixtureIdx] = {
+              ...existing,
+              currentPhase,
+              phases: buildPhaseSlots(currentPhase),
+              gateStatus,
+              nexusNote: isIdle
+                ? `P${currentPhase} ${phaseLabel} · Idle`
+                : currentPhase >= 1
+                ? `P${currentPhase} ${phaseLabel} · Active`
+                : existing.nexusNote,
+              lastActiveLabel: p.createdAt
+                ? new Date(p.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                : existing.lastActiveLabel,
+            };
+            continue;
+          }
+
+          // Otherwise append as a new row if not in fixture by ID
+          if (!fixtureIds.has(p.id)) {
             const nexusNote: string = isIdle
               ? `P${currentPhase} ${phaseLabel} · Idle`
               : currentPhase >= 1
               ? `P${currentPhase} ${phaseLabel} · Active`
               : 'Program created — initial setup in progress.';
-            const gateStatus = currentPhase === 0 ? ('pending' as const) : ('open' as const);
-            return {
+            newPrograms.push({
               id: p.id,
               displayId: p.id.toUpperCase().slice(0, 12),
               name: p.name,
@@ -53,8 +83,9 @@ export default async function ProgramsPage() {
               nexusNote,
               actionLabel: 'Continue' as const,
               isIdle,
-            };
-          });
+            });
+          }
+        }
         view.programs = [...view.programs, ...newPrograms];
       }
     }
