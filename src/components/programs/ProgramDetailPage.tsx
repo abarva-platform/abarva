@@ -27,6 +27,8 @@ import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances'
 import { buildProgramSynthesisContext } from '@/lib/reasoning/program-synthesis-context-builder';
 import { summarizeFailureModes } from '@/lib/reasoning/provenance-ribbon-helpers';
 import { FailureModeWarningChip } from '@/components/_shared/FailureModeWarningChip';
+import { ContradictionDetailCardClient } from '@/components/_shared/ContradictionDetailCardClient';
+import { isResolved as isContradictionResolved } from '@/lib/reasoning/contradiction-resolution-state';
 import { buildProgramStorylineContext, matchStorylinePatterns } from '@/lib/intelligence/storyline-matcher';
 import { buildGateApprovalDrawerView } from '@/lib/programs/gate-approval-drawer-view';
 import type { GateApprovalDrawerView } from '@/lib/programs/gate-approval-drawer-view';
@@ -3209,6 +3211,23 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
     };
   })();
 
+  // REASON-30 — Active contradictions for the current program instance,
+  // filtered against the local resolution ring buffer so dismissed cards
+  // do not reappear on subsequent renders within the same server lifetime.
+  const contradictionInfo = (() => {
+    const instance = APEX_RETAIL_PROGRAM_INSTANCES.find(
+      (i) =>
+        i.displayId === view.displayId ||
+        i.id.toLowerCase() === view.programId.toLowerCase(),
+    );
+    if (!instance) return null;
+    const ctx = buildProgramSynthesisContext(instance);
+    const active = ctx.activeContradictions.filter(
+      (c) => !isContradictionResolved(`${instance.id}::${c.templateId}`),
+    );
+    return { instanceId: instance.id, contradictions: active };
+  })();
+
   return (
     <AppShell
       surface="programs-detail"
@@ -3505,6 +3524,13 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
               <div style={{ padding: '20px 0', fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK_MUTED }}>
                 Gate criteria not defined for P{view.viewingPhase}.
               </div>
+            )}
+            {/* REASON-30 — Contradiction detail card sits below gate criteria */}
+            {contradictionInfo && contradictionInfo.contradictions.length > 0 && (
+              <ContradictionDetailCardClient
+                contradictions={contradictionInfo.contradictions}
+                instanceId={contradictionInfo.instanceId}
+              />
             )}
             {/* PROG21 — Gate approval interaction drawer trigger */}
             {gateApprovalDrawerView && (
