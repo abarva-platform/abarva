@@ -13,159 +13,26 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import {
-  ProgramJourneyRail,
-  type ProgramPhaseSlot,
-} from './ProgramJourneyRail';
+import { AppShell } from '@/components/shell/AppShell';
+import { AgentColumn } from '@/components/shell/AgentColumn';
+import { PhaseStrip } from '@/components/shell/PhaseStrip';
+import type { PhaseStripSlot } from '@/components/shell/PhaseStrip';
+import { SHELL } from '@/lib/shell/shell-tokens';
 
-// ─── Design tokens ─────────────────────────────────────────────────────────
+// ─── Design tokens (keep local copies for form elements) ──────────────────
 
-const SURFACE = '#F8F7F4';
 const CARD    = '#FFFFFF';
-const DARK    = '#0F1E3F';
-const DARK2   = '#162447';
 const BORDER  = 'rgba(20, 33, 47, 0.14)';
 const INK     = '#0c1a3a';
 const MUTED   = 'rgba(27, 38, 50, 0.62)';
 const SUBTLE  = 'rgba(27, 38, 50, 0.42)';
 const MINT    = '#0f766e';
-const MINT_BG = 'rgba(15, 118, 110, 0.10)';
 const BLUE    = '#2563eb';
 const BLUE_BG = 'rgba(37, 99, 235, 0.10)';
 const AMBER   = '#b7791f';
 
-const MONO  = '"JetBrains Mono", "Fira Code", monospace';
-const SANS  = '"DM Sans", -apple-system, BlinkMacSystemFont, sans-serif';
-const SERIF = 'Georgia, "Times New Roman", serif';
-
-// ─── Static phase rail (Origination=1 active, 2-6 locked) ─────────────────
-
-const ORIGINATION_RAIL: ProgramPhaseSlot[] = [
-  { id: 1, label: 'Origination', state: 'current' },
-  { id: 2, label: 'Charter',     state: 'locked' },
-  { id: 3, label: 'Diagnose',    state: 'locked' },
-  { id: 4, label: 'Design',      state: 'locked' },
-  { id: 5, label: 'Execute',     state: 'locked' },
-  { id: 6, label: 'Verify',      state: 'locked' },
-];
-
-// ─── Agent rail ────────────────────────────────────────────────────────────
-
-interface OriginationAgent {
-  initials: string;
-  name: string;
-  job: string;
-  state: 'active' | 'on_call' | 'advisory' | 'idle';
-}
-
-const ORIGINATION_AGENTS: OriginationAgent[] = [
-  {
-    initials: 'STW',
-    name: 'Steward',
-    job: 'Classifying use case · matching patterns',
-    state: 'active',
-  },
-  {
-    initials: 'NXS',
-    name: 'Nexus',
-    job: 'On call — available after program opens',
-    state: 'on_call',
-  },
-];
-
-function AgentRailItem({ agent }: { agent: OriginationAgent }) {
-  const stateColor: Record<OriginationAgent['state'], string> = {
-    active:   MINT,
-    on_call:  AMBER,
-    advisory: SUBTLE,
-    idle:     'rgba(27,38,50,0.35)',
-  };
-  const stateLabel: Record<OriginationAgent['state'], string> = {
-    active:   'Active',
-    on_call:  'On call',
-    advisory: 'Advisory',
-    idle:     'Idle',
-  };
-  const color = stateColor[agent.state];
-
-  return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: '36px 1fr auto',
-        alignItems: 'center',
-        gap: 10,
-        padding: '9px 12px',
-        borderBottom: `1px solid ${BORDER}`,
-        minHeight: 40,
-      }}
-    >
-      <div
-        style={{
-          width: 28,
-          height: 28,
-          borderRadius: 6,
-          background: agent.state === 'active' ? MINT_BG : 'rgba(27,38,50,0.06)',
-          border: `1px solid ${agent.state === 'active' ? MINT : BORDER}`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontFamily: MONO,
-          fontSize: 9,
-          fontWeight: 700,
-          color: agent.state === 'active' ? MINT : MUTED,
-          letterSpacing: '0.04em',
-          flexShrink: 0,
-        }}
-      >
-        {agent.initials}
-      </div>
-      <div style={{ minWidth: 0 }}>
-        <div
-          style={{
-            fontFamily: SANS,
-            fontSize: 12,
-            fontWeight: 600,
-            color: INK,
-            lineHeight: 1.2,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          {agent.name}
-        </div>
-        <div
-          style={{
-            fontFamily: SANS,
-            fontSize: 11,
-            color: MUTED,
-            lineHeight: 1.35,
-            marginTop: 1,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          {agent.job}
-        </div>
-      </div>
-      <span
-        style={{
-          fontFamily: MONO,
-          fontSize: 9,
-          fontWeight: 700,
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
-          color,
-          flexShrink: 0,
-        }}
-      >
-        {stateLabel[agent.state]}
-      </span>
-    </div>
-  );
-}
+const MONO  = SHELL.MONO;
+const SANS  = SHELL.SANS;
 
 // ─── Form field ────────────────────────────────────────────────────────────
 
@@ -270,305 +137,105 @@ export function ProgramOriginationPage({ tenantSlug: _tenantSlug }: ProgramOrigi
     router.push('/programs/apx-01?phase=1');
   };
 
+  // PhaseStrip slots for origination (P0 done implied, show P1-P6)
+  const originationStripPhases: PhaseStripSlot[] = [
+    { id: 1, label: 'Discovery', state: 'current' },
+    { id: 2, label: 'Synthesis', state: 'locked' },
+    { id: 3, label: 'Design',    state: 'locked' },
+    { id: 4, label: 'Build',     state: 'locked' },
+    { id: 5, label: 'Activate',  state: 'locked' },
+    { id: 6, label: 'Operate',   state: 'locked' },
+  ];
+
+  const stewardActions: Array<{ letter: 'A' | 'B' | 'C'; text: string; detail: string }> = [
+    {
+      letter: 'A',
+      text: 'Use-case classifier',
+      detail: 'Steward maps your objective to Apex delivery archetypes',
+    },
+    {
+      letter: 'B',
+      text: 'Pattern matching',
+      detail: 'Retrieves similar completed programs + outcome benchmarks',
+    },
+    {
+      letter: 'C',
+      text: 'Charter pre-draft',
+      detail: 'Generates scope + success criteria for sponsor sign-off',
+    },
+  ];
+
   return (
-    <div
-      style={{
-        background: SURFACE,
-        minHeight: '100vh',
-        fontFamily: SANS,
-        color: INK,
-        padding: '20px 24px 48px',
-        maxWidth: 1240,
-        margin: '0 auto',
-        boxSizing: 'border-box',
+    <AppShell
+      surface="programs"
+      topBarProps={{
+        tenantName: 'Apex Retail Group',
+        showLocked: true,
+        context: 'New Program · P0 Originate',
       }}
+      middleStrip={<PhaseStrip phases={originationStripPhases} />}
     >
-      {/* ── Breadcrumb ───────────────────────────────────────────── */}
-      <nav
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          fontFamily: MONO,
-          fontSize: 11,
-          color: MUTED,
-          marginBottom: 14,
-        }}
-      >
-        <Link href="/programs" style={{ color: MUTED, textDecoration: 'none' }}>
-          Programs
-        </Link>
-        <span style={{ color: SUBTLE }}>›</span>
-        <span style={{ color: INK, fontWeight: 600 }}>New Program</span>
-      </nav>
+      <AgentColumn
+        agent={{ initials: 'Stw', name: 'Steward', role: 'Origination Lead' }}
+        quote="Name the opportunity and identify the executive champion. Steward will classify the use case, match it to a proven delivery pattern, and draft a program scope for sponsor review."
+        agentContext="Origination Brief · Steward active"
+        actions={stewardActions}
+        inputPlaceholder="Ask Steward..."
+      />
 
-      {/* ── Status row ───────────────────────────────────────────── */}
       <div
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          marginBottom: 16,
-          flexWrap: 'wrap',
+          flex: 1,
+          overflowY: 'auto',
+          background: SHELL.PAPER,
+          padding: '24px 32px',
+          fontFamily: SANS,
+          color: INK,
         }}
       >
-        <span
-          style={{
-            fontFamily: SANS,
-            fontSize: 18,
-            fontWeight: 700,
-            color: INK,
-            lineHeight: 1.2,
-          }}
-        >
-          New Program
-        </span>
-        <span
-          style={{
-            padding: '3px 9px',
-            borderRadius: 999,
-            background: BLUE_BG,
-            color: BLUE,
-            fontSize: 11,
-            fontWeight: 700,
-            fontFamily: MONO,
-            letterSpacing: '0.06em',
-          }}
-        >
-          P0 · Origination
-        </span>
-      </div>
-
-      {/* ── Journey rail ─────────────────────────────────────────── */}
-      <div style={{ marginBottom: 20 }}>
-        <ProgramJourneyRail
-          phases={ORIGINATION_RAIL}
-          viewingPhase={1}
-          onPhaseSelect={() => {/* locked phases are non-interactive; Origination is already current */}}
-          variant="full"
-        />
-      </div>
-
-      {/* ── Two-column: Steward workbench + Agent rail ────────────── */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 280px',
-          gap: 16,
-          marginBottom: 20,
-          alignItems: 'stretch',
-        }}
-      >
-        {/* Dark Steward workbench */}
-        <div
-          style={{
-            background: DARK,
-            borderRadius: 10,
-            padding: '18px 20px',
-            color: '#fff',
-            position: 'relative',
-            overflow: 'hidden',
-          }}
-        >
-          {/* Subtle gradient overlay */}
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: `linear-gradient(135deg, ${DARK2} 0%, ${DARK} 60%)`,
-              pointerEvents: 'none',
-            }}
-          />
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                marginBottom: 10,
-              }}
+        {/* ── Page header ──────────────────────────────────────────── */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <Link
+              href="/programs"
+              style={{ fontFamily: MONO, fontSize: 11, color: MUTED, textDecoration: 'none' }}
             >
-              <div
-                style={{
-                  width: 26,
-                  height: 26,
-                  borderRadius: 6,
-                  background: MINT_BG,
-                  border: `1px solid ${MINT}`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontFamily: MONO,
-                  fontSize: 9,
-                  fontWeight: 700,
-                  color: MINT,
-                  letterSpacing: '0.04em',
-                  flexShrink: 0,
-                }}
-              >
-                STW
-              </div>
-              <span
-                style={{
-                  fontFamily: SERIF,
-                  fontSize: 14,
-                  fontWeight: 400,
-                  color: 'rgba(255,255,255,0.92)',
-                  letterSpacing: '0.01em',
-                }}
-              >
-                Steward · Origination Brief
-              </span>
-            </div>
-
-            <p
+              Programs
+            </Link>
+            <span style={{ color: SUBTLE, fontFamily: MONO, fontSize: 11 }}>›</span>
+            <span style={{ fontFamily: MONO, fontSize: 11, color: INK, fontWeight: 600 }}>
+              New Program
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <h1
               style={{
-                fontFamily: SANS,
-                fontSize: 13,
-                color: 'rgba(255,255,255,0.82)',
-                lineHeight: 1.55,
+                fontFamily: SHELL.SERIF,
+                fontSize: 20,
+                fontWeight: 600,
+                color: INK,
                 margin: 0,
-                marginBottom: 14,
+                lineHeight: 1.2,
               }}
             >
-              Name the opportunity and identify the executive champion. Steward will classify
-              the use case, match it to a proven delivery pattern, and draft a program scope
-              for sponsor review — typically within a few minutes.
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {[
-                {
-                  letter: 'A',
-                  text: 'Use-case classifier',
-                  detail: 'Steward maps your objective to Apex delivery archetypes',
-                },
-                {
-                  letter: 'B',
-                  text: 'Pattern matching',
-                  detail: 'Retrieves similar completed programs + outcome benchmarks',
-                },
-                {
-                  letter: 'C',
-                  text: 'Charter pre-draft',
-                  detail: 'Generates scope + success criteria for sponsor sign-off',
-                },
-              ].map(({ letter, text, detail }) => (
-                <div
-                  key={letter}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: 9,
-                    padding: '7px 10px',
-                    borderRadius: 6,
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.09)',
-                  }}
-                >
-                  <span
-                    style={{
-                      width: 20,
-                      height: 20,
-                      borderRadius: 4,
-                      background: 'rgba(255,255,255,0.12)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontFamily: MONO,
-                      fontSize: 10,
-                      fontWeight: 700,
-                      color: 'rgba(255,255,255,0.7)',
-                      flexShrink: 0,
-                      marginTop: 1,
-                    }}
-                  >
-                    {letter}
-                  </span>
-                  <div>
-                    <div
-                      style={{
-                        fontFamily: SANS,
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: 'rgba(255,255,255,0.9)',
-                        lineHeight: 1.3,
-                      }}
-                    >
-                      {text}
-                    </div>
-                    <div
-                      style={{
-                        fontFamily: SANS,
-                        fontSize: 11,
-                        color: 'rgba(255,255,255,0.52)',
-                        lineHeight: 1.35,
-                        marginTop: 2,
-                      }}
-                    >
-                      {detail}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Agent rail card */}
-        <div
-          style={{
-            background: CARD,
-            border: `1px solid ${BORDER}`,
-            borderRadius: 10,
-            overflow: 'hidden',
-          }}
-        >
-          <div
-            style={{
-              padding: '10px 12px 8px',
-              borderBottom: `1px solid ${BORDER}`,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
+              New Program
+            </h1>
             <span
               style={{
-                fontFamily: MONO,
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-                color: MUTED,
-              }}
-            >
-              Agents
-            </span>
-            <span
-              style={{
-                width: 18,
-                height: 18,
+                padding: '3px 9px',
                 borderRadius: 999,
-                background: MINT_BG,
-                border: `1px solid ${MINT}`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontFamily: MONO,
-                fontSize: 9,
+                background: BLUE_BG,
+                color: BLUE,
+                fontSize: 11,
                 fontWeight: 700,
-                color: MINT,
+                fontFamily: MONO,
+                letterSpacing: '0.06em',
               }}
             >
-              1
+              P0 · Originate
             </span>
           </div>
-          {ORIGINATION_AGENTS.map((agent) => (
-            <AgentRailItem key={agent.initials} agent={agent} />
-          ))}
         </div>
-      </div>
 
       {/* ── Origination form ─────────────────────────────────────── */}
       <div
@@ -815,6 +482,7 @@ export function ProgramOriginationPage({ tenantSlug: _tenantSlug }: ProgramOrigi
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </AppShell>
   );
 }
