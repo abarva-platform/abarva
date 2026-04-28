@@ -10,17 +10,23 @@
  * Contradiction ids are caller-defined strings. The convention used by the
  * UI wiring is `{instanceId}::{templateId}` so the same template detected on
  * two instances can be resolved independently.
+ *
+ * Each resolution also stores the ISO-8601 timestamp at which it was first
+ * marked, so the per-instance event timeline can show *when* a contradiction
+ * was resolved. Re-marking the same id is idempotent and does NOT update
+ * the original timestamp — the first resolution wins.
  */
 
-const RESOLVED: Set<string> = new Set();
+const RESOLVED: Map<string, string> = new Map();
 
 /**
  * Mark a contradiction id as resolved. Subsequent calls with the same id
- * are idempotent.
+ * are idempotent and preserve the original resolution timestamp.
  */
 export function markResolved(id: string): void {
   if (typeof id !== 'string' || id.length === 0) return;
-  RESOLVED.add(id);
+  if (RESOLVED.has(id)) return;
+  RESOLVED.set(id, new Date().toISOString());
 }
 
 /**
@@ -35,7 +41,24 @@ export function isResolved(id: string): boolean {
  * order they were inserted.
  */
 export function getResolved(): string[] {
-  return Array.from(RESOLVED);
+  return Array.from(RESOLVED.keys());
+}
+
+/**
+ * Returns the ISO-8601 timestamp at which the given id was first marked
+ * resolved, or `undefined` if it is not in the resolved set.
+ */
+export function getResolvedAt(id: string): string | undefined {
+  return RESOLVED.get(id);
+}
+
+/**
+ * Returns a snapshot of every resolved id paired with its resolution
+ * timestamp, in insertion order. Returns a fresh array so callers cannot
+ * mutate the internal state.
+ */
+export function getResolvedEntries(): ReadonlyArray<{ id: string; resolvedAt: string }> {
+  return Array.from(RESOLVED.entries()).map(([id, resolvedAt]) => ({ id, resolvedAt }));
 }
 
 /**

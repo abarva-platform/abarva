@@ -7,6 +7,8 @@
 import {
   _resetForTests,
   getResolved,
+  getResolvedAt,
+  getResolvedEntries,
   isResolved,
   markResolved,
 } from '@/lib/reasoning/contradiction-resolution-state';
@@ -62,5 +64,35 @@ describe('contradiction-resolution-state', () => {
     // @ts-expect-error — exercising defensive guard against bad input
     markResolved(null);
     expect(getResolved()).toEqual([]);
+  });
+
+  it('getResolvedAt returns an ISO timestamp for a marked id', () => {
+    markResolved('id-A');
+    const ts = getResolvedAt('id-A');
+    expect(typeof ts).toBe('string');
+    expect(new Date(ts as string).toISOString()).toBe(ts);
+  });
+
+  it('getResolvedAt returns undefined for an unmarked id', () => {
+    expect(getResolvedAt('id-missing')).toBeUndefined();
+  });
+
+  it('re-marking the same id preserves the original resolution timestamp', () => {
+    markResolved('id-A');
+    const first = getResolvedAt('id-A');
+    // Re-mark with the same id; timestamp should be the same.
+    markResolved('id-A');
+    expect(getResolvedAt('id-A')).toBe(first);
+  });
+
+  it('getResolvedEntries returns id+timestamp pairs in insertion order', () => {
+    markResolved('id-A');
+    markResolved('id-B');
+    const entries = getResolvedEntries();
+    expect(entries.map(e => e.id)).toEqual(['id-A', 'id-B']);
+    for (const e of entries) {
+      expect(typeof e.resolvedAt).toBe('string');
+      expect(new Date(e.resolvedAt).toISOString()).toBe(e.resolvedAt);
+    }
   });
 });

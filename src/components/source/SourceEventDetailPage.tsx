@@ -19,10 +19,12 @@ import { buildPricingCompletenessView } from '@/lib/source/pricing-completeness-
 import { buildBafoScenarioCompareView } from '@/lib/source/bafo-scenario-compare-view';
 import { ContradictionDetailCardClient } from '@/components/_shared/ContradictionDetailCardClient';
 import { CascadeImpactCard, ReverseCascadeCard } from '@/components/_shared/CascadeImpactCard';
+import { InstanceEventTimeline } from '@/components/_shared/InstanceEventTimeline';
 import { buildSourceSynthesisContext } from '@/lib/reasoning/synthesis-context-builder';
 import { computeReverseCascade } from '@/lib/reasoning/cross-instance-reasoner';
 import { PAT_SRC_AMS_001 } from '@/lib/intelligence/source-lifecycle-patterns';
 import { isResolved as isContradictionResolved } from '@/lib/reasoning/contradiction-resolution-state';
+import { buildInstanceEventTimeline } from '@/lib/reasoning/instance-event-timeline';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -228,6 +230,14 @@ function ReadinessTab() {
         upstream={computeReverseCascade(AMS_VENDOR_CONSOLIDATION_2026_INSTANCE)}
         thisInstanceId={AMS_VENDOR_CONSOLIDATION_2026_INSTANCE.displayId}
         title="Upstream dependencies"
+      />
+
+      {/* REASON-32 — Per-instance reasoning event timeline. Sits below the
+          cascade card so the user can scan recent activity (synthesis runs,
+          evidence ingestion, contradiction resolutions) without digging
+          through the work pane. */}
+      <InstanceEventTimeline
+        entries={buildInstanceEventTimeline(AMS_VENDOR_CONSOLIDATION_2026_INSTANCE.id)}
       />
 
       {/* Honest disclaimer */}
