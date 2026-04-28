@@ -8,7 +8,7 @@ import { SHELL } from '@/lib/shell/shell-tokens';
 import { POLICIES_FIXTURE, POLICIES_AGENT_VOICE, type PolicyItem } from '@/lib/setup/shell-setup-fixture';
 
 const SUB_NAV_ITEMS = [
-  { key: 'connectors', label: 'Connectors', href: '/admin' },
+  { key: 'connectors', label: 'Connectors', href: '/admin/connectors' },
   { key: 'users', label: 'Users', href: '/admin/users' },
   { key: 'audit', label: 'Audit log', href: '/admin/audit' },
   { key: 'policies', label: 'Policies', active: true, href: '/admin/policies' },
@@ -508,6 +508,9 @@ function PolicyCard({
 
 export function SetupPoliciesPage() {
   const [reviewPolicy, setReviewPolicy] = useState<PolicyItem | null>(null);
+  const activeCount = POLICIES_FIXTURE.filter((policy) => policy.status === 'active').length;
+  const reviewDueCount = POLICIES_FIXTURE.filter((policy) => policy.status === 'review-due').length;
+  const draftCount = POLICIES_FIXTURE.filter((policy) => policy.status === 'draft').length;
 
   return (
     <AppShell
@@ -550,6 +553,19 @@ export function SetupPoliciesPage() {
           >
             Setup
           </div>
+          <div
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 10,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: SHELL.PEACH_TEXT,
+              marginBottom: 8,
+              lineHeight: 1,
+            }}
+          >
+            Canonical route · /admin/policies
+          </div>
           <h1
             style={{
               fontFamily: SHELL.SERIF,
@@ -565,6 +581,12 @@ export function SetupPoliciesPage() {
           </h1>
         </div>
 
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
+          <PolicyChip label="Active" value={activeCount} tone="active" />
+          <PolicyChip label="Review due" value={reviewDueCount} tone="review-due" />
+          <PolicyChip label="Draft" value={draftCount} tone="draft" />
+        </div>
+
         {/* Policy cards */}
         <div>
           {POLICIES_FIXTURE.map((policy) => (
@@ -578,5 +600,44 @@ export function SetupPoliciesPage() {
         <PolicyReviewModal policy={reviewPolicy} onClose={() => setReviewPolicy(null)} />
       )}
     </AppShell>
+  );
+}
+
+function PolicyChip({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone: 'active' | 'review-due' | 'draft';
+}) {
+  const styles = tone === 'active'
+    ? { bg: SHELL.MINT_BG, text: SHELL.MINT_TEXT }
+    : tone === 'review-due'
+      ? { bg: SHELL.PEACH_BG, text: SHELL.PEACH_TEXT }
+      : { bg: SHELL.GRAY_BG, text: SHELL.GRAY_TEXT };
+
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        fontFamily: SHELL.MONO,
+        fontSize: 10,
+        fontWeight: 600,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        color: styles.text,
+        background: styles.bg,
+        borderRadius: 999,
+        padding: '5px 11px',
+        lineHeight: 1,
+      }}
+    >
+      <span style={{ fontFamily: SHELL.SANS, fontSize: 14, fontWeight: 700 }}>{value}</span>
+      {label}
+    </span>
   );
 }
