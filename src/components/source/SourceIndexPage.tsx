@@ -510,9 +510,9 @@ export function SourceIndexPage() {
           if (letter === 'A') {
             firstEventRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
           } else if (letter === 'B') {
-            router.push('/source/originate');
+            router.push('/source/events/apex-retail-ams-outsourcing-2026');
           } else if (letter === 'C') {
-            router.push('/source/ams-vendor-2026');
+            firstEventRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }
         }}
       />

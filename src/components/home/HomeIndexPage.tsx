@@ -433,8 +433,8 @@ export function HomeIndexPage() {
       // AI Cloud Spend pressure
       router.push('/tower/pressures/twr-ai-cloud-spend');
     } else if (letter === 'C') {
-      // AMS BAFO award — drill into the source event
-      router.push('/source/ams-vendor-2026');
+      // AMS BAFO award — drill into the source event (Wave S1 route)
+      router.push('/source/events/apex-retail-ams-outsourcing-2026');
     }
   }
 
