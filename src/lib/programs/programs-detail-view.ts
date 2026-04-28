@@ -161,6 +161,32 @@ const APX_DFV2_P6_WORKBENCH: ProgramWorkbenchContent = {
   ],
 };
 
+// ─── APX-CDP-2026 P3 Design · post-gate-approval view ────────────────────────
+
+const APX_CDP_2026_P3_WORKBENCH: ProgramWorkbenchContent = {
+  title: 'P3 Design · Architecture Sprint Active',
+  prose:
+    'Design gate approved. The CDP architecture sprint is underway — Nexus is orchestrating the data layer design, identity graph schema, and vendor integration contracts. The AMS Vendor Consolidation decision (Stage 7 BAFO) has locked Vendor C as the managed CDP layer, reducing in-house build scope. Sentinel is validating Unified Loyalty Intelligence (T3-H03) as the pattern reference for the personalization layer.',
+  actionsLabel: 'Nexus recommends',
+  actions: [
+    {
+      letter: 'A',
+      text: 'Review architecture blueprint',
+      detail: 'CDP data layer + identity graph schema — draft ready for sponsor review',
+    },
+    {
+      letter: 'B',
+      text: 'Lock vendor integration contract',
+      detail: 'Vendor C scope confirmed — finalize API contract and SLA',
+    },
+    {
+      letter: 'C',
+      text: 'Brief on T3-H03 Loyalty pattern',
+      detail: 'Sentinel validated Unified Loyalty Intelligence — apply to personalization layer',
+    },
+  ],
+};
+
 // ─── APX-CDP-2026 specific workbench (demo flagship) ─────────────────────────
 // P2 Synthesis · Design gate pending · Workshop 5 incomplete · 36% evidence
 // Linked source: AMS Vendor Consolidation 2026 · Stage 7 BAFO
@@ -215,6 +241,10 @@ function buildWorkbenchContent(
   // Demo flagship override — P2 Synthesis active view
   if (programId === 'apx-cdp-2026' && viewingPhase === 2 && viewingPhaseState === 'current') {
     return APX_CDP_2026_P2_WORKBENCH;
+  }
+  // Demo flagship override — P3 Design active view (post gate-approval)
+  if (programId === 'apx-cdp-2026' && viewingPhase === 3 && viewingPhaseState === 'current') {
+    return APX_CDP_2026_P3_WORKBENCH;
   }
   switch (viewingPhaseState) {
     case 'done':
@@ -362,6 +392,41 @@ function buildPhasePanel(
           citation: 'AI usage audit · Apr 22 2026',
           source: 'Atlas / Automated',
           excerpt: 'Evidence coverage for this phase is at 36% against a 70% target for gate readiness. 3 key items are outstanding.',
+          confidence: 'high' as const,
+        },
+      ],
+    };
+  }
+  // APX-CDP-2026 P3 gate — Design phase active deliverables + Build gate criteria
+  if (programId === 'apx-cdp-2026' && viewingPhase === 3 && viewingPhaseState === 'current') {
+    return {
+      gateCriteria: [
+        { criterion: 'Architecture blueprint reviewed by sponsor', met: false },
+        { criterion: 'Vendor integration contract signed (Vendor C)', met: false },
+        { criterion: 'Data model approved by engineering lead', met: true },
+        { criterion: 'Privacy architecture signed off', met: false },
+        { criterion: 'Build brief approved and scoped', met: false },
+      ],
+      evidenceItems: [
+        {
+          id: 'ev-p3-1',
+          citation: 'Gate approval record · Apr 27 2026',
+          source: 'Steward / Gate Review',
+          excerpt: 'Design gate (P2 → P3) approved. Workshop 5 findings accepted; privacy boundary policy filed. AMS BAFO outcome locked Vendor C.',
+          confidence: 'high' as const,
+        },
+        {
+          id: 'ev-p3-2',
+          citation: 'AMS Vendor Consolidation · BAFO Award · Apr 27 2026',
+          source: 'Source Event / APX-AMS-2026',
+          excerpt: 'Vendor C selected as managed CDP layer provider. Reduces in-house build scope by ~40%. Integration contract in final review.',
+          confidence: 'high' as const,
+        },
+        {
+          id: 'ev-p3-3',
+          citation: 'Intelligence pattern validation · Apr 27 2026',
+          source: 'Sentinel / T3-H03',
+          excerpt: 'Unified Loyalty Intelligence pattern validated for personalization layer. Sentinel recommends applying T3-H03 reference architecture to identity graph design.',
           confidence: 'high' as const,
         },
       ],

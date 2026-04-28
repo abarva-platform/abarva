@@ -1616,50 +1616,52 @@ function FileUploadOverlay({ programName: _programName, programId: _programId, o
           onChange={handleFileChange}
         />
         {!uploadState ? (
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            style={{
-              margin: 24,
-              border: `2px dashed ${SHELL.CARD_LINE}`,
-              borderRadius: 10,
-              padding: '40px 20px',
-              textAlign: 'center',
-              cursor: 'pointer',
-              background: SHELL.PAPER_SOFT,
-            }}
-          >
+          <>
             <div
+              onClick={() => fileInputRef.current?.click()}
               style={{
-                fontFamily: SHELL.SERIF,
-                fontSize: 15,
-                color: SHELL.INK,
-                marginBottom: 6,
+                margin: 24,
+                border: `2px dashed ${SHELL.CARD_LINE}`,
+                borderRadius: 10,
+                padding: '40px 20px',
+                textAlign: 'center',
+                cursor: 'pointer',
+                background: SHELL.PAPER_SOFT,
               }}
             >
-              Drop a file here
+              <div
+                style={{
+                  fontFamily: SHELL.SERIF,
+                  fontSize: 15,
+                  color: SHELL.INK,
+                  marginBottom: 6,
+                }}
+              >
+                Drop a file here
+              </div>
+              <div
+                style={{
+                  fontFamily: SHELL.SANS,
+                  fontSize: 12,
+                  color: SHELL.INK_MUTED,
+                }}
+              >
+                or click to browse · PDF, DOCX, PPTX up to 25MB
+              </div>
             </div>
-            <div
-              style={{
-                fontFamily: SHELL.SANS,
-                fontSize: 12,
-                color: SHELL.INK_MUTED,
-              }}
-            >
-              or click to browse · PDF, DOCX, PPTX up to 25MB
-            </div>
-          </div>
-          {uploadError && (
-            <div
-              style={{
-                margin: '0 24px',
-                fontFamily: SHELL.SANS,
-                fontSize: 12,
-                color: '#c0392b',
-              }}
-            >
-              {uploadError}
-            </div>
-          )}
+            {uploadError && (
+              <div
+                style={{
+                  margin: '0 24px',
+                  fontFamily: SHELL.SANS,
+                  fontSize: 12,
+                  color: '#c0392b',
+                }}
+              >
+                {uploadError}
+              </div>
+            )}
+          </>
         ) : (
           <div style={{ padding: '24px 24px 0' }}>
             {/* File info */}
