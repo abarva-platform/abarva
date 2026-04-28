@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
 import { AgentColumn } from '@/components/shell/AgentColumn';
 import { StageTrackerStrip } from '@/components/shell/StageTrackerStrip';
@@ -533,7 +534,14 @@ export function SourceIndexPage() {
               letterSpacing: '-0.01em',
             }}
           >
-            {AMS_SOURCE_EVENT.name}
+            <Link
+              href={`/source/${AMS_SOURCE_EVENT.id}`}
+              style={{ color: 'inherit', textDecoration: 'none' }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = 'underline'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = 'none'; }}
+            >
+              {AMS_SOURCE_EVENT.name}
+            </Link>
           </h1>
           <p
             style={{
