@@ -19,6 +19,7 @@ import { LinkedProgramChip } from '@/components/shell/LinkedProgramChip';
 import { SubNavStrip } from '@/components/shell/SubNavStrip';
 import { useToast } from '@/components/shell/Toast';
 import { PatternChip } from '@/components/programs/PatternChip';
+import { NexusSynthesisQuote } from '@/components/programs/NexusSynthesisQuote';
 import { buildProgramStorylineContext, matchStorylinePatterns } from '@/lib/intelligence/storyline-matcher';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -2530,6 +2531,9 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
   // Mode B — AtlasDrawer open state (Shell Layout Spec v2 §5)
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  // REASON-15 — live Nexus synthesis quote (streams from /api/programs/synthesis)
+  const [synthesisQuote, setSynthesisQuote] = useState(view.workbench.prose);
+
   // PROG20 — Section tab navigation
   type SectionKey = 'overview' | 'gate' | 'evidence' | 'deliverables' | 'workshop' | 'actions' | 'decisions';
   const [activeSection, setActiveSection] = useState<SectionKey>('overview');
@@ -2623,10 +2627,19 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
         <RibbonSynthesis
           agentInitials="Nx"
           agentName="Nexus"
-          quote={view.workbench.prose}
+          quote={synthesisQuote}
           isOpen={drawerOpen}
           onToggle={() => setDrawerOpen((v) => !v)}
         />
+
+        {/* REASON-15 — hidden synthesis node; streams live Nexus quote into ribbon */}
+        <div style={{ display: 'none' }} aria-hidden>
+          <NexusSynthesisQuote
+            programId={view.programId}
+            fallback={view.workbench.prose}
+            onLoaded={setSynthesisQuote}
+          />
+        </div>
 
         {/* Work pane — WorkingPaneContainer adds stage label strip + gate badge
             and renders existing content as children (Shell Layout Spec v2 §7) */}
