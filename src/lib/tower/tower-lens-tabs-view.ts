@@ -1,7 +1,7 @@
-// TOWER4 + TOWER1 + TOWER2 · Tower Lens Tabs view-model.
+// TOWER4 + TOWER1 + TOWER2 + TOWER3 · Tower Lens Tabs view-model.
 //
-// Pure deterministic helper that returns metadata for the six lens tabs
-// on the Control Tower surface: Portfolio, Scorecards, Pressure, Source Commercial, Decisions, Executive Brief.
+// Pure deterministic helper that returns metadata for the seven lens tabs
+// on the Control Tower surface: Portfolio, Scorecards, Pressure, Source Commercial, Decisions, Value at Risk, Executive Brief.
 //
 // No model calls, no fetch, no Date.now / Math.random / new Date,
 // no live data. Same input → identical output.
@@ -24,6 +24,7 @@ export type TowerTabKey =
   | 'pressure'
   | 'source_commercial'
   | 'decisions'
+  | 'value_at_risk'
   | 'executive_brief';
 
 export interface TowerTabMeta {
@@ -76,6 +77,12 @@ export const TOWER_TABS: ReadonlyArray<TowerTabMeta> = [
     key: 'decisions',
     label: 'Decisions',
     description: 'Executive decision queue — decisions requiring leadership attention across Source and Programs',
+    hasApexRetailContent: true,
+  },
+  {
+    key: 'value_at_risk',
+    label: 'Value at Risk',
+    description: 'Value at risk portfolio lens — value at stake, evidence confidence, blockers, and decision needs',
     hasApexRetailContent: true,
   },
   {

@@ -46,6 +46,10 @@ import {
   buildExecutiveDecisionQueueView,
 } from '@/lib/tower/executive-decision-queue-view';
 import type { DecisionItem, DecisionUrgency, DecisionStatus } from '@/lib/tower/executive-decision-queue-view';
+import {
+  buildValueAtRiskPortfolioView,
+} from '@/lib/tower/value-at-risk-portfolio-view';
+import type { ValueAtRiskItem, ValueRiskTier, ValueRiskStatus, EvidenceConfidence } from '@/lib/tower/value-at-risk-portfolio-view';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Design tokens (matches existing Tower surface palette)
@@ -154,6 +158,9 @@ export function TowerLensTabs({
         )}
         {activeTab === 'decisions' && (
           <DecisionsPanel />
+        )}
+        {activeTab === 'value_at_risk' && (
+          <ValueAtRiskPanel />
         )}
         {activeTab === 'executive_brief' && (
           <ExecutiveBriefPanel tenantSlug={tenant.routeSlug} />
@@ -924,6 +931,274 @@ function DecisionsPanel() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ─── TOWER3: Value at risk portfolio lens panel ────────────────────────────────
+
+function ValueAtRiskPanel() {
+  const view = buildValueAtRiskPortfolioView();
+  const { summary, items } = view;
+
+  const riskTierColor = (t: ValueRiskTier) => {
+    if (t === 'high') return C.red;
+    if (t === 'medium') return C.amber;
+    return C.mutedSoft;
+  };
+  const statusBg = (s: ValueRiskStatus) => {
+    if (s === 'blocked') return C.redSoft;
+    if (s === 'at_risk') return C.amberSoft;
+    if (s === 'on_track') return 'rgba(22,163,74,0.07)';
+    return C.navySoft;
+  };
+  const statusColor = (s: ValueRiskStatus) => {
+    if (s === 'blocked') return C.red;
+    if (s === 'at_risk') return C.amber;
+    if (s === 'on_track') return C.green;
+    return C.mutedSoft;
+  };
+  const statusLabel = (s: ValueRiskStatus) => {
+    if (s === 'blocked') return 'BLOCKED';
+    if (s === 'at_risk') return 'AT RISK';
+    if (s === 'on_track') return 'ON TRACK';
+    return 'DEFERRED';
+  };
+  const confidenceLabel = (c: EvidenceConfidence) => {
+    if (c === 'strong') return 'Strong';
+    if (c === 'partial') return 'Partial';
+    if (c === 'weak') return 'Weak';
+    return 'Missing';
+  };
+  const confidenceColor = (c: EvidenceConfidence) => {
+    if (c === 'strong') return C.green;
+    if (c === 'partial') return C.amber;
+    if (c === 'weak') return C.red;
+    return C.mutedSoft;
+  };
+
+  const formatUsd = (v: number) =>
+    v >= 1_000_000
+      ? `$${(v / 1_000_000).toFixed(1)}M`
+      : `$${(v / 1000).toFixed(0)}K`;
+
+  return (
+    <div
+      data-testid="tower-value-at-risk-panel"
+      style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 960 }}
+    >
+      <SectionMeta
+        agent="ATLAS"
+        title="Value at Risk"
+        subtitle="Value at stake, evidence confidence, and blocker status across Source and Programs. Deterministic seed."
+      />
+
+      {/* Portfolio summary banner */}
+      <section
+        aria-label="Portfolio value summary"
+        data-testid="tower-value-at-risk-summary"
+        style={{
+          backgroundColor: '#0F1E3F',
+          color: '#FFFFFF',
+          padding: '18px 22px',
+          borderRadius: 6,
+        }}
+      >
+        <div
+          style={{
+            fontSize: 10,
+            fontWeight: 600,
+            letterSpacing: '0.08em',
+            color: '#9AA3B2',
+            textTransform: 'uppercase',
+            marginBottom: 6,
+          }}
+        >
+          ATLAS · VALUE AT RISK · DETERMINISTIC SEED
+        </div>
+        <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>
+          {view.topPriorityGuidance}
+        </div>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+            gap: 10,
+            marginTop: 12,
+          }}
+        >
+          <MetricChip label="At-risk value" value={formatUsd(summary.atRiskValueUsd)} />
+          <MetricChip label="Blocked items" value={String(summary.blockedItemCount)} />
+          <MetricChip label="High-risk items" value={String(summary.highRiskItemCount)} />
+          <MetricChip label="Evidence confidence" value={confidenceLabel(summary.portfolioEvidenceConfidence)} />
+        </div>
+        <div
+          style={{
+            marginTop: 12,
+            fontSize: 10,
+            color: '#525866',
+            borderTop: '1px solid #1F2F5A',
+            paddingTop: 10,
+          }}
+        >
+          Deterministic seed · {view.contextLine}
+        </div>
+      </section>
+
+      {/* Portfolio items */}
+      <section aria-label="Value at risk items">
+        <SectionLabel>Portfolio items · {items.length}</SectionLabel>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {items.map((item: ValueAtRiskItem) => (
+            <article
+              key={item.itemId}
+              data-testid={`tower-var-item-${item.itemId}`}
+              style={{
+                padding: '16px 18px',
+                backgroundColor: C.card,
+                border: `1px solid ${C.border}`,
+                borderLeft: `3px solid ${riskTierColor(item.riskTier)}`,
+                borderRadius: 6,
+              }}
+            >
+              {/* Header */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  gap: 12,
+                  marginBottom: 8,
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <span
+                      style={{
+                        fontFamily: 'JetBrains Mono, monospace',
+                        fontSize: 9,
+                        letterSpacing: '0.12em',
+                        textTransform: 'uppercase',
+                        color: C.mutedSoft,
+                        fontWeight: 700,
+                      }}
+                    >
+                      {item.source}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: 'JetBrains Mono, monospace',
+                        fontSize: 9,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.1em',
+                        color: riskTierColor(item.riskTier),
+                        padding: '2px 5px',
+                        border: `1px solid ${riskTierColor(item.riskTier)}44`,
+                        borderRadius: 3,
+                      }}
+                    >
+                      {item.riskTier} risk
+                    </span>
+                  </div>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>
+                    {item.label}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                  <span
+                    style={{
+                      fontFamily: 'JetBrains Mono, monospace',
+                      fontSize: 11,
+                      color: item.valueQuantified ? C.ink : C.mutedSoft,
+                    }}
+                  >
+                    {item.valueQuantified ? formatUsd(item.valueAtStakeUsd) : 'Not quantified'}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: 'JetBrains Mono, monospace',
+                      fontSize: 9,
+                      textTransform: 'uppercase',
+                      color: statusColor(item.status),
+                      padding: '2px 6px',
+                      background: statusBg(item.status),
+                      borderRadius: 3,
+                    }}
+                  >
+                    {statusLabel(item.status)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Risk narrative */}
+              <p style={{ margin: '0 0 10px', fontSize: 12, color: C.muted, lineHeight: 1.55 }}>
+                {item.riskNarrative}
+              </p>
+
+              {/* Evidence confidence */}
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '4px 10px',
+                  background: C.navySoft,
+                  borderRadius: 4,
+                  marginBottom: 10,
+                }}
+              >
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, textTransform: 'uppercase', color: C.mutedSoft }}>
+                  Evidence:
+                </span>
+                <span style={{ fontSize: 11, color: confidenceColor(item.evidenceConfidence), fontWeight: 600 }}>
+                  {confidenceLabel(item.evidenceConfidence)}
+                </span>
+              </div>
+
+              {/* Blocker note */}
+              {item.blockerNote && (
+                <div
+                  style={{
+                    padding: '6px 10px',
+                    background: C.redSoft,
+                    borderRadius: 4,
+                    marginBottom: 8,
+                    fontSize: 11,
+                    color: C.red,
+                  }}
+                >
+                  ⚠ {item.blockerNote}
+                </div>
+              )}
+
+              {/* Next action */}
+              <div
+                style={{
+                  padding: '8px 12px',
+                  backgroundColor: C.navySoft,
+                  borderRadius: 4,
+                  fontSize: 12,
+                  color: C.navy,
+                }}
+              >
+                <span style={{ fontWeight: 600 }}>Atlas recommends: </span>
+                {item.nextAction}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* Honest disclaimer */}
+      <div
+        data-testid="tower-value-at-risk-disclaimer"
+        data-honest-disclaimer="tower-value-at-risk"
+        style={{ fontSize: 11, color: C.mutedSoft, fontStyle: 'italic' }}
+      >
+        Deterministic seed · Value estimates are directional, derived from fixture BAFO and programme data. Live portfolio value tracking, evidence confidence scoring, and risk quantification are deferred.
+      </div>
+
+      <Caveat>All value at risk items are deterministic seed data. No live portfolio monitoring.</Caveat>
+    </div>
+  );
+}
+
 // Shared sub-components
 // ─────────────────────────────────────────────────────────────────────────────
 
