@@ -1,0 +1,1414 @@
+# ════════════════════════════════════════════════════════════════════
+#  AbarVa Page Catalog · v1.0 · April 27 2026
+# ════════════════════════════════════════════════════════════════════
+#
+# Stable IDs for every page, state variant, modal, and shared component
+# in the AbarVa workspace. Use these IDs as binding spec when briefing
+# Code Desktop, writing tickets, or referencing surfaces in conversation.
+#
+# ID convention: <SURFACE>-<TYPE>-<VARIANT>
+#   SURFACE: SHL (shell) | HOM (home) | SET (setup) | PRG (programs)
+#            SRC (source) | INT (intelligence) | TWR (tower) | CMP (component)
+#   TYPE:    IDX (index) | DTL (detail) | MOD (modal) | FLW (flow step)
+#            STA (state variant) | LNS (lens/view) | EMP (empty) | ERR (error)
+#   VARIANT: phase number (P0–P6), severity (HI/MD/LO), sub-section,
+#            status, or descriptive token
+#
+# Demo tenant: Apex Retail Group · Locked
+# Flagship program: APX-CDP-2026 · CDP Activation · currently P2 Synthesis
+# Design gate (P2 → P3) pending · Steward owns · Workshop 5 incomplete
+#
+# Repo cross-reference: every entry's `repo_slices` field maps to the slice
+# IDs in docs/backlog/backlog-registry.json. The catalog is the design layer;
+# the registry is the build layer. Together they form the spec.
+#
+# ════════════════════════════════════════════════════════════════════
+
+meta:
+  version: "1.0"
+  date: "2026-04-27"
+  total_entries: 78
+  surfaces:
+    - SHL: Shell · cross-cutting chrome and entry pages
+    - HOM: Home · executive landing
+    - SET: Setup · Steward · governance, connectors, users, audit, policies, architecture
+    - PRG: Programs · Nexus · phased program execution, gates, evidence
+    - SRC: Source · Nexus + Steward · sourcing/outsourcing/commercial intelligence
+    - INT: Intelligence · Sentinel · pattern library, solution archetypes
+    - TWR: Tower · Atlas · cross-program pressure, lenses, outcome realization
+    - CMP: Components · shared design-system primitives
+
+  agents:
+    nexus: { name: Nexus, role: Maestro, model: Opus, voice: orchestral, color_token: navy }
+    sentinel: { name: Sentinel, role: Validator, model: Opus, voice: evidence, color_token: navy }
+    atlas: { name: Atlas, role: Synthesizer, model: Sonnet, voice: 150-word-cap, color_token: navy }
+    steward: { name: Steward, role: Governor, model: Sonnet, voice: governance, color_token: navy }
+
+  status_legend:
+    built: Mockup HTML exists in /mnt/user-data/outputs/abarva-mockups
+    matched: Built and matches locked production aesthetic
+    in-shell: Built within the new 3-zone shell template
+    pending: Spec'd but not yet rendered
+    placeholder: Acknowledged · awaiting detailed design
+    in-repo: Production code exists · catalog references the as-built state
+
+  build_priority:
+    P0: Required for shell wave SHELL-1..6
+    P1: Next wave · post-shell adapters
+    P2: Later · awaiting input or lower-leverage
+
+# ════════════════════════════════════════════════════════════════════
+#  SHELL · cross-cutting chrome
+# ════════════════════════════════════════════════════════════════════
+
+pages:
+
+  - id: SHL-NAV-DEFAULT
+    surface: shell
+    name: Standard 5-icon navigation rail · default state
+    type: chrome
+    lead_agent: null
+    description: |
+      The 76px left rail with Setup · Programs · Source · Intelligence · Tower
+      icons. Brand mark top, user avatar bottom. Exactly one icon active per
+      page. Persistent across all surfaces.
+    middle_strip: null
+    working_pane: null
+    interactions:
+      - click_icon: navigates to that surface's default page
+      - hover_icon: reveals tooltip with surface name
+      - click_brand: navigates to HOM-IDX
+      - click_avatar: opens user menu (modal · TBD)
+    mockup_status: in-shell
+    mockup_file: 00-architecture-4-surfaces.html
+    build_priority: P0
+    repo_slices: [SHELL1, SHELL2, SHELL3, NAV1]
+    notes: |
+      Replaces the prior horizontal nav from the production reference.
+      AbarVa wordmark only · no Sanskrit symbol · no AI sparkle.
+      Active item: filled navy with paper letter. Inactive: transparent
+      border, ink-soft letter.
+
+  - id: SHL-LOGIN
+    surface: shell
+    name: Login · pre-tenant entry
+    type: detail
+    lead_agent: null
+    description: |
+      Tenant resolution + auth. Wordmark hero, four-agent signature row
+      (decorative — not full agent panels), email input, sign-in.
+    middle_strip: null
+    working_pane:
+      sections: [tenant_resolution, auth_form]
+    mockup_status: built
+    mockup_file: 00-landing-login.html
+    build_priority: P1
+    repo_slices: []
+    notes: Built in original cycle 4 · pre-shell aesthetic. Needs reskin to paper/navy.
+
+  - id: SHL-LANDING
+    surface: shell
+    name: Public landing · pre-auth
+    type: detail
+    lead_agent: null
+    description: Marketing/explainer page. Not in nav. Routed at "/".
+    mockup_status: pending
+    build_priority: P2
+    repo_slices: []
+    notes: Lower priority · not part of authenticated experience.
+
+  - id: SHL-AUTH-LOST
+    surface: shell
+    name: Auth lost · re-authentication
+    type: state
+    lead_agent: steward
+    description: |
+      Steward narrates that auth has expired. Inline re-auth without losing
+      working state. Used when ServiceNow-style connector auth expires
+      and the maestro needs to re-establish without page reload.
+    mockup_status: pending
+    build_priority: P2
+    repo_slices: []
+
+# ════════════════════════════════════════════════════════════════════
+#  HOME · executive landing
+# ════════════════════════════════════════════════════════════════════
+
+  - id: HOM-IDX-DEFAULT
+    surface: home
+    name: Home · executive landing across surfaces
+    type: index
+    lead_agent: nexus
+    description: |
+      Cross-surface attention list. What needs the maestro now across all
+      programs, all source events, all pressures, all governance items.
+      Nexus narrates the "next move" across the whole workspace.
+    middle_strip:
+      type: filter
+      content: ["All · attention", "Programs", "Source", "Tower", "Setup"]
+    working_pane:
+      sections:
+        - missions_list (cross-surface)
+        - blockers (governance · evidence · gates)
+        - recent_activity (last 24h)
+    agent_voice_focus: |
+      "You have 3 things demanding attention: APX-CDP-2026's Design gate
+      under Steward, AI Cloud Spend at $2.4M (Tower high pressure),
+      and 2 M3 pattern duplicates Sentinel can't auto-resolve."
+    mockup_status: pending
+    build_priority: P1
+    repo_slices: [HOME1]
+    notes: |
+      Doc reports Home as "Thin; needs coherent executive landing."
+      Don't build until shell and primary surfaces are reskinned.
+
+# ════════════════════════════════════════════════════════════════════
+#  SETUP · Steward · governance and platform control
+# ════════════════════════════════════════════════════════════════════
+
+  - id: SET-IDX-CONN
+    surface: setup
+    name: Setup · Connectors view (default)
+    type: index
+    lead_agent: steward
+    description: |
+      Connectors sub-nav active. Grid of 6-8 connector cards showing
+      health (healthy/degraded/disconnected). Steward narrates governance
+      state and surfaces what needs maestro action.
+    middle_strip:
+      type: subnav
+      tabs: [Connectors, Users, Audit log, Policies, Tenant, Architecture]
+      active: Connectors
+    working_pane:
+      sections:
+        - registered_systems_grid
+        - recent_audit_events
+      components: [ConnectorCard, AuditRow]
+    agent_voice_focus: |
+      "8 connectors registered, 1 degraded — ServiceNow lost auth at 14:22 UTC."
+    entry_points: [SHL-NAV-DEFAULT, HOM-IDX-DEFAULT]
+    exit_points: [SET-DTL-CONN-DEGRADED, SET-IDX-USR, SET-IDX-AUD]
+    interactions:
+      - click_subnav: switch to USR/AUD/POL/TEN/ARC view
+      - click_connector_card: open connector detail
+      - click_reconnect: trigger SET-FLW-CONN-RECONNECT
+    mockup_status: in-shell
+    mockup_file: 00-architecture-4-surfaces.html (Surface 01)
+    build_priority: P0
+    repo_slices: [ADM6, ADM8, TRUST3]
+
+  - id: SET-IDX-USR
+    surface: setup
+    name: Setup · Users view
+    type: index
+    lead_agent: steward
+    description: |
+      Users sub-nav active. Table of users with role, tenant scope, last
+      activity. Invite button top-right. Steward narrates user provisioning.
+    middle_strip:
+      type: subnav
+      active: Users
+    working_pane:
+      sections: [users_table]
+      components: [UserRow]
+    mockup_status: pending
+    build_priority: P1
+    repo_slices: [ADM6]
+
+  - id: SET-IDX-AUD
+    surface: setup
+    name: Setup · Audit log view
+    type: index
+    lead_agent: steward
+    description: |
+      Audit log sub-nav active. Chronological table of audit events with
+      filters by actor, surface, severity. Steward narrates anomalies.
+    middle_strip:
+      type: subnav
+      active: Audit log
+    working_pane:
+      sections: [audit_filters, audit_table]
+    mockup_status: pending
+    build_priority: P1
+    repo_slices: [AUD2]
+
+  - id: SET-IDX-POL
+    surface: setup
+    name: Setup · Policies view
+    type: index
+    lead_agent: steward
+    description: |
+      Tenant policies and governance rules. Annual review status.
+    mockup_status: pending
+    build_priority: P1
+    repo_slices: []
+
+  - id: SET-IDX-TEN
+    surface: setup
+    name: Setup · Tenant view
+    type: index
+    lead_agent: steward
+    description: |
+      Tenant settings: branding, tier, deployment model (SaaS/dedicated/private).
+    mockup_status: pending
+    build_priority: P2
+    repo_slices: [TEN3]
+
+  - id: SET-IDX-ARC
+    surface: setup
+    name: Setup · Architecture view (Atlas + Steward sub-page)
+    type: index
+    lead_agent: atlas
+    description: |
+      Reference architecture. App plane, agent plane, context plane, evidence
+      plane, model gateway, tool plane, governance, deployment, Azure data plane.
+      Visual canvas of the eight planes with their relationships.
+    middle_strip:
+      type: subnav
+      active: Architecture
+    working_pane:
+      sections: [architecture_canvas, plane_descriptions]
+    mockup_status: in-repo
+    build_priority: P1
+    repo_slices: [ARCH1, ARCH2, ARCH3, ARCH4]
+    notes: |
+      Sub-page of Setup, not its own rail icon. Doc reports it shipped via
+      ARCH4 in Wave 15. Reskin to shell template.
+
+  - id: SET-DTL-CONN-DEGRADED
+    surface: setup
+    name: Connector detail · ServiceNow degraded
+    type: detail
+    lead_agent: steward
+    description: |
+      Drill-in for a degraded connector. SLA stats, diagnostic timeline,
+      reconnect flow trigger. Steward explains what broke and what to do.
+    working_pane:
+      sections: [hero_status, sla_grid, diagnostic_timeline, reconnect_action]
+    mockup_status: built
+    mockup_file: 15-connector-health-detail.html
+    build_priority: P1
+    repo_slices: []
+    notes: Built pre-shell. Reskin needed.
+
+  - id: SET-DTL-CONN-HEALTHY
+    surface: setup
+    name: Connector detail · healthy state
+    type: detail
+    lead_agent: steward
+    description: Healthy connector view · sync history, recent activity, configure.
+    mockup_status: pending
+    build_priority: P2
+
+  - id: SET-FLW-CONN-RECONNECT
+    surface: setup
+    name: Reconnect flow · auth refresh
+    type: flow
+    lead_agent: steward
+    description: |
+      Multi-step reconnect: auth challenge → credentials → test connection
+      → confirm. Steward walks the maestro through each step.
+    mockup_status: pending
+    build_priority: P1
+
+  - id: SET-FLW-USR-INVITE
+    surface: setup
+    name: Invite collaborator · 4-step wizard
+    type: flow
+    lead_agent: steward
+    description: |
+      Step 1 Identity → Step 2 Role → Step 3 Tenant scope → Step 4 Confirm.
+      Steward validates each step before allowing progression.
+    working_pane:
+      sections: [step_rail, current_step_form, validation_panel]
+    mockup_status: built
+    mockup_file: 19-user-provisioning.html
+    build_priority: P1
+    notes: |
+      Built pre-shell as a single mockup showing Step 3 active. Reskin to
+      shell template; consider whether each step is its own catalog entry
+      (SET-FLW-USR-INVITE-1 through -4) or one entry with state variants.
+
+  - id: SET-MOD-POLICY-REVIEW
+    surface: setup
+    name: Annual policy review modal
+    type: modal
+    lead_agent: steward
+    description: |
+      Triggered when tenant policy approaches annual deadline. Steward
+      summarizes what's changed since last review and what needs sign-off.
+    mockup_status: pending
+    build_priority: P2
+
+# ════════════════════════════════════════════════════════════════════
+#  PROGRAMS · Nexus · phased program execution
+# ════════════════════════════════════════════════════════════════════
+
+  - id: PRG-IDX-DEFAULT
+    surface: programs
+    name: Programs · portfolio index (default)
+    type: index
+    lead_agent: nexus
+    description: |
+      Portfolio table of all active programs for the tenant. Each row shows
+      program ID, name, Nexus subline, mini phase indicator (6 segments),
+      gate status, last activity, Continue/Resume/Review action.
+      Nexus narrates portfolio-scope: pending gates, idle programs, capacity.
+    middle_strip:
+      type: filter
+      content: [All, Active, Idle, Gated, Stale]
+      active: All
+    working_pane:
+      sections: [portfolio_summary, programs_list]
+      components: [PhaseDot, StatusPill, ActionButton]
+    agent_voice_focus: |
+      "You have 7 active programs. APX-CDP-2026's Design gate has been
+      pending six days and needs a decision today. APX-04 has been quiet
+      for 12 days. You have bandwidth to originate one more before Q3."
+    entry_points: [SHL-NAV-DEFAULT, HOM-IDX-DEFAULT]
+    exit_points:
+      - PRG-DTL-P{N} (clicking row)
+      - "next pending action (clicking Continue)"
+      - PRG-FLW-ORIGINATE (clicking + Originate program)
+    interactions:
+      - click_row: open PRG-DTL-P{N}
+      - click_continue: jump to next pending action
+      - click_originate: start PRG-FLW-ORIGINATE
+      - click_filter: re-filter list
+    mockup_status: matched
+    mockup_file: 01-programs-index-matched.html
+    build_priority: P0
+    repo_slices: [PROG10]
+    notes: |
+      Built and matches production aesthetic. Currently uses Morrison naming;
+      update to APX-CDP-2026 / CDP Activation when reskinning to shell.
+
+  - id: PRG-IDX-EMPTY
+    surface: programs
+    name: Programs · empty state (new tenant)
+    type: empty
+    lead_agent: nexus
+    description: |
+      No programs yet. Nexus invites the maestro to originate the first one.
+      Single CTA prominent: "Originate your first program."
+    mockup_status: pending
+    build_priority: P1
+
+  - id: PRG-IDX-FILTERED
+    surface: programs
+    name: Programs · filtered by status
+    type: state
+    lead_agent: nexus
+    description: |
+      Filter pill active in middle strip. List narrows. Nexus voice adjusts
+      to scope: "3 idle programs · oldest is APX-04 at 12 days."
+    mockup_status: pending
+    build_priority: P1
+
+  - id: PRG-FLW-ORIGINATE
+    surface: programs
+    name: Originate new program · Phase 0 intake
+    type: flow
+    lead_agent: atlas
+    description: |
+      Page re-renders into program detail layout with P0 dot active in
+      middle strip. Atlas asks the four origination questions: use case,
+      sponsor, success criteria, data foundation. As maestro answers,
+      Phase 0 closes and Phase 1 (Discovery) opens with Nexus taking lead.
+      One-click navigation, no modal, no wizard chrome.
+    middle_strip:
+      type: phase_journey
+      state: phase_0_active
+      phases: [Originate, Discovery, Synthesis, Design, Build, Activate, Operate]
+    working_pane:
+      sections: [origination_intake, sponsor_capture, success_criteria, data_foundation_check]
+    agent_voice_focus: |
+      Atlas: "Let's get the first phase right. Four questions, in any order.
+      What's the use case? Who sponsors it? What does success look like?
+      What's the data foundation today?"
+    entry_points: [PRG-IDX-DEFAULT (+ Originate CTA)]
+    exit_points: [PRG-DTL-P1 (after intake completes)]
+    mockup_status: pending
+    build_priority: P0
+    repo_slices: []
+    notes: |
+      Founder confirmed: re-render canvas into journey map page · maestro
+      navigates one click at a time · less clutter · skip modal/wizard.
+
+  - id: PRG-DTL-P1
+    surface: programs
+    name: Program detail · Phase 1 Discovery
+    type: detail
+    variant: P1
+    lead_agent: nexus
+    description: |
+      Discovery phase active. Working pane: discovery deliverables (interview
+      notes, source mapping, hypothesis sketches), evidence sources gathered,
+      no gate yet (P1 → P2 gate opens once discovery is "complete").
+    middle_strip:
+      type: phase_journey
+      state: phase_1_active
+    working_pane:
+      sections: [active_deliverable_discovery, evidence_sources, gate_progress]
+    agent_voice_focus: Nexus narrates discovery progress and what's still missing.
+    mockup_status: pending
+    build_priority: P0
+    repo_slices: [PROG10, PROG11]
+
+  - id: PRG-DTL-P2
+    surface: programs
+    name: Program detail · Phase 2 Synthesis (current state for APX-CDP-2026)
+    type: detail
+    variant: P2
+    lead_agent: nexus
+    description: |
+      Synthesis phase active. Working pane: synthesis deliverables, evidence
+      stack with conflict detection, gate readiness for P2 → P3. THIS IS THE
+      CURRENT STATE of the demo program APX-CDP-2026.
+    middle_strip:
+      type: phase_journey
+      state: phase_2_active
+    working_pane:
+      sections: [active_deliverable, evidence_stack, gate_checks]
+      components: [DeliverableCard, EvidenceRow]
+    agent_voice_focus: |
+      "The Design gate is pending because Workshop 5 outcomes and value
+      hypothesis evidence are incomplete. The next best move is to prepare
+      the Design Readiness workshop and resolve the evidence blockers."
+    entry_points: [PRG-IDX-DEFAULT, PRG-DTL-P1 (gate clears)]
+    exit_points: [PRG-MOD-GATE-APPROVE, PRG-MOD-CONTRADICTION, PRG-MOD-EVIDENCE-DRAWER, PRG-DTL-P3]
+    interactions:
+      - click_phase_dot: navigate to that phase's archived view
+      - click_evidence_conflict: open contradiction modal
+      - click_approve_gate: open gate approval modal
+      - hover_deliverable: reveal quick actions
+    mockup_status: matched + in-shell
+    mockup_file: 02-program-detail-matched.html, 00-architecture-4-surfaces.html (Surface 02)
+    build_priority: P0
+    repo_slices: [PROG10, PROG11, PROG12, PROG13, PROG14]
+    notes: |
+      Demo program APX-CDP-2026 sits in this state. Workshop 5 incomplete,
+      value hypothesis evidence missing, privacy boundary/platform-owner
+      confirmation gaps. Evidence coverage 36%.
+
+  - id: PRG-DTL-P3
+    surface: programs
+    name: Program detail · Phase 3 Design
+    type: detail
+    variant: P3
+    lead_agent: nexus
+    description: |
+      Design phase active (post P2 → P3 gate clear). Working pane: design
+      artifacts, architecture sketches, build readiness checks.
+    middle_strip:
+      type: phase_journey
+      state: phase_3_active
+    working_pane:
+      sections: [active_deliverable_design, architecture_sketches, gate_checks_p3_to_p4]
+    mockup_status: pending
+    build_priority: P0
+    repo_slices: []
+
+  - id: PRG-DTL-P4
+    surface: programs
+    name: Program detail · Phase 4 Build
+    type: detail
+    variant: P4
+    lead_agent: nexus
+    description: |
+      Build phase active. Working pane: build artifacts, integration progress,
+      test results, activation readiness.
+    mockup_status: pending
+    build_priority: P0
+    repo_slices: []
+
+  - id: PRG-DTL-P5
+    surface: programs
+    name: Program detail · Phase 5 Activate
+    type: detail
+    variant: P5
+    lead_agent: nexus
+    description: |
+      Activate phase. Field rollout, change management, adoption tracking.
+      Atlas may co-anchor with Nexus (cross-program adoption signal).
+    mockup_status: pending
+    build_priority: P1
+    repo_slices: []
+
+  - id: PRG-DTL-P6
+    surface: programs
+    name: Program detail · Phase 6 Operate (post-launch)
+    type: detail
+    variant: P6
+    lead_agent: nexus
+    description: |
+      Operate phase. Outcome realization tracking. Atlas leads on outcome
+      metrics; Nexus orchestrates ongoing operate loop. Links to TWR-IDX-OUTCOME.
+    mockup_status: pending
+    build_priority: P1
+    repo_slices: []
+
+  - id: PRG-STA-GATE-PENDING
+    surface: programs
+    name: Gate review ribbon · active state on any phase detail
+    type: state
+    lead_agent: nexus
+    description: |
+      When the gate becomes evaluable (e.g. P2 → P3), a peach ribbon appears
+      at the top of the working pane: "Gate review · 4 of 5 cleared, 1 pending
+      your sign-off." Nexus voice shifts to gate-decision mode. Maestro reviews
+      evidence inline, then clicks Approve gate.
+    middle_strip:
+      type: phase_journey
+      state: phase_pending_with_gate_indicator
+    working_pane:
+      sections: [gate_review_ribbon, evidence_summary, sign_off_action]
+    interactions:
+      - click_approve: open PRG-MOD-GATE-APPROVE
+      - click_evidence: open PRG-MOD-EVIDENCE-DRAWER
+    mockup_status: pending
+    build_priority: P0
+    repo_slices: [PROG13]
+    notes: Overlay state on top of any PRG-DTL-P{N}, not its own page.
+
+  - id: PRG-MOD-GATE-APPROVE
+    surface: programs
+    name: Gate approval confirmation modal
+    type: modal
+    lead_agent: steward
+    description: |
+      Confirms gate approval. Surfaces the audit entry Steward will sign,
+      lists what changes (phase advances, deliverables locked, next phase
+      opens). Maestro confirms; Steward records audit; phase strip animates.
+    working_pane:
+      sections: [audit_entry_preview, changes_summary, confirm_actions]
+    interactions:
+      - confirm: phase strip animates · returns to PRG-DTL-P{N+1}
+      - cancel: returns to PRG-STA-GATE-PENDING
+    mockup_status: pending
+    build_priority: P0
+    repo_slices: []
+    notes: Founder confirmed inline ribbon + confirmation modal · not full gate page.
+
+  - id: PRG-MOD-CONTRADICTION
+    surface: programs
+    name: Contradiction resolution modal
+    type: modal
+    lead_agent: nexus
+    description: |
+      Side-by-side diff of conflicting evidence (e.g., Epic 18.2% vs Finance
+      22.4%). Nexus diagnoses why both are correct. Three resolution paths;
+      Path B recommended. Maestro picks: Resolve / Defer / Reject.
+    working_pane:
+      sections: [diff_view, nexus_diagnosis, resolution_paths, action_row]
+    mockup_status: built
+    mockup_file: 14-contradiction-resolution.html
+    build_priority: P1
+    repo_slices: []
+    notes: Built pre-shell. Reskin needed.
+
+  - id: PRG-MOD-EVIDENCE-DRAWER
+    surface: programs
+    name: Evidence drawer · citation drill-in
+    type: modal
+    lead_agent: nexus
+    description: |
+      Slide-in drawer triggered by clicking a citation chip. Shows source
+      document with highlighted passage, 4-step provenance chain, confidence
+      breakdown grid, action row.
+    mockup_status: built
+    mockup_file: 10-evidence-drawer.html
+    build_priority: P1
+    repo_slices: [EVID2, EVID3]
+    notes: Built pre-shell. Reskin needed.
+
+  - id: PRG-MOD-CUSTOM-ACTION
+    surface: programs
+    name: Custom action · expanded input
+    type: modal
+    lead_agent: nexus
+    description: |
+      Maestro types custom action; Nexus shows live preview of what it
+      heard (live agent understanding) before committing.
+    mockup_status: built
+    mockup_file: 18-custom-action-live.html
+    build_priority: P2
+    repo_slices: []
+
+  - id: PRG-STA-PHASE-TRANSITION
+    surface: programs
+    name: Phase transition animation state
+    type: state
+    lead_agent: nexus
+    description: |
+      Animation state · gate clears, current phase turns mint, next phase
+      lights up navy. Brief celebration moment, then settle into new phase.
+    mockup_status: built
+    mockup_file: 17-phase-transition.html
+    build_priority: P2
+
+  - id: PRG-STA-FILE-UPLOAD
+    surface: programs
+    name: File upload + parse pipeline
+    type: state
+    lead_agent: steward
+    description: |
+      Drag-drop drop zone + 6-stage parse pipeline (Receive → Extract →
+      PII → Classify → Cross-check → Route). Steward acks; Nexus picks up
+      ingested content for use in deliverables.
+    mockup_status: built
+    mockup_file: 11-file-upload-parse.html
+    build_priority: P1
+
+  - id: PRG-STA-AGENT-HANDOFF
+    surface: programs
+    name: Agent handoff · Nexus → Sentinel
+    type: state
+    lead_agent: nexus
+    description: |
+      Nexus delivers + admits limits → handoff banner with packet (claims +
+      evidence) → Sentinel verdict preserves disagreement.
+    mockup_status: built
+    mockup_file: 12-agent-handoff.html
+    build_priority: P1
+
+  - id: PRG-STA-SUGGESTED-ACTION
+    surface: programs
+    name: Suggested action flow · 3-frame
+    type: state
+    lead_agent: nexus
+    description: |
+      Maestro reads 3 suggested actions → clicks A → Nexus thinks
+      transparently (declared CTX categories) → response streams with
+      citations and deliverable card.
+    mockup_status: built
+    mockup_file: 09-suggested-action-flow.html
+    build_priority: P1
+
+  - id: PRG-MOD-SCORECARD-OVERRIDE
+    surface: programs
+    name: Scorecard override · rationale required
+    type: modal
+    lead_agent: nexus
+    description: |
+      Maestro overrides scorecard score; Nexus requires reasoned justification
+      before committing. Surfaces audit implication.
+    mockup_status: built
+    mockup_file: 16-scorecard-override.html
+    build_priority: P2
+
+# ════════════════════════════════════════════════════════════════════
+#  SOURCE · Nexus + Steward · sourcing/outsourcing/commercial intelligence
+# ════════════════════════════════════════════════════════════════════
+
+  - id: SRC-IDX-EVENTS
+    surface: source
+    name: Source · events list (default)
+    type: index
+    lead_agent: nexus
+    description: |
+      Portfolio of all sourcing events for the tenant. Each row: event ID,
+      vendor scope, current stage in the 10-stage tracker, linked program
+      (badge), risk posture, last activity, action.
+    middle_strip:
+      type: filter
+      content: [All, Active, Awarded, Closed, Risky]
+    working_pane:
+      sections: [events_list, recent_signals]
+      components: [EventRow, StagePips, RiskBadge, LinkedProgramChip]
+    agent_voice_focus: |
+      "You have 4 active events. AMS Vendor Consolidation 2026 is in
+      Stage 7 (BAFO) and links to APX-CDP-2026's Design phase."
+    mockup_status: in-repo
+    build_priority: P0
+    repo_slices: [SRC11, SRC12, SRC13, SRC27, SRC28]
+    notes: |
+      Doc reports Source Commercial Hub shipped via Waves 14-16. Reskin
+      to shell template. Demo scenario: AMS Vendor Consolidation 2026,
+      tenant-scoped to Apex Retail, linkedProgramCode APX-CDP-2026.
+
+  - id: SRC-IDX-EMPTY
+    surface: source
+    name: Source · empty state (no events)
+    type: empty
+    lead_agent: nexus
+    description: Empty state. Nexus invites maestro to originate first event.
+    mockup_status: pending
+    build_priority: P2
+
+  - id: SRC-DTL-EVENT
+    surface: source
+    name: Source event · canvas (10-stage detail)
+    type: detail
+    lead_agent: nexus
+    description: |
+      Engagement canvas for a sourcing event. 10-stage tracker in middle
+      strip (or sub-strip). Multi-agent tabs: Nexus orchestration, Steward
+      governance/compliance, Atlas commercial synthesis, Sentinel evidence.
+      Working pane sections: vendor scope, BAFO panel, pricing normalization,
+      risk detection, vendor comparison, signals, linked program storyline.
+    middle_strip:
+      type: stage_tracker
+      stages: [Plan, RFI, Shortlist, RFP, Q&A, Initial-Bid, BAFO, Selection, Award, Onboard]
+      active: BAFO
+    working_pane:
+      sections:
+        - vendor_scope
+        - bafo_panel
+        - pricing_normalization
+        - vendor_comparison
+        - risk_detection
+        - signals
+        - linked_program_storyline
+        - action_queue
+      components: [VendorCard, PriceMatrix, RiskFlag, SignalRow, LinkedProgramChip]
+    agent_voice_focus: |
+      Nexus: "AMS Vendor Consolidation 2026 is in BAFO. Three vendors
+      submitted. Vendor C's pricing normalizes to 14% below median.
+      Steward flagged a SOC-2 attestation gap on Vendor B that needs
+      remediation before award."
+    entry_points: [SRC-IDX-EVENTS, PRG-DTL-P{N} (linked source chip)]
+    exit_points: [SRC-STA-BAFO, SRC-STA-COMPARISON, SRC-STA-RISK, SRC-MOD-VENDOR-RESPONSE]
+    mockup_status: in-repo
+    mockup_file: 04-source-canvas.html (pre-shell version)
+    build_priority: P0
+    repo_slices: [SRC11, SRC12, SRC13, SRC14, SRC15, SRC16, SRC17, SRC18, SRC19, SRC20, SRC27, SRC28, SRC29, SRC30]
+    notes: |
+      Largely shipped in repo. Pre-shell mockup (04-source-canvas.html) shows
+      the original 3-column 240+center+380 canvas. Shell adapter needs to
+      collapse to 2-pane (agent column + work pane) and shift the 10-stage
+      tracker to middle strip.
+
+  - id: SRC-STA-BAFO
+    surface: source
+    name: Source · BAFO strategy panel
+    type: state
+    lead_agent: nexus
+    description: |
+      Best And Final Offer strategy view. Vendor positioning, leverage points,
+      Nexus-recommended negotiation moves, Atlas commercial synthesis.
+    mockup_status: in-repo
+    build_priority: P1
+    repo_slices: [SRC11, SRC12]
+
+  - id: SRC-STA-PRICING
+    surface: source
+    name: Source · pricing normalization
+    type: state
+    lead_agent: atlas
+    description: |
+      Normalize vendor pricing across rate cards, units, contract terms
+      into apples-to-apples comparison. Atlas synthesizes the variance.
+    mockup_status: in-repo
+    build_priority: P1
+    repo_slices: [SRC13, SRC14]
+
+  - id: SRC-STA-COMPARISON
+    surface: source
+    name: Source · vendor comparison matrix
+    type: state
+    lead_agent: nexus
+    description: |
+      Side-by-side vendor comparison with weighted scorecard, Nexus
+      observations, Sentinel evidence flags on claims.
+    mockup_status: in-repo
+    build_priority: P1
+    repo_slices: [SRC15, SRC16]
+
+  - id: SRC-STA-RISK
+    surface: source
+    name: Source · risk detection
+    type: state
+    lead_agent: steward
+    description: |
+      Risk dashboard for the event. Compliance gaps, financial stability,
+      delivery risk, contract terms. Steward narrates governance posture.
+    mockup_status: in-repo
+    build_priority: P1
+    repo_slices: [SRC15]
+
+  - id: SRC-STA-SIGNALS
+    surface: source
+    name: Source · signals stream
+    type: state
+    lead_agent: sentinel
+    description: |
+      External signals about vendors (news, ratings, sanctions, financial)
+      that Sentinel surfaces as evidence backing or contradicting vendor claims.
+    mockup_status: in-repo
+    build_priority: P1
+    repo_slices: [SRC16, SRC17]
+
+  - id: SRC-STA-LINKED-PROG
+    surface: source
+    name: Source · linked program storyline
+    type: state
+    lead_agent: nexus
+    description: |
+      Cross-link to the program this sourcing event supports. For demo:
+      APX-CDP-2026 (CDP Activation) needs the AMS vendor for Phase 4 Build.
+      Shows the connection: source event progress affects program phase
+      readiness. Linked program chip in event detail; reverse chip in PRG-DTL.
+    mockup_status: pending
+    build_priority: P0
+    repo_slices: []
+    notes: |
+      Doc explicitly calls out: "Source ↔ Program badges/chips for cross-
+      linking" as the key Wave 19 ask. Critical for the storyline demo.
+
+  - id: SRC-MOD-VENDOR-RESPONSE
+    surface: source
+    name: Vendor response modal · BAFO submission
+    type: modal
+    lead_agent: nexus
+    description: Vendor submits response. Nexus parses; Steward verifies; Atlas synthesizes implication.
+    mockup_status: pending
+    build_priority: P2
+
+  - id: SRC-FLW-ORIGINATE
+    surface: source
+    name: Originate source event · Phase 0 intake
+    type: flow
+    lead_agent: atlas
+    description: |
+      Mirror of PRG-FLW-ORIGINATE pattern. Re-render canvas into stage
+      tracker page with Stage 0 (Plan) active. Atlas asks the four
+      origination questions for sourcing: scope, vendors, criteria, timeline.
+    mockup_status: pending
+    build_priority: P1
+
+  - id: SRC-MOD-ACTION-QUEUE
+    surface: source
+    name: Source action queue · cross-vendor next moves
+    type: modal
+    lead_agent: nexus
+    description: Action queue surfacing per-vendor next moves Nexus recommends.
+    mockup_status: in-repo
+    build_priority: P2
+    repo_slices: [SRC30]
+
+# ════════════════════════════════════════════════════════════════════
+#  INTELLIGENCE · Sentinel · pattern library, solution archetypes
+# ════════════════════════════════════════════════════════════════════
+
+  - id: INT-IDX-DEFAULT
+    surface: intelligence
+    name: Intelligence · library index (all tiers)
+    type: index
+    lead_agent: sentinel
+    description: |
+      Pattern catalogue. Tier filters in middle strip. Patterns grouped
+      into M·Meta (foundational frameworks), T1·Craft (how-to), T3·Use-case
+      (applied templates). Each row: ID, name, Sentinel note, tier badge,
+      status pill, last reviewed, action.
+    middle_strip:
+      type: filter
+      content: ["All", "M · Meta", "T1 · Craft", "T3 · Use-case", "In review", "Candidates"]
+    working_pane:
+      sections: [tier_M, tier_T1, tier_T3]
+      components: [PatternRow, TierPill, StatusPill]
+    agent_voice_focus: |
+      "94 patterns catalogued. T3-H01 (Ambient) is the strongest signal —
+      cited in 4 programs, ready for promotion. Two recent submissions
+      look like duplicates of M3 — I want your call."
+    mockup_status: matched + in-shell
+    mockup_file: 05-intelligence-library-matched.html, 00-architecture-4-surfaces.html (Surface 03)
+    build_priority: P0
+    repo_slices: [I5, I6]
+
+  - id: INT-IDX-FILTERED-M
+    surface: intelligence
+    name: Intelligence · M-tier filter active
+    type: state
+    lead_agent: sentinel
+    description: List narrows to Meta patterns only.
+    mockup_status: pending
+    build_priority: P1
+
+  - id: INT-IDX-FILTERED-T1
+    surface: intelligence
+    name: Intelligence · T1-tier filter active
+    type: state
+    lead_agent: sentinel
+    mockup_status: pending
+    build_priority: P1
+
+  - id: INT-IDX-FILTERED-T3
+    surface: intelligence
+    name: Intelligence · T3-tier filter active
+    type: state
+    lead_agent: sentinel
+    mockup_status: pending
+    build_priority: P1
+
+  - id: INT-IDX-FILTERED-INREVIEW
+    surface: intelligence
+    name: Intelligence · In review filter active
+    type: state
+    lead_agent: sentinel
+    description: 7 patterns Sentinel hasn't validated yet.
+    mockup_status: pending
+    build_priority: P1
+
+  - id: INT-DTL-VALIDATED
+    surface: intelligence
+    name: Pattern detail · validated state (T3-H01 Ambient)
+    type: detail
+    variant: validated
+    lead_agent: sentinel
+    description: |
+      Reading layout (canon exception: pattern leads, agent recedes).
+      Main column: 4 sections (What it does · When to use · Authoring
+      guidance · Anti-patterns) in serif body 18px. Right rail: Sentinel
+      verdict, evidence card, used-by programs, Promote action.
+    middle_strip:
+      type: filter
+      content: ["All", "M", "T1", "T3"]
+    working_pane:
+      sections: [pattern_reading_main, sentinel_verification_rail]
+      components: [VerdictCard, EvidenceCard, UsedByCard, ActionCard]
+    mockup_status: matched
+    mockup_file: 06-pattern-detail-matched.html
+    build_priority: P0
+    repo_slices: [I5]
+
+  - id: INT-DTL-INREVIEW
+    surface: intelligence
+    name: Pattern detail · in review state
+    type: detail
+    variant: in-review
+    lead_agent: sentinel
+    description: |
+      Same reading layout but verdict card shows "In review" not
+      "Validated." Sentinel narrates what's still being validated and
+      what evidence is still missing. No promote action.
+    mockup_status: pending
+    build_priority: P1
+
+  - id: INT-DTL-CANDIDATE
+    surface: intelligence
+    name: Pattern detail · candidate state
+    type: detail
+    variant: candidate
+    lead_agent: sentinel
+    description: |
+      Newly submitted pattern, awaiting first review. Sentinel narrates
+      what would be needed to advance to in-review. May flag as suspected
+      duplicate of existing pattern.
+    mockup_status: pending
+    build_priority: P1
+
+  - id: INT-DTL-DEPRECATED
+    surface: intelligence
+    name: Pattern detail · deprecated state
+    type: detail
+    variant: deprecated
+    lead_agent: sentinel
+    description: Pattern revoked or superseded. Historical reference only.
+    mockup_status: pending
+    build_priority: P2
+
+  - id: INT-MOD-SUBMIT
+    surface: intelligence
+    name: Pattern submission modal
+    type: modal
+    lead_agent: sentinel
+    description: |
+      Maestro submits a new pattern candidate. Sentinel walks through the
+      submission requirements (what evidence is needed, which tier it
+      probably belongs in, suspected duplicates).
+    mockup_status: pending
+    build_priority: P1
+
+  - id: INT-IDX-SOLUTIONS
+    surface: intelligence
+    name: Solution archetypes · sub-section of Intelligence
+    type: index
+    lead_agent: sentinel
+    description: |
+      Solution Intelligence / Pattern Library bridge. Solution archetypes
+      that bridge patterns to programs (e.g., "CDP Activation archetype"
+      bridges T3 patterns to APX-CDP-2026 program template). Sentinel
+      curates archetype validity.
+    middle_strip:
+      type: filter
+      content: ["Patterns", "Solution archetypes", "Modernization packs", "Build/Buy/Partner"]
+      active: Solution archetypes
+    working_pane:
+      sections: [archetypes_list, recommendation_engine_state]
+    mockup_status: in-repo
+    build_priority: P1
+    repo_slices: [SOL3, SOL4, SOL5, SOL6, SOL7, SOL8, SOL9]
+    notes: Doc references Wave PR #242 + #246 for Solution Intelligence Fabric.
+
+# ════════════════════════════════════════════════════════════════════
+#  CONTROL TOWER · Atlas · cross-program pressure, lenses, outcome realization
+# ════════════════════════════════════════════════════════════════════
+
+  - id: TWR-IDX-PORTFOLIO
+    surface: tower
+    name: Tower · portfolio default (cross-program pressures)
+    type: index
+    lead_agent: atlas
+    description: |
+      Portfolio-scope pressure view. Three pressure cards (high/medium/low),
+      cross-program activity stream below. Atlas's 150-word synthesis
+      anchors the agent column.
+    middle_strip:
+      type: filter
+      content: [All, High, Medium, Low watch, Resolved]
+    working_pane:
+      sections: [active_pressures_grid, cross_program_activity]
+      components: [PressureCard, ActivityRow]
+    agent_voice_focus: |
+      "3 active pressures. AI Cloud Spend at $2.4M against $1.8M — 33% over.
+      Vendor Risk amber. Customer Churn signal steady. None block active
+      programs. All three need a maestro decision this week."
+    mockup_status: matched + in-shell
+    mockup_file: 03-control-tower-matched.html, 00-architecture-4-surfaces.html (Surface 04)
+    build_priority: P0
+    repo_slices: [ACT3, ACT4, ACT5, ACT7]
+
+  - id: TWR-IDX-FILTERED-HIGH
+    surface: tower
+    name: Tower · high severity filter active
+    type: state
+    lead_agent: atlas
+    description: List narrows to high-severity pressures only.
+    mockup_status: pending
+    build_priority: P1
+
+  - id: TWR-IDX-FILTERED-RESOLVED
+    surface: tower
+    name: Tower · resolved pressures (history)
+    type: state
+    lead_agent: atlas
+    description: |
+      Historical pressures that have been resolved. Atlas narrates pattern
+      across resolutions ("you've resolved 14 pressures · 9 via Path B-style
+      consolidation · 3 by deferring · 2 by accepting").
+    mockup_status: pending
+    build_priority: P1
+
+  - id: TWR-DTL-PRESSURE-HIGH
+    surface: tower
+    name: Pressure detail · high severity (AI Cloud Spend)
+    type: detail
+    variant: HI
+    lead_agent: atlas
+    description: |
+      Drill-in for a high-severity pressure. Hero stats card (3 numbers),
+      12-week trend SVG, 3 driver cards, 3 resolution paths (Path B
+      recommended). Atlas brief in workbench with explicit 150-word cap badge.
+    working_pane:
+      sections: [hero_stats, trend_chart, drivers, resolution_paths]
+      components: [DriverCard, ResolutionPathCard, TrendSVG]
+    mockup_status: matched
+    mockup_file: 13-pressure-detail-matched.html
+    build_priority: P0
+    repo_slices: [ACT3, ACT4]
+
+  - id: TWR-DTL-PRESSURE-MEDIUM
+    surface: tower
+    name: Pressure detail · medium severity
+    type: detail
+    variant: MD
+    lead_agent: atlas
+    description: Same template as HI but tuned for medium-severity (e.g., Vendor Risk).
+    mockup_status: pending
+    build_priority: P1
+
+  - id: TWR-DTL-PRESSURE-LOW
+    surface: tower
+    name: Pressure detail · low watch
+    type: detail
+    variant: LO
+    lead_agent: atlas
+    description: Same template as HI but tuned for low watch (e.g., Customer Churn signal).
+    mockup_status: pending
+    build_priority: P1
+
+  - id: TWR-IDX-PROG-SCOPE
+    surface: tower
+    name: Tower · program-scope view (zoomed to single program)
+    type: index
+    lead_agent: atlas
+    description: |
+      Tower zoomed to a single program's metrics. Hero KPIs (3-4) for that
+      program, then trend charts (revenue, adoption, cost, quality) stacked,
+      then driver decomposition for off-trend metrics, then activity log
+      specific to this program, then connected pressures. Page can scroll
+      deep — work pane has multiple sections, none cramped.
+    middle_strip:
+      type: filter
+      content: [Overview, Adoption, Value, Cost, Risk, Quality, Activity]
+    working_pane:
+      sections:
+        - hero_kpis
+        - trend_charts_grid
+        - driver_decomposition
+        - program_activity_log
+        - connected_pressures
+      components: [KPICard, TrendChart, DriverBar]
+    agent_voice_focus: |
+      Atlas narrates this specific program's outcome story. Pulls from
+      program detail context but applies cross-program comparison lens.
+    entry_points:
+      - PRG-DTL-P{N} (Open in Tower link)
+      - TWR-IDX-PORTFOLIO (clicking a program in activity)
+    mockup_status: pending
+    build_priority: P0
+    repo_slices: [ACT3, ACT4, ACT5, ACT7]
+    notes: |
+      Founder explicitly called this out: "in control tower there will be
+      lot of metrics by programs that are critical to track (say by
+      program)...vs over program status. The page can roll down to show
+      more data below...we don't have to cramp everything up in the page."
+      Long-scroll OK.
+
+  - id: TWR-LNS-ADOPTION
+    surface: tower
+    name: Tower · Adoption lens
+    type: lens
+    lead_agent: atlas
+    description: |
+      Cross-portfolio adoption view. How many maestros, programs, evidence
+      ledger uses, suggestion accept rates, custom-action ratios. Atlas
+      narrates adoption health.
+    mockup_status: pending
+    build_priority: P1
+    repo_slices: [ACT3]
+    notes: Doc Wave 32 suggestion: Tower lenses for Adoption · Value · Risk.
+
+  - id: TWR-LNS-VALUE
+    surface: tower
+    name: Tower · Value lens
+    type: lens
+    lead_agent: atlas
+    description: |
+      Value realization across programs. Did programs that shipped actually
+      deliver the value hypothesized at gate approval? Closes the loop on
+      "did it work?"
+    mockup_status: pending
+    build_priority: P0
+    repo_slices: [ACT4]
+    notes: |
+      This is the post-launch outcome realization view that closes the
+      "should we do this" → "did it deliver" arc. Critical for the
+      product story.
+
+  - id: TWR-LNS-RISK
+    surface: tower
+    name: Tower · Risk lens
+    type: lens
+    lead_agent: atlas
+    description: |
+      Cross-portfolio risk view. Vendor risk, data risk, governance risk,
+      delivery risk. Atlas synthesizes risk posture across programs.
+    mockup_status: pending
+    build_priority: P1
+    repo_slices: [ACT5]
+
+  - id: TWR-IDX-OUTCOME
+    surface: tower
+    name: Tower · outcome realization (post-launch tracking)
+    type: index
+    lead_agent: atlas
+    description: |
+      Post-launch outcome realization tracking — the "did it deliver?"
+      surface. Different metrics, different time horizon than active pressure
+      tracking. Per-program outcome cards showing predicted vs realized
+      value, confidence intervals, gap analysis.
+    mockup_status: pending
+    build_priority: P0
+    repo_slices: [ACT4]
+    notes: |
+      Founder asked whether this should be its own surface or a tab.
+      Decision: stays inside Tower as a view. Can be elevated to its own
+      rail icon in v2 if it earns the real estate.
+
+  - id: TWR-MOD-NEW-PRESSURE
+    surface: tower
+    name: Set new pressure modal
+    type: modal
+    lead_agent: atlas
+    description: |
+      Maestro defines a new pressure to track. Atlas walks through what
+      makes a good pressure: measurable, time-bound, has a baseline.
+    mockup_status: pending
+    build_priority: P2
+
+  - id: TWR-STA-ACTIVITY-EXPANDED
+    surface: tower
+    name: Cross-program activity stream · expanded view
+    type: state
+    lead_agent: atlas
+    description: |
+      Full activity log across all programs and surfaces, filterable by
+      agent, program, severity. Atlas surfaces patterns across activity.
+    mockup_status: pending
+    build_priority: P2
+
+# ════════════════════════════════════════════════════════════════════
+#  COMPONENTS · shared design-system primitives
+# ════════════════════════════════════════════════════════════════════
+
+components:
+
+  - id: CMP-APP-SHELL
+    name: AppShell · the workspace template
+    description: |
+      The root layout. 76px left rail + main column (top bar + middle strip
+      + 2-pane body). Renders identically across all surfaces.
+    used_in: [SHL-NAV-DEFAULT, all PRG/SET/SRC/INT/TWR pages]
+    mockup_status: in-shell
+    build_priority: P0
+    repo_slices: [SHELL1]
+
+  - id: CMP-NAV-RAIL
+    name: NavRail · 76px icon nav
+    description: |
+      Left icon rail. Brand mark top, 5 surface icons, user avatar bottom.
+      Active item: filled navy with paper letter. Inactive: outlined.
+    used_in: [CMP-APP-SHELL]
+    mockup_status: in-shell
+    build_priority: P0
+    repo_slices: [SHELL1, NAV1]
+
+  - id: CMP-TOP-BAR
+    name: TopBar · 48px
+    description: |
+      Account pill (with amber dot + locked badge), surface context line,
+      timestamp + user avatar. Slim, persistent.
+    used_in: [CMP-APP-SHELL]
+    mockup_status: in-shell
+    build_priority: P0
+
+  - id: CMP-MIDDLE-STRIP
+    name: MiddleStrip · 44px slot-based
+    description: |
+      Slim horizontal strip. Surface owns the content. Slot props:
+      `phaseJourney` (Programs) | `subnav` (Setup) | `filter` (Intel/Tower)
+      | `stageTracker` (Source).
+    variants:
+      - phase_journey: PhaseDot row · used by Programs
+      - subnav: tab row · used by Setup
+      - filter: pill row · used by Intel and Tower
+      - stage_tracker: 10-stage pips · used by Source
+    used_in: [CMP-APP-SHELL]
+    mockup_status: in-shell
+    build_priority: P0
+    repo_slices: [SHELL3]
+
+  - id: CMP-AGENT-COLUMN
+    name: AgentColumn · 480px conversation pane
+    description: |
+      Dark navy column. Agent identity + state pill (top), serif voice
+      quote + context line, suggested actions A/B/C, anchored input box
+      at bottom. Props: agent, voice, context, actions, onSubmit.
+    props:
+      - agent (agent token: nx | sn | at | st)
+      - voice (string · italic serif quote)
+      - context (string · sans subtitle)
+      - actions (Array<{letter, text, detail}>)
+      - onSubmit (function · custom prompt handler)
+    used_in: [all surfaces]
+    mockup_status: in-shell
+    build_priority: P0
+    repo_slices: [SHELL2]
+    notes: |
+      Render primitive only. Content is supplied by the surface from the
+      agent runtime. Don't hardcode voice strings inside the component.
+
+  - id: CMP-WORK-PANE
+    name: WorkPane · right-side scrollable container
+    description: Scrolls independently of agent column. Contains WorkSection components.
+    used_in: [CMP-APP-SHELL]
+    mockup_status: in-shell
+    build_priority: P0
+
+  - id: CMP-WORK-SECTION
+    name: WorkSection · titled section within WorkPane
+    description: |
+      Reusable section block. Mono eyebrow + serif title (15-16px) + meta
+      (right-aligned). Contains rows or cards. Used everywhere in working pane.
+    props: [eyebrow, title, meta, children]
+    used_in: [all working panes]
+    mockup_status: in-shell
+    build_priority: P0
+
+  - id: CMP-EVIDENCE-ROW
+    name: EvidenceRow · pattern for evidence/check items
+    description: |
+      Checkbox-style item: filled (done) | outlined (pending) | warm-tinted
+      (conflict). Name + source + meta. Used for evidence stack and gate checks.
+    used_in: [PRG-DTL-P*, SRC-STA-RISK]
+    mockup_status: in-shell
+    build_priority: P0
+
+  - id: CMP-DELIVERABLE-CARD
+    name: DeliverableCard · program deliverable summary
+    description: |
+      ID + name (serif bold) + meta + Rich/Outline/Stub tag. Action buttons
+      on hover.
+    used_in: [PRG-DTL-P*]
+    mockup_status: in-shell
+    build_priority: P0
+    repo_slices: [PDEL5, PDEL9, PDEL10]
+
+  - id: CMP-CONNECTOR-CARD
+    name: ConnectorCard · connector health card
+    description: |
+      Connector logo + name + last-sync + status pill (Healthy/Degraded).
+      Hover reveals action.
+    used_in: [SET-IDX-CONN]
+    mockup_status: in-shell
+    build_priority: P0
+
+  - id: CMP-PRESSURE-MINI
+    name: PressureMini · compact pressure summary
+    description: |
+      Severity stripe + name + meta + hero number + delta + top driver bar.
+      Used in Tower portfolio list and program-scope pressures section.
+    used_in: [TWR-IDX-PORTFOLIO, TWR-IDX-PROG-SCOPE]
+    mockup_status: in-shell
+    build_priority: P0
+
+  - id: CMP-PHASE-DOT
+    name: PhaseDot · phase indicator
+    description: |
+      Small dot (7px) for done/pending/locked, larger (9px) with halo for current.
+      Mint = done, navy = current, peach = pending, gray = locked.
+    used_in: [CMP-MIDDLE-STRIP, PRG-IDX-DEFAULT (mini phase indicator)]
+    mockup_status: in-shell
+    build_priority: P0
+
+  - id: CMP-STATUS-PILL
+    name: StatusPill · semantic color pills
+    description: |
+      Mint (validated/done), blue (current/scoped), peach (pending/warning),
+      rust (high severity), gray (idle/locked).
+    used_in: [all surfaces]
+    mockup_status: in-shell
+    build_priority: P0
+
+  - id: CMP-AGENT-GLYPH
+    name: AgentGlyph · agent identity mark
+    description: |
+      Circular glyph with two-letter agent code (Nx, Sn, At, St). Multiple
+      sizes: 20px (inline activity), 30px (handoff rail), 40px (workbench identity).
+    used_in: [CMP-AGENT-COLUMN, handoff rails, activity rows]
+    mockup_status: in-shell
+    build_priority: P0
+
+  - id: CMP-LINKED-PROGRAM-CHIP
+    name: LinkedProgramChip · cross-surface link
+    description: |
+      Compact chip showing linked program ID + phase. Used to visually
+      connect Source events to Programs ("Sourcing for: APX-CDP-2026 · P3").
+      Bidirectional: shown on Source events that link to programs, and on
+      programs that have linked source events.
+    used_in: [SRC-DTL-EVENT, PRG-DTL-P*]
+    mockup_status: pending
+    build_priority: P0
+    notes: Critical for Source ↔ Program storyline demo.

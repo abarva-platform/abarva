@@ -83,6 +83,34 @@ function buildAgentRail(
   return [nexus, sentinel, atlas, steward];
 }
 
+// ─── APX-CDP-2026 specific workbench (demo flagship) ─────────────────────────
+// P2 Synthesis · Design gate pending · Workshop 5 incomplete · 36% evidence
+// Linked source: AMS Vendor Consolidation 2026 · Stage 7 BAFO
+
+const APX_CDP_2026_P2_WORKBENCH: ProgramWorkbenchContent = {
+  title: 'P2 Synthesis · Design Gate Pending',
+  prose:
+    'Workshop 5 is incomplete — value hypothesis evidence is missing and privacy boundary confirmation has not been logged. Evidence coverage sits at 36%. The Design gate (P2 → P3) is held by Steward pending these three items. Linked source event AMS Vendor Consolidation 2026 is at Stage 7 BAFO — vendor data architecture decisions here will affect CDP scope.',
+  actionsLabel: 'Nexus recommends',
+  actions: [
+    {
+      letter: 'A',
+      text: 'Complete Workshop 5',
+      detail: 'Log value hypothesis evidence · confirm privacy boundary',
+    },
+    {
+      letter: 'B',
+      text: 'Review AMS Vendor BAFO',
+      detail: 'Stage 7 decisions constrain CDP data layer — align now',
+    },
+    {
+      letter: 'C',
+      text: 'Request Design gate review',
+      detail: 'Notify Steward once Workshop 5 items are resolved',
+    },
+  ],
+};
+
 // ─── Workbench content by phase state ────────────────────────────────────────
 
 function buildWorkbenchContent(
@@ -91,7 +119,12 @@ function buildWorkbenchContent(
   viewingPhase: ProgramPhaseId,
   viewingPhaseLabel: string,
   viewingPhaseState: ProgramPhaseSlot['state'],
+  programId?: string,
 ): ProgramWorkbenchContent {
+  // Demo flagship override — P2 Synthesis active view
+  if (programId === 'apx-cdp-2026' && viewingPhase === 2 && viewingPhaseState === 'current') {
+    return APX_CDP_2026_P2_WORKBENCH;
+  }
   switch (viewingPhaseState) {
     case 'done':
       return {
@@ -150,7 +183,20 @@ function buildPhasePanel(
   viewingPhaseLabel: string,
   viewingPhaseState: ProgramPhaseSlot['state'],
   currentPhase: ProgramPhaseId,
+  programId?: string,
 ): ProgramPhasePanel {
+  // APX-CDP-2026 P2 gate — real blockers surfaced from demo anchor
+  if (programId === 'apx-cdp-2026' && viewingPhase === 2 && viewingPhaseState === 'current') {
+    return {
+      gateCriteria: [
+        { criterion: 'Workshop 5 completed', met: false },
+        { criterion: 'Value hypothesis evidence logged', met: false },
+        { criterion: 'Privacy boundary confirmed', met: false },
+        { criterion: 'AMS vendor architecture alignment noted', met: true },
+        { criterion: 'Sponsor sign-off on Synthesis findings', met: false },
+      ],
+    };
+  }
   switch (viewingPhaseState) {
     case 'done':
       return {
@@ -238,6 +284,7 @@ export function buildProgramDetailView(
       viewingPhase,
       viewingPhaseLabel,
       viewingPhaseState,
+      program.id,
     ),
     agentRail: buildAgentRail(clampedCurrent, viewingPhase),
     phasePanel: buildPhasePanel(
@@ -245,6 +292,7 @@ export function buildProgramDetailView(
       viewingPhaseLabel,
       viewingPhaseState,
       clampedCurrent,
+      program.id,
     ),
     deterministicSeed: true,
   };

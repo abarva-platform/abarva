@@ -4,20 +4,20 @@
 //
 // These types compose existing view-model primitives from types.ui.ts
 // into page-ready shapes for the three Programs page categories:
-//   - ProgramsIndexView     → /programs   (portfolio index + inbox)
-//   - ProgramDetailView     → /programs/:programId   (single program)
-//   - ProgramOriginationView → /programs/new   (origination flow)
+//   - ProgramsIndexView      → /programs           (portfolio index)
+//   - ProgramDetailView      → /programs/:programId (single program)
+//   - ProgramOriginationView → /programs/new        (origination flow)
 //
-// Phase names come from the CANONICAL_SIX_PHASES constant below,
-// which matches PHASE_LABELS in types.db.ts (phases 0–5).
-// Actual program names and phases used throughout are those from the
-// Apex Retail Group demo seed (programs-demo-apex.ts):
-//   1. Contact Center AI Transformation  · Phase 4 Execute  · pattern
-//   2. Unified Customer Data Platform    · Phase 1 Charter  · pattern
-//   3. Store Associate Productivity      · Phase 1 Charter  · custom
-//   4. Demand Forecasting AI             · Phase 5 Verify   · completed
+// Phase model: 7-phase P0–P6 (Originate / Discovery / Synthesis / Design /
+// Build / Activate / Operate) per the shell wave canonical model.
 //
-// File destination: src/lib/programs/programs-page-view.ts
+// Demo anchor (CORR — aligned to pages.yaml §demo-data-baseline):
+//   Flagship: APX-CDP-2026 · Apex Retail CDP Activation · P2 Synthesis
+//   Gate:     Design gate (P2 → P3) pending under Steward
+//   Blockers: Workshop 5 incomplete · value hypothesis evidence missing
+//   Evidence: 36% coverage
+//   Source:   AMS Vendor Consolidation 2026 · Stage 7 BAFO
+//
 // Do NOT modify types.ui.ts solely to accommodate these types.
 
 import type {
@@ -34,33 +34,27 @@ import type {
   ViewerRole,
 } from './types.ui';
 
-// ── Canonical phase model ──────────────────────────────────────────────
-// Six-phase lifecycle shared by Template and Pattern shapes.
-// Custom shapes may use a subset or specialized phase names, but
-// this constant defines the canonical reference.
-//
-// Phase 0 · Origination: use-case captured, scope drafted, sponsor assigned
-// Phase 1 · Charter:     scope locked, success criteria, baseline request
-// Phase 2 · Diagnose:    data analyzed, findings, contradictions flagged
-// Phase 3 · Design:      solution options, tradeoffs, recommendation
-// Phase 4 · Execute:     build, integrate, deploy, measure
-// Phase 5 · Verify:      outcome measurement, benefit realization
-//
-// Hard gates: Phase 2 entry (Charter signed) · Phase 4 entry (Design
-// approved) · Phase 5 CXO verification (before outcome invoice).
-// All other transitions are soft with unresolved markers.
+// ── Canonical phase model (7-phase P0–P6) ─────────────────────────────
+// Shell wave canonical lifecycle per PHASE_LABEL_MAP in programs-fixture.ts.
+// Hard gates at P1 entry (Discovery approved), P3 entry (Design approved),
+// P5 entry (Activate approved). Soft transitions on remaining phases.
 
-export const CANONICAL_SIX_PHASES = [
-  { canonicalPhase: 0, name: 'Origination', gateType: 'none' as const },
-  { canonicalPhase: 1, name: 'Charter',     gateType: 'soft' as const },
-  { canonicalPhase: 2, name: 'Diagnose',    gateType: 'hard' as const },
-  { canonicalPhase: 3, name: 'Design',      gateType: 'soft' as const },
-  { canonicalPhase: 4, name: 'Execute',     gateType: 'hard' as const },
-  { canonicalPhase: 5, name: 'Verify',      gateType: 'hard' as const },
+export const CANONICAL_SEVEN_PHASES = [
+  { canonicalPhase: 0, name: 'Originate',  gateType: 'none' as const },
+  { canonicalPhase: 1, name: 'Discovery',  gateType: 'hard' as const },
+  { canonicalPhase: 2, name: 'Synthesis',  gateType: 'soft' as const },
+  { canonicalPhase: 3, name: 'Design',     gateType: 'hard' as const },
+  { canonicalPhase: 4, name: 'Build',      gateType: 'soft' as const },
+  { canonicalPhase: 5, name: 'Activate',   gateType: 'hard' as const },
+  { canonicalPhase: 6, name: 'Operate',    gateType: 'none' as const },
 ] as const;
 
-export type CanonicalPhaseNumber = 0 | 1 | 2 | 3 | 4 | 5;
-export type CanonicalPhaseName = typeof CANONICAL_SIX_PHASES[number]['name'];
+// Back-compat alias — remove after all consumers migrate to CANONICAL_SEVEN_PHASES
+/** @deprecated use CANONICAL_SEVEN_PHASES */
+export const CANONICAL_SIX_PHASES = CANONICAL_SEVEN_PHASES;
+
+export type CanonicalPhaseNumber = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+export type CanonicalPhaseName = typeof CANONICAL_SEVEN_PHASES[number]['name'];
 
 // ── ProgramsIndexView ─────────────────────────────────────────────────
 // Props for the portfolio index page (/programs).
@@ -282,23 +276,23 @@ export function buildProgramsIndexView(_tenant: 'apex-retail'): ProgramsIndexVie
   const portfolioWorkbench: ProgramWorkbenchContent = {
     title: 'Nexus Portfolio Workbench',
     prose:
-      'Seven programs in flight across the Apex Retail portfolio. Two gates are pending sponsor decisions — APX-01 (Design gate) and APX-05 (Activate gate). APX-04 has been idle 12 days; Nexus recommends a sponsor nudge before the Q3 cadence review.',
+      'Six programs in flight across the Apex Retail portfolio. APX-CDP-2026 is the critical path — Design gate pending at P2 Synthesis with Workshop 5 incomplete and 36% evidence coverage. APX-MRC-2025 has been idle 9 days; sponsor re-engagement recommended before the Q3 cadence review.',
     actionsLabel: 'Nexus recommends',
     actions: [
       {
         letter: 'A',
-        text: 'Clear APX-01 Design gate',
-        detail: 'Sentinel has 2 validation items outstanding',
+        text: 'Clear APX-CDP-2026 Design gate',
+        detail: 'Complete Workshop 5 · close value hypothesis gap · confirm privacy boundary',
       },
       {
         letter: 'B',
-        text: 'Resume APX-04',
-        detail: 'Idle 12 days — engage sponsor before Q3 review',
+        text: 'Resume APX-MRC-2025',
+        detail: 'Idle 9 days — engage sponsor before Q3 review',
       },
       {
         letter: 'C',
-        text: 'Review APX-05 Activate criteria',
-        detail: 'Cross-program brief ready from Atlas',
+        text: 'Review APX-CC-2026 Build progress',
+        detail: 'Activate gate approaching — Atlas brief ready',
       },
     ],
   };
@@ -307,25 +301,25 @@ export function buildProgramsIndexView(_tenant: 'apex-retail'): ProgramsIndexVie
     {
       initials: 'Nx',
       name: 'Nexus',
-      job: 'Orchestrating 7 programs',
+      job: 'Orchestrating 6 programs · APX-CDP-2026 critical path',
       state: 'active',
     },
     {
       initials: 'Sn',
       name: 'Sentinel',
-      job: '2 pending validations · APX-01, APX-05',
+      job: 'Design gate review · APX-CDP-2026 evidence gap',
       state: 'on_call',
     },
     {
       initials: 'At',
       name: 'Atlas',
-      job: 'Cross-program brief ready',
+      job: 'APX-CC-2026 Activate brief ready · DFV2 steady state',
       state: 'on_call',
     },
     {
       initials: 'St',
       name: 'Steward',
-      job: 'APX-07 stale 30d+ · advisory',
+      job: 'APX-CDP-2026 privacy boundary review pending',
       state: 'advisory',
     },
   ];
