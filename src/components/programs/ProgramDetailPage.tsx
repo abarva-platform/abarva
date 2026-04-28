@@ -20,8 +20,11 @@ import { SubNavStrip } from '@/components/shell/SubNavStrip';
 import { useToast } from '@/components/shell/Toast';
 import { PatternChip } from '@/components/programs/PatternChip';
 import { NexusSynthesisQuote } from '@/components/programs/NexusSynthesisQuote';
+import { ProgramProvenanceRibbon } from '@/components/programs/ProgramProvenanceRibbon';
 import { SourceEventChip } from '@/components/programs/SourceEventChip';
 import { buildProgramSourceLinkView } from '@/lib/programs/program-source-link-view';
+import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances';
+import { buildProgramSynthesisContext } from '@/lib/reasoning/program-synthesis-context-builder';
 import { buildProgramStorylineContext, matchStorylinePatterns } from '@/lib/intelligence/storyline-matcher';
 import { buildGateApprovalDrawerView } from '@/lib/programs/gate-approval-drawer-view';
 import type { GateApprovalDrawerView } from '@/lib/programs/gate-approval-drawer-view';
@@ -3003,6 +3006,18 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
           isOpen={drawerOpen}
           onToggle={() => setDrawerOpen((v) => !v)}
         />
+
+        {/* REASON-28 — provenance ribbon: surfaces what informed Nexus's synthesis */}
+        {(() => {
+          const instance = APEX_RETAIL_PROGRAM_INSTANCES.find(
+            (i) =>
+              i.displayId === view.displayId ||
+              i.id.toLowerCase() === view.programId.toLowerCase(),
+          );
+          if (!instance) return null;
+          const synthesisContext = buildProgramSynthesisContext(instance);
+          return <ProgramProvenanceRibbon context={synthesisContext} />;
+        })()}
 
         {/* REASON-15 — hidden synthesis node; streams live Nexus quote into ribbon */}
         <div style={{ display: 'none' }} aria-hidden>
