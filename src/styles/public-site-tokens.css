@@ -1,0 +1,17 @@
+/* AbarVa public site design tokens — maps brand-tokens to pub- namespace */
+/* Derived from src/lib/shell/brand-tokens.ts (locked April 28 2026) */
+
+:root {
+  --pub-paper:       #faf7f1;
+  --pub-ink:         #000000;
+  --pub-signal:      #0066CC;
+  --pub-signal-dark: #0052a3;
+  --pub-navy:        #0c1a3a;
+  --pub-stone:       #888780;
+  --pub-slate:       #5F5E5A;
+  --pub-rule:        rgba(136, 135, 128, 0.25);
+
+  --pub-font-serif: var(--font-fraunces, Fraunces, Georgia, serif);
+  --pub-font-sans:  var(--font-inter, Inter, -apple-system, sans-serif);
+  --pub-font-mono:  "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
