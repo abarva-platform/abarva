@@ -23,7 +23,8 @@ export const SHELL = {
   AMBER_DOT: '#d49b3a',
   RUST_TEXT: '#8a3e22',
   RUST_BG: '#efd4c4',
-  SERIF: '"Fraunces", Georgia, serif',
+  SERIF: '"Cormorant Garamond", Georgia, serif',
+  SERIF_DISPLAY: '"Fraunces", "Cormorant Garamond", Georgia, serif',
   SANS: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
   MONO: '"JetBrains Mono", "Fira Code", monospace',
 } as const;
