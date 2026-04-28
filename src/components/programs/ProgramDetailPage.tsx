@@ -5,7 +5,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
-import { AgentColumn } from '@/components/shell/AgentColumn';
+import { RibbonSynthesis } from '@/components/shell/RibbonSynthesis';
+import { AtlasDrawer } from '@/components/shell/AtlasDrawer';
 import { PhaseStrip } from '@/components/shell/PhaseStrip';
 import type { PhaseStripSlot } from '@/components/shell/PhaseStrip';
 import { SHELL } from '@/lib/shell/shell-tokens';
@@ -2520,6 +2521,9 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
   // PRG-MOD-SCORECARD-OVERRIDE state
   const [showScorecardOverride, setShowScorecardOverride] = useState(false);
 
+  // Mode B — AtlasDrawer open state (Shell Layout Spec v2 §5)
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
   const phaseLabel = PHASE_LABEL_MAP[view.viewingPhase] ?? `Phase ${view.viewingPhase}`;
   const canonicalDetailHref = `/programs/${view.programId}`;
   const currentScore =
@@ -2572,7 +2576,7 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
 
   return (
     <AppShell
-      surface="programs"
+      surface="programs-detail"
       topBarProps={{
         tenantName: 'Apex Retail Group',
         showLocked: true,
@@ -2582,64 +2586,25 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
         <PhaseStrip phases={stripPhases} onPhaseSelect={handlePhaseSelect} />
       }
     >
-      <AgentColumn
-        agent={{ initials: 'Nx', name: 'Nexus', role: 'Program Orchestrator' }}
-        quote={view.workbench.prose}
-        agentContext={view.workbench.title}
-        actions={agentActions}
-        surface="programs"
-        programId={view.programId}
-        onActionClick={handleActionClick}
-        bottomSlot={
-          <>
-            {!showCustomAction && !customActionSent && (
-              <button
-                onClick={() => setShowCustomAction(true)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontFamily: SHELL.MONO,
-                  fontSize: 10,
-                  color: 'rgba(250,247,241,0.4)',
-                  padding: '4px 0',
-                  textAlign: 'left',
-                  letterSpacing: '0.06em',
-                }}
-              >
-                + Custom action...
-              </button>
-            )}
-            {customActionSent && (
-              <span style={{ fontFamily: SHELL.MONO, fontSize: 10, color: SHELL.MINT_TEXT }}>
-                ✓ Queued for Nexus
-              </span>
-            )}
-          {showCustomAction && (
-              <CustomActionPanel
-                placeholder="Tell Nexus what to do..."
-                onSubmit={(text) => {
-                  console.log('Custom action:', text);
-                  setShowCustomAction(false);
-                  setCustomActionSent(true);
-                  setTimeout(() => setCustomActionSent(false), 2000);
-                }}
-                onClose={() => setShowCustomAction(false)}
-              />
-            )}
-          </>
-        }
-      />
+      {/* Mode B: full-width canvas column with ribbon + scrollable work pane */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+        <RibbonSynthesis
+          agentInitials="Nx"
+          agentName="Nexus"
+          quote={view.workbench.prose}
+          isOpen={drawerOpen}
+          onToggle={() => setDrawerOpen((v) => !v)}
+        />
 
-      {/* Work pane */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          background: SHELL.PAPER,
-          padding: '24px 32px',
-        }}
-      >
+        {/* Work pane (scrollable) */}
+        <div
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            background: SHELL.PAPER,
+            padding: '24px 32px',
+          }}
+        >
         {/* Program header */}
         <div style={{ marginBottom: 20 }}>
           <div
@@ -2835,6 +2800,17 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
           </div>
         )}
       </div>
+      </div>
+
+      {/* Mode B — AtlasDrawer (shared AtlasPageState, Shell Layout Spec v2 §5.1) */}
+      <AtlasDrawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        agent={{ initials: 'Nx', name: 'Nexus', role: 'Program Orchestrator' }}
+        quote={view.workbench.prose}
+        surface="programs-detail"
+        programId={view.programId}
+      />
 
       {/* Gate approval modal — portal-style fixed overlay */}
       {showGateModal && view.phasePanel.gateCriteria && (
