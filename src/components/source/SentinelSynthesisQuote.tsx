@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { SynthesisFeedbackControl } from '@/components/reasoning/SynthesisFeedbackControl';
+import { ExplainQuotePill } from '@/components/_shared/ExplainQuotePill';
 
 interface SentinelSynthesisQuoteProps {
   instanceId: string;
@@ -57,6 +58,7 @@ export function SentinelSynthesisQuote({ instanceId, fallback, onLoaded }: Senti
     <span>
       {text}
       {done && <SynthesisFeedbackControl eventId={eventId} />}
+      {done && <ExplainQuotePill surface="source" instanceId={instanceId} />}
     </span>
   );
 }

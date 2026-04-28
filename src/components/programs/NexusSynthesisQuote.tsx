@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { SynthesisFeedbackControl } from '@/components/reasoning/SynthesisFeedbackControl';
+import { ExplainQuotePill } from '@/components/_shared/ExplainQuotePill';
 
 interface NexusSynthesisQuoteProps {
   programId: string;
@@ -57,6 +58,7 @@ export function NexusSynthesisQuote({ programId, fallback, onLoaded }: NexusSynt
     <span>
       {text}
       {done && <SynthesisFeedbackControl eventId={eventId} />}
+      {done && <ExplainQuotePill surface="programs" instanceId={programId} />}
     </span>
   );
 }

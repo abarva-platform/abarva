@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { SynthesisFeedbackControl } from '@/components/reasoning/SynthesisFeedbackControl';
+import { ExplainQuotePill } from '@/components/_shared/ExplainQuotePill';
 
 interface AtlasSynthesisQuoteProps {
   fallback: string; // shown while streaming or on error
@@ -58,6 +59,7 @@ export function AtlasSynthesisQuote({ fallback, onLoaded }: AtlasSynthesisQuoteP
     <span>
       {text}
       {done && <SynthesisFeedbackControl eventId={eventId} />}
+      {done && <ExplainQuotePill surface="tower" instanceId="tower" />}
     </span>
   );
 }
