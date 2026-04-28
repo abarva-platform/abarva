@@ -1,6 +1,6 @@
 # Source Wave S1 Plan · Shell Convergence + Token Refresh
 
-**Status:** Approved (auto — docs-only S0 gated this)
+**Status:** Shipped — PR #545 merged 2026-04-28
 **Branch:** `source/wave-S1/shell-convergence`
 **Catalog entries:** Chrome only — all routes
 

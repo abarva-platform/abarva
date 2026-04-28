@@ -1,6 +1,6 @@
 # Source Wave S5 Plan · Commercial-Intel Convergence
 
-**Status:** Planned (starts after S4 merge)
+**Status:** Shipped — PR #567 merged 2026-04-27
 **Branch:** `source/wave-S5/commercial-convergence`
 **Catalog entries:** Internal — reduces 12 Commercial* panels to 4
 

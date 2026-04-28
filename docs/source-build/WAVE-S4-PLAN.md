@@ -1,6 +1,6 @@
 # Source Wave S4 Plan · Sub-routes Refresh
 
-**Status:** Planned (starts after S3 merge)
+**Status:** Shipped — PR #565 merged 2026-04-27
 **Branch:** `source/wave-S4/sub-routes`
 **Catalog entries:** SRC-DTL-SCORECARD · SRC-DTL-ARTIFACT
 

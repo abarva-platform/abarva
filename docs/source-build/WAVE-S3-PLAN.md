@@ -1,6 +1,6 @@
 # Source Wave S3 Plan · Event Canvas Refresh
 
-**Status:** Planned (starts after S2 merge)
+**Status:** Shipped — PR #563 merged 2026-04-27
 **Branch:** `source/wave-S3/event-canvas`
 **Catalog entries:** SRC-DTL-CANVAS
 

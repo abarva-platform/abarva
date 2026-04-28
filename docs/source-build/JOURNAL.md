@@ -28,3 +28,16 @@ Append-only. Every plan, every PR, every merge, every override.
 **Auto-approval claim:** meets all §10 criteria (docs only, zero code, zero test impact)
 
 ---
+
+---
+
+## 2026-04-28 · Roadmap/JOURNAL reconciliation
+
+**Author:** Codex
+**Scope:** Docs-only ledger reconciliation across Source wave plans and completion artifact.
+
+**Reconciled state:**
+- Source S1-S6 plan headers now reflect shipped PRs recorded in `COMPLETE.md` instead of stale planned/approved statuses.
+- `COMPLETE.md` now preserves the actual closeout span: S0 and S2-S6b merged on 2026-04-27; S1 closed on PR #545 on 2026-04-28.
+
+**Runtime impact:** None. Documentation-only update; no source, test, package, migration, or build metadata files touched.

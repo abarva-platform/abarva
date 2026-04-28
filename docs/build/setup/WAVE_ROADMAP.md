@@ -2,7 +2,7 @@
 
 | Wave | Title | Status | Catalog entries | Dependency | Notes |
 |---|---|---|---|---|---|
-| S0 | Audit + roadmap + skeleton plans | in-progress | docs only | none | creates execution ledger after Session 1 spec merge |
+| S0 | Audit + roadmap + skeleton plans | complete | docs only | none | creates execution ledger after Session 1 spec merge |
 | W1 | Shell ownership + connectors foundation | planned | SET-IDX-CONN | S0 | makes `/admin/**` the canonical connector family |
 | W2 | Connector detail + reconnect/auth | planned | connector detail states + reconnect flow | W1 | converges auth and health semantics |
 | W3 | Microsoft Graph live | planned | first live connector path | W2 | unblocks Tower live M365 and Intelligence signal realism |

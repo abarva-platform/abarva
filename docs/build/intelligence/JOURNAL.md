@@ -27,3 +27,4 @@
 | 2026-04-28 | KF-3 | shipped | Atlas synthesis | PR #627 | merged at 15:23Z; cited deterministic synthesis and renderer landed. |
 | 2026-04-28 | KF-4 | shipped | storyline injection | PR #630 | merged at 15:28Z; Programs, Source, and Tower pattern chips landed. |
 | 2026-04-28 | Master orchestration | complete | 9 waves | closeout PR | all unblocked waves merged; held waves: none; completion artifact created at `docs/build/intelligence/ORCH_COMPLETE_2026-04-28.md`. |
+| 2026-04-28 | DOC-RECON | complete | roadmap alignment | Reconciled `WAVE_ROADMAP.md` with the journaled master orchestration closeout: I0-I7 complete; held waves: none. |

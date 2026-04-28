@@ -10,3 +10,4 @@
 | 2026-04-28 | P5 | complete | #635 | Gate ribbon view model (GateRibbonView from ProgramDetailView); P-SMOKE-CDP anchor: CDP P3→P4 = 2 of 5 criteria met; 48 tests. |
 | 2026-04-28 | P6 | in-progress | #636 | Suggested action overlay view model (3-frame state machine); P-SMOKE-CDP action C: href '/intelligence/t3-h03' → 'View in Intelligence →'; 35 tests. |
 | — | P7 | held | — | Cross-surface integration + legacy retirement — held for human review (route deletion is architecture-sensitive). |
+| 2026-04-28 | DOC-RECON | complete | documentation | Reconciled `WAVE_ROADMAP.md` with journaled execution state: P0-P5 complete, P6 in-progress on PR #636, P7 held for human review. |

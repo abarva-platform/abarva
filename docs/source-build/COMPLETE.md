@@ -1,6 +1,6 @@
 # Source Build — Complete
 
-**All 7 waves shipped · 2026-04-27**
+**All 7 waves shipped · 2026-04-27 through 2026-04-28**
 
 The AbarVa Source module build loop is closed. Every wave planned in `WAVE_ROADMAP.md` has a merged PR with CI green.
 
@@ -58,4 +58,4 @@ The 9 `SourceCommercial*` structural components (consolidated into 4 in Wave S5)
 
 ---
 
-*Source build loop closed 2026-04-27 · Waves S0–S6b · 8 PRs merged*
+*Source build loop closed after PR #545 merged on 2026-04-28; Waves S0-S6b · 8 PRs merged*
