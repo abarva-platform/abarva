@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
 import { AgentColumn } from '@/components/shell/AgentColumn';
 import { FilterPillStrip } from '@/components/shell/FilterPillStrip';
@@ -218,10 +219,11 @@ interface ActivityRow {
   phase: string;
   note: string;
   when: string;
+  href?: string;
 }
 
 const ACTIVITY_ROWS: ActivityRow[] = [
-  { ref: 'APX-CDP-2026', phase: 'Synthesis phase', note: 'Workshop 5 outstanding', when: '2h ago' },
+  { ref: 'APX-CDP-2026', phase: 'Synthesis phase', note: 'Workshop 5 outstanding', when: '2h ago', href: '/tower/programs/apx-cdp-2026' },
   { ref: 'APX-CC-2026', phase: 'Build phase', note: 'Activate gate approaching', when: '4h ago' },
   { ref: 'APX-DFV2-2025', phase: 'Operate', note: 'steady state · Atlas monitoring', when: 'Mar 28' },
 ];
@@ -261,63 +263,78 @@ function ActivityStrip() {
       </div>
 
       {/* Rows */}
-      {ACTIVITY_ROWS.map((row, i) => (
-        <div
-          key={row.ref}
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'baseline',
-            gap: 16,
-            padding: '11px 20px',
-            borderBottom:
-              i < ACTIVITY_ROWS.length - 1 ? `1px solid ${SHELL.CARD_LINE_SOFT}` : undefined,
-          }}
-        >
-          <span
-            style={{
-              fontFamily: SHELL.MONO,
-              fontSize: 10,
-              letterSpacing: '0.08em',
-              color: SHELL.INK_SOFT,
-              flexShrink: 0,
-              minWidth: 120,
-            }}
-          >
-            [{row.ref}]
-          </span>
-          <span
-            style={{
-              fontFamily: SHELL.SANS,
-              fontSize: 13,
-              color: SHELL.INK,
-              flex: 1,
-            }}
-          >
-            {row.phase}
+      {ACTIVITY_ROWS.map((row, i) => {
+        const rowContent = (
+          <>
+            <span
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 10,
+                letterSpacing: '0.08em',
+                color: SHELL.INK_SOFT,
+                flexShrink: 0,
+                minWidth: 120,
+              }}
+            >
+              [{row.ref}]
+            </span>
             <span
               style={{
                 fontFamily: SHELL.SANS,
-                fontSize: 12,
-                color: SHELL.INK_SOFT,
-                marginLeft: 8,
+                fontSize: 13,
+                color: SHELL.INK,
+                flex: 1,
               }}
             >
-              · {row.note}
+              {row.phase}
+              <span
+                style={{
+                  fontFamily: SHELL.SANS,
+                  fontSize: 12,
+                  color: SHELL.INK_SOFT,
+                  marginLeft: 8,
+                }}
+              >
+                · {row.note}
+              </span>
             </span>
-          </span>
-          <span
-            style={{
-              fontFamily: SHELL.MONO,
-              fontSize: 10,
-              color: SHELL.INK_MUTED,
-              flexShrink: 0,
-            }}
+            <span
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 10,
+                color: SHELL.INK_MUTED,
+                flexShrink: 0,
+              }}
+            >
+              {row.when}
+            </span>
+          </>
+        );
+
+        const sharedStyle = {
+          display: 'flex',
+          flexDirection: 'row' as const,
+          alignItems: 'baseline' as const,
+          gap: 16,
+          padding: '11px 20px',
+          borderBottom:
+            i < ACTIVITY_ROWS.length - 1 ? `1px solid ${SHELL.CARD_LINE_SOFT}` : undefined,
+        };
+
+        return row.href ? (
+          <Link
+            key={row.ref}
+            href={row.href}
+            style={{ ...sharedStyle, textDecoration: 'none' }}
           >
-            {row.when}
-          </span>
-        </div>
-      ))}
+            {rowContent}
+          </Link>
+        ) : (
+          <div key={row.ref} style={sharedStyle}>
+            {rowContent}
+          </div>
+        );
+      })}
     </div>
   );
 }
