@@ -1,6 +1,6 @@
 # Source Wave S6 Plan · Cross-surface Storyline + States
 
-**Status:** Planned (starts after S5 merge) · May split into S6a + S6b
+**Status:** Shipped as S6a PR #568 and S6b PR #569 — merged 2026-04-27
 **Branch:** `source/wave-S6a/storyline-states` (and optionally `source/wave-S6b/intake-flow`)
 **Catalog entries:** SRC-STA-LINKED-PROG · SRC-EMP-NO-EVENTS · SRC-ERR-EVENT-NOT-FOUND · SRC-MOD-EVIDENCE · SRC-MOD-CONTRADICTION · SRC-FLW-INTAKE
 

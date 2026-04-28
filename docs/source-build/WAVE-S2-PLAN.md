@@ -1,6 +1,6 @@
 # Source Wave S2 Plan · Index Pages Refresh
 
-**Status:** Planned (starts after S1 merge)
+**Status:** Shipped — PR #555 merged 2026-04-27
 **Branch:** `source/wave-S2/index-refresh`
 **Catalog entries:** SRC-IDX-DEFAULT · SRC-IDX-EVENTS · SRC-IDX-VALUE
 
