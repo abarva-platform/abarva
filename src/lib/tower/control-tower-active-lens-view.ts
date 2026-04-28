@@ -98,9 +98,9 @@ export function listAvailableLenses(): TowerLens[] {
 const APEX_RETAIL_PORTFOLIO_SCORECARDS: TowerScorecard[] = [
   {
     scorecardId: 'sc-apex-portfolio-cdp',
-    label: 'CDP Activation — Synthesis',
+    label: 'CDP Activation — Design',
     status: 'on_track',
-    summary: 'Phase 5 workshop synthesis in progress. Delivery team aligned on 3 remaining deliverables.',
+    summary: 'Design gate cleared Apr 27. Architecture sprint active. Vendor C confirmed as managed CDP layer — in-house build scope reduced ~40%.',
     evidenceBasis: 'Deterministic Wave 2 seed — not live telemetry.',
     owner: 'Programme Lead',
     deterministicSeed: true,
@@ -141,13 +141,13 @@ const APEX_RETAIL_PORTFOLIO_PRESSURE_CARDS: TowerPressureCard[] = [
   {
     pressureId: 'pc-apex-workshop5-gate',
     lens: 'portfolio',
-    label: 'Workshop 5 Gate Pending',
+    label: 'Design Gate Cleared — Build Gate Next',
     pressureSummary:
-      'CDP Activation Phase 5 gate requires 9 outstanding deliverables before gate approval can be assessed.',
+      'CDP Activation Design gate (P2→P3) approved Apr 27. Architecture sprint is active. Build gate (P3→P4) is the next milestone.',
     businessImpact:
-      'Phase 5 gate blocks transition to Execute phase. Evidence deficit prevents evidence-based decision.',
+      'Vendor C confirmed as managed CDP layer — in-house build scope reduced ~40%. Build gate criteria must be met to proceed to P4.',
     recommendedAction:
-      'Prioritise completion of 9 Phase 5 deliverables. Assign accountable owner per deliverable.',
+      'Review Build gate criteria and assign accountable owners per deliverable for the architecture sprint.',
     deterministicSeed: true,
   },
 ];
@@ -219,11 +219,11 @@ const APEX_RETAIL_VALUE_SCORECARDS: TowerScorecard[] = [
   {
     scorecardId: 'sc-apex-value-cdp-baseline',
     label: 'CDP Value Baseline',
-    status: 'blocked',
+    status: 'at_risk',
     summary:
-      'Value baseline not established. G3 gate requires a confirmed measurement framework. ' +
-      '$2.4M CDP value at stake — cannot be tracked without baseline.',
-    evidenceBasis: 'Workshop 5 business case — deterministic Wave 2 seed.',
+      'Value baseline not yet fully established. Design gate cleared Apr 27. ' +
+      '$2.4M CDP value at stake — measurement framework to be confirmed during P3 Architecture sprint.',
+    evidenceBasis: 'Design gate evidence — deterministic Wave 2 seed.',
     owner: 'Programme Sponsor',
     deterministicSeed: true,
   },
@@ -244,9 +244,9 @@ const APEX_RETAIL_VALUE_LENS_DETAIL: TowerLensDetail = {
   lensId: 'value',
   primaryQuestion: 'What measurable value is at stake, and is it being tracked?',
   dataAvailable: [
-    'Workshop 5 business case ($2.4M CDP value identified)',
-    'Programme phase tracking',
-    'BAFO tracking (incomplete)',
+    'Design gate approval evidence ($2.4M CDP value confirmed)',
+    'Programme phase tracking (P3 Design active)',
+    'BAFO tracking (Vendor C selected)',
   ],
   dataMissing: [
     'Confirmed value baseline measurement framework',
@@ -255,11 +255,11 @@ const APEX_RETAIL_VALUE_LENS_DETAIL: TowerLensDetail = {
     'Baseline KPI documentation',
   ],
   topSignal:
-    '$2.4M CDP value identified in Workshop 5 business case, but G3 gate blocks value baseline ' +
-    'establishment. Value cannot be tracked until the gate is cleared.',
+    '$2.4M CDP value confirmed through Design gate approval. Architecture sprint active — value ' +
+    'measurement framework to be established during P3 before Build gate.',
   nextAction:
     'Establish a value measurement framework and document the baseline in the evidence fabric ' +
-    'to unlock the G3 hard gate.',
+    'before the P3→P4 Build gate.',
   atlasRecommendation:
     'Atlas recommends: do not proceed to the Activate phase without a confirmed value baseline. ' +
     'Programmes without baselines are significantly more likely to report value erosion post-activation.',
