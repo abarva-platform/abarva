@@ -45,32 +45,14 @@ export function AppRail(_props: AppRailProps) {
         flexShrink: 0,
       }}
     >
-      {/* Brand mark */}
+      {/* Brand mark — AbarVa "A" icon */}
       <Link href="/home" style={{ textDecoration: 'none', flexShrink: 0, marginBottom: 18 }}>
-        <div
-          style={{
-            width: 36,
-            height: 36,
-            background: SHELL.INK,
-            borderRadius: 8,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <span
-            style={{
-              fontFamily: SHELL.SERIF,
-              fontSize: 14,
-              fontWeight: 600,
-              fontStyle: 'italic',
-              color: SHELL.PAPER,
-              lineHeight: 1,
-            }}
-          >
-            A
-          </span>
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo-mark.svg"
+          alt="AbarVa"
+          style={{ width: 36, height: 33, display: 'block' }}
+        />
       </Link>
 
       {/* Nav items */}
