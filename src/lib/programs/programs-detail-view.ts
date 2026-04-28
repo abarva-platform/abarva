@@ -183,6 +183,7 @@ const APX_CDP_2026_P3_WORKBENCH: ProgramWorkbenchContent = {
       letter: 'C',
       text: 'Brief on T3-H03 Loyalty pattern',
       detail: 'Sentinel validated Unified Loyalty Intelligence — apply to personalization layer',
+      href: '/intelligence/t3-h03',
     },
   ],
 };

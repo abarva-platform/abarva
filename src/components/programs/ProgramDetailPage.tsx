@@ -1300,7 +1300,7 @@ function ContradictionModal({ item, onResolve, onClose }: ContradictionModalProp
 // ─── SuggestedActionOverlay (PRG-STA-SUGGESTED-ACTION) ────────────────────────
 
 interface SuggestedActionOverlayProps {
-  action: { letter: 'A' | 'B' | 'C'; text: string; detail?: string; frame: 1 | 2 | 3 };
+  action: { letter: 'A' | 'B' | 'C'; text: string; detail?: string; href?: string; frame: 1 | 2 | 3 };
   onAdvance: () => void;
   onDismiss: () => void;
 }
@@ -1478,7 +1478,29 @@ function SuggestedActionOverlay({ action, onAdvance, onDismiss }: SuggestedActio
           >
             Added to the program activity stream. Nexus will follow up.
           </div>
-          <button style={solidBtn} onClick={onDismiss}>Close</button>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {action.href && (
+              <a
+                href={action.href}
+                style={{
+                  fontFamily: SHELL.MONO,
+                  fontSize: 10,
+                  color: SHELL.PAPER,
+                  background: 'rgba(250,247,241,0.15)',
+                  border: '1px solid rgba(250,247,241,0.4)',
+                  padding: '6px 12px',
+                  borderRadius: 6,
+                  textDecoration: 'none',
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                }}
+              >
+                Open →
+              </a>
+            )}
+            <button style={solidBtn} onClick={onDismiss}>Close</button>
+          </div>
         </>
       )}
     </div>
@@ -2432,6 +2454,7 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
     letter: 'A' | 'B' | 'C';
     text: string;
     detail?: string;
+    href?: string;
     frame: 1 | 2 | 3;
   } | null>(null);
 
@@ -2469,6 +2492,7 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
     letter: a.letter as 'A' | 'B' | 'C',
     text: a.text,
     detail: a.detail,
+    href: a.href,
   }));
 
   const handleActionClick = (letter: 'A' | 'B' | 'C') => {
@@ -2487,6 +2511,7 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
         letter: action.letter as 'A' | 'B' | 'C',
         text: action.text,
         detail: action.detail,
+        href: action.href,
         frame: 1,
       });
     }
