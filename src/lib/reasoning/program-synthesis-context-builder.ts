@@ -51,6 +51,7 @@ export function buildProgramSynthesisContext(instance: ProgramInstance): Synthes
       blocked: hardBlockers,
     },
     activeContradictions: [],
+    failureModes: [],
     missingArtifacts: instance.deliverables
       .filter(d => d.status !== 'complete' && d.status !== 'in-progress' && d.phaseId === instance.currentPhase)
       .map(d => ({

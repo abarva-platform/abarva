@@ -181,6 +181,7 @@ export function buildTowerSynthesisContext(
       blocked,
     },
     activeContradictions,
+    failureModes: [],
     missingArtifacts: [],
     cascadeContext,
     citations,
