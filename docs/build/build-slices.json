@@ -9595,6 +9595,13 @@
       "category": "Programs",
       "status": "code_complete",
       "notes": "Seven-tab SubNavStrip (Overview, Gate, Evidence, Deliverables, Workshop, Actions, Decisions) added to ProgramDetailPage. Section content gated by active tab. Action A switches to Gate tab. 27 integration tests. PROG20 from track-03."
+    },
+    {
+      "id": "PROG23",
+      "name": "Program Source Link Deepening",
+      "category": "Programs",
+      "status": "code_complete",
+      "notes": "SourceEventChip + buildProgramSourceLinkView wired into ProgramDetailPage Overview tab (program-source-context-card testid). Source LinkedProgramTab gets testid + honest-disclaimer. 16 integration tests. PROG23 from track-03."
     }
   ]
 }

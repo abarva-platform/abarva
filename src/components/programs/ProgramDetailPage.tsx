@@ -20,6 +20,8 @@ import { SubNavStrip } from '@/components/shell/SubNavStrip';
 import { useToast } from '@/components/shell/Toast';
 import { PatternChip } from '@/components/programs/PatternChip';
 import { NexusSynthesisQuote } from '@/components/programs/NexusSynthesisQuote';
+import { SourceEventChip } from '@/components/programs/SourceEventChip';
+import { buildProgramSourceLinkView } from '@/lib/programs/program-source-link-view';
 import { buildProgramStorylineContext, matchStorylinePatterns } from '@/lib/intelligence/storyline-matcher';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -2539,6 +2541,8 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
   const [activeSection, setActiveSection] = useState<SectionKey>('overview');
 
   const phaseLabel = PHASE_LABEL_MAP[view.viewingPhase] ?? `Phase ${view.viewingPhase}`;
+  // PROG23 — linked source event context (deterministic, matches displayId casing)
+  const sourceLinkView = buildProgramSourceLinkView(view.displayId);
   const currentScore =
     view.programId === 'apx-cdp-2026' && view.viewingPhase === 2
       ? '36%'
@@ -2793,7 +2797,7 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
               </div>
             )}
             {view.linkedSourceEvent && (
-              <div data-testid="program-linked-source-chip" style={{ marginBottom: 20 }}>
+              <div data-testid="program-linked-source-chip" style={{ marginBottom: 12 }}>
                 <LinkedProgramChip
                   direction="program-to-source"
                   linkedId="SRC-AMS-2026"
@@ -2803,7 +2807,16 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
                 />
               </div>
             )}
-            {!view.phasePanel.summary && !view.phasePanel.blockerNote && !view.linkedSourceEvent && (
+            {/* PROG23 — Source event commercial context card */}
+            {sourceLinkView && (
+              <div
+                data-testid="program-source-context-card"
+                style={{ marginBottom: 20 }}
+              >
+                <SourceEventChip view={sourceLinkView} />
+              </div>
+            )}
+            {!view.phasePanel.summary && !view.phasePanel.blockerNote && !view.linkedSourceEvent && !sourceLinkView && (
               <div
                 style={{
                   padding: '20px 0',
