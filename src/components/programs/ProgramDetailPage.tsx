@@ -12,6 +12,7 @@ import type { PhaseStripSlot } from '@/components/shell/PhaseStrip';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { ProgramDetailView, ProgramPhaseId, EvidenceItem } from '@/lib/programs/programs-types';
 import { PHASE_LABEL_MAP } from '@/lib/programs/programs-fixture';
+import type { StageId } from '@/lib/shell/atlas-page-state';
 import { LinkedProgramChip } from '@/components/shell/LinkedProgramChip';
 import { useToast } from '@/components/shell/Toast';
 
@@ -2574,9 +2575,22 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
     }
   };
 
+  // Stage-aware pane contract (Shell Layout Spec v2 §7)
+  const currentStage = `P${view.viewingPhase}` as StageId;
+  const programSurfaceContext: Record<string, unknown> = {
+    programId: view.programId,
+    displayId: view.displayId,
+    programName: view.name,
+    phase: view.viewingPhase,
+    phaseLabel,
+    gateStatus: view.gateStatus,
+  };
+
   return (
     <AppShell
       surface="programs-detail"
+      stage={currentStage}
+      surfaceContext={programSurfaceContext}
       topBarProps={{
         tenantName: 'Apex Retail Group',
         showLocked: true,
