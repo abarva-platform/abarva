@@ -1,8 +1,20 @@
 import { ProgramScopePage } from '@/components/tower/ProgramScopePage';
+import { AiProgramDetailPage } from '@/components/tower/AiProgramDetailPage';
 
-export const metadata = { title: 'APX-CDP-2026 · Control Tower' };
+interface Props {
+  params: Promise<{ programId: string }>;
+}
 
-export default function TowerProgramScopeRoute() {
-  // Shell wave: single fixture-backed program. Full routing in next wave.
+export async function generateMetadata({ params }: Props) {
+  const { programId } = await params;
+  return { title: `${programId} · Control Tower` };
+}
+
+export default async function TowerProgramRoute({ params }: Props) {
+  const { programId } = await params;
+  // AI portfolio programs (Tower Wave T3) vs legacy Nexus program scope
+  if (programId.startsWith('twr-prog-')) {
+    return <AiProgramDetailPage programId={programId} />;
+  }
   return <ProgramScopePage />;
 }
