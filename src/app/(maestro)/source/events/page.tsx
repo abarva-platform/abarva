@@ -28,7 +28,7 @@ export default async function SourceEventsPage({
       middleStrip={
         <StageTrackerStrip
           stages={AMS_SOURCE_EVENT.stages}
-          activeStage=""
+          activeStage={stage ?? ''}
         />
       }
     >
