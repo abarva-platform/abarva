@@ -7,7 +7,7 @@ import { SHELL } from '@/lib/shell/shell-tokens';
 import { AUDIT_LOG_FIXTURE, AUDIT_AGENT_VOICE, type AuditEntry } from '@/lib/setup/shell-setup-fixture';
 
 const SUB_NAV_ITEMS = [
-  { key: 'connectors', label: 'Connectors', href: '/admin' },
+  { key: 'connectors', label: 'Connectors', href: '/admin/connectors' },
   { key: 'users', label: 'Users', href: '/admin/users' },
   { key: 'audit', label: 'Audit log', active: true, href: '/admin/audit' },
   { key: 'policies', label: 'Policies', href: '/admin/policies' },
@@ -141,6 +141,9 @@ function AuditRow({ item }: { item: AuditEntry }) {
 }
 
 export function SetupAuditPage() {
+  const criticalCount = AUDIT_LOG_FIXTURE.filter((entry) => entry.severity === 'critical').length;
+  const warnCount = AUDIT_LOG_FIXTURE.filter((entry) => entry.severity === 'warn').length;
+
   return (
     <AppShell
       surface="setup"
@@ -182,6 +185,19 @@ export function SetupAuditPage() {
           >
             Setup
           </div>
+          <div
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 10,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: SHELL.PEACH_TEXT,
+              marginBottom: 8,
+              lineHeight: 1,
+            }}
+          >
+            Canonical route · /admin/audit
+          </div>
           <h1
             style={{
               fontFamily: SHELL.SERIF,
@@ -195,6 +211,12 @@ export function SetupAuditPage() {
           >
             Audit log · 7 events
           </h1>
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
+          <AuditChip label="Critical" value={criticalCount} tone="critical" />
+          <AuditChip label="Warn" value={warnCount} tone="warn" />
+          <AuditChip label="Info" value={AUDIT_LOG_FIXTURE.length - criticalCount - warnCount} tone="info" />
         </div>
 
         {/* Audit rows */}
@@ -212,5 +234,44 @@ export function SetupAuditPage() {
         </div>
       </div>
     </AppShell>
+  );
+}
+
+function AuditChip({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone: 'critical' | 'warn' | 'info';
+}) {
+  const styles = tone === 'critical'
+    ? { bg: SHELL.RUST_BG, text: SHELL.RUST_TEXT }
+    : tone === 'warn'
+      ? { bg: SHELL.PEACH_BG, text: SHELL.PEACH_TEXT }
+      : { bg: SHELL.MINT_BG, text: SHELL.MINT_TEXT };
+
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        fontFamily: SHELL.MONO,
+        fontSize: 10,
+        fontWeight: 600,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        color: styles.text,
+        background: styles.bg,
+        borderRadius: 999,
+        padding: '5px 11px',
+        lineHeight: 1,
+      }}
+    >
+      <span style={{ fontFamily: SHELL.SANS, fontSize: 14, fontWeight: 700 }}>{value}</span>
+      {label}
+    </span>
   );
 }

@@ -7,7 +7,7 @@ import { SHELL } from '@/lib/shell/shell-tokens';
 import { USERS_FIXTURE, USERS_AGENT_VOICE, type UserItem } from '@/lib/setup/shell-setup-fixture';
 
 const SUB_NAV_ITEMS = [
-  { key: 'connectors', label: 'Connectors', href: '/admin' },
+  { key: 'connectors', label: 'Connectors', href: '/admin/connectors' },
   { key: 'users', label: 'Users', active: true, href: '/admin/users' },
   { key: 'audit', label: 'Audit log', href: '/admin/audit' },
   { key: 'policies', label: 'Policies', href: '/admin/policies' },
@@ -154,6 +154,9 @@ function UserRow({ item }: { item: UserItem }) {
 }
 
 export function SetupUsersPage() {
+  const activeCount = USERS_FIXTURE.filter((user) => user.status === 'active').length;
+  const pendingCount = USERS_FIXTURE.filter((user) => user.status === 'pending').length;
+
   return (
     <AppShell
       surface="setup"
@@ -197,6 +200,19 @@ export function SetupUsersPage() {
           </div>
           <div
             style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 10,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: SHELL.PEACH_TEXT,
+              marginBottom: 8,
+              lineHeight: 1,
+            }}
+          >
+            Canonical route · /admin/users
+          </div>
+          <div
+            style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -230,6 +246,12 @@ export function SetupUsersPage() {
           </div>
         </div>
 
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
+          <SummaryChip label="Active" value={activeCount} tone="mint" />
+          <SummaryChip label="Pending" value={pendingCount} tone="peach" />
+          <SummaryChip label="Admin" value={USERS_FIXTURE.filter((user) => user.role === 'admin').length} tone="ink" />
+        </div>
+
         {/* User list */}
         <div
           style={{
@@ -245,5 +267,44 @@ export function SetupUsersPage() {
         </div>
       </div>
     </AppShell>
+  );
+}
+
+function SummaryChip({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone: 'mint' | 'peach' | 'ink';
+}) {
+  const styles = tone === 'mint'
+    ? { bg: SHELL.MINT_BG, text: SHELL.MINT_TEXT }
+    : tone === 'peach'
+      ? { bg: SHELL.PEACH_BG, text: SHELL.PEACH_TEXT }
+      : { bg: SHELL.PAPER_DEEP, text: SHELL.INK };
+
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        fontFamily: SHELL.MONO,
+        fontSize: 10,
+        fontWeight: 600,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        color: styles.text,
+        background: styles.bg,
+        borderRadius: 999,
+        padding: '5px 11px',
+        lineHeight: 1,
+      }}
+    >
+      <span style={{ fontFamily: SHELL.SANS, fontSize: 14, fontWeight: 700 }}>{value}</span>
+      {label}
+    </span>
   );
 }
