@@ -10,6 +10,8 @@ import { NexusEngagementCanvas } from '@/components/source/NexusEngagementCanvas
 import { SourceCommercialEventSection } from '@/components/source/SourceCommercialEventSection';
 import { GateCriteriaPanel } from '@/components/source/GateCriteriaPanel';
 import { FailureModeWarningChip } from '@/components/_shared/FailureModeWarningChip';
+import { MissionList } from '@/components/_shared/MissionList';
+import { deriveMissionsFromInstance } from '@/lib/reasoning/mission-derivation';
 import { getSourcingEvent } from '@/lib/source/queries';
 import { AMS_SOURCE_EVENT } from '@/lib/source/shell-source-fixture';
 import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
@@ -68,6 +70,14 @@ export default async function SourceEventDetailPage({
   const synthesisContext = matchedInstance
     ? buildSourceSynthesisContext(matchedInstance, PAT_SRC_AMS_001)
     : null;
+
+  // Mission queue · derived from the same (instance, pattern) pair as the
+  // gate evaluator. This is the TASK-oriented view of pending criteria —
+  // verb-first, sorted high → medium → low — that complements the
+  // STATUS-oriented `GateCriteriaPanel` below.
+  const derivedMissions = matchedInstance
+    ? deriveMissionsFromInstance(matchedInstance, PAT_SRC_AMS_001)
+    : [];
 
   // REASON-29 — Header-level failure-mode warning chip. Pulls the same
   // SynthesisContext used by the provenance ribbon so high-confidence
@@ -144,6 +154,15 @@ export default async function SourceEventDetailPage({
             currentStageId={nextGateTargetStageId}
             title={`Gate criteria — ${nextGateTargetStageId ?? 'next stage'}`}
           />
+        )}
+        {matchedInstance && (
+          <div style={{ marginTop: 12 }}>
+            <MissionList
+              missions={derivedMissions}
+              title="Pending gates · this event"
+              maxRows={6}
+            />
+          </div>
         )}
         <SourceCommercialEventSection
           eventId={event.id}
