@@ -200,6 +200,282 @@ The source warns against training without sanctioned alternatives, governance th
 ## Instances
 Concrete instances in the source are the six named detection signals, the five maturity stages, and the five intervention paths. Because this pack is the authorial reference implementation for the foundational series, it carries higher confidence and authoritative tiering than the other Wave 2a patterns.`,
   },
+  {
+    id: 'PAT-AI-006',
+    slug: 'coding-agent-rollout-pattern',
+    title: 'Coding-Agent Rollout Pattern',
+    domain: 'ai_programs',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Coding-agent programs scale well when value is tied to engineering throughput and quality baselines rather than enthusiasm alone.',
+    applicability:
+      'Apply when engineering organizations are rolling out Claude Code, GitHub Copilot, Cursor, or similar coding agents and need a credible deployment-and-value frame.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.89,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-28',
+    instanceCount: 2,
+    sourceDocuments: [
+      'docs/source-material/build-specs/abarva-tower-design-spec.md',
+    ],
+    regulatoryChips: [],
+    relatedPatternIds: ['PAT-AI-010', 'PAT-AI-014'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    body: `## Summary
+The Tower spec treats coding-agent programs as measurable operating systems, not developer sentiment exercises. Its concrete Claude Code example for a 200-engineer organization starts from a 90-day pre-rollout baseline of 4.2 PRs per developer per month, rises to 5.8 post-rollout, adds 8% fewer revert PRs, and yields $3.83M in annual value against $400K cost.
+
+## When to apply
+Use this pattern when an engineering organization is moving beyond trial seats and needs a repeatable rollout model with adoption, throughput, and quality baselines.
+
+## How it works
+Set the baseline before rollout, measure post-rollout throughput and quality, attribute value using cohort or similarly credible evidence, then connect expansion decisions to sourcing and capacity constraints. In the Tower storyline, expansion above 280 seats triggers a new Source event because commercial capacity becomes the next bottleneck.
+
+## Variations
+The underlying coding agent may differ, but the rollout structure stays stable: seat scope, workflow integration, measured throughput lift, quality impact, then controlled expansion.
+
+## Pitfalls
+The pattern fails when teams scale seats without baseline data, confuse anecdotal love with portfolio value, or ignore vendor-capacity constraints after the first successful pilot.
+
+## Instances
+- Claude Code: 200 engineers, $400K annual cost
+- Baseline: 4.2 PRs/dev/month over a 90-day pre-rollout cohort
+- Post-rollout: 5.8 PRs/dev/month and 8% fewer revert PRs
+- Expansion above 280 seats requires renegotiation through Source`,
+  },
+  {
+    id: 'PAT-AI-007',
+    slug: 'productivity-agent-adoption-curve',
+    title: 'Productivity-Agent Adoption Curve',
+    domain: 'ai_programs',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Productivity-agent value is dominated by adoption quality and user mix, so seat counts should never be mistaken for realized program value.',
+    applicability:
+      'Apply when enterprises are deploying M365 Copilot, Google Duet, or similar white-collar productivity agents across large employee populations.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.85,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-28',
+    instanceCount: 3,
+    sourceDocuments: [
+      'docs/source-material/build-specs/abarva-tower-design-spec.md',
+    ],
+    regulatoryChips: [],
+    relatedPatternIds: ['PAT-AI-009', 'PAT-AI-010', 'PAT-AI-014'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    body: `## Summary
+The Tower's M365 Copilot walkthrough shows the adoption curve problem cleanly: 12,400 eligible users, but only 2,950 active, or 24% adoption. That leaves the program below the 60% threshold for ROI breakeven even before duplication pressures are considered.
+
+## When to apply
+Use this pattern when a productivity-agent program is licensed broadly and leadership assumes the headline seat count is a proxy for value.
+
+## How it works
+Track eligible users, active users, power-versus-occasional usage, and department-level distribution. Weight value by utilization rather than total seats. Then decide whether to drive targeted activation, reallocate seats, or narrow scope. The Tower example explicitly recommends a 90-day Finance acceleration sprint because that cohort is below the adoption level needed for value defensibility.
+
+## Variations
+Some programs improve through training and workflow change; others through seat redistribution or scope reduction. The curve is still the same: broad licensing does not matter until active, recurring usage is visible in the right populations.
+
+## Pitfalls
+The pattern fails when adoption is measured on license assignment, when occasional users are valued like power users, or when overlap with other tools is ignored.
+
+## Instances
+- M365 Copilot: 12,400 eligible users, 2,950 active
+- 24% adoption is below the 60% breakeven threshold
+- Finance and Legal are the weakest-adoption departments
+- Tower models a 90-day Finance acceleration sprint as the recovery move`,
+  },
+  {
+    id: 'PAT-AI-008',
+    slug: 'ai-program-kill-criteria',
+    title: 'AI Program Kill Criteria',
+    domain: 'ai_programs',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'AI portfolios stay healthy only when underperforming programs face explicit continue-versus-kill criteria instead of indefinite cultural grace periods.',
+    applicability:
+      'Apply when enterprises have multiple AI initiatives in flight and need a rule for stopping those that lack value, adoption, or attribution integrity.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.78,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-28',
+    instanceCount: 2,
+    sourceDocuments: [
+      'docs/source-material/intelligence-pack/05-ai-use-case-portfolio-management.md',
+      'docs/source-material/build-specs/abarva-tower-design-spec.md',
+    ],
+    regulatoryChips: [],
+    relatedPatternIds: ['PAT-AI-004', 'PAT-AI-010', 'PAT-AI-014'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    body: `## Summary
+The portfolio-management pack states the core issue directly: AI use cases persist because kill decisions are politically hard. Sponsors rarely volunteer to close their own bets, so the system needs explicit criteria and a standing review cadence to decide whether an AI program should continue, receive further investment, or stop.
+
+## When to apply
+Use this pattern when an AI program shows weak adoption, unreliable attribution, stalled execution, or material underperformance against its promised outcome.
+
+## How it works
+Require every program to carry baseline, target, attribution method, and stage state. Review underperformers on a fixed cadence with kill explicitly on the agenda. If attribution is absent, adoption is structurally low, or value remains below the threshold needed to justify further spend, the default should move from passive continuation to an explicit decision.
+
+## Variations
+Some portfolios kill quickly after pilot underperformance; others use staged descope, renewal downgrades, or a final remediation sprint before termination. The pattern still requires that stopping be a governed option.
+
+## Pitfalls
+The pattern fails when kill is treated as cultural failure, when sponsors can indefinitely defer the decision, or when measurement ambiguity is used as an excuse to keep spending.
+
+## Instances
+- Portfolio-management pack recommends a quarterly kill-meeting cadence
+- Kill decisions are explicitly owned by portfolio leadership plus sponsor governance
+- Tower recommends descope at renewal when structural issues remain unresolved by Q3`,
+  },
+  {
+    id: 'PAT-AI-009',
+    slug: 'cross-vendor-inference-cost-normalization',
+    title: 'Cross-Vendor Inference Cost Normalization',
+    domain: 'ai_programs',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Enterprises need a normalized view of inference economics across vendors and programs because raw spend overrun alone does not distinguish volume growth from bad rate-card structure.',
+    applicability:
+      'Apply when AI portfolio cost pressure is rising across multiple tools or models and leadership needs to know whether the issue is usage, duplication, or vendor pricing structure.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.82,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-28',
+    instanceCount: 3,
+    sourceDocuments: [
+      'docs/source-material/build-specs/abarva-tower-design-spec.md',
+      'docs/build/PATTERNS_AND_KNOWLEDGE_LAYER_BACKLOG.md',
+    ],
+    regulatoryChips: [],
+    relatedPatternIds: ['PAT-AI-003', 'PAT-AI-007', 'PAT-AI-010'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    body: `## Summary
+The Tower portfolio brief calls out LLM inference overrun of $2.4M and separates the causes: 73% is volume-driven, the remainder is rate-card mismatch. That is the normalization insight. You cannot act intelligently on AI cost pressure until usage growth and vendor economics are decomposed.
+
+## When to apply
+Use this pattern when AI model spend is exceeding plan, when multiple vendors serve overlapping use cases, or when rate-card differences distort apparently similar workloads.
+
+## How it works
+Normalize cost by program, vendor, and usage unit, then separate cost pressure into demand growth, overlap duplication, and pricing structure. Once normalized, leaders can choose between reducing usage, renegotiating rate cards, re-routing workloads, or consolidating overlapping tools.
+
+## Variations
+Some environments normalize at model-call level, others at program or department level. The pattern still requires comparable units and causal decomposition rather than a single overrun number.
+
+## Pitfalls
+The pattern fails when rate-card mismatch is hidden inside blended spend, when overlap with adjacent tools is ignored, or when leaders respond to overrun with blanket seat cuts instead of understanding the economics.
+
+## Instances
+- Portfolio brief: $2.4M inference overrun
+- 73% of overrun is volume-driven; the balance is rate-card mismatch
+- AI Cloud Spend pressure storyline explicitly depends on this normalization logic`,
+  },
+  {
+    id: 'PAT-AI-010',
+    slug: 'ai-program-roi-attribution-methodology',
+    title: 'AI Program ROI Attribution Methodology',
+    domain: 'ai_programs',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'AI program ROI is only comparable across a portfolio when each value claim declares its attribution method and is haircut according to evidence quality.',
+    applicability:
+      'Apply to any AI program whose business case includes time savings, revenue lift, cost avoidance, or quality improvements that need to be compared across program types.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.88,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-28',
+    instanceCount: 5,
+    sourceDocuments: [
+      'docs/source-material/build-specs/abarva-tower-design-spec.md',
+      'docs/source-material/intelligence-pack/05-ai-use-case-portfolio-management.md',
+    ],
+    regulatoryChips: [],
+    relatedPatternIds: ['PAT-AI-006', 'PAT-AI-007', 'PAT-AI-008', 'PAT-AI-009'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    body: `## Summary
+The Tower's most important honesty rule is that every value number carries an attribution method. Self-reported savings get a 0.4 haircut, survey evidence gets 0.6, cohort-matched evidence gets 0.85, and experimental evidence stays at 1.0. That turns AI ROI into something auditable instead of sponsor theater.
+
+## When to apply
+Use this pattern whenever AI value claims are being compared across program types, sponsors, or vendors, especially if some evidence comes from telemetry and some from self-report.
+
+## How it works
+For each program, define baseline, target, measurement method, and attribution type before calling the value "real." Then apply the confidence haircut and express both raw ROI and risk-adjusted ROI. This is what lets M365 Copilot, Claude Code, and Now Assist live in one portfolio view without pretending their evidence quality is identical.
+
+## Variations
+The exact multipliers can be tuned, but the pattern requires a declared evidence ladder and portfolio-wide consistency. Some enterprises may add difference-in-differences or quasi-experimental tiers as they mature.
+
+## Pitfalls
+The pattern fails when claimed ROI is compared without declared methodology, when self-report is treated as objective value, or when finance sees only a single number with no lineage.
+
+## Instances
+- Tower defines risk-adjusted ROI as ROI multiplied by a confidence factor
+- Self-report receives a 0.4 haircut; survey 0.6; cohort-match 0.85; experimental 1.0
+- M365 Copilot attributed value is explicitly haircut before ROI is calculated`,
+  },
+  {
+    id: 'PAT-AI-014',
+    slug: 'ai-program-sponsor-activation',
+    title: 'AI Program Sponsor Activation',
+    domain: 'ai_programs',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'AI programs move faster and fail more honestly when a named sponsor has explicit decision rights, a communication plan, and standing responsibility for stage advancement or kill decisions.',
+    applicability:
+      'Apply when an AI initiative is transitioning from exploratory interest into a governed program that needs real business sponsorship, not just technical ownership.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.79,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-28',
+    instanceCount: 3,
+    sourceDocuments: [
+      'docs/source-material/build-specs/abarva-tower-design-spec.md',
+      'docs/source-material/intelligence-pack/05-ai-use-case-portfolio-management.md',
+    ],
+    regulatoryChips: [],
+    relatedPatternIds: ['PAT-AI-002', 'PAT-AI-008', 'PAT-AI-010'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    body: `## Summary
+Both the Tower onboarding flow and the portfolio-management pack make sponsor activation operational. The program intake model requires a business sponsor and technical owner, while the intervention model requires a named portfolio owner with decision rights plus a sponsor communication plan for advancement and kill decisions.
+
+## When to apply
+Use this pattern when an AI program has real cost, real change impact, or real governance consequences and can no longer survive as an innovation-sidecar with diffuse ownership.
+
+## How it works
+Name the sponsor, define what decisions they own, tie them into stage advancement and kill cadence, and make the communication path explicit before the program scales. This keeps technical teams from carrying political ownership by default and keeps sponsors from appearing only when there is a crisis.
+
+## Variations
+In some enterprises the sponsor is a single business executive; in others a portfolio owner and business sponsor share the role. The pattern still depends on documented rights and active participation.
+
+## Pitfalls
+The pattern fails when sponsorship is nominal, when a program launches without a decision owner, or when sponsor communication is improvised only after ROI or adoption trouble surfaces.
+
+## Instances
+- Tower onboarding requires business sponsor and technical owner at identification time
+- Portfolio-management intervention calls for a named owner with approval and kill rights
+- Kill-meeting cadence requires sponsor communication planning, not just portfolio analytics`,
+  },
 ];
 
 export const AI_PROGRAM_PATTERN_COUNT = AI_PROGRAM_PATTERNS.length;
