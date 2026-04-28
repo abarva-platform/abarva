@@ -9,6 +9,7 @@ import { StageTrackerStrip } from '@/components/shell/StageTrackerStrip';
 import { LinkedProgramChip } from '@/components/shell/LinkedProgramChip';
 import { SentinelAgentColumn } from '@/components/source/SentinelAgentColumn';
 import { SHELL } from '@/lib/shell/shell-tokens';
+import { AskAnythingBar } from '@/components/agent/AskAnythingBar';
 import { SOURCE_INDEX_VIEW, AMS_SOURCE_EVENT } from '@/lib/source/shell-source-fixture';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -518,7 +519,7 @@ export function SourceIndexPage() {
       />
 
       {/* Work pane */}
-      <div style={{ flex: 1, overflowY: 'auto', background: SHELL.PAPER, padding: '24px 32px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', background: SHELL.PAPER, padding: '24px 32px 100px' }}>
 
         {/* Event header section */}
         <div style={{ marginBottom: 20 }}>
@@ -754,6 +755,12 @@ export function SourceIndexPage() {
       {showVendorResponse && (
         <VendorResponseModal onClose={() => setShowVendorResponse(false)} />
       )}
+
+      <AskAnythingBar
+        agent="sentinel"
+        scopeLabel="Source · Apex Retail"
+        surface="source"
+      />
     </AppShell>
   );
 }
