@@ -9238,6 +9238,45 @@
       ],
       "acceptanceCriteria": "npx tsc clean; intelligence-pattern-detail-i2 all 44 tests pass; PatternDetailPage.tsx deleted; IntelligencePatternDetailPage.tsx is NOT use client; ProvenanceRibbon wired",
       "deterministicSeed": true
+    },
+    {
+      "id": "INT-I7",
+      "name": "Intelligence Quality Lens — I7",
+      "status": "code_complete",
+      "type": "ui",
+      "wave": "INT-I7",
+      "description": "I7: INT-LNS-QUALITY — meta-view of the knowledge layer's own health. Deterministic view model aggregates 60+ patterns across 6 seed domains, 10 contradictions (with status breakdown), 5 solutions, and 5 identified knowledge gaps. IntelligenceQualityLensPage server component with ProvenanceRibbon, domain coverage map, contradiction density, and gap analysis.",
+      "allowedFiles": [
+        "src/lib/intelligence/intelligence-quality-lens-view.ts",
+        "src/components/intelligence/IntelligenceQualityLensPage.tsx",
+        "src/components/intelligence/IntelligenceQualityLensSentinel.tsx",
+        "src/app/intelligence/quality/page.tsx",
+        "src/__tests__/integration/intelligence/intelligence-i7.test.ts",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit",
+        "npx jest intelligence-i7"
+      ],
+      "dependsOn": [
+        "INT-I1",
+        "INT-I2"
+      ],
+      "notes": [
+        "New: intelligence-quality-lens-view.ts — aggregates AI_PROGRAM, CDP, SOURCING, ARCHITECTURE, META, INDUSTRY pattern counts; builds contradiction status breakdown; 5 deterministic gap seeds",
+        "New: IntelligenceQualityLensPage.tsx — server component; summary metric cards, domain coverage table, contradiction density, gap analysis",
+        "New: IntelligenceQualityLensSentinel.tsx — client island (AgentColumn)",
+        "New: /intelligence/quality route",
+        "Closes the Intelligence module wave sequence (I1-I7)"
+      ],
+      "acceptanceCriteria": "npx tsc clean; intelligence-i7 all 44 tests pass; totalPatterns >= 60; domain coverage 6 rows; contradictionStatus sums to CONTRADICTION_SEED_COUNT; ProvenanceRibbon wired; NOT use client",
+      "deterministicSeed": true
     }
   ]
 }
