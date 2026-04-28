@@ -27,7 +27,7 @@ export function useAgentStream({ surface, programId, agentName }: UseAgentStream
         const res = await fetch('/api/chat/agent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message, context }),
+          body: JSON.stringify({ message, context, programId, surface }),
         });
 
         if (!res.ok) {
