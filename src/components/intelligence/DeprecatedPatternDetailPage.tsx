@@ -1,24 +1,24 @@
 'use client';
 
-// Shell-native Intelligence pattern detail reading view.
-// INT-DTL-VALIDATED: T3-H01 Ambient AI in Retail — reading layout.
+// Shell-native Intelligence deprecated pattern detail reading view.
+// INT-DTL-DEPRECATED: T2-C03 Rules-Based Recommendation Engine
 
 import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
 import { AgentColumn } from '@/components/shell/AgentColumn';
 import { FilterPillStrip } from '@/components/shell/FilterPillStrip';
 import { SHELL } from '@/lib/shell/shell-tokens';
-import { T3_H01_PATTERN } from '@/lib/intelligence/shell-pattern-detail-fixture';
+import { T2_C03_PATTERN } from '@/lib/intelligence/shell-pattern-detail-deprecated-fixture';
 
-// ─── Sentinel verdict card ────────────────────────────────────────────────────
+// ─── Sentinel verdict card (deprecated) ──────────────────────────────────────
 
 function SentinelVerdictCard() {
-  const v = T3_H01_PATTERN.sentinelVerdict;
+  const v = T2_C03_PATTERN.sentinelVerdict;
   return (
     <div
       style={{
-        background: SHELL.MINT_BG,
-        border: `1px solid ${SHELL.MINT_LINE}`,
+        background: SHELL.RUST_BG,
+        border: `1px solid #d4a090`,
         borderRadius: 10,
         padding: '20px',
         maxWidth: 720,
@@ -41,7 +41,7 @@ function SentinelVerdictCard() {
             width: 24,
             height: 24,
             borderRadius: '50%',
-            background: SHELL.MINT_TEXT,
+            background: SHELL.RUST_TEXT,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -67,20 +67,20 @@ function SentinelVerdictCard() {
             fontFamily: SHELL.SERIF,
             fontSize: 14,
             fontWeight: 700,
-            color: SHELL.MINT_TEXT,
+            color: SHELL.RUST_TEXT,
             flex: 1,
           }}
         >
           Sentinel Verdict
         </span>
 
-        {/* Validated pill */}
+        {/* Deprecated pill */}
         <span
           style={{
             display: 'inline-block',
             padding: '2px 8px',
             borderRadius: 999,
-            background: SHELL.MINT_TEXT,
+            background: SHELL.RUST_TEXT,
             color: '#fff',
             fontFamily: SHELL.SANS,
             fontSize: 11,
@@ -88,7 +88,7 @@ function SentinelVerdictCard() {
             lineHeight: 1.6,
           }}
         >
-          Validated
+          Deprecated
         </span>
 
         {/* Confidence badge */}
@@ -97,8 +97,8 @@ function SentinelVerdictCard() {
             display: 'inline-block',
             padding: '2px 8px',
             borderRadius: 999,
-            background: 'rgba(42,90,58,0.12)',
-            color: SHELL.MINT_TEXT,
+            background: 'rgba(138,62,34,0.12)',
+            color: SHELL.RUST_TEXT,
             fontFamily: SHELL.MONO,
             fontSize: 9.5,
             fontWeight: 600,
@@ -140,108 +140,10 @@ function SentinelVerdictCard() {
   );
 }
 
-// ─── Used by programs ─────────────────────────────────────────────────────────
-
-function UsedByPrograms() {
-  const programs = T3_H01_PATTERN.usedByPrograms;
-  return (
-    <div style={{ marginTop: 40, maxWidth: 720 }}>
-      {/* Eyebrow */}
-      <div
-        style={{
-          fontFamily: SHELL.MONO,
-          fontSize: 9,
-          letterSpacing: '0.18em',
-          textTransform: 'uppercase',
-          color: SHELL.INK_MUTED,
-          marginBottom: 12,
-        }}
-      >
-        Used in {programs.length} programs
-      </div>
-
-      {/* Program rows */}
-      <div
-        style={{
-          borderRadius: 8,
-          border: `1px solid ${SHELL.CARD_LINE}`,
-          background: SHELL.CARD_WHITE,
-          overflow: 'hidden',
-        }}
-      >
-        {programs.map((prog, i) => (
-          <Link
-            key={prog.id}
-            href={`/programs/${prog.id}`}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '80px 1fr 120px',
-              alignItems: 'center',
-              padding: '10px 16px',
-              borderBottom: i < programs.length - 1 ? `1px solid ${SHELL.CARD_LINE_SOFT}` : 'none',
-              textDecoration: 'none',
-              color: SHELL.INK,
-              gap: 12,
-              cursor: 'pointer',
-              transition: 'background 100ms ease',
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.background = SHELL.PAPER_SOFT;
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.background = 'transparent';
-            }}
-          >
-            {/* Program ID */}
-            <span
-              style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 10,
-                color: SHELL.INK_MUTED,
-                letterSpacing: '0.04em',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              {prog.id}
-            </span>
-
-            {/* Program name */}
-            <span
-              style={{
-                fontFamily: SHELL.SERIF,
-                fontSize: 13,
-                color: SHELL.INK,
-                fontWeight: 500,
-              }}
-            >
-              {prog.name}
-            </span>
-
-            {/* Phase pill */}
-            <span
-              style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 10,
-                color: SHELL.PEACH_TEXT,
-                letterSpacing: '0.04em',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {prog.phase}
-            </span>
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export function PatternDetailPage() {
-  const pattern = T3_H01_PATTERN;
+export function DeprecatedPatternDetailPage() {
+  const pattern = T2_C03_PATTERN;
 
   return (
     <AppShell
@@ -255,7 +157,7 @@ export function PatternDetailPage() {
         <FilterPillStrip
           pills={[
             { key: 'all', label: 'All' },
-            { key: 't3', label: 'T3 · Use-case', active: true },
+            { key: 't2', label: 'T2 · Capability', active: true },
           ]}
         />
       }
@@ -313,10 +215,10 @@ export function PatternDetailPage() {
               marginBottom: 6,
             }}
           >
-            {pattern.tier} · Use-case pattern · {pattern.status}
+            {pattern.tier} · Capability pattern · {pattern.status}
           </div>
 
-          {/* ID + star */}
+          {/* ID */}
           <div
             style={{
               fontFamily: SHELL.MONO,
@@ -326,8 +228,7 @@ export function PatternDetailPage() {
               marginBottom: 8,
             }}
           >
-            {pattern.id}{' '}
-            <span style={{ color: SHELL.AMBER_DOT }}>★</span>
+            {pattern.id}
           </div>
 
           {/* Title */}
@@ -381,21 +282,24 @@ export function PatternDetailPage() {
                 display: 'inline-block',
                 padding: '2px 8px',
                 borderRadius: 999,
-                background: SHELL.MINT_BG,
-                color: SHELL.MINT_TEXT,
+                background: SHELL.GRAY_BG,
+                color: SHELL.GRAY_TEXT,
                 fontFamily: SHELL.SANS,
                 fontSize: 11,
                 fontWeight: 500,
                 lineHeight: 1.6,
               }}
             >
-              Validated
+              Deprecated
             </span>
           </div>
         </div>
 
+        {/* Sentinel verdict card (deprecation notice first) */}
+        <SentinelVerdictCard />
+
         {/* Reading sections */}
-        <div style={{ maxWidth: 720 }}>
+        <div style={{ maxWidth: 720, marginTop: 40 }}>
           {pattern.sections.map((section, i) => (
             <div key={section.heading}>
               <h2
@@ -432,12 +336,6 @@ export function PatternDetailPage() {
             </div>
           ))}
         </div>
-
-        {/* Sentinel verdict card */}
-        <SentinelVerdictCard />
-
-        {/* Used by programs */}
-        <UsedByPrograms />
       </div>
     </AppShell>
   );
