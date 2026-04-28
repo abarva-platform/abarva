@@ -1,13 +1,12 @@
 // CORR — Canonical Apex Retail fixture data aligned to the shell wave demo anchor.
 // Deterministic: no Date.now(), no random, no model calls.
 //
-// Demo anchor (pages.yaml §demo-data-baseline):
+// Demo anchor (pages.yaml §demo-data-baseline — updated Apr 27 2026):
 //   Tenant:           Apex Retail Group · Locked
 //   Flagship program: APX-CDP-2026 · Apex Retail CDP Activation
-//   Current phase:    P2 Synthesis · Design gate (P2 → P3) pending under Steward
-//   Known blockers:   Workshop 5 incomplete · value hypothesis evidence missing
-//                     · privacy boundary confirmation gaps
-//   Evidence coverage: 36%
+//   Current phase:    P3 Design · Design gate (P2 → P3) cleared Apr 27 2026
+//   Active work:      Architecture sprint · Vendor C contract in final review
+//   Evidence coverage: 100% (gate cleared)
 //   Linked source:    AMS Vendor Consolidation 2026 · Stage 7 BAFO · linkedProgramCode APX-CDP-2026
 
 import type {
@@ -59,17 +58,18 @@ export function buildPhaseSlots(
 // ─── Apex Retail fixture programs ───────────────────────────────────────────
 
 // APX-CDP-2026 · Apex Retail CDP Activation  ← FLAGSHIP
-// P2 Synthesis · Design gate pending · Workshop 5 incomplete · 36% evidence
+// P3 Design · Design gate cleared Apr 27 · Architecture sprint active
+// Vendor C selected as managed CDP layer · AMS BAFO award unblocked
 // Linked source: AMS Vendor Consolidation 2026 · Stage 7 BAFO
 const apxCdp2026: ProgramRow = {
   id: 'apx-cdp-2026',
   displayId: 'APX-CDP-2026',
   name: 'Apex Retail CDP Activation',
-  currentPhase: 2,
-  phases: buildPhaseSlots(2, { 3: 'pending' }),
-  gateStatus: 'pending',
+  currentPhase: 3,
+  phases: buildPhaseSlots(3, { 4: 'pending' }),
+  gateStatus: 'open',
   lastActiveLabel: '2h ago',
-  nexusNote: 'Workshop 5 incomplete · value hypothesis evidence missing · 36% evidence coverage',
+  nexusNote: 'P3 Design · Architecture sprint active · Vendor C contract in final review',
   actionLabel: 'Continue',
   isIdle: false,
   linkedSourceEvent: 'SRC-AMS-2026 · AMS Vendor Consolidation 2026 · Stage 7 BAFO',
