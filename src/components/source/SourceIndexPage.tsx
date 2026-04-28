@@ -452,7 +452,7 @@ function SourceEmptyState() {
           Source events track vendor consolidation, RFP processes, and procurement exercises from plan through award.
         </p>
         <a
-          href="/source/originate"
+          href="/source/new"
           style={{
             fontFamily: SHELL.MONO,
             fontSize: 11,
