@@ -226,6 +226,17 @@ export function SourceIndexPage() {
           </span>
         </div>
 
+        {/* Originate new event link */}
+        <div style={{ marginTop: 24, paddingTop: 16, borderTop: `1px solid ${SHELL.CARD_LINE}` }}>
+          <a href="/source/new" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_SOFT, textDecoration: 'none',
+          }}>
+            <span>+</span>
+            <span>Originate new source event</span>
+          </a>
+        </div>
+
       </div>
     </AppShell>
   );
