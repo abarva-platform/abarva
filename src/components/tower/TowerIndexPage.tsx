@@ -13,6 +13,7 @@ import {
   type AiProgram,
   type AiPortfolioKpis,
 } from '@/lib/tower/ai-program-portfolio-fixture';
+import { TowerEmptyState } from '@/components/tower/TowerEmptyState';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -729,6 +730,8 @@ export function TowerIndexPage() {
 
   const portfolio = buildAiProgramPortfolioView();
   const { kpis, programs, agentQuote, agentContext, actions } = portfolio;
+
+  if (programs.length === 0) return <TowerEmptyState />;
 
   // Filter programs by active filter (all programs for now — phase filter in T2)
   const filteredPrograms = programs.filter((p) => {
