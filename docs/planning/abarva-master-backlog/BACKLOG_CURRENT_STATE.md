@@ -4,18 +4,19 @@ This file is the persistent handoff between autonomous Codex sessions.
 
 ## 1. Last Completed Loop
 
-- Run timestamp: `2026-04-26 23:19 America/Chicago`
+- Run timestamp: `2026-04-28 18:45 America/Chicago`
 - Last completed wave: `WAVE-21 executive-summary tranche complete`
 - Last merged PRs:
   - `#401` - `docs(planning): add risk and dependency register` - `a7a0bc20`
   - `#400` - `docs(planning): add execution roadmap` - `5bb500a6`
 - Registry updates applied:
   - Item IDs moved to `done`: `ROAD1`, `ROAD2`, `ROAD3`
+  - Item IDs moved to `in_progress`: `OPS15`
   - Item IDs moved to `blocked`: `none newly added in this pass`
 
 ## 2. Current Queue Snapshot
 
-- Next wave candidate: `WAVE-21`
+- Next wave candidate: `WAVE-30`
 - Ready item IDs: `none`
 - Blocked item IDs: `VIS4`, `DESIGN1`
 - Items requiring human approval: `none in current WAVE-21 queue`
@@ -61,5 +62,5 @@ The planning-path orchestration loop is now functioning normally on clean mainli
 
 - BRAND1, SRC39, SRC40, and SRC41 are already merged on main and remain correctly marked as done.
 - ROAD1, ROAD2, and ROAD3 are merged and recorded.
-- VIS2 is actively in progress on the current branch.
-- The next autonomous action after this checkpoint update is to merge `VIS2`, then reassess the blocked WAVE-21 design items against their narrower contracts.
+- OPS15 is now in progress as a docs/planning ingestion slice to keep the registry operational inside the repo.
+- The next autonomous action after this checkpoint update is to complete OPS15 review/merge, then continue WAVE-30 queueing from the in-repo registry state.

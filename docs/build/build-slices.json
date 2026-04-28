@@ -9679,6 +9679,42 @@
       "category": "Intelligence",
       "status": "code_complete",
       "notes": "New value_at_risk tab added to Control Tower (7th tab, between Decisions and Executive Brief). buildValueAtRiskPortfolioView tower-domain lib provides 5 portfolio items covering AMS savings ($300K high/at_risk), AMS transition ($530K medium/at_risk), CDP gate (high/blocked), CDP programme (medium/on_track), BAFO leverage ($150K medium/at_risk). PortfolioValueSummary aggregates totalValueAtStakeUsd, atRiskValueUsd, blockedValueUsd, highRiskItemCount, blockedItemCount. ValueAtRiskPanel renders in TowerLensTabs.tsx — does NOT import from src/lib/source. tower-lens-tabs-view TowerTabKey updated to include value_at_risk (7 total). Updated tower4-lens-tabs.test.ts (6→7 tabs). data-testid tower-value-at-risk-panel, tower-value-at-risk-summary, tower-var-item-{itemId}, tower-value-at-risk-disclaimer. 45 integration tests (tower3 + updated tower4). TOWER7/TOWER3-track05 from track-05."
+    },
+    {
+      "id": "OPS15",
+      "name": "Backlog Registry Ingestion into Repo",
+      "category": "ops",
+      "status": "code_complete",
+      "wave": "wave-30",
+      "risk": "low",
+      "ownerAgent": "Steward",
+      "dependsOn": [
+        "BLG1"
+      ],
+      "allowedFiles": [
+        "docs/build/slices/OPS15_BACKLOG_REGISTRY_INGESTION_INTO_REPO.md",
+        "docs/build/build-slices.json",
+        "docs/planning/abarva-master-backlog/README.md",
+        "docs/planning/abarva-master-backlog/BACKLOG_CURRENT_STATE.md",
+        "docs/planning/abarva-master-backlog/backlog-registry.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json"
+      ],
+      "acceptanceCriteria": [
+        "OPS15 docs slice artifact exists under docs/build/slices.",
+        "AbarVa planning backlog docs reflect ingestion status and operational usage.",
+        "No runtime code changes are introduced.",
+        "Only docs/build and docs/planning backlog files are touched."
+      ],
+      "validationCommands": [
+        "git diff --check"
+      ],
+      "notes": "Docs/planning-only control-plane update to operationalize in-repo backlog-registry usage for autonomous runs."
     }
   ]
 }
