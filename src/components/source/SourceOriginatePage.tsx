@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import { AppShell } from '@/components/shell/AppShell';
+import { PatternSelector } from '@/components/source/PatternSelector';
+import { SOURCE_LIFECYCLE_PATTERNS } from '@/lib/intelligence/source-lifecycle-patterns';
+import type { SourceEventPatternId } from '@/lib/intelligence/seed-types';
 import { SHELL } from '@/lib/shell/shell-tokens';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -15,6 +18,7 @@ interface VendorRow {
 }
 
 interface FormState {
+  patternId: SourceEventPatternId | null;
   eventName: string;
   eventType: EventType | '';
   linkedProgram: string;
@@ -25,9 +29,10 @@ interface FormState {
 // ── Step indicator ─────────────────────────────────────────────────────────────
 
 const STEPS = [
-  { label: '1 · Event details' },
-  { label: '2 · Vendors' },
-  { label: '3 · Confirm' },
+  { label: '1 · Pattern' },
+  { label: '2 · Event details' },
+  { label: '3 · Vendors' },
+  { label: '4 · Confirm' },
 ];
 
 function StepPill({ label, status }: { label: string; status: 'active' | 'complete' | 'pending' }) {
@@ -284,6 +289,67 @@ function NavButton({
   );
 }
 
+// ── Step 0: Pattern ────────────────────────────────────────────────────────────
+
+interface Step0Errors {
+  patternId?: boolean;
+}
+
+function Step0(props: {
+  form: FormState;
+  errors: Step0Errors;
+  onChange: (patch: Partial<FormState>) => void;
+  onContinue: () => void;
+}) {
+  const { form, errors, onChange, onContinue } = props;
+
+  return (
+    <div>
+      <div
+        style={{
+          fontFamily: SHELL.SANS,
+          fontSize: 13,
+          color: SHELL.INK_SOFT,
+          lineHeight: 1.55,
+          marginBottom: 20,
+          maxWidth: 640,
+        }}
+      >
+        Pick the lifecycle pattern that best matches this event. The pattern carries
+        stage definitions, gate criteria, expected artifacts, and contradiction
+        templates — the new event inherits all of it.
+      </div>
+
+      <PatternSelector
+        value={form.patternId}
+        onChange={(patternId) => onChange({ patternId })}
+      />
+
+      {errors.patternId && (
+        <div style={{ fontFamily: SHELL.MONO, fontSize: 10, color: SHELL.RUST_TEXT, marginTop: 12 }}>
+          Select a pattern to continue
+        </div>
+      )}
+
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 28 }}>
+        <a
+          href="/source"
+          style={{
+            fontFamily: SHELL.MONO,
+            fontSize: 11,
+            color: SHELL.INK_SOFT,
+            textDecoration: 'none',
+            padding: '9px 0',
+          }}
+        >
+          ← Cancel
+        </a>
+        <NavButton onClick={onContinue}>Continue →</NavButton>
+      </div>
+    </div>
+  );
+}
+
 // ── Step 1: Event details ──────────────────────────────────────────────────────
 
 interface Step1Errors {
@@ -295,9 +361,10 @@ function Step1(props: {
   form: FormState;
   errors: Step1Errors;
   onChange: (patch: Partial<FormState>) => void;
+  onBack: () => void;
   onContinue: () => void;
 }) {
-  const { form, errors, onChange, onContinue } = props;
+  const { form, errors, onChange, onBack, onContinue } = props;
 
   const PROGRAM_OPTIONS = [
     { value: '', label: '— None —' },
@@ -349,18 +416,7 @@ function Step1(props: {
       </div>
 
       <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 32, clear: 'both' }}>
-        <a
-          href="/source"
-          style={{
-            fontFamily: SHELL.MONO,
-            fontSize: 11,
-            color: SHELL.INK_SOFT,
-            textDecoration: 'none',
-            padding: '9px 0',
-          }}
-        >
-          ← Cancel
-        </a>
+        <NavButton onClick={onBack} variant="ghost">← Back</NavButton>
         <NavButton onClick={onContinue}>Continue →</NavButton>
       </div>
     </div>
@@ -548,8 +604,44 @@ function Step3(props: {
   const eventTypeLabel =
     EVENT_TYPE_OPTIONS.find((o) => o.value === form.eventType)?.label ?? form.eventType;
 
+  const selectedPattern =
+    SOURCE_LIFECYCLE_PATTERNS.find((p) => p.patternId === form.patternId) ?? null;
+
   return (
     <div>
+      {/* Pattern */}
+      {selectedPattern && (
+        <div style={{ marginBottom: 16 }}>
+          <div
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 9,
+              textTransform: 'uppercase',
+              letterSpacing: '0.12em',
+              color: SHELL.INK_MUTED,
+              marginBottom: 4,
+            }}
+          >
+            Lifecycle pattern
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK }}>
+              {selectedPattern.title}
+            </span>
+            <span
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 10,
+                color: SHELL.INK_MUTED,
+                letterSpacing: '0.08em',
+              }}
+            >
+              {selectedPattern.patternId}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Event name */}
       <div
         style={{
@@ -740,13 +832,14 @@ function SuccessState() {
 
 // ── Main wizard component ──────────────────────────────────────────────────────
 
-const STEP_TITLES = ['Event details', 'Vendors', 'Confirm'];
+const STEP_TITLES = ['Pattern', 'Event details', 'Vendors', 'Confirm'];
 
 export function SourceOriginatePage() {
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
 
   const [form, setForm] = useState<FormState>({
+    patternId: null,
     eventName: '',
     eventType: '',
     linkedProgram: '',
@@ -754,11 +847,21 @@ export function SourceOriginatePage() {
     vendors: [{ name: '', contact: '', notes: '' }],
   });
 
+  const [step0Errors, setStep0Errors] = useState<Step0Errors>({});
   const [step1Errors, setStep1Errors] = useState<Step1Errors>({});
   const [step2Errors, setStep2Errors] = useState<Step2Errors>({});
 
   function patchForm(patch: Partial<FormState>) {
     setForm((prev) => ({ ...prev, ...patch }));
+  }
+
+  function handleStep0Continue() {
+    if (!form.patternId) {
+      setStep0Errors({ patternId: true });
+      return;
+    }
+    setStep0Errors({});
+    setStep(1);
   }
 
   function handleStep1Continue() {
@@ -770,7 +873,7 @@ export function SourceOriginatePage() {
       return;
     }
     setStep1Errors({});
-    setStep(1);
+    setStep(2);
   }
 
   function handleStep2Continue() {
@@ -780,7 +883,7 @@ export function SourceOriginatePage() {
       return;
     }
     setStep2Errors({});
-    setStep(2);
+    setStep(3);
   }
 
   function handleSubmit() {
@@ -798,7 +901,7 @@ export function SourceOriginatePage() {
     >
       {/* Full-width work pane */}
       <div style={{ flex: 1, overflowY: 'auto', background: SHELL.PAPER, padding: '40px 60px' }}>
-        <div style={{ maxWidth: 600, margin: '0 auto' }}>
+        <div style={{ maxWidth: step === 0 ? 980 : 600, margin: '0 auto' }}>
 
           {/* Page heading */}
           <div style={{ marginBottom: 24 }}>
@@ -833,24 +936,32 @@ export function SourceOriginatePage() {
           {submitted ? (
             <SuccessState />
           ) : step === 0 ? (
+            <Step0
+              form={form}
+              errors={step0Errors}
+              onChange={patchForm}
+              onContinue={handleStep0Continue}
+            />
+          ) : step === 1 ? (
             <Step1
               form={form}
               errors={step1Errors}
               onChange={patchForm}
+              onBack={() => setStep(0)}
               onContinue={handleStep1Continue}
             />
-          ) : step === 1 ? (
+          ) : step === 2 ? (
             <Step2
               form={form}
               errors={step2Errors}
               onChange={patchForm}
-              onBack={() => setStep(0)}
+              onBack={() => setStep(1)}
               onContinue={handleStep2Continue}
             />
           ) : (
             <Step3
               form={form}
-              onBack={() => setStep(1)}
+              onBack={() => setStep(2)}
               onSubmit={handleSubmit}
             />
           )}
