@@ -4,18 +4,18 @@ This file is the persistent handoff between autonomous Codex sessions.
 
 ## 1. Last Completed Loop
 
-- Run timestamp: `2026-04-26 23:19 America/Chicago`
-- Last completed wave: `WAVE-21 executive-summary tranche complete`
+- Run timestamp: `2026-05-08 22:15 America/Chicago`
+- Last completed wave: `WAVE-30 docs ingestion (OPS15, AGRT1)`
 - Last merged PRs:
-  - `#401` - `docs(planning): add risk and dependency register` - `a7a0bc20`
-  - `#400` - `docs(planning): add execution roadmap` - `5bb500a6`
+  - `#751` - `docs(OPS15): backlog registry ingestion into repo`
+  - `#748` - `docs(AGRT1): model gateway contract plan`
 - Registry updates applied:
-  - Item IDs moved to `done`: `ROAD1`, `ROAD2`, `ROAD3`
+  - Item IDs moved to `done`: `OPS15`, `AGRT1`
   - Item IDs moved to `blocked`: `none newly added in this pass`
 
 ## 2. Current Queue Snapshot
 
-- Next wave candidate: `WAVE-21`
+- Next wave candidate: `WAVE-30`
 - Ready item IDs: `none`
 - Blocked item IDs: `VIS4`, `DESIGN1`
 - Items requiring human approval: `none in current WAVE-21 queue`
@@ -61,5 +61,5 @@ The planning-path orchestration loop is now functioning normally on clean mainli
 
 - BRAND1, SRC39, SRC40, and SRC41 are already merged on main and remain correctly marked as done.
 - ROAD1, ROAD2, and ROAD3 are merged and recorded.
-- VIS2 is actively in progress on the current branch.
-- The next autonomous action after this checkpoint update is to merge `VIS2`, then reassess the blocked WAVE-21 design items against their narrower contracts.
+- OPS15 and AGRT1 merged together in a single docs rebase pass (2026-05-08).
+- Both slices are now registered in build-slices.json and their artifact docs exist under docs/build/slices/.
