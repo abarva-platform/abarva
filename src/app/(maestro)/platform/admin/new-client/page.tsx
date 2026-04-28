@@ -1,4 +1,5 @@
 'use client'
+// LEGACY · being migrated to /admin/new-client in a follow-up wave (post-wave-admin-completion).
 import { useState } from 'react'
 
 const T = {

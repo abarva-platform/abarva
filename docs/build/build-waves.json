@@ -1,0 +1,1468 @@
+{
+  "schemaVersion": 1,
+  "lastUpdated": "2026-04-27 (wave-clean1 100% · PR #476 merged · repo drift cleanup complete)",
+  "source": "Deterministic build wave manifest. Updated by integration agent after each wave merge.",
+  "lifecycle": [
+    "planned",
+    "in_progress",
+    "merged",
+    "blocked",
+    "deferred"
+  ],
+  "validationLifecycle": [
+    "not_run",
+    "tsc_clean",
+    "tests_green",
+    "build_green",
+    "ci_green",
+    "full_pass",
+    "partial",
+    "failing"
+  ],
+  "waves": [
+    {
+      "waveId": "wave-0",
+      "name": "Agentic Spine Foundation",
+      "goal": "Land the canonical Agentic Spine: Programs / Tower / Intelligence / Admin surfaces, S0-S9 context-bundle and disclosure contracts, design canon, page and workflow catalog, and the agentic platform architecture contracts.",
+      "status": "merged",
+      "percentComplete": 98,
+      "plannedSlices": [
+        "S0",
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9",
+        "S9b",
+        "S9c",
+        "S9d",
+        "S9e",
+        "S9f",
+        "S9g",
+        "I1",
+        "I2",
+        "I3",
+        "I4",
+        "ADM1",
+        "ADM2",
+        "ADM3",
+        "ADM4",
+        "ACT1",
+        "MW1",
+        "MW2",
+        "MW4",
+        "PF1",
+        "PDEL",
+        "SOL1",
+        "PF2",
+        "DES1",
+        "DES2",
+        "SOL2",
+        "CAT1",
+        "ARCH1",
+        "ARCH2",
+        "CAT2",
+        "HOME1"
+      ],
+      "completedSlices": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S8",
+        "S9",
+        "S9b",
+        "S9c",
+        "S9d",
+        "S9e",
+        "S9f",
+        "S9g",
+        "I1",
+        "I2",
+        "I3",
+        "I4",
+        "ADM1",
+        "ADM2",
+        "ADM3",
+        "ADM4",
+        "ACT1",
+        "MW1",
+        "MW2",
+        "MW4",
+        "PF1",
+        "PDEL",
+        "SOL1",
+        "PF2",
+        "DES1",
+        "DES2",
+        "SOL2",
+        "CAT1",
+        "ARCH1",
+        "ARCH2",
+        "CAT2",
+        "HOME1"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [
+        "S0"
+      ],
+      "mergedPrs": [
+        189,
+        214,
+        226,
+        238
+      ],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [],
+      "nextAction": "Spine merged. Hold posture; deeper Programs/Tower/Intelligence depth lives in Waves 2 and 4.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-1",
+      "name": "Runtime Safety + Agent Mission + Context/Evidence Backbone",
+      "goal": "Land the agent mission queue and surface wiring, the unified context builder, the evidence ledger, the model gateway and tool registry stubs, the production readiness validator, and the agent dispatch operating model.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "AG10",
+        "AG11",
+        "AG12",
+        "AG13",
+        "CTX2",
+        "CTX3",
+        "EVID2",
+        "EVID3",
+        "MG2",
+        "TOOL2",
+        "OPS1",
+        "OPS2",
+        "PROD2"
+      ],
+      "completedSlices": [
+        "AG10",
+        "AG11",
+        "AG12",
+        "AG13",
+        "CTX2",
+        "CTX3",
+        "EVID2",
+        "EVID3",
+        "MG2",
+        "TOOL2",
+        "OPS1",
+        "OPS2",
+        "PROD2"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [
+        246,
+        253,
+        258
+      ],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [],
+      "nextAction": "Runtime safety backbone merged. Live model gateway routing remains contract-only and is deferred to a later wave.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-2",
+      "name": "AI Control Tower + Intelligence Depth",
+      "goal": "Expand the AI Control Tower across portfolio inventory, adoption, value, risk, and DORA dimensions; deepen Intelligence with canvas mode switching and evidence dataset drawer; add tool invocation audit, unified audit events, and context pack quality scoring.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "ACT2",
+        "ACT3",
+        "ACT4",
+        "ACT5",
+        "ACT7",
+        "I5",
+        "I6",
+        "MG3",
+        "TOOL3",
+        "AUD2",
+        "CTX4",
+        "ACT6",
+        "ACT8",
+        "ACT11",
+        "ACT12",
+        "I7",
+        "I8",
+        "SOL15",
+        "SOL16"
+      ],
+      "completedSlices": [
+        "ACT2",
+        "ACT3",
+        "ACT4",
+        "ACT5",
+        "ACT7",
+        "I5",
+        "I6",
+        "MG3",
+        "TOOL3",
+        "AUD2",
+        "CTX4",
+        "ACT6",
+        "ACT8",
+        "ACT11",
+        "ACT12",
+        "I7",
+        "I8",
+        "SOL15",
+        "SOL16"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [
+        263,
+        272,
+        306
+      ],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [],
+      "nextAction": "Tower and Intelligence read models fully extended. ACT6/8/11/12 cost-consumption/readiness/correlation/waste and I7/I8 source-basis/sentinel-rail landed via PR #306. Live signal ingestion, scheduled refresh, and persona walks remain deferred.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-3",
+      "name": "Enterprise SaaS + Data Trust + Deployment Foundations",
+      "goal": "Land the SaaS tenancy architecture, tenant isolation boundary, dedicated tenant blueprint, dataset trust model, agent data access policy matrix, four-tier enterprise deployment strategy, Azure VNet reference lab, Docker packaging, local private deployment lab, Bicep IaC starter, deployment-status ingestion, users/access surface, and the enterprise deployment + trust verification runbook.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "TEN1",
+        "TEN2",
+        "TEN3",
+        "TRUST1",
+        "TRUST2",
+        "TRUST3",
+        "CLOUD1",
+        "CLOUD2",
+        "CLOUD3",
+        "CLOUD4",
+        "CLOUD5",
+        "ADM6",
+        "PROD3",
+        "PROD4",
+        "QA8"
+      ],
+      "completedSlices": [
+        "TEN1",
+        "TEN2",
+        "TEN3",
+        "TRUST1",
+        "TRUST2",
+        "TRUST3",
+        "CLOUD1",
+        "CLOUD2",
+        "CLOUD3",
+        "CLOUD4",
+        "CLOUD5",
+        "ADM6",
+        "PROD3",
+        "PROD4",
+        "QA8"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [
+        280,
+        281,
+        286
+      ],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [],
+      "nextAction": "Enterprise tenancy and deployment foundations are documented and contract-only. Live provider polling, real Tier 2 onboarding, real private cloud deploys, and CI/Vercel ingestion remain deferred to later waves.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-4",
+      "name": "Program Continuity + Deliverable Loop",
+      "goal": "Land the Program Workshop Mode shell, deliverable canvas renderer, HTML/Markdown viewer, deliverable versioning, evidence trace panel, meeting-notes capture and program-state updates, SME recommendation panel, save/stop/resume program state, and the program continuity + deliverable verification runbook.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "PW1",
+        "PDEL5",
+        "PDEL6",
+        "PDEL7",
+        "PDEL8",
+        "MW5",
+        "MW6",
+        "PROG7",
+        "QA7"
+      ],
+      "completedSlices": [
+        "PW1",
+        "PDEL5",
+        "PDEL6",
+        "PDEL7",
+        "PDEL8",
+        "MW5",
+        "MW6",
+        "PROG7",
+        "QA7"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [
+        275
+      ],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [],
+      "nextAction": "Program continuity and deliverable contracts merged. Real generated deliverables, runtime save/resume, and live notes ingestion remain deferred.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-5",
+      "name": "Solution-to-Workshop / Architecture Canvas",
+      "goal": "Land the solution archetype registry, analytics modernization component pack, healthcare AI archetypes, build/buy/partner decision framework, archetype detail read model, solution intelligence canvas contract, recommendation engine, and the solution intelligence verification runbook.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "SOL3",
+        "SOL4",
+        "SOL5",
+        "SOL6",
+        "SOL7",
+        "SOL8",
+        "SOL9",
+        "QA3"
+      ],
+      "completedSlices": [
+        "SOL3",
+        "SOL4",
+        "SOL5",
+        "SOL6",
+        "SOL7",
+        "SOL8",
+        "SOL9",
+        "QA3"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [
+        242
+      ],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [],
+      "nextAction": "Solution intelligence fabric merged. Live archetype telemetry, dynamic recommendations, and persona walks remain deferred.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-6",
+      "name": "Production Hardening / Route Smoke / Persona Crawler",
+      "goal": "Land the founder-facing verification runbooks (agentic spine, solution workshop, solution intelligence, agent mission persona, route smoke inventory, golden prompt harness) that gate eventual CI promotion of route smoke, persona crawler, security scan, and observability automation.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "QA1",
+        "QA2",
+        "QA4",
+        "QA5",
+        "QA6"
+      ],
+      "completedSlices": [
+        "QA1",
+        "QA2",
+        "QA4",
+        "QA5",
+        "QA6"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "partial",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [],
+      "nextAction": "Runbooks documented. Live CI-backed route smoke, persona crawler, and security scan remain deferred behind PROD5+ and the OPS hardening wave.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-21",
+      "name": "Brand Lock + Blueprint Enforcement + Intelligence/Tower Completion",
+      "goal": "Lock the canonical AbarVa brand asset and component, enforce blueprint authority across remaining surfaces, and complete Intelligence and Control Tower depth slices.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "BRAND1",
+        "BRAND2",
+        "DES9",
+        "PX2",
+        "INTEL1",
+        "INTEL2",
+        "INTEL3",
+        "TOWER1",
+        "TOWER2",
+        "TOWER3",
+        "QA29",
+        "DEMO9",
+        "BLG1",
+        "BLG2"
+      ],
+      "completedSlices": [
+        "BRAND1",
+        "BRAND2",
+        "DES9",
+        "PX2",
+        "INTEL1",
+        "INTEL2",
+        "INTEL3",
+        "TOWER1",
+        "TOWER2",
+        "TOWER3",
+        "QA29",
+        "DEMO9",
+        "BLG1",
+        "BLG2"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [],
+      "nextAction": "All 14 wave-21 slices complete (including BLG1, BLG2). Wave-21 merged.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-7",
+      "name": "Private Azure/GCP Deployment Lab",
+      "goal": "Promote the CLOUD2/CLOUD5 lab blueprints into a real Terraform/Bicep/azd lab path, prove a private-VNet AbarVa boot, exercise the model gateway under egress restriction, and document the matching GCP VPC SC counterpart.",
+      "status": "planned",
+      "percentComplete": 0,
+      "plannedSlices": [],
+      "completedSlices": [],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "not_run",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Author the CLOUD6 (Azure VNet lab IaC realization) and CLOUD7 (GCP VPC lab IaC realization) slice contracts, gated on founder approval to provision in AbarVa-owned non-production subscriptions.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-8",
+      "name": "Build Operations Hardening",
+      "goal": "Harden the deterministic build-operations spine: integration-agent merge protocol, conflict policy enforcement, build wave progress tracker, dispatch queue automation hardening, agent batch acceptance harness, multi-cloud lab harness, production readiness CI ingestion, and the operations-hardening verification runbook.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "OPS5",
+        "OPS6",
+        "OPS7",
+        "OPS8",
+        "QA13",
+        "CLOUD8",
+        "PROD5",
+        "WAVE1"
+      ],
+      "completedSlices": [
+        "OPS5",
+        "OPS6",
+        "OPS7",
+        "OPS8",
+        "QA13",
+        "CLOUD8",
+        "PROD5",
+        "WAVE1"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [
+        291
+      ],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [],
+      "nextAction": "Build operations hardening fully merged via PR #291. Cherry-resolve helper, duplicate-preflight, lane-report validator, worktree-cleanup assistant, secret-hygiene pattern, deployment-status surface, and wave-progress tracker all landed. Next wave: Pattern Library + Quality Governance.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-9",
+      "name": "Pattern Library + Quality Governance",
+      "goal": "Add solution pattern playbook, pattern coverage scoring, program health scorecard, integration test coverage audit, and workshop outcome synthesis.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "SOL15",
+        "SOL16",
+        "PROG9",
+        "QA15",
+        "MW8"
+      ],
+      "completedSlices": [
+        "SOL15",
+        "SOL16",
+        "PROG9",
+        "QA15",
+        "MW8"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [
+        308
+      ],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [],
+      "nextAction": "Pattern library and quality governance fully merged. Live coverage scoring, real workshop capture ingestion, and live program state ingestion remain deferred.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-10",
+      "name": "Final Hardening",
+      "goal": "Add production readiness promotion gate, cross-surface consistency validator, live CI status stub, admin surface completeness inventory, and build run retrospective.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "QA16",
+        "QA17",
+        "PROD6",
+        "ADM7",
+        "OPS9"
+      ],
+      "completedSlices": [
+        "QA16",
+        "QA17",
+        "PROD6",
+        "ADM7",
+        "OPS9"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [
+        309
+      ],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [],
+      "nextAction": "All 6 session waves complete. Real GitHub/Vercel polling, live surface scanning, and manifest promotion deferred to next run.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-11",
+      "name": "Demo Readiness + Architecture Overview",
+      "goal": "Create demo scripts, architecture overview, persona walk results, readiness polish, and agent readiness deep drill for founder/boardroom demos.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "ARCH3",
+        "DEMO1",
+        "DEMO2",
+        "QA18",
+        "PROD7",
+        "ADM8"
+      ],
+      "completedSlices": [
+        "ARCH3",
+        "DEMO1",
+        "DEMO2",
+        "QA18",
+        "PROD7",
+        "ADM8"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [
+        316
+      ],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [],
+      "nextAction": "Wave-11 merged via PR #316. Demo readiness pack complete. Next: live agent wiring, real data ingestion, production deployment.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-12",
+      "name": "Product Polish + Azure Private Data Plane Prep",
+      "goal": "Extend build tooling, add deliverable flows, phase gate, workshop templates, and Azure private data plane lab foundations.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "OPS11",
+        "OPS12",
+        "PDEL9",
+        "PDEL10",
+        "AZLAB1",
+        "AZLAB2",
+        "AZLAB3",
+        "AZLAB4",
+        "AZLAB5"
+      ],
+      "completedSlices": [
+        "OPS11",
+        "OPS12",
+        "PDEL9",
+        "PDEL10",
+        "AZLAB1",
+        "AZLAB2",
+        "AZLAB3",
+        "AZLAB4",
+        "AZLAB5"
+      ],
+      "skippedSlices": [
+        "PROG8",
+        "MW7",
+        "SOL10"
+      ],
+      "blockedSlices": [],
+      "mergedPrs": [
+        322
+      ],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [],
+      "nextAction": "Lane A complete. Awaiting OPS12, PDEL9, PDEL10, AZLAB1-5 integration. Lane B complete. Awaiting OPS11, PDEL9, PDEL10, AZLAB1-5 integration. Lane C complete. Awaiting OPS11, OPS12, PDEL10, AZLAB1-5 integration. Lane D complete. Awaiting OPS11, OPS12, PDEL9, AZLAB1-5 integration. Lane H complete. Awaiting OPS11, OPS12, PDEL9, PDEL10, AZLAB2-5 integration. Lane I complete. Awaiting OPS11, OPS12, PDEL9, PDEL10, AZLAB1, AZLAB3-5 integration. Lane J complete. Awaiting OPS11, OPS12, PDEL9, PDEL10, AZLAB1, AZLAB2, AZLAB4-5 integration. Lane K complete. Awaiting OPS11, OPS12, PDEL9, PDEL10, AZLAB1-3, AZLAB5 integration. Lane L complete. Awaiting OPS11, OPS12, PDEL9, PDEL10, AZLAB1-4 integration.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-13",
+      "name": "Live Demo Validation + Hygiene Enforcement",
+      "goal": "Validate AbarVa can be walked end-to-end cleanly and enforce mandatory hygiene gates before future builds.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "LIVE1",
+        "LIVE2",
+        "LIVE3",
+        "LIVE4",
+        "DEMO3",
+        "QA19",
+        "QA20",
+        "OPS13"
+      ],
+      "completedSlices": [
+        "LIVE1",
+        "LIVE2",
+        "LIVE4",
+        "DEMO3",
+        "QA20",
+        "LIVE3",
+        "QA19",
+        "OPS13"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [
+        332
+      ],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [],
+      "nextAction": "All 8 slices integrated. Integration branch ready for PR.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-15",
+      "name": "Source Commercial UI + Architecture Page",
+      "goal": "Surface Wave-14 commercial intelligence inside the Source app and add the Admin Architecture Overview page.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "SRC19",
+        "SRC20",
+        "SRC21",
+        "SRC22",
+        "SRC23",
+        "SRC24",
+        "SRC25",
+        "SRC26",
+        "ARCH4",
+        "QA22"
+      ],
+      "completedSlices": [
+        "SRC19",
+        "SRC20",
+        "SRC21",
+        "SRC22",
+        "SRC23",
+        "SRC24",
+        "SRC25",
+        "SRC26",
+        "ARCH4",
+        "QA22"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [
+        351
+      ],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Complete remaining 9 slices and merge via PR. Complete remaining slices and merge via PR.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-14",
+      "name": "Source Commercial Intelligence + Pricing Hardening",
+      "goal": "Deliver comprehensive commercial intelligence models, pricing normalization, risk detection, vendor comparison, control tower signals, and mission queue for the Source module.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "SRC11",
+        "SRC12",
+        "SRC13",
+        "SRC14",
+        "SRC15",
+        "SRC16",
+        "SRC17",
+        "SRC18",
+        "QA21",
+        "OPS14"
+      ],
+      "completedSlices": [
+        "SRC11",
+        "SRC12",
+        "SRC13",
+        "SRC14",
+        "SRC15",
+        "SRC16",
+        "SRC17",
+        "SRC18",
+        "QA21",
+        "OPS14"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [
+        340
+      ],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Wave-14 merged via PR #340. 161 tests green, hygiene gate 11/11 PASS. Next: Source module production readiness deepening and live workflow wiring.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-16",
+      "name": "Source Commercial Route Mount + Demo Scenario",
+      "goal": "Mount the Source commercial hub inside the Source event experience, add a deterministic AMS outsourcing demo scenario seed, deliver the commercial executive brief and action queue UI components, verify the route via smoke test, and ship the demo script.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "SRC27",
+        "SRC28",
+        "SRC29",
+        "SRC30",
+        "QA23",
+        "DEMO4"
+      ],
+      "completedSlices": [
+        "SRC27",
+        "SRC28",
+        "SRC29",
+        "SRC30",
+        "QA23",
+        "DEMO4"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [
+        355
+      ],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Integration branch ready. Run validation, push, and merge via PR.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-17",
+      "name": "AbarVa Design + Workflow Canon Enforcement",
+      "goal": "Bring the live AbarVa product together visually, structurally, and narratively across shell, navigation, Admin, Architecture, Production Readiness, and Source Commercial pages.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "DES7",
+        "DES8",
+        "ARCH5",
+        "PROD8",
+        "SRC31",
+        "QA24",
+        "DEMO5"
+      ],
+      "completedSlices": [
+        "DES7",
+        "DES8",
+        "ARCH5",
+        "PROD8",
+        "SRC31",
+        "QA24",
+        "DEMO5"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [
+        362
+      ],
+      "validationStatus": "not_run",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Wave-17 merged. Wave-17A route ownership and shell enforcement is tracked as an integration follow-through batch on a dedicated branch.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-20",
+      "name": "Demo Data Registry + Tenant Richness",
+      "goal": "Create the canonical demo dataset registry encoding tenant richness tiers across all surfaces, enabling repeatable demo delivery with known data boundaries.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "SHELL1",
+        "DEMODATA1",
+        "SHELL3",
+        "SHELL2",
+        "SHELL4",
+        "SHELL5",
+        "SHELL6",
+        "SHELL7",
+        "QA28",
+        "DEMO8",
+        "AGENTX",
+        "PX1"
+      ],
+      "completedSlices": [
+        "SHELL1",
+        "DEMODATA1",
+        "SHELL3",
+        "SHELL2",
+        "SHELL4",
+        "SHELL5",
+        "SHELL6",
+        "SHELL7",
+        "QA28",
+        "DEMO8",
+        "AGENTX",
+        "PX1"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [],
+      "nextAction": "Wave 20 complete. All 12 slices landed: SHELL1-7, DEMODATA1, QA28, DEMO8, AGENTX, PX1.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-19",
+      "name": "Tenant-Scoped Demo Data + Source Intelligence Hardening",
+      "goal": "Scope the Source commercial demo scenario to Apex Retail, replace generic vendor labels with named representative vendors, add extended posture fields, and add deterministicSeed root-level field.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "SRC32",
+        "PROG15",
+        "LINK1",
+        "SRC33",
+        "PROG16",
+        "MW9",
+        "QA27",
+        "DEMO7"
+      ],
+      "completedSlices": [
+        "SRC32",
+        "PROG15",
+        "LINK1",
+        "SRC33",
+        "PROG16",
+        "MW9",
+        "QA27",
+        "DEMO7"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "tsc_clean",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Wave-19 all 8 lanes complete and merged. Next: live data ingestion, pilot client onboarding.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-18",
+      "name": "Program Flagship Experience",
+      "goal": "Make the Program detail page the flagship AbarVa experience: phase journey, workflow, approval gates, deliverables, evidence, actions, agent-driven.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "PROG10",
+        "PROG11",
+        "PROG12",
+        "PROG13",
+        "PROG14",
+        "QA25",
+        "DEMO6"
+      ],
+      "completedSlices": [
+        "PROG10",
+        "PROG11",
+        "PROG12",
+        "PROG13",
+        "PROG14",
+        "QA25",
+        "DEMO6"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [
+        366
+      ],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Wave-18 merged. No further action.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-22",
+      "name": "Program Polish + Reference Implementation",
+      "goal": "Elevate Programs surface to exemplar fidelity; add lens tabs to Intelligence and Tower.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "PROG10",
+        "PROG11",
+        "PROG12",
+        "PROG13",
+        "PROG14",
+        "PROG15",
+        "MW9",
+        "INTEL4",
+        "TOWER4",
+        "QA25",
+        "DEMO6",
+        "DEMO7"
+      ],
+      "completedSlices": [
+        "PROG10",
+        "PROG11",
+        "PROG12",
+        "PROG13",
+        "PROG14",
+        "PROG15",
+        "MW9",
+        "INTEL4",
+        "TOWER4",
+        "QA25",
+        "DEMO6",
+        "DEMO7"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [],
+      "nextAction": "All wave-22 slices complete. Wave-22 merged.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-23",
+      "name": "Source + Program Storyline Demo",
+      "goal": "Complete the AMS sourcing event to CDP programme demo storyline with 4 vendors, BAFO tab, intelligence signals, and updated demo script.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "SRC34",
+        "SRC35",
+        "SRC36",
+        "SRC37",
+        "SRC38",
+        "LINK2",
+        "DEMO10"
+      ],
+      "completedSlices": [
+        "SRC34",
+        "SRC35",
+        "SRC36",
+        "SRC37",
+        "SRC38",
+        "LINK2",
+        "DEMO10"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [
+        397
+      ],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Wave 23 merged via PR #397. Next: Wave 24.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-24",
+      "name": "Azure SaaS + Simulated Private Data Plane Lab — Docs + Architecture",
+      "goal": "Produce the architecture decision records, Azure target architecture diagram, resource naming convention, cost breakdown, Bicep scaffold stubs, private data plane design, and multi-provider model gateway design for the AbarVa Azure lab. Docs only — no live Azure provisioning.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "AZLAB6",
+        "AZLAB7",
+        "AZLAB8"
+      ],
+      "completedSlices": [
+        "AZLAB6",
+        "AZLAB7",
+        "AZLAB8"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Wave 24 docs complete. Check Wave 25 gate conditions before proceeding.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-25",
+      "name": "Production Hardening + E2E Validation",
+      "goal": "Ship production readiness enforcer (PROD9), no-fabrication regression suite (QA30), production smoke test (QA31), and evidence trust audit (QA32). LANE-E (LIVE4 auth) deferred pending founder auth provider decision.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "PROD9",
+        "QA30",
+        "QA31",
+        "QA32"
+      ],
+      "completedSlices": [
+        "PROD9",
+        "QA30",
+        "QA31",
+        "QA32"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [
+        "LIVE4"
+      ],
+      "mergedPrs": [],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [
+        {
+          "id": "LIVE4",
+          "tier": 3,
+          "reason": "Auth provider decision required before live auth integration can proceed",
+          "deferredTo": "wave-26"
+        }
+      ],
+      "nextAction": "Wave 25 complete. LIVE4 (live auth integration) deferred to wave-26 pending founder auth provider decision.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-26",
+      "name": "Enterprise Pilot Package",
+      "goal": "Produce the complete package for an enterprise pilot client: security posture documentation, pilot tenant setup runbook, client onboarding materials, demo scripts for enterprise stakeholders, and investor materials.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "PROD10",
+        "PROD11",
+        "PROD12",
+        "DEMO10",
+        "DEMO11",
+        "DEMO12"
+      ],
+      "completedSlices": [
+        "PROD10",
+        "PROD11",
+        "PROD12",
+        "DEMO10",
+        "DEMO11",
+        "DEMO12"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "full_pass",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Wave 26 complete. Proceed to Wave 27.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-27",
+      "name": "Pattern Library Expansion",
+      "goal": "Deliver the first five solution pattern packs: Data Platform Managed Services (PAT1), Infrastructure Managed Services (PAT2), Vendor Evaluation Scorecard (PAT3), AI Failure Modes → Solution Map (PAT4), and the Pattern Manifest registry (PAT5). All deterministic TypeScript modules — no model calls, no migrations, no UI.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "PAT1_W27",
+        "PAT2_W27",
+        "PAT3_W27",
+        "PAT4_W27",
+        "PAT5_W27"
+      ],
+      "completedSlices": [
+        "PAT1_W27",
+        "PAT2_W27",
+        "PAT3_W27",
+        "PAT4_W27",
+        "PAT5_W27"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Wave 27 complete. Proceed to Wave 28.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-28",
+      "name": "Data Trust Enforcement Layer",
+      "goal": "Deliver the data trust enforcement layer: Evidence Manifest Schema (EVID1), Data Sharing Levels L0-L4 Enforcement (DATA1), Dataset Approval Model (DATA2), and No-Raw-Copy Mode Enforcement (DATA3). All deterministic TypeScript modules — no model calls, no migrations, no UI.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "EVID1",
+        "DATA1",
+        "DATA2",
+        "DATA3"
+      ],
+      "completedSlices": [
+        "EVID1",
+        "DATA1",
+        "DATA2",
+        "DATA3"
+      ],
+      "skippedSlices": [
+        "TRUST4"
+      ],
+      "blockedSlices": [],
+      "mergedPrs": [
+        414
+      ],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Wave 28 complete. Proceed to Wave 29.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-29",
+      "name": "Cleanup — Legacy Shell + Route Registry + Build Ops",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "SHELL8",
+        "SHELL9",
+        "OPS3",
+        "OPS4"
+      ],
+      "completedSlices": [
+        "SHELL8",
+        "SHELL9",
+        "OPS3",
+        "OPS4"
+      ],
+      "skippedSlices": [
+        "OPS2",
+        "BLG2"
+      ],
+      "blockedSlices": [],
+      "mergedPrs": [
+        415
+      ],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Wave 30 next",
+      "lastUpdated": "2026-04-26",
+      "goal": "Remove legacy shell dead code (TopBar/PrimaryNav), establish canonical route registry, codify wave runner protocol, and add pack spec validation."
+    },
+    {
+      "waveId": "wave-30",
+      "name": "Solution Intelligence Expansion",
+      "goal": "Expand the AbarVa pattern library with canonical registry format, pattern authoring lifecycle, and first retail vertical pack.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "PAT1",
+        "PAT2",
+        "PAT3"
+      ],
+      "completedSlices": [
+        "PAT1",
+        "PAT2",
+        "PAT3"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [
+        418
+      ],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Wave 31 next",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-31",
+      "name": "Security Posture Hardening",
+      "goal": "Codify the AbarVa security posture framework with a control-family model and readiness gate, and produce a canonical incident response runbook covering all 4 severity levels.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "SEC3",
+        "SEC4"
+      ],
+      "completedSlices": [
+        "SEC3",
+        "SEC4"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Wave 32 next",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-32",
+      "name": "Agent Surface Completion",
+      "goal": "Close 21 remaining WIRE2 wireframe compliance deviations across 5 surfaces by adding pure TypeScript view models for phase filter, intelligence modes, control tower lenses, admin connectors, admin action strip, and production readiness blocker detail.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "W32A",
+        "W32B",
+        "W32C",
+        "W32D",
+        "W32E",
+        "W32F",
+        "W32QA"
+      ],
+      "completedSlices": [
+        "W32A",
+        "W32B",
+        "W32C",
+        "W32D",
+        "W32E",
+        "W32F",
+        "W32QA"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Wave 33 next",
+      "lastUpdated": "2026-04-27"
+    },
+    {
+      "waveId": "nav1",
+      "name": "Canonical AbarVa Navigation and Active Shell Alignment",
+      "goal": "Align AbarVa nav/shell/wordmark usage across all live routes WITHOUT changing page content, business logic, data models, or runtime behavior. Document the legacy global nav (AbarvaNav) deferral path to NAV2.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "NAV1A",
+        "NAV1B",
+        "NAV1C",
+        "NAV1D",
+        "NAV1E",
+        "NAV1F",
+        "NAV1G"
+      ],
+      "completedSlices": [
+        "NAV1A",
+        "NAV1B",
+        "NAV1C",
+        "NAV1D",
+        "NAV1E",
+        "NAV1F",
+        "NAV1G"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [
+        428,
+        430,
+        431,
+        432,
+        433,
+        434
+      ],
+      "validationStatus": "ci_green",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [],
+      "nextAction": "NAV2 — migrate global nav from legacy AbarvaNav (Clerk avatar + client-switcher) to AbarVaShellNav. Sweep banned tokens (#14B8A6 / #0E9F8C) from non-tenant page bodies.",
+      "lastUpdated": "2026-04-27"
+    },
+    {
+      "waveId": "wave-admin-redesign",
+      "name": "Admin Surface Canonical Redesign",
+      "goal": "Make admin pages render the canonical 3-zone editorial layout (sidebar / canvas / agent rail) with the new abarva-logo-lockup-v2 asset, locked color palette (#070707 / #0b4a91 / #FBFAF7 + soft mint/amber/coral), Cormorant Garamond serif titles, 8-item sub-sidebar, Steward editorial card, 5-cell context bar, agent rail with honest posture, and the permanent Live caveat pill. Lift WIRE2B admin compliance 72 -> 92.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [],
+      "completedSlices": [
+        "ADMIN0",
+        "ADMIN1",
+        "ADMIN2",
+        "ADMIN3",
+        "ADMIN4",
+        "ADMIN5",
+        "ADMIN6",
+        "ADMIN7"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "not_run",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "wave-admin-redesign complete (7/7 slices). ADMIN7 visual lock guards all future admin tree changes. Pick next wave from WAVE_ROADMAP.md.",
+      "lastUpdated": "2026-04-27"
+    },
+    {
+      "waveId": "wave-admin-redesign-followup",
+      "name": "Admin Redesign Follow-up · Single Source of Truth",
+      "goal": "Consolidate the admin tree to a single canonical path at /admin/*, retire /platform/admin/* via redirects, and enforce a single auth gate at /admin/layout.tsx. No content or business logic changes.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "ADMIN8"
+      ],
+      "completedSlices": [
+        "ADMIN8"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "not_run",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Founder review at /admin (now canonical); pick next wave from WAVE_ROADMAP.md.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-agent1",
+      "name": "Agent Reasoning Foundation",
+      "goal": "Replace hardcoded agent UI copy across the 8 admin pages with deterministic, context-aware reasoning. AGENT1A introduces the foundation (AgentContextBundle, posture, editorial, choices); AGENT1B wires it through every admin page-view. Pure read-model. No live model calls.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "AGENT1A",
+        "AGENT1B"
+      ],
+      "completedSlices": [
+        "AGENT1A",
+        "AGENT1B"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "not_run",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Agent reasoning foundation merged. Live model gateway / audit log / write actions deferred to a later wave.",
+      "lastUpdated": "2026-04-27"
+    },
+    {
+      "waveId": "wave-admin-completion",
+      "name": "Admin Completion · depth + legacy consolidation",
+      "goal": "Close out the admin tree. ADMIN10 retires/redirects/deprecates the 16 live legacy /platform/admin/* sub-routes per ADMIN9 audit. ADMIN11–ADMIN17 add per-page depth (sub-tabs, drill-down drawers, action strips, per-row detail) to the 7 content-bearing canonical /admin/* pages. ADMIN18 pulls Overview through with a setup-progress timeline + recent-activity strip + cross-page CTAs. ADMIN19 extends ADMIN7's regression suite to cover the new canvas widgets. All write actions and live model calls remain HARD-GATED for Wave 27+.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [],
+      "completedSlices": [
+        "ADMIN9",
+        "ADMIN10",
+        "ADMIN11",
+        "ADMIN12",
+        "ADMIN13",
+        "ADMIN14",
+        "ADMIN15",
+        "ADMIN16",
+        "ADMIN17",
+        "ADMIN19",
+        "ADMIN18"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "not_run",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "ADMIN19 merged — wave 91% complete (10 of 11). ADMIN18 (Overview pull-through) deferred to ADMIN-DATA wave so it ships with native admin DB tables instead of seed data.",
+      "lastUpdated": "2026-04-27 (ADMIN19 merged · ADMIN18 deferred to ADMIN-DATA wave)"
+    },
+    {
+      "waveId": "wave-admin-data",
+      "name": "Native Admin Data Layer",
+      "goal": "Replace hardcoded TypeScript constants in admin page-views with real data flowing from Supabase via the existing adapter pattern. Closes the founder-flagged gap that deferred ADMIN18 from wave-admin-completion. ADMIN-DATA1 audit + wave registration; ADMIN-DATA2 ships adapter contracts foundation; ADMIN-DATA3-9 wire each admin page (parallel lanes) against typed adapters; ADMIN-DATA10 ships 7 new admin tables (admin_connectors, admin_datasets, admin_dataset_approvals, admin_dataset_quality, admin_blockers, admin_audit_log, admin_setup_progress) + Apex/Meridian seed; ADMIN-DATA11 swaps AGENT1 context bundle source from constants to live DB; ADMIN-DATA12 ships ADMIN18 Overview pull-through against real data; ADMIN-DATA13 locks visual + data regression. All write actions, live model calls, and audit-event emission remain HARD-GATED for Wave 27+.",
+      "status": "complete",
+      "percentComplete": 100,
+      "plannedSlices": [],
+      "completedSlices": [
+        "ADMIN-DATA1",
+        "ADMIN-DATA2",
+        "ADMIN-DATA3",
+        "ADMIN-DATA4",
+        "ADMIN-DATA5",
+        "ADMIN-DATA6",
+        "ADMIN-DATA7",
+        "ADMIN-DATA8",
+        "ADMIN-DATA9",
+        "ADMIN-DATA10",
+        "ADMIN-DATA11",
+        "ADMIN-DATA12",
+        "ADMIN-DATA13"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "not_run",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "wave-admin-data 100% complete. DATA12+DATA13 code_complete.",
+      "lastUpdated": "2026-04-27 (DATA12+DATA13 code_complete · wave-admin-data 100%)"
+    },
+    {
+      "waveId": "wave-clean1",
+      "title": "Repo Drift Cleanup",
+      "goal": "Hygiene pass — collapse stale duplicate directories, clear loose ends, archive legacy docs, add canonical-path drift guard. No feature work, no DB changes. CLEAN1-1: doc tree consolidation (docs/product, docs/planning, docs/design). CLEAN1-2: component+lib collapse (agents→agent, brand+identity→abarva, lib/agents→lib/agent, redirect stubs→next.config). CLEAN1-3: loose ends (tower-mockups, nexora data, codex-inbox, 11 stale worktrees). CLEAN1-4: ESLint no-restricted-imports + Jest canonical-path hygiene test.",
+      "status": "complete",
+      "percentComplete": 100,
+      "plannedSlices": ["CLEAN1-1", "CLEAN1-2", "CLEAN1-3", "CLEAN1-4"],
+      "completedSlices": ["CLEAN1-1", "CLEAN1-2", "CLEAN1-3", "CLEAN1-4"],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [476],
+      "validationStatus": "passed",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "wave-programs-redesign — extend admin canon pattern to Programs surface (WIRE2B gap: Index 76, Detail 72).",
+      "lastUpdated": "2026-04-27 (CLEAN1 100% · PR #476 merged · 4/4 slices code_complete)"
+    }
+  ]
+}

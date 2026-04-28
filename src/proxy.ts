@@ -5,6 +5,18 @@ import { isExternalOnlyRole, resolveSessionClientKey, resolveSessionRole, should
 
 const MOBILE_UA = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
 const ACTIVE_CLIENT_COOKIE = 'abarva_active_client'
+// ADMIN8 — canonical path is /admin/production-readiness; the /platform/admin/*
+// variant is preserved for the legacy redirect's pre-redirect response.
+const PRODUCTION_READINESS_NO_STORE_PATHS = new Set([
+  '/admin/production-readiness',
+  '/platform/admin/production-readiness',
+  '/api/admin/production-readiness',
+])
+const PRODUCTION_READINESS_NO_STORE_HEADERS = {
+  'Cache-Control': 'no-store, no-cache, max-age=0, must-revalidate',
+  Pragma: 'no-cache',
+  Expires: '0',
+} as const
 
 export const PUBLIC_ROUTE_PATTERNS = [
   '/sign-in(.*)',
@@ -40,6 +52,7 @@ const authRequiredRoutes = createRouteMatcher([
   '/sponsor(.*)',
   '/platform(.*)',
   '/intelligence(.*)',
+  '/source(.*)',
 ])
 
 function createSignInRedirect(request: NextRequest) {
@@ -48,7 +61,20 @@ function createSignInRedirect(request: NextRequest) {
   if (requestedPath && requestedPath !== '/' && !request.nextUrl.pathname.startsWith('/sign-in')) {
     url.searchParams.set('redirect', requestedPath)
   }
-  return NextResponse.redirect(url)
+  return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(url))
+}
+
+function isProductionReadinessNoStoreRequest(request: NextRequest) {
+  return PRODUCTION_READINESS_NO_STORE_PATHS.has(request.nextUrl.pathname)
+}
+
+function withProductionReadinessNoStoreHeaders<T extends NextResponse>(request: NextRequest, response: T): T {
+  if (!isProductionReadinessNoStoreRequest(request)) return response
+
+  for (const [key, value] of Object.entries(PRODUCTION_READINESS_NO_STORE_HEADERS)) {
+    response.headers.set(key, value)
+  }
+  return response
 }
 
 export default clerkMiddleware(async (auth, request: NextRequest) => {
@@ -73,11 +99,11 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
   ) {
     const redirectUrl = request.nextUrl.clone()
     redirectUrl.searchParams.delete('client')
-    return NextResponse.redirect(redirectUrl)
+    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(redirectUrl))
   }
 
   if (userId && (request.nextUrl.pathname === '/' || request.nextUrl.pathname.startsWith('/sign-in'))) {
-    return NextResponse.redirect(new URL('/auth-redirect', request.url))
+    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL('/auth-redirect', request.url)))
   }
 
   // Maestro routes — require authenticated Maestro/Admin/Investor
@@ -86,7 +112,7 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
       return createSignInRedirect(request)
     }
     if (role === 'client') {
-      return NextResponse.redirect(new URL('/home', request.url))
+      return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL('/home', request.url)))
     }
   }
 
@@ -96,7 +122,7 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
   }
 
   if (authRequiredRoutes(request) && isExternalOnlyRole(role)) {
-    return NextResponse.redirect(new URL('/', request.url))
+    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL('/', request.url)))
   }
 
   if (!isPublicRoute(request)) {
@@ -130,6 +156,10 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
   const ua = request.headers.get('user-agent') ?? ''
   if (MOBILE_UA.test(ua)) {
     getResponse().headers.set('x-is-mobile', '1')
+  }
+
+  if (isProductionReadinessNoStoreRequest(request)) {
+    withProductionReadinessNoStoreHeaders(request, getResponse())
   }
 
   if (response) return response

@@ -71,10 +71,11 @@ export type CanonicalPhaseName = typeof CANONICAL_SIX_PHASES[number]['name'];
 // view to a single client (used by the tenant-scoped index at
 // /tenant/[tenantSlug]/programs).
 
-export interface ProgramsIndexFilters extends PortfolioFilters {
-  // PortfolioFilters already covers search, phase, archetype, status,
-  // sponsor, pattern, myRole, shape.  No additional fields needed yet.
-}
+// PortfolioFilters already covers search, phase, archetype, status,
+// sponsor, pattern, myRole, shape. No additional fields needed yet,
+// so we alias rather than declare an empty interface (which fails
+// @typescript-eslint/no-empty-object-type).
+export type ProgramsIndexFilters = PortfolioFilters;
 
 export interface ProgramsIndexView {
   // Viewer identity
@@ -256,4 +257,87 @@ export interface OriginationClassifierStage {
   label: string;
   detail: string;
   state: 'pending' | 'running' | 'complete' | 'error';
+}
+
+// ── buildProgramsIndexView ────────────────────────────────────────────────
+// Returns a deterministic ProgramsIndexView for the PROG-C index page.
+// Uses the APEX_PROGRAMS_FIXTURE as the data source; no DB, no model calls.
+// tenant param is 'apex-retail' for the demo anchor.
+
+import type {
+  ProgramAgentRailItem,
+  ProgramRow,
+  ProgramWorkbenchContent,
+  ProgramsIndexView as ProgramsIndexViewV2,
+} from './programs-types';
+import { APEX_PROGRAMS_FIXTURE } from './programs-fixture';
+
+export function buildProgramsIndexView(_tenant: 'apex-retail'): ProgramsIndexViewV2 {
+  const programs: ProgramRow[] = APEX_PROGRAMS_FIXTURE;
+
+  const totalActive = programs.filter((p) => !p.isIdle).length;
+  const gatesPending = programs.filter((p) => p.gateStatus === 'pending').length;
+  const idleCount = programs.filter((p) => p.isIdle).length;
+
+  const portfolioWorkbench: ProgramWorkbenchContent = {
+    title: 'Nexus Portfolio Workbench',
+    prose:
+      'Seven programs in flight across the Apex Retail portfolio. Two gates are pending sponsor decisions — APX-01 (Design gate) and APX-05 (Activate gate). APX-04 has been idle 12 days; Nexus recommends a sponsor nudge before the Q3 cadence review.',
+    actionsLabel: 'Nexus recommends',
+    actions: [
+      {
+        letter: 'A',
+        text: 'Clear APX-01 Design gate',
+        detail: 'Sentinel has 2 validation items outstanding',
+      },
+      {
+        letter: 'B',
+        text: 'Resume APX-04',
+        detail: 'Idle 12 days — engage sponsor before Q3 review',
+      },
+      {
+        letter: 'C',
+        text: 'Review APX-05 Activate criteria',
+        detail: 'Cross-program brief ready from Atlas',
+      },
+    ],
+  };
+
+  const agentRail: ProgramAgentRailItem[] = [
+    {
+      initials: 'Nx',
+      name: 'Nexus',
+      job: 'Orchestrating 7 programs',
+      state: 'active',
+    },
+    {
+      initials: 'Sn',
+      name: 'Sentinel',
+      job: '2 pending validations · APX-01, APX-05',
+      state: 'on_call',
+    },
+    {
+      initials: 'At',
+      name: 'Atlas',
+      job: 'Cross-program brief ready',
+      state: 'on_call',
+    },
+    {
+      initials: 'St',
+      name: 'Steward',
+      job: 'APX-07 stale 30d+ · advisory',
+      state: 'advisory',
+    },
+  ];
+
+  return {
+    tenant: 'Apex Retail Group',
+    totalActive,
+    gatesPending,
+    idleCount,
+    capacityLabel: 'Q3 60% capacity',
+    portfolioWorkbench,
+    agentRail,
+    programs,
+  };
 }

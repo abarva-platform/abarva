@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { headers } from 'next/headers'
+import { AbarVaLogo } from '@/components/abarva/AbarVaLogo'
 
 // Production 404 monitoring · §3.5 of page-agent-coherence-work-order.md.
 // Logs every 404 via console.error so Vercel runtime captures it.
@@ -22,28 +23,15 @@ export default async function NotFound() {
   return (
     <div style={{ minHeight: '100vh', background: '#0D1117', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "-apple-system, 'Helvetica Neue', Arial, sans-serif" }}>
       <div style={{ textAlign: 'center', maxWidth: '480px', padding: '40px' }}>
-        {/* Neural node SVG logo */}
         <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'center' }}>
-          <svg width="64" height="64" viewBox="0 0 32 32" fill="none">
-            <line x1="16" y1="16" x2="16" y2="6"    stroke="#60A5FA" strokeWidth="1.2" opacity="0.55" />
-            <line x1="16" y1="16" x2="24.7" y2="11"  stroke="#60A5FA" strokeWidth="1.2" opacity="0.55" />
-            <line x1="16" y1="16" x2="24.7" y2="21"  stroke="#60A5FA" strokeWidth="1.2" opacity="0.55" />
-            <line x1="16" y1="16" x2="16" y2="26"   stroke="#60A5FA" strokeWidth="1.2" opacity="0.55" />
-            <line x1="16" y1="16" x2="7.3" y2="21"  stroke="#60A5FA" strokeWidth="1.2" opacity="0.55" />
-            <line x1="16" y1="16" x2="7.3" y2="11"  stroke="#60A5FA" strokeWidth="1.2" opacity="0.55" />
-            <circle cx="16"   cy="6"  r="2.2" fill="#60A5FA" />
-            <circle cx="24.7" cy="11" r="2.2" fill="#60A5FA" />
-            <circle cx="24.7" cy="21" r="2.2" fill="#60A5FA" />
-            <circle cx="16"   cy="26" r="2.2" fill="#60A5FA" />
-            <circle cx="7.3"  cy="21" r="2.2" fill="#60A5FA" />
-            <circle cx="7.3"  cy="11" r="2.2" fill="#60A5FA" />
-            <circle cx="16" cy="16" r="5.5" fill="#14B8A6" />
-          </svg>
-        </div>
-
-        {/* AbarVA wordmark */}
-        <div style={{ fontFamily: "'IBM Plex Mono', 'Courier New', monospace", fontWeight: 900, fontSize: '22px', letterSpacing: '-0.02em', marginBottom: '24px' }}>
-          <span style={{ color: '#F0F6FF' }}>Abar</span><span style={{ color: '#14B8A6' }}>VA</span>
+          <AbarVaLogo
+            size="lg"
+            width={120}
+            height={40}
+            style={{ filter: 'brightness(0) invert(1)' }}
+            aria-hidden={false}
+            label="AbarVa wordmark"
+          />
         </div>
 
         {/* 404 */}
@@ -69,9 +57,6 @@ export default async function NotFound() {
           </Link>
           <Link href="/preview/programs" style={{ padding: '12px 24px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.16)', color: '#E6EDF3', fontSize: '14px', fontWeight: 600, textDecoration: 'none', background: 'transparent' }}>
             Programs
-          </Link>
-          <Link href="/preview/intelligence" style={{ padding: '12px 24px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.16)', color: '#E6EDF3', fontSize: '14px', fontWeight: 600, textDecoration: 'none', background: 'transparent' }}>
-            Intelligence
           </Link>
           <Link href="/preview/tower" style={{ padding: '12px 24px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.16)', color: '#E6EDF3', fontSize: '14px', fontWeight: 600, textDecoration: 'none', background: 'transparent' }}>
             Control Tower

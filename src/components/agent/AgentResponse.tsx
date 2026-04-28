@@ -19,9 +19,12 @@
 
 import type { ReactNode } from 'react';
 import type { Citation, RenderedResponse } from '@/lib/agent/renderedResponse';
+import { getHonestDisclosureViewModel } from '@/lib/agent/rendered-response-ui';
 import { AgentCitation } from './AgentCitation';
 import { SparsitySignal } from './SparsitySignal';
 import { HandoffAffordance } from './HandoffAffordance';
+import { HonestDisclosureBanner } from './HonestDisclosureBanner';
+import { ConfidenceQualifier } from './ConfidenceQualifier';
 
 interface AgentResponseProps {
   response: RenderedResponse;
@@ -111,10 +114,23 @@ export function AgentResponse({
   compactCitations = true,
 }: AgentResponseProps) {
   const rendered = renderWithCitations(response.response_text, response.citations, accent, compactCitations);
+  const viewModel = getHonestDisclosureViewModel(response);
 
   return (
     <div className="agent-response" style={{ fontFamily: 'DM Sans, -apple-system, sans-serif' }}>
-      {response.sparsity_flag ? <SparsitySignal /> : null}
+      {viewModel.bannerKind ? (
+        <div style={{ marginBottom: 12 }}>
+          <HonestDisclosureBanner
+            kind={viewModel.bannerKind}
+            detail={viewModel.bannerDetail}
+            qualityIssue={viewModel.qualityIssueLabel}
+          />
+        </div>
+      ) : null}
+
+      {response.sparsity_flag ? (
+        <SparsitySignal evidenceSummary={viewModel.sparsityEvidenceSummary} />
+      ) : null}
 
       <div
         className="agent-response-body"
@@ -127,6 +143,103 @@ export function AgentResponse({
       >
         {rendered}
       </div>
+
+      {viewModel.confidence
+        || viewModel.contextCategoriesUsed.length > 0
+        || viewModel.missingInputs.length > 0 ? (
+        <div
+          className="agent-response-disclosure-footer"
+          style={{
+            marginTop: 12,
+            paddingTop: 10,
+            borderTop: '1px dashed rgba(26,22,18,0.08)',
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            gap: 8,
+            fontFamily: 'JetBrains Mono, monospace',
+            fontSize: 11,
+            color: '#5a5148',
+          }}
+        >
+          {viewModel.confidence ? (
+            <ConfidenceQualifier
+              tier={viewModel.confidence.tier}
+              accent={accent}
+              detail={viewModel.confidence.reason}
+            />
+          ) : null}
+
+          {viewModel.contextCategoriesUsed.length > 0 ? (
+            <div className="agent-context-used" aria-label="Context used" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <span
+                style={{
+                  fontSize: 10,
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  fontWeight: 700,
+                  color: '#8a7e72',
+                }}
+              >
+                Context used
+              </span>
+              {viewModel.contextCategoriesUsed.map((label) => (
+                <span
+                  key={`ctx-${label}`}
+                  className="agent-context-chip"
+                  style={{
+                    padding: '1px 8px',
+                    borderRadius: 999,
+                    background: 'rgba(26,22,18,0.04)',
+                    border: '1px solid rgba(26,22,18,0.08)',
+                    color: '#3d342d',
+                    fontSize: 11,
+                  }}
+                >
+                  {label}
+                </span>
+              ))}
+            </div>
+          ) : null}
+
+          {viewModel.missingInputs.length > 0 ? (
+            <div className="agent-missing-inputs" aria-label="Missing inputs" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <span
+                style={{
+                  fontSize: 10,
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  fontWeight: 700,
+                  color: '#8a7e72',
+                }}
+              >
+                Missing
+              </span>
+              {viewModel.missingInputs.slice(0, 3).map((label) => (
+                <span
+                  key={`miss-${label}`}
+                  className="agent-missing-chip"
+                  style={{
+                    padding: '1px 8px',
+                    borderRadius: 999,
+                    background: 'rgba(217,119,6,0.08)',
+                    border: '1px solid rgba(217,119,6,0.18)',
+                    color: '#7c4a04',
+                    fontSize: 11,
+                  }}
+                >
+                  {label}
+                </span>
+              ))}
+              {viewModel.missingInputs.length > 3 ? (
+                <span style={{ fontSize: 11, color: '#8a7e72' }}>
+                  +{viewModel.missingInputs.length - 3}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
       {response.follow_up_actions.length > 0 ? (
         <div

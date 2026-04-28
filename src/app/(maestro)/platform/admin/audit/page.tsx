@@ -1,3 +1,4 @@
+// LEGACY · being migrated to /admin/audit in a follow-up wave (post-wave-admin-completion).
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { existsSync, readFileSync } from 'fs';

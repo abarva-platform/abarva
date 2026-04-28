@@ -85,6 +85,32 @@ export type ValueLedgerKind = 'projected' | 'realized';
 
 export type ValueConfidence = 'high' | 'medium' | 'low';
 
+export type SourceDataRequirementLevel = 'required' | 'recommended' | 'optional';
+
+export type SourceDataReadinessState =
+  | 'Missing'
+  | 'Requested'
+  | 'Uploaded'
+  | 'Connected'
+  | 'Loaded'
+  | 'Parsed'
+  | 'Available'
+  | 'Usable Evidence'
+  | 'Low Confidence'
+  | 'Stale'
+  | 'Access Restricted'
+  | 'Not Applicable'
+  | 'Waived';
+
+export type SourceEvidenceUsability =
+  | 'not_available'
+  | 'loaded_not_usable'
+  | 'available_not_validated'
+  | 'usable'
+  | 'low_confidence'
+  | 'restricted'
+  | 'waived';
+
 export interface SourcePlatformFoundation {
   key: SourcePlatformFoundationKey;
   label: string;
@@ -182,6 +208,21 @@ export interface SourceValueLedgerSnapshot {
   realized: ValueLedgerEntry[];
 }
 
+export interface SourceDataReadinessItem {
+  id: string;
+  category: string;
+  requirementLevel: SourceDataRequirementLevel;
+  readinessState: SourceDataReadinessState;
+  evidenceUsability: SourceEvidenceUsability;
+  owner: string;
+  sourceSystemOrFile: string;
+  lastUpdated: string | null;
+  confidence: ValueConfidence;
+  workflowImpact: string;
+  agentRecommendation: string;
+  stewardAdminHandoffLabel: string;
+}
+
 export interface SourcingEventSummary {
   id: string;
   code: string;
@@ -215,6 +256,7 @@ export interface SourcingEventDetail extends SourcingEventSummary {
   artifacts: SourceArtifactSummary[];
   scorecard: ScorecardGovernance;
   valueLedger: SourceValueLedgerSnapshot;
+  dataReadiness: SourceDataReadinessItem[];
 }
 
 export interface AbarvaSourceDashboardData {

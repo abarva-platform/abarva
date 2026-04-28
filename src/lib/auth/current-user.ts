@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server';
+import { auth, currentUser as clerkCurrentUser } from '@clerk/nextjs/server';
 import { resolveSessionRole } from '@/lib/auth/access-routing';
 import { getCurrentPerson } from '@/lib/auth/maestro';
 import { getServerSupabase } from '@/lib/supabase-server';
@@ -35,13 +35,42 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   const claims = sessionClaims as
     | {
         publicMetadata?: { person_id?: string; role?: string; clientId?: string };
+        email_addresses?: Array<{ emailAddress: string }>;
+        emailAddresses?: Array<{ emailAddress: string }>;
+        email?: string;
         firstName?: string;
         lastName?: string;
         emailAddress?: string;
       }
     | undefined;
+
   const personIdFromClaims = claims?.publicMetadata?.person_id ?? null;
-  const fallbackEmail = claims?.emailAddress ?? null;
+  const claimEmail =
+    claims?.emailAddress ??
+    claims?.email ??
+    claims?.emailAddresses?.[0]?.emailAddress ??
+    claims?.email_addresses?.[0]?.emailAddress ??
+    null;
+  // Clerk session JWTs do not always include an email claim. For demo
+  // /clerk_test accounts in particular, the JWT payload often only carries
+  // the `sub` (Clerk user id) and publicMetadata. When that happens, the
+  // email-based tenant inference in tenant-access.ts cannot fire and
+  // signed-in users hit a 403 even on their own tenant. Fall through to
+  // Clerk's authoritative user record to recover the email.
+  let fallbackEmail = claimEmail;
+  if (!fallbackEmail) {
+    try {
+      const clerkUser = await clerkCurrentUser();
+      fallbackEmail =
+        clerkUser?.primaryEmailAddress?.emailAddress
+        ?? clerkUser?.emailAddresses?.[0]?.emailAddress
+        ?? null;
+    } catch {
+      // Clerk currentUser may throw outside a request context. Leave email
+      // null — downstream code will treat the user as un-emailed and fall
+      // back to publicMetadata.clientId.
+    }
+  }
   const legacyRole = resolveSessionRole(claims?.publicMetadata?.role ?? null, fallbackEmail);
   const metadataClientKey = claims?.publicMetadata?.clientId ?? null;
   const fallbackName =

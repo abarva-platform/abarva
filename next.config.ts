@@ -12,16 +12,20 @@ const nextConfig: NextConfig = {
   },
 
   // Product-map · legacy paths redirect to their new homes under the
-  // five-item nav. Admin sub-pages (/admin/brief, /admin/outcomes, etc.)
-  // still resolve where they are — the consolidation of those sub-pages
-  // under /platform/* is a separate refactor (they lack /platform/*
-  // counterparts today, so a blanket redirect would break them).
+  // five-item nav.
+  //
+  // ADMIN8 — /admin is now the canonical admin tree. The previous
+  // /admin → /platform and /admin/:path* → /platform/admin/:path*
+  // redirects have been retired so /admin/* pages can render directly.
+  // Legacy /platform/admin{,/architecture,/production-readiness} pages
+  // perform their own App-Router-level `redirect()` to /admin/...
+  // No blanket /platform/admin/:path* redirect is added because many
+  // legacy /platform/admin/* sub-routes (approvals, audit, brief,
+  // connectors, context, data, data-governance, data-guide,
+  // experience-gallery, intelligence, new-client, outcomes, playbook,
+  // quality, revenue, users) remain live with their own content.
   async redirects() {
     return [
-      // Admin: top-level → Platform overview. Sub-pages → /platform/admin/*
-      // (the old Engagement Hub surfaces stay reachable there).
-      { source: '/admin', destination: '/platform', permanent: true },
-      { source: '/admin/:path*', destination: '/platform/admin/:path*', permanent: true },
       { source: '/dashboard', destination: '/home', permanent: true },
       { source: '/dashboard/:path*', destination: '/home/:path*', permanent: true },
       { source: '/data', destination: '/platform/data', permanent: true },
@@ -43,6 +47,9 @@ const nextConfig: NextConfig = {
       // NOTE · /tower/projects, /tower/staff-aug, /tower/tech-stack,
       // /tower/volumetrics, /tower/preview, /tower/onboard/* are legitimate
       // Tower sub-surfaces with their own content and stay live.
+      // CLEAN1-2 · Redirect stubs replaced with config-level redirects.
+      { source: '/maestro', destination: '/home', permanent: true },
+      { source: '/investor', destination: '/investors', permanent: true },
     ];
   },
 };

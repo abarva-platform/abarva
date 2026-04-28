@@ -8,6 +8,8 @@ import PostHogPageView from './posthog-pageview'
 import MobileGuard from '@/components/MobileGuard'
 
 // Cormorant Garamond — canonical AbarVa serif for wordmark + admin headings.
+// Application of the variable lands in ADMIN2; this slice only registers the
+// font so subsequent slices can opt in via `var(--font-cormorant)`.
 const cormorantGaramond = Cormorant_Garamond({
   subsets: ['latin'],
   weight: ['400', '700'],

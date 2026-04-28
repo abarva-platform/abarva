@@ -2,10 +2,32 @@
 
 > This file is written by the orchestration agent at the end of each wave.
 > The next autonomous session reads this file first.
-> Last updated by: orchestration agent (wave-admin-data phase 2 merged — DATA3-9 wired)
+> Last updated by: orchestration agent (wave-clean1 complete — repo drift cleanup; next: wave-programs-redesign)
 > Last updated: 2026-04-27
 
+## Current state: wave-clean1 complete — entering wave-programs-redesign
+
+All 39 original waves merged. wave-admin-data and wave-admin-completion are 100% complete.
+wave-clean1 (hygiene) is now merged. Next surface wave is wave-programs-redesign.
+
 ## Last completed slices
+- sliceIds: CLEAN1-1, CLEAN1-2, CLEAN1-3, CLEAN1-4
+- waveId: wave-clean1 (complete, 100% — 4 of 4 slices done)
+- title: Repo Drift Cleanup
+- prNumber: 476
+- completedAt: 2026-04-27
+- testsGreen: canonical-paths.test.ts 4/4; tsc clean; lint clean
+- skippedSlices: none
+- note: CLEAN1-1 merged duplicate doc trees (docs/product, docs/planning, docs/design archived to design-canon/archive). CLEAN1-2 collapsed stale dirs — components/agents→agent, components/brand+identity→abarva, lib/agents→lib/agent; redirect stubs replaced with next.config.ts entries. CLEAN1-3 archived tower-mockups + nexora data, cleared .codex-inbox, pruned 11 stale worktrees. CLEAN1-4 added ESLint no-restricted-imports + Jest canonical-path hygiene test. ~41 files deleted, ~46 archived, ~25 import sites updated.
+
+## Next: wave-programs-redesign
+- Target: Programs Index (WIRE2B 76 → 90) + Program Detail (72 → 90)
+- Pattern: extend admin canon (AdminCanonShellV2 + EditorialCanvas + AgentRail)
+- Priority: highest WIRE2B gap among remaining surfaces
+
+## Previous completed slices
+
+## Previous completed slices
 - sliceIds: ADMIN-DATA3, ADMIN-DATA4, ADMIN-DATA5, ADMIN-DATA6, ADMIN-DATA7, ADMIN-DATA8, ADMIN-DATA9
 - waveId: wave-admin-data (in_progress, 77% — 10 of 13 slices done)
 - title: wave-admin-data phase 2 — 7 admin pages wired to adapters
@@ -27,12 +49,11 @@
 - skippedSlices: none
 - note: First parallel batch of wave-admin-data. ADMIN-DATA2 ships 9 adapter domains under `src/lib/admin/data/` with dual-mode (fixture default; live throws AdminDataMigrationPendingError). ADMIN-DATA10 ships 7 admin schema migrations + idempotent demo seed (Apex Retail mirrors fixtures; Meridian thin; Arcturus shell-only). Migrations NOT yet applied — applied via `supabase migrate` when DATA11 wires AGENT1 to live. Pages don't change yet — DATA3-9 swap consumption.
 
-## Next wave
+## wave-admin-data — COMPLETE
 - waveId: wave-admin-data
-- status: in_progress (77%)
-- nextSlices: [ADMIN-DATA11 — AGENT1 context bundle wired to live DB (sequential); then DATA12 (ADMIN18 rebuilt against admin_setup_progress + admin_audit_log); then DATA13 (regression lock)]
-- recommendedSequence: **DATA11 — AGENT1 wired live (sequential)**. After DATA10 migrations are applied via `supabase migrate`, DATA11 swaps AGENT1's source-of-truth from constants to the live DB through the existing adapter contracts. Sequential because DATA12/DATA13 both depend on DATA11. Then DATA12 ships ADMIN18 Overview pull-through against real data, and DATA13 locks visual + data regression to close the wave.
-- estimatedWallClock: ~2-3 hours wall-clock for DATA11; ~1-2 hours each for DATA12, DATA13.
+- status: complete (100%)
+- allSlicesComplete: ADMIN-DATA1 through ADMIN-DATA13 (13/13)
+- note: wave-admin-data is fully complete. All admin page-views consume live Supabase data via the adapter pattern. wave-admin-completion is also 100% complete (ADMIN18 delivered as DATA12).
 
 ## Previous deferral note · ADMIN18
 ADMIN18 (Overview pull-through · setup timeline + recent activity strip + cross-page CTAs) was scoped to use deterministic seed for both timeline and activity. Founder asked for native data flow from real DB tables. ADMIN18 is **subsumed** by ADMIN-DATA12 in wave-admin-data — same UI scope, but reads from `admin_setup_progress` + `admin_audit_log` (DATA10). ADMIN18 remains in `plannedSlices` of wave-admin-completion historically and is **not** silently dropped — its work ships as ADMIN-DATA12.

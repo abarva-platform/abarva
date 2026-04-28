@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { AbarVaLogo } from '@/components/abarva/AbarVaLogo';
 import { getCurrentPerson } from '@/lib/auth/maestro';
 import { getServerSupabase } from '@/lib/supabase-server';
 
@@ -7,9 +8,7 @@ export const dynamic = 'force-dynamic';
 
 const BG = '#0A0A0A';
 const INK = '#F5F5F0';
-const TEAL = '#14B8A6';
 const MUTE = 'rgba(245, 245, 240, 0.72)';
-const FONT_SERIF = 'Georgia, serif';
 const FONT_MONO = 'JetBrains Mono, monospace';
 const FONT_BODY = 'DM Sans, -apple-system, sans-serif';
 const BORDER_SOFT = '0.5px solid rgba(255,255,255,0.08)';
@@ -41,10 +40,12 @@ export default async function SponsorHomePage() {
   return (
     <div style={{ minHeight: '100vh', background: BG, color: INK, fontFamily: FONT_BODY }}>
       <div style={{ padding: '20px 24px', borderBottom: BORDER_SOFT, display: 'flex', alignItems: 'baseline', gap: 16 }}>
-        <div>
-          <span style={{ fontFamily: FONT_SERIF, color: INK, fontSize: 17, fontWeight: 800 }}>Abar</span>
-          <span style={{ fontFamily: FONT_SERIF, color: TEAL, fontSize: 23, fontWeight: 900 }}>Va</span>
-        </div>
+        <AbarVaLogo
+          size="sm"
+          height={22}
+          style={{ filter: 'brightness(0) invert(1)' }}
+          aria-hidden={false}
+        />
         <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: '0.14em', color: MUTE, textTransform: 'uppercase' }}>
           Sponsor · {person.name}
         </div>

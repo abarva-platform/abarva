@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workspace architecture · 4 surfaces · AbarVa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #faf7f1; --paper-soft: #f4f0e7; --paper-deep: #ede7d5;
+  --card-white: #fdfbf6; --card-line: #e6dfce; --card-line-soft: #ece6d5;
+  --ink: #0c1a3a; --ink-mid: #2a3a5e; --ink-soft: #5b6c8a; --ink-muted: #8b95a8;
+  --mint-bg: #dde9d9; --mint-line: #c2d6bf; --mint-text: #2a5a3a;
+  --blue-bg: #dee8f5; --blue-line: #bccfe6;
+  --peach-bg: #f5e2c9; --peach-line: #e6cca5; --peach-text: #a06d28;
+  --gray-bg: #efece4; --gray-line: #ddd9cf; --gray-text: #8b8779;
+  --rust-bg: #efd4c4; --rust-line: #d9b59f; --rust-text: #8a3e22;
+  --amber-dot: #d49b3a;
+  --serif: 'Fraunces', Georgia, serif; --sans: 'Inter', -apple-system, sans-serif; --mono: 'JetBrains Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--paper-deep); color: var(--ink); font-family: var(--sans); font-size: 14.5px; line-height: 1.55; font-weight: 400; -webkit-font-smoothing: antialiased; }
+
+/* ─────────────  PAGE INTRO  ───────────── */
+.intro { padding: 64px 60px 48px; max-width: 1380px; margin: 0 auto; }
+.intro-eye { font-family: var(--mono); font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 16px; font-weight: 500; }
+.intro-h { font-family: var(--serif); font-size: 48px; font-weight: 700; letter-spacing: -0.024em; line-height: 1.05; color: var(--ink); max-width: 920px; margin-bottom: 18px; }
+.intro-h em { font-style: italic; font-weight: 400; color: var(--ink-soft); }
+.intro-sub { font-family: var(--sans); font-size: 17px; line-height: 1.6; color: var(--ink-mid); max-width: 760px; font-weight: 400; }
+.intro-sub strong { color: var(--ink); font-weight: 600; }
+
+.share-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 48px; }
+.share-card { padding: 22px 26px; background: var(--card-white); border: 1px solid var(--card-line); border-radius: 10px; }
+.share-eye { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 8px; font-weight: 500; }
+.share-h { font-family: var(--serif); font-size: 18px; font-weight: 700; color: var(--ink); margin-bottom: 8px; letter-spacing: -0.010em; }
+.share-prose { font-family: var(--sans); font-size: 13.5px; line-height: 1.6; color: var(--ink-mid); }
+.share-prose strong { color: var(--ink); font-weight: 600; }
+
+/* ─────────────  SURFACE FRAME — common chrome  ───────────── */
+.surface-block { padding: 0 60px 32px; max-width: 1380px; margin: 0 auto; }
+
+.surface-divider { padding: 36px 60px 16px; max-width: 1380px; margin: 0 auto; display: grid; grid-template-columns: 88px 1fr; gap: 16px; align-items: baseline; }
+.divider-num { font-family: var(--mono); font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-muted); font-weight: 500; padding-top: 4px; }
+.divider-h { font-family: var(--serif); font-size: 26px; font-weight: 700; letter-spacing: -0.014em; color: var(--ink); }
+.divider-h em { font-style: italic; font-weight: 400; color: var(--ink-soft); }
+.divider-sub { font-family: var(--sans); font-size: 13.5px; color: var(--ink-mid); margin-top: 4px; max-width: 740px; }
+
+.frame { background: var(--paper); border: 1px solid var(--card-line); border-radius: 14px; overflow: hidden; box-shadow: 0 1px 2px rgba(13, 31, 61, 0.04), 0 8px 28px rgba(13, 31, 61, 0.06); display: grid; grid-template-columns: 76px 1fr; min-height: 720px; }
+
+/* LEFT NAV RAIL */
+.rail { background: var(--paper-soft); border-right: 1px solid var(--card-line); padding: 12px 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.rail-brand { width: 36px; height: 36px; background: var(--ink); color: var(--paper); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-size: 14px; font-weight: 600; font-style: italic; margin-bottom: 18px; }
+.rail-item { width: 56px; padding: 8px 0; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; border-radius: 8px; transition: background 0.15s; }
+.rail-item:hover { background: rgba(12, 26, 58, 0.05); }
+.rail-item.active { background: var(--ink); }
+.rail-glyph { width: 24px; height: 24px; border-radius: 6px; background: transparent; border: 1.5px solid var(--ink-soft); color: var(--ink-soft); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 10.5px; font-weight: 600; letter-spacing: 0.02em; }
+.rail-item.active .rail-glyph { border-color: var(--paper); color: var(--paper); }
+.rail-label { font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft); font-weight: 500; }
+.rail-item.active .rail-label { color: var(--paper); font-weight: 600; }
+.rail-spacer { flex: 1; }
+.rail-bottom-glyph { width: 28px; height: 28px; border-radius: 50%; background: var(--paper-deep); color: var(--ink); display: flex; align-items: center; justify-content: center; font-family: var(--sans); font-size: 11px; font-weight: 600; margin-bottom: 8px; }
+
+/* MAIN ZONE (everything to the right of the rail) */
+.main { display: flex; flex-direction: column; min-width: 0; }
+
+/* TOP BAR */
+.topbar { height: 48px; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-line-soft); background: var(--paper); }
+.topbar-l { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.tb-account { display: flex; align-items: center; gap: 8px; padding: 5px 11px; background: #e8eef7; border-radius: 6px; }
+.tb-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--amber-dot); }
+.tb-account-name { font-family: var(--serif); font-size: 12.5px; font-weight: 600; color: var(--ink); }
+.tb-context { font-family: var(--sans); font-size: 13px; color: var(--ink-mid); }
+.tb-context strong { color: var(--ink); font-weight: 600; }
+.tb-locked { font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.16em; color: var(--ink); text-transform: uppercase; font-weight: 600; padding: 3px 7px; border: 1px solid var(--ink); border-radius: 3px; }
+.tb-r { display: flex; align-items: center; gap: 14px; }
+.tb-time { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); letter-spacing: 0.04em; }
+.tb-avatar { width: 26px; height: 26px; border-radius: 50%; background: #c5b9d1; display: flex; align-items: center; justify-content: center; font-family: var(--sans); font-size: 11px; color: var(--ink); font-weight: 600; }
+
+/* MIDDLE STRIP */
+.strip { height: 44px; padding: 0 24px; display: flex; align-items: center; gap: 18px; border-bottom: 1px solid var(--card-line-soft); background: var(--paper-soft); }
+
+/* Phase strip variant */
+.phases { display: flex; align-items: center; gap: 0; flex: 1; }
+.phase-mini { display: flex; align-items: center; gap: 8px; padding: 0 14px; }
+.phase-mini + .phase-mini { border-left: 1px solid var(--card-line); }
+.phase-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gray-bg); border: 1px solid var(--gray-line); }
+.phase-dot.done { background: var(--mint-text); border-color: var(--mint-text); }
+.phase-dot.current { background: var(--ink); border-color: var(--ink); width: 9px; height: 9px; box-shadow: 0 0 0 3px rgba(12, 26, 58, 0.12); }
+.phase-dot.pending { background: var(--peach-bg); border-color: var(--peach-line); }
+.phase-name-mini { font-family: var(--sans); font-size: 12px; color: var(--ink-soft); font-weight: 500; }
+.phase-mini.current .phase-name-mini { color: var(--ink); font-weight: 600; }
+.phase-mini.done .phase-name-mini { color: var(--mint-text); }
+.phase-mini.pending .phase-name-mini { color: var(--peach-text); }
+
+/* Sub-nav variant (Setup) */
+.subnav { display: flex; align-items: center; gap: 4px; flex: 1; }
+.subnav-item { padding: 6px 14px; font-family: var(--sans); font-size: 12.5px; color: var(--ink-soft); cursor: pointer; border-radius: 6px; font-weight: 500; }
+.subnav-item:hover { background: var(--paper-deep); color: var(--ink); }
+.subnav-item.active { background: var(--ink); color: var(--paper); font-weight: 600; }
+.subnav-count { font-family: var(--mono); font-size: 10px; opacity: 0.7; margin-left: 6px; }
+
+/* Filter strip variant (Intelligence/Tower) */
+.filter-strip { display: flex; align-items: center; gap: 6px; flex: 1; }
+.filter-pill { padding: 5px 12px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft); cursor: pointer; border-radius: 14px; border: 1px solid var(--card-line); font-weight: 500; }
+.filter-pill:hover { border-color: var(--ink-soft); color: var(--ink); }
+.filter-pill.active { background: var(--ink); color: var(--paper); border-color: var(--ink); font-weight: 600; }
+.filter-pill .count { font-size: 10px; opacity: 0.7; margin-left: 4px; }
+
+.strip-r { display: flex; align-items: center; gap: 12px; }
+.strip-action { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink); padding: 5px 11px; border: 1px solid var(--ink); border-radius: 14px; cursor: pointer; font-weight: 500; }
+
+/* TWO-PANE BODY */
+.body { display: grid; grid-template-columns: 480px 1fr; flex: 1; min-height: 0; }
+
+/* AGENT COLUMN */
+.agent-col { background: var(--ink); color: var(--paper); display: flex; flex-direction: column; padding: 28px 28px 0; min-height: 0; }
+.agent-id { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid rgba(250, 247, 241, 0.15); }
+.agent-glyph { width: 36px; height: 36px; border-radius: 50%; background: var(--paper); color: var(--ink); display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-size: 14px; font-weight: 600; }
+.agent-meta { line-height: 1.2; }
+.agent-name { font-family: var(--serif); font-size: 17px; color: var(--paper); font-weight: 600; }
+.agent-role { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.16em; color: rgba(250, 247, 241, 0.55); text-transform: uppercase; margin-top: 3px; }
+.agent-state { margin-left: auto; font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.14em; color: rgba(250, 247, 241, 0.7); padding: 4px 9px; background: rgba(250, 247, 241, 0.10); border-radius: 12px; text-transform: uppercase; font-weight: 500; }
+.agent-state::before { content: '● '; color: #9bb87a; }
+
+.agent-quote { font-family: var(--serif); font-size: 19px; line-height: 1.5; color: var(--paper); font-style: italic; font-weight: 400; letter-spacing: -0.008em; margin-bottom: 6px; }
+.agent-quote strong { font-style: normal; font-weight: 600; }
+.agent-context { font-family: var(--sans); font-size: 12px; color: rgba(250, 247, 241, 0.55); margin-bottom: 22px; font-style: italic; }
+
+.agent-actions-label { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.18em; color: rgba(250, 247, 241, 0.55); text-transform: uppercase; margin-bottom: 4px; padding-top: 18px; border-top: 1px solid rgba(250, 247, 241, 0.15); font-weight: 500; }
+.agent-action { display: grid; grid-template-columns: 18px 1fr; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(250, 247, 241, 0.10); cursor: pointer; align-items: baseline; transition: padding 0.15s; }
+.agent-action:hover { padding-left: 6px; }
+.aa-letter { font-family: var(--mono); font-size: 11px; color: var(--paper); font-weight: 600; opacity: 0.55; }
+.aa-text { font-family: var(--serif); font-size: 14.5px; color: var(--paper); font-weight: 500; line-height: 1.4; letter-spacing: -0.005em; }
+.aa-detail { font-family: var(--sans); font-size: 11.5px; color: rgba(250, 247, 241, 0.55); margin-top: 3px; font-weight: 400; }
+
+.agent-input { margin-top: auto; padding: 16px 0 24px; }
+.input-box { background: rgba(250, 247, 241, 0.08); border: 1px solid rgba(250, 247, 241, 0.20); border-radius: 22px; padding: 11px 16px 11px 18px; display: flex; align-items: center; gap: 12px; cursor: text; }
+.input-box:hover { border-color: rgba(250, 247, 241, 0.35); }
+.input-prompt { font-family: var(--sans); font-size: 13px; color: rgba(250, 247, 241, 0.45); flex: 1; }
+.input-send { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: rgba(250, 247, 241, 0.6); text-transform: uppercase; font-weight: 600; }
+
+/* WORKING PANE — ERP density */
+.work { background: var(--paper); padding: 24px 32px 32px; overflow-y: auto; }
+
+.work-section { margin-bottom: 24px; }
+.work-section + .work-section { padding-top: 24px; border-top: 1px solid var(--card-line-soft); }
+.ws-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; }
+.ws-eye { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-muted); font-weight: 500; }
+.ws-h { font-family: var(--serif); font-size: 16px; font-weight: 700; color: var(--ink); letter-spacing: -0.010em; margin-top: 3px; }
+.ws-meta { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); letter-spacing: 0.04em; }
+
+/* COMPACT ROW (used across surfaces) */
+.work-row { display: grid; gap: 14px; padding: 9px 4px; border-bottom: 1px solid var(--card-line-soft); align-items: center; cursor: pointer; transition: padding 0.12s, background 0.12s; }
+.work-row:hover { padding-left: 8px; background: var(--paper-soft); border-radius: 4px; }
+.work-row:last-child { border-bottom: none; }
+
+.row-id { font-family: var(--mono); font-size: 10.5px; color: var(--ink-soft); letter-spacing: 0.04em; font-weight: 500; }
+.row-name { font-family: var(--sans); font-size: 13px; color: var(--ink); font-weight: 500; }
+.row-name-bold { font-family: var(--serif); font-size: 14px; font-weight: 700; color: var(--ink); letter-spacing: -0.008em; }
+.row-sub { font-family: var(--sans); font-size: 11.5px; color: var(--ink-soft); margin-top: 2px; }
+.row-status { font-family: var(--sans); font-size: 11.5px; font-weight: 600; }
+.row-status.done { color: var(--mint-text); }
+.row-status.pending { color: var(--peach-text); }
+.row-status.idle { color: var(--gray-text); }
+.row-status.high { color: var(--rust-text); }
+.row-time { font-family: var(--mono); font-size: 10.5px; color: var(--ink-muted); letter-spacing: 0.02em; }
+
+.row-action { font-family: var(--sans); font-size: 11.5px; color: var(--ink); font-weight: 500; padding: 4px 10px; border: 1px solid var(--ink); border-radius: 12px; background: transparent; cursor: pointer; justify-self: end; transition: background 0.15s, color 0.15s; }
+.row-action:hover { background: var(--ink); color: var(--paper); }
+
+/* deliverable card / connector card / pattern row patterns */
+.deliv-block { background: var(--card-white); border: 1px solid var(--card-line); border-radius: 8px; padding: 14px 16px; margin-bottom: 8px; }
+.deliv-row { display: grid; grid-template-columns: 60px 1fr auto; gap: 14px; align-items: center; }
+.deliv-id { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); letter-spacing: 0.04em; font-weight: 500; }
+.deliv-name { font-family: var(--serif); font-size: 14.5px; color: var(--ink); font-weight: 700; letter-spacing: -0.008em; }
+.deliv-meta { font-family: var(--sans); font-size: 11.5px; color: var(--ink-soft); margin-top: 2px; }
+.deliv-tag { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.14em; padding: 3px 8px; border-radius: 10px; text-transform: uppercase; font-weight: 500; }
+.deliv-tag.rich { background: var(--mint-bg); color: var(--mint-text); border: 1px solid var(--mint-line); }
+.deliv-tag.outline { background: var(--gray-bg); color: var(--gray-text); border: 1px solid var(--gray-line); }
+
+.evidence-row { display: grid; grid-template-columns: 16px 1fr auto; gap: 12px; padding: 10px 4px; border-bottom: 1px solid var(--card-line-soft); align-items: center; }
+.evidence-row:last-child { border-bottom: none; }
+.ev-check { width: 14px; height: 14px; border-radius: 3px; border: 1.5px solid var(--card-line); }
+.ev-check.done { background: var(--mint-text); border-color: var(--mint-text); position: relative; }
+.ev-check.done::after { content: ''; position: absolute; left: 3px; top: 1px; width: 5px; height: 8px; border-right: 1.5px solid var(--paper); border-bottom: 1.5px solid var(--paper); transform: rotate(45deg); }
+.ev-check.conflict { background: var(--peach-bg); border-color: var(--peach-line); }
+.ev-name { font-family: var(--sans); font-size: 12.5px; color: var(--ink); font-weight: 500; line-height: 1.35; }
+.ev-name strong { font-weight: 600; }
+.ev-source { font-family: var(--mono); font-size: 10.5px; color: var(--ink-muted); margin-top: 2px; }
+.ev-meta { font-family: var(--mono); font-size: 10.5px; color: var(--ink-soft); }
+
+/* Connector card grid */
+.conn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.conn-card { background: var(--card-white); border: 1px solid var(--card-line); border-radius: 8px; padding: 14px 16px; cursor: pointer; transition: border-color 0.15s; }
+.conn-card:hover { border-color: var(--ink); }
+.conn-card.degraded { border-color: var(--peach-line); background: rgba(245, 226, 201, 0.25); }
+.conn-row { display: grid; grid-template-columns: 32px 1fr auto; gap: 12px; align-items: center; }
+.conn-logo { width: 30px; height: 30px; background: var(--paper-soft); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-size: 13px; font-weight: 700; color: var(--ink); border: 1px solid var(--card-line); }
+.conn-name { font-family: var(--serif); font-size: 13.5px; color: var(--ink); font-weight: 700; letter-spacing: -0.005em; }
+.conn-sub { font-family: var(--mono); font-size: 10.5px; color: var(--ink-soft); margin-top: 2px; }
+.conn-status { font-family: var(--sans); font-size: 10.5px; font-weight: 600; padding: 3px 8px; border-radius: 10px; }
+.conn-status.healthy { color: var(--mint-text); background: var(--mint-bg); }
+.conn-status.degraded { color: var(--peach-text); background: var(--peach-bg); }
+
+/* Pressure mini-card */
+.pressure-mini { background: var(--card-white); border: 1px solid var(--card-line); border-radius: 8px; padding: 14px 16px; margin-bottom: 8px; cursor: pointer; transition: border-color 0.15s; position: relative; }
+.pressure-mini:hover { border-color: var(--ink); }
+.pressure-mini::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 2px; }
+.pressure-mini.high::before { background: var(--rust-text); }
+.pressure-mini.medium::before { background: var(--peach-text); }
+.pressure-mini.low::before { background: var(--mint-text); }
+.pm-row { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: baseline; padding-left: 10px; }
+.pm-name { font-family: var(--serif); font-size: 14px; color: var(--ink); font-weight: 700; letter-spacing: -0.008em; }
+.pm-meta { font-family: var(--mono); font-size: 10.5px; color: var(--ink-soft); margin-top: 2px; }
+.pm-num { font-family: var(--serif); font-size: 18px; color: var(--ink); font-weight: 700; font-feature-settings: 'tnum'; line-height: 1; }
+.pm-num.rust { color: var(--rust-text); }
+.pm-delta { font-family: var(--mono); font-size: 9.5px; color: var(--ink-soft); margin-top: 2px; text-align: right; }
+.pm-driver { display: flex; align-items: center; justify-content: space-between; padding-left: 10px; padding-top: 8px; margin-top: 8px; border-top: 1px solid var(--card-line-soft); font-family: var(--sans); font-size: 11.5px; color: var(--ink-mid); }
+.pm-driver-bar { width: 80px; height: 3px; background: var(--paper-soft); border-radius: 2px; position: relative; overflow: hidden; margin-left: 12px; }
+.pm-driver-fill { position: absolute; left: 0; top: 0; bottom: 0; }
+.pressure-mini.high .pm-driver-fill { background: var(--rust-text); }
+.pressure-mini.medium .pm-driver-fill { background: var(--peach-text); }
+.pressure-mini.low .pm-driver-fill { background: var(--mint-text); }
+
+/* Pattern row spacing */
+.pat-row { grid-template-columns: 70px 1fr 90px 90px 70px; }
+
+/* TRANSITION ANNOTATION */
+.transition { padding: 18px 60px; max-width: 1380px; margin: 0 auto; display: grid; grid-template-columns: 88px 1fr; gap: 16px; align-items: baseline; }
+.trans-marker { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.18em; color: var(--ink-muted); text-transform: uppercase; font-weight: 500; padding-top: 4px; }
+.trans-text { font-family: var(--serif); font-size: 14px; line-height: 1.55; color: var(--ink-soft); font-style: italic; max-width: 760px; font-weight: 400; }
+.trans-text strong { color: var(--ink); font-style: normal; font-weight: 600; }
+
+/* SUMMARY FOOTER */
+.summary { padding: 80px 60px; max-width: 1380px; margin: 0 auto; }
+.sum-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+.sum-card { padding: 36px 38px; background: var(--card-white); border: 1px solid var(--card-line); border-radius: 14px; }
+.sum-card.dark { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.sum-eye { font-family: var(--mono); font-size: 10px; letter-spacing: 0.20em; text-transform: uppercase; margin-bottom: 14px; font-weight: 500; }
+.sum-card .sum-eye { color: var(--ink-muted); }
+.sum-card.dark .sum-eye { color: rgba(250, 247, 241, 0.6); }
+.sum-h { font-family: var(--serif); font-size: 26px; font-weight: 700; letter-spacing: -0.014em; margin-bottom: 16px; }
+.sum-card .sum-h { color: var(--ink); }
+.sum-card.dark .sum-h { color: var(--paper); }
+.sum-card.dark .sum-h em { font-style: italic; color: rgba(250, 247, 241, 0.7); font-weight: 400; }
+.sum-list { list-style: none; }
+.sum-list li { padding: 10px 0; border-bottom: 1px solid; display: grid; grid-template-columns: 130px 1fr; gap: 14px; align-items: baseline; }
+.sum-card .sum-list li { border-bottom-color: var(--card-line-soft); }
+.sum-card.dark .sum-list li { border-bottom-color: rgba(250, 247, 241, 0.10); }
+.sum-list li:last-child { border-bottom: none; }
+.sum-key { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; font-weight: 500; }
+.sum-card .sum-key { color: var(--ink-soft); }
+.sum-card.dark .sum-key { color: rgba(250, 247, 241, 0.6); }
+.sum-val { font-family: var(--sans); font-size: 13.5px; line-height: 1.5; }
+.sum-card .sum-val { color: var(--ink); }
+.sum-card.dark .sum-val { color: var(--paper); }
+.sum-val strong { font-weight: 600; }
+
+.foot { padding: 28px 60px 44px; max-width: 1380px; margin: 0 auto; display: flex; justify-content: space-between; align-items: baseline; }
+.foot-l { font-family: var(--serif); font-size: 13.5px; color: var(--ink-soft); font-style: italic; }
+.foot-r { font-family: var(--mono); font-size: 11px; color: var(--ink-muted); letter-spacing: 0.04em; }
+</style>
+</head>
+<body>
+
+<!-- INTRO -->
+<div class="intro">
+  <div class="intro-eye">Workspace architecture · Apr 27 2026</div>
+  <h1 class="intro-h">One template, <em>four jobs.</em></h1>
+  <p class="intro-sub">Setup, Programs, Intelligence, and Control Tower share the same chrome — left rail, top bar, slim middle strip, agent column on the left, working pane on the right. <strong>The agent never moves; the work changes.</strong> What follows is the same architecture filled four different ways.</p>
+
+  <div class="share-grid">
+    <div class="share-card">
+      <div class="share-eye">Common chrome</div>
+      <h3 class="share-h">What stays identical on every surface</h3>
+      <p class="share-prose">Left icon rail (76px), top bar (48px), middle strip (44px), agent column (480px) with voice + suggested actions + input box, and a working pane that fills the rest. The aesthetic — paper, navy ink, Fraunces serif for moments of voice, Inter sans for working content — is locked.</p>
+    </div>
+    <div class="share-card">
+      <div class="share-eye">What varies per surface</div>
+      <h3 class="share-h">Lead agent · middle strip · working content</h3>
+      <p class="share-prose">Steward leads Setup, Nexus leads Programs, Sentinel leads Intelligence, Atlas leads Control Tower. The middle strip's semantics shift (sub-nav · phase journey · tier filter · severity filter), and the working pane fills with whatever the maestro is operating on for that surface.</p>
+    </div>
+  </div>
+</div>
+
+
+<!-- SURFACE 01 — SETUP -->
+<div class="surface-divider">
+  <div class="divider-num">Surface 01</div>
+  <div>
+    <h2 class="divider-h">Setup <em>· Steward leads</em></h2>
+    <p class="divider-sub">Connectors, users, audit, and policies. The middle strip is a sub-nav. Steward narrates governance state and surfaces what needs maestro action.</p>
+  </div>
+</div>
+
+<div class="surface-block">
+  <div class="frame">
+
+    <!-- RAIL -->
+    <div class="rail">
+      <div class="rail-brand">A</div>
+      <div class="rail-item active">
+        <div class="rail-glyph">St</div>
+        <div class="rail-label">Setup</div>
+      </div>
+      <div class="rail-item"><div class="rail-glyph">Pr</div><div class="rail-label">Programs</div></div>
+      <div class="rail-item"><div class="rail-glyph">In</div><div class="rail-label">Intel</div></div>
+      <div class="rail-item"><div class="rail-glyph">Tw</div><div class="rail-label">Tower</div></div>
+      <div class="rail-spacer"></div>
+      <div class="rail-bottom-glyph">D</div>
+    </div>
+
+    <div class="main">
+      <!-- TOP BAR -->
+      <div class="topbar">
+        <div class="topbar-l">
+          <div class="tb-account">
+            <div class="tb-dot"></div>
+            <div class="tb-account-name">Apex Retail Group</div>
+          </div>
+          <div class="tb-locked">Locked</div>
+          <div class="tb-context">· Setup &amp; Governance</div>
+        </div>
+        <div class="tb-r">
+          <div class="tb-time">14:22 UTC · Apr 27</div>
+          <div class="tb-avatar">D</div>
+        </div>
+      </div>
+
+      <!-- MIDDLE STRIP — sub-nav -->
+      <div class="strip">
+        <div class="subnav">
+          <div class="subnav-item active">Connectors<span class="subnav-count">8</span></div>
+          <div class="subnav-item">Users<span class="subnav-count">47</span></div>
+          <div class="subnav-item">Audit log</div>
+          <div class="subnav-item">Policies</div>
+          <div class="subnav-item">Tenant</div>
+        </div>
+        <div class="strip-r">
+          <div class="strip-action">+ Connect</div>
+        </div>
+      </div>
+
+      <!-- BODY -->
+      <div class="body">
+
+        <!-- AGENT -->
+        <div class="agent-col">
+          <div class="agent-id">
+            <div class="agent-glyph">St</div>
+            <div class="agent-meta">
+              <div class="agent-name">Steward</div>
+              <div class="agent-role">Governor · Sonnet</div>
+            </div>
+            <div class="agent-state">Active</div>
+          </div>
+
+          <div class="agent-quote">"<strong>8 connectors registered, 1 degraded</strong> — ServiceNow lost auth at 14:22 UTC. Two invites accepted yesterday. No audit anomalies. Tenant policy needs annual review by May 15."</div>
+          <div class="agent-context">Reading 8 connector states · 47 users · 312 audit events</div>
+
+          <div class="agent-actions-label">Suggested · Steward has prepared</div>
+          <div class="agent-action">
+            <div class="aa-letter">A</div>
+            <div>
+              <div class="aa-text">Reconnect ServiceNow</div>
+              <div class="aa-detail">Auth refresh ready · 30 seconds</div>
+            </div>
+          </div>
+          <div class="agent-action">
+            <div class="aa-letter">B</div>
+            <div>
+              <div class="aa-text">Review pending invites</div>
+              <div class="aa-detail">2 awaiting confirmation · sent Apr 24</div>
+            </div>
+          </div>
+          <div class="agent-action">
+            <div class="aa-letter">C</div>
+            <div>
+              <div class="aa-text">Schedule policy review</div>
+              <div class="aa-detail">Annual deadline May 15 · 18 days</div>
+            </div>
+          </div>
+
+          <div class="agent-input">
+            <div class="input-box">
+              <div class="input-prompt">Type to Steward...</div>
+              <div class="input-send">↵ Send</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WORK -->
+        <div class="work">
+          <div class="work-section">
+            <div class="ws-head">
+              <div>
+                <div class="ws-eye">Section · Connectors</div>
+                <div class="ws-h">Registered systems · 8</div>
+              </div>
+              <div class="ws-meta">7 healthy · 1 degraded</div>
+            </div>
+            <div class="conn-grid">
+
+              <div class="conn-card degraded">
+                <div class="conn-row">
+                  <div class="conn-logo">SN</div>
+                  <div>
+                    <div class="conn-name">ServiceNow</div>
+                    <div class="conn-sub">Auth lost · 14:22 UTC</div>
+                  </div>
+                  <div class="conn-status degraded">Degraded</div>
+                </div>
+              </div>
+
+              <div class="conn-card">
+                <div class="conn-row">
+                  <div class="conn-logo">SF</div>
+                  <div>
+                    <div class="conn-name">Salesforce</div>
+                    <div class="conn-sub">Last sync 12 min ago</div>
+                  </div>
+                  <div class="conn-status healthy">Healthy</div>
+                </div>
+              </div>
+
+              <div class="conn-card">
+                <div class="conn-row">
+                  <div class="conn-logo">Sn</div>
+                  <div>
+                    <div class="conn-name">Snowflake</div>
+                    <div class="conn-sub">Last sync 4 min ago</div>
+                  </div>
+                  <div class="conn-status healthy">Healthy</div>
+                </div>
+              </div>
+
+              <div class="conn-card">
+                <div class="conn-row">
+                  <div class="conn-logo">Sl</div>
+                  <div>
+                    <div class="conn-name">Slack</div>
+                    <div class="conn-sub">Last sync 2 min ago</div>
+                  </div>
+                  <div class="conn-status healthy">Healthy</div>
+                </div>
+              </div>
+
+              <div class="conn-card">
+                <div class="conn-row">
+                  <div class="conn-logo">Co</div>
+                  <div>
+                    <div class="conn-name">Confluence</div>
+                    <div class="conn-sub">Last sync 8 min ago</div>
+                  </div>
+                  <div class="conn-status healthy">Healthy</div>
+                </div>
+              </div>
+
+              <div class="conn-card">
+                <div class="conn-row">
+                  <div class="conn-logo">Ta</div>
+                  <div>
+                    <div class="conn-name">Tableau</div>
+                    <div class="conn-sub">Last sync 6 min ago</div>
+                  </div>
+                  <div class="conn-status healthy">Healthy</div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="work-section">
+            <div class="ws-head">
+              <div>
+                <div class="ws-eye">Section · Recent audit</div>
+                <div class="ws-h">Last 4 events</div>
+              </div>
+              <div class="ws-meta">312 total · 0 anomalies</div>
+            </div>
+            <div class="work-row" style="grid-template-columns: 90px 1fr 80px 80px;">
+              <div class="row-id">14:22 UTC</div>
+              <div><div class="row-name">ServiceNow auth lost</div></div>
+              <div class="row-status pending">Action</div>
+              <div class="row-time">Steward</div>
+            </div>
+            <div class="work-row" style="grid-template-columns: 90px 1fr 80px 80px;">
+              <div class="row-id">11:08 UTC</div>
+              <div><div class="row-name">Maya Tang accepted invite · APX-01</div></div>
+              <div class="row-status done">Logged</div>
+              <div class="row-time">System</div>
+            </div>
+            <div class="work-row" style="grid-template-columns: 90px 1fr 80px 80px;">
+              <div class="row-id">10:14 UTC</div>
+              <div><div class="row-name">Daniel Okafor accepted invite · APX-04</div></div>
+              <div class="row-status done">Logged</div>
+              <div class="row-time">System</div>
+            </div>
+            <div class="work-row" style="grid-template-columns: 90px 1fr 80px 80px;">
+              <div class="row-id">Apr 26</div>
+              <div><div class="row-name">Tenant policy export · annual review prep</div></div>
+              <div class="row-status done">Logged</div>
+              <div class="row-time">D. Patel</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="transition">
+  <div class="trans-marker">From Setup → Programs</div>
+  <div class="trans-text">Same chrome. The lead agent shifts from Steward to Nexus. The middle strip swaps a sub-nav for the <strong>six-phase program journey</strong>. The working pane swaps the connector grid for the program's deliverables, evidence, and gate checks.</div>
+</div>
+
+
+<!-- SURFACE 02 — PROGRAMS -->
+<div class="surface-divider">
+  <div class="divider-num">Surface 02</div>
+  <div>
+    <h2 class="divider-h">Programs <em>· Nexus leads</em></h2>
+    <p class="divider-sub">A specific program in active execution. The middle strip is the six-phase journey. Nexus narrates the gate decision; the working pane shows what needs to clear before the next phase opens.</p>
+  </div>
+</div>
+
+<div class="surface-block">
+  <div class="frame">
+
+    <div class="rail">
+      <div class="rail-brand">A</div>
+      <div class="rail-item"><div class="rail-glyph">St</div><div class="rail-label">Setup</div></div>
+      <div class="rail-item active"><div class="rail-glyph">Pr</div><div class="rail-label">Programs</div></div>
+      <div class="rail-item"><div class="rail-glyph">In</div><div class="rail-label">Intel</div></div>
+      <div class="rail-item"><div class="rail-glyph">Tw</div><div class="rail-label">Tower</div></div>
+      <div class="rail-spacer"></div>
+      <div class="rail-bottom-glyph">D</div>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="topbar-l">
+          <div class="tb-account">
+            <div class="tb-dot"></div>
+            <div class="tb-account-name">Apex Retail Group</div>
+          </div>
+          <div class="tb-locked">Locked</div>
+          <div class="tb-context">· <strong>APX-01</strong> Morrison Owned Brand Margin Recovery</div>
+        </div>
+        <div class="tb-r">
+          <div class="tb-time">Updated 2h ago</div>
+          <div class="tb-avatar">D</div>
+        </div>
+      </div>
+
+      <!-- MIDDLE STRIP — phase journey -->
+      <div class="strip">
+        <div class="phases">
+          <div class="phase-mini done"><div class="phase-dot done"></div><div class="phase-name-mini">Discovery</div></div>
+          <div class="phase-mini current"><div class="phase-dot current"></div><div class="phase-name-mini">Synthesis</div></div>
+          <div class="phase-mini pending"><div class="phase-dot pending"></div><div class="phase-name-mini">Design</div></div>
+          <div class="phase-mini"><div class="phase-dot"></div><div class="phase-name-mini">Build</div></div>
+          <div class="phase-mini"><div class="phase-dot"></div><div class="phase-name-mini">Activate</div></div>
+          <div class="phase-mini"><div class="phase-dot"></div><div class="phase-name-mini">Operate</div></div>
+        </div>
+        <div class="strip-r">
+          <div class="strip-action">View canvas</div>
+        </div>
+      </div>
+
+      <div class="body">
+
+        <div class="agent-col">
+          <div class="agent-id">
+            <div class="agent-glyph">Nx</div>
+            <div class="agent-meta">
+              <div class="agent-name">Nexus</div>
+              <div class="agent-role">Maestro · Opus</div>
+            </div>
+            <div class="agent-state">Active</div>
+          </div>
+
+          <div class="agent-quote">"The Design gate is pending because Workshop 5 outcomes and value hypothesis evidence are <strong>incomplete</strong>. The next best move is to prepare the Design Readiness workshop and resolve the evidence blockers before approving the gate."</div>
+          <div class="agent-context">Reading 142 sources · 4 deliverables · 18 days of program activity</div>
+
+          <div class="agent-actions-label">Suggested · Nexus has prepared</div>
+          <div class="agent-action">
+            <div class="aa-letter">A</div>
+            <div>
+              <div class="aa-text">Open Design Readiness workshop</div>
+              <div class="aa-detail">Resolves 4 of 5 evidence blockers · 25 min</div>
+            </div>
+          </div>
+          <div class="agent-action">
+            <div class="aa-letter">B</div>
+            <div>
+              <div class="aa-text">Review hypothesis with Sentinel</div>
+              <div class="aa-detail">Two claims need pressure-testing</div>
+            </div>
+          </div>
+          <div class="agent-action">
+            <div class="aa-letter">C</div>
+            <div>
+              <div class="aa-text">Brief on Workshop 5 outcomes</div>
+              <div class="aa-detail">Atlas synthesis ready · 150 words · 2 min</div>
+            </div>
+          </div>
+
+          <div class="agent-input">
+            <div class="input-box">
+              <div class="input-prompt">Type to Nexus...</div>
+              <div class="input-send">↵ Send</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="work">
+
+          <div class="work-section">
+            <div class="ws-head">
+              <div>
+                <div class="ws-eye">Section · Active deliverable</div>
+                <div class="ws-h">D17 · Morrison Q3 Decision Memo</div>
+              </div>
+              <div class="ws-meta">Updated 2h ago</div>
+            </div>
+            <div class="deliv-block">
+              <div class="deliv-row">
+                <div class="deliv-id">D17</div>
+                <div>
+                  <div class="deliv-name">Morrison Q3 Decision Memo</div>
+                  <div class="deliv-meta">14 sources cited · authored by Atlas · awaiting maestro review</div>
+                </div>
+                <div class="deliv-tag rich">Rich</div>
+              </div>
+            </div>
+            <div class="deliv-block">
+              <div class="deliv-row">
+                <div class="deliv-id">D16</div>
+                <div>
+                  <div class="deliv-name">Cohort Definitions &amp; Methodology</div>
+                  <div class="deliv-meta">9 sources cited · validated by Sentinel</div>
+                </div>
+                <div class="deliv-tag rich">Rich</div>
+              </div>
+            </div>
+            <div class="deliv-block">
+              <div class="deliv-row">
+                <div class="deliv-id">D14</div>
+                <div>
+                  <div class="deliv-name">Diagnostic Findings · Executive Summary</div>
+                  <div class="deliv-meta">4 sources · still gathering · last touched 4 days ago</div>
+                </div>
+                <div class="deliv-tag outline">Outline</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="work-section">
+            <div class="ws-head">
+              <div>
+                <div class="ws-eye">Section · Evidence stack</div>
+                <div class="ws-h">5 items · 1 contradiction unresolved</div>
+              </div>
+              <div class="ws-meta">Sentinel checked 4 of 5</div>
+            </div>
+            <div class="evidence-row">
+              <div class="ev-check conflict"></div>
+              <div>
+                <div class="ev-name"><strong>Q3 attribution · Epic source</strong> — 18.2% lift</div>
+                <div class="ev-source">APX-01-EPIC-04 · cohort: members 12mo+</div>
+              </div>
+              <div class="ev-meta">Conflict</div>
+            </div>
+            <div class="evidence-row">
+              <div class="ev-check conflict"></div>
+              <div>
+                <div class="ev-name"><strong>Q3 attribution · Finance source</strong> — 22.4% lift</div>
+                <div class="ev-source">APX-01-FIN-12 · cohort: all transactions</div>
+              </div>
+              <div class="ev-meta">Conflict</div>
+            </div>
+            <div class="evidence-row">
+              <div class="ev-check done"></div>
+              <div>
+                <div class="ev-name">Cohort definitions reconciled · D16</div>
+                <div class="ev-source">Sentinel verdict · 9 sources cited</div>
+              </div>
+              <div class="ev-meta">Verified</div>
+            </div>
+            <div class="evidence-row">
+              <div class="ev-check done"></div>
+              <div>
+                <div class="ev-name">Promotion calendar · vendor confirmation</div>
+                <div class="ev-source">Confluence/morrison-q3-promo · stamped Mar 18</div>
+              </div>
+              <div class="ev-meta">Verified</div>
+            </div>
+          </div>
+
+          <div class="work-section">
+            <div class="ws-head">
+              <div>
+                <div class="ws-eye">Section · Gate checks</div>
+                <div class="ws-h">Design gate · 4 of 5 cleared</div>
+              </div>
+              <div class="ws-meta">1 awaiting maestro</div>
+            </div>
+            <div class="evidence-row">
+              <div class="ev-check done"></div>
+              <div><div class="ev-name">Workshop 5 outcomes captured</div></div>
+              <div class="ev-meta">Apr 24</div>
+            </div>
+            <div class="evidence-row">
+              <div class="ev-check done"></div>
+              <div><div class="ev-name">Value hypothesis docs reviewed</div></div>
+              <div class="ev-meta">Apr 25</div>
+            </div>
+            <div class="evidence-row">
+              <div class="ev-check done"></div>
+              <div><div class="ev-name">Sentinel verdict ready · 12 of 14 claims pass</div></div>
+              <div class="ev-meta">Apr 26</div>
+            </div>
+            <div class="evidence-row">
+              <div class="ev-check done"></div>
+              <div><div class="ev-name">Atlas synthesis ready · 150 words</div></div>
+              <div class="ev-meta">Apr 27</div>
+            </div>
+            <div class="evidence-row">
+              <div class="ev-check"></div>
+              <div><div class="ev-name"><strong>Maestro sign-off needed</strong></div></div>
+              <div class="ev-meta">Pending</div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="transition">
+  <div class="trans-marker">From Programs → Intelligence</div>
+  <div class="trans-text">Same chrome. Lead agent shifts from Nexus to Sentinel. The middle strip becomes a <strong>tier filter</strong> (M·Meta / T1·Craft / T3·Use-case). The working pane swaps deliverables for the pattern catalogue.</div>
+</div>
+
+
+<!-- SURFACE 03 — INTELLIGENCE -->
+<div class="surface-divider">
+  <div class="divider-num">Surface 03</div>
+  <div>
+    <h2 class="divider-h">Intelligence <em>· Sentinel leads</em></h2>
+    <p class="divider-sub">The pattern library. Middle strip filters by tier. Sentinel narrates which patterns are validated, which are in review, and what needs the maestro's call.</p>
+  </div>
+</div>
+
+<div class="surface-block">
+  <div class="frame">
+
+    <div class="rail">
+      <div class="rail-brand">A</div>
+      <div class="rail-item"><div class="rail-glyph">St</div><div class="rail-label">Setup</div></div>
+      <div class="rail-item"><div class="rail-glyph">Pr</div><div class="rail-label">Programs</div></div>
+      <div class="rail-item active"><div class="rail-glyph">In</div><div class="rail-label">Intel</div></div>
+      <div class="rail-item"><div class="rail-glyph">Tw</div><div class="rail-label">Tower</div></div>
+      <div class="rail-spacer"></div>
+      <div class="rail-bottom-glyph">D</div>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="topbar-l">
+          <div class="tb-account">
+            <div class="tb-dot"></div>
+            <div class="tb-account-name">Apex Retail Group</div>
+          </div>
+          <div class="tb-locked">Locked</div>
+          <div class="tb-context">· Intelligence library</div>
+        </div>
+        <div class="tb-r">
+          <div class="tb-time">94 patterns</div>
+          <div class="tb-avatar">D</div>
+        </div>
+      </div>
+
+      <!-- MIDDLE STRIP — tier filter -->
+      <div class="strip">
+        <div class="filter-strip">
+          <div class="filter-pill active">All <span class="count">94</span></div>
+          <div class="filter-pill">M · Meta <span class="count">5</span></div>
+          <div class="filter-pill">T1 · Craft <span class="count">42</span></div>
+          <div class="filter-pill">T3 · Use-case <span class="count">47</span></div>
+          <div class="filter-pill">In review <span class="count">7</span></div>
+          <div class="filter-pill">Candidates <span class="count">12</span></div>
+        </div>
+        <div class="strip-r">
+          <div class="strip-action">+ Submit</div>
+        </div>
+      </div>
+
+      <div class="body">
+
+        <div class="agent-col">
+          <div class="agent-id">
+            <div class="agent-glyph">Sn</div>
+            <div class="agent-meta">
+              <div class="agent-name">Sentinel</div>
+              <div class="agent-role">Validator · Opus</div>
+            </div>
+            <div class="agent-state">Active</div>
+          </div>
+
+          <div class="agent-quote">"<strong>94 patterns catalogued</strong>. T3-H01 (Ambient) is the strongest signal — cited in 4 programs, ready for promotion. Two recent submissions look like duplicates of M3 — I want your call before I close them."</div>
+          <div class="agent-context">7 patterns in review · 12 candidates queued · 4 promotions this month</div>
+
+          <div class="agent-actions-label">Suggested · Sentinel has prepared</div>
+          <div class="agent-action">
+            <div class="aa-letter">A</div>
+            <div>
+              <div class="aa-text">Promote T3-H01 Ambient</div>
+              <div class="aa-detail">4 portfolio cites · evidence packet ready</div>
+            </div>
+          </div>
+          <div class="agent-action">
+            <div class="aa-letter">B</div>
+            <div>
+              <div class="aa-text">Resolve 2 M3 duplicates</div>
+              <div class="aa-detail">Submitted Apr 22 and Apr 24 · close vs reject</div>
+            </div>
+          </div>
+          <div class="agent-action">
+            <div class="aa-letter">C</div>
+            <div>
+              <div class="aa-text">Triage candidate queue</div>
+              <div class="aa-detail">12 patterns waiting · est. 35 min</div>
+            </div>
+          </div>
+
+          <div class="agent-input">
+            <div class="input-box">
+              <div class="input-prompt">Type to Sentinel...</div>
+              <div class="input-send">↵ Send</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="work">
+
+          <div class="work-section">
+            <div class="ws-head">
+              <div>
+                <div class="ws-eye">Tier · M · Meta</div>
+                <div class="ws-h">Foundational frameworks · 5</div>
+              </div>
+              <div class="ws-meta">All validated</div>
+            </div>
+            <div class="work-row pat-row">
+              <div class="row-id">M3</div>
+              <div><div class="row-name-bold">Five-Dimension Synthesis</div><div class="row-sub">23 portfolio cites · canonical framework</div></div>
+              <div class="row-status done">Validated</div>
+              <div class="row-time">Mar 18</div>
+              <button class="row-action">Open</button>
+            </div>
+            <div class="work-row pat-row">
+              <div class="row-id">M4</div>
+              <div><div class="row-name-bold">Pressure Decomposition</div><div class="row-sub">14 portfolio cites · used by Tower</div></div>
+              <div class="row-status done">Validated</div>
+              <div class="row-time">Mar 22</div>
+              <button class="row-action">Open</button>
+            </div>
+            <div class="work-row pat-row">
+              <div class="row-id">M5</div>
+              <div><div class="row-name-bold">Evidence Provenance Chain</div><div class="row-sub">All Sentinel verdicts cite this</div></div>
+              <div class="row-status done">Validated</div>
+              <div class="row-time">Apr 02</div>
+              <button class="row-action">Open</button>
+            </div>
+          </div>
+
+          <div class="work-section">
+            <div class="ws-head">
+              <div>
+                <div class="ws-eye">Tier · T3 · Use-case · highlighted</div>
+                <div class="ws-h">Applied templates by domain · 47</div>
+              </div>
+              <div class="ws-meta">T3-H01 ready to promote</div>
+            </div>
+            <div class="work-row pat-row" style="background: var(--blue-bg); border-radius: 6px; padding-left: 12px; padding-right: 12px; border-color: var(--blue-line);">
+              <div class="row-id">T3-H01</div>
+              <div><div class="row-name-bold">Ambient · Meeting Capture</div><div class="row-sub">4 cites · evidence packet attached · ready</div></div>
+              <div class="row-status pending">Promote</div>
+              <div class="row-time">Apr 12</div>
+              <button class="row-action">Review</button>
+            </div>
+            <div class="work-row pat-row">
+              <div class="row-id">T3-H02</div>
+              <div><div class="row-name-bold">Stakeholder Pulse Capture</div><div class="row-sub">Sister pattern to H01 · 2 cites</div></div>
+              <div class="row-status done">Validated</div>
+              <div class="row-time">Apr 03</div>
+              <button class="row-action">Open</button>
+            </div>
+            <div class="work-row pat-row">
+              <div class="row-id">T3-K04</div>
+              <div><div class="row-name-bold">Promotion Cadence Diagnostic</div><div class="row-sub">Used directly by APX-01 Phase 2</div></div>
+              <div class="row-status done">Validated</div>
+              <div class="row-time">Mar 31</div>
+              <button class="row-action">Open</button>
+            </div>
+            <div class="work-row pat-row">
+              <div class="row-id">T3-P02</div>
+              <div><div class="row-name-bold">Replenishment Velocity Curve</div><div class="row-sub">Suspected M3 duplicate · awaiting your call</div></div>
+              <div class="row-status pending">Candidate</div>
+              <div class="row-time">Apr 22</div>
+              <button class="row-action">Open</button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="transition">
+  <div class="trans-marker">From Intelligence → Control Tower</div>
+  <div class="trans-text">Same chrome. Lead agent shifts from Sentinel to Atlas. The middle strip becomes a <strong>severity filter</strong>. The working pane swaps the pattern list for active pressure cards.</div>
+</div>
+
+
+<!-- SURFACE 04 — CONTROL TOWER -->
+<div class="surface-divider">
+  <div class="divider-num">Surface 04</div>
+  <div>
+    <h2 class="divider-h">Control Tower <em>· Atlas leads</em></h2>
+    <p class="divider-sub">Cross-program pressure. Middle strip filters by severity. Atlas narrates pressure state with a 150-word cap; the working pane shows what's at risk.</p>
+  </div>
+</div>
+
+<div class="surface-block">
+  <div class="frame">
+
+    <div class="rail">
+      <div class="rail-brand">A</div>
+      <div class="rail-item"><div class="rail-glyph">St</div><div class="rail-label">Setup</div></div>
+      <div class="rail-item"><div class="rail-glyph">Pr</div><div class="rail-label">Programs</div></div>
+      <div class="rail-item"><div class="rail-glyph">In</div><div class="rail-label">Intel</div></div>
+      <div class="rail-item active"><div class="rail-glyph">Tw</div><div class="rail-label">Tower</div></div>
+      <div class="rail-spacer"></div>
+      <div class="rail-bottom-glyph">D</div>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="topbar-l">
+          <div class="tb-account">
+            <div class="tb-dot"></div>
+            <div class="tb-account-name">Apex Retail Group</div>
+          </div>
+          <div class="tb-locked">Locked</div>
+          <div class="tb-context">· Cross-program pressure</div>
+        </div>
+        <div class="tb-r">
+          <div class="tb-time">Brief 2h ago</div>
+          <div class="tb-avatar">D</div>
+        </div>
+      </div>
+
+      <!-- MIDDLE STRIP — severity filter -->
+      <div class="strip">
+        <div class="filter-strip">
+          <div class="filter-pill active">All <span class="count">3</span></div>
+          <div class="filter-pill">High <span class="count">1</span></div>
+          <div class="filter-pill">Medium <span class="count">1</span></div>
+          <div class="filter-pill">Low watch <span class="count">1</span></div>
+          <div class="filter-pill">Resolved <span class="count">14</span></div>
+        </div>
+        <div class="strip-r">
+          <div class="strip-action">Refresh brief</div>
+        </div>
+      </div>
+
+      <div class="body">
+
+        <div class="agent-col">
+          <div class="agent-id">
+            <div class="agent-glyph">At</div>
+            <div class="agent-meta">
+              <div class="agent-name">Atlas</div>
+              <div class="agent-role">Synthesizer · 150-word cap</div>
+            </div>
+            <div class="agent-state">Active</div>
+          </div>
+
+          <div class="agent-quote">"<strong>3 active pressures.</strong> AI Cloud Spend at $2.4M against $1.8M — 33% over, the highest pressure. Vendor Risk for the DW migration slipped to amber. Customer Churn signal is steady but worth watching as the May rollout approaches. None block active programs. <strong>All three need a maestro decision this week.</strong>"</div>
+          <div class="agent-context">Synthesizing 12 weeks of spend data · 3 vendor signals · cohort drift</div>
+
+          <div class="agent-actions-label">Suggested · Atlas has prepared</div>
+          <div class="agent-action">
+            <div class="aa-letter">A</div>
+            <div>
+              <div class="aa-text">Open AI Cloud Spend brief</div>
+              <div class="aa-detail">$620k variance · Path B recommended</div>
+            </div>
+          </div>
+          <div class="agent-action">
+            <div class="aa-letter">B</div>
+            <div>
+              <div class="aa-text">Review Vendor Risk amber alert</div>
+              <div class="aa-detail">DW migration slipped 14 days · remediation plan attached</div>
+            </div>
+          </div>
+          <div class="agent-action">
+            <div class="aa-letter">C</div>
+            <div>
+              <div class="aa-text">Watch Customer Churn signal</div>
+              <div class="aa-detail">4.2% vs 3.8% baseline · pre-rollout review May 6</div>
+            </div>
+          </div>
+
+          <div class="agent-input">
+            <div class="input-box">
+              <div class="input-prompt">Type to Atlas...</div>
+              <div class="input-send">↵ Send</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="work">
+
+          <div class="work-section">
+            <div class="ws-head">
+              <div>
+                <div class="ws-eye">Section · Active pressures</div>
+                <div class="ws-h">3 signals worth attention</div>
+              </div>
+              <div class="ws-meta">1 high · 1 medium · 1 watch</div>
+            </div>
+
+            <div class="pressure-mini high">
+              <div class="pm-row">
+                <div>
+                  <div class="pm-name">AI Cloud Spend · Q3 quarter-to-date</div>
+                  <div class="pm-meta">High severity · 12 weeks observed · climbing 9 of 12</div>
+                </div>
+                <div>
+                  <div class="pm-num rust">$2.4M</div>
+                  <div class="pm-delta">+33% over $1.8M budget</div>
+                </div>
+              </div>
+              <div class="pm-driver">
+                <span>Top driver: Fine-tuning experiments</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-family: var(--mono); font-size: 10.5px; color: var(--rust-text); font-weight: 600;">38%</span>
+                  <div class="pm-driver-bar"><div class="pm-driver-fill" style="width: 95%;"></div></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pressure-mini medium">
+              <div class="pm-row">
+                <div>
+                  <div class="pm-name">Vendor Risk · DW migration</div>
+                  <div class="pm-meta">Medium severity · 14d slip · vendor remediation requested</div>
+                </div>
+                <div>
+                  <div class="pm-num">14d</div>
+                  <div class="pm-delta">slip · target May 19</div>
+                </div>
+              </div>
+              <div class="pm-driver">
+                <span>Top blocker: Schema mismatch · staging</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-family: var(--mono); font-size: 10.5px; color: var(--peach-text); font-weight: 600;">7d</span>
+                  <div class="pm-driver-bar"><div class="pm-driver-fill" style="width: 100%;"></div></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pressure-mini low">
+              <div class="pm-row">
+                <div>
+                  <div class="pm-name">Customer Churn · Retail signal</div>
+                  <div class="pm-meta">Low watch · steady · pre-rollout window May 6</div>
+                </div>
+                <div>
+                  <div class="pm-num">4.2%</div>
+                  <div class="pm-delta">vs 3.8% baseline</div>
+                </div>
+              </div>
+              <div class="pm-driver">
+                <span>Cohort: New customers · 0–3mo</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-family: var(--mono); font-size: 10.5px; color: var(--mint-text); font-weight: 600;">6.8%</span>
+                  <div class="pm-driver-bar"><div class="pm-driver-fill" style="width: 70%;"></div></div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="work-section">
+            <div class="ws-head">
+              <div>
+                <div class="ws-eye">Section · Cross-program activity</div>
+                <div class="ws-h">Recent events · 4</div>
+              </div>
+              <div class="ws-meta">Last 8h</div>
+            </div>
+            <div class="work-row" style="grid-template-columns: 28px 1fr 80px 70px;">
+              <div style="width: 22px; height: 22px; border-radius: 50%; background: var(--ink); color: var(--paper); display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-size: 9.5px; font-weight: 600;">At</div>
+              <div><div class="row-name"><strong>Atlas</strong> refreshed AI Cloud Spend brief — variance grew $42k overnight</div></div>
+              <div class="row-id">Tower</div>
+              <div class="row-time">2h ago</div>
+            </div>
+            <div class="work-row" style="grid-template-columns: 28px 1fr 80px 70px;">
+              <div style="width: 22px; height: 22px; border-radius: 50%; background: var(--ink); color: var(--paper); display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-size: 9.5px; font-weight: 600;">Nx</div>
+              <div><div class="row-name"><strong>Nexus</strong> linked Cloud Spend pressure to APX-04 idle volumes</div></div>
+              <div class="row-id">APX-04</div>
+              <div class="row-time">3h ago</div>
+            </div>
+            <div class="work-row" style="grid-template-columns: 28px 1fr 80px 70px;">
+              <div style="width: 22px; height: 22px; border-radius: 50%; background: var(--ink); color: var(--paper); display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-size: 9.5px; font-weight: 600;">St</div>
+              <div><div class="row-name"><strong>Steward</strong> flagged vendor remediation plan as missing 2 SOC-2 attestations</div></div>
+              <div class="row-id">Vendor</div>
+              <div class="row-time">5h ago</div>
+            </div>
+            <div class="work-row" style="grid-template-columns: 28px 1fr 80px 70px;">
+              <div style="width: 22px; height: 22px; border-radius: 50%; background: var(--ink); color: var(--paper); display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-size: 9.5px; font-weight: 600;">Sn</div>
+              <div><div class="row-name"><strong>Sentinel</strong> validated APX-01 D17 evidence — 14 of 14 cited claims pass</div></div>
+              <div class="row-id">APX-01</div>
+              <div class="row-time">7h ago</div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- SUMMARY -->
+<div class="summary">
+  <div class="sum-grid">
+
+    <div class="sum-card">
+      <div class="sum-eye">Stays the same</div>
+      <h3 class="sum-h">The chrome and the conversation pattern.</h3>
+      <ul class="sum-list">
+        <li><span class="sum-key">Left rail</span><span class="sum-val">Icon nav · 76px · Setup, Programs, Intel, Tower</span></li>
+        <li><span class="sum-key">Top bar</span><span class="sum-val">Tenant + locked pill + surface context · 48px</span></li>
+        <li><span class="sum-key">Middle strip</span><span class="sum-val">44px slim band · always horizontal</span></li>
+        <li><span class="sum-key">Agent column</span><span class="sum-val">480px · voice + 3 actions + input box</span></li>
+        <li><span class="sum-key">Working pane</span><span class="sum-val">Fills remaining · scrolls independently</span></li>
+        <li><span class="sum-key">Aesthetic</span><span class="sum-val">Paper, navy, Fraunces serif for voice, Inter sans for work</span></li>
+      </ul>
+    </div>
+
+    <div class="sum-card dark">
+      <div class="sum-eye">Varies per surface</div>
+      <h3 class="sum-h">The lead agent and <em>the job at hand.</em></h3>
+      <ul class="sum-list">
+        <li><span class="sum-key">Setup</span><span class="sum-val"><strong>Steward</strong> · sub-nav strip · connector grid</span></li>
+        <li><span class="sum-key">Programs</span><span class="sum-val"><strong>Nexus</strong> · phase journey strip · deliverables + evidence + gates</span></li>
+        <li><span class="sum-key">Intelligence</span><span class="sum-val"><strong>Sentinel</strong> · tier filter strip · pattern catalogue</span></li>
+        <li><span class="sum-key">Tower</span><span class="sum-val"><strong>Atlas</strong> · severity filter strip · pressure cards + activity</span></li>
+        <li><span class="sum-key">Voice tone</span><span class="sum-val">Steward governs, Nexus orchestrates, Sentinel validates, Atlas synthesizes</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+
+<div class="foot">
+  <div class="foot-l">"One template, four jobs. The agent never moves; the work changes."</div>
+  <div class="foot-r">Workspace architecture · Apr 27 2026</div>
+</div>
+
+</body>
+</html>

@@ -1,27 +1,24 @@
 'use client'
 import Link from 'next/link'
-import { useState, useRef, Suspense } from 'react'
+import { useState, Suspense } from 'react'
 import { useUser, useClerk } from '@clerk/nextjs'
 import { useRouter, usePathname } from 'next/navigation'
 import { resolveSessionRole } from '@/lib/auth/access-routing'
 import { clearActiveClientContext } from '@/lib/auth/client-context-storage'
-import { useClientContext, ALL_CLIENTS } from '@/lib/use-client-context'
-import AbarvaMark from './AbarvaMark'
+import { useClientContext } from '@/lib/use-client-context'
+import { AbarvaWordmark } from './abarva/AbarVaWordmark'
+import { COLORS, FONT, TYPE, BORDER, SPACING, RADIUS } from '@/lib/design/abarva-theme'
 
-const NAV_BG    = 'var(--color-page-bg)'
-const NAV_BORD  = 'rgba(255,255,255,0.08)'
-const TEAL      = '#14B8A6'
-const NAV_TEXT  = '#EFF6FF'
-const NAV_MUTE  = 'rgba(239,246,255,0.85)'
-const SANS      = 'DM Sans, sans-serif'
-const MONO      = 'JetBrains Mono, monospace'
-const SERIF     = 'Georgia, serif'
-const DROP_BG   = '#FFFFFF'
-const DROP_BORD = '#E5E7EB'
-const DROP_HEAD = '#0C0C0C'
-const DROP_DESC = '#3C3C3C'
-const DROP_CAT  = '#14B8A6'
-const DROP_HOVER = '#F9FAFB'
+const NAV_BG = COLORS.surface
+const NAV_BORD = COLORS.border
+const NAVY = COLORS.navy
+const NAV_TEXT = COLORS.ink
+const NAV_MUTE = COLORS.muted
+const SANS = FONT.body
+const MONO = FONT.mono
+const DROP_BG = '#FFFFFF'
+const DROP_BORD = BORDER.hairline
+const DROP_HEAD = COLORS.inkDark
 
 interface NavProps {
   activePage?: string;
@@ -35,21 +32,14 @@ interface NavProps {
 }
 
 function NavInner({ activePage, compact = false }: NavProps) {
-  const [open, setOpen] = useState<string | null>(null)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
-  const [clientToggleOpen, setClientToggleOpen] = useState(false)
-  const closeTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const { isLoaded, user } = useUser()
   const { signOut } = useClerk()
   const router = useRouter()
   const pathname = usePathname() ?? ''
 
-  const { clientId, currentClient, allowedClients, canSwitch, switchClient } = useClientContext()
-
-  const openDrop = (id: string) => { clearTimeout(closeTimer.current); setOpen(id) }
-  const startClose = () => { closeTimer.current = setTimeout(() => setOpen(null), 180) }
-  const cancelClose = () => clearTimeout(closeTimer.current)
+  const { clientId, currentClient } = useClientContext()
 
   const email = user?.primaryEmailAddress?.emailAddress
     ?? user?.emailAddresses?.[0]?.emailAddress
@@ -97,24 +87,15 @@ function NavInner({ activePage, compact = false }: NavProps) {
                                 || activePage === 'platform'
                             )
   const investorActive     = pathname.startsWith('/investor') || activePage === 'investor'
-  const maestroActive      = homeActive
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
-  const dropPanel: React.CSSProperties = {
-    position: 'absolute', top: '58px', left: 0,
-    background: DROP_BG, border: `1px solid ${DROP_BORD}`,
-    borderRadius: '12px', padding: '8px 0', zIndex: 300,
-    boxShadow: '0 4px 32px rgba(0,0,0,0.18)',
-  }
 
   const navLink = (label: string, href: string, active: boolean) => (
     <a href={href} key={label} className={active ? 'abarva-nav-link abarva-nav-link--active' : 'abarva-nav-link'} style={{
       fontSize: '15px',
-      fontWeight: active ? 700 : 400,
+      fontWeight: active ? 700 : 500,
       letterSpacing: '-0.01em',
-      color: active ? TEAL : NAV_TEXT,
+      color: active ? NAVY : NAV_TEXT,
       padding: '8px 20px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
-      borderBottom: active ? `2px solid ${TEAL}` : '2px solid transparent',
+      borderBottom: active ? `2px solid ${NAVY}` : '2px solid transparent',
       transition: 'color 150ms cubic-bezier(0, 0, 0.2, 1), border-color 150ms cubic-bezier(0, 0, 0.2, 1)',
       borderRadius: '6px',
     }}>
@@ -122,7 +103,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
     </a>
   )
 
-  // Demo nav item — temporarily disabled while v2 ships; rendered at caption weight (white 72%)
+  // Demo nav item — temporarily disabled while v2 ships.
   const demoNavItem = () => (
     <span
       key="demo-nav"
@@ -132,29 +113,29 @@ function NavInner({ activePage, compact = false }: NavProps) {
         fontSize: '15px',
         fontWeight: 600,
         letterSpacing: '-0.01em',
-        color: 'rgba(245,245,240,0.72)',
+        color: NAV_MUTE,
         padding: '8px 20px', fontFamily: SANS, flexShrink: 0,
         borderBottom: '1px solid transparent',
         pointerEvents: 'none' as React.CSSProperties['pointerEvents'],
         cursor: 'default',
       }}
     >
-      Demo <span style={{ fontFamily: MONO, fontSize: 10, marginLeft: 4, color: 'rgba(245,245,240,0.55)' }}>soon</span>
+      Demo <span style={{ fontFamily: MONO, fontSize: 10, marginLeft: 4, color: '#8A7565' }}>soon</span>
     </span>
   )
 
   // Admin nav item — clickable for admin, hidden visually-only for non-admin via disabled state
   const adminNavItem = () => (
     <a
-      href={isAdmin ? '/platform/admin' : undefined}
+      href={isAdmin ? '/admin' : undefined}
       key="admin-nav"
       style={{
         fontSize: '15px',
         fontWeight: isAdmin && adminActive ? 700 : 600,
         letterSpacing: '-0.01em',
-        color: isAdmin ? (adminActive ? TEAL : NAV_TEXT) : 'rgba(245,245,240,0.35)',
+        color: isAdmin ? (adminActive ? NAVY : NAV_TEXT) : NAV_MUTE,
         padding: '8px 20px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
-        borderBottom: isAdmin && adminActive ? `1px solid ${TEAL}` : '1px solid transparent',
+        borderBottom: isAdmin && adminActive ? `1px solid ${NAVY}` : '1px solid transparent',
         pointerEvents: isAdmin ? 'auto' : 'none' as React.CSSProperties['pointerEvents'],
         cursor: isAdmin ? 'pointer' : 'default',
       }}
@@ -163,47 +144,76 @@ function NavInner({ activePage, compact = false }: NavProps) {
     </a>
   )
 
-  // Client dropdown (admin + investor)
-  const clientDropdown = () => (
-    <div style={{ position: 'relative', marginRight: '16px' }}>
-      <button
-        onClick={() => setClientToggleOpen(o => !o)}
-        className="abarva-client-btn"
-        aria-label={`Current client: ${currentClient.shortName}. Change client.`}
-        aria-haspopup="listbox"
-        aria-expanded={clientToggleOpen}
-        style={{ display: 'flex', alignItems: 'center', gap: '7px', background: 'none', border: 'none', padding: '4px 8px 4px 0', cursor: 'pointer' }}
-      >
-        <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: currentClient.color, flexShrink: 0 }} />
-        <span style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 600, color: NAV_TEXT }}>{currentClient.shortName}</span>
-        <span style={{ fontFamily: MONO, fontSize: '9px', color: NAV_MUTE }}>▾</span>
-      </button>
-      {clientToggleOpen && (
-        <div onMouseLeave={() => setClientToggleOpen(false)} style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, background: DROP_BG, border: `1px solid ${DROP_BORD}`, borderRadius: '10px', padding: '6px', zIndex: 400, minWidth: '220px', boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
-          <div style={{ fontFamily: MONO, fontSize: '8px', color: DROP_CAT, letterSpacing: '.1em', padding: '4px 8px 8px', textTransform: 'uppercase' }}>Switch Account</div>
-          {ALL_CLIENTS.map(c => {
-            const isActive  = c.id === clientId
-            const isAllowed = !!allowedClients.find(a => a.id === c.id)
-            return (
-              <button key={c.id} onClick={() => { if (isAllowed) { switchClient(c.id); setClientToggleOpen(false) } }}
-                style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 10px', borderRadius: '7px', border: 'none', background: isActive ? `${c.color}12` : 'transparent', cursor: isAllowed ? 'pointer' : 'default', opacity: isAllowed ? 1 : 0.35 }}
-              >
-                <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: c.color, flexShrink: 0 }} />
-                <div style={{ fontFamily: SANS, fontSize: '12px', fontWeight: isActive ? 600 : 400, color: isActive ? c.color : DROP_HEAD }}>{c.shortName}</div>
-                {isActive && <span style={{ fontFamily: MONO, fontSize: '9px', color: c.color, marginLeft: 'auto' }}>✓</span>}
-              </button>
-            )
-          })}
-        </div>
-      )}
-    </div>
-  )
-
-  // Static client label (maestro — locked to their client)
+  // Static client label for all roles.
   const staticClientLabel = () => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginRight: '16px', padding: '4px 8px 4px 0' }}>
-      <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: currentClient.color, flexShrink: 0 }} />
-      <span style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 600, color: NAV_TEXT }}>{currentClient.shortName}</span>
+    <div
+      aria-label={`Current account ${currentClient.name}. Account switching is disabled.`}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+        border: `1px solid ${COLORS.border}`,
+        background: '#F5F3EE',
+        borderRadius: `${RADIUS.lg}px`,
+        padding: `${SPACING.xs}px ${SPACING.md}px`,
+        marginRight: '16px',
+        boxSizing: 'border-box',
+        minWidth: '226px',
+      }}
+    >
+      <div
+        style={{
+          width: '8px',
+          height: '8px',
+          borderRadius: '50%',
+          background: currentClient.color,
+          boxShadow: `0 0 0 2px ${COLORS.surface}`,
+          flexShrink: 0,
+        }}
+      />
+      <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, lineHeight: 1.05 }}>
+        <span
+          style={{
+            fontFamily: TYPE.eyebrow.fontFamily,
+            fontSize: `${TYPE.eyebrow.fontSize}px`,
+            letterSpacing: TYPE.eyebrow.letterSpacing,
+            color: NAV_MUTE,
+            textTransform: TYPE.eyebrow.textTransform,
+            marginBottom: '2px',
+          }}
+        >
+          Account
+        </span>
+        <span
+          title={currentClient.name}
+          style={{
+            fontFamily: SANS,
+            fontSize: '12px',
+            fontWeight: 600,
+            color: NAV_TEXT,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            display: 'block',
+            maxWidth: '170px',
+          }}
+        >
+          {currentClient.name}
+        </span>
+      </div>
+      <span
+        style={{
+          marginLeft: 'auto',
+          fontFamily: MONO,
+          fontSize: '10px',
+          color: NAV_MUTE,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        locked
+      </span>
     </div>
   )
 
@@ -213,25 +223,25 @@ function NavInner({ activePage, compact = false }: NavProps) {
           behavior changes. Honors prefers-reduced-motion. */}
       <style jsx global>{`
         .abarva-nav-link:not(.abarva-nav-link--active):hover {
-          color: #14B8A6;
+          color: ${NAVY};
         }
         .abarva-nav-link:focus-visible {
           outline: none;
-          box-shadow: 0 0 0 2px #020408, 0 0 0 4px #14B8A6;
+          box-shadow: 0 0 0 2px ${COLORS.surface}, 0 0 0 4px ${NAVY};
         }
         .abarva-avatar-btn:focus-visible,
         .abarva-client-btn:focus-visible {
           outline: none;
-          box-shadow: 0 0 0 2px #020408, 0 0 0 4px #14B8A6;
+          box-shadow: 0 0 0 2px ${COLORS.surface}, 0 0 0 4px ${NAVY};
           border-radius: 8px;
         }
         .abarva-menu-item:hover {
-          background: #F9FAFB !important;
+          background: #F5F3EE !important;
         }
         .abarva-menu-item:focus-visible {
           outline: none;
-          background: #F9FAFB !important;
-          box-shadow: inset 2px 0 0 #14B8A6;
+          background: #F5F3EE !important;
+          box-shadow: inset 2px 0 0 ${NAVY};
         }
         @media (prefers-reduced-motion: reduce) {
           .abarva-nav-link {
@@ -240,19 +250,19 @@ function NavInner({ activePage, compact = false }: NavProps) {
         }
       `}</style>
       <div id="abarva-nav" style={{
-        height: '60px', background: NAV_BG,
-        borderBottom: `1px solid ${NAV_BORD}`,
-        display: 'flex', alignItems: 'center', padding: '0 24px', gap: '2px',
+        height: '56px', background: NAV_BG,
+        borderBottom: BORDER.hairline,
+        display: 'flex', alignItems: 'center', padding: `0 ${SPACING.xxl}px`, gap: `${SPACING.sm}px`,
         boxSizing: 'border-box',
+        boxShadow: '0 6px 18px rgba(27, 43, 92, 0.06)',
       }}>
 
         {/* ── Wordmark ─────────────────────────────────────────────────────── */}
-        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px', marginRight: '24px', flexShrink: 0 }}>
-          <AbarvaMark size={36} />
-          <div style={{ display: 'flex', alignItems: 'baseline', lineHeight: 1 }}>
-            <span style={{ fontFamily: SERIF, fontSize: '21px', fontWeight: 700, color: NAV_TEXT }}>Abar</span>
-            <span style={{ fontFamily: SERIF, fontSize: '26px', fontWeight: 900, color: TEAL }}>Va</span>
-          </div>
+        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: `${SPACING.md}px`, marginRight: `${SPACING.xl}px`, flexShrink: 0 }}>
+          <AbarvaWordmark
+            size="md"
+            inkColor={NAV_TEXT}
+          />
         </Link>
 
         {/* ══════════════════════════════════════════════════════════════════
@@ -264,7 +274,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
         ══════════════════════════════════════════════════════════════════ */}
         {signedIn && isOperator && (
           <>
-            {(isAdmin || isInvestor) ? clientDropdown() : staticClientLabel()}
+            {staticClientLabel()}
             {!compact && navLink('Home', '/home', homeActive)}
             {!compact && navLink('Programs', '/engagements', engagementsActive)}
             {!compact && navLink('Source', '/source', sourceActive)}
@@ -300,7 +310,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
         )}
 
         {/* ── Right side: Admin portal shortcut + user avatar ─── */}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: `${SPACING.xs}px` }}>
           {signedIn && (isAdmin || isInvestor) && navLink('Investor', '/investor', investorActive)}
           {signedIn && isAdmin && adminNavItem()}
           <div style={{ width: '12px' }} />
@@ -317,11 +327,11 @@ function NavInner({ activePage, compact = false }: NavProps) {
               >
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '12px', fontWeight: 500, color: NAV_TEXT, fontFamily: SANS }}>{firstName}</div>
-                  <div style={{ fontSize: '9px', color: TEAL, fontFamily: MONO }}>
+                  <div style={{ fontSize: '9px', color: NAVY, fontFamily: MONO }}>
                     {isAdmin ? 'Admin' : isMaestro ? 'Maestro' : isInvestor ? 'Investor' : isClient ? 'Client' : isExternal ? 'External' : ''}
                   </div>
                 </div>
-                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'rgba(20,184,166,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: TEAL, fontFamily: MONO, flexShrink: 0 }}>
+                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'rgba(27, 43, 92, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: NAVY, fontFamily: MONO, flexShrink: 0 }}>
                   {initials}
                 </div>
               </button>
@@ -360,11 +370,11 @@ function NavInner({ activePage, compact = false }: NavProps) {
             </div>
           ) : (
             <>
-              <Link href="/sign-in" style={{ fontSize: '12px', fontWeight: 500, color: 'rgba(255,255,255,0.7)', textDecoration: 'none', padding: '5px 12px', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', flexShrink: 0, fontFamily: SANS }}>
+              <Link href="/sign-in" style={{ fontSize: '12px', fontWeight: 500, color: NAV_TEXT, textDecoration: 'none', padding: '5px 12px', border: `1px solid ${NAV_BORD}`, borderRadius: '6px', flexShrink: 0, fontFamily: SANS, background: '#FFFFFF' }}>
                 Login
               </Link>
               {/* dom-integrity-ignore-line */}
-              <span title="Demo temporarily unavailable — new version coming soon" style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.45)', background: 'rgba(255,255,255,0.06)', padding: '5px 14px', borderRadius: '4px', flexShrink: 0, fontFamily: SANS, border: '1px solid rgba(255,255,255,0.1)', cursor: 'default' }}>
+              <span title="Demo temporarily unavailable — new version coming soon" style={{ fontSize: '12px', fontWeight: 600, color: NAV_MUTE, background: '#F5F3EE', padding: '5px 14px', borderRadius: '6px', flexShrink: 0, fontFamily: SANS, border: `1px solid ${NAV_BORD}`, cursor: 'default' }}>
                 Demo soon
               </span>
             </>
@@ -378,7 +388,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
 
 export default function AbarvaNav(props: NavProps) {
   return (
-    <Suspense fallback={<div style={{ height: '60px', background: NAV_BG, borderBottom: '1px solid rgba(255,255,255,0.08)' }} />}>
+    <Suspense fallback={<div style={{ height: '56px', background: NAV_BG, borderBottom: BORDER.hairline }} />}>
       <NavInner {...props} />
     </Suspense>
   )

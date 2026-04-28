@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="520" viewBox="0 0 1600 520" role="img" aria-labelledby="title desc">
+  <title id="title">AbarVa logo lockup revised</title>
+  <desc id="desc">AbarVa wordmark with refined intelligence-inspired orbital symbol, smaller mark, tighter Va spacing, Abar in black and Va in dark sky blue.</desc>
+  <defs>
+    <style>
+      .ink { fill: #070707; }
+      .blue { fill: #0b4a91; }
+      .stroke-ink { stroke: #070707; }
+      .word { font-family: "Cormorant Garamond", "Georgia", "Times New Roman", serif; }
+      .strong { font-weight: 700; }
+      .regular { font-weight: 400; }
+    </style>
+  </defs>
+  <rect width="1600" height="520" fill="transparent"/>
+  <g id="abarva-symbol" transform="translate(152 158) scale(0.658)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M104 1 L111 18 L128 25 L111 32 L104 49 L97 32 L80 25 L97 18 Z" fill="#0b4a91" stroke="none"/>
+    <path d="M12 118 H50" class="stroke-ink" stroke-width="6"/>
+    <path d="M166 118 H201" class="stroke-ink" stroke-width="6"/>
+    <circle cx="214" cy="118" r="14" stroke="#070707" stroke-width="6" fill="#fffdf7"/>
+    <path d="M230 118 H250" class="stroke-ink" stroke-width="6"/>
+    <path d="M52 121 C50 68 91 33 144 42" class="stroke-ink" stroke-width="8"/>
+    <path d="M174 74 C202 124 169 181 112 190" class="stroke-ink" stroke-width="8"/>
+    <path d="M63 173 C37 133 48 82 88 58" class="stroke-ink" stroke-width="5" opacity="0.95"/>
+    <path d="M156 51 C195 75 211 125 188 166" class="stroke-ink" stroke-width="5" opacity="0.95"/>
+    <circle cx="112" cy="118" r="68" class="stroke-ink" stroke-width="8"/>
+    <circle cx="112" cy="118" r="42" class="stroke-ink" stroke-width="8"/>
+    <circle cx="112" cy="118" r="18" fill="#0b4a91" stroke="none"/>
+  </g>
+  <g id="abarva-wordmark" transform="translate(350 299)">
+    <text class="word strong ink" x="0" y="0" font-size="168" letter-spacing="-8">A</text>
+    <text class="word regular ink" x="104" y="0" font-size="168" letter-spacing="-8">bar</text>
+    <text class="word strong blue" x="318" y="0" font-size="168" letter-spacing="-9">V</text>
+    <text class="word regular blue" x="416" y="0" font-size="168" letter-spacing="-9">a</text>
+  </g>
+</svg>

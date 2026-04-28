@@ -62,6 +62,31 @@ const eslintConfig = defineConfig([
       "react-hooks/set-state-in-effect": "off",
     },
   },
+  // CLEAN1-4: block re-introduction of retired directory names.
+  {
+    rules: {
+      "no-restricted-imports": ["error", {
+        patterns: [
+          {
+            group: ["*/components/agents", "*/components/agents/*"],
+            message: "Use @/components/agent/ (canonical path — see CLEAN1)",
+          },
+          {
+            group: ["*/components/brand", "*/components/brand/*"],
+            message: "Use @/components/abarva/ (canonical path — see CLEAN1)",
+          },
+          {
+            group: ["*/components/identity", "*/components/identity/*"],
+            message: "Use @/components/abarva/ (canonical path — see CLEAN1)",
+          },
+          {
+            group: ["*/lib/agents", "*/lib/agents/*"],
+            message: "Use @/lib/agent/ (canonical path — see CLEAN1)",
+          },
+        ],
+      }],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
