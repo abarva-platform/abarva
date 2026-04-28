@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-04-25",
+  "lastUpdated": "2026-04-28",
   "source": "Deterministic dispatch queue for AbarVa multi-lane build batches. Owned jointly by Builder and Reviewer. Items listed here are recommended slices; the founder remains the sole authority on what actually ships.",
   "lifecycle": [
     "proposed",
@@ -15,8 +15,11 @@
       "title": "Agent Mission Surface Wiring",
       "laneType": "ui",
       "priority": "high",
-      "status": "in_progress",
-      "dependsOn": ["AG10", "AG11"],
+      "status": "merged",
+      "dependsOn": [
+        "AG10",
+        "AG11"
+      ],
       "conflictRisk": "medium",
       "recommendedWorktree": "/Users/anand/Projects/nexus-pack-ag12",
       "recommendedBranch": "pack/ag12-mission-surface-wiring",
@@ -60,8 +63,12 @@
       "title": "Unified Context Builder Live Retrieval Wiring",
       "laneType": "read_model",
       "priority": "high",
-      "status": "in_progress",
-      "dependsOn": ["CTX2", "EVID2", "ADM3"],
+      "status": "merged",
+      "dependsOn": [
+        "CTX2",
+        "EVID2",
+        "ADM3"
+      ],
       "conflictRisk": "medium",
       "recommendedWorktree": "/Users/anand/Projects/nexus-pack-ctx3",
       "recommendedBranch": "pack/ctx3-unified-context-live-retrieval",
@@ -105,8 +112,10 @@
       "title": "Evidence Ledger Tenant-Bound Persistence Stub",
       "laneType": "read_model",
       "priority": "high",
-      "status": "in_progress",
-      "dependsOn": ["EVID2"],
+      "status": "merged",
+      "dependsOn": [
+        "EVID2"
+      ],
       "conflictRisk": "low",
       "recommendedWorktree": "/Users/anand/Projects/nexus-pack-evid3",
       "recommendedBranch": "pack/evid3-evidence-ledger-tenant-stub",
@@ -147,8 +156,11 @@
       "title": "Mission Workflow Cross-Agent Handoff Contract",
       "laneType": "read_model",
       "priority": "high",
-      "status": "in_progress",
-      "dependsOn": ["AG10", "AG11"],
+      "status": "merged",
+      "dependsOn": [
+        "AG10",
+        "AG11"
+      ],
       "conflictRisk": "low",
       "recommendedWorktree": "/Users/anand/Projects/nexus-pack-mw4",
       "recommendedBranch": "pack/mw4-mission-workflow-handoff",
@@ -189,8 +201,10 @@
       "title": "Agent Activity Inline Recommendation Variant",
       "laneType": "ui",
       "priority": "medium",
-      "status": "in_progress",
-      "dependsOn": ["AG11"],
+      "status": "merged",
+      "dependsOn": [
+        "AG11"
+      ],
       "conflictRisk": "low",
       "recommendedWorktree": "/Users/anand/Projects/nexus-pack-act2",
       "recommendedBranch": "pack/act2-agent-activity-inline-recommendation",
@@ -232,8 +246,10 @@
       "title": "Operating Model Verification Runbook",
       "laneType": "qa",
       "priority": "medium",
-      "status": "in_progress",
-      "dependsOn": ["OPS1"],
+      "status": "merged",
+      "dependsOn": [
+        "OPS1"
+      ],
       "conflictRisk": "low",
       "recommendedWorktree": "/Users/anand/Projects/nexus-pack-qa5",
       "recommendedBranch": "pack/qa5-operating-model-verification",
@@ -272,7 +288,7 @@
       "title": "Program Deliverables Library Filter View",
       "laneType": "ui",
       "priority": "medium",
-      "status": "ready",
+      "status": "merged",
       "dependsOn": [],
       "conflictRisk": "low",
       "recommendedWorktree": "/Users/anand/Projects/nexus-pack-pdel6",
@@ -315,8 +331,11 @@
       "title": "Agent Activity Hidden Drawer Variant",
       "laneType": "ui",
       "priority": "medium",
-      "status": "proposed",
-      "dependsOn": ["AG11", "ACT2"],
+      "status": "merged",
+      "dependsOn": [
+        "AG11",
+        "ACT2"
+      ],
       "conflictRisk": "low",
       "recommendedWorktree": "/Users/anand/Projects/nexus-pack-act3",
       "recommendedBranch": "pack/act3-agent-activity-hidden-drawer",
@@ -358,7 +377,7 @@
       "title": "Admin Setup Connector Health Read Model",
       "laneType": "read_model",
       "priority": "medium",
-      "status": "ready",
+      "status": "merged",
       "dependsOn": [],
       "conflictRisk": "low",
       "recommendedWorktree": "/Users/anand/Projects/nexus-pack-adm6",
@@ -400,7 +419,7 @@
       "title": "Pattern Registry Lifecycle Contract",
       "laneType": "read_model",
       "priority": "medium",
-      "status": "ready",
+      "status": "merged",
       "dependsOn": [],
       "conflictRisk": "low",
       "recommendedWorktree": "/Users/anand/Projects/nexus-pack-pat1",
@@ -442,8 +461,10 @@
       "title": "Pattern Promotion Linter",
       "laneType": "qa",
       "priority": "medium",
-      "status": "proposed",
-      "dependsOn": ["PAT1"],
+      "status": "merged",
+      "dependsOn": [
+        "PAT1"
+      ],
       "conflictRisk": "low",
       "recommendedWorktree": "/Users/anand/Projects/nexus-pack-pat2",
       "recommendedBranch": "pack/pat2-pattern-promotion-linter",
@@ -484,7 +505,7 @@
       "title": "Data Lineage Read Model",
       "laneType": "read_model",
       "priority": "medium",
-      "status": "ready",
+      "status": "merged",
       "dependsOn": [],
       "conflictRisk": "low",
       "recommendedWorktree": "/Users/anand/Projects/nexus-pack-data1",
@@ -526,8 +547,10 @@
       "title": "Data Lineage Inspector UI",
       "laneType": "ui",
       "priority": "medium",
-      "status": "proposed",
-      "dependsOn": ["DATA1"],
+      "status": "merged",
+      "dependsOn": [
+        "DATA1"
+      ],
       "conflictRisk": "low",
       "recommendedWorktree": "/Users/anand/Projects/nexus-pack-data2",
       "recommendedBranch": "pack/data2-data-lineage-inspector-ui",
@@ -569,8 +592,10 @@
       "title": "Model Gateway Live Provider Stub",
       "laneType": "runtime_stub",
       "priority": "high",
-      "status": "ready",
-      "dependsOn": ["MG2"],
+      "status": "merged",
+      "dependsOn": [
+        "MG2"
+      ],
       "conflictRisk": "medium",
       "recommendedWorktree": "/Users/anand/Projects/nexus-pack-mg3",
       "recommendedBranch": "pack/mg3-model-gateway-live-provider-stub",
@@ -611,8 +636,11 @@
       "title": "Tool Dispatcher Stub",
       "laneType": "runtime_stub",
       "priority": "high",
-      "status": "ready",
-      "dependsOn": ["TOOL2", "MG2"],
+      "status": "merged",
+      "dependsOn": [
+        "TOOL2",
+        "MG2"
+      ],
       "conflictRisk": "medium",
       "recommendedWorktree": "/Users/anand/Projects/nexus-pack-tool3",
       "recommendedBranch": "pack/tool3-tool-dispatcher-stub",
@@ -653,8 +681,11 @@
       "title": "Solution Canvas UI Shell",
       "laneType": "ui",
       "priority": "medium",
-      "status": "ready",
-      "dependsOn": ["SOL8", "SOL9"],
+      "status": "merged",
+      "dependsOn": [
+        "SOL8",
+        "SOL9"
+      ],
       "conflictRisk": "low",
       "recommendedWorktree": "/Users/anand/Projects/nexus-pack-sol10",
       "recommendedBranch": "pack/sol10-solution-canvas-ui-shell",
@@ -696,8 +727,11 @@
       "title": "Solution Architecture Draft Read Model",
       "laneType": "read_model",
       "priority": "medium",
-      "status": "proposed",
-      "dependsOn": ["SOL9", "SOL10"],
+      "status": "merged",
+      "dependsOn": [
+        "SOL9",
+        "SOL10"
+      ],
       "conflictRisk": "low",
       "recommendedWorktree": "/Users/anand/Projects/nexus-pack-sol11",
       "recommendedBranch": "pack/sol11-solution-architecture-draft",
@@ -738,8 +772,10 @@
       "title": "Intelligence Pattern Graph Read Model",
       "laneType": "read_model",
       "priority": "medium",
-      "status": "ready",
-      "dependsOn": ["PAT1"],
+      "status": "merged",
+      "dependsOn": [
+        "PAT1"
+      ],
       "conflictRisk": "low",
       "recommendedWorktree": "/Users/anand/Projects/nexus-pack-i5",
       "recommendedBranch": "pack/i5-intelligence-pattern-graph",
@@ -780,8 +816,10 @@
       "title": "Intelligence Pattern Graph UI Shell",
       "laneType": "ui",
       "priority": "medium",
-      "status": "proposed",
-      "dependsOn": ["I5"],
+      "status": "merged",
+      "dependsOn": [
+        "I5"
+      ],
       "conflictRisk": "low",
       "recommendedWorktree": "/Users/anand/Projects/nexus-pack-i6",
       "recommendedBranch": "pack/i6-intelligence-pattern-graph-ui",
@@ -823,8 +861,10 @@
       "title": "Production Readiness Validator CI Gate",
       "laneType": "integration",
       "priority": "high",
-      "status": "ready",
-      "dependsOn": ["PROD2"],
+      "status": "merged",
+      "dependsOn": [
+        "PROD2"
+      ],
       "conflictRisk": "medium",
       "recommendedWorktree": "/Users/anand/Projects/nexus-pack-prod3",
       "recommendedBranch": "pack/prod3-production-readiness-ci-gate",
