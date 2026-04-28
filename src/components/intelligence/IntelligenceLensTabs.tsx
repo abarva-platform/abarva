@@ -44,6 +44,11 @@ import {
 import { IntelligenceWorkflowCanvas } from '@/components/intelligence/IntelligenceWorkflowCanvas';
 import { KnowledgeFabricHealthPanel } from '@/components/intelligence/KnowledgeFabricHealthPanel';
 import type { TenantSeedPlan } from '@/lib/programs/enhancement-seed-planner';
+import {
+  buildApexRetailPatternPlanView,
+  type AppliedPattern,
+  type PatternEvidenceGap,
+} from '@/lib/intelligence/apex-retail-pattern-plan-view';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Design tokens (matches existing intelligence surface palette)
@@ -150,6 +155,9 @@ export function IntelligenceLensTabs({
         )}
         {activeTab === 'signals' && (
           <SignalsPanel tenantSlug={tenant.routeSlug} />
+        )}
+        {activeTab === 'pattern_plan' && (
+          <PatternPlanPanel />
         )}
       </div>
     </div>
@@ -969,6 +977,175 @@ function EvidenceRow({
       <span style={{ fontSize: 11, color: C.mutedSoft, fontStyle: 'italic' }}>
         {item.note}
       </span>
+    </div>
+  );
+}
+
+// ─── INT1: Pattern Plan panel ─────────────────────────────────────────────────
+
+function patternStatusBadge(status: AppliedPattern['applicationStatus']): React.CSSProperties {
+  const base: React.CSSProperties = {
+    display: 'inline-block',
+    padding: '2px 7px',
+    borderRadius: 4,
+    fontSize: 9,
+    fontWeight: 700,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase' as const,
+  };
+  switch (status) {
+    case 'active':      return { ...base, background: '#f0fdf4', color: '#166534' };
+    case 'candidate':   return { ...base, background: '#fefce8', color: '#854d0e' };
+    case 'monitoring':  return { ...base, background: '#eff6ff', color: '#1d4ed8' };
+    case 'deferred':    return { ...base, background: '#f5f3ff', color: '#5b21b6' };
+    default:            return { ...base, background: C.surface, color: C.muted, border: `1px solid ${C.border}` };
+  }
+}
+
+function evidenceBadge(strength: AppliedPattern['evidenceStrength']): React.CSSProperties {
+  const base: React.CSSProperties = {
+    display: 'inline-block',
+    padding: '2px 7px',
+    borderRadius: 4,
+    fontSize: 9,
+    fontWeight: 600,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase' as const,
+  };
+  switch (strength) {
+    case 'strong':  return { ...base, background: '#f0fdf4', color: '#166534' };
+    case 'partial': return { ...base, background: '#fefce8', color: '#854d0e' };
+    case 'weak':    return { ...base, background: '#fef2f2', color: '#991b1b' };
+    default:        return { ...base, background: C.surface, color: C.muted, border: `1px solid ${C.border}` };
+  }
+}
+
+function PatternPlanPanel() {
+  const view = buildApexRetailPatternPlanView();
+  const { summary, patterns, priorityPatterns } = view;
+  const prioritySet = new Set(priorityPatterns);
+
+  return (
+    <div
+      data-testid="intelligence-pattern-plan-panel"
+      style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 960 }}
+    >
+      {/* Header */}
+      <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', color: C.muted, textTransform: 'uppercase' }}>
+        {view.headline}
+      </div>
+
+      {/* Summary metrics */}
+      <div
+        data-testid="intelligence-pattern-plan-summary"
+        style={{ backgroundColor: C.card, border: `1px solid ${C.border}`, borderRadius: 6, padding: '16px 18px' }}
+      >
+        <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' as const, marginBottom: 12 }}>
+          {[
+            { label: 'Active', value: summary.activeCount },
+            { label: 'Candidate', value: summary.candidateCount },
+            { label: 'Monitoring', value: summary.monitoringCount },
+            { label: 'With gaps', value: summary.patternsWithGapsCount },
+          ].map((m, i) => (
+            <div key={`ppm-${i}`} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.08em', color: C.muted, textTransform: 'uppercase' }}>{m.label}</span>
+              <span style={{ fontSize: 22, fontWeight: 700, color: C.ink, lineHeight: 1 }}>{m.value}</span>
+            </div>
+          ))}
+        </div>
+        <p style={{ fontSize: 12, color: C.muted, margin: '0 0 4px', lineHeight: 1.5, fontStyle: 'italic', borderTop: `1px solid ${C.border}`, paddingTop: 10 }}>
+          {view.atlasGuidance}
+        </p>
+      </div>
+
+      {/* Applied patterns */}
+      <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', color: C.muted, textTransform: 'uppercase', marginBottom: -8 }}>
+        Applied patterns
+      </div>
+      {patterns.map((pattern: AppliedPattern) => (
+        <div
+          key={pattern.patternId}
+          data-testid={`intelligence-pattern-plan-item-${pattern.patternId}`}
+          style={{
+            backgroundColor: C.card,
+            border: `1px solid ${prioritySet.has(pattern.patternId) ? C.navy : C.border}`,
+            borderLeft: prioritySet.has(pattern.patternId) ? `3px solid ${C.navy}` : `1px solid ${C.border}`,
+            borderRadius: 6,
+            padding: '14px 16px',
+          }}
+        >
+          {/* Title row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' as const }}>
+            {prioritySet.has(pattern.patternId) && (
+              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: C.navy, textTransform: 'uppercase', background: C.navySoft, padding: '2px 6px', borderRadius: 3 }}>
+                Priority
+              </span>
+            )}
+            <span style={{ fontSize: 13, fontWeight: 600, color: C.ink }}>{pattern.title}</span>
+            <span style={patternStatusBadge(pattern.applicationStatus)}>{pattern.applicationStatus.replace('_', ' ')}</span>
+            <span style={evidenceBadge(pattern.evidenceStrength)}>Evidence: {pattern.evidenceStrength}</span>
+          </div>
+
+          {/* Client application */}
+          <p style={{ fontSize: 12, color: C.muted, margin: '0 0 8px', lineHeight: 1.5 }}>
+            {pattern.clientApplication}
+          </p>
+
+          {/* Evidence items */}
+          {pattern.evidenceItems.length > 0 && (
+            <div style={{ marginBottom: 8 }}>
+              <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.08em', color: C.mutedSoft, textTransform: 'uppercase', marginBottom: 4 }}>
+                Evidence on file
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                {pattern.evidenceItems.map((item, i) => (
+                  <div key={`ei-${pattern.patternId}-${i}`} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: 10, color: '#166534', flexShrink: 0, marginTop: 1 }}>✓</span>
+                    <span style={{ fontSize: 11, color: C.muted }}>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Evidence gaps */}
+          {pattern.evidenceGaps.length > 0 && (
+            <div
+              data-testid={`intelligence-pattern-plan-gaps-${pattern.patternId}`}
+              style={{ marginBottom: pattern.sentinelNextAction ? 8 : 0 }}
+            >
+              <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.08em', color: '#854d0e', textTransform: 'uppercase', marginBottom: 4 }}>
+                Evidence gaps
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {pattern.evidenceGaps.map((gap: PatternEvidenceGap) => (
+                  <div key={gap.gapId} style={{ background: '#fefce8', border: '1px solid #fde68a', borderRadius: 4, padding: '5px 8px' }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: '#854d0e' }}>{gap.label}</span>
+                    <span style={{ fontSize: 10, color: '#92400e', marginLeft: 6 }}>from {gap.source}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Sentinel next action */}
+          {pattern.sentinelNextAction && (
+            <div style={{ background: '#f0f4ff', border: '1px solid #c7d7fe', borderRadius: 4, padding: '6px 10px', fontSize: 11, color: '#1d4ed8', fontStyle: 'italic' }}>
+              <span style={{ fontWeight: 700, fontStyle: 'normal' }}>Sentinel: </span>
+              {pattern.sentinelNextAction}
+            </div>
+          )}
+        </div>
+      ))}
+
+      {/* Disclaimer */}
+      <div
+        data-testid="intelligence-pattern-plan-disclaimer"
+        data-honest-disclaimer="intelligence-pattern-plan"
+        style={{ fontSize: 9, color: C.mutedSoft, fontStyle: 'italic', lineHeight: 1.5, borderTop: `1px solid ${C.border}`, paddingTop: 10 }}
+      >
+        Deterministic seed · Pattern application status reflects fixture context for SRC-AMS-2026 at Stage 7 BAFO and APX-CDP-2026 at P3 Design. Live pattern activation tracking, dynamic evidence gap detection, and cross-client benchmarking are deferred.
+      </div>
     </div>
   );
 }

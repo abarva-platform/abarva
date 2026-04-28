@@ -1,4 +1,4 @@
-// INTEL4 · Intelligence Lens Tabs view-model.
+// INTEL4 + INT1 · Intelligence Lens Tabs view-model.
 //
 // Pure deterministic helper that returns metadata for the five canonical
 // lens tabs on the Intelligence surface: Summary, Evidence, Programs,
@@ -24,7 +24,8 @@ export type IntelligenceLensTab =
   | 'evidence'
   | 'programs'
   | 'actions'
-  | 'signals';
+  | 'signals'
+  | 'pattern_plan';
 
 export interface IntelligenceLensTabMeta {
   key: IntelligenceLensTab;
@@ -76,6 +77,12 @@ export const INTELLIGENCE_TABS: ReadonlyArray<IntelligenceLensTabMeta> = [
     key: 'signals',
     label: 'Signals',
     description: 'Raw Sentinel signals and workflow canvas modes',
+    hasApexRetailContent: true,
+  },
+  {
+    key: 'pattern_plan',
+    label: 'Pattern Plan',
+    description: 'Client-specific applied pattern plan — application status, evidence gaps, and priority actions',
     hasApexRetailContent: true,
   },
 ];
