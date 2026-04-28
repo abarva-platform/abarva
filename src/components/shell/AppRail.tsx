@@ -8,7 +8,7 @@ import { SHELL } from '@/lib/shell/shell-tokens';
 export interface AppRailProps {}
 
 const NAV_ITEMS = [
-  { key: 'setup',        label: 'Setup',    glyph: 'St', href: '/platform/admin' },
+  { key: 'setup',        label: 'Setup',    glyph: 'St', href: '/admin' },
   { key: 'programs',     label: 'Programs', glyph: 'Pr', href: '/programs' },
   { key: 'source',       label: 'Source',   glyph: 'So', href: '/source' },
   { key: 'intelligence', label: 'Intel',    glyph: 'In', href: '/intelligence' },
@@ -22,7 +22,7 @@ function detectSurface(pathname: string): SurfaceKey | null {
   if (pathname.startsWith('/intelligence')) return 'intelligence';
   if (pathname.startsWith('/tower')) return 'tower';
   if (pathname.startsWith('/source')) return 'source';
-  if (pathname.startsWith('/platform')) return 'setup';
+  if (pathname.startsWith('/admin') || pathname.startsWith('/platform')) return 'setup';
   return null;
 }
 
