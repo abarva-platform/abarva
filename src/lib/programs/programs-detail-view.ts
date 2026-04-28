@@ -135,6 +135,32 @@ const APX_CC_2026_P4_WORKBENCH: ProgramWorkbenchContent = {
   ],
 };
 
+// ─── APX-CC-2026 specific workbench (P5 Activate — locked/pending from P4 Build) ──
+
+const APX_CC_2026_P5_WORKBENCH: ProgramWorkbenchContent = {
+  title: 'P5 Activate · Activation Pending',
+  prose: 'P5 Activate is locked until Build gate clears. IVR migration and dashboard delivery are the remaining Build blockers. Once cleared, the Activate phase opens a 4-week launch runway with phased contact center rollout and early churn monitoring.',
+  actionsLabel: 'Unlock path',
+  actions: [
+    { letter: 'A', text: 'Complete IVR migration', detail: 'Last Build blocker — 3 sprints remaining' },
+    { letter: 'B', text: 'Deliver supervisor dashboard', detail: 'Final build deliverable — UX review pending' },
+    { letter: 'C', text: 'Preview Activate launch plan', detail: 'Phased rollout: 200 agents in Week 1' },
+  ],
+};
+
+// ─── APX-DFV2-2025 specific workbench (P6 Operate — steady state, live) ──────
+
+const APX_DFV2_P6_WORKBENCH: ProgramWorkbenchContent = {
+  title: 'P6 Operate · Steady State',
+  prose: 'Demand Forecasting v2 has been live since November 2025. Forecast accuracy is at 87% — 5pp above the 82% target. Inventory waste reduction is running $1.4M/yr against a $1.2M projection. Atlas is monitoring weekly model drift and seasonal retraining cycles.',
+  actionsLabel: 'Atlas monitors',
+  actions: [
+    { letter: 'A', text: 'Review outcome actuals', detail: '$1.4M/yr savings vs $1.2M projection — 17% ahead' },
+    { letter: 'B', text: 'Check model drift report', detail: 'Q2 retraining cycle due in 3 weeks' },
+    { letter: 'C', text: 'View full outcome report', detail: 'Tower value lens · APX-DFV2 deep-dive' },
+  ],
+};
+
 // ─── APX-CDP-2026 specific workbench (demo flagship) ─────────────────────────
 // P2 Synthesis · Design gate pending · Workshop 5 incomplete · 36% evidence
 // Linked source: AMS Vendor Consolidation 2026 · Stage 7 BAFO
@@ -179,6 +205,12 @@ function buildWorkbenchContent(
   }
   if (programId === 'apx-cc-2026' && viewingPhase === 4 && viewingPhaseState === 'current') {
     return APX_CC_2026_P4_WORKBENCH;
+  }
+  if (programId === 'apx-cc-2026' && viewingPhase === 5) {
+    return APX_CC_2026_P5_WORKBENCH;
+  }
+  if (programId === 'apx-dfv2-2025' && viewingPhase === 6 && viewingPhaseState === 'current') {
+    return APX_DFV2_P6_WORKBENCH;
   }
   // Demo flagship override — P2 Synthesis active view
   if (programId === 'apx-cdp-2026' && viewingPhase === 2 && viewingPhaseState === 'current') {
@@ -266,6 +298,29 @@ function buildPhasePanel(
         { criterion: 'Operator dashboard MVP complete', met: false },
         { criterion: 'Load test passing at 2× peak traffic', met: false },
         { criterion: 'Sponsor sign-off on Activate criteria', met: false },
+      ],
+    };
+  }
+  // APX-CC-2026 P5 gate — locked/pending view from P4 Build perspective
+  if (programId === 'apx-cc-2026' && viewingPhase === 5) {
+    return {
+      gateCriteria: [
+        { criterion: 'IVR migration complete', met: false },
+        { criterion: 'Supervisor dashboard delivered', met: false },
+        { criterion: 'Load test passed (500 concurrent)', met: false },
+        { criterion: 'Sponsor sign-off on Build gate', met: false },
+      ],
+      blockerNote: 'P5 Activate entry requires clearing the Build gate (P4). Two blockers remain: IVR migration and dashboard delivery.',
+    };
+  }
+  // APX-DFV2-2025 P6 gate — steady state operating view
+  if (programId === 'apx-dfv2-2025' && viewingPhase === 6) {
+    return {
+      deliverables: [
+        { label: 'Weekly demand forecast run', status: 'done' as const },
+        { label: 'Q1 outcome report published', status: 'done' as const },
+        { label: 'Q2 seasonal retraining', status: 'pending' as const },
+        { label: 'Model drift monitoring (Atlas)', status: 'done' as const },
       ],
     };
   }
