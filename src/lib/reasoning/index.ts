@@ -78,6 +78,20 @@ export { buildProgramSynthesisContext, programInstanceStateHash } from './progra
 // Tower (Atlas) portfolio synthesis context builder — REASON-17
 export { buildTowerSynthesisContext, towerStateHash } from './tower-synthesis-context-builder';
 
+// Synthesis telemetry — in-memory ring buffer + feedback channel
+export {
+  recordSynthesisEvent,
+  getRecentSynthesisEvents,
+  recordFeedback,
+  SYNTHESIS_TELEMETRY_CAPACITY,
+} from './synthesis-telemetry';
+export type {
+  SynthesisTelemetryEvent,
+  SynthesisTelemetryInput,
+  SynthesisSurface,
+  SynthesisFeedback,
+} from './synthesis-telemetry';
+
 // Cross-instance reasoner — REASON-18 + REASON-9
 export {
   resolveLinkedProgram,

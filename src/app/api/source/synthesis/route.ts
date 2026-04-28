@@ -6,6 +6,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { SOURCE_EVENT_INSTANCES } from "@/lib/source/source-event-instances";
 import { PAT_SRC_AMS_001 } from "@/lib/intelligence/source-lifecycle-patterns";
 import { buildSourceSynthesisContext, instanceStateHash } from "@/lib/reasoning/synthesis-context-builder";
+import { recordSynthesisEvent } from "@/lib/reasoning/synthesis-telemetry";
 import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
 
 // Simple in-memory cache: key → text response
@@ -28,6 +29,7 @@ Format: Plain prose, 40–60 words. No headers, no bullets, no markdown.
 ${AGENT_DEMO_SYSTEM_BLOCK}`;
 
 export async function POST(request: Request) {
+  const startedAt = Date.now();
   const body = (await request.json()) as { instanceId?: string; patternId?: string };
   const instanceId = body.instanceId ?? 'ams-vendor-consolidation-2026';
 
@@ -45,17 +47,34 @@ export async function POST(request: Request) {
   // Only AMS-001 pattern supported in REASON-14; extend as more patterns author
   const pattern = PAT_SRC_AMS_001;
 
+  // Build context up-front so we can attach telemetry counts to both
+  // cache-hit and cache-miss responses.
+  const ctx = buildSourceSynthesisContext(instance, pattern);
+
   // Cache check
   const stateHash = instanceStateHash(instance);
   const cacheKey = `${instance.id}:${stateHash}:${pattern.version}:sentinel`;
   const cached = synthesisCache.get(cacheKey);
   if (cached) {
+    const event = recordSynthesisEvent({
+      surface: 'source',
+      instanceId: instance.id,
+      patternId: pattern.patternId,
+      cacheHit: true,
+      latencyMs: Date.now() - startedAt,
+      citationCount: ctx.citations.length,
+      contradictionCount: ctx.activeContradictions.length,
+      failureModeCount: ctx.failureModes.length,
+      gateCount: ctx.gatesSummary.total,
+    });
     return new Response(cached, {
-      headers: { "Content-Type": "text/plain; charset=utf-8", "X-Cache": "HIT" },
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "X-Cache": "HIT",
+        "X-Synthesis-Event-Id": event.id,
+      },
     });
   }
-
-  const ctx = buildSourceSynthesisContext(instance, pattern);
 
   // Build the structured prompt from synthesis context
   const userMessage = buildSynthesisUserMessage(ctx);
@@ -71,6 +90,18 @@ export async function POST(request: Request) {
 
   const encoder = new TextEncoder();
   let accumulated = '';
+
+  const event = recordSynthesisEvent({
+    surface: 'source',
+    instanceId: instance.id,
+    patternId: pattern.patternId,
+    cacheHit: false,
+    latencyMs: Date.now() - startedAt,
+    citationCount: ctx.citations.length,
+    contradictionCount: ctx.activeContradictions.length,
+    failureModeCount: ctx.failureModes.length,
+    gateCount: ctx.gatesSummary.total,
+  });
 
   const readable = new ReadableStream({
     async start(controller) {
@@ -93,6 +124,7 @@ export async function POST(request: Request) {
       "Content-Type": "text/plain; charset=utf-8",
       "Transfer-Encoding": "chunked",
       "X-Cache": "MISS",
+      "X-Synthesis-Event-Id": event.id,
     },
   });
 }

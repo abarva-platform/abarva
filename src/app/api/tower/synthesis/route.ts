@@ -9,6 +9,7 @@ import {
   buildTowerSynthesisContext,
   towerStateHash,
 } from "@/lib/reasoning/tower-synthesis-context-builder";
+import { recordSynthesisEvent } from "@/lib/reasoning/synthesis-telemetry";
 import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
 
 // Simple in-memory cache: key → text response
@@ -54,23 +55,39 @@ export async function POST(_request: Request) {
   // Tower has no body parameters — context is the whole portfolio.
   void _request;
 
+  const startedAt = Date.now();
   const programInstances = APEX_RETAIL_PROGRAM_INSTANCES;
   const sourceEventInstances = SOURCE_EVENT_INSTANCES;
+
+  // Build context up-front so we can attach telemetry counts to both
+  // cache-hit and cache-miss responses.
+  const ctx = buildTowerSynthesisContext(programInstances, sourceEventInstances);
 
   // Cache check
   const stateHash = towerStateHash(programInstances, sourceEventInstances);
   const cacheKey = `tower:${stateHash}:atlas:v1`;
   const cached = synthesisCache.get(cacheKey);
   if (cached) {
+    const event = recordSynthesisEvent({
+      surface: 'tower',
+      instanceId: 'tower',
+      patternId: null,
+      cacheHit: true,
+      latencyMs: Date.now() - startedAt,
+      citationCount: ctx.citations.length,
+      contradictionCount: ctx.activeContradictions.length,
+      failureModeCount: ctx.failureModes.length,
+      gateCount: ctx.gatesSummary.total,
+    });
     return new Response(cached, {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
         "X-Cache": "HIT",
+        "X-Synthesis-Event-Id": event.id,
       },
     });
   }
 
-  const ctx = buildTowerSynthesisContext(programInstances, sourceEventInstances);
   const snap = ctx.instanceSnapshot as {
     programCount: number;
     sourceEventCount: number;
@@ -130,6 +147,18 @@ export async function POST(_request: Request) {
   const encoder = new TextEncoder();
   let accumulated = '';
 
+  const event = recordSynthesisEvent({
+    surface: 'tower',
+    instanceId: 'tower',
+    patternId: null,
+    cacheHit: false,
+    latencyMs: Date.now() - startedAt,
+    citationCount: ctx.citations.length,
+    contradictionCount: ctx.activeContradictions.length,
+    failureModeCount: ctx.failureModes.length,
+    gateCount: ctx.gatesSummary.total,
+  });
+
   const readable = new ReadableStream({
     async start(controller) {
       for await (const chunk of stream) {
@@ -154,6 +183,7 @@ export async function POST(_request: Request) {
       "Content-Type": "text/plain; charset=utf-8",
       "Transfer-Encoding": "chunked",
       "X-Cache": "MISS",
+      "X-Synthesis-Event-Id": event.id,
     },
   });
 }
