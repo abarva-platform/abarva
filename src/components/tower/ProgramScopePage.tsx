@@ -413,6 +413,7 @@ export function ProgramScopePage() {
         agentContext={scope.agentContext}
         actions={scope.actions}
         surface="tower"
+        programId="apx-cdp-2026"
       />
 
       <div
