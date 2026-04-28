@@ -9,6 +9,11 @@
 // Journey rail: Phase 1 (Origination) is active; phases 2–6 are locked.
 // "Open Program →" is disabled until name + objective + sponsor are filled.
 // On open → redirect to /programs/apx-01 (demo anchor for Apex Retail).
+//
+// Wizard steps:
+//   Step 1 "opportunity" — program name + problem statement
+//   Step 2 "success"     — target outcome + timeline horizon
+//   Step 3 "owners"      — sponsor + lead + summary review + submit
 
 import * as React from 'react';
 import Link from 'next/link';
@@ -33,6 +38,16 @@ const AMBER   = '#b7791f';
 
 const MONO  = SHELL.MONO;
 const SANS  = SHELL.SANS;
+
+// ─── Step metadata ─────────────────────────────────────────────────────────
+
+const STEPS = [
+  { n: 1, slug: 'opportunity', label: 'Name the opportunity' },
+  { n: 2, slug: 'success',     label: 'Define success'       },
+  { n: 3, slug: 'owners',      label: 'Assign owners + confirm' },
+] as const;
+
+type StepNumber = 1 | 2 | 3;
 
 // ─── Form field ────────────────────────────────────────────────────────────
 
@@ -112,6 +127,180 @@ const SELECT_STYLE: React.CSSProperties = {
   paddingRight: 28,
 };
 
+// ─── Step indicator ────────────────────────────────────────────────────────
+
+function StepIndicator({ currentStep }: { currentStep: StepNumber }) {
+  const step = STEPS[currentStep - 1];
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        marginBottom: 16,
+      }}
+    >
+      {STEPS.map((s) => {
+        const isCurrent  = s.n === currentStep;
+        const isComplete = s.n < currentStep;
+        return (
+          <React.Fragment key={s.n}>
+            {s.n > 1 && (
+              <div
+                style={{
+                  flex: 1,
+                  height: 1,
+                  background: isComplete || isCurrent ? MINT : BORDER,
+                  transition: 'background 0.2s',
+                }}
+              />
+            )}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                opacity: isCurrent ? 1 : isComplete ? 0.75 : 0.38,
+              }}
+            >
+              <div
+                style={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  background: isCurrent ? INK : isComplete ? MINT : 'transparent',
+                  border: `1.5px solid ${isCurrent ? INK : isComplete ? MINT : BORDER}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  transition: 'background 0.2s, border-color 0.2s',
+                }}
+              >
+                {isComplete ? (
+                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                    <path d="M1 4l3 3 5-6" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                ) : (
+                  <span
+                    style={{
+                      fontFamily: MONO,
+                      fontSize: 10,
+                      fontWeight: 700,
+                      color: isCurrent ? '#fff' : SUBTLE,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {s.n}
+                  </span>
+                )}
+              </div>
+              <span
+                style={{
+                  fontFamily: SANS,
+                  fontSize: 11,
+                  fontWeight: isCurrent ? 600 : 400,
+                  color: isCurrent ? INK : MUTED,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {s.label}
+              </span>
+            </div>
+          </React.Fragment>
+        );
+      })}
+      {/* Current step label for screen readers / compact summary */}
+      <span
+        style={{
+          fontFamily: MONO,
+          fontSize: 10,
+          color: SUBTLE,
+          marginLeft: 'auto',
+          flexShrink: 0,
+        }}
+      >
+        Step {step.n} of {STEPS.length}
+      </span>
+    </div>
+  );
+}
+
+// ─── Summary review card (step 3) ─────────────────────────────────────────
+
+interface SummaryCardProps {
+  programName: string;
+  objective: string;
+  targetOutcome: string;
+  timeline: string;
+}
+
+function SummaryCard({ programName, objective, targetOutcome, timeline }: SummaryCardProps) {
+  const rows: Array<{ label: string; value: string }> = [
+    { label: 'Program name',      value: programName  || '—' },
+    { label: 'Problem statement', value: objective     || '—' },
+    { label: 'Target outcome',    value: targetOutcome || '—' },
+    { label: 'Timeline',          value: timeline      || 'Not defined' },
+  ];
+  return (
+    <div
+      style={{
+        background: 'rgba(27,38,50,0.03)',
+        border: `1px solid ${BORDER}`,
+        borderRadius: 8,
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          padding: '8px 12px',
+          borderBottom: `1px solid ${BORDER}`,
+          fontFamily: SANS,
+          fontSize: 10,
+          fontWeight: 700,
+          color: MUTED,
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
+        }}
+      >
+        Review · Steps 1 &amp; 2
+      </div>
+      <div style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {rows.map((r) => (
+          <div key={r.label} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+            <span
+              style={{
+                fontFamily: SANS,
+                fontSize: 11,
+                fontWeight: 600,
+                color: SUBTLE,
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                width: 130,
+                flexShrink: 0,
+                paddingTop: 1,
+              }}
+            >
+              {r.label}
+            </span>
+            <span
+              style={{
+                fontFamily: SANS,
+                fontSize: 12,
+                color: r.value === '—' || r.value === 'Not defined' ? SUBTLE : INK,
+                lineHeight: 1.4,
+                fontStyle: r.value === '—' || r.value === 'Not defined' ? 'italic' : 'normal',
+              }}
+            >
+              {r.value}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main component ────────────────────────────────────────────────────────
 
 export interface ProgramOriginationPageProps {
@@ -121,20 +310,31 @@ export interface ProgramOriginationPageProps {
 export function ProgramOriginationPage({ tenantSlug: _tenantSlug }: ProgramOriginationPageProps) {
   const router = useRouter();
 
-  // Form state
-  const [programName, setProgramName]       = React.useState('');
-  const [objective, setObjective]           = React.useState('');
-  const [sponsor, setSponsor]               = React.useState('');
-  const [targetOutcome, setTargetOutcome]   = React.useState('');
-  const [sourceEvent, setSourceEvent]       = React.useState('');
-  const [clientMaestro, setClientMaestro]   = React.useState('');
+  // Wizard step
+  const [currentStep, setCurrentStep] = React.useState<StepNumber>(1);
 
-  // Submission state
-  const [isSubmitting, setIsSubmitting]     = React.useState(false);
-  const [showSuccess, setShowSuccess]       = React.useState(false);
-  const [submitError, setSubmitError]       = React.useState<string | null>(null);
+  // Step 1 fields
+  const [programName, setProgramName] = React.useState('');
+  const [objective, setObjective]     = React.useState('');
 
-  const canOpen = programName.trim().length > 0 && objective.trim().length > 0 && sponsor !== '';
+  // Step 2 fields
+  const [targetOutcome, setTargetOutcome] = React.useState('');
+  const [timeline, setTimeline]           = React.useState('');
+
+  // Step 3 fields
+  const [sponsor, setSponsor]           = React.useState('');
+  const [clientMaestro, setClientMaestro] = React.useState('');
+
+  // Submission state (step 3 only)
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [showSuccess, setShowSuccess]   = React.useState(false);
+  const [submitError, setSubmitError]   = React.useState<string | null>(null);
+
+  // Step validity
+  const step1Valid = programName.trim().length > 0 && objective.trim().length > 0;
+  const step2Valid = true; // both fields optional
+  const step3Valid = sponsor !== '';
+  const canOpen    = step1Valid && step3Valid;
 
   const handleOpen = async () => {
     if (!canOpen || isSubmitting) return;
@@ -153,10 +353,8 @@ export function ProgramOriginationPage({ tenantSlug: _tenantSlug }: ProgramOrigi
             sponsorPersonId: sponsor,
             leadPersonId: clientMaestro || sponsor,
           },
-          originSource: sourceEvent
-            ? (sourceEvent.startsWith('thread') ? 'intelligence_thread' : 'tower_signal')
-            : 'user_initiated',
-          originSourceRef: sourceEvent || null,
+          originSource: 'user_initiated',
+          originSourceRef: null,
         }),
       });
 
@@ -218,6 +416,268 @@ export function ProgramOriginationPage({ tenantSlug: _tenantSlug }: ProgramOrigi
       detail: 'Generates scope + success criteria for sponsor sign-off',
     },
   ];
+
+  // ── Button helpers ────────────────────────────────────────────────────────
+
+  const ghostButtonStyle: React.CSSProperties = {
+    fontFamily: SANS,
+    fontSize: 12,
+    fontWeight: 500,
+    color: MUTED,
+    background: CARD,
+    border: `1px solid ${BORDER}`,
+    borderRadius: 6,
+    padding: '8px 14px',
+    cursor: 'pointer',
+    textDecoration: 'none',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+  };
+
+  const nextButtonStyle = (enabled: boolean): React.CSSProperties => ({
+    fontFamily: SANS,
+    fontSize: 12,
+    fontWeight: 700,
+    color: enabled ? '#fff' : SUBTLE,
+    background: enabled ? INK : 'rgba(27,38,50,0.07)',
+    border: `1px solid ${enabled ? INK : BORDER}`,
+    borderRadius: 6,
+    padding: '8px 18px',
+    cursor: enabled ? 'pointer' : 'not-allowed',
+    transition: 'background 0.15s, color 0.15s, border-color 0.15s',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    letterSpacing: '0.01em',
+  });
+
+  const submitButtonStyle = (enabled: boolean): React.CSSProperties => ({
+    ...nextButtonStyle(enabled),
+    minWidth: 148,
+    justifyContent: 'center',
+    background: showSuccess ? MINT : nextButtonStyle(enabled).background,
+    border: `1px solid ${showSuccess ? MINT : enabled ? INK : BORDER}`,
+    color: showSuccess ? '#fff' : nextButtonStyle(enabled).color,
+  });
+
+  // ── Render step content ───────────────────────────────────────────────────
+
+  function renderStepContent() {
+    if (currentStep === 1) {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <Field label="Program name" required>
+            <input
+              type="text"
+              placeholder="e.g. Contact Center AI Transformation"
+              value={programName}
+              onChange={(e) => setProgramName(e.target.value)}
+              style={INPUT_STYLE}
+              autoFocus
+            />
+          </Field>
+          <Field
+            label="Problem statement"
+            required
+            hint="One sentence: what problem are we solving?"
+          >
+            <textarea
+              placeholder="e.g. Deploy AI-assisted routing and summarization across 3 contact center hubs"
+              value={objective}
+              onChange={(e) => setObjective(e.target.value)}
+              style={TEXTAREA_STYLE}
+            />
+          </Field>
+        </div>
+      );
+    }
+
+    if (currentStep === 2) {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <Field
+            label="Target outcome"
+            hint="What does measurable success look like?"
+          >
+            <textarea
+              placeholder="e.g. Reduce handle time 30% · save $2.4M annually"
+              value={targetOutcome}
+              onChange={(e) => setTargetOutcome(e.target.value)}
+              style={TEXTAREA_STYLE}
+            />
+          </Field>
+          <Field label="Timeline horizon">
+            <select
+              value={timeline}
+              onChange={(e) => setTimeline(e.target.value)}
+              style={SELECT_STYLE}
+            >
+              <option value="">Not defined</option>
+              <option value="3 months">3 months</option>
+              <option value="6 months">6 months</option>
+              <option value="12 months+">12 months+</option>
+            </select>
+          </Field>
+        </div>
+      );
+    }
+
+    // Step 3
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <SummaryCard
+          programName={programName}
+          objective={objective}
+          targetOutcome={targetOutcome}
+          timeline={timeline}
+        />
+        <Field label="Executive sponsor" required hint="Must be a named executive with budget authority">
+          <select
+            value={sponsor}
+            onChange={(e) => setSponsor(e.target.value)}
+            style={SELECT_STYLE}
+          >
+            <option value="">— Select sponsor —</option>
+            <option value="ceo">Sarah Chen · CEO</option>
+            <option value="coo">Michael Torres · COO</option>
+            <option value="cfo">David Kim · CFO</option>
+            <option value="cto">Priya Patel · CTO</option>
+            <option value="cmo">James Wright · CMO</option>
+          </select>
+        </Field>
+        <Field
+          label="Program lead"
+          hint="Apex team member driving this program day-to-day"
+        >
+          <select
+            value={clientMaestro}
+            onChange={(e) => setClientMaestro(e.target.value)}
+            style={SELECT_STYLE}
+          >
+            <option value="">— Assign later —</option>
+            <option value="maestro-001">Alex Rivera · VP Operations</option>
+            <option value="maestro-002">Jordan Lee · Director, Digital</option>
+            <option value="maestro-003">Morgan Blake · Head of Analytics</option>
+          </select>
+        </Field>
+      </div>
+    );
+  }
+
+  // ── Render footer ─────────────────────────────────────────────────────────
+
+  function renderFooter() {
+    const isFirst = currentStep === 1;
+    const isLast  = currentStep === 3;
+
+    return (
+      <div
+        style={{
+          padding: '12px 18px',
+          borderTop: `1px solid ${BORDER}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: 'rgba(27,38,50,0.02)',
+        }}
+      >
+        {/* Left: status message (step 3) or empty space */}
+        <div
+          style={{
+            fontFamily: SANS,
+            fontSize: 11,
+            color: SUBTLE,
+            lineHeight: 1.4,
+            maxWidth: 440,
+          }}
+        >
+          {isLast
+            ? isSubmitting
+              ? 'Creating program record in Supabase…'
+              : showSuccess
+                ? 'Program created. Redirecting to program workbench…'
+                : canOpen
+                  ? 'Steward will begin classifying once the program opens.'
+                  : 'Select an executive sponsor to continue.'
+            : null}
+        </div>
+
+        {/* Right: navigation buttons */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {/* Back / Cancel */}
+            {isFirst ? (
+              <Link
+                href="/programs"
+                style={ghostButtonStyle}
+              >
+                Cancel
+              </Link>
+            ) : (
+              <button
+                onClick={() => setCurrentStep((s) => (s - 1) as StepNumber)}
+                style={ghostButtonStyle}
+              >
+                <span style={{ fontSize: 14, lineHeight: 1 }}>←</span> Back
+              </button>
+            )}
+
+            {/* Next / Submit */}
+            {isLast ? (
+              <button
+                onClick={handleOpen}
+                disabled={!canOpen || isSubmitting}
+                style={submitButtonStyle(canOpen && !isSubmitting)}
+              >
+                {showSuccess
+                  ? 'Program created ✓'
+                  : isSubmitting
+                    ? 'Creating program…'
+                    : (
+                      <>
+                        Open Program
+                        <span style={{ fontSize: 14, lineHeight: 1 }}>→</span>
+                      </>
+                    )}
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  if (currentStep === 1 && !step1Valid) return;
+                  setCurrentStep((s) => (s + 1) as StepNumber);
+                }}
+                disabled={currentStep === 1 && !step1Valid}
+                style={nextButtonStyle(currentStep === 2 || step1Valid)}
+              >
+                Next <span style={{ fontSize: 14, lineHeight: 1 }}>→</span>
+              </button>
+            )}
+          </div>
+
+          {submitError && (
+            <div
+              style={{
+                padding: '7px 12px',
+                background: 'rgba(185, 28, 28, 0.07)',
+                border: '1px solid rgba(185, 28, 28, 0.35)',
+                borderRadius: 6,
+                fontFamily: SANS,
+                fontSize: 12,
+                color: '#b91c1c',
+                maxWidth: 340,
+                textAlign: 'right',
+              }}
+            >
+              {submitError}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── JSX ───────────────────────────────────────────────────────────────────
 
   return (
     <AppShell
@@ -292,292 +752,33 @@ export function ProgramOriginationPage({ tenantSlug: _tenantSlug }: ProgramOrigi
           </div>
         </div>
 
-      {/* ── Origination form ─────────────────────────────────────── */}
-      <div
-        style={{
-          background: CARD,
-          border: `1px solid ${BORDER}`,
-          borderRadius: 10,
-          overflow: 'hidden',
-        }}
-      >
-        {/* Form header */}
+        {/* ── Wizard card ──────────────────────────────────────────── */}
         <div
           style={{
-            padding: '12px 18px',
-            borderBottom: `1px solid ${BORDER}`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
+            background: CARD,
+            border: `1px solid ${BORDER}`,
+            borderRadius: 10,
+            overflow: 'hidden',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span
-              style={{
-                fontFamily: SANS,
-                fontSize: 12,
-                fontWeight: 700,
-                color: INK,
-                letterSpacing: '0.01em',
-              }}
-            >
-              Program details
-            </span>
-            <span
-              style={{
-                fontFamily: MONO,
-                fontSize: 10,
-                color: SUBTLE,
-              }}
-            >
-              · fields marked * are required
-            </span>
-          </div>
-
-          {/* Required fields progress */}
+          {/* Card header with step indicator */}
           <div
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
+              padding: '14px 18px',
+              borderBottom: `1px solid ${BORDER}`,
             }}
           >
-            <span
-              style={{
-                fontFamily: MONO,
-                fontSize: 10,
-                color: canOpen ? MINT : MUTED,
-              }}
-            >
-              {[programName.trim().length > 0, objective.trim().length > 0, sponsor !== ''].filter(Boolean).length}
-              /3 required
-            </span>
-            <div
-              style={{
-                width: 60,
-                height: 3,
-                borderRadius: 999,
-                background: BORDER,
-                overflow: 'hidden',
-              }}
-            >
-              <div
-                style={{
-                  height: '100%',
-                  width: `${([programName.trim().length > 0, objective.trim().length > 0, sponsor !== ''].filter(Boolean).length / 3) * 100}%`,
-                  background: canOpen ? MINT : AMBER,
-                  borderRadius: 999,
-                  transition: 'width 0.2s ease',
-                }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* 2-column form grid */}
-        <div
-          style={{
-            padding: '18px',
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '16px 20px',
-          }}
-        >
-          {/* Left column */}
-          <Field label="Program name" required>
-            <input
-              type="text"
-              placeholder="e.g. Contact Center AI Transformation"
-              value={programName}
-              onChange={(e) => setProgramName(e.target.value)}
-              style={INPUT_STYLE}
-              autoFocus
-            />
-          </Field>
-
-          <Field
-            label="Target outcome"
-            hint="Quantifiable business result this program delivers"
-          >
-            <textarea
-              placeholder="e.g. Reduce handle time 30% · save $2.4M annually"
-              value={targetOutcome}
-              onChange={(e) => setTargetOutcome(e.target.value)}
-              style={TEXTAREA_STYLE}
-            />
-          </Field>
-
-          <Field
-            label="Strategic objective"
-            required
-            hint="One sentence: what problem are we solving?"
-          >
-            <textarea
-              placeholder="e.g. Deploy AI-assisted routing and summarization across 3 contact center hubs"
-              value={objective}
-              onChange={(e) => setObjective(e.target.value)}
-              style={TEXTAREA_STYLE}
-            />
-          </Field>
-
-          <Field
-            label="Link source event"
-            hint="Intelligence thread, signal, or meeting note that prompted this"
-          >
-            <select
-              value={sourceEvent}
-              onChange={(e) => setSourceEvent(e.target.value)}
-              style={SELECT_STYLE}
-            >
-              <option value="">— None / enter manually —</option>
-              <option value="thread-001">Thread · Q2 CX Cost Review (Apr 14)</option>
-              <option value="thread-002">Thread · AI Productivity Signal (Apr 20)</option>
-              <option value="signal-001">Signal · Atlas · Labor cost deviation +18%</option>
-              <option value="signal-002">Signal · Sentinel · Cart abandonment spike</option>
-            </select>
-          </Field>
-
-          <Field label="Executive sponsor" required hint="Must be a named executive with budget authority">
-            <select
-              value={sponsor}
-              onChange={(e) => setSponsor(e.target.value)}
-              style={SELECT_STYLE}
-            >
-              <option value="">— Select sponsor —</option>
-              <option value="ceo">Sarah Chen · CEO</option>
-              <option value="coo">Michael Torres · COO</option>
-              <option value="cfo">David Kim · CFO</option>
-              <option value="cto">Priya Patel · CTO</option>
-              <option value="cmo">James Wright · CMO</option>
-            </select>
-          </Field>
-
-          <Field
-            label="Client maestro"
-            hint="Apex team member driving this program day-to-day"
-          >
-            <select
-              value={clientMaestro}
-              onChange={(e) => setClientMaestro(e.target.value)}
-              style={SELECT_STYLE}
-            >
-              <option value="">— Assign later —</option>
-              <option value="maestro-001">Alex Rivera · VP Operations</option>
-              <option value="maestro-002">Jordan Lee · Director, Digital</option>
-              <option value="maestro-003">Morgan Blake · Head of Analytics</option>
-            </select>
-          </Field>
-        </div>
-
-        {/* Form footer + CTA */}
-        <div
-          style={{
-            padding: '12px 18px',
-            borderTop: `1px solid ${BORDER}`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            background: 'rgba(27,38,50,0.02)',
-          }}
-        >
-          <div
-            style={{
-              fontFamily: SANS,
-              fontSize: 11,
-              color: SUBTLE,
-              lineHeight: 1.4,
-              maxWidth: 440,
-            }}
-          >
-            {isSubmitting
-              ? 'Creating program record in Supabase…'
-              : showSuccess
-                ? 'Program created. Redirecting to program workbench…'
-                : canOpen
-                  ? 'Steward will begin classifying once the program opens. Charter gate activates after scope review.'
-                  : 'Fill in program name, objective, and executive sponsor to continue.'}
+            <StepIndicator currentStep={currentStep} />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Link
-                href="/programs"
-                style={{
-                  fontFamily: SANS,
-                  fontSize: 12,
-                  fontWeight: 500,
-                  color: MUTED,
-                  textDecoration: 'none',
-                  padding: '8px 14px',
-                  borderRadius: 6,
-                  border: `1px solid ${BORDER}`,
-                  background: CARD,
-                  pointerEvents: isSubmitting ? 'none' : undefined,
-                  opacity: isSubmitting ? 0.5 : 1,
-                }}
-              >
-                Cancel
-              </Link>
-              <button
-                onClick={handleOpen}
-                disabled={!canOpen || isSubmitting}
-                style={{
-                  fontFamily: SANS,
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: (canOpen && !isSubmitting) ? '#fff' : SUBTLE,
-                  background: showSuccess
-                    ? MINT
-                    : (canOpen && !isSubmitting)
-                      ? INK
-                      : 'rgba(27,38,50,0.07)',
-                  border: `1px solid ${showSuccess ? MINT : (canOpen && !isSubmitting) ? INK : BORDER}`,
-                  borderRadius: 6,
-                  padding: '8px 18px',
-                  cursor: (canOpen && !isSubmitting) ? 'pointer' : 'not-allowed',
-                  transition: 'background 0.15s, color 0.15s, border-color 0.15s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  letterSpacing: '0.01em',
-                  minWidth: 148,
-                  justifyContent: 'center',
-                }}
-              >
-                {showSuccess
-                  ? 'Program created ✓'
-                  : isSubmitting
-                    ? 'Creating program…'
-                    : (
-                      <>
-                        Open Program
-                        <span style={{ fontSize: 14, lineHeight: 1 }}>→</span>
-                      </>
-                    )
-                }
-              </button>
-            </div>
-
-            {submitError && (
-              <div
-                style={{
-                  padding: '7px 12px',
-                  background: 'rgba(185, 28, 28, 0.07)',
-                  border: '1px solid rgba(185, 28, 28, 0.35)',
-                  borderRadius: 6,
-                  fontFamily: SANS,
-                  fontSize: 12,
-                  color: '#b91c1c',
-                  maxWidth: 340,
-                  textAlign: 'right',
-                }}
-              >
-                {submitError}
-              </div>
-            )}
+          {/* Step content */}
+          <div style={{ padding: '18px' }}>
+            {renderStepContent()}
           </div>
+
+          {/* Footer navigation */}
+          {renderFooter()}
         </div>
-      </div>
       </div>
     </AppShell>
   );
