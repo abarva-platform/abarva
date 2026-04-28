@@ -34,8 +34,13 @@ export default async function ProgramDetailRoute({
     // silently fall back to fixture
   }
 
-  // Build view from fixture (always as base)
-  const view = buildProgramDetailView(id, viewingPhase);
+  // Extract the DB currentPhase BEFORE building the view so we can pass it as
+  // overrideCurrentPhase. This ensures phase slots and workbench content reflect the
+  // real phase (e.g. P3 after gate approval) rather than the fixture's hardcoded phase.
+  const dbCurrentPhase = dbData?.engagement?.current_phase ?? undefined;
+
+  // Build view from fixture (always as base), passing DB phase override when available.
+  const view = buildProgramDetailView(id, viewingPhase, dbCurrentPhase ?? undefined);
 
   // Always ensure the view uses the requested programId, not the fixture fallback id.
   // This matters when the program is not in the fixture set (e.g. newly created programs).
@@ -50,6 +55,8 @@ export default async function ProgramDetailRoute({
 
     // Override key scalar fields with real data
     view.name = eng.name ?? view.name;
+    // currentPhase is already set correctly via overrideCurrentPhase above,
+    // but keep the direct assignment as a safety net for any edge cases.
     if (eng.current_phase !== null && eng.current_phase !== undefined) {
       const clampedPhase = Math.max(0, Math.min(6, eng.current_phase)) as typeof view.currentPhase;
       view.currentPhase = clampedPhase;

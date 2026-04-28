@@ -11,6 +11,7 @@
 import {
   APEX_PROGRAMS_FIXTURE,
   PHASE_LABEL_MAP,
+  buildPhaseSlots,
 } from './programs-fixture';
 import type {
   ProgramAgentRailItem,
@@ -478,21 +479,36 @@ function buildPhasePanel(
 export function buildProgramDetailView(
   programId: string,
   requestedPhase?: number,
+  overrideCurrentPhase?: number,
 ): ProgramDetailView {
   // Look up program by id; fall back to APX-01 for demo safety
   const program =
     APEX_PROGRAMS_FIXTURE.find((p) => p.id === programId) ??
     APEX_PROGRAMS_FIXTURE[0];
 
-  // The fixture phases include 0 (Originate). We expose 1-6 in the navigator.
-  // Filter to phases 1-6 for the rail.
-  const railPhases = program.phases.filter(
-    (slot): slot is ProgramPhaseSlot & { id: 1 | 2 | 3 | 4 | 5 | 6 } =>
-      slot.id >= 1 && slot.id <= 6,
-  );
+  // If the caller provides an overrideCurrentPhase (e.g. from DB), use it.
+  // This ensures the phase rail and workbench content reflect the real current phase,
+  // not the fixture's hardcoded phase. Applies to both fixture programs (post-gate-advance)
+  // and non-fixture programs (newly created).
+  const effectiveCurrentPhase =
+    overrideCurrentPhase !== undefined
+      ? Math.max(1, Math.min(6, overrideCurrentPhase))
+      : program.currentPhase;
+
+  // Rebuild phase slots using the effective current phase, or fall back to the
+  // program fixture's slots if no override was given.
+  const railPhases =
+    overrideCurrentPhase !== undefined
+      ? buildPhaseSlots(effectiveCurrentPhase as ProgramPhaseId).filter(
+          (slot: ProgramPhaseSlot) => (slot.id as number) >= 1 && (slot.id as number) <= 6,
+        )
+      : program.phases.filter(
+          (slot): slot is ProgramPhaseSlot & { id: 1 | 2 | 3 | 4 | 5 | 6 } =>
+            slot.id >= 1 && slot.id <= 6,
+        );
 
   // Resolve viewing phase: default to currentPhase, clamped to 1-6
-  const clampedCurrent = Math.max(1, Math.min(6, program.currentPhase)) as ProgramPhaseId;
+  const clampedCurrent = Math.max(1, Math.min(6, effectiveCurrentPhase)) as ProgramPhaseId;
   let viewingPhase: ProgramPhaseId;
   if (requestedPhase !== undefined && requestedPhase >= 1 && requestedPhase <= 6) {
     viewingPhase = requestedPhase as ProgramPhaseId;
