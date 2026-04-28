@@ -157,3 +157,66 @@ export function buildProgramEvidenceMap(instance: ProgramInstance): Record<strin
 
   return map;
 }
+
+/**
+ * Same as `buildProgramEvidenceMap`, plus any items contributed at runtime via
+ * the in-memory evidence ingestion store. The base map is computed first
+ * (preserving signature parity with existing call sites) and then augmented
+ * additively:
+ *
+ *   - Each ingested item with a string `field` and a defined `value`
+ *     overwrites that key on the map (last-write-wins, mirroring the
+ *     fixture-evidence loop on the Source side).
+ *   - Items carrying a numeric `phase` (or string-numeric phase) flip the
+ *     corresponding `evidence-phase-${n}` key to true so phase-coverage
+ *     gate criteria pick the ingested item up.
+ *   - All ingested items are also surfaced as an array under
+ *     `evidence-uploaded-since-baseline` for criteria that look for
+ *     "fresh evidence on file" semantics rather than a specific field.
+ *   - `evidence-ingested-count` exposes the running tally of ingested
+ *     items so a gate criterion can require N pieces of evidence.
+ *
+ * This is the path the Programs detail page uses so a user can POST a new
+ * evidence item via the demo form and watch gates flip on next render.
+ * Out-of-process callers (CLI seed, fixture-only tests) keep using
+ * `buildProgramEvidenceMap` and stay deterministic.
+ */
+export function buildProgramEvidenceMapWithIngestions(
+  instance: ProgramInstance,
+): Record<string, unknown> {
+  // Lazy require keeps this module's import surface unchanged for fixture-only
+  // consumers and for tests that already mock `buildProgramEvidenceMap`.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { getEvidenceFor } = require('@/lib/reasoning/evidence-ingestion-store') as typeof import('@/lib/reasoning/evidence-ingestion-store');
+  const map = buildProgramEvidenceMap(instance);
+  const ingested = getEvidenceFor(instance.id);
+  if (ingested.length === 0) return map;
+
+  for (const ev of ingested) {
+    if (!ev || typeof ev !== 'object') continue;
+    const obj = ev as Record<string, unknown>;
+    if (typeof obj.field === 'string' && obj.value !== undefined) {
+      map[obj.field] = obj.value;
+    }
+    // Phase coverage: a phase number on the ingested item flips the
+    // `evidence-phase-${n}` key the same way fixture evidence does.
+    const rawPhase = obj.phase ?? obj.phaseId;
+    let phaseNum: number | undefined;
+    if (typeof rawPhase === 'number' && Number.isFinite(rawPhase)) {
+      phaseNum = rawPhase;
+    } else if (typeof rawPhase === 'string' && rawPhase.length > 0) {
+      const parsed = Number(rawPhase);
+      if (Number.isFinite(parsed)) phaseNum = parsed;
+    }
+    if (phaseNum !== undefined) {
+      map[`evidence-phase-${phaseNum}`] = true;
+    }
+  }
+  map['evidence-uploaded-since-baseline'] = ingested.slice();
+  map['evidence-ingested-count'] = ingested.length;
+  // Also bump the canonical evidence-count so criteria that read it via the
+  // base map see the ingested contributions reflected.
+  const baseCount = typeof map['evidence-count'] === 'number' ? (map['evidence-count'] as number) : 0;
+  map['evidence-count'] = baseCount + ingested.length;
+  return map;
+}
