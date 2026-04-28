@@ -1,0 +1,76 @@
+// Shell-native Intelligence surface fixture
+// Backs the AppShell-native /intelligence index page.
+
+export interface IntelligencePattern {
+  id: string;
+  name: string;
+  tier: 'T1' | 'T2' | 'T3';
+  status: 'validated' | 'emerging' | 'deprecated';
+  lastReviewed: string;
+  usedInPrograms: number;
+  description: string;
+}
+
+export interface IntelligenceIndexView {
+  patterns: IntelligencePattern[];
+  agentQuote: string;
+  agentContext: string;
+  actions: Array<{ letter: 'A' | 'B' | 'C'; text: string; detail?: string }>;
+}
+
+export const INTELLIGENCE_INDEX_VIEW: IntelligenceIndexView = {
+  patterns: [
+    {
+      id: 'T3-H01',
+      name: 'Ambient AI in Retail',
+      tier: 'T3',
+      status: 'validated',
+      lastReviewed: 'Apr 22 2026',
+      usedInPrograms: 4,
+      description: 'Instruments store environment passively — surfaces real-time decisions without staff queries.',
+    },
+    {
+      id: 'T3-H02',
+      name: 'Predictive Demand Sensing',
+      tier: 'T3',
+      status: 'validated',
+      lastReviewed: 'Apr 18 2026',
+      usedInPrograms: 2,
+      description: 'Combines POS velocity, weather, and event signals to sharpen 7-day demand forecasts.',
+    },
+    {
+      id: 'T2-C01',
+      name: 'Customer Lifetime Value Uplift',
+      tier: 'T2',
+      status: 'emerging',
+      lastReviewed: 'Apr 10 2026',
+      usedInPrograms: 1,
+      description: 'CLV modelling used to prioritize marketing spend and loyalty offer depth.',
+    },
+    {
+      id: 'T2-C02',
+      name: 'Contact Center AI Deflection',
+      tier: 'T2',
+      status: 'validated',
+      lastReviewed: 'Apr 14 2026',
+      usedInPrograms: 1,
+      description: 'LLM-powered resolution of top-10 contact drivers before human escalation.',
+    },
+    {
+      id: 'T1-F01',
+      name: 'Unified Customer Identity',
+      tier: 'T1',
+      status: 'validated',
+      lastReviewed: 'Mar 30 2026',
+      usedInPrograms: 3,
+      description: 'Foundation pattern: identity graph stitching across POS, loyalty, and digital channels.',
+    },
+  ],
+  agentQuote: 'Five patterns active across this library. T3-H01 leads on program citation count — four programs validated against it this cycle. Two emerging patterns are gaining evidence fast.',
+  agentContext: 'Sentinel · Pattern Library · 5 patterns · Apr 27 2026',
+  actions: [
+    { letter: 'A', text: 'Show validation evidence', detail: 'Pull the evidence ledger for all validated patterns' },
+    { letter: 'B', text: 'Surface emerging signals', detail: 'T2-C01 is gaining evidence — flag for promotion review' },
+    { letter: 'C', text: 'Add a new pattern', detail: 'Open the pattern authoring template in Synthesis' },
+  ],
+};
