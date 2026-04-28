@@ -15,8 +15,7 @@ import { requireTenancy } from "@/app/api/v1/programs/_auth";
 import { getEngagementWithPhaseData } from "@/lib/programs/db-phase-queries";
 import { PHASE_LABEL_MAP } from "@/lib/programs/programs-fixture";
 import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
-import { getStagePlaybook } from "@/lib/agent/stage-playbooks";
-import { getCategoryPlaybook } from "@/lib/agent/service-category-playbooks";
+import { retrieveStageContext, retrieveCategoryContext } from "@/lib/intelligence/agent-retrieval";
 
 // ── Agent voice map ────────────────────────────────────────────────────────────
 
@@ -139,12 +138,12 @@ export async function POST(request: Request) {
     }
   }
 
-  const categoryPlaybook = getCategoryPlaybook(
+  const categoryPlaybook = retrieveCategoryContext(
     (body.surfaceContext?.eventName as string) ?? '',
     (body.surfaceContext?.eventType as string) ?? undefined,
   );
 
-  const stagePlaybook = getStagePlaybook(stage);
+  const stagePlaybook = retrieveStageContext(stage);
 
 
   const systemPrompt = [
