@@ -1,8 +1,8 @@
-# AbarVa Patterns & Knowledge Layer · Comprehensive Backlog v1.2
+# AbarVa Patterns & Knowledge Layer · Comprehensive Backlog v1.1
 
-**Version:** 1.2 · April 28 2026
-**Supersedes:** v1.1 (same date — v1.1 had incomplete KS-1 remap notes and Phase 1 shipped target)
-**Status:** Comprehensive plan locked; Phase 1 shipped target reflected
+**Version:** 1.1 · April 28 2026
+**Supersedes:** v1.0 (same date — v1.0 had incomplete Phase 1)
+**Status:** Comprehensive plan locked
 **Purpose:** Drive the knowledge layer from architecturally-correct-but-thin to substantively-credible. Every phase produces a corpus state that is **demo-complete for the storylines it serves**, not partial.
 
 ---
@@ -97,12 +97,12 @@ Future-of-work programs, talent strategy, cross-tenant patterns, etc. Specified 
 
 | Primitive | End of Phase 1 | End of Phase 2 | End of Phase 3 | End of 90 days |
 |---|---|---|---|---|
-| **Patterns** | **✅ shipped 2026-04-28: 60 patterns** | 90 | 130 | 150 |
-| **Signals** | **✅ shipped 2026-04-28: 30 signals** | 50 | 100 | 200 |
-| **Solutions** | **✅ shipped 2026-04-28: 9 solutions** | 18 | 28 | 35 |
-| **Contradictions** | **✅ shipped 2026-04-28: 10 contradictions** | 18 | 25 | 30 |
+| **Patterns** | **65** (was 44) | 90 | 130 | 150 |
+| **Signals** | **30** (was 20) | 50 | 100 | 200 |
+| **Solutions** | **9** (P0 set) | 18 | 28 | 35 |
+| **Contradictions** | **10** (was 0) | 18 | 25 | 30 |
 
-Phase 1 is the comprehensiveness fix: every primitive type populated, all 9 demo storylines covered. The v1.2 shipped baseline is 60 patterns, 30 signals, 9 solutions, and 10 contradictions.
+Phase 1 is the comprehensiveness fix: every primitive type populated, all 9 demo storylines covered.
 
 ---
 
@@ -213,18 +213,6 @@ Same composition as v1.0 §6 but Phase 1 ships the full P0 set (was Phase 3 in v
 
 **Composition closure verified for the KS-1 solution set above:** every pattern referenced in a P0 solution is in Phase 1's pattern set. Test 4 of §0 passes.
 
-### §6.1 · Phase 1 remap notes
-
-KS-1 shipped the P0 solution set with the Phase 1 remappings already applied in the table above. The remaps remove draft-only pattern IDs and point each solution at pattern IDs that resolve in §4.
-
-| Prior draft reference | v1.2 resolved reference | Applied in §6 | Rationale |
-|---|---|---|---|
-| SOL-005 future-of-work draft reference | PAT-AI-013 | SOL-002 | The shipped coding-agent / Claude Code rollout solution uses the AI Talent Strategy pattern now defined in §4.4, rather than the deferred Future-of-Work draft namespace. |
-| SOL-005 cross-industry attribution draft reference | PAT-AI-010 | SOL-002 | ROI attribution for AI program outcomes is represented by PAT-AI-010 in §4.4, so the solution composes against the Phase 1 AI Programs domain instead of a draft cross-industry namespace. |
-| Cross-industry value / attribution draft reference | PAT-AI-010 | SOL-002, SOL-004, SOL-006 | Cross-industry value / attribution logic is consolidated into PAT-AI-010 for the v1.2 Phase 1 corpus. |
-
-Resolution check for §6 pattern references: PAT-AI-* references resolve to §4.4, PAT-ARCH-* references resolve to §4.5, PAT-CDP-* references resolve to §4.3, PAT-SRC-* references resolve to §4.2, and PAT-IND-RET-* references resolve to §4.8 as far as this planning document enumerates or ranges those IDs. No draft-only pattern IDs remain in §6.
-
 ---
 
 ## §7 · Contradiction backlog · 10 in Phase 1
@@ -233,18 +221,6 @@ Same 10 as v1.0 §7. Phase reassignment from Phase 3 → **Phase 1**.
 
 The first 5 (CON-001 through CON-005) are vendor-claim-vs-evidence type and are demo-distinctive. Without these, the contradiction concept doesn't render at demo time.
 
-### §7.5 · Contradiction confidence schema decision
-
-KF-2 needs a stable indexing contract for contradiction confidence. Three options were considered:
-
-| Option | Shape | Decision |
-|---|---|---|
-| Party-min | Derive contradiction confidence from the lowest party confidence value. | Rejected. This hides review state and overweights the weakest cited party even when the contradiction itself is accepted. |
-| Top-level field | Add a contradiction-level `confidence` field beside party-level confidence. | Rejected for KF-2. This creates a second confidence axis that can diverge from contradiction review status. |
-| Status-as-confidence | Treat contradiction `status` as the searchable confidence dimension; keep party confidence values inside the parties payload. | **Locked for KF-2 indexing.** |
-
-**Locked decision:** status-as-confidence. KF-2 relational indexing should not add a top-level contradiction confidence column. Contradictions index `status` as the queryable confidence / maturity dimension, while party-confidence values remain attached to their respective parties for audit and explanation.
-
 ---
 
 ## §8 · Knowledge fabric infrastructure backlog · phase reassignment
@@ -252,7 +228,7 @@ KF-2 needs a stable indexing contract for contradiction confidence. Three option
 | Wave | Description | Phase |
 |---|---|---|
 | **KF-1** | Pattern fixture loader | Phase 2 |
-| **KF-2** | 5-store indexing; uses §7.5 status-as-confidence for contradiction indexing | Phase 2 |
+| **KF-2** | 5-store indexing | Phase 2 |
 | **KF-3** | Atlas synthesis engine | Phase 2 |
 | **KF-4** | Cross-surface storyline injection | Phase 2 |
 | **KF-5** | Contradiction detection engine | Phase 3 |
@@ -447,7 +423,7 @@ Phase 2 outcome: corpus serves the **Phase 2 storylines** (§2.2 — industry de
 
 **Infrastructure waves:**
 - KF-1 · Pattern fixture loader
-- KF-2 · 5-store indexing (feature-flagged; uses §7.5 status-as-confidence for contradiction indexing)
+- KF-2 · 5-store indexing (touches architecture; founder-approved)
 - KF-3 · Atlas synthesis engine
 - KF-4 · Cross-surface storyline injection
 - SIG-INFRA-2 · Manual signal entry form
@@ -467,7 +443,7 @@ Same 5 tests as §0, applied to Phase 2 storylines. Notably:
 
 15-18 days. Longer than Phase 1 because:
 - Compliance bottleneck (founder review per pattern)
-- Infrastructure waves (KF-1 through KF-4) are heavier than fixture work; KF-2 writes remain feature-flagged while contradiction confidence indexes via status
+- Infrastructure waves (KF-1 through KF-4) are heavier than fixture work
 - More waves total (~12 vs Phase 1's ~10)
 
 ---
@@ -549,11 +525,11 @@ Pattern extraction waves don't conflict with module build waves. Different file 
 ## §18 · Document control
 
 - **Authoritative location:** `docs/build/PATTERNS_AND_KNOWLEDGE_LAYER_BACKLOG.md`
-- **Version:** 1.2 (supersedes 1.1 same date)
+- **Version:** 1.1 (supersedes 1.0 same date)
 - **Authored:** April 28 2026
 - **Owner:** Founder
 - **§0 standard:** locked. Future edits to Phases 2-5 must run the 5 tests before phase scope is locked.
 
 ---
 
-**End of patterns and knowledge layer backlog v1.2.**
+**End of patterns and knowledge layer backlog v1.1.**
