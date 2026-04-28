@@ -155,13 +155,14 @@ const ROUTE_REGISTRY: ReadonlyArray<RouteRegistryEntry> = [
   // --- Admin ---
   {
     routeId: 'admin-index',
-    pattern: '/platform/admin',
+    pattern: '/admin',
     label: 'Admin Portal',
     shellKind: 'admin',
     surface: 'admin',
     primaryAgent: 'Steward',
     requiresAuth: true,
     active: true,
+    notes: 'Legacy /platform/admin redirects to /admin; /admin is the canonical Setup operator entry.',
   },
   {
     routeId: 'admin-connectors',
