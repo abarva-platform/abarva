@@ -24,11 +24,43 @@ describe('Setup canonical route registry parity', () => {
     }
   });
 
+  it('registers canonical connector, users, invite, and audit Setup routes under /admin/*', () => {
+    const expected = [
+      ['admin-connectors', '/admin/connectors', 'Setup Connectors'],
+      ['admin-connector-detail', '/admin/connectors/[connectorId]', 'Setup Connector Detail'],
+      ['admin-connector-reconnect', '/admin/connectors/[connectorId]/reconnect', 'Setup Connector Reconnect'],
+      ['admin-users', '/admin/users', 'Setup Users'],
+      ['admin-users-access', '/admin/users-access', 'Setup Users Access'],
+      ['admin-invite', '/admin/invite', 'Setup Invite User'],
+      ['admin-audit', '/admin/audit', 'Setup Audit Log'],
+    ] as const;
+
+    for (const [routeId, pattern, label] of expected) {
+      const route = getRouteById(routeId);
+      expect(route).toBeDefined();
+      expect(route!.pattern).toBe(pattern);
+      expect(route!.label).toBe(label);
+      expect(route!.shellKind).toBe('admin');
+      expect(route!.surface).toBe('admin');
+      expect(route!.primaryAgent).toBe('Steward');
+      expect(route!.requiresAuth).toBe(true);
+      expect(route!.active).toBe(true);
+    }
+  });
+
   it('keeps platform architecture as a legacy redirect bridge, not canonical registry pattern', () => {
     const architecture = getRouteById('admin-architecture');
 
     expect(architecture?.pattern).toBe('/admin/architecture');
     expect(architecture?.notes).toContain('/platform/admin/architecture');
     expect(getRoutesBySurface('admin').some((route) => route.pattern === '/platform/admin/architecture')).toBe(false);
+  });
+
+  it('does not add legacy platform Setup routes as canonical connector/users/audit patterns', () => {
+    const adminRoutes = getRoutesBySurface('admin').map((route) => route.pattern);
+
+    expect(adminRoutes).not.toContain('/platform/admin/connectors');
+    expect(adminRoutes).not.toContain('/platform/admin/users');
+    expect(adminRoutes).not.toContain('/platform/admin/audit');
   });
 });
