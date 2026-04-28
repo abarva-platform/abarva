@@ -40,7 +40,7 @@ export const T3_H01_PATTERN = {
 
   // Used by programs
   usedByPrograms: [
-    { id: 'APX-CDP-2026', name: 'Apex Retail CDP Activation', phase: 'P2 Synthesis' },
+    { id: 'APX-CDP-2026', name: 'Apex Retail CDP Activation', phase: 'P3 Design' },
     { id: 'APX-CC-2026', name: 'Contact Center AI Transformation', phase: 'P4 Build' },
     { id: 'APX-SAP-2026', name: 'Store Associate Productivity AI', phase: 'P1 Discovery' },
     { id: 'APX-LPM-2026', name: 'Loyalty Platform Modernization', phase: 'P3 Design' },
@@ -54,7 +54,7 @@ export const T3_H01_PATTERN = {
   agentContext: 'Sentinel · T3-H01 · validated Apr 22 2026',
   actions: [
     { letter: 'A' as const, text: 'Promote to featured status', detail: 'Adds ★ to index listing · signals highest confidence' },
-    { letter: 'B' as const, text: 'Link to APX-CDP-2026', detail: 'Cite this pattern in the Design gate evidence for APX-CDP-2026' },
+    { letter: 'B' as const, text: 'Link to APX-CDP-2026', detail: 'Cite this pattern in the Build gate evidence — P3 Design active' },
     { letter: 'C' as const, text: 'Submit revision', detail: 'Propose an update to authoring guidance based on field experience' },
   ],
 };
