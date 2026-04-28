@@ -20,9 +20,11 @@ import type { SurfaceId, StageId } from './atlas-page-state';
 /**
  * Describes what the working pane should render for a given surface + stage.
  *
- * primaryArtifact    — main content (always present); fills available space.
- * secondaryArtifact  — optional supplemental panel; rendered below or beside
- *                      primary depending on layout mode.
+ * primaryArtifact    — main content; fills available space.
+ *                      When omitted, WorkingPaneContainer renders its
+ *                      children prop instead (backward-compat fallback).
+ * secondaryArtifact  — optional supplemental panel; rendered below primary
+ *                      with a max-height constraint.
  * stageTransitionAffordance — optional gate / advance affordance rendered at
  *                      the bottom of the pane; null for non-gate stages.
  * stageLabel         — short human-readable label for the current stage
@@ -31,7 +33,8 @@ import type { SurfaceId, StageId } from './atlas-page-state';
  *                      gate before advancing (e.g. P2→P3, P4→P5 in Programs).
  */
 export interface WorkingPaneShape {
-  primaryArtifact: ReactNode;
+  /** When absent, WorkingPaneContainer's children fill the primary slot. */
+  primaryArtifact?: ReactNode;
   secondaryArtifact?: ReactNode;
   stageTransitionAffordance?: ReactNode;
   stageLabel: string;

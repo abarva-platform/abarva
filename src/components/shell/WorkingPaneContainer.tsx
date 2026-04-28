@@ -67,6 +67,9 @@ export function WorkingPaneContainer({
   }
 
   // Shape resolved — render the structured pane.
+  // primaryArtifact is optional: if absent, render children in that slot.
+  const primaryContent = shape.primaryArtifact ?? children;
+
   return (
     <div
       style={{
@@ -77,16 +80,18 @@ export function WorkingPaneContainer({
         ...style,
       }}
     >
-      {/* Stage label breadcrumb */}
+      {/* Stage label breadcrumb strip */}
       <div
         style={{
-          padding: '6px 20px',
+          padding: '5px 20px',
           background: SHELL.PAPER_SOFT,
           borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
           display: 'flex',
           alignItems: 'center',
           gap: 8,
           flexShrink: 0,
+          height: 28,
+          boxSizing: 'border-box',
         }}
       >
         <span
@@ -119,9 +124,9 @@ export function WorkingPaneContainer({
         )}
       </div>
 
-      {/* Primary artifact — fills available space */}
+      {/* Primary slot — fills available space */}
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
-        {shape.primaryArtifact}
+        {primaryContent}
       </div>
 
       {/* Secondary artifact — optional, rendered below primary */}

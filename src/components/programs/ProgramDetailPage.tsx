@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { RibbonSynthesis } from '@/components/shell/RibbonSynthesis';
 import { AtlasDrawer } from '@/components/shell/AtlasDrawer';
+import { WorkingPaneContainer } from '@/components/shell/WorkingPaneContainer';
+import { programsShapeResolver } from '@/lib/programs/programs-shape-resolver';
 import { PhaseStrip } from '@/components/shell/PhaseStrip';
 import type { PhaseStripSlot } from '@/components/shell/PhaseStrip';
 import { SHELL } from '@/lib/shell/shell-tokens';
@@ -2610,15 +2612,13 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
           onToggle={() => setDrawerOpen((v) => !v)}
         />
 
-        {/* Work pane (scrollable) */}
-        <div
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            background: SHELL.PAPER,
-            padding: '24px 32px',
-          }}
+        {/* Work pane — WorkingPaneContainer adds stage label strip + gate badge
+            and renders existing content as children (Shell Layout Spec v2 §7) */}
+        <WorkingPaneContainer
+          shapeResolver={programsShapeResolver}
+          style={{ background: SHELL.PAPER }}
         >
+        <div style={{ padding: '24px 32px' }}>
         {/* Program header */}
         <div style={{ marginBottom: 20 }}>
           <div
@@ -2813,7 +2813,8 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
             />
           </div>
         )}
-      </div>
+        </div>
+      </WorkingPaneContainer>
       </div>
 
       {/* Mode B — AtlasDrawer (shared AtlasPageState, Shell Layout Spec v2 §5.1) */}
