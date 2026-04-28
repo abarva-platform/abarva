@@ -115,7 +115,7 @@ export const CONTRADICTION_SEEDS: ContradictionSeed[] = [
       'src/lib/intelligence/seed-patterns-ai-programs.ts',
     ],
     body:
-      'TODO: Attach the exact internal evidence packet behind the 1.8 hr/week attributed figure and reconcile it with the Copilot Finance pilot missing-input state.',
+      'Evidence enrichment: PAT-AI-010 supplies the confidence rationale for keeping the internal 1.8 hr/week figure below the vendor 5 hr/week benchmark: AI value must carry an attribution method, with cohort-matched evidence haircut to 0.85, survey evidence to 0.6, self-report to 0.4, and experimental evidence to 1.0. The Tower Finance pilot still names baseline_data and attribution_method as missing inputs, so this contradiction should not resolve to the vendor benchmark without a dated baseline and explicit attribution packet.',
   },
   {
     id: 'CON-004',
@@ -176,7 +176,7 @@ export const CONTRADICTION_SEEDS: ContradictionSeed[] = [
       'docs/source-material/intelligence-pack/04-vendor-sprawl-ai-tool-rationalization.md',
     ],
     body:
-      'TODO: Reconcile whether the 60 percent feature-overlap framing and 30 percent usage-overlap signal refer to the same surface, and whether the $0.6M and $0.8M pressures are additive or duplicate views.',
+      'Evidence enrichment: the current Phase 1 title differs from the kickoff SAP Joule example, so this enrichment follows the seeded Now Assist/Copilot contradiction. Tower evidence identifies P-DUPL overlap from M365 Copilot into Now Assist summarization at $0.8M, a consolidation path that saves $0.6M by shifting Now Assist seats to higher-value use cases, and reciprocal Now Assist overlap with M365 Copilot for FAQ summarization. Treat the $0.6M and $0.8M as directional pressure views until an overlap matrix proves whether they are additive savings or duplicate estimates of the same summarization surface.',
   },
   {
     id: 'CON-006',
@@ -206,7 +206,7 @@ export const CONTRADICTION_SEEDS: ContradictionSeed[] = [
       'src/lib/intelligence/seed-patterns-ai-programs.ts',
     ],
     body:
-      'TODO: Attach tenant-specific bypass instances with tool, acquisition path, threshold bypass, and violated policy clause.',
+      'Evidence enrichment: PAT-AI-002 establishes the formal governance lane, while PAT-AI-005 and the Keystone overlay supply the bypass mechanism: shadow AI, embedded vendor AI, and under-threshold procurement can move usage outside sanctioned review. External research ask: attach tenant procurement and usage evidence that names the tool, acquisition path, spend threshold used or avoided, approval route, violated policy clause, date, and accountable owner before resolving this from pattern-level tension to tenant-proven contradiction.',
   },
   {
     id: 'CON-007',
@@ -236,7 +236,7 @@ export const CONTRADICTION_SEEDS: ContradictionSeed[] = [
       'src/lib/intelligence/seed-patterns-ai-programs.ts',
     ],
     body:
-      'TODO: Add a real finance/procurement/IT spend snapshot with variance percentage and delta explanation.',
+      'External research ask: the corpus supports the existence of fragmented AI spend views but does not include a dated finance/procurement/IT reconciliation snapshot. Resolve with a same-period export from finance GL/AP, procurement contract records, IT SaaS or cloud inventory, and embedded-vendor AI entitlement data; the evidence packet should quantify variance percentage, dollar delta, excluded categories, and whether embedded AI, shadow subscriptions, inference usage, and seat licenses are counted once.',
   },
   {
     id: 'CON-008',
@@ -296,7 +296,7 @@ export const CONTRADICTION_SEEDS: ContradictionSeed[] = [
       'src/lib/intelligence/seed-patterns-industry.ts',
     ],
     body:
-      'TODO: Attach the specific ambient pilot charter, vendor pair or sequence, and downstream integration map if tenant-specific proof is required.',
+      'External research ask: the current corpus supports ambient-clinical value-chain and prior-authorization readiness patterns, but not a tenant-specific pilot sequence. Resolve with the signed pilot charter, named ambient vendors or rotation sequence, EHR and downstream integration map, specialty workflow roster, governance owner, evaluation criteria, and handoff metrics showing whether vendor comparison is sufficient or downstream readiness is the binding constraint.',
   },
   {
     id: 'CON-010',
@@ -326,7 +326,7 @@ export const CONTRADICTION_SEEDS: ContradictionSeed[] = [
       'src/lib/intelligence/seed-patterns-ai-programs.ts',
     ],
     body:
-      'TODO: Add the tenant-specific owner map and at least one concrete acquisition that bypassed the named owner.',
+      'Evidence enrichment: PAT-AI-002 and PAT-AI-014 support named ownership and sponsor activation, while PAT-AI-005 plus the Keystone overlay describe under-threshold acquisition as a channel that can bypass that authority. External research ask: attach the tenant AI-owner RACI, delegated procurement thresholds, intake policy, and at least one concrete acquisition record naming vendor, buyer, approval path, amount, date, and why the named owner did not control the decision.',
   },
 ];
 
