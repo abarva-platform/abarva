@@ -16,6 +16,7 @@ export interface AgentColumnProps {
   agentContext?: string;
   actions: AgentAction[];
   inputPlaceholder?: string;
+  onActionClick?: (letter: 'A' | 'B' | 'C') => void;
 }
 
 export function AgentColumn({
@@ -24,6 +25,7 @@ export function AgentColumn({
   agentContext,
   actions,
   inputPlaceholder,
+  onActionClick,
 }: AgentColumnProps) {
   const placeholder = inputPlaceholder ?? `Ask ${agent.name}...`;
 
@@ -181,7 +183,7 @@ export function AgentColumn({
 
         {/* Action items */}
         {actions.map((action) => (
-          <ActionItem key={action.letter} action={action} />
+          <ActionItem key={action.letter} action={action} onActionClick={onActionClick} />
         ))}
       </div>
 
@@ -229,7 +231,13 @@ export function AgentColumn({
   );
 }
 
-function ActionItem({ action }: { action: AgentAction }) {
+function ActionItem({
+  action,
+  onActionClick,
+}: {
+  action: AgentAction;
+  onActionClick?: (letter: 'A' | 'B' | 'C') => void;
+}) {
   return (
     <div
       role="button"
@@ -244,6 +252,8 @@ function ActionItem({ action }: { action: AgentAction }) {
         cursor: 'pointer',
         transition: 'padding-left 0.15s',
       }}
+      onClick={() => onActionClick?.(action.letter as 'A' | 'B' | 'C')}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onActionClick?.(action.letter as 'A' | 'B' | 'C'); }}
       onMouseEnter={(e) => {
         (e.currentTarget as HTMLDivElement).style.paddingLeft = '6px';
       }}
