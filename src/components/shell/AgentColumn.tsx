@@ -52,6 +52,12 @@ export interface AgentColumnProps {
    * while keeping `quote` as the compact-header fallback string.
    */
   synthesisNode?: ReactNode;
+  /**
+   * Optional provenance content rendered directly below the synthesis quote
+   * (and above `agentContext`). Used by the Source surface to expose the
+   * grounding for the streamed Sentinel synthesis (REASON-27).
+   */
+  provenanceSlot?: ReactNode;
 }
 
 // ── AgentColumn ───────────────────────────────────────────────────────────────
@@ -67,6 +73,7 @@ export function AgentColumn({
   surface,
   programId,
   synthesisNode,
+  provenanceSlot,
 }: AgentColumnProps) {
   const placeholder = inputPlaceholder ?? `Ask ${agent.name}…`;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -224,6 +231,9 @@ export function AgentColumn({
           >
             {synthesisNode ?? quote}
           </p>
+
+          {/* Provenance slot — renders directly below the synthesis quote (REASON-27) */}
+          {provenanceSlot && <div style={{ margin: '0 0 14px 0' }}>{provenanceSlot}</div>}
 
           {/* Agent context */}
           {agentContext && (

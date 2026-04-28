@@ -4,6 +4,7 @@ import { StageTrackerStrip } from '@/components/shell/StageTrackerStrip';
 import type { StageStatus } from '@/components/shell/StageTrackerStrip';
 import { SentinelAgentColumn } from '@/components/source/SentinelAgentColumn';
 import { SentinelSynthesisQuote } from '@/components/source/SentinelSynthesisQuote';
+import { SourceProvenanceRibbon } from '@/components/source/SourceProvenanceRibbon';
 import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
 import { NexusEngagementCanvas } from '@/components/source/NexusEngagementCanvas';
 import { SourceCommercialEventSection } from '@/components/source/SourceCommercialEventSection';
@@ -13,6 +14,7 @@ import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
 import { buildEvidenceMap } from '@/lib/source/source-event-instance';
 import { PAT_SRC_AMS_001 } from '@/lib/intelligence/source-lifecycle-patterns';
 import { createGateEvaluator } from '@/lib/reasoning/gate-evaluator';
+import { buildSourceSynthesisContext } from '@/lib/reasoning/synthesis-context-builder';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,6 +48,12 @@ export default async function SourceEventDetailPage({
     stageStates = raw;
   }
 
+  // REASON-27 — Build the SynthesisContext server-side so the provenance
+  // ribbon can surface what grounded the streamed Sentinel synthesis quote.
+  const synthesisContext = matchedInstance
+    ? buildSourceSynthesisContext(matchedInstance, PAT_SRC_AMS_001)
+    : null;
+
   return (
     <AppShell
       surface="source"
@@ -77,6 +85,7 @@ export default async function SourceEventDetailPage({
             fallback={`${event.name} at ${event.currentStageLabel}.${event.blocker ? ` Blocker: ${event.blocker}.` : ''}`}
           />
         }
+        provenanceSlot={synthesisContext ? <SourceProvenanceRibbon context={synthesisContext} /> : undefined}
         quote={`${event.name} at ${event.currentStageLabel}.`}
         agentContext={`Sentinel · ${event.name} · ${event.currentStageLabel}`}
         actions={[
