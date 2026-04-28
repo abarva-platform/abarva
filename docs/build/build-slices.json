@@ -9623,6 +9623,13 @@
       "category": "Programs",
       "status": "code_complete",
       "notes": "MaestroNextActionComposer added to Workshop section. buildMaestroNextActionView lib derives 3 contextual choices (gate/evidence/stakeholder/execution/phase focus) from program gate status and phase state, plus custom free-text option, disabled submit with honest reason. data-testid maestro-next-action-composer, maestro-action-choice-A/B/C, maestro-action-choice-custom, maestro-action-submit, maestro-action-composer-disclaimer. 36 integration tests. PROG24 from track-03."
+    },
+    {
+      "id": "SRC42",
+      "name": "Commercial Active Canvas Tab Consolidation",
+      "category": "Source",
+      "status": "code_complete",
+      "notes": "SourceEventDetailPage expanded from 5 tabs to 8. New tabs: SummaryTab (source-summary-tab testid, event facts + status roll-up), ReadinessTab (source-readiness-tab testid, 6 criteria with 4 done/1 pending/1 blocked + next actions), MissionsTab (source-missions-tab testid, 4 agent missions Sentinel/Nexus/Steward/Atlas). Default active tab changed from bafo to summary. All three new tabs have data-honest-disclaimer with Deterministic seed prefix. 29 integration tests. SRC42 from track-04."
     }
   ]
 }
