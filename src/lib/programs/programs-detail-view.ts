@@ -162,6 +162,32 @@ const APX_DFV2_P6_WORKBENCH: ProgramWorkbenchContent = {
   ],
 };
 
+// ─── APX-LPM-2026 specific workbench (P2 Synthesis · Active) ─────────────────
+
+const APX_LPM_2026_P2_WORKBENCH: ProgramWorkbenchContent = {
+  title: 'P2 Synthesis · Solution Options Under Review',
+  prose:
+    'Synthesis is progressing well. Sentinel has reviewed three loyalty platform modernization options: (1) Greenfield rebuild on the existing Snowflake data lake, (2) Vendor-managed SaaS loyalty engine with API integration, (3) Composable approach leveraging the in-flight CDP (APX-CDP-2026) as the identity backbone. Options 2 and 3 have conflicting cost models that Nexus is reconciling against the program budget. Design gate target is mid-May 2026.',
+  actionsLabel: 'Nexus recommends',
+  actions: [
+    {
+      letter: 'A',
+      text: 'Reconcile cost model conflict',
+      detail: 'Option 2 vs 3 · SaaS vs CDP-composable cost delta',
+    },
+    {
+      letter: 'B',
+      text: 'Request CDP dependency review',
+      detail: 'APX-CDP-2026 identity graph readiness for LPM',
+    },
+    {
+      letter: 'C',
+      text: 'Schedule Design gate review',
+      detail: 'Target: week of May 12 · sponsor + IT architect',
+    },
+  ],
+};
+
 // ─── APX-CDP-2026 P3 Design · post-gate-approval view ────────────────────────
 
 const APX_CDP_2026_P3_WORKBENCH: ProgramWorkbenchContent = {
@@ -239,6 +265,10 @@ function buildWorkbenchContent(
   }
   if (programId === 'apx-dfv2-2025' && viewingPhase === 6 && viewingPhaseState === 'current') {
     return APX_DFV2_P6_WORKBENCH;
+  }
+  // APX-LPM-2026 P2 Synthesis — solution options under review
+  if (programId === 'apx-lpm-2026' && viewingPhase === 2 && viewingPhaseState === 'current') {
+    return APX_LPM_2026_P2_WORKBENCH;
   }
   // Demo flagship override — P2 Synthesis active view
   if (programId === 'apx-cdp-2026' && viewingPhase === 2 && viewingPhaseState === 'current') {
@@ -353,6 +383,37 @@ function buildPhasePanel(
         { label: 'Q1 outcome report published', status: 'done' as const },
         { label: 'Q2 seasonal retraining', status: 'pending' as const },
         { label: 'Model drift monitoring (Atlas)', status: 'done' as const },
+      ],
+    };
+  }
+  // APX-LPM-2026 P2 Synthesis gate — three-option decision criteria
+  if (programId === 'apx-lpm-2026' && viewingPhase === 2 && viewingPhaseState === 'current') {
+    return {
+      gateCriteria: [
+        { criterion: 'Three solution options fully documented', met: true },
+        { criterion: 'Cost model conflict resolved (Option 2 vs 3)', met: false },
+        { criterion: 'CDP dependency assessment complete (APX-CDP-2026)', met: false },
+        { criterion: 'Business case draft reviewed by sponsor', met: false },
+        { criterion: 'Design gate review scheduled', met: false },
+      ],
+      evidenceItems: [
+        {
+          id: 'lpm-ev-1',
+          citation: 'Sentinel pattern review · Apr 24 2026',
+          source: 'Sentinel / T2-L04',
+          excerpt: 'Composable loyalty architecture (Option 3) is a validated pattern — three retail case studies available. Dependency on CDP identity graph maturity is the primary risk.',
+          confidence: 'high' as const,
+          provenanceNote: 'Deterministic intelligence citation · /intelligence/t2-l04',
+        },
+        {
+          id: 'lpm-ev-2',
+          citation: 'Cost model analysis · Apr 26 2026',
+          source: 'Nexus / Budget Review',
+          excerpt: 'Option 2 (SaaS) projects $820K/yr licensing cost. Option 3 (CDP-composable) projects $340K/yr marginal cost but carries CDP readiness risk. Delta is $480K/yr — conflict unresolved.',
+          confidence: 'medium' as const,
+          hasContradiction: true,
+          provenanceNote: 'Deterministic cost model · pre-synthesis baseline',
+        },
       ],
     };
   }
