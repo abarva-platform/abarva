@@ -1,7 +1,7 @@
-import { SetupConnectorsPage } from '@/components/setup/SetupConnectorsPage';
+import { redirect } from 'next/navigation';
 
 export const metadata = { title: 'Setup · AbarVa' };
 
 export default function AdminOverviewPage() {
-  return <SetupConnectorsPage />;
+  redirect('/admin/connectors');
 }

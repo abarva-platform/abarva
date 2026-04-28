@@ -9,7 +9,7 @@ import { SHELL } from '@/lib/shell/shell-tokens';
 import { SETUP_INDEX_VIEW, type ConnectorItem } from '@/lib/setup/shell-setup-fixture';
 
 const SUB_NAV_ITEMS = [
-  { key: 'connectors', label: 'Connectors', active: true, href: '/admin' },
+  { key: 'connectors', label: 'Connectors', active: true, href: '/admin/connectors' },
   { key: 'users', label: 'Users', href: '/admin/users' },
   { key: 'audit', label: 'Audit log', href: '/admin/audit' },
   { key: 'policies', label: 'Policies', href: '/admin/policies' },
@@ -68,7 +68,6 @@ function ConnectorCard({ item }: { item: ConnectorItem }) {
         alignItems: 'flex-start',
       }}
     >
-      {/* Glyph circle */}
       <div
         style={{
           width: 36,
@@ -94,9 +93,7 @@ function ConnectorCard({ item }: { item: ConnectorItem }) {
         </span>
       </div>
 
-      {/* Right column */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        {/* Top row: name + status pill */}
         <div
           style={{
             display: 'flex',
@@ -123,7 +120,6 @@ function ConnectorCard({ item }: { item: ConnectorItem }) {
           <StatusPill status={item.status} />
         </div>
 
-        {/* Last sync */}
         <div
           style={{
             fontFamily: SHELL.MONO,
@@ -135,7 +131,6 @@ function ConnectorCard({ item }: { item: ConnectorItem }) {
           Last sync: {item.lastSync}
         </div>
 
-        {/* Status note */}
         <div
           style={{
             fontFamily: SHELL.SANS,
@@ -148,7 +143,6 @@ function ConnectorCard({ item }: { item: ConnectorItem }) {
           {item.statusNote}
         </div>
 
-        {/* Action button */}
         {needsAction && (
           <button
             type="button"
@@ -237,7 +231,6 @@ export function SetupConnectorsPage() {
         }}
       />
 
-      {/* Work pane */}
       <div
         style={{
           flex: 1,
@@ -246,7 +239,6 @@ export function SetupConnectorsPage() {
           padding: '24px 32px',
         }}
       >
-        {/* Eyebrow + header */}
         <div style={{ marginBottom: 20 }}>
           <div
             style={{
@@ -260,6 +252,19 @@ export function SetupConnectorsPage() {
             }}
           >
             Setup
+          </div>
+          <div
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 10,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: SHELL.PEACH_TEXT,
+              marginBottom: 8,
+              lineHeight: 1,
+            }}
+          >
+            Canonical route · /admin/connectors
           </div>
           <h1
             style={{
@@ -276,7 +281,6 @@ export function SetupConnectorsPage() {
           </h1>
         </div>
 
-        {/* Health summary chips */}
         <div
           style={{
             display: 'flex',
@@ -306,7 +310,6 @@ export function SetupConnectorsPage() {
           />
         </div>
 
-        {/* Connector card grid */}
         <div
           style={{
             display: 'grid',

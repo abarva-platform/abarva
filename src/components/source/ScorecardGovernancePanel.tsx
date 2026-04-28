@@ -81,13 +81,9 @@ const CANONICAL_DIMENSIONS: Array<{
 ];
 
 const SCORECARD_LIFECYCLE: ScorecardGovernance['approvalState'][] = [
-  'default_generated',
-  'client_edited',
-  'rationale_added',
-  'reviewed',
+  'not_started',
+  'in_review',
   'approved',
-  'locked',
-  'used_for_vendor_evaluation',
 ];
 
 export function ScorecardGovernancePanel({
@@ -163,7 +159,7 @@ export function ScorecardGovernancePanel({
                           : SHELL.INK_SOFT,
                     }}
                   >
-                    {formatStatus(state)}
+                    {state.replace('_', ' ')}
                   </div>
                 );
               })}
