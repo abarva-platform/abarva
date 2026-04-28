@@ -1,18 +1,11 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { EXPERIENCE_COLORS, TEXT } from '@/lib/design-system';
+import { SHELL } from '@/lib/shell/shell-tokens';
 import { summarizeApprovalState } from '@/lib/source/scorecard';
 import type {
   ScorecardCriterion,
   ScorecardGovernance,
   ScorecardCriterionStatus,
 } from '@/lib/source/types';
-import {
-  sourceCard,
-  sourceInsetCard,
-  sourceSectionLabel,
-  sourceTableCell,
-  sourceTableHeaderCell,
-} from './foundationStyles';
 
 type GovernanceShellStatus = 'draft' | 'in review' | 'locked' | 'blocked';
 type EvidenceConfidence = 'high' | 'medium' | 'low' | 'missing';
@@ -113,7 +106,7 @@ export function ScorecardGovernancePanel({
       <div style={sourceCard}>
         <div style={HEADER}>
           <div style={{ minWidth: 0 }}>
-            <div style={{ ...sourceSectionLabel, color: EXPERIENCE_COLORS.accentTeal }}>
+            <div style={{ ...sourceSectionLabel, color: SHELL.MINT_TEXT }}>
               Steward governance lead
             </div>
             <h2 style={TITLE}>Scorecard governance shell</h2>
@@ -121,16 +114,16 @@ export function ScorecardGovernancePanel({
           </div>
           <div style={STATUS_CARD}>
             <div style={sourceSectionLabel}>Scorecard status</div>
-            <div style={{ ...TEXT.body, fontWeight: 700, color: statusColor(shellStatus), textTransform: 'uppercase' }}>
+            <div style={{ fontFamily: SHELL.SANS, fontSize: 14, lineHeight: 1.6, fontWeight: 700, color: statusColor(shellStatus), textTransform: 'uppercase' }}>
               {shellStatus}
             </div>
-            <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
+            <div style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK_SOFT }}>
               {summary.label} · {summary.approved}/{summary.required} required criteria approved
             </div>
             <div style={METER_TRACK} aria-hidden="true">
               <div style={{ ...METER_FILL, width: `${readinessPercent}%`, backgroundColor: statusColor(shellStatus) }} />
             </div>
-            <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
+            <div style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK_SOFT }}>
               Readiness meter: {readinessPercent}% deterministic completion
             </div>
           </div>
@@ -149,10 +142,10 @@ export function ScorecardGovernancePanel({
           <section style={sourceCard} aria-labelledby="scorecard-criteria-heading">
             <div style={TABLE_HEADER}>
               <div>
-                <div style={{ ...sourceSectionLabel, color: EXPERIENCE_COLORS.accentBlue }}>Criteria table</div>
+                <div style={{ ...sourceSectionLabel, color: SHELL.INK_MID }}>Criteria table</div>
                 <h3 id="scorecard-criteria-heading" style={SUBTITLE}>Evaluation governance criteria</h3>
               </div>
-              <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
+              <div style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK_SOFT }}>
                 Deterministic governance shell. No live score submission or approval workflow execution.
               </div>
             </div>
@@ -171,8 +164,8 @@ export function ScorecardGovernancePanel({
                   {rows.map((row) => (
                     <tr key={row.key}>
                       <td style={sourceTableCell}>
-                        <div style={{ fontWeight: 700, color: EXPERIENCE_COLORS.textPrimary }}>{row.label}</div>
-                        <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
+                        <div style={{ fontWeight: 700, color: SHELL.INK }}>{row.label}</div>
+                        <div style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK_SOFT }}>
                           Source: {row.matchedLabel}
                         </div>
                       </td>
@@ -184,9 +177,9 @@ export function ScorecardGovernancePanel({
                       </td>
                       <td style={sourceTableCell}>{row.ownerRole}</td>
                       <td style={sourceTableCell}>
-                        <div style={{ color: EXPERIENCE_COLORS.textPrimary }}>{row.rationale}</div>
+                        <div style={{ color: SHELL.INK }}>{row.rationale}</div>
                         {row.rationaleMissing ? (
-                          <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.riskAmber, marginTop: 6 }}>
+                          <div style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.PEACH_TEXT, marginTop: 6 }}>
                             Missing rationale state is explicit and should be cleared before lock.
                           </div>
                         ) : null}
@@ -199,7 +192,7 @@ export function ScorecardGovernancePanel({
           </section>
 
           <section id="scorecard-blockers" style={sourceCard} aria-labelledby="scorecard-blockers-heading">
-            <div style={{ ...sourceSectionLabel, color: EXPERIENCE_COLORS.riskAmber }}>Blockers and rationale</div>
+            <div style={{ ...sourceSectionLabel, color: SHELL.PEACH_TEXT }}>Blockers and rationale</div>
             <h3 id="scorecard-blockers-heading" style={SUBTITLE}>What is blocking scorecard confidence</h3>
             <div style={LIST_GRID}>
               <InfoCard title="Blocking criteria">
@@ -273,19 +266,19 @@ export function ScorecardGovernancePanel({
               <ContextLine label="State" value={gateImpact.state} />
               <ContextLine label="Proceed to BAFO" value={gateImpact.state === 'ready' ? 'Yes, if the rest of the deterministic gate pack stays green.' : 'No, the governance route still carries blockers or approvals.'} />
             </div>
-            <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary, marginTop: 10 }}>
+            <div style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK_SOFT, marginTop: 10 }}>
               {gateImpact.blocker ?? 'No explicit gate blocker is currently recorded for this transition.'}
             </div>
-            <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary, marginTop: 10 }}>
+            <div style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK_SOFT, marginTop: 10 }}>
               Required artifacts: {gateImpact.requiredArtifacts.join(', ')}
             </div>
-            <div style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary, marginTop: 4 }}>
+            <div style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK_SOFT, marginTop: 4 }}>
               Required approvals: {gateImpact.requiredApprovals.join(', ')}
             </div>
           </InfoCard>
 
           <InfoCard title="Custom follow-up placeholder">
-            <div id="scorecard-custom" style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>
+            <div id="scorecard-custom" style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK_SOFT }}>
               Ask custom is intentionally a placeholder explanation in this slice. Future agent interaction can attach here, but no model call or approval automation is running now.
             </div>
           </InfoCard>
@@ -399,17 +392,17 @@ function formatStatus(status: ScorecardCriterionStatus): string {
 }
 
 function statusColor(status: GovernanceShellStatus | ScorecardCriterionStatus): string {
-  if (status === 'approved' || status === 'locked') return EXPERIENCE_COLORS.journeyComplete;
-  if (status === 'ready' || status === 'in review') return EXPERIENCE_COLORS.accentBlue;
-  if (status === 'draft') return EXPERIENCE_COLORS.riskAmber;
-  return EXPERIENCE_COLORS.riskRed;
+  if (status === 'approved' || status === 'locked') return SHELL.MINT_TEXT;
+  if (status === 'ready' || status === 'in review') return SHELL.INK_MID;
+  if (status === 'draft') return SHELL.PEACH_TEXT;
+  return SHELL.RUST_TEXT;
 }
 
 function confidenceColor(confidence: EvidenceConfidence): string {
-  if (confidence === 'high') return EXPERIENCE_COLORS.journeyComplete;
-  if (confidence === 'medium') return EXPERIENCE_COLORS.accentBlue;
-  if (confidence === 'low') return EXPERIENCE_COLORS.riskAmber;
-  return EXPERIENCE_COLORS.riskRed;
+  if (confidence === 'high') return SHELL.MINT_TEXT;
+  if (confidence === 'medium') return SHELL.INK_MID;
+  if (confidence === 'low') return SHELL.PEACH_TEXT;
+  return SHELL.RUST_TEXT;
 }
 
 function InfoCard({ title, children }: { title: string; children: ReactNode }) {
@@ -424,8 +417,8 @@ function InfoCard({ title, children }: { title: string; children: ReactNode }) {
 function ContextLine({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-      <span style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>{label}</span>
-      <span style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textPrimary, textAlign: 'right' }}>{value}</span>
+      <span style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK_SOFT }}>{label}</span>
+      <span style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK, textAlign: 'right' }}>{value}</span>
     </div>
   );
 }
@@ -442,7 +435,7 @@ function ActionAnchor({
   return (
     <a href={href} style={ACTION_LINK}>
       <span style={{ fontWeight: 700 }}>{label}</span>
-      <span style={{ ...TEXT.small, color: EXPERIENCE_COLORS.textSecondary }}>{description}</span>
+      <span style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK_SOFT }}>{description}</span>
     </a>
   );
 }
@@ -467,6 +460,51 @@ function Pill({ tone, children }: { tone: string; children: ReactNode }) {
   );
 }
 
+const sourceCard: CSSProperties = {
+  background: SHELL.CARD_WHITE,
+  border: '1px solid ' + SHELL.CARD_LINE,
+  borderRadius: 12,
+  padding: 16,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 12,
+};
+
+const sourceInsetCard: CSSProperties = {
+  background: SHELL.PAPER_SOFT,
+  border: '1px solid ' + SHELL.CARD_LINE,
+  borderRadius: 8,
+  padding: '12px 14px',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 10,
+};
+
+const sourceSectionLabel: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  fontWeight: 600,
+  color: SHELL.INK_MUTED,
+  letterSpacing: '0.14em',
+  textTransform: 'uppercase',
+  marginBottom: 0,
+};
+
+const sourceTableCell: CSSProperties = {
+  padding: '12px 14px',
+  borderTop: '1px solid ' + SHELL.CARD_LINE,
+  verticalAlign: 'top',
+};
+
+const sourceTableHeaderCell: CSSProperties = {
+  fontFamily: SHELL.SANS,
+  fontSize: 11,
+  textTransform: 'uppercase',
+  letterSpacing: '0.08em',
+  padding: '0 14px 10px',
+  borderBottom: '1px solid ' + SHELL.CARD_LINE,
+};
+
 const SECTION: CSSProperties = {
   display: 'grid',
   gap: 16,
@@ -482,26 +520,35 @@ const HEADER: CSSProperties = {
 
 const TITLE: CSSProperties = {
   margin: '4px 0 0',
-  color: EXPERIENCE_COLORS.textPrimary,
+  color: SHELL.INK,
   fontSize: 30,
   lineHeight: 1.1,
 };
 
 const SUBTITLE: CSSProperties = {
   margin: '4px 0 0',
-  color: EXPERIENCE_COLORS.textPrimary,
+  color: SHELL.INK,
   fontSize: 20,
   lineHeight: 1.2,
 };
 
 const INTRO: CSSProperties = {
-  ...TEXT.bodySecondary,
+  fontFamily: SHELL.SANS,
+  fontSize: 13,
+  color: SHELL.INK_SOFT,
+  lineHeight: 1.5,
   margin: '10px 0 0',
   maxWidth: 860,
 };
 
 const STATUS_CARD: CSSProperties = {
-  ...sourceInsetCard,
+  background: SHELL.PAPER_SOFT,
+  border: '1px solid ' + SHELL.CARD_LINE,
+  borderRadius: 8,
+  padding: '12px 14px',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 10,
   minWidth: 260,
   maxWidth: 320,
 };
@@ -510,7 +557,7 @@ const METER_TRACK: CSSProperties = {
   width: '100%',
   height: 8,
   borderRadius: 999,
-  background: EXPERIENCE_COLORS.borderSoft,
+  background: SHELL.CARD_LINE,
   overflow: 'hidden',
   marginTop: 8,
 };
@@ -528,9 +575,15 @@ const ACTION_ROW: CSSProperties = {
 };
 
 const ACTION_LINK: CSSProperties = {
-  ...sourceInsetCard,
+  background: SHELL.PAPER_SOFT,
+  border: '1px solid ' + SHELL.CARD_LINE,
+  borderRadius: 8,
+  padding: '12px 14px',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 10,
   textDecoration: 'none',
-  color: EXPERIENCE_COLORS.textPrimary,
+  color: SHELL.INK,
 };
 
 const GRID: CSSProperties = {
@@ -565,7 +618,7 @@ const LIST: CSSProperties = {
   paddingLeft: 18,
   display: 'grid',
   gap: 6,
-  color: EXPERIENCE_COLORS.textSecondary,
+  color: SHELL.INK_SOFT,
 };
 
 const CARD_STACK: CSSProperties = {
@@ -574,7 +627,8 @@ const CARD_STACK: CSSProperties = {
 };
 
 const CAVEAT: CSSProperties = {
-  ...TEXT.small,
-  color: EXPERIENCE_COLORS.textSecondary,
+  fontFamily: SHELL.SANS,
+  fontSize: 11,
+  color: SHELL.INK_SOFT,
   padding: '0 2px',
 };

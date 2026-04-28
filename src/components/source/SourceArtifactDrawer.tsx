@@ -1,6 +1,35 @@
-import { COLORS } from '@/lib/design-system';
+import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourceArtifactDetail } from '@/lib/source/types';
-import { sourceCard, sourceInsetCard, sourceSectionLabel } from './foundationStyles';
+
+const sourceCard = {
+  background: SHELL.CARD_WHITE,
+  border: '1px solid ' + SHELL.CARD_LINE,
+  borderRadius: 12,
+  padding: 16,
+  display: 'flex',
+  flexDirection: 'column' as const,
+  gap: 12,
+};
+
+const sourceInsetCard = {
+  background: SHELL.PAPER_SOFT,
+  border: '1px solid ' + SHELL.CARD_LINE,
+  borderRadius: 8,
+  padding: '12px 14px',
+  display: 'flex',
+  flexDirection: 'column' as const,
+  gap: 10,
+};
+
+const sourceSectionLabel = {
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  fontWeight: 600,
+  color: SHELL.INK_MUTED,
+  letterSpacing: '0.14em',
+  textTransform: 'uppercase' as const,
+  marginBottom: 0,
+};
 
 const CHIP_ROW = {
   display: 'flex',
@@ -11,22 +40,22 @@ const CHIP_ROW = {
 
 const CHIP = {
   fontSize: 11,
-  border: '1px solid #D7DEE9',
+  border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 999,
   padding: '4px 8px',
-  background: '#F3F6FB',
-  color: '#1F2433',
+  background: SHELL.PAPER_SOFT,
+  color: SHELL.INK,
   fontWeight: 600,
 };
 
 const ACTION_LINK = {
   ...sourceSectionLabel,
   textDecoration: 'none',
-  border: '1px solid #1B2B5C',
+  border: '1px solid ' + SHELL.INK_MID,
   borderRadius: 999,
-  background: '#EEF3FF',
+  background: SHELL.BLUE_BG,
   padding: '8px 12px',
-  color: '#1F2433',
+  color: SHELL.INK,
   fontWeight: 600,
   marginBottom: 8,
 };
@@ -92,10 +121,10 @@ export function SourceArtifactDrawer({ artifact }: { artifact: SourceArtifactDet
                 readOnly
                 placeholder="Ask Nexus about this artifact, source version, or evidence..."
                 style={{
-                  border: '1px solid #D4DEEE',
+                  border: '1px solid ' + SHELL.BLUE_LINE,
                   borderRadius: 8,
-                  background: '#F3F7FF',
-                  color: '#738298',
+                  background: SHELL.PAPER_SOFT,
+                  color: SHELL.INK_SOFT,
                   padding: '8px 10px',
                   minWidth: 280,
                 }}
@@ -105,7 +134,7 @@ export function SourceArtifactDrawer({ artifact }: { artifact: SourceArtifactDet
           </label>
         </div>
       </div>
-      <div style={{ ...CHIP, marginTop: 10, background: '#F8FAFF', borderColor: COLORS.textMuted }}>
+      <div style={{ ...CHIP, marginTop: 10, background: SHELL.CARD_WHITE, borderColor: SHELL.INK_MUTED }}>
         Deterministic seeded artifact shell only. This page does not include upload, parsing, workflow automation, or approval runtime.
       </div>
     </section>
