@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { StageTrackerStrip } from '@/components/shell/StageTrackerStrip';
+import type { StageStatus } from '@/components/shell/StageTrackerStrip';
 import { SentinelAgentColumn } from '@/components/source/SentinelAgentColumn';
 import { SentinelSynthesisQuote } from '@/components/source/SentinelSynthesisQuote';
 import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
@@ -9,6 +10,9 @@ import { SourceCommercialEventSection } from '@/components/source/SourceCommerci
 import { getSourcingEvent } from '@/lib/source/queries';
 import { AMS_SOURCE_EVENT } from '@/lib/source/shell-source-fixture';
 import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
+import { buildEvidenceMap } from '@/lib/source/source-event-instance';
+import { PAT_SRC_AMS_001 } from '@/lib/intelligence/source-lifecycle-patterns';
+import { createGateEvaluator } from '@/lib/reasoning/gate-evaluator';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +28,23 @@ export default async function SourceEventDetailPage({
   // Resolve typed instance for live synthesis. Fallback to AMS instance when
   // other events don't have a typed SourceEventInstance yet.
   const matchedInstance = SOURCE_EVENT_INSTANCES.find(i => i.id === eventId)
+    ?? SOURCE_EVENT_INSTANCES.find(i => event.name.toLowerCase().includes('ams'))
     ?? SOURCE_EVENT_INSTANCES[0];
+
+  // Build gate-driven stage states when a typed instance is available.
+  let stageStates: Record<string, StageStatus> | undefined;
+  if (matchedInstance) {
+    const evidenceMap = buildEvidenceMap(matchedInstance);
+    const evaluator = createGateEvaluator(PAT_SRC_AMS_001);
+    const allStageEvals = evaluator.evaluateAllStages(matchedInstance.currentStage, evidenceMap);
+    const raw: Record<string, StageStatus> = {};
+    for (const stageEval of allStageEvals) {
+      raw[stageEval.stageLabel] = stageEval.status;
+      // Also key by hyphenated form to match AMS_SOURCE_EVENT.stages ('Initial-Bid' vs 'Initial Bid')
+      raw[stageEval.stageLabel.replace(/ /g, '-')] = stageEval.status;
+    }
+    stageStates = raw;
+  }
 
   return (
     <AppShell
@@ -46,6 +66,7 @@ export default async function SourceEventDetailPage({
         <StageTrackerStrip
           stages={AMS_SOURCE_EVENT.stages}
           activeStage={event.currentStageLabel === 'Orals/BAFO' ? 'BAFO' : event.currentStageLabel}
+          stageStates={stageStates}
         />
       }
     >
