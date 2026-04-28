@@ -36,35 +36,26 @@ export function AppTopBar({
         <img
           src="/logo.svg"
           alt="AbarVa"
-          style={{ height: 18, width: 'auto', display: 'block', flexShrink: 0 }}
+          style={{ height: 20, width: 'auto', display: 'block', flexShrink: 0 }}
         />
 
         {/* Divider */}
         <div
           style={{
             width: 1,
-            height: 18,
-            background: SHELL.CARD_LINE_SOFT,
+            height: 16,
+            background: SHELL.CARD_LINE,
             flexShrink: 0,
           }}
         />
 
-        {/* Tenant badge */}
-        <div
-          style={{
-            background: '#e8eef7',
-            borderRadius: 6,
-            padding: '5px 11px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 7,
-          }}
-        >
+        {/* Tenant name — plain, no pill */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           {/* Amber dot */}
           <div
             style={{
-              width: 6,
-              height: 6,
+              width: 5,
+              height: 5,
               borderRadius: '50%',
               background: SHELL.AMBER_DOT,
               flexShrink: 0,
@@ -73,8 +64,9 @@ export function AppTopBar({
           <span
             style={{
               fontFamily: SHELL.SERIF,
-              fontSize: 12.5,
-              fontWeight: 600,
+              fontSize: 13.5,
+              fontWeight: 400,
+              letterSpacing: '0.01em',
               color: SHELL.INK,
               lineHeight: 1,
             }}
