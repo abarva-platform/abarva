@@ -482,16 +482,36 @@ export function ProgramScopePage() {
                 fontSize: 10,
                 letterSpacing: '0.1em',
                 textTransform: 'uppercase',
-                background: SHELL.PEACH_BG,
-                color: SHELL.PEACH_TEXT,
+                background: scope.gateStatus === 'cleared' ? SHELL.MINT_BG : SHELL.PEACH_BG,
+                color: scope.gateStatus === 'cleared' ? SHELL.MINT_TEXT : SHELL.PEACH_TEXT,
                 padding: '4px 12px',
                 borderRadius: 12,
-                border: `1px solid ${SHELL.PEACH_LINE}`,
+                border: `1px solid ${scope.gateStatus === 'cleared' ? SHELL.MINT_LINE : SHELL.PEACH_LINE}`,
                 flexShrink: 0,
               }}
             >
-              Design gate pending · 6 days
+              {scope.gateStatus === 'cleared' ? 'Design gate cleared · Apr 27' : 'Gate pending'}
             </span>
+
+            {/* Build gate chip — always shown when in Design phase */}
+            {scope.phase === 'P3 Design' && (
+              <span
+                style={{
+                  fontFamily: SHELL.MONO,
+                  fontSize: 10,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  background: SHELL.PEACH_BG,
+                  color: SHELL.PEACH_TEXT,
+                  padding: '4px 12px',
+                  borderRadius: 12,
+                  border: `1px solid ${SHELL.PEACH_LINE}`,
+                  flexShrink: 0,
+                }}
+              >
+                Build gate · 2 of 5 criteria
+              </span>
+            )}
 
             {/* Evidence bar */}
             <div style={{ flex: 1, minWidth: 200 }}>
