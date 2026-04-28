@@ -41,7 +41,7 @@ export function PageFooter({ variant = 'authenticated', style }: Props) {
           <div>
             <EyebrowLabel tone="muted" size="xs">Company</EyebrowLabel>
             <ul style={{ margin: '8px 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <li><Link href="/investor" style={{ color: 'rgba(245,245,240,0.85)', fontSize: 13, textDecoration: 'none' }}>Investors</Link></li>
+              <li><Link href="/investors" style={{ color: 'rgba(245,245,240,0.85)', fontSize: 13, textDecoration: 'none' }}>Investors</Link></li>
             </ul>
           </div>
           <div>

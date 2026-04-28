@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
 import { AgentColumn } from '@/components/shell/AgentColumn';
@@ -453,7 +453,7 @@ function SourceEmptyState() {
           Source events track vendor consolidation, RFP processes, and procurement exercises from plan through award.
         </p>
         <a
-          href="/source/originate"
+          href="/source/new"
           style={{
             fontFamily: SHELL.MONO,
             fontSize: 11,
@@ -478,8 +478,10 @@ function SourceEmptyState() {
 
 export function SourceIndexPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const isDemoEmpty = searchParams?.get('demo') === 'empty';
   const [showVendorResponse, setShowVendorResponse] = useState(false);
+  const firstEventRowRef = useRef<HTMLDivElement>(null);
 
   if (isDemoEmpty) return <SourceEmptyState />;
 
@@ -503,7 +505,15 @@ export function SourceIndexPage() {
         quote={SOURCE_INDEX_VIEW.agentQuote}
         agentContext={SOURCE_INDEX_VIEW.agentContext}
         actions={SOURCE_INDEX_VIEW.actions}
-        inputPlaceholder="Ask Nexus about this event..."
+        onActionClick={(letter) => {
+          if (letter === 'A') {
+            firstEventRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          } else if (letter === 'B') {
+            router.push('/source/originate');
+          } else if (letter === 'C') {
+            router.push('/source/ams-vendor-2026');
+          }
+        }}
       />
 
       {/* Work pane */}

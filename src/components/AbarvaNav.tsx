@@ -345,7 +345,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
                     </div>
                   </div>
                   {(isAdmin || isMaestro) && (
-                    <Link href="/maestro" className="abarva-menu-item" style={{ display: 'block', padding: '9px 14px', textDecoration: 'none', fontFamily: SANS, fontSize: '13px', color: DROP_HEAD, borderRadius: '8px', margin: '0 4px' }}>
+                    <Link href="/home" className="abarva-menu-item" style={{ display: 'block', padding: '9px 14px', textDecoration: 'none', fontFamily: SANS, fontSize: '13px', color: DROP_HEAD, borderRadius: '8px', margin: '0 4px' }}>
                       Maestro Workspace
                     </Link>
                   )}
