@@ -7,3 +7,4 @@
 | 2026-04-28 | KP-1 | shipped | +436/-0 | 6 patterns | PR #590 | typecheck passed via `npx tsc --noEmit --pretty false` before squash merge. |
 | 2026-04-28 | KP-2a | shipped | +363/-0 | 5 patterns | PR #591 | typecheck passed via `npx tsc --noEmit --pretty false` before squash merge. |
 | 2026-04-28 | KP-2b | shipped | +433/-0 | 8 patterns | PR #592 | typecheck passed via `npx tsc --noEmit --pretty false` before squash merge. |
+| 2026-04-28 | KP-3 | shipped | +573/-0 | 12 patterns | PR #593 | merged at 13:26Z; local typecheck passed; CI integrity failure was outside this wave (`src/app/not-found.tsx` javascript href and pre-existing Tower placeholder_text fixtures). |
