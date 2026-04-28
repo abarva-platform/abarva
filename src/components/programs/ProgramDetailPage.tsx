@@ -35,6 +35,8 @@ import type { DeliverablesCanvasView } from '@/lib/programs/deliverable-canvas-p
 import { buildMaestroNextActionView } from '@/lib/programs/maestro-next-action-view';
 import { buildWorkshopNotesActionPlanView } from '@/lib/programs/workshop-notes-action-plan-view';
 import { WorkshopNotesActionPlanPanel } from '@/components/programs/WorkshopNotesActionPlanPanel';
+import { MissionList } from '@/components/_shared/MissionList';
+import { getMissionsForProgram } from '@/lib/agent/agent-mission-derived';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -3350,6 +3352,21 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
             ))}
           </div>
         )}
+
+        {/* Mission queue · derived from the program's pending gate criteria.
+            TASK-oriented complement to the Gate section's STATUS view. */}
+        {(() => {
+          const missions = getMissionsForProgram(view.programId);
+          return (
+            <div style={{ marginBottom: 20 }}>
+              <MissionList
+                missions={missions}
+                title="Pending gates · this program"
+                maxRows={6}
+              />
+            </div>
+          );
+        })()}
 
         {/* PROG20 — Section tab strip */}
         <div

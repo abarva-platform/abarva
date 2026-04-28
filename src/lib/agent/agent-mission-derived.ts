@@ -14,8 +14,15 @@
 // `@/lib/programs/` — the AG12 module-hygiene rule forbids those
 // imports from surface components but allows imports from `@/lib/agent`.
 
-import { deriveAllMissions, type DerivedMission } from '@/lib/reasoning/mission-derivation';
-import { AMS_VENDOR_CONSOLIDATION_2026_INSTANCE } from '@/lib/source/source-event-instances';
+import {
+  deriveAllMissions,
+  deriveMissionsFromInstance,
+  type DerivedMission,
+} from '@/lib/reasoning/mission-derivation';
+import {
+  AMS_VENDOR_CONSOLIDATION_2026_INSTANCE,
+  SOURCE_EVENT_INSTANCES,
+} from '@/lib/source/source-event-instances';
 import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances';
 import { SOURCE_LIFECYCLE_PATTERNS } from '@/lib/intelligence/source-lifecycle-patterns';
 import { PROGRAM_LIFECYCLE_PATTERNS } from '@/lib/intelligence/program-lifecycle-patterns';
@@ -90,4 +97,48 @@ export function getTopDerivedPanelMissions(
   return buildDerivedAgentMissions()
     .slice(0, safeLimit)
     .map(mapDerivedMissionToPanel);
+}
+
+/**
+ * Returns the auto-derived missions for a single Source event by id.
+ *
+ * Looks up the typed `SourceEventInstance` in `SOURCE_EVENT_INSTANCES`,
+ * resolves its `patternId` against `SOURCE_LIFECYCLE_PATTERNS`, and runs
+ * the pure derivation. Returns `[]` when no matching instance or pattern
+ * is found — never throws — so detail pages can render an empty
+ * mission list cleanly.
+ */
+export function getMissionsForSourceEvent(
+  eventId: string,
+): readonly DerivedMission[] {
+  const instance = SOURCE_EVENT_INSTANCES.find((i) => i.id === eventId);
+  if (!instance) return [];
+  const pattern = SOURCE_LIFECYCLE_PATTERNS.find(
+    (p) => p.patternId === instance.patternId,
+  );
+  if (!pattern) return [];
+  return deriveMissionsFromInstance(instance, pattern);
+}
+
+/**
+ * Returns the auto-derived missions for a single Apex Retail program by id.
+ *
+ * Match is case-insensitive on either `id` or `displayId` to tolerate
+ * the mixed-case program identifiers in router params. Returns `[]` when
+ * no matching instance or pattern is found.
+ */
+export function getMissionsForProgram(
+  programId: string,
+): readonly DerivedMission[] {
+  const needle = programId.toLowerCase();
+  const instance = APEX_RETAIL_PROGRAM_INSTANCES.find(
+    (i) =>
+      i.id.toLowerCase() === needle || i.displayId.toLowerCase() === needle,
+  );
+  if (!instance) return [];
+  const pattern = PROGRAM_LIFECYCLE_PATTERNS.find(
+    (p) => p.patternId === instance.patternId,
+  );
+  if (!pattern) return [];
+  return deriveMissionsFromInstance(instance, pattern);
 }
