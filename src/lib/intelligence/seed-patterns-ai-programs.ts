@@ -476,6 +476,144 @@ The pattern fails when sponsorship is nominal, when a program launches without a
 - Portfolio-management intervention calls for a named owner with approval and kill rights
 - Kill-meeting cadence requires sponsor communication planning, not just portfolio analytics`,
   },
+  {
+    id: 'PAT-AI-011',
+    slug: 'service-desk-ai-deflection-optimization',
+    title: 'Service-Desk AI Deflection Optimization',
+    domain: 'ai_programs',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Service-desk AI programs only become commercially sound when knowledge-base completeness and scope discipline are treated as the main levers of deflection, not afterthoughts.',
+    applicability:
+      'Apply when ITSM or customer-service AI programs are underperforming against their promised deflection or cost-savings targets.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.86,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-28',
+    instanceCount: 3,
+    sourceDocuments: [
+      'docs/source-material/build-specs/abarva-tower-design-spec.md',
+    ],
+    regulatoryChips: [],
+    relatedPatternIds: ['PAT-AI-007', 'PAT-AI-010'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    body: `## Summary
+The Tower's Now Assist walkthrough shows why deflection programs underperform. A 50,000-employee deployment promised 40% ticket deflection and $1.5M annual savings, but landed at 28% deflection, $1.12M attributed value, and negative economics against $2.8M cost. The structural blockers were knowledge-base integration at only 60% completeness and 30% usage overlap with Copilot.
+
+## When to apply
+Use this pattern when a service-desk AI rollout is missing its deflection target, carrying duplicated scope, or showing weak economics despite broad deployment.
+
+## How it works
+Treat deflection as a systems problem: complete the knowledge base, narrow the agent to use cases where it is distinct, and model the deflection ceiling honestly before adding more spend. In the Tower example, the recommended move is a 90-day KB completion sprint plus scope narrowing to ITSM-specific use cases.
+
+## Variations
+Some programs need knowledge-base completion first; others need taxonomy cleanup, intent pruning, or duplication removal. The operating principle is the same: optimize the ceiling before pretending scale solves value.
+
+## Pitfalls
+The pattern fails when leaders blame adoption alone, ignore overlapping tools, or keep broadening scope while the foundational knowledge layer is incomplete.
+
+## Instances
+- Now Assist deflection at 28% versus 40% promised
+- Knowledge-base integration only 60% complete
+- 30% of current usage duplicates Copilot
+- Tower recommends descope at next renewal if integration work does not move by Q3`,
+  },
+  {
+    id: 'PAT-AI-012',
+    slug: 'erp-agent-integration-depth-decision',
+    title: 'ERP-Agent Integration Depth Decision',
+    domain: 'ai_programs',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'ERP-agent programs should be evaluated primarily on integration depth and lock-in consequences because superficial productivity wins can hide highly consequential architectural commitments.',
+    applicability:
+      'Apply when enterprises are assessing SAP Joule, Workday AI, Oracle AI Apps, or similar ERP-embedded agents tied to core systems of record.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.81,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-28',
+    instanceCount: 2,
+    sourceDocuments: [
+      'docs/source-material/build-specs/abarva-tower-design-spec.md',
+    ],
+    regulatoryChips: [],
+    relatedPatternIds: ['PAT-AI-010', 'PAT-CDP-009'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    body: `## Summary
+The Tower's ERP walkthrough frames the real question for SAP Joule and similar agents: not just whether automation value exists, but whether the depth of integration justifies the strategic lock-in. The example shows medium-confidence value, strong integration depth, and extreme switching cost because Joule is tied directly to SAP S/4HANA core.
+
+## When to apply
+Use this pattern when an ERP-embedded AI agent is being proposed as a strategic program and the organization needs to choose between shallow experimentation and deep platform commitment.
+
+## How it works
+Assess the program on routine-task automation, decision-support improvement, and close-cycle effects, but weight the decision through integration depth and switching cost. If the agent is lightly integrated, optionality remains high. If it is deeply coupled to the ERP core, the review cadence should become more strategic and less tactical.
+
+## Variations
+Some ERP-agent programs remain narrow assistants; others become operating-layer commitments bound to the system of record. The depth decision should be explicit before the program is scaled.
+
+## Pitfalls
+The pattern fails when leaders approve deep integration based on pilot enthusiasm alone, or when the organization underestimates how vendor-bound the workflow becomes after coupling to the core ERP.
+
+## Instances
+- SAP Joule program cost model includes license plus integration
+- Confidence is medium because value depends on integration depth
+- Vendor lock is explicit: tied to SAP S/4HANA core with extreme switching cost
+- Tower treats it as a strategic review-cadence program, not a quick tactical optimization`,
+  },
+  {
+    id: 'PAT-AI-013',
+    slug: 'ai-talent-strategy-for-ai-mature-orgs',
+    title: 'AI Talent Strategy for AI-Mature Orgs',
+    domain: 'ai_programs',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'AI-mature organizations need a talent strategy that treats AI fluency as a capability portfolio, measured through leading indicators and defended with epistemic humility rather than overstated ROI.',
+    applicability:
+      'Apply when an enterprise is investing in AI fluency, change management, and retention as part of a broader AI operating model rather than a single vendor rollout.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.74,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-28',
+    instanceCount: 2,
+    sourceDocuments: [
+      'docs/source-material/build-specs/abarva-tower-design-spec.md',
+      'docs/build/PATTERNS_AND_KNOWLEDGE_LAYER_BACKLOG.md',
+    ],
+    regulatoryChips: [],
+    relatedPatternIds: ['PAT-AI-014'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    body: `## Summary
+The Tower spec treats future-of-work programs as strategic bets with low-confidence value attribution. That is the right frame for AI talent strategy in mature organizations: skill coverage, retention, and time-to-productivity matter, but they cannot be scored with the same defensibility as coding-agent ROI. The spec also names the external pressure directly: AI-fluent candidates are joining only AI-mature shops.
+
+## When to apply
+Use this pattern when an organization is trying to build AI capability across the workforce and is tempted to evaluate the effort as if it were a short-cycle software ROI program.
+
+## How it works
+Track leading indicators such as AI-fluent skills coverage, time-to-productivity trend, and retention posture, then review the investment on a quarterly strategic cadence instead of demanding instant ROI proof. Keep the program visible, but mark its confidence honestly. In the Tower canon, this is why T-FOW uses dashed-bubble treatment and low-confidence language.
+
+## Variations
+Some organizations focus on broad workforce fluency, others on AI-heavy specialist tracks or retention of scarce technical talent. The pattern still depends on leading indicators and strategic rather than purely financial review.
+
+## Pitfalls
+The pattern fails when leaders overstate near-term value, or when they abandon the capability build because lagging indicators are not readable within the first two quarters.
+
+## Instances
+- T-FOW target: raise AI fluency to 60% of workforce
+- Skills coverage at 38% is a leading indicator, not proof of ROI
+- Tower recommends continued investment with quarterly review and epistemic humility`,
+  },
 ];
 
 export const AI_PROGRAM_PATTERN_COUNT = AI_PROGRAM_PATTERNS.length;
