@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { buildPageMetadata } from '@/lib/public-site/seo-defaults';
 import { MaestroHero } from '@/components/public-site/MaestroHero';
+import { ContradictionsScoreboard } from '@/components/public-site/ContradictionsScoreboard';
 import { HowItWorks } from '@/components/public-site/HowItWorks';
 import { ElevenPlaneDiagram } from '@/components/public-site/ElevenPlaneDiagram';
 
@@ -33,6 +34,7 @@ export default function HomePage() {
   return (
     <>
       <MaestroHero />
+      <ContradictionsScoreboard />
       <HowItWorks />
       {/* Layer 4: Architecture teaser */}
       <section
