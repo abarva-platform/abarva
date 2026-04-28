@@ -184,3 +184,49 @@ export function buildEvidenceMap(instance: SourceEventInstance): Record<string, 
 
   return map;
 }
+
+/**
+ * Same as `buildEvidenceMap`, plus any items contributed at runtime via
+ * the in-memory evidence ingestion store. The base map is computed first
+ * (preserving signature parity with the existing call sites) and then
+ * augmented additively:
+ *
+ *   - Each ingested item with a string `field` and a defined `value`
+ *     overwrites that key on the map (same precedence rule the fixture
+ *     evidence loop uses — last write wins).
+ *   - All ingested items are also surfaced as an array under
+ *     `evidence-uploaded-since-baseline` for criteria that look for
+ *     "fresh evidence on file" semantics rather than a specific field.
+ *
+ * This is the path the Source detail page uses so a user can POST a new
+ * evidence item via the demo form and watch gates flip on next render.
+ * Out-of-process callers (CLI seed, fixture-only tests) keep using
+ * `buildEvidenceMap` and stay deterministic.
+ */
+export function buildEvidenceMapWithIngestions(
+  instance: SourceEventInstance,
+): Record<string, unknown> {
+  // Lazy require to keep the existing module's import surface unchanged
+  // for fixture-only consumers (and to avoid a hard dependency in tests
+  // that already mock `buildEvidenceMap`).
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { getEvidenceFor } = require('@/lib/reasoning/evidence-ingestion-store') as typeof import('@/lib/reasoning/evidence-ingestion-store');
+  const map = buildEvidenceMap(instance);
+  const ingested = getEvidenceFor(instance.id);
+  if (ingested.length === 0) return map;
+
+  for (const ev of ingested) {
+    if (
+      ev &&
+      typeof ev === 'object' &&
+      typeof (ev as Record<string, unknown>).field === 'string' &&
+      (ev as Record<string, unknown>).value !== undefined
+    ) {
+      const field = (ev as Record<string, unknown>).field as string;
+      map[field] = (ev as Record<string, unknown>).value;
+    }
+  }
+  map['evidence-uploaded-since-baseline'] = ingested.slice();
+  map['evidence-ingested-count'] = ingested.length;
+  return map;
+}

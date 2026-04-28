@@ -15,7 +15,8 @@ import { deriveMissionsFromInstance } from '@/lib/reasoning/mission-derivation';
 import { getSourcingEvent } from '@/lib/source/queries';
 import { AMS_SOURCE_EVENT } from '@/lib/source/shell-source-fixture';
 import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
-import { buildEvidenceMap } from '@/lib/source/source-event-instance';
+import { buildEvidenceMapWithIngestions } from '@/lib/source/source-event-instance';
+import { AddEvidenceForm } from '@/components/source/AddEvidenceForm';
 import { PAT_SRC_AMS_001 } from '@/lib/intelligence/source-lifecycle-patterns';
 import { createGateEvaluator } from '@/lib/reasoning/gate-evaluator';
 import { buildSourceSynthesisContext } from '@/lib/reasoning/synthesis-context-builder';
@@ -47,7 +48,7 @@ export default async function SourceEventDetailPage({
   let nextGateEvaluations: GateEvaluation[] = [];
   let nextGateTargetStageId: string | undefined;
   if (matchedInstance) {
-    const evidenceMap = buildEvidenceMap(matchedInstance);
+    const evidenceMap = buildEvidenceMapWithIngestions(matchedInstance);
     const evaluator = createGateEvaluator(PAT_SRC_AMS_001);
     const allStageEvals = evaluator.evaluateAllStages(matchedInstance.currentStage, evidenceMap);
     const raw: Record<string, StageStatus> = {};
@@ -154,6 +155,14 @@ export default async function SourceEventDetailPage({
             currentStageId={nextGateTargetStageId}
             title={`Gate criteria — ${nextGateTargetStageId ?? 'next stage'}`}
           />
+        )}
+        {matchedInstance && (
+          <div style={{ marginTop: 12 }}>
+            <AddEvidenceForm
+              instanceId={matchedInstance.id}
+              currentStage={matchedInstance.currentStage}
+            />
+          </div>
         )}
         {matchedInstance && (
           <div style={{ marginTop: 12 }}>
