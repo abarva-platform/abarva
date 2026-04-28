@@ -442,6 +442,7 @@ export function HomeIndexPage() {
 
   return (
     <AppShell
+      surface="home"
       topBarProps={{
         tenantName: v.tenant,
         showLocked: v.tenantLocked,

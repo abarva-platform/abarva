@@ -9,7 +9,6 @@ import { AppShell } from '@/components/shell/AppShell';
 import { AgentColumn } from '@/components/shell/AgentColumn';
 import { FilterPillStrip } from '@/components/shell/FilterPillStrip';
 import { SHELL } from '@/lib/shell/shell-tokens';
-import { AskAnythingBar } from '@/components/agent/AskAnythingBar';
 import type { ProgramRow, ProgramsIndexView as ProgramsIndexViewV2 } from '@/lib/programs/programs-types';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -360,7 +359,7 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
           flex: 1,
           overflowY: 'auto',
           background: SHELL.PAPER,
-          padding: '24px 32px 100px',
+          padding: '24px 32px 32px',
         }}
       >
         {/* Stats row */}
@@ -602,11 +601,6 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
         </div>
       </div>
 
-      <AskAnythingBar
-        agent="nexus"
-        scopeLabel="Programs · Apex Retail"
-        surface="programs"
-      />
     </AppShell>
   );
 }
