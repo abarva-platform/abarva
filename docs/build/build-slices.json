@@ -9279,6 +9279,43 @@
       "deterministicSeed": true
     },
     {
+      "id": "INT-I4",
+      "name": "Intelligence Pattern Graph Browser — I4",
+      "status": "code_complete",
+      "type": "ui",
+      "wave": "INT-I4",
+      "description": "I4: INT-IDX-GRAPH — Knowledge graph browser surface at /intelligence/patterns. Consumes existing pattern-graph-read-model.ts + pattern-graph-shell-view.ts. PatternGraphShell server component with ProvenanceRibbon, node table (lifecycle + degree), edge table (kind + weight), hub pattern callout.",
+      "allowedFiles": [
+        "src/components/intelligence/PatternGraphShell.tsx",
+        "src/components/intelligence/PatternGraphSentinel.tsx",
+        "src/app/intelligence/patterns/page.tsx",
+        "src/__tests__/integration/intelligence/intelligence-i4.test.ts",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit",
+        "npx jest intelligence-i4"
+      ],
+      "dependsOn": [
+        "INT-I1"
+      ],
+      "notes": [
+        "New: PatternGraphShell.tsx — server component; graph metrics, node table with lifecycle stage + degree, edge table with kind + weight, hub pattern callout",
+        "New: PatternGraphSentinel.tsx — client island (AgentColumn)",
+        "New: /intelligence/patterns route",
+        "Uses pre-existing pattern-graph-read-model.ts + pattern-graph-shell-view.ts (I5/I6 from agent-dispatch-queue)",
+        "ProvenanceRibbon.primitive = 'Pattern' with storeBinding = 'seed edges · no live graph store'"
+      ],
+      "acceptanceCriteria": "npx tsc clean; intelligence-i4 all 40 tests pass; PatternGraphShell.tsx NOT use client; ProvenanceRibbon wired; node table shows degree; edge table shows kind + weight; hub patterns highlighted",
+      "deterministicSeed": true
+    },
+    {
       "id": "INT-I5",
       "name": "Intelligence Solutions + Contradictions — I5",
       "status": "code_complete",
