@@ -1,7 +1,9 @@
 'use client';
 
-// SHELL-B — Programs Index page adapted to AppShell.
-// Receives ProgramsIndexViewV2 (alias for programs-types ProgramsIndexView).
+// PROG-P2 · Programs Index page — canonical shell alignment.
+// Catalog entries: PRG-IDX-DEFAULT, PRG-IDX-LINKED, PRG-IDX-EMPTY, PRG-IDX-FILTERED.
+// Server component passes ProgramsIndexView to this client island.
+// data-testid markers required for P-SMOKE-CDP assertions.
 
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -365,6 +367,7 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
 
       {/* Work pane */}
       <div
+        data-testid="programs-index-page"
         style={{
           flex: 1,
           overflowY: 'auto',
@@ -495,6 +498,7 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
 
         {flagship ? (
           <div
+            data-testid="programs-flagship-card"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -518,7 +522,7 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
                   marginBottom: 4,
                 }}
               >
-                Canonical route · /programs
+                Spotlight · {flagship.displayId}
               </div>
               <div
                 style={{
@@ -619,6 +623,7 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
         {/* Programs table or empty state */}
         {filtered.length === 0 ? (
           <div
+            data-testid="programs-empty-state"
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -674,7 +679,9 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
             </button>
           </div>
         ) : (
-          <ProgramsTable programs={filtered} />
+          <div data-testid="programs-table">
+            <ProgramsTable programs={filtered} />
+          </div>
         )}
 
         {/* Originate new program link */}
@@ -695,6 +702,7 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
             <span>Originate new program</span>
           </Link>
           <div
+            data-honest-disclaimer="programs-index"
             style={{
               marginTop: 10,
               fontFamily: SHELL.MONO,
@@ -703,7 +711,7 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
               letterSpacing: '0.06em',
             }}
           >
-            Canonical route · /programs
+            Deterministic seed · Apex Retail Group
           </div>
         </div>
       </div>
