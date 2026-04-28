@@ -5,9 +5,11 @@
 //   2. program-source-context-card testid present in Overview section
 //   3. sourceLinkView is derived from view.displayId (deterministic, no API calls)
 //   4. SourceEventDetailPage LinkedProgramTab has testid + honest disclaimer
+//   5. buildProgramSourceLinkView view model contract
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { buildProgramSourceLinkView } from '@/lib/programs/program-source-link-view';
 
 const DETAIL_PATH = join(
   process.cwd(),
@@ -26,7 +28,7 @@ const detailSrc = readFileSync(DETAIL_PATH, 'utf8');
 const sourceEventSrc = readFileSync(SOURCE_EVENT_PATH, 'utf8');
 const linkLibSrc = readFileSync(LINK_LIB_PATH, 'utf8');
 
-// ─── Programs side ─────────────────────────────────────────────────────────
+// ─── Programs side ────────────────────���───────────────────���────────────────
 
 describe('PROG23 · ProgramDetailPage · source link imports', () => {
   it('imports SourceEventChip from programs components', () => {
@@ -51,13 +53,12 @@ describe('PROG23 · ProgramDetailPage · source context card', () => {
     expect(detailSrc).toContain('<SourceEventChip view={sourceLinkView}');
   });
 
-  it('source context card is gated on sourceLinkView (not on view.linkedSourceEvent alone)', () => {
-    // The card renders when sourceLinkView is truthy (from buildProgramSourceLinkView)
+  it('source context card is gated on sourceLinkView truthy check', () => {
     expect(detailSrc).toContain('sourceLinkView && (');
   });
 });
 
-// ─── Source side ────────────────────────────────────────────────────────────
+// ─── Source side ─────────────────────────���──────────────────────────────���───
 
 describe('PROG23 · SourceEventDetailPage · LinkedProgramTab', () => {
   it('has data-testid="source-linked-program-tab"', () => {
@@ -74,45 +75,53 @@ describe('PROG23 · SourceEventDetailPage · LinkedProgramTab', () => {
 
   it('still renders LinkedProgramChip for the program chip', () => {
     expect(sourceEventSrc).toContain('LinkedProgramChip');
-    expect(sourceEventSrc).toContain("direction=\"source-to-program\"");
+    expect(sourceEventSrc).toContain('direction="source-to-program"');
   });
 });
 
-// ─── View model lib ─────────────────────────────────────────────────────────
+// ─── View model lib ───────��────────────────────────────���────────────────────
 
-describe('PROG23 · program-source-link-view · determinism', () => {
+describe('PROG23 · program-source-link-view · source audit', () => {
   it('buildProgramSourceLinkView is exported', () => {
     expect(linkLibSrc).toContain('export function buildProgramSourceLinkView');
-  });
-
-  it('APX-CDP-2026 returns a non-null view', () => {
-    const { buildProgramSourceLinkView } = require(LINK_LIB_PATH.replace('.ts', ''));
-    const view = buildProgramSourceLinkView('APX-CDP-2026');
-    expect(view).not.toBeNull();
-    expect(view.deterministicSeed).toBe(true);
-  });
-
-  it('unknown programCode returns null', () => {
-    const { buildProgramSourceLinkView } = require(LINK_LIB_PATH.replace('.ts', ''));
-    const view = buildProgramSourceLinkView('unknown-program');
-    expect(view).toBeNull();
-  });
-
-  it('has topCommercialBlocker (not fabricated)', () => {
-    const { buildProgramSourceLinkView } = require(LINK_LIB_PATH.replace('.ts', ''));
-    const view = buildProgramSourceLinkView('APX-CDP-2026');
-    expect(view.topCommercialBlocker.trim().length).toBeGreaterThan(0);
-  });
-
-  it('has routeHint pointing to source event', () => {
-    const { buildProgramSourceLinkView } = require(LINK_LIB_PATH.replace('.ts', ''));
-    const view = buildProgramSourceLinkView('APX-CDP-2026');
-    expect(view.routeHint).toContain('/source/events/');
   });
 
   it('module contains no runtime impurity', () => {
     expect(linkLibSrc).not.toMatch(/Date\.now/);
     expect(linkLibSrc).not.toMatch(/Math\.random/);
     expect(linkLibSrc).not.toMatch(/fetch\(/);
+  });
+
+  it('deterministicSeed is true literal', () => {
+    expect(linkLibSrc).toContain('deterministicSeed: true');
+  });
+});
+
+describe('PROG23 · program-source-link-view · runtime contract', () => {
+  it('APX-CDP-2026 returns a non-null view', () => {
+    const view = buildProgramSourceLinkView('APX-CDP-2026');
+    expect(view).not.toBeNull();
+    expect(view!.deterministicSeed).toBe(true);
+  });
+
+  it('unknown programCode returns null', () => {
+    const view = buildProgramSourceLinkView('unknown-program');
+    expect(view).toBeNull();
+  });
+
+  it('has non-empty topCommercialBlocker (not fabricated)', () => {
+    const view = buildProgramSourceLinkView('APX-CDP-2026');
+    expect(view!.topCommercialBlocker.trim().length).toBeGreaterThan(0);
+  });
+
+  it('routeHint points to source event', () => {
+    const view = buildProgramSourceLinkView('APX-CDP-2026');
+    expect(view!.routeHint).toContain('/source/events/');
+  });
+
+  it('is deterministic across calls', () => {
+    const a = buildProgramSourceLinkView('APX-CDP-2026');
+    const b = buildProgramSourceLinkView('APX-CDP-2026');
+    expect(JSON.stringify(a)).toBe(JSON.stringify(b));
   });
 });
