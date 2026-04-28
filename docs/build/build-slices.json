@@ -9667,6 +9667,13 @@
       "notes": "New decisions tab added to Control Tower (6th tab, between Source Commercial and Executive Brief). buildExecutiveDecisionQueueView tower-domain lib provides 5 decisions across source/programs/cross_domain domains with urgency (immediate/this_week), status (open/blocked/pending_input), known/missing context, blockers, and Atlas recommendations. DecisionsPanel renders in TowerLensTabs.tsx. Critical blocker alert shown when immediate decision has unresolved blocker. Updated tower4-lens-tabs.test.ts (5→6 tabs). data-testid tower-decisions-panel, tower-decisions-executive-summary, tower-decisions-critical-blocker-alert, tower-decisions-disclaimer. 59 integration tests (tower2 + updated tower4). TOWER6/TOWER2-track05 from track-05."
     },
     {
+      "id": "INT1",
+      "name": "Apex Retail Client-specific Pattern Plan",
+      "category": "Intelligence",
+      "status": "code_complete",
+      "notes": "New 'pattern_plan' tab (6th tab) added to IntelligenceLensTabs. buildApexRetailPatternPlanView intelligence lib provides 6 applied patterns across sourcing/cdp/ai_programs domains with applicationStatus (active/candidate/monitoring), evidenceStrength, clientApplication narratives, evidenceItems, evidenceGaps, and sentinelNextAction. PatternPlanSummary aggregates activeCount, candidateCount, monitoringCount, patternsWithGapsCount. Priority patterns: BAFO-GOVERNANCE-001 + CDP-AMS-ARCH-001 + AI-VENDOR-LOCK-001. data-testid intelligence-pattern-plan-panel, intelligence-pattern-plan-summary, intelligence-pattern-plan-item-{patternId}, intelligence-pattern-plan-gaps-{patternId}, intelligence-pattern-plan-disclaimer. 47 integration tests (int1 + updated intel4). INT1 from track-05."
+    },
+    {
       "id": "SRC45",
       "name": "Transition Readiness Placeholder Surface",
       "category": "Source",
