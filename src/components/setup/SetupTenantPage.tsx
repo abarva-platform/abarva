@@ -7,7 +7,7 @@ import { SHELL } from '@/lib/shell/shell-tokens';
 import { TENANT_FIXTURE, TENANT_AGENT_VOICE } from '@/lib/setup/shell-setup-tenant-fixture';
 
 const SUB_NAV_ITEMS = [
-  { key: 'connectors', label: 'Connectors', href: '/admin' },
+  { key: 'connectors', label: 'Connectors', href: '/admin/connectors' },
   { key: 'users', label: 'Users', href: '/admin/users' },
   { key: 'audit', label: 'Audit log', href: '/admin/audit' },
   { key: 'policies', label: 'Policies', href: '/admin/policies' },
@@ -104,6 +104,19 @@ export function SetupTenantPage() {
           >
             Setup · Tenant
           </div>
+          <div
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 10,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: SHELL.PEACH_TEXT,
+              marginBottom: 8,
+              lineHeight: 1,
+            }}
+          >
+            Canonical route · /admin/tenant
+          </div>
           <h1
             style={{
               fontFamily: SHELL.SERIF,
@@ -117,6 +130,12 @@ export function SetupTenantPage() {
           >
             Tenant Settings
           </h1>
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
+          <TenantChip label="Tier" value={TENANT_FIXTURE.tier} tone="mint" />
+          <TenantChip label="Renewal owner" value={TENANT_FIXTURE.renewalOwner} tone="ink" />
+          <TenantChip label="Data residency" value={TENANT_FIXTURE.dataResidency} tone="peach" />
         </div>
 
         {/* Two-column info grid */}
@@ -304,5 +323,44 @@ export function SetupTenantPage() {
         </div>
       </div>
     </AppShell>
+  );
+}
+
+function TenantChip({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: 'mint' | 'peach' | 'ink';
+}) {
+  const styles = tone === 'mint'
+    ? { bg: SHELL.MINT_BG, text: SHELL.MINT_TEXT }
+    : tone === 'peach'
+      ? { bg: SHELL.PEACH_BG, text: SHELL.PEACH_TEXT }
+      : { bg: SHELL.PAPER_DEEP, text: SHELL.INK };
+
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        fontFamily: SHELL.MONO,
+        fontSize: 10,
+        fontWeight: 600,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        color: styles.text,
+        background: styles.bg,
+        borderRadius: 999,
+        padding: '5px 11px',
+        lineHeight: 1,
+      }}
+    >
+      <span style={{ fontFamily: SHELL.SANS, fontSize: 12, fontWeight: 700 }}>{label}</span>
+      {value}
+    </span>
   );
 }
