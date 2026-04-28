@@ -1,3 +1,9 @@
+// PROG-P1 FREEZE — This route has unique deliverable rendering logic and
+// cannot be trivially redirected to a canonical Programs path without a
+// canonical deliverable detail route existing first.
+// Status: frozen until PROG-P7 (cross-surface integration + legacy retirement).
+// Do NOT add new feature logic here. Read-only preserve.
+
 import { notFound } from 'next/navigation';
 import { DeliverableTierRenderer } from '@/components/deliverables/DeliverableTierRenderer';
 import { buildSeedDeliverableRenderModel, findDeliverableByRoute } from '@/lib/deliverables/seed-route-resolver';
