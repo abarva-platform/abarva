@@ -201,17 +201,17 @@ Same composition as v1.0 §6 but Phase 1 ships the full P0 set (was Phase 3 in v
 
 | ID | Name | Composing patterns | Phase |
 |---|---|---|---|
-| **SOL-001** | CDP Activation for mid-market retail | PAT-CDP-001, 002, 006, PAT-IND-RET-001 | **1** |
-| **SOL-002** | AI-coding-agent rollout for engineering org of 100-500 | PAT-AI-006, 010, PAT-FOW-005 | **1** |
-| **SOL-003** | Vendor consolidation playbook for AI tooling >$10M | PAT-AI-003, PAT-SRC-005, 009 | **1** |
-| **SOL-004** | ITSM AI deployment with deflection target >35% | PAT-AI-011, PAT-IND-CROSS-001 | **1** |
-| **SOL-006** | M365 Copilot enterprise rollout | PAT-AI-007, PAT-IND-CROSS-002 | **1** |
+| **SOL-001** | CDP Activation for mid-market retail | PAT-CDP-001, PAT-CDP-002, PAT-CDP-006, PAT-IND-RET-001 | **1** |
+| **SOL-002** | AI-coding-agent rollout for engineering org of 100-500 | PAT-AI-006, PAT-AI-010, PAT-AI-013 | **1** |
+| **SOL-003** | Vendor consolidation playbook for AI tooling >$10M | PAT-AI-003, PAT-SRC-005, PAT-SRC-009 | **1** |
+| **SOL-004** | ITSM AI deployment with deflection target >35% | PAT-AI-011, PAT-AI-010 | **1** |
+| **SOL-006** | M365 Copilot enterprise rollout | PAT-AI-007, PAT-AI-010 | **1** |
 | **SOL-007** | Shadow AI to sanctioned AI migration | PAT-AI-005, PAT-AI-002 | **1** |
-| **SOL-010** | Owned-brand margin recovery (retail) | PAT-IND-RET-001, 002 | **1** |
-| **SOL-013** | AI portfolio governance establishment | PAT-AI-002, 004, PAT-ARCH-002 | **1** |
-| **SOL-014** | Vendor BAFO orchestration | PAT-SRC-001, 002, 007 | **1** |
+| **SOL-010** | Owned-brand margin recovery (retail) | PAT-IND-RET-001, PAT-IND-RET-002 | **1** |
+| **SOL-013** | AI portfolio governance establishment | PAT-AI-002, PAT-AI-004, PAT-ARCH-002 | **1** |
+| **SOL-014** | Vendor BAFO orchestration | PAT-SRC-001, PAT-SRC-002, PAT-SRC-007 | **1** |
 
-**Composition closure verified:** every pattern referenced in a P0 solution is in Phase 1's pattern set. Test 4 of §0 passes.
+**Composition closure verified for the KS-1 solution set above:** every pattern referenced in a P0 solution is in Phase 1's pattern set. Test 4 of §0 passes.
 
 ---
 
