@@ -9454,6 +9454,41 @@
       ],
       "acceptanceCriteria": "npx tsc clean; ScorecardGovernancePanel tests 13 pass; SourceArtifactDrawer tests 11 pass; lifecycle strip renders all 7 states; tier indicator has data-tier attribute",
       "deterministicSeed": true
+    },
+    {
+      "id": "HOME-POLISH",
+      "name": "Home Polish",
+      "status": "code_complete",
+      "type": "ui",
+      "wave": "HOME-POLISH",
+      "description": "Three small polish moves on HomeIndexPage: (1) tighten Nexus voice density from 3 sentences to 2, (2) upgrade peach urgency accent on gate-pending KPI from PEACH_LINE to PEACH_TEXT, (3) add data-testid to middle strip and source audit test.",
+      "allowedFiles": [
+        "src/components/home/HomeIndexPage.tsx",
+        "src/lib/home/shell-home-fixture.ts",
+        "src/__tests__/integration/home/home-index-page.test.ts",
+        "src/__tests__/integration/home/agentic-home-entry.test.ts",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit",
+        "npx jest integration/home"
+      ],
+      "dependsOn": [],
+      "notes": [
+        "agentQuote shortened from 40 words to 19 words — same 3 linked decisions but telegraphic",
+        "StatsCard urgent border changed from SHELL.PEACH_LINE (#e6cca5) to SHELL.PEACH_TEXT (#a06d28) for visible urgency accent",
+        "data-testid='home-middle-strip' added to middle strip div for testability",
+        "home-index-page.test.ts: 10 tests confirming voice density, peach accent, and middle strip presence",
+        "Fixed pre-existing test failure in agentic-home-entry.test.ts (page now uses HomeIndexPage, not AgenticHomeEntry)"
+      ],
+      "acceptanceCriteria": "npx tsc clean; integration/home all 28 tests pass; agentQuote under 30 words; urgent left border uses PEACH_TEXT; middle strip has data-testid",
+      "deterministicSeed": true
     }
   ]
 }

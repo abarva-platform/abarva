@@ -53,7 +53,7 @@ function StatsCard({ label, value, detail, detailColor, urgent = false }: StatCa
       style={{
         background: SHELL.CARD_WHITE,
         border: `1px solid ${SHELL.CARD_LINE}`,
-        borderLeft: urgent ? `4px solid ${SHELL.PEACH_LINE}` : `1px solid ${SHELL.CARD_LINE}`,
+        borderLeft: urgent ? `4px solid ${SHELL.PEACH_TEXT}` : `1px solid ${SHELL.CARD_LINE}`,
         borderRadius: 10,
         padding: '14px 16px',
       }}
@@ -451,6 +451,7 @@ export function HomeIndexPage() {
       }}
       middleStrip={
         <div
+          data-testid="home-middle-strip"
           style={{
             display: 'flex',
             alignItems: 'center',
