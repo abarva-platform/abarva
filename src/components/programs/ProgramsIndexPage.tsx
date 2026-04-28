@@ -18,6 +18,10 @@ import {
   getProgramsIndexFilterSummary,
   normalizeProgramsIndexFilter,
 } from '@/lib/programs/programs-page-view';
+import {
+  buildPhaseFilterView,
+  type ProgramPhase,
+} from '@/lib/programs/phase-filter-view';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -290,6 +294,8 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const activeFilter = normalizeProgramsIndexFilter(searchParams?.get('filter') ?? null);
+  const activePhase = (searchParams?.get('phase') ?? 'all') as ProgramPhase | 'all';
+  const phaseView = buildPhaseFilterView('apex-retail', activePhase === 'all' ? 'all' : activePhase as ProgramPhase);
   const flagship = view.programs.find((program) => program.id === 'apx-cdp-2026') ?? view.programs[0];
   const filtered = filterProgramRowsForIndex(view.programs, activeFilter);
   const emptyStateCopy = getProgramsIndexEmptyStateCopy(activeFilter);
@@ -386,6 +392,105 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
           <span style={{ color: SHELL.INK_MUTED }}>{view.capacityLabel}</span>
           <span style={{ margin: '0 8px', opacity: 0.4 }}>·</span>
           <span style={{ color: SHELL.INK_MUTED }}>{filteredSummary}</span>
+        </div>
+
+        {/* Phase filter strip */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            marginBottom: 20,
+            flexWrap: 'wrap',
+          }}
+        >
+          {/* "By phase" label */}
+          <span
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 9,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: SHELL.INK_MUTED,
+              marginRight: 4,
+            }}
+          >
+            Phase
+          </span>
+
+          {/* All pill */}
+          <button
+            onClick={() => router.push('/programs', { scroll: false })}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              padding: '4px 10px',
+              fontFamily: SHELL.MONO,
+              fontSize: 10,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              borderRadius: 14,
+              border: `1px solid ${activePhase === 'all' ? SHELL.INK : SHELL.CARD_LINE}`,
+              background: activePhase === 'all' ? SHELL.INK : 'transparent',
+              color: activePhase === 'all' ? SHELL.PAPER : SHELL.INK_SOFT,
+              cursor: 'pointer',
+              lineHeight: 1,
+            }}
+          >
+            All
+            <span style={{ fontSize: 10, opacity: 0.7, marginLeft: 4 }}>
+              {phaseView.totalPrograms}
+            </span>
+          </button>
+
+          {/* One pill per phase */}
+          {phaseView.options.map((opt) => {
+            const isActive = activePhase === opt.phase;
+            return (
+              <button
+                key={opt.phase}
+                title={opt.description}
+                onClick={() =>
+                  router.push(`/programs?phase=${opt.phase}`, { scroll: false })
+                }
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '4px 10px',
+                  fontFamily: SHELL.MONO,
+                  fontSize: 10,
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  borderRadius: 14,
+                  border: `1px solid ${isActive ? SHELL.INK : SHELL.CARD_LINE}`,
+                  background: isActive ? SHELL.INK : 'transparent',
+                  color: isActive ? SHELL.PAPER : opt.programCount === 0 ? SHELL.INK_MUTED : SHELL.INK_SOFT,
+                  cursor: opt.programCount === 0 ? 'default' : 'pointer',
+                  lineHeight: 1,
+                  opacity: opt.programCount === 0 && !isActive ? 0.55 : 1,
+                }}
+              >
+                {opt.isCurrentPhase && (
+                  <span
+                    style={{
+                      width: 5,
+                      height: 5,
+                      borderRadius: '50%',
+                      background: isActive ? SHELL.PAPER : SHELL.MINT_TEXT,
+                      flexShrink: 0,
+                    }}
+                  />
+                )}
+                {opt.label}
+                {opt.programCount > 0 && (
+                  <span style={{ fontSize: 10, opacity: 0.7, marginLeft: 2 }}>
+                    {opt.programCount}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {flagship ? (
