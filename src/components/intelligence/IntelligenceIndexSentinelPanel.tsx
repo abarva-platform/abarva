@@ -279,7 +279,7 @@ export function IntelligenceIndexSentinelPanel({
         onActionClick={(letter) => {
           if (letter === 'A') router.push('/intelligence?filter=validated');
           else if (letter === 'B') router.push('/intelligence?filter=in-review');
-          else if (letter === 'C') setShowSubmitModal(true);
+          else if (letter === 'C') router.push('/intelligence/author');
         }}
       />
       {showSubmitModal && (
