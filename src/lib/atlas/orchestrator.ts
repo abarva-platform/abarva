@@ -104,7 +104,7 @@ export async function runAtlasTurnDetailed(input: {
     summary: response.response.slice(0, 480),
     details: {
       source_message: input.message,
-      system_prompt: buildAtlasSystemPrompt('Active client'),
+      system_prompt: buildAtlasSystemPrompt(toolResults.portfolio?.clientName ?? 'Apex Retail Group'),
       suggestions: response.suggestions,
     },
     severity: extractSeverity(response.response),

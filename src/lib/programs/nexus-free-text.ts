@@ -10,6 +10,7 @@ import {
 } from '@/lib/intelligence/pattern-manifest';
 import type { NexusConfidence, Source } from '@/lib/intelligence/types';
 import type { ProgramContextBundle } from '@/lib/programs/nexus';
+import { AGENT_DEMO_SYSTEM_BLOCK } from '@/lib/agent/demo-context';
 
 const STOPWORDS = new Set([
   'the',
@@ -446,15 +447,15 @@ async function synthesizeWithClaude(args: {
     model: process.env.NEXUS_COMPOSER_MODEL ?? 'claude-opus-4-7',
     max_tokens: 380,
     system: [
-      'You are Nexus, the Programs-zone pressure tester.',
-      'Use only the provided composition.',
-      'Stay direct, structured, and specific.',
-      'Never flatter the user.',
+      'You are Nexus, the Programs-zone orchestration agent for the AbarVa platform.',
+      'Use only the provided composition and context. Do not invent program state, evidence, or gate decisions.',
+      'Stay direct, structured, and specific. Never flatter the user.',
       'Use the provided markdown citations verbatim.',
       'If sparseEvidence is true, say "Evidence is thin" in the first sentence.',
       'Be explicit that most support here is authored/composite unless the composition says otherwise.',
       'Close with one concrete next step.',
-    ].join(' '),
+      AGENT_DEMO_SYSTEM_BLOCK,
+    ].join('\n'),
     messages: [
       {
         role: 'user',
