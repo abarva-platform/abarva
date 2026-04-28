@@ -230,9 +230,9 @@ describe('ADMIN-DATA2 · admin-users-adapter', () => {
 });
 
 describe('ADMIN-DATA2 · admin-connectors-adapter', () => {
-  it('returns 6 connectors for apex-retail', async () => {
+  it('returns 7 connectors for apex-retail', async () => {
     const connectors = await getAdminConnectors(APEX);
-    expect(connectors.length).toBe(6);
+    expect(connectors.length).toBe(7);
   });
 
   it('returns 2 connectors for meridian', async () => {
@@ -277,6 +277,25 @@ describe('ADMIN-DATA2 · admin-connectors-adapter', () => {
     expect(detail!.healthTrend.length).toBeGreaterThan(0);
   });
 
+  it('models Microsoft Graph as a blocked contract-only connector', async () => {
+    const connector = await getAdminConnectorById(APEX, 'conn-apex-ms-graph');
+    expect(connector?.vendor).toBe('Microsoft Graph');
+    expect(connector?.status).toBe('blocked');
+    expect(connector?.blockerReason).toContain('Setup W4');
+
+    const detail = await getAdminConnectorDetail(APEX, 'conn-apex-ms-graph');
+    expect(detail?.configSchema?.fields).toEqual([
+      'tenantId',
+      'clientId',
+      'clientSecret',
+      'redirectUri',
+      'adminConsent',
+      'requiredScopes',
+    ]);
+    expect(detail?.requiredScopes).toContain('User.Read.All');
+    expect(detail?.recentSyncAttempts[0].errorMessage).toContain('Setup W4');
+  });
+
   it('returns null detail for unknown connector', async () => {
     expect(await getAdminConnectorDetail(APEX, 'nope')).toBeNull();
   });
@@ -291,7 +310,7 @@ describe('ADMIN-DATA2 · admin-connectors-adapter', () => {
   });
 
   it('sync fixture helper returns connectors', () => {
-    expect(getAdminConnectorsFixture(APEX).length).toBe(6);
+    expect(getAdminConnectorsFixture(APEX).length).toBe(7);
   });
 });
 

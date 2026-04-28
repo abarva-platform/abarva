@@ -56,6 +56,7 @@ export interface AdminConnectorHealthPoint {
 
 export interface AdminConnectorDetail extends AdminConnectorRow {
   configSchema: Record<string, unknown> | null;
+  requiredScopes?: ReadonlyArray<string>;
   recentSyncAttempts: ReadonlyArray<AdminConnectorSyncAttempt>;
   healthTrend: ReadonlyArray<AdminConnectorHealthPoint>;
 }

@@ -119,6 +119,22 @@ const APEX_RETAIL_CONNECTORS: ReadonlyArray<AdminConnectorRow> = [
     lastSyncAttempt: '2026-04-26T11:00:00.000Z',
     updatedAt: FIXTURE_GENERATED_AT,
   },
+  {
+    id: 'conn-apex-ms-graph',
+    tenantSlug: 'apex-retail',
+    kind: 'identity',
+    vendor: 'Microsoft Graph',
+    label: 'Microsoft Graph',
+    status: 'blocked',
+    requiredForPilot: false,
+    requiredForProduction: true,
+    blockerReason:
+      'Microsoft Graph OAuth is not configured. Setup W4 must own tenant admin consent, token storage, and live validation before configure/test can run.',
+    stewardGuidance:
+      'Graph connector is contract-only in Setup W3. Required scopes and configuration are masked for review, but no OAuth exchange, Graph SDK call, or live tenant read is performed.',
+    lastSyncAttempt: null,
+    updatedAt: FIXTURE_GENERATED_AT,
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -181,6 +197,16 @@ function buildSyncAttempts(row: AdminConnectorRow): ReadonlyArray<AdminConnector
   if (row.status === 'deferred') {
     return [];
   }
+  if (row.status === 'blocked') {
+    return [
+      {
+        at: '2026-04-26T00:00:00.000Z',
+        result: 'failed',
+        errorMessage:
+          'Blocked until Setup W4 implements live Microsoft Graph OAuth consent boundary.',
+      },
+    ];
+  }
   return [
     {
       at: '2026-04-26T00:00:00.000Z',
@@ -199,6 +225,9 @@ function buildHealthTrend(row: AdminConnectorRow): ReadonlyArray<AdminConnectorH
     ];
   }
   if (row.status === 'deferred') {
+    return [{ at: '2026-04-26T00:00:00.000Z', status: 'paused' }];
+  }
+  if (row.status === 'blocked') {
     return [{ at: '2026-04-26T00:00:00.000Z', status: 'paused' }];
   }
   return [{ at: '2026-04-26T00:00:00.000Z', status: 'failed' }];
@@ -229,6 +258,19 @@ const CONFIG_SCHEMAS: Readonly<Record<string, Record<string, unknown>>> = {
     fields: ['publishableKey', 'secretKey', 'allowedRedirectOrigins'],
     docsHref: 'https://clerk.com/docs',
   },
+  'conn-apex-ms-graph': {
+    fields: ['tenantId', 'clientId', 'clientSecret', 'redirectUri', 'adminConsent', 'requiredScopes'],
+    docsHref: 'https://learn.microsoft.com/graph/overview',
+    maskedConfig: {
+      tenantId: 'tenant-****',
+      clientId: 'app-****',
+      clientSecret: '••••••••',
+      redirectUri: 'https://app.abarva.ai/api/setup/microsoft-graph/callback',
+      adminConsent: 'not granted',
+      requiredScopes:
+        'User.Read.All, Group.Read.All, Directory.Read.All, Calendars.Read, Mail.ReadBasic.All, Reports.Read.All',
+    },
+  },
   'conn-meridian-identity': {
     fields: ['publishableKey', 'secretKey'],
     docsHref: 'https://clerk.com/docs',
@@ -256,6 +298,17 @@ export function adminConnectorDetailFixture(
   return {
     ...row,
     configSchema: CONFIG_SCHEMAS[connectorId] ?? null,
+    requiredScopes:
+      connectorId === 'conn-apex-ms-graph'
+        ? [
+            'User.Read.All',
+            'Group.Read.All',
+            'Directory.Read.All',
+            'Calendars.Read',
+            'Mail.ReadBasic.All',
+            'Reports.Read.All',
+          ]
+        : undefined,
     recentSyncAttempts: buildSyncAttempts(row),
     healthTrend: buildHealthTrend(row),
   };
