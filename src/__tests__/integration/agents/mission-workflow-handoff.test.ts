@@ -31,10 +31,10 @@ import {
   type MissionWorkflowHandoffView,
   type AgentMissionAgent,
   type AgentMissionHandoffTrigger,
-} from '@/lib/agents/mission-workflow-handoff';
+} from '@/lib/agent/mission-workflow-handoff';
 
 const root = process.cwd();
-const SOURCE_PATH = 'src/lib/agents/mission-workflow-handoff.ts';
+const SOURCE_PATH = 'src/lib/agent/mission-workflow-handoff.ts';
 
 const CANONICAL_AGENTS: AgentMissionAgent[] = ['nexus', 'sentinel', 'atlas', 'steward'];
 

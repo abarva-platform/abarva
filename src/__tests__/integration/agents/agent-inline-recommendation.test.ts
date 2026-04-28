@@ -31,10 +31,10 @@ import {
   describeInlineRecommendation,
   type AgentInlineRecommendationView,
   type AgentMissionPanelAgent,
-} from '@/lib/agents/agent-inline-recommendation-view';
+} from '@/lib/agent/agent-inline-recommendation-view';
 
 const root = process.cwd();
-const VIEW_SOURCE_PATH = 'src/lib/agents/agent-inline-recommendation-view.ts';
+const VIEW_SOURCE_PATH = 'src/lib/agent/agent-inline-recommendation-view.ts';
 const COMPONENT_SOURCE_PATH = 'src/components/agents/AgentInlineRecommendation.tsx';
 
 const CANONICAL_AGENTS: AgentMissionPanelAgent[] = ['nexus', 'sentinel', 'atlas', 'steward'];

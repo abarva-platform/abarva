@@ -24,7 +24,7 @@ import {
   buildAgentInlineRecommendationView,
   type AgentInlineRecommendationView,
   type InlineRecommendationItem,
-} from '@/lib/agents/agent-inline-recommendation-view';
+} from '@/lib/agent/agent-inline-recommendation-view';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
