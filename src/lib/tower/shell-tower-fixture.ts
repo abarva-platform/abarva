@@ -53,6 +53,68 @@ export const PRESSURE_CUSTOMER_CHURN: PressureItem = {
   status: 'watching',
 };
 
+// ---------------------------------------------------------------------------
+// Pressure detail types and constants
+// ---------------------------------------------------------------------------
+
+export interface PressureDetail extends PressureItem {
+  agentQuote: string;
+  agentContext: string;
+  actions: Array<{ letter: 'A' | 'B' | 'C'; text: string; detail?: string }>;
+  timeline: Array<{ date: string; event: string; actor: string }>;
+  relatedPrograms: Array<{ displayId: string; name: string; href: string }>;
+}
+
+export const PRESSURE_DETAIL_VENDOR_RISK: PressureDetail = {
+  ...PRESSURE_VENDOR_RISK,
+  agentQuote:
+    '4 of 12 vendors are amber or red — ServiceNow auth degraded 3 days ago, and 2 BAFO vendors have pending SOC-2 reports. The AMS Vendor Consolidation BAFO decision (Stage 7) will resolve 2 of the 4 amber items. Recommend fast-tracking the AMS selection.',
+  agentContext: 'Atlas · Vendor Risk · medium severity',
+  actions: [
+    { letter: 'A' as const, text: 'Resolve ServiceNow auth', detail: 'Reconnect OAuth — Setup → Connectors → ServiceNow' },
+    { letter: 'B' as const, text: 'Fast-track AMS BAFO decision', detail: 'Resolves Vendor B and Vendor C amber status' },
+    { letter: 'C' as const, text: 'Request SOC-2 reports', detail: '2 vendors pending — deadline in 2 weeks' },
+  ],
+  timeline: [
+    { date: 'Apr 24', event: 'ServiceNow OAuth token expired — connector degraded', actor: 'Steward' },
+    { date: 'Apr 22', event: 'Vendor B SOC-2 report flagged as overdue', actor: 'Atlas' },
+    { date: 'Apr 19', event: 'AMS BAFO entered Stage 7 — 3 vendors shortlisted', actor: 'Nexus' },
+    { date: 'Apr 15', event: 'Vendor risk level elevated from low to medium', actor: 'Atlas' },
+  ],
+  relatedPrograms: [
+    { displayId: 'APX-CDP-2026', name: 'Apex Retail CDP Activation', href: '/programs/apx-cdp-2026' },
+  ],
+};
+
+export const PRESSURE_DETAIL_CUSTOMER_CHURN: PressureDetail = {
+  ...PRESSURE_CUSTOMER_CHURN,
+  agentQuote:
+    'Quarterly churn is at 8.2% — down 0.4pp from last quarter. The Contact Center AI program is the most likely driver of this improvement, though causal attribution requires 2 more quarters of data. This is a watch item, not a blocker.',
+  agentContext: 'Atlas · Customer Churn Signal · watching',
+  actions: [
+    { letter: 'A' as const, text: 'Brief sponsor on churn trend', detail: 'Early signal — worth a 60-second update' },
+    { letter: 'B' as const, text: 'Link churn metric to CC-AI outcome model', detail: 'Atlas can track attribution from Build → Activate' },
+    { letter: 'C' as const, text: 'Set churn alert threshold', detail: 'Watch at 8.5% · escalate at 9%' },
+  ],
+  timeline: [
+    { date: 'Apr 27', event: 'Q1 churn finalized at 8.2% — 0.4pp improvement', actor: 'Atlas' },
+    { date: 'Mar 31', event: 'Contact Center AI NLP hit 94% accuracy in Build', actor: 'Nexus' },
+    { date: 'Jan 27', event: 'Churn watch item created — Q4 baseline 8.6%', actor: 'Atlas' },
+  ],
+  relatedPrograms: [
+    { displayId: 'APX-CC-2026', name: 'Contact Center AI', href: '/programs/apx-cc-2026' },
+  ],
+};
+
+export const PRESSURE_DETAIL_MAP: Record<string, PressureDetail> = {
+  'twr-vendor-risk': PRESSURE_DETAIL_VENDOR_RISK,
+  'twr-customer-churn': PRESSURE_DETAIL_CUSTOMER_CHURN,
+};
+
+// ---------------------------------------------------------------------------
+// Tower index view
+// ---------------------------------------------------------------------------
+
 export const TOWER_INDEX_VIEW = {
   tenant: 'Apex Retail Group',
   agentQuote:
