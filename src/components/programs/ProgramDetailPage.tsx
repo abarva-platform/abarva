@@ -1031,6 +1031,512 @@ function ContradictionModal({ item, onResolve, onClose }: ContradictionModalProp
   );
 }
 
+// ─── SuggestedActionOverlay (PRG-STA-SUGGESTED-ACTION) ────────────────────────
+
+interface SuggestedActionOverlayProps {
+  action: { letter: 'A' | 'B' | 'C'; text: string; detail?: string; frame: 1 | 2 | 3 };
+  onAdvance: () => void;
+  onDismiss: () => void;
+}
+
+function SuggestedActionOverlay({ action, onAdvance, onDismiss }: SuggestedActionOverlayProps) {
+  const ghostBtn: React.CSSProperties = {
+    fontFamily: SHELL.MONO,
+    fontSize: 10,
+    color: 'rgba(250,247,241,0.8)',
+    background: 'none',
+    border: '1px solid rgba(250,247,241,0.3)',
+    borderRadius: 6,
+    padding: '7px 14px',
+    cursor: 'pointer',
+    letterSpacing: '0.06em',
+  };
+  const solidBtn: React.CSSProperties = {
+    fontFamily: SHELL.MONO,
+    fontSize: 10,
+    color: SHELL.INK,
+    background: SHELL.PAPER,
+    border: 'none',
+    borderRadius: 6,
+    padding: '7px 14px',
+    cursor: 'pointer',
+    letterSpacing: '0.06em',
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        bottom: 80,
+        right: 320,
+        background: SHELL.INK,
+        borderRadius: 12,
+        padding: '20px 24px',
+        width: 340,
+        boxShadow: '0 8px 32px rgba(0,0,0,0.24)',
+        zIndex: 800,
+      }}
+    >
+      {action.frame === 1 && (
+        <>
+          <div
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 9,
+              color: 'rgba(250,247,241,0.7)',
+              letterSpacing: '0.16em',
+              textTransform: 'uppercase',
+              marginBottom: 10,
+            }}
+          >
+            Nexus suggests
+          </div>
+          <div
+            style={{
+              fontFamily: SHELL.SERIF,
+              fontSize: 15,
+              color: SHELL.PAPER,
+              lineHeight: 1.4,
+              marginBottom: 4,
+            }}
+          >
+            {action.text}
+          </div>
+          {action.detail && (
+            <div
+              style={{
+                fontFamily: SHELL.SANS,
+                fontSize: 12,
+                color: 'rgba(250,247,241,0.7)',
+                marginBottom: 16,
+                lineHeight: 1.5,
+              }}
+            >
+              {action.detail}
+            </div>
+          )}
+          {!action.detail && <div style={{ marginBottom: 16 }} />}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button style={ghostBtn} onClick={onDismiss}>Dismiss</button>
+            <button style={solidBtn} onClick={onAdvance}>Proceed →</button>
+          </div>
+        </>
+      )}
+
+      {action.frame === 2 && (
+        <>
+          <div
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 9,
+              color: 'rgba(250,247,241,0.7)',
+              letterSpacing: '0.16em',
+              textTransform: 'uppercase',
+              marginBottom: 10,
+            }}
+          >
+            Confirm action
+          </div>
+          <div
+            style={{
+              fontFamily: SHELL.SERIF,
+              fontSize: 15,
+              color: SHELL.PAPER,
+              lineHeight: 1.4,
+              marginBottom: 6,
+            }}
+          >
+            Are you sure you want to: {action.text}?
+          </div>
+          <div
+            style={{
+              fontFamily: SHELL.SANS,
+              fontSize: 12,
+              color: 'rgba(250,247,241,0.7)',
+              marginBottom: 16,
+              lineHeight: 1.5,
+            }}
+          >
+            This will be logged in the program activity stream.
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button style={ghostBtn} onClick={onDismiss}>← Back</button>
+            <button style={solidBtn} onClick={onAdvance}>Confirm and proceed</button>
+          </div>
+        </>
+      )}
+
+      {action.frame === 3 && (
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+            <div
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: '50%',
+                background: SHELL.MINT_TEXT,
+                flexShrink: 0,
+              }}
+            />
+            <span
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 9,
+                color: SHELL.MINT_TEXT,
+                letterSpacing: '0.16em',
+                textTransform: 'uppercase',
+              }}
+            >
+              Action logged
+            </span>
+          </div>
+          <div
+            style={{
+              fontFamily: SHELL.SERIF,
+              fontSize: 14,
+              color: SHELL.PAPER,
+              lineHeight: 1.4,
+              marginBottom: 6,
+            }}
+          >
+            {action.text}
+          </div>
+          <div
+            style={{
+              fontFamily: SHELL.SANS,
+              fontSize: 12,
+              color: 'rgba(250,247,241,0.7)',
+              marginBottom: 16,
+              lineHeight: 1.5,
+            }}
+          >
+            Added to the program activity stream. Nexus will follow up.
+          </div>
+          <button style={solidBtn} onClick={onDismiss}>Close</button>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── FileUploadOverlay (PRG-STA-FILE-UPLOAD) ──────────────────────────────────
+
+interface FileUploadOverlayProps {
+  programName: string;
+  onClose: () => void;
+}
+
+function FileUploadOverlay({ programName: _programName, onClose }: FileUploadOverlayProps) {
+  const [uploadState, setUploadState] = useState<{
+    name: string;
+    size: string;
+    stage: 'uploading' | 'parsing' | 'done';
+  } | null>(null);
+
+  const simulateUpload = () => {
+    if (uploadState) return;
+    const fileName = 'Workshop-5-Output-Apr2026.pdf';
+    setUploadState({ name: fileName, size: '1.2 MB', stage: 'uploading' });
+    setTimeout(
+      () => setUploadState((s) => (s ? { ...s, stage: 'parsing' } : null)),
+      1200,
+    );
+    setTimeout(
+      () => setUploadState((s) => (s ? { ...s, stage: 'done' } : null)),
+      2800,
+    );
+  };
+
+  const progressPct =
+    uploadState?.stage === 'uploading'
+      ? 33
+      : uploadState?.stage === 'parsing'
+      ? 70
+      : 100;
+
+  const insightChips: Array<{ label: string; bg: string }> = [
+    { label: 'Value hypothesis gap identified', bg: SHELL.PEACH_BG },
+    { label: 'Workshop 5 completion criteria confirmed', bg: SHELL.MINT_BG },
+    { label: 'Privacy boundary reference found', bg: SHELL.BLUE_BG },
+  ];
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        right: 0,
+        bottom: 0,
+        width: 420,
+        background: SHELL.PAPER,
+        borderLeft: `1px solid ${SHELL.CARD_LINE}`,
+        display: 'flex',
+        flexDirection: 'column',
+        zIndex: 910,
+        boxShadow: '-4px 0 24px rgba(0,0,0,0.08)',
+      }}
+    >
+      {/* Header */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '16px 20px',
+          borderBottom: `1px solid ${SHELL.CARD_LINE}`,
+          flexShrink: 0,
+        }}
+      >
+        <span
+          style={{
+            fontFamily: SHELL.MONO,
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: '0.16em',
+            textTransform: 'uppercase',
+            color: SHELL.INK,
+          }}
+        >
+          Upload document
+        </span>
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            fontFamily: SHELL.SANS,
+            fontSize: 18,
+            color: SHELL.INK_MUTED,
+            lineHeight: 1,
+            padding: '0 2px',
+          }}
+        >
+          ×
+        </button>
+      </div>
+
+      {/* Upload zone / progress */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '0 0 16px' }}>
+        {!uploadState ? (
+          <div
+            onClick={simulateUpload}
+            style={{
+              margin: 24,
+              border: `2px dashed ${SHELL.CARD_LINE}`,
+              borderRadius: 10,
+              padding: '40px 20px',
+              textAlign: 'center',
+              cursor: 'pointer',
+              background: SHELL.PAPER_SOFT,
+            }}
+          >
+            <div
+              style={{
+                fontFamily: SHELL.SERIF,
+                fontSize: 15,
+                color: SHELL.INK,
+                marginBottom: 6,
+              }}
+            >
+              Drop a file here
+            </div>
+            <div
+              style={{
+                fontFamily: SHELL.SANS,
+                fontSize: 12,
+                color: SHELL.INK_MUTED,
+              }}
+            >
+              or click to browse · PDF, DOCX, PPTX up to 25MB
+            </div>
+          </div>
+        ) : (
+          <div style={{ padding: '24px 24px 0' }}>
+            {/* File info */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: 8,
+                marginBottom: 10,
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: SHELL.SANS,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: SHELL.INK,
+                }}
+              >
+                {uploadState.name}
+              </span>
+              <span
+                style={{
+                  fontFamily: SHELL.MONO,
+                  fontSize: 9,
+                  color: SHELL.INK_MUTED,
+                  letterSpacing: '0.06em',
+                }}
+              >
+                {uploadState.size}
+              </span>
+            </div>
+
+            {/* Stage indicator */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                marginBottom: 10,
+              }}
+            >
+              <div
+                style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: '50%',
+                  flexShrink: 0,
+                  background:
+                    uploadState.stage === 'done' ? SHELL.MINT_TEXT : SHELL.AMBER_DOT,
+                }}
+              />
+              <span
+                style={{
+                  fontFamily: SHELL.MONO,
+                  fontSize: 9,
+                  color:
+                    uploadState.stage === 'done' ? SHELL.MINT_TEXT : SHELL.INK_MUTED,
+                  letterSpacing: '0.10em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                {uploadState.stage === 'uploading' && 'Uploading...'}
+                {uploadState.stage === 'parsing' && 'Nexus is parsing document...'}
+                {uploadState.stage === 'done' && 'Document parsed · 3 insights extracted'}
+              </span>
+            </div>
+
+            {/* Progress bar */}
+            <div
+              style={{
+                height: 4,
+                borderRadius: 2,
+                background: SHELL.CARD_LINE,
+                marginBottom: 20,
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  height: '100%',
+                  borderRadius: 2,
+                  background: SHELL.MINT_TEXT,
+                  width: `${progressPct}%`,
+                  transition: 'width 0.4s ease',
+                }}
+              />
+            </div>
+
+            {/* Insight chips (shown when done) */}
+            {uploadState.stage === 'done' && (
+              <>
+                <div
+                  style={{
+                    fontFamily: SHELL.MONO,
+                    fontSize: 9,
+                    fontWeight: 700,
+                    letterSpacing: '0.14em',
+                    textTransform: 'uppercase',
+                    color: SHELL.INK_MUTED,
+                    marginBottom: 10,
+                  }}
+                >
+                  Extracted insights
+                </div>
+                <div style={{ marginBottom: 20 }}>
+                  {insightChips.map((chip) => (
+                    <div
+                      key={chip.label}
+                      style={{
+                        fontFamily: SHELL.MONO,
+                        fontSize: 9,
+                        color: SHELL.INK,
+                        background: chip.bg,
+                        padding: '4px 10px',
+                        borderRadius: 10,
+                        marginBottom: 6,
+                        display: 'inline-block',
+                        marginRight: 4,
+                      }}
+                    >
+                      {chip.label}
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={onClose}
+                  style={{
+                    fontFamily: SHELL.MONO,
+                    fontSize: 11,
+                    color: SHELL.PAPER,
+                    background: SHELL.INK,
+                    border: 'none',
+                    borderRadius: 6,
+                    padding: '8px 14px',
+                    cursor: 'pointer',
+                    letterSpacing: '0.06em',
+                  }}
+                >
+                  Add to program evidence →
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Nexus advisory */}
+      <div
+        style={{
+          background: SHELL.PAPER_SOFT,
+          padding: '12px 16px',
+          borderTop: `1px solid ${SHELL.CARD_LINE}`,
+          flexShrink: 0,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: SHELL.MONO,
+            fontSize: 8,
+            fontWeight: 700,
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            color: SHELL.INK_MUTED,
+            marginBottom: 4,
+          }}
+        >
+          Nexus
+        </div>
+        <div
+          style={{
+            fontFamily: SHELL.SANS,
+            fontSize: 11,
+            color: SHELL.INK_MUTED,
+            lineHeight: 1.5,
+          }}
+        >
+          Documents are parsed for evidence and linked to the current phase. Nexus will flag
+          relevant gate criteria.
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
@@ -1038,6 +1544,17 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
   const [showGateModal, setShowGateModal] = useState(false);
   const [evidenceDrawerItem, setEvidenceDrawerItem] = useState<EvidenceItem | null>(null);
   const [contradictionItem, setContradictionItem] = useState<EvidenceItem | null>(null);
+
+  // PRG-STA-SUGGESTED-ACTION state
+  const [suggestedAction, setSuggestedAction] = useState<{
+    letter: 'A' | 'B' | 'C';
+    text: string;
+    detail?: string;
+    frame: 1 | 2 | 3;
+  } | null>(null);
+
+  // PRG-STA-FILE-UPLOAD state
+  const [showFileUpload, setShowFileUpload] = useState(false);
 
   const phaseLabel = PHASE_LABEL_MAP[view.viewingPhase] ?? `Phase ${view.viewingPhase}`;
 
@@ -1059,6 +1576,18 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
     detail: a.detail,
   }));
 
+  const handleActionClick = (letter: 'A' | 'B' | 'C') => {
+    const action = view.workbench.actions.find((a) => a.letter === letter);
+    if (action) {
+      setSuggestedAction({
+        letter: action.letter as 'A' | 'B' | 'C',
+        text: action.text,
+        detail: action.detail,
+        frame: 1,
+      });
+    }
+  };
+
   return (
     <AppShell
       surface="programs"
@@ -1076,6 +1605,7 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
         quote={view.workbench.prose}
         agentContext={view.workbench.title}
         actions={agentActions}
+        onActionClick={handleActionClick}
       />
 
       {/* Work pane */}
@@ -1110,6 +1640,22 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
               {view.displayId}
             </span>
             <GatePill status={view.gateStatus} />
+            {/* Upload affordance */}
+            <button
+              onClick={() => setShowFileUpload(true)}
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 10,
+                color: SHELL.INK_SOFT,
+                background: 'none',
+                border: `1px solid ${SHELL.CARD_LINE}`,
+                borderRadius: 5,
+                padding: '4px 10px',
+                cursor: 'pointer',
+              }}
+            >
+              ↑ Upload document
+            </button>
           </div>
           <h1
             style={{
@@ -1231,6 +1777,27 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
             setContradictionItem(null);
           }}
           onClose={() => setContradictionItem(null)}
+        />
+      )}
+
+      {/* PRG-STA-SUGGESTED-ACTION overlay */}
+      {suggestedAction && (
+        <SuggestedActionOverlay
+          action={suggestedAction}
+          onAdvance={() =>
+            setSuggestedAction((s) =>
+              s ? { ...s, frame: (s.frame < 3 ? s.frame + 1 : 3) as 1 | 2 | 3 } : null,
+            )
+          }
+          onDismiss={() => setSuggestedAction(null)}
+        />
+      )}
+
+      {/* PRG-STA-FILE-UPLOAD overlay */}
+      {showFileUpload && (
+        <FileUploadOverlay
+          programName={view.name}
+          onClose={() => setShowFileUpload(false)}
         />
       )}
     </AppShell>
