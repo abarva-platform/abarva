@@ -1,11 +1,12 @@
 // INT-DTL — Shell-native Intelligence pattern detail reading view.
+// I1: DeprecatedPatternDetailPage deleted; deprecated patterns now route to
+// PatternDetailPage (same surface). Full rewire to SentinelPatternDetail is I2.
 // Serves T3-H01 (validated), T3-H03 (in-review), T1-F02 (candidate),
 // and T2-C03 (deprecated) via fixture map.
 // Unknown pattern IDs redirect back to the library index.
 
 import { redirect } from 'next/navigation';
 import { PatternDetailPage } from '@/components/intelligence/PatternDetailPage';
-import { DeprecatedPatternDetailPage } from '@/components/intelligence/DeprecatedPatternDetailPage';
 import { T3_H01_PATTERN } from '@/lib/intelligence/shell-pattern-detail-fixture';
 import { T3_H03_PATTERN } from '@/lib/intelligence/shell-pattern-detail-inreview-fixture';
 import { T1_F02_PATTERN } from '@/lib/intelligence/shell-pattern-detail-candidate-fixture';
@@ -44,10 +45,8 @@ export default async function PatternDetailRoute({
     redirect('/intelligence');
   }
 
-  if (pattern.status === 'deprecated') {
-    return <DeprecatedPatternDetailPage />;
-  }
-
+  // I1: DeprecatedPatternDetailPage removed — all patterns use PatternDetailPage.
+  // I2 will rewire to SentinelPatternDetail (server component) as the canonical surface.
   const usingPrograms = 'usingPrograms' in pattern ? pattern.usingPrograms : undefined;
   return <PatternDetailPage usingPrograms={usingPrograms} />;
 }

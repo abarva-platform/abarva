@@ -57,7 +57,7 @@ export function buildIntelligenceDeterministicJourneyManifest(): IntelligenceDet
         route: '/tenant/apex-retail/intelligence',
         evidence: [
           'src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx',
-          'IntelligenceRouteShell',
+          // I1: IntelligenceRouteShell retired — route directly renders IntelligenceLensTabs.
           'IntelligenceLensTabs',
         ],
         deterministicSeedOnly: true,

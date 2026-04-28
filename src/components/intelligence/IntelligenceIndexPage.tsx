@@ -1,253 +1,19 @@
-'use client';
-
-// Shell-native Intelligence Index page — pattern library browsing surface.
-// INT-IDX: AppShell + FilterPillStrip + Sentinel AgentColumn + pattern list.
+// I1 · INT-IDX-LIBRARY — Server-component Intelligence pattern library index.
+//
+// Converted from 'use client' in I1. All filter state is URL-param-driven
+// (searchParams.filter passed as a prop from the route). No useState, no
+// useRouter, no useSearchParams here.
+//
+// Client interactivity (AgentColumn actions + PatternSubmitModal) is isolated
+// to IntelligenceIndexSentinelPanel (client component island).
+// Filter pill navigation uses IntelligenceFilterLinks (server component, Link-based).
 
 import Link from 'next/link';
-import { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
-import { AgentColumn } from '@/components/shell/AgentColumn';
-import { FilterPillStrip } from '@/components/shell/FilterPillStrip';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { INTELLIGENCE_INDEX_VIEW, type IntelligencePattern } from '@/lib/intelligence/shell-intelligence-fixture';
-
-// ─── INT-MOD-SUBMIT: Pattern submission modal ─────────────────────────────────
-
-interface PatternSubmitModalProps {
-  onClose: () => void;
-}
-
-function PatternSubmitModal({ onClose }: PatternSubmitModalProps) {
-  const [name, setName] = useState('');
-  const [tier, setTier] = useState<'T1' | 'T2' | 'T3' | null>(null);
-  const [problem, setProblem] = useState('');
-  const [evidence, setEvidence] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-
-  function handleSubmit() {
-    if (name.trim() === '' || tier === null) return;
-    setSubmitted(true);
-    setTimeout(() => onClose(), 2500);
-  }
-
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    border: `1px solid ${SHELL.CARD_LINE}`,
-    borderRadius: 6,
-    padding: '8px 12px',
-    fontFamily: SHELL.SANS,
-    fontSize: 13,
-    background: SHELL.PAPER,
-    color: SHELL.INK,
-    boxSizing: 'border-box',
-    outline: 'none',
-    resize: 'none',
-  };
-
-  const labelStyle: React.CSSProperties = {
-    fontFamily: SHELL.MONO,
-    fontSize: 9,
-    letterSpacing: '0.12em',
-    textTransform: 'uppercase',
-    color: SHELL.INK_MUTED,
-    display: 'block',
-    marginBottom: 5,
-  };
-
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 1200,
-        background: 'rgba(12,26,58,0.6)',
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-      }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <div
-        style={{
-          background: SHELL.PAPER,
-          borderRadius: 12,
-          padding: 32,
-          maxWidth: 520,
-          width: '100%',
-          margin: '10vh auto',
-          boxShadow: '0 8px 40px rgba(0,0,0,0.18)',
-        }}
-      >
-        {/* Header */}
-        <div style={{ marginBottom: 24 }}>
-          <div
-            style={{
-              fontFamily: SHELL.SERIF,
-              fontSize: 20,
-              fontWeight: 700,
-              color: SHELL.INK,
-              lineHeight: 1.2,
-              marginBottom: 4,
-            }}
-          >
-            Submit a Pattern
-          </div>
-          <div
-            style={{
-              fontFamily: SHELL.MONO,
-              fontSize: 9,
-              color: SHELL.INK_MUTED,
-              letterSpacing: '0.1em',
-            }}
-          >
-            Sn · Pattern submission
-          </div>
-        </div>
-
-        {submitted ? (
-          /* Success state */
-          <div>
-            <div
-              style={{
-                padding: '14px 16px',
-                background: SHELL.MINT_BG,
-                border: `1px solid ${SHELL.MINT_LINE}`,
-                borderRadius: 8,
-                fontFamily: SHELL.SANS,
-                fontSize: 13,
-                color: SHELL.MINT_TEXT,
-                marginBottom: 20,
-              }}
-            >
-              ✓ Submitted — Sentinel will begin review within one cycle.
-            </div>
-            <button
-              onClick={onClose}
-              style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 10,
-                letterSpacing: '0.08em',
-                color: SHELL.INK_SOFT,
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: 0,
-              }}
-            >
-              Close
-            </button>
-          </div>
-        ) : (
-          /* Form */
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {/* Pattern name */}
-            <div>
-              <label style={labelStyle}>Pattern name</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                style={inputStyle}
-                placeholder="e.g. Predictive Churn Signal"
-              />
-            </div>
-
-            {/* Tier */}
-            <div>
-              <label style={labelStyle}>Tier</label>
-              <div style={{ display: 'flex', gap: 8 }}>
-                {(['T1', 'T2', 'T3'] as const).map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setTier(t)}
-                    style={{
-                      padding: '5px 16px',
-                      borderRadius: 999,
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontFamily: SHELL.MONO,
-                      fontSize: 10,
-                      fontWeight: 600,
-                      letterSpacing: '0.08em',
-                      background: tier === t ? SHELL.INK : SHELL.GRAY_BG,
-                      color: tier === t ? SHELL.PAPER : SHELL.INK_SOFT,
-                      transition: 'background 120ms ease, color 120ms ease',
-                    }}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Problem statement */}
-            <div>
-              <label style={labelStyle}>Problem statement</label>
-              <textarea
-                rows={3}
-                value={problem}
-                onChange={(e) => setProblem(e.target.value)}
-                style={inputStyle}
-                placeholder="Describe the problem this pattern addresses…"
-              />
-            </div>
-
-            {/* Evidence links */}
-            <div>
-              <label style={labelStyle}>Evidence links (optional)</label>
-              <textarea
-                rows={2}
-                value={evidence}
-                onChange={(e) => setEvidence(e.target.value)}
-                style={inputStyle}
-                placeholder="https://…"
-              />
-            </div>
-
-            {/* Buttons */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
-              <button
-                onClick={onClose}
-                style={{
-                  fontFamily: SHELL.MONO,
-                  fontSize: 10,
-                  letterSpacing: '0.08em',
-                  color: SHELL.INK_SOFT,
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: 0,
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={name.trim() === '' || tier === null}
-                style={{
-                  fontFamily: SHELL.MONO,
-                  fontSize: 10,
-                  letterSpacing: '0.08em',
-                  background: name.trim() === '' || tier === null ? SHELL.GRAY_BG : SHELL.INK,
-                  color: name.trim() === '' || tier === null ? SHELL.INK_MUTED : SHELL.PAPER,
-                  border: 'none',
-                  borderRadius: 6,
-                  padding: '9px 18px',
-                  cursor: name.trim() === '' || tier === null ? 'not-allowed' : 'pointer',
-                  transition: 'background 120ms ease, color 120ms ease',
-                }}
-              >
-                Submit for Sentinel review
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+import { IntelligenceIndexSentinelPanel } from '@/components/intelligence/IntelligenceIndexSentinelPanel';
+import { IntelligenceFilterLinks, type FilterLinkPill } from '@/components/intelligence/IntelligenceFilterLinks';
 
 // ─── Tier badge ───────────────────────────────────────────────────────────────
 
@@ -329,13 +95,6 @@ function PatternRow({ pattern }: { pattern: IntelligencePattern }) {
         textDecoration: 'none',
         color: SHELL.INK,
         gap: 8,
-        transition: 'background 100ms ease',
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLAnchorElement).style.background = SHELL.PAPER_SOFT;
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLAnchorElement).style.background = 'transparent';
       }}
     >
       {/* ID */}
@@ -410,9 +169,7 @@ function PatternRow({ pattern }: { pattern: IntelligencePattern }) {
 
       {/* View link */}
       <div>
-        <Link
-          href={href}
-          onClick={(e) => e.stopPropagation()}
+        <span
           style={{
             display: 'inline-block',
             padding: '4px 10px',
@@ -425,13 +182,12 @@ function PatternRow({ pattern }: { pattern: IntelligencePattern }) {
             fontWeight: 500,
             textTransform: 'uppercase',
             letterSpacing: '0.08em',
-            textDecoration: 'none',
             lineHeight: 1.4,
             whiteSpace: 'nowrap',
           }}
         >
           View
-        </Link>
+        </span>
       </div>
     </Link>
   );
@@ -485,32 +241,47 @@ function PatternTable({ patterns }: { patterns: IntelligencePattern[] }) {
   );
 }
 
+// ─── Filter logic ─────────────────────────────────────────────────────────────
+
+function applyFilter(
+  patterns: IntelligencePattern[],
+  filter: string | undefined,
+): IntelligencePattern[] {
+  if (!filter || filter === 'all') return patterns;
+  if (filter === 't1') return patterns.filter((p) => p.tier === 'T1');
+  if (filter === 't2') return patterns.filter((p) => p.tier === 'T2');
+  if (filter === 't3') return patterns.filter((p) => p.tier === 'T3');
+  if (filter === 'in-review') return patterns.filter((p) => p.status === 'in-review');
+  if (filter === 'candidate') return patterns.filter((p) => p.status === 'candidate');
+  if (filter === 'validated') return patterns.filter((p) => p.status === 'validated');
+  return patterns;
+}
+
+function buildFilterPills(
+  patterns: IntelligencePattern[],
+  activeFilter: string,
+): FilterLinkPill[] {
+  return [
+    { key: 'all', label: 'All', active: activeFilter === 'all' || !activeFilter, count: patterns.length, href: '/intelligence' },
+    { key: 't3', label: 'T3 · Use-case', active: activeFilter === 't3', count: patterns.filter((p) => p.tier === 'T3').length, href: '/intelligence?filter=t3' },
+    { key: 't2', label: 'T2 · Capability', active: activeFilter === 't2', count: patterns.filter((p) => p.tier === 'T2').length, href: '/intelligence?filter=t2' },
+    { key: 't1', label: 'T1 · Foundation', active: activeFilter === 't1', count: patterns.filter((p) => p.tier === 'T1').length, href: '/intelligence?filter=t1' },
+    { key: 'in-review', label: 'In review', active: activeFilter === 'in-review', count: patterns.filter((p) => p.status === 'in-review').length, href: '/intelligence?filter=in-review' },
+  ];
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export function IntelligenceIndexPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const activeFilter = searchParams?.get('filter') ?? 'all';
-  const [showSubmitModal, setShowSubmitModal] = useState(false);
+interface IntelligenceIndexPageProps {
+  /** URL filter param — e.g. 'all', 't1', 't2', 't3', 'in-review'. */
+  filter?: string;
+}
 
-  const filtered = INTELLIGENCE_INDEX_VIEW.patterns.filter(p => {
-    if (activeFilter === 'all') return true;
-    if (activeFilter === 't1') return p.tier === 'T1';
-    if (activeFilter === 't2') return p.tier === 'T2';
-    if (activeFilter === 't3') return p.tier === 'T3';
-    if (activeFilter === 'in-review') return p.status === 'in-review';
-    if (activeFilter === 'candidate') return p.status === 'candidate';
-    if (activeFilter === 'validated') return p.status === 'validated';
-    return true;
-  });
-
-  const filterPills = [
-    { key: 'all', label: 'All', active: activeFilter === 'all', count: INTELLIGENCE_INDEX_VIEW.patterns.length, href: '/intelligence' },
-    { key: 't3', label: 'T3 · Use-case', active: activeFilter === 't3', count: INTELLIGENCE_INDEX_VIEW.patterns.filter(p => p.tier === 'T3').length, href: '/intelligence?filter=t3' },
-    { key: 't2', label: 'T2 · Capability', active: activeFilter === 't2', count: INTELLIGENCE_INDEX_VIEW.patterns.filter(p => p.tier === 'T2').length, href: '/intelligence?filter=t2' },
-    { key: 't1', label: 'T1 · Foundation', active: activeFilter === 't1', count: INTELLIGENCE_INDEX_VIEW.patterns.filter(p => p.tier === 'T1').length, href: '/intelligence?filter=t1' },
-    { key: 'in-review', label: 'In review', active: activeFilter === 'in-review', count: INTELLIGENCE_INDEX_VIEW.patterns.filter(p => p.status === 'in-review').length, href: '/intelligence?filter=in-review' },
-  ];
+export function IntelligenceIndexPage({ filter }: IntelligenceIndexPageProps) {
+  const activeFilter = filter ?? 'all';
+  const allPatterns = INTELLIGENCE_INDEX_VIEW.patterns;
+  const filtered = applyFilter(allPatterns, activeFilter);
+  const filterPills = buildFilterPills(allPatterns, activeFilter);
 
   return (
     <AppShell
@@ -520,30 +291,13 @@ export function IntelligenceIndexPage() {
         showLocked: true,
         context: 'Intelligence · Pattern Library',
       }}
-      middleStrip={
-        <FilterPillStrip
-          pills={filterPills.map(pill => ({
-            key: pill.key,
-            label: pill.label,
-            active: pill.active,
-            count: pill.count,
-            onClick: () => router.push(pill.href),
-          }))}
-        />
-      }
+      middleStrip={<IntelligenceFilterLinks pills={filterPills} />}
     >
-      {/* Sentinel column */}
-      <AgentColumn
-        agent={{ initials: 'Sn', name: 'Sentinel', role: 'Pattern Validator' }}
-        quote={INTELLIGENCE_INDEX_VIEW.agentQuote}
+      {/* Sentinel column — client island (handles modal + agent actions) */}
+      <IntelligenceIndexSentinelPanel
+        agentQuote={INTELLIGENCE_INDEX_VIEW.agentQuote}
         agentContext={INTELLIGENCE_INDEX_VIEW.agentContext}
         actions={INTELLIGENCE_INDEX_VIEW.actions}
-        surface="intelligence"
-        onActionClick={(letter) => {
-          if (letter === 'A') router.push('/intelligence?filter=validated');
-          else if (letter === 'B') router.push('/intelligence?filter=in-review');
-          else if (letter === 'C') setShowSubmitModal(true);
-        }}
       />
 
       {/* Main content */}
@@ -609,9 +363,6 @@ export function IntelligenceIndexPage() {
           </Link>
         </div>
       </div>
-
-      {/* INT-MOD-SUBMIT: Pattern submission modal */}
-      {showSubmitModal && <PatternSubmitModal onClose={() => setShowSubmitModal(false)} />}
     </AppShell>
   );
 }
