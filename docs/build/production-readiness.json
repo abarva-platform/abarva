@@ -1146,7 +1146,9 @@
         "OPS9 build run retrospective added (src/lib/ops/build-run-retrospective.ts); deterministic summary of 6-wave run; totalSlicesLanded, totalTestsAdded, nextRunPriorities; createdFrom ops9_build_run_retrospective.",
         "ARCH3: Agent mission runtime architecture documented; Nexus/Sentinel/Atlas/Steward roles formalized.",
         "ADM8: Agent readiness deep drill shows all 4 agents partial; live mission queue and evidence integration remain primary blockers.",
-        "ACT3 dedicated AgentHiddenDrawer component + view model added (src/lib/agents/agent-hidden-drawer-view.ts, src/components/agents/AgentHiddenDrawer.tsx); wraps AG11 hidden_drawer variant with AI portfolio context from ACT2; 51 integration tests; aria-expanded='false'; open deferred to ACT4; deterministicSeed: true; no client directive, no model calls."
+        "ACT3 dedicated AgentHiddenDrawer component + view model added (src/lib/agents/agent-hidden-drawer-view.ts, src/components/agents/AgentHiddenDrawer.tsx); wraps AG11 hidden_drawer variant with AI portfolio context from ACT2; 51 integration tests; aria-expanded='false'; open deferred to ACT4; deterministicSeed: true; no client directive, no model calls.",
+        "ACT2 AgentInlineRecommendation + view model added (src/lib/agents/agent-inline-recommendation-view.ts, src/components/agents/AgentInlineRecommendation.tsx); inline_recommendation variant with confidence classification and urgent flag; 47 integration tests; deterministicSeed: true; no client directive.",
+        "MW4 mission-workflow-handoff contract added (src/lib/agents/mission-workflow-handoff.ts); resolves AG10 handoff fields into typed MissionHandoffEdge DAG; per-agent outbound/inbound summaries; blocking handoff detection; 49 integration tests; deterministicSeed: true; runtime routing deferred."
       ]
     },
     {
