@@ -18,6 +18,8 @@ import {
   summarizeCascade,
   summarizeGates,
 } from '@/lib/reasoning/provenance-ribbon-helpers';
+import { isLifecyclePatternId } from '@/lib/reasoning/lifecycle-pattern-lookup';
+import { PatternDoctrineLink } from '@/components/source/PatternDoctrineLink';
 import { SHELL } from '@/lib/shell/shell-tokens';
 
 interface SourceProvenanceRibbonProps {
@@ -54,39 +56,48 @@ export function SourceProvenanceRibbon({ context }: SourceProvenanceRibbonProps)
       <RibbonSection label="Patterns">
         {cited.length > 0 ? (
           <div style={{ display: 'inline-flex', flexWrap: 'wrap', gap: 6 }}>
-            {cited.map((p) => (
-              <span
-                key={p.patternId}
-                title={`${p.patternId} · ${p.section}`}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  border: `1px solid ${SHELL.CARD_LINE}`,
-                  borderRadius: 999,
-                  background: SHELL.CARD_WHITE,
-                  padding: '3px 9px',
-                  fontFamily: SHELL.MONO,
-                  fontSize: 9.5,
-                  fontWeight: 600,
-                  color: SHELL.INK,
-                  letterSpacing: '0.04em',
-                }}
-              >
-                <span>{p.patternId}</span>
+            {cited.map((p) =>
+              isLifecyclePatternId(p.patternId) ? (
+                <PatternDoctrineLink
+                  key={p.patternId}
+                  patternId={p.patternId}
+                  title={p.title}
+                  hoverTitle={`${p.patternId} · ${p.section}`}
+                />
+              ) : (
                 <span
+                  key={p.patternId}
+                  title={`${p.patternId} · ${p.section}`}
                   style={{
-                    fontFamily: SHELL.SANS,
-                    fontWeight: 400,
-                    color: SHELL.INK_MUTED,
-                    fontSize: 10.5,
-                    letterSpacing: 0,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    border: `1px solid ${SHELL.CARD_LINE}`,
+                    borderRadius: 999,
+                    background: SHELL.CARD_WHITE,
+                    padding: '3px 9px',
+                    fontFamily: SHELL.MONO,
+                    fontSize: 9.5,
+                    fontWeight: 600,
+                    color: SHELL.INK,
+                    letterSpacing: '0.04em',
                   }}
                 >
-                  {p.title}
+                  <span>{p.patternId}</span>
+                  <span
+                    style={{
+                      fontFamily: SHELL.SANS,
+                      fontWeight: 400,
+                      color: SHELL.INK_MUTED,
+                      fontSize: 10.5,
+                      letterSpacing: 0,
+                    }}
+                  >
+                    {p.title}
+                  </span>
                 </span>
-              </span>
-            ))}
+              )
+            )}
           </div>
         ) : (
           <span style={{ color: SHELL.INK_MUTED, fontStyle: 'italic' }}>none</span>
