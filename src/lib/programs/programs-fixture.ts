@@ -108,16 +108,16 @@ const apxSap2026: ProgramRow = {
 };
 
 // APX-LPM-2026 · Loyalty Platform Modernization
-// P3 Design · active
+// P2 Synthesis · active · solution options under Sentinel analysis
 const apxLpm2026: ProgramRow = {
   id: 'apx-lpm-2026',
   displayId: 'APX-LPM-2026',
   name: 'Loyalty Platform Modernization',
-  currentPhase: 3,
-  phases: buildPhaseSlots(3, { 3: 'open' }),
+  currentPhase: 2,
+  phases: buildPhaseSlots(2, { 2: 'open' }),
   gateStatus: 'open',
   lastActiveLabel: '1d ago',
-  nexusNote: 'Design phase — solution options under Sentinel review',
+  nexusNote: 'Synthesis phase — solution options under Sentinel analysis',
   actionLabel: 'Continue',
   isIdle: false,
 };
@@ -159,7 +159,7 @@ export const APEX_PROGRAMS_FIXTURE: ProgramRow[] = [
   apxCdp2026,   // flagship — P3 Design · Build gate pending (2/5 criteria)
   apxCc2026,    // P4 Build · active
   apxSap2026,   // P1 Discovery · active
-  apxLpm2026,   // P3 Design · active
+  apxLpm2026,   // P2 Synthesis · active
   apxMrc2025,   // P3 Design · idle
   apxDfv2,      // P6 Operate · steady state
 ];
