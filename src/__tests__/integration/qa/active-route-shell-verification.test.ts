@@ -168,7 +168,7 @@ describe('QA28 — Active Route Shell Verification: Wave-20 deferred items', () 
   const wave20ComponentPaths = [
     'AbarVaAppShell',
     'ProgramRouteShell',
-    'SourceRouteShell',
+    'SentinelAgentColumn', // Wave S1: SourceRouteShell retired, replaced by SentinelAgentColumn
     'AdminRouteShell',
     'IntelligenceRouteShell',
     'TowerRouteShell',
