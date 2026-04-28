@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { AgentColumn } from '@/components/shell/AgentColumn';
@@ -663,7 +664,18 @@ function NewPressureModal({ onClose }: NewPressureModalProps) {
 // Main page
 // ---------------------------------------------------------------------------
 
-export function TowerIndexPage() {
+interface TowerIndexPageProps {
+  /**
+   * REASON-29 — Provenance ribbon rendered below the streamed Atlas synthesis
+   * quote inside AgentColumn's `provenanceSlot`. Built server-side from
+   * `buildTowerSynthesisContext(programs, sources)` and passed in as a
+   * pre-rendered ReactNode so the client component stays unaware of fixture
+   * data.
+   */
+  provenanceSlot?: ReactNode;
+}
+
+export function TowerIndexPage({ provenanceSlot }: TowerIndexPageProps = {}) {
   const [showNewPressure, setShowNewPressure] = useState(false);
   const [synthesisQuote, setSynthesisQuote] = useState(TOWER_INDEX_VIEW.agentQuote);
   const searchParams = useSearchParams();
@@ -703,6 +715,7 @@ export function TowerIndexPage() {
         agentContext={TOWER_INDEX_VIEW.agentContext}
         actions={TOWER_INDEX_VIEW.actions}
         surface="tower"
+        provenanceSlot={provenanceSlot}
         onActionClick={(letter) => {
           if (letter === 'A') router.push('/tower?filter=high');
           else if (letter === 'B') router.push('/tower/programs/apx-cdp-2026');

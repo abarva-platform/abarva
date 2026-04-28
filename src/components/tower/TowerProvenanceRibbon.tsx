@@ -1,0 +1,213 @@
+/**
+ * TowerProvenanceRibbon — REASON-29
+ *
+ * Surfaces the inputs that grounded Atlas's portfolio synthesis quote on the
+ * Tower (Control Tower) surface. Sits directly below the streamed Atlas quote
+ * inside AgentColumn's `provenanceSlot`.
+ *
+ * Unlike the per-instance Source / Program ribbons, this one reports portfolio
+ * totals: patterns cited across all instances, gate counts (cleared / pending /
+ * blocked), open blockers across the portfolio, and cross-instance cascade
+ * impacts. It demonstrates Layer 3 → Layer 4 transparency at portfolio scope.
+ *
+ * Server-render-friendly: no client hooks, no event handlers. Pure presentation
+ * over a SynthesisContext built by `buildTowerSynthesisContext`. All formatting
+ * happens in `provenance-ribbon-helpers.ts` so the shape can be unit-tested.
+ *
+ * Style follows the AbarVa palette via SHELL tokens — no new color tokens.
+ */
+
+import type { SynthesisContext } from '@/lib/reasoning/types';
+import {
+  formatCitations,
+  summarizeBlockers,
+  summarizeCascade,
+  summarizeGates,
+  summarizePortfolio,
+} from '@/lib/reasoning/provenance-ribbon-helpers';
+import { SHELL } from '@/lib/shell/shell-tokens';
+
+interface TowerProvenanceRibbonProps {
+  context: SynthesisContext;
+}
+
+const RIBBON_BG = '#F8F7F4';
+const SECTION_GAP = 14;
+const VISIBLE_CITATION_LIMIT = 4;
+
+export function TowerProvenanceRibbon({ context }: TowerProvenanceRibbonProps) {
+  const cited = formatCitations(context.citations, VISIBLE_CITATION_LIMIT);
+  const gates = summarizeGates(context.gatesSummary);
+  const blockers = summarizeBlockers(context);
+  const cascade = summarizeCascade(context);
+  const portfolio = summarizePortfolio(context);
+
+  const hasCitations = cited.length > 0;
+  const hasBlockers = blockers.count > 0;
+  const hasCascade = cascade.count > 0;
+
+  return (
+    <aside
+      aria-label="Tower provenance ribbon"
+      data-testid="tower-provenance-ribbon"
+      style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        gap: `${SECTION_GAP}px`,
+        rowGap: 8,
+        padding: '8px 16px',
+        minHeight: 40,
+        background: RIBBON_BG,
+        borderTop: `1px solid ${SHELL.CARD_LINE}`,
+        borderBottom: `1px solid ${SHELL.CARD_LINE}`,
+        fontFamily: SHELL.SANS,
+        fontSize: 11,
+        color: SHELL.INK_SOFT,
+      }}
+    >
+      <Section label="Portfolio">
+        <span
+          title={`${portfolio.programCount} program${portfolio.programCount === 1 ? '' : 's'}, ${portfolio.sourceEventCount} source event${portfolio.sourceEventCount === 1 ? '' : 's'}`}
+          style={{ color: SHELL.INK }}
+        >
+          {portfolio.headline}
+        </span>
+      </Section>
+
+      <Divider />
+
+      <Section label="Patterns">
+        {hasCitations ? (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {cited.map((c) => (
+              <span
+                key={c.patternId}
+                title={`${c.patternId} — ${c.section}`}
+                style={{
+                  fontFamily: SHELL.SANS,
+                  fontSize: 11,
+                  color: SHELL.INK,
+                  background: SHELL.CARD_WHITE,
+                  border: `1px solid ${SHELL.CARD_LINE}`,
+                  borderRadius: 999,
+                  padding: '2px 9px',
+                  lineHeight: 1.4,
+                }}
+              >
+                {c.title}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <Muted>No pattern citations yet</Muted>
+        )}
+      </Section>
+
+      <Divider />
+
+      <Section label="Portfolio gates">
+        <span style={{ fontFamily: SHELL.SERIF, fontSize: 13, color: SHELL.INK }}>
+          {gates.cleared}
+        </span>
+        <Muted> cleared · </Muted>
+        <span style={{ fontFamily: SHELL.SERIF, fontSize: 13, color: SHELL.INK }}>
+          {gates.pending}
+        </span>
+        <Muted> pending</Muted>
+        {blockers.count > 0 ? (
+          <>
+            <Muted> · </Muted>
+            <span style={{ fontFamily: SHELL.SERIF, fontSize: 13, color: SHELL.RUST_TEXT }}>
+              {blockers.count}
+            </span>
+            <Muted> blocked</Muted>
+          </>
+        ) : null}
+      </Section>
+
+      <Divider />
+
+      <Section label="Open blockers">
+        {hasBlockers ? (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <Dot color={blockers.severity === 'red' ? SHELL.RUST_TEXT : SHELL.AMBER_DOT} />
+            <span style={{ color: SHELL.INK }}>
+              {blockers.count} across portfolio
+            </span>
+          </span>
+        ) : (
+          <Muted>None</Muted>
+        )}
+      </Section>
+
+      <Divider />
+
+      <Section label="Cascade">
+        {hasCascade ? (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            {cascade.hasBlockingImpact ? <Dot color={SHELL.AMBER_DOT} /> : null}
+            <span style={{ color: SHELL.INK }}>
+              {cascade.count} cross-instance link{cascade.count === 1 ? '' : 's'}
+            </span>
+          </span>
+        ) : (
+          <Muted>No linked instances</Muted>
+        )}
+      </Section>
+    </aside>
+  );
+}
+
+function Section({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 24 }}>
+      <span
+        style={{
+          fontFamily: SHELL.MONO,
+          fontSize: 9,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          color: SHELL.INK_MUTED,
+          fontWeight: 700,
+        }}
+      >
+        {label}
+      </span>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{children}</span>
+    </div>
+  );
+}
+
+function Muted({ children }: { children: React.ReactNode }) {
+  return <span style={{ color: SHELL.INK_MUTED }}>{children}</span>;
+}
+
+function Divider() {
+  return (
+    <span
+      aria-hidden
+      style={{
+        display: 'inline-block',
+        width: 1,
+        height: 16,
+        background: SHELL.CARD_LINE,
+      }}
+    />
+  );
+}
+
+function Dot({ color }: { color: string }) {
+  return (
+    <span
+      aria-hidden
+      style={{
+        display: 'inline-block',
+        width: 8,
+        height: 8,
+        borderRadius: 999,
+        background: color,
+      }}
+    />
+  );
+}

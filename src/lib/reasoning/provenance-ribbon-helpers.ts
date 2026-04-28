@@ -136,3 +136,45 @@ export function summarizeCascade(
   const hasBlockingImpact = cascades.some((c) => c.severity === 'blocking');
   return { count, hasBlockingImpact };
 }
+
+export interface PortfolioSummaryView {
+  /** Number of program instances aggregated by the Tower context. */
+  programCount: number;
+  /** Number of source-event instances aggregated by the Tower context. */
+  sourceEventCount: number;
+  /** Total instances (programs + source events). */
+  totalInstanceCount: number;
+  /** Single-line headline used by the Tower ribbon's "Portfolio" chip. */
+  headline: string;
+}
+
+/**
+ * Summarize the portfolio shape captured in `context.instanceSnapshot` for the
+ * Tower ribbon. The snapshot is typed as `Record<string, unknown>` so this
+ * helper reads it defensively — missing or non-numeric fields fall back to
+ * zero. Pure: deterministic over its inputs.
+ *
+ * Used only by the Tower (portfolio-level) ribbon. Per-instance ribbons can
+ * ignore this helper.
+ */
+export function summarizePortfolio(
+  context: Pick<SynthesisContext, 'instanceSnapshot'>,
+): PortfolioSummaryView {
+  const snap = context.instanceSnapshot ?? {};
+  const programCount = readNonNegativeInt(snap, 'programCount');
+  const sourceEventCount = readNonNegativeInt(snap, 'sourceEventCount');
+  const totalInstanceCount =
+    readNonNegativeInt(snap, 'totalInstanceCount') || programCount + sourceEventCount;
+
+  const programLabel = `${programCount} program${programCount === 1 ? '' : 's'}`;
+  const sourceLabel = `${sourceEventCount} source event${sourceEventCount === 1 ? '' : 's'}`;
+  const headline = `${programLabel} · ${sourceLabel}`;
+
+  return { programCount, sourceEventCount, totalInstanceCount, headline };
+}
+
+function readNonNegativeInt(snap: Record<string, unknown>, key: string): number {
+  const v = snap[key];
+  if (typeof v !== 'number' || !Number.isFinite(v) || v < 0) return 0;
+  return Math.floor(v);
+}
