@@ -196,6 +196,8 @@ interface GateApproveModalProps {
   unmetCriteria: string[];
   onApprove: (rationale: string) => void;
   onClose: () => void;
+  isLoading?: boolean;
+  error?: string | null;
 }
 
 function GateApproveModal({
@@ -204,6 +206,8 @@ function GateApproveModal({
   unmetCriteria,
   onApprove,
   onClose,
+  isLoading = false,
+  error = null,
 }: GateApproveModalProps) {
   const [rationale, setRationale] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -329,6 +333,25 @@ function GateApproveModal({
           />
         </div>
 
+        {/* Error message */}
+        {error && (
+          <div
+            style={{
+              marginBottom: 16,
+              padding: '8px 12px',
+              background: SHELL.PEACH_BG,
+              border: `1px solid ${SHELL.PEACH_LINE}`,
+              borderRadius: 6,
+              fontFamily: SHELL.SANS,
+              fontSize: 12,
+              color: SHELL.PEACH_TEXT,
+              lineHeight: 1.4,
+            }}
+          >
+            {error}
+          </div>
+        )}
+
         {/* Buttons */}
         <div
           style={{
@@ -339,6 +362,7 @@ function GateApproveModal({
         >
           <button
             onClick={onClose}
+            disabled={isLoading}
             style={{
               border: `1px solid ${SHELL.CARD_LINE}`,
               background: 'transparent',
@@ -346,27 +370,28 @@ function GateApproveModal({
               fontSize: 12,
               padding: '8px 16px',
               borderRadius: 6,
-              cursor: 'pointer',
+              cursor: isLoading ? 'not-allowed' : 'pointer',
               color: SHELL.INK,
+              opacity: isLoading ? 0.5 : 1,
             }}
           >
             Cancel
           </button>
           <button
-            onClick={() => canApprove && onApprove(rationale)}
-            disabled={!canApprove}
+            onClick={() => canApprove && !isLoading && onApprove(rationale)}
+            disabled={!canApprove || isLoading}
             style={{
-              background: canApprove ? SHELL.INK : SHELL.GRAY_BG,
-              color: canApprove ? SHELL.PAPER : SHELL.GRAY_TEXT,
+              background: canApprove && !isLoading ? SHELL.INK : SHELL.GRAY_BG,
+              color: canApprove && !isLoading ? SHELL.PAPER : SHELL.GRAY_TEXT,
               fontFamily: SHELL.SANS,
               fontSize: 12,
               padding: '8px 16px',
               borderRadius: 6,
               border: 'none',
-              cursor: canApprove ? 'pointer' : 'not-allowed',
+              cursor: canApprove && !isLoading ? 'pointer' : 'not-allowed',
             }}
           >
-            Approve gate
+            {isLoading ? 'Approving...' : 'Approve gate'}
           </button>
         </div>
       </div>
@@ -2346,6 +2371,8 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
   const router = useRouter();
   const gateSectionRef = useRef<HTMLDivElement>(null);
   const [showGateModal, setShowGateModal] = useState(false);
+  const [gateApproveError, setGateApproveError] = useState<string | null>(null);
+  const [isApprovingGate, setIsApprovingGate] = useState(false);
   const [evidenceDrawerItem, setEvidenceDrawerItem] = useState<EvidenceItem | null>(null);
   const [contradictionItem, setContradictionItem] = useState<EvidenceItem | null>(null);
 
@@ -2677,9 +2704,41 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
           unmetCriteria={view.phasePanel.gateCriteria
             .filter((c) => !c.met)
             .map((c) => c.criterion)}
-          onApprove={(rationale) => {
-            console.log('Gate approved', rationale);
-            setShowGateModal(false);
+          isLoading={isApprovingGate}
+          error={gateApproveError}
+          onApprove={async (rationale) => {
+            setIsApprovingGate(true);
+            setGateApproveError(null);
+            try {
+              const res = await fetch(`/api/v1/programs/${view.programId}/advance`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  toPhase: view.viewingPhase + 1,
+                  bypassGate: true,
+                  snapshot: { rationale, approvedAt: new Date().toISOString() },
+                }),
+              });
+              const data = await res.json();
+              if (data.ok) {
+                setShowGateModal(false);
+                setShowPhaseTransition(true);
+                setTimeout(() => {
+                  setShowPhaseTransition(false);
+                  router.push(`/programs/${view.programId}?phase=${data.newPhase}`);
+                }, 2500);
+              } else if (data.error === 'gate_blocked') {
+                setGateApproveError('Gate blocked — hard gate criteria must be met before advancing');
+              } else if (data.error === 'approval_required') {
+                setGateApproveError('Approval request created — waiting for founder sign-off');
+              } else {
+                setGateApproveError(data.detail ?? data.message ?? 'Phase advance failed — please try again');
+              }
+            } catch {
+              setGateApproveError('Network error — please try again');
+            } finally {
+              setIsApprovingGate(false);
+            }
           }}
           onClose={() => setShowGateModal(false)}
         />
