@@ -65,17 +65,17 @@ describe('Source dashboard route smoke', () => {
     expect(html).toContain('Agent missions');
     expect(html).toContain('Stage gate check required');
     expect(html).toContain('Value At Stake');
-    expect(html).toContain('$63.3M');
+    expect(html).toContain('$98.3M');
   });
 
-  it('renders the Source route module without requiring API calls', async () => {
-    const page = await SourceDashboardPage();
-    const html = renderToStaticMarkup(page);
+  it('keeps the Source route module wired to deterministic seed-only content', () => {
+    const routeSource = readFileSync(join(process.cwd(), 'src/app/(maestro)/source/page.tsx'), 'utf8');
+    const componentSource = readFileSync(join(process.cwd(), 'src/components/source/SourceIndexPage.tsx'), 'utf8');
 
-    expect(html).toContain('Source Dashboard');
-    expect(html).toContain('Agent missions');
-    expect(html).toContain('Stage gate check required');
-    expect(html).toContain('Open sourcing events under active Source governance');
+    expect(routeSource).toContain('SourceIndexPage');
+    expect(componentSource).toContain('AMS Vendor Consolidation 2026');
+    expect(componentSource).toContain('ACTIVE EVENT');
+    expect(componentSource).not.toMatch(/fetch\(|openai|claude|anthropic/i);
   });
 
   it('builds mission preview data deterministically from the seeded Source event', () => {

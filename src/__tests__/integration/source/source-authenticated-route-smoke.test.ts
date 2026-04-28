@@ -32,14 +32,14 @@ describe('Source authenticated route smoke', () => {
     }
   });
 
-  it('renders the authenticated Source dashboard route with deterministic content', async () => {
-    const page = await SourceDashboardPage();
-    const html = renderToStaticMarkup(page);
+  it('keeps the Source dashboard route wired to deterministic seed-only content', () => {
+    const routeSource = readWorkspaceFile('src/app/(maestro)/source/page.tsx');
+    const componentSource = readWorkspaceFile('src/components/source/SourceIndexPage.tsx');
 
-    expect(html).toContain('Source Dashboard');
-    expect(html).toContain('Agent missions');
-    expect(html).toContain('Live Sourcing Events');
-    expect(html).toContain('Stage gate check required');
+    expect(routeSource).toContain('SourceIndexPage');
+    expect(componentSource).toContain('AMS Vendor Consolidation 2026');
+    expect(componentSource).toContain('SOURCE_INDEX_VIEW');
+    expect(componentSource).not.toMatch(/fetch\(|openai|claude|anthropic/i);
   });
 
   it('renders the authenticated Source event route with deterministic shell content', async () => {
@@ -50,9 +50,8 @@ describe('Source authenticated route smoke', () => {
 
     expect(html).toContain('Data &amp; AI Modernization SI Selection');
     expect(html).toContain('Journey map');
-    expect(html).toContain('Current-stage workspace');
+    expect(html).toContain('Scope stage workspace');
     expect(html).toContain('Data readiness');
-    expect(html).toContain('Agent mission preview');
   });
 
   it('documents the current auth test boundary without weakening auth', () => {

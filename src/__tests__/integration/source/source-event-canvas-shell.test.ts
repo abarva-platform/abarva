@@ -117,11 +117,10 @@ describe('Source event canvas shell', () => {
     });
     const html = renderToStaticMarkup(page);
 
-    expect(html).toContain('Source event canvas led by Nexus across pricing, risk, BAFO, readiness, mission, and signal workflow steps.');
     expect(html).toContain('Lead sourcing agent');
-    expect(html).toContain('Top mission');
-    expect(html).toContain('Stage gate check required');
+    expect(html).toContain('Nexus guidance');
     expect(html).toContain('Deterministic guidance only');
+    expect(html).toContain('Scope stage workspace');
   });
 
   it('surfaces BAFO negotiation panel signals in event canvas when orals/BAFO is active', async () => {

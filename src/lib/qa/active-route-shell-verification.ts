@@ -270,13 +270,13 @@ export function runActiveRouteShellVerification(): ShellVerificationReport {
     ),
   );
 
-  // ---- Check 11: SourceRouteShell (Wave-20 SHELL5 — deferred) ------------
+  // ---- Check 11: SentinelAgentColumn (Wave-S1 — shipped) -----------------
   checks.push(
     checkComponentExistsOrDeferred(
       'QA28-C11',
-      'src/components/source/SourceRouteShell.tsx',
-      'SourceRouteShell.tsx exists (Wave-20 SHELL5)',
-      'SourceRouteShell.tsx is a Wave-20 SHELL5 component — not yet integrated into this branch. Deferred pending Wave-20 integration.',
+      'src/components/source/SentinelAgentColumn.tsx',
+      'SentinelAgentColumn.tsx exists (Wave-S1 shell convergence)',
+      'SentinelAgentColumn.tsx not found — source shell migration to AppShell + SentinelAgentColumn incomplete.',
     ),
   );
 

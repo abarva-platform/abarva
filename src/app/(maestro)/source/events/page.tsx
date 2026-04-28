@@ -1,6 +1,10 @@
-import { SourceCanonShell } from '@/components/source';
+import { AppShell } from '@/components/shell/AppShell';
+import { StageTrackerStrip } from '@/components/shell/StageTrackerStrip';
+import { SentinelAgentColumn } from '@/components/source/SentinelAgentColumn';
+import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
 import { SourceEventsPortfolio } from '@/components/source/SourceEventsPortfolio';
 import { listSourcingEvents } from '@/lib/source/queries';
+import { AMS_SOURCE_EVENT } from '@/lib/source/shell-source-fixture';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,16 +17,36 @@ export default async function SourceEventsPage({
   const events = await listSourcingEvents();
 
   return (
-    <SourceCanonShell
-      activeRoute="events"
-      title="Source events"
-      summary="Source Events Portfolio command surface for scanning seeded sourcing events by stage, blocker, value, and next commercial move before drilling into the full event canvas."
+    <AppShell
+      surface="source"
+      topBarProps={{
+        tenantName: 'Apex Retail Group',
+        showLocked: true,
+        context: 'Source · Events portfolio',
+      }}
+      middleStrip={
+        <StageTrackerStrip
+          stages={AMS_SOURCE_EVENT.stages}
+          activeStage=""
+        />
+      }
     >
-      <SourceEventsPortfolio
-        events={events}
-        activeStage={stage ?? null}
-        activeStatus={status ?? null}
+      <SentinelAgentColumn
+        quote="12 events across the portfolio · 4 active · AMS Vendor Consolidation 2026 in Stage 7 BAFO, one input away from close."
+        agentContext="Sentinel · Source events · Apex Retail Group"
+        actions={[
+          { letter: 'A', text: 'Review BAFO events', detail: 'Sourcing events currently in Orals/BAFO stage' },
+          { letter: 'B', text: 'Review evaluation queue', detail: 'Events in vendor evaluation awaiting scoring' },
+          { letter: 'C', text: 'Review at-risk events', detail: 'Events flagged with blockers or governance gaps' },
+        ]}
       />
-    </SourceCanonShell>
+      <SourceWorkingPane>
+        <SourceEventsPortfolio
+          events={events}
+          activeStage={stage ?? null}
+          activeStatus={status ?? null}
+        />
+      </SourceWorkingPane>
+    </AppShell>
   );
 }

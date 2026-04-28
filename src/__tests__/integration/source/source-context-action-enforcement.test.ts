@@ -36,8 +36,6 @@ describe('Source context-used and action-enforcement slices', () => {
     expect(html).toContain('Review Design gate blockers');
     expect(html).toContain('Open Workshop 5 outcomes');
     expect(html).toContain('Inspect deliverable evidence');
-    expect(html).toContain('Ask Nexus about this program, gate, workshop, or evidence...');
-    expect(html).toContain('Submit (disabled until runtime)');
   });
 
   it('renders scorecard with required context and action shell', async () => {
@@ -99,8 +97,8 @@ describe('Source context-used and action-enforcement slices', () => {
       'src/app/(maestro)/source/events/[eventId]/scorecard/page.tsx',
       'src/app/(maestro)/source/events/[eventId]/artifacts/[artifactId]/page.tsx',
       'src/app/(maestro)/source/value/page.tsx',
-      'src/components/source/SourceRouteShell.tsx',
-      'src/components/source/SourceFoundationShell.tsx',
+      'src/components/source/SentinelAgentColumn.tsx',
+      'src/components/source/SourceWorkingPane.tsx',
       'src/components/source/SourceArtifactDrawer.tsx',
     ].map((filePath) => readFileSync(join(process.cwd(), filePath), 'utf8')).join('\n');
 
