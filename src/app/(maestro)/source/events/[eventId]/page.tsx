@@ -8,6 +8,7 @@ import { SourceProvenanceRibbon } from '@/components/source/SourceProvenanceRibb
 import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
 import { NexusEngagementCanvas } from '@/components/source/NexusEngagementCanvas';
 import { SourceCommercialEventSection } from '@/components/source/SourceCommercialEventSection';
+import { GateCriteriaPanel } from '@/components/source/GateCriteriaPanel';
 import { getSourcingEvent } from '@/lib/source/queries';
 import { AMS_SOURCE_EVENT } from '@/lib/source/shell-source-fixture';
 import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
@@ -15,6 +16,7 @@ import { buildEvidenceMap } from '@/lib/source/source-event-instance';
 import { PAT_SRC_AMS_001 } from '@/lib/intelligence/source-lifecycle-patterns';
 import { createGateEvaluator } from '@/lib/reasoning/gate-evaluator';
 import { buildSourceSynthesisContext } from '@/lib/reasoning/synthesis-context-builder';
+import type { GateEvaluation } from '@/lib/reasoning/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,6 +37,11 @@ export default async function SourceEventDetailPage({
 
   // Build gate-driven stage states when a typed instance is available.
   let stageStates: Record<string, StageStatus> | undefined;
+  // REASON-23 — also surface criteria-level gate detail. The next-stage gate
+  // criteria are the most actionable; we additionally include all upcoming
+  // stage criteria so the panel reads like a forward-looking ribbon.
+  let nextGateEvaluations: GateEvaluation[] = [];
+  let nextGateTargetStageId: string | undefined;
   if (matchedInstance) {
     const evidenceMap = buildEvidenceMap(matchedInstance);
     const evaluator = createGateEvaluator(PAT_SRC_AMS_001);
@@ -46,6 +53,12 @@ export default async function SourceEventDetailPage({
       raw[stageEval.stageLabel.replace(/ /g, '-')] = stageEval.status;
     }
     stageStates = raw;
+
+    // The criteria that gate the CURRENT → NEXT advance. evaluateStage returns
+    // criteria whose stageId names the destination stage, so the criterion
+    // stageId tells us the gate target.
+    nextGateEvaluations = evaluator.evaluateStage(matchedInstance.currentStage, evidenceMap);
+    nextGateTargetStageId = nextGateEvaluations[0]?.stageId;
   }
 
   // REASON-27 — Build the SynthesisContext server-side so the provenance
@@ -96,6 +109,14 @@ export default async function SourceEventDetailPage({
       />
       <SourceWorkingPane>
         <NexusEngagementCanvas event={event} />
+        {matchedInstance && nextGateEvaluations.length > 0 && (
+          <GateCriteriaPanel
+            evaluations={nextGateEvaluations}
+            pattern={PAT_SRC_AMS_001}
+            currentStageId={nextGateTargetStageId}
+            title={`Gate criteria — ${nextGateTargetStageId ?? 'next stage'}`}
+          />
+        )}
         <SourceCommercialEventSection
           eventId={event.id}
           eventName={event.name}
