@@ -3,10 +3,14 @@
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { SHELL } from '@/lib/shell/shell-tokens';
 
+export type StageStatus = 'passed' | 'current' | 'upcoming' | 'blocked';
+
 interface StageTrackerStripProps {
   stages: string[];
   activeStage: string;
   onStageSelect?: (stage: string) => void;
+  /** Optional gate-driven state per stage. When provided, overrides color logic. */
+  stageStates?: Record<string, StageStatus>;
 }
 
 // Pipe divider positions — after index (0-based): after RFI(1), RFP(4), BAFO(7), Award(8)
@@ -14,7 +18,59 @@ interface StageTrackerStripProps {
 // Dividers after: index 1, 4, 6, 8
 const PIPE_AFTER = new Set([1, 4, 6, 8]);
 
-export function StageTrackerStrip({ stages, activeStage, onStageSelect }: StageTrackerStripProps) {
+// Color values for blocked (amber) — SHELL.AMBER_DOT is available
+const AMBER = SHELL.AMBER_DOT;
+
+/**
+ * Resolve pip/label colors from a gate-driven StageStatus.
+ * Exported for unit testing.
+ */
+export function colorsForStatus(status: StageStatus): {
+  pipColor: string;
+  labelColor: string;
+  labelWeight: number;
+} {
+  switch (status) {
+    case 'passed':
+      return { pipColor: SHELL.MINT_TEXT, labelColor: SHELL.MINT_TEXT, labelWeight: 400 };
+    case 'current':
+      return { pipColor: SHELL.INK, labelColor: SHELL.INK, labelWeight: 600 };
+    case 'upcoming':
+      return { pipColor: SHELL.GRAY_LINE, labelColor: SHELL.INK_MUTED, labelWeight: 400 };
+    case 'blocked':
+      return { pipColor: AMBER, labelColor: AMBER, labelWeight: 600 };
+  }
+}
+
+/**
+ * Compute the display colors for a stage given the full strip context.
+ * Used in both the component and tests to verify the coloring logic.
+ *
+ * @param stage        Stage label
+ * @param index        Position in stages array
+ * @param activeIndex  Index of activeStage
+ * @param stageStates  Optional gate-driven states (when provided, overrides index logic)
+ */
+export function resolveStageColors(
+  stage: string,
+  index: number,
+  activeIndex: number,
+  stageStates?: Record<string, StageStatus>,
+): { pipColor: string; labelColor: string; labelWeight: number } {
+  if (stageStates) {
+    const status: StageStatus = stageStates[stage] ?? 'upcoming';
+    return colorsForStatus(status);
+  }
+  const isDone = index < activeIndex;
+  const isCurrent = index === activeIndex;
+  return {
+    pipColor: isDone ? SHELL.MINT_TEXT : isCurrent ? SHELL.INK : SHELL.GRAY_LINE,
+    labelColor: isCurrent ? SHELL.INK : isDone ? SHELL.MINT_TEXT : SHELL.INK_MUTED,
+    labelWeight: isCurrent ? 600 : 400,
+  };
+}
+
+export function StageTrackerStrip({ stages, activeStage, onStageSelect, stageStates }: StageTrackerStripProps) {
   const activeIndex = stages.indexOf(activeStage);
   const router = useRouter();
   const pathname = usePathname();
@@ -40,15 +96,12 @@ export function StageTrackerStrip({ stages, activeStage, onStageSelect }: StageT
   return (
     <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 0 }}>
       {stages.map((stage, index) => {
-        const isDone = index < activeIndex;
-        const isCurrent = index === activeIndex;
         const showPipe = PIPE_AFTER.has(index) && index < stages.length - 1;
 
-        const pipColor = isDone
-          ? SHELL.MINT_TEXT
-          : isCurrent
-          ? SHELL.INK
-          : SHELL.GRAY_LINE;
+        // Gate-driven coloring when stageStates is provided; index-based fallback otherwise.
+        const { pipColor, labelColor, labelWeight } = resolveStageColors(
+          stage, index, activeIndex, stageStates,
+        );
 
         return (
           <div
@@ -85,8 +138,8 @@ export function StageTrackerStrip({ stages, activeStage, onStageSelect }: StageT
                 style={{
                   fontFamily: SHELL.MONO,
                   fontSize: 9,
-                  color: isCurrent ? SHELL.INK : isDone ? SHELL.MINT_TEXT : SHELL.INK_MUTED,
-                  fontWeight: isCurrent ? 600 : 400,
+                  color: labelColor,
+                  fontWeight: labelWeight,
                   letterSpacing: '0.04em',
                   lineHeight: 1,
                   whiteSpace: 'nowrap',
