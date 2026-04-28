@@ -20,6 +20,11 @@ import {
   type ActionAgent,
 } from '@/lib/intelligence/intelligence-actions-mode-view';
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const fs = require('fs') as typeof import('fs');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const path = require('path') as typeof import('path');
+
 // ===========================================================================
 // Programs Mode — structure
 // ===========================================================================
@@ -302,5 +307,32 @@ describe('buildIntelligenceActionsModeView — unknown tenant', () => {
   it('lowContextDisclosure is non-null for unknown tenant', () => {
     const view = buildIntelligenceActionsModeView('shell-tenant');
     expect(view.lowContextDisclosure).not.toBeNull();
+  });
+});
+
+// ===========================================================================
+// Mounted IntelligenceLensTabs parity
+// ===========================================================================
+
+describe('IntelligenceLensTabs — Programs/Actions read-model parity', () => {
+  const sourcePath = path.resolve(
+    __dirname,
+    '../../../components/intelligence/IntelligenceLensTabs.tsx',
+  );
+  const source = fs.readFileSync(sourcePath, 'utf8');
+
+  it('imports the dedicated Programs and Actions read models', () => {
+    expect(source).toMatch(/from '@\/lib\/intelligence\/intelligence-programs-mode-view'/);
+    expect(source).toMatch(/from '@\/lib\/intelligence\/intelligence-actions-mode-view'/);
+  });
+
+  it('uses tenant.routeSlug when building Programs and Actions tab content', () => {
+    expect(source).toContain('buildIntelligenceProgramsModeView(tenant.routeSlug)');
+    expect(source).toContain('buildIntelligenceActionsModeView(tenant.routeSlug)');
+  });
+
+  it('renders impactedPrograms and actions from the dedicated view models', () => {
+    expect(source).toContain('const programs = view.impactedPrograms');
+    expect(source).toMatch(/view\.actions\.map\(\(action, idx\) =>/);
   });
 });

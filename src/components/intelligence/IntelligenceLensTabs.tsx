@@ -26,14 +26,21 @@ import {
   buildIntelligenceWorkflowCanvasView,
 } from '@/lib/intelligence/intelligence-workflow-canvas-view';
 import {
+  buildIntelligenceActionsModeView,
+  type IntelligenceAction,
+} from '@/lib/intelligence/intelligence-actions-mode-view';
+import {
   buildSentinelEvidenceBriefView,
   type EvidenceItem,
 } from '@/lib/intelligence/sentinel-brief-evidence-view';
 import {
+  buildIntelligenceProgramsModeView,
+  type IntelligenceImpactedProgram,
+} from '@/lib/intelligence/intelligence-programs-mode-view';
+import {
   buildSentinelIntelligenceView,
   type SentinelPatternCard,
 } from '@/lib/intelligence/sentinel-pattern-view';
-import type { SentinelPatternDetection } from '@/lib/intelligence/sentinel-pattern-detections';
 import { IntelligenceWorkflowCanvas } from '@/components/intelligence/IntelligenceWorkflowCanvas';
 import type { TenantSeedPlan } from '@/lib/programs/enhancement-seed-planner';
 
@@ -304,8 +311,8 @@ function SummaryPanel({ tenant }: { tenant: TenantSeedPlan }) {
 
 /** Programs — affected program map and deterministic cross-surface links */
 function ProgramsPanel({ tenant }: { tenant: TenantSeedPlan }) {
-  const view = buildSentinelIntelligenceView(tenant);
-  const programs = buildProgramRows(view.cards);
+  const view = buildIntelligenceProgramsModeView(tenant.routeSlug);
+  const programs = view.impactedPrograms;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 960 }}>
@@ -318,90 +325,22 @@ function ProgramsPanel({ tenant }: { tenant: TenantSeedPlan }) {
       {programs.length > 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {programs.map((program, idx) => (
-            <article
-              key={program.href}
-              style={{
-                padding: '14px 18px',
-                backgroundColor: C.card,
-                border: `1px solid ${C.border}`,
-                borderLeft: `3px solid ${C.navy}`,
-                borderRadius: 6,
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  justifyContent: 'space-between',
-                  gap: 12,
-                  marginBottom: 8,
-                }}
-              >
-                <span
-                  style={{
-                    fontFamily: 'JetBrains Mono, monospace',
-                    fontSize: 10,
-                    letterSpacing: '0.12em',
-                    textTransform: 'uppercase',
-                    color: C.mutedSoft,
-                    fontWeight: 700,
-                  }}
-                >
-                  PRG-{String(idx + 1).padStart(3, '0')} · {program.patterns.map((pattern) => pattern.patternKey.replace(/_/g, ' ')).join(' · ')}
-                </span>
-                <ConfidenceBadge level={program.highestConfidence} />
-              </div>
-              <div style={{ display: 'grid', gap: 4 }}>
-                <Link
-                  href={program.href}
-                  style={{
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: C.ink,
-                    textDecoration: 'none',
-                  }}
-                >
-                  {program.programCode} · {program.programName}
-                </Link>
-                <div style={{ fontSize: 12, color: C.muted }}>
-                  {program.patterns.length} active patterns · {program.totalMissingInputs} open input gaps
-                </div>
-              </div>
-              <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.55 }}>
-                {program.patterns.slice(0, 2).map((pattern) => pattern.patternName).join(' · ')}
-              </div>
-              {program.patterns.length > 0 && (
-                <div
-                  style={{
-                    marginTop: 8,
-                    padding: '6px 10px',
-                    backgroundColor: C.amberSoft,
-                    border: `1px solid ${C.amber}44`,
-                    borderRadius: 4,
-                    fontSize: 11,
-                    color: C.muted,
-                  }}
-                >
-                  Recommended focus: {program.patterns[0].recommendedAction}
-                </div>
-              )}
-            </article>
+            <ProgramImpactRow key={program.programCode} program={program} order={idx + 1} />
           ))}
         </div>
       ) : (
         <EmptyState message="No affected programs are currently mapped from deterministic pattern detections for this tenant." />
       )}
 
-      <Caveat>
-        Programs mode is deterministic and link-safe. It reuses canonical program routes and does not invent live portfolio telemetry.
-      </Caveat>
+      {view.lowContextDisclosure && <Caveat>{view.lowContextDisclosure}</Caveat>}
+      <Caveat>{view.caveat}</Caveat>
     </div>
   );
 }
 
 /** Actions — priority-ordered operator follow-through from seeded pattern detections */
 function ActionsPanel({ tenant }: { tenant: TenantSeedPlan }) {
-  const view = buildSentinelIntelligenceView(tenant);
+  const view = buildIntelligenceActionsModeView(tenant.routeSlug);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 960 }}>
@@ -411,10 +350,10 @@ function ActionsPanel({ tenant }: { tenant: TenantSeedPlan }) {
         subtitle="Context-first follow-through for each active pattern. Actions are deterministic guidance, not executable automations."
       />
 
-      {view.cards.length > 0 ? (
+      {view.actions.length > 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {view.cards.map((card, idx) => (
-            <ActionRow key={card.detection.patternKey} card={card} order={idx + 1} />
+          {view.actions.map((action, idx) => (
+            <ActionRow key={action.id} action={action} order={idx + 1} />
           ))}
         </div>
       ) : (
@@ -457,9 +396,8 @@ function ActionsPanel({ tenant }: { tenant: TenantSeedPlan }) {
         </div>
       </section>
 
-      <Caveat>
-        Actions mode discloses what is missing instead of pretending the system can execute work on your behalf today.
-      </Caveat>
+      {view.lowContextDisclosure && <Caveat>{view.lowContextDisclosure}</Caveat>}
+      <Caveat>{view.caveat}</Caveat>
     </div>
   );
 }
@@ -630,100 +568,13 @@ function SignalsPanel({ tenantSlug }: { tenantSlug: string }) {
 // Shared sub-components
 // ─────────────────────────────────────────────────────────────────────────────
 
-interface ProgramRowModel {
-  programCode: string;
-  programName: string;
-  href: string;
-  highestConfidence: string;
-  totalMissingInputs: number;
-  patterns: ReadonlyArray<SentinelPatternDetection>;
-}
-
-function buildProgramRows(
-  cards: ReadonlyArray<SentinelPatternCard>,
-): ReadonlyArray<ProgramRowModel> {
-  const map = new Map<string, ProgramRowModel>();
-
-  for (const card of cards) {
-    for (const program of card.detection.affectedPrograms) {
-      const existing = map.get(program.routeHref);
-      if (existing) {
-        const nextPatterns = [...existing.patterns, card.detection].sort(
-          compareDetections,
-        );
-        map.set(program.routeHref, {
-          ...existing,
-          highestConfidence: strongerConfidence(
-            existing.highestConfidence,
-            card.confidenceLabel,
-          ),
-          totalMissingInputs:
-            existing.totalMissingInputs + card.detection.missingInputs.length,
-          patterns: nextPatterns,
-        });
-        continue;
-      }
-
-      map.set(program.routeHref, {
-        programCode: program.programCode,
-        programName: program.programName,
-        href: program.routeHref,
-        highestConfidence: card.confidenceLabel,
-        totalMissingInputs: card.detection.missingInputs.length,
-        patterns: [card.detection],
-      });
-    }
-  }
-
-  return [...map.values()].sort((a, b) => compareProgramRows(a, b));
-}
-
-function compareProgramRows(a: ProgramRowModel, b: ProgramRowModel): number {
-  const byPatternCount = b.patterns.length - a.patterns.length;
-  if (byPatternCount !== 0) return byPatternCount;
-  const byConfidence = compareConfidence(a.highestConfidence, b.highestConfidence);
-  if (byConfidence !== 0) return byConfidence;
-  return a.programCode.localeCompare(b.programCode);
-}
-
-function compareDetections(a: SentinelPatternDetection, b: SentinelPatternDetection): number {
-  const byConfidence = compareConfidence(a.confidence, b.confidence);
-  if (byConfidence !== 0) return byConfidence;
-  return a.patternName.localeCompare(b.patternName);
-}
-
-function compareConfidence(left: string, right: string): number {
-  return confidenceRank(right) - confidenceRank(left);
-}
-
-function strongerConfidence(left: string, right: string): string {
-  return confidenceRank(left) >= confidenceRank(right) ? left : right;
-}
-
-function confidenceRank(value: string): number {
-  switch (value.toLowerCase()) {
-    case 'high':
-      return 3;
-    case 'medium':
-      return 2;
-    case 'low':
-      return 1;
-    default:
-      return 0;
-  }
-}
-
 function ActionRow({
-  card,
+  action,
   order,
 }: {
-  card: SentinelPatternCard;
+  action: IntelligenceAction;
   order: number;
 }) {
-  const evidenceBasis = card.detection.evidenceSignals.length > 0
-    ? `${card.detection.evidenceSignals.length} evidence-linked signals`
-    : `${card.sourceSignalCount} seeded portfolio signals`;
-
   return (
     <article
       style={{
@@ -755,17 +606,17 @@ function ActionRow({
               fontWeight: 700,
             }}
           >
-            ACT-{String(order).padStart(3, '0')} · {card.detection.patternKey.replace(/_/g, ' ')}
+            ACT-{String(order).padStart(3, '0')} · {action.id} · {action.agent}
           </span>
           <span style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>
-            {card.detection.recommendedAction}
+            {action.title}
           </span>
         </div>
-        <ConfidenceBadge level={card.confidenceLabel} />
+        <PriorityBadge priority={action.priority} />
       </div>
 
       <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.55 }}>
-        {card.detection.whyItMatters}
+        {action.description}
       </div>
 
       <div
@@ -775,18 +626,12 @@ function ActionRow({
           gap: 10,
         }}
       >
-        <ActionMeta label="Evidence basis" value={evidenceBasis} />
-        <ActionMeta
-          label="Affected programs"
-          value={card.detection.affectedPrograms.map((program) => program.programCode).join(' · ')}
-        />
-        <ActionMeta
-          label="Likely handoff"
-          value={card.detection.handoffTargets.length > 0 ? card.detection.handoffTargets.join(' · ') : 'Sentinel'}
-        />
+        <ActionMeta label="Evidence basis" value={action.evidenceBasis} />
+        <ActionMeta label="Affected surface" value={action.affectedSurface} />
+        <ActionMeta label="Likely handoff" value={action.agent} />
       </div>
 
-      {card.detection.missingInputs.length > 0 && (
+      {action.blockedBy && (
         <div
           style={{
             padding: '8px 10px',
@@ -797,10 +642,127 @@ function ActionRow({
             color: C.ink,
           }}
         >
-          Missing before action is reliable: {card.detection.missingInputs.slice(0, 3).join(' · ')}
+          Blocked by: {action.blockedBy}
         </div>
       )}
     </article>
+  );
+}
+
+function ProgramImpactRow({
+  program,
+  order,
+}: {
+  program: IntelligenceImpactedProgram;
+  order: number;
+}) {
+  return (
+    <article
+      style={{
+        padding: '14px 18px',
+        backgroundColor: C.card,
+        border: `1px solid ${C.border}`,
+        borderLeft: `3px solid ${C.navy}`,
+        borderRadius: 6,
+        display: 'grid',
+        gap: 10,
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          gap: 12,
+        }}
+      >
+        <span
+          style={{
+            fontFamily: 'JetBrains Mono, monospace',
+            fontSize: 10,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: C.mutedSoft,
+            fontWeight: 700,
+          }}
+        >
+          PRG-{String(order).padStart(3, '0')} · {program.patternIds.join(' · ')}
+        </span>
+        <span
+          style={{
+            fontFamily: 'JetBrains Mono, monospace',
+            fontSize: 10,
+            color: C.navy,
+            backgroundColor: C.navySoft,
+            borderRadius: 999,
+            padding: '2px 8px',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Seed-linked
+        </span>
+      </div>
+      <div style={{ display: 'grid', gap: 4 }}>
+        <Link
+          href={programHrefFor(program.programCode)}
+          style={{
+            fontSize: 14,
+            fontWeight: 600,
+            color: C.ink,
+            textDecoration: 'none',
+          }}
+        >
+          {program.programCode} · {program.programName}
+        </Link>
+        <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.55 }}>
+          {program.impactSummary}
+        </div>
+      </div>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: 10,
+        }}
+      >
+        <ActionMeta label="Sentinel signal" value={program.sentinelSignal} />
+        <ActionMeta label="Evidence basis" value={program.evidenceBasis} />
+      </div>
+    </article>
+  );
+}
+
+function programHrefFor(programCode: string): string {
+  return `/programs/${programCode.toLowerCase()}`;
+}
+
+function PriorityBadge({ priority }: { priority: IntelligenceAction['priority'] }) {
+  const label = priority.replace(/_/g, ' ');
+  const color =
+    priority === 'immediate'
+      ? C.red
+      : priority === 'this_week'
+        ? C.amber
+        : priority === 'this_month'
+          ? C.navy
+          : C.mutedSoft;
+  return (
+    <span
+      style={{
+        fontFamily: 'JetBrains Mono, monospace',
+        fontSize: 10,
+        fontWeight: 700,
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase',
+        padding: '2px 8px',
+        borderRadius: 999,
+        background: `${color}18`,
+        color,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {label}
+    </span>
   );
 }
 

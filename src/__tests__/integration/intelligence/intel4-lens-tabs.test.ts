@@ -159,6 +159,20 @@ describe('INTEL4 component file probe', () => {
     expect(src).not.toMatch(/@\/lib\/source/);
   });
 
+  it('wires Programs and Actions tabs to their deterministic read models', () => {
+    const src = fs.readFileSync(componentPath, 'utf8');
+    expect(src).toContain('buildIntelligenceProgramsModeView');
+    expect(src).toContain('buildIntelligenceActionsModeView');
+    expect(src).toMatch(/const view = buildIntelligenceProgramsModeView\(tenant\.routeSlug\)/);
+    expect(src).toMatch(/const view = buildIntelligenceActionsModeView\(tenant\.routeSlug\)/);
+  });
+
+  it('does not derive Programs or Actions tab content from pattern cards', () => {
+    const src = fs.readFileSync(componentPath, 'utf8');
+    expect(src).not.toContain('buildProgramRows');
+    expect(src).not.toMatch(/view\.cards\.map\(\(card, idx\) =>/);
+  });
+
   it('does not call fetch or Date.now', () => {
     const src = fs.readFileSync(componentPath, 'utf8');
     expect(src).not.toMatch(/\bfetch\s*\(/);
