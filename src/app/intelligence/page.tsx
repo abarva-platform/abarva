@@ -1,6 +1,8 @@
 // INT-IDX — Shell-native Intelligence pattern library index.
 // Server Component: renders the AppShell-native IntelligenceIndexPage.
+// Suspense boundary required because IntelligenceIndexPage uses useSearchParams.
 
+import { Suspense } from 'react';
 import { IntelligenceIndexPage } from '@/components/intelligence/IntelligenceIndexPage';
 
 export const metadata = {
@@ -8,5 +10,9 @@ export const metadata = {
 };
 
 export default function IntelligencePage() {
-  return <IntelligenceIndexPage />;
+  return (
+    <Suspense fallback={null}>
+      <IntelligenceIndexPage />
+    </Suspense>
+  );
 }
