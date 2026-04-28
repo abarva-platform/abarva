@@ -2530,7 +2530,6 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const phaseLabel = PHASE_LABEL_MAP[view.viewingPhase] ?? `Phase ${view.viewingPhase}`;
-  const canonicalDetailHref = `/programs/${view.programId}`;
   const currentScore =
     view.programId === 'apx-cdp-2026' && view.viewingPhase === 2
       ? '36%'
@@ -2628,7 +2627,7 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
           shapeResolver={programsShapeResolver}
           style={{ background: SHELL.PAPER }}
         >
-        <div style={{ padding: '24px 32px' }}>
+        <div data-testid="program-detail-page" style={{ padding: '24px 32px' }}>
         {/* Program header */}
         <div style={{ marginBottom: 20 }}>
           <div
@@ -2691,7 +2690,9 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
               letterSpacing: '0.06em',
             }}
           >
-            Canonical route · <code>{canonicalDetailHref}</code>
+            <span data-honest-disclaimer="programs-detail">
+              {view.displayId} · Deterministic seed
+            </span>
           </div>
         </div>
 
@@ -2712,6 +2713,7 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
         )}
 
         {/* Gate ribbon — shown when gate is pending */}
+        <div data-testid="program-gate-ribbon">
         {view.gateStatus === 'pending' && view.phasePanel.gateCriteria && (
           <>
             <GateRibbon
@@ -2740,6 +2742,7 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
             </div>
           </>
         )}
+        </div>
 
         {/* Gate criteria */}
         {view.phasePanel.gateCriteria && view.phasePanel.gateCriteria.length > 0 && (
@@ -2829,7 +2832,7 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
 
         {/* Linked source event */}
         {view.linkedSourceEvent && (
-          <div style={{ marginBottom: 20 }}>
+          <div data-testid="program-linked-source-chip" style={{ marginBottom: 20 }}>
             <LinkedProgramChip
               direction="program-to-source"
               linkedId="SRC-AMS-2026"

@@ -9203,7 +9203,7 @@
     },
     {
       "id": "INT-I2",
-      "name": "Intelligence Pattern Detail + ProvenanceRibbon — I2",
+      "name": "Intelligence Pattern Detail + ProvenanceRibbon \u2014 I2",
       "status": "code_complete",
       "type": "ui",
       "wave": "INT-I2",
@@ -9231,21 +9231,21 @@
       ],
       "notes": [
         "Deleted PatternDetailPage.tsx (was 'use client', hardcoded to T3-H01)",
-        "New: intelligence-pattern-detail-view.ts — deterministic view model bridging T3-H01, T3-H03, T1-F02, T2-C03 fixtures",
-        "New: IntelligencePatternDetailPage.tsx — server component with IntelligenceProvenanceRibbon",
-        "New: IntelligencePatternDetailSentinel.tsx — client island (AgentColumn, read-only)",
-        "I2 acceptance criteria: T3-H03 ≥2 evidence rows + ProvenanceRibbon present on every pattern"
+        "New: intelligence-pattern-detail-view.ts \u2014 deterministic view model bridging T3-H01, T3-H03, T1-F02, T2-C03 fixtures",
+        "New: IntelligencePatternDetailPage.tsx \u2014 server component with IntelligenceProvenanceRibbon",
+        "New: IntelligencePatternDetailSentinel.tsx \u2014 client island (AgentColumn, read-only)",
+        "I2 acceptance criteria: T3-H03 \u22652 evidence rows + ProvenanceRibbon present on every pattern"
       ],
       "acceptanceCriteria": "npx tsc clean; intelligence-pattern-detail-i2 all 44 tests pass; PatternDetailPage.tsx deleted; IntelligencePatternDetailPage.tsx is NOT use client; ProvenanceRibbon wired",
       "deterministicSeed": true
     },
     {
       "id": "INT-I7",
-      "name": "Intelligence Quality Lens — I7",
+      "name": "Intelligence Quality Lens \u2014 I7",
       "status": "code_complete",
       "type": "ui",
       "wave": "INT-I7",
-      "description": "I7: INT-LNS-QUALITY — meta-view of the knowledge layer's own health. Deterministic view model aggregates 60+ patterns across 6 seed domains, 10 contradictions (with status breakdown), 5 solutions, and 5 identified knowledge gaps. IntelligenceQualityLensPage server component with ProvenanceRibbon, domain coverage map, contradiction density, and gap analysis.",
+      "description": "I7: INT-LNS-QUALITY \u2014 meta-view of the knowledge layer's own health. Deterministic view model aggregates 60+ patterns across 6 seed domains, 10 contradictions (with status breakdown), 5 solutions, and 5 identified knowledge gaps. IntelligenceQualityLensPage server component with ProvenanceRibbon, domain coverage map, contradiction density, and gap analysis.",
       "allowedFiles": [
         "src/lib/intelligence/intelligence-quality-lens-view.ts",
         "src/components/intelligence/IntelligenceQualityLensPage.tsx",
@@ -9269,9 +9269,9 @@
         "INT-I2"
       ],
       "notes": [
-        "New: intelligence-quality-lens-view.ts — aggregates AI_PROGRAM, CDP, SOURCING, ARCHITECTURE, META, INDUSTRY pattern counts; builds contradiction status breakdown; 5 deterministic gap seeds",
-        "New: IntelligenceQualityLensPage.tsx — server component; summary metric cards, domain coverage table, contradiction density, gap analysis",
-        "New: IntelligenceQualityLensSentinel.tsx — client island (AgentColumn)",
+        "New: intelligence-quality-lens-view.ts \u2014 aggregates AI_PROGRAM, CDP, SOURCING, ARCHITECTURE, META, INDUSTRY pattern counts; builds contradiction status breakdown; 5 deterministic gap seeds",
+        "New: IntelligenceQualityLensPage.tsx \u2014 server component; summary metric cards, domain coverage table, contradiction density, gap analysis",
+        "New: IntelligenceQualityLensSentinel.tsx \u2014 client island (AgentColumn)",
         "New: /intelligence/quality route",
         "Closes the Intelligence module wave sequence (I1-I7)"
       ],
@@ -9280,11 +9280,11 @@
     },
     {
       "id": "INT-I4",
-      "name": "Intelligence Pattern Graph Browser — I4",
+      "name": "Intelligence Pattern Graph Browser \u2014 I4",
       "status": "code_complete",
       "type": "ui",
       "wave": "INT-I4",
-      "description": "I4: INT-IDX-GRAPH — Knowledge graph browser surface at /intelligence/patterns. Consumes existing pattern-graph-read-model.ts + pattern-graph-shell-view.ts. PatternGraphShell server component with ProvenanceRibbon, node table (lifecycle + degree), edge table (kind + weight), hub pattern callout.",
+      "description": "I4: INT-IDX-GRAPH \u2014 Knowledge graph browser surface at /intelligence/patterns. Consumes existing pattern-graph-read-model.ts + pattern-graph-shell-view.ts. PatternGraphShell server component with ProvenanceRibbon, node table (lifecycle + degree), edge table (kind + weight), hub pattern callout.",
       "allowedFiles": [
         "src/components/intelligence/PatternGraphShell.tsx",
         "src/components/intelligence/PatternGraphSentinel.tsx",
@@ -9306,22 +9306,22 @@
         "INT-I1"
       ],
       "notes": [
-        "New: PatternGraphShell.tsx — server component; graph metrics, node table with lifecycle stage + degree, edge table with kind + weight, hub pattern callout",
-        "New: PatternGraphSentinel.tsx — client island (AgentColumn)",
+        "New: PatternGraphShell.tsx \u2014 server component; graph metrics, node table with lifecycle stage + degree, edge table with kind + weight, hub pattern callout",
+        "New: PatternGraphSentinel.tsx \u2014 client island (AgentColumn)",
         "New: /intelligence/patterns route",
         "Uses pre-existing pattern-graph-read-model.ts + pattern-graph-shell-view.ts (I5/I6 from agent-dispatch-queue)",
-        "ProvenanceRibbon.primitive = 'Pattern' with storeBinding = 'seed edges · no live graph store'"
+        "ProvenanceRibbon.primitive = 'Pattern' with storeBinding = 'seed edges \u00b7 no live graph store'"
       ],
       "acceptanceCriteria": "npx tsc clean; intelligence-i4 all 40 tests pass; PatternGraphShell.tsx NOT use client; ProvenanceRibbon wired; node table shows degree; edge table shows kind + weight; hub patterns highlighted",
       "deterministicSeed": true
     },
     {
       "id": "INT-I5",
-      "name": "Intelligence Solutions + Contradictions — I5",
+      "name": "Intelligence Solutions + Contradictions \u2014 I5",
       "status": "code_complete",
       "type": "ui",
       "wave": "INT-I5",
-      "description": "I5: Delete 'use client' SolutionsIndexPage; introduce IntelligenceSolutionsIndexPage (server), IntelligenceSolutionDetailPage (server), IntelligenceContradictionDetailPage (server — the most distinctive Intelligence surface). Three view models bridge existing fixtures deterministically. ProvenanceRibbon on every surface.",
+      "description": "I5: Delete 'use client' SolutionsIndexPage; introduce IntelligenceSolutionsIndexPage (server), IntelligenceSolutionDetailPage (server), IntelligenceContradictionDetailPage (server \u2014 the most distinctive Intelligence surface). Three view models bridge existing fixtures deterministically. ProvenanceRibbon on every surface.",
       "allowedFiles": [
         "src/lib/intelligence/intelligence-solutions-index-view.ts",
         "src/lib/intelligence/intelligence-solution-detail-view.ts",
@@ -9352,24 +9352,24 @@
       ],
       "notes": [
         "Deleted SolutionsIndexPage.tsx (was 'use client')",
-        "New: intelligence-solutions-index-view.ts — deterministic view model bridging shell-solutions-fixture",
-        "New: intelligence-solution-detail-view.ts — per-archetype view model with composition manifest + pattern roles",
-        "New: intelligence-contradiction-detail-view.ts — bridges CONTRADICTION_SEEDS (10 contradictions) into typed view",
-        "New: IntelligenceSolutionsIndexPage.tsx — server component with ProvenanceRibbon + links to detail",
-        "New: IntelligenceSolutionDetailPage.tsx — server component with composition manifest",
-        "New: IntelligenceContradictionDetailPage.tsx — server component; Party A/B panels, resolution panel, affected patterns",
-        "I5 first-class contradiction detail — invisible in 99% of enterprises, making it visible is structural advantage"
+        "New: intelligence-solutions-index-view.ts \u2014 deterministic view model bridging shell-solutions-fixture",
+        "New: intelligence-solution-detail-view.ts \u2014 per-archetype view model with composition manifest + pattern roles",
+        "New: intelligence-contradiction-detail-view.ts \u2014 bridges CONTRADICTION_SEEDS (10 contradictions) into typed view",
+        "New: IntelligenceSolutionsIndexPage.tsx \u2014 server component with ProvenanceRibbon + links to detail",
+        "New: IntelligenceSolutionDetailPage.tsx \u2014 server component with composition manifest",
+        "New: IntelligenceContradictionDetailPage.tsx \u2014 server component; Party A/B panels, resolution panel, affected patterns",
+        "I5 first-class contradiction detail \u2014 invisible in 99% of enterprises, making it visible is structural advantage"
       ],
       "acceptanceCriteria": "npx tsc clean; intelligence-i5 all 78 tests pass; SolutionsIndexPage.tsx deleted; all 3 server components NOT use client; ProvenanceRibbon wired on Solutions + Contradiction; contradiction detail has Party A + Party B panels",
       "deterministicSeed": true
     },
     {
       "id": "INT-I3",
-      "name": "Intelligence Signal Stream — I3",
+      "name": "Intelligence Signal Stream \u2014 I3",
       "status": "code_complete",
       "type": "ui",
       "wave": "INT-I3",
-      "description": "I3: INT-IDX-SIGNALS + INT-DTL-SIGNAL — Signal stream index and signal detail surfaces. Two view models bridge the 30 manual signal seeds (seed-signals-manual.ts) deterministically. IntelligenceSignalsIndexPage server component with ProvenanceRibbon and source-type breakdown; IntelligenceSignalDetailPage server component with confidence badge, affected-patterns chips, and metadata panel.",
+      "description": "I3: INT-IDX-SIGNALS + INT-DTL-SIGNAL \u2014 Signal stream index and signal detail surfaces. Two view models bridge the 30 manual signal seeds (seed-signals-manual.ts) deterministically. IntelligenceSignalsIndexPage server component with ProvenanceRibbon and source-type breakdown; IntelligenceSignalDetailPage server component with confidence badge, affected-patterns chips, and metadata panel.",
       "allowedFiles": [
         "src/lib/intelligence/intelligence-signals-index-view.ts",
         "src/lib/intelligence/intelligence-signal-detail-view.ts",
@@ -9396,13 +9396,13 @@
         "INT-I1"
       ],
       "notes": [
-        "New: intelligence-signals-index-view.ts — bridges MANUAL_SIGNALS (30 seeds) with source-type breakdown and ProvenanceRibbon",
-        "New: intelligence-signal-detail-view.ts — per-signal detail with confidence label, affected patterns, agent quote by source type",
-        "New: IntelligenceSignalsIndexPage.tsx — server component with ProvenanceRibbon + signal rows linking to detail pages",
-        "New: IntelligenceSignalDetailPage.tsx — server component with confidence badge, source metadata, affected patterns/programs panels",
-        "New: IntelligenceSignalsSentinel.tsx + IntelligenceSignalDetailSentinel.tsx — client islands",
+        "New: intelligence-signals-index-view.ts \u2014 bridges MANUAL_SIGNALS (30 seeds) with source-type breakdown and ProvenanceRibbon",
+        "New: intelligence-signal-detail-view.ts \u2014 per-signal detail with confidence label, affected patterns, agent quote by source type",
+        "New: IntelligenceSignalsIndexPage.tsx \u2014 server component with ProvenanceRibbon + signal rows linking to detail pages",
+        "New: IntelligenceSignalDetailPage.tsx \u2014 server component with confidence badge, source metadata, affected patterns/programs panels",
+        "New: IntelligenceSignalsSentinel.tsx + IntelligenceSignalDetailSentinel.tsx \u2014 client islands",
         "New: /intelligence/signals route + /intelligence/signals/[signalId] route",
-        "ProvenanceRibbon.primitive = 'Signal' — first use of the Signal primitive"
+        "ProvenanceRibbon.primitive = 'Signal' \u2014 first use of the Signal primitive"
       ],
       "acceptanceCriteria": "npx tsc clean; intelligence-i3 all 67 tests pass; both server components NOT use client; ProvenanceRibbon wired with primitive='Signal'; signal rows link to detail pages; unknown signalId redirects to /intelligence/signals",
       "deterministicSeed": true
@@ -9443,11 +9443,11 @@
         "SRC-S3"
       ],
       "notes": [
-        "ScorecardGovernancePanel: 7-state ScorecardLifecycleState strip (default_generated → used_for_vendor_evaluation); backwards-compat with legacy 3-state arc",
-        "EvaluationCriteriaEditor: paper aesthetic refresh — colored left-border per status, status pill uses status color, data-testid added",
+        "ScorecardGovernancePanel: 7-state ScorecardLifecycleState strip (default_generated \u2192 used_for_vendor_evaluation); backwards-compat with legacy 3-state arc",
+        "EvaluationCriteriaEditor: paper aesthetic refresh \u2014 colored left-border per status, status pill uses status color, data-testid added",
         "SourceArtifactDrawer: TierIndicator component (rich=MINT, outline=INK_MID, stub=PEACH); data-testid on tier indicator and provenance panel",
         "SourceArtifactStatusStrip: SRC-S4 comment header, data-testid on section",
-        "Scorecard page Sentinel voice: 'Scorecard at {lifecycleState}. {N} criteria approved · {M} pending review. Locks when all criteria reach approved.'",
+        "Scorecard page Sentinel voice: 'Scorecard at {lifecycleState}. {N} criteria approved \u00b7 {M} pending review. Locks when all criteria reach approved.'",
         "Artifact page Sentinel voice: 'Artifact tier: {tier}. Status: {status}. Provenance: deterministic_seed. Evidence chain: {N} entries.'",
         "Mockups updated: src-dtl-artifact.html with tier indicator CSS + 3 tier variants reference; src-dtl-scorecard.html Sentinel voice updated to spec format",
         "Fixed pre-existing test failure in source-scorecard-governance.test.ts (incorrect case in 'Scorecard governance shell' assertion)"
@@ -9481,7 +9481,7 @@
       ],
       "dependsOn": [],
       "notes": [
-        "agentQuote shortened from 40 words to 19 words — same 3 linked decisions but telegraphic",
+        "agentQuote shortened from 40 words to 19 words \u2014 same 3 linked decisions but telegraphic",
         "StatsCard urgent border changed from SHELL.PEACH_LINE (#e6cca5) to SHELL.PEACH_TEXT (#a06d28) for visible urgency accent",
         "data-testid='home-middle-strip' added to middle strip div for testability",
         "home-index-page.test.ts: 10 tests confirming voice density, peach accent, and middle strip presence",
@@ -9514,9 +9514,11 @@
         "npx tsc --noEmit",
         "npx jest integration/programs/program-route-shell-enforcement"
       ],
-      "dependsOn": ["PROG-P0"],
+      "dependsOn": [
+        "PROG-P0"
+      ],
       "notes": [
-        "Legacy tenant routes already redirected in PR #583 — this wave formalizes the enforcement contract",
+        "Legacy tenant routes already redirected in PR #583 \u2014 this wave formalizes the enforcement contract",
         "DatasetExplorerPanel linked-programs href updated from /tenant/${scope}/programs to /programs",
         "Deliverables route frozen with PROG-P1 comment; evidence route frozen with PROG-P1 comment",
         "Pre-existing test failures in program-route-shell-enforcement.test.ts fixed (assertions updated to redirect architecture)"
@@ -9526,11 +9528,11 @@
     },
     {
       "id": "PROG-P2",
-      "name": "Programs Portfolio Index — Canonical Shell Alignment",
+      "name": "Programs Portfolio Index \u2014 Canonical Shell Alignment",
       "status": "code_complete",
       "type": "ui",
       "wave": "PROG-P2",
-      "description": "Aligns ProgramsIndexPage to canonical shell spec. Removes dev annotations ('Canonical route · /programs'), adds data-testid markers for P-SMOKE-CDP test targeting, replaces flagship card dev label with 'Spotlight · {displayId}', adds data-honest-disclaimer footer. 9 new P2 source-audit tests.",
+      "description": "Aligns ProgramsIndexPage to canonical shell spec. Removes dev annotations ('Canonical route \u00b7 /programs'), adds data-testid markers for P-SMOKE-CDP test targeting, replaces flagship card dev label with 'Spotlight \u00b7 {displayId}', adds data-honest-disclaimer footer. 9 new P2 source-audit tests.",
       "allowedFiles": [
         "src/components/programs/ProgramsIndexPage.tsx",
         "src/__tests__/integration/programs/programs-index-p2-source-audit.test.ts",
@@ -9546,16 +9548,46 @@
         "npx tsc --noEmit",
         "npx jest integration/programs/"
       ],
-      "dependsOn": ["PROG-P1"],
+      "dependsOn": [
+        "PROG-P1"
+      ],
       "notes": [
-        "Flagship card label changed from 'Canonical route · /programs' to 'Spotlight · {flagship.displayId}'",
-        "Footer label changed from 'Canonical route · /programs' to 'Deterministic seed · Apex Retail Group'",
+        "Flagship card label changed from 'Canonical route \u00b7 /programs' to 'Spotlight \u00b7 {flagship.displayId}'",
+        "Footer label changed from 'Canonical route \u00b7 /programs' to 'Deterministic seed \u00b7 Apex Retail Group'",
         "data-testid markers: programs-index-page, programs-flagship-card, programs-empty-state, programs-table",
         "data-honest-disclaimer='programs-index' added to footer",
         "9 new source-audit tests in programs-index-p2-source-audit.test.ts"
       ],
       "acceptanceCriteria": "npx tsc clean; 1166 programs integration tests pass; flagship card shows Spotlight label; no dev annotations; data-testid markers present",
       "deterministicSeed": true
+    },
+    {
+      "id": "PROG-P3",
+      "name": "Programs Detail Core Canonicalization",
+      "category": "Programs",
+      "status": "code_complete",
+      "notes": "ProgramDetailPage testid markers (program-detail-page, program-gate-ribbon, program-linked-source-chip) + dev annotation replaced with honest disclaimer. 11 integration tests. PR #692."
+    },
+    {
+      "id": "PROG-P4",
+      "name": "Programs Origination + Future-Phase Expansion",
+      "category": "Programs",
+      "status": "code_complete",
+      "notes": "Origination view model (3 wizard steps, 31 tests) + intentional P5/P6 locked workbench + phase panel content. PR #633."
+    },
+    {
+      "id": "PROG-P5",
+      "name": "Programs Gate Ribbon View Model",
+      "category": "Programs",
+      "status": "code_complete",
+      "notes": "Gate ribbon view model (GateRibbonView from ProgramDetailView); P-SMOKE-CDP anchor: CDP P3->P4 = 2 of 5 criteria met; 48 tests. PR #635."
+    },
+    {
+      "id": "PROG-P6",
+      "name": "Programs Suggested Action Overlay View Model",
+      "category": "Programs",
+      "status": "code_complete",
+      "notes": "Suggested action overlay view model (3-frame state machine); P-SMOKE-CDP action C: href /intelligence/t3-h03; 35 tests. PR #636."
     }
   ]
 }
