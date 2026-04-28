@@ -31,6 +31,8 @@ import type { GateApprovalDrawerView } from '@/lib/programs/gate-approval-drawer
 import { buildDeliverablesCanvasView } from '@/lib/programs/deliverable-canvas-polish-view';
 import type { DeliverablesCanvasView } from '@/lib/programs/deliverable-canvas-polish-view';
 import { buildMaestroNextActionView } from '@/lib/programs/maestro-next-action-view';
+import { buildWorkshopNotesActionPlanView } from '@/lib/programs/workshop-notes-action-plan-view';
+import { WorkshopNotesActionPlanPanel } from '@/components/programs/WorkshopNotesActionPlanPanel';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -3064,6 +3066,8 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
   const deliverablesCanvasView = buildDeliverablesCanvasView(view);
   // PROG24 — Maestro next action composer
   const maestroActionView = buildMaestroNextActionView(view);
+  // PROG25 — Workshop notes to actions/deliverables plan
+  const workshopNotesPlanView = buildWorkshopNotesActionPlanView(view);
   const [maestroSelectedChoice, setMaestroSelectedChoice] = useState<'A' | 'B' | 'C' | 'custom' | null>(null);
   const [maestroCustomText, setMaestroCustomText] = useState('');
   const [evidenceDrawerItem, setEvidenceDrawerItem] = useState<EvidenceItem | null>(null);
@@ -3627,6 +3631,7 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
                 </div>
               ))}
             </div>
+            <WorkshopNotesActionPlanPanel view={workshopNotesPlanView} />
             {/* PROG24 — Maestro next action composer */}
             <MaestroNextActionComposer
               composerView={maestroActionView}
