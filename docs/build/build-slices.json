@@ -9277,6 +9277,54 @@
       ],
       "acceptanceCriteria": "npx tsc clean; intelligence-i7 all 44 tests pass; totalPatterns >= 60; domain coverage 6 rows; contradictionStatus sums to CONTRADICTION_SEED_COUNT; ProvenanceRibbon wired; NOT use client",
       "deterministicSeed": true
+    },
+    {
+      "id": "INT-I5",
+      "name": "Intelligence Solutions + Contradictions — I5",
+      "status": "code_complete",
+      "type": "ui",
+      "wave": "INT-I5",
+      "description": "I5: Delete 'use client' SolutionsIndexPage; introduce IntelligenceSolutionsIndexPage (server), IntelligenceSolutionDetailPage (server), IntelligenceContradictionDetailPage (server — the most distinctive Intelligence surface). Three view models bridge existing fixtures deterministically. ProvenanceRibbon on every surface.",
+      "allowedFiles": [
+        "src/lib/intelligence/intelligence-solutions-index-view.ts",
+        "src/lib/intelligence/intelligence-solution-detail-view.ts",
+        "src/lib/intelligence/intelligence-contradiction-detail-view.ts",
+        "src/components/intelligence/IntelligenceSolutionsIndexPage.tsx",
+        "src/components/intelligence/IntelligenceSolutionDetailPage.tsx",
+        "src/components/intelligence/IntelligenceContradictionDetailPage.tsx",
+        "src/components/intelligence/IntelligenceSolutionsSentinel.tsx",
+        "src/components/intelligence/IntelligenceContradictionDetailSentinel.tsx",
+        "src/app/intelligence/solutions/page.tsx",
+        "src/app/intelligence/solutions/[solutionId]/page.tsx",
+        "src/app/intelligence/contradictions/[contradictionId]/page.tsx",
+        "src/__tests__/integration/intelligence/intelligence-i5.test.ts",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit",
+        "npx jest intelligence-i5"
+      ],
+      "dependsOn": [
+        "INT-I1"
+      ],
+      "notes": [
+        "Deleted SolutionsIndexPage.tsx (was 'use client')",
+        "New: intelligence-solutions-index-view.ts — deterministic view model bridging shell-solutions-fixture",
+        "New: intelligence-solution-detail-view.ts — per-archetype view model with composition manifest + pattern roles",
+        "New: intelligence-contradiction-detail-view.ts — bridges CONTRADICTION_SEEDS (10 contradictions) into typed view",
+        "New: IntelligenceSolutionsIndexPage.tsx — server component with ProvenanceRibbon + links to detail",
+        "New: IntelligenceSolutionDetailPage.tsx — server component with composition manifest",
+        "New: IntelligenceContradictionDetailPage.tsx — server component; Party A/B panels, resolution panel, affected patterns",
+        "I5 first-class contradiction detail — invisible in 99% of enterprises, making it visible is structural advantage"
+      ],
+      "acceptanceCriteria": "npx tsc clean; intelligence-i5 all 78 tests pass; SolutionsIndexPage.tsx deleted; all 3 server components NOT use client; ProvenanceRibbon wired on Solutions + Contradiction; contradiction detail has Party A + Party B panels",
+      "deterministicSeed": true
     }
   ]
 }
