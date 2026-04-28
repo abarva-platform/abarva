@@ -18,7 +18,9 @@ import { buildSourceStorylineContext, matchStorylinePatterns } from '@/lib/intel
 import { buildPricingCompletenessView } from '@/lib/source/pricing-completeness-view';
 import { buildBafoScenarioCompareView } from '@/lib/source/bafo-scenario-compare-view';
 import { ContradictionDetailCardClient } from '@/components/_shared/ContradictionDetailCardClient';
+import { CascadeImpactCard, ReverseCascadeCard } from '@/components/_shared/CascadeImpactCard';
 import { buildSourceSynthesisContext } from '@/lib/reasoning/synthesis-context-builder';
+import { computeReverseCascade } from '@/lib/reasoning/cross-instance-reasoner';
 import { PAT_SRC_AMS_001 } from '@/lib/intelligence/source-lifecycle-patterns';
 import { isResolved as isContradictionResolved } from '@/lib/reasoning/contradiction-resolution-state';
 
@@ -215,6 +217,17 @@ function ReadinessTab() {
       <ContradictionDetailCardClient
         contradictions={activeContradictions}
         instanceId={AMS_VENDOR_CONSOLIDATION_2026_INSTANCE.id}
+      />
+
+      {/* REASON-31 — Cascade impact detail (downstream + upstream) */}
+      <CascadeImpactCard
+        impacts={synthesisContext.cascadeContext}
+        title="Downstream impacts"
+      />
+      <ReverseCascadeCard
+        upstream={computeReverseCascade(AMS_VENDOR_CONSOLIDATION_2026_INSTANCE)}
+        thisInstanceId={AMS_VENDOR_CONSOLIDATION_2026_INSTANCE.displayId}
+        title="Upstream dependencies"
       />
 
       {/* Honest disclaimer */}

@@ -28,6 +28,8 @@ import { buildProgramSynthesisContext } from '@/lib/reasoning/program-synthesis-
 import { summarizeFailureModes } from '@/lib/reasoning/provenance-ribbon-helpers';
 import { FailureModeWarningChip } from '@/components/_shared/FailureModeWarningChip';
 import { ContradictionDetailCardClient } from '@/components/_shared/ContradictionDetailCardClient';
+import { CascadeImpactCard, ReverseCascadeCard } from '@/components/_shared/CascadeImpactCard';
+import { computeReverseCascade } from '@/lib/reasoning/cross-instance-reasoner';
 import { isResolved as isContradictionResolved } from '@/lib/reasoning/contradiction-resolution-state';
 import { buildProgramStorylineContext, matchStorylinePatterns } from '@/lib/intelligence/storyline-matcher';
 import { buildGateApprovalDrawerView } from '@/lib/programs/gate-approval-drawer-view';
@@ -3228,6 +3230,24 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
     return { instanceId: instance.id, contradictions: active };
   })();
 
+  // REASON-31 — Cascade impact info: downstream impacts from the synthesis
+  // context plus the upstream `computeReverseCascade` view so the user can
+  // see both directions of the cross-instance dependency graph.
+  const cascadeInfo = (() => {
+    const instance = APEX_RETAIL_PROGRAM_INSTANCES.find(
+      (i) =>
+        i.displayId === view.displayId ||
+        i.id.toLowerCase() === view.programId.toLowerCase(),
+    );
+    if (!instance) return null;
+    const ctx = buildProgramSynthesisContext(instance);
+    return {
+      instanceId: instance.displayId,
+      impacts: ctx.cascadeContext,
+      upstream: computeReverseCascade(instance),
+    };
+  })();
+
   return (
     <AppShell
       surface="programs-detail"
@@ -3531,6 +3551,22 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
                 contradictions={contradictionInfo.contradictions}
                 instanceId={contradictionInfo.instanceId}
               />
+            )}
+            {/* REASON-31 — Cascade impact detail (downstream + upstream) */}
+            {cascadeInfo && (
+              <>
+                <CascadeImpactCard
+                  impacts={cascadeInfo.impacts}
+                  title="Downstream impacts"
+                />
+                {cascadeInfo.upstream.length > 0 && (
+                  <ReverseCascadeCard
+                    upstream={cascadeInfo.upstream}
+                    thisInstanceId={cascadeInfo.instanceId}
+                    title="Upstream dependencies"
+                  />
+                )}
+              </>
             )}
             {/* PROG21 — Gate approval interaction drawer trigger */}
             {gateApprovalDrawerView && (
