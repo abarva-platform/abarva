@@ -16,6 +16,9 @@ export function SourceArtifactStatusStrip({
 }: {
   artifacts: SourceArtifactStatusStripSeedItem[];
 }) {
+  const approvedCount = artifacts.filter((artifact) => artifact.status === 'approved' || artifact.status === 'locked').length;
+  const needsAttentionCount = artifacts.filter((artifact) => artifact.status === 'changes_requested' || artifact.status === 'needs_inputs').length;
+
   return (
     <section style={SECTION} aria-label="Source artifact status strip">
       <div style={HEADER}>
@@ -25,6 +28,14 @@ export function SourceArtifactStatusStrip({
           <p style={{ margin: '7px 0 0', fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>
             Metadata-only strip. No artifact drawer, generation, export/import, or approval workflow execution.
           </p>
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+          <span style={{ ...PILL, color: SHELL.MINT_TEXT, borderColor: SHELL.MINT_TEXT }}>
+            {approvedCount} approved
+          </span>
+          <span style={{ ...PILL, color: SHELL.PEACH_TEXT, borderColor: SHELL.PEACH_TEXT }}>
+            {needsAttentionCount} need inputs
+          </span>
         </div>
       </div>
 
@@ -43,7 +54,7 @@ export function SourceArtifactStatusStrip({
           <tbody>
             {artifacts.map((artifact) => (
               <tr key={artifact.artifactName}>
-                <td style={TABLE_CELL}>{artifact.artifactName}</td>
+                <td style={{ ...TABLE_CELL, fontWeight: 700 }}>{artifact.artifactName}</td>
                 <td style={TABLE_CELL}>
                   <span style={{ ...PILL, color: statusColor(artifact.status), borderColor: statusColor(artifact.status) }}>
                     {artifact.status}

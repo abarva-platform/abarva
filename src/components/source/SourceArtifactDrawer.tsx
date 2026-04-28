@@ -1,6 +1,13 @@
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourceArtifactDetail } from '@/lib/source/types';
 
+interface ArtifactProvenance {
+  createdFrom: string;
+  storeKey: string;
+  freshness: string;
+  evidenceLedgerEntryId?: string;
+}
+
 const sourceCard = {
   background: SHELL.CARD_WHITE,
   border: '1px solid ' + SHELL.CARD_LINE,
@@ -60,17 +67,29 @@ const ACTION_LINK = {
   marginBottom: 8,
 };
 
-export function SourceArtifactDrawer({ artifact }: { artifact: SourceArtifactDetail }) {
+export function SourceArtifactDrawer({
+  artifact,
+  provenance,
+}: {
+  artifact: SourceArtifactDetail;
+  provenance?: ArtifactProvenance;
+}) {
   const sectionCount = artifact.sections.length;
 
   return (
     <section style={sourceCard}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <div>
-          <div style={{ fontSize: 12, opacity: 0.72 }}>{artifact.kind.replace('_', ' ')}</div>
-          <div style={{ fontSize: 24, fontWeight: 700 }}>{artifact.title}</div>
+          <div style={sourceSectionLabel}>Artifact detail</div>
+          <div style={{ fontSize: 12, color: SHELL.INK_SOFT }}>{artifact.kind.replace('_', ' ')}</div>
+          <div style={{ fontFamily: SHELL.SERIF, fontSize: 28, lineHeight: 1.1, color: SHELL.INK }}>
+            {artifact.title}
+          </div>
         </div>
-        <div style={{ fontSize: 12, opacity: 0.72 }}>{artifact.status.replace('_', ' ')}</div>
+        <div style={{ display: 'grid', gap: 8, justifyItems: 'end' }}>
+          <span style={CHIP}>Status: {artifact.status.replaceAll('_', ' ')}</span>
+          <span style={CHIP}>Tier: {artifact.tier ?? 'unclassified'}</span>
+        </div>
       </div>
 
       <div style={{ marginTop: 10 }}>
@@ -83,25 +102,54 @@ export function SourceArtifactDrawer({ artifact }: { artifact: SourceArtifactDet
         </div>
       </div>
 
-      <div>{artifact.summary}</div>
+      <div style={{ fontFamily: SHELL.SANS, fontSize: 14, lineHeight: 1.6, color: SHELL.INK }}>
+        {artifact.summary}
+      </div>
+      {provenance ? (
+        <div style={sourceInsetCard}>
+          <div style={sourceSectionLabel}>Visible provenance</div>
+          <div style={{ display: 'grid', gap: 8 }}>
+            <div><strong>Created from:</strong> {provenance.createdFrom}</div>
+            <div><strong>Store key:</strong> {provenance.storeKey}</div>
+            <div><strong>Freshness:</strong> {provenance.freshness}</div>
+            {provenance.evidenceLedgerEntryId ? (
+              <div><strong>Evidence ledger entry:</strong> {provenance.evidenceLedgerEntryId}</div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
       <div id="artifact-evidence">
         {artifact.sections.map((section) => (
           <div key={section.label} style={sourceInsetCard}>
-            <div style={{ fontWeight: 700 }}>{section.label}</div>
-            <div>{section.body}</div>
+            <div style={{ fontWeight: 700, color: SHELL.INK }}>{section.label}</div>
+            <div style={{ fontFamily: SHELL.SANS, fontSize: 14, lineHeight: 1.55, color: SHELL.INK }}>
+              {section.body}
+            </div>
           </div>
         ))}
       </div>
       <div id="artifact-missing-inputs" style={sourceInsetCard}>
-        <div style={{ fontWeight: 700 }}>Governance notes</div>
+        <div style={{ fontWeight: 700, color: SHELL.INK }}>Governance notes</div>
         <ul style={{ margin: 0, paddingLeft: 18 }}>
           {artifact.governanceNotes.map((note) => (
             <li key={note}>{note}</li>
           ))}
         </ul>
       </div>
+      {artifact.patternLinks.length > 0 ? (
+        <div style={sourceInsetCard}>
+          <div style={{ fontWeight: 700, color: SHELL.INK }}>Linked patterns</div>
+          <div style={CHIP_ROW}>
+            {artifact.patternLinks.map((pattern) => (
+              <span key={pattern} style={CHIP}>
+                {pattern}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
       <div style={sourceInsetCard}>
-        <div style={{ fontWeight: 700, marginBottom: 8 }}>Artifact action layer</div>
+        <div style={{ fontWeight: 700, marginBottom: 8, color: SHELL.INK }}>Artifact action layer</div>
         <div style={{ display: 'grid', gap: 8 }}>
           <a href="#artifact-evidence" style={ACTION_LINK}>
             Show evidence
@@ -119,7 +167,7 @@ export function SourceArtifactDrawer({ artifact }: { artifact: SourceArtifactDet
                 id="artifact-custom-input"
                 type="text"
                 readOnly
-                placeholder="Ask Nexus about this artifact, source version, or evidence..."
+                placeholder="Ask Sentinel about this artifact, evidence chain, or source version..."
                 style={{
                   border: '1px solid ' + SHELL.BLUE_LINE,
                   borderRadius: 8,

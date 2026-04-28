@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SRC-DTL-SCORECARD</title>
+    <style>
+      :root {
+        --paper: #faf7f1;
+        --paper-soft: #f3efe6;
+        --card: #fffdf8;
+        --ink: #0c1a3a;
+        --ink-soft: #45556f;
+        --line: #d8d2c4;
+        --mint: #1f7a64;
+        --mint-bg: #e6f3ee;
+        --peach: #b45e2d;
+        --peach-bg: #fbeadd;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--paper); color: var(--ink); font-family: "DM Sans", Arial, sans-serif; }
+      .app { display: grid; grid-template-columns: 76px 480px 1fr; min-height: 100vh; }
+      .rail { background: #0c1a3a; }
+      .agent { background: #102247; color: #faf7f1; padding: 28px; display: grid; gap: 18px; align-content: start; }
+      .main { display: grid; grid-template-rows: 48px 44px 1fr; }
+      .topbar, .strip { display: flex; align-items: center; padding: 0 24px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.55); }
+      .strip { font-size: 12px; color: var(--ink-soft); }
+      .content { padding: 28px 32px; display: grid; gap: 18px; }
+      .hero, .panel { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
+      .hero { display: grid; grid-template-columns: 1.2fr .8fr; gap: 18px; }
+      .eyebrow { font: 600 10px/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .12em; color: var(--ink-soft); }
+      h1, h2, h3 { margin: 0; font-family: Georgia, serif; }
+      .meter { height: 10px; border-radius: 999px; background: var(--paper-soft); overflow: hidden; }
+      .meter span { display: block; width: 72%; height: 100%; background: var(--mint); }
+      .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+      .chip { border: 1px solid var(--line); border-radius: 999px; padding: 5px 9px; font: 600 10px/1.4 ui-monospace, monospace; text-transform: uppercase; }
+      .chip.current { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+      .chip.done { background: var(--mint-bg); color: var(--mint); border-color: var(--mint); }
+      .grid { display: grid; grid-template-columns: 1.5fr .9fr; gap: 18px; }
+      table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+      th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+      th { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-soft); }
+      .pill { display: inline-block; padding: 4px 8px; border-radius: 999px; border: 1px solid var(--line); font-size: 11px; }
+      .pill.peach { color: var(--peach); border-color: var(--peach); background: var(--peach-bg); }
+      .pill.mint { color: var(--mint); border-color: var(--mint); background: var(--mint-bg); }
+      ul { margin: 10px 0 0 18px; padding: 0; }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="rail"></aside>
+      <aside class="agent">
+        <div class="eyebrow">Sentinel · Scorecard</div>
+        <h2>Scorecard reviewed, not yet locked.</h2>
+        <p>Four criteria are approved or ready. Commercial rationale and governance approval remain the gating items before BAFO can fully clear.</p>
+      </aside>
+      <main class="main">
+        <div class="topbar">AbarVa · Apex Retail · Source · Scorecard governance</div>
+        <div class="strip">Plan · RFI · Shortlist · RFP · Q&amp;A · Initial-Bid · BAFO · Selection · Award · Onboard</div>
+        <div class="content">
+          <section class="hero">
+            <div>
+              <div class="eyebrow">Steward governance lead</div>
+              <h1>Scorecard governance</h1>
+              <p>Deterministic governance shell for AMS Vendor Consolidation 2026. The panel shows what is approved, what is blocked, and what still lacks rationale before the Evaluation→BAFO gate can move.</p>
+            </div>
+            <div>
+              <div class="eyebrow">Status</div>
+              <h3>In review</h3>
+              <p>4 of 6 required criteria approved or ready</p>
+              <div class="meter"><span></span></div>
+              <div class="chips">
+                <span class="chip done">default generated</span>
+                <span class="chip done">client edited</span>
+                <span class="chip done">rationale added</span>
+                <span class="chip current">reviewed</span>
+                <span class="chip">approved</span>
+                <span class="chip">locked</span>
+                <span class="chip">used for vendor evaluation</span>
+              </div>
+            </div>
+          </section>
+          <div class="grid">
+            <section class="panel">
+              <div class="eyebrow">Criteria table</div>
+              <h2>Evaluation governance criteria</h2>
+              <table>
+                <thead>
+                  <tr><th>Criterion</th><th>Status</th><th>Evidence</th><th>Owner</th><th>Rationale</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>Commercial</td><td><span class="pill peach">blocked</span></td><td><span class="pill peach">low</span></td><td>Nexus</td><td>Vendor C contract markup still pending legal sign-off.</td></tr>
+                  <tr><td>Evidence</td><td><span class="pill mint">approved</span></td><td><span class="pill mint">high</span></td><td>Sentinel</td><td>BAFO comparison and SOC-2 references are attached.</td></tr>
+                  <tr><td>Governance</td><td><span class="pill peach">needs review</span></td><td><span class="pill peach">medium</span></td><td>Steward</td><td>Decision memo rationale needs final procurement note.</td></tr>
+                </tbody>
+              </table>
+            </section>
+            <section class="panel">
+              <div class="eyebrow">Gate impact</div>
+              <h2>Evaluation → BAFO</h2>
+              <p>The gate is still in review. Commercial and governance criteria remain the blockers.</p>
+              <ul>
+                <li>Current blocker: Vendor C integration contract language</li>
+                <li>Required approvals: Procurement review, Steward governance sign-off</li>
+                <li>Required artifacts: Scorecard packet, BAFO comparison, decision memo</li>
+              </ul>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>
