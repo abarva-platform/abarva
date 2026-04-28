@@ -39,6 +39,7 @@ export interface ProgramRow {
   nexusNote: string;        // one-line Nexus annotation
   actionLabel: 'Continue' | 'Resume' | 'Review';
   isIdle: boolean;
+  linkedSourceEvent?: string; // e.g. 'SRC-AMS-2026 · AMS Vendor Consolidation 2026 · Stage 7 BAFO'
 }
 
 export interface ProgramsIndexView {

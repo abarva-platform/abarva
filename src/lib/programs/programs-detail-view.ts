@@ -277,7 +277,7 @@ export function buildProgramDetailView(
     viewingPhase,
     phases: railPhases,
     gateStatus: program.gateStatus,
-    linkedSourceEvent: program.nexusNote,
+    linkedSourceEvent: program.linkedSourceEvent ?? undefined,
     workbench: buildWorkbenchContent(
       program.name,
       clampedCurrent,

@@ -3,6 +3,7 @@
 import { AppShell } from '@/components/shell/AppShell';
 import { AgentColumn } from '@/components/shell/AgentColumn';
 import { StageTrackerStrip } from '@/components/shell/StageTrackerStrip';
+import { LinkedProgramChip } from '@/components/shell/LinkedProgramChip';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { SOURCE_INDEX_VIEW, AMS_SOURCE_EVENT } from '@/lib/source/shell-source-fixture';
 
@@ -85,49 +86,13 @@ export function SourceIndexPage() {
 
         {/* Linked program chip */}
         <div style={{ marginBottom: 24 }}>
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              background: SHELL.PAPER_DEEP,
-              border: `1px solid ${SHELL.CARD_LINE}`,
-              borderRadius: 20,
-              padding: '5px 12px',
-            }}
-          >
-            <span
-              style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 9,
-                textTransform: 'uppercase',
-                letterSpacing: '0.14em',
-                color: SHELL.INK_MUTED,
-              }}
-            >
-              linked program
-            </span>
-            <span
-              style={{
-                fontFamily: SHELL.SERIF,
-                fontSize: 13,
-                fontWeight: 700,
-                color: SHELL.INK,
-              }}
-            >
-              {AMS_SOURCE_EVENT.linkedProgramId} · {AMS_SOURCE_EVENT.linkedProgramName}
-            </span>
-            <span
-              style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 10,
-                color: SHELL.PEACH_TEXT,
-                letterSpacing: '0.04em',
-              }}
-            >
-              {AMS_SOURCE_EVENT.linkedProgramPhase}
-            </span>
-          </div>
+          <LinkedProgramChip
+            direction="source-to-program"
+            linkedId="APX-CDP-2026"
+            linkedName="Apex Retail CDP Activation"
+            linkedPhase="P2 Synthesis"
+            href="/programs/apx-cdp-2026"
+          />
         </div>
 
         {/* Vendor summary */}
@@ -194,6 +159,30 @@ export function SourceIndexPage() {
           >
             Vendor C — pricing $1.8M/yr · 14% below median
           </div>
+        </div>
+
+        {/* Program impact cross-link */}
+        <div style={{ marginBottom: 24 }}>
+          <p
+            style={{
+              fontFamily: SHELL.SANS,
+              fontSize: 13,
+              color: SHELL.INK_SOFT,
+              margin: '0 0 10px 0',
+              lineHeight: 1.55,
+              maxWidth: 640,
+            }}
+          >
+            This sourcing event directly affects P3 Design scope for APX-CDP-2026. Vendor architecture
+            decisions must be aligned before the Design gate clears.
+          </p>
+          <LinkedProgramChip
+            direction="source-to-program"
+            linkedId="APX-CDP-2026"
+            linkedName="Apex Retail CDP Activation"
+            linkedPhase="P2 Synthesis"
+            href="/programs/apx-cdp-2026"
+          />
         </div>
 
         {/* Risk flag */}
