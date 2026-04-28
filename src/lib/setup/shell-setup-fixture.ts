@@ -7,6 +7,62 @@ export interface ConnectorItem {
   statusNote: string; // one-line Steward observation
 }
 
+export interface ConnectorDetail extends ConnectorItem {
+  // Already in ConnectorItem: id, name, logo, lastSync, status, statusNote
+  vendor: string;
+  authType: string;
+  endpoint: string;
+  connectorType: string;
+  description: string;
+  errorCode?: string;
+  errorMessage?: string;
+  errorTime?: string;
+  lastSuccessfulSync?: string;
+  syncFrequency: string;
+  dataFlows: Array<{ direction: 'inbound' | 'outbound'; description: string; lastSynced: string }>;
+  agentQuote: string;
+  actions: Array<{ letter: 'A' | 'B' | 'C'; text: string; detail?: string }>;
+  reconnectSteps: string[];
+}
+
+export const SERVICENOW_CONNECTOR_DETAIL: ConnectorDetail = {
+  // Base ConnectorItem fields — matches existing ServiceNow item in SETUP_INDEX_VIEW
+  id: 'sn',
+  name: 'ServiceNow',
+  logo: 'SN',
+  lastSync: '14:22 UTC · Apr 27',
+  status: 'degraded',
+  statusNote: 'OAuth token expired — reconnect required',
+  // Extended fields
+  vendor: 'ServiceNow Inc.',
+  authType: 'OAuth 2.0',
+  endpoint: 'https://apex-retail.service-now.com/api/now/v2',
+  connectorType: 'ITSM',
+  description: 'IT Service Management integration — change requests and incident data for program risk monitoring.',
+  errorCode: 'OAUTH_TOKEN_EXPIRED',
+  errorMessage: 'OAuth access token expired. Refresh token is valid — re-authorize to restore sync.',
+  errorTime: 'Apr 27 · 14:22 UTC',
+  lastSuccessfulSync: 'Apr 27 · 14:15 UTC',
+  syncFrequency: 'Every 15 minutes',
+  dataFlows: [
+    { direction: 'inbound', description: 'Change requests → Program risk signals', lastSynced: 'Apr 27 · 14:15 UTC' },
+    { direction: 'inbound', description: 'Incident P1/P2 alerts → Tower pressure feed', lastSynced: 'Apr 27 · 14:15 UTC' },
+    { direction: 'outbound', description: 'Program gate events → ServiceNow change log', lastSynced: 'Apr 27 · 14:15 UTC' },
+  ],
+  agentQuote: 'ServiceNow OAuth token expired at 14:22 UTC today — 7 minutes after the last successful sync. The refresh token is still valid, so re-authorization is a 2-click fix. No data loss occurred. 3 change requests queued for import once reconnected.',
+  actions: [
+    { letter: 'A' as const, text: 'Reconnect ServiceNow', detail: 'Re-authorize OAuth — takes ~60 seconds' },
+    { letter: 'B' as const, text: 'Review queued change requests', detail: '3 items waiting — import on reconnect' },
+    { letter: 'C' as const, text: 'Set token expiry alert', detail: 'Notify 24 hrs before next token expiry' },
+  ],
+  reconnectSteps: [
+    'Confirm your ServiceNow admin credentials are ready',
+    'Click "Authorize ServiceNow" below to open the OAuth consent screen',
+    'Sign in to ServiceNow and approve the AbarVa integration',
+    'AbarVa will receive a new token and resume sync automatically',
+  ],
+};
+
 const CONNECTORS: ConnectorItem[] = [
   {
     id: 'sn',
