@@ -9200,6 +9200,44 @@
       ],
       "acceptanceCriteria": "npx tsc clean; intelligence-route-shell-wiring, intelligence-tower-shell-control, intelligence-deterministic-journey tests pass; no remaining imports of deleted files",
       "deterministicSeed": true
+    },
+    {
+      "id": "INT-I2",
+      "name": "Intelligence Pattern Detail + ProvenanceRibbon — I2",
+      "status": "code_complete",
+      "type": "ui",
+      "wave": "INT-I2",
+      "description": "I2: Delete 'use client' PatternDetailPage; create deterministic view model (intelligence-pattern-detail-view.ts) bridging 4 fixtures; server component IntelligencePatternDetailPage with IntelligenceProvenanceRibbon; client island IntelligencePatternDetailSentinel. Fixes patternId bug (was hardcoded to T3-H01).",
+      "allowedFiles": [
+        "src/lib/intelligence/intelligence-pattern-detail-view.ts",
+        "src/components/intelligence/IntelligencePatternDetailPage.tsx",
+        "src/components/intelligence/IntelligencePatternDetailSentinel.tsx",
+        "src/app/intelligence/[patternId]/page.tsx",
+        "src/__tests__/integration/intelligence/intelligence-pattern-detail-i2.test.ts",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/auth/**",
+        "supabase/**",
+        "package.json"
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit",
+        "npx jest intelligence-pattern-detail-i2"
+      ],
+      "dependsOn": [
+        "INT-I1"
+      ],
+      "notes": [
+        "Deleted PatternDetailPage.tsx (was 'use client', hardcoded to T3-H01)",
+        "New: intelligence-pattern-detail-view.ts — deterministic view model bridging T3-H01, T3-H03, T1-F02, T2-C03 fixtures",
+        "New: IntelligencePatternDetailPage.tsx — server component with IntelligenceProvenanceRibbon",
+        "New: IntelligencePatternDetailSentinel.tsx — client island (AgentColumn, read-only)",
+        "I2 acceptance criteria: T3-H03 ≥2 evidence rows + ProvenanceRibbon present on every pattern"
+      ],
+      "acceptanceCriteria": "npx tsc clean; intelligence-pattern-detail-i2 all 44 tests pass; PatternDetailPage.tsx deleted; IntelligencePatternDetailPage.tsx is NOT use client; ProvenanceRibbon wired",
+      "deterministicSeed": true
     }
   ]
 }
