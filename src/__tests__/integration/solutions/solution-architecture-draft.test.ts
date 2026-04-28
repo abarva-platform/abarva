@@ -97,7 +97,7 @@ describe('SOL11 — buildSolutionArchitectureDraftView default seed', () => {
 
   it('exposes the underlying draft', () => {
     expect(view.draft).toBeDefined();
-    expect(view.draft.deterministicSeed ?? view.draft.createdFrom).toBeTruthy();
+    expect(view.draft.createdFrom).toBeTruthy();
   });
 
   it('exposes the summary', () => {
@@ -426,7 +426,7 @@ describe('SOL11 — module hygiene', () => {
     const raw = readFileSync(resolve(root, SOURCE_PATH), 'utf8');
     // Strip string literals and comments before scanning
     source = raw
-      .replace(/`[^`]*`/gs, '``')
+      .replace(/`[\s\S]*?`/g, '``')
       .replace(/"[^"]*"/g, '""')
       .replace(/'[^']*'/g, "''")
       .replace(/\/\/[^\n]*/g, '')
