@@ -18,6 +18,8 @@ import type {
   DerivedMission,
   DerivedMissionPriority,
 } from '@/lib/reasoning/mission-derivation';
+import { getMissionState } from '@/lib/reasoning/mission-state-store';
+import { MissionListClientControls } from '@/components/_shared/MissionListClientControls';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -37,6 +39,18 @@ export interface MissionListProps {
    * Defaults to `false`; detail-page consumers see only the stage id.
    */
   readonly showInstancePrefix?: boolean;
+  /**
+   * Optional handler invoked when a user clicks the "Complete" affordance on
+   * a row. When provided (alongside / or instead of `onDismiss`), the row
+   * renders a small ghost-button group; when omitted, no controls render
+   * (preserving the read-only behaviour of existing consumers).
+   */
+  readonly onComplete?: (id: string) => void;
+  /**
+   * Optional handler invoked when a user clicks the "Dismiss" affordance on
+   * a row. See `onComplete` for rendering semantics.
+   */
+  readonly onDismiss?: (id: string) => void;
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
@@ -76,6 +90,17 @@ const ROW: CSSProperties = {
   borderRadius: 8,
   background: SHELL.PAPER_SOFT,
   border: `1px solid ${SHELL.CARD_LINE_SOFT}`,
+};
+
+const ROW_WITH_CONTROLS: CSSProperties = {
+  ...ROW,
+  gridTemplateColumns: 'auto 1fr auto auto',
+};
+
+const CONTROLS_CELL: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'flex-end',
 };
 
 const DOT_BASE: CSSProperties = {
@@ -181,10 +206,19 @@ export function MissionList({
   maxRows = 5,
   emptyState,
   showInstancePrefix = false,
+  onComplete,
+  onDismiss,
 }: MissionListProps) {
   const safeMax = Math.max(0, Math.trunc(maxRows));
-  const visible = missions.slice(0, safeMax);
-  const hiddenCount = Math.max(0, missions.length - visible.length);
+  // Filter out missions that have already been actioned (complete/dismissed).
+  // Reads from the in-memory mission-state store; on the server this is the
+  // process-local snapshot, on the client this is hydrated to the same value
+  // because the store is module-scoped.
+  const active = missions.filter((m) => getMissionState(m.id) === null);
+  const visible = active.slice(0, safeMax);
+  const hiddenCount = Math.max(0, active.length - visible.length);
+  const showControls = Boolean(onComplete || onDismiss);
+  const rowStyle = showControls ? ROW_WITH_CONTROLS : ROW;
 
   return (
     <section style={SECTION} data-testid="mission-list">
@@ -198,7 +232,7 @@ export function MissionList({
           {visible.map((mission) => (
             <li
               key={mission.id}
-              style={ROW}
+              style={rowStyle}
               data-testid="mission-list-row"
               data-priority={mission.priority}
             >
@@ -229,6 +263,15 @@ export function MissionList({
                   ? `${shortInstanceTag(mission.instanceDisplayId)} ${mission.stageId}`
                   : mission.stageId}
               </span>
+              {showControls && (
+                <span style={CONTROLS_CELL}>
+                  <MissionListClientControls
+                    missionId={mission.id}
+                    onComplete={onComplete}
+                    onDismiss={onDismiss}
+                  />
+                </span>
+              )}
             </li>
           ))}
         </ul>

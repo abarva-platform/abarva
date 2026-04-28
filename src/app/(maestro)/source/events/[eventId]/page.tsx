@@ -11,7 +11,8 @@ import { SourceCommercialEventSection } from '@/components/source/SourceCommerci
 import { GateCriteriaPanel } from '@/components/source/GateCriteriaPanel';
 import { FailureModeWarningChip } from '@/components/_shared/FailureModeWarningChip';
 import { CompareWithDropdown } from '@/components/_shared/CompareWithDropdown';
-import { MissionList } from '@/components/_shared/MissionList';
+import { MissionListInteractive } from '@/components/_shared/MissionListInteractive';
+import { RecentMissionStates } from '@/components/_shared/RecentMissionStates';
 import { deriveMissionsFromInstance } from '@/lib/reasoning/mission-derivation';
 import { getSourcingEvent } from '@/lib/source/queries';
 import { AMS_SOURCE_EVENT } from '@/lib/source/shell-source-fixture';
@@ -181,12 +182,13 @@ export default async function SourceEventDetailPage({
           </div>
         )}
         {matchedInstance && (
-          <div style={{ marginTop: 12 }}>
-            <MissionList
+          <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>
+            <MissionListInteractive
               missions={derivedMissions}
               title="Pending gates · this event"
               maxRows={6}
             />
+            <RecentMissionStates instanceId={matchedInstance.id} limit={3} />
           </div>
         )}
         <SourceCommercialEventSection
