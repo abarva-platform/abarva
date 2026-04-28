@@ -1,16 +1,17 @@
 'use client';
 
 import React from 'react';
+import { SHELL } from '@/lib/shell/shell-tokens';
 import { SourceCommercialSummaryPanel } from './SourceCommercialSummaryPanel';
 import { buildCommercialSummaryProps } from '../../lib/source/source-commercial-summary';
 
 // Design tokens — AbarVa canon
-const BG = '#FAFAF9';
-const DARK = '#0F0E0D';
-const TEXT = '#3D3B38';
-const MUTED = '#706D66';
-const BORDER = '#E8E6E3';
-const ACCENT = '#1E3A5F'; // dark navy/blue — NOT teal
+const BG = SHELL.PAPER;
+const DARK = SHELL.INK;
+const TEXT = SHELL.INK_SOFT;
+const MUTED = SHELL.INK_MUTED;
+const BORDER = SHELL.CARD_LINE;
+const ACCENT = SHELL.INK_MID; // dark navy/blue — NOT teal
 
 export interface SourceCommercialSummarySurfaceProps {
   eventId: string;

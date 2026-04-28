@@ -1,6 +1,7 @@
 'use client';
 
 import type { CSSProperties } from 'react';
+import { SHELL } from '@/lib/shell/shell-tokens';
 import {
   buildCommercialExecutiveBrief,
   type CommercialPosture,
@@ -39,18 +40,18 @@ function postureBadgeStyle(posture: CommercialPosture): CSSProperties {
     fontSize: 12,
     fontWeight: 600,
     letterSpacing: '0.02em',
-    fontFamily: '"DM Sans", -apple-system, sans-serif',
+    fontFamily: SHELL.SANS,
   };
   switch (posture) {
     case 'strong':
-      return { ...base, background: '#166534', color: '#DCFCE7' };
+      return { ...base, background: SHELL.MINT_TEXT, color: SHELL.MINT_BG };
     case 'developing':
-      return { ...base, background: '#92400E', color: '#FEF3C7' };
+      return { ...base, background: SHELL.PEACH_TEXT, color: SHELL.PEACH_BG };
     case 'at-risk':
-      return { ...base, background: '#991B1B', color: '#FEE2E2' };
+      return { ...base, background: SHELL.RUST_TEXT, color: SHELL.RUST_BG };
     case 'incomplete':
     default:
-      return { ...base, background: '#374151', color: '#F3F4F6' };
+      return { ...base, background: SHELL.INK_SOFT, color: SHELL.PAPER };
   }
 }
 
@@ -65,34 +66,34 @@ function severityChipStyle(severity: ExecutiveBriefRisk['severity']): CSSPropert
     fontWeight: 600,
     textTransform: 'uppercase',
     letterSpacing: '0.04em',
-    fontFamily: '"DM Sans", -apple-system, sans-serif',
+    fontFamily: SHELL.SANS,
   };
   switch (severity) {
     case 'critical':
-      return { ...base, background: '#FEE2E2', color: '#7F1D1D' };
+      return { ...base, background: SHELL.RUST_BG, color: SHELL.RUST_TEXT };
     case 'high':
-      return { ...base, background: '#FFEDD5', color: '#7C2D12' };
+      return { ...base, background: SHELL.PEACH_BG, color: SHELL.PEACH_TEXT };
     case 'medium':
     default:
-      return { ...base, background: '#FEF9C3', color: '#713F12' };
+      return { ...base, background: SHELL.PEACH_BG, color: SHELL.PEACH_TEXT };
   }
 }
 
 // ─── Shared styles ────────────────────────────────────────────────────────────
 
 const OUTER: CSSProperties = {
-  background: '#FFFFFF',
-  border: '1px solid #E5E7EB',
+  background: SHELL.CARD_WHITE,
+  border: `1px solid ${SHELL.CARD_LINE}`,
   borderRadius: 8,
   overflow: 'hidden',
-  fontFamily: '"DM Sans", -apple-system, sans-serif',
-  color: '#171412',
+  fontFamily: SHELL.SANS,
+  color: SHELL.INK,
   maxWidth: 900,
   width: '100%',
 };
 
 const HEADER: CSSProperties = {
-  background: '#1E3A5F',
+  background: SHELL.INK_MID,
   padding: '24px 28px 20px',
   position: 'relative',
 };
@@ -109,22 +110,22 @@ const HEADER_TITLE: CSSProperties = {
   fontWeight: 600,
   letterSpacing: '0.08em',
   textTransform: 'uppercase',
-  color: '#93C5FD',
+  color: SHELL.BLUE_LINE,
   margin: '0 0 6px',
-  fontFamily: '"DM Sans", -apple-system, sans-serif',
+  fontFamily: SHELL.SANS,
 };
 
 const HEADER_H2: CSSProperties = {
   fontSize: 20,
   fontWeight: 700,
-  color: '#FFFFFF',
+  color: SHELL.CARD_WHITE,
   margin: '0 0 4px',
-  fontFamily: 'Georgia, serif',
+  fontFamily: SHELL.SERIF,
 };
 
 const HEADER_SUMMARY: CSSProperties = {
   fontSize: 13,
-  color: '#CBD5E1',
+  color: SHELL.INK_SOFT,
   margin: '10px 0 0',
   lineHeight: 1.6,
   maxWidth: 600,
@@ -133,7 +134,7 @@ const HEADER_SUMMARY: CSSProperties = {
 const CLOSE_BTN: CSSProperties = {
   background: 'transparent',
   border: '1px solid rgba(255,255,255,0.25)',
-  color: '#CBD5E1',
+  color: SHELL.INK_SOFT,
   borderRadius: 4,
   width: 28,
   height: 28,
@@ -147,7 +148,7 @@ const CLOSE_BTN: CSSProperties = {
 
 const BODY: CSSProperties = {
   padding: '24px 28px',
-  background: '#FFFFFF',
+  background: SHELL.CARD_WHITE,
 };
 
 const CARDS_ROW: CSSProperties = {
@@ -159,8 +160,8 @@ const CARDS_ROW: CSSProperties = {
 
 const CARD: CSSProperties = {
   flex: '1 1 240px',
-  background: '#FAFAF9',
-  border: '1px solid #E5E7EB',
+  background: SHELL.PAPER,
+  border: `1px solid ${SHELL.CARD_LINE}`,
   borderRadius: 6,
   padding: '16px 18px',
 };
@@ -170,20 +171,20 @@ const CARD_TITLE: CSSProperties = {
   fontWeight: 700,
   letterSpacing: '0.06em',
   textTransform: 'uppercase',
-  color: '#6B7280',
+  color: SHELL.INK_MUTED,
   margin: '0 0 12px',
 };
 
 const RISK_ROW: CSSProperties = {
   paddingBottom: 10,
   marginBottom: 10,
-  borderBottom: '1px solid #F3F4F6',
+  borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
 };
 
 const RISK_LABEL: CSSProperties = {
   fontSize: 13,
   fontWeight: 600,
-  color: '#171412',
+  color: SHELL.INK,
   marginBottom: 4,
   display: 'flex',
   alignItems: 'center',
@@ -192,20 +193,20 @@ const RISK_LABEL: CSSProperties = {
 
 const RISK_MITIGATION: CSSProperties = {
   fontSize: 12,
-  color: '#6B7280',
+  color: SHELL.INK_MUTED,
   lineHeight: 1.5,
 };
 
 const LEVER_ROW: CSSProperties = {
   paddingBottom: 10,
   marginBottom: 10,
-  borderBottom: '1px solid #F3F4F6',
+  borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
 };
 
 const LEVER_LABEL: CSSProperties = {
   fontSize: 13,
   fontWeight: 600,
-  color: '#171412',
+  color: SHELL.INK,
   marginBottom: 3,
   display: 'flex',
   alignItems: 'center',
@@ -216,27 +217,27 @@ const LEVER_LABEL: CSSProperties = {
 const LEVER_IMPACT: CSSProperties = {
   fontSize: 11,
   fontWeight: 600,
-  color: '#2E6FD8',
+  color: SHELL.BLUE_LINE,
   whiteSpace: 'nowrap' as const,
 };
 
 const LEVER_DESC: CSSProperties = {
   fontSize: 12,
-  color: '#6B7280',
+  color: SHELL.INK_MUTED,
   lineHeight: 1.5,
 };
 
 const MISSING_ITEM: CSSProperties = {
   fontSize: 12,
-  color: '#6B7280',
+  color: SHELL.INK_MUTED,
   padding: '3px 0',
   paddingLeft: 12,
   position: 'relative' as const,
 };
 
 const NEXT_ACTION_BOX: CSSProperties = {
-  background: '#DBEAFE',
-  border: '1px solid #BFDBFE',
+  background: SHELL.BLUE_BG,
+  border: `1px solid ${SHELL.BLUE_LINE}`,
   borderRadius: 6,
   padding: '14px 18px',
   marginBottom: 16,
@@ -247,22 +248,22 @@ const NEXT_ACTION_LABEL: CSSProperties = {
   fontWeight: 700,
   letterSpacing: '0.06em',
   textTransform: 'uppercase',
-  color: '#1E40AF',
+  color: SHELL.INK_MID,
   marginBottom: 6,
 };
 
 const NEXT_ACTION_TEXT: CSSProperties = {
   fontSize: 13,
-  color: '#1E3A5F',
+  color: SHELL.INK_MID,
   lineHeight: 1.6,
 };
 
 const CAVEAT: CSSProperties = {
   fontSize: 11,
-  color: '#9CA3AF',
+  color: SHELL.INK_MUTED,
   lineHeight: 1.5,
   paddingTop: 8,
-  borderTop: '1px solid #F3F4F6',
+  borderTop: `1px solid ${SHELL.CARD_LINE_SOFT}`,
 };
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -312,7 +313,7 @@ export function SourceCommercialExecutiveBrief({
               <span style={postureBadgeStyle(brief.commercialPosture)}>
                 {postureLabel(brief.commercialPosture)}
               </span>
-              <span style={{ fontSize: 12, color: '#94A3B8' }}>{brief.postureRationale}</span>
+              <span style={{ fontSize: 12, color: SHELL.INK_MUTED }}>{brief.postureRationale}</span>
             </div>
           </div>
           {onClose != null && (
@@ -351,7 +352,7 @@ export function SourceCommercialExecutiveBrief({
           {/* Vendor Comparability */}
           <div style={CARD}>
             <p style={CARD_TITLE}>Vendor Comparability</p>
-            <p style={{ fontSize: 13, color: '#171412', marginBottom: 12, lineHeight: 1.5 }}>
+            <p style={{ fontSize: 13, color: SHELL.INK, marginBottom: 12, lineHeight: 1.5 }}>
               {brief.vendorComparabilityState}
             </p>
             {brief.missingInputs.length > 0 && (
