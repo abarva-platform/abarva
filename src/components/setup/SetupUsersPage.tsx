@@ -11,6 +11,7 @@ const SUB_NAV_ITEMS = [
   { key: 'users', label: 'Users', active: true, href: '/admin/users' },
   { key: 'audit', label: 'Audit log', href: '/admin/audit' },
   { key: 'policies', label: 'Policies', href: '/admin/policies' },
+  { key: 'tenant', label: 'Tenant', href: '/admin/tenant' },
   { key: 'architecture', label: 'Architecture', href: '/admin/architecture' },
 ];
 
