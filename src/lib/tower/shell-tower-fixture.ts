@@ -106,7 +106,31 @@ export const PRESSURE_DETAIL_CUSTOMER_CHURN: PressureDetail = {
   ],
 };
 
+export const PRESSURE_DETAIL_AI_CLOUD_SPEND: PressureDetail = {
+  ...PRESSURE_AI_CLOUD_SPEND,
+  agentQuote:
+    'LLM inference spend hit $2.4M against a $1.8M budget — 33% over. The spike is concentrated in the three Q2 integrations: CDP personalization, Contact Center NLP, and Demand Forecasting. A negotiated rate card with the primary provider is the single highest-leverage action — Atlas estimates $180K/yr recovery. No new model deployments should be approved until rate card is in place.',
+  agentContext: 'Atlas · AI Cloud Spend · high severity',
+  actions: [
+    { letter: 'A' as const, text: 'Initiate rate card negotiation', detail: '$180K/yr recovery · primary LLM provider · 2-week lead' },
+    { letter: 'B' as const, text: 'Pause non-critical model deployments', detail: 'Hold until rate card signed — 3 pending requests' },
+    { letter: 'C' as const, text: 'Brief CFO on budget variance', detail: '$600K gap — needs executive visibility this week' },
+  ],
+  timeline: [
+    { date: 'Apr 27', event: 'AI Cloud Spend pressure escalated to high severity', actor: 'Atlas' },
+    { date: 'Apr 20', event: 'CDP personalization layer deployed — inference volume spiked +18%', actor: 'Nexus' },
+    { date: 'Apr 10', event: 'Contact Center NLP promoted to staging — adds ~$42K/mo', actor: 'Nexus' },
+    { date: 'Mar 15', event: 'Cloud spend crossed $1.8M annual run-rate threshold', actor: 'Atlas' },
+    { date: 'Feb 28', event: 'LLM provider rate card renewal deferred to Q2', actor: 'David Chen' },
+  ],
+  relatedPrograms: [
+    { displayId: 'APX-CDP-2026', name: 'Apex Retail CDP Activation', href: '/programs/apx-cdp-2026' },
+    { displayId: 'APX-CC-2026', name: 'Contact Center AI', href: '/programs/apx-cc-2026' },
+  ],
+};
+
 export const PRESSURE_DETAIL_MAP: Record<string, PressureDetail> = {
+  'twr-ai-cloud-spend': PRESSURE_DETAIL_AI_CLOUD_SPEND,
   'twr-vendor-risk': PRESSURE_DETAIL_VENDOR_RISK,
   'twr-customer-churn': PRESSURE_DETAIL_CUSTOMER_CHURN,
 };
