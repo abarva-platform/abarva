@@ -11,6 +11,8 @@ import { StageTrackerStrip } from '@/components/shell/StageTrackerStrip';
 import { LinkedProgramChip } from '@/components/shell/LinkedProgramChip';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { AMS_SOURCE_EVENT } from '@/lib/source/shell-source-fixture';
+import { PatternChip } from '@/components/source/PatternChip';
+import { buildSourceStorylineContext, matchStorylinePatterns } from '@/lib/intelligence/storyline-matcher';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -730,6 +732,7 @@ export function SourceEventDetailPage() {
     stageIndex: 7,
     vendorCount: AMS_SOURCE_EVENT.vendorCount,
   };
+  const storylineMatches = matchStorylinePatterns(buildSourceStorylineContext(), { limit: 4 });
 
   return (
     <AppShell
@@ -806,6 +809,22 @@ export function SourceEventDetailPage() {
           >
             Stage 7 of 10 · BAFO · {AMS_SOURCE_EVENT.vendorCount} vendors active
           </div>
+
+          {storylineMatches.length > 0 && (
+            <div
+              data-testid="source-storyline-pattern-chips"
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 8,
+                marginBottom: 14,
+              }}
+            >
+              {storylineMatches.map((pattern) => (
+                <PatternChip key={pattern.id} pattern={pattern} />
+              ))}
+            </div>
+          )}
 
           {/* Tab bar */}
           <div style={{ display: 'flex', gap: 0 }}>

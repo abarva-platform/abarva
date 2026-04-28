@@ -6,6 +6,8 @@ import { AgentColumn } from '@/components/shell/AgentColumn';
 import { FilterPillStrip } from '@/components/shell/FilterPillStrip';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { APX_CDP_SCOPE, type KPICard, type TrendPoint } from '@/lib/tower/shell-program-scope-fixture';
+import { PatternChip } from '@/components/tower/PatternChip';
+import { buildTowerStorylineContext, matchStorylinePatterns } from '@/lib/intelligence/storyline-matcher';
 
 // ---------------------------------------------------------------------------
 // KPI card
@@ -396,6 +398,7 @@ const FILTER_PILLS = [
 
 export function ProgramScopePage() {
   const scope = APX_CDP_SCOPE;
+  const storylineMatches = matchStorylinePatterns(buildTowerStorylineContext(), { limit: 3 });
 
   return (
     <AppShell
@@ -546,6 +549,22 @@ export function ProgramScopePage() {
               </div>
             </div>
           </div>
+
+          {storylineMatches.length > 0 && (
+            <div
+              data-testid="tower-storyline-pattern-chips"
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 8,
+                marginTop: 16,
+              }}
+            >
+              {storylineMatches.map((pattern) => (
+                <PatternChip key={pattern.id} pattern={pattern} />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* ------------------------------------------------------------------ */}

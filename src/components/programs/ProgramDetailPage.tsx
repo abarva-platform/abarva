@@ -17,6 +17,8 @@ import { PHASE_LABEL_MAP } from '@/lib/programs/programs-fixture';
 import type { StageId } from '@/lib/shell/atlas-page-state';
 import { LinkedProgramChip } from '@/components/shell/LinkedProgramChip';
 import { useToast } from '@/components/shell/Toast';
+import { PatternChip } from '@/components/programs/PatternChip';
+import { buildProgramStorylineContext, matchStorylinePatterns } from '@/lib/intelligence/storyline-matcher';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -2587,6 +2589,14 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
     phaseLabel,
     gateStatus: view.gateStatus,
   };
+  const storylineMatches = matchStorylinePatterns(
+    buildProgramStorylineContext({
+      programId: view.programId,
+      displayId: view.displayId,
+      name: view.name,
+      phaseLabel,
+    }),
+  );
 
   return (
     <AppShell
@@ -2684,6 +2694,22 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
             Canonical route · <code>{canonicalDetailHref}</code>
           </div>
         </div>
+
+        {storylineMatches.length > 0 && (
+          <div
+            data-testid="program-storyline-pattern-chips"
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 8,
+              margin: '-8px 0 20px',
+            }}
+          >
+            {storylineMatches.map((pattern) => (
+              <PatternChip key={pattern.id} pattern={pattern} />
+            ))}
+          </div>
+        )}
 
         {/* Gate ribbon — shown when gate is pending */}
         {view.gateStatus === 'pending' && view.phasePanel.gateCriteria && (
