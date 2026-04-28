@@ -20,24 +20,24 @@ export const APX_CDP_SCOPE = {
   programId: 'apx-cdp-2026',
   displayId: 'APX-CDP-2026',
   programName: 'Apex Retail CDP Activation',
-  phase: 'P2 Synthesis',
-  gateStatus: 'pending' as const,
-  evidenceCoverage: 36,
+  phase: 'P3 Design',
+  gateStatus: 'cleared' as const,
+  evidenceCoverage: 100,
 
   // Atlas agent voice
-  agentQuote: 'APX-CDP-2026 is on the critical path. Evidence coverage at 36% is the primary risk — the Design gate cannot clear until Workshop 5 closes. The value hypothesis is intact but unvalidated. No cost overruns yet; budget tracking is clean through P2.',
+  agentQuote: 'APX-CDP-2026 cleared the Design gate on Apr 27. Architecture sprint is now active. Vendor C confirmed as managed CDP layer — in-house build scope reduced ~40%. Build gate (P3→P4) readiness is the next milestone.',
   agentContext: 'Atlas · APX-CDP-2026 · program-scope view',
   actions: [
-    { letter: 'A' as const, text: 'Drill into gate blockers', detail: 'Workshop 5 + value hypothesis + privacy boundary' },
-    { letter: 'B' as const, text: 'View AMS vendor timeline', detail: 'BAFO decision affects CDP data layer scope' },
-    { letter: 'C' as const, text: 'Forecast P3–P5 timeline', detail: 'Atlas model: 18 weeks from gate clear to Activate' },
+    { letter: 'A' as const, text: 'Review architecture blueprint', detail: 'Vendor C managed CDP layer — scope confirmed' },
+    { letter: 'B' as const, text: 'Check vendor contract status', detail: 'AMS BAFO selected Vendor C — contract execution in progress' },
+    { letter: 'C' as const, text: 'View Build gate criteria', detail: 'Next milestone: P3→P4 Build gate readiness' },
   ],
 
   kpis: [
-    { label: 'Evidence Coverage', value: '36', unit: '%', trend: 'flat', trendNote: 'Unchanged 2 weeks', status: 'at-risk' },
-    { label: 'Gate Readiness', value: '2 of 5', unit: 'criteria met', trend: 'flat', trendNote: 'Blocked on Workshop 5', status: 'off-track' },
-    { label: 'Budget Tracking', value: '$0 variance', trend: 'flat', trendNote: 'On budget through P2', status: 'on-track' },
-    { label: 'Schedule', value: '6 days', unit: 'gate overdue', trend: 'up', trendNote: 'Gate pending since Apr 21', status: 'at-risk' },
+    { label: 'Evidence Coverage', value: '100', unit: '%', trend: 'up', trendNote: 'Design gate cleared Apr 27', status: 'on-track' },
+    { label: 'Gate Readiness', value: '5 of 5', unit: 'criteria met', trend: 'up', trendNote: 'Design gate cleared Apr 27', status: 'on-track' },
+    { label: 'Budget Tracking', value: '$0 variance', trend: 'flat', trendNote: 'On budget through P3', status: 'on-track' },
+    { label: 'Schedule', value: 'On track', unit: '', trend: 'up', trendNote: 'Architecture sprint active', status: 'on-track' },
   ] as KPICard[],
 
   evidenceTrend: [
@@ -48,8 +48,8 @@ export const APX_CDP_SCOPE = {
   phaseTimeline: [
     { phase: 'P0 Originate', status: 'done', completedDate: 'Jan 8 2026' },
     { phase: 'P1 Discovery', status: 'done', completedDate: 'Feb 14 2026' },
-    { phase: 'P2 Synthesis', status: 'current', startDate: 'Feb 14 2026', note: 'Gate pending' },
-    { phase: 'P3 Design', status: 'pending', estDuration: '6 weeks' },
+    { phase: 'P2 Synthesis', status: 'done', completedDate: 'Apr 27 2026' },
+    { phase: 'P3 Design', status: 'current', startDate: 'Apr 27 2026', note: 'Architecture sprint active' },
     { phase: 'P4 Build', status: 'locked', estDuration: '10 weeks' },
     { phase: 'P5 Activate', status: 'locked', estDuration: '4 weeks' },
     { phase: 'P6 Operate', status: 'locked', estDuration: 'ongoing' },
@@ -60,9 +60,9 @@ export const APX_CDP_SCOPE = {
   ] as ConnectedPressure[],
 
   activityLog: [
-    { timestamp: '2h ago', actor: 'Nexus', event: 'Workshop 5 deadline reminder sent to sponsor' },
-    { timestamp: '1d ago', actor: 'Steward', event: 'Privacy boundary confirmation request logged' },
-    { timestamp: '3d ago', actor: 'Sentinel', event: 'Value hypothesis evidence flagged as incomplete' },
+    { timestamp: 'Apr 27', actor: 'Steward', event: 'Design gate (P2→P3) approved by Steward' },
+    { timestamp: 'Apr 27', actor: 'Nexus', event: 'Vendor C selected as managed CDP layer via AMS BAFO' },
+    { timestamp: 'Apr 27', actor: 'Atlas', event: 'Architecture sprint initiated — Build gate criteria shared' },
     { timestamp: 'Apr 21', actor: 'Nexus', event: 'Design gate evaluation started' },
     { timestamp: 'Apr 14', actor: 'Nexus', event: 'P2 Synthesis entered — 6 workshops planned' },
   ],

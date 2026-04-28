@@ -39,7 +39,7 @@ export function buildAtlasExecutiveBriefView(tenantSlug: string): AtlasExecutive
       ? 'Apex Retail · AI Programme Value and Risk Summary'
       : 'Executive Brief — Insufficient Data',
     briefSummary: isRich
-      ? 'CDP Activation programme is in Synthesis phase with gate pending. AMS vendor consolidation is the critical commercial enabler. Two evidence gaps remain before Design gate can proceed.'
+      ? 'CDP Activation programme cleared the Design gate on Apr 27 and is now in P3 Design. Architecture sprint is active — Vendor C confirmed as managed CDP layer. AMS vendor consolidation delivered the critical commercial decision.'
       : 'Atlas cannot generate a meaningful executive brief. No rich programme or commercial data is seeded for this tenant.',
     topValueSignal: {
       signalType: 'value',
@@ -69,27 +69,27 @@ export function buildAtlasExecutiveBriefView(tenantSlug: string): AtlasExecutive
       signalType: 'adoption',
       label: isRich ? 'Platform readiness — pre-activation stage' : 'No adoption signal available',
       summary: isRich
-        ? 'CDP platform is in pre-activation (Synthesis) stage. Workshop 5 completed. Platform owner confirmation outstanding.'
+        ? 'CDP program cleared Design gate (Apr 27). Architecture sprint active — Vendor C confirmed as managed CDP layer. Adoption readiness planning should begin during P3 Design.'
         : 'Adoption signal not available for this tenant.',
-      evidenceBasis: isRich ? 'Workshop 5 outcomes seed (Wave 19 MW9).' : null,
+      evidenceBasis: isRich ? 'Design gate approval evidence (Apr 27). Architecture sprint seed.' : null,
       businessImpact: isRich
-        ? 'Activation timeline depends on Design gate approval, which requires value baseline and platform owner sign-off.'
+        ? 'Activation timeline depends on Build gate approval and adoption readiness plan completion during P3.'
         : 'Not applicable.',
       deterministicSeed: true,
     },
     portfolioReadiness: {
-      label: isRich ? 'CDP Activation — Synthesis stage' : 'No programme data',
+      label: isRich ? 'CDP Activation — Design stage' : 'No programme data',
       readinessScore: isRich ? 'partial' : 'not_ready',
       readinessNote: isRich
-        ? 'One active programme in Synthesis. Gate pending 3 items. 6 programmes in portfolio, 5 active.'
+        ? 'One active programme in P3 Design. Design gate cleared Apr 27. 6 programmes in portfolio, 5 active.'
         : 'No programme data seeded for this tenant.',
       deterministicSeed: true,
     },
     missingData: isRich
-      ? ['Approved value baseline', 'Platform owner confirmation', 'Final BAFO commercial evidence from AMS']
+      ? ['Confirmed value measurement framework', 'Build gate evidence package', 'Adoption readiness plan for P3→P4']
       : ['All programme data', 'All commercial data', 'All intelligence data'],
     recommendedExecutiveAction: isRich
-      ? 'Approve Workshop 5 value hypothesis evidence and confirm platform owner for Design gate. Resolve AMS BAFO to unlock programme delivery commercial foundation.'
+      ? 'Review architecture blueprint and confirm value measurement framework for Build gate. Initiate adoption readiness plan during P3 Design sprint — do not defer to P4.'
       : 'Pilot Apex Retail for full Atlas executive experience.',
     commercialSignalNote: isRich
       ? 'AMS vendor consolidation (apex-retail-ams-outsourcing-2026) is the active commercial event linked to this programme. BAFO outcome is the critical commercial path item.'

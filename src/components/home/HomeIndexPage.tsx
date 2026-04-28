@@ -20,18 +20,21 @@ function detailColorValue(dc: DetailColor): string {
 
 // ─── Gate status badge color ─────────────────────────────────────────────────
 
-type GateStatus = 'pending' | 'open';
+type GateStatus = 'pending' | 'open' | 'cleared';
 
 function gateBackground(gs: GateStatus): string {
-  return gs === 'pending' ? SHELL.PEACH_BG : SHELL.MINT_BG;
+  if (gs === 'pending') return SHELL.PEACH_BG;
+  return SHELL.MINT_BG;
 }
 
 function gateBorder(gs: GateStatus): string {
-  return gs === 'pending' ? SHELL.PEACH_LINE : SHELL.MINT_LINE;
+  if (gs === 'pending') return SHELL.PEACH_LINE;
+  return SHELL.MINT_LINE;
 }
 
 function gateText(gs: GateStatus): string {
-  return gs === 'pending' ? SHELL.PEACH_TEXT : SHELL.MINT_TEXT;
+  if (gs === 'pending') return SHELL.PEACH_TEXT;
+  return SHELL.MINT_TEXT;
 }
 
 // ─── Stats card ──────────────────────────────────────────────────────────────
@@ -146,7 +149,7 @@ function ProgramRow({ displayId, name, phase, phaseLabel, gateStatus, href }: Pr
             lineHeight: 1,
           }}
         >
-          {gateStatus === 'pending' ? 'gate pending' : 'open'}
+          {gateStatus === 'pending' ? 'gate pending' : gateStatus === 'cleared' ? 'gate cleared' : 'open'}
         </span>
         <Link
           href={href}
