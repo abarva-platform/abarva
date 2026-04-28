@@ -596,7 +596,7 @@ const ADMIN_MODULES: ReadonlyArray<AdminModuleReadiness> = [
     key: 'connectors',
     name: 'Connectors',
     status: 'partial',
-    routeHref: '/platform/admin/connectors',
+    routeHref: '/admin/connectors',
     description:
       'Connector list and sync health. Live sync jobs are deferred; today the surface is read-only seed.',
   },
@@ -648,7 +648,7 @@ const RECOMMENDED_ACTIONS: ReadonlyArray<AdminRecommendedAction> = [
     label: 'Capture AI tool adoption telemetry',
     reason:
       'Domain #8 (AI Tool Adoption / Usage / Cost) has no datasets loaded; Atlas cannot defend productivity-uplift claims.',
-    routeHref: '/platform/admin/connectors',
+    routeHref: '/admin/connectors',
   },
   {
     id: 'attach-baseline-kpis',
@@ -721,7 +721,7 @@ function composeBrief(
     {
       id: 'gap-ai-tool-telemetry',
       label: 'AI tool adoption telemetry is not yet wired',
-      routeHref: '/platform/admin/connectors',
+      routeHref: '/admin/connectors',
     },
   ];
 
