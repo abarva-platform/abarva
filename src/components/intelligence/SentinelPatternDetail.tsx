@@ -16,6 +16,8 @@ import { buildSentinelPatternAuthoredContent } from '@/lib/intelligence/sentinel
 import { SentinelPatternContentPanel } from '@/components/intelligence/SentinelPatternContentPanel';
 import { buildEvidenceDatasetDrawerView } from '@/lib/intelligence/evidence-dataset-drawer-view';
 import { EvidenceDatasetDrawer } from '@/components/intelligence/EvidenceDatasetDrawer';
+import { IntelligenceProvenanceRibbon } from '@/components/intelligence/IntelligenceProvenanceRibbon';
+import { buildPatternProvenanceRibbonView } from '@/lib/intelligence/intelligence-provenance-ribbon-view';
 
 interface SentinelPatternDetailProps {
   view: SentinelPatternDetailView;
@@ -131,6 +133,8 @@ export function SentinelPatternDetail({ view }: SentinelPatternDetailProps) {
       <p style={{ margin: 0, fontSize: 14, color: COLORS.muted, lineHeight: 1.6 }}>
         {view.summary}
       </p>
+
+      <IntelligenceProvenanceRibbon view={buildPatternProvenanceRibbonView(view)} />
 
       <Block heading="Why it matters">
         <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, fontStyle: 'italic', color: COLORS.muted }}>
