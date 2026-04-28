@@ -10,6 +10,7 @@ import type { PhaseStripSlot } from '@/components/shell/PhaseStrip';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { ProgramDetailView } from '@/lib/programs/programs-types';
 import { PHASE_LABEL_MAP } from '@/lib/programs/programs-fixture';
+import { LinkedProgramChip } from '@/components/shell/LinkedProgramChip';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -363,21 +364,14 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
 
         {/* Linked source event */}
         {view.linkedSourceEvent && (
-          <div>
-            <span
-              style={{
-                display: 'inline-block',
-                fontFamily: SHELL.MONO,
-                fontSize: 10,
-                color: SHELL.INK_MUTED,
-                padding: '3px 10px',
-                borderRadius: 999,
-                border: `1px solid ${SHELL.CARD_LINE}`,
-                background: SHELL.CARD_WHITE,
-              }}
-            >
-              {'→ '}{view.linkedSourceEvent}
-            </span>
+          <div style={{ marginBottom: 20 }}>
+            <LinkedProgramChip
+              direction="program-to-source"
+              linkedId="SRC-AMS-2026"
+              linkedName="AMS Vendor Consolidation 2026"
+              linkedStage="BAFO · Stage 7"
+              href="/source"
+            />
           </div>
         )}
       </div>
