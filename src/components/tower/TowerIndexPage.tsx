@@ -291,17 +291,19 @@ function ActivityStrip() {
           gap: 10,
         }}
       >
-        <span
+        <Link
+          href="/tower/activity"
           style={{
             fontFamily: SHELL.MONO,
             fontSize: 9,
-            letterSpacing: '0.18em',
-            textTransform: 'uppercase',
             color: SHELL.INK_MUTED,
+            textDecoration: 'none',
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
           }}
         >
-          Cross-program activity
-        </span>
+          Cross-program activity →
+        </Link>
       </div>
 
       {/* Rows */}

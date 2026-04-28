@@ -138,6 +138,56 @@ export function ConnectorDetailPage({ detail }: ConnectorDetailPageProps) {
           <span style={{ fontFamily: SHELL.MONO, fontSize: 11 }}>{detail.endpoint}</span>
         </div>
 
+        {/* Healthy status section */}
+        {detail.status === 'healthy' && (
+          <div
+            style={{
+              background: SHELL.MINT_BG,
+              border: `1px solid ${SHELL.MINT_LINE}`,
+              borderRadius: 8,
+              padding: '14px 18px',
+              marginBottom: 20,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+            }}
+          >
+            <div
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: SHELL.MINT_TEXT,
+                flexShrink: 0,
+              }}
+            />
+            <div>
+              <div
+                style={{
+                  fontFamily: SHELL.MONO,
+                  fontSize: 10,
+                  color: SHELL.MINT_TEXT,
+                  fontWeight: 700,
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                HEALTHY
+              </div>
+              <div
+                style={{
+                  fontFamily: SHELL.SANS,
+                  fontSize: 12,
+                  color: SHELL.MINT_TEXT,
+                  marginTop: 2,
+                }}
+              >
+                Last sync {detail.lastSuccessfulSync} · OAuth valid for 87 days
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Error banner */}
         {detail.errorCode && (
           <div
