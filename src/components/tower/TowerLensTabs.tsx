@@ -42,6 +42,10 @@ import {
   buildSourceCommercialSignalsView,
 } from '@/lib/tower/source-commercial-signals-view';
 import type { CommercialSignal, CommercialSignalSeverity } from '@/lib/tower/source-commercial-signals-view';
+import {
+  buildExecutiveDecisionQueueView,
+} from '@/lib/tower/executive-decision-queue-view';
+import type { DecisionItem, DecisionUrgency, DecisionStatus } from '@/lib/tower/executive-decision-queue-view';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Design tokens (matches existing Tower surface palette)
@@ -147,6 +151,9 @@ export function TowerLensTabs({
         )}
         {activeTab === 'source_commercial' && (
           <SourceCommercialPanel />
+        )}
+        {activeTab === 'decisions' && (
+          <DecisionsPanel />
         )}
         {activeTab === 'executive_brief' && (
           <ExecutiveBriefPanel tenantSlug={tenant.routeSlug} />
@@ -590,6 +597,328 @@ function SourceCommercialPanel() {
       </div>
 
       <Caveat>All source commercial signals are deterministic seed data. No live Atlas monitoring.</Caveat>
+    </div>
+  );
+}
+
+// ─── TOWER2: Executive decision queue panel ───────────────────────────────────
+
+function DecisionsPanel() {
+  const view = buildExecutiveDecisionQueueView();
+  const { summary, decisions } = view;
+
+  const urgencyColor = (u: DecisionUrgency) => {
+    if (u === 'immediate') return C.red;
+    if (u === 'this_week') return C.amber;
+    if (u === 'this_month') return C.navy;
+    return C.mutedSoft;
+  };
+  const urgencyLabel = (u: DecisionUrgency) => {
+    if (u === 'immediate') return 'IMMEDIATE';
+    if (u === 'this_week') return 'THIS WEEK';
+    if (u === 'this_month') return 'THIS MONTH';
+    return 'MONITOR';
+  };
+  const statusBg = (s: DecisionStatus) => {
+    if (s === 'blocked') return C.redSoft;
+    if (s === 'pending_input') return C.amberSoft;
+    if (s === 'ready_to_close') return 'rgba(22,163,74,0.07)';
+    return C.navySoft;
+  };
+  const statusLabel = (s: DecisionStatus) => {
+    if (s === 'blocked') return 'BLOCKED';
+    if (s === 'pending_input') return 'PENDING INPUT';
+    if (s === 'ready_to_close') return 'READY TO CLOSE';
+    return 'OPEN';
+  };
+
+  return (
+    <div
+      data-testid="tower-decisions-panel"
+      style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 960 }}
+    >
+      <SectionMeta
+        agent="ATLAS"
+        title="Executive Decisions"
+        subtitle="Decisions requiring leadership attention across Source and Programs. Deterministic seed."
+      />
+
+      {/* Executive summary banner */}
+      <section
+        aria-label="Executive decision summary"
+        data-testid="tower-decisions-executive-summary"
+        style={{
+          backgroundColor: '#0F1E3F',
+          color: '#FFFFFF',
+          padding: '18px 22px',
+          borderRadius: 6,
+        }}
+      >
+        <div
+          style={{
+            fontSize: 10,
+            fontWeight: 600,
+            letterSpacing: '0.08em',
+            color: '#9AA3B2',
+            textTransform: 'uppercase',
+            marginBottom: 6,
+          }}
+        >
+          ATLAS · DECISION QUEUE · DETERMINISTIC SEED
+        </div>
+        <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>
+          {view.executiveSummary}
+        </div>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+            gap: 10,
+            marginTop: 12,
+          }}
+        >
+          <MetricChip label="Immediate" value={String(summary.immediateCount)} />
+          <MetricChip label="This week" value={String(summary.thisWeekCount)} />
+          <MetricChip label="Blocked" value={String(summary.blockedCount)} />
+          <MetricChip label="Open" value={String(summary.openCount)} />
+        </div>
+        <div
+          style={{
+            marginTop: 12,
+            fontSize: 10,
+            color: '#525866',
+            borderTop: '1px solid #1F2F5A',
+            paddingTop: 10,
+          }}
+        >
+          Deterministic seed · {view.contextLine}
+        </div>
+      </section>
+
+      {/* Critical blocker alert */}
+      {summary.criticalBlockerActive && (
+        <div
+          data-testid="tower-decisions-critical-blocker-alert"
+          style={{
+            padding: '10px 14px',
+            background: C.redSoft,
+            border: `1px solid ${C.red}30`,
+            borderRadius: 6,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+          }}
+        >
+          <span
+            style={{
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: 10,
+              textTransform: 'uppercase',
+              letterSpacing: '0.1em',
+              color: C.red,
+              fontWeight: 700,
+            }}
+          >
+            CRITICAL BLOCKER ACTIVE
+          </span>
+          <span style={{ fontSize: 12, color: C.ink }}>
+            An immediate decision has an unresolved blocker. Leadership action required.
+          </span>
+        </div>
+      )}
+
+      {/* Decision items */}
+      <section aria-label="Decision queue">
+        <SectionLabel>Decision queue · {decisions.length} items</SectionLabel>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {decisions.map((decision: DecisionItem) => (
+            <article
+              key={decision.decisionId}
+              data-testid={`tower-decision-item-${decision.decisionId}`}
+              style={{
+                padding: '16px 18px',
+                backgroundColor: C.card,
+                border: `1px solid ${C.border}`,
+                borderLeft: `3px solid ${urgencyColor(decision.urgency)}`,
+                borderRadius: 6,
+              }}
+            >
+              {/* Header */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  gap: 12,
+                  marginBottom: 8,
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <span
+                      style={{
+                        fontFamily: 'JetBrains Mono, monospace',
+                        fontSize: 9,
+                        letterSpacing: '0.12em',
+                        textTransform: 'uppercase',
+                        color: urgencyColor(decision.urgency),
+                        fontWeight: 700,
+                        padding: '2px 5px',
+                        border: `1px solid ${urgencyColor(decision.urgency)}44`,
+                        borderRadius: 3,
+                      }}
+                    >
+                      {urgencyLabel(decision.urgency)}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: 'JetBrains Mono, monospace',
+                        fontSize: 9,
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        color: C.mutedSoft,
+                      }}
+                    >
+                      {decision.domain.replace(/_/g, ' ')}
+                    </span>
+                  </div>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>
+                    {decision.title}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    fontFamily: 'JetBrains Mono, monospace',
+                    fontSize: 9,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                    color: decision.status === 'blocked' ? C.red : C.mutedSoft,
+                    padding: '3px 7px',
+                    background: statusBg(decision.status),
+                    borderRadius: 3,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {statusLabel(decision.status)}
+                </div>
+              </div>
+
+              {/* Context */}
+              <p style={{ margin: '0 0 10px', fontSize: 12, color: C.muted, lineHeight: 1.55 }}>
+                {decision.context}
+              </p>
+
+              {/* Decision question */}
+              <div
+                style={{
+                  marginBottom: 10,
+                  padding: '8px 12px',
+                  background: C.navySoft,
+                  borderRadius: 4,
+                  fontSize: 12,
+                  color: C.navy,
+                }}
+              >
+                <span style={{ fontWeight: 600 }}>Decision question: </span>
+                {decision.decisionQuestion}
+              </div>
+
+              {/* Atlas recommendation */}
+              <div
+                style={{
+                  marginBottom: 10,
+                  padding: '8px 12px',
+                  background: 'rgba(22,163,74,0.07)',
+                  borderRadius: 4,
+                  fontSize: 12,
+                  color: C.green,
+                }}
+              >
+                <span style={{ fontWeight: 600 }}>Atlas recommends: </span>
+                {decision.recommendedAction}
+              </div>
+
+              {/* Known / Missing */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+                <div>
+                  <div
+                    style={{
+                      fontFamily: 'JetBrains Mono, monospace',
+                      fontSize: 9,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.1em',
+                      color: C.mutedSoft,
+                      marginBottom: 4,
+                    }}
+                  >
+                    KNOWN
+                  </div>
+                  {decision.knownContext.map((k, i) => (
+                    <div key={i} style={{ fontSize: 11, color: C.muted, marginBottom: 2 }}>
+                      ✓ {k}
+                    </div>
+                  ))}
+                </div>
+                {decision.missingContext.length > 0 && (
+                  <div>
+                    <div
+                      style={{
+                        fontFamily: 'JetBrains Mono, monospace',
+                        fontSize: 9,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.1em',
+                        color: C.mutedSoft,
+                        marginBottom: 4,
+                      }}
+                    >
+                      MISSING
+                    </div>
+                    {decision.missingContext.map((m, i) => (
+                      <div key={i} style={{ fontSize: 11, color: C.muted, marginBottom: 2 }}>
+                        ? {m}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Blockers */}
+              {decision.blockers.length > 0 && (
+                <div
+                  style={{
+                    padding: '6px 10px',
+                    background: C.redSoft,
+                    borderRadius: 4,
+                    marginBottom: 8,
+                  }}
+                >
+                  {decision.blockers.map((b) => (
+                    <div key={b.blockerId} style={{ fontSize: 11, color: C.red }}>
+                      ⚠ {b.label} · {b.owner}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Footer: owner + deadline */}
+              <div style={{ fontSize: 11, color: C.mutedSoft, fontFamily: 'JetBrains Mono, monospace' }}>
+                Owner: {decision.owner} · Deadline: {decision.deadline}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* Honest disclaimer */}
+      <div
+        data-testid="tower-decisions-disclaimer"
+        data-honest-disclaimer="tower-executive-decisions"
+        style={{ fontSize: 11, color: C.mutedSoft, fontStyle: 'italic' }}
+      >
+        Deterministic seed · Decision queue reflects fixture context for APX-CDP-2026 and SRC-AMS-2026 only. Live gate state, vendor submission status, and programme escalations are deferred.
+      </div>
+
+      <Caveat>All decisions are deterministic seed data. No live programme monitoring.</Caveat>
     </div>
   );
 }
