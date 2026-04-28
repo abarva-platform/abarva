@@ -15,6 +15,7 @@ import { requireTenancy } from "@/app/api/v1/programs/_auth";
 import { getEngagementWithPhaseData } from "@/lib/programs/db-phase-queries";
 import { PHASE_LABEL_MAP } from "@/lib/programs/programs-fixture";
 import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
+import { getStagePlaybook } from "@/lib/agent/stage-playbooks";
 
 // ── Agent voice map ────────────────────────────────────────────────────────────
 
@@ -111,11 +112,41 @@ export async function POST(request: Request) {
     contextLines.push(...eventContextLines);
   }
 
+  // Cross-surface: inject linked program state when on Source surface
+  const linkedProgramId = (body.surfaceContext?.linkedProgramCode as string) ?? null;
+  if (surface === 'source' && linkedProgramId && linkedProgramId !== programId) {
+    try {
+      await requireTenancy();
+      const linkedData = await getEngagementWithPhaseData(linkedProgramId);
+      if (linkedData) {
+        const { engagement: linkedEng, evidence: linkedEv, gateApprovals: linkedGates } = linkedData;
+        const linkedPhase = linkedEng.current_phase ?? 0;
+        const linkedPhaseLabel = PHASE_LABEL_MAP[linkedPhase as keyof typeof PHASE_LABEL_MAP] ?? 'Unknown';
+        const linkedLatestGate = linkedGates.length > 0
+          ? `${linkedGates[0].action} by ${linkedGates[0].actor_name}`
+          : 'pending';
+        contextLines.push(
+          `Linked program (cross-surface): ${linkedEng.name} (${linkedProgramId})`,
+          `  Current phase: P${linkedPhase} ${linkedPhaseLabel}`,
+          `  Evidence items: ${linkedEv.length}`,
+          `  Latest gate action: ${linkedLatestGate}`,
+          `  Note: this source event outcome directly affects the linked program gate criteria.`,
+        );
+      }
+    } catch {
+      // Auth or DB error — proceed without linked program enrichment
+    }
+  }
+
+  const stagePlaybook = getStagePlaybook(stage);
+
+
   const systemPrompt = [
     voiceLine,
     "",
     "Page context:",
     ...contextLines,
+    stagePlaybook ? `\nCurrent stage guidance:\n${stagePlaybook}` : "",
     "",
     "Response guidelines:",
     "- Keep responses under 200 words. Be direct, specific, actionable.",
