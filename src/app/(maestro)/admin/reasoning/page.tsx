@@ -1068,6 +1068,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/gate-radar',
     description: '5-dimension gate progress radar — hard gates, soft gates, evidence, waivers, and contradiction-free rate',
   },
+  {
+    title: 'Activity feed',
+    href: '/admin/reasoning/activity-feed',
+    description: 'Real-time activity feed — stage transitions, evidence, waivers, and resolutions as event cards',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
