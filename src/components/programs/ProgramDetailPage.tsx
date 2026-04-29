@@ -81,6 +81,7 @@ import { ReasoningErrorBoundary } from '@/components/reasoning/ReasoningErrorBou
 import { EvidenceTagChips } from '@/components/reasoning/EvidenceTagChips';
 import { EvidenceSuggestionsPanel } from '@/components/reasoning/EvidenceSuggestionsPanel';
 import { buildEvidenceSuggestions } from '@/lib/reasoning/evidence-suggestions';
+import { GateHistorySidebar } from '@/components/reasoning/GateHistorySidebar';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -4344,6 +4345,8 @@ export function ProgramDetailPage({
                 Gate criteria not defined for P{view.viewingPhase}.
               </div>
             )}
+            {/* REASON-38 — Gate history sidebar: session audit trail of waivers/approvals/rejections */}
+            <GateHistorySidebar instanceId={view.programId} />
             {/* REASON-35 — Evidence coverage heatmap: visual grid of which gate
                 criteria have supporting evidence across all lifecycle stages. */}
             {heatmapInfo && (
