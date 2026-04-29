@@ -1063,6 +1063,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/resolution-effectiveness',
     description: 'Contradiction resolution effectiveness — estimated health improvement per resolution and path analysis',
   },
+  {
+    title: 'Gate radar',
+    href: '/admin/reasoning/gate-radar',
+    description: '5-dimension gate progress radar — hard gates, soft gates, evidence, waivers, and contradiction-free rate',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
