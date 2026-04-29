@@ -68,6 +68,7 @@ import { MissionListInteractive } from '@/components/_shared/MissionListInteract
 import { RecentMissionStates } from '@/components/_shared/RecentMissionStates';
 import { getMissionsForProgram } from '@/lib/agent/agent-mission-derived';
 import { AddProgramEvidenceForm } from '@/components/programs/AddProgramEvidenceForm';
+import { CascadeImpactSection } from '@/components/_shared/CascadeImpactSection';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -3901,6 +3902,10 @@ export function ProgramDetailPage({
                 </button>
               </div>
             )}
+            {/* REASON-34 — Cascade impact graph for this program instance */}
+            <CascadeImpactSection
+              instanceId={evidenceIngestionInfo?.instanceId ?? view.programId}
+            />
           </div>
         )}
 

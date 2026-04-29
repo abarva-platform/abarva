@@ -24,6 +24,7 @@ import { AMS_SOURCE_EVENT } from '@/lib/source/shell-source-fixture';
 import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
 import { buildEvidenceMapWithIngestions } from '@/lib/source/source-event-instance';
 import { AddEvidenceForm } from '@/components/source/AddEvidenceForm';
+import { CascadeImpactSection } from '@/components/_shared/CascadeImpactSection';
 import { PAT_SRC_AMS_001 } from '@/lib/intelligence/source-lifecycle-patterns';
 import { createGateEvaluator } from '@/lib/reasoning/gate-evaluator';
 import { buildSourceSynthesisContext } from '@/lib/reasoning/synthesis-context-builder';
@@ -234,6 +235,10 @@ export default async function SourceEventDetailPage({
               filters={timelineFilters}
             />
           </div>
+        )}
+        {/* REASON-34 — Cascade impact graph for this source-event instance */}
+        {matchedInstance && (
+          <CascadeImpactSection instanceId={matchedInstance.id} />
         )}
         <SourceCommercialEventSection
           eventId={event.id}
