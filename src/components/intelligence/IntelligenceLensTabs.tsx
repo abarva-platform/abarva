@@ -22,6 +22,9 @@ import {
   buildIntelligenceLensTabsView,
   type IntelligenceLensTab,
 } from '@/lib/intelligence/intelligence-lens-tabs-view';
+import { EvidenceQualityChip } from '@/components/_shared/EvidenceQualityChip';
+import { FailureModeWarningChip } from '@/components/_shared/FailureModeWarningChip';
+import { scoreEvidenceItem } from '@/lib/reasoning/evidence-quality';
 import {
   buildIntelligenceWorkflowCanvasView,
 } from '@/lib/intelligence/intelligence-workflow-canvas-view';
@@ -994,6 +997,21 @@ function EvidenceRow({
 }) {
   const accent =
     variant === 'confirmed' ? '#16A34A' : C.amber;
+
+  // Score the evidence item for the quality chip. Map intelligence-side
+  // fields onto the scorer's EvidenceLikeItem shape.
+  const itemScore = scoreEvidenceItem({
+    text: item.note,
+    citation: item.source ?? undefined,
+  });
+  const itemQualitySummary = {
+    mean: itemScore.score,
+    weakCount: itemScore.grade === 'weak' ? 1 : 0,
+    fairCount: itemScore.grade === 'fair' ? 1 : 0,
+    strongCount: itemScore.grade === 'strong' ? 1 : 0,
+    total: 1,
+  };
+
   return (
     <div
       style={{
@@ -1004,10 +1022,27 @@ function EvidenceRow({
         borderRadius: 6,
         display: 'flex',
         flexDirection: 'column',
-        gap: 3,
+        gap: 6,
       }}
     >
-      <span style={{ fontSize: 13, fontWeight: 600, color: C.ink }}>{item.label}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: C.ink }}>{item.label}</span>
+        {/* Evidence quality chip — inline after the label */}
+        <EvidenceQualityChip
+          summary={itemQualitySummary}
+          grade={itemScore.grade}
+          reasons={itemScore.reasons}
+        />
+        {/* Failure mode warning chip — missing evidence items represent an
+            unresolved evidence gap, which is itself a failure mode signal */}
+        {variant === 'missing' && (
+          <FailureModeWarningChip
+            topLabel="missing evidence"
+            topConfidence={0.75}
+            highCount={1}
+          />
+        )}
+      </div>
       {item.source && (
         <span style={{ fontSize: 11, color: C.muted }}>Source: {item.source}</span>
       )}

@@ -33,6 +33,7 @@ import { computeInstanceHealth } from '@/lib/reasoning/instance-health';
 import {
   summarizeEvidenceQuality,
   summaryGrade,
+  scoreEvidenceItem,
 } from '@/lib/reasoning/evidence-quality';
 import { CompareWithDropdown } from '@/components/_shared/CompareWithDropdown';
 import { getAllInstanceIds } from '@/lib/reasoning/instance-resolver';
@@ -1054,87 +1055,118 @@ function EvidenceSection({ items, onView }: EvidenceSectionProps) {
         Evidence · {items.length} citations
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {items.map((item) => (
-          <div
-            key={item.id}
-            onClick={() => onView(item)}
-            style={{
-              padding: '8px 12px',
-              borderRadius: 6,
-              border: `1px solid ${SHELL.CARD_LINE}`,
-              background: SHELL.CARD_WHITE,
-              marginBottom: 0,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              cursor: 'pointer',
-            }}
-          >
-            {/* Confidence dot */}
+        {items.map((item) => {
+          // Score this evidence item for the quality chip. Map program-side
+          // fields onto the scorer's EvidenceLikeItem shape.
+          const itemScore = scoreEvidenceItem({
+            text: item.excerpt,
+            citation: item.citation,
+            uploadedBy: item.source,
+          });
+          const itemQualitySummary = {
+            mean: itemScore.score,
+            weakCount: itemScore.grade === 'weak' ? 1 : 0,
+            fairCount: itemScore.grade === 'fair' ? 1 : 0,
+            strongCount: itemScore.grade === 'strong' ? 1 : 0,
+            total: 1,
+          };
+          return (
             <div
+              key={item.id}
+              onClick={() => onView(item)}
               style={{
-                width: 6,
-                height: 6,
-                borderRadius: '50%',
-                background: confidenceDotColor(item.confidence),
-                flexShrink: 0,
+                padding: '8px 12px',
+                borderRadius: 6,
+                border: `1px solid ${SHELL.CARD_LINE}`,
+                background: SHELL.CARD_WHITE,
+                marginBottom: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                cursor: 'pointer',
               }}
-            />
-            {/* Citation */}
-            <div style={{ flex: 1, minWidth: 0 }}>
+            >
+              {/* Confidence dot */}
               <div
                 style={{
-                  fontFamily: SHELL.SANS,
-                  fontSize: 12,
-                  color: SHELL.INK,
-                  lineHeight: 1.4,
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  background: confidenceDotColor(item.confidence),
+                  flexShrink: 0,
                 }}
-              >
-                {item.citation}
-              </div>
-              {item.provenanceNote ? (
+              />
+              {/* Citation */}
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
-                    marginTop: 3,
-                    fontFamily: SHELL.MONO,
-                    fontSize: 9,
-                    color: SHELL.INK_MUTED,
-                    letterSpacing: '0.08em',
+                    fontFamily: SHELL.SANS,
+                    fontSize: 12,
+                    color: SHELL.INK,
+                    lineHeight: 1.4,
                   }}
                 >
-                  {item.provenanceNote}
+                  {item.citation}
                 </div>
-              ) : null}
-            </div>
-            {/* Conflict badge */}
-            {item.hasContradiction && (
+                {item.provenanceNote ? (
+                  <div
+                    style={{
+                      marginTop: 3,
+                      fontFamily: SHELL.MONO,
+                      fontSize: 9,
+                      color: SHELL.INK_MUTED,
+                      letterSpacing: '0.08em',
+                    }}
+                  >
+                    {item.provenanceNote}
+                  </div>
+                ) : null}
+              </div>
+              {/* Evidence quality chip */}
+              <EvidenceQualityChip
+                summary={itemQualitySummary}
+                grade={itemScore.grade}
+                reasons={itemScore.reasons}
+              />
+              {/* Failure mode warning chip — shown when a contradiction is
+                  recorded against this evidence item */}
+              {item.hasContradiction && (
+                <FailureModeWarningChip
+                  topLabel="contradiction detected"
+                  topConfidence={0.8}
+                  highCount={1}
+                />
+              )}
+              {/* Conflict badge */}
+              {item.hasContradiction && (
+                <span
+                  style={{
+                    background: SHELL.PEACH_BG,
+                    color: SHELL.PEACH_TEXT,
+                    fontFamily: SHELL.MONO,
+                    fontSize: 9,
+                    padding: '2px 7px',
+                    borderRadius: 4,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  ⚠ conflict
+                </span>
+              )}
+              {/* View arrow */}
               <span
                 style={{
-                  background: SHELL.PEACH_BG,
-                  color: SHELL.PEACH_TEXT,
                   fontFamily: SHELL.MONO,
-                  fontSize: 9,
-                  padding: '2px 7px',
-                  borderRadius: 4,
+                  fontSize: 10,
+                  color: SHELL.INK_MUTED,
                   whiteSpace: 'nowrap',
                 }}
               >
-                ⚠ conflict
+                View →
               </span>
-            )}
-            {/* View arrow */}
-            <span
-              style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 10,
-                color: SHELL.INK_MUTED,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              View →
-            </span>
-          </div>
-        ))}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
