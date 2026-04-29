@@ -97,22 +97,22 @@ describe("knowledge fabric", () => {
     expect(ledger.entries().map((entry) => entry.eventType)).toEqual(["observed", "indexed"]);
   });
 
-  it("dry-runs indexCorpus across 196 primitives without mutating stores", () => {
+  it("dry-runs indexCorpus across 197 primitives without mutating stores", () => {
     delete process.env.KNOWLEDGE_FABRIC_WRITES_ENABLED;
     const primitives = corpusToPrimitives();
     const result = indexCorpus();
 
-    expect(primitives).toHaveLength(196);
+    expect(primitives).toHaveLength(197);
     expect(result).toEqual(
       expect.objectContaining({
-        corpusSize: 196,
+        corpusSize: 197,
         dryRun: true,
         writesEnabled: false,
-        attemptedWrites: 980,
+        attemptedWrites: 985,
         writtenWrites: 0,
       }),
     );
-    expect(result.results).toHaveLength(980);
+    expect(result.results).toHaveLength(985);
     expect(result.fabric.relational.count()).toBe(0);
     expect(result.fabric.vector.count()).toBe(0);
     expect(result.fabric.graph.nodeCount()).toBe(0);
