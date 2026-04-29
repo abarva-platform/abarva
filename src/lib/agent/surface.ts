@@ -52,6 +52,15 @@ export function canonicalizeSurface(
       const programId = typeof ctx.programId === 'string' ? ctx.programId : null;
       return programId ? `/programs/${programId}` : surface;
     }
+    case 'intelligence': {
+      // PR-INT-B · Sentinel's surface. The bare list surface has no
+      // detail-level id; semantic and URL-shaped forms collapse onto
+      // the same single-segment path. Tools register for '/intelligence'
+      // (URL-shaped, matching the existing convention) so we canonicalize
+      // here. Detail routes (e.g. '/intelligence/patterns/<id>') will
+      // need their own case once added.
+      return '/intelligence';
+    }
     // Add cases here as detail-level surfaces gain canonical URL forms.
     // 'source-detail', 'evidence-detail', etc.
     default:

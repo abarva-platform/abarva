@@ -46,6 +46,11 @@ describe('canonicalizeSurface', () => {
     expect(canonicalizeSurface('source-detail', { programId: 'x' })).toBe('source-detail');
   });
 
+  it("'intelligence' canonicalizes to '/intelligence' (PR-INT-B)", () => {
+    expect(canonicalizeSurface('intelligence', {})).toBe('/intelligence');
+    expect(canonicalizeSurface('intelligence', undefined)).toBe('/intelligence');
+  });
+
   it('empty surface stays empty', () => {
     expect(canonicalizeSurface('', {})).toBe('');
   });
