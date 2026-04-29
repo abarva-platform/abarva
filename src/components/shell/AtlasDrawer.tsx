@@ -17,6 +17,7 @@ import { useRef, useEffect } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { useAgentStream } from '@/hooks/useAgentStream';
 import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
+import { AgentMarkdown } from '@/lib/agent/markdownRenderer';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -348,7 +349,6 @@ export function AtlasDrawer({
                   fontSize: 13,
                   color: 'rgba(250,247,241,0.88)',
                   lineHeight: 1.65,
-                  whiteSpace: 'pre-wrap',
                 }}
               >
                 {isStreaming && !response ? (
@@ -362,7 +362,10 @@ export function AtlasDrawer({
                   </span>
                 ) : (
                   <>
-                    {response}
+                    {/* Surface 2 PR1 — render through AgentMarkdown so
+                        Nexus's markdown (bold, tables, IDs, citation
+                        chips) renders properly instead of as raw text. */}
+                    <AgentMarkdown text={response} />
                     {isStreaming && (
                       <span style={{ opacity: 0.5, marginLeft: 1 }}>▊</span>
                     )}
@@ -570,11 +573,14 @@ function DrawerChatBubble({
             ? 'rgba(250,247,241,0.90)'
             : 'rgba(250,247,241,0.85)',
           lineHeight: 1.65,
-          whiteSpace: 'pre-wrap',
+          // User turns are plain text we typed; assistant turns may
+          // contain markdown / IDs / citation tags and go through
+          // AgentMarkdown below.
+          whiteSpace: isUser ? 'pre-wrap' : undefined,
           wordBreak: 'break-word',
         }}
       >
-        {text}
+        {isUser ? text : <AgentMarkdown text={text} />}
       </div>
     </div>
   );
