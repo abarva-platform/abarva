@@ -24,6 +24,7 @@ import { AMS_SOURCE_EVENT } from '@/lib/source/shell-source-fixture';
 import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
 import { buildEvidenceMapWithIngestions } from '@/lib/source/source-event-instance';
 import { AddEvidenceForm } from '@/components/source/AddEvidenceForm';
+import { BulkEvidenceImportButton } from '@/components/source/BulkEvidenceImportButton';
 import { CascadeImpactSection } from '@/components/_shared/CascadeImpactSection';
 import { PatternRecommendationChips } from '@/components/source/PatternRecommendationChips';
 import { PAT_SRC_AMS_001 } from '@/lib/intelligence/source-lifecycle-patterns';
@@ -232,6 +233,9 @@ export default async function SourceEventDetailPage({
         )}
         {matchedInstance && (
           <div style={{ marginTop: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+              <BulkEvidenceImportButton instanceId={matchedInstance.id} />
+            </div>
             <AddEvidenceForm
               instanceId={matchedInstance.id}
               currentStage={matchedInstance.currentStage}

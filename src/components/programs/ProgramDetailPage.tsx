@@ -72,6 +72,7 @@ import { MissionListInteractive } from '@/components/_shared/MissionListInteract
 import { RecentMissionStates } from '@/components/_shared/RecentMissionStates';
 import { getMissionsForProgram } from '@/lib/agent/agent-mission-derived';
 import { AddProgramEvidenceForm } from '@/components/programs/AddProgramEvidenceForm';
+import { BulkEvidenceImportButton } from '@/components/programs/BulkEvidenceImportButton';
 import { CascadeImpactSection } from '@/components/_shared/CascadeImpactSection';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -4098,6 +4099,9 @@ export function ProgramDetailPage({
                 gates flip on next render via buildProgramEvidenceMapWithIngestions. */}
             {evidenceIngestionInfo && (
               <div style={{ marginTop: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+                  <BulkEvidenceImportButton instanceId={evidenceIngestionInfo.instanceId} />
+                </div>
                 <AddProgramEvidenceForm
                   instanceId={evidenceIngestionInfo.instanceId}
                   currentPhase={evidenceIngestionInfo.currentPhase}
