@@ -99,7 +99,7 @@ async function applyWaiver(criterionId: string): Promise<void> {
     instanceId: AMS_EVENT_ID,
     reason: 'Demo scenario preset',
   });
-  const req = new Request('http://localhost/api/reasoning/gate-waiver', {
+  const req = new Request('https://internal.abarva.invalid/api/reasoning/gate-waiver', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body,
