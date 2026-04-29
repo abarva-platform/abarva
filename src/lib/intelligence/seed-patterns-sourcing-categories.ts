@@ -2458,6 +2458,469 @@ Vendor claim: we have the connector. Detection: test required objects, sync mode
 
 The common failure is ranking vendors by connector count rather than production-grade connector behavior. The second is ignoring how pricing meters scale with workload. The third is forgetting that managed SaaS may reduce connector maintenance while open-source or cloud-native tools can shift cost into people, infrastructure, and monitoring.`,
   },
+  {
+    id: 'PAT-SRC-CAT-REV-001',
+    slug: 'revenue-intelligence-platform-sourcing',
+    title: 'Revenue Intelligence Platform Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Revenue intelligence sourcing should test whether forecast, activity, call, email, meeting, CRM, and pipeline signals change the revenue operating cadence, not whether a vendor can produce impressive executive dashboards.',
+    applicability:
+      'Apply when sourcing revenue intelligence, RevOps, forecasting, pipeline inspection, deal-risk scoring, activity capture, conversation intelligence, or revenue orchestration platforms around Salesforce, HubSpot, Dynamics, or adjacent CRM estates.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.79,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.gartner.com/reviews/market/revenue-intelligence',
+      'https://www.gartner.com/en/documents/5579027',
+      'https://www.forrester.com/report/the-forrester-wave-tm-revenue-orchestration-platforms-for-b2b-q3-2024/RES181226',
+      'https://www.salesforce.com/sales/revenue-intelligence/',
+      'https://www.gong.io/revenue-intelligence',
+      'https://help.gong.io/docs/explainer-about-deal-likelihood-scores',
+      'https://support.outreach.io/support/solutions/articles/159000425531',
+      'https://www.clari.com/pricing/',
+      'https://www.sec.gov/Archives/edgar/data/1794515/000179451525000075/zoominfo10k2024printvf.pdf',
+    ],
+    regulatoryChips: ['GDPR-if-person-data', 'CCPA-if-California-personal-information', 'recording-consent-review', 'SOC-2-review'],
+    relatedPatternIds: ['PAT-SRC-CAT-CRM-001', 'PAT-SRC-CAT-BI-001', 'PAT-SRC-CAT-COMM-002'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'customer_facing',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Clari',
+        tier: 'enterprise',
+        positioning: 'Revenue platform candidate associated with forecasting, pipeline inspection, mutual action, revenue cadence, and RevOps operating workflows.',
+        cautions: ['Public pricing posture is quote-led; value claims require buyer adoption and forecast-process proof.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Clari Pricing', url: 'https://www.clari.com/pricing/', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'Gong',
+        tier: 'enterprise',
+        positioning: 'Revenue intelligence and conversation intelligence candidate using calls, emails, CRM activity, deal signals, and coaching workflows.',
+        cautions: ['Call and email capture creates privacy, consent, security, retention, and adoption scrutiny.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Gong Revenue Intelligence', url: 'https://www.gong.io/revenue-intelligence', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'Salesforce Revenue Intelligence and Outreach',
+        tier: 'enterprise',
+        positioning: 'CRM-native and sales-execution candidates when the buyer wants pipeline, forecast, and seller workflow closer to the core sales stack.',
+        cautions: ['Native adjacency does not prove forecasting discipline, seller adoption, or objective deal-risk scoring.'],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'Revenue intelligence quote-led commercial posture',
+        model: 'subscription',
+        metric: 'Seller, manager, RevOps, forecasting, conversation, AI, integration, support, and services scope',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Clari Pricing', url: 'https://www.clari.com/pricing/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Salesforce Revenue Intelligence', url: 'https://www.salesforce.com/sales/revenue-intelligence/', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Negotiated seat tiers, bundled modules, implementation services, renewal terms, and forecast-value evidence require buyer quotes or AbarVa benchmarks' },
+        ],
+        confidence: 0.56,
+        notes: 'Use public pages to identify packaging posture only. Do not infer per-seat price, discount, ROI, or payback without proposal evidence.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Communication capture and privacy controls',
+        buyerPosition: 'Define email, calendar, meeting, call, transcript, recording, buyer-contact, retention, deletion, consent, subprocessor, and support-access controls.',
+      },
+      {
+        clauseArea: 'CRM integration and data-use boundary',
+        buyerPosition: 'Require exact CRM objects, fields, writeback behavior, model-training posture, AI-output logging, and admin/audit evidence before award.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Forecast cadence proof',
+        whenToUse: 'Use when vendors claim better forecast accuracy or revenue predictability.',
+        buyerAsk: 'Run scripted forecast-call, slipped-deal, manager-inspection, and commit-change workflows using buyer CRM fields and anonymized activity data.',
+      },
+      {
+        lever: 'Seat and module segmentation',
+        whenToUse: 'Use when proposals blend reps, managers, executives, RevOps, conversation intelligence, forecasting, and AI modules.',
+        buyerAsk: 'Separate required users, read-only users, admin users, call-capture users, forecasting users, AI features, integrations, and services in the price schedule.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'revintel-crm-hygiene-dependency',
+        label: 'CRM hygiene dependency',
+        severity: 'high',
+        detectionSignals: ['The model relies on opportunity stages, close dates, owners, amounts, activities, or fields the buyer does not maintain consistently.'],
+        mitigations: ['Require pre-award data-quality assessment and post-award operating cadence owners'],
+      },
+      {
+        id: 'revintel-surveillance-backlash',
+        label: 'Seller surveillance backlash',
+        severity: 'medium',
+        detectionSignals: ['Reps perceive activity capture, call analysis, or coaching scores as punitive rather than operationally useful.'],
+        mitigations: ['Define change-management, consent, manager enablement, and acceptable-use rules before rollout'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Review regulated communications capture, supervision, retention, data residency, and model-output auditability.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Avoid PHI capture in calls, emails, CRM notes, transcripts, or AI summaries unless privacy counsel approves the boundary.',
+      },
+      {
+        industry: 'telecommunications',
+        modifier: 'Test enterprise account hierarchies, channel partner motion, renewal/expansion workflows, and long-cycle forecasting cadence.',
+      },
+    ],
+    body: `## Summary
+Revenue intelligence sourcing sits between CRM, sales management, sales engagement, conversation intelligence, forecasting, and BI. The category promises to make pipeline, commit calls, deal risk, seller activity, buyer engagement, and revenue cadence more inspectable than standard CRM reporting. That promise is credible only when the buyer can prove the platform changes management behavior, not merely when it produces attractive dashboards.
+
+## When to apply
+Use this pattern when a B2B sales organization has complex pipeline, board-level forecast pressure, subjective manager calls, weak CRM hygiene, fragmented call and email signals, high seller headcount, account-based motions, or recurring slipped deals. It applies to Clari, Gong, Salesforce Revenue Intelligence, Outreach forecasting, revenue orchestration platforms, and adjacent RevOps tools. Do not use it as the primary pattern for core CRM, generic BI, CPQ, billing, marketing attribution, or customer success unless forecast, pipeline, or revenue execution is the core buying job.
+
+## Category boundary
+In scope: pipeline inspection, forecast categories, commit and best-case movement, deal health, activity capture, call/email/calendar signals, conversation intelligence, next-step guidance, manager coaching, RevOps analytics, CRM writeback, account health, executive forecasting, AI scoring, and revenue-cadence workflows. Out of scope: pure sales engagement sequences, contact data, CRM replacement, finance revenue recognition, quote-to-cash, marketing attribution, and generic dashboards that do not affect seller or manager behavior.
+
+## Lifecycle and gates
+The scope gate should identify the forecast owner, CRM source of truth, sales stages, required fields, data-quality gaps, capture sources, privacy boundaries, buyer-consent expectations, and manager operating cadence. The RFP gate should require vendors to map how their signals are generated, how recommendations are explained, which CRM objects are read or written, and how activity capture works. The proof gate should run scripted workflows: slipped enterprise deal, stale opportunity, forecast downgrade, missing economic buyer, manager inspection, renewal expansion, and executive forecast rollup. The BAFO gate should normalize seller seats, manager seats, RevOps/admin seats, read-only executive users, conversation modules, forecasting modules, AI features, integrations, support, implementation, training, and renewal protections.
+
+## Evaluation rubric
+Weight CRM and activity-data fit around 20 percent, forecast and pipeline workflow around 25 percent, manager and seller adoption around 20 percent, privacy/security/compliance around 15 percent, commercial clarity around 10 percent, and AI explainability/exit risk around 10 percent. Raise privacy weight when email, calendar, meeting recordings, or transcripts are captured. Raise adoption weight when the sales culture already resists CRM hygiene or manager inspection.
+
+## Pricing and contract notes
+Public pages and analyst summaries support category framing but not enterprise net economics. Clari's public pricing page is tailored/quote-led. Salesforce and Gong public materials describe revenue intelligence capabilities. Outreach public support content describes forecasting and pipeline management concepts. None of those sources prove a buyer's negotiated price, discount, implementation cost, payback, forecast-accuracy lift, or adoption rate. Those fields remain founder-data-gap unless AbarVa has buyer proposals, invoices, usage exports, or approved benchmarks.
+
+Contracting should focus on communication capture, consent, retention, deletion, data export, CRM writeback, support access, model-training restrictions, subprocessors, audit logs, incident response, and renewal protections. If calls or emails may include regulated data, legal review is mandatory before the vendor can be treated as low-risk.
+
+## Contradictions and failure modes
+Vendor claim: AI predicts revenue. Detection: require explainability, input-field inventory, historical backtest method, exception workflow, and buyer-specific validation. Vendor claim: reps will adopt it. Detection: test manager cadence, rep workflow, mobile/email integration, coaching usage, and CRM writeback. Vendor claim: it fixes forecast accuracy. Detection: separate tool capability from operating discipline, pipeline definitions, data hygiene, and leadership behavior.
+
+The common failure is buying an overlay on dirty CRM data and then blaming the tool when forecasts remain subjective. The second is treating surveillance-like activity capture as a neutral productivity feature. The third is measuring success by dashboards published instead of decisions changed: earlier deal intervention, cleaner forecast calls, fewer stale opportunities, and clearer commit accountability.`,
+  },
+  {
+    id: 'PAT-SRC-CAT-BI-001',
+    slug: 'governed-business-intelligence-platform-sourcing',
+    title: 'Governed Business Intelligence Platform Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'BI sourcing should shift the competition from dashboard aesthetics to governed metrics, adoption economics, semantic control, embedded analytics rights, and downstream compute exposure.',
+    applicability:
+      'Apply when sourcing business intelligence, analytics, dashboarding, semantic-layer, embedded analytics, or self-service analytics platforms such as Power BI, Tableau, Looker, Sigma, and ThoughtSpot.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.82,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.gartner.com/reviews/market/analytics-business-intelligence-platforms',
+      'https://www.microsoft.com/en/power-platform/products/power-bi/pricing',
+      'https://www.tableau.com/pricing',
+      'https://docs.cloud.google.com/looker/docs/looker-core-overview',
+      'https://www.thoughtspot.com/pricing',
+      'https://help.sigmacomputing.com/docs/about-sigma',
+      'https://www.sigmacomputing.com/product/t-architecture',
+    ],
+    regulatoryChips: ['GDPR-if-person-data', 'HIPAA-if-PHI', 'SOX-if-financial-reporting', 'SOC-2-review'],
+    relatedPatternIds: ['PAT-SRC-CAT-CDW-001', 'PAT-SRC-CAT-FAB-001', 'PAT-SRC-CAT-ETL-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'data_analytics',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Microsoft Power BI and Fabric',
+        tier: 'enterprise',
+        positioning: 'BI and analytics candidate strongest where Microsoft 365, Azure, Fabric, Entra, and enterprise licensing alignment matter.',
+        cautions: ['Per-user and capacity economics, Fabric interactions, and viewer licensing must be modeled together.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Power BI Pricing', url: 'https://www.microsoft.com/en/power-platform/products/power-bi/pricing', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'Tableau',
+        tier: 'enterprise',
+        positioning: 'Visual analytics candidate with Cloud, Server, role-based licenses, enterprise editions, and Tableau Next/agentic analytics positioning.',
+        cautions: ['Creator, Explorer, Viewer, Server, Tableau+, Data Cloud, and agentic analytics packaging must be normalized.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Tableau Pricing', url: 'https://www.tableau.com/pricing', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'Looker, Sigma, and ThoughtSpot',
+        tier: 'specialist',
+        positioning: 'Governed semantic, warehouse-native, embedded, and search/AI analytics candidates where self-service and data-platform alignment drive the event.',
+        cautions: ['Warehouse compute, semantic ownership, embedded rights, and custom enterprise pricing can dominate the headline license comparison.'],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'BI public pricing posture and packaging only',
+        model: 'hybrid',
+        metric: 'Role seats, capacity, embedded analytics, semantic layer, AI features, support, training, non-production instances, and data-platform compute',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Power BI Pricing', url: 'https://www.microsoft.com/en/power-platform/products/power-bi/pricing', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Tableau Pricing', url: 'https://www.tableau.com/pricing', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'ThoughtSpot Pricing', url: 'https://www.thoughtspot.com/pricing', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Negotiated enterprise price, embedded external-user economics, warehouse compute, implementation cost, and renewal uplift require buyer evidence' },
+        ],
+        confidence: 0.64,
+        notes: 'Public pages identify licensing constructs, not buyer-specific TCO or value.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Embedded analytics and external users',
+        buyerPosition: 'Define internal versus external users, white-label rights, SSO, tenant isolation, API limits, caching, export, and customer-facing SLA boundaries.',
+      },
+      {
+        clauseArea: 'Governed metrics and data access',
+        buyerPosition: 'Require semantic definitions, lineage, row-level security, audit logs, data export, workspace ownership, and content portability commitments.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Usage telemetry normalization',
+        whenToUse: 'Use during renewal or consolidation when seat sprawl, dormant dashboards, or duplicated workspaces are visible.',
+        buyerAsk: 'Provide usage by viewer, creator, admin, workspace, dashboard, query, embedded app, and business owner before BAFO.',
+      },
+      {
+        lever: 'Semantic-layer proof',
+        whenToUse: 'Use when vendors claim trusted self-service or AI analytics.',
+        buyerAsk: 'Prove how governed definitions, permissions, row-level rules, lineage, and correction workflows survive natural-language and self-service use.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'bi-dashboard-sprawl',
+        label: 'Dashboard sprawl without metric governance',
+        severity: 'high',
+        detectionSignals: ['Teams publish duplicate dashboards for the same metric and cannot identify authoritative business definitions.'],
+        mitigations: ['Require governed metric owner, certified content workflow, and semantic-layer proof before award'],
+      },
+      {
+        id: 'bi-compute-cost-blindspot',
+        label: 'Downstream compute cost blind spot',
+        severity: 'medium',
+        detectionSignals: ['Tool evaluation ignores warehouse, Fabric, embedded, refresh, cache, or query costs triggered by BI usage.'],
+        mitigations: ['Model dashboard/query workloads against data-platform cost drivers before BAFO'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Stress certified metrics, audit trails, entitlement reviews, SOX-adjacent reporting controls, and regulated-data access.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Review PHI visibility, minimum necessary access, row-level rules, de-identification, audit logs, and BAA posture.',
+      },
+      {
+        industry: 'retail_cpg',
+        modifier: 'Model high-volume store, SKU, promotion, loyalty, inventory, and supplier analytics with freshness and external sharing constraints.',
+      },
+    ],
+    body: `## Summary
+Business intelligence sourcing should not be a beauty contest among dashboards. A BI platform becomes the decision layer for finance, sales, operations, product, supply chain, customer, and executive reporting. The hard problem is not whether a chart can be made; it is whether business teams can trust the metric, understand the lineage, access the right slice, avoid duplicate definitions, and act quickly without overwhelming analysts or exploding compute cost.
+
+## When to apply
+Use this pattern when sourcing or renewing BI, analytics, dashboarding, governed self-service, semantic-layer, embedded analytics, or AI analytics platforms. It fits Power BI, Tableau, Looker, Sigma, ThoughtSpot, and adjacent tools. Apply it for dashboard consolidation, data-platform migration, Microsoft/Google/Salesforce/Snowflake/Databricks ecosystem standardization, embedded customer analytics, finance reporting control, or AI/natural-language analytics decisions. Do not use it for pure warehouse, ETL, MDM, data catalog, spreadsheet automation, or reporting services unless the platform decision is BI-led.
+
+## Category boundary
+In scope: dashboards, reports, semantic models, certified metrics, governed self-service, row-level security, sharing, scheduling, data refresh, embedded analytics, APIs, admin controls, audit logs, natural-language analytics, AI summaries, usage telemetry, training, support, and content migration. Out of scope: raw data storage, pipeline orchestration, master data, full data governance, and custom analytics services unless included in the BI award.
+
+## Lifecycle and gates
+The scope gate should identify business personas, viewer/creator/admin mix, authoritative metrics, embedded use cases, regulated fields, data sources, refresh latency, current dashboard inventory, and data-platform dependencies. The RFP gate should require vendors to map licensing and capacity constructs to those personas and workloads. The proof gate should test one governed executive metric, one ad hoc self-service question, one row-level-security scenario, one stale-dashboard cleanup scenario, one embedded analytics scenario if relevant, and one AI/natural-language question with correction workflow. The BAFO gate should normalize role seats, capacity, embedded/external users, non-production instances, premium support, training, migration, API limits, AI features, warehouse or Fabric compute, and renewal protections.
+
+## Evaluation rubric
+Weight governed metric model around 25 percent, business-user adoption around 20 percent, data-platform fit around 15 percent, security and auditability around 15 percent, commercial predictability around 15 percent, and embedded/AI/exit risk around 10 percent. Increase audit and metric-control weight for finance, insurance, healthcare, and regulated reporting. Increase embedded economics weight when analytics are customer-facing.
+
+## Pricing and contract notes
+Public pricing visibility varies by vendor and deployment model. Microsoft publishes Power BI and Fabric pricing constructs. Tableau publishes role and edition constructs for Cloud, Server, and Tableau Next, with some bundles requiring sales contact. Google Looker public documentation supports edition, hosting, API, semantic, and embedding concepts, but enterprise pricing often requires engagement. ThoughtSpot publishes plan constructs. Sigma public materials emphasize live warehouse analytics and inherited governance, while enterprise commercial terms require vendor engagement. None of these pages prove buyer-specific discounts, renewal uplift, migration effort, embedded user economics, or data-platform compute cost.
+
+Contracting should define user categories, embedded rights, external-user restrictions, audit logs, row-level security, SSO/SCIM, tenant isolation, data export, content portability, service levels, support response, training, AI data use, and renewal protections. For warehouse-native tools, require cost observability and query controls so business adoption does not create unbounded downstream spend.
+
+## Contradictions and failure modes
+Vendor claim: self-service analytics reduces analyst burden. Detection: test semantic definitions, permissioning, certified content, correction workflow, and actual user personas. Vendor claim: AI answers business questions. Detection: test governed metrics, row-level access, hallucination controls, source traceability, and escalation to analysts. Vendor claim: the license is inexpensive. Detection: model role mix, capacity, embedded users, support, migration, data-platform compute, and unused-seat cleanup.
+
+The common failure is replacing dashboard sprawl with a new dashboard factory. The second is buying AI analytics before the business agrees on metric definitions. The third is comparing per-seat list prices while ignoring capacity, embedded rights, query cost, support, training, and content migration.`,
+  },
+  {
+    id: 'PAT-SRC-CAT-LLM-001',
+    slug: 'enterprise-llm-model-access-sourcing',
+    title: 'Enterprise LLM and Generative AI Model Access Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Enterprise LLM sourcing should create a governed model-access portfolio with cost controls, data boundaries, routing options, and deprecation resilience rather than selecting a single model from a benchmark.',
+    applicability:
+      'Apply when sourcing hosted LLM APIs, model gateways, hyperscaler model access, provisioned throughput, batch inference, prompt caching, tool-use add-ons, data residency, retention controls, or enterprise generative AI platform access.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.78,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://openai.com/api/pricing/',
+      'https://openai.com/business-data/',
+      'https://platform.claude.com/docs/en/about-claude/pricing',
+      'https://platform.claude.com/docs/en/build-with-claude/api-and-data-retention',
+      'https://azure.microsoft.com/en-us/pricing/details/azure-openai/',
+      'https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/deployment-types',
+      'https://learn.microsoft.com/en-us/azure/foundry/responsible-ai/openai/data-privacy',
+      'https://aws.amazon.com/bedrock/pricing/',
+      'https://aws.amazon.com/bedrock/security-privacy-responsible-ai/',
+      'https://cloud.google.com/gemini-enterprise-agent-platform/generative-ai/pricing',
+      'https://services.google.com/fh/files/misc/ociso-ai-trust-paper-v2.pdf',
+    ],
+    regulatoryChips: ['GDPR-if-person-data', 'HIPAA-if-PHI', 'BAA-if-required', 'DORA-if-regulated-financial-entity', 'EU-AI-Act-review'],
+    relatedPatternIds: ['PAT-SRC-CAT-FAB-001', 'PAT-SRC-CAT-ETL-001', 'PAT-SRC-CAT-BI-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'ai_ml',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'OpenAI API and enterprise offerings',
+        tier: 'enterprise',
+        positioning: 'Direct model API and enterprise model-access candidate with published API pricing, processing modes, tool charges, data-residency, and reserved-capacity offerings.',
+        cautions: ['Pricing and model availability are volatile; contract review must verify retention, regional processing, rate limits, and enterprise terms at award time.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'OpenAI API Pricing', url: 'https://openai.com/api/pricing/', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'Anthropic Claude API',
+        tier: 'enterprise',
+        positioning: 'Direct model API candidate with public model pricing, prompt caching, batch, data-retention, and third-party platform guidance.',
+        cautions: ['Do not assume the same commercial, residency, or feature posture across direct API, AWS, Google, or Microsoft channels.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Anthropic Claude API Pricing', url: 'https://platform.claude.com/docs/en/about-claude/pricing', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'Azure OpenAI, AWS Bedrock, and Google Vertex/Gemini',
+        tier: 'enterprise',
+        positioning: 'Hyperscaler model-access channels where cloud commitments, IAM, networking, region controls, marketplace billing, and multi-model access may matter as much as model choice.',
+        cautions: ['Same-family models can have different availability, price, quota, deployment type, latency, and data-processing posture by channel and region.'],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'LLM official pricing constructs only',
+        model: 'usage-based',
+        metric: 'Input tokens, output tokens, cached tokens, batch/flex jobs, tool calls, provisioned throughput, region/data zone premium, and enterprise reserved capacity',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'OpenAI API Pricing', url: 'https://openai.com/api/pricing/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Anthropic Claude API Pricing', url: 'https://platform.claude.com/docs/en/about-claude/pricing', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'AWS Bedrock Pricing', url: 'https://aws.amazon.com/bedrock/pricing/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Google Gemini Enterprise Agent Platform Pricing', url: 'https://cloud.google.com/gemini-enterprise-agent-platform/generative-ai/pricing', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Negotiated discounts, committed cloud spend treatment, quota guarantees, private SLAs, and legal acceptance require buyer evidence' },
+        ],
+        confidence: 0.58,
+        notes: 'Do not persist exact volatile token prices in this category pattern. Use official pages at sourcing time and snapshot the date in the event record.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Prompt, completion, tool, and training-data controls',
+        buyerPosition: 'Define retention, logging, abuse monitoring, model-training opt-out/default, fine-tuning data handling, deletion, support access, and use of prompts or outputs.',
+      },
+      {
+        clauseArea: 'Model change and continuity',
+        buyerPosition: 'Require model/version notice, deprecation windows, fallback routing rights, quota transparency, rate-limit escalation, and migration assistance.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Workload-shape cost model',
+        whenToUse: 'Use before BAFO when token spend, long context, agent loops, tool calls, or output-heavy workloads can change economics.',
+        buyerAsk: 'Model representative prompts, outputs, cache hit assumptions, batch eligibility, tool calls, region settings, and retry behavior against each provider channel.',
+      },
+      {
+        lever: 'Direct versus hyperscaler channel comparison',
+        whenToUse: 'Use when teams can buy direct or through Azure, AWS, Google, marketplace, or committed cloud spend.',
+        buyerAsk: 'Compare model availability, terms, data processing, region, quota, IAM/networking, billing, discounts, support, and fallback design by channel.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'llm-variable-spend-loop',
+        label: 'Variable token and tool-call spend loop',
+        severity: 'high',
+        detectionSignals: ['Agentic workflows, retries, long context, web search, code execution, or multimodal inputs are not capped or observed.'],
+        mitigations: ['Require budgets, per-use-case quotas, telemetry, kill switches, prompt caching assumptions, and workload tests before production expansion'],
+      },
+      {
+        id: 'llm-data-boundary-confusion',
+        label: 'Data boundary confusion',
+        severity: 'critical',
+        detectionSignals: ['Team treats data residency, retention, training use, logging, abuse monitoring, and support access as the same control.'],
+        mitigations: ['Require legal/security review of each deployment type and feature class before award'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Stress outsourcing review, audit logs, model risk governance, data location, critical service resilience, and exit/fallback rights.',
+        regulatoryRefs: ['DORA where applicable to EU financial entities'],
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Review PHI, BAA availability, retention, logging, minimum necessary data, human review, and clinical/non-clinical use boundaries.',
+      },
+      {
+        industry: 'public_sector',
+        modifier: 'Review government cloud eligibility, residency, procurement channel, accessibility, records, audit, and sensitive-data restrictions.',
+      },
+    ],
+    body: `## Summary
+Enterprise LLM sourcing is not a single-vendor benchmark exercise. It is a governed access decision covering direct APIs, hyperscaler model gateways, model versions, token meters, caching, batch processing, provisioned throughput, tool calls, data retention, regional processing, security controls, and fallback design. The right sourcing question is: which model-access portfolio lets the buyer deploy approved use cases safely, predictably, and reversibly?
+
+## When to apply
+Use this pattern when pilots are moving into production, token spend is becoming material, teams need approved data handling, product groups want model APIs, engineering wants multi-model routing, legal asks about retention or training use, or latency/quota limits require reserved capacity. It applies to OpenAI, Anthropic, Azure OpenAI and Microsoft Foundry, AWS Bedrock, Google Vertex AI and Gemini Enterprise Agent Platform, and similar hosted model-access channels. Do not use it for generic chatbot seats, internal GPU procurement, fully self-hosted open-source models, or standalone model-training services.
+
+## Category boundary
+In scope: model APIs, model gateways, direct vendor contracts, marketplace/hyperscaler access, pay-as-you-go tokens, batch/flex processing, prompt caching, long context, embeddings, tool charges, web/search/code tools, provisioned throughput, reserved capacity, region/data-zone settings, logging, retention, training-data controls, encryption, key management, audit, rate limits, quotas, model deprecation, and fallback routing. Out of scope: business app copilot subscriptions, consumer plans, custom GPU clusters, and speculative provider economics.
+
+## Lifecycle and gates
+The scope gate should inventory use cases, data classes, prompt/output sensitivity, required models, latency, volume, regions, fallback needs, budget owners, and prohibited uses. The RFP gate should require official pricing-page snapshots, data-processing summaries, security attestations, retention defaults, model/version availability, quota posture, and deployment-type options. The proof gate should run representative workloads: short prompt, long context, output-heavy task, batchable task, retrieval/tool workflow, sensitive-data redaction test, cache scenario, and failure/fallback path. The BAFO gate should normalize token inputs and outputs, cache reads/writes, batch discounts, tool calls, provisioned throughput, regional premiums, support, enterprise terms, cloud-commit treatment, and legal acceptance.
+
+## Evaluation rubric
+Weight data protection and legal posture around 25 percent, workload cost predictability around 20 percent, model quality on buyer tasks around 20 percent, reliability/quota/latency around 15 percent, integration and operational control around 10 percent, and exit/fallback resilience around 10 percent. Increase legal weight for healthcare, financial services, public sector, minors' data, regulated communications, or sensitive employee/customer data.
+
+## Pricing and contract notes
+Official pricing pages are required at sourcing time because model names, token rates, caching rules, batch discounts, tool charges, regional constructs, and provisioned-capacity options change. OpenAI publishes API pricing, batch, tool, and enterprise offering references. Anthropic publishes Claude model pricing, cache, batch, and third-party platform references. Azure OpenAI pricing and Microsoft Foundry documentation describe pay-as-you-go, provisioned deployment, batch, global/data-zone/regional options, and deployment-type differences. AWS Bedrock publishes model-provider pricing and provisioned options. Google publishes Gemini/Vertex-style pricing and provisioned throughput concepts. The corpus should preserve the constructs and require a dated event snapshot, not hard-code volatile prices as durable benchmarks.
+
+Contracting should define prompt and completion retention, logging, abuse monitoring, training-use defaults, fine-tuning data, deletion, support access, encryption, key management, subprocessors, data location, model/version change notice, quota escalation, deprecation notice, fallback rights, and incident response. Preview features, agents, tools, and connectors may have different terms; they require explicit review.
+
+## Contradictions and failure modes
+Vendor claim: the same model is available through multiple channels. Detection: compare price, region, quota, latency, feature support, retention, logging, and terms by channel. Vendor claim: data is protected. Detection: separate residency, processing location, retention, training use, abuse monitoring, support access, and fine-tuning data. Vendor claim: the workload is inexpensive. Detection: model prompts, outputs, retries, agent loops, tool calls, cache misses, batch eligibility, and observability.
+
+The common failure is approving AI experimentation without cost, data, and fallback controls, then discovering that production usage behaves differently. The second is treating public benchmarks as procurement proof. The third is buying one provider path and losing leverage when model deprecation, quota, regional requirements, or application quality shifts.`,
+  },
 ];
 
 export const SOURCING_CATEGORY_PATTERN_COUNT = SOURCING_CATEGORY_PATTERNS.length;
