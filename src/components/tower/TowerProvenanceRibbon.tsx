@@ -30,6 +30,7 @@ import { isLifecyclePatternId } from '@/lib/reasoning/lifecycle-pattern-lookup';
 import { PatternDoctrineLink } from '@/components/source/PatternDoctrineLink';
 import { SynthesisFeedbackWidget } from '@/components/reasoning/SynthesisFeedbackWidget';
 import { CopySummaryButton } from '@/components/reasoning/CopySummaryButton';
+import { SynthesisConfidenceBar } from '@/components/reasoning/SynthesisConfidenceBar';
 import { SHELL } from '@/lib/shell/shell-tokens';
 
 interface TowerProvenanceRibbonProps {
@@ -213,6 +214,9 @@ export function TowerProvenanceRibbon({ context, eventId }: TowerProvenanceRibbo
 
       <Divider />
       <CopySummaryButton text={context.stageGuidance} />
+
+      <Divider />
+      <SynthesisConfidenceBar context={context} />
     </aside>
   );
 }
