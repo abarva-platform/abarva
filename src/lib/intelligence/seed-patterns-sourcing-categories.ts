@@ -555,6 +555,494 @@ Vendor claim: the suite is unified. Detection: require an end-to-end workflow cr
 
 The highest-risk failure mode is treating payroll as just another module. The second is letting HR own the event without payroll, IT, finance, legal, security, works council, and frontline operations. The third is accepting generic AI assurances for hiring, performance, scheduling, or worker-management features without regulatory and bias-control review.`,
   },
+  {
+    id: 'PAT-SRC-CAT-ITSM-001',
+    slug: 'it-service-management-platform-sourcing',
+    title: 'IT Service Management Platform Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'ITSM sourcing should be treated as an operating-model and workflow-platform decision, not a help-desk tool buy; process depth, CMDB maturity, AI support, integration, security, and implementation burden must be proven together.',
+    applicability:
+      'Apply when sourcing, replacing, consolidating, or renegotiating ITSM, ESM, service desk, IT help desk, incident/problem/change, CMDB, asset, or AI service-agent platforms.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.80,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.servicenow.com/products/itsm/pricing.html',
+      'https://www.atlassian.com/collections/service/pricing',
+      'https://www.freshworks.com/freshservice/pricing/',
+      'https://www.helixops.ai/products/bmc-helix-itsm.html',
+      'https://www.ivanti.com/products/ivanti-neurons-itsm',
+      'https://www.manageengine.com/products/service-desk/pricing.html',
+      'https://www.iso.org/publication/PUB100441.html',
+      'https://www.servicenow.com/company/trust.html',
+      'https://www.atlassian.com/trust',
+    ],
+    regulatoryChips: ['ISO-IEC-20000', 'SOC-2-if-available', 'GDPR-if-EU-employee-data'],
+    relatedPatternIds: ['PAT-SRC-003', 'PAT-SRC-CAT-ERP-001', 'PAT-SRC-CAT-HCM-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'enterprise_saas',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'ServiceNow IT Service Management',
+        tier: 'enterprise',
+        positioning: 'Enterprise workflow platform candidate for ITSM, service catalog, incident, problem, change, CMDB, virtual agent, analytics, and AI-enabled operations.',
+        strengths: ['Enterprise workflow breadth', 'Service management ecosystem', 'Public product packaging visibility'],
+        cautions: ['Custom quote and add-on normalization required before commercial comparison'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'ServiceNow ITSM Pricing', url: 'https://www.servicenow.com/products/itsm/pricing.html', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'Atlassian Jira Service Management',
+        tier: 'enterprise',
+        positioning: 'Service management candidate strongest where Jira, Confluence, DevOps, incident, and collaboration workflows are strategic.',
+        strengths: ['Developer and collaboration adjacency', 'Public service collection pricing page', 'Knowledge and incident workflow ecosystem'],
+        cautions: ['Enterprise security, assets, AI, and premium support entitlements must be package-verified'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Atlassian Service Collection Pricing', url: 'https://www.atlassian.com/collections/service/pricing', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'Freshservice, BMC Helix ITSM, Ivanti Neurons for ITSM, and ManageEngine ServiceDesk Plus',
+        tier: 'mid-market',
+        positioning: 'Alternative suites for mid-market, enterprise, or IT operations contexts where ticketing, asset, change, service catalog, or AI-service features must be tested against scale and governance needs.',
+        strengths: ['Visible public product scope', 'Multiple deployment and package options'],
+        cautions: ['CMDB maturity, security posture, AI entitlements, and implementation partner fit vary by package and buyer scale'],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'ITSM public pricing and quote anchors',
+        model: 'subscription',
+        metric: 'Agent, technician, requester, asset, AI, support, or enterprise quote structure',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Atlassian Service Collection Pricing', url: 'https://www.atlassian.com/collections/service/pricing', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Freshservice Pricing', url: 'https://www.freshworks.com/freshservice/pricing/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'ManageEngine ServiceDesk Plus Pricing', url: 'https://www.manageengine.com/products/service-desk/pricing.html', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Enterprise net pricing, discount bands, implementation services, and AI usage pricing require buyer quote evidence' },
+        ],
+        confidence: 0.62,
+        notes: 'Use current vendor pricing pages as dated evidence only. Do not embed durable numeric pricing without event-time verification.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Service and support continuity',
+        buyerPosition: 'Define uptime, support response, major incident escalation, data backup, disaster recovery, export, and transition assistance obligations.',
+      },
+      {
+        clauseArea: 'Security and AI data handling',
+        buyerPosition: 'Require security attestations, DPA, subprocessor transparency, identity controls, audit logs, AI usage boundaries, and customer-data handling terms.',
+      },
+      {
+        clauseArea: 'Implementation acceptance',
+        buyerPosition: 'Tie acceptance to configured service catalog, incident/problem/change workflows, CMDB/asset scope, integrations, SLA reporting, and migration proof.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Agent and requester normalization',
+        whenToUse: 'Use when vendors price agents, technicians, requesters, assets, AI, support, and environments differently.',
+        buyerAsk: 'Provide a normalized commercial sheet for named agents, light agents, requesters, assets, AI usage, premium support, environments, and implementation services.',
+      },
+      {
+        lever: 'CMDB scope boundary',
+        whenToUse: 'Use when the business case assumes CMDB or asset-management maturity but ownership and data quality are unclear.',
+        buyerAsk: 'Separate base ITSM scope from CMDB discovery, relationship modeling, data cleansing, and ongoing ownership obligations.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'itsm-cmdb-overreach',
+        label: 'CMDB overreach',
+        severity: 'high',
+        detectionSignals: ['Vendor demo assumes clean configuration data, but buyer lacks owners, reconciliation rules, or discovery scope.'],
+        mitigations: ['Define CMDB scope and ownership before BAFO', 'Use phased implementation gates for assets and relationships'],
+      },
+      {
+        id: 'itsm-ai-deflection-overclaim',
+        label: 'AI deflection overclaim',
+        severity: 'medium',
+        detectionSignals: ['Vendor promises ticket reduction without buyer baselines, entitlement detail, data controls, or human escalation rules.'],
+        mitigations: ['Require usage limits, training/data posture, escalation design, and measured pilot criteria'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Raise audit, resilience, access-control, incident-evidence, and data-location requirements for regulated operations.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Stress clinical operations impact, PHI boundaries, device/asset dependencies, and critical incident escalation.',
+      },
+      {
+        industry: 'public_sector',
+        modifier: 'Add accessibility, procurement transparency, residency, records retention, and security attestation review.',
+      },
+    ],
+    body: `## Summary
+IT service management platforms manage the intake, workflow, resolution, governance, and reporting of IT services. The sourcing question is not which ticketing tool is cheapest. It is whether the platform can support the buyer's service operating model across incidents, service requests, problems, changes, assets, configuration data, knowledge, automation, AI assistance, and cross-functional service delivery.
+
+Public ISO material frames IT service management as a management system for services in changing environments and references integration with methods and frameworks such as Agile, Lean, DevOps, ITIL, COBIT, and ISO 27001. That makes ITSM sourcing especially sensitive to process fit and governance maturity. A buyer can select a well-known platform and still fail if service catalog ownership, CMDB scope, change controls, SLA data, and implementation responsibilities are unclear.
+
+## When to apply
+Use this pattern when sourcing, replacing, consolidating, or renegotiating ITSM, ESM, service desk, IT help desk, incident, problem, change, service catalog, asset, CMDB, IT operations workflow, or AI service-agent platforms. Do not use it as the primary pattern for endpoint management, observability-only platforms, MSP PSA tooling, IT outsourcing, or customer-support CRM unless ITSM process ownership is the core sourcing decision.
+
+## Category boundary
+In scope: incident management, service request management, problem management, change enablement, knowledge management, service catalog, asset management, CMDB, self-service portal, virtual agent or AI agent, SLA reporting, workflow automation, analytics, integrations, identity, security, implementation, migration, and support. Out of scope: endpoint-only management, monitoring-only tools, PSA tools for managed service providers, customer support case management, and outsourced service desk labor unless the platform contract bundles them.
+
+## Vendor landscape
+Enterprise workflow evaluations often include ServiceNow IT Service Management. Collaboration and DevOps-adjacent evaluations often include Atlassian Jira Service Management. Mid-market and enterprise alternatives can include Freshservice, BMC Helix ITSM, Ivanti Neurons for ITSM, and ManageEngine ServiceDesk Plus. Public vendor pages show different packaging around incident, request, change, problem, knowledge, assets, service catalog, CMDB, AI, analytics, and support. Treat those pages as scope evidence, not as proof that the quoted package includes every capability.
+
+## Lifecycle and gates
+The scope gate should collect ticket volume by type and priority, current agent count, requester population, service catalog inventory, SLA targets and actuals, asset and CMDB scope, integrations, identity requirements, data residency needs, and migration timeline. The market-scan gate should separate enterprise workflow breadth, DevOps integration, mid-market simplicity, and IT operations depth.
+
+The RFP gate should require demos for incident-to-problem flow, major incident process, service catalog creation, change risk workflow, CMDB relationship model, asset lifecycle, SLA breach reporting, AI self-service, Teams or Slack intake, monitoring integration, identity integration, audit logs, sandbox/release management, and export/exit capability. The BAFO gate should normalize agents, technicians, requesters, assets, AI conversations or resolutions, premium security, support tier, environments, marketplace apps, integrations, implementation services, and migration effort. The contract gate should close security, DPA, subprocessors, data residency, support response, incident notification, backup, DR, audit, AI data handling, export, and transition terms.
+
+## Evaluation rubric
+Weight process depth around 25 percent, CMDB and asset maturity around 15 percent, AI/self-service and knowledge around 15 percent, integration ecosystem around 15 percent, security/trust/compliance around 10 percent, implementation complexity around 10 percent, reporting/SLA controls around 5 percent, and commercial model around 5 percent. Increase security and audit weight for regulated environments. Increase integration and incident weight for DevOps-heavy or high-availability operations.
+
+## Pricing and contract notes
+Pricing must be normalized by agents, technicians, requesters, assets, nodes, AI conversations, premium security add-ons, sandboxes, non-production environments, implementation services, marketplace apps, integrations, support tier, and overages. Some vendors publish public pricing tiers; others require custom quotes. Do not embed durable numeric pricing in the corpus. Capture public pages as dated evidence and mark enterprise net pricing, discount bands, implementation partner cost, AI usage pricing, and renewal uplifts as founder-data-gap until verified.
+
+Contracting should protect operational continuity. Require service availability commitments, support response definitions, major incident escalation, data export, transition assistance, backup and disaster recovery, security attestations, identity controls, audit logs, data processing terms, AI data-handling restrictions, subprocessor transparency, and implementation acceptance criteria.
+
+## Contradictions and failure modes
+Vendor claim: AI will deflect tickets. Detection: require current ticket baselines, in-scope topics, usage entitlements, escalation paths, human review, training/data posture, and measured pilot criteria. Vendor claim: CMDB is included. Detection: require asset discovery scope, relationship model, data owners, reconciliation rules, and ongoing maintenance process. Vendor claim: ITIL or ISO alignment is enough. Detection: require buyer-specific process mapping, workflow evidence, and administrator operating model.
+
+The common failure is buying a service desk tool and discovering that the hard work was service operating-model design. The second failure is underestimating migration: workflows, request types, queues, automations, SLAs, knowledge articles, asset records, CMDB relationships, integrations, identity groups, reports, and historical tickets. The third failure is accepting low headline license price while excluding AI, assets, security, premium support, environments, or implementation effort from the comparison.`,
+  },
+  {
+    id: 'PAT-SRC-CAT-EPM-001',
+    slug: 'enterprise-performance-management-fpa-platform-sourcing',
+    title: 'Enterprise Performance Management and FP&A Platform Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'EPM and FP&A platform sourcing is finance operating-model transformation, not a software comparison; model complexity, integration burden, Excel dependency, consolidation scope, ownership capacity, and commercial terms must be evaluated together.',
+    applicability:
+      'Apply when sourcing or replacing planning, budgeting, forecasting, scenario modeling, consolidation, close, reporting, xP&A, or enterprise performance management software.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.80,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.gartner.com/reviews/market/financial-planning-software',
+      'https://www.workday.com/en-us/products/adaptive-planning/pricing.html',
+      'https://www.oracle.com/performance-management',
+      'https://www.anaplan.com/solutions/enterprise-management-platform-epm',
+      'https://www.onestream.com/platform/',
+      'https://www.sap.com/products/data-cloud/cloud-analytics/pricing.html',
+      'https://www.board.com/pricing',
+      'https://planful.com/official-planful-company-information/',
+      'https://www.prophix.com/platform-overview-2-3/',
+    ],
+    regulatoryChips: ['SOX-if-public-company', 'SOC-1-if-control-relevant', 'SOC-2-if-cloud-service', 'GDPR-if-EU-data'],
+    relatedPatternIds: ['PAT-SRC-CAT-ERP-001', 'PAT-SRC-003', 'PAT-SRC-010'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'enterprise_saas',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Anaplan',
+        tier: 'enterprise',
+        positioning: 'Connected planning platform candidate for finance, sales, supply chain, workforce, and scenario modeling use cases.',
+        strengths: ['Connected planning orientation', 'Scenario and model-building positioning'],
+        cautions: ['Finance ownership capacity and model administration burden must be tested'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Anaplan EPM', url: 'https://www.anaplan.com/solutions/enterprise-management-platform-epm', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'Workday Adaptive Planning',
+        tier: 'enterprise',
+        positioning: 'Planning platform candidate for budgeting, forecasting, what-if scenarios, and Workday ecosystem alignment.',
+        strengths: ['Planning workflow positioning', 'Public pricing page confirms quote-based pricing posture'],
+        cautions: ['Numeric pricing and implementation economics require quote evidence'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Workday Adaptive Planning Pricing', url: 'https://www.workday.com/en-us/products/adaptive-planning/pricing.html', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'Oracle Fusion Cloud EPM, OneStream, SAP Analytics Cloud Planning, Pigment, Planful, Board, Vena, and Prophix',
+        tier: 'enterprise',
+        positioning: 'Suite, unified-finance, connected-planning, Excel-native, and mid-market alternatives that should be segmented by use case rather than ranked generically.',
+        cautions: ['Vendor AI, consolidation, close, and pricing claims require event-time proof and contract exhibits'],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'EPM/FP&A quote-based commercial model',
+        model: 'hybrid',
+        metric: 'User roles, modules, models, entities, integrations, capacity, environments, support, AI, and services',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Workday Adaptive Planning Pricing', url: 'https://www.workday.com/en-us/products/adaptive-planning/pricing.html', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Board Pricing', url: 'https://www.board.com/pricing', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Numeric pricing, discount, implementation, and renewal benchmarks require current quote or buyer contract evidence' },
+        ],
+        confidence: 0.57,
+        notes: 'Most enterprise EPM pricing is quote-based or capacity/package-specific. Do not use third-party ranges without approval.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Financial model and data ownership',
+        buyerPosition: 'Require export rights for models, metadata, dimensions, hierarchies, scenarios, reports, audit logs, and source-data mappings.',
+      },
+      {
+        clauseArea: 'Security and audit controls',
+        buyerPosition: 'Require SSO, RBAC, audit trails, DPA, subprocessors, data residency, SOC evidence where relevant, and AI data-use terms.',
+      },
+      {
+        clauseArea: 'Implementation acceptance',
+        buyerPosition: 'Tie acceptance to configured planning models, reconciled actuals, integrations, workflow approvals, report packages, and administrator enablement.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Use-case phasing',
+        whenToUse: 'Use when vendor scope bundles corporate FP&A, workforce, revenue, supply chain, close, and consolidation before data readiness is proven.',
+        buyerAsk: 'Phase modules and fees by validated use case, integration readiness, and model-owner capacity.',
+      },
+      {
+        lever: 'Implementation partner accountability',
+        whenToUse: 'Use when platform success depends on model build, data integration, and finance process redesign.',
+        buyerAsk: 'Name SI responsibilities, acceptance criteria, defects, admin training, and remediation rights in the SOW.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'epm-model-admin-gap',
+        label: 'Finance model administration gap',
+        severity: 'high',
+        detectionSignals: ['Vendor assumes finance-owned model agility, but buyer lacks platform admins, data owners, or governance cadence.'],
+        mitigations: ['Require operating model and admin enablement plan before award'],
+      },
+      {
+        id: 'epm-integration-underestimate',
+        label: 'Integration and actuals reconciliation underestimate',
+        severity: 'high',
+        detectionSignals: ['ERP, GL, HRIS, CRM, warehouse, or consolidation feeds are not mapped to model dimensions and refresh cadence.'],
+        mitigations: ['Require source-system inventory, sample loads, reconciliation gates, and data-owner signoff'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'retail_cpg',
+        modifier: 'Stress store, channel, promo, SKU, labor, and demand-driver planning requirements.',
+      },
+      {
+        industry: 'manufacturing',
+        modifier: 'Raise product, plant, supply, cost, capacity, and scenario-model complexity.',
+      },
+      {
+        industry: 'financial_services',
+        modifier: 'Raise auditability, access control, regulatory reporting, model risk, and close/consolidation evidence.',
+      },
+    ],
+    body: `## Summary
+Enterprise performance management and FP&A platforms sit between finance process, enterprise data, and executive decision-making. The buyer is not simply selecting budget software. It is deciding how finance will collect assumptions, govern versions, model business drivers, integrate operational data, publish reporting, support scenario analysis, and accelerate decision cycles. Treating this as a feature checklist hides the operating-model work that determines whether the platform succeeds.
+
+Public category pages define financial planning software around planning, budgeting, forecasting, role-based security, cloud delivery, reporting, analysis, and user-driven models. That framing is useful because it forces the sourcing event to ask what finance will own after implementation. A flexible planning platform can create speed, but only if data ownership, model governance, integration cadence, and administrator capacity are real.
+
+## When to apply
+Use this pattern when sourcing or replacing planning, budgeting, forecasting, scenario modeling, consolidation, close, reporting, xP&A, or enterprise performance management software. Do not use it for pure ERP selection, BI-only reporting, spreadsheet cleanup without platform intent, or narrow departmental planning with no enterprise workflow, security, integration, or governance requirements.
+
+## Category boundary
+In scope: corporate budgeting, rolling forecast, driver-based planning, scenario modeling, workforce planning, revenue planning, opex and capex planning, management reporting, close and consolidation where included, workflow approvals, versioning, data integration, security, audit trails, AI-assisted forecasting or planning, implementation services, and support. Out of scope: ERP system of record, BI visualization alone, tax, treasury, and standalone data warehouse work unless they are part of the planning or consolidation operating model.
+
+## Vendor landscape
+Representative vendors include Anaplan, Workday Adaptive Planning, Oracle Fusion Cloud EPM, OneStream, SAP Analytics Cloud Planning, Pigment, Planful, Board, Vena, and Prophix. These vendors should not be treated as interchangeable. Some emphasize connected planning across functions. Some emphasize finance-owned planning. Some emphasize close and consolidation. Some emphasize Excel-native adoption. Some emphasize suite alignment with ERP or HCM. The sourcing team should state whether the priority is corporate FP&A modernization, connected planning, close/consolidation control, cross-functional xP&A, or adoption speed.
+
+## Lifecycle and gates
+The scope gate should document planning use cases, current model inventory, chart of accounts, entity hierarchy, cost centers, planning cycles, actuals sources, HR/workforce sources, revenue drivers, approval workflows, report packages, user roles, security requirements, and whether close or consolidation is in scope. If consolidation is included, require currency, intercompany, ownership, eliminations, journal, close-calendar, and audit requirements. If xP&A is included, require operational-driver definitions and accountable data owners outside finance.
+
+The RFP gate should separate software subscription, implementation, integrations, training, sandbox, support, premium support, AI add-ons, storage or capacity, and partner services. The demo gate should require scripted model-build and reporting scenarios using the buyer's actual planning logic, not generic dashboards. The BAFO gate should normalize pricing, implementation assumptions, service levels, support terms, renewal caps, data export, exit rights, and AI/data-use terms. The award gate should name the internal platform owner and implementation partner accountability model.
+
+## Evaluation rubric
+Weight functional fit around 25 percent, modeling and scalability around 15 percent, integration and data management around 15 percent, usability and finance ownership around 15 percent, security/audit/controls around 10 percent, implementation partner ecosystem around 10 percent, and commercial model and contract flexibility around 10 percent. Increase security and audit weight for public-company or regulated reporting. Increase integration weight for global operating models or complex ERP, HRIS, CRM, and warehouse dependencies.
+
+## Pricing and contract notes
+Most enterprise FP&A and EPM vendors do not publish simple numeric pricing. Public sources often show quote-based pricing, request-pricing workflows, or purchasing paths rather than reliable per-user enterprise rates. Numeric pricing fields should remain blank and marked founder-data-gap unless the buyer supplies quotes, current official price lists, or contract evidence. Commercial comparison should normalize user roles, modules, entities, environments, implementation services, integrations, storage or capacity, AI features, support tiers, and renewal escalation.
+
+Contracting should protect model and data portability. Require export rights for models, dimensions, hierarchies, metadata, scenarios, reports, audit logs, and source-data mappings. Require SSO, RBAC, audit trails, DPA, subprocessors, data residency, SOC evidence where relevant, AI data-use language, implementation acceptance, defect remediation, training, administrator enablement, and transition assistance.
+
+## Contradictions and failure modes
+Vendor claim: finance will own the model. Detection: require evidence that finance users can maintain dimensions, drivers, reports, workflows, and scenarios without constant SI dependency. Vendor claim: AI forecasting improves accuracy. Detection: require buyer-specific baselines, explainability, permissions inheritance, data lineage, and forecast-quality measurement. Vendor claim: connected planning is ready. Detection: require operational data owners, source-system mappings, refresh cadence, and reconciliation controls.
+
+The common failure is buying a powerful modeling platform without the finance ownership capacity to operate it. The second failure is underestimating integration and actuals reconciliation. The third failure is treating Excel coexistence as either inherently good or inherently bad instead of testing the buyer's operating model. The fourth failure is letting close/consolidation, planning, and BI requirements blur until the selected platform is asked to be everything without clear ownership.`,
+  },
+  {
+    id: 'PAT-SRC-CAT-CMS-001',
+    slug: 'cms-headless-content-platform-sourcing',
+    title: 'CMS and Headless Content Platform Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'CMS sourcing should be treated as a content operating-model decision, not just a publishing-platform selection; authoring, structured content, governance, accessibility, security, migration, and integration ownership determine the durable fit.',
+    applicability:
+      'Apply when sourcing a legacy CMS, WCM, DXP, headless CMS, hybrid-headless CMS, composable content platform, website publishing platform, or multi-channel content system.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.79,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.forrester.com/report/the-forrester-wave-tm-content-management-systems-q1-2025/RES182086',
+      'https://www.gartner.com/reviews/market/web-content-management',
+      'https://www.contentful.com/pricing/',
+      'https://www.contentful.com/composable-content/',
+      'https://www.sanity.io/pricing?product=service',
+      'https://www.storyblok.com/pricing/',
+      'https://strapi.io/pricing-cms',
+      'https://hygraph.com/pricing',
+      'https://www.w3.org/WAI/standards-guidelines/atag/',
+    ],
+    regulatoryChips: ['WCAG-context', 'ATAG', 'GDPR-if-personal-data', 'SOC-2-if-available'],
+    relatedPatternIds: ['PAT-SRC-CAT-CDP-001', 'PAT-SRC-CAT-MA-001', 'PAT-SRC-CAT-CSP-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'customer_facing',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Contentful, Sanity, Storyblok, Strapi, Hygraph, and Contentstack',
+        tier: 'specialist',
+        positioning: 'Headless, hybrid-headless, and composable CMS candidates for structured content, API delivery, developer extensibility, and omnichannel reuse.',
+        strengths: ['Structured content orientation', 'API delivery', 'Composable architecture options'],
+        cautions: ['Editor usability, preview, governance, accessibility, and integration ownership must be proven'],
+      },
+      {
+        vendorName: 'Adobe Experience Manager, Optimizely, Acquia, Sitecore, and Kentico/Kontent.ai',
+        tier: 'enterprise',
+        positioning: 'Enterprise CMS, WCM, or DXP candidates where page management, personalization, DAM, workflow, analytics, or ecosystem support matter.',
+        cautions: ['Suite breadth can obscure implementation, migration, and total-cost ownership'],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'CMS public pricing and enterprise quote model',
+        model: 'hybrid',
+        metric: 'Seats, spaces/projects/datasets, locales, environments, API calls, bandwidth, assets, workflows, SSO, audit logs, support, and services',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Contentful Pricing', url: 'https://www.contentful.com/pricing/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Sanity Pricing', url: 'https://www.sanity.io/pricing?product=service', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Storyblok Pricing', url: 'https://www.storyblok.com/pricing/', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Enterprise price, discount, overage, migration, and support benchmarks require current quote or contract evidence' },
+        ],
+        confidence: 0.60,
+        notes: 'Public tiers change and enterprise pricing is often custom. Verify current pricing at event time.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Content portability and exit',
+        buyerPosition: 'Require export of content, schemas, references, assets, metadata, locales, workflows, and audit history in usable formats.',
+      },
+      {
+        clauseArea: 'Security and access governance',
+        buyerPosition: 'Require SSO/SAML, SCIM where needed, role granularity, audit logs, DPA, subprocessors, data residency, backup/restore, and API token controls.',
+      },
+      {
+        clauseArea: 'Accessibility governance',
+        buyerPosition: 'Require evidence of authoring support for accessibility checks, alt text, headings, labels, preview, and governance workflows without claiming legal compliance absent buyer review.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Usage-unit normalization',
+        whenToUse: 'Use when vendors price seats, API calls, bandwidth, assets, locales, environments, workflows, SSO, or support differently.',
+        buyerAsk: 'Provide a normalized usage schedule with overage terms, alerts, caps, and enterprise support assumptions.',
+      },
+      {
+        lever: 'Migration proof before award',
+        whenToUse: 'Use when legacy content, SEO, localization, assets, or page templates are material to launch risk.',
+        buyerAsk: 'Require sample export/import, content model mapping, redirect strategy, rollback plan, and implementation partner acceptance criteria.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'cms-editor-experience-gap',
+        label: 'Editor experience gap',
+        severity: 'high',
+        detectionSignals: ['Architecture demo is strong, but marketers cannot author, preview, approve, localize, or publish without developer help.'],
+        mitigations: ['Run hands-on marketer demo and authoring sandbox before award'],
+      },
+      {
+        id: 'cms-content-model-lock-in',
+        label: 'Content model lock-in',
+        severity: 'medium',
+        detectionSignals: ['Content types, references, locales, and schema migrations are hard to export or evolve.'],
+        mitigations: ['Require portability proof, schema migration plan, and exit clauses'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'retail_cpg',
+        modifier: 'Stress commerce integration, product content, promotions, localization, campaigns, and high-volume asset workflows.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Raise review workflows, accessibility, medical/legal/regulatory approval, privacy, and claim-governance controls.',
+      },
+      {
+        industry: 'financial_services',
+        modifier: 'Add regulated-content approval, audit trail, record retention, accessibility, data residency, and security review.',
+      },
+    ],
+    body: `## Summary
+CMS selection is no longer only about editing web pages. Modern buyers often need structured content that can be reused across websites, apps, commerce experiences, support portals, documentation, personalization engines, and AI-assisted workflows. The sourcing team should separate a website publishing problem from a governed content-platform problem before engaging vendors.
+
+Public analyst and peer-review pages confirm CMS and web content management as active vendor-selection categories, while vendor materials show a spectrum from enterprise DXP suites to headless, hybrid-headless, composable, and self-hosted platforms. Use those sources for category orientation only. The winning platform depends on marketer authoring, developer extensibility, content modeling, governance, accessibility, security, migration, and integration ownership.
+
+## When to apply
+Use this pattern when replacing or consolidating a CMS, WCM, DXP, website publishing platform, headless CMS, hybrid-headless CMS, or composable content platform. It applies to multi-brand, multi-locale, multi-channel, ecommerce, mobile, portal, documentation, and public-site content decisions. Do not use it as the primary pattern for DAM, CDP, marketing automation, product information management, or ecommerce platform selection unless the CMS is the system of record for content operations.
+
+## Category boundary
+In scope: content modeling, structured content, page authoring, visual editing, preview, workflow approvals, localization, versioning, publishing, API delivery, webhooks, roles and permissions, SSO, audit logs, asset handling, CDN and bandwidth limits, environments, migration tooling, accessibility support, security, implementation partner scope, and support. Out of scope: pure front-end framework selection, DAM-only storage, personalization engine only, analytics only, or commerce engine selection unless CMS governance is central.
+
+## Vendor landscape
+Native headless and composable evaluations may include Contentful, Sanity, Storyblok, Strapi, Hygraph, Contentstack, and similar vendors. Enterprise CMS and DXP evaluations may include Adobe Experience Manager, Optimizely, Acquia, Sitecore, Kentico/Kontent.ai, and related suites. Open-source or self-hosted products can fit buyers that value control and extensibility, but they shift hosting, upgrades, security, backup, and support obligations onto the buyer. The market scan should segment platforms by authoring model, API model, hosting model, governance depth, and operational burden rather than treating headless or composable as inherently better.
+
+## Lifecycle and gates
+The scope gate should document content types, brands, locales, sites, channels, author populations, approval workflows, accessibility needs, personalization needs, SEO needs, integrations, asset flows, migration inventory, front-end ownership, and launch timeline. The RFP gate should require vendors to prove content modeling, authoring, preview, governance, localization, workflow, API delivery, security, and migration against buyer-owned scenarios.
+
+A strong demo includes both a marketer path and a developer path: create a content type, author localized content, preview it in context, route it through approval, publish it through an API, roll it back, inspect permissions, manage an asset, and export or migrate content. The BAFO gate should normalize users, spaces, projects, datasets, environments, locales, API calls, bandwidth, assets, workflows, SSO, audit logs, support SLAs, overages, migration services, and implementation partner scope. The contract gate should close portability, data processing, security, accessibility support, uptime, support, backup, export, and transition language.
+
+## Evaluation rubric
+Weight content modeling and governance around 20 percent, editor experience around 20 percent, developer/API model around 15 percent, localization and workflow around 10 percent, migration and implementation around 15 percent, security/access/audit around 10 percent, accessibility support around 5 percent, and commercial model around 5 percent. Increase accessibility and approval weight for healthcare, financial services, public sector, education, and regulated content. Increase performance, localization, and asset workflow weight for retail, CPG, commerce, media, and global brand estates.
+
+## Pricing and contract notes
+Public vendor pricing varies in transparency. Some vendors list self-service tiers and usage limits; enterprise pricing is often custom. Numeric fields should stay blank or marked founder-data-gap until verified from current official pricing pages, quote responses, or signed contracts. The pricing worksheet should normalize seats, API requests, CDN bandwidth, asset storage and traffic, locales, environments, spaces, projects, datasets, webhooks, workflows, SSO, audit logs, support SLAs, professional services, migration, and overages.
+
+Contracting should protect portability and governance. Require export of content, schemas, references, assets, metadata, locales, workflow state, and audit history in usable formats. Require DPA, subprocessors, data residency, SSO/SAML, SCIM if needed, role granularity, audit logs, backup/restore, incident notification, least-privilege API token controls, uptime, support, transition assistance, and documented overage terms.
+
+## Contradictions and failure modes
+Vendor claim: composable architecture creates flexibility. Detection: require ownership for integrations, preview, governance, release management, and total cost. Vendor claim: headless improves reuse. Detection: require content model proof, locale handling, reference management, schema migration, and marketer usability. Vendor claim: AI accelerates content. Detection: require permissions, brand controls, data-use terms, auditability, and review workflow.
+
+The common failure is selecting for developer architecture while editor adoption collapses. The second failure is under-scoping migration: legacy content inventory, SEO redirects, localization mapping, component libraries, analytics tags, personalization rules, assets, user roles, and front-end build ownership. The third failure is assuming accessibility or regulatory compliance without authoring-tool evidence and buyer legal review. The fourth failure is comparing license tiers while ignoring API calls, bandwidth, storage, environments, SSO, audit logs, support, and migration cost.`,
+  },
 ];
 
 export const SOURCING_CATEGORY_PATTERN_COUNT = SOURCING_CATEGORY_PATTERNS.length;
