@@ -1,14 +1,14 @@
 # Corpus Autonomous State
 
-Last update: 2026-04-29 · **STATUS: PAUSED** (see CORPUS_PAUSE.md)
+Last update: 2026-04-29 · **STATUS: ACTIVE** (founder resumed autonomous loop)
 
 ---
 
-## Pause snapshot
+## Resume snapshot
 
-The autonomous loop is paused pending foundation fix wave (Programs
-module + UX audit). Do not resume until CORPUS_PAUSE.md is deleted
-by founder.
+Founder instruction received 2026-04-29: "continue to execute non stop
+in a loop with full auto approval to merge PR." `CORPUS_PAUSE.md` has
+been deleted and the corpus loop is active again.
 
 ---
 
@@ -24,7 +24,7 @@ by founder.
 
 **CAT domain (category-specific sourcing playbooks)**
 
-39 patterns merged across 13 PRs (#812–#824):
+39 patterns merged across 13 PRs (#812-#824):
 
 | PR | Patterns | Merged |
 |----|----------|--------|
@@ -55,14 +55,14 @@ git history for the authored content.
 
 | Domain | Target (spec) | Authored | Merged | Status |
 |--------|--------------|----------|--------|--------|
-| CAT — Category playbooks | 50 | 42 | 39 | In progress (paused at 39 merged) |
-| VEN — Vendor intelligence | 200 | 0 | 0 | Not started |
-| CON — Contract intelligence | 30 | 0 | 0 | Not started |
-| PRC — Pricing intelligence | 25 | 0 | 0 | Not started |
-| PROC — Process/methodology | 20 | 0 | 0 | Not started |
-| IND — Industry overlays | 50 | 0 | 0 | Not started |
-| REG — Regulatory/compliance | 15 | 0 | 0 | Not started |
-| RSK — Risk patterns | 25 | 0 | 0 | Not started |
+| CAT - Category playbooks | 50 | 42 | 39 | In progress |
+| VEN - Vendor intelligence | 200 | 0 | 0 | Not started |
+| CON - Contract intelligence | 30 | 0 | 0 | Not started |
+| PRC - Pricing intelligence | 25 | 0 | 0 | Not started |
+| PROC - Process/methodology | 20 | 0 | 0 | Not started |
+| IND - Industry overlays | 50 | 0 | 0 | Not started |
+| REG - Regulatory/compliance | 15 | 0 | 0 | Not started |
+| RSK - Risk patterns | 25 | 0 | 0 | Not started |
 | **Total** | **415** | **42** | **39** | **~9.4% of target** |
 
 Pre-existing patterns in repo before Wave 0: 24 (not counted above).
@@ -86,8 +86,7 @@ Wave 103 was in-flight at pause time:
 
 ## Open PRs / held PRs requiring founder review
 
-None at time of pause (all in-flight PRs from Wave 103 were auto-merged
-or are pending auto-merge per standing authority).
+- PR #831 - `[corpus][cat] Author PAT-SRC-CAT-WFM-001, PAT-SRC-CAT-PSA-001, PAT-SRC-CAT-CPQ-001 · 3 patterns` - in rebase/validation after resume.
 
 ---
 
@@ -97,21 +96,12 @@ or are pending auto-merge per standing authority).
 |----|------|--------|
 | #1047 | health-attribution | Merged before pause declared |
 | #1049 | pattern-coverage-matrix | Merged before pause declared |
-| TBD (103-C) | gate-progression-log | In-flight; auto-merges on green |
+| #1048 | gate-progression-log | Merged before resume |
 
 ---
 
-## Resume checklist
+## Active loop checklist
 
-When CORPUS_PAUSE.md is deleted by founder:
-
-1. Confirm Programs module passes all 5 completion dimensions
-2. Read `docs/build/SOURCING_CORPUS_BUILD_KICKOFF_V1.md` — that file
-   is the authoritative spec
-3. Resume corpus from CAT domain: next queued IDs are
-   PAT-SRC-CAT-TMS-001, PAT-SRC-CAT-HRTECH-001, PAT-SRC-CAT-PAYROLL-001,
-   then continue the WFM/PSA/CPQ queue (see original state file history)
-4. VEN domain (200 patterns) is the largest workstream — begin parallel
-   batching after CAT domain completes
-5. Admin reasoning pages loop: do NOT resume unless founder explicitly
-   re-authorizes; the current ~155 pages may already exceed useful scope
+1. Rebase and merge PR #831 if green and scoped.
+2. Continue CAT domain with the next queued IDs from the kickoff plan.
+3. Keep admin reasoning page generation paused unless separately re-authorized; this resume is for corpus expansion.
