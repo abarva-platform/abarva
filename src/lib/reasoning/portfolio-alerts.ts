@@ -17,6 +17,7 @@ import type {
 import { buildSourceSynthesisContext } from './synthesis-context-builder';
 import { buildProgramSynthesisContext } from './program-synthesis-context-builder';
 import { computeInstanceHealth } from './instance-health';
+import { getAlertState } from './alert-acknowledgment-state';
 import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances';
 import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
 import { SOURCE_LIFECYCLE_PATTERNS } from '@/lib/intelligence/source-lifecycle-patterns';
@@ -228,6 +229,14 @@ export function buildPortfolioAlerts(): PortfolioAlert[] {
     all.push(...buildAlertsForInstance(ctx, label, link));
   }
 
-  all.sort(compareAlerts);
-  return all;
+  // Filter out alerts that have been explicitly dismissed by a user. Alerts
+  // that have been *acknowledged* stay in the feed (the UI tags them with a
+  // small "ack'd" badge so the user knows they have already been seen).
+  const visible = all.filter((alert) => {
+    const state = getAlertState(alert.id);
+    return state?.status !== 'dismissed';
+  });
+
+  visible.sort(compareAlerts);
+  return visible;
 }
