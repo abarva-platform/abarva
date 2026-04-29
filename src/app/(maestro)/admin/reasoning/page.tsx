@@ -1073,6 +1073,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/activity-feed',
     description: 'Real-time activity feed — stage transitions, evidence, waivers, and resolutions as event cards',
   },
+  {
+    title: 'Pattern evolution',
+    href: '/admin/reasoning/pattern-evolution',
+    description: 'Instance health evolution through pattern stages — how health progresses as instances advance',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
