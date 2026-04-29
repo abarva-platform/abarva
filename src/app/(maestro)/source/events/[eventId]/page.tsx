@@ -14,6 +14,10 @@ import { EvidenceQualityChip } from '@/components/_shared/EvidenceQualityChip';
 import { CompareWithDropdown } from '@/components/_shared/CompareWithDropdown';
 import { MissionListInteractive } from '@/components/_shared/MissionListInteractive';
 import { RecentMissionStates } from '@/components/_shared/RecentMissionStates';
+import { InstanceEventTimeline } from '@/components/_shared/InstanceEventTimeline';
+import { InstanceEventTimelineFilterBar } from '@/components/_shared/InstanceEventTimelineFilterBar';
+import { buildInstanceEventTimeline } from '@/lib/reasoning/instance-event-timeline';
+import { parseTimelineFiltersFromSearchParams } from '@/lib/reasoning/instance-event-timeline-filters';
 import { deriveMissionsFromInstance } from '@/lib/reasoning/mission-derivation';
 import { getSourcingEvent } from '@/lib/source/queries';
 import { AMS_SOURCE_EVENT } from '@/lib/source/shell-source-fixture';
@@ -32,12 +36,18 @@ export const dynamic = 'force-dynamic';
 
 export default async function SourceEventDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ eventId: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { eventId } = await params;
+  const sp = (await (searchParams ?? Promise.resolve({}))) ?? {};
   const event = await getSourcingEvent(eventId);
   if (!event) notFound();
+
+  // Decode URL-driven timeline filters (`?tlKind=…&tlSince=…&tlSearch=…`).
+  const timelineFilters = parseTimelineFiltersFromSearchParams(sp);
 
   // Resolve typed instance for live synthesis. Fallback to AMS instance when
   // other events don't have a typed SourceEventInstance yet.
@@ -214,6 +224,15 @@ export default async function SourceEventDetailPage({
               maxRows={6}
             />
             <RecentMissionStates instanceId={matchedInstance.id} limit={3} />
+          </div>
+        )}
+        {matchedInstance && (
+          <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <InstanceEventTimelineFilterBar filters={timelineFilters} />
+            <InstanceEventTimeline
+              entries={buildInstanceEventTimeline(matchedInstance.id)}
+              filters={timelineFilters}
+            />
           </div>
         )}
         <SourceCommercialEventSection

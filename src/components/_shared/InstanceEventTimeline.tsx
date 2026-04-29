@@ -17,6 +17,10 @@ import {
   type TimelineEntry,
   type TimelineEntryKind,
 } from '@/lib/reasoning/instance-event-timeline';
+import {
+  filterTimeline,
+  type TimelineFilters,
+} from '@/lib/reasoning/instance-event-timeline-filters';
 import { SHELL } from '@/lib/shell/shell-tokens';
 
 export interface InstanceEventTimelineProps {
@@ -31,6 +35,12 @@ export interface InstanceEventTimelineProps {
    * the relative-time output. Defaults to `Date.now()` at render time.
    */
   nowMs?: number;
+  /**
+   * Optional URL-driven filters. When provided, entries are narrowed via
+   * `filterTimeline` before rendering. Pass `nowMs` here as well to keep the
+   * date-range cutoff aligned with the relative-time labels above each row.
+   */
+  filters?: TimelineFilters;
 }
 
 const DEFAULT_TITLE = 'Reasoning events';
@@ -38,28 +48,36 @@ const DEFAULT_MAX_ROWS = 12;
 
 const EMPTY_COPY =
   'No reasoning events yet · interact with this instance to populate';
+const EMPTY_FILTERED_COPY =
+  'No events match the current filter · clear filters to see all';
 
 export function InstanceEventTimeline({
   entries,
   maxRows = DEFAULT_MAX_ROWS,
   title = DEFAULT_TITLE,
   nowMs,
+  filters,
 }: InstanceEventTimelineProps) {
-  const visible = entries.slice(0, maxRows);
-  const hidden = Math.max(0, entries.length - visible.length);
+  const filtered = filters
+    ? filterTimeline(entries, { ...filters, nowMs: filters.nowMs ?? nowMs })
+    : entries;
+  const visible = filtered.slice(0, maxRows);
+  const hidden = Math.max(0, filtered.length - visible.length);
 
-  if (entries.length === 0) {
+  if (filtered.length === 0) {
     return (
       <section data-testid="instance-event-timeline-empty" style={sectionStyle}>
         <SectionHeader label={title} count={0} />
-        <div style={emptyStyle}>{EMPTY_COPY}</div>
+        <div style={emptyStyle}>
+          {entries.length === 0 ? EMPTY_COPY : EMPTY_FILTERED_COPY}
+        </div>
       </section>
     );
   }
 
   return (
     <section data-testid="instance-event-timeline" style={sectionStyle}>
-      <SectionHeader label={title} count={entries.length} />
+      <SectionHeader label={title} count={filtered.length} />
       <div style={listStyle}>
         {visible.map(entry => (
           <TimelineRow key={entry.id} entry={entry} nowMs={nowMs} />

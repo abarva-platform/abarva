@@ -37,6 +37,8 @@ import { getAllInstanceIds } from '@/lib/reasoning/instance-resolver';
 import { ContradictionDetailCardClient } from '@/components/_shared/ContradictionDetailCardClient';
 import { CascadeImpactCard, ReverseCascadeCard } from '@/components/_shared/CascadeImpactCard';
 import { InstanceEventTimeline } from '@/components/_shared/InstanceEventTimeline';
+import { InstanceEventTimelineFilterBar } from '@/components/_shared/InstanceEventTimelineFilterBar';
+import type { TimelineFilters } from '@/lib/reasoning/instance-event-timeline-filters';
 import { LifecycleMiniGraph } from '@/components/_shared/LifecycleMiniGraph';
 import { HandoffNarrativePanel } from '@/components/_shared/HandoffNarrativePanel';
 import type { StageStatus } from '@/components/shell/StageTrackerStrip';
@@ -65,6 +67,18 @@ import { AddProgramEvidenceForm } from '@/components/programs/AddProgramEvidence
 
 export interface ProgramDetailPageProps {
   view: ProgramDetailView;
+  /**
+   * URL-driven filter state for the per-instance reasoning event timeline.
+   * Decoded from the page-level `searchParams` upstream so the rendered
+   * filter strip reflects the current URL, and the entries are filtered
+   * server-side. `undefined` → render the full timeline with no filter.
+   */
+  timelineFilters?: TimelineFilters;
+  /**
+   * Search params already on the page (e.g. `phase=3`) — emitted as hidden
+   * inputs by the timeline filter bar so they survive the GET round-trip.
+   */
+  preservedSearchParams?: Readonly<Record<string, string | undefined>>;
 }
 
 // ─── Gate pill ────────────────────────────────────────────────────────────────
@@ -3079,7 +3093,11 @@ function PhaseTransitionOverlay({
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
+export function ProgramDetailPage({
+  view,
+  timelineFilters,
+  preservedSearchParams,
+}: ProgramDetailPageProps) {
   const router = useRouter();
   const { toast } = useToast();
   const gateSectionRef = useRef<HTMLDivElement>(null);
@@ -3774,9 +3792,20 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
                 )}
               </>
             )}
-            {/* REASON-32 — Per-instance reasoning event timeline. */}
+            {/* REASON-32 — Per-instance reasoning event timeline + filter bar.
+                Filters are URL-driven (`?tlKind=…&tlSince=…&tlSearch=…`) so
+                the filter survives a hard reload and works without JS. */}
             {timelineEntries && (
-              <InstanceEventTimeline entries={timelineEntries.entries} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <InstanceEventTimelineFilterBar
+                  filters={timelineFilters ?? {}}
+                  preserveParams={preservedSearchParams}
+                />
+                <InstanceEventTimeline
+                  entries={timelineEntries.entries}
+                  filters={timelineFilters}
+                />
+              </div>
             )}
             {/* PRG-EVIDENCE-INGEST — demo form to POST evidence and watch
                 gates flip on next render via buildProgramEvidenceMapWithIngestions. */}
