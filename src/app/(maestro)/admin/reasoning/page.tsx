@@ -943,6 +943,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/health-forecast',
     description: 'Projected health scores based on open gates and remaining stages — trajectory and at-risk instances',
   },
+  {
+    title: 'Instance timeline',
+    href: '/admin/reasoning/instance-timeline',
+    description: 'Per-instance chronological event stream — stage transitions, evidence, waivers, and resolutions combined',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
