@@ -62,13 +62,17 @@ pack.
 
 | Pack | Status | Owner |
 |---|---|---|
-| P0 Originate | Not authored | Codex (parallel) |
-| P1 Discovery | Not authored | Codex (parallel) |
-| **P2 Synthesis** | **✅ Shipped** | Claude (reference) |
-| P3 Design | Not authored | Codex (parallel) |
-| P4 Build | Not authored | Codex (parallel) |
-| P5 Activate | Not authored | Codex (parallel) |
-| P6 Operate | Not authored | Codex (parallel) |
+| P0 Originate | ✅ Shipped (PR #1121) | Codex |
+| P1 Discovery | ✅ Shipped (PR #1121) | Codex |
+| **P2 Synthesis** | **✅ Shipped (reference, PR #1114)** | Claude |
+| P3 Design | ✅ Shipped (PR #1121) | Codex |
+| P4 Build | ✅ Shipped (PR #1121) | Codex |
+| P5 Activate | ✅ Shipped (PR #1121) | Codex |
+| P6 Operate | ✅ Shipped (PR #1121) | Codex |
+
+All 7 packs pass the `__tests__/phase-packs.test.ts` schema-sanity
+suite (99 tests). Cross-phase handoffs (`producesForNext` /
+`requiresFromPrior`) are word-for-word aligned across each transition.
 
 **Open design question:** the per-pattern overlay. The codebase already
 has `LifecyclePatternSeed` per pattern (CDP, AMS, etc.) with
@@ -177,23 +181,80 @@ agent layer.
 
 ---
 
+## 6. Knowledge-layer broker boundary (load-bearing)
+
+**What it is:** the architectural seam between app-tier code (agents,
+routes, components) and the data layer (EnterpriseDataRoom, vector,
+graph, persistence). The boundary is named `AgentContextBroker` and is
+the **only allowed pathway** from app code to tenant data.
+
+**Five layers:**
+
+```
+PhasePack            static workflow doctrine (this doc, §1)
+EnterpriseDataRoom   tenant/client facts, artifacts, systems, evidence
+AgentContextBroker   governed context envelope · the contracted seam
+PersistenceMapper    dry-run lowering toward Postgres / vector / graph
+Vector / graph       designed but NOT live yet
+```
+
+**Hard rules for app-tier work:**
+
+1. Never `import` EnterpriseDataRoom seed files / broker internals /
+   vector-or-graph stores from `src/app/**` or `src/lib/agent/**`.
+2. Never query a vector or graph store directly from agents/routes —
+   they aren't live and even when they are, the broker is the seam.
+3. Phase Packs stay static doctrine — `evaluationHint` strings can
+   *describe* tables/columns by name, but pack code MUST NOT call them.
+4. Programs runtime defaults to read-only. Write-back is a separate,
+   contracted scope.
+
+**Implication for sequencing:** every PR in §2-5 below that needs
+tenant evidence has a hidden prerequisite — `ProgramsBrokerAdapter`
+(thin wrapper around `buildEnterpriseAgentContextBundle`). Without
+that adapter, the implementation has to either (a) mock evidence in
+TS or (b) violate the boundary. We pick (a) until the broker is live.
+
+**PRs:**
+- **PR-V:** `ProgramsBrokerAdapter` — thin adapter around
+  `buildEnterpriseAgentContextBundle`. Converts `ProgramContextBundle`
+  + tenant/program ids into a broker request. Read-only.
+- **PR-W:** Evidence-binding tests — for each phase pack, verify
+  `definitionOfDone[].evaluationHint` maps to either current DB
+  concepts or Enterprise Data Room artifact/evidence concepts. The
+  test is descriptive (string matching to a known vocabulary), not
+  runtime-coupled.
+- **PR-X:** Graph/vector readiness doc (BEFORE any persistence
+  migration). Recommended defaults from Codex: text-embedding-3-small,
+  1536 dims, `vector(1536)` if Supabase pgvector is chosen. Graph
+  fallback: Postgres tables first, not Neo4j-first.
+- **PR-Y:** Write-back contract — generated deliverables, user edits,
+  decisions, approvals, evidence attachments become write events with
+  provenance. Lands AFTER PR-V (read-only adapter) is stable.
+
+---
+
 ## Sequencing — the path to "actually replaces a senior PM"
 
 Within the agent-intelligence track, work proceeds in waves.
 Each wave produces something demonstrable; we don't queue the next
 wave's work behind speculative scope from later waves.
 
-**Wave 1 — Foundation (in flight):**
-- ✅ PR-A: Pack scaffold + P2 reference *(merged in #1114)*
-- 🔜 PR-B: `phase_evidence_check` tool + reactive artifacts
-- 🔜 PR-C: `advance_phase` tool using pack evidence
-- 🔜 PR-D: Codex-authored P0/P1/P3/P4/P5/P6 packs
-- 🔜 PR-E: Production walk via Chrome MCP
+**Wave 1 — Foundation (COMPLETE on the app tier):**
+- ✅ PR-A · Pack scaffold + P2 Synthesis reference *(merged #1114)*
+- ✅ PR-B · `phase-progress` + `anti-pattern-flag` artifacts *(merged #1119)*
+- ✅ PR-C · `advance_phase` tool + surface-glob registry *(merged #1120)*
+- ✅ PR-D · Codex-authored P0/P1/P3/P4/P5/P6 packs *(merged #1121)*
+- ✅ PR-F · Agent-centric layout reshape · chat 60% + reactive 35% *(merged #1123)*
+- 🔜 PR-E · Production walk via Chrome MCP — verify agent-centric layout + every phase pack changes Nexus's posture
 
-**Wave 2 — Activation:**
-- PR-F: Pack ↔ pattern-overlay composition
-- PR-G: Question-resolution tracking
-- PR-H: Meeting-notes → pack signal
+**Wave 2 — Activation + broker contract:**
+- PR-V · `ProgramsBrokerAdapter` (read-only)
+- PR-W · Evidence-binding tests (pack hints → broker vocabulary)
+- PR-G · Question-resolution tracking
+- PR-H · Meeting-notes → pack signal
+- PR-F'  · Pack ↔ pattern-overlay composition (the original PR-F slot;
+   layout reshape took the letter so this is renamed)
 
 **Wave 3 — Lateral & expansion:**
 - PR-I: Evidence-type expansion
@@ -209,7 +270,9 @@ wave's work behind speculative scope from later waves.
 - PR-U: Org-chart event ingestion
 
 **Wave 5 — The moonshot (longitudinal):**
-- PR-P: Outcome telemetry
+- PR-X: Graph/vector readiness doc (gates anything below)
+- PR-Y: Write-back contract (provenance-tracked deliverables/edits/decisions)
+- PR-P: Outcome telemetry (writes go through PR-Y)
 - PR-Q: Pack versioning
 - PR-R: Longitudinal aggregation
 - PR-S: Pack-evolution governance
