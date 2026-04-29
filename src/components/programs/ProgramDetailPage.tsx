@@ -76,6 +76,7 @@ import { BulkEvidenceImportButton } from '@/components/programs/BulkEvidenceImpo
 import { CascadeImpactSection } from '@/components/_shared/CascadeImpactSection';
 import { PhaseAdvanceButton } from '@/components/programs/PhaseAdvanceButton';
 import { EvidenceCoverageHeatmap } from '@/components/reasoning/EvidenceCoverageHeatmap';
+import { EvidenceNetworkGraph } from '@/components/reasoning/EvidenceNetworkGraph';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -4214,6 +4215,14 @@ export function ProgramDetailPage({
                     Sn · Request Sentinel evidence review →
                   </button>
                 </div>
+                {/* REASON-36 — Evidence network graph: SVG bipartite graph
+                    linking evidence items to the gate criteria they support. */}
+                {heatmapInfo && (
+                  <EvidenceNetworkGraph
+                    instance={heatmapInfo.instance}
+                    pattern={heatmapInfo.pattern}
+                  />
+                )}
               </>
             ) : (
               <div style={{ padding: '20px 0', fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK_MUTED }}>
