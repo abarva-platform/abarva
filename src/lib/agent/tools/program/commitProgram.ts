@@ -110,6 +110,12 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
         leadUserId: originationForm.leadPersonId,
       });
 
+      // Surface 1 navigation sentinel: tell the client the program is
+      // ready to be navigated to. Agent-authored confirmation text still
+      // streams normally; this sentinel is stripped client-side before
+      // display (StewardChat scrubs the regex).
+      ctx.writer?.write(`\n[[program-created:${program.id}]]`);
+
       return {
         success: true,
         data: {
