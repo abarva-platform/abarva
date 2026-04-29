@@ -1133,6 +1133,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Gate Timeline',
     description: 'Chronological gate events per instance — gate-met, waivers, and stage transitions with demo timestamps.',
   },
+  {
+    title: 'Gate Pass Rate Trend',
+    href: '/admin/reasoning/gate-pass-rate-trend',
+    description: 'Stage-by-stage pass rate trajectory — early vs. late program performance with inflection point detection.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
