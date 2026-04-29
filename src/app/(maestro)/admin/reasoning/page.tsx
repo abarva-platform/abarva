@@ -609,6 +609,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     description: 'Cross-instance view of all active unresolved contradictions',
   },
   {
+    title: 'Waiver analysis',
+    href: '/admin/reasoning/waiver-analysis',
+    description: 'Gate waivers, approvals, and rejections summarised by instance and criterion',
+  },
+  {
     title: 'Feedback stats',
     href: '/admin/reasoning/feedback-stats',
     description: 'Aggregated synthesis feedback ratings per surface and instance',

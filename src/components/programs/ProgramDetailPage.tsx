@@ -23,6 +23,7 @@ import { useToast } from '@/components/shell/Toast';
 import { PatternChip } from '@/components/programs/PatternChip';
 import { NexusSynthesisQuote } from '@/components/programs/NexusSynthesisQuote';
 import { ProgramProvenanceRibbon } from '@/components/programs/ProgramProvenanceRibbon';
+import { DownloadContextButton } from '@/components/reasoning/DownloadContextButton';
 import { SourceEventChip } from '@/components/programs/SourceEventChip';
 import { buildProgramSourceLinkView } from '@/lib/programs/program-source-link-view';
 import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances';
@@ -3952,6 +3953,9 @@ export function ProgramDetailPage({
           const synthesisContext = buildProgramSynthesisContext(instance);
           return <ProgramProvenanceRibbon context={synthesisContext} />;
         })()}
+        <div style={{ marginTop: 4 }}>
+          <DownloadContextButton instanceId={view.programId} surface="program" />
+        </div>
 
         {/* REASON-15 — hidden synthesis node; streams live Nexus quote into ribbon */}
         <div style={{ display: 'none' }} aria-hidden>

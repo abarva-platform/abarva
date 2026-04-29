@@ -117,8 +117,7 @@ export function RiskRegisterPanel({
 }: RiskRegisterPanelProps) {
   const rows = typeof maxRows === 'number' ? risks.slice(0, maxRows) : risks;
 
-  if (rows.length === 0 && !showEmptyState) return null;
-
+  // Hooks must be called before any conditional return (rules-of-hooks).
   const resolvedInstanceId = instanceId ?? risks[0]?.instanceId ?? 'portfolio';
 
   const handleExportCsv = useCallback(() => {
@@ -133,6 +132,9 @@ export function RiskRegisterPanel({
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }, [risks, resolvedInstanceId]);
+
+  // Early return after all hooks have been called unconditionally.
+  if (rows.length === 0 && !showEmptyState) return null;
 
   return (
     <section

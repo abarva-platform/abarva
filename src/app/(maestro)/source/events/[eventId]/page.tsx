@@ -5,6 +5,7 @@ import type { StageStatus } from '@/components/shell/StageTrackerStrip';
 import { SentinelAgentColumn } from '@/components/source/SentinelAgentColumn';
 import { SentinelSynthesisQuote } from '@/components/source/SentinelSynthesisQuote';
 import { SourceProvenanceRibbon } from '@/components/source/SourceProvenanceRibbon';
+import { DownloadContextButton } from '@/components/reasoning/DownloadContextButton';
 import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
 import { NexusEngagementCanvas } from '@/components/source/NexusEngagementCanvas';
 import { SourceCommercialEventSection } from '@/components/source/SourceCommercialEventSection';
@@ -164,7 +165,16 @@ export default async function SourceEventDetailPage({
             fallback={`${event.name} at ${event.currentStageLabel}.${event.blocker ? ` Blocker: ${event.blocker}.` : ''}`}
           />
         }
-        provenanceSlot={synthesisContext ? <SourceProvenanceRibbon context={synthesisContext} /> : undefined}
+        provenanceSlot={
+          synthesisContext ? (
+            <>
+              <SourceProvenanceRibbon context={synthesisContext} />
+              <div style={{ marginTop: 4 }}>
+                <DownloadContextButton instanceId={matchedInstance.id} surface="source" />
+              </div>
+            </>
+          ) : undefined
+        }
         quote={`${event.name} at ${event.currentStageLabel}.`}
         agentContext={`Sentinel · ${event.name} · ${event.currentStageLabel}`}
         actions={[
