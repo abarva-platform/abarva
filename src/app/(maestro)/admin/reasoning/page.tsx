@@ -643,6 +643,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/scorecard',
     description: 'All instances ranked by composite reasoning health score',
   },
+  {
+    title: 'Demo panel',
+    href: '/admin/reasoning/demo-panel',
+    description: 'Trigger pre-built demo scenarios: green-path, red-alert, mid-review',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
