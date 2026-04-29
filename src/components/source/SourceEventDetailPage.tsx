@@ -23,6 +23,7 @@ import { ContradictionDetailCardClient } from '@/components/_shared/Contradictio
 import { CascadeImpactCard, ReverseCascadeCard } from '@/components/_shared/CascadeImpactCard';
 import { InstanceEventTimeline } from '@/components/_shared/InstanceEventTimeline';
 import { LifecycleMiniGraph } from '@/components/_shared/LifecycleMiniGraph';
+import { HandoffNarrativePanel } from '@/components/_shared/HandoffNarrativePanel';
 import type { StageStatus } from '@/components/shell/StageTrackerStrip';
 import { buildSourceSynthesisContext } from '@/lib/reasoning/synthesis-context-builder';
 import { computeReverseCascade } from '@/lib/reasoning/cross-instance-reasoner';
@@ -31,6 +32,7 @@ import { isResolved as isContradictionResolved } from '@/lib/reasoning/contradic
 import { buildInstanceEventTimeline } from '@/lib/reasoning/instance-event-timeline';
 import { createGateEvaluator } from '@/lib/reasoning/gate-evaluator';
 import { buildStageMicroSynthesisMap } from '@/lib/reasoning/stage-micro-synthesis';
+import { buildStageHandoffNarratives } from '@/lib/reasoning/stage-handoff-narrative';
 import { buildEvidenceMap } from '@/lib/source/source-event-instance';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -1859,6 +1861,20 @@ export function SourceEventDetailPage() {
             stageStates={miniGraphStageStates}
             gateCriteriaCount={gateCriteriaCount}
             microSynthesis={miniGraphMicroSynthesis}
+          />
+        </div>
+        {/* REASON-31 — Stage handoff narrative panel: describes the
+            evidence/gate handoff between consecutive stages. Sits directly
+            below the lifecycle mini-graph. */}
+        <div
+          data-testid="source-handoff-narrative"
+          style={{
+            padding: '12px 28px 14px',
+            borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
+          }}
+        >
+          <HandoffNarrativePanel
+            narratives={buildStageHandoffNarratives(PAT_SRC_AMS_001)}
           />
         </div>
         {/* Event header */}
