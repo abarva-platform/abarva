@@ -1198,6 +1198,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Waiver Risk Register',
     description: 'Formal risk register for active waivers — impact, likelihood, risk level matrix, and mitigation status.',
   },
+  {
+    href: '/admin/reasoning/contradiction-resolution-log',
+    title: 'Contradiction Resolution Log',
+    description: 'Log of all resolved contradictions — resolution paths, health impact estimates, and path distribution.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
