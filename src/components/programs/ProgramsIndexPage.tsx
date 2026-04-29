@@ -24,11 +24,34 @@ import {
   buildPhaseFilterView,
   type ProgramPhase,
 } from '@/lib/programs/phase-filter-view';
+import { InstanceHealthBadge } from '@/components/_shared/InstanceHealthBadge';
+import { computeInstanceHealth } from '@/lib/reasoning/instance-health';
+import { buildProgramSynthesisContext } from '@/lib/reasoning/program-synthesis-context-builder';
+import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances';
+import type { InstanceHealth } from '@/lib/reasoning/instance-health';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 export interface ProgramsIndexPageProps {
   view: ProgramsIndexViewV2;
+}
+
+// ─── Health lookup ────────────────────────────────────────────────────────────
+
+/**
+ * Compute instance health for a program row by matching it against the
+ * APEX_RETAIL_PROGRAM_INSTANCES fixture via displayId or id. Returns null
+ * when the row has no corresponding reasoning instance (e.g. DB-only programs).
+ */
+function computeRowHealth(row: ProgramRow): InstanceHealth | null {
+  const instance = APEX_RETAIL_PROGRAM_INSTANCES.find(
+    (i) =>
+      i.displayId === row.displayId ||
+      i.id.toLowerCase() === row.id.toLowerCase(),
+  );
+  if (!instance) return null;
+  const ctx = buildProgramSynthesisContext(instance);
+  return computeInstanceHealth(ctx);
 }
 
 // ─── Mini phase dots ──────────────────────────────────────────────────────────
@@ -120,6 +143,7 @@ function GatePill({ status }: { status: ProgramRow['gateStatus'] }) {
 
 function ProgramTableRow({ row }: { row: ProgramRow }) {
   const actionHref = `/programs/${row.id}?phase=${row.currentPhase}`;
+  const health = computeRowHealth(row);
 
   return (
     <Link
@@ -128,8 +152,8 @@ function ProgramTableRow({ row }: { row: ProgramRow }) {
         display: 'grid',
         gridTemplateColumns: '64px 1fr 80px 108px 72px 80px',
         alignItems: 'center',
-        height: 44,
-        padding: '0 16px',
+        minHeight: 44,
+        padding: '6px 16px',
         borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
         textDecoration: 'none',
         color: SHELL.INK,
@@ -155,21 +179,33 @@ function ProgramTableRow({ row }: { row: ProgramRow }) {
         {row.displayId}
       </span>
 
-      {/* Name */}
+      {/* Name + health badge */}
       <div style={{ minWidth: 0 }}>
         <div
           style={{
-            fontFamily: SHELL.SERIF,
-            fontSize: 14,
-            fontWeight: 700,
-            color: SHELL.INK,
-            whiteSpace: 'nowrap',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
             overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            lineHeight: 1.2,
           }}
         >
-          {row.name}
+          <span
+            style={{
+              fontFamily: SHELL.SERIF,
+              fontSize: 14,
+              fontWeight: 700,
+              color: SHELL.INK,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              lineHeight: 1.2,
+              flexShrink: 1,
+              minWidth: 0,
+            }}
+          >
+            {row.name}
+          </span>
+          {health && <InstanceHealthBadge health={health} />}
         </div>
         <div
           style={{
