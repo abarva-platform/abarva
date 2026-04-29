@@ -335,6 +335,92 @@ describe('extractArtifacts · Surface 2 program-detail artifacts', () => {
   });
 });
 
+describe('extractArtifacts · Surface 2 PR-B phase-pack visibility', () => {
+  it('parses phase-progress with all three valid statuses', () => {
+    for (const status of ['met', 'unmet', 'unknown'] as const) {
+      const r = extractArtifacts(
+        `[[artifact:phase-progress]]{"evidenceItemId":"charter-signed-off","label":"Charter signed off","severity":"hard","status":"${status}","detail":"sponsor draft only"}[[/artifact]]`,
+      );
+      expect(r.artifacts).toHaveLength(1);
+      expect(r.artifacts[0]).toMatchObject({
+        type: 'phase-progress',
+        evidenceItemId: 'charter-signed-off',
+        label: 'Charter signed off',
+        severity: 'hard',
+        status,
+        detail: 'sponsor draft only',
+      });
+    }
+  });
+
+  it('parses phase-progress without optional detail', () => {
+    const r = extractArtifacts(
+      '[[artifact:phase-progress]]{"evidenceItemId":"x","label":"X","severity":"soft","status":"unknown"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(1);
+    expect(r.artifacts[0]).toMatchObject({
+      type: 'phase-progress',
+      evidenceItemId: 'x',
+      label: 'X',
+      severity: 'soft',
+      status: 'unknown',
+    });
+    expect((r.artifacts[0] as { detail?: string }).detail).toBeUndefined();
+  });
+
+  it('rejects phase-progress with unknown status', () => {
+    const r = extractArtifacts(
+      '[[artifact:phase-progress]]{"evidenceItemId":"x","label":"X","severity":"hard","status":"in-progress"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('rejects phase-progress with bad severity', () => {
+    const r = extractArtifacts(
+      '[[artifact:phase-progress]]{"evidenceItemId":"x","label":"X","severity":"medium","status":"met"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('rejects phase-progress with empty evidenceItemId', () => {
+    const r = extractArtifacts(
+      '[[artifact:phase-progress]]{"evidenceItemId":"","label":"X","severity":"hard","status":"met"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('parses anti-pattern-flag with all required fields', () => {
+    const r = extractArtifacts(
+      '[[artifact:anti-pattern-flag]]{"antiPatternId":"phantom-sponsor","label":"The Phantom Sponsor","detectedSignal":"User cannot describe sponsor calendar commitment","whatToFlag":"Sponsor pattern looks delegated; high probability of stalling at first decision.","mitigation":"Insist on a recurring sponsor cadence on the calendar before close."}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(1);
+    expect(r.artifacts[0]).toMatchObject({
+      type: 'anti-pattern-flag',
+      antiPatternId: 'phantom-sponsor',
+      label: 'The Phantom Sponsor',
+    });
+  });
+
+  it('rejects anti-pattern-flag missing whatToFlag', () => {
+    const r = extractArtifacts(
+      '[[artifact:anti-pattern-flag]]{"antiPatternId":"x","label":"X","detectedSignal":"y","mitigation":"z"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('rejects anti-pattern-flag with empty detectedSignal', () => {
+    const r = extractArtifacts(
+      '[[artifact:anti-pattern-flag]]{"antiPatternId":"x","label":"X","detectedSignal":"","whatToFlag":"y","mitigation":"z"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+});
+
 describe('extractArtifacts · type-narrowing', () => {
   it('returns a discriminated union — caller can switch on `type`', () => {
     const input =
