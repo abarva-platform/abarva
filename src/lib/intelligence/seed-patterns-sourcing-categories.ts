@@ -6476,6 +6476,422 @@ The common failure is treating payroll as routine software when a small configur
   },
 
 
+  {
+    id: 'PAT-SRC-CAT-EHS-001',
+    slug: 'environment-health-safety-ehs-software-sourcing',
+    title: 'Environment, Health, and Safety Software Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'EHS software sourcing should prove regulatory recordkeeping, incident workflow, corrective-action discipline, environmental data lineage, mobile frontline adoption, and audit evidence before buyers accept compliance automation or AI safety claims.',
+    applicability:
+      'Apply when sourcing Enablon, VelocityEHS, Intelex, Sphera, Cority, EcoOnline, Benchmark Gensuite, SafetyCulture, Evotix, Quentic, Dakota Software, IsoMetrix, or comparable EHS, EHSQ, ESG, incident, audit, chemical, and environmental compliance platforms.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.80,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.wolterskluwer.com/en/solutions/enablon',
+      'https://www.wolterskluwer.com/en/solutions/enablon/performance-metrics-software',
+      'https://www.ehs.com/',
+      'https://www.ehs.com/ehs-software-buyers-guide/',
+      'https://www.ehs.com/wp-content/uploads/2024/07/VelocityEHS_Capability-Sheet_Incident-Management.pdf',
+      'https://www.osha.gov/recordkeeping/RKforms.html',
+      'https://www.osha.gov/300A/',
+      'https://www.osha.gov/recordkeeping/finalrule/index.html',
+      'https://www.epa.gov/toxics-release-inventory-tri-program/electronic-submission-tri-reporting-forms',
+      'https://www.iso.org/iso-45001-occupational-health-and-safety.html',
+    ],
+    regulatoryChips: ['OSHA-recordkeeping-review', 'EPA-TRI-review', 'ISO-45001-review', 'chemical-management-review', 'worker-privacy-review'],
+    relatedPatternIds: ['PAT-SRC-CAT-QMS-001', 'PAT-SRC-CAT-ESG-001', 'PAT-SRC-CAT-WFM-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'enterprise_saas',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Enablon, VelocityEHS, Intelex, Sphera, Cority, EcoOnline, Benchmark Gensuite, SafetyCulture, Evotix, Quentic, Dakota Software, and IsoMetrix',
+        tier: 'enterprise',
+        positioning: 'EHS and EHSQ candidates spanning incident management, audits, inspections, corrective actions, chemical management, environmental compliance, sustainability/ESG adjacency, occupational health, training, and mobile frontline reporting.',
+        cautions: ['Separate regulatory recordkeeping and audit evidence from dashboards, AI summarization, and broad ESG claims. Validate jurisdiction, facility, chemical, and reporting scope.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Enablon EHS software overview', url: 'https://www.wolterskluwer.com/en/solutions/enablon', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'VelocityEHS platform and buyer guide', url: 'https://www.ehs.com/ehs-software-buyers-guide/', asOf: '2026-04-29' },
+          { type: 'regulatory-document', label: 'OSHA injury and illness forms and ITA guidance', url: 'https://www.osha.gov/recordkeeping/RKforms.html', asOf: '2026-04-29' },
+        ],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'EHS pricing constructs only',
+        model: 'hybrid',
+        metric: 'Facilities, users, modules, incident volumes, chemicals/SDS counts, inspections, audit programs, environmental reporting scope, mobile users, integrations, implementation, migration, support, and managed content/services',
+        sourceBasis: [
+          { type: 'founder-data-gap', label: 'Facility count, jurisdictions, OSHA/EPA obligations, chemical inventory, incident volume, mobile populations, and implementation scope require buyer evidence' },
+        ],
+        confidence: 0.50,
+        notes: 'Do not publish EHS pricing benchmarks or compliance savings without buyer quote or invoice evidence.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Regulatory recordkeeping and audit evidence',
+        buyerPosition: 'Define covered jurisdictions, forms/reports, facility hierarchy, incident classification, audit trails, correction workflows, electronic submission support, retention, export, and responsibility for regulatory-content updates.',
+      },
+      {
+        clauseArea: 'Frontline data and worker privacy',
+        buyerPosition: 'Require role controls, mobile/offline behavior, location/photo handling, witness statements, medical/confidentiality boundaries, breach notice, subprocessors, deletion, and transition assistance.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Regulatory-scenario proof',
+        whenToUse: 'Use before BAFO for OSHA, EPA TRI, chemical, occupational-health, process-safety, or multi-country EHS obligations.',
+        buyerAsk: 'Run buyer scenarios for incident intake, OSHA log, corrective action, audit finding, environmental metric, SDS lookup, inspection, and regulator-ready export.',
+      },
+      {
+        lever: 'Module and facility decomposition',
+        whenToUse: 'Use when the vendor bundles safety, environmental, chemical, ESG, occupational health, training, contractor, and audit modules.',
+        buyerAsk: 'Separate module fees, facility scope, user populations, mobile users, content libraries, integrations, implementation services, support, and managed regulatory content.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'ehs-compliance-automation-overclaim',
+        label: 'Compliance automation overclaim',
+        severity: 'critical',
+        detectionSignals: ['Vendor says compliance is automated without facility scope, jurisdiction mapping, recordkeeping duties, review workflow, or legal owner acceptance.'],
+        mitigations: ['Require jurisdiction-by-jurisdiction scope, legal owner signoff, audit trail proof, export tests, and regulatory-content change process'],
+      },
+      {
+        id: 'ehs-frontline-adoption-risk',
+        label: 'Frontline adoption and evidence quality risk',
+        severity: 'high',
+        detectionSignals: ['Incident, inspection, and corrective-action workflows require too many fields, do not work offline, or lack worker privacy controls.'],
+        mitigations: ['Pilot mobile scenarios, tune required fields, validate offline capture, train supervisors, and prove corrective-action closure evidence'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'manufacturing',
+        modifier: 'Stress incident logs, lockout/tagout adjacency, chemical inventory, audits, corrective actions, and plant-level reporting.',
+      },
+      {
+        industry: 'energy_utilities',
+        modifier: 'Stress process safety, contractor safety, environmental reporting, remote sites, emissions/waste/water data lineage, and regulator-ready exports.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Stress occupational health, exposure events, privacy boundaries, training, incident investigation, and facility-specific compliance duties.',
+      },
+    ],
+    body: `## Summary
+Environment, Health, and Safety software is an operational-risk and regulatory-evidence system. It can support incident reporting, investigations, corrective actions, audits, inspections, chemical management, environmental reporting, training, occupational health, contractor safety, sustainability adjacency, and executive dashboards. The sourcing event should therefore test whether the platform can create defensible records across facilities and jurisdictions, not whether it can display a polished safety dashboard.
+
+## When to apply
+Use this pattern when sourcing Enablon, VelocityEHS, Intelex, Sphera, Cority, EcoOnline, Benchmark Gensuite, SafetyCulture, Evotix, Quentic, Dakota Software, IsoMetrix, or comparable EHS and EHSQ platforms. Apply it during safety-management modernization, OSHA recordkeeping improvement, environmental compliance reporting, chemical/SDS consolidation, audit and inspection redesign, contractor safety programs, ESG/EHS data integration, or multi-site EHS standardization. Do not use it for QMS-only, ESG-only, GRC-only, worker-compensation-only, or facilities-maintenance events unless safety and environmental records are central.
+
+## Category boundary
+In scope: incident and near-miss reporting, investigation, root cause, corrective and preventive actions, audits, inspections, observations, hazard reporting, training evidence, occupational health adjacency, contractor safety, chemical inventory and SDS, environmental metrics, waste/water/air reporting support, facility hierarchy, mobile/offline capture, dashboards, and regulator-ready exports. Adjacent but distinct: QMS, ESG disclosure, carbon accounting, HR case management, workers compensation claims administration, asset maintenance, and legal matter management.
+
+## Lifecycle and gates
+The scope gate should inventory facilities, countries, OSHA or local injury reporting duties, environmental permits, TRI or equivalent reporting, chemical inventory, audits, inspections, incident volume, mobile workers, unions, contractor populations, existing SDS libraries, and target integrations. The RFP gate should require regulatory scope, audit trails, data model, role controls, DPA, subprocessors, mobile/offline behavior, implementation, migration, and support. The proof gate should run incident intake, OSHA log/export, near miss, corrective action, inspection, audit finding, SDS search, environmental metric capture, regulator-ready export, and dashboard reconciliation. The BAFO gate should normalize facilities, modules, user classes, mobile/offline users, chemical/SDS records, environmental records, integrations, implementation, migration, content libraries, support, and renewal controls.
+
+## Evaluation rubric
+Weight regulatory recordkeeping and auditability around 25 percent, incident/corrective-action workflow around 20 percent, environmental and chemical data lineage around 15 percent, frontline usability around 15 percent, integration and security around 15 percent, and commercial predictability around 10 percent. Increase regulatory weight for high-hazard operations, multi-jurisdiction reporting, chemical management, process safety, or environmental permits.
+
+## Pricing and contract notes
+Public sources support capability framing but not net price or compliance outcomes. Enablon public pages describe EHS software across safety, environmental, risk, audits, inspections, incident management, and reporting. VelocityEHS describes platform areas such as safety, ergonomics, chemical management, contractor safety, operational risk, sustainability, environmental compliance, and incident management. OSHA public materials define recordkeeping forms and electronic submission guidance, while EPA TRI material explains electronic submission of TRI reporting forms. These sources do not prove that any software guarantees compliance, reduces incidents, lowers insurance cost, or accelerates regulatory reporting for a specific buyer.
+
+Contracting should define covered jurisdictions, facility hierarchy, reportable-record logic, audit trails, data retention, regulatory-content update responsibilities, mobile/offline commitments, confidentiality for medical or witness data, security attestations, support response, export rights, transition assistance, implementation acceptance, and liability boundaries for missed or incorrect regulatory submissions.
+
+## Contradictions and failure modes
+Vendor claim: compliance is automated. Detection: require jurisdiction mapping, reportability logic, legal owner review, export evidence, and content-update process. Vendor claim: AI improves incident quality. Detection: require human review, audit trail, explainability, privacy review, and no invented root-cause findings. Vendor claim: one EHS suite covers ESG, quality, safety, and environmental reporting. Detection: test each data lineage, evidence owner, and reporting obligation separately.
+
+The common failure is selecting EHS as a dashboard project and discovering that incident classification, corrective actions, chemical records, environmental metrics, and regulatory exports are still reconciled manually. The second is assuming mobile frontline adoption without piloting real supervisors, shifts, and sites. The third is treating regulatory content as vendor-owned when legal accountability stays with the buyer.`
+  },
+  {
+    id: 'PAT-SRC-CAT-PPM-001',
+    slug: 'project-portfolio-management-sourcing',
+    title: 'Project and Strategic Portfolio Management Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'PPM sourcing should prove investment-governance, capacity, financials, delivery integration, prioritization, and executive decision rights before buyers accept strategy-to-execution or AI portfolio claims.',
+    applicability:
+      'Apply when sourcing Planview, ServiceNow Strategic Portfolio Management, Broadcom Clarity, Microsoft Project/Project for the web, Jira Align, Atlassian Enterprise Strategy and Planning, Smartsheet, monday.com, Adobe Workfront, or comparable PPM/SPM platforms.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.79,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.planview.com/products-solutions/solutions/strategic-portfolio-management/',
+      'https://www.planview.com/products-solutions/products/ppm-pro/project-portfolio-management/',
+      'https://www.planview.com/products-solutions/',
+      'https://www.servicenow.com/products/strategic-portfolio-management/what-is-project-portfolio-management.html',
+      'https://www.servicenow.com/docs/r/it-business-management/ppm-collaboration/c_ProjectPortfolioSuiteWithFinancials.html',
+      'https://valueops.broadcom.com/products/clarity',
+      'https://docs.broadcom.com/doc/clarity-ppm-product-brief',
+    ],
+    regulatoryChips: ['SOX-if-capex-control', 'portfolio-governance-review', 'data-access-review', 'financial-planning-integration-review'],
+    relatedPatternIds: ['PAT-SRC-CAT-PSA-001', 'PAT-SRC-CAT-ERP-001', 'PAT-SRC-CAT-BI-001', 'PAT-SRC-CAT-ITSM-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'enterprise_saas',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Planview, ServiceNow SPM, Broadcom Clarity, Microsoft Project, Jira Align, Smartsheet, monday.com, Adobe Workfront, and comparable PPM/SPM tools',
+        tier: 'enterprise',
+        positioning: 'Portfolio candidates spanning demand intake, prioritization, roadmaps, investment planning, capacity, resource management, financial forecasting, hybrid delivery, dependencies, and executive reporting.',
+        cautions: ['Separate portfolio governance from task/project management, agile delivery tools, ERP financials, PSA delivery economics, and BI reporting.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Planview strategic portfolio management capabilities', url: 'https://www.planview.com/products-solutions/solutions/strategic-portfolio-management/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'ServiceNow project portfolio management overview', url: 'https://www.servicenow.com/products/strategic-portfolio-management/what-is-project-portfolio-management.html', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Clarity by Broadcom strategic portfolio management', url: 'https://valueops.broadcom.com/products/clarity', asOf: '2026-04-29' },
+        ],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'PPM/SPM pricing constructs only',
+        model: 'subscription',
+        metric: 'Portfolio users, project managers, requesters, team members, executives, modules, integrations, environments, financial/resource planning scope, implementation, migration, reporting, and support',
+        sourceBasis: [
+          { type: 'founder-data-gap', label: 'Portfolio count, user roles, financial governance, delivery tools, integrations, historic project data, and implementation scope require buyer evidence' },
+        ],
+        confidence: 0.50,
+        notes: 'Do not publish PPM price, savings, productivity, or portfolio-value benchmarks without buyer-specific evidence.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Portfolio financial and decision governance',
+        buyerPosition: 'Define investment types, approval workflow, budget/capex/opex fields, scenario assumptions, audit logs, reporting ownership, and integration boundaries with finance, agile, ITSM, and BI systems.',
+      },
+      {
+        clauseArea: 'Migration, integration, and exit',
+        buyerPosition: 'Require export of portfolios, projects, roadmaps, decisions, dependencies, resources, financials, baselines, risks, issues, and audit history with transition assistance and API access.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Decision-scenario proof',
+        whenToUse: 'Use when executives expect the platform to govern prioritization, funding, capacity, or strategy-to-execution tradeoffs.',
+        buyerAsk: 'Run scenarios for demand intake, scoring, capacity constraint, budget cut, roadmap change, dependency conflict, executive approval, and forecast variance.',
+      },
+      {
+        lever: 'Role and method decomposition',
+        whenToUse: 'Use when vendors bundle requesters, team members, project managers, resource managers, financial planners, executives, and agile teams.',
+        buyerAsk: 'Separate role rights, portfolio modules, agile integrations, financial planning, resource management, reporting, implementation, and support line items.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'ppm-governance-without-decision-rights',
+        label: 'Portfolio tool without decision rights',
+        severity: 'high',
+        detectionSignals: ['Executive sponsors expect portfolio discipline but intake, prioritization, funding, and kill/continue decisions remain outside the platform.'],
+        mitigations: ['Define governance RACI, approval thresholds, scoring model, meeting cadence, and decision audit trail before award'],
+      },
+      {
+        id: 'ppm-integration-fragility',
+        label: 'Delivery and finance integration fragility',
+        severity: 'high',
+        detectionSignals: ['Project status, agile work, resource capacity, financial forecasts, and actuals come from disconnected systems with no reconciliation owner.'],
+        mitigations: ['Require integration map, system-of-record decisions, reconciliation tests, API limits, and reporting acceptance criteria'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Stress auditability, investment approval, regulatory change portfolios, risk acceptance, and evidence for deferred or canceled work.',
+      },
+      {
+        industry: 'public_sector',
+        modifier: 'Stress capital planning, grants or appropriations alignment, procurement milestones, public reporting, and accessibility/security requirements.',
+      },
+      {
+        industry: 'manufacturing',
+        modifier: 'Stress product, plant, capital, engineering, and IT portfolio conflicts with resource and dependency visibility.',
+      },
+    ],
+    body: `## Summary
+Project and Strategic Portfolio Management software is a decision-governance layer. It should help leaders decide which work to fund, sequence, pause, accelerate, or stop under constraints of strategy, capacity, cost, risk, dependencies, and delivery reality. A sourcing event fails when it evaluates PPM as project status reporting while leaving investment decisions, financial assumptions, resource governance, and delivery-tool integration outside the scope.
+
+## When to apply
+Use this pattern when sourcing Planview, ServiceNow Strategic Portfolio Management, Broadcom Clarity, Microsoft Project, Jira Align, Atlassian portfolio products, Smartsheet, monday.com, Adobe Workfront, or comparable PPM/SPM platforms. Apply it during PMO modernization, strategy-to-execution programs, investment planning, project intake redesign, capacity planning, agile portfolio planning, IT/business portfolio consolidation, capital planning, or executive reporting improvement. Do not use it as the primary pattern for PSA, ITSM, agile team planning, ERP, BI, OKR-only, or generic task management unless portfolio prioritization and funding decisions are central.
+
+## Category boundary
+In scope: demand intake, business cases, scoring, prioritization, portfolio roadmaps, investment types, funding, capacity planning, resource management, dependency management, scenario planning, financial forecasts, capex/opex fields, benefits tracking, risks/issues, executive approvals, hybrid delivery integration, agile tool integration, reporting, and audit trails. Adjacent but distinct: project task execution, PSA billing, ERP actuals, ITSM tickets, HRIS resource master, agile team boards, BI dashboards, and OKR tracking.
+
+## Lifecycle and gates
+The scope gate should inventory portfolios, investment types, governance forums, scoring model, budget fields, capex/opex treatment, resource pools, delivery methods, agile/project tools, finance systems, HR systems, reporting audiences, migration sources, and decision rights. The RFP gate should require role-based licensing, data model, financial/resource planning, integrations, API limits, security, audit logs, implementation, migration, and exit rights. The proof gate should run demand intake, scoring, prioritization, capacity conflict, funding change, roadmap change, dependency risk, executive approval, financial forecast, delivery-tool sync, and report reconciliation. The BAFO gate should normalize users, roles, modules, portfolios, integrations, environments, implementation, migration, reporting, support, and renewal controls.
+
+## Evaluation rubric
+Weight decision governance around 25 percent, resource and capacity planning around 20 percent, financial planning and forecast control around 15 percent, integration with delivery and finance systems around 20 percent, executive reporting and usability around 10 percent, and commercial predictability around 10 percent. Increase auditability weight when capital governance, regulated change portfolios, or public-sector reporting are in scope.
+
+## Pricing and contract notes
+Public sources support capability framing. Planview describes strategic portfolio management capabilities across strategy visualization, planning/funding, demand/capacity, performance analytics, program management, team delivery, enterprise architecture, and AI. ServiceNow describes PPM and Strategic Portfolio Management in terms of strategic alignment, prioritization, resource allocation, demand management, and project portfolio governance. Broadcom Clarity public pages describe aligning investments in people and technology with strategic goals. These sources do not prove buyer-specific portfolio ROI, labor productivity, project success rates, cost reduction, or implementation timeline.
+
+Contracting should define role rights, portfolio data ownership, financial and resource assumptions, integration obligations, API access, audit logs, implementation acceptance, migration scope, export rights, transition assistance, sandbox access, support response, renewal uplift, and ownership for reconciliation between PPM, finance, HR, agile, ITSM, and BI systems.
+
+## Contradictions and failure modes
+Vendor claim: strategy-to-execution is connected. Detection: trace one initiative from strategy through intake, scoring, funding, resource constraint, delivery tool, financial forecast, status report, and executive decision. Vendor claim: AI recommends better prioritization. Detection: require explainable inputs, human approval, audit trail, and no opaque investment decisions. Vendor claim: integration is native. Detection: prove field mapping, sync direction, conflict handling, API limits, and reporting reconciliation.
+
+The common failure is buying portfolio visibility without changing decision rights. The second is underestimating data quality: capacity, actuals, forecasts, dependencies, and status often live in different systems with different owners. The third is overfitting the tool to one PMO method while the enterprise uses a hybrid of waterfall, agile, product, capital, and operational work.`
+  },
+  {
+    id: 'PAT-SRC-CAT-QMS-001',
+    slug: 'quality-management-system-qms-software-sourcing',
+    title: 'Quality Management System Software Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'QMS software sourcing should prove controlled documents, CAPA, audit trails, validation evidence, supplier quality, training linkage, and regulated-process fit before buyers accept audit-readiness or AI quality claims.',
+    applicability:
+      'Apply when sourcing MasterControl, Veeva Vault QMS, ETQ Reliance, TrackWise Digital, ComplianceQuest, Greenlight Guru, Qualio, Arena, Dot Compliance, Ideagen, Intellect, or comparable eQMS/QMS platforms.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.80,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.veeva.com/products/vault-qms/',
+      'https://www.veeva.com/wp-content/uploads/2023/07/Veeva-Product-Sheet-Vault-Quality.pdf?1=',
+      'https://www.etq.com/product-overview/',
+      'https://www.etq.com/audit-management/',
+      'https://www.mastercontrol.com/library/quality/iso-13485/',
+      'https://www.mastercontrol.com/quality/document-control-software/control/',
+      'https://www.mastercontrol.com/compliance/iso13485/software',
+      'https://www.mastercontrol.com/quality/qms/med-device-qms',
+      'https://www.fda.gov/medical-devices/postmarket-requirements-devices/quality-management-system-regulation-qmsr',
+      'https://www.fda.gov/medical-devices/quality-management-system-regulation-qmsr/quality-management-system-regulation-frequently-asked-questions',
+      'https://www.iso.org/standard/59752.html',
+    ],
+    regulatoryChips: ['FDA-QSR-QMSR-review', 'ISO-13485-review', 'GxP-validation-review', '21-CFR-Part-11-review-if-electronic-records', 'supplier-quality-review'],
+    relatedPatternIds: ['PAT-SRC-CAT-EHS-001', 'PAT-SRC-CAT-CLM-001', 'PAT-SRC-CAT-LMS-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'enterprise_saas',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'MasterControl, Veeva Vault QMS, ETQ Reliance, TrackWise Digital, ComplianceQuest, Greenlight Guru, Qualio, Arena, Dot Compliance, Ideagen, and Intellect',
+        tier: 'enterprise',
+        positioning: 'QMS and eQMS candidates spanning controlled documents, CAPA, deviations, complaints, audits, supplier quality, change control, training, risk, validation, and regulated-quality workflows.',
+        cautions: ['Validate regulated-industry fit, electronic-record controls, validation packages, audit trails, training linkage, and supplier/external collaborator access before award.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Veeva Vault QMS public product page', url: 'https://www.veeva.com/products/vault-qms/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'ETQ Reliance QMS overview', url: 'https://www.etq.com/product-overview/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'MasterControl ISO 13485 QMS software page', url: 'https://www.mastercontrol.com/compliance/iso13485/software', asOf: '2026-04-29' },
+        ],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'QMS pricing constructs only',
+        model: 'hybrid',
+        metric: 'Quality users, approvers, read-only/training users, external collaborators, modules, documents, workflows, validation package, integrations, implementation, migration, support, and regulated environment scope',
+        sourceBasis: [
+          { type: 'founder-data-gap', label: 'Regulated scope, user roles, document volume, CAPA/deviation volume, validation needs, supplier users, and implementation scope require buyer evidence' },
+        ],
+        confidence: 0.50,
+        notes: 'Do not publish QMS price, audit-readiness, FDA-483 reduction, validation-cost, or quality-cost benchmarks without buyer or approved source evidence.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Validation and electronic-record controls',
+        buyerPosition: 'Define validation package, audit trail, electronic signature, access control, record retention, change-control evidence, release testing, admin rights, and regulated-environment responsibilities.',
+      },
+      {
+        clauseArea: 'Quality data and exit',
+        buyerPosition: 'Require export of documents, revisions, CAPAs, deviations, complaints, audits, training links, supplier records, change controls, signatures, attachments, and audit history with transition assistance.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Regulated-process proof',
+        whenToUse: 'Use when life sciences, medical device, aerospace, automotive, food, or other regulated quality obligations are material.',
+        buyerAsk: 'Run scripted proof for document change, CAPA, deviation, complaint, supplier issue, audit finding, training assignment, signature, and validation evidence.',
+      },
+      {
+        lever: 'Validation package and external-user decomposition',
+        whenToUse: 'Use when the quote bundles QMS modules, validation services, supplier portals, read-only users, training users, and implementation.',
+        buyerAsk: 'Separate validation artifacts, migration, module scope, external collaborators, approvers, read-only users, training seats, support tier, and future workflow changes.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'qms-validation-gap',
+        label: 'Validation and audit-trail gap',
+        severity: 'critical',
+        detectionSignals: ['Vendor cannot explain validation package, audit trail, electronic signatures, release controls, or regulated change evidence.'],
+        mitigations: ['Require validation deliverables, Part 11/GxP review where applicable, audit-trail tests, and regulated owner signoff'],
+      },
+      {
+        id: 'qms-process-islands',
+        label: 'Disconnected quality processes',
+        severity: 'high',
+        detectionSignals: ['CAPA, documents, training, complaints, audits, suppliers, and change controls do not link into a traceable quality record.'],
+        mitigations: ['Run end-to-end traceability proof and require data model, workflow, and reporting acceptance criteria'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'healthcare',
+        modifier: 'For life sciences and medical devices, stress validation, electronic records/signatures, ISO 13485, FDA QSR/QMSR, complaints, CAPA, and supplier quality.',
+      },
+      {
+        industry: 'manufacturing',
+        modifier: 'Stress nonconformance, supplier quality, audits, change control, document control, training linkage, and shop-floor quality events.',
+      },
+      {
+        industry: 'energy_utilities',
+        modifier: 'Stress asset/process quality, audit evidence, corrective actions, supplier controls, safety/EHS overlap, and regulated operating procedures.',
+      },
+    ],
+    body: `## Summary
+Quality Management System software is an evidence system for controlled processes. It may govern documents, CAPA, deviations, complaints, audits, supplier quality, change control, training, risk, validation, and electronic signatures. A sourcing event should prove that quality records are traceable, validated where required, and usable during audits or inspections. It should not treat QMS as a generic workflow or document repository.
+
+## When to apply
+Use this pattern when sourcing MasterControl, Veeva Vault QMS, ETQ Reliance, TrackWise Digital, ComplianceQuest, Greenlight Guru, Qualio, Arena, Dot Compliance, Ideagen, Intellect, or comparable eQMS/QMS platforms. Apply it during paper-to-eQMS migration, regulated manufacturing expansion, life-sciences or medical-device quality modernization, CAPA remediation, supplier-quality redesign, audit readiness improvement, document-control replacement, or validation improvement. Do not use it for EHS-only, LMS-only, CLM-only, GRC-only, or general document-management events unless controlled quality processes are central.
+
+## Category boundary
+In scope: controlled documents, revision history, training linkage, deviations, nonconformances, CAPA, complaints, audits, supplier quality, change control, risk management, electronic signatures, audit trails, validation packages, external collaborators, attachments, reporting, dashboards, and export. Adjacent but distinct: EHS incident management, manufacturing execution, PLM, LMS, supplier risk, GRC, CLM, and file storage.
+
+## Lifecycle and gates
+The scope gate should inventory regulated products, standards, sites, quality processes, document volumes, CAPA/deviation/complaint volume, audit scope, supplier population, training linkage, validation obligations, external collaborators, integrations, and migration sources. The RFP gate should require module scope, electronic-record controls, audit trails, validation package, security, DPA, subprocessors, implementation method, migration approach, support, and exit rights. The proof gate should run document change, CAPA, deviation, complaint, supplier issue, audit finding, training assignment, electronic signature, validation evidence, report export, and record-retention scenarios. The BAFO gate should normalize users, roles, read-only access, external users, modules, validation services, migration, integrations, implementation, support, sandboxes, and renewal controls.
+
+## Evaluation rubric
+Weight regulated-process fit around 25 percent, audit trail and validation evidence around 20 percent, workflow traceability around 20 percent, document/training linkage around 15 percent, integration and security around 10 percent, and commercial predictability around 10 percent. Increase validation weight where GxP, medical device, electronic signatures, or formal software validation are in scope.
+
+## Pricing and contract notes
+Public sources support capability framing. Veeva describes Vault QMS for life-sciences quality processes including complaints, deviations, audits, quality risk management, supplier quality, and change control. ETQ Reliance public material describes applications such as document control, training management, audit management, corrective action, and analytics. MasterControl public material describes ISO 13485 and medical-device QMS support across document control, CAPA, change control, training, audits, and validation-oriented workflows. FDA's QMSR page states that the Quality Management System Regulation became effective on February 2, 2026 and incorporates ISO 13485:2016 by reference for medical device quality management system requirements. These public sources do not prove net price, implementation effort, audit outcome, FDA-483 reduction, validation cost reduction, or quality-cost improvement for a specific buyer.
+
+Contracting should define validation deliverables, electronic-record and signature controls, audit logs, release/change-control responsibilities, data ownership, migration acceptance, record retention, external collaborator access, support response, export rights, transition assistance, security attestations, renewal uplift, and responsibility for configuration or validation defects.
+
+## Contradictions and failure modes
+Vendor claim: audit readiness is built in. Detection: require complete traceability from document to training, event, CAPA, change control, approval, signature, and audit export. Vendor claim: validation is easy. Detection: inspect validation package, responsibility matrix, test scripts, release controls, and regulated owner signoff. Vendor claim: AI accelerates investigations or CAPA. Detection: require human review, source traceability, audit trail, and no unsupported root-cause or regulatory conclusions.
+
+The common failure is buying electronic workflow without preserving inspection-ready evidence. The second is treating validation as a vendor checkbox while buyer procedures, configuration, integrations, and release controls create regulated responsibility. The third is leaving documents, training, supplier records, complaints, and CAPAs in separate process islands, making audit reconstruction slow and fragile.`
+  },
+
 ];
 
 export const SOURCING_CATEGORY_PATTERN_COUNT = SOURCING_CATEGORY_PATTERNS.length;

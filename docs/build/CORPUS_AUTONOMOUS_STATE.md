@@ -1,12 +1,12 @@
 # Corpus Autonomous State
 
-Last update timestamp: 2026-04-29T04:21:01Z
+Last update timestamp: 2026-04-29T04:50:07Z
 
 ## Current wave
 Wave 1 - category-specific sourcing playbooks in progress.
 
 ## Domains in progress
-- Category-specific sourcing playbooks: PR #824 merged; TMS/HRTech/payroll batch authored locally for validation.
+- Category-specific sourcing playbooks: PR #826 merged; PR #831 held on unrelated DOM integrity failure; EHS/PPM/QMS batch validated locally but PR creation paused to avoid a second known out-of-scope CI failure.
 - Process/methodology: queued.
 - Contract intelligence: queued.
 - Pricing intelligence: queued.
@@ -17,7 +17,7 @@ Wave 1 - category-specific sourcing playbooks in progress.
 
 ## Pattern counts by domain
 - Existing sourcing corpus on latest main before Wave 1: 24 patterns.
-- Category-specific sourcing playbooks (`PAT-SRC-CAT-*`): 42 authored across Wave 1; 39 merged in PRs #812, #813, #814, #815, #816, #817, #818, #819, #820, #821, #822, #823, and #824, and 3 authored locally for the next PR.
+- Category-specific sourcing playbooks (`PAT-SRC-CAT-*`): 48 authored across Wave 1; 42 merged in PRs #812, #813, #814, #815, #816, #817, #818, #819, #820, #821, #822, #823, #824, and #826; 3 held in PR #831; 3 authored locally for the next PR.
 - Vendor intelligence profiles (`PAT-SRC-VEN-*`): 0
 - Contract intelligence (`PAT-SRC-CON-*`): 0
 - Pricing intelligence (`PAT-SRC-PRC-*`): 0
@@ -41,23 +41,18 @@ Wave 1 - category-specific sourcing playbooks in progress.
 - #822 - `[corpus][cat] Author PAT-SRC-CAT-OBS-001, PAT-SRC-CAT-ITAM-001, PAT-SRC-CAT-SAM-001 · 3 patterns` - merged 2026-04-29T04:01:27Z at `04e22a1e64d7abb13015de34be6b77ec28e8ad92`.
 - #823 - `[corpus][cat] Author PAT-SRC-CAT-ESM-001, PAT-SRC-CAT-BPM-001, PAT-SRC-CAT-LEGAL-001 · 3 patterns` - merged 2026-04-29T04:12:20Z at `97230967ec74a83b98814224b649da47214b613f`.
 - #824 - `[corpus][cat] Author PAT-SRC-CAT-PROCURE-001, PAT-SRC-CAT-CLM-001, PAT-SRC-CAT-AP-001 · 3 patterns` - merged 2026-04-29T04:20:15Z at `d3b76da741d85d74e6c920686f116bee8d55d9c6`.
+- #826 - `[corpus][cat] Author PAT-SRC-CAT-TMS-001, PAT-SRC-CAT-HRTECH-001, PAT-SRC-CAT-PAYROLL-001 · 3 patterns` - merged 2026-04-29T04:39:00Z at `32043d785c4b8f89f663ef1bf97364e3b7923433`.
 
 ## Open PRs
-- None.
+- #831 - `[corpus][cat] Author PAT-SRC-CAT-WFM-001, PAT-SRC-CAT-PSA-001, PAT-SRC-CAT-CPQ-001 · 3 patterns` - held; labeled `NEEDS REVIEW` because `Routes and disclaimers` fails on unrelated empty handlers in `src/components/reasoning/SynthesisFeedbackWidget.tsx`.
 
 ## Held PRs requiring founder review
-- None.
+- #831 - held from auto-merge. Corpus validation passed locally, but CI is not green due to an out-of-scope DOM integrity failure in existing runtime/UI files.
 
 ## Stalled lanes
-- None. Collaboration/productivity, video conferencing, enterprise messaging, CDP, cloud data warehouse, lakehouse, MDM, data fabric, ETL/ELT, revenue intelligence, BI, LLM/model-access, agent runtime, vector retrieval, MLOps, enterprise code platform, workforce IAM, IGA, PAM, SASE/SSE, SIEM, EDR/XDR, CNAPP/CSPM, FinOps, observability, ITAM, SAM, ESM, BPM, legal operations, procurement, CLM, AP automation, TMS, HRTech, and payroll research lanes completed with read-only source notes.
+- None. Collaboration/productivity, video conferencing, enterprise messaging, CDP, cloud data warehouse, lakehouse, MDM, data fabric, ETL/ELT, revenue intelligence, BI, LLM/model-access, agent runtime, vector retrieval, MLOps, enterprise code platform, workforce IAM, IGA, PAM, SASE/SSE, SIEM, EDR/XDR, CNAPP/CSPM, FinOps, observability, ITAM, SAM, ESM, BPM, legal operations, procurement, CLM, AP automation, TMS, HRTech, payroll, WFM, PSA, CPQ, EHS, PPM, and QMS research lanes completed with read-only source notes.
 
 ## Next 16 queued pattern IDs
-- PAT-SRC-CAT-WFM-001
-- PAT-SRC-CAT-PSA-001
-- PAT-SRC-CAT-CPQ-001
-- PAT-SRC-CAT-EHS-001
-- PAT-SRC-CAT-PPM-001
-- PAT-SRC-CAT-QMS-001
 - PAT-SRC-CAT-RPA-001
 - PAT-SRC-CAT-ERP2-001
 - PAT-SRC-CAT-DOC-001
@@ -68,10 +63,17 @@ Wave 1 - category-specific sourcing playbooks in progress.
 - PAT-SRC-CAT-BI2-001
 - PAT-SRC-CAT-SEARCH-001
 - PAT-SRC-CAT-EMAIL-001
+- PAT-SRC-CAT-SSO-001
+- PAT-SRC-CAT-OBS2-001
+- PAT-SRC-CAT-MDM2-001
+- PAT-SRC-CAT-ITOM-001
+- PAT-SRC-CAT-DB-001
+- PAT-SRC-CAT-API-001
 
 ## Current blockers
+- Hard stop: PR #831 cannot auto-merge, and opening another corpus PR would trigger the same out-of-scope `Routes and disclaimers` failure in `src/components/reasoning/SynthesisFeedbackWidget.tsx`. Per hard stop condition 5, notify founder before continuing PR creation.
 - Full `npm test -- --runInBand` remains blocked by pre-existing unrelated broad-suite failures outside corpus branch scope.
 - Numeric pricing, discount, implementation-ratio, AI-usage, overage, and renewal-uplift claims remain intentionally blank unless source-backed by buyer evidence or approved benchmarks.
 
 ## Next action
-Validate and open the TMS, HRTech, and payroll category batch: `PAT-SRC-CAT-TMS-001`, `PAT-SRC-CAT-HRTECH-001`, and `PAT-SRC-CAT-PAYROLL-001`, then continue with the WFM/PSA/CPQ queue.
+Stop and notify founder: EHS, PPM, and QMS are committed locally on `corpus/cat/ehs-ppm-qms-batch-16-main`, but PR creation is paused until the unrelated DOM integrity failure is resolved or explicitly overridden.
