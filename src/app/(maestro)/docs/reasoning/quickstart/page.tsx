@@ -331,6 +331,11 @@ export default function ReasoningQuickstartDocPage() {
             <Link href="/docs/reasoning/demo" style={LINK_STYLE}>
               5-minute demo walkthrough
             </Link>
+            . For an investor-ready overview of what the reasoning layer is
+            and live metrics from the corpus, read the{' '}
+            <Link href="/docs/reasoning/about" style={LINK_STYLE}>
+              about page
+            </Link>
             .
           </p>
         </Section>

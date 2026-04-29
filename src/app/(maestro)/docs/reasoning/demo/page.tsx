@@ -459,6 +459,11 @@ export default function ReasoningDemoDocPage() {
             <Link href="/docs/reasoning/patterns" style={LINK_STYLE}>
               Pattern doctrine library
             </Link>
+            . Want an investor-ready overview with live metrics from the
+            corpus?{' '}
+            <Link href="/docs/reasoning/about" style={LINK_STYLE}>
+              About the reasoning layer
+            </Link>
             .
           </p>
         </Section>
