@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * LifecycleMiniGraph — REASON-30
  *
@@ -5,7 +7,11 @@
  * circle per pattern stage, connected by directional arrows, with a small
  * gate-criteria count badge attached to each node.
  *
- * Server component: no hooks, no event handlers — purely presentational.
+ * Client component (no hooks of its own — the `'use client'` boundary exists
+ * solely so the optional `onStageClick` callback can be wired through). When
+ * `onStageClick` is omitted the rendered output is identical to the legacy
+ * presentational SVG that shipped in PR #762.
+ *
  * Caller is expected to pass a deterministic `stages` list, the same
  * `stageStates` map already computed for the strip, and a `gateCriteriaCount`
  * map keyed by stage id.
@@ -13,6 +19,8 @@
  * Returns `null` when there are no stages — patternless instances render as
  * nothing rather than a vestigial SVG outline.
  */
+
+import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 
 import type { LifecycleStage } from '@/lib/intelligence/seed-types';
 import { SHELL } from '@/lib/shell/shell-tokens';
@@ -91,6 +99,13 @@ export interface LifecycleMiniGraphProps {
    * Falls back to the stage's pattern description when absent for a stage.
    */
   microSynthesis?: Record<string, string>;
+  /**
+   * Optional click handler. When provided, each stage node becomes
+   * interactive: clicking calls `onStageClick(stageId)` and the cursor
+   * upgrades to `pointer`. When omitted the graph renders as a presentational
+   * SVG with hover-tooltips only (legacy PR #762 behaviour).
+   */
+  onStageClick?: (stageId: string) => void;
 }
 
 export function LifecycleMiniGraph({
@@ -98,6 +113,7 @@ export function LifecycleMiniGraph({
   stageStates,
   gateCriteriaCount,
   microSynthesis,
+  onStageClick,
 }: LifecycleMiniGraphProps) {
   if (!stages || stages.length === 0) {
     return null;
@@ -164,8 +180,24 @@ export function LifecycleMiniGraph({
             microSynthesis?.[stage.id] && microSynthesis[stage.id]!.length > 0
               ? `${stage.label} — ${microSynthesis[stage.id]}`
               : stage.description;
+          const interactive = typeof onStageClick === 'function';
+          const clickProps = interactive
+            ? {
+                role: 'button' as const,
+                tabIndex: 0,
+                style: { cursor: 'pointer' as const },
+                onClick: () => onStageClick!(stage.id),
+                onKeyDown: (e: ReactKeyboardEvent<SVGGElement>) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onStageClick!(stage.id);
+                  }
+                },
+                'aria-label': `Open synthesis for stage ${stage.label}`,
+              }
+            : {};
           return (
-            <g key={stage.id} data-stage-id={stage.id}>
+            <g key={stage.id} data-stage-id={stage.id} {...clickProps}>
               <title>{tooltip}</title>
               <circle
                 cx={node.x}

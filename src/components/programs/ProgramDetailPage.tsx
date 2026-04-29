@@ -45,6 +45,7 @@ import { InstanceEventTimeline } from '@/components/_shared/InstanceEventTimelin
 import { InstanceEventTimelineFilterBar } from '@/components/_shared/InstanceEventTimelineFilterBar';
 import type { TimelineFilters } from '@/lib/reasoning/instance-event-timeline-filters';
 import { LifecycleMiniGraph } from '@/components/_shared/LifecycleMiniGraph';
+import { StageSynthesisDrawer } from '@/components/_shared/StageSynthesisDrawer';
 import { HandoffNarrativePanel } from '@/components/_shared/HandoffNarrativePanel';
 import type { StageStatus } from '@/components/shell/StageTrackerStrip';
 import { findLifecyclePattern } from '@/lib/reasoning/lifecycle-pattern-lookup';
@@ -3109,6 +3110,8 @@ export function ProgramDetailPage({
   const [showGateModal, setShowGateModal] = useState(false);
   const [gateApproveError, setGateApproveError] = useState<string | null>(null);
   const [isApprovingGate, setIsApprovingGate] = useState(false);
+  // REASON-32 — opt-in deeper LLM-streamed per-stage synthesis. `null` = closed.
+  const [openStageId, setOpenStageId] = useState<string | null>(null);
   // PROG21 — Gate approval interaction drawer
   const [showGateApprovalDrawer, setShowGateApprovalDrawer] = useState(false);
   const gateApprovalDrawerView = buildGateApprovalDrawerView(view);
@@ -3423,7 +3426,14 @@ export function ProgramDetailPage({
     // between each consecutive pair of stages.
     const handoffNarratives = buildStageHandoffNarratives(pattern);
 
-    return { stages: pattern.stages, counts, states, microSynthesis, handoffNarratives };
+    return {
+      instanceId: instance.id,
+      stages: pattern.stages,
+      counts,
+      states,
+      microSynthesis,
+      handoffNarratives,
+    };
   })();
 
   // PRG-EVIDENCE-INGEST — Resolve the underlying program-instance id +
@@ -3609,6 +3619,7 @@ export function ProgramDetailPage({
               stageStates={lifecycleMiniGraph.states}
               gateCriteriaCount={lifecycleMiniGraph.counts}
               microSynthesis={lifecycleMiniGraph.microSynthesis}
+              onStageClick={setOpenStageId}
             />
           </div>
         )}
@@ -4360,6 +4371,20 @@ export function ProgramDetailPage({
         <GateApprovalDrawer
           drawerView={gateApprovalDrawerView}
           onClose={() => setShowGateApprovalDrawer(false)}
+        />
+      )}
+
+      {/* REASON-32 — Per-stage LLM-streamed deeper synthesis drawer */}
+      {openStageId && lifecycleMiniGraph && (
+        <StageSynthesisDrawer
+          open
+          instanceId={lifecycleMiniGraph.instanceId}
+          stageId={openStageId}
+          stageLabel={
+            lifecycleMiniGraph.stages.find((s) => s.id === openStageId)?.label
+            ?? openStageId
+          }
+          onClose={() => setOpenStageId(null)}
         />
       )}
     </AppShell>

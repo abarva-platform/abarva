@@ -28,6 +28,7 @@ import { CascadeImpactCard, ReverseCascadeCard } from '@/components/_shared/Casc
 import { LinkedInstanceTilesGrid } from '@/components/_shared/LinkedInstanceTilesGrid';
 import { InstanceEventTimeline } from '@/components/_shared/InstanceEventTimeline';
 import { LifecycleMiniGraph } from '@/components/_shared/LifecycleMiniGraph';
+import { StageSynthesisDrawer } from '@/components/_shared/StageSynthesisDrawer';
 import { HandoffNarrativePanel } from '@/components/_shared/HandoffNarrativePanel';
 import type { StageStatus } from '@/components/shell/StageTrackerStrip';
 import { buildSourceSynthesisContext } from '@/lib/reasoning/synthesis-context-builder';
@@ -1794,6 +1795,8 @@ function TransitionReadinessTab() {
 export function SourceEventDetailPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('summary');
   const [drawerOpen, setDrawerOpen] = useState(false);
+  // REASON-32 — opt-in deeper LLM-streamed per-stage synthesis. `null` = closed.
+  const [openStageId, setOpenStageId] = useState<string | null>(null);
 
   // Stage-aware pane contract (Shell Layout Spec v2 §7)
   // BAFO = stage 7 of 10 → StageId S7
@@ -1884,6 +1887,7 @@ export function SourceEventDetailPage() {
             stageStates={miniGraphStageStates}
             gateCriteriaCount={gateCriteriaCount}
             microSynthesis={miniGraphMicroSynthesis}
+            onStageClick={setOpenStageId}
           />
         </div>
         {/* REASON-31 — Stage handoff narrative panel: describes the
@@ -2034,6 +2038,20 @@ export function SourceEventDetailPage() {
         quote={STEWARD_QUOTE}
         surface="source-detail"
       />
+
+      {/* REASON-32 — Per-stage LLM-streamed deeper synthesis drawer */}
+      {openStageId && (
+        <StageSynthesisDrawer
+          open
+          instanceId={AMS_VENDOR_CONSOLIDATION_2026_INSTANCE.id}
+          stageId={openStageId}
+          stageLabel={
+            PAT_SRC_AMS_001.stages.find((s) => s.id === openStageId)?.label
+            ?? openStageId
+          }
+          onClose={() => setOpenStageId(null)}
+        />
+      )}
     </AppShell>
   );
 }
