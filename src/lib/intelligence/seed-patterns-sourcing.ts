@@ -16,6 +16,7 @@ import { DOCUSIGN_VENDOR_PROFILE_PATTERN } from './seed-patterns-sourcing-vendor
 import { SOURCING_VENDOR_GITHUB_PATTERNS } from './seed-patterns-sourcing-vendors-github';
 import { PAT_SRC_VEN_AZURE_001 } from './seed-patterns-sourcing-vendors-azure';
 import { PAT_SRC_VEN_ELASTIC_001 } from './seed-patterns-sourcing-vendors-elastic';
+import { PAT_SRC_VEN_GOOGLECLOUD_001 } from './seed-patterns-sourcing-vendors-googlecloud';
 import { PAT_SRC_VEN_NEWRELIC_001 } from './seed-patterns-sourcing-vendors-newrelic';
 import { SOURCING_VENDOR_SAP_PATTERNS } from './seed-patterns-sourcing-vendors-sap';
 import { SMARTSHEET_VENDOR_PROFILE_PATTERNS } from './seed-patterns-sourcing-vendors-smartsheet';
@@ -1133,6 +1134,7 @@ Fixed-fee or capped T&M with monthly not-to-exceed, explicit deliverable accepta
   PAT_SRC_VEN_ELASTIC_001,
   ...SOURCING_VENDOR_SAP_PATTERNS,
   PAT_SRC_VEN_AZURE_001,
+  PAT_SRC_VEN_GOOGLECLOUD_001,
 ];
 
 export const SOURCING_PATTERN_COUNT = SOURCING_PATTERNS.length;
