@@ -11,6 +11,7 @@ import { SOURCING_PROCESS_PATTERNS } from './seed-patterns-sourcing-process';
 import { SOURCING_REGULATORY_AI_PATTERNS } from './seed-patterns-sourcing-regulatory-ai';
 import { SOURCING_REGULATORY_PATTERNS } from './seed-patterns-sourcing-regulatory';
 import { PAT_SRC_VEN_CLOUDFLARE_001 } from './seed-patterns-sourcing-vendors-cloudflare';
+import { PAT_SRC_VEN_CONTENTSTACK_001 } from './seed-patterns-sourcing-vendors-contentstack';
 import { SOURCING_VENDOR_COUPA_PATTERNS } from './seed-patterns-sourcing-vendors-coupa';
 import { DOCUSIGN_VENDOR_PROFILE_PATTERN } from './seed-patterns-sourcing-vendors-docusign';
 import { SOURCING_VENDOR_GITHUB_PATTERNS } from './seed-patterns-sourcing-vendors-github';
@@ -1145,6 +1146,7 @@ Fixed-fee or capped T&M with monthly not-to-exceed, explicit deliverable accepta
   PAT_SRC_VEN_ADYEN_001,
   PAT_SRC_VEN_BLOOMREACH_001,
   PAT_SRC_VEN_ACQUIA_001,
+  PAT_SRC_VEN_CONTENTSTACK_001,
 ];
 
 export const SOURCING_PATTERN_COUNT = SOURCING_PATTERNS.length;
