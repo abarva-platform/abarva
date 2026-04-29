@@ -45,10 +45,35 @@ export function clearWaiverAuditBuffer(): void {
   waiverAuditBuffer.length = 0;
 }
 
+// ─── Approval audit buffer ────────────────────────────────────────────────────
+// Mirrors the waiver buffer pattern. Gate-approval POSTs push records here via
+// `recordApproval`; the GET handler reads them alongside the waiver buffer.
+
+interface ApprovalAuditRecord {
+  instanceId: string;
+  criterionId: string;
+  action: 'approve' | 'reject';
+  justification: string;
+  actedAt: string;
+}
+
+export const approvalAuditBuffer: ApprovalAuditRecord[] = [];
+
+export function recordApproval(record: ApprovalAuditRecord): void {
+  approvalAuditBuffer.push(record);
+}
+
+/** Clear the approval audit buffer — used by the demo-reset endpoint. */
+export function clearApprovalAuditBuffer(): void {
+  approvalAuditBuffer.length = 0;
+}
+
 // ─── AuditEntry type ─────────────────────────────────────────────────────────
 
 export type AuditEntryType =
   | 'gate_waiver'
+  | 'gate_approval'
+  | 'gate_reject'
   | 'contradiction_resolved'
   | 'synthesis_feedback';
 
@@ -120,19 +145,19 @@ const DEMO_ENTRIES: AuditEntry[] = [
   },
   {
     id: 'audit_demo_07',
-    type: 'gate_waiver',
+    type: 'gate_approval',
     actor: 'demo-user',
-    instanceId: 'cdp-implementation',
-    detail: 'Gate criterion "data-governance-approval" waived — governance board on recess',
-    timestamp: hoursAgo(40),
+    instanceId: 'ams-vendor-consolidation-2026',
+    detail: 'Gate criterion "commercial-terms-signed" approved — signed NDA received',
+    timestamp: hoursAgo(1),
   },
   {
     id: 'audit_demo_08',
-    type: 'contradiction_resolved',
+    type: 'gate_reject',
     actor: 'demo-user',
-    instanceId: 'store-assoc-productivity',
-    detail: 'Contradiction "resource-constraint-conflict" marked resolved',
-    timestamp: hoursAgo(47),
+    instanceId: 'cdp-implementation',
+    detail: 'Gate criterion "security-pentest-completed" rejected — report not yet submitted',
+    timestamp: hoursAgo(3),
   },
 ];
 
@@ -153,7 +178,19 @@ function buildLiveEntries(): AuditEntry[] {
     });
   }
 
-  // 2. Contradiction resolutions
+  // 2. Gate approvals / rejections from the live buffer
+  for (const record of approvalAuditBuffer) {
+    entries.push({
+      id: `approval_${record.instanceId}_${record.criterionId}_${record.action}`,
+      type: record.action === 'approve' ? 'gate_approval' : 'gate_reject',
+      actor: 'demo-user',
+      instanceId: record.instanceId,
+      detail: `Gate criterion "${record.criterionId}" ${record.action === 'approve' ? 'approved' : 'rejected'} — ${record.justification}`,
+      timestamp: record.actedAt,
+    });
+  }
+
+  // 3. Contradiction resolutions
   for (const r of getResolvedEntries()) {
     // Convention: id is `{instanceId}::{templateId}` or bare templateId
     const parts = r.id.split('::');
@@ -169,7 +206,7 @@ function buildLiveEntries(): AuditEntry[] {
     });
   }
 
-  // 3. Synthesis feedback signals
+  // 4. Synthesis feedback signals
   const feedbackEvents = getRecentSynthesisEvents(500).filter(
     (e) => e.feedback !== undefined,
   );
