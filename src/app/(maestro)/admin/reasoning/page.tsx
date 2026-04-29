@@ -1058,6 +1058,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/health-bands',
     description: 'Health score band distribution — instance counts per band with common pattern and stage analysis',
   },
+  {
+    title: 'Resolution effectiveness',
+    href: '/admin/reasoning/resolution-effectiveness',
+    description: 'Contradiction resolution effectiveness — estimated health improvement per resolution and path analysis',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
