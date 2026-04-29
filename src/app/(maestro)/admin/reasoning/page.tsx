@@ -903,6 +903,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/confidence-breakdown',
     description: 'Synthesis confidence scores for all instances with factor-level breakdown of what drives confidence',
   },
+  {
+    title: 'Lifecycle map',
+    href: '/admin/reasoning/lifecycle-map',
+    description: 'Visual stage-pipeline map for every lifecycle pattern — stages ordered with gate criterion counts',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
