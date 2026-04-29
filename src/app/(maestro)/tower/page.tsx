@@ -2,6 +2,7 @@ import { TowerIndexPage } from '@/components/tower/TowerIndexPage';
 import { TowerProvenanceRibbon } from '@/components/tower/TowerProvenanceRibbon';
 import { TowerTopPatternsTile } from '@/components/tower/TowerTopPatternsTile';
 import { TowerMissionQueue } from '@/components/tower/TowerMissionQueue';
+import { TowerPortfolioSummaryStrip } from '@/components/tower/TowerPortfolioSummaryStrip';
 import { RiskRegisterPanel } from '@/components/_shared/RiskRegisterPanel';
 import { buildTowerSynthesisContext } from '@/lib/reasoning/tower-synthesis-context-builder';
 import { buildPortfolioRiskRegister } from '@/lib/reasoning/risk-register';
@@ -38,6 +39,7 @@ export default function TowerPage() {
           <TowerMissionQueue limit={8} />
         </>
       }
+      portfolioSummarySlot={<TowerPortfolioSummaryStrip />}
     />
   );
 }
