@@ -1,11 +1,12 @@
 import { performance } from 'node:perf_hooks';
 
 import { corpus, loadCorpus } from '../../src/lib/intelligence';
+import type { PatternSeed } from '../../src/lib/intelligence/seed-types';
 import type { SolutionSeed } from '../../src/lib/intelligence/seed-solutions';
 
 describe('intelligence corpus loader', () => {
   it('loads the shipped Phase 1 corpus counts', () => {
-    expect(corpus.patterns).toHaveLength(60);
+    expect(corpus.patterns).toHaveLength(72);
     expect(corpus.signals).toHaveLength(30);
     expect(corpus.solutions).toHaveLength(9);
     expect(corpus.contradictions).toHaveLength(10);
@@ -122,5 +123,81 @@ describe('intelligence corpus loader', () => {
     const elapsedMs = performance.now() - startedAt;
 
     expect(elapsedMs).toBeLessThan(100);
+  });
+
+  it('accepts optional sourcing extension fields without changing existing seeds', () => {
+    const extendedPattern = {
+      ...corpus.patterns[0],
+      id: 'PAT-SRC-EXTENSION-SMOKE',
+      slug: 'sourcing-extension-smoke',
+      category: 'services',
+      vendorClass: 'service',
+      vendorLandscape: [
+        {
+          vendorName: 'Example Services',
+          tier: 'specialist',
+          positioning: 'Used only to verify the optional sourcing extension shape.',
+          sourceBasis: [
+            {
+              type: 'founder-data-gap',
+              label: 'No public claim; type-shape smoke fixture only',
+            },
+          ],
+        },
+      ],
+      pricingBenchmarks: [
+        {
+          label: 'Founder data required',
+          model: 'unknown',
+          sourceBasis: [
+            {
+              type: 'founder-data-gap',
+              label: 'Pricing intentionally unspecified',
+            },
+          ],
+          confidence: 0.5,
+        },
+      ],
+      standardClauses: [
+        {
+          clauseArea: 'Exit assistance',
+          buyerPosition: 'Buyer requires transition support terms before award.',
+        },
+      ],
+      negotiationLevers: [
+        {
+          lever: 'Scope boundary',
+          whenToUse: 'Use when proposal scope and retained-buyer scope are not separated.',
+          buyerAsk: 'Separate base scope, transition scope, and optional advisory scope.',
+        },
+      ],
+      riskFactors: [
+        {
+          id: 'risk-scope-drift',
+          label: 'Scope drift',
+          severity: 'medium',
+          detectionSignals: ['Proposal relies on undefined retained responsibilities.'],
+          mitigations: ['Require a responsibility matrix before BAFO.'],
+        },
+      ],
+      industryVariants: [
+        {
+          industry: 'cross_industry',
+          modifier: 'No industry-specific modifier for the smoke fixture.',
+        },
+      ],
+    } satisfies PatternSeed;
+
+    const loaded = loadCorpus({
+      patterns: [extendedPattern],
+      signals: [],
+      solutions: [],
+      contradictions: [],
+    });
+
+    expect(loaded.patternsById.get('PAT-SRC-EXTENSION-SMOKE')).toMatchObject({
+      category: 'services',
+      vendorClass: 'service',
+    });
   });
 });
