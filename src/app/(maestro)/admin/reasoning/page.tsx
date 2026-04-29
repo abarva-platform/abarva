@@ -853,6 +853,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/portfolio-trend',
     description: 'Stage progression timeline across all instances — derived from stage history timestamps',
   },
+  {
+    title: 'Synthesis preview',
+    href: '/admin/reasoning/synthesis-preview',
+    description: 'L4 synthesis output for any instance — reasoning layer assessment, findings, and recommendations',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
