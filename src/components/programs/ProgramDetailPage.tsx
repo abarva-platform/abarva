@@ -30,6 +30,7 @@ import { buildProgramSynthesisContext } from '@/lib/reasoning/program-synthesis-
 import { summarizeFailureModes } from '@/lib/reasoning/provenance-ribbon-helpers';
 import { FailureModeWarningChip } from '@/components/_shared/FailureModeWarningChip';
 import { EvidenceQualityChip } from '@/components/_shared/EvidenceQualityChip';
+import { StaleEvidenceChip } from '@/components/reasoning/StaleEvidenceChip';
 import { InstanceHealthBadge } from '@/components/_shared/InstanceHealthBadge';
 import { computeInstanceHealth } from '@/lib/reasoning/instance-health';
 import {
@@ -1183,6 +1184,7 @@ function EvidenceSection({ items, onView }: EvidenceSectionProps) {
             text: item.excerpt,
             citation: item.citation,
             uploadedBy: item.source,
+            uploadedAt: item.uploadedAt ?? undefined,
           });
           const itemQualitySummary = {
             mean: itemScore.score,
@@ -1249,6 +1251,8 @@ function EvidenceSection({ items, onView }: EvidenceSectionProps) {
                 grade={itemScore.grade}
                 reasons={itemScore.reasons}
               />
+              {/* Staleness chip — shown when evidence is older than 90 days */}
+              <StaleEvidenceChip date={item.uploadedAt ?? null} />
               {/* Failure mode warning chip — shown when a contradiction is
                   recorded against this evidence item */}
               {item.hasContradiction && (

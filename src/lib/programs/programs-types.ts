@@ -63,6 +63,8 @@ export interface EvidenceItem {
   confidence: 'high' | 'medium' | 'low';
   hasContradiction?: boolean;  // true if a conflicting item exists
   provenanceNote?: string;
+  /** ISO date string for when this evidence was recorded/uploaded. Used for staleness rendering. */
+  uploadedAt?: string | null;
 }
 
 export interface ProgramPhasePanel {

@@ -47,13 +47,47 @@ describe('scoreEvidenceItem', () => {
     expect(fresh.reasons).toContain('Uploaded within 90 days (+0.10)');
   });
 
-  test('stale uploadedAt outside 90 days does not get freshness bonus', () => {
+  test('stale uploadedAt outside 90 days does not get freshness bonus and takes severe-stale penalty', () => {
+    // 2025-01-01 → ~483 days before NOW (2026-04-28) → severe stale → -0.20
+    // citation 0.20 + uploadedBy 0.15 - severe stale 0.20 = 0.15
     const stale = scoreEvidenceItem(
       { citation: 'doc', uploadedBy: 'jane', uploadedAt: '2025-01-01T00:00:00Z' },
       NOW_MS,
     );
-    expect(stale.score).toBeCloseTo(0.35, 5);
-    expect(stale.reasons.some((r) => r.includes('Uploaded'))).toBe(false);
+    expect(stale.score).toBeCloseTo(0.15, 5);
+    expect(stale.reasons.some((r) => r.includes('Uploaded within'))).toBe(false);
+    expect(stale.reasons.some((r) => r.includes('severe stale'))).toBe(true);
+  });
+
+  test('mild stale uploadedAt between 90–180 days incurs -0.10 penalty', () => {
+    // 2025-11-30 → ~149 days before NOW (2026-04-28) → mild stale → -0.10
+    // citation 0.20 + uploadedBy 0.15 - mild stale 0.10 = 0.25
+    const mildStale = scoreEvidenceItem(
+      { citation: 'doc', uploadedBy: 'jane', uploadedAt: '2025-11-30T00:00:00Z' },
+      NOW_MS,
+    );
+    expect(mildStale.score).toBeCloseTo(0.25, 5);
+    expect(mildStale.reasons.some((r) => r.includes('mild stale'))).toBe(true);
+  });
+
+  test('severe stale uploadedAt older than 180 days incurs -0.20 penalty', () => {
+    // 2025-10-01 → ~209 days before NOW (2026-04-28) → severe stale → -0.20
+    // citation 0.20 + uploadedBy 0.15 - severe stale 0.20 = 0.15
+    const severeStale = scoreEvidenceItem(
+      { citation: 'doc', uploadedBy: 'jane', uploadedAt: '2025-10-01T00:00:00Z' },
+      NOW_MS,
+    );
+    expect(severeStale.score).toBeCloseTo(0.15, 5);
+    expect(severeStale.reasons.some((r) => r.includes('severe stale'))).toBe(true);
+  });
+
+  test('age deduction cannot push score below 0', () => {
+    // Only a citation 0.20 - severe stale 0.20 = 0, not negative
+    const result = scoreEvidenceItem(
+      { citation: 'doc', uploadedAt: '2024-01-01T00:00:00Z' },
+      NOW_MS,
+    );
+    expect(result.score).toBeGreaterThanOrEqual(0);
   });
 
   test('text length brackets — short / medium / long', () => {

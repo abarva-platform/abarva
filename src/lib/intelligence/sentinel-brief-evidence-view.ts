@@ -7,6 +7,8 @@ export interface EvidenceItem {
   status: EvidenceItemStatus;
   source: string | null;
   note: string;
+  /** ISO date string for when this evidence was recorded/uploaded. Used for staleness rendering. */
+  date?: string | null;
   deterministicSeed: true;
 }
 

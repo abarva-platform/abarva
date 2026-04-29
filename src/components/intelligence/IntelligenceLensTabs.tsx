@@ -24,6 +24,7 @@ import {
 } from '@/lib/intelligence/intelligence-lens-tabs-view';
 import { EvidenceQualityChip } from '@/components/_shared/EvidenceQualityChip';
 import { FailureModeWarningChip } from '@/components/_shared/FailureModeWarningChip';
+import { StaleEvidenceChip } from '@/components/reasoning/StaleEvidenceChip';
 import { scoreEvidenceItem } from '@/lib/reasoning/evidence-quality';
 import {
   buildIntelligenceWorkflowCanvasView,
@@ -1041,6 +1042,8 @@ function EvidenceRow({
           grade={itemScore.grade}
           reasons={itemScore.reasons}
         />
+        {/* Staleness chip — shown when evidence is older than 90 days */}
+        <StaleEvidenceChip date={item.date ?? null} />
         {/* Failure mode warning chip — missing evidence items represent an
             unresolved evidence gap, which is itself a failure mode signal */}
         {variant === 'missing' && (
