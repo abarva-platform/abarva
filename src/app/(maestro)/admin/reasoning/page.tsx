@@ -1318,6 +1318,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Evidence Velocity',
     description: 'Evidence accumulation rate per instance — coverage %, velocity, and time-to-sufficiency projections.',
   },
+  {
+    href: '/admin/reasoning/gate-compliance-score',
+    title: 'Gate Compliance Score',
+    description: 'Native gate compliance per instance — raw pass rate minus waiver and contradiction penalties.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
