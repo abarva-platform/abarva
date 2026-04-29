@@ -793,6 +793,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/regulatory',
     description: 'All regulatory and compliance tags across lifecycle patterns with active instance coverage',
   },
+  {
+    title: 'Health alerts',
+    href: '/admin/reasoning/health-alerts',
+    description: 'At-risk instances requiring attention — critical, high, medium, and low severity alerts',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
