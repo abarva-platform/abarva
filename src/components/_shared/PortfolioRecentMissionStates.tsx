@@ -68,6 +68,16 @@ const ROW: CSSProperties = {
   lineHeight: 1.4,
 };
 
+const NOTE: CSSProperties = {
+  gridColumn: '1 / -1',
+  margin: 0,
+  fontFamily: SHELL.SANS,
+  fontSize: 11,
+  fontStyle: 'italic',
+  color: SHELL.INK_MUTED,
+  lineHeight: 1.4,
+};
+
 const INSTANCE_BADGE: CSSProperties = {
   display: 'inline-block',
   padding: '2px 7px',
@@ -117,6 +127,7 @@ interface RecentRow {
   readonly criterionId: string;
   readonly status: 'complete' | 'dismissed';
   readonly timestamp: string;
+  readonly note?: string;
 }
 
 function splitMissionId(
@@ -147,13 +158,23 @@ export function PortfolioRecentMissionStates({
     const recents = getRecentMissionStates(id, safeLimit);
     for (const r of recents) {
       const { instanceId, criterionId } = splitMissionId(r.id, id);
-      aggregated.push({
-        missionId: r.id,
-        instanceId,
-        criterionId,
-        status: r.status,
-        timestamp: r.timestamp,
-      });
+      const row: RecentRow = r.note !== undefined
+        ? {
+            missionId: r.id,
+            instanceId,
+            criterionId,
+            status: r.status,
+            timestamp: r.timestamp,
+            note: r.note,
+          }
+        : {
+            missionId: r.id,
+            instanceId,
+            criterionId,
+            status: r.status,
+            timestamp: r.timestamp,
+          };
+      aggregated.push(row);
     }
   }
   if (aggregated.length === 0) return null;
@@ -181,6 +202,11 @@ export function PortfolioRecentMissionStates({
             >
               {entry.status}
             </span>
+            {entry.note && (
+              <p style={NOTE} data-testid="portfolio-recent-mission-note">
+                {entry.note}
+              </p>
+            )}
           </li>
         ))}
       </ul>
