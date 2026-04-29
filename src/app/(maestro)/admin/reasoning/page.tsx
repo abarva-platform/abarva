@@ -893,6 +893,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/instance-scorecard',
     description: 'Full scorecard comparison — health score, gates, contradictions, evidence, and waivers for every instance',
   },
+  {
+    title: 'Criterion detail',
+    href: '/admin/reasoning/criterion-detail',
+    description: 'Every gate criterion across all patterns with per-instance pass rates and hardest-criteria ranking',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
