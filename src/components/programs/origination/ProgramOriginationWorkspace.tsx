@@ -6,17 +6,19 @@
 // on the right. Replaces the legacy 3-step form (per kickoff §5: "the
 // 3-step wizard is deleted, not deprecated").
 //
-// In this PR the brief panel renders an empty/placeholder draft. PR2
-// adds structured-artifact extraction so the brief assembles reactively
-// as Steward identifies fields. PR3 adds engagement-keyed conversation
-// persistence (Obs #4 — conversation lost on reload).
+// PR2 wires the structured-artifact channel: Steward emits artifacts
+// inline with its text response; this component lifts the brief state
+// and applies each artifact incrementally so the right pane materializes
+// the agent's reasoning as it happens.
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { BrandColors, BrandTypography } from '@/lib/shell/brand-tokens';
+import type { Artifact } from '@/lib/agent/artifacts';
 import {
   ProgramBriefPanel,
   EMPTY_BRIEF,
   type ProgramBriefDraft,
+  type PatternMatchCard,
 } from './ProgramBriefPanel';
 import { StewardChat, type ChatTurn } from './StewardChat';
 
@@ -31,9 +33,42 @@ export function ProgramOriginationWorkspace({
   tenantName,
   initialTurns,
 }: ProgramOriginationWorkspaceProps) {
-  // Brief state lives here so PR2's structured-artifact channel can
-  // hand mutations down without restructuring the component tree.
-  const [brief] = useState<ProgramBriefDraft>(EMPTY_BRIEF);
+  const [brief, setBrief] = useState<ProgramBriefDraft>(EMPTY_BRIEF);
+  const [patternMatch, setPatternMatch] = useState<PatternMatchCard | null>(null);
+
+  const applyArtifact = useCallback((artifact: Artifact) => {
+    switch (artifact.type) {
+      case 'brief-field':
+        setBrief((prev) => ({ ...prev, [artifact.field]: artifact.value }));
+        return;
+      case 'pattern-match':
+        setPatternMatch({
+          patternId: artifact.patternId,
+          name: artifact.name,
+          summary: artifact.summary,
+          successRatePct: artifact.successRatePct,
+          deploymentCount: artifact.deploymentCount,
+          typicalDurationMonths: artifact.typicalDurationMonths,
+        });
+        // Mirror the matched-pattern id onto the brief so the brief row
+        // renders alongside the rich card.
+        setBrief((prev) => ({ ...prev, matchedPatternId: artifact.patternId }));
+        return;
+      case 'cross-program-dependency':
+        setBrief((prev) => {
+          const next = `${artifact.programId} · ${artifact.programName} (${artifact.currentPhase})`;
+          if (prev.crossProgramDependencies.includes(next)) return prev;
+          return {
+            ...prev,
+            crossProgramDependencies: [...prev.crossProgramDependencies, next],
+          };
+        });
+        return;
+      case 'classification':
+        setBrief((prev) => ({ ...prev, classification: artifact.archetypeLabel }));
+        return;
+    }
+  }, []);
 
   return (
     <main
@@ -114,8 +149,13 @@ export function ProgramOriginationWorkspace({
           minHeight: 0,
         }}
       >
-        <StewardChat surface={surface} tenantName={tenantName} initialTurns={initialTurns} />
-        <ProgramBriefPanel brief={brief} />
+        <StewardChat
+          surface={surface}
+          tenantName={tenantName}
+          initialTurns={initialTurns}
+          onArtifact={applyArtifact}
+        />
+        <ProgramBriefPanel brief={brief} patternMatch={patternMatch} />
       </div>
     </main>
   );
