@@ -281,27 +281,32 @@ function ScorecardTable({ scored }: { scored: ScoredRow[] }) {
                     {idx + 1}
                   </td>
                   <td style={TD}>
-                    <div
-                      style={{
-                        fontFamily: TYPOGRAPHY.serif,
-                        fontSize: 14,
-                        fontWeight: 600,
-                        color: COLORS.ink,
-                        letterSpacing: '-0.01em',
-                      }}
+                    <a
+                      href={`/admin/reasoning/instances/${row.id}`}
+                      style={{ color: SHELL.INK, textDecoration: 'none' }}
                     >
-                      {row.label}
-                    </div>
-                    <div
-                      style={{
-                        fontFamily: TYPOGRAPHY.mono,
-                        fontSize: 10,
-                        color: `${COLORS.ink}77`,
-                        marginTop: 2,
-                      }}
-                    >
-                      {row.id}
-                    </div>
+                      <div
+                        style={{
+                          fontFamily: TYPOGRAPHY.serif,
+                          fontSize: 14,
+                          fontWeight: 600,
+                          color: COLORS.ink,
+                          letterSpacing: '-0.01em',
+                        }}
+                      >
+                        {row.label}
+                      </div>
+                      <div
+                        style={{
+                          fontFamily: TYPOGRAPHY.mono,
+                          fontSize: 10,
+                          color: `${COLORS.ink}77`,
+                          marginTop: 2,
+                        }}
+                      >
+                        {row.id}
+                      </div>
+                    </a>
                   </td>
                   <td style={TD}>
                     <TypeBadge type={row.type} />
