@@ -933,6 +933,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/gate-owners',
     description: 'Hard gate criterion ownership by stakeholder category — grouped by pattern with distribution chart',
   },
+  {
+    title: 'Gate gap',
+    href: '/admin/reasoning/gate-gap',
+    description: 'Current stage gate gap per instance — hard gates remaining before advancement, with ready-to-advance list',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
