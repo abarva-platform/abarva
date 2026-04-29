@@ -778,6 +778,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/co-application',
     description: 'Lifecycle patterns that commonly appear together — defined and observed relationships',
   },
+  {
+    title: 'Contradiction debug',
+    href: '/admin/reasoning/contradiction-debug',
+    description: 'Per-instance contradiction detection — active, resolved, and non-firing templates with evidence',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
