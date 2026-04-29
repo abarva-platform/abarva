@@ -315,6 +315,12 @@ export default function ReasoningQuickstartDocPage() {
             user-facing surfaces already wired through Layer 3. The
             {' '}<Code>/admin/reasoning</Code> telemetry dashboard is the
             operational view of Layer 4 once your surface is shipping prose.
+            For a flat, git-derived view of every reasoning-layer commit
+            shipped, read the{' '}
+            <Link href="/docs/reasoning/changelog" style={LINK_STYLE}>
+              reasoning changelog
+            </Link>
+            .
           </p>
         </Section>
       </EditorialCanvas>
