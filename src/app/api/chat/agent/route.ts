@@ -15,6 +15,7 @@ import { requireTenancy } from "@/app/api/v1/programs/_auth";
 import { getEngagementWithPhaseData } from "@/lib/programs/db-phase-queries";
 import { PHASE_LABEL_MAP } from "@/lib/programs/programs-fixture";
 import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
+import { getUserContextPromptBlock } from "@/lib/agent/userContext";
 import { retrieveStageContext, retrieveCategoryContext } from "@/lib/intelligence/agent-retrieval";
 
 // ── Agent voice map ────────────────────────────────────────────────────────────
@@ -146,9 +147,15 @@ export async function POST(request: Request) {
   const stagePlaybook = retrieveStageContext(stage);
 
 
+  // F0.2 Layer 0 — user context block, composed AFTER role/voice line
+  // and BEFORE knowledge/task content so the agent always knows who
+  // it's speaking with. Empty string when unauthenticated.
+  const userContextBlock = await getUserContextPromptBlock();
+
   const systemPrompt = [
     voiceLine,
     "",
+    userContextBlock,
     "Page context:",
     ...contextLines,
     categoryPlaybook ? `\nService category context:\n${categoryPlaybook}` : "",

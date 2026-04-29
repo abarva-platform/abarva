@@ -44,6 +44,7 @@ import { createOutcomeFeeInvoice, isStripeConfigured } from '@/lib/billing/strip
 import { logAudit } from '@/lib/audit/log';
 import { assembleMaestroContextBlock } from '@/lib/agent/prompts/_shared/maestro-context';
 import { assembleUserContextBlock } from '@/lib/agent/prompts/_shared/user-context';
+import { getUserContextPromptBlock } from '@/lib/agent/userContext';
 import { assembleTopicIntelligenceBlock } from '@/lib/agent/prompts/_shared/topic-intelligence';
 import { updateMaestroProfile } from '@/lib/agent/maestro-extractor';
 import { parseChoicesFromText } from '@/lib/agent/parse-choices';
@@ -130,7 +131,12 @@ export async function POST(
     ? await getActivePersonalThreads(sponsor.id)
     : [];
 
-  const [maestroContextBlock, userContextBlock, topicIntelligenceBlock] = await Promise.all([
+  // F0.2 Layer 0 — signed-in user block. Distinct from the maestro
+  // context below: the maestro is the person assigned to run this
+  // engagement; the signed-in user is whoever is reading the chat.
+  // Often the same person, but not always.
+  const [signedInUserContextBlock, maestroContextBlock, userContextBlock, topicIntelligenceBlock] = await Promise.all([
+    getUserContextPromptBlock(),
     maestro
       ? assembleMaestroContextBlock({ personId: maestro.id, personName: maestro.name })
       : Promise.resolve(''),
@@ -206,6 +212,7 @@ export async function POST(
     engagement, sponsor, activePatterns, peerDecisions, chainedPatterns, maestro, personalThreads,
     maestroContextBlock,
     userContextBlock,
+    signedInUserContextBlock,
     topicIntelligenceBlock,
     retrievedContextBlock: [retrievedContextBlock, crossClientBlock].filter(Boolean).join('\n\n'),
   });

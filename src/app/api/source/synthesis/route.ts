@@ -10,6 +10,7 @@ import { recordSynthesisEvent } from "@/lib/reasoning/synthesis-telemetry";
 import { computeSynthesisEtag } from "@/lib/reasoning/synthesis-etag";
 import { registerSynthesisCache } from "@/lib/reasoning/synthesis-cache-registry";
 import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
+import { getUserContextPromptBlock } from "@/lib/agent/userContext";
 
 // Simple in-memory cache: key → text response
 // In production this would be Redis; for demo an in-process cache is sufficient.
@@ -17,7 +18,7 @@ const synthesisCache = new Map<string, string>();
 const cacheCreatedAt = new Map<string, number>();
 registerSynthesisCache('source', synthesisCache, cacheCreatedAt);
 
-const SENTINEL_SYNTHESIS_PROMPT = `You are Sentinel, AbarVa's intelligence validator on the Source surface.
+const SENTINEL_SYNTHESIS_VOICE_AND_TASK = `You are Sentinel, AbarVa's intelligence validator on the Source surface.
 
 Your synthesis task: given the structured state of a sourcing event (current stage, gate evaluations, missing artifacts, linked program dependencies), produce a 2–3 sentence validator's assessment in Sentinel voice.
 
@@ -28,9 +29,14 @@ Sentinel voice register (from brand voice spec §9):
 - Precise. No hedging language. No generic procurement boilerplate.
 - Reference the linked program dependency when it directly affects urgency.
 
-Format: Plain prose, 40–60 words. No headers, no bullets, no markdown.
+Format: Plain prose, 40–60 words. No headers, no bullets, no markdown.`;
 
-${AGENT_DEMO_SYSTEM_BLOCK}`;
+function buildSentinelSynthesisPrompt(userContextBlock: string): string {
+  // F0.2: role/voice → user context (Layer 0) → demo/knowledge block.
+  return [SENTINEL_SYNTHESIS_VOICE_AND_TASK, userContextBlock, AGENT_DEMO_SYSTEM_BLOCK]
+    .filter((s) => s && s.trim().length > 0)
+    .join('\n\n');
+}
 
 export async function POST(request: Request) {
   const startedAt = Date.now();
@@ -114,10 +120,13 @@ export async function POST(request: Request) {
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+  // F0.2 Layer 0
+  const userContextBlock = await getUserContextPromptBlock();
+
   const stream = await client.messages.stream({
     model: "claude-sonnet-4-6",
     max_tokens: 150,
-    system: SENTINEL_SYNTHESIS_PROMPT,
+    system: buildSentinelSynthesisPrompt(userContextBlock),
     messages: [{ role: "user", content: userMessage }],
   });
 
