@@ -20,13 +20,47 @@
 const RESOLVED: Map<string, string> = new Map();
 
 /**
+ * Pluggable persistence backend. Implementations are write-only and
+ * best-effort — callers do not await them and failures are swallowed by the
+ * dispatch site. The default (no backend installed) preserves the original
+ * in-memory-only semantics.
+ */
+export interface ContradictionResolutionBackend {
+  /** Persist that a contradiction id was marked resolved at the given ts. */
+  mark(id: string, timestamp: string): Promise<void>;
+  /** Persist a clear of all resolved-state rows (test-only / admin use). */
+  clearAll(): Promise<void>;
+}
+
+let activeBackend: ContradictionResolutionBackend | null = null;
+
+/**
+ * Install a write-through backend for contradiction resolution persistence.
+ * Pass `null` to restore the default in-memory-only behavior.
+ */
+export function setContradictionResolutionBackend(
+  backend: ContradictionResolutionBackend | null,
+): void {
+  activeBackend = backend;
+}
+
+/** Read the currently-installed backend (mostly for tests + diagnostics). */
+export function getContradictionResolutionBackend(): ContradictionResolutionBackend | null {
+  return activeBackend;
+}
+
+/**
  * Mark a contradiction id as resolved. Subsequent calls with the same id
  * are idempotent and preserve the original resolution timestamp.
  */
 export function markResolved(id: string): void {
   if (typeof id !== 'string' || id.length === 0) return;
   if (RESOLVED.has(id)) return;
-  RESOLVED.set(id, new Date().toISOString());
+  const timestamp = new Date().toISOString();
+  RESOLVED.set(id, timestamp);
+  if (activeBackend) {
+    void activeBackend.mark(id, timestamp).catch(() => {});
+  }
 }
 
 /**
@@ -66,4 +100,5 @@ export function getResolvedEntries(): ReadonlyArray<{ id: string; resolvedAt: st
  */
 export function _resetForTests(): void {
   RESOLVED.clear();
+  activeBackend = null;
 }
