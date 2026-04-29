@@ -1228,6 +1228,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Gate Remediation Plan',
     description: 'Prioritized P1-P4 remediation plans per instance — unmet gates, health gain estimates, and quick wins.',
   },
+  {
+    href: '/admin/reasoning/pattern-conflict-detector',
+    title: 'Pattern Conflict Detector',
+    description: 'Detects stage ordering, duplicate criteria, and gate count conflicts between pattern pairs.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
