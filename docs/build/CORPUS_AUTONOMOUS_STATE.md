@@ -1,23 +1,23 @@
 # Corpus Autonomous State
 
-Last update timestamp: 2026-04-29T15:18:03Z
+Last update timestamp: 2026-04-29T15:28:26Z
 Status: ACTIVE - founder resumed autonomous corpus loop and granted auto-merge authority for scoped green PRs.
 
 ## Current wave
-Wave 3 - contract intelligence sourcing playbooks in progress.
+Wave 4 - pricing intelligence sourcing playbooks in progress.
 
 ## Domains in progress
 - Category-specific sourcing playbooks: PR #1055 merged; target met with 51 authored and merged category patterns.
 - Process/methodology: PR #1056 merged; 3 process patterns live in corpus.
-- Contract intelligence: PR #1057 merged; PAT-SRC-CON-004/005/006 integration active in PR-prep branch.
-- Pricing intelligence: Worker PRC-1 active on PAT-SRC-PRC-SAAS-001.
+- Contract intelligence: PR #1059 merged; 6 contract patterns live in corpus.
+- Pricing intelligence: PAT-SRC-PRC-CLOUD-001 integration active in PR-prep branch; PAT-SRC-PRC-SAAS-001 queued.
 - Risk patterns: Worker RSK-1 active on PAT-SRC-RSK-001/002/003.
 - Regulatory/compliance: Worker REG-1 active on PAT-SRC-REG-DORA-001.
 - Industry overlays: Worker IND-1 active on PAT-SRC-IND-HEALTH-001, PAT-SRC-IND-FINSERV-001, PAT-SRC-IND-RETAIL-001.
 - Vendor profiles: queued.
 
 ## Active lane board
-- 2026-04-29T15:09:07Z - Integration lead - contract batch 1 integration - local validation and PR preparation in progress.
+- 2026-04-29T15:28:26Z - Integration lead - cloud pricing integration - rebase conflict resolution and local validation in progress.
 - 2026-04-29T14:59:17Z - Worker PROC-1 (`019dd9b6-0494-73d1-8f1e-96001145df36`) - process batch 1 - complete; branch pushed.
 - 2026-04-29T14:59:17Z - Worker CON-1 (`019dd9b6-2960-73e1-9620-6281ca27711a`) - contract batch 1 - complete; branch committed.
 - 2026-04-29T14:59:17Z - Worker RSK-1 (`019dd9b6-46fa-7e41-9670-98b11b0737e0`) - risk batch 1 - complete; branch committed.
@@ -33,9 +33,9 @@ Wave 3 - contract intelligence sourcing playbooks in progress.
 ## Pattern counts by domain
 - Existing sourcing corpus on latest main before Wave 1: 24 patterns.
 - Category-specific sourcing playbooks (`PAT-SRC-CAT-*`): 51 authored and merged across Wave 1.
-- Vendor intelligence profiles (`PAT-SRC-VEN-*`): 0
-- Contract intelligence (`PAT-SRC-CON-*`): 6 authored; 3 merged; 3 integration active.
-- Pricing intelligence (`PAT-SRC-PRC-*`): 0
+- Vendor intelligence profiles (`PAT-SRC-VEN-*`): 0 integrated; multiple authored profiles queued for one-pattern PRs.
+- Contract intelligence (`PAT-SRC-CON-*`): 6 authored and merged.
+- Pricing intelligence (`PAT-SRC-PRC-*`): 1 authored; cloud pricing integration active.
 - Process and methodology (`PAT-SRC-PROC-*`): 3 authored and merged.
 - Industry-specific overlays (`PAT-SRC-IND-*`): 0
 - Regulatory and compliance (`PAT-SRC-REG-*`): 0
@@ -62,9 +62,10 @@ Wave 3 - contract intelligence sourcing playbooks in progress.
 - #1055 - `[corpus][cat] Author PAT-SRC-CAT-RPA-001, PAT-SRC-CAT-ERP2-001, PAT-SRC-CAT-DOC-001 · 3 patterns` - merged 2026-04-29T14:58Z at `642a547be3626b77f0a8b72115efe8b33a20be61`.
 - #1056 - `[corpus][proc] Author PAT-SRC-PROC-001, PAT-SRC-PROC-002, PAT-SRC-PROC-003 · 3 patterns` - merged 2026-04-29T15:08Z at `a0245457038cf313318d5b13d49daead03d535df`.
 - #1057 - `[corpus][con] Author PAT-SRC-CON-001, PAT-SRC-CON-002, PAT-SRC-CON-003 · 3 patterns` - merged 2026-04-29T15:17Z at `f2784cf9ae1a62ee07ed59bf96eb99311ab33ab4`.
+- #1059 - `[corpus][con] Author PAT-SRC-CON-004, PAT-SRC-CON-005, PAT-SRC-CON-006 · 3 patterns` - merged 2026-04-29T15:25Z at `bf8b1652817a4ea8c9bdab7d7200371e365818bb`.
 
 ## Open PRs
-- Contract batch 2 - `[corpus][con] Author PAT-SRC-CON-004, PAT-SRC-CON-005, PAT-SRC-CON-006 · 3 patterns` - local integration in progress.
+- Pricing cloud - `[corpus][prc] Author PAT-SRC-PRC-CLOUD-001 · 1 pattern` - local integration in progress.
 
 ## Held PRs requiring founder review
 - None.
@@ -95,4 +96,4 @@ Wave 3 - contract intelligence sourcing playbooks in progress.
 - Numeric pricing, discount, implementation-ratio, AI-usage, overage, and renewal-uplift claims remain intentionally blank unless source-backed by buyer evidence or approved benchmarks.
 
 ## Next action
-Validate, push, open, and auto-merge the contract batch 2 integration PR if green and scoped while vendor/domain workers continue authoring non-conflicting batches.
+Validate, push, open, and auto-merge the cloud pricing integration PR if green and scoped while vendor/domain workers continue authoring non-conflicting batches.
