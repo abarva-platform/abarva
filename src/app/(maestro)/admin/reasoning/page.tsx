@@ -1123,6 +1123,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/evidence-heatmap',
     description: 'Instance × stage evidence density grid — identify under-evidenced stages at a glance.',
   },
+  {
+    title: 'Synthesis Comparison',
+    href: '/admin/reasoning/synthesis-comparison',
+    description: 'Health vs. confidence rank comparison — spot divergence between structural health and synthesis quality.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
