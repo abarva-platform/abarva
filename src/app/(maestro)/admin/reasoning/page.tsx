@@ -1193,6 +1193,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Health Momentum',
     description: 'Health velocity per stage — accelerating, improving, stable, declining trajectories with projection.',
   },
+  {
+    href: '/admin/reasoning/waiver-risk-register',
+    title: 'Waiver Risk Register',
+    description: 'Formal risk register for active waivers — impact, likelihood, risk level matrix, and mitigation status.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
