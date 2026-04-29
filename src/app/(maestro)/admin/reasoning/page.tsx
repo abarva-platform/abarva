@@ -904,6 +904,16 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     description: 'Synthesis confidence scores for all instances with factor-level breakdown of what drives confidence',
   },
   {
+    title: 'Lifecycle map',
+    href: '/admin/reasoning/lifecycle-map',
+    description: 'Visual stage-pipeline map for every lifecycle pattern — stages ordered with gate criterion counts',
+  },
+  {
+    title: 'Waiver impact',
+    href: '/admin/reasoning/waiver-impact',
+    description: 'Health score impact analysis of active gate waivers — current vs. without-waiver scores per instance',
+  },
+  {
     title: 'Coverage matrix',
     href: '/admin/reasoning/coverage-matrix',
     description: 'Instance × stage evidence coverage matrix — which instances have evidence for which stages',
