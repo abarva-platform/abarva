@@ -11,6 +11,8 @@ import { WorkingPaneContainer } from '@/components/shell/WorkingPaneContainer';
 import { programsShapeResolver } from '@/lib/programs/programs-shape-resolver';
 import { PhaseStrip } from '@/components/shell/PhaseStrip';
 import type { PhaseStripSlot } from '@/components/shell/PhaseStrip';
+import { ProgramJourneyRail } from '@/components/programs/ProgramJourneyRail';
+import type { ProgramPhaseSlot } from '@/components/programs/ProgramJourneyRail';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { ProgramDetailView, ProgramPhaseId, EvidenceItem } from '@/lib/programs/programs-types';
 import { PHASE_LABEL_MAP } from '@/lib/programs/programs-fixture';
@@ -3640,6 +3642,56 @@ export function ProgramDetailPage({
             <HandoffNarrativePanel narratives={lifecycleMiniGraph.handoffNarratives} />
           </div>
         )}
+
+        {/* REASON-32 — ProgramJourneyRail with "View synthesis →" per phase.
+            Complements the LifecycleMiniGraph by surfacing the phase-level
+            navigator with per-chip synthesis triggers. Only rendered when the
+            lifecycle pattern resolves to a full phase set. */}
+        {lifecycleMiniGraph && view.phases.length > 0 && (() => {
+          // Build sorted stage list to map phase ordinal (1-6) → pattern stageId
+          const sortedPatternStages = [...lifecycleMiniGraph.stages].sort(
+            (a, b) => a.order - b.order,
+          );
+          const handleSynthesisClick = (phaseId: 1 | 2 | 3 | 4 | 5 | 6) => {
+            // phase ids are 1-indexed; sortedPatternStages is 0-indexed
+            const stageId = sortedPatternStages[phaseId - 1]?.id;
+            if (stageId) setOpenStageId(stageId);
+          };
+          const railPhases: ProgramPhaseSlot[] = view.phases.map((s) => ({
+            id: s.id as ProgramPhaseSlot['id'],
+            label: s.label,
+            state: s.state,
+          }));
+          return (
+            <div
+              data-testid="program-journey-rail"
+              style={{
+                padding: '4px 0 12px',
+                marginBottom: 4,
+                borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: SHELL.MONO,
+                  fontSize: 9,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.14em',
+                  color: SHELL.INK_MUTED,
+                  marginBottom: 8,
+                }}
+              >
+                Phase navigator
+              </div>
+              <ProgramJourneyRail
+                phases={railPhases}
+                viewingPhase={view.viewingPhase as ProgramPhaseSlot['id']}
+                onPhaseSelect={handlePhaseSelect as (id: ProgramPhaseSlot['id']) => void}
+                onSynthesisClick={handleSynthesisClick}
+              />
+            </div>
+          );
+        })()}
 
         {storylineMatches.length > 0 && (
           <div

@@ -31,6 +31,13 @@ export interface ProgramJourneyRailProps {
   viewingPhase: 1 | 2 | 3 | 4 | 5 | 6;
   onPhaseSelect: (phase: 1 | 2 | 3 | 4 | 5 | 6) => void;
   variant?: 'full' | 'mini';   // 'full' = 36px chips, 'mini' = 4px segments
+  /**
+   * Optional callback fired when the user clicks "View synthesis →" on a
+   * phase chip. Receives the canonical phase id (1-6) so the caller can map
+   * it to the appropriate LifecyclePatternSeed stage id.
+   * Only rendered when variant === 'full'.
+   */
+  onSynthesisClick?: (phaseId: 1 | 2 | 3 | 4 | 5 | 6) => void;
 }
 
 // ─── Design tokens (inline — programs shell uses inline styles throughout) ──
@@ -171,6 +178,7 @@ export function ProgramJourneyRail({
   viewingPhase,
   onPhaseSelect,
   variant = 'full',
+  onSynthesisClick,
 }: ProgramJourneyRailProps) {
 
   // ── Mini variant ──────────────────────────────────────────────────────────
@@ -286,6 +294,38 @@ export function ProgramJourneyRail({
               </div>
             </button>
 
+            {/* View synthesis trigger — only when callback provided and phase
+                is not locked. Sits below the chip so it does not disturb chip
+                hit-target sizing. */}
+            {onSynthesisClick && slot.state !== 'locked' && (
+              <button
+                type="button"
+                data-testid={`phase-synthesis-trigger-${slot.id}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSynthesisClick(slot.id);
+                }}
+                style={{
+                  marginTop: 2,
+                  fontFamily: MONO,
+                  fontSize: 8,
+                  letterSpacing: '0.06em',
+                  color: 'rgba(27,38,50,0.45)',
+                  background: 'transparent',
+                  border: 'none',
+                  padding: '0 2px',
+                  cursor: 'pointer',
+                  textAlign: 'center',
+                  width: '100%',
+                  lineHeight: 1.4,
+                  appearance: 'none',
+                  WebkitAppearance: 'none',
+                }}
+              >
+                View synthesis →
+              </button>
+            )}
+
             {/* Downward caret below the viewing chip */}
             {isViewing && (
               <div
@@ -302,7 +342,7 @@ export function ProgramJourneyRail({
                 ▾
               </div>
             )}
-            {!isViewing && (
+            {!isViewing && !onSynthesisClick && (
               // Spacer so all chips stay the same height in their column
               <div style={{ height: 12 }} aria-hidden="true" />
             )}
