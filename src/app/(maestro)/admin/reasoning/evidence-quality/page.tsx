@@ -750,9 +750,10 @@ export default function EvidenceQualityPage() {
 
         <StaleCallout staleRows={staleRows} />
 
-        {reports.map((report) => (
-          <InstanceSection key={report.instanceId} report={report} />
-        ))}
+        {reports.map((report) => {
+          const section = <InstanceSection report={report} />;
+          return <div key={report.instanceId}>{section}</div>;
+        })}
       </EditorialCanvas>
     </AdminCanonShellV2>
   );
