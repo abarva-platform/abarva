@@ -923,6 +923,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/contradiction-network',
     description: 'Co-occurrence network of contradiction templates — which contradictions appear together across instances',
   },
+  {
+    title: 'Pattern similarity',
+    href: '/admin/reasoning/pattern-similarity',
+    description: 'Pairwise similarity between lifecycle patterns based on shared gate criteria and contradiction templates',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
