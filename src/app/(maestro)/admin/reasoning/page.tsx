@@ -1083,6 +1083,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/instance-notes',
     description: 'Deterministic advisory notes per instance — health grade, stage advisory, blockers, and contradictions',
   },
+  {
+    title: 'Gate dependency',
+    href: '/admin/reasoning/gate-dependency',
+    description: 'Inferred gate criterion dependencies across stages — critical path and dependency chain analysis',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
