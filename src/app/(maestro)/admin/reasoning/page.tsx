@@ -773,6 +773,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/sponsors',
     description: 'All sponsors across instances with their portfolio responsibilities',
   },
+  {
+    title: 'Co-application map',
+    href: '/admin/reasoning/co-application',
+    description: 'Lifecycle patterns that commonly appear together — defined and observed relationships',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
