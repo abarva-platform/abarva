@@ -738,6 +738,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/governance-flags',
     description: 'All governance flags across instances — blockers, risks, exceptions, and notes',
   },
+  {
+    title: 'Stage transitions',
+    href: '/admin/reasoning/stage-transitions',
+    description: 'Chronological log of all stage advancement events across source event instances',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
