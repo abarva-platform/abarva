@@ -13,6 +13,7 @@ import {
   type WeeklyDigest,
   type WeeklyDigestPerInstance,
 } from '@/lib/reasoning/weekly-digest';
+import { DigestRegenerateButton } from '@/components/admin/reasoning/DigestRegenerateButton';
 
 export const metadata = {
   title: 'Reasoning weekly digest · AbarVa Admin',
@@ -367,9 +368,9 @@ function BackLink() {
 }
 
 function ActionRow() {
-  // Two side-by-side actions above the digest body: navigate back,
-  // and open the print-friendly view in a new tab. The print page
-  // auto-triggers `window.print()` on mount — see
+  // Three actions above the digest body: navigate back (left), and on
+  // the right: the on-demand regenerate button + open print view.
+  // The print page auto-triggers `window.print()` on mount — see
   // `src/components/reasoning/PrintAutoTrigger.tsx`.
   return (
     <div
@@ -382,28 +383,38 @@ function ActionRow() {
       }}
     >
       <BackLink />
-      <a
-        href="/admin/reasoning/digest/print"
-        target="_blank"
-        rel="noopener noreferrer"
+      <div
         style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: SPACING.xs,
-          background: COLORS.navy,
-          border: `1px solid ${COLORS.navy}`,
-          borderRadius: RADIUS.lg,
-          padding: `${SPACING.sm} ${SPACING.md}`,
-          textDecoration: 'none',
-          fontFamily: TYPOGRAPHY.sans,
-          fontSize: 13,
-          color: COLORS.white,
-          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: SPACING.sm,
+          flexWrap: 'wrap',
         }}
       >
-        <span aria-hidden="true">⎙</span>
-        <span>Open print view</span>
-      </a>
+        <DigestRegenerateButton />
+        <a
+          href="/admin/reasoning/digest/print"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: SPACING.xs,
+            background: COLORS.navy,
+            border: `1px solid ${COLORS.navy}`,
+            borderRadius: RADIUS.lg,
+            padding: `${SPACING.sm} ${SPACING.md}`,
+            textDecoration: 'none',
+            fontFamily: TYPOGRAPHY.sans,
+            fontSize: 13,
+            color: COLORS.white,
+            fontWeight: 600,
+          }}
+        >
+          <span aria-hidden="true">⎙</span>
+          <span>Open print view</span>
+        </a>
+      </div>
     </div>
   );
 }
