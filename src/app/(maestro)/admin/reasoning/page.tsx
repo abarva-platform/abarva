@@ -1253,6 +1253,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Health Leaderboard',
     description: 'Rankings, gold/silver/bronze podium, category awards — Gate Champion, Clean Slate, Most Improved, Evidence Leader.',
   },
+  {
+    href: '/admin/reasoning/gate-pass-predictor',
+    title: 'Gate Pass Predictor',
+    description: 'Trajectory-based predictions of next likely gate achievements — confidence levels and stalled instance detection.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
