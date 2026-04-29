@@ -733,6 +733,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/artifacts',
     description: 'Expected vs submitted artifacts across all instances — identifies missing and draft items',
   },
+  {
+    title: 'Governance flags',
+    href: '/admin/reasoning/governance-flags',
+    description: 'All governance flags across instances — blockers, risks, exceptions, and notes',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
