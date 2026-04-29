@@ -70,6 +70,82 @@ describe('extractArtifacts · happy path', () => {
   });
 });
 
+describe('extractArtifacts · sourcing artifacts', () => {
+  it('parses vendor-card with optional risk flags and pattern id', () => {
+    const result = extractArtifacts(
+      '[[artifact:vendor-card]]{"vendorId":"ven-servicenow","name":"ServiceNow","tier":"enterprise","positioning":"Strong ITSM-led AMS incumbent candidate.","riskFlags":["Incumbent lock-in"],"patternId":"PAT-SRC-VEN-ITSM-AMS"}[[/artifact]]',
+    );
+    expect(result.artifacts).toHaveLength(1);
+    expect(result.artifacts[0]).toMatchObject({
+      type: 'vendor-card',
+      vendorId: 'ven-servicenow',
+      name: 'ServiceNow',
+      tier: 'enterprise',
+      riskFlags: ['Incumbent lock-in'],
+      patternId: 'PAT-SRC-VEN-ITSM-AMS',
+    });
+  });
+
+  it('parses pricing-benchmark with citation discipline fields', () => {
+    const result = extractArtifacts(
+      '[[artifact:pricing-benchmark]]{"category":"AMS managed services","metric":"monthly run-rate per application","median":4200,"p25":3100,"p75":6100,"source":"Apex benchmark pack","sampleSize":18,"patternId":"PAT-SRC-PRC-AMS-RUN-RATE"}[[/artifact]]',
+    );
+    expect(result.artifacts).toHaveLength(1);
+    expect(result.artifacts[0]).toMatchObject({
+      type: 'pricing-benchmark',
+      category: 'AMS managed services',
+      median: 4200,
+      source: 'Apex benchmark pack',
+      sampleSize: 18,
+    });
+  });
+
+  it('parses contract-clause, BAFO scoreboard, walkaway, and sourcing stage signals', () => {
+    const input =
+      '[[artifact:contract-clause]]{"clauseId":"exit-assistance-rate-card","title":"Exit assistance rate card","currentLanguage":"Reasonable transition assistance.","recommendedLanguage":"Attach roles, rate caps, and 120-day transfer window.","leverage":"BAFO is still open.","patternId":"PAT-SRC-CON-EXIT-ASSISTANCE"}[[/artifact]]' +
+      '[[artifact:bafo-scoreboard]]{"vendors":[{"vendorId":"ven-a","name":"Vendor A"},{"vendorId":"ven-b","name":"Vendor B"}],"dimensions":[{"label":"Commercial fit","weight":35},{"label":"Transition risk","weight":25}],"scoresMatrix":[[82,68],[76,84]],"notes":"Vendor B carries less transition risk."}[[/artifact]]' +
+      '[[artifact:walkaway-signal]]{"credibility":"soft","reasoning":"Two alternatives exist, but neither has dates locked.","recommendation":"Lock challenger availability before threatening walkaway."}[[/artifact]]' +
+      '[[artifact:sourcing-stage-progress]]{"evidenceItemId":"bafo-calendar-locked","label":"BAFO calendar locked","severity":"hard","status":"unmet","detail":"Dates are still tentative."}[[/artifact]]' +
+      '[[artifact:sourcing-stage-changed]]{"eventId":"apex-retail-ams-outsourcing-2026","fromStage":5,"toStage":6,"snapshotId":"snap-src-001"}[[/artifact]]';
+    const result = extractArtifacts(input);
+
+    expect(result.artifacts.map((artifact) => artifact.type)).toEqual([
+      'contract-clause',
+      'bafo-scoreboard',
+      'walkaway-signal',
+      'sourcing-stage-progress',
+      'sourcing-stage-changed',
+    ]);
+    expect(result.artifacts[1]).toMatchObject({
+      type: 'bafo-scoreboard',
+      vendors: [
+        { vendorId: 'ven-a', name: 'Vendor A' },
+        { vendorId: 'ven-b', name: 'Vendor B' },
+      ],
+      scoresMatrix: [
+        [82, 68],
+        [76, 84],
+      ],
+    });
+    expect(result.artifacts[4]).toMatchObject({
+      type: 'sourcing-stage-changed',
+      eventId: 'apex-retail-ams-outsourcing-2026',
+      fromStage: 5,
+      toStage: 6,
+    });
+  });
+
+  it('rejects malformed sourcing payloads without crashing', () => {
+    const result = extractArtifacts(
+      '[[artifact:vendor-card]]{"vendorId":"ven-x","name":"Vendor X","tier":"mega","positioning":"Invalid tier."}[[/artifact]]' +
+        '[[artifact:bafo-scoreboard]]{"vendors":[{"vendorId":"ven-a","name":"Vendor A"}],"dimensions":[{"label":"Commercial","weight":50}],"scoresMatrix":[[90,91]]}[[/artifact]]',
+    );
+    expect(result.artifacts).toHaveLength(0);
+    expect(result.visibleText).toContain('[[artifact:vendor-card parse-failed]]');
+    expect(result.visibleText).toContain('[[artifact:bafo-scoreboard parse-failed]]');
+  });
+});
+
 describe('extractArtifacts · streaming-chunk safety', () => {
   it('returns the unclosed artifact tail as `remaining` when the close sentinel is missing', () => {
     const input =

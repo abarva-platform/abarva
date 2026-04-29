@@ -48,7 +48,18 @@ export type ArtifactType =
   // graph traversals + contradiction templates as cards in the
   // reactive knowledge pane.
   | 'graph-neighborhood' // {rootId, rootLabel, nodeCount, edgeCount, topEdges[]}
-  | 'contradiction-flag'; // {contradictionId, label, severity, partyA, partyB, detectionDescription, resolutionPath}
+  | 'contradiction-flag' // {contradictionId, label, severity, partyA, partyB, detectionDescription, resolutionPath}
+  // PR-SRC-D · Sentinel-on-Sourcing artifacts. These mirror the
+  // Programs/Intelligence reactive-workspace channel while using
+  // procurement-specific cards for vendor, pricing, contract, BAFO,
+  // walkaway, and stage-pack reasoning.
+  | 'vendor-card' // {vendorId, name, tier, positioning, riskFlags?, patternId?}
+  | 'pricing-benchmark' // {category, metric, median, p25?, p75?, source, sampleSize?, patternId?}
+  | 'contract-clause' // {clauseId, title, currentLanguage?, recommendedLanguage, leverage, patternId?}
+  | 'bafo-scoreboard' // {vendors[], dimensions[], scoresMatrix, notes?}
+  | 'walkaway-signal' // {credibility, reasoning, recommendation}
+  | 'sourcing-stage-progress' // {evidenceItemId, label, severity, status, detail?}
+  | 'sourcing-stage-changed'; // {eventId, fromStage, toStage, snapshotId?}
 
 // ── Strongly-typed artifact payloads ──────────────────────────────────────────
 
@@ -231,6 +242,70 @@ export interface ContradictionFlagArtifact {
   resolutionPath: string;
 }
 
+export interface VendorCardArtifact {
+  type: 'vendor-card';
+  vendorId: string;
+  name: string;
+  tier: 'enterprise' | 'mid-market' | 'specialist' | 'emerging' | 'incumbent';
+  positioning: string;
+  riskFlags?: string[];
+  patternId?: string;
+}
+
+export interface PricingBenchmarkArtifact {
+  type: 'pricing-benchmark';
+  category: string;
+  metric: string;
+  median: number;
+  p25?: number;
+  p75?: number;
+  source: string;
+  sampleSize?: number;
+  patternId?: string;
+}
+
+export interface ContractClauseArtifact {
+  type: 'contract-clause';
+  clauseId: string;
+  title: string;
+  currentLanguage?: string;
+  recommendedLanguage: string;
+  leverage: string;
+  patternId?: string;
+}
+
+export interface BafoScoreboardArtifact {
+  type: 'bafo-scoreboard';
+  vendors: Array<{ vendorId: string; name: string }>;
+  dimensions: Array<{ label: string; weight: number }>;
+  scoresMatrix: number[][];
+  notes?: string;
+}
+
+export interface WalkawaySignalArtifact {
+  type: 'walkaway-signal';
+  credibility: 'strong' | 'soft' | 'theatre';
+  reasoning: string;
+  recommendation: string;
+}
+
+export interface SourcingStageProgressArtifact {
+  type: 'sourcing-stage-progress';
+  evidenceItemId: string;
+  label: string;
+  severity: 'hard' | 'soft';
+  status: 'met' | 'unmet' | 'unknown';
+  detail?: string;
+}
+
+export interface SourcingStageChangedArtifact {
+  type: 'sourcing-stage-changed';
+  eventId: string;
+  fromStage: number;
+  toStage: number;
+  snapshotId?: string;
+}
+
 export type Artifact =
   | BriefFieldArtifact
   | PatternMatchArtifact
@@ -244,7 +319,14 @@ export type Artifact =
   | AntiPatternFlagArtifact
   | ProgramPhaseChangedArtifact
   | GraphNeighborhoodArtifact
-  | ContradictionFlagArtifact;
+  | ContradictionFlagArtifact
+  | VendorCardArtifact
+  | PricingBenchmarkArtifact
+  | ContractClauseArtifact
+  | BafoScoreboardArtifact
+  | WalkawaySignalArtifact
+  | SourcingStageProgressArtifact
+  | SourcingStageChangedArtifact;
 
 // ── Parser ────────────────────────────────────────────────────────────────────
 //
@@ -273,7 +355,7 @@ export interface ExtractResult {
   remaining: string;
 }
 
-function isKnownArtifactType(type: string): type is ArtifactType {
+export function isKnownArtifactType(type: string): type is ArtifactType {
   return (
     type === 'brief-field' ||
     type === 'pattern-match' ||
@@ -287,7 +369,14 @@ function isKnownArtifactType(type: string): type is ArtifactType {
     type === 'anti-pattern-flag' ||
     type === 'program-phase-changed' ||
     type === 'graph-neighborhood' ||
-    type === 'contradiction-flag'
+    type === 'contradiction-flag' ||
+    type === 'vendor-card' ||
+    type === 'pricing-benchmark' ||
+    type === 'contract-clause' ||
+    type === 'bafo-scoreboard' ||
+    type === 'walkaway-signal' ||
+    type === 'sourcing-stage-progress' ||
+    type === 'sourcing-stage-changed'
   );
 }
 
@@ -315,6 +404,20 @@ function isPartialOpenSentinel(tail: string): boolean {
  * naturally. This helper is here for future symmetry if the deferral
  * strategy changes.
  */
+
+function optionalString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
+
+function stringArray(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const strings = value.filter((item) => typeof item === 'string' && item.length > 0) as string[];
+  return strings.length > 0 ? strings : undefined;
+}
+
+function isSourceStage(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 7;
+}
 
 function tryParseArtifact(type: string, json: string): Artifact | null {
   if (!isKnownArtifactType(type)) return null;
@@ -557,6 +660,156 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
         partyB,
         detectionDescription,
         resolutionPath,
+      };
+    }
+    case 'vendor-card': {
+      const vendorId = obj.vendorId;
+      const name = obj.name;
+      const tier = obj.tier;
+      const positioning = obj.positioning;
+      if (typeof vendorId !== 'string' || vendorId.length === 0) return null;
+      if (typeof name !== 'string' || name.length === 0) return null;
+      if (
+        tier !== 'enterprise' &&
+        tier !== 'mid-market' &&
+        tier !== 'specialist' &&
+        tier !== 'emerging' &&
+        tier !== 'incumbent'
+      ) {
+        return null;
+      }
+      if (typeof positioning !== 'string' || positioning.length === 0) return null;
+      return {
+        type,
+        vendorId,
+        name,
+        tier,
+        positioning,
+        riskFlags: stringArray(obj.riskFlags),
+        patternId: optionalString(obj.patternId),
+      };
+    }
+    case 'pricing-benchmark': {
+      const category = obj.category;
+      const metric = obj.metric;
+      const median = obj.median;
+      const source = obj.source;
+      if (typeof category !== 'string' || category.length === 0) return null;
+      if (typeof metric !== 'string' || metric.length === 0) return null;
+      if (typeof median !== 'number') return null;
+      if (typeof source !== 'string' || source.length === 0) return null;
+      return {
+        type,
+        category,
+        metric,
+        median,
+        p25: typeof obj.p25 === 'number' ? obj.p25 : undefined,
+        p75: typeof obj.p75 === 'number' ? obj.p75 : undefined,
+        source,
+        sampleSize:
+          typeof obj.sampleSize === 'number' && Number.isInteger(obj.sampleSize)
+            ? obj.sampleSize
+            : undefined,
+        patternId: optionalString(obj.patternId),
+      };
+    }
+    case 'contract-clause': {
+      const clauseId = obj.clauseId;
+      const title = obj.title;
+      const recommendedLanguage = obj.recommendedLanguage;
+      const leverage = obj.leverage;
+      if (typeof clauseId !== 'string' || clauseId.length === 0) return null;
+      if (typeof title !== 'string' || title.length === 0) return null;
+      if (typeof recommendedLanguage !== 'string' || recommendedLanguage.length === 0) return null;
+      if (typeof leverage !== 'string' || leverage.length === 0) return null;
+      return {
+        type,
+        clauseId,
+        title,
+        currentLanguage: optionalString(obj.currentLanguage),
+        recommendedLanguage,
+        leverage,
+        patternId: optionalString(obj.patternId),
+      };
+    }
+    case 'bafo-scoreboard': {
+      const vendorsRaw = obj.vendors;
+      const dimensionsRaw = obj.dimensions;
+      const scoresMatrixRaw = obj.scoresMatrix;
+      if (!Array.isArray(vendorsRaw) || !Array.isArray(dimensionsRaw) || !Array.isArray(scoresMatrixRaw)) {
+        return null;
+      }
+      const vendors: BafoScoreboardArtifact['vendors'] = [];
+      for (const raw of vendorsRaw) {
+        if (!raw || typeof raw !== 'object') continue;
+        const vendor = raw as Record<string, unknown>;
+        if (typeof vendor.vendorId !== 'string' || vendor.vendorId.length === 0) continue;
+        if (typeof vendor.name !== 'string' || vendor.name.length === 0) continue;
+        vendors.push({ vendorId: vendor.vendorId, name: vendor.name });
+      }
+      const dimensions: BafoScoreboardArtifact['dimensions'] = [];
+      for (const raw of dimensionsRaw) {
+        if (!raw || typeof raw !== 'object') continue;
+        const dimension = raw as Record<string, unknown>;
+        if (typeof dimension.label !== 'string' || dimension.label.length === 0) continue;
+        if (typeof dimension.weight !== 'number') continue;
+        dimensions.push({ label: dimension.label, weight: dimension.weight });
+      }
+      const scoresMatrix = scoresMatrixRaw.filter(
+        (row): row is number[] =>
+          Array.isArray(row) &&
+          row.length === dimensions.length &&
+          row.every((score) => typeof score === 'number'),
+      );
+      if (vendors.length === 0 || dimensions.length === 0) return null;
+      if (scoresMatrix.length !== vendors.length) return null;
+      return {
+        type,
+        vendors,
+        dimensions,
+        scoresMatrix,
+        notes: optionalString(obj.notes),
+      };
+    }
+    case 'walkaway-signal': {
+      const credibility = obj.credibility;
+      const reasoning = obj.reasoning;
+      const recommendation = obj.recommendation;
+      if (credibility !== 'strong' && credibility !== 'soft' && credibility !== 'theatre') return null;
+      if (typeof reasoning !== 'string' || reasoning.length === 0) return null;
+      if (typeof recommendation !== 'string' || recommendation.length === 0) return null;
+      return { type, credibility, reasoning, recommendation };
+    }
+    case 'sourcing-stage-progress': {
+      const evidenceItemId = obj.evidenceItemId;
+      const label = obj.label;
+      const severity = obj.severity;
+      const status = obj.status;
+      if (typeof evidenceItemId !== 'string' || evidenceItemId.length === 0) return null;
+      if (typeof label !== 'string' || label.length === 0) return null;
+      if (severity !== 'hard' && severity !== 'soft') return null;
+      if (status !== 'met' && status !== 'unmet' && status !== 'unknown') return null;
+      return {
+        type,
+        evidenceItemId,
+        label,
+        severity,
+        status,
+        detail: optionalString(obj.detail),
+      };
+    }
+    case 'sourcing-stage-changed': {
+      const eventId = obj.eventId;
+      const fromStage = obj.fromStage;
+      const toStage = obj.toStage;
+      if (typeof eventId !== 'string' || eventId.length === 0) return null;
+      if (!isSourceStage(fromStage) || !isSourceStage(toStage)) return null;
+      return {
+        type,
+        eventId,
+        fromStage,
+        toStage,
+        snapshotId: optionalString(obj.snapshotId),
       };
     }
   }
@@ -808,4 +1061,67 @@ a wrongly-flagged Phantom Sponsor will erode trust in the platform.
             "detectionDescription": <when this fires>,
             "resolutionPath": <what to do next>}
     Example:
-    [[artifact:contradiction-flag]]{"contradictionId":"vendor-savings-vs-measured","label":"Vendor savings claim vs measured reality","severity":"high","partyA":"Vendor benchmark","partyB":"Measured run-rate","detectionDescription":"Vendor cites 22% savings against an unverified baseline; tenant's measured run-rate shows 7% over the same window.","resolutionPath":"Pull the baseline source-of-truth into the broker citation and ask Sentinel to evidence-check the vendor claim before signing."}[[/artifact]]`;
+    [[artifact:contradiction-flag]]{"contradictionId":"vendor-savings-vs-measured","label":"Vendor savings claim vs measured reality","severity":"high","partyA":"Vendor benchmark","partyB":"Measured run-rate","detectionDescription":"Vendor cites 22% savings against an unverified baseline; tenant's measured run-rate shows 7% over the same window.","resolutionPath":"Pull the baseline source-of-truth into the broker citation and ask Sentinel to evidence-check the vendor claim before signing."}[[/artifact]]
+
+13. vendor-card — Sourcing-side. Emit one per vendor when Sentinel
+    compares a vendor set, names an incumbent posture, or summarizes a
+    qualified candidate. Keep positioning citation-aware and concise.
+    Shape: {"vendorId": <stable-id>, "name": <vendor-name>,
+            "tier": "enterprise"|"mid-market"|"specialist"|"emerging"|"incumbent",
+            "positioning": <why this vendor is in the set>,
+            "riskFlags"?: [<risk-label>], "patternId"?: <PAT-SRC-VEN-*|pattern-id>}
+    Example:
+    [[artifact:vendor-card]]{"vendorId":"ven-servicenow","name":"ServiceNow","tier":"enterprise","positioning":"Strong incumbent for ITSM-led AMS consolidation; validate integration depth before shortlist.","riskFlags":["Incumbent lock-in","Workflow customization sprawl"],"patternId":"PAT-SRC-VEN-ITSM-AMS"}[[/artifact]]
+
+14. pricing-benchmark — Sourcing-side. Emit when Sentinel cites pricing
+    ranges, median economics, or category-level commercial baselines.
+    source is required; do not emit uncited benchmarks.
+    Shape: {"category": <category>, "metric": <unit>, "median": <number>,
+            "p25"?: <number>, "p75"?: <number>, "source": <citation>,
+            "sampleSize"?: <int>, "patternId"?: <PAT-SRC-PRC-*|pattern-id>}
+    Example:
+    [[artifact:pricing-benchmark]]{"category":"AMS managed services","metric":"monthly run-rate per application","median":4200,"p25":3100,"p75":6100,"source":"Apex sourcing benchmark pack, Q1 2026","sampleSize":18,"patternId":"PAT-SRC-PRC-AMS-RUN-RATE"}[[/artifact]]
+
+15. contract-clause — Sourcing-side. Emit when Sentinel identifies a
+    clause gap, proposed language, or buyer leverage point. recommendedLanguage
+    is required because the card should be actionable.
+    Shape: {"clauseId": <stable-id>, "title": <clause-title>,
+            "currentLanguage"?: <vendor-proposed-text>,
+            "recommendedLanguage": <buyer-ask>,
+            "leverage": <why buyer can push>, "patternId"?: <PAT-SRC-CON-*|pattern-id>}
+    Example:
+    [[artifact:contract-clause]]{"clauseId":"exit-assistance-rate-card","title":"Exit assistance rate card","currentLanguage":"Vendor provides reasonable transition assistance.","recommendedLanguage":"Attach named transition roles, rate caps, and a 120-day knowledge-transfer window.","leverage":"BAFO is still open and two challengers offered capped transition support.","patternId":"PAT-SRC-CON-EXIT-ASSISTANCE"}[[/artifact]]
+
+16. bafo-scoreboard — Sourcing-side. Emit when comparing final offers
+    across weighted dimensions. scoresMatrix is [vendor][dimension] and
+    must align with vendors and dimensions exactly.
+    Shape: {"vendors": [{"vendorId": <id>, "name": <name>}],
+            "dimensions": [{"label": <dimension>, "weight": <number>}],
+            "scoresMatrix": [[<number>]], "notes"?: <string>}
+    Example:
+    [[artifact:bafo-scoreboard]]{"vendors":[{"vendorId":"ven-a","name":"Vendor A"},{"vendorId":"ven-b","name":"Vendor B"}],"dimensions":[{"label":"Commercial fit","weight":35},{"label":"Transition risk","weight":25}],"scoresMatrix":[[82,68],[76,84]],"notes":"Vendor B carries less transition risk, but Vendor A remains stronger on commercial fit."}[[/artifact]]
+
+17. walkaway-signal — Sourcing-side. Emit when the user's leverage,
+    alternatives, or sequence design make the walkaway credible or not.
+    Shape: {"credibility": "strong"|"soft"|"theatre",
+            "reasoning": <why>, "recommendation": <next move>}
+    Example:
+    [[artifact:walkaway-signal]]{"credibility":"soft","reasoning":"The team has two alternatives, but neither has implementation dates or executive air cover yet.","recommendation":"Do not threaten walkaway in BAFO. First lock challenger availability and sponsor backing."}[[/artifact]]
+
+18. sourcing-stage-progress — Sourcing-side. Parallel to phase-progress.
+    Emit when the active sourcing stage pack has an evidence item and
+    the conversation gives signal on status. Dedupe uses evidenceItemId.
+    Shape: {"evidenceItemId": <stage-pack-item-id>, "label": <label>,
+            "severity": "hard"|"soft", "status": "met"|"unmet"|"unknown",
+            "detail"?: <one-line elaboration>}
+    Example:
+    [[artifact:sourcing-stage-progress]]{"evidenceItemId":"bafo-calendar-locked","label":"BAFO calendar locked before final concessions","severity":"hard","status":"unmet","detail":"User said dates are still tentative, so final concessions are premature."}[[/artifact]]
+
+19. sourcing-stage-changed — Sourcing-side. Emitted by future
+    advance_sourcing_stage tooling after a successful gated mutation so
+    the client can refresh server data in place. Do not emit this from
+    ordinary conversation.
+    Shape: {"eventId": <source-event-id>, "fromStage": <0..7>,
+            "toStage": <0..7>, "snapshotId"?: <mutation-snapshot-id>}
+    Example:
+    [[artifact:sourcing-stage-changed]]{"eventId":"apex-retail-ams-outsourcing-2026","fromStage":5,"toStage":6,"snapshotId":"snap-src-2026-04-29-001"}[[/artifact]]`;
