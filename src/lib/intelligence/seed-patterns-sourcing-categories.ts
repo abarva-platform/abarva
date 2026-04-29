@@ -2921,6 +2921,454 @@ Vendor claim: the same model is available through multiple channels. Detection: 
 
 The common failure is approving AI experimentation without cost, data, and fallback controls, then discovering that production usage behaves differently. The second is treating public benchmarks as procurement proof. The third is buying one provider path and losing leverage when model deprecation, quota, regional requirements, or application quality shifts.`,
   },
+  {
+    id: 'PAT-SRC-CAT-AGENT-001',
+    slug: 'enterprise-ai-agent-platform-sourcing',
+    title: 'Enterprise AI Agent Platform Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'AI agent platform sourcing should test identity, tool authorization, memory, observability, evaluation, runtime isolation, and rollback controls before accepting a vendor claim that agents are production-ready.',
+    applicability:
+      'Apply when sourcing enterprise AI agent builders, agent runtimes, orchestration frameworks, low-code agent studios, tool gateways, MCP infrastructure, workflow agents, browser/code tools, or agent governance platforms.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.77,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://aws.amazon.com/bedrock/agentcore/pricing/',
+      'https://aws.amazon.com/blogs/machine-learning/amazon-bedrock-agentcore-is-now-generally-available/',
+      'https://www.microsoft.com/en-us/microsoft-365-copilot/microsoft-copilot-studio',
+      'https://cloud.google.com/products/gemini-enterprise-agent-platform',
+      'https://www.salesforce.com/agentforce/pricing/',
+      'https://js.langchain.com/docs/langgraph',
+      'https://docs.crewai.com/',
+      'https://ai-sdk.dev/docs',
+    ],
+    regulatoryChips: ['GDPR-if-person-data', 'SOC-2-review', 'HIPAA-if-PHI', 'EU-AI-Act-review', 'DORA-if-regulated-financial-entity'],
+    relatedPatternIds: ['PAT-SRC-CAT-LLM-001', 'PAT-SRC-CAT-VEC-001', 'PAT-SRC-CAT-MLOPS-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'ai_ml',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'AWS Bedrock AgentCore',
+        tier: 'enterprise',
+        positioning: 'Agent runtime and governance platform with modular runtime, browser, code interpreter, gateway, policy, identity, memory, observability, evaluation, and registry constructs.',
+        cautions: ['Consumption can span runtime, memory, gateway, policy, browser/code tools, telemetry, model calls, storage, and network transfer.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Amazon Bedrock AgentCore Pricing', url: 'https://aws.amazon.com/bedrock/agentcore/pricing/', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'Microsoft Copilot Studio and Google Gemini Enterprise Agent Platform',
+        tier: 'enterprise',
+        positioning: 'Enterprise agent-builder candidates where tenant identity, business-app connectors, governance, low-code authoring, and cloud ecosystem alignment matter.',
+        cautions: ['Buyer must separate included app entitlements from agent runtime, message, connector, model, and governance costs.'],
+      },
+      {
+        vendorName: 'Salesforce Agentforce, LangGraph, CrewAI, and Vercel AI SDK',
+        tier: 'specialist',
+        positioning: 'Application, CRM, framework, and developer-platform approaches for building workflow agents and agentic applications.',
+        cautions: ['Framework flexibility does not replace production controls for identity, tool scope, observability, evaluation, and rollback.'],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'Agent platform public pricing constructs only',
+        model: 'hybrid',
+        metric: 'Messages, agent actions, runtime CPU/memory, gateway/tool calls, memory records, evaluation tokens, observability telemetry, model calls, connectors, and support',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Amazon Bedrock AgentCore Pricing', url: 'https://aws.amazon.com/bedrock/agentcore/pricing/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Salesforce Agentforce Pricing', url: 'https://www.salesforce.com/agentforce/pricing/', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Negotiated enterprise packaging, included entitlements, connector costs, model spend, and agent volume forecasts require buyer evidence' },
+        ],
+        confidence: 0.55,
+        notes: 'Do not compare platforms from headline agent pricing alone; agent costs are workload-shape dependent.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Agent authority and tool boundary',
+        buyerPosition: 'Define identities, delegated authorization, tool scopes, approval gates, policy checks, credential handling, audit logs, and emergency disablement.',
+      },
+      {
+        clauseArea: 'Runtime observability and rollback',
+        buyerPosition: 'Require traces, prompt/tool logs, evaluation evidence, sampled review, incident export, version rollback, and kill-switch rights before production expansion.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Dangerous-action proof',
+        whenToUse: 'Use before BAFO when agents can write records, send messages, execute code, browse websites, or call business systems.',
+        buyerAsk: 'Demonstrate identity, policy, approval, audit, rollback, and kill-switch behavior on buyer-defined risky actions.',
+      },
+      {
+        lever: 'Agent cost decomposition',
+        whenToUse: 'Use when proposals blend model spend, runtime, tool calls, memory, observability, connectors, and user seats.',
+        buyerAsk: 'Break out every meter and model representative task volumes before commercial award.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'agent-authority-sprawl',
+        label: 'Agent authority sprawl',
+        severity: 'critical',
+        detectionSignals: ['Agent can act across systems without clear delegated identity, least privilege, approvals, or audit trails.'],
+        mitigations: ['Require tool allowlists, policy checks, human approval for high-risk actions, and emergency disablement'],
+      },
+      {
+        id: 'agent-eval-theater',
+        label: 'Evaluation theater',
+        severity: 'high',
+        detectionSignals: ['Vendor shows demo success but cannot produce regression tests, sampled review, trace exports, or failure taxonomy.'],
+        mitigations: ['Require buyer workload eval set, replay harness, and production monitoring plan'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Stress delegated authority, audit trails, model risk governance, outsourcing review, and high-risk action approvals.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Require PHI boundary design, BAA posture, human review, and explicit prohibition of unsafe clinical automation unless approved.',
+      },
+      {
+        industry: 'public_sector',
+        modifier: 'Review procurement, records retention, identity federation, accessibility, residency, and citizen-facing action controls.',
+      },
+    ],
+    body: `## Summary
+Enterprise AI agent platform sourcing is where model access becomes operational authority. A chatbot answers; an agent can plan, call tools, retrieve records, write back to systems, browse, execute code, remember context, and trigger workflows. The sourcing event must therefore evaluate the control plane around the agent, not only the quality of a demo conversation.
+
+## When to apply
+Use this pattern when a buyer is sourcing an agent builder, agent runtime, low-code agent studio, MCP/tool gateway, workflow-agent platform, browser/code tool, memory service, evaluation harness, or agent governance layer. It fits AWS Bedrock AgentCore, Microsoft Copilot Studio, Google Gemini Enterprise Agent Platform, Salesforce Agentforce, LangGraph/LangChain, CrewAI, Vercel AI SDK/Workflow-style developer platforms, and similar approaches. Do not use it for generic chatbot subscriptions, pure LLM API access, BI copilots, or RPA unless autonomous tool use and governed action are central.
+
+## Category boundary
+In scope: agent identity, delegated authorization, tool registry, connectors, MCP servers, runtime isolation, code execution, browser automation, memory, retrieval, planning, workflow orchestration, human approvals, policy checks, traces, evals, telemetry, versioning, rollback, cost controls, and incident response. Out of scope: model pricing alone, simple chat UI, knowledge-base search, and application copilots that cannot call external tools.
+
+## Lifecycle and gates
+The scope gate should classify agent personas, allowed systems, allowed actions, prohibited actions, approval thresholds, data classes, retention, runtime model, expected volumes, and owner of production monitoring. The RFP gate should require identity architecture, tool authorization, audit model, memory design, runtime isolation, observability, evaluation, and commercial meter disclosures. The proof gate should test one read-only workflow, one writeback workflow, one blocked high-risk action, one tool failure, one hallucinated tool request, one rollback, one human approval, and one cost-budget alert. The BAFO gate should normalize messages, model calls, runtime CPU/memory, tool calls, gateway calls, memory records, evaluation tokens, browser/code usage, connectors, telemetry storage, support, and services.
+
+## Evaluation rubric
+Weight authority and identity controls around 25 percent, observability and evaluation around 20 percent, workload fit around 20 percent, security/privacy/compliance around 15 percent, commercial predictability around 10 percent, and portability/exit around 10 percent. Increase authority weight when agents can transact, communicate externally, update customer records, write code, access regulated data, or act on behalf of employees.
+
+## Pricing and contract notes
+Public pricing pages show that agent platforms can have many meters. AWS AgentCore describes modular consumption across runtime, browser, code interpreter, gateway, policy, identity, memory, observability, and evaluations. Salesforce publishes Agentforce pricing constructs. Microsoft and Google public pages frame agent building and governance capabilities, while buyer-specific costs depend on licensing, connectors, model calls, cloud commitments, and usage. Do not compare vendors from a single headline unit. Model representative task traces and include model spend, runtime, memory, telemetry, connector, gateway, and support costs.
+
+Contracting should define tool authority, credential handling, delegated identity, data retention, model-training posture, trace/log access, approval requirements, incident notification, kill switch, rollback, evaluation evidence, and support responsibilities. For risky actions, the contract should reference explicit allowed and prohibited action classes.
+
+## Contradictions and failure modes
+Vendor claim: agents are production-ready. Detection: test identity, policy, tool failure, trace export, human approval, rollback, and cost caps. Vendor claim: no-code agents are safe for business users. Detection: require environment separation, publishing controls, tool allowlists, and audit. Vendor claim: framework portability prevents lock-in. Detection: inspect memory, tool schema, evaluation data, connector mappings, and production telemetry export.
+
+The common failure is letting a successful demo become production authority without identity and policy design. The second is ignoring that agent loops multiply model, tool, runtime, memory, and telemetry costs. The third is treating evaluation as a launch checklist instead of a continuous operating control.`,
+  },
+  {
+    id: 'PAT-SRC-CAT-VEC-001',
+    slug: 'vector-database-retrieval-infrastructure-sourcing',
+    title: 'Vector Database and Retrieval Infrastructure Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Vector database sourcing should compare retrieval quality, metadata filtering, hybrid search, ingestion operations, data governance, and workload cost rather than assuming every RAG workload needs a dedicated vector database.',
+    applicability:
+      'Apply when sourcing vector databases, vector search, embedding stores, semantic retrieval, RAG infrastructure, hybrid search, or retrieval layers across Pinecone, Weaviate, Qdrant, Zilliz/Milvus, Elastic/OpenSearch, MongoDB Atlas, pgvector, and cloud data platforms.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.80,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.pinecone.io/pricing/',
+      'https://weaviate.io/pricing',
+      'https://qdrant.tech/pricing/',
+      'https://zilliz.com/pricing',
+      'https://www.mongodb.com/products/platform/atlas-vector-search',
+      'https://www.elastic.co/what-is/vector-search',
+      'https://opensearch.org/docs/latest/vector-search/',
+      'https://github.com/pgvector/pgvector',
+    ],
+    regulatoryChips: ['GDPR-if-person-data', 'HIPAA-if-PHI', 'SOC-2-review', 'data-residency-review'],
+    relatedPatternIds: ['PAT-SRC-CAT-LLM-001', 'PAT-SRC-CAT-FAB-001', 'PAT-SRC-CAT-CDW-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'ai_ml',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Pinecone, Weaviate, Qdrant, and Zilliz/Milvus',
+        tier: 'specialist',
+        positioning: 'Dedicated vector database candidates for managed semantic search, hybrid retrieval, metadata filtering, scale, and AI application retrieval workloads.',
+        cautions: ['Performance and cost claims require buyer workload tests; public pricing constructs do not prove TCO.'],
+      },
+      {
+        vendorName: 'Elastic, OpenSearch, MongoDB Atlas Vector Search, and pgvector',
+        tier: 'enterprise',
+        positioning: 'Existing-search, document-database, open-source, and Postgres-adjacent options where consolidation, governance, or operational familiarity may beat a separate vector service.',
+        cautions: ['Existing-platform fit does not prove retrieval quality, latency, recall, filtering, or operational simplicity.'],
+      },
+      {
+        vendorName: 'Warehouse and lakehouse-native vector search',
+        tier: 'enterprise',
+        positioning: 'Data-platform-native option when embeddings live close to governed enterprise data and query cost is already managed in the analytics estate.',
+        cautions: ['Semantic retrieval requirements can expose limits in freshness, latency, filtering, or application serving patterns.'],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'Vector retrieval public pricing constructs only',
+        model: 'hybrid',
+        metric: 'Vectors, dimensions, storage, pods/nodes/compute units, read/write units, replicas, hybrid search, backups, regions, support, and data transfer',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Pinecone Pricing', url: 'https://www.pinecone.io/pricing/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Weaviate Pricing', url: 'https://weaviate.io/pricing', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Qdrant Pricing', url: 'https://qdrant.tech/pricing/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Zilliz Pricing', url: 'https://zilliz.com/pricing', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Buyer workload dimensions, recall targets, latency SLOs, write volume, embedding refresh, and negotiated enterprise terms require evidence' },
+        ],
+        confidence: 0.62,
+        notes: 'Benchmark only with buyer corpus, filters, embedding model, query mix, and latency targets.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Data governance and retrieval exportability',
+        buyerPosition: 'Define embedding ownership, metadata export, source-document linkage, deletion propagation, region, encryption, access logs, and migration assistance.',
+      },
+      {
+        clauseArea: 'Operational SLO and workload controls',
+        buyerPosition: 'Require ingestion/backfill controls, index rebuild behavior, backup/restore, read/write throttles, cost alerts, and incident response.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Buyer-corpus retrieval bakeoff',
+        whenToUse: 'Use when vendors rely on generic benchmarks or demo corpora.',
+        buyerAsk: 'Run the same embeddings, documents, metadata filters, hybrid queries, and evaluation labels across finalist platforms.',
+      },
+      {
+        lever: 'Existing-platform challenger',
+        whenToUse: 'Use when a dedicated vector database is proposed without proof that existing Postgres, search, document, warehouse, or cloud tools are insufficient.',
+        buyerAsk: 'Compare dedicated service value against existing-platform retrieval quality, governance, operations, and TCO.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'vector-benchmark-mismatch',
+        label: 'Benchmark mismatch',
+        severity: 'high',
+        detectionSignals: ['Vendor cites generic latency or recall benchmarks not tied to buyer corpus, dimensions, filters, query mix, or freshness.'],
+        mitigations: ['Require buyer-corpus evaluation and traceable retrieval labels'],
+      },
+      {
+        id: 'vector-delete-gap',
+        label: 'Deletion and source-of-truth gap',
+        severity: 'high',
+        detectionSignals: ['Source document deletion or permission change does not reliably propagate to chunks, embeddings, metadata, and caches.'],
+        mitigations: ['Test deletion, re-embedding, permission changes, and audit logs before award'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'healthcare',
+        modifier: 'Stress PHI boundaries, deletion propagation, access control, audit logs, BAA posture, and minimum necessary retrieval.',
+      },
+      {
+        industry: 'financial_services',
+        modifier: 'Stress entitlement-aware retrieval, regulated records, model risk evidence, auditability, and data residency.',
+      },
+      {
+        industry: 'public_sector',
+        modifier: 'Review residency, records retention, accessibility, procurement constraints, and sensitive-data indexing rules.',
+      },
+    ],
+    body: `## Summary
+Vector database sourcing is really retrieval infrastructure sourcing. The buyer is not buying vectors; the buyer is buying the ability for an application or agent to retrieve the right governed context at the right time, under the right permissions, with predictable cost and observable quality. A dedicated vector database may be the right answer, but existing search, document, Postgres, warehouse, or cloud-native vector search can also be credible challengers.
+
+## When to apply
+Use this pattern for RAG systems, semantic search, embedding stores, retrieval APIs, hybrid keyword/vector search, agent memory retrieval, document Q&A, product search, support knowledge retrieval, and internal knowledge assistants. It applies to Pinecone, Weaviate, Qdrant, Zilliz/Milvus, Elastic, OpenSearch, MongoDB Atlas Vector Search, pgvector, and data-platform-native vector search. Do not use it for model access, data catalog, MDM, or BI unless semantic retrieval is the sourcing decision.
+
+## Category boundary
+In scope: embeddings, vector dimensions, distance metrics, metadata filters, hybrid search, reranking hooks, namespaces/collections, ingestion pipelines, chunking, backfills, update/delete propagation, access control, tenancy, region/residency, backup, replication, latency, recall, query volume, write volume, observability, and export. Out of scope: embedding model selection alone, full document management, generic search consulting, and LLM application UI.
+
+## Lifecycle and gates
+The scope gate should classify corpus size, document types, embedding model, dimensions, update frequency, deletion requirements, permission model, latency targets, recall targets, regions, and application workload. The RFP gate should require pricing meters, security posture, deployment options, filtering capability, hybrid search behavior, backup/restore, and migration/export model. The proof gate should use buyer documents, buyer metadata, representative queries, expected retrieval labels, permission changes, deletion tests, and backfill scenarios. The BAFO gate should normalize storage, compute units, read/write units, replicas, backups, support, data transfer, embedding refresh, observability, and internal operations cost.
+
+## Evaluation rubric
+Weight retrieval quality around 25 percent, metadata/permission filtering around 20 percent, operational reliability around 15 percent, cost predictability around 15 percent, security/governance around 15 percent, and portability/exit around 10 percent. Increase permission weight when retrieval is user-specific. Increase freshness and deletion weight when source documents change frequently or regulated records are involved.
+
+## Pricing and contract notes
+Public pricing pages for Pinecone, Weaviate, Qdrant, and Zilliz identify constructs such as managed tiers, capacity, compute, storage, and enterprise packaging, but those pages do not prove buyer-specific TCO. Existing-platform options such as MongoDB Atlas Vector Search, Elastic/OpenSearch vector search, and pgvector shift cost into current database, search, cloud, or engineering estates. Cost comparison must use the buyer's vectors, dimensions, filters, write frequency, query mix, regions, replicas, and SLOs.
+
+Contracting should define embedding and metadata ownership, export format, source-document linkage, deletion propagation, permission updates, data residency, encryption, support access, incident response, backup/restore, index rebuild, migration assistance, and service credits. If the vector store contains personal data or sensitive content, deletion and entitlement tests are not optional.
+
+## Contradictions and failure modes
+Vendor claim: fastest vector search. Detection: test buyer corpus, filters, dimensions, query mix, and freshness. Vendor claim: simple RAG deployment. Detection: inspect chunking, ingestion, permissions, deletion, evaluation labels, and observability. Vendor claim: cheaper than alternatives. Detection: model reads, writes, storage, replicas, backups, data transfer, embedding refresh, and engineering operations.
+
+The common failure is selecting a vector database from a benchmark that does not resemble the buyer's corpus. The second is forgetting that permissions and deletion are retrieval features, not only security features. The third is adding a new managed service when an existing governed platform could satisfy the workload with less operational fragmentation.`,
+  },
+  {
+    id: 'PAT-SRC-CAT-MLOPS-001',
+    slug: 'mlops-model-lifecycle-platform-sourcing',
+    title: 'MLOps and Model Lifecycle Platform Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'MLOps sourcing should govern the model lifecycle from experiment to registry, deployment, monitoring, feature lineage, evaluation, and rollback rather than treating notebooks, pipelines, and dashboards as separate tool buys.',
+    applicability:
+      'Apply when sourcing MLOps, model registry, experiment tracking, feature stores, model serving, monitoring, evaluation, ML platform, or AI governance tools across Databricks, AWS SageMaker, Google Vertex AI, Azure Machine Learning, Weights & Biases, Arize, Fiddler, WhyLabs, Tecton, Feast, and related platforms.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.79,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.databricks.com/product/machine-learning',
+      'https://www.databricks.com/product/machine-learning/pricing',
+      'https://aws.amazon.com/sagemaker/pricing/',
+      'https://cloud.google.com/vertex-ai',
+      'https://cloud.google.com/vertex-ai/pricing',
+      'https://azure.microsoft.com/en-us/products/machine-learning/',
+      'https://azure.microsoft.com/en-us/pricing/details/machine-learning/',
+      'https://wandb.ai/site/pricing',
+      'https://arize.com/pricing/',
+      'https://www.fiddler.ai/pricing',
+      'https://www.tecton.ai/pricing/',
+      'https://github.com/feast-dev/feast',
+    ],
+    regulatoryChips: ['SOC-2-review', 'GDPR-if-person-data', 'HIPAA-if-PHI', 'model-risk-management', 'EU-AI-Act-review'],
+    relatedPatternIds: ['PAT-SRC-CAT-LLM-001', 'PAT-SRC-CAT-FAB-001', 'PAT-SRC-CAT-ETL-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'ai_ml',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Databricks, AWS SageMaker, Google Vertex AI, and Azure Machine Learning',
+        tier: 'enterprise',
+        positioning: 'Cloud and data-platform-native ML lifecycle candidates for experimentation, pipelines, model registry, serving, feature/data integration, and governance.',
+        cautions: ['Cloud compute, storage, serving, monitoring, notebooks, pipelines, and marketplace commitments must be modeled together.'],
+      },
+      {
+        vendorName: 'Weights & Biases, Arize, Fiddler, WhyLabs, Tecton, and Feast',
+        tier: 'specialist',
+        positioning: 'Specialist candidates for experiment tracking, model monitoring, observability, explainability, feature stores, and lifecycle governance.',
+        cautions: ['Specialist depth must be weighed against integration cost, data movement, and platform fragmentation.'],
+      },
+      {
+        vendorName: 'Open-source lifecycle stack',
+        tier: 'emerging',
+        positioning: 'OSS and self-managed stack around MLflow, Feast, notebooks, CI/CD, model servers, and monitoring libraries when control and portability matter.',
+        cautions: ['License cost savings can shift into engineering operations, security, upgrades, and support.'],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'MLOps public pricing constructs only',
+        model: 'hybrid',
+        metric: 'Compute, storage, notebooks, training jobs, endpoints, registry, monitoring, feature store, users, tracked experiments, inference, support, and services',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'AWS SageMaker Pricing', url: 'https://aws.amazon.com/sagemaker/pricing/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Azure Machine Learning Pricing', url: 'https://azure.microsoft.com/en-us/pricing/details/machine-learning/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Weights & Biases Pricing', url: 'https://wandb.ai/site/pricing', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Buyer workload mix, cloud commitments, production inference volume, monitoring retention, and negotiated enterprise support require evidence' },
+        ],
+        confidence: 0.60,
+        notes: 'MLOps TCO is workload and operating-model dependent; public pricing identifies meters only.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Model artifact, feature, and experiment portability',
+        buyerPosition: 'Require export of model artifacts, registry metadata, experiment history, evaluation results, feature definitions, lineage, and monitoring data.',
+      },
+      {
+        clauseArea: 'Production monitoring and rollback',
+        buyerPosition: 'Define drift, quality, bias, performance, incident, audit, approval, rollback, and retention responsibilities before production use.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Lifecycle coverage proof',
+        whenToUse: 'Use when a vendor claims end-to-end ML platform capability.',
+        buyerAsk: 'Demonstrate one model from experiment through registry, approval, deployment, monitoring, drift alert, rollback, and audit export.',
+      },
+      {
+        lever: 'Platform versus specialist decomposition',
+        whenToUse: 'Use when cloud-native suites and specialist tools compete.',
+        buyerAsk: 'Separate must-have lifecycle controls from nice-to-have specialist depth, integration burden, and operating ownership.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'mlops-notebook-to-prod-gap',
+        label: 'Notebook-to-production gap',
+        severity: 'high',
+        detectionSignals: ['Experiment tracking works, but registry, approvals, serving, monitoring, and rollback are manual or unclear.'],
+        mitigations: ['Run lifecycle proof with audit and rollback artifacts before award'],
+      },
+      {
+        id: 'mlops-monitoring-blindspot',
+        label: 'Monitoring blind spot',
+        severity: 'high',
+        detectionSignals: ['Production model behavior lacks drift, data-quality, latency, bias, cost, or business-outcome monitoring.'],
+        mitigations: ['Require production telemetry design, thresholds, ownership, and incident workflow'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Raise model risk management, independent validation, audit trail, lineage, approval, monitoring, and retirement controls.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Review clinical/non-clinical use boundary, PHI, validation evidence, monitoring, human review, and regulatory device implications.',
+      },
+      {
+        industry: 'insurance',
+        modifier: 'Stress explainability, bias monitoring, feature lineage, adverse-action evidence, and regulatory exam support.',
+      },
+    ],
+    body: `## Summary
+MLOps platform sourcing should connect experimentation to production accountability. Data scientists need notebooks and experiments; engineering needs pipelines and deployment; risk and compliance need lineage, approvals, monitoring, and audit evidence; product owners need reliable model behavior. A sourcing event that optimizes only one of those personas usually creates a handoff gap.
+
+## When to apply
+Use this pattern when sourcing MLOps, model registry, experiment tracking, feature store, model serving, monitoring, evaluation, ML platform, or model governance tooling. It applies to Databricks Mosaic AI and MLflow, AWS SageMaker, Google Vertex AI, Azure Machine Learning, Weights & Biases, Arize, Fiddler, WhyLabs, Tecton, Feast, and related platforms. Do not use it for pure LLM API access, BI dashboards, generic data pipelines, or data science staffing unless model lifecycle controls drive the decision.
+
+## Category boundary
+In scope: notebooks, experiments, lineage, datasets, feature stores, model registry, approvals, CI/CD, pipelines, training jobs, batch scoring, online serving, monitoring, drift, bias, quality, explainability, evaluation, audit logs, rollback, retirement, access control, and cost controls. Out of scope: raw data warehouse, generic ETL, model procurement, labeling services, and standalone dashboards unless they connect to the model lifecycle.
+
+## Lifecycle and gates
+The scope gate should identify model types, production criticality, regulated data, validation requirements, feature ownership, deployment targets, monitoring obligations, and current toolchain. The RFP gate should require vendors to map lifecycle coverage and price meters. The proof gate should run one representative model through experiment, registry, approval, deployment, monitoring, drift or quality alert, rollback, and audit export. The BAFO gate should normalize users, compute, storage, training jobs, endpoints, registry, feature store, monitoring retention, evaluation, support, marketplace terms, professional services, and internal operations.
+
+## Evaluation rubric
+Weight lifecycle completeness around 25 percent, production monitoring around 20 percent, data/feature lineage around 15 percent, integration with current cloud/data stack around 15 percent, governance and auditability around 15 percent, and commercial predictability around 10 percent. Increase governance weight for financial services, healthcare, insurance, public sector, and any model affecting eligibility, pricing, credit, clinical, employment, or safety outcomes.
+
+## Pricing and contract notes
+Public pricing pages for AWS SageMaker, Azure Machine Learning, Databricks, Weights & Biases, Arize, Fiddler, and related tools identify different commercial constructs: compute, endpoints, users, tracked experiments, monitoring, storage, support, or enterprise packages. Google Vertex AI and cloud-native platforms often tie MLOps cost to multiple services. TCO must include cloud compute, storage, endpoints, monitoring retention, data movement, CI/CD, internal operations, and support. Do not infer negotiated discounts, cloud-commit treatment, or workload cost without buyer traces.
+
+Contracting should define model artifact ownership, registry metadata export, feature definitions, experiment history, evaluation data, monitoring telemetry, retention, incident response, approval workflow, rollback, deletion, security reports, and transition assistance. If models are regulated, require audit artifacts and independent validation support.
+
+## Contradictions and failure modes
+Vendor claim: end-to-end ML platform. Detection: prove the path from experiment to registry, deployment, monitoring, rollback, and audit. Vendor claim: open standards prevent lock-in. Detection: export model artifacts, lineage, experiment metadata, feature definitions, and monitoring history. Vendor claim: monitoring is included. Detection: verify drift, bias, quality, latency, cost, business outcome, alert routing, and owner response.
+
+The common failure is buying experiment tracking and still lacking production accountability. The second is selecting a cloud-native suite because it is convenient while specialist monitoring or feature needs remain unresolved. The third is ignoring model retirement and rollback until a production model behaves badly.`,
+  },
 ];
 
 export const SOURCING_CATEGORY_PATTERN_COUNT = SOURCING_CATEGORY_PATTERNS.length;
