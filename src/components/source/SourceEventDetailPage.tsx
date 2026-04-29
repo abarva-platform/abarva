@@ -50,6 +50,7 @@ import { EvidenceNetworkGraph } from '@/components/reasoning/EvidenceNetworkGrap
 import { ReasoningErrorBoundary } from '@/components/reasoning/ReasoningErrorBoundary';
 import { EvidenceSuggestionsPanel } from '@/components/reasoning/EvidenceSuggestionsPanel';
 import { buildEvidenceSuggestions } from '@/lib/reasoning/evidence-suggestions';
+import { DownloadContextButton } from '@/components/reasoning/DownloadContextButton';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -1826,6 +1827,9 @@ export function SourceEventDetailPage() {
           isOpen={drawerOpen}
           onToggle={() => setDrawerOpen((v) => !v)}
         />
+        <div style={{ padding: '4px 16px' }}>
+          <DownloadContextButton instanceId={AMS_VENDOR_CONSOLIDATION_2026_INSTANCE.id} surface="source" />
+        </div>
 
         {/* Work pane — WorkingPaneContainer adds stage label strip + gate badge
             for Source event stages (Shell Layout Spec v2 §7) */}
