@@ -1233,6 +1233,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Pattern Conflict Detector',
     description: 'Detects stage ordering, duplicate criteria, and gate count conflicts between pattern pairs.',
   },
+  {
+    href: '/admin/reasoning/health-volatility',
+    title: 'Health Volatility',
+    description: 'Health score sensitivity analysis — upside from contradiction resolution, downside from waiver removal.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
