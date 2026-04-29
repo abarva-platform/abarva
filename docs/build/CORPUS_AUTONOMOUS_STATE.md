@@ -1,45 +1,43 @@
 # Corpus Autonomous State
 
-Last update timestamp: 2026-04-29T16:04:18Z
-Status: ACTIVE - founder resumed autonomous corpus loop and granted auto-merge authority for scoped green PRs.
+Last update timestamp: 2026-04-29T16:19:00Z
+Status: ACTIVE - founder explicitly approved resuming after pause, requested parallel governed agents, and granted auto-merge authority for scoped green PRs.
 
 ## Current wave
-Wave 3 - contract intelligence sourcing playbooks in progress.
+Wave 2/3 blend - process/methodology continuation while vendor profiles are being authored in parallel; pause gate removed by founder approval.
 
 ## Domains in progress
-- Category-specific sourcing playbooks: PR #1055 merged; target met with 51 authored and merged category patterns.
-- Process/methodology: PR #1056 merged; 3 process patterns live in corpus.
-- Contract intelligence: PAT-SRC-CON-007 integration active in PR-prep branch; 6 contract patterns live in corpus.
-- Pricing intelligence: PR #1062 merged; 2 pricing patterns live in corpus.
-- Risk patterns: Worker RSK-1 active on PAT-SRC-RSK-001/002/003.
-- Regulatory/compliance: PR #1065 merged; 2 regulatory patterns live in corpus.
-- Industry overlays: Worker IND-1 active on PAT-SRC-IND-HEALTH-001, PAT-SRC-IND-FINSERV-001, PAT-SRC-IND-RETAIL-001.
-- Vendor profiles: queued.
+- Category-specific sourcing playbooks: target met with 51 authored and merged category patterns.
+- Process/methodology: PAT-SRC-PROC-007 renewal calendar governance is in local integration/PR-prep; 3 process patterns are already live.
+- Contract intelligence: PR #1066 merged; 7 contract patterns are live in corpus.
+- Pricing intelligence: PR #1062 merged; 2 pricing patterns are live in corpus.
+- Risk patterns: queued authored batches exist; RSK-001 needs body-length review before PR.
+- Regulatory/compliance: PR #1065 merged; 2 regulatory patterns are live in corpus.
+- Industry overlays: queued authored batch exists for health, financial services, and retail overlays.
+- Vendor profiles: multiple one-pattern profiles are authored/queued; GitHub, GitLab, Cloudflare, and DocuSign workers are active.
 
 ## Active lane board
-- 2026-04-29T16:04:18Z - Integration lead - contract audit-rights integration - local validation and PR preparation in progress.
-- 2026-04-29T14:59:17Z - Worker PROC-1 (`019dd9b6-0494-73d1-8f1e-96001145df36`) - process batch 1 - complete; branch pushed.
-- 2026-04-29T14:59:17Z - Worker CON-1 (`019dd9b6-2960-73e1-9620-6281ca27711a`) - contract batch 1 - complete; branch committed.
-- 2026-04-29T14:59:17Z - Worker RSK-1 (`019dd9b6-46fa-7e41-9670-98b11b0737e0`) - risk batch 1 - complete; branch committed.
-- 2026-04-29T14:59:17Z - Worker IND-1 (`019dd9b6-6a88-7a13-83f7-0f742467df5d`) - industry batch 1 - recovered, validated, committed, and pushed.
-- 2026-04-29T14:59:17Z - Worker REG-1 (`019dd9b6-87c1-7751-a5be-26cab582e099`) - DORA regulatory pattern - complete; branch committed.
-- 2026-04-29T14:59:17Z - Worker PRC-1 (`019dd9b6-a52e-72a1-91aa-e3a3233e914d`) - SaaS pricing architecture pattern - complete; branch committed.
-- 2026-04-29T14:59:17Z - Worker VEN-MSFT-1 (`019dd9bb-4452-79e0-bc0c-209c6303ae46`) - paused safely on unexpected untracked vendor file; integration lead will recover in isolated worktree.
-- 2026-04-29T14:59:17Z - Worker VEN-SFDC-1 (`019dd9bb-8c99-76d1-a8cb-c98379a10c45`) - active.
-- 2026-04-29T14:59:17Z - Worker VEN-ORCL-1 (`019dd9bb-c762-7473-af38-1851b06f36e2`) - active.
-- 2026-04-29T14:59:17Z - Worker VEN-SAP-1 (`019dd9bc-ad44-7ef3-84a2-2a3b10db949a`) - active.
-- 2026-04-29T14:59:17Z - Worker VEN-SNOW-1 (`019dd9bc-d295-7f72-bbc0-3b236de0acfa`) - active.
+- 2026-04-29T16:19:00Z - Integration lead - PAT-SRC-PROC-007 renewal calendar governance - pause gate removal, aggregate wiring, count updates, validation, PR creation.
+- 2026-04-29T16:13:14Z - PR #1066 - PAT-SRC-CON-007 audit rights governance - merged at `068afbc11274cfd4f7366c3ef644c235d84e6abe`.
+- 2026-04-29T16:19:00Z - Worker Harvey (`019dda09-af99-7cb1-90a5-98bb30888b86`) - PAT-SRC-VEN-GITHUB-001 - active.
+- 2026-04-29T16:19:00Z - Worker Maxwell (`019dda09-afca-7073-b50d-80c296ad073c`) - PAT-SRC-VEN-GITLAB-001 - active.
+- 2026-04-29T16:19:00Z - Worker Kant (`019dda09-b00c-77d2-98bd-32dcc72648d5`) - PAT-SRC-VEN-CLOUDFLARE-001 - active.
+- 2026-04-29T16:19:00Z - Worker Anscombe (`019dda09-b02f-7df2-b228-22f3230a90a5`) - PAT-SRC-VEN-DOCUSIGN-001 - active.
+- 2026-04-29T16:15:10Z - Queued vendor lane - Datadog profile authored and staged for later one-pattern integration.
+- 2026-04-29T16:15:10Z - Queued process lane - advanced process batch PROC-004/005/006 authored for later integration.
+- 2026-04-29T16:15:10Z - Queued risk lane - commercial risk batch RSK-004/005/006 authored for later integration.
+- 2026-04-29T16:15:10Z - Queued industry lane - health, financial services, and retail overlays authored for later integration.
 
 ## Pattern counts by domain
 - Existing sourcing corpus on latest main before Wave 1: 24 patterns.
 - Category-specific sourcing playbooks (`PAT-SRC-CAT-*`): 51 authored and merged across Wave 1.
 - Vendor intelligence profiles (`PAT-SRC-VEN-*`): 0 integrated; multiple authored profiles queued for one-pattern PRs.
-- Contract intelligence (`PAT-SRC-CON-*`): 7 authored; 6 merged; 1 integration active.
+- Contract intelligence (`PAT-SRC-CON-*`): 7 authored and merged.
 - Pricing intelligence (`PAT-SRC-PRC-*`): 2 authored and merged.
-- Process and methodology (`PAT-SRC-PROC-*`): 3 authored and merged.
-- Industry-specific overlays (`PAT-SRC-IND-*`): 0
+- Process and methodology (`PAT-SRC-PROC-*`): 4 authored; 3 merged; 1 active in PR-prep.
+- Industry-specific overlays (`PAT-SRC-IND-*`): 0 integrated; 3 authored and queued.
 - Regulatory and compliance (`PAT-SRC-REG-*`): 2 authored and merged.
-- Risk patterns (`PAT-SRC-RSK-*`): 0
+- Risk patterns (`PAT-SRC-RSK-*`): 0 integrated; 6 authored and queued, with RSK-001 needing body-length review.
 
 ## Merged PRs
 - #811 - `[corpus][types] Add sourcing pattern extensions · Wave 0` - merged 2026-04-29T02:15:53Z at `804d331e59d6579c6ea1c91ea33a267b752d683b`.
@@ -58,7 +56,9 @@ Wave 3 - contract intelligence sourcing playbooks in progress.
 - #824 - `[corpus][cat] Author PAT-SRC-CAT-PROCURE-001, PAT-SRC-CAT-CLM-001, PAT-SRC-CAT-AP-001 · 3 patterns` - merged 2026-04-29T04:20:15Z at `d3b76da741d85d74e6c920686f116bee8d55d9c6`.
 - #826 - `[corpus][cat] Author PAT-SRC-CAT-TMS-001, PAT-SRC-CAT-HRTECH-001, PAT-SRC-CAT-PAYROLL-001 · 3 patterns` - merged 2026-04-29T04:39:00Z at `32043d785c4b8f89f663ef1bf97364e3b7923433`.
 - #831 - `[corpus][cat] Author PAT-SRC-CAT-WFM-001, PAT-SRC-CAT-PSA-001, PAT-SRC-CAT-CPQ-001 · 3 patterns` - merged 2026-04-29T14:12Z at `7a72e3a70ca9f437624cc08e8284b80fda11ac5d`.
+- #1052 - `chore(corpus): resume autonomous corpus loop` - merged 2026-04-29T14:00Z at `871fe9b1`.
 - #1053 - `[corpus][cat] Author PAT-SRC-CAT-EHS-001, PAT-SRC-CAT-PPM-001, PAT-SRC-CAT-QMS-001 · 3 patterns` - merged 2026-04-29T14:28Z at `ea48760970e2874c1bc1fae3804d2da0b2f242a5`.
+- #1054 - `chore(corpus): update autonomous corpus state after cat17 merge` - merged 2026-04-29T14:36Z at `03564736`.
 - #1055 - `[corpus][cat] Author PAT-SRC-CAT-RPA-001, PAT-SRC-CAT-ERP2-001, PAT-SRC-CAT-DOC-001 · 3 patterns` - merged 2026-04-29T14:58Z at `642a547be3626b77f0a8b72115efe8b33a20be61`.
 - #1056 - `[corpus][proc] Author PAT-SRC-PROC-001, PAT-SRC-PROC-002, PAT-SRC-PROC-003 · 3 patterns` - merged 2026-04-29T15:08Z at `a0245457038cf313318d5b13d49daead03d535df`.
 - #1057 - `[corpus][con] Author PAT-SRC-CON-001, PAT-SRC-CON-002, PAT-SRC-CON-003 · 3 patterns` - merged 2026-04-29T15:17Z at `f2784cf9ae1a62ee07ed59bf96eb99311ab33ab4`.
@@ -67,37 +67,42 @@ Wave 3 - contract intelligence sourcing playbooks in progress.
 - #1062 - `[corpus][prc] Author PAT-SRC-PRC-SAAS-001 · 1 pattern` - merged 2026-04-29T15:49Z at `8c4f935fac89f38cc18de9e44fb177be618cb4e4`.
 - #1063 - `[corpus][reg] Author PAT-SRC-REG-DORA-001 · 1 pattern` - merged 2026-04-29T15:56Z at `28f25e47bceb5d716a29c249a0edfa9e533972a2`.
 - #1065 - `[corpus][reg] Author PAT-SRC-REG-EUAI-001 · 1 pattern` - merged 2026-04-29T16:04Z at `936a0d43d412dd9fa30d17f51a5832c33879bf72`.
+- #1066 - `[corpus][con] Author PAT-SRC-CON-007 · 1 pattern` - merged 2026-04-29T16:13:14Z at `068afbc11274cfd4f7366c3ef644c235d84e6abe`.
 
 ## Open PRs
-- Contract audit rights - `[corpus][con] Author PAT-SRC-CON-007 · 1 pattern` - local integration in progress.
+- None yet. PAT-SRC-PROC-007 is in local integration and will be opened after validation.
 
 ## Held PRs requiring founder review
 - None.
 
 ## Stalled lanes
-- None. Collaboration/productivity, video conferencing, enterprise messaging, CDP, cloud data warehouse, lakehouse, MDM, data fabric, ETL/ELT, revenue intelligence, BI, LLM/model-access, agent runtime, vector retrieval, MLOps, enterprise code platform, workforce IAM, IGA, PAM, SASE/SSE, SIEM, EDR/XDR, CNAPP/CSPM, FinOps, observability, ITAM, SAM, ESM, BPM, legal operations, procurement, CLM, AP automation, TMS, HRTech, payroll, WFM, PSA, and CPQ research lanes completed with read-only source notes.
+- None currently.
+- Prior vendor workers were intentionally shut down at pause detection; replacement workers are now active under the founder resume approval.
+- Watch item: RSK-001 from risk batch 1 is below the 400-word hold threshold and must be patched or held before PR.
 
 ## Next 16 queued pattern IDs
-- PAT-SRC-CAT-LMS-001
-- PAT-SRC-CAT-CRM2-001
-- PAT-SRC-CAT-DAM-001
-- PAT-SRC-CAT-ESG-001
-- PAT-SRC-CAT-BI2-001
-- PAT-SRC-CAT-SEARCH-001
-- PAT-SRC-CAT-EMAIL-001
-- PAT-SRC-CAT-SSO-001
-- PAT-SRC-CAT-OBS2-001
-- PAT-SRC-CAT-MDM2-001
-- PAT-SRC-CAT-ECOM-001
-- PAT-SRC-CAT-PIM-001
-- PAT-SRC-CAT-PLM-001
-- PAT-SRC-CAT-FSM-001
-- PAT-SRC-CAT-ITOM-001
-- PAT-SRC-CAT-SCM-001
+- PAT-SRC-PROC-007
+- PAT-SRC-PROC-004
+- PAT-SRC-PROC-005
+- PAT-SRC-PROC-006
+- PAT-SRC-RSK-004
+- PAT-SRC-RSK-005
+- PAT-SRC-RSK-006
+- PAT-SRC-IND-HEALTH-001
+- PAT-SRC-IND-FINSERV-001
+- PAT-SRC-IND-RETAIL-001
+- PAT-SRC-VEN-DATADOG-001
+- PAT-SRC-VEN-GITHUB-001
+- PAT-SRC-VEN-GITLAB-001
+- PAT-SRC-VEN-CLOUDFLARE-001
+- PAT-SRC-VEN-DOCUSIGN-001
+- PAT-SRC-VEN-MICROSOFT-001
 
 ## Current blockers
+- Pause gate `docs/build/CORPUS_PAUSE.md` removed in the active resume PR under founder approval.
 - Full `npm test -- --runInBand` remains blocked by pre-existing unrelated broad-suite failures outside corpus branch scope.
 - Numeric pricing, discount, implementation-ratio, AI-usage, overage, and renewal-uplift claims remain intentionally blank unless source-backed by buyer evidence or approved benchmarks.
+- Vendor/regulatory/pricing PRs remain one-pattern PRs because source confidence and evidence discipline are higher risk.
 
 ## Next action
-Validate, push, open, and auto-merge the contract audit-rights integration PR if green and scoped while vendor/domain workers continue authoring non-conflicting batches.
+Validate PAT-SRC-PROC-007 locally, push `corpus/proc/renewal-calendar-integration`, open PR, watch checks, and auto-merge if all gates are green while vendor workers continue authoring in parallel.
