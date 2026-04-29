@@ -1,6 +1,6 @@
 # Corpus Autonomous State
 
-Last update timestamp: 2026-04-29T15:49:24Z
+Last update timestamp: 2026-04-29T15:57:04Z
 Status: ACTIVE - founder resumed autonomous corpus loop and granted auto-merge authority for scoped green PRs.
 
 ## Current wave
@@ -12,12 +12,12 @@ Wave 6 - regulatory and compliance sourcing playbooks in progress.
 - Contract intelligence: PR #1059 merged; 6 contract patterns live in corpus.
 - Pricing intelligence: PR #1062 merged; 2 pricing patterns live in corpus.
 - Risk patterns: Worker RSK-1 active on PAT-SRC-RSK-001/002/003.
-- Regulatory/compliance: PAT-SRC-REG-DORA-001 integration active in PR-prep branch.
+- Regulatory/compliance: PR #1063 merged; PAT-SRC-REG-EUAI-001 integration active in PR-prep branch.
 - Industry overlays: Worker IND-1 active on PAT-SRC-IND-HEALTH-001, PAT-SRC-IND-FINSERV-001, PAT-SRC-IND-RETAIL-001.
 - Vendor profiles: queued.
 
 ## Active lane board
-- 2026-04-29T15:49:24Z - Integration lead - DORA regulatory integration - local validation and PR preparation in progress.
+- 2026-04-29T15:57:04Z - Integration lead - EU AI Act regulatory integration - local validation and PR preparation in progress.
 - 2026-04-29T14:59:17Z - Worker PROC-1 (`019dd9b6-0494-73d1-8f1e-96001145df36`) - process batch 1 - complete; branch pushed.
 - 2026-04-29T14:59:17Z - Worker CON-1 (`019dd9b6-2960-73e1-9620-6281ca27711a`) - contract batch 1 - complete; branch committed.
 - 2026-04-29T14:59:17Z - Worker RSK-1 (`019dd9b6-46fa-7e41-9670-98b11b0737e0`) - risk batch 1 - complete; branch committed.
@@ -38,7 +38,7 @@ Wave 6 - regulatory and compliance sourcing playbooks in progress.
 - Pricing intelligence (`PAT-SRC-PRC-*`): 2 authored and merged.
 - Process and methodology (`PAT-SRC-PROC-*`): 3 authored and merged.
 - Industry-specific overlays (`PAT-SRC-IND-*`): 0
-- Regulatory and compliance (`PAT-SRC-REG-*`): 1 authored; integration active.
+- Regulatory and compliance (`PAT-SRC-REG-*`): 2 authored; 1 merged; 1 integration active.
 - Risk patterns (`PAT-SRC-RSK-*`): 0
 
 ## Merged PRs
@@ -65,9 +65,10 @@ Wave 6 - regulatory and compliance sourcing playbooks in progress.
 - #1059 - `[corpus][con] Author PAT-SRC-CON-004, PAT-SRC-CON-005, PAT-SRC-CON-006 · 3 patterns` - merged 2026-04-29T15:25Z at `bf8b1652817a4ea8c9bdab7d7200371e365818bb`.
 - #1060 - `[corpus][prc] Author PAT-SRC-PRC-CLOUD-001 · 1 pattern` - merged 2026-04-29T15:40Z at `69131fe16262a27c20fcf1bbca561d24d793c694`.
 - #1062 - `[corpus][prc] Author PAT-SRC-PRC-SAAS-001 · 1 pattern` - merged 2026-04-29T15:49Z at `8c4f935fac89f38cc18de9e44fb177be618cb4e4`.
+- #1063 - `[corpus][reg] Author PAT-SRC-REG-DORA-001 · 1 pattern` - merged 2026-04-29T15:56Z at `28f25e47bceb5d716a29c249a0edfa9e533972a2`.
 
 ## Open PRs
-- DORA regulatory - `[corpus][reg] Author PAT-SRC-REG-DORA-001 · 1 pattern` - local integration in progress.
+- EU AI Act regulatory - `[corpus][reg] Author PAT-SRC-REG-EUAI-001 · 1 pattern` - local integration in progress.
 
 ## Held PRs requiring founder review
 - None.
@@ -98,4 +99,4 @@ Wave 6 - regulatory and compliance sourcing playbooks in progress.
 - Numeric pricing, discount, implementation-ratio, AI-usage, overage, and renewal-uplift claims remain intentionally blank unless source-backed by buyer evidence or approved benchmarks.
 
 ## Next action
-Validate, push, open, and auto-merge the DORA regulatory integration PR if green and scoped while vendor/domain workers continue authoring non-conflicting batches.
+Validate, push, open, and auto-merge the EU AI Act regulatory integration PR if green and scoped while vendor/domain workers continue authoring non-conflicting batches.
