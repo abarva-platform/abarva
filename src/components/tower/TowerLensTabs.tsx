@@ -66,6 +66,7 @@ import {
 } from '@/lib/reasoning/cross-instance-reasoner';
 import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances';
 import { LinkedInstanceTilesGrid } from '@/components/_shared/LinkedInstanceTilesGrid';
+import { PortfolioPhaseHeatmap } from '@/components/tower/PortfolioPhaseHeatmap';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Design tokens (matches existing Tower surface palette)
@@ -235,6 +236,31 @@ function PortfolioPanel({ tenant }: { tenant: TenantSeedPlan }) {
         title="Portfolio"
         subtitle="Programme portfolio overview — pressure signals and vendor-aligned programme status. Deterministic seed."
       />
+
+      {/* Portfolio phase heatmap */}
+      <section aria-label="Portfolio phase map" data-testid="portfolio-phase-map-section">
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            marginBottom: 10,
+          }}
+        >
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: C.muted,
+            }}
+          >
+            Portfolio phase map
+          </span>
+        </div>
+        <PortfolioPhaseHeatmap />
+      </section>
 
       {/* Active alerts section */}
       <section aria-label="Active alerts">
