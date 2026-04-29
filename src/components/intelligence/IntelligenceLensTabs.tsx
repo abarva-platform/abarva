@@ -1,4 +1,4 @@
-// INTEL4 + INT4 + INT5 · Intelligence Lens Tabs.
+// INTEL4 + INT4 + INT5 + INT6 · Intelligence Lens Tabs.
 //
 // Server component. Renders the blueprint-aligned five-mode lens surface
 // (Summary · Evidence · Programs · Actions · Signals) and the content panel
@@ -62,6 +62,11 @@ import {
   buildProgrammeRiskSummaryView,
   type ProgrammeRiskSignal,
 } from '@/lib/intelligence/programme-risk-summary-view';
+import {
+  buildGateReadinessView,
+  type GateRequirement,
+  type ProgrammeGateReadiness,
+} from '@/lib/intelligence/gate-readiness-view';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Design tokens (matches existing intelligence surface palette)
@@ -180,6 +185,9 @@ export function IntelligenceLensTabs({
         )}
         {activeTab === 'programme_risk' && (
           <ProgrammeRiskPanel />
+        )}
+        {activeTab === 'gate_readiness' && (
+          <GateReadinessPanel />
         )}
       </div>
     </div>
@@ -1700,6 +1708,199 @@ function ProgrammeRiskPanel() {
         style={{ fontSize: 10, color: C.mutedSoft, fontStyle: 'italic', lineHeight: 1.5, borderTop: `1px solid ${C.border}`, paddingTop: 10 }}
       >
         Deterministic seed · Programme risk summary cross-references fixture contradiction, gap, and gate data for the Apex Retail engagement. Live risk scoring, real-time gate tracking, and evidence ingest are managed by the Sentinel reasoning runtime.
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INT6 · Gate Readiness Checklist Panel
+// ─────────────────────────────────────────────────────────────────────────────
+
+const GATE_READINESS_STATUS_STYLE: Record<string, { bg: string; text: string; label: string; border: string }> = {
+  clear:    { bg: '#f0fdf4', text: '#166534', label: 'Clear',    border: '#16a34a' },
+  at_risk:  { bg: '#fef3c7', text: '#92400e', label: 'At Risk',  border: '#d97706' },
+  blocked:  { bg: '#fef2f2', text: '#b91c1c', label: 'Blocked',  border: '#b91c1c' },
+};
+
+const GATE_REQ_STATUS_STYLE: Record<string, { bg: string; text: string; label: string }> = {
+  met:      { bg: '#f0fdf4', text: '#166534', label: 'Met' },
+  open:     { bg: '#eff6ff', text: '#1d4ed8', label: 'Open' },
+  at_risk:  { bg: '#fef3c7', text: '#92400e', label: 'At Risk' },
+  blocked:  { bg: '#fef2f2', text: '#b91c1c', label: 'Blocked' },
+};
+
+const GATE_REQ_URGENCY_STYLE: Record<string, { bg: string; text: string }> = {
+  critical: { bg: '#fef2f2', text: '#b91c1c' },
+  high:     { bg: '#fef3c7', text: '#92400e' },
+  medium:   { bg: '#eff6ff', text: '#1d4ed8' },
+  low:      { bg: '#f3f4f6', text: '#6b7280' },
+};
+
+const GATE_REQ_CATEGORY_LABEL: Record<string, string> = {
+  evidence:      'Evidence',
+  contradiction: 'Contradiction',
+  stakeholder:   'Stakeholder',
+  technical:     'Technical',
+  governance:    'Governance',
+};
+
+function GateReadinessPanel() {
+  const view = buildGateReadinessView();
+  const { programmes, metrics } = view;
+
+  return (
+    <div
+      data-testid="intelligence-gate-readiness-panel"
+      style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 960 }}
+    >
+      {/* Header */}
+      <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', color: C.muted, textTransform: 'uppercase' }}>
+        INT6 · Gate Readiness Checklist · Apex Retail
+      </div>
+
+      {/* Metrics bar */}
+      <div
+        data-testid="intelligence-gate-readiness-summary"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+          flexWrap: 'wrap',
+          padding: '12px 16px',
+          backgroundColor: C.card,
+          border: `1px solid ${C.border}`,
+          borderRadius: 8,
+        }}
+      >
+        <span style={{ fontSize: 11, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600 }}>
+          Gate Readiness
+        </span>
+        <span style={{ fontSize: 12, color: C.muted }}>
+          {metrics.totalProgrammes} programmes · {metrics.totalOpenRequirements} open requirements
+        </span>
+        {metrics.blockedCount > 0 && (
+          <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: '#fef2f2', color: '#b91c1c', fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', border: '1px solid #fca5a5' }}>
+            {metrics.blockedCount} gate blocked
+          </span>
+        )}
+        {metrics.atRiskCount > 0 && (
+          <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: '#fef3c7', color: '#92400e', fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            {metrics.atRiskCount} at risk
+          </span>
+        )}
+        {metrics.clearCount > 0 && (
+          <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: '#f0fdf4', color: '#166534', fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            {metrics.clearCount} clear
+          </span>
+        )}
+        {metrics.criticalOpenCount > 0 && (
+          <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: '#fef2f2', color: '#b91c1c', fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', border: '1px solid #fca5a5' }}>
+            {metrics.criticalOpenCount} critical open
+          </span>
+        )}
+      </div>
+
+      {/* Atlas summary */}
+      <p style={{ fontSize: 13, color: C.ink, lineHeight: 1.6, margin: 0 }}>
+        {view.atlasSummary}
+      </p>
+
+      {/* Per-programme gate readiness cards */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {programmes.map((prog: ProgrammeGateReadiness) => {
+          const statusStyle = GATE_READINESS_STATUS_STYLE[prog.gateReadinessStatus] ?? GATE_READINESS_STATUS_STYLE.at_risk;
+          const metCount = prog.requirements.filter((r) => r.status === 'met').length;
+          const totalReqs = prog.requirements.length;
+          return (
+            <div
+              key={prog.programmeId}
+              data-testid={`intelligence-gate-readiness-${prog.programmeId}`}
+              style={{
+                backgroundColor: C.card,
+                border: `1px solid ${C.border}`,
+                borderLeft: `3px solid ${statusStyle.border}`,
+                borderRadius: 6,
+                padding: '14px 16px',
+              }}
+            >
+              {/* Programme header */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+                <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: C.ink }}>
+                  {prog.programmeName}
+                </span>
+                <span style={{ display: 'inline-block', padding: '2px 7px', borderRadius: 4, fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', background: statusStyle.bg, color: statusStyle.text }}>
+                  Gate: {statusStyle.label}
+                </span>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: C.mutedSoft }}>
+                  {prog.programmeCode} · Next: {prog.nextGate}
+                </span>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: metCount === totalReqs ? '#166534' : C.mutedSoft }}>
+                  {metCount}/{totalReqs} met
+                </span>
+              </div>
+
+              {/* Requirements checklist */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {prog.requirements.map((req: GateRequirement) => {
+                  const reqStatusStyle = GATE_REQ_STATUS_STYLE[req.status] ?? GATE_REQ_STATUS_STYLE.open;
+                  const reqUrgencyStyle = GATE_REQ_URGENCY_STYLE[req.urgency] ?? GATE_REQ_URGENCY_STYLE.medium;
+                  const isMet = req.status === 'met';
+                  return (
+                    <div
+                      key={req.requirementId}
+                      style={{
+                        padding: '8px 10px',
+                        background: isMet ? '#f0fdf4' : C.surface,
+                        border: `1px solid ${isMet ? '#bbf7d0' : C.border}`,
+                        borderRadius: 4,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 4,
+                        opacity: isMet ? 0.85 : 1,
+                      }}
+                    >
+                      {/* Req header row */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span style={{ flex: 1, fontSize: 12, fontWeight: isMet ? 400 : 600, color: isMet ? '#166534' : C.ink, textDecoration: isMet ? 'none' : 'none' }}>
+                          {isMet && <span style={{ marginRight: 5 }}>✓</span>}
+                          {req.description}
+                        </span>
+                        <span style={{ display: 'inline-block', padding: '1px 6px', borderRadius: 3, fontSize: 9, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', background: reqStatusStyle.bg, color: reqStatusStyle.text }}>
+                          {reqStatusStyle.label}
+                        </span>
+                        {!isMet && (
+                          <span style={{ display: 'inline-block', padding: '1px 6px', borderRadius: 3, fontSize: 9, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', background: reqUrgencyStyle.bg, color: reqUrgencyStyle.text }}>
+                            {req.urgency}
+                          </span>
+                        )}
+                        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: C.mutedSoft, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                          {GATE_REQ_CATEGORY_LABEL[req.category] ?? req.category}
+                        </span>
+                      </div>
+
+                      {/* Sentinel note — only for non-met */}
+                      {!isMet && (
+                        <div style={{ fontSize: 11, color: C.muted, fontStyle: 'italic' }}>
+                          {req.sentinelNote}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Honest disclaimer */}
+      <div
+        data-testid="intelligence-gate-readiness-disclaimer"
+        data-honest-disclaimer="intelligence-gate-readiness"
+        style={{ fontSize: 10, color: C.mutedSoft, fontStyle: 'italic', lineHeight: 1.5, borderTop: `1px solid ${C.border}`, paddingTop: 10 }}
+      >
+        Deterministic seed · Gate readiness checklist reflects fixture requirement data for the four Apex Retail AI programmes. Live gate tracking, automated requirement closure, and cross-programme dependency resolution are managed by the Sentinel reasoning runtime.
       </div>
     </div>
   );
