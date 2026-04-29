@@ -1218,6 +1218,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Stage Transition Analysis',
     description: 'Transition frequency, dwell times, success predictors, and stuck instance identification.',
   },
+  {
+    href: '/admin/reasoning/instance-deep-dive',
+    title: 'Instance Deep Dive',
+    description: 'Comprehensive per-instance view — health, gates, waivers, contradictions, evidence, stage track, and synthesis advisory.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
