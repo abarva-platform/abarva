@@ -104,9 +104,12 @@ export function AgentCanvas({
         />
       </div>
 
-      {/* Right column — reactive panel (sticky-ish, scrollable). */}
+      {/* Right column — reactive panel (sticky-ish, scrollable).
+          PR-N · header label adapts to the active agent (Atlas on
+          /home, Nexus on /programs/*, etc.) so the panel header
+          matches the chat persona on the left. */}
       <aside
-        aria-label="Nexus reactive workbench"
+        aria-label={`${agent.name} reactive workbench`}
         style={{
           minHeight: 0,
           minWidth: 0,
@@ -114,8 +117,39 @@ export function AgentCanvas({
           paddingRight: 4,
         }}
       >
-        <NexusReactivePanel artifacts={artifacts} />
+        <NexusReactivePanel
+          artifacts={artifacts}
+          agentLabel={agent.name}
+          emptyStatePrompts={emptyStatePromptsFor(agent.name)}
+        />
       </aside>
     </section>
   );
+}
+
+/**
+ * PR-N · agent-specific empty-state copy. Atlas on /home gets
+ * portfolio prompts; Nexus on /programs/* gets phase-pack prompts.
+ * Sentinel has its own SentinelReactivePanel and doesn't pass through
+ * here, but we cover the case for completeness.
+ */
+function emptyStatePromptsFor(agentName: string): { primary: string; secondary: string } {
+  switch (agentName) {
+    case 'Atlas':
+      return {
+        primary: "what needs my attention today?",
+        secondary: "show me programs at risk",
+      };
+    case 'Sentinel':
+      return {
+        primary: "show me patterns like CDP activation",
+        secondary: "cite evidence for vendor lock-in risk",
+      };
+    case 'Nexus':
+    default:
+      return {
+        primary: "where are we?",
+        secondary: "can we advance the gate?",
+      };
+  }
 }

@@ -34,6 +34,21 @@ export interface NexusReactivePanelProps {
    * recent first — the panel reverses-time-order the rendered cards.
    */
   artifacts: Artifact[];
+  /**
+   * PR-N · agent label rendered in the panel header. Defaults to
+   * 'Nexus' for backwards compat with /programs/<id>. /home passes
+   * 'Atlas'; /programs (list) keeps 'Nexus'. (Intelligence has its own
+   * SentinelReactivePanel.) Removes the founder-flagged copy mismatch
+   * where Atlas's surface showed "Nexus reasoning · live".
+   */
+  agentLabel?: string;
+  /**
+   * PR-N · operator-coded prompts shown in the empty-state placeholder.
+   * Two short prompt suggestions tailored to the active agent — Atlas
+   * gets portfolio prompts, Nexus gets phase-pack prompts. Default
+   * stays the existing /programs/<id> phrasing.
+   */
+  emptyStatePrompts?: { primary: string; secondary: string };
 }
 
 // ── Status badge ──────────────────────────────────────────────────────────────
@@ -434,8 +449,15 @@ export function selectVisibleArtifacts(artifacts: Artifact[]): Artifact[] {
     .reverse();
 }
 
-export function NexusReactivePanel({ artifacts }: NexusReactivePanelProps) {
+export function NexusReactivePanel({
+  artifacts,
+  agentLabel = 'Nexus',
+  emptyStatePrompts,
+}: NexusReactivePanelProps) {
   const visible = useMemo(() => selectVisibleArtifacts(artifacts), [artifacts]);
+  const headerLabel = `${agentLabel} reasoning · live`;
+  const promptPrimary = emptyStatePrompts?.primary ?? 'where are we?';
+  const promptSecondary = emptyStatePrompts?.secondary ?? 'can we advance the gate?';
 
   // PR-H — empty state. The reactive panel reserves grid space inside
   // <AgentCanvas> regardless of artifact count, so when no artifacts
@@ -470,13 +492,12 @@ export function NexusReactivePanel({ artifacts }: NexusReactivePanelProps) {
             fontWeight: 700,
           }}
         >
-          Nexus reasoning · live
+          {headerLabel}
         </div>
         <p style={{ margin: '4px 0 0', fontSize: 13, lineHeight: 1.55 }}>
-          As we work this phase together, Nexus will materialize gate
-          evaluations, phase-progress cards, anti-pattern flags, and
-          pattern matches here — one card per piece of reasoning, in
-          real time.
+          As we work together, {agentLabel} will materialize gate evaluations,
+          progress cards, anti-pattern flags, and pattern matches here — one card
+          per piece of reasoning, in real time.
         </p>
         <p
           style={{
@@ -487,9 +508,8 @@ export function NexusReactivePanel({ artifacts }: NexusReactivePanelProps) {
             fontStyle: 'italic',
           }}
         >
-          Start the conversation on the left. Ask &ldquo;where are we?&rdquo; or
-          &ldquo;can we advance the gate?&rdquo; — cards will populate as
-          Nexus reasons.
+          Start the conversation on the left. Ask &ldquo;{promptPrimary}&rdquo; or
+          &ldquo;{promptSecondary}&rdquo; — cards will populate as {agentLabel} reasons.
         </p>
       </section>
     );
@@ -519,7 +539,7 @@ export function NexusReactivePanel({ artifacts }: NexusReactivePanelProps) {
           fontWeight: 700,
         }}
       >
-        Nexus reasoning · live
+        {headerLabel}
       </header>
       {visible.map((a, idx) => {
         const key = `${a.type}-${idx}`;
