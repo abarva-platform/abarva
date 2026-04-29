@@ -1143,6 +1143,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/health-clusters',
     description: 'Instances grouped into 5 health bands with within-cluster pattern analysis and structural mismatch detection.',
   },
+  {
+    href: '/admin/reasoning/stage-gate-scorecard',
+    title: 'Stage Gate Scorecard',
+    description: 'Per-stage Pass/Partial/Fail ratings across all instances — identify worst and best performing stages.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
