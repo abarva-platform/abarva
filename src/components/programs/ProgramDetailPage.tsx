@@ -4215,6 +4215,7 @@ export function ProgramDetailPage({
             estate. The static legacy content (storyline, missions,
             sub-nav, sections) collapses below in a details accordion. */}
         <AgentCanvas
+          surface={`/programs/${view.programId}`}
           programId={view.programId}
           agent={{ initials: 'Nx', name: 'Nexus', role: 'Program Orchestrator' }}
           quote={view.workbench.prose}
