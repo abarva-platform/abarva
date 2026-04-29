@@ -1093,6 +1093,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/gate-export',
     description: 'Exportable gate status matrix — all instances × all criteria with met/waived/unmet status cells',
   },
+  {
+    title: 'Alerts dashboard',
+    href: '/admin/reasoning/alerts-dashboard',
+    description: 'Unified triage dashboard — critical health, stale waivers, chronic contradictions, and long dwell alerts',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
