@@ -718,6 +718,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/contradiction-browser',
     description: 'Full dictionary of contradiction templates with live resolution status and severity breakdown',
   },
+  {
+    title: 'Gate status matrix',
+    href: '/admin/reasoning/gate-status-matrix',
+    description: 'Hard gate criteria × instances grid — met/waived/unmet/N/A status at a glance',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
