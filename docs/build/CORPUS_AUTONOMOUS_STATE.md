@@ -1,6 +1,6 @@
 # Corpus Autonomous State
 
-Last update timestamp: 2026-04-29T17:53:00Z
+Last update timestamp: 2026-04-29T17:55:30Z
 Status: ACTIVE - founder explicitly approved resuming after pause, requested parallel governed agents, and granted auto-merge authority for scoped green PRs.
 
 ## Current wave
@@ -100,7 +100,7 @@ Wave 8 - vendor profile one-pattern PRs beginning after process/methodology batc
 - #1077 - `[corpus][ven] Author PAT-SRC-VEN-ASANA-001 · 1 pattern` - merged 2026-04-29T17:52:42Z at `f193c464a9bfa600e0229b98486cd0c4b2c27b51`.
 
 ## Open PRs
-- None yet. PAT-SRC-VEN-SMARTSHEET-001 is in local integration and will be opened after validation.
+- #1078 - `[corpus][ven] Author PAT-SRC-VEN-SMARTSHEET-001 · 1 pattern` - open; CI/Vercel pending. URL: https://github.com/anandsundaram-hash/abarva/pull/1078
 
 ## Held PRs requiring founder review
 - None.
@@ -132,4 +132,4 @@ Wave 8 - vendor profile one-pattern PRs beginning after process/methodology batc
 - Vendor/regulatory/pricing PRs remain one-pattern PRs because source confidence and evidence discipline are higher risk.
 
 ## Next action
-Validate PAT-SRC-VEN-SMARTSHEET-001 locally, push `corpus/ven/smartsheet-integration`, open PR, watch checks, and auto-merge if all gates are green while vendor workers continue authoring in parallel.
+Watch PR #1078 checks and auto-merge if green while preparing PAT-SRC-VEN-COUPA-001 integration in parallel.
