@@ -18,6 +18,7 @@ import { SHELL } from '@/lib/shell/shell-tokens';
 import { useAgentStream } from '@/hooks/useAgentStream';
 import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
 import { AgentMarkdown } from '@/lib/agent/markdownRenderer';
+import type { Artifact } from '@/lib/agent/artifacts';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -37,6 +38,14 @@ export interface AtlasDrawerProps {
   surface?: string;
   /** Program identifier for local useAgentStream fallback. */
   programId?: string;
+  /**
+   * Surface 2 PR2 — when provided, Nexus's structured artifacts
+   * (gate-evaluation, evidence-highlight, phase-recommendation, etc.)
+   * are parsed from the streamed response and dispatched here so the
+   * surrounding page can render them reactively. Sentinels are
+   * stripped from the chat-visible text.
+   */
+  onArtifact?: (artifact: Artifact) => void;
 }
 
 // ── AtlasDrawer ───────────────────────────────────────────────────────────────
@@ -48,6 +57,7 @@ export function AtlasDrawer({
   quote,
   surface,
   programId,
+  onArtifact,
 }: AtlasDrawerProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const threadEndRef = useRef<HTMLDivElement>(null);
@@ -58,6 +68,7 @@ export function AtlasDrawer({
     surface: surface ?? 'home',
     programId,
     agentName: agent.name,
+    onArtifact,
   });
 
   const ask          = pageState?.ask             ?? localStream.ask;

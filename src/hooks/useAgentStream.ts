@@ -3,14 +3,27 @@
 // Stateless fallback — no history. Use AtlasPageStateProvider for multi-turn.
 
 import { useState, useCallback } from 'react';
+import { extractArtifacts, type Artifact } from '@/lib/agent/artifacts';
 
 interface UseAgentStreamOptions {
   surface: string; // 'programs' | 'intelligence' | 'tower' | 'source' | 'setup' | 'home'
   programId?: string;
   agentName: string;
+  /**
+   * Surface 2 PR2 — when provided, the hook parses artifacts from the
+   * streamed text and dispatches each one. The exposed `response` is
+   * the visible text with artifact tuples stripped, so the caller can
+   * render it through AgentMarkdown without leaking sentinel grammar.
+   */
+  onArtifact?: (artifact: Artifact) => void;
 }
 
-export function useAgentStream({ surface, programId, agentName }: UseAgentStreamOptions) {
+export function useAgentStream({
+  surface,
+  programId,
+  agentName,
+  onArtifact,
+}: UseAgentStreamOptions) {
   const [response, setResponse] = useState<string>('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,14 +55,52 @@ export function useAgentStream({ surface, programId, agentName }: UseAgentStream
         if (!reader) throw new Error('No response body');
 
         const decoder = new TextDecoder();
-        let accumulated = '';
+        // Two buffers when artifact extraction is enabled:
+        //   - `pending` holds raw streamed text that may contain a
+        //     partial artifact sentinel; carried across chunks.
+        //   - `committedVisible` holds the artifact-stripped text.
+        // When onArtifact isn't provided we just accumulate raw and
+        // expose it directly (preserves the prior behaviour for
+        // surfaces that haven't opted into the channel).
+        let pending = '';
+        let committedVisible = '';
+        const seenArtifacts = new Set<string>();
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          // API streams plain text — just accumulate chunks directly
-          accumulated += decoder.decode(value, { stream: true });
-          setResponse(accumulated);
+          const chunk = decoder.decode(value, { stream: true });
+          if (!onArtifact) {
+            // Raw passthrough — no artifact parsing.
+            committedVisible += chunk;
+            setResponse(committedVisible);
+            continue;
+          }
+          pending += chunk;
+          const { visibleText, artifacts, remaining } = extractArtifacts(pending);
+          committedVisible += visibleText;
+          pending = remaining;
+          for (const a of artifacts) {
+            const key = JSON.stringify(a);
+            if (seenArtifacts.has(key)) continue;
+            seenArtifacts.add(key);
+            onArtifact(a);
+          }
+          setResponse(committedVisible + pending);
+        }
+
+        // Flush any unclosed artifact tail when streaming ends.
+        if (onArtifact && pending.length > 0) {
+          const final = extractArtifacts(pending);
+          committedVisible += final.visibleText;
+          if (final.remaining.length > 0) committedVisible += final.remaining;
+          for (const a of final.artifacts) {
+            const key = JSON.stringify(a);
+            if (seenArtifacts.has(key)) continue;
+            seenArtifacts.add(key);
+            onArtifact(a);
+          }
+          setResponse(committedVisible);
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Connection error');
@@ -57,7 +108,7 @@ export function useAgentStream({ surface, programId, agentName }: UseAgentStream
         setIsStreaming(false);
       }
     },
-    [surface, programId, agentName],
+    [surface, programId, agentName, onArtifact],
   );
 
   const clear = useCallback(() => {
