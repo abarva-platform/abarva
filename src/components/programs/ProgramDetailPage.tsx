@@ -33,10 +33,12 @@ import { ContradictionDetailCardClient } from '@/components/_shared/Contradictio
 import { CascadeImpactCard, ReverseCascadeCard } from '@/components/_shared/CascadeImpactCard';
 import { InstanceEventTimeline } from '@/components/_shared/InstanceEventTimeline';
 import { LifecycleMiniGraph } from '@/components/_shared/LifecycleMiniGraph';
+import { HandoffNarrativePanel } from '@/components/_shared/HandoffNarrativePanel';
 import type { StageStatus } from '@/components/shell/StageTrackerStrip';
 import { findLifecyclePattern } from '@/lib/reasoning/lifecycle-pattern-lookup';
 import { createGateEvaluator } from '@/lib/reasoning/gate-evaluator';
 import { buildStageMicroSynthesisMap } from '@/lib/reasoning/stage-micro-synthesis';
+import { buildStageHandoffNarratives } from '@/lib/reasoning/stage-handoff-narrative';
 import { buildProgramEvidenceMap } from '@/lib/programs/program-instance';
 import { computeReverseCascade } from '@/lib/reasoning/cross-instance-reasoner';
 import { buildInstanceEventTimeline } from '@/lib/reasoning/instance-event-timeline';
@@ -3337,7 +3339,11 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
     const evaluations = evaluator.evaluateAllStages(currentStageId, evidenceMap);
     const microSynthesis = buildStageMicroSynthesisMap(evaluations, pattern);
 
-    return { stages: pattern.stages, counts, states, microSynthesis };
+    // REASON-31 — Stage handoff narratives describing the evidence handoff
+    // between each consecutive pair of stages.
+    const handoffNarratives = buildStageHandoffNarratives(pattern);
+
+    return { stages: pattern.stages, counts, states, microSynthesis, handoffNarratives };
   })();
 
   // PRG-EVIDENCE-INGEST — Resolve the underlying program-instance id +
@@ -3517,6 +3523,22 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
               gateCriteriaCount={lifecycleMiniGraph.counts}
               microSynthesis={lifecycleMiniGraph.microSynthesis}
             />
+          </div>
+        )}
+
+        {/* REASON-31 — Stage handoff narrative panel: describes the
+            evidence/gate handoff between consecutive phases. Sits directly
+            below the lifecycle mini-graph. */}
+        {lifecycleMiniGraph && (
+          <div
+            data-testid="program-handoff-narrative"
+            style={{
+              padding: '4px 0 12px',
+              marginBottom: 4,
+              borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
+            }}
+          >
+            <HandoffNarrativePanel narratives={lifecycleMiniGraph.handoffNarratives} />
           </div>
         )}
 
