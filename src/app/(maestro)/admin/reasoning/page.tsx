@@ -873,6 +873,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/pattern-usage',
     description: 'Pattern adoption analytics — instance count per lifecycle pattern broken down by tenant',
   },
+  {
+    title: 'Gate heatmap',
+    href: '/admin/reasoning/gate-heatmap',
+    description: 'Stage-level gate pass-rate heatmap — average gate satisfaction per stage across all instances',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
