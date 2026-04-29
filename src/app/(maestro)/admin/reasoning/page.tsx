@@ -589,9 +589,9 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     description: 'Instance ↔ pattern drift checks',
   },
   {
-    title: 'Audit Trail',
+    title: 'Audit log',
     href: '/admin/reasoning/audit',
-    description: 'Log of all reasoning actions — gate waivers, contradiction resolutions, and synthesis feedback',
+    description: 'Live chronological log of gate waivers, approvals, and contradiction resolutions',
   },
   {
     title: 'Evidence Quality',
