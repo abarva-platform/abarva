@@ -823,6 +823,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/pattern-docs',
     description: 'Full documentation browser for lifecycle patterns — thesis, applicability, and body text',
   },
+  {
+    title: 'Contradiction frequency',
+    href: '/admin/reasoning/contradiction-frequency',
+    description: 'Which contradiction templates fire most often across instances — frequency ranking and resolution rates',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
