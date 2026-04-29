@@ -160,10 +160,10 @@ describe('contradiction-template-overrides', () => {
   it('integration: overriding detectionHint changes detector output', () => {
     // Import inside the test so the detector picks up the override module
     // through its public surface (no module mocking needed).
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const {
-      createContradictionDetector,
-    } = require('@/lib/reasoning/contradiction-detector') as typeof import('@/lib/reasoning/contradiction-detector');
+    /* eslint-disable @typescript-eslint/no-require-imports */
+    const { createContradictionDetector } =
+      require('@/lib/reasoning/contradiction-detector') as typeof import('@/lib/reasoning/contradiction-detector');
+    /* eslint-enable @typescript-eslint/no-require-imports */
 
     const detector = createContradictionDetector(PAT_SRC_AMS_001);
 
