@@ -1003,6 +1003,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/contradiction-severity',
     description: 'Active contradiction ranking by severity — critical to low, correlated with instance health scores',
   },
+  {
+    title: 'Waiver expiry',
+    href: '/admin/reasoning/waiver-expiry',
+    description: 'Gate waiver age tracking — fresh, aging, and stale waivers flagged for review',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
