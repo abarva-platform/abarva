@@ -39,9 +39,11 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
     'Persist a new program to the database after the user has explicitly confirmed the program brief. ' +
     'Returns the program id on success. Call this only after the user says yes to your "Shall I register?" ' +
     'question — never speculatively. ' +
-    'IMPORTANT: sponsor_person_id and lead_person_id MUST be UUIDs from the persons table — not role titles ' +
-    "(e.g. 'CTO'), not names (e.g. 'Lin Martinez'), not the literal word 'sponsor'. If the user has only " +
-    "named a role, ask them for the actual person by name (and ideally id) before calling this tool. " +
+    'IMPORTANT: sponsor_person_id and lead_person_id MUST be UUIDs from the persons table. ' +
+    'If the user has named a role ("CIO") or a person ("Lin Martinez") without giving you a UUID, ' +
+    'call the `lookup_person` tool FIRST to resolve them — do NOT ask the user to paste a UUID themselves. ' +
+    'The seeded persons table for the active tenant has leadership records you can resolve against. Only ' +
+    'after lookup_person returns a match should you call commit_program with the resulting person_id. ' +
     'If this returns failure, report the failure honestly with recovery options; do not announce success.',
   surfaces: ['/programs/new', '/demo/programs/new'],
   input_schema: {
@@ -66,15 +68,15 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
       sponsor_person_id: {
         type: 'string',
         description:
-          'UUID from persons table for the named program sponsor. Not a role title, not a name. ' +
-          "If the user has only said 'CTO' or 'the head of platform', ask them to name the actual " +
-          'person before calling this tool.',
+          'UUID from persons table for the named program sponsor. If the user said a role ' +
+          '("CIO") or a name without a UUID, call lookup_person FIRST to resolve them — do not ' +
+          'ask the user to paste a UUID.',
       },
       lead_person_id: {
         type: 'string',
         description:
-          'UUID from persons table for the program lead. Often the same as sponsor for small programs. ' +
-          'Same rules as sponsor_person_id — must be a UUID, not a role.',
+          'UUID from persons table for the program lead. Same rules as sponsor_person_id — ' +
+          'use lookup_person to resolve roles or names into UUIDs before calling commit_program.',
       },
       classification: {
         type: 'string',
