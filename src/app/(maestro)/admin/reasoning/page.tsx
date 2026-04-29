@@ -1033,6 +1033,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/pattern-stats',
     description: 'Aggregate statistics per lifecycle pattern — stages, criteria, contradictions, failure modes, and instance counts',
   },
+  {
+    title: 'Citation map',
+    href: '/admin/reasoning/citation-map',
+    description: 'Source document citation map — which knowledge base documents back which patterns and instances',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
