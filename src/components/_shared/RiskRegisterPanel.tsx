@@ -1,12 +1,18 @@
+'use client';
+
 /**
  * RiskRegisterPanel — joins contradictions + failure modes into a single
  * prioritised risk register.
  *
- * Server-friendly: no React hooks, no event handlers. Pure presentational.
+ * Client component: the "Export CSV" button in the header requires browser
+ * APIs (Blob / URL.createObjectURL) that are unavailable server-side.
+ * Rendering is otherwise pure/presentational.
+ *
  * Renders nothing when `risks` is empty unless the caller opts in via the
  * `showEmptyState` flag.
  */
 
+import { useCallback } from 'react';
 import type { RiskItem } from '@/lib/reasoning/risk-register';
 import { SHELL } from '@/lib/shell/shell-tokens';
 
@@ -22,6 +28,12 @@ export interface RiskRegisterPanelProps {
    * Defaults to true so the panel is self-explanatory.
    */
   showEmptyState?: boolean;
+  /**
+   * Instance id used to build the exported CSV filename.
+   * Falls back to `risks[0].instanceId` when omitted, then `'portfolio'`.
+   * Filename format: `risk-register-<instanceId>-<YYYY-MM-DD>.csv`
+   */
+  instanceId?: string;
 }
 
 const SEVERITY_DOT: Record<RiskItem['severity'], string> = {
@@ -56,15 +68,71 @@ function excerpt(text: string, max = 140): string {
   return `${text.slice(0, max - 1).trimEnd()}…`;
 }
 
+// ─── CSV helpers ──────────────────────────────────────────────────────────────
+
+/** Wrap a value in double-quotes, escaping any internal double-quotes. */
+function csvCell(value: string | number): string {
+  const s = String(value);
+  // RFC 4180: fields containing commas, newlines, or quotes must be quoted;
+  // any embedded double-quote must be doubled.
+  if (s.includes('"') || s.includes(',') || s.includes('\n') || s.includes('\r')) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
+}
+
+function buildCsvString(risks: RiskItem[]): string {
+  const header = ['Risk ID', 'Label', 'Kind', 'Severity', 'Confidence', 'Instance', 'Tenant', 'Mitigation'];
+  const rows = risks.map((r) => [
+    r.id,
+    r.label,
+    r.kind,
+    r.severity,
+    String(Math.round(r.confidence * 100)) + '%',
+    r.instanceLabel,
+    r.tenantId,
+    r.mitigation,
+  ]);
+
+  const lines = [header, ...rows].map((cols) => cols.map(csvCell).join(','));
+  return lines.join('\r\n');
+}
+
+function todayIso(): string {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export function RiskRegisterPanel({
   risks,
   title = 'Risk register',
   maxRows,
   showEmptyState = true,
+  instanceId,
 }: RiskRegisterPanelProps) {
   const rows = typeof maxRows === 'number' ? risks.slice(0, maxRows) : risks;
 
   if (rows.length === 0 && !showEmptyState) return null;
+
+  const resolvedInstanceId = instanceId ?? risks[0]?.instanceId ?? 'portfolio';
+
+  const handleExportCsv = useCallback(() => {
+    const csv = buildCsvString(risks);
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `risk-register-${resolvedInstanceId}-${todayIso()}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [risks, resolvedInstanceId]);
 
   return (
     <section
@@ -100,6 +168,30 @@ export function RiskRegisterPanel({
         >
           {title} · {rows.length} {rows.length === 1 ? 'item' : 'items'}
         </span>
+
+        <button
+          type="button"
+          onClick={handleExportCsv}
+          disabled={risks.length === 0}
+          data-testid="risk-register-export-csv"
+          style={{
+            fontFamily: SHELL.MONO,
+            fontSize: 9,
+            textTransform: 'uppercase',
+            letterSpacing: '0.1em',
+            color: risks.length === 0 ? SHELL.INK_MUTED : SHELL.INK_SOFT,
+            background: 'transparent',
+            border: `1px solid ${SHELL.CARD_LINE}`,
+            borderRadius: 5,
+            padding: '3px 10px',
+            cursor: risks.length === 0 ? 'not-allowed' : 'pointer',
+            opacity: risks.length === 0 ? 0.45 : 1,
+            lineHeight: 1,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Export CSV
+        </button>
       </div>
 
       {rows.length === 0 ? (
