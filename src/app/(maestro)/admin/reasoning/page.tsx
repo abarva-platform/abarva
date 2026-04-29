@@ -903,6 +903,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/confidence-breakdown',
     description: 'Synthesis confidence scores for all instances with factor-level breakdown of what drives confidence',
   },
+  {
+    title: 'Waiver impact',
+    href: '/admin/reasoning/waiver-impact',
+    description: 'Health score impact analysis of active gate waivers — current vs. without-waiver scores per instance',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
