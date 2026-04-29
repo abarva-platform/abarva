@@ -9698,8 +9698,15 @@
       "id": "INT3",
       "name": "Sentinel Evidence Gap Queue",
       "category": "Intelligence",
-      "status": "code_complete",
+      "status": "merged",
       "notes": "New 'gap_queue' tab (7th tab) added to IntelligenceLensTabs. buildEvidenceGapQueueView lib aggregates 8 evidence gaps across 5 Apex Retail patterns into a prioritized close-out queue: 2 critical (Vendor B SOC-2 + CDP P3 Design gate), 3 high (Vendor C scope + Vendor A cost split + AI exit clause), 3 medium (AI tooling commitment + KTP Phase 2 + incumbent contract expiry). Each EvidenceGapQueueItem carries queueId, gapId, label, needed, responsibleParty, patternId, patternTitle, patternApplicationStatus, urgency, deadlineHint, contextLink. EvidenceGapQueueSummary aggregates criticalCount, highCount, mediumCount, lowCount. EvidenceGapQueuePanel renders summary bar, atlas synthesis, gap cards with urgency/status badges and blocker-style left border. data-testid intelligence-gap-queue-panel, intelligence-gap-queue-summary, intelligence-gap-queue-item-{queueId}, intelligence-gap-queue-disclaimer; data-honest-disclaimer intelligence-gap-queue with literal 'Deterministic seed'. intel4-lens-tabs.test.ts updated 6→7. 72 integration tests (int3 + updated intel4). INT3 from track-05."
+    },
+    {
+      "id": "SRC46",
+      "name": "Award Decision Tracker",
+      "category": "Source",
+      "status": "code_complete",
+      "notes": "New 'award' tab (10th tab) added to SourceEventDetailPage. buildAwardDecisionView source lib provides ranked vendor comparison at Stage 7 (BAFO Evaluation Complete): Vendor C rank 1 recommended (overall 83, CDP-compatible), Vendor A rank 2 conditional (best transition/risk profile), Vendor B rank 3 not-recommended (SOC-2 hard gate). Each VendorAwardProfile has VendorScoreCard (commercial, technical, transition, risk, overall 0-100), status, blockingIssues, decisionNote. AwardDecisionSummary carries recommendedVendorId, decisionReadiness, rationale, keyDecisionFactors, preAwardConditions. AwardDecisionTab renders stage header, recommendation summary card with pre-award conditions, atlas guidance, vendor cards with score rows and blocker callouts. data-testid source-award-decision-tab, source-award-decision-summary, source-award-vendor-{vendorId}, source-award-decision-disclaimer; data-honest-disclaimer source-award-decision with literal 'Deterministic seed'. 42 integration tests. SRC46 from track-04."
     }
   ]
 }
