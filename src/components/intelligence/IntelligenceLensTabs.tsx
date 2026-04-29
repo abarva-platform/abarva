@@ -74,6 +74,11 @@ import {
   buildEngagementScorecardView,
   type ProgrammeScorecardRow,
 } from '@/lib/intelligence/engagement-scorecard-view';
+import {
+  buildMilestoneTrackerView,
+  type ProgrammeMilestone,
+  type ProgrammeMilestoneSchedule,
+} from '@/lib/intelligence/milestone-tracker-view';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Design tokens (matches existing intelligence surface palette)
@@ -198,6 +203,9 @@ export function IntelligenceLensTabs({
         )}
         {activeTab === 'engagement_scorecard' && (
           <EngagementScorecardPanel />
+        )}
+        {activeTab === 'milestone_tracker' && (
+          <MilestoneTrackerPanel />
         )}
       </div>
     </div>
@@ -2128,6 +2136,185 @@ function EngagementScorecardPanel() {
         style={{ fontSize: 10, color: C.mutedSoft, fontStyle: 'italic', lineHeight: 1.5, borderTop: `1px solid ${C.border}`, paddingTop: 10 }}
       >
         Deterministic seed · Engagement scorecard aggregates fixture contradiction, evidence gap, gate readiness, and pattern application signals for the Apex Retail engagement. Live signal aggregation, real-time scoring, and cross-engagement benchmarking are managed by the Sentinel reasoning runtime.
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INT8 · Milestone Tracker Panel
+// ─────────────────────────────────────────────────────────────────────────────
+
+const MILESTONE_STATUS_STYLE: Record<string, { bg: string; text: string; label: string; border: string }> = {
+  on_track: { bg: '#f0fdf4', text: '#166534', label: 'On Track', border: '#16a34a' },
+  at_risk:  { bg: '#fef3c7', text: '#92400e', label: 'At Risk',  border: '#d97706' },
+  overdue:  { bg: '#fef2f2', text: '#b91c1c', label: 'Overdue',  border: '#dc2626' },
+  blocked:  { bg: '#fef2f2', text: '#b91c1c', label: 'Blocked',  border: '#b91c1c' },
+};
+
+const MILESTONE_TYPE_STYLE: Record<string, { bg: string; text: string }> = {
+  gate:     { bg: '#ede9fe', text: '#5b21b6' },
+  review:   { bg: '#e0f2fe', text: '#075985' },
+  decision: { bg: '#fef3c7', text: '#92400e' },
+  delivery: { bg: '#f0fdf4', text: '#166534' },
+};
+
+function MilestoneTrackerPanel() {
+  const view = buildMilestoneTrackerView();
+  const { programmes, metrics } = view;
+
+  return (
+    <div
+      data-testid="intelligence-milestone-tracker-panel"
+      style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 960 }}
+    >
+      {/* Header */}
+      <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', color: C.muted, textTransform: 'uppercase' }}>
+        INT8 · Milestone Tracker · Apex Retail
+      </div>
+
+      {/* Metrics bar */}
+      <div
+        data-testid="intelligence-milestone-tracker-summary"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+          flexWrap: 'wrap',
+          padding: '12px 16px',
+          backgroundColor: C.card,
+          border: `1px solid ${C.border}`,
+          borderRadius: 8,
+        }}
+      >
+        <span style={{ fontSize: 11, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600 }}>
+          Milestones
+        </span>
+        <span style={{ fontSize: 12, color: C.muted }}>
+          {metrics.totalMilestones} total across {programmes.length} programmes
+        </span>
+        {metrics.blockedCount > 0 && (
+          <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: '#fef2f2', color: '#b91c1c', fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', border: '1px solid #fca5a5' }}>
+            {metrics.blockedCount} blocked
+          </span>
+        )}
+        {metrics.atRiskCount > 0 && (
+          <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: '#fef3c7', color: '#92400e', fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            {metrics.atRiskCount} at risk
+          </span>
+        )}
+        {metrics.onTrackCount > 0 && (
+          <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: '#f0fdf4', color: '#166534', fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            {metrics.onTrackCount} on track
+          </span>
+        )}
+      </div>
+
+      {/* Atlas summary */}
+      <p style={{ fontSize: 13, color: C.ink, lineHeight: 1.6, margin: 0 }}>
+        {view.atlasSummary}
+      </p>
+
+      {/* Per-programme milestone schedules */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {programmes.map((prog: ProgrammeMilestoneSchedule) => {
+          const blockedMs = prog.milestones.filter((m) => m.status === 'blocked').length;
+          const atRiskMs = prog.milestones.filter((m) => m.status === 'at_risk').length;
+          return (
+            <div
+              key={prog.programmeId}
+              data-testid={`intelligence-milestone-${prog.programmeId}`}
+              style={{
+                backgroundColor: C.card,
+                border: `1px solid ${C.border}`,
+                borderLeft: `3px solid ${blockedMs > 0 ? '#b91c1c' : atRiskMs > 0 ? '#d97706' : '#16a34a'}`,
+                borderRadius: 6,
+                padding: '14px 16px',
+              }}
+            >
+              {/* Programme header */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+                <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: C.ink }}>
+                  {prog.programmeName}
+                </span>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: C.mutedSoft }}>
+                  {prog.programmeCode}
+                </span>
+                {blockedMs > 0 && (
+                  <span style={{ display: 'inline-block', padding: '1px 6px', borderRadius: 3, fontSize: 9, fontWeight: 600, textTransform: 'uppercase', background: '#fef2f2', color: '#b91c1c' }}>
+                    {blockedMs} blocked
+                  </span>
+                )}
+                {atRiskMs > 0 && (
+                  <span style={{ display: 'inline-block', padding: '1px 6px', borderRadius: 3, fontSize: 9, fontWeight: 600, textTransform: 'uppercase', background: '#fef3c7', color: '#92400e' }}>
+                    {atRiskMs} at risk
+                  </span>
+                )}
+              </div>
+
+              {/* Milestone rows */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {prog.milestones.map((ms: ProgrammeMilestone) => {
+                  const statusStyle = MILESTONE_STATUS_STYLE[ms.status] ?? MILESTONE_STATUS_STYLE.at_risk;
+                  const typeStyle = MILESTONE_TYPE_STYLE[ms.milestoneType] ?? MILESTONE_TYPE_STYLE.delivery;
+                  const isOk = ms.status === 'on_track';
+                  return (
+                    <div
+                      key={ms.milestoneId}
+                      style={{
+                        padding: '8px 10px',
+                        background: isOk ? '#f9fafb' : C.surface,
+                        border: `1px solid ${isOk ? '#e5e7eb' : statusStyle.border + '44'}`,
+                        borderRadius: 4,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 4,
+                      }}
+                    >
+                      {/* Milestone header */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span style={{ flex: 1, fontSize: 12, fontWeight: isOk ? 400 : 600, color: isOk ? C.muted : C.ink }}>
+                          {isOk && <span style={{ color: '#16a34a', marginRight: 5 }}>✓</span>}
+                          {ms.milestoneName}
+                        </span>
+                        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: C.mutedSoft }}>
+                          {ms.targetPeriod}
+                        </span>
+                        <span style={{ display: 'inline-block', padding: '1px 6px', borderRadius: 3, fontSize: 9, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', background: statusStyle.bg, color: statusStyle.text }}>
+                          {statusStyle.label}
+                        </span>
+                        <span style={{ display: 'inline-block', padding: '1px 6px', borderRadius: 3, fontSize: 9, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', background: typeStyle.bg, color: typeStyle.text }}>
+                          {ms.milestoneType}
+                        </span>
+                      </div>
+
+                      {/* Blocker or sentinel note — only for non-on-track */}
+                      {!isOk && ms.blockerSummary && (
+                        <div style={{ fontSize: 11, color: '#92400e', background: '#fef3c7', borderRadius: 3, padding: '3px 6px' }}>
+                          Blocker: {ms.blockerSummary}
+                        </div>
+                      )}
+                      {!isOk && ms.sentinelNote && (
+                        <div style={{ fontSize: 11, color: C.muted, fontStyle: 'italic' }}>
+                          {ms.sentinelNote}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Honest disclaimer */}
+      <div
+        data-testid="intelligence-milestone-tracker-disclaimer"
+        data-honest-disclaimer="intelligence-milestone-tracker"
+        style={{ fontSize: 10, color: C.mutedSoft, fontStyle: 'italic', lineHeight: 1.5, borderTop: `1px solid ${C.border}`, paddingTop: 10 }}
+      >
+        Deterministic seed · Milestone tracker reflects fixture schedule data for the four Apex Retail AI programmes. Target periods are relative engagement labels, not wall-clock dates. Live milestone tracking, automated status updates, and schedule dependency resolution are managed by the Sentinel reasoning runtime.
       </div>
     </div>
   );
