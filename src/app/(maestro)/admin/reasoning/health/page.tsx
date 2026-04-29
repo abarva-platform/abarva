@@ -24,6 +24,7 @@ import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances'
 import { SOURCE_LIFECYCLE_PATTERNS } from '@/lib/intelligence/source-lifecycle-patterns';
 import { PROGRAM_LIFECYCLE_PATTERNS } from '@/lib/intelligence/program-lifecycle-patterns';
 import type { SynthesisContext } from '@/lib/reasoning/types';
+import { GateProgressRing } from '@/components/reasoning/GateProgressRing';
 
 export const dynamic = 'force-dynamic';
 
@@ -332,7 +333,16 @@ function InstanceCard({ row }: { row: InstanceHealthRow }) {
             <KindBadge kind={row.kind} />
           </div>
         </div>
-        <InstanceHealthBadge health={row.health} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+          {row.gatesTotal > 0 && (
+            <GateProgressRing
+              pct={Math.round((row.gatesMet / row.gatesTotal) * 100)}
+              size={44}
+              label="Gates"
+            />
+          )}
+          <InstanceHealthBadge health={row.health} />
+        </div>
       </div>
 
       {/* Stage */}
