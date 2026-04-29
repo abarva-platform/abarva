@@ -2,7 +2,7 @@
 //
 // Verifies structural invariants added in INT3:
 //   1. sentinel-evidence-gap-queue-view lib is deterministic and contract-correct
-//   2. intelligence-lens-tabs-view has gap_queue tab key (7th tab)
+//   2. intelligence-lens-tabs-view has gap_queue tab key (7th tab; INT4 added 8th)
 //   3. IntelligenceLensTabs renders EvidenceGapQueuePanel with correct testids
 //   4. Honest disclaimer is literal (not interpolated)
 
@@ -37,8 +37,8 @@ describe('INT3 · intelligence-lens-tabs-view · gap_queue tab', () => {
     expect(keys).toContain('gap_queue');
   });
 
-  it('INTELLIGENCE_TABS has exactly seven tabs', () => {
-    expect(INTELLIGENCE_TABS).toHaveLength(7);
+  it('INTELLIGENCE_TABS has at least seven tabs (INT4 added contradiction_monitor as 8th)', () => {
+    expect(INTELLIGENCE_TABS.length).toBeGreaterThanOrEqual(7);
   });
 
   it("resolveIntelligenceTab accepts 'gap_queue'", () => {
