@@ -618,6 +618,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/feedback-stats',
     description: 'Aggregated synthesis feedback ratings per surface and instance',
   },
+  {
+    title: 'Pattern metrics',
+    href: '/admin/reasoning/pattern-metrics',
+    description: 'Per-pattern instance usage, contradiction counts, and gate coverage',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
