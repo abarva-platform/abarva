@@ -8,8 +8,7 @@
 // file are the crossing point.
 //
 // Where the DB doesn't yet carry a view-model field, we resolve it by
-// calling back into queries.ts or return a stable default. Gaps are
-// flagged with TODO comments so we can backfill as DB evolves.
+// calling back into queries.ts or return a stable default.
 
 import { getServerSupabase } from '@/lib/supabase-server';
 import type {
