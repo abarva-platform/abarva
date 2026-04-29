@@ -748,6 +748,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/pattern-health',
     description: 'Health metrics aggregated by lifecycle pattern — avg score, contradictions, gate coverage',
   },
+  {
+    title: 'Evidence ingest',
+    href: '/admin/reasoning/evidence-ingest',
+    description: 'Inject evidence fields into instances to trigger gate evaluation changes — demo affordance',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
