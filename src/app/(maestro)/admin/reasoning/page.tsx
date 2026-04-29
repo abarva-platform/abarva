@@ -1019,6 +1019,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     description: 'Within-pattern instance benchmarking — best vs. worst performers within each lifecycle pattern group',
   },
   {
+    title: 'Contradiction age',
+    href: '/admin/reasoning/contradiction-age',
+    description: 'Active contradiction age tracking — chronic (>30d), ongoing, and fresh, with resolution urgency',
+  },
+  {
     title: 'Gate audit',
     href: '/admin/reasoning/gate-audit',
     description: 'Complete gate action audit log — waivers, approvals, and evidence submissions that affect gate status',
