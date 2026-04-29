@@ -67,6 +67,7 @@ import {
 import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances';
 import { LinkedInstanceTilesGrid } from '@/components/_shared/LinkedInstanceTilesGrid';
 import { PortfolioPhaseHeatmap } from '@/components/tower/PortfolioPhaseHeatmap';
+import { DependencyManagerPanel } from '@/components/tower/DependencyManagerPanel';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Design tokens (matches existing Tower surface palette)
@@ -187,6 +188,9 @@ export function TowerLensTabs({
         )}
         {activeTab === 'reasoning_activity' && (
           <ReasoningActivityBriefPanel />
+        )}
+        {activeTab === 'dependencies' && (
+          <DependenciesPanel />
         )}
       </div>
     </div>
@@ -1934,6 +1938,30 @@ function ReasoningActivityBriefPanel() {
         the Apex Retail engagement. Live contradiction detection, pattern synthesis, and handoff
         tracking are managed by the Sentinel reasoning runtime.
       </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TOWER-DEP · Dependencies panel
+// ─────────────────────────────────────────────────────────────────────────────
+
+function DependenciesPanel() {
+  return (
+    <div
+      data-testid="tower-dependencies-panel"
+      style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 960 }}
+    >
+      <SectionMeta
+        agent="ATLAS"
+        title="Dependencies"
+        subtitle="Source-to-program dependency matrix — all cross-instance links between source events and programs. Deterministic seed."
+      />
+      <DependencyManagerPanel />
+      <Caveat>
+        All dependency links are deterministic seed data derived from fixture instances. Live
+        dependency tracking and automated link derivation are deferred.
+      </Caveat>
     </div>
   );
 }
