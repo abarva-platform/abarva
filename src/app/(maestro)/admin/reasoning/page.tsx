@@ -928,6 +928,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/pattern-similarity',
     description: 'Pairwise similarity between lifecycle patterns based on shared gate criteria and contradiction templates',
   },
+  {
+    title: 'Gate owners',
+    href: '/admin/reasoning/gate-owners',
+    description: 'Hard gate criterion ownership by stakeholder category — grouped by pattern with distribution chart',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
