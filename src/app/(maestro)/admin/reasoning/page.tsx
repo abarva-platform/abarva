@@ -1059,6 +1059,16 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     description: 'Health score band distribution — instance counts per band with common pattern and stage analysis',
   },
   {
+    title: 'Resolution effectiveness',
+    href: '/admin/reasoning/resolution-effectiveness',
+    description: 'Contradiction resolution effectiveness — estimated health improvement per resolution and path analysis',
+  },
+  {
+    title: 'Gate radar',
+    href: '/admin/reasoning/gate-radar',
+    description: '5-dimension gate progress radar — hard gates, soft gates, evidence, waivers, and contradiction-free rate',
+  },
+  {
     title: 'Activity feed',
     href: '/admin/reasoning/activity-feed',
     description: 'Real-time activity feed — stage transitions, evidence, waivers, and resolutions as event cards',
