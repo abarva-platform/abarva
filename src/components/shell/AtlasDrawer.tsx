@@ -293,7 +293,10 @@ export function AtlasDrawer({
               fontFamily: SHELL.SERIF,
               fontSize: 12.5,
               fontStyle: 'italic',
-              color: 'rgba(250,247,241,0.50)',
+              // PR-H readability fix · was 0.50 (too dim on dark INK
+              // background, founder reported "barely visible" during
+              // production walk).
+              color: 'rgba(250,247,241,0.78)',
               lineHeight: 1.45,
               margin: 0,
               display: '-webkit-box',

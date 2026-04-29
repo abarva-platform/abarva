@@ -437,7 +437,63 @@ export function selectVisibleArtifacts(artifacts: Artifact[]): Artifact[] {
 export function NexusReactivePanel({ artifacts }: NexusReactivePanelProps) {
   const visible = useMemo(() => selectVisibleArtifacts(artifacts), [artifacts]);
 
-  if (visible.length === 0) return null;
+  // PR-H — empty state. The reactive panel reserves grid space inside
+  // <AgentCanvas> regardless of artifact count, so when no artifacts
+  // have been emitted yet the column was rendering as a blank
+  // paper-colored void. Founder reported "no dynamic content on the
+  // right" during the production walk. Empty state names what this
+  // surface is for so it reads as agent-driven, not broken.
+  if (visible.length === 0) {
+    return (
+      <section
+        aria-label="Nexus reactive workbench"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 10,
+          padding: '20px 18px',
+          background: BrandColors.paper,
+          border: `1px dashed rgba(12,26,58,0.18)`,
+          borderRadius: 10,
+          color: BrandColors.slate,
+          fontFamily: BrandTypography.sans,
+          minHeight: 160,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: BrandTypography.mono,
+            fontSize: 10,
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            color: BrandColors.stone,
+            fontWeight: 700,
+          }}
+        >
+          Nexus reasoning · live
+        </div>
+        <p style={{ margin: '4px 0 0', fontSize: 13, lineHeight: 1.55 }}>
+          As we work this phase together, Nexus will materialize gate
+          evaluations, phase-progress cards, anti-pattern flags, and
+          pattern matches here — one card per piece of reasoning, in
+          real time.
+        </p>
+        <p
+          style={{
+            margin: 0,
+            fontSize: 12,
+            lineHeight: 1.5,
+            color: BrandColors.stone,
+            fontStyle: 'italic',
+          }}
+        >
+          Start the conversation on the left. Ask &ldquo;where are we?&rdquo; or
+          &ldquo;can we advance the gate?&rdquo; — cards will populate as
+          Nexus reasons.
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section
