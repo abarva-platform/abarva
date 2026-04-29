@@ -828,6 +828,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/contradiction-frequency',
     description: 'Which contradiction templates fire most often across instances — frequency ranking and resolution rates',
   },
+  {
+    title: 'Pattern confidence',
+    href: '/admin/reasoning/pattern-confidence',
+    description: 'Lifecycle patterns ranked by confidence score with validation status and instance counts',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
