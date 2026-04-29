@@ -22,6 +22,7 @@ import { runToolUseLoop } from "@/lib/agent/streaming/toolUseLoop";
 import { FOUR_LAYER_REASONING_INSTRUCTIONS } from "@/lib/intelligence/synthesis/instructionLayer";
 import { validateSynthesisOutput } from "@/lib/intelligence/synthesis/outputValidator";
 import { recordViolations } from "@/lib/intelligence/synthesis/violationsRecorder";
+import { ARTIFACT_CHANNEL_INSTRUCTIONS } from "@/lib/agent/artifacts";
 // F0.4: import the commit_program tool module so it self-registers
 // at startup. Routes that don't surface this tool will simply not
 // expose it in `tools`, but the registration must happen for the
@@ -162,6 +163,18 @@ export async function POST(request: Request) {
   // it's speaking with. Empty string when unauthenticated.
   const userContextBlock = await getUserContextPromptBlock();
 
+  // Surface 1 PR2 — artifact-channel instructions are composed for
+  // surfaces that have a reactive workspace ready to consume them.
+  // /programs/new and /demo/programs/new are the first; other surfaces
+  // adopt the channel as their surface fix ships.
+  const surfacesWithArtifactChannel = new Set([
+    '/programs/new',
+    '/demo/programs/new',
+  ]);
+  const artifactInstructions = surfacesWithArtifactChannel.has(surface)
+    ? ARTIFACT_CHANNEL_INSTRUCTIONS
+    : '';
+
   const systemPrompt = [
     voiceLine,
     "",
@@ -169,6 +182,8 @@ export async function POST(request: Request) {
     // F0.3 — four-layer reasoning + scope policy + integrity contract.
     // Composed AFTER user context (Layer 0) and BEFORE knowledge / task.
     FOUR_LAYER_REASONING_INSTRUCTIONS,
+    "",
+    artifactInstructions,
     "",
     "Page context:",
     ...contextLines,
@@ -180,7 +195,9 @@ export async function POST(request: Request) {
     "- Reference tenant and program names from context.",
     "- Never say you don't have specific information about the tenant — use the demo context below.",
     AGENT_DEMO_SYSTEM_BLOCK,
-  ].join("\n");
+  ]
+    .filter((s) => s !== '' && s !== undefined && s !== null)
+    .join("\n");
 
   // ── Stream response (F0.4 tool-use loop) ────────────────────────────────────
   //

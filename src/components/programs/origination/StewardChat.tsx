@@ -10,14 +10,17 @@
 // natural-language confirmation. The chat then navigates to the new
 // program detail page.
 //
-// In this PR the navigation trigger is a sentinel `[[program-created:<id>]]`
-// emitted by the tool result and surfaced via the streamed text. PR2
-// will replace this with a proper structured-artifact channel.
+// PR2 (Surface 1) adds the structured-artifact channel: Steward emits
+// inline artifacts via `[[artifact:<type>]]<JSON>[[/artifact]]` sentinels
+// which this component parses out and dispatches via `onArtifact`. The
+// chat-visible text never shows the artifact tuples; the right-pane
+// workspace consumes them to populate the program brief reactively.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AgentMarkdown } from '@/lib/agent/markdownRenderer';
 import { BrandColors, BrandTypography } from '@/lib/shell/brand-tokens';
+import { extractArtifacts, type Artifact } from '@/lib/agent/artifacts';
 
 export interface ChatTurn {
   id: string;
@@ -33,6 +36,12 @@ export interface StewardChatProps {
   tenantName: string;
   /** Initial server-rendered turns (typically the cold-open Steward greeting). */
   initialTurns: ChatTurn[];
+  /**
+   * PR2 — artifact dispatcher. Called once per artifact parsed from the
+   * streamed response. The workspace lifts brief state and applies
+   * incremental updates from each artifact.
+   */
+  onArtifact?: (artifact: Artifact) => void;
 }
 
 const STEWARD_ACCENT = BrandColors.signalBlue;
@@ -42,7 +51,7 @@ function generateTurnId(): string {
   return `turn_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export function StewardChat({ surface, tenantName, initialTurns }: StewardChatProps) {
+export function StewardChat({ surface, tenantName, initialTurns, onArtifact }: StewardChatProps) {
   const router = useRouter();
   const [turns, setTurns] = useState<ChatTurn[]>(initialTurns);
   const [draft, setDraft] = useState('');
@@ -96,21 +105,58 @@ export function StewardChat({ surface, tenantName, initialTurns }: StewardChatPr
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      let accumulated = '';
+      // `pendingBuffer` holds text that may contain a partial artifact
+      // sentinel (open-without-close yet) — it's carried across read()
+      // chunks until the close sentinel arrives. `committedVisible` is
+      // the artifact-stripped text we've already displayed.
+      let pendingBuffer = '';
+      let committedVisible = '';
+      const seenArtifacts = new Set<string>();
+
+      const dispatchNew = (artifacts: Artifact[]) => {
+        if (!onArtifact) return;
+        for (const a of artifacts) {
+          const key = JSON.stringify(a);
+          if (seenArtifacts.has(key)) continue;
+          seenArtifacts.add(key);
+          onArtifact(a);
+        }
+      };
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        accumulated += decoder.decode(value, { stream: true });
-        // Strip the navigation sentinel from the visible text. We still
-        // honor it after the stream completes; users shouldn't see it.
-        const visible = accumulated.replace(PROGRAM_CREATED_SENTINEL, '').trimEnd();
+        pendingBuffer += decoder.decode(value, { stream: true });
+        const { visibleText, artifacts, remaining } = extractArtifacts(pendingBuffer);
+        committedVisible += visibleText;
+        pendingBuffer = remaining;
+        dispatchNew(artifacts);
+
+        // Strip the navigation sentinel from the visible text we render.
+        const display = (committedVisible + pendingBuffer)
+          .replace(PROGRAM_CREATED_SENTINEL, '')
+          .trimEnd();
         setTurns((prev) =>
-          prev.map((t) => (t.id === assistantTurnId ? { ...t, text: visible } : t)),
+          prev.map((t) => (t.id === assistantTurnId ? { ...t, text: display } : t)),
         );
       }
 
-      const navMatch = PROGRAM_CREATED_SENTINEL.exec(accumulated);
+      // Flush any remaining buffer through the parser one last time so a
+      // final artifact whose close arrived in the same chunk as the
+      // close-of-stream still dispatches.
+      if (pendingBuffer.length > 0) {
+        const final = extractArtifacts(pendingBuffer);
+        committedVisible += final.visibleText;
+        // If `final.remaining` still has an unclosed open sentinel, it
+        // means the agent emitted a malformed artifact — surface it as
+        // visible text so the bug doesn't silently disappear.
+        if (final.remaining.length > 0) committedVisible += final.remaining;
+        dispatchNew(final.artifacts);
+        pendingBuffer = '';
+      }
+
+      const allText = committedVisible;
+      const navMatch = PROGRAM_CREATED_SENTINEL.exec(allText);
       if (navMatch) {
         const programId = navMatch[1];
         // Give the user a beat to see the success message before navigating.
@@ -132,7 +178,7 @@ export function StewardChat({ surface, tenantName, initialTurns }: StewardChatPr
       // Refocus the input so the user can keep typing without clicking.
       inputRef.current?.focus();
     }
-  }, [draft, streaming, surface, tenantName, turns, router]);
+  }, [draft, streaming, surface, tenantName, turns, router, onArtifact]);
 
   return (
     <section

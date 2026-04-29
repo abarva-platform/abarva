@@ -2,11 +2,12 @@
 
 // ProgramBriefPanel · Surface 1 of Programs Strict Completion v1.2
 //
-// Right-pane companion to StewardChat. In this PR it shows a placeholder
-// awaiting-extraction state; PR2 (structured artifact extraction) wires
-// it to the streaming brief assembled by Steward as the conversation
-// progresses. By the time Steward says "Shall I register?" this panel
-// will show the complete brief ready to commit.
+// Right-pane companion to StewardChat. PR2 wires the reactive artifact
+// channel: Steward emits structured artifacts (brief-field, pattern-match,
+// cross-program-dependency, classification) which the workspace
+// dispatches into the brief state below. The chat narrative stays
+// conversational ("see the pattern card on your right"); the rich
+// pattern card and field rows live here.
 
 import { BrandColors, BrandTypography } from '@/lib/shell/brand-tokens';
 
@@ -33,6 +34,20 @@ export const EMPTY_BRIEF: ProgramBriefDraft = {
   lead: null,
   crossProgramDependencies: [],
 };
+
+/**
+ * Pattern-match card data dispatched by the `pattern-match` artifact.
+ * Renders as a prominent card inside the brief panel — the canonical
+ * "see the pattern card on your right" reference target.
+ */
+export interface PatternMatchCard {
+  patternId: string;
+  name: string;
+  summary: string;
+  successRatePct?: number;
+  deploymentCount?: number;
+  typicalDurationMonths?: number;
+}
 
 interface BriefRowProps {
   label: string;
@@ -81,11 +96,125 @@ function BriefRow({ label, value }: BriefRowProps) {
 
 export interface ProgramBriefPanelProps {
   brief: ProgramBriefDraft;
+  /** Optional rich pattern card; rendered above the field rows when present. */
+  patternMatch?: PatternMatchCard | null;
   /** True once the user has confirmed and the registration tool is in flight. */
   registering?: boolean;
 }
 
-export function ProgramBriefPanel({ brief, registering = false }: ProgramBriefPanelProps) {
+function PatternMatchCardView({ card }: { card: PatternMatchCard }) {
+  const stats: Array<{ label: string; value: string }> = [];
+  if (typeof card.successRatePct === 'number') {
+    stats.push({ label: 'success rate', value: `${card.successRatePct}%` });
+  }
+  if (typeof card.deploymentCount === 'number') {
+    stats.push({ label: 'deployments', value: `${card.deploymentCount}` });
+  }
+  if (typeof card.typicalDurationMonths === 'number') {
+    stats.push({ label: 'typical duration', value: `${card.typicalDurationMonths} mo` });
+  }
+  return (
+    <a
+      href={`/source/patterns/${card.patternId}`}
+      style={{
+        display: 'block',
+        background: '#FFFFFF',
+        border: `1px solid rgba(12,26,58,0.16)`,
+        borderRadius: 8,
+        padding: '14px 16px',
+        textDecoration: 'none',
+        color: BrandColors.inkBlack,
+        boxShadow: '0 1px 3px rgba(12,26,58,0.04)',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          gap: 10,
+          marginBottom: 8,
+          flexWrap: 'wrap',
+        }}
+      >
+        <span
+          style={{
+            fontFamily: BrandTypography.mono,
+            fontSize: 10,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: BrandColors.signalBlue,
+            fontWeight: 700,
+          }}
+        >
+          Matched pattern
+        </span>
+        <span
+          style={{
+            fontFamily: BrandTypography.mono,
+            fontSize: 11,
+            color: BrandColors.stone,
+          }}
+        >
+          {card.patternId}
+        </span>
+      </div>
+      <div
+        style={{
+          fontFamily: BrandTypography.serif,
+          fontSize: 17,
+          fontWeight: 500,
+          color: BrandColors.inkBlack,
+          lineHeight: 1.3,
+          marginBottom: 6,
+        }}
+      >
+        {card.name}
+      </div>
+      <p
+        style={{
+          margin: 0,
+          fontFamily: BrandTypography.sans,
+          fontSize: 13,
+          color: BrandColors.slate,
+          lineHeight: 1.55,
+        }}
+      >
+        {card.summary}
+      </p>
+      {stats.length > 0 ? (
+        <div
+          style={{
+            display: 'flex',
+            gap: 14,
+            marginTop: 12,
+            flexWrap: 'wrap',
+          }}
+        >
+          {stats.map((s) => (
+            <span
+              key={s.label}
+              style={{
+                fontFamily: BrandTypography.mono,
+                fontSize: 11,
+                color: BrandColors.stone,
+              }}
+            >
+              <span style={{ color: BrandColors.inkBlack, fontWeight: 600 }}>{s.value}</span>
+              {' '}
+              <span style={{ textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s.label}</span>
+            </span>
+          ))}
+        </div>
+      ) : null}
+    </a>
+  );
+}
+
+export function ProgramBriefPanel({
+  brief,
+  patternMatch,
+  registering = false,
+}: ProgramBriefPanelProps) {
   return (
     <aside
       style={{
@@ -131,12 +260,14 @@ export function ProgramBriefPanel({ brief, registering = false }: ProgramBriefPa
         </h2>
       </header>
 
+      {patternMatch ? <PatternMatchCardView card={patternMatch} /> : null}
+
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         <BriefRow label="Problem" value={brief.problemStatement} />
         <BriefRow label="Outcome" value={brief.targetOutcome} />
         <BriefRow label="Timeline" value={brief.timeline} />
         <BriefRow label="Classification" value={brief.classification} />
-        <BriefRow label="Matched pattern" value={brief.matchedPatternId} />
+        {patternMatch ? null : <BriefRow label="Matched pattern" value={brief.matchedPatternId} />}
         <BriefRow label="Sponsor" value={brief.sponsor} />
         <BriefRow label="Lead" value={brief.lead} />
       </div>
