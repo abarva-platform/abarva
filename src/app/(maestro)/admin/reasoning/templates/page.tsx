@@ -243,6 +243,26 @@ export default async function ContradictionTemplateEditorPage() {
         title="Detection hint editor"
         subtitle="In-memory overrides on the hand-authored ContradictionTemplate library. Save to record an override, Reset to drop back to the baseline. Persistence is out of scope — overrides are wiped on server restart."
       >
+        <a
+          href="/admin/reasoning"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: SPACING.sm,
+            background: COLORS.white,
+            border: `1px solid ${COLORS.ink}22`,
+            borderRadius: RADIUS.lg,
+            padding: `${SPACING.sm} ${SPACING.md}`,
+            textDecoration: 'none',
+            fontFamily: TYPOGRAPHY.sans,
+            fontSize: 13,
+            color: COLORS.ink,
+            alignSelf: 'flex-start',
+          }}
+        >
+          <span style={{ fontWeight: 600 }}>Back to reasoning telemetry</span>
+          <span style={{ color: `${COLORS.ink}88` }}>cache, latency, feedback</span>
+        </a>
         <div
           style={{
             background: COLORS.white,
