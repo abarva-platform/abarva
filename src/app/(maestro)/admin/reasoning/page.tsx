@@ -913,6 +913,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/waiver-impact',
     description: 'Health score impact analysis of active gate waivers — current vs. without-waiver scores per instance',
   },
+  {
+    title: 'Coverage matrix',
+    href: '/admin/reasoning/coverage-matrix',
+    description: 'Instance × stage evidence coverage matrix — which instances have evidence for which stages',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
