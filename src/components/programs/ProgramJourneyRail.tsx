@@ -306,11 +306,15 @@ export function ProgramJourneyRail({
                   onSynthesisClick(slot.id);
                 }}
                 style={{
-                  marginTop: 2,
+                  marginTop: 3,
                   fontFamily: MONO,
-                  fontSize: 8,
+                  // PR-H readability fix · was 8px / 0.45 alpha
+                  // (founder reported "barely visible" on production walk).
+                  // 10px at 0.72 alpha keeps the secondary-action visual
+                  // weight without being a usability bug.
+                  fontSize: 10,
                   letterSpacing: '0.06em',
-                  color: 'rgba(27,38,50,0.45)',
+                  color: 'rgba(27,38,50,0.72)',
                   background: 'transparent',
                   border: 'none',
                   padding: '0 2px',
