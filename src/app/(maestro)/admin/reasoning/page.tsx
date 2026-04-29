@@ -592,6 +592,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/audit',
     description: 'Log of all reasoning actions — gate waivers, contradiction resolutions, and synthesis feedback',
   },
+  {
+    title: 'Evidence Quality',
+    href: '/admin/reasoning/evidence-quality',
+    description: 'Quality scores for every evidence item across all fixture instances — grade distribution, stale callout, CSV export',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
