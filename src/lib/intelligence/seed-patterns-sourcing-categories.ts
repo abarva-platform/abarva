@@ -4721,6 +4721,446 @@ Vendor claim: guaranteed savings. Detection: require buyer baseline, owner workf
 
 The common failure is buying dashboards without cost ownership. The second is trusting savings recommendations that teams cannot safely implement. The third is overcommitting to discounts while workloads, architecture, or demand are changing.`,
   },
+  {
+    id: 'PAT-SRC-CAT-OBS-001',
+    slug: 'observability-apm-log-management-sourcing',
+    title: 'Observability, APM, Logs, Metrics, and Tracing Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Observability sourcing should normalize telemetry value, retention, cardinality, workflow, and incident accountability instead of comparing dashboards or accepting unlimited-ingest assumptions.',
+    applicability:
+      'Apply when sourcing Datadog, New Relic, Dynatrace, Splunk Observability Cloud, Grafana Cloud, Elastic Observability, Honeycomb, Sumo Logic, OpenTelemetry programs, or native cloud observability services.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.82,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.datadoghq.com/pricing/',
+      'https://docs.datadoghq.com/logs/log_configuration/indexes/',
+      'https://newrelic.com/pricing',
+      'https://docs.newrelic.com/docs/accounts/accounts-billing/new-relic-one-pricing-users/pricing-billing/',
+      'https://www.dynatrace.com/pricing/',
+      'https://docs.dynatrace.com/docs/ingest-from/opentelemetry/opentelemetry-licensing',
+      'https://grafana.com/pricing/',
+      'https://grafana.com/docs/grafana-cloud/cost-management-and-billing/manage-invoices/understand-your-invoice/application-observability-invoice/',
+      'https://www.elastic.co/pricing/serverless-observability/',
+      'https://cloud.google.com/products/observability/pricing',
+      'https://opentelemetry.io/docs/what-is-opentelemetry/',
+    ],
+    regulatoryChips: ['SOC-2-review', 'production-logging-privacy-review', 'GDPR-if-person-data', 'HIPAA-if-PHI', 'PCI-if-cardholder-environment'],
+    relatedPatternIds: ['PAT-SRC-CAT-FINOPS-001', 'PAT-SRC-CAT-EDR-001', 'PAT-SRC-CAT-CSP-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'infrastructure',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Datadog, New Relic, Dynatrace, Splunk Observability Cloud, Grafana Cloud, Elastic Observability, Honeycomb, and Sumo Logic',
+        tier: 'enterprise',
+        positioning: 'Observability candidates for infrastructure monitoring, APM, logs, metrics, traces, profiling, synthetics, RUM, event correlation, incident workflow, and telemetry governance.',
+        cautions: ['Normalize telemetry meters, retention, cardinality, sampling, user access, and incident workflow before comparing platform breadth.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Datadog pricing page', url: 'https://www.datadoghq.com/pricing/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'New Relic pricing page', url: 'https://newrelic.com/pricing', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Dynatrace pricing page', url: 'https://www.dynatrace.com/pricing/', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'OpenTelemetry and native cloud observability services',
+        tier: 'specialist',
+        positioning: 'Instrumentation and provider-native baselines that can reduce lock-in risk or establish telemetry standards before a commercial platform decision.',
+        cautions: ['OpenTelemetry standardizes collection and signals, but buyers still need backend storage, query, retention, alerting, governance, and operating ownership.'],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'Observability public pricing constructs only',
+        model: 'usage-based',
+        metric: 'Hosts, containers, pods, data ingest, indexed logs, retained events, traces/spans, metrics/cardinality, synthetics, RUM sessions, users, support, and annual commit',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Datadog pricing page', url: 'https://www.datadoghq.com/pricing/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'New Relic pricing page', url: 'https://newrelic.com/pricing', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Grafana Cloud pricing page', url: 'https://grafana.com/pricing/', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Telemetry volume, retention, cardinality, service count, deployment topology, user access, and negotiated commit require buyer evidence' },
+        ],
+        confidence: 0.62,
+        notes: 'Public pages expose meters and some rates, but enterprise cost depends on instrumentation choices, sampling, retention, support, commit, and data-routing controls.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Telemetry ownership and portability',
+        buyerPosition: 'Require export for logs, metrics, traces, dashboards, monitors, notebooks, incident data, retention history, and configuration where technically available.',
+      },
+      {
+        clauseArea: 'Cost governance and ingestion controls',
+        buyerPosition: 'Define ingestion limits, overage notification, sampling controls, high-cardinality guardrails, retention tiers, archive access, and approval for new billable telemetry sources.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Telemetry bill-of-materials',
+        whenToUse: 'Use before BAFO or renewal when hosts, containers, traces, logs, metrics, RUM, synthetics, and users are mixed across teams.',
+        buyerAsk: 'Build a current and forecast telemetry BOM with retention, sampling, indexing, cardinality, and ownership by service/team.',
+      },
+      {
+        lever: 'OpenTelemetry portability proof',
+        whenToUse: 'Use when the buyer wants vendor optionality or has multi-backend observability architecture.',
+        buyerAsk: 'Demonstrate instrumentation reuse, collector routing, schema handling, and migration/export limits without breaking alert and incident workflows.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'observability-telemetry-cost-runaway',
+        label: 'Telemetry cost runaway',
+        severity: 'high',
+        detectionSignals: ['Default log ingestion, high-cardinality metrics, unsampled traces, RUM sessions, synthetics, or container churn are not forecast before rollout.'],
+        mitigations: ['Require ingestion controls, sampling policy, retention tiers, budget alerts, and telemetry owner review'],
+      },
+      {
+        id: 'observability-dashboard-without-action',
+        label: 'Dashboard without incident accountability',
+        severity: 'medium',
+        detectionSignals: ['Platform demos focus on dashboards but not alert quality, ownership routing, runbooks, on-call handoff, or post-incident evidence.'],
+        mitigations: ['Run a proof around real incidents, SLOs, owners, escalation, and postmortem evidence'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Stress auditability, sensitive log masking, retention policy, incident evidence, segregation of duties, and production access controls.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Review PHI-adjacent logs, clinical uptime, emergency workflows, support escalation, and telemetry minimization.',
+      },
+      {
+        industry: 'retail_cpg',
+        modifier: 'Plan for seasonal traffic, checkout observability, RUM sampling, synthetic checks, and telemetry cost spikes during promotions.',
+      },
+    ],
+    body: `## Summary
+Observability sourcing is a telemetry economics and operating-model decision, not a dashboard beauty contest. The buyer is choosing how logs, metrics, traces, events, profiles, synthetics, RUM, alerts, SLOs, and incident workflows become reliable production knowledge. The hard part is not collecting everything. The hard part is collecting the right evidence, retaining it at the right tier, routing it to accountable owners, and keeping the bill predictable as systems scale.
+
+## When to apply
+Use this pattern when sourcing Datadog, New Relic, Dynatrace, Splunk Observability Cloud, Grafana Cloud, Elastic Observability, Honeycomb, Sumo Logic, OpenTelemetry collector programs, or AWS/Azure/Google native observability services. Apply it during APM renewal, log-cost escalation, SRE program buildout, incident-review gaps, cloud migration, Kubernetes/container growth, OpenTelemetry standardization, digital-experience monitoring, RUM or synthetic monitoring expansion, or vendor consolidation. Do not use it for pure SIEM, pure FinOps, pure ITSM incident management, or endpoint/security monitoring unless production telemetry is the sourcing anchor.
+
+## Category boundary
+In scope: infrastructure monitoring, APM, distributed tracing, logs, metrics, events, profiles, synthetics, RUM, service maps, dashboards, alerting, SLOs, incident workflow, telemetry pipelines, OpenTelemetry, retention, archive, ingest controls, cardinality, sampling, data export, access controls, and on-call collaboration. Adjacent but distinct: SIEM, CNAPP, EDR, ITSM, FinOps, feature flags, test observability, and data observability.
+
+## Lifecycle and gates
+The scope gate should inventory monitored hosts, containers, pods, services, log sources, trace volume, metric cardinality, RUM sessions, synthetics, retention needs, incident processes, SLOs, current alert noise, cloud-native tools, and engineering ownership. The RFP gate should require supported telemetry types, OpenTelemetry support, ingestion controls, retention tiers, archive/export, alert routing, role-based access, privacy controls, API limits, and pricing meters. The proof gate should instrument representative services, replay a real incident, test query latency, validate sampling, export data, tune alerts, and measure billable telemetry. The BAFO gate should normalize hosts, containers, data ingest, indexed logs, spans, metric series, RUM, synthetics, users, support, commit, and professional services.
+
+## Evaluation rubric
+Weight incident usefulness around 25 percent, telemetry governance around 20 percent, cost predictability around 20 percent, instrumentation and OpenTelemetry fit around 15 percent, workflow integrations around 10 percent, and platform breadth around 10 percent. Increase governance weight when log volume is high, regulated data may enter telemetry, or Kubernetes/autoscaling drives unpredictable cardinality.
+
+## Pricing and contract notes
+Public pricing and documentation from Datadog, New Relic, Dynatrace, Grafana, Elastic, Google Cloud, and OpenTelemetry show that observability cost can be driven by hosts, pods, telemetry ingest, logs, indexed events, traces, metrics, sessions, synthetics, users, support, and annual commits. These pages should not be converted into a buyer quote without buyer telemetry data. The safest sourcing model is a telemetry bill-of-materials with current usage, forecast growth, retention policy, sampling policy, and owner routing.
+
+Contracting should define telemetry ownership, export, retention, archive, deletion, privacy controls, data residency, overage notification, high-cardinality guardrails, support response, implementation responsibilities, and transition assistance. If the vendor offers AI/assistant incident features, keep claims tied to documented function and proof results, not promised MTTR outcomes.
+
+## Contradictions and failure modes
+Vendor claim: collect everything. Detection: model ingestion, retention, indexing, cardinality, and archive cost before rollout. Vendor claim: OpenTelemetry means portability. Detection: test dashboard, alert, query, schema, and incident workflow migration, not only instrumentation. Vendor claim: platform consolidation lowers cost. Detection: compare the normalized telemetry BOM against native and point-tool alternatives.
+
+The common failure is default-on telemetry that creates a surprising bill before teams agree on value. The second is dashboards without reliable on-call ownership. The third is choosing a backend before deciding what telemetry should be sampled, indexed, retained hot, archived, or dropped.`,
+  },
+  {
+    id: 'PAT-SRC-CAT-ITAM-001',
+    slug: 'it-asset-management-cmdb-discovery-sourcing',
+    title: 'IT Asset Management, Discovery, Inventory, and CMDB Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'ITAM sourcing should prove trusted asset identity, lifecycle ownership, discovery coverage, normalization, and workflow integration before buyers treat an inventory tool as a CMDB or risk system of record.',
+    applicability:
+      'Apply when sourcing ServiceNow Hardware Asset Management, ServiceNow CMDB/Discovery adjacency, Flexera One IT Asset Management or IT Visibility, Lansweeper, Device42, Ivanti, BMC Helix Discovery/CMDB, Tanium adjacency, or asset discovery/inventory programs.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.80,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.servicenow.com/products/hardware-asset-management.html',
+      'https://blogs.servicenow.com/content/dam/servicenow-assets/public/en-us/doc-type/resource-center/data-sheet/ds-hardware-asset-management.pdf',
+      'https://www.flexera.com/solutions/it-inventory/it-asset-discovery',
+      'https://docs.flexera.com/flexera/EN/ITAssets/Discovery_And_Inventory_Parent_Landing.htm',
+      'https://www.flexera.com/solutions/it-inventory',
+      'https://www.lansweeper.com/plans-pricing/',
+      'https://docs.lansweeper.com/classic/docs/lansweeper-discovery',
+      'https://www.device42.com/features/it-asset-management/',
+      'https://docs.device42.com/getstarted/getting-started-with-auto-discovery/',
+    ],
+    regulatoryChips: ['SOC-2-review', 'asset-disposal-review', 'data-residency-if-inventory-sensitive', 'SOX-if-asset-controls', 'HIPAA-if-clinical-assets'],
+    relatedPatternIds: ['PAT-SRC-CAT-SAM-001', 'PAT-SRC-CAT-IAM-001', 'PAT-SRC-CAT-EDR-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'enterprise_saas',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'ServiceNow, Flexera, Lansweeper, Device42, Ivanti, BMC Helix, and Tanium-adjacent inventory',
+        tier: 'enterprise',
+        positioning: 'ITAM and discovery candidates for hardware lifecycle, asset inventory, CMDB enrichment, normalized technology data, device/application discovery, ownership, and workflow integration.',
+        cautions: ['Separate asset management, configuration management, discovery, service mapping, software licensing, and endpoint operations instead of treating all inventory as the same record.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'ServiceNow Hardware Asset Management', url: 'https://www.servicenow.com/products/hardware-asset-management.html', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Flexera IT asset discovery', url: 'https://www.flexera.com/solutions/it-inventory/it-asset-discovery', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Lansweeper plans and pricing', url: 'https://www.lansweeper.com/plans-pricing/', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'CMDB, ITSM, endpoint management, and security-tool adjacencies',
+        tier: 'specialist',
+        positioning: 'Adjacent systems that provide asset evidence, CI records, owner workflows, endpoint posture, vulnerability context, or lifecycle automation.',
+        cautions: ['A CMDB implementation requires governance and data quality controls; a scanner alone does not create trusted configuration management.'],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'ITAM/discovery public pricing constructs only',
+        model: 'hybrid',
+        metric: 'Assets, devices, users, installations, discovery methods, connectors, CMDB/ITSM modules, support, implementation, and data normalization scope',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Lansweeper plans and pricing', url: 'https://www.lansweeper.com/plans-pricing/', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Asset counts, discovery coverage, CMDB scope, connector count, normalization needs, support tier, and implementation effort require buyer evidence' },
+        ],
+        confidence: 0.54,
+        notes: 'Public plans expose asset-count constructs for some tools, but enterprise ITAM economics depend on estate scale, modules, connectors, implementation, governance, and data cleanup.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Asset data ownership and export',
+        buyerPosition: 'Require export for asset records, discovery evidence, ownership mappings, normalized models, lifecycle history, reconciliation rules, and CMDB links.',
+      },
+      {
+        clauseArea: 'Discovery boundary and data quality',
+        buyerPosition: 'Define in-scope networks, cloud accounts, endpoints, OT/IoT exclusions, credentials, agent/agentless methods, refresh cadence, duplicate handling, and data-quality SLAs.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Golden asset record proof',
+        whenToUse: 'Use when multiple systems claim to be the source of truth for devices, users, owners, and lifecycle status.',
+        buyerAsk: 'Reconcile sampled assets across procurement, endpoint, identity, CMDB, network, cloud, and finance data sources with exception workflow.',
+      },
+      {
+        lever: 'Discovery coverage proof',
+        whenToUse: 'Use before committing to scanner or CMDB scope.',
+        buyerAsk: 'Show coverage for remote endpoints, servers, cloud, network, SaaS, contractors, offline assets, and sensitive networks without violating security constraints.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'itam-false-source-of-truth',
+        label: 'False source of truth',
+        severity: 'high',
+        detectionSignals: ['Tool demo shows a rich inventory but does not reconcile duplicates, ownership, lifecycle status, financial records, and CI relationships.'],
+        mitigations: ['Require reconciliation tests, source precedence, data steward ownership, and exception queues'],
+      },
+      {
+        id: 'itam-discovery-blind-spots',
+        label: 'Discovery blind spots',
+        severity: 'high',
+        detectionSignals: ['Remote, cloud, mobile, OT, contractor, unmanaged, or segmented assets are not discovered or refreshed reliably.'],
+        mitigations: ['Map discovery methods by asset class and require coverage reporting plus compensating controls'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'healthcare',
+        modifier: 'Separate clinical devices, shared workstations, biomedical ownership, PHI-adjacent inventories, and disposal evidence from standard corporate endpoints.',
+      },
+      {
+        industry: 'manufacturing',
+        modifier: 'Treat OT, plant-floor systems, scanners, kiosks, and disconnected assets as separate discovery and lifecycle populations.',
+      },
+      {
+        industry: 'financial_services',
+        modifier: 'Stress audit evidence, SOX-adjacent asset controls, end-of-life tracking, privileged asset ownership, and disposal chain of custody.',
+      },
+    ],
+    body: `## Summary
+ITAM sourcing is about trusted asset identity and lifecycle control. A buyer is not merely buying a scanner. The event must determine which assets exist, who owns them, where they are, how they are discovered, how records are normalized, how lifecycle events are governed, and how the asset view supports security, finance, procurement, service management, and audit evidence.
+
+## When to apply
+Use this pattern when sourcing ServiceNow Hardware Asset Management, ServiceNow CMDB/Discovery adjacency, Flexera One IT Asset Management, Flexera IT Visibility, Lansweeper, Device42, Ivanti, BMC Helix Discovery/CMDB, Tanium-adjacent inventory, or enterprise asset discovery programs. Apply it during CMDB cleanup, audit findings, hardware refresh, cyber-insurance review, M&A integration, unmanaged-device risk, software audit preparation, service-management modernization, cloud/endpoint visibility gaps, or asset disposal concerns. Do not use it for pure SAM, pure SaaS management, pure endpoint security, or pure vulnerability management unless hardware/software asset identity is the sourcing anchor.
+
+## Category boundary
+In scope: hardware asset lifecycle, inventory, procurement-to-disposal workflow, discovery, agent/agentless collection, CMDB enrichment, CI relationships, ownership, location, warranty/support data, model normalization, duplicate reconciliation, asset retirement, disposal evidence, integrations, and data export. Adjacent but distinct: SAM, SaaS management, CMDB/service mapping, endpoint management, vulnerability management, IAM, procurement suites, and GRC control evidence.
+
+## Lifecycle and gates
+The scope gate should inventory asset classes, source systems, CMDB quality, endpoint tools, network segments, cloud accounts, mobile/remote populations, OT/IoT boundaries, procurement feeds, disposal workflow, and data stewards. The RFP gate should require discovery methods, connector coverage, normalization, refresh cadence, duplicate handling, asset/CI linkage, workflow automation, role-based access, export, and implementation assumptions. The proof gate should reconcile sampled assets across procurement, endpoint, identity, network, cloud, CMDB, and finance systems. The BAFO gate should normalize assets, modules, connectors, implementation, data cleanup, managed services, support, and governance effort.
+
+## Evaluation rubric
+Weight discovery coverage around 25 percent, reconciliation and normalization around 20 percent, lifecycle workflow around 20 percent, CMDB/ITSM integration around 15 percent, reporting/export around 10 percent, and commercial predictability around 10 percent. Increase reconciliation weight when the buyer has many overlapping tools or a low-trust CMDB.
+
+## Pricing and contract notes
+Public sources from ServiceNow, Flexera, Lansweeper, and Device42 show common constructs: hardware lifecycle management, CMDB visibility, discovery/inventory, normalized technology data, asset counts, connectors, and workflow. Public price pages may show asset-count starting points for some vendors, but enterprise price depends on asset population, module scope, connectors, implementation, support, and data remediation. Do not treat an asset-count plan as a full CMDB or ITAM program cost.
+
+Contracting should define asset-data ownership, export, discovery credentials, refresh cadence, duplicate remediation, source precedence, support, implementation deliverables, data cleanup responsibilities, disposal evidence, and transition assistance. If the tool will support security or audit processes, require evidence of data freshness and exception workflow.
+
+## Contradictions and failure modes
+Vendor claim: single source of truth. Detection: reconcile sampled assets against procurement, endpoint, identity, network, cloud, and finance data. Vendor claim: agentless discovery is complete. Detection: test remote, offline, segmented, cloud, mobile, OT, and contractor populations. Vendor claim: CMDB value comes out of the box. Detection: inspect ownership, class model, CI relationships, source precedence, and steward process.
+
+The common failure is building a beautiful inventory nobody trusts. The second is confusing discovered devices with governed assets. The third is buying a CMDB or discovery tool without assigning data stewards and exception queues.`,
+  },
+  {
+    id: 'PAT-SRC-CAT-SAM-001',
+    slug: 'software-asset-management-license-optimization-sourcing',
+    title: 'Software Asset Management, License Optimization, and SaaS Management Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'SAM sourcing should reconcile entitlement, deployment, usage, contract, renewal, SaaS, and audit evidence before buyers rely on savings claims or compliance posture.',
+    applicability:
+      'Apply when sourcing Flexera/Snow, ServiceNow Software Asset Management, USU, Zylo, Productiv, Torii, BetterCloud, SaaS management platforms, license optimization programs, or complex publisher compliance support.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.81,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.flexera.com/blog/it-asset-management/flexera-completes-acquisition-of-snow-software/',
+      'https://www.flexera.com/solutions/software-usage-costs/software-asset-management',
+      'https://docs.flexera.com/snow-license-manager-ui/concepts-terminology-and-features/software-asset-management',
+      'https://www.servicenow.com/PRODUCTS/software-asset-management.html',
+      'https://www.servicenow.com/standard/resource-center/data-sheet/ds-sam-publisher-packs.html',
+      'https://www.servicenow.com/docs/r/yokohama/it-asset-management/software-asset-management/sam-publisher-packs.html',
+      'https://www.usu.com/en/it-asset-management/software-asset-management',
+      'https://www.usu.com/en-us/solutions/usu-software-asset-management/saas-optimization/',
+      'https://zylo.com/pricing/',
+      'https://productiv.com/saas-management-tools/',
+    ],
+    regulatoryChips: ['vendor-audit-readiness', 'SOX-if-software-controls', 'data-processing-review', 'GDPR-if-user-usage-data', 'FedRAMP-if-public-sector-SaaS'],
+    relatedPatternIds: ['PAT-SRC-CAT-ITAM-001', 'PAT-SRC-CAT-FINOPS-001', 'PAT-SRC-CAT-IAM-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'enterprise_saas',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Flexera/Snow, ServiceNow SAM, USU, Zylo, Productiv, Torii, BetterCloud, and SaaS management tools',
+        tier: 'enterprise',
+        positioning: 'SAM and SaaS management candidates for discovery, entitlement reconciliation, license optimization, publisher packs, renewal workflow, SaaS visibility, usage analytics, and compliance evidence.',
+        cautions: ['Do not accept savings or compliance posture without entitlement quality, discovery coverage, usage evidence, contract terms, and publisher-specific license logic.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Flexera completes Snow Software acquisition', url: 'https://www.flexera.com/blog/it-asset-management/flexera-completes-acquisition-of-snow-software/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'ServiceNow SAM publisher packs', url: 'https://www.servicenow.com/standard/resource-center/data-sheet/ds-sam-publisher-packs.html', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Zylo pricing page', url: 'https://zylo.com/pricing/', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'Publisher-specific license specialists and managed SAM services',
+        tier: 'specialist',
+        positioning: 'Useful for complex Microsoft, Oracle, SAP, IBM, Adobe, VMware, SaaS, BYOL, or audit-defense programs where tool output requires expert interpretation.',
+        cautions: ['Separate tool license, implementation, managed service, publisher expertise, and audit-defense scope.'],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'SAM/SaaS management public pricing constructs only',
+        model: 'hybrid',
+        metric: 'Managed software publishers, devices/users, SaaS applications, integrations, entitlement records, usage connectors, publisher packs, managed services, and implementation scope',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Zylo pricing page', url: 'https://zylo.com/pricing/', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Entitlements, publisher scope, SaaS app count, renewal calendar, audit exposure, connector count, and managed-service needs require buyer evidence' },
+        ],
+        confidence: 0.52,
+        notes: 'Public pages often require custom quote for enterprise SAM/SaaS management; avoid cost-savings claims unless tied to buyer data and agreed methodology.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Entitlement and usage evidence ownership',
+        buyerPosition: 'Require export of entitlements, deployment, usage, allocation, optimization recommendations, renewal history, publisher calculations, and audit evidence.',
+      },
+      {
+        clauseArea: 'Publisher logic and audit support',
+        buyerPosition: 'Define supported publishers, license metrics, content/library updates, audit-defense boundaries, calculation assumptions, and responsibility for contract interpretation.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Entitlement-quality proof',
+        whenToUse: 'Use before accepting savings, compliance, or audit-readiness claims.',
+        buyerAsk: 'Load representative contracts, entitlements, deployments, usage data, and renewals, then reconcile exceptions with documented assumptions.',
+      },
+      {
+        lever: 'Renewal calendar leverage',
+        whenToUse: 'Use when material SaaS or publisher renewals are inside the next 12 months.',
+        buyerAsk: 'Prioritize integrations and optimization evidence for the renewal calendar, not generic application inventory.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'sam-savings-without-entitlements',
+        label: 'Savings claim without entitlement evidence',
+        severity: 'high',
+        detectionSignals: ['Vendor estimates reclaim or compliance value before contracts, usage, allocation, and publisher metrics are loaded.'],
+        mitigations: ['Require buyer data proof, documented assumptions, and finance/procurement signoff on savings methodology'],
+      },
+      {
+        id: 'sam-audit-false-confidence',
+        label: 'Audit false confidence',
+        severity: 'critical',
+        detectionSignals: ['Tool claims compliance, but publisher-specific terms, virtualization, indirect access, BYOL, or cloud migration rights are unresolved.'],
+        mitigations: ['Validate complex publishers with specialist review and retain underlying calculation evidence'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Stress audit defense, entitlement evidence, renewal controls, user-access governance, SaaS risk, and SOX-adjacent software spend controls.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Review clinical software ownership, PHI-adjacent usage data, shared-device licensing, and high-risk vendor renewal dependencies.',
+      },
+      {
+        industry: 'public_sector',
+        modifier: 'Consider procurement rules, named agreements, license transfer limits, audit evidence, and public-sector cloud/SaaS terms.',
+      },
+    ],
+    body: `## Summary
+SAM sourcing is not a generic software inventory exercise. It is the discipline of reconciling what the buyer owns, what is deployed, what is used, what contracts allow, what renewals are coming, and what audit exposure exists. The tool decision must connect entitlements, discovery, usage, SaaS integrations, publisher logic, contract records, renewal workflow, and finance/procurement action.
+
+## When to apply
+Use this pattern when sourcing Flexera/Snow, ServiceNow Software Asset Management, USU, Zylo, Productiv, Torii, BetterCloud, SaaS management platforms, license optimization tooling, publisher-pack programs, or managed SAM services. Apply it during software audit pressure, renewal savings programs, SaaS sprawl, Microsoft/Oracle/SAP/IBM/Adobe/VMware complexity, M&A, cloud migration/BYOL review, shadow IT discovery, access cleanup, or procurement centralization. Do not use it for pure hardware ITAM, pure FinOps, pure IAM, or procurement-only contract lifecycle management unless software entitlement and usage reconciliation is central.
+
+## Category boundary
+In scope: software discovery, normalized software recognition, entitlements, purchase records, contract terms, license metrics, usage evidence, SaaS application discovery, user/license utilization, renewal calendar, reclaim/reharvest workflow, publisher packs, compliance reports, audit evidence, BYOL/cloud rights, allocation, and export. Adjacent but distinct: hardware ITAM, CMDB, IAM, SaaS security posture, FinOps, CLM, procurement suites, and vendor management.
+
+## Lifecycle and gates
+The scope gate should inventory publishers, SaaS apps, contracts, entitlement quality, discovery sources, usage connectors, renewal calendar, audit history, cloud/BYOL exposure, and owner model. The RFP gate should require supported publishers, normalization, entitlement ingestion, usage collection, SaaS integrations, publisher packs, compliance calculations, renewal workflow, reclaim automation, export, and managed-service boundaries. The proof gate should load representative entitlements, deployments, usage, contracts, and renewals for high-value publishers. The BAFO gate should normalize managed publishers, users/devices, SaaS apps, connectors, implementation, managed services, content updates, and audit support.
+
+## Evaluation rubric
+Weight entitlement reconciliation around 25 percent, publisher-specific license logic around 20 percent, usage and SaaS integration around 20 percent, renewal/reclaim workflow around 15 percent, audit evidence and export around 10 percent, and commercial predictability around 10 percent. Increase publisher-logic weight for Oracle, SAP, IBM, Microsoft, Adobe, VMware, and hybrid-cloud/BYOL portfolios.
+
+## Pricing and contract notes
+Public sources from Flexera, Snow documentation, ServiceNow SAM, USU, Zylo, and Productiv show the functional map: software inventory, entitlement management, publisher packs, usage analysis, SaaS visibility, renewal workflow, and optimization suggestions. Flexera completed its Snow Software acquisition before this pattern's as-of date, so Snow-related sourcing should validate current Flexera/Snow packaging and support path. Enterprise pricing is commonly quote-based and depends on publishers, users/devices, SaaS applications, connectors, managed services, implementation, and content/library needs.
+
+Contracting should define data export, entitlement ownership, publisher pack scope, calculation assumptions, content update cadence, managed-service duties, audit-defense boundaries, usage connector responsibilities, privacy treatment for user-level data, and transition assistance. Do not accept generic savings percentages; require buyer-specific entitlement and usage proof.
+
+## Contradictions and failure modes
+Vendor claim: savings are immediate. Detection: load buyer contracts, usage, allocation, and renewal dates, then require finance-approved methodology. Vendor claim: compliance position is known. Detection: validate publisher terms, virtualization, indirect access, BYOL/cloud rights, and exceptions. Vendor claim: SaaS management equals SAM. Detection: separate SaaS usage optimization from complex on-prem and hybrid license compliance.
+
+The common failure is buying a SAM tool when the buyer's entitlement data is incomplete. The second is optimizing easy SaaS licenses while ignoring audit-heavy publishers. The third is treating tool output as legal interpretation without preserving assumptions and specialist review for complex terms.`,
+  },
 ];
 
 export const SOURCING_CATEGORY_PATTERN_COUNT = SOURCING_CATEGORY_PATTERNS.length;
