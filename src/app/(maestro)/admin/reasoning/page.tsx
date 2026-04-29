@@ -633,6 +633,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/phase-matrix',
     description: 'Cross-program × phase gate coverage grid',
   },
+  {
+    title: 'Changelog',
+    href: '/admin/reasoning/changelog',
+    description: '114-entry audit history of all reasoning system changes by wave',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
