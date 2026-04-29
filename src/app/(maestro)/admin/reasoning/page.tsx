@@ -1303,6 +1303,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Instance Maturity Index',
     description: 'Composite IMI score: governance, gate compliance, evidence maturity, contradiction-free dimensions.',
   },
+  {
+    href: '/admin/reasoning/synthesis-timeline',
+    title: 'Synthesis Timeline',
+    description: 'Simulated confidence evolution over 5 time snapshots — trend arrows, fastest risers, quartile shifts.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
