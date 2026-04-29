@@ -17,13 +17,13 @@ describe('getPhasePack', () => {
     expect(pack?.label).toBe('P2 Synthesis');
   });
 
-  it('returns null for phases without a pack yet', () => {
-    expect(getPhasePack(0)).toBeNull();
-    expect(getPhasePack(1)).toBeNull();
-    expect(getPhasePack(3)).toBeNull();
-    expect(getPhasePack(4)).toBeNull();
-    expect(getPhasePack(5)).toBeNull();
-    expect(getPhasePack(6)).toBeNull();
+  it('returns every authored phase pack', () => {
+    expect(getPhasePack(0)?.label).toBe('P0 Originate');
+    expect(getPhasePack(1)?.label).toBe('P1 Discovery');
+    expect(getPhasePack(3)?.label).toBe('P3 Design');
+    expect(getPhasePack(4)?.label).toBe('P4 Build');
+    expect(getPhasePack(5)?.label).toBe('P5 Activate');
+    expect(getPhasePack(6)?.label).toBe('P6 Operate');
   });
 
   it('returns null cleanly for null/undefined/out-of-range', () => {
@@ -38,7 +38,7 @@ describe('getPhasePack', () => {
 describe('listAuthoredPhases', () => {
   it('returns the set of phases that have packs (sorted)', () => {
     const phases = listAuthoredPhases();
-    expect(phases).toEqual([2]); // PR-A ships P2 only
+    expect(phases).toEqual([0, 1, 2, 3, 4, 5, 6]);
   });
 });
 

@@ -7,15 +7,28 @@
 //   - formatPhasePackForPrompt(pack): render the pack into a system-block
 //     section that Nexus reads at the start of every turn
 //
-// Why null-safe: PR-A ships P2 only; Codex authors P0/P1/P3/P4/P5/P6 in
-// parallel and we integrate them in PR-D. During the gap, Nexus on a
-// pack-less phase keeps its prior generic behavior — no regression.
+// Why null-safe: runtime callers may still pass null, undefined, or an
+// out-of-range phase while data is loading or while older program records are
+// being normalized. A missing/invalid phase should degrade cleanly rather than
+// throwing inside the agent route.
 
 import type { PhaseNumber, PhasePack } from './types';
+import { P0_ORIGINATE } from './P0_originate';
+import { P1_DISCOVERY } from './P1_discovery';
 import { P2_SYNTHESIS } from './P2_synthesis';
+import { P3_DESIGN } from './P3_design';
+import { P4_BUILD } from './P4_build';
+import { P5_ACTIVATE } from './P5_activate';
+import { P6_OPERATE } from './P6_operate';
 
 const PACKS: Partial<Record<PhaseNumber, PhasePack>> = {
+  0: P0_ORIGINATE,
+  1: P1_DISCOVERY,
   2: P2_SYNTHESIS,
+  3: P3_DESIGN,
+  4: P4_BUILD,
+  5: P5_ACTIVATE,
+  6: P6_OPERATE,
 };
 
 export function getPhasePack(phase: number | null | undefined): PhasePack | null {
