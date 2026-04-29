@@ -162,6 +162,11 @@ export default function ReasoningChangelogDocPage() {
             <Link href="/docs/reasoning/api" style={LINK_STYLE}>
               API reference
             </Link>
+            ; for a hands-on, click-through tour of the live product surfaces
+            wired through Layer 3, read the{' '}
+            <Link href="/docs/reasoning/demo" style={LINK_STYLE}>
+              5-minute demo walkthrough
+            </Link>
             .
           </p>
         </Section>

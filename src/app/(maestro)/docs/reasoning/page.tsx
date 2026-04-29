@@ -243,6 +243,14 @@ export default function ReasoningArchitectureDocPage() {
             >
               reasoning changelog
             </Link>
+            . For a hands-on, click-through tour of the live product surfaces
+            wired through Layer 3, see the{' '}
+            <Link
+              href="/docs/reasoning/demo"
+              style={{ color: COLORS.navy, textDecoration: 'underline', textUnderlineOffset: '2px' }}
+            >
+              5-minute demo walkthrough
+            </Link>
             .
           </p>
         </Section>
