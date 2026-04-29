@@ -5,10 +5,14 @@
 //
 // Receives the full sorted rows from the server component and applies
 // client-side filters via useState. No URL params — filter state is ephemeral.
+//
+// Also hosts the inline PatternBodyEditor — each row has an "Edit" ghost
+// button that expands the editor below that row.
 
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
 import type { PatternUsageRow } from '@/lib/reasoning/pattern-usage-analytics';
+import { PatternBodyEditor } from '@/components/admin/reasoning/PatternBodyEditor';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -243,10 +247,14 @@ function FilterBar({
 function PatternUsageTable({
   rows,
   totalCount,
+  patternBodies,
 }: {
   rows: PatternUsageRow[];
   totalCount: number;
+  patternBodies: Record<string, string>;
 }) {
+  const [openEditorId, setOpenEditorId] = useState<string | null>(null);
+
   return (
     <section
       style={{
@@ -316,75 +324,131 @@ function PatternUsageTable({
                 <th style={HEADER_CELL}>Failure-mode coverage</th>
                 <th style={HEADER_CELL}>Synthesis events</th>
                 <th style={HEADER_CELL}>Cascade events</th>
+                <th style={{ ...HEADER_CELL, textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => (
-                <tr key={row.patternId}>
-                  <td style={BODY_CELL}>
-                    <a
-                      href={`/source/patterns/${row.patternId}`}
-                      style={{
-                        textDecoration: 'none',
-                        color: COLORS.ink,
-                        display: 'block',
-                      }}
-                    >
-                      <div
+              {rows.map((row) => {
+                const isOpen = openEditorId === row.patternId;
+                const defaultBody = patternBodies[row.patternId] ?? '';
+                return (
+                  <React.Fragment key={row.patternId}>
+                    <tr>
+                      <td style={BODY_CELL}>
+                        <a
+                          href={`/source/patterns/${row.patternId}`}
+                          style={{
+                            textDecoration: 'none',
+                            color: COLORS.ink,
+                            display: 'block',
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontFamily: TYPOGRAPHY.mono,
+                              fontSize: 11,
+                              color: `${COLORS.ink}77`,
+                              letterSpacing: '0.04em',
+                            }}
+                          >
+                            {row.patternId}
+                          </div>
+                          <div
+                            style={{
+                              fontFamily: TYPOGRAPHY.serif,
+                              fontSize: 14,
+                              color: COLORS.navy,
+                              marginTop: 2,
+                            }}
+                          >
+                            {row.patternLabel}
+                          </div>
+                        </a>
+                      </td>
+                      <td style={BODY_CELL}>
+                        <FamilyPill family={row.family} />
+                      </td>
+                      <td style={MONO_CELL}>
+                        {row.instanceCount === 0 ? (
+                          <span style={{ color: `${COLORS.ink}66` }}>0</span>
+                        ) : (
+                          row.instanceCount
+                        )}
+                      </td>
+                      <td style={BODY_CELL}>
+                        <CoverageChip
+                          covered={row.contradictionTemplatesCovered}
+                          total={row.contradictionTemplateCount}
+                        />
+                      </td>
+                      <td style={BODY_CELL}>
+                        <CoverageChip
+                          covered={row.failureModesCovered}
+                          total={row.failureModeTemplateCount}
+                        />
+                      </td>
+                      <td style={MONO_CELL}>
+                        {row.synthesisEventCount}
+                        <span style={{ color: `${COLORS.ink}66`, marginLeft: 4 }}>
+                          ({row.synthesisEventCountLast24h} in 24h)
+                        </span>
+                      </td>
+                      <td style={MONO_CELL}>
+                        {row.cascadeAsSourceCount}→ / →{row.cascadeAsTargetCount}
+                      </td>
+                      <td
                         style={{
-                          fontFamily: TYPOGRAPHY.mono,
-                          fontSize: 11,
-                          color: `${COLORS.ink}77`,
-                          letterSpacing: '0.04em',
+                          ...BODY_CELL,
+                          textAlign: 'right',
+                          whiteSpace: 'nowrap',
                         }}
                       >
-                        {row.patternId}
-                      </div>
-                      <div
-                        style={{
-                          fontFamily: TYPOGRAPHY.serif,
-                          fontSize: 14,
-                          color: COLORS.navy,
-                          marginTop: 2,
-                        }}
-                      >
-                        {row.patternLabel}
-                      </div>
-                    </a>
-                  </td>
-                  <td style={BODY_CELL}>
-                    <FamilyPill family={row.family} />
-                  </td>
-                  <td style={MONO_CELL}>
-                    {row.instanceCount === 0 ? (
-                      <span style={{ color: `${COLORS.ink}66` }}>0</span>
-                    ) : (
-                      row.instanceCount
-                    )}
-                  </td>
-                  <td style={BODY_CELL}>
-                    <CoverageChip
-                      covered={row.contradictionTemplatesCovered}
-                      total={row.contradictionTemplateCount}
-                    />
-                  </td>
-                  <td style={BODY_CELL}>
-                    <CoverageChip
-                      covered={row.failureModesCovered}
-                      total={row.failureModeTemplateCount}
-                    />
-                  </td>
-                  <td style={MONO_CELL}>
-                    {row.synthesisEventCount}
-                    <span style={{ color: `${COLORS.ink}66`, marginLeft: 4 }}>
-                      ({row.synthesisEventCountLast24h} in 24h)
-                    </span>
-                  </td>
-                  <td style={MONO_CELL}>
-                    {row.cascadeAsSourceCount}→ / →{row.cascadeAsTargetCount}
-                  </td>
-                </tr>
-              ))}
+                        <button
+                          type="button"
+                          aria-label={`Edit body for ${row.patternId}`}
+                          onClick={() =>
+                            setOpenEditorId(isOpen ? null : row.patternId)
+                          }
+                          style={{
+                            fontFamily: TYPOGRAPHY.sans,
+                            fontSize: 11,
+                            fontWeight: 600,
+                            color: isOpen ? COLORS.navy : COLORS.ink,
+                            background: isOpen
+                              ? `${COLORS.navy}10`
+                              : 'transparent',
+                            border: `1px solid ${isOpen ? COLORS.navy : COLORS.ink}22`,
+                            borderRadius: RADIUS.sm,
+                            padding: '4px 10px',
+                            cursor: 'pointer',
+                            letterSpacing: '0.02em',
+                          }}
+                        >
+                          Edit ✏
+                        </button>
+                      </td>
+                    </tr>
+                    {isOpen ? (
+                      <tr key={`${row.patternId}-editor`}>
+                        <td
+                          colSpan={8}
+                          style={{
+                            padding: `${SPACING.sm} ${SPACING.md} ${SPACING.md}`,
+                            borderBottom: `1px solid ${COLORS.ink}10`,
+                            background: `${COLORS.ink}02`,
+                          }}
+                        >
+                          <PatternBodyEditor
+                            patternId={row.patternId}
+                            defaultBody={defaultBody}
+                            onClose={() => setOpenEditorId(null)}
+                          />
+                        </td>
+                      </tr>
+                    ) : null}
+                  </React.Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -395,7 +459,13 @@ function PatternUsageTable({
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 
-export function PatternFilterView({ rows }: { rows: PatternUsageRow[] }) {
+export function PatternFilterView({
+  rows,
+  patternBodies,
+}: {
+  rows: PatternUsageRow[];
+  patternBodies: Record<string, string>;
+}) {
   const [query, setQuery] = useState('');
   const [family, setFamily] = useState<FamilyFilter>('all');
 
@@ -423,7 +493,11 @@ export function PatternFilterView({ rows }: { rows: PatternUsageRow[] }) {
         totalCount={rows.length}
         filteredCount={filtered.length}
       />
-      <PatternUsageTable rows={filtered} totalCount={rows.length} />
+      <PatternUsageTable
+        rows={filtered}
+        totalCount={rows.length}
+        patternBodies={patternBodies}
+      />
     </>
   );
 }

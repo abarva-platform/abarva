@@ -11,6 +11,7 @@ import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { EditorialCanvas } from '@/components/admin/EditorialCanvas';
 import { AgentRail } from '@/components/admin/AgentRail';
 import { computePatternUsage } from '@/lib/reasoning/pattern-usage-analytics';
+import { getAllLifecyclePatterns } from '@/lib/reasoning/lifecycle-pattern-lookup';
 import { PatternFilterView } from './PatternFilterView';
 
 export const dynamic = 'force-dynamic';
@@ -90,6 +91,13 @@ function HeadlineTile({
 export default function ReasoningPatternsPage() {
   const report = computePatternUsage();
 
+  // Build a patternId → body lookup so PatternFilterView can pre-fill
+  // the inline body editor without needing another data fetch.
+  const patternBodies: Record<string, string> = {};
+  for (const p of getAllLifecyclePatterns()) {
+    patternBodies[p.patternId] = p.body ?? '';
+  }
+
   return (
     <AdminCanonShellV2
       agentRail={
@@ -154,8 +162,8 @@ export default function ReasoningPatternsPage() {
           <span style={{ color: `${COLORS.ink}88` }}>cache, latency, feedback</span>
         </a>
 
-        {/* Client component: handles keyword search + category filtering */}
-        <PatternFilterView rows={report.rows} />
+        {/* Client component: handles keyword search, category filtering, and inline body editing */}
+        <PatternFilterView rows={report.rows} patternBodies={patternBodies} />
       </EditorialCanvas>
     </AdminCanonShellV2>
   );
