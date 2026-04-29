@@ -291,7 +291,7 @@ export default async function ContradictionTemplateEditorPage() {
               lineHeight: 1.5,
             }}
           >
-            Tweak `detectionHint` to fire detections that wouldn't have fired
+            Tweak `detectionHint` to fire detections that wouldn&apos;t have fired
             before — the change applies on the next synthesis call.
           </div>
         </div>
