@@ -42,7 +42,13 @@ export type ArtifactType =
   // React tree (chat history, reactive panel, AtlasPageState) survives
   // the phase transition, so the user keeps the conversation across
   // P3 → P4 instead of starting from a blank Nexus on a reloaded page.
-  | 'program-phase-changed'; // {programId, fromPhase, toPhase, snapshotId?}
+  | 'program-phase-changed' // {programId, fromPhase, toPhase, snapshotId?}
+  // Surface 2 PR-INT-D · Sentinel-side knowledge artifacts. Sentinel
+  // (the librarian agent) emits these on /intelligence to materialize
+  // graph traversals + contradiction templates as cards in the
+  // reactive knowledge pane.
+  | 'graph-neighborhood' // {rootId, rootLabel, nodeCount, edgeCount, topEdges[]}
+  | 'contradiction-flag'; // {contradictionId, label, severity, partyA, partyB, detectionDescription, resolutionPath}
 
 // ── Strongly-typed artifact payloads ──────────────────────────────────────────
 
@@ -182,6 +188,49 @@ export interface ProgramPhaseChangedArtifact {
   snapshotId?: string;
 }
 
+/**
+ * PR-INT-D · graph-neighborhood card. Sentinel emits one when it
+ * walks the pattern graph (pattern_neighborhood tool, future broker
+ * graph traversal). The card renders a compact hub-and-spoke or
+ * ASCII-edge layout; topEdges is capped at 8 in the renderer to keep
+ * the card under ~200px tall even on noisy patterns. nodeCount /
+ * edgeCount carry the full traversal scope so the agent can narrate
+ * "(showing 8 of 23 neighbors)" without re-counting.
+ */
+export interface GraphNeighborhoodArtifact {
+  type: 'graph-neighborhood';
+  rootId: string;
+  rootLabel: string;
+  nodeCount: number;
+  edgeCount: number;
+  /** Top edges, max 8 in the card; the bundle has more available. */
+  topEdges: Array<{
+    targetId: string;
+    targetLabel: string;
+    edgeType: 'co_applies_with' | 'contradicts' | 'depends_on' | 'precedes';
+  }>;
+}
+
+/**
+ * PR-INT-D · contradiction-flag card. Reuses the shape of
+ * ContradictionTemplate from src/lib/intelligence/seed-types.ts so
+ * pack/broker contradiction templates flow through unchanged. PR-INT-E's
+ * validate_synthesis tool emits one of these when a synthesis text
+ * triggers a contradiction; future cross-agent relays (Wave 2) can
+ * also emit them when Sentinel finds a Vendor-vs-measured-reality
+ * mismatch in evidence.
+ */
+export interface ContradictionFlagArtifact {
+  type: 'contradiction-flag';
+  contradictionId: string;
+  label: string;
+  severity: 'low' | 'medium' | 'high';
+  partyA: string;
+  partyB: string;
+  detectionDescription: string;
+  resolutionPath: string;
+}
+
 export type Artifact =
   | BriefFieldArtifact
   | PatternMatchArtifact
@@ -193,7 +242,9 @@ export type Artifact =
   | ProgramFocusArtifact
   | PhaseProgressArtifact
   | AntiPatternFlagArtifact
-  | ProgramPhaseChangedArtifact;
+  | ProgramPhaseChangedArtifact
+  | GraphNeighborhoodArtifact
+  | ContradictionFlagArtifact;
 
 // ── Parser ────────────────────────────────────────────────────────────────────
 //
@@ -234,7 +285,9 @@ function isKnownArtifactType(type: string): type is ArtifactType {
     type === 'program-focus' ||
     type === 'phase-progress' ||
     type === 'anti-pattern-flag' ||
-    type === 'program-phase-changed'
+    type === 'program-phase-changed' ||
+    type === 'graph-neighborhood' ||
+    type === 'contradiction-flag'
   );
 }
 
@@ -447,6 +500,64 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
       const snapshotId =
         typeof obj.snapshotId === 'string' && obj.snapshotId.length > 0 ? obj.snapshotId : undefined;
       return { type, programId, fromPhase, toPhase, snapshotId };
+    }
+    case 'graph-neighborhood': {
+      const rootId = obj.rootId;
+      const rootLabel = obj.rootLabel;
+      const nodeCount = obj.nodeCount;
+      const edgeCount = obj.edgeCount;
+      const topEdgesRaw = obj.topEdges;
+      if (typeof rootId !== 'string' || rootId.length === 0) return null;
+      if (typeof rootLabel !== 'string' || rootLabel.length === 0) return null;
+      if (typeof nodeCount !== 'number' || nodeCount < 0) return null;
+      if (typeof edgeCount !== 'number' || edgeCount < 0) return null;
+      if (!Array.isArray(topEdgesRaw)) return null;
+      const topEdges: GraphNeighborhoodArtifact['topEdges'] = [];
+      for (const raw of topEdgesRaw) {
+        if (!raw || typeof raw !== 'object') continue;
+        const edge = raw as Record<string, unknown>;
+        const targetId = edge.targetId;
+        const targetLabel = edge.targetLabel;
+        const edgeType = edge.edgeType;
+        if (typeof targetId !== 'string' || targetId.length === 0) continue;
+        if (typeof targetLabel !== 'string' || targetLabel.length === 0) continue;
+        if (
+          edgeType !== 'co_applies_with' &&
+          edgeType !== 'contradicts' &&
+          edgeType !== 'depends_on' &&
+          edgeType !== 'precedes'
+        ) {
+          continue;
+        }
+        topEdges.push({ targetId, targetLabel, edgeType });
+      }
+      return { type, rootId, rootLabel, nodeCount, edgeCount, topEdges };
+    }
+    case 'contradiction-flag': {
+      const contradictionId = obj.contradictionId;
+      const label = obj.label;
+      const severity = obj.severity;
+      const partyA = obj.partyA;
+      const partyB = obj.partyB;
+      const detectionDescription = obj.detectionDescription;
+      const resolutionPath = obj.resolutionPath;
+      if (typeof contradictionId !== 'string' || contradictionId.length === 0) return null;
+      if (typeof label !== 'string' || label.length === 0) return null;
+      if (severity !== 'low' && severity !== 'medium' && severity !== 'high') return null;
+      if (typeof partyA !== 'string' || partyA.length === 0) return null;
+      if (typeof partyB !== 'string' || partyB.length === 0) return null;
+      if (typeof detectionDescription !== 'string' || detectionDescription.length === 0) return null;
+      if (typeof resolutionPath !== 'string' || resolutionPath.length === 0) return null;
+      return {
+        type,
+        contradictionId,
+        label,
+        severity,
+        partyA,
+        partyB,
+        detectionDescription,
+        resolutionPath,
+      };
     }
   }
 }
@@ -666,4 +777,35 @@ not "I have no idea yet."
 
 For anti-pattern-flag: only emit when the detectionHint signal is
 genuinely visible. False positives are worse than missed flags here —
-a wrongly-flagged Phantom Sponsor will erode trust in the platform.`;
+a wrongly-flagged Phantom Sponsor will erode trust in the platform.
+
+11. graph-neighborhood — Sentinel-side. Emit when you've walked the
+    pattern graph and the user benefits from a structural summary of
+    the neighborhood (vs. a wall of pattern-match cards). topEdges is
+    capped at 8 in the renderer; nodeCount + edgeCount carry the full
+    traversal scope so you can narrate "showing 8 of N" honestly.
+    Emit ALONGSIDE pattern-match cards for the individual neighbors —
+    the graph card is the structural summary, the pattern-match cards
+    are the per-pattern details.
+    Shape: {"rootId": <pattern-id>, "rootLabel": <pattern-name>,
+            "nodeCount": <int>, "edgeCount": <int>,
+            "topEdges": [{"targetId": <pattern-id>, "targetLabel": <name>,
+                          "edgeType": "co_applies_with"|"contradicts"|"depends_on"|"precedes"}]}
+    Example:
+    [[artifact:graph-neighborhood]]{"rootId":"pattern_ai_use_case_portfolio","rootLabel":"AI Use Case Portfolio Management","nodeCount":11,"edgeCount":11,"topEdges":[{"targetId":"pattern_analytics_modernization","targetLabel":"Analytics Modernization","edgeType":"co_applies_with"},{"targetId":"pattern_responsible_ai","targetLabel":"Responsible AI Governance","edgeType":"co_applies_with"}]}[[/artifact]]
+
+12. contradiction-flag — Sentinel-side. Emit when a pattern's
+    contradictionTemplate fires against the user's claim or synthesis,
+    when evidence in the data room conflicts with a vendor claim, or
+    when validate_synthesis finds a contradiction. Reuses the shape of
+    pack/seed ContradictionTemplate so authored data flows through
+    unchanged. partyA / partyB name the contradicting sources (e.g.
+    "Vendor claim" vs "Measured reality"); detectionDescription explains
+    when it fires; resolutionPath is the redirect.
+    Shape: {"contradictionId": <stable-id>, "label": <human label>,
+            "severity": "low"|"medium"|"high",
+            "partyA": <source-A>, "partyB": <source-B>,
+            "detectionDescription": <when this fires>,
+            "resolutionPath": <what to do next>}
+    Example:
+    [[artifact:contradiction-flag]]{"contradictionId":"vendor-savings-vs-measured","label":"Vendor savings claim vs measured reality","severity":"high","partyA":"Vendor benchmark","partyB":"Measured run-rate","detectionDescription":"Vendor cites 22% savings against an unverified baseline; tenant's measured run-rate shows 7% over the same window.","resolutionPath":"Pull the baseline source-of-truth into the broker citation and ask Sentinel to evidence-check the vendor claim before signing."}[[/artifact]]`;

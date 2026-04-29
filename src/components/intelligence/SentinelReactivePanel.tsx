@@ -18,8 +18,10 @@
 import { useMemo } from 'react';
 import type {
   Artifact,
+  ContradictionFlagArtifact,
   CrossProgramDependencyArtifact,
   EvidenceHighlightArtifact,
+  GraphNeighborhoodArtifact,
   PatternMatchArtifact,
 } from '@/lib/agent/artifacts';
 import { BrandColors, BrandTypography } from '@/lib/shell/brand-tokens';
@@ -182,6 +184,148 @@ function CrossProgramDependencyCard({ a }: { a: CrossProgramDependencyArtifact }
   );
 }
 
+const EDGE_TYPE_LABEL: Record<
+  GraphNeighborhoodArtifact['topEdges'][number]['edgeType'],
+  string
+> = {
+  co_applies_with: 'co-applies',
+  contradicts: 'contradicts',
+  depends_on: 'depends on',
+  precedes: 'precedes',
+};
+
+function GraphNeighborhoodCard({ a }: { a: GraphNeighborhoodArtifact }) {
+  // Card stays compact — cap visible edges at 8; the bundle's
+  // edgeCount tells the user how much was traversed in total.
+  const visibleEdges = a.topEdges.slice(0, 8);
+  return (
+    <CardShell kind="Graph neighborhood">
+      <div style={{ fontWeight: 600, fontSize: 13.5 }}>{a.rootLabel}</div>
+      <div
+        style={{
+          fontFamily: BrandTypography.mono,
+          fontSize: 11,
+          color: BrandColors.signalBlue,
+          marginTop: 2,
+        }}
+      >
+        {a.rootId}
+      </div>
+      <div
+        style={{
+          fontFamily: BrandTypography.mono,
+          fontSize: 10,
+          color: BrandColors.stone,
+          marginTop: 6,
+          letterSpacing: '0.04em',
+        }}
+      >
+        {a.nodeCount} node{a.nodeCount === 1 ? '' : 's'} · {a.edgeCount} edge
+        {a.edgeCount === 1 ? '' : 's'}
+        {visibleEdges.length < a.topEdges.length
+          ? ` · showing ${visibleEdges.length} of ${a.topEdges.length}`
+          : ''}
+      </div>
+      {visibleEdges.length > 0 && (
+        <ul
+          style={{
+            margin: '8px 0 0',
+            padding: 0,
+            listStyle: 'none',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 4,
+          }}
+        >
+          {visibleEdges.map((edge) => (
+            <li
+              key={`${edge.edgeType}:${edge.targetId}`}
+              style={{
+                fontFamily: BrandTypography.sans,
+                fontSize: 12,
+                color: BrandColors.slate,
+                lineHeight: 1.4,
+              }}
+            >
+              <span style={{ color: BrandColors.stone }}>↳ {EDGE_TYPE_LABEL[edge.edgeType]} </span>
+              <span style={{ color: BrandColors.inkBlack, fontWeight: 500 }}>
+                {edge.targetLabel}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </CardShell>
+  );
+}
+
+function ContradictionFlagCard({ a }: { a: ContradictionFlagArtifact }) {
+  const severityColor =
+    a.severity === 'high'
+      ? '#b91c1c'
+      : a.severity === 'medium'
+        ? '#b45309'
+        : BrandColors.stone;
+  return (
+    <CardShell kind={`Contradiction · ${a.severity}`}>
+      <div
+        style={{
+          fontWeight: 600,
+          fontSize: 13.5,
+          color: severityColor,
+        }}
+      >
+        {a.label}
+      </div>
+      <div
+        style={{
+          fontFamily: BrandTypography.mono,
+          fontSize: 10,
+          color: BrandColors.stone,
+          marginTop: 2,
+          letterSpacing: '0.04em',
+        }}
+      >
+        {a.partyA} ⇄ {a.partyB}
+      </div>
+      <div
+        style={{
+          fontFamily: BrandTypography.mono,
+          fontSize: 9.5,
+          letterSpacing: '0.10em',
+          textTransform: 'uppercase',
+          color: BrandColors.stone,
+          fontWeight: 700,
+          marginTop: 10,
+          marginBottom: 4,
+        }}
+      >
+        Detection
+      </div>
+      <p style={{ margin: 0, fontSize: 12.5, color: BrandColors.inkBlack, lineHeight: 1.55 }}>
+        {a.detectionDescription}
+      </p>
+      <div
+        style={{
+          fontFamily: BrandTypography.mono,
+          fontSize: 9.5,
+          letterSpacing: '0.10em',
+          textTransform: 'uppercase',
+          color: '#0f766e',
+          fontWeight: 700,
+          marginTop: 10,
+          marginBottom: 4,
+        }}
+      >
+        Resolution
+      </div>
+      <p style={{ margin: 0, fontSize: 12.5, color: BrandColors.slate, lineHeight: 1.55 }}>
+        {a.resolutionPath}
+      </p>
+    </CardShell>
+  );
+}
+
 // ── Panel ─────────────────────────────────────────────────────────────────────
 
 /**
@@ -190,10 +334,9 @@ function CrossProgramDependencyCard({ a }: { a: CrossProgramDependencyArtifact }
  *
  * Behavior:
  *   - pattern-match, evidence-highlight, cross-program-dependency: kept.
+ *   - graph-neighborhood, contradiction-flag (PR-INT-D): kept.
  *   - Everything else: dropped (Programs / Surface 1 territory).
  *   - Result reversed so the most recent card lands at the top.
- *
- * PR-INT-D extends this with graph-neighborhood and contradiction-flag.
  */
 export function selectVisibleSentinelArtifacts(artifacts: Artifact[]): Artifact[] {
   return artifacts
@@ -201,7 +344,9 @@ export function selectVisibleSentinelArtifacts(artifacts: Artifact[]): Artifact[
       (a) =>
         a.type === 'pattern-match' ||
         a.type === 'evidence-highlight' ||
-        a.type === 'cross-program-dependency',
+        a.type === 'cross-program-dependency' ||
+        a.type === 'graph-neighborhood' ||
+        a.type === 'contradiction-flag',
     )
     .reverse();
 }
@@ -296,6 +441,10 @@ export function SentinelReactivePanel({ artifacts }: SentinelReactivePanelProps)
             return <EvidenceHighlightCard key={key} a={a} />;
           case 'cross-program-dependency':
             return <CrossProgramDependencyCard key={key} a={a} />;
+          case 'graph-neighborhood':
+            return <GraphNeighborhoodCard key={`gn-${a.rootId}`} a={a} />;
+          case 'contradiction-flag':
+            return <ContradictionFlagCard key={`cf-${a.contradictionId}`} a={a} />;
           default:
             return null;
         }
