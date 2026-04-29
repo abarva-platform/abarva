@@ -240,21 +240,39 @@ Within the agent-intelligence track, work proceeds in waves.
 Each wave produces something demonstrable; we don't queue the next
 wave's work behind speculative scope from later waves.
 
-**Wave 1 — Foundation (COMPLETE on the app tier):**
-- ✅ PR-A · Pack scaffold + P2 Synthesis reference *(merged #1114)*
-- ✅ PR-B · `phase-progress` + `anti-pattern-flag` artifacts *(merged #1119)*
-- ✅ PR-C · `advance_phase` tool + surface-glob registry *(merged #1120)*
-- ✅ PR-D · Codex-authored P0/P1/P3/P4/P5/P6 packs *(merged #1121)*
-- ✅ PR-F · Agent-centric layout reshape · chat 60% + reactive 35% *(merged #1123)*
-- 🔜 PR-E · Production walk via Chrome MCP — verify agent-centric layout + every phase pack changes Nexus's posture
+**Wave 1 — Foundation (COMPLETE):**
+- ✅ PR-A · Pack scaffold + P2 Synthesis reference *(#1114)*
+- ✅ PR-B · `phase-progress` + `anti-pattern-flag` artifacts *(#1119)*
+- ✅ PR-C · `advance_phase` tool + surface-glob registry *(#1120)*
+- ✅ PR-D · Codex-authored P0/P1/P3/P4/P5/P6 packs *(#1121)*
+- ✅ PR-F · Agent-centric layout reshape `/programs/<id>` *(#1123)*
+- ✅ PR-G · Surface canonicalization fix · restored tool + artifact channel *(#1125)*
+- ✅ PR-H · Readability + reactive-panel empty state *(#1126)*
+- ✅ PR-K · Origination → active program persistent canvas *(#1127)*
+- ✅ PR-L · In-place phase advance + shared-chat artifact dispatch *(#1131)*
+- ✅ PR-V/W/X · Codex broker bundle (`ProgramsBrokerAdapter` + evidence-binding tests + readiness doc) *(#1129/1130/1132)*
+
+**Wave 1.5 — Master canvas across all four entry surfaces (COMPLETE):**
+- ✅ PR-I · `/programs` (list) agent-centric reshape *(#1134)*
+- ✅ PR-J · `/home` (Atlas portfolio) agent-centric reshape *(#1136)*
+- ✅ PR-INT-A through E · `/intelligence` (Sentinel) agent-centric surface, Sentinel tools, new artifact types · parallel session *(#1135/1137/1138/1139/1141)*
+- ✅ Redirect fix · retired stale `/intelligence` → `/preview/intelligence` redirect that 404'd Sentinel surface *(#1142)*
+
+**Wave 1.6 — PR-E production walk + polish (COMPLETE):**
+- ✅ PR-E · Chrome MCP walk on production `nexus-vert-kappa.vercel.app` · all four surfaces verified behaviorally:
+   - **`/home` Atlas** — chat works, portfolio triage (Critical/Watch/On Track), reactive panel populates with `phase-recommendation` + `gate-evaluation [BLOCKED]` cards
+   - **`/programs` Nexus list** — chat works, portfolio overview with per-program risk classification + recommended actions
+   - **`/programs/<id>` Nexus detail** — `advance_phase` tool fires, `governance.evaluateGate` returns hard-fail blockers, four cards render in panel (`phase-recommendation` + 3× `gate-evaluation`), Nexus refuses to fabricate success
+   - **`/intelligence` Sentinel** — chat works, `search_patterns` tool fires; **bug found:** `pattern-match` artifacts emitted with malformed JSON when summary contained `[[/artifact]]` substring → fixed in PR-O
+- ✅ PR-N · Adaptive panel header by active agent (Atlas/Nexus/Sentinel labels match) *(#1145)*
+- ✅ PR-O · `search_patterns` summary sanitizer (drops `longDescription` fallback, caps + escapes close-sentinel) *(#1147)*
+- ✅ PR-P · CardShell adaptive agent prefix · cards inside the panel match the panel header *(#1148)*
 
 **Wave 2 — Activation + broker contract:**
-- PR-V · `ProgramsBrokerAdapter` (read-only)
-- PR-W · Evidence-binding tests (pack hints → broker vocabulary)
-- PR-G · Question-resolution tracking
-- PR-H · Meeting-notes → pack signal
-- PR-F'  · Pack ↔ pattern-overlay composition (the original PR-F slot;
-   layout reshape took the letter so this is renamed)
+- PR-G' · Question-resolution tracking (Nexus knows which pack questions have been answered, doesn't repeat openers)
+- PR-H' · Meeting-notes → pack signal
+- PR-F'  · Pack ↔ pattern-overlay composition (per-pattern + per-phase compose into one prompt)
+- Sourcing module session · `SESSION_BRIEF_SOURCING_MODULE.md` (#1144) ready to hand off to a fresh session — 8 PRs (PR-SRC-A through PR-SRC-H)
 
 **Wave 3 — Lateral & expansion:**
 - PR-I: Evidence-type expansion
