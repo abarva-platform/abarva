@@ -11,6 +11,7 @@ import {
   executeTool,
   getRelevantTools,
   registerTool,
+  surfaceMatches,
   toAnthropicToolDefinition,
   type AgentTool,
   type ToolContext,
@@ -157,5 +158,75 @@ describe('registry · executeTool', () => {
     );
     await executeTool('inspect_ctx', {}, makeCtx('/programs/new'));
     expect(captured?.surface).toBe('/programs/new');
+  });
+});
+
+describe('registry · surfaceMatches (path-glob support for /:id)', () => {
+  it('exact-matches literal surface keys', () => {
+    expect(surfaceMatches('/programs/new', '/programs/new')).toBe(true);
+    expect(surfaceMatches('/programs/new', '/programs/apx-cdp-2026')).toBe(false);
+  });
+
+  it("'*' matches every surface", () => {
+    expect(surfaceMatches('*', '/programs/new')).toBe(true);
+    expect(surfaceMatches('*', '/anything-else')).toBe(true);
+  });
+
+  it('glob `:id` matches a single path segment', () => {
+    expect(surfaceMatches('/programs/:id', '/programs/apx-cdp-2026')).toBe(true);
+    expect(surfaceMatches('/programs/:id', '/programs/apx-cc-2026')).toBe(true);
+  });
+
+  it('glob `:id` does NOT capture the sibling `new` literal', () => {
+    expect(surfaceMatches('/programs/:id', '/programs/new')).toBe(false);
+  });
+
+  it('glob requires same number of path segments', () => {
+    expect(surfaceMatches('/programs/:id', '/programs/abc/details')).toBe(false);
+    expect(surfaceMatches('/programs/:id', '/programs')).toBe(false);
+  });
+
+  it('glob with multiple segments composes', () => {
+    expect(surfaceMatches('/programs/:id/report', '/programs/apx-cdp-2026/report')).toBe(true);
+    expect(surfaceMatches('/programs/:id/report', '/programs/apx-cdp-2026/edit')).toBe(false);
+  });
+
+  it('rejects empty segment for `:id`', () => {
+    expect(surfaceMatches('/programs/:id', '/programs/')).toBe(false);
+  });
+});
+
+describe('registry · /:id-globbed tool registration', () => {
+  it('getRelevantTools returns globbed tools for matching surfaces', () => {
+    registerTool(
+      makeTool({
+        name: 'detail_only_tool',
+        surfaces: ['/programs/:id'],
+      }),
+    );
+    expect(
+      getRelevantTools('/programs/apx-cdp-2026').map((t) => t.name),
+    ).toEqual(['detail_only_tool']);
+    expect(getRelevantTools('/programs/new').map((t) => t.name)).toEqual([]);
+    expect(getRelevantTools('/home').map((t) => t.name)).toEqual([]);
+  });
+
+  it('executeTool surface gate uses the same glob semantics (defence in depth)', async () => {
+    registerTool(
+      makeTool({
+        name: 'detail_advance',
+        surfaces: ['/programs/:id'],
+        handler: async () => ({ success: true, data: { ok: true } }),
+      }),
+    );
+
+    const okResult = await executeTool('detail_advance', {}, makeCtx('/programs/apx-cdp-2026'));
+    expect(okResult.success).toBe(true);
+
+    const blocked = await executeTool('detail_advance', {}, makeCtx('/programs/new'));
+    expect(blocked.success).toBe(false);
+    if (!blocked.success) {
+      expect(blocked.error).toMatch(/not available on surface/);
+    }
   });
 });

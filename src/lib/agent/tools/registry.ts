@@ -68,12 +68,50 @@ export function registerTool<I>(tool: AgentTool<I>): void {
 }
 
 /**
+ * Match a registered surface pattern against a current-surface key.
+ * Supports three forms:
+ *   1. Exact match — '/programs/new' against '/programs/new'
+ *   2. Global wildcard — '*' matches any surface
+ *   3. Path glob with `:id` segments — '/programs/:id' matches
+ *      '/programs/apx-cdp-2026' but NOT '/programs/new' (the latter
+ *      is a sibling literal that must keep its own surface key).
+ *
+ * Used by getRelevantTools() AND executeTool() — defence in depth so a
+ * leaked tool name can't run on a surface that didn't register it.
+ */
+export function surfaceMatches(pattern: string, surface: string): boolean {
+  if (pattern === '*') return true;
+  if (pattern === surface) return true;
+  if (!pattern.includes(':')) return false;
+  const patternParts = pattern.split('/');
+  const surfaceParts = surface.split('/');
+  if (patternParts.length !== surfaceParts.length) return false;
+  for (let i = 0; i < patternParts.length; i++) {
+    const p = patternParts[i];
+    const s = surfaceParts[i];
+    if (p.startsWith(':')) {
+      // Reserved literal: don't let `:id` capture a sibling literal
+      // like `/programs/new`. The /programs/new surface registers
+      // its own tools (commit_program, lookup_person, etc.) and
+      // must not also receive program-detail tools meant for an
+      // existing program.
+      if (s === 'new') return false;
+      if (s.length === 0) return false;
+      continue;
+    }
+    if (p !== s) return false;
+  }
+  return true;
+}
+
+/**
  * Returns the tool definitions visible to a given surface. Tools opt
- * into surfaces explicitly; `'*'` means globally available.
+ * into surfaces via exact strings, the `'*'` wildcard, or `:id`-style
+ * path globs (e.g. '/programs/:id').
  */
 export function getRelevantTools(surface: string): AgentTool[] {
-  return REGISTRY.filter(
-    (tool) => tool.surfaces.includes('*') || tool.surfaces.includes(surface),
+  return REGISTRY.filter((tool) =>
+    tool.surfaces.some((pattern) => surfaceMatches(pattern, surface)),
   );
 }
 
@@ -110,8 +148,10 @@ export async function executeTool(
   }
   // Surface gate — defence in depth. The agent should only see tools
   // for its current surface, but if a tool name leaks across surfaces
-  // we fail closed rather than executing it.
-  if (!tool.surfaces.includes('*') && !tool.surfaces.includes(ctx.surface)) {
+  // we fail closed rather than executing it. Uses the same
+  // surfaceMatches helper as getRelevantTools so glob and exact
+  // semantics stay aligned.
+  if (!tool.surfaces.some((pattern) => surfaceMatches(pattern, ctx.surface))) {
     return {
       success: false,
       error: `Tool ${name} is not available on surface ${ctx.surface}`,
