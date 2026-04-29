@@ -1243,6 +1243,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Evidence Source Map',
     description: 'Source document citation frequency — most-cited, never-cited, and source-to-instance matrix.',
   },
+  {
+    href: '/admin/reasoning/gate-success-factors',
+    title: 'Gate Success Factors',
+    description: 'Correlation analysis of what drives gate pass rates — contradiction, waiver, stage, and health comparisons.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
