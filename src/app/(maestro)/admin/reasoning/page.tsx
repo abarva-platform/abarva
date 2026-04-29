@@ -918,6 +918,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/coverage-matrix',
     description: 'Instance × stage evidence coverage matrix — which instances have evidence for which stages',
   },
+  {
+    title: 'Gate owners',
+    href: '/admin/reasoning/gate-owners',
+    description: 'Hard gate criterion ownership by stakeholder category — grouped by pattern with distribution chart',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
