@@ -953,6 +953,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/regulatory-map',
     description: 'Regulatory framework coverage across patterns — which regulations affect which instances',
   },
+  {
+    title: 'Tenant comparison',
+    href: '/admin/reasoning/tenant-comparison',
+    description: 'Cross-tenant reasoning health metrics — avg score, gate pass rate, and contradiction rate by client',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
