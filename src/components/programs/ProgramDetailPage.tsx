@@ -38,6 +38,7 @@ import { ContradictionDetailCardClient } from '@/components/_shared/Contradictio
 import { RiskRegisterPanel } from '@/components/_shared/RiskRegisterPanel';
 import { buildRiskRegisterForInstance } from '@/lib/reasoning/risk-register';
 import { CascadeImpactCard, ReverseCascadeCard } from '@/components/_shared/CascadeImpactCard';
+import { LinkedInstanceTilesGrid } from '@/components/_shared/LinkedInstanceTilesGrid';
 import { InstanceEventTimeline } from '@/components/_shared/InstanceEventTimeline';
 import { InstanceEventTimelineFilterBar } from '@/components/_shared/InstanceEventTimelineFilterBar';
 import type { TimelineFilters } from '@/lib/reasoning/instance-event-timeline-filters';
@@ -3332,6 +3333,7 @@ export function ProgramDetailPage({
     const ctx = buildProgramSynthesisContext(instance);
     return {
       instanceId: instance.displayId,
+      canonicalInstanceId: instance.id,
       impacts: ctx.cascadeContext,
       upstream: computeReverseCascade(instance),
     };
@@ -3815,6 +3817,12 @@ export function ProgramDetailPage({
                     title="Upstream dependencies"
                   />
                 )}
+                {/* Cross-instance linked tiles — compact summary of every
+                    instance this one cascades to or from, deduped across
+                    both directions. */}
+                <LinkedInstanceTilesGrid
+                  currentInstanceId={cascadeInfo.canonicalInstanceId}
+                />
               </>
             )}
             {/* REASON-32 — Per-instance reasoning event timeline + filter bar.
