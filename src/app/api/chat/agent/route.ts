@@ -182,17 +182,23 @@ export async function POST(request: Request) {
   const activeClient = await getActiveClientRow().catch(() => null);
   const tenantSystemBlock = getTenantSystemBlock(activeClient?.key ?? null);
 
-  // Surface 1 PR2 — artifact-channel instructions are composed for
-  // surfaces that have a reactive workspace ready to consume them.
-  // /programs/new and /demo/programs/new are the first; other surfaces
-  // adopt the channel as their surface fix ships.
+  // Surface 1 PR2 / Surface 2 PR2 — artifact-channel instructions are
+  // composed for surfaces that have a reactive workspace ready to
+  // consume them. The check supports literal surface keys (Surface 1)
+  // AND the canonical programs-detail pattern (Surface 2 — any
+  // /programs/<id> surface that isn't /programs/new).
   const surfacesWithArtifactChannel = new Set([
     '/programs/new',
     '/demo/programs/new',
   ]);
-  const artifactInstructions = surfacesWithArtifactChannel.has(surface)
-    ? ARTIFACT_CHANNEL_INSTRUCTIONS
-    : '';
+  const isProgramDetailSurface =
+    typeof surface === 'string' &&
+    /^\/programs\/[^/]+$/.test(surface) &&
+    surface !== '/programs/new';
+  const artifactInstructions =
+    surfacesWithArtifactChannel.has(surface) || isProgramDetailSurface
+      ? ARTIFACT_CHANNEL_INSTRUCTIONS
+      : '';
 
   const systemPrompt = [
     voiceLine,

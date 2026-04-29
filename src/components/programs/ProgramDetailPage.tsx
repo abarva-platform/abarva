@@ -2,7 +2,9 @@
 
 // SHELL-B — Program Detail Page adapted to AppShell.
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import type { Artifact as NexusArtifact } from '@/lib/agent/artifacts';
+import { NexusReactivePanel } from '@/components/programs/NexusReactivePanel';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { RibbonSynthesis } from '@/components/shell/RibbonSynthesis';
@@ -3595,6 +3597,20 @@ export function ProgramDetailPage({
   // Mode B — AtlasDrawer open state (Shell Layout Spec v2 §5)
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  // Surface 2 PR2 — reactive Nexus artifacts dispatched by AtlasDrawer.
+  // The NexusReactivePanel renders these as live cards above the
+  // existing static phase/gate/evidence regions. Subsequent PRs
+  // progressively replace the static regions with reactive equivalents
+  // driven by the same channel.
+  const [nexusArtifacts, setNexusArtifacts] = useState<NexusArtifact[]>([]);
+  const handleNexusArtifact = useCallback((artifact: NexusArtifact) => {
+    setNexusArtifacts((prev) => {
+      const key = JSON.stringify(artifact);
+      if (prev.some((a) => JSON.stringify(a) === key)) return prev;
+      return [...prev, artifact];
+    });
+  }, []);
+
   // REASON-15 — live Nexus synthesis quote (streams from /api/programs/synthesis)
   const [synthesisQuote, setSynthesisQuote] = useState(view.workbench.prose);
 
@@ -4201,6 +4217,11 @@ export function ProgramDetailPage({
           const recentInstanceId = missions[0]?.instanceId ?? view.programId;
           return (
             <div style={{ marginBottom: 20, display: 'grid', gap: 8 }}>
+              {/* Surface 2 PR2 — live Nexus reasoning materializes here as
+                  the user converses in the AtlasDrawer. Empty until the
+                  agent emits artifacts; shows above the static mission /
+                  pending-gate list which subsequent PRs will replace. */}
+              <NexusReactivePanel artifacts={nexusArtifacts} />
               <MissionListInteractive
                 missions={missions}
                 title="Pending gates · this program"
@@ -4794,14 +4815,18 @@ export function ProgramDetailPage({
       </WorkingPaneContainer>
       </div>
 
-      {/* Mode B — AtlasDrawer (shared AtlasPageState, Shell Layout Spec v2 §5.1) */}
+      {/* Mode B — AtlasDrawer (shared AtlasPageState, Shell Layout Spec v2 §5.1).
+          Surface 2 PR2: surface key is now /programs/<id> so the chat/agent
+          route enables the artifact channel and Nexus emits gate-evaluation,
+          evidence-highlight, phase-recommendation cards into NexusReactivePanel. */}
       <AtlasDrawer
         isOpen={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         agent={{ initials: 'Nx', name: 'Nexus', role: 'Program Orchestrator' }}
         quote={view.workbench.prose}
-        surface="programs-detail"
+        surface={`/programs/${view.programId}`}
         programId={view.programId}
+        onArtifact={handleNexusArtifact}
       />
 
       {/* Gate approval modal — portal-style fixed overlay */}

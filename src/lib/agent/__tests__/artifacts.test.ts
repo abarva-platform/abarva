@@ -261,6 +261,80 @@ describe('extractArtifacts · malformed input', () => {
   });
 });
 
+describe('extractArtifacts · Surface 2 program-detail artifacts', () => {
+  it('accepts gate-evaluation with all four valid statuses', () => {
+    for (const status of ['met', 'unmet', 'pending', 'blocked'] as const) {
+      const r = extractArtifacts(
+        `[[artifact:gate-evaluation]]{"gate":"Build gate · privacy","status":"${status}","detail":"x","reasoning":"y"}[[/artifact]]`,
+      );
+      expect(r.artifacts).toHaveLength(1);
+      expect(r.artifacts[0]).toMatchObject({
+        type: 'gate-evaluation',
+        gate: 'Build gate · privacy',
+        status,
+        detail: 'x',
+        reasoning: 'y',
+      });
+    }
+  });
+
+  it('rejects gate-evaluation with an unknown status', () => {
+    const r = extractArtifacts(
+      '[[artifact:gate-evaluation]]{"gate":"Build gate","status":"in-progress"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('parses evidence-highlight with required + optional fields', () => {
+    const r = extractArtifacts(
+      '[[artifact:evidence-highlight]]{"evidenceId":"EV-CDP-013","label":"Vendor C contract","reason":"Privacy clauses missing on p14."}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(1);
+    expect(r.artifacts[0]).toMatchObject({
+      type: 'evidence-highlight',
+      evidenceId: 'EV-CDP-013',
+      label: 'Vendor C contract',
+      reason: 'Privacy clauses missing on p14.',
+    });
+  });
+
+  it('parses phase-recommendation with blockers + nextActions arrays', () => {
+    const r = extractArtifacts(
+      '[[artifact:phase-recommendation]]{"phase":3,"recommendation":"Hold on advancing to Build.","blockers":["Privacy attestation outstanding"],"nextActions":["Schedule privacy review"]}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(1);
+    expect(r.artifacts[0]).toMatchObject({
+      type: 'phase-recommendation',
+      phase: 3,
+      recommendation: 'Hold on advancing to Build.',
+      blockers: ['Privacy attestation outstanding'],
+      nextActions: ['Schedule privacy review'],
+    });
+  });
+
+  it('rejects phase-recommendation with out-of-range phase', () => {
+    const r = extractArtifacts(
+      '[[artifact:phase-recommendation]]{"phase":99,"recommendation":"x"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('parses program-focus', () => {
+    const r = extractArtifacts(
+      '[[artifact:program-focus]]{"programId":"APX-CC-2026","name":"Contact Center AI","currentPhase":"P4 Build"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(1);
+    expect(r.artifacts[0]).toMatchObject({
+      type: 'program-focus',
+      programId: 'APX-CC-2026',
+      name: 'Contact Center AI',
+      currentPhase: 'P4 Build',
+    });
+  });
+});
+
 describe('extractArtifacts · type-narrowing', () => {
   it('returns a discriminated union — caller can switch on `type`', () => {
     const input =

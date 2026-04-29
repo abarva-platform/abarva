@@ -21,7 +21,14 @@ export type ArtifactType =
   | 'brief-field' // {field: 'programName' | 'problemStatement' | …, value: string}
   | 'pattern-match' // {patternId, name, summary, successRatePct?, deploymentCount?, typicalDurationMonths?}
   | 'cross-program-dependency' // {programId, programName, currentPhase}
-  | 'classification'; // {archetype, archetypeLabel, confidence?}
+  | 'classification' // {archetype, archetypeLabel, confidence?}
+  // Surface 2 — program-detail artifacts. Nexus reasons live; the right
+  // pane materializes that reasoning via these structured cards
+  // alongside (and eventually instead of) the static dashboard.
+  | 'gate-evaluation' // {gate, status, detail?, reasoning?}
+  | 'evidence-highlight' // {evidenceId, label, reason}
+  | 'phase-recommendation' // {phase, recommendation, blockers?, nextActions?}
+  | 'program-focus'; // {programId, name, currentPhase} — Nexus shifts focus to a program
 
 // ── Strongly-typed artifact payloads ──────────────────────────────────────────
 
@@ -62,11 +69,56 @@ export interface ClassificationArtifact {
   confidence?: 'high' | 'medium' | 'low';
 }
 
+export interface GateEvaluationArtifact {
+  type: 'gate-evaluation';
+  /** Short label or criterion name, e.g. "Build gate · privacy architecture sign-off". */
+  gate: string;
+  /** Current evaluation outcome. */
+  status: 'met' | 'unmet' | 'pending' | 'blocked';
+  /** Optional one-liner detail (what's needed / what's verified). */
+  detail?: string;
+  /** Optional Nexus reasoning narrative. */
+  reasoning?: string;
+}
+
+export interface EvidenceHighlightArtifact {
+  type: 'evidence-highlight';
+  /** Stable id from the evidence map; the panel highlights the matching card. */
+  evidenceId: string;
+  /** Human label for when the id can't render (yet). */
+  label?: string;
+  /** Why Nexus is calling this out. */
+  reason: string;
+}
+
+export interface PhaseRecommendationArtifact {
+  type: 'phase-recommendation';
+  /** Phase id the recommendation applies to (0..6). */
+  phase: number;
+  /** Nexus's recommended next move. */
+  recommendation: string;
+  /** Outstanding blockers preventing the next move. */
+  blockers?: string[];
+  /** Concrete next actions Nexus suggests. */
+  nextActions?: string[];
+}
+
+export interface ProgramFocusArtifact {
+  type: 'program-focus';
+  programId: string;
+  name: string;
+  currentPhase: string;
+}
+
 export type Artifact =
   | BriefFieldArtifact
   | PatternMatchArtifact
   | CrossProgramDependencyArtifact
-  | ClassificationArtifact;
+  | ClassificationArtifact
+  | GateEvaluationArtifact
+  | EvidenceHighlightArtifact
+  | PhaseRecommendationArtifact
+  | ProgramFocusArtifact;
 
 // ── Parser ────────────────────────────────────────────────────────────────────
 //
@@ -100,7 +152,11 @@ function isKnownArtifactType(type: string): type is ArtifactType {
     type === 'brief-field' ||
     type === 'pattern-match' ||
     type === 'cross-program-dependency' ||
-    type === 'classification'
+    type === 'classification' ||
+    type === 'gate-evaluation' ||
+    type === 'evidence-highlight' ||
+    type === 'phase-recommendation' ||
+    type === 'program-focus'
   );
 }
 
@@ -217,6 +273,60 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
           ? confidence
           : undefined;
       return { type, archetype, archetypeLabel: labelFinal, confidence: validConfidence };
+    }
+    case 'gate-evaluation': {
+      const gate = obj.gate;
+      const status = obj.status;
+      if (typeof gate !== 'string' || gate.trim().length === 0) return null;
+      const validStatus =
+        status === 'met' || status === 'unmet' || status === 'pending' || status === 'blocked'
+          ? status
+          : null;
+      if (!validStatus) return null;
+      return {
+        type,
+        gate,
+        status: validStatus,
+        detail: typeof obj.detail === 'string' ? obj.detail : undefined,
+        reasoning: typeof obj.reasoning === 'string' ? obj.reasoning : undefined,
+      };
+    }
+    case 'evidence-highlight': {
+      const evidenceId = obj.evidenceId;
+      const reason = obj.reason;
+      if (typeof evidenceId !== 'string' || typeof reason !== 'string') return null;
+      return {
+        type,
+        evidenceId,
+        reason,
+        label: typeof obj.label === 'string' ? obj.label : undefined,
+      };
+    }
+    case 'phase-recommendation': {
+      const phase = obj.phase;
+      const recommendation = obj.recommendation;
+      if (typeof phase !== 'number' || phase < 0 || phase > 6) return null;
+      if (typeof recommendation !== 'string' || recommendation.trim().length === 0) return null;
+      const blockers = Array.isArray(obj.blockers)
+        ? (obj.blockers.filter((s) => typeof s === 'string') as string[])
+        : undefined;
+      const nextActions = Array.isArray(obj.nextActions)
+        ? (obj.nextActions.filter((s) => typeof s === 'string') as string[])
+        : undefined;
+      return { type, phase, recommendation, blockers, nextActions };
+    }
+    case 'program-focus': {
+      const programId = obj.programId;
+      const name = obj.name;
+      const currentPhase = obj.currentPhase;
+      if (
+        typeof programId !== 'string' ||
+        typeof name !== 'string' ||
+        typeof currentPhase !== 'string'
+      ) {
+        return null;
+      }
+      return { type, programId, name, currentPhase };
     }
   }
 }
@@ -339,7 +449,8 @@ RIGHT: "Got it — the program name is in the brief on your right."
 
 Available artifact types and their EXACT JSON shapes:
 
-1. brief-field — single-field update on the program brief.
+1. brief-field — single-field update on the program brief (Surface 1
+   /programs/new). Other surfaces ignore.
    Shape: {"field": <field-name>, "value": <string>}
    field ∈ {programName, problemStatement, targetOutcome, timeline,
            classification, sponsor, lead}
@@ -361,12 +472,41 @@ Available artifact types and their EXACT JSON shapes:
    [[artifact:pattern-match]]{"patternId":"PAT-PRG-CDP-001","name":"CDP Activation","summary":"Customer data platform programme lifecycle.","successRatePct":72,"deploymentCount":18}[[/artifact]]
 
 4. cross-program-dependency — emit one per linked program when you
-   surface a dependency. The brief renders it as a chip.
+   surface a dependency.
    Shape: {"programId": <APX-…>, "programName": <string>, "currentPhase": <string>}
    Example:
    [[artifact:cross-program-dependency]]{"programId":"APX-CDP-2026","programName":"Apex Retail CDP Activation","currentPhase":"P3 Design"}[[/artifact]]
 
-When an artifact updates a field already in the brief, just emit a new
-brief-field artifact for the same field — the panel replaces the old
-value. Don't repeat artifacts you've already emitted for fields that
-haven't changed.`;
+5. gate-evaluation — Surface 2 (program detail). Emit one per gate
+   criterion as you reason through the current phase's gate. The panel
+   renders a status pill and reasoning narrative.
+   Shape: {"gate": <criterion label>, "status": "met"|"unmet"|"pending"|"blocked",
+           "detail"?: <string>, "reasoning"?: <string>}
+   Example:
+   [[artifact:gate-evaluation]]{"gate":"Build gate · privacy architecture sign-off","status":"unmet","detail":"Vendor C SOC-2 attestation pending","reasoning":"Privacy team needs the attestation file before the architecture review can sign off."}[[/artifact]]
+
+6. evidence-highlight — Surface 2. When you reference a specific
+   evidence item in your reasoning, emit one of these so the matching
+   card on the page can highlight.
+   Shape: {"evidenceId": <stable-id>, "label"?: <string>, "reason": <string>}
+   Example:
+   [[artifact:evidence-highlight]]{"evidenceId":"EV-CDP-013","label":"Vendor C contract draft","reason":"Privacy clauses missing on page 14."}[[/artifact]]
+
+7. phase-recommendation — Surface 2. Emit when you've reasoned about
+   the next move for the current phase. The panel renders a "Nexus
+   recommends" card with blockers + next-actions.
+   Shape: {"phase": <0..6>, "recommendation": <string>,
+           "blockers"?: [<string>], "nextActions"?: [<string>]}
+   Example:
+   [[artifact:phase-recommendation]]{"phase":3,"recommendation":"Hold on advancing to Build until Vendor C contract is signed.","blockers":["Privacy attestation outstanding","Architecture review unscheduled"],"nextActions":["Schedule privacy review for next week","Confirm BAFO award timeline with sourcing"]}[[/artifact]]
+
+8. program-focus — Surface 2. Emit when you shift focus to a different
+   program inside a multi-program reasoning thread (cross-portfolio).
+   Shape: {"programId": <APX-…>, "name": <string>, "currentPhase": <string>}
+   Example:
+   [[artifact:program-focus]]{"programId":"APX-CC-2026","name":"Contact Center AI","currentPhase":"P4 Build"}[[/artifact]]
+
+When an artifact updates a value already in the panel, just emit a new
+artifact of the same type — the panel replaces or upserts as
+appropriate. Don't repeat artifacts you've already emitted for fields
+that haven't changed.`;
