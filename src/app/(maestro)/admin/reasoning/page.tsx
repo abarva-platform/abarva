@@ -1053,6 +1053,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/instance-comparison',
     description: 'Top vs. bottom performer comparison — side-by-side health metrics for best and worst instances',
   },
+  {
+    title: 'Health bands',
+    href: '/admin/reasoning/health-bands',
+    description: 'Health score band distribution — instance counts per band with common pattern and stage analysis',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
