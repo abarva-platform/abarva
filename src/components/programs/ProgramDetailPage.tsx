@@ -27,6 +27,11 @@ import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances'
 import { buildProgramSynthesisContext } from '@/lib/reasoning/program-synthesis-context-builder';
 import { summarizeFailureModes } from '@/lib/reasoning/provenance-ribbon-helpers';
 import { FailureModeWarningChip } from '@/components/_shared/FailureModeWarningChip';
+import { EvidenceQualityChip } from '@/components/_shared/EvidenceQualityChip';
+import {
+  summarizeEvidenceQuality,
+  summaryGrade,
+} from '@/lib/reasoning/evidence-quality';
 import { CompareWithDropdown } from '@/components/_shared/CompareWithDropdown';
 import { getAllInstanceIds } from '@/lib/reasoning/instance-resolver';
 import { ContradictionDetailCardClient } from '@/components/_shared/ContradictionDetailCardClient';
@@ -3238,6 +3243,27 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
     };
   })();
 
+  // Evidence-quality aggregate — `ProgramEvidenceItem` already carries
+  // `citation/uploadedAt/uploadedBy`, so the scorer's expected shape lines
+  // up directly. The chip is a visibility hint for "evidence is weak"
+  // alongside the gate pill.
+  const evidenceQualityHeader = (() => {
+    const instance = APEX_RETAIL_PROGRAM_INSTANCES.find(
+      (i) =>
+        i.displayId === view.displayId ||
+        i.id.toLowerCase() === view.programId.toLowerCase(),
+    );
+    if (!instance || instance.evidence.length === 0) return null;
+    const summary = summarizeEvidenceQuality(
+      instance.evidence.map((ev) => ({
+        citation: ev.citation,
+        uploadedAt: ev.uploadedAt,
+        uploadedBy: ev.uploadedBy,
+      })),
+    );
+    return { summary, grade: summaryGrade(summary) };
+  })();
+
   // REASON-30 — Active contradictions for the current program instance,
   // filtered against the local resolution ring buffer so dismissed cards
   // do not reappear on subsequent renders within the same server lifetime.
@@ -3447,6 +3473,12 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
                 topConfidence={failureModeHeaderInfo.topConfidence}
                 highCount={failureModeHeaderInfo.highCount}
                 mitigations={failureModeHeaderInfo.mitigations}
+              />
+            )}
+            {evidenceQualityHeader && (
+              <EvidenceQualityChip
+                summary={evidenceQualityHeader.summary}
+                grade={evidenceQualityHeader.grade}
               />
             )}
             {compareInstanceId && (

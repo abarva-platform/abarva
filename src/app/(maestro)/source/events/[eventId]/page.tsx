@@ -10,6 +10,7 @@ import { NexusEngagementCanvas } from '@/components/source/NexusEngagementCanvas
 import { SourceCommercialEventSection } from '@/components/source/SourceCommercialEventSection';
 import { GateCriteriaPanel } from '@/components/source/GateCriteriaPanel';
 import { FailureModeWarningChip } from '@/components/_shared/FailureModeWarningChip';
+import { EvidenceQualityChip } from '@/components/_shared/EvidenceQualityChip';
 import { CompareWithDropdown } from '@/components/_shared/CompareWithDropdown';
 import { MissionListInteractive } from '@/components/_shared/MissionListInteractive';
 import { RecentMissionStates } from '@/components/_shared/RecentMissionStates';
@@ -24,6 +25,7 @@ import { createGateEvaluator } from '@/lib/reasoning/gate-evaluator';
 import { buildSourceSynthesisContext } from '@/lib/reasoning/synthesis-context-builder';
 import { getAllInstanceIds } from '@/lib/reasoning/instance-resolver';
 import { summarizeFailureModes } from '@/lib/reasoning/provenance-ribbon-helpers';
+import { summarizeEvidenceQuality, summaryGrade } from '@/lib/reasoning/evidence-quality';
 import type { GateEvaluation } from '@/lib/reasoning/types';
 
 export const dynamic = 'force-dynamic';
@@ -89,6 +91,23 @@ export default async function SourceEventDetailPage({
   const failureModeSummary = synthesisContext
     ? summarizeFailureModes(synthesisContext)
     : null;
+  // Evidence-quality aggregate for the typed instance. Source-side
+  // `EvidenceItem` uses `{ value, source, recordedAt }` rather than the
+  // generic shape, so we adapt the fields onto the scorer's expected
+  // properties before summarizing.
+  const evidenceQualitySummary = matchedInstance
+    ? summarizeEvidenceQuality(
+        matchedInstance.evidence.map((ev) => ({
+          text: ev.value,
+          citation: ev.source,
+          uploadedAt: ev.recordedAt,
+          uploadedBy: ev.source,
+        })),
+      )
+    : null;
+  const evidenceQualityGrade = evidenceQualitySummary
+    ? summaryGrade(evidenceQualitySummary)
+    : undefined;
   const failureModeTopMitigations = (() => {
     if (!synthesisContext || !failureModeSummary || failureModeSummary.topLabel === null) {
       return undefined;
@@ -155,6 +174,12 @@ export default async function SourceEventDetailPage({
               topConfidence={failureModeSummary.topConfidence}
               highCount={failureModeSummary.highConfidence}
               mitigations={failureModeTopMitigations}
+            />
+          )}
+          {evidenceQualitySummary && evidenceQualitySummary.total > 0 && (
+            <EvidenceQualityChip
+              summary={evidenceQualitySummary}
+              grade={evidenceQualityGrade}
             />
           )}
           {matchedInstance && (
