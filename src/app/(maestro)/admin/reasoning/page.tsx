@@ -532,6 +532,177 @@ function EmptyState() {
   );
 }
 
+type ToolEntry = {
+  title: string;
+  href: string;
+  description: string;
+};
+
+const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
+  {
+    title: 'Templates editor',
+    href: '/admin/reasoning/templates',
+    description: 'Edit contradiction template detection hints in-memory',
+  },
+  {
+    title: 'Coverage audit',
+    href: '/admin/reasoning/coverage',
+    description: 'Which templates fire across the fixture corpus',
+  },
+  {
+    title: 'Weekly digest',
+    href: '/admin/reasoning/digest',
+    description: 'Last-7-days synthesis activity per instance',
+  },
+  {
+    title: 'Pattern analytics',
+    href: '/admin/reasoning/patterns',
+    description: 'Pattern usage and event distribution',
+  },
+];
+
+function ToolCard({ entry }: { entry: ToolEntry }) {
+  return (
+    <a
+      href={entry.href}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: SPACING.md,
+        background: COLORS.white,
+        border: `1px solid ${COLORS.ink}14`,
+        borderRadius: RADIUS.lg,
+        padding: `${SPACING.md} ${SPACING.lg}`,
+        textDecoration: 'none',
+        color: COLORS.ink,
+      }}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'baseline',
+            gap: SPACING.sm,
+            flexWrap: 'wrap',
+          }}
+        >
+          <span
+            style={{
+              fontFamily: TYPOGRAPHY.serif,
+              fontSize: 16,
+              fontWeight: 600,
+              color: COLORS.ink,
+              letterSpacing: '-0.01em',
+            }}
+          >
+            {entry.title}
+          </span>
+          <span
+            style={{
+              fontFamily: TYPOGRAPHY.mono,
+              fontSize: 11,
+              color: `${COLORS.ink}88`,
+            }}
+          >
+            {entry.href}
+          </span>
+        </div>
+        <span
+          style={{
+            fontFamily: TYPOGRAPHY.sans,
+            fontSize: 13,
+            color: `${COLORS.ink}99`,
+            lineHeight: 1.4,
+          }}
+        >
+          {entry.description}
+        </span>
+      </div>
+      <span
+        aria-hidden="true"
+        style={{
+          fontFamily: TYPOGRAPHY.mono,
+          fontSize: 18,
+          color: COLORS.navy,
+          flexShrink: 0,
+        }}
+      >
+        →
+      </span>
+    </a>
+  );
+}
+
+function ToolsDirectory() {
+  return (
+    <section
+      style={{
+        background: COLORS.white,
+        border: `1px solid ${COLORS.ink}14`,
+        borderRadius: RADIUS.lg,
+        overflow: 'hidden',
+      }}
+    >
+      <header
+        style={{
+          padding: `${SPACING.md} ${SPACING.lg}`,
+          borderBottom: `1px solid ${COLORS.ink}10`,
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          gap: SPACING.md,
+        }}
+      >
+        <div>
+          <h2
+            style={{
+              fontFamily: TYPOGRAPHY.serif,
+              fontSize: 20,
+              color: COLORS.ink,
+              margin: 0,
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Tools
+          </h2>
+          <div
+            style={{
+              fontFamily: TYPOGRAPHY.sans,
+              fontSize: 12,
+              color: `${COLORS.ink}88`,
+              marginTop: 2,
+            }}
+          >
+            Reasoning admin sub-routes
+          </div>
+        </div>
+        <span
+          style={{
+            fontFamily: TYPOGRAPHY.mono,
+            fontSize: 11,
+            color: `${COLORS.ink}88`,
+          }}
+        >
+          {TOOL_ENTRIES.length} tool{TOOL_ENTRIES.length === 1 ? '' : 's'}
+        </span>
+      </header>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          gap: SPACING.sm,
+          padding: SPACING.md,
+        }}
+      >
+        {TOOL_ENTRIES.map((entry) => (
+          <ToolCard key={entry.href} entry={entry} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function TopPatterns({ summary }: { summary: TelemetrySummary }) {
   if (summary.topPatterns.length === 0) return null;
   return (
@@ -747,99 +918,7 @@ export default async function ReasoningTelemetryPage() {
       >
         <HeaderCard totalEvents={summary.totalEvents} />
         <ReasoningHealthBadge />
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: SPACING.sm,
-            alignItems: 'center',
-          }}
-        >
-          <a
-            href="/admin/reasoning/templates"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: SPACING.sm,
-              background: COLORS.white,
-              border: `1px solid ${COLORS.ink}22`,
-              borderRadius: RADIUS.lg,
-              padding: `${SPACING.sm} ${SPACING.md}`,
-              textDecoration: 'none',
-              fontFamily: TYPOGRAPHY.sans,
-              fontSize: 13,
-              color: COLORS.ink,
-            }}
-          >
-            <span style={{ fontWeight: 600 }}>Open contradiction template editor</span>
-            <span style={{ color: `${COLORS.ink}88` }}>
-              tweak detectionHints in-memory
-            </span>
-          </a>
-          <a
-            href="/admin/reasoning/digest"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: SPACING.sm,
-              background: COLORS.white,
-              border: `1px solid ${COLORS.ink}22`,
-              borderRadius: RADIUS.lg,
-              padding: `${SPACING.sm} ${SPACING.md}`,
-              textDecoration: 'none',
-              fontFamily: TYPOGRAPHY.sans,
-              fontSize: 13,
-              color: COLORS.ink,
-            }}
-          >
-            <span style={{ fontWeight: 600 }}>Open weekly digest</span>
-            <span style={{ color: `${COLORS.ink}88` }}>
-              7-day executive sweep
-            </span>
-          </a>
-          <a
-            href="/admin/reasoning/coverage"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: SPACING.sm,
-              background: COLORS.white,
-              border: `1px solid ${COLORS.ink}22`,
-              borderRadius: RADIUS.lg,
-              padding: `${SPACING.sm} ${SPACING.md}`,
-              textDecoration: 'none',
-              fontFamily: TYPOGRAPHY.sans,
-              fontSize: 13,
-              color: COLORS.ink,
-            }}
-          >
-            <span style={{ fontWeight: 600 }}>Open template coverage audit</span>
-            <span style={{ color: `${COLORS.ink}88` }}>
-              which templates fire on fixtures
-            </span>
-          </a>
-          <a
-            href="/admin/reasoning/patterns"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: SPACING.sm,
-              background: COLORS.white,
-              border: `1px solid ${COLORS.ink}22`,
-              borderRadius: RADIUS.lg,
-              padding: `${SPACING.sm} ${SPACING.md}`,
-              textDecoration: 'none',
-              fontFamily: TYPOGRAPHY.sans,
-              fontSize: 13,
-              color: COLORS.ink,
-            }}
-          >
-            <span style={{ fontWeight: 600 }}>Open pattern usage analytics</span>
-            <span style={{ color: `${COLORS.ink}88` }}>
-              per-pattern instance, coverage, telemetry
-            </span>
-          </a>
-        </div>
+        <ToolsDirectory />
         {summary.totalEvents === 0 ? (
           <EmptyState />
         ) : (
