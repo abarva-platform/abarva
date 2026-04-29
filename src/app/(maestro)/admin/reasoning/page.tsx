@@ -768,6 +768,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/linked-instances',
     description: 'Cross-instance dependency map — program links, source event links, and blocking dependencies',
   },
+  {
+    title: 'Sponsor directory',
+    href: '/admin/reasoning/sponsors',
+    description: 'All sponsors across instances with their portfolio responsibilities',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
