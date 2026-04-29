@@ -11,8 +11,18 @@
 // Loose typing on `item` is intentional — both SourceEventInstance and
 // ProgramInstance fixture shapes can flow through. We validate that
 // `instanceId` is a non-empty string and `item` is an object.
+//
+// GET /api/reasoning/evidence/ingest?instanceId=xxx
+//
+// Returns { items: Array<{ item: object; ingestedAt: string }> } — the
+// full evidence list for the given instance, zipped with ingestion
+// timestamps from the sidecar parallel array.
 
-import { addEvidence, getEvidenceFor } from "@/lib/reasoning/evidence-ingestion-store";
+import {
+  addEvidence,
+  getEvidenceFor,
+  getEvidenceTimestampsFor,
+} from "@/lib/reasoning/evidence-ingestion-store";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -53,6 +63,31 @@ export async function POST(request: Request) {
 
   return new Response(
     JSON.stringify({ ok: true, totalAddedForInstance }),
+    { status: 200, headers: { "Content-Type": "application/json" } },
+  );
+}
+
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const instanceId = url.searchParams.get("instanceId") ?? "";
+
+  if (!instanceId) {
+    return new Response(
+      JSON.stringify({ error: "instanceId query param is required" }),
+      { status: 400, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
+  const items = getEvidenceFor(instanceId);
+  const timestamps = getEvidenceTimestampsFor(instanceId);
+
+  const zipped = items.map((item, i) => ({
+    item,
+    ingestedAt: timestamps[i] ?? new Date().toISOString(),
+  }));
+
+  return new Response(
+    JSON.stringify({ items: zipped }),
     { status: 200, headers: { "Content-Type": "application/json" } },
   );
 }
