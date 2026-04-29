@@ -903,6 +903,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/confidence-breakdown',
     description: 'Synthesis confidence scores for all instances with factor-level breakdown of what drives confidence',
   },
+  {
+    title: 'Coverage matrix',
+    href: '/admin/reasoning/coverage-matrix',
+    description: 'Instance × stage evidence coverage matrix — which instances have evidence for which stages',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
