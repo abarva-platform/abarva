@@ -4266,6 +4266,461 @@ Vendor claim: AI SOC reduces analyst burden. Detection: inspect workflow, eviden
 
 The common failure is sending every log to the highest-cost tier without source value or retention policy. The second is losing detection coverage during migration because rules and parsers were not inventoried. The third is buying managed detection while leaving response authority, evidence ownership, and SIEM data portability ambiguous.`,
   },
+
+  {
+    id: 'PAT-SRC-CAT-EDR-001',
+    slug: 'edr-xdr-endpoint-security-sourcing',
+    title: 'EDR, XDR, and Endpoint Security Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Endpoint security sourcing should evaluate telemetry, investigation, response authority, fleet coverage, data export, and MDR adjacency instead of treating EDR as a simple antivirus replacement.',
+    applicability:
+      'Apply when sourcing CrowdStrike Falcon, Microsoft Defender for Endpoint, SentinelOne Singularity, Palo Alto Cortex XDR, Trend Vision One, Sophos XDR, VMware Carbon Black, Tanium adjacency, and MDR/MXDR endpoint programs.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.82,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.crowdstrike.com/tech-hub/endpoint-security/falcon-insight-xdr-walkthrough/',
+      'https://www.crowdstrike.com/en-us/resources/data-sheets/falcon-data-replicator/',
+      'https://www.crowdstrike.com/en-us/pricing/falcon-pro/',
+      'https://www.microsoft.com/en-us/security/business/security-101/what-is-edr-endpoint-detection-response',
+      'https://learn.microsoft.com/en-us/defender-endpoint/api/management-apis',
+      'https://learn.microsoft.com/en-us/defender-xdr/streaming-api',
+      'https://learn.microsoft.com/en-us/defender-endpoint/defender-endpoint-plan-1',
+      'https://learn.microsoft.com/en-us/defender-xdr/managed-detection-and-response-xdr',
+      'https://www.sentinelone.com/platform/',
+      'https://www.sentinelone.com/platform-packages/',
+      'https://www.sentinelone.com/platform/singularity-complete/',
+      'https://www.paloaltonetworks.com/cortex/cortex-xdr',
+      'https://www.trendmicro.com/content/dam/trendmicro/global/en/core/docs/datasheets/ds-xdr-for-endpoints.pdf',
+      'https://developer.carbonblack.com/reference/carbon-black-cloud/cb-defense/',
+      'https://developer.tanium.com/guides/core-platform/integration_methods',
+    ],
+    regulatoryChips: ['SOC-2-review', 'endpoint-privacy-review', 'GDPR-if-person-data', 'HIPAA-if-PHI', 'PCI-if-cardholder-environment'],
+    relatedPatternIds: ['PAT-SRC-CAT-SIEM-001', 'PAT-SRC-CAT-PAM-001', 'PAT-SRC-CAT-CSP-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'security_identity',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'CrowdStrike, Microsoft Defender for Endpoint, SentinelOne, and Palo Alto Cortex XDR',
+        tier: 'enterprise',
+        positioning: 'Primary endpoint/XDR candidates for agent-based prevention, detection, investigation, hunting, response actions, cross-domain correlation, and MDR adjacency.',
+        cautions: ['Validate endpoint, server, cloud workload, telemetry retention, export, and MDR packaging separately instead of comparing headline endpoint seats.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'CrowdStrike Falcon Insight XDR walkthrough', url: 'https://www.crowdstrike.com/tech-hub/endpoint-security/falcon-insight-xdr-walkthrough/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Microsoft Defender for Endpoint API overview', url: 'https://learn.microsoft.com/en-us/defender-endpoint/api/management-apis', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'SentinelOne platform packages', url: 'https://www.sentinelone.com/platform-packages/', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'Trend Vision One, Sophos, VMware Carbon Black, Tanium, MDR/MXDR providers',
+        tier: 'specialist',
+        positioning: 'Endpoint security, XDR, endpoint management/security-operations, and managed-response options where fleet operations, response workflows, data export, or service capacity drive selection.',
+        cautions: ['Treat Tanium as endpoint-management/security-operations adjacency unless the buyer validates direct EDR equivalence for its use case.'],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'Endpoint security public pricing constructs only',
+        model: 'hybrid',
+        metric: 'Endpoint, user, server, workload, module bundle, retention, data export, MDR/MXDR, support, and partner service scope',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'CrowdStrike public bundle pricing page', url: 'https://www.crowdstrike.com/en-us/pricing/falcon-pro/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'SentinelOne platform packages', url: 'https://www.sentinelone.com/platform-packages/', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Endpoint population, server/workload scope, retention needs, MDR authority, SIEM export, and negotiated enterprise terms require buyer evidence' },
+        ],
+        confidence: 0.57,
+        notes: 'Public pages reveal packaging and some list-price constructs, but enterprise endpoint total cost depends on fleet, modules, retention, services, and telemetry economics.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Telemetry ownership and export',
+        buyerPosition: 'Require searchable retention, raw/normalized export options, API limits, SIEM/data-lake delivery, deletion handling, data residency, and transition assistance.',
+      },
+      {
+        clauseArea: 'Response authority and MDR scope',
+        buyerPosition: 'Define which response actions are automated, recommended, or human-approved, and separate vendor MDR duties from buyer SOC duties.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Fleet coverage proof',
+        whenToUse: 'Use when the buyer has mixed Windows, macOS, Linux, server, VDI, cloud workload, contractor, or unmanaged endpoint populations.',
+        buyerAsk: 'Prove deployment, telemetry, performance, response, and uninstall/rollback behavior across representative endpoint classes.',
+      },
+      {
+        lever: 'Telemetry-to-SIEM model',
+        whenToUse: 'Use when endpoint telemetry will feed SIEM, data lake, MDR, or incident response workflows.',
+        buyerAsk: 'Price and prove export method, retention, schema, latency, API limits, and downstream ingestion cost before award.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'edr-coverage-gap',
+        label: 'Endpoint coverage gap',
+        severity: 'critical',
+        detectionSignals: ['Mac, Linux, server, VDI, contractor, mobile, unmanaged, disconnected, or ephemeral cloud workloads are not covered by the same agent and policy model.'],
+        mitigations: ['Require fleet inventory, deployment proof, exception handling, and compensating controls before rollout'],
+      },
+      {
+        id: 'edr-telemetry-economics-gap',
+        label: 'Endpoint telemetry economics gap',
+        severity: 'high',
+        detectionSignals: ['Buyer assumes telemetry is free, raw, unlimited, real-time, retained indefinitely, and cheap to ingest into SIEM.'],
+        mitigations: ['Separate endpoint license, telemetry export, retention, SIEM ingestion, and data-lake cost models'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Stress response authorization, privileged endpoint activity, retention, forensic export, regulator-ready evidence, and endpoint coverage for contractors and developers.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Review clinical endpoint performance, PHI-adjacent telemetry, shared workstations, emergency workflows, medical-device adjacency, and support windows.',
+      },
+      {
+        industry: 'manufacturing',
+        modifier: 'Separate corporate endpoint EDR from plant-floor OT/IoT constraints, disconnected endpoints, maintenance windows, and fragile legacy systems.',
+      },
+    ],
+    body: `## Summary
+EDR and XDR sourcing is not just an antivirus replacement. The buyer is choosing how endpoint activity becomes prevention, detection, investigation, response, forensic evidence, and cross-domain security context. That means the event must examine fleet coverage, telemetry quality, response authority, retention, data export, analyst workflow, MDR scope, and operating burden alongside agent price.
+
+## When to apply
+Use this pattern when sourcing CrowdStrike Falcon, Microsoft Defender for Endpoint, SentinelOne Singularity, Palo Alto Cortex XDR, Trend Vision One, Sophos XDR, VMware Carbon Black, Tanium-adjacent endpoint operations, MDR/MXDR services, or endpoint telemetry pipelines. Apply it during legacy AV renewal, ransomware concern, cyber-insurance review, Microsoft 365/E5 rationalization, breach findings, SOC modernization, endpoint fleet growth, M&A, SIEM retention pressure, or 24/7 monitoring gaps. Do not use it for consumer antivirus, pure MDM/UEM, pure SIEM, backup, DLP-only, or CNAPP-only buying unless endpoint agent/control is central.
+
+## Category boundary
+In scope: endpoint prevention, EDR, XDR, threat hunting, endpoint telemetry, response actions, isolation/quarantine, investigation, forensics, server/workload agents, retention, API/export, SIEM integration, SOAR integration, MDR, vulnerability/exposure adjacency, identity/cloud/email/network telemetry correlation, and deployment operations. Adjacent but distinct: SIEM, CNAPP, IAM, NDR, ITDR, endpoint management, backup, and incident-response retainers.
+
+## Lifecycle and gates
+The scope gate should inventory users, endpoints, servers, operating systems, VDI, contractors, BYOD, cloud workloads, disconnected endpoints, current agents, exclusions, compliance constraints, telemetry destinations, and SOC staffing. The RFP gate should require platform coverage, response actions, telemetry retention, export, privacy, support, MDR scope, API limits, and pricing meters. The proof gate should deploy to representative devices, test performance, agent conflicts, detection workflow, response actions, export to SIEM, retention search, role-based access, and rollback. The BAFO gate should normalize endpoints, users, servers, workloads, modules, retention, telemetry export, MDR, support, services, and downstream SIEM cost.
+
+## Evaluation rubric
+Weight endpoint coverage around 25 percent, detection/investigation workflow around 20 percent, response authority around 15 percent, telemetry export and retention around 15 percent, deployment/operations around 15 percent, and commercial predictability around 10 percent. Increase operations weight for healthcare, manufacturing, VDI-heavy fleets, and high-Mac/Linux/server environments.
+
+## Pricing and contract notes
+Public sources from CrowdStrike, Microsoft, SentinelOne, Palo Alto, Trend, Sophos, Carbon Black, Tanium, and MITRE identify packaging constructs such as endpoint bundles, MDR adjacency, telemetry export, API access, XDR correlation, and ATT&CK-informed evaluation. Public pricing may exist for some bundles, but enterprise terms, server/workload licensing, retention, telemetry export, and MDR authority remain buyer-specific. Do not infer breach reduction, ROI, or discounting from vendor pages.
+
+Contracting should define covered endpoint classes, telemetry ownership, search retention, raw and normalized export, API limits, data residency, privacy controls, response actions, MDR authorization, incident escalation, support SLAs, agent rollback, transition assistance, and evidence availability.
+
+## Contradictions and failure modes
+Vendor claim: XDR replaces separate tools. Detection: test SIEM, SOAR, identity, cloud, NDR, vulnerability, and MDR workflow boundaries. Vendor claim: endpoint visibility is complete. Detection: inspect macOS, Linux, servers, VDI, contractors, disconnected endpoints, and cloud workloads. Vendor claim: telemetry export is included. Detection: verify schema, latency, retention, API limits, and downstream cost.
+
+The common failure is selecting the endpoint agent while ignoring SOC workflow and telemetry economics. The second is discovering that servers, Linux, VDI, contractors, or cloud workloads license differently. The third is assuming MDR is included or authorized to act when the contract only provides recommendations.`,
+  },
+  {
+    id: 'PAT-SRC-CAT-CSP-001',
+    slug: 'cloud-security-posture-cnapp-sourcing',
+    title: 'Cloud Security Posture, CNAPP, CSPM, CWPP, and CIEM Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'CNAPP sourcing should connect posture, workload, identity, code, runtime, and remediation evidence so buyers can prioritize exploitable cloud risk rather than buying another noisy findings dashboard.',
+    applicability:
+      'Apply when sourcing Wiz, Palo Alto Prisma Cloud or Cortex Cloud, Microsoft Defender for Cloud, CrowdStrike Falcon Cloud Security, Lacework FortiCNAPP, Orca, Check Point CloudGuard, AWS Security Hub or Inspector, Google Security Command Center, CSPM, CWPP, CIEM, and CNAPP platforms.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.81,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://abc.xyz/investor/news/news-details/2026/Google-Completes-Acquisition-of-Wiz-2026-ta7OaU2uA0/default.aspx',
+      'https://cloud.google.com/blog/products/identity-security/google-announces-agreement-acquire-wiz',
+      'https://cloud.google.com/wiz',
+      'https://www.paloaltonetworks.com/resources/guides/cloud-native-application-protection-platform-design-guide',
+      'https://docs-cortex.paloaltonetworks.com/r/Cortex-CLOUD/Cortex-Cloud-Runtime-Security-Documentation/What-is-Cortex-Cloud-Runtime-Security',
+      'https://learn.microsoft.com/azure/defender-for-cloud/defender-for-cloud-introduction?s=09',
+      'https://learn.microsoft.com/en-ie/azure/defender-for-cloud/permissions-management',
+      'https://www.crowdstrike.com/en-us/platform/cloud-security/cnapp/',
+      'https://investor.fortinet.com/news-releases/news-release-details/fortinet-completes-acquisition-lacework',
+      'https://orca.security/resources/blog/cwpp-cspm-ciem-cnapp/',
+      'https://aws.amazon.com/security-hub/pricing',
+      'https://aws.amazon.com/inspector/pricing/',
+      'https://cloud.google.com/security/products/security-command-center',
+    ],
+    regulatoryChips: ['SOC-2-review', 'CIS-benchmark-review', 'NIST-review', 'PCI-if-cardholder-environment', 'HIPAA-if-PHI'],
+    relatedPatternIds: ['PAT-SRC-CAT-EDR-001', 'PAT-SRC-CAT-IAM-001', 'PAT-SRC-CAT-SIEM-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'security_identity',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Wiz, Palo Alto Prisma/Cortex Cloud, Microsoft Defender for Cloud, CrowdStrike Falcon Cloud Security, Lacework FortiCNAPP, Orca, and Check Point CloudGuard',
+        tier: 'enterprise',
+        positioning: 'CNAPP and cloud posture candidates spanning CSPM, CWPP, CIEM, code/IaC, Kubernetes, serverless, vulnerability, compliance, DSPM adjacency, and cloud detection.',
+        cautions: ['Validate runtime depth, agentless limits, remediation workflow, cloud neutrality, and native-cloud overlap before consolidation claims are accepted.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Microsoft Defender for Cloud overview', url: 'https://learn.microsoft.com/azure/defender-for-cloud/defender-for-cloud-introduction?s=09', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'CrowdStrike Falcon Cloud Security CNAPP', url: 'https://www.crowdstrike.com/en-us/platform/cloud-security/cnapp/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Google completes Wiz acquisition', url: 'https://abc.xyz/investor/news/news-details/2026/Google-Completes-Acquisition-of-Wiz-2026-ta7OaU2uA0/default.aspx', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'AWS Security Hub, Amazon Inspector, Google Security Command Center, and native-cloud services',
+        tier: 'enterprise',
+        positioning: 'Native cloud posture, vulnerability, and security-command-center options for buyers concentrated in one cloud or comparing native baselines against third-party CNAPP.',
+        cautions: ['Native tools may be strong baselines but can fragment ownership and normalization in multicloud estates.'],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'CNAPP/CSPM public pricing constructs only',
+        model: 'hybrid',
+        metric: 'Cloud accounts, billable resources, workloads, containers, serverless resources, images, identities, modules, runtime agents, support, and marketplace terms',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Microsoft Defender for Cloud pricing', url: 'https://azure.microsoft.com/en-us/pricing/details/defender-for-cloud/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'AWS Security Hub pricing', url: 'https://aws.amazon.com/security-hub/pricing', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Amazon Inspector pricing', url: 'https://aws.amazon.com/inspector/pricing/', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Cloud inventory, runtime needs, resource counts, containers, identities, image scans, modules, and negotiated terms require buyer evidence' },
+        ],
+        confidence: 0.59,
+        notes: 'Pricing differs by cloud resource, workload, module, package, and marketplace channel; do not infer third-party CNAPP pricing without a quote.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Cloud risk data and remediation ownership',
+        buyerPosition: 'Require asset inventory export, finding export, risk graph/evidence export, ownership mapping, ticket workflow, remediation evidence, and transition assistance.',
+      },
+      {
+        clauseArea: 'Runtime and agentless boundary',
+        buyerPosition: 'Define which risks are discovered agentlessly, which require agents, which need cloud-native services, and which actions the platform can actually enforce.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Native-cloud challenger',
+        whenToUse: 'Use when the estate is concentrated in AWS, Azure, or Google Cloud or existing native services are already enabled.',
+        buyerAsk: 'Compare third-party CNAPP value against native posture, vulnerability, identity, compliance, and workflow coverage with the same cloud inventory.',
+      },
+      {
+        lever: 'Exploitable-path proof',
+        whenToUse: 'Use when a vendor claims risk prioritization or attack-path superiority.',
+        buyerAsk: 'Demonstrate public exposure, sensitive data, vulnerability, identity path, workload context, owner routing, and remediation evidence on buyer assets.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'csp-noisy-findings-loop',
+        label: 'Noisy cloud findings loop',
+        severity: 'high',
+        detectionSignals: ['Cloud findings are duplicated, context-poor, unactionable, or not routed to accountable owners.'],
+        mitigations: ['Require owner mapping, risk prioritization, ticket workflow, suppression policy, and remediation evidence'],
+      },
+      {
+        id: 'csp-agentless-runtime-confusion',
+        label: 'Agentless and runtime confusion',
+        severity: 'high',
+        detectionSignals: ['Buyer assumes agentless posture scanning provides complete runtime workload protection.'],
+        mitigations: ['Separate CSPM, CWPP, CDR, CIEM, vulnerability, code, and runtime controls in the proof event'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Stress multicloud exposure paths, privileged cloud identities, compliance evidence, outsourcing review, and operational resilience.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Review PHI-adjacent workloads, sensitive-data exposure, access paths, BAA posture, audit evidence, and remediation ownership.',
+      },
+      {
+        industry: 'public_sector',
+        modifier: 'Review government cloud eligibility, sensitive workload boundaries, FedRAMP/public procurement, and evidence export requirements.',
+      },
+    ],
+    body: `## Summary
+Cloud Security Posture and CNAPP sourcing is the buyer's attempt to make cloud risk visible, prioritized, and remediable. The category spans posture, workload, identity, code, runtime, Kubernetes, containers, serverless, vulnerability, compliance, and cloud detection. The event should answer whether the tool helps the buyer identify exploitable cloud risk and route it to owners, not whether it can produce the longest list of findings.
+
+## When to apply
+Use this pattern when sourcing Wiz, Palo Alto Prisma Cloud or Cortex Cloud, Microsoft Defender for Cloud, CrowdStrike Falcon Cloud Security, Lacework FortiCNAPP, Orca, Check Point CloudGuard, AWS Security Hub, Amazon Inspector, Google Security Command Center, or adjacent CSPM, CWPP, CIEM, CDR, and CNAPP capabilities. Apply it during rapid cloud expansion, multicloud normalization, Kubernetes/serverless growth, cloud IAM least-privilege programs, audit pressure, cloud breach findings, or tool consolidation. Do not use it for endpoint-only EDR, pure SIEM/SOAR, generic GRC, or cloud consulting unless cloud posture and workload risk are central.
+
+## Category boundary
+In scope: asset inventory, posture checks, misconfiguration, vulnerability scanning, container/image scanning, Kubernetes posture, serverless posture, cloud workload protection, cloud identity entitlement management, attack paths, secrets, data exposure, IaC/code-to-cloud context, compliance frameworks, runtime detection, remediation workflow, ticketing, SIEM/XDR export, and evidence. Adjacent but distinct: EDR, SIEM, IAM, PAM, data security posture, and DevSecOps tools.
+
+## Lifecycle and gates
+The scope gate should inventory cloud accounts, subscriptions, projects, Kubernetes clusters, containers, serverless resources, VMs, storage, databases, identities, CI/CD paths, compliance frameworks, and current native tools. The RFP gate should require deployment model, cloud coverage, agentless versus agent coverage, runtime depth, identity analysis, vulnerability sources, evidence exports, pricing meters, and workflow integrations. The proof gate should test representative cloud accounts, a public exposure, sensitive-data path, vulnerable workload, overprivileged identity, Kubernetes finding, code-to-cloud link, ticket routing, and remediation evidence. The BAFO gate should normalize billable resources, modules, cloud marketplaces, runtime agents, image scans, identity counts, support, services, and native-tool displacement.
+
+## Evaluation rubric
+Weight risk prioritization around 25 percent, cloud/workload coverage around 20 percent, identity and exposure context around 15 percent, remediation workflow around 15 percent, native-cloud integration around 10 percent, compliance/evidence around 10 percent, and commercial predictability around 5 percent. Increase evidence weight for regulated workloads and increase workflow weight when developers own remediation.
+
+## Pricing and contract notes
+Public sources from Microsoft, AWS, Amazon Inspector, Google, Wiz/Google, Palo Alto, CrowdStrike, Fortinet/Lacework, Orca, and Check Point show that CNAPP pricing can depend on resource counts, workload classes, cloud accounts, image scans, serverless resources, identities, modules, runtime agents, and marketplace terms. Public acquisition or roadmap statements should not be converted into assumptions about future packaging. Google completed its Wiz acquisition in 2026 and publicly described a cloud-environment commitment, but buyers should validate contract terms directly.
+
+Contracting should define asset and finding export, retention, evidence, remediation workflow, API access, data residency, cloud permissions, agent behavior, transition assistance, support, implementation milestones, and acceptance tests. If the buyer is replacing native tools, require an explicit native-versus-third-party control map.
+
+## Contradictions and failure modes
+Vendor claim: CNAPP consolidates cloud security. Detection: map CSPM, CWPP, CIEM, code, runtime, DSPM, compliance, and detection scope by cloud and workload. Vendor claim: agentless coverage is complete. Detection: test runtime, process, memory, network, Kubernetes, and response requirements. Vendor claim: risks are prioritized. Detection: inspect whether exposure, identity, vulnerability, data sensitivity, and business context converge on buyer assets.
+
+The common failure is buying a better findings list without owner routing or remediation evidence. The second is assuming a single cloud-native tool is enough for multicloud governance. The third is accepting agentless posture visibility as runtime workload protection.`,
+  },
+  {
+    id: 'PAT-SRC-CAT-FINOPS-001',
+    slug: 'finops-cloud-cost-management-sourcing',
+    title: 'FinOps and Cloud Cost Management Platform Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'FinOps tooling should be sourced around accountable cost allocation, forecasting, optimization workflow, commitment governance, and business unit economics rather than generic savings promises.',
+    applicability:
+      'Apply when sourcing IBM Cloudability, Tanzu CloudHealth, Flexera One Cloud Cost Optimization, CloudZero, Finout, Harness Cloud Cost Management, ProsperOps, Spot/Flexera, AWS Cost Explorer, Azure Cost Management, Google Cloud FinOps Hub, and adjacent cloud cost automation.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.84,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.finops.org/framework/',
+      'https://www.finops.org/framework/capabilities/manage-shared-cloud-cost/',
+      'https://www.finops.org/framework/capabilities/workload-optimization/',
+      'https://www.finops.org/framework/capabilities/rate-optimization/',
+      'https://focus.finops.org/what-is-focus/',
+      'https://www.apptio.com/products/cloudability/',
+      'https://www.vmware.com/docs/solution-overview-vmware-tanzu-cloudhealth-simplify-cloud-financial-management',
+      'https://www.flexera.com/products/flexera-one/cloud-cost-optimization',
+      'https://www.flexera.com/about-us/press-center/flexera-completes-acquisition-of-netapps-spot-finops-portfolio',
+      'https://www.flexera.com/about-us/press-center/flexera-expands-its-finops-solution-with-agentic-and-ai-enabled-cost-optimization',
+      'https://www.cloudzero.com/',
+      'https://www.finout.io/finops',
+      'https://www.harness.io/products/cloud-cost-management',
+      'https://docs.aws.amazon.com/cost-management/latest/userguide/ce-what-is.html',
+      'https://docs.cloud.google.com/billing/docs/how-to/finops-hub',
+    ],
+    regulatoryChips: ['financial-governance', 'cloud-commitment-review', 'data-residency-if-billing-data-sensitive', 'SOX-if-chargeback-controls'],
+    relatedPatternIds: ['PAT-SRC-CAT-CDW-001', 'PAT-SRC-CAT-CSP-001', 'PAT-SRC-CAT-OBS-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'infrastructure',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'IBM Cloudability, Tanzu CloudHealth, Flexera One, CloudZero, Finout, Harness CCM, ProsperOps, and Spot/Flexera',
+        tier: 'enterprise',
+        positioning: 'FinOps and cloud cost management candidates for allocation, showback, forecasting, anomaly detection, optimization, Kubernetes cost, commitment automation, and unit economics.',
+        cautions: ['Tooling does not replace tagging discipline, ownership, procurement governance, architectural change, or engineering action.'],
+        sourceBasis: [
+          { type: 'industry-consortium', label: 'FinOps Framework', url: 'https://www.finops.org/framework/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'IBM Cloudability', url: 'https://www.apptio.com/products/cloudability/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Flexera One Cloud Cost Optimization', url: 'https://www.flexera.com/products/flexera-one/cloud-cost-optimization', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'AWS Cost Explorer, AWS Compute Optimizer, Azure Cost Management, and Google Cloud FinOps Hub',
+        tier: 'enterprise',
+        positioning: 'Native cloud baselines for cost visibility, forecasting, recommendations, commitment insights, and optimization opportunities within each provider ecosystem.',
+        cautions: ['Native tools may be sufficient for simpler/single-cloud needs but can be harder to normalize across multicloud, Kubernetes, SaaS/data-cloud, and unit-economic views.'],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'FinOps public pricing constructs only',
+        model: 'hybrid',
+        metric: 'Cloud spend under management, accounts, providers, Kubernetes clusters, data sources, users, automation modules, commitment portfolio, support, and implementation services',
+        sourceBasis: [
+          { type: 'industry-consortium', label: 'FOCUS cost and usage data specification', url: 'https://focus.finops.org/what-is-focus/', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Cloud spend, tagging maturity, commitment inventory, Kubernetes usage, data-cloud scope, automation appetite, and negotiated terms require buyer evidence' },
+        ],
+        confidence: 0.50,
+        notes: 'Do not repeat vendor savings claims as buyer outcomes; normalize tool cost against governance maturity and actionable optimization volume.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Cost data ownership and portability',
+        buyerPosition: 'Require export of normalized cost data, allocation rules, business mappings, budgets, forecasts, recommendations, anomaly history, and commitment portfolio evidence.',
+      },
+      {
+        clauseArea: 'Automation and commitment guardrails',
+        buyerPosition: 'Define approval thresholds, rollback, forecast inputs, overcommitment controls, spot/interruptible workload eligibility, and responsibility for automated actions.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Native-tool baseline challenger',
+        whenToUse: 'Use when a buyer has single-cloud or basic visibility needs.',
+        buyerAsk: 'Prove incremental value beyond AWS, Azure, or Google native cost tools for allocation, ownership, workflow, Kubernetes, commitment management, and unit economics.',
+      },
+      {
+        lever: 'Optimization-to-action proof',
+        whenToUse: 'Use when a tool demonstrates savings recommendations but not operational follow-through.',
+        buyerAsk: 'Route buyer-specific recommendations to owners, estimate risk, create tickets, record disposition, and show governance evidence.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'finops-dashboard-without-ownership',
+        label: 'Dashboard without ownership',
+        severity: 'high',
+        detectionSignals: ['Tool shows spend and savings recommendations, but teams do not trust allocation or own remediation.'],
+        mitigations: ['Require business mappings, showback workflow, owner routing, recommendation disposition, and governance cadence'],
+      },
+      {
+        id: 'finops-overcommitment-risk',
+        label: 'Commitment overreach',
+        severity: 'high',
+        detectionSignals: ['Automation buys commitments or shifts workloads without workload stability, forecast, or rollback governance.'],
+        mitigations: ['Set approval thresholds, utilization bands, scenario forecasts, and owner accountability for commitments'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Stress chargeback controls, budget evidence, commitment governance, cloud risk alignment, and auditability of allocation rules.',
+      },
+      {
+        industry: 'retail_cpg',
+        modifier: 'Plan for seasonal traffic, promotional spikes, unit economics by brand/channel, and cautious commitment strategy.',
+      },
+      {
+        industry: 'public_sector',
+        modifier: 'Review budget authority, procurement rules, chargeback limits, cloud marketplace constraints, and transparent allocation evidence.',
+      },
+    ],
+    body: `## Summary
+FinOps sourcing is the discipline of making variable technology spend understandable, accountable, forecastable, and actionable. The tool decision should not be framed as buying savings. It should be framed as creating trusted cost data, ownership, optimization workflow, commitment governance, and unit economics that engineering, finance, product, procurement, and executives can actually use.
+
+## When to apply
+Use this pattern when sourcing IBM Cloudability, Tanzu CloudHealth, Flexera One Cloud Cost Optimization, CloudZero, Finout, Harness Cloud Cost Management, ProsperOps, Spot/Flexera, AWS Cost Explorer, AWS Compute Optimizer, Azure Cost Management, Google Cloud FinOps Hub, or adjacent cloud cost automation. Apply it during cloud bill growth, budget misses, multi-cloud expansion, Kubernetes spend growth, AI/data-cloud spend volatility, weak tagging, showback/chargeback programs, commitment complexity, or CFO scrutiny. Do not use it for generic ITFM/TBM, observability-only APM, procurement-only services, or cloud migration consulting unless cloud-cost accountability is the sourcing anchor.
+
+## Category boundary
+In scope: cost ingestion, normalized billing data, FOCUS-style data, allocation, tags/labels/accounts, shared-cost rules, budgets, forecasts, anomaly detection, showback, chargeback, rightsizing, idle cleanup, scheduling, storage tiering, Kubernetes cost, unit economics, commitment management, Savings Plans/RIs/CUDs, spot/interruptible guidance, ticket workflow, automation, and governance cadence. Adjacent but distinct: ITAM, ITFM, observability, procurement, cloud architecture, SaaS management, and data-cloud cost management.
+
+## Lifecycle and gates
+The scope gate should inventory providers, accounts, tags, cost centers, products, Kubernetes clusters, data-cloud platforms, commitment inventory, budget process, existing native tools, owner model, and optimization backlog. The RFP gate should require allocation rules, data freshness, supported providers, FOCUS support, anomaly workflow, commitment analytics, Kubernetes coverage, automation controls, export, and support. The proof gate should ingest buyer cost data, map ownership, allocate shared spend, detect anomalies, produce forecasts, generate recommendations, route tickets, and export evidence. The BAFO gate should normalize spend under management, users, providers, data sources, automation modules, commitment portfolio, implementation, and internal process effort.
+
+## Evaluation rubric
+Weight allocation trust around 25 percent, actionable optimization workflow around 20 percent, forecasting and anomaly management around 15 percent, commitment/rate optimization around 15 percent, unit economics around 10 percent, integrations/export around 10 percent, and commercial predictability around 5 percent. Increase commitment weight when cloud contracts are material and increase unit economics weight for product-led or consumption-heavy businesses.
+
+## Pricing and contract notes
+Public sources from the FinOps Foundation, FOCUS, IBM Cloudability, VMware/Tanzu CloudHealth, Flexera, CloudZero, Finout, Harness, AWS, Azure, and Google show the functional map: allocation, optimization, rate management, FOCUS data, native tools, and workflow. They do not prove guaranteed savings. Flexera completed the Spot FinOps portfolio acquisition in 2025 and acquired ProsperOps/Chaos Genius in 2026, so current vendor ownership should be validated during sourcing. Tool cost must be compared against tagging maturity, spend scale, commitment risk, Kubernetes complexity, and the buyer's ability to act.
+
+Contracting should define data export, allocation-rule ownership, recommendation history, automation approvals, commitment guardrails, anomaly routing, implementation support, success criteria, and transition assistance. If automation is enabled, require explicit approval thresholds, rollback, and responsibility for overcommitment or workload disruption.
+
+## Contradictions and failure modes
+Vendor claim: guaranteed savings. Detection: require buyer baseline, owner workflow, engineering action, and attribution method. Vendor claim: native tools are insufficient. Detection: compare against AWS, Azure, or Google native capability for the buyer's actual complexity. Vendor claim: automation is safe. Detection: test forecast stability, approval, rollback, and workload eligibility.
+
+The common failure is buying dashboards without cost ownership. The second is trusting savings recommendations that teams cannot safely implement. The third is overcommitting to discounts while workloads, architecture, or demand are changing.`,
+  },
 ];
 
 export const SOURCING_CATEGORY_PATTERN_COUNT = SOURCING_CATEGORY_PATTERNS.length;
