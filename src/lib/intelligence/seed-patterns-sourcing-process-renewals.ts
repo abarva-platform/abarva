@@ -85,8 +85,8 @@ export const SOURCING_PROCESS_RENEWAL_CALENDAR_PATTERNS: PatternSeed[] = [
       'https://vsc.gsa.gov/drupal/node/125',
     ],
     regulatoryChips: ['Option-exercise-review', 'Notice-window-control', 'Past-performance-review'],
-    relatedPatternIds: ['PAT-SRC-RENEWAL-001', 'PAT-SRC-PROC-001', 'PAT-SRC-PROC-002', 'PAT-SRC-PROC-003'],
-    derivedFromPatternIds: ['PAT-SRC-RENEWAL-001'],
+    relatedPatternIds: ['PAT-SRC-CON-002', 'PAT-SRC-PROC-001', 'PAT-SRC-PROC-002', 'PAT-SRC-PROC-003'],
+    derivedFromPatternIds: [],
     taggedContradictionIds: [],
     category: 'process_methodology',
     lifecycleStages: RENEWAL_CALENDAR_STAGES,
@@ -108,7 +108,7 @@ export const SOURCING_PROCESS_RENEWAL_CALENDAR_PATTERNS: PatternSeed[] = [
           gateType: 'soft',
           stageId: 'calendar_inventory',
           evaluationHint:
-            'Look for linkage to PAT-SRC-RENEWAL-001, vendor leverage analysis, or a program decision that depends on the renewal outcome.',
+            'Look for linkage to renewal calendar governance, vendor leverage analysis, or a program decision that depends on the renewal outcome.',
         },
       ],
       readiness_brief: [

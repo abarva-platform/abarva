@@ -98,7 +98,7 @@ export const PAT_SRC_VEN_NEWRELIC_001: PatternSeed = {
     'DORA-if-regulated-financial-entity',
     'security-operations-critical-control',
   ],
-  relatedPatternIds: ['PAT-SRC-CAT-FINOPS-001', 'PAT-SRC-CON-004', 'PAT-SRC-RENEWAL-001', 'PAT-SRC-PRC-SAAS-001'],
+  relatedPatternIds: ['PAT-SRC-CAT-FINOPS-001', 'PAT-SRC-CON-004', 'PAT-SRC-PROC-007', 'PAT-SRC-PRC-SAAS-001'],
   derivedFromPatternIds: [],
   taggedContradictionIds: [],
   category: 'infrastructure',

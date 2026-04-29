@@ -134,7 +134,7 @@ export const SOURCING_VENDOR_GITLAB_PATTERNS: PatternSeed[] = [
       'https://handbook.gitlab.com/handbook/legal/subscription-agreement/',
     ],
     regulatoryChips: ['GDPR-if-personal-data', 'SOC-2-review', 'ISO-27001-review', 'DORA-if-regulated-financial-entity', 'HIPAA-if-PHI'],
-    relatedPatternIds: ['PAT-SRC-CAT-LLM-001', 'PAT-SRC-CAT-FINOPS-001', 'PAT-SRC-PRC-SAAS-001', 'PAT-SRC-CON-SLA-001'],
+    relatedPatternIds: ['PAT-SRC-CAT-LLM-001', 'PAT-SRC-CAT-FINOPS-001', 'PAT-SRC-PRC-SAAS-001', 'PAT-SRC-CON-004'],
     derivedFromPatternIds: [],
     taggedContradictionIds: [],
     category: 'enterprise_saas',

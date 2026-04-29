@@ -59,6 +59,22 @@ describe('intelligence corpus loader', () => {
     }
   });
 
+  it('keeps pattern graph references closed over loaded corpus ids', () => {
+    for (const pattern of corpus.patterns) {
+      for (const patternId of pattern.relatedPatternIds) {
+        expect(corpus.patternsById.has(patternId)).toBe(true);
+      }
+
+      for (const patternId of pattern.derivedFromPatternIds) {
+        expect(corpus.patternsById.has(patternId)).toBe(true);
+      }
+
+      for (const contradictionId of pattern.taggedContradictionIds) {
+        expect(corpus.contradictionsById.has(contradictionId)).toBe(true);
+      }
+    }
+  });
+
   it('fails fast on duplicate ids', () => {
     const duplicatePattern = { ...corpus.patterns[0] };
 
