@@ -1213,6 +1213,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Gate Benchmark',
     description: 'Instance gate performance vs. portfolio average — health, gate rate, contradiction, and waiver deltas.',
   },
+  {
+    href: '/admin/reasoning/stage-transition-analysis',
+    title: 'Stage Transition Analysis',
+    description: 'Transition frequency, dwell times, success predictors, and stuck instance identification.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
