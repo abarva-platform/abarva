@@ -30,7 +30,7 @@ export const DOCUSIGN_VENDOR_PROFILE_PATTERN: PatternSeed = {
     'https://investor.docusign.com/files/doc_financials/2025/ar/DOCU_Annual-Report-FY25.pdf',
   ],
   regulatoryChips: ['ESIGN', 'UETA', 'eIDAS-if-EU-signature-level-required', '21-CFR-Part-11-if-life-sciences', 'GDPR-if-EU-personal-data'],
-  relatedPatternIds: ['PAT-SRC-RENEWAL-001', 'PAT-SRC-CAT-CRM-001'],
+  relatedPatternIds: ['PAT-SRC-PROC-007', 'PAT-SRC-CAT-CRM-001'],
   derivedFromPatternIds: [],
   taggedContradictionIds: [],
   category: 'enterprise_saas',
