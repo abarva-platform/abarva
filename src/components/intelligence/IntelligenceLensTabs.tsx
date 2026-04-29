@@ -1,4 +1,4 @@
-// INTEL4 · Intelligence Lens Tabs.
+// INTEL4 + INT4 · Intelligence Lens Tabs.
 //
 // Server component. Renders the blueprint-aligned five-mode lens surface
 // (Summary · Evidence · Programs · Actions · Signals) and the content panel
@@ -53,6 +53,11 @@ import {
   buildEvidenceGapQueueView,
   type EvidenceGapQueueItem,
 } from '@/lib/intelligence/sentinel-evidence-gap-queue-view';
+import {
+  buildPatternContradictionMonitorView,
+  type PatternContradictionSummary,
+  type PatternContradictionItem,
+} from '@/lib/intelligence/pattern-contradiction-monitor-view';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Design tokens (matches existing intelligence surface palette)
@@ -165,6 +170,9 @@ export function IntelligenceLensTabs({
         )}
         {activeTab === 'gap_queue' && (
           <EvidenceGapQueuePanel />
+        )}
+        {activeTab === 'contradiction_monitor' && (
+          <ContradictionMonitorPanel />
         )}
       </div>
     </div>
@@ -1309,6 +1317,197 @@ function EvidenceGapQueuePanel() {
       >
         Deterministic seed · Gap queue reflects fixture evidence gaps for the Apex Retail engagement.
         Live gap tracking and evidence upload are handled by the intelligence fabric evidence management module.
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INT4 · Pattern Contradiction Monitor Panel
+// ─────────────────────────────────────────────────────────────────────────────
+
+const CONTRADICTION_PATTERN_STATUS_STYLE: Record<string, { bg: string; text: string; label: string }> = {
+  critical:   { bg: '#fef2f2', text: '#b91c1c', label: 'Critical' },
+  at_risk:    { bg: '#fef3c7', text: '#92400e', label: 'At Risk' },
+  monitoring: { bg: '#eff6ff', text: '#1d4ed8', label: 'Monitoring' },
+  clean:      { bg: '#f0fdf4', text: '#166534', label: 'Clean' },
+};
+
+const CONTRADICTION_SEVERITY_STYLE: Record<string, { bg: string; text: string }> = {
+  high:   { bg: '#fef2f2', text: '#b91c1c' },
+  medium: { bg: '#fef3c7', text: '#92400e' },
+  low:    { bg: '#f3f4f6', text: '#6b7280' },
+};
+
+const CONTRADICTION_STATUS_STYLE: Record<string, { bg: string; text: string; label: string }> = {
+  open:          { bg: '#fef3c7', text: '#92400e', label: 'Open' },
+  investigating: { bg: '#eff6ff', text: '#1d4ed8', label: 'Investigating' },
+  escalated:     { bg: '#fef2f2', text: '#b91c1c', label: 'Escalated' },
+  resolved:      { bg: '#f0fdf4', text: '#166534', label: 'Resolved' },
+};
+
+function ContradictionMonitorPanel() {
+  const view = buildPatternContradictionMonitorView();
+  const { patterns, summary } = view;
+
+  return (
+    <div
+      data-testid="intelligence-contradiction-monitor-panel"
+      style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 960 }}
+    >
+      {/* Header */}
+      <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', color: C.muted, textTransform: 'uppercase' }}>
+        INT4 · Pattern Contradiction Monitor · Apex Retail
+      </div>
+
+      {/* Summary bar */}
+      <div
+        data-testid="intelligence-contradiction-monitor-summary"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+          flexWrap: 'wrap',
+          padding: '12px 16px',
+          backgroundColor: C.card,
+          border: `1px solid ${C.border}`,
+          borderRadius: 8,
+        }}
+      >
+        <span style={{ fontSize: 11, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600 }}>
+          Contradiction Monitor
+        </span>
+        <span style={{ fontSize: 12, color: C.muted }}>
+          {summary.patternsWithActiveContradictions} of {summary.totalPatterns} patterns active
+        </span>
+        {summary.escalatedContradictions > 0 && (
+          <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: '#fef2f2', color: '#b91c1c', fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            {summary.escalatedContradictions} escalated
+          </span>
+        )}
+        {summary.highSeverityContradictions > 0 && (
+          <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: '#fef3c7', color: '#92400e', fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            {summary.highSeverityContradictions} high severity
+          </span>
+        )}
+        <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: C.surface, color: C.muted, fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', border: `1px solid ${C.border}` }}>
+          {summary.totalActiveContradictions} active total
+        </span>
+      </div>
+
+      {/* Atlas synthesis */}
+      <p style={{ fontSize: 13, color: C.ink, lineHeight: 1.6, margin: 0 }}>
+        {view.atlasSynthesis}
+      </p>
+
+      {/* Per-pattern cards */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {patterns.map((pattern: PatternContradictionSummary) => {
+          const statusStyle = CONTRADICTION_PATTERN_STATUS_STYLE[pattern.overallStatus] ?? CONTRADICTION_PATTERN_STATUS_STYLE.monitoring;
+          return (
+            <div
+              key={pattern.patternId}
+              data-testid={`intelligence-contradiction-${pattern.patternId}`}
+              style={{
+                backgroundColor: C.card,
+                border: `1px solid ${C.border}`,
+                borderLeft: `3px solid ${statusStyle.text}`,
+                borderRadius: 6,
+                padding: '14px 16px',
+              }}
+            >
+              {/* Pattern header */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+                <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: C.ink }}>
+                  {pattern.patternTitle}
+                </span>
+                <span style={{ display: 'inline-block', padding: '2px 7px', borderRadius: 4, fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', background: statusStyle.bg, color: statusStyle.text }}>
+                  {statusStyle.label}
+                </span>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: C.mutedSoft }}>
+                  {pattern.patternType}
+                </span>
+              </div>
+
+              {/* Pattern metrics row */}
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: pattern.contradictions.length > 0 ? 10 : 0 }}>
+                <span style={{ fontSize: 11, color: C.muted }}>
+                  {pattern.activeContradictions} active
+                </span>
+                {pattern.resolvedContradictions > 0 && (
+                  <span style={{ fontSize: 11, color: '#166534' }}>
+                    {pattern.resolvedContradictions} resolved
+                  </span>
+                )}
+                {pattern.highSeverityCount > 0 && (
+                  <span style={{ fontSize: 11, color: '#b91c1c', fontWeight: 600 }}>
+                    {pattern.highSeverityCount} high severity
+                  </span>
+                )}
+                {pattern.escalatedCount > 0 && (
+                  <span style={{ fontSize: 11, color: '#b91c1c', fontWeight: 700 }}>
+                    {pattern.escalatedCount} escalated
+                  </span>
+                )}
+              </div>
+
+              {/* Contradiction item cards */}
+              {pattern.contradictions.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {pattern.contradictions.map((con: PatternContradictionItem) => {
+                    const sevStyle = CONTRADICTION_SEVERITY_STYLE[con.severity] ?? CONTRADICTION_SEVERITY_STYLE.low;
+                    const stStyle = CONTRADICTION_STATUS_STYLE[con.status] ?? CONTRADICTION_STATUS_STYLE.open;
+                    return (
+                      <div
+                        key={con.contradictionId}
+                        style={{
+                          padding: '8px 10px',
+                          background: C.surface,
+                          border: `1px solid ${C.border}`,
+                          borderRadius: 4,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 4,
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                          <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: C.ink }}>
+                            {con.label}
+                          </span>
+                          <span style={{ display: 'inline-block', padding: '1px 6px', borderRadius: 3, fontSize: 9, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', background: sevStyle.bg, color: sevStyle.text }}>
+                            {con.severity}
+                          </span>
+                          <span style={{ display: 'inline-block', padding: '1px 6px', borderRadius: 3, fontSize: 9, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', background: stStyle.bg, color: stStyle.text }}>
+                            {stStyle.label}
+                          </span>
+                        </div>
+                        {con.blockedItem && (
+                          <div style={{ fontSize: 11, color: '#92400e', background: '#fef3c7', borderRadius: 3, padding: '3px 6px' }}>
+                            Blocks: {con.blockedItem}
+                          </div>
+                        )}
+                        {con.resolutionPath && (
+                          <div style={{ fontSize: 11, color: C.muted, fontStyle: 'italic' }}>
+                            Path: {con.resolutionPath}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Honest disclaimer */}
+      <div
+        data-testid="intelligence-contradiction-monitor-disclaimer"
+        data-honest-disclaimer="intelligence-contradiction-monitor"
+        style={{ fontSize: 10, color: C.mutedSoft, fontStyle: 'italic', lineHeight: 1.5, borderTop: `1px solid ${C.border}`, paddingTop: 10 }}
+      >
+        Deterministic seed · Contradiction monitor reflects fixture pattern data for the Apex Retail engagement. Live contradiction detection and resolution tracking are managed by the Sentinel reasoning runtime.
       </div>
     </div>
   );

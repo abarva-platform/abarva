@@ -1,8 +1,8 @@
-// INTEL4 + INT1 + INT3 · Intelligence Lens Tabs view-model.
+// INTEL4 + INT1 + INT3 + INT4 · Intelligence Lens Tabs view-model.
 //
-// Pure deterministic helper that returns metadata for the five canonical
+// Pure deterministic helper that returns metadata for the eight canonical
 // lens tabs on the Intelligence surface: Summary, Evidence, Programs,
-// Actions, Signals.
+// Actions, Signals, Pattern Plan, Gap Queue, Contradiction Monitor.
 //
 // No model calls, no fetch, no Date.now / Math.random / new Date,
 // no live data. Same input → identical output.
@@ -26,7 +26,8 @@ export type IntelligenceLensTab =
   | 'actions'
   | 'signals'
   | 'pattern_plan'
-  | 'gap_queue';
+  | 'gap_queue'
+  | 'contradiction_monitor';
 
 export interface IntelligenceLensTabMeta {
   key: IntelligenceLensTab;
@@ -90,6 +91,12 @@ export const INTELLIGENCE_TABS: ReadonlyArray<IntelligenceLensTabMeta> = [
     key: 'gap_queue',
     label: 'Gap Queue',
     description: 'Prioritized evidence gap close-out queue — critical and high-urgency items first',
+    hasApexRetailContent: true,
+  },
+  {
+    key: 'contradiction_monitor',
+    label: 'Contradictions',
+    description: 'Per-pattern contradiction monitor — active contradictions, resolution status, severity, and blocked gates across the Apex Retail engagement',
     hasApexRetailContent: true,
   },
 ];
