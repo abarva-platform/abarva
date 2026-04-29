@@ -28,6 +28,11 @@ import { ARTIFACT_CHANNEL_INSTRUCTIONS } from "@/lib/agent/artifacts";
 // expose it in `tools`, but the registration must happen for the
 // surface filter to find it.
 import "@/lib/agent/tools/program/commitProgram";
+// Surface 1 PR2.2 — lookup_person tool registers for /programs/new
+// and /demo/programs/new so Steward can resolve role titles ("CIO",
+// "VP of Applications") into actual person UUIDs from the seeded
+// persons table before calling commit_program.
+import "@/lib/agent/tools/program/lookupPerson";
 
 // ── Agent voice map ────────────────────────────────────────────────────────────
 
