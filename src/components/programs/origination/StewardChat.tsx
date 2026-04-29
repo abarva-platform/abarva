@@ -21,6 +21,11 @@ import { useRouter } from 'next/navigation';
 import { AgentMarkdown } from '@/lib/agent/markdownRenderer';
 import { BrandColors, BrandTypography } from '@/lib/shell/brand-tokens';
 import { extractArtifacts, type Artifact } from '@/lib/agent/artifacts';
+import {
+  buildHandoffMarker,
+  persistOriginationHandoff,
+} from '@/lib/shell/origination-handoff';
+import type { ChatTurn as AtlasChatTurn } from '@/lib/shell/atlas-page-state';
 
 export interface ChatTurn {
   id: string;
@@ -47,6 +52,13 @@ export interface StewardChatProps {
    * incremental updates from each artifact.
    */
   onArtifact?: (artifact: Artifact) => void;
+  /**
+   * PR-K — name of the program being authored, used in the handoff
+   * marker copy when commit_program lands. Falls back to a generic
+   * phrase when null/undefined (the conversation continuity still
+   * works, only the marker text reads less specific).
+   */
+  programName?: string | null;
 }
 
 const STEWARD_ACCENT = BrandColors.signalBlue;
@@ -56,12 +68,31 @@ function generateTurnId(): string {
   return `turn_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
+/**
+ * Convert StewardChat's local turn shape ({ role: 'user' | 'assistant' })
+ * into AtlasPageStateProvider's ChatTurn shape ({ role: 'user' | 'agent',
+ * agentName, timestamp }) for cross-surface handoff persistence.
+ */
+function toAtlasTurns(turns: ChatTurn[]): AtlasChatTurn[] {
+  return turns.map((t, idx) => ({
+    id: t.id,
+    role: t.role === 'user' ? 'user' : 'agent',
+    agentName: t.role === 'assistant' ? (t.agentName ?? 'Steward') : 'user',
+    text: t.text,
+    // Origination chat doesn't track per-turn timestamps; fall back to a
+    // monotonic offset anchored at now so the destination renders them
+    // in order. (Date.now() - turns.length + idx ensures ascending.)
+    timestamp: Date.now() - turns.length + idx,
+  }));
+}
+
 export function StewardChat({
   surface,
   tenantName,
   turns,
   onTurnsChange,
   onArtifact,
+  programName,
 }: StewardChatProps) {
   const router = useRouter();
   const [draft, setDraft] = useState('');
@@ -199,6 +230,24 @@ export function StewardChat({
       const navMatch = PROGRAM_CREATED_SENTINEL.exec(allText);
       if (navMatch) {
         const programId = navMatch[1];
+        // PR-K · before the route change, persist the conversation
+        // turns so AtlasPageStateProvider on /programs/<id> can hydrate
+        // them and the user keeps the thread instead of starting from
+        // a blank Nexus greeting. The handoff window is intentionally
+        // short (90s) to avoid replaying old conversations.
+        const finalTurnsForHandoff: ChatTurn[] = turns.map((t) =>
+          t.id === assistantTurnId ? { ...t, text: finalDisplay } : t,
+        );
+        const handoffTurns = [
+          ...toAtlasTurns(finalTurnsForHandoff),
+          buildHandoffMarker(programName ?? 'your program'),
+        ];
+        persistOriginationHandoff({
+          programId,
+          programName: programName ?? 'your program',
+          turns: handoffTurns,
+          capturedAt: Date.now(),
+        });
         // Give the user a beat to see the success message before navigating.
         setTimeout(() => {
           router.push(`/programs/${programId}`);

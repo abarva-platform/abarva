@@ -367,19 +367,27 @@ export function AtlasDrawer({
             </div>
           )}
 
-          {/* Completed turns */}
-          {conversation.map((turn) => (
-            <DrawerChatBubble
-              key={turn.id}
-              role={turn.role}
-              text={turn.text}
-              label={
-                turn.role === 'user'
-                  ? 'You'
-                  : `${agent.initials} · ${turn.agentName}`
-              }
-            />
-          ))}
+          {/* Completed turns. PR-K · turns with agentName === '__handoff__'
+              are rendered as a divider-style banner instead of a chat
+              bubble — they mark the moment commit_program landed and
+              the conversation transitioned from Steward (origination)
+              to the active program canvas. */}
+          {conversation.map((turn) =>
+            turn.agentName === '__handoff__' ? (
+              <DrawerHandoffMarker key={turn.id} text={turn.text} />
+            ) : (
+              <DrawerChatBubble
+                key={turn.id}
+                role={turn.role}
+                text={turn.text}
+                label={
+                  turn.role === 'user'
+                    ? 'You'
+                    : `${agent.initials} · ${turn.agentName}`
+                }
+              />
+            ),
+          )}
 
           {/* In-flight streaming turn */}
           {(isStreaming || response) && (
@@ -569,6 +577,48 @@ export function AtlasDrawer({
         </div>
       </div>
     </>
+  );
+}
+
+// ── DrawerHandoffMarker ───────────────────────────────────────────────────────
+//
+// PR-K · rendered for turns with agentName === '__handoff__'. Visually a
+// hairline divider with a centered status pill so the user sees the
+// origination → active program transition as a deliberate beat rather
+// than a mid-stream chat bubble.
+
+function DrawerHandoffMarker({ text }: { text: string }) {
+  return (
+    <div
+      style={{
+        margin: '14px 0 12px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        flexShrink: 0,
+      }}
+    >
+      <div style={{ flex: 1, height: 1, background: 'rgba(250,247,241,0.18)' }} />
+      <div
+        style={{
+          fontFamily: SHELL.MONO,
+          fontSize: 9.5,
+          letterSpacing: '0.10em',
+          textTransform: 'uppercase',
+          color: 'rgba(250,247,241,0.62)',
+          fontWeight: 700,
+          padding: '4px 10px',
+          border: '1px solid rgba(250,247,241,0.18)',
+          borderRadius: 999,
+          background: 'rgba(250,247,241,0.04)',
+          textAlign: 'center',
+          maxWidth: '70%',
+        }}
+      >
+        {text}
+      </div>
+      <div style={{ flex: 1, height: 1, background: 'rgba(250,247,241,0.18)' }} />
+    </div>
   );
 }
 

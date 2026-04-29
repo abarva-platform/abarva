@@ -18,6 +18,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useRef,
   useState,
   type ReactNode,
@@ -28,6 +29,7 @@ import type {
   ChatTurn,
 } from '@/lib/shell/atlas-page-state';
 import { ATLAS_SYNTHESIS_TURN_ID } from '@/lib/shell/atlas-page-state';
+import { consumeOriginationHandoff } from '@/lib/shell/origination-handoff';
 
 // ── Default surface-to-agent mapping ─────────────────────────────────────────
 
@@ -63,6 +65,25 @@ export function AtlasPageStateProvider({
   const [currentResponse, setCurrentResponse] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // PR-K · hydrate from origination handoff if present. When the user
+  // just completed commit_program on /programs/new, StewardChat
+  // persisted the conversation turns + a handoff marker to
+  // sessionStorage before navigation. We pick that up on mount so
+  // /programs/<id> doesn't start with a blank Nexus thread — the
+  // origination conversation continues as the same canvas.
+  useEffect(() => {
+    if (surface !== 'programs-detail') return;
+    const programId =
+      typeof surfaceContext.programId === 'string' ? surfaceContext.programId : null;
+    if (!programId) return;
+    const handoffTurns = consumeOriginationHandoff(programId);
+    if (handoffTurns && handoffTurns.length > 0) {
+      setConversation(handoffTurns);
+    }
+    // Run only on first mount per surface/program. surfaceContext is
+    // referenced via lookup; we don't depend on its identity changing.
+  }, [surface, surfaceContext]);
 
   // Stable ref so ask() can cancel an in-flight request
   const abortRef = useRef<AbortController | null>(null);

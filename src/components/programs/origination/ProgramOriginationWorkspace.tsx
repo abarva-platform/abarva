@@ -219,6 +219,10 @@ export function ProgramOriginationWorkspace({
           turns={turns}
           onTurnsChange={handleTurnsChange}
           onArtifact={applyArtifact}
+          // PR-K · pass current brief.programName through so the
+          // origination → active handoff marker can address the
+          // program by name when commit_program lands.
+          programName={brief.programName}
         />
         <ProgramBriefPanel brief={brief} patternMatch={patternMatch} />
       </div>
