@@ -9,6 +9,7 @@ import { ProgramDetailPage } from '@/components/programs/ProgramDetailPage';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { getEngagementWithPhaseData } from '@/lib/programs/db-phase-queries';
 import type { EvidenceItem, ProgramGateStatus } from '@/lib/programs/programs-types';
+import { parseTimelineFiltersFromSearchParams } from '@/lib/reasoning/instance-event-timeline-filters';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,11 +18,18 @@ export default async function ProgramDetailRoute({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ phase?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
-  const { phase } = await searchParams;
+  const sp = await searchParams;
+  const phase = typeof sp.phase === 'string' ? sp.phase : undefined;
   const viewingPhase = phase ? parseInt(phase, 10) : undefined;
+
+  // Decode timeline filter URL params (`?tlKind=…&tlSince=…&tlSearch=…`).
+  // Falls through to an empty object when no params are present.
+  const timelineFilters = parseTimelineFiltersFromSearchParams(sp);
+  const preservedSearchParams: Record<string, string | undefined> = {};
+  if (phase !== undefined) preservedSearchParams.phase = phase;
 
   // Try real DB data first
   let dbData = null;
@@ -112,5 +120,11 @@ export default async function ProgramDetailRoute({
     }
   }
 
-  return <ProgramDetailPage view={view} />;
+  return (
+    <ProgramDetailPage
+      view={view}
+      timelineFilters={timelineFilters}
+      preservedSearchParams={preservedSearchParams}
+    />
+  );
 }
