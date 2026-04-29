@@ -993,6 +993,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/gate-velocity',
     description: 'Gate satisfaction velocity per instance — gates met per dwell day with projected completion times',
   },
+  {
+    title: 'Health history',
+    href: '/admin/reasoning/health-history',
+    description: 'Reconstructed health score timeline from stage transitions — derived historical health per instance',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
