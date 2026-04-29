@@ -366,6 +366,48 @@ function BackLink() {
   );
 }
 
+function ActionRow() {
+  // Two side-by-side actions above the digest body: navigate back,
+  // and open the print-friendly view in a new tab. The print page
+  // auto-triggers `window.print()` on mount — see
+  // `src/components/reasoning/PrintAutoTrigger.tsx`.
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: SPACING.md,
+        flexWrap: 'wrap',
+      }}
+    >
+      <BackLink />
+      <a
+        href="/admin/reasoning/digest/print"
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: SPACING.xs,
+          background: COLORS.navy,
+          border: `1px solid ${COLORS.navy}`,
+          borderRadius: RADIUS.lg,
+          padding: `${SPACING.sm} ${SPACING.md}`,
+          textDecoration: 'none',
+          fontFamily: TYPOGRAPHY.sans,
+          fontSize: 13,
+          color: COLORS.white,
+          fontWeight: 600,
+        }}
+      >
+        <span aria-hidden="true">⎙</span>
+        <span>Open print view</span>
+      </a>
+    </div>
+  );
+}
+
 export default async function ReasoningWeeklyDigestPage() {
   const digest = buildWeeklyDigest();
   return (
@@ -383,7 +425,7 @@ export default async function ReasoningWeeklyDigestPage() {
         title="Executive sweep"
         subtitle="Rolling 7-day snapshot of the reasoning layer — synthesis volume, cache health, user feedback, derived missions, and active contradictions / failure modes per instance."
       >
-        <BackLink />
+        <ActionRow />
         <HeaderCard digest={digest} />
         <StatGrid digest={digest} />
         <TopPatterns digest={digest} />
