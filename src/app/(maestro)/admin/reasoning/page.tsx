@@ -1028,6 +1028,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/gate-audit',
     description: 'Complete gate action audit log — waivers, approvals, and evidence submissions that affect gate status',
   },
+  {
+    title: 'Pattern stats',
+    href: '/admin/reasoning/pattern-stats',
+    description: 'Aggregate statistics per lifecycle pattern — stages, criteria, contradictions, failure modes, and instance counts',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
