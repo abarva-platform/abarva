@@ -1,6 +1,6 @@
 # Corpus Autonomous State
 
-Last update timestamp: 2026-04-29T15:09:07Z
+Last update timestamp: 2026-04-29T15:18:03Z
 Status: ACTIVE - founder resumed autonomous corpus loop and granted auto-merge authority for scoped green PRs.
 
 ## Current wave
@@ -9,7 +9,7 @@ Wave 3 - contract intelligence sourcing playbooks in progress.
 ## Domains in progress
 - Category-specific sourcing playbooks: PR #1055 merged; target met with 51 authored and merged category patterns.
 - Process/methodology: PR #1056 merged; 3 process patterns live in corpus.
-- Contract intelligence: PAT-SRC-CON-001/002/003 integration active in PR-prep branch.
+- Contract intelligence: PR #1057 merged; PAT-SRC-CON-004/005/006 integration active in PR-prep branch.
 - Pricing intelligence: Worker PRC-1 active on PAT-SRC-PRC-SAAS-001.
 - Risk patterns: Worker RSK-1 active on PAT-SRC-RSK-001/002/003.
 - Regulatory/compliance: Worker REG-1 active on PAT-SRC-REG-DORA-001.
@@ -34,7 +34,7 @@ Wave 3 - contract intelligence sourcing playbooks in progress.
 - Existing sourcing corpus on latest main before Wave 1: 24 patterns.
 - Category-specific sourcing playbooks (`PAT-SRC-CAT-*`): 51 authored and merged across Wave 1.
 - Vendor intelligence profiles (`PAT-SRC-VEN-*`): 0
-- Contract intelligence (`PAT-SRC-CON-*`): 3 authored; integration active.
+- Contract intelligence (`PAT-SRC-CON-*`): 6 authored; 3 merged; 3 integration active.
 - Pricing intelligence (`PAT-SRC-PRC-*`): 0
 - Process and methodology (`PAT-SRC-PROC-*`): 3 authored and merged.
 - Industry-specific overlays (`PAT-SRC-IND-*`): 0
@@ -61,9 +61,10 @@ Wave 3 - contract intelligence sourcing playbooks in progress.
 - #1053 - `[corpus][cat] Author PAT-SRC-CAT-EHS-001, PAT-SRC-CAT-PPM-001, PAT-SRC-CAT-QMS-001 · 3 patterns` - merged 2026-04-29T14:28Z at `ea48760970e2874c1bc1fae3804d2da0b2f242a5`.
 - #1055 - `[corpus][cat] Author PAT-SRC-CAT-RPA-001, PAT-SRC-CAT-ERP2-001, PAT-SRC-CAT-DOC-001 · 3 patterns` - merged 2026-04-29T14:58Z at `642a547be3626b77f0a8b72115efe8b33a20be61`.
 - #1056 - `[corpus][proc] Author PAT-SRC-PROC-001, PAT-SRC-PROC-002, PAT-SRC-PROC-003 · 3 patterns` - merged 2026-04-29T15:08Z at `a0245457038cf313318d5b13d49daead03d535df`.
+- #1057 - `[corpus][con] Author PAT-SRC-CON-001, PAT-SRC-CON-002, PAT-SRC-CON-003 · 3 patterns` - merged 2026-04-29T15:17Z at `f2784cf9ae1a62ee07ed59bf96eb99311ab33ab4`.
 
 ## Open PRs
-- Contract batch 1 - `[corpus][con] Author PAT-SRC-CON-001, PAT-SRC-CON-002, PAT-SRC-CON-003 · 3 patterns` - local integration in progress.
+- Contract batch 2 - `[corpus][con] Author PAT-SRC-CON-004, PAT-SRC-CON-005, PAT-SRC-CON-006 · 3 patterns` - local integration in progress.
 
 ## Held PRs requiring founder review
 - None.
@@ -94,4 +95,4 @@ Wave 3 - contract intelligence sourcing playbooks in progress.
 - Numeric pricing, discount, implementation-ratio, AI-usage, overage, and renewal-uplift claims remain intentionally blank unless source-backed by buyer evidence or approved benchmarks.
 
 ## Next action
-Validate, push, open, and auto-merge the contract batch 1 integration PR if green and scoped while vendor/domain workers continue authoring non-conflicting batches.
+Validate, push, open, and auto-merge the contract batch 2 integration PR if green and scoped while vendor/domain workers continue authoring non-conflicting batches.
