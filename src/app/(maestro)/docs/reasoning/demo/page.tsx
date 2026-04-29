@@ -454,6 +454,11 @@ export default function ReasoningDemoDocPage() {
             <Link href="/docs/reasoning/changelog" style={LINK_STYLE}>
               changelog
             </Link>
+            . Want to browse and search every pattern doctrine entry in the
+            corpus?{' '}
+            <Link href="/docs/reasoning/patterns" style={LINK_STYLE}>
+              Pattern doctrine library
+            </Link>
             .
           </p>
         </Section>

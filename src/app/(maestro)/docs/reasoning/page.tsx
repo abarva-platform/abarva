@@ -251,6 +251,14 @@ export default function ReasoningArchitectureDocPage() {
             >
               5-minute demo walkthrough
             </Link>
+            . To browse and search every pattern doctrine entry in the full
+            corpus, see the{' '}
+            <Link
+              href="/docs/reasoning/patterns"
+              style={{ color: COLORS.navy, textDecoration: 'underline', textUnderlineOffset: '2px' }}
+            >
+              pattern doctrine library
+            </Link>
             .
           </p>
         </Section>
