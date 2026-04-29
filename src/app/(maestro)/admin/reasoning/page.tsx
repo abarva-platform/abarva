@@ -783,6 +783,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/contradiction-debug',
     description: 'Per-instance contradiction detection — active, resolved, and non-firing templates with evidence',
   },
+  {
+    title: 'Vendor responses',
+    href: '/admin/reasoning/vendor-responses',
+    description: 'All vendor response submissions across source events with completeness tracking',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
