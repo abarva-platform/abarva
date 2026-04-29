@@ -868,6 +868,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/evidence-timeline',
     description: 'Chronological log of all evidence ingestions across instances — grouped by day',
   },
+  {
+    title: 'Pattern usage',
+    href: '/admin/reasoning/pattern-usage',
+    description: 'Pattern adoption analytics — instance count per lifecycle pattern broken down by tenant',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
