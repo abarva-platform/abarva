@@ -296,8 +296,11 @@ export function IntelligenceIndexPage({ filter }: IntelligenceIndexPageProps) {
             padding: '24px 48px 32px',
           }}
         >
-          {/* Page header */}
-          <div style={{ marginBottom: 18 }}>
+          {/* Page header — Sentinel-centric. The legacy "Pattern Library"
+              title shifted into the collapsed library accordion below;
+              the live page is now agent-centric so the header introduces
+              the librarian, not the table. */}
+          <div style={{ marginBottom: 12 }}>
             <div
               style={{
                 fontFamily: SHELL.MONO,
@@ -305,16 +308,16 @@ export function IntelligenceIndexPage({ filter }: IntelligenceIndexPageProps) {
                 letterSpacing: '0.18em',
                 textTransform: 'uppercase',
                 color: SHELL.INK_MUTED,
-                marginBottom: 6,
+                marginBottom: 4,
               }}
             >
-              Intelligence · {filtered.length} pattern{filtered.length !== 1 ? 's' : ''} ·{' '}
-              {activeFilterLabel}
+              Sentinel · knowledge librarian · {filtered.length} pattern
+              {filtered.length !== 1 ? 's' : ''} indexed · {activeFilterLabel}
             </div>
             <h1
               style={{
                 fontFamily: SHELL.SERIF,
-                fontSize: 26,
+                fontSize: 22,
                 fontWeight: 700,
                 color: SHELL.INK,
                 margin: 0,
@@ -322,7 +325,7 @@ export function IntelligenceIndexPage({ filter }: IntelligenceIndexPageProps) {
                 letterSpacing: '-0.01em',
               }}
             >
-              Pattern Library
+              Ask Sentinel about the corpus
             </h1>
           </div>
 
