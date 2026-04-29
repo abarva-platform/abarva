@@ -65,6 +65,8 @@ export interface EvidenceItem {
   provenanceNote?: string;
   /** ISO date string for when this evidence was recorded/uploaded. Used for staleness rendering. */
   uploadedAt?: string | null;
+  /** Optional category tags — e.g. financial, technical, legal, operational, market. */
+  tags?: import('@/lib/reasoning/evidence-tags').EvidenceTag[];
 }
 
 export interface ProgramPhasePanel {
