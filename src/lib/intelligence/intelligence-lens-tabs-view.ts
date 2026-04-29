@@ -1,9 +1,9 @@
-// INTEL4 + INT1 + INT3 + INT4 + INT5 + INT6 + INT7 · Intelligence Lens Tabs view-model.
+// INTEL4 + INT1 + INT3 + INT4 + INT5 + INT6 + INT7 + INT8 · Intelligence Lens Tabs view-model.
 //
-// Pure deterministic helper that returns metadata for the eleven canonical
+// Pure deterministic helper that returns metadata for the twelve canonical
 // lens tabs on the Intelligence surface: Summary, Evidence, Programs,
 // Actions, Signals, Pattern Plan, Gap Queue, Contradiction Monitor,
-// Programme Risk, Gate Readiness, Engagement Scorecard.
+// Programme Risk, Gate Readiness, Engagement Scorecard, Milestone Tracker.
 //
 // No model calls, no fetch, no Date.now / Math.random / new Date,
 // no live data. Same input → identical output.
@@ -31,7 +31,8 @@ export type IntelligenceLensTab =
   | 'contradiction_monitor'
   | 'programme_risk'
   | 'gate_readiness'
-  | 'engagement_scorecard';
+  | 'engagement_scorecard'
+  | 'milestone_tracker';
 
 export interface IntelligenceLensTabMeta {
   key: IntelligenceLensTab;
@@ -119,6 +120,12 @@ export const INTELLIGENCE_TABS: ReadonlyArray<IntelligenceLensTabMeta> = [
     key: 'engagement_scorecard',
     label: 'Scorecard',
     description: 'Engagement intelligence scorecard — per-programme traffic-light rollup of pattern application, evidence confidence, contradiction count, and gate state',
+    hasApexRetailContent: true,
+  },
+  {
+    key: 'milestone_tracker',
+    label: 'Milestones',
+    description: 'Per-programme upcoming milestone schedule — status, blockers, and Sentinel notes for key gates, reviews, decisions, and deliveries',
     hasApexRetailContent: true,
   },
 ];
