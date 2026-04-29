@@ -1103,6 +1103,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/contradiction-resolver',
     description: 'Guided contradiction resolution — all available paths per template with recommended actions and API examples',
   },
+  {
+    title: 'Instance Risk Matrix',
+    href: '/admin/reasoning/instance-risk-matrix',
+    description: '2×2 quadrant matrix plotting health vs. contradictions — identify urgent, watch, fragile, and low-risk instances.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
