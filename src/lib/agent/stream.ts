@@ -14,6 +14,13 @@ export interface StreamTurnArgs {
   messages: Array<{ role: 'user' | 'assistant'; content: string }>;
   model?: string;
   maxTokens?: number;
+  /**
+   * F0.4: Optional tool list passed through to the Anthropic stream.
+   * When omitted the call shape is unchanged (text-only). For routes
+   * that need full multi-turn tool execution, use `runToolUseLoop`
+   * from `streaming/toolUseLoop.ts` instead — this util is text-only.
+   */
+  tools?: Anthropic.Tool[];
 }
 
 export async function* streamAgentTurn(args: StreamTurnArgs): AsyncGenerator<string, string, unknown> {
@@ -23,6 +30,7 @@ export async function* streamAgentTurn(args: StreamTurnArgs): AsyncGenerator<str
     max_tokens: args.maxTokens ?? 1024,
     system: args.system,
     messages: args.messages,
+    ...(args.tools && args.tools.length > 0 ? { tools: args.tools } : {}),
   });
 
   let fullText = '';
