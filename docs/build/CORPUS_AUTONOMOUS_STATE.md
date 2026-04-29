@@ -1,6 +1,6 @@
 # Corpus Autonomous State
 
-Last update timestamp: 2026-04-29T17:49:00Z
+Last update timestamp: 2026-04-29T17:53:00Z
 Status: ACTIVE - founder explicitly approved resuming after pause, requested parallel governed agents, and granted auto-merge authority for scoped green PRs.
 
 ## Current wave
@@ -14,14 +14,15 @@ Wave 8 - vendor profile one-pattern PRs beginning after process/methodology batc
 - Risk patterns: queued authored batches exist; RSK-001 needs body-length review before PR.
 - Regulatory/compliance: PR #1065 merged; 2 regulatory patterns are live in corpus.
 - Industry overlays: queued authored batch exists for health, financial services, and retail overlays.
-- Vendor profiles: PR #1075 merged; PAT-SRC-VEN-ASANA-001 is in local integration; Smartsheet, Coupa, Splunk, New Relic, Elastic, Dropbox, Airtable, MongoDB, ServiceNow-AI, Figma, Notion, Slack, Canva, 1Password, SentinelOne, Lucid, Grammarly, Calendly, Zapier, and Loom are queued; Mural, ClickUp, Intercom, and Typeform workers are active.
+- Vendor profiles: PR #1077 merged; PAT-SRC-VEN-SMARTSHEET-001 is in local integration; Coupa, Splunk, New Relic, Elastic, Dropbox, Airtable, MongoDB, ServiceNow-AI, Figma, Notion, Slack, Canva, 1Password, SentinelOne, Lucid, Grammarly, Calendly, Zapier, Loom, Mural, ClickUp, Intercom, and Typeform are queued; SurveyMonkey, Qualtrics, Gainsight, and Freshworks workers are active.
 
 ## Active lane board
-- 2026-04-29T17:46:00Z - Integration lead - PAT-SRC-VEN-ASANA-001 vendor profile - aggregate wiring, count updates, validation, PR creation.
+- 2026-04-29T17:53:00Z - Integration lead - PAT-SRC-VEN-SMARTSHEET-001 vendor profile - aggregate wiring, count updates, validation, PR creation.
 - 2026-04-29T16:42:16Z - PR #1070 - PAT-SRC-VEN-CLOUDFLARE-001 vendor profile - merged at `8682f28a0d92819597d92a69a5b20b18db24b510`.
 - 2026-04-29T17:28:53Z - PR #1071 - PAT-SRC-VEN-DOCUSIGN-001 vendor profile - merged at `3312bd55668c293e1b137d618780578ad11dd8c0`.
 - 2026-04-29T17:38:24Z - PR #1073 - PAT-SRC-VEN-GITLAB-001 vendor profile - merged at `f0156489059e5eacef1c1c64188b745c308a51ce`.
 - 2026-04-29T17:45:42Z - PR #1075 - PAT-SRC-VEN-GITHUB-001 vendor profile - merged at `f941fdc86c7fe8606afa5d455e7dd3a7b6abf1b9`.
+- 2026-04-29T17:52:42Z - PR #1077 - PAT-SRC-VEN-ASANA-001 vendor profile - merged at `f193c464a9bfa600e0229b98486cd0c4b2c27b51`.
 - 2026-04-29T17:30:12Z - Worker Aristotle (`019dda49-c002-7ea1-a60a-c7c835d542ce`) - PAT-SRC-VEN-CANVA-001 - active.
 - 2026-04-29T17:30:12Z - Worker Gibbs (`019dda49-c033-7883-ab5f-5c4e0ca2496b`) - PAT-SRC-VEN-1PASSWORD-001 - active.
 - 2026-04-29T17:30:12Z - Worker Boyle (`019dda4a-3809-7d31-94b2-a20e0eea54aa`) - PAT-SRC-VEN-SENTINELONE-001 - active.
@@ -53,7 +54,7 @@ Wave 8 - vendor profile one-pattern PRs beginning after process/methodology batc
 ## Pattern counts by domain
 - Existing sourcing corpus on latest main before Wave 1: 24 patterns.
 - Category-specific sourcing playbooks (`PAT-SRC-CAT-*`): 51 authored and merged across Wave 1.
-- Vendor intelligence profiles (`PAT-SRC-VEN-*`): 6 authored into integrated PR flow; 5 merged; 1 active in PR-prep; multiple additional authored profiles queued for one-pattern PRs.
+- Vendor intelligence profiles (`PAT-SRC-VEN-*`): 7 authored into integrated PR flow; 6 merged; 1 active in PR-prep; multiple additional authored profiles queued for one-pattern PRs.
 - Contract intelligence (`PAT-SRC-CON-*`): 7 authored and merged.
 - Pricing intelligence (`PAT-SRC-PRC-*`): 2 authored and merged.
 - Process and methodology (`PAT-SRC-PROC-*`): 7 authored and merged.
@@ -96,9 +97,10 @@ Wave 8 - vendor profile one-pattern PRs beginning after process/methodology batc
 - #1071 - `[corpus][ven] Author PAT-SRC-VEN-DOCUSIGN-001 · 1 pattern` - merged 2026-04-29T17:28:53Z at `3312bd55668c293e1b137d618780578ad11dd8c0`.
 - #1073 - `[corpus][ven] Author PAT-SRC-VEN-GITLAB-001 · 1 pattern` - merged 2026-04-29T17:38:24Z at `f0156489059e5eacef1c1c64188b745c308a51ce`.
 - #1075 - `[corpus][ven] Author PAT-SRC-VEN-GITHUB-001 · 1 pattern` - merged 2026-04-29T17:45:42Z at `f941fdc86c7fe8606afa5d455e7dd3a7b6abf1b9`.
+- #1077 - `[corpus][ven] Author PAT-SRC-VEN-ASANA-001 · 1 pattern` - merged 2026-04-29T17:52:42Z at `f193c464a9bfa600e0229b98486cd0c4b2c27b51`.
 
 ## Open PRs
-- #1077 - `[corpus][ven] Author PAT-SRC-VEN-ASANA-001 · 1 pattern` - open; CI/Vercel pending. URL: https://github.com/anandsundaram-hash/abarva/pull/1077
+- None yet. PAT-SRC-VEN-SMARTSHEET-001 is in local integration and will be opened after validation.
 
 ## Held PRs requiring founder review
 - None.
@@ -110,7 +112,6 @@ Wave 8 - vendor profile one-pattern PRs beginning after process/methodology batc
 
 ## Next 16 queued pattern IDs
 - PAT-SRC-VEN-DATADOG-001
-- PAT-SRC-VEN-ASANA-001
 - PAT-SRC-VEN-SMARTSHEET-001
 - PAT-SRC-VEN-COUPA-001
 - PAT-SRC-VEN-SPLUNK-001
@@ -131,4 +132,4 @@ Wave 8 - vendor profile one-pattern PRs beginning after process/methodology batc
 - Vendor/regulatory/pricing PRs remain one-pattern PRs because source confidence and evidence discipline are higher risk.
 
 ## Next action
-Watch PR #1077 checks and auto-merge if green while preparing PAT-SRC-VEN-SMARTSHEET-001 integration in parallel.
+Validate PAT-SRC-VEN-SMARTSHEET-001 locally, push `corpus/ven/smartsheet-integration`, open PR, watch checks, and auto-merge if all gates are green while vendor workers continue authoring in parallel.

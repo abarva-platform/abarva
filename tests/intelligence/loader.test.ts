@@ -6,7 +6,7 @@ import type { SolutionSeed } from '../../src/lib/intelligence/seed-solutions';
 
 describe('intelligence corpus loader', () => {
   it('loads the shipped Phase 1 corpus counts', () => {
-    expect(corpus.patterns).toHaveLength(146);
+    expect(corpus.patterns).toHaveLength(147);
     expect(corpus.signals).toHaveLength(30);
     expect(corpus.solutions).toHaveLength(9);
     expect(corpus.contradictions).toHaveLength(10);
