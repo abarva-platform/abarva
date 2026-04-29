@@ -12,6 +12,9 @@
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SynthesisContext } from '@/lib/reasoning/types';
 import { findLifecyclePattern } from '@/lib/reasoning/lifecycle-pattern-lookup';
+import { pickFallbackQuoteFromContext } from '@/lib/reasoning/comparison-helpers';
+import { SentinelSynthesisQuote } from '@/components/source/SentinelSynthesisQuote';
+import { NexusSynthesisQuote } from '@/components/programs/NexusSynthesisQuote';
 
 export interface InstanceComparisonSide {
   /** Stable id of the instance (e.g. "APX-CDP-2026"). */
@@ -30,25 +33,11 @@ export interface InstanceComparisonGridProps {
 }
 
 // ── First-sentence quote excerpt ────────────────────────────────────────────
-function firstSentence(text: string | undefined | null): string {
-  if (!text) return '';
-  const trimmed = text.trim();
-  if (!trimmed) return '';
-  // Match up to the first sentence-ending punctuation; otherwise return the
-  // whole string (capped at 240 chars to keep the grid balanced).
-  const match = trimmed.match(/^[^.!?]*[.!?]/);
-  const sentence = match ? match[0] : trimmed;
-  return sentence.length > 240 ? `${sentence.slice(0, 237)}…` : sentence;
-}
-
-function synthesisExcerpt(context: SynthesisContext): string {
-  const candidate = firstSentence(context.stageGuidance);
-  if (candidate) return candidate;
-  const firstCitation = context.citations[0]?.excerpt;
-  const cited = firstSentence(firstCitation);
-  if (cited) return cited;
-  return 'Synthesis available — open detail page';
-}
+//
+// The excerpt is now a *fallback* for the streaming synthesis quote
+// component — it is shown immediately on first paint and replaced as
+// the live synthesis text streams in. The selection logic itself lives
+// in `pickFallbackQuoteFromContext` so it can be unit-tested.
 
 // ── Pattern title (for column header sub-line) ──────────────────────────────
 function patternTitleFor(context: SynthesisContext): string {
@@ -130,7 +119,7 @@ function deriveMetrics(context: SynthesisContext): ComparisonMetrics {
     cascadeCount: cascade.count,
     cascadeTopSeverity: cascade.topLabel,
     activeBlockerCount,
-    excerpt: synthesisExcerpt(context),
+    excerpt: pickFallbackQuoteFromContext(context),
     citations: context.citations
       .map((c) => c.ref.section)
       .filter((s): s is string => Boolean(s)),
@@ -178,6 +167,45 @@ function MonoLabel({ children }: { children: React.ReactNode }) {
     >
       {children}
     </div>
+  );
+}
+
+function SynthesisQuoteCell({
+  side,
+  fallback,
+}: {
+  side: InstanceComparisonSide;
+  fallback: string;
+}) {
+  const quoteStyle: React.CSSProperties = {
+    margin: 0,
+    fontFamily: SHELL.SERIF,
+    fontSize: 14,
+    lineHeight: 1.5,
+    color: SHELL.INK,
+    fontStyle: 'italic',
+    // Keep the column readable on narrow screens — give the streaming
+    // text room to grow without overlapping neighbouring rows.
+    minHeight: 64,
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-word',
+  };
+  return (
+    <p style={quoteStyle}>
+      “
+      {side.kind === 'source' ? (
+        <SentinelSynthesisQuote
+          instanceId={side.instanceId}
+          fallback={fallback}
+        />
+      ) : (
+        <NexusSynthesisQuote
+          programId={side.instanceId}
+          fallback={fallback}
+        />
+      )}
+      ”
+    </p>
   );
 }
 
@@ -402,7 +430,7 @@ export function InstanceComparisonGrid({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '180px 1fr 1fr',
+          gridTemplateColumns: '180px minmax(0, 1fr) minmax(0, 1fr)',
         }}
       >
         <div
@@ -436,38 +464,16 @@ export function InstanceComparisonGrid({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '180px 1fr 1fr',
+          gridTemplateColumns: '180px minmax(0, 1fr) minmax(0, 1fr)',
         }}
       >
         <MetricRow
           label="Synthesis quote"
           leftContent={
-            <p
-              style={{
-                margin: 0,
-                fontFamily: SHELL.SERIF,
-                fontSize: 14,
-                lineHeight: 1.5,
-                color: SHELL.INK,
-                fontStyle: 'italic',
-              }}
-            >
-              “{leftMetrics.excerpt}”
-            </p>
+            <SynthesisQuoteCell side={left} fallback={leftMetrics.excerpt} />
           }
           rightContent={
-            <p
-              style={{
-                margin: 0,
-                fontFamily: SHELL.SERIF,
-                fontSize: 14,
-                lineHeight: 1.5,
-                color: SHELL.INK,
-                fontStyle: 'italic',
-              }}
-            >
-              “{rightMetrics.excerpt}”
-            </p>
+            <SynthesisQuoteCell side={right} fallback={rightMetrics.excerpt} />
           }
         />
         <MetricRow
