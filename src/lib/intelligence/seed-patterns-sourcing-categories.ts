@@ -1043,6 +1043,496 @@ Vendor claim: composable architecture creates flexibility. Detection: require ow
 
 The common failure is selecting for developer architecture while editor adoption collapses. The second failure is under-scoping migration: legacy content inventory, SEO redirects, localization mapping, component libraries, analytics tags, personalization rules, assets, user roles, and front-end build ownership. The third failure is assuming accessibility or regulatory compliance without authoring-tool evidence and buyer legal review. The fourth failure is comparing license tiers while ignoring API calls, bandwidth, storage, environments, SSO, audit logs, support, and migration cost.`,
   },
+  {
+    id: 'PAT-SRC-CAT-COMM-001',
+    slug: 'collaboration-productivity-suite-sourcing',
+    title: 'Collaboration and Productivity Suite Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Collaboration and productivity suite sourcing is an enterprise operating-platform decision, not a per-seat license comparison; identity, records, AI, accessibility, migration, and commercial leverage determine durable fit.',
+    applicability:
+      'Apply when sourcing or renewing enterprise email, calendar, document collaboration, chat, meetings, cloud file storage, productivity apps, AI productivity add-ons, or suite consolidation.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.80,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.microsoft.com/en-us/microsoft-365/enterprise/microsoft-365-plans-and-pricing',
+      'https://www.microsoft.com/en-us/microsoft-365-copilot/pricing/enterprise',
+      'https://learn.microsoft.com/en-us/compliance/assurance/assurance-microsoft-365-compliance-program',
+      'https://www.microsoft.com/en-us/accessibility/conformance-reports/',
+      'https://workspace.google.com/pricing',
+      'https://workspace.google.com/security/',
+      'https://support.google.com/accessibility/answer/2821355?hl=en',
+      'https://cloud.google.com/security/compliance/iso-27001?hl=en',
+      'https://www.zoho.com/workplace/pricing.html',
+      'https://www.zoho.com/workplace/security.html',
+      'https://www.zoho.com/compliance.html',
+      'https://www.cisa.gov/resources-tools/services/secure-cloud-business-applications-scuba-project',
+    ],
+    regulatoryChips: ['SOC-2-if-available', 'ISO-27001-if-scoped', 'GDPR-if-EU-data', 'accessibility-ACR-review'],
+    relatedPatternIds: ['PAT-SRC-CAT-COMM-002', 'PAT-SRC-CAT-COMM-003', 'PAT-SRC-CAT-IAM-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'enterprise_saas',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Microsoft 365',
+        tier: 'enterprise',
+        positioning: 'Enterprise productivity suite strongest where Office compatibility, Windows, Entra, Intune, Purview, Defender, Teams, and E5 security/compliance depth matter.',
+        cautions: ['No-Teams variants, Copilot licensing, E5 security, support, storage, and renewal economics must be normalized before award'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Microsoft 365 Enterprise Plans and Pricing', url: 'https://www.microsoft.com/en-us/microsoft-365/enterprise/microsoft-365-plans-and-pricing', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'Google Workspace',
+        tier: 'enterprise',
+        positioning: 'Cloud-native productivity suite strongest where Gmail, Drive, Meet, Chat, Docs, browser-first collaboration, and simpler administration are central.',
+        cautions: ['Promotional list pricing, Enterprise sales-contact posture, Gemini access, storage, Voice, and migration cost require event-time verification'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Google Workspace Pricing', url: 'https://workspace.google.com/pricing', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'Zoho Workplace',
+        tier: 'mid-market',
+        positioning: 'Alternative productivity suite candidate for cost-sensitive or privacy-positioned environments where Mail, WorkDrive, Cliq, Calendar, and workplace tools can satisfy required workflows.',
+        cautions: ['Enterprise feature parity, support depth, ecosystem integrations, and component-level compliance scope require tighter diligence'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Zoho Workplace Pricing', url: 'https://www.zoho.com/workplace/pricing.html', asOf: '2026-04-29' },
+        ],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'Public suite pricing anchors and AI add-on model',
+        model: 'subscription',
+        metric: 'User per month by suite tier, with add-ons for AI, security, voice, storage, support, or compliance',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Microsoft 365 Enterprise Plans and Pricing', url: 'https://www.microsoft.com/en-us/microsoft-365/enterprise/microsoft-365-plans-and-pricing', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Microsoft 365 Copilot Pricing', url: 'https://www.microsoft.com/en-us/microsoft-365-copilot/pricing/enterprise', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Google Workspace Pricing', url: 'https://workspace.google.com/pricing', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Enterprise net price, discount, renewal concession, reseller pricing, and ELA/EA terms require contract or quote evidence' },
+        ],
+        confidence: 0.62,
+        notes: 'Use public pages as dated list-price orientation only. Do not infer negotiated enterprise pricing or discount depth.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Renewal and license flexibility',
+        buyerPosition: 'Require true-up/down mechanics, license segmentation, renewal caps, add-on treatment, and SKU substitution rights before suite award.',
+      },
+      {
+        clauseArea: 'Security, records, and data handling',
+        buyerPosition: 'Require current trust documentation, DPA, data residency, retention/eDiscovery support, audit logs, accessibility conformance reports, and AI data-use terms.',
+      },
+      {
+        clauseArea: 'Migration acceptance',
+        buyerPosition: 'Tie migration acceptance to mail routing, calendars, file fidelity, shared drives, permissions, retention labels, mobile controls, macros/add-ins, automations, and user adoption evidence.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Persona-based license segmentation',
+        whenToUse: 'Use when knowledge workers, frontline users, contractors, executives, and admins need different suite capabilities.',
+        buyerAsk: 'Normalize license mix by user population and require change rights as adoption and AI rollout mature.',
+      },
+      {
+        lever: 'AI add-on separation',
+        whenToUse: 'Use when vendor bundles AI into renewal momentum before data hygiene and adoption readiness are proven.',
+        buyerAsk: 'Stage AI seats by role, readiness, sensitive-content controls, usage analytics, and measured adoption outcomes.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'comm-suite-migration-disruption',
+        label: 'Suite migration disruption',
+        severity: 'high',
+        detectionSignals: ['Migration plan underweights mail routing, document fidelity, retention, mobile, external sharing, macros, add-ins, and user behavior.'],
+        mitigations: ['Run pilot migrations and adoption tests before award', 'Separate technical cutover from behavior change planning'],
+      },
+      {
+        id: 'comm-suite-ai-overbuy',
+        label: 'AI productivity overbuy',
+        severity: 'medium',
+        detectionSignals: ['Paid AI seats are proposed before permissions hygiene, use-case owners, or adoption metrics exist.'],
+        mitigations: ['Require role-level AI deployment plan and opt-in pilot gates'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Raise records retention, eDiscovery, DLP, audit, supervision, customer-data, data residency, and AI-permission controls.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Review PHI boundaries, BAA availability, mobile controls, external sharing, and records retention by exact service component.',
+      },
+      {
+        industry: 'public_sector',
+        modifier: 'Require accessibility conformance reports, procurement transparency, residency, records, security attestations, and government-cloud eligibility review.',
+      },
+    ],
+    body: `## Summary
+Collaboration suites are now the work system of record for many enterprises. Email, meetings, files, documents, chat, identity-adjacent controls, retention, and AI assistance increasingly converge in the same sourcing decision. The durable decision is therefore not the lowest public seat price. It is whether the suite can support the buyer's operating model, security and records posture, document workflows, migration constraints, accessibility expectations, and commercial leverage.
+
+Microsoft 365, Google Workspace, Zoho Workplace, and adjacent tools solve overlapping but different problems. Microsoft tends to be strongest where Office desktop compatibility, Windows, Entra, Intune, Purview, Defender, Teams, and E5 security/compliance depth matter. Google tends to be strongest where browser-first collaboration, Gmail, Drive, Meet, Chat, Docs, simpler cloud administration, and cloud-native adoption are central. Zoho can be relevant for cost-sensitive or privacy-positioned alternatives, but enterprise buyers need tighter diligence on feature parity, support depth, ecosystem fit, and component-level compliance scope.
+
+## When to apply
+Use this pattern when a sourcing event includes enterprise email, calendar, document collaboration, chat, meetings, cloud file storage, productivity apps, AI productivity add-ons, or suite consolidation. It fits Microsoft 365 renewals, Google Workspace migrations, Zoho or alternative evaluations, dual-suite rationalization, frontline and knowledge-worker segmentation, and security/compliance-driven collaboration modernization. Do not use it as the primary pattern for standalone UCaaS, standalone file sharing, email security gateways, project management, or narrow chat tools unless they are part of a broader suite strategy.
+
+## Category boundary
+In scope: email, calendar, documents, spreadsheets, presentations, file storage, sharing, chat, meetings, search, mobile controls, identity integration, retention, eDiscovery, DLP, audit, admin policy, accessibility conformance, AI productivity add-ons, migration services, user adoption, and enterprise support. Out of scope: standalone video conferencing, enterprise messaging, storage, UCaaS, or project tools unless the buying decision is suite-level.
+
+## Lifecycle and gates
+The scope gate should document user population by role, current license mix, mail/calendar dependencies, document storage and sharing baseline, identity and endpoint controls, compliance and records requirements, accessibility requirements, migration cutover constraints, AI add-on assumptions, and external collaboration posture. The RFP release gate should require a comparable feature matrix, pricing template that separates base suite, add-ons, AI, voice, storage, security, support, and migration, plus current trust and accessibility evidence. The evaluation gate should mark net pricing as founder-data-gap unless verified, score migration risk, and score the admin/security operating model. The award gate should approve final license mix, renewal escalators, data exit terms, adoption measurement, and AI rollout governance.
+
+## Evaluation rubric
+Weight security and compliance around 20 percent, user productivity fit around 20 percent, interoperability and migration risk around 15 percent, administration/identity/endpoint fit around 15 percent, commercial model around 15 percent, accessibility/support/trust evidence around 10 percent, and AI roadmap around 5 percent. Increase compliance weight for financial services, healthcare, education, public sector, and regulated communication environments. Increase migration weight for organizations with heavy desktop macros, legacy shared drives, external collaboration, or complex retention labels.
+
+## Pricing and contract notes
+Public pricing pages are list-price orientation only. They can show available tiers, AI add-on posture, and self-service limits, but they do not prove enterprise net price, discount depth, renewal concessions, reseller terms, migration cost, or true-up rights. Any enterprise net price, discount percentage, renewal concession, ELA/EA term, or reseller-specific pricing should remain founder-data-gap unless supported by an official quote, order form, contract, reseller bid, or billing export.
+
+Contracting should lock renewal caps, license flexibility, add-on pricing, AI data-use terms, data export and deletion, retention/eDiscovery obligations, DPA, subprocessors, data residency, support SLAs, accessibility evidence, migration acceptance, and transition assistance. For regulated buyers, legal and security review must scope controls to the exact service and tenant configuration. Do not claim a suite makes a buyer compliant.
+
+## Contradictions and failure modes
+Vendor claim: the suite is cheaper. Detection: compare base licenses, add-ons, support, storage, voice, AI, security, migration, training, and renewal year economics. Vendor claim: AI is included. Detection: require qualifying license, data permissions, sensitive content controls, usage analytics, and adoption plan. Vendor claim: migration is straightforward. Detection: run pilots for mail routing, calendars, file fidelity, shared drives, permissions, retention, mobile controls, macros, add-ins, and automations.
+
+The common failure is treating a suite renewal as procurement arithmetic while the real decision is operating-platform lock-in. The second failure is overbuying AI before data permissions and role-level use cases are ready. The third failure is underestimating user behavior change, especially when moving between desktop-first and browser-first collaboration models.`,
+  },
+  {
+    id: 'PAT-SRC-CAT-COMM-002',
+    slug: 'video-conferencing-platform-sourcing',
+    title: 'Video Conferencing Platform Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Video conferencing platforms have matured from meeting utilities into collaboration infrastructure; ecosystem fit, security, accessibility, AI workflows, rooms, compliance, and procurement leverage now drive the sourcing decision.',
+    applicability:
+      'Apply when sourcing meeting platforms, video conferencing, room systems, webinar/event tooling, AI meeting assistants, calling bundles, or compliance-ready synchronous collaboration platforms.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.80,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://zoom.us/pricing/',
+      'https://www.zoom.com/en/trust/',
+      'https://www.zoom.com/en/trust/legal-compliance/',
+      'https://www.microsoft.com/en-us/microsoft-teams/compare-microsoft-teams-business-options',
+      'https://learn.microsoft.com/en-us/microsoftteams/security-compliance-overview',
+      'https://www.microsoft.com/en-us/microsoft-teams/accessibility-closed-captions-transcriptions',
+      'https://workspace.google.com/pricing',
+      'https://workspace.google.com/intl/en/products/meet/',
+      'https://support.google.com/accessibility/answer/7313544?hl=en',
+      'https://support.google.com/a/answer/7582940?hl=en',
+      'https://pricing.webex.com/us/en/hybrid-work/meetings/all-features/',
+      'https://www.cisco.com/c/en/us/products/collateral/conferencing/webex-meeting-center/white-paper-c11-737588.html',
+    ],
+    regulatoryChips: ['accessibility-review', 'SOC-2-if-available', 'FedRAMP-if-government-SKU', 'HIPAA-if-healthcare-workflow'],
+    relatedPatternIds: ['PAT-SRC-CAT-COMM-001', 'PAT-SRC-CAT-COMM-003', 'PAT-SRC-CAT-IAM-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'enterprise_saas',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Zoom Workplace',
+        tier: 'enterprise',
+        positioning: 'Meeting-first collaboration platform candidate where external familiarity, webinars, events, rooms, AI meeting workflows, and cross-organization neutrality matter.',
+        cautions: ['Enterprise pricing, AI entitlements, storage, compliance SKU, and room-device scope require quote verification'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Zoom Workplace Pricing', url: 'https://zoom.us/pricing/', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'Microsoft Teams and Google Meet',
+        tier: 'enterprise',
+        positioning: 'Suite-bundled meeting platforms strongest where Microsoft 365 or Google Workspace already define identity, calendar, documents, chat, compliance, and admin policy.',
+        cautions: ['Included-plan assumptions must be validated by tier, tenant settings, meeting limits, recordings, captions, storage, and compliance features'],
+      },
+      {
+        vendorName: 'Cisco Webex',
+        tier: 'enterprise',
+        positioning: 'Enterprise collaboration candidate where Cisco calling, room devices, hybrid work hardware, public-sector/security posture, or communications depth matters.',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Webex Meetings Plans and Pricing', url: 'https://pricing.webex.com/us/en/hybrid-work/meetings/all-features/', asOf: '2026-04-29' },
+        ],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'Video conferencing public plan and enterprise quote model',
+        model: 'hybrid',
+        metric: 'Users, hosts, suite bundles, rooms, calling, webinars, events, AI, storage, support, and compliance add-ons',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Zoom Pricing', url: 'https://zoom.us/pricing/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Microsoft Teams Business Options', url: 'https://www.microsoft.com/en-us/microsoft-teams/compare-microsoft-teams-business-options', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Google Workspace Pricing', url: 'https://workspace.google.com/pricing', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Enterprise net pricing, education/public-sector terms, renewal concessions, and room add-ons require quote evidence' },
+        ],
+        confidence: 0.61,
+        notes: 'List prices and plan limits are volatile. Snapshot current page, region, and plan at event time.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Security and compliance controls',
+        buyerPosition: 'Require encryption posture, admin controls, identity/SSO, retention/eDiscovery, audit artifacts, data residency, government/healthcare SKU review, and incident notification terms.',
+      },
+      {
+        clauseArea: 'AI meeting features',
+        buyerPosition: 'Define transcript, summary, recording, retention, model/data-use, opt-in, user consent, and admin-control boundaries for meeting AI features.',
+      },
+      {
+        clauseArea: 'Rooms and hardware',
+        buyerPosition: 'Define room licenses, device lifecycle, interoperability, support ownership, firmware/update model, installation acceptance, and exit support.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Suite-bundle displacement pressure',
+        whenToUse: 'Use when Zoom or Webex competes against bundled Teams or Meet access already present in a productivity suite.',
+        buyerAsk: 'Trade standalone premium only for measurable workflow, external-user, room, webinar, security, or adoption advantages.',
+      },
+      {
+        lever: 'Add-on decomposition',
+        whenToUse: 'Use when the headline price excludes webinars, events, calling, rooms, AI, compliance, storage, support, or toll audio.',
+        buyerAsk: 'Require line-item add-on schedule and renewal protections for each module.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'video-suite-shelfware',
+        label: 'Meeting platform shelfware',
+        severity: 'medium',
+        detectionSignals: ['Organization pays for multiple video platforms without usage segmentation by meeting type or user persona.'],
+        mitigations: ['Analyze active usage, room footprint, external meeting needs, and suite entitlements before renewal'],
+      },
+      {
+        id: 'video-ai-compliance-gap',
+        label: 'Meeting AI compliance gap',
+        severity: 'high',
+        detectionSignals: ['Transcripts, summaries, recordings, or AI assistants are enabled without retention, consent, access, or data-use controls.'],
+        mitigations: ['Require AI governance exhibit before enabling enterprise-wide meeting AI'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'healthcare',
+        modifier: 'Review PHI boundaries, BAA availability, recording/transcript controls, access policy, and patient-facing use cases by exact SKU.',
+      },
+      {
+        industry: 'higher_education',
+        modifier: 'Stress accessibility, captions, LMS integration, classroom rooms, student privacy, and large meeting/event needs.',
+      },
+      {
+        industry: 'public_sector',
+        modifier: 'Review government cloud, FedRAMP posture where required, accessibility, records retention, procurement, and data residency.',
+      },
+    ],
+    body: `## Summary
+Video conferencing platforms have matured from meeting utilities into bundled collaboration infrastructure. The core product is synchronous audio and video, but enterprise buying decisions now include identity, admin policy, recordings, transcripts, AI summaries, security review, compliance artifacts, accessibility, rooms, webinars, calling, chat, and ecosystem lock-in. The right sourcing question is not only which platform has the best video quality. It is which collaboration operating model the buyer wants to reinforce.
+
+Zoom is often meeting-first, with broader Workplace packaging and strong external-call familiarity. Microsoft Teams is tied to Microsoft 365, Entra, Outlook, SharePoint, Purview, and Office workflows. Google Meet is bundled into Google Workspace and benefits from Gmail, Calendar, Docs, Drive, browser-first access, and Workspace admin policy. Cisco Webex is a collaboration suite with depth around enterprise communications, calling, room systems, and security-oriented positioning.
+
+## When to apply
+Use this pattern when evaluating synchronous collaboration, video conferencing, meeting-room systems, webinar/event tooling, AI meeting assistants, calling bundles, or compliance-ready communications platforms. It fits hybrid-work infrastructure, B2B collaboration, education, healthcare, regulated enterprise meetings, customer success, sales meetings, learning, and board/executive collaboration. Do not use it as the primary pattern for asynchronous messaging, productivity suites, contact center, or telephony-only sourcing unless video meetings are central.
+
+## Category boundary
+In scope: meetings, host/user licensing, participant limits, external guests, webinars, events, rooms, devices, recordings, transcripts, captions, translations, AI summaries, chat adjacency, calendar integration, identity/SSO, admin controls, retention, eDiscovery, audit artifacts, support, storage, compliance SKU, and accessibility. Out of scope: general productivity suites, enterprise messaging, project management, LMS, and UCaaS unless the meeting platform is bundled into those decisions.
+
+## Lifecycle and gates
+The scope gate should define active paid seats, meeting hosts, participant patterns, external collaboration, webinar/event needs, room footprint, calling needs, recording/transcript policy, accessibility requirements, retention/eDiscovery needs, compliance scope, and existing suite entitlements. The RFP gate should require comparable pricing for users/hosts, rooms, calling, webinars, events, AI, storage, compliance, support, and implementation. The demo gate should test calendar scheduling, external guest access, room join, captions, transcript, recording, admin policy, retention setting, security controls, and AI summary governance. The BAFO gate should normalize suite-bundled economics against standalone platform value.
+
+## Evaluation rubric
+Weight ecosystem fit around 25 percent, security/compliance/admin controls around 20 percent, meeting and room experience around 15 percent, accessibility around 10 percent, AI and recording governance around 10 percent, integration and interoperability around 10 percent, and commercial model around 10 percent. Increase accessibility weight for education, public sector, healthcare, and global workforces. Increase room/hardware weight where hybrid office investment is material. Increase compliance weight where recordings, transcripts, legal hold, supervision, or public-sector requirements apply.
+
+## Pricing and contract notes
+Public pricing should be treated as directional only. Microsoft, Google, Webex, and Zoom publish plan pages or business options, but enterprise net pricing, discounts, education/public-sector terms, negotiated add-ons, and renewal concessions require direct evidence. Normalize base licenses, suite entitlements, webinar/event modules, rooms, devices, calling, toll audio, AI, storage, premium support, security/compliance add-ons, and implementation services. Avoid comparing a standalone meeting platform to a suite-bundled meeting tool without assigning value to actual usage and requirements.
+
+Contracting should define security controls, identity/SSO, encryption posture, admin policy, retention, eDiscovery, audit artifacts, DPA, data residency, subprocessor terms, incident notification, accessibility evidence, room support, device lifecycle, AI meeting-data use, recording/transcript controls, consent configuration, export, deletion, and transition assistance.
+
+## Contradictions and failure modes
+Vendor claim: bundled meetings are free. Detection: compare actual user experience, external collaboration, rooms, webinars, compliance controls, support, and adoption against the suite cost already paid. Vendor claim: AI meeting summaries improve productivity. Detection: require usage, consent, retention, access, data-use, and measurable adoption evidence. Vendor claim: compliance is covered. Detection: verify exact SKU, tenant configuration, trust artifact, and buyer jurisdiction.
+
+The common failure is standardizing on a platform because it is already bundled, while ignoring external-meeting friction, room quality, accessibility, and webinar needs. The second failure is paying for multiple meeting platforms without active-usage segmentation. The third failure is enabling recordings, transcripts, and AI summaries without retention, consent, and access-control design.`,
+  },
+  {
+    id: 'PAT-SRC-CAT-COMM-003',
+    slug: 'enterprise-messaging-platform-sourcing',
+    title: 'Enterprise Messaging and Team Chat Platform Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Enterprise messaging sourcing is a governance and workflow-platform decision; retention, eDiscovery, external collaboration, AI/agent controls, integrations, search, security, and suite lock-in matter more than chat UX alone.',
+    applicability:
+      'Apply when sourcing Slack, Microsoft Teams chat, Google Chat, Mattermost, or similar enterprise messaging platforms for persistent team communication, external collaboration, workflow automation, compliance, and AI/agent orchestration.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.79,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://slack.com/enterprise',
+      'https://slack.com/intl/en-us/pricing',
+      'https://support.microsoft.com/en-us/office/information-protection-in-microsoft-teams-d71ce838-d8a6-4841-bc08-3d4e93ac22a5',
+      'https://learn.microsoft.com/en-us/microsoft-365/compliance/teams-workflow-in-advanced-ediscovery',
+      'https://learn.microsoft.com/en-us/microsoft-365/compliance/retention-policies-teams?view=o365-worldwide',
+      'https://workspace.google.com/products/chat/',
+      'https://workspace.google.com/pricing',
+      'https://mattermost.com/pricing/',
+      'https://docs.mattermost.com/product-overview/certifications-and-compliance.html',
+      'https://docs.mattermost.com/product-overview/editions-and-offerings.html',
+    ],
+    regulatoryChips: ['retention-eDiscovery-review', 'DLP-if-available', 'SOC-2-if-available', 'government-cloud-if-required'],
+    relatedPatternIds: ['PAT-SRC-CAT-COMM-001', 'PAT-SRC-CAT-COMM-002', 'PAT-SRC-CAT-IAM-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'enterprise_saas',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Slack',
+        tier: 'enterprise',
+        positioning: 'Enterprise messaging platform candidate where app ecosystem, external collaboration, workflow automation, search, channels, and AI/agent orchestration matter.',
+        cautions: ['Enterprise pricing, retention, DLP, legal hold, data residency, GovSlack, and AI terms require exact plan and contract review'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Slack Enterprise', url: 'https://slack.com/enterprise', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Slack Pricing', url: 'https://slack.com/intl/en-us/pricing', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'Microsoft Teams chat and Google Chat',
+        tier: 'enterprise',
+        positioning: 'Suite-bundled messaging candidates strongest where Microsoft 365 or Google Workspace already define identity, docs, meetings, retention, and admin policy.',
+        cautions: ['Retention, eDiscovery, channel history, external collaboration, and search behavior must be validated by tenant and plan'],
+      },
+      {
+        vendorName: 'Mattermost',
+        tier: 'specialist',
+        positioning: 'Secure and self-hostable messaging candidate for mission-critical, data-sovereign, air-gapped, developer, and regulated collaboration contexts.',
+        cautions: ['Self-hosting reduces some vendor lock-in but adds infrastructure, upgrade, support, scale, compliance, and admin burden'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Mattermost Pricing', url: 'https://mattermost.com/pricing/', asOf: '2026-04-29' },
+        ],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'Enterprise messaging plan and quote model',
+        model: 'subscription',
+        metric: 'Users, guests, workspaces, retention, eDiscovery, DLP, AI, support, app/integration usage, data residency, and deployment model',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Slack Pricing', url: 'https://slack.com/intl/en-us/pricing', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Google Workspace Pricing', url: 'https://workspace.google.com/pricing', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Mattermost Pricing', url: 'https://mattermost.com/pricing/', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Enterprise Grid/custom pricing, Microsoft suite allocation, discounts, retention/eDiscovery add-ons, and renewal concessions require quote or contract evidence' },
+        ],
+        confidence: 0.58,
+        notes: 'Do not use third-party enterprise pricing benchmarks without approval. Public plan pages do not establish net price or discount depth.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Records, retention, and eDiscovery',
+        buyerPosition: 'Require retention, legal hold, export, audit, eDiscovery, DLP, and external-collaboration terms scoped to channels, DMs, guests, files, edits, deletes, and AI outputs.',
+      },
+      {
+        clauseArea: 'AI and agent governance',
+        buyerPosition: 'Define AI/agent permissions, app approvals, data use, logs, prompt/output retention, connector scope, human review, and opt-out controls.',
+      },
+      {
+        clauseArea: 'Exit and portability',
+        buyerPosition: 'Require usable export of channels, DMs where lawful, files, metadata, user/group mappings, workflow definitions, app integrations, and retention/audit history.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Suite displacement and coexistence',
+        whenToUse: 'Use when Slack or Mattermost must justify standalone spend against Teams or Google Chat already bundled into productivity suites.',
+        buyerAsk: 'Require usage, workflow, integration, external-collaboration, compliance, and adoption evidence that exceeds bundled alternatives.',
+      },
+      {
+        lever: 'Compliance feature entitlement',
+        whenToUse: 'Use when retention, legal hold, eDiscovery, DLP, data residency, or government environment is required.',
+        buyerAsk: 'Pin exact plan/SKU, feature entitlement, support process, export format, and renewal price protections.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'messaging-records-gap',
+        label: 'Messaging records and eDiscovery gap',
+        severity: 'high',
+        detectionSignals: ['Retention or export assumptions do not cover edits, deletes, private channels, DMs, guests, files, or AI-generated content.'],
+        mitigations: ['Require records matrix and legal/security signoff before award'],
+      },
+      {
+        id: 'messaging-integration-sprawl',
+        label: 'App and integration sprawl',
+        severity: 'medium',
+        detectionSignals: ['Marketplace apps, bots, webhooks, and AI agents are enabled without approval, logging, or least-privilege controls.'],
+        mitigations: ['Require app governance, admin approvals, DLP review, and periodic access recertification'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Raise supervision, retention, legal hold, eDiscovery, DLP, external communications, audit, and AI-output governance.',
+      },
+      {
+        industry: 'public_sector',
+        modifier: 'Review government-cloud options, records obligations, accessibility, data residency, procurement, and audit export requirements.',
+      },
+      {
+        industry: 'energy_utilities',
+        modifier: 'Stress incident coordination, air-gapped or sovereign deployment needs, operational resilience, and mission-critical support.',
+      },
+    ],
+    body: `## Summary
+Enterprise messaging platforms are no longer informal chat tools. They are persistent communication systems, workflow automation surfaces, app ecosystems, external-collaboration channels, AI/agent front doors, and records repositories. The sourcing decision should therefore test governance and workflow fit as much as user experience. Search, retention, legal hold, eDiscovery, DLP, integrations, external guests, app approvals, data residency, AI outputs, and exit rights can matter more than message formatting.
+
+Representative choices include Slack, Microsoft Teams chat, Google Chat, Mattermost, and specialized secure collaboration tools. Slack often competes on channel-centric work, external collaboration, app ecosystem, workflow automation, search, and Salesforce-adjacent AI positioning. Teams and Google Chat often arrive as part of Microsoft 365 or Google Workspace, which changes the commercial baseline. Mattermost is relevant where self-hosting, data sovereignty, mission-critical workflows, developer collaboration, or air-gapped/private deployment requirements are material.
+
+## When to apply
+Use this pattern when sourcing persistent team chat, enterprise messaging, external-collaboration channels, team spaces, workflow/chat automation, AI agents in messaging, secure collaboration, or messaging retention/eDiscovery. Do not use it as the primary pattern for video conferencing, productivity suite renewal, contact center, social intranet, or project management unless messaging is the core workflow layer.
+
+## Category boundary
+In scope: channels, DMs, group messaging, guest access, external sharing, files, search, app marketplace, bots, workflows, webhooks, AI/agent features, retention, legal hold, eDiscovery, DLP, audit logs, data residency, identity/SSO, mobile controls, compliance export, government/sovereign options, support, uptime, migration, and exit. Out of scope: meetings, email, document authoring, project management, and general productivity unless messaging governance is central.
+
+## Lifecycle and gates
+The scope gate should map active users, guest/external collaboration, regulated communications, channel taxonomy, message volumes, file sharing, app integrations, incident workflows, AI/agent use cases, retention requirements, legal hold needs, eDiscovery workflows, DLP policy, data residency, and existing suite entitlements. The RFP gate should require pricing normalization for users, guests, workspaces, compliance exports, DLP, AI, data residency, premium support, and deployment model. The demo gate should test channel governance, guest access, app approval, retention, eDiscovery/export, search, mobile controls, incident workflow, and AI/agent permission boundaries. The BAFO gate should compare standalone platform value against suite-bundled alternatives.
+
+## Evaluation rubric
+Weight governance and compliance around 25 percent, workflow and integration fit around 20 percent, suite/economics and coexistence around 15 percent, search and knowledge retrieval around 10 percent, external collaboration around 10 percent, security/admin controls around 10 percent, AI/agent governance around 5 percent, and exit/portability around 5 percent. Increase records, eDiscovery, legal hold, and DLP weight for regulated industries. Increase deployment-control weight for defense, public sector, energy, critical infrastructure, and mission-critical operations.
+
+## Pricing and contract notes
+Public plan pages can show packaging direction, but enterprise messaging pricing often depends on user count, workspace topology, enterprise grid or tenant model, guests, compliance features, DLP, data residency, AI features, app/integration needs, support, deployment model, and renewal leverage. Enterprise net pricing, discount ranges, Microsoft suite allocation, Slack Enterprise or GovSlack economics, Mattermost cloud/self-hosted TCO, and renewal concessions should stay founder-data-gap without quote or contract evidence.
+
+Contracting should define records retention, legal hold, eDiscovery, audit logs, DLP, app approvals, external collaboration, data residency, subprocessors, DPA, incident notification, AI/agent terms, prompt/output retention, connector scope, support, export, deletion, and transition assistance. For self-hosted or sovereign deployments, include infrastructure ownership, upgrade cadence, security patching, backup, high availability, monitoring, and support response obligations.
+
+## Contradictions and failure modes
+Vendor claim: chat is included in the suite. Detection: compare actual workflows, channel governance, external collaboration, app ecosystem, search, compliance exports, and user adoption against bundled access. Vendor claim: the platform is compliant. Detection: verify exact plan, tenant settings, export coverage, records scope, legal hold, data residency, and buyer jurisdiction. Vendor claim: AI agents will improve work. Detection: require app approval, permission inheritance, logs, data-use terms, human review, and measured adoption.
+
+The common failure is letting chat proliferate as a shadow records system without legal, compliance, and security ownership. The second failure is paying for standalone messaging while bundled alternatives cover most use cases. The third failure is choosing a self-hosted or sovereign messaging option without resourcing infrastructure, upgrades, monitoring, and support. The fourth failure is allowing app, bot, webhook, and AI-agent sprawl without least-privilege controls.`,
+  },
 ];
 
 export const SOURCING_CATEGORY_PATTERN_COUNT = SOURCING_CATEGORY_PATTERNS.length;
