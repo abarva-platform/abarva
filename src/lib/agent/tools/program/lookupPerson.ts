@@ -49,7 +49,11 @@ export const lookupPersonTool: AgentTool<LookupPersonInput> = {
     "sponsor?'. Only ask the user for clarification if the lookup returns zero or ambiguous results. " +
     'If exactly one match comes back, propose using it. If multiple, ask the user to pick. ' +
     'If zero, tell the user no match was found and offer to register them as a placeholder ' +
-    '(via register_placeholder_person) so the program flow can continue.',
+    '(via register_placeholder_person) so the program flow can continue. ' +
+    'IMPORTANT: pass ONE name or role per call. To resolve two people, make TWO separate ' +
+    'lookup_person calls (you can issue them in parallel). Never combine multiple names with ' +
+    'commas — "Sarah Chen, CIO" as a single query will not match either; split into ' +
+    '{query:"Sarah Chen"} and {query:"CIO"} as separate calls.',
   surfaces: ['/programs/new', '/demo/programs/new'],
   input_schema: {
     type: 'object',

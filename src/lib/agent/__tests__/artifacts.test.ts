@@ -182,6 +182,43 @@ describe('extractArtifacts · classification permissiveness', () => {
     });
   });
 
+  it("accepts classification with `name` alias (Steward's most common malformed shape)", () => {
+    const r = extractArtifacts(
+      '[[artifact:classification]]{"name":"AMS_CONSOLIDATION","confidence":"high"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(1);
+    expect(r.artifacts[0]).toMatchObject({
+      type: 'classification',
+      archetype: 'AMS_CONSOLIDATION',
+      archetypeLabel: 'AMS_CONSOLIDATION',
+      confidence: 'high',
+    });
+  });
+
+  it('accepts classification with `value` alias (matches brief-field-shape mistakes)', () => {
+    const r = extractArtifacts(
+      '[[artifact:classification]]{"value":"CDP Activation"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(1);
+    expect(r.artifacts[0]).toMatchObject({
+      type: 'classification',
+      archetypeLabel: 'CDP Activation',
+      archetype: 'CDP_ACTIVATION',
+    });
+  });
+
+  it('accepts classification with `label` alias', () => {
+    const r = extractArtifacts(
+      '[[artifact:classification]]{"label":"Demand Forecasting","archetype":"DEMAND_FORECAST"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(1);
+    expect(r.artifacts[0]).toMatchObject({
+      type: 'classification',
+      archetypeLabel: 'Demand Forecasting',
+      archetype: 'DEMAND_FORECAST',
+    });
+  });
+
   it('rejects classification with neither field', () => {
     const r = extractArtifacts(
       '[[artifact:classification]]{"confidence":"high"}[[/artifact]]',
