@@ -3,6 +3,7 @@ import type { PersonRow } from '@/lib/db/person';
 import type { ActivePattern, PeerDecisionSummary, ChainedPattern } from '@/lib/graph/types';
 import { CONVERSATION_PRINCIPLES } from './_shared/conversation-principles';
 import { CITATION_INSTRUCTION } from '../retrieval-format';
+import { FOUR_LAYER_REASONING_INSTRUCTIONS } from '@/lib/intelligence/synthesis/instructionLayer';
 
 interface AssembleArgs {
   engagement: EngagementRow;
@@ -54,6 +55,11 @@ export function assembleEngagementSystemPrompt(ctx: AssembleArgs): string {
     ctx.signedInUserContextBlock && ctx.signedInUserContextBlock.trim().length > 0
       ? ctx.signedInUserContextBlock
       : null,
+    // F0.3 — four-layer reasoning + scope policy + integrity contract.
+    // Composed AFTER user context (Layer 0) and BEFORE engagement-specific
+    // context. Action-claim integrity is enforced structurally by F0.4
+    // tool-use; this text aligns the agent's voice with that reality.
+    FOUR_LAYER_REASONING_INSTRUCTIONS,
     ctx.userContextBlock && ctx.userContextBlock.trim().length > 0 ? ctx.userContextBlock : null,
     ctx.maestroContextBlock && ctx.maestroContextBlock.trim().length > 0 ? ctx.maestroContextBlock : null,
     ctx.topicIntelligenceBlock && ctx.topicIntelligenceBlock.trim().length > 0 ? ctx.topicIntelligenceBlock : null,
