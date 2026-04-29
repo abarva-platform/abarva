@@ -113,11 +113,27 @@ export interface GovernanceFlag {
 
 // ── Core SourceEventInstance ──────────────────────────────────────────────────
 
+/**
+ * Default tenant id used by single-tenant demo fixtures and any caller that
+ * does not yet propagate a tenant scope explicitly.
+ *
+ * Shared across the reasoning, source and programs layers so the multi-
+ * tenant scaffolding has one canonical default. Real tenancy enforcement
+ * lands later — for now every fixture pins itself here.
+ */
+export const DEFAULT_TENANT_ID = 'apex-retail';
+
 export interface SourceEventInstance {
   // Identity
   id: string;
   displayId: string;
   tenantSlug: string;
+  /**
+   * Multi-tenant scope. Defaults to `'apex-retail'` for every demo fixture.
+   * Reasoning-layer lookups + filters key off this field; tenancy is not
+   * enforced yet (scaffolding only).
+   */
+  tenantId: string;
   name: string;
 
   // Pattern binding

@@ -41,9 +41,20 @@ export interface RiskItem {
   instanceId: string;
   /** Human-readable label of the instance (display id or name). */
   instanceLabel: string;
+  /**
+   * Multi-tenant scope of the underlying instance. Defaults to
+   * `'apex-retail'` for the demo fixtures. Reasoning admin views can
+   * filter by tenant via this field; tenancy is not enforced yet.
+   */
+  tenantId: string;
   /** Resolution path (contradictions) or first mitigation (failure modes). */
   mitigation: string;
 }
+
+/**
+ * Default tenant id used when no tenant scope is propagated yet.
+ */
+const DEFAULT_RISK_TENANT_ID = 'apex-retail';
 
 // ─── Severity helpers ──────────────────────────────────────────────────────────
 
@@ -63,6 +74,7 @@ function contradictionToRisk(
   detection: ContradictionDetection,
   instanceId: string,
   instanceLabel: string,
+  tenantId: string,
 ): RiskItem {
   return {
     id: detection.templateId,
@@ -72,6 +84,7 @@ function contradictionToRisk(
     confidence: detection.confidence,
     instanceId,
     instanceLabel,
+    tenantId,
     mitigation: detection.resolutionPath,
   };
 }
@@ -80,6 +93,7 @@ function failureModeToRisk(
   detection: FailureModeDetection,
   instanceId: string,
   instanceLabel: string,
+  tenantId: string,
 ): RiskItem {
   return {
     id: detection.failureModeId,
@@ -89,6 +103,7 @@ function failureModeToRisk(
     confidence: detection.confidence,
     instanceId,
     instanceLabel,
+    tenantId,
     mitigation: detection.mitigations[0] ?? '',
   };
 }
@@ -115,6 +130,7 @@ function compareRisk(a: RiskItem, b: RiskItem): number {
 export function buildRiskRegisterForInstance(
   context: SynthesisContext,
   instanceLabel: string,
+  tenantId: string = DEFAULT_RISK_TENANT_ID,
 ): RiskItem[] {
   const seen = new Set<string>();
   const rows: RiskItem[] = [];
@@ -123,14 +139,14 @@ export function buildRiskRegisterForInstance(
     const key = `contradiction::${c.templateId}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    rows.push(contradictionToRisk(c, context.instanceId, instanceLabel));
+    rows.push(contradictionToRisk(c, context.instanceId, instanceLabel, tenantId));
   }
 
   for (const f of context.failureModes) {
     const key = `failure-mode::${f.failureModeId}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    rows.push(failureModeToRisk(f, context.instanceId, instanceLabel));
+    rows.push(failureModeToRisk(f, context.instanceId, instanceLabel, tenantId));
   }
 
   rows.sort(compareRisk);
@@ -151,21 +167,26 @@ function resolveSourcePattern(patternId: string) {
  * so two different instances exhibiting the same contradiction template each
  * contribute their own row (as expected for a portfolio register).
  */
-export function buildPortfolioRiskRegister(): RiskItem[] {
+export function buildPortfolioRiskRegister(
+  options?: { tenantId?: string },
+): RiskItem[] {
   const all: RiskItem[] = [];
+  const tenantFilter = options?.tenantId;
 
   for (const program of APEX_RETAIL_PROGRAM_INSTANCES) {
+    if (tenantFilter !== undefined && program.tenantId !== tenantFilter) continue;
     const ctx = buildProgramSynthesisContext(program);
     const label = program.displayId ?? program.name ?? program.id;
-    all.push(...buildRiskRegisterForInstance(ctx, label));
+    all.push(...buildRiskRegisterForInstance(ctx, label, program.tenantId));
   }
 
   for (const sourceEvent of SOURCE_EVENT_INSTANCES) {
+    if (tenantFilter !== undefined && sourceEvent.tenantId !== tenantFilter) continue;
     const pattern = resolveSourcePattern(sourceEvent.patternId);
     if (pattern === undefined) continue;
     const ctx = buildSourceSynthesisContext(sourceEvent, pattern);
     const label = sourceEvent.displayId ?? sourceEvent.name ?? sourceEvent.id;
-    all.push(...buildRiskRegisterForInstance(ctx, label));
+    all.push(...buildRiskRegisterForInstance(ctx, label, sourceEvent.tenantId));
   }
 
   all.sort(compareRisk);

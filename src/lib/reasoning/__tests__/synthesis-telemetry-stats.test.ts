@@ -37,6 +37,7 @@ function ev(p: PartialEvent = {}): SynthesisTelemetryEvent {
     id: p.id ?? `tlm_test_${counter}`,
     timestamp: p.timestamp ?? `2026-04-28T00:00:${String(counter).padStart(2, '0')}.000Z`,
     surface: p.surface ?? 'source',
+    tenantId: 'apex-retail',
     instanceId: p.instanceId ?? 'instance-1',
     patternId: p.patternId === undefined ? 'PAT-001' : p.patternId,
     cacheHit: p.cacheHit ?? false,

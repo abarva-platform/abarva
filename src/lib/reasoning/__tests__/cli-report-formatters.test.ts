@@ -178,6 +178,7 @@ describe('formatRiskLine', () => {
       confidence: 0.9,
       instanceId: 'APX-CDP-2026',
       instanceLabel: 'APX-CDP-2026',
+      tenantId: 'apex-retail',
       mitigation: '',
     };
     expect(formatRiskLine(1, risk)).toBe(
