@@ -16,6 +16,7 @@ import { requireTenancy, TenancyError } from '@/app/api/v1/programs/_auth';
 import { originateProgram } from '@/lib/programs/mutations';
 import type { ArchetypeKey, OriginationForm } from '@/lib/programs/types.ui';
 import type { OriginSource } from '@/lib/programs/types.db';
+import { getServerSupabase } from '@/lib/supabase-server';
 
 // Postgres UUID v4 format (also matches v1/v3/v5 — sufficient for input
 // validation before we attempt an `engagements.insert` that would
@@ -44,6 +45,11 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
     'call the `lookup_person` tool FIRST to resolve them — do NOT ask the user to paste a UUID themselves. ' +
     'The seeded persons table for the active tenant has leadership records you can resolve against. Only ' +
     'after lookup_person returns a match should you call commit_program with the resulting person_id. ' +
+    "DEFAULTING THE LEAD: when the user has named a sponsor but not a separate lead, ASK 'is " +
+    "<sponsor name> also the day-to-day lead, or someone else?' If the user confirms or doesn't " +
+    'name a separate lead after asking, default lead_person_id to the same UUID as sponsor_person_id. ' +
+    'Most small programs have one person owning both roles; do not stall the flow because the user ' +
+    "hasn't explicitly named a lead. " +
     'If this returns failure, report the failure honestly with recovery options; do not announce success.',
   surfaces: ['/programs/new', '/demo/programs/new'],
   input_schema: {
@@ -141,6 +147,43 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
       sponsorPersonId: input.sponsor_person_id,
       leadPersonId: input.lead_person_id ?? input.sponsor_person_id,
     };
+
+    // Idempotency guard: if a program with the same name was created
+    // for this client in the last 5 minutes, return that one instead
+    // of inserting a duplicate. Defends against double-click on
+    // confirm, network retry, or the agent calling commit_program
+    // twice in the same conversation.
+    try {
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60_000).toISOString();
+      const sb = getServerSupabase();
+      const { data: existing } = await sb
+        .from('engagements')
+        .select('id, name, graph_node_id, created_at')
+        .eq('client_id', tenancy.clientId)
+        .eq('name', originationForm.name)
+        .gte('created_at', fiveMinutesAgo)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (existing) {
+        const row = existing as { id: string; name: string };
+        ctx.writer?.write(`\n[[program-created:${row.id}]]`);
+        return {
+          success: true,
+          data: {
+            program_id: row.id,
+            program_name: row.name,
+            redirect_to: `/programs/${row.id}`,
+            surface: ctx.surface,
+            idempotent_replay: true,
+          },
+        };
+      }
+    } catch {
+      // If the idempotency lookup itself fails, fall through to the
+      // normal insert path. Safer to risk a duplicate than to block
+      // a legitimate registration on a transient lookup error.
+    }
 
     try {
       const program = await originateProgram(tenancy, {
