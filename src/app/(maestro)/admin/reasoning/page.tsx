@@ -919,6 +919,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     description: 'Instance × stage evidence coverage matrix — which instances have evidence for which stages',
   },
   {
+    title: 'Contradiction network',
+    href: '/admin/reasoning/contradiction-network',
+    description: 'Co-occurrence network of contradiction templates — which contradictions appear together across instances',
+  },
+  {
     title: 'Gate owners',
     href: '/admin/reasoning/gate-owners',
     description: 'Hard gate criterion ownership by stakeholder category — grouped by pattern with distribution chart',
