@@ -199,6 +199,22 @@ export default async function SourceEventDetailPage({
               allOtherIds={getAllInstanceIds()}
             />
           )}
+          <a
+            href={`/source/events/${eventId}/report`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              fontFamily: 'DM Sans, sans-serif',
+              fontSize: 10,
+              color: 'rgba(0,0,0,0.5)',
+              textDecoration: 'none',
+              borderBottom: '1px dashed rgba(0,0,0,0.35)',
+              paddingBottom: 1,
+              marginLeft: 4,
+            }}
+          >
+            Full report →
+          </a>
         </div>
         <NexusEngagementCanvas event={event} />
         {matchedInstance && nextGateEvaluations.length > 0 && (
