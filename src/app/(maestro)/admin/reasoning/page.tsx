@@ -1113,6 +1113,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/gate-progress-summary',
     description: 'Executive KPI strip, stage advancement table, top/bottom performers — consolidated printable view.',
   },
+  {
+    title: 'Pattern Recommendations',
+    href: '/admin/reasoning/pattern-recommendation',
+    description: 'Jaccard-based co-apply suggestions per instance — compatibility scores and shared-stage rationale.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
