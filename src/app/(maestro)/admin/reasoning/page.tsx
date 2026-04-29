@@ -1248,6 +1248,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Gate Success Factors',
     description: 'Correlation analysis of what drives gate pass rates — contradiction, waiver, stage, and health comparisons.',
   },
+  {
+    href: '/admin/reasoning/health-leaderboard',
+    title: 'Health Leaderboard',
+    description: 'Rankings, gold/silver/bronze podium, category awards — Gate Champion, Clean Slate, Most Improved, Evidence Leader.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
