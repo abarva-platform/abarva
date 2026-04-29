@@ -1313,6 +1313,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Contradiction Watchlist',
     description: 'Urgency-ranked active contradictions — age, health context, resolution path availability.',
   },
+  {
+    href: '/admin/reasoning/evidence-velocity',
+    title: 'Evidence Velocity',
+    description: 'Evidence accumulation rate per instance — coverage %, velocity, and time-to-sufficiency projections.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
