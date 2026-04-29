@@ -31,6 +31,8 @@ import { LifecycleMiniGraph } from '@/components/_shared/LifecycleMiniGraph';
 import { HandoffNarrativePanel } from '@/components/_shared/HandoffNarrativePanel';
 import type { StageStatus } from '@/components/shell/StageTrackerStrip';
 import { buildSourceSynthesisContext } from '@/lib/reasoning/synthesis-context-builder';
+import { computeInstanceHealth } from '@/lib/reasoning/instance-health';
+import { InstanceHealthBadge } from '@/components/_shared/InstanceHealthBadge';
 import { computeReverseCascade } from '@/lib/reasoning/cross-instance-reasoner';
 import { PAT_SRC_AMS_001 } from '@/lib/intelligence/source-lifecycle-patterns';
 import { isResolved as isContradictionResolved } from '@/lib/reasoning/contradiction-resolution-state';
@@ -1907,15 +1909,32 @@ export function SourceEventDetailPage() {
         >
           <div
             style={{
-              fontFamily: SHELL.MONO,
-              fontSize: 9,
-              textTransform: 'uppercase',
-              letterSpacing: '0.14em',
-              color: SHELL.INK_MUTED,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              flexWrap: 'wrap',
               marginBottom: 4,
             }}
           >
-            {AMS_SOURCE_EVENT.displayId} · ACTIVE EVENT
+            <span
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 9,
+                textTransform: 'uppercase',
+                letterSpacing: '0.14em',
+                color: SHELL.INK_MUTED,
+              }}
+            >
+              {AMS_SOURCE_EVENT.displayId} · ACTIVE EVENT
+            </span>
+            {(() => {
+              const ctx = buildSourceSynthesisContext(
+                AMS_VENDOR_CONSOLIDATION_2026_INSTANCE,
+                PAT_SRC_AMS_001,
+              );
+              const health = computeInstanceHealth(ctx);
+              return <InstanceHealthBadge health={health} />;
+            })()}
           </div>
           <h1
             style={{
