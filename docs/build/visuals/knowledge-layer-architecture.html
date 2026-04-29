@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AbarVa Knowledge Layer Architecture</title>
+  <style>
+    :root {
+      --ink: #102a43;
+      --muted: #52616b;
+      --paper: #f7f3ea;
+      --panel: #ffffff;
+      --blue: #0f3b57;
+      --teal: #2f7f7f;
+      --gold: #e0a458;
+      --rose: #c8553d;
+      --line: #d8dee6;
+      --shadow: 0 18px 45px rgba(16, 42, 67, 0.14);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: ui-serif, Georgia, Cambria, "Times New Roman", serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 12%, rgba(224,164,88,0.22), transparent 26rem),
+        radial-gradient(circle at 86% 8%, rgba(47,127,127,0.18), transparent 24rem),
+        linear-gradient(135deg, #f7f3ea 0%, #eef5f3 100%);
+    }
+    .shell { display: grid; grid-template-columns: 290px minmax(0, 1fr); min-height: 100vh; }
+    aside {
+      position: sticky; top: 0; height: 100vh; padding: 28px 22px;
+      background: rgba(15, 59, 87, 0.96); color: white; box-shadow: var(--shadow); overflow-y: auto;
+    }
+    .brand { font-family: ui-sans-serif, system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; font-size: 12px; color: #bde0e0; }
+    h1 { font-size: 42px; line-height: 1.02; margin: 12px 0 10px; max-width: 860px; }
+    h2 { font-size: 28px; margin: 0 0 14px; }
+    h3 { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; margin: 0 0 10px; color: var(--teal); }
+    p { font-size: 18px; line-height: 1.55; color: var(--muted); }
+    .nav-title { font-size: 24px; line-height: 1.05; margin: 10px 0 18px; }
+    nav a { display: block; color: #e6fffb; text-decoration: none; padding: 10px 12px; border-radius: 12px; margin: 6px 0; font-family: ui-sans-serif, system-ui, sans-serif; font-size: 14px; }
+    nav a:hover { background: rgba(255,255,255,.12); }
+    .download { margin-top: 22px; padding: 14px; border: 1px solid rgba(255,255,255,.22); border-radius: 16px; background: rgba(255,255,255,.08); }
+    .download a { color: #fff3b0; }
+    main { padding: 36px clamp(22px, 5vw, 72px) 80px; }
+    section { scroll-margin-top: 28px; margin: 0 0 34px; }
+    .hero { min-height: 52vh; display: grid; align-content: center; }
+    .hero-card, .card { background: rgba(255,255,255,.82); border: 1px solid rgba(15,59,87,.12); border-radius: 28px; padding: 28px; box-shadow: var(--shadow); backdrop-filter: blur(10px); }
+    .kpis { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px; margin-top: 22px; }
+    .kpi { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 16px; }
+    .kpi strong { display:block; font-size: 28px; color: var(--blue); }
+    .kpi span { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing:.05em; }
+    .planes { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 16px; }
+    .plane { border-radius: 22px; padding: 16px; background: #fff; border: 1px solid var(--line); min-height: 320px; }
+    .plane:nth-child(1) { border-top: 8px solid #84a98c; }
+    .plane:nth-child(2) { border-top: 8px solid #c8553d; }
+    .plane:nth-child(3) { border-top: 8px solid #4d96ff; }
+    .plane:nth-child(4) { border-top: 8px solid #e0a458; }
+    .pill { display: block; padding: 10px 12px; border-radius: 999px; background: #f5f7fa; margin: 10px 0; font-family: ui-sans-serif, system-ui, sans-serif; font-size: 13px; border: 1px solid var(--line); }
+    .flow { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 12px; align-items: stretch; }
+    .step { position: relative; padding: 18px; background: #fff; border: 1px solid var(--line); border-radius: 20px; min-height: 150px; }
+    .step:not(:last-child)::after { content: "→"; position: absolute; right: -19px; top: 50%; transform: translateY(-50%); color: var(--rose); font-size: 26px; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .matrix { width: 100%; border-collapse: collapse; overflow: hidden; border-radius: 18px; background:#fff; }
+    .matrix th { background: var(--blue); color: white; text-align: left; font-family: ui-sans-serif, system-ui, sans-serif; font-size: 13px; padding: 12px; }
+    .matrix td { border-bottom: 1px solid var(--line); padding: 12px; vertical-align: top; font-size: 15px; line-height: 1.35; }
+    .map { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
+    .node { background:#fff; border:1px solid var(--line); border-radius:18px; padding:14px; min-height:86px; }
+    .node b { color: var(--blue); }
+    .callout { border-left: 6px solid var(--gold); background: rgba(255,255,255,.78); padding: 18px 20px; border-radius: 16px; }
+    code { background: #e8eef3; border-radius: 6px; padding: 2px 6px; }
+    @media (max-width: 980px) {
+      .shell { grid-template-columns: 1fr; }
+      aside { position: relative; height: auto; }
+      .planes, .kpis, .flow, .map { grid-template-columns: 1fr; }
+      .step:not(:last-child)::after { content: "↓"; right: 50%; top: auto; bottom: -24px; transform: translateX(50%); }
+      h1 { font-size: 32px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside>
+      <div class="brand">AbarVa Architecture</div>
+      <div class="nav-title">Knowledge Layer Visual Index</div>
+      <nav>
+        <a href="#overview">1. Executive Overview</a>
+        <a href="#planes">2. Four Planes</a>
+        <a href="#data-shape">3. Data Shape</a>
+        <a href="#context-flow">4. Context Flow</a>
+        <a href="#agents">5. Agent Responsibilities</a>
+        <a href="#model-layer">6. Model Layer</a>
+        <a href="#next">7. Next Build Order</a>
+      </nav>
+      <div class="download">
+        <strong>Companion files</strong><br />
+        <a href="./knowledge-layer-architecture.pdf">Open PDF</a><br />
+        <a href="../KNOWLEDGE_LAYER_ARCHITECTURE_VISUALS.md">Open markdown source</a>
+      </div>
+    </aside>
+    <main>
+      <section id="overview" class="hero">
+        <div class="hero-card">
+          <div class="brand" style="color: var(--teal)">Current Snapshot</div>
+          <h1>Data room + knowledge fabric + broker + model layer, working as one system.</h1>
+          <p>This visual packet shows how AbarVa should keep tenant facts, workflow doctrine, vector/graph retrieval, model calls, and multi-agent behavior coordinated without letting app agents invent their own data layer.</p>
+          <div class="kpis">
+            <div class="kpi"><strong>1</strong><span>Rich tenant now: Apex</span></div>
+            <div class="kpi"><strong>2</strong><span>Partial tenants: Meridian, First Capital</span></div>
+            <div class="kpi"><strong>4</strong><span>Agent roles: Nexus, Sentinel, Atlas, Steward</span></div>
+            <div class="kpi"><strong>7</strong><span>Phase packs: P0-P6</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="planes" class="card">
+        <h2>2. Four Planes</h2>
+        <p>The broker is the clean seam. Everything below it can evolve from seeds to Postgres, vector, graph, and object storage. Everything above it gets governed bundles.</p>
+        <div class="planes">
+          <div class="plane"><h3>Data Plane</h3><span class="pill">Enterprise Data Room</span><span class="pill">Source artifacts</span><span class="pill">Postgres / Supabase</span><span class="pill">pgvector / Search</span><span class="pill">Graph fallback</span></div>
+          <div class="plane"><h3>Knowledge Plane</h3><span class="pill">Patterns</span><span class="pill">Signals</span><span class="pill">Solutions</span><span class="pill">Contradictions</span><span class="pill">P0-P6 Phase Packs</span></div>
+          <div class="plane"><h3>Context Plane</h3><span class="pill">Agent Context Broker</span><span class="pill">Tenant scope</span><span class="pill">Policy + approval state</span><span class="pill">Evidence citations</span><span class="pill">Blocked context</span></div>
+          <div class="plane"><h3>Agent + Model Plane</h3><span class="pill">Nexus</span><span class="pill">Sentinel</span><span class="pill">Atlas</span><span class="pill">Steward</span><span class="pill">Model provider / gateway</span></div>
+        </div>
+      </section>
+
+      <section id="data-shape" class="card">
+        <h2>3. Canonical Tenant Data Shape</h2>
+        <div class="map">
+          <div class="node"><b>Tenant profile</b><br />industry, region, posture, policy</div>
+          <div class="node"><b>Org + people</b><br />execs, IT leaders, decision rights</div>
+          <div class="node"><b>Systems</b><br />applications, integrations, owners</div>
+          <div class="node"><b>Vendors</b><br />contracts, risk, renewals</div>
+          <div class="node"><b>Financials</b><br />spend, KPIs, baselines</div>
+          <div class="node"><b>Programs</b><br />phase state, sponsors, gates</div>
+          <div class="node"><b>Artifacts</b><br />deliverables, templates, examples</div>
+          <div class="node"><b>Evidence</b><br />claims, citations, approval state</div>
+          <div class="node"><b>Chunks</b><br />embedding-ready text units</div>
+          <div class="node"><b>Graph nodes</b><br />tenant, person, system, vendor</div>
+          <div class="node"><b>Graph edges</b><br />owns, supports, cites, risks</div>
+          <div class="node"><b>Write events</b><br />future user/agent changes</div>
+        </div>
+      </section>
+
+      <section id="context-flow" class="card">
+        <h2>4. Context Flow</h2>
+        <div class="flow">
+          <div class="step"><h3>App Surface</h3>Programs, Source, Intelligence, Tower, or chat asks for context.</div>
+          <div class="step"><h3>Broker</h3>Builds an <code>EnterpriseAgentContextRequest</code> and validates the call.</div>
+          <div class="step"><h3>Policy</h3>Checks tenant, surface, role, approval state, and L4 raw-context allowance.</div>
+          <div class="step"><h3>Data + Knowledge</h3>Collects tenant facts, evidence, phase doctrine, patterns, graph summary.</div>
+          <div class="step"><h3>Agent + Model</h3>Receives a scoped bundle, answers with citations, and records trace/audit.</div>
+        </div>
+      </section>
+
+      <section id="agents" class="card">
+        <h2>5. Multi-Agent Responsibilities</h2>
+        <table class="matrix">
+          <tr><th>Agent</th><th>Primary Question</th><th>Context</th><th>Boundary</th></tr>
+          <tr><td>Nexus</td><td>What should the program do next?</td><td>Phase pack, program state, deliverables, evidence, gate readiness.</td><td>No raw-store reads.</td></tr>
+          <tr><td>Sentinel</td><td>Is this evidence trustworthy?</td><td>Evidence rows, citations, graph candidates, contradictions, quality state.</td><td>No invented sources.</td></tr>
+          <tr><td>Atlas</td><td>What does value/portfolio show?</td><td>Financials, KPIs, systems, aggregate program context.</td><td>No raw L4 by default.</td></tr>
+          <tr><td>Steward</td><td>Is this governed and safe?</td><td>Policy readiness, tenant scope, data classification, blocked items.</td><td>No implicit exposure approvals.</td></tr>
+        </table>
+      </section>
+
+      <section id="model-layer" class="card">
+        <h2>6. Model Layer Composition</h2>
+        <p>The model layer should receive context through a composed prompt/tool envelope, not by reaching into seed files. The durable shape is:</p>
+        <div class="callout"><code>Phase Pack</code> + <code>Enterprise Context Bundle</code> + <code>Corpus Retrieval</code> + <code>Tool Policy</code> → <code>Model Call</code> → <code>Trace + Evidence + Write Event</code></div>
+      </section>
+
+      <section id="next" class="card">
+        <h2>7. Recommended Next Build Order</h2>
+        <ol>
+          <li>Add a read-only Programs adapter that calls the broker without changing write behavior.</li>
+          <li>Lock embedding default before DDL. Recommended lab default: <code>text-embedding-3-small</code>, <code>1536</code>, <code>vector(1536)</code> if Supabase pgvector is chosen.</li>
+          <li>Choose graph fallback naming and RLS policy before migrations.</li>
+          <li>Define tenant identity bridge: <code>tenant_key</code> and <code>client_id</code> must be explicit.</li>
+          <li>Add write-back event contract for generated artifacts and user edits.</li>
+          <li>Create real migrations only after dimensions, RLS, namespace convention, and delete/update propagation are locked.</li>
+        </ol>
+        <div class="callout"><strong>Do not shortcut:</strong> app agents should not import seed data directly, agents should not query vector/graph/database stores directly, and phase packs should not become tenant data.</div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
