@@ -7,6 +7,7 @@ import { AppShell } from '@/components/shell/AppShell';
 import { AgentColumn } from '@/components/shell/AgentColumn';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { HOME_VIEW } from '@/lib/home/shell-home-fixture';
+import type { ReasoningDashboardSummary } from '@/lib/reasoning/dashboard-summary';
 
 // ─── Detail color helpers ───────────────────────────────────────────────────
 
@@ -420,9 +421,199 @@ function SectionHeader({ title, viewAllHref }: { title: string; viewAllHref: str
   );
 }
 
+// ─── Reasoning intelligence row ──────────────────────────────────────────────
+
+interface ReasoningCardProps {
+  label: string;
+  value: string;
+  detail: string;
+  detailColor: string;
+  href: string;
+}
+
+function ReasoningCard({ label, value, detail, detailColor, href }: ReasoningCardProps) {
+  return (
+    <Link
+      href={href}
+      style={{ textDecoration: 'none', display: 'block' }}
+    >
+      <div
+        style={{
+          background: SHELL.CARD_WHITE,
+          border: `1px solid ${SHELL.CARD_LINE}`,
+          borderRadius: 10,
+          padding: '12px 14px',
+          cursor: 'pointer',
+          transition: 'border-color 0.15s',
+        }}
+      >
+        <div
+          style={{
+            fontFamily: SHELL.SERIF,
+            fontSize: 20,
+            color: SHELL.INK,
+            fontWeight: 700,
+            lineHeight: 1.15,
+            marginBottom: 3,
+          }}
+        >
+          {value}
+        </div>
+        <div
+          style={{
+            fontFamily: SHELL.MONO,
+            fontSize: 9,
+            color: SHELL.INK_MUTED,
+            textTransform: 'uppercase',
+            letterSpacing: '0.12em',
+            marginBottom: 5,
+            lineHeight: 1,
+          }}
+        >
+          {label}
+        </div>
+        <div
+          style={{
+            fontFamily: SHELL.SANS,
+            fontSize: 11,
+            color: detailColor,
+            lineHeight: 1.3,
+          }}
+        >
+          {detail}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function ReasoningIntelligenceRow({ data }: { data: ReasoningDashboardSummary }) {
+  const { health, gatePassRatePct, criticalAlertCount, coverage } = data;
+
+  // Health card — colored dot indicators
+  const healthValue = (
+    <span style={{ fontFamily: SHELL.SERIF, fontSize: 20, fontWeight: 700, color: SHELL.INK }}>
+      <span style={{ color: SHELL.MINT_TEXT }}>{health.healthy}</span>
+      {' / '}
+      <span style={{ color: SHELL.AMBER_DOT }}>{health.degraded}</span>
+      {' / '}
+      <span style={{ color: SHELL.RUST_TEXT }}>{health.critical}</span>
+    </span>
+  );
+
+  const alertDetail =
+    criticalAlertCount === 0
+      ? 'All clear'
+      : `${criticalAlertCount} critical alert${criticalAlertCount !== 1 ? 's' : ''}`;
+  const alertDetailColor = criticalAlertCount === 0 ? SHELL.MINT_TEXT : SHELL.RUST_TEXT;
+
+  const coveragePct =
+    coverage.total === 0
+      ? '100%'
+      : `${Math.round((coverage.covered / coverage.total) * 100)}%`;
+
+  return (
+    <div style={{ marginBottom: 24 }}>
+      {/* Section label */}
+      <div
+        style={{
+          fontFamily: SHELL.MONO,
+          fontSize: 9,
+          color: SHELL.INK_MUTED,
+          textTransform: 'uppercase',
+          letterSpacing: '0.14em',
+          lineHeight: 1,
+          marginBottom: 10,
+        }}
+      >
+        Reasoning Intelligence
+      </div>
+
+      {/* Four cards */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: 12,
+        }}
+      >
+        {/* 1 — Portfolio health */}
+        <Link href="/admin/reasoning/health" style={{ textDecoration: 'none', display: 'block' }}>
+          <div
+            style={{
+              background: SHELL.CARD_WHITE,
+              border: `1px solid ${SHELL.CARD_LINE}`,
+              borderRadius: 10,
+              padding: '12px 14px',
+            }}
+          >
+            <div style={{ marginBottom: 3 }}>{healthValue}</div>
+            <div
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 9,
+                color: SHELL.INK_MUTED,
+                textTransform: 'uppercase',
+                letterSpacing: '0.12em',
+                marginBottom: 5,
+                lineHeight: 1,
+              }}
+            >
+              Portfolio health
+            </div>
+            <div
+              style={{
+                fontFamily: SHELL.SANS,
+                fontSize: 11,
+                color: SHELL.INK_SOFT,
+                lineHeight: 1.3,
+              }}
+            >
+              <span style={{ color: SHELL.MINT_TEXT }}>● healthy</span>
+              {' · '}
+              <span style={{ color: SHELL.AMBER_DOT }}>● degraded</span>
+              {' · '}
+              <span style={{ color: SHELL.RUST_TEXT }}>● critical</span>
+            </div>
+          </div>
+        </Link>
+
+        {/* 2 — Gate pass rate */}
+        <ReasoningCard
+          label="Gate pass rate"
+          value={`${gatePassRatePct}%`}
+          detail="avg across all instances"
+          detailColor={
+            gatePassRatePct >= 75 ? SHELL.MINT_TEXT : gatePassRatePct >= 50 ? SHELL.AMBER_DOT : SHELL.RUST_TEXT
+          }
+          href="/admin/reasoning/health"
+        />
+
+        {/* 3 — Active alerts */}
+        <ReasoningCard
+          label="Active alerts"
+          value={criticalAlertCount === 0 ? '—' : String(criticalAlertCount)}
+          detail={alertDetail}
+          detailColor={alertDetailColor}
+          href="/admin/reasoning/health"
+        />
+
+        {/* 4 — Template coverage */}
+        <ReasoningCard
+          label="Template coverage"
+          value={coveragePct}
+          detail={`${coverage.covered}/${coverage.total} templates`}
+          detailColor={SHELL.MINT_TEXT}
+          href="/admin/reasoning/coverage"
+        />
+      </div>
+    </div>
+  );
+}
+
 // ─── Main component ────────────────────────────────────────────────────────────
 
-export function HomeIndexPage() {
+export function HomeIndexPage({ reasoning }: { reasoning?: ReasoningDashboardSummary }) {
   const v = HOME_VIEW;
   const router = useRouter();
   const programsSectionRef = useRef<HTMLDivElement>(null);
@@ -515,6 +706,11 @@ export function HomeIndexPage() {
         >
           {v.subgreeting}
         </p>
+
+        {/* Reasoning intelligence row */}
+        {reasoning !== undefined && (
+          <ReasoningIntelligenceRow data={reasoning} />
+        )}
 
         {/* Stats row */}
         <div
