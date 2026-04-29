@@ -50,6 +50,10 @@ import {
   buildValueAtRiskPortfolioView,
 } from '@/lib/tower/value-at-risk-portfolio-view';
 import type { ValueAtRiskItem, ValueRiskTier, ValueRiskStatus, EvidenceConfidence } from '@/lib/tower/value-at-risk-portfolio-view';
+import {
+  buildProgrammeGateStatusView,
+} from '@/lib/tower/programme-gate-status-view';
+import type { ProgrammeGateStatusCard, GateStatus } from '@/lib/tower/programme-gate-status-view';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Design tokens (matches existing Tower surface palette)
@@ -164,6 +168,9 @@ export function TowerLensTabs({
         )}
         {activeTab === 'executive_brief' && (
           <ExecutiveBriefPanel tenantSlug={tenant.routeSlug} />
+        )}
+        {activeTab === 'programme_gates' && (
+          <ProgrammeGatesPanel />
         )}
       </div>
     </div>
@@ -1388,5 +1395,169 @@ function Caveat({ children }: { children: React.ReactNode }) {
     <p style={{ fontSize: 11, color: C.mutedSoft, fontStyle: 'italic', margin: 0 }}>
       {children}
     </p>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TOWER8 · Programme Gates Panel
+// ─────────────────────────────────────────────────────────────────────────────
+
+const GATE_STATUS_STYLE: Record<GateStatus, { bg: string; text: string; label: string }> = {
+  pending: { bg: C.navySoft, text: C.navy, label: 'Pending' },
+  approved: { bg: 'rgba(22,163,74,0.08)', text: C.green, label: 'Approved' },
+  blocked: { bg: C.redSoft, text: C.red, label: 'Blocked' },
+  at_risk: { bg: C.amberSoft, text: '#92400e', label: 'At risk' },
+  not_reached: { bg: '#f3f4f6', text: C.mutedSoft, label: 'Not reached' },
+};
+
+function ProgrammeGateCard({ card }: { card: ProgrammeGateStatusCard }) {
+  const gateStyle = GATE_STATUS_STYLE[card.activeGate.status];
+
+  return (
+    <div
+      data-testid={`tower-gate-programme-${card.programmeId}`}
+      style={{
+        padding: '16px 20px',
+        background: C.card,
+        border: `1px solid ${card.needsTowerAttention ? C.amber : C.border}`,
+        borderLeft: `3px solid ${gateStyle.text}`,
+        borderRadius: 8,
+      }}
+    >
+      {/* Programme header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+        <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 9, letterSpacing: '0.1em', color: C.muted }}>
+          {card.displayId}
+        </span>
+        <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: C.ink }}>
+          {card.programmeName}
+        </span>
+        <span style={{
+          fontFamily: 'DM Mono, monospace', fontSize: 9, letterSpacing: '0.06em',
+          color: C.muted, padding: '1px 6px', background: C.navySoft, borderRadius: 4,
+        }}>
+          {card.currentPhase}
+        </span>
+        <span style={{
+          display: 'inline-block', padding: '2px 7px', borderRadius: 999,
+          background: gateStyle.bg, color: gateStyle.text,
+          fontSize: 9, fontWeight: 600, letterSpacing: '0.06em',
+          textTransform: 'uppercase', lineHeight: 1.5, whiteSpace: 'nowrap',
+        }}>
+          {gateStyle.label}
+        </span>
+      </div>
+
+      {/* Active gate */}
+      <div style={{ marginBottom: 8 }}>
+        <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 9, color: C.muted, letterSpacing: '0.04em' }}>
+          Active gate: {card.activeGate.label}
+          {card.activeGate.targetDate && ` · ${card.activeGate.targetDate}`}
+        </span>
+        {card.activeGate.gatingCondition && (
+          <p style={{ fontSize: 11, color: C.muted, lineHeight: 1.5, margin: '4px 0 0' }}>
+            {card.activeGate.gatingCondition}
+          </p>
+        )}
+      </div>
+
+      {/* Tower flags */}
+      {card.towerFlags.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          {card.towerFlags.map((flag, i) => (
+            <div key={i} style={{ fontSize: 11, color: C.red, lineHeight: 1.5 }}>
+              ⚑ {flag}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProgrammeGatesPanel() {
+  const view = buildProgrammeGateStatusView();
+
+  return (
+    <div
+      data-testid="tower-programme-gates-panel"
+      style={{ padding: '24px 32px', maxWidth: 860 }}
+    >
+      {/* Summary bar */}
+      <div
+        data-testid="tower-programme-gates-summary"
+        style={{
+          display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20,
+          padding: '12px 16px', background: C.card,
+          border: `1px solid ${C.border}`, borderRadius: 8,
+        }}
+      >
+        <span style={{ fontSize: 11, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600 }}>
+          Programme Gates
+        </span>
+        <span style={{ flex: 1, fontSize: 12, color: C.muted }}>
+          {view.summary.totalProgrammes} programmes
+        </span>
+        {view.summary.blockedGates > 0 && (
+          <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: C.redSoft, color: C.red, fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            {view.summary.blockedGates} blocked
+          </span>
+        )}
+        {view.summary.atRiskGates > 0 && (
+          <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: C.amberSoft, color: '#92400e', fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            {view.summary.atRiskGates} at risk
+          </span>
+        )}
+        {view.summary.pendingGates > 0 && (
+          <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: C.navySoft, color: C.navy, fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            {view.summary.pendingGates} pending
+          </span>
+        )}
+        {view.summary.needsAttentionCount > 0 && (
+          <span style={{ fontSize: 11, color: C.amber, fontWeight: 600 }}>
+            {view.summary.needsAttentionCount} need tower attention
+          </span>
+        )}
+      </div>
+
+      {/* Atlas synthesis */}
+      <p style={{ fontSize: 13, color: C.ink, lineHeight: 1.6, margin: '0 0 20px' }}>
+        {view.atlasSynthesis}
+      </p>
+
+      {/* Programme cards */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {view.programmes.map((card: ProgrammeGateStatusCard) => (
+          <ProgrammeGateCard key={card.programmeId} card={card} />
+        ))}
+      </div>
+
+      {/* Cross-programme dependencies */}
+      {view.crossProgrammeDependencies.length > 0 && (
+        <div
+          data-testid="tower-programme-gates-dependencies"
+          style={{ marginTop: 20, padding: '14px 16px', background: C.amberSoft, border: `1px solid ${C.amber}`, borderRadius: 8 }}
+        >
+          <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#92400e', marginBottom: 8 }}>
+            Cross-programme dependencies
+          </div>
+          {view.crossProgrammeDependencies.map((dep, i) => (
+            <p key={i} style={{ fontSize: 11, color: C.ink, lineHeight: 1.55, margin: i > 0 ? '6px 0 0' : 0 }}>
+              {dep}
+            </p>
+          ))}
+        </div>
+      )}
+
+      {/* Honest disclaimer */}
+      <div
+        style={{ marginTop: 20, fontSize: 10, color: C.mutedSoft, letterSpacing: '0.04em' }}
+        data-testid="tower-programme-gates-disclaimer"
+        data-honest-disclaimer="tower-programme-gates"
+      >
+        Deterministic seed · Programme gate status reflects fixture phase data for the Apex Retail engagement.
+        Live gate approvals and phase transitions are managed by the programme gate management workflow.
+      </div>
+    </div>
   );
 }
