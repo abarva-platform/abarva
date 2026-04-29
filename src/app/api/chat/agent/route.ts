@@ -14,7 +14,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { requireTenancy } from "@/app/api/v1/programs/_auth";
 import { getEngagementWithPhaseData } from "@/lib/programs/db-phase-queries";
 import { PHASE_LABEL_MAP } from "@/lib/programs/programs-fixture";
-import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
+import { getTenantSystemBlock } from "@/lib/agent/demo-context";
+import { getActiveClientRow } from "@/lib/active-client";
 import { getUserContextPromptBlock } from "@/lib/agent/userContext";
 import { retrieveStageContext, retrieveCategoryContext } from "@/lib/intelligence/agent-retrieval";
 import { getRelevantTools } from "@/lib/agent/tools/registry";
@@ -173,6 +174,14 @@ export async function POST(request: Request) {
   // it's speaking with. Empty string when unauthenticated.
   const userContextBlock = await getUserContextPromptBlock();
 
+  // Surface 1 PR2.5 — resolve the active client so we can scope the
+  // demo block to the right tenant. Apex Retail gets the rich
+  // multi-program demo context; everyone else gets only the general
+  // platform context (avoids Steward/Nexus referencing Apex programs
+  // in conversations with Meridian or Arcturus users).
+  const activeClient = await getActiveClientRow().catch(() => null);
+  const tenantSystemBlock = getTenantSystemBlock(activeClient?.key ?? null);
+
   // Surface 1 PR2 — artifact-channel instructions are composed for
   // surfaces that have a reactive workspace ready to consume them.
   // /programs/new and /demo/programs/new are the first; other surfaces
@@ -204,7 +213,7 @@ export async function POST(request: Request) {
     "- Keep responses under 200 words. Be direct, specific, actionable.",
     "- Reference tenant and program names from context.",
     "- Never say you don't have specific information about the tenant — use the demo context below.",
-    AGENT_DEMO_SYSTEM_BLOCK,
+    tenantSystemBlock,
   ]
     .filter((s) => s !== '' && s !== undefined && s !== null)
     .join("\n");

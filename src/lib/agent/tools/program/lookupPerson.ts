@@ -111,19 +111,48 @@ export const lookupPersonTool: AgentTool<LookupPersonInput> = {
       };
     }
 
-    // Light-touch query normalization: strip filler words so a query
-    // like "the CIO" still hits a row whose role is "CIO".
-    const stripped = queryRaw.replace(/^(the|our|my|a|an)\s+/i, '');
-    const lower = stripped.toLowerCase();
+    // Tokenize the query so noisy agent input ("Sarah Chen (CIO) is
+    // the sponsor") still resolves to "Sarah Chen". An ILIKE match on
+    // the whole phrase fails because no persons row contains the full
+    // phrase as a substring. Splitting on whitespace + punctuation
+    // and OR-matching individual significant tokens across name/role/
+    // email is forgiving.
+    //
+    // Stopwords: filler words + program-context words the agent might
+    // include unintentionally ("sponsor", "lead", "is the").
+    const STOPWORDS = new Set([
+      'the', 'a', 'an', 'our', 'my', 'is', 'as', 'are', 'we', 'us',
+      'he', 'she', 'they', 'and', 'or', 'of', 'for', 'to', 'in', 'on',
+      'sponsor', 'lead', 'leads', 'leading', 'owner', 'owns', 'owning',
+      'program', 'project', 'team', 'role',
+    ]);
+    const tokens = queryRaw
+      .toLowerCase()
+      .replace(/[(),.;:!?"'—–-]/g, ' ')
+      .split(/\s+/)
+      .map((t) => t.trim())
+      .filter((t) => t.length >= 2 && !STOPWORDS.has(t));
 
-    // Ilike pattern with both word and word-bounded variants. We OR
-    // across name, role, and email so a single query can resolve
-    // a name, a title, or an email.
-    const pattern = `%${lower}%`;
+    // If everything got filtered out (very short or all stopwords),
+    // fall back to the raw query as a last-resort substring search.
+    const effectiveTokens = tokens.length > 0 ? tokens : [queryRaw.toLowerCase()];
+
+    // Build OR clauses: for each token, OR across name/role/email.
+    // PostgREST `.or()` syntax: `field.ilike.value` joined by commas.
+    // Patterns must NOT contain unescaped commas; tokens are
+    // single-word or already-sanitized so we're safe.
+    const orFilters: string[] = [];
+    for (const token of effectiveTokens) {
+      const pat = `%${token}%`;
+      orFilters.push(`name.ilike.${pat}`);
+      orFilters.push(`role.ilike.${pat}`);
+      orFilters.push(`email.ilike.${pat}`);
+    }
+
     const { data, error } = await sb
       .from('persons')
       .select('id, name, role, organization, email')
-      .or(`name.ilike.${pattern},role.ilike.${pattern},email.ilike.${pattern}`)
+      .or(orFilters.join(','))
       .limit(50);
 
     if (error) {

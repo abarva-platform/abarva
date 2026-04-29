@@ -82,6 +82,12 @@ SOURCE EVENT:
 
 // ── Combined block for system prompt injection ───────────────────────────────
 // Append this to any agent system prompt to give it full platform + demo awareness.
+//
+// Surface 1 PR2.5: legacy unconditional block kept for the routes that still
+// import it (most still do). New routes should prefer `getTenantSystemBlock()`
+// below, which scopes the Apex Retail demo context to the Apex tenant only —
+// non-Apex tenants get only the general platform context, avoiding the
+// confusing cross-tenant references Anand spotted during a Meridian walkthrough.
 
 export const AGENT_DEMO_SYSTEM_BLOCK = `
 
@@ -91,3 +97,32 @@ ${ABARVA_PRODUCT_CONTEXT}
 ${APEX_RETAIL_DEMO_CONTEXT}
 --- END CONTEXT ---
 `.trimEnd();
+
+const PLATFORM_ONLY_BLOCK = `
+
+--- PLATFORM CONTEXT ---
+${ABARVA_PRODUCT_CONTEXT}
+--- END CONTEXT ---
+`.trimEnd();
+
+/**
+ * Active-client → demo block resolver. The Apex Retail tenant gets the
+ * full demo block (rich program/source-event context); other tenants
+ * get just the general platform context. This stops Steward and Nexus
+ * from referencing Apex programs in conversations about Meridian /
+ * Arcturus / etc.
+ *
+ * `clientKey` matches the values returned by `getActiveClientRow().key`
+ * (see `src/lib/active-client.ts`). Pass `null` when the request is
+ * unauthenticated; we default to platform-only context.
+ */
+export function getTenantSystemBlock(
+  clientKey: string | null | undefined,
+): string {
+  // Apex Retail is the canonical demo tenant — keep the rich block.
+  if (clientKey === 'apex-retail') return AGENT_DEMO_SYSTEM_BLOCK;
+  // Everything else gets the platform context only. As we build out
+  // tenant-specific demo data for Meridian / Arcturus / etc., this is
+  // the seam to switch on.
+  return PLATFORM_ONLY_BLOCK;
+}
