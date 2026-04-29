@@ -45,6 +45,7 @@ import { buildEvidenceMap } from '@/lib/source/source-event-instance';
 import { getMissionsForSourceEvent } from '@/lib/agent/agent-mission-derived';
 import { MissionListInteractive } from '@/components/_shared/MissionListInteractive';
 import { RecentMissionStates } from '@/components/_shared/RecentMissionStates';
+import { EvidenceCoverageHeatmap } from '@/components/reasoning/EvidenceCoverageHeatmap';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -275,6 +276,13 @@ function ReadinessTab() {
           through the work pane. */}
       <InstanceEventTimeline
         entries={buildInstanceEventTimeline(AMS_VENDOR_CONSOLIDATION_2026_INSTANCE.id)}
+      />
+
+      {/* REASON-35 — Evidence coverage heatmap: visual grid of which gate
+          criteria have supporting evidence across all lifecycle stages. */}
+      <EvidenceCoverageHeatmap
+        instance={AMS_VENDOR_CONSOLIDATION_2026_INSTANCE}
+        pattern={PAT_SRC_AMS_001}
       />
 
       {/* Honest disclaimer */}

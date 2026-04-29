@@ -75,6 +75,7 @@ import { AddProgramEvidenceForm } from '@/components/programs/AddProgramEvidence
 import { BulkEvidenceImportButton } from '@/components/programs/BulkEvidenceImportButton';
 import { CascadeImpactSection } from '@/components/_shared/CascadeImpactSection';
 import { PhaseAdvanceButton } from '@/components/programs/PhaseAdvanceButton';
+import { EvidenceCoverageHeatmap } from '@/components/reasoning/EvidenceCoverageHeatmap';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -3609,6 +3610,21 @@ export function ProgramDetailPage({
     return { instanceId: instance.id, currentPhase: instance.currentPhase };
   })();
 
+  // REASON-35 — Evidence coverage heatmap: resolve instance + lifecycle
+  // pattern for the viewing program so the heatmap can match evidence to
+  // gate criteria across all stages.
+  const heatmapInfo = (() => {
+    const instance = APEX_RETAIL_PROGRAM_INSTANCES.find(
+      (i) =>
+        i.displayId === view.displayId ||
+        i.id.toLowerCase() === view.programId.toLowerCase(),
+    );
+    if (!instance) return null;
+    const pattern = findLifecyclePattern(instance.patternId);
+    if (!pattern || pattern.stages.length === 0) return null;
+    return { instance, pattern };
+  })();
+
   // REASON-32 — Per-instance reasoning event timeline entries. Reads from
   // the synthesis telemetry, evidence ingestion store, and contradiction
   // resolution state, all keyed by the underlying program-instance id.
@@ -4049,6 +4065,14 @@ export function ProgramDetailPage({
               <div style={{ padding: '20px 0', fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK_MUTED }}>
                 Gate criteria not defined for P{view.viewingPhase}.
               </div>
+            )}
+            {/* REASON-35 — Evidence coverage heatmap: visual grid of which gate
+                criteria have supporting evidence across all lifecycle stages. */}
+            {heatmapInfo && (
+              <EvidenceCoverageHeatmap
+                instance={heatmapInfo.instance}
+                pattern={heatmapInfo.pattern}
+              />
             )}
             {/* REASON-30 — Contradiction detail card sits below gate criteria */}
             {contradictionInfo && contradictionInfo.contradictions.length > 0 && (
