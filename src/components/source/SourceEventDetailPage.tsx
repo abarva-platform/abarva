@@ -20,6 +20,8 @@ import { buildBafoScenarioCompareView } from '@/lib/source/bafo-scenario-compare
 import { buildTransitionReadinessView } from '@/lib/source/transition-readiness-view';
 import type { VendorTransitionReadiness, TransitionRiskItem, TransitionGoNoGoItem, TransitionReadinessStatus } from '@/lib/source/transition-readiness-view';
 import { ContradictionDetailCardClient } from '@/components/_shared/ContradictionDetailCardClient';
+import { RiskRegisterPanel } from '@/components/_shared/RiskRegisterPanel';
+import { buildRiskRegisterForInstance } from '@/lib/reasoning/risk-register';
 import { CascadeImpactCard, ReverseCascadeCard } from '@/components/_shared/CascadeImpactCard';
 import { InstanceEventTimeline } from '@/components/_shared/InstanceEventTimeline';
 import { LifecycleMiniGraph } from '@/components/_shared/LifecycleMiniGraph';
@@ -229,6 +231,15 @@ function ReadinessTab() {
       <ContradictionDetailCardClient
         contradictions={activeContradictions}
         instanceId={AMS_VENDOR_CONSOLIDATION_2026_INSTANCE.id}
+      />
+
+      {/* Risk register — joins contradictions + failure modes for this instance. */}
+      <RiskRegisterPanel
+        risks={buildRiskRegisterForInstance(
+          synthesisContext,
+          AMS_VENDOR_CONSOLIDATION_2026_INSTANCE.displayId,
+        )}
+        title="Risk register · this event"
       />
 
       {/* REASON-31 — Cascade impact detail (downstream + upstream) */}
