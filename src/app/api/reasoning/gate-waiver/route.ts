@@ -21,6 +21,20 @@ function jsonResponse(body: unknown, status: number): Response {
 // In-memory store — keyed by `${instanceId}::${criterionId}`.
 const waiverStore = new Map<string, { reason: string; waivedAt: string }>();
 
+/** Retrieve all waiver records whose key starts with `${instanceId}::`. */
+export function getWaiversForInstance(
+  instanceId: string,
+): Array<{ criterionId: string; reason: string; waivedAt: string }> {
+  const prefix = `${instanceId}::`;
+  const results: Array<{ criterionId: string; reason: string; waivedAt: string }> = [];
+  for (const [key, value] of waiverStore.entries()) {
+    if (key.startsWith(prefix)) {
+      results.push({ criterionId: key.slice(prefix.length), reason: value.reason, waivedAt: value.waivedAt });
+    }
+  }
+  return results;
+}
+
 /** Clear all gate waivers — used by the demo-reset endpoint. */
 export function clearWaivers(): void {
   waiverStore.clear();

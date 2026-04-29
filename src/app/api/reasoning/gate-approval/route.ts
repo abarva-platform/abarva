@@ -31,6 +31,20 @@ export function getApproval(instanceId: string, criterionId: string): ApprovalRe
   return approvalStore.get(`${instanceId}::${criterionId}`);
 }
 
+/** Retrieve all approval/rejection records for a given instanceId. */
+export function getApprovalsForInstance(
+  instanceId: string,
+): Array<{ criterionId: string; record: ApprovalRecord }> {
+  const prefix = `${instanceId}::`;
+  const results: Array<{ criterionId: string; record: ApprovalRecord }> = [];
+  for (const [key, record] of approvalStore.entries()) {
+    if (key.startsWith(prefix)) {
+      results.push({ criterionId: key.slice(prefix.length), record });
+    }
+  }
+  return results;
+}
+
 /** Clear all gate approvals — used by the demo-reset endpoint. */
 export function clearApprovals(): void {
   approvalStore.clear();
