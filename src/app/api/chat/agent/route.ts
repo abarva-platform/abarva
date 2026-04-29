@@ -58,6 +58,15 @@ import "@/lib/agent/tools/program/registerPlaceholderPerson";
 // static doctrine; runtime evidence-evaluation is deferred to the
 // future knowledge-broker layer.
 import "@/lib/agent/tools/program/advancePhase";
+// Surface 2 PR-INT-C — Sentinel tools for /intelligence surface.
+// search_patterns + pattern_neighborhood + evidence_lookup register
+// for surface '/intelligence'. Vector retrieval is not live yet
+// (GRAPH_VECTOR_READINESS.md); the tools fall back to keyword overlap
+// against the static pattern manifest until the broker grows vector
+// support. Evidence lookups already route through SentinelBrokerAdapter.
+import "@/lib/agent/tools/intelligence/searchPatterns";
+import "@/lib/agent/tools/intelligence/patternNeighborhood";
+import "@/lib/agent/tools/intelligence/evidenceLookup";
 
 // ── Agent voice map ────────────────────────────────────────────────────────────
 
