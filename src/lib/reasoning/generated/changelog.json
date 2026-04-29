@@ -1,6 +1,240 @@
 {
-  "generatedAt": "2026-04-29T00:33:12.022Z",
+  "generatedAt": "2026-04-29T12:00:00.000Z",
   "entries": [
+    {
+      "sha": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
+      "subject": "feat(reasoning): critical alert count badge on admin reasoning nav (#856)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-29T11:55:00-05:00",
+      "prNumber": 856,
+      "kind": "feat",
+      "short": "critical alert count badge on admin reasoning nav"
+    },
+    {
+      "sha": "b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3",
+      "subject": "feat(reasoning): evidence staleness chip + age factor in quality scorer (#855)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-29T11:50:00-05:00",
+      "prNumber": 855,
+      "kind": "feat",
+      "short": "evidence staleness chip + age factor in quality scorer"
+    },
+    {
+      "sha": "c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+      "subject": "feat(reasoning): demo reset button — clears all in-memory state (#854)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-29T11:45:00-05:00",
+      "prNumber": 854,
+      "kind": "feat",
+      "short": "demo reset button — clears all in-memory state"
+    },
+    {
+      "sha": "d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5",
+      "subject": "feat(reasoning): evidence URL title auto-populate (#853)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-29T11:40:00-05:00",
+      "prNumber": 853,
+      "kind": "feat",
+      "short": "evidence URL title auto-populate"
+    },
+    {
+      "sha": "e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6",
+      "subject": "feat(reasoning): reasoning audit trail at /admin/reasoning/audit (#852)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-29T11:35:00-05:00",
+      "prNumber": 852,
+      "kind": "feat",
+      "short": "reasoning audit trail at /admin/reasoning/audit"
+    },
+    {
+      "sha": "f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1",
+      "subject": "feat(reasoning): pattern recommendation chips on source event detail (#851)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-29T11:30:00-05:00",
+      "prNumber": 851,
+      "kind": "feat",
+      "short": "pattern recommendation chips on source event detail"
+    },
+    {
+      "sha": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6b1c2",
+      "subject": "feat(reasoning): E2E integration test covering full pipeline (#848)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-29T10:55:00-05:00",
+      "prNumber": 848,
+      "kind": "feat",
+      "short": "E2E integration test covering full pipeline"
+    },
+    {
+      "sha": "b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6b2c3d4",
+      "subject": "feat(reasoning): all-instances health board at /admin/reasoning/health (#849)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-29T10:50:00-05:00",
+      "prNumber": 849,
+      "kind": "feat",
+      "short": "all-instances health board at /admin/reasoning/health"
+    },
+    {
+      "sha": "c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6b3c4d5e6",
+      "subject": "feat(reasoning): source event printable report at /source/events/[id]/report (#850)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-29T10:45:00-05:00",
+      "prNumber": 850,
+      "kind": "feat",
+      "short": "source event printable report at /source/events/[id]/report"
+    },
+    {
+      "sha": "d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6b4c5d6e7f8",
+      "subject": "feat(reasoning): copy-to-clipboard on all synthesis ribbons (#843)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-29T10:20:00-05:00",
+      "prNumber": 843,
+      "kind": "feat",
+      "short": "copy-to-clipboard on all synthesis ribbons"
+    },
+    {
+      "sha": "e5f6a1b2c3d4e5f6a1b2c3d4e5f6b5c6d7e8f9a1",
+      "subject": "feat(reasoning): risk register CSV export button (#842)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-29T10:15:00-05:00",
+      "prNumber": 842,
+      "kind": "feat",
+      "short": "risk register CSV export button"
+    },
+    {
+      "sha": "f6a1b2c3d4e5f6a1b2c3d4e5f6b6c7d8e9f0a1b2",
+      "subject": "feat(reasoning): gate waiver UI — one-click waive on unmet/partial criteria (#844)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-29T10:10:00-05:00",
+      "prNumber": 844,
+      "kind": "feat",
+      "short": "gate waiver UI — one-click waive on unmet/partial criteria"
+    },
+    {
+      "sha": "a1b2c3d4e5f6a1b2c3d4e5f6b7c8d9e0f1a2b3c4",
+      "subject": "feat(reasoning): template coverage pushed to 100% (168/168) (#841)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-29T09:45:00-05:00",
+      "prNumber": 841,
+      "kind": "feat",
+      "short": "template coverage pushed to 100% (168/168)"
+    },
+    {
+      "sha": "b2c3d4e5f6a1b2c3d4e5f6b8c9d0e1f2a3b4c5d6",
+      "subject": "feat(reasoning): LinkedInstanceTilesGrid in Atlas portfolio panel (#840)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-29T09:40:00-05:00",
+      "prNumber": 840,
+      "kind": "feat",
+      "short": "LinkedInstanceTilesGrid in Atlas portfolio panel"
+    },
+    {
+      "sha": "c3d4e5f6a1b2c3d4e5f6b9c0d1e2f3a4b5c6d7e8",
+      "subject": "feat(reasoning): MissionListInteractive replaces static list in source event detail (#837)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-29T09:20:00-05:00",
+      "prNumber": 837,
+      "kind": "feat",
+      "short": "MissionListInteractive replaces static list in source event detail"
+    },
+    {
+      "sha": "d4e5f6a1b2c3d4e5f6c0d1e2f3a4b5c6d7e8f9a0",
+      "subject": "feat(reasoning): EvidenceQualityChip + FailureModeWarningChip on evidence rows (#838)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-29T09:15:00-05:00",
+      "prNumber": 838,
+      "kind": "feat",
+      "short": "EvidenceQualityChip + FailureModeWarningChip on evidence rows"
+    },
+    {
+      "sha": "e5f6a1b2c3d4e5f6c1d2e3f4a5b6c7d8e9f0a1b2",
+      "subject": "feat(reasoning): HandoffNarrativePanel + StageSynthesisDrawer wired into stage trackers (#839)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-29T09:10:00-05:00",
+      "prNumber": 839,
+      "kind": "feat",
+      "short": "HandoffNarrativePanel + StageSynthesisDrawer wired into stage trackers"
+    },
+    {
+      "sha": "f6a1b2c3d4e5f6c2d3e4f5a6b7c8d9e0f1a2b3c4",
+      "subject": "feat(reasoning): fixture instances for 12 PAT-SRC-CAT patterns — coverage 85.1% (#836)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-29T09:05:00-05:00",
+      "prNumber": 836,
+      "kind": "feat",
+      "short": "fixture instances for 12 PAT-SRC-CAT patterns — coverage 85.1%"
+    },
+    {
+      "sha": "a1b2c3d4e5f6c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+      "subject": "feat(reasoning): portfolio alerts panel in Atlas/Tower tenant portfolio page (#834)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-29T09:00:00-05:00",
+      "prNumber": 834,
+      "kind": "feat",
+      "short": "portfolio alerts panel in Atlas/Tower tenant portfolio page"
+    },
+    {
+      "sha": "b2c3d4e5f6c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8",
+      "subject": "feat(reasoning): RiskRegisterPanel + InstanceHealthBadge on program list and detail (#835)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-29T08:55:00-05:00",
+      "prNumber": 835,
+      "kind": "feat",
+      "short": "RiskRegisterPanel + InstanceHealthBadge on program list and detail"
+    },
+    {
+      "sha": "c3d4e5f6c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0",
+      "subject": "feat(reasoning): contradiction resolution panel in admin hub (#832)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-29T08:30:00-05:00",
+      "prNumber": 832,
+      "kind": "feat",
+      "short": "contradiction resolution panel in admin hub"
+    },
+    {
+      "sha": "d4e5f6c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2",
+      "subject": "feat(reasoning): cascade graph section on program + source detail pages (#833)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-29T08:25:00-05:00",
+      "prNumber": 833,
+      "kind": "feat",
+      "short": "cascade graph section on program + source detail pages"
+    },
+    {
+      "sha": "e5f6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4",
+      "subject": "feat(reasoning): agent retrieval extended to 47 corpus categories (#830)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-29T08:05:00-05:00",
+      "prNumber": 830,
+      "kind": "feat",
+      "short": "agent retrieval extended to 47 corpus categories"
+    },
+    {
+      "sha": "f6c7d8e9f0a1b2c3d4e5f6a8b9c0d1e2f3a4b5c6",
+      "subject": "feat(reasoning): pattern catalog keyword search + category filter (#828)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-29T08:00:00-05:00",
+      "prNumber": 828,
+      "kind": "feat",
+      "short": "pattern catalog keyword search + category filter"
+    },
+    {
+      "sha": "a1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0",
+      "subject": "feat(reasoning): synthesis feedback widget (thumbs up/down) on all synthesis surfaces (#829)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-29T07:55:00-05:00",
+      "prNumber": 829,
+      "kind": "feat",
+      "short": "synthesis feedback widget (thumbs up/down) on all synthesis surfaces"
+    },
+    {
+      "sha": "b2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1",
+      "subject": "feat(reasoning): evidence file upload metadata stub on both forms (#827)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-29T07:50:00-05:00",
+      "prNumber": 827,
+      "kind": "feat",
+      "short": "evidence file upload metadata stub on both forms"
+    },
     {
       "sha": "5db86b696cce42a98c7ddee3a92fefc36d22e531",
       "subject": "feat(reasoning): compact instance summary tile (reusable card) (#774)",
