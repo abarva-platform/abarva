@@ -723,6 +723,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/gate-status-matrix',
     description: 'Hard gate criteria × instances grid — met/waived/unmet/N/A status at a glance',
   },
+  {
+    title: 'Risk register',
+    href: '/admin/reasoning/risk-register',
+    description: 'Portfolio-wide risk register — all contradictions and failure modes ranked by severity',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
