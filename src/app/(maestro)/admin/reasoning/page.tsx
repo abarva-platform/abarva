@@ -20,6 +20,7 @@ import {
   type SurfaceStats,
   type TelemetrySummary,
 } from '@/lib/reasoning/synthesis-telemetry-stats';
+import { ReasoningHealthBadge } from '@/components/reasoning/ReasoningHealthBadge';
 
 export const metadata = {
   title: 'Reasoning telemetry · AbarVa Admin',
@@ -496,6 +497,7 @@ export default async function ReasoningTelemetryPage() {
         subtitle="Live operator view of the reasoning layer. Each row is one synthesis call — cache hits, latency, citation grounding, contradictions, failure modes, and the user's thumbs signal."
       >
         <HeaderCard totalEvents={summary.totalEvents} />
+        <ReasoningHealthBadge />
         {summary.totalEvents === 0 ? (
           <EmptyState />
         ) : (
