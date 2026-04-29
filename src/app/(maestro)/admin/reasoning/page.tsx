@@ -753,6 +753,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/evidence-ingest',
     description: 'Inject evidence fields into instances to trigger gate evaluation changes — demo affordance',
   },
+  {
+    title: 'Vendor tracker',
+    href: '/admin/reasoning/vendor-tracker',
+    description: 'All vendor participants across source events with status and selection tracking',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
