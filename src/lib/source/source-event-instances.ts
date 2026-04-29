@@ -18,6 +18,7 @@ export const AMS_VENDOR_CONSOLIDATION_2026_INSTANCE: SourceEventInstance = {
   id: 'apex-retail-ams-outsourcing-2026',
   displayId: 'SRC-AMS-2026',
   tenantSlug: 'apex-retail',
+  tenantId: 'apex-retail',
   name: 'AMS Vendor Consolidation 2026',
 
   // ── Pattern binding ────────────────────────────────────────────────────────
@@ -618,6 +619,7 @@ export const APEX_RETAIL_RFP_STORE_POS_2026_INSTANCE: SourceEventInstance = {
   id: 'apex-retail-rfp-store-pos-2026',
   displayId: 'DEMO-SRC-RFP-2026',
   tenantSlug: 'apex-retail',
+  tenantId: 'apex-retail',
   name: 'In-Store POS Hardware RFP 2026',
 
   patternId: 'PAT-SRC-RFP-001',
@@ -792,6 +794,7 @@ export const APEX_RETAIL_SOLE_SOURCE_ERP_2026_INSTANCE: SourceEventInstance = {
   id: 'apex-retail-sole-source-erp-2026',
   displayId: 'DEMO-SRC-SOLE-2026',
   tenantSlug: 'apex-retail',
+  tenantId: 'apex-retail',
   name: 'Aurelius Legacy ERP Support — Sole-Source Award',
 
   patternId: 'PAT-SRC-SOLE-001',
@@ -963,6 +966,7 @@ export const APEX_RETAIL_FRAMEWORK_CALLOFF_2026_INSTANCE: SourceEventInstance = 
   id: 'apex-retail-framework-callout-2026',
   displayId: 'DEMO-SRC-FRAME-2026',
   tenantSlug: 'apex-retail',
+  tenantId: 'apex-retail',
   name: 'Atlantis MSA Framework Call-Off — Security Analysts',
 
   patternId: 'PAT-SRC-FRAMEWORK-001',
@@ -1123,6 +1127,7 @@ export const APEX_RETAIL_RENEWAL_IAM_2026_INSTANCE: SourceEventInstance = {
   id: 'apex-retail-renewal-iam-2026',
   displayId: 'DEMO-SRC-REN-2026',
   tenantSlug: 'apex-retail',
+  tenantId: 'apex-retail',
   name: 'Centaurus Identity Platform Renewal Decision',
 
   patternId: 'PAT-SRC-RENEWAL-001',
@@ -1282,6 +1287,7 @@ export const APEX_RETAIL_DECOM_LEGACY_ERP_2026_INSTANCE: SourceEventInstance = {
   id: 'apex-retail-decom-legacy-erp-2026',
   displayId: 'DEMO-SRC-DEC-2026',
   tenantSlug: 'apex-retail',
+  tenantId: 'apex-retail',
   name: 'Helios Legacy ERP Vendor Decommission',
 
   patternId: 'PAT-SRC-DECOM-001',
@@ -1435,6 +1441,7 @@ export const APEX_RETAIL_EMERGENCY_PAYMENT_2026_INSTANCE: SourceEventInstance = 
   id: 'apex-retail-emergency-payment-2026',
   displayId: 'DEMO-SRC-EMR-2026',
   tenantSlug: 'apex-retail',
+  tenantId: 'apex-retail',
   name: 'Payment Fraud Detection — Emergency Sourcing',
 
   patternId: 'PAT-SRC-EMERGENCY-001',

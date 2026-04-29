@@ -901,10 +901,24 @@ function CascadeHitsTile({ events }: { events: CascadeTelemetryEvent[] }) {
   );
 }
 
-export default async function ReasoningTelemetryPage() {
-  const events = getRecentSynthesisEvents(200);
+export default async function ReasoningTelemetryPage({
+  searchParams,
+}: {
+  // Next 16 typed search params: a Promise of the parsed query string. We
+  // accept a single optional `?tenantId=...` filter and forward it to the
+  // telemetry readers. With one tenant in fixtures the filter is a no-op
+  // today; the wiring is what matters for the multi-tenant scaffolding.
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = (await searchParams) ?? {};
+  const rawTenant = params.tenantId;
+  const tenantId =
+    typeof rawTenant === 'string' && rawTenant.length > 0 ? rawTenant : undefined;
+  const filterOptions = tenantId !== undefined ? { tenantId } : undefined;
+
+  const events = getRecentSynthesisEvents(200, filterOptions);
   const summary = summarizeTelemetry(events);
-  const cascadeEvents = getRecentCascadeEvents(200);
+  const cascadeEvents = getRecentCascadeEvents(200, filterOptions);
 
   return (
     <AdminCanonShellV2

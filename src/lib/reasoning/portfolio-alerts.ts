@@ -43,11 +43,22 @@ export interface PortfolioAlert {
   instanceId: string;
   /** Display label of the instance (display id or name). */
   instanceLabel: string;
+  /**
+   * Multi-tenant scope of the underlying instance. Defaults to
+   * `'apex-retail'` for the demo fixtures. Reasoning admin views can
+   * filter by tenant via this field; tenancy is not enforced yet.
+   */
+  tenantId: string;
   /** One-sentence detail explaining what the alert means. */
   detail: string;
   /** URL to the relevant detail page for one-click drill-in. */
   link: string;
 }
+
+/**
+ * Default tenant id used when no tenant scope is propagated yet.
+ */
+const DEFAULT_ALERT_TENANT_ID = 'apex-retail';
 
 // ─── Severity helpers ──────────────────────────────────────────────────────────
 
@@ -77,6 +88,7 @@ function healthAlert(
   context: SynthesisContext,
   instanceLabel: string,
   link: string,
+  tenantId: string,
 ): PortfolioAlert | null {
   const health = computeInstanceHealth(context);
   if (health.grade !== 'red') return null;
@@ -88,6 +100,7 @@ function healthAlert(
     label: `Health red (${health.score}/100)`,
     instanceId: context.instanceId,
     instanceLabel,
+    tenantId,
     detail: summary,
     link,
   };
@@ -98,6 +111,7 @@ function contradictionAlert(
   instanceId: string,
   instanceLabel: string,
   link: string,
+  tenantId: string,
 ): PortfolioAlert | null {
   if (detection.severity !== 'high') return null;
   return {
@@ -107,6 +121,7 @@ function contradictionAlert(
     label: detection.label,
     instanceId,
     instanceLabel,
+    tenantId,
     detail: detection.resolutionPath || 'High-severity contradiction detected.',
     link,
   };
@@ -117,6 +132,7 @@ function failureModeAlert(
   instanceId: string,
   instanceLabel: string,
   link: string,
+  tenantId: string,
 ): PortfolioAlert | null {
   if (detection.confidence < FAILURE_MODE_ALERT_THRESHOLD) return null;
   const mitigation = detection.mitigations[0] ?? 'Review pattern-authored mitigations.';
@@ -127,6 +143,7 @@ function failureModeAlert(
     label: detection.label,
     instanceId,
     instanceLabel,
+    tenantId,
     detail: mitigation,
     link,
   };
@@ -137,6 +154,7 @@ function cascadeAlert(
   instanceId: string,
   instanceLabel: string,
   link: string,
+  tenantId: string,
 ): PortfolioAlert | null {
   if (impact.impactSeverity !== 'high') return null;
   const targetLabel = impact.targetInstanceName ?? impact.targetInstanceId;
@@ -147,6 +165,7 @@ function cascadeAlert(
     label: `Cascade impact → ${targetLabel}`,
     instanceId,
     instanceLabel,
+    tenantId,
     detail: impact.impact || `Downstream impact on ${targetLabel}.`,
     link,
   };
@@ -177,24 +196,25 @@ export function buildAlertsForInstance(
   context: SynthesisContext,
   instanceLabel: string,
   link: string,
+  tenantId: string = DEFAULT_ALERT_TENANT_ID,
 ): PortfolioAlert[] {
   const alerts: PortfolioAlert[] = [];
 
-  const health = healthAlert(context, instanceLabel, link);
+  const health = healthAlert(context, instanceLabel, link, tenantId);
   if (health !== null) alerts.push(health);
 
   for (const c of context.activeContradictions) {
-    const a = contradictionAlert(c, context.instanceId, instanceLabel, link);
+    const a = contradictionAlert(c, context.instanceId, instanceLabel, link, tenantId);
     if (a !== null) alerts.push(a);
   }
 
   for (const f of context.failureModes) {
-    const a = failureModeAlert(f, context.instanceId, instanceLabel, link);
+    const a = failureModeAlert(f, context.instanceId, instanceLabel, link, tenantId);
     if (a !== null) alerts.push(a);
   }
 
   for (const c of context.cascadeContext) {
-    const a = cascadeAlert(c, context.instanceId, instanceLabel, link);
+    const a = cascadeAlert(c, context.instanceId, instanceLabel, link, tenantId);
     if (a !== null) alerts.push(a);
   }
 
@@ -209,23 +229,28 @@ export function buildAlertsForInstance(
  * program instance + active source-event instance. Sorted globally:
  * severity (high → medium) → instanceId asc → kind asc → id asc.
  */
-export function buildPortfolioAlerts(): PortfolioAlert[] {
+export function buildPortfolioAlerts(
+  options?: { tenantId?: string },
+): PortfolioAlert[] {
   const all: PortfolioAlert[] = [];
+  const tenantFilter = options?.tenantId;
 
   for (const program of APEX_RETAIL_PROGRAM_INSTANCES) {
+    if (tenantFilter !== undefined && program.tenantId !== tenantFilter) continue;
     const ctx = buildProgramSynthesisContext(program);
     const label = program.displayId ?? program.name ?? program.id;
     const link = programLink(program.id);
-    all.push(...buildAlertsForInstance(ctx, label, link));
+    all.push(...buildAlertsForInstance(ctx, label, link, program.tenantId));
   }
 
   for (const sourceEvent of SOURCE_EVENT_INSTANCES) {
+    if (tenantFilter !== undefined && sourceEvent.tenantId !== tenantFilter) continue;
     const pattern = resolveSourcePattern(sourceEvent.patternId);
     if (pattern === undefined) continue;
     const ctx = buildSourceSynthesisContext(sourceEvent, pattern);
     const label = sourceEvent.displayId ?? sourceEvent.name ?? sourceEvent.id;
     const link = sourceLink(sourceEvent.id);
-    all.push(...buildAlertsForInstance(ctx, label, link));
+    all.push(...buildAlertsForInstance(ctx, label, link, sourceEvent.tenantId));
   }
 
   all.sort(compareAlerts);

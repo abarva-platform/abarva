@@ -28,6 +28,13 @@ export type CascadeBuildContext =
   | 'tower-synthesis';
 
 /**
+ * Default tenant id stamped on cascade events when the caller does not pass
+ * one through. Mirrors `DEFAULT_TELEMETRY_TENANT_ID` for synthesis events;
+ * tenancy is not enforced yet (scaffolding only).
+ */
+export const DEFAULT_CASCADE_TENANT_ID = 'apex-retail';
+
+/**
  * A single cascade event — one row of "this cross-instance edge was live
  * when synthesis context was built."
  */
@@ -36,6 +43,11 @@ export interface CascadeTelemetryEvent {
   id: string;
   /** ISO-8601 timestamp when the event was recorded. */
   timestamp: string;
+  /**
+   * Multi-tenant scope for the event. Defaults to `'apex-retail'` when the
+   * recorder does not supply one. Mirrors the field on the synthesis event.
+   */
+  tenantId: string;
   /** The instance whose state change is the trigger. */
   sourceInstanceId: string;
   /** The instance that will be affected. */
@@ -71,11 +83,15 @@ function nextEventId(): string {
 /**
  * Input shape for recording — caller supplies the operational fields, the
  * module fills in `id` and `timestamp`.
+ *
+ * `tenantId` is optional for back-compat: callers that have not yet been
+ * threaded through with a tenant scope omit it and the recorder fills in
+ * the default tenant.
  */
 export type CascadeTelemetryInput = Omit<
   CascadeTelemetryEvent,
-  'id' | 'timestamp'
->;
+  'id' | 'timestamp' | 'tenantId'
+> & { tenantId?: string };
 
 /**
  * Append a cascade event to the ring buffer. Returns the recorded event.
@@ -86,10 +102,12 @@ export type CascadeTelemetryInput = Omit<
 export function recordCascadeEvent(
   input: CascadeTelemetryInput,
 ): CascadeTelemetryEvent {
+  const { tenantId, ...rest } = input;
   const event: CascadeTelemetryEvent = {
     id: nextEventId(),
     timestamp: new Date().toISOString(),
-    ...input,
+    tenantId: tenantId ?? DEFAULT_CASCADE_TENANT_ID,
+    ...rest,
   };
   buffer.push(event);
   if (buffer.length > CASCADE_TELEMETRY_CAPACITY) {
@@ -101,11 +119,19 @@ export function recordCascadeEvent(
 /**
  * Return the most-recent cascade events, newest first. Defaults to the
  * full buffer.
+ *
+ * Pass `options.tenantId` to filter the returned events to a single tenant.
+ * When omitted, every event is returned (back-compat for existing callers).
  */
 export function getRecentCascadeEvents(
   limit?: number,
+  options?: { tenantId?: string },
 ): CascadeTelemetryEvent[] {
-  const slice = buffer.slice().reverse();
+  let slice = buffer.slice().reverse();
+  if (options?.tenantId !== undefined) {
+    const tid = options.tenantId;
+    slice = slice.filter((e) => e.tenantId === tid);
+  }
   if (typeof limit === 'number' && limit >= 0) {
     return slice.slice(0, limit);
   }

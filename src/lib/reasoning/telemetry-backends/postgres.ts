@@ -120,6 +120,7 @@ interface RawTelemetryRow {
   id: string;
   timestamp: string | Date;
   surface: string;
+  tenant_id?: string | null;
   instance_id: string;
   pattern_id: string | null;
   cache_hit: boolean;
@@ -141,6 +142,10 @@ function rowToEvent(row: RawTelemetryRow): SynthesisTelemetryEvent {
     id: row.id,
     timestamp: toIso(row.timestamp),
     surface: row.surface as SynthesisTelemetryEvent['surface'],
+    // Older rows persisted before the multi-tenant scaffolding column landed
+    // get back-filled with the default tenant on read so the in-memory shape
+    // is stable even against legacy databases.
+    tenantId: row.tenant_id ?? 'apex-retail',
     instanceId: row.instance_id,
     patternId: row.pattern_id,
     cacheHit: row.cache_hit,

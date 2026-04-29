@@ -19,6 +19,7 @@ function ev(
   return {
     id: `csc_test_${idx}`,
     timestamp: new Date(2026, 0, 1, 0, 0, idx).toISOString(),
+    tenantId: 'apex-retail',
     sourceInstanceId: source,
     targetInstanceId: target,
     linkType,

@@ -79,6 +79,12 @@ export interface ProgramInstance {
   id: string;           // 'APX-CDP-2026'
   displayId: string;    // 'APX-CDP-2026'
   tenantSlug: string;   // 'apex-retail'
+  /**
+   * Multi-tenant scope. Defaults to `'apex-retail'` for every demo fixture.
+   * Reasoning-layer lookups + filters key off this field; tenancy is not
+   * enforced yet (scaffolding only).
+   */
+  tenantId: string;
   name: string;
 
   // Pattern binding (for the reasoning layer)

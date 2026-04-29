@@ -28,6 +28,14 @@ export type SynthesisSurface = 'source' | 'programs' | 'tower';
 
 export type SynthesisFeedback = 'up' | 'down';
 
+/**
+ * Default tenant id stamped on telemetry events when the caller does not
+ * pass one through. Mirrors the `DEFAULT_TENANT_ID` exported by the source
+ * and program instance modules so the multi-tenant scaffolding has one
+ * canonical default. Tenancy is not enforced yet.
+ */
+export const DEFAULT_TELEMETRY_TENANT_ID = 'apex-retail';
+
 export interface SynthesisTelemetryEvent {
   /** Stable id assigned at record time. Returned to clients via header. */
   id: string;
@@ -35,6 +43,12 @@ export interface SynthesisTelemetryEvent {
   timestamp: string;
   /** Which synthesis surface produced the event. */
   surface: SynthesisSurface;
+  /**
+   * Multi-tenant scope for the event. Defaults to `'apex-retail'` when the
+   * recorder does not supply one. Reasoning admin views can filter by
+   * tenant via this field; tenancy is not enforced yet.
+   */
+  tenantId: string;
   /**
    * Identifier of the instance the synthesis was about.
    * For Tower the value is the literal string `'tower'` since Tower has no
@@ -130,11 +144,15 @@ function applyRetention(now: number): void {
 /**
  * Input shape for recording — caller supplies the operational data, the
  * module fills in `id` and `timestamp` deterministically.
+ *
+ * `tenantId` is optional for back-compat: callers that have not yet been
+ * threaded through with a tenant scope omit it and the recorder fills in
+ * the default tenant. New call sites should pass the request-scoped tenant.
  */
 export type SynthesisTelemetryInput = Omit<
   SynthesisTelemetryEvent,
-  'id' | 'timestamp' | 'feedback' | 'feedbackTimestamp'
->;
+  'id' | 'timestamp' | 'feedback' | 'feedbackTimestamp' | 'tenantId'
+> & { tenantId?: string };
 
 /**
  * Append an event to the ring buffer. Returns the assigned event id so the
@@ -150,10 +168,12 @@ export function recordSynthesisEvent(input: SynthesisTelemetryInput): SynthesisT
   const now = Date.now();
   applyRetention(now);
 
+  const { tenantId, ...rest } = input;
   const event: SynthesisTelemetryEvent = {
     id: nextEventId(),
     timestamp: new Date(now).toISOString(),
-    ...input,
+    tenantId: tenantId ?? DEFAULT_TELEMETRY_TENANT_ID,
+    ...rest,
   };
   buffer.push(event);
   if (buffer.length > SYNTHESIS_TELEMETRY_CAPACITY) {
@@ -170,9 +190,19 @@ export function recordSynthesisEvent(input: SynthesisTelemetryInput): SynthesisT
 
 /**
  * Return the most-recent events, newest first. Defaults to the full buffer.
+ *
+ * Pass `options.tenantId` to filter the returned events to a single tenant.
+ * When omitted, every event is returned (back-compat for existing callers).
  */
-export function getRecentSynthesisEvents(limit?: number): SynthesisTelemetryEvent[] {
-  const slice = buffer.slice().reverse();
+export function getRecentSynthesisEvents(
+  limit?: number,
+  options?: { tenantId?: string },
+): SynthesisTelemetryEvent[] {
+  let slice = buffer.slice().reverse();
+  if (options?.tenantId !== undefined) {
+    const tid = options.tenantId;
+    slice = slice.filter((e) => e.tenantId === tid);
+  }
   if (typeof limit === 'number' && limit >= 0) {
     return slice.slice(0, limit);
   }

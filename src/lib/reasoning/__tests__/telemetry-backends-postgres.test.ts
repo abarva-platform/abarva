@@ -20,6 +20,7 @@ const baseEvent: SynthesisTelemetryEvent = {
   id: 'tlm_test_1',
   timestamp: '2026-04-28T12:00:00.000Z',
   surface: 'source',
+  tenantId: 'apex-retail',
   instanceId: 'ams-vendor-consolidation-2026',
   patternId: 'PAT-SRC-AMS-001',
   cacheHit: false,
@@ -226,6 +227,10 @@ describe('PostgresTelemetryBackend', () => {
         id: 'tlm_a',
         timestamp: '2026-04-28T11:00:00.000Z',
         surface: 'programs',
+        // Legacy rows without a tenant_id column are back-filled with the
+        // default tenant on read so the in-memory shape matches the typed
+        // SynthesisTelemetryEvent contract.
+        tenantId: 'apex-retail',
         instanceId: 'apex-cdp-2026',
         patternId: 'PAT-PRG-CDP-001',
         cacheHit: true,

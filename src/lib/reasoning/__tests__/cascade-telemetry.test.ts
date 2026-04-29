@@ -90,6 +90,7 @@ describe('getRecentCascadeEvents', () => {
     first.push({
       id: 'fake',
       timestamp: new Date().toISOString(),
+      tenantId: 'apex-retail',
       sourceInstanceId: 'x',
       targetInstanceId: 'y',
       linkType: 'depends-on',

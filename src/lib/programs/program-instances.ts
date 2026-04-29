@@ -48,6 +48,7 @@ export const APX_CDP_2026_INSTANCE: ProgramInstance = {
   id: 'APX-CDP-2026',
   displayId: 'APX-CDP-2026',
   tenantSlug: 'apex-retail',
+  tenantId: 'apex-retail',
   name: 'Apex Retail CDP Activation',
 
   patternId: 'PAT-PRG-CDP-001',
@@ -138,6 +139,7 @@ export const APX_LPM_2026_INSTANCE: ProgramInstance = {
   id: 'APX-LPM-2026',
   displayId: 'APX-LPM-2026',
   tenantSlug: 'apex-retail',
+  tenantId: 'apex-retail',
   name: 'Loyalty Platform Modernization',
 
   patternId: 'PAT-PRG-LOYALTY-001',
@@ -205,6 +207,7 @@ export const APX_SAP_2026_INSTANCE: ProgramInstance = {
   id: 'APX-SAP-2026',
   displayId: 'APX-SAP-2026',
   tenantSlug: 'apex-retail',
+  tenantId: 'apex-retail',
   name: 'Store Associate Productivity AI',
 
   patternId: 'PAT-PRG-AI-CODING-001',
@@ -271,6 +274,7 @@ export const APX_DFV2_INSTANCE: ProgramInstance = {
   id: 'APX-DFV2-2025',
   displayId: 'APX-DFV2-2025',
   tenantSlug: 'apex-retail',
+  tenantId: 'apex-retail',
   name: 'Demand Forecasting AI v2',
 
   patternId: 'PAT-PRG-DATA-FAB-001',
@@ -353,6 +357,7 @@ export const APX_COPILOT_2026_INSTANCE: ProgramInstance = {
   id: 'APX-COPILOT-2026',
   displayId: 'DEMO-APX-COPILOT-2026',
   tenantSlug: 'apex-retail',
+  tenantId: 'apex-retail',
   name: 'M365 Copilot Productivity Rollout',
 
   patternId: 'PAT-PRG-COPILOT-001',
@@ -545,6 +550,7 @@ export const APX_CCAI_2026_INSTANCE: ProgramInstance = {
   id: 'APX-CCAI-2026',
   displayId: 'DEMO-APX-CCAI-2026',
   tenantSlug: 'apex-retail',
+  tenantId: 'apex-retail',
   name: 'Apex Retail Contact Center AI',
 
   patternId: 'PAT-PRG-CC-AI-001',

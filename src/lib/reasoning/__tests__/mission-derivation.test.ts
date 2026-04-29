@@ -38,6 +38,7 @@ function makeEmptyAmsInstance(): SourceEventInstance {
     id: 'empty-ams-instance',
     displayId: 'EMPTY',
     tenantSlug: 'test-tenant',
+    tenantId: 'apex-retail',
     name: 'Empty AMS Instance',
     patternId: 'PAT-SRC-AMS-001',
     patternVersion: '1.0',

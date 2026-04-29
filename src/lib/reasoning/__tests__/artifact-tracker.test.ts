@@ -32,6 +32,7 @@ function makeInstance(artifacts: SourceArtifactRef[]): SourceEventInstance {
     id: 'INST-TEST',
     displayId: 'TEST-001',
     tenantSlug: 'test',
+    tenantId: 'apex-retail',
     name: 'Test instance',
     patternId: 'PAT-SRC-AMS-001',
     patternVersion: '1.0',
