@@ -1,7 +1,7 @@
-// TOWER4 + TOWER1 + TOWER2 + TOWER3 + TOWER8 · Tower Lens Tabs view-model.
+// TOWER4 + TOWER1 + TOWER2 + TOWER3 + TOWER8 + TOWER9 · Tower Lens Tabs view-model.
 //
-// Pure deterministic helper that returns metadata for the eight lens tabs
-// on the Control Tower surface: Portfolio, Scorecards, Pressure, Source Commercial, Decisions, Value at Risk, Executive Brief, Programme Gates.
+// Pure deterministic helper that returns metadata for the nine lens tabs
+// on the Control Tower surface: Portfolio, Scorecards, Pressure, Source Commercial, Decisions, Value at Risk, Executive Brief, Programme Gates, Reasoning Activity.
 //
 // No model calls, no fetch, no Date.now / Math.random / new Date,
 // no live data. Same input → identical output.
@@ -26,7 +26,8 @@ export type TowerTabKey =
   | 'decisions'
   | 'value_at_risk'
   | 'executive_brief'
-  | 'programme_gates';
+  | 'programme_gates'
+  | 'reasoning_activity';
 
 export interface TowerTabMeta {
   key: TowerTabKey;
@@ -96,6 +97,12 @@ export const TOWER_TABS: ReadonlyArray<TowerTabMeta> = [
     key: 'programme_gates',
     label: 'Programme Gates',
     description: 'Gate status across all 4 Apex AI programmes — pending, blocked, at-risk indicators and cross-programme dependencies',
+    hasApexRetailContent: true,
+  },
+  {
+    key: 'reasoning_activity',
+    label: 'Reasoning Activity',
+    description: 'AI reasoning activity brief — active contradictions, cross-stage handoff readiness, and pattern synthesis signals across the Apex Retail engagement',
     hasApexRetailContent: true,
   },
 ];

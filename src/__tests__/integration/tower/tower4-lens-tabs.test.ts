@@ -18,11 +18,11 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('TOWER_TABS', () => {
-  it('declares exactly eight canonical tabs (TOWER1 + TOWER2 + TOWER3 added source_commercial + decisions + value_at_risk; TOWER8 added programme_gates)', () => {
-    expect(TOWER_TABS).toHaveLength(8);
+  it('declares exactly nine canonical tabs (TOWER1 + TOWER2 + TOWER3 added source_commercial + decisions + value_at_risk; TOWER8 added programme_gates; TOWER9 added reasoning_activity)', () => {
+    expect(TOWER_TABS).toHaveLength(9);
   });
 
-  it('contains portfolio, scorecards, pressure, source_commercial, decisions, value_at_risk, executive_brief, programme_gates in that order', () => {
+  it('contains portfolio, scorecards, pressure, source_commercial, decisions, value_at_risk, executive_brief, programme_gates, reasoning_activity in that order', () => {
     expect(TOWER_TABS.map((t) => t.key)).toEqual([
       'portfolio',
       'scorecards',
@@ -32,6 +32,7 @@ describe('TOWER_TABS', () => {
       'value_at_risk',
       'executive_brief',
       'programme_gates',
+      'reasoning_activity',
     ]);
   });
 
@@ -71,7 +72,7 @@ describe('resolveTowerTab', () => {
     expect(resolveTowerTab('not_a_tab')).toBe('portfolio');
   });
 
-  const VALID: TowerTabKey[] = ['portfolio', 'scorecards', 'pressure', 'source_commercial', 'decisions', 'value_at_risk', 'executive_brief', 'programme_gates'];
+  const VALID: TowerTabKey[] = ['portfolio', 'scorecards', 'pressure', 'source_commercial', 'decisions', 'value_at_risk', 'executive_brief', 'programme_gates', 'reasoning_activity'];
   for (const key of VALID) {
     it(`accepts valid key "${key}"`, () => {
       expect(resolveTowerTab(key)).toBe(key);
@@ -90,15 +91,15 @@ describe('buildTowerLensTabsView', () => {
   });
 
   it('echoes the active tab', () => {
-    const tabs: TowerTabKey[] = ['portfolio', 'scorecards', 'pressure', 'source_commercial', 'decisions', 'value_at_risk', 'executive_brief', 'programme_gates'];
+    const tabs: TowerTabKey[] = ['portfolio', 'scorecards', 'pressure', 'source_commercial', 'decisions', 'value_at_risk', 'executive_brief', 'programme_gates', 'reasoning_activity'];
     for (const tab of tabs) {
       expect(buildTowerLensTabsView(tab).activeTab).toBe(tab);
     }
   });
 
-  it('always includes all eight tabs', () => {
+  it('always includes all nine tabs', () => {
     const view = buildTowerLensTabsView('pressure');
-    expect(view.tabs).toHaveLength(8);
+    expect(view.tabs).toHaveLength(9);
     expect(view.tabs.map((t) => t.key)).toContain('portfolio');
     expect(view.tabs.map((t) => t.key)).toContain('scorecards');
     expect(view.tabs.map((t) => t.key)).toContain('pressure');
@@ -107,6 +108,7 @@ describe('buildTowerLensTabsView', () => {
     expect(view.tabs.map((t) => t.key)).toContain('value_at_risk');
     expect(view.tabs.map((t) => t.key)).toContain('executive_brief');
     expect(view.tabs.map((t) => t.key)).toContain('programme_gates');
+    expect(view.tabs.map((t) => t.key)).toContain('reasoning_activity');
   });
 
   it('is pure — same input yields identical output', () => {
@@ -135,9 +137,9 @@ describe('TOWER4 component file probe', () => {
     expect(src).toMatch(/export function TowerLensTabs/);
   });
 
-  it('references all eight tab keys in the component source', () => {
+  it('references all nine tab keys in the component source', () => {
     const src = fs.readFileSync(componentPath, 'utf8');
-    for (const key of ['portfolio', 'scorecards', 'pressure', 'source_commercial', 'decisions', 'value_at_risk', 'executive_brief', 'programme_gates']) {
+    for (const key of ['portfolio', 'scorecards', 'pressure', 'source_commercial', 'decisions', 'value_at_risk', 'executive_brief', 'programme_gates', 'reasoning_activity']) {
       expect(src).toContain(key);
     }
   });
