@@ -1183,6 +1183,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Pattern-Health Correlation',
     description: 'Lifecycle pattern leaderboard — avg health, gate pass rate, and contradiction rates by pattern with correlation insights.',
   },
+  {
+    href: '/admin/reasoning/gate-coverage-gaps',
+    title: 'Gate Coverage Gaps',
+    description: 'Sparse stages, no-hard-gate stages, evidence-less criteria — structural gaps in gate coverage with fix recommendations.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
