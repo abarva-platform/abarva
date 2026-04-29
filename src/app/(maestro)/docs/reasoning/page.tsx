@@ -149,6 +149,7 @@ const RUNTIME_ROWS: ReadonlyArray<ModuleRow> = [
   { symbol: 'buildTowerSynthesisContext, towerStateHash', description: 'REASON-17 — assembles the Atlas portfolio synthesis context for the Tower view.' },
   { symbol: 'recordSynthesisEvent, getRecentSynthesisEvents, recordFeedback, SYNTHESIS_TELEMETRY_CAPACITY', description: 'In-memory ring buffer + feedback channel for synthesis telemetry.' },
   { symbol: 'SynthesisTelemetryEvent, SynthesisTelemetryInput, SynthesisSurface, SynthesisFeedback', description: 'Telemetry record shapes feeding /admin/reasoning.' },
+  { symbol: 'TelemetryBackend, setTelemetryBackend, NoOpTelemetryBackend, InMemoryExtendedTelemetryBackend, PostgresTelemetryBackend', description: 'Pluggable persistence backends. Default is in-memory-extended; setting DATABASE_URL + REASONING_TELEMETRY_BACKEND=postgres swaps in the Postgres backend (writes to reasoning_telemetry_events).' },
   { symbol: 'resolveLinkedProgram, resolveLinkedSourceEvent, resolveLinkedInstance', description: 'REASON-18 / REASON-9 — link resolution between source events and programs.' },
   { symbol: 'buildLinkedProgramChip', description: 'UI helper that produces the linked-program chip from a resolved instance.' },
   { symbol: 'computeCascadeImpacts, computeReverseCascade, scoreImpactSeverity, traceMultiHop', description: 'Cross-instance reasoner — forward and reverse cascade computation across linked instances.' },
@@ -348,6 +349,20 @@ export default function ReasoningArchitectureDocPage() {
             for it, never on prose. The telemetry ring buffer
             (<Code>recordSynthesisEvent</Code>) is the operational view of Layer 4
             and is what <Code>/admin/reasoning</Code> renders.
+          </p>
+          <p style={PROSE_STYLE}>
+            Telemetry persistence is pluggable through a narrow{' '}
+            <Code>TelemetryBackend</Code> interface (
+            <Code>write</Code>, <Code>writeFeedback</Code>). The default backend is
+            an in-memory ring of capacity 5000 — no DB required, suitable for dev
+            and ephemeral environments. Setting <Code>DATABASE_URL</Code> together
+            with <Code>REASONING_TELEMETRY_BACKEND=postgres</Code> swaps in the
+            Postgres backend, which write-throughs every recorded event and
+            feedback signal into the <Code>reasoning_telemetry_events</Code> table
+            (migration <Code>20260428180000</Code>). Backend writes are
+            fire-and-forget — failures are logged but never propagate to the
+            caller, so persistence latency or outages cannot block a synthesis
+            response.
           </p>
         </Section>
       </EditorialCanvas>
