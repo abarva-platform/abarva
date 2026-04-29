@@ -6476,6 +6476,425 @@ The common failure is treating payroll as routine software when a small configur
   },
 
 
+  {
+    id: 'PAT-SRC-CAT-WFM-001',
+    slug: 'workforce-management-scheduling-time-sourcing',
+    title: 'Workforce Management, Scheduling, and Time Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Workforce management sourcing should prove labor-rule configuration, schedule fairness, timekeeping accuracy, payroll handoff, and local compliance before buyers accept AI forecasting or labor-optimization claims.',
+    applicability:
+      'Apply when sourcing UKG, Workday Workforce Management, ADP WorkForce Suite, Dayforce, Legion, Deputy, Quinyx, Workforce.com, TCP, When I Work, or comparable WFM, time, attendance, absence, scheduling, and labor forecasting platforms.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.80,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.ukg.com/workforce-management',
+      'https://www.ukg.com/products/ukg-pro-workforce-management',
+      'https://www.workday.com/en-us/products/human-capital-management/payroll-workforce-management.html',
+      'https://www.adp.com/wfm',
+      'https://workforcesoftware.com/workforce-suite/',
+      'https://www.dayforce.com/how-we-help/dayforce/agile-workforce-management/scheduling',
+      'https://legion.co/products/schedule-optimization/',
+      'https://www.deputy.com/features/',
+      'https://workforcesoftware.com/workforce-suite/compliance/',
+      'https://www.dol.gov/agencies/whd/flsa',
+    ],
+    regulatoryChips: ['wage-hour-review', 'fair-workweek-review', 'union-rule-review', 'payroll-integration-review', 'employee-data-privacy-review'],
+    relatedPatternIds: ['PAT-SRC-CAT-HRTECH-001', 'PAT-SRC-CAT-PAYROLL-001', 'PAT-SRC-CAT-HCM-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'enterprise_saas',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'UKG, Workday Workforce Management, ADP WorkForce Suite, Dayforce, Legion, Deputy, Quinyx, Workforce.com, TCP, and When I Work',
+        tier: 'enterprise',
+        positioning: 'Suite and specialist WFM candidates spanning time, attendance, absence, scheduling, labor forecasting, employee self-service, communications, and payroll handoff.',
+        cautions: ['Validate labor rules, union rules, fair-workweek constraints, payroll exports, device model, mobile consent, and frontline adoption before treating AI scheduling as accepted value.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'UKG workforce management product page', url: 'https://www.ukg.com/workforce-management', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Workday workforce management software page', url: 'https://www.workday.com/en-us/products/human-capital-management/payroll-workforce-management.html', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'ADP Workforce Management page', url: 'https://www.adp.com/wfm', asOf: '2026-04-29' },
+        ],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'WFM pricing constructs only',
+        model: 'hybrid',
+        metric: 'Per employee, per active worker, module, location, clock/device, scheduling user, integration, implementation, support, managed service, analytics, and country or rule-pack scope',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Deputy public feature and product packaging pages', url: 'https://www.deputy.com/features/', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Employee counts, hourly populations, locations, union rules, payroll systems, clocks, forecast drivers, and implementation scope require buyer evidence' },
+        ],
+        confidence: 0.56,
+        notes: 'Do not infer category pricing from vendor marketing. Keep numeric benchmarks blank unless buyer quotes, invoices, or approved benchmark data exist.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Labor-rule configuration and payroll handoff',
+        buyerPosition: 'Define pay rules, scheduling rules, break rules, overtime, premiums, union agreements, approval workflows, payroll export obligations, testing evidence, change-control process, and liability allocation for configuration errors.',
+      },
+      {
+        clauseArea: 'Employee data, mobile, and device controls',
+        buyerPosition: 'Require DPA, subprocessors, device/location capture rules, biometric or clock consent review where applicable, role-based access, audit logs, export, deletion, and transition assistance.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Rule-complexity proof before BAFO',
+        whenToUse: 'Use when the buyer has multi-state, multi-country, union, healthcare, retail, manufacturing, or 24/7 scheduling complexity.',
+        buyerAsk: 'Require scripted configuration proof for overtime, breaks, shift swaps, premiums, union rules, absences, holidays, fatigue rules, payroll export, and retro corrections.',
+      },
+      {
+        lever: 'Module and population decomposition',
+        whenToUse: 'Use when the quote bundles core HR, time, scheduling, absence, forecasting, communications, analytics, and managed services.',
+        buyerAsk: 'Separate active workers, managers, schedulers, locations, clocks, modules, integrations, implementation services, support, and managed-service fees.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'wfm-labor-rule-misconfiguration',
+        label: 'Labor-rule misconfiguration',
+        severity: 'critical',
+        detectionSignals: ['Vendor cannot demonstrate buyer-specific overtime, break, meal, union, premium, fair-workweek, or payroll export scenarios.'],
+        mitigations: ['Use scripted payroll/time scenarios, require parallel runs, lock acceptance criteria, and assign liability for configuration defects'],
+      },
+      {
+        id: 'wfm-ai-scheduling-overclaim',
+        label: 'AI scheduling overclaim',
+        severity: 'high',
+        detectionSignals: ['Forecasting or schedule optimization claims lack explainability, manager override, fairness review, or actual demand-driver testing.'],
+        mitigations: ['Require forecast-driver transparency, override logs, fairness controls, compliance checks, and buyer-owned KPI measurement'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'retail_cpg',
+        modifier: 'Stress fair-workweek exposure, location hierarchy, store traffic, shift swaps, minors, seasonal hiring, and mobile adoption.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Stress credentialing, float pools, fatigue, overtime, union rules, critical staffing ratios, and 24/7 scheduling continuity.',
+      },
+      {
+        industry: 'manufacturing',
+        modifier: 'Stress shift patterns, line staffing, safety credentials, job costing, union agreements, attendance points, and payroll premiums.',
+      },
+    ],
+    body: `## Summary
+Workforce management sourcing sits at the seam between people operations, labor cost, compliance, and payroll. The buyer is not only selecting a scheduling tool. The platform may determine how hours are captured, how shifts are assigned, how overtime and premiums are calculated, how absences are approved, how managers react to demand forecasts, and what evidence exists when payroll or wage-hour disputes occur.
+
+## When to apply
+Use this pattern when sourcing UKG, Workday Workforce Management, ADP WorkForce Suite, Dayforce, Legion, Deputy, Quinyx, Workforce.com, TCP, When I Work, or comparable time, attendance, scheduling, absence, labor forecasting, and frontline workforce platforms. Apply it during time-clock replacement, scheduling modernization, payroll integration, store or plant labor optimization, healthcare staffing improvement, union-rule configuration, multi-state compliance remediation, or HCM-suite consolidation. Do not use it as the primary pattern for HRIS, payroll, recruiting, learning, benefits, or employee communications unless time, scheduling, and payroll handoff are central to the sourcing event.
+
+## Category boundary
+In scope: time and attendance, employee scheduling, shift swaps, absence, leave handoff, labor forecasting, demand scheduling, overtime and premium rules, break and meal rules, union and local agreements, manager approvals, mobile self-service, time clocks, biometric or badge devices, payroll export, job and cost-center coding, analytics, workforce communications, and managed WFM support. Adjacent but distinct: core HR, payroll tax, benefits, EOR, contractor management, learning, performance, and standalone collaboration tools.
+
+## Lifecycle and gates
+The scope gate should inventory hourly and salaried populations, locations, countries, payroll systems, HCM systems, clocks and devices, union agreements, break rules, overtime rules, shift premiums, minors, predictive scheduling exposure, job costing, absence processes, and manager approval paths. The RFP gate should require rule configuration evidence, device model, mobile access model, DPA, subprocessors, audit logs, integrations, implementation approach, support model, and export rights. The proof gate should run buyer-authored scenarios for shift creation, swap, missed punch, retro correction, holiday premium, overtime, meal break, union premium, absence, payroll export, and manager override. The BAFO gate should normalize active workers, schedulers, managers, locations, clocks, modules, integrations, implementation, support, managed services, analytics, and renewal controls.
+
+## Evaluation rubric
+Weight labor-rule and payroll accuracy around 25 percent, scheduling and forecasting fit around 20 percent, compliance and auditability around 20 percent, frontline usability around 15 percent, integration and data governance around 10 percent, and commercial predictability around 10 percent. Increase compliance weight when fair-workweek rules, union agreements, minors, healthcare staffing, public-sector rules, or multi-country labor laws are in scope.
+
+## Pricing and contract notes
+Public sources support feature scope, not reliable category pricing. UKG, Workday, ADP, Dayforce, Legion, and Deputy describe constructs such as time tracking, scheduling, labor forecasting, compliance support, analytics, mobile access, and payroll handoff. Those descriptions do not prove net price, implementation duration, labor savings, forecast accuracy, overtime reduction, or compliance risk reduction for a specific buyer. Keep numeric benchmark fields blank unless AbarVa has buyer quotes, invoices, implementation SOWs, or approved benchmark data.
+
+Contracting should define pay-rule configuration responsibilities, testing evidence, acceptance criteria, payroll export obligations, parallel-run support, correction handling, support response, audit logs, mobile and device data controls, biometric or geolocation review where applicable, security attestations, data export, deletion, transition assistance, renewal uplift, and module substitution rights.
+
+## Contradictions and failure modes
+Vendor claim: AI scheduling reduces labor cost. Detection: require actual demand drivers, forecast transparency, manager override, fairness review, and buyer-owned KPI measurement. Vendor claim: compliance is automated. Detection: require jurisdiction, union, rule-change, testing, and liability evidence. Vendor claim: payroll integration is standard. Detection: prove earnings codes, job costing, retro corrections, premiums, holidays, and approval cutoffs in a parallel run.
+
+The common failure is selecting a polished scheduling experience while leaving the hardest pay and labor rules to implementation. The second is accepting AI forecasting claims without understanding what data drives the forecast or how managers can override it. The third is underestimating frontline adoption: if employees, managers, unions, and payroll teams do not trust the schedule and time record, the system will be bypassed or corrected manually.`
+  },
+  {
+    id: 'PAT-SRC-CAT-PSA-001',
+    slug: 'professional-services-automation-sourcing',
+    title: 'Professional Services Automation Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'PSA sourcing should be governed as the operating system for services margin, utilization, delivery risk, billing, revenue forecasting, and CRM-to-finance handoff, not as generic project management software.',
+    applicability:
+      'Apply when sourcing Kantata, Certinia, NetSuite OpenAir, Workday PSA, BigTime, Accelo, ConnectWise, Autotask, Rocketlane, FinancialForce-era PSA estates, or integrated services automation platforms.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.79,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.kantata.com/hosted-services-specifications',
+      'https://www.kantata.com/ps-cloud/financial-management-software/revenue-recognition',
+      'https://certinia.com/professional-services-cloud/automation/',
+      'https://certinia.com/professional-services-cloud/',
+      'https://help.certinia.com/main/2022.3/Subsystems/PSA/Content/topics/GettingStarted/GettingStarted.htm',
+      'https://help.certinia.com/main/2023.1/Content/SRP/Overview.htm',
+      'https://www.bigtime.net/pricing',
+      'https://get.kantata.com/rs/677-LEJ-696/images/2025-ps-maturity-benchmark.pdf',
+    ],
+    regulatoryChips: ['revenue-recognition-review', 'project-accounting-review', 'DCAA-if-government-contractor', 'employee-data-privacy-review'],
+    relatedPatternIds: ['PAT-SRC-CAT-ERP-001', 'PAT-SRC-CAT-CRM-001', 'PAT-SRC-CAT-AP-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'enterprise_saas',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Kantata, Certinia, NetSuite OpenAir, Workday PSA, BigTime, Accelo, ConnectWise, Autotask, Rocketlane, and services modules in ERP/CRM suites',
+        tier: 'enterprise',
+        positioning: 'PSA and services automation candidates spanning opportunity-to-project conversion, resource planning, project delivery, time and expense, billing, revenue forecasts, and project accounting integration.',
+        cautions: ['Separate delivery-project management from financial controls, resource governance, rate cards, billing, revenue recognition, and CRM/accounting integration.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Kantata hosted services specifications', url: 'https://www.kantata.com/hosted-services-specifications', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Certinia PSA overview', url: 'https://certinia.com/professional-services-cloud/automation/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'BigTime public pricing/package page', url: 'https://www.bigtime.net/pricing', asOf: '2026-04-29' },
+        ],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'PSA pricing constructs only',
+        model: 'subscription',
+        metric: 'Named users, light time-entry users, resource managers, project managers, billing users, modules, entities, integrations, data migration, implementation, reporting, support, and sandbox or environment scope',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'BigTime package and feature page', url: 'https://www.bigtime.net/pricing', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Billable headcount, delivery model, rate cards, accounting system, CRM, entities, currencies, and implementation scope require buyer evidence' },
+        ],
+        confidence: 0.55,
+        notes: 'Vendor public pages can orient modules and packaging, but net subscription cost, services cost, and ROI claims require buyer-specific evidence.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Services financial controls',
+        buyerPosition: 'Define rate-card ownership, billing rules, revenue forecast treatment, project accounting handoff, approval controls, audit logs, and acceptance criteria for opportunity-to-project and project-to-invoice scenarios.',
+      },
+      {
+        clauseArea: 'Data migration and exit',
+        buyerPosition: 'Require export of projects, assignments, time, expenses, rate cards, budgets, forecasts, invoices, resource records, and audit history in usable formats with transition assistance.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Role-based license decomposition',
+        whenToUse: 'Use when the vendor prices all participants as full PSA users.',
+        buyerAsk: 'Separate time-entry, expense-entry, resource-manager, project-manager, finance, executive, integration, client-portal, and admin access rights.',
+      },
+      {
+        lever: 'Billing and revenue proof',
+        whenToUse: 'Use before BAFO when fixed-fee, T&M, milestone, retainer, subscription services, or multi-currency billing are material.',
+        buyerAsk: 'Run scripted proof from opportunity through project, assignment, time, expense, revenue forecast, invoice, accounting export, and credit or adjustment.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'psa-finance-delivery-mismatch',
+        label: 'Delivery workflow does not reconcile to finance',
+        severity: 'high',
+        detectionSignals: ['Demo shows tasks and resource plans but not rate cards, billing events, revenue forecasts, invoices, or accounting integration.'],
+        mitigations: ['Require quote-to-project-to-invoice proof, finance signoff, and acceptance criteria tied to real billing scenarios'],
+      },
+      {
+        id: 'psa-utilization-data-quality',
+        label: 'Utilization and capacity data quality risk',
+        severity: 'medium',
+        detectionSignals: ['Resource skills, availability, assignments, time entry, and forecast data are incomplete or owned by different systems.'],
+        mitigations: ['Define resource master, skills taxonomy, assignment governance, data stewardship, and reporting acceptance tests'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'public_sector',
+        modifier: 'Review DCAA, contract cost accounting, labor categories, timesheet controls, auditability, and invoice evidence when government contracting is in scope.',
+      },
+      {
+        industry: 'cross_industry',
+        modifier: 'Stress implementation services, customer success handoff, subscription services, partner delivery, CRM integration, and revenue forecast governance.',
+      },
+      {
+        industry: 'cross_industry',
+        modifier: 'For consulting, audit, legal, engineering, and agency models, tune the proof around rate cards, utilization, project accounting, billing, and margin reporting.',
+      },
+    ],
+    body: `## Summary
+Professional Services Automation is the operating system for services delivery economics. It connects sales opportunities, project setup, resource requests, staffing, skills, utilization, time, expenses, budgets, billing, revenue forecasting, project accounting, and customer delivery evidence. A PSA sourcing event should therefore test whether the buyer can run the business of services through the platform, not whether teams can manage tasks.
+
+## When to apply
+Use this pattern when sourcing Kantata, Certinia, NetSuite OpenAir, Workday PSA, BigTime, Accelo, ConnectWise, Autotask, Rocketlane, or services automation modules in ERP and CRM suites. Apply it during consulting-operations modernization, implementation-services scaling, resource-management redesign, project-accounting cleanup, quote-to-project automation, time-and-billing replacement, post-acquisition consolidation, or services-margin improvement. Do not use it for generic project management, agile delivery, ITSM, legal matter management, or field-service events unless services financial operations and resource economics are central.
+
+## Category boundary
+In scope: opportunity-to-project conversion, project templates, work breakdown structures, resource requests, skills and availability, utilization targets, time and expense, billing rules, fixed-fee and time-and-materials support, milestone billing, project budgets, estimate-to-complete, estimate-at-completion, revenue forecast, invoicing handoff, accounting integration, CRM integration, client portals, dashboards, and reporting. Adjacent but distinct: ERP general ledger, CRM pipeline management, HRIS, payroll, expense reimbursement, agile engineering planning, ticketing, and standalone collaboration tools.
+
+## Lifecycle and gates
+The scope gate should inventory services lines, billable headcount, resource pools, rate cards, delivery methods, project types, entities, currencies, CRM, ERP/accounting, billing models, approval paths, revenue recognition needs, DCAA or public-sector requirements, and migration sources. The RFP gate should require role-based licensing, data model, API/integration model, security, DPA, reporting, implementation approach, migration scope, and exit rights. The proof gate should run opportunity-to-project, staffing, time entry, expense, fixed-fee billing, T&M billing, milestone billing, forecast update, invoice export, project adjustment, and resource-capacity scenarios. The BAFO gate should normalize licenses by role, modules, client portals, integrations, data migration, implementation, reporting, support, sandboxes, and renewal controls.
+
+## Evaluation rubric
+Weight services financial controls around 25 percent, resource management and utilization around 20 percent, billing and accounting integration around 20 percent, delivery workflow fit around 15 percent, reporting and forecast quality around 10 percent, and commercial predictability around 10 percent. Increase financial-control weight when project accounting, multi-entity billing, public-sector contracting, or revenue-recognition governance is in scope.
+
+## Pricing and contract notes
+Public vendor material supports feature and package orientation. Kantata describes PSA functionality across project management, accounting integration, time and expense, resource allocation, portfolio performance, risk, and profitability. Certinia describes Salesforce-native PSA and services financial workflows. BigTime publishes package constructs for time, expense, billing, invoicing, project portfolio, rate management, reports, integrations, and DCAA-related features. These public references do not prove buyer-specific subscription cost, implementation effort, utilization lift, margin improvement, invoice-cycle reduction, or payback.
+
+Contracting should define license roles, rate-card ownership, project and resource data ownership, billing-rule configuration, revenue forecast treatment, accounting handoff, audit logs, implementation acceptance, migration completeness, support response, API access, export rights, transition assistance, renewal uplift, and rights to reduce or reassign users as delivery headcount changes.
+
+## Contradictions and failure modes
+Vendor claim: PSA improves utilization. Detection: require the resource master, skills taxonomy, assignment process, utilization formula, manager accountability, and data-quality plan. Vendor claim: billing is automated. Detection: prove fixed fee, T&M, milestone, retainer, expense, adjustment, credit, invoice, and accounting export flows. Vendor claim: CRM-native or ERP-native architecture removes integration risk. Detection: map objects, permissions, IDs, rate cards, billing events, and reporting ownership.
+
+The common failure is buying project visibility but leaving finance to reconcile invoices manually. The second is treating utilization reporting as a software feature when it depends on clean assignments, time entry, skills, availability, and business rules. The third is under-scoping migration: historical projects, rates, time, expenses, budgets, resource records, and billing evidence often matter long after go-live.`
+  },
+  {
+    id: 'PAT-SRC-CAT-CPQ-001',
+    slug: 'configure-price-quote-sourcing',
+    title: 'Configure, Price, Quote Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'CPQ sourcing should prove product-model governance, pricing-rule control, quote approval, contract handoff, order integration, and renewal/amendment behavior before buyers accept faster-quote or margin claims.',
+    applicability:
+      'Apply when sourcing Salesforce Revenue Cloud or CPQ, Oracle CPQ, Conga CPQ, PROS Smart CPQ, DealHub, SAP CPQ, Zuora CPQ, Model N, Logik.io, Subskribe, or comparable quote-to-cash platforms.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.80,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.salesforce.com/products/cpq/overview/',
+      'https://www.salesforce.com/products/sales-cloud/tools/cpq-software/',
+      'https://www.oracle.com/applications/customer-experience/cpq/',
+      'https://docs.oracle.com/en/cloud/saas/configure-price-quote/index.html',
+      'https://docs.oracle.com/en/cloud/saas/cx-commerce/21d/ccint/introduction-integrating-oracle-cpq.html',
+      'https://conga.com/solutions/cpq-software-solution',
+      'https://documentation.conga.com/en/general/conga-product-glossary/configure-price-quote-cpq',
+      'https://pros.com/pros-platform/pricing-smart-cpq/',
+      'https://dealhub.io/pricing/',
+    ],
+    regulatoryChips: ['revenue-recognition-review', 'approval-control-review', 'customer-contracting-review', 'price-governance-review'],
+    relatedPatternIds: ['PAT-SRC-CAT-CRM-001', 'PAT-SRC-CAT-REV-001', 'PAT-SRC-CAT-CLM-001', 'PAT-SRC-CAT-ERP-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'enterprise_saas',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Salesforce Revenue Cloud or CPQ, Oracle CPQ, Conga CPQ, PROS Smart CPQ, DealHub, SAP CPQ, Zuora CPQ, Model N, Logik.io, and Subskribe',
+        tier: 'enterprise',
+        positioning: 'CPQ and quote-to-cash candidates spanning configuration, pricing, discounting, approvals, quote documents, contract handoff, ordering, subscription changes, and renewal or amendment workflows.',
+        cautions: ['Validate product-catalog governance, pricing source of truth, approval controls, order integration, and amendment/renewal behavior before treating CPQ as a sales-productivity tool.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Oracle CPQ overview and documentation', url: 'https://docs.oracle.com/en/cloud/saas/configure-price-quote/index.html', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Conga CPQ solution and glossary', url: 'https://conga.com/solutions/cpq-software-solution', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Salesforce CPQ overview', url: 'https://www.salesforce.com/products/cpq/overview/', asOf: '2026-04-29' },
+        ],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'CPQ pricing constructs only',
+        model: 'hybrid',
+        metric: 'Sales users, admins, approvers, partner/channel users, modules, quote volume, product catalog complexity, pricing engine, document generation, billing/revenue modules, integrations, implementation, and support',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'DealHub public pricing intake page', url: 'https://dealhub.io/pricing/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'PROS Smart CPQ pricing page', url: 'https://pros.com/pros-platform/pricing-smart-cpq/', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Product catalog size, pricing rules, channels, quote volume, ERP/CRM/billing systems, and implementation scope require buyer evidence' },
+        ],
+        confidence: 0.57,
+        notes: 'Do not infer net CPQ price or implementation effort from public pages. Complex product/pricing rule depth drives cost and risk.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Pricing and approval control',
+        buyerPosition: 'Define pricing source of truth, discount authority, approval workflow, audit logs, override rights, quote validity, margin controls, and responsibility for incorrect quotes or stale prices.',
+      },
+      {
+        clauseArea: 'Quote-to-order and exit',
+        buyerPosition: 'Require integration commitments for CRM, CLM, billing, ERP/order management, catalog data, quote documents, amendments, renewals, exports, transition assistance, and implementation acceptance scenarios.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Scripted product-model proof',
+        whenToUse: 'Use when products include bundles, options, usage, subscriptions, ramp deals, custom pricing, channel pricing, or regulated discount approvals.',
+        buyerAsk: 'Require finalist proof against buyer products, attributes, constraints, price books, discounts, approvals, quote docs, amendments, renewals, and order handoff.',
+      },
+      {
+        lever: 'Implementation accountability',
+        whenToUse: 'Use when the vendor relies on SI configuration or the buyer has legacy quoting rules embedded in spreadsheets or ERP.',
+        buyerAsk: 'Tie milestone payments to catalog migration, rule validation, pricing tests, approval tests, integration tests, and sales-user acceptance.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'cpq-product-model-brittleness',
+        label: 'Product-model brittleness',
+        severity: 'high',
+        detectionSignals: ['Configuration rules, bundles, attributes, dependencies, or price rules cannot be explained, tested, or governed by business owners.'],
+        mitigations: ['Require product-model governance, rule ownership, regression tests, admin controls, and change-management evidence'],
+      },
+      {
+        id: 'cpq-quote-to-order-breakage',
+        label: 'Quote-to-order breakage',
+        severity: 'critical',
+        detectionSignals: ['Quote lines do not reconcile to contract, billing, revenue, ERP order, provisioning, or renewal objects.'],
+        mitigations: ['Run quote-to-contract-to-order scenarios, require integration acceptance, and define issue ownership across CRM, CLM, billing, and ERP'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'manufacturing',
+        modifier: 'Stress configurable products, options, compatibility, channel quoting, ERP item master, lead time, and order handoff.',
+      },
+      {
+        industry: 'cross_industry',
+        modifier: 'Stress subscription amendments, ramps, usage components, renewals, co-terms, billing/revenue integration, and product-led packaging changes.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Review regulated pricing, customer eligibility, contract pricing, approvals, and audit evidence if pricing is tied to healthcare contracting obligations.',
+      },
+    ],
+    body: `## Summary
+Configure, Price, Quote software is where product truth, commercial authority, sales workflow, contract language, order handoff, and revenue operations collide. CPQ should not be sourced as a faster document generator. It should be tested as the control layer that determines which products can be sold, at what price, under which approvals, with which terms, and how the accepted quote becomes a contract, order, invoice, renewal, or amendment.
+
+## When to apply
+Use this pattern when sourcing Salesforce Revenue Cloud or CPQ, Oracle CPQ, Conga CPQ, PROS Smart CPQ, DealHub, SAP CPQ, Zuora CPQ, Model N, Logik.io, Subskribe, or comparable quote-to-cash platforms. Apply it during quote-to-cash transformation, product-catalog cleanup, sales approval redesign, subscription-billing modernization, ERP/order integration, channel quoting, price-management overhaul, or CLM/CRM consolidation. Do not use it for CRM-only, CLM-only, billing-only, e-signature-only, or product-information-management events unless configuration, pricing, and quote approval are central.
+
+## Category boundary
+In scope: product catalog, bundles, options, attributes, compatibility rules, price books, customer-specific pricing, discount approvals, margin controls, guided selling, quote documents, proposal templates, contract handoff, order handoff, amendments, renewals, ramps, usage constructs, partner/channel quoting, CRM integration, CLM integration, billing integration, ERP integration, audit logs, and admin governance. Adjacent but distinct: CRM pipeline management, CLM clause governance, billing mediation, revenue recognition, product information management, ERP item master, and e-commerce.
+
+## Lifecycle and gates
+The scope gate should inventory product families, catalog owners, price books, discount rules, approval authorities, channels, quote volume, contract handoff, billing model, ERP/order systems, renewal process, amendment process, and known spreadsheet or legacy-rule dependencies. The RFP gate should require product-model approach, pricing engine, approval workflows, document generation, integration architecture, implementation method, security, data ownership, API limits, and support. The proof gate should run buyer-authored scenarios for bundle configuration, incompatible options, customer-specific price, discount approval, margin exception, quote revision, contract handoff, order export, renewal, amendment, cancellation, and data export. The BAFO gate should normalize users, administrators, approvers, partner users, modules, quote volume, environments, implementation services, integration services, testing, support, and renewal controls.
+
+## Evaluation rubric
+Weight product and pricing governance around 25 percent, integration with CRM/CLM/billing/ERP around 25 percent, approval controls and auditability around 15 percent, sales usability around 15 percent, implementation and migration around 10 percent, and commercial predictability around 10 percent. Increase integration weight when quote lines must drive fulfillment, provisioning, billing, revenue recognition, or regulated customer pricing.
+
+## Pricing and contract notes
+Public vendor sources establish CPQ scope, not buyer-specific economics. Oracle documentation describes the opportunity-to-quote-to-order process, including product selection, configuration, pricing, quoting, ordering, and approvals. Conga describes CPQ capabilities around configuration, pricing, quote generation, proposals, and CLM adjacency. Salesforce describes CPQ and Revenue Cloud as quote and revenue-management capabilities. PROS and DealHub publish pricing or pricing-intake pages, but public pages do not prove net subscription price, implementation cost, sales-cycle reduction, win-rate improvement, margin lift, or quote-error reduction for a specific buyer.
+
+Contracting should define product and pricing data ownership, admin rights, approval controls, audit logs, implementation acceptance, integration obligations, data migration, quote document templates, API access, support response, sandbox/environments, export rights, transition assistance, renewal uplift, and responsibility for incorrect prices or failed order handoff.
+
+## Contradictions and failure modes
+Vendor claim: CPQ accelerates quoting. Detection: require actual buyer products, rules, approvals, document templates, and sales roles in the proof. Vendor claim: quote-to-cash is integrated. Detection: trace quote lines through contract, order, billing, revenue, provisioning, and renewal objects. Vendor claim: business users can administer pricing. Detection: inspect rule complexity, regression tests, permission model, release process, and rollback procedure.
+
+The common failure is buying CPQ before the product catalog and pricing governance are ready. The second is proving a simple quote while the real business needs amendments, renewals, ramps, usage, channel pricing, or customer-specific terms. The third is under-contracting implementation accountability: CPQ value is usually created in configuration, integrations, data cleanup, and sales adoption, not in the license alone.`
+  },
+
 ];
 
 export const SOURCING_CATEGORY_PATTERN_COUNT = SOURCING_CATEGORY_PATTERNS.length;
