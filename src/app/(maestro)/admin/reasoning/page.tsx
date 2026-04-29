@@ -948,6 +948,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/instance-timeline',
     description: 'Per-instance chronological event stream — stage transitions, evidence, waivers, and resolutions combined',
   },
+  {
+    title: 'Regulatory map',
+    href: '/admin/reasoning/regulatory-map',
+    description: 'Regulatory framework coverage across patterns — which regulations affect which instances',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
