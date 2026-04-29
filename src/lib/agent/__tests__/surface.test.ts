@@ -40,10 +40,22 @@ describe('canonicalizeSurface', () => {
     expect(canonicalizeSurface('/programs/new', {})).toBe('/programs/new');
   });
 
-  it('unknown semantic surfaces pass through unchanged', () => {
-    expect(canonicalizeSurface('home', {})).toBe('home');
-    expect(canonicalizeSurface('tower', {})).toBe('tower');
+  it('PR-I · single-segment semantic surfaces canonicalize to /<name>', () => {
+    expect(canonicalizeSurface('home', {})).toBe('/home');
+    expect(canonicalizeSurface('tower', {})).toBe('/tower');
+    expect(canonicalizeSurface('programs', {})).toBe('/programs');
+    expect(canonicalizeSurface('source', {})).toBe('/source');
+    expect(canonicalizeSurface('intelligence', {})).toBe('/intelligence');
+    expect(canonicalizeSurface('setup', {})).toBe('/setup');
+  });
+
+  it('still-unknown semantic surfaces pass through unchanged', () => {
+    // 'source-detail' / 'setup-detail' would each need their own id in
+    // surfaceContext to canonicalize (parallel to programs-detail).
+    // Until that's wired they pass through.
     expect(canonicalizeSurface('source-detail', { programId: 'x' })).toBe('source-detail');
+    expect(canonicalizeSurface('setup-detail', { programId: 'x' })).toBe('setup-detail');
+    expect(canonicalizeSurface('something-bespoke', {})).toBe('something-bespoke');
   });
 
   it("'intelligence' canonicalizes to '/intelligence' (PR-INT-B)", () => {
@@ -83,9 +95,9 @@ describe('canonicalizeFromBody', () => {
     expect(r).toEqual({ surface: '/programs/top-wins', programId: 'top-wins' });
   });
 
-  it('returns programId=undefined when neither field has it', () => {
+  it('returns programId=undefined when neither field has it (and canonicalizes the surface)', () => {
     const r = canonicalizeFromBody({ surface: 'home' });
-    expect(r).toEqual({ surface: 'home', programId: undefined });
+    expect(r).toEqual({ surface: '/home', programId: undefined });
   });
 
   it('preserves URL-shaped surface untouched', () => {

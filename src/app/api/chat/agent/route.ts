@@ -229,9 +229,14 @@ export async function POST(request: Request) {
   // consume them. The check supports literal surface keys (Surface 1)
   // AND the canonical programs-detail pattern (Surface 2 — any
   // /programs/<id> surface that isn't /programs/new).
+  // PR-I · the artifact channel is now enabled across the full Programs
+  // canvas (list + detail + new). Adding /home and /intelligence is the
+  // natural next step (PR-J for home, Intelligence brief for that one)
+  // — leaving them off here so this PR stays focused.
   const surfacesWithArtifactChannel = new Set([
     '/programs/new',
     '/demo/programs/new',
+    '/programs',
     // PR-INT-B · Sentinel's Intelligence surface. The reactive
     // SentinelReactivePanel materializes pattern-match,
     // evidence-highlight, and cross-program-dependency cards.

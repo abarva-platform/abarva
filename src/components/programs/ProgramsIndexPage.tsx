@@ -4,12 +4,21 @@
 // Catalog entries: PRG-IDX-DEFAULT, PRG-IDX-LINKED, PRG-IDX-EMPTY, PRG-IDX-FILTERED.
 // Server component passes ProgramsIndexView to this client island.
 // data-testid markers required for P-SMOKE-CDP assertions.
+//
+// PR-I (Surface 2 master canvas) — adds an <AgentCanvas> at the top of
+// the page so /programs is agent-centric: Nexus chat dominant + reactive
+// portfolio panel. The legacy filter-pills / stats / programs-grid
+// content collapses into a "Programs portfolio · grid view" details
+// element below. AgentColumn is deprecated for this surface — chat
+// lives inside AgentCanvas now.
 
+import { useCallback, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
-import { AgentColumn } from '@/components/shell/AgentColumn';
+import { AgentCanvas } from '@/components/programs/AgentCanvas';
 import { FilterPillStrip } from '@/components/shell/FilterPillStrip';
+import type { Artifact } from '@/lib/agent/artifacts';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { ProgramRow, ProgramsIndexView as ProgramsIndexViewV2 } from '@/lib/programs/programs-types';
 import {
@@ -331,6 +340,17 @@ function ProgramsTable({ programs }: { programs: ProgramRow[] }) {
 export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
+
+  // PR-I · live Nexus artifacts dispatched by the embedded chat in
+  // AgentCanvas. Same pattern as ProgramDetailPage's nexusArtifacts.
+  const [nexusArtifacts, setNexusArtifacts] = useState<Artifact[]>([]);
+  const handleNexusArtifact = useCallback((artifact: Artifact) => {
+    setNexusArtifacts((prev) => {
+      const key = JSON.stringify(artifact);
+      if (prev.some((a) => JSON.stringify(a) === key)) return prev;
+      return [...prev, artifact];
+    });
+  }, []);
   const activeFilter = normalizeProgramsIndexFilter(searchParams?.get('filter') ?? null);
   const activePhase = (searchParams?.get('phase') ?? 'all') as ProgramPhase | 'all';
   const phaseView = buildPhaseFilterView('apex-retail', activePhase === 'all' ? 'all' : activePhase as ProgramPhase);
@@ -371,12 +391,11 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
     },
   ];
 
-  // Cast actions — fixture always uses 'A'|'B'|'C'; cast for AgentColumn type
-  const agentActions = view.portfolioWorkbench.actions.map((a) => ({
-    letter: a.letter as 'A' | 'B' | 'C',
-    text: a.text,
-    detail: a.detail,
-  }));
+  // Note: the fixture's `portfolioWorkbench.actions` (A/B/C quick
+  // navigations) used to feed AgentColumn. PR-I dropped AgentColumn for
+  // this surface, so those quick actions retire — Nexus chat is now
+  // the navigation. (If we want them back as suggested-prompt chips,
+  // add to AgentCanvas via a follow-up.)
 
   return (
     <AppShell
@@ -387,25 +406,62 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
         context: `Programs · ${view.totalActive} in flight`,
       }}
       middleStrip={<FilterPillStrip pills={filterPills} />}
+      onArtifact={handleNexusArtifact}
     >
-      <AgentColumn
-        agent={{ initials: 'Nx', name: 'Nexus', role: 'Program Orchestrator' }}
-        quote={view.portfolioWorkbench.prose}
-        agentContext={view.portfolioWorkbench.title}
-        actions={agentActions}
-        surface="programs"
-        onActionClick={(letter) => {
-          if (letter === 'A') router.push('/programs?filter=active');
-          else if (letter === 'B') router.push('/programs/new');
-          else if (letter === 'C') router.push('/programs?filter=gated');
+      {/* PR-I · agent-centric primary canvas. Nexus + reactive panel
+          dominate the viewport; the legacy stats / program grid
+          collapses into a details accordion below. AgentColumn (the
+          legacy left-rail chat widget) is deprecated for this
+          surface — chat lives inside AgentCanvas now. */}
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minWidth: 0,
+          minHeight: 0,
+          overflow: 'hidden',
         }}
-      />
+      >
+        <div style={{ padding: '20px 28px 0' }}>
+          <AgentCanvas
+            surface="/programs"
+            agent={{ initials: 'Nx', name: 'Nexus', role: 'Program Orchestrator' }}
+            quote={view.portfolioWorkbench.prose}
+            artifacts={nexusArtifacts}
+            onArtifact={handleNexusArtifact}
+          />
+        </div>
+
+        <details
+          data-testid="programs-index-legacy"
+          style={{
+            margin: '0 28px 28px',
+            border: `1px solid ${SHELL.CARD_LINE}`,
+            borderRadius: 10,
+            background: SHELL.PAPER,
+          }}
+        >
+          <summary
+            style={{
+              cursor: 'pointer',
+              padding: '12px 16px',
+              fontFamily: SHELL.MONO,
+              fontSize: 11,
+              letterSpacing: '0.10em',
+              textTransform: 'uppercase',
+              color: SHELL.GRAY_TEXT,
+              fontWeight: 700,
+              userSelect: 'none',
+            }}
+          >
+            Programs portfolio · grid view ({view.totalActive} active · {view.gatesPending} gated · {view.idleCount} idle)
+          </summary>
 
       {/* Work pane */}
       <div
         data-testid="programs-index-page"
         style={{
-          flex: 1,
           overflowY: 'auto',
           background: SHELL.PAPER,
           padding: '24px 32px 32px',
@@ -765,6 +821,8 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
             Deterministic seed · Apex Retail Group
           </div>
         </div>
+      </div>
+        </details>
       </div>
 
     </AppShell>

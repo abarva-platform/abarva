@@ -52,17 +52,27 @@ export function canonicalizeSurface(
       const programId = typeof ctx.programId === 'string' ? ctx.programId : null;
       return programId ? `/programs/${programId}` : surface;
     }
-    case 'intelligence': {
-      // PR-INT-B · Sentinel's surface. The bare list surface has no
-      // detail-level id; semantic and URL-shaped forms collapse onto
-      // the same single-segment path. Tools register for '/intelligence'
-      // (URL-shaped, matching the existing convention) so we canonicalize
-      // here. Detail routes (e.g. '/intelligence/patterns/<id>') will
-      // need their own case once added.
+    // PR-I · single-segment semantic surfaces have a one-to-one URL form.
+    // Canonicalizing them here keeps tools and the artifact-channel gate
+    // working uniformly across list/detail/home/intelligence — without
+    // each consumer growing its own translation table. PR-INT-B relies
+    // on the 'intelligence' case so Sentinel tools registered for
+    // '/intelligence' (URL-shaped) resolve cleanly when AppShell sends
+    // the semantic 'intelligence' key.
+    case 'programs':
+      return '/programs';
+    case 'home':
+      return '/home';
+    case 'tower':
+      return '/tower';
+    case 'source':
+      return '/source';
+    case 'intelligence':
       return '/intelligence';
-    }
+    case 'setup':
+      return '/setup';
     // Add cases here as detail-level surfaces gain canonical URL forms.
-    // 'source-detail', 'evidence-detail', etc.
+    // 'source-detail', 'evidence-detail', 'setup-detail' (when they need it).
     default:
       return surface;
   }
