@@ -1992,6 +1992,472 @@ Vendor claim: the platform is open. Detection: test read/write semantics, catalo
 
 The common failure is treating object storage openness as full platform portability. The second failure is comparing compute rates while ignoring catalog, governance, networking, storage, scans, transactions, and operations burden. The third failure is adopting a lakehouse before deciding whether the enterprise wants Delta, Iceberg, a hybrid strategy, or vendor-managed abstraction as its long-term data contract.`,
   },
+  {
+    id: 'PAT-SRC-CAT-MDM-001',
+    slug: 'master-data-management-sourcing',
+    title: 'Master Data Management Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'MDM sourcing should evaluate the operating model needed to standardize, match, merge, govern, steward, secure, and distribute shared enterprise entities, not just golden-record tooling.',
+    applicability:
+      'Apply when sourcing enterprise MDM, supplier/customer/product 360, SAP-centered master data governance, or MDM-adjacent governance and catalog programs where duplicate records, source conflicts, compliance-sensitive data, or ERP/CRM/commerce consolidation are material.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.8,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.gartner.com/en/data-analytics/topics/master-data-management',
+      'https://docs.reltio.com/en/reltio/what-does-reltio-do/what-reltio-does-at-a-glance/key-concepts-and-terms-at-a-glance/key-concepts/master-data',
+      'https://www.reltio.com/trust/compliance/',
+      'https://www.informatica.com/products/cloud-integration/master-data-management-cloud.html',
+      'https://www.informatica.com/products/cloud-integration/pricing.html',
+      'https://www.informatica.com/trust-center/certifications-assessments-standards.html',
+      'https://semarchy.com/platform/master-data-management/',
+      'https://semarchy.com/platform/deployment-options/',
+      'https://www.semarchy.com/doc/semarchy-xdm/xdm/latest/Admin/overview.html',
+      'https://help.sap.com/doc/bebc74f167e342ce90fe56630a339e35/6.17.latest/en-US/d5/eb955163146572e10000000a423f68/content.htm',
+      'https://www.sap.com/products/data-cloud/master-data-governance/pricing.html',
+      'https://www.sap.com/about/trust-center/certification-compliance.html',
+      'https://learn.microsoft.com/en-us/purview/data-governance-master-data-management-profisee',
+      'https://www.microsoft.com/en-us/security/business/risk-management/microsoft-purview-data-governance',
+      'https://azure.microsoft.com/en-us/pricing/details/purview/',
+    ],
+    regulatoryChips: ['GDPR-if-EU-person-data', 'HIPAA-if-PHI', 'SOC-2-review', 'SOX-if-financial-master-data'],
+    relatedPatternIds: ['PAT-SRC-CAT-ERP-001', 'PAT-SRC-CAT-CRM-001', 'PAT-SRC-CAT-FAB-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'data_analytics',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Informatica MDM and Reltio',
+        tier: 'enterprise',
+        positioning: 'Enterprise and multidomain MDM candidates where customer, product, supplier, finance, reference, and relationship data must be matched, governed, and distributed.',
+        cautions: ['AI match claims, pricing units, implementation services, and stewardship adoption require proof on buyer data.'],
+      },
+      {
+        vendorName: 'Semarchy xDM and SAP Master Data Governance',
+        tier: 'enterprise',
+        positioning: 'Candidates for configurable multidomain MDM and SAP-centered governance, change-request, approval, activation, and distribution workflows.',
+        cautions: ['SAP fit is strongest where SAP process ownership is central; non-SAP domains and integrations still need proof.'],
+      },
+      {
+        vendorName: 'Microsoft Purview with MDM partner architecture',
+        tier: 'specialist',
+        positioning: 'Governance/catalog/lineage layer relevant to MDM architecture, but not a like-for-like dedicated MDM platform by itself.',
+        cautions: ['Treat Purview as MDM-adjacent unless paired with dedicated MDM or buyer-built master-data services.'],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'MDM public pricing posture and consumption-unit anchors',
+        model: 'hybrid',
+        metric: 'Domains, records, processing units, governed assets, deployment model, services, support, and implementation scope',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Informatica Pricing', url: 'https://www.informatica.com/products/cloud-integration/pricing.html', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'SAP Master Data Governance Pricing', url: 'https://www.sap.com/products/data-cloud/master-data-governance/pricing.html', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Microsoft Purview Pricing', url: 'https://azure.microsoft.com/en-us/pricing/details/purview/', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Negotiated rates, discounts, implementation services, migration costs, connector costs, renewal terms, and private marketplace offers require buyer evidence' },
+        ],
+        confidence: 0.6,
+        notes: 'Public sources identify pricing constructs, not full enterprise MDM TCO or implementation economics.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Master data stewardship and auditability',
+        buyerPosition: 'Define stewardship workflows, approvals, audit trails, survivorship overrides, data-owner accountability, and downstream distribution obligations.',
+      },
+      {
+        clauseArea: 'Match/merge proof and data portability',
+        buyerPosition: 'Require match-rule transparency, lineage to source systems, exportable mastered records, transition support, and deletion or correction workflows.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Proof dataset calibration',
+        whenToUse: 'Use when vendors claim high match quality or rapid implementation.',
+        buyerAsk: 'Run buyer-supplied duplicate, conflicting, and hierarchy scenarios before BAFO and score false positives, false negatives, steward workload, and lineage clarity.',
+      },
+      {
+        lever: 'Domain-scope phasing',
+        whenToUse: 'Use when vendors price or scope broad multidomain programs before ownership is mature.',
+        buyerAsk: 'Phase contract commitments by domain acceptance, stewardship adoption, and downstream distribution success.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'mdm-operating-model-gap',
+        label: 'MDM operating-model gap',
+        severity: 'high',
+        detectionSignals: ['The buyer cannot name data owners, survivorship rules, exception workflow, or source-of-truth decisions.'],
+        mitigations: ['Require stewardship model and proof dataset before award'],
+      },
+      {
+        id: 'mdm-match-quality-overclaim',
+        label: 'Match-quality overclaim',
+        severity: 'medium',
+        detectionSignals: ['Vendor describes AI or fuzzy matching without buyer-data false-positive/false-negative evidence.'],
+        mitigations: ['Test matching on known duplicate and conflicting records with human steward review'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Stress legal entity, customer, counterparty, reference data, audit, lineage, SOX where applicable, and model-risk data controls.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Review patient/member/provider/entity identity, PHI boundaries, BAA posture, correction workflows, and minimum-necessary distribution.',
+      },
+      {
+        industry: 'retail_cpg',
+        modifier: 'Stress product, supplier, location, loyalty/customer, hierarchy, item setup, and commerce/PIM/ERP distribution workflows.',
+      },
+    ],
+    body: `## Summary
+Master data management is a technology-enabled business discipline, not merely a database or golden-record tool. The buyer is trying to make shared entities such as customer, supplier, product, location, asset, finance, material, and reference data uniform, accurate, stewarded, governed, semantically consistent, accountable, and distributable. That means the sourcing event should evaluate operating model and tooling together.
+
+## When to apply
+Use this pattern when sourcing enterprise MDM, customer 360, supplier 360, product 360, SAP-centered master data governance, reference data management, or MDM-adjacent governance programs. It is especially relevant when duplicate records, conflicting source systems, ERP/CRM/commerce consolidation, compliance-sensitive data, AI readiness, or data-quality initiatives depend on shared entity definitions.
+
+## Category boundary
+In scope: entity domains, source-system ingestion, standardization, match and merge, survivorship, manual stewardship, hierarchy management, approval workflow, exception queues, audit trails, data quality, governance/catalog integration, downstream distribution, APIs, security, compliance evidence, deployment model, implementation services, and migration. Out of scope: pure data catalog, pure ETL, CRM record management, PIM-only workflow, or data quality tooling unless mastered entities and stewardship workflows are central.
+
+## Lifecycle and gates
+The scope gate should define domains, data owners, source systems, critical downstream consumers, regulated fields, current duplicate/conflict rates, and the first source-of-truth decisions. The RFP gate should require buyer-authored scenarios: duplicate supplier onboarding, conflicting tax IDs, customer householding, product hierarchy changes, material master approval, manual override, source correction, downstream sync, and audit review. The proof gate should use a buyer-supplied dataset and score false positives, false negatives, steward effort, merge explainability, survivorship, lineage, and distribution behavior. The BAFO gate should normalize domains, record volumes, connectors, governance integrations, services, support, migration, and renewal terms.
+
+## Evaluation rubric
+Weight domain fit and data-model flexibility around 20 percent, match/merge and survivorship around 20 percent, stewardship workflow around 15 percent, governance/security/compliance around 15 percent, integration and distribution around 15 percent, implementation/adoption risk around 10 percent, and commercial transparency around 5 percent. Increase SAP process weight where SAP MDG and ERP change-request workflows are central. Increase catalog/governance weight where Microsoft Purview, Collibra, Informatica, or enterprise policy layers must own glossary, lineage, and access context.
+
+## Pricing and contract notes
+Commercial model is often opaque unless verified. Informatica publicly describes Informatica Processing Units and consumption-based concepts. SAP publishes an MDG pricing page, but enterprise scope can still depend on licensing context and implementation design. Microsoft publishes Purview pricing concepts for governed assets and processing units, which are MDM-adjacent rather than a dedicated MDM platform quote. Reltio, Semarchy, and enterprise MDM deals often require sales engagement, private offer, or quote context. Negotiated rates, discounts, implementation services, migration cost, connector cost, renewal terms, and marketplace terms remain founder-data-gap without buyer evidence.
+
+Contracting should define stewardship workflow, auditability, role access, security artifacts, data export, deletion/correction workflows, connector responsibility, downstream distribution SLAs, implementation acceptance, transition assistance, and remediation if match quality or workflow adoption does not meet agreed proof criteria.
+
+## Contradictions and failure modes
+Vendor claim: AI matching creates the golden record. Detection: test on buyer data and measure false positives, false negatives, override process, and explainability. Vendor claim: implementation is fast. Detection: require data-owner decisions, source-system mapping, stewardship workflow, and downstream distribution proof. Vendor claim: governance is integrated. Detection: confirm glossary, lineage, policy, audit, and quality workflows in the buyer's environment.
+
+The common failure is buying an MDM tool before the organization agrees on ownership, survivorship, source-of-truth rules, and exception handling. The second is piloting on clean demo data rather than messy source records. The third is underpricing implementation and stewardship change management relative to subscription cost.`,
+  },
+  {
+    id: 'PAT-SRC-CAT-FAB-001',
+    slug: 'data-fabric-governance-layer-sourcing',
+    title: 'Data Fabric Governance Layer Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Data catalog and governance platforms should be sourced as a metadata, policy, lineage, quality, access, and AI-readiness control layer across distributed data estates, not as a generic catalog checkbox.',
+    applicability:
+      'Apply when sourcing products that make distributed enterprise data findable, governable, policy-aware, and analytics or AI-ready across cloud, on-prem, SaaS, BI, lakehouse, warehouse, and operational environments.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.8,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://learn.microsoft.com/en-us/azure/purview/overview',
+      'https://learn.microsoft.com/en-us/purview/data-governance-plan',
+      'https://learn.microsoft.com/en-us/purview/data-governance-billing',
+      'https://azure.microsoft.com/en-us/pricing/details/purview/',
+      'https://www.collibra.com/collibra-data-intelligence-cloud',
+      'https://www.collibra.com/company/trust-center',
+      'https://productresources.collibra.com/docs/release-notes/Content/Catalog/to_catalog.htm',
+      'https://www.collibra.com/resources/collibra-units-cus',
+      'https://www.informatica.com/products/data-governance/cloud-data-governance-and-catalog.html',
+      'https://www.informatica.com/products/cloud-integration/pricing.html',
+      'https://www.informatica.com/trust-center.html',
+      'https://www.ibm.com/products/knowledge-catalog',
+      'https://www.ibm.com/products/cloud-pak-for-data',
+      'https://www.ibm.com/products/cloud/pricing',
+      'https://www.alation.com/product-overview/',
+      'https://www.alation.com/product/data-governance/',
+      'https://www.alation.com/pricing/',
+      'https://www.alation.com/alation-trust-center/',
+    ],
+    regulatoryChips: ['GDPR-if-person-data', 'HIPAA-if-PHI', 'SOC-2-review', 'FedRAMP-if-public-sector'],
+    relatedPatternIds: ['PAT-SRC-CAT-MDM-001', 'PAT-SRC-CAT-CDW-001', 'PAT-SRC-CAT-LAKE-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'data_analytics',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Microsoft Purview and Collibra',
+        tier: 'enterprise',
+        positioning: 'Governance/catalog candidates for metadata harvesting, business glossary, data products, domains, lineage, access workflows, and policy-aware discovery.',
+        cautions: ['Lineage depth, policy enforcement, data samples, AI features, and pricing meters must be validated by use case.'],
+      },
+      {
+        vendorName: 'Informatica IDMC and IBM Knowledge Catalog / Cloud Pak for Data',
+        tier: 'enterprise',
+        positioning: 'Data governance fabric candidates where metadata, catalog, quality, policy, lifecycle governance, and hybrid estate coverage matter.',
+        cautions: ['Service mix, consumption units, deployment model, and trust packet access require quote and vendor packet review.'],
+      },
+      {
+        vendorName: 'Alation',
+        tier: 'specialist',
+        positioning: 'Data catalog and governance candidate with active metadata, search/discovery, lineage, trust, quality integrations, and stewardship workflows.',
+        cautions: ['Public pricing is quote-led; AI and productivity claims require buyer proof.'],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'Data fabric governance public pricing posture',
+        model: 'hybrid',
+        metric: 'Governed assets, processing units, platform units, users, connectors, lineage jobs, quality scans, services, and support',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Microsoft Purview Data Governance Billing', url: 'https://learn.microsoft.com/en-us/purview/data-governance-billing', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Informatica Pricing', url: 'https://www.informatica.com/products/cloud-integration/pricing.html', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Alation Pricing', url: 'https://www.alation.com/pricing/', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Negotiated enterprise pricing, implementation services, renewal terms, private marketplace credits, and true TCO require buyer evidence' },
+        ],
+        confidence: 0.61,
+        notes: 'Public sources identify billing constructs and quote posture; they do not prove enterprise TCO or productivity value.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Metadata, samples, and policy data handling',
+        buyerPosition: 'Define what metadata, profiles, samples, lineage, glossaries, policies, AI prompts, and usage telemetry the vendor stores or processes.',
+      },
+      {
+        clauseArea: 'Governance workflow and access enforcement',
+        buyerPosition: 'Require clarity on advisory workflow versus actual enforcement, connected-system dependencies, audit logs, policy inheritance, and request approvals.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Connector and lineage proof',
+        whenToUse: 'Use when vendors claim broad data fabric coverage.',
+        buyerAsk: "Demonstrate scans, lineage, glossary mapping, quality signal, and policy workflow across the buyer's highest-risk warehouse, lakehouse, BI, SaaS, and on-prem systems.",
+      },
+      {
+        lever: 'AI-readiness evidence',
+        whenToUse: 'Use when vendors pitch AI governance, natural-language search, semantic graph, or agent readiness.',
+        buyerAsk: 'Map AI claims to concrete model inventories, data-product workflows, policy inheritance, lineage, evaluation evidence, and data-use controls.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'fabric-metadata-without-governance',
+        label: 'Metadata inventory without operational governance',
+        severity: 'high',
+        detectionSignals: ['The catalog scans assets but cannot drive ownership, policy, access, quality, lineage, or stewardship workflows.'],
+        mitigations: ['Require domain, data product, access, lineage, and quality scenarios before award'],
+      },
+      {
+        id: 'fabric-ai-readiness-overclaim',
+        label: 'AI-readiness overclaim',
+        severity: 'medium',
+        detectionSignals: ['Vendor markets AI readiness without concrete model inventory, data-use controls, policy inheritance, lineage, or evaluation workflows.'],
+        mitigations: ['Score AI claims only when linked to proof artifacts and governance workflows'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Stress lineage, access policy, critical data elements, risk reporting, audit evidence, model/data governance, and third-party-risk artifacts.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Review PHI classification, access requests, lineage, data minimization, DSR support, auditability, and BAA-adjacent workflows.',
+      },
+      {
+        industry: 'public_sector',
+        modifier: 'Review FedRAMP where required, records obligations, data residency, accessibility, procurement constraints, and public transparency requirements.',
+      },
+    ],
+    body: `## Summary
+Data fabric sourcing should begin with the control-plane problem: can the buyer understand, govern, and safely reuse distributed data without centralizing every dataset? The category includes metadata capture, search, discovery, business glossary, lineage, classification, quality signals, governance workflows, access requests, data products, policy context, and AI-readiness claims. A catalog entry alone is not enough.
+
+## When to apply
+Use this pattern when sourcing data catalog, data governance, data fabric, active metadata, access workflow, lineage, quality, or AI-governance platforms across cloud, on-prem, SaaS, BI, warehouse, lakehouse, and operational systems. It is strongest for regulated enterprises, multi-cloud estates, federated stewardship, fragmented catalogs, lineage gaps, and AI programs that require governed context.
+
+## Category boundary
+In scope: technical metadata, business metadata, operational metadata, glossary, critical data elements, data products, catalog scans, lineage, quality, classification, policy workflows, access requests, marketplace/discovery, stewardship ownership, audit logs, trust artifacts, AI governance, semantic context, and connector coverage. Out of scope: pure MDM, pure ETL, pure warehouse, pure BI, and pure security posture tools unless their metadata and governance workflows are central to the sourcing event.
+
+## Lifecycle and gates
+The scope gate should define systems to scan, data domains, governance owners, regulated fields, lineage depth, access workflow, AI use cases, deployment model, and whether enforcement is advisory or integrated into connected platforms. The RFP gate should require demonstrations across the buyer's highest-risk warehouse, lakehouse, BI, SaaS, and on-prem systems. The proof gate should test scan freshness, lineage depth, glossary workflow, data-product publication, policy request, quality signal, access approval, sensitive-data classification, and an AI-readiness workflow. The BAFO gate should normalize governed assets, processing units, users, connectors, lineage jobs, quality scans, services, support, and renewal terms.
+
+## Evaluation rubric
+Weight metadata and connector coverage around 20 percent, lineage and quality depth around 15 percent, business governance workflow around 20 percent, access and policy model around 15 percent, security/trust/compliance around 10 percent, AI-readiness evidence around 10 percent, and pricing/TCO transparency around 10 percent. Increase lineage and audit weight for financial services, healthcare, public sector, insurance, energy, and other regulated contexts.
+
+## Pricing and contract notes
+Public pricing visibility is mixed. Microsoft publishes Purview data-governance billing concepts such as governed assets and processing units. Informatica publicly describes Informatica Processing Units and usage dashboards. Alation's public pricing flow is quote-led. Collibra and IBM public materials describe platform value and enterprise packaging, but customer-specific cost often requires vendor engagement. Do not infer negotiated enterprise pricing, implementation services, renewal terms, private marketplace credits, or true TCO without buyer evidence.
+
+Contracting should define metadata and sample-data handling, profiling, lineage storage, AI data use, access logs, audit evidence, incident notification, subprocessors, data residency, security reports, role access, export, deletion, and transition assistance. If access policy is advisory rather than enforced, the contract and solution design should say so explicitly.
+
+## Contradictions and failure modes
+Vendor claim: we provide a data fabric. Detection: test connected-system coverage, lineage depth, policy workflow, data quality, and stewardship behavior. Vendor claim: AI-ready data. Detection: map AI claims to model inventory, data-product workflow, policy inheritance, lineage, usage logs, and evaluation evidence. Vendor claim: governance is unified. Detection: verify what is automated, manually curated, merely advisory, or actually enforced.
+
+The common failure is buying a searchable catalog that does not change ownership, access, quality, or policy behavior. The second is overvaluing AI discovery before metadata, lineage, and data-quality signals are trustworthy. The third is underestimating implementation work: connectors, glossary terms, domains, owners, access policies, and stewardship workflows require real operating commitment.`,
+  },
+  {
+    id: 'PAT-SRC-CAT-ETL-001',
+    slug: 'etl-elt-data-integration-platform-sourcing',
+    title: 'ETL/ELT and Data Integration Platform Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'ETL/ELT sourcing should be evaluated as a tradeoff among pricing exposure, deployment and control model, connector depth, transformation and orchestration fit, security posture, and cloud or semantic-layer lock-in.',
+    applicability:
+      'Apply when sourcing managed ELT, ETL, reverse ETL, transformation, orchestration, and cloud-native data integration platforms such as Fivetran, Matillion, Informatica, Airbyte, dbt Cloud, AWS Glue, and Azure Data Factory.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.81,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.fivetran.com/pricing',
+      'https://fivetran.com/docs/core-concepts/usage-based-pricing',
+      'https://fivetran.com/docs/security',
+      'https://www.matillion.com/pricing',
+      'https://www.matillion.com/trust-center',
+      'https://www.informatica.com/products/cloud-integration/pricing.html',
+      'https://www.informatica.com/trust-center.html',
+      'https://airbyte.com/pricing',
+      'https://support.airbyte.com/hc/en-us/articles/15947202218907-Securing-Airbyte-Cloud',
+      'https://www.getdbt.com/pricing',
+      'https://www.getdbt.com/security',
+      'https://aws.amazon.com/glue/pricing/',
+      'https://docs.aws.amazon.com/glue/latest/dg/security.html',
+      'https://azure.microsoft.com/en-us/pricing/details/data-factory/',
+      'https://learn.microsoft.com/en-us/security/benchmark/azure/baselines/data-factory-security-baseline',
+    ],
+    regulatoryChips: ['SOC-2-review', 'ISO-27001-if-required', 'HIPAA-if-PHI', 'GDPR-if-person-data'],
+    relatedPatternIds: ['PAT-SRC-CAT-CDW-001', 'PAT-SRC-CAT-LAKE-001', 'PAT-SRC-CAT-FAB-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'data_analytics',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Fivetran and Airbyte',
+        tier: 'specialist',
+        positioning: 'Managed and open-source-oriented ELT candidates strongest when data movement, connector reliability, CDC, and source/destination coverage are central.',
+        cautions: ['Connector count does not prove production-grade fit; pricing meters and self-hosting operations require workload proof.'],
+      },
+      {
+        vendorName: 'Matillion, Informatica, and dbt Cloud',
+        tier: 'enterprise',
+        positioning: 'Transformation and enterprise integration candidates spanning visual ETL/ELT, broad data management, and SQL-centric transformation workflows.',
+        cautions: ['Separate extraction, transformation, orchestration, quality, catalog, support, and implementation responsibilities before comparing cost.'],
+      },
+      {
+        vendorName: 'AWS Glue and Azure Data Factory',
+        tier: 'enterprise',
+        positioning: 'Hyperscaler-native integration services strongest where IAM, networking, procurement, storage, and compute already sit inside AWS or Azure.',
+        cautions: ['Cloud-native entry price can hide engineering time, compute, orchestration, network, monitoring, and warehouse costs.'],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'Data integration public pricing meters only',
+        model: 'hybrid',
+        metric: 'Monthly active rows, credits, IPUs, DPU-hours, vCore-hours, seats, data workers, activities, runs, support, and services',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Fivetran Pricing', url: 'https://www.fivetran.com/pricing', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Airbyte Pricing', url: 'https://airbyte.com/pricing', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'AWS Glue Pricing', url: 'https://aws.amazon.com/glue/pricing/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Azure Data Factory Pricing', url: 'https://azure.microsoft.com/en-us/pricing/details/data-factory/', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Negotiated enterprise quotes, discounts, committed spend, renewal terms, support uplifts, and implementation costs require buyer evidence' },
+        ],
+        confidence: 0.67,
+        notes: 'Do not rank cheapest without workload traces and cloud/warehouse cost modeling.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Connector reliability and change handling',
+        buyerPosition: 'Define connector support, API-change response, schema drift, backfill, resync, CDC, historical load, incident process, and connector deprecation notice.',
+      },
+      {
+        clauseArea: 'Security and data movement controls',
+        buyerPosition: 'Pin SSO, RBAC, SCIM, audit logs, private networking, secrets handling, encryption, compliance reports, region/residency, and support-access boundaries.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'High-risk connector proof',
+        whenToUse: 'Use before BAFO when vendors claim broad connector coverage.',
+        buyerAsk: 'Test three high-risk sources for API limits, schema drift, backfill, CDC, error handling, and lineage into the target warehouse or lakehouse.',
+      },
+      {
+        lever: 'Pricing-meter normalization',
+        whenToUse: 'Use when vendors price by MAR, credits, IPUs, DPUs, vCores, seats, workers, or custom quotes.',
+        buyerAsk: 'Map each meter to observed current and forecast workload, including cloud compute, warehouse impact, support, and internal operations.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'etl-connector-demo-gap',
+        label: 'Connector demo gap',
+        severity: 'high',
+        detectionSignals: ['Vendor lists a connector but cannot prove required tables, sync modes, schema drift, historical load, or CDC behavior.'],
+        mitigations: ['Run proof workload against high-risk production-like sources before award'],
+      },
+      {
+        id: 'etl-meter-surprise',
+        label: 'Pricing meter surprise',
+        severity: 'medium',
+        detectionSignals: ['Rows, credits, DPUs, vCores, seats, or workers scale in a way the buyer cannot forecast.'],
+        mitigations: ['Require workload trace model, caps, alerts, and forecast review before BAFO'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Stress private networking, audit logs, change control, lineage, data residency, secrets handling, and regulated source-system access.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Review PHI boundaries, BAA posture, encryption, minimum necessary movement, audit logs, and downstream destination restrictions.',
+      },
+      {
+        industry: 'retail_cpg',
+        modifier: 'Model high-volume commerce, loyalty, inventory, supplier, and advertising feeds with backfill and schema-drift scenarios.',
+      },
+    ],
+    body: `## Summary
+ETL and ELT sourcing should start with workload shape. A buyer moving many SaaS application tables into Snowflake or BigQuery has a different risk profile from a buyer transforming large semi-structured files in S3, modernizing SSIS, governing enterprise data quality, or standardizing SQL transformation. The first qualification question is whether the job is managed extraction and loading, visual ETL, cloud-native batch processing, SQL transformation, reverse ETL, or broad enterprise data management.
+
+## When to apply
+Use this pattern for managed ELT, ETL, reverse ETL, transformation, orchestration, connector modernization, and cloud-native data integration decisions. It fits Fivetran, Airbyte, Matillion, Informatica, dbt Cloud, AWS Glue, Azure Data Factory, and similar comparisons. Do not use it as the main pattern for warehouse, lakehouse, BI, MDM, or catalog selection unless integration workloads drive the decision.
+
+## Category boundary
+In scope: connectors, CDC, source APIs, destinations, schema drift, historical backfill, resync, orchestration, transformations, dbt/SQL workflow, visual ETL, Spark/serverless jobs, private networking, secrets, audit logs, SSO/RBAC/SCIM, compliance reports, cloud compute, warehouse impact, support, and implementation services. Out of scope: pure BI, pure catalog, pure MDM, application integration/iPaaS, and event streaming unless they are part of the same data movement decision.
+
+## Lifecycle and gates
+The scope gate should classify required sources, destinations, sync modes, data volumes, change frequency, latency targets, regulated fields, transformation ownership, cloud affinity, and operational support model. The RFP gate should map each vendor's public pricing meter to the buyer's observed usage. The proof gate should test three high-risk sources, including API limits, schema drift, historical backfill, CDC or incremental load, error handling, private networking, and lineage into the target platform. The BAFO gate should normalize row, credit, IPU, DPU, vCore, worker, activity/run, seat, support, cloud compute, warehouse, and internal engineering costs.
+
+## Evaluation rubric
+Weight connector fit around 25 percent, pricing predictability around 20 percent, deployment/control model around 15 percent, transformation/orchestration fit around 15 percent, security/compliance around 15 percent, and lock-in/exit risk around 10 percent. Increase security weight for regulated data. Increase operations weight when self-managed OSS or cloud-native services shift responsibility to the buyer. Increase transformation fit where dbt, SQL models, Spark, legacy ETL, or visual orchestration are the core job.
+
+## Pricing and contract notes
+Public pricing meters differ. Fivetran publicly describes usage-based pricing around monthly active rows and transformation model runs. Airbyte publishes open-source, cloud, volume, and capacity-oriented paths. Matillion uses credit-based pricing and editions. Informatica describes consumption pricing through Informatica Processing Units. dbt Cloud publishes free, starter, and enterprise paths. AWS Glue uses DPU-hour and related meters. Azure Data Factory pricing varies across orchestration, data movement, data flow execution, operations, and region. Negotiated enterprise quotes, discounts, support SLAs, committed spend, renewal terms, marketplace terms, professional services, and implementation costs are founder-data-gap unless supplied by buyer evidence.
+
+Contracting should define connector support, API-change response, schema-drift handling, service credits, support access, incident response, audit logs, private networking, secrets handling, encryption, region/residency, export, deletion, and transition assistance. For open-source or cloud-native approaches, explicitly price internal engineering and operational burden.
+
+## Contradictions and failure modes
+Vendor claim: we have the connector. Detection: test required objects, sync modes, schema drift, historical load, CDC, API limits, and resync behavior. Vendor claim: we are cheapest. Detection: model rows, credits, DPUs, vCores, workers, seats, runs, cloud compute, warehouse impact, support, and engineering time. Vendor claim: compliance is covered. Detection: verify exact report scope, product scope, region, private networking, logging, secrets, and support access.
+
+The common failure is ranking vendors by connector count rather than production-grade connector behavior. The second is ignoring how pricing meters scale with workload. The third is forgetting that managed SaaS may reduce connector maintenance while open-source or cloud-native tools can shift cost into people, infrastructure, and monitoring.`,
+  },
 ];
 
 export const SOURCING_CATEGORY_PATTERN_COUNT = SOURCING_CATEGORY_PATTERNS.length;
