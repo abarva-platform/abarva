@@ -1,6 +1,11 @@
 export { corpus, loadCorpus } from './loader';
 export type { CorpusEntity, LoadedCorpus, LoaderConfig } from './types';
 export { SOURCE_LIFECYCLE_PATTERNS, PAT_SRC_AMS_001, PAT_SRC_RFP_001 } from './source-lifecycle-patterns';
+export {
+  SOURCING_CATEGORY_PATTERNS,
+  SOURCING_CATEGORY_PATTERN_COUNT,
+  SOURCING_CATEGORY_PATTERN_IDS,
+} from './seed-patterns-sourcing-categories';
 export type {
   PatternKind,
   SourceEventPatternId,

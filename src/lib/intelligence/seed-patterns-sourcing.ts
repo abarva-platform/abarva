@@ -1,4 +1,5 @@
 import type { PatternSeed } from './seed-types';
+import { SOURCING_CATEGORY_PATTERNS } from './seed-patterns-sourcing-categories';
 
 export const SOURCING_PATTERNS: PatternSeed[] = [
   {
@@ -1087,6 +1088,7 @@ Broad T&M engagements without milestone checkpoints, rate cards that allow grade
 ## Contract terms to negotiate hard
 Fixed-fee or capped T&M with monthly not-to-exceed, explicit deliverable acceptance criteria with revision rounds, IP full assignment for all bespoke work product, conflict of interest disclosure obligations, 12-month non-solicitation on key client staff.`,
   },
+  ...SOURCING_CATEGORY_PATTERNS,
 ];
 
 export const SOURCING_PATTERN_COUNT = SOURCING_PATTERNS.length;
