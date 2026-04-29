@@ -688,6 +688,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/bulk-waiver',
     description: 'Apply gate waivers to multiple criteria at once — useful for demo preparation',
   },
+  {
+    title: 'Pattern compare',
+    href: '/admin/reasoning/pattern-compare',
+    description: 'Side-by-side comparison of two lifecycle patterns — stages, gates, contradiction templates',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
