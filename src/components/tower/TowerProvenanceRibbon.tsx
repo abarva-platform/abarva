@@ -29,6 +29,7 @@ import {
 import { isLifecyclePatternId } from '@/lib/reasoning/lifecycle-pattern-lookup';
 import { PatternDoctrineLink } from '@/components/source/PatternDoctrineLink';
 import { SynthesisFeedbackWidget } from '@/components/reasoning/SynthesisFeedbackWidget';
+import { CopySummaryButton } from '@/components/reasoning/CopySummaryButton';
 import { SHELL } from '@/lib/shell/shell-tokens';
 
 interface TowerProvenanceRibbonProps {
@@ -209,6 +210,9 @@ export function TowerProvenanceRibbon({ context, eventId }: TowerProvenanceRibbo
           <SynthesisFeedbackWidget synthesisId={eventId} surface="tower" />
         </>
       ) : null}
+
+      <Divider />
+      <CopySummaryButton text={context.stageGuidance} />
     </aside>
   );
 }

@@ -24,6 +24,7 @@ import {
 import { isLifecyclePatternId } from '@/lib/reasoning/lifecycle-pattern-lookup';
 import { PatternDoctrineLink } from '@/components/source/PatternDoctrineLink';
 import { SynthesisFeedbackWidget } from '@/components/reasoning/SynthesisFeedbackWidget';
+import { CopySummaryButton } from '@/components/reasoning/CopySummaryButton';
 import { SHELL } from '@/lib/shell/shell-tokens';
 
 interface ProgramProvenanceRibbonProps {
@@ -197,6 +198,9 @@ export function ProgramProvenanceRibbon({ context, eventId }: ProgramProvenanceR
           <SynthesisFeedbackWidget synthesisId={eventId} surface="program" />
         </>
       ) : null}
+
+      <Divider />
+      <CopySummaryButton text={context.stageGuidance} />
     </aside>
   );
 }
