@@ -18,11 +18,11 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('INTELLIGENCE_TABS', () => {
-  it('declares exactly six canonical tabs (INT1 added pattern_plan)', () => {
-    expect(INTELLIGENCE_TABS).toHaveLength(6);
+  it('declares exactly seven canonical tabs (INT1 added pattern_plan, INT3 added gap_queue)', () => {
+    expect(INTELLIGENCE_TABS).toHaveLength(7);
   });
 
-  it('contains summary, evidence, programs, actions, signals, pattern_plan in that order', () => {
+  it('contains summary, evidence, programs, actions, signals, pattern_plan, gap_queue in that order', () => {
     expect(INTELLIGENCE_TABS.map((t) => t.key)).toEqual([
       'summary',
       'evidence',
@@ -30,6 +30,7 @@ describe('INTELLIGENCE_TABS', () => {
       'actions',
       'signals',
       'pattern_plan',
+      'gap_queue',
     ]);
   });
 
@@ -76,6 +77,7 @@ describe('resolveIntelligenceTab', () => {
     'actions',
     'signals',
     'pattern_plan',
+    'gap_queue',
   ];
   for (const key of VALID) {
     it(`accepts valid key "${key}"`, () => {
@@ -108,15 +110,16 @@ describe('buildIntelligenceLensTabsView', () => {
     }
   });
 
-  it('always includes all six tabs', () => {
+  it('always includes all seven tabs', () => {
     const view = buildIntelligenceLensTabsView('evidence');
-    expect(view.tabs).toHaveLength(6);
+    expect(view.tabs).toHaveLength(7);
     expect(view.tabs.map((t) => t.key)).toContain('summary');
     expect(view.tabs.map((t) => t.key)).toContain('evidence');
     expect(view.tabs.map((t) => t.key)).toContain('programs');
     expect(view.tabs.map((t) => t.key)).toContain('actions');
     expect(view.tabs.map((t) => t.key)).toContain('signals');
     expect(view.tabs.map((t) => t.key)).toContain('pattern_plan');
+    expect(view.tabs.map((t) => t.key)).toContain('gap_queue');
   });
 
   it('is pure — same input yields identical output', () => {
@@ -145,9 +148,9 @@ describe('INTEL4 component file probe', () => {
     expect(src).toMatch(/export function IntelligenceLensTabs/);
   });
 
-  it('references all six tab keys in the component source', () => {
+  it('references all seven tab keys in the component source', () => {
     const src = fs.readFileSync(componentPath, 'utf8');
-    for (const key of ['summary', 'evidence', 'programs', 'actions', 'signals', 'pattern_plan']) {
+    for (const key of ['summary', 'evidence', 'programs', 'actions', 'signals', 'pattern_plan', 'gap_queue']) {
       expect(src).toContain(key);
     }
   });

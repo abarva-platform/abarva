@@ -1,4 +1,4 @@
-// INTEL4 + INT1 · Intelligence Lens Tabs view-model.
+// INTEL4 + INT1 + INT3 · Intelligence Lens Tabs view-model.
 //
 // Pure deterministic helper that returns metadata for the five canonical
 // lens tabs on the Intelligence surface: Summary, Evidence, Programs,
@@ -25,7 +25,8 @@ export type IntelligenceLensTab =
   | 'programs'
   | 'actions'
   | 'signals'
-  | 'pattern_plan';
+  | 'pattern_plan'
+  | 'gap_queue';
 
 export interface IntelligenceLensTabMeta {
   key: IntelligenceLensTab;
@@ -83,6 +84,12 @@ export const INTELLIGENCE_TABS: ReadonlyArray<IntelligenceLensTabMeta> = [
     key: 'pattern_plan',
     label: 'Pattern Plan',
     description: 'Client-specific applied pattern plan — application status, evidence gaps, and priority actions',
+    hasApexRetailContent: true,
+  },
+  {
+    key: 'gap_queue',
+    label: 'Gap Queue',
+    description: 'Prioritized evidence gap close-out queue — critical and high-urgency items first',
     hasApexRetailContent: true,
   },
 ];

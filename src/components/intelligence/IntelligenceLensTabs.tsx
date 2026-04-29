@@ -49,6 +49,10 @@ import {
   type AppliedPattern,
   type PatternEvidenceGap,
 } from '@/lib/intelligence/apex-retail-pattern-plan-view';
+import {
+  buildEvidenceGapQueueView,
+  type EvidenceGapQueueItem,
+} from '@/lib/intelligence/sentinel-evidence-gap-queue-view';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Design tokens (matches existing intelligence surface palette)
@@ -158,6 +162,9 @@ export function IntelligenceLensTabs({
         )}
         {activeTab === 'pattern_plan' && (
           <PatternPlanPanel />
+        )}
+        {activeTab === 'gap_queue' && (
+          <EvidenceGapQueuePanel />
         )}
       </div>
     </div>
@@ -1173,5 +1180,136 @@ function Caveat({ children }: { children: React.ReactNode }) {
     <p style={{ fontSize: 11, color: C.mutedSoft, fontStyle: 'italic', margin: 0 }}>
       {children}
     </p>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INT3 · Evidence Gap Queue Panel
+// ─────────────────────────────────────────────────────────────────────────────
+
+const GAP_URGENCY_STYLE: Record<string, { bg: string; text: string; label: string }> = {
+  critical: { bg: '#f8e0d8', text: '#8a3e22', label: 'Critical' },
+  high: { bg: '#fef3c7', text: '#92400e', label: 'High' },
+  medium: { bg: '#dbeafe', text: '#1e40af', label: 'Medium' },
+  low: { bg: '#f3f4f6', text: '#6b7280', label: 'Low' },
+};
+
+const PATTERN_STATUS_STYLE: Record<string, { bg: string; text: string }> = {
+  active: { bg: '#dde9d9', text: '#2a5a3a' },
+  candidate: { bg: '#efece4', text: '#5b6c8a' },
+  monitoring: { bg: '#dee8f5', text: '#2a4a7a' },
+};
+
+function EvidenceGapQueuePanel() {
+  const queue = buildEvidenceGapQueueView();
+
+  return (
+    <div
+      data-testid="intelligence-gap-queue-panel"
+      style={{ padding: '24px 32px', maxWidth: 840 }}
+    >
+      {/* Summary bar */}
+      <div
+        data-testid="intelligence-gap-queue-summary"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+          marginBottom: 20,
+          padding: '12px 16px',
+          background: C.card,
+          border: `1px solid ${C.border}`,
+          borderRadius: 8,
+        }}
+      >
+        <span style={{ fontSize: 11, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600 }}>
+          Gap Queue
+        </span>
+        <span style={{ flex: 1, fontSize: 12, color: C.muted }}>
+          {queue.totalGaps} open gap{queue.totalGaps !== 1 ? 's' : ''}
+        </span>
+        {queue.summary.criticalCount > 0 && (
+          <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: GAP_URGENCY_STYLE.critical.bg, color: GAP_URGENCY_STYLE.critical.text, fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            {queue.summary.criticalCount} critical
+          </span>
+        )}
+        {queue.summary.highCount > 0 && (
+          <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: GAP_URGENCY_STYLE.high.bg, color: GAP_URGENCY_STYLE.high.text, fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            {queue.summary.highCount} high
+          </span>
+        )}
+        {queue.summary.mediumCount > 0 && (
+          <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: GAP_URGENCY_STYLE.medium.bg, color: GAP_URGENCY_STYLE.medium.text, fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            {queue.summary.mediumCount} medium
+          </span>
+        )}
+      </div>
+
+      {/* Atlas summary */}
+      <p style={{ fontSize: 13, color: C.ink, lineHeight: 1.6, margin: '0 0 20px' }}>
+        {queue.atlasSummary}
+      </p>
+
+      {/* Gap items */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {queue.items.map((item: EvidenceGapQueueItem) => {
+          const urgencyStyle = GAP_URGENCY_STYLE[item.urgency] ?? GAP_URGENCY_STYLE.low;
+          const patternStyle = PATTERN_STATUS_STYLE[item.patternApplicationStatus] ?? PATTERN_STATUS_STYLE.candidate;
+          return (
+            <div
+              key={item.queueId}
+              data-testid={`intelligence-gap-queue-item-${item.queueId}`}
+              style={{
+                padding: '14px 18px',
+                background: C.card,
+                border: `1px solid ${C.border}`,
+                borderLeft: `3px solid ${urgencyStyle.text}`,
+                borderRadius: 6,
+              }}
+            >
+              {/* Header row */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
+                <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: C.ink, lineHeight: 1.4 }}>
+                  {item.label}
+                </span>
+                <span style={{ display: 'inline-block', padding: '2px 7px', borderRadius: 999, background: urgencyStyle.bg, color: urgencyStyle.text, fontSize: 9, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', lineHeight: 1.5, whiteSpace: 'nowrap' }}>
+                  {urgencyStyle.label}
+                </span>
+                <span style={{ display: 'inline-block', padding: '2px 7px', borderRadius: 999, background: patternStyle.bg, color: patternStyle.text, fontSize: 9, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', lineHeight: 1.5, whiteSpace: 'nowrap' }}>
+                  {item.patternApplicationStatus}
+                </span>
+              </div>
+
+              {/* Needed */}
+              <p style={{ fontSize: 12, color: C.muted, lineHeight: 1.5, margin: '0 0 8px' }}>
+                {item.needed}
+              </p>
+
+              {/* Meta */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, fontSize: 10, color: C.mutedSoft, letterSpacing: '0.03em' }}>
+                <span>Pattern: {item.patternTitle}</span>
+                <span>Responsible: {item.responsibleParty}</span>
+                {item.deadlineHint && <span>Due: {item.deadlineHint}</span>}
+                {item.contextLink && (
+                  <span style={{ color: C.muted, fontStyle: 'italic' }}>
+                    → {item.contextLink}
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Honest disclaimer */}
+      <div
+        style={{ marginTop: 20, fontSize: 10, color: C.mutedSoft, letterSpacing: '0.04em' }}
+        data-testid="intelligence-gap-queue-disclaimer"
+        data-honest-disclaimer="intelligence-gap-queue"
+      >
+        Deterministic seed · Gap queue reflects fixture evidence gaps for the Apex Retail engagement.
+        Live gap tracking and evidence upload are handled by the intelligence fabric evidence management module.
+      </div>
+    </div>
   );
 }
