@@ -988,6 +988,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/pattern-lineage',
     description: 'Pattern derivation tree — root patterns, derived patterns, co-applies relationships, and inheritance chains',
   },
+  {
+    title: 'Gate velocity',
+    href: '/admin/reasoning/gate-velocity',
+    description: 'Gate satisfaction velocity per instance — gates met per dwell day with projected completion times',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
