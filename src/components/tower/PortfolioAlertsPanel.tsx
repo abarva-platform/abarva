@@ -11,7 +11,11 @@
 import Link from 'next/link';
 import type { PortfolioAlert } from '@/lib/reasoning/portfolio-alerts';
 import { buildPortfolioAlerts } from '@/lib/reasoning/portfolio-alerts';
+import { getAlertState } from '@/lib/reasoning/alert-acknowledgment-state';
 import { SHELL } from '@/lib/shell/shell-tokens';
+import { PortfolioAlertActions } from '@/components/tower/PortfolioAlertActions';
+import { RecentPortfolioAlertStates } from '@/components/tower/RecentPortfolioAlertStates';
+import '@/lib/reasoning/alert-acknowledgment-init';
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 
@@ -61,6 +65,8 @@ export interface PortfolioAlertsPanelProps {
 // ─── Row ──────────────────────────────────────────────────────────────────────
 
 function AlertRow({ alert }: { alert: PortfolioAlert }) {
+  const state = getAlertState(alert.id);
+  const acknowledged = state?.status === 'acknowledged';
   return (
     <article
       data-testid={`portfolio-alert-${alert.kind}-${alert.instanceId}`}
@@ -125,6 +131,30 @@ function AlertRow({ alert }: { alert: PortfolioAlert }) {
             }}
           >
             {alert.label}
+          </span>
+          {acknowledged && (
+            <span
+              data-testid={`portfolio-alert-ack-badge-${alert.id}`}
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 9,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                padding: '2px 7px',
+                borderRadius: 999,
+                background: SHELL.MINT_BG,
+                color: SHELL.MINT_TEXT,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              ack&apos;d
+            </span>
+          )}
+          <span style={{ marginLeft: 'auto' }}>
+            <PortfolioAlertActions
+              alertId={alert.id}
+              acknowledged={acknowledged}
+            />
           </span>
         </div>
 
@@ -286,6 +316,10 @@ export function PortfolioAlertsPanel({
           <AlertGroup severity="medium" alerts={medium} />
         </>
       )}
+
+      {/* Recently acknowledged / dismissed subsection — only renders when at
+          least one alert has been actioned. Mirror of RecentMissionStates. */}
+      <RecentPortfolioAlertStates limit={3} />
     </section>
   );
 }
