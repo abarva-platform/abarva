@@ -27,7 +27,8 @@ export type TowerTabKey =
   | 'value_at_risk'
   | 'executive_brief'
   | 'programme_gates'
-  | 'reasoning_activity';
+  | 'reasoning_activity'
+  | 'dependencies';
 
 export interface TowerTabMeta {
   key: TowerTabKey;
@@ -103,6 +104,12 @@ export const TOWER_TABS: ReadonlyArray<TowerTabMeta> = [
     key: 'reasoning_activity',
     label: 'Reasoning Activity',
     description: 'AI reasoning activity brief — active contradictions, cross-stage handoff readiness, and pattern synthesis signals across the Apex Retail engagement',
+    hasApexRetailContent: true,
+  },
+  {
+    key: 'dependencies',
+    label: 'Dependencies',
+    description: 'Source-to-program dependency matrix — all source event → program links in a cross-instance grid with link type, description, and navigation',
     hasApexRetailContent: true,
   },
 ];
