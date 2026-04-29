@@ -555,6 +555,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     description: 'Last-7-days synthesis activity per instance',
   },
   {
+    title: 'Weekly digest · Print view',
+    href: '/admin/reasoning/digest/print',
+    description: 'Print- and PDF-ready layout · auto-opens print dialog',
+  },
+  {
     title: 'Pattern analytics',
     href: '/admin/reasoning/patterns',
     description: 'Pattern usage and event distribution',
