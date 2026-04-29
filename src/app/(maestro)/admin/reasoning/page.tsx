@@ -1048,6 +1048,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/pattern-gap',
     description: 'Pattern definition completeness — stages with no gates, missing contradiction templates, failure modes, source docs',
   },
+  {
+    title: 'Instance comparison',
+    href: '/admin/reasoning/instance-comparison',
+    description: 'Top vs. bottom performer comparison — side-by-side health metrics for best and worst instances',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
