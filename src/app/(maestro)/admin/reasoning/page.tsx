@@ -1058,6 +1058,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/health-bands',
     description: 'Health score band distribution — instance counts per band with common pattern and stage analysis',
   },
+  {
+    title: 'Activity feed',
+    href: '/admin/reasoning/activity-feed',
+    description: 'Real-time activity feed — stage transitions, evidence, waivers, and resolutions as event cards',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
