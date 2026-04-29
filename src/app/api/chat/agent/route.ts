@@ -33,6 +33,11 @@ import "@/lib/agent/tools/program/commitProgram";
 // "VP of Applications") into actual person UUIDs from the seeded
 // persons table before calling commit_program.
 import "@/lib/agent/tools/program/lookupPerson";
+// Surface 1 PR2.3 — register_placeholder_person tool unblocks the
+// origination flow when the user names a sponsor or lead who isn't
+// seeded yet. Creates a placeholder persons row marked for admin
+// follow-up so Steward can proceed with commit_program.
+import "@/lib/agent/tools/program/registerPlaceholderPerson";
 
 // ── Agent voice map ────────────────────────────────────────────────────────────
 
