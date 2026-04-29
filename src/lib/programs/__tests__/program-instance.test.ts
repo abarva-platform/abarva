@@ -93,12 +93,14 @@ describe('buildProgramEvidenceMap', () => {
 // ── 3. All 4 instances have tenantSlug apex-retail ───────────────────────────
 
 describe('APEX_RETAIL_PROGRAM_INSTANCES', () => {
-  it('contains exactly 6 instances (4 production + 2 demo fixtures)', () => {
+  it('contains exactly 10 instances (4 production + 2 demo fixtures + 4 coverage fixtures)', () => {
     // 4 production-anchor programs (CDP, LPM, SAP, DFV2) plus the COPILOT
     // and CC-AI demo fixtures authored to bind previously-unbound program
-    // lifecycle patterns. Updating this count requires a corresponding
-    // change to APEX_RETAIL_PROGRAM_INSTANCES.
-    expect(APEX_RETAIL_PROGRAM_INSTANCES).toHaveLength(6);
+    // lifecycle patterns, plus 4 coverage-fixture instances (APX-CDP-COVERAGE,
+    // APX-AICOD, APX-LOYALTY, APX-DFAB-COVERAGE) added by
+    // feat/fixture-instances-coverage-90pct to push template coverage to 90%+.
+    // Updating this count requires a corresponding change to APEX_RETAIL_PROGRAM_INSTANCES.
+    expect(APEX_RETAIL_PROGRAM_INSTANCES).toHaveLength(10);
   });
 
   it('all instances have tenantSlug apex-retail', () => {

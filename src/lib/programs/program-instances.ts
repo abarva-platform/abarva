@@ -724,6 +724,13 @@ export const APX_CCAI_2026_INSTANCE: ProgramInstance = {
 
 // ── Aggregate export ──────────────────────────────────────────────────────────
 
+import {
+  APX_CDP_COVERAGE_2026_INSTANCE,
+  APX_AICOD_2026_INSTANCE,
+  APX_LOYALTY_2026_INSTANCE,
+  APX_DFAB_COVERAGE_2026_INSTANCE,
+} from './program-instances-coverage-fixtures';
+
 /** All active Apex Retail program instances. Flagship (CDP) first. */
 export const APEX_RETAIL_PROGRAM_INSTANCES: ProgramInstance[] = [
   APX_CDP_2026_INSTANCE,
@@ -732,4 +739,9 @@ export const APEX_RETAIL_PROGRAM_INSTANCES: ProgramInstance[] = [
   APX_DFV2_INSTANCE,
   APX_COPILOT_2026_INSTANCE,
   APX_CCAI_2026_INSTANCE,
+  // Coverage-fixture instances — bind uncovered templates to the PAT-PRG-* patterns
+  APX_CDP_COVERAGE_2026_INSTANCE,
+  APX_AICOD_2026_INSTANCE,
+  APX_LOYALTY_2026_INSTANCE,
+  APX_DFAB_COVERAGE_2026_INSTANCE,
 ];

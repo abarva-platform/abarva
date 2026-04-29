@@ -73,42 +73,39 @@ describe('coverage thresholds — bound patterns', () => {
     }
   });
 
-  it('at least 65% of contradiction templates on bound patterns are covered', () => {
+  it('at least 90% of contradiction templates on bound patterns are covered', () => {
     // Bound = templates whose pattern has ≥1 fixture instance. With every
-    // pattern now bound, the bound ratio equals the global ratio. The 65%
-    // floor reflects the post-fixture-authoring baseline (currently ~75%);
-    // dropping under it indicates a fixture-evidence keyword regression.
+    // pattern now bound, the bound ratio equals the global ratio. The 90%
+    // floor reflects the post-fixture-authoring baseline from
+    // feat/fixture-instances-coverage-90pct; dropping under it indicates
+    // a fixture-evidence keyword regression.
     const { contradictionsBound } = auditAll().summary;
     expect(contradictionsBound.totalTemplates).toBeGreaterThan(0);
-    expect(contradictionsBound.coverageRatio).toBeGreaterThanOrEqual(0.65);
+    expect(contradictionsBound.coverageRatio).toBeGreaterThanOrEqual(0.90);
   });
 
-  it('at least 65% of failure-mode templates on bound patterns are covered', () => {
+  it('at least 90% of failure-mode templates on bound patterns are covered', () => {
     const { failureModesBound } = auditAll().summary;
     expect(failureModesBound.totalTemplates).toBeGreaterThan(0);
-    expect(failureModesBound.coverageRatio).toBeGreaterThanOrEqual(0.65);
+    expect(failureModesBound.coverageRatio).toBeGreaterThanOrEqual(0.90);
   });
 
-  it('global contradictions+failure-modes coverage ratio at least 65%', () => {
+  it('global contradictions+failure-modes coverage ratio at least 90%', () => {
     // Once every pattern is bound, the global and bound ratios converge.
     // Track the combined ratio so the audit page's headline number has a
     // floor.
     const { coverageRatio } = auditAll().summary;
-    expect(coverageRatio).toBeGreaterThanOrEqual(0.65);
+    expect(coverageRatio).toBeGreaterThanOrEqual(0.90);
   });
 
-  it('reveals at least one uncovered template overall — keyword match is sparse', () => {
-    // The whole point of this audit is to make sparseness visible.
-    // If this ever flips false, we have universal coverage and the audit
-    // might be redundant — worth re-evaluating the thresholds.
-    const result = auditAll();
-    const uncoveredContradictions = result.contradictions.filter(
-      (r) => r.coverage === 'uncovered',
-    );
-    const uncoveredFailureModes = result.failureModes.filter(
-      (r) => r.coverage === 'uncovered',
-    );
-    expect(uncoveredContradictions.length + uncoveredFailureModes.length).toBeGreaterThan(0);
+  it('global coverage ratio is at least 90%', () => {
+    // feat/fixture-instances-coverage-90pct pushed fixture coverage above 90%.
+    // The previous canary ("at least one uncovered") is now obsolete — we
+    // deliberately authored fixtures for every previously-dark template.
+    // This assertion locks in the 90% floor so any future fixture regression
+    // that drops coverage below the target is caught immediately.
+    const { coverageRatio } = auditAll().summary;
+    expect(coverageRatio).toBeGreaterThanOrEqual(0.90);
   });
 });
 
