@@ -595,6 +595,28 @@ export default async function ReasoningTelemetryPage() {
       >
         <HeaderCard totalEvents={summary.totalEvents} />
         <ReasoningHealthBadge />
+        <a
+          href="/admin/reasoning/templates"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: SPACING.sm,
+            background: COLORS.white,
+            border: `1px solid ${COLORS.ink}22`,
+            borderRadius: RADIUS.lg,
+            padding: `${SPACING.sm} ${SPACING.md}`,
+            textDecoration: 'none',
+            fontFamily: TYPOGRAPHY.sans,
+            fontSize: 13,
+            color: COLORS.ink,
+            alignSelf: 'flex-start',
+          }}
+        >
+          <span style={{ fontWeight: 600 }}>Open contradiction template editor</span>
+          <span style={{ color: `${COLORS.ink}88` }}>
+            tweak detectionHints in-memory
+          </span>
+        </a>
         {summary.totalEvents === 0 ? (
           <EmptyState />
         ) : (
