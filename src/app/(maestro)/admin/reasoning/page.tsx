@@ -1283,6 +1283,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Gate Health Index',
     description: 'Portfolio GHI composite score (0-100) — pass rate, evidence, waiver, contradiction, and progression sub-indices.',
   },
+  {
+    href: '/admin/reasoning/reasoning-system-status',
+    title: 'Reasoning System Status',
+    description: 'Operational health check — data store availability, tool inventory by category, system diagnostics.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
