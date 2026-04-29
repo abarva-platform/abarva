@@ -583,6 +583,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/fixture-lint',
     description: 'Instance ↔ pattern drift checks',
   },
+  {
+    title: 'Audit Trail',
+    href: '/admin/reasoning/audit',
+    description: 'Log of all reasoning actions — gate waivers, contradiction resolutions, and synthesis feedback',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
