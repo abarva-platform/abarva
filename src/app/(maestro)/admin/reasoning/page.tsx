@@ -918,6 +918,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/coverage-matrix',
     description: 'Instance × stage evidence coverage matrix — which instances have evidence for which stages',
   },
+  {
+    title: 'Contradiction network',
+    href: '/admin/reasoning/contradiction-network',
+    description: 'Co-occurrence network of contradiction templates — which contradictions appear together across instances',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
