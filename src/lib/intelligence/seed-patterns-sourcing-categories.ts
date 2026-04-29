@@ -5161,6 +5161,437 @@ Vendor claim: savings are immediate. Detection: load buyer contracts, usage, all
 
 The common failure is buying a SAM tool when the buyer's entitlement data is incomplete. The second is optimizing easy SaaS licenses while ignoring audit-heavy publishers. The third is treating tool output as legal interpretation without preserving assumptions and specialist review for complex terms.`,
   },
+  {
+    id: 'PAT-SRC-CAT-ESM-001',
+    slug: 'enterprise-service-management-itsm-workflow-sourcing',
+    title: 'Enterprise Service Management and ITSM-Adjacent Workflow Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Enterprise service management sourcing should prove governed intake, routing, ownership, SLAs, knowledge, asset context, and workflow governance before buyers treat a ticketing tool as an enterprise operating layer.',
+    applicability:
+      'Apply when sourcing ServiceNow ITSM/ESM, Jira Service Management, Freshservice, BMC Helix ITSM, Ivanti Neurons for ITSM, Zendesk Employee Service, Microsoft Power Platform adjacency, or shared-service workflow programs.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.80,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.servicenow.com/products/itsm/pricing.html',
+      'https://blogs.servicenow.com/content/dam/servicenow-assets/public/en-us/doc-type/resource-center/solution-brief/sb-itsm.pdf',
+      'https://www.atlassian.com/software/jira/templates/advanced-it-service-management',
+      'https://www.atlassian.com/collections/service/pricing',
+      'https://www.freshworks.com/freshservice/pricing/',
+      'https://www.freshworks.com/freshservice/features/',
+      'https://www.freshworks.com/freshservice/business-teams/',
+      'https://www.helixops.ai/products/bmc-helix-itsm.html',
+      'https://www.ivanti.com/solutions/enterprise-service-management',
+      'https://www.ivanti.com/products/ivanti-neurons-itsm',
+      'https://www.zendesk.com/employee-service/',
+      'https://support.zendesk.com/hc/en-us/articles/8836478757914-About-the-Zendesk-Employee-Service-Suite',
+      'https://www.microsoft.com/en-us/power-platform/products/power-automate/',
+    ],
+    regulatoryChips: ['SOC-2-review', 'change-control-review', 'access-request-review', 'SOX-if-approval-controls', 'data-residency-if-employee-data'],
+    relatedPatternIds: ['PAT-SRC-CAT-ITAM-001', 'PAT-SRC-CAT-IAM-001', 'PAT-SRC-CAT-BPM-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'enterprise_saas',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'ServiceNow, Atlassian Jira Service Management, Freshservice, BMC Helix, Ivanti Neurons, Zendesk Employee Service, and Microsoft Power Platform adjacency',
+        tier: 'enterprise',
+        positioning: 'Service-management and shared-service workflow candidates for intake, request, incident, problem, change, knowledge, assets/CMDB, employee service, automation, and reporting.',
+        cautions: ['Validate ITSM depth, requester/agent licensing, AI add-ons, asset object limits, CMDB maturity, and implementation burden before accepting platform-consolidation claims.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'ServiceNow ITSM pricing/packages', url: 'https://www.servicenow.com/products/itsm/pricing.html', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Atlassian Service Collection pricing', url: 'https://www.atlassian.com/collections/service/pricing', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Freshservice pricing', url: 'https://www.freshworks.com/freshservice/pricing/', asOf: '2026-04-29' },
+        ],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'ESM/ITSM public pricing constructs only',
+        model: 'hybrid',
+        metric: 'Agents, requesters/customers, service teams, modules, AI assistants, assets/objects, automation/actions, sandboxes, support, implementation, and integration scope',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Atlassian Service Collection pricing', url: 'https://www.atlassian.com/collections/service/pricing', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Freshservice pricing', url: 'https://www.freshworks.com/freshservice/pricing/', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Agent counts, requester populations, module scope, workflow count, CMDB/data cleanup, AI use, and implementation services require buyer evidence' },
+        ],
+        confidence: 0.58,
+        notes: 'Some vendors publish plan constructs, while enterprise ESM total cost depends on modules, agents, requesters, add-ons, data migration, CMDB maturity, and workflow redesign.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Workflow and service-data portability',
+        buyerPosition: 'Require export of tickets, service catalog definitions, workflows, SLAs, knowledge, approval history, CMDB/asset links, automations, and reporting data where technically available.',
+      },
+      {
+        clauseArea: 'AI and automation controls',
+        buyerPosition: 'Define human approval, audit logs, entitlement limits, data-use controls, rollback, and responsibility for AI-assisted routing, summaries, and workflow actions.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Agent/requester license map',
+        whenToUse: 'Use when business teams, IT, HR, facilities, finance, legal, and security may all use the platform differently.',
+        buyerAsk: 'Map creators, fulfillers, approvers, requesters, admins, and occasional users to license requirements before BAFO.',
+      },
+      {
+        lever: 'CMDB and workflow migration proof',
+        whenToUse: 'Use when replacing an incumbent service platform or expanding to enterprise service management.',
+        buyerAsk: 'Prove migration of sample tickets, catalogs, SLAs, knowledge, automations, assets, and integrations with exception handling.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'esm-platform-sprawl',
+        label: 'Service platform sprawl',
+        severity: 'high',
+        detectionSignals: ['ITSM scope expands into HR, legal, finance, ITAM, CMDB, DEX, ITOM, AIOps, and DevOps without license or governance mapping.'],
+        mitigations: ['Require phased scope, ownership, license map, integration inventory, and module-by-module value gates'],
+      },
+      {
+        id: 'esm-ai-overclaim',
+        label: 'AI service-management overclaim',
+        severity: 'medium',
+        detectionSignals: ['Vendor demo emphasizes AI agents, deflection, or autonomous resolution without buyer data, workflow controls, or audit evidence.'],
+        mitigations: ['Treat AI as assisted workflow until proof validates human review, logs, safety controls, and measurable outcomes'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Stress change-control evidence, segregation of duties, access-request audit trail, data retention, and platform administration controls.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Review clinical support workflows, employee data, PHI-adjacent ticket handling, uptime escalation, and emergency change routing.',
+      },
+      {
+        industry: 'public_sector',
+        modifier: 'Validate procurement constraints, accessibility, data residency, audit reporting, requester access, and service catalog governance.',
+      },
+    ],
+    body: `## Summary
+Enterprise service management sourcing is the move from ad hoc support to governed service operations. The buyer is deciding how requests, incidents, approvals, knowledge, assets, SLAs, escalations, and employee-service workflows become accountable work. A ticketing demo is not enough. The event must test ownership, workflow governance, licensing, data migration, CMDB quality, automation, and the boundary between ITSM depth and broader shared-service convenience.
+
+## When to apply
+Use this pattern when sourcing ServiceNow ITSM/ESM, Atlassian Jira Service Management, Freshservice, BMC Helix ITSM, Ivanti Neurons for ITSM, Zendesk Employee Service, Microsoft Power Platform adjacency, or multi-department service workflow programs. Apply it during service-desk replacement, SLA misses, employee-experience programs, shared-services expansion, CMDB cleanup, ITAM integration, access-request governance, change-control findings, or AI service-desk experimentation. Do not use it for pure customer support, pure project management, pure observability, pure RPA, or HRIS-only workflows unless service-management ownership is central.
+
+## Category boundary
+In scope: incident, request, problem, change/release, knowledge, service catalog, employee portal, SLA, queue, approval, escalation, virtual agent, workflow automation, asset/CMDB linkage, business-team service workflows, reporting, and integrations. Adjacent but distinct: ITAM, BPM, HR service delivery, customer support, AIOps, DEX, IAM, GRC, RPA, and low-code app platforms.
+
+## Lifecycle and gates
+The scope gate should inventory service teams, agents, requesters, workflows, service catalogs, current ticket data, SLAs, knowledge, assets, CMDB quality, integrations, business-team expansion, and AI/automation appetite. The RFP gate should require plan/module mapping, agent/requester licensing, workflow configurability, migration support, service catalog, knowledge, assets/CMDB, access controls, reporting, APIs, and support. The proof gate should run buyer scripts for request, incident, change, approval, escalation, knowledge, asset lookup, reporting, and handoff to another department. The BAFO gate should normalize agents, requesters, modules, AI, automation, asset objects, environments, support, implementation, and migration.
+
+## Evaluation rubric
+Weight workflow fit around 25 percent, service-management depth around 20 percent, implementation and migration risk around 20 percent, licensing predictability around 15 percent, platform integration around 10 percent, and AI/automation governance around 10 percent. Increase implementation weight when the buyer has a stale CMDB, many custom workflows, or enterprise-wide shared-service ambitions.
+
+## Pricing and contract notes
+Public sources from ServiceNow, Atlassian, Freshservice, BMC, Ivanti, Zendesk, and Microsoft show common constructs: plans, agents, requesters, service teams, AI assistants, automation, assets, CMDB, employee service, and platform workflow. Public plan pages do not equal enterprise net price. Total cost depends on agents, modules, business-team expansion, AI usage, data migration, CMDB cleanup, integrations, support, training, and implementation partners.
+
+Contracting should define service-data export, workflow ownership, configuration portability, migration responsibilities, uptime/support, AI data use, audit logs, admin access, sandbox/environments, and transition assistance. If the vendor positions AI agents or virtual service, require proof controls rather than accepting deflection or productivity claims.
+
+## Contradictions and failure modes
+Vendor claim: one platform for every department. Detection: map each department's workflows, data, license needs, approvals, and integrations. Vendor claim: AI resolves service demand. Detection: test actual ticket categories, knowledge quality, human approval, audit trail, and exception routing. Vendor claim: migration is straightforward. Detection: migrate sample tickets, catalogs, workflows, SLAs, knowledge, and assets.
+
+The common failure is buying an enterprise platform while only budgeting for a service desk. The second is expanding to HR, finance, legal, and facilities without ownership and license clarity. The third is assuming a better ticket queue fixes broken workflow and CMDB data.`,
+  },
+  {
+    id: 'PAT-SRC-CAT-BPM-001',
+    slug: 'business-process-management-workflow-orchestration-sourcing',
+    title: 'Business Process Management and Workflow Orchestration Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'BPM and workflow orchestration sourcing should prove executable process control, exception handling, integration, governance, and run-history evidence rather than accepting low-code speed or automation ROI claims.',
+    applicability:
+      'Apply when sourcing Appian, Pega, ServiceNow App Engine/Workflow, Camunda, Nintex, Kissflow, Microsoft Power Automate, Salesforce Flow/MuleSoft adjacency, or enterprise workflow orchestration platforms.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.78,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://appian.com/products/platform/overview',
+      'https://appian.com/products/pricing',
+      'https://www.pega.com/products/platform/workflow-automation',
+      'https://www.pega.com/products/platform/case-management',
+      'https://www.servicenow.com/products/now-platform-app-engine.html',
+      'https://www.servicenow.com/platform/workflow-automation.html',
+      'https://camunda.com/platform/',
+      'https://camunda.com/pricing/',
+      'https://www.nintex.com/',
+      'https://kissflow.com/platform/',
+      'https://www.microsoft.com/en-us/power-platform/products/power-automate/',
+      'https://www.microsoft.com/en/power-platform/products/power-automate/pricing',
+      'https://learn.microsoft.com/en-us/power-platform/admin/power-automate-licensing/faqs',
+    ],
+    regulatoryChips: ['SOC-2-review', 'workflow-audit-trail', 'segregation-of-duties-review', 'data-residency-if-sensitive-process-data', 'SOX-if-finance-approvals'],
+    relatedPatternIds: ['PAT-SRC-CAT-ESM-001', 'PAT-SRC-CAT-RPA-001', 'PAT-SRC-CAT-PROCURE-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'enterprise_saas',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Appian, Pega, ServiceNow App Engine, Camunda, Nintex, Kissflow, Microsoft Power Automate, and Salesforce Flow/MuleSoft adjacency',
+        tier: 'enterprise',
+        positioning: 'Workflow and process orchestration candidates spanning BPM, case management, low-code apps, process mining/intelligence, RPA adjacency, approvals, forms, and cross-system automation.',
+        cautions: ['Normalize executable model, integration depth, license meters, citizen-development guardrails, and exportability before comparing demo speed.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Appian platform overview', url: 'https://appian.com/products/platform/overview', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Pega workflow automation', url: 'https://www.pega.com/products/platform/workflow-automation', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Microsoft Power Automate pricing', url: 'https://www.microsoft.com/en/power-platform/products/power-automate/pricing', asOf: '2026-04-29' },
+        ],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'BPM/workflow public pricing constructs only',
+        model: 'hybrid',
+        metric: 'Users, apps, workflows, processes, bots, connectors, actions/requests, documents/pages, process mining storage, environments, support, and implementation services',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Appian pricing', url: 'https://appian.com/products/pricing', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Camunda pricing', url: 'https://camunda.com/pricing/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Microsoft Power Automate pricing', url: 'https://www.microsoft.com/en/power-platform/products/power-automate/pricing', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Process volume, user roles, bot needs, connectors, document volume, environments, and implementation effort require buyer evidence' },
+        ],
+        confidence: 0.58,
+        notes: 'Public pricing exposes some meters, but workflow TCO depends on process complexity, integration, governance, bot capacity, support, and implementation work.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Process asset ownership and export',
+        buyerPosition: 'Require export or documented portability for process definitions, forms, decision tables, run history, logs, attachments, integration configuration, and operational data.',
+      },
+      {
+        clauseArea: 'Automation governance',
+        buyerPosition: 'Define approval controls, segregation of duties, versioning, test/promotion, rollback, citizen-development governance, and monitoring responsibilities.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Executable-script proof',
+        whenToUse: 'Use when vendors demo generic workflow speed instead of buyer exception paths.',
+        buyerAsk: 'Run buyer-authored scripts with approvals, rework, escalation, integrations, exception handling, audit trail, and reporting.',
+      },
+      {
+        lever: 'License-meter decomposition',
+        whenToUse: 'Use before BAFO where users, bots, actions, connectors, documents, and environments may all trigger cost.',
+        buyerAsk: 'Map each target workflow to user roles, automation volume, premium connectors, bot sessions, storage, AI use, and support tiers.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'bpm-no-code-without-governance',
+        label: 'No-code without governance',
+        severity: 'high',
+        detectionSignals: ['Business users can create workflows, but ownership, testing, access, reuse, monitoring, and retirement are unclear.'],
+        mitigations: ['Require center-of-excellence model, SDLC, environment strategy, role controls, and lifecycle governance'],
+      },
+      {
+        id: 'bpm-fragile-ui-automation',
+        label: 'Fragile automation dependency',
+        severity: 'medium',
+        detectionSignals: ['Workflow depends on UI automation for systems that have or need APIs, causing brittle production operations.'],
+        mitigations: ['Prefer API/integration patterns, document exceptions, and require monitoring plus rollback for UI automation'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Stress audit trail, model governance, segregation of duties, approval evidence, and operational resilience for regulated workflows.',
+      },
+      {
+        industry: 'insurance',
+        modifier: 'Evaluate case management, exception handling, document intake, claims workflow, and integration with policy/admin systems.',
+      },
+      {
+        industry: 'manufacturing',
+        modifier: 'Review plant-floor constraints, supplier workflows, quality exceptions, offline handoffs, and ERP/MES integration boundaries.',
+      },
+    ],
+    body: `## Summary
+BPM and workflow orchestration sourcing is about controlled execution of work across people, systems, data, bots, approvals, and exceptions. The buyer is not simply buying low-code speed. The event must prove that the platform can model, execute, monitor, change, and audit business processes without creating uncontrolled app sprawl or fragile automation debt.
+
+## When to apply
+Use this pattern when sourcing Appian, Pega, ServiceNow App Engine/Workflow, Camunda, Nintex, Kissflow, Microsoft Power Automate, Salesforce Flow/MuleSoft adjacency, or enterprise workflow orchestration platforms. Apply it during shared-services redesign, approval bottlenecks, spreadsheet/email replacement, process mining findings, compliance remediation, M&A process harmonization, low-code governance programs, or RPA consolidation. Do not use it for pure iPaaS, pure RPA, ITSM-only ticketing, CRM-native workflow-only, document management-only, or consulting-only process redesign unless cross-process orchestration is the sourcing anchor.
+
+## Category boundary
+In scope: BPM, case management, workflow automation, forms, approvals, decisions, process orchestration, process intelligence/mining, RPA adjacency, IDP adjacency, exception handling, human-in-the-loop controls, run history, monitoring, integrations, citizen development, ALM, and audit evidence. Adjacent but distinct: ITSM, iPaaS, RPA, ERP, CRM, CLM, document management, data integration, and custom application development.
+
+## Lifecycle and gates
+The scope gate should inventory target processes, volumes, roles, exception paths, systems, integrations, documents, approvals, audit needs, current automations, business owners, and governance maturity. The RFP gate should require executable modeling, integration methods, versioning, test/promotion, rollback, audit logs, role controls, process monitoring, export, and license meters. The proof gate should run buyer-authored scripts with real exception paths, rework loops, escalations, delegation, approvals, attachments, and reporting. The BAFO gate should normalize users, apps, processes, workflows, bots, connectors, actions, storage, environments, AI features, support, and services.
+
+## Evaluation rubric
+Weight process execution fit around 25 percent, integration and data handling around 20 percent, governance/ALM around 20 percent, exception handling around 15 percent, commercial predictability around 10 percent, and AI/process-intelligence fit around 10 percent. Increase governance weight where citizen development or regulated approvals are central.
+
+## Pricing and contract notes
+Public sources from Appian, Pega, ServiceNow, Camunda, Nintex, Kissflow, Microsoft, and Salesforce/MuleSoft show a market organized around users, apps, workflows, processes, bots, connectors, automation capacity, process intelligence, and platform services. Public pricing pages should not be converted into buyer TCO without process volume and role mapping. Microsoft Power Automate, for example, exposes user, process, hosted process, and process-mining constructs, but buyer cost still depends on connectors, capacity, flow design, bot concurrency, and tenant entitlements.
+
+Contracting should define process asset ownership, export, run-history retention, integration ownership, admin rights, environment strategy, support, data use, AI controls, and transition assistance. For regulated workflows, require explicit audit trail, version history, approval evidence, and rollback controls.
+
+## Contradictions and failure modes
+Vendor claim: no-code means no IT. Detection: inspect integration, security, ALM, testing, monitoring, and retirement responsibilities. Vendor claim: fast automation creates ROI. Detection: require buyer baseline, process volume, error rate, adoption, and operating cost evidence. Vendor claim: native connectors eliminate integration work. Detection: test authentication, error handling, data mapping, rate limits, and lifecycle support.
+
+The common failure is automating a broken process faster. The second is building workflows that cannot be governed, exported, or safely changed. The third is discovering late that premium connectors, bots, actions, environments, or AI capacity drive the economics.`,
+  },
+  {
+    id: 'PAT-SRC-CAT-LEGAL-001',
+    slug: 'legal-operations-matter-ebilling-clm-sourcing',
+    title: 'Legal Operations, Matter Management, E-Billing, Spend, and CLM Adjacency Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Legal operations sourcing should separate matter management, e-billing, legal spend, vendor management, and CLM adjacency so buyers can govern legal work without overclaiming AI, savings, or legal outcomes.',
+    applicability:
+      'Apply when sourcing Onit/SimpleLegal, Brightflag, Thomson Reuters Legal Tracker, Mitratech TeamConnect, Ironclad, Icertis, DocuSign CLM, Agiloft, Workday/Evisort, or legal operations platforms.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.78,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://cloc.org/cloc-core-12/',
+      'https://legal.thomsonreuters.com/en/insights/articles/what-is-enterprise-legal-management',
+      'https://legal.thomsonreuters.com/blog/what-is-ledes-format-and-what-are-its-benefits-for-legal-e-billing/',
+      'https://www.onit.com/solutions/enterprise-legal-management/',
+      'https://www.onit.com/products/elm/simplelegal/',
+      'https://brightflag.com/',
+      'https://legal.thomsonreuters.com/en/products/legal-tracker/features',
+      'https://mitratech.com/products/teamconnect/',
+      'https://support.ironcladapp.com/hc/en-us/articles/12615001356567-Ironclad-Products-Overview',
+      'https://www.icertis.com/contract-management/',
+      'https://www.docusign.com/products/clm',
+      'https://www.agiloft.com/solutions/clm-legal-professionals/',
+      'https://www.workday.com/en-us/products/contract-management/contract-intelligence.html',
+    ],
+    regulatoryChips: ['legal-privilege-review', 'confidentiality-review', 'data-residency-review', 'SOC-2-review', 'billing-guideline-review'],
+    relatedPatternIds: ['PAT-SRC-CAT-CLM-001', 'PAT-SRC-CAT-BPM-001', 'PAT-SRC-CAT-PROCURE-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'enterprise_saas',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Onit/SimpleLegal, Brightflag, Thomson Reuters Legal Tracker, Mitratech TeamConnect, Ironclad, Icertis, DocuSign CLM, Agiloft, and Workday/Evisort',
+        tier: 'enterprise',
+        positioning: 'Legal operations and CLM-adjacent candidates for matter intake, e-billing, legal spend, vendor management, reporting, contract workflow, repository, AI extraction, and contract intelligence.',
+        cautions: ['Separate ELM/e-billing from CLM/e-signature/legal research, and do not treat software output as legal advice or guaranteed compliance.'],
+        sourceBasis: [
+          { type: 'industry-consortium', label: 'CLOC Core 12', url: 'https://cloc.org/cloc-core-12/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Thomson Reuters enterprise legal management explainer', url: 'https://legal.thomsonreuters.com/en/insights/articles/what-is-enterprise-legal-management', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Onit SimpleLegal', url: 'https://www.onit.com/products/elm/simplelegal/', asOf: '2026-04-29' },
+        ],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'Legal operations public pricing constructs only',
+        model: 'hybrid',
+        metric: 'Legal users, matters, invoices, spend volume, outside counsel vendors, CLM users, contract volume, AI features, integrations, migration, managed review, and support',
+        sourceBasis: [
+          { type: 'founder-data-gap', label: 'Legal matter count, invoice volume, outside counsel roster, AP/ERP integrations, contract repository quality, and legal department operating model require buyer evidence' },
+        ],
+        confidence: 0.45,
+        notes: 'Enterprise legal operations pricing is typically quote-driven; do not infer costs or savings from vendor pages without buyer-specific volume and scope.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Legal data confidentiality and export',
+        buyerPosition: 'Require export of matters, invoices, budgets, accruals, vendors, billing rules, contracts, metadata, documents, audit logs, and reporting data subject to privilege and confidentiality controls.',
+      },
+      {
+        clauseArea: 'AI and legal review boundaries',
+        buyerPosition: 'Define human review, source citation, audit trail, data-use restrictions, confidentiality, model governance, and explicit prohibition on unsupervised legal advice.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'ELM versus CLM scope split',
+        whenToUse: 'Use when the buyer blends matter/e-billing and contract lifecycle needs in one evaluation.',
+        buyerAsk: 'Score matter management, e-billing, spend, vendor management, CLM workflow, repository, and contract intelligence as separate capability lanes.',
+      },
+      {
+        lever: 'Outside counsel adoption proof',
+        whenToUse: 'Use when e-billing or matter collaboration depends on law firm behavior.',
+        buyerAsk: 'Test invoice formats, billing guidelines, timekeeper management, vendor onboarding, dispute workflow, and AP integration with representative firms.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'legal-category-conflation',
+        label: 'Legal category conflation',
+        severity: 'high',
+        detectionSignals: ['Buyer compares CLM, e-billing, ELM, legal research, e-signature, and AI review as if they solve the same job.'],
+        mitigations: ['Separate capability scorecards and require workflow proof for each legal operating job'],
+      },
+      {
+        id: 'legal-ai-overreach',
+        label: 'Legal AI overreach',
+        severity: 'critical',
+        detectionSignals: ['Vendor or buyer treats AI extraction, invoice review, or clause analysis as legal advice or guaranteed compliance.'],
+        mitigations: ['Require human review, citations, audit trail, confidentiality terms, and legal-owner acceptance criteria'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Stress privilege, regulatory matters, outside counsel controls, matter confidentiality, spend approvals, and audit evidence.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Review HIPAA-adjacent matters, litigation/regulatory workflows, privileged data handling, and vendor confidentiality.',
+      },
+      {
+        industry: 'retail_cpg',
+        modifier: 'Plan for high-volume commercial contracts, employment matters, IP/brand issues, outside counsel spend, and franchise/supplier legal workflows.',
+      },
+    ],
+    body: `## Summary
+Legal operations sourcing should create operating control for legal work without pretending software makes legal judgments. The buyer is choosing how matters, invoices, budgets, accruals, outside counsel, billing guidelines, vendors, reports, contracts, repositories, and legal workflows become visible and governed. Matter management, e-billing, enterprise legal management, CLM, contract intelligence, e-signature, and legal research are adjacent but not interchangeable.
+
+## When to apply
+Use this pattern when sourcing Onit/SimpleLegal, Brightflag, Thomson Reuters Legal Tracker, Mitratech TeamConnect, Ironclad, Icertis, DocuSign CLM, Agiloft, Workday/Evisort, or legal operations platforms. Apply it during first legal-ops hire, outside counsel spend pressure, invoice-review bottlenecks, matter spreadsheet fatigue, CLM renewal, ERP/AP integration, contract repository cleanup, M&A integration, multi-currency billing, or legal reporting demands. Do not use it for law-firm practice management, standalone e-signature, standalone legal research, e-discovery, IP docketing, or ALSP services unless corporate legal operations is the sourcing anchor.
+
+## Category boundary
+In scope: matter intake, matter management, e-billing, LEDES/UTBMS workflows, billing guidelines, invoice review, outside counsel management, budgets, accruals, legal spend analytics, vendor management, AP/ERP integration, reporting, contract workflow, CLM adjacency, contract repository, AI extraction, clause search, and legal ops dashboards. Adjacent but distinct: CLM-only, e-signature-only, legal research, e-discovery, privacy/GRC, procurement CLM, and document management.
+
+## Lifecycle and gates
+The scope gate should inventory matters, invoices, law firms, billing guidelines, rate cards, legal vendors, AP/ERP systems, accrual process, contract repositories, templates, clause metadata, privilege/confidentiality constraints, and reporting needs. The RFP gate should require module boundaries, e-billing formats, matter taxonomy, invoice rules, vendor portal, analytics, CLM workflow, integrations, migration, security, data residency, and AI controls. The proof gate should run sample matters, invoices, billing-rule exceptions, accruals, reports, contract intake, repository search, and AP handoff. The BAFO gate should normalize users, matters, invoice volume, spend volume, vendors, contracts, AI features, integrations, migration, support, and managed services.
+
+## Evaluation rubric
+Weight matter/e-billing fit around 25 percent, legal spend and vendor management around 20 percent, CLM adjacency around 15 percent, integration/migration risk around 15 percent, confidentiality/security around 15 percent, and commercial predictability around 10 percent. Increase confidentiality weight for privileged, regulated, cross-border, or litigation-heavy environments.
+
+## Pricing and contract notes
+Public sources from CLOC, Thomson Reuters, Onit/SimpleLegal, Brightflag, Legal Tracker, Mitratech, Ironclad, Icertis, DocuSign, Agiloft, and Workday/Evisort show the legal-ops map: matter management, e-billing, legal spend, vendor management, CLM, contract intelligence, and reporting. They do not justify invented savings, outside counsel reductions, or legal outcome claims. Enterprise pricing is quote-driven and depends on matters, invoices, spend volume, vendors, users, contracts, integrations, migration, support, and managed bill review.
+
+Contracting should define legal-data export, confidentiality, privilege handling, data residency, AP/ERP integration, outside counsel onboarding, invoice format support, billing-rule ownership, AI data use, human review, audit trail, and transition assistance.
+
+## Contradictions and failure modes
+Vendor claim: AI reviews legal work. Detection: require human review, source evidence, audit trail, confidentiality controls, and legal-owner approval. Vendor claim: ELM and CLM are one category. Detection: score matter/e-billing and contract lifecycle workflows separately. Vendor claim: spend savings are available. Detection: require buyer baseline, billing guidelines, vendor adoption, rate cards, and finance-approved methodology.
+
+The common failure is buying CLM when the immediate pain is invoice and matter control, or buying e-billing when the immediate pain is contract workflow. The second is underestimating outside counsel and AP adoption. The third is treating AI output as legal advice rather than review support.`,
+  },
 ];
 
 export const SOURCING_CATEGORY_PATTERN_COUNT = SOURCING_CATEGORY_PATTERNS.length;
