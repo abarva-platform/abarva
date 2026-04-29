@@ -1,3 +1,5 @@
+'use client';
+
 import { getStageStateLabel } from '@/lib/source/lifecycle';
 import type { WorkflowStage } from '@/lib/source/types';
 import { SHELL } from '@/lib/shell/shell-tokens';
@@ -28,7 +30,18 @@ const sourceMuted = {
   lineHeight: 1.5,
 };
 
-export function SourceJourneyTracker({ stages }: { stages: WorkflowStage[] }) {
+export interface SourceJourneyTrackerProps {
+  stages: WorkflowStage[];
+  /**
+   * Optional callback fired when the user clicks "View synthesis →" on a stage
+   * chip. Receives the stage `key` (SourceStageKey) and the stage `label` so
+   * the caller can map to the lifecycle-pattern stage id for
+   * StageSynthesisDrawer.
+   */
+  onSynthesisClick?: (stageKey: string, stageLabel: string) => void;
+}
+
+export function SourceJourneyTracker({ stages, onSynthesisClick }: SourceJourneyTrackerProps) {
   return (
     <section
       style={{
@@ -91,6 +104,28 @@ export function SourceJourneyTracker({ stages }: { stages: WorkflowStage[] }) {
                 {stage.gate.blocker}
               </div>
             ) : null}
+            {onSynthesisClick && (
+              <button
+                type="button"
+                data-testid={`stage-synthesis-trigger-${stage.key}`}
+                onClick={() => onSynthesisClick(stage.key, stage.label)}
+                style={{
+                  marginTop: 4,
+                  fontFamily: SHELL.MONO,
+                  fontSize: 9,
+                  letterSpacing: '0.06em',
+                  color: SHELL.INK_MUTED,
+                  background: 'transparent',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  lineHeight: 1.4,
+                }}
+              >
+                View synthesis →
+              </button>
+            )}
           </div>
         ))}
       </div>

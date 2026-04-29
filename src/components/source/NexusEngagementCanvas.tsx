@@ -15,11 +15,14 @@ import type { SourcingEventDetail } from '@/lib/source/types';
 import { formatUsd } from '@/lib/source/value-ledger';
 import { SourceActiveStageWorkspace } from './SourceActiveStageWorkspace';
 import { SourceAlertPanel } from './SourceAlertPanel';
-import { SourceJourneyTracker } from './SourceJourneyTracker';
+import { SourceJourneyTrackerClient } from './SourceJourneyTrackerClient';
 import { SourceStagePanel } from './SourceStagePanel';
 import { PersistentNexusPanel } from './PersistentNexusPanel';
 import { SourceStageGatePanel } from './SourceStageGatePanel';
 import { SourceArtifactStatusStrip } from './SourceArtifactStatusStrip';
+import { PAT_SRC_AMS_001 } from '@/lib/intelligence/source-lifecycle-patterns';
+import { buildStageHandoffNarratives } from '@/lib/reasoning/stage-handoff-narrative';
+import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
 
 const EVENT_CANVAS_MISSION_GENERATED_AT = '2026-04-26T00:00:00.000Z';
 
@@ -56,18 +59,39 @@ const BODY_GRID: CSSProperties = {
   minWidth: 0,
 };
 
+// Pre-build pattern-level data once at module scope (pure, deterministic).
+const AMS_PATTERN_STAGE_MAP: Record<string, string> = Object.fromEntries(
+  PAT_SRC_AMS_001.stages.map((s) => [s.label, s.id]),
+);
+const AMS_HANDOFF_NARRATIVES = buildStageHandoffNarratives(PAT_SRC_AMS_001);
+
 export function NexusEngagementCanvas({ event }: { event: SourcingEventDetail }) {
   const missionReport = buildEventCanvasMissionReport(event);
   const missionPreviewMissions = getEventCanvasMissionPreviewMissions(missionReport);
   const stageGateReadiness = buildSourceStageGateReadiness({ event });
   const artifactStatusStrip = getSourceArtifactStatusStripSeed(event.id);
 
+  // Resolve the typed instance id for the synthesis API.
+  // Falls back to the AMS fixture instance when no exact match is found.
+  const instanceId =
+    SOURCE_EVENT_INSTANCES.find((i) => i.id === event.id)?.id ??
+    (event.name.toLowerCase().includes('ams')
+      ? SOURCE_EVENT_INSTANCES.find((i) => i.id.toLowerCase().includes('ams'))?.id
+      : undefined) ??
+    SOURCE_EVENT_INSTANCES[0]?.id ??
+    event.id;
+
   return (
     <section style={CANVAS}>
       <EventContextStrip event={event} missionReport={missionReport} />
       <div style={BODY_GRID}>
         <div style={{ display: 'grid', gap: 16, minWidth: 0 }}>
-          <SourceJourneyTracker stages={event.stages} />
+          <SourceJourneyTrackerClient
+            stages={event.stages}
+            instanceId={instanceId}
+            patternStageMap={AMS_PATTERN_STAGE_MAP}
+            handoffNarratives={AMS_HANDOFF_NARRATIVES}
+          />
           <div id="source-route-gate-blockers">
             <SourceStageGatePanel readiness={stageGateReadiness} />
           </div>
