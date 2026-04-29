@@ -1,0 +1,500 @@
+{
+  "generatedAt": "2026-04-29T00:33:12.022Z",
+  "entries": [
+    {
+      "sha": "5db86b696cce42a98c7ddee3a92fefc36d22e531",
+      "subject": "feat(reasoning): compact instance summary tile (reusable card) (#774)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T19:30:02-05:00",
+      "prNumber": 774,
+      "kind": "feat",
+      "short": "compact instance summary tile (reusable card)"
+    },
+    {
+      "sha": "d5ffbfc14516b2501922427557ada1ed968d2b68",
+      "subject": "feat(reasoning): weekly digest summary route + admin view (#773)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T19:28:43-05:00",
+      "prNumber": 773,
+      "kind": "feat",
+      "short": "weekly digest summary route + admin view"
+    },
+    {
+      "sha": "a717529fc5be26c83585b09be76a267fddd8fdd7",
+      "subject": "feat(reasoning): risk register derived from contradictions + failure modes (#772)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T19:26:13-05:00",
+      "prNumber": 772,
+      "kind": "feat",
+      "short": "risk register derived from contradictions + failure modes"
+    },
+    {
+      "sha": "44b7ad89302e7fa0e42df2c651e6ef1c19137983",
+      "subject": "feat(reasoning): event timeline filters + search (#771)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T19:19:52-05:00",
+      "prNumber": 771,
+      "kind": "feat",
+      "short": "event timeline filters + search"
+    },
+    {
+      "sha": "0fae3aea963020fa4aa50bbc491e5d954c740fbb",
+      "subject": "feat(reasoning): stage-by-stage handoff narrative on detail pages (#770)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T19:18:51-05:00",
+      "prNumber": 770,
+      "kind": "feat",
+      "short": "stage-by-stage handoff narrative on detail pages"
+    },
+    {
+      "sha": "0a17599c76860075daf96fcde581130a6bfc552d",
+      "subject": "feat(reasoning): evidence quality scoring (#769)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T19:18:17-05:00",
+      "prNumber": 769,
+      "kind": "feat",
+      "short": "evidence quality scoring"
+    },
+    {
+      "sha": "4aae5eb5ee4a72835d61dbb03c2d5df919211150",
+      "subject": "feat(reasoning): admin contradiction template editor (in-memory overrides) (#767)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T19:12:31-05:00",
+      "prNumber": 767,
+      "kind": "feat",
+      "short": "admin contradiction template editor (in-memory overrides)"
+    },
+    {
+      "sha": "d1e1d0de52743a72bad8479081803a1a6a905a91",
+      "subject": "feat(reasoning): per-stage micro-synthesis on instance detail pages (#766)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T19:10:46-05:00",
+      "prNumber": 766,
+      "kind": "feat",
+      "short": "per-stage micro-synthesis on instance detail pages"
+    },
+    {
+      "sha": "e3387be05f87e3e93bd85f089490fadd6fb59c62",
+      "subject": "feat(reasoning): telemetry digest CSV + JSON export (#764)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T19:09:15-05:00",
+      "prNumber": 764,
+      "kind": "feat",
+      "short": "telemetry digest CSV + JSON export"
+    },
+    {
+      "sha": "34739dc3ab881859c8a3a23b061a61903491ea25",
+      "subject": "feat(reasoning): inline lifecycle mini-graph on instance detail pages (#762)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T19:04:16-05:00",
+      "prNumber": 762,
+      "kind": "feat",
+      "short": "inline lifecycle mini-graph on instance detail pages"
+    },
+    {
+      "sha": "3aa19451bceedeb9d1c166142eb30c4352c54a41",
+      "subject": "feat(reasoning): /api/reasoning/health endpoint with self-test (#761)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T19:02:52-05:00",
+      "prNumber": 761,
+      "kind": "feat",
+      "short": "/api/reasoning/health endpoint with self-test"
+    },
+    {
+      "sha": "7a0dcd811e5f5952d42d53edc4445fb5dcb65519",
+      "subject": "feat(reasoning): ETag-based conditional caching on synthesis routes (#760)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T19:01:35-05:00",
+      "prNumber": 760,
+      "kind": "feat",
+      "short": "ETag-based conditional caching on synthesis routes"
+    },
+    {
+      "sha": "3521c2bd8a5cb90c8cf36e09c49c3b89711cfe0f",
+      "subject": "feat(reasoning): mission completion + dismissal write path (#758)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T18:56:00-05:00",
+      "prNumber": 758,
+      "kind": "feat",
+      "short": "mission completion + dismissal write path"
+    },
+    {
+      "sha": "753f71c60d4d676fb174ab95ac33452480081589",
+      "subject": "docs(reasoning): SDK-style quickstart + import map (#756)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T18:53:54-05:00",
+      "prNumber": 756,
+      "kind": "docs",
+      "short": "SDK-style quickstart + import map"
+    },
+    {
+      "sha": "cd36ebd35bc4dffa99129ce86a21ecd8271b44b2",
+      "subject": "feat(reasoning): compare deep-link from instance detail pages (#755)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T18:53:39-05:00",
+      "prNumber": 755,
+      "kind": "feat",
+      "short": "compare deep-link from instance detail pages"
+    },
+    {
+      "sha": "a49c867c2615f3931f9487a00ad0823f8004a34f",
+      "subject": "feat(reasoning): telemetry persistence stub + retention policy (#753)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T18:48:23-05:00",
+      "prNumber": 753,
+      "kind": "feat",
+      "short": "telemetry persistence stub + retention policy"
+    },
+    {
+      "sha": "d02425f172c126b58670ece6f40ab0c2d5df82b0",
+      "subject": "feat(reasoning): two-instance comparison view at /source/compare (#752)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T18:47:42-05:00",
+      "prNumber": 752,
+      "kind": "feat",
+      "short": "two-instance comparison view at /source/compare"
+    },
+    {
+      "sha": "eaa8202001c9c8ab6c288a23a61cdd0983e80b96",
+      "subject": "feat(reasoning): portfolio mission queue on Tower (#749)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T18:46:18-05:00",
+      "prNumber": 749,
+      "kind": "feat",
+      "short": "portfolio mission queue on Tower"
+    },
+    {
+      "sha": "ed8cefc8ca2929b645b8421b42f8e853964c0691",
+      "subject": "feat(reasoning): explain-this-quote drawer — show which rules fired for a synthesis (#747)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T18:41:07-05:00",
+      "prNumber": 747,
+      "kind": "feat",
+      "short": "explain-this-quote drawer — show which rules fired for a synthesis"
+    },
+    {
+      "sha": "e17b90317b62ff61c40d6182a245326fb0f43663",
+      "subject": "feat(reasoning): per-instance reasoning event timeline (#746)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T18:38:20-05:00",
+      "prNumber": 746,
+      "kind": "feat",
+      "short": "per-instance reasoning event timeline"
+    },
+    {
+      "sha": "65edb0dd873796e247e3dc37c82232d6fa2ad30d",
+      "subject": "docs(reasoning): architecture page enumerating the 4-layer reasoning model (#744)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T18:36:39-05:00",
+      "prNumber": 744,
+      "kind": "docs",
+      "short": "architecture page enumerating the 4-layer reasoning model"
+    },
+    {
+      "sha": "e53b6f1662a32f72a6377f3f036fee14bcf97af6",
+      "subject": "feat(reasoning): program evidence ingestion (mirror Source path) (#742)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T18:30:57-05:00",
+      "prNumber": 742,
+      "kind": "feat",
+      "short": "program evidence ingestion (mirror Source path)"
+    },
+    {
+      "sha": "6a9e3fd0c658c514a6ba2d0b7d63c4bcf74f309f",
+      "subject": "feat(reasoning): pattern index page — browseable directory of all lifecycle patterns (#741)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T18:30:05-05:00",
+      "prNumber": 741,
+      "kind": "feat",
+      "short": "pattern index page — browseable directory of all lifecycle patterns"
+    },
+    {
+      "sha": "75ec936adba2993cbb0c5ebe8a4ec93082a09369",
+      "subject": "feat(reasoning): evidence ingestion stub — POST to add evidence and re-evaluate gates (#740)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T18:25:37-05:00",
+      "prNumber": 740,
+      "kind": "feat",
+      "short": "evidence ingestion stub — POST to add evidence and re-evaluate gates"
+    },
+    {
+      "sha": "142f71d2421b1aa62f1117762605881dddadf3f1",
+      "subject": "feat(reasoning): cascade impact card on Source and Programs detail (#738)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T18:24:35-05:00",
+      "prNumber": 738,
+      "kind": "feat",
+      "short": "cascade impact card on Source and Programs detail"
+    },
+    {
+      "sha": "cebb9c4fe10822e2c9bcd90d4d51a777dda68c88",
+      "subject": "feat(reasoning): pattern-aware Tower drill-down (#737)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T18:24:08-05:00",
+      "prNumber": 737,
+      "kind": "feat",
+      "short": "pattern-aware Tower drill-down"
+    },
+    {
+      "sha": "7fcc41b8f595515ec0b75ed79a3216d139bef003",
+      "subject": "feat(reasoning): contradiction detail card with resolution affordance (#736)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T18:19:07-05:00",
+      "prNumber": 736,
+      "kind": "feat",
+      "short": "contradiction detail card with resolution affordance"
+    },
+    {
+      "sha": "794bd795cf42fad5943f54b9ee63685ae163c0e1",
+      "subject": "feat(reasoning): telemetry digest dashboard at /admin/reasoning (#734)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T18:14:47-05:00",
+      "prNumber": 734,
+      "kind": "feat",
+      "short": "telemetry digest dashboard at /admin/reasoning"
+    },
+    {
+      "sha": "bd2419c26a33ac626200d105d60299dcba21cbff",
+      "subject": "feat(reasoning): derived mission queue rendered on Source and Programs detail pages (#733)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T18:13:15-05:00",
+      "prNumber": 733,
+      "kind": "feat",
+      "short": "derived mission queue rendered on Source and Programs detail pages"
+    },
+    {
+      "sha": "f85d960b7fe1888ff4421e49edb89b71b700e655",
+      "subject": "feat(reasoning): mission queue auto-derived from pending gate criteria (#732)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T18:08:30-05:00",
+      "prNumber": 732,
+      "kind": "feat",
+      "short": "mission queue auto-derived from pending gate criteria"
+    },
+    {
+      "sha": "3c927fd3aea985c5eaa28af5b7f55161c74f78c6",
+      "subject": "feat(reasoning): synthesis telemetry + thumbs feedback channel (#731)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T18:07:42-05:00",
+      "prNumber": 731,
+      "kind": "feat",
+      "short": "synthesis telemetry + thumbs feedback channel"
+    },
+    {
+      "sha": "b53b3bd03f40d83cf3600c398dbccbb5460ba580",
+      "subject": "feat(reasoning): failure-mode warning chip on Source and Programs detail headers (#730)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T18:06:36-05:00",
+      "prNumber": 730,
+      "kind": "feat",
+      "short": "failure-mode warning chip on Source and Programs detail headers"
+    },
+    {
+      "sha": "ac4971a205166fae5e5bdafea0da8496717b2519",
+      "subject": "feat(reasoning): wire program lifecycle patterns into program synthesis + gate evaluation (#728)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T17:58:54-05:00",
+      "prNumber": 728,
+      "kind": "feat",
+      "short": "wire program lifecycle patterns into program synthesis + gate evaluation"
+    },
+    {
+      "sha": "03d4cca86b2443065422ee2c7374085ebba370f7",
+      "subject": "feat(reasoning): render detected failure modes in provenance ribbons (#727)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T17:57:08-05:00",
+      "prNumber": 727,
+      "kind": "feat",
+      "short": "render detected failure modes in provenance ribbons"
+    },
+    {
+      "sha": "3270c86c186936ec2ebf520570985394cc9bc0f6",
+      "subject": "feat(reasoning): pattern detail page — render LifecyclePatternSeed doctrine (#726)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T17:56:29-05:00",
+      "prNumber": 726,
+      "kind": "feat",
+      "short": "pattern detail page — render LifecyclePatternSeed doctrine"
+    },
+    {
+      "sha": "39baca6d64ae507e2e067c32f3254e6618c088cc",
+      "subject": "feat(reasoning): program lifecycle patterns — 6 Apex Retail program archetypes (#724)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T17:50:10-05:00",
+      "prNumber": 724,
+      "kind": "feat",
+      "short": "program lifecycle patterns — 6 Apex Retail program archetypes"
+    },
+    {
+      "sha": "20d6d373f4335de1b7496353e2a557986538ecbd",
+      "subject": "feat(reasoning): failure mode detector — keyword-match against pattern failure modes (#722)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T17:47:04-05:00",
+      "prNumber": 722,
+      "kind": "feat",
+      "short": "failure mode detector — keyword-match against pattern failure modes"
+    },
+    {
+      "sha": "b6d5795f051bca1147fc89fdaa51ce4c509cb960",
+      "subject": "feat(reasoning): Tower provenance ribbon — Atlas synthesis grounding visible (#721)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T17:43:19-05:00",
+      "prNumber": 721,
+      "kind": "feat",
+      "short": "Tower provenance ribbon — Atlas synthesis grounding visible"
+    },
+    {
+      "sha": "42c8c86e498a626cc40c6babb48185ad61df9f52",
+      "subject": "feat(reasoning): REASON-9 — cross-instance reasoner cascade impact computation (#718)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T17:35:18-05:00",
+      "prNumber": 718,
+      "kind": "feat",
+      "short": "REASON-9 — cross-instance reasoner cascade impact computation"
+    },
+    {
+      "sha": "a0b784d704ed3fe715cca39a45ef8a2df93336a8",
+      "subject": "feat(reasoning): REASON-25 — pattern selector in source-event creation (#717)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T17:31:55-05:00",
+      "prNumber": 717,
+      "kind": "feat",
+      "short": "REASON-25 — pattern selector in source-event creation"
+    },
+    {
+      "sha": "2a145f04c4ac6f7cd3f846427e37bcbde054f1e9",
+      "subject": "feat(reasoning): REASON-23 — gate ribbon driven by gate evaluator on Source detail (#716)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T17:31:21-05:00",
+      "prNumber": 716,
+      "kind": "feat",
+      "short": "REASON-23 — gate ribbon driven by gate evaluator on Source detail"
+    },
+    {
+      "sha": "e32a6cecfba6ac528b5e40a945bd6963bcb2c818",
+      "subject": "feat(reasoning): REASON-3+4 — remaining source-event lifecycle patterns (SOLE/FRAMEWORK/RENEWAL/DECOM/EMERGENCY) (#713)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T17:25:57-05:00",
+      "prNumber": 713,
+      "kind": "feat",
+      "short": "REASON-3+4 — remaining source-event lifecycle patterns (SOLE/FRAMEWORK/RENEWAL/DECOM/EMERGENCY)"
+    },
+    {
+      "sha": "27fd7523835fb30e9ba6d6e183b33245da36ca2c",
+      "subject": "feat(reasoning): REASON-28 — provenance ribbon on Programs detail (#711)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T17:23:37-05:00",
+      "prNumber": 711,
+      "kind": "feat",
+      "short": "REASON-28 — provenance ribbon on Programs detail"
+    },
+    {
+      "sha": "d50ea89cdfda5453be7bf51adde7544ace36888e",
+      "subject": "feat(reasoning): REASON-27 — provenance ribbon on Source event detail (#709)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T17:20:04-05:00",
+      "prNumber": 709,
+      "kind": "feat",
+      "short": "REASON-27 — provenance ribbon on Source event detail"
+    },
+    {
+      "sha": "0bc1f830d2a3cbb5d7913a2d4f56d7b0fcf36d4d",
+      "subject": "feat(reasoning): REASON-8 — artifact tracker (per-stage artifact completeness) (#708)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T17:13:05-05:00",
+      "prNumber": 708,
+      "kind": "feat",
+      "short": "REASON-8 — artifact tracker (per-stage artifact completeness)"
+    },
+    {
+      "sha": "d8c6e69c54f2424beab8d7c8e8c6c963b24a0e5f",
+      "subject": "feat(reasoning): REASON-17 — Atlas live synthesis on Tower (#707)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T17:13:02-05:00",
+      "prNumber": 707,
+      "kind": "feat",
+      "short": "REASON-17 — Atlas live synthesis on Tower"
+    },
+    {
+      "sha": "faf0b71fc8ca24bad5a3959b26ed982006f795d5",
+      "subject": "feat(reasoning): REASON-18 — linked program chips derived from cross-instance reasoning (#706)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T17:11:35-05:00",
+      "prNumber": 706,
+      "kind": "feat",
+      "short": "REASON-18 — linked program chips derived from cross-instance reasoning"
+    },
+    {
+      "sha": "e564d3c438bc1f7ae397bcf6db475dbc64fe2a84",
+      "subject": "feat(reasoning): REASON-7 — contradiction detector (keyword-match template evaluation) (#703)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T16:58:03-05:00",
+      "prNumber": 703,
+      "kind": "feat",
+      "short": "REASON-7 — contradiction detector (keyword-match template evaluation)"
+    },
+    {
+      "sha": "b2e15c052d447538ef87b084816ca949bf229b59",
+      "subject": "feat(reasoning): REASON-13 — ProgramInstance type + Apex Retail program instances (#701)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T16:50:57-05:00",
+      "prNumber": 701,
+      "kind": "feat",
+      "short": "REASON-13 — ProgramInstance type + Apex Retail program instances"
+    },
+    {
+      "sha": "6ced6eb1f2836188ff7a3e8756e97e70aa0d8f6e",
+      "subject": "feat(reasoning): REASON-24 — Source stage strip gate-state coloring (#700)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T16:50:51-05:00",
+      "prNumber": 700,
+      "kind": "feat",
+      "short": "REASON-24 — Source stage strip gate-state coloring"
+    },
+    {
+      "sha": "b60402f2a1c502e8a10ae76583cbb7ef269494f0",
+      "subject": "feat(reasoning): REASON-14 — Sentinel live synthesis on Source event detail (#698)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T16:46:20-05:00",
+      "prNumber": 698,
+      "kind": "feat",
+      "short": "REASON-14 — Sentinel live synthesis on Source event detail"
+    },
+    {
+      "sha": "07cb59e93423bc519683f03632ba7ab287fe5d40",
+      "subject": "feat(reasoning): REASON-11 — SourceEventInstance type + AMS Vendor Consolidation 2026 instance (#697)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T16:40:54-05:00",
+      "prNumber": 697,
+      "kind": "feat",
+      "short": "REASON-11 — SourceEventInstance type + AMS Vendor Consolidation 2026 instance"
+    },
+    {
+      "sha": "3b85ce0f961ffeaf7f07be2697bff3b2243d6350",
+      "subject": "feat(reasoning): REASON-6 — gate evaluator (deterministic layer 3 gate logic) (#696)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T16:39:37-05:00",
+      "prNumber": 696,
+      "kind": "feat",
+      "short": "REASON-6 — gate evaluator (deterministic layer 3 gate logic)"
+    },
+    {
+      "sha": "b80de592fd942c605ba68c6cf43a013f96db874a",
+      "subject": "feat(reasoning): REASON-1+2 — lifecycle pattern types + PAT-SRC-AMS-001 (#695)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T16:34:54-05:00",
+      "prNumber": 695,
+      "kind": "feat",
+      "short": "REASON-1+2 — lifecycle pattern types + PAT-SRC-AMS-001"
+    },
+    {
+      "sha": "68f816b713b10a9da199ed5ca24f2fa473db2a82",
+      "subject": "feat(reasoning): REASON-5 — pattern application runtime type definitions (#693)",
+      "author": "anandsundaram-hash",
+      "date": "2026-04-28T16:30:16-05:00",
+      "prNumber": 693,
+      "kind": "feat",
+      "short": "REASON-5 — pattern application runtime type definitions"
+    }
+  ]
+}
