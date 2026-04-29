@@ -47,6 +47,7 @@ import { MissionListInteractive } from '@/components/_shared/MissionListInteract
 import { RecentMissionStates } from '@/components/_shared/RecentMissionStates';
 import { EvidenceCoverageHeatmap } from '@/components/reasoning/EvidenceCoverageHeatmap';
 import { EvidenceNetworkGraph } from '@/components/reasoning/EvidenceNetworkGraph';
+import { ReasoningErrorBoundary } from '@/components/reasoning/ReasoningErrorBoundary';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -246,13 +247,15 @@ function ReadinessTab() {
       />
 
       {/* Risk register — joins contradictions + failure modes for this instance. */}
-      <RiskRegisterPanel
-        risks={buildRiskRegisterForInstance(
-          synthesisContext,
-          AMS_VENDOR_CONSOLIDATION_2026_INSTANCE.displayId,
-        )}
-        title="Risk register · this event"
-      />
+      <ReasoningErrorBoundary section="Risk Register">
+        <RiskRegisterPanel
+          risks={buildRiskRegisterForInstance(
+            synthesisContext,
+            AMS_VENDOR_CONSOLIDATION_2026_INSTANCE.displayId,
+          )}
+          title="Risk register · this event"
+        />
+      </ReasoningErrorBoundary>
 
       {/* REASON-31 — Cascade impact detail (downstream + upstream) */}
       <CascadeImpactCard
@@ -281,17 +284,21 @@ function ReadinessTab() {
 
       {/* REASON-35 — Evidence coverage heatmap: visual grid of which gate
           criteria have supporting evidence across all lifecycle stages. */}
-      <EvidenceCoverageHeatmap
-        instance={AMS_VENDOR_CONSOLIDATION_2026_INSTANCE}
-        pattern={PAT_SRC_AMS_001}
-      />
+      <ReasoningErrorBoundary section="Coverage Heatmap">
+        <EvidenceCoverageHeatmap
+          instance={AMS_VENDOR_CONSOLIDATION_2026_INSTANCE}
+          pattern={PAT_SRC_AMS_001}
+        />
+      </ReasoningErrorBoundary>
 
       {/* REASON-36 — Evidence network graph: SVG bipartite graph linking
           evidence items to the gate criteria they support. */}
-      <EvidenceNetworkGraph
-        instance={AMS_VENDOR_CONSOLIDATION_2026_INSTANCE}
-        pattern={PAT_SRC_AMS_001}
-      />
+      <ReasoningErrorBoundary section="Evidence Network">
+        <EvidenceNetworkGraph
+          instance={AMS_VENDOR_CONSOLIDATION_2026_INSTANCE}
+          pattern={PAT_SRC_AMS_001}
+        />
+      </ReasoningErrorBoundary>
 
       {/* Honest disclaimer */}
       <div

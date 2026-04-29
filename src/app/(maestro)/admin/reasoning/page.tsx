@@ -26,6 +26,7 @@ import {
 } from '@/lib/reasoning/cascade-telemetry';
 import { ReasoningHealthBadge } from '@/components/reasoning/ReasoningHealthBadge';
 import { ContradictionResolutionPanel } from '@/components/reasoning/ContradictionResolutionPanel';
+import { ReasoningErrorBoundary } from '@/components/reasoning/ReasoningErrorBoundary';
 import { DemoResetButton } from '@/components/admin/reasoning/DemoResetButton';
 import { DemoScenarioPanel } from '@/components/admin/reasoning/DemoScenarioPanel';
 import { ReasoningMetricsSection } from '@/components/admin/reasoning/ReasoningMetricsSection';
@@ -1044,7 +1045,9 @@ function ContradictionResolutionSection({
         </span>
       </header>
       <div style={{ padding: SPACING.md }}>
-        <ContradictionResolutionPanel contradictions={contradictions} />
+        <ReasoningErrorBoundary section="Contradiction Resolution">
+          <ContradictionResolutionPanel contradictions={contradictions} />
+        </ReasoningErrorBoundary>
       </div>
     </section>
   );

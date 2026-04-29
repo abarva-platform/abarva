@@ -26,6 +26,7 @@ import { buildEvidenceMapWithIngestions } from '@/lib/source/source-event-instan
 import { AddEvidenceForm } from '@/components/source/AddEvidenceForm';
 import { BulkEvidenceImportButton } from '@/components/source/BulkEvidenceImportButton';
 import { CascadeImpactSection } from '@/components/_shared/CascadeImpactSection';
+import { ReasoningErrorBoundary } from '@/components/reasoning/ReasoningErrorBoundary';
 import { PatternRecommendationChips } from '@/components/source/PatternRecommendationChips';
 import { StageAdvanceButton } from '@/components/source/StageAdvanceButton';
 import { PAT_SRC_AMS_001 } from '@/lib/intelligence/source-lifecycle-patterns';
@@ -268,7 +269,9 @@ export default async function SourceEventDetailPage({
         )}
         {/* REASON-34 — Cascade impact graph for this source-event instance */}
         {matchedInstance && (
-          <CascadeImpactSection instanceId={matchedInstance.id} />
+          <ReasoningErrorBoundary section="Cascade Impact">
+            <CascadeImpactSection instanceId={matchedInstance.id} />
+          </ReasoningErrorBoundary>
         )}
         <SourceCommercialEventSection
           eventId={event.id}

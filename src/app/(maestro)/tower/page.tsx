@@ -6,6 +6,7 @@ import { TowerPortfolioSummaryStrip } from '@/components/tower/TowerPortfolioSum
 import { TowerPortfolioCascadeGraph } from '@/components/tower/TowerPortfolioCascadeGraph';
 import { PortfolioAlertsPanel } from '@/components/tower/PortfolioAlertsPanel';
 import { RiskRegisterPanel } from '@/components/_shared/RiskRegisterPanel';
+import { ReasoningErrorBoundary } from '@/components/reasoning/ReasoningErrorBoundary';
 import { buildTowerSynthesisContext } from '@/lib/reasoning/tower-synthesis-context-builder';
 import { buildPortfolioRiskRegister } from '@/lib/reasoning/risk-register';
 import { buildPortfolioAlerts } from '@/lib/reasoning/portfolio-alerts';
@@ -40,11 +41,13 @@ export default function TowerPage() {
         <>
           <PortfolioAlertsPanel alerts={portfolioAlerts} />
           <TowerProvenanceRibbon context={synthesisContext} />
-          <RiskRegisterPanel
-            risks={portfolioRisks}
-            title="Risk register · portfolio"
-            maxRows={10}
-          />
+          <ReasoningErrorBoundary section="Risk Register">
+            <RiskRegisterPanel
+              risks={portfolioRisks}
+              title="Risk register · portfolio"
+              maxRows={10}
+            />
+          </ReasoningErrorBoundary>
           <TowerTopPatternsTile />
           <TowerMissionQueue limit={8} />
         </>
