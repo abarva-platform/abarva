@@ -1013,6 +1013,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/risk-score',
     description: 'Composite instance risk score combining health, contradictions, dwell time, gate gap, and waivers',
   },
+  {
+    title: 'Pattern benchmark',
+    href: '/admin/reasoning/pattern-benchmark',
+    description: 'Within-pattern instance benchmarking — best vs. worst performers within each lifecycle pattern group',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
