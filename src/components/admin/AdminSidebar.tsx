@@ -4,7 +4,16 @@ import Link from 'next/link';
 import { ADMIN_SUB_SECTIONS, LIVE_CAVEAT_TEXT } from '@/lib/admin/admin-shell-config';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
 
-export function AdminSidebar() {
+export interface AdminSidebarProps {
+  /**
+   * Number of high-severity portfolio alerts for the Reasoning section.
+   * When > 0 a red count badge is shown next to the "Reasoning" nav item.
+   * Pass 0 (or omit) to suppress the badge.
+   */
+  reasoningAlertCount?: number;
+}
+
+export function AdminSidebar({ reasoningAlertCount = 0 }: AdminSidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -30,7 +39,15 @@ export function AdminSidebar() {
 
       <nav style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         {ADMIN_SUB_SECTIONS.map((section) => {
-          const isActive = pathname === section.href;
+          // For sections with sub-pages (e.g. /admin/reasoning/*) use prefix
+          // matching; for leaf sections use exact match to avoid false positives.
+          const isActive =
+            section.id === 'reasoning'
+              ? pathname === section.href || pathname.startsWith(section.href + '/')
+              : pathname === section.href;
+          const showBadge = section.id === 'reasoning' && reasoningAlertCount > 0;
+          const badgeLabel = reasoningAlertCount > 9 ? '9+' : String(reasoningAlertCount);
+
           return (
             <Link
               key={section.id}
@@ -43,10 +60,36 @@ export function AdminSidebar() {
                 color: COLORS.ink,
                 textDecoration: 'none',
                 fontFamily: TYPOGRAPHY.sans,
+                position: 'relative',
               }}
               aria-current={isActive ? 'page' : undefined}
             >
-              <div style={{ fontWeight: isActive ? 600 : 500, fontSize: 14 }}>{section.label}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontWeight: isActive ? 600 : 500, fontSize: 14 }}>{section.label}</span>
+                {showBadge && (
+                  <span
+                    aria-label={`${reasoningAlertCount} critical alert${reasoningAlertCount === 1 ? '' : 's'}`}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      minWidth: 18,
+                      height: 18,
+                      borderRadius: '999px',
+                      background: COLORS.coralInk,
+                      color: COLORS.white,
+                      fontFamily: TYPOGRAPHY.sans,
+                      fontSize: 10,
+                      fontWeight: 700,
+                      lineHeight: 1,
+                      padding: '0 5px',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {badgeLabel}
+                  </span>
+                )}
+              </div>
               <div style={{ fontSize: 11, color: `${COLORS.ink}70`, marginTop: 2 }}>{section.subtitle}</div>
             </Link>
           );
