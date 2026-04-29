@@ -112,6 +112,7 @@ export function MissionListInteractive(props: MissionListInteractiveProps) {
   // Keep focus valid when the mission list mutates (action removes a row).
   useEffect(() => {
     if (activeIds.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (focusedMissionId !== null) setFocusedMissionId(null);
       return;
     }
@@ -124,6 +125,7 @@ export function MissionListInteractive(props: MissionListInteractiveProps) {
   // note state alongside it.
   useEffect(() => {
     if (noteOpenForId !== null && !activeIds.includes(noteOpenForId)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setNoteOpenForId(null);
       setNoteOpenAction(null);
     }
