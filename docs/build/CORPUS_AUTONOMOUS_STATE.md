@@ -1,6 +1,6 @@
 # Corpus Autonomous State
 
-Last update timestamp: 2026-04-29T18:47:03Z
+Last update timestamp: 2026-04-29T18:48:25Z
 Status: ACTIVE - founder explicitly approved resuming after pause, requested parallel governed agents, and granted auto-merge authority for scoped green PRs.
 
 ## Current wave
@@ -14,7 +14,7 @@ Wave 8 - vendor profile one-pattern PRs beginning after process/methodology batc
 - Risk patterns: queued authored batches exist; RSK-001 needs body-length review before PR.
 - Regulatory/compliance: PR #1065 merged; 2 regulatory patterns are live in corpus.
 - Industry overlays: queued authored batch exists for health, financial services, and retail overlays.
-- Vendor profiles: PR #1091 merged for PAT-SRC-VEN-ELASTIC-001; PAT-SRC-VEN-SAP-001 is in PR prep; Azure, Google Cloud, Oracle Cloud, Twilio, RingCentral, Stripe, PayPal, Dropbox, Airtable, MongoDB, ServiceNow-AI, Figma, Notion, Slack, Canva, 1Password, SentinelOne, Lucid, Grammarly, Calendly, Zapier, Loom, Mural, ClickUp, Intercom, Typeform, SurveyMonkey, Qualtrics, Gainsight, Freshworks, Salesloft, Amplitude, Gong, Outreach, LaunchDarkly, HashiCorp, Mixpanel, Snyk, Dovetail, UserTesting, Linear, Miro, PagerDuty, Contentful, Segment, Braze, Workday, and Databricks are queued; Square, Adyen, 8x8, and Checkout workers are active.
+- Vendor profiles: PR #1091 merged for PAT-SRC-VEN-ELASTIC-001; PR #1093 is open for PAT-SRC-VEN-SAP-001; Azure, Google Cloud, Oracle Cloud, Twilio, RingCentral, Stripe, PayPal, Dropbox, Airtable, MongoDB, ServiceNow-AI, Figma, Notion, Slack, Canva, 1Password, SentinelOne, Lucid, Grammarly, Calendly, Zapier, Loom, Mural, ClickUp, Intercom, Typeform, SurveyMonkey, Qualtrics, Gainsight, Freshworks, Salesloft, Amplitude, Gong, Outreach, LaunchDarkly, HashiCorp, Mixpanel, Snyk, Dovetail, UserTesting, Linear, Miro, PagerDuty, Contentful, Segment, Braze, Workday, and Databricks are queued; Square, Adyen, 8x8, and Checkout workers are active.
 
 ## Active lane board
 - 2026-04-29T18:00:22Z - PR #1078 - PAT-SRC-VEN-SMARTSHEET-001 vendor profile - merged at `76089af56e6160a7380f0dc46a948ae3852afae4`.
@@ -22,7 +22,7 @@ Wave 8 - vendor profile one-pattern PRs beginning after process/methodology batc
 - 2026-04-29T18:22:30Z - PR #1081 - PAT-SRC-VEN-SPLUNK-001 vendor profile - merged at `a0f297eca5436cd5488e061cc0da8d0ac1cf1586`.
 - 2026-04-29T18:33:10Z - PR #1085 - PAT-SRC-VEN-NEWRELIC-001 vendor profile - merged at `062696ef67acc73a297cceed0d8f6872e5483935`.
 - 2026-04-29T18:46:03Z - PR #1091 - PAT-SRC-VEN-ELASTIC-001 vendor profile - merged at `9278671368ec3f2f339c03ef37856f1ef72f477c`.
-- 2026-04-29T18:47:03Z - Integration lead - PAT-SRC-VEN-SAP-001 vendor profile - rebased after Elastic merge; PR prep in progress.
+- 2026-04-29T18:48:25Z - PR #1093 - PAT-SRC-VEN-SAP-001 vendor profile - open; CI/Vercel pending. URL: https://github.com/anandsundaram-hash/abarva/pull/1093
 - 2026-04-29T18:35:05Z - Worker Dewey (`019dda80-aac8-7261-963d-de87b8be4b34`) - PAT-SRC-VEN-SAP-001 - complete and queued; commit `060d6ad12af37d9a2939b11a22eceaf8ee480ebb`.
 - 2026-04-29T18:35:05Z - Worker Archimedes the 2nd (`019dda86-7651-72f3-b920-f4d871904163`) - PAT-SRC-VEN-ADOBE-001 - blocked by existing branch/worktree; lane closed without changes.
 - 2026-04-29T18:37:00Z - Worker Locke (`019dda82-da6f-76c1-a6a5-408448d597e5`) - PAT-SRC-VEN-AZURE-001 - complete and queued; commit `80c74c74a10e3569857de45109dbcacc975c4a45`.
@@ -144,7 +144,7 @@ Wave 8 - vendor profile one-pattern PRs beginning after process/methodology batc
 - #1091 - `[corpus][ven] Author PAT-SRC-VEN-ELASTIC-001 · 1 pattern` - merged 2026-04-29T18:46:03Z at `9278671368ec3f2f339c03ef37856f1ef72f477c`.
 
 ## Open PRs
-- None currently; PAT-SRC-VEN-SAP-001 is in PR prep after Elastic merge.
+- #1093 - `[corpus][ven] Author PAT-SRC-VEN-SAP-001 · 1 pattern` - open; CI/Vercel pending. URL: https://github.com/anandsundaram-hash/abarva/pull/1093
 
 ## Held PRs requiring founder review
 - None.
@@ -178,4 +178,4 @@ Wave 8 - vendor profile one-pattern PRs beginning after process/methodology batc
 - Vendor/regulatory/pricing PRs remain one-pattern PRs because source confidence and evidence discipline are higher risk.
 
 ## Next action
-Open PR for PAT-SRC-VEN-SAP-001 and watch CI while active workers continue Square, Adyen, 8x8, and Checkout.com vendor profiles.
+Watch PR #1093 checks and auto-merge if green while preparing PAT-SRC-VEN-AZURE-001 integration locally.
