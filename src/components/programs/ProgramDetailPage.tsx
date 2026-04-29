@@ -3745,6 +3745,9 @@ export function ProgramDetailPage({
           <div
             style={{
               marginTop: 8,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
               fontFamily: SHELL.MONO,
               fontSize: 10,
               color: SHELL.INK_MUTED,
@@ -3754,6 +3757,21 @@ export function ProgramDetailPage({
             <span data-honest-disclaimer="programs-detail">
               {view.displayId} · Deterministic seed
             </span>
+            <a
+              href={`/programs/${view.programId}/report`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 10,
+                color: SHELL.INK_MUTED,
+                textDecoration: 'none',
+                borderBottom: `1px dashed ${SHELL.INK_MUTED}`,
+                paddingBottom: 1,
+              }}
+            >
+              Full report →
+            </a>
           </div>
         </div>
 
