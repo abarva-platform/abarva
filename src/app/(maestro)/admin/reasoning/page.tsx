@@ -803,6 +803,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/health-simulator',
     description: 'What-if score projections — adjust gates and contradictions to see health score changes',
   },
+  {
+    title: 'Pattern domains',
+    href: '/admin/reasoning/pattern-domains',
+    description: 'Lifecycle patterns organized by domain and tier with active instance counts',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
