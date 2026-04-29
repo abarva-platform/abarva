@@ -549,6 +549,11 @@ type ToolEntry = {
 
 const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
   {
+    title: 'Health Board',
+    href: '/admin/reasoning/health',
+    description: 'At-a-glance health verdict for every fixture instance — source events and programs',
+  },
+  {
     title: 'Templates editor',
     href: '/admin/reasoning/templates',
     description: 'Edit contradiction template detection hints in-memory',
