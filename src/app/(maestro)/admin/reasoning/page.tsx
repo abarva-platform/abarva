@@ -848,6 +848,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/source-documents',
     description: 'All source document references across lifecycle patterns — the knowledge base behind each pattern',
   },
+  {
+    title: 'Portfolio trend',
+    href: '/admin/reasoning/portfolio-trend',
+    description: 'Stage progression timeline across all instances — derived from stage history timestamps',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
