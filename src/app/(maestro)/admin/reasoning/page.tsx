@@ -888,6 +888,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/audit-trail',
     description: 'Unified event log — gate waivers, contradiction resolutions, evidence ingestions, and stage approvals in one view',
   },
+  {
+    title: 'Instance scorecard',
+    href: '/admin/reasoning/instance-scorecard',
+    description: 'Full scorecard comparison — health score, gates, contradictions, evidence, and waivers for every instance',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
