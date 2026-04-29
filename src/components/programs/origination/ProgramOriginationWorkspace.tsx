@@ -39,20 +39,29 @@ export function ProgramOriginationWorkspace({
     <main
       style={{
         background: BrandColors.paper,
-        minHeight: '100vh',
-        padding: '24px 28px 32px',
+        // Bound the page to viewport height so the chat panel's internal
+        // scroll container — not the page — handles overflow when the
+        // conversation grows. Without this the textarea drifts below the
+        // fold as Steward's responses accumulate.
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '24px 28px 28px',
         boxSizing: 'border-box',
         fontFamily: BrandTypography.sans,
         color: BrandColors.inkBlack,
+        overflow: 'hidden',
       }}
     >
       <header
         style={{
           maxWidth: 1280,
-          margin: '0 auto 18px',
+          width: '100%',
+          margin: '0 auto 16px',
           display: 'flex',
           flexDirection: 'column',
           gap: 4,
+          flex: '0 0 auto',
         }}
       >
         <span
@@ -96,12 +105,13 @@ export function ProgramOriginationWorkspace({
       <div
         style={{
           maxWidth: 1280,
+          width: '100%',
           margin: '0 auto',
           display: 'grid',
           gridTemplateColumns: 'minmax(0, 7fr) minmax(0, 5fr)',
           gap: 20,
-          height: 'calc(100vh - 160px)',
-          minHeight: 580,
+          flex: '1 1 auto',
+          minHeight: 0,
         }}
       >
         <StewardChat surface={surface} tenantName={tenantName} initialTurns={initialTurns} />

@@ -17,6 +17,11 @@ import { originateProgram } from '@/lib/programs/mutations';
 import type { ArchetypeKey, OriginationForm } from '@/lib/programs/types.ui';
 import type { OriginSource } from '@/lib/programs/types.db';
 
+// Postgres UUID v4 format (also matches v1/v3/v5 — sufficient for input
+// validation before we attempt an `engagements.insert` that would
+// otherwise throw an opaque uuid-cast error.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 interface CommitProgramInput {
   program_name: string;
   problem_statement: string;
@@ -31,7 +36,13 @@ interface CommitProgramInput {
 export const commitProgramTool: AgentTool<CommitProgramInput> = {
   name: 'commit_program',
   description:
-    'Persist a new program to the database after the user has explicitly confirmed the program brief. Returns the program id on success. Call this only after the user says yes to your "Shall I register?" question — never speculatively. If this returns failure, report the failure honestly to the user with recovery options; do not announce success.',
+    'Persist a new program to the database after the user has explicitly confirmed the program brief. ' +
+    'Returns the program id on success. Call this only after the user says yes to your "Shall I register?" ' +
+    'question — never speculatively. ' +
+    'IMPORTANT: sponsor_person_id and lead_person_id MUST be UUIDs from the persons table — not role titles ' +
+    "(e.g. 'CTO'), not names (e.g. 'Lin Martinez'), not the literal word 'sponsor'. If the user has only " +
+    "named a role, ask them for the actual person by name (and ideally id) before calling this tool. " +
+    'If this returns failure, report the failure honestly with recovery options; do not announce success.',
   surfaces: ['/programs/new', '/demo/programs/new'],
   input_schema: {
     type: 'object',
@@ -54,11 +65,16 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
       },
       sponsor_person_id: {
         type: 'string',
-        description: 'Persons.id of the named program sponsor.',
+        description:
+          'UUID from persons table for the named program sponsor. Not a role title, not a name. ' +
+          "If the user has only said 'CTO' or 'the head of platform', ask them to name the actual " +
+          'person before calling this tool.',
       },
       lead_person_id: {
         type: 'string',
-        description: 'Persons.id of the program lead (often the same as sponsor for small programs).',
+        description:
+          'UUID from persons table for the program lead. Often the same as sponsor for small programs. ' +
+          'Same rules as sponsor_person_id — must be a UUID, not a role.',
       },
       classification: {
         type: 'string',
@@ -73,6 +89,32 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
     required: ['program_name', 'problem_statement', 'sponsor_person_id'],
   },
   handler: async (input, ctx): Promise<ToolResult> => {
+    // Pre-flight: validate UUID-shaped person ids BEFORE we attempt the
+    // DB write. Without this the agent's first failure surface is an
+    // opaque "invalid input syntax for type uuid: 'CTO'" Postgres
+    // error, which Steward then translates to a generic "write error"
+    // — not actionable for the user. Catching it here lets Steward
+    // recover by asking for the actual person.
+    if (!UUID_RE.test(input.sponsor_person_id.trim())) {
+      return {
+        success: false,
+        error: `invalid_sponsor_person_id: "${input.sponsor_person_id}" is not a person id`,
+        recovery:
+          `I need the named sponsor as an actual person, not a role like "${input.sponsor_person_id}". ` +
+          'Who specifically should own this — full name? (Ideally with their persons.id from your team list, ' +
+          'but a name is a start; we can resolve from there.)',
+      };
+    }
+    if (input.lead_person_id && !UUID_RE.test(input.lead_person_id.trim())) {
+      return {
+        success: false,
+        error: `invalid_lead_person_id: "${input.lead_person_id}" is not a person id`,
+        recovery:
+          `Same issue with the program lead — "${input.lead_person_id}" is a role, not a person. ` +
+          "Who's leading day-to-day? If it's the sponsor, I can default to that.",
+      };
+    }
+
     let tenancy;
     try {
       tenancy = await requireTenancy();

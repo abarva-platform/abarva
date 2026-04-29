@@ -189,7 +189,11 @@ export function StewardChat({ surface, tenantName, initialTurns }: StewardChatPr
       <div
         ref={threadRef}
         style={{
-          flex: 1,
+          flex: '1 1 auto',
+          // minHeight: 0 lets flex shrink the thread below its intrinsic
+          // content height so internal scroll engages instead of letting
+          // the whole panel grow past the viewport.
+          minHeight: 0,
           overflowY: 'auto',
           padding: '16px 18px',
           display: 'flex',

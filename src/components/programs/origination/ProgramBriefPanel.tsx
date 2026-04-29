@@ -100,6 +100,8 @@ export function ProgramBriefPanel({ brief, registering = false }: ProgramBriefPa
         display: 'flex',
         flexDirection: 'column',
         gap: 16,
+        overflowY: 'auto',
+        minHeight: 0,
       }}
       aria-label="Program brief"
     >
