@@ -24,6 +24,10 @@ import { FOUR_LAYER_REASONING_INSTRUCTIONS } from "@/lib/intelligence/synthesis/
 import { validateSynthesisOutput } from "@/lib/intelligence/synthesis/outputValidator";
 import { recordViolations } from "@/lib/intelligence/synthesis/violationsRecorder";
 import { ARTIFACT_CHANNEL_INSTRUCTIONS } from "@/lib/agent/artifacts";
+// PR-G surface canonicalization — translates semantic surface keys
+// ('programs-detail') into URL-shaped keys ('/programs/<id>') so tool
+// resolution and the artifact-channel gate stay aligned.
+import { canonicalizeFromBody } from "@/lib/agent/surface";
 // Surface 2 PR-A — Phase Intelligence Packs. When the user is on a
 // program-detail surface, load the pack for the engagement's current
 // phase into Nexus's system block. The pack is opinionated coaching
@@ -92,9 +96,20 @@ export async function POST(request: Request) {
 
   const tenantName          = body.tenantName ?? "Apex Retail Group";
   const agentName           = body.agentName  ?? "Atlas";
-  const surface             = body.surface    ?? "";
   const stage               = body.stage      ?? null;
-  const programId           = body.programId;
+  // PR-G surface canonicalization. Two surface-key conventions exist
+  // in the codebase: semantic ('programs-detail') from
+  // AppShell/AtlasPageStateProvider, and URL-shaped ('/programs/<id>')
+  // from tools and the artifact-channel gate. canonicalizeFromBody
+  // resolves to the URL-shaped form when a programId is available, so
+  // tool resolution and the artifact gate stay aligned with their
+  // registered patterns.
+  const surfaceContext = (body.surfaceContext ?? {}) as Record<string, unknown>;
+  const { surface, programId } = canonicalizeFromBody({
+    surface: body.surface,
+    programId: body.programId,
+    surfaceContext,
+  });
   const conversationHistory = body.conversationHistory ?? [];
 
   // ── Build system prompt ─────────────────────────────────────────────────────
@@ -148,8 +163,10 @@ export async function POST(request: Request) {
     }
   }
 
-  // If we have source event context, enrich with live event data
-  const sc = (body.surfaceContext ?? {}) as Record<string, unknown>;
+  // If we have source event context, enrich with live event data.
+  // Reuse the surfaceContext extracted above (PR-G surface canonicalization
+  // already aliased it as `surfaceContext`).
+  const sc = surfaceContext;
   if (sc.eventName) {
     const eventContextLines = [
       `Active source event: ${sc.eventName} (${sc.eventCode ?? ''})`,
