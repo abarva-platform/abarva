@@ -1308,6 +1308,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Synthesis Timeline',
     description: 'Simulated confidence evolution over 5 time snapshots — trend arrows, fastest risers, quartile shifts.',
   },
+  {
+    href: '/admin/reasoning/gate-compliance-score',
+    title: 'Gate Compliance Score',
+    description: 'Native gate compliance per instance — raw pass rate minus waiver and contradiction penalties.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
