@@ -1,12 +1,12 @@
 # AbarVa Sourcing Corpus Autonomous State
 
-Last update timestamp: 2026-04-29T02:09:52Z
+Last update timestamp: 2026-04-29T02:11:14Z
 
 ## Current wave
 - Wave: 0
 - Branch: corpus/wave0-sourcing-pattern-extensions
-- Status: in progress
-- Next action: commit Wave 0, run hygiene gate in committed state, open PR, and merge if green and scoped.
+- Status: local validation passed; PR creation next
+- Next action: push Wave 0 branch, open PR, monitor CI, and merge if green and scoped.
 
 ## Domains in progress
 - Type extensions: active
@@ -71,5 +71,5 @@ Last update timestamp: 2026-04-29T02:09:52Z
 - Merged since last heartbeat: none
 - Stalled lanes: none
 - Next queued pattern IDs: first 16 category IDs listed above
-- Validation since last heartbeat: `npx tsc --noEmit --pretty false` passed; `npx jest tests/intelligence/loader.test.ts --no-coverage --silent` passed; `npm run build` passed; `git diff --check` passed; full `npm test -- --runInBand` failed on unrelated existing suites.
+- Validation since last heartbeat: `npx tsc --noEmit --pretty false` passed; `npx jest tests/intelligence/loader.test.ts --no-coverage --silent` passed; `npm run build` passed; `bash scripts/integration/hygiene_gate.sh --skip-build` passed; `git diff --check HEAD~2..HEAD` passed; full `npm test -- --runInBand` failed on unrelated existing suites.
 - Credit risk: not visible
