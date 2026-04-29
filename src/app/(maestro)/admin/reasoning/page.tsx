@@ -1203,6 +1203,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Contradiction Resolution Log',
     description: 'Log of all resolved contradictions — resolution paths, health impact estimates, and path distribution.',
   },
+  {
+    href: '/admin/reasoning/evidence-coverage-report',
+    title: 'Evidence Coverage Report',
+    description: 'Evidence-to-criterion mapping coverage by instance and stage — portfolio KPIs, gap list, and coverage bars.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
