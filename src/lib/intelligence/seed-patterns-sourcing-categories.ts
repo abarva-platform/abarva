@@ -6033,6 +6033,448 @@ Vendor claim: AP becomes touchless. Detection: test messy buyer invoices, PO mis
 
 The common failure is automating bad invoice hygiene and weak vendor master controls. The second is discovering late that payment rails, FX, tax filings, or failed-payment fees drive economics. The third is giving the AP platform too much payment authority without the controls finance and audit need.`,
   },
+  {
+    id: 'PAT-SRC-CAT-TMS-001',
+    slug: 'treasury-management-system-sourcing',
+    title: 'Treasury Management System and Treasury Workstation Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Treasury management sourcing should prove bank connectivity, cash visibility, payment controls, risk modules, implementation ownership, and liability boundaries before buyers accept real-time liquidity or AI forecast claims.',
+    applicability:
+      'Apply when sourcing Kyriba, Ripple Treasury/GTreasury, FIS Integrity, ION Wallstreet Suite, SAP Treasury and Risk Management, Oracle Treasury, TIS, Coupa Treasury, Nomentia, HighRadius Treasury, Trovata, or treasury workstations.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.79,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.financialprofessionals.org/glossary/treasury-management-system',
+      'https://www.kyriba.com/',
+      'https://www.kyriba.com/legal-pages/kyriba-corp-terms-and-conditions-for-online-cloud-services/',
+      'https://www.kyriba.com/legal-pages/kyriba-global-online-hosting-service-level-agreement/',
+      'https://treasury.ripple.com/gtreasury-is-now-ripple-treasury',
+      'https://www.gtreasury.com/company/security-addendum',
+      'https://www.fisglobal.com/products/fis-treasury-and-risk-manager-integrity-edition',
+      'https://iongroup.com/products/treasury/wallstreet-suite/',
+      'https://www.sap.com/central-asia-caucasus/products/financial-management/treasury-risk-management.html',
+      'https://www.oracle.com/a/ocom/docs/oracle-treasury-data-sheet.pdf',
+      'https://tispayments.com/resources/get-to-know-tis/',
+      'https://tispayments.com/newsroom/tis-successfully-completes-soc-1-2-iso-27001-recertification-audits/',
+      'https://trovata.io/pricing/',
+      'https://trovata.io/tos/',
+      'https://assets.ey.com/content/dam/ey-sites/ey-com/en_gl/topics/assurance/assurance-pdfs/treasury-management-systems-overview.pdf',
+      'https://www.deloitte.com/content/dam/assets-zone2/uk/en/docs/services/financial-advisory/2024/deloitte-uk-treasury-tech-report-updated.pdf',
+    ],
+    regulatoryChips: ['SOX-treasury-controls', 'payment-approval-controls', 'sanctions-screening-if-payments', 'hedge-accounting-review', 'data-residency-review'],
+    relatedPatternIds: ['PAT-SRC-CAT-AP-001', 'PAT-SRC-CAT-PROCURE-001', 'PAT-SRC-CAT-FINOPS-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'enterprise_saas',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Kyriba, Ripple Treasury/GTreasury, FIS Integrity, ION Wallstreet Suite, SAP Treasury and Risk Management, Oracle Treasury, TIS, Coupa Treasury, Nomentia, HighRadius Treasury, and Trovata',
+        tier: 'enterprise',
+        positioning: 'Treasury candidates spanning cash positioning, liquidity forecasting, bank connectivity, payments, bank account administration, FX and interest-rate risk, debt/investments, hedge accounting, audit, and reporting.',
+        cautions: ['Validate named-bank connectivity, payment liability, implementation ownership, security evidence, and bank/account/module economics before accepting broad liquidity claims.'],
+        sourceBasis: [
+          { type: 'industry-consortium', label: 'AFP treasury management system glossary', url: 'https://www.financialprofessionals.org/glossary/treasury-management-system', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Kyriba cloud terms', url: 'https://www.kyriba.com/legal-pages/kyriba-corp-terms-and-conditions-for-online-cloud-services/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Trovata pricing/packages', url: 'https://trovata.io/pricing/', asOf: '2026-04-29' },
+        ],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'TMS public pricing constructs only',
+        model: 'hybrid',
+        metric: 'Modules, authorized users, entities, affiliates, bank accounts, financial institutions, transaction/payment volume, connectivity/API volume, environments, regions, support, implementation, bank onboarding, market data, and managed services',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Kyriba terms reference order schedules, SOWs, transaction-volume addenda, users, SLA, DPA, and AI terms', url: 'https://www.kyriba.com/legal-pages/kyriba-corp-terms-and-conditions-for-online-cloud-services/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Trovata pricing and terms expose bank/account/transaction/user constructs', url: 'https://trovata.io/pricing/', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Named banks, account count, payment volume, ERP systems, bank formats, modules, and implementation SOW require buyer evidence' },
+        ],
+        confidence: 0.56,
+        notes: 'Public material supports commercial-meter mapping, not market-wide pricing, ROI, fraud reduction, forecast accuracy, or implementation-duration claims.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Bank connectivity and implementation acceptance',
+        buyerPosition: 'Define named banks, accounts, countries, formats, API/SWIFT/host-to-host/EBICS responsibilities, testing scripts, cutover criteria, and failed-connectivity remedies.',
+      },
+      {
+        clauseArea: 'Payment controls and liability',
+        buyerPosition: 'Define approval thresholds, dual control, credential custody, authorized users, payment-file release, bank cutoffs, sanctions screening ownership, unauthorized-payment responsibility, and escalation rights.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Connectivity proof by named bank',
+        whenToUse: 'Use when vendors claim broad bank coverage or real-time cash visibility.',
+        buyerAsk: 'Require proof for each bank, account, geography, format, frequency, API/file method, implementation owner, pass-through fee, and support path.',
+      },
+      {
+        lever: 'Phase treasury modules',
+        whenToUse: 'Use when the buyer needs cash visibility quickly but risk, hedge accounting, payments, and debt modules create complexity.',
+        buyerAsk: 'Launch cash visibility and bank connectivity first, with pre-priced options for payments, risk, debt, hedge accounting, and managed services after acceptance.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'tms-connectivity-overclaim',
+        label: 'Bank connectivity overclaim',
+        severity: 'high',
+        detectionSignals: ['Vendor cites thousands of connections but cannot prove the buyer\'s named banks, account types, file formats, and cutover dates.'],
+        mitigations: ['Run named-bank connectivity diligence and tie acceptance to actual data flow, reconciliation, and exception handling'],
+      },
+      {
+        id: 'tms-payment-control-risk',
+        label: 'Treasury payment control risk',
+        severity: 'critical',
+        detectionSignals: ['Payment module scope expands without dual control, credential custody, approval thresholds, bank cutoff, or liability terms.'],
+        mitigations: ['Require maker-checker controls, audit logs, role validation, release controls, incident escalation, and liability allocation'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Review trading, funding, derivatives, pre-settlement, regulatory reporting, model risk, and deeper segregation-of-duties evidence.',
+      },
+      {
+        industry: 'manufacturing',
+        modifier: 'Stress multi-currency cash, FX exposure, commodity risk adjacency, debt, hedge accounting, intercompany, and ERP integration.',
+      },
+      {
+        industry: 'public_sector',
+        modifier: 'Prioritize transparency, auditability, banking controls, segregation of duties, payment approvals, and record retention.',
+      },
+    ],
+    body: `## Summary
+Treasury management system sourcing is about controlled visibility and movement of enterprise cash. The buyer is not merely buying a dashboard. The event must prove bank connectivity, cash positioning, forecasting, payment controls, bank account administration, FX and interest-rate risk, debt and investments, hedge-accounting needs, ERP integration, security, auditability, and the operational line between treasury software, bank portals, payment rails, and ERP finance.
+
+## When to apply
+Use this pattern when sourcing Kyriba, Ripple Treasury/GTreasury, FIS Integrity, ION Wallstreet Suite, SAP Treasury and Risk Management, Oracle Treasury, TIS, Coupa Treasury, Nomentia, HighRadius Treasury, Trovata, or treasury workstations. Apply it during treasury centralization, multi-bank visibility gaps, payment-control remediation, cash forecasting weakness, ERP transformation, bank account rationalization, FX/debt risk programs, SOX treasury findings, or digital-asset treasury exploration. Do not use it for AP automation alone, procurement/spend management alone, retail bank treasury services, investment advisory, or payment rails without treasury workflow ownership.
+
+## Category boundary
+In scope: cash position, liquidity forecasting, bank connectivity, bank account administration, payments, payment factories, SWIFT/API/host-to-host/EBICS files, BAI2/BTRS reporting, FX exposure, interest-rate risk, debt, investments, hedge accounting, reconciliation, audit logs, treasury reporting, and integrations. Adjacent but distinct: ERP finance, AP automation, procurement, banking portals, payment processors, investment advisory, cash management bank services, and commodity trading platforms.
+
+## Lifecycle and gates
+The scope gate should inventory banks, accounts, countries, currencies, entities, payment volumes, file formats, ERP systems, current bank portals, signatory workflows, forecast owners, risk instruments, debt/investment scope, and control requirements. The RFP gate should require module pricing, named-bank connectivity proof, authorized-user rules, transaction/payment meters, implementation SOW, security evidence, SLA, DPA, payment liability terms, and exit. The proof gate should test cash import, account balance, forecast update, payment approval, rejected file, reconciliation, ERP journal, audit log, and export. The BAFO gate should normalize modules, users, entities, banks/accounts, payment volume, connectivity, environments, support, market data, bank fees, SWIFT fees, implementation, and managed services.
+
+## Evaluation rubric
+Weight bank connectivity around 25 percent, treasury process fit around 20 percent, payment controls/security around 20 percent, implementation/integration risk around 15 percent, commercial predictability around 10 percent, and risk/hedge-accounting fit around 10 percent. Increase payment-control weight when the platform releases payments rather than only reports cash.
+
+## Pricing and contract notes
+Public sources support construct-level pricing only. Kyriba public terms reference order schedules, SOWs, transaction-volume addenda, unique users, SLA, DPA, and AI terms. Trovata publicly exposes packaging around banks, accounts, transactions, and users. Treasury events should compare modules, bank accounts, financial institutions, entities, users, transaction volume, connectivity/API volume, environments, support, implementation, bank onboarding, market data, and managed services. Do not generalize vendor packaging into market benchmarks.
+
+Contracting should define named-bank connectivity, file-format ownership, testing, cutover, support, payment liability, credential handling, customer data ownership, data export, termination assistance, security evidence, incident notice, DR, and AI/digital-asset addenda where relevant.
+
+## Contradictions and failure modes
+Vendor claim: connects to all banks. Detection: test named banks, accounts, formats, countries, frequencies, and exception handling. Vendor claim: real-time liquidity. Detection: inspect actual feed cadence, bank limitations, stale balances, forecast ownership, and ERP timing. Vendor claim: payment automation reduces risk. Detection: inspect dual control, credential custody, sanctions ownership, release controls, bank cutoffs, and liability.
+
+The common failure is buying a treasury dashboard before solving bank connectivity and data ownership. The second is under-scoping implementation because bank files and ERP mappings look routine in demos. The third is letting payment or AI forecasting features outrun treasury policy, audit, and board-approved controls.`,
+  },
+  {
+    id: 'PAT-SRC-CAT-HRTECH-001',
+    slug: 'hr-technology-suite-hris-sourcing',
+    title: 'HR Technology Suite, HRIS, and HCM-Adjacent Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'HR technology sourcing should prove employee-data governance, role security, payroll/time/talent boundaries, implementation readiness, and AI employment-decision controls before buyers accept suite consolidation claims.',
+    applicability:
+      'Apply when sourcing Workday HCM, SAP SuccessFactors, Oracle Fusion Cloud HCM, Dayforce, UKG Pro, ADP Workforce Now, Paycom, Paylocity, Paycor, Rippling, HiBob, or integrated HRIS/HCM suites.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.80,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.workday.com/en-us/products/human-capital-management/overview.html',
+      'https://www.workday.com/en-us/legal/end-user-subscription-terms-and-conditions/agreement.html',
+      'https://www.sap.com/products/hcm/what-is-human-capital-management.html',
+      'https://assets.cdn.sap.com/agreements/product-use-and-support-terms/cls/en/sap-successfactors-hcm-suite-supplement-english-v4-2024.pdf',
+      'https://www.oracle.com/human-capital-management/payroll/',
+      'https://www.oracle.com/legal/privacy/services-previous-privacy-policy-080522/',
+      'https://www.adp.com/what-we-offer/products/adp-workforce-now.aspx',
+      'https://www.dayforce.com/why-dayforce/dayforce-suite',
+      'https://www.ukg.com/products/ukg-pro-workforce-management',
+      'https://www.paycom.com/software/',
+      'https://www.paylocity.com/products/hr/',
+      'https://nucleusresearch.com/news/nucleus-research-releases-2025-enterprise-human-capital-management-technology-value-matrix/',
+      'https://www.eeoc.gov/eeoc-disability-related-resources/artificial-intelligence-and-ada',
+      'https://www.nyc.gov/site/dca/about/automated-employment-decision-tools.page',
+      'https://www.dol.gov/index.php/newsroom/releases/osec/osec20241016',
+    ],
+    regulatoryChips: ['employee-PII-DPA-review', 'payroll-compliance-review', 'AI-employment-decision-review', 'data-residency-review', 'role-security-review'],
+    relatedPatternIds: ['PAT-SRC-CAT-HCM-001', 'PAT-SRC-CAT-PAYROLL-001', 'PAT-SRC-CAT-IAM-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'enterprise_saas',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Workday HCM, SAP SuccessFactors, Oracle Fusion Cloud HCM, Dayforce, UKG Pro, ADP Workforce Now, Paycom, Paylocity, Paycor, Rippling, and HiBob',
+        tier: 'enterprise',
+        positioning: 'HR system-of-record and HCM-adjacent candidates spanning core HR, payroll, benefits, time, absence, scheduling, workforce management, recruiting, onboarding, performance, learning, compensation, analytics, employee experience, and HR service delivery.',
+        cautions: ['Separate HRIS, payroll, time, talent, WFM, recruiting, employee experience, and AI employment-decision scope before accepting suite consolidation economics.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Workday HCM overview', url: 'https://www.workday.com/en-us/products/human-capital-management/overview.html', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'SAP HCM overview', url: 'https://www.sap.com/products/hcm/what-is-human-capital-management.html', asOf: '2026-04-29' },
+          { type: 'trade-publication', label: 'Nucleus Research 2025 Enterprise HCM value matrix announcement', url: 'https://nucleusresearch.com/news/nucleus-research-releases-2025-enterprise-human-capital-management-technology-value-matrix/', asOf: '2026-04-29' },
+        ],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'HR technology public pricing constructs only',
+        model: 'hybrid',
+        metric: 'Employees, active workers, worker profiles, authorized users, access rights, modules, tenants, storage, messages, transactions, integrations, country packs, implementation, migration, security, payroll localization, support, and seasonal worker handling',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Workday public agreement references access-rights-based fees unless order form says otherwise', url: 'https://www.workday.com/en-us/legal/end-user-subscription-terms-and-conditions/agreement.html', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'SAP SuccessFactors supplemental terms and user metric language', url: 'https://assets.cdn.sap.com/agreements/product-use-and-support-terms/cls/en/sap-successfactors-hcm-suite-supplement-english-v4-2024.pdf', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Employee counts, seasonal workers, module rollout plan, payroll countries, integrations, and migration scope require buyer evidence' },
+        ],
+        confidence: 0.56,
+        notes: 'Enterprise HCM pricing is generally quote-based. Use public terms for meter normalization, not invented prices, savings, or consolidation benchmarks.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Employee data privacy and portability',
+        buyerPosition: 'Require DPA, subprocessor notice, cross-border transfer terms, breach notice, audit evidence, and export of employee, job, org, payroll, benefits, performance, audit, attachment, and configuration data.',
+      },
+      {
+        clauseArea: 'AI employment decision governance',
+        buyerPosition: 'Require AI feature disclosure, opt-out/disable rights where feasible, bias-audit support, explainability artifacts, accommodation workflow, human review, and customer deployment controls.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Phased module ramp',
+        whenToUse: 'Use when the buyer wants suite consolidation but rollout readiness varies by module or country.',
+        buyerAsk: 'Align license starts to go-live by module/country and price core HR, payroll, time, talent, learning, compensation, analytics, and WFM separately.',
+      },
+      {
+        lever: 'Shelfware and seasonal worker protection',
+        whenToUse: 'Use where employee counts fluctuate or full-suite access rights exceed actual rollout.',
+        buyerAsk: 'Negotiate ramp schedules, delayed starts, true-down rights, inactive-worker exclusions, seasonal-worker treatment, and expansion bands.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'hrtech-ai-employment-risk',
+        label: 'AI employment-decision exposure',
+        severity: 'critical',
+        detectionSignals: ['Recruiting, assessment, performance, scheduling, or talent tools use AI without legal review, bias audit, accommodation path, or human oversight.'],
+        mitigations: ['Require EEOC/ADA and local AEDT review, audit support, explainability, opt-out controls, and human decision accountability'],
+      },
+      {
+        id: 'hrtech-payroll-cutover-risk',
+        label: 'Payroll and HRIS cutover risk',
+        severity: 'high',
+        detectionSignals: ['Migration plan lacks parallel payroll, role validation, historical data reconciliation, integration cutover, or hypercare criteria.'],
+        mitigations: ['Tie implementation acceptance to parallel-run success, security role testing, integration proof, migration reconciliation, and issue burn-down'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'healthcare',
+        modifier: 'Stress scheduling, credentialing, union rules, float pools, shift differentials, overtime, and 24/7 operations.',
+      },
+      {
+        industry: 'retail_cpg',
+        modifier: 'Review high-volume hourly labor, seasonal scaling, mobile time/absence, shift swaps, multi-state wage rules, and store hierarchy.',
+      },
+      {
+        industry: 'financial_services',
+        modifier: 'Emphasize role controls, audit logs, regulated compensation, identity governance, background checks, and data residency.',
+      },
+    ],
+    body: `## Summary
+HR technology suite sourcing is a system-of-record decision for people data and workforce operations. The buyer is not simply consolidating SaaS tools. The event must prove employee-data governance, role security, payroll and time boundaries, talent workflows, implementation readiness, integration into identity/finance/IT, and controls for AI that may affect candidates or employees.
+
+## When to apply
+Use this pattern when sourcing Workday HCM, SAP SuccessFactors, Oracle Fusion Cloud HCM, Dayforce, UKG Pro, ADP Workforce Now, Paycom, Paylocity, Paycor, Rippling, HiBob, or integrated HRIS/HCM suites. Apply it during HRIS replacement, payroll/time modernization, talent-suite consolidation, employee-experience programs, global expansion, manager self-service redesign, workforce analytics programs, or AI recruiting/talent pilots. Do not use it for a narrow ATS, learning tool, benefits broker, EOR, contractor platform, or payroll-only event unless HRIS/HCM data flows and employee-system governance are central.
+
+## Category boundary
+In scope: core HR, employee profile, org/job data, payroll adjacency, benefits, time, absence, scheduling, workforce management, recruiting, onboarding, performance, learning, compensation, workforce analytics, employee experience, HR service delivery, case management, integrations, role security, mobile access, and AI features. Adjacent but distinct: payroll-only, EOR/PEO, contractor management, immigration, equity administration, expense, identity governance, and point recruiting or learning tools.
+
+## Lifecycle and gates
+The scope gate should inventory employees, worker types, locations, unions, payroll countries, time rules, benefits, existing HRIS, ATS, WFM, LMS, IAM, finance, integrations, data quality, role model, and AI employment-decision exposure. The RFP gate should require module pricing, access-right rules, employee/worker profile metrics, data ownership, DPA, subprocessors, security reports, AI controls, payroll responsibilities, implementation approach, migration, integration, support, and export. The proof gate should run hire, transfer, manager change, leave, payroll handoff, time approval, recruiting, performance, role change, reporting, export, and AI-control scripts. The BAFO gate should normalize users, employees, modules, tenants, countries, transactions, integrations, migration, support, implementation, and renewal uplift.
+
+## Evaluation rubric
+Weight data governance and security around 25 percent, HR/payroll/time process fit around 25 percent, implementation and migration around 20 percent, integration fit around 15 percent, AI/legal controls around 10 percent, and commercial predictability around 5 percent. Increase AI/legal weight for recruiting, assessment, scheduling, performance, or talent recommendations.
+
+## Pricing and contract notes
+Public sources support constructs, not benchmark prices. Workday public agreement language ties fees to access rights acquired unless the order form says otherwise. SAP SuccessFactors supplemental terms define usage metrics such as unique active user profiles. HR technology quotes commonly turn on employees, active workers, authorized users, worker profiles, modules, tenants, transactions, storage, integrations, country/payroll packs, implementation, migration, security, and support. Treat analyst and vendor positioning as source context, not proof of savings.
+
+Contracting should define customer data ownership, DPA, subprocessors, cross-border transfers, breach notice, audit evidence, role/security controls, AI feature disclosure, bias-audit support, payroll compliance responsibilities, implementation acceptance, data export, deletion, transition, renewal controls, and shelfware protections.
+
+## Contradictions and failure modes
+Vendor claim: one HR suite reduces complexity. Detection: map modules, countries, role security, integrations, payroll/time rules, migration, and decommission plan. Vendor claim: AI improves hiring or talent decisions. Detection: require legal review, bias-audit support, accommodation path, explainability, and human decision accountability. Vendor claim: pricing follows headcount. Detection: inspect access rights, active profiles, worker types, seasonal workers, modules, country packs, and implementation costs.
+
+The common failure is buying a suite before HR data, roles, and process ownership are clean. The second is treating payroll/time as a simple module when local rules and cutover risk are high. The third is allowing AI employment-decision features into production before legal, HR, and compliance have accepted the control model.`,
+  },
+  {
+    id: 'PAT-SRC-CAT-PAYROLL-001',
+    slug: 'payroll-global-payroll-eor-adjacent-sourcing',
+    title: 'Payroll, Global Payroll, and EOR-Adjacent Payroll Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Payroll sourcing should separate employer obligations, global payroll, managed payroll, EOR adjacency, data controls, and payment/tax liability before buyers accept compliance or country-coverage claims.',
+    applicability:
+      'Apply when sourcing ADP, Workday payroll partners, Dayforce, CloudPay, Alight, Neeyamo, Safeguard Global, TMF Group, Ramco, Payslip, Deel, Remote, Papaya Global, Rippling, Oyster, Multiplier, G-P, Velocity Global, Atlas, or Mercans.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.80,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.adp.com/-/media/PDF/ADP-Global-Payroll-GeoFootprint.ashx?la=en',
+      'https://www.workday.com/en-us/company/partners/global-payroll-partners.html',
+      'https://www.dayforce.com/how-we-help/dayforce/pay-accurately-and-efficiently/global-payroll',
+      'https://www.cloudpay.com/lp/payroll/',
+      'https://www.deel.com/pricing/',
+      'https://remote.com/pricing',
+      'https://www.papayaglobal.com/pricing/',
+      'https://www.rippling.com/products/global/global-payroll-and-hiring',
+      'https://www.oysterhr.com/pricing',
+      'https://www.usemultiplier.com/pricing',
+      'https://payroll.org/vendors/buyers-guides',
+      'https://cms-prod.payroll.org/docs/default-source/buyers-guides/25h-Global-Payroll-eor-dir.pdf',
+      'https://www.edpb.europa.eu/sme-data-protection-guide/data-controller-data-processor_en',
+      'https://www.irs.gov/businesses/small-businesses-self-employed/understanding-employment-taxes',
+      'https://www.dol.gov/general/topic/wages/wagesrecordkeeping',
+      'https://www.irs.gov/newsroom/worker-classification-101-employee-or-independent-contractor',
+      'https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/employment/employment-practices-and-data-protection-keeping-employment-records/',
+    ],
+    regulatoryChips: ['payroll-tax-review', 'worker-classification-review', 'wage-hour-recordkeeping', 'GDPR-employee-data-review', 'EOR-local-law-review'],
+    relatedPatternIds: ['PAT-SRC-CAT-HRTECH-001', 'PAT-SRC-CAT-HCM-001', 'PAT-SRC-CAT-WFM-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'enterprise_saas',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'ADP, Workday global payroll partners, Dayforce, CloudPay, Alight, Neeyamo, Safeguard Global, TMF Group, Ramco, Payslip, Deel, Remote, Papaya Global, Rippling, Oyster, Multiplier, G-P, Velocity Global, Atlas, and Mercans',
+        tier: 'enterprise',
+        positioning: 'Domestic payroll, global payroll, managed payroll, payroll aggregator, payment, and EOR-adjacent candidates spanning gross-to-net, tax filing/remittance, payslips, statutory reporting, payroll calendars, and payroll support.',
+        cautions: ['Separate global payroll from EOR/PEO/contractor management and validate country coverage, local partner use, liability allocation, and employer obligations.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Remote pricing distinguishes global payroll from EOR by legal-entity need', url: 'https://remote.com/pricing', asOf: '2026-04-29' },
+          { type: 'industry-consortium', label: 'PayrollOrg buyer guides and global payroll/EOR directory', url: 'https://payroll.org/vendors/buyers-guides', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'IRS employment tax obligations', url: 'https://www.irs.gov/businesses/small-businesses-self-employed/understanding-employment-taxes', asOf: '2026-04-29' },
+        ],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'Payroll public pricing constructs only',
+        model: 'hybrid',
+        metric: 'Per employee per month, per contractor per month, per transaction, entity/country setup, implementation, managed service, payment processing, FX, off-cycle payroll, year-end, integration/API, support tier, deposits, and minimum commitments',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Remote pricing distinguishes EOR and global payroll constructs', url: 'https://remote.com/pricing', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Deel public pricing modules', url: 'https://www.deel.com/pricing/', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Country list, active employees, payroll frequency, legal entities, local providers, EOR need, payment methods, and implementation scope require buyer evidence' },
+        ],
+        confidence: 0.57,
+        notes: 'Vendor starting prices may be cited as vendor-published reference points, not category benchmarks or landed cost.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Country payroll scope and liability matrix',
+        buyerPosition: 'Define countries, entities, worker types, payroll frequency, tax filings, statutory reports, benefits deductions, year-end obligations, approval cutoffs, and liability for penalties, interest, late filings, and local-provider errors.',
+      },
+      {
+        clauseArea: 'Payroll data processing and exit',
+        buyerPosition: 'Require controller/processor roles, subprocessors, breach notice, cross-border transfer terms, data return/deletion, historical payroll export, parallel-run support, and replacement-vendor cooperation.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Payroll versus EOR decomposition',
+        whenToUse: 'Use when vendors bundle global payroll, EOR, contractor, and HR modules.',
+        buyerAsk: 'Separate global payroll for buyer-owned entities from EOR countries, contractor management, PEO, benefits, HRIS, and implementation line items.',
+      },
+      {
+        lever: 'Parallel-run acceptance',
+        whenToUse: 'Use before cutover in any payroll replacement or multi-country rollout.',
+        buyerAsk: 'Tie go-live and milestone payments to successful parallel payroll, statutory filing checks, GL/journal exports, support response, and exception burn-down.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'payroll-compliance-overclaim',
+        label: 'Global payroll compliance overclaim',
+        severity: 'critical',
+        detectionSignals: ['Vendor says global payroll guarantees compliance without country scope, local-provider disclosure, liability terms, or buyer data obligations.'],
+        mitigations: ['Require country-by-country scope, statutory responsibility matrix, liability allocation, compliance-change process, and buyer RACI'],
+      },
+      {
+        id: 'payroll-cutover-data-risk',
+        label: 'Payroll cutover data risk',
+        severity: 'high',
+        detectionSignals: ['Cutover plan lacks historical data reconciliation, parallel run, payroll calendar mapping, payment testing, or employee support process.'],
+        mitigations: ['Mandate parallel run, reconciliation, payroll calendar proof, payment test, audit-log export, and hypercare exit criteria'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'retail_cpg',
+        modifier: 'Stress hourly workers, tips, shift premiums, minors, seasonal spikes, local wage rules, and high-volume support.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Review shift differentials, union rules, credential pay, overtime complexity, 24/7 operations, and emergency staffing.',
+      },
+      {
+        industry: 'financial_services',
+        modifier: 'Require stronger audit, access controls, segregation of duties, data residency, regulated compensation, and reporting controls.',
+      },
+    ],
+    body: `## Summary
+Payroll sourcing is a high-liability operating decision, not just a pay engine. The buyer is deciding how wages, taxes, statutory filings, deductions, payments, payslips, calendars, worker classifications, and employee support will be controlled across countries and worker types. Global payroll, managed payroll, EOR, PEO, contractor management, HRIS, and time systems overlap, but they do not carry the same employer obligations.
+
+## When to apply
+Use this pattern when sourcing ADP, Workday payroll partners, Dayforce, CloudPay, Alight, Neeyamo, Safeguard Global, TMF Group, Ramco, Payslip, Deel, Remote, Papaya Global, Rippling, Oyster, Multiplier, G-P, Velocity Global, Atlas, or Mercans. Apply it during payroll replacement, global expansion, country consolidation, EOR-to-entity transition, HRIS integration, payroll-error remediation, statutory filing issues, employee support concerns, or multi-currency payroll payment programs. Do not use it for benefits-only, time-only, HRIS-only, contractor-only, immigration-only, or expense events unless payroll compliance and payment are central.
+
+## Category boundary
+In scope: domestic payroll, global payroll, managed payroll, payroll tax filing/remittance, gross-to-net calculation, payslips, statutory reports, payroll payments, payroll calendars, off-cycle payroll, year-end filings, payroll support, payroll journal/GL exports, local provider management, and payroll data integrations. Adjacent but distinct: EOR, PEO, contractor management, benefits administration, time/attendance, HRIS, immigration, equity, recruiting, and expense.
+
+## Lifecycle and gates
+The scope gate should inventory countries, legal entities, worker types, active employees, payroll frequencies, pay calendars, benefits deductions, statutory filings, local providers, HRIS/time systems, GL/journal requirements, bank/payment methods, support model, and EOR needs. The RFP gate should require country scope, local provider disclosure, pricing by employee/country/entity/transaction, DPA, subprocessors, tax responsibility matrix, payroll deadlines, SLA, liability terms, implementation, and exit. The proof gate should run parallel payroll, late change, off-cycle, termination, statutory filing, payslip, GL export, payment failure, support ticket, and data export. The BAFO gate should normalize platform fees, payroll service fees, statutory employer costs, benefits, payment fees, FX, local provider fees, deposits, implementation, year-end, offboarding, and support add-ons.
+
+## Evaluation rubric
+Weight compliance/liability around 25 percent, country coverage and local provider model around 20 percent, payroll accuracy and support around 20 percent, integration and data controls around 15 percent, implementation/cutover around 15 percent, and commercial predictability around 5 percent. Increase liability weight for EOR-adjacent scope or countries with complex local filings.
+
+## Pricing and contract notes
+Public sources support construct-level analysis. Remote publicly distinguishes global payroll for organizations with foreign legal entities from EOR for countries where the company lacks an entity. Deel, Remote, Papaya, Oyster, and Multiplier publish module/pricing pages, but starting prices should remain vendor-published reference points rather than benchmarks. Payroll economics depend on active employees, contractors, countries, entities, payroll runs, payments, FX, statutory filings, local providers, setup, implementation, support, and minimum commitments.
+
+Contracting should define country scope, legal entities, worker types, payroll calendars, input deadlines, validation duties, filing/remittance ownership, data processing, breach notice, cross-border transfers, liability for penalties and payment failures, compliance-change management, audit logs, parallel-run support, historical records, and transition assistance.
+
+## Contradictions and failure modes
+Vendor claim: global payroll guarantees compliance. Detection: require country-by-country scope, local-provider disclosure, liability terms, statutory RACI, and buyer data obligations. Vendor claim: EOR eliminates employment risk. Detection: inspect local law, contract allocation, worker classification, intellectual property, benefits, termination, and tax responsibility. Vendor claim: one platform covers every country. Detection: verify native coverage, partner coverage, subprocessors, service levels, and exit paths by country.
+
+The common failure is treating payroll as routine software when a small configuration defect can mispay employees or miss statutory filings. The second is confusing global payroll with EOR. The third is skipping parallel runs, support design, and historical data export until the cutover is already at risk.`,
+  },
+
 
 ];
 
