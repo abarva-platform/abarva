@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { AppRail } from './AppRail';
 import { AppTopBar } from './AppTopBar';
 import { AppMiddleStrip } from './AppMiddleStrip';
-import { CommandPaletteLoader } from './CommandPaletteLoader';
+// GlobalSearchModal is mounted in the maestro layout for app-wide coverage.
 import { AtlasPageStateProvider } from './AtlasPageStateProvider';
 import type { SurfaceId, StageId } from '@/lib/shell/atlas-page-state';
 
@@ -93,8 +93,7 @@ export function AppShell({
         </AtlasPageStateProvider>
       </div>
 
-      {/* Command palette · self-manages open state via Cmd+K listener */}
-      <CommandPaletteLoader />
+      {/* Global search modal is rendered in the maestro layout for app-wide coverage */}
     </div>
   );
 }
