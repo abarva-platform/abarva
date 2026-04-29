@@ -32,6 +32,9 @@ import { getAllInstanceIds } from '@/lib/reasoning/instance-resolver';
 import { ContradictionDetailCardClient } from '@/components/_shared/ContradictionDetailCardClient';
 import { CascadeImpactCard, ReverseCascadeCard } from '@/components/_shared/CascadeImpactCard';
 import { InstanceEventTimeline } from '@/components/_shared/InstanceEventTimeline';
+import { LifecycleMiniGraph } from '@/components/_shared/LifecycleMiniGraph';
+import type { StageStatus } from '@/components/shell/StageTrackerStrip';
+import { findLifecyclePattern } from '@/lib/reasoning/lifecycle-pattern-lookup';
 import { computeReverseCascade } from '@/lib/reasoning/cross-instance-reasoner';
 import { buildInstanceEventTimeline } from '@/lib/reasoning/instance-event-timeline';
 import { isResolved as isContradictionResolved } from '@/lib/reasoning/contradiction-resolution-state';
@@ -3267,6 +3270,59 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
     };
   })();
 
+  // REASON-30 — Lifecycle mini-graph data: resolve the program's lifecycle
+  // pattern, count gate criteria per stage (keyed by stage id), and translate
+  // PhaseStrip slot states into StageStatus keyed by stage label.
+  const lifecycleMiniGraph = (() => {
+    const instance = APEX_RETAIL_PROGRAM_INSTANCES.find(
+      (i) =>
+        i.displayId === view.displayId ||
+        i.id.toLowerCase() === view.programId.toLowerCase(),
+    );
+    if (!instance) return null;
+    const pattern = findLifecyclePattern(instance.patternId);
+    if (!pattern || pattern.stages.length === 0) return null;
+
+    const counts: Record<string, number> = {};
+    for (const c of pattern.gateCriteria) {
+      counts[c.stageId] = (counts[c.stageId] ?? 0) + 1;
+    }
+
+    const states: Record<string, StageStatus> = {};
+    const sortedStages = [...pattern.stages].sort((a, b) => a.order - b.order);
+    for (const stage of sortedStages) {
+      // Match phase-strip slots by their position in the lifecycle pattern.
+      // Pattern stages declare an `order` (0-indexed for programs, 1-indexed
+      // for sourcing); the program PhaseStrip uses 0-indexed phase ids so we
+      // align by ordinal position rather than raw `order` value.
+      const idx = sortedStages.findIndex((s) => s.id === stage.id);
+      const slot = stripPhases[idx];
+      if (!slot) {
+        states[stage.label] = 'upcoming';
+        continue;
+      }
+      switch (slot.state) {
+        case 'done':
+          states[stage.label] = 'passed';
+          break;
+        case 'current':
+          states[stage.label] = view.gateStatus === 'pending'
+            ? 'blocked'
+            : 'current';
+          break;
+        case 'pending':
+          states[stage.label] = 'upcoming';
+          break;
+        case 'locked':
+        default:
+          states[stage.label] = 'upcoming';
+          break;
+      }
+    }
+
+    return { stages: pattern.stages, counts, states };
+  })();
+
   // PRG-EVIDENCE-INGEST — Resolve the underlying program-instance id +
   // currentPhase so the demo evidence-ingestion form can POST against the
   // shared in-memory store (mirrors the Source detail page).
@@ -3426,6 +3482,25 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
             </span>
           </div>
         </div>
+
+        {/* REASON-30 — Inline lifecycle mini-graph (sits below the PhaseStrip
+            in the AppShell middleStrip; complements but does not replace it) */}
+        {lifecycleMiniGraph && (
+          <div
+            data-testid="program-lifecycle-mini-graph"
+            style={{
+              padding: '4px 0 12px',
+              marginBottom: 4,
+              borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
+            }}
+          >
+            <LifecycleMiniGraph
+              stages={lifecycleMiniGraph.stages}
+              stageStates={lifecycleMiniGraph.states}
+              gateCriteriaCount={lifecycleMiniGraph.counts}
+            />
+          </div>
+        )}
 
         {storylineMatches.length > 0 && (
           <div

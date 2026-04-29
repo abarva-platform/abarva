@@ -22,6 +22,8 @@ import type { VendorTransitionReadiness, TransitionRiskItem, TransitionGoNoGoIte
 import { ContradictionDetailCardClient } from '@/components/_shared/ContradictionDetailCardClient';
 import { CascadeImpactCard, ReverseCascadeCard } from '@/components/_shared/CascadeImpactCard';
 import { InstanceEventTimeline } from '@/components/_shared/InstanceEventTimeline';
+import { LifecycleMiniGraph } from '@/components/_shared/LifecycleMiniGraph';
+import type { StageStatus } from '@/components/shell/StageTrackerStrip';
 import { buildSourceSynthesisContext } from '@/lib/reasoning/synthesis-context-builder';
 import { computeReverseCascade } from '@/lib/reasoning/cross-instance-reasoner';
 import { PAT_SRC_AMS_001 } from '@/lib/intelligence/source-lifecycle-patterns';
@@ -1777,6 +1779,23 @@ export function SourceEventDetailPage() {
   };
   const storylineMatches = matchStorylinePatterns(buildSourceStorylineContext(), { limit: 4 });
 
+  // REASON-30 — Lifecycle mini-graph data, derived from the AMS pattern.
+  // gateCriteriaCount is keyed by stage id; stageStates is keyed by stage
+  // label (matching the StageTrackerStrip convention).
+  const gateCriteriaCount: Record<string, number> = {};
+  for (const criterion of PAT_SRC_AMS_001.gateCriteria) {
+    gateCriteriaCount[criterion.stageId] =
+      (gateCriteriaCount[criterion.stageId] ?? 0) + 1;
+  }
+  const activeIdx = STAGES.indexOf(CURRENT_STAGE);
+  const miniGraphStageStates: Record<string, StageStatus> = {};
+  for (let i = 0; i < STAGES.length; i++) {
+    const label = STAGES[i]!;
+    if (i < activeIdx) miniGraphStageStates[label] = 'passed';
+    else if (i === activeIdx) miniGraphStageStates[label] = 'current';
+    else miniGraphStageStates[label] = 'upcoming';
+  }
+
   return (
     <AppShell
       surface="source-detail"
@@ -1810,6 +1829,21 @@ export function SourceEventDetailPage() {
           shapeResolver={sourceShapeResolver}
           style={{ background: SHELL.PAPER }}
         >
+        {/* REASON-30 — Inline lifecycle mini-graph (sits below the StageTrackerStrip
+            in the AppShell middleStrip; complements but does not replace it) */}
+        <div
+          data-testid="source-lifecycle-mini-graph"
+          style={{
+            padding: '14px 28px 0',
+            borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
+          }}
+        >
+          <LifecycleMiniGraph
+            stages={PAT_SRC_AMS_001.stages}
+            stageStates={miniGraphStageStates}
+            gateCriteriaCount={gateCriteriaCount}
+          />
+        </div>
         {/* Event header */}
         <div
           style={{
