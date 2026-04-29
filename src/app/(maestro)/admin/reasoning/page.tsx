@@ -693,6 +693,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/pattern-compare',
     description: 'Side-by-side comparison of two lifecycle patterns — stages, gates, contradiction templates',
   },
+  {
+    title: 'Resolution log',
+    href: '/admin/reasoning/resolution-log',
+    description: 'All contradiction templates currently marked resolved — in-memory store state',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
