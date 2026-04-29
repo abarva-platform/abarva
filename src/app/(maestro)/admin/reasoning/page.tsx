@@ -648,6 +648,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/demo-panel',
     description: 'Trigger pre-built demo scenarios: green-path, red-alert, mid-review',
   },
+  {
+    title: 'Contradiction matrix',
+    href: '/admin/reasoning/contradiction-matrix',
+    description: 'Template × instance grid showing active and resolved contradictions',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
