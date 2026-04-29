@@ -1018,6 +1018,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/pattern-benchmark',
     description: 'Within-pattern instance benchmarking — best vs. worst performers within each lifecycle pattern group',
   },
+  {
+    title: 'Gate audit',
+    href: '/admin/reasoning/gate-audit',
+    description: 'Complete gate action audit log — waivers, approvals, and evidence submissions that affect gate status',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
