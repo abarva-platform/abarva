@@ -2,6 +2,11 @@
 
 <!-- Backfilled 2026-04-28 from PR titles + commit messages. Original session journals were thin. -->
 
+## 2026-04-29 · Knowledge Persistence Canon Reconciliation
+
+`GRAPH_VECTOR_READINESS.md` is the canonical pilot/persistence decision for embeddings: `text-embedding-3-small` at 1536 dimensions, stored as `vector(1536)` for the first pgvector-backed Enterprise Data Room migration. Older intelligence vision/source-material docs that mention Voyage-3, `text-embedding-3-large`, 1024 dimensions, 3072 dimensions, or Pinecone are historical north-star/provider notes, not the current migration default. Revisit the dimension decision when retrieval quality fails pilot acceptance, tenant count exceeds 100, or a tenant exceeds roughly 10,000 approved chunks; until then the app and broker contracts should align to the 1536-dim profile.
+
+
 | Date | Wave | Status | Lines | Smoke | PR | Notes |
 |---|---|---|---|---|---|---|
 | 2026-04-28 | 5B | shipped | +152/-2 | (pre-infra) | #540 | Intelligence pattern detail gained the "Applied in programs" section for T3-H03. |
