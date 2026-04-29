@@ -924,6 +924,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     description: 'Co-occurrence network of contradiction templates — which contradictions appear together across instances',
   },
   {
+    title: 'Pattern similarity',
+    href: '/admin/reasoning/pattern-similarity',
+    description: 'Pairwise similarity between lifecycle patterns based on shared gate criteria and contradiction templates',
+  },
+  {
     title: 'Gate owners',
     href: '/admin/reasoning/gate-owners',
     description: 'Hard gate criterion ownership by stakeholder category — grouped by pattern with distribution chart',
