@@ -949,6 +949,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     description: 'Per-instance chronological event stream — stage transitions, evidence, waivers, and resolutions combined',
   },
   {
+    title: 'Regulatory map',
+    href: '/admin/reasoning/regulatory-map',
+    description: 'Regulatory framework coverage across patterns — which regulations affect which instances',
+  },
+  {
     title: 'Tenant comparison',
     href: '/admin/reasoning/tenant-comparison',
     description: 'Cross-tenant reasoning health metrics — avg score, gate pass rate, and contradiction rate by client',
