@@ -863,6 +863,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/stage-dwell',
     description: 'Per-instance time-in-current-stage metrics — ranked by longest dwell, with freshness thresholds',
   },
+  {
+    title: 'Evidence timeline',
+    href: '/admin/reasoning/evidence-timeline',
+    description: 'Chronological log of all evidence ingestions across instances — grouped by day',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
