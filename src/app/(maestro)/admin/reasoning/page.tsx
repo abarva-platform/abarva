@@ -838,6 +838,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/demo-state',
     description: 'Current state of all in-memory stores — waivers, resolutions, evidence, stage overrides, and audit trail',
   },
+  {
+    title: 'Source documents',
+    href: '/admin/reasoning/source-documents',
+    description: 'All source document references across lifecycle patterns — the knowledge base behind each pattern',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
