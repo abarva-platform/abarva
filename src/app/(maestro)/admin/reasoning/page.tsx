@@ -26,6 +26,7 @@ import {
 } from '@/lib/reasoning/cascade-telemetry';
 import { ReasoningHealthBadge } from '@/components/reasoning/ReasoningHealthBadge';
 import { ContradictionResolutionPanel } from '@/components/reasoning/ContradictionResolutionPanel';
+import { DemoResetButton } from '@/components/admin/reasoning/DemoResetButton';
 import { detectContradictions } from '@/lib/reasoning/contradiction-detector';
 import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
 import { buildEvidenceMap } from '@/lib/source/source-event-instance';
@@ -207,6 +208,7 @@ function HeaderCard({ totalEvents }: { totalEvents: number }) {
           {totalEvents} event{totalEvents === 1 ? '' : 's'} in window
         </div>
         <ExportPill />
+        <DemoResetButton />
       </div>
     </div>
   );

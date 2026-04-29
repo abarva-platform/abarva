@@ -40,6 +40,11 @@ export function recordWaiver(record: WaiverRecord): void {
   waiverAuditBuffer.push(record);
 }
 
+/** Clear the waiver audit buffer — used by the demo-reset endpoint. */
+export function clearWaiverAuditBuffer(): void {
+  waiverAuditBuffer.length = 0;
+}
+
 // ─── AuditEntry type ─────────────────────────────────────────────────────────
 
 export type AuditEntryType =

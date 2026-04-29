@@ -21,6 +21,11 @@ function jsonResponse(body: unknown, status: number): Response {
 // In-memory store — keyed by `${instanceId}::${criterionId}`.
 const waiverStore = new Map<string, { reason: string; waivedAt: string }>();
 
+/** Clear all gate waivers — used by the demo-reset endpoint. */
+export function clearWaivers(): void {
+  waiverStore.clear();
+}
+
 export async function POST(request: Request) {
   let body: unknown;
   try {

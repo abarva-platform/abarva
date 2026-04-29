@@ -264,6 +264,16 @@ export function getTelemetryBackend(): TelemetryBackend | null {
 }
 
 /**
+ * Clear the telemetry buffer. Used by the demo-reset endpoint to wipe
+ * accumulated synthesis events between demo sessions. Does not reset the
+ * id counter, retention window, or backend — those are runtime config, not
+ * demo state.
+ */
+export function clearSynthesisTelemetry(): void {
+  buffer.length = 0;
+}
+
+/**
  * Test-only helper: clear the buffer, reset the id counter, and restore the
  * default retention window + null backend. Exposed because Jest reuses the
  * module across test cases — without this, events from one test would leak
