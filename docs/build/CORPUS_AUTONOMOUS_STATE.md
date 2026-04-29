@@ -1,6 +1,6 @@
 # Corpus Autonomous State
 
-Last update timestamp: 2026-04-29T19:35:30Z
+Last update timestamp: 2026-04-29T19:40:30Z
 Status: ACTIVE - founder explicitly approved resuming after pause, requested parallel governed agents, and granted auto-merge authority for scoped green PRs.
 
 ## Current wave
@@ -39,7 +39,8 @@ Wave 8 - vendor profile one-pattern PRs beginning after process/methodology batc
 - 2026-04-29T18:47:03Z - Worker Galileo the 2nd (`019dda8e-83bd-74a3-8681-f499dd212446`) - PAT-SRC-VEN-CHECKOUT-001 - complete and queued; commit `f5f1b022ab4382b9330838c80b9c820937574f8e`.
 - 2026-04-29T19:12:33Z - PR #1101 - PAT-SRC-VEN-ORACLECLOUD-001 vendor profile - merged at `4ad632a13647ede72a33b6b881f2fe92421471f3`. URL: https://github.com/anandsundaram-hash/abarva/pull/1101
 - 2026-04-29T19:24:30Z - PR #1103 - PAT-SRC-VEN-SQUARE-001 vendor profile - merged at `309319a57d85da184e0396a07ed1d800560884e3`. URL: https://github.com/anandsundaram-hash/abarva/pull/1103
-- 2026-04-29T19:35:30Z - PR prep - PAT-SRC-VEN-ADYEN-001 vendor profile - focused loader/fabric tests and diff check passed on top of Square; ready to open PR.
+- 2026-04-29T19:35:30Z - PR #1104 - PAT-SRC-VEN-ADYEN-001 vendor profile - merged at `81ab85e2524ccc04636093025d4f803b038ac885`. URL: https://github.com/anandsundaram-hash/abarva/pull/1104
+- 2026-04-29T19:40:30Z - PR prep - PAT-SRC-VEN-BLOOMREACH-001 vendor profile - focused loader/fabric tests and diff check passed on top of Adyen; ready to open PR.
 - 2026-04-29T19:24:30Z - Worker McClintock the 2nd (`019ddaaa-52d9-7870-8be7-82b152d2466d`) - PAT-SRC-VEN-BLOOMREACH-001 - complete and queued; commit `0d6b4b1aa3516c659088e28d251e7022850931ea`.
 - 2026-04-29T19:04:54Z - Worker Ampere the 2nd (`019dda98-1f64-7ba0-9fae-6f3882174f0f`) - PAT-SRC-VEN-TOAST-001 - complete and queued; commit `129213fe974dd8f848b8adc838fac973d2998348`.
 - 2026-04-29T19:04:54Z - Worker Hypatia the 2nd (`019dda9b-d4d7-7fe2-90da-d0295ad069a2`) - PAT-SRC-VEN-WIX-001 - complete and queued; commit `b2cc9b1a681cee94af2f755f66fdef69bf2ae862`.
@@ -107,7 +108,7 @@ Wave 8 - vendor profile one-pattern PRs beginning after process/methodology batc
 ## Pattern counts by domain
 - Existing sourcing corpus on latest main before Wave 1: 24 patterns.
 - Category-specific sourcing playbooks (`PAT-SRC-CAT-*`): 51 authored and merged across Wave 1.
-- Vendor intelligence profiles (`PAT-SRC-VEN-*`): 17 authored into integrated PR flow; 12 merged through Square; Adyen is active in PR-prep; Bloomreach, Acquia, Optimizely, and Contentstack are queued; multiple additional authored profiles queued for one-pattern PRs.
+- Vendor intelligence profiles (`PAT-SRC-VEN-*`): 20 authored into integrated PR flow; 13 merged through Adyen; Bloomreach is active in PR-prep; Acquia, Optimizely, Contentstack, Algolia, and Yotpo are queued; multiple additional authored profiles queued for one-pattern PRs.
 - Contract intelligence (`PAT-SRC-CON-*`): 7 authored and merged.
 - Pricing intelligence (`PAT-SRC-PRC-*`): 2 authored and merged.
 - Process and methodology (`PAT-SRC-PROC-*`): 7 authored and merged.
@@ -162,7 +163,7 @@ Wave 8 - vendor profile one-pattern PRs beginning after process/methodology batc
 - #1101 - `[corpus][ven] Author PAT-SRC-VEN-ORACLECLOUD-001 · 1 pattern` - merged 2026-04-29T19:17:58Z at `4ad632a13647ede72a33b6b881f2fe92421471f3`.
 
 ## Open PRs
-- None currently; Adyen is being opened next for PAT-SRC-VEN-ADYEN-001 after Square merge.
+- None currently; Bloomreach is being opened next for PAT-SRC-VEN-BLOOMREACH-001 after Adyen merge.
 
 ## Held PRs requiring founder review
 - None.
@@ -173,11 +174,11 @@ Wave 8 - vendor profile one-pattern PRs beginning after process/methodology batc
 - Watch item: RSK-001 from risk batch 1 is below the 400-word hold threshold and must be patched or held before PR.
 
 ## Next 16 queued pattern IDs
-- PAT-SRC-VEN-ADYEN-001
-- PAT-SRC-VEN-8X8-001
-- PAT-SRC-VEN-CHECKOUT-001
 - PAT-SRC-VEN-BLOOMREACH-001
+- PAT-SRC-VEN-ACQUIA-001
 - PAT-SRC-VEN-CONTENTSTACK-001
+- PAT-SRC-VEN-OPTIMIZELY-001
+- PAT-SRC-VEN-ALGOLIA-001
 - PAT-SRC-VEN-RINGCENTRAL-001
 - PAT-SRC-VEN-STRIPE-001
 - PAT-SRC-VEN-PAYPAL-001
@@ -196,4 +197,4 @@ Wave 8 - vendor profile one-pattern PRs beginning after process/methodology batc
 - Vendor/regulatory/pricing PRs remain one-pattern PRs because source confidence and evidence discipline are higher risk.
 
 ## Next action
-Open PR for PAT-SRC-VEN-ADYEN-001, monitor CI, and continue preparing Bloomreach / Acquia / Optimizely / Contentstack vendor integrations without idle time.
+Open PR for PAT-SRC-VEN-BLOOMREACH-001, monitor CI, and continue preparing Acquia / Contentstack / Optimizely / Algolia / Yotpo vendor integrations without idle time.
