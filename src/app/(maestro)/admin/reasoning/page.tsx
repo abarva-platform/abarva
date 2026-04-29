@@ -1293,6 +1293,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Portfolio Executive Dashboard',
     description: 'Top-level admin overview — health KPIs, at-risk programs, recent alerts, gate snapshot, and quick links.',
   },
+  {
+    href: '/admin/reasoning/gate-risk-heatmap',
+    title: 'Gate Risk Heatmap',
+    description: 'Stage × gate-type failure rate heatmap — hotspot detection and instance overlay.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
