@@ -628,6 +628,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/evidence-gaps',
     description: 'Portfolio-level view of unmet hard gate criteria missing evidence',
   },
+  {
+    title: 'Phase matrix',
+    href: '/admin/reasoning/phase-matrix',
+    description: 'Cross-program × phase gate coverage grid',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
