@@ -46,6 +46,14 @@ import "@/lib/agent/tools/program/lookupPerson";
 // seeded yet. Creates a placeholder persons row marked for admin
 // follow-up so Steward can proceed with commit_program.
 import "@/lib/agent/tools/program/registerPlaceholderPerson";
+// Surface 2 PR-C — advance_phase tool for /programs/:id surfaces.
+// Closes Crawl Obs #18: gate evaluation runs server-side before any
+// advance, so the agent cannot pretend an advance happened when
+// hard-gate criteria are unmet. Uses governance.evaluateGate (the
+// canonical gate-rule evaluator), NOT pack DoD — the pack stays
+// static doctrine; runtime evidence-evaluation is deferred to the
+// future knowledge-broker layer.
+import "@/lib/agent/tools/program/advancePhase";
 
 // ── Agent voice map ────────────────────────────────────────────────────────────
 
