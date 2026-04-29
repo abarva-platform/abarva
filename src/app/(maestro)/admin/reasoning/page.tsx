@@ -933,6 +933,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/gate-owners',
     description: 'Hard gate criterion ownership by stakeholder category — grouped by pattern with distribution chart',
   },
+  {
+    title: 'Instance timeline',
+    href: '/admin/reasoning/instance-timeline',
+    description: 'Per-instance chronological event stream — stage transitions, evidence, waivers, and resolutions combined',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
