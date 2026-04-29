@@ -42,6 +42,9 @@ import { createGateEvaluator } from '@/lib/reasoning/gate-evaluator';
 import { buildStageMicroSynthesisMap } from '@/lib/reasoning/stage-micro-synthesis';
 import { buildStageHandoffNarratives } from '@/lib/reasoning/stage-handoff-narrative';
 import { buildEvidenceMap } from '@/lib/source/source-event-instance';
+import { getMissionsForSourceEvent } from '@/lib/agent/agent-mission-derived';
+import { MissionListInteractive } from '@/components/_shared/MissionListInteractive';
+import { RecentMissionStates } from '@/components/_shared/RecentMissionStates';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -288,99 +291,22 @@ function ReadinessTab() {
 // ─── SRC42: Missions tab ──────────────────────────────────────────────────────
 
 function MissionsTab() {
-  const missions = [
-    {
-      id: 'M-01',
-      agent: 'Sentinel',
-      agentInitials: 'Sn',
-      label: 'Validate Vendor B SOC-2 gap',
-      detail: 'Confirm attestation status and assess risk if waived',
-      priority: 'critical' as const,
-      state: 'active' as const,
-    },
-    {
-      id: 'M-02',
-      agent: 'Nexus',
-      agentInitials: 'Nx',
-      label: 'Align CDP integration contract scope',
-      detail: 'Vendor C contract must reflect CDP data layer requirements',
-      priority: 'high' as const,
-      state: 'active' as const,
-    },
-    {
-      id: 'M-03',
-      agent: 'Steward',
-      agentInitials: 'St',
-      label: 'Obtain selection approval',
-      detail: 'Steward sign-off gates final award to Vendor C',
-      priority: 'high' as const,
-      state: 'pending' as const,
-    },
-    {
-      id: 'M-04',
-      agent: 'Atlas',
-      agentInitials: 'At',
-      label: 'Model post-selection cost projection',
-      detail: 'Update Executive lens with final Vendor C pricing',
-      priority: 'medium' as const,
-      state: 'pending' as const,
-    },
-  ];
-
-  function priorityColor(p: 'critical' | 'high' | 'medium' | 'low'): string {
-    if (p === 'critical') return SHELL.RUST_TEXT;
-    if (p === 'high') return SHELL.PEACH_TEXT;
-    if (p === 'medium') return SHELL.AMBER_DOT;
-    return SHELL.INK_MUTED;
-  }
-
-  function stateLabel(s: 'active' | 'pending'): string {
-    return s === 'active' ? 'Active' : 'Pending';
-  }
+  const missions = getMissionsForSourceEvent(
+    AMS_VENDOR_CONSOLIDATION_2026_INSTANCE.id,
+  );
 
   return (
-    <div data-testid="source-missions-tab">
-      <div style={{ fontFamily: SHELL.MONO, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.14em', color: SHELL.INK_MUTED, marginBottom: 12 }}>
-        Agent Missions · {missions.filter((m) => m.state === 'active').length} active
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
-        {missions.map((m) => (
-          <div key={m.id} style={{ background: SHELL.CARD_WHITE, border: `1px solid ${SHELL.CARD_LINE}`, borderRadius: 8, padding: '12px 14px' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-              {/* Agent badge */}
-              <div style={{ width: 28, height: 28, borderRadius: 6, background: SHELL.PAPER_DEEP, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span style={{ fontFamily: SHELL.MONO, fontSize: 9, fontWeight: 700, color: SHELL.INK }}>{m.agentInitials}</span>
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-                  <span style={{ fontFamily: SHELL.SANS, fontSize: 13, fontWeight: 600, color: SHELL.INK }}>{m.label}</span>
-                  <span style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: priorityColor(m.priority) }}>{m.priority}</span>
-                </div>
-                <div style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK_SOFT, lineHeight: 1.4, marginBottom: 6 }}>
-                  {m.detail}
-                </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <span style={{ fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.06em' }}>
-                    {m.agent} · {m.id}
-                  </span>
-                  <span style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.06em', color: m.state === 'active' ? SHELL.MINT_TEXT : SHELL.INK_MUTED }}>
-                    {stateLabel(m.state)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Honest disclaimer */}
-      <div
-        data-honest-disclaimer="source-missions"
-        style={{ fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.08em', lineHeight: 1.5 }}
-      >
-        Deterministic seed · SRC-AMS-2026 agent missions reflect fixture context only. Live mission dispatch, state tracking, and agent session management are deferred.
-      </div>
+    <div data-testid="source-missions-tab" style={{ display: 'grid', gap: 8 }}>
+      <MissionListInteractive
+        missions={missions}
+        title="Pending gates · this event"
+        maxRows={6}
+        emptyState="No deliverables tracked"
+      />
+      <RecentMissionStates
+        instanceId={AMS_VENDOR_CONSOLIDATION_2026_INSTANCE.id}
+        limit={3}
+      />
     </div>
   );
 }
