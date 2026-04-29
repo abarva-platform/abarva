@@ -1074,6 +1074,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     description: 'Real-time activity feed — stage transitions, evidence, waivers, and resolutions as event cards',
   },
   {
+    title: 'Pattern evolution',
+    href: '/admin/reasoning/pattern-evolution',
+    description: 'Instance health evolution through pattern stages — how health progresses as instances advance',
+  },
+  {
     title: 'Instance notes',
     href: '/admin/reasoning/instance-notes',
     description: 'Deterministic advisory notes per instance — health grade, stage advisory, blockers, and contradictions',
