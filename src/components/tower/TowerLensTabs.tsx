@@ -58,6 +58,8 @@ import {
   buildReasoningActivityBriefView,
 } from '@/lib/tower/reasoning-activity-brief-view';
 import type { ReasoningContradictionItem, ReasoningHandoffItem } from '@/lib/tower/reasoning-activity-brief-view';
+import { buildPortfolioAlerts } from '@/lib/reasoning/portfolio-alerts';
+import { PortfolioAlertsPanel } from '@/components/tower/PortfolioAlertsPanel';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Design tokens (matches existing Tower surface palette)
@@ -193,6 +195,8 @@ function PortfolioPanel({ tenant }: { tenant: TenantSeedPlan }) {
   const pressureView = buildTowerProgramPressureView(tenant);
   const { signals, summary, strip } = pressureView;
   const pressureBrief = buildAtlasProgramPressureBrief(tenant, signals, summary);
+  const alerts = buildPortfolioAlerts();
+  const alertCount = alerts.length;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 960 }}>
@@ -201,6 +205,64 @@ function PortfolioPanel({ tenant }: { tenant: TenantSeedPlan }) {
         title="Portfolio"
         subtitle="Programme portfolio overview — pressure signals and vendor-aligned programme status. Deterministic seed."
       />
+
+      {/* Active alerts section */}
+      <section aria-label="Active alerts">
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            marginBottom: 10,
+          }}
+        >
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: C.muted,
+            }}
+          >
+            Active alerts
+          </span>
+          {alertCount > 0 ? (
+            <span
+              data-testid="portfolio-alerts-count-badge"
+              style={{
+                fontFamily: 'JetBrains Mono, Fira Code, monospace',
+                fontSize: 10,
+                fontWeight: 600,
+                padding: '2px 9px',
+                borderRadius: 10,
+                background: 'rgba(245,158,11,0.12)',
+                color: '#B45309',
+                border: '1px solid rgba(180,83,9,0.2)',
+              }}
+            >
+              {alertCount} {alertCount === 1 ? 'alert' : 'alerts'}
+            </span>
+          ) : (
+            <span
+              data-testid="portfolio-alerts-clear-badge"
+              style={{
+                fontFamily: 'JetBrains Mono, Fira Code, monospace',
+                fontSize: 10,
+                fontWeight: 600,
+                padding: '2px 9px',
+                borderRadius: 10,
+                background: 'rgba(22,163,74,0.08)',
+                color: '#16A34A',
+                border: '1px solid rgba(22,163,74,0.2)',
+              }}
+            >
+              All clear
+            </span>
+          )}
+        </div>
+        <PortfolioAlertsPanel alerts={alerts} title="Active alerts" />
+      </section>
 
       {/* Atlas portfolio brief */}
       <section
