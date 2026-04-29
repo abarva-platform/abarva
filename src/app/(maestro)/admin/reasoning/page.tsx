@@ -1168,6 +1168,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Program Health Report',
     description: 'Dense executive overview — health, gates, waivers, contradictions in a printable one-page report.',
   },
+  {
+    href: '/admin/reasoning/gate-criteria-browser',
+    title: 'Gate Criteria Browser',
+    description: 'Browsable catalog of all gate criteria by pattern and stage — type, hardest flags, and failure simulation.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
