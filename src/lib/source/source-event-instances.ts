@@ -1595,10 +1595,13 @@ export const APEX_RETAIL_EMERGENCY_PAYMENT_2026_INSTANCE: SourceEventInstance = 
   valueAtStakeUsd: 870000,
 };
 
+import { CAT_PATTERN_INSTANCES } from './cat-pattern-instances';
+
 /**
  * All typed SourceEventInstances for the Apex Retail tenant.
  * The AMS instance is the canonical demo. The DEMO-* instances below bind
  * each previously-unbound source-event lifecycle pattern.
+ * The CAT_PATTERN_INSTANCES bind the 12 PAT-SRC-CAT category lifecycle patterns.
  */
 export const SOURCE_EVENT_INSTANCES: SourceEventInstance[] = [
   AMS_VENDOR_CONSOLIDATION_2026_INSTANCE,
@@ -1608,4 +1611,6 @@ export const SOURCE_EVENT_INSTANCES: SourceEventInstance[] = [
   APEX_RETAIL_RENEWAL_IAM_2026_INSTANCE,
   APEX_RETAIL_DECOM_LEGACY_ERP_2026_INSTANCE,
   APEX_RETAIL_EMERGENCY_PAYMENT_2026_INSTANCE,
+  // 12 category-pattern fixture instances (PAT-SRC-CAT-*)
+  ...CAT_PATTERN_INSTANCES,
 ];

@@ -47,14 +47,15 @@ function cascade(
 }
 
 describe('computePatternUsage — shape and deterministic baseline', () => {
-  it('emits one row per lifecycle pattern (13 total)', () => {
+  it('emits one row per lifecycle pattern', () => {
+    const allPatterns = getAllLifecyclePatterns();
     const report = computePatternUsage({
       synthesisEvents: [],
       cascadeEvents: [],
       now: FIXED_NOW,
     });
-    expect(report.rows).toHaveLength(13);
-    expect(report.totalPatterns).toBe(13);
+    expect(report.rows).toHaveLength(allPatterns.length);
+    expect(report.totalPatterns).toBe(allPatterns.length);
   });
 
   it('covers every patternId from getAllLifecyclePatterns()', () => {

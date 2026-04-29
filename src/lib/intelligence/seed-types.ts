@@ -136,7 +136,20 @@ export type SourceEventPatternId =
   | 'PAT-SRC-FRAMEWORK-001'
   | 'PAT-SRC-RENEWAL-001'
   | 'PAT-SRC-DECOM-001'
-  | 'PAT-SRC-EMERGENCY-001';
+  | 'PAT-SRC-EMERGENCY-001'
+  // Category patterns — 12 PAT-SRC-CAT lifecycle wrappers
+  | 'PAT-SRC-CAT-CDW-001'
+  | 'PAT-SRC-CAT-CDP-001'
+  | 'PAT-SRC-CAT-LAKE-001'
+  | 'PAT-SRC-CAT-ERP-001'
+  | 'PAT-SRC-CAT-CRM-001'
+  | 'PAT-SRC-CAT-HCM-001'
+  | 'PAT-SRC-CAT-IAM-001'
+  | 'PAT-SRC-CAT-ITSM-001'
+  | 'PAT-SRC-CAT-BI-001'
+  | 'PAT-SRC-CAT-LLM-001'
+  | 'PAT-SRC-CAT-AGENT-001'
+  | 'PAT-SRC-CAT-FINOPS-001';
 
 /**
  * Branded pattern IDs for typed program lifecycle patterns.
