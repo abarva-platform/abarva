@@ -95,14 +95,12 @@ export function SynthesisFeedbackWidget({
           surface={surface}
           active={chosen === 'up'}
           disabled
-          onClick={() => {}}
         />
         <ThumbButton
           direction="down"
           surface={surface}
           active={chosen === 'down'}
           disabled
-          onClick={() => {}}
         />
       </span>
     );
@@ -145,7 +143,7 @@ interface ThumbButtonProps {
   surface: SynthesisFeedbackSurface;
   active: boolean;
   disabled: boolean;
-  onClick: () => void;
+  onClick?: () => void;
 }
 
 function ThumbButton({ direction, surface, active, disabled, onClick }: ThumbButtonProps) {
