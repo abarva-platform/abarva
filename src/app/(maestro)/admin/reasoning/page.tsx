@@ -1278,6 +1278,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Evidence Richness Index',
     description: 'Composite ERI score per instance — volume, diversity, freshness, and coverage dimensions (0-100).',
   },
+  {
+    href: '/admin/reasoning/gate-health-index',
+    title: 'Gate Health Index',
+    description: 'Portfolio GHI composite score (0-100) — pass rate, evidence, waiver, contradiction, and progression sub-indices.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
