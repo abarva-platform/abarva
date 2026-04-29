@@ -668,6 +668,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/patterns',
     description: 'Data-dictionary view of all lifecycle patterns — stages, gate criteria, contradiction templates',
   },
+  {
+    title: 'Health snapshot',
+    href: '/admin/reasoning/snapshot',
+    description: 'Auto-refreshing portfolio health dashboard with headline metrics — ideal for demo display',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
