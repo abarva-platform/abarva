@@ -1158,6 +1158,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/evidence-staleness',
     description: 'Fresh/Aging/Stale categorization by instance — staleness scores, most stale instances, freshness trend.',
   },
+  {
+    href: '/admin/reasoning/gate-criteria-browser',
+    title: 'Gate Criteria Browser',
+    description: 'Browsable catalog of all gate criteria by pattern and stage — type, hardest flags, and failure simulation.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
