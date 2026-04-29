@@ -818,6 +818,27 @@ export default async function ReasoningTelemetryPage() {
               which templates fire on fixtures
             </span>
           </a>
+          <a
+            href="/admin/reasoning/patterns"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: SPACING.sm,
+              background: COLORS.white,
+              border: `1px solid ${COLORS.ink}22`,
+              borderRadius: RADIUS.lg,
+              padding: `${SPACING.sm} ${SPACING.md}`,
+              textDecoration: 'none',
+              fontFamily: TYPOGRAPHY.sans,
+              fontSize: 13,
+              color: COLORS.ink,
+            }}
+          >
+            <span style={{ fontWeight: 600 }}>Open pattern usage analytics</span>
+            <span style={{ color: `${COLORS.ink}88` }}>
+              per-pattern instance, coverage, telemetry
+            </span>
+          </a>
         </div>
         {summary.totalEvents === 0 ? (
           <EmptyState />
