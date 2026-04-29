@@ -267,3 +267,57 @@ describe('summarizeEvidenceQuality', () => {
     expect(summaryGrade({ mean: 0.7, weakCount: 0, fairCount: 0, strongCount: 0, total: 1 })).toBe('strong');
   });
 });
+
+// PR #770 — file-attachment metadata branch.
+//
+// The ingestion forms now capture filename + mimetype + fileSize and, for
+// PDFs only, a stub pageCount derived from `ceil(size / 30_000)`. These flow
+// onto `EvidenceLikeItem` so the existing pageCount + new filename heuristic
+// fire from real form submissions.
+describe('scoreEvidenceItem · file attachment metadata', () => {
+  test('attached filename alone bumps score by +0.10', () => {
+    const result = scoreEvidenceItem(
+      { filename: 'transition-plan.pdf', mimetype: 'application/pdf', fileSize: 12_000 },
+      NOW_MS,
+    );
+    expect(result.score).toBe(0.1);
+    expect(result.reasons).toContain('Attached file transition-plan.pdf (+0.10)');
+  });
+
+  test('PDF with stub pageCount >= 5 fires the document-length bonus on top of filename', () => {
+    // 150KB / 30KB = 5 pages → triggers pageCount >= 5 (+0.15) plus filename (+0.10).
+    const result = scoreEvidenceItem(
+      {
+        filename: 'transition-plan.pdf',
+        mimetype: 'application/pdf',
+        fileSize: 150_000,
+        pageCount: 5,
+      },
+      NOW_MS,
+    );
+    expect(result.score).toBe(0.25);
+    expect(result.reasons).toContain('Document length 5 pages (+0.15)');
+    expect(result.reasons).toContain('Attached file transition-plan.pdf (+0.10)');
+  });
+
+  test('attached PDF combined with note + uploader pushes grade into fair', () => {
+    const result = scoreEvidenceItem(
+      {
+        filename: 'signed-soc2.pdf',
+        mimetype: 'application/pdf',
+        fileSize: 750_000, // ceil(750000/30000) = 25 pages
+        pageCount: 25,
+        note: 'SOC 2 Type II report covering 2025-04 through 2026-03 controls.',
+        uploadedBy: 'Avery Chen',
+        uploadedAt: '2026-04-15T00:00:00Z',
+      },
+      NOW_MS,
+    );
+    // citation: 0, uploadedBy: 0.15, uploadedAt fresh: 0.10,
+    // note 100–500 chars: NO (62 chars → +0.05 short body),
+    // pageCount >= 5: +0.15, filename: +0.10
+    // = 0.55 → fair
+    expect(result.score).toBe(0.55);
+    expect(result.grade).toBe('fair');
+  });
+});
