@@ -608,6 +608,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/contradictions',
     description: 'Cross-instance view of all active unresolved contradictions',
   },
+  {
+    title: 'Waiver analysis',
+    href: '/admin/reasoning/waiver-analysis',
+    description: 'Gate waivers, approvals, and rejections summarised by instance and criterion',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
