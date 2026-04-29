@@ -758,6 +758,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/vendor-tracker',
     description: 'All vendor participants across source events with status and selection tracking',
   },
+  {
+    title: 'Evidence coverage',
+    href: '/admin/reasoning/evidence-coverage',
+    description: 'Evidence map contents per instance — what data the gate evaluator sees for each instance',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
