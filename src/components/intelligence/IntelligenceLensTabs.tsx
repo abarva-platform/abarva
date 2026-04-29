@@ -1,4 +1,4 @@
-// INTEL4 + INT4 + INT5 + INT6 · Intelligence Lens Tabs.
+// INTEL4 + INT4 + INT5 + INT6 + INT7 · Intelligence Lens Tabs.
 //
 // Server component. Renders the blueprint-aligned five-mode lens surface
 // (Summary · Evidence · Programs · Actions · Signals) and the content panel
@@ -67,6 +67,10 @@ import {
   type GateRequirement,
   type ProgrammeGateReadiness,
 } from '@/lib/intelligence/gate-readiness-view';
+import {
+  buildEngagementScorecardView,
+  type ProgrammeScorecardRow,
+} from '@/lib/intelligence/engagement-scorecard-view';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Design tokens (matches existing intelligence surface palette)
@@ -188,6 +192,9 @@ export function IntelligenceLensTabs({
         )}
         {activeTab === 'gate_readiness' && (
           <GateReadinessPanel />
+        )}
+        {activeTab === 'engagement_scorecard' && (
+          <EngagementScorecardPanel />
         )}
       </div>
     </div>
@@ -1901,6 +1908,191 @@ function GateReadinessPanel() {
         style={{ fontSize: 10, color: C.mutedSoft, fontStyle: 'italic', lineHeight: 1.5, borderTop: `1px solid ${C.border}`, paddingTop: 10 }}
       >
         Deterministic seed · Gate readiness checklist reflects fixture requirement data for the four Apex Retail AI programmes. Live gate tracking, automated requirement closure, and cross-programme dependency resolution are managed by the Sentinel reasoning runtime.
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INT7 · Engagement Intelligence Scorecard Panel
+// ─────────────────────────────────────────────────────────────────────────────
+
+const SCORECARD_SIGNAL_STYLE: Record<string, { bg: string; text: string; label: string; border: string; dot: string }> = {
+  red:    { bg: '#fef2f2', text: '#b91c1c', label: 'Red',   border: '#b91c1c', dot: '#b91c1c' },
+  amber:  { bg: '#fef3c7', text: '#92400e', label: 'Amber', border: '#d97706', dot: '#d97706' },
+  green:  { bg: '#f0fdf4', text: '#166534', label: 'Green', border: '#16a34a', dot: '#16a34a' },
+};
+
+const SCORECARD_PATTERN_STATUS_STYLE: Record<string, { bg: string; text: string }> = {
+  strong:   { bg: '#f0fdf4', text: '#166534' },
+  partial:  { bg: '#fef3c7', text: '#92400e' },
+  building: { bg: '#eff6ff', text: '#1d4ed8' },
+};
+
+const SCORECARD_EVIDENCE_STYLE: Record<string, { bg: string; text: string }> = {
+  high:   { bg: '#f0fdf4', text: '#166534' },
+  medium: { bg: '#fef3c7', text: '#92400e' },
+  low:    { bg: '#fef2f2', text: '#b91c1c' },
+};
+
+const SCORECARD_GATE_STYLE: Record<string, { bg: string; text: string }> = {
+  clear:    { bg: '#f0fdf4', text: '#166534' },
+  at_risk:  { bg: '#fef3c7', text: '#92400e' },
+  blocked:  { bg: '#fef2f2', text: '#b91c1c' },
+};
+
+function EngagementScorecardPanel() {
+  const view = buildEngagementScorecardView();
+  const { programmes, engagementSummary } = view;
+  const overallStyle = SCORECARD_SIGNAL_STYLE[engagementSummary.overallEngagementSignal] ?? SCORECARD_SIGNAL_STYLE.amber;
+
+  return (
+    <div
+      data-testid="intelligence-engagement-scorecard-panel"
+      style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 960 }}
+    >
+      {/* Header */}
+      <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', color: C.muted, textTransform: 'uppercase' }}>
+        INT7 · Engagement Intelligence Scorecard · Apex Retail
+      </div>
+
+      {/* Engagement summary bar */}
+      <div
+        data-testid="intelligence-engagement-scorecard-summary"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+          flexWrap: 'wrap',
+          padding: '12px 16px',
+          backgroundColor: C.card,
+          border: `1px solid ${C.border}`,
+          borderLeft: `4px solid ${overallStyle.border}`,
+          borderRadius: 8,
+        }}
+      >
+        <span style={{ fontSize: 11, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600 }}>
+          Engagement Signal
+        </span>
+        <span style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 999, background: overallStyle.bg, color: overallStyle.text, fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+          ● {overallStyle.label}
+        </span>
+        <span style={{ fontSize: 12, color: C.muted }}>
+          {engagementSummary.programmesNeedingAttention} of {programmes.length} programmes need attention
+        </span>
+        {engagementSummary.gateBlockedCount > 0 && (
+          <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: '#fef2f2', color: '#b91c1c', fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', border: '1px solid #fca5a5' }}>
+            {engagementSummary.gateBlockedCount} gate blocked
+          </span>
+        )}
+        {engagementSummary.totalCriticalItems > 0 && (
+          <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: '#fef2f2', color: '#b91c1c', fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            {engagementSummary.totalCriticalItems} critical items
+          </span>
+        )}
+      </div>
+
+      {/* Executive summary */}
+      <div
+        style={{
+          padding: '12px 16px',
+          backgroundColor: '#0F1E3F',
+          borderRadius: 6,
+          color: '#FFFFFF',
+        }}
+      >
+        <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', color: '#9AA3B2', textTransform: 'uppercase', marginBottom: 6 }}>
+          SENTINEL · EXECUTIVE SUMMARY · DETERMINISTIC SEED
+        </div>
+        <p style={{ fontSize: 12, color: '#D1D5DB', lineHeight: 1.6, margin: 0 }}>
+          {engagementSummary.sentinelExecutiveSummary}
+        </p>
+      </div>
+
+      {/* Atlas synthesis */}
+      <p style={{ fontSize: 13, color: C.ink, lineHeight: 1.6, margin: 0 }}>
+        {view.atlasSynthesis}
+      </p>
+
+      {/* Programme scorecard rows */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {programmes.map((prog: ProgrammeScorecardRow) => {
+          const signalStyle = SCORECARD_SIGNAL_STYLE[prog.overallSignal] ?? SCORECARD_SIGNAL_STYLE.amber;
+          const patternStyle = SCORECARD_PATTERN_STATUS_STYLE[prog.patternApplicationStatus] ?? SCORECARD_PATTERN_STATUS_STYLE.partial;
+          const evidenceStyle = SCORECARD_EVIDENCE_STYLE[prog.evidenceConfidence] ?? SCORECARD_EVIDENCE_STYLE.medium;
+          const gateStyle = SCORECARD_GATE_STYLE[prog.gateStatus] ?? SCORECARD_GATE_STYLE.at_risk;
+          return (
+            <div
+              key={prog.programmeId}
+              data-testid={`intelligence-scorecard-${prog.programmeId}`}
+              style={{
+                backgroundColor: C.card,
+                border: `1px solid ${C.border}`,
+                borderLeft: `4px solid ${signalStyle.border}`,
+                borderRadius: 6,
+                padding: '12px 16px',
+                display: 'grid',
+                gap: 8,
+              }}
+            >
+              {/* Programme title row */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    background: signalStyle.dot,
+                    flexShrink: 0,
+                    display: 'inline-block',
+                  }}
+                />
+                <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: C.ink }}>
+                  {prog.programmeName}
+                </span>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: C.mutedSoft }}>
+                  {prog.programmeCode}
+                </span>
+              </div>
+
+              {/* One-liner */}
+              <p style={{ fontSize: 12, color: C.muted, margin: 0, lineHeight: 1.5 }}>
+                {prog.sentinelOneLiner}
+              </p>
+
+              {/* Dimension badges row */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {/* Pattern */}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', background: patternStyle.bg, color: patternStyle.text }}>
+                  Pattern: {prog.patternApplicationStatus}
+                </span>
+                {/* Evidence */}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', background: evidenceStyle.bg, color: evidenceStyle.text }}>
+                  Evidence: {prog.evidenceConfidence}
+                  {prog.criticalGapsCount > 0 && ` (${prog.criticalGapsCount} critical)`}
+                </span>
+                {/* Contradictions */}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', background: prog.activeContradictions > 0 ? '#fef3c7' : '#f0fdf4', color: prog.activeContradictions > 0 ? '#92400e' : '#166534' }}>
+                  {prog.activeContradictions} contradiction{prog.activeContradictions !== 1 ? 's' : ''}
+                  {prog.escalatedContradictions > 0 && ` · ${prog.escalatedContradictions} escalated`}
+                </span>
+                {/* Gate */}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', background: gateStyle.bg, color: gateStyle.text }}>
+                  Gate: {prog.gateStatus.replace('_', ' ')} · {prog.nextGate}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Honest disclaimer */}
+      <div
+        data-testid="intelligence-engagement-scorecard-disclaimer"
+        data-honest-disclaimer="intelligence-engagement-scorecard"
+        style={{ fontSize: 10, color: C.mutedSoft, fontStyle: 'italic', lineHeight: 1.5, borderTop: `1px solid ${C.border}`, paddingTop: 10 }}
+      >
+        Deterministic seed · Engagement scorecard aggregates fixture contradiction, evidence gap, gate readiness, and pattern application signals for the Apex Retail engagement. Live signal aggregation, real-time scoring, and cross-engagement benchmarking are managed by the Sentinel reasoning runtime.
       </div>
     </div>
   );

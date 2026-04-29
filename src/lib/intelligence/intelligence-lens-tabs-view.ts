@@ -1,9 +1,9 @@
-// INTEL4 + INT1 + INT3 + INT4 + INT5 + INT6 · Intelligence Lens Tabs view-model.
+// INTEL4 + INT1 + INT3 + INT4 + INT5 + INT6 + INT7 · Intelligence Lens Tabs view-model.
 //
-// Pure deterministic helper that returns metadata for the ten canonical
+// Pure deterministic helper that returns metadata for the eleven canonical
 // lens tabs on the Intelligence surface: Summary, Evidence, Programs,
 // Actions, Signals, Pattern Plan, Gap Queue, Contradiction Monitor,
-// Programme Risk, Gate Readiness.
+// Programme Risk, Gate Readiness, Engagement Scorecard.
 //
 // No model calls, no fetch, no Date.now / Math.random / new Date,
 // no live data. Same input → identical output.
@@ -30,7 +30,8 @@ export type IntelligenceLensTab =
   | 'gap_queue'
   | 'contradiction_monitor'
   | 'programme_risk'
-  | 'gate_readiness';
+  | 'gate_readiness'
+  | 'engagement_scorecard';
 
 export interface IntelligenceLensTabMeta {
   key: IntelligenceLensTab;
@@ -112,6 +113,12 @@ export const INTELLIGENCE_TABS: ReadonlyArray<IntelligenceLensTabMeta> = [
     key: 'gate_readiness',
     label: 'Gate Readiness',
     description: 'Per-programme gate readiness checklist — what Sentinel needs confirmed before each programme can advance to its next milestone gate',
+    hasApexRetailContent: true,
+  },
+  {
+    key: 'engagement_scorecard',
+    label: 'Scorecard',
+    description: 'Engagement intelligence scorecard — per-programme traffic-light rollup of pattern application, evidence confidence, contradiction count, and gate state',
     hasApexRetailContent: true,
   },
 ];
