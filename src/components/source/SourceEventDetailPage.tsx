@@ -25,6 +25,7 @@ import { ContradictionDetailCardClient } from '@/components/_shared/Contradictio
 import { RiskRegisterPanel } from '@/components/_shared/RiskRegisterPanel';
 import { buildRiskRegisterForInstance } from '@/lib/reasoning/risk-register';
 import { CascadeImpactCard, ReverseCascadeCard } from '@/components/_shared/CascadeImpactCard';
+import { LinkedInstanceTilesGrid } from '@/components/_shared/LinkedInstanceTilesGrid';
 import { InstanceEventTimeline } from '@/components/_shared/InstanceEventTimeline';
 import { LifecycleMiniGraph } from '@/components/_shared/LifecycleMiniGraph';
 import { HandoffNarrativePanel } from '@/components/_shared/HandoffNarrativePanel';
@@ -254,6 +255,12 @@ function ReadinessTab() {
         upstream={computeReverseCascade(AMS_VENDOR_CONSOLIDATION_2026_INSTANCE)}
         thisInstanceId={AMS_VENDOR_CONSOLIDATION_2026_INSTANCE.displayId}
         title="Upstream dependencies"
+      />
+
+      {/* Cross-instance linked tiles — compact summary of every instance this
+          one cascades to or from, deduped across both directions. */}
+      <LinkedInstanceTilesGrid
+        currentInstanceId={AMS_VENDOR_CONSOLIDATION_2026_INSTANCE.id}
       />
 
       {/* REASON-32 — Per-instance reasoning event timeline. Sits below the
