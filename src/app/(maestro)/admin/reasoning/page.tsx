@@ -1118,6 +1118,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/pattern-recommendation',
     description: 'Jaccard-based co-apply suggestions per instance — compatibility scores and shared-stage rationale.',
   },
+  {
+    title: 'Evidence Heatmap',
+    href: '/admin/reasoning/evidence-heatmap',
+    description: 'Instance × stage evidence density grid — identify under-evidenced stages at a glance.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
