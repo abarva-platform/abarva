@@ -1188,6 +1188,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Gate Coverage Gaps',
     description: 'Sparse stages, no-hard-gate stages, evidence-less criteria — structural gaps in gate coverage with fix recommendations.',
   },
+  {
+    href: '/admin/reasoning/health-momentum',
+    title: 'Health Momentum',
+    description: 'Health velocity per stage — accelerating, improving, stable, declining trajectories with projection.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
