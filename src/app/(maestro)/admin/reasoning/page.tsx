@@ -708,6 +708,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/waiver-log',
     description: 'All active gate waivers across instances — current in-memory state',
   },
+  {
+    title: 'Failure modes',
+    href: '/admin/reasoning/failure-modes',
+    description: 'Catalog of all failure modes across lifecycle patterns with affected stages and mitigations',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
