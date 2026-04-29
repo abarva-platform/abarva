@@ -1178,6 +1178,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Synthesis Audit',
     description: 'Confidence plausibility checks — flags overconfident, underconfident, divergent, and contradiction-blind instances.',
   },
+  {
+    href: '/admin/reasoning/pattern-health-correlation',
+    title: 'Pattern-Health Correlation',
+    description: 'Lifecycle pattern leaderboard — avg health, gate pass rate, and contradiction rates by pattern with correlation insights.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
