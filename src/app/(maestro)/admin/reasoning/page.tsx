@@ -1173,6 +1173,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Gate Criteria Browser',
     description: 'Browsable catalog of all gate criteria by pattern and stage — type, hardest flags, and failure simulation.',
   },
+  {
+    href: '/admin/reasoning/synthesis-audit',
+    title: 'Synthesis Audit',
+    description: 'Confidence plausibility checks — flags overconfident, underconfident, divergent, and contradiction-blind instances.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
