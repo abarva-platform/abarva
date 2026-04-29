@@ -4,6 +4,88 @@ import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourceRigorLevel, SourcingEventSummary } from '@/lib/source/types';
 import { formatUsd } from '@/lib/source/value-ledger';
 import { EventLifecycleStatusBadge } from './EventLifecycleStatusBadge';
+import { InstanceHealthBadge } from '@/components/_shared/InstanceHealthBadge';
+import { computeInstanceHealth } from '@/lib/reasoning/instance-health';
+import { buildSourceSynthesisContext } from '@/lib/reasoning/synthesis-context-builder';
+import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
+import { findLifecyclePattern } from '@/lib/reasoning/lifecycle-pattern-lookup';
+import type { InstanceHealth } from '@/lib/reasoning/instance-health';
+
+// ─── Reasoning helpers ────────────────────────────────────────────────────────
+
+interface EventReasoningData {
+  health: InstanceHealth;
+  contradictionCount: number;
+}
+
+/**
+ * Compute instance health and contradiction count for a sourcing event row by
+ * matching the event ID against SOURCE_EVENT_INSTANCES. Returns null when no
+ * typed instance exists for that event (e.g. events not yet bound to a pattern).
+ */
+function computeEventReasoningData(eventId: string): EventReasoningData | null {
+  const instance = SOURCE_EVENT_INSTANCES.find((i) => i.id === eventId);
+  if (!instance) return null;
+  const pattern = findLifecyclePattern(instance.patternId);
+  if (!pattern) return null;
+  const ctx = buildSourceSynthesisContext(instance, pattern);
+  return {
+    health: computeInstanceHealth(ctx),
+    contradictionCount: ctx.activeContradictions.length,
+  };
+}
+
+// ─── Contradiction count chip ──────────────────────────────────────────────────
+
+function ContradictionChip({ count }: { count: number }) {
+  if (count === 0) {
+    return (
+      <span
+        data-testid="contradiction-chip-zero"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 4,
+          padding: '2px 7px',
+          borderRadius: 999,
+          border: `1px solid ${SHELL.MINT_LINE}`,
+          background: SHELL.MINT_BG,
+          fontFamily: SHELL.MONO,
+          fontSize: 9,
+          fontWeight: 700,
+          color: SHELL.MINT_TEXT,
+          letterSpacing: '0.04em',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        ✓ no contradictions
+      </span>
+    );
+  }
+  return (
+    <span
+      data-testid="contradiction-chip-nonzero"
+      title={`${count} active contradiction${count === 1 ? '' : 's'} detected`}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
+        padding: '2px 7px',
+        borderRadius: 999,
+        border: `1px solid ${SHELL.PEACH_LINE}`,
+        background: SHELL.PEACH_BG,
+        fontFamily: SHELL.MONO,
+        fontSize: 9,
+        fontWeight: 700,
+        color: SHELL.PEACH_TEXT,
+        letterSpacing: '0.04em',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {count} contradiction{count === 1 ? '' : 's'}
+    </span>
+  );
+}
 
 const SOURCE_CARD: CSSProperties = {
   background: SHELL.CARD_WHITE,
@@ -205,12 +287,21 @@ export function SourcingEventTable({
             </tr>
           </thead>
           <tbody>
-            {events.map((event) => (
+            {events.map((event) => {
+              const reasoningData = computeEventReasoningData(event.id);
+              return (
               <tr key={event.id} style={{ background: lightMode ? LIGHT.row : 'transparent' }}>
                 <td style={tableCell}>
                   <div style={{ display: 'grid', gap: 6 }}>
-                    <div style={{ ...EVENT_NAME, color: textPrimary }}>{event.name}</div>
-                    <div style={{ ...STATUS_META, color: textMuted }}>{event.code} - {event.accountName}</div>
+                    {/* Event name + health badge in a flex row */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <span style={{ ...EVENT_NAME, color: textPrimary }}>{event.name}</span>
+                      {reasoningData && <InstanceHealthBadge health={reasoningData.health} />}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <span style={{ ...STATUS_META, color: textMuted }}>{event.code} - {event.accountName}</span>
+                      {reasoningData && <ContradictionChip count={reasoningData.contradictionCount} />}
+                    </div>
                     {event.blocker ? (
                       <div
                         style={{
@@ -293,7 +384,8 @@ export function SourcingEventTable({
                   </Link>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
