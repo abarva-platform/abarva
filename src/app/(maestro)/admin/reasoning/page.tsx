@@ -1128,6 +1128,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/synthesis-comparison',
     description: 'Health vs. confidence rank comparison — spot divergence between structural health and synthesis quality.',
   },
+  {
+    href: '/admin/reasoning/gate-timeline',
+    title: 'Gate Timeline',
+    description: 'Chronological gate events per instance — gate-met, waivers, and stage transitions with demo timestamps.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
