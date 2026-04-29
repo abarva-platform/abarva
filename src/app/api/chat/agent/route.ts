@@ -238,17 +238,19 @@ export async function POST(request: Request) {
   // consume them. The check supports literal surface keys (Surface 1)
   // AND the canonical programs-detail pattern (Surface 2 — any
   // /programs/<id> surface that isn't /programs/new).
-  // PR-I · the artifact channel is now enabled across the full Programs
-  // canvas (list + detail + new). Adding /home and /intelligence is the
-  // natural next step (PR-J for home, Intelligence brief for that one)
-  // — leaving them off here so this PR stays focused.
+  // Artifact channel enabled across all four agent-centric surfaces:
+  //   /programs/new (Surface 1, Steward)
+  //   /programs (PR-I, Nexus list)
+  //   /programs/<id> (PR-F, Nexus detail — matched via regex below)
+  //   /home (PR-J, Atlas portfolio)
+  //   /intelligence (PR-INT-B, Sentinel knowledge)
+  // Each was added in its respective PR; the conflict between PR-J
+  // and PR-INT-B was resolved here by keeping both surfaces.
   const surfacesWithArtifactChannel = new Set([
     '/programs/new',
     '/demo/programs/new',
     '/programs',
-    // PR-INT-B · Sentinel's Intelligence surface. The reactive
-    // SentinelReactivePanel materializes pattern-match,
-    // evidence-highlight, and cross-program-dependency cards.
+    '/home',
     '/intelligence',
   ]);
   const isProgramDetailSurface =

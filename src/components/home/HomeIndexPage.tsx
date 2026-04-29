@@ -2,9 +2,13 @@
 
 import Link from 'next/link';
 import { useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useCallback, useState } from 'react';
 import { AppShell } from '@/components/shell/AppShell';
-import { AgentColumn } from '@/components/shell/AgentColumn';
+// AgentColumn used to render here as the left-rail chat. PR-J replaced
+// it with the embedded chat inside <AgentCanvas>; the legacy import
+// is dropped along with the static A/B/C action buttons.
+import { AgentCanvas } from '@/components/programs/AgentCanvas';
+import type { Artifact } from '@/lib/agent/artifacts';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { HOME_VIEW } from '@/lib/home/shell-home-fixture';
 import type { ReasoningDashboardSummary } from '@/lib/reasoning/dashboard-summary';
@@ -615,21 +619,25 @@ function ReasoningIntelligenceRow({ data }: { data: ReasoningDashboardSummary })
 
 export function HomeIndexPage({ reasoning }: { reasoning?: ReasoningDashboardSummary }) {
   const v = HOME_VIEW;
-  const router = useRouter();
   const programsSectionRef = useRef<HTMLDivElement>(null);
 
-  function handleActionClick(letter: 'A' | 'B' | 'C') {
-    if (letter === 'A') {
-      // CDP architecture sprint — drill into the P3 Design detail
-      router.push('/programs/apx-cdp-2026');
-    } else if (letter === 'B') {
-      // AI Cloud Spend pressure
-      router.push('/tower/pressures/twr-ai-cloud-spend');
-    } else if (letter === 'C') {
-      // AMS BAFO award — drill into the source event (Wave S1 route)
-      router.push('/source/events/apex-retail-ams-outsourcing-2026');
-    }
-  }
+  // PR-J · live artifacts dispatched by the embedded Atlas chat. Same
+  // pattern as ProgramDetailPage / ProgramsIndexPage. Atlas reasons at
+  // portfolio scope; the reactive panel materializes pressure cards,
+  // gate evaluations, cross-program dependencies as Atlas surfaces them.
+  const [atlasArtifacts, setAtlasArtifacts] = useState<Artifact[]>([]);
+  const handleAtlasArtifact = useCallback((artifact: Artifact) => {
+    setAtlasArtifacts((prev) => {
+      const key = JSON.stringify(artifact);
+      if (prev.some((a) => JSON.stringify(a) === key)) return prev;
+      return [...prev, artifact];
+    });
+  }, []);
+
+  // Note: the legacy A/B/C quick-action handler used to feed AgentColumn.
+  // PR-J dropped AgentColumn for this surface — Atlas chat is now the
+  // navigation. (If we want suggested-prompt chips back, add them to
+  // AgentCanvas via a follow-up.)
 
   return (
     <AppShell
@@ -661,21 +669,66 @@ export function HomeIndexPage({ reasoning }: { reasoning?: ReasoningDashboardSum
           <span>AMS at BAFO</span>
         </div>
       }
+      onArtifact={handleAtlasArtifact}
     >
-      {/* Agent column */}
-      <AgentColumn
-        agent={{ initials: 'Nx', name: 'Nexus', role: 'Executive guide' }}
-        quote={v.agentQuote}
-        agentContext={v.agentContext}
-        actions={v.actions}
-        surface="home"
-        onActionClick={handleActionClick}
-      />
+      {/* PR-J · agent-centric primary canvas. Atlas + reactive panel
+          dominate the viewport; the legacy greeting + dashboard
+          collapses into a details accordion below. AgentColumn (the
+          legacy left-rail chat widget) is deprecated for this
+          surface — chat lives inside AgentCanvas now.
+
+          Voice: Atlas. AppShell.DEFAULT_AGENT['home']='Atlas' so the
+          server-side voiceLine is already Atlas; the prior code
+          showed a "Nx · Nexus" badge in AgentColumn which mismatched
+          the actual responder. Fixing here. */}
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minWidth: 0,
+          minHeight: 0,
+          overflow: 'hidden',
+        }}
+      >
+        <div style={{ padding: '20px 28px 0' }}>
+          <AgentCanvas
+            surface="/home"
+            agent={{ initials: 'At', name: 'Atlas', role: 'Portfolio CIO of staff' }}
+            quote={v.agentQuote}
+            artifacts={atlasArtifacts}
+            onArtifact={handleAtlasArtifact}
+          />
+        </div>
+
+        <details
+          data-testid="home-legacy-dashboard"
+          style={{
+            margin: '0 28px 28px',
+            border: `1px solid ${SHELL.CARD_LINE}`,
+            borderRadius: 10,
+            background: SHELL.PAPER_SOFT,
+          }}
+        >
+          <summary
+            style={{
+              cursor: 'pointer',
+              padding: '12px 16px',
+              fontFamily: SHELL.MONO,
+              fontSize: 11,
+              letterSpacing: '0.10em',
+              textTransform: 'uppercase',
+              color: SHELL.GRAY_TEXT,
+              fontWeight: 700,
+              userSelect: 'none',
+            }}
+          >
+            Morning pulse · greeting · pressures · programs queue
+          </summary>
 
       {/* Work pane */}
       <div
         style={{
-          flex: 1,
           padding: '28px 32px',
           overflowY: 'auto',
           background: SHELL.PAPER_SOFT,
@@ -749,6 +802,8 @@ export function HomeIndexPage({ reasoning }: { reasoning?: ReasoningDashboardSum
             <SourceEventMini />
           </div>
         </div>
+      </div>
+        </details>
       </div>
     </AppShell>
   );
