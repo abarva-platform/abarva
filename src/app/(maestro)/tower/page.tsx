@@ -3,6 +3,7 @@ import { TowerProvenanceRibbon } from '@/components/tower/TowerProvenanceRibbon'
 import { TowerTopPatternsTile } from '@/components/tower/TowerTopPatternsTile';
 import { TowerMissionQueue } from '@/components/tower/TowerMissionQueue';
 import { TowerPortfolioSummaryStrip } from '@/components/tower/TowerPortfolioSummaryStrip';
+import { TowerPortfolioCascadeGraph } from '@/components/tower/TowerPortfolioCascadeGraph';
 import { RiskRegisterPanel } from '@/components/_shared/RiskRegisterPanel';
 import { buildTowerSynthesisContext } from '@/lib/reasoning/tower-synthesis-context-builder';
 import { buildPortfolioRiskRegister } from '@/lib/reasoning/risk-register';
@@ -40,6 +41,7 @@ export default function TowerPage() {
         </>
       }
       portfolioSummarySlot={<TowerPortfolioSummaryStrip />}
+      cascadeGraphSlot={<TowerPortfolioCascadeGraph />}
     />
   );
 }
