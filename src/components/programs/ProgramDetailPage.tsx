@@ -35,6 +35,8 @@ import {
 import { CompareWithDropdown } from '@/components/_shared/CompareWithDropdown';
 import { getAllInstanceIds } from '@/lib/reasoning/instance-resolver';
 import { ContradictionDetailCardClient } from '@/components/_shared/ContradictionDetailCardClient';
+import { RiskRegisterPanel } from '@/components/_shared/RiskRegisterPanel';
+import { buildRiskRegisterForInstance } from '@/lib/reasoning/risk-register';
 import { CascadeImpactCard, ReverseCascadeCard } from '@/components/_shared/CascadeImpactCard';
 import { InstanceEventTimeline } from '@/components/_shared/InstanceEventTimeline';
 import { InstanceEventTimelineFilterBar } from '@/components/_shared/InstanceEventTimelineFilterBar';
@@ -3301,6 +3303,22 @@ export function ProgramDetailPage({
     return { instanceId: instance.id, contradictions: active };
   })();
 
+  // Risk register: joins active contradictions + failure modes for this
+  // program into a single prioritised list. Sits below the contradiction
+  // detail card so users see a unified risk view alongside per-detector cards.
+  const riskRegisterInfo = (() => {
+    const instance = APEX_RETAIL_PROGRAM_INSTANCES.find(
+      (i) =>
+        i.displayId === view.displayId ||
+        i.id.toLowerCase() === view.programId.toLowerCase(),
+    );
+    if (!instance) return null;
+    const ctx = buildProgramSynthesisContext(instance);
+    return {
+      risks: buildRiskRegisterForInstance(ctx, instance.displayId),
+    };
+  })();
+
   // REASON-31 — Cascade impact info: downstream impacts from the synthesis
   // context plus the upstream `computeReverseCascade` view so the user can
   // see both directions of the cross-instance dependency graph.
@@ -3774,6 +3792,13 @@ export function ProgramDetailPage({
               <ContradictionDetailCardClient
                 contradictions={contradictionInfo.contradictions}
                 instanceId={contradictionInfo.instanceId}
+              />
+            )}
+            {/* Risk register — unified view of contradictions + failure modes. */}
+            {riskRegisterInfo && riskRegisterInfo.risks.length > 0 && (
+              <RiskRegisterPanel
+                risks={riskRegisterInfo.risks}
+                title="Risk register · this program"
               />
             )}
             {/* REASON-31 — Cascade impact detail (downstream + upstream) */}
