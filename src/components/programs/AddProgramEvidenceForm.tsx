@@ -14,6 +14,8 @@
 import { useState, type CSSProperties, type FormEvent, type ChangeEvent, type FocusEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { SHELL } from '@/lib/shell/shell-tokens';
+import { EvidenceTagSelector } from '@/components/reasoning/EvidenceTagSelector';
+import type { EvidenceTag } from '@/lib/reasoning/evidence-tags';
 
 const SECTION: CSSProperties = {
   display: 'grid',
@@ -151,6 +153,7 @@ export function AddProgramEvidenceForm({ instanceId, currentPhase }: AddProgramE
   const [note, setNote] = useState<string>('');
   const [url, setUrl] = useState<string>('');
   const [fileMeta, setFileMeta] = useState<FileMeta | null>(null);
+  const [selectedTags, setSelectedTags] = useState<EvidenceTag[]>([]);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [status, setStatus] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
   const [fetchingMeta, setFetchingMeta] = useState<boolean>(false);
@@ -221,6 +224,7 @@ export function AddProgramEvidenceForm({ instanceId, currentPhase }: AddProgramE
         source: 'demo-add-evidence',
         recordedAt: new Date().toISOString(),
         phase,
+        ...(selectedTags.length > 0 && { tags: selectedTags }),
         ...(url.trim() && { url: url.trim() }),
         ...(fileMeta !== null && {
           fileName: fileMeta.fileName,
@@ -242,6 +246,7 @@ export function AddProgramEvidenceForm({ instanceId, currentPhase }: AddProgramE
       setField('');
       setNote('');
       setUrl('');
+      setSelectedTags([]);
       setStatus({
         kind: 'ok',
         text: `evidence added · ${body.totalAddedForInstance} on this program`,
@@ -300,6 +305,7 @@ export function AddProgramEvidenceForm({ instanceId, currentPhase }: AddProgramE
             {submitting ? 'adding…' : 'Add'}
           </button>
         </div>
+        <EvidenceTagSelector selectedTags={selectedTags} onChange={setSelectedTags} />
         <div style={{ display: 'grid', gap: 4 }}>
           <label style={FILE_LABEL}>
             URL (optional — paste to auto-fill note)

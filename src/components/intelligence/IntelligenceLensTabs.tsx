@@ -25,6 +25,8 @@ import {
 import { EvidenceQualityChip } from '@/components/_shared/EvidenceQualityChip';
 import { FailureModeWarningChip } from '@/components/_shared/FailureModeWarningChip';
 import { StaleEvidenceChip } from '@/components/reasoning/StaleEvidenceChip';
+import { EvidenceTagChips } from '@/components/reasoning/EvidenceTagChips';
+import type { EvidenceTag } from '@/lib/reasoning/evidence-tags';
 import { scoreEvidenceItem } from '@/lib/reasoning/evidence-quality';
 import {
   buildIntelligenceWorkflowCanvasView,
@@ -1001,7 +1003,7 @@ function EvidenceRow({
   item,
   variant,
 }: {
-  item: EvidenceItem;
+  item: EvidenceItem & { tags?: EvidenceTag[] };
   variant: 'confirmed' | 'missing';
 }) {
   const accent =
@@ -1044,6 +1046,10 @@ function EvidenceRow({
         />
         {/* Staleness chip — shown when evidence is older than 90 days */}
         <StaleEvidenceChip date={item.date ?? null} />
+        {/* Tag chips — shown when tags are present */}
+        {item.tags && item.tags.length > 0 && (
+          <EvidenceTagChips tags={item.tags} />
+        )}
         {/* Failure mode warning chip — missing evidence items represent an
             unresolved evidence gap, which is itself a failure mode signal */}
         {variant === 'missing' && (

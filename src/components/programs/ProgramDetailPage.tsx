@@ -78,6 +78,7 @@ import { PhaseAdvanceButton } from '@/components/programs/PhaseAdvanceButton';
 import { EvidenceCoverageHeatmap } from '@/components/reasoning/EvidenceCoverageHeatmap';
 import { EvidenceNetworkGraph } from '@/components/reasoning/EvidenceNetworkGraph';
 import { ReasoningErrorBoundary } from '@/components/reasoning/ReasoningErrorBoundary';
+import { EvidenceTagChips } from '@/components/reasoning/EvidenceTagChips';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -1258,6 +1259,10 @@ function EvidenceSection({ items, onView }: EvidenceSectionProps) {
               />
               {/* Staleness chip — shown when evidence is older than 90 days */}
               <StaleEvidenceChip date={item.uploadedAt ?? null} />
+              {/* Tag chips — shown when tags are present */}
+              {item.tags && item.tags.length > 0 && (
+                <EvidenceTagChips tags={item.tags} />
+              )}
               {/* Failure mode warning chip — shown when a contradiction is
                   recorded against this evidence item */}
               {item.hasContradiction && (
