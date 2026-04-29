@@ -8,6 +8,8 @@ import { apexOutcomes } from '@/data/apexretail/outcomes';
 import { apexRFP } from '@/data/apexretail/rfp_data';
 import { apexRetailTechInventory } from '@/data/apexretail/technology_inventory';
 import { apexVendors } from '@/data/apexretail/vendors';
+import { firstCapital } from '@/data/firstcapital';
+import { meridianHealth } from '@/data/meridian';
 import evidenceBase from '@/content/deliverables/apex-retail/morrison/_evidence-base.json';
 import timeline from '@/content/deliverables/apex-retail/morrison/_timeline.json';
 import { CLIENT_DATA, VOLUMETRICS_PROFILES } from '@/scripts/seed/_shared/enterprise-data';
@@ -301,6 +303,9 @@ export interface EnterpriseDataRoomValidationResult {
 export interface EnterpriseDataRoomRecord {
   tenantKey: string;
   generatedFrom: 'deterministic_enterprise_data_room_seed';
+  richness: EnterpriseDataRoomRichness;
+  sourcePaths: string[];
+  canonicalizationWarnings: string[];
   profile: EnterpriseProfileRecord;
   people: EnterprisePersonRecord[];
   systems: EnterpriseSystemRecord[];
@@ -801,6 +806,16 @@ export function buildApexEnterpriseDataRoom(): EnterpriseDataRoomRecord {
   return {
     tenantKey: APEX_TENANT_KEY,
     generatedFrom: 'deterministic_enterprise_data_room_seed',
+    richness: 'rich',
+    sourcePaths: [
+      'src/data/apexretail',
+      'src/scripts/seed/_shared/enterprise-data.ts',
+      'src/content/deliverables/apex-retail/morrison',
+    ],
+    canonicalizationWarnings: [
+      'Apex source files use more than one executive persona universe; this first rich seed uses src/data/apexretail/leadership.ts as the people/org source.',
+      'Apex financial fields appear as both millions and billions across source files; this seed normalizes annual spend into USD while preserving source-basis metadata.',
+    ],
     profile,
     people,
     systems,
@@ -837,8 +852,295 @@ export function buildApexEnterpriseDataRoom(): EnterpriseDataRoomRecord {
   };
 }
 
+
+function buildStructuredSystemsFromClientData(
+  tenantPrefix: string,
+  techStack: typeof CLIENT_DATA['Apex Retail']['techStack'],
+): EnterpriseSystemRecord[] {
+  return techStack.map((system, index) => ({
+    id: `system:${tenantPrefix}:${index + 1}`,
+    name: system.product_name ?? system.vendor_name,
+    vendor: system.vendor_name,
+    category: system.category,
+    businessDomains: [system.owning_function ?? 'Unassigned'],
+    businessUnits: [system.owning_function ?? 'Unassigned'],
+    deploymentModel: system.deployment_model,
+    annualSpendUsd: system.annual_spend_usd,
+    businessOwner: system.owning_function ?? 'Unassigned',
+    itOwner: system.owning_function ?? 'Unassigned',
+    criticality: system.touches_ai ? 'high' : 'medium',
+    lifecycleState: 'structured_seed_candidate',
+    dataClassification: 'Synthetic enterprise seed',
+    integrationCount: 0,
+    documentedIntegrationCount: 0,
+    riskFlags: system.touches_ai ? ['AI-adjacent system; requires governance and evidence binding before production use.'] : [],
+    sourceBasis: SYNTHETIC_SOURCE,
+  }));
+}
+
+function buildStructuredProgramsFromClientData(
+  tenantPrefix: string,
+  projects: typeof CLIENT_DATA['Apex Retail']['projects'],
+): EnterpriseProgramRecord[] {
+  return projects.map((project, index) => ({
+    id: `program:${tenantPrefix}:${index + 1}`,
+    name: project.name,
+    domain: project.program_domain,
+    lifecycleState: project.status,
+    executiveSponsor: project.exec_sponsor,
+    budgetUsd: project.total_budget_usd,
+    spentToDateUsd: project.spent_to_date_usd,
+    annualValueUsd: undefined,
+    timeline: 'Candidate program seed; lifecycle dates not yet normalized.',
+    linkedSystemIds: [],
+    linkedVendorIds: [],
+    linkedEvidenceIds: [],
+    sourceBasis: SYNTHETIC_SOURCE,
+  }));
+}
+
+function buildStructuredStaffAugVendors(
+  tenantPrefix: string,
+  staffAug: typeof CLIENT_DATA['Apex Retail']['staffAug'],
+): EnterpriseVendorContractRecord[] {
+  return staffAug.map((vendor, index) => ({
+    id: `vendor:${tenantPrefix}:staff-aug:${index + 1}`,
+    vendorName: vendor.vendor_name,
+    product: vendor.engagement_type,
+    category: vendor.function_area,
+    annualSpendUsd: vendor.annual_spend_usd,
+    contractStatus: 'Synthetic staff augmentation/service seed; detailed contract lifecycle not yet normalized.',
+    riskLevel: vendor.touches_ai ? 'high' : 'medium',
+    keyRisk: `${vendor.headcount_fte} FTE equivalent engagement. Contract terms, data access, renewal, and SLA fields are pending normalization.`,
+    sourceBasis: SYNTHETIC_SOURCE,
+  }));
+}
+
+function buildCandidateGraph(
+  tenantPrefix: string,
+  profile: EnterpriseProfileRecord,
+  systems: EnterpriseSystemRecord[],
+  vendors: EnterpriseVendorContractRecord[],
+  programs: EnterpriseProgramRecord[],
+  evidence: EnterpriseEvidenceRecord[],
+): EnterpriseDataRoomRecord['graph'] {
+  const tenantNodeId = `tenant:${tenantPrefix}`;
+  const nodes: EnterpriseGraphNodeRecord[] = [
+    { id: tenantNodeId, nodeType: 'Tenant', stableKey: profile.tenantKey, title: profile.legalName, sourceBasis: SYNTHETIC_SOURCE },
+    ...systems.map((system) => ({ id: system.id, nodeType: 'System' as const, stableKey: system.id, title: system.name, sourceBasis: SYNTHETIC_SOURCE })),
+    ...vendors.map((vendor) => ({ id: vendor.id, nodeType: 'Vendor' as const, stableKey: vendor.id, title: vendor.vendorName, sourceBasis: SYNTHETIC_SOURCE })),
+    ...programs.map((program) => ({ id: program.id, nodeType: 'Program' as const, stableKey: program.id, title: program.name, sourceBasis: SYNTHETIC_SOURCE })),
+    ...evidence.map((entry) => ({ id: entry.id, nodeType: 'Evidence' as const, stableKey: entry.id, title: entry.citationLocator, sourceBasis: SYNTHETIC_SOURCE })),
+  ];
+  const edges: EnterpriseGraphEdgeRecord[] = [
+    ...programs.slice(0, 6).map((program) => ({
+      id: `edge:${tenantNodeId}:sponsors:${program.id}`,
+      fromNodeId: tenantNodeId,
+      toNodeId: program.id,
+      edgeType: 'SPONSORS_PROGRAM' as const,
+      confidence: 0.55,
+      evidenceIds: [],
+    })),
+    ...systems.slice(0, 8).map((system) => ({
+      id: `edge:${system.id}:risk-candidate`,
+      fromNodeId: system.id,
+      toNodeId: tenantNodeId,
+      edgeType: 'SYSTEM_HAS_RISK' as const,
+      confidence: 0.5,
+      evidenceIds: [],
+    })),
+  ];
+  return { nodes, edges };
+}
+
+export function buildMeridianEnterpriseDataRoom(): EnterpriseDataRoomRecord {
+  const sourceData = CLIENT_DATA['Meridian Health'];
+  const systems = buildStructuredSystemsFromClientData('meridian', sourceData.techStack);
+  const vendorContracts = buildStructuredStaffAugVendors('meridian', sourceData.staffAug);
+  const programs = buildStructuredProgramsFromClientData('meridian', sourceData.projects);
+  const evidence: EnterpriseEvidenceRecord[] = [
+    {
+      id: 'evidence:meridian:canonical-profile-conflict',
+      tenantKey: 'meridian',
+      sourceArtifactId: 'docs/specs/_meta/seed-data/meridian-health-system-comprehensive-seed.md',
+      citationLocator: 'Meridian profile conflict: TS seed vs comprehensive seed',
+      claimText: 'Meridian has conflicting profile universes across source files; comprehensive seed describes a Mountain West 44-hospital system while TS seed describes a Charlotte-centered 23-hospital system.',
+      evidenceType: 'canonicalization_gap',
+      confidence: 'blocked',
+      usabilityState: 'blocked',
+      linkedArtifactIds: [],
+      linkedGraphNodeIds: [],
+      sourceBasis: SYNTHETIC_SOURCE,
+      dataClassification: 'synthetic',
+      approvalState: 'blocked',
+    },
+  ];
+  const profile: EnterpriseProfileRecord = {
+    tenantKey: 'meridian',
+    legalName: meridianHealth.org.name,
+    displayName: meridianHealth.org.shortName,
+    industry: 'Healthcare',
+    subIndustry: meridianHealth.org.type,
+    headquarters: meridianHealth.org.headquarters,
+    regions: meridianHealth.org.states,
+    employeeCount: meridianHealth.org.employees,
+    revenueUsdBillions: meridianHealth.org.revenue,
+    strategicPriorities: meridianHealth.strategicPriorities,
+    regulatoryPosture: ['HIPAA/PHI sensitivity', 'Provider-payer data boundary', 'Clinical AI governance pending'],
+    dataClassificationPolicyId: 'synthetic-demo-policy-v1',
+    residencyMode: 'abarva_hosted_synthetic',
+    sourceBasis: SYNTHETIC_SOURCE,
+    dataClassification: 'synthetic',
+  };
+
+  return {
+    tenantKey: 'meridian',
+    generatedFrom: 'deterministic_enterprise_data_room_seed',
+    richness: 'partial',
+    sourcePaths: [
+      'src/data/meridian',
+      'docs/specs/_meta/seed-data/meridian-health-system-comprehensive-seed.md',
+      'docs/specs/_meta/seed-data/meridian-intelligence-layer-overlay.md',
+      'src/scripts/seed/_shared/enterprise-data.ts',
+    ],
+    canonicalizationWarnings: [
+      'Canonical profile conflict: comprehensive seed and TypeScript seed describe different Meridian scale/geography/persona universes.',
+      'HIPAA/PHI handling must be enforced before real client data ingestion; this record is synthetic only.',
+      'Detailed contract intelligence and evidence graph are mapped in source docs but not yet fully normalized into runtime records.',
+    ],
+    profile,
+    people: [],
+    systems,
+    vendorContracts,
+    financials: [
+      { id: 'financial:meridian:revenue', metric: 'Revenue', value: meridianHealth.financials.revenue2023, unit: 'USD billions', category: 'revenue', sourceBasis: SYNTHETIC_SOURCE, evidenceIds: [] },
+      { id: 'financial:meridian:it-budget', metric: 'IT budget', value: meridianHealth.financials.itBudget2024, unit: 'USD millions', category: 'budget', sourceBasis: SYNTHETIC_SOURCE, evidenceIds: [] },
+      { id: 'financial:meridian:operating-margin', metric: 'Operating margin', value: meridianHealth.financials.operatingMargin2023, unit: 'percent', category: 'margin', sourceBasis: SYNTHETIC_SOURCE, evidenceIds: [] },
+    ],
+    programs,
+    artifacts: [],
+    sourcingEvents: [],
+    evidence,
+    graph: buildCandidateGraph('meridian', profile, systems, vendorContracts, programs, evidence),
+    vectorReadiness: [
+      { indexFamily: 'tenant_facts', candidateChunkCount: systems.length + vendorContracts.length + programs.length, sourceTypes: ['structured_candidate_fact'], tenantKeyRequired: true, rawPrivateTextAllowedInSharedMetadata: false },
+      { indexFamily: 'tenant_evidence', candidateChunkCount: 220, sourceTypes: ['overlay_evidence_candidate'], tenantKeyRequired: true, rawPrivateTextAllowedInSharedMetadata: false },
+    ],
+  };
+}
+
+export function buildFirstCapitalEnterpriseDataRoom(): EnterpriseDataRoomRecord {
+  const systems: EnterpriseSystemRecord[] = Object.entries(firstCapital.technology).map(([key, value], index) => ({
+    id: `system:first-capital:${key}`,
+    name: key,
+    vendor: typeof value === 'object' && value && 'vendor' in value ? String(value.vendor) : 'Unknown',
+    category: key,
+    businessDomains: ['Financial Services'],
+    businessUnits: ['Technology'],
+    deploymentModel: 'native_ts_seed_candidate',
+    annualSpendUsd: typeof value === 'object' && value && 'annualLicenseCost' in value ? millionsToUsd(Number(value.annualLicenseCost)) : 0,
+    businessOwner: 'Technology leadership pending canonicalization',
+    itOwner: 'Technology leadership pending canonicalization',
+    criticality: index < 2 ? 'high' : 'medium',
+    lifecycleState: 'canonicalization_pending',
+    dataClassification: 'Synthetic financial-services seed',
+    integrationCount: 0,
+    documentedIntegrationCount: 0,
+    riskFlags: ['Financial-services profile conflict must be resolved before rich data-room promotion.'],
+    sourceBasis: SYNTHETIC_SOURCE,
+  }));
+  const evidence: EnterpriseEvidenceRecord[] = [
+    {
+      id: 'evidence:first-capital:canonical-profile-conflict',
+      tenantKey: 'first-capital',
+      sourceArtifactId: 'docs/specs/_meta/seed-data/first-capital-financial-comprehensive-seed.md',
+      citationLocator: 'First Capital profile conflict: TS seed vs comprehensive seed vs shared Arcturus seed',
+      claimText: 'First Capital has conflicting scale/profile sources: TS regional-bank seed, markdown super-regional-bank seed, and shared enterprise seed currently backed by Arcturus constants.',
+      evidenceType: 'canonicalization_gap',
+      confidence: 'blocked',
+      usabilityState: 'blocked',
+      linkedArtifactIds: [],
+      linkedGraphNodeIds: [],
+      sourceBasis: SYNTHETIC_SOURCE,
+      dataClassification: 'synthetic',
+      approvalState: 'blocked',
+    },
+  ];
+  const profile: EnterpriseProfileRecord = {
+    tenantKey: 'first-capital',
+    legalName: firstCapital.org.name,
+    displayName: firstCapital.org.shortName,
+    industry: 'Financial Services',
+    subIndustry: firstCapital.org.type,
+    headquarters: firstCapital.org.headquarters,
+    regions: ['US regional banking footprint'],
+    employeeCount: firstCapital.org.employees,
+    revenueUsdBillions: firstCapital.org.revenue,
+    strategicPriorities: firstCapital.strategicPriorities,
+    regulatoryPosture: ['BSA/AML sensitivity', 'MNPI/legal privileged handling pending', 'Banking regulatory exam posture'],
+    dataClassificationPolicyId: 'synthetic-demo-policy-v1',
+    residencyMode: 'abarva_hosted_synthetic',
+    sourceBasis: SYNTHETIC_SOURCE,
+    dataClassification: 'synthetic',
+  };
+  const programs = firstCapital.aiOpportunities.map((opportunity, index) => ({
+    id: `program:first-capital:ai-opportunity:${index + 1}`,
+    name: opportunity.useCase,
+    domain: 'ai_opportunity',
+    lifecycleState: 'candidate',
+    executiveSponsor: 'Sponsor pending canonicalization',
+    budgetUsd: opportunity.implementationCost,
+    spentToDateUsd: undefined,
+    annualValueUsd: 'annualSaving' in opportunity ? opportunity.annualSaving : opportunity.annualRevenue,
+    timeline: opportunity.timeToValue,
+    linkedSystemIds: [],
+    linkedVendorIds: [],
+    linkedEvidenceIds: [],
+    sourceBasis: SYNTHETIC_SOURCE,
+  }));
+
+  return {
+    tenantKey: 'first-capital',
+    generatedFrom: 'deterministic_enterprise_data_room_seed',
+    richness: 'partial',
+    sourcePaths: [
+      'src/data/firstcapital',
+      'docs/specs/_meta/seed-data/first-capital-financial-comprehensive-seed.md',
+      'docs/specs/_meta/seed-data/first-capital-intelligence-layer-overlay.md',
+      'src/scripts/seed/_shared/enterprise-data.ts',
+    ],
+    canonicalizationWarnings: [
+      'Canonical profile conflict: First Capital appears as a regional bank, a super-regional composite, and an Arcturus-backed shared seed.',
+      'Legal/MNPI handling is not yet represented in the runtime data-room schema; keep this synthetic-only.',
+      'Native First Capital source files have better evidence than CLIENT_DATA[First Capital], which currently points at Arcturus-shaped constants.',
+    ],
+    profile,
+    people: [],
+    systems,
+    vendorContracts: [],
+    financials: [
+      { id: 'financial:first-capital:assets', metric: 'Assets', value: firstCapital.financials.assets2023, unit: 'USD billions', category: 'revenue', sourceBasis: SYNTHETIC_SOURCE, evidenceIds: [] },
+      { id: 'financial:first-capital:it-budget', metric: 'IT budget', value: firstCapital.financials.itBudget, unit: 'USD millions', category: 'budget', sourceBasis: SYNTHETIC_SOURCE, evidenceIds: [] },
+      { id: 'financial:first-capital:cost-to-income', metric: 'Cost-to-income ratio', value: firstCapital.financials.costToIncomeRatio, unit: 'percent', category: 'benchmark', sourceBasis: SYNTHETIC_SOURCE, evidenceIds: [] },
+    ],
+    programs,
+    artifacts: [],
+    sourcingEvents: [],
+    evidence,
+    graph: buildCandidateGraph('first-capital', profile, systems, [], programs, evidence),
+    vectorReadiness: [
+      { indexFamily: 'tenant_facts', candidateChunkCount: systems.length + programs.length, sourceTypes: ['native_ts_candidate_fact'], tenantKeyRequired: true, rawPrivateTextAllowedInSharedMetadata: false },
+      { indexFamily: 'tenant_evidence', candidateChunkCount: 230, sourceTypes: ['overlay_evidence_candidate'], tenantKeyRequired: true, rawPrivateTextAllowedInSharedMetadata: false },
+    ],
+  };
+}
+
 export function listEnterpriseDataRooms(): EnterpriseDataRoomRecord[] {
-  return [buildApexEnterpriseDataRoom()];
+  return [
+    buildApexEnterpriseDataRoom(),
+    buildMeridianEnterpriseDataRoom(),
+    buildFirstCapitalEnterpriseDataRoom(),
+  ];
 }
 
 export function getEnterpriseDataRoom(tenantKey: string): EnterpriseDataRoomRecord | null {
@@ -848,7 +1150,7 @@ export function getEnterpriseDataRoom(tenantKey: string): EnterpriseDataRoomReco
 export function summarizeEnterpriseDataRoom(room: EnterpriseDataRoomRecord): EnterpriseDataRoomSummary {
   return {
     tenantKey: room.tenantKey,
-    richness: 'rich',
+    richness: room.richness,
     totalPeople: room.people.length,
     totalSystems: room.systems.length,
     totalVendors: room.vendorContracts.length,
