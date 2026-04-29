@@ -4,11 +4,16 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Artifact as NexusArtifact } from '@/lib/agent/artifacts';
-import { NexusReactivePanel } from '@/components/programs/NexusReactivePanel';
+// NexusReactivePanel renders inside AgentCanvas now; the import here is
+// no longer needed at the page level.
+import { AgentCanvas } from '@/components/programs/AgentCanvas';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { RibbonSynthesis } from '@/components/shell/RibbonSynthesis';
-import { AtlasDrawer } from '@/components/shell/AtlasDrawer';
+// AtlasDrawer used to render here as a Mode B overlay drawer. Surface
+// 2 PR-F replaced it with the embedded chat inside <AgentCanvas>; the
+// import lives on through AgentCanvas (which embeds AtlasDrawer with
+// `embedded` prop).
 import { WorkingPaneContainer } from '@/components/shell/WorkingPaneContainer';
 import { programsShapeResolver } from '@/lib/programs/programs-shape-resolver';
 import { PhaseStrip } from '@/components/shell/PhaseStrip';
@@ -4188,6 +4193,44 @@ export function ProgramDetailPage({
           );
         })()}
 
+        {/* Surface 2 PR-F — agent-centric primary canvas. Chat with
+            Nexus + reactive panel occupy the dominant viewport real
+            estate. The static legacy content (storyline, missions,
+            sub-nav, sections) collapses below in a details accordion. */}
+        <AgentCanvas
+          programId={view.programId}
+          agent={{ initials: 'Nx', name: 'Nexus', role: 'Program Orchestrator' }}
+          quote={view.workbench.prose}
+          artifacts={nexusArtifacts}
+          onArtifact={handleNexusArtifact}
+        />
+
+        <details
+          data-testid="program-details-legacy"
+          style={{
+            marginBottom: 20,
+            border: `1px solid ${SHELL.CARD_LINE}`,
+            borderRadius: 10,
+            background: SHELL.PAPER,
+          }}
+        >
+          <summary
+            style={{
+              cursor: 'pointer',
+              padding: '12px 16px',
+              fontFamily: SHELL.MONO,
+              fontSize: 11,
+              letterSpacing: '0.10em',
+              textTransform: 'uppercase',
+              color: SHELL.GRAY_TEXT,
+              fontWeight: 700,
+              userSelect: 'none',
+            }}
+          >
+            Program details · gate · evidence · deliverables · workshop
+          </summary>
+          <div style={{ padding: '8px 16px 16px' }}>
+
         {storylineMatches.length > 0 && (
           <div
             data-testid="program-storyline-pattern-chips"
@@ -4217,11 +4260,10 @@ export function ProgramDetailPage({
           const recentInstanceId = missions[0]?.instanceId ?? view.programId;
           return (
             <div style={{ marginBottom: 20, display: 'grid', gap: 8 }}>
-              {/* Surface 2 PR2 — live Nexus reasoning materializes here as
-                  the user converses in the AtlasDrawer. Empty until the
-                  agent emits artifacts; shows above the static mission /
-                  pending-gate list which subsequent PRs will replace. */}
-              <NexusReactivePanel artifacts={nexusArtifacts} />
+              {/* Legacy static mission queue — kept inside the
+                  collapsed details so users who want the old view can
+                  still get to it. The reactive equivalent runs in the
+                  AgentCanvas reactive panel above. */}
               <MissionListInteractive
                 missions={missions}
                 title="Pending gates · this program"
@@ -4811,23 +4853,21 @@ export function ProgramDetailPage({
           </div>
         )}
 
+          {/* close: details > div (legacy collapsible content from
+              Surface 2 PR-F agent-centric reshape) */}
+          </div>
+        </details>
+
         </div>
       </WorkingPaneContainer>
       </div>
 
-      {/* Mode B — AtlasDrawer (shared AtlasPageState, Shell Layout Spec v2 §5.1).
-          Surface 2 PR2: surface key is now /programs/<id> so the chat/agent
-          route enables the artifact channel and Nexus emits gate-evaluation,
-          evidence-highlight, phase-recommendation cards into NexusReactivePanel. */}
-      <AtlasDrawer
-        isOpen={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        agent={{ initials: 'Nx', name: 'Nexus', role: 'Program Orchestrator' }}
-        quote={view.workbench.prose}
-        surface={`/programs/${view.programId}`}
-        programId={view.programId}
-        onArtifact={handleNexusArtifact}
-      />
+      {/* Surface 2 PR-F — agent-centric layout reshape.
+          Chat now lives EMBEDDED in <AgentCanvas> at the top of the
+          page, not as a fixed-position overlay drawer. The drawer-mode
+          AtlasDrawer that used to render here has been removed; the
+          drawerOpen state survives only because RibbonSynthesis still
+          references it (the toggle is a no-op on this surface). */}
 
       {/* Gate approval modal — portal-style fixed overlay */}
       {showGateModal && view.phasePanel.gateCriteria && (

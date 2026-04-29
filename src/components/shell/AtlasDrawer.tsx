@@ -46,6 +46,19 @@ export interface AtlasDrawerProps {
    * stripped from the chat-visible text.
    */
   onArtifact?: (artifact: Artifact) => void;
+  /**
+   * Surface 2 PR-F — agent-centric layout.
+   *
+   * When true, the drawer renders inline as a normal block element
+   * filling its container — no fixed positioning, no backdrop, no
+   * translate animation. Used by /programs/[id] where the chat is
+   * the dominant primary surface (not a sidekick overlay).
+   *
+   * `isOpen` is ignored in embedded mode (the chat is always visible);
+   * `onClose` is also unused. Pass them as `true` and `() => {}` to
+   * satisfy the type.
+   */
+  embedded?: boolean;
 }
 
 // ── AtlasDrawer ───────────────────────────────────────────────────────────────
@@ -58,6 +71,7 @@ export function AtlasDrawer({
   surface,
   programId,
   onArtifact,
+  embedded = false,
 }: AtlasDrawerProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const threadEndRef = useRef<HTMLDivElement>(null);
@@ -80,19 +94,21 @@ export function AtlasDrawer({
 
   const hasThread = conversation.length > 0 || isStreaming || !!response || !!error;
 
-  // Auto-scroll to latest turn whenever content changes.
+  // Auto-scroll to latest turn whenever content changes. In embedded
+  // mode the panel is always visible, so the gate is just "should we
+  // scroll" = always.
   useEffect(() => {
-    if (isOpen) {
+    if (embedded || isOpen) {
       threadEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [isOpen, conversation.length, response]);
+  }, [embedded, isOpen, conversation.length, response]);
 
-  // Focus textarea when drawer opens.
+  // Focus textarea when drawer opens. In embedded mode, focus on mount.
   useEffect(() => {
-    if (isOpen) {
+    if (embedded || isOpen) {
       setTimeout(() => textareaRef.current?.focus(), 250);
     }
-  }, [isOpen]);
+  }, [embedded, isOpen]);
 
   function handleSubmit() {
     const el = textareaRef.current;
@@ -106,39 +122,58 @@ export function AtlasDrawer({
 
   const plainQuote = quote.replace(/<[^>]+>/g, '');
 
+  // Layout shape — embedded mode renders inline as part of the page
+  // flow (no fixed positioning, no backdrop, no slide animation), so
+  // the chat can occupy a permanent column on agent-centric surfaces
+  // like /programs/[id]. Drawer mode is the original Shell Layout
+  // Spec v2 §5.1 right-side overlay.
+  const panelStyle: React.CSSProperties = embedded
+    ? {
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        background: SHELL.INK,
+        display: 'flex',
+        flexDirection: 'column',
+        borderRadius: 12,
+        overflow: 'hidden',
+      }
+    : {
+        position: 'fixed',
+        top: 0,
+        right: 0,
+        bottom: 0,
+        width: 340,
+        background: SHELL.INK,
+        zIndex: 200,
+        display: 'flex',
+        flexDirection: 'column',
+        transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
+        transition: 'transform 220ms ease-out',
+        boxShadow: isOpen ? '-8px 0 32px rgba(0,0,0,0.30)' : 'none',
+      };
+
   return (
     <>
-      {/* Backdrop — darkens canvas when drawer open */}
-      <div
-        onClick={onClose}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'rgba(0,0,0,0.22)',
-          zIndex: 190,
-          pointerEvents: isOpen ? 'auto' : 'none',
-          opacity: isOpen ? 1 : 0,
-          transition: 'opacity 220ms ease-out',
-        }}
-      />
+      {/* Backdrop — darkens canvas when drawer open. Suppressed in
+          embedded mode (the chat is a permanent column, not an overlay). */}
+      {!embedded ? (
+        <div
+          onClick={onClose}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.22)',
+            zIndex: 190,
+            pointerEvents: isOpen ? 'auto' : 'none',
+            opacity: isOpen ? 1 : 0,
+            transition: 'opacity 220ms ease-out',
+          }}
+        />
+      ) : null}
 
-      {/* Drawer panel */}
-      <div
-        style={{
-          position: 'fixed',
-          top: 0,
-          right: 0,
-          bottom: 0,
-          width: 340,
-          background: SHELL.INK,
-          zIndex: 200,
-          display: 'flex',
-          flexDirection: 'column',
-          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
-          transition: 'transform 220ms ease-out',
-          boxShadow: isOpen ? '-8px 0 32px rgba(0,0,0,0.30)' : 'none',
-        }}
-      >
+      {/* Drawer / embedded panel */}
+      <div style={panelStyle}>
         {/* ── Drawer header ── */}
         <div
           style={{
@@ -222,24 +257,27 @@ export function AtlasDrawer({
             <span style={{ color: '#9bb87a' }}>●</span>{' '}Active
           </div>
 
-          {/* Close button */}
-          <button
-            onClick={onClose}
-            aria-label="Close drawer"
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'rgba(250,247,241,0.4)',
-              fontFamily: SHELL.MONO,
-              fontSize: 16,
-              lineHeight: 1,
-              padding: '0 0 0 6px',
-              flexShrink: 0,
-            }}
-          >
-            ×
-          </button>
+          {/* Close button — hidden in embedded mode (the chat is a
+              permanent column, not a closable overlay). */}
+          {!embedded ? (
+            <button
+              onClick={onClose}
+              aria-label="Close drawer"
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'rgba(250,247,241,0.4)',
+                fontFamily: SHELL.MONO,
+                fontSize: 16,
+                lineHeight: 1,
+                padding: '0 0 0 6px',
+                flexShrink: 0,
+              }}
+            >
+              ×
+            </button>
+          ) : null}
         </div>
 
         {/* ── Compact synthesis (Behavior X: synthesis as thread header) ── */}
