@@ -5592,6 +5592,448 @@ Vendor claim: AI reviews legal work. Detection: require human review, source evi
 
 The common failure is buying CLM when the immediate pain is invoice and matter control, or buying e-billing when the immediate pain is contract workflow. The second is underestimating outside counsel and AP adoption. The third is treating AI output as legal advice rather than review support.`,
   },
+  {
+    id: 'PAT-SRC-CAT-PROCURE-001',
+    slug: 'source-to-pay-procurement-suite-sourcing',
+    title: 'Source-to-Pay Procurement Suite and Orchestration Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Source-to-pay sourcing should separate procurement scope, supplier governance, network economics, workflow control, and ERP/AP/CLM integration before buyers accept suite breadth or autonomous sourcing claims.',
+    applicability:
+      'Apply when sourcing SAP Ariba, Oracle Procurement, Workday Spend Management, Coupa, Ivalua, GEP SMART, JAGGAER, Basware, Zip, Fairmarkit, Arkestro, Globality, or procurement orchestration platforms.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.80,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.sap.com/products/spend-management/procure-to-pay/pricing.html',
+      'https://www.sap.com/sea/about/trust-center/agreements.html',
+      'https://support.ariba.com/item/download?item_id=207582&locale=en',
+      'https://www.oracle.com/erp/procurement/',
+      'https://www.oracle.com/us/corporate/pricing/fusion-pricelist-2949061.pdf',
+      'https://www.oracle.com/contracts/cloud-services/',
+      'https://www.workday.com/en-us/topics/erp/procurement.html',
+      'https://www.workday.com/en-us/products/spend-management/strategic-sourcing-supplier-management.html',
+      'https://www.ivalua.com/solutions/process/source-to-pay-platform/',
+      'https://www.gep.com/software/gep-smart',
+      'https://www.jaggaer.com/press-release/19-2-release-simplifies-advanced-source-to-pay-solutions',
+      'https://www.basware.com/en/solutions/procure-to-pay/',
+      'https://ziphq.com/platform-overview',
+      'https://www.fairmarkit.com/',
+      'https://csrc.nist.gov/pubs/sp/800/161/r1/upd1/final',
+      'https://www.iso.org/standard/63026.html',
+      'https://www.occ.treas.gov/news-issuances/news-releases/2023/nr-ia-2023-53.html',
+    ],
+    regulatoryChips: ['third-party-risk-review', 'supplier-data-privacy-review', 'SOX-procurement-controls', 'sanctions-screening-if-global', 'AI-human-approval-review'],
+    relatedPatternIds: ['PAT-SRC-CAT-CLM-001', 'PAT-SRC-CAT-AP-001', 'PAT-SRC-CAT-LEGAL-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'enterprise_saas',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'SAP Ariba, Oracle Procurement, Workday Spend Management, Coupa, Ivalua, GEP SMART, JAGGAER, Basware, Zip, Fairmarkit, Arkestro, and Globality',
+        tier: 'enterprise',
+        positioning: 'Source-to-pay, procure-to-pay, supplier management, intake/orchestration, supplier network, and autonomous sourcing candidates spanning requisitions, sourcing, contracts, purchasing, invoices, payments, and supplier lifecycle controls.',
+        cautions: ['Normalize source-to-pay versus procure-to-pay scope, supplier network fees, ERP system-of-record boundaries, implementation services, and AI autonomy before comparing suite breadth.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'SAP Ariba Buying and Invoicing pricing', url: 'https://www.sap.com/products/spend-management/procure-to-pay/pricing.html', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Oracle Procurement product page', url: 'https://www.oracle.com/erp/procurement/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Workday procurement overview', url: 'https://www.workday.com/en-us/topics/erp/procurement.html', asOf: '2026-04-29' },
+        ],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'Source-to-pay public pricing constructs only',
+        model: 'hybrid',
+        metric: 'Users, employees, spend processed, hosted records, order lines, documents, suppliers, invoices, purchase orders, modules, tenants, supplier network fees, AI/orchestration features, implementation, integrations, support, and transaction meters',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'SAP Ariba Buying and Invoicing spend-based usage metric and price upon request', url: 'https://www.sap.com/products/spend-management/procure-to-pay/pricing.html', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Oracle Fusion Cloud Services price list', url: 'https://www.oracle.com/us/corporate/pricing/fusion-pricelist-2949061.pdf', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Actual spend under management, supplier count, document volumes, modules, ERP footprint, implementation scope, and supplier network fee exposure require buyer evidence' },
+        ],
+        confidence: 0.58,
+        notes: 'Enterprise procurement pricing is often sales-led. Public sources support license-meter normalization, not invented net pricing, savings, or implementation benchmarks.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Supplier network and fee transparency',
+        buyerPosition: 'Require disclosure of supplier-paid fees, document charges, payment fees, account thresholds, network support obligations, and supplier enablement responsibilities before award.',
+      },
+      {
+        clauseArea: 'Autonomous sourcing controls',
+        buyerPosition: 'Require human approval, audit logs, explainability, supplier-fairness controls, and data-use restrictions before AI tools contact suppliers or recommend awards.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Scope decomposition',
+        whenToUse: 'Use when vendors package sourcing, supplier management, purchasing, invoicing, payments, intake, and AI as one suite story.',
+        buyerAsk: 'Price and score full S2P, source-to-contract, supplier management, P2P, intake orchestration, AP automation, and autonomous sourcing as separate lanes.',
+      },
+      {
+        lever: 'Supplier network economics',
+        whenToUse: 'Use before BAFO where supplier portals, transaction documents, payment rails, or network accounts shift cost to suppliers.',
+        buyerAsk: 'Cap or disclose supplier charges, document fees, payment fees, onboarding obligations, support model, and opt-out paths.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'procure-suite-overbuy',
+        label: 'Suite breadth exceeds process maturity',
+        severity: 'high',
+        detectionSignals: ['Buyer wants full suite while supplier master data, category taxonomy, buying channels, contract metadata, and AP controls are weak.'],
+        mitigations: ['Sequence modules by adoption risk and require implementation acceptance criteria for each workflow'],
+      },
+      {
+        id: 'procure-ai-governance-gap',
+        label: 'Autonomous sourcing governance gap',
+        severity: 'critical',
+        detectionSignals: ['Vendor describes autonomous supplier communication, negotiation, or award recommendations without buyer approval gates or audit evidence.'],
+        mitigations: ['Require human-in-loop controls, logs, prompt/data lineage, supplier fairness review, and explicit award governance'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'public_sector',
+        modifier: 'Stress competition rules, contract vehicles, auditability, accessibility, transparency, and category management constraints.',
+      },
+      {
+        industry: 'financial_services',
+        modifier: 'Apply third-party risk lifecycle controls from planning through termination and preserve audit evidence for critical suppliers.',
+      },
+      {
+        industry: 'manufacturing',
+        modifier: 'Review direct-material workflows, BOM linkage, EDI, supplier capacity, quality documentation, commodity exposure, and engineering-change controls.',
+      },
+    ],
+    body: `## Summary
+Source-to-pay procurement sourcing is not a generic software-suite bakeoff. The buyer is choosing how spend demand enters the company, how suppliers are qualified, how sourcing events run, how contracts hand off, how purchases become POs, how invoices match, how payments and supplier networks behave, and how evidence survives audit. The event must separate source-to-pay, procure-to-pay, AP automation, CLM, supplier risk, intake orchestration, and autonomous sourcing so scope does not hide economics or governance.
+
+## When to apply
+Use this pattern when sourcing SAP Ariba, Oracle Procurement, Workday Spend Management, Coupa, Ivalua, GEP SMART, JAGGAER, Basware, Zip, Fairmarkit, Arkestro, Globality, or procurement orchestration platforms. Apply it during procurement transformation, maverick-spend reduction, supplier-risk remediation, ERP modernization, source-to-pay consolidation, intake workflow launch, supplier network migration, AP/PO matching issues, or AI sourcing experiments. Do not use it for pure AP automation, expense cards, generic CLM, treasury, supply chain planning, logistics, VMS, or ERP finance unless supplier/source-to-pay governance is central.
+
+## Category boundary
+In scope: spend analysis, intake, requisitions, sourcing, RFx, auctions, supplier onboarding, supplier master data, supplier risk/performance, contract handoff, catalogs, punchout, purchasing, receiving, invoicing, payments, supplier portals, supplier networks, orchestration, and AI sourcing controls. Adjacent but distinct: CLM, AP automation, T&E, treasury, ERP finance, supply planning, direct-material PLM, logistics, and contingent labor.
+
+## Lifecycle and gates
+The scope gate should inventory spend categories, supplier counts, entity/ERP footprint, PO and invoice volume, contract repositories, supplier onboarding requirements, AP controls, buying channels, taxonomy, risk requirements, and AI appetite. The RFP gate should require module-by-module pricing, user/employee/spend/document metrics, supplier network terms, integration scope, APIs, cXML/EDI, implementation approach, data migration, security, audit, and AI controls. The proof gate should run buyer scripts for supplier onboarding, sourcing event, requisition, approval, PO, receipt, invoice match, contract lookup, exception, and report export. The BAFO gate should normalize subscription, usage, supplier fees, transaction/document charges, implementation, integrations, support, environments, and renewal uplift.
+
+## Evaluation rubric
+Weight process fit around 25 percent, ERP/AP/CLM integration around 20 percent, supplier governance and risk around 20 percent, commercial predictability around 15 percent, implementation/data readiness around 15 percent, and AI/orchestration governance around 5 percent. Increase governance weight when autonomous sourcing or regulated supplier risk is material.
+
+## Pricing and contract notes
+Public sources show heterogeneous meters. SAP Ariba Buying and Invoicing publicly describes a spend-based usage metric, yearly entitlement, price upon request, and multi-year contract constructs. Oracle publishes cloud price-list metrics such as hosted named users, employees, records, and order lines across Fusion services. Supplier network materials can introduce document, transaction, account, or threshold-dependent supplier charges. These sources support meter normalization, not invented net pricing or savings.
+
+Contracting should define modules, usage meters, supplier network charges, data processing, audit rights, service levels, ERP connectors, supplier enablement, implementation acceptance, data export, termination assistance, and AI controls. For autonomous sourcing, require human approval before supplier communications, negotiation moves, or award recommendations.
+
+## Contradictions and failure modes
+Vendor claim: one suite solves procurement. Detection: split S2P, P2P, AP, CLM, intake, supplier risk, and AI into separate proofs. Vendor claim: supplier network value is obvious. Detection: quantify supplier fees, adoption burden, support, opt-outs, and document/payment charges. Vendor claim: AI sources autonomously. Detection: inspect approval gates, logs, data lineage, supplier fairness, and award governance.
+
+The common failure is buying suite breadth before fixing supplier master data, taxonomy, buying channels, and contract metadata. The second is shifting cost or friction to suppliers through network terms. The third is letting AI sourcing demos outrun procurement judgment and auditability.`,
+  },
+  {
+    id: 'PAT-SRC-CAT-CLM-001',
+    slug: 'contract-lifecycle-management-sourcing',
+    title: 'Contract Lifecycle Management Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'CLM sourcing should prove lifecycle workflow, repository quality, metadata, integrations, AI controls, and adoption across legal, procurement, sales, and finance before buyers accept contract-intelligence claims.',
+    applicability:
+      'Apply when sourcing Ironclad, Conga, Sirion, LinkSquares, DocuSign CLM, Icertis, Agiloft, Workday/Evisort, Coupa CLM, GEP, JAGGAER, Malbek, Ivalua, or contract lifecycle management platforms.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.80,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.gartner.com/reviews/market/contract-life-cycle-management',
+      'https://www.forrester.com/report/the-forrester-wave-tm-contract-lifecycle-management-platforms-q1-2025/RES181997',
+      'https://www.docusign.com/products/clm',
+      'https://www.docusign.com/trust/security/clm',
+      'https://www.docusign.com/legal/terms-and-conditions/schedule-docusignclm/attachment-data-protection',
+      'https://www.docusign.com/products/platform/ai/ai-trust',
+      'https://www.agiloft.com/pricing/',
+      'https://www.agiloft.com/terms-policies/data-processing-addendum/',
+      'https://www.agiloft.com/terms-policies/service-level-addendum/',
+      'https://www.agiloft.com/terms-policies/supplemental-services-terms/',
+      'https://linksquares.com/pricing/',
+      'https://linksquares.com/products/contract-lifecycle-management-software/',
+      'https://ironcladapp.com/product/ironclad-ai',
+    ],
+    regulatoryChips: ['DPA-review', 'AI-output-review', 'legal-privilege-review', 'SOC-2-review', 'cross-border-transfer-review'],
+    relatedPatternIds: ['PAT-SRC-CAT-LEGAL-001', 'PAT-SRC-CAT-PROCURE-001', 'PAT-SRC-CAT-AP-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'enterprise_saas',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Ironclad, Conga, Sirion, LinkSquares, DocuSign CLM, Icertis, Agiloft, Workday/Evisort, Coupa, GEP, JAGGAER, Malbek, and Ivalua',
+        tier: 'enterprise',
+        positioning: 'Contract lifecycle and contract intelligence candidates spanning intake, authoring, clause libraries, negotiation, approvals, e-signature, repository, obligation management, renewals, reporting, and AI extraction.',
+        cautions: ['Separate repository, workflow, legal review, procurement/sales integration, AI extraction, and e-signature requirements before accepting CLM category labels.'],
+        sourceBasis: [
+          { type: 'analyst-report', label: 'Forrester CLM Platforms Wave Q1 2025 summary page', url: 'https://www.forrester.com/report/the-forrester-wave-tm-contract-lifecycle-management-platforms-q1-2025/RES181997', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'DocuSign CLM product page', url: 'https://www.docusign.com/products/clm', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'LinkSquares pricing drivers', url: 'https://linksquares.com/pricing/', asOf: '2026-04-29' },
+        ],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'CLM public pricing constructs only',
+        model: 'hybrid',
+        metric: 'Users, contract volume, selected modules, AI/batch analysis, implementation and onboarding, custom integrations, support, environments, e-signature integrations, and migration scope',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'LinkSquares pricing factors', url: 'https://linksquares.com/pricing/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Agiloft pricing and add-on constructs', url: 'https://www.agiloft.com/pricing/', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Contract volume, user roles, repository quality, metadata extraction scope, integration depth, and implementation SOW require buyer evidence' },
+        ],
+        confidence: 0.57,
+        notes: 'CLM pricing is usually quote-based. Public pricing pages support cost-driver normalization, not market-wide price or ROI claims.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Contract data export and transition',
+        buyerPosition: 'Require bulk export of contracts, metadata, clause library, templates, workflows, approval history, obligations, renewal data, audit logs, and integration mappings where technically available.',
+      },
+      {
+        clauseArea: 'AI and contract intelligence boundaries',
+        buyerPosition: 'Define human review, no-reliance language, customer data use, third-party model/subprocessor controls, output audit trail, and remediation for materially wrong extraction or summary behavior.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Repository migration proof',
+        whenToUse: 'Use when legacy contracts are scattered across drives, e-signature systems, procurement tools, CRM, and local legal files.',
+        buyerAsk: 'Make migration, metadata quality, duplicate handling, OCR/extraction confidence, and owner sign-off part of implementation acceptance.',
+      },
+      {
+        lever: 'Role and module normalization',
+        whenToUse: 'Use before BAFO where legal, sales, procurement, finance, and business requesters need different access levels.',
+        buyerAsk: 'Normalize named users, requesters, approvers, business users, admins, AI features, contract volume, support, and environments across quotes.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'clm-data-readiness-gap',
+        label: 'Contract repository data readiness gap',
+        severity: 'high',
+        detectionSignals: ['Legacy contracts lack consistent metadata, owners, amendment linkage, renewal dates, or signed-final versions.'],
+        mitigations: ['Run sample migration, metadata extraction, owner validation, and exception reporting before award'],
+      },
+      {
+        id: 'clm-ai-overreliance',
+        label: 'AI contract intelligence overreliance',
+        severity: 'critical',
+        detectionSignals: ['Buyer or vendor treats extraction, summaries, or clause analysis as legal conclusion or counsel replacement.'],
+        mitigations: ['Require human legal review, citations/source links, output disclaimers, audit trail, and legal-owner acceptance criteria'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Stress data protection, audit trails, third-party risk flowdowns, cross-border transfers, retention, and contract-owner evidence.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Review BAAs, PHI-adjacent contracts, vendor confidentiality, retention, audit access, and clinical/business associate workflows.',
+      },
+      {
+        industry: 'retail_cpg',
+        modifier: 'Plan for supplier agreements, rebates/allowances, private label, franchise or distributor contracts, and high-volume commercial templates.',
+      },
+    ],
+    body: `## Summary
+Contract lifecycle management sourcing is the search for operating control over contracts from request through renewal or termination. The buyer is not merely buying e-signature, a document repository, or AI clause search. The event must prove intake, authoring, clause libraries, negotiation, approvals, execution, repository quality, obligation tracking, renewal alerts, reporting, integrations, security, and AI governance across the teams that create and consume contracts.
+
+## When to apply
+Use this pattern when sourcing Ironclad, Conga, Sirion, LinkSquares, DocuSign CLM, Icertis, Agiloft, Workday/Evisort, Coupa CLM, GEP, JAGGAER, Malbek, Ivalua, or contract lifecycle management platforms. Apply it during legal operations buildout, contract repository cleanup, sales-cycle bottlenecks, supplier agreement governance, procurement transformation, renewal leakage, M&A integration, privacy/security flowdown pressure, or AI contract-intelligence pilots. Do not use it for standalone e-signature, generic document management, legal research, e-discovery, matter management, or AP automation unless lifecycle workflow and contract metadata are central.
+
+## Category boundary
+In scope: contract request, intake forms, playbooks, templates, clause libraries, document assembly, redlining, negotiation, approvals, e-signature handoff, repository, metadata, obligation management, renewals, amendments, search, reporting, integrations, AI extraction, and contract intelligence. Adjacent but distinct: ELM/e-billing, AP, procurement suites, CPQ, CRM, document management, privacy/GRC, e-discovery, and legal advice.
+
+## Lifecycle and gates
+The scope gate should inventory contract types, volumes, repositories, templates, clause playbooks, users, requesters, approvers, business owners, systems of record, e-signature tools, CRM/procurement/ERP integrations, data classifications, and AI restrictions. The RFP gate should require lifecycle modules, user roles, contract-volume assumptions, migration scope, metadata extraction, clause/library governance, AI terms, security evidence, DPA, support, and implementation SOW. The proof gate should run buyer scripts for request, template selection, negotiation, approval, execution, repository search, obligation, renewal alert, amendment, export, and reporting. The BAFO gate should normalize users, contract volume, modules, AI add-ons, environments, integrations, implementation, migration, support, and renewal uplift.
+
+## Evaluation rubric
+Weight lifecycle workflow around 25 percent, repository and metadata quality around 20 percent, integration fit around 15 percent, implementation/migration risk around 15 percent, security and AI governance around 15 percent, and commercial predictability around 10 percent. Increase migration weight when legacy contracts are scattered or metadata is inconsistent.
+
+## Pricing and contract notes
+Public sources show quote-based CLM economics driven by users, contract volume, selected modules, implementation/onboarding, custom integrations, advanced features, AI/batch analysis, support, and migration. LinkSquares publicly lists contract volume, user count, modules, implementation/onboarding, integrations, and advanced features as pricing factors. Agiloft publicly exposes pricing/add-on constructs and separate DPA, service-level, and supplemental terms. These sources support cost-driver normalization, not invented CLM prices, cycle-time reductions, or savings.
+
+Contracting should define modules, user classes, contract volumes, environments, support, DPA, subprocessors, AI use, output limitations, service levels, implementation acceptance, migration responsibilities, data export, deletion, transition assistance, renewal notice, uplift caps, and pre-priced expansion bands.
+
+## Contradictions and failure modes
+Vendor claim: AI understands contracts. Detection: test source citations, extraction confidence, human review, output disclaimers, and legal-owner acceptance. Vendor claim: implementation is mostly configuration. Detection: inspect repository quality, metadata gaps, template governance, workflow ownership, and integration complexity. Vendor claim: CLM speeds the business. Detection: require baseline cycle time, adoption plan, bottleneck map, and business-owner accountability.
+
+The common failure is buying CLM before cleaning contract data and ownership. The second is letting legal, sales, procurement, and finance optimize different workflows inside one tool without governance. The third is treating AI summaries or extracted obligations as legal conclusions rather than review support.`,
+  },
+  {
+    id: 'PAT-SRC-CAT-AP-001',
+    slug: 'accounts-payable-invoice-to-pay-automation-sourcing',
+    title: 'Accounts Payable Automation and Invoice-to-Pay Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'AP automation sourcing should prove invoice intake, matching, approvals, payment authority, ERP sync, supplier adoption, and compliance controls before buyers accept touchless-processing or cash-flow claims.',
+    applicability:
+      'Apply when sourcing Coupa AP Automation, SAP Concur Invoice, Basware, Medius, Stampli, BILL, Tipalti, AvidXchange, or invoice-to-pay and payment automation platforms.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.79,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.coupa.com/products/ap-automation/',
+      'https://www.concur.com/products/concur-invoice',
+      'https://www.basware.com/en/solutions/ap-automation',
+      'https://www.medius.com/solutions/medius-accounts-payable-automation/',
+      'https://www.medius.com/pricing/',
+      'https://www.stampli.com/ap-automation-platform/',
+      'https://www.bill.com/product/accounts-payable/',
+      'https://www.bill.com/product/pricing#accountants',
+      'https://www.bill.com/legal/terms-of-service',
+      'https://tipalti.com/ap-automation/',
+      'https://tipalti.com/pricing/',
+      'https://tipalti.com/legal/tipalti-services-agreement/',
+      'https://tipalti.com/legal/customer-dpa-20220425/',
+      'https://www.avidxchange.com/',
+      'https://www.irs.gov/tax-professionals/taxpayer-identification-number-tin-matching',
+      'https://ofac.treasury.gov/other-ofac-sanctions-lists',
+      'https://peppol.org/about/',
+      'https://www.consilium.europa.eu/en/press/press-releases/2024/11/05/taxation-council-agrees-on-vat-in-the-digital-age-package/pdf/',
+    ],
+    regulatoryChips: ['SOX-AP-controls', 'OFAC-screening-if-payments', 'TIN-validation-review', 'VAT-e-invoicing-if-global', 'bank-account-change-control'],
+    relatedPatternIds: ['PAT-SRC-CAT-PROCURE-001', 'PAT-SRC-CAT-CLM-001', 'PAT-SRC-CAT-LEGAL-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'enterprise_saas',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Coupa AP Automation, SAP Concur Invoice, Basware, Medius, Stampli, BILL, Tipalti, and AvidXchange',
+        tier: 'enterprise',
+        positioning: 'Invoice-to-pay and AP automation candidates for invoice capture, coding, approvals, PO/non-PO matching, supplier onboarding, tax validation, payments, ERP/accounting sync, e-invoicing, and audit trails.',
+        cautions: ['Do not compare AP tools only by OCR or AI demos; normalize payment authority, ERP sync, exception workflows, supplier adoption, tax/vendor controls, and transaction fees.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'BILL pricing and AP/AR constructs', url: 'https://www.bill.com/product/pricing#accountants', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Tipalti AP automation pricing FAQ', url: 'https://tipalti.com/pricing/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Medius pricing/packages', url: 'https://www.medius.com/pricing/', asOf: '2026-04-29' },
+        ],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'AP automation public pricing constructs only',
+        model: 'hybrid',
+        metric: 'Subscription/platform fees, users, approver-only roles, entities, invoice volume, payment volume, payment rails, FX/cross-border fees, tax filings, modules, ERP connectors, implementation, supplier enablement, and support',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'BILL AP/AR user and transaction fee constructs', url: 'https://www.bill.com/product/pricing#accountants', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Tipalti subscription plus transaction-based pricing summary', url: 'https://tipalti.com/pricing/', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Invoice count, PO/non-PO mix, entity/country footprint, payment methods, supplier roster, ERP/accounting integration, and exception volume require buyer evidence' },
+        ],
+        confidence: 0.60,
+        notes: 'Public pages support pricing-meter analysis. They do not justify invented AP savings, touchless rates, close acceleration, or headcount reduction claims.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Payment authority and failed-payment handling',
+        buyerPosition: 'Define approval authority, bank-account change controls, holds, reversals, rejected ACH/debits, failed funding, payment-status evidence, payor liability, and escalation rights.',
+      },
+      {
+        clauseArea: 'AP data export and audit survival',
+        buyerPosition: 'Require export of invoices, attachments, vendors, approvals, coding, matching evidence, payment status, tax data, remittances, audit logs, and retention metadata after termination.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Invoice and payment volume normalization',
+        whenToUse: 'Use where vendors price by users, entities, invoices, payments, rails, FX, modules, or supplier enablement differently.',
+        buyerAsk: 'Model total cost across invoice count, payment count, supplier count, entities, countries, currencies, payment methods, support, and implementation.',
+      },
+      {
+        lever: 'Exception-path proof',
+        whenToUse: 'Use when vendors claim touchless AP or AI capture accuracy.',
+        buyerAsk: 'Test non-PO invoices, PO mismatch, duplicate invoice, vendor bank change, partial receipt, tax exception, failed payment, and ERP sync failure with buyer samples.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'ap-touchless-overclaim',
+        label: 'Touchless AP overclaim',
+        severity: 'high',
+        detectionSignals: ['Vendor demo uses clean invoices while buyer has weak PO hygiene, inconsistent receiving, custom GL coding, and exception-heavy workflows.'],
+        mitigations: ['Require sample invoice testing, exception reporting, buyer baseline, and acceptance thresholds before rollout'],
+      },
+      {
+        id: 'ap-payment-control-risk',
+        label: 'Payment control and fraud risk',
+        severity: 'critical',
+        detectionSignals: ['Workflow automates payments or bank changes without segregation of duties, callback controls, approval logs, or failed-payment procedures.'],
+        mitigations: ['Require bank-change controls, maker-checker approvals, payment holds, audit logs, liability terms, and incident escalation'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Stress segregation of duties, vendor bank-account controls, sanctions screening, audit trails, payment authority, and third-party risk review.',
+      },
+      {
+        industry: 'manufacturing',
+        modifier: 'Review three-way match, goods receipt dependency, EDI/e-invoicing, PO line accuracy, supplier portals, and multi-ERP posting.',
+      },
+      {
+        industry: 'public_sector',
+        modifier: 'Validate e-invoicing mandates, retention, auditability, public payment controls, accessibility, and supplier onboarding constraints.',
+      },
+    ],
+    body: `## Summary
+Accounts payable automation sourcing is the control point between supplier obligations, invoice evidence, approvals, accounting records, and cash leaving the company. The buyer is not just buying OCR or AI capture. The event must prove invoice intake, PO and non-PO matching, coding, approval routing, payment authority, supplier onboarding, tax/vendor checks, ERP sync, audit logs, exception handling, and e-invoicing readiness.
+
+## When to apply
+Use this pattern when sourcing Coupa AP Automation, SAP Concur Invoice, Basware, Medius, Stampli, BILL, Tipalti, AvidXchange, or invoice-to-pay and payment automation platforms. Apply it during AP backlog reduction, duplicate-payment concern, supplier onboarding friction, multi-entity accounting, ERP modernization, global payouts, e-invoicing readiness, audit findings, PO compliance issues, or payment-control redesign. Do not use it for full source-to-pay, procurement catalog, T&E, treasury, AR automation, generic ERP replacement, or CLM unless invoice-to-pay control is central.
+
+## Category boundary
+In scope: invoice intake, OCR/AI capture, invoice coding, PO/non-PO matching, receiving match, approval workflow, supplier onboarding, vendor master validation, tax IDs, sanctions checks, duplicate detection, payment file or payment execution, remittance, ERP/accounting sync, audit trail, e-invoicing, reporting, and exception queues. Adjacent but distinct: procurement sourcing, catalogs, spend cards, travel/expense, treasury, working capital financing, AR, CLM, and ERP finance.
+
+## Lifecycle and gates
+The scope gate should inventory invoice volume, PO/non-PO mix, entities, countries, currencies, payment methods, supplier count, ERP/accounting systems, approval rules, vendor master controls, tax requirements, e-invoicing exposure, current exceptions, and payment authority. The RFP gate should require pricing by users, entities, invoices, payments, payment rails, FX, modules, ERP connectors, supplier portal, compliance controls, implementation, support, and data export. The proof gate should run buyer invoice samples through clean match, PO mismatch, non-PO approval, duplicate invoice, bank change, tax exception, failed payment, and ERP sync. The BAFO gate should normalize subscription, transaction fees, payment fees, FX, tax filings, supplier enablement, implementation, integrations, support, and renewal uplift.
+
+## Evaluation rubric
+Weight matching and exception workflow around 25 percent, ERP/payment integration around 20 percent, payment control and fraud prevention around 20 percent, supplier adoption around 15 percent, compliance/e-invoicing around 10 percent, and commercial predictability around 10 percent. Increase control weight when the tool executes payments rather than only preparing files.
+
+## Pricing and contract notes
+Public sources show mixed AP economics. BILL publicly describes AP/AR as paid subscriptions priced per user, notes custom pricing for enterprise complexity, and discloses that certain payment types can carry transaction fees. Tipalti describes subscription plus transaction-based pricing driven by payment volume, entities, modules, payment methods, and currencies. Medius publishes package constructs and sales-led pricing. These sources support meter normalization, not invented touchless rates, cycle-time savings, or close acceleration.
+
+Contracting should define approval authority, payment holds, reversals, failed funding, payment liability, bank-partner dependencies, DPA, subprocessors, tax/vendor validation responsibilities, ERP connector scope, implementation acceptance, audit-log retention, data export, and transition assistance. For global payments, review OFAC/sanctions, TIN/W-9/W-8, VAT/e-invoicing, FX, and local payment-rail limitations.
+
+## Contradictions and failure modes
+Vendor claim: AP becomes touchless. Detection: test messy buyer invoices, PO mismatches, missing receipts, duplicate invoices, tax exceptions, and custom GL coding. Vendor claim: payments are automated safely. Detection: inspect bank-change controls, segregation of duties, holds, reversals, failed-payment handling, and liability. Vendor claim: supplier network solves adoption. Detection: validate supplier onboarding burden, payment preference, portal friction, virtual-card economics, and support.
+
+The common failure is automating bad invoice hygiene and weak vendor master controls. The second is discovering late that payment rails, FX, tax filings, or failed-payment fees drive economics. The third is giving the AP platform too much payment authority without the controls finance and audit need.`,
+  },
+
 ];
 
 export const SOURCING_CATEGORY_PATTERN_COUNT = SOURCING_CATEGORY_PATTERNS.length;
