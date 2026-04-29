@@ -40,6 +40,39 @@ interface InternalEntry {
 const STATE: Map<string, InternalEntry> = new Map();
 
 /**
+ * Pluggable persistence backend. Implementations should treat both methods
+ * as write-only and idempotent — callers do not await them and do not surface
+ * errors. The default (no backend installed) preserves the in-memory-only
+ * behavior the module shipped with originally.
+ */
+export interface MissionStateBackend {
+  /** Persist a freshly-marked mission state. */
+  write(state: {
+    id: string;
+    status: MissionStatus;
+    timestamp: string;
+    note?: string;
+  }): Promise<void>;
+  /** Persist a clear/delete for a mission id. */
+  clear(id: string): Promise<void>;
+}
+
+let activeBackend: MissionStateBackend | null = null;
+
+/**
+ * Install a write-through backend for mission state persistence. Pass `null`
+ * to restore the default in-memory-only behavior.
+ */
+export function setMissionStateBackend(backend: MissionStateBackend | null): void {
+  activeBackend = backend;
+}
+
+/** Read the currently-installed backend (mostly for tests + diagnostics). */
+export function getMissionStateBackend(): MissionStateBackend | null {
+  return activeBackend;
+}
+
+/**
  * Mark a mission id with a status. Subsequent calls with the same id and
  * same status are idempotent and preserve the original timestamp. Re-marking
  * with a different status overwrites the entry (status, timestamp, note).
@@ -57,6 +90,15 @@ export function setMissionState(
     // non-empty new note is supplied.
     if (typeof note === 'string' && note.length > 0) {
       existing.note = note;
+      if (activeBackend) {
+        const payload = {
+          id,
+          status: existing.status,
+          timestamp: existing.timestamp,
+          note: existing.note,
+        };
+        void activeBackend.write(payload).catch(() => {});
+      }
     }
     return;
   }
@@ -68,6 +110,22 @@ export function setMissionState(
     entry.note = note;
   }
   STATE.set(id, entry);
+  if (activeBackend) {
+    const payload: {
+      id: string;
+      status: MissionStatus;
+      timestamp: string;
+      note?: string;
+    } = {
+      id,
+      status: entry.status,
+      timestamp: entry.timestamp,
+    };
+    if (entry.note !== undefined) {
+      payload.note = entry.note;
+    }
+    void activeBackend.write(payload).catch(() => {});
+  }
 }
 
 /**
@@ -87,6 +145,9 @@ export function getMissionState(id: string): MissionStateEntry | null {
 /** Remove any recorded state for a mission id. No-op if not present. */
 export function clearMissionState(id: string): void {
   STATE.delete(id);
+  if (activeBackend) {
+    void activeBackend.clear(id).catch(() => {});
+  }
 }
 
 /**
@@ -131,4 +192,5 @@ export function getRecentMissionStates(
  */
 export function _resetForTests(): void {
   STATE.clear();
+  activeBackend = null;
 }

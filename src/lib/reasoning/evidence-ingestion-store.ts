@@ -32,6 +32,36 @@
  */
 export type IngestedEvidenceItem = Record<string, unknown>;
 
+/**
+ * Pluggable persistence backend. Implementations are write-only and
+ * best-effort — callers do not await them and failures are swallowed by the
+ * dispatch site. The default (no backend installed) preserves the original
+ * in-memory-only semantics.
+ */
+export interface EvidenceIngestionBackend {
+  /** Persist an ingestion for the given instance id. */
+  write(instanceId: string, item: unknown): Promise<void>;
+  /** Persist a clear of every ingestion row tagged for the instance. */
+  clearForInstance(instanceId: string): Promise<void>;
+}
+
+let activeBackend: EvidenceIngestionBackend | null = null;
+
+/**
+ * Install a write-through backend for evidence ingestion persistence. Pass
+ * `null` to restore the default in-memory-only behavior.
+ */
+export function setEvidenceIngestionBackend(
+  backend: EvidenceIngestionBackend | null,
+): void {
+  activeBackend = backend;
+}
+
+/** Read the currently-installed backend (mostly for tests + diagnostics). */
+export function getEvidenceIngestionBackend(): EvidenceIngestionBackend | null {
+  return activeBackend;
+}
+
 /** Per-process store. Never persisted. Reset on process restart. */
 const store: Map<string, IngestedEvidenceItem[]> = new Map();
 
@@ -64,6 +94,9 @@ export function addEvidence(instanceId: string, item: IngestedEvidenceItem): voi
     store.set(instanceId, [item]);
     timestamps.set(instanceId, [ingestedAt]);
   }
+  if (activeBackend) {
+    void activeBackend.write(instanceId, item).catch(() => {});
+  }
 }
 
 /**
@@ -91,6 +124,9 @@ export function getEvidenceTimestampsFor(instanceId: string): string[] {
 export function clearEvidenceFor(instanceId: string): void {
   store.delete(instanceId);
   timestamps.delete(instanceId);
+  if (activeBackend) {
+    void activeBackend.clearForInstance(instanceId).catch(() => {});
+  }
 }
 
 /**
@@ -100,4 +136,5 @@ export function clearEvidenceFor(instanceId: string): void {
 export function _resetForTests(): void {
   store.clear();
   timestamps.clear();
+  activeBackend = null;
 }
