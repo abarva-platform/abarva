@@ -94,7 +94,7 @@ Wave 8 - vendor profile one-pattern PRs beginning after process/methodology batc
 - #1071 - `[corpus][ven] Author PAT-SRC-VEN-DOCUSIGN-001 · 1 pattern` - merged 2026-04-29T17:28:53Z at `3312bd55668c293e1b137d618780578ad11dd8c0`.
 
 ## Open PRs
-- None yet. PAT-SRC-VEN-GITLAB-001 is in local integration and will be opened after validation.
+- #1073 - `[corpus][ven] Author PAT-SRC-VEN-GITLAB-001 · 1 pattern` - open; CI/Vercel pending. URL: https://github.com/anandsundaram-hash/abarva/pull/1073
 
 ## Held PRs requiring founder review
 - None.
@@ -129,4 +129,4 @@ Wave 8 - vendor profile one-pattern PRs beginning after process/methodology batc
 - Vendor/regulatory/pricing PRs remain one-pattern PRs because source confidence and evidence discipline are higher risk.
 
 ## Next action
-Validate PAT-SRC-VEN-GITLAB-001 locally, push `corpus/ven/gitlab-integration`, open PR, watch checks, and auto-merge if all gates are green while vendor workers continue authoring in parallel.
+Watch PR #1073 checks and auto-merge if green while preparing PAT-SRC-VEN-GITHUB-001 integration in parallel.
