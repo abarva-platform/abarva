@@ -1058,6 +1058,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/health-bands',
     description: 'Health score band distribution — instance counts per band with common pattern and stage analysis',
   },
+  {
+    title: 'Gate radar',
+    href: '/admin/reasoning/gate-radar',
+    description: '5-dimension gate progress radar — hard gates, soft gates, evidence, waivers, and contradiction-free rate',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
