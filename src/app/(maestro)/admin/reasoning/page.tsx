@@ -25,6 +25,15 @@ import {
   type CascadeTelemetryEvent,
 } from '@/lib/reasoning/cascade-telemetry';
 import { ReasoningHealthBadge } from '@/components/reasoning/ReasoningHealthBadge';
+import { ContradictionResolutionPanel } from '@/components/reasoning/ContradictionResolutionPanel';
+import { detectContradictions } from '@/lib/reasoning/contradiction-detector';
+import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
+import { buildEvidenceMap } from '@/lib/source/source-event-instance';
+import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances';
+import { buildProgramEvidenceMap } from '@/lib/programs/program-instance';
+import { SOURCE_LIFECYCLE_PATTERNS } from '@/lib/intelligence/source-lifecycle-patterns';
+import { PROGRAM_LIFECYCLE_PATTERNS } from '@/lib/intelligence/program-lifecycle-patterns';
+import type { ContradictionDetection } from '@/lib/reasoning/types';
 
 export const metadata = {
   title: 'Reasoning telemetry · AbarVa Admin',
@@ -906,6 +915,117 @@ function CascadeHitsTile({ events }: { events: CascadeTelemetryEvent[] }) {
   );
 }
 
+// ─── Contradiction Resolution Section ────────────────────────────────────────
+
+/**
+ * Gathers all active (non-resolved) contradictions across the fixture corpus
+ * (source instances + program instances) by running the detector against each
+ * bound pattern. Deduplicates by templateId — if the same template fires on
+ * multiple instances the first detection is kept.
+ */
+function gatherActiveContradictions(): ContradictionDetection[] {
+  const ALL_PATTERNS = [...SOURCE_LIFECYCLE_PATTERNS, ...PROGRAM_LIFECYCLE_PATTERNS];
+
+  // Build pattern-keyed evidence maps so we only iterate once.
+  const srcByPattern = new Map<string, Array<{ evidenceMap: Record<string, unknown> }>>();
+  for (const inst of SOURCE_EVENT_INSTANCES) {
+    const list = srcByPattern.get(inst.patternId) ?? [];
+    list.push({ evidenceMap: buildEvidenceMap(inst) });
+    srcByPattern.set(inst.patternId, list);
+  }
+  const prgByPattern = new Map<string, Array<{ evidenceMap: Record<string, unknown> }>>();
+  for (const inst of APEX_RETAIL_PROGRAM_INSTANCES) {
+    const list = prgByPattern.get(inst.patternId) ?? [];
+    list.push({ evidenceMap: buildProgramEvidenceMap(inst) });
+    prgByPattern.set(inst.patternId, list);
+  }
+
+  const seen = new Set<string>();
+  const out: ContradictionDetection[] = [];
+
+  for (const pattern of ALL_PATTERNS) {
+    const instances = [
+      ...(srcByPattern.get(pattern.patternId) ?? []),
+      ...(prgByPattern.get(pattern.patternId) ?? []),
+    ];
+    for (const { evidenceMap } of instances) {
+      const detections = detectContradictions(pattern, evidenceMap);
+      for (const d of detections) {
+        if (!seen.has(d.templateId)) {
+          seen.add(d.templateId);
+          out.push(d);
+        }
+      }
+    }
+  }
+
+  return out;
+}
+
+function ContradictionResolutionSection({
+  contradictions,
+}: {
+  contradictions: ContradictionDetection[];
+}) {
+  return (
+    <section
+      style={{
+        background: COLORS.white,
+        border: `1px solid ${COLORS.ink}14`,
+        borderRadius: RADIUS.lg,
+        overflow: 'hidden',
+      }}
+    >
+      <header
+        style={{
+          padding: `${SPACING.md} ${SPACING.lg}`,
+          borderBottom: `1px solid ${COLORS.ink}10`,
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          gap: SPACING.md,
+        }}
+      >
+        <div>
+          <h2
+            style={{
+              fontFamily: TYPOGRAPHY.serif,
+              fontSize: 20,
+              color: COLORS.ink,
+              margin: 0,
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Contradiction Resolution
+          </h2>
+          <div
+            style={{
+              fontFamily: TYPOGRAPHY.sans,
+              fontSize: 12,
+              color: `${COLORS.ink}88`,
+              marginTop: 2,
+            }}
+          >
+            Active contradictions across the fixture corpus — mark resolved to dismiss
+          </div>
+        </div>
+        <span
+          style={{
+            fontFamily: TYPOGRAPHY.mono,
+            fontSize: 12,
+            color: `${COLORS.ink}99`,
+          }}
+        >
+          {contradictions.length} active
+        </span>
+      </header>
+      <div style={{ padding: SPACING.md }}>
+        <ContradictionResolutionPanel contradictions={contradictions} />
+      </div>
+    </section>
+  );
+}
+
 export default async function ReasoningTelemetryPage({
   searchParams,
 }: {
@@ -924,6 +1044,7 @@ export default async function ReasoningTelemetryPage({
   const events = getRecentSynthesisEvents(200, filterOptions);
   const summary = summarizeTelemetry(events);
   const cascadeEvents = getRecentCascadeEvents(200, filterOptions);
+  const activeContradictions = gatherActiveContradictions();
 
   return (
     <AdminCanonShellV2
@@ -943,6 +1064,7 @@ export default async function ReasoningTelemetryPage({
         <HeaderCard totalEvents={summary.totalEvents} />
         <ReasoningHealthBadge />
         <ToolsDirectory />
+        <ContradictionResolutionSection contradictions={activeContradictions} />
         {summary.totalEvents === 0 ? (
           <EmptyState />
         ) : (
