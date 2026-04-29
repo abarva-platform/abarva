@@ -559,6 +559,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/patterns',
     description: 'Pattern usage and event distribution',
   },
+  {
+    title: 'Fixture quality lint',
+    href: '/admin/reasoning/fixture-lint',
+    description: 'Instance ↔ pattern drift checks',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
