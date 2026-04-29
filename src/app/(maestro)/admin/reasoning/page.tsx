@@ -663,6 +663,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/source-timeline',
     description: 'Visual timeline showing all source events at their current procurement lifecycle stage',
   },
+  {
+    title: 'Pattern explorer',
+    href: '/admin/reasoning/patterns',
+    description: 'Data-dictionary view of all lifecycle patterns — stages, gate criteria, contradiction templates',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
