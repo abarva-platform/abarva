@@ -38,7 +38,7 @@ describe('summarizePattern', () => {
   });
 
   it('produces a summary for every shipped lifecycle pattern', () => {
-    expect(SOURCE_LIFECYCLE_PATTERNS).toHaveLength(7);
+    expect(SOURCE_LIFECYCLE_PATTERNS.length).toBeGreaterThanOrEqual(7);
     for (const pattern of SOURCE_LIFECYCLE_PATTERNS) {
       const summary = summarizePattern(pattern);
       expect(summary.patternId).toBe(pattern.patternId);

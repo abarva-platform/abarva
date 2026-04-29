@@ -3283,6 +3283,8 @@ The post-fact governance backfill is the mechanism by which emergency authority 
 // Exported collection
 // ---------------------------------------------------------------------------
 
+import { CAT_LIFECYCLE_PATTERNS } from './source-lifecycle-patterns-cat';
+
 export const SOURCE_LIFECYCLE_PATTERNS: LifecyclePatternSeed[] = [
   PAT_SRC_AMS_001,
   PAT_SRC_RFP_001,
@@ -3291,6 +3293,8 @@ export const SOURCE_LIFECYCLE_PATTERNS: LifecyclePatternSeed[] = [
   PAT_SRC_RENEWAL_001,
   PAT_SRC_DECOM_001,
   PAT_SRC_EMERGENCY_001,
+  // Category-pattern lifecycle wrappers — 12 PAT-SRC-CAT entries
+  ...CAT_LIFECYCLE_PATTERNS,
 ];
 
 export default SOURCE_LIFECYCLE_PATTERNS;
