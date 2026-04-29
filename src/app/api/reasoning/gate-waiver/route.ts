@@ -35,6 +35,27 @@ export function getWaiversForInstance(
   return results;
 }
 
+/** Return all active waiver records as a flat array. */
+export function getWaivers(): Array<{
+  instanceId: string;
+  criterionId: string;
+  reason: string;
+  waivedAt: string;
+}> {
+  const results: Array<{ instanceId: string; criterionId: string; reason: string; waivedAt: string }> = [];
+  for (const [key, value] of waiverStore.entries()) {
+    const sep = key.indexOf('::');
+    if (sep === -1) continue;
+    results.push({
+      instanceId: key.slice(0, sep),
+      criterionId: key.slice(sep + 2),
+      reason: value.reason,
+      waivedAt: value.waivedAt,
+    });
+  }
+  return results;
+}
+
 /** Clear all gate waivers — used by the demo-reset endpoint. */
 export function clearWaivers(): void {
   waiverStore.clear();

@@ -703,6 +703,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/instance-compare',
     description: 'Side-by-side health metrics comparison for any two instances',
   },
+  {
+    title: 'Waiver log',
+    href: '/admin/reasoning/waiver-log',
+    description: 'All active gate waivers across instances — current in-memory state',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
