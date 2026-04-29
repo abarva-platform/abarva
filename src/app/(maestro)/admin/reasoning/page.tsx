@@ -1023,6 +1023,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/contradiction-age',
     description: 'Active contradiction age tracking — chronic (>30d), ongoing, and fresh, with resolution urgency',
   },
+  {
+    title: 'Gate audit',
+    href: '/admin/reasoning/gate-audit',
+    description: 'Complete gate action audit log — waivers, approvals, and evidence submissions that affect gate status',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
