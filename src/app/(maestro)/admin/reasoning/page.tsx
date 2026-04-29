@@ -1043,6 +1043,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/stage-readiness',
     description: 'Stage-level readiness dashboard — what % of instances in each stage are ready to advance',
   },
+  {
+    title: 'Instance comparison',
+    href: '/admin/reasoning/instance-comparison',
+    description: 'Top vs. bottom performer comparison — side-by-side health metrics for best and worst instances',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
