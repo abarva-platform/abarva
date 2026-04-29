@@ -7,7 +7,7 @@
 //
 // Style: AbarVa palette only — paper card, ink text, ghost button.
 
-import { useState, type CSSProperties, type FormEvent, type ChangeEvent } from 'react';
+import { useState, type CSSProperties, type FormEvent, type ChangeEvent, type FocusEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { SHELL } from '@/lib/shell/shell-tokens';
 
@@ -99,11 +99,30 @@ const FILE_HINT: CSSProperties = {
   marginTop: 2,
 };
 
+const URL_HINT: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 11,
+  color: SHELL.INK_MUTED,
+  marginTop: 2,
+};
+
+const URL_HINT_OK: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 11,
+  color: SHELL.MINT_TEXT,
+  marginTop: 2,
+};
+
 interface FileMeta {
   fileName: string;
   fileType: string;
   fileSizeKb: number;
   pageCount?: number;
+}
+
+interface UrlMetaResponse {
+  title: string;
+  description: string;
 }
 
 interface AddEvidenceFormProps {
@@ -129,9 +148,12 @@ export function AddEvidenceForm({ instanceId, currentStage }: AddEvidenceFormPro
   const [stage, setStage] = useState<string>(currentStage);
   const [field, setField] = useState<string>('');
   const [note, setNote] = useState<string>('');
+  const [url, setUrl] = useState<string>('');
   const [fileMeta, setFileMeta] = useState<FileMeta | null>(null);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [status, setStatus] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
+  const [fetchingMeta, setFetchingMeta] = useState<boolean>(false);
+  const [titleFetched, setTitleFetched] = useState<boolean>(false);
 
   function onFileChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -151,6 +173,36 @@ export function AddEvidenceForm({ instanceId, currentStage }: AddEvidenceFormPro
     setFileMeta(meta);
   }
 
+  async function onUrlBlur(e: FocusEvent<HTMLInputElement>) {
+    const val = e.target.value.trim();
+    if (!val.startsWith('http')) return;
+    setFetchingMeta(true);
+    setTitleFetched(false);
+    try {
+      const res = await fetch('/api/evidence/url-meta', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: val }),
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as UrlMetaResponse;
+      if (data.title) {
+        if (!note.trim()) {
+          const combined = data.description
+            ? `${data.title} — ${data.description}`
+            : data.title;
+          setNote(combined);
+        }
+        setTitleFetched(true);
+        setTimeout(() => setTitleFetched(false), 2000);
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setFetchingMeta(false);
+    }
+  }
+
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!field.trim() || !note.trim()) {
@@ -168,6 +220,7 @@ export function AddEvidenceForm({ instanceId, currentStage }: AddEvidenceFormPro
         source: 'demo-add-evidence',
         recordedAt: new Date().toISOString(),
         stageId: stage,
+        ...(url.trim() && { url: url.trim() }),
         ...(fileMeta !== null && {
           fileName: fileMeta.fileName,
           fileType: fileMeta.fileType,
@@ -187,6 +240,7 @@ export function AddEvidenceForm({ instanceId, currentStage }: AddEvidenceFormPro
       const body = (await res.json()) as { ok: boolean; totalAddedForInstance: number };
       setField('');
       setNote('');
+      setUrl('');
       setStatus({
         kind: 'ok',
         text: `evidence added · ${body.totalAddedForInstance} on this instance`,
@@ -244,6 +298,27 @@ export function AddEvidenceForm({ instanceId, currentStage }: AddEvidenceFormPro
           <button type="submit" style={BUTTON} disabled={submitting}>
             {submitting ? 'adding…' : 'Add'}
           </button>
+        </div>
+        <div style={{ display: 'grid', gap: 4 }}>
+          <label style={FILE_LABEL}>
+            URL (optional — paste to auto-fill note)
+          </label>
+          <input
+            type="url"
+            placeholder="https://…"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onBlur={onUrlBlur}
+            style={INPUT}
+            disabled={submitting}
+            aria-label="URL (optional)"
+          />
+          {fetchingMeta && (
+            <div style={URL_HINT}>Fetching title…</div>
+          )}
+          {!fetchingMeta && titleFetched && (
+            <div style={URL_HINT_OK}>Title fetched ✓</div>
+          )}
         </div>
         <div style={{ display: 'grid', gap: 4 }}>
           <label style={FILE_LABEL}>
