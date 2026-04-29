@@ -27,6 +27,7 @@ import {
 import { ReasoningHealthBadge } from '@/components/reasoning/ReasoningHealthBadge';
 import { ContradictionResolutionPanel } from '@/components/reasoning/ContradictionResolutionPanel';
 import { DemoResetButton } from '@/components/admin/reasoning/DemoResetButton';
+import { DemoScenarioPanel } from '@/components/admin/reasoning/DemoScenarioPanel';
 import { ReasoningMetricsSection } from '@/components/admin/reasoning/ReasoningMetricsSection';
 import { detectContradictions } from '@/lib/reasoning/contradiction-detector';
 import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
@@ -1075,6 +1076,7 @@ export default async function ReasoningTelemetryPage({
         subtitle="Live operator view of the reasoning layer. Each row is one synthesis call — cache hits, latency, citation grounding, contradictions, failure modes, and the user's thumbs signal."
       >
         <HeaderCard totalEvents={summary.totalEvents} />
+        <DemoScenarioPanel />
         <ReasoningHealthBadge />
         <ReasoningMetricsSection />
         <ToolsDirectory />
