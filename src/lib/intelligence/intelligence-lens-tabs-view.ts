@@ -1,4 +1,4 @@
-// INTEL4 + INT1 + INT3 + INT4 · Intelligence Lens Tabs view-model.
+// INTEL4 + INT1 + INT3 + INT4 + INT5 · Intelligence Lens Tabs view-model.
 //
 // Pure deterministic helper that returns metadata for the eight canonical
 // lens tabs on the Intelligence surface: Summary, Evidence, Programs,
@@ -27,7 +27,8 @@ export type IntelligenceLensTab =
   | 'signals'
   | 'pattern_plan'
   | 'gap_queue'
-  | 'contradiction_monitor';
+  | 'contradiction_monitor'
+  | 'programme_risk';
 
 export interface IntelligenceLensTabMeta {
   key: IntelligenceLensTab;
@@ -97,6 +98,12 @@ export const INTELLIGENCE_TABS: ReadonlyArray<IntelligenceLensTabMeta> = [
     key: 'contradiction_monitor',
     label: 'Contradictions',
     description: 'Per-pattern contradiction monitor — active contradictions, resolution status, severity, and blocked gates across the Apex Retail engagement',
+    hasApexRetailContent: true,
+  },
+  {
+    key: 'programme_risk',
+    label: 'Programme Risk',
+    description: 'Cross-reference of contradictions, evidence gaps, and gate status rolled up to programme-level risk signals for the 4 Apex AI programmes',
     hasApexRetailContent: true,
   },
 ];

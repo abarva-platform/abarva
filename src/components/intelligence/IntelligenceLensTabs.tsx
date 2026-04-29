@@ -1,4 +1,4 @@
-// INTEL4 + INT4 · Intelligence Lens Tabs.
+// INTEL4 + INT4 + INT5 · Intelligence Lens Tabs.
 //
 // Server component. Renders the blueprint-aligned five-mode lens surface
 // (Summary · Evidence · Programs · Actions · Signals) and the content panel
@@ -58,6 +58,10 @@ import {
   type PatternContradictionSummary,
   type PatternContradictionItem,
 } from '@/lib/intelligence/pattern-contradiction-monitor-view';
+import {
+  buildProgrammeRiskSummaryView,
+  type ProgrammeRiskSignal,
+} from '@/lib/intelligence/programme-risk-summary-view';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Design tokens (matches existing intelligence surface palette)
@@ -173,6 +177,9 @@ export function IntelligenceLensTabs({
         )}
         {activeTab === 'contradiction_monitor' && (
           <ContradictionMonitorPanel />
+        )}
+        {activeTab === 'programme_risk' && (
+          <ProgrammeRiskPanel />
         )}
       </div>
     </div>
@@ -1508,6 +1515,191 @@ function ContradictionMonitorPanel() {
         style={{ fontSize: 10, color: C.mutedSoft, fontStyle: 'italic', lineHeight: 1.5, borderTop: `1px solid ${C.border}`, paddingTop: 10 }}
       >
         Deterministic seed · Contradiction monitor reflects fixture pattern data for the Apex Retail engagement. Live contradiction detection and resolution tracking are managed by the Sentinel reasoning runtime.
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INT5 · Programme Risk Summary Panel
+// ─────────────────────────────────────────────────────────────────────────────
+
+const PROGRAMME_RISK_LEVEL_STYLE: Record<string, { bg: string; text: string; label: string; border: string }> = {
+  critical: { bg: '#fef2f2', text: '#b91c1c', label: 'Critical', border: '#b91c1c' },
+  high:     { bg: '#fef3c7', text: '#92400e', label: 'High',     border: '#d97706' },
+  medium:   { bg: '#eff6ff', text: '#1d4ed8', label: 'Medium',   border: '#3b82f6' },
+  low:      { bg: '#f0fdf4', text: '#166534', label: 'Low',      border: '#16a34a' },
+};
+
+const GATE_STATE_STYLE: Record<string, { bg: string; text: string; label: string }> = {
+  blocked:  { bg: '#fef2f2', text: '#b91c1c', label: 'Blocked' },
+  at_risk:  { bg: '#fef3c7', text: '#92400e', label: 'At Risk' },
+  pending:  { bg: '#eff6ff', text: '#1d4ed8', label: 'Pending' },
+  approved: { bg: '#f0fdf4', text: '#166534', label: 'Approved' },
+};
+
+function ProgrammeRiskPanel() {
+  const view = buildProgrammeRiskSummaryView();
+  const { programmes, metrics } = view;
+
+  return (
+    <div
+      data-testid="intelligence-programme-risk-panel"
+      style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 960 }}
+    >
+      {/* Header */}
+      <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', color: C.muted, textTransform: 'uppercase' }}>
+        INT5 · Programme Risk Summary · Apex Retail
+      </div>
+
+      {/* Metrics bar */}
+      <div
+        data-testid="intelligence-programme-risk-summary"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+          flexWrap: 'wrap',
+          padding: '12px 16px',
+          backgroundColor: C.card,
+          border: `1px solid ${C.border}`,
+          borderRadius: 8,
+        }}
+      >
+        <span style={{ fontSize: 11, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600 }}>
+          Programme Risk
+        </span>
+        <span style={{ fontSize: 12, color: C.muted }}>
+          {metrics.totalProgrammes} programmes · {metrics.needsAttentionCount} need attention
+        </span>
+        {metrics.criticalRiskCount > 0 && (
+          <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: '#fef2f2', color: '#b91c1c', fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            {metrics.criticalRiskCount} critical
+          </span>
+        )}
+        {metrics.highRiskCount > 0 && (
+          <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: '#fef3c7', color: '#92400e', fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            {metrics.highRiskCount} high
+          </span>
+        )}
+        {metrics.blockedProgrammeCount > 0 && (
+          <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: '#fef2f2', color: '#b91c1c', fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', border: '1px solid #fca5a5' }}>
+            {metrics.blockedProgrammeCount} gate blocked
+          </span>
+        )}
+      </div>
+
+      {/* Atlas synthesis */}
+      <p style={{ fontSize: 13, color: C.ink, lineHeight: 1.6, margin: 0 }}>
+        {view.atlasSynthesis}
+      </p>
+
+      {/* Critical path */}
+      <div style={{ padding: '10px 14px', backgroundColor: C.navySoft, border: `1px solid ${C.navy}22`, borderLeft: `3px solid ${C.navy}`, borderRadius: 6, fontSize: 12, color: C.ink }}>
+        <span style={{ fontWeight: 700, color: C.navy, marginRight: 6 }}>Critical path:</span>
+        {view.criticalPath}
+      </div>
+
+      {/* Per-programme risk cards */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {programmes.map((prog: ProgrammeRiskSignal) => {
+          const riskStyle = PROGRAMME_RISK_LEVEL_STYLE[prog.riskLevel] ?? PROGRAMME_RISK_LEVEL_STYLE.low;
+          const gateStyle = GATE_STATE_STYLE[prog.gateStatus] ?? GATE_STATE_STYLE.pending;
+          return (
+            <div
+              key={prog.programmeId}
+              data-testid={`intelligence-programme-risk-${prog.programmeId}`}
+              style={{
+                backgroundColor: C.card,
+                border: `1px solid ${C.border}`,
+                borderLeft: `3px solid ${riskStyle.border}`,
+                borderRadius: 6,
+                padding: '14px 16px',
+              }}
+            >
+              {/* Programme header row */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+                <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: C.ink }}>
+                  {prog.programmeName}
+                </span>
+                <span style={{ display: 'inline-block', padding: '2px 7px', borderRadius: 4, fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', background: riskStyle.bg, color: riskStyle.text }}>
+                  {riskStyle.label} Risk
+                </span>
+                <span style={{ display: 'inline-block', padding: '2px 7px', borderRadius: 4, fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', background: gateStyle.bg, color: gateStyle.text }}>
+                  Gate: {gateStyle.label}
+                </span>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: C.mutedSoft }}>
+                  {prog.programmeCode} · {prog.currentPhase}
+                </span>
+              </div>
+
+              {/* Risk summary */}
+              <p style={{ fontSize: 12, color: C.muted, margin: '0 0 8px', lineHeight: 1.5 }}>
+                {prog.riskSummary}
+              </p>
+
+              {/* Signal metrics row */}
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
+                <span style={{ fontSize: 11, color: prog.activeContradictions > 0 ? '#92400e' : C.mutedSoft }}>
+                  {prog.activeContradictions} contradiction{prog.activeContradictions !== 1 ? 's' : ''}
+                  {prog.escalatedContradictions > 0 && ` (${prog.escalatedContradictions} escalated)`}
+                </span>
+                <span style={{ fontSize: 11, color: prog.criticalGaps > 0 ? '#b91c1c' : prog.highGaps > 0 ? '#92400e' : C.mutedSoft }}>
+                  {prog.evidenceGapsTotal} gap{prog.evidenceGapsTotal !== 1 ? 's' : ''}
+                  {prog.criticalGaps > 0 && ` (${prog.criticalGaps} critical)`}
+                  {prog.highGaps > 0 && prog.criticalGaps === 0 && ` (${prog.highGaps} high)`}
+                </span>
+              </div>
+
+              {/* Critical path item */}
+              {prog.criticalPathItem && (
+                <div style={{ padding: '6px 10px', background: '#fef3c7', border: '1px solid #fde68a', borderRadius: 4, fontSize: 11, color: '#92400e', marginBottom: 8 }}>
+                  <span style={{ fontWeight: 700 }}>Critical path: </span>
+                  {prog.criticalPathItem}
+                </div>
+              )}
+
+              {/* Top contradictions */}
+              {prog.topContradictions.length > 0 && (
+                <div style={{ marginBottom: prog.topGaps.length > 0 ? 6 : 0 }}>
+                  <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.07em', color: C.mutedSoft, textTransform: 'uppercase', marginBottom: 3 }}>
+                    Active contradictions
+                  </div>
+                  {prog.topContradictions.map((con, i) => (
+                    <div key={`con-${i}`} style={{ fontSize: 11, color: C.muted, display: 'flex', gap: 6, marginBottom: 2 }}>
+                      <span style={{ color: '#d97706', flexShrink: 0 }}>·</span>
+                      {con}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Top gaps */}
+              {prog.topGaps.length > 0 && (
+                <div>
+                  <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.07em', color: C.mutedSoft, textTransform: 'uppercase', marginBottom: 3 }}>
+                    Evidence gaps
+                  </div>
+                  {prog.topGaps.map((gap, i) => (
+                    <div key={`gap-${i}`} style={{ fontSize: 11, color: C.muted, display: 'flex', gap: 6, marginBottom: 2 }}>
+                      <span style={{ color: '#d97706', flexShrink: 0 }}>·</span>
+                      {gap}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Honest disclaimer */}
+      <div
+        data-testid="intelligence-programme-risk-disclaimer"
+        data-honest-disclaimer="intelligence-programme-risk"
+        style={{ fontSize: 10, color: C.mutedSoft, fontStyle: 'italic', lineHeight: 1.5, borderTop: `1px solid ${C.border}`, paddingTop: 10 }}
+      >
+        Deterministic seed · Programme risk summary cross-references fixture contradiction, gap, and gate data for the Apex Retail engagement. Live risk scoring, real-time gate tracking, and evidence ingest are managed by the Sentinel reasoning runtime.
       </div>
     </div>
   );
