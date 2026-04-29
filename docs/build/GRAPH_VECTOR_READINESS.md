@@ -40,6 +40,8 @@ Default embedding model: `text-embedding-3-small`.
 
 Default dimensionality: `1536`.
 
+Canon reconciliation: older intelligence vision and source-material notes mention Voyage-3, `text-embedding-3-large`, 1024 dimensions, 3072 dimensions, and Pinecone as north-star or fallback options. For the first Enterprise Data Room persistence migration, this document supersedes those notes: `text-embedding-3-small` at 1536 dimensions is canonical for pilot scale. Revisit only if retrieval quality fails acceptance tests, tenant count exceeds 100, or approved chunks exceed roughly 10,000 per tenant.
+
 Why this is the right default for the lab and first pilots:
 
 - It is sufficient for first-pass semantic retrieval over program deliverables, evidence claims, systems, vendors, phase-pack concepts, and sourcing artifacts.
