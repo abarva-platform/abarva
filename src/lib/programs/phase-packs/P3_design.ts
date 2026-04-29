@@ -348,7 +348,7 @@ export const P3_DESIGN: PhasePack = {
       label: 'The Production Shortcut',
       detectionHint:
         'Pilot plan uses production users or customer data while security, consent, ' +
-        'data residency, access model, or support ownership is still described as TBD.',
+        'data residency, access model, or support ownership is still unnamed or unresolved.',
       whatToFlag:
         'Tell the user they are using pilot language to bypass production discipline. ' +
         'A pilot can be small, but it cannot be uncontrolled.',

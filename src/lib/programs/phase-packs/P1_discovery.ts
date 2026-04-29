@@ -204,7 +204,7 @@ export const P1_DISCOVERY: PhasePack = {
           'Blank roles become P2/P3 blockers. P1 must expose missing owners before ' +
           'Synthesis recommends a path that no one can operate or approve.',
         expectedAnswerShape:
-          'Named missing role and plan to fill it. "TBD" without owner/date is a risk.',
+          'Named missing role and plan to fill it. An unassigned role without owner or date is a risk.',
       },
       {
         id: 'evidence-contradicts-p0',
