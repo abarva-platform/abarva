@@ -813,6 +813,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/related-patterns',
     description: 'Pattern similarity and derivation lineage — related-to and derived-from relationships',
   },
+  {
+    title: 'Gate weights',
+    href: '/admin/reasoning/gate-weights',
+    description: 'Gate criteria ranked by weight — highest-weight unmet gates and score improvement opportunities',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
