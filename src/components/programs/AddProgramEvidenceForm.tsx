@@ -11,7 +11,7 @@
 //
 // Style: AbarVa palette only — paper card, ink text, ghost button.
 
-import { useState, type CSSProperties, type FormEvent } from 'react';
+import { useState, type CSSProperties, type FormEvent, type ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { SHELL } from '@/lib/shell/shell-tokens';
 
@@ -90,6 +90,26 @@ const STATUS_ERR: CSSProperties = {
   color: SHELL.RUST_TEXT,
 };
 
+const FILE_LABEL: CSSProperties = {
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  color: SHELL.INK_SOFT,
+};
+
+const FILE_HINT: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 11,
+  color: SHELL.INK_MUTED,
+  marginTop: 2,
+};
+
+interface FileMeta {
+  fileName: string;
+  fileType: string;
+  fileSizeKb: number;
+  pageCount?: number;
+}
+
 interface AddProgramEvidenceFormProps {
   instanceId: string;
   currentPhase: number;
@@ -110,8 +130,27 @@ export function AddProgramEvidenceForm({ instanceId, currentPhase }: AddProgramE
   const [phase, setPhase] = useState<number>(currentPhase);
   const [field, setField] = useState<string>('');
   const [note, setNote] = useState<string>('');
+  const [fileMeta, setFileMeta] = useState<FileMeta | null>(null);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [status, setStatus] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
+
+  function onFileChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) {
+      setFileMeta(null);
+      return;
+    }
+    const fileSizeKb = file.size / 1024;
+    const meta: FileMeta = {
+      fileName: file.name,
+      fileType: file.type,
+      fileSizeKb,
+    };
+    if (file.type === 'application/pdf') {
+      meta.pageCount = Math.max(1, Math.round(fileSizeKb / 80));
+    }
+    setFileMeta(meta);
+  }
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -130,6 +169,12 @@ export function AddProgramEvidenceForm({ instanceId, currentPhase }: AddProgramE
         source: 'demo-add-evidence',
         recordedAt: new Date().toISOString(),
         phase,
+        ...(fileMeta !== null && {
+          fileName: fileMeta.fileName,
+          fileType: fileMeta.fileType,
+          fileSizeKb: fileMeta.fileSizeKb,
+          ...(fileMeta.pageCount !== undefined && { pageCount: fileMeta.pageCount }),
+        }),
       };
       const res = await fetch('/api/reasoning/evidence/ingest', {
         method: 'POST',
@@ -200,6 +245,24 @@ export function AddProgramEvidenceForm({ instanceId, currentPhase }: AddProgramE
           <button type="submit" style={BUTTON} disabled={submitting}>
             {submitting ? 'adding…' : 'Add'}
           </button>
+        </div>
+        <div style={{ display: 'grid', gap: 4 }}>
+          <label style={FILE_LABEL}>
+            Attach file (optional — metadata only)
+          </label>
+          <input
+            type="file"
+            accept=".pdf,.docx,.xlsx,.pptx,.txt"
+            onChange={onFileChange}
+            disabled={submitting}
+            style={{ fontFamily: SHELL.SANS, fontSize: 12 }}
+            aria-label="Attach file (optional — metadata only)"
+          />
+          {fileMeta !== null && (
+            <div style={FILE_HINT}>
+              Selected: {fileMeta.fileName} ({Math.round(fileMeta.fileSizeKb)} KB)
+            </div>
+          )}
         </div>
         {status && (
           <div style={status.kind === 'ok' ? STATUS_OK : STATUS_ERR} role="status">
