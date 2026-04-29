@@ -1,12 +1,12 @@
 # Corpus Autonomous State
 
-Last update timestamp: 2026-04-29T04:13:47Z
+Last update timestamp: 2026-04-29T04:21:01Z
 
 ## Current wave
 Wave 1 - category-specific sourcing playbooks in progress.
 
 ## Domains in progress
-- Category-specific sourcing playbooks: PR #823 merged; procurement/CLM/AP batch authored locally for validation.
+- Category-specific sourcing playbooks: PR #824 merged; TMS/HRTech/payroll batch authored locally for validation.
 - Process/methodology: queued.
 - Contract intelligence: queued.
 - Pricing intelligence: queued.
@@ -17,7 +17,7 @@ Wave 1 - category-specific sourcing playbooks in progress.
 
 ## Pattern counts by domain
 - Existing sourcing corpus on latest main before Wave 1: 24 patterns.
-- Category-specific sourcing playbooks (`PAT-SRC-CAT-*`): 39 authored across Wave 1; 36 merged in PRs #812, #813, #814, #815, #816, #817, #818, #819, #820, #821, #822, and #823, and 3 authored locally for the next PR.
+- Category-specific sourcing playbooks (`PAT-SRC-CAT-*`): 42 authored across Wave 1; 39 merged in PRs #812, #813, #814, #815, #816, #817, #818, #819, #820, #821, #822, #823, and #824, and 3 authored locally for the next PR.
 - Vendor intelligence profiles (`PAT-SRC-VEN-*`): 0
 - Contract intelligence (`PAT-SRC-CON-*`): 0
 - Pricing intelligence (`PAT-SRC-PRC-*`): 0
@@ -40,6 +40,7 @@ Wave 1 - category-specific sourcing playbooks in progress.
 - #821 - `[corpus][cat] Author PAT-SRC-CAT-EDR-001, PAT-SRC-CAT-CSP-001, PAT-SRC-CAT-FINOPS-001 · 3 patterns` - merged 2026-04-29T03:52:28Z at `3256b4afedaa9205ff6528209257167682826b31`.
 - #822 - `[corpus][cat] Author PAT-SRC-CAT-OBS-001, PAT-SRC-CAT-ITAM-001, PAT-SRC-CAT-SAM-001 · 3 patterns` - merged 2026-04-29T04:01:27Z at `04e22a1e64d7abb13015de34be6b77ec28e8ad92`.
 - #823 - `[corpus][cat] Author PAT-SRC-CAT-ESM-001, PAT-SRC-CAT-BPM-001, PAT-SRC-CAT-LEGAL-001 · 3 patterns` - merged 2026-04-29T04:12:20Z at `97230967ec74a83b98814224b649da47214b613f`.
+- #824 - `[corpus][cat] Author PAT-SRC-CAT-PROCURE-001, PAT-SRC-CAT-CLM-001, PAT-SRC-CAT-AP-001 · 3 patterns` - merged 2026-04-29T04:20:15Z at `d3b76da741d85d74e6c920686f116bee8d55d9c6`.
 
 ## Open PRs
 - None.
@@ -48,12 +49,9 @@ Wave 1 - category-specific sourcing playbooks in progress.
 - None.
 
 ## Stalled lanes
-- None. Collaboration/productivity, video conferencing, enterprise messaging, CDP, cloud data warehouse, lakehouse, MDM, data fabric, ETL/ELT, revenue intelligence, BI, LLM/model-access, agent runtime, vector retrieval, MLOps, enterprise code platform, workforce IAM, IGA, PAM, SASE/SSE, SIEM, EDR/XDR, CNAPP/CSPM, FinOps, observability, ITAM, SAM, ESM, BPM, legal operations, procurement, CLM, and AP automation research lanes completed with read-only source notes.
+- None. Collaboration/productivity, video conferencing, enterprise messaging, CDP, cloud data warehouse, lakehouse, MDM, data fabric, ETL/ELT, revenue intelligence, BI, LLM/model-access, agent runtime, vector retrieval, MLOps, enterprise code platform, workforce IAM, IGA, PAM, SASE/SSE, SIEM, EDR/XDR, CNAPP/CSPM, FinOps, observability, ITAM, SAM, ESM, BPM, legal operations, procurement, CLM, AP automation, TMS, HRTech, and payroll research lanes completed with read-only source notes.
 
 ## Next 16 queued pattern IDs
-- PAT-SRC-CAT-TMS-001
-- PAT-SRC-CAT-HRTECH-001
-- PAT-SRC-CAT-PAYROLL-001
 - PAT-SRC-CAT-WFM-001
 - PAT-SRC-CAT-PSA-001
 - PAT-SRC-CAT-CPQ-001
@@ -67,10 +65,13 @@ Wave 1 - category-specific sourcing playbooks in progress.
 - PAT-SRC-CAT-CRM2-001
 - PAT-SRC-CAT-DAM-001
 - PAT-SRC-CAT-ESG-001
+- PAT-SRC-CAT-BI2-001
+- PAT-SRC-CAT-SEARCH-001
+- PAT-SRC-CAT-EMAIL-001
 
 ## Current blockers
 - Full `npm test -- --runInBand` remains blocked by pre-existing unrelated broad-suite failures outside corpus branch scope.
 - Numeric pricing, discount, implementation-ratio, AI-usage, overage, and renewal-uplift claims remain intentionally blank unless source-backed by buyer evidence or approved benchmarks.
 
 ## Next action
-Validate and open the procurement, CLM, and AP automation category batch: `PAT-SRC-CAT-PROCURE-001`, `PAT-SRC-CAT-CLM-001`, and `PAT-SRC-CAT-AP-001`, then continue with the TMS/HR/payroll queue.
+Validate and open the TMS, HRTech, and payroll category batch: `PAT-SRC-CAT-TMS-001`, `PAT-SRC-CAT-HRTECH-001`, and `PAT-SRC-CAT-PAYROLL-001`, then continue with the WFM/PSA/CPQ queue.
