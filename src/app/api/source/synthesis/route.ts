@@ -7,11 +7,15 @@ import { SOURCE_EVENT_INSTANCES } from "@/lib/source/source-event-instances";
 import { PAT_SRC_AMS_001 } from "@/lib/intelligence/source-lifecycle-patterns";
 import { buildSourceSynthesisContext, instanceStateHash } from "@/lib/reasoning/synthesis-context-builder";
 import { recordSynthesisEvent } from "@/lib/reasoning/synthesis-telemetry";
+import { computeSynthesisEtag } from "@/lib/reasoning/synthesis-etag";
+import { registerSynthesisCache } from "@/lib/reasoning/synthesis-cache-registry";
 import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
 
 // Simple in-memory cache: key → text response
 // In production this would be Redis; for demo an in-process cache is sufficient.
 const synthesisCache = new Map<string, string>();
+const cacheCreatedAt = new Map<string, number>();
+registerSynthesisCache('source', synthesisCache, cacheCreatedAt);
 
 const SENTINEL_SYNTHESIS_PROMPT = `You are Sentinel, AbarVa's intelligence validator on the Source surface.
 
@@ -54,7 +58,35 @@ export async function POST(request: Request) {
   // Cache check
   const stateHash = instanceStateHash(instance);
   const cacheKey = `${instance.id}:${stateHash}:${pattern.version}:sentinel`;
+  const etag = computeSynthesisEtag(cacheKey);
+  const ifNoneMatch = request.headers.get('if-none-match');
   const cached = synthesisCache.get(cacheKey);
+
+  // Conditional GET: client already has this exact synthesis cached.
+  // Short-circuit with 304 — no body, but still emit ETag + X-Cache for
+  // observability parity with the 200 path.
+  if (cached && ifNoneMatch && ifNoneMatch === etag) {
+    const event = recordSynthesisEvent({
+      surface: 'source',
+      instanceId: instance.id,
+      patternId: pattern.patternId,
+      cacheHit: true,
+      latencyMs: Date.now() - startedAt,
+      citationCount: ctx.citations.length,
+      contradictionCount: ctx.activeContradictions.length,
+      failureModeCount: ctx.failureModes.length,
+      gateCount: ctx.gatesSummary.total,
+    });
+    return new Response(null, {
+      status: 304,
+      headers: {
+        ETag: etag,
+        "X-Cache": "HIT",
+        "X-Synthesis-Event-Id": event.id,
+      },
+    });
+  }
+
   if (cached) {
     const event = recordSynthesisEvent({
       surface: 'source',
@@ -70,6 +102,7 @@ export async function POST(request: Request) {
     return new Response(cached, {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
+        ETag: etag,
         "X-Cache": "HIT",
         "X-Synthesis-Event-Id": event.id,
       },
@@ -114,6 +147,7 @@ export async function POST(request: Request) {
       // Cache the full response after streaming completes
       if (accumulated) {
         synthesisCache.set(cacheKey, accumulated);
+        cacheCreatedAt.set(cacheKey, Date.now());
       }
       controller.close();
     },
@@ -123,6 +157,7 @@ export async function POST(request: Request) {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
       "Transfer-Encoding": "chunked",
+      ETag: etag,
       "X-Cache": "MISS",
       "X-Synthesis-Event-Id": event.id,
     },

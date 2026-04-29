@@ -3,6 +3,10 @@
 import { useEffect, useState, useRef } from 'react';
 import { SynthesisFeedbackControl } from '@/components/reasoning/SynthesisFeedbackControl';
 import { ExplainQuotePill } from '@/components/_shared/ExplainQuotePill';
+import {
+  readSynthesisCache,
+  writeSynthesisCache,
+} from '@/lib/reasoning/synthesis-client-cache';
 
 interface SentinelSynthesisQuoteProps {
   instanceId: string;
@@ -26,15 +30,29 @@ export function SentinelSynthesisQuote({ instanceId, fallback, onLoaded }: Senti
     fetchedRef.current = true;
 
     let accumulated = '';
+    const clientCacheKey = `source:${instanceId}`;
+    const cached = readSynthesisCache(clientCacheKey);
+
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (cached) headers['If-None-Match'] = cached.etag;
 
     fetch('/api/source/synthesis', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ instanceId }),
     })
       .then(async (res) => {
+        // 304 Not Modified — server confirms our cached body still matches.
+        if (res.status === 304 && cached) {
+          setEventId(res.headers.get('X-Synthesis-Event-Id'));
+          setText(cached.text);
+          setDone(true);
+          onLoaded?.(cached.text);
+          return;
+        }
         if (!res.ok) throw new Error(`synthesis ${res.status}`);
         setEventId(res.headers.get('X-Synthesis-Event-Id'));
+        const etag = res.headers.get('ETag');
         const reader = res.body?.getReader();
         if (!reader) throw new Error('no body');
         const decoder = new TextDecoder();
@@ -43,6 +61,9 @@ export function SentinelSynthesisQuote({ instanceId, fallback, onLoaded }: Senti
           if (streamDone) break;
           accumulated += decoder.decode(value, { stream: true });
           setText(accumulated);
+        }
+        if (etag && accumulated) {
+          writeSynthesisCache(clientCacheKey, etag, accumulated);
         }
         setDone(true);
         onLoaded?.(accumulated);

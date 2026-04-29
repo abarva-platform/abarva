@@ -9,11 +9,15 @@ import {
   programInstanceStateHash,
 } from "@/lib/reasoning/program-synthesis-context-builder";
 import { recordSynthesisEvent } from "@/lib/reasoning/synthesis-telemetry";
+import { computeSynthesisEtag } from "@/lib/reasoning/synthesis-etag";
+import { registerSynthesisCache } from "@/lib/reasoning/synthesis-cache-registry";
 import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
 
 // Simple in-memory cache: key → text response
 // In production this would be Redis; for demo an in-process cache is sufficient.
 const synthesisCache = new Map<string, string>();
+const cacheCreatedAt = new Map<string, number>();
+registerSynthesisCache('programs', synthesisCache, cacheCreatedAt);
 
 const NEXUS_SYNTHESIS_PROMPT = `You are Nexus, AbarVa's program orchestrator on the Programs surface.
 
@@ -47,7 +51,33 @@ export async function POST(request: Request) {
   // Cache check
   const stateHash = programInstanceStateHash(instance);
   const cacheKey = `${instance.id}:${stateHash}:${instance.patternVersion}:nexus`;
+  const etag = computeSynthesisEtag(cacheKey);
+  const ifNoneMatch = request.headers.get('if-none-match');
   const cached = synthesisCache.get(cacheKey);
+
+  // Conditional GET: client already has this exact synthesis cached.
+  if (cached && ifNoneMatch && ifNoneMatch === etag) {
+    const event = recordSynthesisEvent({
+      surface: 'programs',
+      instanceId: instance.id,
+      patternId: instance.patternId,
+      cacheHit: true,
+      latencyMs: Date.now() - startedAt,
+      citationCount: ctx.citations.length,
+      contradictionCount: ctx.activeContradictions.length,
+      failureModeCount: ctx.failureModes.length,
+      gateCount: ctx.gatesSummary.total,
+    });
+    return new Response(null, {
+      status: 304,
+      headers: {
+        ETag: etag,
+        "X-Cache": "HIT",
+        "X-Synthesis-Event-Id": event.id,
+      },
+    });
+  }
+
   if (cached) {
     const event = recordSynthesisEvent({
       surface: 'programs',
@@ -63,6 +93,7 @@ export async function POST(request: Request) {
     return new Response(cached, {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
+        ETag: etag,
         "X-Cache": "HIT",
         "X-Synthesis-Event-Id": event.id,
       },
@@ -133,6 +164,7 @@ export async function POST(request: Request) {
       // Cache the full response after streaming completes
       if (accumulated) {
         synthesisCache.set(cacheKey, accumulated);
+        cacheCreatedAt.set(cacheKey, Date.now());
       }
       controller.close();
     },
@@ -142,6 +174,7 @@ export async function POST(request: Request) {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
       "Transfer-Encoding": "chunked",
+      ETag: etag,
       "X-Cache": "MISS",
       "X-Synthesis-Event-Id": event.id,
     },
