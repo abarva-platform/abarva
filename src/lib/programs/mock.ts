@@ -1332,8 +1332,9 @@ export async function updateModuleField(_programId?: string, _moduleKey?: string
 }
 
 export async function requestNexusDraft(_programId?: string, _moduleKey?: string): Promise<DraftResult> {
-  // TODO(Packet 8 §8.4, Packet 12 §12.3): replace this typed stub with the real
-  // Mode B drafting SSE integration after Intelligence Nexus infra merges.
+  // TODO(nexus-sse): wire Mode B drafting (Packet 8 §8.4 / Packet 12 §12.3).
+  // Deferred: depends on the shared Intelligence Nexus SSE infra; this branch
+  // ships the frontend shell only.
   return {
     ok: false,
     message: 'Nexus module drafting is intentionally stubbed in this frontend-only branch.',
@@ -1341,14 +1342,16 @@ export async function requestNexusDraft(_programId?: string, _moduleKey?: string
 }
 
 export async function* streamNexusChat(_programId?: string): AsyncGenerator<Turn, void, void> {
-  // TODO(Packet 8 §8.3, Packet 12 §12.3): wire the side-panel chat tab to the
-  // real program-scoped Nexus SSE endpoint after shared infra merges.
+  // TODO(nexus-sse): wire the side-panel chat tab to the program-scoped Nexus
+  // SSE endpoint (Packet 8 §8.3 / Packet 12 §12.3).
+  // Deferred: depends on the shared Intelligence Nexus SSE infra merge.
   yield { id: 'stub-chat-turn', speaker: 'nexus', text: 'Programs chat is running in static-shell mode on this branch.' };
 }
 
 export async function answerCxoTakeover(_programId: string, _mode: 'phase_3_interview' | 'phase_6_verification', answer: string): Promise<NextTurn> {
-  // TODO(Packet 8 §8.5, Packet 12 §12.3): replace this typed stub with the real
-  // Mode C takeover interaction flow after shared interview infrastructure lands.
+  // TODO(nexus-takeover): replace with the live Mode C takeover flow
+  // (Packet 8 §8.5 / Packet 12 §12.3).
+  // Deferred: depends on the shared interview infra and persistence layer.
   return {
     nextQuestion: undefined,
     transcript: [
@@ -1359,8 +1362,8 @@ export async function answerCxoTakeover(_programId: string, _mode: 'phase_3_inte
 }
 
 export async function closeCxoTakeover(_programId?: string): Promise<Synthesis> {
-  // TODO(Packet 8 §8.5): replace with the real synthesis closeout once the
-  // interview persistence layer is available.
+  // TODO(nexus-takeover): emit the real synthesis closeout (Packet 8 §8.5).
+  // Deferred: depends on the shared interview persistence layer landing.
   return {
     headline: 'Static takeover preview',
     bullets: [

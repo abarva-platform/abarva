@@ -19,6 +19,8 @@ import { buildPricingCompletenessView } from '@/lib/source/pricing-completeness-
 import { buildBafoScenarioCompareView } from '@/lib/source/bafo-scenario-compare-view';
 import { buildTransitionReadinessView } from '@/lib/source/transition-readiness-view';
 import type { VendorTransitionReadiness, TransitionRiskItem, TransitionGoNoGoItem, TransitionReadinessStatus } from '@/lib/source/transition-readiness-view';
+import { buildAwardDecisionView } from '@/lib/source/award-decision-view';
+import type { VendorAwardProfile } from '@/lib/source/award-decision-view';
 import { ContradictionDetailCardClient } from '@/components/_shared/ContradictionDetailCardClient';
 import { RiskRegisterPanel } from '@/components/_shared/RiskRegisterPanel';
 import { buildRiskRegisterForInstance } from '@/lib/reasoning/risk-register';
@@ -70,7 +72,7 @@ const STEWARD_ACTIONS = [
 
 // ─── WorkPane tabs (SRC42 — 8-tab consolidated canvas) ───────────────────────
 
-type TabKey = 'summary' | 'pricing' | 'bafo' | 'risk' | 'readiness' | 'missions' | 'signals' | 'program' | 'transition';
+type TabKey = 'summary' | 'pricing' | 'bafo' | 'risk' | 'readiness' | 'missions' | 'signals' | 'program' | 'transition' | 'award';
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: 'summary', label: 'Summary' },
@@ -82,6 +84,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'signals', label: 'Signals' },
   { key: 'program', label: 'Linked Program' },
   { key: 'transition', label: 'Transition' },
+  { key: 'award', label: 'Award' },
 ];
 
 // ─── Tab content components ───────────────────────────────────────────────────
@@ -1992,6 +1995,7 @@ export function SourceEventDetailPage() {
           {activeTab === 'signals' && <SignalsStreamTab />}
           {activeTab === 'program' && <LinkedProgramTab />}
           {activeTab === 'transition' && <TransitionReadinessTab />}
+          {activeTab === 'award' && <AwardDecisionTab />}
         </div>
       </WorkingPaneContainer>
       </div>
@@ -2005,5 +2009,174 @@ export function SourceEventDetailPage() {
         surface="source-detail"
       />
     </AppShell>
+  );
+}
+
+// ─── SRC46 · Award Decision Tab ───────────────────────────────────────────────
+
+const AWARD_STATUS_STYLE: Record<string, { bg: string; text: string; label: string }> = {
+  recommended: { bg: SHELL.MINT_BG, text: SHELL.MINT_TEXT, label: 'Recommended' },
+  conditional: { bg: SHELL.PEACH_BG, text: SHELL.PEACH_TEXT, label: 'Conditional' },
+  not_recommended: { bg: SHELL.RUST_BG, text: SHELL.RUST_TEXT, label: 'Not recommended' },
+};
+
+const RANK_LABEL: Record<number, string> = { 1: '#1', 2: '#2', 3: '#3' };
+
+function AwardVendorCard({ vendor }: { vendor: VendorAwardProfile }) {
+  const statusStyle = AWARD_STATUS_STYLE[vendor.status] ?? AWARD_STATUS_STYLE.conditional;
+  const isTop = vendor.rank === 1;
+
+  return (
+    <div
+      data-testid={`source-award-vendor-${vendor.vendorId}`}
+      style={{
+        padding: '18px 20px',
+        background: SHELL.CARD_WHITE,
+        border: `1px solid ${isTop ? SHELL.MINT_LINE : SHELL.CARD_LINE}`,
+        borderLeft: `4px solid ${statusStyle.text}`,
+        borderRadius: 8,
+      }}
+    >
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+        <span style={{
+          fontFamily: SHELL.MONO, fontSize: 10, fontWeight: 700,
+          color: SHELL.INK_MUTED, letterSpacing: '0.08em',
+        }}>
+          {RANK_LABEL[vendor.rank] ?? `#${vendor.rank}`}
+        </span>
+        <span style={{ fontFamily: SHELL.SERIF, fontSize: 16, fontWeight: 700, color: SHELL.INK, flex: 1 }}>
+          {vendor.vendorName}
+        </span>
+        <span style={{
+          display: 'inline-block', padding: '2px 8px', borderRadius: 999,
+          background: statusStyle.bg, color: statusStyle.text,
+          fontFamily: SHELL.MONO, fontSize: 9, fontWeight: 600,
+          letterSpacing: '0.06em', textTransform: 'uppercase', lineHeight: 1.5,
+        }}>
+          {statusStyle.label}
+        </span>
+        <span style={{
+          fontFamily: SHELL.MONO, fontSize: 13, fontWeight: 700,
+          color: SHELL.INK, letterSpacing: '0.03em',
+        }}>
+          {vendor.scores.overall}
+        </span>
+      </div>
+
+      {/* Score row */}
+      <div style={{
+        display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 10,
+        fontFamily: SHELL.MONO, fontSize: 9.5, color: SHELL.INK_MUTED, letterSpacing: '0.04em',
+      }}>
+        <span>Commercial: {vendor.scores.commercial}</span>
+        <span>Technical: {vendor.scores.technical}</span>
+        <span>Transition: {vendor.scores.transition}</span>
+        <span>Risk: {vendor.scores.risk}</span>
+      </div>
+
+      {/* Decision note */}
+      <p style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK, lineHeight: 1.55, margin: '0 0 8px' }}>
+        {vendor.decisionNote}
+      </p>
+
+      {/* Blocking issues */}
+      {vendor.blockingIssues.length > 0 && (
+        <div style={{
+          padding: '8px 12px', background: SHELL.RUST_BG, borderRadius: 6,
+          fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.RUST_TEXT, lineHeight: 1.5,
+        }}>
+          {vendor.blockingIssues.map((issue, i) => (
+            <div key={i}>⚠ {issue}</div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AwardDecisionTab() {
+  const view = buildAwardDecisionView();
+
+  return (
+    <div
+      data-testid="source-award-decision-tab"
+      style={{ padding: '20px 0', maxWidth: 760 }}
+    >
+      {/* Stage header */}
+      <div style={{
+        fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.14em',
+        textTransform: 'uppercase', color: SHELL.INK_MUTED, marginBottom: 8,
+      }}>
+        {view.decisionStage}
+      </div>
+
+      {/* Summary card */}
+      <div
+        data-testid="source-award-decision-summary"
+        style={{
+          padding: '16px 20px', background: SHELL.MINT_BG,
+          border: `1px solid ${SHELL.MINT_LINE}`, borderRadius: 8, marginBottom: 20,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+          <span style={{
+            fontFamily: SHELL.SERIF, fontSize: 14, fontWeight: 700, color: SHELL.MINT_TEXT,
+          }}>
+            Recommended: {view.summary.recommendedVendorName}
+          </span>
+          <span style={{
+            display: 'inline-block', padding: '2px 8px', borderRadius: 999,
+            background: SHELL.PEACH_BG, color: SHELL.PEACH_TEXT,
+            fontFamily: SHELL.MONO, fontSize: 9, fontWeight: 600,
+            letterSpacing: '0.06em', textTransform: 'uppercase', lineHeight: 1.5,
+          }}>
+            {view.summary.decisionReadiness === 'conditional' ? 'Conditional' :
+             view.summary.decisionReadiness === 'ready' ? 'Ready' : 'Not ready'}
+          </span>
+        </div>
+        <p style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK, lineHeight: 1.6, margin: '0 0 12px' }}>
+          {view.summary.rationale}
+        </p>
+        {view.summary.preAwardConditions.length > 0 && (
+          <div>
+            <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: SHELL.INK_MUTED, marginBottom: 6 }}>
+              Pre-award conditions
+            </div>
+            {view.summary.preAwardConditions.map((cond, i) => (
+              <div key={i} style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK_SOFT, lineHeight: 1.5, paddingLeft: 12, borderLeft: `2px solid ${SHELL.MINT_LINE}`, marginBottom: 4 }}>
+                {cond}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Atlas guidance */}
+      <p style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK, lineHeight: 1.6, margin: '0 0 20px' }}>
+        {view.atlasGuidance}
+      </p>
+
+      {/* Vendor cards */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {view.vendors.map((vendor) => (
+          <AwardVendorCard key={vendor.vendorId} vendor={vendor} />
+        ))}
+      </div>
+
+      {/* Honest disclaimer */}
+      <div
+        style={{
+          marginTop: 20, fontFamily: SHELL.MONO, fontSize: 9,
+          color: SHELL.INK_MUTED, letterSpacing: '0.04em',
+        }}
+        data-testid="source-award-decision-disclaimer"
+        data-honest-disclaimer="source-award-decision"
+      >
+        Deterministic seed · Award decision reflects fixture evaluation data for the Apex Retail
+        AMS Vendor Consolidation engagement. Live scoring and committee ratification are deferred
+        to the programme award management workflow.
+      </div>
+    </div>
   );
 }

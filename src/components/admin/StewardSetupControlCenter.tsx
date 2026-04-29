@@ -35,7 +35,9 @@ import type {
   AgentMissionPanelMission,
   AgentMissionPanelView,
 } from '@/lib/agent/agent-mission-view';
-import { getTopDerivedPanelMissions } from '@/lib/agent/agent-mission-derived';
+import { getPortfolioMissions } from '@/lib/agent/agent-mission-derived';
+import { MissionListInteractive } from '@/components/_shared/MissionListInteractive';
+import { PortfolioRecentMissionStates } from '@/components/_shared/PortfolioRecentMissionStates';
 
 // AG12 · Admin surface mission projection.
 //
@@ -69,19 +71,19 @@ function buildAdminAgentMissionView(): AgentMissionPanelView {
     .slice(0, 3)
     .map(mapAdminMissionToPanel);
 
-  // AG13 · Append top derived missions (auto-derived from pending gate
-  // criteria via the reasoning layer) to the seed list. The derivation is
-  // wrapped in `@/lib/agent/agent-mission-derived` so this surface
-  // component does not import from `@/lib/source` or `@/lib/programs`
-  // directly (AG12 module-hygiene rule).
-  const derived = getTopDerivedPanelMissions(3);
+  // AG13 · Derived (gate-pending) missions used to be appended to the
+  // panel here. They now render below the panel via the interactive
+  // `MissionListInteractive` block so users can mark them complete /
+  // dismiss them from the queue. Keeping them in the panel as well
+  // would double-list every entry, so the panel scope is restricted to
+  // the admin seed missions.
 
   return {
     variant: 'compact_strip',
-    missions: [...seedTop, ...derived],
+    missions: seedTop,
     surfaceLabel: 'Admin Setup',
     honestDisclaimer:
-      'Mission queue blends deterministic seed + gate-derived missions; runtime triggers deferred.',
+      'Steward seed missions; gate-derived missions render below with complete/dismiss controls.',
   };
 }
 
@@ -192,6 +194,34 @@ export function StewardSetupControlCenter({ view }: StewardSetupControlCenterPro
 
       {/* AG12 · Agent mission panel · projected from AG10 deterministic queue (top 3) */}
       <AgentMissionPanel view={buildAdminAgentMissionView()} />
+
+      {/* AG14 · Derived mission queue with Complete / Dismiss controls.
+          Mirrors the Source / Programs detail-page treatment so admins can
+          action gate-pending missions directly from the Steward column.
+          The active list filters out actioned entries (handled inside
+          `MissionList`); the recent block surfaces the last 3 across the
+          full portfolio. */}
+      {(() => {
+        const portfolioMissions = getPortfolioMissions(6);
+        const instanceIds = Array.from(
+          new Set(portfolioMissions.map((m) => m.instanceId)),
+        );
+        return (
+          <div style={{ display: 'grid', gap: 8 }}>
+            <MissionListInteractive
+              missions={portfolioMissions}
+              title="Pending gates · portfolio"
+              maxRows={6}
+              showInstancePrefix
+              emptyState="All portfolio gates satisfied · no missions pending"
+            />
+            <PortfolioRecentMissionStates
+              instanceIds={instanceIds}
+              limit={3}
+            />
+          </div>
+        );
+      })()}
 
       {/* Zone B · Steward Brief */}
       <StewardBriefPanel brief={brief} />
