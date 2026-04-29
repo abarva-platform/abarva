@@ -1,8 +1,13 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { meridianHealth } from "@/data/meridian";
+import { getUserContextPromptBlock } from "@/lib/agent/userContext";
 
 export async function POST(request: Request) {
   const { orgName, orgSize, vertical, challenge } = await request.json();
+
+  // F0.2 Layer 0 — user context for authenticated visitors. Returns
+  // empty string for the common unauthenticated marketing-funnel hit.
+  const userContextBlock = await getUserContextPromptBlock();
 
   // Load org context if Meridian
   const isMeridian = orgName.toLowerCase().includes("meridian");
@@ -40,7 +45,8 @@ You have deep expertise in healthcare and financial services transformations.
 You have access to this organization's actual data, financials, leadership interviews, and known contradictions.
 Reference specific numbers, names, and contradictions from the org data.
 Never give generic advice — every insight must reference their specific situation.
-Format your response with these exact sections:
+
+${userContextBlock}Format your response with these exact sections:
 
 ## TOP 3 TRANSFORMATION CHALLENGES
 (Reference specific metrics and dollar amounts)

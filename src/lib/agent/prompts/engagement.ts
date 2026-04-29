@@ -15,6 +15,13 @@ interface AssembleArgs {
   clientDataSummary?: string[];
   maestroContextBlock?: string;
   userContextBlock?: string;
+  /**
+   * F0.2 Layer-0 block describing the signed-in user (name, role,
+   * sponsorship history). Distinct from `userContextBlock`, which
+   * describes the maestro assigned to the engagement and may be a
+   * different person than the signed-in viewer.
+   */
+  signedInUserContextBlock?: string;
   topicIntelligenceBlock?: string;
   /**
    * Labeled RETRIEVED CONTEXT block from formatRetrievedContext(). Empty
@@ -44,6 +51,9 @@ export function assembleEngagementSystemPrompt(ctx: AssembleArgs): string {
   // tempts the model to cite fabricated source_keys.
   return [
     CONVERSATION_PRINCIPLES,
+    ctx.signedInUserContextBlock && ctx.signedInUserContextBlock.trim().length > 0
+      ? ctx.signedInUserContextBlock
+      : null,
     ctx.userContextBlock && ctx.userContextBlock.trim().length > 0 ? ctx.userContextBlock : null,
     ctx.maestroContextBlock && ctx.maestroContextBlock.trim().length > 0 ? ctx.maestroContextBlock : null,
     ctx.topicIntelligenceBlock && ctx.topicIntelligenceBlock.trim().length > 0 ? ctx.topicIntelligenceBlock : null,

@@ -13,6 +13,7 @@ import { recordSynthesisEvent } from "@/lib/reasoning/synthesis-telemetry";
 import { computeSynthesisEtag } from "@/lib/reasoning/synthesis-etag";
 import { registerSynthesisCache } from "@/lib/reasoning/synthesis-cache-registry";
 import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
+import { getUserContextPromptBlock } from "@/lib/agent/userContext";
 
 // Simple in-memory cache: key → text response
 // In production this would be Redis; for demo an in-process cache is sufficient.
@@ -20,7 +21,7 @@ const synthesisCache = new Map<string, string>();
 const cacheCreatedAt = new Map<string, number>();
 registerSynthesisCache('tower', synthesisCache, cacheCreatedAt);
 
-const ATLAS_SYNTHESIS_PROMPT = `You are Atlas, AbarVa's portfolio CIO-of-staff agent on the Tower surface.
+const ATLAS_SYNTHESIS_VOICE_AND_TASK = `You are Atlas, AbarVa's portfolio CIO-of-staff agent on the Tower surface.
 
 Your synthesis task: given the current state of an entire portfolio (every active program plus every active source event), produce a portfolio-level read that names the single highest-leverage move.
 
@@ -31,9 +32,14 @@ Atlas voice register (from brand voice spec §9):
 - Quantify portfolio scope when relevant (e.g. "across 4 programs and 1 active sourcing event").
 - Precise, executive register. No filler. No hedging.
 
-Format: Plain prose, 100–150 words. No headers, no bullets, no markdown. Single paragraph.
+Format: Plain prose, 100–150 words. No headers, no bullets, no markdown. Single paragraph.`;
 
-${AGENT_DEMO_SYSTEM_BLOCK}`;
+function buildAtlasSynthesisPrompt(userContextBlock: string): string {
+  // F0.2: role/voice → user context (Layer 0) → demo/knowledge block.
+  return [ATLAS_SYNTHESIS_VOICE_AND_TASK, userContextBlock, AGENT_DEMO_SYSTEM_BLOCK]
+    .filter((s) => s && s.trim().length > 0)
+    .join('\n\n');
+}
 
 interface ProgramSummary {
   id: string;
@@ -167,10 +173,13 @@ export async function POST(request: Request) {
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+  // F0.2 Layer 0
+  const userContextBlock = await getUserContextPromptBlock();
+
   const stream = await client.messages.stream({
     model: "claude-sonnet-4-6",
     max_tokens: 350,
-    system: ATLAS_SYNTHESIS_PROMPT,
+    system: buildAtlasSynthesisPrompt(userContextBlock),
     messages: [{ role: "user", content: userMessage }],
   });
 

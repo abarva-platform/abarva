@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { retrieveContext, verticalFromClientContext } from '@/lib/retrieval'
+import { getUserContextPromptBlock } from '@/lib/agent/userContext'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -42,10 +43,11 @@ const STEP_CONTEXT: Record<string, { question: string; outcomeLabel: string }> =
   '4.2': { question: 'What governance model and measurement cadence ensures accountability?',           outcomeLabel: 'Governance Model' },
 }
 
-function buildSystemPrompt(ragContext: string): string {
+function buildSystemPrompt(ragContext: string, userContextBlock: string): string {
   return `You are AbarVa, the world's most rigorous AI transformation advisor.
 You are running a structured, step-by-step AI strategy session with a client.
-${ragContext ? `
+
+${userContextBlock}${ragContext ? `
 INDUSTRY BENCHMARKS AND KNOWLEDGE BASE (retrieved from AbarNexus):
 Use these specific benchmarks to ground your analysis. When relevant, cite the source in parentheses.
 Do not invent numbers — only use figures from this context or say "industry benchmarks suggest".
@@ -159,7 +161,9 @@ export async function POST(request: Request) {
   ].filter(Boolean).join(' ')
 
   const ragContext = await retrieveContext(retrievalQuery, vertical, 4)
-  const systemPrompt = buildSystemPrompt(ragContext)
+  // F0.2 Layer 0 — user context, composed AFTER role line and BEFORE RAG/task
+  const userContextBlock = await getUserContextPromptBlock()
+  const systemPrompt = buildSystemPrompt(ragContext, userContextBlock)
 
   const encoder = new TextEncoder()
 
