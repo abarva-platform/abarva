@@ -1,12 +1,12 @@
 # Corpus Autonomous State
 
-Last update timestamp: 2026-04-29T03:22:30Z
+Last update timestamp: 2026-04-29T03:26:30Z
 
 ## Current wave
 Wave 1 - category-specific sourcing playbooks in progress.
 
 ## Domains in progress
-- Category-specific sourcing playbooks: PR #817 merged; PR #818 open for AI platform batch.
+- Category-specific sourcing playbooks: PR #818 merged; security/identity batch authored and validated locally for PR handoff.
 - Process/methodology: queued.
 - Contract intelligence: queued.
 - Pricing intelligence: queued.
@@ -17,7 +17,7 @@ Wave 1 - category-specific sourcing playbooks in progress.
 
 ## Pattern counts by domain
 - Existing sourcing corpus on latest main before Wave 1: 24 patterns.
-- Category-specific sourcing playbooks (`PAT-SRC-CAT-*`): 21 authored across Wave 1; 18 merged in PRs #812, #813, #814, #815, #816, and #817, and 3 open in PR #818.
+- Category-specific sourcing playbooks (`PAT-SRC-CAT-*`): 24 authored across Wave 1; 21 merged in PRs #812, #813, #814, #815, #816, #817, and #818, and 3 authored locally for the next PR.
 - Vendor intelligence profiles (`PAT-SRC-VEN-*`): 0
 - Contract intelligence (`PAT-SRC-CON-*`): 0
 - Pricing intelligence (`PAT-SRC-PRC-*`): 0
@@ -34,20 +34,18 @@ Wave 1 - category-specific sourcing playbooks in progress.
 - #815 - `[corpus][cat] Author PAT-SRC-CAT-CDP-001, PAT-SRC-CAT-CDW-001, PAT-SRC-CAT-LAKE-001 · 3 patterns` - merged 2026-04-29T03:40:00Z at `3bf3af6c4ae1180506ca3b644566aa020b0b0e60`.
 - #816 - `[corpus][cat] Author PAT-SRC-CAT-MDM-001, PAT-SRC-CAT-FAB-001, PAT-SRC-CAT-ETL-001 · 3 patterns` - merged 2026-04-29T03:04:10Z at `bda991712fcbfe7f2ae0f63148ba303b60851b8b`.
 - #817 - `[corpus][cat] Author PAT-SRC-CAT-REV-001, PAT-SRC-CAT-BI-001, PAT-SRC-CAT-LLM-001 · 3 patterns` - merged 2026-04-29T03:13:00Z at `714c097834c4c85ff2638aa389751485488aa1e3`.
+- #818 - `[corpus][cat] Author PAT-SRC-CAT-AGENT-001, PAT-SRC-CAT-VEC-001, PAT-SRC-CAT-MLOPS-001 · 3 patterns` - merged 2026-04-29T03:24:00Z at `576d3eb834f3a3d74a23deb94eb235b799e88645`.
 
 ## Open PRs
-- #818 - `[corpus][cat] Author PAT-SRC-CAT-AGENT-001, PAT-SRC-CAT-VEC-001, PAT-SRC-CAT-MLOPS-001 · 3 patterns` - opened 2026-04-29T03:22:30Z; awaiting CI/Vercel.
+- None.
 
 ## Held PRs requiring founder review
 - None.
 
 ## Stalled lanes
-- None. Collaboration/productivity, video conferencing, enterprise messaging, CDP, cloud data warehouse, lakehouse, MDM, data fabric, ETL/ELT, revenue intelligence, BI, LLM/model-access, agent runtime, vector retrieval, and MLOps research lanes completed with read-only source notes.
+- None. Collaboration/productivity, video conferencing, enterprise messaging, CDP, cloud data warehouse, lakehouse, MDM, data fabric, ETL/ELT, revenue intelligence, BI, LLM/model-access, agent runtime, vector retrieval, MLOps, enterprise code platform, workforce IAM, and IGA research lanes completed with read-only source notes.
 
 ## Next 16 queued pattern IDs
-- PAT-SRC-CAT-CODE-001
-- PAT-SRC-CAT-IAM-001
-- PAT-SRC-CAT-IGA-001
 - PAT-SRC-CAT-PAM-001
 - PAT-SRC-CAT-SASE-001
 - PAT-SRC-CAT-SIEM-001
@@ -61,10 +59,13 @@ Wave 1 - category-specific sourcing playbooks in progress.
 - PAT-SRC-CAT-BPM-001
 - PAT-SRC-CAT-LEGAL-001
 - PAT-SRC-CAT-PROCURE-001
+- PAT-SRC-CAT-CLM-001
+- PAT-SRC-CAT-AP-001
+- PAT-SRC-CAT-TMS-001
 
 ## Current blockers
 - Full `npm test -- --runInBand` remains blocked by pre-existing unrelated broad-suite failures outside corpus branch scope.
 - Numeric pricing, discount, implementation-ratio, AI-usage, overage, and renewal-uplift claims remain intentionally blank unless source-backed by buyer evidence or approved benchmarks.
 
 ## Next action
-Monitor PR #818 while preparing the next non-conflicting category batch: `PAT-SRC-CAT-CODE-001`, `PAT-SRC-CAT-IAM-001`, and `PAT-SRC-CAT-IGA-001`.
+Validate and open the security/identity category batch: `PAT-SRC-CAT-CODE-001`, `PAT-SRC-CAT-IAM-001`, and `PAT-SRC-CAT-IGA-001`, then continue with privileged access and security platform queue.
