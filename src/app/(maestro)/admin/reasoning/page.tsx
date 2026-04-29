@@ -798,6 +798,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/health-alerts',
     description: 'At-risk instances requiring attention — critical, high, medium, and low severity alerts',
   },
+  {
+    title: 'Health simulator',
+    href: '/admin/reasoning/health-simulator',
+    description: 'What-if score projections — adjust gates and contradictions to see health score changes',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
