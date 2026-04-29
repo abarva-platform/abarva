@@ -623,6 +623,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/pattern-metrics',
     description: 'Per-pattern instance usage, contradiction counts, and gate coverage',
   },
+  {
+    title: 'Evidence gaps',
+    href: '/admin/reasoning/evidence-gaps',
+    description: 'Portfolio-level view of unmet hard gate criteria missing evidence',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
