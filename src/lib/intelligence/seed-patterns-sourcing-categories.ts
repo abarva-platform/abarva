@@ -3369,6 +3369,453 @@ Vendor claim: end-to-end ML platform. Detection: prove the path from experiment 
 
 The common failure is buying experiment tracking and still lacking production accountability. The second is selecting a cloud-native suite because it is convenient while specialist monitoring or feature needs remain unresolved. The third is ignoring model retirement and rollback until a production model behaves badly.`,
   },
+  {
+    id: 'PAT-SRC-CAT-CODE-001',
+    slug: 'enterprise-code-platform-ai-devops-sourcing',
+    title: 'Enterprise Code Platform Sourcing for SCM, DevOps, and AI Coding Assistants',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Enterprise code-platform sourcing should evaluate source control, CI/CD, code security, developer workflow, and AI coding assistant governance as one operating model instead of comparing repository seats in isolation.',
+    applicability:
+      'Apply when sourcing GitHub Enterprise, GitHub Copilot, GitHub Advanced Security, GitLab Premium or Ultimate, GitLab Duo, Bitbucket Cloud or hybrid, Azure DevOps, JetBrains AI, Cursor Teams or Enterprise, and adjacent developer-platform tooling.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.78,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://github.com/pricing',
+      'https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing',
+      'https://docs.github.com/en/copilot/concepts/content-exclusion-for-github-copilot',
+      'https://about.gitlab.com/pricing/',
+      'https://docs.gitlab.com/administration/gitlab_duo_self_hosted/',
+      'https://www.atlassian.com/software/bitbucket/pricing',
+      'https://www.atlassian.com/migration/bitbucket-hybrid-license',
+      'https://azure.microsoft.com/en-us/pricing/details/devops/',
+      'https://www.jetbrains.com/help/ai-assistant/licensing-and-subscriptions.html',
+      'https://cursor.com/pricing',
+      'https://cursor.com/security',
+    ],
+    regulatoryChips: ['SOC-2-review', 'IP-protection', 'open-source-license-review', 'GDPR-if-person-data', 'AI-governance-review'],
+    relatedPatternIds: ['PAT-SRC-CAT-AGENT-001', 'PAT-SRC-CAT-MLOPS-001', 'PAT-SRC-CAT-LLM-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'ai_ml',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'GitHub Enterprise, GitLab, Bitbucket, and Azure DevOps',
+        tier: 'enterprise',
+        positioning: 'Suite and platform candidates spanning source control, code review, CI/CD, package or artifact workflows, security scanning, compliance controls, and enterprise administration.',
+        cautions: ['SCM seats, CI minutes, security add-ons, AI credits, storage, support, and migration services must be decomposed before comparing proposals.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'GitHub Pricing', url: 'https://github.com/pricing', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'GitLab Pricing', url: 'https://about.gitlab.com/pricing/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Azure DevOps Services Pricing', url: 'https://azure.microsoft.com/en-us/pricing/details/devops/', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'GitHub Copilot, GitLab Duo, Atlassian Rovo Dev, JetBrains AI, and Cursor',
+        tier: 'specialist',
+        positioning: 'AI-assisted developer workflow candidates for IDE chat, code completion, agentic development, code review, and repository-aware assistance.',
+        cautions: ['AI data handling, content exclusion, pooled credits, model/provider terms, auditability, and usage caps vary by vendor and plan.'],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'Developer platform public pricing constructs only',
+        model: 'hybrid',
+        metric: 'Developer seats, enterprise seats, AI credits, CI/CD minutes, hosted runners, self-hosted capacity, artifacts, storage, code security, support, and services',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'GitHub Copilot models and pricing', url: 'https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Bitbucket Pricing', url: 'https://www.atlassian.com/software/bitbucket/pricing', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Cursor Pricing', url: 'https://cursor.com/pricing', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Negotiated enterprise discounts, developer populations, AI adoption rates, CI usage, security add-ons, and migration cost require buyer evidence' },
+        ],
+        confidence: 0.58,
+        notes: 'Use public pricing pages only to identify meters; do not hard-code volatile list prices or infer negotiated savings.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'AI coding assistant data handling',
+        buyerPosition: 'Define training use, retention, logging, model-provider subprocessors, content exclusion limits, repository scope, admin controls, and evidence available for audit.',
+      },
+      {
+        clauseArea: 'SCM and CI/CD exit rights',
+        buyerPosition: 'Require repository, issue, pipeline, artifact, package, audit-log, and security-finding export assistance with no penalty for reasonable transition.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Toolchain consolidation model',
+        whenToUse: 'Use when vendor bundles SCM, CI/CD, security scanning, planning, packages, and AI assistance into one proposal.',
+        buyerAsk: 'Separate incumbent spend displaced, net-new modules, migration effort, usage meters, and controls required before award.',
+      },
+      {
+        lever: 'AI governance proof',
+        whenToUse: 'Use before broad AI coding assistant rollout.',
+        buyerAsk: 'Demonstrate admin policy, content exclusion, privacy mode, usage reporting, credit controls, secure prompt behavior, and generated-code review workflow.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'code-ai-data-boundary-gap',
+        label: 'AI coding data boundary gap',
+        severity: 'critical',
+        detectionSignals: ['Team treats no-training language, content exclusion, retention, IDE telemetry, and model-provider controls as one uniform protection.'],
+        mitigations: ['Require vendor-specific data flow, admin controls, content-exclusion limits, and legal review before rollout'],
+      },
+      {
+        id: 'dev-platform-meter-sprawl',
+        label: 'Developer platform meter sprawl',
+        severity: 'high',
+        detectionSignals: ['Proposal blends seats, AI credits, security add-ons, CI minutes, storage, and migration into one headline price.'],
+        mitigations: ['Normalize every meter against buyer repositories, developers, build volume, and security scope'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Stress audit logs, SDLC controls, segregated duties, AI data restrictions, secure code review, and regulator-visible change evidence.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Review PHI avoidance, BAA posture for any protected data path, generated-code review, and secure SDLC evidence.',
+      },
+      {
+        industry: 'public_sector',
+        modifier: 'Review residency, public-sector cloud eligibility, procurement channel, accessibility, records, and repository export.',
+      },
+    ],
+    body: `## Summary
+Enterprise code-platform sourcing now spans source control, code review, CI/CD, package and artifact flows, code security, developer experience, and AI-assisted development. The buyer is not only choosing where repositories live; the buyer is deciding which platform governs how software is created, reviewed, secured, shipped, audited, and increasingly assisted by models. That makes this category a control-plane decision for engineering, security, legal, finance, and procurement.
+
+## When to apply
+Use this pattern for sourcing or renewal events involving GitHub Enterprise, GitHub Copilot, GitHub Advanced Security, GitLab Premium or Ultimate, GitLab Duo, Bitbucket Cloud or hybrid licensing, Azure DevOps Services, JetBrains AI, Cursor Teams or Enterprise, and similar developer-platform or AI coding assistant products. It also applies when M&A, cloud migration, DevSecOps consolidation, or AI assistant rollout forces a standard platform choice. Do not use it for generic software outsourcing, ITSM, observability, cloud infrastructure, or developer staffing unless repository and delivery tooling are the procurement anchor.
+
+## Category boundary
+In scope: repository hosting, branch protection, code review, CI/CD, hosted and self-hosted runners, artifacts, package registries, test plans, code scanning, dependency scanning, secret scanning, AI coding assistants, IDE integrations, agentic code tools, enterprise admin, SSO, SCIM, audit logs, data residency, content exclusion, privacy mode, support, and migration. Out of scope: standalone observability, cloud hosting, endpoint security, broad ALM consulting, and unsupported productivity claims.
+
+## Lifecycle and gates
+The scope gate should inventory repositories, developer and contributor populations, build volume, current CI/CD runners, security scanning coverage, regulated codebases, open-source policy, AI use, and integration with Jira, issue trackers, IDEs, cloud, and identity. The RFP gate should require public pricing meter disclosure, enterprise controls, data handling, security attestations, AI usage controls, migration support, and export rights. The proof gate should test repository migration, protected branch rules, code scanning, secret scanning, CI workload, package flow, SSO/SCIM, audit export, AI assistant privacy controls, and generated-code review. The BAFO gate should normalize seats, AI credits, CI minutes, storage, security add-ons, marketplace or cloud-commit treatment, support, migration, and internal operating cost.
+
+## Evaluation rubric
+Weight developer workflow fit around 20 percent, security and governance around 25 percent, AI data handling around 15 percent, CI/CD and integration depth around 15 percent, commercial predictability around 15 percent, and portability around 10 percent. Increase governance weight for regulated software, customer-facing code, privileged infrastructure code, and distributed contractor access.
+
+## Pricing and contract notes
+Public pages from GitHub, GitLab, Atlassian, Microsoft, JetBrains, and Cursor identify pricing constructs such as developer seats, enterprise tiers, AI credits, CI/CD minutes, security features, audit controls, SSO, SCIM, storage, and support. Those pages should be treated as meter maps, not durable benchmarks. Do not infer discount levels, productivity gains, or total cost without buyer-specific repository counts, build traces, security scope, AI adoption, and negotiated terms.
+
+Contracting should define code and prompt data handling, model-training posture, retention, content exclusion limits, usage reporting, pooled credit or overage controls, repository export, pipeline and artifact export, support SLAs, incident response, vulnerability disclosure, and transition assistance. Any AI coding assistant rollout should include secure SDLC obligations: human review, tests, SAST, dependency scanning, license review, and secret controls.
+
+## Contradictions and failure modes
+Vendor claim: the suite reduces tool sprawl. Detection: map displaced tools, retained exceptions, migration burden, and net-new AI or security meters. Vendor claim: AI coding is safe for proprietary code. Detection: inspect plan-specific training, retention, content exclusion, model-provider, admin, and audit controls. Vendor claim: productivity improves. Detection: require buyer baseline metrics and avoid vendor marketing generalization.
+
+The common failure is buying a developer platform from a seat quote while ignoring CI consumption, security add-ons, AI credits, and migration. The second is letting individual AI assistant adoption precede security review. The third is treating SCM portability as simple until pipeline, artifact, package, audit, and security history are needed.`,
+  },
+  {
+    id: 'PAT-SRC-CAT-IAM-001',
+    slug: 'workforce-iam-identity-platform-sourcing',
+    title: 'Workforce IAM Sourcing for SSO, MFA, Lifecycle, and Conditional Access',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Workforce IAM sourcing should select the durable identity control plane for authentication assurance, app assignment, lifecycle automation, and access evidence rather than treating SSO, MFA, and provisioning as separate point tools.',
+    applicability:
+      'Apply when sourcing or rationalizing workforce identity platforms across Okta, Microsoft Entra, Cisco Duo, Google Cloud Identity, Ping Identity, CyberArk Identity, and adjacent governance integrations.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.82,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.okta.com/products/single-sign-on-workforce-identity/',
+      'https://www.okta.com/pricing/add-ons/',
+      'https://www.microsoft.com/en-us/security/business/microsoft-entra-pricing',
+      'https://duo.com/editions-and-pricing',
+      'https://cloud.google.com/identity/pricing',
+      'https://docs.cloud.google.com/identity/docs/editions',
+      'https://www.pingidentity.com/en/solution/workforce-identity.html',
+      'https://www.thomabravo.com/press-releases/thoma-bravo-completes-acquisition-of-forgerock-combines-forgerock-into-ping-identity',
+      'https://www.cyberark.com/press/cyberark-acquires-identity-as-a-service-leader-idaptive/',
+      'https://documentation.sailpoint.com/saas/help/access/govern_sso.html',
+      'https://pages.nist.gov/800-63-4/sp800-63b.html',
+    ],
+    regulatoryChips: ['SOC-2-review', 'NIST-800-63-review', 'GDPR-if-person-data', 'HIPAA-if-PHI', 'SOX-if-financial-controls'],
+    relatedPatternIds: ['PAT-SRC-CAT-IGA-001', 'PAT-SRC-CAT-COMM-001', 'PAT-SRC-CAT-CODE-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'security_identity',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Okta, Microsoft Entra, Cisco Duo, Google Cloud Identity, and Ping Identity',
+        tier: 'enterprise',
+        positioning: 'Primary workforce IAM platform candidates for SSO, MFA, conditional access, lifecycle, app integrations, logs, and enterprise administration.',
+        cautions: ['Feature packaging differs across SSO, MFA, lifecycle, governance, privileged access, private access, identity threat protection, and support.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Okta Pricing Add-Ons', url: 'https://www.okta.com/pricing/add-ons/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Microsoft Entra Plans and Pricing', url: 'https://www.microsoft.com/en-us/security/business/microsoft-entra-pricing', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Cisco Duo Editions and Pricing', url: 'https://duo.com/editions-and-pricing', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'CyberArk Identity and SailPoint governance adjacency',
+        tier: 'specialist',
+        positioning: 'Adjacent options when workforce IAM overlaps privileged access, identity security, lifecycle governance, and access governance over IdP-managed applications.',
+        cautions: ['Keep IAM, IGA, PAM, ZTNA, and ITDR boundaries explicit; they are related controls, not interchangeable categories.'],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'Workforce IAM public pricing constructs only',
+        model: 'subscription',
+        metric: 'Users, admins, app integrations, MFA methods, lifecycle workflows, conditional access, identity protection, governance modules, private access, support, and services',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Microsoft Entra Plans and Pricing', url: 'https://www.microsoft.com/en-us/security/business/microsoft-entra-pricing', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Google Cloud Identity Pricing', url: 'https://cloud.google.com/identity/pricing', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Tenant mix, worker populations, app inventory, existing Microsoft or Google entitlements, and negotiated enterprise terms require buyer evidence' },
+        ],
+        confidence: 0.60,
+        notes: 'Published editions identify packaging levers; enterprise total cost depends on identity populations, apps, modules, and incumbent bundle rights.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Authentication assurance and recovery',
+        buyerPosition: 'Define MFA method requirements, phishing-resistant path, break-glass accounts, recovery workflow, helpdesk verification, admin access, and emergency support.',
+      },
+      {
+        clauseArea: 'Identity data and evidence export',
+        buyerPosition: 'Require logs, admin actions, assignment history, provisioning events, policy changes, and audit evidence exports in usable formats.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Bundled entitlement challenger',
+        whenToUse: 'Use when Microsoft 365, Google Workspace, Cisco security, or other incumbent platforms already include identity capabilities.',
+        buyerAsk: 'Compare included capabilities against neutral IdP requirements, app coverage, assurance level, lifecycle automation, logs, and migration cost.',
+      },
+      {
+        lever: 'Critical-app SCIM proof',
+        whenToUse: 'Use when proposals assume automated provisioning and deprovisioning.',
+        buyerAsk: 'Prove provisioning, deprovisioning, attribute mapping, exception handling, and audit evidence for the buyer critical-app list.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'iam-mfa-assurance-gap',
+        label: 'MFA assurance gap',
+        severity: 'critical',
+        detectionSignals: ['Buyer treats push, TOTP, SMS, passkeys, and hardware-backed phishing-resistant authentication as equivalent.'],
+        mitigations: ['Require assurance-level mapping, high-risk user policy, recovery controls, and NIST-aligned authentication review'],
+      },
+      {
+        id: 'iam-app-inventory-gap',
+        label: 'App inventory and provisioning gap',
+        severity: 'high',
+        detectionSignals: ['SSO rollout ignores legacy, private, admin, contractor, and long-tail SaaS applications.'],
+        mitigations: ['Require app inventory, connector proof, manual exception workflow, and deprovisioning evidence'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Stress privileged access, SoD, audit exports, phishing-resistant authentication for high-risk users, and regulator-ready evidence.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Review workforce access to PHI systems, shared workstation realities, break-glass workflows, and audit log retention.',
+      },
+      {
+        industry: 'higher_education',
+        modifier: 'Plan for students, faculty, staff, guests, alumni, affiliates, research environments, and uneven app modernization.',
+      },
+    ],
+    body: `## Summary
+Workforce IAM sourcing is the decision about who becomes the control plane for employee, contractor, partner, administrator, and guest access. SSO and MFA are only the visible surface. The sourcing event must also test lifecycle provisioning, app assignment, conditional access, recovery, delegated administration, logging, evidence, and integration with HR, directories, ITSM, security monitoring, and governance tools.
+
+## When to apply
+Use this pattern when sourcing Okta, Microsoft Entra, Cisco Duo, Google Cloud Identity, Ping Identity, CyberArk Identity, or workforce IAM capabilities embedded in broader security and productivity platforms. Apply it during first-time SSO/MFA rollout, legacy AD FS replacement, Microsoft or Google bundle review, M&A identity consolidation, audit remediation, remote-work access redesign, or identity-threat program expansion. Do not use it for pure customer identity, pure PAM, cloud workload IAM, CIAM, endpoint management alone, or IGA-only access certification events.
+
+## Category boundary
+In scope: SSO, MFA, phishing-resistant authentication, passkeys, conditional or risk-based access, directory integration, SCIM provisioning, lifecycle workflows, app connectors, access gateway or private-app access, delegated administration, admin roles, policy management, recovery, audit logs, SIEM export, support, and migration. Adjacent but distinct: IGA, PAM, ZTNA, ITDR, device management, and GRC. The RFP should name the control boundary instead of letting vendors collapse every identity label into one suite story.
+
+## Lifecycle and gates
+The scope gate should inventory workers, contractors, partners, admins, guests, directories, HR sources, apps, privileged systems, private apps, regulated systems, current MFA methods, exception groups, and recovery workflows. The RFP gate should require authentication assurance, SSO coverage, SCIM coverage, lifecycle automation, logs, support, residency, app connector proof, and public pricing meter disclosure. The proof gate should test high-risk admin login, contractor onboarding, leaver deprovisioning, critical-app SCIM, helpdesk recovery, break-glass, conditional access, and log export. The BAFO gate should normalize users, app connectors, feature tiers, lifecycle modules, governance modules, private access, support, services, and existing bundle entitlements.
+
+## Evaluation rubric
+Weight authentication assurance around 25 percent, app and lifecycle coverage around 25 percent, operational reliability around 15 percent, audit and logging around 15 percent, commercial fit around 10 percent, and portability around 10 percent. Increase assurance weight for administrators, developers, finance, HR, executives, regulated data, and remote contractor access.
+
+## Pricing and contract notes
+Public materials from Okta, Microsoft Entra, Duo, Google Cloud Identity, Ping, CyberArk, and SailPoint show that IAM packaging can span SSO, MFA, adaptive policies, lifecycle, governance, privileged access, private access, threat protection, app connectors, and support. Those materials support meter identification only. Do not invent enterprise pricing or assume bundled Microsoft or Google entitlements satisfy every buyer requirement. The buyer must model workforce populations, application inventory, module needs, implementation services, and incumbent licensing rights.
+
+Contracting should define authentication methods, phishing-resistant roadmap, admin controls, break-glass, recovery, log retention, SIEM export, provisioning evidence, support SLAs, security attestations, incident response, deletion, and transition assistance. If the product is used for regulated access, evidence exports and reviewable policy history should be explicit contract requirements.
+
+## Contradictions and failure modes
+Vendor claim: MFA is solved. Detection: inspect method assurance, reset workflow, admin groups, contractor paths, exceptions, and break-glass. Vendor claim: lifecycle is automated. Detection: test critical-app SCIM, attribute mapping, leaver deprovisioning, and manual fallback. Vendor claim: bundled identity is free. Detection: compare required controls, app coverage, services, support, and migration effort.
+
+The common failure is selecting an identity platform from a headline per-user price while leaving long-tail apps, recovery workflows, and deprovisioning manual. The second is confusing MFA adoption with phishing-resistant authentication. The third is discovering during audit that logs, assignment history, and evidence exports were never specified.`,
+  },
+  {
+    id: 'PAT-SRC-CAT-IGA-001',
+    slug: 'identity-governance-access-reviews-entitlement-control-sourcing',
+    title: 'Identity Governance Sourcing for Access Reviews, Lifecycle Governance, and Entitlement Control',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'IGA sourcing should prove that the buyer can govern who has access to what, whether they should still have it, and what evidence shows the control worked across applications, entitlements, and identity populations.',
+    applicability:
+      'Apply when sourcing SailPoint, Saviynt, Microsoft Entra ID Governance, Okta Identity Governance, One Identity Manager, Oracle Access Governance, SAP Cloud Identity Access Governance, CyberArk Identity Governance, or adjacent IGA capabilities.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.81,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.gartner.com/reviews/market/identity-governance-administration',
+      'https://documentation.sailpoint.com/saas/help/certs/index.html',
+      'https://documentation.sailpoint.com/saas/user-help/requests/index.html',
+      'https://saviynt.com/platform',
+      'https://learn.microsoft.com/en-us/entra/id-governance/deploy-access-reviews',
+      'https://learn.microsoft.com/en-us/entra/id-governance/entitlement-management-overview',
+      'https://help.okta.com/oie/en-us/content/topics/identity-governance/access-certification/iga-access-cert.htm',
+      'https://help.okta.com/en-us/Content/Topics/identity-governance/iga.htm',
+      'https://support.oneidentity.com/technical-documents/identity-manager/9.1/attestation-administration-guide/attestation-and-recertification',
+      'https://docs.oracle.com/en-us/iaas/Content/access-governance/access-reviews-overview.htm',
+      'https://www.sap.com/products/financial-management/cloud-iam.html',
+      'https://www.cyberark.com/solutions/identity-governance/',
+      'https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-53r5.pdf',
+    ],
+    regulatoryChips: ['SOC-2-review', 'SOX-if-financial-controls', 'NIST-800-53-AC-2', 'GDPR-if-person-data', 'HIPAA-if-PHI'],
+    relatedPatternIds: ['PAT-SRC-CAT-IAM-001', 'PAT-SRC-CAT-ERP-001', 'PAT-SRC-CAT-CODE-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'security_identity',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'SailPoint, Saviynt, One Identity, Oracle, SAP, and CyberArk',
+        tier: 'enterprise',
+        positioning: 'IGA candidates for access certifications, request workflows, entitlement cataloging, lifecycle governance, role or policy management, risk scoring, and audit evidence.',
+        cautions: ['Connector coverage, entitlement data quality, remediation paths, app ownership, and implementation services often determine practical value.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'SailPoint Certifications Overview', url: 'https://documentation.sailpoint.com/saas/help/certs/index.html', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Saviynt Identity Cloud', url: 'https://saviynt.com/platform', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Oracle Access Reviews', url: 'https://docs.oracle.com/en-us/iaas/Content/access-governance/access-reviews-overview.htm', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'Microsoft Entra ID Governance and Okta Identity Governance',
+        tier: 'enterprise',
+        positioning: 'Identity-platform-native governance candidates for access reviews, entitlement management, lifecycle workflows, and governance around apps already managed through the IdP.',
+        cautions: ['Do not assume IdP-native governance replaces best-of-breed IGA until connector, entitlement, remediation, SoD, and evidence requirements are proven.'],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'IGA public pricing constructs only',
+        model: 'hybrid',
+        metric: 'Governed identities, connected applications, certifications, access requests, lifecycle workflows, entitlement catalog, SoD, analytics, add-ons, implementation services, and support',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Microsoft Entra Plans and Pricing', url: 'https://www.microsoft.com/en-us/security/business/microsoft-entra-pricing', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Identity populations, app connector scope, module packaging, implementation partner cost, and negotiated enterprise pricing require buyer evidence' },
+        ],
+        confidence: 0.52,
+        notes: 'Most IGA TCO depends on data cleanup, connectors, services, modules, and governed identity scope; do not infer pricing from feature names.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Access review evidence',
+        buyerPosition: 'Require reviewer assignments, decisions, comments, exceptions, campaign history, remediation actions, timestamps, and exports suitable for audit evidence.',
+      },
+      {
+        clauseArea: 'Connector and remediation responsibility',
+        buyerPosition: 'Define which applications are direct connectors, ticketed/manual fulfillment, flat-file integrations, or excluded, with remediation ownership and service levels.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Entitlement data-quality proof',
+        whenToUse: 'Use before selecting a vendor whose demo assumes clean entitlement descriptions, owners, and sensitivity labels.',
+        buyerAsk: 'Run a sample of buyer applications through entitlement import, owner mapping, review context, remediation, and evidence export.',
+      },
+      {
+        lever: 'IdP-native versus best-of-breed challenger',
+        whenToUse: 'Use when Entra or Okta governance modules compete with SailPoint, Saviynt, One Identity, Oracle, SAP, or CyberArk.',
+        buyerAsk: 'Compare connector depth, entitlement modeling, SoD, app owner workflow, remediation, evidence, services, and implementation timeline.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'iga-rubber-stamp-review',
+        label: 'Rubber-stamp access review',
+        severity: 'high',
+        detectionSignals: ['Campaigns are broad, reviewers lack business context, and decisions default to approve-all behavior.'],
+        mitigations: ['Require entitlement descriptions, sensitivity, ownership, reviewer guidance, sampling, escalation, and remediation evidence'],
+      },
+      {
+        id: 'iga-connector-remediation-gap',
+        label: 'Connector and remediation gap',
+        severity: 'critical',
+        detectionSignals: ['Critical apps lack connectors or remediation paths, leaving revoked access as a ticket with no proof of completion.'],
+        mitigations: ['Classify each app by integration type and test review-to-revoke evidence before award'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Stress privileged roles, SoD, financial applications, review frequency, auditor evidence, and regulator-visible remediation history.',
+        regulatoryRefs: ['NIST SP 800-53 AC-2 as a public account-management control reference'],
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Review access to PHI systems, workforce changes, shared operational roles, emergency access, and audit evidence retention.',
+      },
+      {
+        industry: 'manufacturing',
+        modifier: 'Plan for plant-floor apps, contractors, shared operational accounts, ERP roles, legacy systems, and manual remediation exceptions.',
+      },
+    ],
+    body: `## Summary
+Identity Governance and Administration sourcing answers a deceptively simple question: who has access to what, should they still have it, and can the organization prove the control worked? The buying decision is not just access-review software. It is a governed model for identities, entitlements, owners, requests, approvals, certifications, remediation, and audit evidence across SaaS, ERP, directories, privileged roles, cloud platforms, legacy apps, and sometimes non-human identities.
+
+## When to apply
+Use this pattern when sourcing SailPoint, Saviynt, Microsoft Entra ID Governance, Okta Identity Governance, One Identity Manager, Oracle Access Governance, SAP Cloud Identity Access Governance, CyberArk Identity Governance, or similar IGA capabilities. Apply it when audit findings, access-review fatigue, M&A, ERP modernization, SaaS sprawl, contractor expansion, privileged-role concerns, or least-privilege programs expose weak entitlement governance. Do not use it for pure SSO/MFA, pure PAM vaulting, pure CIEM, HRIS, GRC evidence management, or custom ticket workflows that lack entitlement inventory and remediation.
+
+## Category boundary
+In scope: access reviews, certifications, attestations, access requests, approval workflows, lifecycle governance, entitlement cataloging, owners, sensitivity labels, SoD checks, role or policy management, risk scoring, remediation, revocation, audit reports, evidence exports, HR source integration, IdP integration, ITSM fulfillment, and connector onboarding. Out of scope: customer identity, device management, general workflow automation, and governance claims unsupported by app-level entitlement data.
+
+## Lifecycle and gates
+The scope gate should identify governed identity populations, HR sources, directories, critical applications, entitlement owners, app owners, reviewer model, audit obligations, and current remediation paths. The RFP gate should require access-review workflow, request workflow, entitlement catalog, connector list, ticketed-app process, SoD capabilities, evidence exports, reporting, security posture, and implementation approach. The proof gate should import sample entitlements from buyer apps, run a campaign, assign reviewers, record decisions, revoke access, handle exceptions, and export evidence. The BAFO gate should normalize governed identities, applications, modules, connectors, implementation partner work, data cleanup, support, and internal owner effort.
+
+## Evaluation rubric
+Weight entitlement data quality around 20 percent, review and remediation workflow around 25 percent, connector and app coverage around 20 percent, evidence and auditability around 15 percent, lifecycle governance around 10 percent, and commercial/implementation predictability around 10 percent. Increase evidence weight when SOX, healthcare, financial controls, privileged access, ERP roles, or regulator examination are in scope.
+
+## Pricing and contract notes
+Public materials from Gartner category pages, SailPoint, Saviynt, Microsoft, Okta, One Identity, Oracle, SAP, CyberArk, and NIST support the functional scope: lifecycle, entitlement management, policy or role management, access certification, access requests, audit, and account-management controls. They do not provide buyer-specific pricing or implementation effort. IGA TCO is shaped by governed identity count, app connector scope, data cleanup, role design, entitlement ownership, module packaging, implementation partner work, and remediation operations.
+
+Contracting should define connector commitments, evidence exports, logs, retention, reviewer history, remediation proof, SoD configuration, data ownership, transition assistance, implementation milestones, acceptance tests, and responsibilities for ticketed or manual apps. If audit deadlines are near, acceptance criteria should be tied to proof of usable evidence, not only software availability.
+
+## Contradictions and failure modes
+Vendor claim: access reviews are automated. Detection: test entitlement context, reviewer assignment, decision capture, remediation, exceptions, and evidence export. Vendor claim: IdP-native governance is enough. Detection: compare critical-app connector depth, entitlement modeling, SoD, and remediation needs. Vendor claim: AI recommendations reduce review burden. Detection: require explainability, override logs, reviewer accountability, and audit acceptance.
+
+The common failure is buying campaign workflow while leaving entitlement data unnamed, ownerless, and unexplained. The second is launching broad reviews that reviewers rubber-stamp because context is poor. The third is discovering too late that revoked access requires manual tickets with no reliable proof of completion.`,
+  },
 ];
 
 export const SOURCING_CATEGORY_PATTERN_COUNT = SOURCING_CATEGORY_PATTERNS.length;
