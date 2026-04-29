@@ -74,6 +74,7 @@ import { getMissionsForProgram } from '@/lib/agent/agent-mission-derived';
 import { AddProgramEvidenceForm } from '@/components/programs/AddProgramEvidenceForm';
 import { BulkEvidenceImportButton } from '@/components/programs/BulkEvidenceImportButton';
 import { CascadeImpactSection } from '@/components/_shared/CascadeImpactSection';
+import { PhaseAdvanceButton } from '@/components/programs/PhaseAdvanceButton';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -3733,6 +3734,11 @@ export function ProgramDetailPage({
             >
               ↑ Upload document
             </button>
+            {/* Phase advance demo affordance */}
+            <PhaseAdvanceButton
+              programId={view.programId}
+              currentPhase={view.currentPhase}
+            />
           </div>
           <h1
             style={{
