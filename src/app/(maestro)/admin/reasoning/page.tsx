@@ -678,6 +678,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/playground',
     description: 'Interactive gate evaluation — toggle evidence to see how coverage changes',
   },
+  {
+    title: 'Evidence catalog',
+    href: '/admin/reasoning/evidence-catalog',
+    description: 'Dictionary of all evidence types referenced across gate criteria, grouped by pattern',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
