@@ -1,43 +1,47 @@
 # Corpus Autonomous State
 
-Last update timestamp: 2026-04-29T16:27:32Z
+Last update timestamp: 2026-04-29T16:35:00Z
 Status: ACTIVE - founder explicitly approved resuming after pause, requested parallel governed agents, and granted auto-merge authority for scoped green PRs.
 
 ## Current wave
-Wave 2/3 blend - process/methodology continuation while vendor profiles are being authored in parallel; pause gate removed and PR #1068 merged.
+Wave 8 - vendor profile one-pattern PRs beginning after process/methodology batch merge.
 
 ## Domains in progress
 - Category-specific sourcing playbooks: target met with 51 authored and merged category patterns.
-- Process/methodology: PR #1068 merged; PAT-SRC-PROC-004/005/006 advanced process batch is in local integration/PR-prep; 4 process patterns are already live.
+- Process/methodology: PR #1069 merged; 7 process patterns are live in corpus.
 - Contract intelligence: PR #1066 merged; 7 contract patterns are live in corpus.
 - Pricing intelligence: PR #1062 merged; 2 pricing patterns are live in corpus.
 - Risk patterns: queued authored batches exist; RSK-001 needs body-length review before PR.
 - Regulatory/compliance: PR #1065 merged; 2 regulatory patterns are live in corpus.
 - Industry overlays: queued authored batch exists for health, financial services, and retail overlays.
-- Vendor profiles: multiple one-pattern profiles are authored/queued; GitHub, GitLab, Asana, and Smartsheet workers are active; Cloudflare and DocuSign are queued for integration.
+- Vendor profiles: PAT-SRC-VEN-CLOUDFLARE-001 is in local integration/PR-prep; GitHub, GitLab, DocuSign, Asana, and Smartsheet are queued; Coupa, Splunk, New Relic, and Elastic workers are active.
 
 ## Active lane board
-- 2026-04-29T16:27:32Z - Integration lead - PAT-SRC-PROC-004/005/006 advanced process batch - aggregate wiring, count updates, validation, PR creation.
+- 2026-04-29T16:35:00Z - Integration lead - PAT-SRC-VEN-CLOUDFLARE-001 vendor profile - aggregate wiring, count updates, validation, PR creation.
+- 2026-04-29T16:34:28Z - PR #1069 - PAT-SRC-PROC-004/005/006 advanced process batch - merged at `6fa8b1ee7c87ce323fe088e070cda606af871f90`.
 - 2026-04-29T16:27:00Z - PR #1068 - PAT-SRC-PROC-007 renewal calendar governance - merged at `132ca576332512eccb6d42050c370e3f364e9b6b`.
 - 2026-04-29T16:13:14Z - PR #1066 - PAT-SRC-CON-007 audit rights governance - merged at `068afbc11274cfd4f7366c3ef644c235d84e6abe`.
-- 2026-04-29T16:19:00Z - Worker Harvey (`019dda09-af99-7cb1-90a5-98bb30888b86`) - PAT-SRC-VEN-GITHUB-001 - active.
-- 2026-04-29T16:19:00Z - Worker Maxwell (`019dda09-afca-7073-b50d-80c296ad073c`) - PAT-SRC-VEN-GITLAB-001 - active.
+- 2026-04-29T16:29:00Z - Worker Harvey (`019dda09-af99-7cb1-90a5-98bb30888b86`) - PAT-SRC-VEN-GITHUB-001 - complete and queued; commit `8091da8e`.
+- 2026-04-29T16:28:00Z - Worker Maxwell (`019dda09-afca-7073-b50d-80c296ad073c`) - PAT-SRC-VEN-GITLAB-001 - complete and queued; commit `b8fcb38d`.
 - 2026-04-29T16:25:00Z - Worker Kant (`019dda09-b00c-77d2-98bd-32dcc72648d5`) - PAT-SRC-VEN-CLOUDFLARE-001 - complete and queued; commit `ebf7fbb8`.
 - 2026-04-29T16:27:00Z - Worker Anscombe (`019dda09-b02f-7df2-b228-22f3230a90a5`) - PAT-SRC-VEN-DOCUSIGN-001 - complete and queued; commit `7c226e3c`.
-- 2026-04-29T16:26:00Z - Worker Kierkegaard (`019dda0f-3f42-73b2-bd85-0a6f75b93c78`) - PAT-SRC-VEN-ASANA-001 - active.
-- 2026-04-29T16:27:00Z - Worker Beauvoir (`019dda10-79ab-7692-a2d0-382bfdf643a4`) - PAT-SRC-VEN-SMARTSHEET-001 - active.
+- 2026-04-29T16:31:00Z - Worker Kierkegaard (`019dda0f-3f42-73b2-bd85-0a6f75b93c78`) - PAT-SRC-VEN-ASANA-001 - complete and queued; commit `b9df3c34`.
+- 2026-04-29T16:34:00Z - Worker Beauvoir (`019dda10-79ab-7692-a2d0-382bfdf643a4`) - PAT-SRC-VEN-SMARTSHEET-001 - complete and queued; commit `b4e14765`.
+- 2026-04-29T16:29:00Z - Worker Goodall (`019dda12-e406-7821-b81f-7fcaff44a345`) - PAT-SRC-VEN-COUPA-001 - active.
+- 2026-04-29T16:30:00Z - Worker Meitner (`019dda13-b2fc-7380-a060-a504d0d81dde`) - PAT-SRC-VEN-SPLUNK-001 - active.
+- 2026-04-29T16:32:00Z - Worker Russell (`019dda15-24c5-77e0-88f4-58ce07e6fbce`) - PAT-SRC-VEN-NEWRELIC-001 - active.
+- 2026-04-29T16:34:00Z - Worker Ampere (`019dda17-4191-7a03-b2fe-a3902e48965b`) - PAT-SRC-VEN-ELASTIC-001 - active.
 - 2026-04-29T16:15:10Z - Queued vendor lane - Datadog profile authored and staged for later one-pattern integration.
-- 2026-04-29T16:27:32Z - Queued process lane - advanced process batch PROC-004/005/006 promoted to active integration.
 - 2026-04-29T16:15:10Z - Queued risk lane - commercial risk batch RSK-004/005/006 authored for later integration.
 - 2026-04-29T16:15:10Z - Queued industry lane - health, financial services, and retail overlays authored for later integration.
 
 ## Pattern counts by domain
 - Existing sourcing corpus on latest main before Wave 1: 24 patterns.
 - Category-specific sourcing playbooks (`PAT-SRC-CAT-*`): 51 authored and merged across Wave 1.
-- Vendor intelligence profiles (`PAT-SRC-VEN-*`): 0 integrated; multiple authored profiles queued for one-pattern PRs.
+- Vendor intelligence profiles (`PAT-SRC-VEN-*`): 1 authored; 0 merged; 1 active in PR-prep; multiple additional authored profiles queued for one-pattern PRs.
 - Contract intelligence (`PAT-SRC-CON-*`): 7 authored and merged.
 - Pricing intelligence (`PAT-SRC-PRC-*`): 2 authored and merged.
-- Process and methodology (`PAT-SRC-PROC-*`): 7 authored; 4 merged; 3 active in PR-prep.
+- Process and methodology (`PAT-SRC-PROC-*`): 7 authored and merged.
 - Industry-specific overlays (`PAT-SRC-IND-*`): 0 integrated; 3 authored and queued.
 - Regulatory and compliance (`PAT-SRC-REG-*`): 2 authored and merged.
 - Risk patterns (`PAT-SRC-RSK-*`): 0 integrated; 6 authored and queued, with RSK-001 needing body-length review.
@@ -72,9 +76,10 @@ Wave 2/3 blend - process/methodology continuation while vendor profiles are bein
 - #1065 - `[corpus][reg] Author PAT-SRC-REG-EUAI-001 · 1 pattern` - merged 2026-04-29T16:04Z at `936a0d43d412dd9fa30d17f51a5832c33879bf72`.
 - #1066 - `[corpus][con] Author PAT-SRC-CON-007 · 1 pattern` - merged 2026-04-29T16:13:14Z at `068afbc11274cfd4f7366c3ef644c235d84e6abe`.
 - #1068 - `[corpus][proc] Author PAT-SRC-PROC-007 · 1 pattern` - merged 2026-04-29T16:27:00Z at `132ca576332512eccb6d42050c370e3f364e9b6b`.
+- #1069 - `[corpus][proc] Author PAT-SRC-PROC-004, PAT-SRC-PROC-005, PAT-SRC-PROC-006 · 3 patterns` - merged 2026-04-29T16:34:28Z at `6fa8b1ee7c87ce323fe088e070cda606af871f90`.
 
 ## Open PRs
-- None yet. PAT-SRC-PROC-004/005/006 is in local integration and will be opened after validation.
+- None yet. PAT-SRC-VEN-CLOUDFLARE-001 is in local integration and will be opened after validation.
 
 ## Held PRs requiring founder review
 - None.
@@ -85,22 +90,22 @@ Wave 2/3 blend - process/methodology continuation while vendor profiles are bein
 - Watch item: RSK-001 from risk batch 1 is below the 400-word hold threshold and must be patched or held before PR.
 
 ## Next 16 queued pattern IDs
-- PAT-SRC-PROC-004
-- PAT-SRC-PROC-005
-- PAT-SRC-PROC-006
-- PAT-SRC-RSK-004
+- PAT-SRC-VEN-CLOUDFLARE-001
+- PAT-SRC-VEN-DATADOG-001
+- PAT-SRC-VEN-GITHUB-001
+- PAT-SRC-VEN-GITLAB-001
+- PAT-SRC-VEN-DOCUSIGN-001
+- PAT-SRC-VEN-ASANA-001
+- PAT-SRC-VEN-SMARTSHEET-001
+- PAT-SRC-VEN-COUPA-001
+- PAT-SRC-VEN-SPLUNK-001
+- PAT-SRC-VEN-NEWRELIC-001
+- PAT-SRC-VEN-ELASTIC-001
 - PAT-SRC-RSK-005
 - PAT-SRC-RSK-006
 - PAT-SRC-IND-HEALTH-001
 - PAT-SRC-IND-FINSERV-001
 - PAT-SRC-IND-RETAIL-001
-- PAT-SRC-VEN-CLOUDFLARE-001
-- PAT-SRC-VEN-DATADOG-001
-- PAT-SRC-VEN-GITHUB-001
-- PAT-SRC-VEN-GITLAB-001
-- PAT-SRC-VEN-CLOUDFLARE-001
-- PAT-SRC-VEN-DOCUSIGN-001
-- PAT-SRC-VEN-MICROSOFT-001
 
 ## Current blockers
 - Pause gate `docs/build/CORPUS_PAUSE.md` removed and merged via PR #1068 under founder approval.
@@ -109,4 +114,4 @@ Wave 2/3 blend - process/methodology continuation while vendor profiles are bein
 - Vendor/regulatory/pricing PRs remain one-pattern PRs because source confidence and evidence discipline are higher risk.
 
 ## Next action
-Validate PAT-SRC-PROC-004/005/006 locally, push `corpus/proc/market-rfp-bafo-integration`, open PR, watch checks, and auto-merge if all gates are green while vendor workers continue authoring in parallel.
+Validate PAT-SRC-VEN-CLOUDFLARE-001 locally, push `corpus/ven/cloudflare-integration`, open PR, watch checks, and auto-merge if all gates are green while vendor workers continue authoring in parallel.

@@ -10,6 +10,7 @@ import { SOURCING_PROCESS_RENEWAL_CALENDAR_PATTERNS } from './seed-patterns-sour
 import { SOURCING_PROCESS_PATTERNS } from './seed-patterns-sourcing-process';
 import { SOURCING_REGULATORY_AI_PATTERNS } from './seed-patterns-sourcing-regulatory-ai';
 import { SOURCING_REGULATORY_PATTERNS } from './seed-patterns-sourcing-regulatory';
+import { PAT_SRC_VEN_CLOUDFLARE_001 } from './seed-patterns-sourcing-vendors-cloudflare';
 
 export const SOURCING_PATTERNS: PatternSeed[] = [
   {
@@ -1109,6 +1110,7 @@ Fixed-fee or capped T&M with monthly not-to-exceed, explicit deliverable accepta
   ...SOURCING_PROCESS_PATTERNS,
   ...SOURCING_REGULATORY_AI_PATTERNS,
   ...SOURCING_REGULATORY_PATTERNS,
+  PAT_SRC_VEN_CLOUDFLARE_001,
 ];
 
 export const SOURCING_PATTERN_COUNT = SOURCING_PATTERNS.length;
