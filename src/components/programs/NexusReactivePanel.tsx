@@ -14,7 +14,7 @@
 // PRs progressively replace those static elements with reactive
 // equivalents driven by the same artifact channel.
 
-import { useMemo } from 'react';
+import { createContext, useContext, useMemo } from 'react';
 import type {
   AntiPatternFlagArtifact,
   Artifact,
@@ -90,6 +90,14 @@ function StatusPill({
 
 // ── Card primitives ───────────────────────────────────────────────────────────
 
+/**
+ * PR-P · agent label for the card-prefix string. NexusReactivePanel sets
+ * this from the `agentLabel` prop (PR-N landed the panel-level prop;
+ * PR-P propagates it into the cards). Default 'Nexus' keeps backwards
+ * compat for any caller that hasn't migrated.
+ */
+const CardAgentLabelContext = createContext<string>('Nexus');
+
 function CardShell({
   kind,
   children,
@@ -97,6 +105,7 @@ function CardShell({
   kind: string;
   children: React.ReactNode;
 }) {
+  const agentLabel = useContext(CardAgentLabelContext);
   return (
     <div
       style={{
@@ -120,7 +129,7 @@ function CardShell({
           marginBottom: 8,
         }}
       >
-        Nexus · {kind}
+        {agentLabel} · {kind}
       </div>
       {children}
     </div>
@@ -468,7 +477,7 @@ export function NexusReactivePanel({
   if (visible.length === 0) {
     return (
       <section
-        aria-label="Nexus reactive workbench"
+        aria-label={`${agentLabel} reactive workbench`}
         style={{
           display: 'flex',
           flexDirection: 'column',
@@ -515,9 +524,15 @@ export function NexusReactivePanel({
     );
   }
 
+  // PR-P · provide agentLabel to every CardShell beneath this render
+  // tree. Without the context, CardShell falls back to 'Nexus' which
+  // is the wrong label on Atlas's /home surface (founder caught
+  // "NEXUS · Phase 4 recommendation" rendering on Atlas's portfolio
+  // cards during the PR-E walk).
   return (
+    <CardAgentLabelContext.Provider value={agentLabel}>
     <section
-      aria-label="Nexus reactive workbench"
+      aria-label={`${agentLabel} reactive workbench`}
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -565,5 +580,6 @@ export function NexusReactivePanel({
         }
       })}
     </section>
+    </CardAgentLabelContext.Provider>
   );
 }
