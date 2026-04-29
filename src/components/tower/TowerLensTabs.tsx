@@ -54,6 +54,10 @@ import {
   buildProgrammeGateStatusView,
 } from '@/lib/tower/programme-gate-status-view';
 import type { ProgrammeGateStatusCard, GateStatus } from '@/lib/tower/programme-gate-status-view';
+import {
+  buildReasoningActivityBriefView,
+} from '@/lib/tower/reasoning-activity-brief-view';
+import type { ReasoningContradictionItem, ReasoningHandoffItem } from '@/lib/tower/reasoning-activity-brief-view';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Design tokens (matches existing Tower surface palette)
@@ -171,6 +175,9 @@ export function TowerLensTabs({
         )}
         {activeTab === 'programme_gates' && (
           <ProgrammeGatesPanel />
+        )}
+        {activeTab === 'reasoning_activity' && (
+          <ReasoningActivityBriefPanel />
         )}
       </div>
     </div>
@@ -1557,6 +1564,175 @@ function ProgrammeGatesPanel() {
       >
         Deterministic seed · Programme gate status reflects fixture phase data for the Apex Retail engagement.
         Live gate approvals and phase transitions are managed by the programme gate management workflow.
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TOWER9 · Reasoning Activity Brief panel helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+const CONTRADICTION_SEVERITY_BORDER: Record<string, string> = {
+  high:   C.red,
+  medium: C.amber,
+  low:    C.mutedSoft,
+};
+
+const CONTRADICTION_STATUS_LABEL: Record<string, string> = {
+  open:       'Open',
+  monitoring: 'Monitoring',
+  resolved:   'Resolved',
+};
+
+const HANDOFF_READINESS_STYLE: Record<string, { bg: string; fg: string; label: string }> = {
+  red:   { bg: C.redSoft,   fg: C.red,   label: 'Blocked' },
+  amber: { bg: C.amberSoft, fg: '#92400e', label: 'At Risk' },
+  green: { bg: 'rgba(22,163,74,0.08)', fg: C.green, label: 'On Track' },
+};
+
+function ReasoningContradictionCard({ item }: { item: ReasoningContradictionItem }) {
+  const border = CONTRADICTION_SEVERITY_BORDER[item.severity] ?? C.border;
+  const statusLabel = CONTRADICTION_STATUS_LABEL[item.status] ?? item.status;
+  return (
+    <div
+      data-testid={`tower-reasoning-contradiction-${item.contradictionId}`}
+      style={{
+        borderLeft: `3px solid ${border}`,
+        padding: '10px 14px',
+        background: C.card,
+        border: `1px solid ${C.border}`,
+        borderLeftWidth: 3,
+        borderLeftColor: border,
+        borderRadius: 6,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+        <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.mutedSoft }}>
+          {item.contradictionId}
+        </span>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <span style={{ display: 'inline-block', padding: '2px 7px', borderRadius: 999, background: item.severity === 'high' ? C.redSoft : item.severity === 'medium' ? C.amberSoft : C.navySoft, color: item.severity === 'high' ? C.red : item.severity === 'medium' ? '#92400e' : C.navy, fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            {item.severity}
+          </span>
+          <span style={{ display: 'inline-block', padding: '2px 7px', borderRadius: 999, background: `${C.ink}08`, color: C.muted, fontSize: 10, fontWeight: 500 }}>
+            {statusLabel}
+          </span>
+        </div>
+      </div>
+      <p style={{ margin: 0, fontSize: 13, color: C.ink, lineHeight: 1.5, fontWeight: 500 }}>
+        {item.label}
+      </p>
+      {item.relevantGate && (
+        <p style={{ margin: 0, fontSize: 11, color: C.muted }}>
+          Gate: {item.relevantGate}
+        </p>
+      )}
+      {item.towerFlag && (
+        <p style={{ margin: '2px 0 0', fontSize: 11, color: '#92400e', lineHeight: 1.4 }}>
+          ⚑ {item.towerFlag}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ReasoningActivityBriefPanel() {
+  const view = buildReasoningActivityBriefView();
+
+  return (
+    <div
+      data-testid="tower-reasoning-activity-panel"
+      style={{ padding: '24px 32px', maxWidth: 860 }}
+    >
+      {/* Summary bar */}
+      <div
+        data-testid="tower-reasoning-activity-summary"
+        style={{
+          display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20,
+          padding: '12px 16px', background: C.card,
+          border: `1px solid ${C.border}`, borderRadius: 8,
+        }}
+      >
+        <span style={{ fontSize: 11, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600 }}>
+          Reasoning Activity
+        </span>
+        <span style={{ flex: 1, fontSize: 11, color: C.muted }}>
+          {view.summary.totalPatternsAnalyzed} patterns · {view.summary.lastSynthesisEvent}
+        </span>
+        {view.summary.activeContradictions > 0 && (
+          <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: C.redSoft, color: C.red, fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            {view.summary.activeContradictions} contradiction{view.summary.activeContradictions !== 1 ? 's' : ''}
+          </span>
+        )}
+        {view.summary.pendingHandoffs > 0 && (
+          <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: C.amberSoft, color: '#92400e', fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            {view.summary.pendingHandoffs} handoff{view.summary.pendingHandoffs !== 1 ? 's' : ''} at risk
+          </span>
+        )}
+      </div>
+
+      {/* Atlas synthesis */}
+      <p style={{ fontSize: 13, color: C.ink, lineHeight: 1.6, margin: '0 0 20px' }}>
+        {view.atlasSynthesis}
+      </p>
+
+      {/* Active contradictions */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {view.activeContradictions.map((item: ReasoningContradictionItem) => (
+          <ReasoningContradictionCard key={item.contradictionId} item={item} />
+        ))}
+      </div>
+
+      {/* Pending handoffs */}
+      {view.pendingHandoffs.length > 0 && (
+        <div
+          data-testid="tower-reasoning-handoffs"
+          style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 6 }}
+        >
+          <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.muted, marginBottom: 4 }}>
+            Cross-Stage Handoff Readiness
+          </div>
+          {view.pendingHandoffs.map((h: ReasoningHandoffItem) => {
+            const rs = HANDOFF_READINESS_STYLE[h.readinessSignal] ?? HANDOFF_READINESS_STYLE.amber;
+            return (
+              <div
+                key={h.handoffId}
+                style={{
+                  display: 'flex', gap: 10, alignItems: 'flex-start',
+                  padding: '8px 12px', background: C.card,
+                  border: `1px solid ${C.border}`, borderRadius: 6,
+                }}
+              >
+                <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: rs.bg, color: rs.fg, fontSize: 9, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap', marginTop: 2 }}>
+                  {rs.label}
+                </span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 11, color: C.muted, marginBottom: 2 }}>
+                    {h.programmeName} · {h.fromStage} → {h.toStage}
+                  </div>
+                  <p style={{ margin: 0, fontSize: 12, color: C.ink, lineHeight: 1.45 }}>
+                    {h.narrativeSummary}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Honest disclaimer */}
+      <div
+        style={{ marginTop: 20, fontSize: 10, color: C.mutedSoft, letterSpacing: '0.04em' }}
+        data-testid="tower-reasoning-activity-disclaimer"
+        data-honest-disclaimer="tower-reasoning-activity"
+      >
+        Deterministic seed · Reasoning activity reflects fixture contradiction and handoff data for
+        the Apex Retail engagement. Live contradiction detection, pattern synthesis, and handoff
+        tracking are managed by the Sentinel reasoning runtime.
       </div>
     </div>
   );
