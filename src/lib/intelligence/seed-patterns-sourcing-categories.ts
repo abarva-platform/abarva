@@ -1533,6 +1533,465 @@ Vendor claim: chat is included in the suite. Detection: compare actual workflows
 
 The common failure is letting chat proliferate as a shadow records system without legal, compliance, and security ownership. The second failure is paying for standalone messaging while bundled alternatives cover most use cases. The third failure is choosing a self-hosted or sovereign messaging option without resourcing infrastructure, upgrades, monitoring, and support. The fourth failure is allowing app, bot, webhook, and AI-agent sprawl without least-privilege controls.`,
   },
+  {
+    id: 'PAT-SRC-CAT-CDP-001',
+    slug: 'customer-data-platform-sourcing',
+    title: 'Customer Data Platform Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'CDP sourcing should score architecture fit, identity and profile quality, activation coverage, governance posture, and pricing-unit transparency rather than accepting broad single-customer-view claims.',
+    applicability:
+      'Apply when sourcing customer data platforms for first-party data ingestion, identity resolution, audience activation, consent-aware governance, and integrations into marketing, analytics, warehouse, CRM, or advertising platforms.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.8,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.cdpinstitute.org/learning-center/what-is-a-cdp/',
+      'https://www.twilio.com/en-us/pricing/customer-data',
+      'https://www.twilio.com/en-us/trust-center',
+      'https://docs.mparticle.com/guides/idsync/identify-users/',
+      'https://docs.mparticle.com/integrations/',
+      'https://docs.tealium.com/server-side/getting-started/intro-cdh/',
+      'https://www.treasuredata.com/product/pricing/',
+      'https://www.treasuredata.com/security/',
+      'https://www.rudderstack.com/pricing/',
+      'https://hightouch.com/pricing/',
+      'https://hightouch.com/docs/security/overview',
+    ],
+    regulatoryChips: ['GDPR-if-EU-data', 'CCPA-if-California-consumer-data', 'HIPAA-if-PHI', 'SOC-2-review'],
+    relatedPatternIds: ['PAT-SRC-CAT-CRM-001', 'PAT-SRC-CAT-CDW-001', 'PAT-SRC-CAT-MA-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'data_analytics',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Twilio Segment',
+        tier: 'enterprise',
+        positioning: 'Packaged CDP candidate with public packaging around Connections, Unify, Engage, identity resolution, profile APIs, and warehouse activation.',
+        cautions: ['Enterprise CDP plan pricing is quote-led and volume-dependent; net pricing, services, and overage terms require buyer evidence.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Twilio Segment Customer Data Platform Pricing', url: 'https://www.twilio.com/en-us/pricing/customer-data', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'Hightouch and RudderStack',
+        tier: 'specialist',
+        positioning: 'Composable and warehouse-native candidates where the buyer wants activation, reverse ETL, event pipelines, and profile workflows near the warehouse.',
+        cautions: ['Free or starter public tiers do not establish enterprise net price, governed activation cost, or implementation effort.'],
+      },
+      {
+        vendorName: 'mParticle, Tealium, and Treasure Data',
+        tier: 'enterprise',
+        positioning: 'Enterprise CDP candidates with public documentation around identity, integrations, customer-data hub capabilities, and security/trust posture.',
+        cautions: ['Identity method, activation depth, consent handling, and compliance scope must be tested by buyer scenario.'],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'CDP public pricing and quote model',
+        model: 'hybrid',
+        metric: 'Events, profiles, destinations, activation volume, warehouse syncs, services, support, and add-ons',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'RudderStack Pricing', url: 'https://www.rudderstack.com/pricing/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Hightouch Pricing', url: 'https://hightouch.com/pricing/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Treasure Data Pricing', url: 'https://www.treasuredata.com/product/pricing/', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Enterprise CDP net price, discounts, services, implementation effort, usage commits, and renewal concessions require quote or contract evidence' },
+        ],
+        confidence: 0.6,
+        notes: 'Use public pricing pages only to identify pricing units and quote posture. Do not infer negotiated enterprise economics.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Customer data processing and activation controls',
+        buyerPosition: 'Define processor role, data-use limits, deletion, DSR support, consent/opt-out handling, destinations, subprocessors, retention, and audit evidence.',
+      },
+      {
+        clauseArea: 'Usage and overage transparency',
+        buyerPosition: 'Pin the priced unit, included volume, overage calculation, volume reforecast process, renewal true-up, and implementation/service assumptions.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Packaged versus composable architecture pressure',
+        whenToUse: 'Use when packaged CDP vendors compete against warehouse-native activation or reverse-ETL options.',
+        buyerAsk: 'Require equivalent workload scenarios for identity, activation, governance, cost, destination coverage, and data-residency posture.',
+      },
+      {
+        lever: 'Volume-unit normalization',
+        whenToUse: 'Use before BAFO when vendors price on different combinations of events, profiles, destinations, rows, syncs, and support.',
+        buyerAsk: 'Submit a normalized model for current and forecast event/profile/activation volume with explicit overage treatment.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'cdp-identity-claim-gap',
+        label: 'Identity resolution claim gap',
+        severity: 'high',
+        detectionSignals: ['Vendor describes a unified profile without proving deterministic identifiers, merge rules, survivorship, debugging, and consent handling.'],
+        mitigations: ['Run buyer-authored identity scenarios before award', 'Require profile lineage and match-rule evidence'],
+      },
+      {
+        id: 'cdp-usage-overage-exposure',
+        label: 'Usage and overage exposure',
+        severity: 'medium',
+        detectionSignals: ['Pricing units are unclear or tied to events/profiles/destinations that the buyer cannot forecast.'],
+        mitigations: ['Demand a volume model and overage cap before BAFO'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'retail_cpg',
+        modifier: 'Stress loyalty identity, offline-to-online matching, consent, suppression, and advertising activation controls.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Review PHI boundaries, BAA availability, consent, minimum-necessary design, and downstream destination restrictions.',
+      },
+      {
+        industry: 'financial_services',
+        modifier: 'Raise data residency, retention, consent, model governance, auditability, and third-party-risk evidence.',
+      },
+    ],
+    body: `## Summary
+A customer data platform is packaged or composable infrastructure for creating a persistent customer profile that can be used by other systems. The CDP Institute definition is useful because it anchors the category in packaged software, unified customer profiles, and downstream accessibility. For sourcing, the first question is not which vendor says single customer view most convincingly. It is whether the buyer wants a packaged CDP to own profiles and activation, or a warehouse-native/composable architecture where the customer warehouse remains the primary store of truth.
+
+## When to apply
+Use this pattern for B2C, marketplace, subscription, retail, media, SaaS, and multi-channel organizations that need first-party data ingestion, identity resolution, audience activation, consent-aware governance, and integrations into marketing, analytics, warehouse, CRM, or advertising platforms. Do not over-apply it to simple CRM, warehouse-only analytics, or a single-channel lifecycle tool unless cross-channel identity and activation are explicit requirements.
+
+## Category boundary
+In scope: event collection, SDKs, server-side ingestion, warehouse and SaaS sources, identity resolution, profile APIs, profile exploration, audience building, activation destinations, reverse ETL, journey triggers, consent handling, suppression, DSR support, security/trust artifacts, data residency, audit logs, implementation services, and usage-based pricing controls. Out of scope: generic marketing automation, email-only lifecycle tools, pure BI warehouses, tag managers without profile unification, and CRM record governance unless they are part of the identity and activation architecture.
+
+## Lifecycle and gates
+The scope gate should define customer identifiers, regulated data classes, current source systems, desired activation destinations, consent and opt-out obligations, geography, event/profile volume assumptions, warehouse role, and marketing ownership. The market-scan gate should separate packaged CDPs from composable CDPs, event pipelines, reverse-ETL platforms, and campaign tools. The RFP gate should require buyer-authored identity scenarios: anonymous-to-known merge, duplicate profile resolution, suppression, deletion request, consent change, destination sync, bad-event quarantine, and profile debugging. The BAFO gate should normalize events, profiles, rows, destinations, syncs, support, implementation, warehouse storage/compute, and overage terms.
+
+## Evaluation rubric
+Weight architecture fit around 20 percent, identity/profile quality around 20 percent, activation and integration coverage around 20 percent, governance/privacy/security around 20 percent, commercial transparency around 10 percent, and migration/operating burden around 10 percent. Raise governance weight for healthcare, financial services, public sector, or children/youth data. Raise activation weight for retail, CPG, media, and marketplaces with loyalty, advertising, and lifecycle-marketing dependencies.
+
+## Pricing and contract notes
+Public pricing varies sharply. RudderStack publishes free and starter-level anchors plus custom growth and enterprise paths. Segment, Hightouch, Treasure Data, mParticle, and Tealium commonly require sales engagement or custom enterprise structure for the full CDP decision. Public pages can identify pricing units and packaging posture, but they do not prove net enterprise price, discount depth, implementation effort, renewal uplift, or overage risk. Keep negotiated pricing, services, discounts, committed volumes, and renewal concessions as founder-data-gap unless AbarVa has a proposal, invoice, signed order form, or approved benchmark.
+
+Contracting should define processor/data-use boundaries, subprocessors, deletion, DSR support, consent propagation, data retention, destination governance, security attestation access, audit logs, incident notification, data residency, export, transition assistance, and usage caps. A CDP touches sensitive customer data and can create downstream harm if bad segments, consent gaps, or identity merges are activated at scale.
+
+## Contradictions and failure modes
+Vendor claim: we create a single customer view. Detection: require match rules, profile lineage, survivorship, consent behavior, and debugging on buyer data. Vendor claim: activation is real time. Detection: test latency, destination limits, batch windows, API failures, retries, and suppression behavior. Vendor claim: pricing is scalable. Detection: model events, profiles, rows, destinations, syncs, warehouse cost, services, and support. The most common failure is buying an impressive activation layer before the buyer knows its identity, consent, and data-quality operating model. The second is comparing public starter plans while ignoring enterprise volume, overages, services, and renewal leverage.`,
+  },
+  {
+    id: 'PAT-SRC-CAT-CDW-001',
+    slug: 'cloud-data-warehouse-sourcing',
+    title: 'Cloud Data Warehouse Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Cloud data warehouse sourcing should compare workload economics, governance posture, ecosystem fit, and operational control separately; public list pricing identifies cost drivers, but actual TCO depends on workload shape and contract evidence.',
+    applicability:
+      'Apply when evaluating Snowflake, BigQuery, Amazon Redshift, Databricks SQL, or adjacent warehouse and lakehouse SQL platforms for analytics, BI, ELT, governed sharing, AI/ML feature stores, or migration from legacy warehouse infrastructure.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.81,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.snowflake.com/legal-files/CreditConsumptionTable.pdf',
+      'https://www.snowflake.com/en/pricing-options/calculator/',
+      'https://docs.snowflake.com/en/user-guide/trust-center/overview',
+      'https://cloud.google.com/bigquery/pricing',
+      'https://docs.cloud.google.com/bigquery/docs/best-practices-costs',
+      'https://docs.cloud.google.com/bigquery/docs/data-governance',
+      'https://aws.amazon.com/redshift/pricing/',
+      'https://docs.aws.amazon.com/redshift/latest/mgmt/working-with-db-encryption.html',
+      'https://docs.aws.amazon.com/redshift/latest/mgmt/security-compliance.html',
+      'https://www.databricks.com/product/pricing',
+      'https://docs.databricks.com/aws/en/compute/sql-warehouse/warehouse-types',
+      'https://www.databricks.com/trust/compliance',
+    ],
+    regulatoryChips: ['SOC-2-review', 'ISO-27001-if-required', 'HIPAA-if-PHI', 'FedRAMP-if-public-sector'],
+    relatedPatternIds: ['PAT-SRC-CAT-CDP-001', 'PAT-SRC-CAT-LAKE-001', 'PAT-SRC-CAT-BI-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'data_analytics',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Snowflake',
+        tier: 'enterprise',
+        positioning: 'Multi-cloud data platform candidate where workload isolation, SQL analytics, governed sharing, and credit-based consumption need explicit modeling.',
+        cautions: ['Credits, storage, serverless features, region, cloud, and edition must be modeled from buyer workloads.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Snowflake Service Consumption Table', url: 'https://www.snowflake.com/legal-files/CreditConsumptionTable.pdf', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'Google BigQuery',
+        tier: 'enterprise',
+        positioning: 'Google Cloud warehouse candidate strongest where BigQuery, GCP IAM, Knowledge Catalog, and bytes-scanned or slot-capacity models align with workload shape.',
+        cautions: ['On-demand versus capacity economics depend on scan volume, reservations, commitments, partitioning, clustering, and query design.'],
+      },
+      {
+        vendorName: 'Amazon Redshift and Databricks SQL',
+        tier: 'enterprise',
+        positioning: 'AWS-native and lakehouse SQL candidates where cloud gravity, S3/lakehouse strategy, serverless/provisioned preference, and ML/AI adjacency matter.',
+        cautions: ['RPU-hour, DBU, storage, transfer, Spectrum, and warehouse-type assumptions must be normalized.'],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'Warehouse public metering units only',
+        model: 'usage-based',
+        metric: 'Credits, bytes scanned, slot-hours, RPU-hours, DBUs, storage, transfer, snapshots, and serverless features',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'BigQuery Pricing', url: 'https://cloud.google.com/bigquery/pricing', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Amazon Redshift Pricing', url: 'https://aws.amazon.com/redshift/pricing/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Databricks Pricing', url: 'https://www.databricks.com/product/pricing', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Committed-use discounts, migration credits, private offers, enterprise agreements, and renewal economics require buyer evidence' },
+        ],
+        confidence: 0.66,
+        notes: 'Do not assert cheapest or lowest TCO without replaying buyer workloads and contract terms.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Usage transparency and cost controls',
+        buyerPosition: 'Require line-item metering, budget alerts, workload tags, query controls, forecast support, credit/commit drawdown reporting, and overage protections.',
+      },
+      {
+        clauseArea: 'Security, governance, and audit evidence',
+        buyerPosition: 'Pin IAM/SSO, encryption, CMK/KMS, private networking, row/column controls, masking, catalog, audit logs, and compliance artifact access by edition or SKU.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Workload replay before BAFO',
+        whenToUse: 'Use whenever vendors present benchmark claims or simple price-unit comparisons.',
+        buyerAsk: 'Run representative BI, ELT, ad hoc, concurrency, storage-growth, and governance scenarios with vendor-visible cost output.',
+      },
+      {
+        lever: 'Cloud-commit and marketplace leverage',
+        whenToUse: 'Use when cloud commitments, marketplace private offers, or committed-use discounts can change the sourcing economics.',
+        buyerAsk: 'Separate technical score from procurement funding source and preserve exit/portability terms.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'warehouse-tco-model-gap',
+        label: 'Warehouse TCO model gap',
+        severity: 'high',
+        detectionSignals: ['Vendor or buyer compares headline rates without workload traces, concurrency, storage growth, egress, support, or commitments.'],
+        mitigations: ['Require workload replay and normalized three-year cost model before award'],
+      },
+      {
+        id: 'warehouse-governance-edition-gap',
+        label: 'Governance edition gap',
+        severity: 'medium',
+        detectionSignals: ['Required controls exist only in higher editions, add-ons, or separately configured cloud-native services.'],
+        mitigations: ['Map every required control to exact SKU, edition, configuration, and evidence artifact'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Stress audit logs, access controls, data lineage, retention, encryption, resilience, exit, and third-party-risk evidence.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Review PHI boundaries, BAA posture, encryption, data minimization, audit access, and role-level controls.',
+      },
+      {
+        industry: 'retail_cpg',
+        modifier: 'Model high-volume loyalty, clickstream, pricing, inventory, personalization, and BI concurrency workloads separately.',
+      },
+    ],
+    body: `## Summary
+Cloud data warehouse sourcing begins when analytics teams need elastic query performance, lower infrastructure management burden, governed access to sensitive data, or a migration path away from fixed-capacity legacy warehouses. The category now spans classic warehouses and lakehouse SQL engines. Snowflake, BigQuery, Amazon Redshift, and Databricks SQL can all support enterprise analytics, but their economics, governance model, and operating posture differ enough that public list-price comparisons can mislead.
+
+## When to apply
+Use this pattern when evaluating a warehouse or SQL analytics platform for BI, ELT, governed sharing, AI/ML feature stores, data-product publishing, or legacy warehouse migration. It also applies when the buyer is deciding whether Snowflake, BigQuery, Redshift, Databricks SQL, or a lakehouse path should become the strategic analytics control plane.
+
+## Category boundary
+In scope: SQL warehouses, serverless or provisioned compute, storage, data scanned, slots, credits, RPU-hours, DBUs, concurrency, workload isolation, catalog/governance, row/column controls, masking, audit logs, private networking, encryption, BI connectors, data sharing, support, migration, and cost controls. Out of scope: pure object storage, transactional databases, standalone BI tools, standalone ETL, and ML platforms unless their workloads materially drive warehouse economics.
+
+## Lifecycle and gates
+The scope gate must collect workload traces: scheduled ELT hours, analyst concurrency, dashboard refresh cadence, ad hoc scan volume, ingestion frequency, storage growth, cold/hot split, region topology, BI tools, data-sharing needs, and regulated data classes. The RFP gate should require each vendor to price the same workload model and identify every cost driver. The proof gate should replay representative queries, load jobs, dashboard concurrency, governance policies, and cost controls. The BAFO gate should normalize public list rates against committed-use discounts, marketplace funding, migration credits, support, egress, storage growth, and renewal terms.
+
+## Evaluation rubric
+Weight workload economics around 25 percent, governance/security around 20 percent, ecosystem and cloud fit around 20 percent, performance and concurrency around 15 percent, operating model around 10 percent, and exit/interoperability around 10 percent. Increase governance weight where regulated data, customer data, PHI, financial data, or public-sector requirements are in scope. Increase cloud-fit weight when an existing AWS, GCP, Azure, Snowflake, or Databricks commitment changes procurement leverage.
+
+## Pricing and contract notes
+Do not summarize this category with a single price-per-TB claim. Snowflake uses credits for compute and serverless features plus storage and data-transfer considerations. BigQuery separates compute and storage and supports on-demand bytes-scanned or capacity-based slot models. Redshift includes provisioned clusters, Redshift Serverless RPU-hours, RA3 managed storage, Spectrum bytes scanned, snapshots, backup storage, and transfer considerations. Databricks SQL can involve serverless, pro, or classic warehouse choices and DBU/cloud-resource exposure depending on configuration. Negotiated discounts, private offers, migration credits, committed-use terms, cloud marketplace credits, and renewal economics are founder-data-gap until evidenced by buyer documents.
+
+Contracting should require usable cost and usage reporting, workload tags, budget controls, support response terms, data export, security/trust artifacts, encryption and key-management commitments, private networking, audit access, incident notification, subprocessors, data residency, and transition assistance. If controls require a specific edition, SKU, cloud service, or configuration, the order form and acceptance plan must say so.
+
+## Contradictions and failure modes
+Vendor claim: we are the lowest-cost warehouse. Detection: replay buyer workloads and compare total spend across compute, storage, scan, transfer, support, commitments, and migration. Vendor claim: serverless is simpler and cheaper. Detection: compare variable workloads, steady-state workloads, network/control needs, and budget predictability. Vendor claim: governance is built in. Detection: map each required control to an exact feature, SKU, and configuration.
+
+The common failure is choosing a platform from benchmark slides without modeling the buyer's workload shape. The second is forgetting that cloud commitments and marketplace private offers can change procurement economics without changing technical fit. The third is assuming governance exists because the platform has a catalog, while row-level controls, masking, lineage, and audit evidence still need configuration and proof.`,
+  },
+  {
+    id: 'PAT-SRC-CAT-LAKE-001',
+    slug: 'lakehouse-data-lake-platform-sourcing',
+    title: 'Lakehouse and Data Lake Platform Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Lakehouse and data-lake platform sourcing is a governance-and-workload fit decision, not a storage-only buy; buyers must compare table format, catalog control, compute economics, security posture, interoperability, and ecosystem lock-in together.',
+    applicability:
+      'Apply when sourcing lakehouse modernization, enterprise analytics foundations, data warehouse offload, Iceberg or Delta adoption, governed self-service analytics, ML/AI data access, cross-cloud sharing, or fragmented data lake consolidation.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.8,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.databricks.com/product/pricing',
+      'https://docs.databricks.com/aws/en/lakehouse',
+      'https://docs.databricks.com/aws/en/lakehouse-architecture/security-compliance-and-privacy/best-practices',
+      'https://docs.snowflake.com/en/user-guide/tables-iceberg-open-catalog',
+      'https://docs.snowflake.com/en/user-guide/opencatalog/overview',
+      'https://www.snowflake.com/en/pricing-options/',
+      'https://docs.snowflake.com/en/user-guide/security-access-control-overview',
+      'https://learn.microsoft.com/en-us/fabric/fundamentals/microsoft-fabric-overview',
+      'https://learn.microsoft.com/en-us/fabric/onelake/onelake-capacity-consumption',
+      'https://azure.microsoft.com/en-us/pricing/details/microsoft-fabric/',
+      'https://docs.aws.amazon.com/lake-formation/latest/dg/what-is-lake-formation.html',
+      'https://aws.amazon.com/lake-formation/pricing/',
+      'https://aws.amazon.com/glue/pricing/',
+      'https://aws.amazon.com/athena/pricing/',
+      'https://aws.amazon.com/s3/pricing/',
+    ],
+    regulatoryChips: ['SOC-2-review', 'ISO-27001-if-required', 'HIPAA-if-PHI', 'FedRAMP-if-public-sector'],
+    relatedPatternIds: ['PAT-SRC-CAT-CDW-001', 'PAT-SRC-CAT-CDP-001', 'PAT-SRC-CAT-ETL-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'data_analytics',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Databricks Lakehouse',
+        tier: 'enterprise',
+        positioning: 'Lakehouse candidate strongest where data engineering, Spark, SQL, ML/AI, notebooks, Delta, and Unity Catalog need one platform posture.',
+        cautions: ['DBU, serverless/pro/classic compute, cloud resources, governance setup, and committed-use terms require workload proof.'],
+      },
+      {
+        vendorName: 'Snowflake Iceberg and Open Catalog',
+        tier: 'enterprise',
+        positioning: 'Candidate for Snowflake-standardized buyers that want Iceberg/Open Catalog interoperability without abandoning Snowflake governance and SQL ergonomics.',
+        cautions: ['Validate read/write semantics, catalog ownership, engine interoperability, region/feature availability, and credit/storage economics.'],
+      },
+      {
+        vendorName: 'Microsoft Fabric OneLake and AWS-native lake stack',
+        tier: 'enterprise',
+        positioning: 'Fabric fits Microsoft/Power BI/Entra capacity buyers; AWS-native fits modular S3/Glue/Lake Formation/Athena buyers that accept more architecture ownership.',
+        cautions: ['Capacity, storage, transaction, Athena/Glue/S3 service charges, and operations burden must be modeled together.'],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'Lakehouse and lake public metering units only',
+        model: 'hybrid',
+        metric: 'DBUs, Snowflake credits, capacity units, OneLake storage, S3, Glue, Athena scanned data, support, and migration services',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Databricks Pricing', url: 'https://www.databricks.com/product/pricing', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Microsoft Fabric Pricing', url: 'https://azure.microsoft.com/en-us/pricing/details/microsoft-fabric/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'AWS Lake Formation Pricing', url: 'https://aws.amazon.com/lake-formation/pricing/', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Committed-use discounts, private rate cards, procurement concessions, support tiers, renewal leverage, and cloud-commit offsets require buyer evidence' },
+        ],
+        confidence: 0.62,
+        notes: 'Public pricing identifies metering units, not workload-specific TCO superiority.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Catalog and table-format control',
+        buyerPosition: 'Define canonical catalog, table format, read/write rights, cross-engine access, metadata export, and portability obligations.',
+      },
+      {
+        clauseArea: 'Governance, security, and proof obligations',
+        buyerPosition: 'Require proof of row/column/tag policy enforcement, audit logs, encryption, private networking, compliance artifacts, and workload-cost visibility.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Open-format and catalog optionality',
+        whenToUse: 'Use when vendors claim openness through Delta, Iceberg, Open Catalog, OneLake, Glue, or multi-engine support.',
+        buyerAsk: 'Demonstrate read/write interoperability, metadata ownership, policy behavior, exit export, and engine substitution before BAFO.',
+      },
+      {
+        lever: 'Representative workload proof',
+        whenToUse: 'Use when a vendor demo does not prove actual BI, ETL, ML, streaming, governance, and sharing economics.',
+        buyerAsk: 'Replay buyer scenarios and require cost output, failure recovery notes, policy evidence, and operational burden assessment.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'lakehouse-control-plane-lock-in',
+        label: 'Catalog and control-plane lock-in',
+        severity: 'high',
+        detectionSignals: ['The platform claims open storage while metadata, policies, lineage, or write paths remain tightly bound to one vendor control plane.'],
+        mitigations: ['Validate metadata export, policy portability, cross-engine read/write, and exit workflows'],
+      },
+      {
+        id: 'lakehouse-service-sprawl-cost',
+        label: 'Distributed service cost sprawl',
+        severity: 'medium',
+        detectionSignals: ['Storage, compute, catalog, scan, orchestration, governance, support, and networking charges are modeled separately or incompletely.'],
+        mitigations: ['Build a full workload bill of materials and run a cost replay before award'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Stress lineage, entitlement reviews, audit logs, policy inheritance, resilience, exit, and model-risk data controls.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Review PHI boundaries, encryption, BAA posture, data minimization, de-identification workflows, and auditability.',
+      },
+      {
+        industry: 'public_sector',
+        modifier: 'Review sovereign/government cloud posture, FedRAMP where required, accessibility, records obligations, residency, and procurement constraints.',
+      },
+    ],
+    body: `## Summary
+A modern lakehouse or data lake platform is not just object storage. It combines storage, table formats, query and processing engines, catalog metadata, access control, lineage, governance, and cost controls. Databricks frames the lakehouse around data lake plus warehouse benefits. Snowflake's Iceberg and Open Catalog direction centers on Apache Iceberg tables and a managed catalog approach. Microsoft Fabric uses OneLake as a tenant-wide logical data lake across Fabric workloads. AWS composes the pattern from S3, Glue Data Catalog, Lake Formation, Athena, EMR, Redshift, and related services. The sourcing question is which control plane should own metadata, policy, and workload orchestration.
+
+## When to apply
+Use this pattern for enterprise analytics foundations, lakehouse modernization, data warehouse offload, Iceberg or Delta adoption, governed self-service analytics, ML/AI data access, cross-cloud data sharing, and consolidation of fragmented lakes and warehouses. Do not use it for simple object-storage procurement unless table format, catalog, governance, or compute choices are part of the decision.
+
+## Category boundary
+In scope: object storage, Delta/Iceberg/table-format strategy, catalog control plane, SQL and Spark engines, serverless or provisioned compute, notebooks, BI, ETL/ELT, streaming, ML/AI data access, governance policies, lineage, data quality, audit logs, encryption, private networking, interoperability, migration, support, and cost controls. Out of scope: standalone BI tools, standalone ETL, transactional databases, and raw backup/archive storage unless they shape the lakehouse control plane.
+
+## Lifecycle and gates
+The scope gate should declare table-format posture, canonical catalog, storage residency, identity provider, regulated data classes, existing cloud commitments, workloads, BI tools, pipeline estate, ML/AI needs, sharing needs, and operations model. The RFP gate should require vendors to show who can read, who can write, who controls metadata, how policies propagate, what happens when compute engines change, and how costs appear. The proof gate should include one BI query set, one ETL/ELT pipeline, one governance policy scenario, one access audit, one schema evolution or table maintenance case, and one multi-engine interoperability test. The BAFO gate should normalize DBUs, credits, capacity units, storage, scans, transactions, support, migration, networking, and committed-use terms.
+
+## Evaluation rubric
+Weight governance and catalog fit around 25 percent, workload performance and economics around 25 percent, table-format and interoperability strategy around 15 percent, ecosystem/cloud fit around 15 percent, security/compliance around 10 percent, and operations/exit risk around 10 percent. Increase interoperability weight where the buyer wants Iceberg, Delta, external engines, or cross-cloud portability. Increase governance weight where regulated or customer-sensitive data will be broadly democratized.
+
+## Pricing and contract notes
+Public pricing models differ materially. Databricks publishes pay-as-you-go and committed-use approaches for data and AI workloads. Snowflake uses credits and optimized storage, with on-demand and capacity purchasing. Fabric pricing is capacity-based, with OneLake storage and capacity consumption considerations. AWS pricing is distributed across Lake Formation, S3, Glue, Athena, and other services. Lake Formation permissions may not carry a separate charge, but the surrounding storage, catalog, query, ETL, transfer, and support costs still matter. Any committed-use discount, private rate card, cloud-commit offset, support tier, migration credit, or renewal concession remains founder-data-gap unless directly evidenced.
+
+Contracting should define catalog ownership, metadata export, table-format commitments, cross-engine access, security controls, policy portability, audit evidence, incident notification, data residency, encryption and key-management posture, support responsibilities, cost-reporting transparency, and transition assistance. For modular AWS-native approaches, assign accountability across services. For integrated vendors, confirm what remains portable if the buyer later changes engines.
+
+## Contradictions and failure modes
+Vendor claim: the platform is open. Detection: test read/write semantics, catalog metadata ownership, policy behavior, table maintenance, and exit export. Vendor claim: the lakehouse lowers cost. Detection: replay BI, ETL, ML, streaming, storage, scan, governance, and support workloads. Vendor claim: governance is unified. Detection: validate row, column, tag, lineage, audit, and cross-engine enforcement with buyer scenarios.
+
+The common failure is treating object storage openness as full platform portability. The second failure is comparing compute rates while ignoring catalog, governance, networking, storage, scans, transactions, and operations burden. The third failure is adopting a lakehouse before deciding whether the enterprise wants Delta, Iceberg, a hybrid strategy, or vendor-managed abstraction as its long-term data contract.`,
+  },
 ];
 
 export const SOURCING_CATEGORY_PATTERN_COUNT = SOURCING_CATEGORY_PATTERNS.length;
