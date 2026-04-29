@@ -681,9 +681,15 @@ interface TowerIndexPageProps {
    * from fixture data.
    */
   portfolioSummarySlot?: ReactNode;
+  /**
+   * REASON-32 — Optional portfolio-level cascade graph (SVG visualization
+   * of cross-instance impact relationships). Rendered below the portfolio
+   * summary tiles for executive triage.
+   */
+  cascadeGraphSlot?: ReactNode;
 }
 
-export function TowerIndexPage({ provenanceSlot, portfolioSummarySlot }: TowerIndexPageProps = {}) {
+export function TowerIndexPage({ provenanceSlot, portfolioSummarySlot, cascadeGraphSlot }: TowerIndexPageProps = {}) {
   const [showNewPressure, setShowNewPressure] = useState(false);
   const [synthesisQuote, setSynthesisQuote] = useState(TOWER_INDEX_VIEW.agentQuote);
   const searchParams = useSearchParams();
@@ -749,6 +755,9 @@ export function TowerIndexPage({ provenanceSlot, portfolioSummarySlot }: TowerIn
       >
         {/* Portfolio summary — instance tiles for at-a-glance triage */}
         {portfolioSummarySlot}
+
+        {/* Portfolio cascade graph — REASON-32 */}
+        {cascadeGraphSlot}
 
         {/* Header row */}
         <div
