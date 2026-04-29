@@ -683,6 +683,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/evidence-catalog',
     description: 'Dictionary of all evidence types referenced across gate criteria, grouped by pattern',
   },
+  {
+    title: 'Bulk waiver',
+    href: '/admin/reasoning/bulk-waiver',
+    description: 'Apply gate waivers to multiple criteria at once — useful for demo preparation',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
