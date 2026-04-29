@@ -709,6 +709,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     description: 'All active gate waivers across instances — current in-memory state',
   },
   {
+    title: 'Gate approvals',
+    href: '/admin/reasoning/gate-approvals',
+    description: 'Gate advancement approval records — which instances advanced through which stages',
+  },
+  {
     title: 'Failure modes',
     href: '/admin/reasoning/failure-modes',
     description: 'Catalog of all failure modes across lifecycle patterns with affected stages and mitigations',
