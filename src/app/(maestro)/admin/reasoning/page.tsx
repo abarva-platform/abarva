@@ -898,6 +898,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/criterion-detail',
     description: 'Every gate criterion across all patterns with per-instance pass rates and hardest-criteria ranking',
   },
+  {
+    title: 'Confidence breakdown',
+    href: '/admin/reasoning/confidence-breakdown',
+    description: 'Synthesis confidence scores for all instances with factor-level breakdown of what drives confidence',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
