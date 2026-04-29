@@ -22,6 +22,7 @@ import { computeSynthesisEtag } from '@/lib/reasoning/synthesis-etag';
 import { buildStageSynthesisPrompt } from '@/lib/reasoning/stage-synthesis-prompt';
 import { AGENT_DEMO_SYSTEM_BLOCK } from '@/lib/agent/demo-context';
 import { getUserContextPromptBlock } from '@/lib/agent/userContext';
+import { FOUR_LAYER_REASONING_INSTRUCTIONS } from '@/lib/intelligence/synthesis/instructionLayer';
 
 // Process-local cache: key → text response. Fine for the demo; production
 // would use Redis. Keyed by `${instanceId}:${stageId}:${stateHash}`.
@@ -172,7 +173,12 @@ export async function POST(request: Request) {
   // F0.2 Layer 0 — composed AFTER role/voice (prompt.system) and BEFORE
   // demo/knowledge block.
   const userContextBlock = await getUserContextPromptBlock();
-  const composedSystem = [prompt.system, userContextBlock, AGENT_DEMO_SYSTEM_BLOCK]
+  const composedSystem = [
+    prompt.system,
+    userContextBlock,
+    FOUR_LAYER_REASONING_INSTRUCTIONS,
+    AGENT_DEMO_SYSTEM_BLOCK,
+  ]
     .filter((s) => s && s.trim().length > 0)
     .join('\n\n');
   const stream = await client.messages.stream({

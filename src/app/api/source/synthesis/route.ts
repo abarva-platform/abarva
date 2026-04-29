@@ -11,6 +11,7 @@ import { computeSynthesisEtag } from "@/lib/reasoning/synthesis-etag";
 import { registerSynthesisCache } from "@/lib/reasoning/synthesis-cache-registry";
 import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
 import { getUserContextPromptBlock } from "@/lib/agent/userContext";
+import { FOUR_LAYER_REASONING_INSTRUCTIONS } from "@/lib/intelligence/synthesis/instructionLayer";
 
 // Simple in-memory cache: key → text response
 // In production this would be Redis; for demo an in-process cache is sufficient.
@@ -32,8 +33,13 @@ Sentinel voice register (from brand voice spec §9):
 Format: Plain prose, 40–60 words. No headers, no bullets, no markdown.`;
 
 function buildSentinelSynthesisPrompt(userContextBlock: string): string {
-  // F0.2: role/voice → user context (Layer 0) → demo/knowledge block.
-  return [SENTINEL_SYNTHESIS_VOICE_AND_TASK, userContextBlock, AGENT_DEMO_SYSTEM_BLOCK]
+  // F0.2 + F0.3 composition.
+  return [
+    SENTINEL_SYNTHESIS_VOICE_AND_TASK,
+    userContextBlock,
+    FOUR_LAYER_REASONING_INSTRUCTIONS,
+    AGENT_DEMO_SYSTEM_BLOCK,
+  ]
     .filter((s) => s && s.trim().length > 0)
     .join('\n\n');
 }

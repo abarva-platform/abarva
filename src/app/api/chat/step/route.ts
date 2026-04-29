@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { retrieveContext, verticalFromClientContext } from '@/lib/retrieval'
 import { getUserContextPromptBlock } from '@/lib/agent/userContext'
 import { getRelevantTools, toAnthropicToolDefinition } from '@/lib/agent/tools/registry'
+import { FOUR_LAYER_REASONING_INSTRUCTIONS } from '@/lib/intelligence/synthesis/instructionLayer'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -48,7 +49,9 @@ function buildSystemPrompt(ragContext: string, userContextBlock: string): string
   return `You are AbarVa, the world's most rigorous AI transformation advisor.
 You are running a structured, step-by-step AI strategy session with a client.
 
-${userContextBlock}${ragContext ? `
+${userContextBlock}${FOUR_LAYER_REASONING_INSTRUCTIONS}
+
+${ragContext ? `
 INDUSTRY BENCHMARKS AND KNOWLEDGE BASE (retrieved from AbarNexus):
 Use these specific benchmarks to ground your analysis. When relevant, cite the source in parentheses.
 Do not invent numbers — only use figures from this context or say "industry benchmarks suggest".

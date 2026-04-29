@@ -19,6 +19,9 @@ import { getUserContextPromptBlock } from "@/lib/agent/userContext";
 import { retrieveStageContext, retrieveCategoryContext } from "@/lib/intelligence/agent-retrieval";
 import { getRelevantTools } from "@/lib/agent/tools/registry";
 import { runToolUseLoop } from "@/lib/agent/streaming/toolUseLoop";
+import { FOUR_LAYER_REASONING_INSTRUCTIONS } from "@/lib/intelligence/synthesis/instructionLayer";
+import { validateSynthesisOutput } from "@/lib/intelligence/synthesis/outputValidator";
+import { recordViolations } from "@/lib/intelligence/synthesis/violationsRecorder";
 // F0.4: import the commit_program tool module so it self-registers
 // at startup. Routes that don't surface this tool will simply not
 // expose it in `tools`, but the registration must happen for the
@@ -163,6 +166,10 @@ export async function POST(request: Request) {
     voiceLine,
     "",
     userContextBlock,
+    // F0.3 — four-layer reasoning + scope policy + integrity contract.
+    // Composed AFTER user context (Layer 0) and BEFORE knowledge / task.
+    FOUR_LAYER_REASONING_INSTRUCTIONS,
+    "",
     "Page context:",
     ...contextLines,
     categoryPlaybook ? `\nService category context:\n${categoryPlaybook}` : "",
@@ -186,6 +193,11 @@ export async function POST(request: Request) {
   const tools = getRelevantTools(surface);
 
   const encoder = new TextEncoder();
+  // F0.3 — buffer the streamed output for post-hoc validation. The
+  // validator runs AFTER streaming completes; it never blocks the
+  // client. Violations are logged to the in-memory ring buffer
+  // (synthesis_violations recorder) for telemetry.
+  let bufferedOutput = "";
   const readable = new ReadableStream({
     async start(controller) {
       try {
@@ -206,6 +218,7 @@ export async function POST(request: Request) {
           },
           writer: {
             write(text) {
+              bufferedOutput += text;
               controller.enqueue(encoder.encode(text));
             },
           },
@@ -213,12 +226,30 @@ export async function POST(request: Request) {
       } catch (err) {
         // Surface tool/stream errors to the client honestly rather
         // than silently truncating the response.
-        const message = err instanceof Error ? err.message : String(err);
+        const errMessage = err instanceof Error ? err.message : String(err);
         controller.enqueue(
-          encoder.encode(`\n\n[stream error: ${message}]`),
+          encoder.encode(`\n\n[stream error: ${errMessage}]`),
         );
       } finally {
         controller.close();
+        // F0.3 post-hoc validation — non-blocking, telemetry-only.
+        // The structural mechanism for action-claim integrity is F0.4
+        // tool-use; this catches the four classes the validator covers.
+        try {
+          const result = validateSynthesisOutput(bufferedOutput, {
+            hasRetrieval: Boolean(categoryPlaybook || stagePlaybook),
+          });
+          if (result.violations.length > 0 || bufferedOutput.length > 0) {
+            recordViolations({
+              route: '/api/chat/agent',
+              surface,
+              violations: result.violations,
+              responseLength: bufferedOutput.length,
+            });
+          }
+        } catch {
+          // Telemetry MUST NOT raise. Swallow.
+        }
       }
     },
   });

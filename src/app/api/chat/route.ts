@@ -3,6 +3,7 @@ import { meridianHealth } from "@/data/meridian";
 import { getUserContextPromptBlock } from "@/lib/agent/userContext";
 import { getRelevantTools } from "@/lib/agent/tools/registry";
 import { runToolUseLoop } from "@/lib/agent/streaming/toolUseLoop";
+import { FOUR_LAYER_REASONING_INSTRUCTIONS } from "@/lib/intelligence/synthesis/instructionLayer";
 
 export async function POST(request: Request) {
   const { orgName, orgSize, vertical, challenge } = await request.json();
@@ -52,7 +53,9 @@ You have access to this organization's actual data, financials, leadership inter
 Reference specific numbers, names, and contradictions from the org data.
 Never give generic advice — every insight must reference their specific situation.
 
-${userContextBlock}Format your response with these exact sections:
+${userContextBlock}${FOUR_LAYER_REASONING_INSTRUCTIONS}
+
+Format your response with these exact sections:
 
 ## TOP 3 TRANSFORMATION CHALLENGES
 (Reference specific metrics and dollar amounts)
