@@ -501,34 +501,18 @@ function InflectionPointCard({ rows }: { rows: StageTrendRow[] }) {
 
 // ─── Section 4: Early vs. Late comparison ────────────────────────────────────
 
-function EarlyLateComparison({ rows }: { rows: StageTrendRow[] }) {
-  const earlyRows = rows.filter((r) => r.stageIdx < 3);
-  const lateRows = rows.filter((r) => r.stageIdx >= 3);
-
-  const earlyAvg =
-    earlyRows.length === 0
-      ? 0
-      : earlyRows.reduce((s, r) => s + r.passRate, 0) / earlyRows.length;
-  const lateAvg =
-    lateRows.length === 0
-      ? 0
-      : lateRows.reduce((s, r) => s + r.passRate, 0) / lateRows.length;
-
-  const delta = earlyAvg - lateAvg;
-  const deltaLabel = delta >= 0 ? `+${Math.round(delta * 100)}%` : `${Math.round(delta * 100)}%`;
-  const deltaColor = delta >= 0 ? SHELL.MINT_TEXT : SHELL.RUST_TEXT;
-
-  const StatBox = ({
-    title,
-    subtitle,
-    value,
-    accent,
-  }: {
-    title: string;
-    subtitle: string;
-    value: string;
-    accent: string;
-  }) => (
+function StatBox({
+  title,
+  subtitle,
+  value,
+  accent,
+}: {
+  title: string;
+  subtitle: string;
+  value: string;
+  accent: string;
+}) {
+  return (
     <div
       style={{
         flex: '1 1 180px',
@@ -576,6 +560,24 @@ function EarlyLateComparison({ rows }: { rows: StageTrendRow[] }) {
       </div>
     </div>
   );
+}
+
+function EarlyLateComparison({ rows }: { rows: StageTrendRow[] }) {
+  const earlyRows = rows.filter((r) => r.stageIdx < 3);
+  const lateRows = rows.filter((r) => r.stageIdx >= 3);
+
+  const earlyAvg =
+    earlyRows.length === 0
+      ? 0
+      : earlyRows.reduce((s, r) => s + r.passRate, 0) / earlyRows.length;
+  const lateAvg =
+    lateRows.length === 0
+      ? 0
+      : lateRows.reduce((s, r) => s + r.passRate, 0) / lateRows.length;
+
+  const delta = earlyAvg - lateAvg;
+  const deltaLabel = delta >= 0 ? `+${Math.round(delta * 100)}%` : `${Math.round(delta * 100)}%`;
+  const deltaColor = delta >= 0 ? SHELL.MINT_TEXT : SHELL.RUST_TEXT;
 
   return (
     <div

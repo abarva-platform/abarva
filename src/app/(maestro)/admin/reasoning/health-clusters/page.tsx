@@ -557,7 +557,7 @@ function AnomalyCallout({ anomalies }: { anomalies: AnomalyRow[] }) {
             marginTop: 2,
           }}
         >
-          Instances whose cluster membership by health doesn't match their gate-pass rate
+          Instances whose cluster membership by health doesn&apos;t match their gate-pass rate
         </div>
       </header>
 
