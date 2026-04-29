@@ -673,9 +673,17 @@ interface TowerIndexPageProps {
    * data.
    */
   provenanceSlot?: ReactNode;
+  /**
+   * Portfolio-level instance summary strip rendered above the active
+   * pressures grid. Pre-rendered server-side (each tile resolves an
+   * instance, builds its synthesis context, and derives missions) and
+   * passed in as a ReactNode so the client component remains decoupled
+   * from fixture data.
+   */
+  portfolioSummarySlot?: ReactNode;
 }
 
-export function TowerIndexPage({ provenanceSlot }: TowerIndexPageProps = {}) {
+export function TowerIndexPage({ provenanceSlot, portfolioSummarySlot }: TowerIndexPageProps = {}) {
   const [showNewPressure, setShowNewPressure] = useState(false);
   const [synthesisQuote, setSynthesisQuote] = useState(TOWER_INDEX_VIEW.agentQuote);
   const searchParams = useSearchParams();
@@ -739,6 +747,9 @@ export function TowerIndexPage({ provenanceSlot }: TowerIndexPageProps = {}) {
           padding: '24px 32px 32px',
         }}
       >
+        {/* Portfolio summary — instance tiles for at-a-glance triage */}
+        {portfolioSummarySlot}
+
         {/* Header row */}
         <div
           style={{
