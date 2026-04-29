@@ -1263,6 +1263,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Gate Pass Predictor',
     description: 'Trajectory-based predictions of next likely gate achievements — confidence levels and stalled instance detection.',
   },
+  {
+    href: '/admin/reasoning/stage-completion-forecast',
+    title: 'Stage Completion Forecast',
+    description: 'Velocity-based stage completion timeline — Gantt-lite view, completion quarters, on-track vs. at-risk.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
