@@ -1,13 +1,13 @@
 # Corpus Autonomous State
 
-Last update timestamp: 2026-04-29T14:05:00Z
+Last update timestamp: 2026-04-29T14:15:00Z
 Status: ACTIVE - founder resumed autonomous corpus loop and granted auto-merge authority for scoped green PRs.
 
 ## Current wave
 Wave 1 - category-specific sourcing playbooks in progress.
 
 ## Domains in progress
-- Category-specific sourcing playbooks: PR #831 is the active WFM/PSA/CPQ batch.
+- Category-specific sourcing playbooks: PR #831 merged; EHS/PPM/QMS batch is active locally for Cat17.
 - Process/methodology: queued.
 - Contract intelligence: queued.
 - Pricing intelligence: queued.
@@ -18,7 +18,7 @@ Wave 1 - category-specific sourcing playbooks in progress.
 
 ## Pattern counts by domain
 - Existing sourcing corpus on latest main before Wave 1: 24 patterns.
-- Category-specific sourcing playbooks (`PAT-SRC-CAT-*`): 45 authored across Wave 1; 42 merged in PRs #812, #813, #814, #815, #816, #817, #818, #819, #820, #821, #822, #823, #824, and #826; 3 active in PR #831.
+- Category-specific sourcing playbooks (`PAT-SRC-CAT-*`): 48 authored across Wave 1; 45 merged in PRs #812, #813, #814, #815, #816, #817, #818, #819, #820, #821, #822, #823, #824, #826, and #831; 3 active locally for the Cat17 PR.
 - Vendor intelligence profiles (`PAT-SRC-VEN-*`): 0
 - Contract intelligence (`PAT-SRC-CON-*`): 0
 - Pricing intelligence (`PAT-SRC-PRC-*`): 0
@@ -43,9 +43,10 @@ Wave 1 - category-specific sourcing playbooks in progress.
 - #823 - `[corpus][cat] Author PAT-SRC-CAT-ESM-001, PAT-SRC-CAT-BPM-001, PAT-SRC-CAT-LEGAL-001 · 3 patterns` - merged 2026-04-29T04:12:20Z at `97230967ec74a83b98814224b649da47214b613f`.
 - #824 - `[corpus][cat] Author PAT-SRC-CAT-PROCURE-001, PAT-SRC-CAT-CLM-001, PAT-SRC-CAT-AP-001 · 3 patterns` - merged 2026-04-29T04:20:15Z at `d3b76da741d85d74e6c920686f116bee8d55d9c6`.
 - #826 - `[corpus][cat] Author PAT-SRC-CAT-TMS-001, PAT-SRC-CAT-HRTECH-001, PAT-SRC-CAT-PAYROLL-001 · 3 patterns` - merged 2026-04-29T04:39:00Z at `32043d785c4b8f89f663ef1bf97364e3b7923433`.
+- #831 - `[corpus][cat] Author PAT-SRC-CAT-WFM-001, PAT-SRC-CAT-PSA-001, PAT-SRC-CAT-CPQ-001 · 3 patterns` - merged 2026-04-29T14:12Z at `7a72e3a70ca9f437624cc08e8284b80fda11ac5d`.
 
 ## Open PRs
-- #831 - `[corpus][cat] Author PAT-SRC-CAT-WFM-001, PAT-SRC-CAT-PSA-001, PAT-SRC-CAT-CPQ-001 · 3 patterns` - rebasing and validating after resume.
+- Cat17 - `[corpus][cat] Author PAT-SRC-CAT-EHS-001, PAT-SRC-CAT-PPM-001, PAT-SRC-CAT-QMS-001 · 3 patterns` - local validation in progress.
 
 ## Held PRs requiring founder review
 - None.
@@ -54,9 +55,6 @@ Wave 1 - category-specific sourcing playbooks in progress.
 - None. Collaboration/productivity, video conferencing, enterprise messaging, CDP, cloud data warehouse, lakehouse, MDM, data fabric, ETL/ELT, revenue intelligence, BI, LLM/model-access, agent runtime, vector retrieval, MLOps, enterprise code platform, workforce IAM, IGA, PAM, SASE/SSE, SIEM, EDR/XDR, CNAPP/CSPM, FinOps, observability, ITAM, SAM, ESM, BPM, legal operations, procurement, CLM, AP automation, TMS, HRTech, payroll, WFM, PSA, and CPQ research lanes completed with read-only source notes.
 
 ## Next 16 queued pattern IDs
-- PAT-SRC-CAT-EHS-001
-- PAT-SRC-CAT-PPM-001
-- PAT-SRC-CAT-QMS-001
 - PAT-SRC-CAT-RPA-001
 - PAT-SRC-CAT-ERP2-001
 - PAT-SRC-CAT-DOC-001
@@ -70,10 +68,13 @@ Wave 1 - category-specific sourcing playbooks in progress.
 - PAT-SRC-CAT-SSO-001
 - PAT-SRC-CAT-OBS2-001
 - PAT-SRC-CAT-MDM2-001
+- PAT-SRC-CAT-ECOM-001
+- PAT-SRC-CAT-PIM-001
+- PAT-SRC-CAT-PLM-001
 
 ## Current blockers
 - Full `npm test -- --runInBand` remains blocked by pre-existing unrelated broad-suite failures outside corpus branch scope.
 - Numeric pricing, discount, implementation-ratio, AI-usage, overage, and renewal-uplift claims remain intentionally blank unless source-backed by buyer evidence or approved benchmarks.
 
 ## Next action
-Merge resume PR #1052 when green, push the rebased #831 branch, and auto-merge #831 if green and scoped.
+Validate, push, and auto-merge the Cat17 EHS/PPM/QMS batch if green and scoped.
