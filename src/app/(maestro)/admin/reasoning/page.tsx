@@ -49,6 +49,94 @@ function formatTimestamp(iso: string): string {
   return d.toISOString().replace('T', ' ').slice(0, 19) + 'Z';
 }
 
+function ExportPill() {
+  // Uses a native <details>/<summary> disclosure so the dropdown opens
+  // without any client-side JavaScript. Each link points at the export
+  // route with `target=_blank` so the browser handles the file download
+  // (Content-Disposition: attachment) without leaving the dashboard.
+  const linkStyle: React.CSSProperties = {
+    display: 'block',
+    padding: `${SPACING.xs} ${SPACING.md}`,
+    fontFamily: TYPOGRAPHY.sans,
+    fontSize: 12,
+    color: COLORS.ink,
+    textDecoration: 'none',
+    borderRadius: RADIUS.sm,
+  };
+  return (
+    <details style={{ position: 'relative' }}>
+      <summary
+        style={{
+          listStyle: 'none',
+          cursor: 'pointer',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          background: COLORS.skyPale,
+          color: COLORS.navy,
+          borderRadius: RADIUS.pill,
+          padding: '6px 14px',
+          fontFamily: TYPOGRAPHY.sans,
+          fontSize: 12,
+          fontWeight: 600,
+          letterSpacing: '0.02em',
+          border: `1px solid ${COLORS.navy}22`,
+        }}
+      >
+        Export
+        <span
+          aria-hidden="true"
+          style={{ fontFamily: TYPOGRAPHY.mono, fontSize: 10, opacity: 0.7 }}
+        >
+          ▾
+        </span>
+      </summary>
+      <div
+        style={{
+          position: 'absolute',
+          top: 'calc(100% + 6px)',
+          right: 0,
+          minWidth: 200,
+          background: COLORS.white,
+          border: `1px solid ${COLORS.ink}22`,
+          borderRadius: RADIUS.md,
+          padding: SPACING.xs,
+          boxShadow: `0 8px 24px ${COLORS.ink}1a`,
+          zIndex: 10,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+        }}
+      >
+        <a
+          href="/api/reasoning/telemetry/export?format=csv"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={linkStyle}
+        >
+          Download CSV
+        </a>
+        <a
+          href="/api/reasoning/telemetry/export?format=json"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={linkStyle}
+        >
+          Download JSON
+        </a>
+        <a
+          href="/api/reasoning/telemetry/export?format=json&pretty=1"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={linkStyle}
+        >
+          Download JSON (pretty)
+        </a>
+      </div>
+    </details>
+  );
+}
+
 function HeaderCard({ totalEvents }: { totalEvents: number }) {
   return (
     <div
@@ -91,12 +179,21 @@ function HeaderCard({ totalEvents }: { totalEvents: number }) {
       </div>
       <div
         style={{
-          fontFamily: TYPOGRAPHY.mono,
-          fontSize: 12,
-          color: `${COLORS.ink}99`,
+          display: 'flex',
+          alignItems: 'center',
+          gap: SPACING.md,
         }}
       >
-        {totalEvents} event{totalEvents === 1 ? '' : 's'} in window
+        <div
+          style={{
+            fontFamily: TYPOGRAPHY.mono,
+            fontSize: 12,
+            color: `${COLORS.ink}99`,
+          }}
+        >
+          {totalEvents} event{totalEvents === 1 ? '' : 's'} in window
+        </div>
+        <ExportPill />
       </div>
     </div>
   );
