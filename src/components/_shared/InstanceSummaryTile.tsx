@@ -32,6 +32,8 @@ import {
   type DerivedMission,
 } from '@/lib/reasoning/mission-derivation';
 import type { SynthesisContext } from '@/lib/reasoning/types';
+import { computeInstanceHealth } from '@/lib/reasoning/instance-health';
+import { InstanceHealthBadge } from '@/components/_shared/InstanceHealthBadge';
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
@@ -257,6 +259,7 @@ interface RenderedTileProps {
   readonly gatesPending: number;
   readonly riskCount: number;
   readonly topMissionLabel: string | null;
+  readonly health: ReturnType<typeof computeInstanceHealth>;
   readonly size: 'compact' | 'full';
 }
 
@@ -361,7 +364,7 @@ function CompactTile(props: RenderedTileProps) {
 
 function FullTile(props: RenderedTileProps): ReactNode {
   const { href, title, displayId, patternTitle, currentStage, status,
-    gatesPassed, gatesTotal, gatesPending, riskCount, topMissionLabel } = props;
+    gatesPassed, gatesTotal, gatesPending, riskCount, topMissionLabel, health } = props;
   return (
     <a
       href={href}
@@ -381,11 +384,12 @@ function FullTile(props: RenderedTileProps): ReactNode {
             </span>
           )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <span style={STAGE_LABEL}>{currentStage}</span>
           <span style={statusPillStyle(status)} data-testid="instance-summary-tile-status">
             {statusLabel(status)}
           </span>
+          <InstanceHealthBadge health={health} />
         </div>
         <GatesAndRisks
           gatesPassed={gatesPassed}
@@ -452,6 +456,7 @@ export function InstanceSummaryTile({
   const riskCount =
     context.activeContradictions.length + context.failureModes.length;
   const status = deriveStageStatus(context);
+  const health = computeInstanceHealth(context);
 
   const tileProps: RenderedTileProps = {
     href: detailHrefFor(kind, instance.id),
@@ -465,6 +470,7 @@ export function InstanceSummaryTile({
     gatesPending,
     riskCount,
     topMissionLabel: topMission?.label ?? null,
+    health,
     size,
   };
 
