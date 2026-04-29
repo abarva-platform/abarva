@@ -8,7 +8,8 @@ export type AdminSubSectionId =
   | 'agent-readiness'
   | 'production-readiness'
   | 'build-progress'
-  | 'architecture';
+  | 'architecture'
+  | 'reasoning';
 
 export interface AdminSubSection {
   id: AdminSubSectionId;
@@ -26,6 +27,7 @@ export const ADMIN_SUB_SECTIONS: ReadonlyArray<AdminSubSection> = [
   { id: 'production-readiness', label: 'Production Readiness', subtitle: 'Demo / pilot / production', href: '/admin/production-readiness' },
   { id: 'build-progress', label: 'Build Progress', subtitle: 'Waves and blockers', href: '/admin/build-progress' },
   { id: 'architecture', label: 'Architecture', subtitle: 'Planes + private data plane', href: '/admin/architecture' },
+  { id: 'reasoning', label: 'Reasoning', subtitle: 'Telemetry, health & patterns', href: '/admin/reasoning' },
 ];
 
 export const LIVE_CAVEAT_TEXT = 'Repository manifest + deterministic read models. No live connector/model claims.';
