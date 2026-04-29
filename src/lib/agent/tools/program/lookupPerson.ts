@@ -42,10 +42,14 @@ export const lookupPersonTool: AgentTool<LookupPersonInput> = {
   description:
     'Resolve a role title or person name (e.g. "CIO", "Lin Martinez", "VP of Applications") ' +
     'into matching persons in the active tenant. Returns a list of {person_id, name, role, ' +
-    'organization, email} matches. Call this BEFORE commit_program when the user has only ' +
-    'named a role or person — never ask the user to paste UUIDs themselves. If exactly one ' +
-    'match comes back, use it. If multiple, ask the user to pick. If zero, tell the user ' +
-    'no person was found and offer to register them as a placeholder or escalate to setup.',
+    'organization, email} matches. ' +
+    'CALL THIS PROACTIVELY: as soon as the user mentions a role or a person — even mid-sentence ' +
+    "— look them up. Don't ask 'who is your CIO?' — call lookup_person({query:'CIO'}) and tell " +
+    "the user what you found. e.g. 'I see Martin Steward as CIO at Meridian — confirming him as " +
+    "sponsor?'. Only ask the user for clarification if the lookup returns zero or ambiguous results. " +
+    'If exactly one match comes back, propose using it. If multiple, ask the user to pick. ' +
+    'If zero, tell the user no match was found and offer to register them as a placeholder ' +
+    '(via register_placeholder_person) so the program flow can continue.',
   surfaces: ['/programs/new', '/demo/programs/new'],
   input_schema: {
     type: 'object',
