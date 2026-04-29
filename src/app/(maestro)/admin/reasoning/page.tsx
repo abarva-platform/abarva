@@ -20,6 +20,10 @@ import {
   type SurfaceStats,
   type TelemetrySummary,
 } from '@/lib/reasoning/synthesis-telemetry-stats';
+import {
+  getRecentCascadeEvents,
+  type CascadeTelemetryEvent,
+} from '@/lib/reasoning/cascade-telemetry';
 import { ReasoningHealthBadge } from '@/components/reasoning/ReasoningHealthBadge';
 
 export const metadata = {
@@ -574,9 +578,157 @@ function TopPatterns({ summary }: { summary: TelemetrySummary }) {
   );
 }
 
+function CascadeSeverityPill({
+  severity,
+}: {
+  severity: CascadeTelemetryEvent['severity'];
+}) {
+  const palette =
+    severity === 'high'
+      ? { bg: COLORS.coralSoft, fg: COLORS.coralInk }
+      : severity === 'medium'
+        ? { bg: COLORS.skyPale, fg: COLORS.navy }
+        : { bg: `${COLORS.ink}10`, fg: `${COLORS.ink}99` };
+  return (
+    <span
+      style={{
+        display: 'inline-block',
+        background: palette.bg,
+        color: palette.fg,
+        borderRadius: RADIUS.pill,
+        padding: '2px 10px',
+        fontFamily: TYPOGRAPHY.sans,
+        fontSize: 11,
+        fontWeight: 600,
+        textTransform: 'uppercase',
+        letterSpacing: '0.04em',
+      }}
+    >
+      {severity}
+    </span>
+  );
+}
+
+function CascadeHitsTile({ events }: { events: CascadeTelemetryEvent[] }) {
+  const recent = events.slice(0, 5);
+  return (
+    <section
+      style={{
+        background: COLORS.white,
+        border: `1px solid ${COLORS.ink}14`,
+        borderRadius: RADIUS.lg,
+        overflow: 'hidden',
+      }}
+    >
+      <header
+        style={{
+          padding: `${SPACING.md} ${SPACING.lg}`,
+          borderBottom: `1px solid ${COLORS.ink}10`,
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          gap: SPACING.md,
+        }}
+      >
+        <div>
+          <h2
+            style={{
+              fontFamily: TYPOGRAPHY.serif,
+              fontSize: 20,
+              color: COLORS.ink,
+              margin: 0,
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Cascade hits
+          </h2>
+          <div
+            style={{
+              fontFamily: TYPOGRAPHY.sans,
+              fontSize: 12,
+              color: `${COLORS.ink}88`,
+              marginTop: 2,
+            }}
+          >
+            Cross-instance impacts surfaced in synthesis context builds
+          </div>
+        </div>
+        <span
+          style={{
+            fontFamily: TYPOGRAPHY.mono,
+            fontSize: 12,
+            color: `${COLORS.ink}99`,
+          }}
+        >
+          {events.length} event{events.length === 1 ? '' : 's'}
+        </span>
+      </header>
+      {recent.length === 0 ? (
+        <div
+          style={{
+            padding: SPACING.lg,
+            fontFamily: TYPOGRAPHY.sans,
+            fontSize: 13,
+            color: `${COLORS.ink}99`,
+          }}
+        >
+          No cascade impacts recorded yet — visit a Source, Programs, or Tower
+          synthesis route to populate this buffer.
+        </div>
+      ) : (
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 720 }}>
+            <thead>
+              <tr>
+                <th style={HEADER_CELL}>Timestamp</th>
+                <th style={HEADER_CELL}>Source</th>
+                <th style={HEADER_CELL}>Target</th>
+                <th style={HEADER_CELL}>Link</th>
+                <th style={HEADER_CELL}>Severity</th>
+                <th style={HEADER_CELL}>Impact</th>
+                <th style={HEADER_CELL}>Build context</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recent.map((event) => (
+                <tr key={event.id}>
+                  <td style={MONO_CELL}>{formatTimestamp(event.timestamp)}</td>
+                  <td style={MONO_CELL}>{event.sourceInstanceId}</td>
+                  <td style={MONO_CELL}>{event.targetInstanceId}</td>
+                  <td style={MONO_CELL}>{event.linkType}</td>
+                  <td style={BODY_CELL}>
+                    <CascadeSeverityPill severity={event.severity} />
+                  </td>
+                  <td style={BODY_CELL}>
+                    {event.impactSeverity ? (
+                      <CascadeSeverityPill severity={event.impactSeverity} />
+                    ) : (
+                      <span
+                        style={{
+                          fontFamily: TYPOGRAPHY.mono,
+                          fontSize: 11,
+                          color: `${COLORS.ink}66`,
+                        }}
+                      >
+                        —
+                      </span>
+                    )}
+                  </td>
+                  <td style={MONO_CELL}>{event.buildContext}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default async function ReasoningTelemetryPage() {
   const events = getRecentSynthesisEvents(200);
   const summary = summarizeTelemetry(events);
+  const cascadeEvents = getRecentCascadeEvents(200);
 
   return (
     <AdminCanonShellV2
@@ -674,6 +826,7 @@ export default async function ReasoningTelemetryPage() {
             <StatGrid summary={summary} />
             <TopPatterns summary={summary} />
             <SurfaceBreakdownTable surfaceStats={summary.bySurface} />
+            <CascadeHitsTile events={cascadeEvents} />
             <RecentEventsTable events={events} />
           </>
         )}

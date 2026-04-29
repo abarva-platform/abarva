@@ -4,8 +4,23 @@ import { createGateEvaluator } from '@/lib/reasoning/gate-evaluator';
 import { createContradictionDetector } from '@/lib/reasoning/contradiction-detector';
 import { createFailureModeDetector } from '@/lib/reasoning/failure-mode-detector';
 import { computeCascadeImpacts } from '@/lib/reasoning/cross-instance-reasoner';
+import { recordCascadeEvent } from '@/lib/reasoning/cascade-telemetry';
 import type { LifecyclePatternSeed } from '@/lib/intelligence/seed-types';
 import type { SynthesisContext, GateEvaluation } from '@/lib/reasoning/types';
+
+/**
+ * Map the reasoner's directional severity (`blocking | accelerating |
+ * informational`) onto the cascade-telemetry tier (`low | medium | high`).
+ * Inline so the three context builders share an identical mapping without
+ * a new shared module.
+ */
+function mapDirectionalSeverity(
+  severity: 'blocking' | 'accelerating' | 'informational',
+): 'low' | 'medium' | 'high' {
+  if (severity === 'blocking') return 'high';
+  if (severity === 'accelerating') return 'medium';
+  return 'low';
+}
 
 /**
  * Builds a structured SynthesisContext from a SourceEventInstance + its pattern.
@@ -57,6 +72,26 @@ export function buildSourceSynthesisContext(
   // logic is computed in one place and severity scoring is consistent
   // across Source / Programs / Tower surfaces.
   const cascadeContext = computeCascadeImpacts(instance);
+
+  // Best-effort cascade telemetry — record one event per impact so the
+  // admin dashboard can answer "which cross-instance edges are live in
+  // synthesis right now?" Failures must not block the builder.
+  try {
+    for (const impact of cascadeContext) {
+      recordCascadeEvent({
+        sourceInstanceId: impact.sourceInstanceId,
+        targetInstanceId: impact.targetInstanceId,
+        linkType: impact.linkType,
+        severity: mapDirectionalSeverity(impact.severity),
+        ...(impact.impactSeverity !== undefined
+          ? { impactSeverity: impact.impactSeverity }
+          : {}),
+        buildContext: 'source-synthesis',
+      });
+    }
+  } catch {
+    // swallow — telemetry must never break synthesis
+  }
 
   // Citations: pattern stage guidance + gate criteria
   const citations = [
