@@ -645,6 +645,27 @@ export default async function ReasoningTelemetryPage() {
               7-day executive sweep
             </span>
           </a>
+          <a
+            href="/admin/reasoning/coverage"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: SPACING.sm,
+              background: COLORS.white,
+              border: `1px solid ${COLORS.ink}22`,
+              borderRadius: RADIUS.lg,
+              padding: `${SPACING.sm} ${SPACING.md}`,
+              textDecoration: 'none',
+              fontFamily: TYPOGRAPHY.sans,
+              fontSize: 13,
+              color: COLORS.ink,
+            }}
+          >
+            <span style={{ fontWeight: 600 }}>Open template coverage audit</span>
+            <span style={{ color: `${COLORS.ink}88` }}>
+              which templates fire on fixtures
+            </span>
+          </a>
         </div>
         {summary.totalEvents === 0 ? (
           <EmptyState />
