@@ -1223,6 +1223,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Instance Deep Dive',
     description: 'Comprehensive per-instance view — health, gates, waivers, contradictions, evidence, stage track, and synthesis advisory.',
   },
+  {
+    href: '/admin/reasoning/gate-remediation-plan',
+    title: 'Gate Remediation Plan',
+    description: 'Prioritized P1-P4 remediation plans per instance — unmet gates, health gain estimates, and quick wins.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
