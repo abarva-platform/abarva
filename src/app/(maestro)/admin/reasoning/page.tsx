@@ -1323,6 +1323,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Gate Compliance Score',
     description: 'Native gate compliance per instance — raw pass rate minus waiver and contradiction penalties.',
   },
+  {
+    href: '/admin/reasoning/health-attribution',
+    title: 'Health Attribution',
+    description: 'Health score decomposed into gate pass rate, contradiction penalty, and base contributions.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
