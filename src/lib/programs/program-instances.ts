@@ -333,6 +333,389 @@ export const APX_DFV2_INSTANCE: ProgramInstance = {
   estimatedValueUsd: 2100000,
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// DEMO FIXTURES — bind the previously-unbound program lifecycle patterns
+//
+// Each instance below targets one ProgramPatternId that previously had zero
+// fixture instances. Evidence citations are tuned so the keyword-matching
+// contradiction and failure-mode detectors can fire on realistic Apex Retail
+// state. These fixtures back the template-coverage audit at
+// /admin/reasoning/coverage and provide demo paths through the COPILOT and
+// CC-AI lifecycles, which were dark before.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── DEMO · APX-COPILOT-2026 · M365 Copilot Productivity Rollout ──────────────
+// Pattern PAT-PRG-COPILOT-001. Programme is mid-pilot at P4 Build with
+// oversharing baseline still open, vendor time-saved claim contested, and
+// adoption skewing to a heavy-user long tail.
+
+export const APX_COPILOT_2026_INSTANCE: ProgramInstance = {
+  id: 'APX-COPILOT-2026',
+  displayId: 'DEMO-APX-COPILOT-2026',
+  tenantSlug: 'apex-retail',
+  name: 'M365 Copilot Productivity Rollout',
+
+  patternId: 'PAT-PRG-COPILOT-001',
+  patternVersion: '1.0.0',
+
+  currentPhase: 4,
+  phases: buildPhaseStates(4, {
+    0: {
+      gateStatus: 'approved',
+      gateEvidence: ['Sponsor charter · cohort-by-cohort scope locked · Nov 2025'],
+      enteredAt: '2025-11-04',
+      exitedAt: '2025-12-02',
+    },
+    1: {
+      gateStatus: 'approved',
+      gateEvidence: [
+        'Oversharing audit baseline · Jan 2026',
+        'Time-spent baseline per cohort · Jan 2026',
+      ],
+      enteredAt: '2025-12-03',
+      exitedAt: '2026-01-30',
+    },
+    2: {
+      gateStatus: 'approved',
+      gateEvidence: ['Sensitivity / DLP posture assessment · Feb 2026'],
+      enteredAt: '2026-02-02',
+      exitedAt: '2026-02-27',
+    },
+    3: {
+      gateStatus: 'approved',
+      gateEvidence: ['Pilot plan (180 users) and locked success criteria · Mar 2026'],
+      enteredAt: '2026-03-02',
+      exitedAt: '2026-03-27',
+    },
+    4: { gateStatus: 'open', enteredAt: '2026-03-30' },
+  }),
+
+  deliverables: [
+    {
+      id: 'cplt-d-001',
+      label: 'Sponsor Charter',
+      phaseId: 0,
+      status: 'complete',
+      completedAt: '2025-11-25',
+    },
+    {
+      id: 'cplt-d-002',
+      label: 'Oversharing Audit',
+      phaseId: 1,
+      status: 'complete',
+      completedAt: '2026-01-12',
+    },
+    {
+      id: 'cplt-d-003',
+      label: 'Time-Spent Baseline',
+      phaseId: 1,
+      status: 'complete',
+      completedAt: '2026-01-22',
+    },
+    {
+      id: 'cplt-d-004',
+      label: 'Sensitivity & DLP Posture Assessment',
+      phaseId: 2,
+      status: 'complete',
+      completedAt: '2026-02-19',
+    },
+    {
+      id: 'cplt-d-005',
+      label: 'Use-Case Backlog (Scored)',
+      phaseId: 2,
+      status: 'complete',
+      completedAt: '2026-02-25',
+    },
+    {
+      id: 'cplt-d-006',
+      label: 'Pilot Plan & Cohort Definition',
+      phaseId: 3,
+      status: 'complete',
+      completedAt: '2026-03-22',
+    },
+    {
+      id: 'cplt-d-007',
+      label: 'Pilot Results Report',
+      phaseId: 4,
+      status: 'in-progress',
+      owner: 'Change Lead',
+      dueDate: '2026-05-12',
+    },
+    {
+      id: 'cplt-d-008',
+      label: 'Sensitivity Incident Review',
+      phaseId: 4,
+      status: 'in-progress',
+      owner: 'Information Protection',
+      dueDate: '2026-05-08',
+    },
+  ],
+
+  evidence: [
+    // CON-PRG-CPLT-001: permissions posture vs copilot surface (oversharing keywords)
+    {
+      id: 'cplt-ev-001',
+      citation:
+        'Oversharing audit · widespread anonymous link sharing, broken inheritance, broad permissions on confidential libraries detected across SharePoint and OneDrive · Jan 12 2026',
+      phaseId: 1,
+      uploadedAt: '2026-01-12',
+      uploadedBy: 'Information Protection',
+      kind: 'assessment',
+    },
+    // CON-PRG-CPLT-002: vendor time-saved claim vs cohort reality
+    {
+      id: 'cplt-ev-002',
+      citation:
+        'Vendor productivity claim 40% time saved per task not corroborated by pilot measurement; minutes per task uplift 9% in Sales cohort, 12% in Legal cohort · Apr 18 2026',
+      phaseId: 4,
+      uploadedAt: '2026-04-18',
+      uploadedBy: 'Change Lead',
+      kind: 'assessment',
+    },
+    // CON-PRG-CPLT-003: sensitivity labelling coverage vs output inheritance
+    {
+      id: 'cplt-ev-003',
+      citation:
+        'Sensitivity label inheritance gap — copilot-generated artefact observed without inherited DLP MIP label exposing confidential material in Teams · Apr 9 2026',
+      phaseId: 4,
+      uploadedAt: '2026-04-09',
+      uploadedBy: 'Information Protection',
+      kind: 'demo',
+    },
+    // CON-PRG-CPLT-004: adoption breadth vs heavy-user skew
+    {
+      id: 'cplt-ev-004',
+      citation:
+        'Adoption telemetry distribution shows weekly active use long tail — 78% of activity from 18% of users; per-cohort aggregate adoption healthy but distribution heavy-user skewed · Apr 21 2026',
+      phaseId: 4,
+      uploadedAt: '2026-04-21',
+      uploadedBy: 'Adoption Analytics',
+      kind: 'assessment',
+    },
+    // FM-PRG-CPLT-001: oversharing amplified by copilot
+    {
+      id: 'cplt-ev-005',
+      citation:
+        'Latent permission sprawl exposed by copilot semantic search producing governance incidents within weeks of activation; sponsor and CISO trust in programme eroding · Apr 14 2026',
+      phaseId: 4,
+      uploadedAt: '2026-04-14',
+      uploadedBy: 'CISO Office',
+      kind: 'document',
+    },
+    // FM-PRG-CPLT-004: licence push without use-case backlog
+    {
+      id: 'cplt-ev-006',
+      citation:
+        'Licences deployed but use-case backlog unscored in some cohorts; users encounter tool with no curated examples adoption stalls programme becomes licence spend story · Apr 20 2026',
+      phaseId: 4,
+      uploadedAt: '2026-04-20',
+      uploadedBy: 'Change Lead',
+      kind: 'document',
+    },
+  ],
+
+  linkedSourceEvents: [],
+  linkedPrograms: [],
+
+  sponsor: { id: 'sponsor-005', name: 'Helena Ortiz', title: 'Chief People Officer' },
+
+  flags: [
+    {
+      id: 'cplt-flag-001',
+      kind: 'risk',
+      description:
+        'Oversharing baseline remediation lagging pilot — sensitivity / DLP incident review pending before activation.',
+      raisedBy: 'Sentinel',
+      raisedAt: '2026-04-14',
+      status: 'open',
+    },
+  ],
+
+  createdAt: '2025-11-04',
+  lastModifiedAt: '2026-04-21',
+  estimatedValueUsd: 1650000,
+};
+
+// ── DEMO · APX-CCAI-2026 · Contact Center AI Programme ───────────────────────
+// Pattern PAT-PRG-CC-AI-001. Programme is at P5 Activate with containment
+// climbing but CSAT eroding, vendor benchmark claim contested, hallucination
+// incidents in pilot transcripts, and handoff context loss observed.
+
+export const APX_CCAI_2026_INSTANCE: ProgramInstance = {
+  id: 'APX-CCAI-2026',
+  displayId: 'DEMO-APX-CCAI-2026',
+  tenantSlug: 'apex-retail',
+  name: 'Apex Retail Contact Center AI',
+
+  patternId: 'PAT-PRG-CC-AI-001',
+  patternVersion: '1.0.0',
+
+  currentPhase: 5,
+  phases: buildPhaseStates(5, {
+    0: {
+      gateStatus: 'approved',
+      gateEvidence: ['Sponsor charter — voice + chat scope · Aug 2025'],
+      enteredAt: '2025-08-01',
+      exitedAt: '2025-08-29',
+    },
+    1: {
+      gateStatus: 'approved',
+      gateEvidence: ['Intent-volume baseline · Sep 2025', 'Containment baseline measured'],
+      enteredAt: '2025-09-01',
+      exitedAt: '2025-10-30',
+    },
+    2: {
+      gateStatus: 'approved',
+      gateEvidence: ['Architecture decision — deflection-first · Nov 2025'],
+      enteredAt: '2025-11-03',
+      exitedAt: '2025-12-12',
+    },
+    3: {
+      gateStatus: 'approved',
+      gateEvidence: ['Handoff design rehearsal · Jan 2026', 'KB plan locked'],
+      enteredAt: '2025-12-15',
+      exitedAt: '2026-02-13',
+    },
+    4: {
+      gateStatus: 'approved',
+      gateEvidence: ['Pilot results · Mar 2026', 'Hallucination review adjudicated'],
+      enteredAt: '2026-02-16',
+      exitedAt: '2026-03-30',
+    },
+    5: { gateStatus: 'open', enteredAt: '2026-03-31' },
+  }),
+
+  deliverables: [
+    {
+      id: 'ccai-d-001',
+      label: 'Architecture Decision Record',
+      phaseId: 2,
+      status: 'complete',
+      completedAt: '2025-12-05',
+    },
+    {
+      id: 'ccai-d-002',
+      label: 'Handoff Design & Rehearsal',
+      phaseId: 3,
+      status: 'complete',
+      completedAt: '2026-01-22',
+    },
+    {
+      id: 'ccai-d-003',
+      label: 'Pilot Results Report',
+      phaseId: 4,
+      status: 'complete',
+      completedAt: '2026-03-25',
+    },
+    {
+      id: 'ccai-d-004',
+      label: 'Knowledge-Base Maintenance Plan',
+      phaseId: 5,
+      status: 'in-progress',
+      owner: 'KB Owner',
+      dueDate: '2026-05-20',
+    },
+    {
+      id: 'ccai-d-005',
+      label: 'Rollout Plan (cohort sequence)',
+      phaseId: 5,
+      status: 'in-progress',
+      owner: 'Programme Lead',
+      dueDate: '2026-05-15',
+    },
+    {
+      id: 'ccai-d-006',
+      label: 'Operate Dashboard (containment + CSAT)',
+      phaseId: 5,
+      status: 'not-started',
+    },
+  ],
+
+  evidence: [
+    // CON-PRG-CCAI-001: containment gain vs CSAT decline
+    {
+      id: 'ccai-ev-001',
+      citation:
+        'Pilot containment rose to 41% but CSAT dropped 4 points and NPS dropped 5 points for the affected intent set — deflection satisfaction trade-off · Mar 22 2026',
+      phaseId: 4,
+      uploadedAt: '2026-03-22',
+      uploadedBy: 'CX Analytics',
+      kind: 'assessment',
+    },
+    // CON-PRG-CCAI-002: vendor containment claim vs pilot reality
+    {
+      id: 'ccai-ev-002',
+      citation:
+        'Vendor benchmark containment claim 70% deflection on shipping intents but measured pilot containment 28% on same intent set — benchmark mismatch flagged · Mar 24 2026',
+      phaseId: 4,
+      uploadedAt: '2026-03-24',
+      uploadedBy: 'Programme Analytics',
+      kind: 'assessment',
+    },
+    // CON-PRG-CCAI-003: hallucination incidents vs confidence telemetry
+    {
+      id: 'ccai-ev-003',
+      citation:
+        'Pilot transcript review identified hallucination incidents — bot reported high confidence on responses subsequently identified as fabricated incorrect product policy advice · Mar 26 2026',
+      phaseId: 4,
+      uploadedAt: '2026-03-26',
+      uploadedBy: 'Quality Lead',
+      kind: 'demo',
+    },
+    // CON-PRG-CCAI-004: handoff design vs customer experience
+    {
+      id: 'ccai-ev-004',
+      citation:
+        'Handoff transcripts show context loss generic queue routing and conversation restart despite design specification preserving context — handoff transfer implementation gap · Apr 4 2026',
+      phaseId: 5,
+      uploadedAt: '2026-04-04',
+      uploadedBy: 'Quality Lead',
+      kind: 'demo',
+    },
+    // FM-PRG-CCAI-001: containment without quality
+    {
+      id: 'ccai-ev-005',
+      citation:
+        'Containment rate climbs while CSAT erodes — customers deflected from agents but contact again escalate externally; programme-level contact volume drops while customer-experience metrics decline · Apr 12 2026',
+      phaseId: 5,
+      uploadedAt: '2026-04-12',
+      uploadedBy: 'CX Analytics',
+      kind: 'document',
+    },
+    // FM-PRG-CCAI-003: knowledge-base decay (containment-by-cohort signal)
+    {
+      id: 'ccai-ev-006',
+      citation:
+        'Knowledge base maintenance plan owner not yet named — bot performs at pilot level for few months then degrades as products policies pricing change but underlying knowledge base not maintained; containment falls hallucinations rise · Apr 18 2026',
+      phaseId: 5,
+      uploadedAt: '2026-04-18',
+      uploadedBy: 'Programme Lead',
+      kind: 'document',
+    },
+  ],
+
+  linkedSourceEvents: [],
+  linkedPrograms: [],
+
+  sponsor: { id: 'sponsor-006', name: 'Damian Ellis', title: 'VP Customer Service' },
+
+  flags: [
+    {
+      id: 'ccai-flag-001',
+      kind: 'risk',
+      description:
+        'Containment-CSAT trade-off + hallucination incidents — broad activation gated on KB ownership and dashboard configuration.',
+      raisedBy: 'Sentinel',
+      raisedAt: '2026-04-04',
+      status: 'open',
+    },
+  ],
+
+  createdAt: '2025-08-01',
+  lastModifiedAt: '2026-04-18',
+  estimatedValueUsd: 2750000,
+};
+
 // ── Aggregate export ──────────────────────────────────────────────────────────
 
 /** All active Apex Retail program instances. Flagship (CDP) first. */
@@ -341,4 +724,6 @@ export const APEX_RETAIL_PROGRAM_INSTANCES: ProgramInstance[] = [
   APX_LPM_2026_INSTANCE,
   APX_SAP_2026_INSTANCE,
   APX_DFV2_INSTANCE,
+  APX_COPILOT_2026_INSTANCE,
+  APX_CCAI_2026_INSTANCE,
 ];
