@@ -658,6 +658,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/export',
     description: 'Download a Markdown reasoning health report for presentations and briefings',
   },
+  {
+    title: 'Source timeline',
+    href: '/admin/reasoning/source-timeline',
+    description: 'Visual timeline showing all source events at their current procurement lifecycle stage',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
