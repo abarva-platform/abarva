@@ -31,13 +31,22 @@ import { NexusReactivePanel } from '@/components/programs/NexusReactivePanel';
 import type { Artifact } from '@/lib/agent/artifacts';
 
 export interface AgentCanvasProps {
-  /** Program id used as the surface key for chat ('/programs/<id>'). */
-  programId: string;
-  /** Agent header — usually Nexus on this surface. */
+  /**
+   * Surface key passed to the chat for tool resolution + artifact gating.
+   * URL-shaped: '/programs/<id>' for detail, '/programs' for list,
+   * '/home' for home, '/intelligence' for the knowledge surface.
+   */
+  surface: string;
+  /**
+   * Program id passed through to the embedded chat hook. Detail-mode
+   * surfaces set this. Portfolio / list / home modes leave it undefined.
+   */
+  programId?: string;
+  /** Agent header — Nexus on programs, Atlas on home/portfolio, Sentinel on intelligence. */
   agent: { initials: string; name: string; role: string };
   /** Synthesis quote shown as the chat header. */
   quote: string;
-  /** Live artifact stream from Nexus's emissions. */
+  /** Live artifact stream from the agent's emissions. */
   artifacts: Artifact[];
   /** Push artifacts back up to the parent page. */
   onArtifact: (artifact: Artifact) => void;
@@ -51,6 +60,7 @@ export interface AgentCanvasProps {
 }
 
 export function AgentCanvas({
+  surface,
   programId,
   agent,
   quote,
@@ -88,7 +98,7 @@ export function AgentCanvas({
           }}
           agent={agent}
           quote={quote}
-          surface={`/programs/${programId}`}
+          surface={surface}
           programId={programId}
           onArtifact={onArtifact}
         />
