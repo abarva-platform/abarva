@@ -18,11 +18,11 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('INTELLIGENCE_TABS', () => {
-  it('declares exactly eight canonical tabs (INT1 added pattern_plan, INT3 added gap_queue, INT4 added contradiction_monitor)', () => {
-    expect(INTELLIGENCE_TABS).toHaveLength(8);
+  it('declares exactly nine canonical tabs (INT1 added pattern_plan, INT3 added gap_queue, INT4 added contradiction_monitor, INT5 added programme_risk)', () => {
+    expect(INTELLIGENCE_TABS).toHaveLength(9);
   });
 
-  it('contains summary, evidence, programs, actions, signals, pattern_plan, gap_queue, contradiction_monitor in that order', () => {
+  it('contains summary, evidence, programs, actions, signals, pattern_plan, gap_queue, contradiction_monitor, programme_risk in that order', () => {
     expect(INTELLIGENCE_TABS.map((t) => t.key)).toEqual([
       'summary',
       'evidence',
@@ -32,6 +32,7 @@ describe('INTELLIGENCE_TABS', () => {
       'pattern_plan',
       'gap_queue',
       'contradiction_monitor',
+      'programme_risk',
     ]);
   });
 
@@ -80,6 +81,7 @@ describe('resolveIntelligenceTab', () => {
     'pattern_plan',
     'gap_queue',
     'contradiction_monitor',
+    'programme_risk',
   ];
   for (const key of VALID) {
     it(`accepts valid key "${key}"`, () => {
@@ -108,15 +110,16 @@ describe('buildIntelligenceLensTabsView', () => {
       'pattern_plan',
       'gap_queue',
       'contradiction_monitor',
+      'programme_risk',
     ];
     for (const tab of tabs) {
       expect(buildIntelligenceLensTabsView(tab).activeTab).toBe(tab);
     }
   });
 
-  it('always includes all eight tabs', () => {
+  it('always includes all nine tabs', () => {
     const view = buildIntelligenceLensTabsView('evidence');
-    expect(view.tabs).toHaveLength(8);
+    expect(view.tabs).toHaveLength(9);
     expect(view.tabs.map((t) => t.key)).toContain('summary');
     expect(view.tabs.map((t) => t.key)).toContain('evidence');
     expect(view.tabs.map((t) => t.key)).toContain('programs');
@@ -125,6 +128,7 @@ describe('buildIntelligenceLensTabsView', () => {
     expect(view.tabs.map((t) => t.key)).toContain('pattern_plan');
     expect(view.tabs.map((t) => t.key)).toContain('gap_queue');
     expect(view.tabs.map((t) => t.key)).toContain('contradiction_monitor');
+    expect(view.tabs.map((t) => t.key)).toContain('programme_risk');
   });
 
   it('is pure — same input yields identical output', () => {
@@ -153,9 +157,9 @@ describe('INTEL4 component file probe', () => {
     expect(src).toMatch(/export function IntelligenceLensTabs/);
   });
 
-  it('references all eight tab keys in the component source', () => {
+  it('references all nine tab keys in the component source', () => {
     const src = fs.readFileSync(componentPath, 'utf8');
-    for (const key of ['summary', 'evidence', 'programs', 'actions', 'signals', 'pattern_plan', 'gap_queue', 'contradiction_monitor']) {
+    for (const key of ['summary', 'evidence', 'programs', 'actions', 'signals', 'pattern_plan', 'gap_queue', 'contradiction_monitor', 'programme_risk']) {
       expect(src).toContain(key);
     }
   });
