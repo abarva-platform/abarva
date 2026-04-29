@@ -52,23 +52,23 @@ export interface SourcingPatternExtensions {
   // Category metadata
   category?: SourcingCategory;
   vendorClass?: VendorClass;  // 'direct-tech' | 'service' | 'hardware' | 'professional-services'
-  
+
   // Lifecycle (when pattern defines a lifecycle)
   lifecycleStages?: LifecycleStage[];
   perStageGateCriteria?: PerStageGates;
   perStageExpectedArtifacts?: PerStageArtifacts;
-  
+
   // Vendor knowledge
   vendorLandscape?: VendorLandscapeEntry[];
   pricingBenchmarks?: PricingBenchmark[];
-  
+
   // Contract knowledge
   standardClauses?: ContractClauseTemplate[];
   negotiationLevers?: NegotiationLever[];
-  
+
   // Risk knowledge
   riskFactors?: RiskFactor[];
-  
+
   // Industry overlays (which industries this pattern modifies)
   industryVariants?: IndustryVariant[];
 }
