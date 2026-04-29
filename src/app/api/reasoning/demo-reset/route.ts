@@ -4,7 +4,7 @@
 
 import { clearWaivers } from '@/app/api/reasoning/gate-waiver/route';
 import { clearApprovals } from '@/app/api/reasoning/gate-approval/route';
-import { clearWaiverAuditBuffer } from '@/app/api/reasoning/audit/route';
+import { clearWaiverAuditBuffer, clearApprovalAuditBuffer } from '@/app/api/reasoning/audit/route';
 import { clearResolved } from '@/lib/reasoning/contradiction-resolution-state';
 import { clearSynthesisTelemetry } from '@/lib/reasoning/synthesis-telemetry';
 
@@ -12,6 +12,7 @@ export async function POST(): Promise<Response> {
   clearWaivers();
   clearApprovals();
   clearWaiverAuditBuffer();
+  clearApprovalAuditBuffer();
   clearResolved();
   clearSynthesisTelemetry();
 

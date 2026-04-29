@@ -3,6 +3,8 @@
 // Demo-only endpoint — records a gate-criterion approval or rejection in an in-memory store.
 // No persistence: resets on server restart (matches gate-waiver and missions/state patterns).
 
+import { recordApproval } from '@/app/api/reasoning/audit/route';
+
 interface GateApprovalBody {
   instanceId: string;
   criterionId: string;
@@ -87,6 +89,14 @@ export async function POST(request: Request): Promise<Response> {
   const key = `${instanceId}::${criterionId}`;
   const record: ApprovalRecord = { action, justification, timestamp: new Date().toISOString() };
   approvalStore.set(key, record);
+
+  recordApproval({
+    instanceId,
+    criterionId,
+    action,
+    justification,
+    actedAt: record.timestamp,
+  });
 
   return jsonResponse({ ok: true, action, timestamp: record.timestamp }, 200);
 }

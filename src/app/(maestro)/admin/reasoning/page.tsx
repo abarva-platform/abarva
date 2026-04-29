@@ -603,6 +603,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/corpus-stats',
     description: 'Body-length distribution, family breakdown, top keywords, and pattern extremes across the full reasoning corpus',
   },
+  {
+    title: 'Active contradictions',
+    href: '/admin/reasoning/contradictions',
+    description: 'Cross-instance view of all active unresolved contradictions',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {

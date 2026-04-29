@@ -80,6 +80,8 @@ import { EvidenceCoverageHeatmap } from '@/components/reasoning/EvidenceCoverage
 import { EvidenceNetworkGraph } from '@/components/reasoning/EvidenceNetworkGraph';
 import { ReasoningErrorBoundary } from '@/components/reasoning/ReasoningErrorBoundary';
 import { EvidenceTagChips } from '@/components/reasoning/EvidenceTagChips';
+import { EvidenceSuggestionsPanel } from '@/components/reasoning/EvidenceSuggestionsPanel';
+import { buildEvidenceSuggestions } from '@/lib/reasoning/evidence-suggestions';
 import { GateHistorySidebar } from '@/components/reasoning/GateHistorySidebar';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -4512,6 +4514,18 @@ export function ProgramDetailPage({
                       pattern={heatmapInfo.pattern}
                     />
                   </ReasoningErrorBoundary>
+                )}
+                {/* REASON-37 — Evidence suggestions panel: context-sensitive
+                    hints for what documents to upload to satisfy each unmet
+                    gate criterion. Only shown when heatmapInfo is available
+                    (i.e., the instance has a recognised lifecycle pattern). */}
+                {heatmapInfo && (
+                  <EvidenceSuggestionsPanel
+                    suggestions={buildEvidenceSuggestions(
+                      heatmapInfo.instance,
+                      heatmapInfo.pattern,
+                    )}
+                  />
                 )}
               </>
             ) : (
