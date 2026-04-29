@@ -1098,6 +1098,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/alerts-dashboard',
     description: 'Unified triage dashboard — critical health, stale waivers, chronic contradictions, and long dwell alerts',
   },
+  {
+    title: 'Contradiction resolver',
+    href: '/admin/reasoning/contradiction-resolver',
+    description: 'Guided contradiction resolution — all available paths per template with recommended actions and API examples',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
