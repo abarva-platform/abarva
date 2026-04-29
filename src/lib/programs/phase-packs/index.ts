@@ -12,10 +12,10 @@
 // pack-less phase keeps its prior generic behavior — no regression.
 
 import type { PhaseNumber, PhasePack } from './types';
-import { P2_CHARTER } from './P2_charter';
+import { P2_SYNTHESIS } from './P2_synthesis';
 
 const PACKS: Partial<Record<PhaseNumber, PhasePack>> = {
-  2: P2_CHARTER,
+  2: P2_SYNTHESIS,
 };
 
 export function getPhasePack(phase: number | null | undefined): PhasePack | null {

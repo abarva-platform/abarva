@@ -1,20 +1,20 @@
 // Phase Intelligence Packs · Surface 2 PR-A tests
 //
 // Locks in the contract that Codex-authored packs (PR-D) must satisfy
-// AND verifies the P2 Charter reference pack is well-formed. The
+// AND verifies the P2 Synthesis reference pack is well-formed. The
 // "schema sanity" suite runs across every authored pack so a bad pack
 // can never silently degrade Nexus's posture.
 
 import { getPhasePack, listAuthoredPhases, formatPhasePackForPrompt } from '../index';
-import { P2_CHARTER } from '../P2_charter';
+import { P2_SYNTHESIS } from '../P2_synthesis';
 import type { PhasePack } from '../types';
 
 describe('getPhasePack', () => {
-  it('returns the P2 Charter pack', () => {
+  it('returns the P2 Synthesis pack', () => {
     const pack = getPhasePack(2);
-    expect(pack).toBe(P2_CHARTER);
+    expect(pack).toBe(P2_SYNTHESIS);
     expect(pack?.phase).toBe(2);
-    expect(pack?.label).toContain('P2');
+    expect(pack?.label).toBe('P2 Synthesis');
   });
 
   it('returns null for phases without a pack yet', () => {
@@ -43,10 +43,10 @@ describe('listAuthoredPhases', () => {
 });
 
 describe('formatPhasePackForPrompt', () => {
-  it('renders the P2 Charter pack into a coherent prompt block', () => {
-    const out = formatPhasePackForPrompt(P2_CHARTER);
+  it('renders the P2 Synthesis pack into a coherent prompt block', () => {
+    const out = formatPhasePackForPrompt(P2_SYNTHESIS);
     expect(out).toContain('ACTIVE PHASE PLAYBOOK');
-    expect(out).toContain('P2 Charter');
+    expect(out).toContain('P2 Synthesis');
     expect(out).toContain('Phase outcome');
     expect(out).toContain('Definition of done');
     expect(out).toContain('Right questions');
@@ -56,13 +56,13 @@ describe('formatPhasePackForPrompt', () => {
   });
 
   it('marks hard-severity DoD items with [HARD] tag for Nexus disambiguation', () => {
-    const out = formatPhasePackForPrompt(P2_CHARTER);
+    const out = formatPhasePackForPrompt(P2_SYNTHESIS);
     expect(out).toContain('[HARD]');
     expect(out).toContain('[SOFT]');
   });
 
   it('renders questions in order open → converge → close', () => {
-    const out = formatPhasePackForPrompt(P2_CHARTER);
+    const out = formatPhasePackForPrompt(P2_SYNTHESIS);
     const openIdx = out.indexOf('OPEN');
     const convergeIdx = out.indexOf('CONVERGE');
     const closeIdx = out.indexOf('CLOSE');
@@ -72,7 +72,7 @@ describe('formatPhasePackForPrompt', () => {
   });
 
   it('renders coaching arc entry/mid/exit posture in order', () => {
-    const out = formatPhasePackForPrompt(P2_CHARTER);
+    const out = formatPhasePackForPrompt(P2_SYNTHESIS);
     const entryIdx = out.indexOf('ENTRY');
     const midIdx = out.indexOf('MID PHASE');
     const exitIdx = out.indexOf('EXIT');
