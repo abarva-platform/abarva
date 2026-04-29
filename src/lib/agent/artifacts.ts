@@ -191,31 +191,32 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
       return { type, programId, programName, currentPhase };
     }
     case 'classification': {
-      // Permissive: agents reliably emit `archetypeLabel` (the
-      // human-readable form) but sometimes omit `archetype` (the
-      // canonical key). If only one is present, derive the other so
-      // the artifact still dispatches instead of failing parse.
-      const archetypeRaw = obj.archetype;
-      const archetypeLabelRaw = obj.archetypeLabel;
-      const archetype =
-        typeof archetypeRaw === 'string'
-          ? archetypeRaw
-          : typeof archetypeLabelRaw === 'string'
-            ? archetypeLabelRaw.toUpperCase().replace(/\s+/g, '_')
-            : null;
-      const archetypeLabel =
-        typeof archetypeLabelRaw === 'string'
-          ? archetypeLabelRaw
-          : typeof archetypeRaw === 'string'
-            ? archetypeRaw
-            : null;
-      if (archetype === null || archetypeLabel === null) return null;
+      // Permissive: agents emit different field names depending on
+      // how they read the instruction layer. Accept any of the common
+      // shapes (`archetype` / `archetypeLabel` / `name` / `label` /
+      // `value`) and normalize to the canonical {archetype, archetypeLabel}.
+      const pickStr = (...keys: string[]): string | null => {
+        for (const k of keys) {
+          const v = obj[k];
+          if (typeof v === 'string' && v.trim().length > 0) return v;
+        }
+        return null;
+      };
+      // Strict-source archetype: only accept it as-is when the agent
+      // gave it under the canonical `archetype` key. Otherwise we
+      // synthesize from the label (uppercase + underscore-collapse).
+      const strictArchetype = pickStr('archetype');
+      const archetypeLabel = pickStr('archetypeLabel', 'label', 'name', 'value', 'archetype');
+      if (!archetypeLabel && !strictArchetype) return null;
+      const labelFinal = archetypeLabel ?? strictArchetype!;
+      const archetype = strictArchetype
+        ?? labelFinal.toUpperCase().replace(/\s+/g, '_');
       const confidence = obj.confidence;
       const validConfidence =
         confidence === 'high' || confidence === 'medium' || confidence === 'low'
           ? confidence
           : undefined;
-      return { type, archetype, archetypeLabel, confidence: validConfidence };
+      return { type, archetype, archetypeLabel: labelFinal, confidence: validConfidence };
     }
   }
 }
@@ -318,30 +319,52 @@ dispatches the artifact to the right pane. Reference the artifact in
 your prose by name, not by raw ID. The user sees the rich card on the
 right; the chat stays conversational.
 
+EMIT ARTIFACTS PROACTIVELY — DON'T WAIT FOR CONFIRMATION:
+
+As soon as the user states something concrete (a program name, a
+problem statement, a target outcome, a sponsor, a lead, a timeline),
+emit a brief-field artifact immediately so the brief panel populates
+in real time. The user can correct you if you misheard — that's fine,
+just emit a new artifact for the same field. Don't sit on extracted
+information waiting for "is this right?" — populate the brief first,
+let the user see what you heard, ask for corrections if any.
+
 WRONG: "I matched this to [PAT-PRG-AMS-CONSOLIDATION-001]."
 RIGHT: "I matched this to AMS Consolidation — see the pattern card on your right."
-        [[artifact:pattern-match]]{"patternId":"PAT-PRG-AMS-CONSOLIDATION-001","name":"AMS Consolidation","summary":"…","successRatePct":78,"deploymentCount":12,"typicalDurationMonths":9}[[/artifact]]
+        [[artifact:pattern-match]]{"patternId":"PAT-PRG-AMS-CONSOLIDATION-001","name":"AMS Consolidation","summary":"Rationalize application + managed-services footprint with AI-driven signals.","successRatePct":78,"deploymentCount":12,"typicalDurationMonths":9}[[/artifact]]
 
 WRONG: "Let me note that as the program name in the brief."
 RIGHT: "Got it — the program name is in the brief on your right."
         [[artifact:brief-field]]{"field":"programName","value":"AMS Consolidation 2026"}[[/artifact]]
 
-Available artifact types:
+Available artifact types and their EXACT JSON shapes:
 
-- brief-field — single-field update on the program brief.
-  field ∈ {programName, problemStatement, targetOutcome, timeline,
-          classification, sponsor, lead}
-  value: the string to display.
+1. brief-field — single-field update on the program brief.
+   Shape: {"field": <field-name>, "value": <string>}
+   field ∈ {programName, problemStatement, targetOutcome, timeline,
+           classification, sponsor, lead}
+   Example:
+   [[artifact:brief-field]]{"field":"sponsor","value":"Sarah Chen"}[[/artifact]]
 
-- pattern-match — full pattern card. Use when you've classified the use
-  case to a named pattern; the right pane renders a clickable card.
+2. classification — the high-level archetype (e.g. AMS_CONSOLIDATION).
+   Often emit alongside a pattern-match.
+   Shape: {"archetype": <UPPER_SNAKE_KEY>, "archetypeLabel": <Human Readable>, "confidence": "high"|"medium"|"low"}
+   Example:
+   [[artifact:classification]]{"archetype":"AMS_CONSOLIDATION","archetypeLabel":"AMS Consolidation","confidence":"high"}[[/artifact]]
 
-- cross-program-dependency — when you surface a linked program as a
-  dependency, emit one of these per dependency. The brief will render
-  it as a chip linked to that program.
+3. pattern-match — full pattern card. Use when you've classified the
+   use case to a named pattern; the right pane renders a clickable card.
+   Shape: {"patternId": <PAT-…>, "name": <string>, "summary": <string>,
+           "successRatePct"?: <number>, "deploymentCount"?: <number>,
+           "typicalDurationMonths"?: <number>}
+   Example:
+   [[artifact:pattern-match]]{"patternId":"PAT-PRG-CDP-001","name":"CDP Activation","summary":"Customer data platform programme lifecycle.","successRatePct":72,"deploymentCount":18}[[/artifact]]
 
-- classification — the high-level archetype (e.g. AMS_CONSOLIDATION).
-  Often emit alongside a pattern-match.
+4. cross-program-dependency — emit one per linked program when you
+   surface a dependency. The brief renders it as a chip.
+   Shape: {"programId": <APX-…>, "programName": <string>, "currentPhase": <string>}
+   Example:
+   [[artifact:cross-program-dependency]]{"programId":"APX-CDP-2026","programName":"Apex Retail CDP Activation","currentPhase":"P3 Design"}[[/artifact]]
 
 When an artifact updates a field already in the brief, just emit a new
 brief-field artifact for the same field — the panel replaces the old
