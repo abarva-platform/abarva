@@ -839,6 +839,27 @@ export default async function ReasoningTelemetryPage() {
               per-pattern instance, coverage, telemetry
             </span>
           </a>
+          <a
+            href="/admin/reasoning/fixture-lint"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: SPACING.sm,
+              background: COLORS.white,
+              border: `1px solid ${COLORS.ink}22`,
+              borderRadius: RADIUS.lg,
+              padding: `${SPACING.sm} ${SPACING.md}`,
+              textDecoration: 'none',
+              fontFamily: TYPOGRAPHY.sans,
+              fontSize: 13,
+              color: COLORS.ink,
+            }}
+          >
+            <span style={{ fontWeight: 600 }}>Open fixture quality lint</span>
+            <span style={{ color: `${COLORS.ink}88` }}>
+              instance ↔ pattern drift checks
+            </span>
+          </a>
         </div>
         {summary.totalEvents === 0 ? (
           <EmptyState />
