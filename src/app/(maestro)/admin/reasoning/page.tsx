@@ -1148,6 +1148,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Stage Gate Scorecard',
     description: 'Per-stage Pass/Partial/Fail ratings across all instances — identify worst and best performing stages.',
   },
+  {
+    title: 'Evidence Staleness',
+    href: '/admin/reasoning/evidence-staleness',
+    description: 'Fresh/Aging/Stale categorization by instance — staleness scores, most stale instances, freshness trend.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
