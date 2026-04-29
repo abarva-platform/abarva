@@ -713,6 +713,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/failure-modes',
     description: 'Catalog of all failure modes across lifecycle patterns with affected stages and mitigations',
   },
+  {
+    title: 'Contradiction browser',
+    href: '/admin/reasoning/contradiction-browser',
+    description: 'Full dictionary of contradiction templates with live resolution status and severity breakdown',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
