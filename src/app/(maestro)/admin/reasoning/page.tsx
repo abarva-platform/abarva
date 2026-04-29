@@ -1298,6 +1298,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Gate Risk Heatmap',
     description: 'Stage × gate-type failure rate heatmap — hotspot detection and instance overlay.',
   },
+  {
+    href: '/admin/reasoning/instance-maturity-index',
+    title: 'Instance Maturity Index',
+    description: 'Composite IMI score: governance, gate compliance, evidence maturity, contradiction-free dimensions.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
