@@ -313,6 +313,26 @@ function NavInner({ activePage, compact = false }: NavProps) {
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: `${SPACING.xs}px` }}>
           {signedIn && (isAdmin || isInvestor) && navLink('Investor', '/investor', investorActive)}
           {signedIn && isAdmin && adminNavItem()}
+          {/* ⌘K search hint */}
+          {signedIn && (
+            <span
+              aria-label="Press Command K to open global search"
+              style={{
+                fontFamily: MONO,
+                fontSize: 9,
+                letterSpacing: '0.12em',
+                color: NAV_MUTE,
+                background: '#EFECE4',
+                padding: '3px 7px',
+                borderRadius: 4,
+                flexShrink: 0,
+                cursor: 'default',
+                userSelect: 'none',
+              }}
+            >
+              ⌘K
+            </span>
+          )}
           <div style={{ width: '12px' }} />
 
           {signedIn ? (
