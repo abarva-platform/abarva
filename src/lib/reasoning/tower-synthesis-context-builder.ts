@@ -12,6 +12,7 @@
 import type { ProgramInstance } from '@/lib/programs/program-instance';
 import type { SourceEventInstance } from '@/lib/source/source-event-instance';
 import { computeCascadeImpacts } from '@/lib/reasoning/cross-instance-reasoner';
+import { recordCascadeEvent } from '@/lib/reasoning/cascade-telemetry';
 import type {
   CascadeImpact,
   CitationPointer,
@@ -110,6 +111,32 @@ export function buildTowerSynthesisContext(
     if (seen.has(key)) continue;
     seen.add(key);
     cascadeContext.push(imp);
+  }
+
+  // Best-effort cascade telemetry — record one event per deduped cascade
+  // impact so the admin dashboard can answer "which cross-instance edges
+  // are live in Atlas synthesis right now?" Never block the builder on it.
+  try {
+    for (const impact of cascadeContext) {
+      const directional: 'low' | 'medium' | 'high' =
+        impact.severity === 'blocking'
+          ? 'high'
+          : impact.severity === 'accelerating'
+            ? 'medium'
+            : 'low';
+      recordCascadeEvent({
+        sourceInstanceId: impact.sourceInstanceId,
+        targetInstanceId: impact.targetInstanceId,
+        linkType: impact.linkType,
+        severity: directional,
+        ...(impact.impactSeverity !== undefined
+          ? { impactSeverity: impact.impactSeverity }
+          : {}),
+        buildContext: 'tower-synthesis',
+      });
+    }
+  } catch {
+    // swallow — telemetry must never break synthesis
   }
 
   // ── Citations — top patterns + top blocker hints ──────────────────────────

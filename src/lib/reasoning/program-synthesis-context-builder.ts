@@ -12,6 +12,7 @@
 import type { ProgramInstance, ProgramDeliverable } from '@/lib/programs/program-instance';
 import { buildProgramEvidenceMapWithIngestions } from '@/lib/programs/program-instance';
 import { computeCascadeImpacts } from '@/lib/reasoning/cross-instance-reasoner';
+import { recordCascadeEvent } from '@/lib/reasoning/cascade-telemetry';
 import { createGateEvaluator } from '@/lib/reasoning/gate-evaluator';
 import { createContradictionDetector } from '@/lib/reasoning/contradiction-detector';
 import { createFailureModeDetector } from '@/lib/reasoning/failure-mode-detector';
@@ -116,6 +117,32 @@ export function buildProgramSynthesisContext(
   // Cross-instance cascade is delegated to the cross-instance reasoner so
   // severity scoring stays consistent across Source / Programs / Tower.
   const cascadeContext = computeCascadeImpacts(instance);
+
+  // Best-effort cascade telemetry — surfaces "which cascade impacts are
+  // live in synthesis output" to the admin dashboard. Never block the
+  // builder on a recording failure.
+  try {
+    for (const impact of cascadeContext) {
+      const directional: 'low' | 'medium' | 'high' =
+        impact.severity === 'blocking'
+          ? 'high'
+          : impact.severity === 'accelerating'
+            ? 'medium'
+            : 'low';
+      recordCascadeEvent({
+        sourceInstanceId: impact.sourceInstanceId,
+        targetInstanceId: impact.targetInstanceId,
+        linkType: impact.linkType,
+        severity: directional,
+        ...(impact.impactSeverity !== undefined
+          ? { impactSeverity: impact.impactSeverity }
+          : {}),
+        buildContext: 'program-synthesis',
+      });
+    }
+  } catch {
+    // swallow — telemetry must never break synthesis
+  }
 
   const resolvedPattern = pattern ?? resolvePattern(instance);
 
