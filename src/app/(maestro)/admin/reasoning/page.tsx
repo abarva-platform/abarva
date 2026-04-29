@@ -1038,6 +1038,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/citation-map',
     description: 'Source document citation map — which knowledge base documents back which patterns and instances',
   },
+  {
+    title: 'Stage readiness',
+    href: '/admin/reasoning/stage-readiness',
+    description: 'Stage-level readiness dashboard — what % of instances in each stage are ready to advance',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
