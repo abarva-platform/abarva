@@ -104,6 +104,31 @@ function isKnownArtifactType(type: string): type is ArtifactType {
   );
 }
 
+/**
+ * Heuristic check: does `tail` look like the start of an open sentinel
+ * (`[[artifact:type]]`) that hasn't fully streamed in yet? Used by
+ * `extractArtifacts` to defer partial opens to the next chunk instead
+ * of committing them as visible text. This was the bug behind the
+ * `[[artifact:brief-fie` raw-tuple regression in production: the open
+ * sentinel got split across stream chunks and the parser flushed the
+ * partial as visible.
+ */
+function isPartialOpenSentinel(tail: string): boolean {
+  // Possible legitimate prefixes of `[[artifact:foo-bar]]`:
+  //   `[`, `[[`, `[[a`, `[[ar`, …, `[[artifact`, `[[artifact:`,
+  //   `[[artifact:f`, `[[artifact:foo`, `[[artifact:foo-`, etc.
+  // Permissive regex that matches any of these prefixes anchored at end.
+  return /^\[(?:\[(?:a(?:r(?:t(?:i(?:f(?:a(?:c(?:t(?::[a-z-]*)?)?)?)?)?)?)?)?)?)?$/.test(tail);
+}
+
+/**
+ * Same idea for the close sentinel `[[/artifact]]` — but the existing
+ * "open found, close missing" branch already defers content via
+ * `remaining`, so partial close inside an in-flight artifact is handled
+ * naturally. This helper is here for future symmetry if the deferral
+ * strategy changes.
+ */
+
 function tryParseArtifact(type: string, json: string): Artifact | null {
   if (!isKnownArtifactType(type)) return null;
   let parsed: unknown;
@@ -166,9 +191,25 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
       return { type, programId, programName, currentPhase };
     }
     case 'classification': {
-      const archetype = obj.archetype;
-      const archetypeLabel = obj.archetypeLabel;
-      if (typeof archetype !== 'string' || typeof archetypeLabel !== 'string') return null;
+      // Permissive: agents reliably emit `archetypeLabel` (the
+      // human-readable form) but sometimes omit `archetype` (the
+      // canonical key). If only one is present, derive the other so
+      // the artifact still dispatches instead of failing parse.
+      const archetypeRaw = obj.archetype;
+      const archetypeLabelRaw = obj.archetypeLabel;
+      const archetype =
+        typeof archetypeRaw === 'string'
+          ? archetypeRaw
+          : typeof archetypeLabelRaw === 'string'
+            ? archetypeLabelRaw.toUpperCase().replace(/\s+/g, '_')
+            : null;
+      const archetypeLabel =
+        typeof archetypeLabelRaw === 'string'
+          ? archetypeLabelRaw
+          : typeof archetypeRaw === 'string'
+            ? archetypeRaw
+            : null;
+      if (archetype === null || archetypeLabel === null) return null;
       const confidence = obj.confidence;
       const validConfidence =
         confidence === 'high' || confidence === 'medium' || confidence === 'low'
@@ -177,6 +218,35 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
       return { type, archetype, archetypeLabel, confidence: validConfidence };
     }
   }
+}
+
+/**
+ * If `text` ends with what could be the start of an open sentinel
+ * (e.g. `…[[arti`), split off that suffix so the caller can defer it
+ * to the next chunk. Returns `{ committed, deferred }` where
+ * `committed` is safe to render and `deferred` should be carried
+ * forward via `remaining`.
+ */
+function splitTrailingPartialOpen(text: string): { committed: string; deferred: string } {
+  // Walk back from the end. Check every `[` in the bounded scan window
+  // — the LEFTMOST `[` whose tail is a valid partial-open prefix wins,
+  // because that maximizes the deferred suffix (safer to defer than
+  // commit; we re-extract on the next chunk anyway).
+  //
+  // We can't break early on a `[` mismatch: a rightmost `[` may match
+  // a single-bracket prefix while an earlier `[` matches the longer
+  // `[[…` prefix — both are valid partial opens, and the leftmost one
+  // is what we want to defer.
+  const limit = Math.max(0, text.length - 64);
+  let earliest = -1;
+  for (let i = text.length - 1; i >= limit; i--) {
+    if (text[i] !== '[') continue;
+    if (isPartialOpenSentinel(text.slice(i))) {
+      earliest = i;
+    }
+  }
+  if (earliest === -1) return { committed: text, deferred: '' };
+  return { committed: text.slice(0, earliest), deferred: text.slice(earliest) };
 }
 
 export function extractArtifacts(input: string): ExtractResult {
@@ -188,10 +258,12 @@ export function extractArtifacts(input: string): ExtractResult {
     const tail = input.slice(cursor);
     const openMatch = OPEN_SENTINEL.exec(tail);
     if (!openMatch) {
-      // No more open sentinels — flush the rest as visible.
-      visible += tail;
-      cursor = input.length;
-      break;
+      // No more *complete* open sentinels — but the tail may still end
+      // with a *partial* open whose `]]` is in the next stream chunk.
+      // Defer that suffix instead of committing it as visible text.
+      const { committed, deferred } = splitTrailingPartialOpen(tail);
+      visible += committed;
+      return { visibleText: visible, artifacts, remaining: deferred };
     }
 
     const openStart = cursor + openMatch.index;

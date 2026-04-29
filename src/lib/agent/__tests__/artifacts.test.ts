@@ -100,6 +100,95 @@ describe('extractArtifacts · streaming-chunk safety', () => {
     expect(r2.visibleText).toContain('What timeline?');
     expect(r2.remaining).toBe('');
   });
+
+  it("defers a partial OPEN sentinel split across chunks (regression: '[[artifact:brief-fie' must not commit as visible)", () => {
+    // The production bug: the open sentinel itself was split, so the
+    // previous parser committed `[[artifact:brief-fie` as visible text
+    // and the user saw raw artifact tuples.
+    const chunk1 = 'Brief is shaping up. [[artifact:brief-fie';
+    const r1 = extractArtifacts(chunk1);
+    expect(r1.artifacts).toHaveLength(0);
+    expect(r1.visibleText).toBe('Brief is shaping up. ');
+    expect(r1.remaining).toBe('[[artifact:brief-fie');
+
+    const chunk2 = 'ld]]{"field":"lead","value":"Lin Martinez"}[[/artifact]] Done.';
+    const r2 = extractArtifacts(r1.remaining + chunk2);
+    expect(r2.artifacts).toHaveLength(1);
+    expect(r2.artifacts[0]).toMatchObject({
+      type: 'brief-field',
+      field: 'lead',
+      value: 'Lin Martinez',
+    });
+    expect(r2.visibleText).toBe(' Done.');
+    expect(r2.remaining).toBe('');
+  });
+
+  it('defers a single trailing `[[` (could be the start of any sentinel)', () => {
+    const r = extractArtifacts('Some prose. [[');
+    expect(r.visibleText).toBe('Some prose. ');
+    expect(r.remaining).toBe('[[');
+  });
+
+  it('defers a trailing single `[` (might be the start of `[[`)', () => {
+    const r = extractArtifacts('Trailing bracket [');
+    expect(r.visibleText).toBe('Trailing bracket ');
+    expect(r.remaining).toBe('[');
+  });
+
+  it('does NOT defer a literal `[bracket]` that is clearly not a sentinel', () => {
+    const r = extractArtifacts('Plain text with [bracketed] content.');
+    expect(r.visibleText).toBe('Plain text with [bracketed] content.');
+    expect(r.remaining).toBe('');
+  });
+
+  it('handles open sentinel cleanly broken just at the colon', () => {
+    const chunk1 = 'Hello. [[artifact:';
+    const r1 = extractArtifacts(chunk1);
+    expect(r1.visibleText).toBe('Hello. ');
+    expect(r1.remaining).toBe('[[artifact:');
+    const chunk2 = 'classification]]{"archetypeLabel":"AMS Consolidation"}[[/artifact]]';
+    const r2 = extractArtifacts(r1.remaining + chunk2);
+    expect(r2.artifacts).toHaveLength(1);
+    expect(r2.artifacts[0]).toMatchObject({
+      type: 'classification',
+      archetypeLabel: 'AMS Consolidation',
+    });
+  });
+});
+
+describe('extractArtifacts · classification permissiveness', () => {
+  it('accepts classification with only archetypeLabel and derives archetype', () => {
+    const r = extractArtifacts(
+      '[[artifact:classification]]{"archetypeLabel":"AMS Consolidation","confidence":"high"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(1);
+    expect(r.artifacts[0]).toMatchObject({
+      type: 'classification',
+      archetypeLabel: 'AMS Consolidation',
+      archetype: 'AMS_CONSOLIDATION',
+      confidence: 'high',
+    });
+  });
+
+  it('accepts classification with only archetype and uses it for both fields', () => {
+    const r = extractArtifacts(
+      '[[artifact:classification]]{"archetype":"CDP_ACTIVATION"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(1);
+    expect(r.artifacts[0]).toMatchObject({
+      type: 'classification',
+      archetype: 'CDP_ACTIVATION',
+      archetypeLabel: 'CDP_ACTIVATION',
+    });
+  });
+
+  it('rejects classification with neither field', () => {
+    const r = extractArtifacts(
+      '[[artifact:classification]]{"confidence":"high"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
 });
 
 describe('extractArtifacts · malformed input', () => {
