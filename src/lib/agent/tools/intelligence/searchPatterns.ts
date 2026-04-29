@@ -36,6 +36,31 @@ interface SearchPatternsInput {
 
 const DEFAULT_LIMIT = 5;
 const MAX_LIMIT = 20;
+const ARTIFACT_SUMMARY_MAX_CHARS = 240;
+
+/**
+ * Defensive cleanup for the `summary` field of a pattern-match artifact.
+ *
+ * Two failure modes this prevents:
+ *   1. The summary contains a literal `[[/artifact]]` substring (or partial
+ *      `]]` sequence) which closes the artifact tuple early during streaming
+ *      and corrupts the JSON.parse downstream.
+ *   2. The summary contains uncollapsed whitespace / control chars that
+ *      bloat the card.
+ *
+ * We replace any close-sentinel-like substring with a safe spaced form,
+ * collapse whitespace, and cap at 240 chars with an ellipsis. JSON.stringify
+ * already escapes quotes / newlines / backslashes — but it won't help if the
+ * close sentinel slips through verbatim, hence this targeted scrub.
+ */
+export function sanitizeSummaryForArtifact(input: string): string {
+  let out = input.replace(/\[\[\/artifact\]\]/g, '[[ /artifact ]]');
+  out = out.replace(/\s+/g, ' ').trim();
+  if (out.length > ARTIFACT_SUMMARY_MAX_CHARS) {
+    out = out.slice(0, ARTIFACT_SUMMARY_MAX_CHARS - 1).trimEnd() + '…';
+  }
+  return out;
+}
 
 export const searchPatternsTool: AgentTool<SearchPatternsInput> = {
   name: 'search_patterns',
@@ -117,12 +142,30 @@ export const searchPatternsTool: AgentTool<SearchPatternsInput> = {
     }
 
     for (const { pattern } of ranked) {
-      const summary =
-        pattern.shortDescription ?? pattern.longDescription ?? `${pattern.category ?? ''}`.trim();
+      // Card-length summary. Two fixes folded in here:
+      //
+      // 1. Drop `longDescription` from the fallback chain. longDescription
+      //    is the full pattern body (often 600-1500 words per the corpus
+      //    authoring spec). It's not a card summary — and crucially, long
+      //    pattern bodies can contain the literal substring "[[/artifact]]"
+      //    when they reference the artifact-channel grammar by name, which
+      //    closes the artifact tuple early and makes JSON.parse fail
+      //    downstream. Production walk caught the parse-failed markers
+      //    surfacing in chat (the parser surfaces them rather than
+      //    silently losing the artifact, per PR-B's design).
+      //
+      // 2. Cap whatever summary we choose at 240 chars + ellipsis. Even
+      //    well-formed shortDescriptions can occasionally contain the
+      //    bracket sequence; capping closes that hole too. Cards aren't
+      //    meant to render full prose anyway.
+      const rawSummary =
+        pattern.shortDescription ??
+        (`${pattern.category ?? ''}`.trim() || pattern.name);
+      const summary = sanitizeSummaryForArtifact(rawSummary);
       const payload = {
         patternId: pattern.id,
         name: pattern.name,
-        summary: summary.length > 0 ? summary : pattern.name,
+        summary,
       };
       ctx.writer?.write(
         `\n[[artifact:pattern-match]]${JSON.stringify(payload)}[[/artifact]]\n`,
