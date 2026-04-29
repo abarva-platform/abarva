@@ -998,6 +998,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/health-history',
     description: 'Reconstructed health score timeline from stage transitions — derived historical health per instance',
   },
+  {
+    title: 'Contradiction severity',
+    href: '/admin/reasoning/contradiction-severity',
+    description: 'Active contradiction ranking by severity — critical to low, correlated with instance health scores',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
@@ -1134,9 +1139,10 @@ function ToolsDirectory() {
           padding: SPACING.md,
         }}
       >
-        {TOOL_ENTRIES.map((entry) => (
-          <ToolCard key={entry.href} entry={entry} />
-        ))}
+        {TOOL_ENTRIES.map((entry) => {
+          const card = <ToolCard entry={entry} />;
+          return <div key={entry.href}>{card}</div>;
+        })}
       </div>
     </section>
   );
