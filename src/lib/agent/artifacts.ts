@@ -28,7 +28,14 @@ export type ArtifactType =
   | 'gate-evaluation' // {gate, status, detail?, reasoning?}
   | 'evidence-highlight' // {evidenceId, label, reason}
   | 'phase-recommendation' // {phase, recommendation, blockers?, nextActions?}
-  | 'program-focus'; // {programId, name, currentPhase} — Nexus shifts focus to a program
+  | 'program-focus' // {programId, name, currentPhase} — Nexus shifts focus to a program
+  // Surface 2 PR-B — phase-pack visibility. Nexus emits these based on
+  // its conversational read of the chat (not from DB queries) so the
+  // user sees doctrine being applied in real time. Packs remain static
+  // doctrine; the runtime evidence-evaluation layer is deferred to the
+  // future knowledge-broker work.
+  | 'phase-progress' // {evidenceItemId, label, severity, status, detail?}
+  | 'anti-pattern-flag'; // {antiPatternId, label, detectedSignal, whatToFlag, mitigation}
 
 // ── Strongly-typed artifact payloads ──────────────────────────────────────────
 
@@ -110,6 +117,48 @@ export interface ProgramFocusArtifact {
   currentPhase: string;
 }
 
+/**
+ * Phase-pack DoD progress card. Nexus emits one per evidence item it
+ * has formed an opinion on during the conversation. The status is
+ * Nexus's *conversational read* — not the result of a DB query — so
+ * the value can be 'unknown' when the chat hasn't surfaced enough to
+ * judge. The pack remains static doctrine; the future knowledge-broker
+ * layer will compute these against real evidence tables.
+ */
+export interface PhaseProgressArtifact {
+  type: 'phase-progress';
+  /** Stable id from the active pack's definitionOfDone. */
+  evidenceItemId: string;
+  /** Human label from the pack — denormalized so the panel can render without re-resolving. */
+  label: string;
+  /** Mirrors the pack item's severity. */
+  severity: 'hard' | 'soft';
+  /** Nexus's conversational read of where this evidence stands. */
+  status: 'met' | 'unmet' | 'unknown';
+  /** Optional one-line elaboration on why Nexus reached this status. */
+  detail?: string;
+}
+
+/**
+ * Phase-pack anti-pattern flag. Nexus emits when conversation shows the
+ * detectionHint signal. The mitigation field carries forward the pack's
+ * redirect language so the panel can render a coherent "what to do next"
+ * card without Nexus paraphrasing each time.
+ */
+export interface AntiPatternFlagArtifact {
+  type: 'anti-pattern-flag';
+  /** Stable id from the active pack's antiPatterns. */
+  antiPatternId: string;
+  /** Human label from the pack — e.g. "The Phantom Sponsor". */
+  label: string;
+  /** What Nexus saw that triggered the flag — usually a quote or paraphrase from chat. */
+  detectedSignal: string;
+  /** Mirrors the pack's whatToFlag — the consequence Nexus is naming. */
+  whatToFlag: string;
+  /** Mirrors the pack's mitigation — what to redirect toward. */
+  mitigation: string;
+}
+
 export type Artifact =
   | BriefFieldArtifact
   | PatternMatchArtifact
@@ -118,7 +167,9 @@ export type Artifact =
   | GateEvaluationArtifact
   | EvidenceHighlightArtifact
   | PhaseRecommendationArtifact
-  | ProgramFocusArtifact;
+  | ProgramFocusArtifact
+  | PhaseProgressArtifact
+  | AntiPatternFlagArtifact;
 
 // ── Parser ────────────────────────────────────────────────────────────────────
 //
@@ -156,7 +207,9 @@ function isKnownArtifactType(type: string): type is ArtifactType {
     type === 'gate-evaluation' ||
     type === 'evidence-highlight' ||
     type === 'phase-recommendation' ||
-    type === 'program-focus'
+    type === 'program-focus' ||
+    type === 'phase-progress' ||
+    type === 'anti-pattern-flag'
   );
 }
 
@@ -327,6 +380,37 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
         return null;
       }
       return { type, programId, name, currentPhase };
+    }
+    case 'phase-progress': {
+      const evidenceItemId = obj.evidenceItemId;
+      const label = obj.label;
+      const severity = obj.severity;
+      const status = obj.status;
+      if (typeof evidenceItemId !== 'string' || evidenceItemId.length === 0) return null;
+      if (typeof label !== 'string' || label.length === 0) return null;
+      if (severity !== 'hard' && severity !== 'soft') return null;
+      if (status !== 'met' && status !== 'unmet' && status !== 'unknown') return null;
+      return {
+        type,
+        evidenceItemId,
+        label,
+        severity,
+        status,
+        detail: typeof obj.detail === 'string' && obj.detail.length > 0 ? obj.detail : undefined,
+      };
+    }
+    case 'anti-pattern-flag': {
+      const antiPatternId = obj.antiPatternId;
+      const label = obj.label;
+      const detectedSignal = obj.detectedSignal;
+      const whatToFlag = obj.whatToFlag;
+      const mitigation = obj.mitigation;
+      if (typeof antiPatternId !== 'string' || antiPatternId.length === 0) return null;
+      if (typeof label !== 'string' || label.length === 0) return null;
+      if (typeof detectedSignal !== 'string' || detectedSignal.length === 0) return null;
+      if (typeof whatToFlag !== 'string' || whatToFlag.length === 0) return null;
+      if (typeof mitigation !== 'string' || mitigation.length === 0) return null;
+      return { type, antiPatternId, label, detectedSignal, whatToFlag, mitigation };
     }
   }
 }
@@ -506,7 +590,44 @@ Available artifact types and their EXACT JSON shapes:
    Example:
    [[artifact:program-focus]]{"programId":"APX-CC-2026","name":"Contact Center AI","currentPhase":"P4 Build"}[[/artifact]]
 
+9. phase-progress — Surface 2. When the active phase pack has a
+   definitionOfDone item and the conversation gives you signal on its
+   status, emit a phase-progress card. The status reflects YOUR
+   conversational read — use 'unknown' freely when the chat hasn't
+   surfaced enough to judge. Use 'met' when the user has confirmed the
+   evidence exists, 'unmet' when the conversation reveals a clear gap.
+   Use the evidenceItemId from the active pack — match the pack's id
+   exactly so the panel can dedupe across turns.
+   Shape: {"evidenceItemId": <pack-item-id>, "label": <pack-item-label>,
+           "severity": "hard"|"soft", "status": "met"|"unmet"|"unknown",
+           "detail"?: <one-line elaboration>}
+   Example (P2 Synthesis pack item charter-signed-off):
+   [[artifact:phase-progress]]{"evidenceItemId":"charter-signed-off","label":"Charter signed off by sponsor","severity":"hard","status":"unmet","detail":"User said the charter is in draft; sponsor has not signed yet."}[[/artifact]]
+
+10. anti-pattern-flag — Surface 2. When the conversation reveals an
+    active pack anti-pattern signal, emit a flag card. The detectedSignal
+    field carries forward what you saw (paraphrase the user's words);
+    whatToFlag and mitigation should mirror the pack's text so the user
+    sees a coherent flag. Surface these PROACTIVELY — the pack tells
+    you what to flag, and the user benefits most when you flag it the
+    moment you see the signal.
+    Shape: {"antiPatternId": <pack-anti-pattern-id>, "label": <pack-label>,
+            "detectedSignal": <what you observed>,
+            "whatToFlag": <consequence — mirror pack>,
+            "mitigation": <redirect — mirror pack>}
+    Example (P2 Synthesis pack anti-pattern phantom-sponsor):
+    [[artifact:anti-pattern-flag]]{"antiPatternId":"phantom-sponsor","label":"The Phantom Sponsor","detectedSignal":"User said the sponsor is the CIO but cannot describe any specific calendar commitment","whatToFlag":"Sponsor pattern looks delegated, not personal. The program has high probability of stalling at the first real decision — this is the #1 reason charters fail in P3.","mitigation":"Insist on a recurring sponsor cadence on the calendar before close, AND name a succession owner. If the sponsor will not commit, the charter is not ready to advance."}[[/artifact]]
+
 When an artifact updates a value already in the panel, just emit a new
 artifact of the same type — the panel replaces or upserts as
 appropriate. Don't repeat artifacts you've already emitted for fields
-that haven't changed.`;
+that haven't changed.
+
+For phase-progress: do NOT emit cards for items where the chat has
+given you no signal. 'unknown' is reserved for when the user has
+brushed a topic but you don't have enough to commit to met/unmet —
+not "I have no idea yet."
+
+For anti-pattern-flag: only emit when the detectionHint signal is
+genuinely visible. False positives are worse than missed flags here —
+a wrongly-flagged Phantom Sponsor will erode trust in the platform.`;

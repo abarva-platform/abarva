@@ -16,11 +16,13 @@
 
 import { useMemo } from 'react';
 import type {
+  AntiPatternFlagArtifact,
   Artifact,
   CrossProgramDependencyArtifact,
   EvidenceHighlightArtifact,
   GateEvaluationArtifact,
   PatternMatchArtifact,
+  PhaseProgressArtifact,
   PhaseRecommendationArtifact,
   ProgramFocusArtifact,
 } from '@/lib/agent/artifacts';
@@ -272,6 +274,100 @@ function CrossProgramDependencyCard({ a }: { a: CrossProgramDependencyArtifact }
   );
 }
 
+function PhaseProgressCard({ a }: { a: PhaseProgressArtifact }) {
+  // 'unknown' status uses the existing 'pending' visual for the StatusPill.
+  const pillStatus =
+    a.status === 'met' ? 'met' : a.status === 'unmet' ? 'unmet' : 'pending';
+  return (
+    <CardShell kind={`Phase progress · ${a.severity === 'hard' ? 'hard gate' : 'soft gate'}`}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          gap: 10,
+          marginBottom: 6,
+          flexWrap: 'wrap',
+        }}
+      >
+        <span style={{ fontWeight: 600, fontSize: 13.5, lineHeight: 1.3 }}>{a.label}</span>
+        <StatusPill label={a.status} status={pillStatus} />
+      </div>
+      {a.detail ? (
+        <p style={{ margin: '4px 0 0', fontSize: 12.5, color: BrandColors.slate, lineHeight: 1.55 }}>
+          {a.detail}
+        </p>
+      ) : null}
+      <div
+        style={{
+          fontFamily: BrandTypography.mono,
+          fontSize: 10,
+          color: BrandColors.stone,
+          marginTop: 6,
+        }}
+      >
+        {a.evidenceItemId}
+      </div>
+    </CardShell>
+  );
+}
+
+function AntiPatternFlagCard({ a }: { a: AntiPatternFlagArtifact }) {
+  return (
+    <CardShell kind={`Anti-pattern flag · ${a.label}`}>
+      <div
+        style={{
+          fontFamily: BrandTypography.mono,
+          fontSize: 9.5,
+          letterSpacing: '0.10em',
+          textTransform: 'uppercase',
+          color: '#b45309',
+          fontWeight: 700,
+          marginBottom: 4,
+        }}
+      >
+        Detected
+      </div>
+      <p style={{ margin: 0, fontSize: 12.5, color: BrandColors.inkBlack, lineHeight: 1.55 }}>
+        {a.detectedSignal}
+      </p>
+      <div
+        style={{
+          fontFamily: BrandTypography.mono,
+          fontSize: 9.5,
+          letterSpacing: '0.10em',
+          textTransform: 'uppercase',
+          color: BrandColors.signalBlue,
+          fontWeight: 700,
+          marginTop: 10,
+          marginBottom: 4,
+        }}
+      >
+        What this means
+      </div>
+      <p style={{ margin: 0, fontSize: 12.5, color: BrandColors.slate, lineHeight: 1.55 }}>
+        {a.whatToFlag}
+      </p>
+      <div
+        style={{
+          fontFamily: BrandTypography.mono,
+          fontSize: 9.5,
+          letterSpacing: '0.10em',
+          textTransform: 'uppercase',
+          color: '#0f766e',
+          fontWeight: 700,
+          marginTop: 10,
+          marginBottom: 4,
+        }}
+      >
+        Redirect to
+      </div>
+      <p style={{ margin: 0, fontSize: 12.5, color: BrandColors.slate, lineHeight: 1.55 }}>
+        {a.mitigation}
+      </p>
+    </CardShell>
+  );
+}
+
 function ProgramFocusCard({ a }: { a: ProgramFocusArtifact }) {
   return (
     <CardShell kind="Now reasoning about">
@@ -290,23 +386,56 @@ function ProgramFocusCard({ a }: { a: ProgramFocusArtifact }) {
 
 // ── Panel ─────────────────────────────────────────────────────────────────────
 
+/**
+ * Filter + dedupe + reverse-time-order the artifact stream into the
+ * cards the panel renders. Exported for unit testing — the panel
+ * itself just maps over the result.
+ *
+ * Behavior:
+ *   - Phase-progress and anti-pattern-flag: dedupe by stable id, keep
+ *     LATEST occurrence (so re-emits act as upserts).
+ *   - Brief-field and classification: dropped — Surface 1 territory.
+ *   - Everything else: preserved in insertion order.
+ *   - Final result is reversed (most recent first across the stream).
+ */
+export function selectVisibleArtifacts(artifacts: Artifact[]): Artifact[] {
+  const seenProgress = new Map<string, PhaseProgressArtifact>();
+  const seenFlags = new Map<string, AntiPatternFlagArtifact>();
+  const orderedNonDeduped: Artifact[] = [];
+
+  for (const a of artifacts) {
+    if (a.type === 'phase-progress') {
+      seenProgress.set(a.evidenceItemId, a);
+    } else if (a.type === 'anti-pattern-flag') {
+      seenFlags.set(a.antiPatternId, a);
+    } else {
+      orderedNonDeduped.push(a);
+    }
+  }
+
+  const merged: Artifact[] = [
+    ...orderedNonDeduped,
+    ...seenProgress.values(),
+    ...seenFlags.values(),
+  ];
+
+  return merged
+    .filter(
+      (a) =>
+        a.type === 'gate-evaluation' ||
+        a.type === 'evidence-highlight' ||
+        a.type === 'phase-recommendation' ||
+        a.type === 'pattern-match' ||
+        a.type === 'cross-program-dependency' ||
+        a.type === 'program-focus' ||
+        a.type === 'phase-progress' ||
+        a.type === 'anti-pattern-flag',
+    )
+    .reverse();
+}
+
 export function NexusReactivePanel({ artifacts }: NexusReactivePanelProps) {
-  // Show most-recent first. Skip artifact types this surface doesn't
-  // render (brief-field, classification — those are Surface 1 territory).
-  const visible = useMemo(() => {
-    return artifacts
-      .filter(
-        (a) =>
-          a.type === 'gate-evaluation' ||
-          a.type === 'evidence-highlight' ||
-          a.type === 'phase-recommendation' ||
-          a.type === 'pattern-match' ||
-          a.type === 'cross-program-dependency' ||
-          a.type === 'program-focus',
-      )
-      .slice()
-      .reverse();
-  }, [artifacts]);
+  const visible = useMemo(() => selectVisibleArtifacts(artifacts), [artifacts]);
 
   if (visible.length === 0) return null;
 
@@ -351,6 +480,10 @@ export function NexusReactivePanel({ artifacts }: NexusReactivePanelProps) {
             return <CrossProgramDependencyCard key={key} a={a} />;
           case 'program-focus':
             return <ProgramFocusCard key={key} a={a} />;
+          case 'phase-progress':
+            return <PhaseProgressCard key={`pp-${a.evidenceItemId}`} a={a} />;
+          case 'anti-pattern-flag':
+            return <AntiPatternFlagCard key={`ap-${a.antiPatternId}`} a={a} />;
           default:
             return null;
         }
