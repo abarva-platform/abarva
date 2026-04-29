@@ -1008,6 +1008,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/waiver-expiry',
     description: 'Gate waiver age tracking — fresh, aging, and stale waivers flagged for review',
   },
+  {
+    title: 'Risk score',
+    href: '/admin/reasoning/risk-score',
+    description: 'Composite instance risk score combining health, contradictions, dwell time, gate gap, and waivers',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
