@@ -93,8 +93,12 @@ describe('buildProgramEvidenceMap', () => {
 // ── 3. All 4 instances have tenantSlug apex-retail ───────────────────────────
 
 describe('APEX_RETAIL_PROGRAM_INSTANCES', () => {
-  it('contains exactly 4 instances', () => {
-    expect(APEX_RETAIL_PROGRAM_INSTANCES).toHaveLength(4);
+  it('contains exactly 6 instances (4 production + 2 demo fixtures)', () => {
+    // 4 production-anchor programs (CDP, LPM, SAP, DFV2) plus the COPILOT
+    // and CC-AI demo fixtures authored to bind previously-unbound program
+    // lifecycle patterns. Updating this count requires a corresponding
+    // change to APEX_RETAIL_PROGRAM_INSTANCES.
+    expect(APEX_RETAIL_PROGRAM_INSTANCES).toHaveLength(6);
   });
 
   it('all instances have tenantSlug apex-retail', () => {

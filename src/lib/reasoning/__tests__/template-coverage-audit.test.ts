@@ -62,19 +62,39 @@ describe('auditAll — runs without error', () => {
 // ─── 2. Coverage thresholds ───────────────────────────────────────────────────
 
 describe('coverage thresholds — bound patterns', () => {
-  it('at least 30% of contradiction templates on bound patterns are covered', () => {
-    // Bound = templates whose pattern has ≥1 fixture instance. The unbound
-    // patterns (no fixtures yet) drag the global ratio down by definition;
-    // the bound ratio is the actionable signal.
-    const { contradictionsBound } = auditAll().summary;
-    expect(contradictionsBound.totalTemplates).toBeGreaterThan(0);
-    expect(contradictionsBound.coverageRatio).toBeGreaterThanOrEqual(0.3);
+  it('every lifecycle pattern has at least one bound fixture instance', () => {
+    // After the unbound-pattern fixture authoring (feat/reasoning-unbound-pattern-fixtures)
+    // every contradiction-template row should report ≥1 instance tested. If a
+    // future fixture refactor drops a pattern's fixture, this canary will fail.
+    const rows = auditContradictionTemplateCoverage();
+    expect(rows.length).toBeGreaterThan(0);
+    for (const row of rows) {
+      expect(row.totalInstancesTested).toBeGreaterThanOrEqual(1);
+    }
   });
 
-  it('at least 30% of failure-mode templates on bound patterns are covered', () => {
+  it('at least 65% of contradiction templates on bound patterns are covered', () => {
+    // Bound = templates whose pattern has ≥1 fixture instance. With every
+    // pattern now bound, the bound ratio equals the global ratio. The 65%
+    // floor reflects the post-fixture-authoring baseline (currently ~75%);
+    // dropping under it indicates a fixture-evidence keyword regression.
+    const { contradictionsBound } = auditAll().summary;
+    expect(contradictionsBound.totalTemplates).toBeGreaterThan(0);
+    expect(contradictionsBound.coverageRatio).toBeGreaterThanOrEqual(0.65);
+  });
+
+  it('at least 65% of failure-mode templates on bound patterns are covered', () => {
     const { failureModesBound } = auditAll().summary;
     expect(failureModesBound.totalTemplates).toBeGreaterThan(0);
-    expect(failureModesBound.coverageRatio).toBeGreaterThanOrEqual(0.3);
+    expect(failureModesBound.coverageRatio).toBeGreaterThanOrEqual(0.65);
+  });
+
+  it('global contradictions+failure-modes coverage ratio at least 65%', () => {
+    // Once every pattern is bound, the global and bound ratios converge.
+    // Track the combined ratio so the audit page's headline number has a
+    // floor.
+    const { coverageRatio } = auditAll().summary;
+    expect(coverageRatio).toBeGreaterThanOrEqual(0.65);
   });
 
   it('reveals at least one uncovered template overall — keyword match is sparse', () => {
@@ -122,32 +142,53 @@ describe('PAT-SRC-AMS-001 — known-firing canary', () => {
   });
 });
 
-// ─── 4. Unbound patterns are reported but always uncovered ────────────────────
+// ─── 4. Newly-bound patterns: each gained ≥1 fixture and ≥1 detection ─────────
 
-describe('unbound patterns — no instances, all rows uncovered', () => {
-  it('every row whose pattern has no fixture instance is marked uncovered', () => {
-    const rows = [
-      ...auditContradictionTemplateCoverage(),
-      ...auditFailureModeCoverage(),
-    ];
-    const unbound = rows.filter((r) => r.totalInstancesTested === 0);
-    expect(unbound.length).toBeGreaterThan(0); // sanity: spec says ≥8 patterns lack fixtures
-    for (const row of unbound) {
-      expect(row.coverage).toBe('uncovered');
-      expect(row.firedOnInstances).toEqual([]);
-    }
-  });
+describe('newly-bound patterns — fixtures present and produce detections', () => {
+  // Each entry below corresponds to a previously-unbound pattern that gained
+  // a demo fixture in feat/reasoning-unbound-pattern-fixtures. The fixture
+  // instance id is asserted explicitly so that fixture renames are caught,
+  // and the row must be `covered` so an evidence-keyword regression fails
+  // the canary directly.
+  const NEW_FIXTURES: Array<{ patternId: string; instanceId: string }> = [
+    { patternId: 'PAT-SRC-RFP-001', instanceId: 'apex-retail-rfp-store-pos-2026' },
+    { patternId: 'PAT-SRC-SOLE-001', instanceId: 'apex-retail-sole-source-erp-2026' },
+    { patternId: 'PAT-SRC-FRAMEWORK-001', instanceId: 'apex-retail-framework-callout-2026' },
+    { patternId: 'PAT-SRC-RENEWAL-001', instanceId: 'apex-retail-renewal-iam-2026' },
+    { patternId: 'PAT-SRC-DECOM-001', instanceId: 'apex-retail-decom-legacy-erp-2026' },
+    { patternId: 'PAT-SRC-EMERGENCY-001', instanceId: 'apex-retail-emergency-payment-2026' },
+    { patternId: 'PAT-PRG-COPILOT-001', instanceId: 'APX-COPILOT-2026' },
+    { patternId: 'PAT-PRG-CC-AI-001', instanceId: 'APX-CCAI-2026' },
+  ];
 
-  it('PAT-SRC-RFP-001 has no instance bound and is fully uncovered', () => {
-    const rows = auditContradictionTemplateCoverage().filter(
-      (r) => r.patternId === 'PAT-SRC-RFP-001',
-    );
-    expect(rows.length).toBeGreaterThan(0);
-    for (const row of rows) {
-      expect(row.totalInstancesTested).toBe(0);
-      expect(row.coverage).toBe('uncovered');
-    }
-  });
+  it.each(NEW_FIXTURES)(
+    '$patternId has at least one fixture instance ($instanceId)',
+    ({ patternId, instanceId }) => {
+      const rows = auditContradictionTemplateCoverage().filter(
+        (r) => r.patternId === patternId,
+      );
+      expect(rows.length).toBeGreaterThan(0);
+      for (const row of rows) {
+        expect(row.totalInstancesTested).toBeGreaterThanOrEqual(1);
+      }
+      // The named instance must produce at least one contradiction detection
+      // somewhere in the pattern, so that a fixture-rename regression bites.
+      const contradictionFires = rows.filter((r) =>
+        r.firedOnInstances.includes(instanceId),
+      );
+      expect(contradictionFires.length).toBeGreaterThan(0);
+    },
+  );
+
+  it.each(NEW_FIXTURES)(
+    '$patternId fixture produces at least one failure-mode detection',
+    ({ patternId, instanceId }) => {
+      const rows = auditFailureModeCoverage().filter((r) => r.patternId === patternId);
+      expect(rows.length).toBeGreaterThan(0);
+      const fmFires = rows.filter((r) => r.firedOnInstances.includes(instanceId));
+      expect(fmFires.length).toBeGreaterThan(0);
+    },
+  );
 });
 
 // ─── 5. Program patterns: at least one template fires somewhere ──────────────
