@@ -27,6 +27,7 @@ import { SynthesisFeedbackWidget } from '@/components/reasoning/SynthesisFeedbac
 import { CopySummaryButton } from '@/components/reasoning/CopySummaryButton';
 import { SynthesisConfidenceBar } from '@/components/reasoning/SynthesisConfidenceBar';
 import { SynthesisDiffPanel } from '@/components/reasoning/SynthesisDiffPanel';
+import { ReasoningErrorBoundary } from '@/components/reasoning/ReasoningErrorBoundary';
 import { SHELL } from '@/lib/shell/shell-tokens';
 
 interface SourceProvenanceRibbonProps {
@@ -233,7 +234,9 @@ export function SourceProvenanceRibbon({ context, eventId }: SourceProvenanceRib
       </div>
 
       <div style={{ width: '100%', paddingLeft: 12, paddingRight: 12 }}>
-        <SynthesisDiffPanel context={context} surface="source" />
+        <ReasoningErrorBoundary section="Synthesis Diff">
+          <SynthesisDiffPanel context={context} surface="source" />
+        </ReasoningErrorBoundary>
       </div>
     </div>
   );

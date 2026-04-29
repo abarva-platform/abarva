@@ -77,6 +77,7 @@ import { CascadeImpactSection } from '@/components/_shared/CascadeImpactSection'
 import { PhaseAdvanceButton } from '@/components/programs/PhaseAdvanceButton';
 import { EvidenceCoverageHeatmap } from '@/components/reasoning/EvidenceCoverageHeatmap';
 import { EvidenceNetworkGraph } from '@/components/reasoning/EvidenceNetworkGraph';
+import { ReasoningErrorBoundary } from '@/components/reasoning/ReasoningErrorBoundary';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -4070,10 +4071,12 @@ export function ProgramDetailPage({
             {/* REASON-35 — Evidence coverage heatmap: visual grid of which gate
                 criteria have supporting evidence across all lifecycle stages. */}
             {heatmapInfo && (
-              <EvidenceCoverageHeatmap
-                instance={heatmapInfo.instance}
-                pattern={heatmapInfo.pattern}
-              />
+              <ReasoningErrorBoundary section="Coverage Heatmap">
+                <EvidenceCoverageHeatmap
+                  instance={heatmapInfo.instance}
+                  pattern={heatmapInfo.pattern}
+                />
+              </ReasoningErrorBoundary>
             )}
             {/* REASON-30 — Contradiction detail card sits below gate criteria */}
             {contradictionInfo && contradictionInfo.contradictions.length > 0 && (
@@ -4084,10 +4087,12 @@ export function ProgramDetailPage({
             )}
             {/* Risk register — unified view of contradictions + failure modes. */}
             {riskRegisterInfo && riskRegisterInfo.risks.length > 0 && (
-              <RiskRegisterPanel
-                risks={riskRegisterInfo.risks}
-                title="Risk register · this program"
-              />
+              <ReasoningErrorBoundary section="Risk Register">
+                <RiskRegisterPanel
+                  risks={riskRegisterInfo.risks}
+                  title="Risk register · this program"
+                />
+              </ReasoningErrorBoundary>
             )}
             {/* REASON-31 — Cascade impact detail (downstream + upstream) */}
             {cascadeInfo && (
@@ -4163,9 +4168,11 @@ export function ProgramDetailPage({
               </div>
             )}
             {/* REASON-34 — Cascade impact graph for this program instance */}
-            <CascadeImpactSection
-              instanceId={evidenceIngestionInfo?.instanceId ?? view.programId}
-            />
+            <ReasoningErrorBoundary section="Cascade Impact">
+              <CascadeImpactSection
+                instanceId={evidenceIngestionInfo?.instanceId ?? view.programId}
+              />
+            </ReasoningErrorBoundary>
           </div>
         )}
 
@@ -4218,10 +4225,12 @@ export function ProgramDetailPage({
                 {/* REASON-36 — Evidence network graph: SVG bipartite graph
                     linking evidence items to the gate criteria they support. */}
                 {heatmapInfo && (
-                  <EvidenceNetworkGraph
-                    instance={heatmapInfo.instance}
-                    pattern={heatmapInfo.pattern}
-                  />
+                  <ReasoningErrorBoundary section="Evidence Network">
+                    <EvidenceNetworkGraph
+                      instance={heatmapInfo.instance}
+                      pattern={heatmapInfo.pattern}
+                    />
+                  </ReasoningErrorBoundary>
                 )}
               </>
             ) : (
