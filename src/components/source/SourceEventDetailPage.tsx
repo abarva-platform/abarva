@@ -29,6 +29,9 @@ import { computeReverseCascade } from '@/lib/reasoning/cross-instance-reasoner';
 import { PAT_SRC_AMS_001 } from '@/lib/intelligence/source-lifecycle-patterns';
 import { isResolved as isContradictionResolved } from '@/lib/reasoning/contradiction-resolution-state';
 import { buildInstanceEventTimeline } from '@/lib/reasoning/instance-event-timeline';
+import { createGateEvaluator } from '@/lib/reasoning/gate-evaluator';
+import { buildStageMicroSynthesisMap } from '@/lib/reasoning/stage-micro-synthesis';
+import { buildEvidenceMap } from '@/lib/source/source-event-instance';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -1796,6 +1799,19 @@ export function SourceEventDetailPage() {
     else miniGraphStageStates[label] = 'upcoming';
   }
 
+  // Per-stage micro-synthesis — rule-based 1-2 sentence advisory rendered as
+  // an SVG <title> tooltip on each lifecycle mini-graph node. Pure helper, no
+  // LLM call, deterministic across renders.
+  const miniGraphMicroSynthesis = (() => {
+    const evidenceMap = buildEvidenceMap(AMS_VENDOR_CONSOLIDATION_2026_INSTANCE);
+    const evaluator = createGateEvaluator(PAT_SRC_AMS_001);
+    const evaluations = evaluator.evaluateAllStages(
+      AMS_VENDOR_CONSOLIDATION_2026_INSTANCE.currentStage,
+      evidenceMap,
+    );
+    return buildStageMicroSynthesisMap(evaluations, PAT_SRC_AMS_001);
+  })();
+
   return (
     <AppShell
       surface="source-detail"
@@ -1842,6 +1858,7 @@ export function SourceEventDetailPage() {
             stages={PAT_SRC_AMS_001.stages}
             stageStates={miniGraphStageStates}
             gateCriteriaCount={gateCriteriaCount}
+            microSynthesis={miniGraphMicroSynthesis}
           />
         </div>
         {/* Event header */}
