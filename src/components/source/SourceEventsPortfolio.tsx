@@ -364,11 +364,27 @@ export function SourceEventsPortfolio({
                 Narrow the seeded queue by sourcing stage or lifecycle posture. Filters are deterministic and update the portfolio in place through route query params.
               </div>
             </div>
-            {(activeStage || activeStatus) ? (
-              <Link href="/source/events" style={SOURCE_ACTION_LINK_SECONDARY}>
-                Reset filters
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <Link
+                href="/source/compare"
+                style={{
+                  color: SHELL.INK_SOFT,
+                  textDecoration: 'underline',
+                  textUnderlineOffset: 2,
+                  fontFamily: SHELL.MONO,
+                  fontSize: 11,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.10em',
+                }}
+              >
+                Compare events →
               </Link>
-            ) : null}
+              {(activeStage || activeStatus) ? (
+                <Link href="/source/events" style={SOURCE_ACTION_LINK_SECONDARY}>
+                  Reset filters
+                </Link>
+              ) : null}
+            </div>
           </div>
 
           <div style={FILTER_ROW}>
