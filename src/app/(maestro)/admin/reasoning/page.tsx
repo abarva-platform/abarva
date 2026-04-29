@@ -1078,6 +1078,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/pattern-evolution',
     description: 'Instance health evolution through pattern stages — how health progresses as instances advance',
   },
+  {
+    title: 'Instance notes',
+    href: '/admin/reasoning/instance-notes',
+    description: 'Deterministic advisory notes per instance — health grade, stage advisory, blockers, and contradictions',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
