@@ -938,6 +938,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/gate-gap',
     description: 'Current stage gate gap per instance — hard gates remaining before advancement, with ready-to-advance list',
   },
+  {
+    title: 'Health forecast',
+    href: '/admin/reasoning/health-forecast',
+    description: 'Projected health scores based on open gates and remaining stages — trajectory and at-risk instances',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
