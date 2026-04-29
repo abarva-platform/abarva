@@ -13,10 +13,12 @@
 // broker exposes a graph traversal contract, swap the manifest read
 // for SentinelBrokerAdapter({ includeGraphNeighborhood: true }).
 //
-// PR-INT-D adds the `graph-neighborhood` artifact type. For now this
-// tool emits one `pattern-match` per neighbor (existing type) so the
-// reactive panel can render the relations. The neighborhood summary
-// is returned in the tool's data payload for the agent to narrate.
+// PR-INT-D · this tool now emits a `graph-neighborhood` summary
+// artifact alongside the per-neighbor `pattern-match` cards. The
+// graph card carries the structural shape (root + topEdges +
+// nodeCount + edgeCount); the pattern-match cards give per-pattern
+// detail. Together the panel shows both the neighborhood at a glance
+// AND the individual patterns that compose it.
 
 import type { AgentTool, ToolResult } from '../registry';
 import { registerTool } from '../registry';
@@ -135,6 +137,27 @@ export const patternNeighborhoodTool: AgentTool<PatternNeighborhoodInput> = {
       if (nextFrontier.length === 0) break;
       frontier.length = 0;
       frontier.push(...nextFrontier);
+    }
+
+    // PR-INT-D · graph-neighborhood summary card. Cap the rendered
+    // edges at 12 in the artifact so the card stays under ~200px.
+    // edgeCount in the payload reflects the FULL traversal so the
+    // agent can narrate "showing N of total" honestly.
+    const graphArtifact = {
+      rootId: root.id,
+      rootLabel: root.name,
+      nodeCount: neighbors.length + 1,
+      edgeCount: neighbors.length,
+      topEdges: neighbors.slice(0, 12).map(({ pattern, edgeType }) => ({
+        targetId: pattern.id,
+        targetLabel: pattern.name,
+        edgeType,
+      })),
+    };
+    if (neighbors.length > 0) {
+      ctx.writer?.write(
+        `\n[[artifact:graph-neighborhood]]${JSON.stringify(graphArtifact)}[[/artifact]]\n`,
+      );
     }
 
     for (const { pattern } of neighbors) {

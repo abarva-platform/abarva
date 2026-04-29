@@ -504,3 +504,114 @@ describe('extractArtifacts · Surface 2 PR-L program-phase-changed', () => {
     ).toHaveLength(0);
   });
 });
+
+describe('extractArtifacts · graph-neighborhood (PR-INT-D)', () => {
+  it('parses a well-formed graph-neighborhood artifact', () => {
+    const input =
+      '[[artifact:graph-neighborhood]]{"rootId":"pattern_ai_use_case_portfolio","rootLabel":"AI Use Case Portfolio Management","nodeCount":11,"edgeCount":10,"topEdges":[{"targetId":"pattern_analytics_modernization","targetLabel":"Analytics Modernization","edgeType":"co_applies_with"}]}[[/artifact]]';
+    const result = extractArtifacts(input);
+    expect(result.artifacts).toHaveLength(1);
+    expect(result.artifacts[0]).toMatchObject({
+      type: 'graph-neighborhood',
+      rootId: 'pattern_ai_use_case_portfolio',
+      rootLabel: 'AI Use Case Portfolio Management',
+      nodeCount: 11,
+      edgeCount: 10,
+    });
+    if (result.artifacts[0].type === 'graph-neighborhood') {
+      expect(result.artifacts[0].topEdges).toEqual([
+        {
+          targetId: 'pattern_analytics_modernization',
+          targetLabel: 'Analytics Modernization',
+          edgeType: 'co_applies_with',
+        },
+      ]);
+    }
+  });
+
+  it('drops malformed edges but keeps the rest', () => {
+    const input =
+      '[[artifact:graph-neighborhood]]{"rootId":"r","rootLabel":"Root","nodeCount":3,"edgeCount":2,"topEdges":[' +
+      '{"targetId":"a","targetLabel":"A","edgeType":"co_applies_with"},' +
+      '{"targetId":"b","edgeType":"co_applies_with"},' +
+      '{"targetId":"c","targetLabel":"C","edgeType":"unknown"}' +
+      ']}[[/artifact]]';
+    const result = extractArtifacts(input);
+    expect(result.artifacts).toHaveLength(1);
+    if (result.artifacts[0].type === 'graph-neighborhood') {
+      expect(result.artifacts[0].topEdges).toHaveLength(1);
+      expect(result.artifacts[0].topEdges[0].targetId).toBe('a');
+    }
+  });
+
+  it('rejects non-array topEdges', () => {
+    expect(
+      extractArtifacts(
+        '[[artifact:graph-neighborhood]]{"rootId":"r","rootLabel":"R","nodeCount":1,"edgeCount":0,"topEdges":"none"}[[/artifact]]',
+      ).artifacts,
+    ).toHaveLength(0);
+  });
+
+  it('rejects negative counts', () => {
+    expect(
+      extractArtifacts(
+        '[[artifact:graph-neighborhood]]{"rootId":"r","rootLabel":"R","nodeCount":-1,"edgeCount":0,"topEdges":[]}[[/artifact]]',
+      ).artifacts,
+    ).toHaveLength(0);
+  });
+
+  it('rejects empty rootId or rootLabel', () => {
+    expect(
+      extractArtifacts(
+        '[[artifact:graph-neighborhood]]{"rootId":"","rootLabel":"R","nodeCount":1,"edgeCount":0,"topEdges":[]}[[/artifact]]',
+      ).artifacts,
+    ).toHaveLength(0);
+    expect(
+      extractArtifacts(
+        '[[artifact:graph-neighborhood]]{"rootId":"r","rootLabel":"","nodeCount":1,"edgeCount":0,"topEdges":[]}[[/artifact]]',
+      ).artifacts,
+    ).toHaveLength(0);
+  });
+});
+
+describe('extractArtifacts · contradiction-flag (PR-INT-D)', () => {
+  it('parses a well-formed contradiction-flag artifact', () => {
+    const input =
+      '[[artifact:contradiction-flag]]{"contradictionId":"vendor-savings-vs-measured","label":"Vendor savings claim vs measured reality","severity":"high","partyA":"Vendor benchmark","partyB":"Measured run-rate","detectionDescription":"Vendor cites 22% savings; tenant measures 7%.","resolutionPath":"Pull baseline source-of-truth and re-cite."}[[/artifact]]';
+    const result = extractArtifacts(input);
+    expect(result.artifacts).toHaveLength(1);
+    expect(result.artifacts[0]).toMatchObject({
+      type: 'contradiction-flag',
+      contradictionId: 'vendor-savings-vs-measured',
+      severity: 'high',
+      partyA: 'Vendor benchmark',
+      partyB: 'Measured run-rate',
+    });
+  });
+
+  it("rejects severity outside 'low' | 'medium' | 'high'", () => {
+    expect(
+      extractArtifacts(
+        '[[artifact:contradiction-flag]]{"contradictionId":"c1","label":"L","severity":"critical","partyA":"A","partyB":"B","detectionDescription":"d","resolutionPath":"r"}[[/artifact]]',
+      ).artifacts,
+    ).toHaveLength(0);
+  });
+
+  it('rejects empty required fields', () => {
+    expect(
+      extractArtifacts(
+        '[[artifact:contradiction-flag]]{"contradictionId":"","label":"L","severity":"low","partyA":"A","partyB":"B","detectionDescription":"d","resolutionPath":"r"}[[/artifact]]',
+      ).artifacts,
+    ).toHaveLength(0);
+    expect(
+      extractArtifacts(
+        '[[artifact:contradiction-flag]]{"contradictionId":"c","label":"","severity":"low","partyA":"A","partyB":"B","detectionDescription":"d","resolutionPath":"r"}[[/artifact]]',
+      ).artifacts,
+    ).toHaveLength(0);
+    expect(
+      extractArtifacts(
+        '[[artifact:contradiction-flag]]{"contradictionId":"c","label":"L","severity":"low","partyA":"A","partyB":"B","detectionDescription":"","resolutionPath":"r"}[[/artifact]]',
+      ).artifacts,
+    ).toHaveLength(0);
+  });
+});
