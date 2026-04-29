@@ -609,9 +609,9 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     description: 'Cross-instance view of all active unresolved contradictions',
   },
   {
-    title: 'Waiver analysis',
+    title: 'Waiver Analysis',
     href: '/admin/reasoning/waiver-analysis',
-    description: 'Gate waivers, approvals, and rejections summarised by instance and criterion',
+    description: 'Deep-dive waiver patterns — frequency by instance and criterion, concentration risk, waiver-free instances.',
   },
   {
     title: 'Feedback stats',

@@ -1,19 +1,23 @@
-// /admin/reasoning/waiver-analysis — Gate waiver and approval analysis.
+// /admin/reasoning/waiver-analysis — Portfolio-wide waiver deep-dive.
 //
-// Server component. Calls the audit route handler in-process to get the full
-// merged dataset (live buffers + demo pre-seed), then filters down to
-// gate_waiver / gate_approval / gate_reject entries and renders:
-//   1. Summary stat row (waivers, approvals, rejections, unique instances)
-//   2. Top waived criteria table
-//   3. Per-instance gate action summary table
-//   4. Recent activity timeline (last 10 gate actions, newest first)
+// Pure server component. Loads all active gate waivers from the in-memory
+// store, then derives:
+//   1. Summary KPI strip (total waivers, unique instances, most-waived
+//      criterion, avg waivers per instance).
+//   2. Waiver frequency by instance — horizontal CSS bar chart.
+//   3. Criterion frequency table — waiver count, % of instances, risk label.
+//   4. Concentration risk card — if any criterion is waived in >50% of
+//      instances, surface a warning.
+//   5. Waiver-free badge list — instances with zero waivers.
 
-import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
+import type { CSSProperties } from 'react';
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { EditorialCanvas } from '@/components/admin/EditorialCanvas';
 import { AgentRail } from '@/components/admin/AgentRail';
-import { GET } from '@/app/api/reasoning/audit/route';
-import type { AuditEntry } from '@/app/api/reasoning/audit/route';
+import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
+import { getWaivers } from '@/app/api/reasoning/gate-waiver/route';
+import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
+import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,118 +25,146 @@ export const metadata = {
   title: 'Waiver analysis · AbarVa Admin',
 };
 
-// ─── Data loading ─────────────────────────────────────────────────────────────
+// ─── Palette constants (inline — rust not in design-tokens yet) ───────────────
 
-async function loadGateEntries(): Promise<AuditEntry[]> {
-  const response = await GET();
-  const all = (await response.json()) as AuditEntry[];
-  return all.filter(
-    (e) =>
-      e.type === 'gate_waiver' ||
-      e.type === 'gate_approval' ||
-      e.type === 'gate_reject',
-  );
+const RUST_SOFT = '#FFF0E6';
+const RUST_INK = '#8B3A0F';
+
+// ─── Instance name lookup ─────────────────────────────────────────────────────
+
+function buildInstanceNameIndex(): Map<string, string> {
+  const index = new Map<string, string>();
+  for (const inst of SOURCE_EVENT_INSTANCES) {
+    index.set(inst.id, inst.name);
+  }
+  for (const inst of APEX_RETAIL_PROGRAM_INSTANCES) {
+    index.set(inst.id, inst.name);
+  }
+  return index;
 }
 
-// ─── Derived analytics ────────────────────────────────────────────────────────
+// ─── Derived data types ───────────────────────────────────────────────────────
+
+interface InstanceWaiverCount {
+  instanceId: string;
+  instanceName: string;
+  count: number;
+}
 
 interface CriterionRow {
   criterionId: string;
   waiverCount: number;
   instancesAffected: number;
+  /** As a fraction 0–1. */
+  pctAffected: number;
+  risk: 'High' | 'Medium' | 'Low';
 }
 
-interface InstanceRow {
-  instanceId: string;
-  waivers: number;
-  approvals: number;
-  rejections: number;
-  firstAction: string;
-  lastAction: string;
+interface WaiverAnalysis {
+  totalWaivers: number;
+  uniqueInstancesWithWaivers: number;
+  totalKnownInstances: number;
+  mostWaivedCriterionId: string | null;
+  mostWaivedCriterionCount: number;
+  avgWaiversPerInstance: number;
+  instanceCounts: InstanceWaiverCount[];
+  waiverFreeInstances: InstanceWaiverCount[];
+  criterionRows: CriterionRow[];
+  concentrationCriteria: Array<{ criterionId: string; count: number }>;
 }
 
-function extractCriterionId(entry: AuditEntry): string {
-  // Detail format: Gate criterion "<id>" waived/approved/rejected — <rest>
-  const match = /Gate criterion "([^"]+)"/.exec(entry.detail);
-  return match ? match[1] : entry.detail.slice(0, 40);
-}
+// ─── Data assembly ────────────────────────────────────────────────────────────
 
-function buildCriterionRows(entries: AuditEntry[]): CriterionRow[] {
-  const waiversOnly = entries.filter((e) => e.type === 'gate_waiver');
+function buildAnalysis(): WaiverAnalysis {
+  const nameIndex = buildInstanceNameIndex();
 
-  const countMap = new Map<string, number>();
-  const instanceSetMap = new Map<string, Set<string>>();
+  // All known instances (union of source + programs fixture)
+  const allKnownIds = new Set<string>();
+  for (const inst of SOURCE_EVENT_INSTANCES) allKnownIds.add(inst.id);
+  for (const inst of APEX_RETAIL_PROGRAM_INSTANCES) allKnownIds.add(inst.id);
+  const totalKnownInstances = allKnownIds.size;
 
-  for (const e of waiversOnly) {
-    const cid = extractCriterionId(e);
-    countMap.set(cid, (countMap.get(cid) ?? 0) + 1);
-    const s = instanceSetMap.get(cid) ?? new Set<string>();
-    s.add(e.instanceId);
-    instanceSetMap.set(cid, s);
+  const waivers = getWaivers();
+
+  // Per-instance count
+  const instanceCountMap = new Map<string, number>();
+  for (const w of waivers) {
+    instanceCountMap.set(w.instanceId, (instanceCountMap.get(w.instanceId) ?? 0) + 1);
   }
 
-  return Array.from(countMap.entries())
-    .map(([criterionId, waiverCount]) => ({
-      criterionId,
-      waiverCount,
-      instancesAffected: instanceSetMap.get(criterionId)?.size ?? 0,
-    }))
-    .sort((a, b) => b.waiverCount - a.waiverCount);
-}
-
-function buildInstanceRows(entries: AuditEntry[]): InstanceRow[] {
-  const map = new Map<
-    string,
-    { waivers: number; approvals: number; rejections: number; timestamps: string[] }
-  >();
-
-  for (const e of entries) {
-    const row = map.get(e.instanceId) ?? {
-      waivers: 0,
-      approvals: 0,
-      rejections: 0,
-      timestamps: [],
-    };
-    if (e.type === 'gate_waiver') row.waivers += 1;
-    if (e.type === 'gate_approval') row.approvals += 1;
-    if (e.type === 'gate_reject') row.rejections += 1;
-    row.timestamps.push(e.timestamp);
-    map.set(e.instanceId, row);
+  // Per-criterion aggregation
+  const criterionCountMap = new Map<string, number>();
+  const criterionInstanceSetMap = new Map<string, Set<string>>();
+  for (const w of waivers) {
+    criterionCountMap.set(w.criterionId, (criterionCountMap.get(w.criterionId) ?? 0) + 1);
+    const s = criterionInstanceSetMap.get(w.criterionId) ?? new Set<string>();
+    s.add(w.instanceId);
+    criterionInstanceSetMap.set(w.criterionId, s);
   }
 
-  return Array.from(map.entries())
-    .map(([instanceId, data]) => {
-      const sorted = [...data.timestamps].sort();
-      return {
-        instanceId,
-        waivers: data.waivers,
-        approvals: data.approvals,
-        rejections: data.rejections,
-        firstAction: sorted[0] ?? '',
-        lastAction: sorted[sorted.length - 1] ?? '',
-      };
+  // Sort criterion rows descending by count
+  const criterionRows: CriterionRow[] = Array.from(criterionCountMap.entries())
+    .map(([criterionId, waiverCount]) => {
+      const instancesAffected = criterionInstanceSetMap.get(criterionId)?.size ?? 0;
+      const pctAffected = totalKnownInstances > 0 ? instancesAffected / totalKnownInstances : 0;
+      let risk: 'High' | 'Medium' | 'Low';
+      if (waiverCount >= 3) risk = 'High';
+      else if (waiverCount === 2) risk = 'Medium';
+      else risk = 'Low';
+      return { criterionId, waiverCount, instancesAffected, pctAffected, risk };
     })
-    .sort((a, b) => b.lastAction.localeCompare(a.lastAction));
+    .sort((a, b) => b.waiverCount - a.waiverCount);
+
+  // Most-waived criterion
+  const topCriterion = criterionRows[0] ?? null;
+
+  // Instance counts — sorted descending by count, then by name
+  const instanceCountsWithWaivers: InstanceWaiverCount[] = Array.from(instanceCountMap.entries())
+    .map(([instanceId, count]) => ({
+      instanceId,
+      instanceName: nameIndex.get(instanceId) ?? instanceId,
+      count,
+    }))
+    .sort((a, b) => b.count - a.count || a.instanceName.localeCompare(b.instanceName));
+
+  // Waiver-free instances
+  const waiverFreeInstances: InstanceWaiverCount[] = Array.from(allKnownIds)
+    .filter((id) => !instanceCountMap.has(id))
+    .map((id) => ({
+      instanceId: id,
+      instanceName: nameIndex.get(id) ?? id,
+      count: 0,
+    }))
+    .sort((a, b) => a.instanceName.localeCompare(b.instanceName));
+
+  const uniqueInstancesWithWaivers = instanceCountsWithWaivers.length;
+  const avgWaiversPerInstance =
+    uniqueInstancesWithWaivers > 0
+      ? waivers.length / uniqueInstancesWithWaivers
+      : 0;
+
+  // Concentration risk: any criterion waived in >50% of all known instances
+  const concentrationCriteria = criterionRows
+    .filter((r) => r.pctAffected > 0.5)
+    .map((r) => ({ criterionId: r.criterionId, count: r.instancesAffected }));
+
+  return {
+    totalWaivers: waivers.length,
+    uniqueInstancesWithWaivers,
+    totalKnownInstances,
+    mostWaivedCriterionId: topCriterion?.criterionId ?? null,
+    mostWaivedCriterionCount: topCriterion?.waiverCount ?? 0,
+    avgWaiversPerInstance,
+    instanceCounts: instanceCountsWithWaivers,
+    waiverFreeInstances,
+    criterionRows,
+    concentrationCriteria,
+  };
 }
 
-// ─── Formatting helpers ────────────────────────────────────────────────────────
+// ─── Style constants ──────────────────────────────────────────────────────────
 
-function formatTimestamp(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toISOString().replace('T', ' ').slice(0, 19) + 'Z';
-}
-
-function typeLabel(type: AuditEntry['type']): string {
-  if (type === 'gate_waiver') return 'Waiver';
-  if (type === 'gate_approval') return 'Approval';
-  if (type === 'gate_reject') return 'Rejection';
-  return type;
-}
-
-// ─── Table style constants ────────────────────────────────────────────────────
-
-const HEADER_CELL: React.CSSProperties = {
+const HEADER_CELL: CSSProperties = {
   fontFamily: TYPOGRAPHY.sans,
   fontSize: 11,
   letterSpacing: '0.08em',
@@ -146,7 +178,7 @@ const HEADER_CELL: React.CSSProperties = {
   whiteSpace: 'nowrap',
 };
 
-const BODY_CELL: React.CSSProperties = {
+const BODY_CELL: CSSProperties = {
   fontFamily: TYPOGRAPHY.sans,
   fontSize: 12,
   color: COLORS.ink,
@@ -155,22 +187,16 @@ const BODY_CELL: React.CSSProperties = {
   verticalAlign: 'top',
 };
 
-const MONO_CELL: React.CSSProperties = {
+const MONO_CELL: CSSProperties = {
   ...BODY_CELL,
   fontFamily: TYPOGRAPHY.mono,
   fontSize: 11,
   color: `${COLORS.ink}bb`,
 };
 
-// ─── Summary stats ────────────────────────────────────────────────────────────
+// ─── Section 1: Summary KPI strip ────────────────────────────────────────────
 
-interface StatTileProps {
-  label: string;
-  value: string | number;
-  sub?: string;
-}
-
-function StatTile({ label, value, sub }: StatTileProps) {
+function KpiCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
     <div
       style={{
@@ -208,13 +234,7 @@ function StatTile({ label, value, sub }: StatTileProps) {
         {value}
       </div>
       {sub ? (
-        <div
-          style={{
-            fontFamily: TYPOGRAPHY.sans,
-            fontSize: 12,
-            color: `${COLORS.ink}88`,
-          }}
-        >
+        <div style={{ fontFamily: TYPOGRAPHY.sans, fontSize: 12, color: `${COLORS.ink}88` }}>
           {sub}
         </div>
       ) : null}
@@ -222,12 +242,8 @@ function StatTile({ label, value, sub }: StatTileProps) {
   );
 }
 
-function SummaryRow({ entries }: { entries: AuditEntry[] }) {
-  const waivers = entries.filter((e) => e.type === 'gate_waiver').length;
-  const approvals = entries.filter((e) => e.type === 'gate_approval').length;
-  const rejections = entries.filter((e) => e.type === 'gate_reject').length;
-  const uniqueInstances = new Set(entries.map((e) => e.instanceId)).size;
-
+function SummaryKpiStrip({ analysis }: { analysis: WaiverAnalysis }) {
+  const avg = analysis.avgWaiversPerInstance.toFixed(1);
   return (
     <div
       style={{
@@ -236,57 +252,43 @@ function SummaryRow({ entries }: { entries: AuditEntry[] }) {
         gap: SPACING.md,
       }}
     >
-      <StatTile label="Gate waivers" value={waivers} sub="in-session" />
-      <StatTile label="Gate approvals" value={approvals} sub="in-session" />
-      <StatTile label="Gate rejections" value={rejections} sub="in-session" />
-      <StatTile
-        label="Unique instances"
-        value={uniqueInstances}
-        sub="affected by any gate action"
+      <KpiCard label="Total waivers" value={analysis.totalWaivers} sub="active in store" />
+      <KpiCard
+        label="Instances with waivers"
+        value={analysis.uniqueInstancesWithWaivers}
+        sub={`of ${analysis.totalKnownInstances} known`}
+      />
+      <KpiCard
+        label="Most-waived criterion"
+        value={analysis.mostWaivedCriterionId ?? '—'}
+        sub={
+          analysis.mostWaivedCriterionId
+            ? `${analysis.mostWaivedCriterionCount} waiver${analysis.mostWaivedCriterionCount === 1 ? '' : 's'}`
+            : 'no waivers yet'
+        }
+      />
+      <KpiCard
+        label="Avg waivers / instance"
+        value={avg}
+        sub="among instances with any waiver"
       />
     </div>
   );
 }
 
-// ─── Type badge ────────────────────────────────────────────────────────────────
+// ─── Section 2: Waiver frequency by instance (horizontal bar chart) ───────────
 
-function TypeBadge({ type }: { type: AuditEntry['type'] }) {
-  let bg: string;
-  let fg: string;
-  if (type === 'gate_waiver') {
-    bg = COLORS.amberSoft;
-    fg = COLORS.amberInk;
-  } else if (type === 'gate_approval') {
-    bg = COLORS.mintSoft;
-    fg = COLORS.mintInk;
-  } else {
-    bg = COLORS.coralSoft;
-    fg = COLORS.coralInk;
-  }
-
-  return (
-    <span
-      style={{
-        display: 'inline-block',
-        background: bg,
-        color: fg,
-        borderRadius: RADIUS.pill,
-        padding: '2px 9px',
-        fontFamily: TYPOGRAPHY.sans,
-        fontSize: 11,
-        fontWeight: 600,
-        letterSpacing: '0.03em',
-        whiteSpace: 'nowrap',
-      }}
-    >
-      {typeLabel(type)}
-    </span>
-  );
+function barColor(count: number): { bg: string; fg: string } {
+  if (count === 0) return { bg: `${COLORS.ink}14`, fg: `${COLORS.ink}66` };
+  if (count <= 2) return { bg: COLORS.amberSoft, fg: COLORS.amberInk };
+  return { bg: RUST_SOFT, fg: RUST_INK };
 }
 
-// ─── Top waived criteria table ────────────────────────────────────────────────
+function InstanceFrequencyChart({ instances }: { instances: InstanceWaiverCount[] }) {
+  if (instances.length === 0) return null;
 
-function TopCriteriaTable({ rows }: { rows: CriterionRow[] }) {
+  const maxCount = instances[0]?.count ?? 1;
+
   return (
     <section
       style={{
@@ -316,7 +318,7 @@ function TopCriteriaTable({ rows }: { rows: CriterionRow[] }) {
               letterSpacing: '-0.01em',
             }}
           >
-            Top waived criteria
+            Waiver frequency by instance
           </h2>
           <div
             style={{
@@ -326,32 +328,161 @@ function TopCriteriaTable({ rows }: { rows: CriterionRow[] }) {
               marginTop: 2,
             }}
           >
-            Sorted by waiver count descending
+            Amber = 1–2 waivers · Rust = 3+ waivers
           </div>
         </div>
-        <span
-          style={{
-            fontFamily: TYPOGRAPHY.mono,
-            fontSize: 11,
-            color: `${COLORS.ink}88`,
-          }}
-        >
+        <span style={{ fontFamily: TYPOGRAPHY.mono, fontSize: 11, color: `${COLORS.ink}88` }}>
+          {instances.length} instance{instances.length === 1 ? '' : 's'}
+        </span>
+      </header>
+      <div style={{ padding: SPACING.md, display: 'flex', flexDirection: 'column', gap: SPACING.sm }}>
+        {instances.map((inst) => {
+          const palette = barColor(inst.count);
+          const widthPct = maxCount > 0 ? (inst.count / maxCount) * 100 : 0;
+          return (
+            <div key={inst.instanceId} style={{ display: 'flex', alignItems: 'center', gap: SPACING.md }}>
+              <div
+                style={{
+                  fontFamily: TYPOGRAPHY.sans,
+                  fontSize: 12,
+                  color: COLORS.ink,
+                  width: 200,
+                  minWidth: 200,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+                title={inst.instanceName}
+              >
+                {inst.instanceName}
+              </div>
+              <div style={{ flex: 1, background: `${COLORS.ink}0a`, borderRadius: RADIUS.sm, overflow: 'hidden', height: 20 }}>
+                <div
+                  style={{
+                    width: `${widthPct}%`,
+                    minWidth: inst.count > 0 ? 24 : 0,
+                    height: '100%',
+                    background: palette.bg,
+                    borderRadius: RADIUS.sm,
+                    transition: 'width 0s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    paddingLeft: SPACING.xs,
+                  }}
+                />
+              </div>
+              <span
+                style={{
+                  fontFamily: TYPOGRAPHY.mono,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: palette.fg,
+                  width: 28,
+                  textAlign: 'right',
+                }}
+              >
+                {inst.count}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+// ─── Section 3: Criterion frequency table ────────────────────────────────────
+
+function riskBadge(risk: 'High' | 'Medium' | 'Low') {
+  const style: CSSProperties =
+    risk === 'High'
+      ? { background: RUST_SOFT, color: RUST_INK }
+      : risk === 'Medium'
+        ? { background: COLORS.amberSoft, color: COLORS.amberInk }
+        : { background: COLORS.mintSoft, color: COLORS.mintInk };
+
+  return (
+    <span
+      style={{
+        ...style,
+        display: 'inline-block',
+        borderRadius: RADIUS.pill,
+        padding: '2px 9px',
+        fontFamily: TYPOGRAPHY.sans,
+        fontSize: 11,
+        fontWeight: 600,
+        letterSpacing: '0.03em',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {risk}
+    </span>
+  );
+}
+
+function CriterionFrequencyTable({
+  rows,
+  totalInstances,
+}: {
+  rows: CriterionRow[];
+  totalInstances: number;
+}) {
+  return (
+    <section
+      style={{
+        background: COLORS.white,
+        border: `1px solid ${COLORS.ink}14`,
+        borderRadius: RADIUS.lg,
+        overflow: 'hidden',
+      }}
+    >
+      <header
+        style={{
+          padding: `${SPACING.md} ${SPACING.lg}`,
+          borderBottom: `1px solid ${COLORS.ink}10`,
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          gap: SPACING.md,
+        }}
+      >
+        <div>
+          <h2
+            style={{
+              fontFamily: TYPOGRAPHY.serif,
+              fontSize: 20,
+              color: COLORS.ink,
+              margin: 0,
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Criterion frequency
+          </h2>
+          <div
+            style={{ fontFamily: TYPOGRAPHY.sans, fontSize: 12, color: `${COLORS.ink}88`, marginTop: 2 }}
+          >
+            Sorted descending by waiver count · Risk: High ≥ 3, Medium = 2, Low = 1
+          </div>
+        </div>
+        <span style={{ fontFamily: TYPOGRAPHY.mono, fontSize: 11, color: `${COLORS.ink}88` }}>
           {rows.length} criterion{rows.length === 1 ? '' : 'a'}
         </span>
       </header>
       <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 520 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 560 }}>
           <thead>
             <tr>
-              <th style={HEADER_CELL}>Criterion ID</th>
-              <th style={{ ...HEADER_CELL, textAlign: 'right' }}>Waiver count</th>
-              <th style={{ ...HEADER_CELL, textAlign: 'right' }}>Instances affected</th>
+              <th style={HEADER_CELL}>Criterion</th>
+              <th style={{ ...HEADER_CELL, textAlign: 'right' }}>Waivers</th>
+              <th style={{ ...HEADER_CELL, textAlign: 'right' }}>
+                % of instances ({totalInstances} total)
+              </th>
+              <th style={HEADER_CELL}>Risk</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((row, idx) => {
-              const isEven = idx % 2 === 0;
-              const rowBg = isEven ? COLORS.white : `${COLORS.ink}04`;
+              const rowBg = idx % 2 === 0 ? COLORS.white : `${COLORS.ink}04`;
               return (
                 <tr key={row.criterionId}>
                   <td
@@ -365,280 +496,24 @@ function TopCriteriaTable({ rows }: { rows: CriterionRow[] }) {
                   >
                     {row.criterionId}
                   </td>
-                  <td
-                    style={{
-                      ...MONO_CELL,
-                      background: rowBg,
-                      textAlign: 'right',
-                    }}
-                  >
+                  <td style={{ ...MONO_CELL, background: rowBg, textAlign: 'right' }}>
                     {row.waiverCount}
                   </td>
-                  <td
-                    style={{
-                      ...MONO_CELL,
-                      background: rowBg,
-                      textAlign: 'right',
-                    }}
-                  >
-                    {row.instancesAffected}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
-
-// ─── Per-instance gate action summary ─────────────────────────────────────────
-
-function InstanceSummaryTable({ rows }: { rows: InstanceRow[] }) {
-  return (
-    <section
-      style={{
-        background: COLORS.white,
-        border: `1px solid ${COLORS.ink}14`,
-        borderRadius: RADIUS.lg,
-        overflow: 'hidden',
-      }}
-    >
-      <header
-        style={{
-          padding: `${SPACING.md} ${SPACING.lg}`,
-          borderBottom: `1px solid ${COLORS.ink}10`,
-          display: 'flex',
-          alignItems: 'baseline',
-          justifyContent: 'space-between',
-          gap: SPACING.md,
-        }}
-      >
-        <div>
-          <h2
-            style={{
-              fontFamily: TYPOGRAPHY.serif,
-              fontSize: 20,
-              color: COLORS.ink,
-              margin: 0,
-              letterSpacing: '-0.01em',
-            }}
-          >
-            Per-instance gate actions
-          </h2>
-          <div
-            style={{
-              fontFamily: TYPOGRAPHY.sans,
-              fontSize: 12,
-              color: `${COLORS.ink}88`,
-              marginTop: 2,
-            }}
-          >
-            Instances that have had at least one gate action — sorted by most recent
-          </div>
-        </div>
-        <span
-          style={{
-            fontFamily: TYPOGRAPHY.mono,
-            fontSize: 11,
-            color: `${COLORS.ink}88`,
-          }}
-        >
-          {rows.length} instance{rows.length === 1 ? '' : 's'}
-        </span>
-      </header>
-      <div style={{ overflowX: 'auto' }}>
-        <table
-          style={{ width: '100%', borderCollapse: 'collapse', minWidth: 760 }}
-        >
-          <thead>
-            <tr>
-              <th style={HEADER_CELL}>Instance ID</th>
-              <th style={{ ...HEADER_CELL, textAlign: 'right' }}>Waivers</th>
-              <th style={{ ...HEADER_CELL, textAlign: 'right' }}>Approvals</th>
-              <th style={{ ...HEADER_CELL, textAlign: 'right' }}>Rejections</th>
-              <th style={HEADER_CELL}>First action</th>
-              <th style={HEADER_CELL}>Last action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, idx) => {
-              const isEven = idx % 2 === 0;
-              const rowBg = isEven ? COLORS.white : `${COLORS.ink}04`;
-              return (
-                <tr key={row.instanceId}>
-                  <td
-                    style={{
-                      ...BODY_CELL,
-                      background: rowBg,
-                      fontFamily: TYPOGRAPHY.mono,
-                      fontSize: 11,
-                      color: COLORS.navy,
-                      fontWeight: 600,
-                    }}
-                  >
-                    {row.instanceId}
-                  </td>
-                  <td
-                    style={{
-                      ...MONO_CELL,
-                      background: rowBg,
-                      textAlign: 'right',
-                      color:
-                        row.waivers > 0 ? COLORS.amberInk : `${COLORS.ink}66`,
-                    }}
-                  >
-                    {row.waivers}
-                  </td>
-                  <td
-                    style={{
-                      ...MONO_CELL,
-                      background: rowBg,
-                      textAlign: 'right',
-                      color:
-                        row.approvals > 0
-                          ? COLORS.mintInk
-                          : `${COLORS.ink}66`,
-                    }}
-                  >
-                    {row.approvals}
-                  </td>
-                  <td
-                    style={{
-                      ...MONO_CELL,
-                      background: rowBg,
-                      textAlign: 'right',
-                      color:
-                        row.rejections > 0
-                          ? COLORS.coralInk
-                          : `${COLORS.ink}66`,
-                    }}
-                  >
-                    {row.rejections}
-                  </td>
-                  <td style={{ ...MONO_CELL, background: rowBg }}>
-                    {formatTimestamp(row.firstAction)}
-                  </td>
-                  <td style={{ ...MONO_CELL, background: rowBg }}>
-                    {formatTimestamp(row.lastAction)}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
-
-// ─── Recent activity timeline ─────────────────────────────────────────────────
-
-function RecentActivityTable({ entries }: { entries: AuditEntry[] }) {
-  const recent = entries.slice(0, 10);
-
-  return (
-    <section
-      style={{
-        background: COLORS.white,
-        border: `1px solid ${COLORS.ink}14`,
-        borderRadius: RADIUS.lg,
-        overflow: 'hidden',
-      }}
-    >
-      <header
-        style={{
-          padding: `${SPACING.md} ${SPACING.lg}`,
-          borderBottom: `1px solid ${COLORS.ink}10`,
-          display: 'flex',
-          alignItems: 'baseline',
-          justifyContent: 'space-between',
-          gap: SPACING.md,
-        }}
-      >
-        <div>
-          <h2
-            style={{
-              fontFamily: TYPOGRAPHY.serif,
-              fontSize: 20,
-              color: COLORS.ink,
-              margin: 0,
-              letterSpacing: '-0.01em',
-            }}
-          >
-            Recent gate activity
-          </h2>
-          <div
-            style={{
-              fontFamily: TYPOGRAPHY.sans,
-              fontSize: 12,
-              color: `${COLORS.ink}88`,
-              marginTop: 2,
-            }}
-          >
-            Last 10 gate actions across waivers and approvals — newest first
-          </div>
-        </div>
-        <span
-          style={{
-            fontFamily: TYPOGRAPHY.mono,
-            fontSize: 11,
-            color: `${COLORS.ink}88`,
-          }}
-        >
-          showing {recent.length} of {entries.length}
-        </span>
-      </header>
-      <div style={{ overflowX: 'auto' }}>
-        <table
-          style={{ width: '100%', borderCollapse: 'collapse', minWidth: 760 }}
-        >
-          <thead>
-            <tr>
-              <th style={HEADER_CELL}>Time</th>
-              <th style={HEADER_CELL}>Type</th>
-              <th style={HEADER_CELL}>Instance</th>
-              <th style={HEADER_CELL}>Criterion</th>
-              <th style={HEADER_CELL}>Detail</th>
-            </tr>
-          </thead>
-          <tbody>
-            {recent.map((entry, idx) => {
-              const isEven = idx % 2 === 0;
-              const rowBg = isEven ? COLORS.white : `${COLORS.ink}04`;
-              const criterionId = extractCriterionId(entry);
-              return (
-                <tr key={entry.id}>
-                  <td style={{ ...MONO_CELL, background: rowBg, whiteSpace: 'nowrap' }}>
-                    {formatTimestamp(entry.timestamp)}
+                  <td style={{ ...MONO_CELL, background: rowBg, textAlign: 'right' }}>
+                    {(row.pctAffected * 100).toFixed(0)}%
+                    <span
+                      style={{
+                        fontFamily: TYPOGRAPHY.sans,
+                        fontSize: 11,
+                        color: `${COLORS.ink}66`,
+                        marginLeft: 4,
+                      }}
+                    >
+                      ({row.instancesAffected} instance{row.instancesAffected === 1 ? '' : 's'})
+                    </span>
                   </td>
                   <td style={{ ...BODY_CELL, background: rowBg }}>
-                    <TypeBadge type={entry.type} />
-                  </td>
-                  <td
-                    style={{
-                      ...MONO_CELL,
-                      background: rowBg,
-                      color: COLORS.navy,
-                      fontWeight: 600,
-                    }}
-                  >
-                    {entry.instanceId}
-                  </td>
-                  <td style={{ ...MONO_CELL, background: rowBg }}>
-                    {criterionId}
-                  </td>
-                  <td
-                    style={{
-                      ...BODY_CELL,
-                      background: rowBg,
-                      maxWidth: 300,
-                      lineHeight: 1.4,
-                      fontSize: 12,
-                    }}
-                  >
-                    {entry.detail}
+                    {riskBadge(row.risk)}
                   </td>
                 </tr>
               );
@@ -650,7 +525,118 @@ function RecentActivityTable({ entries }: { entries: AuditEntry[] }) {
   );
 }
 
-// ─── Empty state ───────────────────────────────────────────────────────────────
+// ─── Section 4: Concentration risk card ──────────────────────────────────────
+
+function ConcentrationRiskCard({
+  risks,
+  totalInstances,
+}: {
+  risks: Array<{ criterionId: string; count: number }>;
+  totalInstances: number;
+}) {
+  if (risks.length === 0) return null;
+
+  return (
+    <section
+      style={{
+        background: RUST_SOFT,
+        border: `1px solid ${RUST_INK}33`,
+        borderRadius: RADIUS.lg,
+        padding: `${SPACING.md} ${SPACING.lg}`,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: SPACING.sm,
+      }}
+    >
+      <div
+        style={{
+          fontFamily: TYPOGRAPHY.serif,
+          fontSize: 20,
+          color: RUST_INK,
+          letterSpacing: '-0.01em',
+        }}
+      >
+        Concentration risk detected
+      </div>
+      {risks.map((r) => (
+        <div
+          key={r.criterionId}
+          style={{
+            fontFamily: TYPOGRAPHY.sans,
+            fontSize: 13,
+            color: RUST_INK,
+            lineHeight: 1.5,
+          }}
+        >
+          ⚠️ Concentration risk:{' '}
+          <span style={{ fontFamily: TYPOGRAPHY.mono, fontWeight: 700 }}>{r.criterionId}</span>{' '}
+          waived in {r.count} of {totalInstances} instances. Consider revising this gate criterion.
+        </div>
+      ))}
+    </section>
+  );
+}
+
+// ─── Section 5: Waiver-free badge list ────────────────────────────────────────
+
+function WaiverFreeBadges({ instances }: { instances: InstanceWaiverCount[] }) {
+  if (instances.length === 0) return null;
+
+  return (
+    <section
+      style={{
+        background: COLORS.white,
+        border: `1px solid ${COLORS.ink}14`,
+        borderRadius: RADIUS.lg,
+        padding: `${SPACING.md} ${SPACING.lg}`,
+      }}
+    >
+      <h2
+        style={{
+          fontFamily: TYPOGRAPHY.serif,
+          fontSize: 20,
+          color: COLORS.ink,
+          margin: `0 0 ${SPACING.md}`,
+          letterSpacing: '-0.01em',
+        }}
+      >
+        Waiver-free instances{' '}
+        <span
+          style={{
+            fontFamily: TYPOGRAPHY.mono,
+            fontSize: 13,
+            color: `${COLORS.ink}66`,
+            fontWeight: 400,
+          }}
+        >
+          ({instances.length})
+        </span>
+      </h2>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: SPACING.sm }}>
+        {instances.map((inst) => (
+          <div
+            key={inst.instanceId}
+            style={{
+              background: COLORS.mintSoft,
+              color: COLORS.mintInk,
+              borderRadius: RADIUS.pill,
+              padding: '4px 14px',
+              fontFamily: TYPOGRAPHY.sans,
+              fontSize: 12,
+              fontWeight: 600,
+              letterSpacing: '0.01em',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {inst.instanceName}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ─── Empty state ──────────────────────────────────────────────────────────────
 
 function EmptyState() {
   return (
@@ -676,57 +662,53 @@ function EmptyState() {
           letterSpacing: '-0.01em',
         }}
       >
-        No gate actions yet
+        No active waivers
       </div>
-      Use the waiver or approval buttons on a Source or Programs detail page to
-      record gate actions. They will appear here once the server has processed at
-      least one request.
+      Use the waiver button on a Source or Programs detail page to record gate waivers. They will
+      appear here once at least one waiver is in the store.
     </div>
   );
 }
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
-export default async function WaiverAnalysisPage() {
-  const entries = await loadGateEntries();
-  const isEmpty = entries.length === 0;
-
-  // Pre-sort newest-first for tables that need it (criteria/instance tables
-  // do their own sort; this is consumed by the timeline and passed through).
-  const sortedEntries = [...entries].sort(
-    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
-  );
-
-  const criterionRows = buildCriterionRows(entries);
-  const instanceRows = buildInstanceRows(entries);
+export default function WaiverAnalysisPage() {
+  const analysis = buildAnalysis();
 
   return (
     <AdminCanonShellV2
       agentRail={
         <AgentRail
           primaryAgentLabel="Steward"
-          primaryActionLabel="Back to reasoning"
-          primaryActionHref="/admin/reasoning"
+          primaryActionLabel="Open waiver log"
+          primaryActionHref="/admin/reasoning/waiver-log"
         />
       }
     >
       <EditorialCanvas
-        eyebrow="Reasoning · Waiver analysis"
-        title="Gate waiver &amp; approval analysis"
-        subtitle="In-session view of every gate waiver, approval, and rejection — grouped by criterion and instance. All data is ephemeral: it resets on server restart."
+        eyebrow="Reasoning · Waivers"
+        title="Waiver Analysis"
+        subtitle="Portfolio-wide waiver patterns — frequency, concentration, and risk profiling"
       >
-        <SummaryRow entries={entries} />
-        {isEmpty ? (
+        <SummaryKpiStrip analysis={analysis} />
+
+        {analysis.totalWaivers === 0 ? (
           <EmptyState />
         ) : (
           <>
-            {criterionRows.length > 0 && (
-              <TopCriteriaTable rows={criterionRows} />
-            )}
-            <InstanceSummaryTable rows={instanceRows} />
-            <RecentActivityTable entries={sortedEntries} />
+            <ConcentrationRiskCard
+              risks={analysis.concentrationCriteria}
+              totalInstances={analysis.totalKnownInstances}
+            />
+            <InstanceFrequencyChart instances={analysis.instanceCounts} />
+            <CriterionFrequencyTable
+              rows={analysis.criterionRows}
+              totalInstances={analysis.totalKnownInstances}
+            />
           </>
         )}
+
+        <WaiverFreeBadges instances={analysis.waiverFreeInstances} />
       </EditorialCanvas>
     </AdminCanonShellV2>
   );
