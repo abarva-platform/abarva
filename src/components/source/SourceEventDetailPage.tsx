@@ -48,6 +48,8 @@ import { RecentMissionStates } from '@/components/_shared/RecentMissionStates';
 import { EvidenceCoverageHeatmap } from '@/components/reasoning/EvidenceCoverageHeatmap';
 import { EvidenceNetworkGraph } from '@/components/reasoning/EvidenceNetworkGraph';
 import { ReasoningErrorBoundary } from '@/components/reasoning/ReasoningErrorBoundary';
+import { EvidenceSuggestionsPanel } from '@/components/reasoning/EvidenceSuggestionsPanel';
+import { buildEvidenceSuggestions } from '@/lib/reasoning/evidence-suggestions';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -299,6 +301,15 @@ function ReadinessTab() {
           pattern={PAT_SRC_AMS_001}
         />
       </ReasoningErrorBoundary>
+
+      {/* REASON-37 — Evidence suggestions panel: context-sensitive hints
+          for what documents to upload to satisfy each unmet gate criterion. */}
+      <EvidenceSuggestionsPanel
+        suggestions={buildEvidenceSuggestions(
+          AMS_VENDOR_CONSOLIDATION_2026_INSTANCE,
+          PAT_SRC_AMS_001,
+        )}
+      />
 
       {/* Honest disclaimer */}
       <div
