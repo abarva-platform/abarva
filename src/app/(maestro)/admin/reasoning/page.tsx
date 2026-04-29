@@ -1108,6 +1108,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/instance-risk-matrix',
     description: '2×2 quadrant matrix plotting health vs. contradictions — identify urgent, watch, fragile, and low-risk instances.',
   },
+  {
+    title: 'Gate Progress Summary',
+    href: '/admin/reasoning/gate-progress-summary',
+    description: 'Executive KPI strip, stage advancement table, top/bottom performers — consolidated printable view.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
