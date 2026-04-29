@@ -743,6 +743,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/stage-transitions',
     description: 'Chronological log of all stage advancement events across source event instances',
   },
+  {
+    title: 'Pattern health',
+    href: '/admin/reasoning/pattern-health',
+    description: 'Health metrics aggregated by lifecycle pattern — avg score, contradictions, gate coverage',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
