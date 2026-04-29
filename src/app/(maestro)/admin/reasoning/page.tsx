@@ -1043,6 +1043,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/stage-readiness',
     description: 'Stage-level readiness dashboard — what % of instances in each stage are ready to advance',
   },
+  {
+    title: 'Pattern gap report',
+    href: '/admin/reasoning/pattern-gap',
+    description: 'Pattern definition completeness — stages with no gates, missing contradiction templates, failure modes, source docs',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
