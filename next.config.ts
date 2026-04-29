@@ -35,15 +35,17 @@ const nextConfig: NextConfig = {
       // Product-map spec: engagement console lives at /engagements/[id].
       // Keep the /engage/* path alive via 308 for bookmarks + prior links.
       { source: '/engage/:path*', destination: '/engagements/:path*', permanent: true },
-      // Intelligence preview remains the primary shell while the canonical
-      // pattern pages keep filling out. Programs and Tower now resolve
-      // through their own route handlers so legacy URLs can redirect into
-      // tenant-scoped seeded surfaces without looping through /preview/*.
-      { source: '/intelligence', destination: '/preview/intelligence', permanent: false },
+      // PR-INT-F · The /intelligence canonical shell is now the
+      // Sentinel agent canvas (src/app/intelligence/page.tsx), reshaped
+      // in PR-INT-B and tooled in PR-INT-C/D/E. The legacy
+      // /intelligence → /preview/intelligence redirect was pointing at
+      // a route that no longer exists (404), hiding the entire Sentinel
+      // surface. Both /intelligence and /intelligence/thread/* now serve
+      // the canonical IntelligenceIndexPage; thread-shaped URLs can
+      // 404 cleanly until the per-pattern detail layer lands.
       // Legacy sponsor URLs now land on the person profile route instead of
       // dumping users into the programs preview shell.
       { source: '/sponsor/:path*', destination: '/persons/:path*', permanent: false },
-      { source: '/intelligence/thread/:path*', destination: '/preview/intelligence', permanent: false },
       // NOTE · /tower/projects, /tower/staff-aug, /tower/tech-stack,
       // /tower/volumetrics, /tower/preview, /tower/onboard/* are legitimate
       // Tower sub-surfaces with their own content and stay live.
