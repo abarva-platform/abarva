@@ -1,14 +1,18 @@
-// /admin/reasoning/evidence-gaps — Portfolio-level evidence gap report.
+// /admin/reasoning/evidence-gaps — Unmet gate criteria with zero supporting evidence.
 //
-// Server component. Iterates over every source event instance and program
-// instance, calls buildEvidenceSuggestions for each, and surfaces instances
-// that have high-priority evidence gaps (unmet hard gate criteria).
+// Pure server component. For each instance (source events + Apex Retail programs),
+// evaluates stage gate criteria against the instance evidence map and identifies
+// criteria that are unmet AND have zero supporting evidence fragments — these are
+// "evidence gaps" as opposed to gates that are unmet but at least have partial
+// signals.
+//
+// Aggregates across all instances to show which criterion IDs appear most
+// frequently as "unmet with no evidence", giving an actionable priority ranking.
 //
 // Renders:
-//   - 3 summary metric cards
-//   - Main table of instances with high-priority gaps, sorted by gap count
-//   - All-clear banner for gap-free instances
-//   - Full empty state if no high-priority gaps exist anywhere
+//   - SummaryStrip: headline counts across all instances
+//   - TopGapsCard: top-10 criteria ranked by instances missing evidence (rust)
+//   - GapTable: per-instance/criterion gap rows with evidence count
 
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
@@ -16,12 +20,12 @@ import { EditorialCanvas } from '@/components/admin/EditorialCanvas';
 import { AgentRail } from '@/components/admin/AgentRail';
 import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
 import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances';
-import { SOURCE_LIFECYCLE_PATTERNS } from '@/lib/intelligence/source-lifecycle-patterns';
-import { PROGRAM_LIFECYCLE_PATTERNS } from '@/lib/intelligence/program-lifecycle-patterns';
-import { buildEvidenceSuggestions } from '@/lib/reasoning/evidence-suggestions';
-import type { LifecyclePatternSeed } from '@/lib/intelligence/seed-types';
-import type { SourceEventInstance } from '@/lib/source/source-event-instance';
-import type { ProgramInstance } from '@/lib/programs/program-instance';
+import { getAllLifecyclePatterns } from '@/lib/reasoning/lifecycle-pattern-lookup';
+import { getEvidenceFor } from '@/lib/reasoning/evidence-ingestion-store';
+import { evaluateStageGates } from '@/lib/reasoning/gate-evaluator';
+import { buildEvidenceMap } from '@/lib/source/source-event-instance';
+import { buildProgramEvidenceMap } from '@/lib/programs/program-instance';
+import type { GateStatus } from '@/lib/reasoning/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,115 +35,159 @@ export const metadata = {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type InstanceType = 'source' | 'program';
-
-interface InstanceGapRow {
+interface GapRow {
   instanceId: string;
   instanceName: string;
-  instanceType: InstanceType;
-  phaseOrStage: string;
-  highGapCount: number;
-  mediumGapCount: number;
-  /** First suggestion's first 2 evidence types (if any). */
-  topEvidenceHints: string[];
+  instanceType: 'source' | 'program';
+  stage: string;
+  criterionId: string;
+  description: string;
+  gateType: 'hard' | 'soft';
+  gateStatus: GateStatus;
+  evidenceCount: number;
+}
+
+interface TopGapEntry {
+  criterionId: string;
+  description: string;
+  gateType: 'hard' | 'soft';
+  instanceCount: number;
 }
 
 // ─── Data computation ─────────────────────────────────────────────────────────
 
-function buildPatternMap(patterns: LifecyclePatternSeed[]): Map<string, LifecyclePatternSeed> {
-  const m = new Map<string, LifecyclePatternSeed>();
-  for (const p of patterns) {
-    m.set(p.patternId, p);
-  }
-  return m;
-}
-
-function currentStageLabel(instance: SourceEventInstance | ProgramInstance): string {
-  if ('currentPhase' in instance && 'phases' in instance) {
-    const phase = instance.phases.find((p) => p.phaseId === instance.currentPhase);
-    return phase ? phase.phaseLabel : `Phase ${instance.currentPhase}`;
-  }
-  return (instance as SourceEventInstance).currentStage;
-}
-
-function computeGapRows(): {
-  rows: InstanceGapRow[];
-  allClearCount: number;
-  totalHighGaps: number;
-  totalMediumGaps: number;
+function computeGaps(): {
+  gaps: GapRow[];
+  totalInstances: number;
+  uniqueGapCriteria: number;
+  hardGapCount: number;
+  softGapCount: number;
+  topGaps: TopGapEntry[];
 } {
-  const srcPatterns = buildPatternMap(SOURCE_LIFECYCLE_PATTERNS);
-  const prgPatterns = buildPatternMap(PROGRAM_LIFECYCLE_PATTERNS);
-
-  const rows: InstanceGapRow[] = [];
-  let allClearCount = 0;
-  let totalHighGaps = 0;
-  let totalMediumGaps = 0;
+  const patternMap = new Map(getAllLifecyclePatterns().map((p) => [p.patternId, p]));
+  const gaps: GapRow[] = [];
 
   // Source event instances
   for (const inst of SOURCE_EVENT_INSTANCES) {
-    const pattern = srcPatterns.get(inst.patternId);
+    const pattern = patternMap.get(inst.patternId);
     if (!pattern) continue;
 
-    const suggestions = buildEvidenceSuggestions(inst, pattern);
-    const highSuggestions = suggestions.filter((s) => s.priority === 'high');
-    const mediumSuggestions = suggestions.filter((s) => s.priority === 'medium');
+    const baseEvMap = buildEvidenceMap(inst);
+    const ingestedItems = getEvidenceFor(inst.id);
 
-    totalHighGaps += highSuggestions.length;
-    totalMediumGaps += mediumSuggestions.length;
-
-    if (highSuggestions.length === 0) {
-      allClearCount += 1;
-      continue;
+    // Merge ingested evidence into a combined map
+    const evMap: Record<string, unknown> = { ...baseEvMap };
+    for (const item of ingestedItems) {
+      for (const [k, v] of Object.entries(item)) {
+        evMap[k] = v;
+      }
     }
 
-    const topHints = highSuggestions[0].suggestedEvidenceTypes.slice(0, 2);
+    const stageId = inst.currentStage;
+    const evaluations = evaluateStageGates(pattern, stageId, evMap);
 
-    rows.push({
-      instanceId: inst.id,
-      instanceName: inst.name,
-      instanceType: 'source',
-      phaseOrStage: inst.currentStage,
-      highGapCount: highSuggestions.length,
-      mediumGapCount: mediumSuggestions.length,
-      topEvidenceHints: topHints,
-    });
+    for (const ev of evaluations) {
+      const isUnmet = ev.status === 'unmet' || ev.status === 'partial';
+      const evidenceCount = ev.evidence.length;
+      if (isUnmet && evidenceCount === 0) {
+        // Find description from pattern gateCriteria
+        const criterion = pattern.gateCriteria.find((c) => c.id === ev.criterionId);
+        gaps.push({
+          instanceId: inst.id,
+          instanceName: inst.name,
+          instanceType: 'source',
+          stage: stageId,
+          criterionId: ev.criterionId,
+          description: criterion?.description ?? ev.criterionId,
+          gateType: ev.gateType,
+          gateStatus: ev.status,
+          evidenceCount,
+        });
+      }
+    }
   }
 
   // Program instances
   for (const inst of APEX_RETAIL_PROGRAM_INSTANCES) {
-    const pattern = prgPatterns.get(inst.patternId);
+    const pattern = patternMap.get(inst.patternId);
     if (!pattern) continue;
 
-    const suggestions = buildEvidenceSuggestions(inst, pattern);
-    const highSuggestions = suggestions.filter((s) => s.priority === 'high');
-    const mediumSuggestions = suggestions.filter((s) => s.priority === 'medium');
+    const baseEvMap = buildProgramEvidenceMap(inst);
+    const ingestedItems = getEvidenceFor(inst.id);
 
-    totalHighGaps += highSuggestions.length;
-    totalMediumGaps += mediumSuggestions.length;
-
-    if (highSuggestions.length === 0) {
-      allClearCount += 1;
-      continue;
+    const evMap: Record<string, unknown> = { ...baseEvMap };
+    for (const item of ingestedItems) {
+      for (const [k, v] of Object.entries(item)) {
+        evMap[k] = v;
+      }
     }
 
-    const topHints = highSuggestions[0].suggestedEvidenceTypes.slice(0, 2);
+    // Resolve current stage label from phase
+    const phaseState = inst.phases.find((p) => p.phaseId === inst.currentPhase);
+    const stageId = phaseState ? phaseState.phaseLabel : `Phase ${inst.currentPhase}`;
 
-    rows.push({
-      instanceId: inst.id,
-      instanceName: inst.name,
-      instanceType: 'program',
-      phaseOrStage: currentStageLabel(inst),
-      highGapCount: highSuggestions.length,
-      mediumGapCount: mediumSuggestions.length,
-      topEvidenceHints: topHints,
-    });
+    const evaluations = evaluateStageGates(pattern, stageId, evMap);
+
+    for (const ev of evaluations) {
+      const isUnmet = ev.status === 'unmet' || ev.status === 'partial';
+      const evidenceCount = ev.evidence.length;
+      if (isUnmet && evidenceCount === 0) {
+        const criterion = pattern.gateCriteria.find((c) => c.id === ev.criterionId);
+        gaps.push({
+          instanceId: inst.id,
+          instanceName: inst.name,
+          instanceType: 'program',
+          stage: stageId,
+          criterionId: ev.criterionId,
+          description: criterion?.description ?? ev.criterionId,
+          gateType: ev.gateType,
+          gateStatus: ev.status,
+          evidenceCount,
+        });
+      }
+    }
   }
 
-  // Sort by high gap count descending
-  rows.sort((a, b) => b.highGapCount - a.highGapCount);
+  // Aggregate top gaps by criterion frequency
+  const criterionCounts = new Map<string, { count: number; description: string; gateType: 'hard' | 'soft' }>();
+  for (const gap of gaps) {
+    const existing = criterionCounts.get(gap.criterionId);
+    if (existing) {
+      existing.count += 1;
+    } else {
+      criterionCounts.set(gap.criterionId, {
+        count: 1,
+        description: gap.description,
+        gateType: gap.gateType,
+      });
+    }
+  }
 
-  return { rows, allClearCount, totalHighGaps, totalMediumGaps };
+  const topGaps: TopGapEntry[] = Array.from(criterionCounts.entries())
+    .map(([criterionId, { count, description, gateType }]) => ({
+      criterionId,
+      description,
+      gateType,
+      instanceCount: count,
+    }))
+    .sort((a, b) => b.instanceCount - a.instanceCount)
+    .slice(0, 10);
+
+  const uniqueGapCriteria = criterionCounts.size;
+  const hardGapCount = gaps.filter((g) => g.gateType === 'hard').length;
+  const softGapCount = gaps.filter((g) => g.gateType === 'soft').length;
+
+  const totalInstances =
+    SOURCE_EVENT_INSTANCES.length + APEX_RETAIL_PROGRAM_INSTANCES.length;
+
+  return {
+    gaps,
+    totalInstances,
+    uniqueGapCriteria,
+    hardGapCount,
+    softGapCount,
+    topGaps,
+  };
 }
 
 // ─── Style constants ──────────────────────────────────────────────────────────
@@ -171,105 +219,270 @@ const MONO_CELL: React.CSSProperties = {
   color: `${COLORS.ink}cc`,
 };
 
-// ─── Components ───────────────────────────────────────────────────────────────
+// ─── SummaryStrip ─────────────────────────────────────────────────────────────
 
-function MetricCard({
-  label,
-  value,
-  sub,
+function SummaryStrip({
+  totalInstances,
+  uniqueGapCriteria,
+  hardGapCount,
+  softGapCount,
 }: {
-  label: string;
-  value: string | number;
-  sub?: string;
+  totalInstances: number;
+  uniqueGapCriteria: number;
+  hardGapCount: number;
+  softGapCount: number;
 }) {
+  const items: Array<{ label: string; value: string | number }> = [
+    { label: 'Instances', value: totalInstances },
+    { label: 'Criteria with evidence gaps', value: uniqueGapCriteria },
+    { label: 'Hard gaps', value: hardGapCount },
+    { label: 'Soft gaps', value: softGapCount },
+  ];
+
   return (
     <div
       style={{
         background: COLORS.white,
         border: `1px solid ${COLORS.ink}14`,
         borderRadius: RADIUS.lg,
-        padding: SPACING.lg,
+        padding: `${SPACING.md} ${SPACING.lg}`,
         display: 'flex',
-        flexDirection: 'column',
-        gap: SPACING.xs,
-        minHeight: 120,
+        flexWrap: 'wrap',
+        gap: `${SPACING.lg} ${SPACING.xl}`,
+        alignItems: 'center',
       }}
     >
+      {items.map((item) => (
+        <div key={item.label} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <div
+            style={{
+              fontFamily: TYPOGRAPHY.sans,
+              fontSize: 11,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: `${COLORS.ink}77`,
+              fontWeight: 600,
+            }}
+          >
+            {item.label}
+          </div>
+          <div
+            style={{
+              fontFamily: TYPOGRAPHY.serif,
+              fontSize: 28,
+              color: COLORS.ink,
+              letterSpacing: '-0.02em',
+              lineHeight: 1.05,
+            }}
+          >
+            {item.value}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── TopGapsCard ──────────────────────────────────────────────────────────────
+
+function GateTypePill({ type }: { type: 'hard' | 'soft' }) {
+  const isHard = type === 'hard';
+  return (
+    <span
+      style={{
+        display: 'inline-block',
+        background: isHard ? COLORS.coralSoft : COLORS.amberSoft,
+        color: isHard ? COLORS.coralInk : COLORS.amberInk,
+        borderRadius: RADIUS.pill,
+        padding: '2px 10px',
+        fontFamily: TYPOGRAPHY.sans,
+        fontSize: 11,
+        fontWeight: 600,
+        textTransform: 'capitalize',
+        letterSpacing: '0.02em',
+      }}
+    >
+      {type}
+    </span>
+  );
+}
+
+function TopGapsCard({ topGaps }: { topGaps: TopGapEntry[] }) {
+  if (topGaps.length === 0) {
+    return (
       <div
         style={{
+          background: COLORS.mintSoft,
+          border: `1px solid ${COLORS.mintInk}33`,
+          borderRadius: RADIUS.lg,
+          padding: `${SPACING.xl} ${SPACING.lg}`,
+          textAlign: 'center',
           fontFamily: TYPOGRAPHY.sans,
-          fontSize: 11,
-          letterSpacing: '0.1em',
-          textTransform: 'uppercase',
-          color: `${COLORS.ink}99`,
+          fontSize: 15,
+          color: COLORS.mintInk,
           fontWeight: 600,
         }}
       >
-        {label}
+        No evidence gaps found — all unmet gate criteria have at least one evidence signal.
       </div>
-      <div
-        style={{
-          fontFamily: TYPOGRAPHY.serif,
-          fontSize: 36,
-          color: COLORS.ink,
-          letterSpacing: '-0.02em',
-          lineHeight: 1.05,
-        }}
-      >
-        {value}
-      </div>
-      {sub ? (
-        <div
-          style={{
-            fontFamily: TYPOGRAPHY.sans,
-            fontSize: 12,
-            color: `${COLORS.ink}88`,
-          }}
-        >
-          {sub}
-        </div>
-      ) : null}
-    </div>
-  );
-}
+    );
+  }
 
-function MetricGrid({
-  instancesWithGaps,
-  totalHighGaps,
-  totalMediumGaps,
-}: {
-  instancesWithGaps: number;
-  totalHighGaps: number;
-  totalMediumGaps: number;
-}) {
   return (
-    <div
+    <section
       style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-        gap: SPACING.md,
+        background: COLORS.coralSoft,
+        border: `1px solid ${COLORS.coralInk}22`,
+        borderRadius: RADIUS.lg,
+        overflow: 'hidden',
       }}
     >
-      <MetricCard
-        label="Instances with gaps"
-        value={instancesWithGaps}
-        sub="1+ unmet hard gate criterion"
-      />
-      <MetricCard
-        label="High-priority gaps"
-        value={totalHighGaps}
-        sub="Hard gate — status unmet"
-      />
-      <MetricCard
-        label="Medium-priority gaps"
-        value={totalMediumGaps}
-        sub="Hard gate partial or soft gate unmet"
-      />
-    </div>
+      <header
+        style={{
+          padding: `${SPACING.md} ${SPACING.lg}`,
+          borderBottom: `1px solid ${COLORS.coralInk}18`,
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          gap: SPACING.md,
+        }}
+      >
+        <div>
+          <h2
+            style={{
+              fontFamily: TYPOGRAPHY.serif,
+              fontSize: 20,
+              color: COLORS.coralInk,
+              margin: 0,
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Top evidence gaps
+          </h2>
+          <div
+            style={{
+              fontFamily: TYPOGRAPHY.sans,
+              fontSize: 12,
+              color: `${COLORS.coralInk}bb`,
+              marginTop: 2,
+            }}
+          >
+            Criteria with zero evidence ranked by frequency across instances
+          </div>
+        </div>
+        <span
+          style={{
+            fontFamily: TYPOGRAPHY.mono,
+            fontSize: 11,
+            color: `${COLORS.coralInk}aa`,
+          }}
+        >
+          top {topGaps.length}
+        </span>
+      </header>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 0,
+        }}
+      >
+        {topGaps.map((entry, idx) => (
+          <div
+            key={entry.criterionId}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: SPACING.md,
+              padding: `${SPACING.sm} ${SPACING.lg}`,
+              borderBottom: idx < topGaps.length - 1 ? `1px solid ${COLORS.coralInk}14` : undefined,
+            }}
+          >
+            <span
+              style={{
+                fontFamily: TYPOGRAPHY.mono,
+                fontSize: 11,
+                color: `${COLORS.coralInk}88`,
+                minWidth: 18,
+                textAlign: 'right',
+              }}
+            >
+              {idx + 1}
+            </span>
+            <span
+              style={{
+                fontFamily: TYPOGRAPHY.mono,
+                fontSize: 11,
+                color: COLORS.coralInk,
+                background: `${COLORS.coralInk}14`,
+                borderRadius: RADIUS.sm,
+                padding: '2px 8px',
+                flexShrink: 0,
+              }}
+            >
+              {entry.criterionId}
+            </span>
+            <span
+              style={{
+                fontFamily: TYPOGRAPHY.sans,
+                fontSize: 12,
+                color: COLORS.coralInk,
+                flex: 1,
+                minWidth: 0,
+              }}
+            >
+              {entry.description}
+            </span>
+            <GateTypePill type={entry.gateType} />
+            <span
+              style={{
+                fontFamily: TYPOGRAPHY.mono,
+                fontSize: 12,
+                color: COLORS.coralInk,
+                fontWeight: 700,
+                flexShrink: 0,
+              }}
+            >
+              {entry.instanceCount} instance{entry.instanceCount === 1 ? '' : 's'}
+            </span>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
-function TypeBadge({ type }: { type: InstanceType }) {
+// ─── GapTable ─────────────────────────────────────────────────────────────────
+
+function StatusBadge({ status }: { status: GateStatus }) {
+  const palette =
+    status === 'unmet'
+      ? { bg: COLORS.coralSoft, fg: COLORS.coralInk }
+      : status === 'partial'
+        ? { bg: COLORS.amberSoft, fg: COLORS.amberInk }
+        : { bg: `${COLORS.ink}0a`, fg: `${COLORS.ink}88` };
+
+  return (
+    <span
+      style={{
+        display: 'inline-block',
+        background: palette.bg,
+        color: palette.fg,
+        borderRadius: RADIUS.pill,
+        padding: '2px 10px',
+        fontFamily: TYPOGRAPHY.sans,
+        fontSize: 11,
+        fontWeight: 600,
+        textTransform: 'uppercase',
+        letterSpacing: '0.04em',
+      }}
+    >
+      {status}
+    </span>
+  );
+}
+
+function InstanceTypeBadge({ type }: { type: 'source' | 'program' }) {
   const isProgram = type === 'program';
   return (
     <span
@@ -291,32 +504,26 @@ function TypeBadge({ type }: { type: InstanceType }) {
   );
 }
 
-function HighCountBadge({ count }: { count: number }) {
-  return (
-    <span
-      style={{
-        display: 'inline-block',
-        background: COLORS.coralSoft,
-        color: COLORS.coralInk,
-        borderRadius: RADIUS.pill,
-        padding: '2px 12px',
-        fontFamily: TYPOGRAPHY.mono,
-        fontSize: 12,
-        fontWeight: 700,
-        letterSpacing: '0.02em',
-      }}
-    >
-      {count}
-    </span>
-  );
-}
+function GapTable({ gaps }: { gaps: GapRow[] }) {
+  if (gaps.length === 0) {
+    return (
+      <div
+        style={{
+          background: COLORS.white,
+          border: `1px solid ${COLORS.ink}14`,
+          borderRadius: RADIUS.lg,
+          padding: `${SPACING.xl} ${SPACING.lg}`,
+          textAlign: 'center',
+          fontFamily: TYPOGRAPHY.sans,
+          fontSize: 14,
+          color: `${COLORS.ink}99`,
+        }}
+      >
+        No evidence gaps detected across any instance.
+      </div>
+    );
+  }
 
-function truncate(text: string, maxLen: number): string {
-  if (text.length <= maxLen) return text;
-  return text.slice(0, maxLen - 1) + '…';
-}
-
-function GapsTable({ rows }: { rows: InstanceGapRow[] }) {
   return (
     <section
       style={{
@@ -346,7 +553,7 @@ function GapsTable({ rows }: { rows: InstanceGapRow[] }) {
               letterSpacing: '-0.01em',
             }}
           >
-            Instances with high-priority gaps
+            Evidence gap detail
           </h2>
           <div
             style={{
@@ -356,7 +563,7 @@ function GapsTable({ rows }: { rows: InstanceGapRow[] }) {
               marginTop: 2,
             }}
           >
-            Sorted by gap count descending · showing unmet hard gate criteria only
+            Unmet gate criteria with zero supporting evidence across all instances
           </div>
         </div>
         <span
@@ -366,75 +573,77 @@ function GapsTable({ rows }: { rows: InstanceGapRow[] }) {
             color: `${COLORS.ink}88`,
           }}
         >
-          {rows.length} instance{rows.length === 1 ? '' : 's'}
+          {gaps.length} gap{gaps.length === 1 ? '' : 's'}
         </span>
       </header>
       <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 760 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 880 }}>
           <thead>
             <tr>
               <th style={HEADER_CELL}>Instance</th>
-              <th style={HEADER_CELL}>Type</th>
-              <th style={HEADER_CELL}>Phase / Stage</th>
-              <th style={{ ...HEADER_CELL, textAlign: 'center' }}>High gaps</th>
-              <th style={{ ...HEADER_CELL, textAlign: 'center' }}>Medium gaps</th>
-              <th style={HEADER_CELL}>Suggested evidence (first 2)</th>
+              <th style={HEADER_CELL}>Stage</th>
+              <th style={HEADER_CELL}>Criterion ID</th>
+              <th style={HEADER_CELL}>Description</th>
+              <th style={{ ...HEADER_CELL, textAlign: 'center' }}>Type</th>
+              <th style={{ ...HEADER_CELL, textAlign: 'center' }}>Gate status</th>
+              <th style={{ ...HEADER_CELL, textAlign: 'center' }}>Evidence</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => {
-              const hintText =
-                row.topEvidenceHints.length > 0
-                  ? truncate(row.topEvidenceHints.join(', '), 60)
-                  : '—';
-              return (
-                <tr key={row.instanceId}>
-                  <td style={BODY_CELL}>
-                    <div style={{ fontWeight: 600 }}>{row.instanceName}</div>
-                    <div
+            {gaps.map((row, idx) => (
+              <tr key={`${row.instanceId}-${row.criterionId}-${idx}`}>
+                <td style={BODY_CELL}>
+                  <div style={{ fontWeight: 600 }}>{row.instanceName}</div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      marginTop: 3,
+                    }}
+                  >
+                    <InstanceTypeBadge type={row.instanceType} />
+                    <span
                       style={{
                         fontFamily: TYPOGRAPHY.mono,
                         fontSize: 10,
-                        color: `${COLORS.ink}77`,
-                        marginTop: 2,
+                        color: `${COLORS.ink}66`,
                       }}
                     >
                       {row.instanceId}
-                    </div>
-                  </td>
-                  <td style={BODY_CELL}>
-                    <TypeBadge type={row.instanceType} />
-                  </td>
-                  <td style={MONO_CELL}>{row.phaseOrStage}</td>
-                  <td
-                    style={{
-                      ...BODY_CELL,
-                      textAlign: 'center',
-                    }}
-                  >
-                    <HighCountBadge count={row.highGapCount} />
-                  </td>
-                  <td
-                    style={{
-                      ...MONO_CELL,
-                      textAlign: 'center',
-                      color: row.mediumGapCount > 0 ? COLORS.amberInk : `${COLORS.ink}55`,
-                    }}
-                  >
-                    {row.mediumGapCount}
-                  </td>
-                  <td
-                    style={{
-                      ...BODY_CELL,
-                      color: `${COLORS.ink}99`,
-                      maxWidth: 260,
-                    }}
-                  >
-                    {hintText}
-                  </td>
-                </tr>
-              );
-            })}
+                    </span>
+                  </div>
+                </td>
+                <td style={MONO_CELL}>{row.stage}</td>
+                <td style={MONO_CELL}>{row.criterionId}</td>
+                <td
+                  style={{
+                    ...BODY_CELL,
+                    maxWidth: 280,
+                    color: `${COLORS.ink}cc`,
+                    fontSize: 12,
+                  }}
+                >
+                  {row.description}
+                </td>
+                <td style={{ ...BODY_CELL, textAlign: 'center' }}>
+                  <GateTypePill type={row.gateType} />
+                </td>
+                <td style={{ ...BODY_CELL, textAlign: 'center' }}>
+                  <StatusBadge status={row.gateStatus} />
+                </td>
+                <td
+                  style={{
+                    ...MONO_CELL,
+                    textAlign: 'center',
+                    color: COLORS.coralInk,
+                    fontWeight: 700,
+                  }}
+                >
+                  0
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
@@ -442,88 +651,35 @@ function GapsTable({ rows }: { rows: InstanceGapRow[] }) {
   );
 }
 
-function AllClearBanner({ count }: { count: number }) {
-  if (count === 0) return null;
-  return (
-    <div
-      style={{
-        background: COLORS.mintSoft,
-        border: `1px solid ${COLORS.mintInk}33`,
-        borderRadius: RADIUS.lg,
-        padding: `${SPACING.md} ${SPACING.lg}`,
-        fontFamily: TYPOGRAPHY.sans,
-        fontSize: 14,
-        color: COLORS.mintInk,
-        fontWeight: 600,
-        display: 'flex',
-        alignItems: 'center',
-        gap: SPACING.sm,
-      }}
-    >
-      <span
-        aria-hidden="true"
-        style={{ fontFamily: TYPOGRAPHY.mono, fontSize: 18, lineHeight: 1 }}
-      >
-        ✓
-      </span>
-      {count} instance{count === 1 ? '' : 's'} with no evidence gaps
-    </div>
-  );
-}
-
-function EmptyStateBanner() {
-  return (
-    <div
-      style={{
-        background: COLORS.mintSoft,
-        border: `1px solid ${COLORS.mintInk}33`,
-        borderRadius: RADIUS.lg,
-        padding: `${SPACING.xl} ${SPACING.lg}`,
-        textAlign: 'center',
-        fontFamily: TYPOGRAPHY.sans,
-        fontSize: 16,
-        color: COLORS.mintInk,
-        fontWeight: 600,
-        lineHeight: 1.5,
-      }}
-    >
-      All hard gate criteria are covered across all instances.
-    </div>
-  );
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function EvidenceGapsPage() {
-  const { rows, allClearCount, totalHighGaps, totalMediumGaps } = computeGapRows();
-  const instancesWithGaps = rows.length;
+  const { gaps, totalInstances, uniqueGapCriteria, hardGapCount, softGapCount, topGaps } =
+    computeGaps();
 
   return (
     <AdminCanonShellV2
       agentRail={
         <AgentRail
           primaryAgentLabel="Steward"
-          primaryActionLabel="Open Source detail"
-          primaryActionHref="/source"
+          primaryActionLabel="Gate status matrix"
+          primaryActionHref="/admin/reasoning/gate-status-matrix"
         />
       }
     >
       <EditorialCanvas
         eyebrow="Reasoning · Evidence"
-        title="Evidence gap report"
-        subtitle="Portfolio-level view of unmet hard gate criteria missing evidence. Instances with at least one high-priority gap appear in the table below — sorted by gap count so the most urgent cases rise to the top."
+        title="Evidence gaps"
+        subtitle="Unmet gate criteria with zero supporting evidence — ranked by frequency across instances. A gap means a gate evaluator found no evidence fragments at all for an unmet criterion: the most actionable form of missing evidence."
       >
-        <MetricGrid
-          instancesWithGaps={instancesWithGaps}
-          totalHighGaps={totalHighGaps}
-          totalMediumGaps={totalMediumGaps}
+        <SummaryStrip
+          totalInstances={totalInstances}
+          uniqueGapCriteria={uniqueGapCriteria}
+          hardGapCount={hardGapCount}
+          softGapCount={softGapCount}
         />
-        {instancesWithGaps === 0 ? (
-          <EmptyStateBanner />
-        ) : (
-          <GapsTable rows={rows} />
-        )}
-        <AllClearBanner count={allClearCount} />
+        <TopGapsCard topGaps={topGaps} />
+        <GapTable gaps={gaps} />
       </EditorialCanvas>
     </AdminCanonShellV2>
   );

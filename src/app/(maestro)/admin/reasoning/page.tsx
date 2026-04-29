@@ -626,7 +626,7 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
   {
     title: 'Evidence gaps',
     href: '/admin/reasoning/evidence-gaps',
-    description: 'Portfolio-level view of unmet hard gate criteria missing evidence',
+    description: 'Unmet gate criteria with zero supporting evidence — missing evidence ranked by frequency across instances',
   },
   {
     title: 'Phase matrix',
