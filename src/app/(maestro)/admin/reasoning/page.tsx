@@ -788,6 +788,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/vendor-responses',
     description: 'All vendor response submissions across source events with completeness tracking',
   },
+  {
+    title: 'Regulatory reference',
+    href: '/admin/reasoning/regulatory',
+    description: 'All regulatory and compliance tags across lifecycle patterns with active instance coverage',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
