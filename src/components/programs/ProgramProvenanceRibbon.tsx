@@ -23,17 +23,20 @@ import {
 } from '@/lib/reasoning/provenance-ribbon-helpers';
 import { isLifecyclePatternId } from '@/lib/reasoning/lifecycle-pattern-lookup';
 import { PatternDoctrineLink } from '@/components/source/PatternDoctrineLink';
+import { SynthesisFeedbackWidget } from '@/components/reasoning/SynthesisFeedbackWidget';
 import { SHELL } from '@/lib/shell/shell-tokens';
 
 interface ProgramProvenanceRibbonProps {
   context: SynthesisContext;
+  /** Telemetry event id for the synthesis. When present, renders a thumbs feedback widget. */
+  eventId?: string;
 }
 
 const RIBBON_BG = '#F8F7F4';
 const SECTION_GAP = 14;
 const VISIBLE_CITATION_LIMIT = 4;
 
-export function ProgramProvenanceRibbon({ context }: ProgramProvenanceRibbonProps) {
+export function ProgramProvenanceRibbon({ context, eventId }: ProgramProvenanceRibbonProps) {
   const cited = formatCitations(context.citations, VISIBLE_CITATION_LIMIT);
   const gates = summarizeGates(context.gatesSummary);
   const blockers = summarizeBlockers(context);
@@ -187,6 +190,13 @@ export function ProgramProvenanceRibbon({ context }: ProgramProvenanceRibbonProp
           <Muted>No failure modes detected</Muted>
         )}
       </Section>
+
+      {eventId ? (
+        <>
+          <Divider />
+          <SynthesisFeedbackWidget synthesisId={eventId} surface="program" />
+        </>
+      ) : null}
     </aside>
   );
 }

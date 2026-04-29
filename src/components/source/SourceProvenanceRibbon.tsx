@@ -23,13 +23,16 @@ import {
 } from '@/lib/reasoning/provenance-ribbon-helpers';
 import { isLifecyclePatternId } from '@/lib/reasoning/lifecycle-pattern-lookup';
 import { PatternDoctrineLink } from '@/components/source/PatternDoctrineLink';
+import { SynthesisFeedbackWidget } from '@/components/reasoning/SynthesisFeedbackWidget';
 import { SHELL } from '@/lib/shell/shell-tokens';
 
 interface SourceProvenanceRibbonProps {
   context: SynthesisContext;
+  /** Telemetry event id for the synthesis. When present, renders a thumbs feedback widget. */
+  eventId?: string;
 }
 
-export function SourceProvenanceRibbon({ context }: SourceProvenanceRibbonProps) {
+export function SourceProvenanceRibbon({ context, eventId }: SourceProvenanceRibbonProps) {
   const cited = formatCitations(context.citations, 4);
   const gates = summarizeGates(context.gatesSummary);
   const cascade = summarizeCascade(context);
@@ -206,6 +209,15 @@ export function SourceProvenanceRibbon({ context }: SourceProvenanceRibbonProps)
           <span style={{ color: SHELL.INK_MUTED }}>no failure modes detected</span>
         )}
       </RibbonSection>
+
+      {eventId ? (
+        <>
+          <Separator />
+          <div style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 8px' }}>
+            <SynthesisFeedbackWidget synthesisId={eventId} surface="source" />
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }
