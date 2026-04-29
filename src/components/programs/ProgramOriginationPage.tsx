@@ -358,17 +358,22 @@ export function ProgramOriginationPage({ tenantSlug: _tenantSlug }: ProgramOrigi
       });
 
       if (response.status === 401) {
-        throw new Error('Session expired — please sign in again');
+        throw new Error('Your session expired. Sign in again, then retry.');
       }
       if (response.status === 403) {
-        throw new Error('No active client for this account — contact your administrator');
+        throw new Error('No active client for this account — contact your administrator.');
       }
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
+        const e = err as { detail?: string; error?: string; fields?: string[] };
+        if (e.error === 'bad_request' && e.fields?.length) {
+          throw new Error(`Couldn't create program: missing ${e.fields.join(', ')}.`);
+        }
         throw new Error(
-          (err as { detail?: string; error?: string }).detail ??
-          (err as { detail?: string; error?: string }).error ??
-          'Failed to create program'
+          e.detail
+            ?? (e.error
+              ? `Couldn't create program: ${e.error}.`
+              : "Couldn't create program. Steward couldn't reach the program service. Try again or contact support.")
         );
       }
 
@@ -376,14 +381,18 @@ export function ProgramOriginationPage({ tenantSlug: _tenantSlug }: ProgramOrigi
       const newProgramId = data.programId;
 
       if (!newProgramId) {
-        throw new Error('No program ID returned — please try again');
+        throw new Error("Steward created the program but didn't return an ID. Try again.");
       }
 
       setShowSuccess(true);
       await new Promise<void>((resolve) => setTimeout(resolve, 800));
       router.push(`/programs/${newProgramId}`);
     } catch (e) {
-      setSubmitError(e instanceof Error ? e.message : 'Something went wrong');
+      // TODO(observability): forward submit failures to Sentry/PostHog once the
+      // client error sink is wired up (no infrastructure exists today).
+      const message = e instanceof Error ? e.message : 'Something went wrong while creating the program.';
+      console.error('[ProgramOriginationPage] submit failed', { message });
+      setSubmitError(message);
       setIsSubmitting(false);
     }
   };
@@ -656,19 +665,61 @@ export function ProgramOriginationPage({ tenantSlug: _tenantSlug }: ProgramOrigi
 
           {submitError && (
             <div
+              role="alert"
+              data-testid="program-origination-error"
               style={{
-                padding: '7px 12px',
+                padding: '8px 12px',
                 background: 'rgba(185, 28, 28, 0.07)',
                 border: '1px solid rgba(185, 28, 28, 0.35)',
                 borderRadius: 6,
                 fontFamily: SANS,
                 fontSize: 12,
                 color: '#b91c1c',
-                maxWidth: 340,
-                textAlign: 'right',
+                maxWidth: 420,
+                textAlign: 'left',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+                lineHeight: 1.45,
               }}
             >
-              {submitError}
+              <span>{submitError}</span>
+              <div style={{ display: 'flex', gap: 8, alignSelf: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => setSubmitError(null)}
+                  style={{
+                    fontFamily: SANS,
+                    fontSize: 11,
+                    fontWeight: 500,
+                    color: MUTED,
+                    background: 'transparent',
+                    border: 'none',
+                    padding: '2px 4px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Dismiss
+                </button>
+                <button
+                  type="button"
+                  onClick={handleOpen}
+                  disabled={!canOpen || isSubmitting}
+                  style={{
+                    fontFamily: SANS,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: '#b91c1c',
+                    background: '#fff',
+                    border: '1px solid rgba(185, 28, 28, 0.45)',
+                    borderRadius: 4,
+                    padding: '3px 10px',
+                    cursor: !canOpen || isSubmitting ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  Try again
+                </button>
+              </div>
             </div>
           )}
         </div>

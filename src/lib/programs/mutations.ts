@@ -48,6 +48,9 @@ export interface OriginateProgramInput {
 export async function originateProgram(ctx: TenancyCtx, input: OriginateProgramInput): Promise<ProgramCore> {
   assertTenancy(ctx);
   const sb = getServerSupabase();
+  // NOTE: engagements has no `created_by` column on the current schema —
+  // creator attribution is captured in module_state_log (changed_by_user_id)
+  // and downstream participant rows. Don't reintroduce a created_by write.
   const { data, error } = await sb
     .from('engagements')
     .insert({
@@ -62,7 +65,6 @@ export async function originateProgram(ctx: TenancyCtx, input: OriginateProgramI
       founder_approval_required: input.founderApprovalRequired ?? false,
       data_residency_region: input.dataResidencyRegion ?? null,
       retention_policy_years: 7,
-      created_by: ctx.userId,
     })
     .select('*')
     .single();
