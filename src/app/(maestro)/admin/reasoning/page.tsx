@@ -1138,6 +1138,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/gate-pass-rate-trend',
     description: 'Stage-by-stage pass rate trajectory — early vs. late program performance with inflection point detection.',
   },
+  {
+    title: 'Health Clusters',
+    href: '/admin/reasoning/health-clusters',
+    description: 'Instances grouped into 5 health bands with within-cluster pattern analysis and structural mismatch detection.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
