@@ -1308,6 +1308,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Synthesis Timeline',
     description: 'Simulated confidence evolution over 5 time snapshots — trend arrows, fastest risers, quartile shifts.',
   },
+  {
+    href: '/admin/reasoning/contradiction-watchlist',
+    title: 'Contradiction Watchlist',
+    description: 'Urgency-ranked active contradictions — age, health context, resolution path availability.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
