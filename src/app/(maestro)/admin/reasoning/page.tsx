@@ -673,6 +673,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/snapshot',
     description: 'Auto-refreshing portfolio health dashboard with headline metrics — ideal for demo display',
   },
+  {
+    title: 'Playground',
+    href: '/admin/reasoning/playground',
+    description: 'Interactive gate evaluation — toggle evidence to see how coverage changes',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
