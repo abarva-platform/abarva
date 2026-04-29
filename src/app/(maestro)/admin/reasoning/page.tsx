@@ -1088,6 +1088,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/gate-dependency',
     description: 'Inferred gate criterion dependencies across stages — critical path and dependency chain analysis',
   },
+  {
+    title: 'Alerts dashboard',
+    href: '/admin/reasoning/alerts-dashboard',
+    description: 'Unified triage dashboard — critical health, stale waivers, chronic contradictions, and long dwell alerts',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
