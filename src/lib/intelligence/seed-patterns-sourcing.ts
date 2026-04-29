@@ -12,6 +12,7 @@ import { SOURCING_REGULATORY_AI_PATTERNS } from './seed-patterns-sourcing-regula
 import { SOURCING_REGULATORY_PATTERNS } from './seed-patterns-sourcing-regulatory';
 import { PAT_SRC_VEN_CLOUDFLARE_001 } from './seed-patterns-sourcing-vendors-cloudflare';
 import { DOCUSIGN_VENDOR_PROFILE_PATTERN } from './seed-patterns-sourcing-vendors-docusign';
+import { SOURCING_VENDOR_GITLAB_PATTERNS } from './seed-patterns-sourcing-vendors-gitlab';
 
 export const SOURCING_PATTERNS: PatternSeed[] = [
   {
@@ -1113,6 +1114,7 @@ Fixed-fee or capped T&M with monthly not-to-exceed, explicit deliverable accepta
   ...SOURCING_REGULATORY_PATTERNS,
   PAT_SRC_VEN_CLOUDFLARE_001,
   DOCUSIGN_VENDOR_PROFILE_PATTERN,
+  ...SOURCING_VENDOR_GITLAB_PATTERNS,
 ];
 
 export const SOURCING_PATTERN_COUNT = SOURCING_PATTERNS.length;
