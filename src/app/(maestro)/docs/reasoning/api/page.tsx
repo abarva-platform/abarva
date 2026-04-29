@@ -1156,6 +1156,11 @@ export default function ReasoningApiReferencePage() {
             <Link href="/docs/reasoning/changelog" style={LINK_STYLE}>
               changelog
             </Link>
+            . For a hands-on, click-through tour of every Layer 3 surface in
+            the live product, read the{' '}
+            <Link href="/docs/reasoning/demo" style={LINK_STYLE}>
+              5-minute demo walkthrough
+            </Link>
             .
           </p>
         </Section>
