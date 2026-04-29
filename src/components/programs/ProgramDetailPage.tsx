@@ -3608,13 +3608,24 @@ export function ProgramDetailPage({
   // progressively replace the static regions with reactive equivalents
   // driven by the same channel.
   const [nexusArtifacts, setNexusArtifacts] = useState<NexusArtifact[]>([]);
-  const handleNexusArtifact = useCallback((artifact: NexusArtifact) => {
-    setNexusArtifacts((prev) => {
-      const key = JSON.stringify(artifact);
-      if (prev.some((a) => JSON.stringify(a) === key)) return prev;
-      return [...prev, artifact];
-    });
-  }, []);
+  const handleNexusArtifact = useCallback(
+    (artifact: NexusArtifact) => {
+      setNexusArtifacts((prev) => {
+        const key = JSON.stringify(artifact);
+        if (prev.some((a) => JSON.stringify(a) === key)) return prev;
+        return [...prev, artifact];
+      });
+
+      // PR-L · in-place phase advance. When advance_phase succeeds it
+      // emits this artifact via ctx.writer; we refresh server data
+      // without unmounting the React tree, so the chat thread and
+      // reactive panel survive the P3 → P4 transition.
+      if (artifact.type === 'program-phase-changed') {
+        router.refresh();
+      }
+    },
+    [router],
+  );
 
   // REASON-15 — live Nexus synthesis quote (streams from /api/programs/synthesis)
   const [synthesisQuote, setSynthesisQuote] = useState(view.workbench.prose);
@@ -3952,6 +3963,12 @@ export function ProgramDetailPage({
       middleStrip={
         <PhaseStrip phases={stripPhases} onPhaseSelect={handlePhaseSelect} />
       }
+      // PR-L · the shared AtlasPageState chat path goes through
+      // AppShell → AtlasPageStateProvider, so onArtifact has to flow
+      // through here too. Without this, only AgentCanvas's local
+      // stream dispatched artifacts and program-phase-changed
+      // signals from advance_phase landed nowhere.
+      onArtifact={handleNexusArtifact}
     >
       {/* Mode B: full-width canvas column with ribbon + scrollable work pane */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>

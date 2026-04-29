@@ -26,6 +26,13 @@ interface AppShellProps {
     timeString?: string;
   };
   middleStrip?: ReactNode;
+  /**
+   * PR-L · structured-artifact dispatcher passed through to
+   * AtlasPageStateProvider. Pages on /programs/<id> wire this to
+   * update the reactive panel and trigger router.refresh() when the
+   * agent emits a program-phase-changed artifact.
+   */
+  onArtifact?: (artifact: import('@/lib/agent/artifacts').Artifact) => void;
   children: ReactNode;
 }
 
@@ -35,6 +42,7 @@ export function AppShell({
   surfaceContext,
   topBarProps,
   middleStrip,
+  onArtifact,
   children,
 }: AppShellProps) {
   const tenantName = topBarProps?.tenantName ?? 'Apex Retail Group';
@@ -79,6 +87,7 @@ export function AppShell({
           tenantName={tenantName}
           stage={stage ?? null}
           surfaceContext={surfaceContext ?? {}}
+          onArtifact={onArtifact}
         >
           <div
             style={{

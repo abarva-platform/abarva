@@ -35,7 +35,14 @@ export type ArtifactType =
   // doctrine; the runtime evidence-evaluation layer is deferred to the
   // future knowledge-broker work.
   | 'phase-progress' // {evidenceItemId, label, severity, status, detail?}
-  | 'anti-pattern-flag'; // {antiPatternId, label, detectedSignal, whatToFlag, mitigation}
+  | 'anti-pattern-flag' // {antiPatternId, label, detectedSignal, whatToFlag, mitigation}
+  // Surface 2 PR-L · emitted by the advance_phase tool (via ctx.writer)
+  // after a successful gate evaluation + DB mutation. The client uses
+  // this to refresh server data in place via router.refresh() — the
+  // React tree (chat history, reactive panel, AtlasPageState) survives
+  // the phase transition, so the user keeps the conversation across
+  // P3 → P4 instead of starting from a blank Nexus on a reloaded page.
+  | 'program-phase-changed'; // {programId, fromPhase, toPhase, snapshotId?}
 
 // ── Strongly-typed artifact payloads ──────────────────────────────────────────
 
@@ -159,6 +166,22 @@ export interface AntiPatternFlagArtifact {
   mitigation: string;
 }
 
+/**
+ * PR-L · emitted by the advance_phase tool after a successful gate
+ * evaluation + DB mutation. ProgramDetailPage's onArtifact handler
+ * uses this to call router.refresh() — the React tree survives, the
+ * server-side phase data refreshes, and the chat thread persists
+ * through P3 → P4 instead of being thrown away by a hard navigation.
+ */
+export interface ProgramPhaseChangedArtifact {
+  type: 'program-phase-changed';
+  programId: string;
+  fromPhase: number;
+  toPhase: number;
+  /** Optional snapshot id from the advance mutation; useful for telemetry. */
+  snapshotId?: string;
+}
+
 export type Artifact =
   | BriefFieldArtifact
   | PatternMatchArtifact
@@ -169,7 +192,8 @@ export type Artifact =
   | PhaseRecommendationArtifact
   | ProgramFocusArtifact
   | PhaseProgressArtifact
-  | AntiPatternFlagArtifact;
+  | AntiPatternFlagArtifact
+  | ProgramPhaseChangedArtifact;
 
 // ── Parser ────────────────────────────────────────────────────────────────────
 //
@@ -209,7 +233,8 @@ function isKnownArtifactType(type: string): type is ArtifactType {
     type === 'phase-recommendation' ||
     type === 'program-focus' ||
     type === 'phase-progress' ||
-    type === 'anti-pattern-flag'
+    type === 'anti-pattern-flag' ||
+    type === 'program-phase-changed'
   );
 }
 
@@ -411,6 +436,17 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
       if (typeof whatToFlag !== 'string' || whatToFlag.length === 0) return null;
       if (typeof mitigation !== 'string' || mitigation.length === 0) return null;
       return { type, antiPatternId, label, detectedSignal, whatToFlag, mitigation };
+    }
+    case 'program-phase-changed': {
+      const programId = obj.programId;
+      const fromPhase = obj.fromPhase;
+      const toPhase = obj.toPhase;
+      if (typeof programId !== 'string' || programId.length === 0) return null;
+      if (typeof fromPhase !== 'number' || fromPhase < 0 || fromPhase > 6) return null;
+      if (typeof toPhase !== 'number' || toPhase < 0 || toPhase > 6) return null;
+      const snapshotId =
+        typeof obj.snapshotId === 'string' && obj.snapshotId.length > 0 ? obj.snapshotId : undefined;
+      return { type, programId, fromPhase, toPhase, snapshotId };
     }
   }
 }
