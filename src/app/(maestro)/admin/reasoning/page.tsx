@@ -27,6 +27,7 @@ import {
 import { ReasoningHealthBadge } from '@/components/reasoning/ReasoningHealthBadge';
 import { ContradictionResolutionPanel } from '@/components/reasoning/ContradictionResolutionPanel';
 import { DemoResetButton } from '@/components/admin/reasoning/DemoResetButton';
+import { ReasoningMetricsSection } from '@/components/admin/reasoning/ReasoningMetricsSection';
 import { detectContradictions } from '@/lib/reasoning/contradiction-detector';
 import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
 import { buildEvidenceMap } from '@/lib/source/source-event-instance';
@@ -1075,6 +1076,7 @@ export default async function ReasoningTelemetryPage({
       >
         <HeaderCard totalEvents={summary.totalEvents} />
         <ReasoningHealthBadge />
+        <ReasoningMetricsSection />
         <ToolsDirectory />
         <ContradictionResolutionSection contradictions={activeContradictions} />
         {summary.totalEvents === 0 ? (
