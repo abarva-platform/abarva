@@ -1153,6 +1153,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Contradiction Map',
     description: 'Active contradiction triage board — instance cards with resolution path snippets, pattern heat row.',
   },
+  {
+    title: 'Evidence Staleness',
+    href: '/admin/reasoning/evidence-staleness',
+    description: 'Fresh/Aging/Stale categorization by instance — staleness scores, most stale instances, freshness trend.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
