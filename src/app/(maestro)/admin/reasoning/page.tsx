@@ -1253,6 +1253,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Health Leaderboard',
     description: 'Rankings, gold/silver/bronze podium, category awards — Gate Champion, Clean Slate, Most Improved, Evidence Leader.',
   },
+  {
+    href: '/admin/reasoning/synthesis-confidence-factors',
+    title: 'Synthesis Confidence Factors',
+    description: 'Factor sensitivity analysis for confidence scores — which inputs matter most and upside potential.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
