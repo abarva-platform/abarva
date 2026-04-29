@@ -27,6 +27,7 @@ import { AddEvidenceForm } from '@/components/source/AddEvidenceForm';
 import { BulkEvidenceImportButton } from '@/components/source/BulkEvidenceImportButton';
 import { CascadeImpactSection } from '@/components/_shared/CascadeImpactSection';
 import { PatternRecommendationChips } from '@/components/source/PatternRecommendationChips';
+import { StageAdvanceButton } from '@/components/source/StageAdvanceButton';
 import { PAT_SRC_AMS_001 } from '@/lib/intelligence/source-lifecycle-patterns';
 import { createGateEvaluator } from '@/lib/reasoning/gate-evaluator';
 import { buildSourceSynthesisContext } from '@/lib/reasoning/synthesis-context-builder';
@@ -217,6 +218,10 @@ export default async function SourceEventDetailPage({
           >
             Full report →
           </a>
+          <StageAdvanceButton
+            eventId={event.id}
+            currentStageKey={event.currentStageKey}
+          />
         </div>
         <NexusEngagementCanvas event={event} />
         <PatternRecommendationChips
