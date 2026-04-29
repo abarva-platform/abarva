@@ -431,6 +431,21 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
           <span style={{ color: SHELL.INK_MUTED }}>{view.capacityLabel}</span>
           <span style={{ margin: '0 8px', opacity: 0.4 }}>·</span>
           <span style={{ color: SHELL.INK_MUTED }}>{filteredSummary}</span>
+          <span style={{ margin: '0 8px', opacity: 0.4 }}>·</span>
+          <Link
+            href="/programs/compare"
+            style={{
+              color: SHELL.INK_SOFT,
+              textDecoration: 'underline',
+              textUnderlineOffset: 2,
+              fontFamily: SHELL.MONO,
+              fontSize: 11,
+              textTransform: 'uppercase',
+              letterSpacing: '0.10em',
+            }}
+          >
+            Compare programs →
+          </Link>
         </div>
 
         {/* Phase filter strip */}
