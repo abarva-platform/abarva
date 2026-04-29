@@ -878,6 +878,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/gate-heatmap',
     description: 'Stage-level gate pass-rate heatmap — average gate satisfaction per stage across all instances',
   },
+  {
+    title: 'Resolution flow',
+    href: '/admin/reasoning/resolution-flow',
+    description: 'Contradiction resolution history — which paths were chosen and how resolutions affected instance health',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
