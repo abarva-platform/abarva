@@ -1273,6 +1273,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Contradiction Impact Analysis',
     description: 'Health cost per active contradiction — suppressed points, recovery potential, and high-ROI resolutions.',
   },
+  {
+    href: '/admin/reasoning/evidence-richness-index',
+    title: 'Evidence Richness Index',
+    description: 'Composite ERI score per instance — volume, diversity, freshness, and coverage dimensions (0-100).',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
