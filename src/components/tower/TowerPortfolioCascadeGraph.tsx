@@ -22,6 +22,8 @@ import type {
 import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances';
 import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
 import { computeCascadeImpacts } from '@/lib/reasoning/cross-instance-reasoner';
+import { getRecentCascadeEvents } from '@/lib/reasoning/cascade-telemetry';
+import { computeEdgeHitCounts } from '@/lib/reasoning/cascade-telemetry-overlay';
 
 export function TowerPortfolioCascadeGraph() {
   // Build the node set first — programs + source events.
@@ -83,11 +85,34 @@ export function TowerPortfolioCascadeGraph() {
     }
   }
 
+  // Live telemetry overlay — fold recent cascade events through the same
+  // canonical-id alias map, then drop any event whose endpoints aren't
+  // part of the current node set (otherwise we'd count edges that aren't
+  // drawn). The graph stays backward-compatible: when no events have
+  // been recorded the map is empty and CascadeGraphSvg renders unchanged.
+  const recentEvents = getRecentCascadeEvents();
+  const aliasedEvents = recentEvents
+    .map((ev) => {
+      const sourceId = idToDisplay.get(ev.sourceInstanceId);
+      const targetId = idToDisplay.get(ev.targetInstanceId);
+      if (!sourceId || !targetId) return null;
+      if (!knownNodeIds.has(sourceId) || !knownNodeIds.has(targetId))
+        return null;
+      return {
+        ...ev,
+        sourceInstanceId: sourceId,
+        targetInstanceId: targetId,
+      };
+    })
+    .filter((ev): ev is NonNullable<typeof ev> => ev !== null);
+  const edgeHitCounts = computeEdgeHitCounts(aliasedEvents);
+
   return (
     <CascadeGraphSvg
       nodes={nodes}
       edges={edges}
       title="Portfolio cascade graph"
+      edgeHitCounts={edgeHitCounts}
     />
   );
 }

@@ -25,6 +25,10 @@ import {
   CASCADE_NODE_RADIUS,
 } from '@/lib/reasoning/cascade-graph-layout';
 import { LINK_TYPE_LABEL } from '@/lib/reasoning/cascade-formatters';
+import {
+  cascadeEdgeKey,
+  CASCADE_HOT_EDGE_THRESHOLD,
+} from '@/lib/reasoning/cascade-telemetry-overlay';
 import type { LinkType } from '@/lib/reasoning/types';
 
 const DEFAULT_VIEWPORT_WIDTH = 720;
@@ -57,6 +61,14 @@ export interface CascadeGraphSvgProps {
   viewportHeight?: number;
   /** Optional title — rendered as a small section header above the graph. */
   title?: string;
+  /**
+   * Optional live-telemetry overlay. When supplied, edges that have been
+   * recently computed get a slightly thicker stroke, a small count badge,
+   * and (above {@link CASCADE_HOT_EDGE_THRESHOLD}) a hotter color. Keys
+   * are produced via {@link cascadeEdgeKey}. Omit to render the static
+   * graph as before — REASON-32 callers stay backward-compatible.
+   */
+  edgeHitCounts?: Map<string, number>;
 }
 
 interface SeverityColors {
@@ -97,6 +109,7 @@ export function CascadeGraphSvg({
   viewportWidth = DEFAULT_VIEWPORT_WIDTH,
   viewportHeight = DEFAULT_VIEWPORT_HEIGHT,
   title,
+  edgeHitCounts,
 }: CascadeGraphSvgProps) {
   // Empty state — no nodes, or nodes but no edges → nothing meaningful to graph.
   if (nodes.length === 0 || edges.length === 0) {
@@ -145,20 +158,47 @@ export function CascadeGraphSvg({
           const colors = colorsForSeverity(meta.severity);
           const midX = (edge.x1 + edge.x2) / 2;
           const midY = (edge.y1 + edge.y2) / 2;
+          const hitCount = edgeHitCounts
+            ? (edgeHitCounts.get(
+                cascadeEdgeKey(edge.source, edge.target, meta.linkType),
+              ) ?? 0)
+            : 0;
+          const hasHits = hitCount >= 1;
+          const isHot = hitCount >= CASCADE_HOT_EDGE_THRESHOLD;
+          // Backward-compat: when no telemetry map is passed, stroke widths
+          // collapse to the original 2 / 1.5 split so REASON-32 callers
+          // render unchanged.
+          const baseStrokeWidth = meta.severity === 'high' ? 2 : 1.5;
+          const strokeWidth = hasHits ? (isHot ? 3 : 2.5) : baseStrokeWidth;
+          // Hot edges promote their color one tier within the existing
+          // palette so we never introduce non-AbarVa hues. low → amber,
+          // medium / high → rust.
+          const stroke = isHot
+            ? meta.severity === 'low'
+              ? SHELL.AMBER_DOT
+              : SHELL.RUST_TEXT
+            : colors.stroke;
+          const arrowId = isHot
+            ? meta.severity === 'low'
+              ? ARROW_HEAD_MED
+              : ARROW_HEAD_HIGH
+            : colors.arrowId;
           return (
             <g
               key={`edge-${edge.source}::${edge.target}::${meta.linkType}::${idx}`}
               data-testid={`cascade-graph-edge-${edge.source}-${edge.target}-${meta.linkType}`}
               data-severity={meta.severity}
+              data-hit-count={hitCount}
+              data-hot={isHot ? 'true' : undefined}
             >
               <line
                 x1={edge.x1}
                 y1={edge.y1}
                 x2={edge.x2}
                 y2={edge.y2}
-                stroke={colors.stroke}
-                strokeWidth={meta.severity === 'high' ? 2 : 1.5}
-                markerEnd={`url(#${colors.arrowId})`}
+                stroke={stroke}
+                strokeWidth={strokeWidth}
+                markerEnd={`url(#${arrowId})`}
               />
               {/* linkType chip text near the arrow midpoint */}
               <text
@@ -178,6 +218,32 @@ export function CascadeGraphSvg({
               >
                 {LINK_TYPE_LABEL[meta.linkType]}
               </text>
+              {/* Recent-hit pip + count badge — only when telemetry is present. */}
+              {hasHits && (
+                <g
+                  data-testid={`cascade-graph-edge-pip-${edge.source}-${edge.target}-${meta.linkType}`}
+                >
+                  <circle
+                    cx={midX + 14}
+                    cy={midY - 4}
+                    r={6}
+                    fill={isHot ? SHELL.RUST_TEXT : SHELL.AMBER_DOT}
+                    stroke={SHELL.PAPER}
+                    strokeWidth={1}
+                  />
+                  <text
+                    x={midX + 14}
+                    y={midY - 1}
+                    textAnchor="middle"
+                    fontFamily={SHELL.MONO}
+                    fontSize={8}
+                    fontWeight={700}
+                    fill={SHELL.PAPER}
+                  >
+                    {hitCount > 99 ? '99+' : hitCount}
+                  </text>
+                </g>
+              )}
             </g>
           );
         })}
