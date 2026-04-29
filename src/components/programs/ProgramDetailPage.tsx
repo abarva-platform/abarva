@@ -35,6 +35,9 @@ import { InstanceEventTimeline } from '@/components/_shared/InstanceEventTimelin
 import { LifecycleMiniGraph } from '@/components/_shared/LifecycleMiniGraph';
 import type { StageStatus } from '@/components/shell/StageTrackerStrip';
 import { findLifecyclePattern } from '@/lib/reasoning/lifecycle-pattern-lookup';
+import { createGateEvaluator } from '@/lib/reasoning/gate-evaluator';
+import { buildStageMicroSynthesisMap } from '@/lib/reasoning/stage-micro-synthesis';
+import { buildProgramEvidenceMap } from '@/lib/programs/program-instance';
 import { computeReverseCascade } from '@/lib/reasoning/cross-instance-reasoner';
 import { buildInstanceEventTimeline } from '@/lib/reasoning/instance-event-timeline';
 import { isResolved as isContradictionResolved } from '@/lib/reasoning/contradiction-resolution-state';
@@ -3320,7 +3323,21 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
       }
     }
 
-    return { stages: pattern.stages, counts, states };
+    // Per-stage micro-synthesis — pure rule-based 1-2 sentence advisory text
+    // surfaced as an SVG <title> tooltip on each lifecycle node. No LLM call.
+    const evidenceMap = buildProgramEvidenceMap(instance);
+    const evaluator = createGateEvaluator(pattern);
+    // Programs use stage ids of the form `P{N}-{Label}`. Pick the stage whose
+    // ordinal position matches `currentPhase` so `evaluateAllStages` can
+    // distinguish passed/current/blocked/upcoming buckets.
+    const orderedStages = [...pattern.stages].sort((a, b) => a.order - b.order);
+    const currentStageId = orderedStages[instance.currentPhase]?.id
+      ?? orderedStages[0]?.id
+      ?? '';
+    const evaluations = evaluator.evaluateAllStages(currentStageId, evidenceMap);
+    const microSynthesis = buildStageMicroSynthesisMap(evaluations, pattern);
+
+    return { stages: pattern.stages, counts, states, microSynthesis };
   })();
 
   // PRG-EVIDENCE-INGEST — Resolve the underlying program-instance id +
@@ -3498,6 +3515,7 @@ export function ProgramDetailPage({ view }: ProgramDetailPageProps) {
               stages={lifecycleMiniGraph.stages}
               stageStates={lifecycleMiniGraph.states}
               gateCriteriaCount={lifecycleMiniGraph.counts}
+              microSynthesis={lifecycleMiniGraph.microSynthesis}
             />
           </div>
         )}

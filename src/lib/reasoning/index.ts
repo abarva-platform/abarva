@@ -111,6 +111,12 @@ export type {
   CascadeGraphEdge,
 } from './cross-instance-reasoner';
 
+// Per-stage micro-synthesis — rule-based 1-2 sentence advisory per stage
+export {
+  buildStageMicroSynthesis,
+  buildStageMicroSynthesisMap,
+} from './stage-micro-synthesis';
+
 // Mission derivation — auto-derives mission queue entries from pending gates
 export {
   deriveMissionsFromInstance,

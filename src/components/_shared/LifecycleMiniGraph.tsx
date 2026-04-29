@@ -84,12 +84,20 @@ export interface LifecycleMiniGraphProps {
   stageStates: Record<string, StageStatus>;
   /** Count of gate criteria per stage, keyed by stage id. */
   gateCriteriaCount: Record<string, number>;
+  /**
+   * Optional per-stage micro-synthesis text, keyed by stage id. When provided,
+   * the corresponding `<title>` element on each stage node group renders the
+   * advisory string as a native SVG tooltip — surfaced on hover, no JS needed.
+   * Falls back to the stage's pattern description when absent for a stage.
+   */
+  microSynthesis?: Record<string, string>;
 }
 
 export function LifecycleMiniGraph({
   stages,
   stageStates,
   gateCriteriaCount,
+  microSynthesis,
 }: LifecycleMiniGraphProps) {
   if (!stages || stages.length === 0) {
     return null;
@@ -152,9 +160,13 @@ export function LifecycleMiniGraph({
           const badgeCx = node.x + NODE_RADIUS - 4;
           const badgeCy = node.y - NODE_RADIUS + 4;
 
+          const tooltip =
+            microSynthesis?.[stage.id] && microSynthesis[stage.id]!.length > 0
+              ? `${stage.label} — ${microSynthesis[stage.id]}`
+              : stage.description;
           return (
-            <g key={stage.id}>
-              <title>{stage.description}</title>
+            <g key={stage.id} data-stage-id={stage.id}>
+              <title>{tooltip}</title>
               <circle
                 cx={node.x}
                 cy={node.y}
