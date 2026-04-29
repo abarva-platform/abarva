@@ -24,6 +24,10 @@
  *   - Has pageCount and pageCount >= 5            +0.15
  *   - Text contains "approved" or "signed"        +0.10
  *
+ * Age deductions (applied after other scoring; score floored at 0):
+ *   - uploadedAt between 90–180 days ago (mild stale)   -0.10
+ *   - uploadedAt older than 180 days (severe stale)     -0.20
+ *
  * Grade boundaries:  <0.4 weak,  <0.7 fair,  else strong.
  */
 
@@ -47,6 +51,7 @@ export interface EvidenceLikeItem {
 }
 
 const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
+const ONE_EIGHTY_DAYS_MS = 180 * 24 * 60 * 60 * 1000;
 
 function gradeFor(score: number): EvidenceQualityGrade {
   if (score < 0.4) return 'weak';
@@ -94,6 +99,14 @@ export function scoreEvidenceItem(
       if (ageMs >= 0 && ageMs <= NINETY_DAYS_MS) {
         score += 0.1;
         reasons.push('Uploaded within 90 days (+0.10)');
+      } else if (ageMs > ONE_EIGHTY_DAYS_MS) {
+        // Severe stale: older than 180 days
+        score -= 0.2;
+        reasons.push('Evidence older than 180 days — severe stale (-0.20)');
+      } else if (ageMs > NINETY_DAYS_MS) {
+        // Mild stale: 90–180 days old
+        score -= 0.1;
+        reasons.push('Evidence 90–180 days old — mild stale (-0.10)');
       }
     }
   }
@@ -128,6 +141,7 @@ export function scoreEvidenceItem(
     reasons.push('Mentions approval or signature (+0.10)');
   }
 
+  if (score < 0) score = 0;
   if (score > 1) score = 1;
   const finalScore = round2(score);
 
