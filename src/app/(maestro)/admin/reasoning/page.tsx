@@ -1073,6 +1073,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/activity-feed',
     description: 'Real-time activity feed — stage transitions, evidence, waivers, and resolutions as event cards',
   },
+  {
+    title: 'Instance notes',
+    href: '/admin/reasoning/instance-notes',
+    description: 'Deterministic advisory notes per instance — health grade, stage advisory, blockers, and contradictions',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
