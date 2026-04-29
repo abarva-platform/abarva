@@ -22,6 +22,7 @@ import { PAT_SRC_VEN_BLOOMREACH_001 } from './seed-patterns-sourcing-vendors-blo
 import { PAT_SRC_VEN_ELASTIC_001 } from './seed-patterns-sourcing-vendors-elastic';
 import { PAT_SRC_VEN_GOOGLECLOUD_001 } from './seed-patterns-sourcing-vendors-googlecloud';
 import { SOURCING_VENDOR_ORACLECLOUD_PATTERNS } from './seed-patterns-sourcing-vendors-oraclecloud';
+import { PAT_SRC_VEN_OPTIMIZELY_001 } from './seed-patterns-sourcing-vendors-optimizely';
 import { PAT_SRC_VEN_NEWRELIC_001 } from './seed-patterns-sourcing-vendors-newrelic';
 import { PAT_SRC_VEN_SQUARE_001 } from './seed-patterns-sourcing-vendors-square';
 import { SOURCING_VENDOR_SAP_PATTERNS } from './seed-patterns-sourcing-vendors-sap';
@@ -1147,6 +1148,7 @@ Fixed-fee or capped T&M with monthly not-to-exceed, explicit deliverable accepta
   PAT_SRC_VEN_BLOOMREACH_001,
   PAT_SRC_VEN_ACQUIA_001,
   PAT_SRC_VEN_CONTENTSTACK_001,
+  PAT_SRC_VEN_OPTIMIZELY_001,
 ];
 
 export const SOURCING_PATTERN_COUNT = SOURCING_PATTERNS.length;
