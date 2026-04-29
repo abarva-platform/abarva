@@ -51,6 +51,37 @@ export interface MissionListProps {
    * a row. See `onComplete` for rendering semantics.
    */
   readonly onDismiss?: (id: string, note?: string) => void;
+  /**
+   * Optional id of the mission that should display the keyboard-focused
+   * affordance (subtle left ink border). Set by `MissionListInteractive`
+   * when keyboard navigation is active. Server callers leave undefined.
+   */
+  readonly focusedMissionId?: string | null;
+  /**
+   * Optional handler invoked when the user clicks anywhere on a mission
+   * row, used by the keyboard-shortcut wrapper to keep focus aligned with
+   * mouse interaction.
+   */
+  readonly onFocusMission?: (id: string) => void;
+  /**
+   * Optional id of the mission whose note input should be open. When set,
+   * the corresponding row's controls render the inline note form. Used by
+   * the keyboard-shortcut wrapper to drive Enter / Esc transitions.
+   */
+  readonly noteOpenForId?: string | null;
+  /**
+   * Action paired with `noteOpenForId` — controls whether the note form
+   * submits a complete or a dismissed action.
+   */
+  readonly noteOpenAction?: 'complete' | 'dismissed' | null;
+  /**
+   * Handler invoked when the inline note form opens or closes for a
+   * specific row, used by the keyboard-shortcut wrapper to track state.
+   */
+  readonly onNoteOpenChange?: (
+    id: string,
+    action: 'complete' | 'dismissed' | null,
+  ) => void;
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
@@ -95,6 +126,14 @@ const ROW: CSSProperties = {
 const ROW_WITH_CONTROLS: CSSProperties = {
   ...ROW,
   gridTemplateColumns: 'auto 1fr auto auto',
+};
+
+const ROW_FOCUSED_OVERLAY: CSSProperties = {
+  // 2px ink-tinted left border replaces the soft 1px accent so keyboard
+  // users always see what's selected; row footprint is unchanged because
+  // the border-left swap stays within the existing 1px line.
+  borderLeft: `2px solid ${SHELL.INK}`,
+  paddingLeft: 9,
 };
 
 const CONTROLS_CELL: CSSProperties = {
@@ -208,6 +247,11 @@ export function MissionList({
   showInstancePrefix = false,
   onComplete,
   onDismiss,
+  focusedMissionId,
+  onFocusMission,
+  noteOpenForId,
+  noteOpenAction,
+  onNoteOpenChange,
 }: MissionListProps) {
   const safeMax = Math.max(0, Math.trunc(maxRows));
   // Filter out missions that have already been actioned (complete/dismissed).
@@ -229,51 +273,72 @@ export function MissionList({
         </div>
       ) : (
         <ul style={LIST}>
-          {visible.map((mission) => (
-            <li
-              key={mission.id}
-              style={rowStyle}
-              data-testid="mission-list-row"
-              data-priority={mission.priority}
-            >
-              <span
-                aria-label={priorityAriaLabel(mission.priority)}
-                style={{
-                  ...DOT_BASE,
-                  background: dotColor(mission.priority),
-                }}
-              />
-              <span style={LABEL}>
-                {mission.label}
-                {mission.description && mission.description !== mission.label && (
-                  <span style={DESCRIPTION} title={mission.evaluationHint || undefined}>
-                    {mission.description}
-                  </span>
-                )}
-              </span>
-              <span
-                style={STAGE_BADGE}
-                title={
-                  showInstancePrefix
-                    ? `${mission.instanceDisplayId} · ${mission.stageId}`
-                    : `Stage · ${mission.stageId}`
+          {visible.map((mission) => {
+            const isFocused = mission.id === focusedMissionId;
+            const liStyle = isFocused
+              ? { ...rowStyle, ...ROW_FOCUSED_OVERLAY }
+              : rowStyle;
+            return (
+              <li
+                key={mission.id}
+                style={liStyle}
+                data-testid="mission-list-row"
+                data-priority={mission.priority}
+                data-focused={isFocused ? 'true' : undefined}
+                data-mission-id={mission.id}
+                onMouseDown={
+                  onFocusMission ? () => onFocusMission(mission.id) : undefined
                 }
               >
-                {showInstancePrefix
-                  ? `${shortInstanceTag(mission.instanceDisplayId)} ${mission.stageId}`
-                  : mission.stageId}
-              </span>
-              {showControls && (
-                <span style={CONTROLS_CELL}>
-                  <MissionListClientControls
-                    missionId={mission.id}
-                    onComplete={onComplete}
-                    onDismiss={onDismiss}
-                  />
+                <span
+                  aria-label={priorityAriaLabel(mission.priority)}
+                  style={{
+                    ...DOT_BASE,
+                    background: dotColor(mission.priority),
+                  }}
+                />
+                <span style={LABEL}>
+                  {mission.label}
+                  {mission.description && mission.description !== mission.label && (
+                    <span style={DESCRIPTION} title={mission.evaluationHint || undefined}>
+                      {mission.description}
+                    </span>
+                  )}
                 </span>
-              )}
-            </li>
-          ))}
+                <span
+                  style={STAGE_BADGE}
+                  title={
+                    showInstancePrefix
+                      ? `${mission.instanceDisplayId} · ${mission.stageId}`
+                      : `Stage · ${mission.stageId}`
+                  }
+                >
+                  {showInstancePrefix
+                    ? `${shortInstanceTag(mission.instanceDisplayId)} ${mission.stageId}`
+                    : mission.stageId}
+                </span>
+                {showControls && (
+                  <span style={CONTROLS_CELL}>
+                    <MissionListClientControls
+                      missionId={mission.id}
+                      onComplete={onComplete}
+                      onDismiss={onDismiss}
+                      controlledPending={
+                        noteOpenForId === mission.id
+                          ? (noteOpenAction ?? null)
+                          : null
+                      }
+                      onPendingChange={
+                        onNoteOpenChange
+                          ? (action) => onNoteOpenChange(mission.id, action)
+                          : undefined
+                      }
+                    />
+                  </span>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
       {hiddenCount > 0 && (

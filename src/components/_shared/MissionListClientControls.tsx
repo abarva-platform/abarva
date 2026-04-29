@@ -71,6 +71,18 @@ export interface MissionListClientControlsProps {
   readonly onComplete?: (id: string, note?: string) => void;
   readonly onDismiss?: (id: string, note?: string) => void;
   readonly busy?: boolean;
+  /**
+   * Externally-controlled pending action. When provided, this overrides the
+   * component's internal state — used by `MissionListInteractive` to drive
+   * the note input from keyboard shortcuts (Enter to open, Esc to close).
+   */
+  readonly controlledPending?: PendingAction;
+  /**
+   * Callback fired whenever the pending action changes. When the parent
+   * supplies `controlledPending`, it should also supply this to keep the
+   * external store in sync as the user clicks the inline buttons.
+   */
+  readonly onPendingChange?: (action: PendingAction) => void;
 }
 
 export function MissionListClientControls({
@@ -78,12 +90,25 @@ export function MissionListClientControls({
   onComplete,
   onDismiss,
   busy = false,
+  controlledPending,
+  onPendingChange,
 }: MissionListClientControlsProps) {
-  const [pending, setPending] = useState<PendingAction>(null);
+  const isControlled = controlledPending !== undefined;
+  const [internalPending, setInternalPending] = useState<PendingAction>(null);
   const [note, setNote] = useState<string>('');
+  const pending: PendingAction = isControlled
+    ? (controlledPending ?? null)
+    : internalPending;
 
   if (!onComplete && !onDismiss) return null;
   const style = busy ? BUTTON_BUSY : BUTTON;
+
+  function setPending(next: PendingAction) {
+    if (!isControlled) {
+      setInternalPending(next);
+    }
+    onPendingChange?.(next);
+  }
 
   function reset() {
     setPending(null);
