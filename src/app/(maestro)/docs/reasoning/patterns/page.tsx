@@ -183,6 +183,8 @@ export default function PatternDoctrineLibraryPage() {
             <Link href="/docs/reasoning" style={LINK_STYLE}>architecture doc</Link>.
             For a hands-on tour, see the{' '}
             <Link href="/docs/reasoning/demo" style={LINK_STYLE}>5-minute demo</Link>.
+            For an investor-ready overview with live metrics, see the{' '}
+            <Link href="/docs/reasoning/about" style={LINK_STYLE}>about page</Link>.
           </p>
         </div>
 

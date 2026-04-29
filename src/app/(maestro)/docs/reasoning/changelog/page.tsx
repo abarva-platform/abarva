@@ -167,6 +167,10 @@ export default function ReasoningChangelogDocPage() {
             <Link href="/docs/reasoning/demo" style={LINK_STYLE}>
               5-minute demo walkthrough
             </Link>
+            ; for an investor-ready overview with live metrics from the corpus, read the{' '}
+            <Link href="/docs/reasoning/about" style={LINK_STYLE}>
+              about page
+            </Link>
             .
           </p>
         </Section>

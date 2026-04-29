@@ -259,6 +259,14 @@ export default function ReasoningArchitectureDocPage() {
             >
               pattern doctrine library
             </Link>
+            . For an investor-ready overview of what the reasoning layer is,
+            why it matters, and key live metrics, see the{' '}
+            <Link
+              href="/docs/reasoning/about"
+              style={{ color: COLORS.navy, textDecoration: 'underline', textUnderlineOffset: '2px' }}
+            >
+              about page
+            </Link>
             .
           </p>
         </Section>
