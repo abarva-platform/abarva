@@ -1163,6 +1163,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Instance Lifecycle Status',
     description: 'Visual pipeline showing current stage position for every instance — complete, active, and upcoming stages.',
   },
+  {
+    href: '/admin/reasoning/program-health-report',
+    title: 'Program Health Report',
+    description: 'Dense executive overview — health, gates, waivers, contradictions in a printable one-page report.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
