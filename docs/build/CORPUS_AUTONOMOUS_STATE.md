@@ -1,13 +1,13 @@
 # Corpus Autonomous State
 
-Last update timestamp: 2026-04-29T14:15:00Z
+Last update timestamp: 2026-04-29T14:30:00Z
 Status: ACTIVE - founder resumed autonomous corpus loop and granted auto-merge authority for scoped green PRs.
 
 ## Current wave
 Wave 1 - category-specific sourcing playbooks in progress.
 
 ## Domains in progress
-- Category-specific sourcing playbooks: PR #831 merged; EHS/PPM/QMS batch is active locally for Cat17.
+- Category-specific sourcing playbooks: PR #831 merged; PR #1053 merged; RPA/ERP2/DOC batch is active locally for Cat18.
 - Process/methodology: queued.
 - Contract intelligence: queued.
 - Pricing intelligence: queued.
@@ -18,7 +18,7 @@ Wave 1 - category-specific sourcing playbooks in progress.
 
 ## Pattern counts by domain
 - Existing sourcing corpus on latest main before Wave 1: 24 patterns.
-- Category-specific sourcing playbooks (`PAT-SRC-CAT-*`): 48 authored across Wave 1; 45 merged in PRs #812, #813, #814, #815, #816, #817, #818, #819, #820, #821, #822, #823, #824, #826, and #831; 3 active locally for the Cat17 PR.
+- Category-specific sourcing playbooks (`PAT-SRC-CAT-*`): 51 authored across Wave 1; 48 merged in PRs #812, #813, #814, #815, #816, #817, #818, #819, #820, #821, #822, #823, #824, #826, #831, and #1053; 3 queued locally for the Cat18 PR.
 - Vendor intelligence profiles (`PAT-SRC-VEN-*`): 0
 - Contract intelligence (`PAT-SRC-CON-*`): 0
 - Pricing intelligence (`PAT-SRC-PRC-*`): 0
@@ -44,9 +44,10 @@ Wave 1 - category-specific sourcing playbooks in progress.
 - #824 - `[corpus][cat] Author PAT-SRC-CAT-PROCURE-001, PAT-SRC-CAT-CLM-001, PAT-SRC-CAT-AP-001 · 3 patterns` - merged 2026-04-29T04:20:15Z at `d3b76da741d85d74e6c920686f116bee8d55d9c6`.
 - #826 - `[corpus][cat] Author PAT-SRC-CAT-TMS-001, PAT-SRC-CAT-HRTECH-001, PAT-SRC-CAT-PAYROLL-001 · 3 patterns` - merged 2026-04-29T04:39:00Z at `32043d785c4b8f89f663ef1bf97364e3b7923433`.
 - #831 - `[corpus][cat] Author PAT-SRC-CAT-WFM-001, PAT-SRC-CAT-PSA-001, PAT-SRC-CAT-CPQ-001 · 3 patterns` - merged 2026-04-29T14:12Z at `7a72e3a70ca9f437624cc08e8284b80fda11ac5d`.
+- #1053 - `[corpus][cat] Author PAT-SRC-CAT-EHS-001, PAT-SRC-CAT-PPM-001, PAT-SRC-CAT-QMS-001 · 3 patterns` - merged 2026-04-29T14:28Z at `ea48760970e2874c1bc1fae3804d2da0b2f242a5`.
 
 ## Open PRs
-- Cat17 - `[corpus][cat] Author PAT-SRC-CAT-EHS-001, PAT-SRC-CAT-PPM-001, PAT-SRC-CAT-QMS-001 · 3 patterns` - local validation in progress.
+- Cat18 - `[corpus][cat] Author PAT-SRC-CAT-RPA-001, PAT-SRC-CAT-ERP2-001, PAT-SRC-CAT-DOC-001 · 3 patterns` - local authoring in progress.
 
 ## Held PRs requiring founder review
 - None.
@@ -55,9 +56,6 @@ Wave 1 - category-specific sourcing playbooks in progress.
 - None. Collaboration/productivity, video conferencing, enterprise messaging, CDP, cloud data warehouse, lakehouse, MDM, data fabric, ETL/ELT, revenue intelligence, BI, LLM/model-access, agent runtime, vector retrieval, MLOps, enterprise code platform, workforce IAM, IGA, PAM, SASE/SSE, SIEM, EDR/XDR, CNAPP/CSPM, FinOps, observability, ITAM, SAM, ESM, BPM, legal operations, procurement, CLM, AP automation, TMS, HRTech, payroll, WFM, PSA, and CPQ research lanes completed with read-only source notes.
 
 ## Next 16 queued pattern IDs
-- PAT-SRC-CAT-RPA-001
-- PAT-SRC-CAT-ERP2-001
-- PAT-SRC-CAT-DOC-001
 - PAT-SRC-CAT-LMS-001
 - PAT-SRC-CAT-CRM2-001
 - PAT-SRC-CAT-DAM-001
@@ -71,10 +69,13 @@ Wave 1 - category-specific sourcing playbooks in progress.
 - PAT-SRC-CAT-ECOM-001
 - PAT-SRC-CAT-PIM-001
 - PAT-SRC-CAT-PLM-001
+- PAT-SRC-CAT-FSM-001
+- PAT-SRC-CAT-ITOM-001
+- PAT-SRC-CAT-SCM-001
 
 ## Current blockers
 - Full `npm test -- --runInBand` remains blocked by pre-existing unrelated broad-suite failures outside corpus branch scope.
 - Numeric pricing, discount, implementation-ratio, AI-usage, overage, and renewal-uplift claims remain intentionally blank unless source-backed by buyer evidence or approved benchmarks.
 
 ## Next action
-Validate, push, and auto-merge the Cat17 EHS/PPM/QMS batch if green and scoped.
+Author, validate, push, and auto-merge the Cat18 RPA/ERP2/DOC batch if green and scoped.
