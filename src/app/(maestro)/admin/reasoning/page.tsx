@@ -638,6 +638,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/changelog',
     description: '114-entry audit history of all reasoning system changes by wave',
   },
+  {
+    title: 'Scorecard',
+    href: '/admin/reasoning/scorecard',
+    description: 'All instances ranked by composite reasoning health score',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
