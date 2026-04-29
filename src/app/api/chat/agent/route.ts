@@ -24,6 +24,13 @@ import { FOUR_LAYER_REASONING_INSTRUCTIONS } from "@/lib/intelligence/synthesis/
 import { validateSynthesisOutput } from "@/lib/intelligence/synthesis/outputValidator";
 import { recordViolations } from "@/lib/intelligence/synthesis/violationsRecorder";
 import { ARTIFACT_CHANNEL_INSTRUCTIONS } from "@/lib/agent/artifacts";
+// Surface 2 PR-A — Phase Intelligence Packs. When the user is on a
+// program-detail surface, load the pack for the engagement's current
+// phase into Nexus's system block. The pack is opinionated coaching
+// knowledge — outcome, right questions, anti-patterns, evidence,
+// posture per phase arc — that complements the per-pattern knowledge
+// already wired in via demo-context.
+import { getPhasePack, formatPhasePackForPrompt } from "@/lib/programs/phase-packs";
 // F0.4: import the commit_program tool module so it self-registers
 // at startup. Routes that don't surface this tool will simply not
 // expose it in `tools`, but the registration must happen for the
@@ -97,6 +104,11 @@ export async function POST(request: Request) {
     stage   ? `Workflow stage: ${stage}.` : "",
   ].filter(Boolean);
 
+  // Phase Intelligence Pack for the active program's current phase.
+  // Resolved alongside programData below; rendered into the system
+  // prompt for program-detail surfaces. Null when no pack authored yet.
+  let phasePackBlock = '';
+
   // If we have a programId, enrich with live DB data
   if (programId) {
     try {
@@ -117,6 +129,11 @@ export async function POST(request: Request) {
           `Evidence items: ${evidence.length} uploaded`,
           `Gate approvals: ${latestGate}`,
         );
+
+        const pack = getPhasePack(phase);
+        if (pack) {
+          phasePackBlock = formatPhasePackForPrompt(pack);
+        }
       }
     } catch {
       // Auth failed or DB error — continue with demo context
@@ -209,6 +226,11 @@ export async function POST(request: Request) {
     FOUR_LAYER_REASONING_INSTRUCTIONS,
     "",
     artifactInstructions,
+    "",
+    // Phase Intelligence Pack — only rendered on program-detail surfaces
+    // where a pack has been authored for the engagement's current phase.
+    // Empty string for other surfaces / phases without a pack yet.
+    phasePackBlock,
     "",
     "Page context:",
     ...contextLines,
