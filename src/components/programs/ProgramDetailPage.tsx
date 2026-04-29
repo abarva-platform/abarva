@@ -476,9 +476,47 @@ function GateApproveModal({
 
 function GateCriteriaList({
   criteria,
+  instanceId,
 }: {
   criteria: NonNullable<ProgramDetailView['phasePanel']['gateCriteria']>;
+  instanceId: string;
 }) {
+  // Local waiver state — demo only, no persistence.
+  // Key: criterion index (stable within a single view render).
+  const [waivedIndices, setWaivedIndices] = useState<Set<number>>(new Set());
+  const [inFlightIndices, setInFlightIndices] = useState<Set<number>>(new Set());
+
+  async function handleWaive(index: number, criterion: string) {
+    setInFlightIndices((prev) => new Set(prev).add(index));
+    try {
+      await fetch('/api/reasoning/gate-waiver', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'gate_waiver',
+          criterionId: `${instanceId}::${index}`,
+          instanceId,
+          reason: 'demo',
+          criterion,
+        }),
+      });
+    } finally {
+      setInFlightIndices((prev) => {
+        const next = new Set(prev);
+        next.delete(index);
+        return next;
+      });
+      // Optimistic update regardless of server response — demo state only.
+      setWaivedIndices((prev) => new Set(prev).add(index));
+    }
+  }
+
+  function handleResetWaivers() {
+    setWaivedIndices(new Set());
+  }
+
+  const hasWaivers = waivedIndices.size > 0;
+
   return (
     <div>
       <div
@@ -495,65 +533,146 @@ function GateCriteriaList({
         Gate criteria
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {criteria.map((g, i) => (
-          <div
-            key={`gc-${i}`}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              padding: '7px 12px',
-              borderRadius: 7,
-              background: g.met
-                ? SHELL.MINT_BG
-                : SHELL.PEACH_BG,
-              border: `1px solid ${g.met ? SHELL.MINT_LINE : SHELL.PEACH_LINE}`,
-            }}
-          >
-            {/* Circle icon */}
+        {criteria.map((g, i) => {
+          const isWaived = waivedIndices.has(i);
+          const isInFlight = inFlightIndices.has(i);
+          const isUnmet = !g.met;
+          const canWaive = isUnmet && !isWaived;
+
+          // Resolve row colours: met → mint, waived → gray, unmet → peach.
+          const rowBg = g.met
+            ? SHELL.MINT_BG
+            : isWaived
+            ? SHELL.GRAY_BG
+            : SHELL.PEACH_BG;
+          const rowBorder = g.met
+            ? SHELL.MINT_LINE
+            : isWaived
+            ? SHELL.GRAY_LINE
+            : SHELL.PEACH_LINE;
+
+          return (
             <div
+              key={`gc-${i}`}
               style={{
-                width: 16,
-                height: 16,
-                borderRadius: '50%',
-                flexShrink: 0,
-                background: g.met ? SHELL.MINT_TEXT : 'transparent',
-                border: g.met ? 'none' : `1.5px solid ${SHELL.INK}`,
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
+                gap: 10,
+                padding: '7px 12px',
+                borderRadius: 7,
+                background: rowBg,
+                border: `1px solid ${rowBorder}`,
               }}
             >
-              {g.met && (
-                <span style={{ color: '#fff', fontSize: 9, lineHeight: 1 }}>✓</span>
+              {/* Circle icon */}
+              <div
+                style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: '50%',
+                  flexShrink: 0,
+                  background: g.met ? SHELL.MINT_TEXT : isWaived ? SHELL.GRAY_TEXT : 'transparent',
+                  border: g.met || isWaived ? 'none' : `1.5px solid ${SHELL.INK}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {(g.met || isWaived) && (
+                  <span style={{ color: '#fff', fontSize: 9, lineHeight: 1 }}>✓</span>
+                )}
+              </div>
+              <span
+                style={{
+                  fontFamily: SHELL.SANS,
+                  fontSize: 12,
+                  color: g.met ? SHELL.MINT_TEXT : isWaived ? SHELL.GRAY_TEXT : SHELL.INK,
+                  lineHeight: 1.4,
+                  textDecoration: isWaived ? 'line-through' : undefined,
+                }}
+              >
+                {g.criterion}
+              </span>
+              {/* Status label / Waive button / Waived chip */}
+              {isWaived ? (
+                <span
+                  style={{
+                    marginLeft: 'auto',
+                    fontFamily: SHELL.MONO,
+                    fontSize: 9,
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    color: SHELL.GRAY_TEXT,
+                    background: SHELL.GRAY_LINE,
+                    borderRadius: 4,
+                    padding: '2px 6px',
+                  }}
+                >
+                  Waived
+                </span>
+              ) : canWaive ? (
+                <button
+                  disabled={isInFlight}
+                  onClick={() => handleWaive(i, g.criterion)}
+                  style={{
+                    marginLeft: 'auto',
+                    fontFamily: SHELL.MONO,
+                    fontSize: 9,
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    color: isInFlight ? SHELL.INK_MUTED : SHELL.PEACH_TEXT,
+                    background: 'none',
+                    border: `1px solid ${isInFlight ? SHELL.GRAY_LINE : SHELL.PEACH_LINE}`,
+                    borderRadius: 4,
+                    padding: '2px 8px',
+                    cursor: isInFlight ? 'not-allowed' : 'pointer',
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {isInFlight ? '…' : 'Waive'}
+                </button>
+              ) : (
+                <span
+                  style={{
+                    marginLeft: 'auto',
+                    fontFamily: SHELL.MONO,
+                    fontSize: 9,
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    color: g.met ? SHELL.MINT_TEXT : SHELL.PEACH_TEXT,
+                  }}
+                >
+                  {g.met ? 'Met' : 'Open'}
+                </span>
               )}
             </div>
-            <span
-              style={{
-                fontFamily: SHELL.SANS,
-                fontSize: 12,
-                color: g.met ? SHELL.MINT_TEXT : SHELL.INK,
-                lineHeight: 1.4,
-              }}
-            >
-              {g.criterion}
-            </span>
-            <span
-              style={{
-                marginLeft: 'auto',
-                fontFamily: SHELL.MONO,
-                fontSize: 9,
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                color: g.met ? SHELL.MINT_TEXT : SHELL.PEACH_TEXT,
-              }}
-            >
-              {g.met ? 'Met' : 'Open'}
-            </span>
-          </div>
-        ))}
+          );
+        })}
       </div>
+      {/* Reset waivers link — only shown when at least one criterion is waived */}
+      {hasWaivers && (
+        <div style={{ marginTop: 8, textAlign: 'right' }}>
+          <button
+            onClick={handleResetWaivers}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontFamily: SHELL.MONO,
+              fontSize: 9,
+              color: SHELL.INK_MUTED,
+              letterSpacing: '0.08em',
+              textDecoration: 'underline',
+              padding: 0,
+            }}
+          >
+            Reset waivers
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -3894,7 +4013,7 @@ export function ProgramDetailPage({
             </div>
             {view.phasePanel.gateCriteria && view.phasePanel.gateCriteria.length > 0 && (
               <div ref={gateSectionRef} style={{ marginBottom: 20 }}>
-                <GateCriteriaList criteria={view.phasePanel.gateCriteria} />
+                <GateCriteriaList criteria={view.phasePanel.gateCriteria} instanceId={view.programId} />
               </div>
             )}
             {!view.phasePanel.gateCriteria && (
