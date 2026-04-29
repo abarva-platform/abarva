@@ -1258,6 +1258,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Synthesis Confidence Factors',
     description: 'Factor sensitivity analysis for confidence scores — which inputs matter most and upside potential.',
   },
+  {
+    href: '/admin/reasoning/gate-pass-predictor',
+    title: 'Gate Pass Predictor',
+    description: 'Trajectory-based predictions of next likely gate achievements — confidence levels and stalled instance detection.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
