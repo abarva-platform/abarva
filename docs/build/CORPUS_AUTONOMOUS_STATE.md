@@ -1,6 +1,6 @@
 # Corpus Autonomous State
 
-Last update timestamp: 2026-04-29T18:04:57Z
+Last update timestamp: 2026-04-29T18:13:52Z
 Status: ACTIVE - founder explicitly approved resuming after pause, requested parallel governed agents, and granted auto-merge authority for scoped green PRs.
 
 ## Current wave
@@ -14,21 +14,30 @@ Wave 8 - vendor profile one-pattern PRs beginning after process/methodology batc
 - Risk patterns: queued authored batches exist; RSK-001 needs body-length review before PR.
 - Regulatory/compliance: PR #1065 merged; 2 regulatory patterns are live in corpus.
 - Industry overlays: queued authored batch exists for health, financial services, and retail overlays.
-- Vendor profiles: PR #1078 merged; PAT-SRC-VEN-COUPA-001 is in local integration; Splunk, New Relic, Elastic, Dropbox, Airtable, MongoDB, ServiceNow-AI, Figma, Notion, Slack, Canva, 1Password, SentinelOne, Lucid, Grammarly, Calendly, Zapier, Loom, Mural, ClickUp, Intercom, Typeform, SurveyMonkey, Qualtrics, Gainsight, and Freshworks are queued; Gong, Outreach, Salesloft, and Amplitude workers are active.
+- Vendor profiles: PR #1081 open for PAT-SRC-VEN-SPLUNK-001; New Relic, Elastic, Dropbox, Airtable, MongoDB, ServiceNow-AI, Figma, Notion, Slack, Canva, 1Password, SentinelOne, Lucid, Grammarly, Calendly, Zapier, Loom, Mural, ClickUp, Intercom, Typeform, SurveyMonkey, Qualtrics, Gainsight, Freshworks, Salesloft, Amplitude, Gong, Outreach, LaunchDarkly, HashiCorp, Mixpanel, and Snyk are queued; Dovetail, UserTesting, Linear, and Miro workers are active.
 
 ## Active lane board
 - 2026-04-29T18:00:22Z - PR #1078 - PAT-SRC-VEN-SMARTSHEET-001 vendor profile - merged at `76089af56e6160a7380f0dc46a948ae3852afae4`.
-- 2026-04-29T18:04:57Z - PR #1079 - PAT-SRC-VEN-COUPA-001 vendor profile - open; CI/Vercel pending. URL: https://github.com/anandsundaram-hash/abarva/pull/1079
+- 2026-04-29T18:09:34Z - PR #1079 - PAT-SRC-VEN-COUPA-001 vendor profile - merged at `f5d4bd066f78a663818d57c03f2b5163682a81d3`.
+- 2026-04-29T18:13:52Z - PR #1081 - PAT-SRC-VEN-SPLUNK-001 vendor profile - open; CI/Vercel pending. URL: https://github.com/anandsundaram-hash/abarva/pull/1081
 - 2026-04-29T16:42:16Z - PR #1070 - PAT-SRC-VEN-CLOUDFLARE-001 vendor profile - merged at `8682f28a0d92819597d92a69a5b20b18db24b510`.
 - 2026-04-29T17:28:53Z - PR #1071 - PAT-SRC-VEN-DOCUSIGN-001 vendor profile - merged at `3312bd55668c293e1b137d618780578ad11dd8c0`.
 - 2026-04-29T17:38:24Z - PR #1073 - PAT-SRC-VEN-GITLAB-001 vendor profile - merged at `f0156489059e5eacef1c1c64188b745c308a51ce`.
 - 2026-04-29T17:45:42Z - PR #1075 - PAT-SRC-VEN-GITHUB-001 vendor profile - merged at `f941fdc86c7fe8606afa5d455e7dd3a7b6abf1b9`.
 - 2026-04-29T17:52:42Z - PR #1077 - PAT-SRC-VEN-ASANA-001 vendor profile - merged at `f193c464a9bfa600e0229b98486cd0c4b2c27b51`.
 - 2026-04-29T18:00:22Z - PR #1078 - PAT-SRC-VEN-SMARTSHEET-001 vendor profile - merged at `76089af56e6160a7380f0dc46a948ae3852afae4`.
-- 2026-04-29T18:00:50Z - Worker Franklin (`019dda65-fc6b-7ba1-a808-9980db743b72`) - PAT-SRC-VEN-GONG-001 - active.
-- 2026-04-29T18:00:50Z - Worker Wegener (`019dda65-fc9f-72c3-8a35-bf6f36822db1`) - PAT-SRC-VEN-OUTREACH-001 - active.
-- 2026-04-29T18:00:50Z - Worker Chandrasekhar (`019dda65-fcc7-7290-b716-0e0e53d5162d`) - PAT-SRC-VEN-SALESLOFT-001 - active.
-- 2026-04-29T18:00:50Z - Worker Galileo (`019dda65-fcf6-7a93-980e-2688721d0a3c`) - PAT-SRC-VEN-AMPLITUDE-001 - active.
+- 2026-04-29T18:05:42Z - Worker Chandrasekhar (`019dda65-fcc7-7290-b716-0e0e53d5162d`) - PAT-SRC-VEN-SALESLOFT-001 - complete and queued; commit `5c0592dd`.
+- 2026-04-29T18:06:12Z - Worker Galileo (`019dda65-fcf6-7a93-980e-2688721d0a3c`) - PAT-SRC-VEN-AMPLITUDE-001 - complete and queued; commit `eeafde66`.
+- 2026-04-29T18:07:18Z - Worker Franklin (`019dda65-fc6b-7ba1-a808-9980db743b72`) - PAT-SRC-VEN-GONG-001 - complete and queued; commit `b4603ef6`.
+- 2026-04-29T18:08:55Z - Worker Wegener (`019dda65-fc9f-72c3-8a35-bf6f36822db1`) - PAT-SRC-VEN-OUTREACH-001 - complete and queued; commit `92268d9f`.
+- 2026-04-29T18:11:03Z - Worker Raman (`019dda6b-2151-79d2-ba98-8eeee569a570`) - PAT-SRC-VEN-LAUNCHDARKLY-001 - complete and queued; commit `8a5f8485`.
+- 2026-04-29T18:12:12Z - Worker Heisenberg (`019dda6b-e6f0-7252-89a6-c472e815e00e`) - PAT-SRC-VEN-HASHICORP-001 - complete and queued; commit `a757abce`.
+- 2026-04-29T18:13:26Z - Worker Faraday (`019dda6c-80d4-79f1-8b95-9a8748d8b216`) - PAT-SRC-VEN-MIXPANEL-001 - complete and queued; commit `5b330aac`.
+- 2026-04-29T18:13:52Z - Worker Descartes (`019dda6b-533b-7971-b4ac-ac940fba0812`) - PAT-SRC-VEN-SNYK-001 - complete and queued; commit `41497740`.
+- 2026-04-29T18:11:03Z - Worker Tesla (`019dda70-ab48-7922-8f2a-a32a0fe3ab1b`) - PAT-SRC-VEN-DOVETAIL-001 - active.
+- 2026-04-29T18:12:12Z - Worker Bacon (`019dda71-6504-7b72-99fd-cdcd499f0e81`) - PAT-SRC-VEN-USERTESTING-001 - active.
+- 2026-04-29T18:13:26Z - Worker Peirce (`019dda72-6169-7720-9926-cc5c74262e04`) - PAT-SRC-VEN-LINEAR-001 - active.
+- 2026-04-29T18:13:52Z - Worker Mencius (`019dda72-890a-71c3-aa41-e529108e0f53`) - PAT-SRC-VEN-MIRO-001 - active.
 - 2026-04-29T17:30:12Z - Worker Aristotle (`019dda49-c002-7ea1-a60a-c7c835d542ce`) - PAT-SRC-VEN-CANVA-001 - active.
 - 2026-04-29T17:30:12Z - Worker Gibbs (`019dda49-c033-7883-ab5f-5c4e0ca2496b`) - PAT-SRC-VEN-1PASSWORD-001 - active.
 - 2026-04-29T17:30:12Z - Worker Boyle (`019dda4a-3809-7d31-94b2-a20e0eea54aa`) - PAT-SRC-VEN-SENTINELONE-001 - active.
@@ -105,9 +114,10 @@ Wave 8 - vendor profile one-pattern PRs beginning after process/methodology batc
 - #1075 - `[corpus][ven] Author PAT-SRC-VEN-GITHUB-001 · 1 pattern` - merged 2026-04-29T17:45:42Z at `f941fdc86c7fe8606afa5d455e7dd3a7b6abf1b9`.
 - #1077 - `[corpus][ven] Author PAT-SRC-VEN-ASANA-001 · 1 pattern` - merged 2026-04-29T17:52:42Z at `f193c464a9bfa600e0229b98486cd0c4b2c27b51`.
 - #1078 - `[corpus][ven] Author PAT-SRC-VEN-SMARTSHEET-001 · 1 pattern` - merged 2026-04-29T18:00:22Z at `76089af56e6160a7380f0dc46a948ae3852afae4`.
+- #1079 - `[corpus][ven] Author PAT-SRC-VEN-COUPA-001 · 1 pattern` - merged 2026-04-29T18:09:34Z at `f5d4bd066f78a663818d57c03f2b5163682a81d3`.
 
 ## Open PRs
-- #1079 - `[corpus][ven] Author PAT-SRC-VEN-COUPA-001 · 1 pattern` - open; CI/Vercel pending. URL: https://github.com/anandsundaram-hash/abarva/pull/1079
+- #1081 - `[corpus][ven] Author PAT-SRC-VEN-SPLUNK-001 · 1 pattern` - open; CI/Vercel pending. URL: https://github.com/anandsundaram-hash/abarva/pull/1081
 
 ## Held PRs requiring founder review
 - None.
@@ -119,7 +129,6 @@ Wave 8 - vendor profile one-pattern PRs beginning after process/methodology batc
 
 ## Next 16 queued pattern IDs
 - PAT-SRC-VEN-DATADOG-001
-- PAT-SRC-VEN-COUPA-001
 - PAT-SRC-VEN-SPLUNK-001
 - PAT-SRC-VEN-NEWRELIC-001
 - PAT-SRC-VEN-ELASTIC-001
@@ -138,4 +147,4 @@ Wave 8 - vendor profile one-pattern PRs beginning after process/methodology batc
 - Vendor/regulatory/pricing PRs remain one-pattern PRs because source confidence and evidence discipline are higher risk.
 
 ## Next action
-Watch PR #1079 checks and auto-merge if green while preparing PAT-SRC-VEN-SPLUNK-001 integration in parallel.
+Watch PR #1081 checks and auto-merge if green while preparing PAT-SRC-VEN-NEWRELIC-001 integration in parallel.
