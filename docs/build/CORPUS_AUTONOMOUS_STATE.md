@@ -1,6 +1,6 @@
 # Corpus Autonomous State
 
-Last update timestamp: 2026-04-29T14:30:00Z
+Last update timestamp: 2026-04-29T14:49:14Z
 Status: ACTIVE - founder resumed autonomous corpus loop and granted auto-merge authority for scoped green PRs.
 
 ## Current wave
@@ -8,13 +8,23 @@ Wave 1 - category-specific sourcing playbooks in progress.
 
 ## Domains in progress
 - Category-specific sourcing playbooks: PR #831 merged; PR #1053 merged; RPA/ERP2/DOC batch is active locally for Cat18.
-- Process/methodology: queued.
-- Contract intelligence: queued.
-- Pricing intelligence: queued.
-- Risk patterns: queued.
-- Regulatory/compliance: queued.
-- Industry overlays: queued.
+- Process/methodology: Worker PROC-1 active on PAT-SRC-PROC-001/002/003.
+- Contract intelligence: Worker CON-1 active on PAT-SRC-CON-001/002/003.
+- Pricing intelligence: Worker PRC-1 active on PAT-SRC-PRC-SAAS-001.
+- Risk patterns: Worker RSK-1 active on PAT-SRC-RSK-001/002/003.
+- Regulatory/compliance: Worker REG-1 active on PAT-SRC-REG-DORA-001.
+- Industry overlays: Worker IND-1 active on PAT-SRC-IND-HEALTH-001, PAT-SRC-IND-FINSERV-001, PAT-SRC-IND-RETAIL-001.
 - Vendor profiles: queued.
+
+## Active lane board
+- 2026-04-29T14:49:14Z - Integration lead - Cat18 RPA/ERP2/DOC - local validation and PR preparation in progress.
+- 2026-04-29T14:49:14Z - Worker PROC-1 (`019dd9b6-0494-73d1-8f1e-96001145df36`) - process batch 1 - active.
+- 2026-04-29T14:49:14Z - Worker CON-1 (`019dd9b6-2960-73e1-9620-6281ca27711a`) - contract batch 1 - active.
+- 2026-04-29T14:49:14Z - Worker RSK-1 (`019dd9b6-46fa-7e41-9670-98b11b0737e0`) - risk batch 1 - active.
+- 2026-04-29T14:49:14Z - Worker IND-1 (`019dd9b6-6a88-7a13-83f7-0f742467df5d`) - industry batch 1 - active.
+- 2026-04-29T14:49:14Z - Worker REG-1 (`019dd9b6-87c1-7751-a5be-26cab582e099`) - DORA regulatory pattern - active.
+- 2026-04-29T14:49:14Z - Worker PRC-1 (`019dd9b6-a52e-72a1-91aa-e3a3233e914d`) - SaaS pricing architecture pattern - active.
+- Vendor lanes - queued until one worker slot frees; current session agent cap reached at 6 workers.
 
 ## Pattern counts by domain
 - Existing sourcing corpus on latest main before Wave 1: 24 patterns.
@@ -78,4 +88,4 @@ Wave 1 - category-specific sourcing playbooks in progress.
 - Numeric pricing, discount, implementation-ratio, AI-usage, overage, and renewal-uplift claims remain intentionally blank unless source-backed by buyer evidence or approved benchmarks.
 
 ## Next action
-Author, validate, push, and auto-merge the Cat18 RPA/ERP2/DOC batch if green and scoped.
+Validate, push, open, and auto-merge the Cat18 RPA/ERP2/DOC batch if green and scoped while worker lanes continue authoring non-conflicting domain batches.

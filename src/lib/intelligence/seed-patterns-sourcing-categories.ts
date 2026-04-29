@@ -7288,6 +7288,400 @@ Public ETQ, MasterControl, and Arena pages establish QMS scope around quality pr
 ## Contradictions and failure modes
 Vendor claim: the platform improves quality. Detection: require root-cause discipline, effectiveness checks, owner accountability, document/training linkage, and audit evidence. Vendor claim: compliance is built in. Detection: map buyer procedures, regulated records, approvals, retention, exports, and validation evidence. The common failure is buying workflow automation while leaving quality ownership ambiguous. The second is separating document control from training evidence. The third is migrating old CAPA and supplier records without preserving context, attachments, signatures, decisions, and closure evidence.`
   },
+  {
+    id: 'PAT-SRC-CAT-RPA-001',
+    slug: 'robotic-process-automation-sourcing',
+    title: 'Robotic Process Automation Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'RPA sourcing should prove process suitability, exception handling, credential governance, bot operations, change resilience, and human handoff before buyers accept automation-volume or productivity claims.',
+    applicability:
+      'Apply when sourcing UiPath, Automation Anywhere, Microsoft Power Automate, SS&C Blue Prism, or comparable automation platforms for attended, unattended, desktop, workflow, and agentic automation use cases.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.79,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.uipath.com/rpa/robotic-process-automation',
+      'https://www.uipath.com/platform',
+      'https://www.automationanywhere.com/robotic-process-automation',
+      'https://www.automationanywhere.com/products/robotic-process-automation-system',
+      'https://www.microsoft.com/en/power-platform/products/power-automate/topics/robotic-process-automation/what-is-rpa',
+      'https://www.blueprism.com/guides/robotic-process-automation-rpa/',
+    ],
+    regulatoryChips: ['credential-governance-review', 'bot-control-review', 'audit-trail-review', 'change-management-review'],
+    relatedPatternIds: ['PAT-SRC-CAT-BPM-001', 'PAT-SRC-CAT-AGENT-001', 'PAT-SRC-CAT-IAM-001', 'PAT-SRC-CAT-DOC-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'enterprise_saas',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'UiPath, Automation Anywhere, Microsoft Power Automate, SS&C Blue Prism, and automation-platform specialists',
+        tier: 'enterprise',
+        positioning: 'Automation platforms spanning attended bots, unattended bots, process orchestration, document automation, workflow, AI/agentic automation, monitoring, and governance.',
+        cautions: ['Validate process stability, exception handling, credential vaulting, bot operations, and change resilience before treating automation as a labor-savings product.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'UiPath RPA overview', url: 'https://www.uipath.com/rpa/robotic-process-automation', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Automation Anywhere RPA overview', url: 'https://www.automationanywhere.com/robotic-process-automation', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Microsoft Power Automate RPA explainer', url: 'https://www.microsoft.com/en/power-platform/products/power-automate/topics/robotic-process-automation/what-is-rpa', asOf: '2026-04-29' },
+        ],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'RPA pricing construct map',
+        model: 'hybrid',
+        metric: 'Attended users, unattended robots, orchestration, document processing, AI/agent modules, environments, monitoring, support, implementation, and managed services',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'UiPath platform material', url: 'https://www.uipath.com/platform', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Bot volume, attended/unattended mix, process inventory, exception rate, credential model, and operations model require buyer evidence' },
+        ],
+        confidence: 0.55,
+        notes: 'Public vendor pages support capability framing only. Do not infer bot price, ROI, FTE savings, processing-time reduction, or automation rate without buyer evidence.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Bot governance and operations',
+        buyerPosition: 'Define bot identity, credential vaulting, access reviews, monitoring, failure handling, change control, release management, audit logs, and ownership for production incidents.',
+      },
+      {
+        clauseArea: 'Automation acceptance and exit',
+        buyerPosition: 'Require acceptance tests for process scripts, exceptions, handoffs, credentials, logs, export of bot assets, documentation, and transition assistance.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Process-suitability proof',
+        whenToUse: 'Use when vendors present automation demos without buyer-specific exception paths.',
+        buyerAsk: 'Run stable, semi-stable, exception-heavy, credentialed, document-driven, and human-review scenarios before BAFO.',
+      },
+      {
+        lever: 'Operations model decomposition',
+        whenToUse: 'Use when the buyer lacks an internal bot operations team.',
+        buyerAsk: 'Separate software subscription, implementation, bot factory, monitoring, support, runbook ownership, managed service, and change-management costs.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'rpa-brittle-ui-automation',
+        label: 'Brittle UI automation',
+        severity: 'high',
+        detectionSignals: ['Bot depends on screen layout, unversioned UI elements, unstable selectors, or downstream system changes without monitoring.'],
+        mitigations: ['Require API-first alternatives where possible, resilient selectors, regression tests, change alerts, and runbook ownership'],
+      },
+      {
+        id: 'rpa-credential-control-gap',
+        label: 'Bot credential control gap',
+        severity: 'critical',
+        detectionSignals: ['Bots use shared accounts, unmanaged secrets, weak access reviews, or unclear ownership for privileged actions.'],
+        mitigations: ['Require bot identity model, vaulting, least privilege, access review cadence, audit logs, and privileged access controls'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Stress segregation of duties, evidence logs, model/rule governance, reconciliations, bot credentials, and auditability.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Stress PHI access, human review, error handling, audit logs, payer/provider workflow constraints, and compliance evidence.',
+      },
+      {
+        industry: 'cross_industry',
+        modifier: 'Stress process suitability, exception management, operations ownership, and change resilience without inventing FTE or ROI claims.',
+      },
+    ],
+    body: `## Summary
+Robotic Process Automation is best sourced as an operating capability, not as a bot license. RPA can automate repetitive work, but the procurement question is whether the target processes are stable enough, governed enough, and monitored enough to run safely after go-live. The event should test process suitability, exception handling, human handoff, credential control, monitoring, release management, and support ownership before accepting productivity language.
+
+## When to apply
+Use this pattern when sourcing UiPath, Automation Anywhere, Microsoft Power Automate, SS&C Blue Prism, or comparable automation platforms. Apply it during shared-services automation, finance operations cleanup, HR operations automation, claims or service operations modernization, document-processing workflows, legacy-system bridging, or automation-center-of-excellence buildout. Do not use it for BPM, iPaaS, AI agents, document management, or API integration alone unless bot execution and automation operations are central.
+
+## Category boundary
+In scope: attended automation, unattended automation, orchestration, bot scheduling, exception queues, human-in-the-loop review, credential management, audit logs, bot monitoring, document automation, process mining adjacency, desktop automation, API-based automation, reusable components, environments, and release management. Adjacent but distinct: BPM workflow, iPaaS, low-code apps, AI agents, OCR-only tools, task mining, enterprise integration, and managed services.
+
+## Lifecycle and gates
+The scope gate should inventory candidate processes, system touchpoints, exception rates, credentials, data sensitivity, UI/API stability, human review, volumes, service-level needs, and current manual controls. The RFP gate should require bot identity, security, orchestration, monitoring, audit, support, implementation approach, reusable components, and export rights. The proof gate should run successful transaction, exception, rollback, credential rotation, system-change, human-review, document-input, and monitoring scenarios. The BAFO gate should normalize attended users, unattended bots, orchestration, document modules, environments, support, implementation, managed service, training, and renewal controls.
+
+## Evaluation rubric
+Weight process suitability and exception handling around 25 percent, security and credential governance around 20 percent, operations and monitoring around 20 percent, build experience and reuse around 15 percent, integration and document handling around 10 percent, and commercial predictability around 10 percent. Increase security weight when bots touch payments, HR, regulated data, or privileged systems.
+
+## Pricing and contract notes
+Public UiPath, Automation Anywhere, Microsoft, and Blue Prism materials support capability framing around RPA, attended/unattended automation, orchestration, and platform governance. They do not prove buyer-specific price, FTE savings, processing-time improvement, automation rate, or ROI. Contracting should define bot identity, credential vaulting, monitoring, support, implementation acceptance, runbooks, export rights, renewal controls, and responsibility for failures caused by system changes.
+
+## Contradictions and failure modes
+Vendor claim: RPA scales automation quickly. Detection: require process inventory, exception analysis, ownership, and bot operations proof. Vendor claim: bots reduce manual effort. Detection: separate license value from redesign, exception handling, human review, and ongoing maintenance. The common failure is automating unstable processes and then creating a fragile production estate. The second is ignoring credentials and access reviews. The third is counting built bots instead of measuring trusted, monitored, maintained automations that survive real system change.`
+  },
+  {
+    id: 'PAT-SRC-CAT-ERP2-001',
+    slug: 'core-erp-modernization-sourcing',
+    title: 'Core ERP Modernization Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Core ERP sourcing must prove process fit, master-data readiness, localization, controls, reporting, integration, migration, and implementation governance before buyers accept transformation or cloud-modernization claims.',
+    applicability:
+      'Apply when sourcing SAP Cloud ERP/S/4HANA, Oracle Fusion Cloud ERP, Microsoft Dynamics 365 Finance/Supply Chain, Workday Financial Management, Infor, NetSuite, or comparable enterprise ERP platforms.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.80,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.sap.com/products/erp/s4hana.cloud-edition.html',
+      'https://www.oracle.com/erp/',
+      'https://docs.oracle.com/en/cloud/saas/',
+      'https://www.microsoft.com/en-us/dynamics-365/products/finance',
+      'https://www.microsoft.com/en-us/dynamics-365/products/supply-chain-management',
+    ],
+    regulatoryChips: ['financial-controls-review', 'sox-control-review', 'data-migration-review', 'localization-tax-review'],
+    relatedPatternIds: ['PAT-SRC-CAT-ERP-001', 'PAT-SRC-CAT-EPM-001', 'PAT-SRC-CAT-MDM-001', 'PAT-SRC-CAT-ETL-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'enterprise_saas',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'SAP Cloud ERP/S/4HANA, Oracle Fusion Cloud ERP, Microsoft Dynamics 365, Workday Financial Management, Infor, NetSuite, and industry ERP platforms',
+        tier: 'enterprise',
+        positioning: 'Core ERP platforms spanning finance, procurement, order management, supply chain, projects, manufacturing, reporting, controls, and enterprise process standardization.',
+        cautions: ['Validate implementation model, process fit, controls, master data, integrations, and localization before treating ERP as a software-only selection.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'SAP Cloud ERP product page', url: 'https://www.sap.com/products/erp/s4hana.cloud-edition.html', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Oracle Fusion Cloud ERP product page', url: 'https://www.oracle.com/erp/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Oracle Fusion Cloud Applications documentation', url: 'https://docs.oracle.com/en/cloud/saas/', asOf: '2026-04-29' },
+        ],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'ERP commercial construct map',
+        model: 'hybrid',
+        metric: 'Full users, employee/self-service users, modules, entities, countries, environments, integrations, implementation waves, data migration, reporting, support, and partner services',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'SAP Cloud ERP public product material', url: 'https://www.sap.com/products/erp/s4hana.cloud-edition.html', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Entities, countries, process scope, legacy footprint, customization, integrations, data quality, and SI approach require buyer evidence' },
+        ],
+        confidence: 0.54,
+        notes: 'Public ERP pages do not prove subscription price, SI cost, migration duration, business-case value, or decommissioning savings.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Implementation and control accountability',
+        buyerPosition: 'Define implementation acceptance, control design, segregation of duties, testing evidence, cutover criteria, data migration, integration ownership, and post-go-live support.',
+      },
+      {
+        clauseArea: 'Data and exit rights',
+        buyerPosition: 'Require export of master data, transactions, audit logs, configurations, reports, approval history, integrations, and transition assistance in usable formats.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Fit-to-standard proof',
+        whenToUse: 'Use when cloud ERP value depends on process standardization and reduced customization.',
+        buyerAsk: 'Run buyer-specific process scenarios and document where standard fit, configuration, extension, workaround, or process change is required.',
+      },
+      {
+        lever: 'SI accountability split',
+        whenToUse: 'Use when software vendor, implementation partner, and buyer responsibilities are distributed.',
+        buyerAsk: 'Separate software obligations, SI deliverables, data migration, testing, controls, integrations, cutover, hypercare, and defect ownership.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'erp-master-data-readiness-gap',
+        label: 'Master-data readiness gap',
+        severity: 'critical',
+        detectionSignals: ['Chart of accounts, suppliers, customers, items, locations, tax data, or approvals are inconsistent across legacy systems.'],
+        mitigations: ['Require data profiling, ownership, cleansing plan, migration rehearsal, reconciliation, and data acceptance gates'],
+      },
+      {
+        id: 'erp-standard-fit-illusion',
+        label: 'Standard-fit illusion',
+        severity: 'high',
+        detectionSignals: ['Demo uses generic best practice while buyer exceptions, localizations, approvals, reporting, and controls remain unresolved.'],
+        mitigations: ['Require fit-gap workbook, localization proof, control signoff, extension register, and executive process-decision log'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'manufacturing',
+        modifier: 'Stress item master, BOM/routing, planning, procurement, inventory, quality, costing, shop-floor integrations, and traceability.',
+      },
+      {
+        industry: 'financial_services',
+        modifier: 'Stress financial controls, close process, regulatory reporting, procurement controls, segregation of duties, audit evidence, and data lineage.',
+      },
+      {
+        industry: 'cross_industry',
+        modifier: 'Stress master data, integrations, reporting, controls, fit-to-standard, and implementation governance before accepting transformation claims.',
+      },
+    ],
+    body: `## Summary
+Core ERP modernization is one of the highest-consequence sourcing categories because the software selection is inseparable from process design, master data, controls, reporting, integration, migration, and implementation governance. The event should not crown the best demo. It should determine which platform and implementation model can run the buyer's operating model with acceptable fit, risk, control evidence, and change capacity.
+
+## When to apply
+Use this pattern when sourcing SAP Cloud ERP/S/4HANA, Oracle Fusion Cloud ERP, Microsoft Dynamics 365 Finance or Supply Chain, Workday Financial Management, Infor, NetSuite, or comparable ERP platforms. Apply it during finance transformation, legacy ERP replacement, post-merger consolidation, cloud ERP migration, shared-services redesign, manufacturing modernization, procurement transformation, or multi-entity controls cleanup. Do not use it for EPM, procurement point solutions, PSA, HCM, or SCM point solutions unless core financial/operational ERP scope is central.
+
+## Category boundary
+In scope: general ledger, accounts payable, accounts receivable, fixed assets, procurement, order management, inventory, projects, manufacturing or supply chain where relevant, approvals, controls, roles, reporting, master data, localizations, integrations, migration, environments, and cutover. Adjacent but distinct: EPM planning, tax engines, treasury, HCM, CRM, data warehouse, iPaaS, and analytics.
+
+## Lifecycle and gates
+The scope gate should inventory entities, countries, processes, legacy systems, customizations, integrations, reports, master data, controls, audit needs, localization, and cutover constraints. The RFP gate should require module scope, fit-to-standard method, implementation plan, partner model, security, integrations, reporting, data migration, testing, and support. The proof gate should run record-to-report, procure-to-pay, order-to-cash, project or manufacturing scenarios, approval controls, reporting, integration, and migration samples. The BAFO gate should normalize users, modules, environments, SI services, data migration, integrations, testing, training, hypercare, support, and renewal controls.
+
+## Evaluation rubric
+Weight process fit and controls around 25 percent, implementation governance around 25 percent, data migration and integration around 20 percent, reporting and analytics around 10 percent, user adoption and operating model around 10 percent, and commercial predictability around 10 percent. Increase implementation weight when legacy customization, multi-country scope, or weak data ownership is present.
+
+## Pricing and contract notes
+Public SAP, Oracle, and Microsoft materials establish cloud ERP scope and product framing. They do not prove buyer-specific subscription cost, implementation cost, migration duration, decommissioning savings, close acceleration, or transformation value. Contracting should define software scope, implementation responsibilities, data ownership, migration acceptance, integration ownership, control evidence, cutover criteria, support, environments, export rights, renewal controls, and transition assistance.
+
+## Contradictions and failure modes
+Vendor claim: cloud ERP enables standardization. Detection: require fit-gap evidence, process-decision log, localization proof, and extension register. Vendor claim: implementation approach reduces risk. Detection: inspect workplan, data readiness, integration plan, testing, cutover, and hypercare. The common failure is underestimating master data and legacy reports. The second is accepting standard-process language while approving many exceptions. The third is failing to define vendor, SI, and buyer accountability when defects appear after go-live.`
+  },
+  {
+    id: 'PAT-SRC-CAT-DOC-001',
+    slug: 'enterprise-document-content-management-sourcing',
+    title: 'Enterprise Document and Content Management Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'Document and content management sourcing should prove metadata discipline, permissions, records retention, workflow, search, line-of-business integration, and migration quality before buyers accept knowledge-productivity or compliance claims.',
+    applicability:
+      'Apply when sourcing OpenText, Box, M-Files, Microsoft SharePoint/Purview patterns, Hyland, Laserfiche, DocuWare, or comparable document, content services, and enterprise content management platforms.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.79,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://blogs.opentext.com/enterprise-content-management-ecm/',
+      'https://www.opentext.com/products/viewing-transformation',
+      'https://www.box.com/content-management/enterprise/',
+      'https://www.m-files.com/supplemental/document-management-software/',
+      'https://www.m-files.com/supplemental/ecm/',
+    ],
+    regulatoryChips: ['records-retention-review', 'permission-governance-review', 'information-lifecycle-review', 'ediscovery-readiness-review'],
+    relatedPatternIds: ['PAT-SRC-CAT-QMS-001', 'PAT-SRC-CAT-EHS-001', 'PAT-SRC-CAT-LEGAL-001', 'PAT-SRC-CAT-IAM-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'enterprise_saas',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'OpenText, Box, M-Files, Microsoft SharePoint/Purview, Hyland, Laserfiche, DocuWare, and content-services platforms',
+        tier: 'enterprise',
+        positioning: 'Document and content platforms spanning repositories, metadata, permissions, workflow, records retention, search, collaboration, capture, and line-of-business integration.',
+        cautions: ['Validate metadata, retention, permissions, search, migration, and adoption; content platforms fail when they become another uncontrolled file share.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'OpenText ECM overview', url: 'https://blogs.opentext.com/enterprise-content-management-ecm/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Box enterprise content management page', url: 'https://www.box.com/content-management/enterprise/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'M-Files document management overview', url: 'https://www.m-files.com/supplemental/document-management-software/', asOf: '2026-04-29' },
+        ],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'Document/content management pricing construct map',
+        model: 'hybrid',
+        metric: 'Named users, external users, storage, repositories, records modules, workflow, capture/OCR, e-signature adjacency, integrations, migration, governance, and support',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'M-Files ECM and document management material', url: 'https://www.m-files.com/supplemental/ecm/', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Repository count, content volume, retention classes, external sharing, migration quality, and integration scope require buyer evidence' },
+        ],
+        confidence: 0.55,
+        notes: 'Public pages support scope only. Do not infer price, storage cost, search productivity, compliance savings, or migration effort without buyer evidence.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Information governance and records',
+        buyerPosition: 'Define metadata ownership, retention schedules, legal hold, audit logs, permission reviews, external sharing, export rights, and responsibility for policy misconfiguration.',
+      },
+      {
+        clauseArea: 'Migration and content quality',
+        buyerPosition: 'Require migration sampling, metadata mapping, permission reconciliation, duplicate handling, broken-link treatment, search acceptance, and transition assistance.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Metadata and retrieval proof',
+        whenToUse: 'Use when vendors demonstrate AI search, knowledge discovery, or workflow without buyer content structure.',
+        buyerAsk: 'Run retrieval, permission, metadata, retention, duplicate, external-sharing, workflow, and audit scenarios using buyer-like content samples.',
+      },
+      {
+        lever: 'Migration risk decomposition',
+        whenToUse: 'Use when content is spread across file shares, SharePoint sites, email archives, legacy ECM, or line-of-business repositories.',
+        buyerAsk: 'Separate migration discovery, cleansing, metadata mapping, permission remediation, validation, user adoption, and archive/decommissioning work.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'doc-metadata-governance-gap',
+        label: 'Metadata governance gap',
+        severity: 'high',
+        detectionSignals: ['Search and workflow depend on tags, classifications, or retention labels that users do not apply consistently.'],
+        mitigations: ['Require metadata model, defaulting rules, lifecycle ownership, validation checks, and adoption proof'],
+      },
+      {
+        id: 'doc-permission-sprawl',
+        label: 'Permission and external-sharing sprawl',
+        severity: 'critical',
+        detectionSignals: ['Legacy folders, external links, inherited permissions, or unmanaged groups are migrated without review.'],
+        mitigations: ['Require permission inventory, external-sharing review, access recertification, audit logs, and migration acceptance gates'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Stress records retention, legal hold, customer data, external sharing, audit trails, and supervisory review evidence.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Stress PHI access, retention, external collaboration, audit logs, consent-related records, and integration with clinical or administrative systems.',
+      },
+      {
+        industry: 'public_sector',
+        modifier: 'Stress public-records requests, retention schedules, accessibility, redaction, legal hold, and defensible search/export.',
+      },
+    ],
+    body: `## Summary
+Enterprise document and content management is not just a repository decision. It is an information-governance decision: how content is classified, secured, retained, found, shared, routed, audited, and eventually disposed of. A sourcing event should prove metadata discipline, permission governance, records retention, search quality, workflow behavior, line-of-business integration, and migration reliability before accepting productivity or compliance language.
+
+## When to apply
+Use this pattern when sourcing OpenText, Box, M-Files, Microsoft SharePoint/Purview patterns, Hyland, Laserfiche, DocuWare, or comparable enterprise content management and content-services platforms. Apply it during file-share cleanup, ECM replacement, records modernization, legal hold improvement, controlled-document programs, external collaboration redesign, document workflow automation, or content migration. Do not use it for QMS, CLM, DAM, LMS, or e-signature alone unless enterprise document governance is central.
+
+## Category boundary
+In scope: repositories, metadata, classification, search, permissions, external sharing, workflow, version control, records retention, legal hold, audit logs, capture/OCR adjacency, content migration, line-of-business integration, APIs, reporting, and exports. Adjacent but distinct: QMS, DAM, CLM, knowledge base, collaboration chat, e-signature, backup/archive, and BI.
+
+## Lifecycle and gates
+The scope gate should inventory repositories, content volume, records schedules, permission groups, external sharing, legal hold, migration sources, workflow needs, regulated content, and line-of-business systems. The RFP gate should require metadata model, search, security, records, workflow, migration, APIs, reporting, support, and retention controls. The proof gate should run upload, classification, permission, external share, workflow approval, search, retention, legal hold, audit, export, and migration-sample scenarios. The BAFO gate should normalize users, storage, modules, records features, capture/OCR, integrations, migration, governance, support, and renewal controls.
+
+## Evaluation rubric
+Weight information governance around 25 percent, permissions and security around 20 percent, search and retrieval around 15 percent, workflow/integration around 15 percent, migration quality around 15 percent, and commercial predictability around 10 percent. Increase governance weight when records, legal hold, regulatory evidence, or external sharing are material.
+
+## Pricing and contract notes
+Public OpenText, Box, and M-Files materials support capability framing around ECM, content services, document management, collaboration, workflow, and integration. They do not prove buyer-specific price, migration effort, storage cost, retrieval improvement, compliance savings, or adoption outcome. Contracting should define metadata ownership, records controls, legal hold, permission review, external sharing, migration acceptance, export rights, support, renewal controls, and transition assistance.
+
+## Contradictions and failure modes
+Vendor claim: users will find information faster. Detection: test buyer-like metadata, permissions, duplicates, archived content, and search behavior. Vendor claim: records retention is controlled. Detection: map retention classes, legal holds, exceptions, exports, and owner approvals. The common failure is migrating unmanaged content into a new tool without fixing ownership. The second is weak permission reconciliation. The third is treating AI search as a substitute for information architecture, retention policy, and content lifecycle governance.`
+  },
 
 ];
 
