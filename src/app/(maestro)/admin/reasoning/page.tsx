@@ -698,6 +698,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/resolution-log',
     description: 'All contradiction templates currently marked resolved — in-memory store state',
   },
+  {
+    title: 'Instance compare',
+    href: '/admin/reasoning/instance-compare',
+    description: 'Side-by-side health metrics comparison for any two instances',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
