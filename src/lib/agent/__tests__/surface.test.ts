@@ -58,6 +58,11 @@ describe('canonicalizeSurface', () => {
     expect(canonicalizeSurface('something-bespoke', {})).toBe('something-bespoke');
   });
 
+  it("'intelligence' canonicalizes to '/intelligence' (PR-INT-B)", () => {
+    expect(canonicalizeSurface('intelligence', {})).toBe('/intelligence');
+    expect(canonicalizeSurface('intelligence', undefined)).toBe('/intelligence');
+  });
+
   it('empty surface stays empty', () => {
     expect(canonicalizeSurface('', {})).toBe('');
   });

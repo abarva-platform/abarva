@@ -1,12 +1,14 @@
 // I1 · INT-IDX-LIBRARY — Server-component Intelligence pattern library index.
 //
-// Converted from 'use client' in I1. All filter state is URL-param-driven
-// (searchParams.filter passed as a prop from the route). No useState, no
-// useRouter, no useSearchParams here.
+// PR-INT-B reshape: the page leads with an agent-centric canvas
+// (Sentinel chat dominant + reactive knowledge pane). The static
+// pattern library table sits below inside a collapsible details
+// accordion — present but de-emphasized. Same layout pattern PR-F
+// established for /programs/[id].
 //
-// Client interactivity (AgentColumn actions + PatternSubmitModal) is isolated
-// to IntelligenceIndexSentinelPanel (client component island).
-// Filter pill navigation uses IntelligenceFilterLinks (server component, Link-based).
+// Filter state remains URL-param-driven (searchParams.filter passed
+// as a prop from the route). The canvas is a client island; the
+// table is server-rendered.
 
 import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
@@ -19,8 +21,8 @@ import {
   normalizeIntelligenceLibraryFilter,
   type IntelligencePattern,
 } from '@/lib/intelligence/shell-intelligence-fixture';
-import { IntelligenceIndexSentinelPanel } from '@/components/intelligence/IntelligenceIndexSentinelPanel';
-import { IntelligenceFilterLinks, type FilterLinkPill } from '@/components/intelligence/IntelligenceFilterLinks';
+import { IntelligenceAgentCanvas } from '@/components/intelligence/IntelligenceAgentCanvas';
+import { IntelligenceFilterLinks } from '@/components/intelligence/IntelligenceFilterLinks';
 
 // ─── Tier badge ───────────────────────────────────────────────────────────────
 
@@ -272,78 +274,113 @@ export function IntelligenceIndexPage({ filter }: IntelligenceIndexPageProps) {
       topBarProps={{
         tenantName: 'Apex Retail Group',
         showLocked: true,
-        context: 'Intelligence · Pattern Library',
+        context: 'Intelligence · Sentinel',
       }}
       middleStrip={<IntelligenceFilterLinks pills={filterPills} />}
     >
-      {/* Sentinel column — client island (handles modal + agent actions) */}
-      <IntelligenceIndexSentinelPanel
-        agentQuote={INTELLIGENCE_INDEX_VIEW.agentQuote}
-        agentContext={INTELLIGENCE_INDEX_VIEW.agentContext}
-        actions={INTELLIGENCE_INDEX_VIEW.actions}
-      />
-
-      {/* Main content */}
+      {/* Single full-width column · canvas-dominant + collapsed library */}
       <div
         style={{
           flex: 1,
-          overflowY: 'auto',
-          background: SHELL.PAPER,
-          padding: '32px 48px 32px',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          minWidth: 0,
         }}
       >
-        {/* Page header */}
-        <div style={{ marginBottom: 28 }}>
-          <div
-            style={{
-              fontFamily: SHELL.MONO,
-              fontSize: 9,
-              letterSpacing: '0.18em',
-              textTransform: 'uppercase',
-              color: SHELL.INK_MUTED,
-              marginBottom: 6,
-            }}
-          >
-            Intelligence · Pattern Library
+        <div
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            background: SHELL.PAPER,
+            padding: '24px 48px 32px',
+          }}
+        >
+          {/* Page header */}
+          <div style={{ marginBottom: 18 }}>
+            <div
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 9,
+                letterSpacing: '0.18em',
+                textTransform: 'uppercase',
+                color: SHELL.INK_MUTED,
+                marginBottom: 6,
+              }}
+            >
+              Intelligence · {filtered.length} pattern{filtered.length !== 1 ? 's' : ''} ·{' '}
+              {activeFilterLabel}
+            </div>
+            <h1
+              style={{
+                fontFamily: SHELL.SERIF,
+                fontSize: 26,
+                fontWeight: 700,
+                color: SHELL.INK,
+                margin: 0,
+                lineHeight: 1.2,
+                letterSpacing: '-0.01em',
+              }}
+            >
+              Pattern Library
+            </h1>
           </div>
-          <h1
+
+          {/* Sentinel agent canvas — chat dominant + reactive knowledge pane */}
+          <IntelligenceAgentCanvas quote={INTELLIGENCE_INDEX_VIEW.agentQuote} />
+
+          {/* Static corpus browser — collapsed by default */}
+          <details
+            data-testid="intelligence-library-legacy"
             style={{
-              fontFamily: SHELL.SERIF,
-              fontSize: 26,
-              fontWeight: 700,
-              color: SHELL.INK,
-              margin: 0,
-              lineHeight: 1.2,
-              letterSpacing: '-0.01em',
+              marginBottom: 20,
+              border: `1px solid ${SHELL.CARD_LINE}`,
+              borderRadius: 10,
+              background: SHELL.PAPER,
             }}
           >
-            Pattern Library
-          </h1>
-          <p
-            style={{
-              fontFamily: SHELL.SANS,
-              fontSize: 13,
-              color: SHELL.INK_MUTED,
-              margin: '6px 0 0',
-              lineHeight: 1.5,
-            }}
-          >
-            {activeFilterLabel} · {filtered.length} pattern{filtered.length !== 1 ? 's' : ''} · deterministic library state for AI program design
-          </p>
-        </div>
-
-        {/* Pattern table */}
-        <PatternTable patterns={filtered} />
-
-        {/* Solutions link */}
-        <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${SHELL.CARD_LINE}` }}>
-          <Link href="/intelligence/solutions" style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_SOFT, textDecoration: 'none',
-          }}>
-            <span>→</span>
-            <span>Solution archetypes · end-to-end blueprints</span>
-          </Link>
+            <summary
+              style={{
+                cursor: 'pointer',
+                padding: '12px 16px',
+                fontFamily: SHELL.MONO,
+                fontSize: 11,
+                letterSpacing: '0.10em',
+                textTransform: 'uppercase',
+                color: SHELL.GRAY_TEXT,
+                fontWeight: 700,
+                userSelect: 'none',
+              }}
+            >
+              Pattern library · {filtered.length} entries · direct browse
+            </summary>
+            <div style={{ padding: '8px 16px 16px' }}>
+              <PatternTable patterns={filtered} />
+              <div
+                style={{
+                  marginTop: 16,
+                  paddingTop: 12,
+                  borderTop: `1px solid ${SHELL.CARD_LINE}`,
+                }}
+              >
+                <Link
+                  href="/intelligence/solutions"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    fontFamily: SHELL.MONO,
+                    fontSize: 11,
+                    color: SHELL.INK_SOFT,
+                    textDecoration: 'none',
+                  }}
+                >
+                  <span>→</span>
+                  <span>Solution archetypes · end-to-end blueprints</span>
+                </Link>
+              </div>
+            </div>
+          </details>
         </div>
       </div>
     </AppShell>

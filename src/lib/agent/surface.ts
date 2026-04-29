@@ -55,7 +55,10 @@ export function canonicalizeSurface(
     // PR-I · single-segment semantic surfaces have a one-to-one URL form.
     // Canonicalizing them here keeps tools and the artifact-channel gate
     // working uniformly across list/detail/home/intelligence — without
-    // each consumer growing its own translation table.
+    // each consumer growing its own translation table. PR-INT-B relies
+    // on the 'intelligence' case so Sentinel tools registered for
+    // '/intelligence' (URL-shaped) resolve cleanly when AppShell sends
+    // the semantic 'intelligence' key.
     case 'programs':
       return '/programs';
     case 'home':

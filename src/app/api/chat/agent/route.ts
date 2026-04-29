@@ -237,6 +237,10 @@ export async function POST(request: Request) {
     '/programs/new',
     '/demo/programs/new',
     '/programs',
+    // PR-INT-B · Sentinel's Intelligence surface. The reactive
+    // SentinelReactivePanel materializes pattern-match,
+    // evidence-highlight, and cross-program-dependency cards.
+    '/intelligence',
   ]);
   const isProgramDetailSurface =
     typeof surface === 'string' &&
