@@ -11,7 +11,7 @@
 // and applies each artifact incrementally so the right pane materializes
 // the agent's reasoning as it happens.
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { BrandColors, BrandTypography } from '@/lib/shell/brand-tokens';
 import type { Artifact } from '@/lib/agent/artifacts';
 import {
@@ -35,6 +35,41 @@ export function ProgramOriginationWorkspace({
 }: ProgramOriginationWorkspaceProps) {
   const [brief, setBrief] = useState<ProgramBriefDraft>(EMPTY_BRIEF);
   const [patternMatch, setPatternMatch] = useState<PatternMatchCard | null>(null);
+  // Lift turns up so we can rehydrate from the saved draft on mount.
+  // Until hydration completes we render `initialTurns` (the cold-open).
+  const [turns, setTurns] = useState<ChatTurn[]>(initialTurns);
+  const [hydrated, setHydrated] = useState(false);
+
+  // PR3 — hydrate from the saved origination draft on mount.
+  // The demo route is public (no tenancy); the API will 401/403, and
+  // we just stay with the cold-open turns.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/programs/origination-draft?surface=${encodeURIComponent(surface)}`,
+          { method: 'GET', cache: 'no-store' },
+        );
+        if (!res.ok) return;
+        const body = (await res.json()) as { draft: { state: { turns?: ChatTurn[]; brief?: ProgramBriefDraft | null; patternMatch?: PatternMatchCard | null } } | null };
+        if (cancelled || !body.draft) return;
+        const state = body.draft.state ?? {};
+        if (Array.isArray(state.turns) && state.turns.length > 0) {
+          setTurns(state.turns);
+        }
+        if (state.brief) setBrief(state.brief);
+        if (state.patternMatch) setPatternMatch(state.patternMatch);
+      } catch {
+        // Non-fatal — proceed with the cold-open.
+      } finally {
+        if (!cancelled) setHydrated(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [surface]);
 
   const applyArtifact = useCallback((artifact: Artifact) => {
     switch (artifact.type) {
@@ -68,6 +103,35 @@ export function ProgramOriginationWorkspace({
         setBrief((prev) => ({ ...prev, classification: artifact.archetypeLabel }));
         return;
     }
+  }, []);
+
+  // PR3 — persist the draft after each non-streaming change so the
+  // server has the latest snapshot. We debounce lightly via a ref so
+  // a flurry of artifact dispatches in one stream collapses to one
+  // POST.
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!hydrated) return; // don't write back the cold-open as a "saved" state
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      void fetch('/api/programs/origination-draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          surface,
+          state: { turns, brief, patternMatch },
+        }),
+      }).catch(() => {
+        /* non-fatal */
+      });
+    }, 600);
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+    };
+  }, [turns, brief, patternMatch, surface, hydrated]);
+
+  const handleTurnsChange = useCallback((next: ChatTurn[]) => {
+    setTurns(next);
   }, []);
 
   return (
@@ -152,7 +216,8 @@ export function ProgramOriginationWorkspace({
         <StewardChat
           surface={surface}
           tenantName={tenantName}
-          initialTurns={initialTurns}
+          turns={turns}
+          onTurnsChange={handleTurnsChange}
           onArtifact={applyArtifact}
         />
         <ProgramBriefPanel brief={brief} patternMatch={patternMatch} />

@@ -17,6 +17,7 @@ import { originateProgram } from '@/lib/programs/mutations';
 import type { ArchetypeKey, OriginationForm } from '@/lib/programs/types.ui';
 import type { OriginSource } from '@/lib/programs/types.db';
 import { getServerSupabase } from '@/lib/supabase-server';
+import { markDraftCommitted } from '@/lib/programs/origination-drafts';
 
 // Postgres UUID v4 format (also matches v1/v3/v5 — sufficient for input
 // validation before we attempt an `engagements.insert` that would
@@ -167,6 +168,14 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
         .maybeSingle();
       if (existing) {
         const row = existing as { id: string; name: string };
+        // Best-effort: dissociate the open draft if one exists so a
+        // fresh /programs/new visit doesn't re-hydrate the just-
+        // committed thread. Non-fatal if it fails.
+        try {
+          await markDraftCommitted(tenancy, ctx.surface, row.id);
+        } catch {
+          // ignore
+        }
         ctx.writer?.write(`\n[[program-created:${row.id}]]`);
         return {
           success: true,
@@ -196,6 +205,15 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
         sponsorUserId: originationForm.sponsorPersonId,
         leadUserId: originationForm.leadPersonId,
       });
+
+      // Surface 1 PR3: dissociate the open origination draft on this
+      // surface so a subsequent /programs/new visit starts fresh.
+      // Best-effort — non-fatal if it fails.
+      try {
+        await markDraftCommitted(tenancy, ctx.surface, program.id);
+      } catch {
+        // ignore
+      }
 
       // Surface 1 navigation sentinel: tell the client the program is
       // ready to be navigated to. Agent-authored confirmation text still
