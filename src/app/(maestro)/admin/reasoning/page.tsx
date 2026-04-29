@@ -728,6 +728,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/risk-register',
     description: 'Portfolio-wide risk register — all contradictions and failure modes ranked by severity',
   },
+  {
+    title: 'Artifact tracker',
+    href: '/admin/reasoning/artifacts',
+    description: 'Expected vs submitted artifacts across all instances — identifies missing and draft items',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
