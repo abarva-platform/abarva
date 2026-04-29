@@ -44,47 +44,91 @@ interface CreateProgramPayload extends CreateProgramRequest {
   topMatch?: PatternClassifierMatch;
 }
 
+// Strip secrets / large fields before logging the payload that triggered a 5xx.
+// Keep enough to reproduce the request, drop anything that could be a token.
+function redactPayload(payload: unknown): unknown {
+  if (!payload || typeof payload !== 'object') return payload;
+  const SENSITIVE = /(token|secret|password|key|authorization|cookie|api[_-]?key)/i;
+  const trim = (v: unknown): unknown => {
+    if (typeof v === 'string') return v.length > 500 ? `${v.slice(0, 500)}…<+${v.length - 500} chars>` : v;
+    if (Array.isArray(v)) return v.map(trim);
+    if (v && typeof v === 'object') {
+      const out: Record<string, unknown> = {};
+      for (const [k, val] of Object.entries(v)) {
+        out[k] = SENSITIVE.test(k) ? '[REDACTED]' : trim(val);
+      }
+      return out;
+    }
+    return v;
+  };
+  return trim(payload);
+}
+
 export async function POST(req: NextRequest) {
+  let payload: CreateProgramPayload | null = null;
   try {
     const ctx = await requireTenancy();
-    const payload = (await req.json()) as CreateProgramPayload;
-    if (!payload?.originationFormResult?.name || !payload?.originationFormResult?.useCase) {
-      return Response.json({ error: 'bad_request', detail: 'name + useCase required' }, { status: 400 });
+    try {
+      payload = (await req.json()) as CreateProgramPayload;
+    } catch {
+      return Response.json(
+        { error: 'bad_request', detail: 'Request body was not valid JSON.' },
+        { status: 400 },
+      );
     }
 
-    const form = payload.originationFormResult;
-    const archetype = (payload.shapeModifications?.shape === 'template' ? null : (deriveArchetype(form.useCase) as ArchetypeKey | null));
+    const form = payload?.originationFormResult;
+    const missing: string[] = [];
+    if (!form?.name?.trim()) missing.push('name');
+    if (!form?.useCase?.trim()) missing.push('useCase');
+    if (missing.length > 0) {
+      return Response.json(
+        {
+          error: 'bad_request',
+          detail: `Missing required field${missing.length === 1 ? '' : 's'}: ${missing.join(', ')}.`,
+          fields: missing,
+        },
+        { status: 400 },
+      );
+    }
+
+    const archetype = (payload!.shapeModifications?.shape === 'template' ? null : (deriveArchetype(form!.useCase) as ArchetypeKey | null));
 
     const program = await originateProgram(ctx, {
-      name: form.name,
-      useCase: form.useCase,
+      name: form!.name,
+      useCase: form!.useCase,
       archetype,
-      originSource: payload.originSource ?? 'user_initiated',
-      originSourceRef: payload.originSourceRef ?? null,
-      acceptedPatternKey: payload.acceptedPatternKey ?? null,
-      industryHint: form.industryHint,
+      originSource: payload!.originSource ?? 'user_initiated',
+      originSourceRef: payload!.originSourceRef ?? null,
+      acceptedPatternKey: payload!.acceptedPatternKey ?? null,
+      industryHint: form!.industryHint,
     });
 
     const sb = getServerSupabase();
 
-    // Seed participants from form
-    if (form.sponsorPersonId) {
-      await sb.from('engagement_participants').insert({
+    // Seed participants from form. Failures here are non-fatal — the program
+    // record exists; we surface a server-side warning but still return success
+    // so the user lands on the program page rather than seeing internal_error
+    // for what's effectively a soft attribution gap.
+    if (form!.sponsorPersonId) {
+      const { error: sponsorErr } = await sb.from('engagement_participants').insert({
         engagement_id: program.id,
-        user_id: form.sponsorPersonId,
-        user_name: form.sponsorPersonId,
+        user_id: form!.sponsorPersonId,
+        user_name: form!.sponsorPersonId,
         role: 'sponsor',
         approval_authority: 'sponsor',
       });
+      if (sponsorErr) console.warn('[POST /api/v1/programs] sponsor participant insert failed', { programId: program.id, error: sponsorErr });
     }
-    if (form.leadPersonId && form.leadPersonId !== form.sponsorPersonId) {
-      await sb.from('engagement_participants').insert({
+    if (form!.leadPersonId && form!.leadPersonId !== form!.sponsorPersonId) {
+      const { error: leadErr } = await sb.from('engagement_participants').insert({
         engagement_id: program.id,
-        user_id: form.leadPersonId,
-        user_name: form.leadPersonId,
+        user_id: form!.leadPersonId,
+        user_name: form!.leadPersonId,
         role: 'lead',
         approval_authority: 'approver',
       });
+      if (leadErr) console.warn('[POST /api/v1/programs] lead participant insert failed', { programId: program.id, error: leadErr });
     }
 
     // Seed program_modules from canonical shape (if pattern accepted)
@@ -148,8 +192,18 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     try { return tenancyErrorResponse(err); } catch {}
-    console.error('[POST /api/v1/programs]', err);
-    return Response.json({ error: 'internal_error' }, { status: 500 });
+    // Log the offending payload (redacted) and the error so future failures
+    // are diagnosable from server logs rather than just an internal_error chip.
+    // TODO(observability): forward to Sentry/PostHog once an error sink is wired up.
+    console.error('[POST /api/v1/programs]', {
+      error: err instanceof Error ? { message: err.message, stack: err.stack } : err,
+      payload: redactPayload(payload),
+    });
+    const detail =
+      err instanceof Error && err.message
+        ? `Steward couldn't create the program record (${err.message}). Try again or contact support.`
+        : "Steward couldn't reach the program service. Try again or contact support.";
+    return Response.json({ error: 'internal_error', detail }, { status: 500 });
   }
 }
 
