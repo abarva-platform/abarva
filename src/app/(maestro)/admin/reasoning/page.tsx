@@ -1088,6 +1088,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/gate-dependency',
     description: 'Inferred gate criterion dependencies across stages — critical path and dependency chain analysis',
   },
+  {
+    title: 'Gate export',
+    href: '/admin/reasoning/gate-export',
+    description: 'Exportable gate status matrix — all instances × all criteria with met/waived/unmet status cells',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
