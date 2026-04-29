@@ -1268,6 +1268,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Stage Completion Forecast',
     description: 'Velocity-based stage completion timeline — Gantt-lite view, completion quarters, on-track vs. at-risk.',
   },
+  {
+    href: '/admin/reasoning/contradiction-impact-analysis',
+    title: 'Contradiction Impact Analysis',
+    description: 'Health cost per active contradiction — suppressed points, recovery potential, and high-ROI resolutions.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
