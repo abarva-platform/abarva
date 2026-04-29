@@ -608,6 +608,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/contradictions',
     description: 'Cross-instance view of all active unresolved contradictions',
   },
+  {
+    title: 'Feedback stats',
+    href: '/admin/reasoning/feedback-stats',
+    description: 'Aggregated synthesis feedback ratings per surface and instance',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
