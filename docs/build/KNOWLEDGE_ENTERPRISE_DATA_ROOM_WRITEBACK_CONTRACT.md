@@ -1,8 +1,8 @@
 # Knowledge Layer Enterprise Data Room and Dynamic Write-Back Contract
 
-Status: proposed implementation contract  
-Date: 2026-04-29  
-Scope: synthetic/demo tenants first; production/private-client data requires a dedicated tenant data plane  
+Status: proposed implementation contract
+Date: 2026-04-29
+Scope: synthetic/demo tenants first; production/private-client data requires a dedicated tenant data plane
 Related docs:
 - `docs/build/KNOWLEDGE_GRAPH_CONTRACT.md`
 - `docs/build/KNOWLEDGE_EVIDENCE_LEDGER_CONTRACT.md`
@@ -1087,4 +1087,3 @@ Acceptance:
 5. `feat(knowledge): index corpus graph edges in knowledge fabric`.
 6. `docs(knowledge): specify pgvector graph schema migration`.
 7. `feat(knowledge): add synthetic artifact write-back draft path`.
-
