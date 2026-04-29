@@ -958,6 +958,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/tenant-comparison',
     description: 'Cross-tenant reasoning health metrics — avg score, gate pass rate, and contradiction rate by client',
   },
+  {
+    title: 'Synthesis diff',
+    href: '/admin/reasoning/synthesis-diff',
+    description: 'Before/after synthesis confidence comparison for instances with evidence ingestions or contradiction resolutions',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
