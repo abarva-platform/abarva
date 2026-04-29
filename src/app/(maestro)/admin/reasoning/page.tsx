@@ -1238,6 +1238,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Health Volatility',
     description: 'Health score sensitivity analysis — upside from contradiction resolution, downside from waiver removal.',
   },
+  {
+    href: '/admin/reasoning/evidence-source-map',
+    title: 'Evidence Source Map',
+    description: 'Source document citation frequency — most-cited, never-cited, and source-to-instance matrix.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
