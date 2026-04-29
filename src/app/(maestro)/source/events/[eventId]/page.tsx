@@ -25,6 +25,7 @@ import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
 import { buildEvidenceMapWithIngestions } from '@/lib/source/source-event-instance';
 import { AddEvidenceForm } from '@/components/source/AddEvidenceForm';
 import { CascadeImpactSection } from '@/components/_shared/CascadeImpactSection';
+import { PatternRecommendationChips } from '@/components/source/PatternRecommendationChips';
 import { PAT_SRC_AMS_001 } from '@/lib/intelligence/source-lifecycle-patterns';
 import { createGateEvaluator } from '@/lib/reasoning/gate-evaluator';
 import { buildSourceSynthesisContext } from '@/lib/reasoning/synthesis-context-builder';
@@ -217,6 +218,10 @@ export default async function SourceEventDetailPage({
           </a>
         </div>
         <NexusEngagementCanvas event={event} />
+        <PatternRecommendationChips
+          eventName={event.name}
+          eventType={event.archetype}
+        />
         {matchedInstance && nextGateEvaluations.length > 0 && (
           <GateCriteriaPanel
             evaluations={nextGateEvaluations}
