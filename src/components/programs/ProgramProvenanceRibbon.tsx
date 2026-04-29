@@ -26,6 +26,7 @@ import { PatternDoctrineLink } from '@/components/source/PatternDoctrineLink';
 import { SynthesisFeedbackWidget } from '@/components/reasoning/SynthesisFeedbackWidget';
 import { CopySummaryButton } from '@/components/reasoning/CopySummaryButton';
 import { SynthesisConfidenceBar } from '@/components/reasoning/SynthesisConfidenceBar';
+import { SynthesisDiffPanel } from '@/components/reasoning/SynthesisDiffPanel';
 import { SHELL } from '@/lib/shell/shell-tokens';
 
 interface ProgramProvenanceRibbonProps {
@@ -205,6 +206,10 @@ export function ProgramProvenanceRibbon({ context, eventId }: ProgramProvenanceR
 
       <Divider />
       <SynthesisConfidenceBar context={context} />
+
+      <div style={{ width: '100%', paddingTop: 4 }}>
+        <SynthesisDiffPanel context={context} surface="program" />
+      </div>
     </aside>
   );
 }
