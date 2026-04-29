@@ -10,7 +10,7 @@
 //   • Server component — no useState, no client hooks
 //   • Client island: IntelligencePatternDetailSentinel (AgentColumn only)
 //
-// No live model calls, no fetch(), no Date.now, no Math.random.
+// No live model calls, no network IO, no Date.now, no Math.random.
 
 import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
@@ -18,6 +18,7 @@ import { IntelligenceProvenanceRibbon } from '@/components/intelligence/Intellig
 import { IntelligencePatternDetailSentinel } from '@/components/intelligence/IntelligencePatternDetailSentinel';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { IntelligencePatternDetailView } from '@/lib/intelligence/intelligence-pattern-detail-view';
+import { buildPatternActionCanvasView } from '@/lib/intelligence/pattern-action-canvas-view';
 
 // ─── Status / tier pills ──────────────────────────────────────────────────────
 
@@ -331,6 +332,216 @@ function UsingProgramsSection({
   );
 }
 
+// ─── Action canvas ────────────────────────────────────────────────────────────
+
+const PRIORITY_STYLE = {
+  immediate: { bg: SHELL.RUST_BG, text: SHELL.RUST_TEXT, label: 'Immediate' },
+  this_week: { bg: SHELL.PEACH_BG, text: SHELL.PEACH_TEXT, label: 'This week' },
+  this_month: { bg: SHELL.BLUE_BG, text: '#2a4a7a', label: 'This month' },
+  backlog: { bg: SHELL.GRAY_BG, text: SHELL.GRAY_TEXT, label: 'Backlog' },
+};
+
+const ACTION_STATUS_STYLE = {
+  open: { bg: SHELL.BLUE_BG, text: '#2a4a7a', label: 'Open' },
+  in_progress: { bg: SHELL.MINT_BG, text: SHELL.MINT_TEXT, label: 'In progress' },
+  blocked: { bg: SHELL.RUST_BG, text: SHELL.RUST_TEXT, label: 'Blocked' },
+  done: { bg: SHELL.GRAY_BG, text: SHELL.GRAY_TEXT, label: 'Done' },
+};
+
+function ActionCanvasSection({
+  patternId,
+  patternName,
+}: {
+  patternId: string;
+  patternName: string;
+}) {
+  const canvas = buildPatternActionCanvasView(patternId, patternName);
+  if (!canvas.hasActions) return null;
+
+  return (
+    <div
+      style={{ marginTop: 36, maxWidth: 720 }}
+      data-testid="intelligence-action-canvas"
+    >
+      {/* Section eyebrow */}
+      <div
+        style={{
+          fontFamily: SHELL.MONO,
+          fontSize: 9,
+          letterSpacing: '0.14em',
+          textTransform: 'uppercase',
+          color: SHELL.INK_MUTED,
+          marginBottom: 12,
+        }}
+      >
+        Action Canvas · {canvas.actions.length} action{canvas.actions.length !== 1 ? 's' : ''}
+      </div>
+
+      {/* Atlas synthesis */}
+      {canvas.atlasSynthesis && (
+        <p
+          style={{
+            fontFamily: SHELL.SANS,
+            fontSize: 13,
+            color: SHELL.INK,
+            lineHeight: 1.6,
+            margin: '0 0 20px',
+          }}
+        >
+          {canvas.atlasSynthesis}
+        </p>
+      )}
+
+      {/* Action items */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {canvas.actions.map((action) => {
+          const prio = PRIORITY_STYLE[action.priority];
+          const stat = ACTION_STATUS_STYLE[action.status];
+          return (
+            <div
+              key={action.actionId}
+              data-testid={`intelligence-action-canvas-item-${action.actionId}`}
+              style={{
+                padding: '16px 20px',
+                background: SHELL.CARD_WHITE,
+                border: `1px solid ${SHELL.CARD_LINE}`,
+                borderRadius: 8,
+              }}
+            >
+              {/* Title + badge row */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 8,
+                  marginBottom: 8,
+                }}
+              >
+                <span
+                  style={{
+                    flex: 1,
+                    fontFamily: SHELL.SANS,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: SHELL.INK,
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {action.title}
+                </span>
+                <span
+                  style={{
+                    display: 'inline-block',
+                    padding: '2px 7px',
+                    borderRadius: 999,
+                    background: prio.bg,
+                    color: prio.text,
+                    fontFamily: SHELL.MONO,
+                    fontSize: 9,
+                    fontWeight: 600,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    lineHeight: 1.5,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {prio.label}
+                </span>
+                <span
+                  style={{
+                    display: 'inline-block',
+                    padding: '2px 7px',
+                    borderRadius: 999,
+                    background: stat.bg,
+                    color: stat.text,
+                    fontFamily: SHELL.MONO,
+                    fontSize: 9,
+                    fontWeight: 600,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    lineHeight: 1.5,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {stat.label}
+                </span>
+              </div>
+
+              {/* Description */}
+              <p
+                style={{
+                  fontFamily: SHELL.SANS,
+                  fontSize: 12,
+                  color: SHELL.INK_SOFT,
+                  lineHeight: 1.55,
+                  margin: '0 0 10px',
+                }}
+              >
+                {action.description}
+              </p>
+
+              {/* Meta: owner, deadline, context link */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 12,
+                  fontFamily: SHELL.MONO,
+                  fontSize: 9.5,
+                  color: SHELL.INK_MUTED,
+                  letterSpacing: '0.04em',
+                }}
+              >
+                <span>Owner: {action.owner}</span>
+                <span>Due: {action.deadline}</span>
+                {action.contextLink && (
+                  <span style={{ color: SHELL.INK_SOFT, fontStyle: 'italic' }}>
+                    → {action.contextLink}
+                  </span>
+                )}
+              </div>
+
+              {/* Blocker note */}
+              {action.blockerNote && (
+                <div
+                  style={{
+                    marginTop: 10,
+                    padding: '8px 12px',
+                    background: SHELL.RUST_BG,
+                    borderRadius: 6,
+                    fontFamily: SHELL.SANS,
+                    fontSize: 11,
+                    color: SHELL.RUST_TEXT,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Blocked: {action.blockerNote}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Honest disclaimer */}
+      <div
+        style={{
+          marginTop: 16,
+          fontFamily: SHELL.MONO,
+          fontSize: 9,
+          color: SHELL.INK_MUTED,
+          letterSpacing: '0.04em',
+        }}
+        data-testid="intelligence-action-canvas-disclaimer"
+        data-honest-disclaimer="intelligence-action-canvas"
+      >
+        Deterministic seed · Action canvas reflects fixture context for the Apex Retail engagement.
+        Live action tracking and deadline management are deferred to the programme action management module.
+      </div>
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 interface IntelligencePatternDetailPageProps {
@@ -522,6 +733,9 @@ export function IntelligencePatternDetailPage({
 
         {/* Programs using this pattern */}
         <UsingProgramsSection programs={view.usingPrograms} />
+
+        {/* INT2: Action canvas */}
+        <ActionCanvasSection patternId={view.patternKey} patternName={view.patternName} />
 
         {/* Honest disclaimer */}
         <div
