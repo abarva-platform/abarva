@@ -963,6 +963,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/synthesis-diff',
     description: 'Before/after synthesis confidence comparison for instances with evidence ingestions or contradiction resolutions',
   },
+  {
+    title: 'Coverage report',
+    href: '/admin/reasoning/coverage-report',
+    description: 'Pattern richness coverage — gate criteria, contradiction templates, failure modes, and source docs per pattern',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
