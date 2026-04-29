@@ -34,8 +34,13 @@ export interface StewardChatProps {
   surface: '/programs/new' | '/demo/programs/new';
   /** Tenant name passed to the agent route prompt context. */
   tenantName: string;
-  /** Initial server-rendered turns (typically the cold-open Steward greeting). */
-  initialTurns: ChatTurn[];
+  /**
+   * Conversation turns. PR3 lifts state to the parent so the workspace
+   * can hydrate from a saved draft and persist on each turn.
+   */
+  turns: ChatTurn[];
+  /** Called whenever the chat appends or updates a turn. */
+  onTurnsChange: (turns: ChatTurn[]) => void;
   /**
    * PR2 — artifact dispatcher. Called once per artifact parsed from the
    * streamed response. The workspace lifts brief state and applies
@@ -51,13 +56,35 @@ function generateTurnId(): string {
   return `turn_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export function StewardChat({ surface, tenantName, initialTurns, onArtifact }: StewardChatProps) {
+export function StewardChat({
+  surface,
+  tenantName,
+  turns,
+  onTurnsChange,
+  onArtifact,
+}: StewardChatProps) {
   const router = useRouter();
-  const [turns, setTurns] = useState<ChatTurn[]>(initialTurns);
   const [draft, setDraft] = useState('');
   const [streaming, setStreaming] = useState(false);
   const threadRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  // Mirror lifted `turns` into a ref so the streaming send() can read the
+  // latest array without re-creating the callback each render. Avoids a
+  // stale-closure issue where conversationHistory misses turns appended
+  // by an in-flight stream.
+  const turnsRef = useRef<ChatTurn[]>(turns);
+  turnsRef.current = turns;
+  const setTurns = useCallback(
+    (updater: ChatTurn[] | ((prev: ChatTurn[]) => ChatTurn[])) => {
+      const next =
+        typeof updater === 'function'
+          ? (updater as (prev: ChatTurn[]) => ChatTurn[])(turnsRef.current)
+          : updater;
+      turnsRef.current = next;
+      onTurnsChange(next);
+    },
+    [onTurnsChange],
+  );
 
   // Auto-scroll the thread to the latest turn whenever turns change.
   useEffect(() => {
@@ -80,7 +107,9 @@ export function StewardChat({ surface, tenantName, initialTurns, onArtifact }: S
     setStreaming(true);
 
     try {
-      const conversationHistory = turns
+      // Read from the ref so a parent state-replace mid-stream doesn't
+      // produce stale conversation history.
+      const conversationHistory = turnsRef.current
         .filter((t) => t.role === 'user' || (t.role === 'assistant' && t.text.trim().length > 0))
         .map((t) => ({
           role: t.role,
@@ -189,7 +218,7 @@ export function StewardChat({ surface, tenantName, initialTurns, onArtifact }: S
       // Refocus the input so the user can keep typing without clicking.
       inputRef.current?.focus();
     }
-  }, [draft, streaming, surface, tenantName, turns, router, onArtifact]);
+  }, [draft, streaming, surface, tenantName, router, onArtifact, setTurns]);
 
   return (
     <section

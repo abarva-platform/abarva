@@ -1,0 +1,182 @@
+// Program origination draft persistence — Surface 1 PR3 of Programs
+// Strict Completion v1.2. Closes Crawl Obs #4 (Steward conversation
+// lost on reload).
+//
+// Drafts live in `program_origination_drafts` keyed by
+// (user_id, client_id, surface). One open draft per slot — committing
+// the draft (via markDraftCommitted) sets `committed_engagement_id`
+// and frees the slot for a new origination on the same surface.
+
+import { getServerSupabase } from '@/lib/supabase-server';
+import type { TenancyCtx } from '@/lib/programs/types.db';
+
+export interface OriginationDraftState {
+  /** Conversation turns the chat will hydrate. Shape mirrors `ChatTurn`. */
+  turns: Array<{
+    id: string;
+    role: 'user' | 'assistant';
+    agentName?: 'Steward';
+    text: string;
+  }>;
+  /** Program brief draft fields. Shape mirrors `ProgramBriefDraft`. */
+  brief: {
+    programName: string | null;
+    problemStatement: string | null;
+    targetOutcome: string | null;
+    timeline: string | null;
+    classification: string | null;
+    matchedPatternId: string | null;
+    sponsor: string | null;
+    lead: string | null;
+    crossProgramDependencies: string[];
+  } | null;
+  /** Rich pattern card data. Shape mirrors `PatternMatchCard`. */
+  patternMatch: {
+    patternId: string;
+    name: string;
+    summary: string;
+    successRatePct?: number;
+    deploymentCount?: number;
+    typicalDurationMonths?: number;
+  } | null;
+}
+
+export interface OriginationDraftRow {
+  id: string;
+  surface: string;
+  state: OriginationDraftState;
+  committed_engagement_id: string | null;
+  updated_at: string;
+}
+
+const SURFACE_ALLOWLIST = new Set(['/programs/new', '/demo/programs/new']);
+
+function assertSurface(surface: string): void {
+  if (!SURFACE_ALLOWLIST.has(surface)) {
+    throw new Error(`Unrecognized origination surface: ${surface}`);
+  }
+}
+
+/**
+ * Read the open draft for the current user on the given surface.
+ * Returns null when no draft exists. Hydrates `state` as the typed
+ * shape; older rows missing fields are normalized to safe defaults.
+ */
+export async function getOpenDraft(
+  ctx: TenancyCtx,
+  surface: string,
+): Promise<OriginationDraftRow | null> {
+  assertSurface(surface);
+  const sb = getServerSupabase();
+  const { data, error } = await sb
+    .from('program_origination_drafts')
+    .select('id, surface, state, committed_engagement_id, updated_at')
+    .eq('user_id', ctx.userId)
+    .eq('client_id', ctx.clientId)
+    .eq('surface', surface)
+    .is('committed_engagement_id', null)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  const row = data as {
+    id: string;
+    surface: string;
+    state: unknown;
+    committed_engagement_id: string | null;
+    updated_at: string;
+  };
+
+  return {
+    id: row.id,
+    surface: row.surface,
+    state: normalizeState(row.state),
+    committed_engagement_id: row.committed_engagement_id,
+    updated_at: row.updated_at,
+  };
+}
+
+/**
+ * Upsert the open draft for the current user on this surface. Creates
+ * a row if none exists; updates the existing row otherwise. The unique
+ * index on (user_id, client_id, surface) WHERE committed_engagement_id IS NULL
+ * ensures one open draft per slot.
+ */
+export async function saveDraft(
+  ctx: TenancyCtx,
+  surface: string,
+  state: OriginationDraftState,
+): Promise<void> {
+  assertSurface(surface);
+  const sb = getServerSupabase();
+  // Look up existing open draft so we can choose insert vs update —
+  // upsert with the partial-unique index is finicky in supabase-js.
+  const { data: existing } = await sb
+    .from('program_origination_drafts')
+    .select('id')
+    .eq('user_id', ctx.userId)
+    .eq('client_id', ctx.clientId)
+    .eq('surface', surface)
+    .is('committed_engagement_id', null)
+    .maybeSingle();
+  if (existing) {
+    await sb
+      .from('program_origination_drafts')
+      .update({ state })
+      .eq('id', (existing as { id: string }).id);
+    return;
+  }
+  await sb.from('program_origination_drafts').insert({
+    user_id: ctx.userId,
+    client_id: ctx.clientId,
+    surface,
+    state,
+  });
+}
+
+/**
+ * Transition the open draft on this surface to a committed state by
+ * linking it to the engagement just created. Frees the slot so a
+ * subsequent origination on the same surface starts fresh.
+ *
+ * No-op when no open draft exists (the user committed via a non-
+ * draft-tracked path).
+ */
+export async function markDraftCommitted(
+  ctx: TenancyCtx,
+  surface: string,
+  engagementId: string,
+): Promise<void> {
+  assertSurface(surface);
+  const sb = getServerSupabase();
+  const { data: existing } = await sb
+    .from('program_origination_drafts')
+    .select('id')
+    .eq('user_id', ctx.userId)
+    .eq('client_id', ctx.clientId)
+    .eq('surface', surface)
+    .is('committed_engagement_id', null)
+    .maybeSingle();
+  if (!existing) return;
+  await sb
+    .from('program_origination_drafts')
+    .update({ committed_engagement_id: engagementId })
+    .eq('id', (existing as { id: string }).id);
+}
+
+function normalizeState(raw: unknown): OriginationDraftState {
+  if (!raw || typeof raw !== 'object') {
+    return { turns: [], brief: null, patternMatch: null };
+  }
+  const obj = raw as Record<string, unknown>;
+  const turns = Array.isArray(obj.turns) ? (obj.turns as OriginationDraftState['turns']) : [];
+  const brief =
+    obj.brief && typeof obj.brief === 'object'
+      ? (obj.brief as OriginationDraftState['brief'])
+      : null;
+  const patternMatch =
+    obj.patternMatch && typeof obj.patternMatch === 'object'
+      ? (obj.patternMatch as OriginationDraftState['patternMatch'])
+      : null;
+  return { turns, brief, patternMatch };
+}
