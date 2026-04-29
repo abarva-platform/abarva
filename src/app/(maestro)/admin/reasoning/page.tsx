@@ -983,6 +983,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/stage-blockers',
     description: 'What is blocking each instance from advancing — unmet hard gates ranked by frequency',
   },
+  {
+    title: 'Pattern lineage',
+    href: '/admin/reasoning/pattern-lineage',
+    description: 'Pattern derivation tree — root patterns, derived patterns, co-applies relationships, and inheritance chains',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
