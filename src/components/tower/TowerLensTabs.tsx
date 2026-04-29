@@ -60,6 +60,12 @@ import {
 import type { ReasoningContradictionItem, ReasoningHandoffItem } from '@/lib/tower/reasoning-activity-brief-view';
 import { buildPortfolioAlerts } from '@/lib/reasoning/portfolio-alerts';
 import { PortfolioAlertsPanel } from '@/components/tower/PortfolioAlertsPanel';
+import {
+  computeCascadeImpacts,
+  computeReverseCascade,
+} from '@/lib/reasoning/cross-instance-reasoner';
+import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances';
+import { LinkedInstanceTilesGrid } from '@/components/_shared/LinkedInstanceTilesGrid';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Design tokens (matches existing Tower surface palette)
@@ -190,6 +196,28 @@ export function TowerLensTabs({
 // Tab panels
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Derive the IDs of program instances that have at least one cross-instance
+ * linked counterpart (in either direction — downstream cascade or upstream
+ * dependency). Used to decide which tiles to render in the portfolio panel.
+ *
+ * Returns a stable-sorted array of canonical program instance IDs that have
+ * at least one linked instance.
+ */
+function deriveLinkedProgramIds(): string[] {
+  const withLinks: string[] = [];
+
+  for (const instance of APEX_RETAIL_PROGRAM_INSTANCES) {
+    const downstream = computeCascadeImpacts(instance);
+    const upstream = computeReverseCascade(instance);
+    if (downstream.length > 0 || upstream.length > 0) {
+      withLinks.push(instance.id);
+    }
+  }
+
+  return withLinks;
+}
+
 /** Portfolio — programme pressure signals + Atlas programme brief */
 function PortfolioPanel({ tenant }: { tenant: TenantSeedPlan }) {
   const pressureView = buildTowerProgramPressureView(tenant);
@@ -197,6 +225,8 @@ function PortfolioPanel({ tenant }: { tenant: TenantSeedPlan }) {
   const pressureBrief = buildAtlasProgramPressureBrief(tenant, signals, summary);
   const alerts = buildPortfolioAlerts();
   const alertCount = alerts.length;
+  const linkedProgramIds = deriveLinkedProgramIds();
+  const linkedCount = linkedProgramIds.length;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 960 }}>
@@ -262,6 +292,88 @@ function PortfolioPanel({ tenant }: { tenant: TenantSeedPlan }) {
           )}
         </div>
         <PortfolioAlertsPanel alerts={alerts} title="Active alerts" />
+      </section>
+
+      {/* Linked programs section */}
+      <section aria-label="Linked programs" data-testid="portfolio-linked-programs-section">
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            marginBottom: 10,
+          }}
+        >
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: C.muted,
+            }}
+          >
+            Linked programs
+          </span>
+          {linkedCount > 0 ? (
+            <span
+              data-testid="portfolio-linked-programs-count-badge"
+              style={{
+                fontFamily: 'JetBrains Mono, Fira Code, monospace',
+                fontSize: 10,
+                fontWeight: 600,
+                padding: '2px 9px',
+                borderRadius: 10,
+                background: C.navySoft,
+                color: C.navy,
+                border: `1px solid ${C.navy}22`,
+              }}
+            >
+              {linkedCount} {linkedCount === 1 ? 'link' : 'links'}
+            </span>
+          ) : (
+            <span
+              data-testid="portfolio-linked-programs-empty-badge"
+              style={{
+                fontFamily: 'JetBrains Mono, Fira Code, monospace',
+                fontSize: 10,
+                fontWeight: 600,
+                padding: '2px 9px',
+                borderRadius: 10,
+                background: C.navySoft,
+                color: C.mutedSoft,
+                border: `1px solid ${C.border}`,
+              }}
+            >
+              None
+            </span>
+          )}
+        </div>
+        {linkedCount > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {linkedProgramIds.map((instanceId) => (
+              <LinkedInstanceTilesGrid
+                key={instanceId}
+                currentInstanceId={instanceId}
+              />
+            ))}
+          </div>
+        ) : (
+          <div
+            data-testid="portfolio-linked-programs-empty-state"
+            style={{
+              padding: '20px 24px',
+              backgroundColor: C.card,
+              border: `1px dashed ${C.border}`,
+              borderRadius: 6,
+              fontSize: 13,
+              color: C.muted,
+              fontStyle: 'italic',
+            }}
+          >
+            No linked programs — cross-instance programme links will appear here when configured.
+          </div>
+        )}
       </section>
 
       {/* Atlas portfolio brief */}
