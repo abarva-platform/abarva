@@ -29,7 +29,7 @@ Snapshot of every autonomous orchestration and the pause action taken (or recomm
 - **Output through last 24h:** PRs #812–#824 + #831 (held). 42 patterns authored across Wave 1; 39 merged.
 - **Pause mechanism:** halt file at `docs/build/CORPUS_PAUSE.md` (per kickoff §10.3).
 - **Currently running?** Wave 1 in flight; #831 held on CI failure.
-- **Action taken:** **PAUSED.** Created [`docs/build/CORPUS_PAUSE.md`](CORPUS_PAUSE.md) in this PR. Resume by deleting the file.
+- **Action taken:** **PAUSED via PR [#1050](https://github.com/anandsundaram-hash/abarva/pull/1050)** (already merged to main at 12:40 UTC by `chore(ops): pause corpus and admin loops pending foundation fix wave`). The canonical `CORPUS_PAUSE.md` lives on main; this PR no longer needs to add it. Resume by deleting the file.
 
 ### 1.3 GitHub Actions scheduled workflows
 

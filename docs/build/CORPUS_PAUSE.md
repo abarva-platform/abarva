@@ -1,22 +1,14 @@
 # Corpus Loop Pause · 2026-04-29
 
-**Reason:** Front-of-house UX audit and rebuild prioritization in progress.
+Reason: Foundation work in progress (UX audit, form fix, production
+crawl test, Programs module fix wave). All autonomous corpus and
+reasoning page generation is paused.
 
-**Created by:** Founder
-**Created at:** 2026-04-29 (pacific-day)
+The corpus build kickoff (abarva-sourcing-corpus-build-kickoff-v1.md)
+remains the authoritative plan for the corpus workstream when it
+resumes. Do NOT start it until this file is deleted by founder.
 
-**Resumes when:** This file is deleted.
-
-**While paused:**
-- No new corpus pattern PRs
-- No new admin reasoning UI tools
-- No new wave dispatch
-- Currently in-flight PRs may complete and merge if green
-- Held PRs (#831, #751, #748) remain held
-
-**Next priority after resume:**
-- Customer-facing UX rebuild (per UX_AUDIT_2026-04-29.md findings)
-- Conversational origination flows
-- Source page reasoning binding (per knowledge layer activation)
-
-Founder will delete this file when ready to resume.
+Resumes when: This file is deleted AND the Programs module has passed
+strict completion criteria (all 5 dimensions: Experience, Agent,
+Knowledge, Data, Performance). At that point the corpus build picks up
+from Wave 0 of the kickoff spec.

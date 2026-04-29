@@ -1328,6 +1328,16 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Health Attribution',
     description: 'Health score decomposed into gate pass rate, contradiction penalty, and base contributions.',
   },
+  {
+    href: '/admin/reasoning/pattern-coverage-matrix',
+    title: 'Pattern Coverage Matrix',
+    description: 'Lifecycle pattern coverage across governance, risk, compliance, technical, and commercial dimensions.',
+  },
+  {
+    href: '/admin/reasoning/gate-progression-log',
+    title: 'Gate Progression Log',
+    description: 'Chronological gate event log — passes, waivers, blocks with per-instance breakdown.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
