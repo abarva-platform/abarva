@@ -96,6 +96,17 @@ export function getResolvedEntries(): ReadonlyArray<{ id: string; resolvedAt: st
 }
 
 /**
+ * Clear all resolved contradictions. Used by the demo-reset endpoint to wipe
+ * state between demo sessions.
+ */
+export function clearResolved(): void {
+  RESOLVED.clear();
+  if (activeBackend) {
+    void activeBackend.clearAll().catch(() => {});
+  }
+}
+
+/**
  * Test-only: clear the resolved set. Not part of the public surface.
  */
 export function _resetForTests(): void {
