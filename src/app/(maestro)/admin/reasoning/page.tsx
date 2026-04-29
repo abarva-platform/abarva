@@ -978,6 +978,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/failure-tracker',
     description: 'Active vs. latent failure mode tracking — which failure modes are triggered or at risk across instances',
   },
+  {
+    title: 'Stage blockers',
+    href: '/admin/reasoning/stage-blockers',
+    description: 'What is blocking each instance from advancing — unmet hard gates ranked by frequency',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
