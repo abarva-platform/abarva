@@ -480,6 +480,13 @@ function GateApproveModal({
 
 // ─── Gate criteria ────────────────────────────────────────────────────────────
 
+// Types for the gate approval inline workflow.
+type ApprovalAction = 'approve' | 'reject';
+interface ApprovalRecord {
+  action: ApprovalAction;
+  justification: string;
+}
+
 function GateCriteriaList({
   criteria,
   instanceId,
@@ -491,6 +498,12 @@ function GateCriteriaList({
   // Key: criterion index (stable within a single view render).
   const [waivedIndices, setWaivedIndices] = useState<Set<number>>(new Set());
   const [inFlightIndices, setInFlightIndices] = useState<Set<number>>(new Set());
+
+  // Approval workflow state. expandedApproval: index of row with open justification input.
+  const [approvedMap, setApprovedMap] = useState<Map<number, ApprovalRecord>>(new Map());
+  const [expandedApproval, setExpandedApproval] = useState<number | null>(null);
+  const [justificationText, setJustificationText] = useState('');
+  const [approvalInFlight, setApprovalInFlight] = useState(false);
 
   async function handleWaive(index: number, criterion: string) {
     setInFlightIndices((prev) => new Set(prev).add(index));
@@ -521,6 +534,43 @@ function GateCriteriaList({
     setWaivedIndices(new Set());
   }
 
+  function openApprovalInput(index: number) {
+    setExpandedApproval(index);
+    setJustificationText('');
+  }
+
+  function cancelApproval() {
+    setExpandedApproval(null);
+    setJustificationText('');
+  }
+
+  async function confirmApproval(index: number, action: ApprovalAction) {
+    if (justificationText.trim().length === 0) return;
+    setApprovalInFlight(true);
+    try {
+      await fetch('/api/reasoning/gate-approval', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          instanceId,
+          criterionId: `${instanceId}::${index}`,
+          justification: justificationText.trim(),
+          action,
+        }),
+      });
+    } finally {
+      setApprovalInFlight(false);
+      // Optimistic update regardless of server response — demo state only.
+      setApprovedMap((prev) => {
+        const next = new Map(prev);
+        next.set(index, { action, justification: justificationText.trim() });
+        return next;
+      });
+      setExpandedApproval(null);
+      setJustificationText('');
+    }
+  }
+
   const hasWaivers = waivedIndices.size > 0;
 
   return (
@@ -544,115 +594,334 @@ function GateCriteriaList({
           const isInFlight = inFlightIndices.has(i);
           const isUnmet = !g.met;
           const canWaive = isUnmet && !isWaived;
+          const approvalRecord = approvedMap.get(i);
+          const isApproved = approvalRecord?.action === 'approve';
+          const isRejected = approvalRecord?.action === 'reject';
+          const isExpanded = expandedApproval === i;
+          // Pending approval action for this row.
+          const pendingAction: ApprovalAction = g.met ? 'approve' : 'reject';
 
-          // Resolve row colours: met → mint, waived → gray, unmet → peach.
-          const rowBg = g.met
+          // Resolve row colours.
+          // approved-met → mint, approved-rejected → rust, waived → gray, unmet → peach.
+          const rowBg = isApproved
+            ? SHELL.MINT_BG
+            : isRejected
+            ? SHELL.RUST_BG
+            : g.met
             ? SHELL.MINT_BG
             : isWaived
             ? SHELL.GRAY_BG
             : SHELL.PEACH_BG;
-          const rowBorder = g.met
+          const rowBorder = isApproved
+            ? SHELL.MINT_LINE
+            : isRejected
+            ? '#d4a898'
+            : g.met
             ? SHELL.MINT_LINE
             : isWaived
             ? SHELL.GRAY_LINE
             : SHELL.PEACH_LINE;
 
           return (
-            <div
-              key={`gc-${i}`}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '7px 12px',
-                borderRadius: 7,
-                background: rowBg,
-                border: `1px solid ${rowBorder}`,
-              }}
-            >
-              {/* Circle icon */}
+            <div key={`gc-${i}`} style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
               <div
                 style={{
-                  width: 16,
-                  height: 16,
-                  borderRadius: '50%',
-                  flexShrink: 0,
-                  background: g.met ? SHELL.MINT_TEXT : isWaived ? SHELL.GRAY_TEXT : 'transparent',
-                  border: g.met || isWaived ? 'none' : `1.5px solid ${SHELL.INK}`,
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
+                  gap: 10,
+                  padding: '7px 12px',
+                  borderRadius: isExpanded ? '7px 7px 0 0' : 7,
+                  background: rowBg,
+                  border: `1px solid ${rowBorder}`,
+                  borderBottom: isExpanded ? 'none' : undefined,
                 }}
               >
-                {(g.met || isWaived) && (
-                  <span style={{ color: '#fff', fontSize: 9, lineHeight: 1 }}>✓</span>
-                )}
+                {/* Circle icon */}
+                <div
+                  style={{
+                    width: 16,
+                    height: 16,
+                    borderRadius: '50%',
+                    flexShrink: 0,
+                    background: isApproved
+                      ? SHELL.MINT_TEXT
+                      : isRejected
+                      ? SHELL.RUST_TEXT
+                      : g.met
+                      ? SHELL.MINT_TEXT
+                      : isWaived
+                      ? SHELL.GRAY_TEXT
+                      : 'transparent',
+                    border:
+                      isApproved || isRejected || g.met || isWaived
+                        ? 'none'
+                        : `1.5px solid ${SHELL.INK}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {(isApproved || g.met || isWaived) && (
+                    <span style={{ color: '#fff', fontSize: 9, lineHeight: 1 }}>✓</span>
+                  )}
+                  {isRejected && (
+                    <span style={{ color: '#fff', fontSize: 9, lineHeight: 1 }}>✗</span>
+                  )}
+                </div>
+                <span
+                  style={{
+                    fontFamily: SHELL.SANS,
+                    fontSize: 12,
+                    color: isApproved
+                      ? SHELL.MINT_TEXT
+                      : isRejected
+                      ? SHELL.RUST_TEXT
+                      : g.met
+                      ? SHELL.MINT_TEXT
+                      : isWaived
+                      ? SHELL.GRAY_TEXT
+                      : SHELL.INK,
+                    lineHeight: 1.4,
+                    textDecoration: isWaived ? 'line-through' : undefined,
+                  }}
+                >
+                  {g.criterion}
+                </span>
+                {/* Right-side: approval chip / approval button / waive button / status label */}
+                <div
+                  style={{
+                    marginLeft: 'auto',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    flexShrink: 0,
+                  }}
+                >
+                  {/* Settled approval chip */}
+                  {isApproved && (
+                    <span
+                      style={{
+                        fontFamily: SHELL.MONO,
+                        fontSize: 9,
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        color: SHELL.MINT_TEXT,
+                        background: SHELL.MINT_LINE,
+                        borderRadius: 4,
+                        padding: '2px 6px',
+                      }}
+                    >
+                      Approved · demo-user
+                    </span>
+                  )}
+                  {isRejected && (
+                    <span
+                      style={{
+                        fontFamily: SHELL.MONO,
+                        fontSize: 9,
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        color: SHELL.RUST_TEXT,
+                        background: '#e8c4b4',
+                        borderRadius: 4,
+                        padding: '2px 6px',
+                      }}
+                    >
+                      Rejected · demo-user
+                    </span>
+                  )}
+                  {/* Waived chip (unmet rows that have been waived) */}
+                  {isWaived && !isApproved && !isRejected && (
+                    <span
+                      style={{
+                        fontFamily: SHELL.MONO,
+                        fontSize: 9,
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        color: SHELL.GRAY_TEXT,
+                        background: SHELL.GRAY_LINE,
+                        borderRadius: 4,
+                        padding: '2px 6px',
+                      }}
+                    >
+                      Waived
+                    </span>
+                  )}
+                  {/* Approval/rejection button — shown when not yet settled and not expanded */}
+                  {!isApproved && !isRejected && !isExpanded && (
+                    <button
+                      onClick={() => openApprovalInput(i)}
+                      style={{
+                        fontFamily: SHELL.MONO,
+                        fontSize: 9,
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        color: g.met ? SHELL.MINT_TEXT : SHELL.RUST_TEXT,
+                        background: 'none',
+                        border: `1px solid ${g.met ? SHELL.MINT_LINE : '#d4a898'}`,
+                        borderRadius: 4,
+                        padding: '2px 8px',
+                        cursor: 'pointer',
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      {g.met ? '✓ Approve' : '✗ Reject'}
+                    </button>
+                  )}
+                  {/* Waive button — only for unmet, un-waived, unsettled rows */}
+                  {canWaive && !isApproved && !isRejected && !isExpanded && (
+                    <button
+                      disabled={isInFlight}
+                      onClick={() => handleWaive(i, g.criterion)}
+                      style={{
+                        fontFamily: SHELL.MONO,
+                        fontSize: 9,
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        color: isInFlight ? SHELL.INK_MUTED : SHELL.PEACH_TEXT,
+                        background: 'none',
+                        border: `1px solid ${isInFlight ? SHELL.GRAY_LINE : SHELL.PEACH_LINE}`,
+                        borderRadius: 4,
+                        padding: '2px 8px',
+                        cursor: isInFlight ? 'not-allowed' : 'pointer',
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      {isInFlight ? '…' : 'Waive'}
+                    </button>
+                  )}
+                  {/* Plain status label for met rows that have neither been actioned nor expanded */}
+                  {g.met && !isApproved && !isExpanded && (
+                    <span
+                      style={{
+                        fontFamily: SHELL.MONO,
+                        fontSize: 9,
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        color: SHELL.MINT_TEXT,
+                      }}
+                    >
+                      Met
+                    </span>
+                  )}
+                  {/* Plain status label for unmet rows that are not waived, not settled, not expanded */}
+                  {isUnmet && !isWaived && !isRejected && !isExpanded && (
+                    <span
+                      style={{
+                        fontFamily: SHELL.MONO,
+                        fontSize: 9,
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        color: SHELL.PEACH_TEXT,
+                      }}
+                    >
+                      Open
+                    </span>
+                  )}
+                </div>
               </div>
-              <span
-                style={{
-                  fontFamily: SHELL.SANS,
-                  fontSize: 12,
-                  color: g.met ? SHELL.MINT_TEXT : isWaived ? SHELL.GRAY_TEXT : SHELL.INK,
-                  lineHeight: 1.4,
-                  textDecoration: isWaived ? 'line-through' : undefined,
-                }}
-              >
-                {g.criterion}
-              </span>
-              {/* Status label / Waive button / Waived chip */}
-              {isWaived ? (
-                <span
+              {/* Inline justification input — shown when this row's approval button was clicked */}
+              {isExpanded && (
+                <div
                   style={{
-                    marginLeft: 'auto',
-                    fontFamily: SHELL.MONO,
-                    fontSize: 9,
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    color: SHELL.GRAY_TEXT,
-                    background: SHELL.GRAY_LINE,
-                    borderRadius: 4,
-                    padding: '2px 6px',
+                    padding: '8px 12px 10px',
+                    background: rowBg,
+                    border: `1px solid ${rowBorder}`,
+                    borderTop: `1px solid ${rowBorder}`,
+                    borderRadius: '0 0 7px 7px',
                   }}
                 >
-                  Waived
-                </span>
-              ) : canWaive ? (
-                <button
-                  disabled={isInFlight}
-                  onClick={() => handleWaive(i, g.criterion)}
-                  style={{
-                    marginLeft: 'auto',
-                    fontFamily: SHELL.MONO,
-                    fontSize: 9,
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    color: isInFlight ? SHELL.INK_MUTED : SHELL.PEACH_TEXT,
-                    background: 'none',
-                    border: `1px solid ${isInFlight ? SHELL.GRAY_LINE : SHELL.PEACH_LINE}`,
-                    borderRadius: 4,
-                    padding: '2px 8px',
-                    cursor: isInFlight ? 'not-allowed' : 'pointer',
-                    lineHeight: 1.6,
-                  }}
-                >
-                  {isInFlight ? '…' : 'Waive'}
-                </button>
-              ) : (
-                <span
-                  style={{
-                    marginLeft: 'auto',
-                    fontFamily: SHELL.MONO,
-                    fontSize: 9,
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    color: g.met ? SHELL.MINT_TEXT : SHELL.PEACH_TEXT,
-                  }}
-                >
-                  {g.met ? 'Met' : 'Open'}
-                </span>
+                  <textarea
+                    autoFocus
+                    maxLength={200}
+                    rows={2}
+                    placeholder="Justification (required, max 200 chars)"
+                    value={justificationText}
+                    onChange={(e) => setJustificationText(e.target.value)}
+                    style={{
+                      width: '100%',
+                      fontFamily: SHELL.SANS,
+                      fontSize: 11,
+                      color: SHELL.INK,
+                      background: SHELL.CARD_WHITE,
+                      border: `1px solid ${SHELL.CARD_LINE}`,
+                      borderRadius: 4,
+                      padding: '5px 8px',
+                      resize: 'none',
+                      boxSizing: 'border-box',
+                      outline: 'none',
+                    }}
+                  />
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      gap: 6,
+                      marginTop: 6,
+                    }}
+                  >
+                    <button
+                      onClick={cancelApproval}
+                      style={{
+                        fontFamily: SHELL.MONO,
+                        fontSize: 9,
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        color: SHELL.INK_MUTED,
+                        background: 'none',
+                        border: `1px solid ${SHELL.GRAY_LINE}`,
+                        borderRadius: 4,
+                        padding: '2px 8px',
+                        cursor: 'pointer',
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      disabled={approvalInFlight || justificationText.trim().length === 0}
+                      onClick={() => confirmApproval(i, pendingAction)}
+                      style={{
+                        fontFamily: SHELL.MONO,
+                        fontSize: 9,
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        color:
+                          approvalInFlight || justificationText.trim().length === 0
+                            ? SHELL.INK_MUTED
+                            : pendingAction === 'approve'
+                            ? SHELL.MINT_TEXT
+                            : SHELL.RUST_TEXT,
+                        background: 'none',
+                        border: `1px solid ${
+                          approvalInFlight || justificationText.trim().length === 0
+                            ? SHELL.GRAY_LINE
+                            : pendingAction === 'approve'
+                            ? SHELL.MINT_LINE
+                            : '#d4a898'
+                        }`,
+                        borderRadius: 4,
+                        padding: '2px 8px',
+                        cursor:
+                          approvalInFlight || justificationText.trim().length === 0
+                            ? 'not-allowed'
+                            : 'pointer',
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      {approvalInFlight ? '…' : 'Confirm'}
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
           );
