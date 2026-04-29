@@ -28,6 +28,8 @@ import { buildProgramSynthesisContext } from '@/lib/reasoning/program-synthesis-
 import { summarizeFailureModes } from '@/lib/reasoning/provenance-ribbon-helpers';
 import { FailureModeWarningChip } from '@/components/_shared/FailureModeWarningChip';
 import { EvidenceQualityChip } from '@/components/_shared/EvidenceQualityChip';
+import { InstanceHealthBadge } from '@/components/_shared/InstanceHealthBadge';
+import { computeInstanceHealth } from '@/lib/reasoning/instance-health';
 import {
   summarizeEvidenceQuality,
   summaryGrade,
@@ -3266,6 +3268,20 @@ export function ProgramDetailPage({
     };
   })();
 
+  // Header-level instance-health badge — single-glance verdict aggregating
+  // pending hard gates, blocked criteria, high-severity contradictions /
+  // failure modes / cascade impacts into green/amber/red.
+  const headerHealth = (() => {
+    const instance = APEX_RETAIL_PROGRAM_INSTANCES.find(
+      (i) =>
+        i.displayId === view.displayId ||
+        i.id.toLowerCase() === view.programId.toLowerCase(),
+    );
+    if (!instance) return null;
+    const ctx = buildProgramSynthesisContext(instance);
+    return computeInstanceHealth(ctx);
+  })();
+
   // Evidence-quality aggregate — `ProgramEvidenceItem` already carries
   // `citation/uploadedAt/uploadedBy`, so the scorer's expected shape lines
   // up directly. The chip is a visibility hint for "evidence is weak"
@@ -3511,6 +3527,7 @@ export function ProgramDetailPage({
               {view.displayId}
             </span>
             <GatePill status={view.gateStatus} />
+            {headerHealth && <InstanceHealthBadge health={headerHealth} />}
             {failureModeHeaderInfo && (
               <FailureModeWarningChip
                 topLabel={failureModeHeaderInfo.topLabel}
