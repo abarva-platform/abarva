@@ -973,6 +973,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/gate-sequence',
     description: 'Recommended evaluation order for gate criteria — hard gates first, ordered by stage and priority',
   },
+  {
+    title: 'Failure tracker',
+    href: '/admin/reasoning/failure-tracker',
+    description: 'Active vs. latent failure mode tracking — which failure modes are triggered or at risk across instances',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
