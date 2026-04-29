@@ -3,6 +3,7 @@ import { SOURCING_CATEGORY_PATTERNS } from './seed-patterns-sourcing-categories'
 import { SOURCING_CONTRACTS_COMMERCIAL_PATTERNS } from './seed-patterns-sourcing-contracts-commercial';
 import { SOURCING_CONTRACT_PATTERNS } from './seed-patterns-sourcing-contracts';
 import { SOURCING_PRICING_CLOUD_PATTERNS } from './seed-patterns-sourcing-pricing-cloud';
+import { SOURCING_PRICING_PATTERNS } from './seed-patterns-sourcing-pricing';
 import { SOURCING_PROCESS_PATTERNS } from './seed-patterns-sourcing-process';
 
 export const SOURCING_PATTERNS: PatternSeed[] = [
@@ -1096,6 +1097,7 @@ Fixed-fee or capped T&M with monthly not-to-exceed, explicit deliverable accepta
   ...SOURCING_CONTRACT_PATTERNS,
   ...SOURCING_CONTRACTS_COMMERCIAL_PATTERNS,
   ...SOURCING_PRICING_CLOUD_PATTERNS,
+  ...SOURCING_PRICING_PATTERNS,
   ...SOURCING_PROCESS_PATTERNS,
 ];
 

@@ -1,6 +1,6 @@
 # Corpus Autonomous State
 
-Last update timestamp: 2026-04-29T15:28:26Z
+Last update timestamp: 2026-04-29T15:41:08Z
 Status: ACTIVE - founder resumed autonomous corpus loop and granted auto-merge authority for scoped green PRs.
 
 ## Current wave
@@ -10,14 +10,14 @@ Wave 4 - pricing intelligence sourcing playbooks in progress.
 - Category-specific sourcing playbooks: PR #1055 merged; target met with 51 authored and merged category patterns.
 - Process/methodology: PR #1056 merged; 3 process patterns live in corpus.
 - Contract intelligence: PR #1059 merged; 6 contract patterns live in corpus.
-- Pricing intelligence: PAT-SRC-PRC-CLOUD-001 integration active in PR-prep branch; PAT-SRC-PRC-SAAS-001 queued.
+- Pricing intelligence: PR #1060 merged; PAT-SRC-PRC-SAAS-001 integration active in PR-prep branch.
 - Risk patterns: Worker RSK-1 active on PAT-SRC-RSK-001/002/003.
 - Regulatory/compliance: Worker REG-1 active on PAT-SRC-REG-DORA-001.
 - Industry overlays: Worker IND-1 active on PAT-SRC-IND-HEALTH-001, PAT-SRC-IND-FINSERV-001, PAT-SRC-IND-RETAIL-001.
 - Vendor profiles: queued.
 
 ## Active lane board
-- 2026-04-29T15:28:26Z - Integration lead - cloud pricing integration - rebase conflict resolution and local validation in progress.
+- 2026-04-29T15:41:08Z - Integration lead - SaaS pricing integration - local validation and PR preparation in progress.
 - 2026-04-29T14:59:17Z - Worker PROC-1 (`019dd9b6-0494-73d1-8f1e-96001145df36`) - process batch 1 - complete; branch pushed.
 - 2026-04-29T14:59:17Z - Worker CON-1 (`019dd9b6-2960-73e1-9620-6281ca27711a`) - contract batch 1 - complete; branch committed.
 - 2026-04-29T14:59:17Z - Worker RSK-1 (`019dd9b6-46fa-7e41-9670-98b11b0737e0`) - risk batch 1 - complete; branch committed.
@@ -35,7 +35,7 @@ Wave 4 - pricing intelligence sourcing playbooks in progress.
 - Category-specific sourcing playbooks (`PAT-SRC-CAT-*`): 51 authored and merged across Wave 1.
 - Vendor intelligence profiles (`PAT-SRC-VEN-*`): 0 integrated; multiple authored profiles queued for one-pattern PRs.
 - Contract intelligence (`PAT-SRC-CON-*`): 6 authored and merged.
-- Pricing intelligence (`PAT-SRC-PRC-*`): 1 authored; cloud pricing integration active.
+- Pricing intelligence (`PAT-SRC-PRC-*`): 2 authored; 1 merged; 1 integration active.
 - Process and methodology (`PAT-SRC-PROC-*`): 3 authored and merged.
 - Industry-specific overlays (`PAT-SRC-IND-*`): 0
 - Regulatory and compliance (`PAT-SRC-REG-*`): 0
@@ -63,9 +63,10 @@ Wave 4 - pricing intelligence sourcing playbooks in progress.
 - #1056 - `[corpus][proc] Author PAT-SRC-PROC-001, PAT-SRC-PROC-002, PAT-SRC-PROC-003 · 3 patterns` - merged 2026-04-29T15:08Z at `a0245457038cf313318d5b13d49daead03d535df`.
 - #1057 - `[corpus][con] Author PAT-SRC-CON-001, PAT-SRC-CON-002, PAT-SRC-CON-003 · 3 patterns` - merged 2026-04-29T15:17Z at `f2784cf9ae1a62ee07ed59bf96eb99311ab33ab4`.
 - #1059 - `[corpus][con] Author PAT-SRC-CON-004, PAT-SRC-CON-005, PAT-SRC-CON-006 · 3 patterns` - merged 2026-04-29T15:25Z at `bf8b1652817a4ea8c9bdab7d7200371e365818bb`.
+- #1060 - `[corpus][prc] Author PAT-SRC-PRC-CLOUD-001 · 1 pattern` - merged 2026-04-29T15:40Z at `69131fe16262a27c20fcf1bbca561d24d793c694`.
 
 ## Open PRs
-- Pricing cloud - `[corpus][prc] Author PAT-SRC-PRC-CLOUD-001 · 1 pattern` - local integration in progress.
+- Pricing SaaS - `[corpus][prc] Author PAT-SRC-PRC-SAAS-001 · 1 pattern` - local integration in progress.
 
 ## Held PRs requiring founder review
 - None.
@@ -96,4 +97,4 @@ Wave 4 - pricing intelligence sourcing playbooks in progress.
 - Numeric pricing, discount, implementation-ratio, AI-usage, overage, and renewal-uplift claims remain intentionally blank unless source-backed by buyer evidence or approved benchmarks.
 
 ## Next action
-Validate, push, open, and auto-merge the cloud pricing integration PR if green and scoped while vendor/domain workers continue authoring non-conflicting batches.
+Validate, push, open, and auto-merge the SaaS pricing integration PR if green and scoped while vendor/domain workers continue authoring non-conflicting batches.
