@@ -934,6 +934,16 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     description: 'Hard gate criterion ownership by stakeholder category — grouped by pattern with distribution chart',
   },
   {
+    title: 'Gate gap',
+    href: '/admin/reasoning/gate-gap',
+    description: 'Current stage gate gap per instance — hard gates remaining before advancement, with ready-to-advance list',
+  },
+  {
+    title: 'Health forecast',
+    href: '/admin/reasoning/health-forecast',
+    description: 'Projected health scores based on open gates and remaining stages — trajectory and at-risk instances',
+  },
+  {
     title: 'Instance timeline',
     href: '/admin/reasoning/instance-timeline',
     description: 'Per-instance chronological event stream — stage transitions, evidence, waivers, and resolutions combined',
