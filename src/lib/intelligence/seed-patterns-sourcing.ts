@@ -17,6 +17,7 @@ import { SOURCING_VENDOR_GITHUB_PATTERNS } from './seed-patterns-sourcing-vendor
 import { SMARTSHEET_VENDOR_PROFILE_PATTERNS } from './seed-patterns-sourcing-vendors-smartsheet';
 import { SOURCING_VENDOR_GITLAB_PATTERNS } from './seed-patterns-sourcing-vendors-gitlab';
 import { ASANA_VENDOR_PROFILE_PATTERNS } from './seed-patterns-sourcing-vendors-asana';
+import { SOURCING_VENDOR_SPLUNK_PATTERNS } from './seed-patterns-sourcing-vendors-splunk';
 
 export const SOURCING_PATTERNS: PatternSeed[] = [
   {
@@ -1123,6 +1124,7 @@ Fixed-fee or capped T&M with monthly not-to-exceed, explicit deliverable accepta
   ...ASANA_VENDOR_PROFILE_PATTERNS,
   ...SMARTSHEET_VENDOR_PROFILE_PATTERNS,
   ...SOURCING_VENDOR_COUPA_PATTERNS,
+  ...SOURCING_VENDOR_SPLUNK_PATTERNS,
 ];
 
 export const SOURCING_PATTERN_COUNT = SOURCING_PATTERNS.length;
