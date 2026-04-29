@@ -10,11 +10,15 @@ import {
   towerStateHash,
 } from "@/lib/reasoning/tower-synthesis-context-builder";
 import { recordSynthesisEvent } from "@/lib/reasoning/synthesis-telemetry";
+import { computeSynthesisEtag } from "@/lib/reasoning/synthesis-etag";
+import { registerSynthesisCache } from "@/lib/reasoning/synthesis-cache-registry";
 import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
 
 // Simple in-memory cache: key → text response
 // In production this would be Redis; for demo an in-process cache is sufficient.
 const synthesisCache = new Map<string, string>();
+const cacheCreatedAt = new Map<string, number>();
+registerSynthesisCache('tower', synthesisCache, cacheCreatedAt);
 
 const ATLAS_SYNTHESIS_PROMPT = `You are Atlas, AbarVa's portfolio CIO-of-staff agent on the Tower surface.
 
@@ -51,10 +55,9 @@ interface SourceSummary {
   linkedProgramIds: string[];
 }
 
-export async function POST(_request: Request) {
-  // Tower has no body parameters — context is the whole portfolio.
-  void _request;
-
+export async function POST(request: Request) {
+  // Tower has no body parameters — context is the whole portfolio. We still
+  // read the request to honour the If-None-Match header for ETag short-circuit.
   const startedAt = Date.now();
   const programInstances = APEX_RETAIL_PROGRAM_INSTANCES;
   const sourceEventInstances = SOURCE_EVENT_INSTANCES;
@@ -66,7 +69,33 @@ export async function POST(_request: Request) {
   // Cache check
   const stateHash = towerStateHash(programInstances, sourceEventInstances);
   const cacheKey = `tower:${stateHash}:atlas:v1`;
+  const etag = computeSynthesisEtag(cacheKey);
+  const ifNoneMatch = request.headers.get('if-none-match');
   const cached = synthesisCache.get(cacheKey);
+
+  // Conditional GET: client already has this exact synthesis cached.
+  if (cached && ifNoneMatch && ifNoneMatch === etag) {
+    const event = recordSynthesisEvent({
+      surface: 'tower',
+      instanceId: 'tower',
+      patternId: null,
+      cacheHit: true,
+      latencyMs: Date.now() - startedAt,
+      citationCount: ctx.citations.length,
+      contradictionCount: ctx.activeContradictions.length,
+      failureModeCount: ctx.failureModes.length,
+      gateCount: ctx.gatesSummary.total,
+    });
+    return new Response(null, {
+      status: 304,
+      headers: {
+        ETag: etag,
+        "X-Cache": "HIT",
+        "X-Synthesis-Event-Id": event.id,
+      },
+    });
+  }
+
   if (cached) {
     const event = recordSynthesisEvent({
       surface: 'tower',
@@ -82,6 +111,7 @@ export async function POST(_request: Request) {
     return new Response(cached, {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
+        ETag: etag,
         "X-Cache": "HIT",
         "X-Synthesis-Event-Id": event.id,
       },
@@ -173,6 +203,7 @@ export async function POST(_request: Request) {
       // Cache the full response after streaming completes
       if (accumulated) {
         synthesisCache.set(cacheKey, accumulated);
+        cacheCreatedAt.set(cacheKey, Date.now());
       }
       controller.close();
     },
@@ -182,6 +213,7 @@ export async function POST(_request: Request) {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
       "Transfer-Encoding": "chunked",
+      ETag: etag,
       "X-Cache": "MISS",
       "X-Synthesis-Event-Id": event.id,
     },
