@@ -32,6 +32,14 @@ export interface ToolContext {
   surface: string;
   /** Optional structured surface context the route already resolved. */
   surfaceContext?: Record<string, unknown>;
+  /**
+   * Optional out-of-band sink to the response stream. Tool handlers that
+   * need to surface a side-channel hint to the client (e.g. a navigation
+   * sentinel like `[[program-created:<id>]]`) write through this. The
+   * default is undefined; routes that opt in pass the same writer used
+   * by the tool-use loop.
+   */
+  writer?: { write(text: string): void };
 }
 
 /**

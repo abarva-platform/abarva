@@ -200,6 +200,16 @@ export async function POST(request: Request) {
   let bufferedOutput = "";
   const readable = new ReadableStream({
     async start(controller) {
+      // Tools (commit_program) and the loop both write through this sink.
+      // Tool-side writes carry surface-specific sentinels (e.g. the
+      // `[[program-created:<id>]]` navigation hint emitted by
+      // commit_program); loop-side writes are agent text deltas.
+      const writer = {
+        write(text: string) {
+          bufferedOutput += text;
+          controller.enqueue(encoder.encode(text));
+        },
+      };
       try {
         await runToolUseLoop({
           client: anthropicClient,
@@ -215,13 +225,9 @@ export async function POST(request: Request) {
             request,
             surface,
             surfaceContext: body.surfaceContext,
+            writer,
           },
-          writer: {
-            write(text) {
-              bufferedOutput += text;
-              controller.enqueue(encoder.encode(text));
-            },
-          },
+          writer,
         });
       } catch (err) {
         // Surface tool/stream errors to the client honestly rather

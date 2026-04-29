@@ -1,11 +1,13 @@
 // origination-view.ts — PROG-E-VIEW
 //
-// View model for the Program Origination wizard (/programs/new).
-// Deterministic: no runtime clocks, no random(), no model calls.
+// View-model helpers for the Phase 0 origination flow. Deterministic:
+// no runtime clocks, no random(), no model calls.
 //
-// Consumed by ProgramOriginationPage.tsx and its integration test.
-// The wizard has three steps. Steward leads classification; Nexus
-// activates once the program opens (i.e. on submit redirect).
+// The legacy 3-step wizard that originally consumed these helpers was
+// replaced in Surface 1 of Programs Strict Completion v1.2 by the
+// Steward-led reactive workspace at /programs/new (and the demo route
+// at /demo/programs/new). The helpers remain useful for downstream
+// consumers that still reason about origination view-models.
 
 export interface OriginationStep {
   n: 1 | 2 | 3;
