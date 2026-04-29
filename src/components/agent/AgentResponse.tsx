@@ -20,6 +20,7 @@
 import type { ReactNode } from 'react';
 import type { Citation, RenderedResponse } from '@/lib/agent/renderedResponse';
 import { getHonestDisclosureViewModel } from '@/lib/agent/rendered-response-ui';
+import { AgentMarkdown } from '@/lib/agent/markdownRenderer';
 import { AgentCitation } from './AgentCitation';
 import { SparsitySignal } from './SparsitySignal';
 import { HandoffAffordance } from './HandoffAffordance';
@@ -48,63 +49,36 @@ interface AgentResponseProps {
 }
 
 /**
- * Resolves citation placeholders in response_text to inline React nodes.
- * Placeholder grammar: `{{cite:<target_type>:<target_id>}}` — emitted by
- * Claude at Stage 5 and preserved through Stage 6 assembly.
+ * Builds the placeholder→React-node map that <AgentMarkdown> uses to
+ * substitute `{{cite:type:id}}` placeholders inline. Both the original
+ * placeholder text (`citation.placeholder`) and the canonical form
+ * (`{{cite:type:id}}`) are mapped to the same pill so either grammar
+ * resolves correctly.
  *
  * Unresolved placeholders (hallucinated, stripped by Stage 6) would never
- * reach this function per §4.6 failure semantics; if one does we render
- * it as plain broken text so the reader sees the bug rather than a gap.
+ * reach this function per §4.6 failure semantics; if one does the
+ * markdown renderer will surface it as literal text — visibly broken,
+ * which is the desired failure mode.
  */
-function renderWithCitations(
-  text: string,
+function buildCitationNodeMap(
   citations: Citation[],
   accent: string,
   compact: boolean,
-): ReactNode[] {
-  const byPlaceholder = new Map<string, Citation>(citations.map((c) => [c.placeholder, c]));
-  // Also allow matching by `{{cite:type:id}}` fallback if the placeholder
-  // field was filled with the canonical form.
-  const byCanonical = new Map<string, Citation>(
-    citations.map((c) => [`{{cite:${c.target_type}:${c.target_id}}}`, c]),
-  );
-
-  const parts: ReactNode[] = [];
-  const regex = /\{\{cite:[a-z_]+:[^}]+\}\}/g;
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
-  let keyCounter = 0;
-
-  while ((match = regex.exec(text)) !== null) {
-    if (match.index > lastIndex) {
-      parts.push(text.slice(lastIndex, match.index));
-    }
-    const placeholder = match[0];
-    const citation = byPlaceholder.get(placeholder) ?? byCanonical.get(placeholder);
-    if (citation) {
-      parts.push(
-        <AgentCitation key={`cite-${keyCounter++}`} citation={citation} accent={accent} compact={compact} />,
-      );
-    } else {
-      // §4.6 failure: stripped placeholder that leaked through. Render as
-      // visibly broken text.
-      parts.push(
-        <span
-          key={`cite-broken-${keyCounter++}`}
-          className="citation-broken"
-          title="Unresolved citation placeholder"
-          style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#c97b5b', background: 'rgba(201,123,91,0.08)', padding: '0 4px', borderRadius: 3 }}
-        >
-          {placeholder}
-        </span>,
-      );
-    }
-    lastIndex = match.index + placeholder.length;
-  }
-  if (lastIndex < text.length) {
-    parts.push(text.slice(lastIndex));
-  }
-  return parts;
+): Map<string, ReactNode> {
+  const map = new Map<string, ReactNode>();
+  citations.forEach((citation, idx) => {
+    const node = (
+      <AgentCitation
+        key={`cite-${idx}`}
+        citation={citation}
+        accent={accent}
+        compact={compact}
+      />
+    );
+    map.set(citation.placeholder, node);
+    map.set(`{{cite:${citation.target_type}:${citation.target_id}}}`, node);
+  });
+  return map;
 }
 
 export function AgentResponse({
@@ -113,7 +87,7 @@ export function AgentResponse({
   onFollowUp,
   compactCitations = true,
 }: AgentResponseProps) {
-  const rendered = renderWithCitations(response.response_text, response.citations, accent, compactCitations);
+  const citationNodes = buildCitationNodeMap(response.citations, accent, compactCitations);
   const viewModel = getHonestDisclosureViewModel(response);
 
   return (
@@ -138,10 +112,9 @@ export function AgentResponse({
           fontSize: 14,
           lineHeight: 1.65,
           color: '#1a1612',
-          whiteSpace: 'pre-wrap',
         }}
       >
-        {rendered}
+        <AgentMarkdown text={response.response_text} inlineNodes={citationNodes} />
       </div>
 
       {viewModel.confidence
