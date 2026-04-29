@@ -968,6 +968,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/coverage-report',
     description: 'Pattern richness coverage — gate criteria, contradiction templates, failure modes, and source docs per pattern',
   },
+  {
+    title: 'Gate sequence',
+    href: '/admin/reasoning/gate-sequence',
+    description: 'Recommended evaluation order for gate criteria — hard gates first, ordered by stage and priority',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
