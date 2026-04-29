@@ -312,7 +312,13 @@ export default function ReasoningQuickstartDocPage() {
               reasoning architecture doc
             </Link>
             {' '}enumerates every public export, the four-layer model, and the
-            user-facing surfaces already wired through Layer 3. The
+            user-facing surfaces already wired through Layer 3. For a dense,
+            per-export listing with TypeScript signatures and anchor links per
+            symbol, read the{' '}
+            <Link href="/docs/reasoning/api" style={LINK_STYLE}>
+              reasoning API reference
+            </Link>
+            . The
             {' '}<Code>/admin/reasoning</Code> telemetry dashboard is the
             operational view of Layer 4 once your surface is shipping prose.
             For a flat, git-derived view of every reasoning-layer commit

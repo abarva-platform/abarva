@@ -158,6 +158,10 @@ export default function ReasoningChangelogDocPage() {
             <Link href="/docs/reasoning/quickstart" style={LINK_STYLE}>
               quickstart
             </Link>
+            ; for a per-export TypeScript reference, read the{' '}
+            <Link href="/docs/reasoning/api" style={LINK_STYLE}>
+              API reference
+            </Link>
             .
           </p>
         </Section>
