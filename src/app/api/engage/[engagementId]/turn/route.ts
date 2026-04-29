@@ -45,6 +45,7 @@ import { logAudit } from '@/lib/audit/log';
 import { assembleMaestroContextBlock } from '@/lib/agent/prompts/_shared/maestro-context';
 import { assembleUserContextBlock } from '@/lib/agent/prompts/_shared/user-context';
 import { getUserContextPromptBlock } from '@/lib/agent/userContext';
+import { getRelevantTools, toAnthropicToolDefinition } from '@/lib/agent/tools/registry';
 import { assembleTopicIntelligenceBlock } from '@/lib/agent/prompts/_shared/topic-intelligence';
 import { updateMaestroProfile } from '@/lib/agent/maestro-extractor';
 import { parseChoicesFromText } from '@/lib/agent/parse-choices';
@@ -251,7 +252,14 @@ export async function POST(
 
         const tStreamStart = Date.now();
         let agentFullText = '';
-        const gen = streamAgentTurn({ system, messages });
+        // F0.4 — engage/turn keeps its text-only stream (the route has
+        // its own <gate_approval> XML detection and SSE post-processing
+        // that isn't compatible with the multi-turn loop). The tool list
+        // is passed through so the engagement-turn agent CAN invoke
+        // surface-relevant tools when they exist; today no tool opts in
+        // to '/engagements/turn' so this resolves to an empty array.
+        const engageTools = getRelevantTools('/engagements/turn').map(toAnthropicToolDefinition);
+        const gen = streamAgentTurn({ system, messages, tools: engageTools });
         for await (const delta of gen) {
           agentFullText += delta;
           controller.enqueue(encoder.encode(JSON.stringify({ type: 'delta', text: delta }) + '\n'));

@@ -17,6 +17,13 @@ import { PHASE_LABEL_MAP } from "@/lib/programs/programs-fixture";
 import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
 import { getUserContextPromptBlock } from "@/lib/agent/userContext";
 import { retrieveStageContext, retrieveCategoryContext } from "@/lib/intelligence/agent-retrieval";
+import { getRelevantTools } from "@/lib/agent/tools/registry";
+import { runToolUseLoop } from "@/lib/agent/streaming/toolUseLoop";
+// F0.4: import the commit_program tool module so it self-registers
+// at startup. Routes that don't surface this tool will simply not
+// expose it in `tools`, but the registration must happen for the
+// surface filter to find it.
+import "@/lib/agent/tools/program/commitProgram";
 
 // ── Agent voice map ────────────────────────────────────────────────────────────
 
@@ -168,32 +175,51 @@ export async function POST(request: Request) {
     AGENT_DEMO_SYSTEM_BLOCK,
   ].join("\n");
 
-  // ── Stream response ─────────────────────────────────────────────────────────
+  // ── Stream response (F0.4 tool-use loop) ────────────────────────────────────
+  //
+  // The route now runs through the multi-turn tool-use loop. Tools
+  // available to the agent are filtered by the current surface — on
+  // /programs/new the agent gets `commit_program`; other surfaces get
+  // an empty tool list and the loop degenerates to a single text turn.
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
-  const stream = await client.messages.stream({
-    model: "claude-sonnet-4-6",
-    max_tokens: 512,
-    system: systemPrompt,
-    messages: [
-      ...conversationHistory.slice(-10),
-      { role: "user", content: message },
-    ],
-  });
+  const anthropicClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const tools = getRelevantTools(surface);
 
   const encoder = new TextEncoder();
   const readable = new ReadableStream({
     async start(controller) {
-      for await (const chunk of stream) {
-        if (
-          chunk.type === "content_block_delta" &&
-          chunk.delta.type === "text_delta"
-        ) {
-          controller.enqueue(encoder.encode(chunk.delta.text));
-        }
+      try {
+        await runToolUseLoop({
+          client: anthropicClient,
+          model: "claude-sonnet-4-6",
+          maxTokens: 512,
+          system: systemPrompt,
+          messages: [
+            ...conversationHistory.slice(-10),
+            { role: "user", content: message },
+          ],
+          tools,
+          toolContext: {
+            request,
+            surface,
+            surfaceContext: body.surfaceContext,
+          },
+          writer: {
+            write(text) {
+              controller.enqueue(encoder.encode(text));
+            },
+          },
+        });
+      } catch (err) {
+        // Surface tool/stream errors to the client honestly rather
+        // than silently truncating the response.
+        const message = err instanceof Error ? err.message : String(err);
+        controller.enqueue(
+          encoder.encode(`\n\n[stream error: ${message}]`),
+        );
+      } finally {
+        controller.close();
       }
-      controller.close();
     },
   });
 

@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { retrieveContext, verticalFromClientContext } from '@/lib/retrieval'
 import { getUserContextPromptBlock } from '@/lib/agent/userContext'
+import { getRelevantTools, toAnthropicToolDefinition } from '@/lib/agent/tools/registry'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -165,6 +166,12 @@ export async function POST(request: Request) {
   const userContextBlock = await getUserContextPromptBlock()
   const systemPrompt = buildSystemPrompt(ragContext, userContextBlock)
 
+  // F0.4 — surface for tool registration. The structured-strategy
+  // session emits options-as-text + a JSON `done` event; it has no
+  // actionable tools today, but registering the surface keeps the
+  // shape consistent with the rest of the interactive routes.
+  const stepTools = getRelevantTools('/strategy-session').map(toAnthropicToolDefinition)
+
   const encoder = new TextEncoder()
 
   const readable = new ReadableStream({
@@ -175,6 +182,7 @@ export async function POST(request: Request) {
           max_tokens: 1024,
           system: systemPrompt,
           messages: [{ role: 'user', content: prompt }],
+          ...(stepTools.length > 0 ? { tools: stepTools } : {}),
         })
 
         let buffer = ''

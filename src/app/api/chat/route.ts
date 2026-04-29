@@ -1,6 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { meridianHealth } from "@/data/meridian";
 import { getUserContextPromptBlock } from "@/lib/agent/userContext";
+import { getRelevantTools } from "@/lib/agent/tools/registry";
+import { runToolUseLoop } from "@/lib/agent/streaming/toolUseLoop";
 
 export async function POST(request: Request) {
   const { orgName, orgSize, vertical, challenge } = await request.json();
@@ -35,12 +37,16 @@ LEADERSHIP INSIGHTS:
 `
     : "";
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const anthropicClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-  const stream = await client.messages.stream({
-    model: "claude-sonnet-4-6",
-    max_tokens: 2048,
-    system: `You are AbarVa, the world's most experienced enterprise transformation advisor.
+  // F0.4: Meridian diagnostic surface has no actionable tools today —
+  // it's a one-shot diagnostic generator. Routing through the loop
+  // anyway keeps all 4 interactive routes structurally consistent
+  // (kickoff §4 F0.4) and means future tools (e.g. `start_engagement`)
+  // can be added without re-plumbing the route.
+  const tools = getRelevantTools('/diagnostic');
+
+  const systemPrompt = `You are AbarVa, the world's most experienced enterprise transformation advisor.
 You have deep expertise in healthcare and financial services transformations.
 You have access to this organization's actual data, financials, leadership interviews, and known contradictions.
 Reference specific numbers, names, and contradictions from the org data.
@@ -64,11 +70,9 @@ ${userContextBlock}Format your response with these exact sections:
 (Compare their metrics to industry benchmarks with specific numbers)
 
 ## FINANCIAL IMPACT
-(Quantify the cost of inaction in dollars)`,
-    messages: [
-      {
-        role: "user",
-        content: `${orgContext}
+(Quantify the cost of inaction in dollars)`;
+
+  const userMessage = `${orgContext}
 
 Diagnose this organization:
 Organization: ${orgName}
@@ -76,23 +80,32 @@ Size: ${orgSize}
 Industry: ${vertical}
 Primary Challenge: ${challenge}
 
-Provide a specific diagnosis using their actual data.`,
-      },
-    ],
-  });
+Provide a specific diagnosis using their actual data.`;
 
   const encoder = new TextEncoder();
   const readable = new ReadableStream({
     async start(controller) {
-      for await (const chunk of stream) {
-        if (
-          chunk.type === "content_block_delta" &&
-          chunk.delta.type === "text_delta"
-        ) {
-          controller.enqueue(encoder.encode(chunk.delta.text));
-        }
+      try {
+        await runToolUseLoop({
+          client: anthropicClient,
+          model: "claude-sonnet-4-6",
+          maxTokens: 2048,
+          system: systemPrompt,
+          messages: [{ role: "user", content: userMessage }],
+          tools,
+          toolContext: { request, surface: '/diagnostic' },
+          writer: {
+            write(text) {
+              controller.enqueue(encoder.encode(text));
+            },
+          },
+        });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        controller.enqueue(encoder.encode(`\n\n[stream error: ${message}]`));
+      } finally {
+        controller.close();
       }
-      controller.close();
     },
   });
 
