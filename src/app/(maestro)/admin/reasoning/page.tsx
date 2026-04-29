@@ -763,6 +763,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/evidence-coverage',
     description: 'Evidence map contents per instance — what data the gate evaluator sees for each instance',
   },
+  {
+    title: 'Linked instances',
+    href: '/admin/reasoning/linked-instances',
+    description: 'Cross-instance dependency map — program links, source event links, and blocking dependencies',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
