@@ -28,11 +28,19 @@ export interface MissionListInteractiveProps {
 async function postMissionState(
   missionId: string,
   status: 'complete' | 'dismissed',
+  note?: string,
 ): Promise<void> {
+  const payload: { missionId: string; status: string; note?: string } = {
+    missionId,
+    status,
+  };
+  if (typeof note === 'string' && note.length > 0) {
+    payload.note = note;
+  }
   const res = await fetch('/api/reasoning/missions/state', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ missionId, status }),
+    body: JSON.stringify(payload),
   });
   if (!res.ok) {
     const body = (await res.json().catch(() => ({}))) as { error?: string };
@@ -45,9 +53,9 @@ export function MissionListInteractive(props: MissionListInteractiveProps) {
   const [, setBusyId] = useState<string | null>(null);
 
   function handle(status: 'complete' | 'dismissed') {
-    return (id: string) => {
+    return (id: string, note?: string) => {
       setBusyId(id);
-      void postMissionState(id, status)
+      void postMissionState(id, status, note)
         .then(() => {
           router.refresh();
         })

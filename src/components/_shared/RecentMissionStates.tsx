@@ -61,6 +61,16 @@ const ROW: CSSProperties = {
   lineHeight: 1.4,
 };
 
+const NOTE: CSSProperties = {
+  gridColumn: '1 / -1',
+  margin: 0,
+  fontFamily: SHELL.SANS,
+  fontSize: 11,
+  fontStyle: 'italic',
+  color: SHELL.INK_MUTED,
+  lineHeight: 1.4,
+};
+
 const ID_LABEL: CSSProperties = {
   fontFamily: SHELL.MONO,
   fontSize: 11,
@@ -120,6 +130,11 @@ export function RecentMissionStates({
             >
               {entry.status}
             </span>
+            {entry.note && (
+              <p style={NOTE} data-testid="recent-mission-note">
+                {entry.note}
+              </p>
+            )}
           </li>
         ))}
       </ul>

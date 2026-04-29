@@ -45,12 +45,12 @@ export interface MissionListProps {
    * renders a small ghost-button group; when omitted, no controls render
    * (preserving the read-only behaviour of existing consumers).
    */
-  readonly onComplete?: (id: string) => void;
+  readonly onComplete?: (id: string, note?: string) => void;
   /**
    * Optional handler invoked when a user clicks the "Dismiss" affordance on
    * a row. See `onComplete` for rendering semantics.
    */
-  readonly onDismiss?: (id: string) => void;
+  readonly onDismiss?: (id: string, note?: string) => void;
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
