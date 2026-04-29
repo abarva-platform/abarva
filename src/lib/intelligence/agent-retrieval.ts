@@ -8,18 +8,20 @@
 // making it available to the intelligence layer, the reasoning runtime, and
 // the agent prompt in one consistent place.
 //
-// Retrieval approach: synchronous in-memory lookup against the SOURCING_PATTERNS
-// array.  No network, no vector search — the corpus is small enough that a
-// linear scan is O(n) with n ≤ 30.  If the corpus grows beyond ~200 patterns
-// a map index should be built at module load time.
+// Retrieval approach: synchronous in-memory lookup against the source-controlled
+// sourcing corpus. No network, no vector search. Pattern bodies are indexed by
+// ID at module load, and category matching uses keyword specificity so generic
+// terms such as "cloud" do not shadow more specific category phrases.
 //
 // Naming convention for the corpus maps:
 //   STAGE_PATTERN_MAP    — stage label → pattern ID
 //   CATEGORY_KEYWORD_MAP — keyword list → pattern ID
 //
-// CATEGORY_KEYWORD_MAP covers all 47 sourcing categories:
+// CATEGORY_KEYWORD_MAP covers the event keywords that the agent route can
+// currently infer from Source event names and types. It is a routing table, not
+// the full sourcing-corpus count.
 //   5  legacy service-type patterns  (PAT-SRC-020 – PAT-SRC-024)
-//   42 corpus category patterns      (PAT-SRC-CAT-* series)
+//   corpus category patterns         (PAT-SRC-CAT-* series)
 
 import SOURCING_PATTERNS from './seed-patterns-sourcing';
 
@@ -807,17 +809,29 @@ export function retrieveCategoryContext(
   eventType?: string,
 ): string | null {
   const haystack = [
-    eventName.toLowerCase(),
-    eventType ? eventType.toLowerCase() : '',
+    eventName,
+    eventType ?? '',
   ].join(' ');
+  const normalizedHaystack = haystack
+    .toLowerCase()
+    .replace(/[-_/]+/g, ' ');
+
+  let bestMatch: { patternId: string; keywordLength: number } | null = null;
 
   for (const { patternId, keywords } of CATEGORY_KEYWORD_MAP) {
     for (const kw of keywords) {
-      if (haystack.includes(kw)) {
-        return PATTERN_BODY_MAP.get(patternId) ?? null;
+      const normalizedKeyword = kw.toLowerCase().replace(/[-_/]+/g, ' ');
+      if (
+        normalizedHaystack.includes(normalizedKeyword) &&
+        (!bestMatch || normalizedKeyword.length > bestMatch.keywordLength)
+      ) {
+        bestMatch = {
+          patternId,
+          keywordLength: normalizedKeyword.length,
+        };
       }
     }
   }
 
-  return null;
+  return bestMatch ? PATTERN_BODY_MAP.get(bestMatch.patternId) ?? null : null;
 }
