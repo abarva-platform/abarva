@@ -10,6 +10,7 @@ import { getCurrentUser } from '@/lib/auth/current-user';
 import { getEngagementWithPhaseData } from '@/lib/programs/db-phase-queries';
 import type { EvidenceItem, ProgramGateStatus } from '@/lib/programs/programs-types';
 import { parseTimelineFiltersFromSearchParams } from '@/lib/reasoning/instance-event-timeline-filters';
+import { getPhaseOverride } from '@/lib/programs/phase-overrides';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,8 +48,14 @@ export default async function ProgramDetailRoute({
   // real phase (e.g. P3 after gate approval) rather than the fixture's hardcoded phase.
   const dbCurrentPhase = dbData?.engagement?.current_phase ?? undefined;
 
-  // Build view from fixture (always as base), passing DB phase override when available.
-  const view = buildProgramDetailView(id, viewingPhase, dbCurrentPhase ?? undefined);
+  // In-memory demo override (set via PATCH /api/v1/programs/:id/phase) takes
+  // precedence over the DB value so a one-click phase advance is reflected
+  // immediately after router.refresh() without a DB write.
+  const memPhaseOverride = getPhaseOverride(id);
+  const resolvedCurrentPhase = memPhaseOverride ?? dbCurrentPhase ?? undefined;
+
+  // Build view from fixture (always as base), passing resolved phase override when available.
+  const view = buildProgramDetailView(id, viewingPhase, resolvedCurrentPhase);
 
   // Always ensure the view uses the requested programId, not the fixture fallback id.
   // This matters when the program is not in the fixture set (e.g. newly created programs).
@@ -63,9 +70,9 @@ export default async function ProgramDetailRoute({
 
     // Override key scalar fields with real data
     view.name = eng.name ?? view.name;
-    // currentPhase is already set correctly via overrideCurrentPhase above,
-    // but keep the direct assignment as a safety net for any edge cases.
-    if (eng.current_phase !== null && eng.current_phase !== undefined) {
+    // currentPhase is already set correctly via resolvedCurrentPhase above.
+    // Only fall back to the DB value when there is no in-memory demo override.
+    if (memPhaseOverride === undefined && eng.current_phase !== null && eng.current_phase !== undefined) {
       const clampedPhase = Math.max(0, Math.min(6, eng.current_phase)) as typeof view.currentPhase;
       view.currentPhase = clampedPhase;
     }
