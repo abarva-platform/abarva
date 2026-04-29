@@ -3816,6 +3816,456 @@ Vendor claim: access reviews are automated. Detection: test entitlement context,
 
 The common failure is buying campaign workflow while leaving entitlement data unnamed, ownerless, and unexplained. The second is launching broad reviews that reviewers rubber-stamp because context is poor. The third is discovering too late that revoked access requires manual tickets with no reliable proof of completion.`,
   },
+
+  {
+    id: 'PAT-SRC-CAT-PAM-001',
+    slug: 'privileged-access-management-sourcing',
+    title: 'Privileged Access Management Sourcing for Vaulting, JIT Elevation, Session Control, and Non-Human Identity Risk',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'PAM sourcing should reduce standing privilege and prove accountable, time-bound, auditable access across humans, admins, service accounts, cloud roles, secrets, and privileged sessions.',
+    applicability:
+      'Apply when sourcing CyberArk, BeyondTrust, Delinea, Microsoft Entra PIM, Okta Privileged Access, Saviynt PAM adjacency, AWS temporary elevated access, Google Cloud Privileged Access Manager, HashiCorp Vault or adjacent secrets and access tooling.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.82,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.cyberark.com/privileged-access-management/',
+      'https://www.cyberark.com/solutions/just-in-time/',
+      'https://www.cyberark.com/products/cloud-security/',
+      'https://www.beyondtrust.com/products/password-safe',
+      'https://delinea.com/products/secret-server',
+      'https://delinea.com/products/secret-server/features/privileged-session-management',
+      'https://learn.microsoft.com/en-us/azure/active-directory/active-directory-privileged-identity-management-configure',
+      'https://help.okta.com/oie/en-us/content/topics/privileged-access/pam-overview.htm',
+      'https://saviynt.com/products/privileged-access-management-software-solutions',
+      'https://docs.aws.amazon.com/singlesignon/latest/userguide/temporary-elevated-access.html',
+      'https://cloud.google.com/iam/docs/pam-overview',
+      'https://www.hashicorp.com/products/vault/secrets-management',
+      'https://www.cisa.gov/secure-our-world/require-multifactor-authentication',
+      'https://csrc.nist.gov/Pubs/sp/800/53/r5/upd1/Final',
+    ],
+    regulatoryChips: ['SOC-2-review', 'NIST-800-53-review', 'PCI-if-cardholder-environment', 'SOX-if-financial-controls', 'HIPAA-if-PHI'],
+    relatedPatternIds: ['PAT-SRC-CAT-IAM-001', 'PAT-SRC-CAT-IGA-001', 'PAT-SRC-CAT-CODE-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'security_identity',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'CyberArk, BeyondTrust, and Delinea',
+        tier: 'enterprise',
+        positioning: 'Core PAM candidates for vaulting, credential discovery, password rotation, privileged session management, remote access, audit, and hybrid infrastructure coverage.',
+        cautions: ['Validate cloud admin, SaaS admin, developer, non-human identity, and secrets-management coverage instead of assuming vaulting equals complete PAM maturity.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'CyberArk Privileged Access Management', url: 'https://www.cyberark.com/privileged-access-management/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'BeyondTrust Password Safe', url: 'https://www.beyondtrust.com/products/password-safe', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Delinea Secret Server', url: 'https://delinea.com/products/secret-server', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'Microsoft Entra PIM, Okta Privileged Access, Saviynt, AWS, Google Cloud, and HashiCorp',
+        tier: 'specialist',
+        positioning: 'Adjacent and workload-specific privileged access options for identity-platform activation, cloud JIT elevation, access requests, secrets, service accounts, and non-human identity patterns.',
+        cautions: ['Do not treat cloud PIM, IGA/PAM adjacency, and secrets management as full substitutes for enterprise PAM without target-system and session-control proof.'],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'PAM public pricing constructs only',
+        model: 'hybrid',
+        metric: 'Privileged users, managed accounts, secrets, target systems, sessions, session recording retention, modules, deployment model, integrations, support, and services',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Microsoft Entra plans and PIM packaging context', url: 'https://www.microsoft.com/en-us/security/business/microsoft-entra-pricing', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'PAM user counts, managed account inventory, secrets volume, session retention, target systems, and negotiated terms require buyer evidence' },
+        ],
+        confidence: 0.50,
+        notes: 'Public pages support capability and packaging constructs, not buyer-specific PAM TCO or discount assumptions.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Privileged access evidence and accountability',
+        buyerPosition: 'Require named-user attribution, approvals, justification, session logs, recording retention, command/activity evidence, emergency access runbooks, and exportable audit trails.',
+      },
+      {
+        clauseArea: 'Secrets and non-human identity control',
+        buyerPosition: 'Define discovery, ownership, rotation, expiration, API token/key handling, workload identity coverage, and migration from unmanaged secrets stores.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Standing privilege reduction proof',
+        whenToUse: 'Use when the vendor claims zero standing privilege or JIT access coverage.',
+        buyerAsk: 'Demonstrate one cloud admin, one database admin, one server admin, one break-glass, and one non-human identity path from request to expiration and evidence export.',
+      },
+      {
+        lever: 'Target-system inventory normalization',
+        whenToUse: 'Use before BAFO when proposals count privileged users but not accounts, secrets, sessions, systems, or retention.',
+        buyerAsk: 'Normalize commercial model against target systems, privileged accounts, secrets, session volumes, recording retention, and implementation services.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'pam-standing-admin-sprawl',
+        label: 'Standing privileged access sprawl',
+        severity: 'critical',
+        detectionSignals: ['Permanent global admin, domain admin, root, owner, service-account, or shared admin access exists without time-bound activation.'],
+        mitigations: ['Require discovery, vaulting or brokered access, JIT activation, approvals, rotation, MFA, monitoring, and offboarding evidence'],
+      },
+      {
+        id: 'pam-session-accountability-gap',
+        label: 'Privileged session accountability gap',
+        severity: 'high',
+        detectionSignals: ['Privileged sessions are not tied to named users, approvals, recordings, commands, or reliable audit export.'],
+        mitigations: ['Test session brokering, recording, termination, audit export, and SIEM/ITSM integration for critical systems'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Stress privileged financial systems, SoD, regulator-visible evidence, session review, break-glass controls, and privileged cloud roles.',
+        regulatoryRefs: ['NIST SP 800-53 AC and AU control families as public control references'],
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Review privileged access to PHI systems, emergency workflows, vendor support sessions, audit retention, and account recovery controls.',
+      },
+      {
+        industry: 'public_sector',
+        modifier: 'Review FedRAMP/public-sector eligibility, air-gapped or self-hosted needs, records retention, admin accountability, and contractor access.',
+      },
+    ],
+    body: `## Summary
+Privileged Access Management sourcing is the access-control decision for the most dangerous identities in the environment. A credible PAM event must cover human administrators, shared accounts, service accounts, break-glass users, cloud roles, local admins, secrets, API keys, privileged sessions, and third-party support paths. The goal is not to buy a vault; it is to reduce standing privilege and prove who had elevated access, why, what they did, and when the privilege ended.
+
+## When to apply
+Use this pattern when sourcing CyberArk, BeyondTrust, Delinea, Microsoft Entra PIM, Okta Privileged Access, Saviynt PAM adjacency, AWS IAM Identity Center temporary elevated access, Google Cloud Privileged Access Manager, HashiCorp Vault/Boundary-style access, or adjacent secrets and privileged-access tooling. Apply it after audit findings, credential compromise, cloud migration, secrets sprawl, ransomware concern, cyber-insurance review, M&A, or developer-platform modernization. Do not use it for ordinary SSO/MFA, consumer password management, SIEM, security awareness, or ITSM workflows unless privileged access is the sourcing anchor.
+
+## Category boundary
+In scope: credential discovery, vaulting, rotation, checkout, session brokering, session recording, JIT elevation, approval workflows, emergency access, local admin control, cloud admin activation, SaaS admin access, service accounts, secrets, SSH keys, certificates, API tokens, vendor access, audit evidence, SIEM integration, ITSM integration, and migration from legacy vaults. Adjacent but distinct: IAM, IGA, CIEM, endpoint privilege management, and secrets management. Each may be in scope, but only after the buyer names the control boundary.
+
+## Lifecycle and gates
+The scope gate should inventory privileged users, admin groups, shared accounts, service accounts, cloud roles, secrets stores, target systems, privileged sessions, break-glass accounts, vendor access, and current audit gaps. The RFP gate should require target-system support, deployment model, session controls, JIT model, secrets handling, evidence exports, retention, support, and implementation approach. The proof gate should test one server admin, one database admin, one cloud admin, one break-glass, one vendor session, and one non-human identity path. The BAFO gate should normalize privileged users, managed accounts, secrets, target systems, sessions, recording retention, integrations, modules, support, and services.
+
+## Evaluation rubric
+Weight standing-privilege reduction around 25 percent, target-system coverage around 20 percent, session accountability around 20 percent, secrets and non-human identity coverage around 15 percent, audit/evidence around 10 percent, and commercial predictability around 10 percent. Increase session and evidence weight when regulated systems, production infrastructure, third-party support, or financial controls are in scope.
+
+## Pricing and contract notes
+Public vendor materials from CyberArk, BeyondTrust, Delinea, Microsoft, Okta, Saviynt, AWS, Google Cloud, HashiCorp, CISA, and NIST support the category constructs: vaulting, JIT activation, session control, secrets, cloud access, MFA, least privilege, and audit evidence. They do not prove buyer-specific pricing or outcome savings. PAM TCO depends on privileged populations, managed accounts, secrets, target systems, recording retention, deployment model, implementation services, integrations, and operating ownership.
+
+Contracting should define discovery obligations, supported targets, named-user attribution, approval records, session recording retention, emergency access, rotation cadence, secrets ownership, audit export, SIEM/ITSM integration, incident support, transition assistance, and acceptance tests. If non-human identities are in scope, token, key, certificate, and workload identity lifecycle controls should be explicit.
+
+## Contradictions and failure modes
+Vendor claim: zero standing privilege. Detection: test whether global admins, service accounts, break-glass users, cloud roles, and vendor sessions actually expire. Vendor claim: full PAM coverage. Detection: compare servers, databases, network devices, SaaS consoles, cloud accounts, Kubernetes, and secrets stores. Vendor claim: audit-ready. Detection: export approvals, recordings, commands, rotations, and revocations.
+
+The common failure is buying vaulting while leaving cloud, DevOps, SaaS, and non-human privilege outside scope. The second is recording sessions without named accountability or usable evidence export. The third is treating break-glass accounts as exceptions that never get monitored, rotated, or tested.`,
+  },
+  {
+    id: 'PAT-SRC-CAT-SASE-001',
+    slug: 'sase-sse-zero-trust-network-access-sourcing',
+    title: 'SASE and SSE Sourcing for ZTNA, SWG, CASB, DLP, and Secure Connectivity',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'SASE and SSE sourcing should prove access, inspection, data protection, network performance, identity integration, and branch or remote-user migration rather than accepting platform-convergence claims at face value.',
+    applicability:
+      'Apply when sourcing Zscaler, Netskope, Palo Alto Prisma Access, Cloudflare One, Cisco Secure Access or Umbrella, Fortinet, Cato Networks, and adjacent ZTNA, SWG, CASB, DLP, FWaaS, SD-WAN, and secure browser services.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.79,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://www.zscaler.com/pricing-and-plans',
+      'https://www.zscaler.com/products/zero-trust-exchange',
+      'https://www.netskope.com/netskope-one',
+      'https://www.netskope.com/products/security-service-edge',
+      'https://www.paloaltonetworks.com/prisma/access',
+      'https://www.cloudflare.com/plans/zero-trust-services/',
+      'https://www.cloudflare.com/sase/',
+      'https://www.cisco.com/site/us/en/products/security/secure-access/index.html',
+      'https://www.fortinet.com/products/sase',
+      'https://www.catonetworks.com/sase/',
+    ],
+    regulatoryChips: ['SOC-2-review', 'GDPR-if-person-data', 'HIPAA-if-PHI', 'data-residency-review', 'DORA-if-regulated-financial-entity'],
+    relatedPatternIds: ['PAT-SRC-CAT-IAM-001', 'PAT-SRC-CAT-SIEM-001', 'PAT-SRC-CAT-PAM-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'security_identity',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Zscaler, Netskope, Palo Alto Prisma Access, and Cloudflare One',
+        tier: 'enterprise',
+        positioning: 'Cloud-delivered SASE/SSE candidates spanning private access, secure web gateway, CASB, DLP, firewall-as-a-service, browser isolation, AI controls, and global connectivity.',
+        cautions: ['Validate which capabilities are included, add-on, preview, region-limited, or dependent on endpoint agents, tunnels, SD-WAN, identity, or log pipelines.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Zscaler Pricing and Plans', url: 'https://www.zscaler.com/pricing-and-plans', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Netskope One', url: 'https://www.netskope.com/netskope-one', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Cloudflare Zero Trust and SASE Plans', url: 'https://www.cloudflare.com/plans/zero-trust-services/', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'Cisco, Fortinet, Cato Networks, and network/security incumbents',
+        tier: 'enterprise',
+        positioning: 'SASE candidates where SD-WAN, firewall, branch networking, secure access, and existing security estate integration are commercial and operational decision drivers.',
+        cautions: ['Separate SSE-only modernization from full SASE branch/network transformation and managed-service operating models.'],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'SASE/SSE public pricing constructs only',
+        model: 'hybrid',
+        metric: 'Users, branches, bandwidth, modules, private apps, locations, data security, browser isolation, SD-WAN, logs, support, and migration services',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Zscaler Pricing and Plans', url: 'https://www.zscaler.com/pricing-and-plans', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Cloudflare Zero Trust Services Plans', url: 'https://www.cloudflare.com/plans/zero-trust-services/', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Remote user counts, branch sites, bandwidth, private apps, DLP scope, log retention, and negotiated enterprise terms require buyer evidence' },
+        ],
+        confidence: 0.56,
+        notes: 'Do not compare SASE vendors from named modules alone; pricing and scope depend on users, traffic, apps, branches, and data controls.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Access and inspection acceptance tests',
+        buyerPosition: 'Require proof for private-app access, internet egress, SaaS controls, TLS inspection, DLP policy, device posture, identity integration, logging, and bypass handling.',
+      },
+      {
+        clauseArea: 'Performance and data-location commitments',
+        buyerPosition: 'Define regions, PoPs, latency expectations, decryption scope, tunnel availability, incident support, log export, and data-processing boundaries.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'SSE versus full SASE decomposition',
+        whenToUse: 'Use when vendors bundle ZTNA/SWG/CASB/DLP with SD-WAN, FWaaS, branch networking, or managed services.',
+        buyerAsk: 'Separate remote-user security, private access, branch connectivity, data protection, and network transformation into priced modules and milestones.',
+      },
+      {
+        lever: 'Critical-app and branch pilot',
+        whenToUse: 'Use before replacing VPN, proxy, secure web gateway, or branch firewall controls.',
+        buyerAsk: 'Pilot top private apps, top SaaS apps, high-latency locations, contractors, unmanaged devices, and break-glass paths with measured logs and user experience.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'sase-platform-convergence-gap',
+        label: 'Platform convergence gap',
+        severity: 'high',
+        detectionSignals: ['Proposal labels capabilities as unified SASE while policy, logs, agents, tunnels, DLP, and branch controls remain fragmented.'],
+        mitigations: ['Require architecture proof, single-policy evidence, log export, identity/device integration, and module-by-module acceptance tests'],
+      },
+      {
+        id: 'sase-user-experience-blindspot',
+        label: 'User experience and bypass blindspot',
+        severity: 'high',
+        detectionSignals: ['Pilot ignores high-latency regions, contractors, mobile users, private apps, certificate pinning, and bypass procedures.'],
+        mitigations: ['Run geographically representative pilot with app performance, failure, bypass, and helpdesk evidence'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Stress data loss controls, private-app access, inspection logs, outsourcing review, operational resilience, and exit plans.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Review PHI traffic, BAA posture, unmanaged devices, clinical app latency, emergency access, and log retention.',
+      },
+      {
+        industry: 'manufacturing',
+        modifier: 'Plan carefully around plant networks, OT segmentation, low-latency needs, contractors, remote support, and branch migration sequencing.',
+      },
+    ],
+    body: `## Summary
+SASE and SSE sourcing is a convergence decision, but convergence must be proven. The buyer is usually replacing or rationalizing VPN, secure web gateway, cloud access security broker, data loss prevention, firewall-as-a-service, browser isolation, remote access, and sometimes SD-WAN or branch security. A strong sourcing event separates what must work for users, apps, data, branches, and security operations from the vendor story that all of those controls live on one platform.
+
+## When to apply
+Use this pattern when sourcing Zscaler, Netskope, Palo Alto Prisma Access, Cloudflare One, Cisco Secure Access or Umbrella, Fortinet, Cato Networks, or adjacent SASE, SSE, ZTNA, SWG, CASB, DLP, FWaaS, SD-WAN, or secure browser capabilities. Apply it during VPN replacement, proxy renewal, remote-work modernization, branch transformation, SaaS data-control expansion, AI-use governance, or network/security consolidation. Do not use it for IAM, EDR, SIEM, endpoint management, or network hardware refresh unless secure access and cloud-delivered inspection are the sourcing anchor.
+
+## Category boundary
+In scope: zero trust network access, private-app access, secure web gateway, CASB, DLP, TLS inspection, remote browser isolation, AI app controls, firewall-as-a-service, DNS security, device posture, endpoint agent, tunnels, PoPs, branch connectors, SD-WAN adjacency, identity integration, log export, policy management, data residency, support, and migration. Out of scope: generic firewalls, pure identity, pure endpoint, and broad network outsourcing unless they are bundled into SASE scope.
+
+## Lifecycle and gates
+The scope gate should inventory users, contractors, devices, locations, branches, private apps, SaaS apps, internet egress, VPN use, proxies, DLP policies, identity providers, certificates, logs, and regional constraints. The RFP gate should require capability packaging, architecture, endpoint requirements, PoP/region model, inspection behavior, log export, data processing, support, and migration approach. The proof gate should test private apps, SaaS controls, internet browsing, TLS inspection, DLP, identity/device posture, contractor access, mobile access, high-latency geographies, bypass, and failure modes. The BAFO gate should normalize users, branches, bandwidth, modules, private apps, log retention, support, services, and incumbent displacement.
+
+## Evaluation rubric
+Weight security policy coverage around 25 percent, user/app performance around 20 percent, identity/device/log integration around 15 percent, data protection around 15 percent, migration and operations around 15 percent, and commercial predictability around 10 percent. Increase performance weight for globally distributed workforces, branch-heavy environments, clinical/plant operations, and latency-sensitive apps.
+
+## Pricing and contract notes
+Public materials from Zscaler, Netskope, Palo Alto, Cloudflare, Cisco, Fortinet, and Cato identify SASE and SSE constructs such as ZTNA, SWG, CASB, DLP, FWaaS, SD-WAN, browser isolation, AI controls, logs, branches, and support. Zscaler and Cloudflare public pages expose packaging constructs, while many enterprise SASE proposals remain quote-led. Do not infer private discounts or total cost from module names. Model users, apps, locations, traffic, branches, inspection scope, log retention, migration services, and existing network/security contracts.
+
+Contracting should define included modules, add-ons, data-processing regions, logging, export, support SLAs, incident handling, decryption responsibilities, bypass controls, migration milestones, professional services, and exit assistance. If SASE replaces VPN or branch controls, acceptance criteria should include measured user experience and rollback plans.
+
+## Contradictions and failure modes
+Vendor claim: unified SASE platform. Detection: inspect policy planes, logs, agent behavior, tunnels, DLP, branch controls, and admin consoles. Vendor claim: VPN replacement is straightforward. Detection: test legacy apps, contractors, unmanaged devices, protocols, latency, and emergency access. Vendor claim: data protection is included. Detection: verify inline SaaS controls, DLP dictionaries, OCR/file handling, AI apps, exceptions, and evidence export.
+
+The common failure is choosing a SASE vendor from platform breadth while ignoring migration complexity. The second is testing only headquarters users and missing regional latency, contractor, mobile, branch, or certificate-pinned app problems. The third is treating SSE modernization and full SASE branch transformation as the same project.`,
+  },
+  {
+    id: 'PAT-SRC-CAT-SIEM-001',
+    slug: 'siem-security-analytics-log-management-sourcing',
+    title: 'SIEM, Security Analytics, and Log Management Sourcing',
+    domain: 'sourcing',
+    tier: 'validated',
+    vertical: 'cross-industry',
+    thesis:
+      'SIEM sourcing should normalize telemetry, analytics, retention, detection content, SOC workflow, and cost drivers before accepting claims about security visibility or AI-powered operations.',
+    applicability:
+      'Apply when sourcing Splunk Enterprise Security, Microsoft Sentinel, Google Security Operations, IBM QRadar, Elastic Security, Sumo Logic Cloud SIEM, Datadog Cloud SIEM, Exabeam, LogRhythm, SOAR, MDR, or security data lake adjacency.',
+    status: 'AUTHORED-DRAFT',
+    version: '1.0',
+    confidence: 0.83,
+    createdFrom: 'human_authored',
+    createdBy: 'codex',
+    createdAt: '2026-04-29',
+    instanceCount: 0,
+    sourceDocuments: [
+      'https://csrc.nist.gov/glossary/term/Security_Information_and_Event_Management',
+      'https://www.nist.gov/publications/guide-computer-security-log-management',
+      'https://www.gartner.com/it-glossary/security-information-and-event-management-siem',
+      'https://www.splunk.com/en_us/products/enterprise-security.html',
+      'https://www.splunk.com/en_us/products/pricing.html',
+      'https://www.microsoft.com/en-us/security/business/siem-and-xdr/microsoft-sentinel',
+      'https://www.microsoft.com/en-us/security/pricing/microsoft-sentinel/',
+      'https://learn.microsoft.com/en-us/azure/sentinel/automation/automation',
+      'https://cloud.google.com/security/products/security-information-event-management',
+      'https://www.ibm.com/products/qradar-siem/pricing',
+      'https://www.elastic.co/security/siem',
+      'https://www.sumologic.com/solutions/cloud-siem',
+      'https://www.datadoghq.com/product/cloud-siem/',
+      'https://www.exabeam.com/capabilities/siem/',
+    ],
+    regulatoryChips: ['SOC-2-review', 'NIST-800-92-review', 'PCI-if-cardholder-environment', 'HIPAA-if-PHI', 'DORA-if-regulated-financial-entity'],
+    relatedPatternIds: ['PAT-SRC-CAT-SASE-001', 'PAT-SRC-CAT-PAM-001', 'PAT-SRC-CAT-OBS-001'],
+    derivedFromPatternIds: [],
+    taggedContradictionIds: [],
+    category: 'security_identity',
+    vendorClass: 'direct-tech',
+    lifecycleStages: CATEGORY_LIFECYCLE_STAGES,
+    vendorLandscape: [
+      {
+        vendorName: 'Splunk, Microsoft Sentinel, Google Security Operations, IBM QRadar, Elastic, Sumo Logic, Datadog, and Exabeam',
+        tier: 'enterprise',
+        positioning: 'Security analytics and SIEM candidates for log collection, normalization, correlation, detection, hunting, case workflow, SOAR, UEBA, compliance reporting, and security data lake adjacency.',
+        cautions: ['Pricing and value depend on telemetry volume, hot/cold retention, search workload, detection content, analyst workflow, and managed-service operating model.'],
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Splunk pricing options', url: 'https://www.splunk.com/en_us/products/pricing.html', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Microsoft Sentinel pricing', url: 'https://www.microsoft.com/en-us/security/pricing/microsoft-sentinel/', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'IBM QRadar SIEM pricing', url: 'https://www.ibm.com/products/qradar-siem/pricing', asOf: '2026-04-29' },
+        ],
+      },
+      {
+        vendorName: 'MDR, MSSP, SOAR, XDR, and observability-log adjacency',
+        tier: 'specialist',
+        positioning: 'Adjacent delivery models where tooling is bundled with 24/7 monitoring, response automation, detection engineering, or broader observability and incident workflows.',
+        cautions: ['Managed service packaging can hide SIEM license, telemetry, retention, response, and staffing assumptions.'],
+      },
+    ],
+    pricingBenchmarks: [
+      {
+        label: 'SIEM public pricing constructs only',
+        model: 'hybrid',
+        metric: 'GB/day, EPS/FPM, analyzed events, workload compute, storage, hot/cold retention, entities, connectors, SOAR runs, support, and managed services',
+        sourceBasis: [
+          { type: 'public-disclosure', label: 'Splunk workload and ingest pricing options', url: 'https://www.splunk.com/en_us/products/pricing.html', asOf: '2026-04-29' },
+          { type: 'public-disclosure', label: 'Microsoft Sentinel pricing', url: 'https://www.microsoft.com/en-us/security/pricing/microsoft-sentinel/', asOf: '2026-04-29' },
+          { type: 'founder-data-gap', label: 'Buyer telemetry inventory, retention, detection workload, cloud terms, SOC staffing, and negotiated enterprise pricing require evidence' },
+        ],
+        confidence: 0.64,
+        notes: 'Normalize logs collected, indexed, analyzed, searched, and retained; do not compare SIEMs from headline ingest alone.',
+      },
+    ],
+    standardClauses: [
+      {
+        clauseArea: 'Telemetry and retention model',
+        buyerPosition: 'Define source inventory, parsing, indexing, analytics tier, data lake/archive tier, hot retention, cold retention, search rights, export, and deletion obligations.',
+      },
+      {
+        clauseArea: 'Detection content and workflow portability',
+        buyerPosition: 'Require rule export, parser documentation, case history, playbook export, ATT&CK mapping, migration assistance, and acceptance tests for high-value detections.',
+      },
+    ],
+    negotiationLevers: [
+      {
+        lever: 'Telemetry tiering model',
+        whenToUse: 'Use when vendors price by ingest, analyzed logs, workload, storage, or security data lake tiers.',
+        buyerAsk: 'Classify high-value analytics logs, lower-value archive logs, compliance retention, and search/hunt workloads before BAFO.',
+      },
+      {
+        lever: 'Detection migration proof',
+        whenToUse: 'Use when replacing an incumbent SIEM or moving to MDR/SOC service.',
+        buyerAsk: 'Convert representative parsers, correlation rules, dashboards, cases, and playbooks before award.',
+      },
+    ],
+    riskFactors: [
+      {
+        id: 'siem-send-everything-cost-loop',
+        label: 'Send-everything SIEM cost loop',
+        severity: 'high',
+        detectionSignals: ['Buyer cannot distinguish logs collected, indexed, analyzed, retained hot, retained cold, or searched frequently.'],
+        mitigations: ['Require source inventory, telemetry tiering, retention policy, filtering, and monthly cost reporting'],
+      },
+      {
+        id: 'siem-detection-migration-gap',
+        label: 'Detection migration gap',
+        severity: 'critical',
+        detectionSignals: ['Existing detections, parsers, dashboards, cases, and playbooks are undocumented or vendor-specific.'],
+        mitigations: ['Run migration proof for critical detections and require export/transition assistance'],
+      },
+    ],
+    industryVariants: [
+      {
+        industry: 'financial_services',
+        modifier: 'Stress log retention, privileged activity, fraud/security correlation, regulator-ready evidence, outsourcing review, and operational resilience.',
+      },
+      {
+        industry: 'healthcare',
+        modifier: 'Review PHI-adjacent logs, audit retention, user access monitoring, incident evidence, and minimum necessary log handling.',
+      },
+      {
+        industry: 'public_sector',
+        modifier: 'Review data residency, procurement vehicle, sensitive-log handling, records retention, and managed-service eligibility.',
+      },
+    ],
+    body: `## Summary
+SIEM sourcing is a security-operations operating model decision. The buyer is choosing how telemetry becomes detection, investigation, response, compliance evidence, and executive confidence. That requires more than comparing log-ingest prices. A credible event normalizes source inventory, parsing, analytics tiers, retention, detection engineering, case workflow, SOAR, MDR adjacency, staffing, and the ability to migrate or export detections later.
+
+## When to apply
+Use this pattern when sourcing Splunk Enterprise Security, Microsoft Sentinel, Google Security Operations, IBM QRadar, Elastic Security, Sumo Logic Cloud SIEM, Datadog Cloud SIEM, Exabeam, LogRhythm, SOAR, MDR, MSSP, or security data lake architectures. Apply it during renewal, ingest overage, legacy SIEM migration, cloud SIEM modernization, SOC transformation, cyber-insurance pressure, audit remediation, major incident response improvement, or MDR evaluation. Do not use it for endpoint-only EDR/XDR, pure observability logging, ITSM, vulnerability management, or threat-intelligence feeds unless SIEM workflow is the sourcing anchor.
+
+## Category boundary
+In scope: security log ingestion, event normalization, parsers, correlation, detections, UEBA/entity analytics, threat hunting, dashboards, case management, SOAR, enrichment, threat intelligence, compliance reporting, hot retention, archive retention, data lake tiering, connectors, APIs, federated search, managed detection, and migration services. Out of scope: generic APM/log observability, endpoint protection, incident-response retainers, and SOC labor unless directly bundled into the SIEM or MDR workflow.
+
+## Lifecycle and gates
+The scope gate should inventory log sources, daily ingest, EPS/FPM, cloud accounts, identity sources, EDR, firewalls, SaaS, OT/IoT, custom apps, compliance retention, high-value detections, and SOC staffing model. The RFP gate should require pricing meters, parsing coverage, detection content, retention tiers, export rights, SOAR capabilities, data residency, support, and managed-service options. The proof gate should ingest representative logs, parse critical sources, trigger high-value detections, open cases, run enrichment, search retained data, export evidence, and model monthly cost. The BAFO gate should normalize ingestion, analyzed logs, workload compute, storage, retention, entities, connectors, playbooks, support, migration, and managed services.
+
+## Evaluation rubric
+Weight telemetry coverage and parsing around 20 percent, detection quality around 20 percent, cost predictability around 20 percent, SOC workflow around 15 percent, retention and compliance around 15 percent, and portability around 10 percent. Increase retention and evidence weight for regulated industries and increase workflow weight when 24/7 MDR or co-managed SOC is in scope.
+
+## Pricing and contract notes
+Public materials from Splunk, Microsoft Sentinel, Google Security Operations, IBM QRadar, Elastic, Sumo Logic, Datadog, and Exabeam show materially different meters: ingest, workload compute, analyzed events, EPS/FPM, entities, credits, storage, retention, and packages. Microsoft also calls out analytics and data lake tiers; Splunk publishes both workload and ingest pricing constructs; IBM lists usage and enterprise constructs. These sources identify meter families, not buyer-specific TCO. The buyer must model logs collected, logs indexed, logs analyzed, logs retained hot, logs archived, search workload, and SOC process.
+
+Contracting should define source onboarding, parser ownership, detection content, rule export, playbook export, case history, retention, data residency, API access, support, professional services, transition assistance, and managed-service responsibilities. If an MDR provider is included, separate tool licensing, data ownership, response authority, escalation paths, and exit rights.
+
+## Contradictions and failure modes
+Vendor claim: AI SOC reduces analyst burden. Detection: inspect workflow, evidence, permissions, auditability, and analyst validation. Vendor claim: pricing is predictable. Detection: model daily ingest, search workload, retention, cloud services, SOAR runs, and growth. Vendor claim: migration is straightforward. Detection: convert actual parsers, rules, dashboards, cases, and playbooks.
+
+The common failure is sending every log to the highest-cost tier without source value or retention policy. The second is losing detection coverage during migration because rules and parsers were not inventoried. The third is buying managed detection while leaving response authority, evidence ownership, and SIEM data portability ambiguous.`,
+  },
 ];
 
 export const SOURCING_CATEGORY_PATTERN_COUNT = SOURCING_CATEGORY_PATTERNS.length;
