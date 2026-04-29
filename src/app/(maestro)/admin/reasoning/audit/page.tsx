@@ -47,6 +47,10 @@ function typeBadgePalette(type: AuditEntryType): BadgePalette {
   switch (type) {
     case 'gate_waiver':
       return { bg: COLORS.amberSoft, fg: COLORS.amberInk, label: 'Gate waiver' };
+    case 'gate_approval':
+      return { bg: COLORS.mintSoft, fg: COLORS.mintInk, label: 'Gate approved' };
+    case 'gate_reject':
+      return { bg: COLORS.coralSoft, fg: COLORS.coralInk, label: 'Gate rejected' };
     case 'contradiction_resolved':
       return { bg: COLORS.mintSoft, fg: COLORS.mintInk, label: 'Contradiction resolved' };
     case 'synthesis_feedback':
