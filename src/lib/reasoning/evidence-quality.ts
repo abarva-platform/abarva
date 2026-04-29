@@ -22,6 +22,7 @@
  *   - Text length 100–500 chars                   +0.15
  *   - Text length > 500 chars                     +0.25
  *   - Has pageCount and pageCount >= 5            +0.15
+ *   - Has attached filename                       +0.10
  *   - Text contains "approved" or "signed"        +0.10
  *
  * Age deductions (applied after other scoring; score floored at 0):
@@ -48,6 +49,15 @@ export interface EvidenceLikeItem {
   pageCount?: number;
   uploadedAt?: string;
   uploadedBy?: string;
+  /**
+   * Optional attached-file metadata (PR #770). When the ingestion form has a
+   * file attached, these fields flow alongside the text body. For PDFs the
+   * caller derives `pageCount` from a stub heuristic so the existing
+   * pageCount-based quality bonus fires.
+   */
+  filename?: string;
+  mimetype?: string;
+  fileSize?: number;
 }
 
 const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
@@ -130,6 +140,14 @@ export function scoreEvidenceItem(
   if (typeof item.pageCount === 'number' && Number.isFinite(item.pageCount) && item.pageCount >= 5) {
     score += 0.15;
     reasons.push(`Document length ${item.pageCount} pages (+0.15)`);
+  }
+
+  // Attached-file signal — having a real file attached (regardless of size or
+  // page count) is a small quality bump over a paste-in note. Stub: we only
+  // require a non-empty filename so the demo path works without a real upload.
+  if (item.filename && item.filename.trim().length > 0) {
+    score += 0.1;
+    reasons.push(`Attached file ${item.filename} (+0.10)`);
   }
 
   // Approval / signature keyword — checked across both citation and body so a

@@ -5,7 +5,7 @@
 // to the in-memory override store. No DB write occurs; resets on server restart.
 
 import type { NextRequest } from 'next/server';
-import { requireTenancy, tenancyErrorResponse } from '../../../_auth';
+import { requireTenancy, tenancyErrorResponse } from '../../_auth';
 import { setPhaseOverride } from '@/lib/programs/phase-overrides';
 import type { ProgramPhaseId } from '@/lib/programs/programs-types';
 
