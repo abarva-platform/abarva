@@ -597,6 +597,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/evidence-quality',
     description: 'Quality scores for every evidence item across all fixture instances — grade distribution, stale callout, CSV export',
   },
+  {
+    title: 'Corpus Stats',
+    href: '/admin/reasoning/corpus-stats',
+    description: 'Body-length distribution, family breakdown, top keywords, and pattern extremes across the full reasoning corpus',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
