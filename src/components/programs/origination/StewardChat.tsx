@@ -155,6 +155,17 @@ export function StewardChat({ surface, tenantName, initialTurns, onArtifact }: S
         pendingBuffer = '';
       }
 
+      // PR2.1 — re-render after flush so the final displayed text always
+      // reflects the artifact-stripped `committedVisible`. Without this,
+      // the last in-loop setTurns may have left a partial buffer in the
+      // displayed text that the post-flush parse cleaned up.
+      const finalDisplay = committedVisible
+        .replace(PROGRAM_CREATED_SENTINEL, '')
+        .trimEnd();
+      setTurns((prev) =>
+        prev.map((t) => (t.id === assistantTurnId ? { ...t, text: finalDisplay } : t)),
+      );
+
       const allText = committedVisible;
       const navMatch = PROGRAM_CREATED_SENTINEL.exec(allText);
       if (navMatch) {
