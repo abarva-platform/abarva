@@ -1208,6 +1208,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Evidence Coverage Report',
     description: 'Evidence-to-criterion mapping coverage by instance and stage — portfolio KPIs, gap list, and coverage bars.',
   },
+  {
+    href: '/admin/reasoning/gate-benchmark',
+    title: 'Gate Benchmark',
+    description: 'Instance gate performance vs. portfolio average — health, gate rate, contradiction, and waiver deltas.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
