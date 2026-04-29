@@ -1148,6 +1148,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Stage Gate Scorecard',
     description: 'Per-stage Pass/Partial/Fail ratings across all instances — identify worst and best performing stages.',
   },
+  {
+    href: '/admin/reasoning/contradiction-map',
+    title: 'Contradiction Map',
+    description: 'Active contradiction triage board — instance cards with resolution path snippets, pattern heat row.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
