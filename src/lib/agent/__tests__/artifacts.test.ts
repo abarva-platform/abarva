@@ -445,3 +445,62 @@ describe('extractArtifacts · type-narrowing', () => {
     ]);
   });
 });
+
+describe('extractArtifacts · Surface 2 PR-L program-phase-changed', () => {
+  it('parses program-phase-changed with required fields', () => {
+    const r = extractArtifacts(
+      '[[artifact:program-phase-changed]]{"programId":"apx-cdp-2026","fromPhase":3,"toPhase":4,"snapshotId":"snap-123"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(1);
+    expect(r.artifacts[0]).toMatchObject({
+      type: 'program-phase-changed',
+      programId: 'apx-cdp-2026',
+      fromPhase: 3,
+      toPhase: 4,
+      snapshotId: 'snap-123',
+    });
+  });
+
+  it('parses program-phase-changed without optional snapshotId', () => {
+    const r = extractArtifacts(
+      '[[artifact:program-phase-changed]]{"programId":"p","fromPhase":2,"toPhase":3}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(1);
+    expect(r.artifacts[0]).toMatchObject({
+      type: 'program-phase-changed',
+      programId: 'p',
+      fromPhase: 2,
+      toPhase: 3,
+    });
+    expect((r.artifacts[0] as { snapshotId?: string }).snapshotId).toBeUndefined();
+  });
+
+  it('rejects program-phase-changed with out-of-range phase', () => {
+    expect(
+      extractArtifacts(
+        '[[artifact:program-phase-changed]]{"programId":"p","fromPhase":3,"toPhase":7}[[/artifact]]',
+      ).artifacts,
+    ).toHaveLength(0);
+    expect(
+      extractArtifacts(
+        '[[artifact:program-phase-changed]]{"programId":"p","fromPhase":-1,"toPhase":4}[[/artifact]]',
+      ).artifacts,
+    ).toHaveLength(0);
+  });
+
+  it('rejects program-phase-changed with non-numeric phase', () => {
+    expect(
+      extractArtifacts(
+        '[[artifact:program-phase-changed]]{"programId":"p","fromPhase":"3","toPhase":4}[[/artifact]]',
+      ).artifacts,
+    ).toHaveLength(0);
+  });
+
+  it('rejects program-phase-changed with empty programId', () => {
+    expect(
+      extractArtifacts(
+        '[[artifact:program-phase-changed]]{"programId":"","fromPhase":3,"toPhase":4}[[/artifact]]',
+      ).artifacts,
+    ).toHaveLength(0);
+  });
+});

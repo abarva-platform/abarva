@@ -30,6 +30,13 @@ import type {
 } from '@/lib/shell/atlas-page-state';
 import { ATLAS_SYNTHESIS_TURN_ID } from '@/lib/shell/atlas-page-state';
 import { consumeOriginationHandoff } from '@/lib/shell/origination-handoff';
+// PR-L · provider now parses artifacts from streamed chunks. Without
+// this, the structured-artifact channel landed by PR-B/PR-C never
+// fired on /programs/<id> because AtlasPageStateProvider's ask() just
+// accumulated raw text — sentinels would surface as visible noise in
+// the chat thread, AND the reactive panel never received any
+// dispatches.
+import { extractArtifacts, type Artifact } from '@/lib/agent/artifacts';
 
 // ── Default surface-to-agent mapping ─────────────────────────────────────────
 
@@ -57,6 +64,7 @@ export function AtlasPageStateProvider({
   stage = null,
   surfaceContext = {},
   agentName,
+  onArtifact,
   children,
 }: AtlasPageStateProviderProps & { children: ReactNode }) {
   const resolvedAgentName = agentName ?? DEFAULT_AGENT[surface] ?? 'Atlas';
@@ -147,20 +155,55 @@ export function AtlasPageStateProvider({
         if (!reader) throw new Error('No response body');
 
         const decoder = new TextDecoder();
-        let accumulated = '';
+        // PR-L streaming loop — parse artifacts incrementally and
+        // strip the sentinels from what the user sees. `pendingBuffer`
+        // carries any partial sentinel across chunk boundaries (the
+        // same pattern StewardChat uses for /programs/new).
+        let pendingBuffer = '';
+        let committedVisible = '';
+        const seenArtifactKeys = new Set<string>();
+
+        const dispatchNew = (artifacts: Artifact[]) => {
+          if (!onArtifact) return;
+          for (const a of artifacts) {
+            const key = JSON.stringify(a);
+            if (seenArtifactKeys.has(key)) continue;
+            seenArtifactKeys.add(key);
+            onArtifact(a);
+          }
+        };
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          accumulated += decoder.decode(value, { stream: true });
-          setCurrentResponse(accumulated);
+          pendingBuffer += decoder.decode(value, { stream: true });
+          const { visibleText, artifacts, remaining } = extractArtifacts(pendingBuffer);
+          committedVisible += visibleText;
+          pendingBuffer = remaining;
+          dispatchNew(artifacts);
+          // Display the committed visible plus any in-flight buffer
+          // (with sentinels still mid-stream); extractArtifacts will
+          // re-clean on the next chunk.
+          setCurrentResponse(committedVisible + pendingBuffer);
+        }
+
+        // Final flush — any closed artifact whose close arrived in the
+        // last chunk dispatches now; any genuinely malformed open
+        // sentinel falls through as visible text so the bug is
+        // observable rather than silently lost.
+        if (pendingBuffer.length > 0) {
+          const final = extractArtifacts(pendingBuffer);
+          committedVisible += final.visibleText;
+          if (final.remaining.length > 0) committedVisible += final.remaining;
+          dispatchNew(final.artifacts);
+          pendingBuffer = '';
         }
 
         // Flush streaming text into conversation
         const agentTurn: ChatTurn = {
           id: `agt-${Date.now()}`,
           role: 'agent',
-          text: accumulated,
+          text: committedVisible,
           agentName: resolvedAgentName,
           timestamp: Date.now(),
         };
@@ -174,7 +217,7 @@ export function AtlasPageStateProvider({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [surface, tenantName, stage, resolvedAgentName, isStreaming, conversation],
+    [surface, tenantName, stage, resolvedAgentName, isStreaming, conversation, onArtifact],
   );
 
   const clearResponse = useCallback(() => {

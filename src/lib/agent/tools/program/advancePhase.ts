@@ -87,7 +87,7 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
     },
     required: ['program_id', 'to_phase'],
   },
-  handler: async (input): Promise<ToolResult> => {
+  handler: async (input, ctx): Promise<ToolResult> => {
     if (typeof input.to_phase !== 'number' || input.to_phase < 0 || input.to_phase > 6) {
       return {
         success: false,
@@ -200,6 +200,24 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
           : { advancedAt: new Date().toISOString() },
         bypassGate: !!input.bypass_gate,
       });
+
+      // PR-L · emit a program-phase-changed artifact directly to the
+      // response stream. The client (AtlasPageStateProvider's stream
+      // parser → ProgramDetailPage's onArtifact) uses this to call
+      // router.refresh() so the page reflects the new phase WITHOUT
+      // unmounting the React tree. Chat history, reactive panel,
+      // AtlasPageState all survive the transition. This is the
+      // in-place advance the "one canvas across the lifecycle"
+      // premise requires.
+      const phaseArtifact = {
+        programId: result.programId,
+        fromPhase,
+        toPhase: result.newPhase,
+        snapshotId: result.snapshotId,
+      };
+      ctx.writer?.write(
+        `\n[[artifact:program-phase-changed]]${JSON.stringify(phaseArtifact)}[[/artifact]]\n`,
+      );
 
       return {
         success: true,

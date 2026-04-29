@@ -103,6 +103,18 @@ export interface AtlasPageStateProviderProps {
   synthesisText?: string;
   /** Initial action set shown by presentational Atlas consumers. */
   suggestedActions?: SuggestedAction[];
+  /**
+   * PR-L · structured-artifact dispatcher. When provided, the provider
+   * parses each streamed chunk through extractArtifacts(), strips the
+   * sentinel tuples from the conversation text the user sees, and
+   * forwards each parsed artifact here. Pages on /programs/<id> wire
+   * this to update the reactive panel and trigger router.refresh()
+   * on program-phase-changed.
+   *
+   * Caller should hold a stable reference (useCallback) so we don't
+   * re-create the streaming closure on every render.
+   */
+  onArtifact?: (artifact: import('@/lib/agent/artifacts').Artifact) => void;
 }
 
 export interface AtlasPageStateSeed extends AtlasPageStateProviderProps {
