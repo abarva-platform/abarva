@@ -854,6 +854,16 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     description: 'Stage progression timeline across all instances — derived from stage history timestamps',
   },
   {
+    title: 'Synthesis preview',
+    href: '/admin/reasoning/synthesis-preview',
+    description: 'L4 synthesis output for any instance — reasoning layer assessment, findings, and recommendations',
+  },
+  {
+    title: 'Stage dwell',
+    href: '/admin/reasoning/stage-dwell',
+    description: 'Per-instance time-in-current-stage metrics — ranked by longest dwell, with freshness thresholds',
+  },
+  {
     title: 'Evidence timeline',
     href: '/admin/reasoning/evidence-timeline',
     description: 'Chronological log of all evidence ingestions across instances — grouped by day',
