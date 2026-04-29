@@ -9,6 +9,10 @@
 
 import type { ContradictionDetection, EvidencePointer, PatternRef } from './types';
 import type { ContradictionTemplate, LifecyclePatternSeed } from '@/lib/intelligence/seed-types';
+import {
+  getOverridesForPattern,
+  hasOverridesForPattern,
+} from './contradiction-template-overrides';
 
 // ─── Internal helpers ──────────────────────────────────────────────────────────
 
@@ -116,7 +120,14 @@ export class LifecycleContradictionDetector {
   detect(evidenceMap: Record<string, unknown>): ContradictionDetection[] {
     const results: ContradictionDetection[] = [];
 
-    for (const template of this.pattern.contradictionTemplates) {
+    // If any override has been recorded for this pattern, use the merged
+    // template list (baseline + overrides). Otherwise, use the baseline
+    // directly so this stays a zero-cost path on the hot detection loop.
+    const templates = hasOverridesForPattern(this.pattern.patternId)
+      ? getOverridesForPattern(this.pattern.patternId)
+      : this.pattern.contradictionTemplates;
+
+    for (const template of templates) {
       const detection = detectTemplate(template, evidenceMap, this.patternRef);
       if (detection !== null) {
         results.push(detection);
