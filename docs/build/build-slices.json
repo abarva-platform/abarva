@@ -9686,6 +9686,13 @@
       "category": "Intelligence",
       "status": "code_complete",
       "notes": "New value_at_risk tab added to Control Tower (7th tab, between Decisions and Executive Brief). buildValueAtRiskPortfolioView tower-domain lib provides 5 portfolio items covering AMS savings ($300K high/at_risk), AMS transition ($530K medium/at_risk), CDP gate (high/blocked), CDP programme (medium/on_track), BAFO leverage ($150K medium/at_risk). PortfolioValueSummary aggregates totalValueAtStakeUsd, atRiskValueUsd, blockedValueUsd, highRiskItemCount, blockedItemCount. ValueAtRiskPanel renders in TowerLensTabs.tsx — does NOT import from src/lib/source. tower-lens-tabs-view TowerTabKey updated to include value_at_risk (7 total). Updated tower4-lens-tabs.test.ts (6→7 tabs). data-testid tower-value-at-risk-panel, tower-value-at-risk-summary, tower-var-item-{itemId}, tower-value-at-risk-disclaimer. 45 integration tests (tower3 + updated tower4). TOWER7/TOWER3-track05 from track-05."
+    },
+    {
+      "id": "INT2",
+      "name": "Pattern Detail Action Canvas",
+      "category": "Intelligence",
+      "status": "code_complete",
+      "notes": "ActionCanvasSection added to IntelligencePatternDetailPage.tsx. buildPatternActionCanvasView intelligence lib provides context-aware action sets for 3 known patterns: T3-H01 (Ambient AI in Retail, 3 actions), T3-H03 (Unified Loyalty Intelligence, 3 actions including 1 blocked), T1-F02 (AI Governance Baseline, 2 actions). Each PatternAction has actionId, title, description, priority (immediate/this_week/this_month/backlog), status (open/in_progress/blocked/done), owner, deadline, blockerNote, contextLink. SYNTHESIS_REGISTRY provides per-pattern Atlas synthesis text. ActionCanvasSection renders between UsingProgramsSection and honest disclaimer. data-testid intelligence-action-canvas, intelligence-action-canvas-item-{actionId}, intelligence-action-canvas-disclaimer; data-honest-disclaimer intelligence-action-canvas with literal 'Deterministic seed' text. 37 integration tests. INT2 from track-05."
     }
   ]
 }
