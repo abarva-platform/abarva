@@ -883,6 +883,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/resolution-flow',
     description: 'Contradiction resolution history — which paths were chosen and how resolutions affected instance health',
   },
+  {
+    title: 'Audit trail',
+    href: '/admin/reasoning/audit-trail',
+    description: 'Unified event log — gate waivers, contradiction resolutions, evidence ingestions, and stage approvals in one view',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
