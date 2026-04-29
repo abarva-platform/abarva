@@ -833,6 +833,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/pattern-confidence',
     description: 'Lifecycle patterns ranked by confidence score with validation status and instance counts',
   },
+  {
+    title: 'Demo state',
+    href: '/admin/reasoning/demo-state',
+    description: 'Current state of all in-memory stores — waivers, resolutions, evidence, stage overrides, and audit trail',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
