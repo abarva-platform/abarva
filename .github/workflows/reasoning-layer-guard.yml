@@ -1,0 +1,49 @@
+# Reasoning Layer Guard
+#
+# Purpose: enforce that the reasoning layer (`src/lib/reasoning/*`) is
+# always type-safe and that its ~620 unit tests pass on every PR and
+# every push to main. The reasoning layer is critical infrastructure
+# for cascade analysis, contradiction detection, and instance health,
+# so we gate it with a dedicated workflow rather than relying on broad
+# CI coverage.
+#
+# This workflow runs alongside (not in front of) the other CI checks
+# so other gates can still complete independently.
+
+name: Reasoning Layer Guard
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: reasoning-layer-guard-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  reasoning-guard:
+    name: Typecheck + reasoning-layer tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install deps
+        run: npm ci
+
+      - name: TypeScript typecheck (full project)
+        run: npx tsc --noEmit
+
+      - name: Reasoning-layer Jest tests
+        run: npx jest src/lib/reasoning --silent
