@@ -1158,6 +1158,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/evidence-staleness',
     description: 'Fresh/Aging/Stale categorization by instance — staleness scores, most stale instances, freshness trend.',
   },
+  {
+    href: '/admin/reasoning/instance-lifecycle-status',
+    title: 'Instance Lifecycle Status',
+    description: 'Visual pipeline showing current stage position for every instance — complete, active, and upcoming stages.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
