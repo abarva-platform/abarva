@@ -818,6 +818,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/gate-weights',
     description: 'Gate criteria ranked by weight — highest-weight unmet gates and score improvement opportunities',
   },
+  {
+    title: 'Pattern docs',
+    href: '/admin/reasoning/pattern-docs',
+    description: 'Full documentation browser for lifecycle patterns — thesis, applicability, and body text',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
