@@ -1288,6 +1288,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     title: 'Reasoning System Status',
     description: 'Operational health check — data store availability, tool inventory by category, system diagnostics.',
   },
+  {
+    href: '/admin/reasoning/portfolio-executive-dashboard',
+    title: 'Portfolio Executive Dashboard',
+    description: 'Top-level admin overview — health KPIs, at-risk programs, recent alerts, gate snapshot, and quick links.',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
