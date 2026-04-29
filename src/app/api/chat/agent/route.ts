@@ -67,6 +67,10 @@ import "@/lib/agent/tools/program/advancePhase";
 import "@/lib/agent/tools/intelligence/searchPatterns";
 import "@/lib/agent/tools/intelligence/patternNeighborhood";
 import "@/lib/agent/tools/intelligence/evidenceLookup";
+// Surface 2 PR-INT-E — validate_synthesis tool wraps runQualityGates()
+// + pattern alignment + contradiction-template detection. Emits
+// pattern-match (aligned) and contradiction-flag (fired) artifacts.
+import "@/lib/agent/tools/intelligence/validateSynthesis";
 
 // ── Agent voice map ────────────────────────────────────────────────────────────
 
