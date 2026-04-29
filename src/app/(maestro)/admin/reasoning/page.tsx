@@ -653,6 +653,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     href: '/admin/reasoning/contradiction-matrix',
     description: 'Template × instance grid showing active and resolved contradictions',
   },
+  {
+    title: 'Export report',
+    href: '/admin/reasoning/export',
+    description: 'Download a Markdown reasoning health report for presentations and briefings',
+  },
 ];
 
 function ToolCard({ entry }: { entry: ToolEntry }) {
