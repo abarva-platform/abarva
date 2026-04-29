@@ -1044,6 +1044,11 @@ const TOOL_ENTRIES: ReadonlyArray<ToolEntry> = [
     description: 'Stage-level readiness dashboard — what % of instances in each stage are ready to advance',
   },
   {
+    title: 'Pattern gap report',
+    href: '/admin/reasoning/pattern-gap',
+    description: 'Pattern definition completeness — stages with no gates, missing contradiction templates, failure modes, source docs',
+  },
+  {
     title: 'Instance comparison',
     href: '/admin/reasoning/instance-comparison',
     description: 'Top vs. bottom performer comparison — side-by-side health metrics for best and worst instances',
