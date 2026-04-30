@@ -65,6 +65,8 @@ import {
 // OV2-4b · attachment refs that ride along with the user turn for
 // chip rendering and pass through surfaceContext for the agent.
 import type { AttachmentChipRef } from '@/lib/programs/attachments/types';
+// Wave 1 · inline files for non-programs surfaces (no DB required).
+import type { InlineFile } from '@/lib/shell/atlas-page-state';
 
 // ── Default surface-to-agent mapping ─────────────────────────────────────────
 
@@ -174,7 +176,7 @@ export function AtlasPageStateProvider({
   const firedFlagsRef = useRef<Set<number>>(new Set());
 
   const ask = useCallback(
-    async (text: string, attachments?: AttachmentChipRef[]) => {
+    async (text: string, attachments?: AttachmentChipRef[], inlineFiles?: InlineFile[]) => {
       if (!text.trim() || isStreaming) return;
 
       // Cancel any previous in-flight request
@@ -234,6 +236,8 @@ export function AtlasPageStateProvider({
             surfaceContext: mergedSurfaceContext,
             agentName: resolvedAgentName,
             conversationHistory,
+            // Wave 1 · inline files extracted client-side (no DB).
+            ...(inlineFiles && inlineFiles.length > 0 ? { inlineFiles } : {}),
             // Legacy compat — context string is built server-side from the
             // richer fields above, but we keep the field for API consumers
             // that haven't migrated.

@@ -1,4 +1,4 @@
-// complete_deliverable tool · Program lifecycle crawl enablement
+// complete_deliverable tool - Program lifecycle crawl enablement
 //
 // Lets Nexus persist and sign off a generated artifact when an authorized
 // user explicitly accepts it. This closes the gap where the agent could
@@ -21,14 +21,15 @@ interface CompleteDeliverableToolInput {
 }
 
 const ALLOWED_DELIVERABLE_TYPES = new Set([
+  'approval_packet',
   'charter',
   'design',
+  'design_brief',
   'design_spec',
+  'discovery_report',
   'execution_plan',
   'outcome_report',
   'vendor_selection',
-  'discovery_report',
-  'approval_packet',
 ]);
 
 export const completeDeliverableTool: AgentTool<CompleteDeliverableToolInput> = {
@@ -50,7 +51,7 @@ export const completeDeliverableTool: AgentTool<CompleteDeliverableToolInput> = 
       deliverable_type_key: {
         type: 'string',
         description:
-          'Deliverable key, e.g. charter, design_spec, execution_plan, outcome_report, vendor_selection.',
+          'Deliverable key, e.g. charter, design_brief, design_spec, execution_plan, outcome_report, vendor_selection.',
       },
       title: {
         type: 'string',
