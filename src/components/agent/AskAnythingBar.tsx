@@ -6,10 +6,21 @@
 //
 // Streams via useAgentStream (same hook powering AgentColumn / AgentRail).
 // For the full conversation history, open the AgentRail on the right edge.
+//
+// OV2-4b · paper-clip wires through to the program-attachments upload
+// pipeline when (a) the surface is a Programs surface AND (b) a
+// programId is supplied. On non-Programs surfaces the paper-clip stays
+// hidden — the upload would have nowhere to land until the per-surface
+// data model exists. Drag-drop and file-picker share the same pending
+// attachments queue managed by usePendingAttachments.
 
-import { useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react';
+import { useRef, useState, type ChangeEvent, type DragEvent, type KeyboardEvent } from 'react';
 import { useAgentStream } from '@/hooks/useAgentStream';
 import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
+import { ATTACHMENT_MIME_ALLOWLIST } from '@/lib/programs/attachments/mime';
+import { usePendingAttachments } from '@/components/programs/attachments/usePendingAttachments';
+import { PendingAttachmentChip } from '@/components/programs/attachments/AttachmentChip';
+import { toAttachmentChipRef } from '@/lib/programs/attachments/types';
 
 // ── Agent profiles ─────────────────────────────────────────────────────────
 
@@ -24,12 +35,6 @@ export type AskAnythingAgent = keyof typeof AGENT_CFG;
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-interface BarFile {
-  id: string;
-  name: string;
-  sizeBytes: number;
-}
-
 export interface AskAnythingBarProps {
   agent: AskAnythingAgent;
   /** Scope label in the eyebrow, e.g. "APX-CDP-2026 · P3 Design" */
@@ -38,6 +43,23 @@ export interface AskAnythingBarProps {
   /** Surface identifier forwarded to useAgentStream */
   surface?: string;
   programId?: string;
+}
+
+/**
+ * Programs-surface gating · the paper-clip only renders when the
+ * composer is bound to a Programs surface AND a programId has been
+ * resolved. Other surfaces (Tower, Sentinel, Setup, etc.) don't yet
+ * have a per-program context so the upload would have no anchor.
+ */
+function isProgramsSurfaceWithId(surface: string | undefined, programId: string | undefined): programId is string {
+  if (!programId) return false;
+  if (!surface) return false;
+  return (
+    surface === 'programs-detail' ||
+    surface === '/programs/new' ||
+    surface === '/demo/programs/new' ||
+    surface.startsWith('/programs/')
+  );
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -57,8 +79,8 @@ export function AskAnythingBar({
 }: AskAnythingBarProps) {
   const cfg = AGENT_CFG[agent];
   const [value, setValue] = useState('');
-  const [files, setFiles] = useState<BarFile[]>([]);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -66,6 +88,13 @@ export function AskAnythingBar({
   // Prefer shared AtlasPageState (Shell Layout Spec v2 §6) — falls back to
   // local useAgentStream for components not yet wrapped in AppShell.
   const pageState = useAtlasPageState();
+
+  // OV2-4b · paper-clip is gated to Programs surfaces with a resolved
+  // programId. Hooks must run unconditionally; we still call the
+  // pending-attachments hook even when gated off, but the resulting
+  // state stays empty because addFiles is only invoked from gated UI.
+  const showPaperClip = isProgramsSurfaceWithId(surface, programId);
+  const pending = usePendingAttachments({ programId: showPaperClip ? programId : null });
 
   const localStream = useAgentStream({
     surface: surface ?? agent,
@@ -96,36 +125,76 @@ export function AskAnythingBar({
   function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      submit();
+      void submit();
     }
   }
 
   // ── Submit ──────────────────────────────────────────────────────────────
 
-  function submit() {
+  async function submit() {
     const text = value.trim();
     if (!text || isStreaming) return;
+
+    // OV2-4b · upload any pending attachments BEFORE sending the chat
+    // turn so Steward / Nexus references the persisted records in
+    // surfaceContext.attachments. If uploads fail we surface the
+    // failed chips inline and don't send the message — the user
+    // either retries or removes the failed entry, then resends.
+    let attachmentRefs: ReturnType<typeof toAttachmentChipRef>[] = [];
+    if (showPaperClip && pending.count > 0) {
+      const records = await pending.uploadAll();
+      // If any pending entry stayed in error state, abort the send.
+      const stillErrored = pending.items.some((it) => it.status === 'error');
+      if (stillErrored) return;
+      attachmentRefs = records.map(toAttachmentChipRef);
+    }
+
     setValue('');
     setPanelOpen(true);
     clearLocal(); // clear previous response
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
-    ask(text);
+    // OV2-4b · pass attachment refs through to the AtlasPageStateProvider
+    // ask() (which threads them into surfaceContext.attachments). The
+    // local-stream fallback (useAgentStream) doesn't accept attachments
+    // yet — without AtlasPageState the chips still render but the
+    // server-side surfaceContext stays unchanged. That gap is acceptable
+    // for v1 since every Programs surface mounts AppShell + AtlasPageState.
+    if (pageState && attachmentRefs.length > 0) {
+      pageState.ask(text, attachmentRefs);
+    } else {
+      ask(text);
+    }
+    if (showPaperClip) pending.clearUploaded();
   }
 
   // ── File attach ─────────────────────────────────────────────────────────
 
   function onFileChange(e: ChangeEvent<HTMLInputElement>) {
-    const picked = Array.from(e.target.files ?? []);
-    if (!picked.length) return;
-    setFiles(prev => [
-      ...prev,
-      ...picked.map((f, i) => ({ id: `${Date.now()}-${i}`, name: f.name, sizeBytes: f.size })),
-    ]);
+    if (!showPaperClip) return;
+    pending.addFiles(e.target.files);
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
-  function removeFile(id: string) {
-    setFiles(prev => prev.filter(f => f.id !== id));
+  function onDrop(e: DragEvent<HTMLDivElement>) {
+    if (!showPaperClip) return;
+    e.preventDefault();
+    setIsDragOver(false);
+    const dropped = e.dataTransfer?.files;
+    if (dropped && dropped.length > 0) pending.addFiles(dropped);
+  }
+
+  function onDragOver(e: DragEvent<HTMLDivElement>) {
+    if (!showPaperClip) return;
+    // Only react when the user is dragging files from the OS — ignore
+    // text / element drags.
+    if (!e.dataTransfer?.types?.includes('Files')) return;
+    e.preventDefault();
+    setIsDragOver(true);
+  }
+
+  function onDragLeave() {
+    if (!showPaperClip) return;
+    setIsDragOver(false);
   }
 
   function dismissPanel() {
@@ -133,7 +202,7 @@ export function AskAnythingBar({
     setPanelOpen(false);
   }
 
-  const canSend = value.trim().length > 0 && !isStreaming;
+  const canSend = value.trim().length > 0 && !isStreaming && !pending.isUploading;
   const showPanel = panelOpen && (hasResponse || isStreaming);
 
   return (
@@ -250,56 +319,100 @@ export function AskAnythingBar({
           </div>
 
           {/* Attachment chips */}
-          {files.length > 0 && (
+          {showPaperClip && pending.count > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 7 }}>
-              {files.map(f => (
-                <span key={f.id} style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                  background: '#fff', border: '1px solid #e6dfce', borderRadius: 6,
-                  padding: '3px 8px', fontSize: 11.5, color: '#2a3a5e',
-                }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
-                  </svg>
-                  {f.name}
-                  <button type="button" onClick={() => removeFile(f.id)} style={{
-                    background: 'none', border: 'none', cursor: 'pointer',
-                    color: '#8b95a8', fontSize: 13, padding: 0, lineHeight: 1,
-                  }}>×</button>
-                </span>
+              {pending.items.map((it) => (
+                <PendingAttachmentChip
+                  key={it.localId}
+                  filename={it.file.name}
+                  sizeBytes={it.file.size}
+                  status={
+                    it.status === 'done'
+                      ? 'pending'
+                      : it.status === 'idle'
+                        ? 'pending'
+                        : it.status
+                  }
+                  loadedBytes={it.loadedBytes}
+                  errorMessage={it.error?.message}
+                  onRemove={() => pending.removeAttachment(it.localId)}
+                  onRetry={
+                    it.status === 'error' ? () => void pending.retry(it.localId) : undefined
+                  }
+                />
               ))}
             </div>
           )}
 
           {/* Input row */}
-          <div style={{
-            maxWidth: 860,
-            display: 'flex', alignItems: 'flex-end', gap: 8,
-            padding: '9px 12px',
-            background: '#FFFFFF',
-            border: '1.5px solid #e6dfce',
-            borderRadius: showPanel ? '0 0 12px 12px' : 12,
-            boxShadow: '0 2px 14px rgba(12,26,58,0.07)',
-            transition: 'border-color 0.15s',
-          }}>
-            {/* Paperclip */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              style={{ display: 'none' }}
-              onChange={onFileChange}
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              aria-label="Attach file"
-              className="aab-attach"
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
-              </svg>
-            </button>
+          <div
+            data-attachment-dragover={isDragOver ? 'true' : 'false'}
+            onDrop={onDrop}
+            onDragOver={onDragOver}
+            onDragLeave={onDragLeave}
+            style={{
+              maxWidth: 860,
+              display: 'flex',
+              alignItems: 'flex-end',
+              gap: 8,
+              padding: '9px 12px',
+              background: '#FFFFFF',
+              border: `1.5px solid ${isDragOver ? '#3B82F6' : '#e6dfce'}`,
+              borderRadius: showPanel ? '0 0 12px 12px' : 12,
+              boxShadow: isDragOver
+                ? '0 0 0 4px rgba(59,130,246,0.15)'
+                : '0 2px 14px rgba(12,26,58,0.07)',
+              transition: 'border-color 0.15s, box-shadow 0.15s',
+              position: 'relative',
+            }}
+          >
+            {/* Drop overlay */}
+            {showPaperClip && isDragOver && (
+              <div
+                aria-hidden
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  borderRadius: 'inherit',
+                  background: 'rgba(59,130,246,0.06)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: '#1E40AF',
+                  pointerEvents: 'none',
+                }}
+              >
+                Drop to attach
+              </div>
+            )}
+            {/* Paperclip — gated to Programs surfaces with a programId */}
+            {showPaperClip && (
+              <>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={ATTACHMENT_MIME_ALLOWLIST.join(',')}
+                  multiple
+                  style={{ display: 'none' }}
+                  onChange={onFileChange}
+                  data-component="AskAnythingBarAttachmentInput"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  aria-label="Attach file"
+                  className="aab-attach"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
+                  </svg>
+                </button>
+              </>
+            )}
 
             {/* Textarea */}
             <textarea
@@ -333,7 +446,7 @@ export function AskAnythingBar({
             <button
               type="button"
               disabled={!canSend}
-              onClick={submit}
+              onClick={() => void submit()}
               aria-label="Send"
               className={`aab-send ${canSend ? 'active' : ''}`}
             >

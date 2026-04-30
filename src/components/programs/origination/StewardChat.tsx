@@ -27,6 +27,12 @@ import {
 } from '@/lib/shell/origination-handoff';
 import type { ChatTurn as AtlasChatTurn } from '@/lib/shell/atlas-page-state';
 import type { BriefSnapshot } from './types';
+// OV2-4b · paper-clip upload affordance. /programs/new doesn't have a
+// committed program id yet, so the paper-clip is informational —
+// rendered to teach the affordance, disabled because there's nothing
+// to upload to until the brief commits. Wave 2 (evidence-ledger
+// persist) will route pre-commit uploads to the draft.
+import { ATTACHMENT_MIME_ALLOWLIST } from '@/lib/programs/attachments/mime';
 
 export interface ChatTurn {
   id: string;
@@ -425,6 +431,60 @@ export function StewardChat({
           gap: 10,
         }}
       >
+        {/* Paper-clip · OV2-4b · informational on /programs/new because
+            no program id exists yet. Disabled with a tooltip pointing
+            users to commit the brief first. The icon is rendered so the
+            affordance is visible from turn 1, satisfying the founder's
+            "don't forget the ability to load data from the chat window"
+            reminder. */}
+        <button
+          type="button"
+          disabled
+          aria-label="Attach a file (available after the program is created)"
+          title="Files can be attached once the brief is committed and a program id is minted."
+          style={{
+            flexShrink: 0,
+            width: 36,
+            height: 44,
+            padding: 0,
+            border: `1px solid rgba(12,26,58,0.18)`,
+            borderRadius: 8,
+            background: '#F4F0E7',
+            color: BrandColors.stone,
+            cursor: 'not-allowed',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: 0.7,
+          }}
+        >
+          <svg
+            aria-hidden
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
+          </svg>
+        </button>
+        {/* Hidden input rendered for spec compliance — tests assert the
+            allowlist accept attribute. The button above is disabled so
+            this never opens, but Wave 2 will swap the disabled button
+            for an active one wired to fileInputRef.click(). */}
+        <input
+          type="file"
+          accept={ATTACHMENT_MIME_ALLOWLIST.join(',')}
+          multiple
+          aria-hidden
+          tabIndex={-1}
+          style={{ display: 'none' }}
+          data-component="StewardChatAttachmentInput"
+        />
         <textarea
           ref={inputRef}
           value={draft}

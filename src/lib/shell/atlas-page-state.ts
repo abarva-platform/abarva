@@ -27,6 +27,8 @@ export type StageId =
 
 // ── Conversation ──────────────────────────────────────────────────────────────
 
+import type { AttachmentChipRef } from '@/lib/programs/attachments/types';
+
 export interface ChatTurn {
   id: string;
   role: 'user' | 'agent';
@@ -34,6 +36,12 @@ export interface ChatTurn {
   /** The agent name for display (Nexus, Sentinel, Atlas, Steward). */
   agentName: string;
   timestamp: number;
+  /**
+   * OV2-4b · attachments persisted with this turn. Rendered as chips
+   * after the message body. Server-side, the turn's surfaceContext
+   * carries the same refs so the agent can reference them.
+   */
+  attachments?: AttachmentChipRef[];
 }
 
 export interface SuggestedAction {
@@ -85,8 +93,13 @@ export interface AtlasPageState {
 
 /** Full context value consumed via useAtlasPageState(). */
 export interface AtlasPageContextValue extends AtlasPageState {
-  /** Submit a user message. Appends user turn + streams agent reply. */
-  ask: (text: string) => void;
+  /**
+   * Submit a user message. Appends user turn + streams agent reply.
+   * Optional attachments are attached to the user turn for chip
+   * rendering AND threaded into surfaceContext.attachments so the
+   * server-side agent prompt can reference them.
+   */
+  ask: (text: string, attachments?: AttachmentChipRef[]) => void;
   /** Clear the in-flight response / error (does not clear conversation). */
   clearResponse: () => void;
 }

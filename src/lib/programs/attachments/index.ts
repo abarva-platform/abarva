@@ -17,35 +17,17 @@ import {
   isWithinSizeLimit,
   MAX_ATTACHMENT_SIZE_BYTES,
 } from './mime';
+import type {
+  AttachmentRecord,
+  AttachmentRedactionState,
+  AttachmentScanStatus,
+} from './types';
 
-export type AttachmentScanStatus =
-  | 'pending'
-  | 'clean'
-  | 'infected'
-  | 'errored'
-  | 'skipped';
-
-export type AttachmentRedactionState = 'none' | 'partial' | 'redacted';
-
-export interface AttachmentRecord {
-  id: string;
-  tenantKey: string;
-  programId: string;
-  phase: number | null;
-  stepId: string | null;
-  deliverableId: string | null;
-  originalName: string;
-  storagePath: string;
-  uploaderUserId: string;
-  mimeType: string;
-  sizeBytes: number;
-  sha256: string;
-  scanStatus: AttachmentScanStatus;
-  scanFindings: Record<string, unknown> | null;
-  redactionState: AttachmentRedactionState;
-  createdAt: string;
-  deletedAt: string | null;
-}
+// Re-export the isomorphic type contracts so existing server-side
+// importers (`from '@/lib/programs/attachments'`) keep working without
+// reaching into ./types directly. The client-side uploader imports
+// from ./types directly to avoid pulling the server-only boundary.
+export type { AttachmentRecord, AttachmentRedactionState, AttachmentScanStatus } from './types';
 
 export interface CreateAttachmentInput {
   tenantKey: string;
