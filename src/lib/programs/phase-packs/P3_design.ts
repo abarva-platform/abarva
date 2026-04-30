@@ -56,6 +56,7 @@ export const P3_DESIGN: PhasePack = {
         'Design package references the P2 synthesis recommendation and names the ' +
         'chosen target-state path. If the design silently changes direction, it ' +
         'must include a dated decision record from sponsor and architecture.',
+      preventsFailureModes: [1, 2],
     },
     {
       id: 'detailed-design-signed-off',
@@ -65,6 +66,7 @@ export const P3_DESIGN: PhasePack = {
         'deliverables_v2 row with deliverable_type_key="design_spec" or "design" ' +
         'and status="signed_off", plus named architecture, data, security, and ' +
         'business-operation reviewers in the design prose or approval metadata.',
+      preventsFailureModes: [1, 6, 7],
     },
     {
       id: 'architecture-sketch-expanded',
@@ -74,6 +76,7 @@ export const P3_DESIGN: PhasePack = {
         'Design artifact shows integrations, data flows, system boundaries, owner ' +
         'for each interface, and explicit deltas from the P2 architecture sketch. ' +
         'A diagram without owner and interface detail is not build architecture.',
+      preventsFailureModes: [6, 7],
     },
     {
       id: 'pilot-cohort-named',
@@ -83,6 +86,7 @@ export const P3_DESIGN: PhasePack = {
         'Build gate package names the pilot cohort as real teams, stores, intents, ' +
         'users, customers, or data domains, not a generic segment. It also states ' +
         'who is excluded and why, so P4 cannot cherry-pick success.',
+      preventsFailureModes: [5, 8],
     },
     {
       id: 'success-criteria-locked',
@@ -92,6 +96,7 @@ export const P3_DESIGN: PhasePack = {
         'Pilot measurement plan names numeric thresholds, comparison method, ' +
         'baseline current value, baseline source, measurement owner, and decision ' +
         'rule for pass/fail. Criteria must be locked before P4 pilot start.',
+      preventsFailureModes: [8, 9],
     },
     {
       id: 'sponsor-commitment-confirmed',
@@ -101,6 +106,7 @@ export const P3_DESIGN: PhasePack = {
         'Design closeout records the sponsor cadence for P4, the decision forum, ' +
         'and the person with approval_authority="sponsor". If the sponsor is only ' +
         'represented by a delegate, the Build start is politically exposed.',
+      preventsFailureModes: [1],
     },
     {
       id: 'scope-boundary-preserved',
@@ -110,6 +116,7 @@ export const P3_DESIGN: PhasePack = {
         'Design package includes in-scope/out-of-scope text and maps every design ' +
         'workstream to that boundary. New workstreams outside the charter require ' +
         'a sponsor-approved change record, not informal design expansion.',
+      preventsFailureModes: [2, 10],
     },
     {
       id: 'kill-criterion-operationalized',
@@ -118,6 +125,7 @@ export const P3_DESIGN: PhasePack = {
       evaluationHint:
         'Pilot plan states how the P2 kill criterion will be observed in P4, who ' +
         'can call it, and what data source triggers the stop/re-baseline decision.',
+      preventsFailureModes: [8, 10],
     },
     {
       id: 'named-dissenter-engaged',
@@ -127,6 +135,7 @@ export const P3_DESIGN: PhasePack = {
         'Phase-3 findings or stakeholder log includes the P2 named dissenter, ' +
         'their objection, and resolution/escalation status. Absence is a signal ' +
         'that political risk was deferred into Build.',
+      preventsFailureModes: [1, 5],
     },
     {
       id: 'phase-3-findings-written',
@@ -136,6 +145,7 @@ export const P3_DESIGN: PhasePack = {
         'program_modules row with module_key="phase_3_findings" or "findings" ' +
         'and status="completed". Findings should include design decisions, open ' +
         'risks, pilot scope, dissent, and unresolved assumptions.',
+      preventsFailureModes: [2, 6],
     },
     {
       id: 'cxo-interview-complete',
@@ -145,6 +155,7 @@ export const P3_DESIGN: PhasePack = {
         'program_modules row with module_key="cxo_interview" and status="completed". ' +
         'The interview should confirm sponsor appetite for the pilot, success ' +
         'thresholds, and the consequence of failing them.',
+      preventsFailureModes: [1, 5],
     },
   ],
 
@@ -161,6 +172,7 @@ export const P3_DESIGN: PhasePack = {
         expectedAnswerShape:
           'A short list: binding target-state path, architecture posture, baseline ' +
           'source, scope boundary; open assumptions with owners and dates.',
+        preventsFailureModes: [2, 7],
       },
       {
         id: 'who-builds-operates-approves',
@@ -173,6 +185,7 @@ export const P3_DESIGN: PhasePack = {
         expectedAnswerShape:
           'Component-by-component ownership table with builder, run owner, approver, ' +
           'and escalation path for design changes.',
+        preventsFailureModes: [4, 5],
       },
       {
         id: 'pilot-cohort-why-this-one',
@@ -185,6 +198,7 @@ export const P3_DESIGN: PhasePack = {
         expectedAnswerShape:
           'Named cohort, inclusion/exclusion criteria, generalisation risks, and ' +
           'whether a control or comparison cohort is needed.',
+        preventsFailureModes: [8, 9],
       },
       {
         id: 'baseline-to-measurement-lineage',
@@ -194,6 +208,7 @@ export const P3_DESIGN: PhasePack = {
         why:
           'Prevents the pilot from measuring convenient telemetry instead of the ' +
           'value case the sponsor signed.',
+        preventsFailureModes: [3, 9],
       },
     ],
     converge: [
@@ -208,6 +223,7 @@ export const P3_DESIGN: PhasePack = {
         expectedAnswerShape:
           'A frozen decision, its rationale, and a measurable reopen trigger such ' +
           'as integration latency, data quality, security finding, or adoption signal.',
+        preventsFailureModes: [6, 7],
       },
       {
         id: 'dissenter-objection',
@@ -217,6 +233,7 @@ export const P3_DESIGN: PhasePack = {
         why:
           'Avoiding dissent in P3 turns it into sabotage or passive non-adoption ' +
           'in P4/P5. The objection must be captured while design can still respond.',
+        preventsFailureModes: [1, 5],
       },
       {
         id: 'pilot-stop-rule',
@@ -229,6 +246,7 @@ export const P3_DESIGN: PhasePack = {
         expectedAnswerShape:
           'Signal, threshold, data source, owner, and decision forum. Vague ' +
           'language like "we will review progress" is not enough.',
+        preventsFailureModes: [8, 10],
       },
       {
         id: 'security-data-operating-gaps',
@@ -238,6 +256,7 @@ export const P3_DESIGN: PhasePack = {
         why:
           'Soft gate does not mean no risk. If a gap remains, the user must name ' +
           'the containment plan rather than bury it in Build assumptions.',
+        preventsFailureModes: [5, 6],
       },
     ],
     close: [
@@ -249,6 +268,7 @@ export const P3_DESIGN: PhasePack = {
         why:
           'This is the practical P3 exit test. If any of those answers require a ' +
           'new meeting, the Build gate package is incomplete.',
+        preventsFailureModes: [5, 8],
       },
       {
         id: 'cxo-commitment-to-consequence',
@@ -261,6 +281,7 @@ export const P3_DESIGN: PhasePack = {
         expectedAnswerShape:
           'Sponsor-attested consequence: scale path if pass; kill, remediate, or ' +
           're-baseline path if fail.',
+        preventsFailureModes: [1, 5],
       },
       {
         id: 'findings-package-complete',
@@ -270,6 +291,7 @@ export const P3_DESIGN: PhasePack = {
         why:
           'The governance gate only checks that findings exist. Nexus should check ' +
           'whether they are useful enough for P4 to operate from.',
+        preventsFailureModes: [2, 6],
       },
     ],
   },
@@ -289,6 +311,7 @@ export const P3_DESIGN: PhasePack = {
         'Create a dated design decision record with the changed assumption, why P2 ' +
         'was invalidated, sponsor/architecture approval, and impact to scope, KPI, ' +
         'and pilot timing.',
+      preventsFailureModes: [1, 2],
     },
     {
       id: 'diagram-without-owners',
@@ -302,6 +325,7 @@ export const P3_DESIGN: PhasePack = {
       mitigation:
         'Force every component and integration to name builder, operator, approver, ' +
         'data steward, and incident owner before Build starts.',
+      preventsFailureModes: [4, 5],
     },
     {
       id: 'convenience-pilot',
@@ -316,6 +340,7 @@ export const P3_DESIGN: PhasePack = {
       mitigation:
         'Require cohort rationale, matched control or comparison where relevant, ' +
         'and explicit limits on what the pilot result can generalise to.',
+      preventsFailureModes: [8, 9],
     },
     {
       id: 'criteria-after-build-start',
@@ -329,6 +354,7 @@ export const P3_DESIGN: PhasePack = {
       mitigation:
         'Lock numeric thresholds, measurement source, comparison method, and pass/fail ' +
         'decision rule in the Build gate package before pilot launch.',
+      preventsFailureModes: [8, 9],
     },
     {
       id: 'ignored-dissenter',
@@ -342,6 +368,7 @@ export const P3_DESIGN: PhasePack = {
       mitigation:
         'Put the dissenter in the design review or record their objection and the ' +
         'sponsor decision that accepts or rejects it.',
+      preventsFailureModes: [1, 5],
     },
     {
       id: 'pilot-as-production-shortcut',
@@ -355,6 +382,7 @@ export const P3_DESIGN: PhasePack = {
       mitigation:
         'Constrain the cohort, document consent/access boundaries, obtain security ' +
         'and privacy review, and name support ownership before launch.',
+      preventsFailureModes: [6, 8],
     },
   ],
 

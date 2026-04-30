@@ -42,6 +42,7 @@ export const P6_OPERATE: PhasePack = {
       severity: 'hard',
       evaluationHint:
         'Operating model or program record names a business owner and technical owner who continue after launch. A PM, vendor lead, or temporary hypercare owner is not sufficient.',
+      preventsFailureModes: [4, 5],
     },
     {
       id: 'quarterly-operating-review-live',
@@ -49,6 +50,7 @@ export const P6_OPERATE: PhasePack = {
       severity: 'hard',
       evaluationHint:
         'Program cadence or governance artifact names the review frequency, attendees, metric pack, decision log owner, and next scheduled review date.',
+      preventsFailureModes: [5, 9],
     },
     {
       id: 'benefits-attestation-retained',
@@ -56,6 +58,7 @@ export const P6_OPERATE: PhasePack = {
       severity: 'hard',
       evaluationHint:
         'program_modules row with module_key="benefits_realization" and status="completed", or equivalent outcome evidence retained in the operating review pack with sponsor/CXO attestation.',
+      preventsFailureModes: [1, 9],
     },
     {
       id: 'adoption-drift-dashboard',
@@ -63,6 +66,7 @@ export const P6_OPERATE: PhasePack = {
       severity: 'soft',
       evaluationHint:
         'Dashboard or evidence record tracks the P5 adoption baseline over time by cohort, including active use, exception volume, support friction, and trend direction.',
+      preventsFailureModes: [5, 9],
     },
     {
       id: 'quality-and-risk-controls-live',
@@ -70,6 +74,7 @@ export const P6_OPERATE: PhasePack = {
       severity: 'soft',
       evaluationHint:
         'Operate evidence names the quality controls relevant to the program: data freshness, model performance, hallucination review, defect rate, handoff quality, security exceptions, or control breaches.',
+      preventsFailureModes: [6, 9],
     },
     {
       id: 'cost-and-vendor-review-ready',
@@ -77,6 +82,7 @@ export const P6_OPERATE: PhasePack = {
       severity: 'soft',
       evaluationHint:
         'Financial or vendor evidence tracks run cost, license utilization, services run-rate, renewal date, and value per active cohort. Missing renewal economics means the program cannot defend expansion.',
+      preventsFailureModes: [7, 10],
     },
     {
       id: 'kill-or-expand-thresholds-owned',
@@ -84,6 +90,7 @@ export const P6_OPERATE: PhasePack = {
       severity: 'soft',
       evaluationHint:
         'Operate review pack names measurable thresholds and owner for expansion, remediation, or retirement. Thresholds must connect to the P2 kill criterion or explain why it changed.',
+      preventsFailureModes: [9, 10],
     },
   ],
 
@@ -96,6 +103,7 @@ export const P6_OPERATE: PhasePack = {
           'Programs decay when ownership stays with the launch team. Operate needs a business owner and technical owner with decision rights, not a project manager closing tasks.',
         expectedAnswerShape:
           'Named owner pair, decision rights, review cadence, escalation path, and budget/run-cost accountability.',
+        preventsFailureModes: [4, 5],
       },
       {
         id: 'value-still-visible',
@@ -104,6 +112,7 @@ export const P6_OPERATE: PhasePack = {
           'Keeps Operate tied to the signed baseline instead of a generic status report. If value is not visible, the program needs remediation or retirement conversation.',
         expectedAnswerShape:
           'Metric, current value, baseline/target, trend, source system, owner, and review date.',
+        preventsFailureModes: [9],
       },
       {
         id: 'adoption-fade-signal',
@@ -112,6 +121,7 @@ export const P6_OPERATE: PhasePack = {
           'Adoption fade often appears as exception volume, inactive users, support workarounds, or declining workflow completion before executive dashboards show value loss.',
         expectedAnswerShape:
           'Early-warning metric with threshold, cohort breakdown, and owner who responds.',
+        preventsFailureModes: [5, 9],
       },
     ],
     converge: [
@@ -122,6 +132,7 @@ export const P6_OPERATE: PhasePack = {
           'A review without a decision is ceremony. Operate should convert telemetry into portfolio choices, not just report status.',
         expectedAnswerShape:
           'One primary decision with evidence required, owner, date, and consequence if the evidence misses threshold.',
+        preventsFailureModes: [9, 10],
       },
       {
         id: 'quality-drift-owner',
@@ -130,6 +141,7 @@ export const P6_OPERATE: PhasePack = {
           'Quality controls fail when monitoring and authority are split. The owner must be able to remediate data, model, process, or support issues.',
         expectedAnswerShape:
           'Named owner, monitored signals, thresholds, remediation rights, and escalation path.',
+        preventsFailureModes: [5, 6],
       },
       {
         id: 'run-cost-vs-value',
@@ -138,6 +150,7 @@ export const P6_OPERATE: PhasePack = {
           'Prevents successful launch from becoming an uneconomic operating burden. License and services spend must stay connected to usage and value.',
         expectedAnswerShape:
           'Run cost, active cohort count, utilization, value metric, renewal date, and threshold for expansion or reduction.',
+        preventsFailureModes: [7, 10],
       },
     ],
     close: [
@@ -148,6 +161,7 @@ export const P6_OPERATE: PhasePack = {
           'Without a decision log, governance becomes theatre. Nexus needs proof that reviews alter funding, scope, controls, or ownership.',
         expectedAnswerShape:
           'Artifact or system of record with decision, owner, date, evidence cited, and next review trigger.',
+        preventsFailureModes: [9, 10],
       },
       {
         id: 'renewal-or-retirement-case',
@@ -156,6 +170,7 @@ export const P6_OPERATE: PhasePack = {
           'Forces Operate to maintain a living value case. If the answer is anecdotal, the capability is vulnerable at budget or vendor renewal.',
         expectedAnswerShape:
           'Evidence packet: adoption trend, value trend, cost trend, quality/risk trend, vendor performance, and sponsor/CXO position.',
+        preventsFailureModes: [7, 10],
       },
       {
         id: 'kill-criterion-revisited',
@@ -164,6 +179,7 @@ export const P6_OPERATE: PhasePack = {
           'Keeps the charter honest after launch. If thresholds changed, the change must be explicit and approved, not silently ignored.',
         expectedAnswerShape:
           'Original criterion, current signal, crossed/not crossed, owner decision, and rationale for any threshold change.',
+        preventsFailureModes: [9, 10],
       },
     ],
   },
@@ -178,6 +194,7 @@ export const P6_OPERATE: PhasePack = {
         'Tell the user the capability is launched but not governed. P6 starts when launch pressure drops; that is when value leakage usually begins.',
       mitigation:
         'Name the steady-state owner, telemetry pack, and next operating review before declaring the program operationally complete.',
+      preventsFailureModes: [5, 9],
     },
     {
       id: 'dashboard-without-decision',
@@ -188,6 +205,7 @@ export const P6_OPERATE: PhasePack = {
         'Surface that the dashboard is observational, not operational. Metrics that do not trigger decisions do not protect value.',
       mitigation:
         'Attach each metric to an expand, remediate, renew, or retire decision with owner and threshold.',
+      preventsFailureModes: [9, 10],
     },
     {
       id: 'adoption-fade-hidden',
@@ -198,6 +216,7 @@ export const P6_OPERATE: PhasePack = {
         'Tell the user adoption is drifting under the status layer. Green status without trend thresholds hides value erosion.',
       mitigation:
         'Set cohort-level thresholds and require remediation actions when trend breaks for two reporting periods.',
+      preventsFailureModes: [5, 9],
     },
     {
       id: 'vendor-renewal-amnesia',
@@ -208,6 +227,7 @@ export const P6_OPERATE: PhasePack = {
         'Surface that renewal economics are not defensible. Without value-per-use evidence, renewal becomes procurement theatre.',
       mitigation:
         'Build a renewal evidence pack: utilization, value trend, support issues, vendor obligations, alternatives, and recommendation.',
+      preventsFailureModes: [7, 10],
     },
     {
       id: 'knowledge-base-decay',
@@ -218,6 +238,7 @@ export const P6_OPERATE: PhasePack = {
         'Flag that the capability will degrade silently. Stale knowledge produces declining trust before anyone sees a system outage.',
       mitigation:
         'Assign freshness owner, review cadence, quality metric, and exception path for stale or disputed content.',
+      preventsFailureModes: [5, 6],
     },
   ],
 

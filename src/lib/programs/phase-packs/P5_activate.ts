@@ -43,6 +43,7 @@ export const P5_ACTIVATE: PhasePack = {
       severity: 'hard',
       evaluationHint:
         'program_modules row with module_key="cxo_verification" and status="completed". The verification note must cite rollout telemetry or outcome evidence, not just a sponsor sentiment statement.',
+      preventsFailureModes: [1, 9],
     },
     {
       id: 'benefits-realization-attested',
@@ -50,6 +51,7 @@ export const P5_ACTIVATE: PhasePack = {
       severity: 'hard',
       evaluationHint:
         'program_modules row with module_key="benefits_realization" and status="completed" plus engagement_participants approval_authority="sponsor" present. Attestation must connect observed value to the P2 baseline KPI and P4 pilot criteria.',
+      preventsFailureModes: [1, 9],
     },
     {
       id: 'outcome-report-drafted',
@@ -57,6 +59,7 @@ export const P5_ACTIVATE: PhasePack = {
       severity: 'soft',
       evaluationHint:
         'deliverables_v2 row with deliverable_type_key="outcome_report". The report should state rollout scope, adoption telemetry, value movement, unresolved risks, and whether the program should operate, expand, pause, or roll back.',
+      preventsFailureModes: [8, 9],
     },
     {
       id: 'rollout-waves-completed',
@@ -64,6 +67,7 @@ export const P5_ACTIVATE: PhasePack = {
       severity: 'soft',
       evaluationHint:
         'Execution or rollout deliverable names each wave, target cohort, actual completion state, and hold reason for any skipped cohort. A single "launched" status without cohort detail is not enough.',
+      preventsFailureModes: [5, 8],
     },
     {
       id: 'adoption-telemetry-baselined',
@@ -71,6 +75,7 @@ export const P5_ACTIVATE: PhasePack = {
       severity: 'soft',
       evaluationHint:
         'Evidence row or outcome report section names the adoption metric, current value, source system, collection cadence, and owner. Examples: weekly active users, workflow completion, containment rate, self-service completion, or field compliance.',
+      preventsFailureModes: [5, 9],
     },
     {
       id: 'support-readiness-live',
@@ -78,6 +83,7 @@ export const P5_ACTIVATE: PhasePack = {
       severity: 'soft',
       evaluationHint:
         'Operating model or support plan names L1/L2 owner, escalation SLA, knowledge-base owner, defect triage channel, and first 30-day hypercare cadence.',
+      preventsFailureModes: [4, 5, 8],
     },
     {
       id: 'exception-paths-controlled',
@@ -85,6 +91,7 @@ export const P5_ACTIVATE: PhasePack = {
       severity: 'soft',
       evaluationHint:
         'Outcome evidence identifies manual workarounds, opt-outs, support exceptions, or old-process fallbacks. Each exception has owner, volume, and disposition: accepted, remediating, or kill-signal candidate.',
+      preventsFailureModes: [5, 8],
     },
   ],
 
@@ -97,6 +104,7 @@ export const P5_ACTIVATE: PhasePack = {
           'Prevents the rollout from over-claiming P4 evidence. If the pilot only proved one cohort or workflow, activation must not imply enterprise readiness.',
         expectedAnswerShape:
           'A pass/fail summary tied to P4 success criteria, with explicit caveats: cohort, workflow, volume, geography, and failure modes not tested.',
+        preventsFailureModes: [8, 9],
       },
       {
         id: 'first-rollout-cohort',
@@ -105,6 +113,7 @@ export const P5_ACTIVATE: PhasePack = {
           'Forces rollout sequencing to be intentional. Random first cohorts hide adoption risk and make support load unpredictable.',
         expectedAnswerShape:
           'Named cohort with rationale, owner, expected volume, support path, and rollback threshold.',
+        preventsFailureModes: [5, 8],
       },
       {
         id: 'support-owner-live',
@@ -113,6 +122,7 @@ export const P5_ACTIVATE: PhasePack = {
           'Activation fails when support ownership is ceremonial. The first week exposes defects, training gaps, and exception pressure that need real decision rights.',
         expectedAnswerShape:
           'Named operational owner, escalation path, decision rights, support hours, and triage channel.',
+        preventsFailureModes: [4, 5],
       },
     ],
     converge: [
@@ -123,6 +133,7 @@ export const P5_ACTIVATE: PhasePack = {
           'Training completion is not adoption. Nexus needs a behavior signal that survives Operate and can be compared to the value hypothesis.',
         expectedAnswerShape:
           'Metric with source and cadence: usage, workflow completion, exception volume, containment, cycle time, quality, or compliance.',
+        preventsFailureModes: [5, 9],
       },
       {
         id: 'exception-volume',
@@ -131,6 +142,7 @@ export const P5_ACTIVATE: PhasePack = {
           'Exception paths are the earliest signal that activation is performative. High bypass volume means the rollout is not actually changing operations.',
         expectedAnswerShape:
           'Exception list with owner, volume, root cause, and decision: fix, tolerate, pause, or roll back.',
+        preventsFailureModes: [5, 8],
       },
       {
         id: 'benefit-source',
@@ -139,6 +151,7 @@ export const P5_ACTIVATE: PhasePack = {
           'Prevents benefit claims from changing measurement method midstream. If the source changes, the outcome report must explain the bridge.',
         expectedAnswerShape:
           'Named system/report plus comparison to P2 baseline source and any normalization required.',
+        preventsFailureModes: [3, 9],
       },
     ],
     close: [
@@ -149,6 +162,7 @@ export const P5_ACTIVATE: PhasePack = {
           'Operate fails when launch teams dissolve and no standing owner inherits adoption, quality, cost, and drift measurement.',
         expectedAnswerShape:
           'Named business owner, technical owner, governance cadence, and escalation route for the next quarter.',
+        preventsFailureModes: [4, 5],
       },
       {
         id: 'cxo-evidence-packet',
@@ -157,6 +171,7 @@ export const P5_ACTIVATE: PhasePack = {
           'Hard-gates the transition to P6. The evidence packet must make benefits attestation auditable and not dependent on program-team optimism.',
         expectedAnswerShape:
           'Outcome report, adoption dashboard, support metrics, exception log, and benefit calculation tied to source systems.',
+        preventsFailureModes: [1, 9],
       },
       {
         id: 'scale-pause-rollback',
@@ -165,6 +180,7 @@ export const P5_ACTIVATE: PhasePack = {
           'Activation must end with a decision, not a status update. Operate needs a clear posture and thresholds for reversing course.',
         expectedAnswerShape:
           'Decision plus threshold: scale to named cohorts, pause pending fixes, or roll back with trigger and owner.',
+        preventsFailureModes: [8, 10],
       },
     ],
   },
@@ -179,6 +195,7 @@ export const P5_ACTIVATE: PhasePack = {
         'Tell the user training proves exposure, not adoption. A program can have 95% attendance and still leave the old process untouched.',
       mitigation:
         'Redirect to behavior telemetry: usage, workflow completion, exception volume, support tickets, cycle time, quality, or control adherence by cohort.',
+      preventsFailureModes: [5, 9],
     },
     {
       id: 'pilot-overreach',
@@ -189,6 +206,7 @@ export const P5_ACTIVATE: PhasePack = {
         'Surface that the pilot result is being overgeneralized. The rollout may be valid, but the evidence does not yet cover the stated activation scope.',
       mitigation:
         'Make the caveat explicit and sequence rollout waves to test the missing risk: hostile users, higher volume, different geography, or unsupported edge cases.',
+      preventsFailureModes: [8, 10],
     },
     {
       id: 'support-afterthought',
@@ -199,6 +217,7 @@ export const P5_ACTIVATE: PhasePack = {
         'Tell the user support readiness is ceremonial. Activation will convert first-week friction into workarounds if support cannot decide quickly.',
       mitigation:
         'Name support owners, escalation rights, triage cadence, and rollback thresholds before the next cohort activates.',
+      preventsFailureModes: [4, 5, 8],
     },
     {
       id: 'changed-measurement-source',
@@ -209,6 +228,7 @@ export const P5_ACTIVATE: PhasePack = {
         'Flag that the value case is no longer comparable to the signed charter. The outcome report must not move the scoreboard after rollout.',
       mitigation:
         'Either use the original baseline source or document a conversion bridge with finance/sponsor approval and the reason the source changed.',
+      preventsFailureModes: [3, 9],
     },
     {
       id: 'silent-exceptions',
@@ -219,6 +239,7 @@ export const P5_ACTIVATE: PhasePack = {
         'Surface that the old operating model is still running under the new label. Value will leak through exceptions that no one is measuring.',
       mitigation:
         'Inventory exception paths, quantify volume, decide disposition, and include residual exceptions in the Operate dashboard.',
+      preventsFailureModes: [5, 8],
     },
   ],
 

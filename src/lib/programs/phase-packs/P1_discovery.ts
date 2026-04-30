@@ -46,6 +46,7 @@ export const P1_DISCOVERY: PhasePack = {
         'Discovery notes or program seed references the P0 handoff fields: value ' +
         'hypothesis seed, sponsor candidate, classification, first cohort/use case, ' +
         'and first evidence request. If P1 starts from a blank page, the P0 handoff failed.',
+      preventsFailureModes: [1, 2, 4],
     },
     {
       id: 'validated-problem-statement',
@@ -56,6 +57,7 @@ export const P1_DISCOVERY: PhasePack = {
         'that names affected cohort/use case, current-state symptom, quantified ' +
         'severity, and what is out of scope. Interview-only summaries without ' +
         'measured severity are not validated.',
+      preventsFailureModes: [2],
     },
     {
       id: 'okr-baseline-captured',
@@ -68,6 +70,7 @@ export const P1_DISCOVERY: PhasePack = {
         'Examples: PR-cycle time from GitHub/Jira; SharePoint oversharing audit; ' +
         'IVR top-intent volume and CSAT; source-system completeness/freshness; ' +
         'identity overlap rate across source systems.',
+      preventsFailureModes: [3, 9],
     },
     {
       id: 'stakeholder-map-named',
@@ -78,6 +81,7 @@ export const P1_DISCOVERY: PhasePack = {
         'people for sponsor, business owner, technical/data/security owner as ' +
         'applicable, adoption owner, approver, and at least one dissenter or blocker. ' +
         'A department-only RACI is not a stakeholder map.',
+      preventsFailureModes: [1, 4],
     },
     {
       id: 'pattern-specific-evidence-complete',
@@ -90,6 +94,7 @@ export const P1_DISCOVERY: PhasePack = {
         'baseline; contact-center AI intent inventory and automation baseline; ' +
         'data fabric source-system inventory, data-quality baseline, and use-case ' +
         'readiness matrix. Waivers must name sponsor rationale.',
+      preventsFailureModes: [2, 3],
     },
     {
       id: 'discovery-contradictions-logged',
@@ -100,6 +105,7 @@ export const P1_DISCOVERY: PhasePack = {
         'problem smaller than expected, sponsor authority weaker, data unavailable, ' +
         'classification changed, or baseline source unreliable. Absence of any ' +
         'contradiction is suspicious on complex programs.',
+      preventsFailureModes: [2],
     },
     {
       id: 'p2-readiness-recommendation',
@@ -109,6 +115,7 @@ export const P1_DISCOVERY: PhasePack = {
         'Discovery Report ends with an explicit recommendation for P2: proceed ' +
         'to Synthesis, re-scope cohort/use case, reclassify pattern, gather missing ' +
         'baseline evidence, or stop. "Continue analysis" is not a recommendation.',
+      preventsFailureModes: [2, 10],
     },
   ],
 
@@ -124,6 +131,7 @@ export const P1_DISCOVERY: PhasePack = {
         expectedAnswerShape:
           'P0 value hypothesis in one sentence plus 2-3 falsifiers tied to measured ' +
           'severity, stakeholder authority, data availability, or cohort fit.',
+        preventsFailureModes: [2],
       },
       {
         id: 'current-state-system-of-record',
@@ -136,6 +144,7 @@ export const P1_DISCOVERY: PhasePack = {
           'Specific system/report/table/export and named owner: GitHub/Jira, NICE ' +
           'WFM, IVR analytics, SharePoint audit, finance close, data-quality profile, ' +
           'CDP source-system extract.',
+        preventsFailureModes: [3, 9],
       },
       {
         id: 'who-feels-the-pain',
@@ -147,6 +156,7 @@ export const P1_DISCOVERY: PhasePack = {
         expectedAnswerShape:
           'Named operators and named executive/business owner, with the cadence at ' +
           'which each sees the pain.',
+        preventsFailureModes: [1, 4],
       },
       {
         id: 'pattern-evidence-family',
@@ -158,6 +168,7 @@ export const P1_DISCOVERY: PhasePack = {
         expectedAnswerShape:
           'Named evidence family and first artifact/export/workshop. Generic ' +
           '"stakeholder interviews" is not enough.',
+        preventsFailureModes: [2, 3],
       },
       {
         id: 'scope-boundary-now',
@@ -169,6 +180,7 @@ export const P1_DISCOVERY: PhasePack = {
         expectedAnswerShape:
           'Explicit out-of-scope list by cohort, function, channel, system, or ' +
           'metric. "We will capture everything" is a fail.',
+        preventsFailureModes: [2, 10],
       },
     ],
     converge: [
@@ -183,6 +195,7 @@ export const P1_DISCOVERY: PhasePack = {
         expectedAnswerShape:
           'Problem, cohort/use case, quantified severity, baseline source, and trigger. ' +
           'No vendor, tool, or architecture name required.',
+        preventsFailureModes: [2],
       },
       {
         id: 'baseline-grain',
@@ -195,6 +208,7 @@ export const P1_DISCOVERY: PhasePack = {
           'Metric grain by cohort, channel, team, repository, source system, segment, ' +
           'intent, or time window, with a note on whether downstream measurement ' +
           'will use the same grain.',
+        preventsFailureModes: [3, 9],
       },
       {
         id: 'stakeholder-map-gaps',
@@ -205,6 +219,7 @@ export const P1_DISCOVERY: PhasePack = {
           'Synthesis recommends a path that no one can operate or approve.',
         expectedAnswerShape:
           'Named missing role and plan to fill it. An unassigned role without owner or date is a risk.',
+        preventsFailureModes: [1, 4],
       },
       {
         id: 'evidence-contradicts-p0',
@@ -216,6 +231,7 @@ export const P1_DISCOVERY: PhasePack = {
         expectedAnswerShape:
           'One or more contradictions, or a defended statement that evidence confirmed ' +
           'the seed across named checks.',
+        preventsFailureModes: [2],
       },
       {
         id: 'p2-option-inputs',
@@ -228,6 +244,7 @@ export const P1_DISCOVERY: PhasePack = {
           'Option dimensions such as build/buy, assist/deflect/resolve, managed vs ' +
           'composable, cohort scope, remediation-first vs constrained pilot, ' +
           'centralized vs domain-owned.',
+        preventsFailureModes: [2],
       },
     ],
     close: [
@@ -241,6 +258,7 @@ export const P1_DISCOVERY: PhasePack = {
         expectedAnswerShape:
           'Yes with artifact names and owners, or no with exact missing item and ' +
           'blocking owner/date.',
+        preventsFailureModes: [2, 9],
       },
       {
         id: 'baseline-owner-attestation',
@@ -251,6 +269,7 @@ export const P1_DISCOVERY: PhasePack = {
           'Baseline ownership matters as much as the number.',
         expectedAnswerShape:
           'Named owner, source, date, caveats, and whether the number is decision-grade.',
+        preventsFailureModes: [3, 9],
       },
       {
         id: 'sponsor-readout-decision',
@@ -262,6 +281,7 @@ export const P1_DISCOVERY: PhasePack = {
         expectedAnswerShape:
           'One of proceed/re-scope/reclassify/more evidence/stop, with sponsor name ' +
           'and rationale.',
+        preventsFailureModes: [1],
       },
     ],
   },
@@ -279,6 +299,7 @@ export const P1_DISCOVERY: PhasePack = {
       mitigation:
         'Require at least one decision-grade baseline source before close. If the ' +
         'source does not exist, record that absence as a finding and baseline the gap.',
+      preventsFailureModes: [3, 9],
     },
     {
       id: 'solution-shadow',
@@ -292,6 +313,7 @@ export const P1_DISCOVERY: PhasePack = {
       mitigation:
         'Rewrite the problem statement without solution nouns. Keep vendor/tool ' +
         'claims in an assumptions section for P2 to evaluate.',
+      preventsFailureModes: [2],
     },
     {
       id: 'baseline-without-grain',
@@ -305,6 +327,7 @@ export const P1_DISCOVERY: PhasePack = {
       mitigation:
         'Re-baseline at the grain P3/P4 will use for pilot and P5 will use for ' +
         'activation. Record caveats if only aggregate data exists.',
+      preventsFailureModes: [9],
     },
     {
       id: 'department-raci',
@@ -318,6 +341,7 @@ export const P1_DISCOVERY: PhasePack = {
       mitigation:
         'Name people for sponsor, business owner, technical/data/security owner, ' +
         'adoption owner, approver, and dissenter. Unknown names become explicit risks.',
+      preventsFailureModes: [1, 4],
     },
     {
       id: 'confirmation-discovery',
@@ -332,6 +356,7 @@ export const P1_DISCOVERY: PhasePack = {
       mitigation:
         'Ask for contradictions explicitly. If none exist, document the checks ' +
         'that could have contradicted the seed and why they did not.',
+      preventsFailureModes: [2],
     },
     {
       id: 'missing-business-owner',
@@ -345,6 +370,7 @@ export const P1_DISCOVERY: PhasePack = {
       mitigation:
         'Find the named business owner before P2. If the program is IT-owned only, ' +
         'P2 must treat adoption ownership as a gate risk.',
+      preventsFailureModes: [1, 4],
     },
     {
       id: 'baseline-owner-dispute',
@@ -358,6 +384,7 @@ export const P1_DISCOVERY: PhasePack = {
       mitigation:
         'Choose one source of record, name caveats, and get owner attestation. If ' +
         'no source is decision-grade, make baseline instrumentation part of P2 scope.',
+      preventsFailureModes: [3, 9],
     },
   ],
 

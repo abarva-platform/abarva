@@ -54,6 +54,7 @@ export const P4_BUILD: PhasePack = {
         'Build artifacts reference the signed P3 design_spec/design deliverable and ' +
         'record any implementation delta as a decision record. If Build cannot point ' +
         'to the design it used, the pilot evidence is not traceable.',
+      preventsFailureModes: [5, 6],
     },
     {
       id: 'pilot-cohort-executed-as-named',
@@ -63,6 +64,7 @@ export const P4_BUILD: PhasePack = {
         'Pilot results report names the same cohort locked in P3, records any ' +
         'dropouts or additions, and explains whether cohort changes affect ' +
         'generalisation. Silent cohort substitution invalidates the pilot.',
+      preventsFailureModes: [8, 9],
     },
     {
       id: 'pilot-outcome-pass-fail',
@@ -72,6 +74,7 @@ export const P4_BUILD: PhasePack = {
         'Pilot report compares actual results to each P3 success threshold using ' +
         'the baseline source and measurement method. The report must explicitly ' +
         'say pass, fail, partial pass with sponsor re-baseline, or kill.',
+      preventsFailureModes: [8, 9],
     },
     {
       id: 'baseline-comparison-preserved',
@@ -81,6 +84,7 @@ export const P4_BUILD: PhasePack = {
         'Outcome tables cite current value, target, actual pilot value, measurement ' +
         'window, source system/report, and method. Replacing the baseline source ' +
         'during P4 requires sponsor-visible re-baseline.',
+      preventsFailureModes: [3, 9],
     },
     {
       id: 'design-approved',
@@ -90,6 +94,7 @@ export const P4_BUILD: PhasePack = {
         'deliverables_v2 row with deliverable_type_key="design_spec" or "design" ' +
         'and status="signed_off". The signer should map to a sponsor-level ' +
         'approval authority, not only a technical reviewer.',
+      preventsFailureModes: [1],
     },
     {
       id: 'operating-model-ready',
@@ -99,6 +104,7 @@ export const P4_BUILD: PhasePack = {
         'Activate package names process owner, run owner, support owner, data owner, ' +
         'security/privacy owner where relevant, cadence, escalation path, training ' +
         'or enablement owner, and steady-state measurement owner.',
+      preventsFailureModes: [4, 5],
     },
     {
       id: 'rollout-plan-for-p5',
@@ -108,6 +114,7 @@ export const P4_BUILD: PhasePack = {
         'Execution or rollout plan names waves, populations, dates/windows, entry ' +
         'criteria per wave, rollback criteria, change-management actions, support ' +
         'capacity, and accountable owner for each wave.',
+      preventsFailureModes: [5, 8],
     },
     {
       id: 'kill-or-rebaseline-decision-recorded',
@@ -117,6 +124,7 @@ export const P4_BUILD: PhasePack = {
         'Activate gate package contains a sponsor-visible decision record tying ' +
         'pilot result to action: scale, kill, remediate and repeat, or re-baseline ' +
         'with named scope and KPI changes.',
+      preventsFailureModes: [1, 10],
     },
     {
       id: 'vendor-selection-approved',
@@ -126,6 +134,7 @@ export const P4_BUILD: PhasePack = {
         'deliverables_v2 row with deliverable_type_key="vendor_selection" is absent ' +
         'or has status="signed_off". If a vendor remains provisional, Nexus should ' +
         'flag activation risk even though the governance check is soft.',
+      preventsFailureModes: [7, 8],
     },
     {
       id: 'execution-plan-drafted',
@@ -135,6 +144,7 @@ export const P4_BUILD: PhasePack = {
         'deliverables_v2 row with deliverable_type_key="execution_plan" exists. ' +
         'The draft should include rollout waves, owner map, support model, comms, ' +
         'training, risks, and measurement cadence.',
+      preventsFailureModes: [5, 8],
     },
     {
       id: 'pilot-incidents-adjudicated',
@@ -144,6 +154,7 @@ export const P4_BUILD: PhasePack = {
         'Pilot report includes defect log, security/privacy incidents if relevant, ' +
         'quality regressions, owner, severity, remediation status, and whether each ' +
         'blocks Activate. Empty incident logs should be explained, not assumed.',
+      preventsFailureModes: [6, 8],
     },
   ],
 
@@ -160,6 +171,7 @@ export const P4_BUILD: PhasePack = {
         expectedAnswerShape:
           'No change, or a list of deltas with decision record, sponsor visibility, ' +
           'and impact on criteria/baseline/cohort.',
+        preventsFailureModes: [2, 5],
       },
       {
         id: 'what-is-the-pilot-calendar',
@@ -172,6 +184,7 @@ export const P4_BUILD: PhasePack = {
         expectedAnswerShape:
           'Pilot start/end, ramp period, excluded dates, official measurement window, ' +
           'and reporting date.',
+        preventsFailureModes: [8, 9],
       },
       {
         id: 'who-owns-run-during-pilot',
@@ -181,6 +194,7 @@ export const P4_BUILD: PhasePack = {
         why:
           'A pilot operated by heroes or vendors does not prove the operating model. ' +
           'The Activate decision needs to know who can run the capability at scale.',
+        preventsFailureModes: [4, 5],
       },
       {
         id: 'what-would-force-kill',
@@ -190,6 +204,7 @@ export const P4_BUILD: PhasePack = {
         why:
           'Reinforces the P2/P3 kill criterion before sunk-cost pressure arrives. ' +
           'The answer gives Nexus permission to challenge zombie pilots.',
+        preventsFailureModes: [8, 10],
       },
     ],
     converge: [
@@ -204,6 +219,7 @@ export const P4_BUILD: PhasePack = {
         expectedAnswerShape:
           'A table-like answer: criterion, baseline, target, actual, source/method, ' +
           'pass/fail, confidence, and notes.',
+        preventsFailureModes: [8, 9],
       },
       {
         id: 'defects-that-change-decision',
@@ -213,6 +229,7 @@ export const P4_BUILD: PhasePack = {
         why:
           'Pilots can hit the headline metric while creating unacceptable risk. ' +
           'Nexus should force the downside evidence into the same decision package.',
+        preventsFailureModes: [6, 8],
       },
       {
         id: 'can-operators-run-this',
@@ -225,6 +242,7 @@ export const P4_BUILD: PhasePack = {
         expectedAnswerShape:
           'Runbook rehearsal, support tickets, training completion, handoff acceptance, ' +
           'or named gaps with remediation date.',
+        preventsFailureModes: [4, 5],
       },
       {
         id: 'rollout-rate-vs-capacity',
@@ -234,6 +252,7 @@ export const P4_BUILD: PhasePack = {
         why:
           'P5 plans usually fail by moving faster than the operating system can ' +
           'absorb. The rollout plan has to match capacity, not ambition.',
+        preventsFailureModes: [5, 8],
       },
     ],
     close: [
@@ -248,6 +267,7 @@ export const P4_BUILD: PhasePack = {
         expectedAnswerShape:
           'One decision option, rationale tied to pass/fail evidence, and named ' +
           'conditions if re-baseline or repeat is chosen.',
+        preventsFailureModes: [1, 10],
       },
       {
         id: 'p5-first-wave-ready',
@@ -257,6 +277,7 @@ export const P4_BUILD: PhasePack = {
         why:
           'Tests whether the rollout plan is operational or merely sequenced. P5 ' +
           'needs wave readiness, not a roadmap slide.',
+        preventsFailureModes: [5, 8],
       },
       {
         id: 'what-is-not-proven',
@@ -266,6 +287,7 @@ export const P4_BUILD: PhasePack = {
         why:
           'Every pilot has limits. Naming them prevents over-generalising success ' +
           'and helps P5 design guardrails around the unknowns.',
+        preventsFailureModes: [8, 9],
       },
     ],
   },
@@ -284,6 +306,7 @@ export const P4_BUILD: PhasePack = {
         'Freeze original criteria in the report, record the proposed re-baseline ' +
         'separately, and require sponsor decision on whether to judge against old ' +
         'or new thresholds.',
+      preventsFailureModes: [8, 9],
     },
     {
       id: 'demo-mistaken-for-pilot',
@@ -297,6 +320,7 @@ export const P4_BUILD: PhasePack = {
       mitigation:
         'Run the named cohort through the locked measurement window and report ' +
         'actuals vs criteria, including defects and non-use.',
+      preventsFailureModes: [8, 9],
     },
     {
       id: 'hero-operated-pilot',
@@ -310,6 +334,7 @@ export const P4_BUILD: PhasePack = {
       mitigation:
         'Require runbook rehearsal, named operating owner, support model, training, ' +
         'and evidence the steady-state team can execute the process.',
+      preventsFailureModes: [4, 5, 8],
     },
     {
       id: 'partial-pass-spin',
@@ -323,6 +348,7 @@ export const P4_BUILD: PhasePack = {
       mitigation:
         'Present criterion-by-criterion outcome and force sponsor decision: accept ' +
         'risk, remediate and repeat, re-baseline, or kill.',
+      preventsFailureModes: [8, 9],
     },
     {
       id: 'rollout-plan-as-calendar',
@@ -336,6 +362,7 @@ export const P4_BUILD: PhasePack = {
       mitigation:
         'Add wave entry criteria, support and training capacity, rollback rules, ' +
         'change-owner per population, and measurement cadence.',
+      preventsFailureModes: [5, 8],
     },
     {
       id: 'vendor-provisional-scale',
@@ -349,6 +376,7 @@ export const P4_BUILD: PhasePack = {
       mitigation:
         'Separate technical pilot result from commercial readiness, obtain vendor ' +
         'selection sign-off, or constrain P5 wave one to what the approved contract supports.',
+      preventsFailureModes: [7, 8],
     },
     {
       id: 'failure-renamed-learning',
@@ -362,6 +390,7 @@ export const P4_BUILD: PhasePack = {
       mitigation:
         'Document the miss, identify root cause, and force the explicit decision: ' +
         'kill, remediate and repeat pilot, or re-baseline with changed scope and economics.',
+      preventsFailureModes: [8, 10],
     },
   ],
 
