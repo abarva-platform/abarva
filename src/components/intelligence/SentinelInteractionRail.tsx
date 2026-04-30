@@ -343,14 +343,14 @@ function RecommendedActionsSection({
                   fontWeight: 500,
                   letterSpacing: '0.10em',
                   textTransform: 'uppercase',
-                  color: COLORS.mutedSoft,
+                  color: action.enabled ? COLORS.navy : COLORS.mutedSoft,
                   border: BORDER.hairlineSoft,
                   borderRadius: RADIUS.pill,
                   padding: '2px 8px',
-                  background: COLORS.surface2,
+                  background: action.enabled ? COLORS.navySoft : COLORS.surface2,
                 }}
               >
-                deferred
+                {action.enabled ? 'ready' : 'deferred'}
               </span>
             </div>
             <p style={{ ...TYPE.body, margin: 0 }}>{action.reason}</p>

@@ -2,6 +2,7 @@ import { classifyIntent } from './classifier';
 import { route } from './router';
 import { synthesizeStream } from './synthesizer';
 import { generateFollowups } from './followups';
+import { retrieveWorldview } from './retrievers/worldview';
 import type { AskSource, IntentClassification, AskIntent } from './types';
 
 export type { AskIntent, AskSource, IntentClassification } from './types';
@@ -54,7 +55,14 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
     const classification = await classifyIntent(trimmed);
     yield { type: 'classified', classification };
 
-    const { sources, averageConfidence } = await route(classification.intent, classification.entities);
+    const [routed, worldview] = await Promise.all([
+      route(classification.intent, classification.entities),
+      retrieveWorldview(trimmed),
+    ]);
+    const sources = [...routed.sources, ...worldview.sources].slice(0, 10);
+    const averageConfidence = sources.length > 0
+      ? sources.reduce((s, x) => s + (x.confidence ?? 0), 0) / sources.length
+      : 0;
     yield { type: 'sources', sources };
 
     if (sources.length === 0) {

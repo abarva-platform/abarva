@@ -3,6 +3,8 @@ import { getServerSupabase } from '@/lib/supabase-server';
 export interface ExecutiveProfileLookupArgs {
   personId?: string | null;
   displayName?: string | null;
+  /** Overrides current_company in the Role line when a tenant is active. */
+  activeTenantDisplayName?: string | null;
 }
 
 interface ExecutiveProfileRow {
@@ -244,7 +246,7 @@ export async function assembleExecutiveUserContextBlock(args: ExecutiveProfileLo
 
   const lines: string[] = [];
   lines.push(`USER CONTEXT · ${profile.full_name} · ${profile.profile_type === 'real_world' ? 'RELATIONSHIP' : 'EXECUTIVE'} profile`);
-  lines.push(`Role · ${profile.current_role_title} at ${profile.current_company}`);
+  lines.push(`Role · ${profile.current_role_title} at ${args.activeTenantDisplayName ?? profile.current_company}`);
 
   const modality = typeof profile.communication_style?.preferred_modality === 'string'
     ? String(profile.communication_style.preferred_modality)

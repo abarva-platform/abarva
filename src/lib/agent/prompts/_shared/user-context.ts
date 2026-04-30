@@ -12,6 +12,9 @@ import {
 export interface UserProfileArgs {
   personId?: string | null;
   displayName?: string | null;
+  /** When set, replaces the profile's current_company in the Role line so
+   * switching tenants doesn't produce "from your seat at [wrong org]". */
+  activeTenantDisplayName?: string | null;
 }
 
 type CareerRole = { role?: string; company?: string; start?: string | null; end?: string | null; scope?: string };
@@ -176,9 +179,10 @@ export async function assembleUserContextBlock(args: UserProfileArgs): Promise<s
 
   const lines: string[] = [];
   lines.push(`USER CONTEXT · ${profile.display_name} · ${profile.demo_tier.toUpperCase()} tier`);
-  if (profile.current_title && profile.current_company) {
-    const scale = formatScale(profile.current_company_scale);
-    lines.push(`Role · ${profile.current_title} at ${profile.current_company}${scale ? ` (${scale})` : ''}`);
+  if (profile.current_title) {
+    const company = args.activeTenantDisplayName ?? profile.current_company;
+    const scale = args.activeTenantDisplayName ? null : formatScale(profile.current_company_scale);
+    lines.push(`Role · ${profile.current_title} at ${company}${scale ? ` (${scale})` : ''}`);
   }
 
   const career = formatCareer(profile.career_history);

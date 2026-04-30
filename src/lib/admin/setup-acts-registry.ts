@@ -400,6 +400,246 @@ const APEX_CONTENT: SetupActsContent = {
   recentActivity: APEX_ACTIVITY,
 };
 
+// ── Meridian Health System fixture (rich) ─────────────────────────────────────
+//
+// Numbers match the 2026-04-30 Meridian seed: 714 records across 14 segment
+// families. All names and figures drawn from meridian-data/ source files.
+
+const MERIDIAN_OPENER = `I see Meridian Health System as a $16.8B not-for-profit IDN (58,000 employees, 30 hospitals, 280 clinics, 14M ambulatory visits, 1.4M covered lives in Meridian Health Plans). The CDIO is Dr. Anita Krishnamurthy; the CFO lens has sharpened since the DENIALS-2024 sunk cost reached $8M. Four AI programs are in flight: Ambient Clinical Documentation (P3 Design, sponsor Jennifer Wexler), Prior Authorization Automation (P4 Build, sponsor Patricia Okafor), Clinical AI Governance Uplift (P2 Synthesis, sponsor Jennifer Wexler), and RCM Modernization (P1 Discovery, sponsor David Park). Epic is a shared integration point across all four — prior-auth rule sets, ambient API access, denial adjudication, and RCM revenue codes all depend on the same Epic layer. One Critical signal is open right now: Epic integration concentration. Here's what I can reason about today.`;
+
+const MERIDIAN_ACT_ONE_FACTS: ActOneFact[] = [
+  {
+    factType: 'enterprise',
+    label: 'ENTERPRISE',
+    value:
+      'Meridian Health System · Not-for-profit IDN · $16.8B FY2025 revenue · 58,000 employees · 30 hospitals · 280 clinics · 14.0M ambulatory visits · 1.4M covered lives · FY ending June 30',
+    sourceSegmentId: '01',
+    sourceSegmentName: 'Enterprise Profile',
+    lastReviewedDays: 5,
+  },
+  {
+    factType: 'priorities',
+    label: 'STRATEGIC PRIORITIES',
+    value:
+      'Operating margin recovery (2.4% margin, compressed 80bp YoY) · Clinical quality and safety · Provider-plan integration · AI governance uplift · Epic optimization ($384M IT budget)',
+    sourceSegmentId: '01',
+    sourceSegmentName: 'Enterprise Profile',
+    lastReviewedDays: 5,
+  },
+  {
+    factType: 'executives',
+    label: 'EXECUTIVE BENCH',
+    value:
+      '19 named executives · CEO Dr. Elaine Morales · CDIO Dr. Anita Krishnamurthy · CFO (named) · COO (named) · CMO Dr. Marcus Reid · Chief Physician Executive Dr. Patricia Okafor · General Counsel Rebecca Hollings · EPMO sponsor Jennifer Wexler (dual-program)',
+    sourceSegmentId: '02',
+    sourceSegmentName: 'Org Structure',
+    lastReviewedDays: 5,
+  },
+  {
+    factType: 'portfolio',
+    label: 'ACTIVE PORTFOLIO',
+    value:
+      '4 AI programs in flight · Ambient Clinical Documentation (P3 Design, sponsor Jennifer Wexler) · Prior Authorization Automation (P4 Build, sponsor Patricia Okafor) · Clinical AI Governance Uplift (P2 Synthesis, sponsor Jennifer Wexler) · RCM Modernization (P1 Discovery, sponsor David Park)',
+    sourceSegmentId: '06',
+    sourceSegmentName: 'Program Inventory',
+    lastReviewedDays: 3,
+  },
+  {
+    factType: 'evidence',
+    label: 'EVIDENCE DEPTH',
+    value:
+      '42 evidence items in ledger · Clinician documentation time baseline 45 min/day · Prior-auth auto-approval rate 8% · DENIALS-2024 sunk cost $8M (lessons-learned on file)',
+    sourceSegmentId: '09',
+    sourceSegmentName: 'Evidence Ledger',
+    lastReviewedDays: 3,
+  },
+  {
+    factType: 'systems',
+    label: 'IT LANDSCAPE',
+    value:
+      '114 systems inventoried (Hyperspace, Ambulatory, MyChart, Cerner Millennium on Kona Coast) · Epic consolidation 80% complete · Kona Coast on Cerner post-capital-pressure pause · 22 shadow IT systems flagged',
+    sourceSegmentId: '03',
+    sourceSegmentName: 'IT System Landscape',
+    lastReviewedDays: 10,
+  },
+  {
+    factType: 'kpis',
+    label: 'KPI DICTIONARY',
+    value:
+      '102 KPIs loaded · ALOS (51.1% baseline → 56.4% FY2026 target) · ED door-to-provider time (52.2%, worsening) · Prior-auth auto-approval 8% → target 22% · Operating margin 2.4%',
+    sourceSegmentId: '05',
+    sourceSegmentName: 'KPI Dictionary',
+    lastReviewedDays: 5,
+  },
+];
+
+const MERIDIAN_ACT_TWO_CAPABILITIES: CapabilityNode[] = [
+  {
+    id: 'cap.pattern-citations.meridian',
+    family: 'pattern-citations',
+    label: '4 program archetypes pattern-matched',
+    count: 4,
+    countNoun: 'archetypes matched to corpus patterns',
+    depthState: 'grounded',
+    groundingExamples: [
+      {
+        label: 'Ambient Clinical Documentation → PAT-PRG-AMBIENT-001',
+        href: '/intelligence/patterns/ambient-clinical-documentation',
+      },
+      {
+        label: 'Prior Authorization Automation → PAT-PRG-PRIOR-AUTH-001',
+        href: '/intelligence/patterns/prior-authorization-automation',
+      },
+      {
+        label: 'RCM Modernization → PAT-PRG-RCM-001 (DENIALS-2024 lesson-learned on file)',
+        href: '/intelligence/patterns/rcm-modernization',
+      },
+    ],
+  },
+  {
+    id: 'cap.cross-program-signals.meridian',
+    family: 'cross-program-signals',
+    label: '22 signals · 1 critical Epic integration concentration open',
+    count: 22,
+    countNoun: 'cross-program signals tracked',
+    depthState: 'grounded',
+    groundingExamples: [
+      {
+        label: 'Epic is a shared integration point for all four AI programs — prior-auth, ambient, denial, RCM (CRITICAL)',
+        href: '/admin/segments/14?filter=critical',
+      },
+      {
+        label: 'Jennifer Wexler is named sponsor on two of four programs simultaneously (HIGH, bandwidth risk)',
+        href: '/admin/segments/14?filter=high',
+      },
+      {
+        label: 'Dr. Okafor is clinical lead and program sponsor simultaneously on Prior Auth AI (MED, decision-rights gap)',
+        href: '/admin/segments/14?filter=medium',
+      },
+    ],
+  },
+  {
+    id: 'cap.evidence-grounded-qa.meridian',
+    family: 'evidence-grounded-qa',
+    label: '42 evidence items grounded',
+    count: 42,
+    countNoun: 'evidence items in ledger',
+    depthState: 'grounded',
+    groundingExamples: [
+      {
+        label: 'Clinician documentation time: 45 min/day baseline (claim, source: time-motion-study-2025-q4)',
+        href: '/admin/segments/09?filter=ambient',
+      },
+      {
+        label: 'Prior-auth auto-approval rate: 8% current → 22% target (source: revenue-cycle-baseline-2026-q1)',
+        href: '/admin/segments/09?filter=prior-auth',
+      },
+      {
+        label: 'DENIALS-2024: $8M sunk cost — lessons-learned file in corpus',
+        href: '/admin/segments/09?filter=denials-2024',
+      },
+    ],
+  },
+  {
+    id: 'cap.outcome-measurement-readiness.meridian',
+    family: 'outcome-measurement-readiness',
+    label: 'Partial · 102 KPIs loaded, baseline lineage varies by program',
+    count: 4,
+    countNoun: 'programs with stated KPI targets',
+    depthState: 'partial',
+    groundingExamples: [
+      {
+        label: 'meridian-ambient-2026 — documentation time 45 min/day baseline → target reduction on file',
+        href: '/programs/meridian-ambient-2026',
+      },
+      {
+        label: 'meridian-prior-auth-2026 — auto-approval 8% → 22% target; measurement methodology confirmed',
+        href: '/programs/meridian-prior-auth-2026',
+      },
+      {
+        label: 'meridian-rcm-modernization-2026 — denial rate baseline from DENIALS-2024 file; recovery target pending CFO sign-off',
+        href: '/programs/meridian-rcm-modernization-2026',
+      },
+    ],
+  },
+];
+
+const MERIDIAN_ACT_THREE_GAINS: CapabilityGainEntry[] = [
+  {
+    id: 'gain.meridian.kona-coast',
+    targetSegmentId: '03',
+    targetSegmentName: 'IT System Landscape',
+    capabilityGained:
+      'Sentinel can map the Kona Coast Cerner-to-Epic migration decision and its downstream AI program dependencies',
+    todayPreview:
+      '"Kona Coast Hospital is on Cerner Millennium after the capital-pressure pause. I can name the gap; I can\'t yet trace which of the four active AI programs depend on Kona Coast Epic parity."',
+    afterPreview:
+      '"Kona Coast system dependencies mapped. Prior Authorization AI and Ambient Clinical Documentation each have integration dependencies that assume Epic parity — the migration pause is a named blocker for both."',
+    impactedPrograms: ['meridian-ambient-2026', 'meridian-prior-auth-2026'],
+    rank: 1,
+  },
+  {
+    id: 'gain.meridian.program-deliverables',
+    targetSegmentId: '08',
+    targetSegmentName: 'Program Deliverables',
+    capabilityGained:
+      'Phase gate reasoning becomes concrete — Sentinel can cite specific deliverable status rather than phase label alone',
+    todayPreview:
+      '"I know all four programs by phase number. I cannot cite specific deliverable status, gate criteria met/open, or what artifact is blocking the next phase advance."',
+    afterPreview:
+      '"Deliverables loaded. Ambient P3 gate criteria named; Prior Auth P4 Build artifacts on file; Clinical AI Governance P2 synthesis charter confirmed. Nexus can now reason about phase advance gates."',
+    impactedPrograms: ['meridian-ambient-2026', 'meridian-prior-auth-2026', 'meridian-ai-governance-2026'],
+    rank: 2,
+  },
+  {
+    id: 'gain.meridian.compliance',
+    targetSegmentId: '12',
+    targetSegmentName: 'Compliance and Regulatory',
+    capabilityGained:
+      'Sentinel can reason about HIPAA, 42 CFR Part 2, CMS AI audit exposure, and MA plan regulatory requirements per program',
+    todayPreview:
+      '"Healthcare regulatory context is loaded at enterprise level (HIPAA, 42 CFR Part 2, CMS Medicare Advantage). I can\'t yet trace which open compliance findings block which active program gate."',
+    afterPreview:
+      '"Compliance findings traced to program gates. Clinical AI Governance P2 charter aligns to the FDA AI/ML SaMD framework; Prior Auth AI has a CMS rule compliance dependency named with remediation owner."',
+    impactedPrograms: ['meridian-ai-governance-2026', 'meridian-prior-auth-2026'],
+    rank: 3,
+  },
+];
+
+const MERIDIAN_ACTIVITY: SetupActivityEvent[] = [
+  {
+    actor: 'Meridian synthetic dataset import',
+    what: 'Loaded 14 segment families · 714 records · 423 graph nodes · 584 edges · 731 context chunks',
+    timestamp: 'Today',
+  },
+  {
+    actor: 'Dr. Anita Krishnamurthy (CDIO)',
+    what: 'Reviewed IT landscape: Kona Coast Cerner migration pause noted; Epic consolidation at 80%',
+    timestamp: '1 week ago',
+  },
+  {
+    actor: 'Sentinel',
+    what: 'Flagged Critical cross-program signal: Epic integration concentration across all four AI programs',
+    timestamp: '3 days ago',
+  },
+  {
+    actor: 'Patricia Okafor (CPE)',
+    what: 'Prior Authorization AI advanced to P4 Build — denial auto-approval baseline confirmed at 8%',
+    timestamp: '2 weeks ago',
+  },
+];
+
+const MERIDIAN_CONTENT: SetupActsContent = {
+  tenantKey: 'meridian',
+  tenantDisplayName: 'Meridian Health System',
+  tenantDataRichness: 'rich',
+  sentinelOpener: MERIDIAN_OPENER,
+  actOneFacts: MERIDIAN_ACT_ONE_FACTS,
+  actTwoCapabilityNodes: MERIDIAN_ACT_TWO_CAPABILITIES,
+  actThreeGainEntries: MERIDIAN_ACT_THREE_GAINS,
+  recentActivity: MERIDIAN_ACTIVITY,
+};
+
 // ── Default sparse fixture (cold tenant) ──────────────────────────────────────
 
 const SPARSE_OPENER = `I don't know much about your enterprise yet. Start with these to give the platform something to reason about — every upload sharpens the next program decision.`;
@@ -482,6 +722,9 @@ export function getSetupActsContent(
 ): SetupActsContent {
   if (tenantKey === 'apexretail') {
     return APEX_CONTENT;
+  }
+  if (tenantKey === 'meridian') {
+    return MERIDIAN_CONTENT;
   }
   const knownKey =
     tenantKey && tenantKey in TENANT_DISPLAY_NAMES

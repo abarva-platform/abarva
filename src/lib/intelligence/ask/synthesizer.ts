@@ -18,8 +18,9 @@ RULES:
 1. Every claim must be attributable to one of the provided sources. No invention.
 2. If the sources don't contain an answer, say so explicitly. "We don't have
    indexed data on that" is a valid response.
-3. Answer in 2-5 short paragraphs. Bold specific numbers, vendor names, and
-   pattern codes. Do not use headers or lists unless the answer genuinely needs them.
+3. Keep responses under 120 words — 2-3 tight paragraphs maximum. Bold specific
+   numbers, vendor names, and pattern codes. No headers or lists unless the answer
+   genuinely requires structured enumeration.
 4. When a source is low-confidence or the sample is small, say so in the answer.
 5. Never reference a specific user, engagement, or client name unless the source
    itself does.
@@ -63,7 +64,7 @@ export async function* synthesizeStream(args: {
   try {
     const stream = await client.messages.create({
       model: chooseModel(args.intent),
-      max_tokens: 1024,
+      max_tokens: 400,
       system,
       messages: [{ role: 'user', content: prompt }],
       stream: true,

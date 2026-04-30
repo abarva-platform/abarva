@@ -112,20 +112,24 @@ describe('Setup Acts registry — Apex (rich) fixture', () => {
 });
 
 describe('Setup Acts registry — sparse fallback', () => {
-  it('returns sparse content for non-Apex tenants', () => {
-    expect(getSetupActsContent('meridian').tenantDataRichness).toBe('sparse');
+  it('returns rich content for known rich tenants (apex, meridian)', () => {
+    expect(getSetupActsContent('apexretail').tenantDataRichness).toBe('rich');
+    expect(getSetupActsContent('meridian').tenantDataRichness).toBe('rich');
+  });
+
+  it('returns sparse content for tenants without authored fixtures', () => {
     expect(getSetupActsContent('arcturus').tenantDataRichness).toBe('sparse');
     expect(getSetupActsContent('keystone').tenantDataRichness).toBe('sparse');
   });
 
   it('sparse content has empty Act 1 + Act 2', () => {
-    const content = getSetupActsContent('meridian');
+    const content = getSetupActsContent('keystone');
     expect(content.actOneFacts).toEqual([]);
     expect(content.actTwoCapabilityNodes).toEqual([]);
   });
 
   it('sparse content has at least 3 onboarding gain entries', () => {
-    const content = getSetupActsContent('meridian');
+    const content = getSetupActsContent('keystone');
     expect(content.actThreeGainEntries.length).toBeGreaterThanOrEqual(3);
   });
 
@@ -203,6 +207,10 @@ describe('Setup Acts registry — voice rules (no marketing language)', () => {
   });
 
   it('sparse content uses no banned marketing language', () => {
+    checkAllText(getSetupActsContent('keystone'));
+  });
+
+  it('Meridian content uses no banned marketing language', () => {
     checkAllText(getSetupActsContent('meridian'));
   });
 });
@@ -225,7 +233,7 @@ describe('Setup Acts registry — summary counts helper', () => {
   });
 
   it('returns null counts for sparse tenant', () => {
-    const content = getSetupActsContent('meridian');
+    const content = getSetupActsContent('keystone');
     const counts = getSetupSummaryCounts(content);
     expect(counts.totalRecords).toBeNull();
     expect(counts.segmentsTracked).toBeNull();
@@ -301,9 +309,9 @@ describe('Setup Acts registry — snapshot merge', () => {
   });
 
   it('promotes sparse tenant to rich when snapshot carries records', () => {
-    const content = getSetupActsContent('meridian');
+    const content = getSetupActsContent('keystone');
     expect(content.tenantDataRichness).toBe('sparse');
-    const snapshot = buildSnapshot({ tenantKey: 'meridian', totalRecords: 12 });
+    const snapshot = buildSnapshot({ tenantKey: 'keystone', totalRecords: 12 });
     const merged = mergeInventorySnapshot(content, snapshot);
     expect(merged.tenantDataRichness).toBe('rich');
   });
