@@ -16,6 +16,7 @@
 // when EnterpriseAgentContextRequest grows vector support.
 
 import { getActiveClientRow } from '@/lib/active-client';
+import type { ClientKey } from '@/lib/client-config';
 import {
   getPatternManifestEntries,
   getPatternManifestEntry,
@@ -23,9 +24,35 @@ import {
 } from '@/lib/intelligence/pattern-manifest';
 
 export interface SentinelToolTenantContext {
+  /**
+   * Tenant key in the BROKER vocabulary (i.e. the
+   * EnterpriseDataRoom.tenantKey form). Apex carries a dash split:
+   * the app's ClientKey is `'apexretail'` (no dash) but the data room
+   * keys it `'apex-retail'`. Other tenants pass through unchanged. See
+   * `project_apex_tenant_key_split.md` in user memory for the
+   * back-story.
+   */
   tenantKey: string;
   clientId: string;
   industryCode: string | null;
+}
+
+/**
+ * Map an app-tier ClientKey to the broker-side tenant key used by
+ * EnterpriseDataRoom + buildEnterpriseAgentContextBundle.
+ *
+ * Pure function so it can be unit-tested without a live session.
+ * Exported so future Sentinel-adjacent tools can reuse the same
+ * boundary translation instead of duplicating the case statement.
+ */
+export function clientKeyToBrokerTenantKey(clientKey: ClientKey | string): string {
+  // Apex is the one tenant where the app and the data-room disagree:
+  // app says `'apexretail'`, data-room says `'apex-retail'`. Without
+  // this mapping, the broker returns the unknown_tenant blocked
+  // bundle for Apex and Sentinel tools go silent on the demo's
+  // primary tenant.
+  if (clientKey === 'apexretail') return 'apex-retail';
+  return clientKey;
 }
 
 /**
@@ -37,7 +64,7 @@ export async function resolveSentinelTenant(): Promise<SentinelToolTenantContext
   const client = await getActiveClientRow().catch(() => null);
   if (!client) return null;
   return {
-    tenantKey: client.key,
+    tenantKey: clientKeyToBrokerTenantKey(client.key),
     clientId: client.id,
     industryCode: client.industry_code,
   };
