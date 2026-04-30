@@ -2,6 +2,15 @@
 
 Status: canonical training and evaluation plan for using the AbarVa worldview corpus as strategic grounding in Sentinel, Nexus, Atlas, and Source conversations.
 
+> **See also:** `sentinel_worldview_training_addendum.md` — the
+> operational addendum that composes this plan with the shipped
+> voice doctrine (`AGENT_VOICE_SENTINEL.md`), the regression
+> suite (`tests/intelligence/failure-modes/`), and the multi-index
+> broker. The addendum specifies the seven concrete deltas:
+> system-prompt composition, regression-suite folding,
+> deterministic reranking, audience pre-filter, two-stage
+> retrieval, refusal triggers, doctrine version stamp.
+
 ## Purpose
 
 The worldview corpus is not marketing copy. It is strategic memory for AbarVa's agents.
