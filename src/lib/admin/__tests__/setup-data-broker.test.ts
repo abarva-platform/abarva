@@ -342,6 +342,34 @@ describe('getCrossProgramSignals', () => {
     expect(signals[2]?.severityBucket).toBe('low');
   });
 
+  it('trims critical severity and replaces boilerplate signal copy', async () => {
+    const rows = [
+      {
+        record_id: 'cross_program_signals:xprog:meridian:010',
+        title: 'Capital conflict Hawaii vs RCM vs ambient',
+        record_payload: {
+          id: 'xprog:meridian:010',
+          type: 'resource_allocation_conflict',
+          severity: ' Critical ',
+          description:
+            'This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.',
+          recommendation:
+            'This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.',
+          status: 'open',
+          programs: ['meridian-ambient-2026', 'meridian-rcm-modernization-2026'],
+          raised_by: 'Atlas',
+          raised_date: '2026-04-20',
+        },
+      },
+    ];
+    fromMock.mockImplementation(() => makeBuilder({ data: rows, error: null }));
+    const signals = await getCrossProgramSignals('meridian-health');
+    expect(signals[0]?.severityBucket).toBe('critical');
+    expect(signals[0]?.description).toContain('Capital conflict Hawaii vs RCM vs ambient');
+    expect(signals[0]?.description).not.toContain('intentionally graph-ready');
+    expect(signals[0]?.recommendation).toContain('Escalate to the sponsor group');
+  });
+
   it('handles missing payload fields gracefully', async () => {
     const rows = [
       {
@@ -355,5 +383,59 @@ describe('getCrossProgramSignals', () => {
     expect(signals).toHaveLength(1);
     expect(signals[0]?.severityBucket).toBe('unknown');
     expect(signals[0]?.programs).toEqual([]);
+  });
+});
+
+describe('getSegmentRecordPage — record title derivation', () => {
+  beforeEach(() => fromMock.mockReset());
+
+  it('uses KPI payload names when imported row titles are generic', async () => {
+    fromMock.mockImplementation((table: string) => {
+      if (table === 'data_inventory_segments') {
+        return makeBuilder({
+          data: {
+            segment_id: 'kpi_dictionary',
+            segment_name: 'KPI dictionary',
+            family_number: 5,
+            record_count: 1,
+            coverage_score: 100,
+            stale_count: 0,
+            missing_count: 0,
+            health_state: 'complete',
+            last_reviewed_at: null,
+            last_ingested_at: null,
+          },
+          error: null,
+        });
+      }
+      if (table === 'data_inventory_records') {
+        return makeBuilder({
+          data: [
+            {
+              record_id: 'kpi_dictionary:kpi:meridian:001',
+              title: 'Kpi Dictionary 1',
+              record_kind: 'kpi',
+              record_payload: {
+                kpi_name: 'Medical Loss Ratio',
+                current_value: '87.4% FY2026 Q2',
+              },
+              source_doc: 'kpi_dictionary.csv',
+              data_classification: 'Internal',
+              freshness_state: 'fresh',
+              confidence: 0.86,
+              last_reviewed: '2026-04-15',
+              uploaded_by: 'Import pipeline',
+              uploaded_at: '2026-04-30T10:00:00Z',
+            },
+          ],
+          error: null,
+        });
+      }
+      return makeBuilder({ data: null, error: null });
+    });
+
+    const page = await getSegmentRecordPage('meridian-health', 'kpi_dictionary');
+
+    expect(page?.records[0]?.title).toBe('Medical Loss Ratio · 87.4% FY2026 Q2');
   });
 });

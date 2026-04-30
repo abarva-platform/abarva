@@ -26,7 +26,9 @@ RULES:
    itself does.
 6. Write like a senior analyst — concise, confident, unpadded.
 7. Do not output source citations inline — the UI renders them separately.
-8. Do not preamble. Start the answer directly.`;
+8. Do not preamble. Start the answer directly.
+9. Never start with hollow acknowledgements like "Good question", "Great question",
+   "Excellent question", "Happy to", or "Let me".`;
 
 function chooseModel(intent: AskIntent): string {
   if (intent === 'vendor_comparison' || intent === 'topic_synthesis' || intent === 'general_synthesis') {
@@ -40,6 +42,28 @@ function formatSourcesBlock(sources: AskSource[]): string {
   return sources
     .map((s, i) => `[SOURCE ${i + 1} · ${s.type} · ${s.name}]\n${s.detail}`)
     .join('\n\n');
+}
+
+const HOLLOW_OPENER_RE =
+  /^\s*(?:good|great|excellent)\s+question(?:,\s*[A-Z][a-z]+)?\.?\s*(?:let me\s+(?:give|be|walk|explain)[^.]*\.\s*)?/i;
+
+export function sanitizeAskSynthesis(text: string, maxWords = 120): string {
+  const withoutOpener = text.replace(HOLLOW_OPENER_RE, '').trim();
+  const words = withoutOpener.split(/\s+/).filter(Boolean);
+  if (words.length <= maxWords) return withoutOpener;
+
+  const capped = words.slice(0, maxWords).join(' ');
+  const lastSentenceEnd = Math.max(
+    capped.lastIndexOf('.'),
+    capped.lastIndexOf('?'),
+    capped.lastIndexOf('!'),
+  );
+  if (lastSentenceEnd > 80) return capped.slice(0, lastSentenceEnd + 1);
+  return `${capped.replace(/[,\s;:]+$/, '')}…`;
+}
+
+function chunkText(text: string): string[] {
+  return text.match(/.{1,80}(?:\s|$)/g)?.map((chunk) => chunk.trimEnd()) ?? [text];
 }
 
 export async function* synthesizeStream(args: {
@@ -70,10 +94,15 @@ export async function* synthesizeStream(args: {
       stream: true,
     });
 
+    let text = '';
     for await (const event of stream) {
       if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-        yield event.delta.text;
+        text += event.delta.text;
       }
+    }
+
+    for (const chunk of chunkText(sanitizeAskSynthesis(text))) {
+      yield chunk;
     }
   } catch (err) {
     yield `\n\n[synthesis error: ${err instanceof Error ? err.message : 'unknown'}]`;

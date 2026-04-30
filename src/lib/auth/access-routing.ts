@@ -12,6 +12,27 @@ function normalizeEmail(email: string | null | undefined): string {
   return email?.trim().toLowerCase() ?? '';
 }
 
+function hasExplicitTenantAlias(email: string | null | undefined): boolean {
+  const normalized = normalizeEmail(email);
+  if (!normalized) return false;
+  return (
+    normalized.includes('demo-meridian+clerk_test') ||
+    normalized.includes('demo-arcturus+clerk_test') ||
+    normalized.includes('demo-firstcapital+clerk_test') ||
+    normalized.includes('demo-apexretail+clerk_test') ||
+    normalized.includes('demo-keystone+clerk_test') ||
+    normalized.includes('demo-nexora+clerk_test') ||
+    normalized.includes('mh+clerk_test') ||
+    normalized.includes('af+clerk_test') ||
+    normalized.includes('apex+clerk_test') ||
+    normalized.includes('keystone+clerk_test') ||
+    normalized.includes('ke+clerk_test') ||
+    normalized.includes('+apex@abarva.com') ||
+    normalized.includes('+meridian@abarva.com') ||
+    normalized.includes('+firstcapital@abarva.com')
+  );
+}
+
 export function isNewClientSetupEmail(email: string | null | undefined): boolean {
   const normalized = normalizeEmail(email);
   return normalized.includes('demo-new+clerk_test');
@@ -37,7 +58,10 @@ export function inferSessionRoleFromEmail(email: string | null | undefined): App
     normalized.includes('af+clerk_test') ||
     normalized.includes('apex+clerk_test') ||
     normalized.includes('keystone+clerk_test') ||
-    normalized.includes('ke+clerk_test')
+    normalized.includes('ke+clerk_test') ||
+    normalized.includes('+apex@abarva.com') ||
+    normalized.includes('+meridian@abarva.com') ||
+    normalized.includes('+firstcapital@abarva.com')
   ) {
     return 'client';
   }
@@ -55,6 +79,11 @@ export function isLockedTenantRole(role: AppSessionRole, email: string | null | 
 }
 
 export function resolvePinnedSessionClientKey(input: ResolveClientInput): ClientKey | null {
+  const inferredClientKey = inferClientKeyFromEmail(input.email);
+  if (hasExplicitTenantAlias(input.email) && inferredClientKey) {
+    return inferredClientKey;
+  }
+
   const resolved = [input.clientId, input.defaultClientId, inferClientKeyFromEmail(input.email)].find((candidate) =>
     isClientKey(candidate),
   );
