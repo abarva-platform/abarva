@@ -20,6 +20,15 @@ describe('maestro person lookup helpers', () => {
     ).toBe(false);
   });
 
+  it('rejects metadata person_id rows without email when the Clerk session has email candidates', () => {
+    expect(
+      personMatchesClerkEmail(
+        { email: null },
+        ['demo-apexretail+clerk_test@abarva.com', 'demo-apexretail@abarva.com'],
+      ),
+    ).toBe(false);
+  });
+
   it('accepts person_id rows whose email matches a Clerk email candidate', () => {
     expect(
       personMatchesClerkEmail(
