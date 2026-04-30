@@ -247,6 +247,136 @@ Every stage must expose:
 | S6 Contract | Contract management standards, supplier obligations | Control requirements embedded in contract | Agreement as enforceable governance artifact | Clause library + contract intelligence + approvals |
 | S7 Activate | Contract management and SRM | Monitor supplier risk and respond | Transition, service delivery, value realization | Transition plan + QBR scorecard + value ledger |
 
+## 7.6 Step Operating Contract
+
+Every stage must decompose into steps. A step is the smallest unit Sentinel can actively help with. Each step needs a contract:
+
+| Field | Meaning |
+|---|---|
+| Step id | Stable id, e.g. `s0-trigger`, `s5-walkaway` |
+| What good looks like | Practitioner-grade completion standard |
+| Entry criteria | What must already be true before the step starts |
+| Exit criteria | What evidence or decision marks the step complete |
+| Pattern support | Which pattern families Sentinel should retrieve |
+| Tenant data support | Which client data room domains Sentinel should check first |
+| Agent move | Extract, validate, coach workshop, compare, generate, evaluate, request approval |
+| Templates / documents | What Sentinel can generate or prepare |
+| Evidence write-back | What artifact/evidence item this step should create or update |
+| Approval posture | None, sponsor review, procurement review, legal/security review, executive approval |
+
+This gives the agent a real operating plan. The user should feel: "A senior sourcing partner knows exactly what we need next."
+
+## 7.7 Step Map By Stage
+
+### S0 Intake
+
+| Step | Good Looks Like | Entry | Exit | Patterns / Data | Agent Move | Generated / Captured Artifact |
+|---|---|---|---|---|---|---|
+| `s0-trigger` | Trigger names why now, deadline, consequence, and business pressure | Category or demand signal exists | Trigger statement captured | category/process patterns; program context; contract renewal calendar | Extract and challenge vague trigger | Intake trigger note |
+| `s0-owner` | Named decision owner has scope and stop/go authority | Trigger exists | Sponsor/owner confirmed or unresolved owner gap logged | people_org; org chart; prior approvals | Resolve known title from tenant data, ask for confirmation | Sponsor confirmation note |
+| `s0-scope-boundary` | In-scope and out-of-scope are explicit enough vendors cannot define the event | Initial category named | Scope boundary recorded with exclusions | system_landscape; vendor_contracts; service towers | Validate and narrow | Scope boundary brief |
+| `s0-baseline-evidence` | Current run-rate, inventory, incumbents, dates, pain, constraints are named or requested | Scope hypothesis exists | Evidence checklist created with owners | evidence_provenance; contracts; financials | Identify missing evidence | Baseline evidence request |
+| `s0-stop-approval` | Stop condition, savings floor, and approval route are stated before market work | Trigger, owner, scope known | Kill criterion and approver path captured | risk patterns; prior gate decisions | Coach decision threshold | Stop/approval criterion |
+| `s0-register-event` | Event is draft or registered with a clear status | Five fields reviewed | Registered S0 event or draft with gaps | stage pack; event schema | Summarize and request confirmation | Sourcing event brief |
+
+### S1 Market Shape
+
+| Step | Good Looks Like | Entry | Exit | Patterns / Data | Agent Move | Generated / Captured Artifact |
+|---|---|---|---|---|---|---|
+| `s1-market-hypothesis` | Buyer states how the market is expected to solve the problem and what is uncertain | S0 event registered | Hypothesis and unknowns captured | category patterns; market signals | Coach market framing | Market hypothesis |
+| `s1-vendor-universe` | Longlist includes incumbents, challengers, specialists, and explicit exclusions | Hypothesis exists | Vendor universe with rationale | vendor profiles; contract registry | Retrieve and compare | Vendor universe table |
+| `s1-rfi-backchannel` | Learning plan uses RFI or practitioner backchannel without leaking leverage | Unknowns named | RFI/backchannel questions ready | stage pack; sourcing process patterns | Generate questions | Market learning plan |
+| `s1-should-cost` | Initial should-cost or baseline assumption exists before vendor pricing | Baseline evidence available or requested | Should-cost model skeleton | pricing patterns; financial baseline | Build starter model | Should-cost worksheet |
+| `s1-advance-readiness` | Buyer knows what must be true to shortlist | Learning plan complete | S2 readiness recommendation | gate criteria | Evaluate | S1 gate packet |
+
+### S2 Shortlist
+
+| Step | Good Looks Like | Entry | Exit | Patterns / Data | Agent Move | Generated / Captured Artifact |
+|---|---|---|---|---|---|---|
+| `s2-rubric-lock` | Scoring weights are set before response bias enters | Market shape complete | Locked rubric with mandatory versus scored criteria | category patterns; stage pack | Coach and validate | Shortlist scoring rubric |
+| `s2-panel` | Evaluation panel includes business, IT, finance, security/legal, procurement, and dissenter | Rubric draft exists | Named panel and missing roles | people_org; stakeholder map | Fill known roles, identify gaps | Evaluation panel map |
+| `s2-supplier-suitability` | Shortlist tests supplier suitability separately from bid quality | Vendor universe exists | Suitability screen complete | vendor profiles; NIST SP 800-161-aligned risk patterns | Compare vendor suitability | Supplier suitability screen |
+| `s2-challenger` | At least one credible challenger is retained or rejection is justified | Suitability screen complete | Challenger decision captured | vendor profiles; market signals | Challenge shortlist bias | Challenger rationale |
+| `s2-approval` | Shortlist owner approves who proceeds to RFP/RFI | Panel and shortlist ready | Approval captured | approval history | Request approval | Shortlist approval note |
+
+### S3 RFP / RFI
+
+| Step | Good Looks Like | Entry | Exit | Patterns / Data | Agent Move | Generated / Captured Artifact |
+|---|---|---|---|---|---|---|
+| `s3-outcome-questions` | Questions test outcomes and evidence, not vendor marketing | Shortlist and rubric locked | RFP/RFI question set drafted | category patterns; contract patterns | Generate and critique | RFP/RFI package |
+| `s3-response-structure` | Vendor response format forces comparability | Draft package exists | Response template and scoring trace ready | templates; pricing patterns | Generate template | Vendor response template |
+| `s3-risk-requirements` | Security, privacy, AI, resilience, and supply-chain requirements are explicit | Category risk known | Risk requirement schedule | NIST SP 800-161; AI RMF; risk patterns | Add risk controls | Risk/control schedule |
+| `s3-q-and-a-discipline` | Q&A captures ambiguity without private side deals | Package issued | Q&A log and clarification rules | evidence ledger | Monitor and summarize | Q&A log |
+| `s3-release-approval` | Procurement/legal approves release | Package complete | Release approval captured | approval workflow | Request approval | Release packet |
+
+### S4 Demo / POC
+
+| Step | Good Looks Like | Entry | Exit | Patterns / Data | Agent Move | Generated / Captured Artifact |
+|---|---|---|---|---|---|---|
+| `s4-buyer-scenarios` | Demo scenarios are buyer-designed and tied to real workflows | Responses received | Scenario script locked | system_landscape; process patterns | Generate scenarios | Demo / POC script |
+| `s4-success-criteria` | Success criteria are observable before demo/POC begins | Scenario draft exists | Criteria locked | stage pack; evidence patterns | Validate criteria | Success criteria matrix |
+| `s4-red-team` | Red-team cases test failure, exception, integration, and AI risk | Criteria exists | Red-team script ready | risk patterns; AI RMF | Generate adversarial cases | Red-team test plan |
+| `s4-result-capture` | Results are captured in comparable form, not vibes | Demo/POC run | Evidence-backed result summary | evidence ledger | Evaluate evidence | Demo/POC result log |
+| `s4-downselect` | Downselect rationale ties back to rubric and evidence | Results captured | Downselect recommendation | vendor profiles; scorecards | Compare and recommend | Downselect memo |
+
+### S5 BAFO
+
+| Step | Good Looks Like | Entry | Exit | Patterns / Data | Agent Move | Generated / Captured Artifact |
+|---|---|---|---|---|---|---|
+| `s5-normalized-commercials` | Offers normalize term, volume, usage, assumptions, one-time costs, and risk | Evaluation narrowed | Comparable commercial view | pricing patterns; contract data | Normalize and flag gaps | BAFO comparison model |
+| `s5-levers` | Buyer knows what to hold, reveal, trade, and refuse | Commercial view exists | Negotiation lever map | pricing/contract/risk patterns | Coach strategy | BAFO lever plan |
+| `s5-calendar` | BAFO sequence has dates, owners, vendor order, and decision windows | Lever map exists | BAFO calendar locked | stage pack; team availability | Generate plan | BAFO calendar |
+| `s5-walkaway` | Walkaway is credible and has executive backing | Savings/risk floor known | Walkaway posture strong/soft/theatre | value ledger; approvals | Evaluate and warn | Walkaway signal |
+| `s5-final-offer` | Final recommendation ties price, risk, scope, and transition | BAFO complete | Award recommendation ready | all prior evidence | Synthesize | BAFO decision memo |
+
+### S6 Contract
+
+| Step | Good Looks Like | Entry | Exit | Patterns / Data | Agent Move | Generated / Captured Artifact |
+|---|---|---|---|---|---|---|
+| `s6-clause-position` | Critical clause positions are explicit before signature | Preferred vendor selected | Clause position matrix | contract patterns; risk patterns | Inspect and compare | Clause matrix |
+| `s6-security-ai-supply-chain` | ICT/AI/supply-chain obligations are contractual, not questionnaire-only | Clause draft exists | Required controls embedded or exceptions logged | NIST SP 800-161; AI RMF; vendor risk | Validate obligations | Risk obligation schedule |
+| `s6-exit-assistance` | Exit, transition, data return, knowledge transfer, and pricing are enforceable | Contract draft exists | Exit-assistance language reviewed | outsourcing patterns; contract patterns | Flag gaps | Exit-assistance checklist |
+| `s6-commercial-protections` | Escalators, indexation, volume assumptions, MFN/benchmarking, and renewal notices are known | Pricing final | Commercial protections reviewed | pricing patterns; contract data | Inspect | Commercial terms review |
+| `s6-signature` | Signature authority and exception approvals are captured | Contract ready | Signature packet approved | people_org; approval workflow | Request approval | Signature packet |
+
+### S7 Activate
+
+| Step | Good Looks Like | Entry | Exit | Patterns / Data | Agent Move | Generated / Captured Artifact |
+|---|---|---|---|---|---|---|
+| `s7-transition-plan` | Transition has owners, dates, dual-run, knowledge transfer, and risks | Award/contract ready | Transition plan approved | ISO 37500 outsourcing patterns; program link | Generate plan | Transition plan |
+| `s7-service-readiness` | Service desk, escalation, reporting, access, and governance are ready | Transition plan exists | Readiness checklist complete | system_landscape; vendor_contracts | Evaluate readiness | Service readiness checklist |
+| `s7-qbr-scorecard` | QBR/scorecard cadence exists before handoff | Service readiness known | Scorecard and review cadence live | SRM patterns; value ledger | Generate scorecard | Supplier governance scorecard |
+| `s7-value-realization` | Value hypothesis is baselined and tracked after go-live | Baseline and award terms known | Value tracking owner and cadence | financial baseline; value ledger | Set measurement | Value realization plan |
+| `s7-lessons-harvest` | Learnings feed patterns and future events | Activation complete | Lessons and pattern updates proposed | evidence ledger; corpus candidates | Harvest and summarize | Lessons learned packet |
+
+## 7.8 Agent Assistance Modes
+
+Sentinel should choose a mode per step:
+
+| Mode | When Used | Agent Behavior |
+|---|---|---|
+| Extract | User can provide the answer in a few words | Ask one question, capture the field, update right canvas |
+| Validate | User makes a claim that must meet a known shape | Compare against good-looks-like, flag gaps |
+| Coach workshop | Step requires meeting or working session | Capture intent, attendees, agenda, template, expected upload |
+| Generate document | A structured artifact is needed | Draft template-backed document and cite source inputs |
+| Compare | Vendors, offers, clauses, or options need scoring | Normalize, show assumptions, emit comparison artifacts |
+| Evaluate gate | User wants to advance | Check hard/soft criteria and approval posture |
+| Request approval | Decision needs sponsor/procurement/legal sign-off | Prepare approval packet and route |
+| Harvest | Stage/event closed | Write learning candidates back to knowledge layer review queue |
+
+## 7.9 Documents And Templates By Stage
+
+| Stage | Core Documents Sentinel Should Generate Or Prepare |
+|---|---|
+| S0 Intake | Sourcing event brief, sponsor confirmation note, baseline evidence request, stop/approval criterion |
+| S1 Market Shape | Market hypothesis, vendor universe, RFI/backchannel question set, should-cost starter |
+| S2 Shortlist | Scoring rubric, evaluator panel map, supplier suitability screen, shortlist approval memo |
+| S3 RFP / RFI | RFP/RFI package, response template, Q&A log, risk/control schedule |
+| S4 Demo / POC | Demo script, POC success criteria, red-team test plan, result capture log |
+| S5 BAFO | BAFO calendar, pricing normalization model, negotiation lever map, walkaway signal, BAFO decision memo |
+| S6 Contract | Clause matrix, risk obligation schedule, exit-assistance checklist, commercial terms review, signature packet |
+| S7 Activate | Transition plan, service readiness checklist, QBR scorecard, value realization plan, lessons learned packet |
+
 ## 8. Right Canvas Behavior
 
 The right canvas is not decorative. It should reduce chat length and make the product feel alive.
