@@ -97,6 +97,8 @@ export function SourcePortfolioReactivePanel({
         Sentinel source reasoning - live
       </header>
 
+      <SourceOperatingModelCard />
+
       <Card kind="Portfolio posture">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
           <Metric label="Events" value={String(events.length)} />
@@ -170,6 +172,62 @@ export function SourcePortfolioReactivePanel({
         </Card>
       ) : null}
     </section>
+  );
+}
+
+function SourceOperatingModelCard() {
+  const rows = [
+    'Create a sourcing event when there is a real business trigger, not just vendor noise.',
+    'Use Sentinel to turn intake into scope, evidence, gates, and deal strategy.',
+    'Open an existing event when you need stage work: shortlist, RFP, demo, BAFO, contract, or activation.',
+  ];
+
+  return (
+    <Card kind="Operating model">
+      <p style={{ ...MUTED, marginBottom: 10 }}>
+        Source is the IT sourcing command center. Sentinel is here to act like the sourcing partner in the room:
+        slow down weak intake, protect buyer leverage, and keep the right evidence visible.
+      </p>
+      <div style={{ display: 'grid', gap: 7 }}>
+        {rows.map((row) => (
+          <div
+            key={row}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '14px minmax(0, 1fr)',
+              gap: 7,
+              alignItems: 'start',
+              fontFamily: SHELL.SANS,
+              fontSize: 12.3,
+              lineHeight: 1.38,
+              color: SHELL.INK_SOFT,
+            }}
+          >
+            <span style={{ color: '#1B2B5C', fontWeight: 800 }}>→</span>
+            <span>{row}</span>
+          </div>
+        ))}
+      </div>
+      <Link
+        href="/source/new"
+        style={{
+          display: 'inline-flex',
+          marginTop: 12,
+          borderRadius: 999,
+          background: SHELL.INK,
+          color: SHELL.PAPER,
+          padding: '7px 11px',
+          fontFamily: SHELL.MONO,
+          fontSize: 9.5,
+          fontWeight: 800,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          textDecoration: 'none',
+        }}
+      >
+        Create sourcing event
+      </Link>
+    </Card>
   );
 }
 

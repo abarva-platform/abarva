@@ -140,9 +140,29 @@ function SourcePortfolioPromptDeck({ events }: { events: SourcingEventSummary[] 
             color: 'rgba(250,247,241,0.88)',
           }}
         >
-          I can help stand up a sourcing event without turning this into an RFP factory. We will first lock five fields:
-          trigger, owner, scope, baseline evidence, and stop/approval.
+          I can help stand up a sourcing event or work an existing one. For a new event, we first lock five fields:
+          trigger, owner, scope, baseline evidence, and stop/approval. Then the right rail carries the evidence and gate state.
         </p>
+        <a
+          href="/source/new"
+          style={{
+            display: 'inline-flex',
+            marginTop: 10,
+            borderRadius: 999,
+            border: '1px solid rgba(250,247,241,0.22)',
+            background: 'rgba(250,247,241,0.08)',
+            color: 'rgba(250,247,241,0.92)',
+            padding: '7px 10px',
+            fontFamily: SHELL.MONO,
+            fontSize: 9.5,
+            fontWeight: 800,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            textDecoration: 'none',
+          }}
+        >
+          Create sourcing event
+        </a>
       </div>
 
       <div style={{ display: 'grid', gap: 7 }}>

@@ -96,7 +96,8 @@ function NexusAdvisory() {
           lineHeight: 1.5,
         }}
       >
-        A new source event will open at Stage 1: Plan. You can link it to a program to align vendor decisions with CDP scope.
+        A new sourcing event opens only after the intake floor is coherent: trigger, owner, scope, baseline evidence,
+        and stop/approval condition.
       </div>
     </div>
   );
@@ -763,7 +764,7 @@ function Step3(props: {
           marginBottom: 16,
         }}
       >
-        Create source event →
+        Create sourcing event →
       </button>
 
       <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
@@ -794,7 +795,7 @@ function SuccessState() {
           lineHeight: 1.5,
         }}
       >
-        ✓ Source event created — Nexus has opened the event in Stage 1: Plan
+        ✓ Sourcing event created — Nexus has opened the event at intake
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <a
@@ -896,7 +897,7 @@ export function SourceOriginatePage() {
       topBarProps={{
         tenantName: 'Apex Retail Group',
         showLocked: true,
-        context: 'Source · New event',
+        context: 'Source · Create sourcing event',
       }}
     >
       {/* Full-width work pane */}
@@ -915,7 +916,7 @@ export function SourceOriginatePage() {
                 marginBottom: 6,
               }}
             >
-              Originate source event
+              Create sourcing event
             </div>
             <h1
               style={{
