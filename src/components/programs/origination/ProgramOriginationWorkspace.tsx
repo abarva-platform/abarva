@@ -315,6 +315,28 @@ export function ProgramOriginationWorkspace({
           case against the AbarVa pattern library, and assemble the brief on
           the right as the picture fills in. Confirm to register.
         </p>
+        <span
+          aria-label="Active tenant"
+          style={{
+            alignSelf: 'flex-start',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            marginTop: 6,
+            padding: '5px 9px',
+            borderRadius: 999,
+            border: `1px solid rgba(12,26,58,0.14)`,
+            background: '#FFFFFF',
+            fontFamily: BrandTypography.mono,
+            fontSize: 10,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: BrandColors.slate,
+            fontWeight: 700,
+          }}
+        >
+          Tenant · {tenantName}
+        </span>
       </header>
 
       <div
