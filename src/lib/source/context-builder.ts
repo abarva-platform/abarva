@@ -45,6 +45,9 @@ import type {
 import {
   DEFAULT_SOURCE_CONTEXT_QUALITY_THRESHOLDS,
 } from './context-quality';
+import {
+  getSourceTechnologySourcingContextFromSetupSeed,
+} from './admin-setup-readiness-contract';
 import type {
   ScorecardCriterionStatus,
   SourceLifecycleStatus,
@@ -104,6 +107,7 @@ export function buildSourceContextFromSeed(input: SourceContextBuilderInput): So
   const relevantPatternSections = getSourcePatternSectionsSeed(event);
   const evidenceCitations = getSourceEvidenceSeed(event);
   const scorecardDefaultWeights = getSourceScorecardDefaultWeightsSeed(event);
+  const clientItContext = getSourceTechnologySourcingContextFromSetupSeed(event.id);
 
   const bundle: SourceAgentContextBundle = {
     ...createEmptySourceContextBundle(input),
@@ -119,6 +123,7 @@ export function buildSourceContextFromSeed(input: SourceContextBuilderInput): So
     eventOwner: event.owner,
     stageOwner: activeStage.gate.ownerRole,
     decisionOwner: event.scorecard.decisionOwner,
+    clientItContext: clientItContext ?? undefined,
     agingDays: event.agingDays,
     blockers,
     waitState: toWaitState(event, activeStage),
@@ -156,6 +161,11 @@ export function buildSourceContextFromSeed(input: SourceContextBuilderInput): So
         updatedAt: artifact.updatedAt,
         stale: false,
       })),
+      ...(clientItContext?.setupDataReferences.map((reference) => ({
+        source: `setup-data-layer:${reference.segmentId}:${reference.recordId}`,
+        updatedAt: reference.lastReviewed ?? clientItContext.updatedAt,
+        stale: false,
+      })) ?? []),
     ],
   };
 
@@ -288,6 +298,7 @@ export function getSourceContextUsed(bundle: SourceAgentContextBundle): SourceCo
         ...(bundle.lifecycleStatus ? ['lifecycleStatus'] : []),
         ...(bundle.nextAction ? ['nextAction'] : []),
         ...(bundle.eventOwner ? ['eventOwner'] : []),
+        ...(bundle.clientItContext ? ['clientItContext'] : []),
         ...(typeof bundle.agingDays === 'number' ? ['agingDays'] : []),
         ...(bundle.stageGates.length ? ['stageGates'] : []),
         ...(bundle.artifacts.length ? ['artifacts'] : []),
