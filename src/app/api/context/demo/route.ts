@@ -48,10 +48,12 @@
  * for a real `client.capture` — the call site stays identical.
  */
 
+import { currentUser } from '@clerk/nextjs/server';
 import { NextResponse, type NextRequest } from 'next/server';
 
 import { requireTenancy, TenancyError } from '@/app/api/v1/programs/_auth';
 import { getActiveClientRow } from '@/lib/active-client';
+import { resolveSessionRole } from '@/lib/auth/access-routing';
 import { clientKeyToBrokerTenantKey } from '@/lib/agent/tools/intelligence/_shared';
 import {
   CONTEXT_DEMO_QUERY_MAX_LENGTH,
@@ -259,13 +261,26 @@ function parseOptionalInteger(raw: unknown, field: string): OptionalIntegerResul
  * auth or no active client; the route translates those to 401/403.
  */
 export async function resolveDemoTenancy(): Promise<DemoTenancyContext> {
-  const ctx = await requireTenancy();
-  // Active client lookup is best-effort — `requireTenancy` already
-  // guaranteed a session and a client; this fetch just carries the
-  // ClientKey we need to translate into the broker's vocabulary.
-  const client = await getActiveClientRow().catch(() => null);
+  // Run auth + active-client + Clerk metadata in parallel for speed.
+  const [ctx, client, clerkUser] = await Promise.all([
+    requireTenancy(),
+    getActiveClientRow().catch(() => null),
+    currentUser().catch(() => null),
+  ]);
   const activeBrokerTenantKey = client ? clientKeyToBrokerTenantKey(client.key) : null;
-  return { userId: ctx.userId, activeBrokerTenantKey, role: ctx.role };
+  // Use the Clerk platform role (publicMetadata.role) for the bypass
+  // check, not persons.role which is the engagement-layer role and may
+  // be null for the founder account.
+  const clerkRole = clerkUser
+    ? resolveSessionRole(
+        clerkUser.publicMetadata?.role as string | undefined,
+        clerkUser.primaryEmailAddress?.emailAddress ??
+          clerkUser.emailAddresses?.[0]?.emailAddress ??
+          undefined,
+      )
+    : undefined;
+  const role = clerkRole ?? ctx.role;
+  return { userId: ctx.userId, activeBrokerTenantKey, role: role ?? undefined };
 }
 
 /**
