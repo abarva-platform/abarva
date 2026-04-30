@@ -43,6 +43,9 @@ jobs:
         run: npm ci
 
       - name: TypeScript typecheck (full project)
+        # OOM fix: full-project tsc was crossing 2 GB heap limit; bumped to 6 GB. Tracked under CI-FIX.
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
         run: npx tsc --noEmit
 
       - name: Reasoning-layer Jest tests

@@ -169,4 +169,7 @@ jobs:
       # excluded from the gate to avoid blocking unrelated PRs. The validator
       # test (step 4) covers the manifest structural contract fully.
       - name: TypeScript typecheck
+        # OOM fix: full-project tsc was crossing 2 GB heap limit; bumped to 6 GB. Tracked under CI-FIX.
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
         run: npx tsc --noEmit --pretty false
