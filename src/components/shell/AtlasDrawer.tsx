@@ -18,7 +18,7 @@ import { SHELL } from '@/lib/shell/shell-tokens';
 import { useAgentStream } from '@/hooks/useAgentStream';
 import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
 import { AgentMarkdown } from '@/lib/agent/markdownRenderer';
-import type { Artifact } from '@/lib/agent/artifacts';
+import { stripArtifactsForDisplay, type Artifact } from '@/lib/agent/artifacts';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -856,7 +856,7 @@ function DrawerChatBubble({
           wordBreak: 'break-word',
         }}
       >
-        {isUser ? text : <AgentMarkdown text={text} />}
+        {isUser ? text : <AgentMarkdown text={stripArtifactsForDisplay(text)} />}
       </div>
     </div>
   );

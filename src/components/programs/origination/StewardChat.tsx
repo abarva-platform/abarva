@@ -22,6 +22,7 @@ import { AgentMarkdown } from '@/lib/agent/markdownRenderer';
 import { BrandColors, BrandTypography } from '@/lib/shell/brand-tokens';
 import {
   extractArtifacts,
+  stripArtifactsForDisplay,
   visibleArtifactPendingText,
   type Artifact,
 } from '@/lib/agent/artifacts';
@@ -442,7 +443,7 @@ export function StewardChat({
               {turn.role === 'user' ? (
                 <span style={{ whiteSpace: 'pre-wrap' }}>{turn.text}</span>
               ) : turn.text.length > 0 ? (
-                <AgentMarkdown text={turn.text} />
+                <AgentMarkdown text={stripArtifactsForDisplay(turn.text)} />
               ) : (
                 <span style={{ color: BrandColors.stone, fontStyle: 'italic' }}>
                   Steward is thinking…

@@ -10,7 +10,7 @@
  *   - reject malformed JSON / unknown types without crashing
  */
 
-import { extractArtifacts, type Artifact } from '../artifacts';
+import { extractArtifacts, stripArtifactsForDisplay, type Artifact } from '../artifacts';
 
 describe('extractArtifacts · happy path', () => {
   it('strips a single complete artifact and dispatches it', () => {
@@ -782,6 +782,20 @@ describe('extractArtifacts · PR-Q navigate-to', () => {
 });
 
 describe('extractArtifacts · OV2-1a brief-progress + overlap-alert', () => {
+  it('strips closed artifact tuples from replayed chat text', () => {
+    const text = stripArtifactsForDisplay(
+      'I captured the sponsor. [[artifact:brief-progress]]{"fieldsTotal":1,"fieldsFilled":1,"fields":[{"id":"sponsor","label":"Sponsor","status":"filled","value":"Sarah Chen"}]}[[/artifact]] Next question.',
+    );
+    expect(text).toBe('I captured the sponsor.  Next question.');
+  });
+
+  it('hides unclosed artifact tuples from replayed chat text', () => {
+    const text = stripArtifactsForDisplay(
+      'I captured the sponsor. [[artifact:brief-progress]]{"fieldsTotal":1,"fieldsFilled":1}',
+    );
+    expect(text).toBe('I captured the sponsor. ');
+  });
+
   it('parses a valid brief-progress with mixed field statuses', () => {
     const r = extractArtifacts(
       '[[artifact:brief-progress]]{"fieldsTotal":8,"fieldsFilled":2,"fields":[' +
