@@ -279,8 +279,13 @@ export async function POST(request: Request) {
       const programData = await getEngagementWithPhaseData(programId, activeClient?.id ?? null);
       if (programData) {
         const { engagement, evidence, gateApprovals } = programData;
-        const phase = engagement.current_phase ?? 0;
-        const phaseLabel = PHASE_LABEL_MAP[phase as keyof typeof PHASE_LABEL_MAP] ?? "Unknown";
+        const currentPhase = engagement.current_phase ?? 0;
+        const viewedPhase = readPromptPhaseFromSurfaceContext(surfaceContext, stage);
+        const promptPhase = viewedPhase ?? currentPhase;
+        const currentPhaseLabel =
+          PHASE_LABEL_MAP[currentPhase as keyof typeof PHASE_LABEL_MAP] ?? "Unknown";
+        const promptPhaseLabel =
+          PHASE_LABEL_MAP[promptPhase as keyof typeof PHASE_LABEL_MAP] ?? "Unknown";
         const latestGate =
           gateApprovals.length > 0
             ? `${gateApprovals[0].action} by ${gateApprovals[0].actor_name}`
@@ -288,12 +293,15 @@ export async function POST(request: Request) {
 
         contextLines.push(
           `Active program: ${engagement.name} (${programId})`,
-          `Current phase: P${phase} ${phaseLabel}`,
+          `Current phase: P${currentPhase} ${currentPhaseLabel}`,
+          viewedPhase !== null && viewedPhase !== currentPhase
+            ? `Viewed phase canvas: P${viewedPhase} ${promptPhaseLabel}`
+            : "",
           `Evidence items: ${evidence.length} uploaded`,
           `Gate approvals: ${latestGate}`,
         );
 
-        const pack = getPhasePack(phase);
+        const pack = getPhasePack(promptPhase);
         if (pack) {
           phasePackBlock = formatPhasePackForPrompt(pack);
         }
@@ -810,6 +818,24 @@ function readClientSuppliedMode(
 ): import("@/lib/knowledge/context-broker").BrokerMode | null {
   const raw = surfaceContext.contextBundleMode;
   return isBrokerMode(raw) ? raw : null;
+}
+
+function readPromptPhaseFromSurfaceContext(
+  surfaceContext: Record<string, unknown>,
+  stage: string | null,
+): number | null {
+  const rawPhase = surfaceContext.phase;
+  if (typeof rawPhase === 'number' && Number.isInteger(rawPhase) && rawPhase >= 0 && rawPhase <= 6) {
+    return rawPhase;
+  }
+  if (typeof rawPhase === 'string' && /^[0-6]$/.test(rawPhase)) {
+    return Number(rawPhase);
+  }
+  if (stage) {
+    const match = /^P([0-6])$/.exec(stage);
+    if (match) return Number(match[1]);
+  }
+  return null;
 }
 
 /**

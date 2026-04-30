@@ -56,6 +56,14 @@ describe('agent route · CB-6 context-bundle wiring', () => {
     expect(source).toContain("surfaceContext.contextBundleMode");
   });
 
+  it('uses the viewed phase canvas for phase-pack prompting when present', () => {
+    expect(source).toContain('function readPromptPhaseFromSurfaceContext(');
+    expect(source).toContain('const viewedPhase = readPromptPhaseFromSurfaceContext(surfaceContext, stage)');
+    expect(source).toContain('const promptPhase = viewedPhase ?? currentPhase');
+    expect(source).toContain('Viewed phase canvas: P${viewedPhase}');
+    expect(source).toContain('const pack = getPhasePack(promptPhase)');
+  });
+
   it('falls back to inferModeForSurface when the client mode is invalid', () => {
     // The client-supplied mode wins ONLY if isModeValidForAuth(...) accepts it.
     expect(source).toMatch(
