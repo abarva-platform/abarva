@@ -5,7 +5,9 @@
  * stays well-defined as Codex / Wave-2 work adds more artifact types.
  */
 
-import { selectVisibleArtifacts } from '../NexusReactivePanel';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { NexusReactivePanel, selectVisibleArtifacts } from '../NexusReactivePanel';
 import type { Artifact } from '@/lib/agent/artifacts';
 
 describe('selectVisibleArtifacts', () => {
@@ -128,6 +130,121 @@ describe('selectVisibleArtifacts', () => {
     expect(selectVisibleArtifacts([])).toEqual([]);
   });
 
+  // OV2-FM-PANEL · failure-mode-flagged dedupe + filter + severity sort.
+  it('keeps failure-mode-flagged artifacts visible (not filtered out)', () => {
+    const input: Artifact[] = [
+      {
+        type: 'failure-mode-flagged',
+        failureModeId: 1,
+        failureModeName: 'Lack of executive sponsorship and ownership',
+        phase: 0,
+        detectedSignal: 'Sponsor cannot describe a calendar commitment.',
+        consequence: 'Air cover collapses at the first hard tradeoff.',
+        redirect: 'Schedule a sponsor 1:1 in the next 5 days.',
+        severity: 'soft',
+      },
+    ];
+    const out = selectVisibleArtifacts(input);
+    expect(out).toHaveLength(1);
+    expect(out[0].type).toBe('failure-mode-flagged');
+  });
+
+  it('dedupes failure-mode-flagged by failureModeId, keeping the latest emission', () => {
+    const input: Artifact[] = [
+      {
+        type: 'failure-mode-flagged',
+        failureModeId: 4,
+        failureModeName: 'Insufficient change-management investment',
+        phase: 5,
+        detectedSignal: 'first signal',
+        consequence: 'first consequence',
+        redirect: 'first redirect',
+        severity: 'soft',
+      },
+      {
+        type: 'failure-mode-flagged',
+        failureModeId: 4,
+        failureModeName: 'Insufficient change-management investment',
+        phase: 5,
+        detectedSignal: 'second signal',
+        consequence: 'second consequence',
+        redirect: 'second redirect',
+        severity: 'hard',
+      },
+    ];
+    const out = selectVisibleArtifacts(input);
+    const flags = out.filter((a) => a.type === 'failure-mode-flagged') as Array<
+      Extract<Artifact, { type: 'failure-mode-flagged' }>
+    >;
+    expect(flags).toHaveLength(1);
+    expect(flags[0].detectedSignal).toBe('second signal');
+    expect(flags[0].consequence).toBe('second consequence');
+    expect(flags[0].redirect).toBe('second redirect');
+    expect(flags[0].severity).toBe('hard');
+  });
+
+  it('keeps two distinct failureModeIds as separate cards', () => {
+    const input: Artifact[] = [
+      {
+        type: 'failure-mode-flagged',
+        failureModeId: 1,
+        failureModeName: 'Lack of executive sponsorship and ownership',
+        phase: 0,
+        detectedSignal: 'sponsor signal',
+        consequence: 'sponsor consequence',
+        redirect: 'sponsor redirect',
+        severity: 'soft',
+      },
+      {
+        type: 'failure-mode-flagged',
+        failureModeId: 9,
+        failureModeName: 'Inability to measure outcomes and impact',
+        phase: 5,
+        detectedSignal: 'baseline signal',
+        consequence: 'baseline consequence',
+        redirect: 'baseline redirect',
+        severity: 'hard',
+      },
+    ];
+    const out = selectVisibleArtifacts(input);
+    const flags = out.filter((a) => a.type === 'failure-mode-flagged') as Array<
+      Extract<Artifact, { type: 'failure-mode-flagged' }>
+    >;
+    expect(flags).toHaveLength(2);
+    expect(flags.map((f) => f.failureModeId).sort()).toEqual([1, 9]);
+  });
+
+  it('orders hard-severity failure-mode-flagged before soft in the rendered output', () => {
+    const input: Artifact[] = [
+      {
+        type: 'failure-mode-flagged',
+        failureModeId: 2,
+        failureModeName: 'Scope creep',
+        phase: 1,
+        detectedSignal: 'soft signal',
+        consequence: 'soft consequence',
+        redirect: 'soft redirect',
+        severity: 'soft',
+      },
+      {
+        type: 'failure-mode-flagged',
+        failureModeId: 6,
+        failureModeName: 'Architecture-review gap',
+        phase: 3,
+        detectedSignal: 'hard signal',
+        consequence: 'hard consequence',
+        redirect: 'hard redirect',
+        severity: 'hard',
+      },
+    ];
+    const out = selectVisibleArtifacts(input);
+    const flags = out.filter((a) => a.type === 'failure-mode-flagged') as Array<
+      Extract<Artifact, { type: 'failure-mode-flagged' }>
+    >;
+    // Hard severity renders first (gate-blocking reads loudest).
+    expect(flags.map((f) => f.severity)).toEqual(['hard', 'soft']);
+  });
+
   // PR-Q · founder feedback regression. The reactive panel was
   // rendering "3 duplicate generic pattern-match cards" because Nexus
   // re-emits the same pattern across turns. Dedupe by patternId keeps
@@ -162,5 +279,113 @@ describe('selectVisibleArtifacts', () => {
     const cdp = patterns.find((p) => p.patternId === 'PAT-PRG-CDP-001');
     expect(cdp?.summary).toBe('refined summary');
     expect(cdp?.successRatePct).toBe(78);
+  });
+});
+
+// OV2-FM-PANEL · render-tests for FailureModeFlaggedCard. Asserts the
+// severity-driven visual treatment, the catalog-id eyebrow, the body
+// fields, and the phase footer all surface in the rendered HTML.
+describe('NexusReactivePanel · failure-mode-flagged rendering', () => {
+  it('renders FAILURE MODE #N eyebrow, name, signal, consequence, redirect, and phase', () => {
+    const artifacts: Artifact[] = [
+      {
+        type: 'failure-mode-flagged',
+        failureModeId: 4,
+        failureModeName: 'Insufficient change-management investment',
+        phase: 5,
+        detectedSignal: 'User said "we ran 8 trainings, adoption is high" with no telemetry.',
+        consequence: 'Training-equals-adoption fallacy; real adoption may stall.',
+        redirect: 'Baseline adoption telemetry against P4 success criteria before close.',
+        severity: 'hard',
+      },
+    ];
+    const html = renderToStaticMarkup(
+      createElement(NexusReactivePanel, { artifacts }),
+    );
+    expect(html).toContain('Failure mode #4');
+    expect(html).toContain('Insufficient change-management investment');
+    expect(html).toContain('Detected signal');
+    expect(html).toContain('we ran 8 trainings');
+    expect(html).toContain('Consequence');
+    expect(html).toContain('Training-equals-adoption fallacy');
+    expect(html).toContain('Redirect');
+    expect(html).toContain('Baseline adoption telemetry');
+    expect(html).toContain('Phase P5');
+  });
+
+  it('hard severity uses a distinct visual indicator from soft severity', () => {
+    const hardArtifacts: Artifact[] = [
+      {
+        type: 'failure-mode-flagged',
+        failureModeId: 1,
+        failureModeName: 'Lack of executive sponsorship and ownership',
+        phase: 0,
+        detectedSignal: 'hard signal',
+        consequence: 'hard consequence',
+        redirect: 'hard redirect',
+        severity: 'hard',
+      },
+    ];
+    const softArtifacts: Artifact[] = [
+      {
+        type: 'failure-mode-flagged',
+        failureModeId: 1,
+        failureModeName: 'Lack of executive sponsorship and ownership',
+        phase: 0,
+        detectedSignal: 'soft signal',
+        consequence: 'soft consequence',
+        redirect: 'soft redirect',
+        severity: 'soft',
+      },
+    ];
+    const hardHtml = renderToStaticMarkup(
+      createElement(NexusReactivePanel, { artifacts: hardArtifacts }),
+    );
+    const softHtml = renderToStaticMarkup(
+      createElement(NexusReactivePanel, { artifacts: softArtifacts }),
+    );
+    // Both surface the data-severity hook.
+    expect(hardHtml).toContain('data-severity="hard"');
+    expect(softHtml).toContain('data-severity="soft"');
+    // Hard adds an explicit hard label in the eyebrow; soft does not.
+    expect(hardHtml).toMatch(/Failure mode #1[\s\S]{0,80}hard/);
+    expect(softHtml).not.toMatch(/Failure mode #1[\s\S]{0,80}\bhard\b/);
+    // Hard uses the danger-tone red for the left edge stripe; soft does not.
+    const dangerRed = '#b91c1c';
+    expect(hardHtml).toContain(dangerRed);
+    expect(softHtml).not.toContain(dangerRed);
+  });
+
+  it('renders hard severity flags before soft severity flags in the panel', () => {
+    const artifacts: Artifact[] = [
+      {
+        type: 'failure-mode-flagged',
+        failureModeId: 2,
+        failureModeName: 'Soft-name fixture',
+        phase: 1,
+        detectedSignal: 's',
+        consequence: 's',
+        redirect: 's',
+        severity: 'soft',
+      },
+      {
+        type: 'failure-mode-flagged',
+        failureModeId: 6,
+        failureModeName: 'Hard-name fixture',
+        phase: 3,
+        detectedSignal: 'h',
+        consequence: 'h',
+        redirect: 'h',
+        severity: 'hard',
+      },
+    ];
+    const html = renderToStaticMarkup(
+      createElement(NexusReactivePanel, { artifacts }),
+    );
+    const hardIndex = html.indexOf('Hard-name fixture');
+    const softIndex = html.indexOf('Soft-name fixture');
+    expect(hardIndex).toBeGreaterThanOrEqual(0);
+    expect(softIndex).toBeGreaterThanOrEqual(0);
+    expect(hardIndex).toBeLessThan(softIndex);
   });
 });

@@ -20,6 +20,7 @@ import type {
   Artifact,
   CrossProgramDependencyArtifact,
   EvidenceHighlightArtifact,
+  FailureModeFlaggedArtifact,
   GateEvaluationArtifact,
   PatternMatchArtifact,
   PhaseProgressArtifact,
@@ -447,6 +448,145 @@ function AntiPatternFlagCard({ a }: { a: AntiPatternFlagArtifact }) {
   );
 }
 
+// OV2-FM-PANEL · failure-mode flag against the cross-cutting catalog
+// of 10 failure modes. Sits alongside AntiPatternFlagCard (both are
+// flag-style cards) but distinct: anti-patterns are phase-pack
+// observations, failure-mode flags are catalog-level. Severity drives
+// tone — `hard` reads as gate-blocking (danger / red), `soft` reads
+// as a note (warning / amber). The per-event card here is the
+// per-emission view of the cross-program telemetry rollup described
+// in PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md Part E.5.
+const FAILURE_MODE_HARD_TONE = {
+  border: 'rgba(220,38,38,0.32)',
+  signal: '#b91c1c',
+  stripe: '#b91c1c',
+} as const;
+
+const FAILURE_MODE_SOFT_TONE = {
+  border: 'rgba(217,119,6,0.32)',
+  signal: '#b45309',
+  stripe: 'transparent',
+} as const;
+
+function FailureModeFlaggedCard({ a }: { a: FailureModeFlaggedArtifact }) {
+  const agentLabel = useContext(CardAgentLabelContext);
+  const tone = a.severity === 'hard' ? FAILURE_MODE_HARD_TONE : FAILURE_MODE_SOFT_TONE;
+  const isHard = a.severity === 'hard';
+  return (
+    <div
+      data-testid="failure-mode-flagged-card"
+      data-severity={a.severity}
+      style={{
+        background: '#FFFFFF',
+        border: `1px solid ${tone.border}`,
+        borderLeft: isHard ? `4px solid ${tone.stripe}` : `1px solid ${tone.border}`,
+        borderRadius: 8,
+        padding: '12px 14px',
+        boxShadow: '0 1px 2px rgba(12,26,58,0.04)',
+        fontFamily: BrandTypography.sans,
+        color: BrandColors.inkBlack,
+      }}
+    >
+      <div
+        style={{
+          fontFamily: BrandTypography.mono,
+          fontSize: 9.5,
+          letterSpacing: '0.10em',
+          textTransform: 'uppercase',
+          color: tone.signal,
+          fontWeight: 700,
+          marginBottom: 8,
+        }}
+      >
+        {agentLabel} · Failure mode #{a.failureModeId}
+        {isHard ? ' · hard' : ' · soft'}
+      </div>
+      <div
+        style={{
+          fontFamily: BrandTypography.serif,
+          fontSize: 15,
+          fontWeight: 400,
+          lineHeight: 1.3,
+          color: BrandColors.inkBlack,
+          marginBottom: 8,
+        }}
+      >
+        {a.failureModeName}
+      </div>
+      <div
+        style={{
+          fontFamily: BrandTypography.mono,
+          fontSize: 9.5,
+          letterSpacing: '0.10em',
+          textTransform: 'uppercase',
+          color: tone.signal,
+          fontWeight: 700,
+          marginBottom: 4,
+        }}
+      >
+        Detected signal
+      </div>
+      <p style={{ margin: 0, fontSize: 12.5, color: BrandColors.inkBlack, lineHeight: 1.55 }}>
+        {a.detectedSignal}
+      </p>
+      <div
+        style={{
+          fontFamily: BrandTypography.mono,
+          fontSize: 9.5,
+          letterSpacing: '0.10em',
+          textTransform: 'uppercase',
+          color: BrandColors.signalBlue,
+          fontWeight: 700,
+          marginTop: 10,
+          marginBottom: 4,
+        }}
+      >
+        Consequence
+      </div>
+      <p style={{ margin: 0, fontSize: 12.5, color: BrandColors.slate, lineHeight: 1.55 }}>
+        {a.consequence}
+      </p>
+      <div
+        style={{
+          fontFamily: BrandTypography.mono,
+          fontSize: 9.5,
+          letterSpacing: '0.10em',
+          textTransform: 'uppercase',
+          color: '#0f766e',
+          fontWeight: 700,
+          marginTop: 10,
+          marginBottom: 4,
+        }}
+      >
+        Redirect
+      </div>
+      <p style={{ margin: 0, fontSize: 12.5, color: BrandColors.slate, lineHeight: 1.55 }}>
+        {a.redirect}
+      </p>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          marginTop: 10,
+        }}
+      >
+        <span
+          style={{
+            fontFamily: BrandTypography.mono,
+            fontSize: 10,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: BrandColors.stone,
+            fontWeight: 700,
+          }}
+        >
+          Phase P{a.phase}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function ProgramFocusCard({ a }: { a: ProgramFocusArtifact }) {
   return (
     <CardShell kind="Now reasoning about">
@@ -471,9 +611,10 @@ function ProgramFocusCard({ a }: { a: ProgramFocusArtifact }) {
  * itself just maps over the result.
  *
  * Behavior:
- *   - Phase-progress, anti-pattern-flag, question-resolved, pattern-match:
- *     dedupe by stable id, keep LATEST occurrence (so re-emits act as
- *     upserts).
+ *   - Phase-progress, anti-pattern-flag, question-resolved, pattern-match,
+ *     failure-mode-flagged: dedupe by stable id, keep LATEST occurrence
+ *     (so re-emits act as upserts). For failure-mode-flagged the stable
+ *     id is `failureModeId` against the 10-failure-mode catalog.
  *   - Brief-field and classification: dropped — Surface 1 territory.
  *   - Everything else: preserved in insertion order.
  *   - Final result is reversed (most recent first across the stream).
@@ -488,6 +629,10 @@ export function selectVisibleArtifacts(artifacts: Artifact[]): Artifact[] {
   // panel was treating each emission as a new card. Same upsert
   // semantics as phase-progress/anti-pattern-flag.
   const seenPatterns = new Map<string, PatternMatchArtifact>();
+  // OV2-FM-PANEL · dedupe failure-mode-flagged by failureModeId so
+  // repeat emissions of the same catalog failure mode collapse into
+  // a single card with the latest details.
+  const seenFailureModes = new Map<number, FailureModeFlaggedArtifact>();
   const orderedNonDeduped: Artifact[] = [];
 
   for (const a of artifacts) {
@@ -501,10 +646,22 @@ export function selectVisibleArtifacts(artifacts: Artifact[]): Artifact[] {
       seenQuestions.set(a.questionId, a);
     } else if (a.type === 'pattern-match') {
       seenPatterns.set(a.patternId, a);
+    } else if (a.type === 'failure-mode-flagged') {
+      seenFailureModes.set(a.failureModeId, a);
     } else {
       orderedNonDeduped.push(a);
     }
   }
+
+  // OV2-FM-PANEL · sort failure-mode flags so hard-severity (gate-blocking)
+  // cards land AFTER soft-severity cards in the merged list. The merged
+  // list is `.reverse()`'d below, which flips that — hard ends up FIRST
+  // in the rendered output, matching the gate-blocking-reads-loudest
+  // visual intent.
+  const failureModesOrdered = Array.from(seenFailureModes.values()).sort((a, b) => {
+    if (a.severity === b.severity) return 0;
+    return a.severity === 'hard' ? 1 : -1;
+  });
 
   const merged: Artifact[] = [
     ...orderedNonDeduped,
@@ -512,6 +669,7 @@ export function selectVisibleArtifacts(artifacts: Artifact[]): Artifact[] {
     ...seenFlags.values(),
     ...seenQuestions.values(),
     ...seenPatterns.values(),
+    ...failureModesOrdered,
   ];
 
   return merged
@@ -525,7 +683,8 @@ export function selectVisibleArtifacts(artifacts: Artifact[]): Artifact[] {
         a.type === 'program-focus' ||
         a.type === 'phase-progress' ||
         a.type === 'anti-pattern-flag' ||
-        a.type === 'question-resolved',
+        a.type === 'question-resolved' ||
+        a.type === 'failure-mode-flagged',
     )
     .reverse();
 }
@@ -647,6 +806,8 @@ export function NexusReactivePanel({
             return <PhaseProgressCard key={`pp-${a.evidenceItemId}`} a={a} />;
           case 'anti-pattern-flag':
             return <AntiPatternFlagCard key={`ap-${a.antiPatternId}`} a={a} />;
+          case 'failure-mode-flagged':
+            return <FailureModeFlaggedCard key={`fm-${a.failureModeId}`} a={a} />;
           case 'question-resolved':
             return <QuestionResolvedCard key={`qr-${a.questionId}`} a={a} />;
           default:
