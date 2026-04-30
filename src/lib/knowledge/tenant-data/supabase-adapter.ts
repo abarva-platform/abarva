@@ -1,5 +1,9 @@
 import 'server-only';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import {
+  getPineconeClient,
+  type PineconeClient,
+} from '@/lib/knowledge/context-broker/pinecone-client';
 import type { TenantDataAdapter } from './adapter';
 import { GraphTraversal } from './graph-traversal';
 import type {
@@ -259,21 +263,34 @@ function mapEvidenceRow(row: InventoryRecordRow): EvidenceRecord {
 
 // ── Adapter ────────────────────────────────────────────────────────────
 
-const TD_9_NOT_IMPLEMENTED = 'Vector retrieval not yet enabled (TD-9 follow-on).';
+const PINECONE_NOT_CONFIGURED = 'Pinecone not configured. Set PINECONE_API_KEY.';
 
 const DEFAULT_RECORD_LIMIT = 50;
 const MAX_RECORD_LIMIT = 200;
 const DEFAULT_CHUNK_LIMIT = 50;
 const MAX_CHUNK_KEYWORD_LIMIT = 50;
+const DEFAULT_VECTOR_LIMIT = 10;
+const MAX_VECTOR_LIMIT = 50;
 
 export class SupabaseTenantDataAdapter implements TenantDataAdapter {
   private readonly graphTraversal: GraphTraversal;
+  private readonly pineconeClientFactory: () => PineconeClient | null;
 
-  constructor(private readonly client: SupabaseClient) {
+  constructor(
+    private readonly client: SupabaseClient,
+    /**
+     * Optional Pinecone-client factory for tests. Production callers
+     * pass nothing; the adapter lazy-resolves the singleton via
+     * `getPineconeClient()` so a missing PINECONE_API_KEY surfaces
+     * only when `chunksByVector` is actually invoked.
+     */
+    pineconeClientFactory: (() => PineconeClient | null) = getPineconeClient,
+  ) {
     // GraphTraversal expects a `() => SupabaseClient` getter so tests can
     // inject mocks per-call. We hand it the same service-role client used
     // for record reads — one client, one tenant boundary, no drift.
     this.graphTraversal = new GraphTraversal(() => this.client);
+    this.pineconeClientFactory = pineconeClientFactory;
   }
 
   async listSegments(tenantKey: string): Promise<SegmentRollup[]> {
@@ -424,12 +441,54 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
     return rows.map(mapChunkRow);
   }
 
-  chunksByVector(
-    _tenantKey: string,
-    _queryVector: number[],
-    _limit?: number,
+  async chunksByVector(
+    tenantKey: string,
+    queryVector: number[],
+    limit?: number,
   ): Promise<ContextChunk[]> {
-    return Promise.reject(new Error(TD_9_NOT_IMPLEMENTED));
+    const pinecone = this.pineconeClientFactory();
+    if (!pinecone) {
+      throw new Error(PINECONE_NOT_CONFIGURED);
+    }
+    if (!Array.isArray(queryVector) || queryVector.length === 0) {
+      throw new Error('chunksByVector: queryVector must be a non-empty number[].');
+    }
+    const topK = Math.min(MAX_VECTOR_LIMIT, Math.max(1, limit ?? DEFAULT_VECTOR_LIMIT));
+
+    const hits = await pinecone.query({
+      vector: queryVector,
+      tenantKey,
+      topK,
+    });
+    if (hits.length === 0) return [];
+
+    const ids = hits.map((h) => h.id);
+    // Bulk-fetch the chunks Postgres-side so the caller gets the
+    // canonical `chunk_text` and provenance — Pinecone metadata is the
+    // smallest possible subset by design (see pinecone-client.ts).
+    const { data, error } = await this.client
+      .from('enterprise_context_chunks')
+      .select(CHUNK_COLUMNS)
+      .eq('tenant_key', tenantKey)
+      .in('chunk_id', ids);
+    if (error) {
+      throw new Error(`chunksByVector failed for tenant '${tenantKey}': ${error.message}`);
+    }
+    const rows = (data ?? []) as unknown as ContextChunkRow[];
+
+    // Map by chunk_id so we can attach the Pinecone score to each
+    // hydrated chunk and preserve Pinecone's relevance ordering.
+    const byId = new Map<string, ContextChunk>();
+    for (const row of rows) {
+      byId.set(row.chunk_id, mapChunkRow(row));
+    }
+    const out: ContextChunk[] = [];
+    for (const hit of hits) {
+      const chunk = byId.get(hit.id);
+      if (!chunk) continue; // Pinecone vector with no Postgres backing — skip silently.
+      out.push({ ...chunk, vectorScore: hit.score });
+    }
+    return out;
   }
 
   async getEvidence(tenantKey: string, evidenceId: string): Promise<EvidenceRecord | null> {

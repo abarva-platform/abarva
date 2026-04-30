@@ -44,5 +44,6 @@ export {
   getContextBroker,
   WARNING_VECTOR_PENDING,
   WARNING_CORPUS_PENDING,
+  vectorRetrievalInfoTag,
   extractKeywords,
 } from './broker';

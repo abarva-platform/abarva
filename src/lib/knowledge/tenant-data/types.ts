@@ -146,6 +146,13 @@ export interface ContextChunk {
   embedding?: number[];
   sourceBasis?: string;
   classification?: 'public' | 'internal' | 'confidential' | 'restricted';
+  /**
+   * Cosine similarity 0..1 from the vector index. Populated only when
+   * the chunk arrives via `chunksByVector` (CB-3); undefined for
+   * keyword / record-scoped retrieval. The broker maps this into
+   * `SemanticChunkHit.score`.
+   */
+  vectorScore?: number;
 }
 
 /** A provenance-tagged claim from the evidence_ledger segment. */

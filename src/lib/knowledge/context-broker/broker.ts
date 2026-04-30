@@ -15,10 +15,13 @@ import 'server-only';
  *   wires the catalog). Tags a `'Corpus retrieval pending CB-6.'`
  *   warning.
  * - `tenant`  — Postgres facts + graph + chunks for one tenant.
- *   Refuses to run without `tenantKey`. Today's chunk retrieval falls
- *   back to keyword (TD-6) because vector retrieval throws (TD-9 /
- *   CB-3 gap); the broker catches the throw and tags the bundle with
+ *   Refuses to run without `tenantKey`. CB-3 wires real Pinecone
+ *   vector retrieval; when `PINECONE_API_KEY` is missing the broker
+ *   catches the throw and falls back to keyword retrieval (TD-6),
+ *   tagging the bundle with
  *   `'Vector retrieval pending — using keyword-only chunk retrieval'`.
+ *   On success the broker attaches a
+ *   `'Vector retrieval via Pinecone (top-K=N).'` info-tag.
  * - `full`    — same as `tenant` plus (in the future) corpus
  *   composition. Behaves identically to `tenant` in CB-1 and tags a
  *   `'Corpus retrieval pending CB-6.'` warning.
@@ -37,6 +40,10 @@ import type {
   TenantRecord,
 } from '@/lib/knowledge/tenant-data/types';
 
+import {
+  embedTexts,
+  type OpenAIEmbeddingsLike,
+} from './embedding-client';
 import {
   MissingTenantKeyError,
   type ContextAssembleInput,
@@ -69,6 +76,15 @@ const CLAMPS = {
 export const WARNING_VECTOR_PENDING =
   'Vector retrieval pending — using keyword-only chunk retrieval';
 export const WARNING_CORPUS_PENDING = 'Corpus retrieval pending CB-6.';
+
+/**
+ * Info-tag emitted when vector retrieval succeeds (CB-3). Embeds the
+ * topK actually used so the panel can render an accurate hover string
+ * without having to introspect the bundle.
+ */
+export function vectorRetrievalInfoTag(topK: number): string {
+  return `Vector retrieval via Pinecone (top-K=${topK}).`;
+}
 
 /**
  * English stopwords used by the keyword extractor. Intentionally
@@ -181,11 +197,20 @@ function emptyBundle(
 }
 
 /**
- * Default `ContextBroker` — TD-2/TD-3-backed for facts/graph/chunks,
- * with stubbed Pinecone (CB-3) and corpus (CB-6) retrieval.
+ * Default `ContextBroker` — TD-2/TD-3-backed for facts/graph/chunks
+ * + Pinecone vector retrieval (CB-3); corpus retrieval is still
+ * stubbed (CB-6).
+ *
+ * The constructor accepts an optional OpenAI-embeddings client for
+ * tests so vector retrieval can be exercised without an OPENAI_API_KEY
+ * or network. Production callers pass nothing — the broker imports
+ * `embedTexts` directly from CB-2's embedding client.
  */
 export class DefaultContextBroker implements ContextBroker {
-  constructor(private readonly adapter: TenantDataAdapter = getTenantDataAdapter()) {}
+  constructor(
+    private readonly adapter: TenantDataAdapter = getTenantDataAdapter(),
+    private readonly openaiClient?: OpenAIEmbeddingsLike,
+  ) {}
 
   async assemble(input: ContextAssembleInput): Promise<ContextBundle> {
     const maxFacts = clamp(input.maxFacts ?? DEFAULTS.maxFacts, CLAMPS.maxFacts);
@@ -254,22 +279,41 @@ export class DefaultContextBroker implements ContextBroker {
     }
 
     // ──────────────── Semantic chunks ────────────────
-    // Vector retrieval throws today (TD-9 / CB-3 gap). Catch the
-    // throw and fall back to keyword retrieval. Tag the bundle so
-    // the panel renders the right empty-state copy.
+    // CB-3: try real vector retrieval first. The adapter throws when
+    // Pinecone is not configured (no PINECONE_API_KEY); on that
+    // throw, or any embedding/query failure, fall back to keyword
+    // retrieval and tag the bundle so the panel renders the right
+    // empty-state copy.
     let semanticChunks: SemanticChunkHit[] = [];
+    let vectorSucceeded = false;
     try {
-      // No real query embedding in CB-1 — pass a single-zero placeholder.
-      // The stub adapter (TD-1) and supabase adapter (TD-9) both throw.
-      // CB-3 replaces this with a real embedding.
-      const vectorChunks = await this.adapter.chunksByVector(tenantKey, [0], maxChunks);
-      semanticChunks = vectorChunks.map((chunk) => ({ chunk, score: 1 }));
+      // Embed the query once. `embedTexts` throws if OPENAI_API_KEY
+      // is missing — which we catch below and fall back as if
+      // Pinecone weren't configured.
+      const embedResult = await embedTexts([input.query], undefined, this.openaiClient);
+      const queryVector = embedResult.results[0]?.embedding ?? [];
+      if (queryVector.length === 0) {
+        throw new Error('embedTexts returned an empty embedding for the query.');
+      }
+      const vectorChunks = await this.adapter.chunksByVector(
+        tenantKey,
+        queryVector,
+        maxChunks,
+      );
+      semanticChunks = vectorChunks.map((chunk) => ({
+        chunk,
+        score: chunk.vectorScore ?? 0,
+      }));
+      vectorSucceeded = true;
     } catch {
       warnings.push(WARNING_VECTOR_PENDING);
       const fallback: ContextChunk[] = keywords.length > 0
         ? await this.adapter.chunksByKeyword(tenantKey, keywords, maxChunks)
         : [];
       semanticChunks = fallback.map((chunk) => ({ chunk, score: 0 }));
+    }
+    if (vectorSucceeded) {
+      warnings.push(vectorRetrievalInfoTag(maxChunks));
     }
 
     if (input.mode === 'full') {

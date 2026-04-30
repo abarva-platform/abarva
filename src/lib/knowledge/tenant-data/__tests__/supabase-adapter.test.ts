@@ -532,10 +532,198 @@ describe('SupabaseTenantDataAdapter.chunksByKeyword', () => {
 });
 
 describe('SupabaseTenantDataAdapter.chunksByVector', () => {
-  it('throws the TD-9 error', async () => {
+  it('throws when Pinecone is not configured', async () => {
+    const adapter = new SupabaseTenantDataAdapter(
+      { from: fromMock } as never,
+      () => null, // no Pinecone client
+    );
     await expect(
-      makeAdapter().chunksByVector('apex-retail', [0.1, 0.2]),
-    ).rejects.toThrow(/TD-9 follow-on/);
+      adapter.chunksByVector('apex-retail', [0.1, 0.2]),
+    ).rejects.toThrow(/Pinecone not configured/);
+  });
+
+  it('throws when queryVector is empty', async () => {
+    const fakePinecone = {
+      upsert: jest.fn(),
+      query: jest.fn(),
+      deleteByIds: jest.fn(),
+      deleteByTenant: jest.fn(),
+    };
+    const adapter = new SupabaseTenantDataAdapter(
+      { from: fromMock } as never,
+      () => fakePinecone,
+    );
+    await expect(
+      adapter.chunksByVector('apex-retail', []),
+    ).rejects.toThrow(/non-empty number\[\]/);
+    expect(fakePinecone.query).not.toHaveBeenCalled();
+  });
+
+  it('returns ContextChunks ordered by Pinecone score with vectorScore populated', async () => {
+    const fakePinecone = {
+      upsert: jest.fn(),
+      query: jest.fn().mockResolvedValue([
+        {
+          id: 'chunk:apex:nps:0',
+          score: 0.92,
+          metadata: {
+            tenant_key: 'apex-retail',
+            record_kind: 'kpi_definition',
+            source_segment: 'kpi_dictionary',
+            record_id: 'kpi_dictionary:apex:nps',
+          },
+        },
+        {
+          id: 'chunk:apex:cdp:0',
+          score: 0.81,
+          metadata: {
+            tenant_key: 'apex-retail',
+            record_kind: 'program_record',
+            source_segment: 'program_inventory',
+            record_id: 'program:apex-cdp-2026',
+          },
+        },
+      ]),
+      deleteByIds: jest.fn(),
+      deleteByTenant: jest.fn(),
+    };
+    stagedResults = [
+      {
+        data: [
+          // Postgres returns rows out-of-order; we expect the adapter
+          // to preserve Pinecone's relevance ordering.
+          {
+            tenant_key: 'apex-retail',
+            chunk_id: 'chunk:apex:cdp:0',
+            source_segment_id: 'program_inventory',
+            source_record_id: 'program:apex-cdp-2026',
+            source_doc: 'programs.csv',
+            source_path: '06_program_inventory/programs.csv',
+            chunk_index: 0,
+            chunk_text: 'Apex CDP 2026 program …',
+            token_count: 50,
+            embedding_status: 'embedded',
+            embedding_model: 'text-embedding-3-small',
+            embedded_at: '2026-04-29T00:00:00Z',
+            provenance: { source_basis: 'tenant_admin_upload', data_classification: 'Internal' },
+            chunk_metadata: { title: 'Apex CDP' },
+          },
+          {
+            tenant_key: 'apex-retail',
+            chunk_id: 'chunk:apex:nps:0',
+            source_segment_id: 'kpi_dictionary',
+            source_record_id: 'kpi_dictionary:apex:nps',
+            source_doc: 'kpi_dictionary.csv',
+            source_path: '05_kpi_dictionary/kpi_dictionary.csv',
+            chunk_index: 0,
+            chunk_text: 'NPS measures customer loyalty …',
+            token_count: 30,
+            embedding_status: 'embedded',
+            embedding_model: 'text-embedding-3-small',
+            embedded_at: '2026-04-29T00:00:00Z',
+            provenance: { source_basis: 'tenant_admin_upload', data_classification: 'Internal' },
+            chunk_metadata: { title: 'NPS' },
+          },
+        ],
+        error: null,
+      },
+    ];
+
+    const adapter = new SupabaseTenantDataAdapter(
+      { from: fromMock } as never,
+      () => fakePinecone,
+    );
+    const out = await adapter.chunksByVector('apex-retail', [0.1, 0.2], 5);
+
+    expect(out).toHaveLength(2);
+    expect(out[0].chunkId).toBe('chunk:apex:nps:0');
+    expect(out[0].vectorScore).toBe(0.92);
+    expect(out[1].chunkId).toBe('chunk:apex:cdp:0');
+    expect(out[1].vectorScore).toBe(0.81);
+
+    // Pinecone query received tenantKey + topK.
+    expect(fakePinecone.query).toHaveBeenCalledWith({
+      vector: [0.1, 0.2],
+      tenantKey: 'apex-retail',
+      topK: 5,
+    });
+
+    // Postgres call hydrated by chunk_id (in-clause) + tenant_key.
+    expect(calls[0].table).toBe('enterprise_context_chunks');
+    expect(calls[0].filters).toEqual([
+      { op: 'eq', column: 'tenant_key', value: 'apex-retail' },
+      { op: 'in', column: 'chunk_id', value: ['chunk:apex:nps:0', 'chunk:apex:cdp:0'] },
+    ]);
+  });
+
+  it('skips Pinecone hits without a Postgres backing row (silent)', async () => {
+    const fakePinecone = {
+      upsert: jest.fn(),
+      query: jest.fn().mockResolvedValue([
+        { id: 'orphan-chunk', score: 0.99, metadata: { tenant_key: 'apex-retail', record_kind: 'k', source_segment: 's', record_id: 'r' } },
+      ]),
+      deleteByIds: jest.fn(),
+      deleteByTenant: jest.fn(),
+    };
+    stagedResults = [{ data: [], error: null }];
+
+    const adapter = new SupabaseTenantDataAdapter(
+      { from: fromMock } as never,
+      () => fakePinecone,
+    );
+    const out = await adapter.chunksByVector('apex-retail', [0.1]);
+    expect(out).toEqual([]);
+  });
+
+  it('returns [] without hitting Postgres when Pinecone returns no hits', async () => {
+    const fakePinecone = {
+      upsert: jest.fn(),
+      query: jest.fn().mockResolvedValue([]),
+      deleteByIds: jest.fn(),
+      deleteByTenant: jest.fn(),
+    };
+    const adapter = new SupabaseTenantDataAdapter(
+      { from: fromMock } as never,
+      () => fakePinecone,
+    );
+    const out = await adapter.chunksByVector('apex-retail', [0.1]);
+    expect(out).toEqual([]);
+    expect(calls).toHaveLength(0);
+  });
+
+  it('clamps limit to MAX_VECTOR_LIMIT (50) and defaults to 10', async () => {
+    const fakePinecone = {
+      upsert: jest.fn(),
+      query: jest.fn().mockResolvedValue([]),
+      deleteByIds: jest.fn(),
+      deleteByTenant: jest.fn(),
+    };
+    const adapter = new SupabaseTenantDataAdapter(
+      { from: fromMock } as never,
+      () => fakePinecone,
+    );
+    await adapter.chunksByVector('apex-retail', [0.1], 9999);
+    expect((fakePinecone.query as jest.Mock).mock.calls[0][0].topK).toBe(50);
+
+    await adapter.chunksByVector('apex-retail', [0.1]);
+    expect((fakePinecone.query as jest.Mock).mock.calls[1][0].topK).toBe(10);
+  });
+
+  it('passes tenant key through to Pinecone — tenant A query never sees tenant B vector', async () => {
+    const fakePinecone = {
+      upsert: jest.fn(),
+      query: jest.fn().mockResolvedValue([]),
+      deleteByIds: jest.fn(),
+      deleteByTenant: jest.fn(),
+    };
+    const adapter = new SupabaseTenantDataAdapter(
+      { from: fromMock } as never,
+      () => fakePinecone,
+    );
+    await adapter.chunksByVector('tenant-a', [0.1]);
+    await adapter.chunksByVector('tenant-b', [0.1]);
+    expect((fakePinecone.query as jest.Mock).mock.calls[0][0].tenantKey).toBe('tenant-a');
+    expect((fakePinecone.query as jest.Mock).mock.calls[1][0].tenantKey).toBe('tenant-b');
   });
 });
 
