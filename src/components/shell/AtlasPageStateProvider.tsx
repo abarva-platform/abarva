@@ -43,6 +43,13 @@ import {
   visibleArtifactPendingText,
   type Artifact,
 } from '@/lib/agent/artifacts';
+// CB-6 · type-only — server-only directive on the broker module is
+// preserved because TS strips this at compile time.
+import type { BrokerMode, ContextBundle } from '@/lib/knowledge/context-broker';
+import {
+  readStoredContextMode,
+  writeStoredContextMode,
+} from '@/lib/shell/context-mode-storage';
 // OV2-FM-TELEMETRY · failure-mode events fire from this dispatch site
 // because the artifact only becomes user-visible AFTER it lands in the
 // reactive panel. Dedupe by failureModeId via firedFlagsRef below
@@ -94,6 +101,38 @@ export function AtlasPageStateProvider({
   const [currentResponse, setCurrentResponse] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // CB-6 · context-bundle state. The agent route emits a
+  // `context-bundle` artifact at the start of each response; we
+  // catch it in the dispatch loop, store the bundle here, and
+  // unset the assembling flag.
+  const [latestContextBundle, setLatestContextBundle] =
+    useState<ContextBundle | null>(null);
+  const [isAssemblingContextBundle, setIsAssemblingContextBundle] =
+    useState(false);
+
+  // CB-6 · per-surface mode preference (4-mode toggle). Hydrated from
+  // localStorage on mount via `readStoredContextMode`; updates persist
+  // back through `writeStoredContextMode`.
+  const [contextBundleMode, setContextBundleModeState] =
+    useState<BrokerMode | null>(null);
+
+  useEffect(() => {
+    // `readStoredContextMode` itself guards `typeof window`, so this is
+    // safe to call on the client mount path. The hydration runs once
+    // per surface — on surface change, we re-read so the toggle's
+    // active state matches the new surface's stored preference.
+    const stored = readStoredContextMode(surface);
+    setContextBundleModeState(stored);
+  }, [surface]);
+
+  const setContextBundleMode = useCallback(
+    (mode: BrokerMode) => {
+      setContextBundleModeState(mode);
+      writeStoredContextMode(surface, mode);
+    },
+    [surface],
+  );
 
   // PR-K · hydrate from origination handoff if present. When the user
   // just completed commit_program on /programs/new, StewardChat
@@ -155,6 +194,11 @@ export function AtlasPageStateProvider({
       setCurrentResponse('');
       setError(null);
       setIsStreaming(true);
+      // CB-6 · the broker assembles the bundle BEFORE streaming starts,
+      // and emits it as the first artifact. Show the skeleton in the
+      // panel during the round-trip so the user sees that retrieval
+      // is happening.
+      setIsAssemblingContextBundle(true);
 
       try {
         // Build prior-turn history to give the model multi-turn context.
@@ -168,10 +212,15 @@ export function AtlasPageStateProvider({
             content: t.text,
           }));
 
-        const mergedSurfaceContext =
-          attachments && attachments.length > 0
-            ? { ...surfaceContext, attachments }
-            : surfaceContext;
+        // CB-6 · thread the user's chosen mode (4-mode toggle) into
+        // `surfaceContext.contextBundleMode`. The route prefers this
+        // when present and valid for the auth state; otherwise it falls
+        // back to `inferModeForSurface(surface, tenantKey)`.
+        const mergedSurfaceContext: Record<string, unknown> = {
+          ...surfaceContext,
+          ...(attachments && attachments.length > 0 ? { attachments } : {}),
+          ...(contextBundleMode ? { contextBundleMode } : {}),
+        };
         const res = await fetch('/api/chat/agent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -210,6 +259,16 @@ export function AtlasPageStateProvider({
             const key = JSON.stringify(a);
             if (seenArtifactKeys.has(key)) continue;
             seenArtifactKeys.add(key);
+            // CB-6 · context-bundle is consumed by the chat surface to
+            // render the "Context Assembled" panel beside the answer.
+            // Store the bundle, clear the assembling flag, and continue
+            // — we deliberately do NOT forward it to onArtifact since
+            // it's not reactive-panel content.
+            if (a.type === 'context-bundle') {
+              setLatestContextBundle(a.bundle);
+              setIsAssemblingContextBundle(false);
+              continue;
+            }
             // PR-Q · navigate-to is handled centrally — queue it for
             // the post-stream finally block. We deliberately do NOT
             // forward it to onArtifact, since reactive-panel consumers
@@ -292,6 +351,11 @@ export function AtlasPageStateProvider({
         setError(e instanceof Error ? e.message : 'Connection error');
       } finally {
         setIsStreaming(false);
+        // CB-6 · if the bundle artifact never arrived (broker errored,
+        // stream aborted) clear the assembling flag so the panel stops
+        // showing the skeleton and falls back to its prior bundle (if
+        // any) or the cold-start state.
+        setIsAssemblingContextBundle(false);
         // PR-Q · fire any queued navigation now that the turn has
         // settled. Pushing during the stream would unmount the
         // provider and throw away the in-flight reader.
@@ -304,7 +368,7 @@ export function AtlasPageStateProvider({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [surface, tenantName, stage, resolvedAgentName, isStreaming, conversation, onArtifact, router],
+    [surface, tenantName, stage, resolvedAgentName, isStreaming, conversation, onArtifact, router, contextBundleMode],
   );
 
   const clearResponse = useCallback(() => {
@@ -325,6 +389,10 @@ export function AtlasPageStateProvider({
     suggestedActions: [],
     ask,
     clearResponse,
+    latestContextBundle,
+    isAssemblingContextBundle,
+    contextBundleMode,
+    setContextBundleMode,
   };
 
   return (

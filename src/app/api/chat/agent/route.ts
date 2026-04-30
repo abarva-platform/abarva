@@ -58,6 +58,17 @@ import {
   type EnterpriseAgentContextBundle,
   type EnterpriseAgentName,
 } from "@/lib/knowledge/agent-context-broker";
+// CB-6 · context-broker for the 4-mode bundle attached to chat
+// answers. Server-only; the type-only import path keeps the
+// client bundle clean (the panel imports the same types via
+// `import type` so the broker's `'server-only'` directive
+// never traverses the client graph).
+import { getContextBroker } from "@/lib/knowledge/context-broker";
+import {
+  inferModeForSurface,
+  isBrokerMode,
+  isModeValidForAuth,
+} from "@/lib/knowledge/context-broker/mode-inference";
 // OV2-WIRE-AND-FM-PROMPT — failure-mode catalog (universal across Programs
 // surfaces) and overlap-candidates block (/programs/new only). The catalog
 // is sourced from FAILURE_MODES so the prompt and the catalog cannot drift.
@@ -85,7 +96,10 @@ import {
   extractAttachmentText,
   type AttachmentTextPreview,
 } from "@/lib/programs/attachments/extract-text";
-import { clientKeyToBrokerTenantKey } from "@/lib/agent/tools/intelligence/_shared";
+import {
+  clientKeyToBrokerTenantKey,
+  clientKeyToInventorySubstrateKey,
+} from "@/lib/agent/tools/intelligence/_shared";
 // F0.4: import the commit_program tool module so it self-registers
 // at startup. Routes that don't surface this tool will simply not
 // expose it in `tools`, but the registration must happen for the
@@ -568,6 +582,35 @@ export async function POST(request: Request) {
   const anthropicClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const tools = getRelevantTools(surface);
 
+  // ── CB-6 · context-bundle assembly ──────────────────────────────────────────
+  //
+  // Server-only: assemble the ContextBundle that grounds this turn so
+  // the chat surface can render the "Context Assembled" panel beside
+  // the answer. Mode resolution prefers a client-supplied
+  // `surfaceContext.contextBundleMode` (the 4-mode toggle's choice),
+  // falling back to the per-surface default in `inferModeForSurface`.
+  //
+  // The bundle is emitted as the first artifact in the response stream
+  // via the artifact-channel grammar, so the client-side parser
+  // (AtlasPageStateProvider) can intercept it before any text turns
+  // are rendered. Failures are non-fatal: the route always streams
+  // an answer, even if bundle assembly errored — the panel falls
+  // through to its cold-start state.
+  const brokerTenantKey = activeClient?.key
+    ? clientKeyToInventorySubstrateKey(activeClient.key)
+    : null;
+  const requestedMode = readClientSuppliedMode(surfaceContext);
+  const bundleMode =
+    requestedMode && isModeValidForAuth(requestedMode, brokerTenantKey)
+      ? requestedMode
+      : inferModeForSurface({ surface, tenantKey: brokerTenantKey });
+
+  const contextBundleArtifact = await assembleContextBundleArtifact({
+    query: message,
+    mode: bundleMode,
+    tenantKey: brokerTenantKey,
+  });
+
   const encoder = new TextEncoder();
   // F0.3 — buffer the streamed output for post-hoc validation. The
   // validator runs AFTER streaming completes; it never blocks the
@@ -587,6 +630,16 @@ export async function POST(request: Request) {
         },
       };
       try {
+        // CB-6 · emit the assembled context bundle as the first artifact
+        // in the response. The client-side parser
+        // (AtlasPageStateProvider) catches `context-bundle` and stores
+        // the bundle on per-conversation state for the panel render.
+        // We bypass the `writer` sink (and therefore the F0.3 text
+        // validator) — bundles are not synthesis output, they're
+        // server-grounded retrieval evidence the panel renders.
+        if (contextBundleArtifact) {
+          controller.enqueue(encoder.encode(contextBundleArtifact));
+        }
         await runToolUseLoop({
           client: anthropicClient,
           model: "claude-sonnet-4-6",
@@ -646,6 +699,48 @@ export async function POST(request: Request) {
 
 function isSourceSurface(surface: string): boolean {
   return surface === '/source' || surface.startsWith('/source/');
+}
+
+/**
+ * CB-6 · pull the optional `contextBundleMode` field off
+ * `surfaceContext` (set by the chat composer's 4-mode toggle).
+ * Unknown / malformed values are dropped so the route falls back
+ * to inferred mode.
+ */
+function readClientSuppliedMode(
+  surfaceContext: Record<string, unknown>,
+): import("@/lib/knowledge/context-broker").BrokerMode | null {
+  const raw = surfaceContext.contextBundleMode;
+  return isBrokerMode(raw) ? raw : null;
+}
+
+/**
+ * CB-6 · assemble the ContextBundle for the current turn and
+ * serialize it as a `[[artifact:context-bundle]]` envelope. Returns
+ * `null` on any error so streaming proceeds even when the broker is
+ * unreachable — the panel falls through to its cold-start state.
+ */
+async function assembleContextBundleArtifact(input: {
+  query: string;
+  mode: import("@/lib/knowledge/context-broker").BrokerMode;
+  tenantKey: string | null;
+}): Promise<string | null> {
+  try {
+    const bundle = await getContextBroker().assemble({
+      query: input.query,
+      mode: input.mode,
+      tenantKey: input.tenantKey ?? undefined,
+    });
+    const json = JSON.stringify({ bundle });
+    return `[[artifact:context-bundle]]${json}[[/artifact]]`;
+  } catch (err) {
+    console.warn('[chat/agent] context_bundle_assembly_failed', {
+      mode: input.mode,
+      tenantKey: input.tenantKey,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  }
 }
 
 function normalizeEnterpriseAgentName(agentName: string): EnterpriseAgentName {
