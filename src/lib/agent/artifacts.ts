@@ -36,6 +36,14 @@ export type ArtifactType =
   // future knowledge-broker work.
   | 'phase-progress' // {evidenceItemId, label, severity, status, detail?}
   | 'anti-pattern-flag' // {antiPatternId, label, detectedSignal, whatToFlag, mitigation}
+  // Surface 2 PR-G' (Wave 2) · question-resolution tracking. Phase
+  // packs declare rightQuestions sequenced open / converge / close.
+  // When the conversation resolves a question, Nexus emits this
+  // artifact; the panel renders a checkmark card and (more importantly)
+  // the conversation history shows the resolution so future turns
+  // don't re-ask the same opener. Closes the "Nexus repeats itself"
+  // observation from the surface-area doc §2 horizontal track.
+  | 'question-resolved' // {questionId, questionText, resolutionSummary?}
   // Surface 2 PR-L · emitted by the advance_phase tool (via ctx.writer)
   // after a successful gate evaluation + DB mutation. The client uses
   // this to refresh server data in place via router.refresh() — the
@@ -200,6 +208,33 @@ export interface ProgramPhaseChangedArtifact {
 }
 
 /**
+ * PR-G' (Wave 2) · question-resolution tracking. Phase packs declare
+ * `rightQuestions` (open / converge / close) — Nexus reads them at
+ * every turn to know what to ask. Without resolution tracking, Nexus
+ * re-asks the same opener two turns later because the prompt-side
+ * doctrine has no signal that the user already answered.
+ *
+ * This artifact closes the loop: when Nexus determines a pack
+ * question has been answered (the user supplied a satisfying answer
+ * in the conversation), it emits one of these. The reactive panel
+ * renders a checkmark card; more importantly, the conversation
+ * history visibly preserves the resolution so the next turn's prompt
+ * context shows Nexus that the question is closed.
+ *
+ * `questionId` matches the pack's right-question id (kebab-case,
+ * unique within the pack). Panel dedupes by id so re-emits upsert.
+ */
+export interface QuestionResolvedArtifact {
+  type: 'question-resolved';
+  /** Stable id from the pack's rightQuestions (open / converge / close). */
+  questionId: string;
+  /** Verbatim or paraphrased question text — denormalized so the panel renders without re-resolving. */
+  questionText: string;
+  /** Optional one-line summary of how the user answered. Surfaces in the card. */
+  resolutionSummary?: string;
+}
+
+/**
  * PR-INT-D · graph-neighborhood card. Sentinel emits one when it
  * walks the pattern graph (pattern_neighborhood tool, future broker
  * graph traversal). The card renders a compact hub-and-spoke or
@@ -318,6 +353,7 @@ export type Artifact =
   | PhaseProgressArtifact
   | AntiPatternFlagArtifact
   | ProgramPhaseChangedArtifact
+  | QuestionResolvedArtifact
   | GraphNeighborhoodArtifact
   | ContradictionFlagArtifact
   | VendorCardArtifact
@@ -368,6 +404,7 @@ export function isKnownArtifactType(type: string): type is ArtifactType {
     type === 'phase-progress' ||
     type === 'anti-pattern-flag' ||
     type === 'program-phase-changed' ||
+    type === 'question-resolved' ||
     type === 'graph-neighborhood' ||
     type === 'contradiction-flag' ||
     type === 'vendor-card' ||
@@ -603,6 +640,17 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
       const snapshotId =
         typeof obj.snapshotId === 'string' && obj.snapshotId.length > 0 ? obj.snapshotId : undefined;
       return { type, programId, fromPhase, toPhase, snapshotId };
+    }
+    case 'question-resolved': {
+      const questionId = obj.questionId;
+      const questionText = obj.questionText;
+      if (typeof questionId !== 'string' || questionId.length === 0) return null;
+      if (typeof questionText !== 'string' || questionText.length === 0) return null;
+      const resolutionSummary =
+        typeof obj.resolutionSummary === 'string' && obj.resolutionSummary.length > 0
+          ? obj.resolutionSummary
+          : undefined;
+      return { type, questionId, questionText, resolutionSummary };
     }
     case 'graph-neighborhood': {
       const rootId = obj.rootId;
@@ -1032,7 +1080,28 @@ For anti-pattern-flag: only emit when the detectionHint signal is
 genuinely visible. False positives are worse than missed flags here —
 a wrongly-flagged Phantom Sponsor will erode trust in the platform.
 
-11. graph-neighborhood — Sentinel-side. Emit when you've walked the
+11. question-resolved — Surface 2. When the user has answered a
+    rightQuestion from the active phase pack to a satisfying degree,
+    emit one of these. Use the questionId from the active pack — it's
+    a stable kebab-case id like "who-benefits-who-loses" or
+    "synthesis-options-compared". The reactive panel renders a
+    checkmark card; more importantly, the conversation history visibly
+    preserves the resolution so YOUR NEXT TURN can see that this
+    question is closed and you don't repeat the opener.
+    Use this aggressively. The pack arc (open / converge / close)
+    only works if the conversation tracks which questions are
+    answered. Without it, you re-ask the same opener two turns later
+    and the user loses confidence in the coaching.
+    What counts as resolved: the user gave a substantive answer that
+    satisfies the question (the pack's explicit reason for asking).
+    Vague or evasive answers do NOT resolve — keep probing.
+    Shape: {"questionId": <pack-question-id>,
+            "questionText": <verbatim or paraphrased question>,
+            "resolutionSummary"?: <one-line summary of the user's answer>}
+    Example (P2 Synthesis pack question who-benefits-who-loses):
+    [[artifact:question-resolved]]{"questionId":"who-benefits-who-loses","questionText":"Who personally benefits if this works, and who personally loses?","resolutionSummary":"Sarah Chen (CIO) benefits via consolidated ops; legacy AMS vendor loses the renewal — named dissenter."}[[/artifact]]
+
+12. graph-neighborhood — Sentinel-side. Emit when you've walked the
     pattern graph and the user benefits from a structural summary of
     the neighborhood (vs. a wall of pattern-match cards). topEdges is
     capped at 8 in the renderer; nodeCount + edgeCount carry the full
