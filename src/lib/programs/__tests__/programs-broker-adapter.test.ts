@@ -1,4 +1,7 @@
-import { buildProgramsContextBundle } from '@/lib/programs/programs-broker-adapter';
+import {
+  buildProgramsContextBundle,
+  formatProgramsBrokerBundleForPrompt,
+} from '@/lib/programs/programs-broker-adapter';
 
 describe('buildProgramsContextBundle', () => {
   it('round-trips a valid Programs broker request', () => {
@@ -69,5 +72,48 @@ describe('buildProgramsContextBundle', () => {
         }),
       ]),
     );
+  });
+
+  // PR-R · founder feedback #1 — tenant org-structure context.
+  it('exposes the executive bench as person items for Nexus', () => {
+    const bundle = buildProgramsContextBundle({
+      tenantKey: 'apex-retail',
+      programId: 'program:apex:morrison-owned-brand-margin-recovery',
+      agentName: 'Nexus',
+    });
+    const people = bundle.items.filter((i) => i.kind === 'person');
+    expect(people.length).toBeGreaterThan(0);
+    expect(people[0].title).toMatch(/—/);
+    expect(people[0].summary).toMatch(/Org unit:/);
+  });
+
+  it('accepts a request without programId for the /programs list surface', () => {
+    expect(() =>
+      buildProgramsContextBundle({
+        tenantKey: 'apex-retail',
+        agentName: 'Nexus',
+      }),
+    ).not.toThrow();
+  });
+});
+
+describe('formatProgramsBrokerBundleForPrompt', () => {
+  it('returns a non-empty TENANT CONTEXT block listing people and programs', () => {
+    const bundle = buildProgramsContextBundle({
+      tenantKey: 'apex-retail',
+      agentName: 'Nexus',
+    });
+    const block = formatProgramsBrokerBundleForPrompt(bundle);
+    expect(block).toContain('TENANT CONTEXT');
+    expect(block).toContain('Executive bench');
+    expect(block).toContain('Active program inventory');
+  });
+
+  it('returns empty string for an unknown tenant (no people/programs)', () => {
+    const bundle = buildProgramsContextBundle({
+      tenantKey: 'unknown-tenant',
+      agentName: 'Nexus',
+    });
+    expect(formatProgramsBrokerBundleForPrompt(bundle)).toBe('');
   });
 });
