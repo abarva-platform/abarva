@@ -24,6 +24,10 @@ import { FOUR_LAYER_REASONING_INSTRUCTIONS } from "@/lib/intelligence/synthesis/
 import { validateSynthesisOutput } from "@/lib/intelligence/synthesis/outputValidator";
 import { recordViolations } from "@/lib/intelligence/synthesis/violationsRecorder";
 import { ARTIFACT_CHANNEL_INSTRUCTIONS } from "@/lib/agent/artifacts";
+import {
+  composeSentinelSystemPrompt,
+  isSentinelVoiceDoctrineEnabled,
+} from "@/lib/agent/voice-doctrine/sentinel";
 // PR-G surface canonicalization — translates semantic surface keys
 // ('programs-detail') into URL-shaped keys ('/programs/<id>') so tool
 // resolution and the artifact-channel gate stay aligned.
@@ -186,7 +190,32 @@ export async function POST(request: Request) {
   //   2. Page context (tenant, surface, stage, program data if available)
   //   3. AGENT_DEMO_SYSTEM_BLOCK (unconditional — platform + Apex demo context)
 
-  const voiceLine = AGENT_VOICE[agentName] ?? DEFAULT_VOICE;
+  // INT-VOICE: for Sentinel on Intelligence surfaces, replace the
+  // one-line voice prompt with the full doctrine spec (sample
+  // exchanges + banned phrases + structural requirement +
+  // honesty modes). Doctrine is gated behind
+  // `SENTINEL_VOICE_DOCTRINE_DRAFT`; default-on in dev/staging,
+  // default-off in production until founder signs off.
+  let voiceLine = AGENT_VOICE[agentName] ?? DEFAULT_VOICE;
+  if (
+    agentName === 'Sentinel' &&
+    typeof surface === 'string' &&
+    surface.startsWith('/intelligence') &&
+    isSentinelVoiceDoctrineEnabled()
+  ) {
+    const inferredMode = surface.startsWith('/programs')
+      ? 'full'
+      : surface.startsWith('/admin')
+        ? 'tenant'
+        : 'corpus';
+    voiceLine = composeSentinelSystemPrompt({
+      mode: inferredMode,
+      tenantKey: null,
+      surface,
+      vectorIndexPending: true,
+      worldviewPending: true,
+    });
+  }
 
   const contextLines: string[] = [
     `Active tenant: ${tenantName} (locked — this is the user's client account).`,
