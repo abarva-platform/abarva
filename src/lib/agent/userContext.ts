@@ -9,6 +9,7 @@
 // user-activity log exists in the schema; building it would violate the
 // schema-without-data anti-pattern in §13).
 
+import { currentUser } from '@clerk/nextjs/server';
 import { getCurrentPerson } from '@/lib/auth/maestro';
 import { getActiveClientRow } from '@/lib/active-client';
 import { getServerSupabase } from '@/lib/supabase-server';
@@ -48,6 +49,23 @@ function deriveFirstName(name: string | null | undefined): string {
   return first || cleaned;
 }
 
+function deriveClerkDisplayName(user: Awaited<ReturnType<typeof currentUser>>): string | null {
+  if (!user) return null;
+  const explicit = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+  if (explicit) return explicit;
+  const email =
+    user.primaryEmailAddress?.emailAddress ??
+    user.emailAddresses[0]?.emailAddress ??
+    null;
+  if (!email) return null;
+  return email.split('@')[0]?.replace(/[._+~-]+/g, ' ').trim() || email;
+}
+
+function deriveClerkRole(user: Awaited<ReturnType<typeof currentUser>>): string {
+  const role = user?.publicMetadata?.role;
+  return typeof role === 'string' && role.trim() ? role : 'signed-in user';
+}
+
 function phaseLabel(phase: number | null | undefined): string {
   if (phase === null || phase === undefined) return 'unknown phase';
   if (phase >= 0 && phase <= 6) {
@@ -66,24 +84,33 @@ function phaseLabel(phase: number | null | undefined): string {
  * interactive + 4 synthesis).
  */
 export async function getUserContext(): Promise<UserContext | null> {
+  let clerkUser: Awaited<ReturnType<typeof currentUser>> = null;
+  try {
+    clerkUser = await currentUser();
+  } catch {
+    clerkUser = null;
+  }
   const person = await getCurrentPerson();
-  if (!person) return null;
+  if (!person && !clerkUser) return null;
   const client = await getActiveClientRow();
   if (!client) return null;
 
   const sb = getServerSupabase();
-  const { data: rows, error } = await sb
-    .from('engagements')
-    .select(
-      'id, graph_node_id, name, current_phase, sponsor_person_id, co_sponsor_person_id',
-    )
-    .eq('client_id', client.id)
-    .or(
-      `sponsor_person_id.eq.${person.id},co_sponsor_person_id.eq.${person.id}`,
-    );
+  const personId = person?.id ?? null;
+  const { data: rows, error } = person
+    ? await sb
+        .from('engagements')
+        .select(
+          'id, graph_node_id, name, current_phase, sponsor_person_id, co_sponsor_person_id',
+        )
+        .eq('client_id', client.id)
+        .or(
+          `sponsor_person_id.eq.${person.id},co_sponsor_person_id.eq.${person.id}`,
+        )
+    : { data: null, error: null };
 
   const sponsorshipHistory: SponsorshipEntry[] =
-    error || !rows
+    error || !rows || !personId
       ? []
       : (rows as Array<{
           id: string;
@@ -97,13 +124,16 @@ export async function getUserContext(): Promise<UserContext | null> {
           programName: row.name,
           currentPhase: phaseLabel(row.current_phase),
           relation:
-            row.sponsor_person_id === person.id ? 'sponsor' : 'co_sponsor',
+            row.sponsor_person_id === personId ? 'sponsor' : 'co_sponsor',
         }));
 
   return {
-    firstName: deriveFirstName(person.name),
-    fullName: person.name ?? deriveFirstName(person.name),
-    role: person.role ?? 'unspecified role',
+    firstName: deriveFirstName(person?.name ?? deriveClerkDisplayName(clerkUser)),
+    fullName:
+      person?.name ??
+      deriveClerkDisplayName(clerkUser) ??
+      deriveFirstName(person?.name),
+    role: person?.role ?? deriveClerkRole(clerkUser),
     tenantId: client.id,
     tenantDisplayName: client.name,
     sponsorshipHistory,
