@@ -101,20 +101,21 @@ describe('Source Nexus API stub contract', () => {
     });
     expect(response.intakeGuidance?.facts.map((fact) => fact.id)).toEqual([
       'why-now',
-      'decision-owner',
       'scope-boundary',
       'value-target',
       'baseline-owner',
+      'approval-owner',
     ]);
+    expect(response.summary).toContain('event-specific gaps');
     expect(response.summary).toContain('Why now');
-    expect(response.summary).toContain('Decision owner');
     expect(response.summary).toContain('Scope boundary');
     expect(response.summary).toContain('Value/savings target');
     expect(response.summary).toContain('Required baseline/data owner');
-    expect(response.summary).not.toMatch(/\b(chatbot|ask me|happy to help|as an ai|parse-failed|\[\[artifact:)/i);
+    expect(response.summary).toContain('Approval owner');
+    expect(response.summary).not.toMatch(/\b(chatbot|ask me|happy to help|as an ai|company|leadership|executive sponsor|embedding_status|vector embeddings are live|parse-failed|\[\[artifact:)/i);
     expect(response.summary.length).toBeLessThan(700);
     expect(response.nexusSummary?.recommendedNextAction).toBe(
-      'Capture those facts, then open Intake with the baseline owner named.',
+      'Open Intake once the baseline/data owner and approval owner are named.',
     );
   });
 

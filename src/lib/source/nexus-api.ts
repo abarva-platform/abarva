@@ -383,17 +383,12 @@ function maybeBuildIntakeGuidance(prompt: string): SourceNexusIntakeGuidance | u
   return {
     detectedIntent: 'it_sourcing_event_intake',
     eventType: prompt,
-    opening: `To stand up "${prompt}" as a sourcing event, capture these five facts.`,
+    opening: `To stand up "${prompt}", capture these event-specific gaps.`,
     facts: [
       {
         id: 'why-now',
         label: 'Why now',
         prompt: 'Trigger, deadline, renewal date, risk, or savings mandate.',
-      },
-      {
-        id: 'decision-owner',
-        label: 'Decision owner',
-        prompt: 'Executive sponsor and procurement lead accountable for go/no-go.',
       },
       {
         id: 'scope-boundary',
@@ -408,10 +403,15 @@ function maybeBuildIntakeGuidance(prompt: string): SourceNexusIntakeGuidance | u
       {
         id: 'baseline-owner',
         label: 'Required baseline/data owner',
-        prompt: 'Owner for application inventory, workload/ticket baseline, spend, contracts, and SLAs.',
+        prompt: 'Owner for inventory, workload/ticket baseline, spend, contracts, and SLAs.',
+      },
+      {
+        id: 'approval-owner',
+        label: 'Approval owner',
+        prompt: 'Owner/forum for launch, scope, spend guardrails, and shortlist moves.',
       },
     ],
-    nextStep: 'Capture those facts, then open Intake with the baseline owner named.',
+    nextStep: 'Open Intake once the baseline/data owner and approval owner are named.',
   };
 }
 
