@@ -353,7 +353,10 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
   }, []);
   const activeFilter = normalizeProgramsIndexFilter(searchParams?.get('filter') ?? null);
   const activePhase = (searchParams?.get('phase') ?? 'all') as ProgramPhase | 'all';
-  const phaseView = buildPhaseFilterView('apex-retail', activePhase === 'all' ? 'all' : activePhase as ProgramPhase);
+  const phaseView = buildPhaseFilterView(
+    view.phaseFilterTenantSlug,
+    activePhase === 'all' ? 'all' : activePhase as ProgramPhase,
+  );
   const flagship = view.programs.find((program) => program.id === 'apx-cdp-2026') ?? view.programs[0];
   const filtered = filterProgramRowsForIndex(view.programs, activeFilter);
   const emptyStateCopy = getProgramsIndexEmptyStateCopy(activeFilter);
@@ -401,7 +404,7 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
     <AppShell
       surface="programs"
       topBarProps={{
-        tenantName: 'Apex Retail Group',
+        tenantName: view.tenant,
         showLocked: true,
         context: `Programs · ${view.totalActive} in flight`,
       }}
