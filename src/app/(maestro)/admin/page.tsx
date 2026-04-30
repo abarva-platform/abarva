@@ -26,6 +26,7 @@ import { getSetupInventorySnapshot } from '@/lib/admin/setup-data-broker';
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { AgentRail } from '@/components/admin/AgentRail';
 import { SetupAdminLanding } from '@/components/admin/setup/SetupAdminLanding';
+import { SetupLandingTelemetryBridge } from '@/components/admin/setup/SetupLandingTelemetryBridge';
 
 export const metadata = { title: 'Setup · AbarVa' };
 export const dynamic = 'force-dynamic';
@@ -61,6 +62,14 @@ export default async function AdminOverviewPage() {
         segmentsTracked={counts.segmentsTracked}
         capabilitiesGrounded={counts.capabilitiesGrounded}
         lastIngestedRelative={lastIngestedRelative}
+      />
+      <SetupLandingTelemetryBridge
+        tenantKey={brokerTenantKey}
+        tenantDataRichness={content.tenantDataRichness}
+        totalRecords={counts.totalRecords}
+        segmentsTracked={counts.segmentsTracked}
+        capabilitiesGrounded={counts.capabilitiesGrounded}
+        liveSnapshotPresent={snapshot !== null}
       />
     </AdminCanonShellV2>
   );
