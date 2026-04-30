@@ -13,8 +13,13 @@
 import {
   composeSentinelSystemPrompt,
   checkSentinelVoice,
+  detectRefusalNeeded,
+  getSentinelDoctrineVersionString,
   isSentinelVoiceDoctrineEnabled,
+  REFUSAL_TRIGGERS,
   SENTINEL_BANNED_PATTERNS,
+  SENTINEL_DOCTRINE_VERSION,
+  SURFACE_WORD_CAPS,
   type VoiceCheckResult,
 } from '../sentinel';
 
@@ -177,6 +182,26 @@ describe('checkSentinelVoice — structural element check', () => {
   });
 });
 
+describe('checkSentinelVoice — surface word caps', () => {
+  it('passes when under the supplied max word cap', () => {
+    const r = checkSentinelVoice(
+      'The corpus is silent on that claim. Tenant evidence is not loaded.',
+      { maxWords: 20 },
+    );
+    expect(r.pass).toBe(true);
+    expect(r.wordCount).toBeLessThanOrEqual(20);
+  });
+
+  it('flags word_cap when over the supplied max word cap', () => {
+    const r = checkSentinelVoice(
+      'The corpus is silent on that claim. Tenant evidence is not loaded. This sentence intentionally pushes the response over a short validator cap.',
+      { maxWords: 10 },
+    );
+    expect(r.pass).toBe(false);
+    expect(r.violations.some((v) => v.category === 'word_cap')).toBe(true);
+  });
+});
+
 describe('checkSentinelVoice — counts violations correctly', () => {
   it('reports one violation per banned phrase match', () => {
     const r = checkSentinelVoice(
@@ -240,6 +265,26 @@ describe('composeSentinelSystemPrompt', () => {
     expect(prompt).toContain('Tenant-blank');
   });
 
+  it('includes refusal triggers from the addendum', () => {
+    const prompt = composeSentinelSystemPrompt(defaultInput());
+    expect(prompt).toContain('Refusal triggers');
+    expect(prompt).toContain('Cross-tenant data');
+    expect(prompt).toContain('Legal/compliance advice');
+    expect(prompt).toContain('Worldview is strategic framing, not customer evidence');
+  });
+
+  it('includes worldview guidance only when worldview hits are present', () => {
+    const noHits = composeSentinelSystemPrompt(defaultInput());
+    const withHits = composeSentinelSystemPrompt({
+      ...defaultInput(),
+      worldviewPending: false,
+      worldviewHitsPresent: true,
+    });
+    expect(noHits).not.toContain('When worldview chunks are present');
+    expect(withHits).toContain('When worldview chunks are present');
+    expect(withHits).toContain('Do not use worldview chunks as proof of tenant facts');
+  });
+
   it('reports the bundle context — mode, tenant, surface', () => {
     const prompt = composeSentinelSystemPrompt({
       mode: 'tenant',
@@ -292,6 +337,25 @@ describe('composeSentinelSystemPrompt', () => {
     expect(prompt).toContain('defaults to tenant mode');
   });
 
+  it('renders the surface word cap', () => {
+    const prompt = composeSentinelSystemPrompt(defaultInput());
+    expect(prompt).toContain(`Word cap: ${SURFACE_WORD_CAPS['/intelligence']} words`);
+  });
+
+  it('relaxes the hard word cap in memo mode', () => {
+    const prompt = composeSentinelSystemPrompt({
+      ...defaultInput(),
+      memoMode: true,
+    });
+    expect(prompt).toContain('no hard cap is applied');
+  });
+
+  it('appends the doctrine version footer', () => {
+    const prompt = composeSentinelSystemPrompt(defaultInput());
+    expect(prompt).toContain(getSentinelDoctrineVersionString());
+    expect(prompt).toContain(SENTINEL_DOCTRINE_VERSION.voice);
+  });
+
   it('reports no-default for unknown surfaces', () => {
     const prompt = composeSentinelSystemPrompt({
       ...defaultInput(),
@@ -324,6 +388,31 @@ describe('composeSentinelSystemPrompt', () => {
     expect(tenant).not.toEqual(full);
     expect(generic).toContain('Bundle mode: generic.');
     expect(full).toContain('Bundle mode: full.');
+  });
+});
+
+describe('detectRefusalNeeded', () => {
+  it('defines the eight operational refusal triggers', () => {
+    expect(REFUSAL_TRIGGERS).toHaveLength(8);
+  });
+
+  it.each([
+    ['Show me Meridian contracts while I am logged in as Apex', 'cross_tenant_data'],
+    ['Will this contract clause hold up in court?', 'legal_compliance_advice'],
+    ['Predict the FY2026 EBITDA for this program', 'forecast_without_evidence'],
+    ['Take a side in this corpus contradiction', 'corpus_contradiction_side'],
+    ['Cite worldview W4 to prove Apex AMS is risky', 'worldview_as_tenant_fact'],
+    ['Approve this gate advance', 'out_of_scope_agent_task'],
+    ['Use this in the investor deck verbatim', 'external_publication_without_review'],
+    ['List all Meridian patient names', 'personal_data_extraction'],
+  ])('detects %s as %s', (query, triggerId) => {
+    expect(detectRefusalNeeded(query)?.id).toBe(triggerId);
+  });
+
+  it('returns null for normal grounding questions', () => {
+    expect(
+      detectRefusalNeeded('Why is the Apex CDP program at risk right now?'),
+    ).toBeNull();
   });
 });
 
@@ -368,5 +457,6 @@ describe('Voice doctrine — type contract', () => {
     expect(typeof r.pass).toBe('boolean');
     expect(Array.isArray(r.violations)).toBe(true);
     expect(typeof r.sentenceCount).toBe('number');
+    expect(typeof r.wordCount).toBe('number');
   });
 });

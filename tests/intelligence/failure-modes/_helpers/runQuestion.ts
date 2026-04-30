@@ -47,7 +47,8 @@ export async function runQuestion(
     tenantKey: tenantKey ?? null,
     surface: options.surface ?? '/intelligence',
     vectorIndexPending: options.vectorIndexPending ?? true,
-    worldviewPending: options.worldviewPending ?? true,
+    worldviewPending: options.worldviewPending ?? bundle.worldviewChunks.length === 0,
+    worldviewHitsPresent: bundle.worldviewChunks.length > 0,
   });
   return { question, bundle, systemPrompt };
 }

@@ -112,7 +112,7 @@ describe('FM #4 — Voice drift', () => {
 
   it('every voice-drift probe in the fixture has bannedPhrases declared', () => {
     const probes = getQuestionsByCategory('voice_drift_probe');
-    expect(probes.length).toBe(5);
+    expect(probes.length).toBe(6);
     for (const probe of probes) {
       expect(probe.bannedPhrases).toBeDefined();
       expect(probe.bannedPhrases!.length).toBeGreaterThan(0);
@@ -121,6 +121,6 @@ describe('FM #4 — Voice drift', () => {
 
   // CB-6 dependent — actual model output
   it.todo(
-    'real Sentinel responses on the 5 voice-drift probes pass checkSentinelVoice (LLM-dependent — CB-6)',
+    'real Sentinel responses on the 6 voice-drift probes pass checkSentinelVoice (LLM-dependent — CB-6)',
   );
 });

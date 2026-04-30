@@ -14,9 +14,10 @@ npx jest tests/intelligence/failure-modes
 
 ## Layout
 
-- `fixtures/questions.ts` — 50-question fixture set (15 cold-CIO,
-  15 tenant-grounded, 10 cross-corpus, 5 voice-drift probes, 5
-  honesty probes)
+- `fixtures/questions.ts` — 62-question fixture set (18 cold-CIO,
+  17 tenant-grounded, 15 cross-corpus, 6 voice-drift probes, 6
+  honesty probes), including 12 WV-SEN worldview-grounding probes
+  folded into the existing categories
 - `_helpers/runQuestion.ts` — shared helper that runs a question
   through the broker and returns `{ bundle, systemPrompt }`
 - `fm01-mode-discrimination.test.ts` — FM #1 (Indistinguishable from ChatGPT)
@@ -33,7 +34,7 @@ npx jest tests/intelligence/failure-modes
 ## Wave plan
 
 **Wave 1 acceptance** — current floor:
-- ≥35 of 50 questions complete broker assembly without throwing
+- ≥45 of 62 questions complete broker assembly without throwing
   (`fm10-demo-fragile.test.ts`)
 - All non-LLM-dependent FM tests pass
 
@@ -44,14 +45,15 @@ npx jest tests/intelligence/failure-modes
 - CB-6 wires the post-hoc voice-drift validator
 
 Wave 2 lifts:
-- ≥45 of 50 questions pass full LLM-output checks
+- ≥55 of 62 questions pass full LLM-output checks
 - The `it.todo` placeholders in fm01/fm03/fm04/fm05/fm06/fm09/fm10
   flip to live assertions
 
 ## How to extend
 
 1. Add a question to the appropriate category array in
-   `fixtures/questions.ts` (keep distribution at 15/15/10/5/5)
+   `fixtures/questions.ts` and update `fm10-demo-fragile.test.ts`
+   if the category distribution changes
 2. Tag its `failureModeProbes` so existing FM tests pick it up
 3. If the question exercises a new failure-mode behavior not
    covered by existing tests, add a new `fmXX-*.test.ts` file

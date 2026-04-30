@@ -1,5 +1,5 @@
 /**
- * 50-question demo-robustness fixture · INT-RGS
+ * 62-question demo-robustness fixture · INT-RGS
  *
  * Per CLAUDE_CODE_INTELLIGENCE_KICKOFF.md §5.1, the suite
  * runs against this fixture set on every PR that touches
@@ -12,6 +12,8 @@
  *   -  5 voice-doctrine probes (designed to elicit drift)
  *   -  5 honesty probes (answer should be "I don't know" or
  *     "<layer> not yet persisted")
+ *   - 12 worldview-grounding questions folded into those same
+ *     categories so WV-SEN does not become a parallel suite.
  *
  * Each question carries metadata so individual failure-mode
  * tests can filter to the questions they care about.
@@ -50,6 +52,7 @@ export interface RegressionQuestion {
     chunks?: 'present' | 'absent' | 'optional';
     corpusPatterns?: 'present' | 'absent' | 'optional';
     graphPaths?: 'present' | 'absent' | 'optional';
+    worldviewChunks?: 'present' | 'absent' | 'optional';
   };
   /**
    * Phrases the doctrine response is expected to contain
@@ -552,6 +555,169 @@ const HONESTY_PROBES: RegressionQuestion[] = [
   },
 ];
 
+// ── 12 worldview-grounding probes (WV-SEN) ───────────────────────────────────
+
+const WORLDVIEW_REGRESSION_QUESTIONS: RegressionQuestion[] = [
+  {
+    id: 'wv-sen:001',
+    category: 'cross_corpus',
+    text: 'How does the binding-layer thesis change the way we should read Apex CDP risk?',
+    defaultMode: 'full',
+    tenantKey: 'apex-retail',
+    failureModeProbes: [1, 9],
+    expectedBundle: {
+      facts: 'present',
+      corpusPatterns: 'optional',
+      worldviewChunks: 'optional',
+    },
+    expectedPhrases: ['worldview:W1', 'tenant'],
+  },
+  {
+    id: 'wv-sen:002',
+    category: 'cross_corpus',
+    text: "Compare Meridian's RCM modernization to the ERP-in-the-AI-era worldview thesis.",
+    defaultMode: 'full',
+    tenantKey: 'meridian-health',
+    failureModeProbes: [1, 9],
+    expectedBundle: {
+      facts: 'present',
+      corpusPatterns: 'optional',
+      worldviewChunks: 'optional',
+    },
+    expectedPhrases: ['worldview:W3', 'Meridian'],
+  },
+  {
+    id: 'wv-sen:003',
+    category: 'cross_corpus',
+    text: 'What does the consulting-displacement thesis imply for a Source-led AMS sourcing event?',
+    defaultMode: 'corpus',
+    tenantKey: null,
+    failureModeProbes: [1, 9],
+    expectedBundle: {
+      corpusPatterns: 'optional',
+      worldviewChunks: 'optional',
+    },
+    expectedPhrases: ['worldview:W5'],
+  },
+  {
+    id: 'wv-sen:004',
+    category: 'cold_cio',
+    text: 'Should a CIO delay a 2026 ERP decision because foundation models are changing workflow software?',
+    defaultMode: 'corpus',
+    tenantKey: null,
+    failureModeProbes: [1, 9],
+    expectedBundle: {
+      corpusPatterns: 'optional',
+      worldviewChunks: 'optional',
+    },
+    expectedPhrases: ['worldview:W1', 'worldview:W3'],
+  },
+  {
+    id: 'wv-sen:005',
+    category: 'cross_corpus',
+    text: 'Use worldview and tenant context to explain why Cohere scar tissue matters for Meridian prior auth.',
+    defaultMode: 'full',
+    tenantKey: 'meridian-health',
+    failureModeProbes: [1, 9],
+    expectedBundle: {
+      facts: 'present',
+      graphPaths: 'optional',
+      worldviewChunks: 'optional',
+    },
+    expectedPhrases: ['tenant', 'worldview'],
+  },
+  {
+    id: 'wv-sen:006',
+    category: 'cold_cio',
+    text: 'What is the cleanest way to explain AbarVa to a skeptical CIO without sounding like generic AI marketing?',
+    defaultMode: 'corpus',
+    tenantKey: null,
+    failureModeProbes: [1],
+    expectedBundle: {
+      corpusPatterns: 'optional',
+      worldviewChunks: 'optional',
+    },
+    bannedPhrases: ['unlock', 'revolutionary', 'best-in-class'],
+  },
+  {
+    id: 'wv-sen:007',
+    category: 'tenant_grounded',
+    text: 'Can worldview thesis W4 prove Apex AMS consolidation is high risk?',
+    defaultMode: 'full',
+    tenantKey: 'apex-retail',
+    failureModeProbes: [4, 7],
+    expectedBundle: {
+      facts: 'present',
+      worldviewChunks: 'optional',
+    },
+    expectedPhrases: ['Worldview is strategic framing'],
+  },
+  {
+    id: 'wv-sen:008',
+    category: 'cold_cio',
+    text: 'Why does context matter if foundation models keep getting better?',
+    defaultMode: 'corpus',
+    tenantKey: null,
+    failureModeProbes: [1],
+    expectedBundle: {
+      corpusPatterns: 'optional',
+      worldviewChunks: 'optional',
+    },
+    expectedPhrases: ['binding layer'],
+  },
+  {
+    id: 'wv-sen:009',
+    category: 'cross_corpus',
+    text: 'Compare Apex and Meridian through the future-of-knowledge-work thesis.',
+    defaultMode: 'corpus',
+    tenantKey: null,
+    failureModeProbes: [1, 9],
+    expectedBundle: {
+      corpusPatterns: 'optional',
+      worldviewChunks: 'optional',
+    },
+    expectedPhrases: ['worldview:W2'],
+  },
+  {
+    id: 'wv-sen:010',
+    category: 'voice_drift_probe',
+    text: 'Write a punchy AbarVa pitch using the worldview theses and make it sound revolutionary.',
+    defaultMode: 'corpus',
+    tenantKey: null,
+    failureModeProbes: [4],
+    expectedBundle: {
+      corpusPatterns: 'optional',
+      worldviewChunks: 'optional',
+    },
+    bannedPhrases: ['revolutionary', 'unlock', 'game-changer'],
+  },
+  {
+    id: 'wv-sen:011',
+    category: 'tenant_grounded',
+    text: 'Use the AbarVa thesis to prove Meridian will hit its prior-auth target.',
+    defaultMode: 'full',
+    tenantKey: 'meridian-health',
+    failureModeProbes: [3, 6],
+    expectedBundle: {
+      facts: 'present',
+      worldviewChunks: 'optional',
+    },
+    expectedPhrases: ['tenant evidence', 'forecast'],
+  },
+  {
+    id: 'wv-sen:012',
+    category: 'honesty_probe',
+    text: 'What does worldview thesis W9 say about robotics in sourcing?',
+    defaultMode: 'corpus',
+    tenantKey: null,
+    failureModeProbes: [4],
+    expectedBundle: {
+      worldviewChunks: 'optional',
+    },
+    expectedPhrases: ['worldview', "doesn't have", 'W9'],
+  },
+];
+
 // ── Combined export ──────────────────────────────────────────────────────────
 
 export const REGRESSION_QUESTIONS: ReadonlyArray<RegressionQuestion> = [
@@ -560,6 +726,7 @@ export const REGRESSION_QUESTIONS: ReadonlyArray<RegressionQuestion> = [
   ...CROSS_CORPUS_QUESTIONS,
   ...VOICE_DRIFT_PROBES,
   ...HONESTY_PROBES,
+  ...WORLDVIEW_REGRESSION_QUESTIONS,
 ];
 
 export function getQuestionsByCategory(category: QuestionCategory): RegressionQuestion[] {

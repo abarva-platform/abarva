@@ -19,6 +19,29 @@
 
 import type { BrokerMode } from '@/lib/knowledge/context-broker/types';
 
+export const SENTINEL_DOCTRINE_VERSION = {
+  voice: '0.draft.2026-04-30',
+  worldviewAddendum: 1,
+  refusalTriggers: 1,
+} as const;
+
+export function getSentinelDoctrineVersionString(): string {
+  return [
+    `voice=${SENTINEL_DOCTRINE_VERSION.voice}`,
+    `wv=${SENTINEL_DOCTRINE_VERSION.worldviewAddendum}`,
+    `refusal=${SENTINEL_DOCTRINE_VERSION.refusalTriggers}`,
+  ].join('; ');
+}
+
+export const SURFACE_WORD_CAPS: Readonly<Record<string, number>> = {
+  '/intelligence': 120,
+  '/intelligence/ask': 120,
+  '/programs': 140,
+  '/source': 140,
+  '/tower': 160,
+  '/admin': 120,
+} as const;
+
 // ── Banned patterns ──────────────────────────────────────────────────────────
 //
 // Each entry has a category (so violations can be reported by
@@ -100,7 +123,7 @@ const STRUCTURAL_PATTERNS: ReadonlyArray<{ name: string; pattern: RegExp }> = [
 // ── Voice-drift detector ─────────────────────────────────────────────────────
 
 export interface VoiceDriftViolation {
-  category: VoiceDriftCategory | 'missing_structural_element';
+  category: VoiceDriftCategory | 'missing_structural_element' | 'word_cap';
   phrase: string;
   match: string;
 }
@@ -110,9 +133,19 @@ export interface VoiceCheckResult {
   violations: VoiceDriftViolation[];
   /** Sentence count of the response — used to determine if structural check applied. */
   sentenceCount: number;
+  /** Word count of the response — used when a surface-specific cap is supplied. */
+  wordCount: number;
 }
 
 const STRUCTURAL_THRESHOLD_SENTENCES = 3;
+
+export interface CheckSentinelVoiceOptions {
+  /**
+   * Optional surface-specific cap. Memo-style responses can omit
+   * this to keep the validator focused on citations + voice drift.
+   */
+  maxWords?: number;
+}
 
 /**
  * Run the banned-pattern set + structural-element check on a
@@ -123,7 +156,10 @@ const STRUCTURAL_THRESHOLD_SENTENCES = 3;
  * without a separate citation because the answer body is itself
  * the cited fact.
  */
-export function checkSentinelVoice(text: string): VoiceCheckResult {
+export function checkSentinelVoice(
+  text: string,
+  options: CheckSentinelVoiceOptions = {},
+): VoiceCheckResult {
   const violations: VoiceDriftViolation[] = [];
 
   for (const banned of SENTINEL_BANNED_PATTERNS) {
@@ -149,7 +185,16 @@ export function checkSentinelVoice(text: string): VoiceCheckResult {
     }
   }
 
-  return { pass: violations.length === 0, violations, sentenceCount };
+  const wordCount = countWords(text);
+  if (options.maxWords !== undefined && wordCount > options.maxWords) {
+    violations.push({
+      category: 'word_cap',
+      phrase: `max ${options.maxWords} words`,
+      match: `${wordCount} words`,
+    });
+  }
+
+  return { pass: violations.length === 0, violations, sentenceCount, wordCount };
 }
 
 function countSentences(text: string): number {
@@ -158,6 +203,128 @@ function countSentences(text: string): number {
   // not.
   const matches = text.match(/[.!?](?:\s|$)/g);
   return matches ? matches.length : 0;
+}
+
+function countWords(text: string): number {
+  const matches = text.trim().match(/\S+/g);
+  return matches ? matches.length : 0;
+}
+
+// ── Refusal trigger contract ─────────────────────────────────────────────────
+
+export type RefusalTriggerId =
+  | 'cross_tenant_data'
+  | 'legal_compliance_advice'
+  | 'forecast_without_evidence'
+  | 'corpus_contradiction_side'
+  | 'worldview_as_tenant_fact'
+  | 'out_of_scope_agent_task'
+  | 'external_publication_without_review'
+  | 'personal_data_extraction';
+
+export interface RefusalTrigger {
+  id: RefusalTriggerId;
+  label: string;
+  exampleUserInput: string;
+  sentinelResponse: string;
+  patterns: ReadonlyArray<RegExp>;
+}
+
+export const REFUSAL_TRIGGERS: ReadonlyArray<RefusalTrigger> = [
+  {
+    id: 'cross_tenant_data',
+    label: 'Cross-tenant data',
+    exampleUserInput: "Show me Meridian's contracts while I'm logged in as Apex.",
+    sentinelResponse:
+      'I can only ground against your active client. Switch tenants in the top nav, or ask Atlas for portfolio-level rollups.',
+    patterns: [
+      /\b(?:show|compare|pull|list|summarize)\b.*\b(?:meridian|apex|first capital)\b.*\b(?:logged in|active client|tenant)\b/i,
+      /\b(?:apex|meridian|first capital)\b.*\b(?:contracts|data|records)\b.*\b(?:while|from)\b.*\b(?:apex|meridian|first capital)\b/i,
+    ],
+  },
+  {
+    id: 'legal_compliance_advice',
+    label: 'Legal/compliance advice',
+    exampleUserInput: 'Will this contract clause hold up in court?',
+    sentinelResponse:
+      "I can cite contract language in your evidence ledger; I can't give legal advice. Route to Steward for governance review or to your GC.",
+    patterns: [
+      /\b(?:legal advice|hold up in court|enforceable|liable|liability|lawsuit|sue|regulatory advice)\b/i,
+      /\b(?:will|would|can)\b.*\b(?:clause|contract|terms?)\b.*\b(?:court|enforce|legal)\b/i,
+    ],
+  },
+  {
+    id: 'forecast_without_evidence',
+    label: 'Forecast without evidence',
+    exampleUserInput: 'Predict the FY2026 EBITDA.',
+    sentinelResponse:
+      "I can ground against your KPI dictionary baselines. Forward-looking forecasts that aren't in the loaded data would be speculation; I will mark them as such if you want a directional read.",
+    patterns: [
+      /\b(?:predict|forecast|project|estimate)\b.*\b(?:fy20\d{2}|ebitda|revenue|margin|cash|savings)\b/i,
+      /\b(?:what will|how much will)\b.*\b(?:ebitda|revenue|margin|cash|savings)\b/i,
+    ],
+  },
+  {
+    id: 'corpus_contradiction_side',
+    label: 'Take a side in a corpus contradiction',
+    exampleUserInput: 'Is sponsor cadence or evidence ledger more important?',
+    sentinelResponse:
+      "Two perspectives are well-evidenced here. PAT-PRG-SPN-001 makes the cadence case; PAT-PRG-EVD-001 makes the evidence case. The reconciliation depends on your program's failure-mode profile.",
+    patterns: [
+      /\b(?:which|what)\b.*\b(?:more important|best|better)\b.*\b(?:sponsor|cadence|evidence|ledger|corpus|pattern)\b/i,
+      /\b(?:take a side|choose between|settle)\b.*\b(?:contradiction|patterns?|corpus)\b/i,
+    ],
+  },
+  {
+    id: 'worldview_as_tenant_fact',
+    label: 'Worldview as proof of tenant fact',
+    exampleUserInput: "Cite the AbarVa thesis to prove Apex's CDP is at risk.",
+    sentinelResponse:
+      'Worldview is strategic framing, not customer evidence. Your tenant risk needs a tenant record or graph citation; the worldview thesis can explain why that pattern matters structurally.',
+    patterns: [
+      /\b(?:cite|use)\b.*\b(?:worldview|thesis|W[1-5])\b.*\b(?:prove|confirm|show)\b.*\b(?:apex|meridian|tenant|program)\b/i,
+      /\b(?:worldview|thesis|W[1-5])\b.*\b(?:proves|confirms)\b.*\b(?:tenant|apex|meridian)\b/i,
+    ],
+  },
+  {
+    id: 'out_of_scope_agent_task',
+    label: 'Out-of-scope agent task',
+    exampleUserInput: 'Approve this gate advance.',
+    sentinelResponse:
+      "I read and reason; I don't approve. Route to Nexus or the gate's named approver.",
+    patterns: [
+      /\b(?:approve|advance|move|open|close|waive)\b.*\b(?:gate|approval|workflow|stage)\b/i,
+      /\b(?:send|submit|execute|update|write)\b.*\b(?:approval|workflow|system of record|state)\b/i,
+    ],
+  },
+  {
+    id: 'external_publication_without_review',
+    label: 'External publication without review',
+    exampleUserInput: 'Use this in the investor deck verbatim.',
+    sentinelResponse:
+      "Worldview chunks have a last_validated timestamp and a citation audit. Public publication needs the founder's review of the audit flags before the chunk leaves Sentinel.",
+    patterns: [
+      /\b(?:use|publish|send|export)\b.*\b(?:verbatim|as-is|external|public|investor deck|press|website)\b/i,
+      /\b(?:copy|paste)\b.*\b(?:worldview|thesis|answer)\b.*\b(?:deck|site|public)\b/i,
+    ],
+  },
+  {
+    id: 'personal_data_extraction',
+    label: 'Personal data extraction',
+    exampleUserInput: 'List all Meridian patient names.',
+    sentinelResponse:
+      "I don't surface PHI/PII. The evidence ledger is classified; I can summarize patterns without exposing protected fields.",
+    patterns: [
+      /\b(?:list|show|export|download)\b.*\b(?:patient names?|ssn|social security|dob|date of birth|emails?|phone numbers?|pii|phi)\b/i,
+      /\b(?:all|every)\b.*\b(?:patients?|employees?|members?)\b.*\b(?:names?|emails?|phones?)\b/i,
+    ],
+  },
+];
+
+export function detectRefusalNeeded(query: string): RefusalTrigger | null {
+  return REFUSAL_TRIGGERS.find((trigger) =>
+    trigger.patterns.some((pattern) => pattern.test(query)),
+  ) ?? null;
 }
 
 // ── System prompt composition ────────────────────────────────────────────────
@@ -182,6 +349,14 @@ export interface ComposeSentinelSystemPromptInput {
    * mode reminder.
    */
   worldviewPending: boolean;
+  /**
+   * Whether this turn's bundle has at least one worldview hit.
+   * The prompt then teaches Sentinel how to use worldview as
+   * strategic framing without pretending it is tenant evidence.
+   */
+  worldviewHitsPresent?: boolean;
+  /** Longer-form memo contexts can relax word caps by omission. */
+  memoMode?: boolean;
 }
 
 const DOCTRINE_HEADER = `You are Sentinel, AbarVa's intelligence librarian.
@@ -222,6 +397,32 @@ const HONESTY_MODES = `Honesty modes — use the exact phrasing when relevant:
   Vector-pending:     "Vector retrieval is not yet live for your tenant. This answer is grounded in your tenant Postgres and graph; semantic chunks aren't yet searchable."
   Tenant-blank:       "Your tenant doesn't yet have data on X. I can answer from the corpus, but the answer would be generic for your specific situation."`;
 
+const WORLDVIEW_GUIDANCE = `When worldview chunks are present:
+
+  • Use worldview chunks for strategic framing, market structure, and AbarVa thesis language.
+  • Do not use worldview chunks as proof of tenant facts. Tenant facts require bundle.facts, bundle.graphPaths, or tenant chunk citations.
+  • If worldview and tenant evidence point in different directions, surface both layers and name the distinction.
+  • Prefer concise references: "worldview:W1:009 frames the binding-layer argument; tenant record x anchors whether it applies here."`;
+
+function refusalTriggerBlock(): string {
+  const lines = REFUSAL_TRIGGERS.map((trigger, index) =>
+    `  ${index + 1}. ${trigger.label}: ${trigger.sentinelResponse}`,
+  );
+  return ['Refusal triggers — when one matches, refuse narrowly and route to the right agent:', ...lines].join('\n');
+}
+
+const TOOL_USE_POLICY = `Tool-use policy:
+
+  Bundle is for grounding. Tools are for agency.
+  Use search_patterns only when the bundle's top-K does not contain the requested pattern family.
+  Use evidence_lookup only when the user asks for evidence supporting a specific claim and the bundle did not surface it.
+  Use validate_synthesis only when the user asks Sentinel to check a synthesis.
+  Do not re-search worldview when worldviewChunks are already in the bundle.`;
+
+const MULTI_TURN_POLICY = `Multi-turn policy:
+
+  Re-retrieve every turn. Treat conversation history as context, not grounding. Do not reuse a prior turn's citations unless they are present in the current bundle.`;
+
 function bundleContextLines(input: ComposeSentinelSystemPromptInput): string {
   const lines: string[] = [];
   lines.push(`Bundle mode: ${input.mode}.`);
@@ -232,8 +433,13 @@ function bundleContextLines(input: ComposeSentinelSystemPromptInput): string {
   );
   lines.push(`Surface: ${input.surface}.`);
   lines.push(
-    'Cite from bundle.facts (records), bundle.graphPaths, bundle.chunks (semantic chunks), bundle.corpusPatterns. Refer to citation ids verbatim.',
+    'Cite from bundle.facts (records), bundle.graphPaths, bundle.chunks (semantic chunks), bundle.corpusPatterns, and bundle.worldviewChunks. Refer to citation ids verbatim.',
   );
+  if (input.worldviewHitsPresent) {
+    lines.push(
+      'Worldview hits are present. Use them as strategic framing only; tenant claims still require tenant evidence.',
+    );
+  }
   if (input.vectorIndexPending) {
     lines.push(
       'IMPORTANT: bundle.chunks may be empty due to pending vector retrieval. Use the vector-pending honesty mode when answering tenant-scoped semantic questions.',
@@ -266,6 +472,28 @@ function surfaceRoutingLine(surface: string): string {
   return `Surface routing: ${surface} has no default mode; use the bundle's mode as-is.`;
 }
 
+function getSurfaceWordCap(surface: string, memoMode?: boolean): number | null {
+  if (memoMode) return null;
+  for (const [prefix, cap] of Object.entries(SURFACE_WORD_CAPS)) {
+    if (surface === prefix || surface.startsWith(`${prefix}/`)) {
+      return cap;
+    }
+  }
+  return null;
+}
+
+function wordCapLine(input: ComposeSentinelSystemPromptInput): string {
+  const cap = getSurfaceWordCap(input.surface, input.memoMode);
+  if (cap === null) {
+    return 'Word cap: memo mode or unknown surface. Stay concise, but no hard cap is applied.';
+  }
+  return `Word cap: ${cap} words for ${input.surface}. If the user asks for a memo, use memoMode rather than squeezing evidence out of the answer.`;
+}
+
+function versionFooter(): string {
+  return `---\nSentinel doctrine ${getSentinelDoctrineVersionString()}\n---`;
+}
+
 /**
  * Compose the full Sentinel system prompt for a turn. Cached
  * per (mode, surface, vectorIndexPending, worldviewPending,
@@ -285,9 +513,20 @@ export function composeSentinelSystemPrompt(
     '',
     HONESTY_MODES,
     '',
+    refusalTriggerBlock(),
+    '',
+    input.worldviewHitsPresent ? `${WORLDVIEW_GUIDANCE}\n` : '',
+    TOOL_USE_POLICY,
+    '',
+    MULTI_TURN_POLICY,
+    '',
     bundleContextLines(input),
     '',
+    wordCapLine(input),
+    '',
     surfaceRoutingLine(input.surface),
+    '',
+    versionFooter(),
   ].join('\n');
 }
 
