@@ -62,11 +62,25 @@ import {
   composeFailureModeDoctrineBlock,
   composeOverlapBlock,
   composeBriefProgressCadenceDirective,
+  composeAttachmentContextBlock,
+  isProgramsSurface,
 } from "@/lib/programs/failure-mode-prompt";
 import {
   detectBriefOverlap,
   type BriefOverlapInput,
 } from "@/lib/programs/origination-overlap";
+// OV2-4c · attachment ingestion. The chat composer threads recent
+// attachment chips through `surfaceContext.attachments`. We resolve the
+// referenced records via `getAttachment`, run text extraction on known
+// formats (md / txt / docx), and inject a system-prompt block so the
+// agent acknowledges uploads by name and reads parsed content as
+// evidence-grade context.
+import { getAttachment } from "@/lib/programs/attachments";
+import type { AttachmentChipRef } from "@/lib/programs/attachments/types";
+import {
+  extractAttachmentText,
+  type AttachmentTextPreview,
+} from "@/lib/programs/attachments/extract-text";
 import { clientKeyToBrokerTenantKey } from "@/lib/agent/tools/intelligence/_shared";
 // F0.4: import the commit_program tool module so it self-registers
 // at startup. Routes that don't surface this tool will simply not
@@ -414,6 +428,18 @@ export async function POST(request: Request) {
   const briefProgressCadenceDirective =
     composeBriefProgressCadenceDirective(surface);
 
+  // OV2-4c · attachment context block. Resolve the chips on
+  // surfaceContext.attachments to AttachmentRecords (so we read the
+  // server-trusted storage path, not the client's claim), extract text
+  // from known formats, and compose a system-prompt block. Failures are
+  // non-fatal: a parse error on one attachment never breaks the turn —
+  // we log and skip, and the agent still sees the chip line.
+  const attachmentContextBlock = await buildAttachmentContextBlock({
+    surface,
+    surfaceAttachments: extractSurfaceAttachments(surfaceContext),
+    activeProgramId: programId,
+  });
+
   const systemPrompt = [
     voiceLine,
     "",
@@ -445,6 +471,14 @@ export async function POST(request: Request) {
     // /programs/new only. Empty string elsewhere or when no candidates.
     overlapCandidatesBlock,
     "",
+    // OV2-4c · attachment context. Lists the most recent N attachments
+    // the user has uploaded (chip + parsed snippet for known formats).
+    // Positioned AFTER broker / overlap context (so the agent sees
+    // tenant truth before user-supplied uploads) and BEFORE phase pack
+    // / response guidelines. Empty string off Programs surfaces or when
+    // no attachments are in flight.
+    attachmentContextBlock,
+    "",
     // Phase Intelligence Pack — only rendered on program-detail surfaces
     // where a pack has been authored for the engagement's current phase.
     // Empty string for other surfaces / phases without a pack yet.
@@ -471,6 +505,9 @@ export async function POST(request: Request) {
     "- Write in flowing prose. Do NOT use markdown code blocks (``` … ```), SQL/JSON snippets, table outlines, or bracketed identifier dumps in the chat reply. Code blocks make the chat feel like a debugger, not a partner.",
     "- Reference patterns, programs, and people by NAME, not raw ID. Say \"AMS Consolidation\" not \"[PAT-PRG-AMS-CONSOLIDATION-001]\". The right-pane card carries the ID; you carry the conversation.",
     "- Bullet lists are fine sparingly (≤ 3 bullets). When the user asks an open question, lead with one or two sentences before any list.",
+    // OV2-4c · attachment doctrine. Always rendered (cheap; the model
+    // simply won't act on it when the ATTACHMENTS block is empty).
+    "- When the user has just uploaded a file (the ATTACHMENTS block above lists recent uploads), acknowledge it by name in your next reply, briefly summarize what you can read of it, and ask what they'd like done with it. Don't pretend you read content you couldn't parse — for binary formats say something like \"I can see you uploaded {name}, but the content isn't text-parseable yet — can you summarize the key points?\". Reference the attachment by its filename, not by id.",
     // OV2-WIRE-AND-FM-PROMPT Part 2 — brief-progress cadence directive.
     // Empty string off /programs/new so the join-filter strips it.
     briefProgressCadenceDirective,
@@ -589,6 +626,105 @@ function normalizeEnterpriseAgentName(agentName: string): EnterpriseAgentName {
     agentName === 'Steward'
     ? agentName
     : 'Sentinel';
+}
+
+/** OV2-4c · cap on how many recent attachments we expand into the system prompt. */
+const ATTACHMENT_CONTEXT_LIMIT = 3;
+
+/**
+ * OV2-4c · pull the attachments array off surfaceContext. The chat
+ * composer threads `surfaceContext.attachments: AttachmentChipRef[]`;
+ * we defensively reject anything that doesn't look like a chip ref.
+ */
+function extractSurfaceAttachments(
+  surfaceContext: Record<string, unknown>,
+): AttachmentChipRef[] {
+  const raw = surfaceContext.attachments;
+  if (!Array.isArray(raw)) return [];
+  const out: AttachmentChipRef[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue;
+    const obj = item as Record<string, unknown>;
+    const id = typeof obj.id === 'string' ? obj.id : '';
+    const programId = typeof obj.programId === 'string' ? obj.programId : '';
+    const originalName =
+      typeof obj.originalName === 'string' ? obj.originalName : '';
+    const mimeType = typeof obj.mimeType === 'string' ? obj.mimeType : '';
+    const sizeBytes =
+      typeof obj.sizeBytes === 'number' && Number.isFinite(obj.sizeBytes)
+        ? obj.sizeBytes
+        : 0;
+    if (!id || !originalName || !mimeType) continue;
+    out.push({ id, programId, originalName, mimeType, sizeBytes });
+  }
+  return out;
+}
+
+/**
+ * OV2-4c · resolve client-supplied attachment chips to server-trusted
+ * AttachmentRecords, extract text from known formats, and compose the
+ * system-prompt block. Returns '' when:
+ *   - No attachments on the turn.
+ *   - The surface is not a Programs surface (uploads only land there).
+ * Per-attachment failures are caught + logged + skipped.
+ */
+async function buildAttachmentContextBlock(input: {
+  surface: string;
+  surfaceAttachments: readonly AttachmentChipRef[];
+  activeProgramId: string | null | undefined;
+}): Promise<string> {
+  const { surface, surfaceAttachments, activeProgramId } = input;
+  if (surfaceAttachments.length === 0) return '';
+  // Surface gate — block is Programs-surface-only. The composer also
+  // checks this; we short-circuit DB reads here.
+  if (!isProgramsSurface(surface)) return '';
+
+  // Cap to the most recent N — the chips arrive in chronological order
+  // from the composer, so trim from the head if more than N are present.
+  const limited = surfaceAttachments.slice(-ATTACHMENT_CONTEXT_LIMIT).reverse();
+
+  const resolvedChips: AttachmentChipRef[] = [];
+  const previews: AttachmentTextPreview[] = [];
+
+  for (const chip of limited) {
+    try {
+      const record = await getAttachment(chip.id);
+      if (!record || record.deletedAt) continue;
+      // Defense in depth — when the route knows the active program,
+      // require the attachment to belong to it. Cross-program
+      // references are silently dropped.
+      if (activeProgramId && record.programId !== activeProgramId) continue;
+
+      // Use the server-side record's authoritative metadata, not the
+      // client's chip — the chip is just a reference.
+      resolvedChips.push({
+        id: record.id,
+        programId: record.programId,
+        originalName: record.originalName,
+        mimeType: record.mimeType,
+        sizeBytes: record.sizeBytes,
+      });
+
+      try {
+        const preview = await extractAttachmentText(record);
+        if (preview) previews.push(preview);
+      } catch (err) {
+        console.warn('[chat/agent] attachment_text_extract_failed', {
+          attachmentId: record.id,
+          mimeType: record.mimeType,
+          message: err instanceof Error ? err.message : String(err),
+        });
+      }
+    } catch (err) {
+      console.warn('[chat/agent] attachment_resolve_failed', {
+        attachmentId: chip.id,
+        message: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  if (resolvedChips.length === 0) return '';
+  return composeAttachmentContextBlock(surface, resolvedChips, previews);
 }
 
 // OV2-WIRE-AND-FM-PROMPT Part 2 — brief-signal extractor. Reads the
