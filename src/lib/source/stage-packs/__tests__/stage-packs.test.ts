@@ -1,4 +1,11 @@
-import { S5_BAFO, formatStagePackForPrompt, getStagePack, listAuthoredStages } from '../index';
+import {
+  S3_RFP,
+  S4_DEMO_POC,
+  S5_BAFO,
+  formatStagePackForPrompt,
+  getStagePack,
+  listAuthoredStages,
+} from '../index';
 import type { StagePack } from '../types';
 
 describe('getStagePack', () => {
@@ -9,11 +16,18 @@ describe('getStagePack', () => {
     expect(pack?.label).toBe('S5 BAFO');
   });
 
+  it('returns the newly authored S3 and S4 packs', () => {
+    expect(getStagePack(3)).toBe(S3_RFP);
+    expect(getStagePack(4)).toBe(S4_DEMO_POC);
+    expect(getStagePack(3)?.label).toBe('S3 RFP');
+    expect(getStagePack(4)?.label).toBe('S4 Demo / POC');
+  });
+
   it('returns null cleanly for missing or out-of-range stages', () => {
     expect(getStagePack(null)).toBeNull();
     expect(getStagePack(undefined)).toBeNull();
     expect(getStagePack(-1)).toBeNull();
-    expect(getStagePack(3)).toBeNull();
+    expect(getStagePack(6)).toBeNull();
     expect(getStagePack(8)).toBeNull();
     expect(getStagePack(99)).toBeNull();
   });
@@ -21,7 +35,7 @@ describe('getStagePack', () => {
 
 describe('listAuthoredStages', () => {
   it('returns the authored stage set sorted', () => {
-    expect(listAuthoredStages()).toEqual([0, 1, 2, 5]);
+    expect(listAuthoredStages()).toEqual([0, 1, 2, 3, 4, 5]);
   });
 });
 

@@ -7,12 +7,16 @@ import type { StagePack, SourcingStageNumber } from './types';
 import { S0_INTAKE } from './S0_intake';
 import { S1_MARKET_SHAPE } from './S1_market_shape';
 import { S2_SHORTLIST } from './S2_shortlist';
+import { S3_RFP } from './S3_rfp';
+import { S4_DEMO_POC } from './S4_demo_poc';
 import { S5_BAFO } from './S5_bafo';
 
 const PACKS: Partial<Record<SourcingStageNumber, StagePack>> = {
   0: S0_INTAKE,
   1: S1_MARKET_SHAPE,
   2: S2_SHORTLIST,
+  3: S3_RFP,
+  4: S4_DEMO_POC,
   5: S5_BAFO,
 };
 
@@ -120,5 +124,7 @@ export function formatStagePackForPrompt(pack: StagePack): string {
 export { S0_INTAKE } from './S0_intake';
 export { S1_MARKET_SHAPE } from './S1_market_shape';
 export { S2_SHORTLIST } from './S2_shortlist';
+export { S3_RFP } from './S3_rfp';
+export { S4_DEMO_POC } from './S4_demo_poc';
 export { S5_BAFO } from './S5_bafo';
 export type { StagePack, SourcingStageNumber } from './types';
