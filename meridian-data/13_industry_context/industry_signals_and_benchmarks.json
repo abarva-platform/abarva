@@ -1,0 +1,406 @@
+{
+  "tenant_key": "meridian-health",
+  "last_updated": "2026-04-25",
+  "data_classification": "Internal",
+  "industry_signals": [
+    {
+      "id": "industry:meridian:001",
+      "type": "market",
+      "source": "CMS MA Star Ratings / 42 CFR Part 422",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-02-20",
+      "affected_programs": [
+        "meridian-prior-auth-2026"
+      ],
+      "severity": "Medium",
+      "time_horizon": "3-12 months",
+      "citations": "https://www.law.cornell.edu/cfr/text/42/part-422",
+      "confidence": 0.86
+    },
+    {
+      "id": "industry:meridian:002",
+      "type": "vendor",
+      "source": "FDA AI/ML-enabled medical devices guidance",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-03-20",
+      "affected_programs": [
+        "meridian-ai-governance-2026"
+      ],
+      "severity": "High",
+      "time_horizon": "12+ months",
+      "citations": "https://www.fda.gov/medical-devices/software-medical-device-samd/artificial-intelligence-and-machine-learning-aiml-enabled-medical-devices",
+      "confidence": 0.86
+    },
+    {
+      "id": "industry:meridian:003",
+      "type": "labor",
+      "source": "ONC information blocking materials",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-04-20",
+      "affected_programs": [
+        "meridian-rcm-modernization-2026"
+      ],
+      "severity": "Low",
+      "time_horizon": "0-3 months",
+      "citations": "https://www.hhs.gov/ocr/privacy/hipaa/administrative/securityrule/index.html",
+      "confidence": 0.86
+    },
+    {
+      "id": "industry:meridian:004",
+      "type": "benchmark",
+      "source": "Joint Commission standards",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-01-20",
+      "affected_programs": [
+        "meridian-ambient-2026"
+      ],
+      "severity": "Medium",
+      "time_horizon": "3-12 months",
+      "citations": "https://www.law.cornell.edu/cfr/text/42/part-422",
+      "confidence": 0.86
+    },
+    {
+      "id": "industry:meridian:005",
+      "type": "regulatory",
+      "source": "AHA / KLAS / Moody healthcare benchmark",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-02-20",
+      "affected_programs": [
+        "meridian-prior-auth-2026"
+      ],
+      "severity": "High",
+      "time_horizon": "12+ months",
+      "citations": "https://www.fda.gov/medical-devices/software-medical-device-samd/artificial-intelligence-and-machine-learning-aiml-enabled-medical-devices",
+      "confidence": 0.86
+    },
+    {
+      "id": "industry:meridian:006",
+      "type": "market",
+      "source": "HHS OCR HIPAA guidance",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-03-20",
+      "affected_programs": [
+        "meridian-ai-governance-2026"
+      ],
+      "severity": "Low",
+      "time_horizon": "0-3 months",
+      "citations": "https://www.hhs.gov/ocr/privacy/hipaa/administrative/securityrule/index.html",
+      "confidence": 0.86
+    },
+    {
+      "id": "industry:meridian:007",
+      "type": "vendor",
+      "source": "CMS MA Star Ratings / 42 CFR Part 422",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-04-20",
+      "affected_programs": [
+        "meridian-rcm-modernization-2026"
+      ],
+      "severity": "Medium",
+      "time_horizon": "3-12 months",
+      "citations": "https://www.law.cornell.edu/cfr/text/42/part-422",
+      "confidence": 0.86
+    },
+    {
+      "id": "industry:meridian:008",
+      "type": "labor",
+      "source": "FDA AI/ML-enabled medical devices guidance",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-01-20",
+      "affected_programs": [
+        "meridian-ambient-2026"
+      ],
+      "severity": "High",
+      "time_horizon": "12+ months",
+      "citations": "https://www.fda.gov/medical-devices/software-medical-device-samd/artificial-intelligence-and-machine-learning-aiml-enabled-medical-devices",
+      "confidence": 0.86
+    },
+    {
+      "id": "industry:meridian:009",
+      "type": "benchmark",
+      "source": "ONC information blocking materials",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-02-20",
+      "affected_programs": [
+        "meridian-prior-auth-2026"
+      ],
+      "severity": "Low",
+      "time_horizon": "0-3 months",
+      "citations": "https://www.hhs.gov/ocr/privacy/hipaa/administrative/securityrule/index.html",
+      "confidence": 0.72
+    },
+    {
+      "id": "industry:meridian:010",
+      "type": "regulatory",
+      "source": "Joint Commission standards",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-03-20",
+      "affected_programs": [
+        "meridian-ai-governance-2026"
+      ],
+      "severity": "Medium",
+      "time_horizon": "3-12 months",
+      "citations": "https://www.law.cornell.edu/cfr/text/42/part-422",
+      "confidence": 0.86
+    },
+    {
+      "id": "industry:meridian:011",
+      "type": "market",
+      "source": "AHA / KLAS / Moody healthcare benchmark",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-04-20",
+      "affected_programs": [
+        "meridian-rcm-modernization-2026"
+      ],
+      "severity": "High",
+      "time_horizon": "12+ months",
+      "citations": "https://www.fda.gov/medical-devices/software-medical-device-samd/artificial-intelligence-and-machine-learning-aiml-enabled-medical-devices",
+      "confidence": 0.86
+    },
+    {
+      "id": "industry:meridian:012",
+      "type": "vendor",
+      "source": "HHS OCR HIPAA guidance",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-01-20",
+      "affected_programs": [
+        "meridian-ambient-2026"
+      ],
+      "severity": "Low",
+      "time_horizon": "0-3 months",
+      "citations": "https://www.hhs.gov/ocr/privacy/hipaa/administrative/securityrule/index.html",
+      "confidence": 0.86
+    },
+    {
+      "id": "industry:meridian:013",
+      "type": "labor",
+      "source": "CMS MA Star Ratings / 42 CFR Part 422",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-02-20",
+      "affected_programs": [
+        "meridian-prior-auth-2026"
+      ],
+      "severity": "Medium",
+      "time_horizon": "3-12 months",
+      "citations": "https://www.law.cornell.edu/cfr/text/42/part-422",
+      "confidence": 0.86
+    },
+    {
+      "id": "industry:meridian:014",
+      "type": "benchmark",
+      "source": "FDA AI/ML-enabled medical devices guidance",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-03-20",
+      "affected_programs": [
+        "meridian-ai-governance-2026"
+      ],
+      "severity": "High",
+      "time_horizon": "12+ months",
+      "citations": "https://www.fda.gov/medical-devices/software-medical-device-samd/artificial-intelligence-and-machine-learning-aiml-enabled-medical-devices",
+      "confidence": 0.86
+    },
+    {
+      "id": "industry:meridian:015",
+      "type": "regulatory",
+      "source": "ONC information blocking materials",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-04-20",
+      "affected_programs": [
+        "meridian-rcm-modernization-2026"
+      ],
+      "severity": "Low",
+      "time_horizon": "0-3 months",
+      "citations": "https://www.hhs.gov/ocr/privacy/hipaa/administrative/securityrule/index.html",
+      "confidence": 0.86
+    },
+    {
+      "id": "industry:meridian:016",
+      "type": "market",
+      "source": "Joint Commission standards",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-01-20",
+      "affected_programs": [
+        "meridian-ambient-2026"
+      ],
+      "severity": "Medium",
+      "time_horizon": "3-12 months",
+      "citations": "https://www.law.cornell.edu/cfr/text/42/part-422",
+      "confidence": 0.86
+    },
+    {
+      "id": "industry:meridian:017",
+      "type": "vendor",
+      "source": "AHA / KLAS / Moody healthcare benchmark",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-02-20",
+      "affected_programs": [
+        "meridian-prior-auth-2026"
+      ],
+      "severity": "High",
+      "time_horizon": "12+ months",
+      "citations": "https://www.fda.gov/medical-devices/software-medical-device-samd/artificial-intelligence-and-machine-learning-aiml-enabled-medical-devices",
+      "confidence": 0.86
+    },
+    {
+      "id": "industry:meridian:018",
+      "type": "labor",
+      "source": "HHS OCR HIPAA guidance",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-03-20",
+      "affected_programs": [
+        "meridian-ai-governance-2026"
+      ],
+      "severity": "Low",
+      "time_horizon": "0-3 months",
+      "citations": "https://www.hhs.gov/ocr/privacy/hipaa/administrative/securityrule/index.html",
+      "confidence": 0.72
+    },
+    {
+      "id": "industry:meridian:019",
+      "type": "benchmark",
+      "source": "CMS MA Star Ratings / 42 CFR Part 422",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-04-20",
+      "affected_programs": [
+        "meridian-rcm-modernization-2026"
+      ],
+      "severity": "Medium",
+      "time_horizon": "3-12 months",
+      "citations": "https://www.law.cornell.edu/cfr/text/42/part-422",
+      "confidence": 0.86
+    },
+    {
+      "id": "industry:meridian:020",
+      "type": "regulatory",
+      "source": "FDA AI/ML-enabled medical devices guidance",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-01-20",
+      "affected_programs": [
+        "meridian-ambient-2026"
+      ],
+      "severity": "High",
+      "time_horizon": "12+ months",
+      "citations": "https://www.fda.gov/medical-devices/software-medical-device-samd/artificial-intelligence-and-machine-learning-aiml-enabled-medical-devices",
+      "confidence": 0.86
+    },
+    {
+      "id": "industry:meridian:021",
+      "type": "market",
+      "source": "ONC information blocking materials",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-02-20",
+      "affected_programs": [
+        "meridian-prior-auth-2026"
+      ],
+      "severity": "Low",
+      "time_horizon": "0-3 months",
+      "citations": "https://www.hhs.gov/ocr/privacy/hipaa/administrative/securityrule/index.html",
+      "confidence": 0.86
+    },
+    {
+      "id": "industry:meridian:022",
+      "type": "vendor",
+      "source": "Joint Commission standards",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-03-20",
+      "affected_programs": [
+        "meridian-ai-governance-2026"
+      ],
+      "severity": "Medium",
+      "time_horizon": "3-12 months",
+      "citations": "https://www.law.cornell.edu/cfr/text/42/part-422",
+      "confidence": 0.86
+    },
+    {
+      "id": "industry:meridian:023",
+      "type": "labor",
+      "source": "AHA / KLAS / Moody healthcare benchmark",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-04-20",
+      "affected_programs": [
+        "meridian-rcm-modernization-2026"
+      ],
+      "severity": "High",
+      "time_horizon": "12+ months",
+      "citations": "https://www.fda.gov/medical-devices/software-medical-device-samd/artificial-intelligence-and-machine-learning-aiml-enabled-medical-devices",
+      "confidence": 0.86
+    },
+    {
+      "id": "industry:meridian:024",
+      "type": "benchmark",
+      "source": "HHS OCR HIPAA guidance",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-01-20",
+      "affected_programs": [
+        "meridian-ambient-2026"
+      ],
+      "severity": "Low",
+      "time_horizon": "0-3 months",
+      "citations": "https://www.hhs.gov/ocr/privacy/hipaa/administrative/securityrule/index.html",
+      "confidence": 0.86
+    },
+    {
+      "id": "industry:meridian:025",
+      "type": "regulatory",
+      "source": "CMS MA Star Ratings / 42 CFR Part 422",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-02-20",
+      "affected_programs": [
+        "meridian-prior-auth-2026"
+      ],
+      "severity": "Medium",
+      "time_horizon": "3-12 months",
+      "citations": "https://www.law.cornell.edu/cfr/text/42/part-422",
+      "confidence": 0.86
+    },
+    {
+      "id": "industry:meridian:026",
+      "type": "market",
+      "source": "FDA AI/ML-enabled medical devices guidance",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-03-20",
+      "affected_programs": [
+        "meridian-ai-governance-2026"
+      ],
+      "severity": "High",
+      "time_horizon": "12+ months",
+      "citations": "https://www.fda.gov/medical-devices/software-medical-device-samd/artificial-intelligence-and-machine-learning-aiml-enabled-medical-devices",
+      "confidence": 0.86
+    },
+    {
+      "id": "industry:meridian:027",
+      "type": "vendor",
+      "source": "ONC information blocking materials",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-04-20",
+      "affected_programs": [
+        "meridian-rcm-modernization-2026"
+      ],
+      "severity": "Low",
+      "time_horizon": "0-3 months",
+      "citations": "https://www.hhs.gov/ocr/privacy/hipaa/administrative/securityrule/index.html",
+      "confidence": 0.72
+    },
+    {
+      "id": "industry:meridian:028",
+      "type": "labor",
+      "source": "Joint Commission standards",
+      "summary": "Healthcare external signal affecting Meridian program planning and governance.",
+      "date": "2026-01-20",
+      "affected_programs": [
+        "meridian-ambient-2026"
+      ],
+      "severity": "Medium",
+      "time_horizon": "3-12 months",
+      "citations": "https://www.law.cornell.edu/cfr/text/42/part-422",
+      "confidence": 0.86
+    }
+  ],
+  "peer_benchmarks": {
+    "healthcare_it_spend_pct_revenue": "2.0-3.2% for large IDNs; Meridian budget 2.3%",
+    "days_in_ar_benchmark": "45-50 strong; Meridian current 52",
+    "ma_star_distribution": "4+ star plans have quality bonus economics; Meridian current synthetic 4.0",
+    "denial_rate_benchmark": "gross and net definitions vary; Meridian uses both",
+    "_source": "Synthetic benchmark notes anchored to public industry terminology and cited public regulatory sources."
+  }
+}

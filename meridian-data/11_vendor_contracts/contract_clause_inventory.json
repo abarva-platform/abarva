@@ -1,0 +1,252 @@
+{
+  "tenant_key": "meridian-health",
+  "last_updated": "2026-04-25",
+  "data_classification": "Confidential",
+  "contracts": [
+    {
+      "vendor_id": "vendor:meridian:001",
+      "vendor_name": "Epic",
+      "scope": "plan",
+      "clauses": {
+        "mfn": "present",
+        "escalators": "4% annual cap",
+        "exit_terms": "Exit assistance 180 days; data export required",
+        "sla": "99.9% for clinical/critical systems; lower for noncritical",
+        "audit_rights": "annual audit + security questionnaire",
+        "baa_terms": "required where PHI touched",
+        "data_residency": "US only for Restricted data",
+        "ai_ml_usage_rights": "No training on Meridian PHI without written approval and governance review"
+      },
+      "risk_notes": "AI/ML and BAA language reviewed; older contracts need refresh."
+    },
+    {
+      "vendor_id": "vendor:meridian:002",
+      "vendor_name": "AWS",
+      "scope": "shared",
+      "clauses": {
+        "mfn": "not present",
+        "escalators": "5% annual cap",
+        "exit_terms": "Exit assistance 180 days; data export required",
+        "sla": "99.9% for clinical/critical systems; lower for noncritical",
+        "audit_rights": "annual audit + security questionnaire",
+        "baa_terms": "required where PHI touched",
+        "data_residency": "US only for Restricted data",
+        "ai_ml_usage_rights": "No training on Meridian PHI without written approval and governance review"
+      },
+      "risk_notes": "AI/ML and BAA language reviewed; older contracts need refresh."
+    },
+    {
+      "vendor_id": "vendor:meridian:003",
+      "vendor_name": "Microsoft",
+      "scope": "provider",
+      "clauses": {
+        "mfn": "present",
+        "escalators": "6% annual cap",
+        "exit_terms": "Exit assistance 180 days; data export required",
+        "sla": "99.9% for clinical/critical systems; lower for noncritical",
+        "audit_rights": "annual audit + security questionnaire",
+        "baa_terms": "required where PHI touched",
+        "data_residency": "US only for Restricted data",
+        "ai_ml_usage_rights": "No training on Meridian PHI without written approval and governance review"
+      },
+      "risk_notes": "AI/ML and BAA language reviewed; older contracts need refresh."
+    },
+    {
+      "vendor_id": "vendor:meridian:004",
+      "vendor_name": "Workday",
+      "scope": "plan",
+      "clauses": {
+        "mfn": "not present",
+        "escalators": "3% annual cap",
+        "exit_terms": "Exit assistance 180 days; data export required",
+        "sla": "99.9% for clinical/critical systems; lower for noncritical",
+        "audit_rights": "annual audit + security questionnaire",
+        "baa_terms": "required where PHI touched",
+        "data_residency": "US only for Restricted data",
+        "ai_ml_usage_rights": "No training on Meridian PHI without written approval and governance review"
+      },
+      "risk_notes": "AI/ML and BAA language reviewed; older contracts need refresh."
+    },
+    {
+      "vendor_id": "vendor:meridian:005",
+      "vendor_name": "Innovaccer",
+      "scope": "shared",
+      "clauses": {
+        "mfn": "present",
+        "escalators": "4% annual cap",
+        "exit_terms": "Exit assistance 180 days; data export required",
+        "sla": "99.9% for clinical/critical systems; lower for noncritical",
+        "audit_rights": "annual audit + security questionnaire",
+        "baa_terms": "required where PHI touched",
+        "data_residency": "US only for Restricted data",
+        "ai_ml_usage_rights": "No training on Meridian PHI without written approval and governance review"
+      },
+      "risk_notes": "AI/ML and BAA language reviewed; older contracts need refresh."
+    },
+    {
+      "vendor_id": "vendor:meridian:006",
+      "vendor_name": "HealthEdge",
+      "scope": "provider",
+      "clauses": {
+        "mfn": "not present",
+        "escalators": "5% annual cap",
+        "exit_terms": "Exit assistance 180 days; data export required",
+        "sla": "99.9% for clinical/critical systems; lower for noncritical",
+        "audit_rights": "annual audit + security questionnaire",
+        "baa_terms": "required where PHI touched",
+        "data_residency": "US only for Restricted data",
+        "ai_ml_usage_rights": "No training on Meridian PHI without written approval and governance review"
+      },
+      "risk_notes": "AI/ML and BAA language reviewed; older contracts need refresh."
+    },
+    {
+      "vendor_id": "vendor:meridian:007",
+      "vendor_name": "Cohere Health",
+      "scope": "plan",
+      "clauses": {
+        "mfn": "present",
+        "escalators": "6% annual cap",
+        "exit_terms": "Exit assistance 180 days; data export required",
+        "sla": "99.9% for clinical/critical systems; lower for noncritical",
+        "audit_rights": "annual audit + security questionnaire",
+        "baa_terms": "required where PHI touched",
+        "data_residency": "US only for Restricted data",
+        "ai_ml_usage_rights": "No training on Meridian PHI without written approval and governance review"
+      },
+      "risk_notes": "AI/ML and BAA language reviewed; older contracts need refresh."
+    },
+    {
+      "vendor_id": "vendor:meridian:008",
+      "vendor_name": "Snowflake",
+      "scope": "shared",
+      "clauses": {
+        "mfn": "not present",
+        "escalators": "3% annual cap",
+        "exit_terms": "Exit assistance 180 days; data export required",
+        "sla": "99.9% for clinical/critical systems; lower for noncritical",
+        "audit_rights": "annual audit + security questionnaire",
+        "baa_terms": "required where PHI touched",
+        "data_residency": "US only for Restricted data",
+        "ai_ml_usage_rights": "No training on Meridian PHI without written approval and governance review"
+      },
+      "risk_notes": "AI/ML and BAA language reviewed; older contracts need refresh."
+    },
+    {
+      "vendor_id": "vendor:meridian:009",
+      "vendor_name": "ServiceNow",
+      "scope": "provider",
+      "clauses": {
+        "mfn": "present",
+        "escalators": "4% annual cap",
+        "exit_terms": "Exit assistance 180 days; data export required",
+        "sla": "99.9% for clinical/critical systems; lower for noncritical",
+        "audit_rights": "annual audit + security questionnaire",
+        "baa_terms": "required where PHI touched",
+        "data_residency": "US only for Restricted data",
+        "ai_ml_usage_rights": "No training on Meridian PHI without written approval and governance review"
+      },
+      "risk_notes": "AI/ML and BAA language reviewed; older contracts need refresh."
+    },
+    {
+      "vendor_id": "vendor:meridian:010",
+      "vendor_name": "ZeOmega",
+      "scope": "plan",
+      "clauses": {
+        "mfn": "not present",
+        "escalators": "5% annual cap",
+        "exit_terms": "Exit assistance 180 days; data export required",
+        "sla": "99.9% for clinical/critical systems; lower for noncritical",
+        "audit_rights": "annual audit + security questionnaire",
+        "baa_terms": "required where PHI touched",
+        "data_residency": "US only for Restricted data",
+        "ai_ml_usage_rights": "No training on Meridian PHI without written approval and governance review"
+      },
+      "risk_notes": "AI/ML and BAA language reviewed; older contracts need refresh."
+    },
+    {
+      "vendor_id": "vendor:meridian:011",
+      "vendor_name": "Inovalon",
+      "scope": "shared",
+      "clauses": {
+        "mfn": "present",
+        "escalators": "6% annual cap",
+        "exit_terms": "Exit assistance 180 days; data export required",
+        "sla": "99.9% for clinical/critical systems; lower for noncritical",
+        "audit_rights": "annual audit + security questionnaire",
+        "baa_terms": "required where PHI touched",
+        "data_residency": "US only for Restricted data",
+        "ai_ml_usage_rights": "No training on Meridian PHI without written approval and governance review"
+      },
+      "risk_notes": "AI/ML and BAA language reviewed; older contracts need refresh."
+    },
+    {
+      "vendor_id": "vendor:meridian:012",
+      "vendor_name": "Cotiviti",
+      "scope": "provider",
+      "clauses": {
+        "mfn": "not present",
+        "escalators": "3% annual cap",
+        "exit_terms": "Exit assistance 180 days; data export required",
+        "sla": "99.9% for clinical/critical systems; lower for noncritical",
+        "audit_rights": "annual audit + security questionnaire",
+        "baa_terms": "required where PHI touched",
+        "data_residency": "US only for Restricted data",
+        "ai_ml_usage_rights": "No training on Meridian PHI without written approval and governance review"
+      },
+      "risk_notes": "AI/ML and BAA language reviewed; older contracts need refresh."
+    },
+    {
+      "vendor_id": "vendor:meridian:013",
+      "vendor_name": "symplr",
+      "scope": "plan",
+      "clauses": {
+        "mfn": "present",
+        "escalators": "4% annual cap",
+        "exit_terms": "Exit assistance 180 days; data export required",
+        "sla": "99.9% for clinical/critical systems; lower for noncritical",
+        "audit_rights": "annual audit + security questionnaire",
+        "baa_terms": "required where PHI touched",
+        "data_residency": "US only for Restricted data",
+        "ai_ml_usage_rights": "No training on Meridian PHI without written approval and governance review"
+      },
+      "risk_notes": "AI/ML and BAA language reviewed; older contracts need refresh."
+    },
+    {
+      "vendor_id": "vendor:meridian:014",
+      "vendor_name": "Salesforce",
+      "scope": "shared",
+      "clauses": {
+        "mfn": "not present",
+        "escalators": "5% annual cap",
+        "exit_terms": "Exit assistance 180 days; data export required",
+        "sla": "99.9% for clinical/critical systems; lower for noncritical",
+        "audit_rights": "annual audit + security questionnaire",
+        "baa_terms": "required where PHI touched",
+        "data_residency": "US only for Restricted data",
+        "ai_ml_usage_rights": "No training on Meridian PHI without written approval and governance review"
+      },
+      "risk_notes": "AI/ML and BAA language reviewed; older contracts need refresh."
+    },
+    {
+      "vendor_id": "vendor:meridian:015",
+      "vendor_name": "Abridge",
+      "scope": "provider",
+      "clauses": {
+        "mfn": "present",
+        "escalators": "6% annual cap",
+        "exit_terms": "Exit assistance 180 days; data export required",
+        "sla": "99.9% for clinical/critical systems; lower for noncritical",
+        "audit_rights": "annual audit + security questionnaire",
+        "baa_terms": "required where PHI touched",
+        "data_residency": "US only for Restricted data",
+        "ai_ml_usage_rights": "No training on Meridian PHI without written approval and governance review"
+      },
+      "risk_notes": "AI/ML and BAA language reviewed; older contracts need refresh."
+    }
+  ],
+  "contract_health_summary": {
+    "total_contracts": 15,
+    "weak_ai_ml_language": 5,
+    "missing_exit_assistance_language": 2
+  }
+}

@@ -1,0 +1,343 @@
+{
+  "tenant_key": "meridian-health",
+  "last_updated": "2026-04-25",
+  "data_classification": "Internal",
+  "schema_version": "1.0",
+  "signals": [
+    {
+      "id": "xprog:meridian:001",
+      "type": "shared_system_dependency",
+      "title": "Okafor lead on prior-auth and RCM creates overload",
+      "programs": [
+        "meridian-prior-auth-2026",
+        "meridian-ai-governance-2026"
+      ],
+      "severity": "Medium",
+      "raised_by_agent": "Atlas",
+      "raised_date": "2026-04-02",
+      "status": "Active monitoring",
+      "description": "Okafor lead on prior-auth and RCM creates overload. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
+      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+    },
+    {
+      "id": "xprog:meridian:002",
+      "type": "shared_vendor",
+      "title": "Wexler involved in three of four programs",
+      "programs": [
+        "meridian-ai-governance-2026",
+        "meridian-rcm-modernization-2026"
+      ],
+      "severity": "High",
+      "raised_by_agent": "Atlas",
+      "raised_date": "2026-04-03",
+      "status": "Active monitoring",
+      "description": "Wexler involved in three of four programs. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
+      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+    },
+    {
+      "id": "xprog:meridian:003",
+      "type": "cross_program_dependency",
+      "title": "Epic touched by all four programs",
+      "programs": [
+        "meridian-rcm-modernization-2026",
+        "meridian-ambient-2026"
+      ],
+      "severity": "Critical",
+      "raised_by_agent": "Atlas",
+      "raised_date": "2026-04-04",
+      "status": "Escalated",
+      "description": "Epic touched by all four programs. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
+      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+    },
+    {
+      "id": "xprog:meridian:004",
+      "type": "cross_program_contradiction",
+      "title": "Cohere is both prior-auth vendor and DENIALS-2024 vendor",
+      "programs": [
+        "meridian-ambient-2026",
+        "meridian-prior-auth-2026"
+      ],
+      "severity": "Low",
+      "raised_by_agent": "Atlas",
+      "raised_date": "2026-04-05",
+      "status": "Active monitoring",
+      "description": "Cohere is both prior-auth vendor and DENIALS-2024 vendor. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
+      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+    },
+    {
+      "id": "xprog:meridian:005",
+      "type": "pattern_grounded_risk",
+      "title": "Innovaccer renewal affects multiple programs",
+      "programs": [
+        "meridian-prior-auth-2026",
+        "meridian-ai-governance-2026"
+      ],
+      "severity": "Medium",
+      "raised_by_agent": "Atlas",
+      "raised_date": "2026-04-06",
+      "status": "Active monitoring",
+      "description": "Innovaccer renewal affects multiple programs. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
+      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+    },
+    {
+      "id": "xprog:meridian:006",
+      "type": "external_signal_effect",
+      "title": "AI Governance must precede ambient P4",
+      "programs": [
+        "meridian-ai-governance-2026",
+        "meridian-rcm-modernization-2026"
+      ],
+      "severity": "High",
+      "raised_by_agent": "Atlas",
+      "raised_date": "2026-04-07",
+      "status": "Escalated",
+      "description": "AI Governance must precede ambient P4. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
+      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+    },
+    {
+      "id": "xprog:meridian:007",
+      "type": "time_bound_pressure",
+      "title": "CBO change management is shared constraint",
+      "programs": [
+        "meridian-rcm-modernization-2026",
+        "meridian-ambient-2026"
+      ],
+      "severity": "Critical",
+      "raised_by_agent": "Atlas",
+      "raised_date": "2026-04-08",
+      "status": "Active monitoring",
+      "description": "CBO change management is shared constraint. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
+      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+    },
+    {
+      "id": "xprog:meridian:008",
+      "type": "control_signal",
+      "title": "Cost-takeout vs clinical AI investment contradiction",
+      "programs": [
+        "meridian-ambient-2026",
+        "meridian-prior-auth-2026"
+      ],
+      "severity": "Low",
+      "raised_by_agent": "Atlas",
+      "raised_date": "2026-04-09",
+      "status": "Active monitoring",
+      "description": "Cost-takeout vs clinical AI investment contradiction. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
+      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+    },
+    {
+      "id": "xprog:meridian:009",
+      "type": "resource_allocation_conflict",
+      "title": "Plan data needs vs provider data-sharing constraints",
+      "programs": [
+        "meridian-prior-auth-2026",
+        "meridian-ai-governance-2026"
+      ],
+      "severity": "Medium",
+      "raised_by_agent": "Atlas",
+      "raised_date": "2026-04-10",
+      "status": "Escalated",
+      "description": "Plan data needs vs provider data-sharing constraints. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
+      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+    },
+    {
+      "id": "xprog:meridian:010",
+      "type": "shared_sme_overcommitment",
+      "title": "Hawaii integration deferred despite strategy",
+      "programs": [
+        "meridian-ai-governance-2026",
+        "meridian-rcm-modernization-2026"
+      ],
+      "severity": "High",
+      "raised_by_agent": "Atlas",
+      "raised_date": "2026-04-11",
+      "status": "Active monitoring",
+      "description": "Hawaii integration deferred despite strategy. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
+      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+    },
+    {
+      "id": "xprog:meridian:011",
+      "type": "shared_system_dependency",
+      "title": "Prior-auth Anthem red indicates PAT-AI-008",
+      "programs": [
+        "meridian-rcm-modernization-2026",
+        "meridian-ambient-2026"
+      ],
+      "severity": "Critical",
+      "raised_by_agent": "Atlas",
+      "raised_date": "2026-04-12",
+      "status": "Active monitoring",
+      "description": "Prior-auth Anthem red indicates PAT-AI-008. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
+      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+    },
+    {
+      "id": "xprog:meridian:012",
+      "type": "shared_vendor",
+      "title": "Ambient attribution method weak PAT-AI-009",
+      "programs": [
+        "meridian-ambient-2026",
+        "meridian-prior-auth-2026"
+      ],
+      "severity": "Low",
+      "raised_by_agent": "Atlas",
+      "raised_date": "2026-04-13",
+      "status": "Escalated",
+      "description": "Ambient attribution method weak PAT-AI-009. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
+      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+    },
+    {
+      "id": "xprog:meridian:013",
+      "type": "cross_program_dependency",
+      "title": "Olive restructuring affects RCM vendor choice",
+      "programs": [
+        "meridian-prior-auth-2026",
+        "meridian-ai-governance-2026"
+      ],
+      "severity": "Medium",
+      "raised_by_agent": "Atlas",
+      "raised_date": "2026-04-14",
+      "status": "Active monitoring",
+      "description": "Olive restructuring affects RCM vendor choice. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
+      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+    },
+    {
+      "id": "xprog:meridian:014",
+      "type": "cross_program_contradiction",
+      "title": "FDA guidance shifts AI governance scope",
+      "programs": [
+        "meridian-ai-governance-2026",
+        "meridian-rcm-modernization-2026"
+      ],
+      "severity": "High",
+      "raised_by_agent": "Atlas",
+      "raised_date": "2026-04-15",
+      "status": "Active monitoring",
+      "description": "FDA guidance shifts AI governance scope. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
+      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+    },
+    {
+      "id": "xprog:meridian:015",
+      "type": "pattern_grounded_risk",
+      "title": "Innovaccer renewal Aug 2026 creates deadline",
+      "programs": [
+        "meridian-rcm-modernization-2026",
+        "meridian-ambient-2026"
+      ],
+      "severity": "Critical",
+      "raised_by_agent": "Atlas",
+      "raised_date": "2026-04-16",
+      "status": "Escalated",
+      "description": "Innovaccer renewal Aug 2026 creates deadline. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
+      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+    },
+    {
+      "id": "xprog:meridian:016",
+      "type": "external_signal_effect",
+      "title": "Board AI policy review creates deadline",
+      "programs": [
+        "meridian-ambient-2026",
+        "meridian-prior-auth-2026"
+      ],
+      "severity": "Low",
+      "raised_by_agent": "Atlas",
+      "raised_date": "2026-04-17",
+      "status": "Active monitoring",
+      "description": "Board AI policy review creates deadline. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
+      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+    },
+    {
+      "id": "xprog:meridian:017",
+      "type": "time_bound_pressure",
+      "title": "19 of 23 AI use cases unattested",
+      "programs": [
+        "meridian-prior-auth-2026",
+        "meridian-ai-governance-2026"
+      ],
+      "severity": "Medium",
+      "raised_by_agent": "Atlas",
+      "raised_date": "2026-04-18",
+      "status": "Active monitoring",
+      "description": "19 of 23 AI use cases unattested. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
+      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+    },
+    {
+      "id": "xprog:meridian:018",
+      "type": "control_signal",
+      "title": "Capital conflict Hawaii vs RCM vs ambient",
+      "programs": [
+        "meridian-ai-governance-2026",
+        "meridian-rcm-modernization-2026"
+      ],
+      "severity": "High",
+      "raised_by_agent": "Atlas",
+      "raised_date": "2026-04-19",
+      "status": "Escalated",
+      "description": "Capital conflict Hawaii vs RCM vs ambient. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
+      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+    },
+    {
+      "id": "xprog:meridian:019",
+      "type": "resource_allocation_conflict",
+      "title": "VP Application Services vacancy slows ownership",
+      "programs": [
+        "meridian-rcm-modernization-2026",
+        "meridian-ambient-2026"
+      ],
+      "severity": "Critical",
+      "raised_by_agent": "Atlas",
+      "raised_date": "2026-04-20",
+      "status": "Active monitoring",
+      "description": "VP Application Services vacancy slows ownership. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
+      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+    },
+    {
+      "id": "xprog:meridian:020",
+      "type": "shared_sme_overcommitment",
+      "title": "Cerner remnant creates identity and analytics fragility",
+      "programs": [
+        "meridian-ambient-2026",
+        "meridian-prior-auth-2026"
+      ],
+      "severity": "Low",
+      "raised_by_agent": "Atlas",
+      "raised_date": "2026-04-21",
+      "status": "Active monitoring",
+      "description": "Cerner remnant creates identity and analytics fragility. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
+      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+    },
+    {
+      "id": "xprog:meridian:021",
+      "type": "shared_system_dependency",
+      "title": "Plan network adequacy vs provider capacity conflict",
+      "programs": [
+        "meridian-prior-auth-2026",
+        "meridian-ai-governance-2026"
+      ],
+      "severity": "Medium",
+      "raised_by_agent": "Atlas",
+      "raised_date": "2026-04-22",
+      "status": "Escalated",
+      "description": "Plan network adequacy vs provider capacity conflict. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
+      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+    },
+    {
+      "id": "xprog:meridian:022",
+      "type": "shared_vendor",
+      "title": "Shadow AI scribe pilots expand governance inventory",
+      "programs": [
+        "meridian-ai-governance-2026",
+        "meridian-rcm-modernization-2026"
+      ],
+      "severity": "High",
+      "raised_by_agent": "Atlas",
+      "raised_date": "2026-04-23",
+      "status": "Active monitoring",
+      "description": "Shadow AI scribe pilots expand governance inventory. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
+      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+    }
+  ],
+  "portfolio_health_summary": {
+    "active_programs": 4,
+    "open_cross_program_signals": 22,
+    "open_high_severity_signals": 11
+  }
+}

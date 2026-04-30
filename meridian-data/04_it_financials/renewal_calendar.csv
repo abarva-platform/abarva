@@ -1,0 +1,56 @@
+contract_id,vendor,system_or_service,renewal_date,current_annual_value,multi_year_value,renewal_status,owner_person_id,scope,strategic_notes
+contract:meridian:001,Epic,Epic Hyperspace,2027-06-30,9200000,27600000,upcoming,person:meridian:maya-ramos,provider,Innovaccer/Cohere/Epic renewals carry multi-program implications.
+contract:meridian:002,Epic,Epic Ambulatory,2027-06-30,6800000,20400000,upcoming,person:meridian:maya-ramos,provider,Innovaccer/Cohere/Epic renewals carry multi-program implications.
+contract:meridian:003,Epic,Epic MyChart,2027-06-30,2100000,6300000,upcoming,person:meridian:jessica-toth,provider,Innovaccer/Cohere/Epic renewals carry multi-program implications.
+contract:meridian:004,Epic,Epic Cogito,2027-06-30,3900000,11700000,upcoming,person:meridian:jordan-mckenzie,provider,Innovaccer/Cohere/Epic renewals carry multi-program implications.
+contract:meridian:005,Epic,Epic Bridges,2027-06-30,1800000,5400000,upcoming,person:meridian:linda-howard,shared,Innovaccer/Cohere/Epic renewals carry multi-program implications.
+contract:meridian:006,Epic,Epic Healthy Planet,2027-06-30,2600000,7800000,upcoming,person:meridian:priya-sharma,shared,Innovaccer/Cohere/Epic renewals carry multi-program implications.
+contract:meridian:007,Epic,Epic Beacon,2027-06-30,1450000,4350000,in_negotiation,person:meridian:maya-ramos,provider,Innovaccer/Cohere/Epic renewals carry multi-program implications.
+contract:meridian:008,Epic,Epic Stork,2027-06-30,940000,2820000,upcoming,person:meridian:maya-ramos,provider,Innovaccer/Cohere/Epic renewals carry multi-program implications.
+contract:meridian:009,Epic,Epic Cosmos,2027-06-30,1200000,3600000,upcoming,person:meridian:jordan-mckenzie,shared,Innovaccer/Cohere/Epic renewals carry multi-program implications.
+contract:meridian:010,Oracle Cerner,Cerner Millennium PowerChart,TBD,3100000,9300000,upcoming,person:meridian:vacant-vp-applications,provider,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:011,HealthEdge,HealthEdge HealthRules Payer,2026-12-31,3200000,9600000,upcoming,person:meridian:owen-li,plan,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:012,SS&C,DST Health Solutions,2026-10-31,1800000,5400000,upcoming,person:meridian:owen-li,plan,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:013,Innovaccer,Innovaccer Population Health,2026-08-31,5200000,15600000,at_risk,person:meridian:priya-sharma,shared,Innovaccer/Cohere/Epic renewals carry multi-program implications.
+contract:meridian:014,Meridian custom,Atlas Internal Data Platform,TBD,6400000,19200000,in_negotiation,person:meridian:jordan-mckenzie,shared,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:015,ZeOmega,ZeOmega Jiva,2027-03-31,2100000,6300000,upcoming,person:meridian:priya-sharma,plan,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:016,Cohere Health,Cohere Health Prior Authorization,2026-11-30,1400000,4200000,upcoming,person:meridian:david-henderson,shared,Innovaccer/Cohere/Epic renewals carry multi-program implications.
+contract:meridian:017,Snowflake,Snowflake Data Cloud,2026-12-31,4800000,14400000,upcoming,person:meridian:jordan-mckenzie,shared,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:018,Amazon Web Services,AWS,2026-09-30,11000000,33000000,upcoming,person:meridian:samuel-ito,shared,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:019,Microsoft,Microsoft 365,2027-05-31,8000000,24000000,upcoming,person:meridian:wei-zhang,shared,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:020,Workday,Workday HCM,2026-09-30,6200000,18600000,upcoming,person:meridian:margaret-liu,shared,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:021,Workday,Workday Financial Management,2026-09-30,5600000,16800000,in_negotiation,person:meridian:david-park,shared,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:022,ServiceNow,ServiceNow ITSM,2027-02-28,3600000,10800000,upcoming,person:meridian:linda-howard,shared,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:023,Okta,Okta,2027-04-30,2400000,7200000,upcoming,person:meridian:daniel-reyes,shared,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:024,Imprivata,Imprivata OneSign,2026-07-31,1700000,5100000,upcoming,person:meridian:daniel-reyes,provider,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:025,Salesforce,Salesforce Health Cloud,2027-01-31,2600000,7800000,upcoming,person:meridian:jessica-toth,shared,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:026,GE HealthCare,Imaging System,2026-02-02,206000,618000,at_risk,person:meridian:linda-howard,provider,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:027,McKesson,Radiology System,2026-03-03,292000,876000,upcoming,person:meridian:jordan-mckenzie,provider,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:028,Philips,Cardiology System,2026-04-04,378000,1134000,in_negotiation,person:meridian:kavita-patel,provider,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:029,Sunquest,Lab System,2026-05-05,464000,1392000,upcoming,person:meridian:vacant-vp-applications,provider,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:030,Omnicell,Pharmacy System,2026-06-06,550000,1650000,upcoming,person:meridian:vacant-vp-applications,provider,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:031,Epic,Pharmacy System,2026-07-07,636000,1908000,upcoming,person:meridian:linda-howard,provider,Innovaccer/Cohere/Epic renewals carry multi-program implications.
+contract:meridian:032,Stryker Vocera,Clinical communications System,2026-08-08,722000,2166000,upcoming,person:meridian:jordan-mckenzie,provider,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:033,PerfectServe,Clinical communications System,2026-09-09,808000,2424000,upcoming,person:meridian:kavita-patel,provider,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:034,Phreesia,Patient access System,2026-10-10,894000,2682000,upcoming,person:meridian:vacant-vp-applications,provider,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:035,Press Ganey,Patient experience System,2026-11-11,980000,2940000,in_negotiation,person:meridian:vacant-vp-applications,provider,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:036,Qualtrics,Patient experience System,2026-12-12,1066000,3198000,upcoming,person:meridian:linda-howard,provider,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:037,symplr,Workforce System,2026-01-13,1152000,3456000,upcoming,person:meridian:jordan-mckenzie,provider,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:038,symplr,Workforce legacy System,2026-02-14,1238000,3714000,upcoming,person:meridian:kavita-patel,provider,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:039,AMN Smart Square,Scheduling System,2026-03-15,1324000,3972000,at_risk,person:meridian:vacant-vp-applications,provider,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:040,Infor Lawson,ERP legacy System,2026-04-16,1410000,4230000,upcoming,person:meridian:vacant-vp-applications,provider,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:041,GHX,Supply chain System,2026-05-17,1496000,4488000,upcoming,person:meridian:linda-howard,provider,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:042,NextGen Mirth,Integration System,TBD,1582000,4746000,in_negotiation,person:meridian:jordan-mckenzie,shared,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:043,Rhapsody,Integration System,2026-07-19,1668000,5004000,upcoming,person:meridian:kavita-patel,shared,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:044,Carequality,HIE System,2026-08-20,1754000,5262000,upcoming,person:meridian:vacant-vp-applications,provider,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:045,CommonWell,HIE System,2026-09-21,1840000,5520000,upcoming,person:meridian:vacant-vp-applications,provider,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:046,Doxy.me,Telehealth legacy System,2026-10-22,1926000,5778000,upcoming,person:meridian:linda-howard,provider,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:047,Tableau,BI System,2026-11-23,2012000,6036000,upcoming,person:meridian:jordan-mckenzie,shared,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:048,Microsoft,BI System,2026-12-24,2098000,6294000,upcoming,person:meridian:kavita-patel,shared,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:049,Quest Analytics,Network adequacy System,2026-01-25,2184000,6552000,in_negotiation,person:meridian:vacant-vp-applications,plan,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:050,Episource,Risk adjustment System,2026-02-01,2270000,6810000,upcoming,person:meridian:vacant-vp-applications,plan,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:051,Inovalon,STAR quality System,2026-03-02,2356000,7068000,upcoming,person:meridian:linda-howard,plan,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:052,Cotiviti,HEDIS System,2026-04-03,2442000,7326000,at_risk,person:meridian:jordan-mckenzie,plan,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:053,symplr,Provider data System,2026-05-04,2528000,7584000,upcoming,person:meridian:kavita-patel,provider,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:054,SailPoint,IGA System,2026-06-05,2614000,7842000,upcoming,person:meridian:vacant-vp-applications,provider,"Standard renewal; monitor BAA, AI/ML, and exit terms."
+contract:meridian:055,CrowdStrike,EDR System,2026-07-06,2700000,8100000,upcoming,person:meridian:vacant-vp-applications,provider,"Standard renewal; monitor BAA, AI/ML, and exit terms."

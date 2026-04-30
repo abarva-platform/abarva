@@ -1,0 +1,82 @@
+category,subcategory,fy2026_planned_usd,fy2025_actual_usd,fy2024_actual_usd,fy2023_actual_usd,run_change_transform,vendor_top,notes
+Change,Line item 01,430000,395000,360000,330000,Change,AWS,Budget line used for IT spend graph.
+Transform,Line item 02,610000,560000,510000,470000,Transform,Microsoft,Budget line used for IT spend graph.
+Vendor,Line item 03,790000,725000,660000,610000,Run,Workday,Budget line used for IT spend graph.
+Cloud,Line item 04,970000,890000,810000,750000,Change,Innovaccer,Budget line used for IT spend graph.
+Consulting,Line item 05,1150000,1055000,960000,890000,Transform,Snowflake,Budget line used for IT spend graph.
+Headcount,Line item 06,1330000,1220000,1110000,1030000,Run,ServiceNow,Budget line used for IT spend graph.
+Plan IT,Line item 07,1510000,1385000,1260000,1170000,Change,HealthEdge,Budget line used for IT spend graph.
+Provider IT,Line item 08,1690000,1550000,1410000,1310000,Transform,Cohere,Budget line used for IT spend graph.
+Shared Infrastructure,Line item 09,1870000,1715000,1560000,1450000,Run,Epic,Budget line used for IT spend graph.
+Run,Line item 10,2050000,1880000,1710000,1590000,Change,AWS,Budget line used for IT spend graph.
+Change,Line item 11,2230000,2045000,1860000,1730000,Transform,Microsoft,Budget line used for IT spend graph.
+Transform,Line item 12,2410000,2210000,2010000,1870000,Run,Workday,Budget line used for IT spend graph.
+Vendor,Line item 13,2590000,2375000,2160000,2010000,Change,Innovaccer,Budget line used for IT spend graph.
+Cloud,Line item 14,2770000,2540000,2310000,2150000,Transform,Snowflake,Budget line used for IT spend graph.
+Consulting,Line item 15,2950000,2705000,2460000,2290000,Run,ServiceNow,Budget line used for IT spend graph.
+Headcount,Line item 16,3130000,2870000,2610000,2430000,Change,HealthEdge,Budget line used for IT spend graph.
+Plan IT,Line item 17,3310000,3035000,2760000,2570000,Transform,Cohere,Estimated; chargeback methodology under review
+Provider IT,Line item 18,3490000,3200000,2910000,2710000,Run,Epic,Budget line used for IT spend graph.
+Shared Infrastructure,Line item 19,3670000,3365000,3060000,2850000,Change,AWS,Budget line used for IT spend graph.
+Run,Line item 20,3850000,3530000,3210000,2990000,Transform,Microsoft,Budget line used for IT spend graph.
+Change,Line item 21,4030000,3695000,3360000,3130000,Run,Workday,Budget line used for IT spend graph.
+Transform,Line item 22,4210000,3860000,3510000,3270000,Change,Innovaccer,Budget line used for IT spend graph.
+Vendor,Line item 23,4390000,4025000,3660000,3410000,Transform,Snowflake,Known unused license pool in 2025 audit
+Cloud,Line item 24,4570000,4190000,3810000,3550000,Run,ServiceNow,Budget line used for IT spend graph.
+Consulting,Line item 25,4750000,4355000,3960000,3690000,Change,HealthEdge,Budget line used for IT spend graph.
+Headcount,Line item 26,4930000,4520000,4110000,3830000,Transform,Cohere,Budget line used for IT spend graph.
+Plan IT,Line item 27,5110000,4685000,4260000,3970000,Run,Epic,Budget line used for IT spend graph.
+Provider IT,Line item 28,5290000,4850000,4410000,4110000,Change,AWS,Budget line used for IT spend graph.
+Shared Infrastructure,Line item 29,5470000,5015000,4560000,4250000,Transform,Microsoft,Budget line used for IT spend graph.
+Run,Line item 30,5650000,5180000,4710000,4390000,Run,Workday,Budget line used for IT spend graph.
+Change,Line item 31,5830000,5345000,4860000,4530000,Change,Innovaccer,Budget line used for IT spend graph.
+Transform,Line item 32,6010000,5510000,5010000,4670000,Transform,Snowflake,Budget line used for IT spend graph.
+Vendor,Line item 33,6190000,5675000,5160000,4810000,Run,ServiceNow,Budget line used for IT spend graph.
+Cloud,Line item 34,6370000,5840000,5310000,4950000,Change,HealthEdge,Estimated; chargeback methodology under review
+Consulting,Line item 35,6550000,6005000,5460000,5090000,Transform,Cohere,Budget line used for IT spend graph.
+Headcount,Line item 36,6730000,6170000,5610000,5230000,Run,Epic,Budget line used for IT spend graph.
+Plan IT,Line item 37,6910000,6335000,5760000,5370000,Change,AWS,Budget line used for IT spend graph.
+Provider IT,Line item 38,7090000,6500000,5910000,5510000,Transform,Microsoft,Budget line used for IT spend graph.
+Shared Infrastructure,Line item 39,7270000,6665000,6060000,5650000,Run,Workday,Budget line used for IT spend graph.
+Run,Line item 40,7450000,6830000,6210000,5790000,Change,Innovaccer,Budget line used for IT spend graph.
+Change,Line item 41,7630000,6995000,6360000,5930000,Transform,Snowflake,Budget line used for IT spend graph.
+Transform,Line item 42,7810000,7160000,6510000,6070000,Run,ServiceNow,Budget line used for IT spend graph.
+Vendor,Line item 43,7990000,7325000,6660000,6210000,Change,HealthEdge,Budget line used for IT spend graph.
+Cloud,Line item 44,8170000,7490000,6810000,6350000,Transform,Cohere,Budget line used for IT spend graph.
+Consulting,Line item 45,8350000,7655000,6960000,6490000,Run,Epic,Budget line used for IT spend graph.
+Headcount,Line item 46,8530000,7820000,7110000,6630000,Change,AWS,Known unused license pool in 2025 audit
+Plan IT,Line item 47,8710000,7985000,7260000,6770000,Transform,Microsoft,Budget line used for IT spend graph.
+Provider IT,Line item 48,8890000,8150000,7410000,6910000,Run,Workday,Budget line used for IT spend graph.
+Shared Infrastructure,Line item 49,9070000,8315000,7560000,7050000,Change,Innovaccer,Budget line used for IT spend graph.
+Run,Line item 50,9250000,8480000,7710000,7190000,Transform,Snowflake,Budget line used for IT spend graph.
+Change,Line item 51,9430000,8645000,7860000,7330000,Run,ServiceNow,Estimated; chargeback methodology under review
+Transform,Line item 52,9610000,8810000,8010000,7470000,Change,HealthEdge,Budget line used for IT spend graph.
+Vendor,Line item 53,9790000,8975000,8160000,7610000,Transform,Cohere,Budget line used for IT spend graph.
+Cloud,Line item 54,9970000,9140000,8310000,7750000,Run,Epic,Budget line used for IT spend graph.
+Consulting,Line item 55,10150000,9305000,8460000,7890000,Change,AWS,Budget line used for IT spend graph.
+Headcount,Line item 56,10330000,9470000,8610000,8030000,Transform,Microsoft,Budget line used for IT spend graph.
+Plan IT,Line item 57,10510000,9635000,8760000,8170000,Run,Workday,Budget line used for IT spend graph.
+Provider IT,Line item 58,10690000,9800000,8910000,8310000,Change,Innovaccer,Budget line used for IT spend graph.
+Shared Infrastructure,Line item 59,10870000,9965000,9060000,8450000,Transform,Snowflake,Budget line used for IT spend graph.
+Run,Line item 60,11050000,10130000,9210000,8590000,Run,ServiceNow,Budget line used for IT spend graph.
+Change,Line item 61,11230000,10295000,9360000,8730000,Change,HealthEdge,Budget line used for IT spend graph.
+Transform,Line item 62,11410000,10460000,9510000,8870000,Transform,Cohere,Budget line used for IT spend graph.
+Vendor,Line item 63,11590000,10625000,9660000,9010000,Run,Epic,Budget line used for IT spend graph.
+Cloud,Line item 64,11770000,10790000,9810000,9150000,Change,AWS,Budget line used for IT spend graph.
+Consulting,Line item 65,11950000,10955000,9960000,9290000,Transform,Microsoft,Budget line used for IT spend graph.
+Headcount,Line item 66,12130000,11120000,10110000,9430000,Run,Workday,Budget line used for IT spend graph.
+Plan IT,Line item 67,12310000,11285000,10260000,9570000,Change,Innovaccer,Budget line used for IT spend graph.
+Provider IT,Line item 68,12490000,11450000,10410000,9710000,Transform,Snowflake,Estimated; chargeback methodology under review
+Shared Infrastructure,Line item 69,12670000,11615000,10560000,9850000,Run,ServiceNow,Known unused license pool in 2025 audit
+Run,Line item 70,12850000,11780000,10710000,9990000,Change,HealthEdge,Budget line used for IT spend graph.
+Change,Line item 71,13030000,11945000,10860000,10130000,Transform,Cohere,Budget line used for IT spend graph.
+Transform,Line item 72,13210000,12110000,11010000,10270000,Run,Epic,Budget line used for IT spend graph.
+Vendor,Line item 73,13390000,12275000,11160000,10410000,Change,AWS,Budget line used for IT spend graph.
+Cloud,Line item 74,13570000,12440000,11310000,10550000,Transform,Microsoft,Budget line used for IT spend graph.
+Consulting,Line item 75,13750000,12605000,11460000,10690000,Run,Workday,Budget line used for IT spend graph.
+Headcount,Line item 76,13930000,12770000,11610000,10830000,Change,Innovaccer,Budget line used for IT spend graph.
+Plan IT,Line item 77,14110000,12935000,11760000,10970000,Transform,Snowflake,Budget line used for IT spend graph.
+Provider IT,Line item 78,14290000,13100000,11910000,11110000,Run,ServiceNow,Budget line used for IT spend graph.
+Shared Infrastructure,Line item 79,14470000,13265000,12060000,11250000,Change,HealthEdge,Budget line used for IT spend graph.
+Run,Line item 80,14650000,13430000,12210000,11390000,Transform,Cohere,Budget line used for IT spend graph.
+Change,Line item 81,14830000,13595000,12360000,11530000,Run,Epic,Budget line used for IT spend graph.

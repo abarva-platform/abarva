@@ -1,0 +1,46 @@
+vendor_id,vendor_name,scope,category,annual_spend_bucket,performance_score,risk_score,financial_health_rating,strategic_alignment_rating,recent_issues_summary,escalation_path,owner_person_id
+vendor:meridian:001,Epic,plan,Cloud,$500K-$1M,56,41,A,5,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:harold-kim
+vendor:meridian:002,Oracle Cerner,shared,RCM,$1M-$5M,57,42,A,1,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:anita-krishnamurthy
+vendor:meridian:003,HealthEdge,provider,Plan admin,$5M+,58,43,A,5,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:david-park
+vendor:meridian:004,SS&C,plan,Security,<$500K,59,44,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:marcus-reid
+vendor:meridian:005,Innovaccer,shared,Analytics,$500K-$1M,60,45,BBB,5,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:jennifer-wexler
+vendor:meridian:006,Meridian custom,provider,EHR,$1M-$5M,61,46,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:sarah-obrien
+vendor:meridian:007,ZeOmega,plan,Cloud,$5M+,62,47,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:rebecca-hollings
+vendor:meridian:008,Cohere Health,shared,RCM,<$500K,63,48,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:james-okonjo
+vendor:meridian:009,Snowflake,provider,Plan admin,$500K-$1M,64,49,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:patricia-okafor
+vendor:meridian:010,Amazon Web Services,plan,Security,$1M-$5M,65,50,BBB,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:margaret-liu
+vendor:meridian:011,Microsoft,shared,Analytics,$5M+,66,51,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:karen-mercer
+vendor:meridian:012,Workday,provider,EHR,<$500K,67,52,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:robert-chen
+vendor:meridian:013,ServiceNow,plan,Cloud,$500K-$1M,68,53,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:thomas-hartwell
+vendor:meridian:014,Okta,shared,RCM,$1M-$5M,69,54,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:lakshmi-venkatesan
+vendor:meridian:015,Imprivata,provider,Plan admin,$5M+,70,55,BBB,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:andrew-fitzgerald
+vendor:meridian:016,Salesforce,plan,Security,<$500K,71,56,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:priya-sharma
+vendor:meridian:017,GE HealthCare,shared,Analytics,$500K-$1M,72,57,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:christopher-vega
+vendor:meridian:018,McKesson,provider,EHR,$1M-$5M,73,58,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:kavita-patel
+vendor:meridian:019,Philips,plan,Cloud,$5M+,74,59,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:marcus-chen
+vendor:meridian:020,Sunquest,shared,RCM,<$500K,75,60,BBB,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:linda-howard
+vendor:meridian:021,Omnicell,provider,Plan admin,$500K-$1M,76,61,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:wei-zhang
+vendor:meridian:022,Stryker Vocera,plan,Security,$1M-$5M,77,62,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:daniel-reyes
+vendor:meridian:023,PerfectServe,shared,Analytics,$5M+,78,63,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:jordan-mckenzie
+vendor:meridian:024,Phreesia,provider,EHR,<$500K,79,64,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:vacant-vp-applications
+vendor:meridian:025,Press Ganey,plan,Cloud,$500K-$1M,80,65,BBB,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:jessica-toth
+vendor:meridian:026,Qualtrics,shared,RCM,$1M-$5M,81,66,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:brian-sullivan
+vendor:meridian:027,symplr,provider,Plan admin,$5M+,82,67,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:david-henderson
+vendor:meridian:028,AMN Smart Square,plan,Security,<$500K,83,68,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:maya-ramos
+vendor:meridian:029,Infor Lawson,shared,Analytics,$500K-$1M,84,69,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:owen-li
+vendor:meridian:030,GHX,provider,EHR,$1M-$5M,85,70,BBB,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:natalie-greer
+vendor:meridian:031,NextGen Mirth,plan,Cloud,$5M+,86,71,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:samuel-ito
+vendor:meridian:032,Rhapsody,shared,RCM,<$500K,87,72,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:leah-benitez
+vendor:meridian:033,Carequality,provider,Plan admin,$500K-$1M,88,73,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:aiden-walsh
+vendor:meridian:034,CommonWell,plan,Security,$1M-$5M,89,74,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:elaine-morales
+vendor:meridian:035,Doxy.me,shared,Analytics,$5M+,90,75,BBB,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:harold-kim
+vendor:meridian:036,Tableau,provider,EHR,<$500K,91,76,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:anita-krishnamurthy
+vendor:meridian:037,Quest Analytics,plan,Cloud,$500K-$1M,92,77,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:david-park
+vendor:meridian:038,Episource,shared,RCM,$1M-$5M,93,78,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:marcus-reid
+vendor:meridian:039,Inovalon,provider,Plan admin,$5M+,94,79,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:jennifer-wexler
+vendor:meridian:040,Cotiviti,plan,Security,<$500K,95,80,BBB,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:sarah-obrien
+vendor:meridian:041,SailPoint,shared,Analytics,$500K-$1M,96,81,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:rebecca-hollings
+vendor:meridian:042,CrowdStrike,provider,EHR,$1M-$5M,55,82,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:james-okonjo
+vendor:meridian:043,Palo Alto,plan,Cloud,$5M+,56,83,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:patricia-okafor
+vendor:meridian:044,Proofpoint,shared,RCM,<$500K,57,84,A,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:margaret-liu
+vendor:meridian:045,Microsoft Sentinel,provider,Plan admin,$500K-$1M,58,85,BBB,3,Standard monitoring; BAA and AI/ML clauses reviewed.,Owner to VP / sponsor / legal as needed,person:meridian:karen-mercer

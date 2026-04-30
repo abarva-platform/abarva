@@ -1,0 +1,373 @@
+{
+  "tenant_key": "meridian-health",
+  "last_updated": "2026-04-25",
+  "data_classification": "Internal",
+  "schema_version": "1.0",
+  "active_programs": [
+    {
+      "id": "meridian-ambient-2026",
+      "name": "Ambient Clinical Documentation Rollout",
+      "archetype_pattern_id": "PAT-PRG-AMBIENT-001",
+      "sponsor_id": "person:meridian:jennifer-wexler",
+      "co_sponsor_id": "person:meridian:marcus-reid",
+      "program_lead_id": "person:meridian:kavita-patel",
+      "business_owner_id": "person:meridian:jennifer-wexler",
+      "technology_lead_id": "person:meridian:kavita-patel",
+      "current_phase": 3,
+      "current_phase_name": "P3 Design",
+      "time_in_phase_days": 48,
+      "started_date": "2025-10-15",
+      "business_case_summary": "Ambient Clinical Documentation Rollout is a board-visible FY2026 program. It includes explicit lessons from DENIALS-2024, Hawaii integration, or patient digital adoption as applicable.",
+      "target_metrics": [
+        {
+          "metric_name": "primary outcome",
+          "baseline": "current state documented",
+          "target": "target state by FY2027",
+          "target_date": "2027-06-30"
+        }
+      ],
+      "budget_approved_usd": 14200000,
+      "budget_consumed_usd": 5200000,
+      "milestones": [
+        {
+          "name": "P0 close",
+          "planned_date": "2025-10-15",
+          "status": "complete"
+        },
+        {
+          "name": "Current phase gate",
+          "planned_date": "2026-06-30",
+          "status": "in_progress"
+        }
+      ],
+      "vendors_involved": [
+        "Abridge",
+        "Suki",
+        "DAX Copilot"
+      ],
+      "systems_touched": [
+        "system:meridian:epic-hyperspace",
+        "system:meridian:epic-ambulatory",
+        "system:meridian:abridge",
+        "system:meridian:suki",
+        "system:meridian:dax-copilot"
+      ],
+      "kpis_targeted": [
+        "kpi:meridian:001",
+        "kpi:meridian:005"
+      ],
+      "risks": [
+        {
+          "id": "risk:meridian-ambient-2026:001",
+          "description": "Pilot-to-production, governance, or operating-model adoption risk remains active.",
+          "severity": "Medium",
+          "owner": "person:meridian:kavita-patel"
+        }
+      ],
+      "recent_decisions": [
+        {
+          "date": "2026-04-15",
+          "decision": "Continue with named caveats",
+          "rationale": "Executive sponsor accepted risk log and next gate criteria."
+        },
+        {
+          "date": "2026-03-28",
+          "decision": "Require explicit attribution method",
+          "rationale": "DENIALS-2024 scar tissue."
+        }
+      ],
+      "stakeholder_map": {
+        "champions": [
+          "person:meridian:jennifer-wexler",
+          "person:meridian:marcus-reid",
+          "person:meridian:kavita-patel"
+        ],
+        "skeptics": [
+          "person:meridian:david-park"
+        ],
+        "neutrals": [
+          "person:meridian:margaret-liu",
+          "person:meridian:thomas-hartwell"
+        ]
+      },
+      "scope": "provider",
+      "failure_mode_flags_active": [
+        "PAT-AI-008",
+        "PAT-AI-005"
+      ],
+      "prior_program_lineage": "PATIENT-DIGITAL-2023"
+    },
+    {
+      "id": "meridian-prior-auth-2026",
+      "name": "Prior Authorization Automation",
+      "archetype_pattern_id": "PAT-PRG-PA-001",
+      "sponsor_id": "person:meridian:patricia-okafor",
+      "co_sponsor_id": "person:meridian:jennifer-wexler",
+      "program_lead_id": "person:meridian:david-henderson",
+      "business_owner_id": "person:meridian:patricia-okafor",
+      "technology_lead_id": "person:meridian:marcus-chen",
+      "current_phase": 4,
+      "current_phase_name": "P4 Build",
+      "time_in_phase_days": 66,
+      "started_date": "2025-02-03",
+      "business_case_summary": "Prior Authorization Automation is a board-visible FY2026 program. It includes explicit lessons from DENIALS-2024, Hawaii integration, or patient digital adoption as applicable.",
+      "target_metrics": [
+        {
+          "metric_name": "primary outcome",
+          "baseline": "current state documented",
+          "target": "target state by FY2027",
+          "target_date": "2027-06-30"
+        }
+      ],
+      "budget_approved_usd": 9800000,
+      "budget_consumed_usd": 6100000,
+      "milestones": [
+        {
+          "name": "P0 close",
+          "planned_date": "2025-02-03",
+          "status": "complete"
+        },
+        {
+          "name": "Current phase gate",
+          "planned_date": "2026-06-30",
+          "status": "in_progress"
+        }
+      ],
+      "vendors_involved": [
+        "Cohere Health"
+      ],
+      "systems_touched": [
+        "system:meridian:cohere-prior-auth",
+        "system:meridian:epic-hyperspace",
+        "system:meridian:healthedge-healthrules"
+      ],
+      "kpis_targeted": [
+        "kpi:meridian:021",
+        "kpi:meridian:012"
+      ],
+      "risks": [
+        {
+          "id": "risk:meridian-prior-auth-2026:001",
+          "description": "Pilot-to-production, governance, or operating-model adoption risk remains active.",
+          "severity": "High",
+          "owner": "person:meridian:david-henderson"
+        }
+      ],
+      "recent_decisions": [
+        {
+          "date": "2026-04-15",
+          "decision": "Continue with named caveats",
+          "rationale": "Executive sponsor accepted risk log and next gate criteria."
+        },
+        {
+          "date": "2026-03-28",
+          "decision": "Require explicit attribution method",
+          "rationale": "DENIALS-2024 scar tissue."
+        }
+      ],
+      "stakeholder_map": {
+        "champions": [
+          "person:meridian:patricia-okafor",
+          "person:meridian:jennifer-wexler",
+          "person:meridian:david-henderson"
+        ],
+        "skeptics": [
+          "central business office managers"
+        ],
+        "neutrals": [
+          "person:meridian:margaret-liu",
+          "person:meridian:thomas-hartwell"
+        ]
+      },
+      "scope": "shared",
+      "failure_mode_flags_active": [
+        "PAT-AI-008",
+        "PAT-AI-005"
+      ],
+      "prior_program_lineage": "DENIALS-2024"
+    },
+    {
+      "id": "meridian-ai-governance-2026",
+      "name": "Clinical AI Governance Uplift",
+      "archetype_pattern_id": "PAT-PRG-AIGOV-001",
+      "sponsor_id": "person:meridian:jennifer-wexler",
+      "co_sponsor_id": "person:meridian:rebecca-hollings",
+      "program_lead_id": "person:meridian:anita-krishnamurthy",
+      "business_owner_id": "person:meridian:jennifer-wexler",
+      "technology_lead_id": "person:meridian:daniel-reyes",
+      "current_phase": 2,
+      "current_phase_name": "P2 Synthesis",
+      "time_in_phase_days": 84,
+      "started_date": "2026-01-08",
+      "business_case_summary": "Clinical AI Governance Uplift is a board-visible FY2026 program. It includes explicit lessons from DENIALS-2024, Hawaii integration, or patient digital adoption as applicable.",
+      "target_metrics": [
+        {
+          "metric_name": "primary outcome",
+          "baseline": "current state documented",
+          "target": "target state by FY2027",
+          "target_date": "2027-06-30"
+        }
+      ],
+      "budget_approved_usd": 4600000,
+      "budget_consumed_usd": 900000,
+      "milestones": [
+        {
+          "name": "P0 close",
+          "planned_date": "2026-01-08",
+          "status": "complete"
+        },
+        {
+          "name": "Current phase gate",
+          "planned_date": "2026-06-30",
+          "status": "in_progress"
+        }
+      ],
+      "vendors_involved": [
+        "ServiceNow",
+        "model registry vendor TBD"
+      ],
+      "systems_touched": [
+        "system:meridian:servicenow",
+        "system:meridian:snowflake",
+        "system:meridian:atlas-data-platform"
+      ],
+      "kpis_targeted": [
+        "kpi:meridian:017",
+        "kpi:meridian:022"
+      ],
+      "risks": [
+        {
+          "id": "risk:meridian-ai-governance-2026:001",
+          "description": "Pilot-to-production, governance, or operating-model adoption risk remains active.",
+          "severity": "Medium",
+          "owner": "person:meridian:anita-krishnamurthy"
+        }
+      ],
+      "recent_decisions": [
+        {
+          "date": "2026-04-15",
+          "decision": "Continue with named caveats",
+          "rationale": "Executive sponsor accepted risk log and next gate criteria."
+        },
+        {
+          "date": "2026-03-28",
+          "decision": "Require explicit attribution method",
+          "rationale": "DENIALS-2024 scar tissue."
+        }
+      ],
+      "stakeholder_map": {
+        "champions": [
+          "person:meridian:jennifer-wexler",
+          "person:meridian:rebecca-hollings",
+          "person:meridian:anita-krishnamurthy"
+        ],
+        "skeptics": [
+          "central business office managers"
+        ],
+        "neutrals": [
+          "person:meridian:margaret-liu",
+          "person:meridian:thomas-hartwell"
+        ]
+      },
+      "scope": "shared",
+      "failure_mode_flags_active": [
+        "PAT-AI-008",
+        "PAT-AI-005"
+      ],
+      "prior_program_lineage": "Board AI risk policy Q3 FY2025"
+    },
+    {
+      "id": "meridian-rcm-modernization-2026",
+      "name": "RCM Modernization",
+      "archetype_pattern_id": "PAT-PRG-RCM-001",
+      "sponsor_id": "person:meridian:david-park",
+      "co_sponsor_id": "person:meridian:patricia-okafor",
+      "program_lead_id": "person:meridian:patricia-okafor",
+      "business_owner_id": "person:meridian:david-park",
+      "technology_lead_id": "person:meridian:marcus-chen",
+      "current_phase": 1,
+      "current_phase_name": "P1 Discovery",
+      "time_in_phase_days": 102,
+      "started_date": "2026-03-01",
+      "business_case_summary": "RCM Modernization is a board-visible FY2026 program. It includes explicit lessons from DENIALS-2024, Hawaii integration, or patient digital adoption as applicable.",
+      "target_metrics": [
+        {
+          "metric_name": "primary outcome",
+          "baseline": "current state documented",
+          "target": "target state by FY2027",
+          "target_date": "2027-06-30"
+        }
+      ],
+      "budget_approved_usd": 22000000,
+      "budget_consumed_usd": 1200000,
+      "milestones": [
+        {
+          "name": "P0 close",
+          "planned_date": "2026-03-01",
+          "status": "complete"
+        },
+        {
+          "name": "Current phase gate",
+          "planned_date": "2026-06-30",
+          "status": "in_progress"
+        }
+      ],
+      "vendors_involved": [
+        "Innovaccer",
+        "Olive",
+        "Notable"
+      ],
+      "systems_touched": [
+        "system:meridian:notable-rcm",
+        "system:meridian:olive-rcm",
+        "system:meridian:innovaccer-pop-health",
+        "system:meridian:epic-hyperspace"
+      ],
+      "kpis_targeted": [
+        "kpi:meridian:011",
+        "kpi:meridian:012",
+        "kpi:meridian:013"
+      ],
+      "risks": [
+        {
+          "id": "risk:meridian-rcm-modernization-2026:001",
+          "description": "Pilot-to-production, governance, or operating-model adoption risk remains active.",
+          "severity": "High",
+          "owner": "person:meridian:patricia-okafor"
+        }
+      ],
+      "recent_decisions": [
+        {
+          "date": "2026-04-15",
+          "decision": "Continue with named caveats",
+          "rationale": "Executive sponsor accepted risk log and next gate criteria."
+        },
+        {
+          "date": "2026-03-28",
+          "decision": "Require explicit attribution method",
+          "rationale": "DENIALS-2024 scar tissue."
+        }
+      ],
+      "stakeholder_map": {
+        "champions": [
+          "person:meridian:david-park",
+          "person:meridian:patricia-okafor",
+          "person:meridian:patricia-okafor"
+        ],
+        "skeptics": [
+          "central business office managers"
+        ],
+        "neutrals": [
+          "person:meridian:margaret-liu",
+          "person:meridian:thomas-hartwell"
+        ]
+      },
+      "scope": "provider",
+      "failure_mode_flags_active": [
+        "PAT-AI-008",
+        "PAT-AI-005"
+      ],
+      "prior_program_lineage": "DENIALS-2024"
+    }
+  ]
+}

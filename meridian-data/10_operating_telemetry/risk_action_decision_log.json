@@ -1,0 +1,385 @@
+{
+  "tenant_key": "meridian-health",
+  "last_updated": "2026-04-25",
+  "data_classification": "Internal",
+  "schema_version": "1.0",
+  "portfolio_risks": [
+    {
+      "id": "risk:meridian:001",
+      "description": "Okafor overcommitted across prior-auth and RCM",
+      "severity": "Medium",
+      "owner": "person:meridian:harold-kim",
+      "status": "in_progress",
+      "mitigation": "Named owner mitigation; reviewed in operating telemetry.",
+      "programs_affected": [
+        "meridian-prior-auth-2026"
+      ]
+    },
+    {
+      "id": "risk:meridian:002",
+      "description": "Anthem integration red",
+      "severity": "High",
+      "owner": "person:meridian:anita-krishnamurthy",
+      "status": "complete",
+      "mitigation": "Named owner mitigation; reviewed in operating telemetry.",
+      "programs_affected": [
+        "meridian-ai-governance-2026"
+      ]
+    },
+    {
+      "id": "risk:meridian:003",
+      "description": "Olive financial stability",
+      "severity": "Critical",
+      "owner": "person:meridian:david-park",
+      "status": "overdue",
+      "mitigation": "Named owner mitigation; reviewed in operating telemetry.",
+      "programs_affected": [
+        "meridian-rcm-modernization-2026"
+      ]
+    },
+    {
+      "id": "risk:meridian:004",
+      "description": "FDA guidance shift",
+      "severity": "Low",
+      "owner": "person:meridian:marcus-reid",
+      "status": "open",
+      "mitigation": "Named owner mitigation; reviewed in operating telemetry.",
+      "programs_affected": [
+        "meridian-ambient-2026"
+      ]
+    },
+    {
+      "id": "risk:meridian:005",
+      "description": "CBO capacity",
+      "severity": "Medium",
+      "owner": "person:meridian:jennifer-wexler",
+      "status": "in_progress",
+      "mitigation": "Named owner mitigation; reviewed in operating telemetry.",
+      "programs_affected": [
+        "meridian-prior-auth-2026"
+      ]
+    },
+    {
+      "id": "risk:meridian:006",
+      "description": "Hawaii Cerner fragility",
+      "severity": "High",
+      "owner": "person:meridian:sarah-obrien",
+      "status": "complete",
+      "mitigation": "Named owner mitigation; reviewed in operating telemetry.",
+      "programs_affected": [
+        "meridian-ai-governance-2026"
+      ]
+    },
+    {
+      "id": "risk:meridian:007",
+      "description": "STAR quality pressure",
+      "severity": "Critical",
+      "owner": "person:meridian:rebecca-hollings",
+      "status": "overdue",
+      "mitigation": "Named owner mitigation; reviewed in operating telemetry.",
+      "programs_affected": [
+        "meridian-rcm-modernization-2026"
+      ]
+    },
+    {
+      "id": "risk:meridian:008",
+      "description": "denial-rate trajectory",
+      "severity": "Low",
+      "owner": "person:meridian:james-okonjo",
+      "status": "open",
+      "mitigation": "Named owner mitigation; reviewed in operating telemetry.",
+      "programs_affected": [
+        "meridian-ambient-2026"
+      ]
+    },
+    {
+      "id": "risk:meridian:009",
+      "description": "AI use cases unattested",
+      "severity": "Medium",
+      "owner": "person:meridian:patricia-okafor",
+      "status": "in_progress",
+      "mitigation": "Named owner mitigation; reviewed in operating telemetry.",
+      "programs_affected": [
+        "meridian-prior-auth-2026"
+      ]
+    },
+    {
+      "id": "risk:meridian:010",
+      "description": "provider-plan data sharing constraint",
+      "severity": "High",
+      "owner": "person:meridian:margaret-liu",
+      "status": "complete",
+      "mitigation": "Named owner mitigation; reviewed in operating telemetry.",
+      "programs_affected": [
+        "meridian-ai-governance-2026"
+      ]
+    },
+    {
+      "id": "risk:meridian:011",
+      "description": "Epic renewal dependency",
+      "severity": "Critical",
+      "owner": "person:meridian:karen-mercer",
+      "status": "overdue",
+      "mitigation": "Named owner mitigation; reviewed in operating telemetry.",
+      "programs_affected": [
+        "meridian-rcm-modernization-2026"
+      ]
+    },
+    {
+      "id": "risk:meridian:012",
+      "description": "Innovaccer renewal pressure",
+      "severity": "Low",
+      "owner": "person:meridian:robert-chen",
+      "status": "open",
+      "mitigation": "Named owner mitigation; reviewed in operating telemetry.",
+      "programs_affected": [
+        "meridian-ambient-2026"
+      ]
+    },
+    {
+      "id": "risk:meridian:013",
+      "description": "nursing workflow skepticism",
+      "severity": "Medium",
+      "owner": "person:meridian:thomas-hartwell",
+      "status": "in_progress",
+      "mitigation": "Named owner mitigation; reviewed in operating telemetry.",
+      "programs_affected": [
+        "meridian-prior-auth-2026"
+      ]
+    },
+    {
+      "id": "risk:meridian:014",
+      "description": "security BAA gaps",
+      "severity": "High",
+      "owner": "person:meridian:lakshmi-venkatesan",
+      "status": "complete",
+      "mitigation": "Named owner mitigation; reviewed in operating telemetry.",
+      "programs_affected": [
+        "meridian-ai-governance-2026"
+      ]
+    },
+    {
+      "id": "risk:meridian:015",
+      "description": "model registry delay",
+      "severity": "Critical",
+      "owner": "person:meridian:andrew-fitzgerald",
+      "status": "overdue",
+      "mitigation": "Named owner mitigation; reviewed in operating telemetry.",
+      "programs_affected": [
+        "meridian-rcm-modernization-2026"
+      ]
+    }
+  ],
+  "open_action_items_critical": [
+    {
+      "id": "action:meridian:001",
+      "owner": "person:meridian:harold-kim",
+      "due_date": "2026-06-15",
+      "status": "in_progress",
+      "description": "Operational action tied to current program risk."
+    },
+    {
+      "id": "action:meridian:002",
+      "owner": "person:meridian:anita-krishnamurthy",
+      "due_date": "2026-07-15",
+      "status": "complete",
+      "description": "Operational action tied to current program risk."
+    },
+    {
+      "id": "action:meridian:003",
+      "owner": "person:meridian:david-park",
+      "due_date": "2026-08-15",
+      "status": "overdue",
+      "description": "Operational action tied to current program risk."
+    },
+    {
+      "id": "action:meridian:004",
+      "owner": "person:meridian:marcus-reid",
+      "due_date": "2026-05-15",
+      "status": "open",
+      "description": "Operational action tied to current program risk."
+    },
+    {
+      "id": "action:meridian:005",
+      "owner": "person:meridian:jennifer-wexler",
+      "due_date": "2026-06-15",
+      "status": "in_progress",
+      "description": "Operational action tied to current program risk."
+    },
+    {
+      "id": "action:meridian:006",
+      "owner": "person:meridian:sarah-obrien",
+      "due_date": "2026-07-15",
+      "status": "complete",
+      "description": "Operational action tied to current program risk."
+    },
+    {
+      "id": "action:meridian:007",
+      "owner": "person:meridian:rebecca-hollings",
+      "due_date": "2026-08-15",
+      "status": "overdue",
+      "description": "Operational action tied to current program risk."
+    },
+    {
+      "id": "action:meridian:008",
+      "owner": "person:meridian:james-okonjo",
+      "due_date": "2026-05-15",
+      "status": "open",
+      "description": "Operational action tied to current program risk."
+    },
+    {
+      "id": "action:meridian:009",
+      "owner": "person:meridian:patricia-okafor",
+      "due_date": "2026-06-15",
+      "status": "in_progress",
+      "description": "Operational action tied to current program risk."
+    },
+    {
+      "id": "action:meridian:010",
+      "owner": "person:meridian:margaret-liu",
+      "due_date": "2026-07-15",
+      "status": "complete",
+      "description": "Operational action tied to current program risk."
+    },
+    {
+      "id": "action:meridian:011",
+      "owner": "person:meridian:karen-mercer",
+      "due_date": "2026-08-15",
+      "status": "overdue",
+      "description": "Operational action tied to current program risk."
+    },
+    {
+      "id": "action:meridian:012",
+      "owner": "person:meridian:robert-chen",
+      "due_date": "2026-05-15",
+      "status": "open",
+      "description": "Operational action tied to current program risk."
+    },
+    {
+      "id": "action:meridian:013",
+      "owner": "person:meridian:thomas-hartwell",
+      "due_date": "2026-06-15",
+      "status": "in_progress",
+      "description": "Operational action tied to current program risk."
+    },
+    {
+      "id": "action:meridian:014",
+      "owner": "person:meridian:lakshmi-venkatesan",
+      "due_date": "2026-07-15",
+      "status": "complete",
+      "description": "Operational action tied to current program risk."
+    },
+    {
+      "id": "action:meridian:015",
+      "owner": "person:meridian:andrew-fitzgerald",
+      "due_date": "2026-08-15",
+      "status": "overdue",
+      "description": "Operational action tied to current program risk."
+    },
+    {
+      "id": "action:meridian:016",
+      "owner": "person:meridian:priya-sharma",
+      "due_date": "2026-05-15",
+      "status": "open",
+      "description": "Operational action tied to current program risk."
+    }
+  ],
+  "open_decisions_pending": [
+    {
+      "id": "decision:meridian:001",
+      "date": "2026-04-02",
+      "decision": "Proceed with caveat / revise gate / escalate owner",
+      "rationale": "Decision mirrors recent meeting notes and keeps graph decisions queryable.",
+      "decided_by": "person:meridian:harold-kim",
+      "dissent": ""
+    },
+    {
+      "id": "decision:meridian:002",
+      "date": "2026-04-03",
+      "decision": "Proceed with caveat / revise gate / escalate owner",
+      "rationale": "Decision mirrors recent meeting notes and keeps graph decisions queryable.",
+      "decided_by": "person:meridian:anita-krishnamurthy",
+      "dissent": ""
+    },
+    {
+      "id": "decision:meridian:003",
+      "date": "2026-04-04",
+      "decision": "Proceed with caveat / revise gate / escalate owner",
+      "rationale": "Decision mirrors recent meeting notes and keeps graph decisions queryable.",
+      "decided_by": "person:meridian:david-park",
+      "dissent": "Documented dissent where attribution, workflow, or governance risk remains."
+    },
+    {
+      "id": "decision:meridian:004",
+      "date": "2026-04-05",
+      "decision": "Proceed with caveat / revise gate / escalate owner",
+      "rationale": "Decision mirrors recent meeting notes and keeps graph decisions queryable.",
+      "decided_by": "person:meridian:marcus-reid",
+      "dissent": ""
+    },
+    {
+      "id": "decision:meridian:005",
+      "date": "2026-04-06",
+      "decision": "Proceed with caveat / revise gate / escalate owner",
+      "rationale": "Decision mirrors recent meeting notes and keeps graph decisions queryable.",
+      "decided_by": "person:meridian:jennifer-wexler",
+      "dissent": ""
+    },
+    {
+      "id": "decision:meridian:006",
+      "date": "2026-04-07",
+      "decision": "Proceed with caveat / revise gate / escalate owner",
+      "rationale": "Decision mirrors recent meeting notes and keeps graph decisions queryable.",
+      "decided_by": "person:meridian:sarah-obrien",
+      "dissent": "Documented dissent where attribution, workflow, or governance risk remains."
+    },
+    {
+      "id": "decision:meridian:007",
+      "date": "2026-04-08",
+      "decision": "Proceed with caveat / revise gate / escalate owner",
+      "rationale": "Decision mirrors recent meeting notes and keeps graph decisions queryable.",
+      "decided_by": "person:meridian:rebecca-hollings",
+      "dissent": ""
+    },
+    {
+      "id": "decision:meridian:008",
+      "date": "2026-04-09",
+      "decision": "Proceed with caveat / revise gate / escalate owner",
+      "rationale": "Decision mirrors recent meeting notes and keeps graph decisions queryable.",
+      "decided_by": "person:meridian:james-okonjo",
+      "dissent": ""
+    },
+    {
+      "id": "decision:meridian:009",
+      "date": "2026-04-10",
+      "decision": "Proceed with caveat / revise gate / escalate owner",
+      "rationale": "Decision mirrors recent meeting notes and keeps graph decisions queryable.",
+      "decided_by": "person:meridian:patricia-okafor",
+      "dissent": "Documented dissent where attribution, workflow, or governance risk remains."
+    },
+    {
+      "id": "decision:meridian:010",
+      "date": "2026-04-11",
+      "decision": "Proceed with caveat / revise gate / escalate owner",
+      "rationale": "Decision mirrors recent meeting notes and keeps graph decisions queryable.",
+      "decided_by": "person:meridian:margaret-liu",
+      "dissent": ""
+    },
+    {
+      "id": "decision:meridian:011",
+      "date": "2026-04-12",
+      "decision": "Proceed with caveat / revise gate / escalate owner",
+      "rationale": "Decision mirrors recent meeting notes and keeps graph decisions queryable.",
+      "decided_by": "person:meridian:karen-mercer",
+      "dissent": ""
+    },
+    {
+      "id": "decision:meridian:012",
+      "date": "2026-04-13",
+      "decision": "Proceed with caveat / revise gate / escalate owner",
+      "rationale": "Decision mirrors recent meeting notes and keeps graph decisions queryable.",
+      "decided_by": "person:meridian:robert-chen",
+      "dissent": "Documented dissent where attribution, workflow, or governance risk remains."
+    }
+  ]
+}
