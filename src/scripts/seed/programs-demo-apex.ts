@@ -570,9 +570,60 @@ async function findExistingProgram(clientId: string, name: string): Promise<stri
   return data ? (data as { id: string }).id : null;
 }
 
+async function ensureProgramDeliverables(programId: string, seed: ProgramSeed): Promise<void> {
+  for (const d of seed.deliverables) {
+    const { data: existingRows, error: lookupErr } = await sb
+      .from('deliverables_v2')
+      .select('id')
+      .eq('engagement_id', programId)
+      .eq('deliverable_type_key', d.typeKey)
+      .eq('title', d.title)
+      .limit(1);
+    if (lookupErr) throw lookupErr;
+
+    let delivId = (existingRows?.[0] as { id: string } | undefined)?.id;
+    if (!delivId) {
+      const { data: delivRow, error: dErr } = await sb
+        .from('deliverables_v2')
+        .insert({
+          engagement_id: programId,
+          deliverable_type_key: d.typeKey,
+          title: d.title,
+          status: d.status,
+          current_version: 1,
+          created_by: d.byNexus ? 'nexus' : 'maestro',
+          signed_off_at: d.status === 'signed_off' ? new Date().toISOString() : null,
+        })
+        .select('id')
+        .single();
+      if (dErr) throw dErr;
+      delivId = (delivRow as { id: string }).id;
+    }
+
+    const { data: versionRows, error: versionLookupErr } = await sb
+      .from('deliverable_versions')
+      .select('id')
+      .eq('deliverable_id', delivId)
+      .eq('version', 1)
+      .limit(1);
+    if (versionLookupErr) throw versionLookupErr;
+
+    if (versionRows?.length) continue;
+    const { error: versionErr } = await sb.from('deliverable_versions').insert({
+      deliverable_id: delivId,
+      version: 1,
+      content: d.content,
+      structured_data: { seeded: true, byNexus: d.byNexus },
+      quality_issues: d.byNexus ? { provenance_map: { pattern_key: seed.patternKey ?? null, seeded: true } } : null,
+    });
+    if (versionErr) throw versionErr;
+  }
+}
+
 async function seedProgram(clientId: string, seed: ProgramSeed): Promise<string> {
   const existing = await findExistingProgram(clientId, seed.name);
   if (existing) {
+    await ensureProgramDeliverables(existing, seed);
     console.log(`✓ exists · ${seed.name} · ${existing}`);
     return existing;
   }
@@ -697,30 +748,7 @@ async function seedProgram(clientId: string, seed: ProgramSeed): Promise<string>
   }
 
   // Deliverables + versions
-  for (const d of seed.deliverables) {
-    const { data: delivRow, error: dErr } = await sb
-      .from('deliverables_v2')
-      .insert({
-        engagement_id: programId,
-        deliverable_type_key: d.typeKey,
-        title: d.title,
-        status: d.status,
-        current_version: 1,
-        created_by: d.byNexus ? 'nexus' : 'maestro',
-        signed_off_at: d.status === 'signed_off' ? new Date().toISOString() : null,
-      })
-      .select('id')
-      .single();
-    if (dErr) throw dErr;
-    const delivId = (delivRow as { id: string }).id;
-    await sb.from('deliverable_versions').insert({
-      deliverable_id: delivId,
-      version: 1,
-      content: d.content,
-      structured_data: { seeded: true, byNexus: d.byNexus },
-      quality_issues: d.byNexus ? { provenance_map: { pattern_key: seed.patternKey ?? null, seeded: true } } : null,
-    });
-  }
+  await ensureProgramDeliverables(programId, seed);
 
   // Maestro flags
   for (const f of seed.flags) {
