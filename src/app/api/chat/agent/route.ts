@@ -15,6 +15,10 @@ import { requireTenancy } from "@/app/api/v1/programs/_auth";
 import { getEngagementWithPhaseData } from "@/lib/programs/db-phase-queries";
 import { PHASE_LABEL_MAP } from "@/lib/programs/programs-fixture";
 import { getTenantSystemBlock } from "@/lib/agent/demo-context";
+// TC-PERSISTENCE-INTEGRATION — Phase 1 partial implementation.
+// Query enterprise_context_chunks for live tenant context; fall back to
+// the hardcoded fixture when no persisted data is available.
+import { buildTenantContextBlock } from "@/lib/intelligence/persistence";
 import { getActiveClientRow } from "@/lib/active-client";
 import { getUserContextPromptBlock } from "@/lib/agent/userContext";
 import { retrieveStageContext, retrieveCategoryContext } from "@/lib/intelligence/agent-retrieval";
@@ -357,7 +361,15 @@ export async function POST(request: Request) {
     ? resolveSourceClientKey(surfaceContext)
     : null;
   const effectiveClientKey = sourceClientKey ?? activeClient?.key ?? null;
-  const tenantSystemBlock = getTenantSystemBlock(effectiveClientKey);
+  // TC-PERSISTENCE-INTEGRATION: resolve the inventory-substrate key (apex-retail
+  // form) so we can query enterprise_context_chunks. Falls back to the hardcoded
+  // fixture when no persisted chunks are available (pre-embed or unknown tenant).
+  const tenantInventoryKey = effectiveClientKey
+    ? clientKeyToInventorySubstrateKey(effectiveClientKey)
+    : null;
+  const tenantSystemBlock =
+    (await buildTenantContextBlock(tenantInventoryKey)) ??
+    getTenantSystemBlock(effectiveClientKey);
 
   // Surface 1 PR2 / Surface 2 PR2 — artifact-channel instructions are
   // composed for surfaces that have a reactive workspace ready to
