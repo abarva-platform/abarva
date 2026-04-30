@@ -258,6 +258,7 @@ function SourceEventPromptDeck({ event }: { event: SourcingEventDetail }) {
 
 function EventCanvasHeader({ event }: { event: SourcingEventDetail }) {
   const linkedProgramId = getLinkedProgramId(event);
+  const clientContext = getClientContextSnapshot(event);
 
   return (
     <header
@@ -320,13 +321,67 @@ function EventCanvasHeader({ event }: { event: SourcingEventDetail }) {
           <div style={META_VALUE}>{event.nextDecision}</div>
         </div>
       </div>
+      {clientContext ? <ClientContextSnapshot snapshot={clientContext} /> : null}
     </header>
+  );
+}
+
+function ClientContextSnapshot({ snapshot }: { snapshot: ClientContextSnapshotData }) {
+  return (
+    <section style={CLIENT_CONTEXT_CARD} aria-label="Client context evidence snapshot">
+      <div style={CLIENT_CONTEXT_HEADER}>
+        <div>
+          <div style={META_LABEL}>{snapshot.label}</div>
+          <div style={CLIENT_CONTEXT_TITLE}>{snapshot.title}</div>
+        </div>
+        <span style={CLIENT_CONTEXT_BADGE}>{snapshot.embeddingStatus}</span>
+      </div>
+      <div style={CLIENT_CONTEXT_GRID}>
+        {snapshot.metrics.map((metric) => (
+          <div key={metric.label} style={CLIENT_CONTEXT_METRIC}>
+            <div style={CLIENT_CONTEXT_METRIC_VALUE}>{metric.value}</div>
+            <div style={CLIENT_CONTEXT_METRIC_LABEL}>{metric.label}</div>
+          </div>
+        ))}
+      </div>
+      <p style={CLIENT_CONTEXT_COPY}>{snapshot.detail}</p>
+      <p style={CLIENT_CONTEXT_DISCLOSURE}>{snapshot.disclosure}</p>
+    </section>
   );
 }
 
 function getLinkedProgramId(event: SourcingEventDetail): string | null {
   const linkedProgramMatch = `${event.problemStatement} ${event.synopsis}`.match(/\b[A-Z]{2,5}-[A-Z]{2,5}-\d{4}\b/);
   return linkedProgramMatch?.[0] ?? null;
+}
+
+interface ClientContextSnapshotData {
+  label: string;
+  title: string;
+  embeddingStatus: string;
+  metrics: Array<{ label: string; value: string }>;
+  detail: string;
+  disclosure: string;
+}
+
+function getClientContextSnapshot(event: SourcingEventDetail): ClientContextSnapshotData | null {
+  if (!/apex/i.test(event.accountName)) return null;
+
+  return {
+    label: 'Client context',
+    title: 'Apex setup evidence is loaded for Source',
+    embeddingStatus: 'Embeddings pending',
+    metrics: [
+      { label: 'setup domains', value: '14' },
+      { label: 'data records', value: '403' },
+      { label: 'graph', value: '257 nodes / 275 edges' },
+      { label: 'context chunks', value: '415 pending' },
+    ],
+    detail:
+      'Source can reason from loaded client context such as IT landscape (96 rows), evidence ledger (20), vendor contracts (38), program inventory (4), and cross-program signals (12).',
+    disclosure:
+      'Seeded Source event plus Apex setup data snapshot. Context chunks have embedding_status=pending; this surface does not claim live vector retrieval.',
+  };
 }
 
 const RAIL_CARD: CSSProperties = {
@@ -404,6 +459,95 @@ const STANDALONE_BADGE: CSSProperties = {
   fontSize: 9,
   letterSpacing: '0.1em',
   textTransform: 'uppercase',
+  color: SHELL.INK_MUTED,
+};
+
+const CLIENT_CONTEXT_CARD: CSSProperties = {
+  display: 'grid',
+  gap: 9,
+  border: '1px solid ' + SHELL.BLUE_LINE,
+  borderRadius: 14,
+  background: SHELL.BLUE_BG,
+  padding: '11px 12px',
+};
+
+const CLIENT_CONTEXT_HEADER: CSSProperties = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'flex-start',
+  gap: 10,
+  flexWrap: 'wrap',
+};
+
+const CLIENT_CONTEXT_TITLE: CSSProperties = {
+  marginTop: 2,
+  fontFamily: SHELL.SANS,
+  fontSize: 13,
+  lineHeight: 1.25,
+  color: SHELL.INK,
+  fontWeight: 800,
+};
+
+const CLIENT_CONTEXT_BADGE: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  border: '1px solid ' + SHELL.PEACH_LINE,
+  borderRadius: 999,
+  background: SHELL.PEACH_BG,
+  padding: '3px 8px',
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  color: SHELL.PEACH_TEXT,
+  fontWeight: 700,
+};
+
+const CLIENT_CONTEXT_GRID: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 120px), 1fr))',
+  gap: 7,
+};
+
+const CLIENT_CONTEXT_METRIC: CSSProperties = {
+  border: '1px solid ' + SHELL.CARD_LINE,
+  borderRadius: 10,
+  background: SHELL.CARD_WHITE,
+  padding: '7px 8px',
+};
+
+const CLIENT_CONTEXT_METRIC_VALUE: CSSProperties = {
+  fontFamily: SHELL.SANS,
+  fontSize: 13,
+  lineHeight: 1.1,
+  color: SHELL.INK,
+  fontWeight: 900,
+};
+
+const CLIENT_CONTEXT_METRIC_LABEL: CSSProperties = {
+  marginTop: 3,
+  fontFamily: SHELL.MONO,
+  fontSize: 8.5,
+  lineHeight: 1.2,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  color: SHELL.INK_MUTED,
+};
+
+const CLIENT_CONTEXT_COPY: CSSProperties = {
+  margin: 0,
+  fontFamily: SHELL.SANS,
+  fontSize: 11.8,
+  lineHeight: 1.38,
+  color: SHELL.INK_SOFT,
+};
+
+const CLIENT_CONTEXT_DISCLOSURE: CSSProperties = {
+  margin: 0,
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  lineHeight: 1.45,
+  letterSpacing: '0.04em',
   color: SHELL.INK_MUTED,
 };
 

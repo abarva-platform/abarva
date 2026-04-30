@@ -141,6 +141,11 @@ describe('Source event canvas shell', () => {
     expect(html).toContain('data-testid="source-linked-program-chip"');
     expect(html).toContain('APX-CDP-2026');
     expect(html).toContain('Source event canvas - IT sourcing workspace');
+    expect(html).toContain('Apex setup evidence is loaded for Source');
+    expect(html).toContain('403');
+    expect(html).toContain('257 nodes / 275 edges');
+    expect(html).toContain('embedding_status=pending');
+    expect(html).toContain('does not claim live vector retrieval');
   });
 
   it('surfaces BAFO negotiation panel signals in event canvas when orals/BAFO is active', async () => {
