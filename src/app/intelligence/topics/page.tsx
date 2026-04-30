@@ -1,49 +1,30 @@
-// /intelligence/topics · INT-1.7 placeholder
+// /intelligence/topics · INT-2.3 reshape
 //
-// "Browse topics" affordance from J0 lands here. The full topic
-// browser is INT-2 territory (J1 oriented browse). Until then this
-// page renders a placeholder with the AI-transformation topics from
-// the design doc and a "coming soon" notice. Public route.
+// Topic grid — replaces the INT-1.7 placeholder. Renders all 10
+// topics from the J1_TOPICS registry as a responsive grid.
+// Public route (auth-gate-removed in INT-1.3).
+//
+// Per docs/build/intelligence/INT-2_DETAILED_DESIGN.md §4.1.
 
 import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
 import { SHELL } from '@/lib/shell/shell-tokens';
-
-const TOPICS_PREVIEW: ReadonlyArray<{ title: string; thesis: string }> = [
-  {
-    title: 'AI use case portfolio management',
-    thesis:
-      'Most enterprises run AI as a collection of disconnected experiments. The portfolio discipline that converts those experiments into compounding value is rare.',
-  },
-  {
-    title: 'Data foundation readiness',
-    thesis:
-      'Readiness is specific: who owns the data, how clean is it, can it move at the cadence the use case requires.',
-  },
-  {
-    title: 'Vendor and platform decisions',
-    thesis:
-      'Vendor demos run on cherry-picked data. Buyer validation runs on the buyer\'s own data. The contracts that lock buyers in are written before that gap is exposed.',
-  },
-  {
-    title: 'AI governance and risk',
-    thesis:
-      'The framework adoption rate is high. The operational adherence rate is low. The framework alone is not governance.',
-  },
-  {
-    title: 'Pilot-to-production scaling',
-    thesis:
-      'The model is fine. The surrounding work — workflow, scale, operations — is what fails.',
-  },
-];
+import { J1TopicGrid } from '@/components/intelligence/J1TopicGrid';
+import {
+  J1_TOPICS,
+  getTotalAssociatedPatternCount,
+} from '@/lib/intelligence/j1-topics';
 
 export const metadata = {
   title: 'Topics · Intelligence | AbarVa',
   description:
-    'Browse AI transformation topics. Topic deep-dive surfaces land with INT-2.',
+    'AI transformation topics — what enterprises grapple with, organized by AbarVa\'s point of view, not as a wiki.',
 };
 
 export default function IntelligenceTopicsPage() {
+  const topicCount = J1_TOPICS.length;
+  const patternCount = getTotalAssociatedPatternCount();
+
   return (
     <AppShell
       surface="intelligence"
@@ -63,18 +44,19 @@ export default function IntelligenceTopicsPage() {
         }}
       >
         <div
-          data-testid="intelligence-topics-page"
+          data-testid="intelligence-j1-topics-page"
           style={{
             flex: 1,
             overflowY: 'auto',
             background: SHELL.PAPER,
             padding: '32px 48px 64px',
-            maxWidth: 880,
+            maxWidth: 1280,
             width: '100%',
             margin: '0 auto',
             boxSizing: 'border-box',
           }}
         >
+          {/* Breadcrumb */}
           <nav
             aria-label="Breadcrumb"
             style={{
@@ -97,16 +79,31 @@ export default function IntelligenceTopicsPage() {
             <span style={{ color: SHELL.INK_MUTED }}>Topics</span>
           </nav>
 
+          {/* Page header */}
           <header style={{ marginBottom: 28 }}>
+            <div
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 9,
+                color: SHELL.INK_MUTED,
+                letterSpacing: '0.18em',
+                textTransform: 'uppercase',
+                marginBottom: 8,
+              }}
+            >
+              AI transformation topics · {topicCount} thesis-led ·{' '}
+              {patternCount} pattern citations
+            </div>
             <h1
               style={{
                 fontFamily: SHELL.SERIF_DISPLAY,
-                fontSize: 'clamp(22px, 3vw, 32px)',
+                fontSize: 'clamp(24px, 3.2vw, 36px)',
                 fontWeight: 400,
                 color: SHELL.INK,
                 margin: 0,
                 lineHeight: 1.15,
                 letterSpacing: '-0.015em',
+                maxWidth: 720,
               }}
             >
               AI transformation topics
@@ -117,84 +114,20 @@ export default function IntelligenceTopicsPage() {
                 fontSize: 14,
                 color: SHELL.INK_SOFT,
                 lineHeight: 1.55,
-                margin: '12px 0 0',
+                margin: '14px 0 0',
                 maxWidth: 640,
               }}
             >
               What enterprises grapple with — organized by AbarVa&apos;s point
-              of view, not as a wiki. Each topic surfaces a thesis up top and
-              the corpus depth underneath.
+              of view, not as a wiki. Each topic surfaces a thesis up top
+              and the corpus depth underneath.
             </p>
           </header>
 
-          {/* Topic preview list */}
-          <ul
-            style={{
-              margin: 0,
-              padding: 0,
-              listStyle: 'none',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 14,
-              marginBottom: 32,
-            }}
-          >
-            {TOPICS_PREVIEW.map((topic) => (
-              <li
-                key={topic.title}
-                style={{
-                  background: SHELL.CARD_WHITE,
-                  border: `1px solid ${SHELL.CARD_LINE}`,
-                  borderRadius: 10,
-                  padding: '14px 18px',
-                }}
-              >
-                <h2
-                  style={{
-                    fontFamily: SHELL.SERIF,
-                    fontSize: 17,
-                    fontWeight: 400,
-                    color: SHELL.INK,
-                    margin: '0 0 6px',
-                    lineHeight: 1.3,
-                  }}
-                >
-                  {topic.title}
-                </h2>
-                <p
-                  style={{
-                    fontFamily: SHELL.SANS,
-                    fontSize: 13,
-                    color: SHELL.INK_SOFT,
-                    lineHeight: 1.55,
-                    margin: 0,
-                  }}
-                >
-                  {topic.thesis}
-                </p>
-              </li>
-            ))}
-          </ul>
-
-          {/* INT-2 notice */}
-          <aside
-            style={{
-              padding: '14px 18px',
-              background: SHELL.PAPER_SOFT,
-              border: `1px dashed ${SHELL.CARD_LINE}`,
-              borderRadius: 8,
-              fontFamily: SHELL.SANS,
-              fontSize: 13,
-              color: SHELL.INK_SOFT,
-              lineHeight: 1.55,
-            }}
-          >
-            <strong style={{ color: SHELL.INK }}>Coming with INT-2:</strong>{' '}
-            click into any topic to see AbarVa&apos;s thesis up top, the corpus
-            patterns that ground it, the contradictions it surfaces, and the
-            recent industry signals attached. Sentinel will be one click away
-            with the topic loaded as conversation context.
-          </aside>
+          {/* The topic grid */}
+          <main>
+            <J1TopicGrid />
+          </main>
         </div>
       </div>
     </AppShell>
