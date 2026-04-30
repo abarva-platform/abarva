@@ -87,6 +87,40 @@ const eslintConfig = defineConfig([
       }],
     },
   },
+  // TD-1: app-tier code MUST go through AgentContextBroker. Direct imports
+  // of the tenant-data adapter from outside src/lib/knowledge/ are not
+  // allowed. See feedback_broker_boundary and TENANT_DATA_INTEGRATION_DESIGN §6.
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: ["src/lib/knowledge/**"],
+    rules: {
+      "no-restricted-imports": ["error", {
+        patterns: [
+          {
+            group: [
+              "@/lib/knowledge/tenant-data",
+              "@/lib/knowledge/tenant-data/*",
+              "*/lib/knowledge/tenant-data",
+              "*/lib/knowledge/tenant-data/*",
+            ],
+            message:
+              "App-tier code must go through AgentContextBroker, not tenant-data directly (TENANT-DATA-DESIGN §6).",
+          },
+        ],
+      }],
+    },
+  },
+  // TD-1: the stub adapter intentionally ignores most parameters. Allow
+  // underscore-prefixed names to mark them as unused without a warning.
+  {
+    files: ["src/lib/knowledge/tenant-data/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
