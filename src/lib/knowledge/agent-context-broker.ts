@@ -29,7 +29,13 @@ export type EnterpriseContextItemKind =
   | 'sourcing_event'
   | 'financial_metric'
   | 'graph_candidate'
-  | 'policy_readiness';
+  | 'policy_readiness'
+  // TD-4 — persisted tenant-data layer surfaces two new context-item
+  // kinds that have no fixture-side analog. The broker keeps emitting
+  // existing kinds today; TD-5 wires the mapper output into the bundle
+  // and starts emitting these.
+  | 'kpi_metric'
+  | 'cross_program_signal';
 
 export type EnterpriseContextSensitivity = 'summary' | 'structured' | 'l4_raw';
 
