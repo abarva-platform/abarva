@@ -19,7 +19,9 @@
 // • Cross-row tenant leakage on a real DB (TENANT_ISOLATION_PROBES owns
 //   the harness for that; the broker boundary keeps leakage in tests).
 // • Graph reads (`listGraphNodes`, `listGraphEdgesForNode`,
-//   `getGraphNeighborhood`, `pathBetween`) — TD-3 owns those.
+//   `getGraphNeighborhood`, `pathBetween`) — owned by `GraphTraversal`
+//   (TD-3) and verified by `graph-traversal.test.ts`. The TD-3-WIRE
+//   delegation tests below confirm the adapter forwards to that class.
 // • Vector search (`chunksByVector`) — TD-9 owns those.
 
 const fromMock = jest.fn<unknown, [string]>();
@@ -366,33 +368,78 @@ describe('SupabaseTenantDataAdapter.getRecord', () => {
   });
 });
 
-// ── Graph methods (TD-3) ──────────────────────────────────────────────
+// ── Graph methods (TD-3-WIRE delegation) ──────────────────────────────
+//
+// The four graph methods on the adapter delegate to a `GraphTraversal`
+// instance constructed in the adapter's constructor. We verify that with
+// a Jest spy on the class prototype: each adapter call should invoke the
+// matching GraphTraversal method exactly once with the same arguments.
+// Behavioural coverage (BFS shape, tenant isolation, depth clamping)
+// lives in `graph-traversal.test.ts` and is not re-asserted here.
 
-describe('SupabaseTenantDataAdapter graph methods (TD-3 deferred)', () => {
-  const adapter = new SupabaseTenantDataAdapter({ from: jest.fn() } as never);
+import { GraphTraversal } from '../graph-traversal';
 
-  it('listGraphNodes throws the TD-3 error', async () => {
-    await expect(adapter.listGraphNodes('apex-retail')).rejects.toThrow(
-      /TD-3 follow-on/,
+describe('SupabaseTenantDataAdapter graph methods (TD-3-WIRE delegation)', () => {
+  it('listGraphNodes delegates to GraphTraversal.listNodes with tenantKey + kind', async () => {
+    const spy = jest
+      .spyOn(GraphTraversal.prototype, 'listNodes')
+      .mockResolvedValue([]);
+    const adapter = makeAdapter();
+    const out = await adapter.listGraphNodes('apex-retail', 'person');
+    expect(out).toEqual([]);
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenCalledWith('apex-retail', 'person');
+    spy.mockRestore();
+  });
+
+  it('listGraphEdgesForNode delegates to GraphTraversal.listEdgesForNode with direction', async () => {
+    const spy = jest
+      .spyOn(GraphTraversal.prototype, 'listEdgesForNode')
+      .mockResolvedValue([]);
+    const adapter = makeAdapter();
+    await adapter.listGraphEdgesForNode(
+      'apex-retail',
+      'person:apex:diana-lopez',
+      'incoming',
     );
+    expect(spy).toHaveBeenCalledWith(
+      'apex-retail',
+      'person:apex:diana-lopez',
+      'incoming',
+    );
+    spy.mockRestore();
   });
 
-  it('listGraphEdgesForNode throws the TD-3 error', async () => {
-    await expect(
-      adapter.listGraphEdgesForNode('apex-retail', 'person:apex:diana-lopez'),
-    ).rejects.toThrow(/TD-3 follow-on/);
+  it('getGraphNeighborhood delegates to GraphTraversal.getNeighborhood with opts', async () => {
+    const spy = jest
+      .spyOn(GraphTraversal.prototype, 'getNeighborhood')
+      .mockResolvedValue({
+        rootId: 'enterprise:apex-retail',
+        nodes: [],
+        edges: [],
+        depth: 0,
+      });
+    const adapter = makeAdapter();
+    await adapter.getGraphNeighborhood('apex-retail', 'enterprise:apex-retail', {
+      maxDepth: 2,
+      edgeKinds: ['LED_BY'],
+    });
+    expect(spy).toHaveBeenCalledWith('apex-retail', 'enterprise:apex-retail', {
+      maxDepth: 2,
+      edgeKinds: ['LED_BY'],
+    });
+    spy.mockRestore();
   });
 
-  it('getGraphNeighborhood throws the TD-3 error', async () => {
-    await expect(
-      adapter.getGraphNeighborhood('apex-retail', 'enterprise:apex-retail'),
-    ).rejects.toThrow(/TD-3 follow-on/);
-  });
-
-  it('pathBetween throws the TD-3 error', async () => {
-    await expect(
-      adapter.pathBetween('apex-retail', 'a', 'b'),
-    ).rejects.toThrow(/TD-3 follow-on/);
+  it('pathBetween delegates to GraphTraversal.findPath with maxDepth', async () => {
+    const spy = jest
+      .spyOn(GraphTraversal.prototype, 'findPath')
+      .mockResolvedValue(null);
+    const adapter = makeAdapter();
+    const out = await adapter.pathBetween('apex-retail', 'a', 'b', 3);
+    expect(out).toBeNull();
+    expect(spy).toHaveBeenCalledWith('apex-retail', 'a', 'b', 3);
+    spy.mockRestore();
   });
 });
 
