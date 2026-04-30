@@ -1,11 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
-import { AgentColumn } from '@/components/shell/AgentColumn';
+// AgentColumn used to render here as the legacy left-rail chat. PR-T
+// replaces it with the embedded chat inside <AgentCanvas>; the import
+// is dropped along with the static A/B/C action buttons.
+import { AgentCanvas } from '@/components/programs/AgentCanvas';
+import type { Artifact } from '@/lib/agent/artifacts';
 import { FilterPillStrip } from '@/components/shell/FilterPillStrip';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { TOWER_INDEX_VIEW, type PressureItem } from '@/lib/tower/shell-tower-fixture';
@@ -689,11 +693,30 @@ interface TowerIndexPageProps {
   cascadeGraphSlot?: ReactNode;
 }
 
-export function TowerIndexPage({ provenanceSlot, portfolioSummarySlot, cascadeGraphSlot }: TowerIndexPageProps = {}) {
+// PR-T · `provenanceSlot` was AgentColumn's audit-trail UI. AgentCanvas
+// doesn't have a slot for it yet; threading provenance into the
+// embedded chat header is a follow-up. The prop is preserved on the
+// type for caller compatibility but unused in this render.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function TowerIndexPage({ provenanceSlot: _provenanceSlot, portfolioSummarySlot, cascadeGraphSlot }: TowerIndexPageProps = {}) {
   const [showNewPressure, setShowNewPressure] = useState(false);
   const [synthesisQuote, setSynthesisQuote] = useState(TOWER_INDEX_VIEW.agentQuote);
   const searchParams = useSearchParams();
   const router = useRouter();
+
+  // PR-T · Atlas reactive artifacts dispatched by the embedded chat.
+  // Same pattern as ProgramDetailPage / HomeIndexPage. Atlas reasons
+  // at the cross-program control-tower scope; the reactive panel
+  // materializes pressure cards, gate evaluations, cross-program
+  // dependencies as Atlas surfaces them.
+  const [atlasArtifacts, setAtlasArtifacts] = useState<Artifact[]>([]);
+  const handleAtlasArtifact = useCallback((artifact: Artifact) => {
+    setAtlasArtifacts((prev) => {
+      const key = JSON.stringify(artifact);
+      if (prev.some((a) => JSON.stringify(a) === key)) return prev;
+      return [...prev, artifact];
+    });
+  }, []);
   const activeFilter = searchParams?.get('filter') ?? 'all';
 
   const filtered = TOWER_INDEX_VIEW.pressures.filter(p => {
@@ -722,32 +745,73 @@ export function TowerIndexPage({ provenanceSlot, portfolioSummarySlot, cascadeGr
         context: 'Control Tower · 3 active pressures',
       }}
       middleStrip={<FilterPillStrip pills={filterPills} />}
+      onArtifact={handleAtlasArtifact}
     >
-      <AgentColumn
-        agent={{ initials: 'At', name: 'Atlas', role: 'Cross-Program Synthesizer' }}
-        quote={synthesisQuote}
-        agentContext={TOWER_INDEX_VIEW.agentContext}
-        actions={TOWER_INDEX_VIEW.actions}
-        surface="tower"
-        provenanceSlot={provenanceSlot}
-        onActionClick={(letter) => {
-          if (letter === 'A') router.push('/tower?filter=high');
-          else if (letter === 'B') router.push('/tower/programs/apx-cdp-2026');
-          else if (letter === 'C') setShowNewPressure(true);
-        }}
-      />
-
-      {/* REASON-17 — hidden synthesis node; streams live Atlas quote into AgentColumn */}
-      <div style={{ display: 'none' }} aria-hidden>
-        <AtlasSynthesisQuote
-          fallback={TOWER_INDEX_VIEW.agentQuote}
-          onLoaded={setSynthesisQuote}
-        />
-      </div>
-
+      {/* PR-T · agent-centric primary canvas. Atlas + reactive panel
+          dominate the viewport; the legacy pressure-grid + portfolio
+          summary collapses into a details accordion below. AgentColumn
+          (the legacy left-rail chat widget) is deprecated for this
+          surface — chat lives inside AgentCanvas now. */}
       <div
         style={{
           flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minWidth: 0,
+          minHeight: 0,
+          overflow: 'hidden',
+        }}
+      >
+        <div style={{ padding: '20px 28px 0' }}>
+          <AgentCanvas
+            surface="/tower"
+            agent={{
+              initials: 'At',
+              name: 'Atlas',
+              role: 'Cross-Program Synthesizer',
+            }}
+            quote={synthesisQuote}
+            artifacts={atlasArtifacts}
+            onArtifact={handleAtlasArtifact}
+          />
+        </div>
+
+        {/* REASON-17 — hidden synthesis node; streams live Atlas quote
+            into AgentCanvas. Stays in place after the reshape. */}
+        <div style={{ display: 'none' }} aria-hidden>
+          <AtlasSynthesisQuote
+            fallback={TOWER_INDEX_VIEW.agentQuote}
+            onLoaded={setSynthesisQuote}
+          />
+        </div>
+
+        <details
+          data-testid="tower-legacy-grid"
+          style={{
+            margin: '0 28px 28px',
+            border: `1px solid ${SHELL.CARD_LINE}`,
+            borderRadius: 10,
+            background: SHELL.PAPER,
+          }}
+        >
+          <summary
+            style={{
+              cursor: 'pointer',
+              padding: '12px 16px',
+              fontFamily: SHELL.MONO,
+              fontSize: 11,
+              letterSpacing: '0.10em',
+              textTransform: 'uppercase',
+              color: SHELL.GRAY_TEXT,
+              fontWeight: 700,
+              userSelect: 'none',
+            }}
+          >
+            Control tower · pressures · portfolio summary · cascade graph
+          </summary>
+
+      <div
+        style={{
           overflowY: 'auto',
           background: SHELL.PAPER,
           padding: '24px 32px 32px',
@@ -874,6 +938,9 @@ export function TowerIndexPage({ provenanceSlot, portfolioSummarySlot, cascadeGr
             <span>Risk lens · open risk items</span>
           </a>
         </div>
+      </div>
+
+        </details>
       </div>
 
       {showNewPressure && (

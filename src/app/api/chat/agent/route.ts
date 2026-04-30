@@ -300,6 +300,8 @@ export async function POST(request: Request) {
   //   /programs/<id> (PR-F, Nexus detail — matched via regex below)
   //   /home (PR-J, Atlas portfolio)
   //   /intelligence (PR-INT-B, Sentinel knowledge)
+  //   /source (Sentinel sourcing)
+  //   /tower (PR-T, Atlas control tower)
   // Each was added in its respective PR; the conflict between PR-J
   // and PR-INT-B was resolved here by keeping both surfaces.
   const surfacesWithArtifactChannel = new Set([
@@ -309,6 +311,7 @@ export async function POST(request: Request) {
     '/home',
     '/intelligence',
     '/source',
+    '/tower',
   ]);
   const isProgramDetailSurface =
     typeof surface === 'string' &&
