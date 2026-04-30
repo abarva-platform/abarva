@@ -22,6 +22,44 @@ import {
 } from './ProgramBriefPanel';
 import { StewardChat, type ChatTurn } from './StewardChat';
 
+/**
+ * Pure reducer for the origination brief. Returns the next brief given
+ * an artifact emitted by Steward. The discriminated union covers the
+ * four origination-relevant artifact types; everything else is ignored.
+ *
+ * Exported so the OV2-1c filter (pattern-match dropped on /programs/new)
+ * can be exercised by a unit test without rendering the workspace.
+ */
+export function applyArtifactToBrief(
+  brief: ProgramBriefDraft,
+  artifact: Artifact,
+): ProgramBriefDraft {
+  switch (artifact.type) {
+    case 'brief-field':
+      return { ...brief, [artifact.field]: artifact.value };
+    case 'pattern-match':
+      // OV2-1c · Founder feedback: pattern-match cards are the wrong
+      // content for /programs/new — pattern matching belongs at
+      // /programs/<id> after a program exists, not during brief
+      // creation. The artifacts.ts parser still accepts the type
+      // (Nexus uses it on the program-detail surface); we just skip
+      // it here so it never surfaces in the origination panel.
+      return brief;
+    case 'cross-program-dependency': {
+      const next = `${artifact.programId} · ${artifact.programName} (${artifact.currentPhase})`;
+      if (brief.crossProgramDependencies.includes(next)) return brief;
+      return {
+        ...brief,
+        crossProgramDependencies: [...brief.crossProgramDependencies, next],
+      };
+    }
+    case 'classification':
+      return { ...brief, classification: artifact.archetypeLabel };
+    default:
+      return brief;
+  }
+}
+
 export interface ProgramOriginationWorkspaceProps {
   surface: '/programs/new' | '/demo/programs/new';
   tenantName: string;
@@ -72,37 +110,7 @@ export function ProgramOriginationWorkspace({
   }, [surface]);
 
   const applyArtifact = useCallback((artifact: Artifact) => {
-    switch (artifact.type) {
-      case 'brief-field':
-        setBrief((prev) => ({ ...prev, [artifact.field]: artifact.value }));
-        return;
-      case 'pattern-match':
-        setPatternMatch({
-          patternId: artifact.patternId,
-          name: artifact.name,
-          summary: artifact.summary,
-          successRatePct: artifact.successRatePct,
-          deploymentCount: artifact.deploymentCount,
-          typicalDurationMonths: artifact.typicalDurationMonths,
-        });
-        // Mirror the matched-pattern id onto the brief so the brief row
-        // renders alongside the rich card.
-        setBrief((prev) => ({ ...prev, matchedPatternId: artifact.patternId }));
-        return;
-      case 'cross-program-dependency':
-        setBrief((prev) => {
-          const next = `${artifact.programId} · ${artifact.programName} (${artifact.currentPhase})`;
-          if (prev.crossProgramDependencies.includes(next)) return prev;
-          return {
-            ...prev,
-            crossProgramDependencies: [...prev.crossProgramDependencies, next],
-          };
-        });
-        return;
-      case 'classification':
-        setBrief((prev) => ({ ...prev, classification: artifact.archetypeLabel }));
-        return;
-    }
+    setBrief((prev) => applyArtifactToBrief(prev, artifact));
   }, []);
 
   // PR3 — persist the draft after each non-streaming change so the
@@ -224,7 +232,8 @@ export function ProgramOriginationWorkspace({
           // program by name when commit_program lands.
           programName={brief.programName}
         />
-        <ProgramBriefPanel brief={brief} patternMatch={patternMatch} />
+        {/* OV2-1c · No `patternMatch` prop on /programs/new (founder feedback). */}
+        <ProgramBriefPanel brief={brief} />
       </div>
     </main>
   );
