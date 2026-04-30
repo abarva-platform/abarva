@@ -33,13 +33,19 @@ interface NavigateToInput {
 export const navigateToTool: AgentTool<NavigateToInput> = {
   name: 'navigate_to',
   description:
-    'Navigate the user to a different page. Use when the user asks to be taken somewhere ' +
-    '("take me to phase 1", "open the CDP program", "let\'s go to /programs/new") OR when the ' +
-    "current surface isn't the right one for the user's intent (e.g. on /programs the user wants " +
-    'to set up a NEW program — redirect to /programs/new where Steward owns origination). ' +
-    'After calling this tool, briefly tell the user where they are going and why; the client ' +
-    'will navigate when your turn ends. Target must be a relative path (starts with /); the tool ' +
-    'rejects absolute URLs to keep the user on-app.',
+    'Navigate the user to a different page. ONLY call this when the user explicitly asks to be ' +
+    'taken somewhere (e.g. "take me to /programs/new", "open the portfolio view", "let\'s go to ' +
+    'the intelligence surface") OR when the current surface is genuinely wrong for their stated ' +
+    'intent (e.g. on /programs the user says they want to start a new program — redirect to ' +
+    '/programs/new). DO NOT call this tool when the user asks a question that can be answered ' +
+    'in chat (e.g. "give me the discovery brief", "walk me through what I need for phase 2", ' +
+    '"what are the entry criteria" — these are informational requests, not navigation requests; ' +
+    'answer them in the conversation). ONLY use routes that are known to exist: /programs, ' +
+    '/programs/new, /programs/<id> (e.g. /programs/apx-cdp-2026), /home, /tower, /intelligence, ' +
+    '/source, /admin. Sub-routes like /programs/<id>/discovery or /programs/<id>/synthesis do ' +
+    'NOT exist — navigating there will 404. After calling this tool, briefly tell the user where ' +
+    'they are going and why. Target must be a relative path (starts with /); absolute URLs are ' +
+    'rejected.',
   surfaces: [
     '/programs',
     '/programs/:id',
@@ -56,8 +62,10 @@ export const navigateToTool: AgentTool<NavigateToInput> = {
       target: {
         type: 'string',
         description:
-          'Relative path to navigate to. Examples: "/programs/apx-cdp-2026", "/programs/new", ' +
-          '"/programs/apx-cdp-2026/report", "/intelligence". Absolute URLs are rejected.',
+          'Relative path to navigate to. Must be one of: "/programs", "/programs/new", ' +
+          '"/programs/<id>" (e.g. "/programs/apx-cdp-2026"), "/home", "/tower", ' +
+          '"/intelligence", "/source", "/admin". Sub-routes like ' +
+          '"/programs/<id>/discovery" do not exist. Absolute URLs are rejected.',
       },
       rationale: {
         type: 'string',
@@ -82,6 +90,34 @@ export const navigateToTool: AgentTool<NavigateToInput> = {
         recovery:
           'Target must be a relative path starting with `/` (e.g. `/programs/apx-cdp-2026`). ' +
           'Tell the user what page you wanted to take them to and ask if that path is correct.',
+      };
+    }
+
+    // Validate against known routes. Reject invented sub-routes like
+    // /programs/<id>/discovery which 404. Valid patterns:
+    //   /programs, /programs/new, /programs/<id> (two segments max)
+    //   /home, /tower, /intelligence, /source, /admin (and sub-paths)
+    const KNOWN_TOP_LEVEL = ['/home', '/tower', '/intelligence', '/source', '/admin', '/programs'];
+    const segments = target.split('/').filter(Boolean); // ['programs', 'apx-cdp-2026']
+    const isProgramsSubRoute = segments[0] === 'programs' && segments.length > 2 && segments[1] !== 'new';
+    if (isProgramsSubRoute) {
+      return {
+        success: false,
+        error: 'route_not_found',
+        recovery:
+          `The route "${target}" does not exist — /programs/<id> sub-routes like ` +
+          '/discovery, /synthesis, /design are not standalone pages. ' +
+          'Answer the user\'s question in chat instead of navigating.',
+      };
+    }
+    const isKnownRoute = KNOWN_TOP_LEVEL.some((p) => target === p || target.startsWith(p + '/'));
+    if (!isKnownRoute) {
+      return {
+        success: false,
+        error: 'route_not_found',
+        recovery:
+          `The route "${target}" is not a known AbarVa route. Known top-level routes: ` +
+          KNOWN_TOP_LEVEL.join(', ') + '. Answer the user\'s question in chat.',
       };
     }
 

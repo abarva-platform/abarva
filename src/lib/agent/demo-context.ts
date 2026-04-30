@@ -120,7 +120,10 @@ export function getTenantSystemBlock(
   clientKey: string | null | undefined,
 ): string {
   // Apex Retail is the canonical demo tenant — keep the rich block.
-  if (clientKey === 'apex-retail') return AGENT_DEMO_SYSTEM_BLOCK;
+  // Accept both the app ClientKey ('apexretail', no dash) and the
+  // inventory-substrate key ('apex-retail', with dash) so the fallback
+  // path in the agent route works regardless of which key was passed.
+  if (clientKey === 'apexretail' || clientKey === 'apex-retail') return AGENT_DEMO_SYSTEM_BLOCK;
   // Everything else gets the platform context only. As we build out
   // tenant-specific demo data for Meridian / Arcturus / etc., this is
   // the seam to switch on.
