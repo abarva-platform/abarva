@@ -122,7 +122,7 @@ function confidenceFrom(value: unknown): number | null {
 }
 
 function pickTitle(payload: Record<string, unknown>, fallback: string): string {
-  for (const key of ['title', 'name', 'vendor_name', 'tool_name', 'system_name', 'claim', 'decision', 'metric', 'category', 'template_id', 'id']) {
+  for (const key of ['title', 'name', 'kpi_name', 'vendor_name', 'tool_name', 'system_name', 'claim', 'decision', 'metric', 'category', 'template_id', 'id']) {
     const value = payload[key];
     if (typeof value === 'string' && value.trim()) return value.trim();
   }

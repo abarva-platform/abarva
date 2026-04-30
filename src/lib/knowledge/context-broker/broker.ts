@@ -77,7 +77,7 @@ const CLAMPS = {
  */
 export const WARNING_VECTOR_PENDING =
   'Vector retrieval pending — using keyword-only chunk retrieval';
-export const WARNING_CORPUS_PENDING = 'Corpus retrieval pending CB-6.';
+export const WARNING_CORPUS_PENDING = 'Corpus pattern retrieval not yet active on this surface.';
 /**
  * INT-WV-2 · raised when the worldview Pinecone index can't be
  * reached (no API key, network, index missing). The bundle still

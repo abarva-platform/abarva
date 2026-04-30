@@ -1,6 +1,6 @@
 {
   "tenant_key": "meridian-health",
-  "last_updated": "2026-04-25",
+  "last_updated": "2026-04-30",
   "data_classification": "Internal",
   "schema_version": "1.0",
   "signals": [
@@ -16,8 +16,8 @@
       "raised_by_agent": "Atlas",
       "raised_date": "2026-04-02",
       "status": "Active monitoring",
-      "description": "Okafor lead on prior-auth and RCM creates overload. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
-      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+      "description": "Dr. Okafor is the named clinical lead for both the Prior Authorization AI program and the RCM Modernization initiative, creating a single point of failure at the clinical operations layer. With prior-auth entering vendor evaluation in Q2 and RCM simultaneously scoping its Epic integration, Okafor's review bandwidth is the binding constraint on both program timelines. No deputy has been designated for either track.",
+      "recommendation": "Convene a capacity review with Okafor and both program sponsors before the May gate. Either stagger Phase 2 kickoffs by six weeks or formally designate a deputy clinical lead for the RCM track to absorb day-to-day coordination. Document the decision in the program risk register before the next steering committee."
     },
     {
       "id": "xprog:meridian:002",
@@ -31,8 +31,8 @@
       "raised_by_agent": "Atlas",
       "raised_date": "2026-04-03",
       "status": "Active monitoring",
-      "description": "Wexler involved in three of four programs. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
-      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+      "description": "Wexler appears as a named workstream owner or required approver in three of Meridian's four active AI programs — AI Governance, RCM Modernization, and Prior Authorization AI. This creates a hidden portfolio dependency: a schedule slip in any one program reduces Wexler's availability for the others, and no successor authority has been designated for any of the three roles. The portfolio is implicitly serialized through a single person.",
+      "recommendation": "Sponsor review should map Wexler's exact deliverable obligations and approval authorities across all three programs. Identify which decisions can be delegated to a direct report for each program. If all three require Wexler's sign-off at major milestones, escalate to the CAIO to formally sequence the milestone gates before Q3."
     },
     {
       "id": "xprog:meridian:003",
@@ -46,8 +46,8 @@
       "raised_by_agent": "Atlas",
       "raised_date": "2026-04-04",
       "status": "Escalated",
-      "description": "Epic touched by all four programs. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
-      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+      "description": "Epic is a shared integration point for all four active AI programs — prior-authorization rule sets, ambient scribe documentation, RCM charge capture, and AI governance attestation workflows all route through Epic APIs and the clinical decision support layer. A single Epic governance change, upgrade window, or API deprecation can cascade simultaneously to all four programs. No coordinated Epic change control process exists across the four program teams.",
+      "recommendation": "Escalate to the Epic Governance Committee immediately to register all four programs as concurrent integration stakeholders. Establish a shared blackout calendar and a coordinated change control review board before any program enters Phase 2 integration work. This is a Critical risk that cannot be mitigated at the individual program level."
     },
     {
       "id": "xprog:meridian:004",
@@ -61,8 +61,8 @@
       "raised_by_agent": "Atlas",
       "raised_date": "2026-04-05",
       "status": "Active monitoring",
-      "description": "Cohere is both prior-auth vendor and DENIALS-2024 vendor. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
-      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+      "description": "Cohere Health is shortlisted for the Prior Authorization AI program and was also the vendor of record for the DENIALS-2024 initiative. If DENIALS-2024 produced unfavorable performance data — elevated denial override rates, clinician friction scores, or SLA misses — that evidence should inform the current prior-auth vendor evaluation. However, the two programs are managed by separate teams with no evidence-sharing protocol, and the DENIALS-2024 post-implementation review has not been surfaced to the prior-auth evaluation committee.",
+      "recommendation": "Pull the DENIALS-2024 post-implementation review and include it in the Prior Authorization vendor scorecard before finalist selection. If Cohere's prior performance is below acceptable threshold on any dimension, document the known risks explicitly in the vendor agreement rather than treating this as a clean slate engagement."
     },
     {
       "id": "xprog:meridian:005",
@@ -76,8 +76,8 @@
       "raised_by_agent": "Atlas",
       "raised_date": "2026-04-06",
       "status": "Active monitoring",
-      "description": "Innovaccer renewal affects multiple programs. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
-      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+      "description": "Innovaccer's data activation platform underpins the member analytics and population health signals used by both the Prior Authorization AI and AI Governance programs. The contract renewal negotiation window overlaps with both programs' Phase 2 data requirements. A delay in renewal execution, a scope reduction in the new contract, or a pricing dispute that stalls the agreement could leave both programs without the population data layer they assumed would be stable through year-end.",
+      "recommendation": "Procurement must initiate the Innovaccer renewal negotiation no later than June 1 to allow adequate commercial review time. Both program leads should confirm their minimum data access requirements — specific datasets, refresh frequency, API SLAs — so those commitments are locked in the renewal scope before negotiation concludes."
     },
     {
       "id": "xprog:meridian:006",
@@ -91,8 +91,8 @@
       "raised_by_agent": "Atlas",
       "raised_date": "2026-04-07",
       "status": "Escalated",
-      "description": "AI Governance must precede ambient P4. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
-      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+      "description": "The Ambient Scribe program's Phase 4 — full departmental rollout — requires a completed AI use-case attestation framework, which is owned and must be ratified by the AI Governance program. The Ambient program is tracking a Q4 2026 P4 date, but the AI Governance program has not yet produced a draft attestation methodology. If Governance slips by eight or more weeks, Ambient P4 cannot proceed without a formal CMO waiver, which would create a compliance gap and require rework of the P4 go-live criteria.",
+      "recommendation": "The AI Governance program lead must deliver a draft attestation framework by June 30 so the Ambient program can build P4 go/no-go criteria around a stable governance baseline. Design the waiver process now — including who can grant it and under what conditions — so a Governance slip does not create a binary block on Ambient P4."
     },
     {
       "id": "xprog:meridian:007",
@@ -106,8 +106,8 @@
       "raised_by_agent": "Atlas",
       "raised_date": "2026-04-08",
       "status": "Active monitoring",
-      "description": "CBO change management is shared constraint. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
-      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+      "description": "The Chief Business Officer's office owns the change management budget and staffing resources for both RCM Modernization and Ambient Scribe — the two programs with the largest front-line user populations across Meridian. Both programs have planned change management mobilization for Q3 2026, creating a direct capacity collision at the CBO team. Neither program plan reflects this conflict, and no sequencing decision has been made at the portfolio level.",
+      "recommendation": "The CBO and both program sponsors must meet before Q3 planning is finalized to sequence the change management peaks. One viable option is staggering RCM's front-line training by six weeks so the CBO team can execute one program's rollout at a time. The alternative — running both simultaneously with consultant surge — should be costed and approved before commitments are made to either program team."
     },
     {
       "id": "xprog:meridian:008",
@@ -121,8 +121,8 @@
       "raised_by_agent": "Atlas",
       "raised_date": "2026-04-09",
       "status": "Active monitoring",
-      "description": "Cost-takeout vs clinical AI investment contradiction. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
-      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+      "description": "The CFO's FY2026 mandate calls for net cost takeout across the enterprise, while the CMO's investment thesis for Ambient Scribe and Prior Authorization AI is framed around productivity gain and denial reduction — not direct cost elimination. This creates a measurement contradiction: Finance will score both programs on cost savings, Clinical will score them on productivity, and neither will show a clean win at the board level unless a shared measurement framework is established before Q2 reporting.",
+      "recommendation": "The CAIO should broker a shared measurement framework before Q2 board reporting that maps clinician productivity gains and denial rate reductions to FTE-equivalent cost savings. Presenting both programs through a unified financial narrative is necessary to prevent them from being classified as discretionary spend under the cost-takeout mandate."
     },
     {
       "id": "xprog:meridian:009",
@@ -136,8 +136,8 @@
       "raised_by_agent": "Atlas",
       "raised_date": "2026-04-10",
       "status": "Escalated",
-      "description": "Plan data needs vs provider data-sharing constraints. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
-      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+      "description": "The Prior Authorization AI program requires payer-side clinical criteria data — Anthem, UnitedHealth, and BCBS authorization logic trees — to train its denial prediction model. However, Meridian's existing provider data-sharing agreements with these payers prohibit automated extraction of plan-side clinical criteria for model training purposes. The program's vendor has built its implementation on the assumption that this data would be available; Legal has not yet reviewed whether the sharing constraints apply.",
+      "recommendation": "Escalate the data-sharing question to Legal and Compliance before the prior-auth vendor contract is signed. If payer-side clinical criteria data is off-limits under the current agreements, the program must redesign its model architecture around provider-side signals only — a materially different technical approach that changes timeline and cost."
     },
     {
       "id": "xprog:meridian:010",
@@ -151,8 +151,8 @@
       "raised_by_agent": "Atlas",
       "raised_date": "2026-04-11",
       "status": "Active monitoring",
-      "description": "Hawaii integration deferred despite strategy. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
-      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+      "description": "Meridian's three-year digital strategy commits to full Hawaii market integration into the core EHR and analytics stack by Q2 2026. Both the AI Governance and RCM Modernization programs have quietly deferred Hawaii-specific data pipelines to future phases without a formal strategy revision. This means Hawaii patients and providers will not be represented in AI governance attestations or RCM optimization outputs — creating a two-tier AI deployment that contradicts the board-approved strategy.",
+      "recommendation": "A sponsor-level decision is required: either formally revise the strategy commitment date for Hawaii AI integration with board acknowledgment, or allocate a Hawaii-specific workstream within both programs' Phase 3 budgets. An informal deferral with no documented rationale creates audit exposure and an equity risk that could become a regulatory issue if AI performance disparities emerge."
     },
     {
       "id": "xprog:meridian:011",
@@ -166,8 +166,8 @@
       "raised_by_agent": "Atlas",
       "raised_date": "2026-04-12",
       "status": "Active monitoring",
-      "description": "Prior-auth Anthem red indicates PAT-AI-008. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
-      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+      "description": "Issue PAT-AI-008 documents that Anthem's prior-authorization portal has returned a blocked status on Meridian's API integration test, meaning the live prior-authorization decisioning path cannot complete Anthem transactions. Anthem represents approximately 31% of Meridian's inpatient volume. This is not a test environment artifact — it reflects a production-readiness failure that will prevent the Prior Authorization AI program from going live for Anthem-covered patients.",
+      "recommendation": "Escalate PAT-AI-008 to Critical status in the program risk log immediately and assign a named Anthem relationship owner with authority to engage Anthem's technical team directly. Go-live cannot proceed for Anthem-covered patient populations until the portal integration is resolved. A manual prior-authorization fallback process for Anthem must be documented and approved within two weeks."
     },
     {
       "id": "xprog:meridian:012",
@@ -181,8 +181,8 @@
       "raised_by_agent": "Atlas",
       "raised_date": "2026-04-13",
       "status": "Escalated",
-      "description": "Ambient attribution method weak PAT-AI-009. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
-      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+      "description": "Issue PAT-AI-009 flags that the Ambient Scribe program's clinical documentation attribution method — which maps AI-generated notes to the ordering clinician for billing and liability purposes — does not satisfy Meridian's coding and billing attribution requirements as defined by the RCM team. Ambient-generated notes entered into Epic will fail the charge review validation step, creating revenue leakage and potential compliance exposure once the program moves beyond pilot.",
+      "recommendation": "Convene the Ambient technical team and the RCM coding team to define a compliant attribution schema before Phase 2 rollout. This is a data architecture decision that must be resolved in the Epic governance process — it is not a vendor negotiation. The schema must be approved by both the Chief Coding Officer and the Ambient program lead before any P2 go-live date is confirmed."
     },
     {
       "id": "xprog:meridian:013",
@@ -196,8 +196,8 @@
       "raised_by_agent": "Atlas",
       "raised_date": "2026-04-14",
       "status": "Active monitoring",
-      "description": "Olive restructuring affects RCM vendor choice. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
-      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+      "description": "Olive AI, evaluated by Meridian in 2024 as a prior-authorization and RCM automation vendor, has undergone significant restructuring including a substantial workforce reduction and a product strategy pivot. If Olive holds any active or pending agreements with Meridian, or remains on any vendor shortlist for the current programs, the restructuring materially changes the vendor's support capacity, product roadmap commitments, and long-term viability as a healthcare AI partner.",
+      "recommendation": "Procurement should confirm immediately whether Olive holds any active or pending agreements with Meridian. If Olive is on the prior-auth or RCM vendor shortlist, initiate a vendor financial health and continuity review before any further evaluation investment is made. Remove Olive from active consideration pending that review unless the review results are favorable."
     },
     {
       "id": "xprog:meridian:014",
@@ -211,8 +211,8 @@
       "raised_by_agent": "Atlas",
       "raised_date": "2026-04-15",
       "status": "Active monitoring",
-      "description": "FDA guidance shifts AI governance scope. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
-      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+      "description": "The FDA's Q1 2026 draft guidance on AI/ML-based Software as a Medical Device expands the classification criteria in ways that may pull Meridian's ambient scribe and prior-authorization AI models under 510(k) or De Novo submission requirements. The AI Governance program's current attestation framework was designed for non-SaMD clinical AI; it does not address FDA submission workflows, predicate device documentation, or the post-market surveillance requirements that a SaMD classification would impose.",
+      "recommendation": "The AI Governance program lead must commission a regulatory counsel review of the FDA guidance against Meridian's full AI portfolio within 60 days. If any models are reclassified as SaMD, the AI Governance program's scope, budget, and timeline require a formal revision before the next board cycle. Do not proceed with attestation framework finalization until regulatory counsel has cleared or scoped the FDA guidance exposure."
     },
     {
       "id": "xprog:meridian:015",
@@ -226,8 +226,8 @@
       "raised_by_agent": "Atlas",
       "raised_date": "2026-04-16",
       "status": "Escalated",
-      "description": "Innovaccer renewal Aug 2026 creates deadline. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
-      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+      "description": "Innovaccer's contract expires August 31, 2026. Both the RCM Modernization and Ambient Scribe programs depend on Innovaccer's care management and population analytics data feeds for their Q4 milestones. A failure to execute the renewal by July 31 — the minimum lead time required for contract execution — would create a contractual data access gap during the highest-stakes delivery window for both programs. Neither program plan reflects this external deadline.",
+      "recommendation": "Procurement must initiate the Innovaccer renewal negotiation no later than June 1 to preserve sufficient commercial review time. Both program leads must submit their minimum data access requirements — specific feeds, refresh rates, and API SLA commitments — to the procurement team before negotiations open. This deadline must be tracked at the portfolio level, not just within the Innovaccer vendor relationship."
     },
     {
       "id": "xprog:meridian:016",
@@ -241,8 +241,8 @@
       "raised_by_agent": "Atlas",
       "raised_date": "2026-04-17",
       "status": "Active monitoring",
-      "description": "Board AI policy review creates deadline. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
-      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+      "description": "The Meridian Board of Directors has scheduled an AI policy and investment review for Q4 2026, at which the Ambient Scribe and Prior Authorization AI programs are both expected to present performance results and governance posture. Neither program currently has a board-ready performance dashboard, a governance narrative aligned to the AI Governance program's attestation framework, or defined metrics that map to the board's investment criteria.",
+      "recommendation": "Both program leads should engage the CAIO's office by September to align on board reporting format, performance metrics, and governance narrative. This is a known, non-negotiable deadline — preparation requires 6 to 8 weeks of effort and should be on both programs' Q3 project plans. Arriving at the Q4 board review without a governance narrative will be interpreted as an oversight, not a resourcing issue."
     },
     {
       "id": "xprog:meridian:017",
@@ -256,8 +256,8 @@
       "raised_by_agent": "Atlas",
       "raised_date": "2026-04-18",
       "status": "Active monitoring",
-      "description": "19 of 23 AI use cases unattested. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
-      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+      "description": "The AI Governance program's use-case registry currently contains 23 live or in-flight AI use cases across Meridian. Of these, 19 have not completed the required attestation review covering risk classification, bias assessment, and performance baseline documentation. The two highest-risk unattested cases are the prior-authorization AI model and the ambient documentation model — both of which are scheduled for expanded rollout in H2 2026, before attestation is complete.",
+      "recommendation": "AI Governance must prioritize attestation completion for the prior-auth and ambient models before any Phase 2 expansion is approved. A triage sprint in May should clear at least 8 to 10 of the 19 unattested cases by assigning dedicated reviewers. The remaining cases require named owners and committed completion dates tracked in the governance registry. No H2 program expansion should receive sign-off without attestation on record."
     },
     {
       "id": "xprog:meridian:018",
@@ -271,8 +271,8 @@
       "raised_by_agent": "Atlas",
       "raised_date": "2026-04-19",
       "status": "Escalated",
-      "description": "Capital conflict Hawaii vs RCM vs ambient. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
-      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+      "description": "The FY2026 IT capital plan allocates a fixed investment pool that is insufficient to simultaneously fund Hawaii market integration, RCM Modernization Phase 2, and Ambient Scribe Phase 3. Finance has not formally adjudicated which programs hold priority claims. Each of the three program sponsors is operating on the assumption that their budget allocation is secured, creating a collision that will surface at the Q2 budget review with no pre-agreed resolution framework.",
+      "recommendation": "The CFO must arbitrate the capital allocation among the three competing claims before May 31. The CAIO should present a portfolio prioritization framework that scores programs by clinical ROI, regulatory obligation, and strategic alignment — not department seniority or historical budget priority. The arbitration outcome must be documented and communicated to all three program teams before Q3 planning begins."
     },
     {
       "id": "xprog:meridian:019",
@@ -286,8 +286,8 @@
       "raised_by_agent": "Atlas",
       "raised_date": "2026-04-20",
       "status": "Active monitoring",
-      "description": "VP Application Services vacancy slows ownership. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
-      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+      "description": "The VP of Application Services position has been vacant since February 2026. This role is the designated Epic system owner and the required sign-off authority for all Epic integration change requests — a mandatory approval step in both the RCM Modernization and Ambient Scribe programs. In the absence of a permanent VP, interim approval authority is undefined, and both programs are accumulating unsigned Epic change requests that are blocking downstream integration work.",
+      "recommendation": "Escalate to the CIO within one week: either appoint an interim VP of Application Services with full Epic approval authority for the duration of the vacancy, or formally delegate Epic change request sign-off to the Director of Application Services. Do not allow unsigned change requests to accumulate past 30 days — the backlog at go-live will delay both programs' production readiness dates."
     },
     {
       "id": "xprog:meridian:020",
@@ -301,8 +301,8 @@
       "raised_by_agent": "Atlas",
       "raised_date": "2026-04-21",
       "status": "Active monitoring",
-      "description": "Cerner remnant creates identity and analytics fragility. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
-      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+      "description": "A legacy Cerner instance that was not fully retired during Meridian's Epic migration remains the system of record for a subset of patient identity and provider roster data. Both the Ambient Scribe and Prior Authorization programs have analytics dependencies that trace back to this Cerner remnant, meaning their dashboards and model training data may carry patient identity mismatches that the Epic layer does not detect or surface. The scope of affected records has not been quantified.",
+      "recommendation": "Data engineering should run a Cerner-to-Epic patient identity reconciliation before either program enters Phase 2 analytics validation. If the identity gap exceeds one percent of the covered patient population, the finding must be disclosed in each program's data quality baseline documentation and factored into model performance benchmarks."
     },
     {
       "id": "xprog:meridian:021",
@@ -316,8 +316,8 @@
       "raised_by_agent": "Atlas",
       "raised_date": "2026-04-22",
       "status": "Escalated",
-      "description": "Plan network adequacy vs provider capacity conflict. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
-      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+      "description": "The Prior Authorization AI model is being trained on Meridian's current provider network configuration, but the AI Governance attestation framework requires models to distinguish between authorization denials driven by clinical criteria and those driven by plan network adequacy gaps — cases where the required specialist is simply not in-network. The current model does not make this distinction, which creates a regulatory exposure and a health equity risk that the attestation framework cannot approve in its current form.",
+      "recommendation": "The prior-auth model vendor must add a network adequacy classification feature to the model output schema before production go-live. The AI Governance team should establish this as a mandatory attestation criterion for all prior-authorization AI models. Both the vendor contract and the attestation checklist should be updated to reflect this requirement before Phase 2 begins."
     },
     {
       "id": "xprog:meridian:022",
@@ -331,8 +331,8 @@
       "raised_by_agent": "Atlas",
       "raised_date": "2026-04-23",
       "status": "Active monitoring",
-      "description": "Shadow AI scribe pilots expand governance inventory. This signal is generated from shared people, system, vendor, evidence, and program dependencies in the Meridian dataset. It is intentionally graph-ready and should resolve back to named source records.",
-      "recommendation": "Assign owner, confirm evidence, and include in next program gate review."
+      "description": "At least four Meridian departments — Orthopedics, Cardiology, Oncology, and Pediatrics — have launched informal AI scribe pilots using commercial tools outside of the formal Ambient Scribe program. These shadow deployments are not registered in the AI governance use-case inventory, have not been risk-classified, and are generating clinical documentation that flows directly into Epic without any attestation review. Each shadow deployment is an uncontrolled AI system producing patient-facing clinical records.",
+      "recommendation": "The CAIO's office must issue a governance notice requiring all shadow AI scribe deployments to register in the use-case registry within 30 days. The AI Governance program should conduct a rapid risk triage of the four known deployments and determine whether any require immediate cessation pending attestation review. A moratorium on new shadow AI deployments should be announced simultaneously to prevent further inventory expansion."
     }
   ],
   "portfolio_health_summary": {

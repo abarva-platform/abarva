@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { askIntelligence } from '@/lib/intelligence/ask';
 import { getCurrentPerson } from '@/lib/auth/maestro';
+import { getActiveClientRow } from '@/lib/active-client';
 import { assembleUserContextBlock } from '@/lib/agent/prompts/_shared/user-context';
 
 export const runtime = 'nodejs';
@@ -19,9 +20,16 @@ export async function GET(req: NextRequest) {
 
   let userContextBlock = '';
   try {
-    const person = await getCurrentPerson();
+    const [person, client] = await Promise.all([
+      getCurrentPerson(),
+      getActiveClientRow().catch(() => null),
+    ]);
     if (person) {
-      userContextBlock = await assembleUserContextBlock({ personId: person.id, displayName: person.name });
+      userContextBlock = await assembleUserContextBlock({
+        personId: person.id,
+        displayName: person.name,
+        activeTenantDisplayName: client?.name ?? null,
+      });
     }
   } catch (err) {
     console.warn('[ask.user-context]', err);

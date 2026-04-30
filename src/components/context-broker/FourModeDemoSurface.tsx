@@ -48,7 +48,7 @@ const SAMPLE_QUERIES: ReadonlyArray<{ label: string; tenant: TenantOption; query
     query: "Why is Meridian's prior-authorization program high-risk right now?",
   },
   {
-    label: 'AI pilot-to-production failure modes',
+    label: 'Cold CIO (no tenant)',
     tenant: '',
     query: 'Why do AI pilots fail to scale?',
   },

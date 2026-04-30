@@ -15,7 +15,7 @@ export interface IntentClassification {
   confidence: number;
 }
 
-export type SourceType = 'VENDOR' | 'PATTERN' | 'TOPIC' | 'RESEARCH' | 'REGULATION' | 'BENCHMARK' | 'INSIGHT' | 'GENERAL';
+export type SourceType = 'VENDOR' | 'PATTERN' | 'TOPIC' | 'RESEARCH' | 'REGULATION' | 'BENCHMARK' | 'INSIGHT' | 'GENERAL' | 'WORLDVIEW';
 
 export interface AskSource {
   type: SourceType;

@@ -307,7 +307,7 @@ function RecordTable({
             <Th>Classification</Th>
             <Th>Freshness</Th>
             <Th>Confidence</Th>
-            <Th>Updated</Th>
+            <Th>Last Reviewed</Th>
           </tr>
         </thead>
         <tbody>
@@ -380,7 +380,7 @@ function RecordRow({ record }: { record: SegmentRecordSummary }) {
           : `${(record.confidence * 100).toFixed(0)}%`}
       </td>
       <td style={{ padding: `${SPACING.sm}`, fontFamily: TYPOGRAPHY.mono, fontSize: 11, color: `${COLORS.ink}99`, whiteSpace: 'nowrap' }}>
-        {record.lastReviewed ?? new Date(record.uploadedAt).toISOString().slice(0, 10)}
+        {record.lastReviewed ?? '—'}
       </td>
     </tr>
   );

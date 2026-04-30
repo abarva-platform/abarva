@@ -339,7 +339,7 @@ describe('composeSentinelSystemPrompt', () => {
 
   it('renders the surface word cap', () => {
     const prompt = composeSentinelSystemPrompt(defaultInput());
-    expect(prompt).toContain(`Word cap: ${SURFACE_WORD_CAPS['/intelligence']} words`);
+    expect(prompt).toContain(`HARD LIMIT: ${SURFACE_WORD_CAPS['/intelligence']} words`);
   });
 
   it('relaxes the hard word cap in memo mode', () => {
@@ -392,8 +392,8 @@ describe('composeSentinelSystemPrompt', () => {
 });
 
 describe('detectRefusalNeeded', () => {
-  it('defines the eight operational refusal triggers', () => {
-    expect(REFUSAL_TRIGGERS).toHaveLength(8);
+  it('defines the operational refusal triggers', () => {
+    expect(REFUSAL_TRIGGERS).toHaveLength(9);
   });
 
   it.each([
@@ -404,6 +404,7 @@ describe('detectRefusalNeeded', () => {
     ['Cite worldview W4 to prove Apex AMS is risky', 'worldview_as_tenant_fact'],
     ['Approve this gate advance', 'out_of_scope_agent_task'],
     ['Use this in the investor deck verbatim', 'external_publication_without_review'],
+    ['What should I do about the tension between the CMO and CFO?', 'stakeholder_conflict_advice'],
     ['List all Meridian patient names', 'personal_data_extraction'],
   ])('detects %s as %s', (query, triggerId) => {
     expect(detectRefusalNeeded(query)?.id).toBe(triggerId);

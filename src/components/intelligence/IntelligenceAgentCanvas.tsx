@@ -55,6 +55,19 @@ export function IntelligenceAgentCanvas({
   }, []);
 
   return (
+    <>
+      <style>{`
+        @media (max-width: 640px) {
+          [data-testid="intelligence-agent-canvas"] {
+            grid-template-columns: 1fr !important;
+            height: auto !important;
+            min-height: 0 !important;
+          }
+          [data-testid="intelligence-agent-canvas"] > aside {
+            display: none;
+          }
+        }
+      `}</style>
     <section
       data-testid="intelligence-agent-canvas"
       aria-label="Sentinel canvas"
@@ -102,5 +115,6 @@ export function IntelligenceAgentCanvas({
         <SentinelReactivePanel artifacts={artifacts} />
       </aside>
     </section>
+    </>
   );
 }

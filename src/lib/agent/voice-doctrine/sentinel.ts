@@ -89,6 +89,7 @@ export const SENTINEL_BANNED_PATTERNS: ReadonlyArray<BannedPattern> = [
 
   // Hollow openers — caught at start of response only
   { category: 'hollow_opener', phrase: 'Great question', pattern: /^\s*great\s+question\b/i },
+  { category: 'hollow_opener', phrase: 'Good question', pattern: /^\s*good\s+question\b/i },
   { category: 'hollow_opener', phrase: 'Excellent question', pattern: /^\s*excellent\s+question\b/i },
   { category: 'hollow_opener', phrase: "I'd be happy to", pattern: /^\s*i'?d\s+be\s+happy\s+to\b/i },
   { category: 'hollow_opener', phrase: 'Let me help', pattern: /^\s*let\s+me\s+help\b/i },
@@ -220,7 +221,8 @@ export type RefusalTriggerId =
   | 'worldview_as_tenant_fact'
   | 'out_of_scope_agent_task'
   | 'external_publication_without_review'
-  | 'personal_data_extraction';
+  | 'personal_data_extraction'
+  | 'stakeholder_conflict_advice';
 
 export interface RefusalTrigger {
   id: RefusalTriggerId;
@@ -309,6 +311,19 @@ export const REFUSAL_TRIGGERS: ReadonlyArray<RefusalTrigger> = [
     ],
   },
   {
+    id: 'stakeholder_conflict_advice',
+    label: 'Stakeholder conflict advice',
+    exampleUserInput: 'What should I do about the tension between the CMO and CFO?',
+    sentinelResponse:
+      "Stakeholder dynamics are Atlas territory. I can surface evidence — program commitments, sponsor history, evidence records — but I don't advise on interpersonal or political navigation. Atlas reads the full portfolio context needed to reason about who should do what.",
+    patterns: [
+      /\b(?:what\s+should\s+I|how\s+(?:do|can|should)\s+I)\b.*\b(?:handle|manage|navigate|deal\s+with|approach|convince|persuade|get\s+(?:them|him|her|the))\b.*\b(?:stakeholder|sponsor|executive|cmo|cfo|coo|ceo|vp|director|manager|board)\b/i,
+      /\b(?:tension|conflict|disagreement|friction|pushback|resistance)\b.*\b(?:between|with)\b.*\b(?:stakeholder|sponsor|executive|cmo|cfo|coo|ceo|vp|director|board)\b/i,
+      /\b(?:politics|political)\b.*\b(?:program|project|initiative|stakeholder|sponsor)\b/i,
+      /\bhow\s+(?:do|can|should)\s+I\b.*\bget\s+(?:buy[- ]?in|sign[- ]?off|support|approval)\b.*\b(?:from|by)\b.*\b(?:cmo|cfo|coo|ceo|vp|director|board|sponsor)\b/i,
+    ],
+  },
+  {
     id: 'personal_data_extraction',
     label: 'Personal data extraction',
     exampleUserInput: 'List all Meridian patient names.',
@@ -383,7 +398,7 @@ const BANNED_PHRASES = `Banned phrases — these trigger voice-drift incidents a
   Coach drift:    "you should", "you must", "you need to", "the next step is", "I recommend"
   Marketing:      unlock / accelerate / leverage / empower / revolutionary / cutting-edge / game-changer / next-generation / best-in-class
   Hedge drift:    "in today's rapidly changing", "in the modern enterprise"
-  Hollow opener:  "Great question", "Excellent question", "I'd be happy to", "Let me help"
+  Hollow opener:  "Great question", "Good question", "Excellent question", "I'd be happy to", "Let me help"
   Ungrounded:     "Generally speaking", "It's well-known that"`;
 
 const STRUCTURAL_REQUIREMENT = `Structural requirement — any response of 3+ sentences must contain at least one of:
@@ -487,7 +502,7 @@ function wordCapLine(input: ComposeSentinelSystemPromptInput): string {
   if (cap === null) {
     return 'Word cap: memo mode or unknown surface. Stay concise, but no hard cap is applied.';
   }
-  return `Word cap: ${cap} words for ${input.surface}. If the user asks for a memo, use memoMode rather than squeezing evidence out of the answer.`;
+  return `HARD LIMIT: ${cap} words for ${input.surface}. Count before you respond. Cut ruthlessly — drop preamble, drop summarising closers, keep only the grounded claim and its citation. If the question genuinely needs more space, tell the user to request a memo.`;
 }
 
 function versionFooter(): string {
