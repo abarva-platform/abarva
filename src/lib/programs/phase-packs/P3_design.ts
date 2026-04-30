@@ -423,4 +423,242 @@ export const P3_DESIGN: PhasePack = {
       'Operating ownership and support assumptions - P4 tests whether the design can be operated, not just configured',
     ],
   },
+
+  // -- Step decomposition - OV2-5-P3 (design doc D.3.4) --------------------
+  //
+  // 9 canonical P3 steps. The DAG roots at the P2 handoff-ingest, then forks
+  // into two parallel substantive workstreams - architecture expansion and
+  // (when in scope) vendor selection - both of which feed the detailed design
+  // composition. The detailed design draft is the central intermediate
+  // artifact: pilot-cohort design, the CXO interview, and the second
+  // dissenter engagement all consume it. The findings package ingests every
+  // substantive output, and design sign-off is the terminal node ingesting
+  // the design draft, vendor selection, pilot cohort, criteria, sponsor
+  // commitment, and dissenter engagement.
+  //
+  // Two intermediate artifacts referenced by `inputs` only (no DoD id, no
+  // step `outputs` entry per slice rule):
+  //   - `p3-detailed-design-draft`: produced by `p3-detailed-design`,
+  //     consumed by pilot-cohort design, CXO interview, dissenter
+  //     engagement, findings package, and sign-off.
+  //   - `p3-vendor-selection-complete`: produced by `p3-vendor-selection`
+  //     when sourcing is in scope, consumed by sign-off; the vendor BAFO
+  //     event lives in /source, not in `definitionOfDone`.
+  //
+  // StepComplexity admits only 'simple' | 'complex'. The design doc D.3.4
+  // labels listed in the task spec are encoded as 'complex' when off-platform
+  // multi-stakeholder work is required (architecture expansion, vendor
+  // selection workshops, pilot-cohort design workshop, CXO 1:1, dissenter
+  // 1:1, detailed-design composition spanning ARB/security/data/privacy
+  // iteration) and as 'simple' when the work is chat-resolvable (handoff
+  // ingest, findings package authoring, gate sign-off request).
+  //
+  // agentRole is single-valued. For the design sign-off the dominant role
+  // is `request_approval`; for workshops `coach_workshop`; for 1:1s
+  // `coach_interview`; for artifact composition `compose_artifact`; for
+  // the P2 carry-forward read `extract`.
+  //
+  // postMeetingUploadExpected is true for the five steps that involve
+  // off-platform meetings (architecture expansion, vendor selection, pilot
+  // cohort design, CXO interview, dissenter engagement). The complex
+  // `p3-detailed-design` step is artifact composition with iterative review
+  // rather than a single uploadable meeting, so it does NOT carry the
+  // post-meeting upload flag. Simple steps and `compose_artifact` /
+  // `request_approval` / `extract` steps are upload-false by rule.
+  steps: [
+    // Continuity step. Tagged [1, 2] because the P2 carry-forward keeps
+    // sponsor commitment (#1) and problem definition (#2) intact across the
+    // gate; without ingesting the carry-forward record, P3 silently
+    // re-litigates target-state and dilutes both. Mirrors the underlying DoD
+    // item `p2-target-state-path-carried-forward` (also tagged [1, 2]).
+    {
+      id: 'p3-handoff-ingest',
+      label: 'Confirm P2 charter + architecture attestation carried forward',
+      complexity: 'simple',
+      agentRole: 'extract',
+      inputs: [],
+      outputs: ['p2-target-state-path-carried-forward'],
+      templateRefs: [],
+      preventsFailureModes: [1, 2],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+    // Architecture / Security / Data / Privacy expansion workshop. One of
+    // the two parallel substantive roots. Tagged [6] - this is where late
+    // attention to governance/privacy/risk gets pre-empted.
+    {
+      id: 'p3-architecture-expansion',
+      label:
+        'Architecture expansion workshop with ARB + Security + Data + Privacy',
+      complexity: 'complex',
+      agentRole: 'coach_workshop',
+      inputs: ['p2-target-state-path-carried-forward'],
+      outputs: ['architecture-sketch-expanded'],
+      templateRefs: [],
+      preventsFailureModes: [6],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+    // Detailed design composition. Encoded as `complex` because the spec
+    // requires iterative work with ARB / security / data / privacy /
+    // operating owners to produce a buildable spec - not a single-pass
+    // authoring turn. agentRole is `compose_artifact` (dominant: the
+    // artifact is the design spec). Output is intermediate
+    // (`p3-detailed-design-draft`); the *signed* spec is produced
+    // downstream by `p3-design-signoff`. Tagged [5, 6] because the design
+    // commits the operating-model change (#5) and absorbs the
+    // governance/privacy/risk controls surfaced by the architecture
+    // expansion (#6).
+    //
+    // postMeetingUploadExpected is false: composition is iterative artifact
+    // work, not a single uploadable meeting. The intent-capture flag
+    // remains true per the slice rule for all complex steps.
+    {
+      id: 'p3-detailed-design',
+      label: 'Compose the detailed design specification',
+      complexity: 'complex',
+      agentRole: 'compose_artifact',
+      inputs: [
+        'p2-target-state-path-carried-forward',
+        'architecture-sketch-expanded',
+      ],
+      outputs: [],
+      templateRefs: [],
+      preventsFailureModes: [5, 6],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: false,
+    },
+    // Vendor selection. The second parallel substantive root; runs when
+    // sourcing is in scope. Output is intermediate
+    // (`p3-vendor-selection-complete`); the formal sourcing handoff is
+    // closed by the vendor BAFO event in /source, not by a P3 DoD id.
+    // Tagged [7] for build-vs-buy / vendor-selection failure mode.
+    {
+      id: 'p3-vendor-selection',
+      label: 'Vendor selection (handoff to /source if vendor in scope)',
+      complexity: 'complex',
+      agentRole: 'coach_workshop',
+      inputs: ['p2-target-state-path-carried-forward'],
+      outputs: [],
+      templateRefs: [],
+      preventsFailureModes: [7],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+    // Pilot cohort + success criteria + stop rule, run as a single design
+    // workshop. Outputs span two DoD ids - `pilot-cohort-named` (cohort
+    // with inclusion/exclusion) and `success-criteria-locked` (numeric
+    // thresholds against the P2 baseline). Tagged [8, 5]: pilot-to-prod
+    // gap (#8) is the dominant prevention; operating-model change (#5)
+    // because cohort selection encodes which workflow actually changes.
+    {
+      id: 'p3-pilot-cohort-design',
+      label: 'Pilot cohort selection + success criteria + stop-rule',
+      complexity: 'complex',
+      agentRole: 'coach_workshop',
+      inputs: [
+        'p2-target-state-path-carried-forward',
+        'p3-detailed-design-draft',
+      ],
+      outputs: ['pilot-cohort-named', 'success-criteria-locked'],
+      templateRefs: [],
+      preventsFailureModes: [8, 5],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+    // CXO 1:1 - sponsor commits to the consequence of pilot pass and pilot
+    // fail. Outputs span `cxo-interview-complete` (governance gate item)
+    // and `sponsor-commitment-confirmed` (the substantive commitment).
+    // Tagged [1] - sponsor commitment failure mode.
+    {
+      id: 'p3-cxo-interview',
+      label: 'CXO 1:1 - sponsor commitment to consequence',
+      complexity: 'complex',
+      agentRole: 'coach_interview',
+      inputs: [
+        'p2-target-state-path-carried-forward',
+        'p3-detailed-design-draft',
+      ],
+      outputs: ['cxo-interview-complete', 'sponsor-commitment-confirmed'],
+      templateRefs: [],
+      preventsFailureModes: [1],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+    // Re-engage the P2 named dissenter against the now-detailed design.
+    // Decision is logged regardless of outcome (resolved / accepted /
+    // escalated). Tagged [2, 10] per the slice spec - dissent that gets
+    // deferred surfaces as scope sprawl (#10) or reopened problem
+    // definition (#2) in P4/P5.
+    {
+      id: 'p3-dissenter-engagement-2',
+      label:
+        'Re-engage P2 dissenter with detailed design; log decision regardless of outcome',
+      complexity: 'complex',
+      agentRole: 'coach_interview',
+      inputs: [
+        'p2-target-state-path-carried-forward',
+        'p3-detailed-design-draft',
+      ],
+      outputs: ['named-dissenter-engaged'],
+      templateRefs: [],
+      preventsFailureModes: [2, 10],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+    // Phase-3 findings package. Continuity / governance step; chat-
+    // resolvable composition once the substantive work is in. Tagged
+    // [2, 6] mirroring the underlying DoD `phase-3-findings-written`
+    // tags - the package keeps the problem definition (#2) honest and
+    // captures the governance/privacy/risk decisions (#6) for P4 audit.
+    {
+      id: 'p3-findings-package',
+      label: 'Compose phase 3 findings package',
+      complexity: 'simple',
+      agentRole: 'compose_artifact',
+      inputs: [
+        'p3-detailed-design-draft',
+        'architecture-sketch-expanded',
+        'pilot-cohort-named',
+        'success-criteria-locked',
+        'cxo-interview-complete',
+        'sponsor-commitment-confirmed',
+        'named-dissenter-engaged',
+        'p3-vendor-selection-complete',
+      ],
+      outputs: ['phase-3-findings-written'],
+      templateRefs: [],
+      preventsFailureModes: [2, 6],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+    // Terminal gate node. Sponsor + ARB sign the design (and vendor
+    // selection if applicable). Output is `detailed-design-signed-off`.
+    // `vendor_selection_approved` is a gate-check rather than a DoD id, so
+    // it is intentionally NOT listed in `outputs`; it is referenced via
+    // `p3-vendor-selection-complete` in `inputs` for DAG legibility.
+    // Tagged [1] per the slice spec - sponsor sign-off concretizes
+    // failure mode #1.
+    {
+      id: 'p3-design-signoff',
+      label:
+        'Sponsor + ARB sign the design (and vendor selection if applicable)',
+      complexity: 'simple',
+      agentRole: 'request_approval',
+      inputs: [
+        'p3-detailed-design-draft',
+        'architecture-sketch-expanded',
+        'pilot-cohort-named',
+        'success-criteria-locked',
+        'sponsor-commitment-confirmed',
+        'named-dissenter-engaged',
+        'p3-vendor-selection-complete',
+      ],
+      outputs: ['detailed-design-signed-off'],
+      templateRefs: [],
+      preventsFailureModes: [1],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+  ],
 };
