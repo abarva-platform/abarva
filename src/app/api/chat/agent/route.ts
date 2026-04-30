@@ -153,6 +153,10 @@ import "@/lib/agent/tools/intelligence/evidenceLookup";
 // + pattern alignment + contradiction-template detection. Emits
 // pattern-match (aligned) and contradiction-flag (fired) artifacts.
 import "@/lib/agent/tools/intelligence/validateSynthesis";
+// Source surface — commit_source_event tool for Sentinel on /source.
+// Creates a DB row in source_events and emits a source-event-created
+// artifact + navigate-to for post-commit routing.
+import "@/lib/agent/tools/source/commitSourceEvent";
 
 // ── Agent voice map ────────────────────────────────────────────────────────────
 
@@ -179,6 +183,8 @@ export async function POST(request: Request) {
     programId?: string;
     /** Prior conversation turns for multi-turn context. Capped at 10. */
     conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
+    /** Wave 1 inline files — text extracted client-side, passed directly in body. */
+    inlineFiles?: Array<{ name: string; content: string | null; sizeBytes?: number; mimeType?: string }>;
   };
 
   const message = body.message?.trim();
@@ -518,6 +524,27 @@ export async function POST(request: Request) {
     activeProgramId: programId,
   });
 
+  // Wave 1 · inline files block. Client extracted text via FileReader
+  // and passed it in the request body. No DB lookup needed.
+  const inlineFilesBlock = (() => {
+    const files = body.inlineFiles;
+    if (!files || files.length === 0) return '';
+    const lines: string[] = ['--- INLINE ATTACHMENTS ---'];
+    for (const f of files) {
+      lines.push(`FILE: ${f.name}${f.sizeBytes != null ? ` (${Math.round(f.sizeBytes / 1024)}KB)` : ''}`);
+      if (f.content) {
+        // Cap at 8000 chars to protect context budget.
+        const preview = f.content.length > 8000 ? f.content.slice(0, 8000) + '\n[...truncated]' : f.content;
+        lines.push(preview);
+      } else {
+        lines.push('[Binary file — content not text-extractable client-side. Acknowledge by name and ask user to describe key points.]');
+      }
+      lines.push('');
+    }
+    lines.push('--- END INLINE ATTACHMENTS ---');
+    return lines.join('\n');
+  })();
+
   const systemPrompt = [
     voiceLine,
     "",
@@ -565,6 +592,11 @@ export async function POST(request: Request) {
     // / response guidelines. Empty string off Programs surfaces or when
     // no attachments are in flight.
     attachmentContextBlock,
+    "",
+    // Wave 1 · inline files passed directly in the request body.
+    // Non-empty on any surface when the user attached a file via the
+    // inline paperclip (Tower, Source, Intelligence, etc.).
+    inlineFilesBlock,
     "",
     // Phase Intelligence Pack — only rendered on program-detail surfaces
     // where a pack has been authored for the engagement's current phase.
@@ -706,6 +738,7 @@ export async function POST(request: Request) {
             request,
             surface,
             surfaceContext: body.surfaceContext,
+            clientKey: activeClient?.key ?? undefined,
             writer,
           },
           writer,

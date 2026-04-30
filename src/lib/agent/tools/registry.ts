@@ -32,6 +32,8 @@ export interface ToolContext {
   surface: string;
   /** Optional structured surface context the route already resolved. */
   surfaceContext?: Record<string, unknown>;
+  /** Active client key (e.g. 'apexretail'). Used by tools that write to per-tenant tables. */
+  clientKey?: string;
   /**
    * Optional out-of-band sink to the response stream. Tool handlers that
    * need to surface a side-channel hint to the client (e.g. a navigation

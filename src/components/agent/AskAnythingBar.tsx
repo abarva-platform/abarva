@@ -7,20 +7,27 @@
 // Streams via useAgentStream (same hook powering AgentColumn / AgentRail).
 // For the full conversation history, open the AgentRail on the right edge.
 //
-// OV2-4b · paper-clip wires through to the program-attachments upload
-// pipeline when (a) the surface is a Programs surface AND (b) a
-// programId is supplied. On non-Programs surfaces the paper-clip stays
-// hidden — the upload would have nowhere to land until the per-surface
-// data model exists. Drag-drop and file-picker share the same pending
-// attachments queue managed by usePendingAttachments.
+// Two paperclip modes:
+//   DB path (showPaperClip): Programs surfaces with a resolved programId.
+//     Files are uploaded to program_attachments; the agent sees persisted
+//     chip refs via surfaceContext.attachments.
+//   Inline path (showInlinePaperClip): every other agent surface.
+//     Text is extracted client-side via FileReader; content is sent in
+//     the request body as inlineFiles[]. No DB required.
 
-import { useRef, useState, type ChangeEvent, type DragEvent, type KeyboardEvent } from 'react';
+import { useCallback, useRef, useState, type ChangeEvent, type DragEvent, type KeyboardEvent } from 'react';
 import { useAgentStream } from '@/hooks/useAgentStream';
 import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
 import { ATTACHMENT_MIME_ALLOWLIST } from '@/lib/programs/attachments/mime';
 import { usePendingAttachments } from '@/components/programs/attachments/usePendingAttachments';
 import { PendingAttachmentChip } from '@/components/programs/attachments/AttachmentChip';
 import { toAttachmentChipRef } from '@/lib/programs/attachments/types';
+import type { InlineFile } from '@/lib/shell/atlas-page-state';
+
+// Mime types we can extract text from client-side with FileReader.readAsText().
+const TEXT_EXTRACTABLE: ReadonlySet<string> = new Set([
+  'text/plain', 'text/markdown', 'text/csv',
+]);
 
 // ── Agent profiles ─────────────────────────────────────────────────────────
 
@@ -81,19 +88,20 @@ export function AskAnythingBar({
   const [value, setValue] = useState('');
   const [panelOpen, setPanelOpen] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [inlineFiles, setInlineFiles] = useState<InlineFile[]>([]);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const inlineFileInputRef = useRef<HTMLInputElement>(null);
 
   // Prefer shared AtlasPageState (Shell Layout Spec v2 §6) — falls back to
   // local useAgentStream for components not yet wrapped in AppShell.
   const pageState = useAtlasPageState();
 
-  // OV2-4b · paper-clip is gated to Programs surfaces with a resolved
-  // programId. Hooks must run unconditionally; we still call the
-  // pending-attachments hook even when gated off, but the resulting
-  // state stays empty because addFiles is only invoked from gated UI.
+  // OV2-4b · DB paper-clip gated to Programs surfaces with a resolved programId.
+  // Inline paper-clip shown on every other surface (Wave 1 — no DB required).
   const showPaperClip = isProgramsSurfaceWithId(surface, programId);
+  const showInlinePaperClip = !showPaperClip;
   const pending = usePendingAttachments({ programId: showPaperClip ? programId : null });
 
   const localStream = useAgentStream({
@@ -153,18 +161,17 @@ export function AskAnythingBar({
     setPanelOpen(true);
     clearLocal(); // clear previous response
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
-    // OV2-4b · pass attachment refs through to the AtlasPageStateProvider
-    // ask() (which threads them into surfaceContext.attachments). The
-    // local-stream fallback (useAgentStream) doesn't accept attachments
-    // yet — without AtlasPageState the chips still render but the
-    // server-side surfaceContext stays unchanged. That gap is acceptable
-    // for v1 since every Programs surface mounts AppShell + AtlasPageState.
-    if (pageState && attachmentRefs.length > 0) {
-      pageState.ask(text, attachmentRefs);
+    if (pageState) {
+      pageState.ask(
+        text,
+        attachmentRefs.length > 0 ? attachmentRefs : undefined,
+        inlineFiles.length > 0 ? inlineFiles : undefined,
+      );
     } else {
       ask(text);
     }
     if (showPaperClip) pending.clearUploaded();
+    if (showInlinePaperClip) setInlineFiles([]);
   }
 
   // ── File attach ─────────────────────────────────────────────────────────
@@ -195,6 +202,32 @@ export function AskAnythingBar({
   function onDragLeave() {
     if (!showPaperClip) return;
     setIsDragOver(false);
+  }
+
+  // Wave 1 inline attach — client-side FileReader text extraction.
+  const readFileAsText = useCallback((file: File): Promise<string | null> => {
+    if (!TEXT_EXTRACTABLE.has(file.type)) return Promise.resolve(null);
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : null);
+      reader.onerror = () => resolve(null);
+      reader.readAsText(file);
+    });
+  }, []);
+
+  async function onInlineFileChange(e: ChangeEvent<HTMLInputElement>) {
+    if (!showInlinePaperClip || !e.target.files) return;
+    const files = Array.from(e.target.files);
+    const resolved: InlineFile[] = await Promise.all(
+      files.map(async (f) => ({
+        name: f.name,
+        content: await readFileAsText(f),
+        sizeBytes: f.size,
+        mimeType: f.type || 'application/octet-stream',
+      })),
+    );
+    setInlineFiles((prev) => [...prev, ...resolved]);
+    if (inlineFileInputRef.current) inlineFileInputRef.current.value = '';
   }
 
   function dismissPanel() {
@@ -318,7 +351,7 @@ export function AskAnythingBar({
             </span>
           </div>
 
-          {/* Attachment chips */}
+          {/* DB attachment chips (Programs surfaces with programId) */}
           {showPaperClip && pending.count > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 7 }}>
               {pending.items.map((it) => (
@@ -340,6 +373,46 @@ export function AskAnythingBar({
                     it.status === 'error' ? () => void pending.retry(it.localId) : undefined
                   }
                 />
+              ))}
+            </div>
+          )}
+
+          {/* Inline file chips (all other surfaces — Wave 1) */}
+          {showInlinePaperClip && inlineFiles.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 7 }}>
+              {inlineFiles.map((f, i) => (
+                <div
+                  key={i}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 5,
+                    padding: '3px 8px 3px 7px', borderRadius: 6,
+                    background: '#f0eee8', border: '1px solid #e2ddd4',
+                    fontSize: 11.5, color: '#3d4a5f', maxWidth: 220,
+                  }}
+                >
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.7 }}>
+                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
+                  </svg>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                    {f.name}
+                  </span>
+                  {f.content === null && (
+                    <span style={{ fontSize: 9.5, color: '#b06030', whiteSpace: 'nowrap' }}>metadata only</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setInlineFiles((prev) => prev.filter((_, j) => j !== i))}
+                    aria-label={`Remove ${f.name}`}
+                    style={{
+                      marginLeft: 2, background: 'none', border: 'none',
+                      cursor: 'pointer', padding: 0, color: '#8b95a8',
+                      display: 'flex', alignItems: 'center', flexShrink: 0,
+                      fontSize: 13, lineHeight: 1,
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
               ))}
             </div>
           )}
@@ -389,7 +462,7 @@ export function AskAnythingBar({
                 Drop to attach
               </div>
             )}
-            {/* Paperclip — gated to Programs surfaces with a programId */}
+            {/* Paperclip — DB path, Programs surfaces with programId */}
             {showPaperClip && (
               <>
                 <input
@@ -404,6 +477,31 @@ export function AskAnythingBar({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
+                  aria-label="Attach file"
+                  className="aab-attach"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
+                  </svg>
+                </button>
+              </>
+            )}
+
+            {/* Paperclip — inline path, all other surfaces (Wave 1) */}
+            {showInlinePaperClip && (
+              <>
+                <input
+                  ref={inlineFileInputRef}
+                  type="file"
+                  accept={ATTACHMENT_MIME_ALLOWLIST.join(',')}
+                  multiple
+                  style={{ display: 'none' }}
+                  onChange={(e) => void onInlineFileChange(e)}
+                  data-component="AskAnythingBarInlineAttachmentInput"
+                />
+                <button
+                  type="button"
+                  onClick={() => inlineFileInputRef.current?.click()}
                   aria-label="Attach file"
                   className="aab-attach"
                 >

@@ -33,6 +33,20 @@ import type { AttachmentChipRef } from '@/lib/programs/attachments/types';
 // client bundle's webpack graph.
 import type { BrokerMode, ContextBundle } from '@/lib/knowledge/context-broker';
 
+/**
+ * Wave 1 inline attachment — client-side text extracted via FileReader.
+ * Used on surfaces without a DB programId (Tower, Source, Intelligence, etc.)
+ * where the full program-attachments pipeline can't anchor a storage row.
+ * Content is passed directly in the agent request body; no DB required.
+ */
+export interface InlineFile {
+  name: string;
+  /** UTF-8 text extracted client-side. null for binary files we can't read. */
+  content: string | null;
+  sizeBytes: number;
+  mimeType: string;
+}
+
 export interface ChatTurn {
   id: string;
   role: 'user' | 'agent';
@@ -130,11 +144,11 @@ export interface AtlasPageState {
 export interface AtlasPageContextValue extends AtlasPageState {
   /**
    * Submit a user message. Appends user turn + streams agent reply.
-   * Optional attachments are attached to the user turn for chip
-   * rendering AND threaded into surfaceContext.attachments so the
-   * server-side agent prompt can reference them.
+   * Optional attachments (DB-backed, programs surfaces) are threaded into
+   * surfaceContext.attachments. Optional inlineFiles (Wave 1, all surfaces)
+   * are passed directly in the request body for client-side text injection.
    */
-  ask: (text: string, attachments?: AttachmentChipRef[]) => void;
+  ask: (text: string, attachments?: AttachmentChipRef[], inlineFiles?: InlineFile[]) => void;
   /** Clear the in-flight response / error (does not clear conversation). */
   clearResponse: () => void;
   /**

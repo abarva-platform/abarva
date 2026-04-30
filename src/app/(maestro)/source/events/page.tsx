@@ -5,12 +5,15 @@ import { SentinelAgentColumn } from '@/components/source/SentinelAgentColumn';
 import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
 import { SourceEventsPortfolio } from '@/components/source/SourceEventsPortfolio';
 import { SourceEmptyState } from '@/components/source/SourceEmptyState';
+import { AdminSourceEventApprovalQueue } from '@/components/source/AdminSourceEventApprovalQueue';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { buildLinkedProgramBadgeView } from '@/lib/source/linked-program-badge-view';
-import { listSourcingEvents } from '@/lib/source/queries';
+import { listSourcingEvents, getPendingSourceEvents } from '@/lib/source/queries';
 import { AMS_SOURCE_EVENT } from '@/lib/source/shell-source-fixture';
 import type { SourcingEventSummary } from '@/lib/source/types';
 import { formatUsd } from '@/lib/source/value-ledger';
+import { getCurrentPerson } from '@/lib/auth/maestro';
+import { getActiveClientRow } from '@/lib/active-client';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +24,12 @@ export default async function SourceEventsPage({
 }) {
   const { stage, status } = await searchParams;
   const events = await listSourcingEvents();
+
+  const [person, activeClient] = await Promise.all([getCurrentPerson(), getActiveClientRow()]);
+  const isAdmin = person?.role === 'admin';
+  const pendingEvents = isAdmin && activeClient
+    ? await getPendingSourceEvents(activeClient.key)
+    : [];
 
   return (
     <AppShell
@@ -44,6 +53,9 @@ export default async function SourceEventsPage({
       ) : (
         <>
           <SourceWorkingPane>
+            {pendingEvents.length > 0 && (
+              <AdminSourceEventApprovalQueue events={pendingEvents} />
+            )}
             <SourceEventsEntryHeader events={events} />
             <SourceEventsPortfolio
               events={events}
