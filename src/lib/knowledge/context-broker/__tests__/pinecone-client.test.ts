@@ -34,8 +34,8 @@ function makeFakeIndex(): {
   const matches: Array<{ id: string; score?: number; metadata?: RecordMetadata }> = [];
 
   const index: PineconeIndexLike = {
-    async upsert(records) {
-      upsertCalls.push(records);
+    async upsert(args) {
+      upsertCalls.push(args.records);
     },
     async query(options) {
       queryCalls.push({

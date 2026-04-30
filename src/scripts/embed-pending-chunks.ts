@@ -2,6 +2,10 @@
  * CB-2 / CB-3 · Embed pending `enterprise_context_chunks` rows via
  * OpenAI and upsert the resulting vectors to Pinecone.
  *
+ * Index-name resolution: prefer `PINECONE_INDEX_NAME`, fall back to
+ * `PINECONE_INDEX` (legacy alias used by the existing Vercel project
+ * envs), then the default `abarva-tenant-context-prod`.
+ *
  * Reads chunks where `embedding_status = 'pending'`, calls the OpenAI
  * embeddings API (`text-embedding-3-small`, 1536 dims), writes the
  * vector to the `embedding` jsonb column (audit trail in Postgres),
@@ -166,6 +170,14 @@ export function parseArgs(argv: string[]): CliArgs {
   return { dryRun, tenantKey, postgresOnly };
 }
 
+function resolveIndexName(): string {
+  return (
+    process.env.PINECONE_INDEX_NAME?.trim() ||
+    process.env.PINECONE_INDEX?.trim() ||
+    'abarva-tenant-context-prod'
+  );
+}
+
 function readPositiveInt(name: string, fallback: number): number {
   const raw = process.env[name];
   if (!raw) return fallback;
@@ -296,7 +308,7 @@ export async function runEmbedJob(
         result.pineconeUpserts += upsert.upsertedCount;
         log(
           `[batch ${batch + 1}] pinecone: upserted ${upsert.upsertedCount} vector(s) ` +
-            `to ${process.env.PINECONE_INDEX_NAME?.trim() || 'abarva-tenant-context-prod'}`,
+            `to ${resolveIndexName()}`,
         );
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -494,7 +506,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<Embe
   console.log(` postgres only   : ${args.postgresOnly ? 'YES' : 'no'}`);
   console.log(` pinecone        : ${pineconeMode}`);
   if (!args.dryRun && !args.postgresOnly && pineconeKeyPresent) {
-    console.log(` pinecone index  : ${process.env.PINECONE_INDEX_NAME?.trim() || 'abarva-tenant-context-prod'}`);
+    console.log(` pinecone index  : ${resolveIndexName()}`);
   }
   console.log(` ceiling cost*   : ~$${estimateCostUsd(hardCap * 500).toFixed(4)}  (assumes ~500 tok/chunk)`);
   console.log('────────────────────────────────────────────────────────────');
