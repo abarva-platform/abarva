@@ -24,12 +24,14 @@ import {
 } from '@/lib/admin/setup-acts-registry';
 import {
   getCrossProgramSignals,
+  getContextChunkStats,
   getSetupInventorySnapshot,
 } from '@/lib/admin/setup-data-broker';
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { AgentRail } from '@/components/admin/AgentRail';
 import { SetupAdminLanding } from '@/components/admin/setup/SetupAdminLanding';
 import { SetupLandingTelemetryBridge } from '@/components/admin/setup/SetupLandingTelemetryBridge';
+import { DataLandscapeTable } from '@/components/admin/setup/DataLandscapeTable';
 
 export const metadata = { title: 'Setup · AbarVa' };
 export const dynamic = 'force-dynamic';
@@ -39,12 +41,13 @@ export default async function AdminOverviewPage() {
   const clientKey = await getActiveClientKey().catch(() => null);
   const brokerTenantKey = clientKey ? clientKeyToInventorySubstrateKey(clientKey) : null;
   const baseContent = getSetupActsContent(clientKey);
-  const [snapshot, signals] = brokerTenantKey
+  const [snapshot, signals, chunkStats] = brokerTenantKey
     ? await Promise.all([
         getSetupInventorySnapshot(brokerTenantKey).catch(() => null),
         getCrossProgramSignals(brokerTenantKey).catch(() => []),
+        getContextChunkStats(brokerTenantKey).catch(() => []),
       ])
-    : [null, []];
+    : [null, [], []];
   const content = mergeInventorySnapshot(baseContent, snapshot);
   const counts = getSetupSummaryCountsWithSnapshot(content, snapshot);
   const lastIngestedRelative = snapshot?.lastIngestedAt
@@ -75,6 +78,15 @@ export default async function AdminOverviewPage() {
         atlasHighSeverityCount={atlasHighSeverityCount}
         nexusProgramCount={programSegment?.recordCount ?? 0}
         stewardFindingCount={complianceSegment?.recordCount ?? 0}
+      />
+      <DataLandscapeTable
+        segments={snapshot?.segments ?? []}
+        chunkStats={chunkStats}
+        totalRecords={counts.totalRecords ?? 0}
+        totalChunks={snapshot?.totalChunks ?? 0}
+        totalNodes={snapshot?.totalNodes ?? 0}
+        totalEdges={snapshot?.totalEdges ?? 0}
+        lastIngestedRelative={lastIngestedRelative}
       />
       <SetupLandingTelemetryBridge
         tenantKey={brokerTenantKey}

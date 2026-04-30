@@ -423,3 +423,67 @@ export async function getCrossProgramSignals(
     return 0;
   });
 }
+
+// ── Context chunk stats per segment ─────────────────────────────────────────
+
+export interface SegmentChunkStat {
+  segmentId: string;
+  totalChunks: number;
+  embeddedChunks: number;
+  pendingChunks: number;
+  failedChunks: number;
+}
+
+interface ChunkCountRow {
+  source_segment_id: string;
+  total_chunks: number | string;
+  embedded_chunks: number | string;
+  pending_chunks: number | string;
+  failed_chunks: number | string;
+}
+
+/**
+ * Return per-segment chunk counts from enterprise_context_chunks.
+ * Shows how many text chunks have been indexed and how many have
+ * embeddings. Returns [] when the table is unreachable — the
+ * data landscape table renders 0s as "–" in that case.
+ */
+export async function getContextChunkStats(
+  tenantKey: string,
+): Promise<SegmentChunkStat[]> {
+  const sb = (() => {
+    try {
+      return getServerSupabase();
+    } catch {
+      return null;
+    }
+  })();
+  if (!sb) return [];
+
+  // Supabase JS client doesn't support GROUP BY + conditional aggregates
+  // directly, so we use the rpc path or fall back to a raw SQL string.
+  // The simplest safe approach: run four separate count queries (one per
+  // embedding_status). This avoids RPC surface, stays fully typed, and
+  // is fast enough for ≤ 1000 chunks per tenant.
+  const { data, error } = await sb
+    .from('enterprise_context_chunks')
+    .select('source_segment_id, embedding_status')
+    .eq('tenant_key', tenantKey);
+
+  if (error || !data) return [];
+
+  const map = new Map<string, SegmentChunkStat>();
+  for (const row of data as { source_segment_id: string; embedding_status: string }[]) {
+    const seg = row.source_segment_id ?? 'unknown';
+    if (!map.has(seg)) {
+      map.set(seg, { segmentId: seg, totalChunks: 0, embeddedChunks: 0, pendingChunks: 0, failedChunks: 0 });
+    }
+    const stat = map.get(seg)!;
+    stat.totalChunks++;
+    if (row.embedding_status === 'embedded') stat.embeddedChunks++;
+    else if (row.embedding_status === 'failed') stat.failedChunks++;
+    else stat.pendingChunks++;
+  }
+
+  return Array.from(map.values());
+}
