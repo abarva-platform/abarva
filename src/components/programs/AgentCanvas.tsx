@@ -90,7 +90,7 @@ export function AgentCanvas({
   quote,
   artifacts,
   onArtifact,
-  heightCss = 'calc(100vh - 220px)',
+  heightCss = 'min(640px, calc(100svh - 220px))',
 }: AgentCanvasProps) {
   // CB-7 · the Context tab only renders on Programs surfaces. Other
   // surfaces (Source, Intelligence, …) have their own rail tooling and
@@ -107,7 +107,7 @@ export function AgentCanvas({
         gridTemplateColumns: 'minmax(0, 1.7fr) minmax(0, 1fr)',
         gap: 16,
         height: heightCss,
-        minHeight: 480,
+        minHeight: 'min(420px, calc(100svh - 220px))',
         marginBottom: 20,
       }}
     >
@@ -131,6 +131,7 @@ export function AgentCanvas({
           surface={surface}
           programId={programId}
           onArtifact={onArtifact}
+          composerPlacement="afterHeader"
         />
       </div>
 
