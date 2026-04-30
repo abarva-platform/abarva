@@ -140,6 +140,10 @@ export function StewardChat({
   const router = useRouter();
   const [draft, setDraft] = useState('');
   const [streaming, setStreaming] = useState(false);
+  const [handoffTarget, setHandoffTarget] = useState<{
+    programId: string;
+    programName: string;
+  } | null>(null);
   const threadRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const showStarterPrompts = !turns.some((turn) => turn.role === 'user');
@@ -180,6 +184,7 @@ export function StewardChat({
     ]);
     setDraft('');
     setStreaming(true);
+    setHandoffTarget(null);
 
     try {
       // Read from the ref so a parent state-replace mid-stream doesn't
@@ -285,6 +290,8 @@ export function StewardChat({
       const navMatch = PROGRAM_CREATED_SENTINEL.exec(allText);
       if (navMatch) {
         const programId = navMatch[1];
+        const targetProgramName = programName ?? 'your program';
+        setHandoffTarget({ programId, programName: targetProgramName });
         // PR-K · before the route change, persist the conversation
         // turns so AtlasPageStateProvider on /programs/<id> can hydrate
         // them and the user keeps the thread instead of starting from
@@ -295,11 +302,11 @@ export function StewardChat({
         );
         const handoffTurns = [
           ...toAtlasTurns(finalTurnsForHandoff),
-          buildHandoffMarker(programName ?? 'your program'),
+          buildHandoffMarker(targetProgramName),
         ];
         persistOriginationHandoff({
           programId,
-          programName: programName ?? 'your program',
+          programName: targetProgramName,
           turns: handoffTurns,
           capturedAt: Date.now(),
         });
@@ -514,6 +521,45 @@ export function StewardChat({
           </section>
         ) : null}
       </div>
+
+      {handoffTarget ? (
+        <section
+          aria-label="Program handoff receipt"
+          style={{
+            margin: '0 14px 12px',
+            padding: '10px 12px',
+            borderRadius: 8,
+            border: `1px solid ${STEWARD_ACCENT}33`,
+            background: `${STEWARD_ACCENT}0D`,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 3,
+          }}
+        >
+          <span
+            style={{
+              fontFamily: BrandTypography.mono,
+              fontSize: 10,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: STEWARD_ACCENT,
+              fontWeight: 700,
+            }}
+          >
+            Submitted for approval
+          </span>
+          <span
+            style={{
+              fontFamily: BrandTypography.sans,
+              fontSize: 13,
+              color: BrandColors.slate,
+              lineHeight: 1.45,
+            }}
+          >
+            Opening {handoffTarget.programName} at /programs/{handoffTarget.programId}.
+          </span>
+        </section>
+      ) : null}
 
       <footer
         style={{
