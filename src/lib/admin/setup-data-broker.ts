@@ -312,7 +312,7 @@ export async function getSegmentRecordPage(
 // `data_inventory_records`; the substantive fields live in
 // `record_payload` (a JSONB column).
 
-export type SignalSeverityBucket = 'high' | 'medium' | 'low' | 'unknown';
+export type SignalSeverityBucket = 'critical' | 'high' | 'medium' | 'low' | 'unknown';
 
 export interface CrossProgramSignal {
   recordId: string;
@@ -352,6 +352,7 @@ interface SignalRow {
 function bucketSeverity(raw: string | undefined): SignalSeverityBucket {
   if (!raw) return 'unknown';
   const normalized = raw.toLowerCase();
+  if (normalized.startsWith('critical')) return 'critical';
   if (normalized.startsWith('high')) return 'high';
   if (normalized.startsWith('medium')) return 'medium';
   if (normalized.startsWith('low')) return 'low';
@@ -359,10 +360,11 @@ function bucketSeverity(raw: string | undefined): SignalSeverityBucket {
 }
 
 const SEVERITY_RANK: Record<SignalSeverityBucket, number> = {
-  high: 0,
-  medium: 1,
-  low: 2,
-  unknown: 3,
+  critical: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+  unknown: 4,
 };
 
 /**

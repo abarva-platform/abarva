@@ -89,6 +89,7 @@ export const SENTINEL_BANNED_PATTERNS: ReadonlyArray<BannedPattern> = [
 
   // Hollow openers — caught at start of response only
   { category: 'hollow_opener', phrase: 'Great question', pattern: /^\s*great\s+question\b/i },
+  { category: 'hollow_opener', phrase: 'Good question', pattern: /^\s*good\s+question\b/i },
   { category: 'hollow_opener', phrase: 'Excellent question', pattern: /^\s*excellent\s+question\b/i },
   { category: 'hollow_opener', phrase: "I'd be happy to", pattern: /^\s*i'?d\s+be\s+happy\s+to\b/i },
   { category: 'hollow_opener', phrase: 'Let me help', pattern: /^\s*let\s+me\s+help\b/i },
@@ -383,7 +384,7 @@ const BANNED_PHRASES = `Banned phrases — these trigger voice-drift incidents a
   Coach drift:    "you should", "you must", "you need to", "the next step is", "I recommend"
   Marketing:      unlock / accelerate / leverage / empower / revolutionary / cutting-edge / game-changer / next-generation / best-in-class
   Hedge drift:    "in today's rapidly changing", "in the modern enterprise"
-  Hollow opener:  "Great question", "Excellent question", "I'd be happy to", "Let me help"
+  Hollow opener:  "Great question", "Good question", "Excellent question", "I'd be happy to", "Let me help"
   Ungrounded:     "Generally speaking", "It's well-known that"`;
 
 const STRUCTURAL_REQUIREMENT = `Structural requirement — any response of 3+ sentences must contain at least one of:

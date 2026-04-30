@@ -63,7 +63,12 @@ export function inferClientKeyFromEmail(email: string | null | undefined): Clien
   if (
     normalized.includes('demo-apexretail') ||
     normalized.includes('apexretail') ||
-    normalized.includes('apex+clerk_test')
+    normalized.includes('apex+clerk_test') ||
+    // Catches demo accounts like anand+apex@abarva.com where the
+    // local-part suffix is "+apex" (no "retail"). The "+" anchor
+    // prevents false matches on domains containing "apex".
+    normalized.includes('+apex@') ||
+    normalized.includes('+apex_')
   ) {
     return 'apexretail';
   }

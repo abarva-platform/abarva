@@ -60,6 +60,11 @@ export function CrossProgramSignalsPanel({
         ) : (
           <>
             <SeverityGroup
+              bucket="critical"
+              eyebrow="Critical severity — immediate escalation required"
+              signals={grouped.critical}
+            />
+            <SeverityGroup
               bucket="high"
               eyebrow="High severity — sponsor decision required"
               signals={grouped.high}
@@ -90,6 +95,7 @@ export function CrossProgramSignalsPanel({
 
 function groupBySeverity(signals: CrossProgramSignal[]) {
   const groups: Record<SignalSeverityBucket, CrossProgramSignal[]> = {
+    critical: [],
     high: [],
     medium: [],
     low: [],
@@ -309,6 +315,13 @@ function groupTone(bucket: SignalSeverityBucket): {
   text: string;
 } {
   switch (bucket) {
+    case 'critical':
+      return {
+        background: '#FEE2E2',
+        border: '#991b1b33',
+        accent: '#991b1b',
+        text: '#991b1b',
+      };
     case 'high':
       return {
         background: COLORS.coralSoft,
