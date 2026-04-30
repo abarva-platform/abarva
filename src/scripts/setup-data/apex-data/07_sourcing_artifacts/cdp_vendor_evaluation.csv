@@ -1,0 +1,11 @@
+vendor,round_1_qualified,identity_resolution_score,activation_score,open_architecture_score,governance_score,tco_5yr_usd_score,timeline_score,weighted_total,round_2_advance,round_3_advance,notes
+Treasure Data,Yes,86,82,88,84,78,80,83.4,Yes,Yes,"Strongest hybrid B2C+retail fit; identity resolution proof at our scale; pricing competitive but high data-volume tier; Snowflake co-existence design is mature"
+Segment (Twilio),Yes,82,90,80,82,72,82,81.4,Yes,Yes,"Best activation breadth (Twilio ecosystem leverage); identity resolution adequate but probabilistic match weaker; reverse-ETL strong; pricing model creates lock-in concern"
+ActionIQ,Yes,80,76,82,78,82,72,78.6,Yes,No,"Round 2 PoC revealed event-stream architecture limits at Apex peak volumes; pricing competitive but technical fit insufficient"
+mParticle,Yes,76,84,76,80,68,78,77.0,Yes,No,"Pricing model misaligned with Apex usage profile; activation strong; identity resolution adequate"
+Tealium AudienceStream,Yes,72,72,68,76,80,84,73.6,No,No,"Incumbent extension scenario; would extend Tealium relationship; identity match capability insufficient for 87% target; eliminated round 1"
+Adobe Real-Time CDP,Yes,84,82,72,82,62,76,77.2,No,No,"Strong on identity and activation but TCO at Apex scale unacceptable; lock-in concern with Adobe stack; eliminated round 1"
+Salesforce Data Cloud,Yes,80,82,70,82,72,72,77.0,No,No,"Strong fit with Salesforce stack but open architecture score insufficient; would deepen Salesforce dependency; eliminated round 1"
+Lytics,No,N/A,N/A,N/A,N/A,N/A,N/A,N/A,No,No,"Did not meet qualification floor — financial stability documentation"
+Hightouch,No,N/A,N/A,N/A,N/A,N/A,N/A,N/A,No,No,"Reverse-ETL only; not full CDP; did not qualify per RFP scope"
+RudderStack,No,N/A,N/A,N/A,N/A,N/A,N/A,N/A,No,No,"Did not have reference customers at $2B+ retail scale"

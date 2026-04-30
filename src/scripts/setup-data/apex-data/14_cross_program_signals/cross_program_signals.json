@@ -1,0 +1,162 @@
+{
+  "tenant_key": "apex-retail",
+  "last_updated": "2026-04-28",
+  "data_classification": "Internal",
+  "schema_version": "1.0",
+  "signals": [
+    {
+      "id": "xprog:apex:001",
+      "type": "shared_sme_overcommitment",
+      "title": "Priya Iyer (VP Digital) is program lead on two critical-path programs simultaneously",
+      "programs": ["apex-cdp-2026", "apex-cc-ai-2026"],
+      "severity": "Medium",
+      "raised_by": "Atlas (cross-program agent)",
+      "raised_date": "2026-04-15",
+      "status": "Acknowledged; mitigation in flight",
+      "description": "Priya Iyer is named program lead on both apex-cdp-2026 (P3 Design) and apex-cc-ai-2026 (P1 Discovery). Both programs require her attention at high cadence. Risk of overcommitment particularly if either program enters intensive workshop phase simultaneously.",
+      "recommendation": "Identify second program lead for one of the two programs by end of Q2 FY2026."
+    },
+    {
+      "id": "xprog:apex:002",
+      "type": "shared_system_dependency",
+      "title": "Salesforce Service Cloud — affects both CDP and CC AI",
+      "programs": ["apex-cdp-2026", "apex-cc-ai-2026"],
+      "severity": "Medium",
+      "raised_by": "Atlas",
+      "raised_date": "2026-04-08",
+      "status": "Active monitoring",
+      "description": "Both CDP (activation target) and CC AI (current voice/case integration) interact with Salesforce Service Cloud. Salesforce renewal is September 2026. CDP design must consider Salesforce contract terms; CC AI design must consider any architecture changes from Einstein activation.",
+      "recommendation": "Joint architecture review session before P3 close on apex-cdp-2026."
+    },
+    {
+      "id": "xprog:apex:003",
+      "type": "shared_vendor",
+      "title": "Snowflake — touches all four programs",
+      "programs": ["apex-cdp-2026", "apex-cc-ai-2026", "apex-ams-consolidation-2026", "apex-forecast-2026"],
+      "severity": "Low (informational)",
+      "raised_by": "Atlas",
+      "raised_date": "2026-04-15",
+      "status": "Informational",
+      "description": "Snowflake is involved in CDP (data layer), CC AI (analytics), AMS (out of scope but data plane), and forecast (data layer). Renewal in November 2026 affects all programs' data architecture assumptions.",
+      "recommendation": "Snowflake renewal strategy must consider cross-program implications; FinOps + commit decisions affect all programs."
+    },
+    {
+      "id": "xprog:apex:004",
+      "type": "cross_program_dependency",
+      "title": "CDP success depends on legacy CRM data extraction; CRM extraction is unfunded",
+      "programs": ["apex-cdp-2026", "Cross-program — data foundation"],
+      "severity": "High",
+      "raised_by": "Atlas",
+      "raised_date": "2026-04-22",
+      "status": "Active concern; budget request in flight",
+      "description": "The CDP program's identity match rate target (87%) requires the legacy in-store CRM to be incorporated into the customer data lake. The CRM extraction project is on the data engineering roadmap but currently unfunded. CDP P3 Design assumes the extraction is done; it isn't.",
+      "recommendation": "Sponsor decision needed: fund CRM extraction in parallel with CDP, or accept a lower identity match rate target. Decision target: 2026-05-31."
+    },
+    {
+      "id": "xprog:apex:005",
+      "type": "cross_program_dependency",
+      "title": "Forecast modernization depends on POS data quality; POS modernization is unfunded",
+      "programs": ["apex-forecast-2026", "Cross-program"],
+      "severity": "Medium",
+      "raised_by": "Atlas",
+      "raised_date": "2026-04-15",
+      "status": "Surfaced for P1 attention",
+      "description": "Demand forecast accuracy at SKU-store-week granularity depends on quality POS data. POS data has known quality issues (loyalty ID capture only ~62% of transactions). POS modernization is on roadmap but unfunded.",
+      "recommendation": "P1 Discovery for forecast must validate that current POS data quality is sufficient for the target accuracy improvement, or escalate the dependency."
+    },
+    {
+      "id": "xprog:apex:006",
+      "type": "cross_program_contradiction",
+      "title": "CMO investment thesis vs CFO cost discipline",
+      "programs": ["apex-cdp-2026", "apex-cc-ai-2026", "apex-forecast-2026"],
+      "severity": "High",
+      "raised_by": "Atlas",
+      "raised_date": "2026-04-12",
+      "status": "Open at executive level",
+      "description": "CMO is championing CDP and CC AI; CSCO is championing forecast modernization; CFO is enforcing FY2026 cost discipline. The combined transformation portfolio is $13M FY2026 spend. Risk of mid-year reprioritization if margin trajectory underperforms in H1.",
+      "recommendation": "Quarterly portfolio review with CFO discipline; clear sequencing for any defer-not-cancel scenario."
+    },
+    {
+      "id": "xprog:apex:007",
+      "type": "cross_program_contradiction",
+      "title": "AMS Consolidation vendor selection vs CDP/CC AI vendor decisions",
+      "programs": ["apex-ams-consolidation-2026", "apex-cdp-2026", "apex-cc-ai-2026"],
+      "severity": "Low",
+      "raised_by": "Atlas",
+      "raised_date": "2026-04-08",
+      "status": "Informational",
+      "description": "AMS Consolidation may select a vendor (Wipro, Infosys, or TCS) that has a competing offering in CDP or CC AI space. While the AMS contract is for managed services (not platform), there's a softer alignment question: do we want our AMS partner championing competing platforms?",
+      "recommendation": "Surface in vendor reference checks; not a blocker."
+    },
+    {
+      "id": "xprog:apex:008",
+      "type": "shared_governance",
+      "title": "AI Governance Council pre-review required for CDP, CC AI, and Forecast",
+      "programs": ["apex-cdp-2026", "apex-cc-ai-2026", "apex-forecast-2026"],
+      "severity": "Low (process)",
+      "raised_by": "Atlas",
+      "raised_date": "2026-04-08",
+      "status": "Active",
+      "description": "All three programs touch AI components requiring AI Governance Council pre-deployment review. Council meeting cadence is monthly; sequencing matters to avoid bottleneck.",
+      "recommendation": "Coordinate with Elena Fischer (Council secretariat) on Council calendar across programs."
+    },
+    {
+      "id": "xprog:apex:009",
+      "type": "shared_vendor_renewal_leverage",
+      "title": "Salesforce + Tealium + Klaviyo co-renewal date creates leverage",
+      "programs": ["apex-cdp-2026"],
+      "severity": "Low (opportunity)",
+      "raised_by": "Atlas",
+      "raised_date": "2026-04-22",
+      "status": "Active",
+      "description": "Salesforce renewal (Sept 15), Tealium renewal (Aug 15), Klaviyo renewal (Aug 15), and CDP vendor selection (Jun 30) all converge in Q2 calendar 2026. Combined martech renewal value is $3.2M annual. Strong negotiation position.",
+      "recommendation": "Coordinated renewal strategy with Nathan Kohl + Priya Iyer + GC."
+    },
+    {
+      "id": "xprog:apex:010",
+      "type": "learning_loop",
+      "title": "Patterns from PERS-2024 should be applied to CC AI",
+      "programs": ["apex-cc-ai-2026"],
+      "severity": "Medium (preventive)",
+      "raised_by": "Atlas",
+      "raised_date": "2026-04-15",
+      "status": "Embedded in P1",
+      "description": "PERS-2024 (AI Personalization Pilot, killed September 2024) failed because (a) lift was not measurable against baseline, (b) merchandising was not co-sponsor, (c) architecture review was after pilot. CC AI must learn: (a) measurement quality is being addressed in P1, (b) WFM Lead is engaged as design partner, (c) AI Governance Council pre-review is scheduled before P2.",
+      "recommendation": "Ensure all three lessons are explicitly documented in CC AI P1 Discovery package."
+    },
+    {
+      "id": "xprog:apex:011",
+      "type": "learning_loop",
+      "title": "Patterns from AMS-2023 are reflected in AMS-2026 design",
+      "programs": ["apex-ams-consolidation-2026"],
+      "severity": "Low (verification)",
+      "raised_by": "Atlas",
+      "raised_date": "2026-04-08",
+      "status": "Verified",
+      "description": "AMS-2023 failed on scope creep, transition risk underestimation, weak vendor management capability, missing architecture review. AMS-2026 has: smaller initial scope (22 apps not 47), per-application discovery in P1, BAFO discipline with floor pricing and exit assistance, ARB embedded throughout. All four lessons applied.",
+      "recommendation": "Continue tracking; pattern-match successful."
+    },
+    {
+      "id": "xprog:apex:012",
+      "type": "shared_data_dependency",
+      "title": "Customer data lake is foundational for CDP, CC AI, and Forecast",
+      "programs": ["apex-cdp-2026", "apex-cc-ai-2026", "apex-forecast-2026"],
+      "severity": "Medium",
+      "raised_by": "Atlas",
+      "raised_date": "2026-04-22",
+      "status": "Active",
+      "description": "All three programs draw from the customer data lake (delivered by CDL-2022). Data lake performance, freshness, and coverage affect all three. Snowflake costs growing 28% YoY partly because of cross-program demand.",
+      "recommendation": "Joint data engineering capacity planning across programs; Snowflake FinOps applies to all."
+    }
+  ],
+  "portfolio_health_summary": {
+    "active_programs": 4,
+    "open_cross_program_signals": 12,
+    "open_high_severity_signals": 2,
+    "open_medium_severity_signals": 5,
+    "open_low_severity_signals": 5,
+    "shared_vendor_concentrations": 3,
+    "shared_sme_overcommitments": 1,
+    "open_cross_program_dependencies": 2
+  }
+}
