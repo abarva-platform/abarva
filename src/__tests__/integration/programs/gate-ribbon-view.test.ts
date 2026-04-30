@@ -134,6 +134,17 @@ describe('GW-01 · APX-SAP-2026 P1 phase summary', () => {
     expect(view.phasePanel.summary).toContain('P1 Discovery is validating');
     expect(view.phasePanel.summary).toContain('sponsor review still need to close');
   });
+
+  it('surfaces P1 deliverables in the phase panel', () => {
+    const view = sapView();
+    expect(view.phasePanel.deliverables).toEqual([
+      { label: 'Origination approval', status: 'done' },
+      { label: 'Discovery interview schedule', status: 'pending' },
+      { label: 'IT data access request', status: 'blocked' },
+      { label: 'Store observations report', status: 'pending' },
+      { label: 'Discovery report', status: 'pending' },
+    ]);
+  });
 });
 
 // ─── APX-CC-2026 gate state is 'open' — ribbon returns null ──────────────────
