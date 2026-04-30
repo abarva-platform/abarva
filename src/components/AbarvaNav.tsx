@@ -60,7 +60,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
   const isOperator = signedIn && (isAdmin || isInvestor || isMaestro) // all non-client signed-in
 
   // ── Paths ────────────────────────────────────────────────────────────────
-  const intelligencePath = `/intelligence?client=${clientId}`
+  const intelligencePath = `/intelligence`
 
   // ── Active states · pathname first (truth), activePage prop fallback
   // for legacy callers.

@@ -1,8 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useUser, useClerk } from '@clerk/nextjs';
 import { SHELL } from '@/lib/shell/shell-tokens';
+import { clearActiveClientContext } from '@/lib/auth/client-context-storage';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface AppRailProps {}
@@ -29,7 +32,14 @@ function detectSurface(pathname: string | null): SurfaceKey | null {
 
 export function AppRail(_props: AppRailProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const active = detectSurface(pathname);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { user } = useUser();
+  const { signOut } = useClerk();
+
+  const displayName = user?.fullName || user?.emailAddresses?.[0]?.emailAddress?.split('@')?.[0] || 'User';
+  const initials = displayName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
 
   return (
     <div
@@ -131,31 +141,66 @@ export function AppRail(_props: AppRailProps) {
       {/* Spacer */}
       <div style={{ flex: 1 }} />
 
-      {/* Bottom avatar */}
-      <div
-        style={{
-          width: 28,
-          height: 28,
-          borderRadius: '50%',
-          background: SHELL.PAPER_DEEP,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: 8,
-          flexShrink: 0,
-        }}
-      >
-        <span
+      {/* Bottom avatar + sign-out */}
+      <div style={{ position: 'relative', marginBottom: 8, flexShrink: 0 }}>
+        <button
+          onClick={() => setMenuOpen((o) => !o)}
+          title={`${displayName} — click to sign out`}
           style={{
-            fontFamily: SHELL.SANS,
-            fontSize: 11,
-            fontWeight: 600,
-            color: SHELL.INK,
-            lineHeight: 1,
+            width: 28,
+            height: 28,
+            borderRadius: '50%',
+            background: SHELL.PAPER_DEEP,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 0,
           }}
         >
-          D
-        </span>
+          <span style={{ fontFamily: SHELL.SANS, fontSize: 11, fontWeight: 600, color: SHELL.INK, lineHeight: 1 }}>
+            {initials}
+          </span>
+        </button>
+
+        {menuOpen && (
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 36,
+              left: 0,
+              background: '#FFFFFF',
+              border: '1px solid rgba(12,26,58,0.12)',
+              borderRadius: 8,
+              padding: '6px 0',
+              zIndex: 400,
+              minWidth: 140,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.14)',
+            }}
+          >
+            <div style={{ padding: '6px 12px 8px', borderBottom: '1px solid rgba(12,26,58,0.08)', marginBottom: 4 }}>
+              <div style={{ fontFamily: SHELL.SANS, fontSize: 11, fontWeight: 600, color: SHELL.INK }}>{displayName}</div>
+            </div>
+            <Link
+              href="/admin"
+              onClick={() => setMenuOpen(false)}
+              style={{ display: 'block', padding: '7px 12px', textDecoration: 'none', fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK }}
+            >
+              Setup / Admin
+            </Link>
+            <button
+              onClick={() => {
+                setMenuOpen(false);
+                clearActiveClientContext();
+                signOut(() => router.push('/'));
+              }}
+              style={{ width: '100%', textAlign: 'left', padding: '7px 12px', fontSize: 12, color: SHELL.INK, background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: SHELL.SANS }}
+            >
+              Sign out
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -20,6 +20,7 @@
 import { buildProgramDetailView } from '@/lib/programs/programs-detail-view';
 import { ProgramDetailPage } from '@/components/programs/ProgramDetailPage';
 import { getCurrentUser } from '@/lib/auth/current-user';
+import { getActiveClientRow } from '@/lib/active-client';
 import { getEngagementWithPhaseData } from '@/lib/programs/db-phase-queries';
 import type { EvidenceItem, ProgramGateStatus } from '@/lib/programs/programs-types';
 import { parseTimelineFiltersFromSearchParams } from '@/lib/reasoning/instance-event-timeline-filters';
@@ -58,7 +59,8 @@ export default async function ProgramDetailRoute({
     const user = await getCurrentUser();
     if (user?.defaultClientId) {
       hasTenantKey = true;
-      dbData = await getEngagementWithPhaseData(id);
+      const clientRow = await getActiveClientRow().catch(() => null);
+      dbData = await getEngagementWithPhaseData(id, clientRow?.id ?? null);
     }
   } catch {
     // silently fall back to fixture

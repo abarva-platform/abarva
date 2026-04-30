@@ -25,6 +25,7 @@ import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances'
 import { getArchetypePrimer } from '@/lib/programs/archetype-primers';
 import { renderArchetypePrimerHtml } from '@/lib/programs/archetype-primers/render-html';
 import { getEngagementWithPhaseData } from '@/lib/programs/db-phase-queries';
+import { getActiveClientRow } from '@/lib/active-client';
 import {
   requireTenancy,
   tenancyErrorResponse,
@@ -77,7 +78,8 @@ export async function GET(
     // be resolved — keeps the 404/no-primer signal honest.
     let dbExists = false;
     try {
-      const db = await getEngagementWithPhaseData(programId);
+      const clientRow = await getActiveClientRow().catch(() => null);
+      const db = await getEngagementWithPhaseData(programId, clientRow?.id ?? null);
       dbExists = db?.engagement != null;
     } catch {
       dbExists = false;
