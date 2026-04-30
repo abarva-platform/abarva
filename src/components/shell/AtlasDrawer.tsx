@@ -273,6 +273,7 @@ export function AtlasDrawer({
             if (fileInputRef.current) fileInputRef.current.value = '';
           }}
         />
+<<<<<<< HEAD
         {showSourcePaperclip && (
           <button
             type="button"
