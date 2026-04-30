@@ -7,11 +7,12 @@
 //   program-charter, discovery-report, pilot-result-report, outcome-report,
 //   meeting-notes, decision-log (alt), workshop-facilitator-guide.
 //
-// EXPORT-3 shipped `program-charter`. EXPORT-3-EXTEND adds renderers for
+// EXPORT-3 shipped `program-charter`. EXPORT-3-EXTEND added renderers for
 // `discovery-report`, `outcome-report`, `meeting-notes`, and
-// `decision-log`. The remaining kinds (`pilot-result-report`,
-// `workshop-facilitator-guide`) still throw a clear EXPORT-3-EXTEND
-// error until their per-kind renderer is added in a future slice.
+// `decision-log`. EXPORT-3-EXTEND-2 closes the DOCX taxonomy by adding
+// `pilot-result-report` and `workshop-facilitator-guide`. After this
+// slice the dispatcher handles all 7 DOCX-default narrative kinds with
+// no deferred throws.
 
 import 'server-only';
 
@@ -41,10 +42,20 @@ import {
   type OutcomeReportSpec,
 } from './outcome-report';
 import {
+  buildPilotResultReportDocument,
+  type PilotResultReportPayload,
+  type PilotResultReportSpec,
+} from './pilot-result-report';
+import {
   buildProgramCharterDocument,
   type ProgramCharterPayload,
   type ProgramCharterSpec,
 } from './program-charter';
+import {
+  buildWorkshopFacilitatorGuideDocument,
+  type WorkshopFacilitatorGuidePayload,
+  type WorkshopFacilitatorGuideSpec,
+} from './workshop-facilitator-guide';
 
 /** DOCX MIME (Open Office XML wordprocessing document). */
 const DOCX_CONTENT_TYPE =
@@ -209,13 +220,85 @@ function isDecisionLogPayloadShape(
   );
 }
 
+/** Shallow guard: spec.payload has the pilot-result-report envelope shape. */
+function isPilotResultReportPayloadShape(
+  payload: Record<string, unknown>,
+): payload is Record<string, unknown> & {
+  programSummary: Record<string, unknown>;
+  pilotCohort: Record<string, unknown>;
+  successCriteria: ReadonlyArray<unknown>;
+  observedOutcomes: ReadonlyArray<unknown>;
+  edgeCases: ReadonlyArray<unknown>;
+  scaleValidation: Record<string, unknown>;
+  changeReadiness: Record<string, unknown>;
+  p5Recommendation: string;
+  p5RecommendationRationale: string;
+} {
+  const ps = payload.programSummary;
+  const cohort = payload.pilotCohort;
+  const successCriteria = payload.successCriteria;
+  const observedOutcomes = payload.observedOutcomes;
+  const edgeCases = payload.edgeCases;
+  const scaleValidation = payload.scaleValidation;
+  const changeReadiness = payload.changeReadiness;
+  const rec = payload.p5Recommendation;
+  const recRationale = payload.p5RecommendationRationale;
+  return (
+    typeof ps === 'object' &&
+    ps !== null &&
+    typeof cohort === 'object' &&
+    cohort !== null &&
+    Array.isArray(successCriteria) &&
+    Array.isArray(observedOutcomes) &&
+    Array.isArray(edgeCases) &&
+    typeof scaleValidation === 'object' &&
+    scaleValidation !== null &&
+    typeof changeReadiness === 'object' &&
+    changeReadiness !== null &&
+    (rec === 'go' || rec === 'no-go' || rec === 'extend-pilot') &&
+    typeof recRationale === 'string'
+  );
+}
+
+/** Shallow guard: spec.payload has the workshop-facilitator-guide envelope shape. */
+function isWorkshopFacilitatorGuidePayloadShape(
+  payload: Record<string, unknown>,
+): payload is Record<string, unknown> & {
+  workshop: Record<string, unknown>;
+  preWorkshopPrep: Record<string, unknown>;
+  agenda: ReadonlyArray<unknown>;
+  facilitationProbes: ReadonlyArray<unknown>;
+  antiPatterns: ReadonlyArray<unknown>;
+  closeout: Record<string, unknown>;
+} {
+  const workshop = payload.workshop;
+  const prep = payload.preWorkshopPrep;
+  const agenda = payload.agenda;
+  const probes = payload.facilitationProbes;
+  const antiPatterns = payload.antiPatterns;
+  const closeout = payload.closeout;
+  return (
+    typeof workshop === 'object' &&
+    workshop !== null &&
+    typeof prep === 'object' &&
+    prep !== null &&
+    Array.isArray(agenda) &&
+    Array.isArray(probes) &&
+    Array.isArray(antiPatterns) &&
+    typeof closeout === 'object' &&
+    closeout !== null
+  );
+}
+
 /**
  * Render a `DeliverableSpec` as a DOCX `DeliverableRenderResult`.
  *
- * Supported kinds: `program-charter` (EXPORT-3) and
+ * Supported kinds: `program-charter` (EXPORT-3),
  * `discovery-report`, `outcome-report`, `meeting-notes`, `decision-log`
- * (EXPORT-3-EXTEND). Other DOCX-supporting kinds throw a clear error
- * pointing reviewers to the still-pending follow-on slice.
+ * (EXPORT-3-EXTEND), and `pilot-result-report`,
+ * `workshop-facilitator-guide` (EXPORT-3-EXTEND-2). The DOCX taxonomy
+ * is now complete; non-DOCX-default kinds throw a clear "no renderer"
+ * error pointing callers at the format router.
  */
 export async function renderDeliverableAsDocx(
   spec: DeliverableSpec,
@@ -305,11 +388,38 @@ export async function renderDeliverableAsDocx(
       document = buildDecisionLogDocument(dlSpec);
       break;
     }
-    case 'pilot-result-report':
-    case 'workshop-facilitator-guide':
-      throw new Error(
-        `DOCX renderer for kind ${spec.kind} is a follow-on slice (EXPORT-3-EXTEND). EXPORT-3 + EXPORT-3-EXTEND ship program-charter, discovery-report, outcome-report, meeting-notes, and decision-log.`,
-      );
+    case 'pilot-result-report': {
+      if (!isPilotResultReportPayloadShape(spec.payload)) {
+        throw new Error(
+          'pilot-result-report payload is malformed: expected ' +
+            '{ programSummary, pilotCohort, successCriteria: array, observedOutcomes: array, edgeCases: array, scaleValidation, changeReadiness, p5Recommendation: go|no-go|extend-pilot, p5RecommendationRationale: string }.',
+        );
+      }
+      const payload = spec.payload as unknown as PilotResultReportPayload;
+      const prSpec: PilotResultReportSpec = {
+        ...spec,
+        kind: 'pilot-result-report',
+        payload,
+      };
+      document = buildPilotResultReportDocument(prSpec);
+      break;
+    }
+    case 'workshop-facilitator-guide': {
+      if (!isWorkshopFacilitatorGuidePayloadShape(spec.payload)) {
+        throw new Error(
+          'workshop-facilitator-guide payload is malformed: expected ' +
+            '{ workshop, preWorkshopPrep, agenda: array, facilitationProbes: array, antiPatterns: array, closeout }.',
+        );
+      }
+      const payload = spec.payload as unknown as WorkshopFacilitatorGuidePayload;
+      const wfSpec: WorkshopFacilitatorGuideSpec = {
+        ...spec,
+        kind: 'workshop-facilitator-guide',
+        payload,
+      };
+      document = buildWorkshopFacilitatorGuideDocument(wfSpec);
+      break;
+    }
     default:
       throw new Error(
         `Kind "${spec.kind}" does not have a DOCX renderer. Use the format router to pick the canonical format.`,
