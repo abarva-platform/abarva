@@ -28,12 +28,19 @@ import type {
 } from '@/lib/shell/atlas-page-state';
 import type { ContextBundle } from '@/lib/knowledge/context-broker';
 
+const mockAtlasDrawer = jest.fn((props: Record<string, unknown>) => (
+  <div
+    data-testid="stub-atlas-drawer"
+    data-composer-placement={String(props.composerPlacement ?? '')}
+  />
+));
+
 // AtlasDrawer pulls in next/navigation and the agent-stream hook; we
 // stub the entire embedded chat with a minimal placeholder so this test
 // can stay focused on the rail. The chat surface itself is exercised
 // by AtlasDrawer's own tests.
 jest.mock('@/components/shell/AtlasDrawer', () => ({
-  AtlasDrawer: () => <div data-testid="stub-atlas-drawer" />,
+  AtlasDrawer: (props: Record<string, unknown>) => mockAtlasDrawer(props),
 }));
 
 // NexusReactivePanel is a heavy artifact-card renderer. The test cares
@@ -103,6 +110,7 @@ const SENTINEL_AGENT = { initials: 'Sn', name: 'Sentinel', role: 'Knowledge' };
 
 afterEach(() => {
   mockUseAtlasPageState.mockReset();
+  mockAtlasDrawer.mockClear();
 });
 
 describe('AgentCanvas · CB-7', () => {
@@ -130,6 +138,27 @@ describe('AgentCanvas · CB-7', () => {
       'data-active',
       'false',
     );
+  });
+
+  it('keeps the embedded composer near the header on Programs pages', () => {
+    mockUseAtlasPageState.mockReturnValue(makePageState());
+    render(
+      <AgentCanvas
+        surface="/programs/APX-CDP-2026"
+        programId="APX-CDP-2026"
+        agent={NEXUS_AGENT}
+        quote="Where are we?"
+        artifacts={[]}
+        onArtifact={() => {}}
+      />,
+    );
+    expect(mockAtlasDrawer).toHaveBeenCalledWith(
+      expect.objectContaining({ embedded: true, composerPlacement: 'afterHeader' }),
+    );
+    expect(screen.getByTestId('program-agent-canvas')).toHaveStyle({
+      height: 'min(640px, calc(100svh - 220px))',
+      minHeight: 'min(420px, calc(100svh - 220px))',
+    });
   });
 
   it('does NOT render the rail tab strip on a non-Programs surface', () => {
