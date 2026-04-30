@@ -41,8 +41,8 @@ describe('public pattern sample', () => {
     const forbidden = [
       'Apex',
       'Meridian',
-      'Keystone',
-      'First Capital',
+      'Retired energy tenant',
+      'Retired financial tenant',
       'Tower Finance',
       'source-material',
       'docs/',

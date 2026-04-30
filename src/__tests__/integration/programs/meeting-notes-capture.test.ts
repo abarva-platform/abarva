@@ -31,7 +31,7 @@ const CANONICAL_WORKSHOP_TYPES = [
 const PROGRAM_KEYS = [
   'apex-contact-center-ai',
   'meridian-clinical-intelligence',
-  'arcturus-decision-cockpit',
+  'apex-demand-forecasting',
 ] as const;
 
 // ---------------------------------------------------------------------

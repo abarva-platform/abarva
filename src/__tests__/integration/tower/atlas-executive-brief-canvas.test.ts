@@ -14,7 +14,6 @@
 // - deterministicSeed === true
 // - deterministicSeedCaveat contains 'seed' or 'Deterministic'
 // - commercialSignalNote for apex-retail is non-null
-// - buildAtlasExecutiveBriefView('arcturus').portfolioReadiness.readinessScore === 'not_ready'
 // - AtlasExecutiveBriefCanvas.tsx exists
 // - AtlasExecutiveBriefCanvas.tsx contains 'ATLAS'
 // - AtlasExecutiveBriefCanvas.tsx does NOT contain '#14B8A6'
@@ -28,7 +27,6 @@ import {
 } from '@/lib/tower/atlas-executive-brief-canvas';
 
 const apexView: AtlasExecutiveBriefView = buildAtlasExecutiveBriefView('apex-retail');
-const arcturusView: AtlasExecutiveBriefView = buildAtlasExecutiveBriefView('arcturus');
 
 const COMPONENT_PATH = path.resolve(
   __dirname,
@@ -91,12 +89,6 @@ describe('buildAtlasExecutiveBriefView — apex-retail', () => {
 
   it('commercialSignalNote is non-null for apex-retail', () => {
     expect(apexView.commercialSignalNote).not.toBeNull();
-  });
-});
-
-describe('buildAtlasExecutiveBriefView — arcturus', () => {
-  it('portfolioReadiness.readinessScore === "not_ready"', () => {
-    expect(arcturusView.portfolioReadiness.readinessScore).toBe('not_ready');
   });
 });
 

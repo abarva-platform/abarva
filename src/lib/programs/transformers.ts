@@ -53,10 +53,6 @@ import { PHASE_LABELS } from './types.db';
 const KNOWN_CLIENT_NAMES = new Map<string, ProgramSummary['clientName']>([
   ['meridian health', 'Meridian Health System'],
   ['meridian health system', 'Meridian Health System'],
-  ['first capital', 'First Capital Financial'],
-  ['first capital financial', 'First Capital Financial'],
-  ['first capital financial group', 'First Capital Financial'],
-  ['arcturus financial', 'First Capital Financial'],
   ['apex retail', 'Apex Retail Group'],
   ['apex retail group', 'Apex Retail Group'],
 ]);

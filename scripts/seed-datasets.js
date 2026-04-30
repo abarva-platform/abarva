@@ -7,13 +7,13 @@
  *   - inserts metadata into dataset_files    (table: see setup-db.sql)
  *
  * Usage:
- *   node scripts/seed-datasets.js --client arcturus
+ *   node scripts/seed-datasets.js --client meridian
  *   node scripts/seed-datasets.js --client meridian
  *
  * Files are read recursively from  datasets/<clientId>/
- * e.g.  datasets/arcturus/margin/M01_PL_by_Business_Unit.xlsx
+ * e.g.  datasets/meridian/margin/M01_PL_by_Business_Unit.xlsx
  *         → documentName  "P&L by Business Unit"
- *         → clientId      "arcturus"
+ *         → clientId      "meridian"
  *         → uploadedBy    "Anand Sundaram · Admin"
  *         → confidence    85
  */
@@ -91,7 +91,7 @@ async function main () {
   const { client } = parseArgs()
 
   if (!client) {
-    console.error('Usage: node scripts/seed-datasets.js --client <arcturus|meridian>')
+    console.error('Usage: node scripts/seed-datasets.js --client <apex|meridian>')
     process.exit(1)
   }
 

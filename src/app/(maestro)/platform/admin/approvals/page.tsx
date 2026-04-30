@@ -19,7 +19,6 @@ const PENDING = [
 
 const COMPLETED = [
   { title: 'Vendor comparison approved — Cohere vs Waystar', client: 'Meridian Health', date: 'Apr 5, 2026', result: 'Approved' },
-  { title: 'IT Financial Model upload approved', client: 'First Capital', date: 'Apr 4, 2026', result: 'Approved' },
   { title: 'Regulatory benchmark data shared with CFO', client: 'Apex Retail', date: 'Apr 3, 2026', result: 'Approved with conditions' },
 ]
 

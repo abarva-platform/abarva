@@ -66,18 +66,6 @@ const CANONICAL_TENANTS: ReadonlyArray<{
     programCodePrefix: 'MRD',
     exampleProgramCode: 'MRD-01',
   },
-  {
-    tenantKey: 'arcturus',
-    routeSlug: 'first-capital-financial',
-    programCodePrefix: 'FCF',
-    exampleProgramCode: 'FCF-01',
-  },
-  {
-    tenantKey: 'keystone',
-    routeSlug: 'keystone-energy',
-    programCodePrefix: 'KST',
-    exampleProgramCode: 'KST-01',
-  },
 ];
 
 // =====================================================================
@@ -103,8 +91,8 @@ describe('Probe 1 · canAccessTenantClient · cross-tenant access denial', () =>
     expect(canAccessTenantClient(apexUser, 'meridian')).toBe(false);
   });
 
-  it('blocks every cross-tenant pair across the four canonical tenants', () => {
-    const tenants: ClientKey[] = ['meridian', 'apexretail', 'arcturus', 'keystone'];
+  it('blocks every cross-tenant pair across the two active tenants', () => {
+    const tenants: ClientKey[] = ['meridian', 'apexretail'];
     for (const userTenant of tenants) {
       const user = snapshot({
         sessionRole: 'client',
@@ -121,21 +109,20 @@ describe('Probe 1 · canAccessTenantClient · cross-tenant access denial', () =>
   it('allows a client whose membership list contains the target tenant', () => {
     const multiTenantUser = snapshot({
       sessionRole: 'client',
-      membershipClientKeys: ['meridian', 'arcturus'],
+      membershipClientKeys: ['meridian', 'apexretail'],
       pinnedClientKey: null,
     });
     expect(canAccessTenantClient(multiTenantUser, 'meridian')).toBe(true);
-    expect(canAccessTenantClient(multiTenantUser, 'arcturus')).toBe(true);
-    expect(canAccessTenantClient(multiTenantUser, 'apexretail')).toBe(false);
+    expect(canAccessTenantClient(multiTenantUser, 'apexretail')).toBe(true);
   });
 
   it('allows a client pinned to the target tenant when membership list is empty', () => {
     const pinnedOnlyUser = snapshot({
       sessionRole: 'client',
-      pinnedClientKey: 'keystone',
+      pinnedClientKey: 'apexretail',
       membershipClientKeys: [],
     });
-    expect(canAccessTenantClient(pinnedOnlyUser, 'keystone')).toBe(true);
+    expect(canAccessTenantClient(pinnedOnlyUser, 'apexretail')).toBe(true);
     expect(canAccessTenantClient(pinnedOnlyUser, 'meridian')).toBe(false);
   });
 
@@ -156,7 +143,7 @@ describe('Probe 1 · canAccessTenantClient · cross-tenant access denial', () =>
       pinnedClientKey: null,
       membershipClientKeys: [],
     });
-    for (const tenant of ['meridian', 'apexretail', 'arcturus', 'keystone'] as ClientKey[]) {
+    for (const tenant of ['meridian', 'apexretail'] as ClientKey[]) {
       expect(canAccessTenantClient(orphanUser, tenant)).toBe(false);
     }
   });
@@ -173,7 +160,7 @@ describe('Probe 2 · canAccessTenantClient · admin role behavior', () => {
       pinnedClientKey: null,
       membershipClientKeys: [],
     });
-    for (const tenant of ['meridian', 'apexretail', 'arcturus', 'keystone'] as ClientKey[]) {
+    for (const tenant of ['meridian', 'apexretail'] as ClientKey[]) {
       expect(canAccessTenantClient(adminUser, tenant)).toBe(true);
     }
   });
@@ -298,23 +285,6 @@ describe('Probe 5 · inferClientKeyFromEmail', () => {
     expect(inferClientKeyFromEmail('anand+apex@abarva.com')).toBe('apexretail');
   });
 
-  it('infers arcturus from canonical Arcturus and First Capital demo emails', () => {
-    expect(inferClientKeyFromEmail('demo-arcturus+clerk_test@abarva.com')).toBe(
-      'arcturus',
-    );
-    expect(inferClientKeyFromEmail('demo-firstcapital+clerk_test@abarva.com')).toBe(
-      'arcturus',
-    );
-    expect(inferClientKeyFromEmail('af+clerk_test@abarva.com')).toBe('arcturus');
-  });
-
-  it('infers keystone from canonical Keystone demo emails', () => {
-    expect(inferClientKeyFromEmail('demo-keystone+clerk_test@abarva.com')).toBe(
-      'keystone',
-    );
-    expect(inferClientKeyFromEmail('ke+clerk_test@abarva.com')).toBe('keystone');
-  });
-
   it('returns null for unknown emails', () => {
     expect(inferClientKeyFromEmail('someone@example.com')).toBeNull();
     expect(inferClientKeyFromEmail(null)).toBeNull();
@@ -404,9 +374,9 @@ describe('Probe 7 · resolvePinnedSessionClientKey', () => {
   it('falls back to email inference when neither clientId nor default is set', () => {
     expect(
       resolvePinnedSessionClientKey({
-        email: 'demo-keystone+clerk_test@abarva.com',
+        email: 'demo-apexretail+clerk_test@abarva.com',
       }),
-    ).toBe('keystone');
+    ).toBe('apexretail');
   });
 
   it('explicit tenant email aliases override stale conflicting metadata', () => {

@@ -37,7 +37,7 @@ const CANONICAL_WORKSHOP_TYPES = [
 const PROGRAM_KEYS = [
   'apex-contact-center-ai',
   'meridian-clinical-intelligence',
-  'arcturus-decision-cockpit',
+  'apex-demand-forecasting',
 ] as const;
 
 function buildAllSeedNotes(): readonly MeetingNoteCapture[] {
@@ -254,7 +254,7 @@ describe('deriveRiskProposals', () => {
 describe('deriveOpenQuestionProposals', () => {
   it('returns one proposal per blocking open question', () => {
     const seed = buildMeetingNoteCaptureSeed(
-      'arcturus-decision-cockpit',
+      'apex-demand-forecasting',
       'executive_decision_review',
     );
     const proposals = deriveOpenQuestionProposals(seed);
@@ -389,7 +389,7 @@ describe('deriveGateImpactProposals', () => {
 
   it('emits gate_signoff_blocked for open questions blocking gate signoff', () => {
     const seed = buildMeetingNoteCaptureSeed(
-      'arcturus-decision-cockpit',
+      'apex-demand-forecasting',
       'value_framing',
     );
     const proposals = deriveGateImpactProposals(seed);

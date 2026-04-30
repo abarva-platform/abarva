@@ -385,15 +385,6 @@ async function seedClient(clientName: string, useCases: UseCaseSeed[]) {
         evidence: { inventoried: 10, untraced_monthly_usd: 24000 },
       },
     );
-  } else if (clientName === 'First Capital') {
-    contradictions.push({
-      client_id: clientId,
-      contradiction_type: 'value_vs_baseline',
-      severity: 'medium',
-      description: 'Wealth platform rebuild in-flight but no baseline spend/hours captured yet.',
-      suggested_action: 'Capture baseline before Phase 2 close.',
-      evidence: { phase: 3, baselines_missing: true },
-    });
   }
 
   if (contradictions.length > 0) {
@@ -405,34 +396,6 @@ async function seedClient(clientName: string, useCases: UseCaseSeed[]) {
 
 async function main() {
   await seedClient('Meridian Health', MERIDIAN_USE_CASES);
-
-  // Arcturus / Apex — minimal, just 2-3 use cases each to show partial state
-  await seedClient('First Capital', [
-    {
-      name: 'Advisor Copilot Draft',
-      description: 'Drafted client commentary for advisors',
-      business_unit: 'Wealth',
-      domain: 'Front Office',
-      stage: 'design',
-      systems: ['Salesforce', 'Claude'],
-      ai_type: 'GenAI',
-      scope: 'department',
-      vendor: 'Anthropic Claude Enterprise',
-      cost: { llm: 18000, compute: 2000, storage: 500, license: 0, integration: 1500, projected_6mo: 144000 },
-    },
-    {
-      name: 'Alt-Asset Report Classifier',
-      description: 'ML classifier for alternative-asset reporting anomalies',
-      business_unit: 'Operations',
-      domain: 'Middle Office',
-      stage: 'evidence',
-      systems: ['custom ML'],
-      ai_type: 'ML',
-      scope: 'department',
-      vendor: 'custom',
-      risk: { data: ['financial'], risk_level: 'medium', governance: 'conditional', hitl: true, vendor_posture: 'no_training' },
-    },
-  ]);
 
   await seedClient('Apex Retail', [
     {

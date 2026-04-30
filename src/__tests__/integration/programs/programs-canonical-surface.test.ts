@@ -146,7 +146,7 @@ describe('countDeliverableTiers', () => {
 
 describe('summarizePortfolio · canonical demo tenants', () => {
   const plan = buildAllProgramsSeedPlan();
-  const TENANT_KEYS = ['apexretail', 'meridian', 'arcturus', 'keystone'] as const;
+  const TENANT_KEYS = ['apexretail', 'meridian'] as const;
 
   it.each(TENANT_KEYS)(
     'produces a deterministic summary for %s',

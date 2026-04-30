@@ -121,51 +121,6 @@ const DEMO_TENANT_DATA_TIERS: DemoTenantDataTier[] = [
     deterministicSeed: true,
     dataNote: 'Meridian is a thin demo tenant. Intelligence demo only.',
   },
-  {
-    tenantSlug: 'arcturus',
-    tenantName: 'Arcturus',
-    richness: 'shell_only',
-    surfaces: [
-      {
-        surface: 'programs',
-        availability: 'unavailable',
-        caveat:
-          'Arcturus is a shell-only tenant. No program, source, or intelligence data seeded.',
-        routeHint: null,
-      },
-      {
-        surface: 'source',
-        availability: 'unavailable',
-        caveat:
-          'Arcturus is a shell-only tenant. No program, source, or intelligence data seeded.',
-        routeHint: null,
-      },
-      {
-        surface: 'intelligence',
-        availability: 'unavailable',
-        caveat:
-          'Arcturus is a shell-only tenant. No program, source, or intelligence data seeded.',
-        routeHint: null,
-      },
-      {
-        surface: 'control_tower',
-        availability: 'unavailable',
-        caveat:
-          'Arcturus is a shell-only tenant. No program, source, or intelligence data seeded.',
-        routeHint: null,
-      },
-      {
-        surface: 'admin',
-        availability: 'unavailable',
-        caveat:
-          'Arcturus is a shell-only tenant. No program, source, or intelligence data seeded.',
-        routeHint: null,
-      },
-    ],
-    sourceProgramLinkage: false,
-    deterministicSeed: true,
-    dataNote: 'Arcturus exists as a Clerk test account only. No rich data in any surface.',
-  },
 ];
 
 // ---------------------------------------------------------------------------

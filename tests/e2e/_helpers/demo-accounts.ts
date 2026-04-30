@@ -14,13 +14,6 @@ export const DEMO_ROLE_ACCOUNTS: Record<string, DemoRoleAccount> = {
     visibleNav: ['Home', 'Programs', 'Intelligence', 'Control Tower'],
     hiddenNav: ['Investor'],
   },
-  clientFirstCapital: {
-    email: 'demo-firstcapital+clerk_test@abarva.com',
-    expectedPath: /\/home\?client=arcturus$/,
-    pageMarker: { kind: 'text', label: 'Arcturus Financial' },
-    visibleNav: ['Home', 'Programs', 'Control Tower'],
-    hiddenNav: ['Intelligence', 'Platform', 'Investor', 'Admin'],
-  },
   investor: {
     email: 'investor+clerk_test@abarva.com',
     expectedPath: /\/investor\?client=meridian$/,

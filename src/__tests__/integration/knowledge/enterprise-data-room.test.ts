@@ -3,7 +3,6 @@ import {
   APEX_RETAIL_VOLUMETRICS,
   ENTERPRISE_DATA_ROOM_CONTRACT_VERSION,
   buildApexEnterpriseDataRoom,
-  buildFirstCapitalEnterpriseDataRoom,
   buildMeridianEnterpriseDataRoom,
   getEnterpriseDataRoom,
   listEnterpriseDataRooms,
@@ -24,8 +23,8 @@ describe('enterprise data room seed', () => {
 
   it('lists Apex as the first integrated enterprise data room', () => {
     const rooms = listEnterpriseDataRooms();
-    expect(rooms).toHaveLength(3);
-    expect(rooms.map((room) => room.tenantKey)).toEqual(['apex-retail', 'meridian', 'first-capital']);
+    expect(rooms).toHaveLength(2);
+    expect(rooms.map((room) => room.tenantKey)).toEqual(['apex-retail', 'meridian']);
     expect(rooms[0].tenantKey).toBe('apex-retail');
     expect(rooms[0].generatedFrom).toBe('deterministic_enterprise_data_room_seed');
   });
@@ -33,7 +32,6 @@ describe('enterprise data room seed', () => {
   it('resolves Apex by tenant key and returns null for unknown tenants', () => {
     expect(getEnterpriseDataRoom('apex-retail')).not.toBeNull();
     expect(getEnterpriseDataRoom('meridian')).not.toBeNull();
-    expect(getEnterpriseDataRoom('first-capital')).not.toBeNull();
     expect(getEnterpriseDataRoom('unknown')).toBeNull();
   });
 
@@ -93,41 +91,30 @@ describe('enterprise data room seed', () => {
 
 
 
-  it('adds Meridian and First Capital as partial conflict-aware candidate rooms', () => {
+  it('adds Meridian as a partial conflict-aware candidate room', () => {
     const meridian = buildMeridianEnterpriseDataRoom();
-    const firstCapital = buildFirstCapitalEnterpriseDataRoom();
 
     expect(meridian.richness).toBe('partial');
-    expect(firstCapital.richness).toBe('partial');
     expect(meridian.canonicalizationWarnings.length).toBeGreaterThanOrEqual(2);
-    expect(firstCapital.canonicalizationWarnings.length).toBeGreaterThanOrEqual(2);
     expect(meridian.evidence.some((entry) => entry.usabilityState === 'blocked')).toBe(true);
-    expect(firstCapital.evidence.some((entry) => entry.usabilityState === 'blocked')).toBe(true);
     expect(meridian.systems.length).toBeGreaterThan(0);
-    expect(firstCapital.systems.length).toBeGreaterThan(0);
     expect(meridian.vectorReadiness.every((index) => index.tenantKeyRequired)).toBe(true);
-    expect(firstCapital.vectorReadiness.every((index) => index.tenantKeyRequired)).toBe(true);
   });
 
-  it('does not promote conflict-aware candidate rooms to rich readiness', () => {
+  it('does not promote conflict-aware Meridian candidate room to rich readiness', () => {
     const meridianValidation = validateEnterpriseDataRoom(buildMeridianEnterpriseDataRoom());
-    const firstCapitalValidation = validateEnterpriseDataRoom(buildFirstCapitalEnterpriseDataRoom());
 
     expect(meridianValidation.isRichTenantReady).toBe(false);
-    expect(firstCapitalValidation.isRichTenantReady).toBe(false);
     expect(meridianValidation.summary.richness).toBe('partial');
-    expect(firstCapitalValidation.summary.richness).toBe('partial');
     expect(meridianValidation.summary.completenessGaps).toBeGreaterThan(0);
-    expect(firstCapitalValidation.summary.completenessGaps).toBeGreaterThan(0);
   });
 
   it('summarizes the portfolio deterministically', () => {
     const summary = summarizeEnterpriseDataRoomPortfolio();
-    expect(summary).toHaveLength(3);
-    expect(summary.map((item) => item.tenantKey)).toEqual(['apex-retail', 'meridian', 'first-capital']);
+    expect(summary).toHaveLength(2);
+    expect(summary.map((item) => item.tenantKey)).toEqual(['apex-retail', 'meridian']);
     expect(summary[0].richness).toBe('rich');
     expect(summary[1].richness).toBe('partial');
-    expect(summary[2].richness).toBe('partial');
     expect(JSON.stringify(summary)).toBe(JSON.stringify(summarizeEnterpriseDataRoomPortfolio()));
   });
 

@@ -192,13 +192,13 @@ describe('ADMIN14 — Data Trust page-view depth', () => {
     }
   });
 
-  it('qualityScorecard has 4 tenant rows', () => {
-    expect(view.qualityScorecard.length).toBe(4);
+  it('qualityScorecard has 3 tenant rows', () => {
+    expect(view.qualityScorecard.length).toBe(3);
   });
 
-  it('qualityScorecard tenants include Apex / Meridian / FirstCapital / AbarVa', () => {
+  it('qualityScorecard tenants include Apex / Meridian / AbarVa', () => {
     const keys = view.qualityScorecard.map((r) => r.tenantKey).sort();
-    expect(keys).toEqual(['abarva', 'apexretail', 'firstcapital', 'meridian']);
+    expect(keys).toEqual(['abarva', 'apexretail', 'meridian']);
   });
 
   it('qualityScorecard rows have all 4 pillars', () => {
@@ -454,7 +454,7 @@ describe('ADMIN14 — Legacy MERGE absorption', () => {
 
   it('quality-scorecard tab content is absorbed (legacy /platform/admin/quality 4×4 grid)', async () => {
     const view = await buildDataTrustPageView();
-    expect(view.qualityScorecard.length).toBe(4); // 4 tenants
+    expect(view.qualityScorecard.length).toBe(3); // Apex, Meridian, and AbarVa
     expect(view.qualityScorecard[0].pillars.length).toBe(4); // 4 pillars
   });
 

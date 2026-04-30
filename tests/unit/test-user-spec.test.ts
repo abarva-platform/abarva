@@ -34,6 +34,6 @@ describe('test user specs', () => {
   test('keeps Jake multi-tenant as the investor persona', () => {
     const jake = TEST_USER_SPECS.find((spec) => spec.key === 'jake-anthology-analyst');
     expect(jake?.appRole).toBe('investor');
-    expect(jake?.expectations.visibleClientKeys).toEqual(['meridian', 'arcturus', 'apexretail', 'keystone']);
+    expect(jake?.expectations.visibleClientKeys).toEqual(['meridian', 'apexretail']);
   });
 });

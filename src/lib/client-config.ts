@@ -15,25 +15,11 @@ export const ALL_CLIENTS: ClientOption[] = [
     vertical: 'Healthcare',
   },
   {
-    id: 'arcturus',
-    name: 'Arcturus Financial Group',
-    shortName: 'Arcturus Financial',
-    color: '#818CF8',
-    vertical: 'Financial Services',
-  },
-  {
     id: 'apexretail',
     name: 'Apex Retail Group',
     shortName: 'Apex Retail',
     color: '#F59E0B',
     vertical: 'Retail',
-  },
-  {
-    id: 'keystone',
-    name: 'Keystone Energy Holdings',
-    shortName: 'Keystone Energy',
-    color: '#60A5FA',
-    vertical: 'Energy',
   },
 ] as const;
 
@@ -43,16 +29,12 @@ export const DEFAULT_CLIENT_KEY: ClientKey = 'meridian';
 
 export const CLIENT_KEY_TO_DB_NAME: Record<ClientKey, string[]> = {
   meridian: ['Meridian Health', 'Meridian Health System'],
-  arcturus: ['Arcturus Financial', 'Arcturus Financial Group', 'First Capital Financial', 'First Capital'],
   apexretail: ['Apex Retail', 'Apex Retail Group'],
-  keystone: ['Keystone Energy', 'Keystone Energy Holdings', 'Keystone Energy Holdings, Inc.'],
 };
 
 export const CLIENT_KEY_TO_INDUSTRY_CODE: Record<ClientKey, string> = {
   meridian: 'HEALTHCARE_IDN',
-  arcturus: 'FINSERV',
   apexretail: 'RETAIL',
-  keystone: 'ENERGY',
 };
 
 export function isClientKey(value: string | null | undefined): value is ClientKey {
@@ -87,28 +69,6 @@ export function inferClientKeyFromEmail(email: string | null | undefined): Clien
     normalized.includes('thesundaram.com')
   ) {
     return 'meridian';
-  }
-
-  if (
-    normalized.includes('demo-arcturus') ||
-    normalized.includes('demo-firstcapital') ||
-    normalized.includes('af+clerk_test') ||
-    normalized.includes('arcturus') ||
-    normalized.includes('firstcapital') ||
-    normalized.includes('first-capital')
-  ) {
-    return 'arcturus';
-  }
-
-  if (
-    normalized.includes('demo-keystone') ||
-    normalized.includes('demo-nexora') ||
-    normalized.includes('keystone+clerk_test') ||
-    normalized.includes('ke+clerk_test') ||
-    normalized.includes('nexora') ||
-    normalized.includes('keystone')
-  ) {
-    return 'keystone';
   }
 
   return null;

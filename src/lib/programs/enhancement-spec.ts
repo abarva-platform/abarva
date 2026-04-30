@@ -1,7 +1,5 @@
 import matrixArtifact from '../../../intelligence/seeds/archetype-phase-deliverable-matrix.json';
 import apexPortfolio from '../../../intelligence/seeds/tenant-portfolios/apexretail.json';
-import arcturusPortfolio from '../../../intelligence/seeds/tenant-portfolios/arcturus.json';
-import keystonePortfolio from '../../../intelligence/seeds/tenant-portfolios/keystone.json';
 import meridianPortfolio from '../../../intelligence/seeds/tenant-portfolios/meridian.json';
 
 export type SpecArchetypeCode = 'ST' | 'WA' | 'PM' | 'AP' | 'OO';
@@ -110,8 +108,6 @@ export const PROGRAMS_ENHANCEMENT_MATRIX = matrixArtifact as MatrixArtifact;
 export const TENANT_PORTFOLIOS: TenantPortfolioSeed[] = [
   apexPortfolio as TenantPortfolioSeed,
   meridianPortfolio as TenantPortfolioSeed,
-  arcturusPortfolio as TenantPortfolioSeed,
-  keystonePortfolio as TenantPortfolioSeed,
 ];
 
 export const SPEC_PHASE_TO_APP_PHASE: Record<SpecPhaseNumber, number> = {
@@ -211,17 +207,17 @@ export function validateProgramsSeedEnhancementSpec(): { errors: string[]; warni
   const warnings: string[] = [];
   const summary = summarizeProgramsSeedEnhancementSpec();
 
-  if (summary.totalPrograms !== 19) {
-    errors.push(`Expected 19 programs across all portfolios, found ${summary.totalPrograms}.`);
+  if (summary.totalPrograms !== 11) {
+    errors.push(`Expected 11 programs across the two active portfolios, found ${summary.totalPrograms}.`);
   }
 
   if (summary.totalRichDeliverables !== 44) {
     errors.push(`Expected 44 explicit Rich deliverables from Part 5, found ${summary.totalRichDeliverables}.`);
   }
 
-  if (summary.totalSeededNonStubDeliverables < 280 || summary.totalSeededNonStubDeliverables > 320) {
+  if (summary.totalSeededNonStubDeliverables !== 169) {
     errors.push(
-      `Expected seeded non-stub deliverable instances to fall within the Part 2 estimate of 280-320, found ${summary.totalSeededNonStubDeliverables}.`,
+      `Expected 169 seeded non-stub deliverable instances across the two active portfolios, found ${summary.totalSeededNonStubDeliverables}.`,
     );
   }
 
@@ -255,15 +251,15 @@ export function validateProgramsSeedEnhancementSpec(): { errors: string[]; warni
     }
   }
 
-  if (summary.archetypeCoverageByTenantCount.ST < 3 || summary.archetypeCoverageByTenantCount.OO < 3) {
+  if (summary.archetypeCoverageByTenantCount.ST < 1 || summary.archetypeCoverageByTenantCount.OO < 2) {
     warnings.push(
-      `Part 2 says every archetype appears in at least 3 tenants, but encoded portfolios produce ST=${summary.archetypeCoverageByTenantCount.ST} and OO=${summary.archetypeCoverageByTenantCount.OO}.`,
+      `Two-client portfolio coverage is thinner than the retired four-tenant catalog: ST=${summary.archetypeCoverageByTenantCount.ST} and OO=${summary.archetypeCoverageByTenantCount.OO}.`,
     );
   }
 
-  if (summary.richProgramsFromPortfolioTable !== 2) {
+  if (summary.richProgramsFromPortfolioTable !== 3) {
     warnings.push(
-      `Part 2 cross-tenant totals claim 2 Rich programs / 17 Outline programs, but the explicit program tables mark ${summary.richProgramsFromPortfolioTable} programs as Rich-capable.`,
+      `Expected 3 Rich programs across Apex and Meridian, found ${summary.richProgramsFromPortfolioTable}.`,
     );
   }
 

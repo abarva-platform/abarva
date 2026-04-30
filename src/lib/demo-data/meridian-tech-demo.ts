@@ -120,7 +120,7 @@ export const MERIDIAN_TECH_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Correct. **14 years of patient history** at 2 hospitals. **F003 at 68%** is the warning. The 2016 Accenture-led Arcturus modernisation failed because they underestimated data migration complexity — same pattern. For Meridian, the unknowns are: (1) How many of the 14 years of Cerner records are in proprietary format vs standard HL7? (2) What is the patient record count (affects timeline)? (3) Are there any Cerner-specific customisations that don\'t map to Epic? These questions must be answered before the migration begins. The Cerner data dictionary commission is the first action in Phase 3 — before any migration scoping.',
+                'Correct. **14 years of patient history** at 2 hospitals. **F003 at 68%** is the warning. The 2016 Accenture-led legacy data migration failed because they underestimated data migration complexity — same pattern. For Meridian, the unknowns are: (1) How many of the 14 years of Cerner records are in proprietary format vs standard HL7? (2) What is the patient record count (affects timeline)? (3) Are there any Cerner-specific customisations that don\'t map to Epic? These questions must be answered before the migration begins. The Cerner data dictionary commission is the first action in Phase 3 — before any migration scoping.',
             },
           ],
         },

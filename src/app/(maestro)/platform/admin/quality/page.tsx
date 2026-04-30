@@ -21,7 +21,7 @@ const LINKS = [
   { href: '/platform/admin/context', label: 'Business Context' },
 ]
 
-type TenantKey = 'meridian' | 'firstcapital' | 'apexretail' | 'keystone'
+type TenantKey = 'meridian' | 'apexretail'
 type Pillar = 'data' | 'evidence' | 'intelligence' | 'knowledge'
 type Severity = 'critical' | 'high' | 'medium'
 type Readiness = 'Exploratory' | 'Decision-support' | 'Board-ready' | 'Settlement-ready'
@@ -66,7 +66,6 @@ type BacklogItem = {
 }
 
 const confidenceMeridian = calculateConfidence('meridian', 'clinical')
-const confidenceFirstCapital = calculateConfidence('firstcapital', 'vendor')
 const confidenceApex = calculateConfidence('apexretail', 'ai_investment')
 
 const TENANTS: TenantSeed[] = [
@@ -86,21 +85,6 @@ const TENANTS: TenantSeed[] = [
     ],
   },
   {
-    key: 'firstcapital',
-    label: 'First Capital Financial',
-    shortLabel: 'First Capital',
-    orgId: 'firstcapital',
-    queryCategory: 'vendor',
-    baseData: confidenceFirstCapital.score,
-    baseEvidence: 66,
-    baseIntelligence: 69,
-    baseKnowledge: 61,
-    notes: [
-      'Vendor and regulatory data are present, but several scorecards still lack source-of-record links.',
-      'Pattern confidence is improving, but promotion discipline is still thin.',
-    ],
-  },
-  {
     key: 'apexretail',
     label: 'Apex Retail Group',
     shortLabel: 'Apex',
@@ -113,19 +97,6 @@ const TENANTS: TenantSeed[] = [
     notes: [
       'Commercial and IT data are strong enough for direction, but customer journey evidence is patchy.',
       'Intervention suggestions outrun evidence depth in a few places.',
-    ],
-  },
-  {
-    key: 'keystone',
-    label: 'Keystone Energy Holdings',
-    shortLabel: 'Keystone',
-    baseData: 58,
-    baseEvidence: 54,
-    baseIntelligence: 57,
-    baseKnowledge: 49,
-    notes: [
-      'Still below decision-support. Too much of the corpus is thin, stale, or ownerless.',
-      'This tenant should be treated as exploratory until provenance and baseline gaps are closed.',
     ],
   },
 ]
@@ -165,39 +136,6 @@ const QUALITY_ACTIONS: QualityAction[] = [
     cta: 'Advance promotion package',
   },
   {
-    id: 'fc-provenance',
-    tenant: 'firstcapital',
-    pillar: 'evidence',
-    severity: 'high',
-    title: 'Backfill provenance on 7 vendor scorecards',
-    detail: 'Performance scorecards are being cited in strategy output without a documented system owner and export timestamp.',
-    delta: 7,
-    owner: 'Steward',
-    cta: 'Request source metadata',
-  },
-  {
-    id: 'fc-regulatory-freshness',
-    tenant: 'firstcapital',
-    pillar: 'data',
-    severity: 'medium',
-    title: 'Replace stale regulatory pack with Q2 exports',
-    detail: 'Current MAS and FCA materials are old enough to weaken readiness for live board discussion.',
-    delta: 5,
-    owner: 'Nexus',
-    cta: 'Upload fresh regulatory artifacts',
-  },
-  {
-    id: 'fc-pattern-threshold',
-    tenant: 'firstcapital',
-    pillar: 'knowledge',
-    severity: 'medium',
-    title: 'Raise 2 candidate patterns above promotion threshold',
-    detail: 'Signals exist, but the n-count and intervention history are still too thin for canonical promotion.',
-    delta: 4,
-    owner: 'Sentinel',
-    cta: 'Inspect candidate pattern set',
-  },
-  {
     id: 'a-customer-evidence',
     tenant: 'apexretail',
     pillar: 'data',
@@ -230,50 +168,6 @@ const QUALITY_ACTIONS: QualityAction[] = [
     owner: 'Steward',
     cta: 'Open anonymization queue',
   },
-  {
-    id: 'k-baseline',
-    tenant: 'keystone',
-    pillar: 'evidence',
-    severity: 'critical',
-    title: 'Lock an outcome baseline before more strategy output is generated',
-    detail: 'No locked baseline means no credible attribution path, which drags both evidence and readiness.',
-    delta: 9,
-    owner: 'Nexus',
-    cta: 'Create baseline package',
-  },
-  {
-    id: 'k-ownerless-observations',
-    tenant: 'keystone',
-    pillar: 'data',
-    severity: 'high',
-    title: 'Assign owners to 14 ownerless observations',
-    detail: 'The corpus contains claims and notes with no accountable human owner or system source.',
-    delta: 6,
-    owner: 'Steward',
-    cta: 'Assign source owners',
-  },
-  {
-    id: 'k-pattern-synthesis',
-    tenant: 'keystone',
-    pillar: 'intelligence',
-    severity: 'medium',
-    title: 'Add cross-source support for 3 high-importance claims',
-    detail: 'Current briefs rely too heavily on interview notes and need KPI or system corroboration.',
-    delta: 5,
-    owner: 'Atlas',
-    cta: 'Open claim support review',
-  },
-  {
-    id: 'k-promotion-discipline',
-    tenant: 'keystone',
-    pillar: 'knowledge',
-    severity: 'medium',
-    title: 'Stop promoting low-confidence signals into reusable memory',
-    detail: 'Keystone has candidate signals being treated too optimistically for their actual support level.',
-    delta: 6,
-    owner: 'Sentinel',
-    cta: 'Tighten promotion thresholds',
-  },
 ]
 
 const BACKLOG_ITEMS: BacklogItem[] = [
@@ -286,7 +180,7 @@ const BACKLOG_ITEMS: BacklogItem[] = [
     progress: 100,
     counter: '2 merged fixes / 2 deployed',
     outcome: 'Signed-in Clerk demo users can resolve tenant context without the old no-client dead end.',
-    nextStep: 'Smoke-test the live app with Meridian and First Capital demo users.',
+    nextStep: 'Smoke-test the live app with Meridian and Apex demo users.',
   },
   {
     id: 'chat-inputs',

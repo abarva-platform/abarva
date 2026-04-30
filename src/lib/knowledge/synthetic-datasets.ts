@@ -635,44 +635,6 @@ Data readiness score: 47/100. Key gaps: no enterprise data catalogue, Epic data 
   },
 
   {
-    id: 'client-arcturus-001',
-    content: `Arcturus Financial Group — Situation Overview
-
-Arcturus Financial Group is a $16.2B revenue global asset manager headquartered in London, managing £840B in AUM across 13,000 employees in 18 countries. Arcturus is experiencing margin compression from fee decline and has made significant AI investment with poorly documented ROI.
-
-Critical situation findings:
-
-Finding 1 — AI investment ROI undocumented: Arcturus has invested $148M in AI and data initiatives over 4 years. Board-level AI ROI is unmeasured; CFO has flagged this as a material risk. Peer asset managers document AI ROI quarterly; Arcturus has no standard measurement framework.
-
-Finding 2 — Salesforce adoption stalled at 44%: Salesforce Financial Services Cloud went live 18 months ago at $12M investment. Daily active use by relationship managers is 44% versus the 75% contractually expected. Root cause: data migration completed only 58% of CRM records; Einstein AI recommendations are unreliable due to incomplete data.
-
-Finding 3 — Data fragmentation blocks AI: 14 separate data environments across investment management, distribution, operations, and risk. No enterprise data catalogue. Quant teams build bespoke data pipelines that are not reusable. Estimated cost of data fragmentation: $22M annually in duplicated effort.
-
-Finding 4 — RegTech compliance costs rising: Arcturus spends $34M annually on regulatory compliance technology. MiFID II data archival is 28% non-compliant. DORA implementation is 6 months behind schedule. AI-assisted RegTech could reduce compliance cost by $12–18M annually.
-
-Finding 5 — ESG data quality is a competitive risk: ESG scores from 3 data providers diverge by 48% on average for the same issuer. Arcturus has no systematic approach to ESG score reconciliation. FCA expects AI-assisted ESG transparency in client reporting by 2026.`,
-    metadata: { category: 'client', vertical: 'financial_services', client_id: 'arcturus', title: 'Arcturus Financial Group Situation', source: 'AbarVa client intelligence', tags: ['arcturus', 'asset_management', 'salesforce', 'ai_roi', 'esg', 'situation'] },
-  },
-
-  {
-    id: 'client-arcturus-002',
-    content: `Arcturus Financial Group — AI Opportunity Map and Technology Landscape
-
-AI opportunity map for Arcturus Financial Group — estimated 3-year value potential: $218M.
-
-Investment management AI ($94M): NLP-driven research synthesis — processing 1,800+ daily research documents, reducing analyst reading time 58% ($28M); ML portfolio risk modelling — real-time scenario analysis across all funds, reducing VaR model error 21% ($34M); ESG AI scoring — systematic ESG data reconciliation and confidence scoring, unlocking ESG AUM mandates ($32M).
-
-Distribution and client AI ($68M): Salesforce Einstein activation (dependent on data remediation) — next-best-action recommendations for 240 relationship managers, targeting 22% cross-sell uplift ($31M); Client reporting GenAI — personalised, automated quarterly client reports, reducing report production cost 61% ($18M); RFP automation AI — 44% of Arcturus RFPs are repetitive; AI-assisted RFP response reduces cost per RFP by 68% ($19M).
-
-Operations and compliance AI ($56M): RegTech AI — automated regulatory monitoring and classification, reducing compliance analyst time 48% ($22M); MiFID II data AI — automated best execution reporting and archival compliance ($18M); Finance automation — AI-driven month-end close acceleration from 8 days to 3.5 days ($16M).
-
-Technology landscape: Cloud — Azure primary (67% of workloads), AWS secondary (33%). Data — fragmented; 14 environments, no enterprise lakehouse. BI — Tableau (investment), PowerBI (operations), inconsistent definitions. CRM — Salesforce FSC (underperforming). ML/AI — mixture of vendor tools and bespoke Python. No enterprise MLOps platform.
-
-Recommended data platform: Databricks on Azure, integrated with existing Azure estate. Estimated implementation: 9 months to enterprise lakehouse with Salesforce integration. Cost: $6.8M.`,
-    metadata: { category: 'client', vertical: 'financial_services', client_id: 'arcturus', title: 'Arcturus AI Opportunities and Tech Landscape', source: 'AbarVa client intelligence', tags: ['arcturus', 'ai_opportunities', 'databricks', 'azure', 'salesforce', 'tech_landscape'] },
-  },
-
-  {
     id: 'client-apex-001',
     content: `Apex Retail Group — Situation Overview
 
@@ -690,46 +652,6 @@ Finding 4 — Digital loyalty fragmentation: Apex operates 3 separate loyalty pr
 
 Finding 5 — Returns cost is structurally high: Apex's e-commerce return rate is 29% (versus 24% industry median for apparel). No AI-assisted virtual try-on or sizing intelligence deployed. Returns management cost: $41M annually. AI-driven returns reduction to 20% return rate would save $17.4M.`,
     metadata: { category: 'client', vertical: 'retail', client_id: 'apexretail', title: 'Apex Retail Group Situation', source: 'AbarVa client intelligence', tags: ['apex', 'retail', 'ecommerce', 'sap', 'supply_chain', 'situation'] },
-  },
-
-  {
-    id: 'client-firstcapital-001',
-    content: `First Capital Financial — Situation Overview
-
-First Capital Financial is a $1.84B revenue regional bank headquartered in Bethesda, MD with $18B in assets, 4,200 employees, and 84 branches. First Capital faces structural efficiency pressure and digital capability gap versus regional and national peers.
-
-Critical situation findings:
-
-Finding 1 — Cost-to-income ratio 13 points above target: First Capital's cost-to-income ratio is 68% versus its 55% target and a 61% peer median. Closing the gap requires $24M in annual operational cost reduction, which organic efficiency alone cannot achieve at the required pace.
-
-Finding 2 — Core banking system 22 years old: First Capital operates on a 22-year-old Fiserv legacy core. Incident rate is 2.4x peer median. Mobile banking feature velocity is constrained — it takes 8–14 months to launch a new mobile feature versus 6–8 weeks at digital-native competitors.
-
-Finding 3 — Digital adoption significantly below peer: Mobile banking monthly active users at 42% of customers, versus 62% peer median. Online loan applications represent 18% of originations versus 54% at top-quartile regional banks. The gap is driven by the core banking limitation and a poor mobile experience.
-
-Finding 4 — AI is board-discussed but not deployed: Board presentations reference AI investment 4x in the last year. No AI use cases are in production. No CDO or AI lead has been hired. The gap between board aspiration and organisational readiness is widening.
-
-Finding 5 — Small business banking underserved: First Capital's small business loan turnaround time is 18 days. Top-quartile regional banks achieve 3–5 days using AI underwriting. First Capital is losing 22% of small business applications to faster competitors.`,
-    metadata: { category: 'client', vertical: 'banking', client_id: 'firstcapital', title: 'First Capital Financial Situation', source: 'AbarVa client intelligence', tags: ['firstcapital', 'banking', 'core_banking', 'digital', 'cost_to_income', 'situation'] },
-  },
-
-  {
-    id: 'client-nexora-001',
-    content: `Nexora Retail & Consumer — Situation Overview
-
-Nexora Retail & Consumer is an $18.4B global retail and CPG company with operations across 28 countries, engaged with AbarVa in April 2026. Nexora has made a $148M AI investment over 3 years with documented ROI of only 8%, representing a significant underperformance versus the 280–380% ROI achievable at this investment level.
-
-Critical situation findings:
-
-Finding 1 — $148M AI investment with 8% ROI: Industry benchmarks for a structured AI programme of $148M over 3 years show 3-year ROI of 280–380%. Nexora's 8% ROI indicates systematic programme failure — not technology failure. Root cause assessment required across strategy, data, platform, and governance dimensions.
-
-Finding 2 — SAP R/3 at EOL December 2027: Nexora runs SAP R/3 (older than ECC 6.0) across 18 markets. End of all support: December 2027. Migration to S/4HANA across 28 countries is a $200–340M programme over 4–5 years. The programme has not been formally scoped or funded.
-
-Finding 3 — Salesforce Einstein licensed but not activated: Nexora has a global Salesforce Einstein licence at $9.2M annually. Activation rate: 4%. The non-activation is attributable to CRM data completeness at 41% — below the 85% threshold required for reliable Einstein recommendations.
-
-Finding 4 — AI governance is absent: No AI steering committee. No CDO. AI initiatives governed by business units independently, resulting in 34 parallel AI pilots with no shared platform or data standards. Duplication cost: estimated $18M annually.
-
-Finding 5 — Customer identity fragmentation: 28 countries, 6 loyalty platforms, no global customer identity resolution. Personalisation AI impossible without unified customer identity. Resolution programme estimated at 18–24 months.`,
-    metadata: { category: 'client', vertical: 'retail', client_id: 'nexora', title: 'Nexora Retail & Consumer Situation', source: 'AbarVa client intelligence', tags: ['nexora', 'retail', 'cpg', 'ai_roi', 'sap', 'salesforce', 'situation'] },
   },
 
 ]

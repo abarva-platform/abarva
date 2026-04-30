@@ -47,10 +47,6 @@ describe('intelligence-workflow-canvas view model', () => {
       expect(brief.confidenceLevel).toBe('low');
     });
 
-    it('arcturus affectedPrograms is empty array', () => {
-      const brief = buildSentinelBriefView('arcturus');
-      expect(brief.affectedPrograms).toEqual([]);
-    });
   });
 
   describe('buildIntelligenceWorkflowCanvasView', () => {

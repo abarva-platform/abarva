@@ -81,10 +81,6 @@ const ORG_LOADED_CATEGORIES: Record<string, string[]> = {
     'clinical_quality', 'vendor_performance', 'it_financials', 'vendor_contracts',
     'technology', 'ai_initiatives', 'workforce', 'financials', 'vendors',
   ],
-  firstcapital: [
-    'it_financials', 'technology', 'vendor_contracts', 'financials',
-    'vendors', 'ai_initiatives', 'workforce',
-  ],
   apexretail: [
     'it_financials', 'technology', 'vendors', 'financials', 'workforce',
   ],

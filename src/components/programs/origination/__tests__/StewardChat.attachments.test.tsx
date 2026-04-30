@@ -129,7 +129,6 @@ describe('StewardChat · starter prompts', () => {
     expect(screen.getByLabelText('Starter prompts')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Apex ERP modernization' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Meridian prior auth' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'First Capital risk controls' })).toBeTruthy();
   });
 
   it('prefills the composer when a starter prompt is selected', () => {

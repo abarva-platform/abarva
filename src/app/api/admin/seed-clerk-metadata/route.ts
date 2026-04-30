@@ -35,17 +35,6 @@ const DEMO_USERS = [
       accountType: 'demo_existing',
     },
   },
-  {
-    email: 'demo-firstcapital+clerk_test@abarva.com',
-    metadata: {
-      role: 'client',
-      clientId: 'arcturus',
-      clientName: 'First Capital',
-      defaultClientId: 'arcturus',
-      clientLocked: true,
-      accountType: 'demo_existing',
-    },
-  },
 ]
 
 export async function POST() {

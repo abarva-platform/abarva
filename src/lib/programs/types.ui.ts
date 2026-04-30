@@ -98,7 +98,7 @@ export interface ProgramSummary {
   lastActivityAt: Date;
   attentionBadge?: { label: string; variant: AttentionVariant };
   shape: 'template' | 'pattern' | 'custom';
-  clientName: 'Meridian Health System' | 'First Capital Financial' | 'Apex Retail Group';
+  clientName: 'Meridian Health System' | 'Apex Retail Group';
 }
 
 export interface OriginationForm {
@@ -164,7 +164,7 @@ export interface ProgramFullState {
   activity: ActivityEntry[];
   linkedIntelligenceThreads?: ThreadRef[];
   archetype: ArchetypeKey;
-  clientName: 'Meridian Health System' | 'First Capital Financial' | 'Apex Retail Group';
+  clientName: 'Meridian Health System' | 'Apex Retail Group';
   sponsorPerson: PersonRef;
   leadPerson: PersonRef;
   phaseStatus: ProgramSummary['phaseStatus'];

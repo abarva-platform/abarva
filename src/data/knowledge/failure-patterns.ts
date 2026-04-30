@@ -22,7 +22,6 @@ export type FailurePattern = {
   successRate: number  // % of successes that had this pattern
   clients: {
     meridian: PatternPresence
-    firstcapital: PatternPresence
     apexretail: PatternPresence
   }
 }
@@ -44,13 +43,7 @@ export const FAILURE_PATTERNS: FailurePattern[] = [
         mitigation: 'Appoint interim CDO before vendor contract is signed. Even a 90-day interim reduces this risk from HIGH to LOW based on Genome data.',
         specificAction: 'Generate CDO interim brief',
       },
-      firstcapital: {
-        present: true,
-        riskLevel: 'HIGH',
-        evidence: 'No CDO role exists. CTO owns AI strategy but also owns infrastructure modernisation — capacity conflict.',
-        mitigation: 'Create CDO role or appoint Chief AI Officer before Wave 1 vendor engagement. CTO cannot span both mandates at scale.',
-        specificAction: 'Generate AI leadership structure recommendation',
-      },
+
       apexretail: {
         present: true,
         riskLevel: 'HIGH',
@@ -76,13 +69,7 @@ export const FAILURE_PATTERNS: FailurePattern[] = [
         mitigation: 'Run 30-day data remediation sprint before vendor selection. Estimated outcome: 55-60% payer coverage — sufficient for pilot accuracy.',
         specificAction: 'Generate data sprint plan',
       },
-      firstcapital: {
-        present: true,
-        riskLevel: 'MEDIUM',
-        evidence: 'T+1 transaction data only. Real-time fraud detection requires real-time data. FedNow API layer partially implemented.',
-        mitigation: 'Complete FedNow API layer before fraud model goes live. Batch fraud scoring has 70% lower ROI than real-time.',
-        specificAction: 'Generate API layer completion plan',
-      },
+
       apexretail: {
         present: true,
         riskLevel: 'MEDIUM',
@@ -108,13 +95,7 @@ export const FAILURE_PATTERNS: FailurePattern[] = [
         mitigation: 'Use reference outcomes from similar health systems (denial rate, payer mix, Epic version) as primary selection criteria. Demo quality is secondary.',
         specificAction: 'Open Vendor Intelligence',
       },
-      firstcapital: {
-        present: false,
-        riskLevel: 'MEDIUM',
-        evidence: 'Vendor evaluation not yet structured. Risk is preventable with the right procurement approach.',
-        mitigation: 'Require three reference calls with peer financial institutions of similar size and FIS architecture before shortlisting.',
-        specificAction: 'Open Vendor Intelligence',
-      },
+
       apexretail: {
         present: false,
         riskLevel: 'LOW',
@@ -140,13 +121,7 @@ export const FAILURE_PATTERNS: FailurePattern[] = [
         mitigation: 'No action required. Continue monthly data quality monitoring.',
         specificAction: 'View data quality dashboard',
       },
-      firstcapital: {
-        present: false,
-        riskLevel: 'LOW',
-        evidence: 'Transaction data quality high (94% clean) but identity resolution across FIS systems incomplete.',
-        mitigation: 'Address identity resolution as part of FedNow API layer work.',
-        specificAction: 'View data quality report',
-      },
+
       apexretail: {
         present: true,
         riskLevel: 'MEDIUM',
@@ -172,13 +147,7 @@ export const FAILURE_PATTERNS: FailurePattern[] = [
         mitigation: 'No action required. Maintain Wave 1 scope discipline. Use this plan to prevent new initiative requests from fragmenting resources.',
         specificAction: 'View Wave 1 scope lock',
       },
-      firstcapital: {
-        present: false,
-        riskLevel: 'LOW',
-        evidence: 'Current portfolio is well-scoped at 3 initiatives. COO resistance to new projects is actually a protective factor here.',
-        mitigation: 'Maintain current scope. COO alignment is an asset, not a barrier.',
-        specificAction: 'View current initiative inventory',
-      },
+
       apexretail: {
         present: true,
         riskLevel: 'HIGH',
@@ -204,13 +173,7 @@ export const FAILURE_PATTERNS: FailurePattern[] = [
         mitigation: 'No action required. Epic native integration path confirmed.',
         specificAction: 'View Epic integration map',
       },
-      firstcapital: {
-        present: true,
-        riskLevel: 'HIGH',
-        evidence: 'FIS HORIZON architecture blocks real-time AI scoring. SQL Server 2017 EOS October 2025. Both are systemic blockers for Wave 2+.',
-        mitigation: 'Wave 1 must work within current architecture constraints. FIS HORIZON modernisation is a Wave 2 prerequisite, not a Wave 1 blocker.',
-        specificAction: 'View architecture constraint map',
-      },
+
       apexretail: {
         present: true,
         riskLevel: 'HIGH',
@@ -236,13 +199,7 @@ export const FAILURE_PATTERNS: FailurePattern[] = [
         mitigation: 'Confirm bets to lock baseline. This eliminates ROI attribution risk entirely.',
         specificAction: 'Confirm bets and set baseline',
       },
-      firstcapital: {
-        present: false,
-        riskLevel: 'LOW',
-        evidence: 'CFO has defined success metrics (fraud losses, cost-to-income). Baseline exists. Formal AbarVa lock required.',
-        mitigation: 'Confirm bets to create formal AbarVa baseline record. CFO metrics become contractually tracked.',
-        specificAction: 'Confirm bets and set baseline',
-      },
+
       apexretail: {
         present: false,
         riskLevel: 'LOW',

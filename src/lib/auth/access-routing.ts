@@ -17,19 +17,11 @@ function hasExplicitTenantAlias(email: string | null | undefined): boolean {
   if (!normalized) return false;
   return (
     normalized.includes('demo-meridian+clerk_test') ||
-    normalized.includes('demo-arcturus+clerk_test') ||
-    normalized.includes('demo-firstcapital+clerk_test') ||
     normalized.includes('demo-apexretail+clerk_test') ||
-    normalized.includes('demo-keystone+clerk_test') ||
-    normalized.includes('demo-nexora+clerk_test') ||
     normalized.includes('mh+clerk_test') ||
-    normalized.includes('af+clerk_test') ||
     normalized.includes('apex+clerk_test') ||
-    normalized.includes('keystone+clerk_test') ||
-    normalized.includes('ke+clerk_test') ||
     normalized.includes('+apex@abarva.com') ||
-    normalized.includes('+meridian@abarva.com') ||
-    normalized.includes('+firstcapital@abarva.com')
+    normalized.includes('+meridian@abarva.com')
   );
 }
 
@@ -48,20 +40,12 @@ export function inferSessionRoleFromEmail(email: string | null | undefined): App
 
   if (
     normalized.includes('demo-meridian+clerk_test') ||
-    normalized.includes('demo-arcturus+clerk_test') ||
-    normalized.includes('demo-firstcapital+clerk_test') ||
     normalized.includes('demo-apexretail+clerk_test') ||
-    normalized.includes('demo-keystone+clerk_test') ||
-    normalized.includes('demo-nexora+clerk_test') ||
     normalized.includes('demo-new+clerk_test') ||
     normalized.includes('mh+clerk_test') ||
-    normalized.includes('af+clerk_test') ||
     normalized.includes('apex+clerk_test') ||
-    normalized.includes('keystone+clerk_test') ||
-    normalized.includes('ke+clerk_test') ||
     normalized.includes('+apex@abarva.com') ||
-    normalized.includes('+meridian@abarva.com') ||
-    normalized.includes('+firstcapital@abarva.com')
+    normalized.includes('+meridian@abarva.com')
   ) {
     return 'client';
   }

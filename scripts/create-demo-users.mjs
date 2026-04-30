@@ -64,21 +64,6 @@ const USERS = [
       accountType: 'demo_existing',
     },
   },
-  {
-    email: 'demo-firstcapital+clerk_test@abarva.com',
-    password: DEMO_USER_PASSWORD,
-    firstName: 'First Capital',
-    lastName: 'Demo',
-    createIfMissing: true,
-    metadata: {
-      role: 'client',
-      clientId: 'arcturus',
-      defaultClientId: 'arcturus',
-      clientLocked: true,
-      clientName: 'First Capital',
-      accountType: 'demo_existing',
-    },
-  },
 ];
 
 async function clerk(path, options = {}) {

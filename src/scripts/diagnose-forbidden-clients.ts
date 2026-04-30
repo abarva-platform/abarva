@@ -7,7 +7,7 @@ loadEnv();
 
 const FORBIDDEN = [
   'CommonSpirit Health',
-  'First Capital Financial',
+  'Retired Client',
   'HP Inc',
   'MD Anderson',
   'Meridian Health System',

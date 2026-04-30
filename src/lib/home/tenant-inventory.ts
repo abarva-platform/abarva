@@ -141,10 +141,7 @@ const APEX_DATA: UploadedDataRow[] = [
   { id: 'apx-d-16', name: 'Evidence Ledger export · Morrison program', type: 'System export', sourceSystem: 'Steward', sourceOwner: 'Steward', qualityRating: 'Audit-grade', sensitivityMarking: 'Confidential', uploadedDate: d(-1), currencyStatus: 'Current', citedByCount: 47, chainOfCustody: 'Complete' },
 ];
 
-// ─── Fallback slices · Meridian / First Capital / Keystone ────────────
-//
-// Keep these light · the demo focus is Apex. When the other composites
-// move to full demo depth, extend these arrays the same way.
+// ─── Fallback slice · Meridian ─────────────────────────────────────
 
 const MERIDIAN_IT: ITStackRow[] = [
   { id: 'mer-it-01', name: 'Epic EHR Platform', category: 'Data', vendor: 'Epic', segment: 'Tier 1 · Strategic', budgetAnnual: 68_000_000, renewalDate: d(320), health: 'Healthy', aiCapability: 'Extension', integrations: 94 },
@@ -189,21 +186,13 @@ const MERIDIAN_DATA: UploadedDataRow[] = [
   { id: 'mer-d-08', name: 'Board Packet Rebuild Effort Study', type: 'Interview', sourceSystem: 'Nexus interview log', sourceOwner: 'Nexus', qualityRating: 'High', sensitivityMarking: 'Confidential', uploadedDate: d(-3), currencyStatus: 'Current', citedByCount: 19, chainOfCustody: 'Complete' },
 ];
 
-const FIRST_CAPITAL_IT: ITStackRow[] = APEX_IT.slice(0, 12).map((r, i) => ({ ...r, id: `fc-it-${i}` }));
-const FIRST_CAPITAL_VENDORS: VendorRow[] = APEX_VENDORS.slice(0, 9).map((r, i) => ({ ...r, id: `fc-v-${i}` }));
-const FIRST_CAPITAL_DATA: UploadedDataRow[] = APEX_DATA.slice(0, 9).map((r, i) => ({ ...r, id: `fc-d-${i}` }));
 
-const KEYSTONE_IT: ITStackRow[] = APEX_IT.slice(0, 11).map((r, i) => ({ ...r, id: `key-it-${i}` }));
-const KEYSTONE_VENDORS: VendorRow[] = APEX_VENDORS.slice(0, 10).map((r, i) => ({ ...r, id: `key-v-${i}` }));
-const KEYSTONE_DATA: UploadedDataRow[] = APEX_DATA.slice(0, 10).map((r, i) => ({ ...r, id: `key-d-${i}` }));
 
 export function getITStack(tenantKey: string | null): ITStackRow[] {
   if (!tenantKey) return APEX_IT;
   const k = tenantKey.toLowerCase();
   if (k.includes('apex')) return APEX_IT;
   if (k.includes('meridian')) return MERIDIAN_IT;
-  if (k.includes('first') || k.includes('arcturus')) return FIRST_CAPITAL_IT;
-  if (k.includes('keystone')) return KEYSTONE_IT;
   return APEX_IT;
 }
 
@@ -212,8 +201,6 @@ export function getVendors(tenantKey: string | null): VendorRow[] {
   const k = tenantKey.toLowerCase();
   if (k.includes('apex')) return APEX_VENDORS;
   if (k.includes('meridian')) return MERIDIAN_VENDORS;
-  if (k.includes('first') || k.includes('arcturus')) return FIRST_CAPITAL_VENDORS;
-  if (k.includes('keystone')) return KEYSTONE_VENDORS;
   return APEX_VENDORS;
 }
 
@@ -222,7 +209,5 @@ export function getUploadedData(tenantKey: string | null): UploadedDataRow[] {
   const k = tenantKey.toLowerCase();
   if (k.includes('apex')) return APEX_DATA;
   if (k.includes('meridian')) return MERIDIAN_DATA;
-  if (k.includes('first') || k.includes('arcturus')) return FIRST_CAPITAL_DATA;
-  if (k.includes('keystone')) return KEYSTONE_DATA;
   return APEX_DATA;
 }

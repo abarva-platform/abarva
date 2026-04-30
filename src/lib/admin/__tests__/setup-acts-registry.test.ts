@@ -118,23 +118,22 @@ describe('Setup Acts registry — sparse fallback', () => {
   });
 
   it('returns sparse content for tenants without authored fixtures', () => {
-    expect(getSetupActsContent('arcturus').tenantDataRichness).toBe('sparse');
-    expect(getSetupActsContent('keystone').tenantDataRichness).toBe('sparse');
+    expect(getSetupActsContent('unknown')).toHaveProperty('tenantDataRichness', 'sparse');
   });
 
   it('sparse content has empty Act 1 + Act 2', () => {
-    const content = getSetupActsContent('keystone');
+    const content = getSetupActsContent('unknown');
     expect(content.actOneFacts).toEqual([]);
     expect(content.actTwoCapabilityNodes).toEqual([]);
   });
 
   it('sparse content has at least 3 onboarding gain entries', () => {
-    const content = getSetupActsContent('keystone');
+    const content = getSetupActsContent('unknown');
     expect(content.actThreeGainEntries.length).toBeGreaterThanOrEqual(3);
   });
 
   it('sparse content uses the cold-tenant opener', () => {
-    const content = getSetupActsContent('arcturus');
+    const content = getSetupActsContent('unknown');
     expect(content.sentinelOpener).toMatch(/don['’]t know/i);
   });
 
@@ -207,7 +206,7 @@ describe('Setup Acts registry — voice rules (no marketing language)', () => {
   });
 
   it('sparse content uses no banned marketing language', () => {
-    checkAllText(getSetupActsContent('keystone'));
+    checkAllText(getSetupActsContent('unknown'));
   });
 
   it('Meridian content uses no banned marketing language', () => {
@@ -233,7 +232,7 @@ describe('Setup Acts registry — summary counts helper', () => {
   });
 
   it('returns null counts for sparse tenant', () => {
-    const content = getSetupActsContent('keystone');
+    const content = getSetupActsContent('unknown');
     const counts = getSetupSummaryCounts(content);
     expect(counts.totalRecords).toBeNull();
     expect(counts.segmentsTracked).toBeNull();
@@ -309,9 +308,9 @@ describe('Setup Acts registry — snapshot merge', () => {
   });
 
   it('promotes sparse tenant to rich when snapshot carries records', () => {
-    const content = getSetupActsContent('keystone');
+    const content = getSetupActsContent('unknown');
     expect(content.tenantDataRichness).toBe('sparse');
-    const snapshot = buildSnapshot({ tenantKey: 'keystone', totalRecords: 12 });
+    const snapshot = buildSnapshot({ tenantKey: 'unknown', totalRecords: 12 });
     const merged = mergeInventorySnapshot(content, snapshot);
     expect(merged.tenantDataRichness).toBe('rich');
   });

@@ -7,7 +7,6 @@ export interface DataClient {
 
 export const DATA_CLIENTS: DataClient[] = [
   { id: 'meridian', name: 'Meridian Health', industry: 'healthcare_idn', industryLabel: 'Healthcare IDN' },
-  { id: 'first_capital', name: 'First Capital', industry: 'finserv', industryLabel: 'Financial Services' },
   { id: 'apex', name: 'Apex Retail', industry: 'retail', industryLabel: 'Retail' },
 ];
 

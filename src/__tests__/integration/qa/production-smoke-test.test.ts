@@ -18,7 +18,7 @@ import {
 } from '@/lib/qa/route-smoke-inventory';
 
 // ---------------------------------------------------------------------------
-// All 16 routes that must be registered
+// All 15 routes that must be registered
 // ---------------------------------------------------------------------------
 
 const REQUIRED_ROUTES: ReadonlyArray<string> = [
@@ -29,7 +29,6 @@ const REQUIRED_ROUTES: ReadonlyArray<string> = [
   '/tenant/apex-retail/tower',
   '/tenant/meridian/programs',
   '/tenant/meridian/intelligence',
-  '/tenant/arcturus/programs',
   '/admin',
   '/admin/architecture',
   '/admin/production-readiness',

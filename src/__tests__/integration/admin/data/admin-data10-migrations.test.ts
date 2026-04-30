@@ -287,11 +287,11 @@ describe('ADMIN-DATA10 — Demo seed migration', () => {
     expect(sql).toContain('skipping Meridian admin demo seed');
   });
 
-  it('does not seed Arcturus (shell-only tenant)', () => {
-    // Arcturus may appear in a comment but must not appear in any INSERT/SELECT logic.
+  it('does not seed retired shell-only tenants', () => {
+    // Retired tenants must not appear in any INSERT/SELECT logic.
     expect(sql).not.toMatch(/INSERT INTO admin_[^;]*[Aa]rcturus/);
-    expect(sql).not.toMatch(/SELECT id INTO v_arcturus_id/);
-    expect(sql).not.toMatch(/clients WHERE name = 'Arcturus'/);
+    expect(sql).not.toMatch(/SELECT id INTO v_retired_id/);
+    expect(sql).not.toMatch(/clients WHERE name = 'Retired Tenant'/);
   });
 
   it('wraps the entire seed in a single DO $$ ... END $$ block', () => {

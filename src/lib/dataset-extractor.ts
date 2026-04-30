@@ -32,7 +32,7 @@ export interface Phase0Output {
   recommended_action: string
 }
 
-export const ARCTURUS_DELIVERY_PHASE0: Phase0Output = {
+export const APEX_DELIVERY_PHASE0: Phase0Output = {
   overall_score: 21,
   overall_verdict: 'partial',
   verdict_summary: 'Sufficient data to begin Phase 1 with high confidence. Three Genome patterns confirmed. Delivery velocity data (sprint metrics) would sharpen the cycle time analysis. Financial breakdown would sharpen the recovery range.',
@@ -121,7 +121,7 @@ export const ARCTURUS_DELIVERY_PHASE0: Phase0Output = {
     },
     {
       title: 'Portfolio Analytics: the benchmark that proves the rest is fixable.',
-      description: 'Portfolio Analytics delivers at or near industry benchmark — highest velocity, lowest cost per story point, genuine internal capability. This proves the problem is not structural to Arcturus. It is specific to squads with high vendor dependency.',
+      description: 'Portfolio Analytics delivers at or near industry benchmark — highest velocity, lowest cost per story point, genuine internal capability. This proves the problem is not structural to Apex. It is specific to squads with high vendor dependency.',
       severity: 'positive',
       source_files: ['ARC-C01', 'ARC-C05'],
       genome_pattern: null
@@ -144,7 +144,7 @@ export const ARCTURUS_DELIVERY_PHASE0: Phase0Output = {
   recommended_action: 'Begin Phase 1 with the Consulting Audit workstream. The data is sufficient to conduct a full audit of all 10 vendor relationships. Request sprint velocity data from CIO before Phase 1 completes.'
 }
 
-export const ARCTURUS_MARGIN_PHASE0: Phase0Output = {
+export const APEX_MARGIN_PHASE0: Phase0Output = {
   overall_score: 38,
   overall_verdict: 'partial',
   verdict_summary: 'Sufficient data to identify $250–320M in addressable margin across three confirmed areas. Middle office, fee yield, client retention, and operations require additional uploads to unlock the next $40–80M estimate range.',
@@ -261,7 +261,7 @@ export const ARCTURUS_MARGIN_PHASE0: Phase0Output = {
   recommended_action: 'Review the Margin Opportunity Map. Approve Phase 0 to begin Phase 1 with the three confirmed high-confidence areas: AI portfolio rationalisation, consulting reduction, and IT structural overspend. Simultaneously, request data uploads for middle office and fee yield to unlock Phase 2 analyses.'
 }
 
-export const ARCTURUS_TECH_PHASE0: Phase0Output = {
+export const APEX_TECH_PHASE0: Phase0Output = {
   overall_score: 34,
   overall_verdict: 'partial',
   verdict_summary: 'Sufficient data to begin Phase 1. System inventory complete. Migration history documented — 3 post-mortems available. Data architecture gaps identified. Technical debt assessment partial — no config files uploaded yet.',
@@ -358,7 +358,7 @@ export const ARCTURUS_TECH_PHASE0: Phase0Output = {
       immediate_action: 'Commission API wrapper feasibility study for the 6 portable customisations'
     },
     {
-      title: 'Charles River IMS + Portfolio Analytics: the proof that Arcturus can govern technology.',
+      title: 'Charles River IMS + Portfolio Analytics: the proof that Apex can govern technology.',
       description: 'Charles River IMS scores 32/100 for technical debt — the best-managed system in the estate. Portfolio Analytics squad delivers at benchmark. These two prove the internal capability exists in pockets. Tech modernisation builds on these, not from zero.',
       severity: 'positive',
       source_files: ['ARC-T02', 'ARC-C01'],
@@ -382,7 +382,7 @@ export const ARCTURUS_TECH_PHASE0: Phase0Output = {
   recommended_action: 'Two immediate actions before Phase 1: (1) Commission Azure SQL migration for SQL Server DW — EOL has passed, this is non-negotiable. (2) Name an executive sponsor for the Bloomberg AIM programme before scoping any approach — all 3 prior failures share this root cause. Phase 1 can begin in parallel with Failure Pattern Analysis as the first workstream.'
 }
 
-export const ARCTURUS_PDLC_PHASE0: Phase0Output = {
+export const APEX_PDLC_PHASE0: Phase0Output = {
   overall_score: 26,
   overall_verdict: 'partial',
   verdict_summary: 'Sufficient data to begin Phase 1 with high confidence. Three Genome patterns confirmed at critical level. MLOps gap is structural — all 28 AI initiatives blocked by the same infrastructure failure. Sprint velocity data would sharpen cycle time analysis.',
@@ -545,7 +545,7 @@ export const MERIDIAN_TECH_PHASE0: Phase0Output = {
       name: 'Data readiness below threshold',
       failure_rate: 0.68,
       confidence: 'probable',
-      evidence: '14 years of Cerner patient history in proprietary format. Data migration planning not started for Q4 2026 Cerner migration. 2016 Arcturus modernisation failed for same reason — data complexity underestimated.',
+      evidence: '14 years of Cerner patient history in proprietary format. Data migration planning not started for Q4 2026 Cerner migration. 2016 Apex modernisation failed for same reason — data complexity underestimated.',
       source_files: ['MER-T02']
     },
     {
@@ -569,7 +569,7 @@ export const MERIDIAN_TECH_PHASE0: Phase0Output = {
     },
     {
       title: 'Cerner migration: Q4 2026 target. Data migration planning not started.',
-      description: '2 hospitals on Cerner. 700 combined beds. 14 years of patient history. Migration target Q4 2026. Data migration planning not started. 2016 Arcturus modernisation failed for identical reason — data complexity underestimated before programme start. This is F003 at 68% failure rate.',
+      description: '2 hospitals on Cerner. 700 combined beds. 14 years of patient history. Migration target Q4 2026. Data migration planning not started. 2016 Apex modernisation failed for identical reason — data complexity underestimated before programme start. This is F003 at 68% failure rate.',
       severity: 'critical',
       source_files: ['MER-T02'],
       genome_pattern: 'F003',
@@ -600,10 +600,10 @@ export const MERIDIAN_TECH_PHASE0: Phase0Output = {
   recommended_action: 'Three parallel tracks: (1) Begin Epic optimization — prior auth module activation for CMS mandate compliance. (2) Start Cerner data migration planning immediately — 14 months is tight. (3) Accelerate CDO hire — prior auth integration has been stalled 18 months without an accountable owner.'
 }
 
-export const ARCTURUS_AI_STRATEGY_PHASE0: Phase0Output = {
+export const APEX_AI_STRATEGY_PHASE0: Phase0Output = {
   overall_score: 26,
   overall_verdict: 'partial',
-  verdict_summary: 'Arcturus has significant AI investment but near-zero production maturity. The Genome confirms this profile: F008 (91%) — AI spend with zero verified ROI is the defining pattern. 14 models in production, none monitored, none retrained since deployment. CDO vacant 11 months. 28 active initiatives, 0 in production delivering documented value. The data infrastructure foundation is fragile: SQL Server 2017 EOL, Netezza unsupported since 2019, Informatica developer cliff arriving Q3 2026.',
+  verdict_summary: 'Apex has significant AI investment but near-zero production maturity. The Genome confirms this profile: F008 (91%) — AI spend with zero verified ROI is the defining pattern. 14 models in production, none monitored, none retrained since deployment. CDO vacant 11 months. 28 active initiatives, 0 in production delivering documented value. The data infrastructure foundation is fragile: SQL Server 2017 EOL, Netezza unsupported since 2019, Informatica developer cliff arriving Q3 2026.',
   recommended_action: 'Proceed to AI Strategy engagement. Phase 1 priority: Contradiction Intelligence to surface board reporting gap. Wave 1 deployment: AI-023 via AWS Bedrock (58-day path to first production model). CDO appointment is prerequisite for Phase 2.',
   dimension_scores: {
     data_readiness: {
@@ -721,8 +721,8 @@ export async function extractDatasetSummaries(
   uploadedFiles: string[]
 ): Promise<Record<string, any>> {
 
-  // Arcturus Delivery
-  if (clientId === 'arcturus' && solution === 'delivery') {
+  // Apex Delivery
+  if (clientId === 'apexretail' && solution === 'delivery') {
     return {
       consulting_audit: {
         file: 'ARC-D01',

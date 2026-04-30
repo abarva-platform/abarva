@@ -31,7 +31,7 @@ const CORE_SEEDS: SeedStep[] = [
   {
     name: 'Pack J · realistic AI portfolios',
     script: 'src/scripts/seed/run-enterprise-packj.ts',
-    description: 'Meridian 42 / First Capital 34 / Apex 29 use cases',
+    description: 'Meridian 42 / Apex 29 use cases',
   },
   {
     name: 'Pack J · extras (contradictions + cost centers + shadow AI)',
@@ -56,9 +56,9 @@ const OPTIONAL_SEEDS: SeedStep[] = [
   {
     name: 'Pack H · enterprise depth (requires --clients arg)',
     script: 'src/scripts/seed/run-enterprise-depth.ts',
-    description: 'Tech stack + volumetrics + staff aug · Meridian/firstcapital/apex',
+    description: 'Tech stack + volumetrics + staff aug · Meridian/Apex',
     optional: true,
-    args: ['--clients', 'meridian,firstcapital,apex'],
+    args: ['--clients', 'meridian,apex'],
   },
 ];
 

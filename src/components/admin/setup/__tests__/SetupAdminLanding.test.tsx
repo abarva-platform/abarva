@@ -98,7 +98,7 @@ describe('SetupAdminLanding', () => {
   });
 
   it('shows sparse content for non-Apex tenants', () => {
-    const content = getSetupActsContent('keystone');
+    const content = getSetupActsContent('unknown');
     render(
       <SetupAdminLanding
         content={content}

@@ -125,17 +125,13 @@ describe('clientKeyToBrokerTenantKey · PR-INT-G Apex tenant key split', () => {
     expect(clientKeyToBrokerTenantKey('apexretail')).toBe('apex-retail');
   });
 
-  it('passes other ClientKeys through unchanged (meridian, arcturus, keystone)', () => {
+  it('passes Meridian through unchanged for the in-memory broker', () => {
     expect(clientKeyToBrokerTenantKey('meridian')).toBe('meridian');
-    expect(clientKeyToBrokerTenantKey('arcturus')).toBe('arcturus');
-    expect(clientKeyToBrokerTenantKey('keystone')).toBe('keystone');
   });
 
   it("substrate map: 'apexretail' → 'apex-retail' and 'meridian' → 'meridian-health'", () => {
     expect(clientKeyToInventorySubstrateKey('apexretail')).toBe('apex-retail');
     expect(clientKeyToInventorySubstrateKey('meridian')).toBe('meridian-health');
-    expect(clientKeyToInventorySubstrateKey('arcturus')).toBe('arcturus');
-    expect(clientKeyToInventorySubstrateKey('keystone')).toBe('keystone');
   });
 
   it('mapped tenant key resolves a non-blocked broker bundle for Apex', () => {

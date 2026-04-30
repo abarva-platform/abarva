@@ -70,13 +70,6 @@ const PROMOTIONS: PromotionRequest[] = [
     note: 'Approved by Marcus Webb (CIO) — ready for master intelligence',
   },
   {
-    id: 'p2', engagement: 'First Capital — FedNow Deployment', org: 'First Capital Bank',
-    maestro: 'Anand Sundaram', document: 'FedNow Vendor Evaluation — Final Scorecard', category: 'Vendor Contracts',
-    requestedAt: 'Apr 13, 2026', status: 'pending',
-    visibleTo: ['CIO', 'CFO', 'COO'],
-    note: 'Decision made. Finzly selected. Promote to master for outcome tracking.',
-  },
-  {
     id: 'p3', engagement: 'Meridian Health — AI Strategy 2026', org: 'Meridian Health',
     maestro: 'Anand Sundaram', document: 'IT Budget 2025–2026', category: 'Financial Performance',
     requestedAt: 'Apr 5, 2026', status: 'approved',
@@ -130,20 +123,6 @@ const ENGAGEMENTS: Engagement[] = [
       { name: 'Healthcare Quality RCM Data.xlsx', uploadedAt: 'Apr 4', uploadedBy: 'Dr. Sarah Patel', status: 'promoted', promotable: true },
       { name: 'Q4 AI Roadmap Draft v2.pptx', uploadedAt: 'Apr 12', uploadedBy: 'Anand Sundaram', status: 'pending_promotion', promotable: true },
       { name: 'Executive Interview Notes — Internal.docx', uploadedAt: 'Apr 13', uploadedBy: 'Anand Sundaram', status: 'engagement_only', promotable: false },
-    ],
-  },
-  {
-    id: 'firstcapital-2026', name: 'First Capital — FedNow Deployment', org: 'First Capital Bank',
-    maestro: 'Anand Sundaram', createdAt: 'Apr 10, 2026', pendingCount: 1,
-    team: [
-      { name: 'David Kim', role: 'CTO', email: 'dkim@firstcapitalbank.com', access: 'Technology, Infrastructure, AI Initiatives', addedAt: 'Apr 10' },
-      { name: 'Jennifer Torres', role: 'CFO', email: 'jtorres@firstcapitalbank.com', access: 'Financials, Vendor Contracts', addedAt: 'Apr 10' },
-      { name: 'Michael Brown', role: 'COO', email: 'mbrown@firstcapitalbank.com', access: 'Operations, Compliance', addedAt: 'Apr 11' },
-    ],
-    files: [
-      { name: 'IT Financial Model FY2025.xlsx', uploadedAt: 'Apr 10', uploadedBy: 'David Kim', status: 'promoted', promotable: true },
-      { name: 'FedNow Vendor Evaluation — Final Scorecard.xlsx', uploadedAt: 'Apr 13', uploadedBy: 'Anand Sundaram', status: 'pending_promotion', promotable: true },
-      { name: 'Finzly Contract Negotiation Notes.docx', uploadedAt: 'Apr 13', uploadedBy: 'Anand Sundaram', status: 'engagement_only', promotable: false },
     ],
   },
   {

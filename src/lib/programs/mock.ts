@@ -42,7 +42,6 @@ const PEOPLE: Record<string, PersonRef> = {
   sofia: { id: 'person-sofia-ramirez', name: 'Sofia Ramirez', title: 'Data Platform Director', initials: 'SR', avatarColor: '#b45309', clientName: 'Apex Retail Group' },
   maya: { id: 'person-maya-brooks', name: 'Maya Brooks', title: 'Store Experience Lead', initials: 'MB', avatarColor: '#be123c', clientName: 'Apex Retail Group' },
   lena: { id: 'person-lena-morales', name: 'Lena Morales', title: 'Maestro Oversight', initials: 'LM', avatarColor: '#7c3aed' },
-  fcfCfo: { id: 'person-elena-ford', name: 'Elena Ford', title: 'Chief Financial Officer', initials: 'EF', avatarColor: '#6d28d9', clientName: 'First Capital Financial' },
 };
 
 const archetypeLabelMap: Record<ArchetypeKey, string> = {

@@ -13,27 +13,27 @@ import {
 // integration test.
 
 const FIXTURE = {
-  clientNames: ['First Capital Financial', 'Arcturus Financial Group', 'First Capital'],
-  activeClientCookie: 'arcturus',
+  clientNames: ['Apex Retail Group', 'Apex Retail'],
+  activeClientCookie: 'apexretail',
   sponsor: {
     graphNodeId: 'person_e2e_phase_3_4_mina_shah',
     name: 'Mina Shah',
     email: 'e2e.mina.shah@abarva.test',
-    role: 'Head of Commercial Banking Operations',
-    organization: 'First Capital Financial',
+    role: 'Head of Retail Operations',
+    organization: 'Apex Retail Group',
     familiarity: 'frequent_collaborator' as const,
     communicationStyle: {
       title: 'Head of Commercial Banking Operations',
       cxo_function: 'Operations',
-      unit: 'Commercial Banking',
-      primary_focus: 'Improve banker throughput and reduce manual review effort across the lending workflow.',
+      unit: 'Retail Operations',
+      primary_focus: 'Improve store operations throughput and reduce manual review effort across the merchandising workflow.',
     },
   },
   engagement: {
     graphNodeId: 'eng_e2e_phase_3_to_4',
-    name: 'First Capital Analytics Modernization',
-    industryCode: 'FINSERV',
-    functionCode: 'MIDDLE_OFFICE',
+    name: 'Apex Analytics Modernization',
+    industryCode: 'RETAIL',
+    functionCode: 'OPERATIONS',
     objectiveCode: 'MODERNISE',
     topicCode: 'analytics_modernization',
     currentPhase: 3,

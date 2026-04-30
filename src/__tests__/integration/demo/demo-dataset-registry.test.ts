@@ -14,8 +14,8 @@ describe('demo-dataset-registry', () => {
   // listDemoDatasets
   // ---------------------------------------------------------------------------
   describe('listDemoDatasets', () => {
-    it('returns 3 tenants', () => {
-      expect(listDemoDatasets()).toHaveLength(3);
+    it('returns 2 tenants', () => {
+      expect(listDemoDatasets()).toHaveLength(2);
     });
   });
 
@@ -33,12 +33,6 @@ describe('demo-dataset-registry', () => {
       const d = getDemoDatasetForTenant('meridian');
       expect(d).not.toBeNull();
       expect(d!.overallTier).toBe('thin');
-    });
-
-    it('arcturus is non-null with tier shell_only', () => {
-      const d = getDemoDatasetForTenant('arcturus');
-      expect(d).not.toBeNull();
-      expect(d!.overallTier).toBe('shell_only');
     });
 
     it('unknown tenant returns null', () => {
@@ -83,11 +77,6 @@ describe('demo-dataset-registry', () => {
       expect(s!.tier).toBe('not_seeded');
     });
 
-    it('arcturus intelligence tier is shell_only', () => {
-      const s = getSurfaceDataAvailability('arcturus', 'intelligence');
-      expect(s).not.toBeNull();
-      expect(s!.tier).toBe('shell_only');
-    });
   });
 
   // ---------------------------------------------------------------------------
@@ -99,8 +88,8 @@ describe('demo-dataset-registry', () => {
       expect(route).toContain('/tenant/apex-retail/programs');
     });
 
-    it('arcturus programs falls back to safe route', () => {
-      const route = getDemoRouteRecommendation('arcturus', 'programs');
+    it('unknown tenant programs falls back to safe route', () => {
+      const route = getDemoRouteRecommendation('unknown', 'programs');
       expect(route).toContain('/tenant/apex-retail/programs');
     });
   });
@@ -117,8 +106,8 @@ describe('demo-dataset-registry', () => {
       expect(summarizeDemoDataCoverage().thinTenants).toBe(1);
     });
 
-    it('shellOnlyTenants is 1', () => {
-      expect(summarizeDemoDataCoverage().shellOnlyTenants).toBe(1);
+    it('shellOnlyTenants is 0', () => {
+      expect(summarizeDemoDataCoverage().shellOnlyTenants).toBe(0);
     });
   });
 

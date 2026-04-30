@@ -110,7 +110,7 @@ ${ABARVA_PRODUCT_CONTEXT}
  * full demo block (rich program/source-event context); other tenants
  * get just the general platform context. This stops Steward and Nexus
  * from referencing Apex programs in conversations about Meridian /
- * Arcturus / etc.
+ * tenant demo data.
  *
  * `clientKey` matches the values returned by `getActiveClientRow().key`
  * (see `src/lib/active-client.ts`). Pass `null` when the request is
@@ -125,7 +125,7 @@ export function getTenantSystemBlock(
   // path in the agent route works regardless of which key was passed.
   if (clientKey === 'apexretail' || clientKey === 'apex-retail') return AGENT_DEMO_SYSTEM_BLOCK;
   // Everything else gets the platform context only. As we build out
-  // tenant-specific demo data for Meridian / Arcturus / etc., this is
+  // tenant-specific demo data for Meridian / tenant demo data., this is
   // the seam to switch on.
   return PLATFORM_ONLY_BLOCK;
 }

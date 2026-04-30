@@ -8,7 +8,6 @@ import { apexOutcomes } from '@/data/apexretail/outcomes';
 import { apexRFP } from '@/data/apexretail/rfp_data';
 import { apexRetailTechInventory } from '@/data/apexretail/technology_inventory';
 import { apexVendors } from '@/data/apexretail/vendors';
-import { firstCapital } from '@/data/firstcapital';
 import { meridianHealth } from '@/data/meridian';
 import evidenceBase from '@/content/deliverables/apex-retail/morrison/_evidence-base.json';
 import timeline from '@/content/deliverables/apex-retail/morrison/_timeline.json';
@@ -1050,117 +1049,10 @@ export function buildMeridianEnterpriseDataRoom(): EnterpriseDataRoomRecord {
   };
 }
 
-export function buildFirstCapitalEnterpriseDataRoom(): EnterpriseDataRoomRecord {
-  const systems: EnterpriseSystemRecord[] = Object.entries(firstCapital.technology).map(([key, value], index) => ({
-    id: `system:first-capital:${key}`,
-    name: key,
-    vendor: typeof value === 'object' && value && 'vendor' in value ? String(value.vendor) : 'Unknown',
-    category: key,
-    businessDomains: ['Financial Services'],
-    businessUnits: ['Technology'],
-    deploymentModel: 'native_ts_seed_candidate',
-    annualSpendUsd: typeof value === 'object' && value && 'annualLicenseCost' in value ? millionsToUsd(Number(value.annualLicenseCost)) : 0,
-    businessOwner: 'Technology leadership pending canonicalization',
-    itOwner: 'Technology leadership pending canonicalization',
-    criticality: index < 2 ? 'high' : 'medium',
-    lifecycleState: 'canonicalization_pending',
-    dataClassification: 'Synthetic financial-services seed',
-    integrationCount: 0,
-    documentedIntegrationCount: 0,
-    riskFlags: ['Financial-services profile conflict must be resolved before rich data-room promotion.'],
-    sourceBasis: SYNTHETIC_SOURCE,
-  }));
-  const evidence: EnterpriseEvidenceRecord[] = [
-    {
-      id: 'evidence:first-capital:canonical-profile-conflict',
-      tenantKey: 'first-capital',
-      sourceArtifactId: 'docs/specs/_meta/seed-data/first-capital-financial-comprehensive-seed.md',
-      citationLocator: 'First Capital profile conflict: TS seed vs comprehensive seed vs shared Arcturus seed',
-      claimText: 'First Capital has conflicting scale/profile sources: TS regional-bank seed, markdown super-regional-bank seed, and shared enterprise seed currently backed by Arcturus constants.',
-      evidenceType: 'canonicalization_gap',
-      confidence: 'blocked',
-      usabilityState: 'blocked',
-      linkedArtifactIds: [],
-      linkedGraphNodeIds: [],
-      sourceBasis: SYNTHETIC_SOURCE,
-      dataClassification: 'synthetic',
-      approvalState: 'blocked',
-    },
-  ];
-  const profile: EnterpriseProfileRecord = {
-    tenantKey: 'first-capital',
-    legalName: firstCapital.org.name,
-    displayName: firstCapital.org.shortName,
-    industry: 'Financial Services',
-    subIndustry: firstCapital.org.type,
-    headquarters: firstCapital.org.headquarters,
-    regions: ['US regional banking footprint'],
-    employeeCount: firstCapital.org.employees,
-    revenueUsdBillions: firstCapital.org.revenue,
-    strategicPriorities: firstCapital.strategicPriorities,
-    regulatoryPosture: ['BSA/AML sensitivity', 'MNPI/legal privileged handling pending', 'Banking regulatory exam posture'],
-    dataClassificationPolicyId: 'synthetic-demo-policy-v1',
-    residencyMode: 'abarva_hosted_synthetic',
-    sourceBasis: SYNTHETIC_SOURCE,
-    dataClassification: 'synthetic',
-  };
-  const programs = firstCapital.aiOpportunities.map((opportunity, index) => ({
-    id: `program:first-capital:ai-opportunity:${index + 1}`,
-    name: opportunity.useCase,
-    domain: 'ai_opportunity',
-    lifecycleState: 'candidate',
-    executiveSponsor: 'Sponsor pending canonicalization',
-    budgetUsd: opportunity.implementationCost,
-    spentToDateUsd: undefined,
-    annualValueUsd: 'annualSaving' in opportunity ? opportunity.annualSaving : opportunity.annualRevenue,
-    timeline: opportunity.timeToValue,
-    linkedSystemIds: [],
-    linkedVendorIds: [],
-    linkedEvidenceIds: [],
-    sourceBasis: SYNTHETIC_SOURCE,
-  }));
-
-  return {
-    tenantKey: 'first-capital',
-    generatedFrom: 'deterministic_enterprise_data_room_seed',
-    richness: 'partial',
-    sourcePaths: [
-      'src/data/firstcapital',
-      'docs/specs/_meta/seed-data/first-capital-financial-comprehensive-seed.md',
-      'docs/specs/_meta/seed-data/first-capital-intelligence-layer-overlay.md',
-      'src/scripts/seed/_shared/enterprise-data.ts',
-    ],
-    canonicalizationWarnings: [
-      'Canonical profile conflict: First Capital appears as a regional bank, a super-regional composite, and an Arcturus-backed shared seed.',
-      'Legal/MNPI handling is not yet represented in the runtime data-room schema; keep this synthetic-only.',
-      'Native First Capital source files have better evidence than CLIENT_DATA[First Capital], which currently points at Arcturus-shaped constants.',
-    ],
-    profile,
-    people: [],
-    systems,
-    vendorContracts: [],
-    financials: [
-      { id: 'financial:first-capital:assets', metric: 'Assets', value: firstCapital.financials.assets2023, unit: 'USD billions', category: 'revenue', sourceBasis: SYNTHETIC_SOURCE, evidenceIds: [] },
-      { id: 'financial:first-capital:it-budget', metric: 'IT budget', value: firstCapital.financials.itBudget, unit: 'USD millions', category: 'budget', sourceBasis: SYNTHETIC_SOURCE, evidenceIds: [] },
-      { id: 'financial:first-capital:cost-to-income', metric: 'Cost-to-income ratio', value: firstCapital.financials.costToIncomeRatio, unit: 'percent', category: 'benchmark', sourceBasis: SYNTHETIC_SOURCE, evidenceIds: [] },
-    ],
-    programs,
-    artifacts: [],
-    sourcingEvents: [],
-    evidence,
-    graph: buildCandidateGraph('first-capital', profile, systems, [], programs, evidence),
-    vectorReadiness: [
-      { indexFamily: 'tenant_facts', candidateChunkCount: systems.length + programs.length, sourceTypes: ['native_ts_candidate_fact'], tenantKeyRequired: true, rawPrivateTextAllowedInSharedMetadata: false },
-      { indexFamily: 'tenant_evidence', candidateChunkCount: 230, sourceTypes: ['overlay_evidence_candidate'], tenantKeyRequired: true, rawPrivateTextAllowedInSharedMetadata: false },
-    ],
-  };
-}
-
 export function listEnterpriseDataRooms(): EnterpriseDataRoomRecord[] {
   return [
     buildApexEnterpriseDataRoom(),
     buildMeridianEnterpriseDataRoom(),
-    buildFirstCapitalEnterpriseDataRoom(),
   ];
 }
 

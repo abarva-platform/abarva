@@ -28,11 +28,11 @@ const FORBIDDEN_LOWER = ['commonspirit health', 'first capital financial', 'hp i
     console.log(`  · ${c.name.padEnd(24)} ${c.id}  use_cases=${ucCount ?? 0} engagements=${engCount ?? 0}`);
   }
 
-  // Pack J First Capital use case gap
+  // Pack J two-client use case check
   const { count: fcUseCases } = await sb
     .from('use_cases')
     .select('*', { count: 'exact', head: true })
     .eq('client_id', 'a75687bf-71b9-4524-ab4e-68ae3f28d200')
     .eq('source', 'seed');
-  console.log(`First Capital use_cases (source=seed) · ${fcUseCases}`);
+  console.log(`Retired-client use_cases (source=seed) · ${fcUseCases}`);
 })();

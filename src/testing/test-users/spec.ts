@@ -22,15 +22,15 @@ export interface TestUserSpec {
     primaryRole: ProvisioningMembershipRole;
   };
   memberships?: Array<{
-    clientKey: 'meridian' | 'arcturus' | 'apexretail' | 'keystone';
+    clientKey: 'meridian' | 'apexretail';
     role: ProvisioningMembershipRole;
   }>;
   sponsorGrant?: {
     programName: string;
-    clientKey: 'meridian' | 'arcturus' | 'apexretail' | 'keystone';
+    clientKey: 'meridian' | 'apexretail';
   };
   expectations: {
-    visibleClientKeys: Array<'meridian' | 'arcturus' | 'apexretail' | 'keystone'>;
+    visibleClientKeys: Array<'meridian' | 'apexretail'>;
     publicOnly: boolean;
     canApprove: boolean;
     canCreatePrograms: boolean;
@@ -116,13 +116,13 @@ export const TEST_USER_SPECS: TestUserSpec[] = [
     appRole: 'investor',
     publicMetadata: {
       role: 'investor',
-      clientIds: ['meridian', 'arcturus', 'apexretail', 'keystone'],
+      clientIds: ['meridian', 'apexretail'],
       defaultClientId: 'meridian',
       clientLocked: false,
       personaKey: 'jake-anthology-analyst',
     },
     expectations: {
-      visibleClientKeys: ['meridian', 'arcturus', 'apexretail', 'keystone'],
+      visibleClientKeys: ['meridian', 'apexretail'],
       publicOnly: false,
       canApprove: false,
       canCreatePrograms: false,

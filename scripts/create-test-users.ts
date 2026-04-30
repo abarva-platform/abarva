@@ -92,9 +92,7 @@ async function loadClients(): Promise<Map<string, ClientRow>> {
   const byKey = new Map<string, ClientRow>();
   for (const row of (data as ClientRow[] | null) ?? []) {
     if (/Meridian/i.test(row.name)) byKey.set('meridian', row);
-    if (/Arcturus|First Capital/i.test(row.name)) byKey.set('arcturus', row);
     if (/Apex Retail/i.test(row.name)) byKey.set('apexretail', row);
-    if (/Keystone/i.test(row.name)) byKey.set('keystone', row);
   }
   return byKey;
 }

@@ -63,7 +63,6 @@ const CANONICAL_PROGRAM_IDS = [
 ]
 
 const CANONICAL_TENANT_IDS = [
-  'tenant-arcturus',
   'tenant-meridian',
   'tenant-apex-retail',
 ]
@@ -136,10 +135,10 @@ const PROGRAM_IDS_BY_SURFACE: Record<Surface, string[]> = {
 
 // Tenant IDs: all surfaces are consistent.
 const TENANT_IDS_BY_SURFACE: Record<Surface, string[]> = {
-  programs: ['tenant-arcturus', 'tenant-meridian', 'tenant-apex-retail'],
-  tower: ['tenant-arcturus', 'tenant-meridian', 'tenant-apex-retail'],
-  intelligence: ['tenant-arcturus', 'tenant-meridian', 'tenant-apex-retail'],
-  admin: ['tenant-arcturus', 'tenant-meridian', 'tenant-apex-retail'],
+  programs: ['tenant-meridian', 'tenant-apex-retail'],
+  tower: ['tenant-meridian', 'tenant-apex-retail'],
+  intelligence: ['tenant-meridian', 'tenant-apex-retail'],
+  admin: ['tenant-meridian', 'tenant-apex-retail'],
 }
 
 // Archetype IDs: intelligence leads, but programs is missing one archetype

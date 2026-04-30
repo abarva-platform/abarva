@@ -178,7 +178,7 @@ export const MERIDIAN_PLATFORMS: Platform[] = CLOUD_AI_PLATFORMS.map(p => {
   return p
 })
 
-// Client-adjusted scores for First Capital (Compliance-first, existing AWS infra)
+// Client-adjusted scores for Apex Retail (retail-first, omnichannel estate)
 export const FIRSTCAPITAL_PLATFORMS: Platform[] = CLOUD_AI_PLATFORMS.map(p => {
   if (p.id === 'aws-claude') return { ...p, scores: { ...p.scores, ecosystemFit: 5, compliance: 5, risk: 5 } }
   if (p.id === 'azure-openai') return { ...p, scores: { ...p.scores, compliance: 3 } }

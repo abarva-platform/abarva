@@ -145,11 +145,10 @@ export interface TenantModelAccessEvaluation {
 const TENANT_KEYS = [
   'apexretail',
   'meridianhealth',
-  'arcturuslogistics',
 ] as const;
 
 // ---------------------------------------------------------------------
-// Seed entries (dense - 3 tenants x 7 providers = 21 entries).
+// Seed entries (dense - 2 tenants x 7 providers = 14 entries).
 // ---------------------------------------------------------------------
 
 const SEED_ENTRIES: readonly TenantModelPolicyEntry[] = [
@@ -348,102 +347,6 @@ const SEED_ENTRIES: readonly TenantModelPolicyEntry[] = [
       'Bedrock contractual posture acceptable in principle; ' +
       'meridianhealth security review pending before tenant rollout.',
     nextReviewStep: 'Security lead to complete vendor review checklist.',
-    createdFrom: 'deterministic_tenant_model_provider_policy_seed',
-  },
-
-  // ---------------- arcturuslogistics (logistics) ----------------
-  {
-    id: 'tmpp-arcturuslogistics-provider_alpha',
-    tenantKey: 'arcturuslogistics',
-    provider: 'provider_alpha',
-    decision: 'approved',
-    basis: ['tenant_admin_decision'],
-    purposes: ['recommendation', 'synthesis', 'classification', 'extraction'],
-    rationale:
-      'Tenant admin approved provider_alpha as the default tier_a ' +
-      'recommendation provider for arcturuslogistics surfaces.',
-    nextReviewStep: '',
-    createdFrom: 'deterministic_tenant_model_provider_policy_seed',
-  },
-  {
-    id: 'tmpp-arcturuslogistics-provider_beta',
-    tenantKey: 'arcturuslogistics',
-    provider: 'provider_beta',
-    decision: 'approved',
-    basis: ['tenant_admin_decision', 'cost_constraint'],
-    purposes: ['classification', 'extraction', 'audit'],
-    rationale:
-      'Approved as the cost-efficient tier_b classification and ' +
-      'extraction provider; explicit cost-constraint basis recorded.',
-    nextReviewStep: '',
-    createdFrom: 'deterministic_tenant_model_provider_policy_seed',
-  },
-  {
-    id: 'tmpp-arcturuslogistics-provider_gamma',
-    tenantKey: 'arcturuslogistics',
-    provider: 'provider_gamma',
-    decision: 'deferred',
-    basis: ['cost_constraint'],
-    purposes: ['recommendation', 'synthesis'],
-    rationale:
-      'Provider_gamma deferred; per-tenant daily cap consumed by ' +
-      'higher-tier providers under current usage pattern.',
-    nextReviewStep:
-      'Revisit once tenant daily cap is renegotiated or usage shifts.',
-    createdFrom: 'deterministic_tenant_model_provider_policy_seed',
-  },
-  {
-    id: 'tmpp-arcturuslogistics-on_prem_open_weight',
-    tenantKey: 'arcturuslogistics',
-    provider: 'on_prem_open_weight',
-    decision: 'approved',
-    basis: ['data_classification'],
-    purposes: ['evaluation', 'extraction'],
-    rationale:
-      'On-prem open-weight model approved for evaluation and ' +
-      'extraction over L3-sensitive shipment data.',
-    nextReviewStep: '',
-    createdFrom: 'deterministic_tenant_model_provider_policy_seed',
-  },
-  {
-    id: 'tmpp-arcturuslogistics-azure_oai',
-    tenantKey: 'arcturuslogistics',
-    provider: 'azure_oai',
-    decision: 'approved',
-    basis: ['security_review', 'tenant_admin_decision'],
-    purposes: ['synthesis', 'extraction', 'audit'],
-    rationale:
-      'Azure OAI approved for synthesis and extraction after ' +
-      'security review of regional posture and tenant key handling.',
-    nextReviewStep: '',
-    createdFrom: 'deterministic_tenant_model_provider_policy_seed',
-  },
-  {
-    id: 'tmpp-arcturuslogistics-vertex_ai',
-    tenantKey: 'arcturuslogistics',
-    provider: 'vertex_ai',
-    decision: 'requires_review',
-    basis: ['governance_review'],
-    purposes: ['classification', 'extraction'],
-    rationale:
-      'Governance review of vertex_ai contractual terms pending ' +
-      'before approval for arcturuslogistics tenant.',
-    nextReviewStep:
-      'Governance lead to confirm contractual review and log decision.',
-    createdFrom: 'deterministic_tenant_model_provider_policy_seed',
-  },
-  {
-    id: 'tmpp-arcturuslogistics-bedrock',
-    tenantKey: 'arcturuslogistics',
-    provider: 'bedrock',
-    decision: 'blocked',
-    basis: ['cost_constraint', 'tenant_admin_decision'],
-    purposes: ['recommendation', 'synthesis'],
-    rationale:
-      'Tenant admin blocked bedrock for arcturuslogistics; current ' +
-      'cost envelope and contractual posture do not support adoption.',
-    nextReviewStep:
-      'Tenant admin to revisit if pricing or contract changes materially.',
     createdFrom: 'deterministic_tenant_model_provider_policy_seed',
   },
 ];

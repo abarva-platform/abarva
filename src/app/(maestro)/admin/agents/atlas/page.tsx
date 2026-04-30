@@ -27,8 +27,6 @@ export const revalidate = 0;
 const TENANT_DISPLAY_FROM_KEY: Record<string, string> = {
   apexretail: 'Apex Retail Group',
   meridian: 'Meridian Health System',
-  arcturus: 'Arcturus Financial Group',
-  keystone: 'Keystone Energy Holdings',
 };
 
 export default async function AdminAtlasPage() {

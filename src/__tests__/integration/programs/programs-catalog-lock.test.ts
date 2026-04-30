@@ -26,26 +26,6 @@ const EXPECTED_PROGRAMS = [
       ['MRD-05', 'readmission-risk-model-refresh', 5, 'completed'],
     ],
   },
-  {
-    tenantKey: 'arcturus',
-    routeSlug: 'first-capital-financial',
-    programs: [
-      ['FCF-01', 'fraud-detection-modernization', 3, 'active'],
-      ['FCF-02', 'customer-onboarding-kyc-ai', 4, 'active'],
-      ['FCF-03', 'wealth-advisor-copilot', 2, 'active'],
-      ['FCF-04', 'commercial-lending-data-platform', 1, 'active'],
-    ],
-  },
-  {
-    tenantKey: 'keystone',
-    routeSlug: 'keystone-energy',
-    programs: [
-      ['KST-01', 'commodity-trading-ai-modernization', 3, 'active'],
-      ['KST-02', 'predictive-maintenance-modernization', 4, 'active'],
-      ['KST-03', 'ot-it-data-platform-convergence', 2, 'active'],
-      ['KST-04', 'regulatory-reporting-ai', 5, 'completed'],
-    ],
-  },
 ] as const;
 
 describe('Programs catalog lock · seeded portfolio shape', () => {
@@ -53,14 +33,14 @@ describe('Programs catalog lock · seeded portfolio shape', () => {
 
   it('locks the portfolio summary counts', () => {
     expect(plan.summary).toEqual({
-      tenantCount: 4,
-      programCount: 19,
+      tenantCount: 2,
+      programCount: 11,
       deliverableTypeCount: 28,
-      deliverableCount: 457,
-      nonStubDeliverableCount: 283,
+      deliverableCount: 269,
+      nonStubDeliverableCount: 169,
       richDeliverableCount: 44,
-      outlineDeliverableCount: 239,
-      stubDeliverableCount: 174,
+      outlineDeliverableCount: 125,
+      stubDeliverableCount: 100,
     });
   });
 
@@ -68,14 +48,10 @@ describe('Programs catalog lock · seeded portfolio shape', () => {
     expect(plan.tenants.map((tenant) => tenant.tenantKey)).toEqual([
       'apexretail',
       'meridian',
-      'arcturus',
-      'keystone',
     ]);
     expect(plan.tenants.map((tenant) => tenant.routeSlug)).toEqual([
       'apex-retail',
       'meridian-health',
-      'first-capital-financial',
-      'keystone-energy',
     ]);
   });
 

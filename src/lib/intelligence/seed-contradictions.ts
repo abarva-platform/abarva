@@ -190,9 +190,9 @@ export const CONTRADICTION_SEEDS: ContradictionSeed[] = [
     },
     partyB: {
       claim: 'Shadow-AI behavior is already bypassing the formal policy through local acquisition and embedded-tool usage.',
-      source: 'Shadow AI governance pack and Keystone overlay.',
+      source: 'Shadow AI governance pack and pattern overlay.',
       evidence:
-        'The source pack identifies policy contradicted by at least three documented instances, and Keystone describes under-threshold procurement pathways.',
+        'The source pack identifies policy contradicted by at least three documented instances, and pattern corpus describes under-threshold procurement pathways.',
       confidence: 0.82,
     },
     whyBothCannotBeTrue:
@@ -202,11 +202,11 @@ export const CONTRADICTION_SEEDS: ContradictionSeed[] = [
     resolutionTimeline: 'Resolve after tenant-specific bypass examples are attached and mapped to the violated policy clauses.',
     sourceDocuments: [
       'docs/source-material/pattern-pack-01-shadow-ai-governance.md',
-      'docs/source-material/tenant-overlays/keystone-intelligence-layer-overlay.md',
+      'docs/source-material/tenant-overlays/pattern-intelligence-layer-overlay.md',
       'src/lib/intelligence/seed-patterns-ai-programs.ts',
     ],
     body:
-      'Evidence enrichment: PAT-AI-002 establishes the formal governance lane, while PAT-AI-005 and the Keystone overlay supply the bypass mechanism: shadow AI, embedded vendor AI, and under-threshold procurement can move usage outside sanctioned review. External research ask: attach tenant procurement and usage evidence that names the tool, acquisition path, spend threshold used or avoided, approval route, violated policy clause, date, and accountable owner before resolving this from pattern-level tension to tenant-proven contradiction.',
+      'Evidence enrichment: PAT-AI-002 establishes the formal governance lane, while PAT-AI-005 and the pattern overlay supplies the bypass mechanism: shadow AI, embedded vendor AI, and under-threshold procurement can move usage outside sanctioned review. External research ask: attach tenant procurement and usage evidence that names the tool, acquisition path, spend threshold used or avoided, approval route, violated policy clause, date, and accountable owner before resolving this from pattern-level tension to tenant-proven contradiction.',
   },
   {
     id: 'CON-007',
@@ -310,7 +310,7 @@ export const CONTRADICTION_SEEDS: ContradictionSeed[] = [
     },
     partyB: {
       claim: 'Procurement paths can still introduce or expand AI tools outside that named owner authority.',
-      source: 'Shadow-AI governance pack and Keystone overlay.',
+      source: 'Shadow-AI governance pack and pattern overlay.',
       evidence:
         'The source material distinguishes declared ownership from procurement control and identifies under-threshold acquisition as a bypass mechanism.',
       confidence: 0.78,
@@ -322,11 +322,11 @@ export const CONTRADICTION_SEEDS: ContradictionSeed[] = [
     resolutionTimeline: 'Resolve after a tenant-specific owner map and at least one bypassing acquisition are attached.',
     sourceDocuments: [
       'docs/source-material/pattern-pack-01-shadow-ai-governance.md',
-      'docs/source-material/tenant-overlays/keystone-intelligence-layer-overlay.md',
+      'docs/source-material/tenant-overlays/pattern-intelligence-layer-overlay.md',
       'src/lib/intelligence/seed-patterns-ai-programs.ts',
     ],
     body:
-      'Evidence enrichment: PAT-AI-002 and PAT-AI-014 support named ownership and sponsor activation, while PAT-AI-005 plus the Keystone overlay describe under-threshold acquisition as a channel that can bypass that authority. External research ask: attach the tenant AI-owner RACI, delegated procurement thresholds, intake policy, and at least one concrete acquisition record naming vendor, buyer, approval path, amount, date, and why the named owner did not control the decision.',
+      'Evidence enrichment: PAT-AI-002 and PAT-AI-014 support named ownership and sponsor activation, while PAT-AI-005 plus the pattern overlay describe under-threshold acquisition as a channel that can bypass that authority. External research ask: attach the tenant AI-owner RACI, delegated procurement thresholds, intake policy, and at least one concrete acquisition record naming vendor, buyer, approval path, amount, date, and why the named owner did not control the decision.',
   },
 ];
 

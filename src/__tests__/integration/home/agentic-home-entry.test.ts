@@ -33,12 +33,12 @@ describe('HOME1 · AgenticHomeEntry · render', () => {
     expect(html.length).toBeGreaterThan(0);
   });
 
-  it('renders without throwing for an explicit tenantSlug prop', () => {
-    expect(() => render({ tenantSlug: 'arcturus' })).not.toThrow();
-    const html = render({ tenantSlug: 'arcturus' });
-    expect(html).toContain('/tenant/arcturus/programs');
-    expect(html).toContain('/tenant/arcturus/tower');
-    expect(html).toContain('/tenant/arcturus/intelligence');
+  it('renders without throwing for an Apex tenantSlug prop', () => {
+    expect(() => render({ tenantSlug: 'apex-retail' })).not.toThrow();
+    const html = render({ tenantSlug: 'apex-retail' });
+    expect(html).toContain('/tenant/apex-retail/programs');
+    expect(html).toContain('/tenant/apex-retail/tower');
+    expect(html).toContain('/tenant/apex-retail/intelligence');
   });
 
   it('falls back to the canonical placeholder slug `acme` when no prop is given', () => {

@@ -157,7 +157,7 @@ const SCRIPTS = [
   },
   {
     id: 'screen-15',
-    text: `Arcturus Financial Group. 200 billion AUM.
+    text: `Apex Retail Group. Omnichannel retail footprint.
     Cost-to-income ratio 71 percent versus 58 percent peer benchmark —
     an 840 million dollar efficiency gap.
     AbarNexus found 94 million in AI spend with zero baselines,

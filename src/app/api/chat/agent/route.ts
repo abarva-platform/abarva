@@ -382,7 +382,7 @@ export async function POST(request: Request) {
   // demo block to the right tenant. Apex Retail gets the rich
   // multi-program demo context; everyone else gets only the general
   // platform context (avoids Steward/Nexus referencing Apex programs
-  // in conversations with Meridian or Arcturus users).
+  // in conversations with Meridian or Apex users).
   // activeClient already resolved above for tenant isolation in getEngagementWithPhaseData.
   const sourceClientKey = isSourceSurface(surface)
     ? resolveSourceClientKey(surfaceContext)

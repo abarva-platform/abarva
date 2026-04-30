@@ -706,9 +706,7 @@ function buildSparseContent(
 
 const TENANT_DISPLAY_NAMES: Record<ClientKey, string> = {
   meridian: 'Meridian Health System',
-  arcturus: 'Arcturus Financial Group',
   apexretail: 'Apex Retail Group',
-  keystone: 'Keystone Energy Holdings',
 };
 
 /**

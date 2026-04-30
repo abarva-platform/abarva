@@ -29,10 +29,6 @@ describe('AGENT1A — Context bundle', () => {
     const ctx = buildAgentContext('meridian-health', 'admin', 'architecture');
     expect(ctx.tenant.tier).toBe('shell_only');
   });
-  it('resolves arcturus as shell_only tier', () => {
-    const ctx = buildAgentContext('arcturus', 'admin', 'architecture');
-    expect(ctx.tenant.tier).toBe('shell_only');
-  });
   it('unknown tenant defaults to shell_only', () => {
     const ctx = buildAgentContext('unknown-xyz', 'admin', 'architecture');
     expect(ctx.tenant.tier).toBe('shell_only');
@@ -456,7 +452,7 @@ describe('AGENT1A — Choices builder', () => {
     expect(buildAgentChoices(ctx, 3).length).toBeGreaterThan(0);
   });
   it('all choice sets include a custom affordance', () => {
-    const ctx = buildAgentContext('arcturus', 'admin', 'architecture');
+    const ctx = buildAgentContext('meridian-health', 'admin', 'architecture');
     const choices = buildAgentChoices(ctx, 3);
     expect(choices.some((c) => c.category === 'custom')).toBe(true);
   });
@@ -576,27 +572,27 @@ describe('AGENT1A — Cross-tenant determinism', () => {
     const b = buildAgentContext('apex-retail', 'admin', 'production-readiness');
     expect(a).toEqual(b);
   });
-  it('shell_only tenants get the same architecture bundle', () => {
-    const a = buildAgentContext('arcturus', 'admin', 'architecture');
+  it('shell_only tenant contexts get the same architecture bundle', () => {
+    const a = buildAgentContext('meridian-health', 'admin', 'architecture');
     const b = buildAgentContext('meridian-health', 'admin', 'architecture');
     // Tenant slug/name differ, but seed should be the same per page.
     expect(a.contextSources.length).toBe(b.contextSources.length);
     expect(a.evidence.strength).toBe(b.evidence.strength);
     expect(a.blockers).toEqual(b.blockers);
   });
-  it('apex-retail and shell_only tenants share the same admin seed for a page', () => {
+  it('apex-retail and shell_only tenant contexts share the same admin seed for a page', () => {
     const a = buildAgentContext('apex-retail', 'admin', 'architecture');
-    const b = buildAgentContext('arcturus', 'admin', 'architecture');
+    const b = buildAgentContext('meridian-health', 'admin', 'architecture');
     expect(a.contextSources).toEqual(b.contextSources);
   });
   it('build-progress always resolves the platform tenant', () => {
     const a = buildAgentContext('apex-retail', 'admin', 'build-progress');
-    const b = buildAgentContext('arcturus', 'admin', 'build-progress');
+    const b = buildAgentContext('meridian-health', 'admin', 'build-progress');
     expect(a.tenant).toEqual(b.tenant);
   });
   it('non-admin surfaces have empty seed regardless of tenant', () => {
     const a = buildAgentContext('apex-retail', 'programs', 'overview');
-    const b = buildAgentContext('arcturus', 'programs', 'overview');
+    const b = buildAgentContext('meridian-health', 'programs', 'overview');
     expect(a.contextSources.length).toBe(0);
     expect(b.contextSources.length).toBe(0);
   });

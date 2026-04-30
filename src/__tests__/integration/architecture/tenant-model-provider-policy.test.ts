@@ -71,7 +71,6 @@ describe('canonical vocabularies', () => {
   it('exposes the canonical tenant keys', () => {
     expect(TENANT_MODEL_POLICY_TENANT_KEYS).toContain('apexretail');
     expect(TENANT_MODEL_POLICY_TENANT_KEYS).toContain('meridianhealth');
-    expect(TENANT_MODEL_POLICY_TENANT_KEYS).toContain('arcturuslogistics');
   });
 });
 

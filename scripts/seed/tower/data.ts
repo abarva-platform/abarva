@@ -110,7 +110,7 @@ export const COHORT_PEERS: CohortPeerSeed[] = [
     metric_snapshot: { adoption_penetration_pct_avg: 58, ai_spend_pct_of_revenue: 0.09, shadow_ai_annual_spend_usd: 940_000, value_attainment_pct_avg: 68, distinct_ai_vendors_count: 8 },
   },
   {
-    display_name: 'Keystone Commerce Group',
+    display_name: 'Apex Retail Group',
     cohort_kind: 'composite',
     industry_code: 'retail',
     revenue_band: '$40B-$50B',

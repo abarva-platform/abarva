@@ -29,18 +29,16 @@ describe('Programs enhancement seed writer helpers', () => {
     });
   });
 
-  it('keeps First Capital aliases while inserting the canonical display name if missing', () => {
-    const arcturus = TENANT_PORTFOLIOS.find((portfolio) => portfolio.tenantKey === 'arcturus')!;
+  it('keeps Apex aliases while inserting the canonical display name if missing', () => {
+    const apex = TENANT_PORTFOLIOS.find((portfolio) => portfolio.tenantKey === 'apexretail')!;
 
-    expect(clientAliasesForPortfolio(arcturus)).toEqual([
-      'First Capital Financial',
-      'Arcturus Financial',
-      'Arcturus Financial Group',
-      'First Capital',
+    expect(clientAliasesForPortfolio(apex)).toEqual([
+      'Apex Retail Group',
+      'Apex Retail',
     ]);
-    expect(buildSeedClientPayload(arcturus)).toMatchObject({
-      name: 'First Capital Financial',
-      industry_code: 'FINSERV',
+    expect(buildSeedClientPayload(apex)).toMatchObject({
+      name: 'Apex Retail Group',
+      industry_code: 'RETAIL',
     });
   });
 

@@ -94,11 +94,6 @@ const STARTER_PROMPTS = [
     prompt:
       'Set up a Meridian Health prior authorization automation program. The problem is manual prior auth work is increasing clinician burden and downstream denial risk. Target outcome: improve auto-approval rate and reduce avoidable denials. Sponsor Patricia Okafor; lead David Henderson; timeline is P1 discovery this quarter.',
   },
-  {
-    label: 'First Capital risk controls',
-    prompt:
-      'Set up a First Capital program for AI model-risk controls. The problem is GenAI pilots are moving faster than governance evidence. Target outcome: standardize attestation, ownership, and audit trails before production use. Sponsor the CIO; lead enterprise risk; timeline is 90 days to P2.',
-  },
 ];
 
 function generateTurnId(): string {

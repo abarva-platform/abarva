@@ -267,20 +267,16 @@ import type {
 import { APEX_PROGRAMS_FIXTURE } from './programs-fixture';
 import { MERIDIAN_PROGRAMS_FIXTURE } from './meridian-fixture';
 
-export type ProgramsIndexTenant = 'apex-retail' | 'meridian-health' | 'first-capital' | 'keystone-energy';
+export type ProgramsIndexTenant = 'apex-retail' | 'meridian-health';
 
 const PROGRAM_FIXTURES_BY_TENANT: Record<ProgramsIndexTenant, ProgramRow[]> = {
   'apex-retail': APEX_PROGRAMS_FIXTURE,
   'meridian-health': MERIDIAN_PROGRAMS_FIXTURE,
-  'first-capital': [],
-  'keystone-energy': [],
 };
 
 const PROGRAM_TENANT_LABELS: Record<ProgramsIndexTenant, string> = {
   'apex-retail': 'Apex Retail Group',
   'meridian-health': 'Meridian Health System',
-  'first-capital': 'First Capital Financial',
-  'keystone-energy': 'Keystone Energy Holdings',
 };
 
 export type ProgramsIndexFilterKey = 'all' | 'active' | 'idle' | 'gated';

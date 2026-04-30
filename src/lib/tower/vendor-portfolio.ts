@@ -1,9 +1,8 @@
 // Vendor portfolio adapter · File 04 Z1-B
 //
-// Each seeded tenant has its own vendor seed schema (apex, meridian,
-// firstcapital, keystone). This adapter normalizes them into a common
-// view model the VendorPortfolioSurface renders. One VM, three seeds,
-// zero re-authoring.
+// Each seeded tenant has its own vendor seed schema (Apex, Meridian).
+// This adapter normalizes them into a common view model the
+// VendorPortfolioSurface renders.
 
 import type { ClientKey } from '@/lib/client-config';
 
@@ -102,13 +101,6 @@ export async function loadVendorPortfolio(tenantKey: ClientKey, tenantDisplay: s
     if (tenantKey === 'meridian') {
       const mod = await import('@/data/meridian/vendors');
       return adapt(tenantKey, tenantDisplay, mod.meridianVendors as unknown as GenericTenantVendorSeed, 'Seeded composite vendor inventory for Meridian Health System.');
-    }
-    if (tenantKey === 'arcturus') {
-      const mod = await import('@/data/firstcapital/vendors');
-      // First Capital seed is a differently-shaped exported record; keep
-      // the adapter tolerant and let the surface render whatever arrives.
-      const data = (mod.firstCapitalVendors ?? {}) as unknown as GenericTenantVendorSeed;
-      return adapt(tenantKey, tenantDisplay, data, 'Seeded composite vendor inventory for Arcturus Financial / First Capital.');
     }
     return null;
   } catch {

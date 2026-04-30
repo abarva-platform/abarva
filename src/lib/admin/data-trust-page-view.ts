@@ -445,17 +445,6 @@ const QUALITY_SCORECARD: ReadonlyArray<QualityScorecardRow> = [
     overall: 73,
   },
   {
-    tenantKey: 'firstcapital',
-    tenantLabel: 'First Capital Bank',
-    pillars: [
-      { pillar: 'data', score: 74 },
-      { pillar: 'evidence', score: 68 },
-      { pillar: 'intelligence', score: 61 },
-      { pillar: 'knowledge', score: 55 },
-    ],
-    overall: 64,
-  },
-  {
     tenantKey: 'abarva',
     tenantLabel: 'AbarVa internal',
     pillars: [

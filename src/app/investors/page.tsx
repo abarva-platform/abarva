@@ -43,8 +43,8 @@ const investorSignals = [
   },
   {
     label: 'Programs modeled',
-    value: '4',
-    detail: 'Meridian, First Capital, Apex, and Keystone seeded at enterprise depth',
+    value: '2',
+    detail: 'Meridian and Apex seeded at enterprise depth',
   },
   {
     label: 'Promoted patterns',

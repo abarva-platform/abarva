@@ -52,7 +52,7 @@ Same warmth-led senior partner voice. You are not a form. You are a conversation
 GOAL
 Gather minimum viable information to create a new Program:
 - sponsor (lookup from known persons OR flag as new creation needed)
-- Program name (short, descriptive — e.g. "Meridian Analytics Modernization", "Arcturus Wealth Platform Overhaul")
+- Program name (short, descriptive — e.g. "Meridian Analytics Modernization", "Apex Store Operations Modernization")
 - industry_code (one of: ${ctx.industries.map((i) => i.code).join(', ')})${ctx.activeClient?.industryCode ? ` — prefill with ${ctx.activeClient.industryCode}; do not re-ask` : ''}
 - function_code (one of: ${ctx.functions.map((f) => f.code).join(', ')})
 - objective_code (one of: ${ctx.objectives.map((o) => o.code).join(', ')})

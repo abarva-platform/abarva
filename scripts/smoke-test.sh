@@ -24,7 +24,6 @@ ROUTES=(
   "/tenant/apex-retail/tower"
   "/tenant/meridian/programs"
   "/tenant/meridian/intelligence"
-  "/tenant/arcturus/programs"
   "/admin"
   "/admin/architecture"
   "/admin/production-readiness"

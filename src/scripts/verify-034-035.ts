@@ -19,7 +19,7 @@ async function main() {
   const { data: clients } = await sb
     .from('clients')
     .select('name, industry_code, annual_revenue_usd, it_budget_usd, ai_budget_usd, employee_count, operational_units')
-    .in('name', ['Meridian Health', 'First Capital', 'Apex Retail']);
+    .in('name', ['Meridian Health', 'Apex Retail']);
   for (const c of (clients ?? []) as Array<Record<string, unknown>>) {
     const rev = c.annual_revenue_usd ? `$${((c.annual_revenue_usd as number) / 1e9).toFixed(1)}B` : '—';
     const it = c.it_budget_usd ? `$${((c.it_budget_usd as number) / 1e6).toFixed(0)}M IT` : '—';

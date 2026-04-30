@@ -37,7 +37,7 @@ The dataset has been deliberately built with five techniques that distinguish it
 
 1. **Imperfection.** ~12% of fields have missing values; some KPIs lack working instrumentation; some systems have "owner: vacant" or "owner: acting"; vendor contracts include 4 with renewals due in <90 days.
 2. **Contradictions.** CFO's stated 18% YoY cost-takeout target conflicts with CIO's modernization roadmap. Data classification policy says one thing; actual storage of customer data in 3 systems shows another. Marketing's claimed customer count differs from CDP fragmentation analysis.
-3. **History.** First Capital's previous AMS consolidation attempt (2023-2024) is documented in the change-failure record. The previous CDO left under unclear circumstances. Two failed initiatives are catalogued with post-mortems.
+3. **History.** Apex's previous AMS consolidation attempt (2023-2024) is documented in the change-failure record. The previous CDO left under unclear circumstances. Two failed initiatives are catalogued with post-mortems.
 4. **Specificity.** KPIs have specific definitions with caveats. "NPS — measured 24h post-interaction, 22% response rate, biased toward extreme experiences."
 5. **Asymmetric depth.** Customer/martech systems are richly instrumented (~28 systems, dense KPIs). Supply chain has only 4 systems and many KPI gaps.
 
@@ -56,4 +56,4 @@ Provenance is preserved on every record: `source_basis`, `last_updated`, `data_c
 
 ## Tenant boundary
 
-All data in this dataset is scoped to `tenant_key: apex-retail`. The knowledge layer must enforce this scope on every query; cross-tenant retrieval (e.g., from `meridian` or `first-capital` queries) must return zero records from this dataset.
+All data in this dataset is scoped to `tenant_key: apex-retail`. The knowledge layer must enforce this scope on every query; cross-tenant retrieval (e.g., from `meridian` or `retired-client` queries) must return zero records from this dataset.

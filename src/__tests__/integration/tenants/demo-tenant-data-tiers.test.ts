@@ -10,9 +10,9 @@ import {
 } from '@/lib/tenants/demo-tenant-data-tiers';
 
 describe('listDemoTenantDataTiers', () => {
-  it('returns exactly 3 tenants', () => {
+  it('returns exactly 2 tenants', () => {
     const tiers = listDemoTenantDataTiers();
-    expect(tiers).toHaveLength(3);
+    expect(tiers).toHaveLength(2);
   });
 
   it('apex-retail richness is rich', () => {
@@ -27,11 +27,6 @@ describe('listDemoTenantDataTiers', () => {
     expect(meridian?.richness).toBe('thin');
   });
 
-  it('arcturus richness is shell_only', () => {
-    const tiers = listDemoTenantDataTiers();
-    const arcturus = tiers.find((t) => t.tenantSlug === 'arcturus');
-    expect(arcturus?.richness).toBe('shell_only');
-  });
 });
 
 describe('getDemoTenantDataTier', () => {
@@ -71,12 +66,6 @@ describe('getSurfaceAvailability', () => {
     expect(getSurfaceAvailability('apex-retail', 'source')).not.toBeNull();
   });
 
-  it('returns non-null for arcturus programs (shows unavailable)', () => {
-    const state = getSurfaceAvailability('arcturus', 'programs');
-    expect(state).not.toBeNull();
-    expect(state?.availability).toBe('unavailable');
-  });
-
   it('returns null for unknown tenant', () => {
     expect(getSurfaceAvailability('not-a-tenant', 'programs')).toBeNull();
   });
@@ -96,14 +85,6 @@ describe('getTenantRouteFallback', () => {
   it('returns a string for all meridian surfaces', () => {
     for (const surface of surfaces) {
       const result = getTenantRouteFallback('meridian', surface);
-      expect(typeof result).toBe('string');
-      expect(result.length).toBeGreaterThan(0);
-    }
-  });
-
-  it('returns a string for all arcturus surfaces', () => {
-    for (const surface of surfaces) {
-      const result = getTenantRouteFallback('arcturus', surface);
       expect(typeof result).toBe('string');
       expect(result.length).toBeGreaterThan(0);
     }

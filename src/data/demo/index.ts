@@ -1,7 +1,7 @@
-// Pre-cached demo responses for all 3 demo paths × 3 clients
+// Pre-cached demo responses for demo paths × active demo clients
 // Used by demo-mode.ts to serve instant responses without API calls
 
-export type DemoClient = 'meridian' | 'firstcapital' | 'apexretail'
+export type DemoClient = 'meridian' | 'apexretail'
 export type DemoPath = 'cxo' | 'investor' | 'design-partner'
 
 export interface DemoResponse {
@@ -291,92 +291,6 @@ AbarVa's outcome fee model requires documented baseline + verified improvement. 
       ],
     },
   },
-  firstcapital: {
-    'fednow-urgency': {
-      question: 'FedNow — What is the real cost of delay?',
-      role: 'CIO',
-      response: `First Capital is one of 847 mid-size commercial banks that has not yet enabled FedNow. The cost of continued delay is not hypothetical — it is measurable and accelerating.
-
-**The $340M deposit risk:**
-Analysis of First Capital's commercial deposit base shows $340M in operating account balances from clients in the $10-100M revenue segment. These clients are actively being solicited by digital-native competitors (Mercury, Brex, Relay) who offer instant payment rails as a baseline feature. Attrition in this segment runs 8-12% annually at banks without real-time payment capability.
-
-**The OCC MRA exposure:**
-Two of First Capital's three open OCC MRAs relate to payment operations — specifically, the manual override rate on AML transaction monitoring (78% vs. 45% benchmark) and the ACH return rate documentation gap. FedNow implementation via Finzly provides the payment hub architecture that directly addresses both MRAs as a side effect of the implementation.
-
-**The 90-day window:**
-Finzly's FedNow enablement deployment averages 87 days from contract to live. The next OCC examination cycle for First Capital begins in Q4 2026. Contracting by end of Q2 gives a 30-day buffer. Every quarter of delay costs approximately $85M in deposit attrition risk and extends the MRA exposure.`,
-      sources: [
-        'First Capital Financial Q4 2025 Regulatory Filing — OCC MRA Documentation',
-        'Finzly FedNow Deployment Timeline Analysis — 23 bank implementations, 2025',
-        'Federal Reserve FedNow Adoption Dashboard — April 2026',
-        'First Capital Commercial Banking Deposit Analysis — Internal Q1 2026',
-      ],
-    },
-    'pdlc-delivery-baseline': {
-      question: 'Delivery Velocity — What does FedNow implementation require from IT delivery?',
-      role: 'CTO',
-      response: `First Capital's current IT delivery model cannot support a 90-day FedNow implementation without structural changes. Here is the assessment.
-
-**Current state:**
-Deploy frequency: 1.4 per month. Lead time: 24 days. Change failure rate: 31% — significantly above the 10% target for financial services with regulatory exposure. MTTR: 8.4 hours.
-
-**The FedNow dependency:**
-Finzly's FedNow connector requires API integration with First Capital's FIS HORIZON core. The integration involves 6 endpoints, real-time event streaming, and a payment ledger reconciliation layer. At First Capital's current change failure rate, a failed deployment during go-live creates regulatory exposure, not just downtime.
-
-**What needs to change:**
-Feature flag architecture for payment rail integrations — deploys can be tested in production without customer exposure. Automated integration test suite for the FIS HORIZON API. Rollback capability to <15 minutes (currently 4+ hours).
-
-**Timeline:**
-Finzly can deploy in 87 days from contract with normal IT engagement. With current change failure rate, First Capital needs a 30-day engineering sprint to stabilize the pipeline before the FedNow integration work begins. This adds 30 days to the timeline — contracts must be executed by May 1 to maintain the Q3 go-live.`,
-      sources: [
-        'First Capital IT Engineering — DORA Metrics Baseline Report Q1 2026',
-        'Finzly FedNow Technical Integration Guide — FIS HORIZON Edition',
-        'First Capital OCC MRA Remediation Plan — Payment Operations, March 2026',
-      ],
-    },
-    'fow-it-run-reduction': {
-      question: 'IT Run Cost — Where is the $18M reduction opportunity?',
-      role: 'CIO',
-      response: `First Capital's IT run cost is $142M annually. Peer banks at similar scale average $98M. The $44M gap has three addressable components.
-
-**Component 1: Legacy application maintenance — $18M**
-First Capital is running 14 applications built between 2003 and 2012 that serve fewer than 100 internal users each. Annual maintenance cost: $18M. Migration or retirement of these applications to modern SaaS or consolidated platforms would recapture most of this spend within 18 months.
-
-**Component 2: Over-provisioned infrastructure — $8M**
-Cloud cost analysis shows $8M in annual waste: idle EC2 instances, over-provisioned RDS databases, and unattached EBS volumes. AWS Cost Explorer data confirms this has been growing at 12% per year — the migration to cloud was done without FinOps governance.
-
-**Component 3: AML operations labor — $12M**
-78% false positive rate in AML transaction monitoring generates 3 FTE of manual review work at $180K fully loaded. ML-based AML tuning to reduce false positives to 45% benchmark eliminates most of this overhead. Actimize model retuning project can be scoped and completed in 90 days.
-
-**Total addressable: $38M of $44M gap in 18 months.** The remaining $6M requires core banking consolidation — a multi-year effort.`,
-      sources: [
-        'First Capital IT Finance — Run Cost Benchmark Analysis Q1 2026',
-        'AWS Cost Explorer Export — First Capital Cloud Spend, March 2026',
-        'First Capital AML Operations Report — Manual Review Queue Analysis',
-      ],
-    },
-    'controltower-compliance-risk': {
-      question: 'AI Compliance Risk — What is our regulatory exposure?',
-      role: 'CISO',
-      response: `First Capital's AI compliance posture has two critical exposures: the AML model risk governance gap and the absence of an AI-specific Model Risk Management framework.
-
-**AML False Positive Rate — Model Risk Governance:**
-The 78% false positive rate in the AML transaction monitoring system (vs. 45% benchmark) is documented in OCC MRA #2. The OCC has not yet required remediation of the underlying model — but the MRA documentation makes clear that manual review reliance is not a sustainable mitigation. The next examination cycle begins Q4 2026.
-
-**Missing AI Model Risk Management Framework:**
-SR 11-7 (OCC/Fed model risk management guidance) applies to all quantitative models including ML models. First Capital has 3 ML models in production (AML, credit scoring adjunct, fraud detection) with no formal SR 11-7 documentation. This is a material gap that will be cited in the Q4 examination.
-
-**What is required:**
-Model inventory with risk tier classification (by Q3 2026). Model validation documentation for the 3 production ML models. Annual validation cycle with independent model validator. Challenger model framework for AML — demonstrating that the false positive rate is being actively managed.
-
-**Timeline:** SR 11-7 compliance for existing models by September 2026. New model governance policy by June 2026.`,
-      sources: [
-        'First Capital OCC MRA #2 — AML Transaction Monitoring Documentation',
-        'Federal Reserve SR 11-7 — Guidance on Model Risk Management',
-        'First Capital AI Model Inventory — IT Risk Management Q1 2026',
-      ],
-    },
-  },
   apexretail: {
     'einstein-activation': {
       question: 'Einstein — Why is $248M in value sitting idle?',
@@ -525,32 +439,6 @@ export const ROLE_QUESTIONS: Record<DemoClient, Record<string, string[]>> = {
       'Competitive Position — Are we falling behind peer systems?',
       'AI Investment — What is the 18-month ROI story?',
       'Design Partner — What does the AbarVa arrangement give us?',
-    ],
-  },
-  firstcapital: {
-    CIO: [
-      'FedNow — What is the real cost of delay?',
-      'AML False Positives — Why is the rate 78% when peers are at 45%?',
-      'Core Banking — What is the Temenos migration risk?',
-      'Finzly — How does 90-day deployment actually work?',
-    ],
-    CFO: [
-      'Deposit Attrition — What is the $340M risk?',
-      'OCC MRAs — What is the financial exposure?',
-      'FedNow ROI — What does the payback model look like?',
-      'AML Operations — What are 3 FTEs in manual review costing us?',
-    ],
-    CDO: [
-      'Data Architecture — What needs to change for real-time payments?',
-      'AWS Bedrock — Is this the right AI infrastructure choice?',
-      'Model Risk — How do we govern AI in a regulated environment?',
-      'FedNow Data — What new signals does real-time payment data create?',
-    ],
-    CEO: [
-      'Competitive Gap — How far behind are we on digital payments?',
-      'Regulatory Risk — What does the OCC examination timeline mean?',
-      'Investment Case — What is the board story for this spend?',
-      'Design Partner — What does AbarVa provide that our advisors don\'t?',
     ],
   },
   apexretail: {

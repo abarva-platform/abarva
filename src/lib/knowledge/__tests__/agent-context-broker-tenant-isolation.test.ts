@@ -3,7 +3,7 @@ import { listEnterpriseDataRooms } from '@/lib/knowledge/enterprise-data-room';
 import { mapEnterpriseDataRoomToPersistenceRows } from '@/lib/knowledge/enterprise-data-room-persistence';
 
 const TENANT_A = 'apex-retail';
-const OTHER_TENANT_RE = /meridian|first-capital/i;
+const OTHER_TENANT_RE = /meridian/i;
 
 function allDryRunChunkRows() {
   return listEnterpriseDataRooms().flatMap((room) =>
@@ -44,7 +44,7 @@ describe('AgentContextBroker tenant isolation', () => {
     // if a future vector query omits tenant_key, other-tenant rows are available.
     expect(unsafeUnfilteredOtherTenantChunks.length).toBeGreaterThan(0);
     expect(unsafeUnfilteredOtherTenantChunks.map((row) => row.tenantKey)).toEqual(
-      expect.arrayContaining(['meridian', 'first-capital']),
+      expect.arrayContaining(['meridian']),
     );
   });
 

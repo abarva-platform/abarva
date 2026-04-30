@@ -69,10 +69,6 @@ describe('buildSentinelEvidenceBriefView — thin/shell tenants', () => {
     expect(view.evidenceConfidenceLevel).toBe('insufficient');
   });
 
-  it('arcturus confirmedEvidence is empty', () => {
-    const view = buildSentinelEvidenceBriefView('arcturus');
-    expect(view.confirmedEvidence).toHaveLength(0);
-  });
 });
 
 describe('SentinelEvidenceBrief component — static hygiene', () => {

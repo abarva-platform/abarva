@@ -175,67 +175,9 @@ const MERIDIAN_DATASET: DemoTenantDataset = {
   deterministicSeed: true,
 };
 
-const ARCTURUS_DATASET: DemoTenantDataset = {
-  tenantSlug: 'arcturus',
-  tenantName: 'Arcturus',
-  overallTier: 'shell_only',
-  surfaces: [
-    {
-      surface: 'programs',
-      tier: 'shell_only',
-      description: 'No data seeded. Shell/Clerk account only.',
-      seedFile: null,
-      caveat: 'Shell only.',
-      routeHint: null,
-      deterministicSeed: true,
-    },
-    {
-      surface: 'source',
-      tier: 'shell_only',
-      description: 'No data seeded. Shell/Clerk account only.',
-      seedFile: null,
-      caveat: 'Shell only.',
-      routeHint: null,
-      deterministicSeed: true,
-    },
-    {
-      surface: 'intelligence',
-      tier: 'shell_only',
-      description: 'No data seeded. Shell/Clerk account only.',
-      seedFile: null,
-      caveat: 'Shell only.',
-      routeHint: null,
-      deterministicSeed: true,
-    },
-    {
-      surface: 'control_tower',
-      tier: 'shell_only',
-      description: 'No data seeded. Shell/Clerk account only.',
-      seedFile: null,
-      caveat: 'Shell only.',
-      routeHint: null,
-      deterministicSeed: true,
-    },
-    {
-      surface: 'admin',
-      tier: 'shell_only',
-      description: 'No data seeded. Shell/Clerk account only.',
-      seedFile: null,
-      caveat: 'Shell only.',
-      routeHint: null,
-      deterministicSeed: true,
-    },
-  ],
-  sourceProgramLinkage: false,
-  knownLinkageFile: null,
-  dataNote: 'Arcturus is a shell-only tenant. Clerk test account only.',
-  deterministicSeed: true,
-};
-
 const ALL_DATASETS: DemoTenantDataset[] = [
   APEX_RETAIL_DATASET,
   MERIDIAN_DATASET,
-  ARCTURUS_DATASET,
 ];
 
 // ---------------------------------------------------------------------------
