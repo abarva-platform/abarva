@@ -133,6 +133,9 @@ import "@/lib/agent/tools/program/registerPlaceholderPerson";
 // static doctrine; runtime evidence-evaluation is deferred to the
 // future knowledge-broker layer.
 import "@/lib/agent/tools/program/advancePhase";
+// Program crawl enablement — lets Nexus persist/sign off generated artifacts
+// so hard gates can read deliverables_v2 instead of chat-only prose.
+import "@/lib/agent/tools/program/completeDeliverable";
 // Surface 2 PR-Q — navigate_to tool. Registered for every entry
 // surface so any agent can take the user somewhere (e.g. Nexus on
 // /programs redirects new-program intent to /programs/new where

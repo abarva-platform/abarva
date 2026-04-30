@@ -15,7 +15,6 @@
 import { getServerSupabase } from '@/lib/supabase-server';
 import type {
   ApprovalAuthority,
-  ApprovalRequestStatus,
   FounderApprovalRequestRow,
   GateCheck,
   TenancyCtx,
@@ -37,6 +36,12 @@ interface GateRule {
 }
 
 const GATE_RULES: GateRule[] = [
+  {
+    fromPhase: 0, toPhase: 1, hard: false, approverRole: 'contributor',
+    checks: [
+      { key: 'sponsor_assigned', describe: 'Sponsor assigned for Phase 0 exit', severity: 'soft' },
+    ],
+  },
   {
     fromPhase: 1, toPhase: 2, hard: false, approverRole: 'contributor',
     checks: [

@@ -107,6 +107,36 @@ async function rollbackEngagement(programId: string): Promise<void> {
   }
 }
 
+async function resolvePersonName(personId: string): Promise<string> {
+  const sb = getServerSupabase();
+  const { data } = await sb
+    .from('persons')
+    .select('name')
+    .eq('id', personId)
+    .maybeSingle();
+  return (data as { name?: string } | null)?.name ?? personId;
+}
+
+async function insertParticipant(input: {
+  programId: string;
+  personId: string;
+  role: string;
+  approvalAuthority: 'sponsor' | 'contributor';
+}): Promise<void> {
+  const sb = getServerSupabase();
+  const userName = await resolvePersonName(input.personId);
+  const { error } = await sb.from('engagement_participants').insert({
+    engagement_id: input.programId,
+    user_id: input.personId,
+    user_name: userName,
+    role: input.role,
+    notify_on: ['phase_gate', 'approval'],
+    approval_authority: input.approvalAuthority,
+    last_touchpoint_at: new Date().toISOString(),
+  });
+  if (error) throw error;
+}
+
 export const commitProgramTool: AgentTool<CommitProgramInput> = {
   name: 'commit_program',
   description:
@@ -427,6 +457,20 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
     // and continue — rolling back here would lose a successful
     // approval submission.
     try {
+      await insertParticipant({
+        programId,
+        personId: originationForm.sponsorPersonId,
+        role: 'Sponsor',
+        approvalAuthority: 'sponsor',
+      });
+      if (originationForm.leadPersonId !== originationForm.sponsorPersonId) {
+        await insertParticipant({
+          programId,
+          personId: originationForm.leadPersonId,
+          role: 'Program Lead',
+          approvalAuthority: 'contributor',
+        });
+      }
       if (input.matched_pattern_id) {
         await sb.from('pattern_match_logs').insert({
           engagement_id: programId,
