@@ -46,6 +46,7 @@ export interface ProgramRow {
 
 export interface ProgramsIndexView {
   tenant: string;
+  phaseFilterTenantSlug: string;
   totalActive: number;
   gatesPending: number;
   idleCount: number;

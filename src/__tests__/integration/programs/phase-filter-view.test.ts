@@ -9,7 +9,6 @@ import {
   buildPhaseFilterView,
   getPhaseLabel,
   getPhasesWithPrograms,
-  type ProgramPhase,
   type PhaseFilterView,
 } from '@/lib/programs/phase-filter-view';
 
@@ -192,8 +191,19 @@ describe('buildPhaseFilterView — meridian', () => {
     expect(view.totalPrograms).toBe(2);
   });
 
+  it('meridian-health alias totalPrograms is 2', () => {
+    const view = buildPhaseFilterView('meridian-health');
+    expect(view.totalPrograms).toBe(2);
+  });
+
   it('meridian synthesis phase isCurrentPhase is true', () => {
     const view = buildPhaseFilterView('meridian');
+    const synthOpt = view.options.find((o) => o.phase === 'synthesis');
+    expect(synthOpt?.isCurrentPhase).toBe(true);
+  });
+
+  it('meridian-health alias synthesis phase isCurrentPhase is true', () => {
+    const view = buildPhaseFilterView('meridian-health');
     const synthOpt = view.options.find((o) => o.phase === 'synthesis');
     expect(synthOpt?.isCurrentPhase).toBe(true);
   });

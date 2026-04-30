@@ -31,9 +31,11 @@ describe('Programs index linked-state and filters', () => {
     const view = buildProgramsIndexView('meridian-health');
 
     expect(view.tenant).toBe('Meridian Health System');
+    expect(view.phaseFilterTenantSlug).toBe('meridian-health');
     expect(view.programs).toHaveLength(2);
     expect(view.programs.every((program) => program.displayId.startsWith('MRD-'))).toBe(true);
     expect(view.programs.some((program) => program.displayId.startsWith('APX-'))).toBe(false);
+    expect(view.agentRail.map((agent) => agent.job).join(' ')).not.toContain('APX-');
   });
 
   it('returns a fresh program array per tenant view build', () => {

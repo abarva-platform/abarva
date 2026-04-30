@@ -108,6 +108,7 @@ const DEFAULT_PHASE_COUNTS: Record<ProgramPhase, number> = {
 const TENANT_CURRENT_PHASE: Record<string, ProgramPhase> = {
   'apex-retail': 'build',
   meridian: 'synthesis',
+  'meridian-health': 'synthesis',
 };
 
 // ---------------------------------------------------------------------------
@@ -116,7 +117,9 @@ const TENANT_CURRENT_PHASE: Record<string, ProgramPhase> = {
 
 function getPhaseCounts(tenantSlug: string): Record<ProgramPhase, number> {
   if (tenantSlug === 'apex-retail') return APEX_RETAIL_PHASE_COUNTS;
-  if (tenantSlug === 'meridian') return MERIDIAN_PHASE_COUNTS;
+  if (tenantSlug === 'meridian' || tenantSlug === 'meridian-health') {
+    return MERIDIAN_PHASE_COUNTS;
+  }
   return DEFAULT_PHASE_COUNTS;
 }
 

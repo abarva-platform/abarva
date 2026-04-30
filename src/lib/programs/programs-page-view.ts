@@ -283,6 +283,13 @@ const PROGRAM_TENANT_LABELS: Record<ProgramsIndexTenant, string> = {
   'keystone-energy': 'Keystone Energy Holdings',
 };
 
+const PHASE_FILTER_TENANT_BY_INDEX_TENANT: Record<ProgramsIndexTenant, string> = {
+  'apex-retail': 'apex-retail',
+  'meridian-health': 'meridian-health',
+  'first-capital': 'first-capital',
+  'keystone-energy': 'keystone-energy',
+};
+
 export type ProgramsIndexFilterKey = 'all' | 'active' | 'idle' | 'gated';
 
 export function normalizeProgramsIndexFilter(value: string | null): ProgramsIndexFilterKey {
@@ -328,6 +335,7 @@ export function getProgramsIndexFilterSummary(
 
 export function buildProgramsIndexView(tenant: ProgramsIndexTenant): ProgramsIndexViewV2 {
   const tenantLabel = PROGRAM_TENANT_LABELS[tenant];
+  const phaseFilterTenantSlug = PHASE_FILTER_TENANT_BY_INDEX_TENANT[tenant];
   const programs: ProgramRow[] = [...PROGRAM_FIXTURES_BY_TENANT[tenant]];
 
   const totalActive = programs.filter((p) => !p.isIdle).length;
@@ -395,25 +403,35 @@ export function buildProgramsIndexView(tenant: ProgramsIndexTenant): ProgramsInd
     {
       initials: 'Sn',
       name: 'Sentinel',
-      job: 'Design gate review · APX-CDP-2026 evidence gap',
+      job:
+        tenant === 'apex-retail'
+          ? 'Design gate review · APX-CDP-2026 evidence gap'
+          : `${tenantLabel} gate evidence watch`,
       state: 'on_call',
     },
     {
       initials: 'At',
       name: 'Atlas',
-      job: 'APX-CC-2026 Activate brief ready · DFV2 steady state',
+      job:
+        tenant === 'apex-retail'
+          ? 'APX-CC-2026 Activate brief ready · DFV2 steady state'
+          : `${tenantLabel} portfolio synthesis ready`,
       state: 'on_call',
     },
     {
       initials: 'St',
       name: 'Steward',
-      job: 'APX-CDP-2026 privacy boundary review pending',
+      job:
+        tenant === 'apex-retail'
+          ? 'APX-CDP-2026 privacy boundary review pending'
+          : `${tenantLabel} P0 intake support`,
       state: 'advisory',
     },
   ];
 
   return {
     tenant: tenantLabel,
+    phaseFilterTenantSlug,
     totalActive,
     gatesPending,
     idleCount,
