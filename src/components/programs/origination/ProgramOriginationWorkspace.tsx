@@ -13,7 +13,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { BrandColors, BrandTypography } from '@/lib/shell/brand-tokens';
-import type { Artifact } from '@/lib/agent/artifacts';
+import type {
+  Artifact,
+  BriefProgressArtifact,
+  OverlapAlertArtifact,
+} from '@/lib/agent/artifacts';
 import {
   ProgramBriefPanel,
   EMPTY_BRIEF,
@@ -23,20 +27,54 @@ import {
 import { StewardChat, type ChatTurn } from './StewardChat';
 
 /**
- * Pure reducer for the origination brief. Returns the next brief given
- * an artifact emitted by Steward. The discriminated union covers the
- * four origination-relevant artifact types; everything else is ignored.
+ * The reducer's working state. The brief itself remains the canonical
+ * field-by-field shape (ProgramBriefDraft); the two meta artifacts
+ * introduced in OV2-1a — `brief-progress` and `overlap-alert` — are
+ * surfaced as sibling slots so the right pane can render them as
+ * dedicated cards above the field rows.
+ */
+export interface OriginationBriefState {
+  brief: ProgramBriefDraft;
+  /**
+   * Latest `brief-progress` emission. Steward emits one per turn;
+   * latest replaces previous (no merging — the artifact already carries
+   * the full field-status snapshot).
+   */
+  briefProgress: BriefProgressArtifact | null;
+  /**
+   * Active overlap alerts, deduped by `overlappingProgramId`. Same
+   * upsert pattern that `pattern-match` and `phase-progress` use in
+   * NexusReactivePanel.selectVisibleArtifacts — re-emits for the same
+   * program replace the prior entry; distinct program ids coexist.
+   */
+  overlapAlerts: OverlapAlertArtifact[];
+}
+
+export const EMPTY_BRIEF_STATE: OriginationBriefState = {
+  brief: EMPTY_BRIEF,
+  briefProgress: null,
+  overlapAlerts: [],
+};
+
+/**
+ * Pure reducer for the origination brief state. Returns the next state
+ * given an artifact emitted by Steward. Covers the origination-relevant
+ * artifact types; everything else is ignored.
  *
  * Exported so the OV2-1c filter (pattern-match dropped on /programs/new)
- * can be exercised by a unit test without rendering the workspace.
+ * and the OV2-1b meta-artifact handling can be exercised by unit tests
+ * without rendering the workspace.
  */
 export function applyArtifactToBrief(
-  brief: ProgramBriefDraft,
+  state: OriginationBriefState,
   artifact: Artifact,
-): ProgramBriefDraft {
+): OriginationBriefState {
   switch (artifact.type) {
     case 'brief-field':
-      return { ...brief, [artifact.field]: artifact.value };
+      return {
+        ...state,
+        brief: { ...state.brief, [artifact.field]: artifact.value },
+      };
     case 'pattern-match':
       // OV2-1c · Founder feedback: pattern-match cards are the wrong
       // content for /programs/new — pattern matching belongs at
@@ -44,19 +82,39 @@ export function applyArtifactToBrief(
       // creation. The artifacts.ts parser still accepts the type
       // (Nexus uses it on the program-detail surface); we just skip
       // it here so it never surfaces in the origination panel.
-      return brief;
+      return state;
     case 'cross-program-dependency': {
       const next = `${artifact.programId} · ${artifact.programName} (${artifact.currentPhase})`;
-      if (brief.crossProgramDependencies.includes(next)) return brief;
+      if (state.brief.crossProgramDependencies.includes(next)) return state;
       return {
-        ...brief,
-        crossProgramDependencies: [...brief.crossProgramDependencies, next],
+        ...state,
+        brief: {
+          ...state.brief,
+          crossProgramDependencies: [...state.brief.crossProgramDependencies, next],
+        },
       };
     }
     case 'classification':
-      return { ...brief, classification: artifact.archetypeLabel };
+      return {
+        ...state,
+        brief: { ...state.brief, classification: artifact.archetypeLabel },
+      };
+    case 'brief-progress':
+      // OV2-1b · latest emission wins. Steward emits one per turn and
+      // the artifact carries the full field-status snapshot, so there's
+      // nothing to merge.
+      return { ...state, briefProgress: artifact };
+    case 'overlap-alert': {
+      // OV2-1b · dedupe-by-overlappingProgramId, latest emission wins.
+      // Distinct program ids coexist. Mirrors the upsert pattern in
+      // NexusReactivePanel.selectVisibleArtifacts.
+      const filtered = state.overlapAlerts.filter(
+        (a) => a.overlappingProgramId !== artifact.overlappingProgramId,
+      );
+      return { ...state, overlapAlerts: [...filtered, artifact] };
+    }
     default:
-      return brief;
+      return state;
   }
 }
 
@@ -71,7 +129,7 @@ export function ProgramOriginationWorkspace({
   tenantName,
   initialTurns,
 }: ProgramOriginationWorkspaceProps) {
-  const [brief, setBrief] = useState<ProgramBriefDraft>(EMPTY_BRIEF);
+  const [briefState, setBriefState] = useState<OriginationBriefState>(EMPTY_BRIEF_STATE);
   const [patternMatch, setPatternMatch] = useState<PatternMatchCard | null>(null);
   // Lift turns up so we can rehydrate from the saved draft on mount.
   // Until hydration completes we render `initialTurns` (the cold-open).
@@ -96,7 +154,10 @@ export function ProgramOriginationWorkspace({
         if (Array.isArray(state.turns) && state.turns.length > 0) {
           setTurns(state.turns);
         }
-        if (state.brief) setBrief(state.brief);
+        if (state.brief) {
+          const nextBrief: ProgramBriefDraft = state.brief;
+          setBriefState((prev) => ({ ...prev, brief: nextBrief }));
+        }
         if (state.patternMatch) setPatternMatch(state.patternMatch);
       } catch {
         // Non-fatal — proceed with the cold-open.
@@ -110,13 +171,15 @@ export function ProgramOriginationWorkspace({
   }, [surface]);
 
   const applyArtifact = useCallback((artifact: Artifact) => {
-    setBrief((prev) => applyArtifactToBrief(prev, artifact));
+    setBriefState((prev) => applyArtifactToBrief(prev, artifact));
   }, []);
 
   // PR3 — persist the draft after each non-streaming change so the
   // server has the latest snapshot. We debounce lightly via a ref so
   // a flurry of artifact dispatches in one stream collapses to one
-  // POST.
+  // POST. Only the brief field-state is persisted; the meta artifacts
+  // (briefProgress, overlapAlerts) re-emit on every Steward turn so
+  // they don't need server snapshots.
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!hydrated) return; // don't write back the cold-open as a "saved" state
@@ -127,7 +190,7 @@ export function ProgramOriginationWorkspace({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           surface,
-          state: { turns, brief, patternMatch },
+          state: { turns, brief: briefState.brief, patternMatch },
         }),
       }).catch(() => {
         /* non-fatal */
@@ -136,7 +199,7 @@ export function ProgramOriginationWorkspace({
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
     };
-  }, [turns, brief, patternMatch, surface, hydrated]);
+  }, [turns, briefState.brief, patternMatch, surface, hydrated]);
 
   const handleTurnsChange = useCallback((next: ChatTurn[]) => {
     setTurns(next);
@@ -230,10 +293,15 @@ export function ProgramOriginationWorkspace({
           // PR-K · pass current brief.programName through so the
           // origination → active handoff marker can address the
           // program by name when commit_program lands.
-          programName={brief.programName}
+          programName={briefState.brief.programName}
         />
         {/* OV2-1c · No `patternMatch` prop on /programs/new (founder feedback). */}
-        <ProgramBriefPanel brief={brief} />
+        {/* OV2-1b · Brief Progress + Overlap Alerts surface as cards above field rows. */}
+        <ProgramBriefPanel
+          brief={briefState.brief}
+          briefProgress={briefState.briefProgress}
+          overlapAlerts={briefState.overlapAlerts}
+        />
       </div>
     </main>
   );
