@@ -19,7 +19,8 @@
 
 import Link from 'next/link';
 
-import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
+import { COLORS, RADIUS, SPACING } from '@/lib/design/design-tokens';
+import { SHELL } from '@/lib/shell/shell-tokens';
 
 export interface SetupAgentStripProps {
   tenantDisplayName: string;
@@ -102,8 +103,8 @@ export function SetupAgentStrip(props: SetupAgentStripProps) {
     <section
       data-testid="admin-agent-strip"
       style={{
-        background: COLORS.white,
-        border: `1px solid ${COLORS.ink}11`,
+        background: SHELL.CARD_WHITE,
+        border: `1px solid ${SHELL.CARD_LINE_SOFT}`,
         borderRadius: RADIUS.lg,
         padding: SPACING.lg,
         display: 'flex',
@@ -123,9 +124,9 @@ export function SetupAgentStrip(props: SetupAgentStripProps) {
         <h2
           style={{
             margin: 0,
-            fontFamily: TYPOGRAPHY.serif,
+            fontFamily: SHELL.SERIF,
             fontSize: 22,
-            color: COLORS.ink,
+            color: SHELL.INK,
             fontWeight: 700,
             lineHeight: 1.3,
           }}
@@ -135,9 +136,9 @@ export function SetupAgentStrip(props: SetupAgentStripProps) {
         <p
           style={{
             margin: 0,
-            fontFamily: TYPOGRAPHY.mono,
+            fontFamily: SHELL.MONO,
             fontSize: 11,
-            color: `${COLORS.ink}99`,
+            color: SHELL.INK_MUTED,
           }}
         >
           Citing across worldview · industry · tenant corpora
@@ -167,8 +168,8 @@ function AgentCard({ agent }: { agent: AgentSummary }) {
     <li role="listitem" data-testid={agent.testid}>
       <div
         style={{
-          background: COLORS.cream,
-          border: `1px solid ${COLORS.ink}11`,
+          background: SHELL.PAPER_SOFT,
+          border: `1px solid ${SHELL.CARD_LINE_SOFT}`,
           borderRadius: RADIUS.md,
           padding: SPACING.md,
           display: 'flex',
@@ -182,9 +183,9 @@ function AgentCard({ agent }: { agent: AgentSummary }) {
           <p
             style={{
               margin: 0,
-              fontFamily: TYPOGRAPHY.serif,
+              fontFamily: SHELL.SERIF,
               fontSize: 18,
-              color: COLORS.ink,
+              color: SHELL.INK,
               fontWeight: 700,
             }}
           >
@@ -193,7 +194,7 @@ function AgentCard({ agent }: { agent: AgentSummary }) {
           <p
             style={{
               margin: 0,
-              fontFamily: TYPOGRAPHY.mono,
+              fontFamily: SHELL.MONO,
               fontSize: 10,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
@@ -207,9 +208,9 @@ function AgentCard({ agent }: { agent: AgentSummary }) {
         <p
           style={{
             margin: 0,
-            fontFamily: TYPOGRAPHY.sans,
+            fontFamily: SHELL.SANS,
             fontSize: 13,
-            color: `${COLORS.ink}cc`,
+            color: SHELL.INK_SOFT,
             lineHeight: 1.5,
             flex: 1,
           }}
@@ -221,7 +222,7 @@ function AgentCard({ agent }: { agent: AgentSummary }) {
           data-testid={`${agent.testid}-cta`}
           style={{
             color: COLORS.navy,
-            fontFamily: TYPOGRAPHY.sans,
+            fontFamily: SHELL.SANS,
             fontSize: 12,
             fontWeight: 600,
             textDecoration: 'none',
