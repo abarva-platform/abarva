@@ -3,6 +3,19 @@
 //
 // Server component: resolves programId + viewingPhase from params/searchParams,
 // tries real DB data first, falls back to fixture, then merges and renders.
+//
+// OV2-3b · patternId resolution choice (path ii)
+// ─────────────────────────────────────────────
+// The engagements table does NOT carry a canonical archetype patternId
+// column (genome_pattern_matches is many-to-many, not 1:1). The de-facto
+// source-of-truth on the program-detail surface is the in-memory
+// `APEX_RETAIL_PROGRAM_INSTANCES` fixture which already feeds three other
+// pattern-driven panels on this page (lifecycle mini-graph, failure-mode
+// chip, evidence heatmap). We resolve patternId from the same fixture
+// rather than extending db-phase-queries.ts to surface a column that
+// does not exist server-side. When the broker contract eventually owns
+// pattern resolution (post PR-V), this lookup migrates to the broker
+// without changing the Phase0Primer prop.
 
 import { buildProgramDetailView } from '@/lib/programs/programs-detail-view';
 import { ProgramDetailPage } from '@/components/programs/ProgramDetailPage';
@@ -11,6 +24,8 @@ import { getEngagementWithPhaseData } from '@/lib/programs/db-phase-queries';
 import type { EvidenceItem, ProgramGateStatus } from '@/lib/programs/programs-types';
 import { parseTimelineFiltersFromSearchParams } from '@/lib/reasoning/instance-event-timeline-filters';
 import { getPhaseOverride } from '@/lib/programs/phase-overrides';
+import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances';
+import { getArchetypePrimer } from '@/lib/programs/archetype-primers';
 
 export const dynamic = 'force-dynamic';
 
@@ -127,11 +142,30 @@ export default async function ProgramDetailRoute({
     }
   }
 
+  // OV2-3b · Resolve the Phase-0 archetype primer (when applicable).
+  // Only fetched when the program is currently in P0; the primer is
+  // wasted weight on later phases. The lookup is `displayId` first, then
+  // `id` (case-insensitive) — same precedence as every other patternId
+  // resolver on this page.
+  let phase0Primer = null;
+  if (view.currentPhase === 0) {
+    const instance = APEX_RETAIL_PROGRAM_INSTANCES.find(
+      (i) =>
+        i.displayId === view.displayId ||
+        i.id.toLowerCase() === view.programId.toLowerCase(),
+    );
+    const patternId = instance?.patternId ?? null;
+    if (patternId) {
+      phase0Primer = getArchetypePrimer(patternId);
+    }
+  }
+
   return (
     <ProgramDetailPage
       view={view}
       timelineFilters={timelineFilters}
       preservedSearchParams={preservedSearchParams}
+      phase0Primer={phase0Primer}
     />
   );
 }
