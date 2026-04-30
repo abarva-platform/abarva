@@ -62,6 +62,7 @@ export * from './source-stage-gate-types';
 export * from './stage-packs';
 export * from './source-event-instance';
 export * from './source-event-instances';
+export * from './sourcing-tools';
 
 export type {
   SourceAgentContextBundle,
