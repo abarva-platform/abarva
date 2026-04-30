@@ -534,6 +534,12 @@ Required behavior:
 - Output should include chunk references and citations.
 - Founder should approve external claims before publication.
 
+## Retrieval Infrastructure Coordination
+
+The active retrieval-infrastructure decision lives in `worldview/synthesis/retrieval_infrastructure_decision.md`. Sentinel and broker implementation slices should treat `worldviewChunks: WorldviewChunkHit[]` and `src/lib/knowledge/context-broker/worldview-retrieval.ts` as canonical unless a future reconciliation slice is explicitly approved.
+
+Do not collapse worldview chunks into `corpusPatterns`, do not mix 3072-dimensional worldview vectors with 1536-dimensional tenant vectors, and do not refactor working retrieval plumbing purely to remove temporary duplication.
+
 ## Implementation Readiness Checklist
 
 Worldview grounding is complete when:
