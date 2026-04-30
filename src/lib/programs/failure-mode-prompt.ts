@@ -30,16 +30,33 @@ export function isProgramsSurface(surface: string | null | undefined): boolean {
  * Names are pulled from FAILURE_MODES so renaming a mode in one place
  * updates the prompt. Returns the same string every call — deterministic.
  */
+// Detection hooks paired with each failure mode. Kept in the same order
+// as FAILURE_MODES so index alignment is guaranteed. These are the SIGNALS
+// the agent should recognise — not a restatement of the name.
+const FM_DETECTION_HOOKS: Readonly<Record<number, string>> = {
+  1:  'No named sponsor · no confirmed budget authority · "we got funding, now what?" · sponsor not named before Discovery spend · budget approved but no executive owns the outcome',
+  2:  'Vague objective ("improve operations" / "leverage AI") · no testable hypothesis · starting build before the problem is validated · hypothesis never written down',
+  3:  'Unknown data ownership · no data access · quality undefined · no data lineage · "we think we have the data" without verification',
+  4:  'Model accuracy reported without business-metric baseline · missing production monitoring · ROI projected but not tracked · no A/B comparison after go-live',
+  5:  'Security/governance not involved until late · privacy impact not assessed · HITL skipped · compliance review deferred · "we\'ll fix it in production"',
+  6:  'Build started before vendor/infra decision settled · architecture rework mid-program · cloud commitment without workload shape · no infra sizing done',
+  7:  'Stakeholder support assumed but not tested · critical team not engaged in Design · change management skipped · adoption assumed · training plan absent',
+  8:  'No delivery plan for P4 or later · no defined build milestone · "agile will figure it out" · no sprint cadence · timeline undefined',
+  9:  'Success defined as "the model runs" · no business KPI baseline · outcome measurement deferred · no way to attribute value to the AI intervention',
+  10: 'Simultaneously running 10+ AI pilots · scope keeps expanding beyond the original use case · new features bolted on · trying to solve every problem at once',
+};
+
 export function formatFailureModeCatalogForPrompt(): string {
   const lines = FAILURE_MODES.map((mode) => {
     const num = String(mode.id).padStart(2, ' ');
-    return `${num}. ${mode.name}`;
+    const hook = FM_DETECTION_HOOKS[mode.id] ? ` — detect when: ${FM_DETECTION_HOOKS[mode.id]}` : '';
+    return `${num}. ${mode.name}${hook}`;
   });
 
   return [
     'THE 10 FAILURES YOU EXIST TO PREVENT:',
     '',
-    'These are the failure modes AI programs hit, grounded in published research (Gartner, RAND, MIT/BCG, McKinsey, Forrester). At every step, in every phase, your job is to force the user through the success-thinking that prevents each. When you detect a signal that one of these is happening, surface it.',
+    'These are the failure modes AI programs hit, grounded in published research (Gartner, RAND, MIT/BCG, McKinsey, Forrester). Each line lists the mode name and the concrete signals that indicate it is happening right now. When you detect a signal, surface it.',
     '',
     ...lines,
   ].join('\n');
@@ -82,6 +99,11 @@ export function formatFailureModeDoctrineForPrompt(): string {
     'Relationship to `anti-pattern-flag`: the pack flag is phase-local doctrine; `failure-mode-flagged` is the cross-phase platform catalog. They CAN co-occur — when a pack anti-pattern is a specific instance of one of the 10, emit both. Example: `phantom-sponsor` (P0) is an instance of failure mode #1; emit the anti-pattern-flag with the pack id AND `failure-mode-flagged` with `failureModeId: 1`. The telemetry rollup needs the catalog id to aggregate across phases.',
     '',
     "Severity: `'soft'` for note-and-redirect signals where the program continues with awareness — this is the default. `'hard'` only when the signal genuinely blocks phase advance: sponsor commitment unmet at P0 gate close, baseline missing at P1→P2, kill criterion missing at P2→P3, value attribution undefined at P5 outcome.",
+    '',
+    'Common misclassifications to avoid:',
+    '- "No confirmed budget" or "funding approved but sponsor unnamed" → FM #1 (sponsorship), NOT FM #10 (sprawl). Sprawl is about running too many initiatives simultaneously, not about missing funding authority.',
+    '- "Unclear value / no hypothesis" → FM #2 (problem definition), not FM #1. FM #1 requires a sponsor gap specifically.',
+    '- "AI everywhere at once, bolting on features" → FM #10 (sprawl). FM #2 is about the core problem being poorly defined; FM #10 is about scope metastasising.',
     '',
     'Field discipline:',
     '- `failureModeId` MUST match the canonical id 1..10. Quote by id, not guessed name.',

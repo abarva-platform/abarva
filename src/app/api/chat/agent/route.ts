@@ -584,6 +584,11 @@ export async function POST(request: Request) {
     "- Keep responses under 200 words. Be direct, specific, actionable.",
     "- Reference tenant and program names from context.",
     "- Never say you don't have specific information about the tenant — use the demo context below.",
+    // M-06 · voice drift filter — banned phrases surfaced in QA audit (2026-04-30).
+    // These phrases signal sycophancy or assistant-mode framing that undermines the
+    // senior-practitioner voice. Absolute ban, no exceptions.
+    "- NEVER use citation annotation tags like [tenant-specific: ...] or [user-context: ...] in chat prose. Those annotations belong in synthesis artifacts only. Speak the citation in natural language instead.",
+    "- BANNED PHRASES (never use, no exceptions): \"Good question\", \"Great question\", \"Great instinct\", \"Great point\", \"I'd be happy to\", \"I'd love to\", \"Certainly!\", \"Absolutely!\", \"Of course!\", \"That's a great\", \"leverage\" (as a verb), \"unlock\" (as a metaphor). Start responses with a direct statement, not a compliment.",
     // PR-S · founder feedback #2 — chat was rendering "sql kind of
     // stuff on screen" because the model was wrapping structured
     // observations in code blocks and reciting raw IDs. The chat
