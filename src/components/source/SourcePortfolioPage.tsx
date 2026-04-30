@@ -117,33 +117,7 @@ export function SourcePortfolioPage({ events, searchParams }: SourcePortfolioPag
             padding: '20px 28px 28px',
           }}
         >
-          <div style={{ marginBottom: 12 }}>
-            <div
-              style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 9,
-                letterSpacing: '0.18em',
-                textTransform: 'uppercase',
-                color: SHELL.INK_MUTED,
-                marginBottom: 4,
-              }}
-            >
-              Sentinel - procurement workspace - seeded portfolio
-            </div>
-            <h1
-              style={{
-                fontFamily: SHELL.SERIF,
-                fontSize: 22,
-                fontWeight: 700,
-                color: SHELL.INK,
-                margin: 0,
-                lineHeight: 1.2,
-                letterSpacing: '-0.01em',
-              }}
-            >
-              Ask Sentinel what is open in sourcing
-            </h1>
-          </div>
+          <SourceCommandHeader eventsInView={eventsInView.length} />
 
           <SourcePortfolioAgentCanvas
             quote={buildPortfolioQuote(eventsInView)}
@@ -189,6 +163,85 @@ export function SourcePortfolioPage({ events, searchParams }: SourcePortfolioPag
         </main>
       )}
     </AppShell>
+  );
+}
+
+function SourceCommandHeader({ eventsInView }: { eventsInView: number }) {
+  return (
+    <section
+      aria-label="Source command center introduction"
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1fr) auto',
+        gap: 18,
+        alignItems: 'end',
+        marginBottom: 14,
+      }}
+    >
+      <div>
+        <div
+          style={{
+            fontFamily: SHELL.MONO,
+            fontSize: 9,
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            color: SHELL.INK_MUTED,
+            marginBottom: 5,
+          }}
+        >
+          Source command center - {eventsInView} events in view
+        </div>
+        <h1
+          style={{
+            fontFamily: SHELL.SERIF,
+            fontSize: 25,
+            fontWeight: 700,
+            color: SHELL.INK,
+            margin: 0,
+            lineHeight: 1.12,
+            letterSpacing: '-0.02em',
+          }}
+        >
+          Create, run, and govern IT sourcing events
+        </h1>
+        <p
+          style={{
+            margin: '7px 0 0',
+            maxWidth: 760,
+            fontFamily: SHELL.SANS,
+            fontSize: 13.2,
+            lineHeight: 1.45,
+            color: SHELL.INK_SOFT,
+          }}
+        >
+          Start a sourcing event, connect it to a program, and let Sentinel keep the deal honest:
+          intake floor, scope boundary, evidence, stage gates, vendor risk, and approval path.
+        </p>
+      </div>
+      <a
+        href="/source/new"
+        data-testid="source-create-event-cta"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: 999,
+          background: SHELL.INK,
+          color: SHELL.PAPER,
+          padding: '10px 16px',
+          fontFamily: SHELL.MONO,
+          fontSize: 10.5,
+          fontWeight: 800,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          textDecoration: 'none',
+          whiteSpace: 'nowrap',
+          boxShadow: '0 8px 18px rgba(12,26,58,0.16)',
+        }}
+      >
+        + Create sourcing event
+      </a>
+    </section>
   );
 }
 
