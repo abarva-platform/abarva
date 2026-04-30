@@ -1,5 +1,9 @@
 import OpenAI from 'openai';
 import { Pinecone } from '@pinecone-database/pinecone';
+import {
+  clientVectorMetadataFilter,
+  clientVectorNamespace,
+} from '@/lib/knowledge/client-vector-namespace';
 
 type IndustryCode = 'HEALTHCARE_IDN' | 'FINSERV' | 'RETAIL' | 'GENERAL';
 
@@ -98,11 +102,12 @@ async function queryNamespace(
   vector: number[],
   namespace: string,
   topK: number,
+  filter?: Record<string, unknown>,
 ): Promise<RetrievedChunk[]> {
   const pc = getPinecone();
   if (!pc) return [];
   const index = pc.index(INDEX_NAME).namespace(namespace);
-  const res = await index.query({ vector, topK, includeMetadata: true });
+  const res = await index.query({ vector, topK, includeMetadata: true, filter });
   const out: RetrievedChunk[] = [];
   for (const m of res.matches ?? []) {
     const md = (m.metadata ?? {}) as Record<string, unknown>;
@@ -143,7 +148,12 @@ export async function assembleRetrievalContext(args: AssembleRetrievalArgs): Pro
   if (!vector) return emptyCtx;
 
   const clientPromise = clientId
-    ? queryNamespace(vector, `client:${clientId}`, args.topKClient ?? 5)
+    ? queryNamespace(
+        vector,
+        clientVectorNamespace(clientId),
+        args.topKClient ?? 5,
+        clientVectorMetadataFilter(clientId),
+      )
     : Promise.resolve<RetrievedChunk[]>([]);
   const industryPromise = queryNamespace(vector, industryNamespace(industry), args.topKIndustry ?? 3);
   const topicPromise = queryNamespace(vector, 'global:ai_governance', args.topKTopic ?? 2);

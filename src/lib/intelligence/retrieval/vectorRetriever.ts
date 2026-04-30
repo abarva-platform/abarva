@@ -6,6 +6,10 @@
 import OpenAI from 'openai';
 import { Pinecone } from '@pinecone-database/pinecone';
 import type { RetrievalResult, Source, TenancyCtx } from '../types';
+import {
+  clientVectorMetadataFilter,
+  isClientVectorNamespace,
+} from '@/lib/knowledge/client-vector-namespace';
 
 const EMBED_MODEL = 'text-embedding-3-large';
 const EMBED_DIMS = 1024;
@@ -85,8 +89,8 @@ export async function vectorSearch(args: VectorSearchArgs): Promise<RetrievalRes
           vector,
           topK,
           includeMetadata: true,
-          filter: ns.startsWith('client-')
-            ? { client_id: { $eq: args.tenancy.clientId } }
+          filter: isClientVectorNamespace(ns)
+            ? clientVectorMetadataFilter(args.tenancy.clientId)
             : undefined,
         });
         for (const match of result.matches ?? []) {

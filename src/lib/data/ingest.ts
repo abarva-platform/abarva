@@ -1,4 +1,5 @@
 import { Pinecone } from '@pinecone-database/pinecone';
+import { clientVectorNamespace } from '@/lib/knowledge/client-vector-namespace';
 
 // Matches scripts/ingest-knowledge.ts conventions
 const EMBED_MODEL = 'multilingual-e5-large';
@@ -74,7 +75,7 @@ export async function ingestClientFile(args: {
   bytes: Uint8Array;
 }): Promise<IngestResult> {
   const { clientId, filename, bytes } = args;
-  const namespace = `client_${clientId}`;
+  const namespace = clientVectorNamespace(clientId);
   const indexName = process.env.PINECONE_INDEX ?? 'nexus-knowledge';
 
   const text = await parseFileToText(filename, bytes);
