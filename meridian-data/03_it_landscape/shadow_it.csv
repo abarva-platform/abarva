@@ -1,0 +1,23 @@
+tool_id,tool_name,vendor,department,users_estimated,monthly_cost_usd,procurement_path,known_to_it,risk_classification,data_handled,first_detected,status,notes
+shadow:meridian:001,ChatGPT Plus personal accounts,OpenAI,clinical operations,27,180,personal_card,Partially,High,possible PHI in prompts,2026-02-12,remediation_in_flight,AI Governance Council tracking; PHI exposure risk requires BAA/access decision.
+shadow:meridian:002,Claude Pro,Anthropic,strategy and finance,34,260,department_card,Partially,Medium,confidential planning,2026-03-12,monitoring,AI Governance Council tracking; PHI exposure risk requires BAA/access decision.
+shadow:meridian:003,Dropbox personal,Dropbox,ambulatory clinics,41,340,personal_card,Yes,High,possible PHI files,2026-04-12,remediation_in_flight,AI Governance Council tracking; PHI exposure risk requires BAA/access decision.
+shadow:meridian:004,Zapier,Zapier,operations,48,420,department_card,Partially,Medium,workflow metadata,2026-01-12,monitoring,AI Governance Council tracking; PHI exposure risk requires BAA/access decision.
+shadow:meridian:005,Loom,Loom,training,55,500,personal_card,Partially,Medium,screen recordings,2026-02-12,monitoring,AI Governance Council tracking; PHI exposure risk requires BAA/access decision.
+shadow:meridian:006,Otter.ai,Otter,clinical meetings,62,580,department_card,Yes,High,meeting transcripts with PHI risk,2026-03-12,remediation_in_flight,AI Governance Council tracking; PHI exposure risk requires BAA/access decision.
+shadow:meridian:007,Notion,Notion,strategy/product,69,660,personal_card,Partially,Medium,knowledge base outside SharePoint,2026-04-12,monitoring,AI Governance Council tracking; PHI exposure risk requires BAA/access decision.
+shadow:meridian:008,unapproved AI scribe pilot,various,specialty clinics,76,740,department_card,Partially,Critical,clinical notes and audio,2026-01-12,remediation_in_flight,AI Governance Council tracking; PHI exposure risk requires BAA/access decision.
+shadow:meridian:009,Google Drive personal,Google,physician groups,83,820,personal_card,Yes,High,documents with patient context,2026-02-12,remediation_in_flight,AI Governance Council tracking; PHI exposure risk requires BAA/access decision.
+shadow:meridian:010,Calendly,Calendly,admin,90,900,department_card,Partially,Low,scheduling metadata,2026-03-12,monitoring,AI Governance Council tracking; PHI exposure risk requires BAA/access decision.
+shadow:meridian:011,Grammarly,Grammarly,communications,97,980,personal_card,Partially,Medium,draft content,2026-04-12,monitoring,AI Governance Council tracking; PHI exposure risk requires BAA/access decision.
+shadow:meridian:012,Perplexity Pro,Perplexity,analytics,104,1060,department_card,Yes,Medium,research prompts,2026-01-12,monitoring,AI Governance Council tracking; PHI exposure risk requires BAA/access decision.
+shadow:meridian:013,Department SaaS 13,various,RCM,18,1040,department_card,No,Medium,operational data,2026-03-20,inventory_pending,Included to preserve imperfect long-tail SaaS inventory.
+shadow:meridian:014,Department SaaS 14,various,plan ops,19,1120,department_card,No,Medium,operational data,2026-03-20,inventory_pending,Included to preserve imperfect long-tail SaaS inventory.
+shadow:meridian:015,Department SaaS 15,various,quality,20,1200,department_card,No,Medium,operational data,2026-03-20,inventory_pending,Included to preserve imperfect long-tail SaaS inventory.
+shadow:meridian:016,Department SaaS 16,various,nursing,21,1280,department_card,No,Medium,operational data,2026-03-20,inventory_pending,Included to preserve imperfect long-tail SaaS inventory.
+shadow:meridian:017,Department SaaS 17,various,RCM,22,1360,department_card,No,Medium,operational data,2026-03-20,inventory_pending,Included to preserve imperfect long-tail SaaS inventory.
+shadow:meridian:018,Department SaaS 18,various,plan ops,23,1440,department_card,No,Medium,operational data,2026-03-20,inventory_pending,Included to preserve imperfect long-tail SaaS inventory.
+shadow:meridian:019,Department SaaS 19,various,quality,24,1520,department_card,No,Medium,operational data,2026-03-20,inventory_pending,Included to preserve imperfect long-tail SaaS inventory.
+shadow:meridian:020,Department SaaS 20,various,nursing,25,1600,department_card,No,Medium,operational data,2026-03-20,inventory_pending,Included to preserve imperfect long-tail SaaS inventory.
+shadow:meridian:021,Department SaaS 21,various,RCM,26,1680,department_card,No,Medium,operational data,2026-03-20,inventory_pending,Included to preserve imperfect long-tail SaaS inventory.
+shadow:meridian:022,Department SaaS 22,various,plan ops,27,1760,department_card,No,Medium,operational data,2026-03-20,inventory_pending,Included to preserve imperfect long-tail SaaS inventory.

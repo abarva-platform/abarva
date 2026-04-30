@@ -1,0 +1,685 @@
+{
+  "tenant_key": "meridian-health",
+  "last_updated": "2026-04-25",
+  "data_classification": "Confidential",
+  "schema_version": "1.0",
+  "evidence_items": [
+    {
+      "id": "ev:meridian:001",
+      "claim": "Clinician documentation time baseline is 45 minutes/day",
+      "source_type": "public_filing",
+      "source_doc": "q4-financial-close.pdf",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:harold-kim",
+      "supports_claims_in": [
+        "meridian-prior-auth-2026",
+        "kpi:meridian:002"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:002",
+      "claim": "Prior-auth auto-approval rate is 8%",
+      "source_type": "industry_research",
+      "source_doc": "ai-governance-workpapers.docx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:anita-krishnamurthy",
+      "supports_claims_in": [
+        "meridian-ai-governance-2026",
+        "kpi:meridian:003"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:003",
+      "claim": "DENIALS-2024 sunk cost reached $8M",
+      "source_type": "expert_interview",
+      "source_doc": "vendor-scorecard.xlsx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Confidential",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:david-park",
+      "supports_claims_in": [
+        "meridian-rcm-modernization-2026",
+        "kpi:meridian:004"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:004",
+      "claim": "Q4 FY2025 gross denial rate increased 180bps",
+      "source_type": "regulatory_doc",
+      "source_doc": "epic-audit-log-analysis-q1-2026.xlsx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:marcus-reid",
+      "supports_claims_in": [
+        "meridian-ambient-2026",
+        "kpi:meridian:005"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:005",
+      "claim": "HCAHPS Q1 FY2026 overall rating declined",
+      "source_type": "peer_anonymized",
+      "source_doc": "q4-financial-close.pdf",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:jennifer-wexler",
+      "supports_claims_in": [
+        "meridian-prior-auth-2026",
+        "kpi:meridian:006"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:006",
+      "claim": "MA STAR overall rating is 4.0",
+      "source_type": "tenant_data_room",
+      "source_doc": "ai-governance-workpapers.docx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Confidential",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:sarah-obrien",
+      "supports_claims_in": [
+        "meridian-ai-governance-2026",
+        "kpi:meridian:007"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:007",
+      "claim": "Ambient documentation peer savings benchmark supports 20-35 minutes/day",
+      "source_type": "public_filing",
+      "source_doc": "vendor-scorecard.xlsx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:rebecca-hollings",
+      "supports_claims_in": [
+        "meridian-rcm-modernization-2026",
+        "kpi:meridian:008"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:008",
+      "claim": "FDA guidance tracking requires clinical AI review",
+      "source_type": "industry_research",
+      "source_doc": "epic-audit-log-analysis-q1-2026.xlsx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.62,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:james-okonjo",
+      "supports_claims_in": [
+        "meridian-ambient-2026",
+        "kpi:meridian:009"
+      ],
+      "caveats": "Low-confidence or stale; value describes the claim without exposing restricted row-level data."
+    },
+    {
+      "id": "ev:meridian:009",
+      "claim": "Innovaccer renewal is strategically loaded",
+      "source_type": "expert_interview",
+      "source_doc": "q4-financial-close.pdf",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Restricted",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:patricia-okafor",
+      "supports_claims_in": [
+        "meridian-prior-auth-2026",
+        "kpi:meridian:010"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:010",
+      "claim": "Cohere pilot 80% vs production 22% created scar tissue",
+      "source_type": "regulatory_doc",
+      "source_doc": "ai-governance-workpapers.docx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:margaret-liu",
+      "supports_claims_in": [
+        "meridian-ai-governance-2026",
+        "kpi:meridian:011"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:011",
+      "claim": "Hawaii Cerner remnant adds integration cost",
+      "source_type": "peer_anonymized",
+      "source_doc": "vendor-scorecard.xlsx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.72,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:karen-mercer",
+      "supports_claims_in": [
+        "meridian-rcm-modernization-2026",
+        "kpi:meridian:012"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:012",
+      "claim": "CBO readiness assessment is below target",
+      "source_type": "tenant_data_room",
+      "source_doc": "epic-audit-log-analysis-q1-2026.xlsx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Confidential",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:robert-chen",
+      "supports_claims_in": [
+        "meridian-ambient-2026",
+        "kpi:meridian:013"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:013",
+      "claim": "Clinician documentation time baseline is 45 minutes/day \u2014 supporting item 13",
+      "source_type": "public_filing",
+      "source_doc": "q4-financial-close.pdf",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.88,
+      "last_updated": "2025-10-15",
+      "owner_person_id": "person:meridian:thomas-hartwell",
+      "supports_claims_in": [
+        "meridian-prior-auth-2026",
+        "kpi:meridian:014"
+      ],
+      "caveats": "Low-confidence or stale; value describes the claim without exposing restricted row-level data."
+    },
+    {
+      "id": "ev:meridian:014",
+      "claim": "Prior-auth auto-approval rate is 8% \u2014 supporting item 14",
+      "source_type": "industry_research",
+      "source_doc": "ai-governance-workpapers.docx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:lakshmi-venkatesan",
+      "supports_claims_in": [
+        "meridian-ai-governance-2026",
+        "kpi:meridian:015"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:015",
+      "claim": "DENIALS-2024 sunk cost reached $8M \u2014 supporting item 15",
+      "source_type": "expert_interview",
+      "source_doc": "vendor-scorecard.xlsx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Confidential",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:andrew-fitzgerald",
+      "supports_claims_in": [
+        "meridian-rcm-modernization-2026",
+        "kpi:meridian:016"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:016",
+      "claim": "Q4 FY2025 gross denial rate increased 180bps \u2014 supporting item 16",
+      "source_type": "regulatory_doc",
+      "source_doc": "epic-audit-log-analysis-q1-2026.xlsx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.62,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:priya-sharma",
+      "supports_claims_in": [
+        "meridian-ambient-2026",
+        "kpi:meridian:017"
+      ],
+      "caveats": "Low-confidence or stale; value describes the claim without exposing restricted row-level data."
+    },
+    {
+      "id": "ev:meridian:017",
+      "claim": "HCAHPS Q1 FY2026 overall rating declined \u2014 supporting item 17",
+      "source_type": "peer_anonymized",
+      "source_doc": "q4-financial-close.pdf",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:christopher-vega",
+      "supports_claims_in": [
+        "meridian-prior-auth-2026",
+        "kpi:meridian:018"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:018",
+      "claim": "MA STAR overall rating is 4.0 \u2014 supporting item 18",
+      "source_type": "tenant_data_room",
+      "source_doc": "ai-governance-workpapers.docx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Restricted",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:kavita-patel",
+      "supports_claims_in": [
+        "meridian-ai-governance-2026",
+        "kpi:meridian:019"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:019",
+      "claim": "Ambient documentation peer savings benchmark supports 20-35 minutes/day \u2014 supporting item 19",
+      "source_type": "public_filing",
+      "source_doc": "vendor-scorecard.xlsx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:marcus-chen",
+      "supports_claims_in": [
+        "meridian-rcm-modernization-2026",
+        "kpi:meridian:020"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:020",
+      "claim": "FDA guidance tracking requires clinical AI review \u2014 supporting item 20",
+      "source_type": "industry_research",
+      "source_doc": "epic-audit-log-analysis-q1-2026.xlsx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:linda-howard",
+      "supports_claims_in": [
+        "meridian-ambient-2026",
+        "kpi:meridian:021"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:021",
+      "claim": "Innovaccer renewal is strategically loaded \u2014 supporting item 21",
+      "source_type": "expert_interview",
+      "source_doc": "q4-financial-close.pdf",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Confidential",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:wei-zhang",
+      "supports_claims_in": [
+        "meridian-prior-auth-2026",
+        "kpi:meridian:022"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:022",
+      "claim": "Cohere pilot 80% vs production 22% created scar tissue \u2014 supporting item 22",
+      "source_type": "regulatory_doc",
+      "source_doc": "ai-governance-workpapers.docx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.72,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:daniel-reyes",
+      "supports_claims_in": [
+        "meridian-ai-governance-2026",
+        "kpi:meridian:023"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:023",
+      "claim": "Hawaii Cerner remnant adds integration cost \u2014 supporting item 23",
+      "source_type": "peer_anonymized",
+      "source_doc": "vendor-scorecard.xlsx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:jordan-mckenzie",
+      "supports_claims_in": [
+        "meridian-rcm-modernization-2026",
+        "kpi:meridian:024"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:024",
+      "claim": "CBO readiness assessment is below target \u2014 supporting item 24",
+      "source_type": "tenant_data_room",
+      "source_doc": "epic-audit-log-analysis-q1-2026.xlsx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Confidential",
+      "confidence": 0.62,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:vacant-vp-applications",
+      "supports_claims_in": [
+        "meridian-ambient-2026",
+        "kpi:meridian:025"
+      ],
+      "caveats": "Low-confidence or stale; value describes the claim without exposing restricted row-level data."
+    },
+    {
+      "id": "ev:meridian:025",
+      "claim": "Clinician documentation time baseline is 45 minutes/day \u2014 supporting item 25",
+      "source_type": "public_filing",
+      "source_doc": "q4-financial-close.pdf",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:jessica-toth",
+      "supports_claims_in": [
+        "meridian-prior-auth-2026",
+        "kpi:meridian:026"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:026",
+      "claim": "Prior-auth auto-approval rate is 8% \u2014 supporting item 26",
+      "source_type": "industry_research",
+      "source_doc": "ai-governance-workpapers.docx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.88,
+      "last_updated": "2025-10-15",
+      "owner_person_id": "person:meridian:brian-sullivan",
+      "supports_claims_in": [
+        "meridian-ai-governance-2026",
+        "kpi:meridian:027"
+      ],
+      "caveats": "Low-confidence or stale; value describes the claim without exposing restricted row-level data."
+    },
+    {
+      "id": "ev:meridian:027",
+      "claim": "DENIALS-2024 sunk cost reached $8M \u2014 supporting item 27",
+      "source_type": "expert_interview",
+      "source_doc": "vendor-scorecard.xlsx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Restricted",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:david-henderson",
+      "supports_claims_in": [
+        "meridian-rcm-modernization-2026",
+        "kpi:meridian:028"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:028",
+      "claim": "Q4 FY2025 gross denial rate increased 180bps \u2014 supporting item 28",
+      "source_type": "regulatory_doc",
+      "source_doc": "epic-audit-log-analysis-q1-2026.xlsx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:maya-ramos",
+      "supports_claims_in": [
+        "meridian-ambient-2026",
+        "kpi:meridian:029"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:029",
+      "claim": "HCAHPS Q1 FY2026 overall rating declined \u2014 supporting item 29",
+      "source_type": "peer_anonymized",
+      "source_doc": "q4-financial-close.pdf",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:owen-li",
+      "supports_claims_in": [
+        "meridian-prior-auth-2026",
+        "kpi:meridian:030"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:030",
+      "claim": "MA STAR overall rating is 4.0 \u2014 supporting item 30",
+      "source_type": "tenant_data_room",
+      "source_doc": "ai-governance-workpapers.docx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Confidential",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:natalie-greer",
+      "supports_claims_in": [
+        "meridian-ai-governance-2026",
+        "kpi:meridian:031"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:031",
+      "claim": "Ambient documentation peer savings benchmark supports 20-35 minutes/day \u2014 supporting item 31",
+      "source_type": "public_filing",
+      "source_doc": "vendor-scorecard.xlsx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:samuel-ito",
+      "supports_claims_in": [
+        "meridian-rcm-modernization-2026",
+        "kpi:meridian:032"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:032",
+      "claim": "FDA guidance tracking requires clinical AI review \u2014 supporting item 32",
+      "source_type": "industry_research",
+      "source_doc": "epic-audit-log-analysis-q1-2026.xlsx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.62,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:leah-benitez",
+      "supports_claims_in": [
+        "meridian-ambient-2026",
+        "kpi:meridian:033"
+      ],
+      "caveats": "Low-confidence or stale; value describes the claim without exposing restricted row-level data."
+    },
+    {
+      "id": "ev:meridian:033",
+      "claim": "Innovaccer renewal is strategically loaded \u2014 supporting item 33",
+      "source_type": "expert_interview",
+      "source_doc": "q4-financial-close.pdf",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Confidential",
+      "confidence": 0.72,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:aiden-walsh",
+      "supports_claims_in": [
+        "meridian-prior-auth-2026",
+        "kpi:meridian:034"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:034",
+      "claim": "Cohere pilot 80% vs production 22% created scar tissue \u2014 supporting item 34",
+      "source_type": "regulatory_doc",
+      "source_doc": "ai-governance-workpapers.docx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:elaine-morales",
+      "supports_claims_in": [
+        "meridian-ai-governance-2026",
+        "kpi:meridian:035"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:035",
+      "claim": "Hawaii Cerner remnant adds integration cost \u2014 supporting item 35",
+      "source_type": "peer_anonymized",
+      "source_doc": "vendor-scorecard.xlsx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:harold-kim",
+      "supports_claims_in": [
+        "meridian-rcm-modernization-2026",
+        "kpi:meridian:036"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:036",
+      "claim": "CBO readiness assessment is below target \u2014 supporting item 36",
+      "source_type": "tenant_data_room",
+      "source_doc": "epic-audit-log-analysis-q1-2026.xlsx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Restricted",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:anita-krishnamurthy",
+      "supports_claims_in": [
+        "meridian-ambient-2026",
+        "kpi:meridian:037"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:037",
+      "claim": "Clinician documentation time baseline is 45 minutes/day \u2014 supporting item 37",
+      "source_type": "public_filing",
+      "source_doc": "q4-financial-close.pdf",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:david-park",
+      "supports_claims_in": [
+        "meridian-prior-auth-2026",
+        "kpi:meridian:038"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:038",
+      "claim": "Prior-auth auto-approval rate is 8% \u2014 supporting item 38",
+      "source_type": "industry_research",
+      "source_doc": "ai-governance-workpapers.docx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:marcus-reid",
+      "supports_claims_in": [
+        "meridian-ai-governance-2026",
+        "kpi:meridian:039"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:039",
+      "claim": "DENIALS-2024 sunk cost reached $8M \u2014 supporting item 39",
+      "source_type": "expert_interview",
+      "source_doc": "vendor-scorecard.xlsx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Confidential",
+      "confidence": 0.88,
+      "last_updated": "2025-10-15",
+      "owner_person_id": "person:meridian:jennifer-wexler",
+      "supports_claims_in": [
+        "meridian-rcm-modernization-2026",
+        "kpi:meridian:040"
+      ],
+      "caveats": "Low-confidence or stale; value describes the claim without exposing restricted row-level data."
+    },
+    {
+      "id": "ev:meridian:040",
+      "claim": "Q4 FY2025 gross denial rate increased 180bps \u2014 supporting item 40",
+      "source_type": "regulatory_doc",
+      "source_doc": "epic-audit-log-analysis-q1-2026.xlsx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.62,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:sarah-obrien",
+      "supports_claims_in": [
+        "meridian-ambient-2026",
+        "kpi:meridian:041"
+      ],
+      "caveats": "Low-confidence or stale; value describes the claim without exposing restricted row-level data."
+    },
+    {
+      "id": "ev:meridian:041",
+      "claim": "HCAHPS Q1 FY2026 overall rating declined \u2014 supporting item 41",
+      "source_type": "peer_anonymized",
+      "source_doc": "q4-financial-close.pdf",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Internal",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:rebecca-hollings",
+      "supports_claims_in": [
+        "meridian-prior-auth-2026",
+        "kpi:meridian:042"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    },
+    {
+      "id": "ev:meridian:042",
+      "claim": "MA STAR overall rating is 4.0 \u2014 supporting item 42",
+      "source_type": "tenant_data_room",
+      "source_doc": "ai-governance-workpapers.docx",
+      "source_section": "Relevant tab / workpaper section",
+      "data_classification": "Confidential",
+      "confidence": 0.88,
+      "last_updated": "2026-04-15",
+      "owner_person_id": "person:meridian:james-okonjo",
+      "supports_claims_in": [
+        "meridian-ai-governance-2026",
+        "kpi:meridian:043"
+      ],
+      "caveats": "Source is sufficient for synthetic tenant reasoning; not public customer data."
+    }
+  ],
+  "evidence_freshness_summary": {
+    "total_items": 42,
+    "low_confidence_under_0_75": 8,
+    "stale_over_120_days": 3
+  }
+}

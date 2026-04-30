@@ -47,6 +47,8 @@
     "db:smoke:apex-intelligence": "npx tsx src/scripts/seed/smoke-apex-intelligence-layer.ts",
     "db:seed:apex-setup-data": "npx tsx src/scripts/setup-data/load-apex-setup-data.ts",
     "db:verify:apex-setup-data": "npx tsx src/scripts/setup-data/verify-apex-setup-data.ts",
+    "db:seed:meridian-setup-data": "npx tsx src/scripts/setup-data/load-meridian-setup-data.ts",
+    "db:verify:meridian-setup-data": "npx tsx src/scripts/setup-data/verify-meridian-setup-data.ts",
     "db:seed:meridian-intelligence": "npx tsx src/scripts/seed/seed-meridian-intelligence-layer.ts",
     "db:verify:meridian-intelligence": "npx tsx src/scripts/seed/verify-meridian-intelligence-layer.ts",
     "db:smoke:meridian-intelligence": "npx tsx src/scripts/seed/smoke-meridian-intelligence-layer.ts",

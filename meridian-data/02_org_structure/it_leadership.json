@@ -1,0 +1,376 @@
+{
+  "tenant_key": "meridian-health",
+  "last_updated": "2026-04-25",
+  "data_classification": "Internal",
+  "schema_version": "1.0",
+  "ai_governance_council": {
+    "charter_date": "2025-Q3 board mandate; operational charter ratified 2026-01-18",
+    "chair": "person:meridian:jennifer-wexler",
+    "members": [
+      "person:meridian:anita-krishnamurthy",
+      "person:meridian:rebecca-hollings",
+      "person:meridian:karen-mercer",
+      "person:meridian:lakshmi-venkatesan",
+      "person:meridian:marcus-reid",
+      "person:meridian:daniel-reyes",
+      "rotating physician representative"
+    ],
+    "meeting_cadence": "Monthly, with ad hoc review for high-risk clinical AI",
+    "authority_scope": "Every clinical AI use case must have inventory, risk classification, FDA/state regulatory attestation, model-owner assignment, and monitoring plan.",
+    "current_status": "23 use cases under review; 4 attested; 19 in progress; three shadow AI scribe pilots recently surfaced."
+  },
+  "it_leaders": [
+    {
+      "id": "person:meridian:kavita-patel",
+      "full_name": "Dr. Kavita Patel",
+      "title": "Associate CMIO, AI",
+      "scope": "provider",
+      "reports_to": "person:meridian:jennifer-wexler",
+      "tenure_in_role_years": 2,
+      "domain_ownership": [
+        "Epic / clinical applications"
+      ],
+      "prior_roles": [
+        "Meridian delivery leadership",
+        "Healthcare technology role"
+      ],
+      "stated_priorities_fy2026": [
+        "AI governance readiness",
+        "Epic optimization",
+        "plan-provider data sharing",
+        "cyber resilience"
+      ],
+      "vacancy_status": "Filled"
+    },
+    {
+      "id": "person:meridian:marcus-chen",
+      "full_name": "Marcus Chen",
+      "title": "Senior Director, Technology",
+      "scope": "shared",
+      "reports_to": "person:meridian:anita-krishnamurthy",
+      "tenure_in_role_years": 4,
+      "domain_ownership": [
+        "enterprise data, integration, and portfolio delivery"
+      ],
+      "prior_roles": [
+        "Meridian delivery leadership",
+        "Healthcare technology role"
+      ],
+      "stated_priorities_fy2026": [
+        "AI governance readiness",
+        "Epic optimization",
+        "plan-provider data sharing",
+        "cyber resilience"
+      ],
+      "vacancy_status": "Filled"
+    },
+    {
+      "id": "person:meridian:linda-howard",
+      "full_name": "Linda Howard",
+      "title": "VP Enterprise Architecture",
+      "scope": "shared",
+      "reports_to": "person:meridian:anita-krishnamurthy",
+      "tenure_in_role_years": 7,
+      "domain_ownership": [
+        "enterprise data, integration, and portfolio delivery"
+      ],
+      "prior_roles": [
+        "Meridian delivery leadership",
+        "Healthcare technology role"
+      ],
+      "stated_priorities_fy2026": [
+        "AI governance readiness",
+        "Epic optimization",
+        "plan-provider data sharing",
+        "cyber resilience"
+      ],
+      "vacancy_status": "Filled"
+    },
+    {
+      "id": "person:meridian:wei-zhang",
+      "full_name": "Wei Zhang",
+      "title": "VP Infrastructure & Cloud",
+      "scope": "shared",
+      "reports_to": "person:meridian:anita-krishnamurthy",
+      "tenure_in_role_years": 5,
+      "domain_ownership": [
+        "security and infrastructure"
+      ],
+      "prior_roles": [
+        "Meridian delivery leadership",
+        "Healthcare technology role"
+      ],
+      "stated_priorities_fy2026": [
+        "AI governance readiness",
+        "Epic optimization",
+        "plan-provider data sharing",
+        "cyber resilience"
+      ],
+      "vacancy_status": "Filled"
+    },
+    {
+      "id": "person:meridian:daniel-reyes",
+      "full_name": "Daniel Reyes",
+      "title": "VP Information Security / CISO",
+      "scope": "shared",
+      "reports_to": "person:meridian:anita-krishnamurthy",
+      "tenure_in_role_years": 5,
+      "domain_ownership": [
+        "security and infrastructure"
+      ],
+      "prior_roles": [
+        "Meridian delivery leadership",
+        "Healthcare technology role"
+      ],
+      "stated_priorities_fy2026": [
+        "AI governance readiness",
+        "Epic optimization",
+        "plan-provider data sharing",
+        "cyber resilience"
+      ],
+      "vacancy_status": "Filled"
+    },
+    {
+      "id": "person:meridian:jordan-mckenzie",
+      "full_name": "Jordan McKenzie",
+      "title": "VP Data and Analytics",
+      "scope": "shared",
+      "reports_to": "person:meridian:anita-krishnamurthy",
+      "tenure_in_role_years": 0.5,
+      "domain_ownership": [
+        "enterprise data, integration, and portfolio delivery"
+      ],
+      "prior_roles": [
+        "Meridian delivery leadership",
+        "Healthcare technology role"
+      ],
+      "stated_priorities_fy2026": [
+        "AI governance readiness",
+        "Epic optimization",
+        "plan-provider data sharing",
+        "cyber resilience"
+      ],
+      "vacancy_status": "Filled"
+    },
+    {
+      "id": "person:meridian:vacant-vp-applications",
+      "full_name": "VACANT",
+      "title": "VP Application Services",
+      "scope": "shared",
+      "reports_to": "person:meridian:anita-krishnamurthy",
+      "tenure_in_role_years": 0,
+      "domain_ownership": [
+        "enterprise data, integration, and portfolio delivery"
+      ],
+      "prior_roles": [
+        "Meridian delivery leadership",
+        "Healthcare technology role"
+      ],
+      "stated_priorities_fy2026": [
+        "AI governance readiness",
+        "Epic optimization",
+        "plan-provider data sharing",
+        "cyber resilience"
+      ],
+      "vacancy_status": "Vacant \u2014 search in flight"
+    },
+    {
+      "id": "person:meridian:jessica-toth",
+      "full_name": "Jessica Toth",
+      "title": "VP Digital Patient Experience",
+      "scope": "provider",
+      "reports_to": "person:meridian:anita-krishnamurthy",
+      "tenure_in_role_years": 2,
+      "domain_ownership": [
+        "enterprise data, integration, and portfolio delivery"
+      ],
+      "prior_roles": [
+        "Meridian delivery leadership",
+        "Healthcare technology role"
+      ],
+      "stated_priorities_fy2026": [
+        "AI governance readiness",
+        "Epic optimization",
+        "plan-provider data sharing",
+        "cyber resilience"
+      ],
+      "vacancy_status": "Filled"
+    },
+    {
+      "id": "person:meridian:brian-sullivan",
+      "full_name": "Brian Sullivan",
+      "title": "Director, EPMO",
+      "scope": "shared",
+      "reports_to": "person:meridian:anita-krishnamurthy",
+      "tenure_in_role_years": 3,
+      "domain_ownership": [
+        "enterprise data, integration, and portfolio delivery"
+      ],
+      "prior_roles": [
+        "Meridian delivery leadership",
+        "Healthcare technology role"
+      ],
+      "stated_priorities_fy2026": [
+        "AI governance readiness",
+        "Epic optimization",
+        "plan-provider data sharing",
+        "cyber resilience"
+      ],
+      "vacancy_status": "Filled"
+    },
+    {
+      "id": "person:meridian:david-henderson",
+      "full_name": "David Henderson",
+      "title": "Director, RCM Innovation",
+      "scope": "provider",
+      "reports_to": "person:meridian:patricia-okafor",
+      "tenure_in_role_years": 3,
+      "domain_ownership": [
+        "enterprise data, integration, and portfolio delivery"
+      ],
+      "prior_roles": [
+        "Meridian delivery leadership",
+        "Healthcare technology role"
+      ],
+      "stated_priorities_fy2026": [
+        "AI governance readiness",
+        "Epic optimization",
+        "plan-provider data sharing",
+        "cyber resilience"
+      ],
+      "vacancy_status": "Filled"
+    },
+    {
+      "id": "person:meridian:maya-ramos",
+      "full_name": "Maya Ramos",
+      "title": "Director Clinical Applications",
+      "scope": "provider",
+      "reports_to": "person:meridian:vacant-vp-applications",
+      "tenure_in_role_years": 4,
+      "domain_ownership": [
+        "Epic / clinical applications"
+      ],
+      "prior_roles": [
+        "Meridian delivery leadership",
+        "Healthcare technology role"
+      ],
+      "stated_priorities_fy2026": [
+        "AI governance readiness",
+        "Epic optimization",
+        "plan-provider data sharing",
+        "cyber resilience"
+      ],
+      "vacancy_status": "Filled"
+    },
+    {
+      "id": "person:meridian:owen-li",
+      "full_name": "Owen Li",
+      "title": "Director Plan Systems",
+      "scope": "plan",
+      "reports_to": "person:meridian:vacant-vp-applications",
+      "tenure_in_role_years": 3,
+      "domain_ownership": [
+        "plan systems"
+      ],
+      "prior_roles": [
+        "Meridian delivery leadership",
+        "Healthcare technology role"
+      ],
+      "stated_priorities_fy2026": [
+        "AI governance readiness",
+        "Epic optimization",
+        "plan-provider data sharing",
+        "cyber resilience"
+      ],
+      "vacancy_status": "Filled"
+    },
+    {
+      "id": "person:meridian:natalie-greer",
+      "full_name": "Natalie Greer",
+      "title": "Director Cybersecurity Operations",
+      "scope": "shared",
+      "reports_to": "person:meridian:daniel-reyes",
+      "tenure_in_role_years": 3,
+      "domain_ownership": [
+        "enterprise data, integration, and portfolio delivery"
+      ],
+      "prior_roles": [
+        "Meridian delivery leadership",
+        "Healthcare technology role"
+      ],
+      "stated_priorities_fy2026": [
+        "AI governance readiness",
+        "Epic optimization",
+        "plan-provider data sharing",
+        "cyber resilience"
+      ],
+      "vacancy_status": "Filled"
+    },
+    {
+      "id": "person:meridian:samuel-ito",
+      "full_name": "Samuel Ito",
+      "title": "Director Cloud Operations",
+      "scope": "shared",
+      "reports_to": "person:meridian:wei-zhang",
+      "tenure_in_role_years": 4,
+      "domain_ownership": [
+        "security and infrastructure"
+      ],
+      "prior_roles": [
+        "Meridian delivery leadership",
+        "Healthcare technology role"
+      ],
+      "stated_priorities_fy2026": [
+        "AI governance readiness",
+        "Epic optimization",
+        "plan-provider data sharing",
+        "cyber resilience"
+      ],
+      "vacancy_status": "Filled"
+    },
+    {
+      "id": "person:meridian:leah-benitez",
+      "full_name": "Leah Benitez",
+      "title": "Director Data Engineering",
+      "scope": "shared",
+      "reports_to": "person:meridian:jordan-mckenzie",
+      "tenure_in_role_years": 1,
+      "domain_ownership": [
+        "enterprise data, integration, and portfolio delivery"
+      ],
+      "prior_roles": [
+        "Meridian delivery leadership",
+        "Healthcare technology role"
+      ],
+      "stated_priorities_fy2026": [
+        "AI governance readiness",
+        "Epic optimization",
+        "plan-provider data sharing",
+        "cyber resilience"
+      ],
+      "vacancy_status": "Filled"
+    },
+    {
+      "id": "person:meridian:aiden-walsh",
+      "full_name": "Dr. Aiden Walsh",
+      "title": "Former CIO",
+      "scope": "system",
+      "reports_to": null,
+      "tenure_in_role_years": 5,
+      "domain_ownership": [
+        "enterprise data, integration, and portfolio delivery"
+      ],
+      "prior_roles": [
+        "Meridian delivery leadership",
+        "Healthcare technology role"
+      ],
+      "stated_priorities_fy2026": [
+        "AI governance readiness",
+        "Epic optimization",
+        "plan-provider data sharing",
+        "cyber resilience"
+      ],
+      "vacancy_status": "Filled"
+    }
+  ]
+}
