@@ -7,7 +7,7 @@ test.describe('Intelligence foundation browse', () => {
   test.skip(missingPrereqs.length > 0, `Missing required env: ${missingPrereqs.join(', ')}`);
 
   test('filters the library by industry and category facets', async ({ page }) => {
-    await withClerkAuth(page, { email: 'anand+clerk_test@abarva.com', activeClient: 'meridian' });
+    await withClerkAuth(page, { email: 'anand.sundaram@thesundaram.com', activeClient: 'meridian' });
 
     await page.goto('/intelligence/library');
     await expect(page.getByRole('heading', { name: 'What AbarVa knows' })).toBeVisible();

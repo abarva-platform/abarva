@@ -333,9 +333,9 @@ describe('Probe 5 · inferClientKeyFromEmail', () => {
 // =====================================================================
 
 describe('Probe 6 · session role inference', () => {
-  it('infers admin only for the canonical admin emails', () => {
-    expect(inferSessionRoleFromEmail('anand+clerk_test@abarva.com')).toBe('admin');
-    expect(inferSessionRoleFromEmail('anand.sundaram@thesundaram.com')).toBe('admin');
+  it('does not infer admin from Anand emails without Clerk metadata', () => {
+    expect(inferSessionRoleFromEmail('anand+clerk_test@abarva.com')).toBeNull();
+    expect(inferSessionRoleFromEmail('anand.sundaram@thesundaram.com')).toBeNull();
   });
 
   it('infers investor only for the canonical investor email', () => {
@@ -444,14 +444,14 @@ describe('Probe 8 · shouldStripUnauthorizedClientParam', () => {
     ).toBe(false);
   });
 
-  it('does not strip for admin role (admin can switch tenants freely)', () => {
+  it('strips for the pinned founder account when a different tenant is requested', () => {
     expect(
       shouldStripUnauthorizedClientParam(
-        'admin',
-        { email: 'anand+clerk_test@abarva.com' },
+        'client',
+        { email: 'anand.sundaram@thesundaram.com', clientId: 'meridian' },
         'apexretail',
       ),
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it('does not strip when no requested client param is present', () => {

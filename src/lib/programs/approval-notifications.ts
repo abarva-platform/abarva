@@ -28,7 +28,6 @@ import type { ApprovalRequest } from '@/lib/programs/approval';
 // When OV2-2d-RBAC ships the tenant_admin role helper, this list goes
 // away and is replaced by a `getTenantAdminEmails(tenantKey)` lookup.
 const PLATFORM_ADMIN_EMAILS: readonly string[] = [
-  'anand+clerk_test@abarva.com',
   'anand.sundaram@thesundaram.com',
 ];
 

@@ -35,7 +35,8 @@ describe('access-routing', () => {
   });
 
   test('infers roles for legacy demo logins', () => {
-    expect(inferSessionRoleFromEmail('anand+clerk_test@abarva.com')).toBe('admin');
+    expect(inferSessionRoleFromEmail('anand+clerk_test@abarva.com')).toBeNull();
+    expect(inferSessionRoleFromEmail('anand.sundaram@thesundaram.com')).toBeNull();
     expect(inferSessionRoleFromEmail('investor+clerk_test@abarva.com')).toBe('investor');
     expect(inferSessionRoleFromEmail('demo-meridian+clerk_test@abarva.com')).toBe('client');
     expect(resolveSessionRole(undefined, 'demo-apexretail+clerk_test@abarva.com')).toBe('client');
@@ -62,7 +63,7 @@ describe('access-routing', () => {
   test('recognizes locked tenant roles from role or email alias', () => {
     expect(isLockedTenantRole('client', null)).toBe(true);
     expect(isLockedTenantRole(undefined, 'demo-keystone+clerk_test@abarva.com')).toBe(true);
-    expect(isLockedTenantRole('admin', 'anand+clerk_test@abarva.com')).toBe(false);
+    expect(isLockedTenantRole(undefined, 'anand.sundaram@thesundaram.com')).toBe(false);
   });
 
   test('strips unauthorized client params for locked sessions', () => {
@@ -89,11 +90,11 @@ describe('access-routing', () => {
     ).toBe(false);
     expect(
       shouldStripUnauthorizedClientParam(
-        'admin',
-        { email: 'anand+clerk_test@abarva.com', defaultClientId: 'meridian' },
+        'client',
+        { email: 'anand.sundaram@thesundaram.com', clientId: 'meridian', defaultClientId: 'meridian' },
         'apexretail',
       ),
-    ).toBe(false);
+    ).toBe(true);
   });
 
   test('routes external users to the public surface', () => {

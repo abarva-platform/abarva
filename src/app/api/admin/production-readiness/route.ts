@@ -6,7 +6,6 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 const ADMIN_EMAIL_ALLOWLIST = new Set([
-  'anand+clerk_test@abarva.com',
   'anand.sundaram@thesundaram.com',
 ]);
 
