@@ -2,6 +2,8 @@ import {
   S3_RFP,
   S4_DEMO_POC,
   S5_BAFO,
+  S6_CONTRACT,
+  S7_ACTIVATE,
   formatStagePackForPrompt,
   getStagePack,
   listAuthoredStages,
@@ -23,19 +25,24 @@ describe('getStagePack', () => {
     expect(getStagePack(4)?.label).toBe('S4 Demo / POC');
   });
 
+  it('returns the S6 Contract and S7 Activate packs', () => {
+    expect(getStagePack(6)).toBe(S6_CONTRACT);
+    expect(getStagePack(7)).toBe(S7_ACTIVATE);
+    expect(getStagePack(6)?.label).toBe('S6 Contract');
+    expect(getStagePack(7)?.label).toBe('S7 Activate');
+  });
+
   it('returns null cleanly for missing or out-of-range stages', () => {
     expect(getStagePack(null)).toBeNull();
     expect(getStagePack(undefined)).toBeNull();
     expect(getStagePack(-1)).toBeNull();
-    expect(getStagePack(6)).toBeNull();
     expect(getStagePack(8)).toBeNull();
     expect(getStagePack(99)).toBeNull();
   });
 });
-
 describe('listAuthoredStages', () => {
   it('returns the authored stage set sorted', () => {
-    expect(listAuthoredStages()).toEqual([0, 1, 2, 3, 4, 5]);
+    expect(listAuthoredStages()).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
   });
 });
 
@@ -56,6 +63,16 @@ describe('formatStagePackForPrompt', () => {
     const out = formatStagePackForPrompt(S5_BAFO);
     expect(out).toContain('Source workflow mapping: evaluation, orals_bafo, selection');
     expect(out).toContain('Corpus references: PAT-SRC-AMS-001');
+  });
+
+  it('includes S6 Contract source-stage mapping', () => {
+    const out = formatStagePackForPrompt(S6_CONTRACT);
+    expect(out).toContain('Source workflow mapping: selection, contract_mobilization');
+  });
+
+  it('includes S7 Activate source-stage mapping', () => {
+    const out = formatStagePackForPrompt(S7_ACTIVATE);
+    expect(out).toContain('Source workflow mapping: contract_mobilization, value_realization');
   });
 
   it('marks hard and soft evidence items distinctly', () => {
