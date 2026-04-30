@@ -77,7 +77,12 @@ export type ArtifactType =
   | 'bafo-scoreboard' // {vendors[], dimensions[], scoresMatrix, notes?}
   | 'walkaway-signal' // {credibility, reasoning, recommendation}
   | 'sourcing-stage-progress' // {evidenceItemId, label, severity, status, detail?}
-  | 'sourcing-stage-changed'; // {eventId, fromStage, toStage, snapshotId?}
+  | 'sourcing-stage-changed' // {eventId, fromStage, toStage, snapshotId?}
+  // OV2-1a (founder feedback) · /programs/new right-pane content. Brief
+  // fills in field-by-field; overlap alert fires when this new program
+  // collides with an existing program in the tenant's portfolio.
+  | 'brief-progress' // {fieldsTotal, fieldsFilled, fields: Array<{id,label,status,value?}>}
+  | 'overlap-alert'; // {overlappingProgramId, overlappingProgramName, overlappingProgramPhase?, overlapKind, overlapDetail}
 
 // ── Strongly-typed artifact payloads ──────────────────────────────────────────
 
@@ -373,6 +378,30 @@ export interface SourcingStageChangedArtifact {
   snapshotId?: string;
 }
 
+// OV2-1a · /programs/new brief-builder progress card. Replaces the
+// pattern-match cards on this surface (founder feedback: wrong content).
+export interface BriefProgressArtifact {
+  type: 'brief-progress';
+  fieldsTotal: number;
+  fieldsFilled: number;
+  fields: Array<{
+    id: string;
+    label: string;
+    status: 'empty' | 'partial' | 'filled';
+    value?: string;
+  }>;
+}
+
+// OV2-1a · overlap with existing tenant program (archetype/sponsor/system).
+export interface OverlapAlertArtifact {
+  type: 'overlap-alert';
+  overlappingProgramId: string;
+  overlappingProgramName: string;
+  overlappingProgramPhase?: string;
+  overlapKind: 'archetype' | 'sponsor' | 'system' | 'multiple';
+  overlapDetail: string;
+}
+
 export type Artifact =
   | BriefFieldArtifact
   | PatternMatchArtifact
@@ -395,7 +424,9 @@ export type Artifact =
   | BafoScoreboardArtifact
   | WalkawaySignalArtifact
   | SourcingStageProgressArtifact
-  | SourcingStageChangedArtifact;
+  | SourcingStageChangedArtifact
+  | BriefProgressArtifact
+  | OverlapAlertArtifact;
 
 // ── Parser ────────────────────────────────────────────────────────────────────
 //
@@ -447,7 +478,9 @@ export function isKnownArtifactType(type: string): type is ArtifactType {
     type === 'bafo-scoreboard' ||
     type === 'walkaway-signal' ||
     type === 'sourcing-stage-progress' ||
-    type === 'sourcing-stage-changed'
+    type === 'sourcing-stage-changed' ||
+    type === 'brief-progress' ||
+    type === 'overlap-alert'
   );
 }
 
@@ -908,6 +941,67 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
         snapshotId: optionalString(obj.snapshotId),
       };
     }
+    case 'brief-progress': {
+      // OV2-1a · brief-builder progress card.
+      const fieldsTotal = obj.fieldsTotal;
+      const fieldsFilled = obj.fieldsFilled;
+      const fieldsRaw = obj.fields;
+      if (typeof fieldsTotal !== 'number' || !Number.isInteger(fieldsTotal) || fieldsTotal <= 0) {
+        return null;
+      }
+      if (
+        typeof fieldsFilled !== 'number' ||
+        !Number.isInteger(fieldsFilled) ||
+        fieldsFilled < 0 ||
+        fieldsFilled > fieldsTotal
+      ) {
+        return null;
+      }
+      if (!Array.isArray(fieldsRaw)) return null;
+      const fields: BriefProgressArtifact['fields'] = [];
+      for (const raw of fieldsRaw) {
+        if (!raw || typeof raw !== 'object') return null;
+        const field = raw as Record<string, unknown>;
+        const id = field.id;
+        const label = field.label;
+        const status = field.status;
+        if (typeof id !== 'string' || id.length === 0) return null;
+        if (typeof label !== 'string' || label.length === 0) return null;
+        if (status !== 'empty' && status !== 'partial' && status !== 'filled') return null;
+        const value =
+          typeof field.value === 'string' && field.value.length > 0 ? field.value : undefined;
+        fields.push({ id, label, status, value });
+      }
+      return { type, fieldsTotal, fieldsFilled, fields };
+    }
+    case 'overlap-alert': {
+      // OV2-1a · alert when this brief overlaps an existing program.
+      const overlappingProgramId = obj.overlappingProgramId;
+      const overlappingProgramName = obj.overlappingProgramName;
+      const overlapKind = obj.overlapKind;
+      const overlapDetail = obj.overlapDetail;
+      if (typeof overlappingProgramId !== 'string' || overlappingProgramId.length === 0) return null;
+      if (typeof overlappingProgramName !== 'string' || overlappingProgramName.length === 0) {
+        return null;
+      }
+      if (
+        overlapKind !== 'archetype' &&
+        overlapKind !== 'sponsor' &&
+        overlapKind !== 'system' &&
+        overlapKind !== 'multiple'
+      ) {
+        return null;
+      }
+      if (typeof overlapDetail !== 'string' || overlapDetail.length === 0) return null;
+      return {
+        type,
+        overlappingProgramId,
+        overlappingProgramName,
+        overlappingProgramPhase: optionalString(obj.overlappingProgramPhase),
+        overlapKind,
+        overlapDetail,
+      };
+    }
   }
 }
 
@@ -1257,4 +1351,32 @@ a wrongly-flagged Phantom Sponsor will erode trust in the platform.
     fires when your turn ends.
     Shape: {"target": <relative-path>, "rationale"?: <string>, "replace"?: <boolean>}
     Example (the tool emits this for you — shown for parser reference):
-    [[artifact:navigate-to]]{"target":"/programs/new","rationale":"Origination intent; Steward owns the new-program flow."}[[/artifact]]`;
+    [[artifact:navigate-to]]{"target":"/programs/new","rationale":"Origination intent; Steward owns the new-program flow."}[[/artifact]]
+
+21. brief-progress — Surface 1 (/programs/new) origination only. Emit
+    on EVERY Steward turn after each new field is captured so the right
+    pane materializes the brief filling in field-by-field. This REPLACES
+    pattern-match cards on /programs/new — pattern-match was wrong
+    content for that surface (founder feedback). The 8-field P0 brief
+    set comes from the design doc; emit one card per turn covering all
+    fields with their current status, not one per field.
+    Shape: {"fieldsTotal": <int>, "fieldsFilled": <int>,
+            "fields": [{"id": <kebab-id>, "label": <human label>,
+                        "status": "empty"|"partial"|"filled",
+                        "value"?: <short current value>}]}
+    Example:
+    [[artifact:brief-progress]]{"fieldsTotal":8,"fieldsFilled":2,"fields":[{"id":"sponsor-candidate","label":"Sponsor candidate","status":"filled","value":"Sarah Chen (CIO)"},{"id":"problem-statement","label":"Problem statement","status":"filled","value":"AMS spend up 22% YoY"},{"id":"target-outcome","label":"Target outcome","status":"empty"},{"id":"archetype","label":"Archetype","status":"empty"},{"id":"timeline","label":"Timeline","status":"empty"},{"id":"named-systems","label":"Named systems","status":"empty"},{"id":"named-vendors","label":"Named vendors","status":"empty"},{"id":"lead","label":"Program lead","status":"empty"}]}[[/artifact]]
+
+22. overlap-alert — Surface 1 (/programs/new) origination only. Emit
+    when the broker bundle (tenant program inventory) reveals an
+    existing program that overlaps the brief being built — same
+    archetype, same sponsor, or same system footprint. Use real program
+    ids and names from the bundle, not placeholders. Use
+    overlapKind="multiple" when more than one dimension overlaps.
+    Shape: {"overlappingProgramId": <real-program-id>,
+            "overlappingProgramName": <real-program-name>,
+            "overlappingProgramPhase"?: <e.g. "P3 Design">,
+            "overlapKind": "archetype"|"sponsor"|"system"|"multiple",
+            "overlapDetail": <one-line human-readable detail>}
+    Example:
+    [[artifact:overlap-alert]]{"overlappingProgramId":"APX-CDP-2026","overlappingProgramName":"Apex Retail CDP Activation","overlappingProgramPhase":"P3 Design","overlapKind":"sponsor","overlapDetail":"Sarah Chen is already sponsoring APX-CDP-2026 in P3; double-check sponsor bandwidth before originating."}[[/artifact]]`;
