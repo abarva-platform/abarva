@@ -22,10 +22,27 @@ import 'server-only';
 
 import type {
   ContextChunk,
+  GraphEdge,
   GraphNeighborhood,
+  GraphNode,
   GraphPath,
   TenantRecord,
 } from '@/lib/knowledge/tenant-data/types';
+
+// Re-export the tenant-data shapes that app-tier consumers
+// need so they don't have to reach into tenant-data/types
+// (which is restricted by the broker-boundary ESLint rule).
+// Per CB-5 + the boundary doctrine: every shape app code
+// reads from a `ContextBundle` is reachable through the
+// context-broker module.
+export type {
+  ContextChunk,
+  GraphEdge,
+  GraphNeighborhood,
+  GraphNode,
+  GraphPath,
+  TenantRecord,
+};
 
 /**
  * The 4 retrieval modes per design doc Section 4.

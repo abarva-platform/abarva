@@ -24,6 +24,15 @@ export type {
   CorpusPatternHit,
   ContextBundle,
   ContextAssembleInput,
+  // Tenant-data shapes the bundle composes — re-exported so
+  // app-tier consumers don't need to reach into tenant-data
+  // directly (which is blocked by the broker-boundary rule).
+  ContextChunk,
+  GraphEdge,
+  GraphNeighborhood,
+  GraphNode,
+  GraphPath,
+  TenantRecord,
 } from './types';
 
 export { MissingTenantKeyError } from './types';
