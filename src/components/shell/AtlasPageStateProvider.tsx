@@ -43,6 +43,18 @@ import {
   visibleArtifactPendingText,
   type Artifact,
 } from '@/lib/agent/artifacts';
+// OV2-FM-TELEMETRY · failure-mode events fire from this dispatch site
+// because the artifact only becomes user-visible AFTER it lands in the
+// reactive panel. Dedupe by failureModeId via firedFlagsRef below
+// matches the panel's own dedupe key (NexusReactivePanel.selectVisibleArtifacts)
+// so re-emissions of the same flag don't inflate rollup counts.
+// Server-side capture is OV2-FM-TELEMETRY-SERVER follow-on; the
+// `cleared` event is wired in the helper but not yet fired here
+// because agent doctrine for retraction has not landed.
+import {
+  trackFailureModeFlagged,
+  type FailureModeContext,
+} from '@/lib/programs/failure-mode-telemetry';
 
 // ── Default surface-to-agent mapping ─────────────────────────────────────────
 
@@ -111,6 +123,12 @@ export function AtlasPageStateProvider({
   // where we wait for the close-of-turn before mutating routing.
   const router = useRouter();
   const pendingNavRef = useRef<{ target: string; replace: boolean } | null>(null);
+
+  // OV2-FM-TELEMETRY · session-scoped dedupe set for failure-mode-flagged
+  // events. Same key (failureModeId) the reactive panel uses so the
+  // PostHog rollup counts each catalog mode at most once per session
+  // even when Nexus re-emits the same flag across turns.
+  const firedFlagsRef = useRef<Set<number>>(new Set());
 
   const ask = useCallback(
     async (text: string) => {
@@ -193,6 +211,33 @@ export function AtlasPageStateProvider({
             if (a.type === 'navigate-to') {
               pendingNavRef.current = { target: a.target, replace: a.replace === true };
               continue;
+            }
+            // OV2-FM-TELEMETRY · fire posthog event the FIRST time we
+            // see a given failureModeId in this session, so the
+            // cross-program rollup (design doc Part E.5) has events
+            // to aggregate. Tracking happens BEFORE onArtifact so the
+            // event reflects what the platform produced even if the
+            // panel render throws downstream.
+            if (a.type === 'failure-mode-flagged') {
+              if (!firedFlagsRef.current.has(a.failureModeId)) {
+                firedFlagsRef.current.add(a.failureModeId);
+                const programId =
+                  typeof surfaceContext.programId === 'string'
+                    ? surfaceContext.programId
+                    : null;
+                // Note: tenantName is the display name (e.g. "Apex Retail Group");
+                // the broker tenant key (e.g. "apex-retail") is server-side and
+                // not available in this client context. PostHog rollups can
+                // bucket on display name; if a broker-key dimension becomes
+                // necessary the API route can mirror via OV2-FM-TELEMETRY-SERVER.
+                const ctx: FailureModeContext = {
+                  programId,
+                  tenantKey: tenantName,
+                  surface,
+                  agentName: resolvedAgentName,
+                };
+                trackFailureModeFlagged(a, ctx);
+              }
             }
             onArtifact?.(a);
           }
