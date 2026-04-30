@@ -799,7 +799,9 @@ data_model:
       doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
       section: "B.4 Cross-cutting concerns — Audit log"
       quoted_requirement: "New table program_audit_log (id, tenant_key, program_id, actor_id, role, action, from_state, to_state, rationale, evidence_refs[], created_at). Read-only after write."
-    current_state: documented_not_built
+    current_state: built_and_verified
+    built_at: "2026-04-30"
+    validation_note: "Migration 20260430140000_program_audit_log.sql"
     code_check:
       expected_files:
         - supabase/migrations/*audit*
