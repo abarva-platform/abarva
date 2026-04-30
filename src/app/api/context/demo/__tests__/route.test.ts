@@ -308,6 +308,12 @@ describe('POST /api/context/demo · tenant-key cross-check (apex-retail / apexre
   it('returns 403 when requested tenantKey does not match active client', async () => {
     // Active client is Apex (broker key: apex-retail). Caller asks for
     // Meridian; the route MUST refuse, not forward the request.
+    // Role is client — admin/investor bypass this gate by design.
+    requireTenancyMock.mockResolvedValueOnce({
+      clientId: 'c-apex',
+      userId: 'u-1',
+      role: 'client',
+    });
     const res = await POST(
       makeRequest({
         query: 'meridian secrets',
@@ -334,10 +340,14 @@ describe('POST /api/context/demo · tenant-key cross-check (apex-retail / apexre
     expect(res.status).toBe(200);
   });
 
-  it('rejects raw app-form tenant key (apexretail) for tenant mode', async () => {
-    // Defense-in-depth: callers must use the broker-shaped key. The
-    // route does not silently translate caller input; it expects the
-    // client (or the panel) to ship the canonical broker form.
+  it('rejects raw app-form tenant key (apexretail) for tenant mode (client role)', async () => {
+    // Defense-in-depth for client/maestro roles: callers must use the
+    // broker-shaped key. Admin/investor bypass this gate by design.
+    requireTenancyMock.mockResolvedValueOnce({
+      clientId: 'c-apex',
+      userId: 'u-1',
+      role: 'client',
+    });
     const res = await POST(
       makeRequest({
         query: 'apex CDP',
@@ -348,7 +358,12 @@ describe('POST /api/context/demo · tenant-key cross-check (apex-retail / apexre
     expect(res.status).toBe(403);
   });
 
-  it('returns 403 when active client lookup yields nothing for tenant mode', async () => {
+  it('returns 403 when active client lookup yields nothing for tenant mode (client role)', async () => {
+    requireTenancyMock.mockResolvedValueOnce({
+      clientId: 'c-apex',
+      userId: 'u-1',
+      role: 'client',
+    });
     getActiveClientRowMock.mockResolvedValueOnce(null);
     const res = await POST(
       makeRequest({
