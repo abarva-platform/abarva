@@ -18,6 +18,11 @@ import 'server-only';
 // defense for any direct authenticated client.
 
 import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  notifyApprovalApproved,
+  notifyApprovalRejected,
+  notifyApprovalSubmitted,
+} from '@/lib/programs/approval-notifications';
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -189,7 +194,19 @@ export async function submitForApproval(
     );
   }
 
-  return rowToApprovalRequest(data as unknown as ApprovalRequestRow);
+  const request = rowToApprovalRequest(data as unknown as ApprovalRequestRow);
+
+  // OV2-2d-NOTIFY · fire-and-forget email to tenant admins. Email
+  // failures must not block the approval workflow.
+  void notifyApprovalSubmitted(request).catch((err: unknown) => {
+     
+    console.error('[approval] notifyApprovalSubmitted threw', {
+      requestId: request.id,
+      err: err instanceof Error ? err.message : String(err),
+    });
+  });
+
+  return request;
 }
 
 /**
@@ -254,7 +271,24 @@ export async function decideApprovalRequest(
     );
   }
 
-  return rowToApprovalRequest(data as unknown as ApprovalRequestRow);
+  const request = rowToApprovalRequest(data as unknown as ApprovalRequestRow);
+
+  // OV2-2d-NOTIFY · fire-and-forget email to the requester. Email
+  // failures must not block the approval workflow.
+  const notify =
+    request.requestStatus === 'approved'
+      ? notifyApprovalApproved
+      : notifyApprovalRejected;
+  void notify(request).catch((err: unknown) => {
+     
+    console.error('[approval] notify decision threw', {
+      requestId: request.id,
+      decision: request.requestStatus,
+      err: err instanceof Error ? err.message : String(err),
+    });
+  });
+
+  return request;
 }
 
 /**

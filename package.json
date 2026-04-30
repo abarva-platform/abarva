@@ -111,6 +111,7 @@
     "recharts": "^3.8.1",
     "rehype-sanitize": "^6.0.0",
     "remark-gfm": "^4.0.1",
+    "resend": "^6.12.2",
     "rss-parser": "^3.13.0",
     "server-only": "^0.0.1",
     "stripe": "^22.0.2"
