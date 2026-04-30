@@ -12,6 +12,7 @@
 // No model calls. No network. Same inputs produce identical outputs.
 
 import {
+  SOURCE_GOLDEN_EVENT_IDS,
   SOURCE_GOLDEN_EVENT_VALUES_USD,
   SOURCE_LIFECYCLE_STATUS_LABELS,
   SOURCE_STAGE_LABELS,
@@ -21,6 +22,7 @@ import {
 import {
   assessSourceContextQuality,
   buildSourceContextFromSeed,
+  getSourceContextUsed,
 } from '../context-builder';
 import { getSourceEventSeed, getSourceValueSeed } from '../mock-seed';
 import type { SourceLifecycleStatus, SourceStageKey } from '../types';
@@ -245,6 +247,88 @@ describe('Source golden events · cross-event invariants', () => {
       );
       expect(a.score).toEqual(b.score);
     }
+  });
+});
+
+// ----------------------------------------------------------------------
+// Apex Retail setup-data grounding
+// ----------------------------------------------------------------------
+
+describe('Source Apex Retail IT context grounding', () => {
+  function buildApexAmsContext() {
+    return buildSourceContextFromSeed({
+      ...buildPortfolioContextInput(),
+      tenant: {
+        tenantId: 'apex-retail',
+        tenantKey: 'apex-retail',
+        tenantName: 'Apex Retail Group',
+        activeClientId: 'apex-retail',
+        activeClientName: 'Apex Retail Group',
+      },
+      route: `/source/events/${SOURCE_GOLDEN_EVENT_IDS.apexRetailAmsOutsourcing2026}`,
+      surface: 'eventCanvas',
+      eventId: SOURCE_GOLDEN_EVENT_IDS.apexRetailAmsOutsourcing2026,
+      userPrompt: 'Who are the CIO, CFO, procurement lead, and IT operations lead?',
+    });
+  }
+
+  it('grounds Apex IT sourcing leadership from setup data-layer references', () => {
+    const bundle = buildApexAmsContext();
+    const leadership = bundle.clientItContext?.leadership ?? [];
+
+    expect(bundle.clientItContext?.tenantKey).toBe('apex-retail');
+    expect(leadership.map((role) => role.roleKey)).toEqual([
+      'cio',
+      'cfo',
+      'procurementLead',
+      'itOperationsLead',
+    ]);
+    expect(leadership.map((role) => role.name)).toEqual([
+      'Carlos Rivera',
+      'Margaret Chen',
+      'Nathan Kohl',
+      'Diana Lopez',
+    ]);
+    for (const role of leadership) {
+      expect(role.setupDataReferences.length).toBeGreaterThan(0);
+      expect(role.setupDataReferences.every((reference) => reference.table === 'data_inventory_records')).toBe(true);
+    }
+  });
+
+  it('adds IT landscape and service-management facts without treating them as live context', () => {
+    const bundle = buildApexAmsContext();
+    const context = bundle.clientItContext;
+
+    expect(context?.systemLandscapeSummary).toContain('SAP S/4HANA');
+    expect(context?.systemLandscapeSummary).toContain('ServiceNow ITSM');
+    expect(context?.coreSystems.map((system) => system.systemId)).toEqual(
+      expect.arrayContaining([
+        'sys:apex:sap-s4',
+        'sys:apex:oracle-retail-pos',
+        'sys:apex:servicenow',
+      ]),
+    );
+    expect(context?.applicationSupportBaselineHints.join(' ')).toContain('22 applications');
+    expect(context?.serviceManagementBaselineHints.join(' ')).toContain('ServiceNow ITSM');
+    expect(context?.disclosure.contextMode).toBe('setup_seed_projection');
+    expect(context?.disclosure.userFacingDisclosure).toContain('seeded Apex setup context');
+  });
+
+  it('tells Source not to ask for seeded Apex facts and records setup provenance as deterministic context', () => {
+    const bundle = buildApexAmsContext();
+    const contextUsed = getSourceContextUsed(bundle)[0];
+
+    expect(bundle.clientItContext?.disclosure.agentInstructions.join(' ')).toContain(
+      'Do not ask the user for seeded Apex leadership roles',
+    );
+    expect(contextUsed.deterministicFieldsUsed).toContain('clientItContext');
+    expect(bundle.sourceOfTruthTimestamps.map((timestamp) => timestamp.source)).toEqual(
+      expect.arrayContaining([
+        'setup-data-layer:org_structure:org_structure:executive-bench',
+        'setup-data-layer:org_structure:org_structure:it-leadership',
+        'setup-data-layer:it_landscape:it_landscape:systems-inventory',
+      ]),
+    );
   });
 });
 

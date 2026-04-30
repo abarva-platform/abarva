@@ -1,5 +1,9 @@
 import { SOURCE_GOLDEN_EVENT_IDS } from './constants';
 import type {
+  SourceClientItContextSnapshot,
+  SourceSetupDataLayerReference,
+} from './agent-context';
+import type {
   SourceDataReadinessItem,
   SourceDataReadinessState,
   SourceDataRequirementLevel,
@@ -229,6 +233,16 @@ export function getSeededAdminSetupReadinessRecordsForSourceEvent(
   }
 
   return DATA_AI_MODERNIZATION_ADMIN_SETUP_RECORDS.map((record) => ({ ...record }));
+}
+
+export function getSourceTechnologySourcingContextFromSetupSeed(
+  eventId: string,
+): SourceClientItContextSnapshot | null {
+  if (eventId !== SOURCE_GOLDEN_EVENT_IDS.apexRetailAmsOutsourcing2026) {
+    return null;
+  }
+
+  return cloneSourceClientItContext(APEX_RETAIL_TECHNOLOGY_SOURCING_CONTEXT);
 }
 
 function getWorkflowImpact(
@@ -625,3 +639,226 @@ const DATA_AI_MODERNIZATION_ADMIN_SETUP_RECORDS: SourceAdminSetupReadinessRecord
     provenance: 'Seeded requested platform readiness record.',
   },
 ];
+
+const setupRecordRef = (
+  segmentId: string,
+  recordId: string,
+  sourceDoc: string,
+  sourcePath: string,
+  confidence: SourceSetupDataLayerReference['confidence'],
+  lastReviewed = '2026-04-22',
+): SourceSetupDataLayerReference => ({
+  table: 'data_inventory_records',
+  segmentId,
+  recordId,
+  sourceDoc,
+  sourcePath,
+  lastReviewed,
+  confidence,
+});
+
+const EXECUTIVE_BENCH_REF = setupRecordRef(
+  'org_structure',
+  'org_structure:executive-bench',
+  'executive_bench.json',
+  '02_org_structure/executive_bench.json',
+  'high',
+);
+
+const IT_LEADERSHIP_REF = setupRecordRef(
+  'org_structure',
+  'org_structure:it-leadership',
+  'it_leadership.json',
+  '02_org_structure/it_leadership.json',
+  'high',
+);
+
+const IT_LANDSCAPE_REF = setupRecordRef(
+  'it_landscape',
+  'it_landscape:systems-inventory',
+  'systems_inventory.csv',
+  '03_it_landscape/systems_inventory.csv',
+  'high',
+  '2026-04-29',
+);
+
+const INTEGRATION_MAP_REF = setupRecordRef(
+  'it_landscape',
+  'it_landscape:integration-map',
+  'integration_map.json',
+  '03_it_landscape/integration_map.json',
+  'high',
+  '2026-04-10',
+);
+
+const AMS_BAFO_TRACKER_REF = setupRecordRef(
+  'sourcing_artifacts',
+  'sourcing_artifacts:ams-bafo-tracker',
+  'ams_bafo_tracker.md',
+  '07_sourcing_artifacts/ams_bafo_tracker.md',
+  'high',
+  '2026-04-25',
+);
+
+const AMS_ARB_ATTESTATION_REF = setupRecordRef(
+  'program_deliverables',
+  'program_deliverables:ams-arb-attestation',
+  'ams_arb_attestation.md',
+  '08_program_deliverables/ams_arb_attestation.md',
+  'high',
+  '2026-04-08',
+);
+
+const APEX_RETAIL_TECHNOLOGY_SOURCING_CONTEXT: SourceClientItContextSnapshot = {
+  tenantKey: 'apex-retail',
+  tenantName: 'Apex Retail Group',
+  contextName: 'Apex Retail IT sourcing context',
+  sourcingScope: 'technology_sourcing',
+  updatedAt: '2026-04-29',
+  leadership: [
+    {
+      roleKey: 'cio',
+      roleLabel: 'CIO / AMS executive sponsor',
+      personId: 'person:apex:carlos-rivera',
+      name: 'Carlos Rivera',
+      title: 'Chief Information Officer',
+      sourcingRelevance:
+        'Sponsors AMS Consolidation 2026 and owns IT cost stabilization, AMS completion, cloud migration phase 2, and AI platform readiness.',
+      setupDataReferences: [EXECUTIVE_BENCH_REF, AMS_BAFO_TRACKER_REF],
+    },
+    {
+      roleKey: 'cfo',
+      roleLabel: 'CFO / value and investment authority',
+      personId: 'person:apex:margaret-chen',
+      name: 'Margaret Chen',
+      title: 'Chief Financial Officer',
+      sourcingRelevance:
+        'Owns cost discipline, vendor consolidation savings, IT spend rationalization, and realized-savings scrutiny for the AMS award.',
+      setupDataReferences: [EXECUTIVE_BENCH_REF, AMS_ARB_ATTESTATION_REF],
+    },
+    {
+      roleKey: 'procurementLead',
+      roleLabel: 'IT procurement lead',
+      personId: 'person:apex:nathan-kohl',
+      name: 'Nathan Kohl',
+      title: 'VP, IT Procurement & Vendor Management',
+      sourcingRelevance:
+        'Leads IT vendor contracts, renewals, BAFO negotiations, and vendor risk management; named procurement lead for AMS Consolidation 2026.',
+      setupDataReferences: [IT_LEADERSHIP_REF, AMS_BAFO_TRACKER_REF],
+    },
+    {
+      roleKey: 'itOperationsLead',
+      roleLabel: 'Application services / IT operations lead',
+      personId: 'person:apex:diana-lopez',
+      name: 'Diana Lopez',
+      title: 'VP, Application Services',
+      sourcingRelevance:
+        'Co-leads AMS Consolidation 2026 and owns the application-services domains that define the transition and support baseline.',
+      setupDataReferences: [IT_LEADERSHIP_REF, AMS_ARB_ATTESTATION_REF],
+    },
+  ],
+  systemLandscapeSummary:
+    'Setup data layer records show Apex Retail as a technology-sourcing client with a cloud-first SAP S/4HANA core, Salesforce customer platforms, Oracle Retail legacy store/POS systems, Snowflake/Databricks data platforms, ServiceNow ITSM, and mixed SaaS/on-prem operations. AMS scope should stay bounded to the 22 in-scope merchandising and supply-chain applications unless live setup data says otherwise.',
+  coreSystems: [
+    {
+      systemId: 'sys:apex:sap-s4',
+      name: 'SAP S/4HANA',
+      category: 'ERP',
+      ownerRole: 'Diana Lopez / Margaret Chen',
+      sourcingRelevance:
+        'Critical finance and inventory core with renewal leverage in 2027; AMS answers should preserve ERP boundary clarity.',
+      setupDataReferences: [IT_LANDSCAPE_REF],
+    },
+    {
+      systemId: 'sys:apex:salesforce-commerce',
+      name: 'Salesforce Commerce Cloud',
+      category: 'E-commerce platform',
+      ownerRole: 'Priya Iyer / Jennifer Park',
+      sourcingRelevance:
+        'Customer-facing platform is an out-of-scope dependency for AMS cross-portfolio incidents, not a default AMS tower.',
+      setupDataReferences: [IT_LANDSCAPE_REF, AMS_ARB_ATTESTATION_REF],
+    },
+    {
+      systemId: 'sys:apex:oracle-retail-pos',
+      name: 'Oracle Retail POS',
+      category: 'POS',
+      ownerRole: 'Acting store technology owner',
+      sourcingRelevance:
+        'Aging, mission-critical store system with amber transition risk; Source should mention POS transition risk rather than asking whether it exists.',
+      setupDataReferences: [IT_LANDSCAPE_REF, AMS_ARB_ATTESTATION_REF],
+    },
+    {
+      systemId: 'sys:apex:servicenow',
+      name: 'ServiceNow ITSM',
+      category: 'ITSM',
+      ownerRole: 'Raj Patel',
+      sourcingRelevance:
+        'Current ITSM baseline is ServiceNow ITSM only; do not infer HR or broader ServiceNow modules without live evidence.',
+      setupDataReferences: [IT_LANDSCAPE_REF, IT_LEADERSHIP_REF],
+    },
+    {
+      systemId: 'sys:apex:snowflake',
+      name: 'Snowflake Data Cloud',
+      category: 'Data warehouse',
+      ownerRole: 'James Wright / Lynne Stratham',
+      sourcingRelevance:
+        'Analytics foundation and CDP dependency; AMS vendor responsibilities should maintain application boundaries around data integrations.',
+      setupDataReferences: [IT_LANDSCAPE_REF, INTEGRATION_MAP_REF],
+    },
+  ],
+  applicationSupportBaselineHints: [
+    'AMS Consolidation 2026 is scoped to 22 applications: 15 merchandising and 7 supply-chain applications.',
+    'Store technology and customer-facing platforms are excluded by default, with cross-portfolio incident handoff required where dependencies exist.',
+    'Per-application discovery is complete at P1/P2, but service-level values remain generic until authored with the selected vendor.',
+    'Transition design expects per-application plans, named technical leads, knowledge-transfer documentation, and tier-based shadow periods.',
+  ],
+  serviceManagementBaselineHints: [
+    'ServiceNow ITSM is the seeded service-management platform and is owned by Raj Patel in the setup data layer.',
+    'ServiceNow is ITSM-only in the seeded landscape; HR or other ServiceNow modules are considered but not adopted.',
+    'The selected AMS vendor should maintain the existing integration topology; legacy EDI, SAP CPI, and custom Snowflake ETL paths stay outside the AMS replacement scope.',
+  ],
+  disclosure: {
+    contextMode: 'setup_seed_projection',
+    userFacingDisclosure:
+      'Using seeded Apex setup context from the Admin/Setup data layer; live tenant retrieval and recency verification are not running in this Source seed path.',
+    liveOverrideRule:
+      'If live setup-data retrieval is available and conflicts with this seed projection, live setup data wins and Source must disclose the conflict.',
+    agentInstructions: [
+      'Do not ask the user for seeded Apex leadership roles, core IT landscape, or service-management baseline facts when this context is present.',
+      'Say "seeded setup context" when using these facts, and say "live setup data" only when a live retrieval path supplied the fact.',
+      'Ask for confirmation only when the user asks for current/live state, when a fact conflicts with uploaded evidence, or when the required detail is not present in setup references.',
+      'Keep Source answers limited to technology sourcing; route non-IT procurement questions away from this context.',
+    ],
+  },
+  setupDataReferences: [
+    EXECUTIVE_BENCH_REF,
+    IT_LEADERSHIP_REF,
+    IT_LANDSCAPE_REF,
+    INTEGRATION_MAP_REF,
+    AMS_BAFO_TRACKER_REF,
+    AMS_ARB_ATTESTATION_REF,
+  ],
+};
+
+function cloneSourceClientItContext(
+  context: SourceClientItContextSnapshot,
+): SourceClientItContextSnapshot {
+  return {
+    ...context,
+    leadership: context.leadership.map((role) => ({
+      ...role,
+      setupDataReferences: role.setupDataReferences.map((reference) => ({ ...reference })),
+    })),
+    coreSystems: context.coreSystems.map((system) => ({
+      ...system,
+      setupDataReferences: system.setupDataReferences.map((reference) => ({ ...reference })),
+    })),
+    applicationSupportBaselineHints: [...context.applicationSupportBaselineHints],
+    serviceManagementBaselineHints: [...context.serviceManagementBaselineHints],
+    disclosure: {
+      ...context.disclosure,
+      agentInstructions: [...context.disclosure.agentInstructions],
+    },
+    setupDataReferences: context.setupDataReferences.map((reference) => ({ ...reference })),
+  };
+}

@@ -78,6 +78,69 @@ export interface SourceContextSourceOfTruthTimestamp {
   stale: boolean;
 }
 
+export type SourceSetupDataLayerTable =
+  | 'data_inventory_records'
+  | 'enterprise_context_chunks'
+  | 'enterprise_graph_nodes'
+  | 'enterprise_graph_edges';
+
+export interface SourceSetupDataLayerReference {
+  table: SourceSetupDataLayerTable;
+  segmentId: string;
+  recordId: string;
+  sourceDoc: string;
+  sourcePath?: string;
+  lastReviewed?: string;
+  confidence?: 'low' | 'medium' | 'high';
+}
+
+export type SourceTechnologyLeadershipRoleKey =
+  | 'cio'
+  | 'cfo'
+  | 'procurementLead'
+  | 'itOperationsLead';
+
+export interface SourceTechnologyLeadershipRole {
+  roleKey: SourceTechnologyLeadershipRoleKey;
+  roleLabel: string;
+  personId: string;
+  name: string;
+  title: string;
+  sourcingRelevance: string;
+  setupDataReferences: SourceSetupDataLayerReference[];
+}
+
+export interface SourceTechnologySystemHint {
+  systemId: string;
+  name: string;
+  category: string;
+  ownerRole: string;
+  sourcingRelevance: string;
+  setupDataReferences: SourceSetupDataLayerReference[];
+}
+
+export interface SourceSeededVsLiveDisclosure {
+  contextMode: 'setup_seed_projection' | 'live_setup_data' | 'mixed';
+  userFacingDisclosure: string;
+  liveOverrideRule: string;
+  agentInstructions: string[];
+}
+
+export interface SourceClientItContextSnapshot {
+  tenantKey: string;
+  tenantName: string;
+  contextName: string;
+  sourcingScope: 'technology_sourcing';
+  updatedAt: string;
+  leadership: SourceTechnologyLeadershipRole[];
+  systemLandscapeSummary: string;
+  coreSystems: SourceTechnologySystemHint[];
+  applicationSupportBaselineHints: string[];
+  serviceManagementBaselineHints: string[];
+  disclosure: SourceSeededVsLiveDisclosure;
+  setupDataReferences: SourceSetupDataLayerReference[];
+}
+
 export interface SourceAllowedAction {
   id: string;
   label: string;
@@ -327,6 +390,7 @@ export interface SourceAgentContextBundle {
   eventOwner?: string;
   stageOwner?: string;
   decisionOwner?: string;
+  clientItContext?: SourceClientItContextSnapshot;
   dueDate?: string;
   agingDays?: number;
   blockers: string[];
