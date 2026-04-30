@@ -2,6 +2,8 @@
 
 ## Purpose
 
+Related operational slice: `../NEXT_SLICE_PLAN_SOURCE_ARTIFACT_INGESTION_AND_PRICING_INTELLIGENCE.md` defines how uploaded/generated artifacts flow through blob storage, registry, parsing, chunks, vectors, graph, Postgres facts, agent context, versioning, and approvals.
+
 AbarVa Source artifacts are governed work products, not disposable AI text.
 
 Artifact generation must respect sourcing event state, required inputs, evidence, review status, approval routing, version history, and lock state. Nexus may assist with drafting, but Source owns the workflow state and artifact record.
