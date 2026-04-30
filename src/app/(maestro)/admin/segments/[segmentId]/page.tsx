@@ -15,7 +15,7 @@
 
 import { notFound } from 'next/navigation';
 
-import { getActiveClientKey } from '@/lib/active-client';
+import { getActiveClientRow } from '@/lib/active-client';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import {
   formatRelativeTimestamp,
@@ -25,7 +25,7 @@ import { getSegmentRecordPage } from '@/lib/admin/setup-data-broker';
 import { headers } from 'next/headers';
 
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
-import { AgentRail } from '@/components/admin/AgentRail';
+import { SetupChatRail } from '@/components/admin/SetupChatRail';
 import { SegmentDetailPage } from '@/components/admin/setup/SegmentDetailPage';
 import { SetupSegmentTelemetryBridge } from '@/components/admin/setup/SetupSegmentTelemetryBridge';
 
@@ -48,8 +48,9 @@ export default async function AdminSegmentPage({ params }: PageProps) {
   const reference = resolveSegmentRef(segmentId);
   if (!reference) notFound();
 
-  const clientKey = await getActiveClientKey().catch(() => null);
-  const brokerTenantKey = clientKey ? clientKeyToInventorySubstrateKey(clientKey) : null;
+  const activeClient = await getActiveClientRow().catch(() => null);
+  const clientKey = activeClient?.key ?? 'apexretail';
+  const brokerTenantKey = clientKeyToInventorySubstrateKey(clientKey);
   const page = brokerTenantKey
     ? await getSegmentRecordPage(brokerTenantKey, reference.segmentKey).catch(() => null)
     : null;
@@ -61,15 +62,7 @@ export default async function AdminSegmentPage({ params }: PageProps) {
   const cameFromLanding = /\/admin(\/|\?|$)/.test(referer) && !/\/admin\/segments\//.test(referer);
 
   return (
-    <AdminCanonShellV2
-      agentRail={
-        <AgentRail
-          primaryAgentLabel="Sentinel"
-          primaryActionLabel="Ask Sentinel about this segment"
-          primaryActionHref="/intelligence/ask"
-        />
-      }
-    >
+    <AdminCanonShellV2 agentRail={<SetupChatRail />}>
       <SegmentDetailPage
         reference={reference}
         rollup={page?.rollup ?? null}

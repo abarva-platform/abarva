@@ -14,7 +14,7 @@
  * unavailable.
  */
 
-import { getActiveClientKey } from '@/lib/active-client';
+import { getActiveClientRow } from '@/lib/active-client';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import {
   formatRelativeTimestamp,
@@ -28,7 +28,7 @@ import {
   getSetupInventorySnapshot,
 } from '@/lib/admin/setup-data-broker';
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
-import { AgentRail } from '@/components/admin/AgentRail';
+import { SetupChatRail } from '@/components/admin/SetupChatRail';
 import { SetupAdminLanding } from '@/components/admin/setup/SetupAdminLanding';
 import { SetupLandingTelemetryBridge } from '@/components/admin/setup/SetupLandingTelemetryBridge';
 import { DataLandscapeTable } from '@/components/admin/setup/DataLandscapeTable';
@@ -38,8 +38,11 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function AdminOverviewPage() {
-  const clientKey = await getActiveClientKey().catch(() => null);
-  const brokerTenantKey = clientKey ? clientKeyToInventorySubstrateKey(clientKey) : null;
+  const activeClient = await getActiveClientRow().catch(() => null);
+  // Fall back to apexretail so authored content always matches the top bar
+  // (which also hard-codes Apex Retail Group when no row is found).
+  const clientKey = activeClient?.key ?? 'apexretail';
+  const brokerTenantKey = clientKeyToInventorySubstrateKey(clientKey);
   const baseContent = getSetupActsContent(clientKey);
   const [snapshot, signals, chunkStats] = brokerTenantKey
     ? await Promise.all([
@@ -58,15 +61,7 @@ export default async function AdminOverviewPage() {
   const complianceSegment = snapshot?.segments.find((s) => s.segmentId === 'compliance');
 
   return (
-    <AdminCanonShellV2
-      agentRail={
-        <AgentRail
-          primaryAgentLabel="Sentinel"
-          primaryActionLabel="Ask Sentinel about your data"
-          primaryActionHref="/intelligence/ask"
-        />
-      }
-    >
+    <AdminCanonShellV2 agentRail={<SetupChatRail />}>
       <SetupAdminLanding
         content={content}
         segmentRollups={snapshot?.segments ?? []}
