@@ -116,6 +116,7 @@ export function J0FailureModeCard({
       data-state={previewOpen ? 'preview' : 'collapsed'}
       role="listitem"
       aria-label={`${card.editorialName}: ${card.oneLineHook}`}
+      className="j0-failure-mode-card"
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -130,6 +131,10 @@ export function J0FailureModeCard({
         transition: reducedMotion
           ? 'none'
           : 'border-color 120ms ease, box-shadow 120ms ease',
+        // Default outline removed; focus-visible style is added via the
+        // global :focus-visible CSS rule (see globals.css). This keeps
+        // mouse interactions free of focus rings while still meeting
+        // WCAG 2.4.7 (visible focus) for keyboard users.
         outline: 'none',
       }}
     >

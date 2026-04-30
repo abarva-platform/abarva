@@ -499,3 +499,24 @@ export function getCanonicalFailureMode(
   }
   return mode;
 }
+
+/**
+ * Sort cards by "most cited" — the heuristic the J0 mobile collapse
+ * uses to pick which 5 cards to show by default. Score = pattern count
+ * + research-anchor count; tiebreak by failureModeId ascending so the
+ * order is deterministic across server + client renders.
+ *
+ * Per INT-1_DETAILED_DESIGN.md FR-040 + §9 item 5.
+ */
+export function getCardsByMostCited(
+  cards: ReadonlyArray<FailureModeNarrativeCard>,
+  limit?: number,
+): FailureModeNarrativeCard[] {
+  const ranked = [...cards].sort((a, b) => {
+    const scoreA = a.citedPatternIds.length + a.citedResearch.length;
+    const scoreB = b.citedPatternIds.length + b.citedResearch.length;
+    if (scoreA !== scoreB) return scoreB - scoreA;
+    return a.failureModeId - b.failureModeId;
+  });
+  return typeof limit === 'number' ? ranked.slice(0, limit) : ranked;
+}

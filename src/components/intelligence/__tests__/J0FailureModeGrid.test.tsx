@@ -67,4 +67,48 @@ describe('J0FailureModeGrid', () => {
     expect(screen.getByText(/Lack of executive sponsorship/i)).toBeInTheDocument();
     expect(screen.getByText(/Pilot-to-production scaling gap/i)).toBeInTheDocument();
   });
+
+  // ── INT-1.4 — accessibility shape locks ─────────────────────────────────────
+
+  it('grid section has an aria-label naming what it is', () => {
+    render(<J0FailureModeGrid />);
+    const grid = screen.getByTestId('intelligence-j0-card-grid');
+    expect(grid.getAttribute('aria-label')).toMatch(
+      /Why enterprise AI transformation fails/i,
+    );
+  });
+
+  it('every card has aria-label combining editorial name + hook', () => {
+    render(<J0FailureModeGrid />);
+    const card1 = screen.getByTestId('intelligence-j0-card-1');
+    const ariaLabel = card1.getAttribute('aria-label') ?? '';
+    expect(ariaLabel).toContain('The Phantom Sponsor');
+    expect(ariaLabel.length).toBeGreaterThan('The Phantom Sponsor'.length);
+  });
+
+  // ── INT-1.4 — mobile-collapse default state ─────────────────────────────────
+
+  it('on a desktop viewport, all 10 cards are visible (no collapse)', () => {
+    // jsdom default viewport is desktop-sized; matchMedia('(max-width: 767px)')
+    // returns false. All 10 cards therefore render through the normal path.
+    render(<J0FailureModeGrid />);
+    for (let id = 1; id <= 10; id += 1) {
+      expect(
+        screen.getByTestId(`intelligence-j0-card-${id}`),
+      ).toBeInTheDocument();
+    }
+  });
+
+  it('does NOT show the "Show all 10" button on a desktop viewport', () => {
+    render(<J0FailureModeGrid />);
+    expect(
+      screen.queryByTestId('intelligence-j0-show-all'),
+    ).toBeNull();
+  });
+
+  it('grid declares data-show-all="true" on desktop', () => {
+    render(<J0FailureModeGrid />);
+    const grid = screen.getByTestId('intelligence-j0-card-grid');
+    expect(grid.getAttribute('data-show-all')).toBe('true');
+  });
 });
