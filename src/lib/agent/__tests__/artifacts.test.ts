@@ -887,3 +887,106 @@ describe('extractArtifacts · OV2-1a brief-progress + overlap-alert', () => {
     expect(r.visibleText).toContain('parse-failed');
   });
 });
+
+describe('extractArtifacts · OV2-FM-FLAG-ARTIFACT failure-mode-flagged', () => {
+  it('parses a valid soft flag', () => {
+    const r = extractArtifacts(
+      '[[artifact:failure-mode-flagged]]{"failureModeId":1,"failureModeName":"Lack of executive sponsorship and ownership","phase":0,"detectedSignal":"User said the CIO mentioned it but cannot describe a calendar commitment.","consequence":"Sponsor pattern looks delegated; air cover collapses at the first hard tradeoff.","redirect":"Schedule a sponsor 1:1 in the next 5 days; capture cadence before P0 closes.","severity":"soft"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(1);
+    expect(r.artifacts[0]).toMatchObject({
+      type: 'failure-mode-flagged',
+      failureModeId: 1,
+      failureModeName: 'Lack of executive sponsorship and ownership',
+      phase: 0,
+      severity: 'soft',
+    });
+  });
+
+  it('parses a valid hard flag', () => {
+    const r = extractArtifacts(
+      '[[artifact:failure-mode-flagged]]{"failureModeId":7,"failureModeName":"Vendor and build-vs-buy strategy errors","phase":3,"detectedSignal":"User wants to skip vendor scorecard and pick incumbent.","consequence":"Undisciplined vendor selection drives a large share of AI program write-offs.","redirect":"Run the structured build-vs-buy criteria before sponsor approval.","severity":"hard"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(1);
+    expect(r.artifacts[0]).toMatchObject({
+      type: 'failure-mode-flagged',
+      failureModeId: 7,
+      phase: 3,
+      severity: 'hard',
+    });
+  });
+
+  it('rejects failureModeId 0', () => {
+    const r = extractArtifacts(
+      '[[artifact:failure-mode-flagged]]{"failureModeId":0,"failureModeName":"X","phase":0,"detectedSignal":"y","consequence":"z","redirect":"w","severity":"soft"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('rejects failureModeId 11', () => {
+    const r = extractArtifacts(
+      '[[artifact:failure-mode-flagged]]{"failureModeId":11,"failureModeName":"X","phase":0,"detectedSignal":"y","consequence":"z","redirect":"w","severity":"soft"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('rejects non-integer failureModeId', () => {
+    const r = extractArtifacts(
+      '[[artifact:failure-mode-flagged]]{"failureModeId":1.5,"failureModeName":"X","phase":0,"detectedSignal":"y","consequence":"z","redirect":"w","severity":"soft"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('rejects empty detectedSignal / consequence / redirect', () => {
+    const emptyDetected = extractArtifacts(
+      '[[artifact:failure-mode-flagged]]{"failureModeId":1,"failureModeName":"X","phase":0,"detectedSignal":"","consequence":"z","redirect":"w","severity":"soft"}[[/artifact]]',
+    );
+    expect(emptyDetected.artifacts).toHaveLength(0);
+    expect(emptyDetected.visibleText).toContain('parse-failed');
+
+    const emptyConsequence = extractArtifacts(
+      '[[artifact:failure-mode-flagged]]{"failureModeId":1,"failureModeName":"X","phase":0,"detectedSignal":"y","consequence":"","redirect":"w","severity":"soft"}[[/artifact]]',
+    );
+    expect(emptyConsequence.artifacts).toHaveLength(0);
+    expect(emptyConsequence.visibleText).toContain('parse-failed');
+
+    const emptyRedirect = extractArtifacts(
+      '[[artifact:failure-mode-flagged]]{"failureModeId":1,"failureModeName":"X","phase":0,"detectedSignal":"y","consequence":"z","redirect":"","severity":"soft"}[[/artifact]]',
+    );
+    expect(emptyRedirect.artifacts).toHaveLength(0);
+    expect(emptyRedirect.visibleText).toContain('parse-failed');
+  });
+
+  it('rejects unknown severity value', () => {
+    const r = extractArtifacts(
+      '[[artifact:failure-mode-flagged]]{"failureModeId":1,"failureModeName":"X","phase":0,"detectedSignal":"y","consequence":"z","redirect":"w","severity":"critical"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('rejects phase out of range (negative or > 6)', () => {
+    const negative = extractArtifacts(
+      '[[artifact:failure-mode-flagged]]{"failureModeId":1,"failureModeName":"X","phase":-1,"detectedSignal":"y","consequence":"z","redirect":"w","severity":"soft"}[[/artifact]]',
+    );
+    expect(negative.artifacts).toHaveLength(0);
+    expect(negative.visibleText).toContain('parse-failed');
+
+    const tooHigh = extractArtifacts(
+      '[[artifact:failure-mode-flagged]]{"failureModeId":1,"failureModeName":"X","phase":7,"detectedSignal":"y","consequence":"z","redirect":"w","severity":"soft"}[[/artifact]]',
+    );
+    expect(tooHigh.artifacts).toHaveLength(0);
+    expect(tooHigh.visibleText).toContain('parse-failed');
+  });
+
+  it('rejects missing failureModeName', () => {
+    const r = extractArtifacts(
+      '[[artifact:failure-mode-flagged]]{"failureModeId":1,"phase":0,"detectedSignal":"y","consequence":"z","redirect":"w","severity":"soft"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+});

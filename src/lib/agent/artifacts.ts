@@ -82,7 +82,13 @@ export type ArtifactType =
   // fills in field-by-field; overlap alert fires when this new program
   // collides with an existing program in the tenant's portfolio.
   | 'brief-progress' // {fieldsTotal, fieldsFilled, fields: Array<{id,label,status,value?}>}
-  | 'overlap-alert'; // {overlappingProgramId, overlappingProgramName, overlappingProgramPhase?, overlapKind, overlapDetail}
+  | 'overlap-alert' // {overlappingProgramId, overlappingProgramName, overlappingProgramPhase?, overlapKind, overlapDetail}
+  // OV2-FM-FLAG-ARTIFACT · top-level "I just flagged failure mode #N" card.
+  // Anti-pattern flags are phase-local; this artifact ties a flag back to
+  // the cross-cutting 10-failure-mode catalog so the platform's value-prop
+  // (forced success-thinking against the 10) is visible per program AND
+  // can be rolled up cross-program in telemetry per design doc Part E.5.
+  | 'failure-mode-flagged'; // {failureModeId, failureModeName, phase, detectedSignal, consequence, redirect, severity}
 
 // ── Strongly-typed artifact payloads ──────────────────────────────────────────
 
@@ -402,6 +408,25 @@ export interface OverlapAlertArtifact {
   overlapDetail: string;
 }
 
+// OV2-FM-FLAG-ARTIFACT · top-level failure-mode flag.
+export interface FailureModeFlaggedArtifact {
+  type: 'failure-mode-flagged';
+  /** 1..10, references FAILURE_MODES.id */
+  failureModeId: number;
+  /** Failure mode short name (denormalized so the panel renders without resolving). */
+  failureModeName: string;
+  /** Phase the flag was raised in (0..6). */
+  phase: number;
+  /** What the agent observed in chat or evidence that triggered this flag. */
+  detectedSignal: string;
+  /** What this means for the program if unaddressed (<= 1 sentence). */
+  consequence: string;
+  /** Recommended next move to address (<= 1 sentence). */
+  redirect: string;
+  /** Severity — 'soft' = note, 'hard' = blocks advance until resolved. */
+  severity: 'soft' | 'hard';
+}
+
 export type Artifact =
   | BriefFieldArtifact
   | PatternMatchArtifact
@@ -426,7 +451,8 @@ export type Artifact =
   | SourcingStageProgressArtifact
   | SourcingStageChangedArtifact
   | BriefProgressArtifact
-  | OverlapAlertArtifact;
+  | OverlapAlertArtifact
+  | FailureModeFlaggedArtifact;
 
 // ── Parser ────────────────────────────────────────────────────────────────────
 //
@@ -480,7 +506,8 @@ export function isKnownArtifactType(type: string): type is ArtifactType {
     type === 'sourcing-stage-progress' ||
     type === 'sourcing-stage-changed' ||
     type === 'brief-progress' ||
-    type === 'overlap-alert'
+    type === 'overlap-alert' ||
+    type === 'failure-mode-flagged'
   );
 }
 
@@ -1002,6 +1029,46 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
         overlapDetail,
       };
     }
+    case 'failure-mode-flagged': {
+      // OV2-FM-FLAG-ARTIFACT · top-level failure-mode flag against the 10
+      // catalog. Parser guards the type only; it intentionally does NOT
+      // import FAILURE_MODES to verify the id exists in the catalog
+      // (avoids a lib/agent -> lib/programs circular dep). Authoring
+      // bugs surface in telemetry rollups, not at parse time.
+      const failureModeId = obj.failureModeId;
+      const failureModeName = obj.failureModeName;
+      const phase = obj.phase;
+      const detectedSignal = obj.detectedSignal;
+      const consequence = obj.consequence;
+      const redirect = obj.redirect;
+      const severity = obj.severity;
+      if (
+        typeof failureModeId !== 'number' ||
+        !Number.isInteger(failureModeId) ||
+        failureModeId < 1 ||
+        failureModeId > 10
+      ) {
+        return null;
+      }
+      if (typeof failureModeName !== 'string' || failureModeName.length === 0) return null;
+      if (typeof phase !== 'number' || !Number.isInteger(phase) || phase < 0 || phase > 6) {
+        return null;
+      }
+      if (typeof detectedSignal !== 'string' || detectedSignal.length === 0) return null;
+      if (typeof consequence !== 'string' || consequence.length === 0) return null;
+      if (typeof redirect !== 'string' || redirect.length === 0) return null;
+      if (severity !== 'soft' && severity !== 'hard') return null;
+      return {
+        type,
+        failureModeId,
+        failureModeName,
+        phase,
+        detectedSignal,
+        consequence,
+        redirect,
+        severity,
+      };
+    }
   }
 }
 
@@ -1379,4 +1446,24 @@ a wrongly-flagged Phantom Sponsor will erode trust in the platform.
             "overlapKind": "archetype"|"sponsor"|"system"|"multiple",
             "overlapDetail": <one-line human-readable detail>}
     Example:
-    [[artifact:overlap-alert]]{"overlappingProgramId":"APX-CDP-2026","overlappingProgramName":"Apex Retail CDP Activation","overlappingProgramPhase":"P3 Design","overlapKind":"sponsor","overlapDetail":"Sarah Chen is already sponsoring APX-CDP-2026 in P3; double-check sponsor bandwidth before originating."}[[/artifact]]`;
+    [[artifact:overlap-alert]]{"overlappingProgramId":"APX-CDP-2026","overlappingProgramName":"Apex Retail CDP Activation","overlappingProgramPhase":"P3 Design","overlapKind":"sponsor","overlapDetail":"Sarah Chen is already sponsoring APX-CDP-2026 in P3; double-check sponsor bandwidth before originating."}[[/artifact]]
+
+23. failure-mode-flagged — Programs-side, all phases. Emit when you observe
+    a signal that one of the 10 platform failure modes (the ones in your
+    THE 10 FAILURES YOU EXIST TO PREVENT block) is happening in this
+    program. Use the canonical id and name from the catalog; reference
+    the phase you're in. detectedSignal must paraphrase the user's words;
+    consequence and redirect must mirror the doctrine in the relevant
+    phase pack's anti-pattern when applicable. Severity 'hard' only when
+    the flag genuinely blocks advance (e.g. sponsor check unmet at gate
+    close); otherwise 'soft'.
+    Use sparingly and accurately. False positives erode trust in the
+    platform faster than missed flags. When uncertain, ask the user a
+    clarifying question rather than flag.
+    Shape: {"failureModeId": <1..10>, "failureModeName": <catalog name>,
+            "phase": <0..6>, "detectedSignal": <what you observed>,
+            "consequence": <what this means if unaddressed>,
+            "redirect": <recommended next move>,
+            "severity": "soft"|"hard"}
+    Example:
+    [[artifact:failure-mode-flagged]]{"failureModeId":1,"failureModeName":"Lack of executive sponsorship and ownership","phase":0,"detectedSignal":"User said the CIO 'mentioned it' but cannot describe a calendar commitment.","consequence":"Sponsor pattern looks delegated; air cover collapses at the first hard tradeoff.","redirect":"Schedule a sponsor 1:1 in the next 5 days; capture calendar cadence and escalation authority before P0 closes.","severity":"soft"}[[/artifact]]`;
