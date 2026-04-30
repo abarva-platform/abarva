@@ -3,8 +3,10 @@
 import {
   composeBriefProgressCadenceDirective,
   composeFailureModeBlock,
+  composeFailureModeDoctrineBlock,
   composeOverlapBlock,
   formatFailureModeCatalogForPrompt,
+  formatFailureModeDoctrineForPrompt,
   isProgramsSurface,
 } from '../failure-mode-prompt';
 import { FAILURE_MODES } from '../failure-modes';
@@ -154,6 +156,125 @@ describe('composeOverlapBlock', () => {
     const block = composeOverlapBlock(truncated);
     expect(block).toContain('apex-cdp-2026');
     expect(block).not.toContain('apex-ams-2026');
+  });
+});
+
+describe('formatFailureModeDoctrineForPrompt (OV2-FM-DOCTRINE)', () => {
+  const block = formatFailureModeDoctrineForPrompt();
+
+  it('returns a non-empty string with the doctrine title', () => {
+    expect(block.length).toBeGreaterThan(0);
+    expect(block).toContain('FAILURE-MODE DOCTRINE:');
+  });
+
+  it('names both artifact types and explains the relationship', () => {
+    expect(block).toContain('failure-mode-flagged');
+    expect(block).toContain('anti-pattern-flag');
+    // Relationship language: pack-local vs cross-phase platform catalog.
+    expect(block).toMatch(/cross-phase|platform-level|platform catalog/i);
+    expect(block).toMatch(/phase-local|active pack|active phase pack/i);
+  });
+
+  it('contains the cadence rule', () => {
+    expect(block).toContain('at most one');
+    expect(block).toContain('per turn');
+    expect(block).toContain('failureModeId');
+  });
+
+  it('contains soft and hard severity guidance', () => {
+    expect(block).toContain("'soft'");
+    expect(block).toContain("'hard'");
+    // Soft = note-and-redirect; hard = blocks advance.
+    expect(block).toMatch(/note-and-redirect|continue with awareness/i);
+    expect(block).toMatch(/block(s)?\s+(phase\s+)?advance|refuse advance/i);
+  });
+
+  it('teaches signal grounding (paraphrase user words, ≤ 20 words)', () => {
+    expect(block).toContain('detectedSignal');
+    expect(block).toContain('20 words');
+  });
+
+  it('does NOT restate the 10 catalog names (the catalog block already does)', () => {
+    // Spot-check: the canonical names should not appear in the doctrine
+    // block — they live in the catalog block above it. Doctrine references
+    // the catalog by id, not by name.
+    expect(block).not.toContain(
+      'Lack of executive sponsorship and ownership',
+    );
+  });
+
+  it('is tight relative to the catalog block (doctrine is rules-only)', () => {
+    const catalog = formatFailureModeCatalogForPrompt();
+    // Snapshot-style: the doctrine should not balloon. The catalog block
+    // today is just title + 10 numbered names + provenance line, so it is
+    // very compact; the doctrine is rules-only and must stay within a
+    // small multiple. Tighter doctrine helps the model reach the rules
+    // before token budget squeezes them. If the catalog grows (e.g. when
+    // E.5 telemetry rollup adds more provenance), this multiple gives
+    // headroom. The hard ceiling is what matters.
+    expect(block.length).toBeLessThan(catalog.length * 4);
+    // Absolute ceiling: the doctrine block must remain a tight
+    // senior-practitioner paragraph, not a corporate guidelines doc.
+    expect(block.length).toBeLessThan(3000);
+  });
+});
+
+describe('composeFailureModeDoctrineBlock (OV2-FM-DOCTRINE)', () => {
+  it('returns the doctrine block on Programs surfaces', () => {
+    expect(composeFailureModeDoctrineBlock('/programs/new')).toContain(
+      'FAILURE-MODE DOCTRINE:',
+    );
+    expect(composeFailureModeDoctrineBlock('/programs/abc-123')).toContain(
+      'FAILURE-MODE DOCTRINE:',
+    );
+    expect(composeFailureModeDoctrineBlock('/tower')).toContain(
+      'FAILURE-MODE DOCTRINE:',
+    );
+    expect(composeFailureModeDoctrineBlock('/demo/programs/new')).toContain(
+      'FAILURE-MODE DOCTRINE:',
+    );
+  });
+
+  it('returns empty string off Programs surfaces (intelligence is out of scope)', () => {
+    expect(composeFailureModeDoctrineBlock('/intelligence')).toBe('');
+    expect(composeFailureModeDoctrineBlock('/source')).toBe('');
+    expect(composeFailureModeDoctrineBlock('/home')).toBe('');
+    expect(composeFailureModeDoctrineBlock(null)).toBe('');
+    expect(composeFailureModeDoctrineBlock(undefined)).toBe('');
+  });
+
+  it('parallels composeFailureModeBlock — doctrine present iff catalog is', () => {
+    const surfaces = [
+      '/programs',
+      '/programs/new',
+      '/programs/abc-123',
+      '/demo/programs/new',
+      '/tower',
+      '/intelligence',
+      '/source',
+      '/home',
+      null,
+      undefined,
+    ] as const;
+    for (const s of surfaces) {
+      const catalog = composeFailureModeBlock(s);
+      const doctrine = composeFailureModeDoctrineBlock(s);
+      // Both empty or both non-empty — they must be paired.
+      expect(catalog === '').toBe(doctrine === '');
+    }
+  });
+
+  it('when both blocks are present, doctrine logically follows the catalog', () => {
+    // Simulate the route's join: catalog first, then doctrine. Confirms
+    // the doctrine references the catalog and reads as a follow-on.
+    const catalog = composeFailureModeBlock('/programs/new');
+    const doctrine = composeFailureModeDoctrineBlock('/programs/new');
+    const composed = [catalog, '', doctrine].filter(Boolean).join('\n');
+    expect(composed.indexOf('THE 10 FAILURES YOU EXIST TO PREVENT:')).toBeLessThan(
+      composed.indexOf('FAILURE-MODE DOCTRINE:'),
+    );
+    // Doctrine references the catalog above ("see catalog above").
+    expect(doctrine).toMatch(/see catalog above|catalog above/i);
   });
 });
 

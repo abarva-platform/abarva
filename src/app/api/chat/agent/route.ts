@@ -58,6 +58,7 @@ import {
 // is sourced from FAILURE_MODES so the prompt and the catalog cannot drift.
 import {
   composeFailureModeBlock,
+  composeFailureModeDoctrineBlock,
   composeOverlapBlock,
   composeBriefProgressCadenceDirective,
 } from "@/lib/programs/failure-mode-prompt";
@@ -373,6 +374,13 @@ export async function POST(request: Request) {
   // Empty string elsewhere; the prompt-array filter strips it cleanly.
   const failureModeBlock = composeFailureModeBlock(surface);
 
+  // OV2-FM-DOCTRINE — emission doctrine for `failure-mode-flagged`. Same
+  // surface gate as the catalog. Catalog tells the agent WHAT the 10 are;
+  // doctrine tells the agent HOW to flag them (when, when-not, severity,
+  // field grounding, cadence, relationship to `anti-pattern-flag`). Both
+  // must be in the prompt for the agent to fire correctly.
+  const failureModeDoctrineBlock = composeFailureModeDoctrineBlock(surface);
+
   // OV2-WIRE-AND-FM-PROMPT Part 2 — overlap candidates block on
   // `/programs/new` and `/demo/programs/new` only. Reads draft brief
   // signals from `surfaceContext.briefSnapshot` (when the client posts
@@ -411,6 +419,11 @@ export async function POST(request: Request) {
     // and BEFORE four-layer reasoning so the agent always knows what
     // it exists to prevent before it reasons.
     failureModeBlock,
+    "",
+    // OV2-FM-DOCTRINE — emission doctrine for `failure-mode-flagged`.
+    // Injected IMMEDIATELY AFTER the catalog so the agent reads WHAT
+    // the 10 are, then HOW to flag them. Same Programs-surface gate.
+    failureModeDoctrineBlock,
     "",
     // F0.3 — four-layer reasoning + scope policy + integrity contract.
     // Composed AFTER user context (Layer 0) and BEFORE knowledge / task.

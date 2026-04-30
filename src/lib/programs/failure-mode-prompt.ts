@@ -2,6 +2,12 @@
 // Sources canonical names from FAILURE_MODES so the prompt and the catalog
 // never drift. Design ref: docs/build/PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
 // Section C.6.
+//
+// Slice OV2-FM-DOCTRINE — adds the doctrine block that teaches the agent
+// WHEN to emit `failure-mode-flagged` (vs the per-phase `anti-pattern-flag`),
+// how to ground every emission in the user's words, severity discipline, and
+// cadence. Pairs with the catalog block: catalog = WHAT the 10 are; doctrine
+// = HOW to flag them. Design ref: Parts C.4, C.6, E.5.
 
 import { FAILURE_MODES } from '@/lib/programs/failure-modes';
 import type { BriefOverlapMatch } from '@/lib/programs/origination-overlap';
@@ -43,6 +49,61 @@ export function formatFailureModeCatalogForPrompt(): string {
 export function composeFailureModeBlock(surface: string | null | undefined): string {
   if (!isProgramsSurface(surface)) return '';
   return formatFailureModeCatalogForPrompt();
+}
+
+/**
+ * Render the doctrine block — HOW to emit `failure-mode-flagged` artifacts
+ * relative to `anti-pattern-flag`. The catalog block teaches the agent
+ * WHAT the 10 are; this block teaches discipline: when to fire, when to
+ * stay silent, severity rules, field grounding, cadence.
+ *
+ * Voice-matched to the artifact-channel instructions in artifacts.ts —
+ * senior-practitioner instruction, opinionated, examples-driven. Does NOT
+ * restate the 10 names (the catalog above already carries them).
+ *
+ * Deterministic — returns the same string every call.
+ */
+export function formatFailureModeDoctrineForPrompt(): string {
+  return [
+    'FAILURE-MODE DOCTRINE:',
+    '',
+    "Emit `failure-mode-flagged` when the user, evidence, or broker bundle shows a SIGNAL — specific, observable — that one of the 10 (see catalog above) is being committed in this program right now. Not vibes. Not hypotheticals.",
+    '',
+    'Emit when: the signal is present in this turn or the visible context, AND no active phase-pack `anti-pattern-flag` already captures it cleanly. The pack is the first place to look; the catalog is for cross-phase or pack-uncovered signals.',
+    '',
+    'Do NOT emit when:',
+    '- You only suspect the failure could happen later. This artifact is for present signals, not future risks. Coach the risk in chat.',
+    '- A pack `anti-pattern-flag` fits cleanly (e.g. `phantom-sponsor` in P0). Prefer the pack flag — it carries phase-specific mitigation.',
+    '- You are uncertain. Ask a clarifying question. False positives erode trust faster than missed flags.',
+    '',
+    'Relationship to `anti-pattern-flag`: the pack flag is phase-local doctrine; `failure-mode-flagged` is the cross-phase platform catalog. They CAN co-occur — when a pack anti-pattern is a specific instance of one of the 10, emit both. Example: `phantom-sponsor` (P0) is an instance of failure mode #1; emit the anti-pattern-flag with the pack id AND `failure-mode-flagged` with `failureModeId: 1`. The telemetry rollup needs the catalog id to aggregate across phases.',
+    '',
+    "Severity: `'soft'` for note-and-redirect signals where the program continues with awareness — this is the default. `'hard'` only when the signal genuinely blocks phase advance: sponsor commitment unmet at P0 gate close, baseline missing at P1→P2, kill criterion missing at P2→P3, value attribution undefined at P5 outcome.",
+    '',
+    'Field discipline:',
+    '- `failureModeId` MUST match the canonical id 1..10. Quote by id, not guessed name.',
+    '- `failureModeName` MUST match the catalog name verbatim.',
+    "- `phase` is the program's current phase (0..6) at the moment of flagging.",
+    "- `detectedSignal` paraphrases the user's actual words (≤ 20 words) — not a generic restatement of the failure mode.",
+    "- `consequence` mirrors the matching pack anti-pattern's `whatToFlag` when one applies; else senior-practitioner voice from the catalog's preventionMechanism.",
+    "- `redirect` mirrors the pack's `mitigation` when relevant; else the platform's preventionMechanism. Concrete next move, not a slogan.",
+    '',
+    'Cadence: at most one `failure-mode-flagged` per `failureModeId` per turn unless the user surfaces multiple distinct signals. Do not bulk-emit the catalog.',
+    '',
+    'You are the senior practitioner walking alongside the program lead. Surface failure-mode signals when they are present, with evidence, sparingly enough that the user trusts each one.',
+  ].join('\n');
+}
+
+/**
+ * Compose the doctrine block iff the surface qualifies. Empty string on
+ * non-Programs surfaces so the route's filter strips it. Always emitted
+ * alongside the catalog block — the two are paired.
+ */
+export function composeFailureModeDoctrineBlock(
+  surface: string | null | undefined,
+): string {
+  if (!isProgramsSurface(surface)) return '';
+  return formatFailureModeDoctrineForPrompt();
 }
 
 /**
