@@ -11,6 +11,27 @@ export * from './agent-mission-report';
 export * from './agent-mission-types';
 export * from './agent-missions';
 export * from './attachments';
+export type {
+  SourceArtifactApprovalState,
+  SourceArtifactEvidenceState,
+  SourceArtifactFamily,
+  SourceArtifactFormat,
+  SourceArtifactOrigin,
+  SourceArtifactRegistryChipRef,
+  SourceArtifactRegistryRecord,
+  SourceClassificationStatus,
+  SourceDataClassification,
+  SourceEmbeddingStatus,
+  SourceGraphStatus,
+  SourceParseStatus,
+} from './artifact-registry/types';
+export { toSourceArtifactRegistryChipRef } from './artifact-registry/types';
+export {
+  isAllowedSourceArtifactMimeType,
+  isWithinSourceArtifactSizeLimit,
+  MAX_SOURCE_ARTIFACT_SIZE_BYTES,
+  SOURCE_ARTIFACT_MIME_ALLOWLIST,
+} from './artifact-registry/mime';
 export * from './chat-types';
 export * from './constants';
 export * from './context-builder';
