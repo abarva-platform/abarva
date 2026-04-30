@@ -1,6 +1,7 @@
 import 'server-only';
 import type { TenantDataAdapter } from './adapter';
 import type { GraphNeighborhood } from './types';
+import { getSupabaseTenantDataAdapter } from './supabase-adapter';
 
 /**
  * Stub `TenantDataAdapter` for TD-1.
@@ -52,10 +53,33 @@ export const TENANT_DATA_STUB: TenantDataAdapter = {
 };
 
 /**
- * Adapter selection. TD-1 always returns the stub; TD-2 swaps for the
- * Supabase-backed implementation. Callers should always route through
- * this function rather than importing the stub directly.
+ * Adapter selection. TD-2 prefers the Supabase-backed adapter when the
+ * service-role env vars are set; otherwise it falls back silently to the
+ * stub so that unit tests / CI runs without DB credentials still work.
+ *
+ * The fallback path logs once per process so the silent degradation does
+ * not become invisible. The warning is suppressed when `JEST_WORKER_ID`
+ * is set so the Jest output stays quiet by default.
  */
+let warnedAboutMissingEnv = false;
+
 export function getTenantDataAdapter(): TenantDataAdapter {
+  const supabase = getSupabaseTenantDataAdapter();
+  if (supabase) return supabase;
+  if (!warnedAboutMissingEnv && !process.env.JEST_WORKER_ID) {
+    warnedAboutMissingEnv = true;
+    console.warn(
+      '[tenant-data] NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set; ' +
+        'falling back to TENANT_DATA_STUB. Set both to enable real reads.',
+    );
+  }
   return TENANT_DATA_STUB;
+}
+
+/**
+ * Test seam — resets the warned-about-missing-env flag so successive
+ * tests can re-exercise the warning path.
+ */
+export function __resetTenantDataWarningForTests(): void {
+  warnedAboutMissingEnv = false;
 }
