@@ -22,3 +22,7 @@ Generated chunk-first corpus for AbarVa's strategic worldview. The canonical ret
 ## Design Principle
 
 Postgres holds facts. Pinecone holds meaning. The graph holds relationships. The worldview corpus is meaning-first: each chunk contains one complete strategic argument with citations, AbarVa framing, implications, and audience metadata.
+
+## Sentinel Grounding
+
+The canonical plan for using worldview chunks as agent grounding is `synthesis/sentinel_worldview_grounding_training_plan.md`. It defines when Sentinel should retrieve W1-W5, how worldview merges with tenant context and Source/Programs workflow state, and the golden fixtures required before worldview-grounded answers are considered reliable.
