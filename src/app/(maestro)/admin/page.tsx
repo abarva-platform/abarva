@@ -14,7 +14,7 @@
  * unavailable.
  */
 
-import { getActiveClientKey } from '@/lib/active-client';
+import { getActiveClientRow } from '@/lib/active-client';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import {
   formatRelativeTimestamp,
@@ -38,8 +38,11 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function AdminOverviewPage() {
-  const clientKey = await getActiveClientKey().catch(() => null);
-  const brokerTenantKey = clientKey ? clientKeyToInventorySubstrateKey(clientKey) : null;
+  const activeClient = await getActiveClientRow().catch(() => null);
+  // Fall back to apexretail so authored content always matches the top bar
+  // (which also hard-codes Apex Retail Group when no row is found).
+  const clientKey = activeClient?.key ?? 'apexretail';
+  const brokerTenantKey = clientKeyToInventorySubstrateKey(clientKey);
   const baseContent = getSetupActsContent(clientKey);
   const [snapshot, signals, chunkStats] = brokerTenantKey
     ? await Promise.all([
