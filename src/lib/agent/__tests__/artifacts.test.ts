@@ -990,3 +990,90 @@ describe('extractArtifacts · OV2-FM-FLAG-ARTIFACT failure-mode-flagged', () => 
     expect(r.visibleText).toContain('parse-failed');
   });
 });
+
+// EXPORT-4 · deliverable-ready download chip artifact.
+describe('extractArtifacts · deliverable-ready', () => {
+  it('parses a valid deliverable-ready artifact with specId', () => {
+    const r = extractArtifacts(
+      '[[artifact:deliverable-ready]]{"kind":"program-charter","format":"docx","title":"Apex CDP Activation 2026 — Charter v1","exportUrl":"/api/programs/APX-CDP-2026/deliverables/program-charter/export","programId":"APX-CDP-2026","specId":"a8f3e9c1-7d2b-4f6a-9c3e-1a2b3c4d5e6f"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(1);
+    expect(r.artifacts[0]).toMatchObject({
+      type: 'deliverable-ready',
+      kind: 'program-charter',
+      format: 'docx',
+      title: 'Apex CDP Activation 2026 — Charter v1',
+      exportUrl: '/api/programs/APX-CDP-2026/deliverables/program-charter/export',
+      programId: 'APX-CDP-2026',
+      specId: 'a8f3e9c1-7d2b-4f6a-9c3e-1a2b3c4d5e6f',
+    });
+  });
+
+  it('parses without specId (degraded path; chip falls back to inline POST)', () => {
+    const r = extractArtifacts(
+      '[[artifact:deliverable-ready]]{"kind":"okr-baseline","format":"xlsx","title":"Q3 Baseline","exportUrl":"/api/programs/APX-CDP-2026/deliverables/okr-baseline/export","programId":"APX-CDP-2026"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(1);
+    expect(r.artifacts[0]).toMatchObject({
+      type: 'deliverable-ready',
+      kind: 'okr-baseline',
+      format: 'xlsx',
+    });
+    const a = r.artifacts[0];
+    if (a.type === 'deliverable-ready') {
+      expect(a.specId).toBeUndefined();
+    }
+  });
+
+  it('rejects an unknown kind value', () => {
+    const r = extractArtifacts(
+      '[[artifact:deliverable-ready]]{"kind":"made-up-kind","format":"docx","title":"X","exportUrl":"/api/programs/A/deliverables/made-up-kind/export","programId":"A"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('rejects an invalid format value', () => {
+    const r = extractArtifacts(
+      '[[artifact:deliverable-ready]]{"kind":"program-charter","format":"csv","title":"X","exportUrl":"/api/programs/A/deliverables/program-charter/export","programId":"A"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('rejects empty title', () => {
+    const r = extractArtifacts(
+      '[[artifact:deliverable-ready]]{"kind":"program-charter","format":"docx","title":"","exportUrl":"/api/programs/A/deliverables/program-charter/export","programId":"A"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('rejects empty exportUrl', () => {
+    const r = extractArtifacts(
+      '[[artifact:deliverable-ready]]{"kind":"program-charter","format":"docx","title":"X","exportUrl":"","programId":"A"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('rejects absolute / off-host exportUrl (defense vs cross-origin POST)', () => {
+    const absolute = extractArtifacts(
+      '[[artifact:deliverable-ready]]{"kind":"program-charter","format":"docx","title":"X","exportUrl":"https://attacker.example.com/steal","programId":"A"}[[/artifact]]',
+    );
+    expect(absolute.artifacts).toHaveLength(0);
+
+    const protocolRelative = extractArtifacts(
+      '[[artifact:deliverable-ready]]{"kind":"program-charter","format":"docx","title":"X","exportUrl":"//attacker.example.com/steal","programId":"A"}[[/artifact]]',
+    );
+    expect(protocolRelative.artifacts).toHaveLength(0);
+  });
+
+  it('rejects empty programId', () => {
+    const r = extractArtifacts(
+      '[[artifact:deliverable-ready]]{"kind":"program-charter","format":"docx","title":"X","exportUrl":"/api/programs/A/deliverables/program-charter/export","programId":""}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+});
