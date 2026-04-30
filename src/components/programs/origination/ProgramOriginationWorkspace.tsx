@@ -125,6 +125,23 @@ export interface ProgramOriginationWorkspaceProps {
   initialTurns: ChatTurn[];
 }
 
+const DRAFT_SESSION_STORAGE_PREFIX = 'abarva.program_origination.session';
+
+function generateDraftSessionId(): string {
+  return `orig_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function draftSessionStorageKey(surface: string): string {
+  return `${DRAFT_SESSION_STORAGE_PREFIX}:${surface}`;
+}
+
+export function shouldHydrateOriginationDraft(
+  draftState: { sessionId?: string | null } | null | undefined,
+  currentSessionId: string | null,
+): boolean {
+  return Boolean(currentSessionId && draftState?.sessionId === currentSessionId);
+}
+
 export function ProgramOriginationWorkspace({
   surface,
   tenantName,
@@ -136,11 +153,27 @@ export function ProgramOriginationWorkspace({
   // Until hydration completes we render `initialTurns` (the cold-open).
   const [turns, setTurns] = useState<ChatTurn[]>(initialTurns);
   const [hydrated, setHydrated] = useState(false);
+  const [draftSessionId, setDraftSessionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const key = draftSessionStorageKey(surface);
+      const existing = window.sessionStorage.getItem(key);
+      const next = existing || generateDraftSessionId();
+      if (!existing) window.sessionStorage.setItem(key, next);
+      setDraftSessionId(next);
+    } catch {
+      setDraftSessionId(generateDraftSessionId());
+    }
+  }, [surface]);
 
   // PR3 — hydrate from the saved origination draft on mount.
   // The demo route is public (no tenancy); the API will 401/403, and
-  // we just stay with the cold-open turns.
+  // we just stay with the cold-open turns. Hydration is scoped to the
+  // browser session id so a fresh /programs/new visit does not revive
+  // a previous session's conversation.
   useEffect(() => {
+    if (!draftSessionId) return;
     let cancelled = false;
     (async () => {
       try {
@@ -149,9 +182,19 @@ export function ProgramOriginationWorkspace({
           { method: 'GET', cache: 'no-store' },
         );
         if (!res.ok) return;
-        const body = (await res.json()) as { draft: { state: { turns?: ChatTurn[]; brief?: ProgramBriefDraft | null; patternMatch?: PatternMatchCard | null } } | null };
+        const body = (await res.json()) as {
+          draft: {
+            state: {
+              sessionId?: string;
+              turns?: ChatTurn[];
+              brief?: ProgramBriefDraft | null;
+              patternMatch?: PatternMatchCard | null;
+            };
+          } | null;
+        };
         if (cancelled || !body.draft) return;
         const state = body.draft.state ?? {};
+        if (!shouldHydrateOriginationDraft(state, draftSessionId)) return;
         if (Array.isArray(state.turns) && state.turns.length > 0) {
           setTurns(state.turns);
         }
@@ -169,7 +212,7 @@ export function ProgramOriginationWorkspace({
     return () => {
       cancelled = true;
     };
-  }, [surface]);
+  }, [surface, draftSessionId]);
 
   const applyArtifact = useCallback((artifact: Artifact) => {
     setBriefState((prev) => applyArtifactToBrief(prev, artifact));
@@ -184,6 +227,7 @@ export function ProgramOriginationWorkspace({
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!hydrated) return; // don't write back the cold-open as a "saved" state
+    if (!draftSessionId) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       void fetch('/api/programs/origination-draft', {
@@ -191,7 +235,7 @@ export function ProgramOriginationWorkspace({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           surface,
-          state: { turns, brief: briefState.brief, patternMatch },
+          state: { sessionId: draftSessionId, turns, brief: briefState.brief, patternMatch },
         }),
       }).catch(() => {
         /* non-fatal */
@@ -200,7 +244,7 @@ export function ProgramOriginationWorkspace({
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
     };
-  }, [turns, briefState.brief, patternMatch, surface, hydrated]);
+  }, [turns, briefState.brief, patternMatch, surface, hydrated, draftSessionId]);
 
   const handleTurnsChange = useCallback((next: ChatTurn[]) => {
     setTurns(next);
