@@ -61,7 +61,7 @@ export default async function AdminOverviewPage() {
   const complianceSegment = snapshot?.segments.find((s) => s.segmentId === 'compliance');
 
   return (
-    <AdminCanonShellV2 agentRail={<SetupChatRail />}>
+    <AdminCanonShellV2 agentRail={<SetupChatRail />} tenantName={activeClient?.name ?? 'Apex Retail Group'}>
       <SetupAdminLanding
         content={content}
         segmentRollups={snapshot?.segments ?? []}

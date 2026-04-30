@@ -62,7 +62,7 @@ export default async function AdminSegmentPage({ params }: PageProps) {
   const cameFromLanding = /\/admin(\/|\?|$)/.test(referer) && !/\/admin\/segments\//.test(referer);
 
   return (
-    <AdminCanonShellV2 agentRail={<SetupChatRail />}>
+    <AdminCanonShellV2 agentRail={<SetupChatRail />} tenantName={activeClient?.name ?? 'Apex Retail Group'}>
       <SegmentDetailPage
         reference={reference}
         rollup={page?.rollup ?? null}
