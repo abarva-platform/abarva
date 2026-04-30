@@ -1,0 +1,19 @@
+template_id,name,category,phase,format,status,owner,last_updated,description
+tmpl:apex:rfi-cdp,RFI Template — CDP / MarTech,RFI,Pre-RFP,DOCX,Active,person:apex:nathan-kohl,2025-11-15,Used for early market scan on customer data platforms and adjacent martech
+tmpl:apex:rfi-saas-general,RFI Template — General SaaS,RFI,Pre-RFP,DOCX,Active,person:apex:nathan-kohl,2024-08-22,Standard SaaS market scan
+tmpl:apex:rfp-ams,RFP Template — Application Managed Services,RFP,Pre-RFP,DOCX,Active,person:apex:nathan-kohl,2026-01-10,"Updated post-2023 lessons; includes per-app discovery requirement, transition-risk plan, exit assistance template"
+tmpl:apex:rfp-cdp-martech,RFP Template — CDP and MarTech,RFP,Pre-RFP,DOCX,Active,person:apex:nathan-kohl,2026-01-22,"Updated 2026 with CCPA/CPRA-specific requirements; consent enforcement language"
+tmpl:apex:rfp-data-platform,RFP Template — Data Platform,RFP,Pre-RFP,DOCX,Active,person:apex:nathan-kohl,2025-09-10,"Snowflake / Databricks / data tooling; includes egress / data residency requirements"
+tmpl:apex:rfp-cybersecurity,RFP Template — Cybersecurity Tooling,RFP,Pre-RFP,DOCX,Active,person:apex:nathan-kohl,2025-06-04,SIEM / EDR / IAM / SASE; includes SOC2 / ISO27001 verification
+tmpl:apex:rfp-ai-ml,RFP Template — AI / ML Platform and Tooling,RFP,Pre-RFP,DOCX,Active,person:apex:elena-fischer,2025-10-18,"New 2025; includes AI Governance Council review requirement; data-use restrictions; model evaluation criteria"
+tmpl:apex:rfp-erp-extension,RFP Template — ERP / SAP Adjacent,RFP,Pre-RFP,DOCX,Active,person:apex:nathan-kohl,2024-04-12,For SAP-adjacent and ERP extension procurement
+tmpl:apex:rfp-staff-aug,RFP Template — Staff Augmentation,RFP,Pre-RFP,DOCX,Active,person:apex:nathan-kohl,2024-02-08,Standard staff aug
+tmpl:apex:rfp-consulting,RFP Template — Consulting / SI,RFP,Pre-RFP,DOCX,Active,person:apex:nathan-kohl,2025-04-15,"Includes named-resource commitment language post-2023"
+tmpl:apex:eval-scorecard,Evaluation Scorecard Template,Eval,RFP,XLSX,Active,person:apex:nathan-kohl,2025-12-08,Standard evaluation matrix
+tmpl:apex:reference-call,Reference Call Note Template,Eval,RFP,DOCX,Active,person:apex:nathan-kohl,2024-05-10,Standard reference call structure
+tmpl:apex:bafo-tracker,BAFO Tracker Template,Negotiation,Negotiation,XLSX,Active,person:apex:nathan-kohl,2026-01-30,"Updated 2026 with locked / open / floor structure"
+tmpl:apex:risk-questionnaire,Vendor Risk Questionnaire,Eval,RFP,DOCX,Active,person:apex:kevin-harrison,2025-11-22,Risk + compliance questionnaire (joint Security + Privacy + Procurement)
+tmpl:apex:msa-template,MSA Template (Apex Standard),Contract,Award,DOCX,Active,person:apex:rebecca-singh,2025-08-15,"Updated 2025 with AI clauses; data residency; exit assistance"
+tmpl:apex:sow-template,SOW Template (Standard),Contract,Award,DOCX,Active,person:apex:rebecca-singh,2025-08-15,Standard SOW
+tmpl:apex:dpa-template,Data Processing Addendum Template,Contract,Award,DOCX,Active,person:apex:rebecca-singh,2025-09-22,"Updated 2025 with state privacy laws; CPRA-specific"
+tmpl:apex:exit-assistance,Exit Assistance Template,Contract,Award,DOCX,Active,person:apex:rebecca-singh,2025-08-15,"Standard exit assistance language; required in every multi-year contract post-2024"

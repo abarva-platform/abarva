@@ -100,6 +100,12 @@ export default async function SourceEventDetailPage({
   const derivedMissions = matchedInstance
     ? deriveMissionsFromInstance(matchedInstance, PAT_SRC_AMS_001)
     : [];
+  const blockingGateEvaluations = nextGateEvaluations.filter(
+    (evaluation) =>
+      evaluation.gateType === 'hard' &&
+      evaluation.status !== 'met' &&
+      evaluation.status !== 'waived',
+  );
 
   // REASON-29 — Header-level failure-mode warning chip. Pulls the same
   // SynthesisContext used by the provenance ribbon so high-confidence
@@ -145,6 +151,8 @@ export default async function SourceEventDetailPage({
           stages={AMS_SOURCE_EVENT.stages}
           activeStage={event.currentStageLabel === 'Orals/BAFO' ? 'BAFO' : event.currentStageLabel}
           stageStates={stageStates}
+          variant="journey"
+          personaLabel="Sourcing lead"
         />
       }
     >
@@ -244,6 +252,8 @@ export default async function SourceEventDetailPage({
         <StageAdvanceButton
           eventId={event.id}
           currentStageKey={event.currentStageKey}
+          blockingGateCount={blockingGateEvaluations.length}
+          blockingGateLabel={nextGateTargetStageId}
         />
       </div>
       <PatternRecommendationChips

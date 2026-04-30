@@ -195,6 +195,127 @@ export async function signOffDeliverable(ctx: TenancyCtx, programId: string, del
   if (error) throw error;
 }
 
+export interface CompleteDeliverableInput {
+  deliverableTypeKey: string;
+  title: string;
+  content?: string;
+  moduleKey?: string;
+  structuredData?: Record<string, unknown>;
+  provenanceMap?: Record<string, unknown>;
+  signOff?: boolean;
+}
+
+/**
+ * Create/update a deliverable and optionally sign it off in one atomic
+ * crawl-facing operation. This is intentionally stricter than the draft
+ * route: it exists for explicit user/admin approval moments where Nexus has
+ * generated the artifact and the authorized user says to accept it.
+ */
+export async function completeDeliverable(
+  ctx: TenancyCtx,
+  programId: string,
+  input: CompleteDeliverableInput,
+): Promise<{ deliverableId: string; versionId: string | null; status: 'draft' | 'signed_off' }> {
+  assertTenancy(ctx);
+  await assertProgramTenancy(ctx, programId);
+  const deliverableTypeKey = input.deliverableTypeKey.trim();
+  const title = input.title.trim();
+  if (!deliverableTypeKey) throw new Error('[completeDeliverable] deliverableTypeKey is required');
+  if (!title) throw new Error('[completeDeliverable] title is required');
+
+  const sb = getServerSupabase();
+  const now = new Date().toISOString();
+  const { data: existing, error: existingError } = await sb
+    .from('deliverables_v2')
+    .select('id, current_version')
+    .eq('engagement_id', programId)
+    .eq('deliverable_type_key', deliverableTypeKey)
+    .maybeSingle();
+  if (existingError) throw existingError;
+
+  let deliverableId: string;
+  let nextVersion = 1;
+  if (existing) {
+    deliverableId = (existing as { id: string; current_version: number | null }).id;
+    nextVersion = ((existing as { current_version: number | null }).current_version ?? 0) + 1;
+    const { error } = await sb
+      .from('deliverables_v2')
+      .update({
+        title,
+        current_version: nextVersion,
+        status: input.signOff === false ? 'draft' : 'signed_off',
+        signed_off_by: input.signOff === false ? null : ctx.userId,
+        signed_off_at: input.signOff === false ? null : now,
+        updated_at: now,
+      })
+      .eq('id', deliverableId)
+      .eq('engagement_id', programId);
+    if (error) throw error;
+  } else {
+    const { data: created, error } = await sb
+      .from('deliverables_v2')
+      .insert({
+        engagement_id: programId,
+        deliverable_type_key: deliverableTypeKey,
+        title,
+        status: input.signOff === false ? 'draft' : 'signed_off',
+        current_version: 1,
+        created_by: 'nexus',
+        signed_off_by: input.signOff === false ? null : ctx.userId,
+        signed_off_at: input.signOff === false ? null : now,
+      })
+      .select('id')
+      .single();
+    if (error) throw error;
+    deliverableId = (created as { id: string }).id;
+  }
+
+  let versionId: string | null = null;
+  const content = input.content?.trim();
+  if (content) {
+    const { data: version, error } = await sb
+      .from('deliverable_versions')
+      .insert({
+        deliverable_id: deliverableId,
+        version: nextVersion,
+        content,
+        structured_data: {
+          ...(input.structuredData ?? {}),
+          module_key: input.moduleKey ?? null,
+          completed_by_tool: true,
+          signed_off: input.signOff !== false,
+        },
+        quality_issues: input.provenanceMap ? { provenance_map: input.provenanceMap } : null,
+        generated_from_context_hash: null,
+      })
+      .select('id')
+      .single();
+    if (error) throw error;
+    versionId = (version as { id: string }).id;
+  }
+
+  const { error: logErr } = await sb.from('module_state_log').insert({
+    engagement_id: programId,
+    module_key: input.moduleKey ?? deliverableTypeKey,
+    previous_state: null,
+    new_state: input.signOff === false ? 'drafted' : 'signed_off',
+    changed_by_user_id: ctx.userId,
+    notes: `${title} ${input.signOff === false ? 'drafted' : 'signed off'} by Nexus tool`,
+    context_jsonb: {
+      deliverable_id: deliverableId,
+      deliverable_type_key: deliverableTypeKey,
+      version_id: versionId,
+    },
+  });
+  if (logErr) throw logErr;
+
+  return {
+    deliverableId,
+    versionId,
+    status: input.signOff === false ? 'draft' : 'signed_off',
+  };
+}
+
 export async function setModuleStatus(
   ctx: TenancyCtx,
   programId: string,

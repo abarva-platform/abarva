@@ -1,0 +1,137 @@
+{
+  "tenant_key": "apex-retail",
+  "last_updated": "2026-04-22",
+  "data_classification": "Internal",
+  "it_leadership": [
+    {
+      "id": "person:apex:raj-patel",
+      "name": "Raj Patel",
+      "title": "VP, Infrastructure & Cloud",
+      "reports_to": "person:apex:carlos-rivera",
+      "tenure_in_role_years": 4,
+      "domains_owned": ["network", "compute", "storage", "AWS landing zone", "DC operations"],
+      "team_size": 38,
+      "known_for": "led the AWS migration phase 1 (completed 2024); managing the Bangalore tech center"
+    },
+    {
+      "id": "person:apex:diana-lopez",
+      "name": "Diana Lopez",
+      "title": "VP, Application Services",
+      "reports_to": "person:apex:carlos-rivera",
+      "tenure_in_role_years": 2,
+      "domains_owned": ["ERP", "CRM", "HCM apps", "merchandising apps", "store apps"],
+      "team_size": 64,
+      "known_for": "joined post the 2023 AMS failure; rebuilding application portfolio discipline; co-leads the 2026 AMS consolidation"
+    },
+    {
+      "id": "person:apex:james-wright",
+      "name": "James Wright",
+      "title": "VP, Data Engineering & Platform",
+      "reports_to": "person:apex:lynne-stratham",
+      "tenure_in_role_years": 1,
+      "domains_owned": ["data warehouse", "data lake", "integration platform", "MDM", "BI"],
+      "team_size": 22,
+      "known_for": "promoted by the new CDO from director level in early 2026; key player in CDP program"
+    },
+    {
+      "id": "person:apex:linda-mwangi",
+      "name": "Linda Mwangi",
+      "title": "VP, Enterprise Architecture",
+      "reports_to": "person:apex:carlos-rivera",
+      "tenure_in_role_years": 5,
+      "domains_owned": ["architecture review board", "API platform", "integration standards", "AI architecture"],
+      "team_size": 11,
+      "known_for": "owns the architecture review board; gatekeeper on every program in P2 and P3; authored the AI Architecture Reference framework"
+    },
+    {
+      "id": "person:apex:kevin-harrison",
+      "name": "Kevin Harrison",
+      "title": "VP, Cybersecurity Operations",
+      "reports_to": "person:apex:sarah-whitfield",
+      "tenure_in_role_years": 3,
+      "domains_owned": ["SOC", "vulnerability management", "incident response", "PCI program ops"],
+      "team_size": 18,
+      "known_for": "owned the November 2025 PCI assessment"
+    },
+    {
+      "id": "person:apex:priya-iyer",
+      "name": "Priya Iyer",
+      "title": "VP, Digital & E-commerce Technology",
+      "reports_to": "person:apex:carlos-rivera",
+      "tenure_in_role_years": 3,
+      "domains_owned": ["e-commerce platform", "mobile app", "marketing technology", "site search", "personalization"],
+      "team_size": 47,
+      "known_for": "tightly aligned with the CMO; powerful internal voice on customer-facing investment"
+    },
+    {
+      "id": "person:apex:vacant-store-tech",
+      "name": "OPEN — Acting: Brandon Hayes",
+      "title": "VP, Store Technology",
+      "reports_to": "person:apex:carlos-rivera",
+      "tenure_in_role_years": 0,
+      "domains_owned": ["POS systems", "store networking", "store device management", "in-store digital"],
+      "team_size": 29,
+      "known_for": "role open since January 2026 after previous VP departed; Brandon Hayes (director) acting; recruitment in progress; impact: store technology decisions are slow"
+    },
+    {
+      "id": "person:apex:nathan-kohl",
+      "name": "Nathan Kohl",
+      "title": "VP, IT Procurement & Vendor Management",
+      "reports_to": "person:apex:margaret-chen",
+      "tenure_in_role_years": 2,
+      "domains_owned": ["IT vendor contracts", "renewals", "BAFO negotiations", "vendor risk management"],
+      "team_size": 8,
+      "known_for": "reports to CFO not CIO (organizational choice from 2024); aggressive on cost; sometimes friction with IT teams over scope choices"
+    },
+    {
+      "id": "person:apex:elena-fischer",
+      "name": "Elena Fischer",
+      "title": "Director, AI & Emerging Technology",
+      "reports_to": "person:apex:linda-mwangi",
+      "tenure_in_role_years": 1,
+      "domains_owned": ["AI platform strategy", "model evaluation", "AI governance secretariat"],
+      "team_size": 4,
+      "known_for": "newly created role in 2025; running the AI Governance Council; works closely with CDO on AI strategy"
+    },
+    {
+      "id": "person:apex:daniel-okeke",
+      "name": "Daniel Okeke",
+      "title": "Director, IT PMO",
+      "reports_to": "person:apex:carlos-rivera",
+      "tenure_in_role_years": 3,
+      "domains_owned": ["IT portfolio", "program management", "stage-gate governance"],
+      "team_size": 9,
+      "known_for": "post-2023-AMS-failure rebuild of IT PMO; stage-gate discipline newly stricter under his ownership"
+    }
+  ],
+  "domain_owners": [
+    {"domain": "ERP", "owner": "person:apex:diana-lopez", "system": "system:apex:sap-s4"},
+    {"domain": "CRM", "owner": "person:apex:priya-iyer", "system": "system:apex:salesforce"},
+    {"domain": "HCM", "owner": "person:apex:diana-lopez", "system": "system:apex:workday"},
+    {"domain": "POS", "owner": "person:apex:vacant-store-tech", "system": "system:apex:oracle-retail"},
+    {"domain": "E-commerce", "owner": "person:apex:priya-iyer", "system": "system:apex:salesforce-commerce"},
+    {"domain": "Customer Data", "owner": "person:apex:james-wright", "system": "OPEN — CDP target state"},
+    {"domain": "Email Marketing", "owner": "person:apex:priya-iyer", "system": "system:apex:klaviyo"},
+    {"domain": "Demand Planning", "owner": "person:apex:michael-tanaka", "system": "system:apex:ovaa-planning"},
+    {"domain": "Data Warehouse", "owner": "person:apex:james-wright", "system": "system:apex:snowflake"},
+    {"domain": "BI", "owner": "person:apex:james-wright", "system": "system:apex:tableau"},
+    {"domain": "Identity / SSO", "owner": "person:apex:kevin-harrison", "system": "system:apex:okta"},
+    {"domain": "ITSM", "owner": "person:apex:raj-patel", "system": "system:apex:servicenow"}
+  ],
+  "ai_governance_council": {
+    "established": "2025-09-01",
+    "chair": "person:apex:rebecca-singh",
+    "secretariat": "person:apex:elena-fischer",
+    "members": [
+      "person:apex:lynne-stratham",
+      "person:apex:carlos-rivera",
+      "person:apex:sarah-whitfield",
+      "person:apex:linda-mwangi",
+      "person:apex:thomas-brennan",
+      "person:apex:rebecca-singh"
+    ],
+    "cadence": "monthly",
+    "decision_authority": "tier-2 AI use cases (pre-deployment)",
+    "escalation_to": "Risk Committee of the Board"
+  }
+}

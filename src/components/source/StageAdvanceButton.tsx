@@ -16,6 +16,8 @@ import { SHELL } from '@/lib/shell/shell-tokens';
 interface StageAdvanceButtonProps {
   eventId: string;
   currentStageKey: SourceStageKey;
+  blockingGateCount?: number;
+  blockingGateLabel?: string;
 }
 
 const WRAP: CSSProperties = {
@@ -82,7 +84,12 @@ function Spinner() {
   );
 }
 
-export function StageAdvanceButton({ eventId, currentStageKey }: StageAdvanceButtonProps) {
+export function StageAdvanceButton({
+  eventId,
+  currentStageKey,
+  blockingGateCount = 0,
+  blockingGateLabel,
+}: StageAdvanceButtonProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -94,8 +101,14 @@ export function StageAdvanceButton({ eventId, currentStageKey }: StageAdvanceBut
 
   async function handleAdvance() {
     if (!nextStageKey || loading) return;
-    setLoading(true);
     setError(null);
+    if (blockingGateCount > 0) {
+      setError(
+        `Cannot advance — ${blockingGateCount} hard gate${blockingGateCount === 1 ? '' : 's'} unmet for ${blockingGateLabel ?? nextStageLabel}. Review gate criteria below.`,
+      );
+      return;
+    }
+    setLoading(true);
     try {
       const res = await fetch(`/api/v1/source/${encodeURIComponent(eventId)}/stage`, {
         method: 'PATCH',

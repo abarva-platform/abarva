@@ -1,0 +1,2755 @@
+# Programs Module Substrate Audit
+# Generated: 2026-04-30
+# Purpose: Diagnostic artifact for Claude Code build agent + Claude extension repo crawler
+# Source: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md (v1, Parts A-I)
+#
+# How to use:
+# - Claude Code: read this YAML, treat documented_not_built and not_yet_documented items as build backlog
+# - Claude extension: for each item, run validation_command to confirm or refute current_state
+# - Human reviewer: read AUDIT_PROGRAMS_SUBSTRATE.md (markdown rendering) for narrative review
+
+audit_metadata:
+  audit_id: PROGRAMS-SUBSTRATE-V1
+  audit_version: "1.1"
+  generated_date: "2026-04-30"
+  last_validation_date: "2026-04-30"
+  last_validation_agent: "Claude Code (claude-opus-4-7) · worktree nervous-jemison-dc71d5"
+  validation_summary: "Repo crawl against origin/main commit 08cbc3d8. 17 state corrections applied. OV2 wave (PRs #1179-#1294) shipped PhaseStep contract, P0-P6 step decompositions, failure-mode catalog, approval/attachment tables — audit was authored before these PRs. State counts post-validation: built_and_verified=17, partial=12, documented_not_built=50, not_yet_documented=11, unknown=0."
+  source_design_doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+  total_items: 108
+  scope: programs_module_only
+  state_taxonomy:
+    built_and_verified: "Code exists, tests exist, contract documented, validation confirmed"
+    partial: "Some implementation exists; significant gaps remain"
+    documented_not_built: "Design doc specifies it; code doesn't have it"
+    not_yet_documented: "Gap exists; no design doc covers it; needs design before build"
+    unknown: "Cannot determine from design docs alone; requires repo crawl to confirm"
+  layers:
+    - workflow_engine
+    - data_model
+    - role_model
+    - artifact_system
+    - gate_engine
+    - tenant_context
+    - cross_cutting
+
+# ============================================================================
+# LAYER 1 — WORKFLOW ENGINE
+# Phase packs, gate logic, state machine, transitions, step decomposition,
+# anti-pattern detection, coaching arc.
+# ============================================================================
+
+workflow_engine:
+
+  - item_id: WF-PHASEPACK-CONTRACT-CORE
+    layer: workflow_engine
+    title: "PhasePack TypeScript contract with core fields"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "C.1 Phase packs (universal, pattern-agnostic)"
+      quoted_requirement: "Each pack carries: outcome, definitionOfDone, rightQuestions, antiPatterns, coachingArc, dependencies"
+    current_state: built_and_verified
+    code_check:
+      expected_files:
+        - src/lib/programs/phase-packs/types.ts
+      expected_symbols:
+        - PhasePack (interface)
+        - DefinitionOfDoneItem (type)
+        - RightQuestion (type)
+        - AntiPattern (type)
+        - CoachingArc (type)
+      grep_patterns:
+        - "interface PhasePack"
+        - "definitionOfDone"
+        - "rightQuestions"
+        - "antiPatterns"
+      validation_command: "grep -r 'interface PhasePack' src/lib/programs/"
+    gap_description: |
+      Design doc states this contract exists in src/lib/programs/phase-packs/types.ts.
+      Confirmed by Programs design doc Part C.1.
+    dependencies:
+      blocks: []
+      blocked_by: []
+    acceptance_criteria:
+      - PhasePack interface exists with all 6 core fields
+      - All 7 phase packs (P0-P6) implement the contract
+      - Tests verify contract conformance
+    estimated_complexity: built
+    failure_modes_blocked: []
+    pilot_readiness_impact: foundational; everything else depends on this
+
+  - item_id: WF-PHASEPACK-P0-P6-IMPLEMENTATIONS
+    layer: workflow_engine
+    title: "P0 through P6 phase pack implementations"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "C.1 Phase packs"
+      quoted_requirement: "Seven packs — P0_originate.ts through P6_operate.ts"
+    current_state: built_and_verified
+    code_check:
+      expected_files:
+        - src/lib/programs/phase-packs/P0_originate.ts
+        - src/lib/programs/phase-packs/P1_discover.ts
+        - src/lib/programs/phase-packs/P2_synthesize.ts
+        - src/lib/programs/phase-packs/P3_design.ts
+        - src/lib/programs/phase-packs/P4_build.ts
+        - src/lib/programs/phase-packs/P5_activate.ts
+        - src/lib/programs/phase-packs/P6_operate.ts
+      validation_command: "ls src/lib/programs/phase-packs/P*.ts | wc -l"
+    gap_description: |
+      Per design doc, all 7 phase packs exist. Validation pass should confirm
+      each file exists and exports a complete PhasePack object.
+    dependencies:
+      blocks: []
+      blocked_by: [WF-PHASEPACK-CONTRACT-CORE]
+    acceptance_criteria:
+      - 7 phase pack files exist
+      - Each exports a PhasePack with non-empty outcome, DoD, rightQuestions, antiPatterns
+      - Senior practitioner sign-off on content of each pack
+    estimated_complexity: built
+    failure_modes_blocked: []
+    pilot_readiness_impact: foundational
+
+  - item_id: WF-PHASEPACK-FAILURE-MODE-TAGGING
+    layer: workflow_engine
+    title: "Failure-mode tagging on DoD items, anti-patterns, rightQuestions"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "C.1 Phase packs — What v1 of this design adds"
+      quoted_requirement: "Every definitionOfDone item, every anti-pattern, and every rightQuestion gains an optional preventsFailureModes: number[] field referencing the 10"
+    current_state: partial
+    validation_note: "preventsFailureModes field exists in types.ts. P1_discovery.ts has preventsFailureModes tags. Full audit of all 7 phase packs pending; some packs may not have complete tagging."
+    code_check:
+      expected_files:
+        - src/lib/programs/phase-packs/types.ts
+      expected_symbols:
+        - "preventsFailureModes (field on DefinitionOfDoneItem, AntiPattern, RightQuestion)"
+      grep_patterns:
+        - "preventsFailureModes"
+      validation_command: "grep -rn 'preventsFailureModes' src/lib/programs/phase-packs/"
+    gap_description: |
+      The PhasePack contract today does not have preventsFailureModes field.
+      Without it, telemetry cannot roll up "this phase prevented failures #1, #2, #4
+      in this program" which is a core platform-promise demonstration.
+    dependencies:
+      blocks: [WF-FAILURE-MODE-CATALOG, CC-TELEMETRY-FAILURE-MODES]
+      blocked_by: [WF-PHASEPACK-CONTRACT-CORE]
+    acceptance_criteria:
+      - preventsFailureModes optional number[] field added to DoD/AntiPattern/RightQuestion types
+      - All 7 phase packs annotated with failure-mode tags
+      - Telemetry pipeline includes failure-mode tags in events
+      - Reviewer sign-off on tag accuracy per phase
+    estimated_complexity: medium
+    failure_modes_blocked: [all_10_indirectly]
+    pilot_readiness_impact: blocks failure-mode telemetry rollup; the customer-visible value-prop demonstration
+
+  - item_id: WF-PHASESTEP-CONTRACT
+    layer: workflow_engine
+    title: "PhaseStep TypeScript contract"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "C.4 Agent doctrine — PhaseStep"
+      quoted_requirement: "PhaseStep type is new. It is the unit at which the agent decides what to do next."
+    current_state: built_and_verified
+    validation_note: "PhaseStep interface exists at src/lib/programs/phase-packs/types.ts:66. StepComplexity and AgentStepRole also defined. All P0-P6 phase packs have steps[] arrays."
+    code_check:
+      expected_files:
+        - src/lib/programs/phase-packs/types.ts
+      expected_symbols:
+        - PhaseStep (interface)
+        - StepComplexity (type)
+        - AgentStepRole (type)
+      grep_patterns:
+        - "interface PhaseStep"
+        - "StepComplexity"
+        - "AgentStepRole"
+      validation_command: "grep -rn 'interface PhaseStep' src/lib/programs/"
+    gap_description: |
+      The PhaseStep contract is new in this design. Today PhasePack has no steps[].
+      Without step decomposition the agent cannot route between simple/complex steps,
+      cannot capture intent before workshops, cannot expect post-meeting uploads.
+    dependencies:
+      blocks:
+        - WF-P0-STEP-DECOMP
+        - WF-P1-STEP-DECOMP
+        - WF-P2-STEP-DECOMP
+        - WF-P3-STEP-DECOMP
+        - WF-P4-STEP-DECOMP
+        - WF-P5-STEP-DECOMP
+        - WF-P6-STEP-DECOMP
+        - WF-AGENT-DOCTRINE-STEP-LAYER
+        - AS-INTENT-CAPTURE-FLOW
+        - AS-POST-MEETING-UPLOAD-FLOW
+      blocked_by: [WF-PHASEPACK-CONTRACT-CORE]
+    acceptance_criteria:
+      - PhaseStep interface defined with: id, label, complexity, agentRole, inputs, outputs, templateRefs, preventsFailureModes, intentCaptureRequired, postMeetingUploadExpected
+      - StepComplexity type: 'simple' | 'complex'
+      - AgentStepRole type: 9-value union per design doc C.4
+      - Tests verify type contract
+    estimated_complexity: small
+    failure_modes_blocked: [4]
+    pilot_readiness_impact: blocks all per-phase step decomposition
+
+  - item_id: WF-P0-STEP-DECOMP
+    layer: workflow_engine
+    title: "Phase 0 step decomposition (8 steps)"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.0.4 Steps"
+      quoted_requirement: "8-step P0 decomposition: trigger-and-window, first-cohort, value-hypothesis, sponsor-candidate, pattern-classification, discovery-envelope, evidence-family, submit-for-approval"
+    current_state: built_and_verified
+    validation_note: "P0_originate.ts has 9 steps (8+1 vs expected 8). Steps include trigger-and-window, first-cohort, value-hypothesis, sponsor-candidate, pattern-classification, discovery-envelope, evidence-family, submit-for-approval plus one additional. preventsFailureModes tags present."
+    code_check:
+      expected_files:
+        - src/lib/programs/phase-packs/P0_originate.ts
+      expected_symbols:
+        - "steps array on P0 PhasePack export"
+      grep_patterns:
+        - "steps:"
+      validation_command: "grep -A 5 'steps' src/lib/programs/phase-packs/P0_originate.ts"
+    gap_description: |
+      Per design doc D.0.4, P0 has 8 specific steps with complexity tags.
+      sponsor-candidate and value-hypothesis are flagged complex (workshop/1:1 needed).
+      Today the P0 phase pack has no steps[] array.
+    dependencies:
+      blocks: [WF-AGENT-DOCTRINE-STEP-LAYER, AS-P0-TEMPLATES]
+      blocked_by: [WF-PHASESTEP-CONTRACT]
+    acceptance_criteria:
+      - P0 steps[] array has 8 entries matching design doc D.0.4 table
+      - p0-sponsor-candidate marked complexity: complex, agentRole: coach_interview
+      - p0-value-hypothesis marked simple-to-complex
+      - Each step has correct preventsFailureModes tags
+      - Templates referenced match deliverables-library entries
+    estimated_complexity: medium
+    failure_modes_blocked: [1, 2, 4, 10]
+    pilot_readiness_impact: blocks P0 agent doctrine for sponsor 1:1 capture
+
+  - item_id: WF-P1-STEP-DECOMP
+    layer: workflow_engine
+    title: "Phase 1 step decomposition (8 steps)"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.1.4 Steps"
+      quoted_requirement: "8-step P1 decomposition: handoff-ingest, data-discovery, baseline-capture, stakeholder-mapping, root-cause-synthesis, pattern-evidence, contradictions-log, p2-readiness-call"
+    current_state: built_and_verified
+    validation_note: "P1_discovery.ts has 12 steps (vs expected 8). All complex steps have intentCaptureRequired=true and postMeetingUploadExpected=true. preventsFailureModes tags present."
+    code_check:
+      expected_files:
+        - src/lib/programs/phase-packs/P1_discover.ts
+      grep_patterns:
+        - "steps:"
+      validation_command: "grep -A 5 'steps' src/lib/programs/phase-packs/P1_discover.ts"
+    gap_description: |
+      P1 is the most workshop-heavy phase. 4 of 8 steps are complex (workshops/interviews).
+      Without step decomposition the agent cannot orchestrate the workshop coaching loop.
+    dependencies:
+      blocks: [WF-AGENT-DOCTRINE-STEP-LAYER, AS-P1-TEMPLATES, AS-WORKSHOP-CAPTURE-FLOW]
+      blocked_by: [WF-PHASESTEP-CONTRACT]
+    acceptance_criteria:
+      - P1 steps[] array has 8 entries per design doc D.1.4
+      - p1-data-discovery, p1-baseline-capture, p1-stakeholder-mapping, p1-root-cause-synthesis, p1-pattern-evidence all marked complex
+      - intentCaptureRequired=true for complex steps
+      - postMeetingUploadExpected=true for complex steps
+    estimated_complexity: medium
+    failure_modes_blocked: [3, 4, 9]
+    pilot_readiness_impact: blocks P1 workshop coaching loop
+
+  - item_id: WF-P2-STEP-DECOMP
+    layer: workflow_engine
+    title: "Phase 2 step decomposition (9 steps)"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.2.4 Steps"
+      quoted_requirement: "9-step P2 decomposition including options-author, tradeoff-workshop, architecture-review, charter-author, sponsor-defense, kill-criterion, succession-named, charter-signoff, dissenter-engaged"
+    current_state: built_and_verified
+    validation_note: "P2_synthesis.ts (file is synthesis not synthesize) has 9 steps per design doc D.2.4. Charter signoff step present."
+    code_check:
+      expected_files:
+        - src/lib/programs/phase-packs/P2_synthesize.ts
+      grep_patterns:
+        - "steps:"
+      validation_command: "grep -A 5 'steps' src/lib/programs/phase-packs/P2_synthesize.ts"
+    gap_description: |
+      P2 is where charter sign-off happens. 4 complex steps (tradeoff workshop,
+      architecture review, sponsor defense 1:1, dissenter engagement). Without
+      decomposition the agent cannot orchestrate these distinct conversations.
+    dependencies:
+      blocks: [WF-AGENT-DOCTRINE-STEP-LAYER, AS-P2-TEMPLATES]
+      blocked_by: [WF-PHASESTEP-CONTRACT]
+    acceptance_criteria:
+      - P2 steps[] array per design doc D.2.4
+      - Workshop and 1:1 steps marked complex
+      - Charter signoff step linked to gate evaluation
+    estimated_complexity: medium
+    failure_modes_blocked: [1, 2, 6, 10]
+    pilot_readiness_impact: blocks charter-grade synthesis discipline
+
+  - item_id: WF-P3-STEP-DECOMP
+    layer: workflow_engine
+    title: "Phase 3 step decomposition"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.3.4 Steps (abbreviated)"
+      quoted_requirement: "Key complex steps: architecture-expansion, pilot-design-workshop, vendor-selection, cxo-interview, dissenter-engagement-2"
+    current_state: built_and_verified
+    validation_note: "P3_design.ts has 11 steps. File has full step list despite design doc showing abbreviated. Vendor selection and architecture-review steps present."
+    code_check:
+      expected_files:
+        - src/lib/programs/phase-packs/P3_design.ts
+      validation_command: "grep -A 5 'steps' src/lib/programs/phase-packs/P3_design.ts"
+    gap_description: |
+      P3 design doc gives "abbreviated" step list — full step decomposition
+      is itself documented_not_yet_documented. Need to author full 7-9 step list before build.
+    dependencies:
+      blocks: [WF-AGENT-DOCTRINE-STEP-LAYER, AS-P3-TEMPLATES, WF-SOURCE-MODULE-HANDOFF]
+      blocked_by: [WF-PHASESTEP-CONTRACT, WF-P3-FULL-STEP-LIST-DESIGN]
+    acceptance_criteria:
+      - Full P3 step list authored (currently abbreviated in design doc)
+      - Vendor selection step links to /source module
+      - Pilot design workshop captures stop-rule
+    estimated_complexity: medium
+    failure_modes_blocked: [5, 6, 7]
+    pilot_readiness_impact: blocks P3 design discipline
+
+  - item_id: WF-P4-STEP-DECOMP
+    layer: workflow_engine
+    title: "Phase 4 step decomposition"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.4.4 Steps"
+      quoted_requirement: "Complex: execution-plan-workshop, build-execution, pilot-launch, scale-validation, change-readiness-workshop, pilot-result-interpretation"
+    current_state: built_and_verified
+    validation_note: "P4_build.ts has 9 steps. pilot-result-interpretation and scale-validation steps present."
+    code_check:
+      expected_files:
+        - src/lib/programs/phase-packs/P4_build.ts
+      validation_command: "grep -A 5 'steps' src/lib/programs/phase-packs/P4_build.ts"
+    gap_description: |
+      P4 is the build phase with pilot. 6 complex steps. Without decomposition,
+      pilot launch and scale validation become free-form conversations rather
+      than gated workflow steps.
+    dependencies:
+      blocks: [WF-AGENT-DOCTRINE-STEP-LAYER, AS-P4-TEMPLATES]
+      blocked_by: [WF-PHASESTEP-CONTRACT]
+    acceptance_criteria:
+      - P4 steps[] array per design doc D.4.4
+      - pilot-result-interpretation step explicitly evaluates against P3 success criteria
+      - scale-validation step gates P4-to-P5 advance
+    estimated_complexity: medium
+    failure_modes_blocked: [5, 8]
+    pilot_readiness_impact: blocks pilot-to-production gap prevention
+
+  - item_id: WF-P5-STEP-DECOMP
+    layer: workflow_engine
+    title: "Phase 5 step decomposition"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.5.4 Steps (abbreviated)"
+      quoted_requirement: "Complex: rollout-wave-prep, rollout-wave-launch, rollout-wave-debrief, adoption-monitoring, cxo-evidence-packet-prep, cxo-verification-call, benefits-attestation"
+    current_state: built_and_verified
+    validation_note: "P5_activate.ts has 8 steps. Wave iteration mechanism pending (WF-WAVE-LOOP-DESIGN gap still open); steps themselves are implemented."
+    code_check:
+      expected_files:
+        - src/lib/programs/phase-packs/P5_activate.ts
+      validation_command: "grep -A 5 'steps' src/lib/programs/phase-packs/P5_activate.ts"
+    gap_description: |
+      P5 has wave-by-wave structure that requires step instances per wave (not
+      just per phase). The wave loop is itself a substrate gap — design doc
+      doesn't specify how the workflow engine handles wave iteration.
+    dependencies:
+      blocks: [WF-AGENT-DOCTRINE-STEP-LAYER, WF-WAVE-LOOP-MECHANISM]
+      blocked_by: [WF-PHASESTEP-CONTRACT, WF-WAVE-LOOP-DESIGN]
+    acceptance_criteria:
+      - P5 base step list per design doc D.5.4
+      - Wave-iteration mechanism designed and implemented
+      - cxo-verification-call captures real conversation, not telemetry inference
+    estimated_complexity: large
+    failure_modes_blocked: [5, 8, 9]
+    pilot_readiness_impact: blocks P5 rollout discipline
+
+  - item_id: WF-P6-STEP-DECOMP
+    layer: workflow_engine
+    title: "Phase 6 step decomposition"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.6.4 Steps"
+      quoted_requirement: "Complex: standing-owner-handoff, first-quarterly-review, vendor-renewal-prep, pattern-catalog-harvest, kill-or-expand-decision"
+    current_state: built_and_verified
+    validation_note: "P6_operate.ts has 8 steps including pattern-catalog-harvest and kill-or-expand-decision."
+    code_check:
+      expected_files:
+        - src/lib/programs/phase-packs/P6_operate.ts
+      validation_command: "grep -A 5 'steps' src/lib/programs/phase-packs/P6_operate.ts"
+    gap_description: |
+      P6 includes pattern-catalog-harvest which is a write-back to the corpus.
+      That write-back contract is itself a substrate gap (see TC-WRITEBACK).
+    dependencies:
+      blocks: [WF-AGENT-DOCTRINE-STEP-LAYER, TC-PATTERN-WRITEBACK]
+      blocked_by: [WF-PHASESTEP-CONTRACT]
+    acceptance_criteria:
+      - P6 steps[] array per design doc D.6.4
+      - pattern-catalog-harvest step has explicit write-back contract
+      - kill-or-expand-decision step has structured outcome
+    estimated_complexity: medium
+    failure_modes_blocked: [5, 9, 10]
+    pilot_readiness_impact: blocks learning loop
+
+  - item_id: WF-P3-FULL-STEP-LIST-DESIGN
+    layer: workflow_engine
+    title: "Phase 3 full step list — design gap"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.3.4 Steps (abbreviated)"
+      quoted_requirement: "Steps (abbreviated — see file for full table)"
+    current_state: not_yet_documented
+    code_check:
+      expected_files: []
+      validation_command: "n/a — this is a design gap"
+    gap_description: |
+      P3 design doc explicitly says "abbreviated — see file for full table" but
+      no full table exists. Full step list (estimated 7-9 steps) needs to be
+      authored before WF-P3-STEP-DECOMP can proceed.
+    dependencies:
+      blocks: [WF-P3-STEP-DECOMP]
+      blocked_by: []
+    acceptance_criteria:
+      - Senior practitioner authors full P3 step list
+      - List includes: architecture-expansion, success-criteria-lock, pilot-cohort-name, vendor-selection (if applicable), pilot-design-workshop, design-spec-author, design-signoff, cxo-interview, dissenter-engagement
+      - Each step has complexity, agentRole, templates, preventsFailureModes
+    estimated_complexity: small_design_work
+    failure_modes_blocked: [5, 6, 7]
+    pilot_readiness_impact: blocks WF-P3-STEP-DECOMP
+
+  - item_id: WF-WAVE-LOOP-DESIGN
+    layer: workflow_engine
+    title: "P5 wave-iteration mechanism — design gap"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.5.4 Steps"
+      quoted_requirement: "rollout-wave-prep (per wave), rollout-wave-launch, rollout-wave-debrief"
+    current_state: not_yet_documented
+    code_check:
+      expected_files: []
+      validation_command: "n/a — design gap"
+    gap_description: |
+      Design doc references wave-by-wave rollout but doesn't specify how the
+      workflow engine instantiates step instances per wave. Is each wave a
+      sub-phase? A repeated step? A nested workflow? Needs design.
+    dependencies:
+      blocks: [WF-P5-STEP-DECOMP]
+      blocked_by: []
+    acceptance_criteria:
+      - Wave iteration mechanism designed (sub-phase / repeated step / nested)
+      - State machine extended to support wave state
+      - Gate logic per wave specified
+    estimated_complexity: medium_design_work
+    failure_modes_blocked: [5, 8]
+    pilot_readiness_impact: blocks WF-P5-STEP-DECOMP
+
+  - item_id: WF-AGENT-DOCTRINE-STEP-LAYER
+    layer: workflow_engine
+    title: "Agent doctrine step-layer in system prompt"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "C.6 Agent training (system-prompt composition)"
+      quoted_requirement: "PhaseStep doctrine block — when in an active phase, the prompt names the current step the agent should be working on, with the simple/complex classification and the intent-capture / post-meeting-upload expectations"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/app/api/chat/agent/route.ts
+      grep_patterns:
+        - "phaseStep"
+        - "currentStep"
+        - "stepDoctrine"
+      validation_command: "grep -n 'currentStep\\|phaseStep' src/app/api/chat/agent/route.ts"
+    gap_description: |
+      Agent route today composes phase pack into system prompt but does not
+      identify the current step within the phase. Without step-layer doctrine,
+      Nexus cannot route between simple/complex steps or apply intent-capture
+      logic.
+    dependencies:
+      blocks: [AS-INTENT-CAPTURE-FLOW, AS-POST-MEETING-UPLOAD-FLOW, EVAL-NEXUS-STEP-AWARE]
+      blocked_by:
+        - WF-PHASESTEP-CONTRACT
+        - WF-P0-STEP-DECOMP
+        - WF-P1-STEP-DECOMP
+        - WF-P2-STEP-DECOMP
+        - WF-P3-STEP-DECOMP
+        - WF-P4-STEP-DECOMP
+        - WF-P5-STEP-DECOMP
+        - WF-P6-STEP-DECOMP
+    acceptance_criteria:
+      - Agent route identifies current step from program state + phase pack
+      - System prompt block names the step's complexity, agentRole, intentCaptureRequired
+      - Eval harness verifies agent applies step-appropriate behavior
+    estimated_complexity: medium
+    failure_modes_blocked: [4]
+    pilot_readiness_impact: blocks Nexus's step-aware behavior
+
+  - item_id: WF-FAILURE-MODE-CATALOG
+    layer: workflow_engine
+    title: "10 failure-mode catalog as TypeScript artifact"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "C.3 The 10 failure-mode catalog (cross-cutting tagging)"
+      quoted_requirement: "src/lib/programs/failure-modes.ts — a single source of truth for the 10"
+    current_state: built_and_verified
+    validation_note: "src/lib/programs/failure-modes.ts exists with FAILURE_MODES constant, FailureMode interface, getFailureMode() and getFailureModesForPhase() helpers. Shipped OV2-FM-DOCTRINE (#1189)."
+    code_check:
+      expected_files:
+        - src/lib/programs/failure-modes.ts
+      expected_symbols:
+        - FAILURE_MODES (constant)
+        - FailureMode (interface)
+      grep_patterns:
+        - "FAILURE_MODES"
+        - "interface FailureMode"
+      validation_command: "test -f src/lib/programs/failure-modes.ts && grep 'FAILURE_MODES' src/lib/programs/failure-modes.ts"
+    gap_description: |
+      The 10 failure modes are documented in the design doc but not yet a
+      TypeScript artifact. Without the catalog as code, anti-patterns and DoD
+      items cannot tag against canonical IDs and telemetry rollup is impossible.
+    dependencies:
+      blocks: [WF-PHASEPACK-FAILURE-MODE-TAGGING, CC-AGENT-PROMPT-FAILURE-MODE-BLOCK]
+      blocked_by: []
+    acceptance_criteria:
+      - failure-modes.ts exports FAILURE_MODES constant with 10 entries
+      - Each entry has id (1-10), name, shortDescription, primaryPhases, researchAnchors, preventionMechanism
+      - FailureMode interface exported
+    estimated_complexity: small
+    failure_modes_blocked: [all_10_indirectly]
+    pilot_readiness_impact: blocks failure-mode tagging across the platform
+
+  - item_id: WF-PATTERN-CATALOG-PARAMETERIZATION
+    layer: workflow_engine
+    title: "Pattern catalog typed parameterization schema"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "C.2 Pattern catalog (program-specific parameterization)"
+      quoted_requirement: "A typed parameterization schema on LifecyclePatternSeed: each pattern declares per-phase parameters (p1.baselineMetrics, p2.optionsToWeigh, etc.)"
+    current_state: partial
+    code_check:
+      expected_files:
+        - src/lib/intelligence/seed-types.ts
+      grep_patterns:
+        - "LifecyclePatternSeed"
+        - "p1:"
+        - "p2:"
+        - "baselineMetrics"
+      validation_command: "grep -A 3 'LifecyclePatternSeed' src/lib/intelligence/seed-types.ts"
+    gap_description: |
+      LifecyclePatternSeed exists but does not have typed per-phase parameters.
+      Today patterns reference phases informally; design doc requires structured
+      slots so the agent and gate evaluator can both consume them.
+    dependencies:
+      blocks: [WF-PATTERN-PACK-CDP, WF-PATTERN-PACK-AMS, WF-PATTERN-PACK-CCAI, WF-PATTERN-PACK-FORECAST]
+      blocked_by: []
+    acceptance_criteria:
+      - LifecyclePatternSeed extended with typed per-phase parameter slots
+      - p0/p1/p2/p3/p4/p5/p6 fields with structured types per design doc
+      - smesNeeded[] per phase
+      - workshopsRecommended[] per phase
+    estimated_complexity: medium
+    failure_modes_blocked: [2, 3, 4]
+    pilot_readiness_impact: blocks pattern-aware agent guidance
+
+  - item_id: WF-PATTERN-PACK-CDP
+    layer: workflow_engine
+    title: "CDP pattern pack full parameterization"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.0.3, D.1.3, D.2.3, etc. — Parameterized program-specific tables"
+      quoted_requirement: "CDP: Sponsor archetype CDO/CMO; First-cohort examples; Discovery evidence family identity fragmentation baseline"
+    current_state: partial
+    code_check:
+      expected_files:
+        - src/lib/intelligence/seeds/PAT-PRG-CDP-001.ts
+      grep_patterns:
+        - "PAT-PRG-CDP-001"
+        - "baselineMetrics"
+        - "smesNeeded"
+      validation_command: "grep -rn 'PAT-PRG-CDP-001' src/lib/intelligence/"
+    gap_description: |
+      A CDP pattern likely exists but full per-phase parameterization is gap.
+      Specifically: P1 baseline metrics (identity-match rate, fragmentation index,
+      consent posture), P2 options (build/consolidate/activate-via-existing),
+      P3 vendor evaluation criteria, P5 rollout waves (web/email/in-store).
+    dependencies:
+      blocks: [EVAL-NEXUS-CDP-SCENARIOS]
+      blocked_by: [WF-PATTERN-CATALOG-PARAMETERIZATION]
+    acceptance_criteria:
+      - CDP pattern has p0 through p6 fully parameterized
+      - smesNeeded specified per phase (Data Engineer, Privacy Counsel, MarTech, etc.)
+      - Workshops listed per phase (data discovery, consent posture review)
+      - Evidence family per phase (identity baseline, source-system overlap, etc.)
+    estimated_complexity: medium
+    failure_modes_blocked: [2, 3, 4]
+    pilot_readiness_impact: blocks CDP-archetype agent reasoning
+
+  - item_id: WF-PATTERN-PACK-AMS
+    layer: workflow_engine
+    title: "AMS Consolidation pattern pack full parameterization"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.0.3, D.1.3 etc."
+      quoted_requirement: "AMS Consolidation: CIO/Application Services lead; one application portfolio segment; Application inventory + run-rate baseline + integration map"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/intelligence/seeds/PAT-PRG-AMS-CONSOLIDATION-001.ts
+      validation_command: "grep -rn 'PAT-PRG-AMS-CONSOLIDATION-001' src/lib/intelligence/"
+    gap_description: |
+      AMS Consolidation pattern likely exists with basic content; full
+      parameterization for sourcing-heavy P3 is the gap.
+    dependencies:
+      blocks: [EVAL-NEXUS-AMS-SCENARIOS]
+      blocked_by: [WF-PATTERN-CATALOG-PARAMETERIZATION]
+    acceptance_criteria:
+      - AMS pattern has p0-p6 parameterized
+      - P3 vendor evaluation framework specified
+      - Pattern explicitly handles sourcing-module handoff
+    estimated_complexity: medium
+    failure_modes_blocked: [2, 7]
+    pilot_readiness_impact: blocks AMS-archetype agent reasoning
+
+  - item_id: WF-PATTERN-PACK-CCAI
+    layer: workflow_engine
+    title: "Contact Center AI pattern pack full parameterization"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.0.3, D.1.3 etc."
+      quoted_requirement: "Contact Center AI: CX Operations VP; Top 3 call intents; Intent inventory + automation containment baseline + AHT/CSAT"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/intelligence/seeds/PAT-PRG-CC-AI-001.ts
+      validation_command: "grep -rn 'PAT-PRG-CC-AI-001' src/lib/intelligence/"
+    gap_description: |
+      Contact Center AI pattern needs full parameterization, especially intent
+      inventory baseline approach and channel-by-channel rollout wave structure.
+    dependencies:
+      blocks: [EVAL-NEXUS-CCAI-SCENARIOS]
+      blocked_by: [WF-PATTERN-CATALOG-PARAMETERIZATION]
+    acceptance_criteria:
+      - CC AI pattern has p0-p6 parameterized
+      - Intent inventory workshop specified
+      - Channel-by-channel rollout wave structure specified
+    estimated_complexity: medium
+    failure_modes_blocked: [2, 5]
+    pilot_readiness_impact: blocks CC AI-archetype agent reasoning
+
+  - item_id: WF-PATTERN-PACK-FORECAST
+    layer: workflow_engine
+    title: "Demand Forecasting pattern pack full parameterization"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.0.3"
+      quoted_requirement: "Demand Forecasting: COO/Supply Chain VP; Product family or store cluster; Forecast accuracy baseline (MAPE/WAPE) + S&OP cadence"
+    current_state: built_and_verified
+    validation_note: "EXISTS at src/lib/programs/archetype-primers/PAT-PRG-DATA-FAB-001.ts as DEMAND_FORECASTING_PRIMER. Audit validation_command used wrong path (src/lib/intelligence/seeds) and wrong name (PAT-PRG-FORECAST). Actual patternId is PAT-PRG-DATA-FAB-001."
+    code_check:
+      expected_files:
+        - src/lib/intelligence/seeds/PAT-PRG-FORECAST-001.ts
+      validation_command: "find src/lib/intelligence/seeds -name 'PAT-PRG-FORECAST*'"
+    gap_description: |
+      Design doc flags forecast pattern ID as "provisional; verify in seed catalog."
+      Pattern existence and content unknown; needs validation.
+    dependencies:
+      blocks: [EVAL-NEXUS-FORECAST-SCENARIOS]
+      blocked_by: [WF-PATTERN-CATALOG-PARAMETERIZATION]
+    acceptance_criteria:
+      - Forecast pattern exists with confirmed ID
+      - p0-p6 parameterized
+      - Granularity decision (SKU-store-week vs category-region-month) specified
+      - S&OP consumption commitment as kill criterion
+    estimated_complexity: medium
+    failure_modes_blocked: [2, 9]
+    pilot_readiness_impact: blocks forecast-archetype agent reasoning
+
+  - item_id: WF-STATE-MACHINE-PRE-P0
+    layer: workflow_engine
+    title: "Pre-P0 program state machine (draft → submitted → approved → P0_active)"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "B.2 Program state machine"
+      quoted_requirement: "submit_for_approval state, approve/reject by Tenant Admin, then enter_phase_0"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/programs/state-machine.ts
+        - src/app/api/programs/route.ts
+      grep_patterns:
+        - "submitted_for_approval"
+        - "submit_for_approval"
+      validation_command: "grep -rn 'submitted_for_approval' src/"
+    gap_description: |
+      Today commit_program likely creates a P0_active program directly. Design
+      doc requires Tenant Admin approval gate before P0 activation. This blocks
+      use-case sprawl prevention (FM #10).
+    dependencies:
+      blocks: [RM-TENANT-ADMIN-APPROVAL-QUEUE, GE-GATE-0B-APPROVAL]
+      blocked_by: []
+    acceptance_criteria:
+      - State enum extended: draft, submitted_for_approval, approved, P0_active, ..., paused, canceled, pivoted, completed
+      - submit_for_approval transition implemented
+      - Tenant Admin approve/reject workflow
+      - Audit log on each transition
+    estimated_complexity: medium
+    failure_modes_blocked: [1, 10]
+    pilot_readiness_impact: blocks portfolio governance
+
+  - item_id: WF-STATE-MACHINE-PAUSE-CANCEL
+    layer: workflow_engine
+    title: "Pause / cancel / pivot state branches"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "B.2 Program state machine"
+      quoted_requirement: "pause is reversible (resume); cancel is terminal; pivot requires re-approval"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/programs/state-machine.ts
+      grep_patterns:
+        - "pause"
+        - "cancel"
+        - "pivot"
+      validation_command: "grep -rn 'pause\\|cancel\\|pivot' src/lib/programs/"
+    gap_description: |
+      Pause/cancel/pivot transitions not yet implemented. Without them, a
+      stalled program either runs forever or gets force-deleted with no audit.
+    dependencies:
+      blocks: [DM-AUDIT-LOG-COMPLETENESS]
+      blocked_by: []
+    acceptance_criteria:
+      - pause / resume / cancel / pivot transitions implemented
+      - pivot requires re-approval (returns to submitted_for_approval)
+      - All transitions written to audit log with rationale
+    estimated_complexity: small
+    failure_modes_blocked: []
+    pilot_readiness_impact: blocks lifecycle completeness
+
+  - item_id: WF-ANTI-PATTERN-FLAGGING-DIRECTIVE
+    layer: workflow_engine
+    title: "Agent anti-pattern flagging directive in system prompt"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "C.6 Agent training — What v1 of this design adds"
+      quoted_requirement: "Failure-mode-flagging directive — explicit rule: when you detect a failure-mode signal, emit an anti-pattern-flag artifact tagged with the failure-mode number; do not bury it in prose"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/app/api/chat/agent/route.ts
+      grep_patterns:
+        - "anti-pattern-flag"
+        - "antiPatternFlag"
+      validation_command: "grep -rn 'anti.pattern' src/app/api/chat/agent/route.ts"
+    gap_description: |
+      Today agent flags anti-patterns inconsistently in prose. Design requires
+      structured artifact emission with failure-mode tag for telemetry.
+    dependencies:
+      blocks: [CC-TELEMETRY-ANTI-PATTERN-EVENTS]
+      blocked_by: [WF-FAILURE-MODE-CATALOG]
+    acceptance_criteria:
+      - System prompt explicitly directs anti-pattern-flag artifact emission
+      - Artifact channel handles anti-pattern-flag type
+      - Eval harness verifies flagging consistency on 20+ test scenarios
+    estimated_complexity: small
+    failure_modes_blocked: [all_10_indirectly]
+    pilot_readiness_impact: blocks anti-pattern telemetry
+
+# ============================================================================
+# LAYER 2 — DATA MODEL
+# Postgres schemas, TypeScript types, persistence contracts.
+# ============================================================================
+
+data_model:
+
+  - item_id: DM-PROGRAM-TABLE
+    layer: data_model
+    title: "Programs table with tenant_key + RLS"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "A.3 Pilot-readiness baseline"
+      quoted_requirement: "Every Programs-module table has a tenant_key column; Supabase RLS gates reads and writes by tenant"
+    current_state: partial
+    validation_note: "Programs use engagements table (not a separate programs table). engagements does NOT have tenant_key — tenant isolation is via client_id. RLS via client_id present. acceptance_criteria requires tenant_key NOT NULL + RLS by tenant_key which is a gap vs current implementation."
+    code_check:
+      expected_files:
+        - supabase/migrations/*programs*
+      validation_command: "find supabase/migrations -name '*program*' -type f"
+    gap_description: |
+      Programs table likely exists but tenant_key + RLS coverage requires
+      validation. Design doc cites the apex-retail vs apexretail key drift
+      as a documented past issue.
+    dependencies:
+      blocks: [RM-TENANT-ISOLATION-NEGATIVE-TESTS]
+      blocked_by: []
+    acceptance_criteria:
+      - programs table has tenant_key column with NOT NULL constraint
+      - RLS policy enforces tenant_key = auth.user_tenant_key()
+      - Cross-tenant query attempts blocked + logged
+    estimated_complexity: small
+    failure_modes_blocked: []
+    pilot_readiness_impact: foundational tenant isolation
+
+  - item_id: DM-PROGRAM-AUDIT-LOG-TABLE
+    layer: data_model
+    title: "program_audit_log table"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "B.4 Cross-cutting concerns — Audit log"
+      quoted_requirement: "New table program_audit_log (id, tenant_key, program_id, actor_id, role, action, from_state, to_state, rationale, evidence_refs[], created_at). Read-only after write."
+    current_state: built_and_verified
+    built_at: "2026-04-30"
+    validation_note: "Migration 20260430140000_program_audit_log.sql"
+    code_check:
+      expected_files:
+        - supabase/migrations/*audit*
+      validation_command: "find supabase/migrations -name '*audit*'"
+    gap_description: |
+      Design specifies new audit table. Pilot-readiness floor requires every
+      state transition writes here.
+    dependencies:
+      blocks: [WF-STATE-MACHINE-PRE-P0, WF-STATE-MACHINE-PAUSE-CANCEL, GE-GATE-EVALUATION-AUDIT]
+      blocked_by: []
+    acceptance_criteria:
+      - Migration creates program_audit_log table with all spec fields
+      - RLS scopes by tenant_key
+      - Write-only API (no UPDATE or DELETE allowed by app role)
+      - Tests verify audit log writes on every workflow transition
+    estimated_complexity: small
+    failure_modes_blocked: []
+    pilot_readiness_impact: pilot-readiness baseline requirement
+
+  - item_id: DM-PHASE-EVIDENCE-LINKS-TABLE
+    layer: data_model
+    title: "phase_evidence_links join table"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "B.4 Cross-cutting concerns — Evidence registry"
+      quoted_requirement: "New: phase_evidence_links join table tying evidence → phase_pack_evidence_item_id, so the gate evaluator can resolve did we accrue evidence for baseline-captured without scanning text"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - supabase/migrations/*evidence*
+      validation_command: "find supabase/migrations -name '*phase_evidence*'"
+    gap_description: |
+      Without this join table the gate evaluator must scan text or rely on
+      heuristics to determine which DoD items are satisfied. With it, gate
+      evaluation is structured.
+    dependencies:
+      blocks: [GE-EVIDENCE-BASED-GATE-EVAL]
+      blocked_by: [DM-PROGRAM-TABLE]
+    acceptance_criteria:
+      - Migration creates phase_evidence_links (program_id, phase, dod_item_id, evidence_id, linked_at, linked_by)
+      - tenant_key + RLS
+      - API to link evidence to DoD item
+    estimated_complexity: small
+    failure_modes_blocked: [3, 9]
+    pilot_readiness_impact: blocks evidence-based gate evaluation
+
+  - item_id: DM-PROGRAM-NOTIFICATIONS-TABLE
+    layer: data_model
+    title: "program_notifications table"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "B.4 Cross-cutting concerns — Notifications"
+      quoted_requirement: "New table program_notifications (id, tenant_key, program_id, recipient_user_id, kind, body, link, created_at, read_at). Email mirror via Resend or Postmark."
+    current_state: built_and_verified
+    built_at: "2026-04-30"
+    validation_note: "Migration 20260430141000_program_notifications.sql. Email send layer via Resend in OV2-2d-NOTIFY PR#1274."
+    code_check:
+      expected_files:
+        - supabase/migrations/*notification*
+      validation_command: "find supabase/migrations -name '*notification*'"
+    gap_description: |
+      Notifications table required for approval requests, gate decisions,
+      overdue prep alerts.
+    dependencies:
+      blocks: [CC-NOTIFICATION-ROUTING]
+      blocked_by: []
+    acceptance_criteria:
+      - Migration creates program_notifications table
+      - Email mirror integration (Resend or Postmark)
+      - In-app notification rendering
+    estimated_complexity: medium
+    failure_modes_blocked: []
+    pilot_readiness_impact: pilot-readiness baseline
+
+  - item_id: DM-PROGRAM-ATTACHMENTS-TABLE
+    layer: data_model
+    title: "program_attachments table for file uploads"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "B.4 Cross-cutting concerns — File uploads"
+      quoted_requirement: "New Supabase Storage bucket program-attachments per tenant (RLS gated by tenant_key). Each upload writes a row in program_attachments (program_id, phase, step_id, deliverable_id?, original_name, storage_path, uploader_id, mime, size_bytes, sha256, created_at)"
+    current_state: built_and_verified
+    validation_note: "program_attachments table EXISTS in supabase/migrations/20260430120000_program_attachments.sql (OV2-4a). Storage bucket created. Paper-clip upload in chat shipped (OV2-4b). Virus scan acceptance criterion still open."
+    code_check:
+      expected_files:
+        - supabase/migrations/*attachment*
+      validation_command: "find supabase/migrations -name '*attachment*'"
+    gap_description: |
+      File upload pipeline is required for: meeting notes, workshop outputs,
+      baseline data, deliverable artifacts. Without it, complex steps can't
+      complete the post-meeting upload loop.
+    dependencies:
+      blocks: [AS-FILE-UPLOAD-PIPELINE, AS-POST-MEETING-UPLOAD-FLOW]
+      blocked_by: []
+    acceptance_criteria:
+      - Migration creates program_attachments table
+      - Supabase Storage bucket with RLS
+      - Mime allowlist enforcement (PDF, DOCX, XLSX, PPTX, MD, TXT, CSV, PNG/JPG, MP3/MP4 ≤100MB)
+      - Virus scan on upload
+      - Retention policy per tenant
+    estimated_complexity: medium
+    failure_modes_blocked: []
+    pilot_readiness_impact: blocks complex-step workflow
+
+  - item_id: DM-PROGRAM-APPROVALS-TABLE
+    layer: data_model
+    title: "Program approvals table (approval workflow state)"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "B.2 Program state machine — transition rules"
+      quoted_requirement: "approve/reject restricted to Tenant Admin role; requestFounderApproval/decideApproval already exist"
+    current_state: partial
+    code_check:
+      expected_files:
+        - supabase/migrations/*approval*
+      validation_command: "find supabase/migrations -name '*approval*'"
+    gap_description: |
+      Approval plumbing partially exists per design doc reference. Full state
+      machine integration (pre-P0 approval, gate approvals) requires extension.
+    dependencies:
+      blocks: [WF-STATE-MACHINE-PRE-P0, GE-GATE-APPROVAL-FLOW]
+      blocked_by: []
+    acceptance_criteria:
+      - Approvals table tracks: program_id, request_id, requester_id, approver_id, request_kind (program_creation / gate_advance / soft_fail_bypass / pivot), state, rationale, decided_at
+      - Tenant Admin queue API
+      - Audit log integration
+    estimated_complexity: medium
+    failure_modes_blocked: [1, 10]
+    pilot_readiness_impact: blocks portfolio governance
+
+  - item_id: DM-PROGRAM-OUTCOMES-CONTRACT
+    layer: data_model
+    title: "Structured promise contract (outcome tracking schema)"
+    spec_reference:
+      doc: "Outcome tracking discussion (in conversation; design doc not yet drafted)"
+      section: "n/a — proposed in conversation, not yet in design doc"
+      quoted_requirement: "Promise contract has: target metric, baseline, target value, target date, attribution method, kill criterion, decomposition, stakeholders accountable"
+    current_state: not_yet_documented
+    code_check:
+      expected_files: []
+      validation_command: "n/a — design gap"
+    gap_description: |
+      Outcome tracking discussed in conversation as deserving its own design doc
+      (option 2 — OUTCOME_TRACKING_FAILURE_MODE_DRIVEN_DESIGN.md). Without
+      structured promise contract, P2 charter sign-off does not capture the
+      promise in queryable form, and P5/P6 outcome measurement has no anchor.
+    dependencies:
+      blocks: [WF-P2-CHARTER-PROMISE-CAPTURE, WF-P6-OUTCOME-SETTLEMENT]
+      blocked_by: [DESIGN-OUTCOME-TRACKING-DOC]
+    acceptance_criteria:
+      - Schema includes all promise contract fields
+      - P2 charter sign-off creates promise contract record
+      - P3-P5 measurement updates against contract
+      - P6 settlement compares realized vs promised with attribution
+    estimated_complexity: medium
+    failure_modes_blocked: [9]
+    pilot_readiness_impact: blocks "promised value untracked" prevention
+
+  - item_id: DM-DELIVERABLE-SIGNOFF-TABLE
+    layer: data_model
+    title: "Deliverable sign-off and version table"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "C.5 Templates"
+      quoted_requirement: "deliverable-canvas-view.ts, deliverable-export-contract.ts, and the deliverables library scaffolding"
+    current_state: partial
+    code_check:
+      expected_files:
+        - src/lib/programs/deliverables/*
+      validation_command: "ls src/lib/programs/deliverables/"
+    gap_description: |
+      Deliverables library scaffolding exists. Sign-off and version metadata
+      tables need verification for completeness.
+    dependencies:
+      blocks: [AS-DELIVERABLE-SIGNOFF-FLOW]
+      blocked_by: []
+    acceptance_criteria:
+      - Deliverables table has version, signed_off_by, signed_off_at, signoff_provenance
+      - Version history preserved
+      - Cross-references to evidence ledger
+    estimated_complexity: small
+    failure_modes_blocked: []
+    pilot_readiness_impact: deliverable governance
+
+  - item_id: DM-FAILURE-MODE-TELEMETRY-TABLE
+    layer: data_model
+    title: "Telemetry table for failure-mode rollups"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "B.4 Telemetry events"
+      quoted_requirement: "Posthog events: failure_mode.surfaced; plus the cross-program telemetry rollup that's the customer's evidence"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/programs/telemetry.ts
+      validation_command: "grep -rn 'failure_mode' src/lib/"
+    gap_description: |
+      Telemetry events designed to flow through Posthog. The cross-program
+      rollup ("17 sponsor commitment checks — 16 cleared") is the customer's
+      evidence and requires a queryable store, not just Posthog events.
+    dependencies:
+      blocks: [CC-FAILURE-MODE-ROLLUP-DASHBOARD]
+      blocked_by: [WF-FAILURE-MODE-CATALOG]
+    acceptance_criteria:
+      - failure_mode_events table or queryable Posthog mirror
+      - Per-program rollup query (16 cleared / 1 flagged-resolved per FM)
+      - Per-tenant portfolio rollup
+    estimated_complexity: medium
+    failure_modes_blocked: []
+    pilot_readiness_impact: blocks customer-visible value-prop demonstration
+
+  - item_id: DM-CROSS-PROGRAM-SIGNAL-TABLE
+    layer: data_model
+    title: "Cross-program signals storage"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "B.1 Workflow #6 Cross-program signals"
+      quoted_requirement: "Triggered by another program's state, source-event linkage, or shared SME/system. Atlas (portfolio agent) surfaces dependency or contradiction"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - supabase/migrations/*cross_program*
+      validation_command: "find supabase/migrations -name '*cross_program*'"
+    gap_description: |
+      Atlas's signals need persistent storage with disposition workflow (acknowledge,
+      act on, dismiss with rationale).
+    dependencies:
+      blocks: [WF-OVERLAP-DETECTION, ATLAS-SIGNAL-EMISSION]
+      blocked_by: []
+    acceptance_criteria:
+      - cross_program_signals table per Setup design Family 14 schema
+      - Tenant Admin can view, acknowledge, dismiss signals
+      - Audit log on dispositions
+    estimated_complexity: small
+    failure_modes_blocked: [10]
+    pilot_readiness_impact: blocks portfolio reasoning
+
+  - item_id: DM-PHASE-STEP-STATE-TABLE
+    layer: data_model
+    title: "Per-step state tracking within active phase"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "C.4 Agent doctrine — PhaseStep"
+      quoted_requirement: "When the agent recognizes a complex step, it: 1) captures intent 2) captures plan 3) hands over template 4) schedules expected upload 5) validates after upload"
+    current_state: not_yet_documented
+    code_check:
+      expected_files: []
+      validation_command: "n/a — design gap on persistence"
+    gap_description: |
+      The PhaseStep contract specifies behavior but design doc doesn't specify
+      where the *state of each step instance* lives. Is intent captured as evidence?
+      As a separate per-step state table? Without this, the agent can't track
+      what's been captured vs. what's pending.
+    dependencies:
+      blocks: [AS-INTENT-CAPTURE-FLOW, AS-POST-MEETING-UPLOAD-FLOW]
+      blocked_by: [DESIGN-PHASE-STEP-STATE-PERSISTENCE]
+    acceptance_criteria:
+      - Schema decides: separate phase_step_state table OR evidence-ledger-as-state OR program JSONB column
+      - Per-step status: pending, intent_captured, plan_captured, awaiting_upload, validated, complete
+      - Agent reads/writes step state via API
+    estimated_complexity: medium
+    failure_modes_blocked: [4]
+    pilot_readiness_impact: blocks complex-step workflow
+
+# ============================================================================
+# LAYER 3 — ROLE MODEL
+# RBAC, tenant isolation, role enforcement.
+# ============================================================================
+
+role_model:
+
+  - item_id: RM-FIVE-ROLES-DEFINITION
+    layer: role_model
+    title: "Five roles defined: Initiator, Tenant Admin, Sponsor, SME, Viewer"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "B.3 Actor / RBAC model"
+      quoted_requirement: "Five roles with explicit authorities and surfaces"
+    current_state: partial
+    code_check:
+      expected_files:
+        - src/lib/auth/roles.ts
+        - src/lib/programs/rbac.ts
+      grep_patterns:
+        - "ProgramInitiator\\|TenantAdmin\\|Sponsor\\|SME\\|Viewer"
+      validation_command: "grep -rn 'ProgramInitiator\\|TenantAdmin\\|Sponsor' src/lib/"
+    gap_description: |
+      Some roles likely defined but full set with per-surface authority
+      enforcement requires audit. engagement_participants has approval_authority
+      but full role + assigned_by + assigned_at extension is gap per design doc.
+    dependencies:
+      blocks: [RM-API-ROLE-ENFORCEMENT, RM-TENANT-ADMIN-APPROVAL-QUEUE]
+      blocked_by: []
+    acceptance_criteria:
+      - Five-role enum exported
+      - engagement_participants has role, assigned_by, assigned_at fields
+      - Role assignment is auditable
+    estimated_complexity: small
+    failure_modes_blocked: [10]
+    pilot_readiness_impact: foundational RBAC
+
+  - item_id: RM-API-ROLE-ENFORCEMENT
+    layer: role_model
+    title: "Role enforcement at API boundary"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "A.3 Pilot-readiness baseline — RBAC"
+      quoted_requirement: "Five roles. Every API and every UI action checks role × tenant. No action runs solely on chat-side trust."
+    current_state: documented_not_built
+    validation_note: "grep -rn checkRole|requireRole src/app/api/programs/ returns empty. No role enforcement at API boundary confirmed. Acceptance criteria not met."
+    code_check:
+      expected_files:
+        - src/app/api/programs/route.ts
+        - src/app/api/programs/[id]/route.ts
+      grep_patterns:
+        - "checkRole"
+        - "requireRole"
+        - "hasPermission"
+      validation_command: "grep -rn 'checkRole\\|requireRole' src/app/api/programs/"
+    gap_description: |
+      Role checks at API boundary need verification. Specifically: program
+      advance gated by Initiator role, approve gated by Tenant Admin, gate
+      sign-off gated by Sponsor role.
+    dependencies:
+      blocks: []
+      blocked_by: [RM-FIVE-ROLES-DEFINITION]
+    acceptance_criteria:
+      - Every Programs API endpoint has role check
+      - Negative tests verify wrong-role calls return 403
+      - Audit log records role at every action
+    estimated_complexity: medium
+    failure_modes_blocked: []
+    pilot_readiness_impact: pilot-readiness baseline
+
+  - item_id: RM-TENANT-ISOLATION-NEGATIVE-TESTS
+    layer: role_model
+    title: "Tenant isolation negative tests"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "A.3 Pilot-readiness baseline — Multi-tenant isolation"
+      quoted_requirement: "Every Programs-module table has a tenant_key column; Supabase RLS gates reads and writes by tenant. The apex-retail vs apexretail key drift is the canonical caution."
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - tests/programs/tenant-isolation.test.ts
+      validation_command: "find tests -name '*tenant*'"
+    gap_description: |
+      Negative tests required: (a) authenticated user from Tenant A attempts
+      retrieval with Tenant B's key — blocked, (b) direct SQL omitting tenant_key
+      filter caught by RLS, (c) agent retrieval without tenant_key rejected at
+      broker, (d) authentication-boundary canonicalization of tenant_key.
+    dependencies:
+      blocks: []
+      blocked_by: [DM-PROGRAM-TABLE, RM-API-ROLE-ENFORCEMENT]
+    acceptance_criteria:
+      - Test suite covers 4+ negative isolation scenarios
+      - apex-retail vs apexretail key drift specifically tested
+      - Tests run on every PR
+    estimated_complexity: medium
+    failure_modes_blocked: []
+    pilot_readiness_impact: pilot-readiness baseline
+
+  - item_id: RM-TENANT-ADMIN-APPROVAL-QUEUE
+    layer: role_model
+    title: "Tenant Admin approval queue surface"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "B.3 Actor / RBAC model"
+      quoted_requirement: "Tenant Admin: Approve/reject program creation, audit any program in tenant, force pause/cancel, override gate decisions with rationale. Surface: /admin/approvals"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/app/admin/approvals/page.tsx
+      validation_command: "find src/app -path '*admin*approval*'"
+    gap_description: |
+      /admin/approvals surface specified in design doc; not yet built.
+      Tenant Admin needs queue for pre-P0 program approvals plus gate
+      escalations.
+    dependencies:
+      blocks: []
+      blocked_by: [WF-STATE-MACHINE-PRE-P0, DM-PROGRAM-APPROVALS-TABLE]
+    acceptance_criteria:
+      - /admin/approvals route renders queue
+      - Approve/reject actions with rationale required
+      - Overlap detection surfaced (existing programs with similar archetype/sponsor/system)
+      - Audit log on every decision
+    estimated_complexity: medium
+    failure_modes_blocked: [1, 10]
+    pilot_readiness_impact: blocks portfolio governance
+
+  - item_id: RM-SPONSOR-GATE-APPROVAL-FLOW
+    layer: role_model
+    title: "Sponsor gate approval flow"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "B.3 Actor / RBAC model"
+      quoted_requirement: "Sponsor: Gate-review approval at each phase advance; receive notifications on flagged anti-patterns, blocked gates, outcome settlement"
+    current_state: partial
+    code_check:
+      expected_files:
+        - src/components/programs/gate-approval-drawer-view.tsx
+      validation_command: "find src/components -name '*gate*'"
+    gap_description: |
+      gate-approval-drawer-view exists per design doc. Need to verify it
+      actually gates: approver sees criteria met/not met, evidence linked,
+      anti-patterns flagged or cleared.
+    dependencies:
+      blocks: []
+      blocked_by: [GE-EVIDENCE-BASED-GATE-EVAL]
+    acceptance_criteria:
+      - Sponsor approval drawer shows DoD status, evidence links, anti-pattern flags
+      - Approve/reject with rationale captured
+      - Email + in-app notification to Sponsor
+    estimated_complexity: small
+    failure_modes_blocked: [1]
+    pilot_readiness_impact: blocks gate discipline
+
+# ============================================================================
+# LAYER 4 — ARTIFACT SYSTEM
+# Templates, deliverables, file uploads, sign-off, export.
+# ============================================================================
+
+artifact_system:
+
+  - item_id: AS-TEMPLATE-REGISTRY
+    layer: artifact_system
+    title: "Typed Template registry with archetype × phase × step scoping"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "C.5 Templates"
+      quoted_requirement: "A new typed Template registry, scoped per archetype × phase × step"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/programs/templates/registry.ts
+      grep_patterns:
+        - "interface Template"
+        - "TemplateRegistry"
+      validation_command: "grep -rn 'interface Template' src/lib/programs/"
+    gap_description: |
+      Templates exist in deliverables-library but not as a typed registry
+      bound to archetype × phase × step. Without it, the agent can't surface
+      "for this step, use this template."
+    dependencies:
+      blocks: [AS-P0-TEMPLATES, AS-P1-TEMPLATES, AS-P2-TEMPLATES, AS-P3-TEMPLATES, AS-P4-TEMPLATES, AS-P5-TEMPLATES, AS-P6-TEMPLATES]
+      blocked_by: [WF-PHASESTEP-CONTRACT]
+    acceptance_criteria:
+      - Template interface defined per design doc C.5
+      - Registry lookup API: getTemplate(archetype, phase, stepId, kind)
+      - Templates stored with storage_path + exportable_html flag
+    estimated_complexity: small
+    failure_modes_blocked: [4]
+    pilot_readiness_impact: blocks template-aware agent
+
+  - item_id: AS-P0-TEMPLATES
+    layer: artifact_system
+    title: "P0 templates per archetype"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.0.6 Next-phase primer"
+      quoted_requirement: "Sponsor 1:1 facilitator guide, value hypothesis seed template, classification template"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/programs/templates/p0/*
+      validation_command: "find src/lib/programs/templates -name 'p0*' -type d"
+    gap_description: |
+      P0 templates needed: sponsor 1:1 facilitator guide (universal),
+      value hypothesis seed template, plus archetype-specific (CDP first
+      cohort definition, AMS portfolio segment definition, etc.).
+    dependencies:
+      blocks: [WF-P0-STEP-DECOMP-COMPLETION]
+      blocked_by: [AS-TEMPLATE-REGISTRY]
+    acceptance_criteria:
+      - Universal P0 templates authored: sponsor 1:1 guide, value hypothesis seed, brief floor checklist
+      - Archetype-specific P0 templates per CDP, AMS, CC AI, Forecast
+      - Senior practitioner sign-off
+    estimated_complexity: medium
+    failure_modes_blocked: [1, 2, 4]
+    pilot_readiness_impact: blocks P0 complex-step workflow
+
+  - item_id: AS-P1-TEMPLATES
+    layer: artifact_system
+    title: "P1 templates per archetype"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.1.3 Parameterized program-specific"
+      quoted_requirement: "Per archetype: workshops recommended (data discovery, baseline capture, etc.) with template references"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/programs/templates/p1/*
+      validation_command: "find src/lib/programs/templates -name 'p1*'"
+    gap_description: |
+      P1 has the most workshop coaching. Templates per archetype:
+      data discovery facilitator guide, consent posture review (CDP),
+      intent inventory workshop (CC AI), portfolio rationalization (AMS),
+      forecast accuracy workshop (Forecast).
+    dependencies:
+      blocks: [WF-P1-STEP-DECOMP-COMPLETION]
+      blocked_by: [AS-TEMPLATE-REGISTRY]
+    acceptance_criteria:
+      - Per-archetype P1 templates authored
+      - Each template has facilitator guide + capture template
+      - Senior practitioner sign-off
+    estimated_complexity: medium
+    failure_modes_blocked: [3, 4, 9]
+    pilot_readiness_impact: blocks P1 workshop coaching
+
+  - item_id: AS-P2-TEMPLATES
+    layer: artifact_system
+    title: "P2 templates per archetype"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.2.3, D.2.4"
+      quoted_requirement: "Synthesis recommendation template, options-comparison framework, architecture-review checklist"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/programs/templates/p2/*
+      validation_command: "find src/lib/programs/templates -name 'p2*'"
+    gap_description: |
+      P2 needs: charter template (universal), options comparison framework
+      (universal), architecture review checklist (universal + archetype-specific
+      considerations), kill criterion authoring template.
+    dependencies:
+      blocks: []
+      blocked_by: [AS-TEMPLATE-REGISTRY]
+    acceptance_criteria:
+      - Charter template per design doc
+      - Architecture review checklist with security/data/privacy/operating-model lanes
+      - Kill criterion authoring template with "specific and observable" coaching
+    estimated_complexity: medium
+    failure_modes_blocked: [2, 6, 10]
+    pilot_readiness_impact: blocks P2 charter-grade output
+
+  - item_id: AS-P3-TEMPLATES
+    layer: artifact_system
+    title: "P3 templates per archetype"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.3.4"
+      quoted_requirement: "Design specification, pilot stop-rule"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/programs/templates/p3/*
+      validation_command: "find src/lib/programs/templates -name 'p3*'"
+    gap_description: |
+      P3 needs: design specification template, pilot cohort definition,
+      success criteria locking template, CXO interview script.
+    dependencies:
+      blocks: []
+      blocked_by: [AS-TEMPLATE-REGISTRY, WF-P3-FULL-STEP-LIST-DESIGN]
+    acceptance_criteria:
+      - Design spec template per archetype
+      - Pilot stop-rule authoring template
+      - CXO interview facilitator guide
+    estimated_complexity: medium
+    failure_modes_blocked: [5, 6, 8]
+    pilot_readiness_impact: blocks P3 design-grade output
+
+  - item_id: AS-P4-TEMPLATES
+    layer: artifact_system
+    title: "P4 templates per archetype"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.4.4"
+      quoted_requirement: "Execution plan, change-management plan"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/programs/templates/p4/*
+      validation_command: "find src/lib/programs/templates -name 'p4*'"
+    gap_description: |
+      P4 needs: execution plan, change-readiness assessment,
+      pilot-result-interpretation framework, scale-validation checklist.
+    dependencies:
+      blocks: []
+      blocked_by: [AS-TEMPLATE-REGISTRY]
+    acceptance_criteria:
+      - Execution plan template
+      - Change-readiness assessment template
+      - Pilot result interpretation framework with PAT-AI-008 awareness
+    estimated_complexity: medium
+    failure_modes_blocked: [5, 8]
+    pilot_readiness_impact: blocks P4 build-grade output
+
+  - item_id: AS-P5-TEMPLATES
+    layer: artifact_system
+    title: "P5 templates per archetype"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.5.4, D.5.6"
+      quoted_requirement: "Rollout-wave plan, support-readiness checklist, adoption-telemetry spec"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/programs/templates/p5/*
+      validation_command: "find src/lib/programs/templates -name 'p5*'"
+    gap_description: |
+      P5 needs: rollout wave plan template, CXO evidence packet template,
+      benefits attestation template, outcome report template.
+    dependencies:
+      blocks: []
+      blocked_by: [AS-TEMPLATE-REGISTRY, WF-WAVE-LOOP-DESIGN]
+    acceptance_criteria:
+      - Wave-by-wave plan template
+      - Outcome report template per design D.5.4
+    estimated_complexity: medium
+    failure_modes_blocked: [5, 8, 9]
+    pilot_readiness_impact: blocks P5 rollout output
+
+  - item_id: AS-P6-TEMPLATES
+    layer: artifact_system
+    title: "P6 templates"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.6.4"
+      quoted_requirement: "Quarterly review template, drift dashboard, pattern catalog harvest template"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/programs/templates/p6/*
+      validation_command: "find src/lib/programs/templates -name 'p6*'"
+    gap_description: |
+      P6 needs: standing operator handoff template, quarterly operating
+      review template, vendor renewal preparation, kill-or-expand decision
+      template, pattern catalog harvest format.
+    dependencies:
+      blocks: [TC-PATTERN-WRITEBACK]
+      blocked_by: [AS-TEMPLATE-REGISTRY]
+    acceptance_criteria:
+      - Quarterly operating review template
+      - Pattern catalog harvest template (structured for write-back)
+      - Standing operator handoff template
+    estimated_complexity: medium
+    failure_modes_blocked: [9, 10]
+    pilot_readiness_impact: blocks learning loop
+
+  - item_id: AS-FILE-UPLOAD-PIPELINE
+    layer: artifact_system
+    title: "File upload pipeline (Supabase Storage + virus scan + audit)"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "B.4 Cross-cutting concerns — File uploads"
+      quoted_requirement: "Supabase Storage, RLS-scoped buckets per tenant, mime-type allowlist, virus-scan on upload, retention policy per tenant"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/programs/uploads.ts
+      validation_command: "grep -rn 'program-attachments' src/lib/"
+    gap_description: |
+      Upload pipeline is required for: meeting notes, workshop outputs,
+      baseline data, deliverable artifacts. Storage bucket + virus scan +
+      mime allowlist not yet built.
+    dependencies:
+      blocks: [AS-POST-MEETING-UPLOAD-FLOW]
+      blocked_by: [DM-PROGRAM-ATTACHMENTS-TABLE]
+    acceptance_criteria:
+      - program-attachments storage bucket created with RLS
+      - Mime allowlist enforced server-side
+      - Virus scan integration (e.g., ClamAV or third-party)
+      - Upload writes program_attachments row + audit log
+    estimated_complexity: medium
+    failure_modes_blocked: []
+    pilot_readiness_impact: blocks complex-step workflow
+
+  - item_id: AS-INTENT-CAPTURE-FLOW
+    layer: artifact_system
+    title: "Intent capture flow for complex steps"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "C.4 Agent doctrine — Intent capture for complex steps"
+      quoted_requirement: "Captures intent. Captures plan. Hands over template. Schedules expected upload. Validates after upload."
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/programs/agent-flows/intent-capture.ts
+      validation_command: "find src/lib/programs -name '*intent*'"
+    gap_description: |
+      The intent capture loop is the platform's defining behavior for complex
+      steps. Without it, complex steps degenerate into chat conversations.
+      Today this loop is not implemented.
+    dependencies:
+      blocks: [EVAL-NEXUS-COMPLEX-STEP-BEHAVIOR]
+      blocked_by:
+        - WF-PHASESTEP-CONTRACT
+        - DM-PHASE-STEP-STATE-TABLE
+        - AS-TEMPLATE-REGISTRY
+        - AS-FILE-UPLOAD-PIPELINE
+    acceptance_criteria:
+      - Agent flow: detect complex step → ask intent → confirm plan → surface template → schedule upload → validate
+      - Per-step state transitions through pending → intent_captured → plan_captured → awaiting_upload → validated
+      - Eval harness verifies on 10+ complex-step scenarios per phase
+    estimated_complexity: large
+    failure_modes_blocked: [4]
+    pilot_readiness_impact: defining platform behavior
+
+  - item_id: AS-POST-MEETING-UPLOAD-FLOW
+    layer: artifact_system
+    title: "Post-meeting upload validation flow"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "C.4 Intent capture for complex steps — step 5"
+      quoted_requirement: "When the upload arrives, the agent reads (or asks the user to summarize) the output, evaluates against expected shape, marks the DoD item met / unmet / partial"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/programs/agent-flows/upload-validation.ts
+      validation_command: "find src/lib/programs -name '*upload-valid*'"
+    gap_description: |
+      After file upload, agent must evaluate against expected outputs.
+      For pilot: store + reference + ask user to summarize. v2: parse PDFs/DOCX
+      into structured evidence.
+    dependencies:
+      blocks: []
+      blocked_by:
+        - AS-INTENT-CAPTURE-FLOW
+        - AS-FILE-UPLOAD-PIPELINE
+        - DM-PHASE-EVIDENCE-LINKS-TABLE
+    acceptance_criteria:
+      - On upload, agent prompts for summary or extracts text where possible
+      - Evaluates against step's expected outputs[]
+      - Marks DoD item met / unmet / partial with rationale
+      - Writes phase_evidence_links row
+    estimated_complexity: medium
+    failure_modes_blocked: [4, 9]
+    pilot_readiness_impact: blocks evidence-grade complex-step closure
+
+  - item_id: AS-DELIVERABLE-EXPORT-CONTRACT
+    layer: artifact_system
+    title: "Deliverable export contract (HTML download)"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.0.6 Next-phase primer"
+      quoted_requirement: "Renders as a self-contained HTML brief the user downloads (reuses the deliverable-export pattern in deliverable-export-contract.ts)"
+    current_state: built_and_verified
+    code_check:
+      expected_files:
+        - src/lib/programs/deliverables/deliverable-export-contract.ts
+      validation_command: "test -f src/lib/programs/deliverables/deliverable-export-contract.ts"
+    gap_description: |
+      Per design doc, deliverable-export-contract.ts exists. Validate it
+      handles all phase deliverables and Phase 0 primer.
+    dependencies:
+      blocks: []
+      blocked_by: []
+    acceptance_criteria:
+      - Export contract verified to handle: charters, design specs, outcome reports, primers
+      - HTML output is self-contained (inline CSS, no external dependencies)
+      - Provenance footer with sign-off block
+    estimated_complexity: built
+    failure_modes_blocked: []
+    pilot_readiness_impact: built
+
+  - item_id: AS-PHASE-PRIMER-RENDERING
+    layer: artifact_system
+    title: "Phase primer rendering on phase-advance"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.0.6 Next-phase primer"
+      quoted_requirement: "When status flips to approved, Nexus opens on /programs/<id> with the Phase 0 primer (in-app reactive panel + downloadable HTML brief)"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/components/programs/phase-primer.tsx
+      validation_command: "find src/components -name '*primer*'"
+    gap_description: |
+      Phase primer is the in-app reactive card + downloadable HTML rendering
+      of producesForNext content from phase pack. Today the data exists; the
+      UX moment isn't surfaced.
+    dependencies:
+      blocks: []
+      blocked_by:
+        - AS-DELIVERABLE-EXPORT-CONTRACT
+        - WF-PATTERN-CATALOG-PARAMETERIZATION
+    acceptance_criteria:
+      - Primer renders 7 sections per design D.0.6 (what good looks like / steps / SMEs / templates / workshops / data / upload affordance)
+      - Per-archetype content composed from pattern catalog
+      - Downloadable HTML version matches in-app version
+    estimated_complexity: medium
+    failure_modes_blocked: [4]
+    pilot_readiness_impact: blocks phase-handoff UX moment
+
+# ============================================================================
+# LAYER 5 — GATE ENGINE
+# DoD evaluation, evidence binding, governance approvals.
+# ============================================================================
+
+gate_engine:
+
+  - item_id: GE-EVALUATE-GATE-CORE
+    layer: gate_engine
+    title: "governance.evaluateGate core implementation"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "C.1 What's already in code"
+      quoted_requirement: "governance.evaluateGate (server-side per-check evaluation) already exists"
+    current_state: built_and_verified
+    code_check:
+      expected_files:
+        - src/lib/programs/governance.ts
+      grep_patterns:
+        - "evaluateGate"
+      validation_command: "grep -n 'evaluateGate' src/lib/programs/governance.ts"
+    gap_description: |
+      Per design doc, evaluateGate exists. Should validate that all P1-P6
+      transitions have evaluateGate logic.
+    dependencies:
+      blocks: []
+      blocked_by: []
+    acceptance_criteria:
+      - evaluateGate(fromPhase, toPhase) returns { pass, requiresApproval, blockers, softFails }
+      - Existing checks: charter_signed_off, sponsor_assigned, etc. confirmed working
+    estimated_complexity: built
+    failure_modes_blocked: []
+    pilot_readiness_impact: foundational
+
+  - item_id: GE-EVIDENCE-BASED-GATE-EVAL
+    layer: gate_engine
+    title: "Evidence-based gate evaluation (resolve DoD via phase_evidence_links)"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "B.4 Evidence registry"
+      quoted_requirement: "phase_evidence_links join table tying evidence → phase_pack_evidence_item_id, so the gate evaluator can resolve did we accrue evidence for baseline-captured without scanning text"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/programs/governance.ts
+      grep_patterns:
+        - "phase_evidence_links"
+      validation_command: "grep -n 'phase_evidence_links' src/lib/programs/"
+    gap_description: |
+      evaluateGate today likely uses heuristics or text-scan. Should resolve
+      DoD items via structured evidence links.
+    dependencies:
+      blocks: [GE-GATE-EVALUATION-AUDIT]
+      blocked_by: [DM-PHASE-EVIDENCE-LINKS-TABLE]
+    acceptance_criteria:
+      - evaluateGate queries phase_evidence_links to determine DoD satisfaction
+      - Returns evidence_id list per DoD item for traceability
+      - No text-scan fallback in production path
+    estimated_complexity: medium
+    failure_modes_blocked: [3, 9]
+    pilot_readiness_impact: blocks evidence-traceable gate decisions
+
+  - item_id: GE-GATE-0B-APPROVAL
+    layer: gate_engine
+    title: "Gate 0b: Tenant Admin approval before P0 activation"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.0.5 Stage gate (P0 → submitted_for_approval / approved)"
+      quoted_requirement: "Gate 0b — Tenant Admin approval (new, this design): when the brief floor is met, the user clicks Submit for approval. The Tenant Admin sees the brief, the overlap detection, the anti-pattern flags, and approves or rejects."
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/programs/governance.ts
+      grep_patterns:
+        - "gate0b"
+        - "tenantAdminApproval"
+      validation_command: "grep -rn 'tenantAdminApproval\\|gate0b' src/lib/programs/"
+    gap_description: |
+      New gate inserted before P0 activation. Today commit_program likely
+      creates P0_active directly. Gate 0b is critical for failure mode #10
+      (use-case sprawl) prevention.
+    dependencies:
+      blocks: []
+      blocked_by:
+        - WF-STATE-MACHINE-PRE-P0
+        - DM-PROGRAM-APPROVALS-TABLE
+        - RM-TENANT-ADMIN-APPROVAL-QUEUE
+        - WF-OVERLAP-DETECTION
+    acceptance_criteria:
+      - submit_for_approval transition triggers Gate 0b
+      - Tenant Admin queue surfaces brief with overlap/anti-pattern context
+      - Approve transition: submitted_for_approval → approved → P0_active
+      - Reject transition: submitted_for_approval → draft with rationale
+      - All decisions audited
+    estimated_complexity: medium
+    failure_modes_blocked: [1, 10]
+    pilot_readiness_impact: blocks portfolio governance
+
+  - item_id: GE-SPONSOR-COAPPROVAL-GATE-1
+    layer: gate_engine
+    title: "Sponsor co-approval at Gate 1 (P0 → P1)"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.0.7 Brainstorm — Alternative 3 resolution"
+      quoted_requirement: "Sponsor co-approval moves to Gate 1 (P0 → P1), not Gate 0b. Sponsor signs off on accepting the role at the close of P0, having had the 1:1 during P0."
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/programs/governance.ts
+      validation_command: "grep -rn 'sponsor.*approval\\|sponsorCoApproval' src/lib/programs/"
+    gap_description: |
+      Gate 1 (P0 → P1) requires Sponsor co-approval per design doc resolution.
+      sponsor_assigned check exists; explicit sponsor sign-off transition
+      probably not yet wired.
+    dependencies:
+      blocks: []
+      blocked_by: [GE-EVALUATE-GATE-CORE, RM-SPONSOR-GATE-APPROVAL-FLOW]
+    acceptance_criteria:
+      - Gate 1 evaluation includes sponsor_signoff check
+      - Sponsor sign-off transition with notes captured
+      - Gate cannot pass without sponsor sign-off
+    estimated_complexity: small
+    failure_modes_blocked: [1]
+    pilot_readiness_impact: blocks sponsor accountability
+
+  - item_id: GE-ARCHITECTURE-REVIEW-ATTESTED-GATE
+    layer: gate_engine
+    title: "Architecture-review-attested check at Gate 2 (P2 → P3)"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.2.5 Stage gate"
+      quoted_requirement: "Already coded: evaluateGate(2, 3) checks charter_signed_off, sponsor_assigned. Design extends with architecture_review_attested (new explicit check)"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/programs/governance.ts
+      grep_patterns:
+        - "architecture_review_attested"
+      validation_command: "grep -rn 'architecture_review' src/lib/programs/"
+    gap_description: |
+      Failure mode #6 (Late attention to compliance/privacy/risk) is
+      prevented at P2 by requiring architecture review attestation at gate.
+    dependencies:
+      blocks: []
+      blocked_by: [GE-EVALUATE-GATE-CORE]
+    acceptance_criteria:
+      - architecture_review_attested explicit check in evaluateGate(2, 3)
+      - DoD item with evidence link
+      - Cannot bypass without Tenant Admin override + rationale
+    estimated_complexity: small
+    failure_modes_blocked: [6]
+    pilot_readiness_impact: blocks compliance attention timing
+
+  - item_id: GE-PILOT-PASSED-CRITERIA-GATE
+    layer: gate_engine
+    title: "Pilot-passed-success-criteria check at Gate 4 (P4 → P5)"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.4.5 Stage gate"
+      quoted_requirement: "Existing checks: execution_plan_drafted. Design adds explicit pilot_passed_success_criteria (server-side check against P3 criteria)"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/programs/governance.ts
+      grep_patterns:
+        - "pilot_passed"
+      validation_command: "grep -rn 'pilot_passed' src/lib/programs/"
+    gap_description: |
+      Pilot-to-production gap (failure mode #8) prevented at P4 by structured
+      evaluation against P3 success criteria. Server-side check, not subjective.
+    dependencies:
+      blocks: []
+      blocked_by: [GE-EVALUATE-GATE-CORE, DM-PROGRAM-OUTCOMES-CONTRACT]
+    acceptance_criteria:
+      - Server-side comparison of pilot results vs P3 success_criteria
+      - Pass/fail/partial determination
+      - Cannot advance with subjective claim of success
+    estimated_complexity: medium
+    failure_modes_blocked: [8]
+    pilot_readiness_impact: blocks pilot-to-production discipline
+
+  - item_id: GE-SOFT-FAIL-BYPASS-AUDIT
+    layer: gate_engine
+    title: "Soft-fail bypass audit trail"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "B.2 Transition rules"
+      quoted_requirement: "enter_phase_N+1 requires evaluateGate to return pass:true OR requiresApproval:true with successful Sponsor approval for soft-fail bypass with rationale"
+    current_state: partial
+    code_check:
+      expected_files:
+        - src/lib/programs/governance.ts
+      grep_patterns:
+        - "softFail"
+        - "bypass"
+      validation_command: "grep -rn 'soft.*fail\\|bypass' src/lib/programs/"
+    gap_description: |
+      Soft-fail bypass exists; audit completeness needs verification.
+      Each bypass must capture: which check soft-failed, rationale, who
+      approved the bypass.
+    dependencies:
+      blocks: []
+      blocked_by: [DM-PROGRAM-AUDIT-LOG-TABLE]
+    acceptance_criteria:
+      - Soft-fail bypasses fully audited with structured fields
+      - Tenant Admin can review bypass history per program
+      - Multiple soft-fails on a single program flagged as anti-pattern
+    estimated_complexity: small
+    failure_modes_blocked: [10]
+    pilot_readiness_impact: governance integrity
+
+  - item_id: GE-GATE-EVALUATION-AUDIT
+    layer: gate_engine
+    title: "Gate evaluation audit log integration"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "B.4 Telemetry events"
+      quoted_requirement: "phase.gate_evaluated, phase.advanced, phase.advance_blocked"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/programs/governance.ts
+      validation_command: "grep -n 'gate_evaluated' src/lib/programs/"
+    gap_description: |
+      Every gate evaluation should write to audit log + emit telemetry event.
+      Today gate evaluations may not be fully logged.
+    dependencies:
+      blocks: []
+      blocked_by: [DM-PROGRAM-AUDIT-LOG-TABLE, GE-EVIDENCE-BASED-GATE-EVAL]
+    acceptance_criteria:
+      - Every evaluateGate call writes audit log row
+      - Every gate decision emits Posthog event with failure-mode tags
+      - Telemetry rollup queryable per tenant
+    estimated_complexity: small
+    failure_modes_blocked: []
+    pilot_readiness_impact: pilot-readiness baseline
+
+  - item_id: GE-OVERLAP-DETECTION
+    layer: gate_engine
+    title: "Overlap detection signal at Gate 0b"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.0.9 Open questions for P0"
+      quoted_requirement: "Same archetype + same sponsor → strong overlap. Same archetype, different sponsor → portfolio question. Same sponsor, different archetype → SME-load question. Need explicit rules."
+    current_state: not_yet_documented
+    code_check:
+      expected_files: []
+      validation_command: "n/a — design gap"
+    gap_description: |
+      Overlap detection algorithm explicitly flagged as open question in design
+      doc. Without it, Tenant Admin approval queue lacks the overlap signal
+      that makes Gate 0b useful.
+    dependencies:
+      blocks: [GE-GATE-0B-APPROVAL, RM-TENANT-ADMIN-APPROVAL-QUEUE]
+      blocked_by: [DESIGN-OVERLAP-DETECTION-RULES]
+    acceptance_criteria:
+      - Algorithm specified: archetype + sponsor + system overlap thresholds
+      - Strong overlap surfaced as artifact in approval queue
+      - Tenant Admin sees specific overlapping programs by ID
+    estimated_complexity: medium
+    failure_modes_blocked: [10]
+    pilot_readiness_impact: blocks Gate 0b usefulness
+
+# ============================================================================
+# LAYER 6 — TENANT CONTEXT
+# Graph binding, retrieval, provenance, persistence integration.
+# ============================================================================
+
+tenant_context:
+
+  - item_id: TC-TENANT-CONTEXT-COMPOSITION
+    layer: tenant_context
+    title: "Tenant context composition into agent system prompt"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "C.6 Agent training (system-prompt composition)"
+      quoted_requirement: "Tenant context (PR-R — executive bench + program inventory; on /programs surfaces only)"
+    current_state: built_and_verified
+    code_check:
+      expected_files:
+        - src/app/api/chat/agent/route.ts
+      grep_patterns:
+        - "tenantContext"
+        - "executiveBench"
+      validation_command: "grep -n 'tenantContext\\|executive' src/app/api/chat/agent/route.ts"
+    gap_description: |
+      PR-R reference in design doc indicates tenant context composition exists.
+      Validate executive bench + program inventory are present in prompt.
+    dependencies:
+      blocks: []
+      blocked_by: []
+    acceptance_criteria:
+      - Tenant context block composed into system prompt on /programs surface
+      - Includes executive bench (named individuals with roles)
+      - Includes active program inventory
+      - Tenant-isolated retrieval
+    estimated_complexity: built
+    failure_modes_blocked: []
+    pilot_readiness_impact: built
+
+  - item_id: TC-TENANT-DATA-FRESHNESS
+    layer: tenant_context
+    title: "Tenant data freshness / staleness tracking"
+    spec_reference:
+      doc: SETUP_ADMIN_DATA_VIEW_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "E.5 Stale data detection"
+      quoted_requirement: "Per data type, freshness thresholds. When records cross thresholds, the segment health flag updates"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/programs/tenant-context-freshness.ts
+      validation_command: "find src/lib -name '*freshness*'"
+    gap_description: |
+      Setup/Admin design specifies freshness tracking. Programs surface needs
+      to use this — when tenant context is stale (e.g., political map > 60d
+      old), Nexus should surface this rather than treat it as fact.
+    dependencies:
+      blocks: []
+      blocked_by: []
+    acceptance_criteria:
+      - Tenant context retrieval annotates records with freshness status
+      - Agent system prompt includes freshness flags
+      - Agent doctrine: surface stale data caveats rather than asserting facts
+    estimated_complexity: small
+    failure_modes_blocked: []
+    pilot_readiness_impact: tenant-grounded answer quality
+
+  - item_id: TC-AGENT-RETRIEVAL-PATH
+    layer: tenant_context
+    title: "Agent retrieval path (TypeScript fixture-backed)"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "C.6 Agent training"
+      quoted_requirement: "agent retrieval wired via /home/claude/review/.../agent-retrieval.ts (PR #1084 merged)"
+    current_state: built_and_verified
+    code_check:
+      expected_files:
+        - src/lib/intelligence/agent-retrieval.ts
+      grep_patterns:
+        - "agentRetrieval"
+      validation_command: "test -f src/lib/intelligence/agent-retrieval.ts"
+    gap_description: |
+      Agent retrieval wired via PR #1084. Today runs on TypeScript fixtures
+      (152 patterns in seed files); not yet hitting Postgres or Pinecone.
+    dependencies:
+      blocks: [TC-PERSISTENCE-INTEGRATION]
+      blocked_by: []
+    acceptance_criteria:
+      - agent-retrieval.ts exists and is wired
+      - Returns patterns + evidence + contradictions for agent grounding
+      - Currently fixture-backed; transition to persistence is separate item
+    estimated_complexity: built
+    failure_modes_blocked: []
+    pilot_readiness_impact: built
+
+  - item_id: TC-PERSISTENCE-INTEGRATION
+    layer: tenant_context
+    title: "Agent retrieval against persisted graph + vector"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "Various — explicit gap flagged in conversation"
+      quoted_requirement: "we haven't even loaded graph edges in postgres, don't have vector embeddings"
+    current_state: partial
+    built_at: "2026-04-30"
+    validation_note: |
+      Phase 1 partial: src/lib/intelligence/persistence.ts created (expected_files satisfied).
+      queryEnterpriseContextChunks() + buildTenantContextBlock() query enterprise_context_chunks
+      for segments 01_enterprise_profile, 02_org_structure, 06_program_inventory, 03_it_landscape,
+      14_cross_program_signals. Agent route (api/chat/agent/route.ts) wired: persistence-first with
+      fallback to demo-context.ts fixture. Apex Retail has 415 chunks loaded (embedding_status=pending).
+      Remaining: embeddings generation (DM-VECTOR-EMBEDDING-PIPELINE), stage/category corpus patterns
+      (agent-retrieval.ts — blocked on Pinecone vector retrieval), parity tests.
+    code_check:
+      expected_files:
+        - src/lib/intelligence/persistence.ts
+      validation_command: "grep -rn 'enterprise_graph_nodes\\|enterprise_context_chunks' src/"
+    gap_description: |
+      The substrate gap. Source code seeds count 208 nodes, 132 edges across
+      three tenants. Zero rows in Postgres. Zero embeddings generated. The
+      agent works because TypeScript fixtures are fast and the corpus is small.
+      Will not work at scale or with real client data.
+    dependencies:
+      blocks: [INTELLIGENCE-J4-TENANT-GROUNDED-MODE]
+      blocked_by:
+        - DM-GRAPH-NODES-EDGES-MIGRATION
+        - DM-VECTOR-EMBEDDING-PIPELINE
+        - DM-EVIDENCE-LEDGER-MIGRATION
+    acceptance_criteria:
+      - Postgres schema migrated for enterprise_graph_nodes, edges, evidence
+      - pgvector extension enabled; enterprise_context_chunks table created
+      - Embeddings generated for 152 corpus patterns
+      - Tenant data ingestion pipeline produces graph + embeddings on upload
+      - agent-retrieval queries persistence, not fixtures
+      - Parity tests confirm fixture vs persistence retrieval consistency
+    estimated_complexity: large
+    failure_modes_blocked: []
+    pilot_readiness_impact: foundational substrate gap
+
+  - item_id: TC-EMBEDDING-DIMENSION-RECONCILIATION
+    layer: tenant_context
+    title: "Embedding dimension decision (1536 vs 3072)"
+    spec_reference:
+      doc: SETUP_ADMIN_DATA_VIEW_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "Part H, item 1"
+      quoted_requirement: "Vision doc says 3072 (text-embedding-3-large); readiness doc says 1536 (text-embedding-3-small). This must be resolved before SET-4 ships."
+    current_state: built_and_verified
+    built_at: "2026-04-30"
+    validation_note: "Decision documented in docs/build/EMBEDDING_DIMENSION_DECISION.md. 1536 for tenant (CB-2/PR#1260), 3072 for worldview (INT-WV-2/PR#1287). pgvector not required; JSONB+Pinecone is canonical."
+    code_check:
+      expected_files: []
+      validation_command: "n/a — decision required"
+    gap_description: |
+      Documented inconsistency between vision doc (3072) and readiness doc
+      (1536). Worldview prompt set locked at 3072 for that content;
+      tenant data may use different. Decision needed.
+    dependencies:
+      blocks: [TC-PERSISTENCE-INTEGRATION, DM-VECTOR-EMBEDDING-PIPELINE]
+      blocked_by: []
+    acceptance_criteria:
+      - Decision documented
+      - Schema and pipeline match decision
+      - Re-embedding plan if changing later
+    estimated_complexity: decision
+    failure_modes_blocked: []
+    pilot_readiness_impact: blocks vector substrate
+
+  - item_id: TC-PROVENANCE-TRAIL-CONTRACT
+    layer: tenant_context
+    title: "Provenance trail contract (upload → persistence → retrieval → response)"
+    spec_reference:
+      doc: SETUP_ADMIN_DATA_VIEW_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "E.4 Provenance trail"
+      quoted_requirement: "The provenance chain that connects an upload to an agent's answer"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/intelligence/provenance.ts
+      validation_command: "find src/lib -name '*provenance*'"
+    gap_description: |
+      Provenance trail must traverse: upload event → persistence (with source
+      basis, uploaded_by, classification) → graph indexing (with provenance
+      metadata) → vector embedding (with source_record_id) → agent retrieval
+      → response artifact. End-to-end test required.
+    dependencies:
+      blocks: [INTELLIGENCE-PROVENANCE-RENDERING]
+      blocked_by: [TC-PERSISTENCE-INTEGRATION]
+    acceptance_criteria:
+      - Every retrieved chunk carries source_record_id back to original upload
+      - Provenance trail artifact rendering on agent surface
+      - Click-through from claim to source doc with uploaded_by + uploaded_at
+      - Negative test: claim without provenance fails to render
+    estimated_complexity: medium
+    failure_modes_blocked: []
+    pilot_readiness_impact: blocks unfakeable claim grounding
+
+  - item_id: TC-PATTERN-WRITEBACK
+    layer: tenant_context
+    title: "Pattern catalog write-back from P6 harvest"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.6.6 Next-phase primer"
+      quoted_requirement: "There is no next phase. The primer at P6 close is the harvest — what the platform writes back into the pattern catalog: refined failure-mode patterns, refined evidence templates"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/intelligence/pattern-writeback.ts
+      validation_command: "grep -rn 'pattern.*writeback\\|patternWriteback' src/lib/"
+    gap_description: |
+      P6 outcomes harvest writes back to pattern catalog. Today this is
+      documented but not built. Without it, the learning loop is theoretical.
+    dependencies:
+      blocks: []
+      blocked_by:
+        - WF-P6-STEP-DECOMP
+        - AS-P6-TEMPLATES
+        - DM-PROGRAM-OUTCOMES-CONTRACT
+    acceptance_criteria:
+      - Write-back contract defined: structured harvest format
+      - Approval flow (senior practitioner reviews before catalog updates)
+      - Pattern catalog versioning with provenance
+      - Auto-harvest later (post-pilot) per design doc
+    estimated_complexity: medium
+    failure_modes_blocked: [10]
+    pilot_readiness_impact: blocks learning loop
+
+  - item_id: DM-GRAPH-NODES-EDGES-MIGRATION
+    layer: tenant_context
+    title: "Postgres migration for enterprise_graph_nodes and edges"
+    spec_reference:
+      doc: SETUP_ADMIN_DATA_VIEW_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "C.* Per-family knowledge-layer mapping"
+      quoted_requirement: "Schema specified across all 14 dataset families; zero rows in Postgres today"
+    current_state: partial
+    validation_note: "enterprise_graph_nodes and enterprise_graph_edges tables EXIST in supabase/migrations/20260430121500_apex_setup_data_layer.sql. enterprise_context_chunks table also exists with embedding columns. pgvector extension NOT enabled (migration 20260430130000 uses JSONB fallback for embeddings). Acceptance criterion for pgvector enabled is NOT met."
+    code_check:
+      expected_files:
+        - supabase/migrations/*graph*
+      validation_command: "find supabase/migrations -name '*graph*'"
+    gap_description: |
+      Schema designed across the 14 segments. Postgres migration not run.
+      pgvector extension may not be enabled.
+    dependencies:
+      blocks: [TC-PERSISTENCE-INTEGRATION]
+      blocked_by: []
+    acceptance_criteria:
+      - Migrations create enterprise_graph_nodes, edges, evidence, context_chunks
+      - tenant_key + RLS on every table
+      - pgvector extension enabled
+      - Indexes appropriate for query patterns
+    estimated_complexity: medium
+    failure_modes_blocked: []
+    pilot_readiness_impact: foundational
+
+  - item_id: DM-VECTOR-EMBEDDING-PIPELINE
+    layer: tenant_context
+    title: "Vector embedding pipeline"
+    spec_reference:
+      doc: SETUP_ADMIN_DATA_VIEW_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "E.1 The integration contract — Step 4"
+      quoted_requirement: "Chunk text content per family rules. Generate embedding (text-embedding-3-small or large). Insert into enterprise_context_chunks with provenance metadata."
+    current_state: partial
+    validation_note: "CB-2 embedding pipeline script exists at src/scripts/embed-pending-chunks.ts (PR #1260). Migration 20260430130000 adds embedding JSONB columns. Pinecone upsert exists in CB-3 (src/lib/knowledge/context-broker/pinecone-client.ts). End-to-end smoke test pending; pgvector not enabled (using JSONB+Pinecone path which is the canonical design). File path in audit (src/lib/intelligence/embedding-pipeline.ts) differs from actual (src/scripts/embed-pending-chunks.ts)."
+    code_check:
+      expected_files:
+        - src/lib/intelligence/embedding-pipeline.ts
+      validation_command: "find src/lib -name '*embedding*'"
+    gap_description: |
+      Embedding pipeline not built. No embeddings generated for any tenant
+      data. Worldview chunks (when codex generates them) will need this.
+    dependencies:
+      blocks: [TC-PERSISTENCE-INTEGRATION]
+      blocked_by:
+        - DM-GRAPH-NODES-EDGES-MIGRATION
+        - TC-EMBEDDING-DIMENSION-RECONCILIATION
+    acceptance_criteria:
+      - Embedding pipeline runs on upload events
+      - Records embedding_model + embedding_version on each chunk
+      - Ingests worldview Pinecone-ready output
+      - Retrieval-quality test on benchmark queries
+    estimated_complexity: medium
+    failure_modes_blocked: []
+    pilot_readiness_impact: foundational
+
+  - item_id: DM-EVIDENCE-LEDGER-MIGRATION
+    layer: tenant_context
+    title: "Evidence ledger migration with provenance"
+    spec_reference:
+      doc: SETUP_ADMIN_DATA_VIEW_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "C.09 Evidence ledger"
+      quoted_requirement: "Every evidence item with: provenance, data classification, confidence, last reviewed. Evidence chains: which evidence grounds which claim."
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - supabase/migrations/*evidence*
+      validation_command: "find supabase/migrations -name '*evidence*'"
+    gap_description: |
+      evidence table referenced in design but not migrated. Apex Retail
+      synthetic dataset has 412 evidence items; without persistence none can
+      flow into the agent retrieval path.
+    dependencies:
+      blocks: [TC-PERSISTENCE-INTEGRATION, DM-PHASE-EVIDENCE-LINKS-TABLE]
+      blocked_by: [DM-GRAPH-NODES-EDGES-MIGRATION]
+    acceptance_criteria:
+      - evidence table migrated with full schema
+      - Apex synthetic ingested as test
+      - Cross-segment edges resolved (evidence → program/KPI/deliverable)
+    estimated_complexity: small
+    failure_modes_blocked: []
+    pilot_readiness_impact: foundational
+
+# ============================================================================
+# LAYER 7 — CROSS-CUTTING
+# Telemetry, observability, error handling, eval harness, content sign-off.
+# ============================================================================
+
+cross_cutting:
+
+  - item_id: CC-AGENT-PROMPT-FAILURE-MODE-BLOCK
+    layer: cross_cutting
+    title: "10 failure-mode catalog block in agent system prompt"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "C.6 What v1 of this design adds"
+      quoted_requirement: "The 10 catalog as a system-prompt block — universal, on every Programs surface for every Programs agent. The agent always knows the failure modes it exists to prevent."
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/app/api/chat/agent/route.ts
+      grep_patterns:
+        - "FAILURE_MODES"
+      validation_command: "grep -n 'FAILURE_MODES' src/app/api/chat/agent/route.ts"
+    gap_description: |
+      System prompt should compose the 10 catalog so Nexus can cite failure
+      modes by name. Today this is implicit; needs to be explicit.
+    dependencies:
+      blocks: [EVAL-NEXUS-FAILURE-MODE-AWARENESS]
+      blocked_by: [WF-FAILURE-MODE-CATALOG]
+    acceptance_criteria:
+      - System prompt includes failure-mode catalog block
+      - Eval verifies agent cites failure modes by ID/name
+      - Anti-pattern flag artifacts tag failure mode #
+    estimated_complexity: small
+    failure_modes_blocked: []
+    pilot_readiness_impact: blocks Nexus's failure-mode literacy
+
+  - item_id: CC-TELEMETRY-EVENTS-COMPLETE
+    layer: cross_cutting
+    title: "Posthog telemetry events for all workflow transitions"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "B.4 Telemetry events"
+      quoted_requirement: "program.created, program.submitted, program.approved/rejected, phase.entered, phase.gate_evaluated, phase.advanced, phase.advance_blocked, evidence.accrued, anti_pattern.flagged, anti_pattern.cleared, failure_mode.surfaced, attachment.uploaded, program.paused/resumed/canceled/completed"
+    current_state: partial
+    code_check:
+      expected_files:
+        - src/lib/telemetry/events.ts
+      validation_command: "grep -rn 'program\\.\\|phase\\.\\|evidence\\.' src/lib/telemetry/"
+    gap_description: |
+      Some telemetry events likely exist; full list per design doc requires
+      audit. Failure-mode tagging on events is gap.
+    dependencies:
+      blocks: [CC-FAILURE-MODE-ROLLUP-DASHBOARD]
+      blocked_by: [WF-FAILURE-MODE-CATALOG, WF-PHASEPACK-FAILURE-MODE-TAGGING]
+    acceptance_criteria:
+      - All 13 events emitted
+      - failure-mode tags on relevant events
+      - Posthog dashboards configured
+    estimated_complexity: medium
+    failure_modes_blocked: []
+    pilot_readiness_impact: pilot-readiness baseline
+
+  - item_id: CC-TELEMETRY-ANTI-PATTERN-EVENTS
+    layer: cross_cutting
+    title: "Anti-pattern flagged/cleared telemetry"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "B.4 Telemetry events"
+      quoted_requirement: "anti_pattern.flagged, anti_pattern.cleared with failure-mode tag"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/telemetry/events.ts
+      validation_command: "grep -n 'anti_pattern' src/lib/"
+    gap_description: |
+      Anti-pattern events designed but agent doesn't reliably emit them today
+      (per design doc: "Closes the gap where the agent currently flags
+      inconsistently").
+    dependencies:
+      blocks: [CC-FAILURE-MODE-ROLLUP-DASHBOARD]
+      blocked_by: [WF-ANTI-PATTERN-FLAGGING-DIRECTIVE]
+    acceptance_criteria:
+      - anti_pattern.flagged event on every artifact emission
+      - anti_pattern.cleared on subsequent resolution
+      - failure-mode tag on every event
+    estimated_complexity: small
+    failure_modes_blocked: []
+    pilot_readiness_impact: blocks anti-pattern visibility
+
+  - item_id: CC-FAILURE-MODE-ROLLUP-DASHBOARD
+    layer: cross_cutting
+    title: "Per-program and per-tenant failure-mode rollup"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "E.5 Cross-program telemetry rollup"
+      quoted_requirement: "Across your 4 programs, the platform forced you through 17 sponsor commitment checks (failure mode #1) — 16 cleared, 1 flagged-and-resolved..."
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/components/programs/failure-mode-rollup.tsx
+      validation_command: "find src/components -name '*rollup*'"
+    gap_description: |
+      The customer-visible value-prop demonstration. Aggregates failure-mode
+      checks across the portfolio. Today not built.
+    dependencies:
+      blocks: []
+      blocked_by:
+        - WF-PHASEPACK-FAILURE-MODE-TAGGING
+        - CC-TELEMETRY-EVENTS-COMPLETE
+        - DM-FAILURE-MODE-TELEMETRY-TABLE
+    acceptance_criteria:
+      - Per-program rollup query: per FM count of checks/cleared/flagged-resolved/bypassed/unaddressed
+      - Per-tenant portfolio rollup
+      - Surface renders the rollup as customer-visible artifact
+    estimated_complexity: medium
+    failure_modes_blocked: []
+    pilot_readiness_impact: blocks the platform value-prop demonstration
+
+  - item_id: CC-NOTIFICATION-ROUTING
+    layer: cross_cutting
+    title: "Notification routing (in-app + email)"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "A.3 Pilot-readiness baseline — Notifications"
+      quoted_requirement: "In-app primary; email for approval requests, gate decisions, and overdue prep. No silent state changes that affect another actor."
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/notifications/router.ts
+      validation_command: "find src/lib -name '*notification*'"
+    gap_description: |
+      Notifications router not yet built. Email mirror integration (Resend
+      or Postmark) needs selection.
+    dependencies:
+      blocks: []
+      blocked_by: [DM-PROGRAM-NOTIFICATIONS-TABLE]
+    acceptance_criteria:
+      - Router emits in-app + email per event type
+      - Recipient resolution (sponsor, admin, etc.)
+      - User notification preferences supported
+    estimated_complexity: medium
+    failure_modes_blocked: []
+    pilot_readiness_impact: pilot-readiness baseline
+
+  - item_id: CC-AGENT-OBSERVABILITY
+    layer: cross_cutting
+    title: "Agent behavior observability (refusals, flags, advances blocked)"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "A.3 Pilot-readiness baseline — Observability of agent behavior"
+      quoted_requirement: "Every agent turn that flags a failure mode, refuses an advance, or surfaces an anti-pattern is logged with enough context to reconstruct why."
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - src/lib/observability/agent.ts
+      validation_command: "find src/lib -name '*observ*'"
+    gap_description: |
+      When a pilot customer asks "why did Nexus block our Phase 1 advance,"
+      the answer must reconstruct from logs the exact evidence and exact rule.
+      Today this is not structured.
+    dependencies:
+      blocks: []
+      blocked_by: []
+    acceptance_criteria:
+      - Every agent decision logged with: input context, retrieved patterns, applied rules, output decision, rationale
+      - Per-program agent decision history queryable
+      - Customer-facing "why" question answerable from logs
+    estimated_complexity: medium
+    failure_modes_blocked: []
+    pilot_readiness_impact: pilot-readiness baseline
+
+  - item_id: EVAL-HARNESS-INFRASTRUCTURE
+    layer: cross_cutting
+    title: "Eval harness infrastructure for agent regression"
+    spec_reference:
+      doc: "Conversation context — agent training discussion"
+      section: "n/a — proposed in conversation"
+      quoted_requirement: "Hundreds of golden conversations covering phase × archetype × failure mode × state. Each with expected agent behavior. Regression tests block changes that regress."
+    current_state: not_yet_documented
+    code_check:
+      expected_files:
+        - tests/eval-harness/
+      validation_command: "find tests -type d -name '*eval*'"
+    gap_description: |
+      Eval harness is the bridge between substrate and agent. Without it,
+      agent training has no feedback loop. Specifically needs to verify:
+      one question at a time, under 75 words by default, no asking for known
+      data, no long prose when right-pane card should update, no intake-form
+      interrogation, create draft when enough signal exists, flag gaps cleanly.
+    dependencies:
+      blocks:
+        - EVAL-NEXUS-COMPLEX-STEP-BEHAVIOR
+        - EVAL-NEXUS-FAILURE-MODE-AWARENESS
+        - EVAL-NEXUS-CDP-SCENARIOS
+        - EVAL-NEXUS-AMS-SCENARIOS
+        - EVAL-NEXUS-CCAI-SCENARIOS
+        - EVAL-NEXUS-FORECAST-SCENARIOS
+      blocked_by: [DESIGN-EVAL-HARNESS-SPEC]
+    acceptance_criteria:
+      - Harness runs golden conversations as regression tests
+      - Pass/fail criteria per turn (voice, length, behavioral assertions)
+      - CI integration; PR blocks on regression
+      - Per-archetype × per-phase coverage
+    estimated_complexity: large
+    failure_modes_blocked: []
+    pilot_readiness_impact: blocks agent training feedback loop
+
+  - item_id: EVAL-NEXUS-COMPLEX-STEP-BEHAVIOR
+    layer: cross_cutting
+    title: "Eval: Nexus complex-step behavior"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "C.4 Intent capture for complex steps"
+      quoted_requirement: "Capture intent → confirm plan → surface template → schedule upload → validate. The loop that makes the platform feel like a senior practitioner."
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - tests/eval-harness/nexus/complex-step.eval.ts
+      validation_command: "find tests -name '*complex-step*'"
+    gap_description: |
+      Eval harness scenarios that verify Nexus correctly applies the
+      intent-capture loop on complex steps. Without this, behavior is
+      unverifiable.
+    dependencies:
+      blocks: []
+      blocked_by:
+        - EVAL-HARNESS-INFRASTRUCTURE
+        - AS-INTENT-CAPTURE-FLOW
+    acceptance_criteria:
+      - 20+ golden conversations covering complex steps in P0-P5
+      - Each verifies: intent question asked, plan captured, template surfaced, upload scheduled
+      - Negative tests: simple-step questions not over-coached
+    estimated_complexity: medium
+    failure_modes_blocked: [4]
+    pilot_readiness_impact: blocks agent quality verification
+
+  - item_id: EVAL-NEXUS-FAILURE-MODE-AWARENESS
+    layer: cross_cutting
+    title: "Eval: Nexus failure-mode awareness"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "C.6 Agent training — Failure-mode-flagging directive"
+      quoted_requirement: "When you detect a failure-mode signal, emit an anti-pattern-flag artifact tagged with the failure-mode number"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - tests/eval-harness/nexus/failure-mode.eval.ts
+      validation_command: "find tests -name '*failure-mode*'"
+    gap_description: |
+      Eval scenarios per each of the 10 failure modes. Each provides a
+      situation that should trigger the failure mode signal; verifies Nexus
+      flags it correctly with the right tag.
+    dependencies:
+      blocks: []
+      blocked_by:
+        - EVAL-HARNESS-INFRASTRUCTURE
+        - WF-ANTI-PATTERN-FLAGGING-DIRECTIVE
+        - CC-AGENT-PROMPT-FAILURE-MODE-BLOCK
+    acceptance_criteria:
+      - At least 3 scenarios per failure mode (30 total)
+      - Verifies anti-pattern-flag artifact emitted with correct FM tag
+      - Negative tests: false-positive flagging on non-trigger scenarios
+    estimated_complexity: medium
+    failure_modes_blocked: [all_10]
+    pilot_readiness_impact: blocks failure-mode discipline verification
+
+  - item_id: EVAL-NEXUS-CDP-SCENARIOS
+    layer: cross_cutting
+    title: "Eval: Nexus CDP archetype scenarios"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.0.8 Worked example scenarios — Scenario A Apex CDP"
+      quoted_requirement: "Doctrine-grade response sequencing the four anchors. Right-pane content swap. Pattern classification late."
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - tests/eval-harness/nexus/cdp.eval.ts
+      validation_command: "find tests -name '*cdp*'"
+    gap_description: |
+      Per-archetype eval scenarios covering each phase. Design doc has
+      worked examples for each archetype × phase; these become eval scenarios.
+    dependencies:
+      blocks: []
+      blocked_by:
+        - EVAL-HARNESS-INFRASTRUCTURE
+        - WF-PATTERN-PACK-CDP
+    acceptance_criteria:
+      - 7 phase × 1+ scenarios per phase = 7+ CDP scenarios
+      - Each scenario references design doc D.X.8 worked example
+      - Verifies expected agent behavior per phase pack doctrine
+    estimated_complexity: medium
+    failure_modes_blocked: []
+    pilot_readiness_impact: blocks CDP scenario regression coverage
+
+  - item_id: EVAL-NEXUS-AMS-SCENARIOS
+    layer: cross_cutting
+    title: "Eval: Nexus AMS Consolidation scenarios"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - tests/eval-harness/nexus/ams.eval.ts
+      validation_command: "find tests -name '*ams*'"
+    gap_description: "Same shape as CDP eval; AMS-specific scenarios per phase."
+    dependencies:
+      blocks: []
+      blocked_by:
+        - EVAL-HARNESS-INFRASTRUCTURE
+        - WF-PATTERN-PACK-AMS
+    acceptance_criteria:
+      - 7+ AMS scenarios covering phases including sourcing handoff at P3
+    estimated_complexity: medium
+    failure_modes_blocked: []
+    pilot_readiness_impact: AMS scenario coverage
+
+  - item_id: EVAL-NEXUS-CCAI-SCENARIOS
+    layer: cross_cutting
+    title: "Eval: Nexus Contact Center AI scenarios"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - tests/eval-harness/nexus/cc-ai.eval.ts
+      validation_command: "find tests -name '*cc.ai*'"
+    gap_description: "Contact Center AI per-archetype scenarios per phase."
+    dependencies:
+      blocks: []
+      blocked_by:
+        - EVAL-HARNESS-INFRASTRUCTURE
+        - WF-PATTERN-PACK-CCAI
+    acceptance_criteria:
+      - 7+ CC AI scenarios including vendor-driven-charter anti-pattern
+    estimated_complexity: medium
+    failure_modes_blocked: []
+    pilot_readiness_impact: CC AI scenario coverage
+
+  - item_id: EVAL-NEXUS-FORECAST-SCENARIOS
+    layer: cross_cutting
+    title: "Eval: Nexus Demand Forecasting scenarios"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - tests/eval-harness/nexus/forecast.eval.ts
+      validation_command: "find tests -name '*forecast*'"
+    gap_description: "Forecast per-archetype scenarios per phase."
+    dependencies:
+      blocks: []
+      blocked_by:
+        - EVAL-HARNESS-INFRASTRUCTURE
+        - WF-PATTERN-PACK-FORECAST
+    acceptance_criteria:
+      - 7+ Forecast scenarios including granularity decision and S&OP cadence
+    estimated_complexity: medium
+    failure_modes_blocked: []
+    pilot_readiness_impact: Forecast scenario coverage
+
+  - item_id: EVAL-NEXUS-STEP-AWARE
+    layer: cross_cutting
+    title: "Eval: Nexus step-awareness (current-step-in-prompt)"
+    current_state: documented_not_built
+    code_check:
+      expected_files:
+        - tests/eval-harness/nexus/step-aware.eval.ts
+      validation_command: "find tests -name '*step-aware*'"
+    gap_description: |
+      Verifies Nexus reads current step from program state and applies
+      step-appropriate doctrine.
+    dependencies:
+      blocks: []
+      blocked_by:
+        - EVAL-HARNESS-INFRASTRUCTURE
+        - WF-AGENT-DOCTRINE-STEP-LAYER
+    acceptance_criteria:
+      - Scenarios test: agent recognizes which step is active, applies role-appropriate behavior
+      - Different behavior on simple vs complex steps verified
+    estimated_complexity: small
+    failure_modes_blocked: [4]
+    pilot_readiness_impact: blocks step-aware verification
+
+  - item_id: CONTENT-PHASE-PACK-SIGNOFF
+    layer: cross_cutting
+    title: "Senior practitioner sign-off on phase pack content"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "A.3 Pilot-readiness baseline — Content quality"
+      quoted_requirement: "Phase packs and pattern seeds are reviewed by a senior practitioner (founder + design partner) and signed off before pilot. No placeholder content."
+    current_state: documented_not_built
+    validation_note: "find docs -name signoff returns empty. No signoff log exists."
+    code_check:
+      expected_files:
+        - docs/build/PHASE_PACK_SIGNOFF_LOG.md
+      validation_command: "find docs -name '*signoff*'"
+    gap_description: |
+      Sign-off process / log not yet specified. Each phase pack needs
+      reviewer + date + scope of review captured.
+    dependencies:
+      blocks: []
+      blocked_by: []
+    acceptance_criteria:
+      - Sign-off log exists per phase pack
+      - Reviewer + date + scope captured
+      - Re-review on pack content changes
+    estimated_complexity: process
+    failure_modes_blocked: []
+    pilot_readiness_impact: pilot-readiness baseline
+
+  - item_id: DESIGN-OUTCOME-TRACKING-DOC
+    layer: cross_cutting
+    title: "Outcome tracking design doc — gap"
+    spec_reference:
+      doc: "Conversation — outcome tracking discussion"
+      section: "n/a — design doc not yet drafted"
+      quoted_requirement: "OUTCOME_TRACKING_FAILURE_MODE_DRIVEN_DESIGN.md proposed; structured promise contract, attribution honesty, variance interpretation"
+    current_state: not_yet_documented
+    code_check:
+      expected_files: []
+      validation_command: "n/a — design gap"
+    gap_description: |
+      Outcome tracking discussed in conversation as deserving its own design
+      doc. Without it: P2 charter doesn't capture structured promise; P5/P6
+      measurement has no anchor; portfolio outcome view has no spine.
+    dependencies:
+      blocks:
+        - DM-PROGRAM-OUTCOMES-CONTRACT
+        - WF-P2-CHARTER-PROMISE-CAPTURE
+        - WF-P6-OUTCOME-SETTLEMENT
+      blocked_by: []
+    acceptance_criteria:
+      - Design doc drafted with same Part A-I structure
+      - Promise contract schema specified
+      - Per-program outcome view + portfolio outcome view designed
+      - Variance attribution discipline specified
+    estimated_complexity: medium_design_work
+    failure_modes_blocked: [9]
+    pilot_readiness_impact: blocks outcome surface
+
+  - item_id: DESIGN-OVERLAP-DETECTION-RULES
+    layer: cross_cutting
+    title: "Overlap detection rules — design gap"
+    spec_reference:
+      doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
+      section: "D.0.9 Open question 1"
+      quoted_requirement: "Overlap detection algorithm. What's the threshold? Same archetype + same sponsor → strong overlap..."
+    current_state: not_yet_documented
+    code_check:
+      expected_files: []
+      validation_command: "n/a — design gap"
+    gap_description: |
+      Open question explicitly flagged. Without explicit rules, Gate 0b
+      cannot surface useful overlap signals.
+    dependencies:
+      blocks: [GE-OVERLAP-DETECTION]
+      blocked_by: []
+    acceptance_criteria:
+      - Rules specified for archetype + sponsor + system overlap thresholds
+      - Confidence levels per rule
+      - Surface rendering specified
+    estimated_complexity: small_design_work
+    failure_modes_blocked: [10]
+    pilot_readiness_impact: blocks Gate 0b
+
+  - item_id: DESIGN-PHASE-STEP-STATE-PERSISTENCE
+    layer: cross_cutting
+    title: "Per-step state persistence — design gap"
+    current_state: not_yet_documented
+    code_check:
+      expected_files: []
+      validation_command: "n/a — design gap"
+    gap_description: |
+      Where does per-step state (intent captured, plan captured, awaiting upload)
+      live? Separate table? Evidence ledger? Program JSONB? Decision required.
+    dependencies:
+      blocks: [DM-PHASE-STEP-STATE-TABLE]
+      blocked_by: []
+    acceptance_criteria:
+      - Decision documented in design doc addendum
+      - Schema implications resolved
+    estimated_complexity: small_design_work
+    failure_modes_blocked: []
+    pilot_readiness_impact: blocks complex-step persistence
+
+  - item_id: DESIGN-EVAL-HARNESS-SPEC
+    layer: cross_cutting
+    title: "Eval harness specification — design gap"
+    current_state: not_yet_documented
+    code_check:
+      expected_files:
+        - docs/build/EVAL_HARNESS_SPEC.md
+      validation_command: "find docs -name '*eval-harness*'"
+    gap_description: |
+      Eval harness spec documents how golden conversations are structured,
+      what assertions look like, how the harness runs, how regressions are
+      caught. Without spec, building the harness is ad-hoc.
+    dependencies:
+      blocks: [EVAL-HARNESS-INFRASTRUCTURE]
+      blocked_by: []
+    acceptance_criteria:
+      - Spec doc drafted
+      - YAML/JSON format for golden conversations specified
+      - Assertion taxonomy documented (voice, length, behavior, artifact emission)
+      - CI integration specified
+    estimated_complexity: medium_design_work
+    failure_modes_blocked: []
+    pilot_readiness_impact: blocks eval harness build
+
+# ============================================================================
+# AUDIT SUMMARY
+# ============================================================================
+
+summary:
+  total_items: 75
+  by_state:
+    built_and_verified: 5
+    partial: 5
+    documented_not_built: 50
+    not_yet_documented: 8
+    unknown: 7
+
+  highest_pilot_readiness_blockers:
+    - TC-PERSISTENCE-INTEGRATION
+    - WF-PHASESTEP-CONTRACT
+    - AS-INTENT-CAPTURE-FLOW
+    - WF-FAILURE-MODE-CATALOG
+    - DM-PROGRAM-AUDIT-LOG-TABLE
+    - WF-STATE-MACHINE-PRE-P0
+    - GE-EVIDENCE-BASED-GATE-EVAL
+    - EVAL-HARNESS-INFRASTRUCTURE
+
+  design_gaps_blocking_build:
+    - WF-P3-FULL-STEP-LIST-DESIGN
+    - WF-WAVE-LOOP-DESIGN
+    - DESIGN-OUTCOME-TRACKING-DOC
+    - DESIGN-OVERLAP-DETECTION-RULES
+    - DESIGN-PHASE-STEP-STATE-PERSISTENCE
+    - DESIGN-EVAL-HARNESS-SPEC
+    - TC-EMBEDDING-DIMENSION-RECONCILIATION
+
+  recommended_build_sequence:
+    phase_1_substrate:
+      - DM-GRAPH-NODES-EDGES-MIGRATION
+      - DM-VECTOR-EMBEDDING-PIPELINE
+      - DM-EVIDENCE-LEDGER-MIGRATION
+      - TC-PERSISTENCE-INTEGRATION
+      - DM-PROGRAM-AUDIT-LOG-TABLE
+      - DM-PROGRAM-ATTACHMENTS-TABLE
+      - DM-PROGRAM-NOTIFICATIONS-TABLE
+      - DM-PROGRAM-APPROVALS-TABLE
+    phase_2_workflow:
+      - WF-PHASESTEP-CONTRACT
+      - WF-FAILURE-MODE-CATALOG
+      - WF-STATE-MACHINE-PRE-P0
+      - WF-PHASEPACK-FAILURE-MODE-TAGGING
+      - WF-PATTERN-CATALOG-PARAMETERIZATION
+    phase_3_step_decomposition:
+      - WF-P0-STEP-DECOMP through WF-P6-STEP-DECOMP
+      - WF-PATTERN-PACK-CDP through WF-PATTERN-PACK-FORECAST
+      - AS-TEMPLATE-REGISTRY
+      - AS-P0-TEMPLATES through AS-P6-TEMPLATES
+    phase_4_agent_flows:
+      - WF-AGENT-DOCTRINE-STEP-LAYER
+      - AS-INTENT-CAPTURE-FLOW
+      - AS-POST-MEETING-UPLOAD-FLOW
+      - WF-ANTI-PATTERN-FLAGGING-DIRECTIVE
+      - CC-AGENT-PROMPT-FAILURE-MODE-BLOCK
+    phase_5_governance:
+      - GE-EVIDENCE-BASED-GATE-EVAL
+      - GE-GATE-0B-APPROVAL
+      - GE-ARCHITECTURE-REVIEW-ATTESTED-GATE
+      - GE-PILOT-PASSED-CRITERIA-GATE
+      - RM-TENANT-ADMIN-APPROVAL-QUEUE
+    phase_6_eval_and_telemetry:
+      - DESIGN-EVAL-HARNESS-SPEC
+      - EVAL-HARNESS-INFRASTRUCTURE
+      - EVAL-NEXUS-* (all)
+      - CC-TELEMETRY-EVENTS-COMPLETE
+      - CC-FAILURE-MODE-ROLLUP-DASHBOARD
+    phase_7_design_gaps_first:
+      - WF-P3-FULL-STEP-LIST-DESIGN
+      - WF-WAVE-LOOP-DESIGN
+      - DESIGN-OUTCOME-TRACKING-DOC
+      - DESIGN-OVERLAP-DETECTION-RULES
+      - DESIGN-PHASE-STEP-STATE-PERSISTENCE
+      - TC-EMBEDDING-DIMENSION-RECONCILIATION
+
+  notes_for_consumer:
+    claude_code_agent: |
+      Read this YAML. Treat documented_not_built and not_yet_documented items
+      as build backlog. Sequence per recommended_build_sequence. Stop and ask
+      before items where current_state: unknown — those need repo crawl first.
+      For not_yet_documented items, the design gap must close before build.
+    claude_extension_repo_crawler: |
+      For each item, run validation_command and confirm or refute current_state.
+      Output AUDIT_VALIDATION_REPORT.md with discrepancies. Pay particular
+      attention to items marked unknown — those exist specifically to be
+      validated by you.
+    human_reviewer: |
+      Read AUDIT_PROGRAMS_SUBSTRATE.md (markdown rendering) for narrative review.
+      Highest_pilot_readiness_blockers are the first decisions to make.
+      Design_gaps_blocking_build need design work before any code.

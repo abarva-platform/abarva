@@ -15,6 +15,10 @@ import { requireTenancy } from "@/app/api/v1/programs/_auth";
 import { getEngagementWithPhaseData } from "@/lib/programs/db-phase-queries";
 import { PHASE_LABEL_MAP } from "@/lib/programs/programs-fixture";
 import { getTenantSystemBlock } from "@/lib/agent/demo-context";
+// TC-PERSISTENCE-INTEGRATION — Phase 1 partial implementation.
+// Query enterprise_context_chunks for live tenant context; fall back to
+// the hardcoded fixture when no persisted data is available.
+import { buildTenantContextBlock } from "@/lib/intelligence/persistence";
 import { getActiveClientRow } from "@/lib/active-client";
 import { getUserContextPromptBlock } from "@/lib/agent/userContext";
 import { retrieveStageContext, retrieveCategoryContext } from "@/lib/intelligence/agent-retrieval";
@@ -45,6 +49,11 @@ import {
 } from "@/lib/source/stage-packs";
 import { buildSourceLifecycleContract } from "@/lib/lifecycle-operating-system";
 import type { SourceStageKey } from "@/lib/source/types";
+import {
+  AMS_OUTSOURCING_2026_EVENT_ID,
+  buildAmsVendorStoryline,
+} from "@/lib/source/ams-outsourcing-2026-view";
+import { buildAmsBafoView } from "@/lib/source/ams-bafo-view";
 // PR-R · broker bundle for Nexus on /programs surfaces — exposes
 // the tenant's executive bench + program inventory so Nexus can
 // reference real people/roles instead of inventing them. Closes
@@ -124,6 +133,9 @@ import "@/lib/agent/tools/program/registerPlaceholderPerson";
 // static doctrine; runtime evidence-evaluation is deferred to the
 // future knowledge-broker layer.
 import "@/lib/agent/tools/program/advancePhase";
+// Program crawl enablement — lets Nexus persist/sign off generated artifacts
+// so hard gates can read deliverables_v2 instead of chat-only prose.
+import "@/lib/agent/tools/program/completeDeliverable";
 // Surface 2 PR-Q — navigate_to tool. Registered for every entry
 // surface so any agent can take the user somewhere (e.g. Nexus on
 // /programs redirects new-program intent to /programs/new where
@@ -334,6 +346,7 @@ export async function POST(request: Request) {
     surface,
     hasEvent: Boolean(sc.eventName),
   });
+  const sourceEventSeedBlock = buildSourceEventSeedPromptBlock(surfaceContext);
 
 
   // F0.2 Layer 0 — user context block, composed AFTER role/voice line
@@ -347,7 +360,19 @@ export async function POST(request: Request) {
   // platform context (avoids Steward/Nexus referencing Apex programs
   // in conversations with Meridian or Arcturus users).
   const activeClient = await getActiveClientRow().catch(() => null);
-  const tenantSystemBlock = getTenantSystemBlock(activeClient?.key ?? null);
+  const sourceClientKey = isSourceSurface(surface)
+    ? resolveSourceClientKey(surfaceContext)
+    : null;
+  const effectiveClientKey = sourceClientKey ?? activeClient?.key ?? null;
+  // TC-PERSISTENCE-INTEGRATION: resolve the inventory-substrate key (apex-retail
+  // form) so we can query enterprise_context_chunks. Falls back to the hardcoded
+  // fixture when no persisted chunks are available (pre-embed or unknown tenant).
+  const tenantInventoryKey = effectiveClientKey
+    ? clientKeyToInventorySubstrateKey(effectiveClientKey)
+    : null;
+  const tenantSystemBlock =
+    (await buildTenantContextBlock(tenantInventoryKey)) ??
+    getTenantSystemBlock(effectiveClientKey);
 
   // Surface 1 PR2 / Surface 2 PR2 — artifact-channel instructions are
   // composed for surfaces that have a reactive workspace ready to
@@ -420,11 +445,11 @@ export async function POST(request: Request) {
       // existing tenantSystemBlock + page-context lines.
     }
   }
-  if (isSourceSurface(surface) && activeClient?.key) {
+  if (isSourceSurface(surface) && effectiveClientKey) {
     try {
       sourceTenantContextBlock = formatSourceBrokerBundleForPrompt(
         buildEnterpriseAgentContextBundle({
-          tenantKey: activeClient.key,
+          tenantKey: effectiveClientKey,
           agentName: normalizeEnterpriseAgentName(agentName),
           surface: 'source',
           includeGraphNeighborhood: false,
@@ -530,6 +555,8 @@ export async function POST(request: Request) {
     "",
     sourceTenantContextBlock,
     "",
+    sourceEventSeedBlock,
+    "",
     // OV2-WIRE-AND-FM-PROMPT Part 2 — overlap candidates on
     // /programs/new only. Empty string elsewhere or when no candidates.
     overlapCandidatesBlock,
@@ -560,6 +587,11 @@ export async function POST(request: Request) {
     "- Keep responses under 200 words. Be direct, specific, actionable.",
     "- Reference tenant and program names from context.",
     "- Never say you don't have specific information about the tenant — use the demo context below.",
+    // M-06 · voice drift filter — banned phrases surfaced in QA audit (2026-04-30).
+    // These phrases signal sycophancy or assistant-mode framing that undermines the
+    // senior-practitioner voice. Absolute ban, no exceptions.
+    "- NEVER use citation annotation tags like [tenant-specific: ...] or [user-context: ...] in chat prose. Those annotations belong in synthesis artifacts only. Speak the citation in natural language instead.",
+    "- BANNED PHRASES (never use, no exceptions): \"Good question\", \"Great question\", \"Great instinct\", \"Great point\", \"I'd be happy to\", \"I'd love to\", \"Certainly!\", \"Absolutely!\", \"Of course!\", \"That's a great\", \"leverage\" (as a verb), \"unlock\" (as a metaphor). Start responses with a direct statement, not a compliment.",
     // PR-S · founder feedback #2 — chat was rendering "sql kind of
     // stuff on screen" because the model was wrapping structured
     // observations in code blocks and reciting raw IDs. The chat
@@ -582,6 +614,7 @@ export async function POST(request: Request) {
           "- Keep most Source replies under 75 words unless the user explicitly asks for a deep dive, draft, comparison, or executive brief.",
           "- If the user is starting an event, quietly map their words to the five-field intake floor: trigger, decision owner, scope boundary, baseline evidence, stop/approval condition. Do not recite all five unless asked.",
           "- Use known tenant context before asking. If the user names a role and Source tenant context resolves it, use the known person by name and ask only to confirm authority. Never ask 'who is the CIO?' when context names the CIO.",
+          "- If SOURCE EVENT PAGE SEED CONTEXT is present, use that page-local event, vendor, BAFO, committee, gate, and risk data before saying information is missing.",
           "- If the user mistypes a title (for example CIKO when CIO is likely), correct lightly and continue; do not make the typo the center of the reply.",
           "- Let the right pane carry progress, gates, evidence, blockers, and next-step prep. In prose, summarize what changed and the one next missing field.",
           "- If emitting sourcing-stage-progress artifacts, emit valid JSON only; never expose artifact syntax in prose.",
@@ -616,8 +649,8 @@ export async function POST(request: Request) {
   // are rendered. Failures are non-fatal: the route always streams
   // an answer, even if bundle assembly errored — the panel falls
   // through to its cold-start state.
-  const brokerTenantKey = activeClient?.key
-    ? clientKeyToInventorySubstrateKey(activeClient.key)
+  const brokerTenantKey = effectiveClientKey
+    ? clientKeyToInventorySubstrateKey(effectiveClientKey)
     : null;
   const requestedMode = readClientSuppliedMode(surfaceContext);
   const bundleMode =
@@ -1017,6 +1050,62 @@ function buildSourceOperatingDoctrineBlock(input: {
     '- Treat broad scope such as "enterprise all towers" as a useful hypothesis but not yet a boundary. Ask for the first boundary or evidence upload, not a lecture.',
     '- For "what do you know about my company", answer as a short ledger: known tenant facts, known leadership, known systems/contracts, and missing live data. Do not apologize at length.',
     '- Prefer action verbs: register, attach, generate, prepare, review, approve, defer, waive, advance.',
+  ].join('\n');
+}
+
+function resolveSourceClientKey(surfaceContext: Record<string, unknown>): string | null {
+  const eventId = typeof surfaceContext.eventId === 'string' ? surfaceContext.eventId : '';
+  const accountName = typeof surfaceContext.accountName === 'string'
+    ? surfaceContext.accountName.toLowerCase()
+    : '';
+
+  if (eventId === AMS_OUTSOURCING_2026_EVENT_ID || accountName.includes('apex')) {
+    return 'apex-retail';
+  }
+  if (accountName.includes('meridian')) {
+    return 'meridian-health';
+  }
+
+  return null;
+}
+
+function buildSourceEventSeedPromptBlock(surfaceContext: Record<string, unknown>): string {
+  const eventId = typeof surfaceContext.eventId === 'string' ? surfaceContext.eventId : '';
+  if (eventId !== AMS_OUTSOURCING_2026_EVENT_ID) return '';
+
+  const storyline = buildAmsVendorStoryline();
+  const bafo = buildAmsBafoView();
+
+  const vendorLines = storyline.vendors.map((vendor) => {
+    const risks = vendor.riskFlags.length > 0
+      ? vendor.riskFlags
+          .map((risk) => `${risk.severity.toUpperCase()} ${risk.label}: ${risk.detail}`)
+          .join('; ')
+      : 'No open risk flags';
+    return `- ${vendor.vendorLabel}: ${vendor.proposalStatusLabel}; pricing band ${vendor.pricingBandLabel}; risks: ${risks}.`;
+  });
+  const invitedVendors = bafo.invitedVendors
+    .map((vendor) => `${vendor.vendorLabel} (${vendor.responseStatusLabel}; due ${vendor.responseDeadline})`)
+    .join('; ');
+  const excludedVendors = bafo.notInvitedVendors
+    .map((vendor) => `${vendor.vendorLabel}: ${vendor.exclusionReason}`)
+    .join('; ');
+  const committee = bafo.selectionCommittee
+    .map((member) => `${member.name}, ${member.role}`)
+    .join('; ');
+
+  return [
+    'SOURCE EVENT PAGE SEED CONTEXT (current canvas; deterministic demo seed):',
+    `Event: ${storyline.eventName}. Account: Apex Retail. Event ID: ${storyline.eventId}. Linked program: ${storyline.linkedProgramCode}. Current stage: S5 Orals/BAFO.`,
+    'Use this page-local context before saying vendor, BAFO, committee, risk, or gate data is missing.',
+    'Vendor proposals rendered on the current canvas:',
+    ...vendorLines,
+    `BAFO invited vendors: ${invitedVendors}.`,
+    `Vendors not invited to BAFO: ${excludedVendors}.`,
+    `Selection committee: ${committee}.`,
+    `BAFO next steps: ${bafo.nextSteps.join('; ')}.`,
+    'Weakest-response rule: if asked which vendor response is weakest, name BlueMaster Operations first because it carries a CRITICAL transition plan quality gap; then mention Northstar pricing opacity and ArcVault governance as BAFO risks if useful.',
+    `Evidence caveat: ${storyline.evidenceCaveat} ${bafo.evidenceCaveat}`,
   ].join('\n');
 }
 

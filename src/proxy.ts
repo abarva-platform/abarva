@@ -1,7 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { isExternalOnlyRole, resolveSessionClientKey, resolveSessionRole, shouldStripUnauthorizedClientParam } from '@/lib/auth/access-routing'
+import { isExternalOnlyRole, resolvePinnedSessionClientKey, resolveSessionRole, shouldStripUnauthorizedClientParam } from '@/lib/auth/access-routing'
 
 const MOBILE_UA = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
 const ACTIVE_CLIENT_COOKIE = 'abarva_active_client'
@@ -149,16 +149,25 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
   }
 
   if (isPublicRoute(request) && userId && !isExternalOnlyRole(role)) {
-    const pinnedClient = resolveSessionClientKey({
+    // B-01 fix: only write the cookie when the client key is EXPLICITLY
+    // pinned via Clerk metadata or email inference. Using resolveSessionClientKey
+    // here was wrong — it returns DEFAULT_CLIENT_KEY='meridian' when no explicit
+    // pin is found, which overwrote any valid cookie the client had already set
+    // (e.g. via the UI tenant-switcher). Admin/investor users and demo accounts
+    // without Clerk clientId metadata would get their cookie silently reset to
+    // 'meridian' on every public-route visit, causing the tenant binding leak.
+    const explicitlyPinnedClient = resolvePinnedSessionClientKey({
       clientId: metadata.clientId,
       defaultClientId: metadata.defaultClientId,
       email,
     })
-    getResponse().cookies.set(ACTIVE_CLIENT_COOKIE, pinnedClient, {
-      path: '/',
-      maxAge: 60 * 60 * 24 * 365,
-      sameSite: 'lax',
-    })
+    if (explicitlyPinnedClient) {
+      getResponse().cookies.set(ACTIVE_CLIENT_COOKIE, explicitlyPinnedClient, {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365,
+        sameSite: 'lax',
+      })
+    }
   }
 
   // Tag mobile UA requests — consumed by server components via x-is-mobile header

@@ -10,7 +10,7 @@ export function AppMiddleStrip({ children, rightSlot }: AppMiddleStripProps) {
   return (
     <div
       style={{
-        height: 44,
+        minHeight: 44,
         background: SHELL.PAPER_SOFT,
         borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
         display: 'flex',

@@ -5,12 +5,17 @@ import { SHELL } from '@/lib/shell/shell-tokens';
 
 export type StageStatus = 'passed' | 'current' | 'upcoming' | 'blocked';
 
+type StageTrackerVariant = 'compact' | 'journey';
+
 interface StageTrackerStripProps {
   stages: string[];
   activeStage: string;
   onStageSelect?: (stage: string) => void;
   /** Optional gate-driven state per stage. When provided, overrides color logic. */
   stageStates?: Record<string, StageStatus>;
+  /** Source uses the journey variant so the stage path reads as a user traversal, not a tiny status barcode. */
+  variant?: StageTrackerVariant;
+  personaLabel?: string;
 }
 
 // Pipe divider positions — after index (0-based): after RFI(1), RFP(4), BAFO(7), Award(8)
@@ -70,7 +75,14 @@ export function resolveStageColors(
   };
 }
 
-export function StageTrackerStrip({ stages, activeStage, onStageSelect, stageStates }: StageTrackerStripProps) {
+export function StageTrackerStrip({
+  stages,
+  activeStage,
+  onStageSelect,
+  stageStates,
+  variant = 'compact',
+  personaLabel = 'Sourcing lead',
+}: StageTrackerStripProps) {
   const activeIndex = stages.indexOf(activeStage);
   const router = useRouter();
   const pathname = usePathname();
@@ -91,6 +103,214 @@ export function StageTrackerStrip({ stages, activeStage, onStageSelect, stageSta
     }
     const query = params.toString();
     router.push(query ? `${pathname}?${query}` : pathname);
+  }
+
+  if (variant === 'journey') {
+    return (
+      <div
+        aria-label={`${personaLabel} sourcing journey`}
+        style={{
+          width: '100%',
+          display: 'grid',
+          gridTemplateColumns: 'minmax(150px, 0.24fr) minmax(0, 1fr)',
+          alignItems: 'center',
+          gap: 14,
+          padding: '8px 0 9px',
+        }}
+      >
+        <div style={{ display: 'grid', gap: 3, minWidth: 0 }}>
+          <div
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 8.5,
+              letterSpacing: '0.15em',
+              textTransform: 'uppercase',
+              color: SHELL.INK_MUTED,
+              fontWeight: 800,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Sourcing journey
+          </div>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 7,
+              minWidth: 0,
+            }}
+          >
+            <span
+              aria-hidden
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: 999,
+                background: SHELL.INK,
+                color: SHELL.PAPER,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: SHELL.MONO,
+                fontSize: 8,
+                fontWeight: 900,
+                flexShrink: 0,
+              }}
+            >
+              SL
+            </span>
+            <div style={{ display: 'grid', gap: 1, minWidth: 0 }}>
+              <span
+                style={{
+                  fontFamily: SHELL.SANS,
+                  fontSize: 12,
+                  fontWeight: 800,
+                  color: SHELL.INK,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {personaLabel}
+              </span>
+              <span
+                style={{
+                  fontFamily: SHELL.MONO,
+                  fontSize: 9,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: AMBER,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Step {activeIndex + 1 > 0 ? activeIndex + 1 : '-'} of {stages.length}: {activeStage || 'Select stage'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0,
+            minWidth: 0,
+            overflowX: 'auto',
+            scrollbarWidth: 'none',
+            padding: '2px 2px 0',
+          }}
+        >
+          {stages.map((stage, index) => {
+            const { pipColor, labelColor, labelWeight } = resolveStageColors(
+              stage,
+              index,
+              activeIndex,
+              stageStates,
+            );
+            const status = stageStates?.[stage] ?? (index < activeIndex ? 'passed' : index === activeIndex ? 'current' : 'upcoming');
+            const isCurrent = index === activeIndex;
+            const isDone = status === 'passed';
+            const isBlocked = status === 'blocked';
+            const nextStage = stages[index + 1];
+
+            return (
+              <div key={stage} style={{ display: 'flex', alignItems: 'center', flex: '1 0 84px', minWidth: 84 }}>
+                <button
+                  type="button"
+                  onClick={() => handleStageClick(stage)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleStageClick(stage); }}
+                  aria-current={isCurrent ? 'step' : undefined}
+                  aria-label={`${stage} stage ${index + 1} of ${stages.length}${isCurrent ? ', current stage' : ''}`}
+                  style={{
+                    appearance: 'none',
+                    border: isCurrent ? `1px solid ${SHELL.INK}` : `1px solid ${SHELL.CARD_LINE}`,
+                    borderRadius: 14,
+                    background: isCurrent
+                      ? `linear-gradient(180deg, ${SHELL.CARD_WHITE} 0%, ${SHELL.PAPER} 100%)`
+                      : 'transparent',
+                    boxShadow: isCurrent ? '0 8px 20px rgba(12, 26, 58, 0.14)' : 'none',
+                    padding: isCurrent ? '5px 7px 6px' : '4px 4px',
+                    display: 'grid',
+                    justifyItems: 'center',
+                    gap: 4,
+                    minWidth: isCurrent ? 76 : 64,
+                    transform: isCurrent ? 'translateY(-1px)' : 'none',
+                    cursor: 'pointer',
+                    position: 'relative',
+                  }}
+                >
+                  {isCurrent && (
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: -9,
+                        borderRadius: 999,
+                        background: AMBER,
+                        color: SHELL.CARD_WHITE,
+                        padding: '2px 6px',
+                        fontFamily: SHELL.MONO,
+                        fontSize: 7,
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercase',
+                        fontWeight: 900,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      You are here
+                    </span>
+                  )}
+                  <span
+                    style={{
+                      width: isCurrent ? 24 : 18,
+                      height: isCurrent ? 24 : 18,
+                      borderRadius: 999,
+                      border: `2px solid ${pipColor}`,
+                      background: isDone ? pipColor : isCurrent ? SHELL.CARD_WHITE : isBlocked ? '#fff7ed' : SHELL.PAPER_SOFT,
+                      color: isDone ? SHELL.CARD_WHITE : pipColor,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontFamily: SHELL.MONO,
+                      fontSize: isCurrent ? 9 : 8,
+                      fontWeight: 900,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {isDone ? '✓' : index + 1}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: SHELL.MONO,
+                      fontSize: isCurrent ? 9 : 8,
+                      color: labelColor,
+                      fontWeight: isCurrent ? 900 : labelWeight,
+                      letterSpacing: '0.04em',
+                      lineHeight: 1,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {stage}
+                  </span>
+                </button>
+                {nextStage && (
+                  <div
+                    aria-hidden
+                    style={{
+                      height: 3,
+                      flex: '1 1 26px',
+                      minWidth: 18,
+                      borderRadius: 999,
+                      background: index < activeIndex ? SHELL.MINT_TEXT : SHELL.CARD_LINE,
+                      margin: '0 -1px',
+                    }}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
   }
 
   return (
