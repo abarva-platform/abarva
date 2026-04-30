@@ -51,6 +51,7 @@ export const P0_ORIGINATE: PhasePack = {
         'program-lifecycle-patterns.ts stage ids (for example PAT-PRG-CDP-001, ' +
         'PAT-PRG-AI-CODING-001, PAT-PRG-COPILOT-001, PAT-PRG-CC-AI-001, ' +
         'PAT-PRG-DATA-FAB-001). Free-text "AI initiative" is not classification.',
+      preventsFailureModes: [2, 4],
     },
     {
       id: 'value-hypothesis-seed',
@@ -62,6 +63,7 @@ export const P0_ORIGINATE: PhasePack = {
         'that can be tested later against baseline modules such as baseline_capture, ' +
         'program_modules, or Discovery artifacts. "$5M opportunity" without ' +
         'mechanism is not sufficient.',
+      preventsFailureModes: [2],
     },
     {
       id: 'sponsor-candidate-named',
@@ -71,6 +73,7 @@ export const P0_ORIGINATE: PhasePack = {
         'engagement_participants includes a real person candidate for sponsor or ' +
         'approver authority, or the seed explicitly names the executive expected ' +
         'to sign. Role labels like "CIO office" or "business" do not satisfy this.',
+      preventsFailureModes: [1],
     },
     {
       id: 'discovery-funding-envelope',
@@ -81,6 +84,7 @@ export const P0_ORIGINATE: PhasePack = {
         'states the budget/capacity/time box for Discovery. P0 can proceed with ' +
         'a soft flag if the envelope is provisional, but not if Discovery has no ' +
         'named capacity at all.',
+      preventsFailureModes: [10],
     },
     {
       id: 'initial-scope-boundary',
@@ -90,6 +94,7 @@ export const P0_ORIGINATE: PhasePack = {
         'Seed names the first cohort, channel, function, repository set, intent ' +
         'family, or consuming use case. "Enterprise-wide" or "all employees" ' +
         'without the first cohort is a smell that P1 will sprawl.',
+      preventsFailureModes: [2, 10],
     },
     {
       id: 'evidence-family-selected',
@@ -102,6 +107,7 @@ export const P0_ORIGINATE: PhasePack = {
         'time-spent baseline; contact-center AI requires intent inventory and ' +
         'automation baseline; data fabric requires source-system inventory and ' +
         'data-quality baseline.',
+      preventsFailureModes: [2],
     },
   ],
 
@@ -117,6 +123,7 @@ export const P0_ORIGINATE: PhasePack = {
         expectedAnswerShape:
           'A concrete event, pressure, renewal, board commitment, operational ' +
           'threshold, or customer-impact signal with a date or decision window.',
+        preventsFailureModes: [2, 10],
       },
       {
         id: 'who-is-the-first-cohort',
@@ -130,6 +137,7 @@ export const P0_ORIGINATE: PhasePack = {
         expectedAnswerShape:
           'One named cohort, function, intent family, repository set, channel, or ' +
           'consuming use case. "All teams" is not good enough for P0 close.',
+        preventsFailureModes: [2, 10],
       },
       {
         id: 'what-value-mechanism',
@@ -142,6 +150,7 @@ export const P0_ORIGINATE: PhasePack = {
           'Behavior change plus mechanism: fewer escalations, faster PR cycle, ' +
           'higher identity match rate, cleaner forecast consumption, lower ' +
           'oversharing exposure. A dollar number alone fails.',
+        preventsFailureModes: [2],
       },
       {
         id: 'who-can-say-no',
@@ -153,6 +162,7 @@ export const P0_ORIGINATE: PhasePack = {
         expectedAnswerShape:
           'Named executive and authority shape: budget, policy, operating model, ' +
           'vendor decision, stakeholder access. A committee is a warning sign.',
+        preventsFailureModes: [1],
       },
       {
         id: 'which-pattern-is-this',
@@ -165,6 +175,7 @@ export const P0_ORIGINATE: PhasePack = {
         expectedAnswerShape:
           'One primary pattern with the reason it fits, plus any uncertainty that ' +
           'P1 must resolve. Multiple patterns are allowed only with a declared lead pattern.',
+        preventsFailureModes: [2, 4],
       },
     ],
     converge: [
@@ -179,6 +190,7 @@ export const P0_ORIGINATE: PhasePack = {
         expectedAnswerShape:
           'For [cohort/use case], we believe [intervention/capability] will change ' +
           '[behavior] and move [metric direction] because [mechanism].',
+        preventsFailureModes: [2],
       },
       {
         id: 'classification-defense',
@@ -191,6 +203,7 @@ export const P0_ORIGINATE: PhasePack = {
           'A falsifier tied to evidence: e.g., no cross-channel identity problem, ' +
           'tool sprawl not material, oversharing already remediated, source-system ' +
           'quality not in scope, contact intents too low volume.',
+        preventsFailureModes: [2],
       },
       {
         id: 'discovery-capacity',
@@ -201,6 +214,7 @@ export const P0_ORIGINATE: PhasePack = {
           'permission to interview, inspect systems, and capture baselines.',
         expectedAnswerShape:
           'Named access commitments and time box. "We will find time" means P0 is not ready.',
+        preventsFailureModes: [4, 10],
       },
       {
         id: 'first-evidence-request',
@@ -213,6 +227,7 @@ export const P0_ORIGINATE: PhasePack = {
           'A specific evidence artifact: PR metrics export, SharePoint permission ' +
           'audit, IVR intent report, source-system inventory, RFM baseline, ' +
           'identity-overlap report, or similar.',
+        preventsFailureModes: [2],
       },
     ],
     close: [
@@ -226,6 +241,7 @@ export const P0_ORIGINATE: PhasePack = {
           'exercise. This question closes P0 into a handoff artifact.',
         expectedAnswerShape:
           'A compact packet with five named fields and no placeholders.',
+        preventsFailureModes: [2, 10],
       },
       {
         id: 'sponsor-calendar',
@@ -236,6 +252,7 @@ export const P0_ORIGINATE: PhasePack = {
           'known sponsor check-in to validate or kill the problem statement.',
         expectedAnswerShape:
           'Specific meeting or cadence. "Ad hoc" is a soft fail and should be flagged.',
+        preventsFailureModes: [1],
       },
       {
         id: 'stop-condition-for-discovery',
@@ -247,6 +264,7 @@ export const P0_ORIGINATE: PhasePack = {
         expectedAnswerShape:
           'A measurable or observable stop condition tied to problem severity, ' +
           'baseline size, sponsor authority, or access constraints.',
+        preventsFailureModes: [10],
       },
     ],
   },
@@ -265,6 +283,7 @@ export const P0_ORIGINATE: PhasePack = {
       mitigation:
         'Force one cohort/use case and one value mechanism. Convert the slogan ' +
         'into a falsifiable hypothesis before discussing solutions.',
+      preventsFailureModes: [2, 10],
     },
     {
       id: 'enthusiast-without-authority',
@@ -279,6 +298,7 @@ export const P0_ORIGINATE: PhasePack = {
       mitigation:
         'Name the sponsor candidate and the exact decision right they hold. If ' +
         'authority is uncertain, make sponsor validation the first P1 work item.',
+      preventsFailureModes: [1],
     },
     {
       id: 'funding-before-hypothesis',
@@ -292,6 +312,7 @@ export const P0_ORIGINATE: PhasePack = {
       mitigation:
         'Backfill the hypothesis seed before Discovery starts. P1 should validate ' +
         'whether the funded motion has a real problem, not assume it does.',
+      preventsFailureModes: [2, 10],
     },
     {
       id: 'pattern-shopping',
@@ -305,6 +326,7 @@ export const P0_ORIGINATE: PhasePack = {
       mitigation:
         'Pick one lead pattern and name falsifiers. P1 can reclassify if evidence ' +
         'contradicts the assumption.',
+      preventsFailureModes: [2],
     },
     {
       id: 'enterprise-wide-first',
@@ -318,6 +340,7 @@ export const P0_ORIGINATE: PhasePack = {
       mitigation:
         'Name the first cohort, channel, repository set, intent family, or ' +
         'consuming use case. Treat broader rollout as P5 expansion, not P0 scope.',
+      preventsFailureModes: [2, 10],
     },
     {
       id: 'vendor-demo-origin',
@@ -331,6 +354,7 @@ export const P0_ORIGINATE: PhasePack = {
       mitigation:
         'Restate the hypothesis in problem language and make vendor claims ' +
         'explicit assumptions for P1 evidence checks.',
+      preventsFailureModes: [2],
     },
   ],
 
@@ -365,4 +389,111 @@ export const P0_ORIGINATE: PhasePack = {
       'Discovery stop condition - P1 can recommend no-go instead of manufacturing Synthesis work',
     ],
   },
+
+  steps: [
+    {
+      id: 'p0-trigger-and-window',
+      label: 'Capture what triggered the program now and the decision window',
+      complexity: 'simple',
+      agentRole: 'extract',
+      inputs: [],
+      outputs: ['program_trigger_note'],
+      templateRefs: [],
+      preventsFailureModes: [2],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+    {
+      id: 'p0-first-cohort',
+      label: 'Name the first cohort or use case',
+      complexity: 'simple',
+      agentRole: 'validate',
+      inputs: ['program_trigger_note'],
+      outputs: ['initial-scope-boundary'],
+      templateRefs: [],
+      preventsFailureModes: [2, 10],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+    {
+      id: 'p0-value-hypothesis',
+      label:
+        'Compose the value hypothesis seed (cohort × behavior × mechanism × direction)',
+      complexity: 'complex',
+      agentRole: 'coach_workshop',
+      inputs: ['program_trigger_note', 'initial-scope-boundary'],
+      outputs: ['value-hypothesis-seed'],
+      templateRefs: [],
+      preventsFailureModes: [2],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: false,
+    },
+    {
+      id: 'p0-sponsor-candidate',
+      label: 'Identify a real sponsor candidate with authority via sponsor 1:1',
+      complexity: 'complex',
+      agentRole: 'coach_interview',
+      inputs: ['value-hypothesis-seed'],
+      outputs: ['sponsor-candidate-named'],
+      templateRefs: [],
+      preventsFailureModes: [1],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+    {
+      id: 'p0-pattern-classification',
+      label: 'Select the pattern / archetype for the program',
+      complexity: 'simple',
+      agentRole: 'validate',
+      inputs: ['value-hypothesis-seed', 'initial-scope-boundary'],
+      outputs: ['program-seed-recorded'],
+      templateRefs: [],
+      preventsFailureModes: [2],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+    {
+      id: 'p0-discovery-envelope',
+      label: 'State Discovery funding / capacity / time-box',
+      complexity: 'simple',
+      agentRole: 'extract',
+      inputs: ['program-seed-recorded'],
+      outputs: ['discovery-funding-envelope'],
+      templateRefs: [],
+      preventsFailureModes: [10],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+    {
+      id: 'p0-evidence-family',
+      label: 'Confirm which Discovery evidence family P1 will collect',
+      complexity: 'simple',
+      agentRole: 'validate',
+      inputs: ['program-seed-recorded'],
+      outputs: ['evidence-family-selected'],
+      templateRefs: [],
+      preventsFailureModes: [2, 3],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+    {
+      id: 'p0-submit-for-approval',
+      label: 'Submit the brief to Tenant Admin for approval',
+      complexity: 'simple',
+      agentRole: 'request_approval',
+      inputs: [
+        'program-seed-recorded',
+        'value-hypothesis-seed',
+        'sponsor-candidate-named',
+        'initial-scope-boundary',
+        'discovery-funding-envelope',
+        'evidence-family-selected',
+      ],
+      outputs: [],
+      templateRefs: [],
+      preventsFailureModes: [10],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+  ],
 };

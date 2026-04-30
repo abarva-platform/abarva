@@ -86,6 +86,7 @@ export interface PhaseEvidenceItem {
   severity: 'hard' | 'soft';
   /** How Nexus knows this evidence exists — not the criterion itself. */
   evaluationHint: string;
+  preventsFailureModes?: number[];
 }
 
 /** A single question Nexus should drive toward. Sequenced by arc. */
@@ -97,6 +98,7 @@ export interface PhaseQuestion {
   why: string;
   /** Optional shape of a "good enough" answer — helps Nexus judge sufficiency. */
   expectedAnswerShape?: string;
+  preventsFailureModes?: number[];
 }
 
 /** A failure mode Nexus must surface proactively when the signal appears. */
@@ -110,6 +112,7 @@ export interface PhaseAntiPattern {
   whatToFlag: string;
   /** What to redirect the conversation toward. */
   mitigation: string;
+  preventsFailureModes?: number[];
 }
 
 /** Posture changes across the phase — entry / mid / exit. */
