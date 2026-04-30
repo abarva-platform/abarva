@@ -4,6 +4,9 @@ This Build Pack is the source of truth for **AbarVa Source**.
 
 Codex must read [CYCLE_STATE.md](/Users/anand/Projects/nexus/CYCLE_STATE.md) first for live operating state, then this file before reading any other file in [docs/abarva-source/build-pack](/Users/anand/Projects/nexus/docs/abarva-source/build-pack).
 
+The canonical Source / Outsourcing experience design reference for technology
+and IT sourcing is [SOURCE_SOURCING_EXPERIENCE_DESIGN_BLUEPRINT.md](/Users/anand/Projects/nexus/docs/abarva-source/SOURCE_SOURCING_EXPERIENCE_DESIGN_BLUEPRINT.md).
+
 ## What AbarVa Source Is
 
 AbarVa Source is an AI-led sourcing and vendor-selection workflow product inside the broader AbarVa platform.
