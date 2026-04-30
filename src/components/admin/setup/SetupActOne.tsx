@@ -17,7 +17,8 @@ import type {
   ActOneFact,
   InventorySegmentRollup,
 } from '@/lib/admin/setup-acts-registry';
-import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
+import { COLORS, RADIUS, SPACING } from '@/lib/design/design-tokens';
+import { SHELL } from '@/lib/shell/shell-tokens';
 
 export interface SetupActOneProps {
   facts: ActOneFact[];
@@ -29,8 +30,8 @@ export function SetupActOne({ facts, segmentRollups }: SetupActOneProps) {
     <section
       data-testid="admin-setup-act-one"
       style={{
-        background: COLORS.white,
-        border: `1px solid ${COLORS.ink}11`,
+        background: SHELL.CARD_WHITE,
+        border: `1px solid ${SHELL.CARD_LINE_SOFT}`,
         borderRadius: RADIUS.lg,
         padding: SPACING.xl,
         display: 'flex',
@@ -80,7 +81,7 @@ export function SetupActOne({ facts, segmentRollups }: SetupActOneProps) {
           <h3
             style={{
               margin: 0,
-              fontFamily: TYPOGRAPHY.sans,
+              fontFamily: SHELL.SANS,
               fontSize: 12,
               letterSpacing: '0.12em',
               textTransform: 'uppercase',
@@ -117,8 +118,8 @@ function FactCard({ fact }: { fact: ActOneFact }) {
       role="listitem"
       data-testid={`admin-setup-fact-${fact.factType}`}
       style={{
-        background: COLORS.cream,
-        border: `1px solid ${COLORS.ink}11`,
+        background: SHELL.PAPER_SOFT,
+        border: `1px solid ${SHELL.CARD_LINE_SOFT}`,
         borderRadius: RADIUS.md,
         padding: SPACING.md,
         display: 'flex',
@@ -129,7 +130,7 @@ function FactCard({ fact }: { fact: ActOneFact }) {
       <p
         style={{
           margin: 0,
-          fontFamily: TYPOGRAPHY.mono,
+          fontFamily: SHELL.MONO,
           fontSize: 10,
           letterSpacing: '0.1em',
           color: COLORS.navy,
@@ -141,10 +142,10 @@ function FactCard({ fact }: { fact: ActOneFact }) {
       <p
         style={{
           margin: 0,
-          fontFamily: TYPOGRAPHY.sans,
+          fontFamily: SHELL.SANS,
           fontSize: 14,
           lineHeight: 1.5,
-          color: COLORS.ink,
+          color: SHELL.INK,
         }}
       >
         {fact.value}
@@ -152,9 +153,9 @@ function FactCard({ fact }: { fact: ActOneFact }) {
       <p
         style={{
           margin: `${SPACING.xs} 0 0`,
-          fontFamily: TYPOGRAPHY.mono,
+          fontFamily: SHELL.MONO,
           fontSize: 10,
-          color: `${COLORS.ink}88`,
+          color: SHELL.INK_MUTED,
         }}
       >
         Source: segment {fact.sourceSegmentId} · {fact.sourceSegmentName} ·{' '}
@@ -193,9 +194,9 @@ function SegmentRollupCard({ segment }: { segment: InventorySegmentRollup }) {
         <p
           style={{
             margin: 0,
-            fontFamily: TYPOGRAPHY.sans,
+            fontFamily: SHELL.SANS,
             fontSize: 13,
-            color: COLORS.ink,
+            color: SHELL.INK,
             fontWeight: 600,
           }}
         >
@@ -205,7 +206,7 @@ function SegmentRollupCard({ segment }: { segment: InventorySegmentRollup }) {
         <p
           style={{
             margin: 0,
-            fontFamily: TYPOGRAPHY.mono,
+            fontFamily: SHELL.MONO,
             fontSize: 10,
             color: tone.text,
             fontWeight: 700,
@@ -219,9 +220,9 @@ function SegmentRollupCard({ segment }: { segment: InventorySegmentRollup }) {
       <p
         style={{
           margin: 0,
-          fontFamily: TYPOGRAPHY.mono,
+          fontFamily: SHELL.MONO,
           fontSize: 11,
-          color: `${COLORS.ink}aa`,
+          color: SHELL.INK_SOFT,
         }}
       >
         {segment.recordCount.toLocaleString()} record
@@ -269,9 +270,9 @@ function healthTone(healthState: string): HealthTone {
       };
     default:
       return {
-        background: COLORS.cream,
-        border: `${COLORS.ink}11`,
-        text: `${COLORS.ink}88`,
+        background: SHELL.GRAY_BG,
+        border: SHELL.CARD_LINE_SOFT,
+        text: SHELL.INK_MUTED,
       };
   }
 }
@@ -290,7 +291,7 @@ function ActHeader({
       <p
         style={{
           margin: 0,
-          fontFamily: TYPOGRAPHY.sans,
+          fontFamily: SHELL.SANS,
           fontSize: 11,
           letterSpacing: '0.12em',
           textTransform: 'uppercase',
@@ -303,9 +304,9 @@ function ActHeader({
       <h2
         style={{
           margin: 0,
-          fontFamily: TYPOGRAPHY.serif,
+          fontFamily: SHELL.SERIF,
           fontSize: 28,
-          color: COLORS.ink,
+          color: SHELL.INK,
           fontWeight: 700,
           letterSpacing: '-0.01em',
         }}
@@ -315,9 +316,9 @@ function ActHeader({
       <p
         style={{
           margin: 0,
-          fontFamily: TYPOGRAPHY.sans,
+          fontFamily: SHELL.SANS,
           fontSize: 14,
-          color: `${COLORS.ink}aa`,
+          color: SHELL.INK_SOFT,
           lineHeight: 1.5,
           maxWidth: '720px',
         }}
@@ -334,9 +335,9 @@ function EmptyState({ message }: { message: string }) {
       data-testid="admin-setup-empty"
       style={{
         margin: 0,
-        fontFamily: TYPOGRAPHY.sans,
+        fontFamily: SHELL.SANS,
         fontSize: 14,
-        color: `${COLORS.ink}aa`,
+        color: SHELL.INK_SOFT,
         fontStyle: 'italic',
       }}
     >

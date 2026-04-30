@@ -33,8 +33,12 @@ describe('Gate rule sequence · pure logic', () => {
   it('GATE_RULES covers all adjacent-phase transitions', async () => {
     const { findGateRule } = await import('@/lib/programs/governance');
 
-    // P0→P1 has no formal gate rule (no governance entry)
-    expect(findGateRule(0, 1)).toBeNull();
+    // P0→P1 exists as a soft kickoff gate so approved programs can leave setup
+    // without tripping a no-rule blocker.
+    const r01 = findGateRule(0, 1);
+    expect(r01).not.toBeNull();
+    expect(r01!.hard).toBe(false);
+    expect(r01!.checks.some((c) => c.key === 'sponsor_assigned')).toBe(true);
 
     // P1→P2 exists but is soft-only
     const r12 = findGateRule(1, 2);

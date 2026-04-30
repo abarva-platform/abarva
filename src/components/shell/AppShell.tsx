@@ -34,6 +34,7 @@ interface AppShellProps {
    * `false` when omitted.
    */
   hasTenantKey?: boolean;
+  agentName?: string;
   middleStrip?: ReactNode;
   /**
    * PR-L · structured-artifact dispatcher passed through to
@@ -51,6 +52,7 @@ export function AppShell({
   surfaceContext,
   topBarProps,
   hasTenantKey = false,
+  agentName,
   middleStrip,
   onArtifact,
   children,
@@ -98,6 +100,7 @@ export function AppShell({
           hasTenantKey={hasTenantKey}
           stage={stage ?? null}
           surfaceContext={surfaceContext ?? {}}
+          agentName={agentName}
           onArtifact={onArtifact}
         >
           <div

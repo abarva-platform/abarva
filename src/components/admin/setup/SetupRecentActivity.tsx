@@ -8,7 +8,8 @@
  */
 
 import type { SetupActivityEvent } from '@/lib/admin/setup-acts-registry';
-import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
+import { COLORS, RADIUS, SPACING } from '@/lib/design/design-tokens';
+import { SHELL } from '@/lib/shell/shell-tokens';
 
 import { SetupActHeader } from './SetupActOne';
 
@@ -21,8 +22,8 @@ export function SetupRecentActivity({ events }: SetupRecentActivityProps) {
     <section
       data-testid="admin-setup-activity"
       style={{
-        background: COLORS.white,
-        border: `1px solid ${COLORS.ink}11`,
+        background: SHELL.CARD_WHITE,
+        border: `1px solid ${SHELL.CARD_LINE_SOFT}`,
         borderRadius: RADIUS.lg,
         padding: SPACING.xl,
         display: 'flex',
@@ -40,9 +41,9 @@ export function SetupRecentActivity({ events }: SetupRecentActivityProps) {
           data-testid="admin-setup-empty"
           style={{
             margin: 0,
-            fontFamily: TYPOGRAPHY.sans,
+            fontFamily: SHELL.SANS,
             fontSize: 14,
-            color: `${COLORS.ink}aa`,
+            color: SHELL.INK_SOFT,
             fontStyle: 'italic',
           }}
         >
@@ -70,14 +71,14 @@ export function SetupRecentActivity({ events }: SetupRecentActivityProps) {
                 gridTemplateColumns: '120px 1fr 100px',
                 gap: SPACING.sm,
                 paddingBottom: SPACING.sm,
-                borderBottom: i === events.length - 1 ? 'none' : `1px solid ${COLORS.ink}0d`,
+                borderBottom: i === events.length - 1 ? 'none' : `1px solid ${SHELL.CARD_LINE_SOFT}`,
                 alignItems: 'baseline',
               }}
             >
               <p
                 style={{
                   margin: 0,
-                  fontFamily: TYPOGRAPHY.mono,
+                  fontFamily: SHELL.MONO,
                   fontSize: 11,
                   color: COLORS.navy,
                   fontWeight: 600,
@@ -91,9 +92,9 @@ export function SetupRecentActivity({ events }: SetupRecentActivityProps) {
               <p
                 style={{
                   margin: 0,
-                  fontFamily: TYPOGRAPHY.sans,
+                  fontFamily: SHELL.SANS,
                   fontSize: 13,
-                  color: COLORS.ink,
+                  color: SHELL.INK,
                   lineHeight: 1.45,
                 }}
               >
@@ -102,9 +103,9 @@ export function SetupRecentActivity({ events }: SetupRecentActivityProps) {
               <p
                 style={{
                   margin: 0,
-                  fontFamily: TYPOGRAPHY.mono,
+                  fontFamily: SHELL.MONO,
                   fontSize: 10,
-                  color: `${COLORS.ink}88`,
+                  color: SHELL.INK_MUTED,
                   textAlign: 'right',
                   whiteSpace: 'nowrap',
                 }}

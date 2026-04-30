@@ -16,7 +16,8 @@
 import Link from 'next/link';
 
 import type { CrossProgramSignal, SignalSeverityBucket } from '@/lib/admin/setup-data-broker';
-import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
+import { COLORS, RADIUS, SPACING } from '@/lib/design/design-tokens';
+import { SHELL } from '@/lib/shell/shell-tokens';
 import { EditorialCanvas } from '@/components/admin/EditorialCanvas';
 
 export interface CrossProgramSignalsPanelProps {
@@ -44,7 +45,7 @@ export function CrossProgramSignalsPanel({
           data-testid="admin-xprog-breadcrumb"
           style={{
             color: COLORS.navy,
-            fontFamily: TYPOGRAPHY.sans,
+            fontFamily: SHELL.SANS,
             fontSize: 12,
             fontWeight: 600,
             textDecoration: 'none',
@@ -123,7 +124,7 @@ function SeverityGroup({
       <h2
         style={{
           margin: 0,
-          fontFamily: TYPOGRAPHY.sans,
+          fontFamily: SHELL.SANS,
           fontSize: 12,
           letterSpacing: '0.12em',
           textTransform: 'uppercase',
@@ -159,7 +160,7 @@ function SignalCard({ signal }: { signal: CrossProgramSignal }) {
       role="listitem"
       data-testid={`admin-xprog-signal-${signal.signalId}`}
       style={{
-        background: COLORS.white,
+        background: SHELL.CARD_WHITE,
         border: `1px solid ${tone.border}`,
         borderLeft: `3px solid ${tone.accent}`,
         borderRadius: RADIUS.md,
@@ -181,9 +182,9 @@ function SignalCard({ signal }: { signal: CrossProgramSignal }) {
         <p
           style={{
             margin: 0,
-            fontFamily: TYPOGRAPHY.serif,
+            fontFamily: SHELL.SERIF,
             fontSize: 18,
-            color: COLORS.ink,
+            color: SHELL.INK,
             lineHeight: 1.4,
             fontWeight: 600,
           }}
@@ -196,9 +197,9 @@ function SignalCard({ signal }: { signal: CrossProgramSignal }) {
         <p
           style={{
             margin: 0,
-            fontFamily: TYPOGRAPHY.sans,
+            fontFamily: SHELL.SANS,
             fontSize: 13,
-            color: `${COLORS.ink}cc`,
+            color: SHELL.INK_SOFT,
             lineHeight: 1.55,
           }}
         >
@@ -217,7 +218,7 @@ function SignalCard({ signal }: { signal: CrossProgramSignal }) {
           <p
             style={{
               margin: 0,
-              fontFamily: TYPOGRAPHY.mono,
+              fontFamily: SHELL.MONO,
               fontSize: 10,
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
@@ -230,9 +231,9 @@ function SignalCard({ signal }: { signal: CrossProgramSignal }) {
           <p
             style={{
               margin: `${SPACING.xs} 0 0`,
-              fontFamily: TYPOGRAPHY.sans,
+              fontFamily: SHELL.SANS,
               fontSize: 13,
-              color: COLORS.ink,
+              color: SHELL.INK,
               lineHeight: 1.5,
             }}
           >
@@ -246,9 +247,9 @@ function SignalCard({ signal }: { signal: CrossProgramSignal }) {
           gap: SPACING.md,
           flexWrap: 'wrap',
           alignItems: 'baseline',
-          fontFamily: TYPOGRAPHY.mono,
+          fontFamily: SHELL.MONO,
           fontSize: 11,
-          color: `${COLORS.ink}99`,
+          color: SHELL.INK_MUTED,
         }}
       >
         <span>Type: {signal.signalType.replace(/_/g, ' ')}</span>
@@ -295,7 +296,7 @@ function SeverityPill({
         background: tone.background,
         color: tone.text,
         borderRadius: RADIUS.pill,
-        fontFamily: TYPOGRAPHY.mono,
+        fontFamily: SHELL.MONO,
         fontSize: 10,
         fontWeight: 700,
         textTransform: 'uppercase',
@@ -345,10 +346,10 @@ function groupTone(bucket: SignalSeverityBucket): {
       };
     case 'unknown':
       return {
-        background: COLORS.cream,
-        border: `${COLORS.ink}22`,
-        accent: `${COLORS.ink}55`,
-        text: `${COLORS.ink}99`,
+        background: SHELL.GRAY_BG,
+        border: SHELL.CARD_LINE,
+        accent: SHELL.INK_MUTED,
+        text: SHELL.INK_MUTED,
       };
   }
 }
@@ -358,8 +359,8 @@ function EmptyState() {
     <section
       data-testid="admin-xprog-empty"
       style={{
-        background: COLORS.white,
-        border: `1px dashed ${COLORS.ink}33`,
+        background: SHELL.CARD_WHITE,
+        border: `1px dashed ${SHELL.CARD_LINE}`,
         borderRadius: RADIUS.lg,
         padding: SPACING.xl,
         textAlign: 'center',
@@ -368,9 +369,9 @@ function EmptyState() {
       <p
         style={{
           margin: 0,
-          fontFamily: TYPOGRAPHY.serif,
+          fontFamily: SHELL.SERIF,
           fontSize: 18,
-          color: COLORS.ink,
+          color: SHELL.INK,
           lineHeight: 1.4,
         }}
       >
@@ -379,9 +380,9 @@ function EmptyState() {
       <p
         style={{
           margin: `${SPACING.sm} 0 0`,
-          fontFamily: TYPOGRAPHY.sans,
+          fontFamily: SHELL.SANS,
           fontSize: 13,
-          color: `${COLORS.ink}aa`,
+          color: SHELL.INK_SOFT,
           maxWidth: '520px',
           marginLeft: 'auto',
           marginRight: 'auto',

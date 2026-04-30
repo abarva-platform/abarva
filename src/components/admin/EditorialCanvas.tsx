@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { COLORS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
+import { COLORS, SPACING } from '@/lib/design/design-tokens';
+import { SHELL } from '@/lib/shell/shell-tokens';
 
 export interface EditorialCanvasProps {
   eyebrow: string;
@@ -14,7 +15,7 @@ export function EditorialCanvas({ eyebrow, title, subtitle, children }: Editoria
       style={{
         flex: 1,
         padding: `${SPACING.xl} ${SPACING.xxl}`,
-        background: COLORS.cream,
+        background: SHELL.PAPER,
         minWidth: 0,
         display: 'flex',
         flexDirection: 'column',
@@ -24,7 +25,7 @@ export function EditorialCanvas({ eyebrow, title, subtitle, children }: Editoria
       <header>
         <p
           style={{
-            fontFamily: TYPOGRAPHY.sans,
+            fontFamily: SHELL.SANS,
             fontSize: 11,
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
@@ -37,10 +38,10 @@ export function EditorialCanvas({ eyebrow, title, subtitle, children }: Editoria
         </p>
         <h1
           style={{
-            fontFamily: TYPOGRAPHY.serif,
+            fontFamily: SHELL.SERIF,
             fontSize: 56,
             fontWeight: 700,
-            color: COLORS.ink,
+            color: SHELL.INK,
             margin: '8px 0 0',
             letterSpacing: '-0.02em',
             lineHeight: 1.05,
@@ -51,9 +52,9 @@ export function EditorialCanvas({ eyebrow, title, subtitle, children }: Editoria
         {subtitle ? (
           <p
             style={{
-              fontFamily: TYPOGRAPHY.sans,
+              fontFamily: SHELL.SANS,
               fontSize: 15,
-              color: `${COLORS.ink}aa`,
+              color: SHELL.INK_SOFT,
               marginTop: SPACING.md,
               lineHeight: 1.5,
               maxWidth: '720px',

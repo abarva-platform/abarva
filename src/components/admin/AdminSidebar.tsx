@@ -2,14 +2,10 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { ADMIN_SUB_SECTIONS, LIVE_CAVEAT_TEXT } from '@/lib/admin/admin-shell-config';
-import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
+import { COLORS, RADIUS, SPACING } from '@/lib/design/design-tokens';
+import { SHELL } from '@/lib/shell/shell-tokens';
 
 export interface AdminSidebarProps {
-  /**
-   * Number of high-severity portfolio alerts for the Reasoning section.
-   * When > 0 a red count badge is shown next to the "Reasoning" nav item.
-   * Pass 0 (or omit) to suppress the badge.
-   */
   reasoningAlertCount?: number;
 }
 
@@ -20,27 +16,26 @@ export function AdminSidebar({ reasoningAlertCount = 0 }: AdminSidebarProps) {
     <aside
       style={{
         width: '280px',
-        background: COLORS.cream,
-        borderRight: `1px solid ${COLORS.ink}10`,
+        background: SHELL.CARD_WHITE,
+        borderRight: `1px solid ${SHELL.CARD_LINE_SOFT}`,
         padding: SPACING.lg,
         display: 'flex',
         flexDirection: 'column',
         gap: SPACING.md,
+        overflowY: 'auto',
       }}
     >
       <header style={{ marginBottom: SPACING.md }}>
-        <h2 style={{ fontFamily: TYPOGRAPHY.serif, fontSize: 24, color: COLORS.ink, margin: 0 }}>
+        <h2 style={{ fontFamily: SHELL.SERIF, fontSize: 20, color: SHELL.INK, margin: 0, fontWeight: 600 }}>
           Setup / Admin
         </h2>
-        <p style={{ fontFamily: TYPOGRAPHY.sans, fontSize: 13, color: `${COLORS.ink}99`, marginTop: 8, lineHeight: 1.5 }}>
+        <p style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK_SOFT, marginTop: 6, lineHeight: 1.5 }}>
           Steward-led control plane for tenant setup, data trust, access, readiness and architecture.
         </p>
       </header>
 
       <nav style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         {ADMIN_SUB_SECTIONS.map((section) => {
-          // For sections with sub-pages (e.g. /admin/reasoning/*) use prefix
-          // matching; for leaf sections use exact match to avoid false positives.
           const isActive =
             section.id === 'reasoning'
               ? pathname === section.href || pathname.startsWith(section.href + '/')
@@ -57,9 +52,9 @@ export function AdminSidebar({ reasoningAlertCount = 0 }: AdminSidebarProps) {
                 padding: `${SPACING.sm} ${SPACING.md}`,
                 borderRadius: RADIUS.md,
                 background: isActive ? COLORS.skyPale : 'transparent',
-                color: COLORS.ink,
+                color: SHELL.INK,
                 textDecoration: 'none',
-                fontFamily: TYPOGRAPHY.sans,
+                fontFamily: SHELL.SANS,
                 position: 'relative',
               }}
               aria-current={isActive ? 'page' : undefined}
@@ -77,8 +72,8 @@ export function AdminSidebar({ reasoningAlertCount = 0 }: AdminSidebarProps) {
                       height: 18,
                       borderRadius: '999px',
                       background: COLORS.coralInk,
-                      color: COLORS.white,
-                      fontFamily: TYPOGRAPHY.sans,
+                      color: '#fff',
+                      fontFamily: SHELL.SANS,
                       fontSize: 10,
                       fontWeight: 700,
                       lineHeight: 1,
@@ -90,7 +85,7 @@ export function AdminSidebar({ reasoningAlertCount = 0 }: AdminSidebarProps) {
                   </span>
                 )}
               </div>
-              <div style={{ fontSize: 11, color: `${COLORS.ink}70`, marginTop: 2 }}>{section.subtitle}</div>
+              <div style={{ fontSize: 11, color: SHELL.INK_MUTED, marginTop: 2 }}>{section.subtitle}</div>
             </Link>
           );
         })}
@@ -102,7 +97,7 @@ export function AdminSidebar({ reasoningAlertCount = 0 }: AdminSidebarProps) {
             padding: SPACING.md,
             background: COLORS.amberSoft,
             borderRadius: RADIUS.md,
-            fontFamily: TYPOGRAPHY.sans,
+            fontFamily: SHELL.SANS,
             fontSize: 12,
             color: COLORS.amberInk,
           }}

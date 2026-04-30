@@ -10,7 +10,8 @@
  * (records, segments) inline.
  */
 
-import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
+import { COLORS, RADIUS, SPACING } from '@/lib/design/design-tokens';
+import { SHELL } from '@/lib/shell/shell-tokens';
 
 export interface SetupSentinelOpenerProps {
   tenantDisplayName: string;
@@ -38,8 +39,8 @@ export function SetupSentinelOpener({
     <section
       data-testid="admin-setup-sentinel-opener"
       style={{
-        background: COLORS.white,
-        border: `1px solid ${COLORS.ink}11`,
+        background: SHELL.CARD_WHITE,
+        border: `1px solid ${SHELL.CARD_LINE_SOFT}`,
         borderRadius: RADIUS.lg,
         padding: SPACING.xl,
         display: 'flex',
@@ -58,7 +59,7 @@ export function SetupSentinelOpener({
         <p
           style={{
             margin: 0,
-            fontFamily: TYPOGRAPHY.sans,
+            fontFamily: SHELL.SANS,
             fontSize: 11,
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
@@ -72,9 +73,9 @@ export function SetupSentinelOpener({
           <p
             style={{
               margin: 0,
-              fontFamily: TYPOGRAPHY.mono,
+              fontFamily: SHELL.MONO,
               fontSize: 11,
-              color: `${COLORS.ink}99`,
+              color: SHELL.INK_MUTED,
             }}
             data-testid="admin-setup-last-refreshed"
           >
@@ -86,10 +87,10 @@ export function SetupSentinelOpener({
       <p
         style={{
           margin: 0,
-          fontFamily: TYPOGRAPHY.serif,
+          fontFamily: SHELL.SERIF,
           fontSize: 22,
           lineHeight: 1.45,
-          color: COLORS.ink,
+          color: SHELL.INK,
         }}
         data-testid="admin-setup-opener-prose"
       >
@@ -103,7 +104,7 @@ export function SetupSentinelOpener({
           flexWrap: 'wrap',
           marginTop: SPACING.sm,
           paddingTop: SPACING.md,
-          borderTop: `1px solid ${COLORS.ink}11`,
+          borderTop: `1px solid ${SHELL.CARD_LINE_SOFT}`,
         }}
         role="list"
         aria-label="Setup summary metrics"
@@ -146,11 +147,11 @@ function SummaryCount({
       <p
         style={{
           margin: 0,
-          fontFamily: TYPOGRAPHY.sans,
+          fontFamily: SHELL.SANS,
           fontSize: 11,
           letterSpacing: '0.1em',
           textTransform: 'uppercase',
-          color: `${COLORS.ink}99`,
+          color: SHELL.INK_MUTED,
           fontWeight: 600,
         }}
       >
@@ -159,10 +160,10 @@ function SummaryCount({
       <p
         style={{
           margin: 0,
-          fontFamily: TYPOGRAPHY.serif,
+          fontFamily: SHELL.SERIF,
           fontSize: 28,
           lineHeight: 1,
-          color: COLORS.ink,
+          color: SHELL.INK,
           fontWeight: 600,
         }}
       >
