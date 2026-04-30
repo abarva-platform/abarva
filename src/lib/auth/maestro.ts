@@ -10,7 +10,7 @@ function getClerkPersonId(user: Awaited<ReturnType<typeof currentUser>>): string
   return typeof candidate === 'string' && candidate.length > 0 ? candidate : null;
 }
 
-function getEmailLookupCandidates(email: string | null): string[] {
+export function getEmailLookupCandidates(email: string | null): string[] {
   if (!email) return [];
 
   const normalized = email.trim().toLowerCase();
@@ -28,6 +28,17 @@ function getEmailLookupCandidates(email: string | null): string[] {
   }
 
   return Array.from(new Set(candidates));
+}
+
+export function personMatchesClerkEmail(
+  person: Pick<PersonRow, 'email'> | null,
+  emailCandidates: string[],
+): boolean {
+  if (!person) return false;
+  if (emailCandidates.length === 0) return true;
+  const personEmail = person.email?.trim().toLowerCase();
+  if (!personEmail) return true;
+  return emailCandidates.includes(personEmail);
 }
 
 async function getPersonById(personId: string): Promise<PersonRow | null> {
@@ -81,8 +92,10 @@ export async function getCurrentPerson(): Promise<PersonRow | null> {
     return personCache.person;
   }
 
-  const person = (personId ? await getPersonById(personId) : null)
-    ?? (await getPersonByEmailCandidates(emailCandidates));
+  const personFromMetadata = personId ? await getPersonById(personId) : null;
+  const person = personMatchesClerkEmail(personFromMetadata, emailCandidates)
+    ? personFromMetadata
+    : await getPersonByEmailCandidates(emailCandidates);
 
   if (!person) return null;
   personCache = { key: cacheKey, person, expires: Date.now() + 60_000 };
