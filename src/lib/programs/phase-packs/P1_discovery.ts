@@ -421,4 +421,129 @@ export const P1_DISCOVERY: PhasePack = {
       'Option dimensions surfaced by Discovery - P2 turns them into target-state alternatives and trade-offs',
     ],
   },
+
+  steps: [
+    // Continuity step. Tagged [2] because the P0 handoff carries the value-
+    // hypothesis seed forward; without ingestion P1 would relitigate problem
+    // definition (failure mode #2) instead of testing it.
+    {
+      id: 'p1-handoff-ingest',
+      label: 'Confirm P0 handoff received and active',
+      complexity: 'simple',
+      agentRole: 'extract',
+      inputs: [],
+      outputs: ['p0-seed-ingested'],
+      templateRefs: [],
+      preventsFailureModes: [2],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+    // Output `current-state-system-of-record` is a `rightQuestions.open` id,
+    // not a DoD id. Kept as the step output to make the DAG legible to readers
+    // (data discovery produces the system-of-record before baseline capture
+    // can sample it); the closest hard DoD item this step ultimately feeds is
+    // `okr-baseline-captured`, which is captured by the next step.
+    {
+      id: 'p1-data-discovery',
+      label: 'Identify data sources / system-of-record / ownership / accessibility',
+      complexity: 'complex',
+      agentRole: 'coach_workshop',
+      inputs: ['p0-seed-ingested'],
+      outputs: ['current-state-system-of-record'],
+      templateRefs: [],
+      preventsFailureModes: [3],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+    {
+      id: 'p1-baseline-capture',
+      label: 'Capture OKR baseline (archetype-parameterized metric)',
+      complexity: 'complex',
+      agentRole: 'coach_baseline',
+      inputs: ['current-state-system-of-record'],
+      outputs: ['okr-baseline-captured'],
+      templateRefs: [],
+      preventsFailureModes: [9],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+    // Stakeholder mapping is interview-driven (coach_interview is the dominant
+    // role) but treated as complex per the slice spec because each 1:1 has its
+    // own intent capture and post-interview upload.
+    {
+      id: 'p1-stakeholder-mapping',
+      label: 'Identify and validate full stakeholder map',
+      complexity: 'complex',
+      agentRole: 'coach_interview',
+      inputs: ['p0-seed-ingested'],
+      outputs: ['stakeholder-map-named'],
+      templateRefs: [],
+      preventsFailureModes: [1, 4],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+    {
+      id: 'p1-root-cause-synthesis',
+      label:
+        'Synthesize root causes from evidence into validated problem statement',
+      complexity: 'complex',
+      agentRole: 'coach_workshop',
+      inputs: ['okr-baseline-captured', 'stakeholder-map-named'],
+      outputs: ['validated-problem-statement'],
+      templateRefs: [],
+      preventsFailureModes: [2],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+    {
+      id: 'p1-pattern-evidence',
+      label:
+        'Capture archetype-specific evidence family (CDP identity overlap, CC-AI intent inventory, AMS app footprint, etc.)',
+      complexity: 'complex',
+      agentRole: 'coach_workshop',
+      inputs: ['validated-problem-statement', 'okr-baseline-captured'],
+      outputs: ['pattern-specific-evidence-complete'],
+      templateRefs: [],
+      preventsFailureModes: [2, 3],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+    {
+      id: 'p1-contradictions-log',
+      label: 'Log contradictions surfaced during Discovery for P2',
+      complexity: 'simple',
+      agentRole: 'extract',
+      inputs: ['validated-problem-statement', 'pattern-specific-evidence-complete'],
+      outputs: ['discovery-contradictions-logged'],
+      templateRefs: [],
+      preventsFailureModes: [2],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+    // Design doc D.1.4 marks this step "medium" with role "coach_interview +
+    // request_approval"; StepComplexity has no `medium` value and agentRole is
+    // single-valued, so we encode it as `simple` (chat-resolvable sponsor
+    // briefing, no off-platform workshop) with `coach_interview` as the
+    // dominant role. The `request_approval` action is a side effect at the
+    // end (sponsor sign-off on the proceed/pivot/kill recommendation).
+    {
+      id: 'p1-p2-readiness-call',
+      label:
+        'Sponsor briefing + P2 readiness recommendation (proceed / pivot / kill)',
+      complexity: 'simple',
+      agentRole: 'coach_interview',
+      inputs: [
+        'validated-problem-statement',
+        'okr-baseline-captured',
+        'stakeholder-map-named',
+        'pattern-specific-evidence-complete',
+        'discovery-contradictions-logged',
+      ],
+      outputs: ['p2-readiness-recommendation'],
+      templateRefs: [],
+      preventsFailureModes: [1, 10],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+  ],
 };
