@@ -408,6 +408,13 @@ function buildPhasePanel(
     return {
       summary:
         'P1 Discovery is validating the SAP finance modernization seed against current-state evidence. Nexus has stakeholder alignment logged, but interviews, data-access confirmation, value hypothesis detail, and sponsor review still need to close before Synthesis can make a credible options call.',
+      deliverables: [
+        { label: 'Origination approval', status: 'done' },
+        { label: 'Discovery interview schedule', status: 'pending' },
+        { label: 'IT data access request', status: 'blocked' },
+        { label: 'Store observations report', status: 'pending' },
+        { label: 'Discovery report', status: 'pending' },
+      ],
       gateCriteria: [
         { criterion: 'Discovery interviews completed (4 of 6)', met: false },
         { criterion: 'Value hypothesis drafted', met: false },
