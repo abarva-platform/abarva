@@ -611,6 +611,13 @@ export function visibleArtifactPendingText(pending: string): string {
   return sanitizeArtifactDebugText(pending);
 }
 
+export function stripArtifactsForDisplay(text: string): string {
+  const parsed = extractArtifacts(text);
+  return sanitizeArtifactDebugText(
+    parsed.visibleText + visibleArtifactPendingText(parsed.remaining),
+  );
+}
+
 export function isKnownArtifactType(type: string): type is ArtifactType {
   return (
     type === 'brief-field' ||
