@@ -4,9 +4,8 @@ import { listSourcingEvents } from '@/lib/source/queries';
 export const metadata = { title: 'Source · AbarVa' };
 export const dynamic = 'force-dynamic';
 
-// SourceIndexPage remains the legacy deterministic dashboard reference;
-// SourcePortfolioPage keeps that seeded portfolio content below the new
-// Sentinel canvas instead of rendering the old two-column route directly.
+// SourcePortfolioPage is the table-forward command-center entry; the legacy
+// SourceIndexPage remains available only as a deterministic reference surface.
 
 export default async function SourcePage({
   searchParams,

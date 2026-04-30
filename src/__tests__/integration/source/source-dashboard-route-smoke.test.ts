@@ -3,7 +3,6 @@ import { join } from 'node:path';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { AbarVaSourceDashboard } from '@/components/source/AbarVaSourceDashboard';
-import SourceDashboardPage from '@/app/(maestro)/source/page';
 import {
   SOURCE_GOLDEN_EVENT_IDS,
   buildSourceAgentContextBundle,
@@ -61,6 +60,8 @@ describe('Source dashboard route smoke', () => {
     const html = renderToStaticMarkup(createElement(AbarVaSourceDashboard, { data }));
 
     expect(html).toContain('Source command read');
+    expect(html).toContain('Source command center');
+    expect(html).toContain('Create sourcing event');
     expect(html).toContain('Executive pressure signals');
     expect(html).toContain('Agent missions');
     expect(html).toContain('Stage gate check required');
@@ -70,11 +71,19 @@ describe('Source dashboard route smoke', () => {
 
   it('keeps the Source route module wired to deterministic seed-only content', () => {
     const routeSource = readFileSync(join(process.cwd(), 'src/app/(maestro)/source/page.tsx'), 'utf8');
-    const componentSource = readFileSync(join(process.cwd(), 'src/components/source/SourceIndexPage.tsx'), 'utf8');
+    const eventsRouteSource = readFileSync(join(process.cwd(), 'src/app/(maestro)/source/events/page.tsx'), 'utf8');
+    const componentSource = readFileSync(join(process.cwd(), 'src/components/source/SourcePortfolioPage.tsx'), 'utf8');
+    const tableSource = readFileSync(join(process.cwd(), 'src/components/source/SourcingEventTable.tsx'), 'utf8');
 
-    expect(routeSource).toContain('SourceIndexPage');
-    expect(componentSource).toContain('AMS Vendor Consolidation 2026');
-    expect(componentSource).toContain('ACTIVE EVENT');
+    expect(routeSource).toContain('SourcePortfolioPage');
+    expect(eventsRouteSource).toContain('IT sourcing operating queue');
+    expect(eventsRouteSource).toContain('Start IT sourcing event');
+    expect(eventsRouteSource).toContain('The table is the primary workspace');
+    expect(componentSource).toContain('Create, run, and govern IT sourcing events');
+    expect(componentSource).toContain('Nexus mission preview');
+    expect(componentSource).toContain('Source is the operating room for technology and IT sourcing');
+    expect(tableSource).toContain('Program / Evidence');
+    expect(tableSource).toContain('Evidence posture: seeded summary; open event for readiness rows.');
     expect(componentSource).not.toMatch(/fetch\(|openai|claude|anthropic/i);
   });
 
@@ -99,7 +108,10 @@ describe('Source dashboard route smoke', () => {
   it('keeps the dashboard route smoke deterministic and inside Source scope', () => {
     const sources = [
       'src/app/(maestro)/source/page.tsx',
+      'src/app/(maestro)/source/events/page.tsx',
       'src/components/source/AbarVaSourceDashboard.tsx',
+      'src/components/source/SourcePortfolioPage.tsx',
+      'src/components/source/SourcingEventTable.tsx',
       'src/lib/source/agent-mission-report.ts',
     ].map((filePath) => readFileSync(join(process.cwd(), filePath), 'utf8')).join('\n');
 

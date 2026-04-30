@@ -187,6 +187,42 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
       }}
     >
       <section
+        aria-label="AbarVa Source command center entry"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1fr) auto',
+          gap: 12,
+          alignItems: 'end',
+          background: LIGHT.card,
+          border: `1px solid ${LIGHT.line}`,
+          borderRadius: 14,
+          padding: '14px 16px',
+        }}
+      >
+        <div style={{ display: 'grid', gap: 5 }}>
+          <div style={{ ...SOURCE_SECTION_LABEL, color: LIGHT.teal }}>Source command center</div>
+          <div
+            style={{
+              fontFamily: SHELL.SERIF,
+              fontSize: 'clamp(22px, 2.4vw, 30px)',
+              lineHeight: 1.08,
+              color: LIGHT.ink,
+              fontWeight: 800,
+            }}
+          >
+            Technology sourcing portfolio, mission preview, and event queue.
+          </div>
+          <p style={{ ...SOURCE_MUTED, margin: 0, maxWidth: 760, color: LIGHT.muted }}>
+            Create and govern IT sourcing events for AMS, cloud, data, AI, cybersecurity, enterprise software,
+            SI partners, and technology operating-model work. This is not a blank prompt or generic procurement surface.
+          </p>
+        </div>
+        <Link href="/source/new" style={SOURCE_ACTION_LINK_PRIMARY}>
+          Create sourcing event
+        </Link>
+      </section>
+
+      <section
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))',

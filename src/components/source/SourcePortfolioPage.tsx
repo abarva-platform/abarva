@@ -7,9 +7,11 @@ import { FilterPillStrip } from '@/components/shell/FilterPillStrip';
 import { SourceEventsPortfolio } from '@/components/source/SourceEventsPortfolio';
 import { SourcePortfolioAgentCanvas } from '@/components/source/SourcePortfolioAgentCanvas';
 import { SourceEmptyState } from '@/components/source/SourceEmptyState';
+import { SourcingEventTable } from '@/components/source/SourcingEventTable';
 import type { Artifact } from '@/lib/agent/artifacts';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourceLifecycleStatus, SourceStageKey, SourcingEventSummary } from '@/lib/source/types';
+import { formatUsd } from '@/lib/source/value-ledger';
 
 interface SourcePortfolioPageProps {
   events: SourcingEventSummary[];
@@ -117,7 +119,11 @@ export function SourcePortfolioPage({ events, searchParams }: SourcePortfolioPag
             padding: '20px 28px 28px',
           }}
         >
-          <SourceCommandHeader eventsInView={eventsInView.length} />
+          <SourceCommandHeader eventsInView={eventsInView.length} events={eventsInView} />
+
+          <SourceMissionPreview events={eventsInView} />
+
+          <SourcingEventTable events={eventsInView} variant="light" />
 
           <SourcePortfolioAgentCanvas
             quote={buildPortfolioQuote(eventsInView)}
@@ -126,6 +132,7 @@ export function SourcePortfolioPage({ events, searchParams }: SourcePortfolioPag
             activeStatus={activeStatus}
             artifacts={artifacts}
             onArtifact={handleArtifact}
+            heightCss="420px"
           />
 
           <details
@@ -166,13 +173,24 @@ export function SourcePortfolioPage({ events, searchParams }: SourcePortfolioPag
   );
 }
 
-function SourceCommandHeader({ eventsInView }: { eventsInView: number }) {
+function SourceCommandHeader({
+  eventsInView,
+  events,
+}: {
+  eventsInView: number;
+  events: SourcingEventSummary[];
+}) {
+  const activeEvents = events.filter((event) => event.status === 'active').length;
+  const waitingEvents = events.filter((event) => event.status.startsWith('waiting_on')).length;
+  const atRiskEvents = events.filter((event) => event.isAtRisk || event.status === 'at_risk').length;
+  const valueAtStake = events.reduce((sum, event) => sum + event.valueAtStakeUsd, 0);
+
   return (
     <section
       aria-label="Source command center introduction"
       style={{
         display: 'grid',
-        gridTemplateColumns: 'minmax(0, 1fr) auto',
+        gridTemplateColumns: 'minmax(0, 1fr) minmax(260px, auto)',
         gap: 18,
         alignItems: 'end',
         marginBottom: 14,
@@ -214,33 +232,196 @@ function SourceCommandHeader({ eventsInView }: { eventsInView: number }) {
             color: SHELL.INK_SOFT,
           }}
         >
-          Start a sourcing event, connect it to a program, and let Sentinel keep the deal honest:
-          intake floor, scope boundary, evidence, stage gates, vendor risk, and approval path.
+          Source is the operating room for technology and IT sourcing: intake thesis, scope boundary,
+          evidence readiness, stage gates, vendor risk, commercial value, and owner action stay visible
+          before anyone opens an agent thread.
         </p>
       </div>
-      <a
-        href="/source/new"
-        data-testid="source-create-event-cta"
+      <div
         style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderRadius: 999,
-          background: SHELL.INK,
-          color: SHELL.PAPER,
-          padding: '10px 16px',
-          fontFamily: SHELL.MONO,
-          fontSize: 10.5,
-          fontWeight: 800,
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
-          textDecoration: 'none',
-          whiteSpace: 'nowrap',
-          boxShadow: '0 8px 18px rgba(12,26,58,0.16)',
+          display: 'grid',
+          gap: 10,
+          justifyItems: 'end',
         }}
       >
-        + Create sourcing event
-      </a>
+        <a
+          href="/source/new"
+          data-testid="source-create-event-cta"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 999,
+            background: SHELL.INK,
+            color: SHELL.PAPER,
+            padding: '10px 16px',
+            fontFamily: SHELL.MONO,
+            fontSize: 10.5,
+            fontWeight: 800,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            textDecoration: 'none',
+            whiteSpace: 'nowrap',
+            boxShadow: '0 8px 18px rgba(12,26,58,0.16)',
+          }}
+        >
+          + Create sourcing event
+        </a>
+        <div
+          aria-label="Source portfolio pressure summary"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, minmax(58px, 1fr))',
+            gap: 8,
+            width: '100%',
+            maxWidth: 380,
+          }}
+        >
+          <HeaderMetric label="Active" value={String(activeEvents)} />
+          <HeaderMetric label="Waiting" value={String(waitingEvents)} />
+          <HeaderMetric label="At risk" value={String(atRiskEvents)} />
+          <HeaderMetric label="Value" value={formatUsd(valueAtStake)} compact />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HeaderMetric({
+  label,
+  value,
+  compact = false,
+}: {
+  label: string;
+  value: string;
+  compact?: boolean;
+}) {
+  return (
+    <div
+      style={{
+        border: `1px solid ${SHELL.CARD_LINE}`,
+        borderRadius: 10,
+        background: SHELL.CARD_WHITE,
+        padding: '8px 9px',
+        display: 'grid',
+        gap: 3,
+      }}
+    >
+      <div
+        style={{
+          fontFamily: SHELL.MONO,
+          fontSize: 8,
+          letterSpacing: '0.10em',
+          textTransform: 'uppercase',
+          color: SHELL.INK_MUTED,
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontFamily: compact ? SHELL.SANS : SHELL.SERIF,
+          fontSize: compact ? 12 : 19,
+          fontWeight: 800,
+          color: SHELL.INK,
+          lineHeight: 1.05,
+        }}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function SourceMissionPreview({ events }: { events: SourcingEventSummary[] }) {
+  const topEvent = selectTopEvent(events);
+
+  return (
+    <section
+      aria-label="Source mission preview"
+      data-testid="source-mission-preview"
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1.5fr) minmax(220px, 0.8fr)',
+        gap: 12,
+        marginBottom: 14,
+      }}
+    >
+      <div
+        style={{
+          border: `1px solid ${SHELL.CARD_LINE}`,
+          borderRadius: 12,
+          background: SHELL.CARD_WHITE,
+          padding: '14px 16px',
+          display: 'grid',
+          gap: 6,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: SHELL.MONO,
+            fontSize: 9,
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            color: '#1B2B5C',
+            fontWeight: 800,
+          }}
+        >
+          Nexus mission preview
+        </div>
+        <div
+          style={{
+            fontFamily: SHELL.SERIF,
+            fontSize: 21,
+            lineHeight: 1.2,
+            color: SHELL.INK,
+            fontWeight: 700,
+          }}
+        >
+          {topEvent
+            ? `${topEvent.name} is the first sourcing event to open.`
+            : 'No IT sourcing events match this portfolio view.'}
+        </div>
+        <p
+          style={{
+            margin: 0,
+            fontFamily: SHELL.SANS,
+            fontSize: 13,
+            lineHeight: 1.48,
+            color: SHELL.INK_SOFT,
+          }}
+        >
+          {topEvent
+            ? `${topEvent.currentStageLabel} · ${topEvent.statusLabel}. ${topEvent.blocker ?? topEvent.nextDecision} Next action: ${topEvent.nextAction}.`
+            : 'Reset filters or create a technology sourcing event with owner, scope, value basis, and evidence posture before starting workflow.'}
+        </p>
+      </div>
+      <div
+        style={{
+          border: '1px solid rgba(15,118,110,0.22)',
+          borderRadius: 12,
+          background: 'rgba(15,118,110,0.08)',
+          padding: '14px 16px',
+          display: 'grid',
+          gap: 6,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: SHELL.MONO,
+            fontSize: 9,
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            color: '#0F766E',
+            fontWeight: 800,
+          }}
+        >
+          IT-only sourcing scope
+        </div>
+        <p style={{ margin: 0, fontFamily: SHELL.SANS, fontSize: 12.8, lineHeight: 1.48, color: SHELL.INK_SOFT }}>
+          Use Source for AMS, cloud, data, AI, cybersecurity, enterprise software, SI partners, and technology operating-model work. Non-technology procurement belongs elsewhere.
+        </p>
+      </div>
     </section>
   );
 }
@@ -271,4 +452,12 @@ function buildPortfolioQuote(events: SourcingEventSummary[]): string {
   })[0];
 
   return `${events.length} source events in view - ${active} active - ${atRisk} at risk. ${topEvent.name} is the top mission signal at ${topEvent.currentStageLabel}; next action: ${topEvent.nextAction}.`;
+}
+
+function selectTopEvent(events: SourcingEventSummary[]): SourcingEventSummary | null {
+  return [...events].sort((left, right) => {
+    if (Number(right.isAtRisk) !== Number(left.isAtRisk)) return Number(right.isAtRisk) - Number(left.isAtRisk);
+    if (right.openAlerts !== left.openAlerts) return right.openAlerts - left.openAlerts;
+    return right.valueAtStakeUsd - left.valueAtStakeUsd;
+  })[0] ?? null;
 }

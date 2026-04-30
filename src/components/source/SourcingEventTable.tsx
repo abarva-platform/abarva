@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourceRigorLevel, SourcingEventSummary } from '@/lib/source/types';
 import { formatUsd } from '@/lib/source/value-ledger';
+import { buildLinkedProgramBadgeView } from '@/lib/source/linked-program-badge-view';
 import { EventLifecycleStatusBadge } from './EventLifecycleStatusBadge';
 import { InstanceHealthBadge } from '@/components/_shared/InstanceHealthBadge';
 import { computeInstanceHealth } from '@/lib/reasoning/instance-health';
@@ -269,18 +270,20 @@ export function SourcingEventTable({
           </div>
         </div>
         <p style={{ ...SOURCE_MUTED, margin: 0, maxWidth: 640, color: textMuted }}>
-          Compare each event by status, stage, owner, aging, value, blocker, and next operating move.
+          Compare each IT sourcing event by stage, lifecycle, owner, linked program, evidence posture, value,
+          blocker, aging, and next operating move.
         </p>
       </div>
 
       <div style={{ maxWidth: '100%', overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: lightMode ? 820 : 940 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: lightMode ? 1080 : 1160 }}>
           <thead>
             <tr style={{ textAlign: 'left' }}>
-              <th style={headerCell}>Event</th>
+              <th style={headerCell}>Event / Tenant</th>
               <th style={headerCell}>Archetype / Rigor</th>
               <th style={headerCell}>Workflow</th>
               <th style={headerCell}>Owner / Pressure</th>
+              <th style={headerCell}>Program / Evidence</th>
               <th style={headerCell}>Value At Stake</th>
               <th style={headerCell}>Next Action</th>
               <th style={{ ...headerCell, textAlign: 'right' }}>Open</th>
@@ -289,6 +292,7 @@ export function SourcingEventTable({
           <tbody>
             {events.map((event) => {
               const reasoningData = computeEventReasoningData(event.id);
+              const linkedProgram = buildLinkedProgramBadgeView(event.id);
               return (
               <tr key={event.id} style={{ background: lightMode ? LIGHT.row : 'transparent' }}>
                 <td style={tableCell}>
@@ -348,6 +352,20 @@ export function SourcingEventTable({
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                       <span style={{ ...STATUS_META, color: textMuted }}>{event.agingDays}d aging</span>
                       <span style={{ ...STATUS_META, color: textMuted }}>{event.statusLabel}</span>
+                    </div>
+                  </div>
+                </td>
+
+                <td style={tableCell}>
+                  <div style={{ display: 'grid', gap: 7, minWidth: 170 }}>
+                    <div style={{ color: textPrimary, fontWeight: 700 }}>
+                      {linkedProgram ? linkedProgram.programCode : 'Standalone'}
+                    </div>
+                    <div style={{ ...STATUS_META, color: textMuted }}>
+                      {linkedProgram ? linkedProgram.programName : 'No linked program in seeded summary'}
+                    </div>
+                    <div style={{ ...STATUS_META, color: textMuted }}>
+                      Evidence posture: seeded summary; open event for readiness rows.
                     </div>
                   </div>
                 </td>
