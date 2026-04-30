@@ -49,6 +49,19 @@ import {
   buildProgramsContextBundle,
   formatProgramsBrokerBundleForPrompt,
 } from "@/lib/programs/programs-broker-adapter";
+// OV2-WIRE-AND-FM-PROMPT — failure-mode catalog (universal across Programs
+// surfaces) and overlap-candidates block (/programs/new only). The catalog
+// is sourced from FAILURE_MODES so the prompt and the catalog cannot drift.
+import {
+  composeFailureModeBlock,
+  composeOverlapBlock,
+  composeBriefProgressCadenceDirective,
+} from "@/lib/programs/failure-mode-prompt";
+import {
+  detectBriefOverlap,
+  type BriefOverlapInput,
+} from "@/lib/programs/origination-overlap";
+import { clientKeyToBrokerTenantKey } from "@/lib/agent/tools/intelligence/_shared";
 // F0.4: import the commit_program tool module so it self-registers
 // at startup. Routes that don't surface this tool will simply not
 // expose it in `tools`, but the registration must happen for the
@@ -328,10 +341,50 @@ export async function POST(request: Request) {
     }
   }
 
+  // OV2-WIRE-AND-FM-PROMPT Part 1 — failure-mode catalog block. Universal
+  // across all Programs surfaces (`/programs*`, `/demo/programs*`, `/tower*`).
+  // Empty string elsewhere; the prompt-array filter strips it cleanly.
+  const failureModeBlock = composeFailureModeBlock(surface);
+
+  // OV2-WIRE-AND-FM-PROMPT Part 2 — overlap candidates block on
+  // `/programs/new` and `/demo/programs/new` only. Reads draft brief
+  // signals from `surfaceContext.briefSnapshot` (when the client posts
+  // them), maps to BriefOverlapInput, calls detectBriefOverlap, and
+  // surfaces the top 3 matches. Empty string when the client hasn't
+  // sent brief signals yet — the wiring is forward-compatible.
+  let overlapCandidatesBlock = '';
+  const isOriginationSurface =
+    surface === '/programs/new' || surface === '/demo/programs/new';
+  if (isOriginationSurface && activeClient?.key) {
+    const overlapInput = buildBriefOverlapInput(
+      clientKeyToBrokerTenantKey(activeClient.key),
+      surfaceContext,
+    );
+    if (overlapInput) {
+      try {
+        const matches = detectBriefOverlap(overlapInput).slice(0, 3);
+        overlapCandidatesBlock = composeOverlapBlock(matches);
+      } catch {
+        // Broker failure is non-fatal — drop the block.
+      }
+    }
+  }
+
+  // Cadence directive that nudges Steward to emit `brief-progress` on
+  // every brief-refining turn. Empty string off origination surfaces.
+  const briefProgressCadenceDirective =
+    composeBriefProgressCadenceDirective(surface);
+
   const systemPrompt = [
     voiceLine,
     "",
     userContextBlock,
+    // OV2-WIRE-AND-FM-PROMPT Part 1 — universal failure-mode catalog
+    // for Programs surfaces. Positioned AFTER user context (Layer 0)
+    // and BEFORE four-layer reasoning so the agent always knows what
+    // it exists to prevent before it reasons.
+    failureModeBlock,
+    "",
     // F0.3 — four-layer reasoning + scope policy + integrity contract.
     // Composed AFTER user context (Layer 0) and BEFORE knowledge / task.
     FOUR_LAYER_REASONING_INSTRUCTIONS,
@@ -341,6 +394,10 @@ export async function POST(request: Request) {
     // PR-R · tenant org-structure block for Nexus on /programs
     // surfaces. Empty string on every other surface/agent.
     nexusTenantContextBlock,
+    "",
+    // OV2-WIRE-AND-FM-PROMPT Part 2 — overlap candidates on
+    // /programs/new only. Empty string elsewhere or when no candidates.
+    overlapCandidatesBlock,
     "",
     // Phase Intelligence Pack — only rendered on program-detail surfaces
     // where a pack has been authored for the engagement's current phase.
@@ -368,6 +425,9 @@ export async function POST(request: Request) {
     "- Write in flowing prose. Do NOT use markdown code blocks (``` … ```), SQL/JSON snippets, table outlines, or bracketed identifier dumps in the chat reply. Code blocks make the chat feel like a debugger, not a partner.",
     "- Reference patterns, programs, and people by NAME, not raw ID. Say \"AMS Consolidation\" not \"[PAT-PRG-AMS-CONSOLIDATION-001]\". The right-pane card carries the ID; you carry the conversation.",
     "- Bullet lists are fine sparingly (≤ 3 bullets). When the user asks an open question, lead with one or two sentences before any list.",
+    // OV2-WIRE-AND-FM-PROMPT Part 2 — brief-progress cadence directive.
+    // Empty string off /programs/new so the join-filter strips it.
+    briefProgressCadenceDirective,
     ...(isSourceSurface(surface)
       ? [
           "- On Source surfaces, do not produce a long sourcing essay on the first turn. Diagnose the stage, name the missing capture fields, and ask the next 2-3 questions.",
@@ -467,6 +527,87 @@ export async function POST(request: Request) {
 
 function isSourceSurface(surface: string): boolean {
   return surface === '/source' || surface.startsWith('/source/');
+}
+
+// OV2-WIRE-AND-FM-PROMPT Part 2 — brief-signal extractor. Reads the
+// optional `briefSnapshot` shape posted by StewardChat (when the client
+// adds it) and maps it to BriefOverlapInput. Returns null when no
+// signals are present so the caller skips overlap detection entirely.
+//
+// briefSnapshot shape (forward-compatible — client may add fields over time):
+//   { programName?, sponsor?, classification?, problemStatement?, lead? }
+//
+// `classification` is the canonical pattern id (e.g. PAT-PRG-CDP-001) when
+// the user (or the agent) has classified the program. The overlap
+// detector currently does not match on archetype (broker gap; see
+// origination-overlap.ts header), but we forward the value so the
+// detector lights up automatically when the broker carries pattern ids.
+const KNOWN_SYSTEM_TOKENS: readonly string[] = [
+  'salesforce',
+  'snowflake',
+  'sap',
+  'oracle',
+  'workday',
+  'servicenow',
+  'segment',
+  'twilio',
+  'genesys',
+  'nice',
+  'adobe',
+  'databricks',
+  'amperity',
+];
+
+function extractSystemFootprint(text: string | undefined): string[] {
+  if (!text || typeof text !== 'string') return [];
+  const lower = text.toLowerCase();
+  return KNOWN_SYSTEM_TOKENS.filter((token) => lower.includes(token));
+}
+
+function buildBriefOverlapInput(
+  tenantKey: string,
+  surfaceContext: Record<string, unknown>,
+): BriefOverlapInput | null {
+  const briefSnapshotRaw = surfaceContext.briefSnapshot;
+  if (
+    !briefSnapshotRaw ||
+    typeof briefSnapshotRaw !== 'object' ||
+    Array.isArray(briefSnapshotRaw)
+  ) {
+    return null;
+  }
+  const snapshot = briefSnapshotRaw as Record<string, unknown>;
+
+  const sponsorCandidate =
+    typeof snapshot.sponsor === 'string' && snapshot.sponsor.trim().length > 0
+      ? snapshot.sponsor.trim()
+      : undefined;
+  const archetypeId =
+    typeof snapshot.classification === 'string' &&
+    snapshot.classification.trim().length > 0
+      ? snapshot.classification.trim()
+      : undefined;
+  const problemStatement =
+    typeof snapshot.problemStatement === 'string'
+      ? snapshot.problemStatement
+      : '';
+  const programName =
+    typeof snapshot.programName === 'string' ? snapshot.programName : '';
+  const systemFootprint = extractSystemFootprint(
+    `${problemStatement} ${programName}`,
+  );
+
+  // No usable signal → skip detection entirely (returns empty matches anyway).
+  if (!sponsorCandidate && !archetypeId && systemFootprint.length === 0) {
+    return null;
+  }
+
+  return {
+    tenantKey,
+    archetypeId,
+    sponsorCandidate,
+    systemFootprint: systemFootprint.length > 0 ? systemFootprint : undefined,
+  };
 }
 
 function buildSourceOperatingDoctrineBlock(input: {
