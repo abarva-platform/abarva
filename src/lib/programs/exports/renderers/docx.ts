@@ -7,9 +7,11 @@
 //   program-charter, discovery-report, pilot-result-report, outcome-report,
 //   meeting-notes, decision-log (alt), workshop-facilitator-guide.
 //
-// EXPORT-3 ships `program-charter` only; the dispatcher returns a clear
-// error for the other kinds until their per-kind renderer is added in
-// follow-on slices (tracked as EXPORT-3-EXTEND).
+// EXPORT-3 shipped `program-charter`. EXPORT-3-EXTEND adds renderers for
+// `discovery-report`, `outcome-report`, `meeting-notes`, and
+// `decision-log`. The remaining kinds (`pilot-result-report`,
+// `workshop-facilitator-guide`) still throw a clear EXPORT-3-EXTEND
+// error until their per-kind renderer is added in a future slice.
 
 import 'server-only';
 
@@ -18,6 +20,26 @@ import { Packer } from 'docx';
 import { buildExportFilename } from '../filename';
 import type { DeliverableRenderResult, DeliverableSpec } from '../types';
 
+import {
+  buildDecisionLogDocument,
+  type DecisionLogPayload,
+  type DecisionLogSpec,
+} from './decision-log';
+import {
+  buildDiscoveryReportDocument,
+  type DiscoveryReportPayload,
+  type DiscoveryReportSpec,
+} from './discovery-report';
+import {
+  buildMeetingNotesDocument,
+  type MeetingNotesPayload,
+  type MeetingNotesSpec,
+} from './meeting-notes';
+import {
+  buildOutcomeReportDocument,
+  type OutcomeReportPayload,
+  type OutcomeReportSpec,
+} from './outcome-report';
 import {
   buildProgramCharterDocument,
   type ProgramCharterPayload,
@@ -72,10 +94,128 @@ function isProgramCharterPayloadShape(
 }
 
 /**
+ * Shallow guard: spec.payload has the discovery-report envelope shape.
+ *
+ * Consistent with the program-charter guard, this validates only the
+ * top-level fields the dispatcher needs to recognize the kind. Per-
+ * section shape is the document builder's responsibility; per-section
+ * validation lives at the API boundary in EXPORT-4 (Zod).
+ */
+function isDiscoveryReportPayloadShape(
+  payload: Record<string, unknown>,
+): payload is Record<string, unknown> & {
+  problemStatement: Record<string, unknown>;
+  baseline: ReadonlyArray<unknown>;
+  stakeholderMap: ReadonlyArray<unknown>;
+  rootCauses: ReadonlyArray<unknown>;
+  patternEvidence: Record<string, unknown>;
+  p2Recommendation: string;
+  p2RecommendationRationale: string;
+} {
+  const ps = payload.problemStatement;
+  const baseline = payload.baseline;
+  const sm = payload.stakeholderMap;
+  const rc = payload.rootCauses;
+  const pe = payload.patternEvidence;
+  const rec = payload.p2Recommendation;
+  const recRationale = payload.p2RecommendationRationale;
+  return (
+    typeof ps === 'object' &&
+    ps !== null &&
+    Array.isArray(baseline) &&
+    Array.isArray(sm) &&
+    Array.isArray(rc) &&
+    typeof pe === 'object' &&
+    pe !== null &&
+    (rec === 'proceed' || rec === 'pivot' || rec === 'kill') &&
+    typeof recRationale === 'string'
+  );
+}
+
+/** Shallow guard: spec.payload has the outcome-report envelope shape. */
+function isOutcomeReportPayloadShape(
+  payload: Record<string, unknown>,
+): payload is Record<string, unknown> & {
+  programSummary: Record<string, unknown>;
+  outcomesVsBaseline: ReadonlyArray<unknown>;
+  adoptionEvidence: ReadonlyArray<unknown>;
+  benefitsAttestation: Record<string, unknown>;
+  challengesAndMitigations: ReadonlyArray<unknown>;
+  learningsForCatalog: ReadonlyArray<unknown>;
+  p6HandoffPlan: Record<string, unknown>;
+} {
+  const ps = payload.programSummary;
+  const outcomes = payload.outcomesVsBaseline;
+  const adoption = payload.adoptionEvidence;
+  const ba = payload.benefitsAttestation;
+  const challenges = payload.challengesAndMitigations;
+  const learnings = payload.learningsForCatalog;
+  const handoff = payload.p6HandoffPlan;
+  return (
+    typeof ps === 'object' &&
+    ps !== null &&
+    Array.isArray(outcomes) &&
+    Array.isArray(adoption) &&
+    typeof ba === 'object' &&
+    ba !== null &&
+    Array.isArray(challenges) &&
+    Array.isArray(learnings) &&
+    typeof handoff === 'object' &&
+    handoff !== null
+  );
+}
+
+/** Shallow guard: spec.payload has the meeting-notes envelope shape. */
+function isMeetingNotesPayloadShape(
+  payload: Record<string, unknown>,
+): payload is Record<string, unknown> & {
+  meeting: Record<string, unknown>;
+  attendees: ReadonlyArray<unknown>;
+  keyDiscussions: ReadonlyArray<unknown>;
+  decisions: ReadonlyArray<unknown>;
+  actionItems: ReadonlyArray<unknown>;
+  notesAuthor: string;
+} {
+  const meeting = payload.meeting;
+  const attendees = payload.attendees;
+  const keyDiscussions = payload.keyDiscussions;
+  const decisions = payload.decisions;
+  const actionItems = payload.actionItems;
+  const notesAuthor = payload.notesAuthor;
+  return (
+    typeof meeting === 'object' &&
+    meeting !== null &&
+    Array.isArray(attendees) &&
+    Array.isArray(keyDiscussions) &&
+    Array.isArray(decisions) &&
+    Array.isArray(actionItems) &&
+    typeof notesAuthor === 'string'
+  );
+}
+
+/** Shallow guard: spec.payload has the decision-log envelope shape. */
+function isDecisionLogPayloadShape(
+  payload: Record<string, unknown>,
+): payload is Record<string, unknown> & {
+  programSummary: Record<string, unknown>;
+  entries: ReadonlyArray<unknown>;
+} {
+  const ps = payload.programSummary;
+  const entries = payload.entries;
+  return (
+    typeof ps === 'object' &&
+    ps !== null &&
+    Array.isArray(entries)
+  );
+}
+
+/**
  * Render a `DeliverableSpec` as a DOCX `DeliverableRenderResult`.
  *
- * EXPORT-3 supports `program-charter` only. Other DOCX-default kinds
- * throw a clear error pointing reviewers to the follow-on slice.
+ * Supported kinds: `program-charter` (EXPORT-3) and
+ * `discovery-report`, `outcome-report`, `meeting-notes`, `decision-log`
+ * (EXPORT-3-EXTEND). Other DOCX-supporting kinds throw a clear error
+ * pointing reviewers to the still-pending follow-on slice.
  */
 export async function renderDeliverableAsDocx(
   spec: DeliverableSpec,
@@ -101,14 +241,74 @@ export async function renderDeliverableAsDocx(
       document = buildProgramCharterDocument(charterSpec);
       break;
     }
-    case 'discovery-report':
+    case 'discovery-report': {
+      if (!isDiscoveryReportPayloadShape(spec.payload)) {
+        throw new Error(
+          'discovery-report payload is malformed: expected ' +
+            '{ problemStatement, baseline: array, stakeholderMap: array, rootCauses: array, patternEvidence, p2Recommendation: proceed|pivot|kill, p2RecommendationRationale: string }.',
+        );
+      }
+      const payload = spec.payload as unknown as DiscoveryReportPayload;
+      const drSpec: DiscoveryReportSpec = {
+        ...spec,
+        kind: 'discovery-report',
+        payload,
+      };
+      document = buildDiscoveryReportDocument(drSpec);
+      break;
+    }
+    case 'outcome-report': {
+      if (!isOutcomeReportPayloadShape(spec.payload)) {
+        throw new Error(
+          'outcome-report payload is malformed: expected ' +
+            '{ programSummary, outcomesVsBaseline: array, adoptionEvidence: array, benefitsAttestation, challengesAndMitigations: array, learningsForCatalog: array, p6HandoffPlan }.',
+        );
+      }
+      const payload = spec.payload as unknown as OutcomeReportPayload;
+      const orSpec: OutcomeReportSpec = {
+        ...spec,
+        kind: 'outcome-report',
+        payload,
+      };
+      document = buildOutcomeReportDocument(orSpec);
+      break;
+    }
+    case 'meeting-notes': {
+      if (!isMeetingNotesPayloadShape(spec.payload)) {
+        throw new Error(
+          'meeting-notes payload is malformed: expected ' +
+            '{ meeting, attendees: array, keyDiscussions: array, decisions: array, actionItems: array, notesAuthor: string }.',
+        );
+      }
+      const payload = spec.payload as unknown as MeetingNotesPayload;
+      const mnSpec: MeetingNotesSpec = {
+        ...spec,
+        kind: 'meeting-notes',
+        payload,
+      };
+      document = buildMeetingNotesDocument(mnSpec);
+      break;
+    }
+    case 'decision-log': {
+      if (!isDecisionLogPayloadShape(spec.payload)) {
+        throw new Error(
+          'decision-log payload is malformed: expected ' +
+            '{ programSummary, entries: array }.',
+        );
+      }
+      const payload = spec.payload as unknown as DecisionLogPayload;
+      const dlSpec: DecisionLogSpec = {
+        ...spec,
+        kind: 'decision-log',
+        payload,
+      };
+      document = buildDecisionLogDocument(dlSpec);
+      break;
+    }
     case 'pilot-result-report':
-    case 'outcome-report':
-    case 'meeting-notes':
-    case 'decision-log':
     case 'workshop-facilitator-guide':
       throw new Error(
-        `DOCX renderer for kind ${spec.kind} is a follow-on slice (EXPORT-3-EXTEND). EXPORT-3 ships program-charter only.`,
+        `DOCX renderer for kind ${spec.kind} is a follow-on slice (EXPORT-3-EXTEND). EXPORT-3 + EXPORT-3-EXTEND ship program-charter, discovery-report, outcome-report, meeting-notes, and decision-log.`,
       );
     default:
       throw new Error(
