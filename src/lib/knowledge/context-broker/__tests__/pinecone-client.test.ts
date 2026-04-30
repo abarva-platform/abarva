@@ -14,12 +14,23 @@ import {
   createPineconeClientForTests,
   getPineconeClient,
   PINECONE_DEFAULT_INDEX_NAME,
+  PINECONE_DEFAULT_TENANT_INDEX_NAME,
+  PINECONE_DEFAULT_WORLDVIEW_INDEX_NAME,
+  PINECONE_INDEX_TENANT,
+  PINECONE_INDEX_WORLDVIEW,
   PINECONE_UPSERT_BATCH_SIZE,
+  type PineconeClient,
   type PineconeIndexLike,
   type PineconeUpsertItem,
+  type PineconeWorldviewMetadata,
 } from '../pinecone-client';
 
 const EMBED_DIM = 1536;
+
+/** Helper: build a properly-dimensioned tenant query vector for tests. */
+function tenantVec(): number[] {
+  return new Array<number>(EMBED_DIM).fill(0.001);
+}
 
 function makeFakeIndex(): {
   index: PineconeIndexLike;
@@ -194,7 +205,7 @@ describe('PineconeClient.query', () => {
   it('always sets tenant_key in the metadata filter', async () => {
     const fake = makeFakeIndex();
     const client = createPineconeClientForTests(fake.index);
-    await client.query({ vector: [0.1, 0.2], tenantKey: 'apex-retail' });
+    await client.query({ vector: tenantVec(), tenantKey: 'apex-retail' });
 
     expect(fake.queryCalls).toHaveLength(1);
     expect(fake.queryCalls[0].filter).toEqual({
@@ -206,7 +217,7 @@ describe('PineconeClient.query', () => {
     const fake = makeFakeIndex();
     const client = createPineconeClientForTests(fake.index);
     await client.query({
-      vector: [0.1],
+      vector: tenantVec(),
       tenantKey: 'apex-retail',
       metadataFilter: { record_kind: { $eq: 'kpi_definition' } },
     });
@@ -220,13 +231,13 @@ describe('PineconeClient.query', () => {
     const fake = makeFakeIndex();
     const client = createPineconeClientForTests(fake.index);
 
-    await client.query({ vector: [0.1], tenantKey: 'apex-retail' });
+    await client.query({ vector: tenantVec(), tenantKey: 'apex-retail' });
     expect(fake.queryCalls[0].topK).toBe(10);
 
-    await client.query({ vector: [0.1], tenantKey: 'apex-retail', topK: 9999 });
+    await client.query({ vector: tenantVec(), tenantKey: 'apex-retail', topK: 9999 });
     expect(fake.queryCalls[1].topK).toBe(100);
 
-    await client.query({ vector: [0.1], tenantKey: 'apex-retail', topK: 0 });
+    await client.query({ vector: tenantVec(), tenantKey: 'apex-retail', topK: 0 });
     expect(fake.queryCalls[2].topK).toBe(1);
   });
 
@@ -249,7 +260,7 @@ describe('PineconeClient.query', () => {
     );
 
     const client = createPineconeClientForTests(fake.index);
-    const out = await client.query({ vector: [0.1], tenantKey: 'apex-retail' });
+    const out = await client.query({ vector: tenantVec(), tenantKey: 'apex-retail' });
     expect(out).toHaveLength(2);
     expect(out[0]).toMatchObject({ id: 'chunk-1', score: 0.91 });
     expect(out[0].metadata.tenant_key).toBe('apex-retail');
@@ -261,7 +272,7 @@ describe('PineconeClient.query', () => {
     const fake = makeFakeIndex();
     const client = createPineconeClientForTests(fake.index);
     await expect(
-      client.query({ vector: [0.1], tenantKey: '' }),
+      client.query({ vector: tenantVec(), tenantKey: '' }),
     ).rejects.toThrow(/tenantKey is required/);
   });
 
@@ -280,8 +291,8 @@ describe('PineconeClient.query', () => {
     // TENANT_ISOLATION_PROBES.)
     const fake = makeFakeIndex();
     const client = createPineconeClientForTests(fake.index);
-    await client.query({ vector: [0.1], tenantKey: 'tenant-a' });
-    await client.query({ vector: [0.1], tenantKey: 'tenant-b' });
+    await client.query({ vector: tenantVec(), tenantKey: 'tenant-a' });
+    await client.query({ vector: tenantVec(), tenantKey: 'tenant-b' });
     expect(fake.queryCalls[0].filter).toEqual({ tenant_key: { $eq: 'tenant-a' } });
     expect(fake.queryCalls[1].filter).toEqual({ tenant_key: { $eq: 'tenant-b' } });
   });
@@ -321,5 +332,213 @@ describe('PineconeClient.deleteByTenant', () => {
     const fake = makeFakeIndex();
     const client = createPineconeClientForTests(fake.index);
     await expect(client.deleteByTenant('')).rejects.toThrow(/tenantKey is required/);
+  });
+});
+
+// ── WV-INGEST: multi-index registry + worldview mode ────────────────
+
+const WORLDVIEW_DIM = 3072;
+
+function makeWorldviewItem(
+  id: string,
+  thesisId: string,
+): PineconeUpsertItem<PineconeWorldviewMetadata> {
+  return {
+    id,
+    vector: new Array<number>(WORLDVIEW_DIM).fill(0.001),
+    metadata: {
+      chunk_id: id,
+      thesis_id: thesisId,
+      thesis_title: 'Foundation Models as the Next Enterprise OS',
+      chunk_position: 1,
+      chunk_total_in_thesis: 17,
+      chunk_title: 'The OS Shift Is Real, But Misnamed',
+      chunk_type: 'claim',
+      keywords: ['enterprise OS', 'binding layer'],
+      audience_tags: ['founder', 'investor'],
+      primary_audience: 'founder',
+      confidence: 0.82,
+      is_forecast: true,
+      validation_status: 'draft',
+      last_validated: '2026-04-30',
+      source_basis: 'worldview_corpus',
+    },
+  };
+}
+
+describe('multi-index config exports (WV-INGEST)', () => {
+  it('PINECONE_INDEX_TENANT carries 1536 dims and tenant mode', () => {
+    expect(PINECONE_INDEX_TENANT.dimension).toBe(1536);
+    expect(PINECONE_INDEX_TENANT.metric).toBe('cosine');
+    expect(PINECONE_INDEX_TENANT.mode).toBe('tenant');
+  });
+
+  it('PINECONE_INDEX_WORLDVIEW carries 3072 dims, worldview namespace, worldview mode', () => {
+    expect(PINECONE_INDEX_WORLDVIEW.dimension).toBe(3072);
+    expect(PINECONE_INDEX_WORLDVIEW.metric).toBe('cosine');
+    expect(PINECONE_INDEX_WORLDVIEW.namespace).toBe('worldview');
+    expect(PINECONE_INDEX_WORLDVIEW.mode).toBe('worldview');
+  });
+
+  it('exposes default index names for both indexes', () => {
+    expect(PINECONE_DEFAULT_TENANT_INDEX_NAME).toBe('abarva-tenant-context-prod');
+    expect(PINECONE_DEFAULT_WORLDVIEW_INDEX_NAME).toBe('abarva-worldview-prod');
+    // Back-compat alias matches the tenant name.
+    expect(PINECONE_DEFAULT_INDEX_NAME).toBe(PINECONE_DEFAULT_TENANT_INDEX_NAME);
+  });
+});
+
+describe('getPineconeClient(config) — multi-index registry', () => {
+  const realKey = process.env.PINECONE_API_KEY;
+
+  afterEach(() => {
+    if (realKey === undefined) {
+      delete process.env.PINECONE_API_KEY;
+    } else {
+      process.env.PINECONE_API_KEY = realKey;
+    }
+    __resetPineconeClientForTests();
+  });
+
+  it('returns null for both indexes when PINECONE_API_KEY is not set', () => {
+    delete process.env.PINECONE_API_KEY;
+    __resetPineconeClientForTests();
+    expect(getPineconeClient(PINECONE_INDEX_TENANT)).toBeNull();
+    expect(getPineconeClient(PINECONE_INDEX_WORLDVIEW)).toBeNull();
+  });
+
+  it('returns distinct clients for tenant and worldview indexes', () => {
+    process.env.PINECONE_API_KEY = 'test-key';
+    __resetPineconeClientForTests();
+    const tenant = getPineconeClient(PINECONE_INDEX_TENANT);
+    const worldview = getPineconeClient(PINECONE_INDEX_WORLDVIEW);
+    expect(tenant).not.toBeNull();
+    expect(worldview).not.toBeNull();
+    expect(tenant).not.toBe(worldview);
+    expect(tenant?.getConfig?.()?.mode).toBe('tenant');
+    expect(worldview?.getConfig?.()?.mode).toBe('worldview');
+  });
+
+  it('memoises clients by index name', () => {
+    process.env.PINECONE_API_KEY = 'test-key';
+    __resetPineconeClientForTests();
+    const a = getPineconeClient(PINECONE_INDEX_TENANT);
+    const b = getPineconeClient(PINECONE_INDEX_TENANT);
+    expect(a).toBe(b);
+  });
+});
+
+describe('worldview-mode PineconeClient', () => {
+  it('upsert validates 3072-dim vectors against the worldview config', async () => {
+    const fake = makeFakeIndex();
+    const client = createPineconeClientForTests<PineconeWorldviewMetadata>(
+      fake.index,
+      PINECONE_INDEX_WORLDVIEW,
+    );
+    await client.upsert([makeWorldviewItem('worldview:W1:001', 'W1')]);
+    const records = fake.upsertCalls[0] as Array<{
+      id: string;
+      values: number[];
+      metadata: Record<string, unknown>;
+    }>;
+    expect(records).toHaveLength(1);
+    expect(records[0].id).toBe('worldview:W1:001');
+    expect(records[0].values).toHaveLength(WORLDVIEW_DIM);
+    // Worldview metadata round-trips the structured fields.
+    expect(records[0].metadata).toMatchObject({
+      chunk_id: 'worldview:W1:001',
+      thesis_id: 'W1',
+      thesis_title: 'Foundation Models as the Next Enterprise OS',
+      chunk_position: 1,
+      chunk_title: 'The OS Shift Is Real, But Misnamed',
+      chunk_type: 'claim',
+      keywords: ['enterprise OS', 'binding layer'],
+      audience_tags: ['founder', 'investor'],
+      primary_audience: 'founder',
+      confidence: 0.82,
+      is_forecast: true,
+      validation_status: 'draft',
+      last_validated: '2026-04-30',
+      source_basis: 'worldview_corpus',
+    });
+  });
+
+  it('upsert throws when vector dimension does not match the index config', async () => {
+    const fake = makeFakeIndex();
+    const client: PineconeClient<PineconeWorldviewMetadata> =
+      createPineconeClientForTests<PineconeWorldviewMetadata>(
+        fake.index,
+        PINECONE_INDEX_WORLDVIEW,
+      );
+    const wrongDim: PineconeUpsertItem<PineconeWorldviewMetadata> = {
+      id: 'worldview:W1:001',
+      vector: new Array<number>(1536).fill(0), // tenant-dim vector
+      metadata: {
+        chunk_id: 'worldview:W1:001',
+        thesis_id: 'W1',
+        thesis_title: 't',
+        source_basis: 'worldview_corpus',
+      },
+    };
+    await expect(client.upsert([wrongDim])).rejects.toThrow(
+      /1536-dim vector; index .* expects 3072/,
+    );
+  });
+
+  it('query does NOT require tenantKey on worldview-mode index', async () => {
+    const fake = makeFakeIndex();
+    const client = createPineconeClientForTests<PineconeWorldviewMetadata>(
+      fake.index,
+      PINECONE_INDEX_WORLDVIEW,
+    );
+    await client.query({ vector: new Array<number>(WORLDVIEW_DIM).fill(0.1) });
+    expect(fake.queryCalls).toHaveLength(1);
+    // No filter means the full namespace is searched.
+    expect(fake.queryCalls[0].filter).toBeUndefined();
+  });
+
+  it('query passes through caller-supplied metadata filter on worldview', async () => {
+    const fake = makeFakeIndex();
+    const client = createPineconeClientForTests<PineconeWorldviewMetadata>(
+      fake.index,
+      PINECONE_INDEX_WORLDVIEW,
+    );
+    await client.query({
+      vector: new Array<number>(WORLDVIEW_DIM).fill(0.1),
+      metadataFilter: { thesis_id: { $eq: 'W1' } },
+    });
+    expect(fake.queryCalls[0].filter).toEqual({ thesis_id: { $eq: 'W1' } });
+    // Importantly: no `tenant_key` key is injected for worldview.
+    expect(fake.queryCalls[0].filter).not.toHaveProperty('tenant_key');
+  });
+
+  it('query rejects vectors with the wrong dimension on worldview', async () => {
+    const fake = makeFakeIndex();
+    const client = createPineconeClientForTests<PineconeWorldviewMetadata>(
+      fake.index,
+      PINECONE_INDEX_WORLDVIEW,
+    );
+    await expect(
+      client.query({ vector: [0.1, 0.2, 0.3] }), // 3 dims, not 3072
+    ).rejects.toThrow(/expects 3072/);
+  });
+
+  it('deleteByTenant throws on worldview-mode index', async () => {
+    const fake = makeFakeIndex();
+    const client = createPineconeClientForTests<PineconeWorldviewMetadata>(
+      fake.index,
+      PINECONE_INDEX_WORLDVIEW,
+    );
+    await expect(client.deleteByTenant('apex-retail')).rejects.toThrow(
+      /not supported on worldview-mode/,
+    );
+  });
+
+  it('tenant-mode query still requires tenantKey (back-compat with CB-3)', async () => {
+    const fake = makeFakeIndex();
+    const client = createPineconeClientForTests(fake.index, PINECONE_INDEX_TENANT);
+    await expect(
+      client.query({ vector: new Array<number>(EMBED_DIM).fill(0.1) }),
+    ).rejects.toThrow(/tenantKey is required/);
   });
 });

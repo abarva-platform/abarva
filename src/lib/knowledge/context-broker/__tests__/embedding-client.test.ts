@@ -11,20 +11,23 @@ import {
   estimateTokensFromChars,
   EMBEDDING_DIM,
   EMBEDDING_MODEL,
+  EMBEDDING_MODEL_TENANT,
+  EMBEDDING_MODEL_WORLDVIEW,
+  type EmbeddingModelConfig,
   type OpenAIEmbeddingsLike,
 } from '../embedding-client';
 
 jest.mock('server-only', () => ({}));
 
-function makeVector(seed: number): number[] {
-  const v = new Array<number>(EMBEDDING_DIM);
-  for (let i = 0; i < EMBEDDING_DIM; i += 1) {
+function makeVector(seed: number, dim: number = EMBEDDING_DIM): number[] {
+  const v = new Array<number>(dim);
+  for (let i = 0; i < dim; i += 1) {
     v[i] = ((seed + i) % 2000) / 2000;
   }
   return v;
 }
 
-function makeMockClient(): {
+function makeMockClient(dim: number = EMBEDDING_DIM): {
   client: OpenAIEmbeddingsLike;
   calls: Array<{ model: string; input: string[] }>;
 } {
@@ -34,7 +37,10 @@ function makeMockClient(): {
       create: jest.fn(async ({ model, input }) => {
         calls.push({ model, input });
         return {
-          data: input.map((_, idx) => ({ embedding: makeVector(idx + calls.length), index: idx })),
+          data: input.map((_, idx) => ({
+            embedding: makeVector(idx + calls.length, dim),
+            index: idx,
+          })),
           usage: {
             prompt_tokens: input.length * 100,
             total_tokens: input.length * 100,
@@ -156,6 +162,58 @@ describe('embedTexts', () => {
     expect(calls[0].input.length).toBe(2048);
     expect(calls[1].input.length).toBe(2);
   });
+
+  describe('multi-model (WV-INGEST)', () => {
+    it('defaults to the tenant small model when no modelConfig is passed', async () => {
+      const { client, calls } = makeMockClient();
+      const out = await embedTexts(['hi'], {}, client);
+      expect(calls[0].model).toBe('text-embedding-3-small');
+      expect(out.results[0].embedding).toHaveLength(EMBEDDING_MODEL_TENANT.dimension);
+    });
+
+    it('produces 3072-dim vectors when EMBEDDING_MODEL_WORLDVIEW is passed', async () => {
+      const { client, calls } = makeMockClient(EMBEDDING_MODEL_WORLDVIEW.dimension);
+      const out = await embedTexts(
+        ['worldview chunk text'],
+        { modelConfig: EMBEDDING_MODEL_WORLDVIEW },
+        client,
+      );
+      expect(calls[0].model).toBe('text-embedding-3-large');
+      expect(out.results).toHaveLength(1);
+      expect(out.results[0].embedding).toHaveLength(EMBEDDING_MODEL_WORLDVIEW.dimension);
+      expect(out.results[0].embedding).toHaveLength(3072);
+    });
+
+    it('throws when OpenAI returns a vector with the wrong dimension for the requested model', async () => {
+      // Force a dim mismatch: ask for worldview (3072) but mock returns 1536.
+      const mismatchClient: OpenAIEmbeddingsLike = {
+        embeddings: {
+          create: jest.fn(async ({ input }) => ({
+            data: input.map((_, idx) => ({
+              embedding: makeVector(idx, EMBEDDING_MODEL_TENANT.dimension),
+              index: idx,
+            })),
+            usage: { prompt_tokens: 50, total_tokens: 50 },
+          })),
+        },
+      };
+      await expect(
+        embedTexts(['x'], { modelConfig: EMBEDDING_MODEL_WORLDVIEW }, mismatchClient),
+      ).rejects.toThrow(/expected 3072 for text-embedding-3-large/);
+    });
+
+    it('estimates cost using the per-model rate from the result summary', async () => {
+      const { client } = makeMockClient(EMBEDDING_MODEL_WORLDVIEW.dimension);
+      const out = await embedTexts(
+        ['hello'],
+        { modelConfig: EMBEDDING_MODEL_WORLDVIEW },
+        client,
+      );
+      // Mock charges 100 tokens; large rate is $0.13/1M.
+      const expected = (100 / 1_000_000) * EMBEDDING_MODEL_WORLDVIEW.costPerMillionTokensUsd;
+      expect(out.summary.estimatedCostUsd).toBeCloseTo(expected, 9);
+    });
+  });
 });
 
 describe('estimateCostUsd', () => {
@@ -163,12 +221,26 @@ describe('estimateCostUsd', () => {
     expect(estimateCostUsd(0)).toBe(0);
   });
 
-  it('returns ~$0.02 for 1M tokens', () => {
+  it('returns ~$0.02 for 1M tokens (default tenant model)', () => {
     expect(estimateCostUsd(1_000_000)).toBeCloseTo(0.02, 6);
   });
 
-  it('returns ~$0.0001 for 5000 tokens', () => {
+  it('returns ~$0.0001 for 5000 tokens (default tenant model)', () => {
     expect(estimateCostUsd(5_000)).toBeCloseTo(0.0001, 6);
+  });
+
+  it('uses the worldview rate ($0.13/M) when EMBEDDING_MODEL_WORLDVIEW is passed', () => {
+    expect(estimateCostUsd(1_000_000, EMBEDDING_MODEL_WORLDVIEW)).toBeCloseTo(0.13, 6);
+    expect(estimateCostUsd(50_000, EMBEDDING_MODEL_WORLDVIEW)).toBeCloseTo(0.0065, 6);
+  });
+
+  it('honours an arbitrary cost-per-million config', () => {
+    const custom: EmbeddingModelConfig = {
+      model: 'text-embedding-3-small',
+      dimension: 1536,
+      costPerMillionTokensUsd: 1.0,
+    };
+    expect(estimateCostUsd(2_500_000, custom)).toBe(2.5);
   });
 });
 

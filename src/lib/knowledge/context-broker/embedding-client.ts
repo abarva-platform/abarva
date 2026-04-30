@@ -1,37 +1,75 @@
 import 'server-only';
 
 /**
- * CB-2 · Thin OpenAI embeddings wrapper used by the embedding job.
+ * CB-2 / WV-INGEST · Thin OpenAI embeddings wrapper used by the
+ * embedding jobs (tenant chunks + worldview corpus).
  *
- * - Model is baked in (`text-embedding-3-small`, 1536 dims). Re-embeds to a
- *   different model are intentional re-runs of the job (chunk_id is stable).
- * - Caller passes an arbitrary `string[]`; the client batches up to OpenAI's
- *   per-request input cap so the caller doesn't have to think about it.
- * - 429 (rate limit) errors trigger exponential backoff (max 3 retries per
- *   batch). All other 4xx / 5xx bubble up.
+ * - Two model configs are supported:
+ *   - `EMBEDDING_MODEL_TENANT`   (`text-embedding-3-small`, 1536 dims)
+ *   - `EMBEDDING_MODEL_WORLDVIEW` (`text-embedding-3-large`, 3072 dims)
  *
- * Pinecone is not in scope for CB-2 — this module only produces vectors.
+ *   The tenant model is the back-compat default. Pinecone indexes have
+ *   fixed dimension, so each model maps to its own index — see
+ *   `pinecone-client.ts` for the parallel index registry.
+ *
+ * - Caller passes an arbitrary `string[]`; the client batches up to
+ *   OpenAI's per-request input cap so the caller doesn't have to think
+ *   about it.
+ * - 429 (rate limit) errors trigger exponential backoff (max 3 retries
+ *   per batch). All other 4xx / 5xx bubble up.
+ *
+ * Pinecone is not in scope for this module — it only produces vectors.
  */
 
 import OpenAI from 'openai';
 
-/** Hard model + dim contract for the broker's embedding store. */
-export const EMBEDDING_MODEL = 'text-embedding-3-small' as const;
-export const EMBEDDING_DIM = 1536 as const;
+// ── Model registry ────────────────────────────────────────────────────
+
+export type EmbeddingModelName =
+  | 'text-embedding-3-small'
+  | 'text-embedding-3-large';
+
+export interface EmbeddingModelConfig {
+  model: EmbeddingModelName;
+  dimension: number;
+  /** USD cost per 1,000,000 input tokens for this model. */
+  costPerMillionTokensUsd: number;
+}
+
+/** Tenant-context corpus: cheap-and-broad. CB-2's default. */
+export const EMBEDDING_MODEL_TENANT: EmbeddingModelConfig = {
+  model: 'text-embedding-3-small',
+  dimension: 1536,
+  costPerMillionTokensUsd: 0.02,
+};
+
+/** Worldview corpus: high-quality / high-leverage. WV-INGEST. */
+export const EMBEDDING_MODEL_WORLDVIEW: EmbeddingModelConfig = {
+  model: 'text-embedding-3-large',
+  dimension: 3072,
+  costPerMillionTokensUsd: 0.13,
+};
+
+/**
+ * Back-compat aliases. Callers from CB-2 still import these directly;
+ * they resolve to the tenant model.
+ */
+export const EMBEDDING_MODEL = EMBEDDING_MODEL_TENANT.model;
+export const EMBEDDING_DIM = EMBEDDING_MODEL_TENANT.dimension;
+/** Back-compat: the per-1M-token rate for the tenant default. */
+export const COST_PER_MILLION_TOKENS_USD =
+  EMBEDDING_MODEL_TENANT.costPerMillionTokensUsd;
 
 /**
  * OpenAI's `embeddings.create` accepts up to 2048 inputs per request and
- * 300,000 tokens summed across them. We cap at 256 to stay comfortably under
- * both ceilings for typical chunk sizes (~500 tokens) and to keep batch
- * latency predictable. Configurable via the third `embedTexts` arg.
+ * 300,000 tokens summed across them. We cap at 256 to stay comfortably
+ * under both ceilings for typical chunk sizes (~500 tokens) and to keep
+ * batch latency predictable. Configurable via the third `embedTexts` arg.
  */
 export const DEFAULT_BATCH_INPUT_CAP = 256;
 
 /** OpenAI per-request hard limit on number of array inputs. */
 export const OPENAI_INPUT_LIMIT = 2048;
-
-/** Pricing for `text-embedding-3-small` is $0.02 per 1M tokens. */
-export const COST_PER_MILLION_TOKENS_USD = 0.02;
 
 export interface EmbeddingResult {
   text: string;
@@ -52,6 +90,11 @@ export interface EmbedTextsResult {
 }
 
 export interface EmbeddingClientOptions {
+  /**
+   * Embedding model to use. Defaults to `EMBEDDING_MODEL_TENANT`
+   * (`text-embedding-3-small`, 1536 dims) for CB-2 back-compat.
+   */
+  modelConfig?: EmbeddingModelConfig;
   /** Cap on array size sent to OpenAI in a single request. */
   batchInputCap?: number;
   /** Max retries for a single batch on 429 rate-limit errors. */
@@ -108,19 +151,23 @@ function chunkArray<T>(input: T[], size: number): T[][] {
 }
 
 /**
- * Embed an array of texts using `text-embedding-3-small`. Internally batches
- * the array to stay under the OpenAI per-request cap. Returns one
- * `EmbeddingResult` per input in the original order.
+ * Embed an array of texts. The model defaults to
+ * `text-embedding-3-small` (1536 dims) for CB-2 back-compat — pass
+ * `{ modelConfig: EMBEDDING_MODEL_WORLDVIEW }` for the worldview corpus.
+ *
+ * Internally batches the array to stay under the OpenAI per-request cap.
+ * Returns one `EmbeddingResult` per input in the original order.
  *
  * On 429 rate-limit: exponential backoff up to `maxRetries` (default 3).
- * On any other error: throws (the caller decides whether to mark the chunk
- * as failed and continue, or abort the run).
+ * On any other error: throws (the caller decides whether to mark the
+ * chunk as failed and continue, or abort the run).
  */
 export async function embedTexts(
   texts: string[],
   options: EmbeddingClientOptions = {},
   client: OpenAIEmbeddingsLike = defaultOpenAI(),
 ): Promise<EmbedTextsResult> {
+  const modelConfig = options.modelConfig ?? EMBEDDING_MODEL_TENANT;
   const batchInputCap = Math.min(
     options.batchInputCap ?? DEFAULT_BATCH_INPUT_CAP,
     OPENAI_INPUT_LIMIT,
@@ -156,7 +203,7 @@ export async function embedTexts(
     for (;;) {
       try {
         response = await client.embeddings.create({
-          model: EMBEDDING_MODEL,
+          model: modelConfig.model,
           input: batch,
         });
         totalRequests += 1;
@@ -183,6 +230,19 @@ export async function embedTexts(
       throw new Error(
         `embedTexts: OpenAI returned ${response.data.length} embeddings for ${batch.length} inputs`,
       );
+    }
+
+    // Validate dimension matches the requested model.
+    for (const item of response.data) {
+      if (
+        !Array.isArray(item.embedding) ||
+        item.embedding.length !== modelConfig.dimension
+      ) {
+        throw new Error(
+          `embedTexts: OpenAI returned ${item.embedding?.length ?? 0}-dim ` +
+            `embedding; expected ${modelConfig.dimension} for ${modelConfig.model}`,
+        );
+      }
     }
 
     // Distribute the batch's token usage proportionally to character count
@@ -216,14 +276,20 @@ export async function embedTexts(
     summary: {
       totalTokens,
       totalRequests,
-      estimatedCostUsd: estimateCostUsd(totalTokens),
+      estimatedCostUsd: estimateCostUsd(totalTokens, modelConfig),
     },
   };
 }
 
-/** USD cost for `tokens` tokens on `text-embedding-3-small`. */
-export function estimateCostUsd(tokens: number): number {
-  return (tokens / 1_000_000) * COST_PER_MILLION_TOKENS_USD;
+/**
+ * USD cost for `tokens` tokens on `modelConfig`. Defaults to the tenant
+ * small model for CB-2 back-compat.
+ */
+export function estimateCostUsd(
+  tokens: number,
+  modelConfig: EmbeddingModelConfig = EMBEDDING_MODEL_TENANT,
+): number {
+  return (tokens / 1_000_000) * modelConfig.costPerMillionTokensUsd;
 }
 
 /**
