@@ -89,6 +89,8 @@ interface DemoTenancyContext {
   userId: string;
   /** Broker-shaped tenant key derived from the active client. */
   activeBrokerTenantKey: string | null;
+  /** Raw role from Clerk metadata. Admin/investor bypass the tenant cross-check. */
+  role: string | undefined;
 }
 
 function jsonError(
@@ -263,7 +265,7 @@ export async function resolveDemoTenancy(): Promise<DemoTenancyContext> {
   // ClientKey we need to translate into the broker's vocabulary.
   const client = await getActiveClientRow().catch(() => null);
   const activeBrokerTenantKey = client ? clientKeyToBrokerTenantKey(client.key) : null;
-  return { userId: ctx.userId, activeBrokerTenantKey };
+  return { userId: ctx.userId, activeBrokerTenantKey, role: ctx.role };
 }
 
 /**
@@ -280,19 +282,15 @@ export async function assembleDemoBundle(
   if (request.mode === 'all') {
     throw new Error('assembleDemoBundle only supports a single broker mode.');
   }
-  // Tenant-mode authorization gate. The caller's active client (in
-  // broker-shaped form) MUST equal the requested tenantKey. We never
-  // honor a caller-supplied tenantKey verbatim; that would let a
-  // signed-in Apex user query Meridian.
+  // Tenant-mode authorization gate. For client/maestro roles, the active
+  // client MUST match the requested tenantKey. Admin/investor bypass this
+  // check — they have cross-tenant read access by design.
   if (TENANT_REQUIRED_MODES.includes(request.mode)) {
-    if (!ctx.activeBrokerTenantKey) {
+    if (request.tenantKey) {
+      ensureTenantAllowed(request.tenantKey, ctx);
+    } else if (!ctx.activeBrokerTenantKey) {
       throw new ForbiddenTenantError(
         'No active client mapping for this user; cannot run tenant-scoped retrieval.',
-      );
-    }
-    if (request.tenantKey !== ctx.activeBrokerTenantKey) {
-      throw new ForbiddenTenantError(
-        `tenantKey '${request.tenantKey}' does not match the caller's active client.`,
       );
     }
   }
@@ -388,6 +386,9 @@ export async function assembleDemoBundles(
 }
 
 function ensureTenantAllowed(tenantKey: string, ctx: DemoTenancyContext): void {
+  // Admin and investor roles have cross-tenant read access — no gate needed.
+  // The cross-check is only required for client/maestro locked-tenant roles.
+  if (ctx.role === 'admin' || ctx.role === 'investor') return;
   if (!ctx.activeBrokerTenantKey) {
     throw new ForbiddenTenantError(
       'No active client mapping for this user; cannot run tenant-scoped retrieval.',
