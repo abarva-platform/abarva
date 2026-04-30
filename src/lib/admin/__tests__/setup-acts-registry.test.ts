@@ -8,10 +8,12 @@
 
 import {
   formatRelativeTimestamp,
+  getAllSegmentReferences,
   getSetupActsContent,
   getSetupSummaryCounts,
   getSetupSummaryCountsWithSnapshot,
   mergeInventorySnapshot,
+  resolveSegmentRef,
   type ActOneFact,
   type CapabilityGainEntry,
   type CapabilityNode,
@@ -319,6 +321,33 @@ describe('Setup Acts registry — snapshot merge', () => {
     const counts = getSetupSummaryCountsWithSnapshot(content, null);
     expect(counts.totalRecords).toBe(403);
     expect(counts.segmentsTracked).toBe(14);
+  });
+});
+
+describe('Setup Acts registry — segment reference helpers', () => {
+  it('resolves numeric form "01" to enterprise_profile', () => {
+    const ref = resolveSegmentRef('01');
+    expect(ref?.segmentKey).toBe('enterprise_profile');
+    expect(ref?.familyNumber).toBe(1);
+    expect(ref?.displayName).toBe('Enterprise profile');
+  });
+
+  it('resolves substrate key "cross_program_signals" to numeric "14"', () => {
+    const ref = resolveSegmentRef('cross_program_signals');
+    expect(ref?.numericId).toBe('14');
+    expect(ref?.familyNumber).toBe(14);
+  });
+
+  it('returns null for unknown ids', () => {
+    expect(resolveSegmentRef('not-a-segment')).toBeNull();
+    expect(resolveSegmentRef(null)).toBeNull();
+  });
+
+  it('exposes all 14 segments via getAllSegmentReferences', () => {
+    const refs = getAllSegmentReferences();
+    expect(refs).toHaveLength(14);
+    expect(refs[0]?.familyNumber).toBe(1);
+    expect(refs[13]?.familyNumber).toBe(14);
   });
 });
 

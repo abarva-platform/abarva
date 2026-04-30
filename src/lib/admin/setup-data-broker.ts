@@ -31,6 +31,19 @@ import type {
   SetupInventorySnapshot,
 } from '@/lib/admin/setup-acts-registry';
 
+export interface SegmentRecordSummary {
+  recordId: string;
+  title: string;
+  recordKind: string;
+  sourceDoc: string;
+  dataClassification: string;
+  freshnessState: string;
+  confidence: number | null;
+  lastReviewed: string | null;
+  uploadedBy: string;
+  uploadedAt: string;
+}
+
 interface SegmentRollupRow {
   segment_id: string;
   segment_name: string;
@@ -185,5 +198,109 @@ export async function getSetupInventorySnapshot(
     totalEdges,
     recentActivity,
     lastIngestedAt,
+  };
+}
+
+interface RecordRow {
+  record_id: string;
+  title: string;
+  record_kind: string;
+  source_doc: string;
+  data_classification: string;
+  freshness_state: string;
+  confidence: number | string | null;
+  last_reviewed: string | null;
+  uploaded_by: string;
+  uploaded_at: string;
+}
+
+export interface SegmentRecordPage {
+  segmentKey: string;
+  rollup: InventorySegmentRollup | null;
+  records: SegmentRecordSummary[];
+}
+
+const SEGMENT_RECORD_LIMIT = 200;
+
+/**
+ * Read the per-record list for a segment, plus the rollup row.
+ * Returns null when both queries fail; returns an empty record
+ * list with a non-null rollup when the segment exists but has no
+ * records yet.
+ */
+export async function getSegmentRecordPage(
+  brokerTenantKey: string,
+  segmentKey: string,
+): Promise<SegmentRecordPage | null> {
+  const sb = (() => {
+    try {
+      return getServerSupabase();
+    } catch {
+      return null;
+    }
+  })();
+  if (!sb) return null;
+
+  const [rollupResult, recordsResult] = await Promise.all([
+    sb
+      .from('data_inventory_segments')
+      .select(
+        'segment_id, segment_name, family_number, record_count, coverage_score, stale_count, missing_count, health_state, last_reviewed_at, last_ingested_at',
+      )
+      .eq('tenant_key', brokerTenantKey)
+      .eq('segment_id', segmentKey)
+      .maybeSingle(),
+    sb
+      .from('data_inventory_records')
+      .select(
+        'record_id, title, record_kind, source_doc, data_classification, freshness_state, confidence, last_reviewed, uploaded_by, uploaded_at',
+      )
+      .eq('tenant_key', brokerTenantKey)
+      .eq('segment_id', segmentKey)
+      .order('uploaded_at', { ascending: false })
+      .limit(SEGMENT_RECORD_LIMIT),
+  ]);
+
+  if (rollupResult.error && recordsResult.error) return null;
+
+  const rollupRow = rollupResult.data as SegmentRollupRow | null | undefined;
+  const rollup: InventorySegmentRollup | null = rollupRow
+    ? {
+        segmentId: rollupRow.segment_id,
+        segmentName: rollupRow.segment_name,
+        familyNumber: rollupRow.family_number,
+        recordCount: toNumber(rollupRow.record_count),
+        coverageScore: toNumber(rollupRow.coverage_score),
+        staleCount: toNumber(rollupRow.stale_count),
+        missingCount: toNumber(rollupRow.missing_count),
+        healthState: rollupRow.health_state,
+        lastReviewedAt: rollupRow.last_reviewed_at,
+        lastIngestedAt: rollupRow.last_ingested_at,
+      }
+    : null;
+
+  const recordRows = (recordsResult.data ?? []) as RecordRow[];
+  const records: SegmentRecordSummary[] = recordRows.map((row) => ({
+    recordId: row.record_id,
+    title: row.title,
+    recordKind: row.record_kind,
+    sourceDoc: row.source_doc,
+    dataClassification: row.data_classification,
+    freshnessState: row.freshness_state,
+    confidence:
+      row.confidence === null
+        ? null
+        : typeof row.confidence === 'number'
+          ? row.confidence
+          : Number(row.confidence) || null,
+    lastReviewed: row.last_reviewed,
+    uploadedBy: row.uploaded_by,
+    uploadedAt: row.uploaded_at,
+  }));
+
+  return {
+    segmentKey,
+    rollup,
+    records,
   };
 }

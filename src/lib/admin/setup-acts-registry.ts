@@ -494,6 +494,57 @@ export function getSetupActsContent(
   return buildSparseContent(knownKey, displayName);
 }
 
+// ── Segment id mapping ────────────────────────────────────────────────────────
+//
+// Two forms exist in the codebase:
+//   • Numeric form ("01" → "14") used in spec §C and in
+//     user-facing URLs like `/admin/segments/01`.
+//   • String form ("enterprise_profile" → "cross_program_signals")
+//     used in the data substrate (`data_inventory_records`,
+//     `data_inventory_segments`).
+//
+// `resolveSegmentRef` accepts either form and returns both, plus
+// the human display name. Returns null if the input matches
+// neither.
+
+export interface SegmentReference {
+  numericId: string;
+  segmentKey: string;
+  displayName: string;
+  familyNumber: number;
+}
+
+const SEGMENT_REFERENCES: ReadonlyArray<SegmentReference> = [
+  { numericId: '01', segmentKey: 'enterprise_profile', displayName: 'Enterprise profile', familyNumber: 1 },
+  { numericId: '02', segmentKey: 'org_structure', displayName: 'Org structure', familyNumber: 2 },
+  { numericId: '03', segmentKey: 'it_landscape', displayName: 'IT system landscape', familyNumber: 3 },
+  { numericId: '04', segmentKey: 'it_financials', displayName: 'IT financials', familyNumber: 4 },
+  { numericId: '05', segmentKey: 'kpi_dictionary', displayName: 'KPI dictionary', familyNumber: 5 },
+  { numericId: '06', segmentKey: 'program_inventory', displayName: 'Program inventory', familyNumber: 6 },
+  { numericId: '07', segmentKey: 'sourcing_artifacts', displayName: 'Sourcing artifacts', familyNumber: 7 },
+  { numericId: '08', segmentKey: 'program_deliverables', displayName: 'Program deliverables', familyNumber: 8 },
+  { numericId: '09', segmentKey: 'evidence_ledger', displayName: 'Evidence ledger', familyNumber: 9 },
+  { numericId: '10', segmentKey: 'operating_telemetry', displayName: 'Operating telemetry', familyNumber: 10 },
+  { numericId: '11', segmentKey: 'vendor_contracts', displayName: 'Vendor and contract', familyNumber: 11 },
+  { numericId: '12', segmentKey: 'compliance', displayName: 'Compliance and regulatory', familyNumber: 12 },
+  { numericId: '13', segmentKey: 'industry_context', displayName: 'Industry context', familyNumber: 13 },
+  { numericId: '14', segmentKey: 'cross_program_signals', displayName: 'Cross-program signals', familyNumber: 14 },
+];
+
+export function getAllSegmentReferences(): ReadonlyArray<SegmentReference> {
+  return SEGMENT_REFERENCES;
+}
+
+export function resolveSegmentRef(input: string | null | undefined): SegmentReference | null {
+  if (!input) return null;
+  const normalized = input.toLowerCase();
+  const numeric = SEGMENT_REFERENCES.find((s) => s.numericId === normalized);
+  if (numeric) return numeric;
+  const byKey = SEGMENT_REFERENCES.find((s) => s.segmentKey === normalized);
+  if (byKey) return byKey;
+  return null;
+}
+
 // ── Live snapshot overlay ─────────────────────────────────────────────────────
 //
 // SETUP-1.2 onwards: the setup-data-broker reads
