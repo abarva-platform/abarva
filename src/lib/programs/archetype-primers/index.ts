@@ -1,11 +1,16 @@
 // PR-OV2-3a: Archetype primer registry.
 
 import { CDP_ACTIVATION_PRIMER } from './PAT-PRG-CDP-001';
+import { CONTACT_CENTER_AI_PRIMER } from './PAT-PRG-CC-AI-001';
 import type { ArchetypePrimer } from './types';
 
 export { CDP_ACTIVATION_PRIMER } from './PAT-PRG-CDP-001';
+export { CONTACT_CENTER_AI_PRIMER } from './PAT-PRG-CC-AI-001';
 
-const PRIMERS: ReadonlyArray<ArchetypePrimer> = [CDP_ACTIVATION_PRIMER];
+const PRIMERS: ReadonlyArray<ArchetypePrimer> = [
+  CDP_ACTIVATION_PRIMER,
+  CONTACT_CENTER_AI_PRIMER,
+];
 
 export function getArchetypePrimer(patternId: string): ArchetypePrimer | null {
   return PRIMERS.find((p) => p.patternId === patternId) ?? null;
