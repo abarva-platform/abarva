@@ -140,6 +140,10 @@ export interface EnterpriseFinancialRecord {
   evidenceIds: string[];
 }
 
+// OV2-1d-archetype · added optional patternId so the broker can carry a
+// canonical archetype id (e.g. PAT-PRG-CDP-001) end-to-end for overlap
+// detection. Optional by design — only set when the source program
+// clearly maps to a pattern in program-lifecycle-patterns.ts.
 export interface EnterpriseProgramRecord {
   id: string;
   name: string;
@@ -153,6 +157,8 @@ export interface EnterpriseProgramRecord {
   linkedSystemIds: string[];
   linkedVendorIds: string[];
   linkedEvidenceIds: string[];
+  /** Optional canonical pattern id (e.g. 'PAT-PRG-CDP-001'). Maps to program-lifecycle-patterns.ts. */
+  patternId?: string;
   sourceBasis: EnterpriseDataSourceBasis;
 }
 
@@ -502,6 +508,17 @@ function buildApexFinancials(): EnterpriseFinancialRecord[] {
   return [...records, ...opportunityRecords, ...benchmarkRecords];
 }
 
+// OV2-1d-archetype · canonical pattern ids for Apex opportunities that
+// map cleanly to program-lifecycle-patterns.ts. Other opportunities
+// (Dynamic Pricing, Supply Chain Optimization, Store Labor, Shrinkage,
+// Returns, SAP migration, CLV) do not have a canonical pattern yet —
+// leave undefined rather than guessing.
+const APEX_OPPORTUNITY_PATTERN_IDS: Record<string, string> = {
+  'op-001': 'PAT-PRG-DATA-FAB-001',
+  'op-003': 'PAT-PRG-CDP-001',
+  'op-010': 'PAT-PRG-LOYALTY-001',
+};
+
 function buildApexPrograms(): EnterpriseProgramRecord[] {
   const opportunityPrograms = apexOpportunities.opportunities.map((opportunity) => ({
     id: `program:apex:${opportunity.id}`,
@@ -515,6 +532,7 @@ function buildApexPrograms(): EnterpriseProgramRecord[] {
     linkedSystemIds: opportunity.name.includes('Personalization') ? ['system:apex:sfcc', 'system:apex:segment-cdp'] : [],
     linkedVendorIds: [],
     linkedEvidenceIds: [],
+    patternId: APEX_OPPORTUNITY_PATTERN_IDS[opportunity.id],
     sourceBasis: SYNTHETIC_SOURCE,
   }));
 
@@ -878,6 +896,8 @@ function buildStructuredSystemsFromClientData(
   }));
 }
 
+// OV2-1d-archetype · pass through optional pattern_id from the seed
+// (currently set on Meridian's M365 Copilot rollout).
 function buildStructuredProgramsFromClientData(
   tenantPrefix: string,
   projects: typeof CLIENT_DATA['Apex Retail']['projects'],
@@ -895,6 +915,7 @@ function buildStructuredProgramsFromClientData(
     linkedSystemIds: [],
     linkedVendorIds: [],
     linkedEvidenceIds: [],
+    patternId: project.pattern_id,
     sourceBasis: SYNTHETIC_SOURCE,
   }));
 }

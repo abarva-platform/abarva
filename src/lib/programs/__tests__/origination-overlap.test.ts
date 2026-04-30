@@ -216,13 +216,51 @@ describe('detectBriefOverlap', () => {
     }
   });
 
-  it('archetype matching is inert in this slice (input.archetypeId never produces a match alone)', () => {
-    // OV2-1d gap: the broker does not yet carry pattern ids on program
-    // items (see module header). archetypeId on its own should not
-    // produce any match against the Apex inventory.
+  // OV2-1d-archetype · archetype matching now lands. The Apex broker
+  // bundle exposes the top 6 programs (morrison + op-001..op-005), and
+  // op-003 (Personalization Engine) is seeded with PAT-PRG-CDP-001.
+  it('matches by archetype only and reports overlapKind=archetype', () => {
     const matches = detectBriefOverlap({
       tenantKey: TENANT,
       archetypeId: 'PAT-PRG-CDP-001',
+    });
+    expect(matches.length).toBeGreaterThan(0);
+    expect(matches.every((m) => m.overlapKind === 'archetype')).toBe(true);
+    expect(matches[0].matchScore).toBeCloseTo(0.7, 5);
+    expect(matches[0].overlapDetail).toMatch(/archetype/);
+  });
+
+  it('combines archetype + sponsor into overlapKind=multiple with score > 0.7', () => {
+    // op-003 is Personalization Engine, exec sponsor "Executive sponsor
+    // pending". Use that exact sponsor token and the matching CDP
+    // pattern so we land both dimensions on the same program.
+    const facts = getApexProgramFacts();
+    const personalization = facts.find((p) =>
+      p.title.toLowerCase().includes('personalization'),
+    );
+    expect(personalization).toBeDefined();
+    expect(personalization!.sponsor.length).toBeGreaterThan(0);
+
+    const matches = detectBriefOverlap({
+      tenantKey: TENANT,
+      archetypeId: 'PAT-PRG-CDP-001',
+      sponsorCandidate: personalization!.sponsor,
+    });
+
+    const multi = matches.find(
+      (m) => m.programName.toLowerCase().includes('personalization')
+        && m.overlapKind === 'multiple',
+    );
+    expect(multi).toBeDefined();
+    expect(multi!.matchScore).toBeGreaterThan(0.7);
+    expect(multi!.overlapDetail).toMatch(/archetype/);
+    expect(multi!.overlapDetail).toMatch(/sponsor/);
+  });
+
+  it('returns no archetype hits for a pattern id that is not seeded on any program', () => {
+    const matches = detectBriefOverlap({
+      tenantKey: TENANT,
+      archetypeId: 'PAT-PRG-NONEXISTENT-999',
     });
     expect(matches).toEqual([]);
   });

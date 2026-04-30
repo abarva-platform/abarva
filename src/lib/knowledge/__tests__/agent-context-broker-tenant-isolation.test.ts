@@ -48,6 +48,35 @@ describe('AgentContextBroker tenant isolation', () => {
     );
   });
 
+  // OV2-1d-archetype · programs that map to a canonical pattern id
+  // surface it through the broker as a `pattern:${id}` entry in
+  // provenanceIds (same convention as `system:*` and `vendor:*`).
+  it('propagates patternId through the program provenance for archetype-mapped programs', () => {
+    const bundle = buildEnterpriseAgentContextBundle({
+      tenantKey: TENANT_A,
+      agentName: 'Nexus',
+      surface: 'programs',
+    });
+    const programs = bundle.items.filter((item) => item.kind === 'program');
+    expect(programs.length).toBeGreaterThan(0);
+
+    const personalization = programs.find((p) =>
+      p.title.toLowerCase().includes('personalization'),
+    );
+    expect(personalization).toBeDefined();
+    expect(personalization!.provenanceIds).toEqual(
+      expect.arrayContaining(['pattern:PAT-PRG-CDP-001']),
+    );
+
+    // Programs without canonical pattern intent should NOT carry a
+    // pattern: provenance entry — `patternId` is opt-in.
+    const morrison = programs.find((p) =>
+      p.id.includes('morrison-owned-brand-margin-recovery'),
+    );
+    expect(morrison).toBeDefined();
+    expect(morrison!.provenanceIds.some((id) => id.startsWith('pattern:'))).toBe(false);
+  });
+
   it('returns an explicit blocked bundle instead of falling back to another tenant', () => {
     const bundle = buildEnterpriseAgentContextBundle({
       tenantKey: 'missing-tenant',
