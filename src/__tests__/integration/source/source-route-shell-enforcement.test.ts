@@ -10,12 +10,15 @@ describe('DESROUTE4 source route shell enforcement (Wave S1 — AppShell)', () =
   const sourceEventsRoute = 'src/app/(maestro)/source/events/page.tsx';
   const sourceEventDetailRoute = 'src/app/(maestro)/source/events/[eventId]/page.tsx';
   const sentinelAgentColumn = 'src/components/source/SentinelAgentColumn.tsx';
+  const chatAgentRoute = 'src/app/api/chat/agent/route.ts';
 
   it('target source routes use AppShell (Wave S1 migration complete)', () => {
-    [sourceEventsRoute, sourceEventDetailRoute].forEach((file) => {
-      const source = read(file);
-      expect(source).toContain('AppShell');
-    });
+    const events = read(sourceEventsRoute);
+    expect(events).toContain('AppShell');
+
+    const detail = read(sourceEventDetailRoute);
+    expect(detail).toContain('SourceEventAgentCanvas');
+
     // Dashboard uses SourceIndexPage which itself wraps AppShell
     const dashboard = read(sourceDashboardRoute);
     expect(dashboard).toContain('SourceIndexPage');
@@ -26,11 +29,22 @@ describe('DESROUTE4 source route shell enforcement (Wave S1 — AppShell)', () =
     expect(source).toContain('SourceCommercialEventSection');
   });
 
-  it('SentinelAgentColumn is the lead agent wrapper for Source surfaces', () => {
-    [sourceEventsRoute, sourceEventDetailRoute].forEach((file) => {
-      const source = read(file);
-      expect(source).toContain('SentinelAgentColumn');
-    });
+  it('Source event routes use the embedded agent canvas instead of the old rail wrapper', () => {
+    const source = read(sourceEventDetailRoute);
+    expect(source).not.toContain('SentinelAgentColumn');
+    expect(source).toContain('SourceEventAgentCanvas');
+  });
+
+  it('Source agent prompt uses consulting-partner pacing and tenant context for every Source agent', () => {
+    const route = read(chatAgentRoute);
+
+    expect(route).toContain('SOURCE CONSULTING PARTNER STYLE');
+    expect(route).toContain('Ask at most ONE question in the chat reply');
+    expect(route).toContain('Keep most Source replies under 75 words');
+    expect(route).toContain("Never ask 'who is the CIO?' when context names the CIO");
+    expect(route).toContain('isSourceSurface(surface) && activeClient?.key');
+    expect(route).toContain('agentName: normalizeEnterpriseAgentName(agentName)');
+    expect(route).not.toContain("agentName === 'Sentinel' && isSourceSurface(surface)");
   });
 
   it('deterministic caveat is preserved — no live claims, no guaranteed savings', () => {

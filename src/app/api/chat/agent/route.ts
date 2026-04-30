@@ -52,6 +52,7 @@ import {
 import {
   buildEnterpriseAgentContextBundle,
   type EnterpriseAgentContextBundle,
+  type EnterpriseAgentName,
 } from "@/lib/knowledge/agent-context-broker";
 // OV2-WIRE-AND-FM-PROMPT — failure-mode catalog (universal across Programs
 // surfaces) and overlap-candidates block (/programs/new only). The catalog
@@ -349,12 +350,12 @@ export async function POST(request: Request) {
       // existing tenantSystemBlock + page-context lines.
     }
   }
-  if (agentName === 'Sentinel' && isSourceSurface(surface) && activeClient?.key) {
+  if (isSourceSurface(surface) && activeClient?.key) {
     try {
       sourceTenantContextBlock = formatSourceBrokerBundleForPrompt(
         buildEnterpriseAgentContextBundle({
           tenantKey: activeClient.key,
-          agentName: 'Sentinel',
+          agentName: normalizeEnterpriseAgentName(agentName),
           surface: 'source',
           includeGraphNeighborhood: false,
           allowL4RawContext: false,
@@ -475,11 +476,14 @@ export async function POST(request: Request) {
     briefProgressCadenceDirective,
     ...(isSourceSurface(surface)
       ? [
-          "- On Source surfaces, sound like a senior sourcing partner, not a policy manual. Keep most replies under 110 words unless the user explicitly asks for a deep dive.",
-          "- For simple Source questions, answer directly first, then ask at most ONE next question.",
-          "- If the user is starting an event, use the five-field intake floor: trigger, decision owner, scope boundary, baseline evidence, stop/approval condition.",
-          "- If the user names a role and the Source tenant context resolves it, use the known person by name and ask for confirmation of decision authority. Do not ask 'who is the CIO?' when the context names the CIO.",
-          "- Let the right pane carry progress. In prose, summarize what changed and the next missing field; do not narrate every gate criterion.",
+          "- SOURCE CONSULTING PARTNER STYLE: short, calm, commercially sharp. No lengthy passages. No intake-form behavior. No 'Acknowledged' opener.",
+          "- Default Source reply shape: (1) one-sentence read of what you heard, (2) one sentence on why it matters, (3) exactly ONE next question or action.",
+          "- Ask at most ONE question in the chat reply. If several fields are missing, pick the single highest-leverage blocker and let the right pane/artifact cards carry the rest.",
+          "- Keep most Source replies under 75 words unless the user explicitly asks for a deep dive, draft, comparison, or executive brief.",
+          "- If the user is starting an event, quietly map their words to the five-field intake floor: trigger, decision owner, scope boundary, baseline evidence, stop/approval condition. Do not recite all five unless asked.",
+          "- Use known tenant context before asking. If the user names a role and Source tenant context resolves it, use the known person by name and ask only to confirm authority. Never ask 'who is the CIO?' when context names the CIO.",
+          "- If the user mistypes a title (for example CIKO when CIO is likely), correct lightly and continue; do not make the typo the center of the reply.",
+          "- Let the right pane carry progress, gates, evidence, blockers, and next-step prep. In prose, summarize what changed and the one next missing field.",
           "- If emitting sourcing-stage-progress artifacts, emit valid JSON only; never expose artifact syntax in prose.",
         ]
       : []),
@@ -576,6 +580,15 @@ export async function POST(request: Request) {
 
 function isSourceSurface(surface: string): boolean {
   return surface === '/source' || surface.startsWith('/source/');
+}
+
+function normalizeEnterpriseAgentName(agentName: string): EnterpriseAgentName {
+  return agentName === 'Nexus' ||
+    agentName === 'Sentinel' ||
+    agentName === 'Atlas' ||
+    agentName === 'Steward'
+    ? agentName
+    : 'Sentinel';
 }
 
 // OV2-WIRE-AND-FM-PROMPT Part 2 — brief-signal extractor. Reads the
@@ -685,9 +698,12 @@ function buildSourceOperatingDoctrineBlock(input: {
     '',
     'Partner pacing:',
     '- Be crisp. Do not recap the whole doctrine unless asked.',
+    '- Ask one question at a time. A consulting partner sequences the work; they do not hand the client a questionnaire.',
+    '- For a simple sourcing intent, give a short read and ask for the single missing fact that unlocks the next workflow step.',
     '- If a user gives a title and tenant context names that role, use the name and ask for confirmation rather than asking who the person is.',
     '- Treat broad scope such as "enterprise all towers" as a useful hypothesis but not yet a boundary. Ask for the first boundary or evidence upload, not a lecture.',
     '- For "what do you know about my company", answer as a short ledger: known tenant facts, known leadership, known systems/contracts, and missing live data. Do not apologize at length.',
+    '- Prefer action verbs: register, attach, generate, prepare, review, approve, defer, waive, advance.',
   ].join('\n');
 }
 
