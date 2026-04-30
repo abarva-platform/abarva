@@ -1,14 +1,19 @@
-// /intelligence/failure-modes/[slug] · INT-1.7
+// /intelligence/failure-modes/[slug] · INT-1.7 → INT-2.4 enhancement
 //
-// J1-shaped placeholder page that renders the full failure-mode
-// narrative from the J0 card registry plus a "Coming with INT-2"
-// notice. Per INT-1_DETAILED_DESIGN.md §9 D2: the deep-link gives
-// the user something substantive (the full narrative they would
-// have seen in J1 anyway) until the topic surface lands at INT-2.
+// J1 failure-mode anchored deep-dive. Renders the failure-mode
+// narrative + cited research + example scenarios (INT-1.7) PLUS:
+//   - Pattern citations as cards with name + category + 1-line
+//     description, linking to /intelligence/patterns/<slug>
+//     (INT-2.4 enhancement; replaces monospace-id list).
+//   - "Related topics" section listing J1 topics whose
+//     associatedFailureModeIds[] includes this failure mode
+//     (INT-2.4 new section).
+//   - INT-2 coming-soon notice REPLACED with a contextual nav
+//     block ("Explore related topics ↓ · Ask Sentinel about
+//     this →").
 //
-// Server component; no client islands. Public route (auth-gate
-// removed in INT-1.3). The headline failure mode + cited research +
-// example scenarios all render inline.
+// Server component; public route. Per
+// INT-2_DETAILED_DESIGN.md §2.4 + §4.3.
 
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -19,6 +24,11 @@ import {
   getJ0CardBySlug,
 } from '@/lib/intelligence/j0-failure-mode-cards';
 import { J0_FAILURE_MODE_CARDS, slugifyEditorialName } from '@/lib/intelligence/j0-failure-mode-cards';
+import { getTopicsByFailureModeId } from '@/lib/intelligence/j1-topics';
+import {
+  getPatternManifestEntry,
+  patternRouteFor,
+} from '@/lib/intelligence/pattern-manifest';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -49,6 +59,18 @@ export default async function FailureModePage({ params }: PageProps) {
     notFound();
   }
   const canonical = getCanonicalFailureMode(card);
+
+  // INT-2.4: resolve cited patterns to manifest entries (name +
+  // category + description + canonical route). Patterns that fail
+  // to resolve are filtered out (validation tests catch this at
+  // build, so this is defensive only).
+  const patternEntries = card.citedPatternIds
+    .map((id) => getPatternManifestEntry(id))
+    .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+
+  // INT-2.4: resolve related topics whose associatedFailureModeIds[]
+  // includes this card's failureModeId.
+  const relatedTopics = getTopicsByFailureModeId(card.failureModeId);
 
   return (
     <AppShell
@@ -339,30 +361,9 @@ export default async function FailureModePage({ params }: PageProps) {
             </div>
           </section>
 
-          {/* INT-2 notice */}
-          <aside
-            style={{
-              padding: '14px 18px',
-              background: SHELL.PAPER_SOFT,
-              border: `1px dashed ${SHELL.CARD_LINE}`,
-              borderRadius: 8,
-              fontFamily: SHELL.SANS,
-              fontSize: 13,
-              color: SHELL.INK_SOFT,
-              lineHeight: 1.55,
-              marginBottom: 16,
-            }}
-          >
-            <strong style={{ color: SHELL.INK }}>Coming with INT-2:</strong>{' '}
-            this page becomes the J1 oriented-browse surface — pattern depth,
-            graph traversal, and contradictions surfaced inline. Today you
-            see the full failure-mode narrative; the topic deep-dive is on
-            the way.
-          </aside>
-
-          {/* Cited patterns — preview */}
-          {card.citedPatternIds.length > 0 && (
-            <section>
+          {/* Cited patterns — INT-2.4 enhanced rendering */}
+          {patternEntries.length > 0 && (
+            <section style={{ marginBottom: 32 }}>
               <h2
                 style={{
                   fontFamily: SHELL.MONO,
@@ -374,33 +375,179 @@ export default async function FailureModePage({ params }: PageProps) {
                   margin: '0 0 12px',
                 }}
               >
-                Patterns · {card.citedPatternIds.length}
+                Patterns · {patternEntries.length}
               </h2>
-              <ul
+              <div
                 style={{
-                  margin: 0,
-                  padding: 0,
-                  listStyle: 'none',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 6,
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                  gap: 12,
                 }}
               >
-                {card.citedPatternIds.map((id) => (
-                  <li
-                    key={id}
+                {patternEntries.map((pattern) => (
+                  <Link
+                    key={pattern.id}
+                    href={patternRouteFor(pattern.slug)}
+                    data-testid={`intelligence-j1-failure-mode-pattern-card-${pattern.id}`}
                     style={{
-                      fontFamily: SHELL.MONO,
-                      fontSize: 11,
-                      color: SHELL.INK_SOFT,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      background: SHELL.CARD_WHITE,
+                      border: `1px solid ${SHELL.CARD_LINE}`,
+                      borderRadius: 8,
+                      padding: '12px 14px',
+                      textDecoration: 'none',
+                      color: SHELL.INK,
                     }}
                   >
-                    {id}
-                  </li>
+                    <div
+                      style={{
+                        fontFamily: SHELL.SERIF,
+                        fontSize: 15,
+                        fontWeight: 400,
+                        color: SHELL.INK,
+                        marginBottom: 4,
+                        lineHeight: 1.3,
+                      }}
+                    >
+                      {pattern.name}
+                    </div>
+                    {pattern.category && (
+                      <div
+                        style={{
+                          fontFamily: SHELL.MONO,
+                          fontSize: 10,
+                          color: SHELL.INK_MUTED,
+                          letterSpacing: '0.04em',
+                          marginBottom: 6,
+                        }}
+                      >
+                        {pattern.category}
+                      </div>
+                    )}
+                    {pattern.shortDescription && (
+                      <p
+                        style={{
+                          fontFamily: SHELL.SANS,
+                          fontSize: 12,
+                          color: SHELL.INK_SOFT,
+                          lineHeight: 1.5,
+                          margin: 0,
+                        }}
+                      >
+                        {pattern.shortDescription.length > 120
+                          ? `${pattern.shortDescription.slice(0, 117)}…`
+                          : pattern.shortDescription}
+                      </p>
+                    )}
+                  </Link>
                 ))}
-              </ul>
+              </div>
             </section>
           )}
+
+          {/* Related topics — INT-2.4 new section */}
+          {relatedTopics.length > 0 && (
+            <section style={{ marginBottom: 32 }}>
+              <h2
+                style={{
+                  fontFamily: SHELL.MONO,
+                  fontSize: 11,
+                  color: SHELL.INK_MUTED,
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  fontWeight: 700,
+                  margin: '0 0 12px',
+                }}
+              >
+                Related topics · {relatedTopics.length}
+              </h2>
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 8,
+                }}
+              >
+                {relatedTopics.map((topic) => (
+                  <Link
+                    key={topic.topicId}
+                    href={`/intelligence/topics/${topic.topicId}`}
+                    data-testid={`intelligence-j1-failure-mode-related-topic-${topic.topicId}`}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '8px 14px',
+                      background: SHELL.CARD_WHITE,
+                      border: `1px solid ${SHELL.CARD_LINE}`,
+                      borderRadius: 999,
+                      textDecoration: 'none',
+                      color: SHELL.INK,
+                      fontFamily: SHELL.SANS,
+                      fontSize: 13,
+                    }}
+                  >
+                    <span style={{ fontWeight: 500 }}>{topic.title}</span>
+                    <span style={{ color: SHELL.INK_MUTED }}>→</span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* INT-2.4 contextual nav (replaces the old "Coming with INT-2"
+              notice). Kept brief — the page already has substance. */}
+          <aside
+            style={{
+              display: 'flex',
+              gap: 12,
+              flexWrap: 'wrap',
+              padding: '14px 18px',
+              background: SHELL.PAPER_SOFT,
+              border: `1px solid ${SHELL.CARD_LINE}`,
+              borderRadius: 10,
+            }}
+          >
+            <Link
+              href="/intelligence/ask"
+              data-testid="intelligence-j1-failure-mode-ask-sentinel"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '8px 14px',
+                background: SHELL.INK,
+                color: SHELL.PAPER,
+                border: `1px solid ${SHELL.INK}`,
+                borderRadius: 6,
+                textDecoration: 'none',
+                fontFamily: SHELL.SANS,
+                fontSize: 13,
+                fontWeight: 500,
+              }}
+            >
+              Ask Sentinel about this →
+            </Link>
+            <Link
+              href="/intelligence"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '8px 14px',
+                background: 'transparent',
+                color: SHELL.INK,
+                border: `1px solid ${SHELL.CARD_LINE}`,
+                borderRadius: 6,
+                textDecoration: 'none',
+                fontFamily: SHELL.SANS,
+                fontSize: 13,
+              }}
+            >
+              ← All failure modes
+            </Link>
+          </aside>
         </div>
       </div>
     </AppShell>
