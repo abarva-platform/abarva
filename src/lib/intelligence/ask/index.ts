@@ -20,6 +20,21 @@ export interface AskOptions {
   userContextBlock?: string;
 }
 
+export function atlasStakeholderConflictHandoff(query: string): string | null {
+  const normalized = query.toLowerCase();
+  const asksForAdvice = /\b(what should i do|what do i do|how should i handle|give me.*playbook|resolution path)\b/.test(normalized);
+  const namesConflict =
+    /\b(cmo|cfo|stakeholder|executive|sponsor)\b/.test(normalized) &&
+    /\b(conflict|contradiction|tension|misalignment|vs|versus)\b/.test(normalized);
+  if (!asksForAdvice || !namesConflict) return null;
+
+  return [
+    'Atlas should own that call. I can surface the contradiction and evidence, but Sentinel should not prescribe the political resolution.',
+    'Handoff to Atlas: map the growth thesis, cost-takeout posture, affected programs, and decision owner; then return options with tradeoffs.',
+    'Which program is the conflict surfacing in?',
+  ].join(' ');
+}
+
 function emptyStateMessage(intent: AskIntent): string {
   switch (intent) {
     case 'vendor_lookup':
@@ -64,6 +79,16 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       ? sources.reduce((s, x) => s + (x.confidence ?? 0), 0) / sources.length
       : 0;
     yield { type: 'sources', sources };
+
+    const handoff = atlasStakeholderConflictHandoff(trimmed);
+    if (handoff) {
+      for (const chunk of handoff.match(/.{1,80}(?:\s|$)/g) ?? [handoff]) {
+        yield { type: 'delta', text: chunk.trimEnd() };
+      }
+      yield { type: 'followups', followups: ['Ask Atlas to map the contradiction', 'Show the evidence behind this tension'] };
+      yield { type: 'done' };
+      return;
+    }
 
     if (sources.length === 0) {
       const msg = emptyStateMessage(classification.intent);

@@ -205,6 +205,7 @@ interface RecordRow {
   record_id: string;
   title: string;
   record_kind: string;
+  record_payload?: Record<string, unknown> | null;
   source_doc: string;
   data_classification: string;
   freshness_state: string;
@@ -212,6 +213,33 @@ interface RecordRow {
   last_reviewed: string | null;
   uploaded_by: string;
   uploaded_at: string;
+}
+
+function stringField(payload: Record<string, unknown> | null | undefined, key: string): string | null {
+  const value = payload?.[key];
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+}
+
+function isGenericRecordTitle(title: string, segmentKey: string): boolean {
+  const normalized = title.trim().toLowerCase();
+  if (!normalized) return true;
+  if (segmentKey === 'kpi_dictionary' && /^kpi dictionary \d+$/.test(normalized)) return true;
+  return false;
+}
+
+function deriveRecordTitle(row: RecordRow, segmentKey: string): string {
+  if (!isGenericRecordTitle(row.title, segmentKey)) return row.title;
+  const payload = row.record_payload;
+  const candidate =
+    stringField(payload, 'title') ??
+    stringField(payload, 'kpi_name') ??
+    stringField(payload, 'metric_name') ??
+    stringField(payload, 'name') ??
+    stringField(payload, 'claim');
+  if (!candidate) return row.title;
+
+  const currentValue = stringField(payload, 'current_value');
+  return currentValue ? `${candidate} · ${currentValue}` : candidate;
 }
 
 export interface SegmentRecordPage {
@@ -253,7 +281,7 @@ export async function getSegmentRecordPage(
     sb
       .from('data_inventory_records')
       .select(
-        'record_id, title, record_kind, source_doc, data_classification, freshness_state, confidence, last_reviewed, uploaded_by, uploaded_at',
+        'record_id, title, record_kind, record_payload, source_doc, data_classification, freshness_state, confidence, last_reviewed, uploaded_by, uploaded_at',
       )
       .eq('tenant_key', brokerTenantKey)
       .eq('segment_id', segmentKey)
@@ -282,7 +310,7 @@ export async function getSegmentRecordPage(
   const recordRows = (recordsResult.data ?? []) as RecordRow[];
   const records: SegmentRecordSummary[] = recordRows.map((row) => ({
     recordId: row.record_id,
-    title: row.title,
+    title: deriveRecordTitle(row, segmentKey),
     recordKind: row.record_kind,
     sourceDoc: row.source_doc,
     dataClassification: row.data_classification,
@@ -351,12 +379,61 @@ interface SignalRow {
 
 function bucketSeverity(raw: string | undefined): SignalSeverityBucket {
   if (!raw) return 'unknown';
-  const normalized = raw.toLowerCase();
+  const normalized = raw.trim().toLowerCase();
   if (normalized.startsWith('critical')) return 'critical';
   if (normalized.startsWith('high')) return 'high';
   if (normalized.startsWith('medium')) return 'medium';
   if (normalized.startsWith('low')) return 'low';
   return 'unknown';
+}
+
+function isBoilerplateSignalText(value: string | undefined): boolean {
+  const normalized = value?.trim().toLowerCase() ?? '';
+  if (!normalized) return true;
+  return (
+    normalized.includes('this signal is generated from shared people') ||
+    normalized.includes('intentionally graph-ready') ||
+    normalized.includes('should resolve back to named source records')
+  );
+}
+
+function humanizeSignalType(signalType: string): string {
+  return signalType.replace(/_/g, ' ').trim() || 'cross-program signal';
+}
+
+function deriveSignalDescription(args: {
+  title: string;
+  signalType: string;
+  severityBucket: SignalSeverityBucket;
+  programs: string[];
+}): string {
+  const programText =
+    args.programs.length > 0
+      ? ` It touches ${args.programs.join(', ')}.`
+      : ' No linked program list was provided in the substrate payload.';
+  const severityText =
+    args.severityBucket === 'unknown'
+      ? 'unclassified severity'
+      : `${args.severityBucket} severity`;
+  return `${args.title} is a ${severityText} ${humanizeSignalType(args.signalType)} surfaced by Atlas.${programText}`;
+}
+
+function deriveSignalRecommendation(args: {
+  signalType: string;
+  severityBucket: SignalSeverityBucket;
+  programs: string[];
+}): string {
+  const ownerAction =
+    args.severityBucket === 'critical'
+      ? 'Escalate to the sponsor group before the next gate.'
+      : args.severityBucket === 'high'
+        ? 'Put this on the next sponsor decision agenda.'
+        : 'Track this in the portfolio review and refresh evidence before the next phase change.';
+  const programText =
+    args.programs.length > 0
+      ? ` Anchor the discussion on ${args.programs.join(', ')}.`
+      : ' Ask Atlas to resolve the linked programs before assigning an owner.';
+  return `${ownerAction}${programText} Treat it as ${humanizeSignalType(args.signalType)}, not a generic portfolio note.`;
 }
 
 const SEVERITY_RANK: Record<SignalSeverityBucket, number> = {
@@ -398,17 +475,30 @@ export async function getCrossProgramSignals(
   const signals: CrossProgramSignal[] = rows.map((row) => {
     const payload = row.record_payload ?? {};
     const severityRaw = payload.severity ?? '';
+    const severityBucket = bucketSeverity(severityRaw);
+    const signalType = payload.type ?? 'unknown';
+    const programs = Array.isArray(payload.programs) ? payload.programs : [];
+    const fallbackArgs = {
+      title: row.title,
+      signalType,
+      severityBucket,
+      programs,
+    };
     return {
       recordId: row.record_id,
       signalId: payload.id ?? row.record_id,
       title: row.title,
-      signalType: payload.type ?? 'unknown',
+      signalType,
       severityRaw,
-      severityBucket: bucketSeverity(severityRaw),
-      description: payload.description ?? '',
-      recommendation: payload.recommendation ?? '',
+      severityBucket,
+      description: isBoilerplateSignalText(payload.description)
+        ? deriveSignalDescription(fallbackArgs)
+        : payload.description ?? '',
+      recommendation: isBoilerplateSignalText(payload.recommendation)
+        ? deriveSignalRecommendation(fallbackArgs)
+        : payload.recommendation ?? '',
       status: payload.status ?? '',
-      programs: Array.isArray(payload.programs) ? payload.programs : [],
+      programs,
       raisedBy: payload.raised_by ?? '',
       raisedDate: payload.raised_date ?? null,
     };
@@ -432,14 +522,6 @@ export interface SegmentChunkStat {
   embeddedChunks: number;
   pendingChunks: number;
   failedChunks: number;
-}
-
-interface ChunkCountRow {
-  source_segment_id: string;
-  total_chunks: number | string;
-  embedded_chunks: number | string;
-  pending_chunks: number | string;
-  failed_chunks: number | string;
 }
 
 /**

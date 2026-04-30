@@ -295,6 +295,7 @@ describe('Probe 5 · inferClientKeyFromEmail', () => {
       'apexretail',
     );
     expect(inferClientKeyFromEmail('apex+clerk_test@abarva.com')).toBe('apexretail');
+    expect(inferClientKeyFromEmail('anand+apex@abarva.com')).toBe('apexretail');
   });
 
   it('infers arcturus from canonical Arcturus and First Capital demo emails', () => {
@@ -351,6 +352,7 @@ describe('Probe 6 · session role inference', () => {
     expect(inferSessionRoleFromEmail('demo-apexretail+clerk_test@abarva.com')).toBe(
       'client',
     );
+    expect(inferSessionRoleFromEmail('anand+apex@abarva.com')).toBe('client');
   });
 
   it('returns null for unknown emails', () => {
@@ -405,6 +407,16 @@ describe('Probe 7 · resolvePinnedSessionClientKey', () => {
         email: 'demo-keystone+clerk_test@abarva.com',
       }),
     ).toBe('keystone');
+  });
+
+  it('explicit tenant email aliases override stale conflicting metadata', () => {
+    expect(
+      resolvePinnedSessionClientKey({
+        clientId: 'meridian',
+        defaultClientId: 'meridian',
+        email: 'anand+apex@abarva.com',
+      }),
+    ).toBe('apexretail');
   });
 
   it('returns null when no signal resolves to a ClientKey', () => {
