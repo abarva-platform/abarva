@@ -7,6 +7,23 @@ Codex must read [CYCLE_STATE.md](/Users/anand/Projects/nexus/CYCLE_STATE.md) fir
 The canonical Source / Outsourcing experience design reference for technology
 and IT sourcing is [SOURCE_SOURCING_EXPERIENCE_DESIGN_BLUEPRINT.md](/Users/anand/Projects/nexus/docs/abarva-source/SOURCE_SOURCING_EXPERIENCE_DESIGN_BLUEPRINT.md).
 
+When tenant setup data exists, Source must consume it before asking the user to
+re-enter enterprise facts. For Apex Retail, the loaded setup layer currently
+contains org structure, IT landscape, KPI dictionary, program inventory,
+evidence ledger, vendor contracts, cross-program signals, graph rows, and
+retrieval-ready context chunks that are not yet available for vector retrieval.
+Source may ask for
+event-specific confirmation, boundaries, value targets, and baseline owners, but
+it should not behave as if the tenant has no leadership, systems, vendor,
+program, or evidence context.
+
+The same rule applies to Meridian Health and future flagship tenants. Source
+uses Postgres/setup records for facts and provenance, graph rows for stored
+relationships, and future vector retrieval for semantic chunk recall. Pinecone,
+when introduced, is the semantic memory layer over tenant chunks, not the source
+of truth. Until embeddings and tenant-filtered retrieval are proven, Source must
+label context as deterministic setup context rather than semantic retrieval.
+
 ## What AbarVa Source Is
 
 AbarVa Source is an AI-led sourcing and vendor-selection workflow product inside the broader AbarVa platform.
