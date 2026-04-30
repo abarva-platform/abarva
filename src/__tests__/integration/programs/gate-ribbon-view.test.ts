@@ -145,6 +145,13 @@ describe('GW-01 · APX-SAP-2026 P1 phase summary', () => {
       { label: 'Discovery report', status: 'pending' },
     ]);
   });
+
+  it('renders generic current-phase summary copy for newly created P1 programs', () => {
+    const view = buildProgramDetailView('new-program-from-db', undefined, 1);
+    expect(view.viewingPhase).toBe(1);
+    expect(view.phasePanel.summary).toContain('P1 Discovery is active');
+    expect(view.phasePanel.summary).toContain('clear the next gate');
+  });
 });
 
 // ─── APX-CC-2026 gate state is 'open' — ribbon returns null ──────────────────

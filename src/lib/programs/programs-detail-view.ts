@@ -617,6 +617,8 @@ function buildPhasePanel(
       };
     case 'current':
       return {
+        summary:
+          `P${viewingPhase} ${viewingPhaseLabel} is active. Nexus is tracking the phase deliverables, sponsor sign-off path, linked evidence, and unresolved risks needed to clear the next gate.`,
         gateCriteria: [
           { criterion: 'All required deliverables submitted', met: false },
           { criterion: 'Sponsor sign-off obtained', met: false },
