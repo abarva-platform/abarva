@@ -1,3 +1,50 @@
+/**
+ * Enterprise agent context broker — two-source consumer (TD-5).
+ *
+ * The broker is the single seam between app-tier callers and tenant
+ * data. It returns an `EnterpriseAgentContextBundle` that callers
+ * flatten into prompt blocks (Programs, Source, Intelligence). Per
+ * `feedback_broker_boundary`, app-tier code MUST NOT bypass this
+ * module to reach `EnterpriseDataRoom`, the tenant-data adapter,
+ * vector stores, or the graph store.
+ *
+ * Source layering — the bundle is built from one of two sources per
+ * request, never mixed within a single response:
+ *
+ *   1. Persisted tenant data (`TenantDataAdapter`). Used when the
+ *      adapter reports `hasPersistedData(tenantKey) === true`. Records
+ *      flow through `mapTenantRecordsToContextItems` (TD-4) and the
+ *      bundle is tagged with a `tenant_admin_upload` source-basis
+ *      warning. The synchronous `EnterpriseDataRoom` fixture is
+ *      skipped entirely.
+ *   2. Code-fixture (`EnterpriseDataRoom`). The legacy synchronous
+ *      seeded-room path. Used when the adapter has no rows for the
+ *      tenant — the bundle warns with the synthetic-fixture string.
+ *
+ * Per-item `sourceBasis` tagging is preserved end-to-end: persisted
+ * items carry the mapper's value (defaulting to `tenant_admin_upload`),
+ * fixture items carry whatever the seed declared. The bundle's
+ * `warnings` array carries an explicit one-line summary so callers can
+ * surface freshness in the UI without having to inspect every item.
+ *
+ * Callers — there are two entry points by design:
+ *   • `buildEnterpriseAgentContextBundle` (sync) — fixture-only,
+ *     unchanged behavior. Existing call sites keep working without
+ *     code changes.
+ *   • `buildEnterpriseAgentContextBundleAsync` — two-source consumer.
+ *     New code paths and tests opt in here. The migration of existing
+ *     call sites to the async variant is intentionally out of scope
+ *     for TD-5 (surgical wiring slice; route migrations follow).
+ *
+ * Open question — RLS posture: reads currently use the service-role
+ * Supabase client (matches the existing fixture path's trust posture
+ * and TD-2's choice). A follow-on slice should evaluate whether
+ * app-tier callers should flow through an RLS-aware client carrying
+ * the user JWT so that PII / restricted classifications are gated by
+ * row-level security rather than by the broker contract alone. See
+ * design doc §3 and TD-2 follow-on note.
+ */
+
 import {
   getEnterpriseDataRoom,
   validateEnterpriseDataRoom,
@@ -7,6 +54,12 @@ import {
   type EnterpriseDataRoomRecord,
   type EnterpriseEvidenceRecord,
 } from '@/lib/knowledge/enterprise-data-room';
+import { mapTenantRecordsToContextItems } from '@/lib/knowledge/tenant-data/mapper';
+import {
+  getTenantDataAdapter,
+  type SegmentId,
+  type TenantDataAdapter,
+} from '@/lib/knowledge/tenant-data';
 
 export type EnterpriseAgentName = 'Nexus' | 'Sentinel' | 'Atlas' | 'Steward';
 
@@ -108,6 +161,12 @@ export interface EnterpriseAgentContextBundle {
 
 const BROKER_VERSION = 'enterprise_agent_context_broker_v1';
 
+/** TD-5 — bundle-level warning strings emitted by the two-source consumer. */
+export const TENANT_DATA_PERSISTED_WARNING =
+  'Tenant context sourced from persisted data layer (tenant_admin_upload).';
+export const TENANT_DATA_FIXTURE_WARNING =
+  'Tenant context sourced from synthetic Enterprise Data Room fixture.';
+
 export function buildEnterpriseAgentContextBundle(
   request: EnterpriseAgentContextRequest,
 ): EnterpriseAgentContextBundle {
@@ -137,6 +196,73 @@ export function buildEnterpriseAgentContextBundle(
       validation.isRichTenantReady
         ? 'Tenant meets current rich-readiness thresholds for synthetic demo context.'
         : 'Tenant does not meet rich-readiness thresholds; use partial context with explicit provenance.',
+      TENANT_DATA_FIXTURE_WARNING,
+    ],
+  };
+}
+
+/**
+ * TD-5 — async two-source consumer.
+ *
+ * Returns the same `EnterpriseAgentContextBundle` shape as the
+ * synchronous entry point, but populates `items` from the persisted
+ * tenant-data layer when {@link TenantDataAdapter.hasPersistedData}
+ * reports true, and falls back to the existing code-fixture path
+ * otherwise. Sources are never mixed within a single response — the
+ * bundle picks one and tags itself in `warnings`.
+ *
+ * Per-item `sourceBasis` is preserved end-to-end: persisted items
+ * carry the value from {@link mapTenantRecordsToContextItems} (default
+ * `tenant_admin_upload`); fixture items carry whatever the seed
+ * declared. The bundle's `warnings` array carries an explicit
+ * one-line summary identifying the source basis the bundle was
+ * assembled from.
+ */
+export async function buildEnterpriseAgentContextBundleAsync(
+  request: EnterpriseAgentContextRequest,
+): Promise<EnterpriseAgentContextBundle> {
+  const room = getEnterpriseDataRoom(request.tenantKey);
+  if (!room) {
+    return buildUnknownTenantBundle(request);
+  }
+
+  const validation = validateEnterpriseDataRoom(room);
+  const blockedItems = buildBlockedItems(request, room);
+  const citations = room.evidence.slice(0, 12).map(toCitation);
+
+  const adapter = getTenantDataAdapter();
+  const persisted = await adapter.hasPersistedData(request.tenantKey);
+
+  let items: EnterpriseAgentContextItem[];
+  let extraWarnings: string[];
+  if (persisted) {
+    items = [
+      buildTenantSummaryItem(room, citations),
+      ...(await selectPersistedContextItems(adapter, request)),
+    ];
+    extraWarnings = [TENANT_DATA_PERSISTED_WARNING];
+  } else {
+    items = selectContextItems(room, request, citations);
+    extraWarnings = [TENANT_DATA_FIXTURE_WARNING];
+  }
+
+  return {
+    tenantKey: request.tenantKey,
+    agentName: request.agentName,
+    surface: request.surface,
+    generatedFrom: BROKER_VERSION,
+    runtimeSafe: true,
+    directStoreAccess: false,
+    items,
+    blockedItems,
+    citations,
+    graphNeighborhood: buildGraphNeighborhood(room, Boolean(request.includeGraphNeighborhood)),
+    warnings: [
+      'Context broker is contract-only; it does not query persistent stores, generate embeddings, or mutate runtime routes.',
+      validation.isRichTenantReady
+        ? 'Tenant meets current rich-readiness thresholds for synthetic demo context.'
+        : 'Tenant does not meet rich-readiness thresholds; use partial context with explicit provenance.',
+      ...extraWarnings,
     ],
   };
 }
@@ -206,7 +332,23 @@ function selectContextItems(
   request: EnterpriseAgentContextRequest,
   citations: EnterpriseEvidenceCitation[],
 ): EnterpriseAgentContextItem[] {
-  const items: EnterpriseAgentContextItem[] = [buildTenantSummaryItem(room, citations)];
+  return [
+    buildTenantSummaryItem(room, citations),
+    ...selectFixtureContextItems(room, request, citations),
+  ];
+}
+
+/**
+ * The original code-fixture per-agent selection. Extracted so the
+ * two-source async consumer can compose the tenant-summary item with
+ * either fixture items or persisted items without duplication.
+ */
+function selectFixtureContextItems(
+  room: EnterpriseDataRoomRecord,
+  request: EnterpriseAgentContextRequest,
+  citations: EnterpriseEvidenceCitation[],
+): EnterpriseAgentContextItem[] {
+  const items: EnterpriseAgentContextItem[] = [];
 
   if (request.agentName === 'Nexus') {
     // PR-R · founder feedback #1 — "Nexus doesn't have context of
@@ -418,6 +560,78 @@ function selectContextItems(
   }
 
   return items;
+}
+
+/**
+ * TD-5 — per-agent selector for the persisted tenant-data path.
+ *
+ * Mirrors the slice plan's segment-mapping table. Each agent reads a
+ * curated set of segments through {@link TenantDataAdapter.listRecords},
+ * runs results through {@link mapTenantRecordsToContextItems}, and
+ * returns the mapped items in segment order.
+ *
+ * Limits are aligned with the corresponding code-fixture slices so
+ * prompt budgets stay comparable across the two source paths.
+ *
+ * Records whose `(segment_id, record_kind)` pairs have no mapping in
+ * TD-4 (e.g. the `compliance_posture` segment, which is provisional
+ * and has no mapper case yet) are dropped silently by the mapper. A
+ * follow-on TD-4 extension can add the mappings.
+ */
+async function selectPersistedContextItems(
+  adapter: TenantDataAdapter,
+  request: EnterpriseAgentContextRequest,
+): Promise<EnterpriseAgentContextItem[]> {
+  const tenantKey = request.tenantKey;
+  const fetches: Array<Promise<EnterpriseAgentContextItem[]>> = [];
+
+  const fetch = (segmentId: SegmentId, limit: number): void => {
+    fetches.push(
+      adapter
+        .listRecords(tenantKey, segmentId, { limit })
+        .then((records) => mapTenantRecordsToContextItems(records)),
+    );
+  };
+
+  switch (request.agentName) {
+    case 'Nexus':
+      // Founder feedback #1 — Nexus needs the executive bench, the
+      // active program inventory, the cross-program signals (so it can
+      // talk about portfolio-wide patterns), and the top evidence
+      // claims (provenance for any factual statement).
+      fetch('org_structure', 8);
+      fetch('program_inventory', 6);
+      fetch('cross_program_signals', 4);
+      fetch('evidence_ledger', 5);
+      break;
+    case 'Sentinel':
+      // Sentinel is the librarian agent — corpus-wide retrieval and
+      // citation discipline. The persisted layer surfaces evidence
+      // claims and KPI definitions; deep graph-walking is out of scope
+      // for TD-5 (kept simple per the slice plan).
+      fetch('evidence_ledger', 8);
+      fetch('kpi_dictionary', 6);
+      break;
+    case 'Atlas':
+      // Atlas reasons over financial / system-landscape posture. KPI
+      // metrics carry their own provenance (source_system, data_owner,
+      // confidence) — surface those verbatim instead of folding into
+      // financial_metric (per design doc §3.1).
+      fetch('kpi_dictionary', 8);
+      fetch('it_landscape', 4);
+      break;
+    case 'Steward':
+      // Steward owns vendor + policy posture. Compliance segment has
+      // no mapper case yet; the mapper drops those records and a
+      // follow-on TD-4 extension can add the mapping.
+      fetch('vendor_contracts', 6);
+      break;
+    default:
+      break;
+  }
+
+  const settled = await Promise.all(fetches);
+  return settled.flat();
 }
 
 function buildTenantSummaryItem(
