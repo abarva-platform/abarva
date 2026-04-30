@@ -3,6 +3,8 @@
 import {
   composeAttachmentContextBlock,
   composeBriefProgressCadenceDirective,
+  composeCrossProgramSignalsBlock,
+  composeCrossProgramSignalsBlockForSurface,
   composeFailureModeBlock,
   composeFailureModeDoctrineBlock,
   composeOverlapBlock,
@@ -14,6 +16,7 @@ import { FAILURE_MODES } from '../failure-modes';
 import type { BriefOverlapMatch } from '../origination-overlap';
 import type { AttachmentChipRef } from '../attachments/types';
 import type { AttachmentTextPreview } from '../attachments/extract-text';
+import type { EnterpriseAgentContextItem } from '@/lib/knowledge/agent-context-broker';
 
 describe('formatFailureModeCatalogForPrompt', () => {
   const block = formatFailureModeCatalogForPrompt();
@@ -401,5 +404,192 @@ describe('composeAttachmentContextBlock', () => {
         [docxPreview],
       ),
     ).toContain('meeting-notes.docx');
+  });
+});
+
+// ── TD-7 · cross-program-signal system-prompt block ─────────────────────────
+
+describe('composeCrossProgramSignalsBlock (TD-7)', () => {
+  // Build a broker context item that mirrors the mapper's output shape
+  // for cross_program_signal records. The mapper composes the summary
+  // as `Programs: a, b; severity X; recommendation` — the helper parses
+  // that back into structured fields without reaching into the broker.
+  function makeSignal(args: {
+    recordId: string;
+    title: string;
+    programs: string[];
+    severity: string;
+    recommendation: string;
+  }): EnterpriseAgentContextItem {
+    const segments: string[] = [];
+    if (args.programs.length > 0) segments.push(`Programs: ${args.programs.join(', ')}`);
+    if (args.severity) segments.push(`severity ${args.severity}`);
+    if (args.recommendation) segments.push(args.recommendation);
+    return {
+      id: `tenant-data:${args.recordId}`,
+      kind: 'cross_program_signal',
+      title: args.title,
+      summary: segments.join('; '),
+      tenantKey: 'apex-retail',
+      sourceBasis: 'tenant_admin_upload',
+      dataClassification: 'internal',
+      sensitivity: 'summary',
+      provenanceIds: [args.recordId, ...args.programs],
+      linkedEvidence: [],
+    };
+  }
+
+  it('returns empty string when no cross-program signals are present', () => {
+    expect(composeCrossProgramSignalsBlock([])).toBe('');
+  });
+
+  it('returns empty string when items have other kinds only', () => {
+    const items: EnterpriseAgentContextItem[] = [
+      {
+        id: 'person:apex:diana-lopez',
+        kind: 'person',
+        title: 'Diana Lopez',
+        summary: 'CIO',
+        tenantKey: 'apex-retail',
+        sourceBasis: 'tenant_admin_upload',
+        dataClassification: 'internal',
+        sensitivity: 'summary',
+        provenanceIds: ['person:apex:diana-lopez'],
+        linkedEvidence: [],
+      },
+    ];
+    expect(composeCrossProgramSignalsBlock(items)).toBe('');
+  });
+
+  it('renders three signals with the canonical signal-id, title, programs, severity, and recommendation', () => {
+    const signals: EnterpriseAgentContextItem[] = [
+      makeSignal({
+        recordId: 'cross_program_signals:xprog:apex:001',
+        title: 'Priya Iyer leads two critical-path programs simultaneously',
+        programs: ['apex-cdp-2026', 'apex-cc-ai-2026'],
+        severity: 'medium',
+        recommendation:
+          'Identify second program lead for one of the two programs by end of Q2 FY2026.',
+      }),
+      makeSignal({
+        recordId: 'cross_program_signals:xprog:apex:002',
+        title: 'CDP and Forecasting share the same data engineering team',
+        programs: ['apex-cdp-2026', 'apex-forecast-2026'],
+        severity: 'high',
+        recommendation: 'Sequence the two programs; do not parallelize.',
+      }),
+      makeSignal({
+        recordId: 'cross_program_signals:xprog:apex:003',
+        title: 'Vendor X concentration risk across three programs',
+        programs: ['apex-cdp-2026', 'apex-cc-ai-2026', 'apex-forecast-2026'],
+        severity: 'critical',
+        recommendation: 'Pause renewal pending vendor diversification review.',
+      }),
+    ];
+
+    const block = composeCrossProgramSignalsBlock(signals);
+
+    // Header.
+    expect(block).toContain('CROSS-PROGRAM SIGNALS');
+
+    // Each signal-id (recordId) is surfaced — without the tenant-data: prefix.
+    expect(block).toContain('signal-id: cross_program_signals:xprog:apex:001');
+    expect(block).toContain('signal-id: cross_program_signals:xprog:apex:002');
+    expect(block).toContain('signal-id: cross_program_signals:xprog:apex:003');
+    // The tenant-data: namespace prefix should NOT leak into the prompt.
+    expect(block).not.toContain('tenant-data:cross_program_signals');
+
+    // Each title.
+    expect(block).toContain('Priya Iyer leads two critical-path programs simultaneously');
+    expect(block).toContain('CDP and Forecasting share the same data engineering team');
+    expect(block).toContain('Vendor X concentration risk across three programs');
+
+    // Programs list rendered as comma-separated ids.
+    expect(block).toContain('programs: apex-cdp-2026, apex-cc-ai-2026');
+    expect(block).toContain('programs: apex-cdp-2026, apex-forecast-2026');
+    expect(block).toContain(
+      'programs: apex-cdp-2026, apex-cc-ai-2026, apex-forecast-2026',
+    );
+
+    // Severity rendered lowercase per artifact contract.
+    expect(block).toContain('severity: medium');
+    expect(block).toContain('severity: high');
+    expect(block).toContain('severity: critical');
+
+    // Each recommendation surfaces verbatim.
+    expect(block).toContain(
+      'Identify second program lead for one of the two programs by end of Q2 FY2026.',
+    );
+    expect(block).toContain('Sequence the two programs');
+    expect(block).toContain('Pause renewal pending vendor diversification review.');
+
+    // Footer guidance is present so the agent knows not to invent.
+    expect(block).toContain('Do NOT invent signals');
+  });
+
+  it('skips items whose summary cannot yield a programs list (mapper drift / malformed)', () => {
+    const malformed: EnterpriseAgentContextItem = {
+      id: 'tenant-data:cross_program_signals:xprog:apex:bad',
+      kind: 'cross_program_signal',
+      title: 'Malformed signal',
+      summary: 'severity high; some recommendation', // no Programs: segment
+      tenantKey: 'apex-retail',
+      sourceBasis: 'tenant_admin_upload',
+      dataClassification: 'internal',
+      sensitivity: 'summary',
+      provenanceIds: [],
+      linkedEvidence: [],
+    };
+    expect(composeCrossProgramSignalsBlock([malformed])).toBe('');
+  });
+
+  it('lowercases mixed-case severity (mapper passes through verbatim from records)', () => {
+    const signal = makeSignal({
+      recordId: 'cps:001',
+      title: 'Mixed-case severity case',
+      programs: ['p1', 'p2'],
+      severity: 'Medium', // record-side capitalization
+      recommendation: 'Confirm and reduce.',
+    });
+    const block = composeCrossProgramSignalsBlock([signal]);
+    expect(block).toContain('severity: medium');
+  });
+});
+
+describe('composeCrossProgramSignalsBlockForSurface (TD-7)', () => {
+  const items: EnterpriseAgentContextItem[] = [
+    {
+      id: 'tenant-data:cross_program_signals:xprog:apex:001',
+      kind: 'cross_program_signal',
+      title: 'A signal',
+      summary: 'Programs: a, b; severity medium; do something',
+      tenantKey: 'apex-retail',
+      sourceBasis: 'tenant_admin_upload',
+      dataClassification: 'internal',
+      sensitivity: 'summary',
+      provenanceIds: ['cross_program_signals:xprog:apex:001'],
+      linkedEvidence: [],
+    },
+  ];
+
+  it('returns the block on Programs surfaces', () => {
+    const block = composeCrossProgramSignalsBlockForSurface('/programs', items);
+    expect(block).toContain('CROSS-PROGRAM SIGNALS');
+  });
+
+  it('returns the block on /programs/<id>', () => {
+    const block = composeCrossProgramSignalsBlockForSurface(
+      '/programs/apex-cdp-2026',
+      items,
+    );
+    expect(block).toContain('CROSS-PROGRAM SIGNALS');
+  });
+
+  it('returns empty string off Programs surfaces', () => {
+    expect(composeCrossProgramSignalsBlockForSurface('/intelligence', items)).toBe('');
+    expect(composeCrossProgramSignalsBlockForSurface('/source', items)).toBe('');
+    expect(composeCrossProgramSignalsBlockForSurface('/home', items)).toBe('');
+    expect(composeCrossProgramSignalsBlockForSurface(null, items)).toBe('');
+    expect(composeCrossProgramSignalsBlockForSurface(undefined, items)).toBe('');
   });
 });

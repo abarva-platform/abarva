@@ -528,3 +528,155 @@ describe('NexusReactivePanel · deliverable-ready rendering', () => {
     expect(html).toContain('XLSX');
   });
 });
+
+// TD-7 · cross-program-signal as first-class artifact.
+describe('NexusReactivePanel · cross-program-signal rendering', () => {
+  // Tone color hex codes match CROSS_PROGRAM_SIGNAL_TONE in the panel.
+  const CRITICAL_RED = '#b91c1c';
+  const HIGH_ORANGE = '#c2410c';
+  const MEDIUM_AMBER = '#b45309';
+
+  it('renders critical severity with a 4px red stripe', () => {
+    const artifacts: Artifact[] = [
+      {
+        type: 'cross-program-signal',
+        signalId: 'cps:critical-1',
+        title: 'Vendor concentration risk across three programs',
+        programs: ['p1', 'p2', 'p3'],
+        severity: 'critical',
+        recommendation: 'Pause renewal pending diversification.',
+      },
+    ];
+    const html = renderToStaticMarkup(
+      createElement(NexusReactivePanel, { artifacts }),
+    );
+    expect(html).toContain('data-severity="critical"');
+    expect(html).toContain('CRITICAL');
+    expect(html).toContain(CRITICAL_RED);
+    // 4px stripe.
+    expect(html).toMatch(/border-left:\s*4px solid #b91c1c/);
+    expect(html).toContain('Vendor concentration risk across three programs');
+  });
+
+  it('renders high severity with a 3px orange stripe', () => {
+    const artifacts: Artifact[] = [
+      {
+        type: 'cross-program-signal',
+        signalId: 'cps:high-1',
+        title: 'Architecture review backlog blocks two programs',
+        programs: ['p1', 'p2'],
+        severity: 'high',
+        recommendation: 'Add second reviewer to the bench.',
+      },
+    ];
+    const html = renderToStaticMarkup(
+      createElement(NexusReactivePanel, { artifacts }),
+    );
+    expect(html).toContain('data-severity="high"');
+    expect(html).toContain('HIGH');
+    expect(html).toContain(HIGH_ORANGE);
+    expect(html).toMatch(/border-left:\s*3px solid #c2410c/);
+  });
+
+  it('renders medium severity with a 2px amber stripe', () => {
+    const artifacts: Artifact[] = [
+      {
+        type: 'cross-program-signal',
+        signalId: 'cps:medium-1',
+        title: 'Priya Iyer leads two critical-path programs simultaneously',
+        programs: ['apex-cdp-2026', 'apex-cc-ai-2026'],
+        severity: 'medium',
+        recommendation:
+          'Identify second program lead for one of the two programs by end of Q2 FY2026.',
+      },
+    ];
+    const html = renderToStaticMarkup(
+      createElement(NexusReactivePanel, { artifacts }),
+    );
+    expect(html).toContain('data-severity="medium"');
+    expect(html).toContain('MEDIUM');
+    expect(html).toContain(MEDIUM_AMBER);
+    expect(html).toMatch(/border-left:\s*2px solid #b45309/);
+  });
+
+  it('renders low severity with a 1px slate stripe', () => {
+    const artifacts: Artifact[] = [
+      {
+        type: 'cross-program-signal',
+        signalId: 'cps:low-1',
+        title: 'Soft schedule overlap',
+        programs: ['p1'],
+        severity: 'low',
+        recommendation: 'Note in next review.',
+      },
+    ];
+    const html = renderToStaticMarkup(
+      createElement(NexusReactivePanel, { artifacts }),
+    );
+    expect(html).toContain('data-severity="low"');
+    expect(html).toContain('LOW');
+    expect(html).toMatch(/border-left:\s*1px solid/);
+  });
+
+  it('renders the programs strip with click-through links per program', () => {
+    const artifacts: Artifact[] = [
+      {
+        type: 'cross-program-signal',
+        signalId: 'cps:strip-1',
+        title: 'Two programs, one strip',
+        programs: ['apex-cdp-2026', 'apex-cc-ai-2026'],
+        severity: 'medium',
+        recommendation: 'See chart.',
+      },
+    ];
+    const html = renderToStaticMarkup(
+      createElement(NexusReactivePanel, { artifacts }),
+    );
+    expect(html).toContain('data-testid="cross-program-signal-programs"');
+    expect(html).toContain('href="/programs/apex-cdp-2026"');
+    expect(html).toContain('href="/programs/apex-cc-ai-2026"');
+    expect(html).toContain('apex-cdp-2026');
+    expect(html).toContain('apex-cc-ai-2026');
+  });
+
+  it('dedupes cross-program-signal by signalId, keeping the latest emission', () => {
+    const input: Artifact[] = [
+      {
+        type: 'cross-program-signal',
+        signalId: 'cross_program_signals:xprog:apex:001',
+        title: 'first title',
+        programs: ['p1'],
+        severity: 'low',
+        recommendation: 'first recommendation',
+      },
+      {
+        type: 'cross-program-signal',
+        signalId: 'cross_program_signals:xprog:apex:001',
+        title: 'second title',
+        programs: ['p1', 'p2'],
+        severity: 'high',
+        recommendation: 'second recommendation',
+      },
+      {
+        type: 'cross-program-signal',
+        signalId: 'cross_program_signals:xprog:apex:002',
+        title: 'distinct signal',
+        programs: ['p3'],
+        severity: 'medium',
+        recommendation: 'distinct recommendation',
+      },
+    ];
+    const out = selectVisibleArtifacts(input);
+    const signals = out.filter((a) => a.type === 'cross-program-signal') as Array<
+      Extract<Artifact, { type: 'cross-program-signal' }>
+    >;
+    expect(signals).toHaveLength(2);
+    const apex001 = signals.find(
+      (s) => s.signalId === 'cross_program_signals:xprog:apex:001',
+    );
+    expect(apex001?.title).toBe('second title');
+    expect(apex001?.severity).toBe('high');
+    expect(apex001?.recommendation).toBe('second recommendation');
+    expect(apex001?.programs).toEqual(['p1', 'p2']);
+  });
+});
