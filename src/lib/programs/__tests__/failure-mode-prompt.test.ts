@@ -1,6 +1,7 @@
 // Slice OV2-WIRE-AND-FM-PROMPT — failure-mode prompt block tests.
 
 import {
+  composeAttachmentContextBlock,
   composeBriefProgressCadenceDirective,
   composeFailureModeBlock,
   composeFailureModeDoctrineBlock,
@@ -11,6 +12,8 @@ import {
 } from '../failure-mode-prompt';
 import { FAILURE_MODES } from '../failure-modes';
 import type { BriefOverlapMatch } from '../origination-overlap';
+import type { AttachmentChipRef } from '../attachments/types';
+import type { AttachmentTextPreview } from '../attachments/extract-text';
 
 describe('formatFailureModeCatalogForPrompt', () => {
   const block = formatFailureModeCatalogForPrompt();
@@ -297,5 +300,106 @@ describe('composeBriefProgressCadenceDirective', () => {
     expect(composeBriefProgressCadenceDirective('/intelligence')).toBe('');
     expect(composeBriefProgressCadenceDirective(null)).toBe('');
     expect(composeBriefProgressCadenceDirective(undefined)).toBe('');
+  });
+});
+
+// ── OV2-4c · attachment context block ───────────────────────────────────────
+
+describe('composeAttachmentContextBlock', () => {
+  const docxChip: AttachmentChipRef = {
+    id: 'att-docx',
+    programId: 'prog-1',
+    originalName: 'meeting-notes.docx',
+    mimeType:
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    sizeBytes: 24_576,
+  };
+  const pdfChip: AttachmentChipRef = {
+    id: 'att-pdf',
+    programId: 'prog-1',
+    originalName: 'evidence.pdf',
+    mimeType: 'application/pdf',
+    sizeBytes: 102_400,
+  };
+
+  const docxPreview: AttachmentTextPreview = {
+    attachmentId: 'att-docx',
+    originalName: 'meeting-notes.docx',
+    mimeType: docxChip.mimeType,
+    parsedTextSnippet: 'P1 stakeholder workshop notes — action items follow.',
+    truncated: false,
+    parsingMethod: 'docx-mammoth',
+    warnings: [],
+  };
+
+  it('returns empty string when no attachments', () => {
+    expect(composeAttachmentContextBlock('/programs/abc', [], [])).toBe('');
+  });
+
+  it('returns empty string off Programs surfaces', () => {
+    expect(
+      composeAttachmentContextBlock('/intelligence', [docxChip], [docxPreview]),
+    ).toBe('');
+    expect(
+      composeAttachmentContextBlock('/source', [docxChip], [docxPreview]),
+    ).toBe('');
+  });
+
+  it('renders the header and a chip line per attachment with name + mime + size', () => {
+    const block = composeAttachmentContextBlock(
+      '/programs/prog-1',
+      [docxChip, pdfChip],
+      [docxPreview],
+    );
+    expect(block).toContain('ATTACHMENTS THE USER HAS UPLOADED');
+    expect(block).toContain(`meeting-notes.docx (${docxChip.mimeType}, 24576 bytes)`);
+    expect(block).toContain(
+      `evidence.pdf (application/pdf, 102400 bytes)`,
+    );
+  });
+
+  it('renders the parsed snippet when available', () => {
+    const block = composeAttachmentContextBlock(
+      '/programs/prog-1',
+      [docxChip],
+      [docxPreview],
+    );
+    expect(block).toContain(docxPreview.parsedTextSnippet);
+  });
+
+  it('renders the binary-format hint when no preview is available', () => {
+    const block = composeAttachmentContextBlock(
+      '/programs/prog-1',
+      [pdfChip],
+      [],
+    );
+    expect(block).toContain('content not parsed');
+  });
+
+  it('marks truncated previews with a [truncated] tag', () => {
+    const truncated: AttachmentTextPreview = {
+      ...docxPreview,
+      truncated: true,
+      parsedTextSnippet: 'first chunk of a long doc',
+    };
+    const block = composeAttachmentContextBlock(
+      '/programs/prog-1',
+      [docxChip],
+      [truncated],
+    );
+    expect(block).toContain('[truncated]');
+  });
+
+  it('works on /tower and /demo/programs surfaces', () => {
+    expect(
+      composeAttachmentContextBlock('/tower', [docxChip], [docxPreview]),
+    ).toContain('meeting-notes.docx');
+    expect(
+      composeAttachmentContextBlock(
+        '/demo/programs/new',
+        [docxChip],
+        [docxPreview],
+      ),
+    ).toContain('meeting-notes.docx');
   });
 });

@@ -11,6 +11,8 @@
 
 import { FAILURE_MODES } from '@/lib/programs/failure-modes';
 import type { BriefOverlapMatch } from '@/lib/programs/origination-overlap';
+import type { AttachmentChipRef } from '@/lib/programs/attachments/types';
+import type { AttachmentTextPreview } from '@/lib/programs/attachments/extract-text';
 
 const PROGRAMS_SURFACE_PREFIXES = ['/programs', '/demo/programs', '/tower'];
 
@@ -144,4 +146,60 @@ export function composeBriefProgressCadenceDirective(
     return '';
   }
   return "- After every turn that captures or refines a brief field, emit a `brief-progress` artifact summarizing the 8-field state. The user's right pane only updates when you emit it.";
+}
+
+/**
+ * Slice OV2-4c — compose the ATTACHMENTS block for the agent's system
+ * prompt. Lists recent uploads (most recent first) by name, mime, and
+ * size. For attachments whose content was parsed into a text snippet
+ * (markdown / plain text / DOCX), surfaces the snippet inline so the
+ * agent reads it as evidence-grade context. For binary formats (PDF,
+ * XLSX, images, etc.) renders the chip line only with a "content not
+ * parsed" hint.
+ *
+ * Empty string when no attachments OR when the surface isn't a Programs
+ * surface — uploads only land in Programs surfaces today, but the surface
+ * gate keeps prompts clean for non-Programs callers.
+ *
+ * Caller is responsible for slicing `attachments` to the most recent N
+ * (the route uses 3) before calling. We don't slice here so the
+ * composer stays pure.
+ */
+export function composeAttachmentContextBlock(
+  surface: string | null | undefined,
+  attachments: readonly AttachmentChipRef[],
+  textPreviews: readonly AttachmentTextPreview[],
+): string {
+  if (!isProgramsSurface(surface)) return '';
+  if (!attachments || attachments.length === 0) return '';
+
+  const previewById = new Map<string, AttachmentTextPreview>();
+  for (const preview of textPreviews) {
+    previewById.set(preview.attachmentId, preview);
+  }
+
+  const lines: string[] = [
+    'ATTACHMENTS THE USER HAS UPLOADED (most recent first):',
+    '',
+  ];
+
+  for (const att of attachments) {
+    lines.push(
+      `  - ${att.originalName} (${att.mimeType}, ${att.sizeBytes} bytes)`,
+    );
+    const preview = previewById.get(att.id);
+    if (preview && preview.parsedTextSnippet.length > 0) {
+      const truncatedTail = preview.truncated ? ' [truncated]' : '';
+      // Indent the snippet two spaces deeper than the chip line for
+      // visual grouping. Keep the snippet as-is (no further escaping)
+      // — the system prompt is plain text.
+      lines.push(`    ${preview.parsedTextSnippet}${truncatedTail}`);
+    } else {
+      lines.push(
+        '    (content not parsed — file is binary or in an unsupported format)',
+      );
+    }
+  }
+
+  return lines.join('\n');
 }
