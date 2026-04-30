@@ -225,6 +225,12 @@ export function ContextAssembledPanel({
         onCitationClick={onCitationClick}
       />
       <Footer bundle={bundle} />
+      {/* CB-10 · info-tags render below the footer in a slate-toned
+          strip, distinct from the amber `Warnings` strip. Vector-
+          retrieval-succeeded ("Vector retrieval via Pinecone…") and
+          similar success metadata land here so they don't read like
+          a problem. */}
+      {bundle.infoTags.length > 0 ? <InfoTags infoTags={bundle.infoTags} /> : null}
     </aside>
   );
 }
@@ -327,6 +333,53 @@ function ModeBadge({ mode }: { mode: ContextBundle['mode'] }) {
   );
 }
 
+function InfoTags({ infoTags }: { infoTags: string[] }) {
+  // CB-10 · slate-toned info strip for retrieval success metadata.
+  // Visually distinct from the amber `Warnings` strip so users don't
+  // misread "Vector retrieval via Pinecone (top-K=8)." as a problem.
+  return (
+    <div
+      data-testid="context-panel-info-tags"
+      style={{
+        background: `${COLORS.ink}07`,
+        border: `1px solid ${COLORS.ink}11`,
+        borderRadius: RADIUS.sm,
+        padding: SPACING.sm,
+      }}
+    >
+      <p
+        style={{
+          margin: 0,
+          fontFamily: TYPOGRAPHY.mono,
+          fontSize: 10,
+          textTransform: 'uppercase',
+          letterSpacing: '0.1em',
+          color: `${COLORS.ink}77`,
+          fontWeight: 700,
+        }}
+      >
+        Info ({infoTags.length})
+      </p>
+      <ul style={{ margin: `${SPACING.xs} 0 0`, padding: `0 0 0 ${SPACING.md}` }}>
+        {infoTags.map((tag, i) => (
+          <li
+            key={i}
+            data-testid={`context-panel-info-tag-${i}`}
+            style={{
+              fontFamily: TYPOGRAPHY.sans,
+              fontSize: 12,
+              color: `${COLORS.ink}99`,
+              lineHeight: 1.4,
+            }}
+          >
+            {tag}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function Warnings({ warnings }: { warnings: string[] }) {
   return (
     <div
@@ -418,6 +471,22 @@ function FactsSection({
                 ) : null}
                 <SourceClassChip sourceClass={prov?.sourceClass ?? null} />
               </div>
+              {/* CB-10 · per-recordKind detail rows. The provenance triple
+                  for a `kpi_metric` (current/target/source/owner/confidence)
+                  is what makes it a distinct kind in TD-4 — surface it
+                  explicitly rather than letting it disappear under a
+                  default `title + chips` summary. Same for
+                  `cross_program_signal` where severity + program list +
+                  recommendation are the decision-grade payload. */}
+              {fact.recordKind === 'kpi_metric' ? (
+                <KpiMetricDetail recordId={fact.recordId} payload={fact.payload} />
+              ) : null}
+              {fact.recordKind === 'cross_program_signal' ? (
+                <CrossProgramSignalDetail
+                  recordId={fact.recordId}
+                  payload={fact.payload}
+                />
+              ) : null}
               {prov?.sourceDoc ? (
                 <p
                   style={metaLineStyle}
@@ -432,6 +501,156 @@ function FactsSection({
       </ul>
     </Section>
   );
+}
+
+/**
+ * CB-10 · `kpi_metric` detail row. TD-4's `kpi_metric` payload carries
+ * `current_value / target_fy2026 / source_system / data_owner / confidence`
+ * — the provenance triple that makes the kind decision-grade. We
+ * surface each populated field on its own labeled line so the panel
+ * doesn't hide the metric inside a generic summary string.
+ */
+function KpiMetricDetail({
+  recordId,
+  payload,
+}: {
+  recordId: string;
+  payload: Record<string, unknown>;
+}) {
+  const current = readKpiScalar(payload.current_value);
+  const target =
+    readKpiScalar(payload.target_fy2026) ?? readKpiScalar(payload.target);
+  const source =
+    readKpiString(payload.source_system) ??
+    readKpiString(payload.source_system_id);
+  const owner =
+    readKpiString(payload.data_owner) ??
+    readKpiString(payload.data_owner_person_id);
+  const confidence = readKpiScalar(payload.confidence);
+
+  const rows: Array<{ label: string; value: string; testid: string }> = [];
+  if (current !== null) {
+    rows.push({ label: 'Current', value: current, testid: `context-panel-kpi-current-${recordId}` });
+  }
+  if (target !== null) {
+    rows.push({ label: 'Target', value: target, testid: `context-panel-kpi-target-${recordId}` });
+  }
+  if (source !== null) {
+    rows.push({ label: 'Source', value: source, testid: `context-panel-kpi-source-${recordId}` });
+  }
+  if (owner !== null) {
+    rows.push({ label: 'Owner', value: owner, testid: `context-panel-kpi-owner-${recordId}` });
+  }
+  if (confidence !== null) {
+    rows.push({ label: 'Confidence', value: confidence, testid: `context-panel-kpi-confidence-${recordId}` });
+  }
+  if (rows.length === 0) return null;
+
+  return (
+    <dl
+      data-testid={`context-panel-kpi-detail-${recordId}`}
+      style={kpiDetailListStyle}
+    >
+      {rows.map((row) => (
+        <div key={row.label} style={kpiDetailRowStyle}>
+          <dt style={kpiDetailLabelStyle}>{row.label}</dt>
+          <dd
+            data-testid={row.testid}
+            style={kpiDetailValueStyle}
+          >
+            {row.value}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/**
+ * CB-10 · `cross_program_signal` detail row. TD-4 maps this kind from
+ * `payload.programs[] / severity / recommendation`. The severity +
+ * affected-programs join + recommendation is the decision-grade
+ * payload; surface them explicitly rather than collapsing into a
+ * default summary.
+ */
+function CrossProgramSignalDetail({
+  recordId,
+  payload,
+}: {
+  recordId: string;
+  payload: Record<string, unknown>;
+}) {
+  const programs = readKpiStringArray(payload.programs);
+  const severity = readKpiString(payload.severity);
+  const recommendation = readKpiString(payload.recommendation);
+
+  if (programs.length === 0 && !severity && !recommendation) return null;
+
+  return (
+    <div
+      data-testid={`context-panel-signal-detail-${recordId}`}
+      style={kpiDetailListStyle}
+    >
+      {severity ? (
+        <div style={kpiDetailRowStyle}>
+          <dt style={kpiDetailLabelStyle}>Severity</dt>
+          <dd
+            data-testid={`context-panel-signal-severity-${recordId}`}
+            style={{ ...kpiDetailValueStyle, fontWeight: 600 }}
+          >
+            {severity}
+          </dd>
+        </div>
+      ) : null}
+      {programs.length > 0 ? (
+        <div style={kpiDetailRowStyle}>
+          <dt style={kpiDetailLabelStyle}>Programs</dt>
+          <dd
+            data-testid={`context-panel-signal-programs-${recordId}`}
+            style={kpiDetailValueStyle}
+          >
+            {programs.join(', ')}
+          </dd>
+        </div>
+      ) : null}
+      {recommendation ? (
+        <div style={kpiDetailRowStyle}>
+          <dt style={kpiDetailLabelStyle}>Recommendation</dt>
+          <dd
+            data-testid={`context-panel-signal-recommendation-${recordId}`}
+            style={kpiDetailValueStyle}
+          >
+            {recommendation}
+          </dd>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function readKpiScalar(value: unknown): string | null {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  if (typeof value === 'boolean') return value ? 'true' : 'false';
+  return null;
+}
+
+function readKpiString(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function readKpiStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const out: string[] = [];
+  for (const v of value) {
+    if (typeof v === 'string' && v.trim().length > 0) out.push(v.trim());
+  }
+  return out;
 }
 
 function GraphPathsSection({
@@ -910,4 +1129,41 @@ const metaLineStyle: React.CSSProperties = {
   fontSize: 10,
   color: `${COLORS.ink}88`,
   marginTop: 2,
+};
+
+// CB-10 · per-recordKind detail row styles (kpi_metric, cross_program_signal).
+// Two-column label/value layout — small enough to read at the panel's
+// rail width but distinct from the chip row above so the metric reads
+// as content, not metadata.
+const kpiDetailListStyle: React.CSSProperties = {
+  margin: '4px 0 0',
+  padding: 0,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 2,
+};
+
+const kpiDetailRowStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '88px 1fr',
+  alignItems: 'baseline',
+  gap: SPACING.xs,
+};
+
+const kpiDetailLabelStyle: React.CSSProperties = {
+  margin: 0,
+  fontFamily: TYPOGRAPHY.mono,
+  fontSize: 10,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  color: `${COLORS.ink}77`,
+  fontWeight: 700,
+};
+
+const kpiDetailValueStyle: React.CSSProperties = {
+  margin: 0,
+  fontFamily: TYPOGRAPHY.sans,
+  fontSize: 12,
+  color: COLORS.ink,
+  lineHeight: 1.4,
 };

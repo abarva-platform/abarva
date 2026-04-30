@@ -1192,6 +1192,15 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
       if (!Array.isArray(b.corpusPatterns)) return null;
       if (!Array.isArray(b.provenance)) return null;
       if (!Array.isArray(b.warnings)) return null;
+      // CB-10 · `infoTags` is the success-metadata channel split out
+      // from `warnings`. Older serialized bundles may not carry it; we
+      // accept missing/non-array (treat as empty) rather than rejecting,
+      // since the panel renders empty info-tag strips harmlessly.
+      if (b.infoTags === undefined) {
+        b.infoTags = [];
+      } else if (!Array.isArray(b.infoTags)) {
+        return null;
+      }
       if (typeof b.assembledAt !== 'string') return null;
       // Pass through the bundle verbatim. Type assertion is safe because
       // we've validated every load-bearing key the panel reads; cost

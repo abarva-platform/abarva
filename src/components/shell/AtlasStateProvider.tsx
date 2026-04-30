@@ -32,6 +32,7 @@ function stableKey(value: unknown) {
 export function AtlasStateProvider({
   children,
   tenantName,
+  hasTenantKey = false,
   surface,
   stage = null,
   surfaceContext = {},
@@ -45,6 +46,7 @@ export function AtlasStateProvider({
   const seed = useMemo(
     () => ({
       tenantName,
+      hasTenantKey,
       surface,
       stage,
       surfaceContext,
@@ -54,6 +56,7 @@ export function AtlasStateProvider({
     }),
     [
       tenantName,
+      hasTenantKey,
       surface,
       stage,
       surfaceContextKey,

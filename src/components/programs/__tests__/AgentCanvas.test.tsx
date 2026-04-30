@@ -59,6 +59,7 @@ function makeBundle(overrides: Partial<ContextBundle> = {}): ContextBundle {
     corpusPatterns: [],
     provenance: [],
     warnings: [],
+    infoTags: [],
     assembledAt: '2026-04-30T14:32:09Z',
     ...overrides,
   };
@@ -76,6 +77,7 @@ function makePageState(
   };
   return {
     tenantName: 'Apex Retail Group',
+    hasTenantKey: true,
     surface: 'programs-detail',
     stage: null,
     surfaceContext: {},
@@ -208,6 +210,51 @@ describe('AgentCanvas · CB-7', () => {
     const panel = screen.getByTestId('context-assembled-panel');
     expect(panel).toHaveAttribute('data-state', 'loading');
     expect(screen.getByTestId('context-panel-skeleton')).toBeInTheDocument();
+  });
+
+  it('disables tenant + full when hasTenantKey is false (CB-8)', () => {
+    // CB-8 · the disabled-mode guardrail keys off the explicit
+    // `hasTenantKey` boolean threaded through AtlasPageState. The
+    // previous proxy was `tenantName` non-empty — but AppShell
+    // defaults `tenantName` to 'Apex Retail Group' for unauthenticated
+    // demo opens, so the disabled state never fired.
+    mockUseAtlasPageState.mockReturnValue(
+      makePageState({ tenantName: 'Apex Retail Group', hasTenantKey: false }),
+    );
+    render(
+      <AgentCanvas
+        surface="/programs/APX-CDP-2026"
+        programId="APX-CDP-2026"
+        agent={NEXUS_AGENT}
+        quote="Where are we?"
+        artifacts={[]}
+        onArtifact={() => {}}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('agent-canvas-rail-tab-context'));
+    expect(screen.getByTestId('mode-toggle-tenant')).toBeDisabled();
+    expect(screen.getByTestId('mode-toggle-full')).toBeDisabled();
+    expect(screen.getByTestId('mode-toggle-generic')).not.toBeDisabled();
+    expect(screen.getByTestId('mode-toggle-corpus')).not.toBeDisabled();
+  });
+
+  it('enables all four modes when hasTenantKey is true (CB-8)', () => {
+    mockUseAtlasPageState.mockReturnValue(
+      makePageState({ hasTenantKey: true }),
+    );
+    render(
+      <AgentCanvas
+        surface="/programs/APX-CDP-2026"
+        programId="APX-CDP-2026"
+        agent={NEXUS_AGENT}
+        quote="Where are we?"
+        artifacts={[]}
+        onArtifact={() => {}}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('agent-canvas-rail-tab-context'));
+    expect(screen.getByTestId('mode-toggle-tenant')).not.toBeDisabled();
+    expect(screen.getByTestId('mode-toggle-full')).not.toBeDisabled();
   });
 
   it('forwards mode-toggle clicks to setContextBundleMode', () => {

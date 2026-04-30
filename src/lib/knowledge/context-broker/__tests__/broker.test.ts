@@ -271,7 +271,11 @@ describe('DefaultContextBroker.assemble — tenant mode', () => {
     });
     expect(bundle.semanticChunks[1].score).toBe(0.84);
     expect(bundle.warnings).not.toContain(WARNING_VECTOR_PENDING);
-    expect(bundle.warnings).toContain(vectorRetrievalInfoTag(5));
+    // CB-10 · vector-retrieval-succeeded is success metadata and now
+    // lives on `infoTags` (slate-toned info strip), not `warnings`
+    // (amber strip).
+    expect(bundle.warnings).not.toContain(vectorRetrievalInfoTag(5));
+    expect(bundle.infoTags).toContain(vectorRetrievalInfoTag(5));
   });
 
   it('falls back to keyword retrieval and tags WARNING_VECTOR_PENDING when embedTexts throws', async () => {

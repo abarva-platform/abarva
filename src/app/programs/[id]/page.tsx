@@ -49,9 +49,15 @@ export default async function ProgramDetailRoute({
 
   // Try real DB data first
   let dbData = null;
+  // CB-8 · whether the session has a real tenant binding. Threaded
+  // into AppShell so the 4-mode toggle can correctly disable
+  // Tenant / Full when no tenant is bound — `tenantName` is a display
+  // string defaulted in AppShell and is NOT a reliable proxy.
+  let hasTenantKey = false;
   try {
     const user = await getCurrentUser();
     if (user?.defaultClientId) {
+      hasTenantKey = true;
       dbData = await getEngagementWithPhaseData(id);
     }
   } catch {
@@ -166,6 +172,7 @@ export default async function ProgramDetailRoute({
       timelineFilters={timelineFilters}
       preservedSearchParams={preservedSearchParams}
       phase0Primer={phase0Primer}
+      hasTenantKey={hasTenantKey}
     />
   );
 }

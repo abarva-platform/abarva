@@ -69,6 +69,16 @@ export interface SuggestedAction {
 export interface AtlasPageState {
   /** Tenant name from shell context (locked at login, never re-fetched). */
   tenantName: string;
+  /**
+   * CB-8 · whether the active session has a real tenant binding (i.e.
+   * an active client row resolved server-side). `tenantName` defaults
+   * to a display string for unauthenticated demo opens, so it is NOT a
+   * reliable proxy for "user is signed in to a tenant." Surfaces that
+   * resolve `getActiveClientRow()` thread the boolean here so the
+   * 4-mode toggle can correctly disable Tenant / Full when no real
+   * tenant is bound.
+   */
+  hasTenantKey: boolean;
   /** Surface the page belongs to (canonical, assigned in the catalog). */
   surface: SurfaceId;
   /** Workflow stage for stage-aware surfaces; null for monitoring surfaces. */
@@ -140,6 +150,12 @@ export interface AtlasPageContextValue extends AtlasPageState {
 
 export interface AtlasPageStateProviderProps {
   tenantName: string;
+  /**
+   * CB-8 · whether the session has a real tenant binding. Defaults to
+   * `false` (matches the unauthenticated demo path). Surfaces that
+   * resolve `getActiveClientRow()` server-side pass `!!activeClient`.
+   */
+  hasTenantKey?: boolean;
   surface: SurfaceId;
   stage?: StageId | null;
   surfaceContext?: Record<string, unknown>;
@@ -201,6 +217,7 @@ export function createAtlasPageState(seed: AtlasPageStateSeed): AtlasPageState {
 
   return {
     tenantName,
+    hasTenantKey: seed.hasTenantKey ?? false,
     surface: seed.surface,
     stage: seed.stage ?? null,
     surfaceContext: seed.surfaceContext ?? {},

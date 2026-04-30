@@ -215,10 +215,17 @@ function RightRailTabs({
     );
   }
 
-  const hasTenantKey = Boolean(
-    pageState.tenantName && pageState.tenantName.trim().length > 0,
-  );
-  const availableModes = availableModesFor({ hasTenantKey });
+  // CB-8 · narrow the picker to modes that are admissible in the
+  // current auth state. We use the explicit `hasTenantKey` boolean
+  // threaded through `AtlasPageState` (set by surfaces that resolve
+  // `getActiveClientRow()` / `getCurrentUser()` server-side); the
+  // route does the strict `isModeValidForAuth` check server-side
+  // regardless. `tenantName` is unreliable here — `AppShell` defaults
+  // it to a display string for unauthenticated demo opens, so the
+  // previous `tenantName`-based proxy never disabled Tenant / Full.
+  const availableModes = availableModesFor({
+    hasTenantKey: pageState.hasTenantKey,
+  });
 
   const handleModeChange = (mode: BrokerMode) => {
     pageState.setContextBundleMode(mode);

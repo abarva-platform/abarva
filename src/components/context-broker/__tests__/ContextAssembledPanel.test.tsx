@@ -94,6 +94,7 @@ function bundle(overrides: Partial<ContextBundle> = {}): ContextBundle {
     corpusPatterns: [],
     provenance: [],
     warnings: [],
+    infoTags: [],
     assembledAt: '2026-04-30T14:32:09Z',
     ...overrides,
   };
@@ -379,5 +380,146 @@ describe('ContextAssembledPanel — onCitationClick', () => {
     render(<ContextAssembledPanel bundle={bundle({ facts: [f], provenance: [p] })} />);
     const cite = screen.getByTestId(`context-panel-fact-cite-${f.recordId}`);
     expect(cite.tagName).toBe('P');
+  });
+});
+
+// CB-10 · info-tag strip tests
+describe('ContextAssembledPanel · info-tags strip (CB-10)', () => {
+  it('renders the info-tags strip when bundle.infoTags is populated', () => {
+    render(
+      <ContextAssembledPanel
+        bundle={bundle({
+          infoTags: ['Vector retrieval via Pinecone (top-K=8).'],
+        })}
+      />,
+    );
+    const strip = screen.getByTestId('context-panel-info-tags');
+    expect(strip).toBeInTheDocument();
+    expect(strip).toHaveTextContent('Info (1)');
+    expect(screen.getByTestId('context-panel-info-tag-0')).toHaveTextContent(
+      'Vector retrieval via Pinecone (top-K=8).',
+    );
+  });
+
+  it('does not render the info-tags strip when bundle.infoTags is empty', () => {
+    render(<ContextAssembledPanel bundle={bundle({ infoTags: [] })} />);
+    expect(screen.queryByTestId('context-panel-info-tags')).not.toBeInTheDocument();
+  });
+
+  it('keeps warnings strip distinct from info-tags strip', () => {
+    render(
+      <ContextAssembledPanel
+        bundle={bundle({
+          warnings: ['Vector retrieval pending — using keyword-only chunk retrieval'],
+          infoTags: ['Vector retrieval via Pinecone (top-K=8).'],
+        })}
+      />,
+    );
+    expect(screen.getByTestId('context-panel-warnings')).toBeInTheDocument();
+    expect(screen.getByTestId('context-panel-info-tags')).toBeInTheDocument();
+    // Each strip carries its own copy.
+    const warnings = screen.getByTestId('context-panel-warnings');
+    expect(warnings).toHaveTextContent('Warnings (1)');
+    const infos = screen.getByTestId('context-panel-info-tags');
+    expect(infos).toHaveTextContent('Info (1)');
+  });
+});
+
+// CB-10 · per-recordKind detail rows
+describe('ContextAssembledPanel · kpi_metric detail row (CB-10)', () => {
+  it('renders current/target/source/owner/confidence rows when payload has them', () => {
+    const f = fact({
+      recordId: 'kpi:apex:cac',
+      recordKind: 'kpi_metric',
+      title: 'Customer Acquisition Cost',
+      payload: {
+        current_value: 142,
+        target_fy2026: 110,
+        source_system: 'Snowflake / mart.cac_daily',
+        data_owner: 'person:apex:diana-lopez',
+        confidence: 0.78,
+      },
+    });
+    const p = provenance({ sourceId: f.recordId });
+    render(<ContextAssembledPanel bundle={bundle({ facts: [f], provenance: [p] })} />);
+    expect(
+      screen.getByTestId(`context-panel-kpi-detail-${f.recordId}`),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId(`context-panel-kpi-current-${f.recordId}`),
+    ).toHaveTextContent('142');
+    expect(
+      screen.getByTestId(`context-panel-kpi-target-${f.recordId}`),
+    ).toHaveTextContent('110');
+    expect(
+      screen.getByTestId(`context-panel-kpi-source-${f.recordId}`),
+    ).toHaveTextContent('Snowflake / mart.cac_daily');
+    expect(
+      screen.getByTestId(`context-panel-kpi-owner-${f.recordId}`),
+    ).toHaveTextContent('person:apex:diana-lopez');
+    expect(
+      screen.getByTestId(`context-panel-kpi-confidence-${f.recordId}`),
+    ).toHaveTextContent('0.78');
+  });
+
+  it('omits empty rows and renders nothing when payload has no kpi fields', () => {
+    const f = fact({
+      recordId: 'kpi:apex:no-payload',
+      recordKind: 'kpi_metric',
+      payload: {},
+    });
+    render(<ContextAssembledPanel bundle={bundle({ facts: [f], provenance: [] })} />);
+    expect(
+      screen.queryByTestId(`context-panel-kpi-detail-${f.recordId}`),
+    ).not.toBeInTheDocument();
+  });
+
+  it('does not render the kpi detail for non-kpi facts', () => {
+    const f = fact({ recordKind: 'program' });
+    render(<ContextAssembledPanel bundle={bundle({ facts: [f], provenance: [] })} />);
+    expect(
+      screen.queryByTestId(`context-panel-kpi-detail-${f.recordId}`),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe('ContextAssembledPanel · cross_program_signal detail row (CB-10)', () => {
+  it('renders severity / programs / recommendation when payload has them', () => {
+    const f = fact({
+      recordId: 'signal:apex:cross-cdp-cac',
+      recordKind: 'cross_program_signal',
+      title: 'CDP rollout pulls CAC up across two programs',
+      payload: {
+        severity: 'high',
+        programs: ['program:apex-cdp-2026', 'program:apex-cac-2026'],
+        recommendation: 'Coordinate sequencing through the joint program review.',
+      },
+    });
+    const p = provenance({ sourceId: f.recordId });
+    render(<ContextAssembledPanel bundle={bundle({ facts: [f], provenance: [p] })} />);
+    expect(
+      screen.getByTestId(`context-panel-signal-detail-${f.recordId}`),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId(`context-panel-signal-severity-${f.recordId}`),
+    ).toHaveTextContent('high');
+    expect(
+      screen.getByTestId(`context-panel-signal-programs-${f.recordId}`),
+    ).toHaveTextContent('program:apex-cdp-2026, program:apex-cac-2026');
+    expect(
+      screen.getByTestId(`context-panel-signal-recommendation-${f.recordId}`),
+    ).toHaveTextContent('Coordinate sequencing through the joint program review.');
+  });
+
+  it('renders nothing when payload is empty', () => {
+    const f = fact({
+      recordId: 'signal:apex:empty',
+      recordKind: 'cross_program_signal',
+      payload: {},
+    });
+    render(<ContextAssembledPanel bundle={bundle({ facts: [f], provenance: [] })} />);
+    expect(
+      screen.queryByTestId(`context-panel-signal-detail-${f.recordId}`),
+    ).not.toBeInTheDocument();
   });
 });

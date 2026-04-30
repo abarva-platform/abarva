@@ -116,6 +116,13 @@ export interface ProgramDetailPageProps {
    * registered for the resolved patternId or the program is past P0.
    */
   phase0Primer?: ArchetypePrimer | null;
+  /**
+   * CB-8 · whether the session has a real tenant binding. Resolved
+   * server-side from `getCurrentUser().defaultClientId`. Threaded into
+   * AppShell so the 4-mode toggle can correctly disable Tenant / Full
+   * when no tenant is bound. Defaults to `false`.
+   */
+  hasTenantKey?: boolean;
 }
 
 // ─── Gate pill ────────────────────────────────────────────────────────────────
@@ -3561,6 +3568,7 @@ export function ProgramDetailPage({
   timelineFilters,
   preservedSearchParams,
   phase0Primer,
+  hasTenantKey = false,
 }: ProgramDetailPageProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -3970,6 +3978,7 @@ export function ProgramDetailPage({
         showLocked: true,
         context: `${view.displayId} · P${view.viewingPhase} ${phaseLabel}`,
       }}
+      hasTenantKey={hasTenantKey}
       middleStrip={
         <PhaseStrip phases={stripPhases} onPhaseSelect={handlePhaseSelect} />
       }
