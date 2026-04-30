@@ -12,6 +12,7 @@ import {
   MissingTenantKeyError,
   WARNING_CORPUS_PENDING,
   WARNING_VECTOR_PENDING,
+  WARNING_WORLDVIEW_PENDING,
   extractKeywords,
   vectorRetrievalInfoTag,
   type ContextBroker,
@@ -181,7 +182,10 @@ describe('DefaultContextBroker.assemble — generic mode', () => {
 });
 
 describe('DefaultContextBroker.assemble — corpus mode', () => {
-  it('returns empty bundle with the CB-6 warning', async () => {
+  it('returns empty bundle with worldview-pending + CB-6 warnings when worldview index is unreachable', async () => {
+    // INT-WV-2: with no PINECONE_API_KEY in test env, the worldview
+    // retriever returns reached=false and the broker tags both the
+    // worldview-pending and pattern-catalog (CB-6) gaps.
     const { broker } = makeBroker();
     const bundle = await broker.assemble({ query: 'pattern question', mode: 'corpus' });
 
@@ -191,8 +195,10 @@ describe('DefaultContextBroker.assemble — corpus mode', () => {
     expect(bundle.graphPaths).toEqual([]);
     expect(bundle.semanticChunks).toEqual([]);
     expect(bundle.corpusPatterns).toEqual([]);
+    expect(bundle.worldviewChunks).toEqual([]);
     expect(bundle.provenance).toEqual([]);
-    expect(bundle.warnings).toEqual([WARNING_CORPUS_PENDING]);
+    expect(bundle.warnings).toContain(WARNING_WORLDVIEW_PENDING);
+    expect(bundle.warnings).toContain(WARNING_CORPUS_PENDING);
   });
 });
 

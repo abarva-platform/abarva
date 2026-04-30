@@ -535,6 +535,7 @@ function brokerErrorBundle(
     graphPaths: [],
     semanticChunks: [],
     corpusPatterns: [],
+    worldviewChunks: [],
     provenance: [],
     warnings: [
       `broker_failure: ${err instanceof Error ? err.message : String(err)}`,

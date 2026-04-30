@@ -44,7 +44,9 @@ export {
   getContextBroker,
   WARNING_VECTOR_PENDING,
   WARNING_CORPUS_PENDING,
+  WARNING_WORLDVIEW_PENDING,
   vectorRetrievalInfoTag,
+  worldviewRetrievalInfoTag,
   extractKeywords,
 } from './broker';
 
@@ -59,3 +61,7 @@ export type {
 } from './demo-contract';
 
 export { CONTEXT_DEMO_QUERY_MAX_LENGTH } from './demo-contract';
+
+// INT-WV-2 · worldview chunk hit type — re-exported alongside the
+// other bundle shapes so panel + tests don't reach into ./types.
+export type { WorldviewChunkHit } from './types';

@@ -92,6 +92,7 @@ function bundle(overrides: Partial<ContextBundle> = {}): ContextBundle {
     graphPaths: [],
     semanticChunks: [],
     corpusPatterns: [],
+    worldviewChunks: [],
     provenance: [],
     warnings: [],
     infoTags: [],

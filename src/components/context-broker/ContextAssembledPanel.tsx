@@ -51,6 +51,7 @@ import type {
   GraphPath,
   SemanticChunkHit,
   TenantRecord,
+  WorldviewChunkHit,
 } from '@/lib/knowledge/context-broker';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
 
@@ -222,6 +223,10 @@ export function ContextAssembledPanel({
       <PatternsSection
         patterns={bundle.corpusPatterns}
         provenanceById={provenanceById}
+        onCitationClick={onCitationClick}
+      />
+      <WorldviewSection
+        chunks={bundle.worldviewChunks}
         onCitationClick={onCitationClick}
       />
       <Footer bundle={bundle} />
@@ -869,7 +874,7 @@ function Footer({ bundle }: { bundle: ContextBundle }) {
       >
         {bundle.facts.length} facts · {bundle.graphPaths.length} paths ·{' '}
         {bundle.semanticChunks.length} chunks · {bundle.corpusPatterns.length} patterns ·{' '}
-        {bundle.provenance.length} citations
+        {bundle.worldviewChunks.length} worldview · {bundle.provenance.length} citations
       </p>
     </footer>
   );
@@ -1012,6 +1017,125 @@ function SourceClassChip({
     >
       {sourceClassLabel(sourceClass)}
     </span>
+  );
+}
+
+function WorldviewSection({
+  chunks,
+  onCitationClick,
+}: {
+  chunks: ReadonlyArray<WorldviewChunkHit>;
+  onCitationClick?: (provenance: ContextProvenance) => void;
+}) {
+  if (chunks.length === 0) {
+    return (
+      <Section
+        title={`Worldview (0)`}
+        testid="context-panel-section-worldview"
+        empty
+      >
+        <EmptyLine
+          label="No worldview chunks retrieved."
+          testid="context-panel-worldview-empty"
+        />
+      </Section>
+    );
+  }
+  return (
+    <Section
+      title={`Worldview (${chunks.length})`}
+      testid="context-panel-section-worldview"
+    >
+      <ul role="list" style={listResetStyle}>
+        {chunks.map((c, i) => (
+          <li
+            key={c.chunkId}
+            role="listitem"
+            data-testid={`context-panel-worldview-${i}`}
+            style={{ ...itemCardStyle, borderLeft: `3px solid ${SLATE_BLUE}` }}
+          >
+            <p
+              data-testid={`context-panel-worldview-thesis-${i}`}
+              style={{
+                margin: 0,
+                fontFamily: TYPOGRAPHY.mono,
+                fontSize: 10,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                color: COLORS.navy,
+                fontWeight: 700,
+              }}
+            >
+              {c.thesisId}
+              {typeof c.chunkPosition === 'number' ? ` · ${c.chunkPosition}` : ''}
+              {c.chunkType ? ` · ${c.chunkType}` : ''}
+            </p>
+            <button
+              type="button"
+              data-testid={`context-panel-worldview-cite-${i}`}
+              onClick={
+                onCitationClick
+                  ? () =>
+                      onCitationClick({
+                        sourceClass: 'corpus',
+                        sourceId: c.chunkId,
+                        confidence: c.confidence,
+                      })
+                  : undefined
+              }
+              aria-label={`Worldview citation ${c.chunkId}`}
+              style={{
+                margin: 0,
+                fontFamily: TYPOGRAPHY.sans,
+                fontSize: 13,
+                color: COLORS.ink,
+                background: 'transparent',
+                border: 'none',
+                padding: 0,
+                textAlign: 'left',
+                cursor: onCitationClick ? 'pointer' : 'default',
+                lineHeight: 1.4,
+              }}
+            >
+              {c.chunkTitle ?? c.chunkId}
+            </button>
+            <div
+              style={{
+                display: 'flex',
+                gap: SPACING.xs,
+                flexWrap: 'wrap',
+                alignItems: 'center',
+              }}
+            >
+              <Chip
+                label={c.score > 0 ? c.score.toFixed(2) : '—'}
+                testid={`context-panel-worldview-score-${i}`}
+              />
+              {c.primaryAudience ? (
+                <Chip
+                  label={c.primaryAudience}
+                  testid={`context-panel-worldview-audience-${i}`}
+                />
+              ) : null}
+              {c.isForecast ? (
+                <Chip label="forecast" testid={`context-panel-worldview-forecast-${i}`} />
+              ) : null}
+            </div>
+            <p
+              style={{
+                margin: 0,
+                fontFamily: TYPOGRAPHY.mono,
+                fontSize: 10,
+                color: `${COLORS.ink}77`,
+              }}
+            >
+              {c.chunkId}
+              {c.thesisTitle ? ` · ${c.thesisTitle}` : ''}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </Section>
   );
 }
 
