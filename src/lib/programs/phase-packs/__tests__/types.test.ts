@@ -32,11 +32,12 @@ describe('PhasePack · OV2-5-types compatibility', () => {
     }
   });
 
-  it('packs without authored steps have steps === undefined (P3-P6 until later slices)', () => {
+  it('packs without authored steps have steps === undefined (P3, P5-P6 until later slices)', () => {
     // OV2-P0-complete authored steps for P0; OV2-5-P1 authored steps for P1;
-    // OV2-5-P2 authored steps for P2. P3-P6 remain unauthored until
-    // OV2-5-P3..OV2-5-P6.
-    const PHASES_WITH_STEPS = new Set([0, 1, 2]);
+    // OV2-5-P2 authored steps for P2; OV2-5-P4 authored steps for P4. P3,
+    // P5-P6 remain unauthored until their slices land (OV2-5-P3, OV2-5-P5,
+    // OV2-5-P6).
+    const PHASES_WITH_STEPS = new Set([0, 1, 2, 4]);
     for (const p of listAuthoredPhases()) {
       const pack = getPhasePack(p);
       if (PHASES_WITH_STEPS.has(p)) {

@@ -428,4 +428,193 @@ export const P4_BUILD: PhasePack = {
       'Pilot incident/defect/adoption limits - P5 contains the risks the pilot did not eliminate',
     ],
   },
+
+  // ── Step decomposition · OV2-5-P4 (design doc D.4.4) ─────────────────────
+  //
+  // 8 canonical P4 steps. P4 prevents failure modes #5 (workflow / operating-
+  // model change), #8 (pilot-to-production scaling gap), and #3 (operational
+  // data foundation). The DAG threads the P3 handoff through the execution
+  // plan, into a parallel build-monitoring + pilot-launch fork, then converges
+  // through scale-validation + change-readiness + result interpretation into
+  // the sponsor go/no-go.
+  //
+  // StepComplexity admits only 'simple' | 'complex'. Two design-doc steps are
+  // "medium" (build-monitoring is continuous, pilot-result-interpretation is
+  // chat-resolvable evaluation); both are encoded as 'simple' per the slice
+  // rule, with a comment naming the design-doc complexity.
+  //
+  // Output rules: outputs MUST reference real DoD ids on this pack, or be the
+  // empty array for intermediate-artifact producers. Where the design doc
+  // implies an output that has no canonical DoD id (scale-validation, change-
+  // readiness, pilot-launch, build-monitoring, result-interpretation), the
+  // step's `outputs` is empty and downstream steps reference the intermediate
+  // artifact id in their `inputs` so the DAG stays legible:
+  //   • p4-pilot-launch         → p4-pilot-launch-result
+  //   • p4-scale-validation     → p4-scale-validation-result
+  //   • p4-change-readiness     → p4-change-readiness-result
+  //   • p4-pilot-result-interp  → p4-pilot-result-interpretation-summary
+  // The change-readiness step has no DoD id named "change-readiness" on this
+  // pack — the closest matches (`operating-model-ready`, `rollout-plan-for-p5`)
+  // belong to the broader Activate gate package; the workshop itself produces
+  // an intermediate readiness assessment that flows into the go/no-go.
+  // Likewise no canonical DoD id exists for "scale-validation" or "pilot-
+  // result-validated"; the validated pass/fail is later codified in the gate
+  // package via `pilot-outcome-pass-fail` and `baseline-comparison-preserved`,
+  // but those DoDs are not the direct output of a single workshop step.
+  steps: [
+    // Continuity step. Tagged [5] because P4 monitors workflow / operating-
+    // model change end-to-end; the handoff carries the signed P3 design and
+    // success criteria forward so build never relitigates them. Output is
+    // `detailed-design-available`, the P4 DoD id that captures P3-design
+    // ingestion at Build start.
+    {
+      id: 'p4-handoff-ingest',
+      label:
+        'Confirm P3 design + pilot cohort + success criteria carried forward',
+      complexity: 'simple',
+      agentRole: 'extract',
+      inputs: [],
+      outputs: ['detailed-design-available'],
+      templateRefs: [],
+      preventsFailureModes: [5],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+    {
+      id: 'p4-execution-plan-workshop',
+      label:
+        'Author execution plan covering build sequencing, change management, support readiness, integration',
+      complexity: 'complex',
+      agentRole: 'coach_workshop',
+      inputs: ['detailed-design-available'],
+      outputs: ['execution-plan-drafted'],
+      templateRefs: [],
+      preventsFailureModes: [5],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+    // Design doc D.4.4 marks build-monitoring "medium" (the build executes
+    // off-platform; the agent role is monitoring + flagging slippage / scope
+    // drift / pilot-overreach). Encoded as 'simple' per the slice rule —
+    // continuous flagging is chat-resolvable. No DoD output: this step
+    // produces ongoing anti-pattern flags, not a gate artifact. Tagged [10]
+    // (use-case sprawl / unrealistic expectations) because pilot-overreach
+    // and scope drift are the core anti-patterns it surfaces.
+    {
+      id: 'p4-build-monitoring',
+      label:
+        "Monitor the build; flag slippage / scope drift / 'pilot-overreach' anti-patterns",
+      complexity: 'simple',
+      agentRole: 'flag_anti_pattern',
+      inputs: ['execution-plan-drafted'],
+      outputs: [],
+      templateRefs: [],
+      preventsFailureModes: [10],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+    // Pilot launch is a complex coached event (off-platform pilot start,
+    // scaled-production-data activation). Output is intermediate: the launch
+    // produces a pilot-result artifact consumed by scale-validation and
+    // result-interpretation. Tagged [8] because launching against scaled
+    // production data is the core pilot-to-production scaling-gap prevention.
+    {
+      id: 'p4-pilot-launch',
+      label: 'Launch the pilot against scaled production data',
+      complexity: 'complex',
+      agentRole: 'coach_workshop',
+      inputs: ['execution-plan-drafted'],
+      outputs: [],
+      templateRefs: [],
+      preventsFailureModes: [8],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+    // Scale-validation workshop reads the pilot launch result and validates
+    // it against P3 success criteria + edge cases + scaled-data behavior. No
+    // P4 DoD id literally names "pilot-result-validated" or "scale-validation";
+    // the slice rule is "real DoD id OR empty" so outputs is empty. Downstream
+    // steps reference the intermediate artifact `p4-scale-validation-result`
+    // in their inputs to keep the DAG legible. Tagged [8] because scale-
+    // validation is the explicit pilot-to-production check.
+    {
+      id: 'p4-scale-validation-workshop',
+      label:
+        'Validate the pilot result against P3 success criteria + edge cases + scaled-data behavior',
+      complexity: 'complex',
+      agentRole: 'coach_workshop',
+      inputs: ['p4-pilot-launch-result'],
+      outputs: [],
+      templateRefs: [],
+      preventsFailureModes: [8],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+    // Cohort-level change-management readiness assessment. No P4 DoD id is
+    // named "change-readiness" on this pack — the workshop produces an
+    // intermediate readiness assessment that flows into the go/no-go's
+    // operating-model-ready and rollout-plan-for-p5 outputs. Tagged [5]
+    // because workflow / operating-model change is the failure mode the
+    // assessment exists to prevent.
+    {
+      id: 'p4-change-readiness-workshop',
+      label: 'Cohort-level change-management readiness assessment',
+      complexity: 'complex',
+      agentRole: 'coach_workshop',
+      inputs: ['execution-plan-drafted'],
+      outputs: [],
+      templateRefs: [],
+      preventsFailureModes: [5],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+    // Design doc D.4.4 marks pilot-result-interpretation "medium". Encoded
+    // as 'simple' per the slice rule — interpreting evidence and surfacing
+    // the pilot-overreach anti-pattern is chat-resolvable (no off-platform
+    // workshop). Output is intermediate (the interpretation feeds the go/no-
+    // go decision). Tagged [8] because the interpretation is what surfaces
+    // pilot-overreach when users want to scale without scale-validation.
+    {
+      id: 'p4-pilot-result-interpretation',
+      label:
+        "Interpret pilot result; surface 'pilot-overreach' if user wants to scale without scale-validation",
+      complexity: 'simple',
+      agentRole: 'evaluate_evidence',
+      inputs: [
+        'p4-pilot-launch-result',
+        'p4-scale-validation-result',
+      ],
+      outputs: [],
+      templateRefs: [],
+      preventsFailureModes: [8],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+    // Sponsor + Operations Owner go/no-go for P5 activation. Chat-resolvable
+    // approval request — the substantive work happened upstream in scale-
+    // validation, change-readiness, and result-interpretation. Outputs map to
+    // the P4→P5 gate hard check `design_approved` (governance.ts) and the
+    // sponsor-visible `kill-or-rebaseline-decision-recorded`. Tagged [1, 8]:
+    // sponsor sign-off on the gate decision concretizes failure mode #1
+    // (sponsor commitment) and #8 (pilot-to-production scaling gap, the
+    // explicit go/no-go).
+    {
+      id: 'p4-go-no-go-call',
+      label: 'Sponsor + Operations Owner go/no-go decision for P5 activation',
+      complexity: 'simple',
+      agentRole: 'request_approval',
+      inputs: [
+        'p4-pilot-result-interpretation-summary',
+        'p4-scale-validation-result',
+        'p4-change-readiness-result',
+        'execution-plan-drafted',
+        'detailed-design-available',
+      ],
+      outputs: ['design-approved', 'kill-or-rebaseline-decision-recorded'],
+      templateRefs: [],
+      preventsFailureModes: [1, 8],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+  ],
 };
