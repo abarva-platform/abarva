@@ -82,6 +82,7 @@ function makeBundle(overrides: Partial<ContextBundle> = {}): ContextBundle {
     corpusPatterns: [],
     provenance: [],
     warnings: [],
+    infoTags: [],
     assembledAt: '2026-04-29T00:00:00.000Z',
     ...overrides,
   };
