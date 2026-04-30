@@ -47,6 +47,7 @@ function bundle(overrides: Partial<ContextBundle> = {}): ContextBundle {
     corpusPatterns: [],
     provenance: [],
     warnings: [],
+    infoTags: [],
     assembledAt: '2026-04-30T14:32:09Z',
     ...overrides,
   };
@@ -64,6 +65,7 @@ function pageState(
   };
   return {
     tenantName: 'Apex Retail Group',
+    hasTenantKey: true,
     surface: 'programs-detail',
     stage: null,
     surfaceContext: {},
@@ -147,12 +149,42 @@ describe('AtlasChatOverlay · CB-6', () => {
     expect(setContextBundleMode).toHaveBeenCalledWith('corpus');
   });
 
-  it('disables tenant + full when tenantName is empty (no tenant key)', () => {
-    mockUseAtlasPageState.mockReturnValue(pageState({ tenantName: '' }));
+  it('disables tenant + full when hasTenantKey is false (CB-8)', () => {
+    // CB-8 · the disabled-mode guardrail keys off the explicit
+    // `hasTenantKey` boolean, NOT `tenantName`. AppShell defaults
+    // `tenantName` to "Apex Retail Group" for unauthenticated demo
+    // opens, so the prior `tenantName`-based proxy was always true
+    // and the toggle never disabled Tenant / Full.
+    mockUseAtlasPageState.mockReturnValue(
+      pageState({ tenantName: 'Apex Retail Group', hasTenantKey: false }),
+    );
     render(<AtlasChatOverlay open={true} onClose={() => {}} />);
     expect(screen.getByTestId('mode-toggle-tenant')).toBeDisabled();
     expect(screen.getByTestId('mode-toggle-full')).toBeDisabled();
     expect(screen.getByTestId('mode-toggle-generic')).not.toBeDisabled();
     expect(screen.getByTestId('mode-toggle-corpus')).not.toBeDisabled();
+  });
+
+  it('enables all four modes when hasTenantKey is true (CB-8)', () => {
+    mockUseAtlasPageState.mockReturnValue(
+      pageState({ hasTenantKey: true }),
+    );
+    render(<AtlasChatOverlay open={true} onClose={() => {}} />);
+    expect(screen.getByTestId('mode-toggle-tenant')).not.toBeDisabled();
+    expect(screen.getByTestId('mode-toggle-full')).not.toBeDisabled();
+    expect(screen.getByTestId('mode-toggle-generic')).not.toBeDisabled();
+    expect(screen.getByTestId('mode-toggle-corpus')).not.toBeDisabled();
+  });
+
+  it('disables tenant + full even when tenantName is set if hasTenantKey is false (CB-8)', () => {
+    // Regression check for the DEFECT-B walk finding: tenantName is
+    // unreliable as a tenant-key proxy because AppShell defaults it
+    // to a display string.
+    mockUseAtlasPageState.mockReturnValue(
+      pageState({ tenantName: 'Apex Retail Group', hasTenantKey: false }),
+    );
+    render(<AtlasChatOverlay open={true} onClose={() => {}} />);
+    expect(screen.getByTestId('mode-toggle-tenant')).toBeDisabled();
+    expect(screen.getByTestId('mode-toggle-full')).toBeDisabled();
   });
 });

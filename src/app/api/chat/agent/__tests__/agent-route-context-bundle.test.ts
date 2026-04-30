@@ -83,8 +83,28 @@ describe('agent route · CB-6 context-bundle wiring', () => {
     expect(enqueueIdx).toBeLessThan(loopIdx);
   });
 
-  it('catches assembly errors so the stream still proceeds (returns null on error)', () => {
+  it('catches assembly errors so the stream still proceeds', () => {
     expect(source).toContain('context_bundle_assembly_failed');
-    expect(source).toMatch(/return null;\s*}\s*}/);
+  });
+
+  // CB-10 · graceful broker-throw fallback. Prior to CB-10 the route
+  // returned `null` and silently skipped emitting the artifact, so the
+  // panel could not distinguish "no retrieval needed" from "retrieval
+  // errored." Now we always emit a placeholder generic bundle with the
+  // failure as a warning.
+  it('on broker throw, emits a placeholder generic bundle with a failure warning (CB-10)', () => {
+    // assembleContextBundleArtifact returns Promise<string> (no nullable union).
+    expect(source).toMatch(
+      /async function assembleContextBundleArtifact\([\s\S]*?\): Promise<string>/,
+    );
+    // Catch branch builds a placeholder bundle with mode 'generic'.
+    expect(source).toContain("mode: 'generic' as const");
+    // The placeholder warning copy explains the failure.
+    expect(source).toContain('Context assembly failed:');
+    expect(source).toContain('Answering without retrieved context.');
+    // The placeholder is also serialized via the same artifact envelope.
+    expect(source).toMatch(
+      /\[\[artifact:context-bundle\]\]\$\{JSON\.stringify\(fallback\)\}\[\[\/artifact\]\]/,
+    );
   });
 });

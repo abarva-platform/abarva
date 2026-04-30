@@ -181,6 +181,7 @@ function emptyBundle(
   input: ContextAssembleInput,
   tenantKey: string | null,
   warnings: string[],
+  infoTags: string[] = [],
 ): ContextBundle {
   return {
     query: input.query,
@@ -193,6 +194,7 @@ function emptyBundle(
     provenance: [],
     assembledAt: nowIso(),
     warnings,
+    infoTags,
   };
 }
 
@@ -238,6 +240,11 @@ export class DefaultContextBroker implements ContextBroker {
     const tenantKey = input.tenantKey;
 
     const warnings: string[] = [];
+    // CB-10 · info-tags are success metadata about how retrieval ran
+    // (e.g. "Vector retrieval via Pinecone (top-K=N).") — kept distinct
+    // from warnings so the panel can render them in a separate
+    // slate-toned strip rather than the amber warnings strip.
+    const infoTags: string[] = [];
     const keywords = extractKeywords(input.query);
 
     // ──────────────── Facts ────────────────
@@ -313,7 +320,10 @@ export class DefaultContextBroker implements ContextBroker {
       semanticChunks = fallback.map((chunk) => ({ chunk, score: 0 }));
     }
     if (vectorSucceeded) {
-      warnings.push(vectorRetrievalInfoTag(maxChunks));
+      // CB-10 · vector-retrieval-succeeded is success metadata, not a
+      // warning — pushed onto `infoTags` so the panel renders it in a
+      // distinct slate-toned strip rather than the amber warnings.
+      infoTags.push(vectorRetrievalInfoTag(maxChunks));
     }
 
     if (input.mode === 'full') {
@@ -340,6 +350,7 @@ export class DefaultContextBroker implements ContextBroker {
       provenance,
       assembledAt: nowIso(),
       warnings,
+      infoTags,
     };
   }
 }

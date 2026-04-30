@@ -88,6 +88,7 @@ const AtlasPageStateContext = createContext<AtlasPageContextValue | null>(null);
 
 export function AtlasPageStateProvider({
   tenantName,
+  hasTenantKey = false,
   surface,
   stage = null,
   surfaceContext = {},
@@ -378,6 +379,7 @@ export function AtlasPageStateProvider({
 
   const value: AtlasPageContextValue = {
     tenantName,
+    hasTenantKey,
     surface,
     stage,
     surfaceContext,

@@ -143,6 +143,14 @@ export interface ContextBundle {
   };
   /** Warnings (e.g. `'Vector retrieval pending — using keyword-only chunk retrieval'`). */
   warnings: string[];
+  /**
+   * CB-10 · informational tags (e.g. `'Vector retrieval via Pinecone (top-K=8).'`).
+   * Distinct from `warnings` — these are *success metadata* about how
+   * retrieval ran. Rendered as a separate slate-toned strip below the
+   * bundle so success notes don't read like an amber-strip warning.
+   * Always present (possibly empty) so the panel renders deterministically.
+   */
+  infoTags: string[];
 }
 
 /**

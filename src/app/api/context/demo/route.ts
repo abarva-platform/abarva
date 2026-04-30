@@ -234,6 +234,7 @@ function brokerErrorBundle(
     warnings: [
       `broker_failure: ${err instanceof Error ? err.message : String(err)}`,
     ],
+    infoTags: [],
     assembledAt: new Date().toISOString(),
   };
 }

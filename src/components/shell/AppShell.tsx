@@ -25,6 +25,15 @@ interface AppShellProps {
     context?: string;
     timeString?: string;
   };
+  /**
+   * CB-8 · whether the session has a real tenant binding (i.e. an
+   * active client row resolved server-side via `getActiveClientRow()`).
+   * Used by the 4-mode toggle to disable Tenant / Full when no tenant
+   * is bound. `tenantName` is unreliable for this check — it defaults
+   * to a display string for unauthenticated demo opens. Defaults to
+   * `false` when omitted.
+   */
+  hasTenantKey?: boolean;
   middleStrip?: ReactNode;
   /**
    * PR-L · structured-artifact dispatcher passed through to
@@ -41,6 +50,7 @@ export function AppShell({
   stage,
   surfaceContext,
   topBarProps,
+  hasTenantKey = false,
   middleStrip,
   onArtifact,
   children,
@@ -85,6 +95,7 @@ export function AppShell({
         <AtlasPageStateProvider
           surface={(surface as SurfaceId) ?? 'home'}
           tenantName={tenantName}
+          hasTenantKey={hasTenantKey}
           stage={stage ?? null}
           surfaceContext={surfaceContext ?? {}}
           onArtifact={onArtifact}

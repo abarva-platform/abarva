@@ -31,6 +31,7 @@ function bundle(mode: ContextBundle['mode'], tenantKey: string | null): ContextB
     corpusPatterns: [],
     provenance: [],
     warnings: [],
+    infoTags: [],
     assembledAt: '2026-04-30T14:32:09Z',
   };
 }

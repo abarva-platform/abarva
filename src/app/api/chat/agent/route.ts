@@ -630,16 +630,18 @@ export async function POST(request: Request) {
         },
       };
       try {
-        // CB-6 · emit the assembled context bundle as the first artifact
-        // in the response. The client-side parser
+        // CB-6 / CB-10 · emit the assembled context bundle as the
+        // first artifact in the response. The client-side parser
         // (AtlasPageStateProvider) catches `context-bundle` and stores
         // the bundle on per-conversation state for the panel render.
         // We bypass the `writer` sink (and therefore the F0.3 text
         // validator) — bundles are not synthesis output, they're
         // server-grounded retrieval evidence the panel renders.
-        if (contextBundleArtifact) {
-          controller.enqueue(encoder.encode(contextBundleArtifact));
-        }
+        // assembleContextBundleArtifact always returns a string
+        // (CB-10) — on broker throw it emits a placeholder generic
+        // bundle with the failure as a warning, so the panel can
+        // distinguish "no retrieval needed" from "retrieval errored."
+        controller.enqueue(encoder.encode(contextBundleArtifact));
         await runToolUseLoop({
           client: anthropicClient,
           model: "claude-sonnet-4-6",
@@ -715,16 +717,23 @@ function readClientSuppliedMode(
 }
 
 /**
- * CB-6 · assemble the ContextBundle for the current turn and
- * serialize it as a `[[artifact:context-bundle]]` envelope. Returns
- * `null` on any error so streaming proceeds even when the broker is
- * unreachable — the panel falls through to its cold-start state.
+ * CB-6 / CB-10 · assemble the ContextBundle for the current turn and
+ * serialize it as a `[[artifact:context-bundle]]` envelope.
+ *
+ * Always returns a serialized envelope — never `null`. CB-10 changes
+ * the failure mode: when the broker throws (Pinecone outage, missing
+ * adapter, malformed input), we emit a `mode='generic'` placeholder
+ * bundle with a warning that explains the failure. The chat turn
+ * continues to stream the LLM response; the panel renders the empty
+ * bundle plus the warning so the user can distinguish "no retrieval
+ * was needed" from "retrieval errored." Prior to CB-10 the route
+ * returned `null` and the panel fell through silently to cold-start.
  */
 async function assembleContextBundleArtifact(input: {
   query: string;
   mode: import("@/lib/knowledge/context-broker").BrokerMode;
   tenantKey: string | null;
-}): Promise<string | null> {
+}): Promise<string> {
   try {
     const bundle = await getContextBroker().assemble({
       query: input.query,
@@ -734,12 +743,36 @@ async function assembleContextBundleArtifact(input: {
     const json = JSON.stringify({ bundle });
     return `[[artifact:context-bundle]]${json}[[/artifact]]`;
   } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err);
     console.warn('[chat/agent] context_bundle_assembly_failed', {
       mode: input.mode,
       tenantKey: input.tenantKey,
-      message: err instanceof Error ? err.message : String(err),
+      message: reason,
     });
-    return null;
+    // CB-10 · emit a placeholder generic bundle so the panel renders
+    // an explicit "context unavailable" state. We deliberately use
+    // `mode: 'generic'` (not the requested mode) so the panel takes
+    // the single-line empty path and the warning string carries the
+    // failure detail. `tenantKey` is null on this branch — there is
+    // no successfully-resolved tenant to attribute the bundle to.
+    const fallback = {
+      bundle: {
+        query: input.query,
+        mode: 'generic' as const,
+        tenantKey: null,
+        facts: [],
+        graphPaths: [],
+        semanticChunks: [],
+        corpusPatterns: [],
+        provenance: [],
+        warnings: [
+          `Context assembly failed: ${reason}. Answering without retrieved context.`,
+        ],
+        infoTags: [],
+        assembledAt: new Date().toISOString(),
+      },
+    };
+    return `[[artifact:context-bundle]]${JSON.stringify(fallback)}[[/artifact]]`;
   }
 }
 
