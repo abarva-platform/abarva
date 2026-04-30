@@ -77,16 +77,17 @@ export function SourceEventAgentCanvas({
           minHeight: 0,
           overflow: 'hidden',
           background: SHELL.PAPER,
-          padding: '18px 24px 24px',
+          padding: '14px 18px 18px',
         }}
       >
         <section
           style={{
             display: 'grid',
-            gridTemplateColumns: 'minmax(0, 1.65fr) minmax(340px, 0.95fr)',
-            gap: 16,
+            gridTemplateColumns: 'minmax(420px, 1.45fr) minmax(360px, 0.95fr)',
+            gap: 14,
             height: '100%',
             minHeight: 0,
+            alignItems: 'stretch',
           }}
         >
           <div
@@ -94,6 +95,8 @@ export function SourceEventAgentCanvas({
             style={{
               minHeight: 0,
               minWidth: 0,
+              height: '100%',
+              overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column',
             }}
@@ -108,6 +111,8 @@ export function SourceEventAgentCanvas({
               quote={quote}
               surface={`/source/events/${event.id}`}
               onArtifact={handleArtifact}
+              composerPlacement="afterHeader"
+              emptyState={<SourceEventPromptDeck event={event} />}
             />
           </div>
 
@@ -121,6 +126,105 @@ export function SourceEventAgentCanvas({
         </section>
       </main>
     </AppShell>
+  );
+}
+
+function SourceEventPromptDeck({ event }: { event: SourcingEventDetail }) {
+  const prompts = [
+    {
+      label: 'Gate read',
+      prompt: `Can we advance ${event.name} past ${event.currentStageLabel}?`,
+    },
+    {
+      label: 'Compare',
+      prompt: 'Compare the shortlisted vendors against the stage rubric.',
+    },
+    {
+      label: 'BAFO',
+      prompt: 'Run a BAFO check: walkaway credibility, holds, and sequence.',
+    },
+  ];
+
+  return (
+    <div
+      style={{
+        width: '100%',
+        display: 'grid',
+        gap: 10,
+        padding: '0 0 6px',
+      }}
+    >
+      <div
+        style={{
+          border: '1px solid rgba(250,247,241,0.12)',
+          borderRadius: 12,
+          background: 'rgba(250,247,241,0.055)',
+          padding: '10px 12px',
+        }}
+      >
+        <div
+          style={{
+            fontFamily: SHELL.MONO,
+            fontSize: 8.5,
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            color: 'rgba(250,247,241,0.48)',
+            fontWeight: 700,
+          }}
+        >
+          Operator prompt
+        </div>
+        <p
+          style={{
+            margin: '6px 0 0',
+            fontFamily: SHELL.SERIF,
+            fontSize: 14.5,
+            lineHeight: 1.32,
+            color: 'rgba(250,247,241,0.88)',
+          }}
+        >
+          Ask Sentinel what decision is safe now, what evidence is missing, or what leverage to use next.
+        </p>
+      </div>
+
+      <div style={{ display: 'grid', gap: 7 }}>
+        {prompts.map((item) => (
+          <div
+            key={item.label}
+            style={{
+              border: '1px solid rgba(250,247,241,0.10)',
+              borderRadius: 10,
+              padding: '7px 10px',
+              background: 'rgba(250,247,241,0.035)',
+            }}
+          >
+            <div
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 8,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                color: 'rgba(250,247,241,0.40)',
+                fontWeight: 700,
+              }}
+            >
+              {item.label}
+            </div>
+            <div
+              style={{
+                marginTop: 2,
+                fontFamily: SHELL.SANS,
+                fontSize: 11.8,
+                lineHeight: 1.32,
+                color: 'rgba(250,247,241,0.78)',
+              }}
+            >
+              {item.prompt}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 

@@ -325,14 +325,13 @@ export function SourcingReactivePanel({ artifacts }: SourcingReactivePanelProps)
         style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: 10,
-          padding: '20px 18px',
+          gap: 8,
+          padding: '12px 14px',
           background: BrandColors.paper,
           border: `1px dashed rgba(12,26,58,0.18)`,
           borderRadius: 10,
           color: BrandColors.slate,
           fontFamily: BrandTypography.sans,
-          minHeight: 160,
         }}
       >
         <div
@@ -347,21 +346,19 @@ export function SourcingReactivePanel({ artifacts }: SourcingReactivePanelProps)
         >
           Sentinel sourcing reasoning - live
         </div>
-        <p style={{ margin: '4px 0 0', fontSize: 13, lineHeight: 1.55 }}>
-          As you ask Sentinel to compare vendors, inspect clauses, benchmark pricing, or test
-          walkaway leverage, sourcing cards will materialize here in real time.
+        <p style={{ margin: '2px 0 0', fontSize: 12.5, lineHeight: 1.45 }}>
+          Ask Sentinel to compare vendors, inspect clauses, benchmark pricing, or test walkaway leverage.
         </p>
         <p
           style={{
             margin: 0,
-            fontSize: 12,
-            lineHeight: 1.5,
+            fontSize: 11.5,
+            lineHeight: 1.4,
             color: BrandColors.stone,
             fontStyle: 'italic',
           }}
         >
-          Try &ldquo;Compare these vendors&rdquo;, &ldquo;Run BAFO check&rdquo;, or
-          &ldquo;What&apos;s the walkaway?&rdquo; - cards will populate as Sentinel retrieves.
+          Try &ldquo;Compare vendors&rdquo;, &ldquo;Run BAFO check&rdquo;, or &ldquo;What&apos;s the walkaway?&rdquo;
         </p>
       </section>
     );
