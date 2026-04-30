@@ -514,18 +514,611 @@ This scenario uses the agent's coaching to *force the baseline question* in P0 �
 
 ---
 
-## Part E — v2 Scope (P1–P6 + cross-program walkthroughs)
+---
 
-To follow in v2 of this doc, with the same per-phase depth (failures prevented, what good looks like, parameterized, steps, gate, primer, brainstormed alternatives, worked-example scenarios across all 4 Apex programs):
+## P1 — Discovery (fully worked)
 
-- **P1 — Discovery (Diagnose).** Failures: #2, #3, #4, #9 baseline. Step focus: data-discovery workshop (complex), stakeholder interviews (complex), root-cause synthesis. Gate: baseline captured, data ownership confirmed, root causes named.
-- **P2 — Synthesis (Design Choice).** Failures: #2 (sharpen), #6 compliance. Step focus: options weighed, trade-offs surfaced, compliance / privacy review folded in *here*, not later. Gate: charter signed off; sponsor commits.
-- **P3 — Design.** Failures: #5 commitment to change, #6 governance, #7 vendor strategy. Step focus: architecture, sourcing decision (link to /source module), workflow integration design, change-management plan committed. Gate: design approved + vendor selection approved.
-- **P4 — Build.** Failures: #5 workflow, #8 pilot-to-production. Step focus: execution plan, integration build, scaled-data validation, change-management activation. Gate: execution plan drafted + first scale validation passes.
-- **P5 — Activate.** Failures: #5, #8, #9. Step focus: rollout, training, incentive change, measurement instrumentation, real-user adoption tracking. Gate: outcome instrumentation live + adoption thresholds met.
-- **P6 — Operate.** Failures: #9, #10, learning loop. Step focus: outcome measurement vs. baseline, learnings harvest into pattern catalog, sponsor verification, benefits realization attestation. Gate: outcome report + CXO verification + benefits attested.
+### D.1.1 Failures prevented
 
-**Cross-program worked examples in v2:** for each of the 4 Apex programs (CDP, Contact Center AI, AMS Consolidation, Demand Forecasting), walk the agent's desired vs. actual behavior at *every* phase, surfacing the design delta.
+| # | Failure mode | Why P1 is the right phase to prevent it |
+|---|---|---|
+| 2 | Unclear problem definition or business objectives | P1 turns the P0 hypothesis into an evidence-validated problem statement with measured severity and explicit boundary. The question stops being "is this a real idea?" and becomes "can we prove it with current-state data?" |
+| 3 | Lack of data foundation | P1 is *the* place where data quality, ownership, and accessibility are tested. If the data doesn't exist, isn't clean, or isn't accessible, P1 surfaces it before P2 commits a design choice that the data can't support. |
+| 4 | Lack of right talent and skills | P1 produces the named stakeholder map — technical, data, security, business, dissenters. If the program needs a Privacy Counsel and there isn't one in the tenant's bench, P1 names the gap before P3 architecture commits. |
+| 9 | Inability to measure outcomes and impact (baseline half) | P1 captures the OKR baseline with source, grain, method, and owner. Without this, the program's eventual outcome cannot be measured against a real before-state. |
+
+### D.1.2 What good looks like (universal)
+
+From the existing P1 phase pack `outcome`:
+
+> A Discovery package that validates or rejects the P0 seed with current-state evidence: a problem statement with observed severity and boundary, OKR baselines with current values, sources, grain, method, and owners, plus a stakeholder map naming sponsor, business owner, technical/data/security owners, dissenters, and adoption blockers. P1 is not done when interviews are complete. It is done when P2 has enough evidence to compare target-state options without re-litigating whether the problem is real.
+
+**Hard `definitionOfDone` items** (already coded):
+
+- `p0-seed-ingested` — P1 starts from the P0 handoff, not blank.
+- `validated-problem-statement` — affected cohort, current-state symptom, quantified severity, scope boundary.
+- `okr-baseline-captured` — baseline with source / grain / method / owner / caveats.
+- `stakeholder-map-named` — named people for sponsor, owners, dissenters, blockers.
+- `pattern-specific-evidence-complete` — archetype-specific evidence family captured.
+
+**Soft items:**
+
+- `discovery-contradictions-logged` — contradictions surfaced for P2 to resolve.
+- `p2-readiness-recommendation` — P1 recommends whether P2 should proceed, pivot, or kill.
+
+### D.1.3 Parameterized program-specific
+
+| Pattern | P1 baseline metrics | Pattern-specific evidence family | P1 SMEs needed | Recommended workshops |
+|---|---|---|---|---|
+| **CDP** | Identity-match rate, fragmentation index, consent posture (per first cohort) | Source-system identity overlap, customer-data inventory, consent / privacy posture | Data Engineer, Privacy Counsel, MarTech architect, CDO/CMO sponsor | Data discovery workshop (data inventory + ownership), Consent posture review |
+| **Contact Center AI** | Top-intent volume, current containment %, AHT, CSAT, transfer rate (per first cohort) | Intent inventory, IVR/agent transcripts (representative sample), WFM data, CSAT trace | WFM Lead, CX Operations, Voice/IVR architect, Digital Channels Owner | Intent inventory workshop, Containment baseline workshop |
+| **AMS Consolidation** | Application count + run-rate (per portfolio segment), integration debt, license utilization | Application inventory, vendor-contract registry, integration map, headcount allocation | Application Owner, Vendor Manager, Architecture Review Board, Finance Partner | Portfolio rationalization workshop, Vendor / contract scan |
+| **Demand Forecasting** | MAPE/WAPE per granularity, S&OP cadence, stockout/inventory turn (per product family or store cluster) | Forecast-source inventory (planning systems), historical demand & error trace, S&OP decision cadence | Demand Planner, Supply Chain VP, Data Engineer, S&OP Lead | Forecast accuracy workshop, S&OP cadence review |
+
+### D.1.4 Steps
+
+| Step id | Label | Complexity | Agent role | Outputs (evidence) | Prevents |
+|---|---|---|---|---|---|
+| `p1-handoff-ingest` | Confirm P0 handoff received and active | simple | extract + validate | `p0-seed-ingested` | continuity |
+| `p1-data-discovery` | Identify data sources / system-of-record / ownership / accessibility | **complex** (workshop required) | coach_workshop | `current-state-system-of-record` notes + data-inventory upload | #3 |
+| `p1-baseline-capture` | Capture OKR baseline (archetype-parameterized metric) | **complex** (data pull or workshop) | coach_baseline | `okr-baseline-captured` | #9 |
+| `p1-stakeholder-mapping` | Identify and validate full stakeholder map | medium-to-complex | coach_interview (per stakeholder) | `stakeholder-map-named` | #1 (sponsor confirm), #4 |
+| `p1-root-cause-synthesis` | Synthesize root causes from evidence | **complex** (workshop) | coach_workshop | `validated-problem-statement` | #2 |
+| `p1-pattern-evidence` | Capture archetype-specific evidence family | **complex** (per pattern) | coach_workshop | `pattern-specific-evidence-complete` | #2, #3 |
+| `p1-contradictions-log` | Log contradictions for P2 | simple | extract | `discovery-contradictions-logged` | #2 (continuity) |
+| `p1-p2-readiness-call` | Sponsor briefing + P2 readiness recommendation | medium | coach_interview + request_approval | `p2-readiness-recommendation` | #1 |
+
+P1 is the phase with the most **complex** steps. The agent's role shifts from extraction (P0) to coaching off-platform work (workshops, interviews, data pulls). The intent-capture / post-meeting-upload loop runs many times.
+
+### D.1.5 Stage gate (P1 → P2)
+
+`evaluateGate(1, 2)` (existing logic; DoD checks already wired):
+
+- **Hard:** all 5 hard DoD items met (`p0-seed-ingested`, `validated-problem-statement`, `okr-baseline-captured`, `stakeholder-map-named`, `pattern-specific-evidence-complete`).
+- **Soft:** `discovery-contradictions-logged`, `p2-readiness-recommendation`.
+- **Approver:** Sponsor (with Tenant Admin override available for soft-fail bypass).
+
+### D.1.6 Next-phase primer (P1 → P2)
+
+When P1 closes, the in-app primer + downloadable HTML brief renders P2's expectations:
+
+1. P2 (Synthesis) outcome statement, contextualized for the pattern.
+2. P2 step list (which options to weigh, who attends the architecture review, kill-criterion authoring).
+3. SMEs needed for P2 (typically: Architect, Finance Partner, Privacy/Risk owner — pattern-parameterized).
+4. P2 templates (synthesis recommendation template, options-comparison framework, architecture-review checklist).
+5. Workshops to schedule (synthesis workshop, dissenter session, kill-criterion authoring).
+6. Data and evidence to bring forward from P1 (the stakeholder map, the baseline, the pattern-specific evidence family, the contradictions log).
+
+### D.1.7 Brainstorm — design alternatives considered
+
+**Alternative 1: Treat P1 as primarily interview-driven; defer baseline capture to P2.**
+
+- Pro: faster P1 close.
+- Con: violates failure mode #9. A program that enters P2 without a measured baseline cannot test its target-state options against current-state data. Synthesis becomes prose, not analysis.
+- **Rejected.** Baseline lives in P1.
+
+**Alternative 2: Make `pattern-specific-evidence-complete` a soft DoD item.**
+
+- Pro: more flexibility; some patterns may have evidence types that aren't critical until P3.
+- Con: the entire point of pattern parameterization is that the archetype's specific evidence is what makes the program defensible. Softening it lets thin programs through.
+- **Rejected.** It stays hard. The pattern catalog defines what "complete" looks like; if a particular pattern truly doesn't need a piece of evidence at P1, the catalog should say so per-pattern.
+
+**Alternative 3: Insert a P1.5 "data-readiness gate" before allowing P1 to close.**
+
+- Pro: hardens against #3 even more.
+- Con: introduces a new phase the user has to navigate; complicates the state machine. The existing `okr-baseline-captured` + `pattern-specific-evidence-complete` already enforce data readiness as gate criteria.
+- **Rejected for v1.** Revisit if pilot data shows programs slipping through P1 with data debt.
+
+**Alternative 4: P1 outputs the *recommendation* (proceed / pivot / kill) explicitly as a hard DoD, not soft.**
+
+- Pro: forces the program lead to commit to a P2 stance; reduces drift programs.
+- Con: in some cases the data alone makes the recommendation obvious; in others the synthesis call genuinely belongs in P2 with the architect in the room. Forcing a recommendation in P1 may collapse what should be a P2 conversation.
+- **Resolution:** keep it soft. Telemetry tracks programs that close P1 without a recommendation; if they tend to drift, harden in v2.
+
+### D.1.8 Worked example scenarios
+
+#### Scenario A — Apex CDP Activation
+
+**User opens P1:** "Sponsor approved P0. Where do we start with Discovery?"
+
+**Desired:**
+
+> "Three workshops, in this order, will get us to a defensible P2 brief.
+>
+> **Day 1 — Data discovery.** I want to map every system that holds customer identity for the first cohort we anchored: CRM, ecommerce identity, loyalty, email, web events. We're trying to answer: where does the source-of-record live, who owns it, and what's the actual identity match-rate today across these systems. I have the facilitator guide ready; you'll want the Data Engineer, your MarTech architect, and the cohort's business owner in the room.
+>
+> **Day 2 — Consent and privacy posture.** Every CDP fails in P3 if privacy isn't anchored in P1. Privacy Counsel + DPO together. We capture consent state per source, residency obligations, and any audit findings in flight.
+>
+> **Day 3 — Baseline + stakeholder validation.** Sponsor 1:1 to confirm the P0 hypothesis still holds against what we found in Days 1-2. Stakeholder map locked.
+>
+> Want me to draft the agenda for Day 1 and walk you through the data-discovery template?"
+
+**Right pane:** Brief Progress (P1 fields filling in), Workshop Plan card (3 sessions queued with status: planned / in-progress / complete), pattern-match card *now* relevant (CDP pattern is locked), Anti-pattern monitoring (e.g. `wishlist-baseline` flag if baseline values not anchored to a real source).
+
+**Actual:**
+
+- Today's Nexus opens P1 with no structured workshop coaching. Asks generic questions; doesn't sequence the three sessions; doesn't differentiate simple-from-complex steps.
+- Pattern-match cards already on screen (today they appear from P0); appropriate now but were noise earlier.
+- No "intent capture before workshop / upload after workshop" loop.
+- No facilitator guide surfaced.
+
+**Design delta:**
+
+- Step decomposition (D.1.4) becomes the agent's working plan; complex steps gate on intent capture + post-workshop upload.
+- Templates for each P1 step linked from the pattern catalog → shown inline.
+- Reactive panel renders Workshop Plan + intent-capture cards; pattern-match card is now appropriate at this surface (P1+) but stays deduped.
+
+#### Scenario B — Apex Contact Center AI
+
+**User opens P1:** "We have call data going back two years. Let's start there."
+
+**Desired:**
+
+> "Good — we have raw material. But we want to be careful: 'two years of call data' isn't a baseline yet. Let's structure this so P2 has something to work with.
+>
+> First, the **intent inventory**. We don't need every call categorized — we need the top intents that account for, say, 70% of volume in our first cohort. WFM has the categorization model; let's run a workshop with WFM Lead + CX Ops to confirm intents. Output: a top-intent table with volume, current handle path (IVR / agent), and current containment %.
+>
+> Second, the **baseline metrics**: containment %, AHT, CSAT, transfer rate — broken out per top intent. This is the single most important artifact for P2 because synthesis options will be evaluated against these numbers.
+>
+> Third, the **representative transcripts** — a small audited sample (50-100) of the top intents. P3 will need them for design, but P1 captures them so we can verify intent classification.
+>
+> The risk I'd flag right now: if the baseline numbers come from a containment dashboard whose data lineage we don't trust, the P2 case is built on sand. Do you know who owns the containment metric?"
+
+**Failure modes flagged:** #3 (data lineage), #9 (baseline trustworthiness).
+
+#### Scenario C — Apex AMS Consolidation
+
+**User opens P1:** "I have the application list from Finance. Run-rate is in the contract registry."
+
+**Desired:**
+
+> "That's a good starting position. Two cautions and one workshop.
+>
+> **Caution 1 — Finance's app list and the actual application footprint don't always agree.** Finance bills against contracts; SCCM, EAM, and the ITSM CMDB will tell you what's actually deployed. If we baseline run-rate from contracts only, we miss zombie apps with no users and overcharged retainers. We want to reconcile.
+>
+> **Caution 2 — Run-rate without integration debt is half the story.** AMS consolidation programs that look at run-rate alone get blindsided in P3 when integration cost surfaces. Let's also pull the integration map from the architecture team.
+>
+> **Workshop — Portfolio rationalization session.** Application Owner + Architecture Review Board + Vendor Manager. We use the rationalization template (TIME framework — Tolerate / Invest / Migrate / Eliminate) on the segment we anchored in P0. Output: candidate set for consolidation with rationale.
+>
+> Who owns the CMDB? And do we have the integration map current within the last 6 months?"
+
+#### Scenario D — Apex Demand Forecasting
+
+**User opens P1:** "Our forecast is wrong but I'm not sure where to start."
+
+**Desired:**
+
+> "Right — 'forecast accuracy' isn't a baseline yet either. Let's tighten this in three steps.
+>
+> **Granularity decision.** SKU-store-week, category-region-month, brand-quarter — different granularities have different MAPE/WAPE profiles and different value mechanisms. P0 anchored on a product family; let's anchor granularity now too. Demand Planner needs to make this call with the Supply Chain VP.
+>
+> **Baseline pull.** Once granularity is locked, we pull historical forecast-vs-actual at that grain for the last 12 months. The real artifact isn't the average MAPE — it's the *distribution* of error and where the bias sits. A flat MAPE of 25% with structural under-forecast in promotional periods is a different program than a flat MAPE of 25% randomly distributed.
+>
+> **S&OP cadence inventory.** Demand-forecasting programs fail when they improve the model but the business decision cadence still ignores it. P1 captures who currently consumes the forecast and at what cadence, so P2 can design the consumption path along with the model path.
+>
+> Three workshops, one sponsor sync. Want me to start with the granularity decision?"
+
+---
+
+## P2 — Synthesis (fully worked)
+
+### D.2.1 Failures prevented
+
+| # | Failure mode | Why P2 |
+|---|---|---|
+| 2 | Unclear problem definition or business objectives (sharpened) | P2 produces the signed charter with named target outcome, scope boundary, value mechanism, and kill criterion. Vague becomes signed. |
+| 6 | Late attention to governance, privacy, and risk | P2's `architecture-review-attested` DoD pulls security / privacy / data into the synthesis decision *before* design commits in P3. Compliance is anchored here, not at P5 deployment. |
+| 1 | Sponsor commitment (re-tested) | P2 hard-requires `sponsor-assigned` + `succession-owner-named` + sponsor recommended-path defense. The P0 candidate becomes the P2 committed sponsor, or the program kills. |
+| 10 | Unrealistic expectations and use-case sprawl (re-tested) | `everywhere-charter` anti-pattern is a P2-specific failure mode. The agent flags any synthesis that re-expands scope beyond P1's first cohort. |
+
+### D.2.2 What good looks like (universal)
+
+P2 outcome (existing pack):
+
+> A signed gate package combining (a) a synthesis recommendation that names the target outcome, value mechanism, recommended path, tradeoffs considered, and explicit dissent; (b) a charter signed by the sponsor with named succession owner and kill criterion; (c) an architecture-review attestation that security, data, privacy, and operating-model implications were read.
+
+**Hard DoD items** (existing): `charter-signed-off`, `sponsor-assigned`, `synthesis-options-compared`, `architecture-review-attested`, `baseline-kpi-captured`, `value-hypothesis-with-mechanism`.
+
+**Soft:** `scope-boundary-stated`, `dissenter-named`, `kill-criterion-locked`, `succession-owner-named`.
+
+### D.2.3 Parameterized program-specific
+
+| Pattern | Options to weigh in P2 | Architecture-review focus | Kill criterion examples |
+|---|---|---|---|
+| **CDP** | Build on existing CDP vs. consolidate to new platform vs. activate via existing martech stack with identity layer | Data residency, consent flow, identity-resolution accuracy SLA, real-time vs batch | Identity match-rate fails to clear *X*% within 90 days of build; consent flow fails legal review |
+| **Contact Center AI** | Conversational AI in IVR vs agent-assist copilot vs full self-serve; build vs vendor; channel-by-channel | WFM integration, supervisor exception path, hallucination control, transcript retention | Containment uplift below *X* points after pilot; CSAT regresses below threshold |
+| **AMS Consolidation** | Single-vendor managed service vs in-house + targeted partner vs hybrid co-source | Vendor lock-in posture, exit assistance, transition risk, capability matrix | Vendor BAFO concessions below floor; transition risk red on > *N* portfolio items |
+| **Demand Forecasting** | Hierarchical statistical model vs ML model vs vendor SaaS forecast platform | Data lineage, model retraining cadence, S&OP integration, MAPE acceptance gate | MAPE doesn't beat current by *X* points on holdout; S&OP refuses to consume |
+
+### D.2.4 Steps
+
+| Step id | Label | Complexity | Agent role | Outputs | Prevents |
+|---|---|---|---|---|---|
+| `p2-options-author` | Author the options-to-weigh list (≥3 options) | medium | coach + validate (against pattern parameter set) | options table | #2, #10 |
+| `p2-tradeoff-workshop` | Run the synthesis workshop comparing options | **complex** | coach_workshop | `synthesis-options-compared` + workshop notes upload | #2 |
+| `p2-architecture-review` | Architecture / data / security / privacy review | **complex** | coach_workshop | `architecture-review-attested` | #6 |
+| `p2-charter-author` | Compose the program charter | medium | compose_artifact | charter draft | continuity |
+| `p2-sponsor-defense` | Sponsor 1:1 — defend recommended path against 3-month-fear question | **complex** | coach_interview | sponsor commitment evidence | #1 |
+| `p2-kill-criterion` | Lock the kill criterion (specific and observable) | simple-to-medium | coach + validate | `kill-criterion-locked` | #2, #10 |
+| `p2-succession-named` | Name a sponsor succession owner | simple | extract | `succession-owner-named` | #1 |
+| `p2-charter-signoff` | Sponsor signs the charter | simple action | request_approval | `charter-signed-off` | gate |
+| `p2-dissenter-engaged` | Identify and engage at least one dissenter | medium | coach_interview | `dissenter-named` | #2, #10 |
+
+### D.2.5 Stage gate (P2 → P3)
+
+Already coded: `evaluateGate(2, 3)` checks `charter_signed_off`, `sponsor_assigned`. Design extends with `architecture_review_attested` (new explicit check).
+
+- **Hard:** charter signed; sponsor assigned; architecture review attested; options compared; baseline carried.
+- **Soft:** dissenter named, kill criterion locked, succession named, scope boundary stated.
+- **Approver:** Sponsor + Architecture Review Board representative (joint).
+
+### D.2.6 Next-phase primer (P2 → P3)
+
+P3 (Design) primer renders: detailed-design plan, pilot cohort selection, success-criteria locking, sponsor commitment confirmation. Templates for design specification and pilot stop-rule. Workshops: design-tradeoff freeze, dissenter-objection session, pilot-stop-rule authoring.
+
+### D.2.7 Brainstorm — design alternatives considered
+
+**Alternative 1: Make architecture review optional unless flagged by Sentinel as high-risk.**
+
+- Pro: less friction for low-stakes programs.
+- Con: violates failure mode #6. The whole point is that compliance / privacy / risk are anchored *here*. "Low-stakes" is what every program calls itself before it discovers the risk.
+- **Rejected.** Architecture review stays universal.
+
+**Alternative 2: Combine sponsor 1:1 and dissenter engagement into one session.**
+
+- Pro: efficiency.
+- Con: dissenter conversation needs a different posture and sometimes a different room. Combining them often produces a weak version of both.
+- **Rejected.** Two distinct steps.
+
+**Alternative 3: Allow the kill criterion to be authored after charter sign-off.**
+
+- Pro: charter close happens faster.
+- Con: charters without explicit kill criteria become commitment traps — the program runs even when evidence says stop. Anti-pattern `orphaned-kill-criterion` is exactly this.
+- **Rejected.** Kill criterion stays in P2 close.
+
+### D.2.8 Worked example scenarios
+
+#### Scenario A — Apex CDP Activation in P2
+
+**User opens P2:** "P1 was a lot. Where do we start synthesis?"
+
+**Desired:**
+
+> "We have a strong P1 — identity match-rate baseline, consent posture clear, sponsor still committed. Synthesis is about choosing one of three real paths and being honest about what we give up.
+>
+> The three options I want us to weigh:
+>
+> 1. **Build on the existing CDP** — fastest, but the identity-match ceiling we measured may cap value.
+> 2. **Consolidate to a new platform** — highest ceiling, but real transition cost and timeline risk.
+> 3. **Activate via existing martech with an identity layer** — middle ground, depends on whether the identity layer carries the load.
+>
+> For each, we surface: cost, time-to-first-cohort-value, risk to data residency, sponsor's 3-month-fear answer, and the kill criterion we'd write.
+>
+> The architecture review is *during* the synthesis workshop, not after. Privacy Counsel and the DPO need to read the residency implications of each option before we recommend one. I want them in the room.
+>
+> Want me to draft the options-comparison template so we have a working artifact when the workshop starts?"
+
+#### Scenario B — Apex Contact Center AI in P2
+
+**User opens P2:** "Vendor X has been pushing hard on a full IVR replacement."
+
+**Desired:**
+
+> "Two things to note before we shape synthesis. First — flag: vendor pressure during P2 is the `vendor-driven-charter` anti-pattern. We don't kill the option, but we put it on the comparison table alongside two others, and we name what we'd give up.
+>
+> The three options we should compare:
+>
+> 1. **Conversational AI in IVR (vendor-led)** — vendor pitch.
+> 2. **Agent-assist copilot** — keeps the agent path, augments with AI.
+> 3. **Channel-by-channel rollout starting with digital self-serve** — slower, less vendor lock-in.
+>
+> Each gets a baseline (containment % we captured in P1), a target with kill threshold, an architecture-review checklist (WFM integration, supervisor exception path, hallucination control), and a sponsor-defense answer.
+>
+> The dissenter to engage: WFM Lead. They'll have the strongest case for option 2 over option 1, and we want their objection on the record before charter signing. Want me to schedule the dissenter session before the synthesis workshop or after?"
+
+#### Scenario C — Apex AMS Consolidation in P2
+
+**Desired pattern:** Same shape — three options (single-vendor / in-house+partner / hybrid co-source), architecture review with vendor lock-in / exit assistance / transition risk, sponsor 3-month-fear question, kill criterion (BAFO floor + transition-risk threshold). Sourcing module is co-engaged from P2; the agent emits handoff artifacts.
+
+#### Scenario D — Apex Demand Forecasting in P2
+
+**Desired pattern:** Three options (statistical / ML / vendor SaaS), architecture review (data lineage, retraining cadence, S&OP integration), kill criterion (MAPE-vs-current threshold + S&OP consumption commitment), dissenter (Supply Chain VP if they prefer status quo).
+
+---
+
+## P3 — Design (fully worked)
+
+### D.3.1 Failures prevented
+
+| # | Failure mode | Why P3 |
+|---|---|---|
+| 5 | Lack of business commitment to operating-model and workflow change | P3 is where the design commits to the workflow + operating-model change, not just the system change. The design spec includes who builds, who operates, who approves, and what changes downstream. |
+| 6 | Late attention to governance / privacy / risk (operational specifics) | Architecture sketch expanded with security, data, operating-model gaps named — `security-data-operating-gaps` question. |
+| 7 | Vendor and build-vs-buy strategy errors | If sourcing is in scope, P3 is where vendor selection is approved. The /source module integrates here; vendor-selection-approved is an existing gate check. |
+| 1 | Sponsor commitment confirmed (re-tested) | `sponsor-commitment-confirmed` DoD — sponsor signs the design, not just the charter. |
+
+### D.3.2 What good looks like (universal)
+
+P3 outcome (existing): "A Build gate package that converts the P2 recommendation into a buildable...". Hard DoD: `p2-target-state-path-carried-forward`, `detailed-design-signed-off`, `architecture-sketch-expanded`, `pilot-cohort-named`, `success-criteria-locked`, `sponsor-commitment-confirmed`, `phase-3-findings-written`, `cxo-interview-complete`.
+
+### D.3.3 Parameterized program-specific
+
+Per pattern, P3 specializes:
+
+- **CDP:** detailed identity-resolution architecture, source-system integration spec, consent-flow design, real-time vs batch decision frozen, pilot cohort = subset of first cohort.
+- **Contact Center AI:** detailed agent-assist or self-serve flow, WFM integration spec, exception path, hallucination control mechanism, pilot cohort = top 2 intents in one channel.
+- **AMS Consolidation:** detailed transition design, vendor selection approved (via /source), pilot cohort = first portfolio segment.
+- **Demand Forecasting:** detailed model spec, S&OP consumption path, retraining cadence, pilot cohort = one product family / store cluster.
+
+### D.3.4 Steps (abbreviated — see file for full table)
+
+Key complex steps:
+
+- `p3-architecture-expansion` (complex workshop with ARB + Security + Data)
+- `p3-pilot-design-workshop` (complex workshop — pilot cohort, success criteria, stop-rule)
+- `p3-vendor-selection` (complex — handoff to /source if vendor in scope)
+- `p3-cxo-interview` (complex 1:1 — sponsor commits to consequence)
+- `p3-dissenter-engagement-2` (complex — engage P2 dissenter; if dissenter still objects, decision logged not buried)
+
+Simple steps: `p3-success-criteria-lock`, `p3-pilot-cohort-name`, `p3-design-signoff`.
+
+### D.3.5 Stage gate (P3 → P4)
+
+Existing: `phase_3_findings_written`, `cxo_interview_complete`, `design_approved`, `vendor_selection_approved` (when applicable). Approver: Sponsor + ARB rep + (if vendor) Sourcing approver.
+
+### D.3.6 Next-phase primer (P3 → P4)
+
+P4 primer: execution plan, integration build steps, scaled-data validation, change-management activation. SMEs: build team, Change Manager, Pilot Cohort Owner. Templates: execution-plan, change-management plan. Workshops: pilot kickoff, change-readiness workshop.
+
+### D.3.7 Brainstorm — design alternatives considered
+
+**Alternative 1: Vendor selection as a separate phase.**
+
+- Con: vendor selection needs to be inside the design phase because the design depends on the vendor choice. Separating them creates two-pass design.
+- **Rejected.** Sourcing handoff inside P3 is correct.
+
+**Alternative 2: Allow `cxo-interview-complete` to be a Slack message rather than a real interview.**
+
+- Con: defeats the failure mode #1 prevention. Sponsor commitment to consequence is the meaningful artifact, not a thumbs-up.
+- **Rejected.** CXO interview stays a real conversation with notes.
+
+### D.3.8 Worked example scenarios (sketched; expand in v3 if reviewer wants more depth)
+
+- **CDP:** Architecture expansion forces consent-flow detail; vendor for identity resolution selected via /source; pilot cohort = top-decile loyalty members; success criteria = identity-match rate + experience activation rate.
+- **Contact Center AI:** Architecture expansion forces hallucination-control mechanism + supervisor escalation; vendor selected if conversational platform is bought; pilot cohort = top-2 intents in digital channel; success criteria = containment uplift + CSAT preservation.
+- **AMS Consolidation:** Vendor BAFO complete; transition design includes exit-assistance terms; pilot cohort = first portfolio segment; success criteria = run-rate cut + transition-risk green.
+- **Demand Forecasting:** Architecture expansion forces data-lineage + retraining cadence; pilot cohort = one product family; success criteria = MAPE delta + S&OP consumption commit.
+
+---
+
+## P4 — Build (fully worked)
+
+### D.4.1 Failures prevented
+
+| # | Failure mode | Why P4 |
+|---|---|---|
+| 5 | Workflow / operating-model change | P4 builds the system AND the workflow change; the change-management plan executes here, not at P5. |
+| 8 | Pilot-to-production scaling gap | P4 includes scaled-data validation — the pilot must run against representative data volumes and edge cases, not curated demo data. |
+| 3 | Data foundation (operational) | P4 confirms the data pipelines work at production-grade. If they don't, P5 fails. |
+
+### D.4.2 What good looks like (universal)
+
+P4 outcome (existing): "An Activate gate package that proves what happened in the pilot against...". Hard DoD typically includes `execution-plan-drafted`, pilot results captured against P3 success criteria, integration-tested at scale, change-management readiness reviewed.
+
+### D.4.3 Parameterized program-specific
+
+- **CDP:** identity-resolution running at scale; activation channels integrated; consent flow live in pilot; data residency tested.
+- **Contact Center AI:** model trained, supervisor exception path live, transcript retention working, fallback to human verified; pilot intents containment measured.
+- **AMS Consolidation:** transition for pilot segment executed; vendor onboarding complete; integration tests pass at scale; exit-assistance terms in contract.
+- **Demand Forecasting:** model trained on full history; held-out validation passes MAPE threshold; S&OP cadence integrated; retraining cadence operational.
+
+### D.4.4 Steps
+
+Complex: `p4-execution-plan-workshop`, `p4-build-execution` (the actual build, agent's role is monitoring + flagging), `p4-pilot-launch`, `p4-scale-validation` (workshop to evaluate), `p4-change-readiness-workshop`, `p4-pilot-result-interpretation`.
+
+Simple: `p4-execution-plan-drafted`, `p4-go-no-go-call`.
+
+### D.4.5 Stage gate (P4 → P5)
+
+Existing checks: `execution_plan_drafted`. Design adds explicit `pilot_passed_success_criteria` (server-side check against P3 criteria). Approver: Sponsor + Operations Owner.
+
+### D.4.6 Next-phase primer (P4 → P5)
+
+P5 primer: rollout waves, training, support readiness, adoption telemetry baselining. SMEs: Change Manager, Support Lead, Adoption Owner, Operations Owner. Templates: rollout-wave plan, support-readiness checklist, adoption-telemetry spec.
+
+### D.4.7 Brainstorm — design alternatives considered
+
+**Alternative 1: Pilot in P3, build in P4.**
+
+- Con: pilot in P3 = unbuilt design = no real test. Today's structure is correct: build in P4, pilot is the *output* of the build, evaluated at P4 close.
+- **Rejected.** P4 build → P4 pilot → P4 evaluation against P3 criteria.
+
+**Alternative 2: Defer change-management work to P5 ("activation").**
+
+- Con: this is one of the most common failure paths in real programs (#5). Change management starts in P3 design, escalates in P4 build, executes at scale in P5. Deferring it creates the Adoption Cliff.
+- **Rejected.** Change-management readiness is a P4 hard check.
+
+### D.4.8 Worked scenarios (sketched)
+
+For each archetype: pilot result interpretation against the P3 success criteria, `pilot-overreach` anti-pattern flagged if "the pilot worked, let's go enterprise" without scale-validation. Change-readiness workshop with cohort-level findings.
+
+---
+
+## P5 — Activate (fully worked)
+
+### D.5.1 Failures prevented
+
+| # | Failure mode | Why P5 |
+|---|---|---|
+| 5 | Workflow / operating-model change (executes) | Rollout waves change the operating model in real teams. Adoption telemetry tells the truth. |
+| 8 | Pilot-to-production scaling gap (operational truth) | Rollout-wave-by-wave; data drift, scale issues, edge-case failures surface here and are fixed before the next wave. |
+| 9 | Inability to measure outcomes and impact (instrumentation) | Adoption telemetry baselined against P4 success criteria; outcome instrumentation live. |
+
+### D.5.2 What good looks like (universal)
+
+P5 outcome (existing): "Activation is complete when the approved design has moved through named rollout waves, the operating model is live with accountable owners, adoption telemetry is baselined against the P4 success criteria, support paths are staffed, and the sponsor has enough evidence to attest whether benefits are materializing."
+
+Hard DoD (existing): `rollout-waves-completed`, `adoption-telemetry-baselined`, `support-readiness-live`, `exception-paths-controlled`, `cxo-verification-complete`, `benefits-realization-attested`, `outcome-report-drafted`.
+
+### D.5.3 Parameterized program-specific
+
+- **CDP:** rollout waves = activation channels (web → email → in-store); adoption telemetry = use-rate of identity-resolved data; support = MarTech ops + DPO escalation.
+- **Contact Center AI:** rollout waves = channel-by-channel; adoption telemetry = real containment + agent acceptance rate; support = WFM exception queue + supervisor escalation.
+- **AMS Consolidation:** rollout waves = portfolio-segment-by-segment; adoption telemetry = run-rate realized + transition-risk burndown; support = vendor service desk + internal escalation.
+- **Demand Forecasting:** rollout waves = product-family-by-product-family; adoption telemetry = S&OP consumption rate + decision adherence; support = Demand Planner + S&OP team.
+
+### D.5.4 Steps (abbreviated)
+
+Complex: `p5-rollout-wave-prep` (per wave), `p5-rollout-wave-launch`, `p5-rollout-wave-debrief`, `p5-adoption-monitoring`, `p5-cxo-evidence-packet-prep`, `p5-cxo-verification-call`, `p5-benefits-attestation`.
+
+Simple: `p5-go-no-go-per-wave`, `p5-outcome-report-draft`.
+
+### D.5.5 Stage gate (P5 → P6)
+
+Existing: `cxo_verification_complete`, `benefits_realization_attested`, `outcome_report_drafted`. Approver: Sponsor + CXO (the sponsor's executive peer / CFO if benefits are financial).
+
+### D.5.6 Next-phase primer (P5 → P6)
+
+P6 primer: standing operating owner, quarterly review cadence, drift dashboards, vendor renewal tracking, kill-or-expand thresholds. Handoff from program team to operating owner.
+
+### D.5.7 Brainstorm — design alternatives considered
+
+**Alternative 1: One-shot rollout instead of waves.**
+
+- Con: the entire failure mode #8 prevention depends on waves. One-shot rollouts that fail blow up the program.
+- **Rejected.** Waves are mandatory; the *number* of waves is parameterized.
+
+**Alternative 2: Allow `cxo-verification-complete` to be inferred from telemetry.**
+
+- Con: CXO verification is a deliberate executive sign-off. Inferring it from data lets adoption-cliff programs claim victory.
+- **Rejected.** Real CXO conversation with notes uploaded.
+
+### D.5.8 Worked scenarios (sketched)
+
+`training-equals-adoption` anti-pattern flagged when the user reports "we ran 8 trainings, adoption is high" without telemetry to back it. `silent-exceptions` flagged when exception volume exceeds threshold and isn't surfaced in supervisor reports.
+
+---
+
+## P6 — Operate (fully worked)
+
+### D.6.1 Failures prevented
+
+| # | Failure mode | Why P6 |
+|---|---|---|
+| 9 | Inability to measure outcomes and impact (operational + sustained) | P6 is the only phase that proves value *over time*. Quarterly operating reviews against signed baseline. |
+| 5 | Workflow / operating-model change (sustained) | Adoption fade signal — does the new behavior persist after the launch energy fades? |
+| 10 | Unrealistic expectations (re-tested) | `kill-or-expand-thresholds-owned` — if value isn't sustaining, the program is killed or remediated; if it's exceeding, it's expanded with explicit decision. |
+| Learning loop | Pattern catalog updates | P6 outputs are harvested into the pattern catalog so the next program of this archetype starts smarter. |
+
+### D.6.2 What good looks like (universal)
+
+P6 outcome (existing): "Operate is successful when the capability has a named steady-state owner, a recurring review cadence, telemetry that shows whether value is sustaining against the signed baseline, and a decision path for expansion, remediation, renewal, or retirement."
+
+Hard DoD (existing): `standing-owner-named`, `quarterly-operating-review-live`, `benefits-attestation-retained`, `adoption-drift-dashboard`, `quality-and-risk-controls-live`, `cost-and-vendor-review-ready`, `kill-or-expand-thresholds-owned`.
+
+### D.6.3 Parameterized program-specific
+
+- **CDP:** standing owner = MarTech Ops Lead; reviews = quarterly identity-match drift, consent posture re-attest; vendor reviews = identity-resolution provider.
+- **Contact Center AI:** standing owner = CX Ops; reviews = containment drift, CSAT, exception volume; vendor reviews = conversational platform vendor.
+- **AMS Consolidation:** standing owner = Application Services Lead; reviews = run-rate realized, transition risk burndown; vendor reviews = managed-services partner.
+- **Demand Forecasting:** standing owner = Demand Planner / S&OP Lead; reviews = MAPE drift, consumption rate, decision adherence; vendor reviews = forecast platform if SaaS.
+
+### D.6.4 Steps
+
+Complex: `p6-standing-owner-handoff`, `p6-first-quarterly-review`, `p6-vendor-renewal-prep`, `p6-pattern-catalog-harvest` (new — harvest learnings into the pattern catalog), `p6-kill-or-expand-decision`.
+
+Simple: `p6-dashboard-live`, `p6-cost-review-scheduled`.
+
+### D.6.5 Stage gate (P6 → completed)
+
+A program never "advances out" of P6 in the same sense. P6 close = `program.completed = true` with outcome report and handoff to operations. The "gate" is the final outcome-vs-baseline review and the pattern-catalog harvest.
+
+### D.6.6 Next-phase primer
+
+There is no next phase. The primer at P6 close is **the harvest** — what the platform writes back into the pattern catalog: refined failure-mode patterns, refined evidence templates, validated workshop facilitator guides, validated baseline-capture techniques. This is the learning loop.
+
+### D.6.7 Brainstorm — design alternatives considered
+
+**Alternative 1: Treat P6 as out-of-scope for the platform; programs "complete" at P5.**
+
+- Con: violates failure mode #9 (sustained measurement) and #10 (sprawl by abandonment). Programs that "complete" at P5 are the ones that erode quietly afterward.
+- **Rejected.** P6 is in-scope; it's the active-governance phase.
+
+**Alternative 2: Pattern catalog harvest is automatic.**
+
+- Pro: less manual work.
+- Con: at pilot stage, the harvest needs human review (founder + design partner) to make sure the right learnings are abstracted. Auto-harvest can be added later.
+- **Rejected for v1.** Human-in-the-loop harvest until the pattern catalog has matured.
+
+### D.6.8 Worked scenarios (sketched)
+
+`launch-is-done` anti-pattern flagged when user marks P6 complete after the launch celebration without ongoing review. `vendor-renewal-amnesia` flagged 90 days before vendor renewal if review pack isn't ready.
+
+---
+
+## Part E — Cross-program scenario walkthroughs
+
+Each of the 4 Apex programs run end-to-end through the design. The story format is condensed: the failure mode the platform prevented at each phase, the agent action, the artifact the customer leaves with.
+
+### E.1 Apex CDP Activation — full lifecycle
+
+| Phase | Failure prevented | Agent doctrine action | Artifact |
+|---|---|---|---|
+| P0 | #1, #2, #10 | Refuses to accept "the CIO mentioned it" as sponsor; coaches sponsor 1:1; forces first-cohort definition | Charter seed with sponsor candidate + value hypothesis + first cohort + pattern locked |
+| P1 | #3, #9 | Three workshops (data discovery, consent posture, baseline+stakeholder); flags `wishlist-baseline` if values aren't sourced | Discovery package: identity-match baseline, consent posture, stakeholder map |
+| P2 | #6, #1 | Three options compared; architecture review *with* Privacy Counsel; sponsor 3-month-fear question; kill criterion locked | Signed charter + architecture attestation + dissenter on record |
+| P3 | #5, #6, #7 | Detailed identity-resolution architecture; vendor selected via /source if buy; pilot cohort = top-decile loyalty | Build-ready design + vendor selection approved + pilot cohort named |
+| P4 | #5, #8 | Build executes; pilot runs against scaled production data; identity-match measured per criterion | Pilot result + change-readiness assessment |
+| P5 | #5, #8, #9 | Rollout wave-by-wave (web → email → in-store); adoption telemetry live; CXO verification | Rollout complete + benefits attested + outcome report |
+| P6 | #9, #5, #10, learning | Quarterly identity-match drift review; consent re-attestation; pattern catalog harvest (CDP-specific learnings) | Standing owner active + drift dashboard + pattern catalog updated |
+
+### E.2 Apex Contact Center AI — full lifecycle
+
+| Phase | Failure prevented | Agent doctrine action | Artifact |
+|---|---|---|---|
+| P0 | #1, #2, #10 | First-intent question (not "all calls"); sponsor 1:1 with CX VP; `vendor-driven-charter` flag if vendor pressure visible | Charter seed |
+| P1 | #3, #9 | Intent inventory + containment baseline + transcript audit; flags any baseline whose lineage is unverified | Discovery package |
+| P2 | #6, #7 | Three options (IVR / agent-assist / channel-by-channel); architecture review covers hallucination control + supervisor exception; WFM Lead engaged as dissenter | Signed charter |
+| P3 | #5, #6, #7 | Detailed agent-assist or self-serve flow; WFM integration spec; pilot cohort = top 2 intents in one channel | Design spec |
+| P4 | #5, #8 | Build + pilot in one channel; containment measured per intent; supervisor exception path proven | Pilot result |
+| P5 | #5, #8 | Rollout channel-by-channel; agent acceptance rate tracked; `silent-exceptions` flagged if exception volume hidden | Rollout complete |
+| P6 | #9, learning | Containment drift review; CSAT trace; pattern catalog harvest | Sustained operations |
+
+### E.3 Apex AMS Consolidation — full lifecycle
+
+| Phase | Failure prevented | Agent doctrine action | Artifact |
+|---|---|---|---|
+| P0 | #1, #2, #10 | First portfolio segment (not "all 1,200 apps"); CIO sponsor with vendor-decision authority | Charter seed |
+| P1 | #3, #9 | Application inventory reconciled (Finance vs CMDB vs SCCM); run-rate baseline; integration debt mapped | Discovery package |
+| P2 | #6, #7 | Three sourcing options (single-vendor / hybrid / in-house+partner); /source module engaged; vendor lock-in posture in architecture review | Signed charter + sourcing initiated |
+| P3 | #5, #6, #7 | Vendor BAFO complete; transition design with exit-assistance terms; pilot segment named | Design spec + vendor selection approved |
+| P4 | #5, #8 | Transition for pilot segment executes; vendor onboarding; integration at scale verified | Pilot transition complete |
+| P5 | #5, #8 | Rollout segment-by-segment; run-rate realized tracked; transition-risk burndown | Rollout complete |
+| P6 | #9, #10, learning | Quarterly run-rate review; vendor renewal prep at 90 days; pattern catalog harvest (AMS-specific) | Sustained operations |
+
+### E.4 Apex Demand Forecasting — full lifecycle
+
+| Phase | Failure prevented | Agent doctrine action | Artifact |
+|---|---|---|---|
+| P0 | #1, #2, #10 | Granularity decision forced; first product family / store cluster; Supply Chain VP as real sponsor | Charter seed |
+| P1 | #3, #9 | Forecast accuracy distribution (not just average MAPE); S&OP cadence inventory; current consumers mapped | Discovery package |
+| P2 | #6, #7 | Three options (statistical / ML / vendor SaaS); architecture review with data lineage + retraining; S&OP consumption commitment as kill criterion | Signed charter |
+| P3 | #5, #6 | Detailed model spec; S&OP consumption path; pilot product family | Design spec |
+| P4 | #5, #8 | Model trained; held-out validation passes; S&OP cadence integrated for pilot product family | Pilot result |
+| P5 | #5, #8, #9 | Rollout family-by-family; S&OP consumption rate measured; decision adherence tracked | Rollout complete |
+| P6 | #9, learning | MAPE drift dashboard; S&OP consumption review; pattern catalog harvest (forecast-specific) | Sustained operations |
+
+### E.5 Cross-program telemetry rollup (the platform's value prop, made visible)
+
+For each program, the platform produces a per-phase report showing which of the 10 failure modes were *flagged*, *cleared*, *bypassed with rationale*, or *unaddressed*. Aggregated across the tenant's portfolio, this is the customer's evidence:
+
+> "Across your 4 programs, the platform forced you through:
+> - 17 sponsor commitment checks (failure mode #1) — 16 cleared, 1 flagged-and-resolved
+> - 12 baseline-vs-target checks (#9) — 12 cleared
+> - 8 architecture-review attestations (#6) — 8 cleared, 2 raised compliance issues that would have surfaced at deployment without the review
+> - 4 vendor BAFO discipline events (#7) — 3 saved an estimated *$X* in negotiated concessions"
+
+This is not analytics. It is the contract. It is what the customer points at when their CFO asks "what is this platform doing for us."
 
 ---
 
