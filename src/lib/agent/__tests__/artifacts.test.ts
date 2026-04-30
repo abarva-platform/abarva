@@ -780,3 +780,110 @@ describe('extractArtifacts · PR-Q navigate-to', () => {
     ).toHaveLength(0);
   });
 });
+
+describe('extractArtifacts · OV2-1a brief-progress + overlap-alert', () => {
+  it('parses a valid brief-progress with mixed field statuses', () => {
+    const r = extractArtifacts(
+      '[[artifact:brief-progress]]{"fieldsTotal":8,"fieldsFilled":2,"fields":[' +
+        '{"id":"sponsor-candidate","label":"Sponsor candidate","status":"filled","value":"Sarah Chen (CIO)"},' +
+        '{"id":"problem-statement","label":"Problem statement","status":"partial","value":"AMS spend up"},' +
+        '{"id":"target-outcome","label":"Target outcome","status":"empty"}' +
+        ']}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(1);
+    expect(r.artifacts[0]).toMatchObject({
+      type: 'brief-progress',
+      fieldsTotal: 8,
+      fieldsFilled: 2,
+    });
+    if (r.artifacts[0].type === 'brief-progress') {
+      expect(r.artifacts[0].fields).toHaveLength(3);
+      expect(r.artifacts[0].fields[0]).toMatchObject({
+        id: 'sponsor-candidate',
+        label: 'Sponsor candidate',
+        status: 'filled',
+        value: 'Sarah Chen (CIO)',
+      });
+      expect(r.artifacts[0].fields[2].value).toBeUndefined();
+    }
+  });
+
+  it('accepts brief-progress with an empty fields array (brief starts empty)', () => {
+    const r = extractArtifacts(
+      '[[artifact:brief-progress]]{"fieldsTotal":8,"fieldsFilled":0,"fields":[]}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(1);
+    expect(r.artifacts[0]).toMatchObject({
+      type: 'brief-progress',
+      fieldsTotal: 8,
+      fieldsFilled: 0,
+    });
+  });
+
+  it('rejects brief-progress with negative fieldsFilled', () => {
+    const r = extractArtifacts(
+      '[[artifact:brief-progress]]{"fieldsTotal":8,"fieldsFilled":-1,"fields":[]}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('rejects brief-progress with fieldsFilled greater than fieldsTotal', () => {
+    const r = extractArtifacts(
+      '[[artifact:brief-progress]]{"fieldsTotal":8,"fieldsFilled":9,"fields":[]}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('rejects brief-progress with malformed status enum value', () => {
+    const r = extractArtifacts(
+      '[[artifact:brief-progress]]{"fieldsTotal":1,"fieldsFilled":0,"fields":[' +
+        '{"id":"sponsor-candidate","label":"Sponsor candidate","status":"in-progress"}' +
+        ']}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('parses overlap-alert for each overlapKind value', () => {
+    for (const overlapKind of ['archetype', 'sponsor', 'system', 'multiple'] as const) {
+      const r = extractArtifacts(
+        `[[artifact:overlap-alert]]{"overlappingProgramId":"APX-CDP-2026","overlappingProgramName":"Apex Retail CDP Activation","overlappingProgramPhase":"P3 Design","overlapKind":"${overlapKind}","overlapDetail":"Detail line."}[[/artifact]]`,
+      );
+      expect(r.artifacts).toHaveLength(1);
+      expect(r.artifacts[0]).toMatchObject({
+        type: 'overlap-alert',
+        overlappingProgramId: 'APX-CDP-2026',
+        overlappingProgramName: 'Apex Retail CDP Activation',
+        overlappingProgramPhase: 'P3 Design',
+        overlapKind,
+        overlapDetail: 'Detail line.',
+      });
+    }
+  });
+
+  it('rejects overlap-alert with unknown overlapKind', () => {
+    const r = extractArtifacts(
+      '[[artifact:overlap-alert]]{"overlappingProgramId":"APX-CDP-2026","overlappingProgramName":"Apex Retail CDP","overlapKind":"vendor","overlapDetail":"x"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('rejects overlap-alert with empty overlappingProgramId', () => {
+    const r = extractArtifacts(
+      '[[artifact:overlap-alert]]{"overlappingProgramId":"","overlappingProgramName":"X","overlapKind":"archetype","overlapDetail":"y"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('rejects overlap-alert with empty overlapDetail', () => {
+    const r = extractArtifacts(
+      '[[artifact:overlap-alert]]{"overlappingProgramId":"APX-CDP-2026","overlappingProgramName":"Apex Retail CDP","overlapKind":"sponsor","overlapDetail":""}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+});
