@@ -2,6 +2,8 @@
 
 ## 1. Product Principle
 
+Related operational slice: `../NEXT_SLICE_PLAN_SOURCE_ARTIFACT_INGESTION_AND_PRICING_INTELLIGENCE.md` defines how AMS proposal/pricing files become parsed pricing components, commercial exceptions, graph edges, context-broker inputs, generated workbooks, BAFO packs, and approval-ready decision artifacts.
+
 AbarVa Source should not depend on paid third-party benchmarks for MVP.
 
 Core pricing and negotiation intelligence should come from:
