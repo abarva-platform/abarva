@@ -12,6 +12,6 @@ export const metadata = {
     'Why enterprise AI transformation fails — and how AbarVa prevents it. Ten failure modes, grounded in pattern doctrine, with cited research anchors from McKinsey, MIT/BCG, RAND, Forrester, and Gartner.',
 };
 
-export default function IntelligencePage() {
+export default async function IntelligencePage() {
   return <IntelligenceIndexPage />;
 }
