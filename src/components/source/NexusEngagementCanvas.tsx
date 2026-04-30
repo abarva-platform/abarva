@@ -134,7 +134,7 @@ function EventContextStrip({
     { label: 'Current stage', value: event.currentStageLabel },
     { label: 'Value at stake', value: formatUsd(event.valueAtStakeUsd) },
     { label: 'Mission load', value: `${missionReport.missionCount} missions` },
-    { label: 'Top action', value: missionReport.recommendedNextAction },
+    { label: 'Top action', value: event.nextAction || missionReport.recommendedNextAction },
   ];
 
   return (

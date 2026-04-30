@@ -45,6 +45,11 @@ import {
 } from "@/lib/source/stage-packs";
 import { buildSourceLifecycleContract } from "@/lib/lifecycle-operating-system";
 import type { SourceStageKey } from "@/lib/source/types";
+import {
+  AMS_OUTSOURCING_2026_EVENT_ID,
+  buildAmsVendorStoryline,
+} from "@/lib/source/ams-outsourcing-2026-view";
+import { buildAmsBafoView } from "@/lib/source/ams-bafo-view";
 // PR-R · broker bundle for Nexus on /programs surfaces — exposes
 // the tenant's executive bench + program inventory so Nexus can
 // reference real people/roles instead of inventing them. Closes
@@ -334,6 +339,7 @@ export async function POST(request: Request) {
     surface,
     hasEvent: Boolean(sc.eventName),
   });
+  const sourceEventSeedBlock = buildSourceEventSeedPromptBlock(surfaceContext);
 
 
   // F0.2 Layer 0 — user context block, composed AFTER role/voice line
@@ -347,7 +353,11 @@ export async function POST(request: Request) {
   // platform context (avoids Steward/Nexus referencing Apex programs
   // in conversations with Meridian or Arcturus users).
   const activeClient = await getActiveClientRow().catch(() => null);
-  const tenantSystemBlock = getTenantSystemBlock(activeClient?.key ?? null);
+  const sourceClientKey = isSourceSurface(surface)
+    ? resolveSourceClientKey(surfaceContext)
+    : null;
+  const effectiveClientKey = sourceClientKey ?? activeClient?.key ?? null;
+  const tenantSystemBlock = getTenantSystemBlock(effectiveClientKey);
 
   // Surface 1 PR2 / Surface 2 PR2 — artifact-channel instructions are
   // composed for surfaces that have a reactive workspace ready to
@@ -420,11 +430,11 @@ export async function POST(request: Request) {
       // existing tenantSystemBlock + page-context lines.
     }
   }
-  if (isSourceSurface(surface) && activeClient?.key) {
+  if (isSourceSurface(surface) && effectiveClientKey) {
     try {
       sourceTenantContextBlock = formatSourceBrokerBundleForPrompt(
         buildEnterpriseAgentContextBundle({
-          tenantKey: activeClient.key,
+          tenantKey: effectiveClientKey,
           agentName: normalizeEnterpriseAgentName(agentName),
           surface: 'source',
           includeGraphNeighborhood: false,
@@ -530,6 +540,8 @@ export async function POST(request: Request) {
     "",
     sourceTenantContextBlock,
     "",
+    sourceEventSeedBlock,
+    "",
     // OV2-WIRE-AND-FM-PROMPT Part 2 — overlap candidates on
     // /programs/new only. Empty string elsewhere or when no candidates.
     overlapCandidatesBlock,
@@ -582,6 +594,7 @@ export async function POST(request: Request) {
           "- Keep most Source replies under 75 words unless the user explicitly asks for a deep dive, draft, comparison, or executive brief.",
           "- If the user is starting an event, quietly map their words to the five-field intake floor: trigger, decision owner, scope boundary, baseline evidence, stop/approval condition. Do not recite all five unless asked.",
           "- Use known tenant context before asking. If the user names a role and Source tenant context resolves it, use the known person by name and ask only to confirm authority. Never ask 'who is the CIO?' when context names the CIO.",
+          "- If SOURCE EVENT PAGE SEED CONTEXT is present, use that page-local event, vendor, BAFO, committee, gate, and risk data before saying information is missing.",
           "- If the user mistypes a title (for example CIKO when CIO is likely), correct lightly and continue; do not make the typo the center of the reply.",
           "- Let the right pane carry progress, gates, evidence, blockers, and next-step prep. In prose, summarize what changed and the one next missing field.",
           "- If emitting sourcing-stage-progress artifacts, emit valid JSON only; never expose artifact syntax in prose.",
@@ -616,8 +629,8 @@ export async function POST(request: Request) {
   // are rendered. Failures are non-fatal: the route always streams
   // an answer, even if bundle assembly errored — the panel falls
   // through to its cold-start state.
-  const brokerTenantKey = activeClient?.key
-    ? clientKeyToInventorySubstrateKey(activeClient.key)
+  const brokerTenantKey = effectiveClientKey
+    ? clientKeyToInventorySubstrateKey(effectiveClientKey)
     : null;
   const requestedMode = readClientSuppliedMode(surfaceContext);
   const bundleMode =
@@ -1017,6 +1030,62 @@ function buildSourceOperatingDoctrineBlock(input: {
     '- Treat broad scope such as "enterprise all towers" as a useful hypothesis but not yet a boundary. Ask for the first boundary or evidence upload, not a lecture.',
     '- For "what do you know about my company", answer as a short ledger: known tenant facts, known leadership, known systems/contracts, and missing live data. Do not apologize at length.',
     '- Prefer action verbs: register, attach, generate, prepare, review, approve, defer, waive, advance.',
+  ].join('\n');
+}
+
+function resolveSourceClientKey(surfaceContext: Record<string, unknown>): string | null {
+  const eventId = typeof surfaceContext.eventId === 'string' ? surfaceContext.eventId : '';
+  const accountName = typeof surfaceContext.accountName === 'string'
+    ? surfaceContext.accountName.toLowerCase()
+    : '';
+
+  if (eventId === AMS_OUTSOURCING_2026_EVENT_ID || accountName.includes('apex')) {
+    return 'apex-retail';
+  }
+  if (accountName.includes('meridian')) {
+    return 'meridian-health';
+  }
+
+  return null;
+}
+
+function buildSourceEventSeedPromptBlock(surfaceContext: Record<string, unknown>): string {
+  const eventId = typeof surfaceContext.eventId === 'string' ? surfaceContext.eventId : '';
+  if (eventId !== AMS_OUTSOURCING_2026_EVENT_ID) return '';
+
+  const storyline = buildAmsVendorStoryline();
+  const bafo = buildAmsBafoView();
+
+  const vendorLines = storyline.vendors.map((vendor) => {
+    const risks = vendor.riskFlags.length > 0
+      ? vendor.riskFlags
+          .map((risk) => `${risk.severity.toUpperCase()} ${risk.label}: ${risk.detail}`)
+          .join('; ')
+      : 'No open risk flags';
+    return `- ${vendor.vendorLabel}: ${vendor.proposalStatusLabel}; pricing band ${vendor.pricingBandLabel}; risks: ${risks}.`;
+  });
+  const invitedVendors = bafo.invitedVendors
+    .map((vendor) => `${vendor.vendorLabel} (${vendor.responseStatusLabel}; due ${vendor.responseDeadline})`)
+    .join('; ');
+  const excludedVendors = bafo.notInvitedVendors
+    .map((vendor) => `${vendor.vendorLabel}: ${vendor.exclusionReason}`)
+    .join('; ');
+  const committee = bafo.selectionCommittee
+    .map((member) => `${member.name}, ${member.role}`)
+    .join('; ');
+
+  return [
+    'SOURCE EVENT PAGE SEED CONTEXT (current canvas; deterministic demo seed):',
+    `Event: ${storyline.eventName}. Account: Apex Retail. Event ID: ${storyline.eventId}. Linked program: ${storyline.linkedProgramCode}. Current stage: S5 Orals/BAFO.`,
+    'Use this page-local context before saying vendor, BAFO, committee, risk, or gate data is missing.',
+    'Vendor proposals rendered on the current canvas:',
+    ...vendorLines,
+    `BAFO invited vendors: ${invitedVendors}.`,
+    `Vendors not invited to BAFO: ${excludedVendors}.`,
+    `Selection committee: ${committee}.`,
+    `BAFO next steps: ${bafo.nextSteps.join('; ')}.`,
+    'Weakest-response rule: if asked which vendor response is weakest, name BlueMaster Operations first because it carries a CRITICAL transition plan quality gap; then mention Northstar pricing opacity and ArcVault governance as BAFO risks if useful.',
+    `Evidence caveat: ${storyline.evidenceCaveat} ${bafo.evidenceCaveat}`,
   ].join('\n');
 }
 

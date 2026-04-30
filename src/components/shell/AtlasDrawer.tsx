@@ -136,6 +136,8 @@ export function AtlasDrawer({
   }
 
   const plainQuote = quote.replace(/<[^>]+>/g, '');
+  const showSourcePaperclip =
+    surface === 'source' || surface === '/source' || Boolean(surface?.startsWith('/source/'));
 
   // Layout shape — embedded mode renders inline as part of the page
   // flow (no fixed positioning, no backdrop, no slide animation), so
@@ -196,6 +198,41 @@ export function AtlasDrawer({
           alignItems: 'flex-end',
         }}
       >
+        {showSourcePaperclip && (
+          <button
+            type="button"
+            disabled
+            aria-disabled="true"
+            aria-label="Attach evidence file — metadata-only upload uses the evidence form below"
+            title="Attach evidence is metadata-only in this shell. Use the Add Evidence form below until chat upload runtime is wired."
+            style={{
+              width: 26,
+              height: 26,
+              borderRadius: '50%',
+              background: 'rgba(250,247,241,0.08)',
+              border: '1px solid rgba(250,247,241,0.18)',
+              color: 'rgba(250,247,241,0.45)',
+              cursor: 'not-allowed',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              padding: 0,
+              fontSize: 14,
+              lineHeight: 1,
+            }}
+          >
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+              <path
+                d="M4.1 7.1 7.8 3.4a2 2 0 0 1 2.8 2.8L5.8 11a3 3 0 0 1-4.2-4.2l5-5"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        )}
         <textarea
           ref={textareaRef}
           rows={1}

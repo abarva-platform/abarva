@@ -311,10 +311,12 @@ export function SourceEventsPortfolio({
                   id="source-events-custom-input"
                   type="text"
                   readOnly
+                  disabled
+                  aria-disabled="true"
                   placeholder="Ask Nexus about this event portfolio, stage priorities, blockers, or evidence..."
                   style={{
                     ...SOURCE_SECTION_LABEL,
-                    background: '#FFFFFF',
+                    background: '#F8FAFC',
                     border: '1px solid #D0D8E8',
                     borderRadius: 8,
                     color: '#6B7280',
@@ -325,12 +327,20 @@ export function SourceEventsPortfolio({
                     width: '100%',
                   }}
                 />
-                <span style={{
-                  ...SOURCE_ACTION_LINK_SECONDARY,
-                  whiteSpace: 'nowrap',
-                }}>
+                <button
+                  type="button"
+                  disabled
+                  aria-disabled="true"
+                  title="Open a Source event to talk to Sentinel. Portfolio Nexus runtime is deferred."
+                  style={{
+                    ...SOURCE_ACTION_LINK_SECONDARY,
+                    whiteSpace: 'nowrap',
+                    cursor: 'not-allowed',
+                    opacity: 0.72,
+                  }}
+                >
                   Submit (disabled until runtime)
-                </span>
+                </button>
               </div>
             </label>
           </div>

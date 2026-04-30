@@ -123,10 +123,11 @@ describe('Source event canvas shell', () => {
     });
     const html = renderToStaticMarkup(page);
 
-    expect(html).toContain('Lead sourcing agent');
-    expect(html).toContain('Agent rail');
-    expect(html).toContain('Nexus, Sentinel, Steward, Atlas');
+    expect(html).toContain('Sentinel source event canvas');
+    expect(html).toContain('Agent-led Source event workspace');
+    expect(html).toContain('Live Source event reasoning pane');
     expect(html).toContain('Contextual prompts');
+    expect(html).toContain('Ask Sentinel: Capture plan');
     expect(html).toContain('Nexus guidance');
     expect(html).toContain('Deterministic guidance only');
     expect(html).toContain('Scope stage workspace');

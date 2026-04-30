@@ -78,7 +78,7 @@ describe('Source dashboard route smoke', () => {
     expect(routeSource).toContain('SourcePortfolioPage');
     expect(eventsRouteSource).toContain('IT sourcing operating queue');
     expect(eventsRouteSource).toContain('Start IT sourcing event');
-    expect(eventsRouteSource).toContain('The table is the primary workspace');
+    expect(eventsRouteSource).toContain('The table is supporting evidence');
     expect(componentSource).toContain('Create, run, and govern IT sourcing events');
     expect(componentSource).toContain('Nexus mission preview');
     expect(componentSource).toContain('Source is the operating room for technology and IT sourcing');
