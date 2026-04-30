@@ -18,6 +18,43 @@ export type NexusFormat =
   | 'counter_pair'
   | 'idk';
 export type NexusConfidence = 'high' | 'medium' | 'low';
+export type IntelligenceReasoningMode =
+  | 'generic'
+  | 'corpus_grounded'
+  | 'tenant_grounded'
+  | 'cross_corpus';
+export type IntelligenceAuthState =
+  | 'cold'
+  | 'authenticated_no_programs'
+  | 'authenticated_with_programs';
+export type IntelligenceEngagementState =
+  | 'landing'
+  | 'topic_open'
+  | 'conversation_active'
+  | 'synthesis_validation';
+export type IntelligenceProvenanceSourceType =
+  | 'pattern'
+  | 'evidence'
+  | 'contradiction'
+  | 'signal'
+  | 'tenant_program'
+  | 'tenant_evidence';
+export type IntelligenceProvenanceSourceBasis =
+  | 'source_code_seed'
+  | 'database_graph'
+  | 'tenant_data_room'
+  | 'live_signal'
+  | 'vector_index'
+  | 'composite_seed';
+export type IntelligenceSurfaceContentEntryType =
+  | 'failure_mode_card'
+  | 'topic_entry'
+  | 'demo_robustness_question';
+export type IntelligenceSurfaceContentStatus =
+  | 'draft'
+  | 'in_review'
+  | 'approved'
+  | 'archived';
 export type ThreadState = 'A' | 'B' | 'C';
 export type GovernanceState = 'ephemeral' | 'persistent';
 export type TurnRole = 'user' | 'nexus' | 'system';
@@ -51,6 +88,83 @@ export interface Source {
   confidence?: NexusConfidence;
   url?: string;
   asOf?: string;
+}
+
+export interface IntelligenceProvenanceGrounding {
+  sourceType: IntelligenceProvenanceSourceType;
+  sourceId: string;
+  sourceTitle: string;
+  confidence: number;
+  sourceBasis: IntelligenceProvenanceSourceBasis;
+  lastUpdated: string;
+}
+
+export interface IntelligenceProvenanceTrail {
+  claimText: string;
+  groundingChain: IntelligenceProvenanceGrounding[];
+}
+
+export interface IntelligenceModeAnswer {
+  mode: IntelligenceReasoningMode;
+  answer: string;
+  distinctiveContent: string;
+  provenanceCount: number;
+}
+
+export interface IntelligenceSessionLog {
+  id: string;
+  tenantKey: string | null;
+  clientId: string | null;
+  userId: string | null;
+  sessionId: string;
+  threadId: string | null;
+  queryText: string;
+  responseMode: IntelligenceReasoningMode;
+  availableModes: IntelligenceReasoningMode[];
+  retrievedPatternIds: string[];
+  retrievedEvidenceIds: string[];
+  retrievedContradictionIds: string[];
+  retrievedSignalIds: string[];
+  provenanceRendered: IntelligenceProvenanceTrail[];
+  tenantDataUsed: boolean;
+  authState: IntelligenceAuthState;
+  engagementState: IntelligenceEngagementState;
+  latencyMs: number | null;
+  toolNames: string[];
+  errorCode: string | null;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface IntelligenceModeToggleEvent {
+  id: string;
+  sessionLogId: string | null;
+  sessionId: string;
+  clientId: string | null;
+  userId: string | null;
+  previousMode: IntelligenceReasoningMode | null;
+  nextMode: IntelligenceReasoningMode;
+  dwellMs: number | null;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface IntelligenceSurfaceContentEntry {
+  id: string;
+  registryKey: string;
+  entryType: IntelligenceSurfaceContentEntryType;
+  title: string;
+  body: Record<string, unknown>;
+  citedPatternIds: string[];
+  citedContradictionIds: string[];
+  citedSignalIds: string[];
+  citedResearchAnchors: Array<Record<string, unknown>>;
+  status: IntelligenceSurfaceContentStatus;
+  version: number;
+  lastReviewedBy: string | null;
+  lastReviewedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ContradictionFlag {
