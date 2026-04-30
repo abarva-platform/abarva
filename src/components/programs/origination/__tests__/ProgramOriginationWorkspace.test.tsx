@@ -3,25 +3,14 @@
  */
 
 import { render, screen, waitFor } from '@testing-library/react';
-import { ProgramOriginationWorkspace } from '../ProgramOriginationWorkspace';
+import {
+  EMPTY_BRIEF_STATE,
+  ProgramOriginationWorkspace,
+  buildOperatorChecklist,
+} from '../ProgramOriginationWorkspace';
 
 jest.mock('../StewardChat', () => ({
   StewardChat: () => <section aria-label="Mock Steward chat" />,
-}));
-
-jest.mock('../ProgramBriefPanel', () => ({
-  EMPTY_BRIEF: {
-    programName: null,
-    problemStatement: null,
-    targetOutcome: null,
-    timeline: null,
-    classification: null,
-    matchedPatternId: null,
-    sponsor: null,
-    lead: null,
-    crossProgramDependencies: [],
-  },
-  ProgramBriefPanel: () => <aside aria-label="Mock program brief" />,
 }));
 
 describe('ProgramOriginationWorkspace', () => {
@@ -55,6 +44,76 @@ describe('ProgramOriginationWorkspace', () => {
     expect(screen.getByLabelText('Active tenant').textContent).toContain(
       'Tenant · Apex Retail Group',
     );
+    expect(screen.getByLabelText('New program setup checklist')).toBeTruthy();
+    expect(screen.getByText('Tenant confirmed')).toBeTruthy();
+    expect(screen.getByText('Setup conversation')).toBeTruthy();
+    expect(screen.getByText('Brief ready')).toBeTruthy();
+    expect(screen.getByText('Submit for approval')).toBeTruthy();
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+  });
+});
+
+describe('buildOperatorChecklist', () => {
+  it('marks tenant as done and conversation as active before the first user turn', () => {
+    const checklist = buildOperatorChecklist({
+      tenantName: 'Apex Retail Group',
+      turns: [{ id: 'cold-open', role: 'assistant', agentName: 'Steward', text: 'Welcome.' }],
+      briefState: EMPTY_BRIEF_STATE,
+    });
+
+    expect(checklist.map((item) => [item.id, item.status])).toEqual([
+      ['tenant', 'done'],
+      ['conversation', 'active'],
+      ['brief', 'pending'],
+      ['submit', 'pending'],
+    ]);
+  });
+
+  it('marks the brief as active once setup fields start filling in', () => {
+    const checklist = buildOperatorChecklist({
+      tenantName: 'Apex Retail Group',
+      turns: [{ id: 't1', role: 'user', text: 'Set up ERP modernization.' }],
+      briefState: {
+        ...EMPTY_BRIEF_STATE,
+        brief: {
+          ...EMPTY_BRIEF_STATE.brief,
+          programName: 'Apex ERP Modernization',
+          problemStatement: 'Close is too slow.',
+        },
+      },
+    });
+
+    expect(checklist.map((item) => [item.id, item.status])).toEqual([
+      ['tenant', 'done'],
+      ['conversation', 'done'],
+      ['brief', 'active'],
+      ['submit', 'pending'],
+    ]);
+  });
+
+  it('moves submit to active when the minimum setup brief is ready', () => {
+    const checklist = buildOperatorChecklist({
+      tenantName: 'Apex Retail Group',
+      turns: [{ id: 't1', role: 'user', text: 'Set up ERP modernization.' }],
+      briefState: {
+        ...EMPTY_BRIEF_STATE,
+        brief: {
+          ...EMPTY_BRIEF_STATE.brief,
+          programName: 'Apex ERP Modernization',
+          problemStatement: 'Close is too slow.',
+          targetOutcome: 'Reduce close cycle time.',
+          sponsor: 'Sarah Chen',
+          lead: 'Mei Tanaka',
+          classification: 'ERP Modernization',
+        },
+      },
+    });
+
+    expect(checklist.map((item) => [item.id, item.status])).toEqual([
+      ['tenant', 'done'],
+      ['conversation', 'done'],
+      ['brief', 'done'],
+      ['submit', 'active'],
+    ]);
   });
 });
