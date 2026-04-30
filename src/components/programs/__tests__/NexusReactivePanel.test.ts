@@ -127,4 +127,40 @@ describe('selectVisibleArtifacts', () => {
   it('returns empty for an empty stream', () => {
     expect(selectVisibleArtifacts([])).toEqual([]);
   });
+
+  // PR-Q · founder feedback regression. The reactive panel was
+  // rendering "3 duplicate generic pattern-match cards" because Nexus
+  // re-emits the same pattern across turns. Dedupe by patternId keeps
+  // the latest emission as a single card.
+  it('dedupes pattern-match by patternId, keeping the latest emission', () => {
+    const input: Artifact[] = [
+      {
+        type: 'pattern-match',
+        patternId: 'PAT-PRG-CDP-001',
+        name: 'CDP Activation',
+        summary: 'first summary',
+      },
+      {
+        type: 'pattern-match',
+        patternId: 'PAT-PRG-CDP-001',
+        name: 'CDP Activation',
+        summary: 'refined summary',
+        successRatePct: 78,
+      },
+      {
+        type: 'pattern-match',
+        patternId: 'PAT-PRG-AMS-001',
+        name: 'AMS Consolidation',
+        summary: 'distinct pattern',
+      },
+    ];
+    const out = selectVisibleArtifacts(input);
+    const patterns = out.filter((a) => a.type === 'pattern-match') as Array<
+      Extract<Artifact, { type: 'pattern-match' }>
+    >;
+    expect(patterns).toHaveLength(2);
+    const cdp = patterns.find((p) => p.patternId === 'PAT-PRG-CDP-001');
+    expect(cdp?.summary).toBe('refined summary');
+    expect(cdp?.successRatePct).toBe(78);
+  });
 });

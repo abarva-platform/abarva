@@ -23,6 +23,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { useRouter } from 'next/navigation';
 import type {
   AtlasPageContextValue,
   AtlasPageStateProviderProps,
@@ -96,6 +97,16 @@ export function AtlasPageStateProvider({
   // Stable ref so ask() can cancel an in-flight request
   const abortRef = useRef<AbortController | null>(null);
 
+  // PR-Q · navigate-to artifact handling. The agent emits a
+  // `navigate-to` artifact via the navigate_to tool to take the user
+  // to a different page (e.g. /programs/new for new-program intent
+  // when on /programs). We queue the request during streaming and
+  // fire router.push (or router.replace) once the stream completes
+  // — same pattern as advance_phase's program-phase-changed (PR-L)
+  // where we wait for the close-of-turn before mutating routing.
+  const router = useRouter();
+  const pendingNavRef = useRef<{ target: string; replace: boolean } | null>(null);
+
   const ask = useCallback(
     async (text: string) => {
       if (!text.trim() || isStreaming) return;
@@ -164,12 +175,21 @@ export function AtlasPageStateProvider({
         const seenArtifactKeys = new Set<string>();
 
         const dispatchNew = (artifacts: Artifact[]) => {
-          if (!onArtifact) return;
           for (const a of artifacts) {
             const key = JSON.stringify(a);
             if (seenArtifactKeys.has(key)) continue;
             seenArtifactKeys.add(key);
-            onArtifact(a);
+            // PR-Q · navigate-to is handled centrally — queue it for
+            // the post-stream finally block. We deliberately do NOT
+            // forward it to onArtifact, since reactive-panel consumers
+            // would treat it as panel content. If a future surface
+            // wants to observe navigations it can subscribe to
+            // router events directly.
+            if (a.type === 'navigate-to') {
+              pendingNavRef.current = { target: a.target, replace: a.replace === true };
+              continue;
+            }
+            onArtifact?.(a);
           }
         };
 
@@ -214,10 +234,19 @@ export function AtlasPageStateProvider({
         setError(e instanceof Error ? e.message : 'Connection error');
       } finally {
         setIsStreaming(false);
+        // PR-Q · fire any queued navigation now that the turn has
+        // settled. Pushing during the stream would unmount the
+        // provider and throw away the in-flight reader.
+        const nav = pendingNavRef.current;
+        pendingNavRef.current = null;
+        if (nav) {
+          if (nav.replace) router.replace(nav.target);
+          else router.push(nav.target);
+        }
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [surface, tenantName, stage, resolvedAgentName, isStreaming, conversation, onArtifact],
+    [surface, tenantName, stage, resolvedAgentName, isStreaming, conversation, onArtifact, router],
   );
 
   const clearResponse = useCallback(() => {
