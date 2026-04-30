@@ -312,9 +312,11 @@ export function ProgramOriginationWorkspace({
   useEffect(() => {
     try {
       const key = draftSessionStorageKey(surface);
-      const existing = window.sessionStorage.getItem(key);
-      const next = existing || generateDraftSessionId();
-      if (!existing) window.sessionStorage.setItem(key, next);
+      // Mint a fresh setup session for every /programs/new mount. Reusing
+      // the previous sessionStorage value made a new origination inherit
+      // the last unfinished conversation in the same browser session.
+      const next = generateDraftSessionId();
+      window.sessionStorage.setItem(key, next);
       setDraftSessionId(next);
     } catch {
       setDraftSessionId(generateDraftSessionId());
@@ -324,7 +326,7 @@ export function ProgramOriginationWorkspace({
   // PR3 — hydrate from the saved origination draft on mount.
   // The demo route is public (no tenancy); the API will 401/403, and
   // we just stay with the cold-open turns. Hydration is scoped to the
-  // browser session id so a fresh /programs/new visit does not revive
+  // page-mount session id so a fresh /programs/new visit does not revive
   // a previous session's conversation.
   useEffect(() => {
     if (!draftSessionId) return;
