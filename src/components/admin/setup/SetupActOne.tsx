@@ -13,6 +13,8 @@
  * Per SETUP-1_DETAILED_DESIGN.md §6.2.
  */
 
+import Link from 'next/link';
+
 import type {
   ActOneFact,
   InventorySegmentRollup,
@@ -231,6 +233,24 @@ function SegmentRollupCard({ segment }: { segment: InventorySegmentRollup }) {
         {segment.staleCount > 0 ? ` · ${segment.staleCount} stale` : ''}
         {segment.missingCount > 0 ? ` · ${segment.missingCount} missing` : ''}
       </p>
+      {segment.healthState !== 'complete' && (
+        <Link
+          href={`/admin/segments/${segment.segmentId}`}
+          data-testid={`admin-setup-segment-link-${segment.segmentId}`}
+          style={{
+            marginTop: 2,
+            display: 'inline-block',
+            fontFamily: SHELL.SANS,
+            fontSize: 11,
+            fontWeight: 600,
+            color: COLORS.navy,
+            textDecoration: 'none',
+            borderBottom: `1px dotted ${COLORS.navy}66`,
+          }}
+        >
+          Add records →
+        </Link>
+      )}
     </li>
   );
 }

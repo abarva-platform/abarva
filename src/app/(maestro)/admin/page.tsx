@@ -28,7 +28,7 @@ import {
   getSetupInventorySnapshot,
 } from '@/lib/admin/setup-data-broker';
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
-import { AgentRail } from '@/components/admin/AgentRail';
+import { SetupChatRail } from '@/components/admin/SetupChatRail';
 import { SetupAdminLanding } from '@/components/admin/setup/SetupAdminLanding';
 import { SetupLandingTelemetryBridge } from '@/components/admin/setup/SetupLandingTelemetryBridge';
 import { DataLandscapeTable } from '@/components/admin/setup/DataLandscapeTable';
@@ -58,15 +58,7 @@ export default async function AdminOverviewPage() {
   const complianceSegment = snapshot?.segments.find((s) => s.segmentId === 'compliance');
 
   return (
-    <AdminCanonShellV2
-      agentRail={
-        <AgentRail
-          primaryAgentLabel="Sentinel"
-          primaryActionLabel="Ask Sentinel about your data"
-          primaryActionHref="/intelligence/ask"
-        />
-      }
-    >
+    <AdminCanonShellV2 agentRail={<SetupChatRail />}>
       <SetupAdminLanding
         content={content}
         segmentRollups={snapshot?.segments ?? []}
