@@ -127,6 +127,15 @@ describe('P-SMOKE-CDP · APX-CDP-2026 gate ribbon (P3 Design → P4 Build)', () 
   });
 });
 
+describe('GW-01 · APX-SAP-2026 P1 phase summary', () => {
+  it('renders deterministic Discovery summary copy instead of the empty-state fallback', () => {
+    const view = sapView();
+    expect(view.viewingPhase).toBe(1);
+    expect(view.phasePanel.summary).toContain('P1 Discovery is validating');
+    expect(view.phasePanel.summary).toContain('sponsor review still need to close');
+  });
+});
+
 // ─── APX-CC-2026 gate state is 'open' — ribbon returns null ──────────────────
 
 describe('APX-CC-2026 gate state (gateStatus open — no ribbon)', () => {

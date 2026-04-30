@@ -406,6 +406,8 @@ function buildPhasePanel(
   // APX-SAP-2026 P1 gate criteria
   if (programId === 'apx-sap-2026' && viewingPhase === 1 && viewingPhaseState === 'current') {
     return {
+      summary:
+        'P1 Discovery is validating the SAP finance modernization seed against current-state evidence. Nexus has stakeholder alignment logged, but interviews, data-access confirmation, value hypothesis detail, and sponsor review still need to close before Synthesis can make a credible options call.',
       gateCriteria: [
         { criterion: 'Discovery interviews completed (4 of 6)', met: false },
         { criterion: 'Value hypothesis drafted', met: false },
