@@ -13,7 +13,7 @@
 //
 // Shell Layout Spec v2 §5.1 · April 2026
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, type ReactNode } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { useAgentStream } from '@/hooks/useAgentStream';
 import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
@@ -59,6 +59,13 @@ export interface AtlasDrawerProps {
    * satisfy the type.
    */
   embedded?: boolean;
+  /**
+   * Optional empty-state content for embedded agent canvases. Keeps
+   * surface-specific operator prompts above the input without forking the
+   * drawer behavior or the shared conversation state.
+   */
+  emptyState?: ReactNode;
+  composerPlacement?: 'bottom' | 'afterHeader';
 }
 
 // ── AtlasDrawer ───────────────────────────────────────────────────────────────
@@ -72,6 +79,8 @@ export function AtlasDrawer({
   programId,
   onArtifact,
   embedded = false,
+  emptyState,
+  composerPlacement = 'bottom',
 }: AtlasDrawerProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const threadEndRef = useRef<HTMLDivElement>(null);
@@ -128,13 +137,14 @@ export function AtlasDrawer({
   // like /programs/[id]. Drawer mode is the original Shell Layout
   // Spec v2 §5.1 right-side overlay.
   const panelStyle: React.CSSProperties = embedded
-    ? {
-        position: 'relative',
-        width: '100%',
-        height: '100%',
-        background: SHELL.INK,
-        display: 'flex',
-        flexDirection: 'column',
+      ? {
+          position: 'relative',
+          width: '100%',
+          height: '100%',
+          minHeight: 0,
+          background: SHELL.INK,
+          display: 'flex',
+          flexDirection: 'column',
         borderRadius: 12,
         overflow: 'hidden',
       }
@@ -152,6 +162,114 @@ export function AtlasDrawer({
         transition: 'transform 220ms ease-out',
         boxShadow: isOpen ? '-8px 0 32px rgba(0,0,0,0.30)' : 'none',
       };
+
+  const inputBar = (
+    <div
+      style={{
+        flexShrink: 0,
+        padding: composerPlacement === 'afterHeader' ? '10px 18px 12px' : '10px 18px 14px',
+        borderTop:
+          composerPlacement === 'afterHeader' ? 'none' : '1px solid rgba(250,247,241,0.10)',
+        borderBottom:
+          composerPlacement === 'afterHeader' ? '1px solid rgba(250,247,241,0.10)' : 'none',
+        background: SHELL.INK,
+        position: embedded && composerPlacement === 'bottom' ? 'sticky' : undefined,
+        bottom: embedded && composerPlacement === 'bottom' ? 0 : undefined,
+        zIndex: embedded ? 1 : undefined,
+      }}
+    >
+      <div
+        style={{
+          background: 'rgba(250,247,241,0.08)',
+          border: '1px solid rgba(250,247,241,0.18)',
+          borderRadius: 20,
+          padding: '9px 10px 9px 16px',
+          display: 'flex',
+          flexDirection: 'row',
+          gap: 8,
+          alignItems: 'flex-end',
+        }}
+      >
+        <textarea
+          ref={textareaRef}
+          rows={1}
+          spellCheck
+          placeholder={`Ask ${agent.name}…`}
+          disabled={isStreaming}
+          style={{
+            fontFamily: SHELL.SANS,
+            fontSize: 13,
+            color: 'rgba(250,247,241,0.85)',
+            flex: 1,
+            background: 'transparent',
+            border: 'none',
+            outline: 'none',
+            resize: 'none',
+            lineHeight: 1.5,
+            maxHeight: 100,
+            overflowY: 'auto',
+            caretColor: SHELL.PAPER,
+          }}
+          onInput={(e) => {
+            const el = e.currentTarget;
+            el.style.height = 'auto';
+            el.style.height = `${el.scrollHeight}px`;
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              handleSubmit();
+            }
+          }}
+        />
+
+        {/* Send / spinner button */}
+        <button
+          onClick={handleSubmit}
+          disabled={isStreaming}
+          aria-label={isStreaming ? 'Sending…' : 'Send'}
+          style={{
+            width: 26,
+            height: 26,
+            borderRadius: '50%',
+            background: isStreaming
+              ? 'rgba(250,247,241,0.10)'
+              : SHELL.PAPER,
+            border: 'none',
+            cursor: isStreaming ? 'default' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            transition: 'background 0.15s',
+            padding: 0,
+          }}
+        >
+          {isStreaming ? (
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+              <circle
+                cx="5.5" cy="5.5" r="4"
+                stroke="rgba(250,247,241,0.3)"
+                strokeWidth="1.4"
+                strokeDasharray="12 6"
+                strokeLinecap="round"
+              />
+            </svg>
+          ) : (
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M6 10V2M6 2L3 5M6 2L9 5"
+                stroke={SHELL.INK}
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -309,6 +427,8 @@ export function AtlasDrawer({
           </p>
         </div>
 
+        {composerPlacement === 'afterHeader' ? inputBar : null}
+
         {/* ── Conversation thread ── */}
         <div
           style={{
@@ -347,23 +467,26 @@ export function AtlasDrawer({
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                justifyContent: 'center',
-                paddingBottom: 40,
+                justifyContent: emptyState ? 'flex-start' : 'center',
+                paddingBottom: emptyState ? 12 : 40,
+                paddingTop: emptyState ? 6 : 0,
               }}
             >
-              <div
-                style={{
-                  fontFamily: SHELL.SERIF,
-                  fontSize: 13,
-                  fontStyle: 'italic',
-                  color: 'rgba(250,247,241,0.30)',
-                  textAlign: 'center',
-                  lineHeight: 1.5,
-                  maxWidth: 220,
-                }}
-              >
-                Ask {agent.name} anything about this page
-              </div>
+              {emptyState ?? (
+                <div
+                  style={{
+                    fontFamily: SHELL.SERIF,
+                    fontSize: 13,
+                    fontStyle: 'italic',
+                    color: 'rgba(250,247,241,0.30)',
+                    textAlign: 'center',
+                    lineHeight: 1.5,
+                    maxWidth: 220,
+                  }}
+                >
+                  Ask {agent.name} anything about this page
+                </div>
+              )}
             </div>
           )}
 
@@ -477,104 +600,7 @@ export function AtlasDrawer({
         </div>
 
         {/* ── Input bar ── */}
-        <div
-          style={{
-            flexShrink: 0,
-            padding: '12px 18px 20px',
-            borderTop: '1px solid rgba(250,247,241,0.10)',
-          }}
-        >
-          <div
-            style={{
-              background: 'rgba(250,247,241,0.08)',
-              border: '1px solid rgba(250,247,241,0.18)',
-              borderRadius: 20,
-              padding: '9px 10px 9px 16px',
-              display: 'flex',
-              flexDirection: 'row',
-              gap: 8,
-              alignItems: 'flex-end',
-            }}
-          >
-            <textarea
-              ref={textareaRef}
-              rows={1}
-              spellCheck
-              placeholder={`Ask ${agent.name}…`}
-              disabled={isStreaming}
-              style={{
-                fontFamily: SHELL.SANS,
-                fontSize: 13,
-                color: 'rgba(250,247,241,0.85)',
-                flex: 1,
-                background: 'transparent',
-                border: 'none',
-                outline: 'none',
-                resize: 'none',
-                lineHeight: 1.5,
-                maxHeight: 100,
-                overflowY: 'auto',
-                caretColor: SHELL.PAPER,
-              }}
-              onInput={(e) => {
-                const el = e.currentTarget;
-                el.style.height = 'auto';
-                el.style.height = `${el.scrollHeight}px`;
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSubmit();
-                }
-              }}
-            />
-
-            {/* Send / spinner button */}
-            <button
-              onClick={handleSubmit}
-              disabled={isStreaming}
-              aria-label={isStreaming ? 'Sending…' : 'Send'}
-              style={{
-                width: 26,
-                height: 26,
-                borderRadius: '50%',
-                background: isStreaming
-                  ? 'rgba(250,247,241,0.10)'
-                  : SHELL.PAPER,
-                border: 'none',
-                cursor: isStreaming ? 'default' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                transition: 'background 0.15s',
-                padding: 0,
-              }}
-            >
-              {isStreaming ? (
-                <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                  <circle
-                    cx="5.5" cy="5.5" r="4"
-                    stroke="rgba(250,247,241,0.3)"
-                    strokeWidth="1.4"
-                    strokeDasharray="12 6"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              ) : (
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path
-                    d="M6 10V2M6 2L3 5M6 2L9 5"
-                    stroke={SHELL.INK}
-                    strokeWidth="1.7"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              )}
-            </button>
-          </div>
-        </div>
+        {composerPlacement === 'bottom' ? inputBar : null}
       </div>
     </>
   );

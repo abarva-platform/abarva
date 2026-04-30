@@ -11,6 +11,9 @@ export function SourceWorkingPane({ children, padding = '24px 32px' }: SourceWor
     <div
       style={{
         flex: 1,
+        minHeight: 0,
+        minWidth: 0,
+        height: '100%',
         overflowY: 'auto',
         background: SHELL.PAPER,
         padding,
