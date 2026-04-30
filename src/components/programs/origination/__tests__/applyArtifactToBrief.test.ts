@@ -17,6 +17,7 @@
 import {
   applyArtifactToBrief,
   EMPTY_BRIEF_STATE,
+  shouldHydrateOriginationDraft,
 } from '../ProgramOriginationWorkspace';
 import { EMPTY_BRIEF } from '../ProgramBriefPanel';
 import type {
@@ -188,5 +189,14 @@ describe('applyArtifactToBrief', () => {
     const afterBoth = applyArtifactToBrief(afterCdp, ams);
     expect(afterBoth.overlapAlerts).toHaveLength(2);
     expect(afterBoth.overlapAlerts).toEqual([cdp, ams]);
+  });
+});
+
+describe('shouldHydrateOriginationDraft', () => {
+  it('hydrates only when the persisted draft session matches the current browser session', () => {
+    expect(shouldHydrateOriginationDraft({ sessionId: 'session-a' }, 'session-a')).toBe(true);
+    expect(shouldHydrateOriginationDraft({ sessionId: 'session-a' }, 'session-b')).toBe(false);
+    expect(shouldHydrateOriginationDraft({}, 'session-a')).toBe(false);
+    expect(shouldHydrateOriginationDraft({ sessionId: 'session-a' }, null)).toBe(false);
   });
 });
