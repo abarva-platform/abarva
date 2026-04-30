@@ -55,6 +55,22 @@ export const CLIENT_KEY_TO_INDUSTRY_CODE: Record<ClientKey, string> = {
   keystone: 'ENERGY',
 };
 
+export function industryCodeForClientName(name: string | null | undefined): string | null {
+  const normalized = name?.trim().toLowerCase();
+  if (!normalized) return null;
+
+  for (const client of ALL_CLIENTS) {
+    const candidates = CLIENT_KEY_TO_DB_NAME[client.id].map((candidate) =>
+      candidate.trim().toLowerCase(),
+    );
+    if (candidates.includes(normalized)) {
+      return CLIENT_KEY_TO_INDUSTRY_CODE[client.id];
+    }
+  }
+
+  return null;
+}
+
 export function isClientKey(value: string | null | undefined): value is ClientKey {
   return !!value && ALL_CLIENTS.some((client) => client.id === value);
 }
