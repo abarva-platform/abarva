@@ -25,6 +25,7 @@ import type {
   PhaseProgressArtifact,
   PhaseRecommendationArtifact,
   ProgramFocusArtifact,
+  QuestionResolvedArtifact,
 } from '@/lib/agent/artifacts';
 import { BrandColors, BrandTypography } from '@/lib/shell/brand-tokens';
 
@@ -335,6 +336,60 @@ function PhaseProgressCard({ a }: { a: PhaseProgressArtifact }) {
   );
 }
 
+function QuestionResolvedCard({ a }: { a: QuestionResolvedArtifact }) {
+  return (
+    <CardShell kind="Question resolved">
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 8,
+          marginBottom: 6,
+        }}
+      >
+        <span
+          style={{
+            color: '#0f766e',
+            fontSize: 14,
+            lineHeight: 1.3,
+            flexShrink: 0,
+            marginTop: 1,
+          }}
+          aria-hidden="true"
+        >
+          ✓
+        </span>
+        <span style={{ fontWeight: 600, fontSize: 13, lineHeight: 1.4 }}>
+          {a.questionText}
+        </span>
+      </div>
+      {a.resolutionSummary ? (
+        <p
+          style={{
+            margin: '4px 0 0 22px',
+            fontSize: 12.5,
+            color: BrandColors.slate,
+            lineHeight: 1.55,
+          }}
+        >
+          {a.resolutionSummary}
+        </p>
+      ) : null}
+      <div
+        style={{
+          fontFamily: BrandTypography.mono,
+          fontSize: 10,
+          color: BrandColors.stone,
+          marginTop: 6,
+          marginLeft: 22,
+        }}
+      >
+        {a.questionId}
+      </div>
+    </CardShell>
+  );
+}
+
 function AntiPatternFlagCard({ a }: { a: AntiPatternFlagArtifact }) {
   return (
     <CardShell kind={`Anti-pattern flag · ${a.label}`}>
@@ -425,6 +480,7 @@ function ProgramFocusCard({ a }: { a: ProgramFocusArtifact }) {
 export function selectVisibleArtifacts(artifacts: Artifact[]): Artifact[] {
   const seenProgress = new Map<string, PhaseProgressArtifact>();
   const seenFlags = new Map<string, AntiPatternFlagArtifact>();
+  const seenQuestions = new Map<string, QuestionResolvedArtifact>();
   const orderedNonDeduped: Artifact[] = [];
 
   for (const a of artifacts) {
@@ -432,6 +488,10 @@ export function selectVisibleArtifacts(artifacts: Artifact[]): Artifact[] {
       seenProgress.set(a.evidenceItemId, a);
     } else if (a.type === 'anti-pattern-flag') {
       seenFlags.set(a.antiPatternId, a);
+    } else if (a.type === 'question-resolved') {
+      // PR-G' · dedupe by stable questionId. Re-emits upsert (e.g.
+      // Nexus refines a resolutionSummary on a later turn).
+      seenQuestions.set(a.questionId, a);
     } else {
       orderedNonDeduped.push(a);
     }
@@ -441,6 +501,7 @@ export function selectVisibleArtifacts(artifacts: Artifact[]): Artifact[] {
     ...orderedNonDeduped,
     ...seenProgress.values(),
     ...seenFlags.values(),
+    ...seenQuestions.values(),
   ];
 
   return merged
@@ -453,7 +514,8 @@ export function selectVisibleArtifacts(artifacts: Artifact[]): Artifact[] {
         a.type === 'cross-program-dependency' ||
         a.type === 'program-focus' ||
         a.type === 'phase-progress' ||
-        a.type === 'anti-pattern-flag',
+        a.type === 'anti-pattern-flag' ||
+        a.type === 'question-resolved',
     )
     .reverse();
 }
@@ -575,6 +637,8 @@ export function NexusReactivePanel({
             return <PhaseProgressCard key={`pp-${a.evidenceItemId}`} a={a} />;
           case 'anti-pattern-flag':
             return <AntiPatternFlagCard key={`ap-${a.antiPatternId}`} a={a} />;
+          case 'question-resolved':
+            return <QuestionResolvedCard key={`qr-${a.questionId}`} a={a} />;
           default:
             return null;
         }

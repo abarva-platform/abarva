@@ -691,3 +691,39 @@ describe('extractArtifacts · contradiction-flag (PR-INT-D)', () => {
     ).toHaveLength(0);
   });
 });
+
+describe('extractArtifacts · Surface 2 PR-G-prime question-resolved', () => {
+  it('parses with all fields', () => {
+    const r = extractArtifacts(
+      '[[artifact:question-resolved]]{"questionId":"who-benefits-who-loses","questionText":"Who personally benefits if this works, and who personally loses?","resolutionSummary":"Sarah Chen benefits; legacy AMS vendor loses."}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(1);
+    expect(r.artifacts[0]).toMatchObject({
+      type: 'question-resolved',
+      questionId: 'who-benefits-who-loses',
+      questionText: 'Who personally benefits if this works, and who personally loses?',
+      resolutionSummary: 'Sarah Chen benefits; legacy AMS vendor loses.',
+    });
+  });
+
+  it('parses without optional resolutionSummary', () => {
+    const r = extractArtifacts(
+      '[[artifact:question-resolved]]{"questionId":"q","questionText":"text?"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(1);
+    expect(r.artifacts[0]).toMatchObject({ type: 'question-resolved', questionId: 'q' });
+    expect((r.artifacts[0] as { resolutionSummary?: string }).resolutionSummary).toBeUndefined();
+  });
+
+  it('rejects empty questionId', () => {
+    expect(
+      extractArtifacts('[[artifact:question-resolved]]{"questionId":"","questionText":"q"}[[/artifact]]').artifacts,
+    ).toHaveLength(0);
+  });
+
+  it('rejects empty questionText', () => {
+    expect(
+      extractArtifacts('[[artifact:question-resolved]]{"questionId":"q","questionText":""}[[/artifact]]').artifacts,
+    ).toHaveLength(0);
+  });
+});
