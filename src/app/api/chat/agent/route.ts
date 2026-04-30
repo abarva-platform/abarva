@@ -268,11 +268,15 @@ export async function POST(request: Request) {
   // prompt for program-detail surfaces. Null when no pack authored yet.
   let phasePackBlock = '';
 
+  // Resolve active client row once here — used for tenant isolation in
+  // getEngagementWithPhaseData calls below AND for the demo context block later.
+  const activeClient = await getActiveClientRow().catch(() => null);
+
   // If we have a programId, enrich with live DB data
   if (programId) {
     try {
       await requireTenancy();
-      const programData = await getEngagementWithPhaseData(programId);
+      const programData = await getEngagementWithPhaseData(programId, activeClient?.id ?? null);
       if (programData) {
         const { engagement, evidence, gateApprovals } = programData;
         const phase = engagement.current_phase ?? 0;
@@ -318,7 +322,7 @@ export async function POST(request: Request) {
   if (surface === 'source' && linkedProgramId && linkedProgramId !== programId) {
     try {
       await requireTenancy();
-      const linkedData = await getEngagementWithPhaseData(linkedProgramId);
+      const linkedData = await getEngagementWithPhaseData(linkedProgramId, activeClient?.id ?? null);
       if (linkedData) {
         const { engagement: linkedEng, evidence: linkedEv, gateApprovals: linkedGates } = linkedData;
         const linkedPhase = linkedEng.current_phase ?? 0;
@@ -371,7 +375,7 @@ export async function POST(request: Request) {
   // multi-program demo context; everyone else gets only the general
   // platform context (avoids Steward/Nexus referencing Apex programs
   // in conversations with Meridian or Arcturus users).
-  const activeClient = await getActiveClientRow().catch(() => null);
+  // activeClient already resolved above for tenant isolation in getEngagementWithPhaseData.
   const sourceClientKey = isSourceSurface(surface)
     ? resolveSourceClientKey(surfaceContext)
     : null;

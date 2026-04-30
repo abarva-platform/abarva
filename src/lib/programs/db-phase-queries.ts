@@ -60,15 +60,20 @@ export interface EngagementPhaseData {
 /**
  * Returns real engagement record merged with phase-level data.
  * Returns null if the engagement is not found or any critical query fails.
+ *
+ * @param clientUUID - When provided, enforces tenant isolation by adding
+ *   `.eq('client_id', clientUUID)` to the engagements query. Callers should
+ *   pass the UUID from getActiveClientRow() so cross-tenant reads return null.
  */
 export async function getEngagementWithPhaseData(
   engagementId: string,
+  clientUUID?: string | null,
 ): Promise<EngagementPhaseData | null> {
   try {
     const supabase = getServerSupabase();
 
     // Core engagement with milestones and risks via FK relations
-    const { data: engagement, error: engError } = await supabase
+    let query = supabase
       .from('engagements')
       .select(`
         id,
@@ -79,8 +84,9 @@ export async function getEngagementWithPhaseData(
         program_milestones(id, name, status, target_date, phase_number),
         program_risks(id, title, likelihood, impact, status, phase_number)
       `)
-      .eq('id', engagementId)
-      .single();
+      .eq('id', engagementId);
+    if (clientUUID) query = query.eq('client_id', clientUUID);
+    const { data: engagement, error: engError } = await query.single();
 
     if (engError || !engagement) return null;
 
