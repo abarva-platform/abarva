@@ -38,6 +38,13 @@ export default function IntelligenceAskPage() {
         context: 'Intelligence · Ask Sentinel',
       }}
     >
+      <style>{`
+        @media (max-width: 640px) {
+          [data-testid="intelligence-ask-page"] {
+            padding: 14px 12px 22px !important;
+          }
+        }
+      `}</style>
       <div
         style={{
           flex: 1,
