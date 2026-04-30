@@ -11,8 +11,13 @@ import {
 export interface ProgramsBrokerRequest {
   /** Tenant client key, e.g. 'apex-retail'. */
   tenantKey: string;
-  /** Program id to scope the broker request. */
-  programId: string;
+  /**
+   * Program id to scope the broker request. Optional because the
+   * /programs list surface has no active program — the broker still
+   * returns tenant-wide context (people, program inventory) on that
+   * surface.
+   */
+  programId?: string;
   /** Agent acting in this turn. Determines what the broker reveals. */
   agentName: EnterpriseAgentName;
   /** Optional broker surface; defaults to the semantic Programs surface. */
@@ -37,4 +42,56 @@ export function buildProgramsContextBundle(
     includeGraphNeighborhood: request.includeGraphNeighborhood ?? false,
     requestedDomains: request.requestedDomains,
   });
+}
+
+/**
+ * PR-R · format the broker bundle into a prompt block for Nexus on
+ * the /programs surfaces. Founder feedback #1: "[Nexus] does not have
+ * the context of existing org structure ... who is who in IT".
+ *
+ * The block names the tenant, lists the executive bench (people
+ * domain) with role + decision rights, and lists the program
+ * inventory. Provenance and citations are intentionally omitted — the
+ * goal is to ground Nexus in *who* and *what*, not to surface broker
+ * internals to the model.
+ *
+ * Returns '' if the bundle has no people / no programs (so the system
+ * prompt stays clean for unknown tenants).
+ */
+export function formatProgramsBrokerBundleForPrompt(
+  bundle: EnterpriseAgentContextBundle,
+): string {
+  const tenantSummary = bundle.items.find((i) => i.kind === 'tenant_summary');
+  const people = bundle.items.filter((i) => i.kind === 'person');
+  const programs = bundle.items.filter((i) => i.kind === 'program');
+
+  if (people.length === 0 && programs.length === 0 && !tenantSummary) {
+    return '';
+  }
+
+  const sections: string[] = ['TENANT CONTEXT (from broker — use this when the user references roles, people, or other programs):'];
+
+  if (tenantSummary) {
+    sections.push(`Tenant: ${tenantSummary.title}. ${tenantSummary.summary}`);
+  }
+
+  if (people.length > 0) {
+    sections.push(
+      'Executive bench / IT leadership:',
+      ...people.map((p) => `  - ${p.title}. ${p.summary}`),
+    );
+  }
+
+  if (programs.length > 0) {
+    sections.push(
+      'Active program inventory:',
+      ...programs.map((p) => `  - ${p.title} — ${p.summary}`),
+    );
+  }
+
+  sections.push(
+    'Use these names verbatim when discussing sponsorship, leadership, or escalation. Do not invent role titles or people the bench does not list.',
+  );
+
+  return sections.join('\n');
 }

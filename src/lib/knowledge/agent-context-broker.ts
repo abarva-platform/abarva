@@ -20,6 +20,7 @@ export type EnterpriseContextSurface =
 
 export type EnterpriseContextItemKind =
   | 'tenant_summary'
+  | 'person'
   | 'program'
   | 'artifact'
   | 'evidence'
@@ -201,6 +202,37 @@ function selectContextItems(
   const items: EnterpriseAgentContextItem[] = [buildTenantSummaryItem(room, citations)];
 
   if (request.agentName === 'Nexus') {
+    // PR-R · founder feedback #1 — "Nexus doesn't have context of
+    // existing org structure ... who is who in IT". Expose the
+    // executive bench (people domain) so Nexus can resolve role
+    // titles ("CIO", "VP of Applications") into actual named people
+    // when discussing sponsorship, lead candidates, or escalation
+    // paths on the /programs surfaces. Slice 8 keeps the prompt
+    // bounded; the seeded executive bench is sized so the top 8
+    // already covers C-suite + IT/Apps leadership for Apex.
+    items.push(...room.people.slice(0, 8).map((person) => ({
+      id: `ctx:${person.id}`,
+      kind: 'person' as const,
+      title: `${person.name} — ${person.role}`,
+      summary: [
+        `Org unit: ${person.orgUnit}`,
+        person.reportsToRole ? `Reports to: ${person.reportsToRole}` : null,
+        person.decisionRights.length > 0
+          ? `Decision rights: ${person.decisionRights.slice(0, 3).join('; ')}`
+          : null,
+        person.priorities.length > 0
+          ? `Priorities: ${person.priorities.slice(0, 3).join('; ')}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join('. '),
+      tenantKey: room.tenantKey,
+      sourceBasis: person.sourceBasis,
+      dataClassification: 'synthetic' as const,
+      sensitivity: 'structured' as const,
+      provenanceIds: [person.id, ...person.sponsorsPrograms, ...person.ownsSystems],
+      linkedEvidence: [],
+    })));
     items.push(...room.programs.slice(0, 6).map((program) => ({
       id: `ctx:${program.id}`,
       kind: 'program' as const,

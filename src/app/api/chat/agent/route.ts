@@ -35,6 +35,14 @@ import { canonicalizeFromBody } from "@/lib/agent/surface";
 // posture per phase arc — that complements the per-pattern knowledge
 // already wired in via demo-context.
 import { getPhasePack, formatPhasePackForPrompt } from "@/lib/programs/phase-packs";
+// PR-R · broker bundle for Nexus on /programs surfaces — exposes
+// the tenant's executive bench + program inventory so Nexus can
+// reference real people/roles instead of inventing them. Closes
+// founder feedback #1 from the production walk.
+import {
+  buildProgramsContextBundle,
+  formatProgramsBrokerBundleForPrompt,
+} from "@/lib/programs/programs-broker-adapter";
 // F0.4: import the commit_program tool module so it self-registers
 // at startup. Routes that don't surface this tool will simply not
 // expose it in `tools`, but the registration must happen for the
@@ -273,6 +281,33 @@ export async function POST(request: Request) {
       ? ARTIFACT_CHANNEL_INSTRUCTIONS
       : '';
 
+  // PR-R · founder feedback #1 — Nexus on /programs surfaces now
+  // receives tenant org-structure context (executive bench + program
+  // inventory) from the broker so it can resolve roles ("CIO", "VP
+  // of Applications") into actual named people without making them
+  // up. Scoped narrowly: only Nexus, only /programs and
+  // /programs/<id>, only when the active tenant has a data room
+  // (broker returns '' for unknown tenants).
+  let nexusTenantContextBlock = '';
+  const isNexusProgramsSurface =
+    agentName === 'Nexus' &&
+    typeof surface === 'string' &&
+    (surface === '/programs' || isProgramDetailSurface);
+  if (isNexusProgramsSurface && activeClient?.key) {
+    try {
+      const brokerBundle = buildProgramsContextBundle({
+        tenantKey: activeClient.key,
+        programId: programId ?? undefined,
+        agentName: 'Nexus',
+        surface: 'programs',
+      });
+      nexusTenantContextBlock = formatProgramsBrokerBundleForPrompt(brokerBundle);
+    } catch {
+      // Broker failure is non-fatal — Nexus falls through to the
+      // existing tenantSystemBlock + page-context lines.
+    }
+  }
+
   const systemPrompt = [
     voiceLine,
     "",
@@ -282,6 +317,10 @@ export async function POST(request: Request) {
     FOUR_LAYER_REASONING_INSTRUCTIONS,
     "",
     artifactInstructions,
+    "",
+    // PR-R · tenant org-structure block for Nexus on /programs
+    // surfaces. Empty string on every other surface/agent.
+    nexusTenantContextBlock,
     "",
     // Phase Intelligence Pack — only rendered on program-detail surfaces
     // where a pack has been authored for the engagement's current phase.
