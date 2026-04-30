@@ -10,6 +10,8 @@ import { S2_SHORTLIST } from './S2_shortlist';
 import { S3_RFP } from './S3_rfp';
 import { S4_DEMO_POC } from './S4_demo_poc';
 import { S5_BAFO } from './S5_bafo';
+import { S6_CONTRACT } from './S6_contract';
+import { S7_ACTIVATE } from './S7_activate';
 
 const PACKS: Partial<Record<SourcingStageNumber, StagePack>> = {
   0: S0_INTAKE,
@@ -18,6 +20,8 @@ const PACKS: Partial<Record<SourcingStageNumber, StagePack>> = {
   3: S3_RFP,
   4: S4_DEMO_POC,
   5: S5_BAFO,
+  6: S6_CONTRACT,
+  7: S7_ACTIVATE,
 };
 
 export function getStagePack(stage: number | null | undefined): StagePack | null {
@@ -127,4 +131,6 @@ export { S2_SHORTLIST } from './S2_shortlist';
 export { S3_RFP } from './S3_rfp';
 export { S4_DEMO_POC } from './S4_demo_poc';
 export { S5_BAFO } from './S5_bafo';
+export { S6_CONTRACT } from './S6_contract';
+export { S7_ACTIVATE } from './S7_activate';
 export type { StagePack, SourcingStageNumber } from './types';
