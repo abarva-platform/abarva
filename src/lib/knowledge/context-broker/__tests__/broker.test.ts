@@ -1,9 +1,10 @@
 /**
- * ContextBroker · CB-1 unit tests.
+ * ContextBroker · CB-1 + CB-3 unit tests.
  *
  * Exercises the per-mode composition discipline against a hand-rolled
- * `TenantDataAdapter` mock. No real DB / Pinecone — those land in
- * CB-2/CB-3.
+ * `TenantDataAdapter` mock. No real DB / Pinecone / OpenAI — vector
+ * retrieval is exercised via an injected OpenAIEmbeddingsLike stub
+ * and an adapter whose `chunksByVector` is overridden.
  */
 
 import {
@@ -12,8 +13,10 @@ import {
   WARNING_CORPUS_PENDING,
   WARNING_VECTOR_PENDING,
   extractKeywords,
+  vectorRetrievalInfoTag,
   type ContextBroker,
 } from '..';
+import type { OpenAIEmbeddingsLike } from '../embedding-client';
 import type { TenantDataAdapter } from '@/lib/knowledge/tenant-data';
 import type {
   ContextChunk,
@@ -22,6 +25,22 @@ import type {
 } from '@/lib/knowledge/tenant-data/types';
 
 jest.mock('server-only', () => ({}));
+
+const EMBED_DIM = 1536;
+
+function makeFakeOpenAI(): OpenAIEmbeddingsLike {
+  return {
+    embeddings: {
+      create: jest.fn(async ({ input }: { model: string; input: string[] }) => ({
+        data: input.map((_, idx) => ({
+          embedding: new Array<number>(EMBED_DIM).fill((idx + 1) / 1000),
+          index: idx,
+        })),
+        usage: { prompt_tokens: input.length * 50, total_tokens: input.length * 50 },
+      })),
+    },
+  };
+}
 
 const TENANT = 'apex-retail';
 
@@ -105,9 +124,12 @@ function buildAdapter(overrides: AdapterOverrides = {}): TenantDataAdapter {
   };
 }
 
-function makeBroker(overrides: AdapterOverrides = {}): { broker: ContextBroker; adapter: TenantDataAdapter } {
+function makeBroker(
+  overrides: AdapterOverrides = {},
+  openai: OpenAIEmbeddingsLike = makeFakeOpenAI(),
+): { broker: ContextBroker; adapter: TenantDataAdapter } {
   const adapter = buildAdapter(overrides);
-  const broker = new DefaultContextBroker(adapter);
+  const broker = new DefaultContextBroker(adapter, openai);
   return { broker, adapter };
 }
 
@@ -182,7 +204,7 @@ describe('DefaultContextBroker.assemble — tenant mode', () => {
     ).rejects.toBeInstanceOf(MissingTenantKeyError);
   });
 
-  it('hydrates facts from chunksByKeyword + getRecord', async () => {
+  it('hydrates facts from chunksByKeyword + getRecord (keyword-fallback path)', async () => {
     const seedChunks: ContextChunk[] = [
       makeChunk('chunk:apex:cdp:001', 'program:apex-cdp-2026'),
       makeChunk('chunk:apex:cdp:002', 'program:apex-cdp-2026'), // dupe record_id
@@ -193,6 +215,7 @@ describe('DefaultContextBroker.assemble — tenant mode', () => {
       'program:apex-contact-center-ai-2026': makeRecord('program:apex-contact-center-ai-2026'),
     };
 
+    // Default adapter has chunksByVector rejecting — keyword fallback fires.
     const { broker } = makeBroker({
       chunksByKeyword: jest.fn().mockResolvedValue(seedChunks),
       getRecord: jest.fn().mockImplementation((_t: string, id: string) => Promise.resolve(records[id] ?? null)),
@@ -217,6 +240,68 @@ describe('DefaultContextBroker.assemble — tenant mode', () => {
     expect(bundle.graphPaths.length).toBe(2);
     expect(bundle.warnings).toContain(WARNING_VECTOR_PENDING);
     expect(bundle.warnings).not.toContain(WARNING_CORPUS_PENDING);
+  });
+
+  it('uses Pinecone vector retrieval when chunksByVector succeeds', async () => {
+    const seedChunks: ContextChunk[] = [
+      makeChunk('chunk:apex:cdp:001', 'program:apex-cdp-2026'),
+    ];
+    const vectorChunks: ContextChunk[] = [
+      { ...makeChunk('chunk:apex:cdp:vec:001', 'program:apex-cdp-2026'), vectorScore: 0.91 },
+      { ...makeChunk('chunk:apex:cdp:vec:002', 'program:apex-cdp-2026'), vectorScore: 0.84 },
+    ];
+    const { broker, adapter } = makeBroker({
+      chunksByKeyword: jest.fn().mockResolvedValue(seedChunks),
+      getRecord: jest.fn().mockResolvedValue(makeRecord('program:apex-cdp-2026')),
+      chunksByVector: jest.fn().mockResolvedValue(vectorChunks),
+    });
+
+    const bundle = await broker.assemble({
+      query: 'apex cdp sponsor',
+      mode: 'tenant',
+      tenantKey: TENANT,
+      maxChunks: 5,
+    });
+
+    expect(adapter.chunksByVector).toHaveBeenCalled();
+    expect(bundle.semanticChunks).toHaveLength(2);
+    expect(bundle.semanticChunks[0]).toMatchObject({
+      score: 0.91,
+      chunk: expect.objectContaining({ chunkId: 'chunk:apex:cdp:vec:001' }),
+    });
+    expect(bundle.semanticChunks[1].score).toBe(0.84);
+    expect(bundle.warnings).not.toContain(WARNING_VECTOR_PENDING);
+    expect(bundle.warnings).toContain(vectorRetrievalInfoTag(5));
+  });
+
+  it('falls back to keyword retrieval and tags WARNING_VECTOR_PENDING when embedTexts throws', async () => {
+    const fallbackChunks: ContextChunk[] = [
+      makeChunk('chunk:apex:keywords:001', 'program:apex-cdp-2026'),
+    ];
+    const failingOpenAI: OpenAIEmbeddingsLike = {
+      embeddings: {
+        create: jest.fn(async () => {
+          throw new Error('OpenAI down');
+        }),
+      },
+    };
+    const adapter = buildAdapter({
+      chunksByKeyword: jest.fn().mockResolvedValue(fallbackChunks),
+      getRecord: jest.fn().mockResolvedValue(makeRecord('program:apex-cdp-2026')),
+      // chunksByVector would succeed if reached — but embedTexts fails first.
+      chunksByVector: jest.fn().mockResolvedValue([]),
+    });
+    const broker = new DefaultContextBroker(adapter, failingOpenAI);
+
+    const bundle = await broker.assemble({
+      query: 'apex cdp',
+      mode: 'tenant',
+      tenantKey: TENANT,
+    });
+
+    expect(bundle.warnings).toContain(WARNING_VECTOR_PENDING);
+    expect(bundle.semanticChunks.length).toBeGreaterThan(0);
+    expect(bundle.semanticChunks[0].score).toBe(0); // keyword fallback marker
   });
 
   it('catches chunksByVector throws and falls back to keyword retrieval', async () => {

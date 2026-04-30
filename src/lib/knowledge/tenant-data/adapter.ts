@@ -72,7 +72,16 @@ export interface TenantDataAdapter {
   /** Keyword retrieval over chunks (ILIKE / ts_rank). See design doc §5.2. */
   chunksByKeyword(tenantKey: string, keywords: string[], limit?: number): Promise<ContextChunk[]>;
 
-  /** Throws when embeddings aren't live yet. TD-9 lifts the throw. See design doc §5.3. */
+  /**
+   * Vector retrieval against the Pinecone index. CB-3 wires the live
+   * implementation in `SupabaseTenantDataAdapter` — throws with
+   * `'Pinecone not configured. Set PINECONE_API_KEY.'` when the key
+   * is missing so callers can fall back. See design doc §5.3.
+   *
+   * Returned chunks may carry `vectorScore` (cosine similarity from
+   * Pinecone). Records that are not in Pinecone metadata stay
+   * undefined (e.g. keyword-fallback hits via `chunksByKeyword`).
+   */
   chunksByVector(tenantKey: string, queryVector: number[], limit?: number): Promise<ContextChunk[]>;
 
   /** Provenance-aware fetch for evidence_ledger ids. */
