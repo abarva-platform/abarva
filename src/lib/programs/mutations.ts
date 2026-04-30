@@ -30,6 +30,17 @@ async function assertProgramTenancy(ctx: TenancyCtx, programId: string): Promise
   if (!program) throw new Error(`[programs/mutations] program ${programId} not accessible`);
 }
 
+async function resolveClientIndustryCode(clientId: string, fallback?: string | null): Promise<string> {
+  const sb = getServerSupabase();
+  const { data } = await sb
+    .from('clients')
+    .select('industry_code')
+    .eq('id', clientId)
+    .maybeSingle();
+  const fromClient = (data as { industry_code?: string | null } | null)?.industry_code;
+  return (fromClient?.trim() || fallback?.trim() || 'UNKNOWN').toUpperCase();
+}
+
 export interface OriginateProgramInput {
   name: string;
   useCase: string;
@@ -48,6 +59,7 @@ export interface OriginateProgramInput {
 export async function originateProgram(ctx: TenancyCtx, input: OriginateProgramInput): Promise<ProgramCore> {
   assertTenancy(ctx);
   const sb = getServerSupabase();
+  const industryCode = await resolveClientIndustryCode(ctx.clientId, input.industryHint);
   // NOTE: engagements has no `created_by` column on the current schema —
   // creator attribution is captured in module_state_log (changed_by_user_id)
   // and downstream participant rows. Don't reintroduce a created_by write.
@@ -55,6 +67,7 @@ export async function originateProgram(ctx: TenancyCtx, input: OriginateProgramI
     .from('engagements')
     .insert({
       client_id: ctx.clientId,
+      industry_code: industryCode,
       name: input.name,
       status: 'active',
       current_phase: 0,

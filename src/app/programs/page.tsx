@@ -3,7 +3,9 @@
 // Tries real DB portfolio first; merges any non-fixture programs into the view.
 
 import { Suspense } from 'react';
-import { buildProgramsIndexView } from '@/lib/programs/programs-page-view';
+import { getActiveClientRow } from '@/lib/active-client';
+import type { ClientKey } from '@/lib/client-config';
+import { buildProgramsIndexView, type ProgramsIndexTenant } from '@/lib/programs/programs-page-view';
 import { buildPhaseSlots, PHASE_LABEL_MAP } from '@/lib/programs/programs-fixture';
 import { ProgramsIndexPage } from '@/components/programs/ProgramsIndexPage';
 import { getProgramPortfolio } from '@/lib/programs/queries';
@@ -11,18 +13,31 @@ import { getCurrentUser } from '@/lib/auth/current-user';
 import type { ProgramPhaseId, ProgramRow } from '@/lib/programs/programs-types';
 
 export const metadata = {
-  title: 'Programs | Apex Retail Group',
+  title: 'Programs | AbarVa Nexus',
+};
+
+export const dynamic = 'force-dynamic';
+
+const PROGRAM_TENANT_BY_CLIENT_KEY: Record<ClientKey, ProgramsIndexTenant> = {
+  apexretail: 'apex-retail',
+  meridian: 'meridian-health',
+  arcturus: 'first-capital',
+  keystone: 'keystone-energy',
 };
 
 export default async function ProgramsPage() {
-  // Fixture view as base (always present — safe fallback)
-  const view = buildProgramsIndexView('apex-retail');
+  const activeClient = await getActiveClientRow();
+  const tenant = activeClient ? PROGRAM_TENANT_BY_CLIENT_KEY[activeClient.key] : 'apex-retail';
+  const view = buildProgramsIndexView(tenant);
 
-  // Try DB portfolio; merge any programs not already in the fixture set
+  // Try DB portfolio; merge only rows scoped to the active client UUID.
   try {
     const user = await getCurrentUser();
-    if (user?.defaultClientId) {
-      const ctx = { clientId: user.defaultClientId, userId: user.clerkUserId };
+    if (activeClient) {
+      const ctx = {
+        clientId: activeClient.id,
+        userId: user?.personId ?? user?.clerkUserId ?? 'programs-page',
+      };
       const dbPrograms = await getProgramPortfolio(ctx);
 
       if (dbPrograms && dbPrograms.length > 0) {

@@ -64,6 +64,7 @@ import type { ArchetypeKey, OriginationForm } from '@/lib/programs/types.ui';
 import type { OriginSource } from '@/lib/programs/types.db';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { getActiveClientRow } from '@/lib/active-client';
+import { CLIENT_KEY_TO_INDUSTRY_CODE } from '@/lib/client-config';
 import { markDraftCommitted } from '@/lib/programs/origination-drafts';
 
 // Postgres UUID v4 format (also matches v1/v3/v5 — sufficient for input
@@ -270,6 +271,9 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
       };
     }
     const tenantKey = activeClient.key;
+    const industryCode = (
+      activeClient.industry_code?.trim() || CLIENT_KEY_TO_INDUSTRY_CODE[tenantKey]
+    ).toUpperCase();
 
     const originationForm: OriginationForm = {
       name: input.program_name,
@@ -358,6 +362,7 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
         .from('engagements')
         .insert({
           client_id: tenancy.clientId,
+          industry_code: industryCode,
           name: originationForm.name,
           // Legacy lifecycle: leave at 'draft' so old code paths that
           // still read `status` correctly see this program as not-yet-

@@ -261,7 +261,7 @@ describe('commit_program · sponsor/lead UUID pre-flight', () => {
 // ─────────────────────────────────────────────────────────────────────
 
 describe('commit_program · OV2-2b approval-queue flow', () => {
-  function stageHappyPath() {
+  function stageHappyPath(activeClientOverrides: Record<string, unknown> = {}) {
     requireTenancyMock.mockResolvedValue({
       clientId: 'client_uuid_1',
       userId: 'user_abc',
@@ -272,6 +272,7 @@ describe('commit_program · OV2-2b approval-queue flow', () => {
       name: 'Apex Retail Group',
       industry_code: 'retail',
       key: 'apexretail',
+      ...activeClientOverrides,
     });
     // Idempotency lookup (engagements maybeSingle) → no prior row
     pendingResults.push({ maybeSingleResult: { data: null, error: null } });
@@ -321,6 +322,7 @@ describe('commit_program · OV2-2b approval-queue flow', () => {
     expect(engagementInsert).toBeDefined();
     expect(engagementInsert!.insertedRow).toMatchObject({
       client_id: 'client_uuid_1',
+      industry_code: 'RETAIL',
       name: 'Test Program',
       lifecycle_state: 'submitted_for_approval',
       status: 'draft',
@@ -350,6 +352,26 @@ describe('commit_program · OV2-2b approval-queue flow', () => {
 
     // 3 · navigation sentinel still emitted for the client
     expect(writes.some((w) => w.includes('[[program-created:'))).toBe(true);
+  });
+
+  it('falls back to the configured client industry code when the client row is missing one', async () => {
+    stageHappyPath({ industry_code: null });
+    submitForApprovalMock.mockResolvedValue(makeApprovalRequest());
+
+    const result = await commitProgramTool.handler(
+      {
+        program_name: 'Test Program',
+        problem_statement: 'Test',
+        sponsor_person_id: SPONSOR_UUID,
+      },
+      makeCtx(),
+    );
+
+    expect(result.success).toBe(true);
+    const engagementInsert = queryLog.find(
+      (q) => q.table === 'engagements' && q.insertedRow !== null,
+    );
+    expect(engagementInsert?.insertedRow?.industry_code).toBe('RETAIL');
   });
 
   it('defaults lead_person_id to sponsor_person_id when not provided', async () => {
