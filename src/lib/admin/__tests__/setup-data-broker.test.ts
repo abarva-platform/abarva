@@ -14,6 +14,7 @@ jest.mock('@/lib/supabase-server', () => ({
 }));
 
 import {
+  getCrossProgramSignals,
   getSegmentRecordPage,
   getSetupInventorySnapshot,
 } from '../setup-data-broker';
@@ -268,5 +269,91 @@ describe('getSegmentRecordPage', () => {
     );
     const page = await getSegmentRecordPage('apex-retail', 'org_structure');
     expect(page).toBeNull();
+  });
+});
+
+describe('getCrossProgramSignals', () => {
+  beforeEach(() => fromMock.mockReset());
+
+  it('returns an empty list when the substrate is unreachable', async () => {
+    fromMock.mockImplementation(() =>
+      makeBuilder({ data: null, error: { message: 'boom' } }),
+    );
+    const signals = await getCrossProgramSignals('apex-retail');
+    expect(signals).toEqual([]);
+  });
+
+  it('parses payload + sorts by severity bucket then by raised_date desc', async () => {
+    const rows = [
+      {
+        record_id: 'cross_program_signals:xprog:apex:002',
+        title: 'Salesforce — affects CDP and CC AI',
+        record_payload: {
+          id: 'xprog:apex:002',
+          type: 'shared_system_dependency',
+          severity: 'Medium',
+          description: 'desc',
+          recommendation: 'rec',
+          status: 'tracking',
+          programs: ['apex-cdp-2026', 'apex-cc-ai-2026'],
+          raised_by: 'Atlas',
+          raised_date: '2026-04-08',
+        },
+      },
+      {
+        record_id: 'cross_program_signals:xprog:apex:003',
+        title: 'CMO vs CFO posture',
+        record_payload: {
+          id: 'xprog:apex:003',
+          type: 'strategic_misalignment',
+          severity: 'High',
+          description: 'desc',
+          recommendation: 'rec',
+          status: 'open',
+          programs: ['apex-cdp-2026'],
+          raised_by: 'Atlas',
+          raised_date: '2026-04-12',
+        },
+      },
+      {
+        record_id: 'cross_program_signals:xprog:apex:001',
+        title: 'Co-renewal opportunity',
+        record_payload: {
+          id: 'xprog:apex:001',
+          type: 'shared_vendor_renewal',
+          severity: 'Low (opportunity)',
+          description: 'desc',
+          recommendation: 'rec',
+          status: 'tracking',
+          programs: ['apex-cdp-2026', 'apex-cc-ai-2026'],
+          raised_by: 'Atlas',
+          raised_date: '2026-04-01',
+        },
+      },
+    ];
+    fromMock.mockImplementation(() => makeBuilder({ data: rows, error: null }));
+    const signals = await getCrossProgramSignals('apex-retail');
+    expect(signals.map((s) => s.signalId)).toEqual([
+      'xprog:apex:003', // high
+      'xprog:apex:002', // medium
+      'xprog:apex:001', // low
+    ]);
+    expect(signals[0]?.severityBucket).toBe('high');
+    expect(signals[2]?.severityBucket).toBe('low');
+  });
+
+  it('handles missing payload fields gracefully', async () => {
+    const rows = [
+      {
+        record_id: 'cross_program_signals:xprog:apex:001',
+        title: 'A signal with no payload',
+        record_payload: null,
+      },
+    ];
+    fromMock.mockImplementation(() => makeBuilder({ data: rows, error: null }));
+    const signals = await getCrossProgramSignals('apex-retail');
+    expect(signals).toHaveLength(1);
+    expect(signals[0]?.severityBucket).toBe('unknown');
+    expect(signals[0]?.programs).toEqual([]);
   });
 });

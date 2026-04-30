@@ -16,7 +16,7 @@
 import { notFound } from 'next/navigation';
 
 import { getActiveClientKey } from '@/lib/active-client';
-import { clientKeyToBrokerTenantKey } from '@/lib/agent/tools/intelligence/_shared';
+import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import {
   formatRelativeTimestamp,
   resolveSegmentRef,
@@ -49,7 +49,7 @@ export default async function AdminSegmentPage({ params }: PageProps) {
   if (!reference) notFound();
 
   const clientKey = await getActiveClientKey().catch(() => null);
-  const brokerTenantKey = clientKey ? clientKeyToBrokerTenantKey(clientKey) : null;
+  const brokerTenantKey = clientKey ? clientKeyToInventorySubstrateKey(clientKey) : null;
   const page = brokerTenantKey
     ? await getSegmentRecordPage(brokerTenantKey, reference.segmentKey).catch(() => null)
     : null;

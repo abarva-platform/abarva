@@ -51,7 +51,29 @@ export function clientKeyToBrokerTenantKey(clientKey: ClientKey | string): strin
   // this mapping, the broker returns the unknown_tenant blocked
   // bundle for Apex and Sentinel tools go silent on the demo's
   // primary tenant.
+  //
+  // NOTE: This function targets the EnterpriseDataRoom in-memory
+  // substrate that Sentinel tools read from. Codex's newer
+  // `data_inventory_*` tables use a different key for Meridian
+  // (`meridian-health`); see `clientKeyToInventorySubstrateKey`
+  // for that mapping.
   if (clientKey === 'apexretail') return 'apex-retail';
+  return clientKey;
+}
+
+/**
+ * Map an app-tier ClientKey to the tenant_key used in the
+ * `data_inventory_*` Postgres substrate (Codex's 2026-04-30 data
+ * layer). Differs from `clientKeyToBrokerTenantKey` only for
+ * Meridian, where the substrate keys with a dash:
+ *   - app `'apexretail'` → substrate `'apex-retail'`
+ *   - app `'meridian'`   → substrate `'meridian-health'`
+ */
+export function clientKeyToInventorySubstrateKey(
+  clientKey: ClientKey | string,
+): string {
+  if (clientKey === 'apexretail') return 'apex-retail';
+  if (clientKey === 'meridian') return 'meridian-health';
   return clientKey;
 }
 

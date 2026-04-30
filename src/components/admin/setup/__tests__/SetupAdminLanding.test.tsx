@@ -27,6 +27,10 @@ describe('SetupAdminLanding', () => {
         segmentsTracked={14}
         capabilitiesGrounded={2}
         lastIngestedRelative="5m ago"
+        atlasSignalCount={12}
+        atlasHighSeverityCount={2}
+        nexusProgramCount={4}
+        stewardFindingCount={11}
       />,
     );
 
@@ -47,6 +51,10 @@ describe('SetupAdminLanding', () => {
         totalRecords={403}
         segmentsTracked={14}
         capabilitiesGrounded={2}
+        atlasSignalCount={12}
+        atlasHighSeverityCount={2}
+        nexusProgramCount={4}
+        stewardFindingCount={11}
       />,
     );
     const records = screen.getByTestId('admin-setup-summary-records');
@@ -77,6 +85,10 @@ describe('SetupAdminLanding', () => {
         totalRecords={1}
         segmentsTracked={1}
         capabilitiesGrounded={0}
+        atlasSignalCount={0}
+        atlasHighSeverityCount={0}
+        nexusProgramCount={0}
+        stewardFindingCount={0}
       />,
     );
     expect(screen.getByTestId('admin-setup-act-one-rollups')).toBeInTheDocument();
@@ -94,6 +106,10 @@ describe('SetupAdminLanding', () => {
         totalRecords={null}
         segmentsTracked={null}
         capabilitiesGrounded={0}
+        atlasSignalCount={0}
+        atlasHighSeverityCount={0}
+        nexusProgramCount={0}
+        stewardFindingCount={0}
       />,
     );
     expect(screen.getByTestId('admin-setup-landing')).toHaveAttribute(
@@ -114,6 +130,10 @@ describe('SetupAdminLanding', () => {
         totalRecords={403}
         segmentsTracked={14}
         capabilitiesGrounded={2}
+        atlasSignalCount={12}
+        atlasHighSeverityCount={2}
+        nexusProgramCount={4}
+        stewardFindingCount={11}
       />,
     );
     const list = screen.getByTestId('admin-setup-gain-list');
@@ -136,6 +156,10 @@ describe('SetupAdminLanding', () => {
         totalRecords={403}
         segmentsTracked={14}
         capabilitiesGrounded={2}
+        atlasSignalCount={12}
+        atlasHighSeverityCount={2}
+        nexusProgramCount={4}
+        stewardFindingCount={11}
       />,
     );
     const grounded = screen.getAllByTestId('admin-setup-depth-grounded');
