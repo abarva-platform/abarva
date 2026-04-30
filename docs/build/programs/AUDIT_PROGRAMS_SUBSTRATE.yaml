@@ -1979,7 +1979,9 @@ tenant_context:
       doc: SETUP_ADMIN_DATA_VIEW_FAILURE_MODE_DRIVEN_DESIGN.md
       section: "Part H, item 1"
       quoted_requirement: "Vision doc says 3072 (text-embedding-3-large); readiness doc says 1536 (text-embedding-3-small). This must be resolved before SET-4 ships."
-    current_state: not_yet_documented
+    current_state: built_and_verified
+    built_at: "2026-04-30"
+    validation_note: "Decision documented in docs/build/EMBEDDING_DIMENSION_DECISION.md. 1536 for tenant (CB-2/PR#1260), 3072 for worldview (INT-WV-2/PR#1287). pgvector not required; JSONB+Pinecone is canonical."
     code_check:
       expected_files: []
       validation_command: "n/a — decision required"
