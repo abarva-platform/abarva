@@ -990,3 +990,133 @@ describe('extractArtifacts · OV2-FM-FLAG-ARTIFACT failure-mode-flagged', () => 
     expect(r.visibleText).toContain('parse-failed');
   });
 });
+
+describe('extractArtifacts · context-bundle (CB-6)', () => {
+  function bundlePayload(overrides: Record<string, unknown> = {}): string {
+    const base = {
+      query: 'why is apex CDP at risk?',
+      mode: 'tenant',
+      tenantKey: 'apex-retail',
+      facts: [],
+      graphPaths: [],
+      semanticChunks: [],
+      corpusPatterns: [],
+      provenance: [],
+      warnings: [],
+      assembledAt: '2026-04-30T14:32:09Z',
+      ...overrides,
+    };
+    return JSON.stringify({ bundle: base });
+  }
+
+  it('parses a minimal valid context-bundle artifact', () => {
+    const input = `[[artifact:context-bundle]]${bundlePayload()}[[/artifact]]`;
+    const r = extractArtifacts(input);
+    expect(r.artifacts).toHaveLength(1);
+    const a = r.artifacts[0] as Artifact & { type: 'context-bundle' };
+    expect(a.type).toBe('context-bundle');
+    expect(a.bundle.query).toBe('why is apex CDP at risk?');
+    expect(a.bundle.mode).toBe('tenant');
+    expect(a.bundle.tenantKey).toBe('apex-retail');
+  });
+
+  it('accepts every valid mode', () => {
+    for (const mode of ['generic', 'corpus', 'tenant', 'full'] as const) {
+      const r = extractArtifacts(
+        `[[artifact:context-bundle]]${bundlePayload({ mode, tenantKey: mode === 'generic' || mode === 'corpus' ? null : 'apex-retail' })}[[/artifact]]`,
+      );
+      expect(r.artifacts).toHaveLength(1);
+    }
+  });
+
+  it('accepts tenantKey === null', () => {
+    const r = extractArtifacts(
+      `[[artifact:context-bundle]]${bundlePayload({ mode: 'corpus', tenantKey: null })}[[/artifact]]`,
+    );
+    expect(r.artifacts).toHaveLength(1);
+  });
+
+  it('strips the artifact from visible text', () => {
+    const r = extractArtifacts(
+      `Prefix [[artifact:context-bundle]]${bundlePayload()}[[/artifact]] suffix.`,
+    );
+    expect(r.visibleText).toBe('Prefix  suffix.');
+  });
+
+  it('rejects an unknown mode', () => {
+    const r = extractArtifacts(
+      `[[artifact:context-bundle]]${bundlePayload({ mode: 'partial' })}[[/artifact]]`,
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('rejects missing query', () => {
+    const r = extractArtifacts(
+      `[[artifact:context-bundle]]${JSON.stringify({
+        bundle: {
+          mode: 'tenant',
+          tenantKey: 'apex-retail',
+          facts: [],
+          graphPaths: [],
+          semanticChunks: [],
+          corpusPatterns: [],
+          provenance: [],
+          warnings: [],
+          assembledAt: '2026-04-30T14:32:09Z',
+        },
+      })}[[/artifact]]`,
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('rejects when arrays are missing', () => {
+    const r = extractArtifacts(
+      `[[artifact:context-bundle]]${JSON.stringify({
+        bundle: {
+          query: 'q',
+          mode: 'tenant',
+          tenantKey: 'apex-retail',
+          // facts intentionally absent
+          graphPaths: [],
+          semanticChunks: [],
+          corpusPatterns: [],
+          provenance: [],
+          warnings: [],
+          assembledAt: '2026-04-30T14:32:09Z',
+        },
+      })}[[/artifact]]`,
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('rejects an outer payload without "bundle" key', () => {
+    const r = extractArtifacts(
+      `[[artifact:context-bundle]]{"notBundle":true}[[/artifact]]`,
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('rejects malformed JSON', () => {
+    const r = extractArtifacts(
+      `[[artifact:context-bundle]]not-json{[[/artifact]]`,
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('preserves nested arrays/objects (passes them through verbatim)', () => {
+    const r = extractArtifacts(
+      `[[artifact:context-bundle]]${bundlePayload({
+        warnings: ['Vector retrieval pending — using keyword-only chunk retrieval'],
+      })}[[/artifact]]`,
+    );
+    const a = r.artifacts[0] as Artifact & { type: 'context-bundle' };
+    expect(a.bundle.warnings).toEqual([
+      'Vector retrieval pending — using keyword-only chunk retrieval',
+    ]);
+  });
+});
