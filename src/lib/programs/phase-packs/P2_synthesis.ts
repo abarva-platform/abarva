@@ -60,6 +60,7 @@ export const P2_SYNTHESIS: PhasePack = {
         'deliverables_v2 row with deliverable_type_key="charter" and status="signed_off". ' +
         'The signing person must have approval_authority="sponsor" on engagement_participants — ' +
         'not delegate, not chief of staff.',
+      preventsFailureModes: [1, 2],
     },
     {
       id: 'sponsor-assigned',
@@ -68,6 +69,7 @@ export const P2_SYNTHESIS: PhasePack = {
       evaluationHint:
         'engagement_participants row with approval_authority="sponsor". The sponsor ' +
         'must be a real persons-table record, not a role label like "CIO".',
+      preventsFailureModes: [1],
     },
     {
       id: 'synthesis-options-compared',
@@ -77,6 +79,7 @@ export const P2_SYNTHESIS: PhasePack = {
         'Synthesis prose names ≥2 options, lists what each gives up, and explains ' +
         'why the recommended path beats the alternatives. Single-option synthesis is ' +
         'a smell — usually means trade-offs were not actually examined.',
+      preventsFailureModes: [2, 7],
     },
     {
       id: 'architecture-review-attested',
@@ -86,6 +89,7 @@ export const P2_SYNTHESIS: PhasePack = {
         'Synthesis package has a named architecture reviewer with a date and ' +
         'comments. "Reviewed by architecture team" without a name or date is ' +
         'ceremonial, not real.',
+      preventsFailureModes: [6],
     },
     {
       id: 'baseline-kpi-captured',
@@ -96,6 +100,7 @@ export const P2_SYNTHESIS: PhasePack = {
         'or report the number comes from, and the measurement method. ' +
         '"Reduce wait time" is not enough; "reduce avg answer time from 4.2 min ' +
         '(NICE WFM Q1 baseline) to <90s by Q4" is.',
+      preventsFailureModes: [3, 9],
     },
     {
       id: 'value-hypothesis-with-mechanism',
@@ -105,6 +110,7 @@ export const P2_SYNTHESIS: PhasePack = {
         'Charter explains *how* the value materializes, not just *that* it does. ' +
         '"$3M savings" alone is wishful; "$3M savings via 22% reduction in ' +
         'escalations × $140 marginal cost per escalation" is testable in P5/P6.',
+      preventsFailureModes: [2, 9],
     },
     {
       id: 'scope-boundary-stated',
@@ -113,6 +119,7 @@ export const P2_SYNTHESIS: PhasePack = {
       evaluationHint:
         'Charter has explicit "in scope" and "out of scope" prose. ' +
         '"Everywhere" or ">3 functional areas" is a smell.',
+      preventsFailureModes: [2, 10],
     },
     {
       id: 'dissenter-named',
@@ -122,6 +129,7 @@ export const P2_SYNTHESIS: PhasePack = {
         'Every real change has someone who loses status, headcount, vendor ' +
         'relationship, or political capital. If no dissenter is named, either the ' +
         'program is too small to matter or the sponsor is hiding the politics.',
+      preventsFailureModes: [1, 5],
     },
     {
       id: 'kill-criterion-locked',
@@ -131,6 +139,7 @@ export const P2_SYNTHESIS: PhasePack = {
         'Charter names a measurable signal that would justify stopping the ' +
         'program. Without one, the program drifts into zombie status when results ' +
         'disappoint.',
+      preventsFailureModes: [2, 10],
     },
     {
       id: 'succession-owner-named',
@@ -139,6 +148,7 @@ export const P2_SYNTHESIS: PhasePack = {
       evaluationHint:
         'Single-sponsor programs are fragile. A named succession owner reduces ' +
         'the risk of charter collapse mid-program.',
+      preventsFailureModes: [1],
     },
   ],
 
@@ -157,6 +167,7 @@ export const P2_SYNTHESIS: PhasePack = {
           'At least two named options with concrete trade-offs ' +
           '(cost vs. speed, build vs. buy, scope vs. risk). "There’s really only ' +
           'one option" is a fail.',
+        preventsFailureModes: [2, 7],
       },
       {
         id: 'who-benefits-who-loses',
@@ -167,6 +178,7 @@ export const P2_SYNTHESIS: PhasePack = {
         expectedAnswerShape:
           'Two named people (or two named functions with named heads). ' +
           '"Everyone wins" is a fail.',
+        preventsFailureModes: [1, 5],
       },
       {
         id: 'baseline-source',
@@ -178,6 +190,7 @@ export const P2_SYNTHESIS: PhasePack = {
         expectedAnswerShape:
           'A current numeric value tied to a specific system or report ' +
           '(NICE WFM dashboard, finance close, etc.) — not a remembered figure.',
+        preventsFailureModes: [3, 9],
       },
       {
         id: 'why-now',
@@ -188,6 +201,7 @@ export const P2_SYNTHESIS: PhasePack = {
           'orphaned when budget tightens.',
         expectedAnswerShape:
           'A concrete event with a date or window. "We always wanted to do this" is a fail.',
+        preventsFailureModes: [2, 10],
       },
       {
         id: 'sponsor-time-committed',
@@ -200,6 +214,7 @@ export const P2_SYNTHESIS: PhasePack = {
         expectedAnswerShape:
           'Specific cadence — e.g., "weekly 30-min steer + monthly 90-min review." ' +
           'Vague answers ("as needed") indicate phantom sponsorship.',
+        preventsFailureModes: [1],
       },
     ],
     converge: [
@@ -215,6 +230,7 @@ export const P2_SYNTHESIS: PhasePack = {
         expectedAnswerShape:
           'A concrete condition under which the recommendation flips ' +
           '("if integration cost > $X, option 2 wins"). Not "option 1 is just better."',
+        preventsFailureModes: [2],
       },
       {
         id: 'architecture-review',
@@ -223,6 +239,7 @@ export const P2_SYNTHESIS: PhasePack = {
         why:
           'A synthesis without architecture pushback is either pre-aligned or ' +
           'unread. P3 design will surface the issues you avoided here.',
+        preventsFailureModes: [6],
       },
       {
         id: 'cut-fifty-percent',
@@ -232,6 +249,7 @@ export const P2_SYNTHESIS: PhasePack = {
         why:
           'Forces priority on the charter. Programs that cannot survive a 50% ' +
           'cut are wishlists.',
+        preventsFailureModes: [2, 10],
       },
       {
         id: 'value-mechanism',
@@ -241,6 +259,7 @@ export const P2_SYNTHESIS: PhasePack = {
         why:
           'Distinguishes a testable value hypothesis from a wishful number. ' +
           'Without a mechanism, P6 outcomes attestation becomes performative.',
+        preventsFailureModes: [2, 9],
       },
       {
         id: 'sponsor-three-month-fear',
@@ -248,6 +267,7 @@ export const P2_SYNTHESIS: PhasePack = {
         why:
           'Surfaces the real risk anchor — usually the sponsor’s reputation or ' +
           'political cover. Aligns P3/P4 risk work to what the sponsor cares about.',
+        preventsFailureModes: [1, 6],
       },
     ],
     close: [
@@ -259,6 +279,7 @@ export const P2_SYNTHESIS: PhasePack = {
         why:
           'A charter signed by someone without authority is theatre. Verify ' +
           'approval_authority="sponsor" on the persons record before close.',
+        preventsFailureModes: [1],
       },
       {
         id: 'succession',
@@ -266,6 +287,7 @@ export const P2_SYNTHESIS: PhasePack = {
         why:
           'Single-sponsor programs are fragile. A named succession owner reduces ' +
           'the risk of charter collapse mid-program.',
+        preventsFailureModes: [1],
       },
       {
         id: 'kill-criterion',
@@ -279,6 +301,7 @@ export const P2_SYNTHESIS: PhasePack = {
         expectedAnswerShape:
           'A measurable signal: "if pilot adoption stays under 30% after 8 weeks." ' +
           '"If it’s clearly not working" is not a kill criterion.',
+        preventsFailureModes: [2, 10],
       },
     ],
   },
@@ -299,6 +322,7 @@ export const P2_SYNTHESIS: PhasePack = {
         'Push for at least one credible alternative with a concrete crossover ' +
         '("if integration cost > $X" / "if vendor lock-in matters more than time-to-market"). ' +
         'Force the user to defend the recommendation against it.',
+      preventsFailureModes: [2, 7],
     },
     {
       id: 'unread-architecture',
@@ -314,6 +338,7 @@ export const P2_SYNTHESIS: PhasePack = {
         'Insist on a named senior architect and at least one substantive piece ' +
         'of feedback before closing the gate. If architecture is genuinely ' +
         'aligned, surface why.',
+      preventsFailureModes: [6],
     },
     {
       id: 'everywhere-charter',
@@ -329,6 +354,7 @@ export const P2_SYNTHESIS: PhasePack = {
       mitigation:
         'Push for one primary function with at most one adjacent dependency named. ' +
         'Other functions become explicit P5 expansion candidates, not in-scope here.',
+      preventsFailureModes: [2, 10],
     },
     {
       id: 'wishlist-baseline',
@@ -345,6 +371,7 @@ export const P2_SYNTHESIS: PhasePack = {
         'Push for a specific system or report as the baseline source ' +
         '(NICE WFM, Tableau dashboard, finance close, etc.) and a measurement ' +
         'method (daily average, weekly p95, etc.).',
+      preventsFailureModes: [3, 9],
     },
     {
       id: 'phantom-sponsor',
@@ -362,6 +389,7 @@ export const P2_SYNTHESIS: PhasePack = {
         'Insist on a recurring sponsor cadence on the calendar before close, AND ' +
         'name a succession owner. If the sponsor will not commit, the charter is ' +
         'not ready to advance — a wrong sponsor is more costly than no sponsor.',
+      preventsFailureModes: [1],
     },
     {
       id: 'vendor-driven-charter',
@@ -377,6 +405,7 @@ export const P2_SYNTHESIS: PhasePack = {
       mitigation:
         'Reframe in problem language. The charter should name a measurable ' +
         'behavior change, not a tool. Tools belong in P3 design options.',
+      preventsFailureModes: [2, 7],
     },
     {
       id: 'committee-charter',
@@ -390,6 +419,7 @@ export const P2_SYNTHESIS: PhasePack = {
       mitigation:
         'Push for one accountable sponsor. Other interested parties become ' +
         'advisors or stakeholders, not co-sponsors.',
+      preventsFailureModes: [1],
     },
     {
       id: 'no-dissenter',
@@ -404,6 +434,7 @@ export const P2_SYNTHESIS: PhasePack = {
         'Probe for the dissenter: which vendor relationship dies, which team loses ' +
         'headcount, which exec loses oversight, which process owner loses control. ' +
         'Name them in the charter risk register.',
+      preventsFailureModes: [1, 5],
     },
     {
       id: 'orphaned-kill-criterion',
@@ -415,6 +446,7 @@ export const P2_SYNTHESIS: PhasePack = {
       mitigation:
         'Insist on a measurable kill criterion before close — adoption < X by ' +
         'week N, baseline movement < Y by quarter Q, etc.',
+      preventsFailureModes: [2, 10],
     },
   ],
 
