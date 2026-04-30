@@ -51,7 +51,16 @@ const authRequiredRoutes = createRouteMatcher([
   '/tower(.*)',
   '/sponsor(.*)',
   '/platform(.*)',
-  '/intelligence(.*)',
+  // INT-1.3 · /intelligence is the J0 cold landing — corpus doctrine,
+  // not tenant data — and is public. Sub-paths that touch tenant data
+  // (Sentinel chat, validate_synthesis) self-gate. Legacy authoring /
+  // quality / synthesize / author paths stay auth-gated until they are
+  // either reshaped (INT-2+) or explicitly public.
+  '/intelligence/author(.*)',
+  '/intelligence/quality(.*)',
+  '/intelligence/synthesize(.*)',
+  '/intelligence/ask(.*)',
+  '/intelligence/validate(.*)',
   '/source(.*)',
 ])
 

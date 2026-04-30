@@ -1,18 +1,17 @@
-// INT-IDX — Shell-native Intelligence pattern library index.
-// I1: Server Component. Reads ?filter= from searchParams and passes to
-// IntelligenceIndexPage (now a server component). No client state.
+// INT-1.3 — /intelligence is the J0 cold landing surface.
+// Server component renders the failure-mode card grid as the primary
+// affordance. No filter param; the legacy ?filter= query is dropped
+// because the J0 cold landing has no filter chrome (the topic browser
+// in INT-2 will own filter semantics).
 
 import { IntelligenceIndexPage } from '@/components/intelligence/IntelligenceIndexPage';
 
 export const metadata = {
-  title: 'Intelligence · Pattern Library | Apex Retail Group',
+  title: 'Intelligence · Why AI programs fail | AbarVa',
+  description:
+    'Why enterprise AI transformation fails — and how AbarVa prevents it. Ten failure modes, grounded in pattern doctrine, with cited research anchors from McKinsey, MIT/BCG, RAND, Forrester, and Gartner.',
 };
 
-export default async function IntelligencePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ filter?: string }>;
-}) {
-  const { filter } = await searchParams;
-  return <IntelligenceIndexPage filter={filter} />;
+export default async function IntelligencePage() {
+  return <IntelligenceIndexPage />;
 }

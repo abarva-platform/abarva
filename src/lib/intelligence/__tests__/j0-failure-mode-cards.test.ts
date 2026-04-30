@@ -10,6 +10,7 @@ import { FAILURE_MODES } from '@/lib/programs/failure-modes';
 import {
   CORPUS_VERSION,
   J0_FAILURE_MODE_CARDS,
+  getCardsByMostCited,
   getJ0CardByFailureModeId,
   getJ0CardBySlug,
   getTotalResearchAnchorCount,
@@ -296,6 +297,41 @@ describe('J0 card audit — manual sanity', () => {
     for (const card of J0_FAILURE_MODE_CARDS) {
       expect(card.whatGoodLooksLike).toMatch(concreteHints);
     }
+  });
+});
+
+describe('J0 most-cited sort (INT-1.4 mobile collapse)', () => {
+  it('sorts by pattern + anchor count descending, with failureModeId tiebreak ascending', () => {
+    const ranked = getCardsByMostCited(J0_FAILURE_MODE_CARDS);
+    expect(ranked.length).toBe(J0_FAILURE_MODE_CARDS.length);
+
+    // Each consecutive pair must respect the order rule.
+    for (let i = 0; i < ranked.length - 1; i += 1) {
+      const a = ranked[i];
+      const b = ranked[i + 1];
+      const scoreA = a.citedPatternIds.length + a.citedResearch.length;
+      const scoreB = b.citedPatternIds.length + b.citedResearch.length;
+      if (scoreA !== scoreB) {
+        expect(scoreA).toBeGreaterThanOrEqual(scoreB);
+      } else {
+        // Tiebreak: failureModeId ascending.
+        expect(a.failureModeId).toBeLessThan(b.failureModeId);
+      }
+    }
+  });
+
+  it('returns exactly N when limit is provided', () => {
+    expect(getCardsByMostCited(J0_FAILURE_MODE_CARDS, 5)).toHaveLength(5);
+    expect(getCardsByMostCited(J0_FAILURE_MODE_CARDS, 1)).toHaveLength(1);
+    expect(getCardsByMostCited(J0_FAILURE_MODE_CARDS, 99)).toHaveLength(
+      J0_FAILURE_MODE_CARDS.length,
+    );
+  });
+
+  it('does not mutate the input array', () => {
+    const original = [...J0_FAILURE_MODE_CARDS];
+    getCardsByMostCited(J0_FAILURE_MODE_CARDS, 5);
+    expect([...J0_FAILURE_MODE_CARDS]).toEqual(original);
   });
 });
 
