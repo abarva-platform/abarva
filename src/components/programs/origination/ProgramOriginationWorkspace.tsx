@@ -25,6 +25,7 @@ import {
   type PatternMatchCard,
 } from './ProgramBriefPanel';
 import { StewardChat, type ChatTurn } from './StewardChat';
+import { buildBriefSnapshot } from './types';
 
 /**
  * The reducer's working state. The brief itself remains the canonical
@@ -294,6 +295,9 @@ export function ProgramOriginationWorkspace({
           // origination → active handoff marker can address the
           // program by name when commit_program lands.
           programName={briefState.brief.programName}
+          // OV2-WIRE-CLIENT · project the live brief into the snapshot
+          // shape /api/chat/agent expects on `surfaceContext.briefSnapshot`.
+          briefSnapshot={buildBriefSnapshot(briefState.brief)}
         />
         {/* OV2-1c · No `patternMatch` prop on /programs/new (founder feedback). */}
         {/* OV2-1b · Brief Progress + Overlap Alerts surface as cards above field rows. */}

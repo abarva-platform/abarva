@@ -26,6 +26,7 @@ import {
   persistOriginationHandoff,
 } from '@/lib/shell/origination-handoff';
 import type { ChatTurn as AtlasChatTurn } from '@/lib/shell/atlas-page-state';
+import type { BriefSnapshot } from './types';
 
 export interface ChatTurn {
   id: string;
@@ -59,6 +60,14 @@ export interface StewardChatProps {
    * works, only the marker text reads less specific).
    */
   programName?: string | null;
+  /**
+   * OV2-WIRE-CLIENT — current brief signals, threaded into the POST
+   * body's `surfaceContext.briefSnapshot`. The agent route maps this
+   * to BriefOverlapInput and runs detectBriefOverlap so Steward sees
+   * overlap candidates in its system prompt. Optional — empty fields
+   * collapse to undefined so detection only fires on real signals.
+   */
+  briefSnapshot?: BriefSnapshot;
 }
 
 const STEWARD_ACCENT = BrandColors.signalBlue;
@@ -93,7 +102,13 @@ export function StewardChat({
   onTurnsChange,
   onArtifact,
   programName,
+  briefSnapshot,
 }: StewardChatProps) {
+  // OV2-WIRE-CLIENT — mirror briefSnapshot into a ref so an in-flight
+  // stream's send() closure always reads the latest snapshot the user
+  // has typed, without re-creating the callback on every keystroke.
+  const briefSnapshotRef = useRef<BriefSnapshot | undefined>(briefSnapshot);
+  briefSnapshotRef.current = briefSnapshot;
   const router = useRouter();
   const [draft, setDraft] = useState('');
   const [streaming, setStreaming] = useState(false);
@@ -147,6 +162,12 @@ export function StewardChat({
           content: t.text,
         }));
 
+      // OV2-WIRE-CLIENT — thread the current brief signals into
+      // surfaceContext.briefSnapshot so /api/chat/agent can run
+      // detectBriefOverlap and inject overlap candidates into Steward's
+      // system prompt. Empty/null fields are already collapsed to
+      // undefined by buildBriefSnapshot.
+      const snapshot = briefSnapshotRef.current;
       const res = await fetch('/api/chat/agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -156,6 +177,9 @@ export function StewardChat({
           agentName: 'Steward',
           surface,
           conversationHistory,
+          surfaceContext: {
+            briefSnapshot: snapshot ?? {},
+          },
         }),
       });
 
