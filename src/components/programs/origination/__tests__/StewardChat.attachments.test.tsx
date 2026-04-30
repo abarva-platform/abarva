@@ -14,7 +14,7 @@
 //   3. The hidden file input carries the canonical mime allowlist
 //      `accept` attribute, ready for Wave 2 wiring.
 
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { StewardChat, type ChatTurn } from '../StewardChat';
 import { ATTACHMENT_MIME_ALLOWLIST } from '@/lib/programs/attachments/mime';
 
@@ -32,6 +32,10 @@ jest.mock('@/lib/agent/markdownRenderer', () => ({
 
 const TURNS: ChatTurn[] = [
   { id: 't1', role: 'user', text: 'Hello Steward.' },
+];
+
+const COLD_OPEN_TURNS: ChatTurn[] = [
+  { id: 'cold-open-production', role: 'assistant', agentName: 'Steward', text: 'Welcome.' },
 ];
 
 describe('StewardChat · OV2-4b paper-clip', () => {
@@ -76,5 +80,53 @@ describe('StewardChat · OV2-4b paper-clip', () => {
     expect(input).not.toBeNull();
     const accept = input?.getAttribute('accept') ?? '';
     expect(accept.split(',')).toEqual(expect.arrayContaining([...ATTACHMENT_MIME_ALLOWLIST]));
+  });
+});
+
+describe('StewardChat · starter prompts', () => {
+  it('shows fast-start setup prompts before the first user turn', () => {
+    render(
+      <StewardChat
+        surface="/programs/new"
+        tenantName="Apex Retail"
+        turns={COLD_OPEN_TURNS}
+        onTurnsChange={() => {}}
+      />,
+    );
+
+    expect(screen.getByLabelText('Starter prompts')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Apex ERP modernization' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Meridian prior auth' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'First Capital risk controls' })).toBeTruthy();
+  });
+
+  it('prefills the composer when a starter prompt is selected', () => {
+    render(
+      <StewardChat
+        surface="/programs/new"
+        tenantName="Apex Retail"
+        turns={COLD_OPEN_TURNS}
+        onTurnsChange={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Apex ERP modernization' }));
+
+    const composer = screen.getByLabelText('Message Steward') as HTMLTextAreaElement;
+    expect(composer.value).toContain('Set up a new Apex Retail program');
+    expect(composer.value).toContain('Sponsor Sarah Chen');
+  });
+
+  it('hides starter prompts after the user has already sent a turn', () => {
+    render(
+      <StewardChat
+        surface="/programs/new"
+        tenantName="Apex Retail"
+        turns={TURNS}
+        onTurnsChange={() => {}}
+      />,
+    );
+
+    expect(screen.queryByLabelText('Starter prompts')).toBeNull();
   });
 });

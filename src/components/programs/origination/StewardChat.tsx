@@ -83,6 +83,24 @@ export interface StewardChatProps {
 const STEWARD_ACCENT = BrandColors.signalBlue;
 const PROGRAM_CREATED_SENTINEL = /\[\[program-created:([^\]]+)\]\]/;
 
+const STARTER_PROMPTS = [
+  {
+    label: 'Apex ERP modernization',
+    prompt:
+      'Set up a new Apex Retail program for SAP finance modernization. The problem is month-end close takes too long because finance data is split across SAP, Workday, and spreadsheets. Target outcome: reduce close cycle time by 30% and improve executive reporting confidence. Sponsor Sarah Chen; lead Mei Tanaka; start P0 in May.',
+  },
+  {
+    label: 'Meridian prior auth',
+    prompt:
+      'Set up a Meridian Health prior authorization automation program. The problem is manual prior auth work is increasing clinician burden and downstream denial risk. Target outcome: improve auto-approval rate and reduce avoidable denials. Sponsor Patricia Okafor; lead David Henderson; timeline is P1 discovery this quarter.',
+  },
+  {
+    label: 'First Capital risk controls',
+    prompt:
+      'Set up a First Capital program for AI model-risk controls. The problem is GenAI pilots are moving faster than governance evidence. Target outcome: standardize attestation, ownership, and audit trails before production use. Sponsor the CIO; lead enterprise risk; timeline is 90 days to P2.',
+  },
+];
+
 function generateTurnId(): string {
   return `turn_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -124,6 +142,7 @@ export function StewardChat({
   const [streaming, setStreaming] = useState(false);
   const threadRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const showStarterPrompts = !turns.some((turn) => turn.role === 'user');
   // Mirror lifted `turns` into a ref so the streaming send() can read the
   // latest array without re-creating the callback each render. Avoids a
   // stale-closure issue where conversationHistory misses turns appended
@@ -425,6 +444,75 @@ export function StewardChat({
             </div>
           </div>
         ))}
+
+        {showStarterPrompts ? (
+          <section
+            aria-label="Starter prompts"
+            style={{
+              border: `1px solid rgba(12,26,58,0.10)`,
+              borderRadius: 10,
+              padding: '12px 14px',
+              background: BrandColors.paper,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+            }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <span
+                style={{
+                  fontFamily: BrandTypography.mono,
+                  fontSize: 10,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: BrandColors.stone,
+                  fontWeight: 700,
+                }}
+              >
+                Fast-start setup
+              </span>
+              <span
+                style={{
+                  fontFamily: BrandTypography.sans,
+                  fontSize: 13,
+                  color: BrandColors.slate,
+                  lineHeight: 1.45,
+                }}
+              >
+                Pick a realistic starter brief, then edit before sending.
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {STARTER_PROMPTS.map((starter) => (
+                <button
+                  key={starter.label}
+                  type="button"
+                  onClick={() => {
+                    setDraft(starter.prompt);
+                    if (typeof requestAnimationFrame === 'function') {
+                      requestAnimationFrame(() => inputRef.current?.focus());
+                    } else {
+                      inputRef.current?.focus();
+                    }
+                  }}
+                  style={{
+                    border: `1px solid rgba(12,26,58,0.16)`,
+                    borderRadius: 999,
+                    background: '#FFFFFF',
+                    color: BrandColors.inkBlack,
+                    cursor: 'pointer',
+                    fontFamily: BrandTypography.sans,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    padding: '7px 10px',
+                  }}
+                >
+                  {starter.label}
+                </button>
+              ))}
+            </div>
+          </section>
+        ) : null}
       </div>
 
       <footer
