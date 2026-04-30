@@ -16,10 +16,10 @@ interface SourcePortfolioAgentCanvasProps {
   heightCss?: string;
 }
 
-const SENTINEL_AGENT = {
-  initials: 'Sn',
-  name: 'Sentinel',
-  role: 'Sourcing Intelligence',
+const NEXUS_AGENT = {
+  initials: 'Nx',
+  name: 'Nexus',
+  role: 'Source Command Lead',
 } as const;
 
 export function SourcePortfolioAgentCanvas({
@@ -34,10 +34,10 @@ export function SourcePortfolioAgentCanvas({
   return (
     <section
       data-testid="source-portfolio-agent-canvas"
-      aria-label="Sentinel source portfolio canvas"
+      aria-label="Nexus source mission canvas"
       style={{
         display: 'grid',
-        gridTemplateColumns: 'minmax(0, 1.7fr) minmax(0, 1fr)',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
         gap: 16,
         height: heightCss,
         minHeight: 480,
@@ -56,9 +56,9 @@ export function SourcePortfolioAgentCanvas({
           embedded
           isOpen={true}
           onClose={() => {
-            // Embedded chat is always visible on the source portfolio canvas.
+            // Embedded guidance stays visible after the table-first portfolio read.
           }}
-          agent={SENTINEL_AGENT}
+          agent={NEXUS_AGENT}
           quote={quote}
           surface="/source"
           onArtifact={onArtifact}
@@ -67,7 +67,7 @@ export function SourcePortfolioAgentCanvas({
       </div>
 
       <aside
-        aria-label="Sentinel source portfolio reactive workbench"
+        aria-label="Source portfolio mission preview rail"
         style={{
           minHeight: 0,
           minWidth: 0,
@@ -129,7 +129,7 @@ function SourcePortfolioPromptDeck({ events }: { events: SourcingEventSummary[] 
             fontWeight: 700,
           }}
         >
-          Sentinel intake posture
+          Nexus intake posture
         </div>
         <p
           style={{
@@ -140,7 +140,7 @@ function SourcePortfolioPromptDeck({ events }: { events: SourcingEventSummary[] 
             color: 'rgba(250,247,241,0.88)',
           }}
         >
-          I can help stand up a sourcing event or work an existing one. For a new event, we first lock five fields:
+          I can help stand up a technology sourcing event or work an existing one. For a new event, we first lock five fields:
           trigger, owner, scope, baseline evidence, and stop/approval. Then the right rail carries the evidence and gate state.
         </p>
         <a

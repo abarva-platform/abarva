@@ -83,7 +83,7 @@ export function SourcePortfolioReactivePanel({
   const filterLabel = [activeStage, activeStatus].filter(Boolean).join(' / ') || 'all source events';
 
   return (
-    <section aria-label="Sentinel source portfolio workbench" style={PANEL}>
+    <section aria-label="Source portfolio mission preview" style={PANEL}>
       <header
         style={{
           fontFamily: SHELL.MONO,
@@ -94,7 +94,7 @@ export function SourcePortfolioReactivePanel({
           fontWeight: 700,
         }}
       >
-        Sentinel source reasoning - live
+        Nexus mission preview - seeded
       </header>
 
       <SourceOperatingModelCard />
@@ -107,7 +107,7 @@ export function SourcePortfolioReactivePanel({
           <Metric label="Value" value={formatUsd(valueAtStake)} />
         </div>
         <p style={{ ...MUTED, marginTop: 10 }}>
-          Current view: {filterLabel}. Sentinel is using seeded portfolio facts only; no live procurement write-back is implied.
+          Current view: {filterLabel}. Nexus is using seeded portfolio facts only; no live procurement write-back is implied.
         </p>
       </Card>
 
@@ -125,7 +125,7 @@ export function SourcePortfolioReactivePanel({
         </Card>
       ) : (
         <Card kind="Top mission signal">
-          <p style={MUTED}>No seeded source events match this filter posture. Reset filters to restore Sentinel portfolio read.</p>
+            <p style={MUTED}>No seeded source events match this filter posture. Reset filters to restore the Nexus portfolio read.</p>
         </Card>
       )}
 
@@ -167,7 +167,7 @@ export function SourcePortfolioReactivePanel({
       {visibleArtifacts.length === 0 && visibleSourcingArtifacts.length === 0 ? (
         <Card kind="Try next">
           <p style={MUTED}>
-            Ask Sentinel to start an application managed services event. The next useful card should be intake progress: owner, problem, scope boundary, evidence, kill criterion, and approval route.
+            Start an IT sourcing event from the command center. The next useful card should be intake progress: owner, problem, scope boundary, evidence, kill criterion, and approval route.
           </p>
         </Card>
       ) : null}
@@ -185,8 +185,8 @@ function SourceOperatingModelCard() {
   return (
     <Card kind="Operating model">
       <p style={{ ...MUTED, marginBottom: 10 }}>
-        Source is the IT sourcing command center. Sentinel is here to act like the sourcing partner in the room:
-        slow down weak intake, protect buyer leverage, and keep the right evidence visible.
+        Source is the IT sourcing command center. Nexus leads the sourcing motion while Sentinel challenges evidence,
+        Steward protects gates, and Atlas frames value and executive consequence.
       </p>
       <div style={{ display: 'grid', gap: 7 }}>
         {rows.map((row) => (
@@ -225,7 +225,7 @@ function SourceOperatingModelCard() {
           textDecoration: 'none',
         }}
       >
-        Create sourcing event
+        Start IT sourcing event
       </Link>
     </Card>
   );
