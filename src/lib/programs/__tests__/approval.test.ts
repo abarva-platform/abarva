@@ -539,7 +539,7 @@ describe('migration: program_approval_requests RLS policies', () => {
   const sql = readFileSync(
     path.resolve(
       process.cwd(),
-      'supabase/migrations/20260430120000_program_approval_workflow.sql',
+      'supabase/migrations/20260430120100_program_approval_workflow.sql',
     ),
     'utf-8',
   );
