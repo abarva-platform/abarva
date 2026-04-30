@@ -233,6 +233,10 @@ function selectContextItems(
       provenanceIds: [person.id, ...person.sponsorsPrograms, ...person.ownsSystems],
       linkedEvidence: [],
     })));
+    // OV2-1d-archetype · when the program carries a canonical pattern
+    // id, surface it in provenanceIds as `pattern:${patternId}` (same
+    // prefix-namespace convention used for `system:*` and `vendor:*`
+    // ids). Consumers like detectBriefOverlap filter by the prefix.
     items.push(...room.programs.slice(0, 6).map((program) => ({
       id: `ctx:${program.id}`,
       kind: 'program' as const,
@@ -242,7 +246,12 @@ function selectContextItems(
       sourceBasis: program.sourceBasis,
       dataClassification: 'synthetic' as const,
       sensitivity: 'structured' as const,
-      provenanceIds: [program.id, ...program.linkedSystemIds, ...program.linkedVendorIds],
+      provenanceIds: [
+        program.id,
+        ...program.linkedSystemIds,
+        ...program.linkedVendorIds,
+        ...(program.patternId ? [`pattern:${program.patternId}`] : []),
+      ],
       linkedEvidence: citationsForIds(citations, program.linkedEvidenceIds),
     })));
     items.push(...room.artifacts.slice(0, 5).map((artifact) => ({

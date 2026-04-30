@@ -14,16 +14,13 @@ import 'server-only';
 // ids — those are the runtime hooks used here for sponsor and system
 // matching.
 //
-// Archetype gap (chose option (b) per slice spec): the broker's
-// program item shape does not currently carry a pattern / archetype id
-// — `EnterpriseProgramRecord` does not have a `patternId` field, and
-// the underlying source data (apex opportunities, outcomes, morrison
-// program) was not authored with pattern ids attached. Wiring an
-// archetype id through the broker requires changes in the data room,
-// the seeded apex source, and the broker mapper — out of scope for
-// this slice. Archetype matching is therefore inert in this slice
-// (input.archetypeId is accepted but never produces a match). Closing
-// the gap is a follow-on slice (OV2-1d-archetype).
+// OV2-1d-archetype · archetype matching is now live. The broker
+// surfaces the canonical pattern id as a `pattern:${id}` entry in
+// `provenanceIds` (same convention as `system:*` and `vendor:*`).
+// extractProgramFacts reads it back, and detectBriefOverlap compares
+// against `input.archetypeId` case-insensitively. Programs whose
+// source data does not map to a canonical pattern leave patternId
+// undefined and never produce an archetype hit.
 
 import {
   buildProgramsContextBundle,
@@ -55,15 +52,13 @@ export interface BriefOverlapMatch {
 }
 
 // Per-dimension weights summed to a max of 1.0; multi-dimension hits
-// naturally rank higher. ARCHETYPE_WEIGHT is defined for the wiring
-// slice (OV2-1d-wire) but unused today — see header gap note.
+// naturally rank higher.
 const ARCHETYPE_WEIGHT = 0.7;
 const SPONSOR_WEIGHT = 0.5;
 const SYSTEM_WEIGHT = 0.3;
-// Toggle that flips on once the broker carries pattern ids. When true,
-// detectBriefOverlap will evaluate archetype matches against the
-// program item's pattern id (TBD field). Today it's always false.
-const ARCHETYPE_MATCH_ENABLED = false;
+// OV2-1d-archetype · archetype matching is enabled now that the
+// broker carries pattern ids via `pattern:${patternId}` provenance.
+const ARCHETYPE_MATCH_ENABLED = true;
 
 type Dimension = 'archetype' | 'sponsor' | 'system';
 
@@ -74,7 +69,7 @@ interface ProgramFacts {
   sponsor?: string;
   /** Lower-cased system / vendor identifiers from provenanceIds (system:* and vendor:*). */
   systemTokens: string[];
-  /** Pattern / archetype id when the broker carries it. Always undefined today — see header gap note. */
+  /** Pattern / archetype id when the broker carries it (OV2-1d-archetype). */
   archetypeId?: string;
 }
 
@@ -183,11 +178,18 @@ function extractProgramFacts(item: EnterpriseAgentContextItem): ProgramFacts {
   const phase = readPart(summary, /^([^;]+);/);
   const sponsor = readPart(summary, /;\s*sponsor\s+(.+?);\s*timeline\s+/i);
 
-  // provenanceIds is `[program.id, ...linkedSystemIds, ...linkedVendorIds]`.
+  // provenanceIds is `[program.id, ...linkedSystemIds, ...linkedVendorIds, pattern:${patternId}?]`.
   // Filter to system:/vendor: prefixed ids, lower-cased for matching.
   const systemTokens = item.provenanceIds
     .filter((id) => /^(system|vendor):/i.test(id))
     .map((id) => id.toLowerCase());
+
+  // OV2-1d-archetype · pull the canonical pattern id off the
+  // `pattern:` provenance entry when the broker carries one.
+  const patternProvenance = item.provenanceIds.find((id) => /^pattern:/i.test(id));
+  const archetypeId = patternProvenance
+    ? patternProvenance.slice('pattern:'.length)
+    : undefined;
 
   return {
     programId,
@@ -195,6 +197,7 @@ function extractProgramFacts(item: EnterpriseAgentContextItem): ProgramFacts {
     phase: phase ?? undefined,
     sponsor: sponsor ?? undefined,
     systemTokens,
+    archetypeId,
   };
 }
 

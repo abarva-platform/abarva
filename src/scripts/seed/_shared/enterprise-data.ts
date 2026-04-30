@@ -23,6 +23,9 @@ export interface TechStackItemSeed {
   touches_ai?: boolean;
 }
 
+// OV2-1d-archetype · optional patternId on the seed so the broker can
+// surface the canonical archetype for programs whose intent maps to a
+// pattern in program-lifecycle-patterns.ts (e.g. M365 Copilot rollout).
 export interface ProjectSeed {
   name: string;
   description: string;
@@ -32,6 +35,7 @@ export interface ProjectSeed {
   spent_to_date_usd: number;
   exec_sponsor: string;
   touches_ai?: boolean;
+  pattern_id?: string;
 }
 
 export interface StaffAugSeed {
@@ -104,7 +108,7 @@ const MERIDIAN_PROJECTS: ProjectSeed[] = [
   { name: 'Research data platform', description: 'Multi-omics + RWE infrastructure.', program_domain: 'research', status: 'approved', total_budget_usd: 22_000_000, spent_to_date_usd: 2_200_000, exec_sponsor: 'Chief Research Officer', touches_ai: true },
   { name: 'Staff augmentation consolidation', description: 'Rationalize 14 staff aug vendors to 6.', program_domain: 'vendor_rationalization', status: 'in_flight', total_budget_usd: 1_200_000, spent_to_date_usd: 360_000, exec_sponsor: 'CIO' },
   { name: 'Shadow AI discovery + remediation', description: 'Zscaler-based discovery + governance onboarding for 9 shadow tools.', program_domain: 'ai_initiative', status: 'in_flight', total_budget_usd: 2_400_000, spent_to_date_usd: 1_200_000, exec_sponsor: 'CISO', touches_ai: true },
-  { name: 'M365 Copilot full rollout', description: 'Deploy Copilot across 8,400 eligible seats.', program_domain: 'ai_initiative', status: 'stabilizing', total_budget_usd: 8_400_000, spent_to_date_usd: 7_392_000, exec_sponsor: 'CIO', touches_ai: true },
+  { name: 'M365 Copilot full rollout', description: 'Deploy Copilot across 8,400 eligible seats.', program_domain: 'ai_initiative', status: 'stabilizing', total_budget_usd: 8_400_000, spent_to_date_usd: 7_392_000, exec_sponsor: 'CIO', touches_ai: true, pattern_id: 'PAT-PRG-COPILOT-001' },
   { name: 'Claims triage copilot', description: 'Claude-based claims denial prediction at scale.', program_domain: 'ai_initiative', status: 'in_flight', total_budget_usd: 3_800_000, spent_to_date_usd: 2_736_000, exec_sponsor: 'Revenue Cycle VP', touches_ai: true },
   { name: 'Sepsis model FDA-style validation', description: 'Clinical validation ahead of full deployment.', program_domain: 'clinical_ai', status: 'in_flight', total_budget_usd: 2_200_000, spent_to_date_usd: 1_210_000, exec_sponsor: 'CMIO', touches_ai: true },
   { name: 'Radiology AI consolidation', description: 'Evaluation to consolidate Aidoc + HeartFlow + others.', program_domain: 'ai_initiative', status: 'ideation', total_budget_usd: 4_800_000, spent_to_date_usd: 1_200_000, exec_sponsor: 'Chief Radiologist', touches_ai: true },
