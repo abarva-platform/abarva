@@ -2,6 +2,7 @@ import 'server-only';
 
 import {
   buildEnterpriseAgentContextBundle,
+  buildEnterpriseAgentContextBundleAsync,
   type EnterpriseAgentContextBundle,
   type EnterpriseAgentContextRequest,
   type EnterpriseAgentName,
@@ -45,6 +46,28 @@ export function buildProgramsContextBundle(
 }
 
 /**
+ * TD-5 — async two-source variant. Routes the same Programs broker
+ * request through {@link buildEnterpriseAgentContextBundleAsync},
+ * which prefers persisted tenant data when the adapter reports rows
+ * for the tenant and otherwise falls back to the synchronous fixture
+ * path. Surface, defaults, and bundle shape match the sync entry
+ * point above.
+ */
+export function buildProgramsContextBundleAsync(
+  request: ProgramsBrokerRequest,
+): Promise<EnterpriseAgentContextBundle> {
+  return buildEnterpriseAgentContextBundleAsync({
+    tenantKey: request.tenantKey,
+    programId: request.programId,
+    agentName: request.agentName,
+    surface: request.surface ?? 'programs',
+    allowL4RawContext: request.allowL4RawContext ?? false,
+    includeGraphNeighborhood: request.includeGraphNeighborhood ?? false,
+    requestedDomains: request.requestedDomains,
+  });
+}
+
+/**
  * PR-R · format the broker bundle into a prompt block for Nexus on
  * the /programs surfaces. Founder feedback #1: "[Nexus] does not have
  * the context of existing org structure ... who is who in IT".
@@ -64,8 +87,22 @@ export function formatProgramsBrokerBundleForPrompt(
   const tenantSummary = bundle.items.find((i) => i.kind === 'tenant_summary');
   const people = bundle.items.filter((i) => i.kind === 'person');
   const programs = bundle.items.filter((i) => i.kind === 'program');
+  // TD-5 — persisted-source bundles carry these new kinds. The fixture
+  // path never emits them, so the sections only appear when the
+  // adapter served the bundle. Rendered as small, bounded blocks so
+  // prompt budget is respected.
+  const kpis = bundle.items.filter((i) => i.kind === 'kpi_metric');
+  const crossProgramSignals = bundle.items.filter(
+    (i) => i.kind === 'cross_program_signal',
+  );
 
-  if (people.length === 0 && programs.length === 0 && !tenantSummary) {
+  if (
+    people.length === 0 &&
+    programs.length === 0 &&
+    kpis.length === 0 &&
+    crossProgramSignals.length === 0 &&
+    !tenantSummary
+  ) {
     return '';
   }
 
@@ -86,6 +123,20 @@ export function formatProgramsBrokerBundleForPrompt(
     sections.push(
       'Active program inventory:',
       ...programs.map((p) => `  - ${p.title} — ${p.summary}`),
+    );
+  }
+
+  if (kpis.length > 0) {
+    sections.push(
+      'KPI dictionary (current vs target with provenance):',
+      ...kpis.map((k) => `  - ${k.title}. ${k.summary}`),
+    );
+  }
+
+  if (crossProgramSignals.length > 0) {
+    sections.push(
+      'Cross-program signals (portfolio-wide patterns):',
+      ...crossProgramSignals.map((s) => `  - ${s.title}. ${s.summary}`),
     );
   }
 
