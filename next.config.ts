@@ -1,7 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['@anthropic-ai/sdk'],
+  // Server-only externals.
+  //
+  // - `@anthropic-ai/sdk` is excluded so the Edge bundler does not try to
+  //   inline it.
+  // - `docx` is the DOCX renderer used by the deliverable export pipeline
+  //   (src/lib/programs/exports/renderers/docx.ts). It is server-only
+  //   (~400KB) and must never appear in client bundles; keeping it in
+  //   `serverExternalPackages` guarantees Next.js externalises it on the
+  //   server and leaves it out of any client chunk.
+  serverExternalPackages: ['@anthropic-ai/sdk', 'docx'],
 
   // Enables `forbidden()` and `unauthorized()` from `next/navigation`.
   // Used by `src/lib/auth/tenant-access.ts` to render the /forbidden.tsx
