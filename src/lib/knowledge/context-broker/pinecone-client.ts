@@ -19,6 +19,9 @@ import 'server-only';
  * Environment:
  *   PINECONE_API_KEY      — required for `getPineconeClient()` to return non-null
  *   PINECONE_INDEX_NAME   — optional; defaults to `abarva-tenant-context-prod`
+ *                            Falls back to `PINECONE_INDEX` (legacy alias used
+ *                            by the existing Vercel project envs) when
+ *                            PINECONE_INDEX_NAME is unset.
  *
  * Index creation is OUT of scope. The PR description in CB-3 has the
  * one-time manual setup steps (dim 1536, metric cosine, serverless).
@@ -114,7 +117,10 @@ export interface PineconeClient {
  * Jest module mocking.
  */
 export interface PineconeIndexLike {
-  upsert(records: Array<{ id: string; values: number[]; metadata?: RecordMetadata }>): Promise<void>;
+  // Pinecone SDK v7 takes upsert({ records: [...] }), not upsert([...]).
+  upsert(args: {
+    records: Array<{ id: string; values: number[]; metadata?: RecordMetadata }>;
+  }): Promise<void>;
   query(options: {
     vector: number[];
     topK: number;
@@ -222,7 +228,11 @@ class PineconeClientImpl implements PineconeClient {
         values: item.vector,
         metadata: toRecordMetadata(item.metadata),
       }));
-      await this.index.upsert(records);
+      // Pinecone SDK v7 expects upsert({ records: [...] }), not
+      // upsert([...]). The older positional-array shape silently
+      // fails as "Must pass in at least 1 record to upsert" because
+      // the SDK reads `{ records }` from the first argument.
+      await this.index.upsert({ records });
       upsertedCount += batch.length;
     }
     return { upsertedCount };
@@ -288,7 +298,13 @@ class PineconeClientImpl implements PineconeClient {
 let cachedClient: PineconeClient | null = null;
 
 function readIndexName(): string {
-  return process.env.PINECONE_INDEX_NAME?.trim() || DEFAULT_INDEX_NAME;
+  // Prefer the canonical name; fall back to the legacy PINECONE_INDEX
+  // alias that the existing Vercel project envs use, then the default.
+  return (
+    process.env.PINECONE_INDEX_NAME?.trim() ||
+    process.env.PINECONE_INDEX?.trim() ||
+    DEFAULT_INDEX_NAME
+  );
 }
 
 /**
