@@ -26,6 +26,7 @@ import {
   ALL_CLIENTS,
   DEFAULT_CLIENT_KEY,
   inferClientKeyFromEmail,
+  industryCodeForClientName,
   isClientKey,
   type ClientKey,
 } from '@/lib/client-config';
@@ -326,6 +327,27 @@ describe('Probe 5 · inferClientKeyFromEmail', () => {
     expect(inferClientKeyFromEmail('demo-meridian+clerk_test@abarva.com')).not.toBe(
       'apexretail',
     );
+  });
+});
+
+// =====================================================================
+// Probe 5b · industryCodeForClientName · demo-client industry fallback
+// =====================================================================
+
+describe('Probe 5b · industryCodeForClientName', () => {
+  it('maps canonical demo client names to their program industry codes', () => {
+    expect(industryCodeForClientName('Apex Retail')).toBe('RETAIL');
+    expect(industryCodeForClientName('Apex Retail Group')).toBe('RETAIL');
+    expect(industryCodeForClientName('Meridian Health')).toBe('HEALTHCARE_IDN');
+    expect(industryCodeForClientName('Meridian Health System')).toBe('HEALTHCARE_IDN');
+    expect(industryCodeForClientName('First Capital')).toBe('FINSERV');
+    expect(industryCodeForClientName('Arcturus Financial Group')).toBe('FINSERV');
+  });
+
+  it('returns null for unknown or empty client names', () => {
+    expect(industryCodeForClientName('Unknown Client')).toBeNull();
+    expect(industryCodeForClientName('')).toBeNull();
+    expect(industryCodeForClientName(null)).toBeNull();
   });
 });
 

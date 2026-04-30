@@ -4,6 +4,7 @@
 // risk, module state transitions). All tenancy-asserted.
 
 import { getServerSupabase } from '@/lib/supabase-server';
+import { industryCodeForClientName } from '@/lib/client-config';
 import type {
   MilestoneStatus,
   ModuleStatus,
@@ -30,15 +31,29 @@ async function assertProgramTenancy(ctx: TenancyCtx, programId: string): Promise
   if (!program) throw new Error(`[programs/mutations] program ${programId} not accessible`);
 }
 
+export function resolveProgramIndustryCode(
+  client: { name?: string | null; industry_code?: string | null } | null,
+  fallback?: string | null,
+): string {
+  return (
+    client?.industry_code?.trim() ||
+    industryCodeForClientName(client?.name) ||
+    fallback?.trim() ||
+    'UNKNOWN'
+  ).toUpperCase();
+}
+
 async function resolveClientIndustryCode(clientId: string, fallback?: string | null): Promise<string> {
   const sb = getServerSupabase();
   const { data } = await sb
     .from('clients')
-    .select('industry_code')
+    .select('name, industry_code')
     .eq('id', clientId)
     .maybeSingle();
-  const fromClient = (data as { industry_code?: string | null } | null)?.industry_code;
-  return (fromClient?.trim() || fallback?.trim() || 'UNKNOWN').toUpperCase();
+  return resolveProgramIndustryCode(
+    data as { name?: string | null; industry_code?: string | null } | null,
+    fallback,
+  );
 }
 
 export interface OriginateProgramInput {

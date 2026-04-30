@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { currentUser } from '@clerk/nextjs/server';
 import { resolvePinnedSessionClientKey, resolveSessionRole } from '@/lib/auth/access-routing';
 import {
+  CLIENT_KEY_TO_INDUSTRY_CODE,
   CLIENT_KEY_TO_DB_NAME,
   DEFAULT_CLIENT_KEY,
   inferClientKeyFromEmail,
@@ -111,10 +112,11 @@ export async function getActiveClientRow(requestedClientId?: string | null): Pro
       .ilike('name', candidate)
       .maybeSingle();
     if (data) {
+      const row = data as { id: string; name: string; industry_code: string | null };
       return {
-        id: (data as { id: string }).id,
-        name: (data as { name: string }).name,
-        industry_code: (data as { industry_code: string | null }).industry_code,
+        id: row.id,
+        name: row.name,
+        industry_code: row.industry_code?.trim() || CLIENT_KEY_TO_INDUSTRY_CODE[key],
         key,
       };
     }
