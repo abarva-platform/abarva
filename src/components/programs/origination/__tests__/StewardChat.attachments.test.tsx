@@ -14,20 +14,37 @@
 //   3. The hidden file input carries the canonical mime allowlist
 //      `accept` attribute, ready for Wave 2 wiring.
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { TextDecoder } from 'node:util';
+import { useState, type ComponentProps } from 'react';
 import { StewardChat, type ChatTurn } from '../StewardChat';
 import { ATTACHMENT_MIME_ALLOWLIST } from '@/lib/programs/attachments/mime';
+
+global.TextDecoder = TextDecoder as typeof global.TextDecoder;
+
+const mockRouterPush = jest.fn();
 
 // next/navigation isn't relevant for render-only checks but the chat
 // imports useRouter unconditionally.
 jest.mock('next/navigation', () => ({
-  useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
+  useRouter: () => ({ push: mockRouterPush, replace: jest.fn() }),
 }));
 
 // AgentMarkdown does its own DOM things — we don't care about its
 // rendering here so a passthrough mock keeps the test focused.
 jest.mock('@/lib/agent/markdownRenderer', () => ({
   AgentMarkdown: ({ text }: { text: string }) => <span data-testid="markdown">{text}</span>,
+}));
+
+jest.mock('@/lib/shell/origination-handoff', () => ({
+  buildHandoffMarker: (programName: string) => ({
+    id: 'handoff-marker',
+    role: 'agent',
+    agentName: 'Steward',
+    text: `Continuing from ${programName}`,
+    timestamp: Date.now(),
+  }),
+  persistOriginationHandoff: jest.fn(),
 }));
 
 const TURNS: ChatTurn[] = [
@@ -38,7 +55,22 @@ const COLD_OPEN_TURNS: ChatTurn[] = [
   { id: 'cold-open-production', role: 'assistant', agentName: 'Steward', text: 'Welcome.' },
 ];
 
+function StatefulStewardChat(
+  props: Omit<ComponentProps<typeof StewardChat>, 'turns' | 'onTurnsChange'> & {
+    initialTurns?: ChatTurn[];
+  },
+) {
+  const { initialTurns = COLD_OPEN_TURNS, ...chatProps } = props;
+  const [turns, setTurns] = useState<ChatTurn[]>(initialTurns);
+  return <StewardChat {...chatProps} turns={turns} onTurnsChange={setTurns} />;
+}
+
 describe('StewardChat · OV2-4b paper-clip', () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+    mockRouterPush.mockClear();
+  });
+
   it('renders a paper-clip button in the composer', () => {
     render(
       <StewardChat
@@ -128,5 +160,59 @@ describe('StewardChat · starter prompts', () => {
     );
 
     expect(screen.queryByLabelText('Starter prompts')).toBeNull();
+  });
+});
+
+describe('StewardChat · handoff receipt', () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+    mockRouterPush.mockClear();
+  });
+
+  afterEach(() => {
+    delete (global as Partial<typeof globalThis>).fetch;
+  });
+
+  it('shows a handoff receipt when commit_program returns a program-created sentinel', async () => {
+    const streamedChunk = Buffer.from(
+      'Submitted for approval. [[program-created:APX-NEW-2026]]',
+    );
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      body: {
+        getReader: () => ({
+          read: jest
+            .fn()
+            .mockResolvedValueOnce({ done: false, value: streamedChunk })
+            .mockResolvedValueOnce({ done: true, value: undefined }),
+        }),
+      },
+    } as unknown as Response);
+
+    render(
+      <StatefulStewardChat
+        surface="/programs/new"
+        tenantName="Apex Retail"
+        programName="Apex ERP Modernization"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Apex ERP modernization' }));
+
+    const composer = screen.getByLabelText('Message Steward') as HTMLTextAreaElement;
+    await waitFor(() => {
+      expect(composer.value).toContain('Set up a new Apex Retail program');
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+    await waitFor(() => {
+      expect(screen.getByLabelText('Program handoff receipt')).toBeTruthy();
+    });
+    expect(screen.getByText('Submitted for approval')).toBeTruthy();
+    expect(screen.getByText(/Opening Apex ERP Modernization at/)).toBeTruthy();
+    expect(screen.getByText(/\/programs\/APX-NEW-2026/)).toBeTruthy();
   });
 });
