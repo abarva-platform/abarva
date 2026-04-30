@@ -38,6 +38,8 @@ export default async function SourceEventScorecardPage({
         <StageTrackerStrip
           stages={AMS_SOURCE_EVENT.stages}
           activeStage={event.currentStageLabel === 'Orals/BAFO' ? 'BAFO' : event.currentStageLabel}
+          variant="journey"
+          personaLabel="Sourcing lead"
         />
       }
     >

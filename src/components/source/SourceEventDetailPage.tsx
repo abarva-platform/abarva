@@ -1815,6 +1815,8 @@ export function SourceEventDetailPage() {
         <StageTrackerStrip
           stages={STAGES}
           activeStage={CURRENT_STAGE}
+          variant="journey"
+          personaLabel="Sourcing lead"
         />
       }
     >

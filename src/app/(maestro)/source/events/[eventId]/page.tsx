@@ -151,6 +151,8 @@ export default async function SourceEventDetailPage({
           stages={AMS_SOURCE_EVENT.stages}
           activeStage={event.currentStageLabel === 'Orals/BAFO' ? 'BAFO' : event.currentStageLabel}
           stageStates={stageStates}
+          variant="journey"
+          personaLabel="Sourcing lead"
         />
       }
     >

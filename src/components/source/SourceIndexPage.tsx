@@ -499,6 +499,8 @@ export function SourceIndexPage() {
         <StageTrackerStrip
           stages={AMS_SOURCE_EVENT.stages}
           activeStage={AMS_SOURCE_EVENT.activeStage}
+          variant="journey"
+          personaLabel="Sourcing lead"
         />
       }
     >
