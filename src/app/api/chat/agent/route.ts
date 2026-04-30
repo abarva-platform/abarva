@@ -229,6 +229,7 @@ export async function POST(request: Request) {
       surface,
       vectorIndexPending: true,
       worldviewPending: true,
+      worldviewHitsPresent: false,
     });
   }
 
