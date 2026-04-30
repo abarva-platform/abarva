@@ -7,6 +7,7 @@ import {
   useEffect,
   useRef,
   useState,
+  useSyncExternalStore,
 } from 'react';
 import { createPortal } from 'react-dom';
 import { SHELL } from '@/lib/shell/shell-tokens';
@@ -157,8 +158,22 @@ interface ToastContainerProps {
   onDismiss: (id: number) => void;
 }
 
+const getClientMountedSnapshot = () => true;
+const getServerMountedSnapshot = () => false;
+
+function subscribeToHydration(onStoreChange: () => void) {
+  const timeoutId = window.setTimeout(onStoreChange, 0);
+  return () => window.clearTimeout(timeoutId);
+}
+
 function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {
-  if (typeof document === 'undefined') return null;
+  const mounted = useSyncExternalStore(
+    subscribeToHydration,
+    getClientMountedSnapshot,
+    getServerMountedSnapshot,
+  );
+
+  if (!mounted) return null;
 
   return createPortal(
     <div
