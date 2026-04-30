@@ -3,6 +3,10 @@
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { useAtlasPageState } from '@/hooks/useAtlasPageState';
 import { ATLAS_SYNTHESIS_TURN_ID } from '@/lib/shell/atlas-page-state';
+// OV2-4b · in-conversation attachment chip rendering. Turns sent with
+// attachments carry the refs through to the user-side view; chips link
+// out to the signed-URL download endpoint.
+import { PersistedAttachmentChip } from '@/components/programs/attachments/AttachmentChip';
 
 interface AtlasChatOverlayProps {
   open: boolean;
@@ -82,6 +86,20 @@ export function AtlasChatOverlay({ open, onClose }: AtlasChatOverlayProps) {
             <p style={{ margin: 0, fontFamily: SHELL.SANS, fontSize: 13, lineHeight: 1.5 }}>
               {turn.text}
             </p>
+            {turn.attachments && turn.attachments.length > 0 && (
+              <div
+                style={{
+                  marginTop: 8,
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 6,
+                }}
+              >
+                {turn.attachments.map((att) => (
+                  <PersistedAttachmentChip key={att.id} attachment={att} />
+                ))}
+              </div>
+            )}
           </article>
         ))}
       </div>

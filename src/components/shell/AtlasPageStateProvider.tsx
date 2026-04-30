@@ -55,6 +55,9 @@ import {
   trackFailureModeFlagged,
   type FailureModeContext,
 } from '@/lib/programs/failure-mode-telemetry';
+// OV2-4b · attachment refs that ride along with the user turn for
+// chip rendering and pass through surfaceContext for the agent.
+import type { AttachmentChipRef } from '@/lib/programs/attachments/types';
 
 // ── Default surface-to-agent mapping ─────────────────────────────────────────
 
@@ -131,7 +134,7 @@ export function AtlasPageStateProvider({
   const firedFlagsRef = useRef<Set<number>>(new Set());
 
   const ask = useCallback(
-    async (text: string) => {
+    async (text: string, attachments?: AttachmentChipRef[]) => {
       if (!text.trim() || isStreaming) return;
 
       // Cancel any previous in-flight request
@@ -145,6 +148,7 @@ export function AtlasPageStateProvider({
         text: text.trim(),
         agentName: resolvedAgentName,
         timestamp: Date.now(),
+        attachments: attachments && attachments.length > 0 ? attachments : undefined,
       };
 
       setConversation(prev => [...prev, userTurn]);
@@ -164,6 +168,10 @@ export function AtlasPageStateProvider({
             content: t.text,
           }));
 
+        const mergedSurfaceContext =
+          attachments && attachments.length > 0
+            ? { ...surfaceContext, attachments }
+            : surfaceContext;
         const res = await fetch('/api/chat/agent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -173,7 +181,7 @@ export function AtlasPageStateProvider({
             surface,
             tenantName,
             stage: stage ?? undefined,
-            surfaceContext,
+            surfaceContext: mergedSurfaceContext,
             agentName: resolvedAgentName,
             conversationHistory,
             // Legacy compat — context string is built server-side from the
