@@ -1,12 +1,10 @@
 import { notFound } from 'next/navigation';
-import { AppShell } from '@/components/shell/AppShell';
 import { StageTrackerStrip } from '@/components/shell/StageTrackerStrip';
 import type { StageStatus } from '@/components/shell/StageTrackerStrip';
-import { SentinelAgentColumn } from '@/components/source/SentinelAgentColumn';
 import { SentinelSynthesisQuote } from '@/components/source/SentinelSynthesisQuote';
 import { SourceProvenanceRibbon } from '@/components/source/SourceProvenanceRibbon';
 import { DownloadContextButton } from '@/components/reasoning/DownloadContextButton';
-import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
+import { SourceEventAgentCanvas } from '@/components/source/SourceEventAgentCanvas';
 import { NexusEngagementCanvas } from '@/components/source/NexusEngagementCanvas';
 import { SourceCommercialEventSection } from '@/components/source/SourceCommercialEventSection';
 import { GateCriteriaPanel } from '@/components/source/GateCriteriaPanel';
@@ -58,7 +56,9 @@ export default async function SourceEventDetailPage({
   // Resolve typed instance for live synthesis. Fallback to AMS instance when
   // other events don't have a typed SourceEventInstance yet.
   const matchedInstance = SOURCE_EVENT_INSTANCES.find(i => i.id === eventId)
-    ?? SOURCE_EVENT_INSTANCES.find(i => event.name.toLowerCase().includes('ams'))
+    ?? (event.name.toLowerCase().includes('ams')
+      ? SOURCE_EVENT_INSTANCES.find((instance) => instance.id.toLowerCase().includes('ams'))
+      : undefined)
     ?? SOURCE_EVENT_INSTANCES[0];
 
   // Build gate-driven stage states when a typed instance is available.
@@ -134,22 +134,12 @@ export default async function SourceEventDetailPage({
     return top?.mitigations;
   })();
 
+  const sentinelQuote = `${event.name} at ${event.currentStageLabel}.${event.blocker ? ` Blocker: ${event.blocker}.` : ''}`;
+
   return (
-    <AppShell
-      surface="source"
-      surfaceContext={{
-        eventId: event.id,
-        eventName: event.name,
-        eventCode: event.code ?? '',
-        currentStage: event.currentStageLabel ?? '',
-        blocker: event.blocker ?? null,
-        valueAtStakeUsd: event.valueAtStakeUsd ?? null,
-      }}
-      topBarProps={{
-        tenantName: event.accountName,
-        showLocked: true,
-        context: `Source · ${event.name} · ${event.currentStageLabel}`,
-      }}
+    <SourceEventAgentCanvas
+      event={event}
+      quote={sentinelQuote}
       middleStrip={
         <StageTrackerStrip
           stages={AMS_SOURCE_EVENT.stages}
@@ -158,137 +148,157 @@ export default async function SourceEventDetailPage({
         />
       }
     >
-      <SentinelAgentColumn
-        synthesisNode={
-          <SentinelSynthesisQuote
-            instanceId={matchedInstance?.id ?? 'ams-vendor-consolidation-2026'}
-            fallback={`${event.name} at ${event.currentStageLabel}.${event.blocker ? ` Blocker: ${event.blocker}.` : ''}`}
-          />
-        }
-        provenanceSlot={
-          synthesisContext ? (
-            <>
-              <SourceProvenanceRibbon context={synthesisContext} />
-              <div style={{ marginTop: 4 }}>
-                <DownloadContextButton instanceId={matchedInstance.id} surface="source" />
-              </div>
-            </>
-          ) : undefined
-        }
-        quote={`${event.name} at ${event.currentStageLabel}.`}
-        agentContext={`Sentinel · ${event.name} · ${event.currentStageLabel}`}
-        actions={[
-          { letter: 'A', text: 'Review BAFO award status', detail: 'Vendor C selected — award and integration contract in final review' },
-          { letter: 'B', text: 'Open CDP linked program', detail: 'APX-CDP-2026 P3 Design · Architecture sprint active' },
-          { letter: 'C', text: 'Inspect vendor evidence', detail: 'BAFO submissions and SOC-2 attestations on file' },
-        ]}
-      />
-      <SourceWorkingPane>
+      <section
+        aria-label="Sentinel event synthesis"
+        style={{
+          border: '1px solid rgba(12,26,58,0.12)',
+          borderRadius: 14,
+          background: '#FFFFFF',
+          padding: '14px 16px',
+          display: 'grid',
+          gap: 10,
+        }}
+      >
         <div
           style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            gap: 8,
-            marginBottom: 12,
+            fontFamily: 'DM Mono, monospace',
+            fontSize: 9,
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            color: 'rgba(12,26,58,0.52)',
+            fontWeight: 700,
           }}
         >
-          {failureModeSummary && (
-            <FailureModeWarningChip
-              topLabel={failureModeSummary.topLabel}
-              topConfidence={failureModeSummary.topConfidence}
-              highCount={failureModeSummary.highConfidence}
-              mitigations={failureModeTopMitigations}
-            />
-          )}
-          {evidenceQualitySummary && evidenceQualitySummary.total > 0 && (
-            <EvidenceQualityChip
-              summary={evidenceQualitySummary}
-              grade={evidenceQualityGrade}
-            />
-          )}
-          {matchedInstance && (
-            <CompareWithDropdown
-              currentInstanceId={matchedInstance.id}
-              allOtherIds={getAllInstanceIds()}
-            />
-          )}
-          <a
-            href={`/source/events/${eventId}/report`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              fontFamily: 'DM Sans, sans-serif',
-              fontSize: 10,
-              color: 'rgba(0,0,0,0.5)',
-              textDecoration: 'none',
-              borderBottom: '1px dashed rgba(0,0,0,0.35)',
-              paddingBottom: 1,
-              marginLeft: 4,
-            }}
-          >
-            Full report →
-          </a>
-          <StageAdvanceButton
-            eventId={event.id}
-            currentStageKey={event.currentStageKey}
+          Sentinel synthesis
+        </div>
+        <p
+          style={{
+            margin: 0,
+            fontFamily: 'Fraunces, Georgia, serif',
+            fontSize: 18,
+            fontStyle: 'italic',
+            lineHeight: 1.5,
+            color: 'rgba(12,26,58,0.92)',
+          }}
+        >
+          <SentinelSynthesisQuote
+            instanceId={matchedInstance?.id ?? 'ams-vendor-consolidation-2026'}
+            fallback={sentinelQuote}
+          />
+        </p>
+        {synthesisContext ? (
+          <div>
+            <SourceProvenanceRibbon context={synthesisContext} />
+            <div style={{ marginTop: 6 }}>
+              <DownloadContextButton instanceId={matchedInstance.id} surface="source" />
+            </div>
+          </div>
+        ) : null}
+      </section>
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          gap: 8,
+          marginBottom: 12,
+        }}
+      >
+        {failureModeSummary && (
+          <FailureModeWarningChip
+            topLabel={failureModeSummary.topLabel}
+            topConfidence={failureModeSummary.topConfidence}
+            highCount={failureModeSummary.highConfidence}
+            mitigations={failureModeTopMitigations}
+          />
+        )}
+        {evidenceQualitySummary && evidenceQualitySummary.total > 0 && (
+          <EvidenceQualityChip
+            summary={evidenceQualitySummary}
+            grade={evidenceQualityGrade}
+          />
+        )}
+        {matchedInstance && (
+          <CompareWithDropdown
+            currentInstanceId={matchedInstance.id}
+            allOtherIds={getAllInstanceIds()}
+          />
+        )}
+        <a
+          href={`/source/events/${eventId}/report`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            fontFamily: 'DM Sans, sans-serif',
+            fontSize: 10,
+            color: 'rgba(0,0,0,0.5)',
+            textDecoration: 'none',
+            borderBottom: '1px dashed rgba(0,0,0,0.35)',
+            paddingBottom: 1,
+            marginLeft: 4,
+          }}
+        >
+          Full report →
+        </a>
+        <StageAdvanceButton
+          eventId={event.id}
+          currentStageKey={event.currentStageKey}
+        />
+      </div>
+      <NexusEngagementCanvas event={event} />
+      <PatternRecommendationChips
+        eventName={event.name}
+        eventType={event.archetype}
+      />
+      {matchedInstance && nextGateEvaluations.length > 0 && (
+        <GateCriteriaPanel
+          evaluations={nextGateEvaluations}
+          pattern={PAT_SRC_AMS_001}
+          currentStageId={nextGateTargetStageId}
+          title={`Gate criteria — ${nextGateTargetStageId ?? 'next stage'}`}
+        />
+      )}
+      {matchedInstance && (
+        <div style={{ marginTop: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+            <BulkEvidenceImportButton instanceId={matchedInstance.id} />
+          </div>
+          <AddEvidenceForm
+            instanceId={matchedInstance.id}
+            currentStage={matchedInstance.currentStage}
           />
         </div>
-        <NexusEngagementCanvas event={event} />
-        <PatternRecommendationChips
-          eventName={event.name}
-          eventType={event.archetype}
-        />
-        {matchedInstance && nextGateEvaluations.length > 0 && (
-          <GateCriteriaPanel
-            evaluations={nextGateEvaluations}
-            pattern={PAT_SRC_AMS_001}
-            currentStageId={nextGateTargetStageId}
-            title={`Gate criteria — ${nextGateTargetStageId ?? 'next stage'}`}
+      )}
+      {matchedInstance && (
+        <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>
+          <MissionListInteractive
+            missions={derivedMissions}
+            title="Pending gates · this event"
+            maxRows={6}
           />
-        )}
-        {matchedInstance && (
-          <div style={{ marginTop: 12 }}>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
-              <BulkEvidenceImportButton instanceId={matchedInstance.id} />
-            </div>
-            <AddEvidenceForm
-              instanceId={matchedInstance.id}
-              currentStage={matchedInstance.currentStage}
-            />
-          </div>
-        )}
-        {matchedInstance && (
-          <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>
-            <MissionListInteractive
-              missions={derivedMissions}
-              title="Pending gates · this event"
-              maxRows={6}
-            />
-            <RecentMissionStates instanceId={matchedInstance.id} limit={3} />
-          </div>
-        )}
-        {matchedInstance && (
-          <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <InstanceEventTimelineFilterBar filters={timelineFilters} />
-            <InstanceEventTimeline
-              entries={buildInstanceEventTimeline(matchedInstance.id)}
-              filters={timelineFilters}
-            />
-          </div>
-        )}
-        {/* REASON-34 — Cascade impact graph for this source-event instance */}
-        {matchedInstance && (
-          <ReasoningErrorBoundary section="Cascade Impact">
-            <CascadeImpactSection instanceId={matchedInstance.id} />
-          </ReasoningErrorBoundary>
-        )}
-        <SourceCommercialEventSection
-          eventId={event.id}
-          eventName={event.name}
-          accountName={event.accountName}
-        />
-      </SourceWorkingPane>
-    </AppShell>
+          <RecentMissionStates instanceId={matchedInstance.id} limit={3} />
+        </div>
+      )}
+      {matchedInstance && (
+        <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <InstanceEventTimelineFilterBar filters={timelineFilters} />
+          <InstanceEventTimeline
+            entries={buildInstanceEventTimeline(matchedInstance.id)}
+            filters={timelineFilters}
+          />
+        </div>
+      )}
+      {/* REASON-34 — Cascade impact graph for this source-event instance */}
+      {matchedInstance && (
+        <ReasoningErrorBoundary section="Cascade Impact">
+          <CascadeImpactSection instanceId={matchedInstance.id} />
+        </ReasoningErrorBoundary>
+      )}
+      <SourceCommercialEventSection
+        eventId={event.id}
+        eventName={event.name}
+        accountName={event.accountName}
+      />
+    </SourceEventAgentCanvas>
   );
 }
