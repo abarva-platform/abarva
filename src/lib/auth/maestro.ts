@@ -37,7 +37,7 @@ export function personMatchesClerkEmail(
   if (!person) return false;
   if (emailCandidates.length === 0) return true;
   const personEmail = person.email?.trim().toLowerCase();
-  if (!personEmail) return true;
+  if (!personEmail) return false;
   return emailCandidates.includes(personEmail);
 }
 
