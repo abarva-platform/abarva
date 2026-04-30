@@ -855,7 +855,9 @@ data_model:
       doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
       section: "B.4 Cross-cutting concerns — Notifications"
       quoted_requirement: "New table program_notifications (id, tenant_key, program_id, recipient_user_id, kind, body, link, created_at, read_at). Email mirror via Resend or Postmark."
-    current_state: documented_not_built
+    current_state: built_and_verified
+    built_at: "2026-04-30"
+    validation_note: "Migration 20260430141000_program_notifications.sql. Email send layer via Resend in OV2-2d-NOTIFY PR#1274."
     code_check:
       expected_files:
         - supabase/migrations/*notification*
