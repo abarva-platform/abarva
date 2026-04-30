@@ -1,22 +1,69 @@
 // commit_program tool · F0.4 first tool, used by Surface 1 (/programs/new)
 //
+// OV2-2b · Tenant-admin approval queue wiring (this file's redesign)
+// ──────────────────────────────────────────────────────────────────────
+// Investigation findings (pre-OV2-2b shape, for the audit trail):
+//
+//   • The pre-OV2-2b tool called `originateProgram(tenancy, …)` which
+//     inserted an `engagements` row with `status='active'`,
+//     `current_phase=0` — a program went LIVE the instant Steward
+//     committed the brief. No tenant-admin signoff in between.
+//   • The handler returned `{ program_id, program_name, redirect_to,
+//     surface }`; Steward read the result and announced "Registered ✅"
+//     with a redirect link. Idempotency guard: a same-name insert
+//     within 5 minutes returned the existing row instead of double-
+//     inserting.
+//   • There was no "draft" mode — the tool always flipped to active.
+//
+// What changes in OV2-2b (per design doc §B.2 state machine + §D.0.5
+// Gate 0b · Tenant Admin approval):
+//
+//   • The engagement is now created with `lifecycle_state =
+//     'submitted_for_approval'` (NOT 'active'). The legacy `status`
+//     column is set to 'draft' so old code paths that read `status`
+//     don't treat the program as live.
+//   • `current_phase` stays 0 to preserve existing read-path semantics
+//     (queries/UI that read `current_phase ?? 0`); the gate for
+//     "running vs. waiting" is `lifecycle_state`, not the phase
+//     number. Per the slice spec: limbo, not phase 0 — but the phase
+//     rail still has to render something coherent.
+//   • Immediately after the engagement insert, we capture a brief
+//     snapshot and call `submitForApproval(...)` from
+//     `lib/programs/approval.ts`. That helper writes a row into
+//     `program_approval_requests` and (per its contract) also flips
+//     `engagements.lifecycle_state` to 'submitted_for_approval' (no-op
+//     since we already set it, but the helper's invariant is
+//     preserved).
+//   • Rollback discipline: if EITHER the brief-snapshot step OR the
+//     `submitForApproval` call throws, we DELETE the just-inserted
+//     engagement so we never leave an orphan row. The
+//     `program_approval_requests.program_id` FK is ON DELETE CASCADE
+//     — rollback is safe even if a partial approval row exists
+//     (which it shouldn't, since we only call submit once).
+//   • The tool now returns `{ engagement_id, approval_request_id,
+//     program_name, lifecycle_state, redirect_to, surface }` so
+//     Steward can name what's pending. The natural-language line
+//     Steward should read aloud is described in the tool
+//     `description` field below.
+//
 // When the user confirms the program brief Steward has assembled, the
 // agent emits a tool_use block with the structured fields. The route
-// invokes this handler, which calls into the existing program-creation
-// path (originateProgram). Only after the DB write returns does the
-// agent generate the success-confirmation message — this is the
-// architectural mechanism that makes "Registered ✅ but DB write
-// failed" structurally impossible.
+// invokes this handler. Only after the engagement insert AND the
+// approval-request insert both succeed does the agent generate the
+// "submitted for approval" confirmation — this is the architectural
+// mechanism that makes "Registered ✅ but DB write failed" structurally
+// impossible.
 //
 // Per kickoff §4 F0.4: surfaces = ['/programs/new', '/demo/programs/new'].
 
 import type { AgentTool, ToolResult } from '../registry';
 import { registerTool } from '../registry';
 import { requireTenancy, TenancyError } from '@/app/api/v1/programs/_auth';
-import { originateProgram } from '@/lib/programs/mutations';
+import { submitForApproval } from '@/lib/programs/approval';
 import type { ArchetypeKey, OriginationForm } from '@/lib/programs/types.ui';
 import type { OriginSource } from '@/lib/programs/types.db';
 import { getServerSupabase } from '@/lib/supabase-server';
+import { getActiveClientRow } from '@/lib/active-client';
 import { markDraftCommitted } from '@/lib/programs/origination-drafts';
 
 // Postgres UUID v4 format (also matches v1/v3/v5 — sufficient for input
@@ -35,12 +82,45 @@ interface CommitProgramInput {
   matched_pattern_id?: string;
 }
 
+/**
+ * Best-effort cleanup: delete the just-inserted engagement so we never
+ * leave a row in 'submitted_for_approval' without a matching approval
+ * request. This is the manual transactional unit; Supabase doesn't give
+ * us a single-statement BEGIN/ROLLBACK over the JS client, so we do the
+ * compensating delete explicitly. CASCADE on
+ * `program_approval_requests.program_id` ensures any partial child row
+ * goes too. Errors during cleanup are swallowed and logged — the caller
+ * already has the original failure to surface; we don't want to mask it.
+ */
+async function rollbackEngagement(programId: string): Promise<void> {
+  try {
+    const sb = getServerSupabase();
+    await sb.from('engagements').delete().eq('id', programId);
+  } catch (cleanupErr) {
+    // We log but don't rethrow — the original error from
+    // submitForApproval is the one Steward needs to recover from.
+    console.error(
+      '[commit_program] rollback delete failed for engagement',
+      programId,
+      cleanupErr,
+    );
+  }
+}
+
 export const commitProgramTool: AgentTool<CommitProgramInput> = {
   name: 'commit_program',
   description:
-    'Persist a new program to the database after the user has explicitly confirmed the program brief. ' +
-    'Returns the program id on success. Call this only after the user says yes to your "Shall I register?" ' +
-    'question — never speculatively. ' +
+    'Submit a new program brief for tenant-admin approval after the user has explicitly confirmed it. ' +
+    'IMPORTANT: this tool no longer goes live immediately — per the OV2-2 redesign, the program enters ' +
+    'the `submitted_for_approval` state and a row is added to the tenant-admin approval queue. The ' +
+    'tenant admin reviews the brief and either approves (program flips to `approved` and Phase 0 unlocks) ' +
+    'or rejects (returns to draft with rationale). Returns the engagement id AND the approval request id. ' +
+    'On success, tell the user — in your own words — that the brief has been submitted for approval, ' +
+    'name what happens next (a tenant admin will review and approve before Phase 0 unlocks), and let them ' +
+    'know they can navigate to /programs/<engagement_id> to see the approval-pending state. Do NOT say ' +
+    '"the program is now active" or "registered" — the program is QUEUED, not running. ' +
+    'Call this only after the user says yes to your "Shall I submit this for approval?" question — never ' +
+    'speculatively. ' +
     'IMPORTANT: sponsor_person_id and lead_person_id MUST be UUIDs from the persons table. ' +
     'If the user has named a role ("CIO") or a person ("Lin Martinez") without giving you a UUID, ' +
     'call the `lookup_person` tool FIRST to resolve them — do NOT ask the user to paste a UUID themselves. ' +
@@ -141,6 +221,26 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
       throw err;
     }
 
+    // Resolve the active client row again to recover the tenant_key
+    // (TEXT, e.g. 'apexretail') alongside the clientId UUID. The
+    // approval table keys by tenant_key; engagements key by client_id.
+    // Both come from the same client lookup, but `requireTenancy` only
+    // exposes the UUID, so we re-query for the key.
+    const activeClient = await getActiveClientRow().catch(() => null);
+    if (!activeClient || activeClient.id !== tenancy.clientId) {
+      // Defensive: the active-client resolution should always agree
+      // with requireTenancy. If it doesn't, something is off and we
+      // refuse to write rather than guess.
+      return {
+        success: false,
+        error: 'tenant_key_resolution_failed',
+        recovery:
+          "I can't pin the active client right now. Refresh the page and I'll try again — if this " +
+          'persists, your session is in a weird state and a sign-out/sign-in will fix it.',
+      };
+    }
+    const tenantKey = activeClient.key;
+
     const originationForm: OriginationForm = {
       name: input.program_name,
       useCase: input.problem_statement,
@@ -153,13 +253,15 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
     // for this client in the last 5 minutes, return that one instead
     // of inserting a duplicate. Defends against double-click on
     // confirm, network retry, or the agent calling commit_program
-    // twice in the same conversation.
+    // twice in the same conversation. (We also short-circuit for an
+    // already-pending approval request on that engagement so we don't
+    // double-queue.)
+    const sb = getServerSupabase();
     try {
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60_000).toISOString();
-      const sb = getServerSupabase();
       const { data: existing } = await sb
         .from('engagements')
-        .select('id, name, graph_node_id, created_at')
+        .select('id, name, created_at, lifecycle_state')
         .eq('client_id', tenancy.clientId)
         .eq('name', originationForm.name)
         .gte('created_at', fiveMinutesAgo)
@@ -167,21 +269,40 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
         .limit(1)
         .maybeSingle();
       if (existing) {
-        const row = existing as { id: string; name: string };
-        // Best-effort: dissociate the open draft if one exists so a
-        // fresh /programs/new visit doesn't re-hydrate the just-
-        // committed thread. Non-fatal if it fails.
+        const row = existing as {
+          id: string;
+          name: string;
+          lifecycle_state: string | null;
+        };
+        // Try to find the matching approval request so Steward can
+        // reference it in the replay message. Best-effort: if we
+        // can't find it (e.g. raced), we still return the engagement.
+        const { data: existingApproval } = await sb
+          .from('program_approval_requests')
+          .select('id')
+          .eq('program_id', row.id)
+          .eq('request_status', 'pending')
+          .order('requested_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
         try {
           await markDraftCommitted(tenancy, ctx.surface, row.id);
         } catch {
           // ignore
         }
+        // Use the existing `program-created` sentinel — the client's
+        // StewardChat component watches for it specifically and
+        // navigates to /programs/<id>. The wording is a hint to the
+        // browser, not user-visible; renaming would break navigation.
         ctx.writer?.write(`\n[[program-created:${row.id}]]`);
         return {
           success: true,
           data: {
-            program_id: row.id,
+            engagement_id: row.id,
+            approval_request_id:
+              (existingApproval as { id: string } | null)?.id ?? null,
             program_name: row.name,
+            lifecycle_state: row.lifecycle_state ?? 'submitted_for_approval',
             redirect_to: `/programs/${row.id}`,
             surface: ctx.surface,
             idempotent_replay: true,
@@ -194,52 +315,181 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
       // a legitimate registration on a transient lookup error.
     }
 
+    // ── Step 1 · insert the engagement in 'submitted_for_approval' ──
+    //
+    // NOTE: engagements has no `created_by` column on the current
+    // schema — creator attribution is captured in module_state_log
+    // (changed_by_user_id) and the approval-request row's
+    // requested_by_user_id. Don't reintroduce a created_by write.
+    let programId: string;
+    let programName: string;
     try {
-      const program = await originateProgram(tenancy, {
-        name: originationForm.name,
-        useCase: originationForm.useCase,
-        archetype: input.classification ?? null,
-        originSource: 'maestro_console' as OriginSource,
-        originSourceRef: null,
-        acceptedPatternKey: input.matched_pattern_id ?? null,
-        sponsorUserId: originationForm.sponsorPersonId,
-        leadUserId: originationForm.leadPersonId,
-      });
-
-      // Surface 1 PR3: dissociate the open origination draft on this
-      // surface so a subsequent /programs/new visit starts fresh.
-      // Best-effort — non-fatal if it fails.
-      try {
-        await markDraftCommitted(tenancy, ctx.surface, program.id);
-      } catch {
-        // ignore
+      const { data, error } = await sb
+        .from('engagements')
+        .insert({
+          client_id: tenancy.clientId,
+          name: originationForm.name,
+          // Legacy lifecycle: leave at 'draft' so old code paths that
+          // still read `status` correctly see this program as not-yet-
+          // running. New code paths read `lifecycle_state`.
+          status: 'draft',
+          lifecycle_state: 'submitted_for_approval',
+          // Existing convention: keep current_phase = 0 so phase-rail
+          // queries that read `current_phase ?? 0` continue to render.
+          // The gate for "running vs. waiting" is lifecycle_state, not
+          // the phase number.
+          current_phase: 0,
+          program_archetype: input.classification ?? null,
+          origin_source: 'maestro_console' as OriginSource,
+          origin_source_ref: null,
+          maestro_oversight_level: 'partial',
+          founder_approval_required: false,
+          data_residency_region: null,
+          retention_policy_years: 7,
+        })
+        .select('id, name')
+        .single();
+      if (error || !data) {
+        const message = error?.message ?? 'unknown insert error';
+        return {
+          success: false,
+          error: `engagement_insert_failed: ${message}`,
+          recovery:
+            "Couldn't write the program to the database — the API returned an error. " +
+            'Want me to retry, or do you want me to capture this as a draft for review?',
+        };
       }
-
-      // Surface 1 navigation sentinel: tell the client the program is
-      // ready to be navigated to. Agent-authored confirmation text still
-      // streams normally; this sentinel is stripped client-side before
-      // display (StewardChat scrubs the regex).
-      ctx.writer?.write(`\n[[program-created:${program.id}]]`);
-
-      return {
-        success: true,
-        data: {
-          program_id: program.id,
-          program_name: program.name,
-          redirect_to: `/programs/${program.id}`,
-          surface: ctx.surface,
-        },
-      };
+      programId = (data as { id: string }).id;
+      programName = (data as { name: string }).name;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return {
         success: false,
-        error: `originate_failed: ${message}`,
+        error: `engagement_insert_failed: ${message}`,
         recovery:
           "Couldn't write the program to the database — the API returned an error. " +
           'Want me to retry, or do you want me to capture this as a draft for review?',
       };
     }
+
+    // Build the brief snapshot. This is the audit-quality payload
+    // the tenant admin will review and that is preserved verbatim
+    // even if the engagement is later edited. Normalize: strip
+    // optional fields with empty values so the JSONB stays clean.
+    const briefSnapshot: Record<string, unknown> = {
+      program_name: originationForm.name,
+      problem_statement: originationForm.useCase,
+      sponsor_person_id: originationForm.sponsorPersonId,
+      lead_person_id: originationForm.leadPersonId,
+      classification: input.classification ?? null,
+      matched_pattern_id: input.matched_pattern_id ?? null,
+      submitted_from_surface: ctx.surface,
+      submitted_at: new Date().toISOString(),
+    };
+    if (input.target_outcome && input.target_outcome.trim()) {
+      briefSnapshot.target_outcome = input.target_outcome.trim();
+    }
+    if (input.timeline && input.timeline.trim()) {
+      briefSnapshot.timeline = input.timeline.trim();
+    }
+
+    // ── Step 2 · submit for approval (transactional with rollback) ──
+    let approvalRequestId: string;
+    try {
+      const approval = await submitForApproval({
+        tenantKey,
+        programId,
+        requestedByUserId: tenancy.userId,
+        briefSnapshot,
+      });
+      approvalRequestId = approval.id;
+    } catch (submitErr) {
+      // Compensating rollback: delete the just-created engagement so
+      // we never end up with a 'submitted_for_approval' row without a
+      // matching approval request. This is the surrogate for a real
+      // DB transaction; CASCADE handles any partial child row.
+      await rollbackEngagement(programId);
+      const message =
+        submitErr instanceof Error ? submitErr.message : String(submitErr);
+      return {
+        success: false,
+        error: `approval_submit_failed: ${message}`,
+        recovery:
+          "Couldn't queue the brief for tenant-admin approval — the approval-request write failed " +
+          'and I rolled back the engagement so we don\'t have an orphan record. Want me to retry, ' +
+          'or capture this as a local draft and you can submit later?',
+      };
+    }
+
+    // ── Step 3 · best-effort post-write side effects ──
+    // pattern_match_logs and module_state_log are useful audit trails
+    // but not load-bearing for the approval queue. If they fail we log
+    // and continue — rolling back here would lose a successful
+    // approval submission.
+    try {
+      if (input.matched_pattern_id) {
+        await sb.from('pattern_match_logs').insert({
+          engagement_id: programId,
+          pattern_key: input.matched_pattern_id,
+          match_confidence: null,
+          match_context_jsonb: {
+            use_case: originationForm.useCase,
+            accepted_at_origination: true,
+          },
+          suggested_action: 'pattern',
+          acted_upon: true,
+          acted_upon_at: new Date().toISOString(),
+          acted_upon_by_user_id: tenancy.userId,
+          matched_by_agent: 'classifier_v1',
+        });
+      }
+      await sb.from('module_state_log').insert({
+        engagement_id: programId,
+        module_key: 'origination',
+        previous_state: null,
+        new_state: 'submitted_for_approval',
+        changed_by_user_id: tenancy.userId,
+        context_jsonb: {
+          pattern_key: input.matched_pattern_id ?? null,
+          origin: 'maestro_console',
+          approval_request_id: approvalRequestId,
+        },
+      });
+    } catch (sideEffectErr) {
+      console.error(
+        '[commit_program] post-submit side-effect log failed (non-fatal)',
+        sideEffectErr,
+      );
+    }
+
+    // Surface 1 PR3: dissociate the open origination draft on this
+    // surface so a subsequent /programs/new visit starts fresh.
+    // Best-effort — non-fatal if it fails.
+    try {
+      await markDraftCommitted(tenancy, ctx.surface, programId);
+    } catch {
+      // ignore
+    }
+
+    // Surface 1 navigation sentinel: tell the client the program is
+    // ready to be navigated to. Reuses the existing `program-created`
+    // sentinel — StewardChat watches for it specifically. The
+    // sentinel is a navigation hint stripped client-side before
+    // display; the user-visible message that Steward generates is
+    // what carries the new "submitted for approval" semantics.
+    ctx.writer?.write(`\n[[program-created:${programId}]]`);
+
+    return {
+      success: true,
+      data: {
+        engagement_id: programId,
+        approval_request_id: approvalRequestId,
+        program_name: programName,
+        lifecycle_state: 'submitted_for_approval',
+        redirect_to: `/programs/${programId}`,
+        surface: ctx.surface,
+      },
+    };
   },
 };
 
