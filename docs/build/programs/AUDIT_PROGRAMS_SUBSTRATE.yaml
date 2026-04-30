@@ -1949,7 +1949,16 @@ tenant_context:
       doc: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md
       section: "Various — explicit gap flagged in conversation"
       quoted_requirement: "we haven't even loaded graph edges in postgres, don't have vector embeddings"
-    current_state: documented_not_built
+    current_state: partial
+    built_at: "2026-04-30"
+    validation_note: |
+      Phase 1 partial: src/lib/intelligence/persistence.ts created (expected_files satisfied).
+      queryEnterpriseContextChunks() + buildTenantContextBlock() query enterprise_context_chunks
+      for segments 01_enterprise_profile, 02_org_structure, 06_program_inventory, 03_it_landscape,
+      14_cross_program_signals. Agent route (api/chat/agent/route.ts) wired: persistence-first with
+      fallback to demo-context.ts fixture. Apex Retail has 415 chunks loaded (embedding_status=pending).
+      Remaining: embeddings generation (DM-VECTOR-EMBEDDING-PIPELINE), stage/category corpus patterns
+      (agent-retrieval.ts — blocked on Pinecone vector retrieval), parity tests.
     code_check:
       expected_files:
         - src/lib/intelligence/persistence.ts
