@@ -58,6 +58,13 @@ import "@/lib/agent/tools/program/registerPlaceholderPerson";
 // static doctrine; runtime evidence-evaluation is deferred to the
 // future knowledge-broker layer.
 import "@/lib/agent/tools/program/advancePhase";
+// Surface 2 PR-Q — navigate_to tool. Registered for every entry
+// surface so any agent can take the user somewhere (e.g. Nexus on
+// /programs redirects new-program intent to /programs/new where
+// Steward owns origination). Closes founder feedback "[Nexus] does
+// not help me navigate to phase 1 ... I don't have a navigation
+// tool in my current session."
+import "@/lib/agent/tools/program/navigateTo";
 // Surface 2 PR-INT-C — Sentinel tools for /intelligence surface.
 // search_patterns + pattern_neighborhood + evidence_lookup register
 // for surface '/intelligence'. Vector retrieval is not live yet

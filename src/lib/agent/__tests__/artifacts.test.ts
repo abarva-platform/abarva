@@ -727,3 +727,56 @@ describe('extractArtifacts · Surface 2 PR-G-prime question-resolved', () => {
     ).toHaveLength(0);
   });
 });
+
+describe('extractArtifacts · PR-Q navigate-to', () => {
+  it('parses a relative path with rationale and replace=false default', () => {
+    const r = extractArtifacts(
+      '[[artifact:navigate-to]]{"target":"/programs/new","rationale":"Origination intent"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(1);
+    expect(r.artifacts[0]).toMatchObject({
+      type: 'navigate-to',
+      target: '/programs/new',
+      rationale: 'Origination intent',
+    });
+    expect((r.artifacts[0] as { replace?: boolean }).replace).toBe(false);
+  });
+
+  it('parses replace=true for consolidating navigations', () => {
+    const r = extractArtifacts(
+      '[[artifact:navigate-to]]{"target":"/programs/apx-cdp-2026","replace":true}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(1);
+    expect(r.artifacts[0]).toMatchObject({
+      type: 'navigate-to',
+      target: '/programs/apx-cdp-2026',
+      replace: true,
+    });
+  });
+
+  it('rejects an absolute http URL (security: stay on-app)', () => {
+    expect(
+      extractArtifacts(
+        '[[artifact:navigate-to]]{"target":"https://evil.example.com/steal"}[[/artifact]]',
+      ).artifacts,
+    ).toHaveLength(0);
+  });
+
+  it('rejects a protocol-relative `//host` (which browsers route off-app)', () => {
+    expect(
+      extractArtifacts('[[artifact:navigate-to]]{"target":"//evil.example.com"}[[/artifact]]').artifacts,
+    ).toHaveLength(0);
+  });
+
+  it('rejects empty target', () => {
+    expect(
+      extractArtifacts('[[artifact:navigate-to]]{"target":""}[[/artifact]]').artifacts,
+    ).toHaveLength(0);
+  });
+
+  it('rejects target missing leading slash', () => {
+    expect(
+      extractArtifacts('[[artifact:navigate-to]]{"target":"programs/new"}[[/artifact]]').artifacts,
+    ).toHaveLength(0);
+  });
+});

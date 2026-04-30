@@ -44,6 +44,16 @@ export type ArtifactType =
   // don't re-ask the same opener. Closes the "Nexus repeats itself"
   // observation from the surface-area doc §2 horizontal track.
   | 'question-resolved' // {questionId, questionText, resolutionSummary?}
+  // PR-Q (Wave 2 polish, founder feedback) · navigation tool.
+  // When the user wants to be taken somewhere — to a phase module,
+  // to /programs/new for origination, to a specific program —
+  // the navigate_to tool emits this artifact via ctx.writer.
+  // AtlasPageStateProvider intercepts it post-stream and calls
+  // router.push(target). Same pattern as program-phase-changed →
+  // router.refresh() (PR-L). Closes the founder feedback "Nexus
+  // does not help me navigate to phase 1" by giving Nexus a real
+  // navigation primitive instead of "I don't have a tool".
+  | 'navigate-to' // {target, rationale?, replace?}
   // Surface 2 PR-L · emitted by the advance_phase tool (via ctx.writer)
   // after a successful gate evaluation + DB mutation. The client uses
   // this to refresh server data in place via router.refresh() — the
@@ -235,6 +245,28 @@ export interface QuestionResolvedArtifact {
 }
 
 /**
+ * PR-Q · navigate-to artifact. Emitted by the navigate_to tool (or
+ * directly by the agent's text stream when the chat surface registers
+ * the tool). The AtlasPageStateProvider intercepts these post-stream
+ * and calls router.push(target) — same pattern as
+ * program-phase-changed → router.refresh() in PR-L.
+ *
+ * `target` is a relative path (`/programs/new`, `/programs/<id>`,
+ * `/programs/<id>/report`). Absolute URLs are rejected at parse time
+ * to prevent agents from redirecting users off-app.
+ *
+ * `replace` defaults to false (history.push). Set true for
+ * "consolidating" navigations like origination → active program where
+ * the prior URL shouldn't survive a back-button press.
+ */
+export interface NavigateToArtifact {
+  type: 'navigate-to';
+  target: string;
+  rationale?: string;
+  replace?: boolean;
+}
+
+/**
  * PR-INT-D · graph-neighborhood card. Sentinel emits one when it
  * walks the pattern graph (pattern_neighborhood tool, future broker
  * graph traversal). The card renders a compact hub-and-spoke or
@@ -354,6 +386,7 @@ export type Artifact =
   | AntiPatternFlagArtifact
   | ProgramPhaseChangedArtifact
   | QuestionResolvedArtifact
+  | NavigateToArtifact
   | GraphNeighborhoodArtifact
   | ContradictionFlagArtifact
   | VendorCardArtifact
@@ -405,6 +438,7 @@ export function isKnownArtifactType(type: string): type is ArtifactType {
     type === 'anti-pattern-flag' ||
     type === 'program-phase-changed' ||
     type === 'question-resolved' ||
+    type === 'navigate-to' ||
     type === 'graph-neighborhood' ||
     type === 'contradiction-flag' ||
     type === 'vendor-card' ||
@@ -651,6 +685,20 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
           ? obj.resolutionSummary
           : undefined;
       return { type, questionId, questionText, resolutionSummary };
+    }
+    case 'navigate-to': {
+      const target = obj.target;
+      if (typeof target !== 'string' || target.length === 0) return null;
+      // Reject absolute URLs to prevent agents redirecting off-app.
+      // Relative paths only — must start with '/'.
+      if (!target.startsWith('/')) return null;
+      // Reject anything that looks like protocol-relative or
+      // off-host, even with a leading slash.
+      if (target.startsWith('//')) return null;
+      const rationale =
+        typeof obj.rationale === 'string' && obj.rationale.length > 0 ? obj.rationale : undefined;
+      const replace = obj.replace === true;
+      return { type, target, rationale, replace };
     }
     case 'graph-neighborhood': {
       const rootId = obj.rootId;
@@ -1193,4 +1241,20 @@ a wrongly-flagged Phantom Sponsor will erode trust in the platform.
     Shape: {"eventId": <source-event-id>, "fromStage": <0..7>,
             "toStage": <0..7>, "snapshotId"?: <mutation-snapshot-id>}
     Example:
-    [[artifact:sourcing-stage-changed]]{"eventId":"apex-retail-ams-outsourcing-2026","fromStage":5,"toStage":6,"snapshotId":"snap-src-2026-04-29-001"}[[/artifact]]`;
+    [[artifact:sourcing-stage-changed]]{"eventId":"apex-retail-ams-outsourcing-2026","fromStage":5,"toStage":6,"snapshotId":"snap-src-2026-04-29-001"}[[/artifact]]
+
+20. navigate-to — Tool-emitted only. The navigate_to tool emits this
+    artifact; the client routes the user post-stream. Do NOT emit this
+    artifact from ordinary conversation — call the navigate_to tool
+    instead. The tool exists because describing where the user should
+    go is not the same as taking them there. Use it whenever the user
+    says "take me to …", "open …", "go to …", and ALSO whenever the
+    current surface is wrong for the user's intent (on /programs the
+    user says "let's set up a new program" → call navigate_to with
+    target "/programs/new"; on /tower the user picks a program to dive
+    into → call navigate_to with target "/programs/<id>"). Always tell
+    the user briefly where you are taking them and why; the navigation
+    fires when your turn ends.
+    Shape: {"target": <relative-path>, "rationale"?: <string>, "replace"?: <boolean>}
+    Example (the tool emits this for you — shown for parser reference):
+    [[artifact:navigate-to]]{"target":"/programs/new","rationale":"Origination intent; Steward owns the new-program flow."}[[/artifact]]`;

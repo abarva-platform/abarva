@@ -471,8 +471,9 @@ function ProgramFocusCard({ a }: { a: ProgramFocusArtifact }) {
  * itself just maps over the result.
  *
  * Behavior:
- *   - Phase-progress and anti-pattern-flag: dedupe by stable id, keep
- *     LATEST occurrence (so re-emits act as upserts).
+ *   - Phase-progress, anti-pattern-flag, question-resolved, pattern-match:
+ *     dedupe by stable id, keep LATEST occurrence (so re-emits act as
+ *     upserts).
  *   - Brief-field and classification: dropped — Surface 1 territory.
  *   - Everything else: preserved in insertion order.
  *   - Final result is reversed (most recent first across the stream).
@@ -481,6 +482,12 @@ export function selectVisibleArtifacts(artifacts: Artifact[]): Artifact[] {
   const seenProgress = new Map<string, PhaseProgressArtifact>();
   const seenFlags = new Map<string, AntiPatternFlagArtifact>();
   const seenQuestions = new Map<string, QuestionResolvedArtifact>();
+  // PR-Q · dedupe pattern-match by patternId. Founder feedback: the
+  // panel was rendering "3 duplicate generic pattern-match cards"
+  // because Nexus re-emits the same pattern across turns and the
+  // panel was treating each emission as a new card. Same upsert
+  // semantics as phase-progress/anti-pattern-flag.
+  const seenPatterns = new Map<string, PatternMatchArtifact>();
   const orderedNonDeduped: Artifact[] = [];
 
   for (const a of artifacts) {
@@ -492,6 +499,8 @@ export function selectVisibleArtifacts(artifacts: Artifact[]): Artifact[] {
       // PR-G' · dedupe by stable questionId. Re-emits upsert (e.g.
       // Nexus refines a resolutionSummary on a later turn).
       seenQuestions.set(a.questionId, a);
+    } else if (a.type === 'pattern-match') {
+      seenPatterns.set(a.patternId, a);
     } else {
       orderedNonDeduped.push(a);
     }
@@ -502,6 +511,7 @@ export function selectVisibleArtifacts(artifacts: Artifact[]): Artifact[] {
     ...seenProgress.values(),
     ...seenFlags.values(),
     ...seenQuestions.values(),
+    ...seenPatterns.values(),
   ];
 
   return merged
