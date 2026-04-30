@@ -20,7 +20,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AgentMarkdown } from '@/lib/agent/markdownRenderer';
 import { BrandColors, BrandTypography } from '@/lib/shell/brand-tokens';
-import { extractArtifacts, type Artifact } from '@/lib/agent/artifacts';
+import {
+  extractArtifacts,
+  visibleArtifactPendingText,
+  type Artifact,
+} from '@/lib/agent/artifacts';
 import {
   buildHandoffMarker,
   persistOriginationHandoff,
@@ -223,7 +227,7 @@ export function StewardChat({
         dispatchNew(artifacts);
 
         // Strip the navigation sentinel from the visible text we render.
-        const display = (committedVisible + pendingBuffer)
+        const display = (committedVisible + visibleArtifactPendingText(pendingBuffer))
           .replace(PROGRAM_CREATED_SENTINEL, '')
           .trimEnd();
         setTurns((prev) =>
@@ -240,7 +244,9 @@ export function StewardChat({
         // If `final.remaining` still has an unclosed open sentinel, it
         // means the agent emitted a malformed artifact — surface it as
         // visible text so the bug doesn't silently disappear.
-        if (final.remaining.length > 0) committedVisible += final.remaining;
+        if (final.remaining.length > 0) {
+          committedVisible += visibleArtifactPendingText(final.remaining);
+        }
         dispatchNew(final.artifacts);
         pendingBuffer = '';
       }
@@ -265,7 +271,7 @@ export function StewardChat({
         // them and the user keeps the thread instead of starting from
         // a blank Nexus greeting. The handoff window is intentionally
         // short (90s) to avoid replaying old conversations.
-        const finalTurnsForHandoff: ChatTurn[] = turns.map((t) =>
+        const finalTurnsForHandoff: ChatTurn[] = turnsRef.current.map((t) =>
           t.id === assistantTurnId ? { ...t, text: finalDisplay } : t,
         );
         const handoffTurns = [
@@ -297,7 +303,7 @@ export function StewardChat({
       // Refocus the input so the user can keep typing without clicking.
       inputRef.current?.focus();
     }
-  }, [draft, streaming, surface, tenantName, router, onArtifact, setTurns]);
+  }, [draft, streaming, surface, tenantName, router, onArtifact, setTurns, programName]);
 
   return (
     <section

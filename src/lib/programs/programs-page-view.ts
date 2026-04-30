@@ -256,7 +256,7 @@ export interface OriginationClassifierStage {
 // ── buildProgramsIndexView ────────────────────────────────────────────────
 // Returns a deterministic ProgramsIndexView for the PROG-C index page.
 // Uses the APEX_PROGRAMS_FIXTURE as the data source; no DB, no model calls.
-// tenant param is 'apex-retail' for the demo anchor.
+// tenant param is the canonical client slug resolved by the server page.
 
 import type {
   ProgramAgentRailItem,
@@ -265,6 +265,23 @@ import type {
   ProgramsIndexView as ProgramsIndexViewV2,
 } from './programs-types';
 import { APEX_PROGRAMS_FIXTURE } from './programs-fixture';
+import { MERIDIAN_PROGRAMS_FIXTURE } from './meridian-fixture';
+
+export type ProgramsIndexTenant = 'apex-retail' | 'meridian-health' | 'first-capital' | 'keystone-energy';
+
+const PROGRAM_FIXTURES_BY_TENANT: Record<ProgramsIndexTenant, ProgramRow[]> = {
+  'apex-retail': APEX_PROGRAMS_FIXTURE,
+  'meridian-health': MERIDIAN_PROGRAMS_FIXTURE,
+  'first-capital': [],
+  'keystone-energy': [],
+};
+
+const PROGRAM_TENANT_LABELS: Record<ProgramsIndexTenant, string> = {
+  'apex-retail': 'Apex Retail Group',
+  'meridian-health': 'Meridian Health System',
+  'first-capital': 'First Capital Financial',
+  'keystone-energy': 'Keystone Energy Holdings',
+};
 
 export type ProgramsIndexFilterKey = 'all' | 'active' | 'idle' | 'gated';
 
@@ -309,43 +326,70 @@ export function getProgramsIndexFilterSummary(
   return `${visibleCount} of ${totalCount} programs shown · ${filter} filter`;
 }
 
-export function buildProgramsIndexView(tenant: 'apex-retail'): ProgramsIndexViewV2 {
-  const tenantLabel = tenant === 'apex-retail' ? 'Apex Retail Group' : 'Apex Retail Group';
-  const programs: ProgramRow[] = APEX_PROGRAMS_FIXTURE;
+export function buildProgramsIndexView(tenant: ProgramsIndexTenant): ProgramsIndexViewV2 {
+  const tenantLabel = PROGRAM_TENANT_LABELS[tenant];
+  const programs: ProgramRow[] = [...PROGRAM_FIXTURES_BY_TENANT[tenant]];
 
   const totalActive = programs.filter((p) => !p.isIdle).length;
   const gatesPending = programs.filter((p) => p.gateStatus === 'pending').length;
   const idleCount = programs.filter((p) => p.isIdle).length;
 
-  const portfolioWorkbench: ProgramWorkbenchContent = {
-    title: 'Nexus Portfolio Workbench',
-    prose:
-      'Six programs in flight across the Apex Retail portfolio. APX-CDP-2026 is the critical path — Design gate cleared Apr 27, now in P3 Design with Build gate 2 of 5 criteria met. Vendor C contract is the near-term blocker. APX-MRC-2025 has been idle 9 days; sponsor re-engagement recommended before the Q3 cadence review.',
-    actionsLabel: 'Nexus recommends',
-    actions: [
-      {
-        letter: 'A',
-        text: 'Advance APX-CDP-2026 Build gate',
-        detail: 'Close Vendor C contract · privacy architecture sign-off · build brief scoping',
-      },
-      {
-        letter: 'B',
-        text: 'Resume APX-MRC-2025',
-        detail: 'Idle 9 days — engage sponsor before Q3 review',
-      },
-      {
-        letter: 'C',
-        text: 'Review APX-CC-2026 Build progress',
-        detail: 'Activate gate approaching — IVR migration critical path',
-      },
-    ],
-  };
+  const portfolioWorkbench: ProgramWorkbenchContent =
+    tenant === 'apex-retail'
+      ? {
+          title: 'Nexus Portfolio Workbench',
+          prose:
+            'Six programs in flight across the Apex Retail portfolio. APX-CDP-2026 is the critical path — Design gate cleared Apr 27, now in P3 Design with Build gate 2 of 5 criteria met. Vendor C contract is the near-term blocker. APX-MRC-2025 has been idle 9 days; sponsor re-engagement recommended before the Q3 cadence review.',
+          actionsLabel: 'Nexus recommends',
+          actions: [
+            {
+              letter: 'A',
+              text: 'Advance APX-CDP-2026 Build gate',
+              detail: 'Close Vendor C contract · privacy architecture sign-off · build brief scoping',
+            },
+            {
+              letter: 'B',
+              text: 'Resume APX-MRC-2025',
+              detail: 'Idle 9 days — engage sponsor before Q3 review',
+            },
+            {
+              letter: 'C',
+              text: 'Review APX-CC-2026 Build progress',
+              detail: 'Activate gate approaching — IVR migration critical path',
+            },
+          ],
+        }
+      : {
+          title: 'Nexus Portfolio Workbench',
+          prose: `${tenantLabel} portfolio view is scoped to the active tenant. Nexus is reading the tenant-specific program list and will show seeded rows only when they belong to this client.`,
+          actionsLabel: 'Nexus recommends',
+          actions: [
+            {
+              letter: 'A',
+              text: 'Review active phase gates',
+              detail: 'Focus on open gates and missing evidence before advancing programs.',
+            },
+            {
+              letter: 'B',
+              text: 'Check idle programs',
+              detail: 'Confirm sponsor ownership for any program without recent activity.',
+            },
+            {
+              letter: 'C',
+              text: 'Create a new program',
+              detail: 'Use Steward on /programs/new when the portfolio needs a new P0 brief.',
+            },
+          ],
+        };
 
   const agentRail: ProgramAgentRailItem[] = [
     {
       initials: 'Nx',
       name: 'Nexus',
-      job: 'Orchestrating 6 programs · APX-CDP-2026 critical path',
+      job:
+        tenant === 'apex-retail'
+          ? 'Orchestrating 6 programs · APX-CDP-2026 critical path'
+          : `Orchestrating ${tenantLabel} programs`,
       state: 'active',
     },
     {

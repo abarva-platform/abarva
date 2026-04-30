@@ -48,6 +48,13 @@ export const CLIENT_KEY_TO_DB_NAME: Record<ClientKey, string[]> = {
   keystone: ['Keystone Energy', 'Keystone Energy Holdings', 'Keystone Energy Holdings, Inc.'],
 };
 
+export const CLIENT_KEY_TO_INDUSTRY_CODE: Record<ClientKey, string> = {
+  meridian: 'HEALTHCARE_IDN',
+  arcturus: 'FINSERV',
+  apexretail: 'RETAIL',
+  keystone: 'ENERGY',
+};
+
 export function isClientKey(value: string | null | undefined): value is ClientKey {
   return !!value && ALL_CLIENTS.some((client) => client.id === value);
 }

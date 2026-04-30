@@ -740,7 +740,7 @@ export async function POST(request: Request) {
         await runToolUseLoop({
           client: anthropicClient,
           model: "claude-sonnet-4-6",
-          maxTokens: 512,
+          maxTokens: 2048,
           system: systemPrompt,
           messages: [
             ...conversationHistory.slice(-10),

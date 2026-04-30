@@ -27,6 +27,34 @@ describe('Programs index linked-state and filters', () => {
     );
   });
 
+  it('builds the Meridian tenant view without Apex fixture bleed', () => {
+    const view = buildProgramsIndexView('meridian-health');
+
+    expect(view.tenant).toBe('Meridian Health System');
+    expect(view.programs).toHaveLength(2);
+    expect(view.programs.every((program) => program.displayId.startsWith('MRD-'))).toBe(true);
+    expect(view.programs.some((program) => program.displayId.startsWith('APX-'))).toBe(false);
+  });
+
+  it('returns a fresh program array per tenant view build', () => {
+    const first = buildProgramsIndexView('meridian-health');
+    first.programs.push({
+      id: 'test-only-row',
+      displayId: 'TEST',
+      name: 'Mutation Guard',
+      currentPhase: 0,
+      phases: [],
+      gateStatus: 'pending',
+      lastActiveLabel: 'test',
+      nexusNote: 'test',
+      actionLabel: 'Continue',
+      isIdle: false,
+    });
+
+    const second = buildProgramsIndexView('meridian-health');
+    expect(second.programs.some((program) => program.id === 'test-only-row')).toBe(false);
+  });
+
   it('filters active, idle, and gated rows deterministically', () => {
     const view = buildProgramsIndexView('apex-retail');
 
