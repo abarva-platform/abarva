@@ -24,3 +24,7 @@ export { buildExportFilename } from './filename';
 
 export { recordExportAudit } from './audit';
 export type { ExportAuditInput, ExportAuditOutcome } from './audit';
+
+// EXPORT-4 · ephemeral spec cache the agent uses to hand a composed
+// deliverable spec to the export route via a short-lived id.
+export { storeSpec, getSpec, SPEC_CACHE_TTL_MS } from './spec-cache';

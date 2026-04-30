@@ -14,11 +14,12 @@
 // PRs progressively replace those static elements with reactive
 // equivalents driven by the same artifact channel.
 
-import { createContext, useContext, useMemo } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import type {
   AntiPatternFlagArtifact,
   Artifact,
   CrossProgramDependencyArtifact,
+  DeliverableReadyArtifact,
   EvidenceHighlightArtifact,
   FailureModeFlaggedArtifact,
   GateEvaluationArtifact,
@@ -603,6 +604,169 @@ function ProgramFocusCard({ a }: { a: ProgramFocusArtifact }) {
   );
 }
 
+// EXPORT-4 · deliverable-ready download chip card.
+//
+// Renders an eyebrow tag (kind + format), a serif title (human label),
+// and a download button that POSTs to the artifact's exportUrl. When
+// the artifact carries a `specId`, the POST body is `{ specId }` —
+// the server resolves the cached spec. The button manages a local
+// busy/error state so a slow render or auth failure surfaces visibly
+// instead of leaving the user staring at a stuck chip.
+//
+// We deliberately do NOT trigger a fetch on render — only on click.
+// The agent's emission is the "spec is ready" signal; the user's
+// click is the "I want to download it now" intent.
+function formatLabel(format: DeliverableReadyArtifact['format']): string {
+  switch (format) {
+    case 'docx':
+      return 'DOCX';
+    case 'xlsx':
+      return 'XLSX';
+    case 'html':
+      return 'HTML';
+    case 'pdf':
+      return 'PDF';
+  }
+}
+
+function kindLabel(kind: DeliverableReadyArtifact['kind']): string {
+  // Kebab-case → Title Case for display in the eyebrow.
+  return kind
+    .split('-')
+    .map((word) => (word.length > 0 ? word[0]!.toUpperCase() + word.slice(1) : word))
+    .join(' ');
+}
+
+function DeliverableReadyCard({ a }: { a: DeliverableReadyArtifact }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const onClick = useCallback(async () => {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const body = a.specId
+        ? JSON.stringify({ specId: a.specId, format: a.format })
+        : JSON.stringify({ format: a.format });
+      const res = await fetch(a.exportUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+      });
+      if (!res.ok) {
+        // Best-effort error parse — surface the server's `error` field
+        // if present, otherwise the status code.
+        let detail = `HTTP ${res.status}`;
+        try {
+          const payload = (await res.json()) as { error?: string; detail?: string };
+          if (payload.error) detail = payload.error;
+        } catch {
+          // body wasn't JSON — keep the status string
+        }
+        setError(detail);
+        return;
+      }
+      // Stream the response body to a Blob and trigger the browser download.
+      const blob = await res.blob();
+      const disposition = res.headers.get('Content-Disposition') ?? '';
+      const filenameMatch = /filename="([^"]+)"/.exec(disposition);
+      const filename =
+        filenameMatch && filenameMatch[1]
+          ? filenameMatch[1]
+          : `${a.kind}.${a.format}`;
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'download_failed');
+    } finally {
+      setBusy(false);
+    }
+  }, [a, busy]);
+
+  return (
+    <div
+      data-testid="deliverable-ready-card"
+      data-kind={a.kind}
+      data-format={a.format}
+      style={{
+        background: '#FFFFFF',
+        border: `1px solid rgba(12,26,58,0.12)`,
+        borderRadius: 8,
+        padding: '12px 14px',
+        boxShadow: '0 1px 2px rgba(12,26,58,0.04)',
+        fontFamily: BrandTypography.sans,
+        color: BrandColors.inkBlack,
+      }}
+    >
+      <div
+        style={{
+          fontFamily: BrandTypography.mono,
+          fontSize: 9.5,
+          letterSpacing: '0.10em',
+          textTransform: 'uppercase',
+          color: BrandColors.signalBlue,
+          fontWeight: 700,
+          marginBottom: 8,
+        }}
+      >
+        Deliverable ready · {kindLabel(a.kind)} · {formatLabel(a.format)}
+      </div>
+      <div
+        style={{
+          fontFamily: BrandTypography.serif,
+          fontSize: 15,
+          fontWeight: 400,
+          lineHeight: 1.3,
+          color: BrandColors.inkBlack,
+          marginBottom: 10,
+        }}
+      >
+        {a.title}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 10 }}>
+        {error ? (
+          <span
+            style={{
+              fontFamily: BrandTypography.mono,
+              fontSize: 11,
+              color: '#b91c1c',
+            }}
+          >
+            {error}
+          </span>
+        ) : null}
+        <button
+          type="button"
+          onClick={onClick}
+          disabled={busy}
+          data-testid="deliverable-ready-download"
+          style={{
+            background: BrandColors.inkBlack,
+            color: '#FFFFFF',
+            border: 'none',
+            borderRadius: 6,
+            padding: '8px 14px',
+            fontFamily: BrandTypography.sans,
+            fontSize: 12.5,
+            fontWeight: 600,
+            cursor: busy ? 'progress' : 'pointer',
+            opacity: busy ? 0.6 : 1,
+          }}
+        >
+          {busy ? 'Preparing…' : `Download ${kindLabel(a.kind).toLowerCase()} →`}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Panel ─────────────────────────────────────────────────────────────────────
 
 /**
@@ -633,6 +797,12 @@ export function selectVisibleArtifacts(artifacts: Artifact[]): Artifact[] {
   // repeat emissions of the same catalog failure mode collapse into
   // a single card with the latest details.
   const seenFailureModes = new Map<number, FailureModeFlaggedArtifact>();
+  // EXPORT-4 · dedupe deliverable-ready by `kind+programId`. The agent
+  // re-emits when a spec is updated; the panel should show ONE chip
+  // per (kind, program) pair — the latest. Without dedupe, every
+  // re-emission stacks a new chip and the panel reads as a deliverable
+  // pile-on instead of "the charter is ready, click to download."
+  const seenDeliverables = new Map<string, DeliverableReadyArtifact>();
   const orderedNonDeduped: Artifact[] = [];
 
   for (const a of artifacts) {
@@ -648,6 +818,8 @@ export function selectVisibleArtifacts(artifacts: Artifact[]): Artifact[] {
       seenPatterns.set(a.patternId, a);
     } else if (a.type === 'failure-mode-flagged') {
       seenFailureModes.set(a.failureModeId, a);
+    } else if (a.type === 'deliverable-ready') {
+      seenDeliverables.set(`${a.kind}::${a.programId}`, a);
     } else {
       orderedNonDeduped.push(a);
     }
@@ -670,6 +842,7 @@ export function selectVisibleArtifacts(artifacts: Artifact[]): Artifact[] {
     ...seenQuestions.values(),
     ...seenPatterns.values(),
     ...failureModesOrdered,
+    ...seenDeliverables.values(),
   ];
 
   return merged
@@ -684,7 +857,8 @@ export function selectVisibleArtifacts(artifacts: Artifact[]): Artifact[] {
         a.type === 'phase-progress' ||
         a.type === 'anti-pattern-flag' ||
         a.type === 'question-resolved' ||
-        a.type === 'failure-mode-flagged',
+        a.type === 'failure-mode-flagged' ||
+        a.type === 'deliverable-ready',
     )
     .reverse();
 }
@@ -810,6 +984,10 @@ export function NexusReactivePanel({
             return <FailureModeFlaggedCard key={`fm-${a.failureModeId}`} a={a} />;
           case 'question-resolved':
             return <QuestionResolvedCard key={`qr-${a.questionId}`} a={a} />;
+          case 'deliverable-ready':
+            return (
+              <DeliverableReadyCard key={`dr-${a.kind}-${a.programId}`} a={a} />
+            );
           default:
             return null;
         }

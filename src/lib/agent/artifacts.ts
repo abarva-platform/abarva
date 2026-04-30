@@ -17,6 +17,15 @@
 // conversations. Structured artifacts assemble in real-time as the
 // agent reasons."
 
+// EXPORT-4 · type-only import of the exports taxonomy. Artifacts.ts
+// stays runtime-pure (the import erases at compile time) and the
+// `deliverable-ready` artifact carries kind/format strings the
+// renderer round-trip already validated.
+import type {
+  DeliverableFormat,
+  DeliverableKind,
+} from '@/lib/programs/exports/types';
+
 export type ArtifactType =
   | 'brief-field' // {field: 'programName' | 'problemStatement' | …, value: string}
   | 'pattern-match' // {patternId, name, summary, successRatePct?, deploymentCount?, typicalDurationMonths?}
@@ -94,7 +103,15 @@ export type ArtifactType =
   // the agent's answer (Postgres facts + graph paths + Pinecone chunks
   // + corpus pattern hits + provenance + warnings). Surfaces consume
   // this to render the "Context Assembled" panel beside the answer.
-  | 'context-bundle'; // {bundle: ContextBundle}
+  | 'context-bundle' // {bundle: ContextBundle}
+  // EXPORT-4 · format-aware deliverable export. Emitted at the END of
+  // a `compose_artifact` step once the agent has produced the spec.
+  // The reactive panel renders a download chip; clicking it POSTs the
+  // cached spec id to the export route, which renders + serves the
+  // binary. The server-side compose helper stores the spec via
+  // storeSpec() (lib/programs/exports/spec-cache.ts) and the agent
+  // emits the returned id as the artifact's specId.
+  | 'deliverable-ready'; // {kind, format, title, exportUrl, programId, specId?}
 
 // ── Strongly-typed artifact payloads ──────────────────────────────────────────
 
@@ -446,6 +463,44 @@ export interface FailureModeFlaggedArtifact {
   severity: 'soft' | 'hard';
 }
 
+// EXPORT-4 · format-aware deliverable export · download-chip card.
+// Emitted at the end of a compose_artifact step once the agent has
+// produced the deliverable's structured spec. The reactive panel
+// renders a download chip; clicking it POSTs `{ specId }` to the
+// `exportUrl` and the export route renders + serves the binary.
+//
+// `specId` is the opaque key returned by `storeSpec()` in
+// lib/programs/exports/spec-cache.ts. It is OPTIONAL on the artifact
+// shape itself so legacy emitters (or pre-cached re-emits) can still
+// surface a download chip — the panel falls back to "open the export
+// route" when no specId is present, leaving the user to click into
+// the agent for a re-compose.
+export interface DeliverableReadyArtifact {
+  type: 'deliverable-ready';
+  /** Deliverable kind discriminator. Mirrors the export taxonomy. */
+  kind: DeliverableKind;
+  /** Format the deliverable was rendered as. Mirrors the export taxonomy. */
+  format: DeliverableFormat;
+  /** Human-readable title shown on the download chip. */
+  title: string;
+  /**
+   * Path-relative download URL the chip POSTs to. Always rooted at
+   * `/api/programs/{programId}/deliverables/{kind}/export`. Stored on
+   * the artifact (vs derived in the panel) so the panel doesn't have
+   * to know URL routing — the agent owns the URL shape.
+   */
+  exportUrl: string;
+  /** Program id the deliverable belongs to. */
+  programId: string;
+  /**
+   * Spec id from the in-memory cache (`storeSpec` return value). When
+   * present, the chip POSTs `{ specId }` and the route resolves the
+   * cached spec. Optional so the artifact still parses if the agent
+   * is on the inline-spec path.
+   */
+  specId?: string;
+}
+
 export type Artifact =
   | BriefFieldArtifact
   | PatternMatchArtifact
@@ -472,7 +527,8 @@ export type Artifact =
   | BriefProgressArtifact
   | OverlapAlertArtifact
   | FailureModeFlaggedArtifact
-  | ContextBundleArtifact;
+  | ContextBundleArtifact
+  | DeliverableReadyArtifact;
 
 // ── Parser ────────────────────────────────────────────────────────────────────
 //
@@ -546,7 +602,8 @@ export function isKnownArtifactType(type: string): type is ArtifactType {
     type === 'brief-progress' ||
     type === 'overlap-alert' ||
     type === 'failure-mode-flagged' ||
-    type === 'context-bundle'
+    type === 'context-bundle' ||
+    type === 'deliverable-ready'
   );
 }
 
@@ -1142,8 +1199,66 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
       // hundreds of records / chunks at full mode).
       return { type, bundle: bundle as unknown as ContextBundleArtifact['bundle'] };
     }
+    case 'deliverable-ready': {
+      // EXPORT-4 · download-chip artifact. Parser validates kind +
+      // format against the closed sets so a typo on either side
+      // surfaces as a parse-failure card instead of a broken chip.
+      const kind = obj.kind;
+      const format = obj.format;
+      const title = obj.title;
+      const exportUrl = obj.exportUrl;
+      const programId = obj.programId;
+      if (typeof kind !== 'string' || !DELIVERABLE_KIND_SET.has(kind)) return null;
+      if (typeof format !== 'string' || !DELIVERABLE_FORMAT_SET.has(format)) return null;
+      if (typeof title !== 'string' || title.length === 0) return null;
+      if (typeof exportUrl !== 'string' || exportUrl.length === 0) return null;
+      // Reject absolute / off-host URLs the same way navigate-to does
+      // — protects the user from agent-emitted cross-origin POSTs.
+      if (!exportUrl.startsWith('/') || exportUrl.startsWith('//')) return null;
+      if (typeof programId !== 'string' || programId.length === 0) return null;
+      const specId = optionalString(obj.specId);
+      return {
+        type,
+        kind: kind as DeliverableKind,
+        format: format as DeliverableFormat,
+        title,
+        exportUrl,
+        programId,
+        specId,
+      };
+    }
   }
 }
+
+/** EXPORT-4 · runtime sets used by the parser to validate the
+ * artifact's kind + format. Sourced from types.ts (compile-time) and
+ * mirrored here as runtime sets to avoid pulling the renderer modules
+ * into the agent bundle.
+ */
+const DELIVERABLE_KIND_SET: ReadonlySet<string> = new Set<string>([
+  'program-charter',
+  'discovery-report',
+  'okr-baseline',
+  'stakeholder-map',
+  'synthesis-options-table',
+  'architecture-sketch',
+  'execution-plan',
+  'pilot-result-report',
+  'outcome-report',
+  'bafo-scoreboard',
+  'meeting-notes',
+  'decision-log',
+  'roadmap',
+  'financial-baseline',
+  'archetype-primer',
+  'workshop-facilitator-guide',
+]);
+const DELIVERABLE_FORMAT_SET: ReadonlySet<string> = new Set<string>([
+  'html',
+  'xlsx',
+  'docx',
+  'pdf',
+]);
 
 /**
  * If `text` ends with what could be the start of an open sentinel
@@ -1539,4 +1654,28 @@ a wrongly-flagged Phantom Sponsor will erode trust in the platform.
             "redirect": <recommended next move>,
             "severity": "soft"|"hard"}
     Example:
-    [[artifact:failure-mode-flagged]]{"failureModeId":1,"failureModeName":"Lack of executive sponsorship and ownership","phase":0,"detectedSignal":"User said the CIO 'mentioned it' but cannot describe a calendar commitment.","consequence":"Sponsor pattern looks delegated; air cover collapses at the first hard tradeoff.","redirect":"Schedule a sponsor 1:1 in the next 5 days; capture calendar cadence and escalation authority before P0 closes.","severity":"soft"}[[/artifact]]`;
+    [[artifact:failure-mode-flagged]]{"failureModeId":1,"failureModeName":"Lack of executive sponsorship and ownership","phase":0,"detectedSignal":"User said the CIO 'mentioned it' but cannot describe a calendar commitment.","consequence":"Sponsor pattern looks delegated; air cover collapses at the first hard tradeoff.","redirect":"Schedule a sponsor 1:1 in the next 5 days; capture calendar cadence and escalation authority before P0 closes.","severity":"soft"}[[/artifact]]
+
+24. deliverable-ready — EXPORT-4. Emit AT THE END of a compose_artifact
+    step once you have produced the deliverable's structured payload
+    AND the server-side compose helper has stored it via storeSpec()
+    (which returns a short-lived cache id). The user's reactive panel
+    renders a download chip; clicking it POSTs the spec id to the
+    export URL and downloads the binary.
+    Do NOT emit until you have actually composed the artifact's
+    content. The chip is the user-visible signal that "the deliverable
+    is ready to download" — emitting it speculatively (before the
+    content is composed) yields a 404 / spec_not_found when the user
+    clicks. Emit ONCE per compose_artifact step. Re-emit only if the
+    spec materially changes (the panel dedupes by kind+programId so
+    re-emits replace the chip cleanly).
+    Format must match the kind's canonical format (or an allowed
+    override). Title is the human-readable name shown on the chip
+    (e.g. "Apex CDP Activation 2026 — Charter v1"). exportUrl is
+    relative; absolute / off-host URLs are rejected at parse time.
+    Shape: {"kind": <DeliverableKind>, "format": "html"|"xlsx"|"docx"|"pdf",
+            "title": <chip-label>,
+            "exportUrl": "/api/programs/<programId>/deliverables/<kind>/export",
+            "programId": <program-id>, "specId"?: <cache-id>}
+    Example:
+    [[artifact:deliverable-ready]]{"kind":"program-charter","format":"docx","title":"Apex CDP Activation 2026 — Charter v1","exportUrl":"/api/programs/APX-CDP-2026/deliverables/program-charter/export","programId":"APX-CDP-2026","specId":"a8f3e9c1-7d2b-4f6a-9c3e-1a2b3c4d5e6f"}[[/artifact]]`;

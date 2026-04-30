@@ -356,6 +356,88 @@ describe('NexusReactivePanel · failure-mode-flagged rendering', () => {
     expect(softHtml).not.toContain(dangerRed);
   });
 
+  // EXPORT-4 · deliverable-ready dedupe + render.
+  it('keeps deliverable-ready artifacts visible (not filtered out)', () => {
+    const input: Artifact[] = [
+      {
+        type: 'deliverable-ready',
+        kind: 'program-charter',
+        format: 'docx',
+        title: 'Apex CDP Activation 2026 — Charter v1',
+        exportUrl: '/api/programs/APX-CDP-2026/deliverables/program-charter/export',
+        programId: 'APX-CDP-2026',
+        specId: 'spec-1',
+      },
+    ];
+    const out = selectVisibleArtifacts(input);
+    expect(out).toHaveLength(1);
+    expect(out[0].type).toBe('deliverable-ready');
+  });
+
+  it('dedupes deliverable-ready by kind+programId, keeping the latest', () => {
+    const input: Artifact[] = [
+      {
+        type: 'deliverable-ready',
+        kind: 'program-charter',
+        format: 'docx',
+        title: 'Charter v1',
+        exportUrl: '/api/programs/APX-CDP-2026/deliverables/program-charter/export',
+        programId: 'APX-CDP-2026',
+        specId: 'spec-old',
+      },
+      {
+        type: 'deliverable-ready',
+        kind: 'program-charter',
+        format: 'docx',
+        title: 'Charter v2',
+        exportUrl: '/api/programs/APX-CDP-2026/deliverables/program-charter/export',
+        programId: 'APX-CDP-2026',
+        specId: 'spec-new',
+      },
+    ];
+    const out = selectVisibleArtifacts(input);
+    const chips = out.filter((a) => a.type === 'deliverable-ready') as Array<
+      Extract<Artifact, { type: 'deliverable-ready' }>
+    >;
+    expect(chips).toHaveLength(1);
+    expect(chips[0].title).toBe('Charter v2');
+    expect(chips[0].specId).toBe('spec-new');
+  });
+
+  it('keeps two distinct (kind, programId) pairs as separate chips', () => {
+    const input: Artifact[] = [
+      {
+        type: 'deliverable-ready',
+        kind: 'program-charter',
+        format: 'docx',
+        title: 'Charter A',
+        exportUrl: '/api/programs/A/deliverables/program-charter/export',
+        programId: 'A',
+      },
+      {
+        type: 'deliverable-ready',
+        kind: 'program-charter',
+        format: 'docx',
+        title: 'Charter B',
+        exportUrl: '/api/programs/B/deliverables/program-charter/export',
+        programId: 'B',
+      },
+      {
+        type: 'deliverable-ready',
+        kind: 'okr-baseline',
+        format: 'xlsx',
+        title: 'OKR A',
+        exportUrl: '/api/programs/A/deliverables/okr-baseline/export',
+        programId: 'A',
+      },
+    ];
+    const out = selectVisibleArtifacts(input);
+    const chips = out.filter((a) => a.type === 'deliverable-ready') as Array<
+      Extract<Artifact, { type: 'deliverable-ready' }>
+    >;
+    expect(chips).toHaveLength(3);
+  });
+
   it('renders hard severity flags before soft severity flags in the panel', () => {
     const artifacts: Artifact[] = [
       {
@@ -387,5 +469,62 @@ describe('NexusReactivePanel · failure-mode-flagged rendering', () => {
     expect(hardIndex).toBeGreaterThanOrEqual(0);
     expect(softIndex).toBeGreaterThanOrEqual(0);
     expect(hardIndex).toBeLessThan(softIndex);
+  });
+});
+
+// EXPORT-4 · deliverable-ready chip render.
+describe('NexusReactivePanel · deliverable-ready rendering', () => {
+  it('renders a download chip with eyebrow, title, and download button', () => {
+    const artifacts: Artifact[] = [
+      {
+        type: 'deliverable-ready',
+        kind: 'program-charter',
+        format: 'docx',
+        title: 'Apex CDP Activation 2026 — Charter v1',
+        exportUrl: '/api/programs/APX-CDP-2026/deliverables/program-charter/export',
+        programId: 'APX-CDP-2026',
+        specId: 'spec-1',
+      },
+    ];
+    const html = renderToStaticMarkup(
+      createElement(NexusReactivePanel, { artifacts }),
+    );
+    expect(html).toContain('Deliverable ready');
+    expect(html).toContain('Program Charter');
+    expect(html).toContain('DOCX');
+    expect(html).toContain('Apex CDP Activation 2026');
+    expect(html).toContain('Download');
+    // Card surfaces data-* hooks for click-targeting in integration.
+    expect(html).toContain('data-testid="deliverable-ready-card"');
+    expect(html).toContain('data-testid="deliverable-ready-download"');
+    expect(html).toContain('data-kind="program-charter"');
+    expect(html).toContain('data-format="docx"');
+  });
+
+  it('renders chips for distinct (kind, programId) pairs', () => {
+    const artifacts: Artifact[] = [
+      {
+        type: 'deliverable-ready',
+        kind: 'program-charter',
+        format: 'docx',
+        title: 'Charter A',
+        exportUrl: '/api/programs/A/deliverables/program-charter/export',
+        programId: 'A',
+      },
+      {
+        type: 'deliverable-ready',
+        kind: 'okr-baseline',
+        format: 'xlsx',
+        title: 'OKR A',
+        exportUrl: '/api/programs/A/deliverables/okr-baseline/export',
+        programId: 'A',
+      },
+    ];
+    const html = renderToStaticMarkup(
+      createElement(NexusReactivePanel, { artifacts }),
+    );
+    expect(html).toContain('Charter A');
+    expect(html).toContain('OKR A');
+    expect(html).toContain('XLSX');
   });
 });
