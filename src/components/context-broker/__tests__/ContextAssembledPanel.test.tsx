@@ -193,7 +193,11 @@ describe('ContextAssembledPanel — sections', () => {
       />,
     );
     const factsSection = screen.getByTestId('context-panel-section-facts');
-    const items = factsSection.querySelectorAll('[data-testid^="context-panel-fact-r"]');
+    // Match the OUTER `<li>` cards exactly (avoid nested testids like
+    // `-cite-`, `-segment-`, `-kind-` that share the prefix).
+    const items = factsSection.querySelectorAll(
+      '[data-testid="context-panel-fact-r1"], [data-testid="context-panel-fact-r2"]',
+    );
     expect(items[0]?.getAttribute('data-testid')).toBe('context-panel-fact-r2');
     expect(items[1]?.getAttribute('data-testid')).toBe('context-panel-fact-r1');
   });
@@ -316,5 +320,64 @@ describe('ContextAssembledPanel — a11y', () => {
     render(<ContextAssembledPanel bundle={bundle({ facts: [f], provenance: [p] })} />);
     const dot = screen.getByTestId('context-panel-confidence-dot');
     expect(dot).toHaveAttribute('aria-label', 'Confidence 92 percent');
+  });
+});
+
+// ── CB-6 reconciliation · bundle|null + isLoading + onCitationClick ─────────
+
+describe('ContextAssembledPanel — cold-start state (bundle === null)', () => {
+  it('renders the muted no-context line when bundle is null', () => {
+    render(<ContextAssembledPanel bundle={null} />);
+    const root = screen.getByTestId('context-assembled-panel');
+    expect(root).toHaveAttribute('data-state', 'empty');
+    expect(screen.getByTestId('context-assembled-empty-cold')).toBeInTheDocument();
+  });
+});
+
+describe('ContextAssembledPanel — loading skeleton', () => {
+  it('renders the 3-line skeleton shimmer when isLoading=true', () => {
+    render(<ContextAssembledPanel bundle={null} isLoading />);
+    const root = screen.getByTestId('context-assembled-panel');
+    expect(root).toHaveAttribute('data-state', 'loading');
+    expect(root).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByTestId('context-panel-skeleton')).toBeInTheDocument();
+    expect(screen.getByTestId('context-panel-skeleton-line-0')).toBeInTheDocument();
+    expect(screen.getByTestId('context-panel-skeleton-line-1')).toBeInTheDocument();
+    expect(screen.getByTestId('context-panel-skeleton-line-2')).toBeInTheDocument();
+  });
+
+  it('isLoading takes precedence over a non-null bundle', () => {
+    render(<ContextAssembledPanel bundle={bundle()} isLoading />);
+    expect(screen.getByTestId('context-panel-skeleton')).toBeInTheDocument();
+    // Real sections are not in the DOM during loading.
+    expect(screen.queryByTestId('context-panel-section-facts')).toBeNull();
+  });
+});
+
+describe('ContextAssembledPanel — onCitationClick', () => {
+  it('renders fact title as a button with sourceId aria-label and fires the handler', () => {
+    const f = fact();
+    const p = provenance({ sourceId: f.recordId });
+    const onCitationClick = jest.fn();
+    render(
+      <ContextAssembledPanel
+        bundle={bundle({ facts: [f], provenance: [p] })}
+        onCitationClick={onCitationClick}
+      />,
+    );
+    const cite = screen.getByTestId(`context-panel-fact-cite-${f.recordId}`);
+    expect(cite.tagName).toBe('BUTTON');
+    expect(cite).toHaveAttribute('aria-label', f.recordId);
+    cite.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(onCitationClick).toHaveBeenCalledTimes(1);
+    expect(onCitationClick).toHaveBeenCalledWith(p);
+  });
+
+  it('renders fact title as a static <p> when handler is omitted', () => {
+    const f = fact();
+    const p = provenance({ sourceId: f.recordId });
+    render(<ContextAssembledPanel bundle={bundle({ facts: [f], provenance: [p] })} />);
+    const cite = screen.getByTestId(`context-panel-fact-cite-${f.recordId}`);
+    expect(cite.tagName).toBe('P');
   });
 });

@@ -1,5 +1,7 @@
+'use client';
+
 /**
- * ContextAssembledPanel · CB-5
+ * ContextAssembledPanel · CB-5 (canonical) · CB-6 reconciliation
  *
  * Renders a `ContextBundle` beside an agent answer. The panel
  * is the *receipt* for the answer: per-section count, source-
@@ -12,6 +14,17 @@
  *   4. Semantic chunks
  *   5. Corpus patterns
  *   6. Footer (guardrail badge + telemetry summary)
+ *
+ * CB-6 reconciliation note: this is the canonical Context
+ * Assembled panel. A single, more-general API:
+ *
+ *   bundle: ContextBundle | null   // null → cold-start empty
+ *   isLoading?: boolean             // assembly in flight
+ *   onCitationClick?: (provenance: ContextProvenance) => void
+ *
+ * The four-mode demo page passes a non-null bundle and ignores
+ * loading/click. The chat surface passes null + isLoading
+ * during assembly, and threads onCitationClick through.
  *
  * Design system:
  *   - Cream background, Georgia serif section titles, DM Sans
@@ -79,16 +92,82 @@ function sourceClassLabel(sourceClass: ContextProvenance['sourceClass'] | null):
 }
 
 export interface ContextAssembledPanelProps {
-  bundle: ContextBundle;
   /**
-   * When set, renders a "Last assembled X seconds ago" line
-   * relative to this timestamp; otherwise renders the assembled-
-   * at value verbatim.
+   * The assembled bundle. `null` renders the cold-start empty
+   * state ("No context assembled yet").
+   */
+  bundle: ContextBundle | null;
+  /**
+   * When true, renders a 3-line skeleton shimmer instead of the
+   * bundle. Used while the broker is assembling for the latest turn.
+   */
+  isLoading?: boolean;
+  /**
+   * Optional click-through handler for citations (fact cards,
+   * chunk cards, pattern rows). Receives the matching
+   * `ContextProvenance` entry (sourceId, sourceClass, etc.). When
+   * omitted the panel renders citations as static cards.
+   */
+  onCitationClick?: (provenance: ContextProvenance) => void;
+  /**
+   * Optional reference time for the relative "Assembled X ago"
+   * line in the header. When set, renders `Xs ago / Xm ago / Xh ago`
+   * relative to this; otherwise renders the assembled-at value
+   * verbatim. Server-rendered usage should leave this unset and
+   * accept the verbatim ISO time slice.
    */
   now?: Date;
 }
 
-export function ContextAssembledPanel({ bundle, now }: ContextAssembledPanelProps) {
+export function ContextAssembledPanel({
+  bundle,
+  isLoading = false,
+  onCitationClick,
+  now,
+}: ContextAssembledPanelProps) {
+  // Loading state — 3-line skeleton shimmer per design doc §5.4.
+  if (isLoading) {
+    return (
+      <aside
+        data-testid="context-assembled-panel"
+        data-state="loading"
+        aria-live="polite"
+        aria-busy="true"
+        aria-label="Context Assembled"
+        style={panelRootStyle}
+      >
+        <SkeletonShimmer />
+      </aside>
+    );
+  }
+
+  // Cold-start — no bundle yet. One muted line.
+  if (bundle === null) {
+    return (
+      <aside
+        data-testid="context-assembled-panel"
+        data-state="empty"
+        aria-live="polite"
+        aria-label="Context Assembled"
+        style={panelRootStyle}
+      >
+        <p
+          data-testid="context-assembled-empty-cold"
+          style={{
+            margin: 0,
+            fontFamily: TYPOGRAPHY.serif,
+            fontSize: 16,
+            color: `${COLORS.ink}cc`,
+            lineHeight: 1.5,
+            fontStyle: 'italic',
+          }}
+        >
+          No context assembled yet — ask a question to see the receipt.
+        </p>
+      </aside>
+    );
+  }
+
   // Generic mode collapses to a single line per design doc §5.4.
   if (bundle.mode === 'generic') {
     return (
@@ -120,6 +199,7 @@ export function ContextAssembledPanel({ bundle, now }: ContextAssembledPanelProp
   return (
     <aside
       data-testid="context-assembled-panel"
+      data-state="ready"
       data-mode={bundle.mode}
       data-tenant-key={bundle.tenantKey ?? ''}
       aria-live="polite"
@@ -128,16 +208,52 @@ export function ContextAssembledPanel({ bundle, now }: ContextAssembledPanelProp
     >
       <Header bundle={bundle} now={now} />
       {bundle.warnings.length > 0 ? <Warnings warnings={bundle.warnings} /> : null}
-      <FactsSection facts={bundle.facts} provenanceById={provenanceById} />
+      <FactsSection
+        facts={bundle.facts}
+        provenanceById={provenanceById}
+        onCitationClick={onCitationClick}
+      />
       <GraphPathsSection paths={bundle.graphPaths} />
-      <ChunksSection chunks={bundle.semanticChunks} provenanceById={provenanceById} />
-      <PatternsSection patterns={bundle.corpusPatterns} />
+      <ChunksSection
+        chunks={bundle.semanticChunks}
+        provenanceById={provenanceById}
+        onCitationClick={onCitationClick}
+      />
+      <PatternsSection
+        patterns={bundle.corpusPatterns}
+        provenanceById={provenanceById}
+        onCitationClick={onCitationClick}
+      />
       <Footer bundle={bundle} />
     </aside>
   );
 }
 
 // ── Sub-components ───────────────────────────────────────────────────────────
+
+function SkeletonShimmer() {
+  return (
+    <div
+      data-testid="context-panel-skeleton"
+      style={{ display: 'flex', flexDirection: 'column', gap: SPACING.sm }}
+      aria-hidden="true"
+    >
+      {[80, 60, 70].map((widthPct, i) => (
+        <span
+          key={i}
+          data-testid={`context-panel-skeleton-line-${i}`}
+          style={{
+            display: 'block',
+            height: 14,
+            width: `${widthPct}%`,
+            background: `${COLORS.ink}11`,
+            borderRadius: RADIUS.sm,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
 
 function Header({ bundle, now }: { bundle: ContextBundle; now?: Date }) {
   const assembledAt = new Date(bundle.assembledAt);
@@ -258,9 +374,11 @@ function Warnings({ warnings }: { warnings: string[] }) {
 function FactsSection({
   facts,
   provenanceById,
+  onCitationClick,
 }: {
   facts: ReadonlyArray<TenantRecord>;
   provenanceById: Map<string, ContextProvenance>;
+  onCitationClick?: (provenance: ContextProvenance) => void;
 }) {
   if (facts.length === 0) {
     return (
@@ -284,12 +402,14 @@ function FactsSection({
               key={fact.recordId}
               role="listitem"
               data-testid={`context-panel-fact-${fact.recordId}`}
-              style={{
-                ...itemCardStyle,
-                borderLeft: `3px solid ${sourceClassBorder(prov?.sourceClass ?? null)}`,
-              }}
+              style={{ ...itemCardStyle, borderLeft: `3px solid ${sourceClassBorder(prov?.sourceClass ?? null)}` }}
             >
-              <p style={itemTitleStyle}>{fact.title || fact.recordKind}</p>
+              <CitationButton
+                provenance={prov}
+                onCitationClick={onCitationClick}
+                testid={`context-panel-fact-cite-${fact.recordId}`}
+                label={fact.title || fact.recordKind}
+              />
               <div style={chipRowStyle}>
                 <Chip label={fact.segmentId} testid={`context-panel-fact-segment-${fact.recordId}`} />
                 <Chip label={fact.recordKind} testid={`context-panel-fact-kind-${fact.recordId}`} />
@@ -370,9 +490,11 @@ function renderGraphPath(path: GraphNeighborhood | GraphPath): string {
 function ChunksSection({
   chunks,
   provenanceById,
+  onCitationClick,
 }: {
   chunks: ReadonlyArray<SemanticChunkHit>;
   provenanceById: Map<string, ContextProvenance>;
+  onCitationClick?: (provenance: ContextProvenance) => void;
 }) {
   if (chunks.length === 0) {
     return (
@@ -396,9 +518,13 @@ function ChunksSection({
                 borderLeft: `3px solid ${sourceClassBorder(prov?.sourceClass ?? null)}`,
               }}
             >
-              <p style={{ ...itemTitleStyle, fontSize: 13, fontFamily: TYPOGRAPHY.serif }}>
-                {truncate(hit.chunk.text, 200)}
-              </p>
+              <CitationButton
+                provenance={prov}
+                onCitationClick={onCitationClick}
+                testid={`context-panel-chunk-cite-${i}`}
+                label={truncate(hit.chunk.text, 200)}
+                titleStyle={{ ...itemTitleStyle, fontSize: 13, fontFamily: TYPOGRAPHY.serif }}
+              />
               <div style={chipRowStyle}>
                 <Chip
                   label={hit.score > 0 ? hit.score.toFixed(2) : 'keyword'}
@@ -425,7 +551,15 @@ function ChunksSection({
   );
 }
 
-function PatternsSection({ patterns }: { patterns: ReadonlyArray<CorpusPatternHit> }) {
+function PatternsSection({
+  patterns,
+  provenanceById,
+  onCitationClick,
+}: {
+  patterns: ReadonlyArray<CorpusPatternHit>;
+  provenanceById: Map<string, ContextProvenance>;
+  onCitationClick?: (provenance: ContextProvenance) => void;
+}) {
   if (patterns.length === 0) {
     return (
       <Section
@@ -440,35 +574,43 @@ function PatternsSection({ patterns }: { patterns: ReadonlyArray<CorpusPatternHi
   return (
     <Section title={`Patterns (${patterns.length})`} testid="context-panel-section-patterns">
       <ul role="list" style={listResetStyle}>
-        {patterns.map((p) => (
-          <li
-            key={p.patternId}
-            role="listitem"
-            data-testid={`context-panel-pattern-${p.patternId}`}
-            style={{ ...itemCardStyle, borderLeft: `3px solid ${SLATE_BLUE}` }}
-          >
-            <Link
-              href={`/intelligence/patterns/${p.patternId.toLowerCase()}`}
-              data-testid={`context-panel-pattern-link-${p.patternId}`}
-              style={{
-                margin: 0,
-                fontFamily: TYPOGRAPHY.sans,
-                fontSize: 13,
-                color: COLORS.navy,
-                fontWeight: 600,
-                textDecoration: 'none',
-                borderBottom: `1px dotted ${COLORS.navy}66`,
-              }}
+        {patterns.map((p) => {
+          const prov = provenanceById.get(p.patternId) ?? null;
+          return (
+            <li
+              key={p.patternId}
+              role="listitem"
+              data-testid={`context-panel-pattern-${p.patternId}`}
+              style={{ ...itemCardStyle, borderLeft: `3px solid ${SLATE_BLUE}` }}
             >
-              {p.patternId}
-            </Link>
-            <p style={{ ...itemTitleStyle, fontSize: 13 }}>{p.patternName}</p>
-            {p.summary ? <p style={metaLineStyle}>{p.summary}</p> : null}
-            {typeof p.score === 'number' ? (
-              <Chip label={p.score.toFixed(2)} testid={`context-panel-pattern-score-${p.patternId}`} />
-            ) : null}
-          </li>
-        ))}
+              <Link
+                href={`/intelligence/patterns/${p.patternId.toLowerCase()}`}
+                data-testid={`context-panel-pattern-link-${p.patternId}`}
+                onClick={
+                  onCitationClick && prov
+                    ? () => onCitationClick(prov)
+                    : undefined
+                }
+                style={{
+                  margin: 0,
+                  fontFamily: TYPOGRAPHY.sans,
+                  fontSize: 13,
+                  color: COLORS.navy,
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  borderBottom: `1px dotted ${COLORS.navy}66`,
+                }}
+              >
+                {p.patternId}
+              </Link>
+              <p style={{ ...itemTitleStyle, fontSize: 13 }}>{p.patternName}</p>
+              {p.summary ? <p style={metaLineStyle}>{p.summary}</p> : null}
+              {typeof p.score === 'number' ? (
+                <Chip label={p.score.toFixed(2)} testid={`context-panel-pattern-score-${p.patternId}`} />
+              ) : null}
+            </li>
+          );
+        })}
       </ul>
     </Section>
   );
@@ -536,6 +678,58 @@ function Section({
       <h3 style={sectionTitleStyle}>{title}</h3>
       {children}
     </section>
+  );
+}
+
+/**
+ * CitationButton — when `onCitationClick` is supplied AND the
+ * citation has a matching provenance entry, render the title as
+ * a real `<button>` with `aria-label = sourceId` so the click is
+ * keyboard-traversable. Otherwise render as a plain `<p>` so we
+ * don't attach behavior the caller didn't ask for.
+ */
+function CitationButton({
+  provenance,
+  onCitationClick,
+  testid,
+  label,
+  titleStyle,
+}: {
+  provenance: ContextProvenance | null;
+  onCitationClick?: (provenance: ContextProvenance) => void;
+  testid: string;
+  label: string;
+  titleStyle?: React.CSSProperties;
+}) {
+  const finalStyle = titleStyle ?? itemTitleStyle;
+  if (onCitationClick && provenance) {
+    return (
+      <button
+        type="button"
+        data-testid={testid}
+        aria-label={provenance.sourceId}
+        onClick={() => onCitationClick(provenance)}
+        style={{
+          ...finalStyle,
+          background: 'transparent',
+          border: 'none',
+          padding: 0,
+          textAlign: 'left',
+          cursor: 'pointer',
+          color: COLORS.navy,
+          textDecoration: 'underline',
+          textDecorationStyle: 'dotted',
+          textUnderlineOffset: 3,
+        }}
+      >
+        {label}
+      </button>
+    );
+  }
+  return (
+    <p data-testid={testid} style={finalStyle}>
+      {label}
+    </p>
   );
 }
 

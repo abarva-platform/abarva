@@ -88,7 +88,13 @@ export type ArtifactType =
   // the cross-cutting 10-failure-mode catalog so the platform's value-prop
   // (forced success-thinking against the 10) is visible per program AND
   // can be rolled up cross-program in telemetry per design doc Part E.5.
-  | 'failure-mode-flagged'; // {failureModeId, failureModeName, phase, detectedSignal, consequence, redirect, severity}
+  | 'failure-mode-flagged' // {failureModeId, failureModeName, phase, detectedSignal, consequence, redirect, severity}
+  // CB-6 · server-side artifact emitted by /api/chat/agent at the START
+  // of the response stream. Carries the full ContextBundle that grounded
+  // the agent's answer (Postgres facts + graph paths + Pinecone chunks
+  // + corpus pattern hits + provenance + warnings). Surfaces consume
+  // this to render the "Context Assembled" panel beside the answer.
+  | 'context-bundle'; // {bundle: ContextBundle}
 
 // ── Strongly-typed artifact payloads ──────────────────────────────────────────
 
@@ -408,6 +414,19 @@ export interface OverlapAlertArtifact {
   overlapDetail: string;
 }
 
+// CB-6 · context-bundle artifact. Type-only import so the server-only
+// boundary on `@/lib/knowledge/context-broker` is preserved (the
+// broker module imports `'server-only'` and would error if pulled
+// into a client bundle, but type-only imports are erased at compile
+// time and never traverse webpack's import graph).
+import type { ContextBundle } from '@/lib/knowledge/context-broker';
+
+export interface ContextBundleArtifact {
+  type: 'context-bundle';
+  /** The full assembled ContextBundle that grounded the agent's answer. */
+  bundle: ContextBundle;
+}
+
 // OV2-FM-FLAG-ARTIFACT · top-level failure-mode flag.
 export interface FailureModeFlaggedArtifact {
   type: 'failure-mode-flagged';
@@ -452,7 +471,8 @@ export type Artifact =
   | SourcingStageChangedArtifact
   | BriefProgressArtifact
   | OverlapAlertArtifact
-  | FailureModeFlaggedArtifact;
+  | FailureModeFlaggedArtifact
+  | ContextBundleArtifact;
 
 // ── Parser ────────────────────────────────────────────────────────────────────
 //
@@ -525,7 +545,8 @@ export function isKnownArtifactType(type: string): type is ArtifactType {
     type === 'sourcing-stage-changed' ||
     type === 'brief-progress' ||
     type === 'overlap-alert' ||
-    type === 'failure-mode-flagged'
+    type === 'failure-mode-flagged' ||
+    type === 'context-bundle'
   );
 }
 
@@ -1086,6 +1107,40 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
         redirect,
         severity,
       };
+    }
+    case 'context-bundle': {
+      // CB-6 · context-bundle artifact. Validates the minimum-viable
+      // shape of a ContextBundle so a malformed payload doesn't crash
+      // the chat surface. We accept the JSON when it looks like a
+      // bundle (has the keys the panel reads) without exhaustively
+      // re-validating every nested object — the broker is the source
+      // of truth and the bundle was produced server-side.
+      const bundle = obj.bundle;
+      if (!bundle || typeof bundle !== 'object' || Array.isArray(bundle)) return null;
+      const b = bundle as Record<string, unknown>;
+      if (typeof b.query !== 'string') return null;
+      if (
+        b.mode !== 'generic' &&
+        b.mode !== 'corpus' &&
+        b.mode !== 'tenant' &&
+        b.mode !== 'full'
+      ) {
+        return null;
+      }
+      // tenantKey: string | null per ContextBundle.tenantKey
+      if (b.tenantKey !== null && typeof b.tenantKey !== 'string') return null;
+      if (!Array.isArray(b.facts)) return null;
+      if (!Array.isArray(b.graphPaths)) return null;
+      if (!Array.isArray(b.semanticChunks)) return null;
+      if (!Array.isArray(b.corpusPatterns)) return null;
+      if (!Array.isArray(b.provenance)) return null;
+      if (!Array.isArray(b.warnings)) return null;
+      if (typeof b.assembledAt !== 'string') return null;
+      // Pass through the bundle verbatim. Type assertion is safe because
+      // we've validated every load-bearing key the panel reads; cost
+      // of a deep clone here would be wasteful (the bundle can carry
+      // hundreds of records / chunks at full mode).
+      return { type, bundle: bundle as unknown as ContextBundleArtifact['bundle'] };
     }
   }
 }

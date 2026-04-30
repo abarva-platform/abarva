@@ -28,6 +28,10 @@ export type StageId =
 // ── Conversation ──────────────────────────────────────────────────────────────
 
 import type { AttachmentChipRef } from '@/lib/programs/attachments/types';
+// CB-6 · type-only import — the broker module is server-only, but type
+// imports are erased at compile time so this never traverses the
+// client bundle's webpack graph.
+import type { BrokerMode, ContextBundle } from '@/lib/knowledge/context-broker';
 
 export interface ChatTurn {
   id: string;
@@ -87,6 +91,27 @@ export interface AtlasPageState {
   isStreaming: boolean;
   error: string | null;
   suggestedActions: SuggestedAction[];
+  /**
+   * CB-6 · the latest assembled `ContextBundle` for the active
+   * conversation. Set when the agent route emits a
+   * `context-bundle` artifact at the start of its response.
+   * `null` before the first turn or while assembly is in flight
+   * (in which case `isAssemblingContextBundle` is also true).
+   */
+  latestContextBundle: ContextBundle | null;
+  /**
+   * CB-6 · true while the broker is assembling for the latest user
+   * turn (between user-submit and the first context-bundle artifact
+   * landing). The panel renders a skeleton during this window.
+   */
+  isAssemblingContextBundle: boolean;
+  /**
+   * CB-6 · the user's per-surface mode preference for the 4-mode
+   * toggle. `null` until the user picks one (the route then uses
+   * `inferModeForSurface` per surface). The provider hydrates this
+   * from localStorage on mount.
+   */
+  contextBundleMode: BrokerMode | null;
 }
 
 // ── Context value ─────────────────────────────────────────────────────────────
@@ -102,6 +127,13 @@ export interface AtlasPageContextValue extends AtlasPageState {
   ask: (text: string, attachments?: AttachmentChipRef[]) => void;
   /** Clear the in-flight response / error (does not clear conversation). */
   clearResponse: () => void;
+  /**
+   * CB-6 · update the per-surface context-mode preference. The provider
+   * persists the chosen mode to localStorage keyed by surface; the
+   * next `ask()` call sends it to the route via
+   * `surfaceContext.contextBundleMode`.
+   */
+  setContextBundleMode: (mode: BrokerMode) => void;
 }
 
 // ── Provider props ────────────────────────────────────────────────────────────
@@ -186,6 +218,9 @@ export function createAtlasPageState(seed: AtlasPageStateSeed): AtlasPageState {
     isStreaming: false,
     error: null,
     suggestedActions: seed.suggestedActions ?? [],
+    latestContextBundle: null,
+    isAssemblingContextBundle: false,
+    contextBundleMode: null,
   };
 }
 

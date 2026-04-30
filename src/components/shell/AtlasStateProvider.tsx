@@ -12,6 +12,8 @@ import {
   type AtlasPageContextValue,
   type AtlasPageStateProviderProps,
 } from '@/lib/shell/atlas-page-state';
+import type { BrokerMode } from '@/lib/knowledge/context-broker';
+import { writeStoredContextMode } from '@/lib/shell/context-mode-storage';
 
 interface AtlasStateProviderProps extends AtlasPageStateProviderProps {
   children: ReactNode;
@@ -85,14 +87,29 @@ export function AtlasStateProvider({
     setState(resetAtlasPageState(seed));
   }, [seed]);
 
+  // CB-6 · 4-mode toggle setter for the legacy provider. The non-stream
+  // path doesn't actually re-run assembly (this provider builds replies
+  // in-memory via `buildAtlasContextualReply`), but we must satisfy the
+  // `AtlasPageContextValue` contract and keep the localStorage write so
+  // the preference persists across navigations into the streaming
+  // provider.
+  const setContextBundleMode = useCallback(
+    (mode: BrokerMode) => {
+      setState((previous) => ({ ...previous, contextBundleMode: mode }));
+      writeStoredContextMode(surface, mode);
+    },
+    [surface],
+  );
+
   const value = useMemo<AtlasPageContextValue>(
     () => ({
       ...state,
       ask,
       clearResponse,
       reset,
+      setContextBundleMode,
     }),
-    [state, ask, clearResponse, reset],
+    [state, ask, clearResponse, reset, setContextBundleMode],
   );
 
   return (
