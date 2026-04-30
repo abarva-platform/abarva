@@ -32,12 +32,12 @@ describe('PhasePack · OV2-5-types compatibility', () => {
     }
   });
 
-  it('packs without authored steps have steps === undefined (P5-P6 until later slices)', () => {
+  it('packs without authored steps have steps === undefined (P6 until later slices)', () => {
     // OV2-P0-complete authored steps for P0; OV2-5-P1 authored steps for P1;
     // OV2-5-P2 authored steps for P2; OV2-5-P3 authored steps for P3;
-    // OV2-5-P4 authored steps for P4. P5-P6 remain unauthored until
-    // OV2-5-P5 / OV2-5-P6 land.
-    const PHASES_WITH_STEPS = new Set([0, 1, 2, 3, 4]);
+    // OV2-5-P4 authored steps for P4; OV2-5-P5 authored steps for P5. P6
+    // remains unauthored until OV2-5-P6 lands.
+    const PHASES_WITH_STEPS = new Set([0, 1, 2, 3, 4, 5]);
     for (const p of listAuthoredPhases()) {
       const pack = getPhasePack(p);
       if (PHASES_WITH_STEPS.has(p)) {
@@ -114,19 +114,36 @@ describe('PhaseStep literal · OV2-5-types contract', () => {
 });
 
 describe('PhasePack.steps · optional field', () => {
+  // A synthetic minimal PhasePack-shaped literal used to exercise the steps
+  // optional field independently of any authored pack's evolution. The
+  // authored packs (P0..P5 today, P6 in a parallel slice) all have or will
+  // have a `steps` array, so spreading one of them would inherit `steps` and
+  // mask the `undefined` branch under test.
+  function buildSyntheticBase(): PhasePack {
+    return {
+      phase: 0,
+      label: 'P0 Test Synthetic',
+      outcome: 'Synthetic pack used only for type-shape tests.',
+      definitionOfDone: [],
+      rightQuestions: { open: [], converge: [], close: [] },
+      antiPatterns: [],
+      coachingArc: {
+        entry: 'entry',
+        midPhase: 'mid',
+        exit: 'exit',
+      },
+      dependencies: { requiresFromPrior: [], producesForNext: [] },
+    };
+  }
+
   it('accepts a PhasePack literal with steps undefined', () => {
-    // Build a minimal pack-shaped literal using one of the real packs as the
-    // base so we exercise the type without modifying authored content. Use a
-    // pack that has not yet been step-authored (P5) so the spread does not
-    // carry an existing steps array; OV2-5-P0..OV2-5-P4 added steps to
-    // P0..P4 respectively.
-    const base = getPhasePack(5)!;
+    const base = buildSyntheticBase();
     const withoutSteps: PhasePack = { ...base };
     expect(withoutSteps.steps).toBeUndefined();
   });
 
   it('accepts a PhasePack literal with steps as an array', () => {
-    const base = getPhasePack(5)!;
+    const base = buildSyntheticBase();
     const step: PhaseStep = {
       id: 'compose-charter-draft',
       label: 'Compose the charter draft',

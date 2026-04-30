@@ -266,4 +266,207 @@ export const P5_ACTIVATE: PhasePack = {
       'Scale, pause, or rollback decision with threshold that Operate can monitor',
     ],
   },
+
+  // ── Step decomposition · OV2-5-P5 (design doc D.5.4) ─────────────────────
+  //
+  // 8 canonical P5 steps. P5 prevents failure modes #5 (workflow / operating-
+  // model change executes), #8 (pilot-to-production scaling gap surfaces wave
+  // by wave), and #9 (instrumentation — adoption telemetry baselined against
+  // P4 criteria). The DAG threads the P4 handoff into a wave-aware sub-loop
+  // (prep → launch → debrief, repeated per wave), with adoption-monitoring
+  // running continuously in parallel across waves. Support-and-exceptions
+  // converges on the operating-readiness DoDs once waves complete; CXO
+  // verification reads the adoption telemetry baseline + outcome-report draft;
+  // the final compose step locks benefits attestation and the outcome report
+  // for the P5 → P6 gate.
+  //
+  // StepComplexity admits only 'simple' | 'complex'. The slice spec marks
+  // p5-support-and-exceptions "medium-treat-as-simple" — it is encoded as
+  // 'simple' per the slice rule. Adoption-monitoring is continuous (no off-
+  // platform workshop) and is also 'simple'. The four wave/CXO interview
+  // steps are 'complex' with intentCaptureRequired=true and
+  // postMeetingUploadExpected=true.
+  //
+  // Output rules: outputs MUST reference real DoD ids on this pack, or be the
+  // empty array for intermediate-artifact producers. Where the design doc
+  // implies an output that has no canonical DoD id (handoff continuity, per-
+  // wave prep, per-wave launch), the step's `outputs` is empty and downstream
+  // steps reference the intermediate artifact id in their `inputs` so the DAG
+  // stays legible:
+  //   • p5-handoff-ingest        → p5-handoff-summary
+  //   • p5-rollout-wave-prep     → p5-rollout-wave-prep-result
+  //   • p5-rollout-wave-launch   → p5-rollout-wave-launch-result
+  //   • p5-rollout-wave-debrief  → also emits the cumulative
+  //                                p5-outcome-report-draft alongside the
+  //                                canonical `rollout-waves-completed` DoD
+  //
+  // The CXO verification call reads adoption telemetry + outcome-report draft,
+  // matching the slice spec. The benefits/outcome-report compose step reads
+  // every substantive upstream artifact and emits the two final DoDs that
+  // anchor the P5 → P6 gate alongside the cxo-verification DoD.
+  steps: [
+    // Continuity step. Tagged [5] because P5 monitors workflow / operating-
+    // model change wave by wave; the handoff carries the P4 pilot result,
+    // operating model, and rollout plan forward so wave prep never relitigates
+    // them. No DoD output: this step ingests upstream artifacts and emits an
+    // intermediate `p5-handoff-summary` consumed by wave-prep.
+    {
+      id: 'p5-handoff-ingest',
+      label:
+        'Confirm P4 build + pilot result + rollout plan carried forward',
+      complexity: 'simple',
+      agentRole: 'extract',
+      inputs: [],
+      outputs: [],
+      templateRefs: [],
+      preventsFailureModes: [5],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+    // Per-wave preparation: cohort named, success criteria, support staffed,
+    // comms ready. Complex coached workshop (off-platform readiness review).
+    // No DoD output: wave-prep produces an intermediate readiness assessment
+    // consumed by wave-launch. Tagged [5, 8] because cohort-by-cohort
+    // readiness is the explicit pilot-to-production scaling-gap prevention.
+    {
+      id: 'p5-rollout-wave-prep',
+      label:
+        'Per-wave preparation: cohort named, success criteria, support staffed, comms ready',
+      complexity: 'complex',
+      agentRole: 'coach_workshop',
+      inputs: ['p5-handoff-summary'],
+      outputs: [],
+      templateRefs: [],
+      preventsFailureModes: [5, 8],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+    // Launch one rollout wave. Complex coached event (off-platform launch).
+    // No DoD output: the launch produces an intermediate wave-result artifact
+    // consumed by wave-debrief and adoption-monitoring. Tagged [5, 8] —
+    // launching a cohort is where workflow change executes and where the
+    // pilot-to-production scaling gap surfaces in real teams.
+    {
+      id: 'p5-rollout-wave-launch',
+      label: 'Launch one rollout wave',
+      complexity: 'complex',
+      agentRole: 'coach_workshop',
+      inputs: ['p5-rollout-wave-prep-result'],
+      outputs: [],
+      templateRefs: [],
+      preventsFailureModes: [5, 8],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+    // Per-wave debrief: did adoption hold, what broke, what to change for the
+    // next wave. Complex coached workshop (off-platform debrief / retro). The
+    // cumulative output of this step across all waves is the
+    // `rollout-waves-completed` DoD. The step also emits the intermediate
+    // `p5-outcome-report-draft` artifact (the running narrative of pass/fail
+    // by wave) consumed by the CXO verification call. Tagged [5, 8].
+    {
+      id: 'p5-rollout-wave-debrief',
+      label:
+        'Per-wave debrief: did adoption hold, what broke, what to change for the next wave',
+      complexity: 'complex',
+      agentRole: 'coach_workshop',
+      inputs: ['p5-rollout-wave-launch-result'],
+      outputs: ['rollout-waves-completed'],
+      templateRefs: [],
+      preventsFailureModes: [5, 8],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+    // Continuous adoption telemetry monitoring; flags the
+    // `training-equals-adoption` and `silent-exceptions` anti-patterns when
+    // they appear in evidence. Encoded as 'simple' per the slice rule —
+    // continuous flagging is chat-resolvable (no off-platform workshop). Runs
+    // in parallel with the wave loop and reads each launch result. Tagged
+    // [5, 9] — adoption fade is the workflow-change failure mode and missing
+    // telemetry is the instrumentation failure mode.
+    {
+      id: 'p5-adoption-monitoring',
+      label:
+        'Continuous adoption telemetry monitoring; flag training-equals-adoption and silent-exceptions',
+      complexity: 'simple',
+      agentRole: 'flag_anti_pattern',
+      inputs: ['p5-rollout-wave-launch-result'],
+      outputs: ['adoption-telemetry-baselined'],
+      templateRefs: [],
+      preventsFailureModes: [5, 9],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+    // Slice spec marks this step "medium-treat-as-simple". Encoded as 'simple'
+    // per the slice rule — support readiness validation and exception-path
+    // control are chat-resolvable evidence checks once the wave debriefs have
+    // produced the operating-model evidence. Outputs both canonical DoDs:
+    // `support-readiness-live` and `exception-paths-controlled`. Tagged
+    // [5, 8] — controlled exception paths and live support are the
+    // operating-model proof that prevents value leakage and pilot-to-prod gaps.
+    {
+      id: 'p5-support-and-exceptions',
+      label:
+        'Support readiness live; exception paths controlled',
+      complexity: 'simple',
+      agentRole: 'validate',
+      inputs: ['rollout-waves-completed'],
+      outputs: ['support-readiness-live', 'exception-paths-controlled'],
+      templateRefs: [],
+      preventsFailureModes: [5, 8],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+    // Sponsor + CXO peer evidence-packet conversation; CXO attests benefits
+    // or asks for rework. Complex coached interview (off-platform executive
+    // verification meeting). Reads the adoption telemetry baseline + the
+    // outcome-report draft accumulated through the wave debriefs. Outputs the
+    // canonical `cxo-verification-complete` DoD. Tagged [1, 9]: CXO sign-off
+    // concretizes failure mode #1 (sponsor commitment, re-tested under value)
+    // and failure mode #9 (measurable outcomes the executive can attest to).
+    {
+      id: 'p5-cxo-verification-call',
+      label:
+        'Sponsor + CXO peer evidence-packet conversation; CXO attests benefits or asks for rework',
+      complexity: 'complex',
+      agentRole: 'coach_interview',
+      inputs: [
+        'adoption-telemetry-baselined',
+        'p5-outcome-report-draft',
+      ],
+      outputs: ['cxo-verification-complete'],
+      templateRefs: [],
+      preventsFailureModes: [1, 9],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+    // Lock the outcome report with benefits attested for handoff to P6.
+    // Chat-resolvable compose step — the substantive work happened upstream
+    // in the wave debriefs, adoption monitoring, support-and-exceptions, and
+    // CXO verification. Reads everything substantive: rollout-waves-completed,
+    // adoption-telemetry-baselined, support-readiness-live,
+    // exception-paths-controlled, and cxo-verification-complete. Outputs the
+    // remaining two P5 → P6 gate DoDs: `benefits-realization-attested` and
+    // `outcome-report-drafted`. Tagged [9, 1] — benefits attestation is the
+    // instrumentation closure and the sponsor/CXO commitment closure.
+    {
+      id: 'p5-benefits-attestation-and-outcome-report',
+      label:
+        'Lock outcome report with benefits attested for handoff to P6',
+      complexity: 'simple',
+      agentRole: 'compose_artifact',
+      inputs: [
+        'rollout-waves-completed',
+        'adoption-telemetry-baselined',
+        'support-readiness-live',
+        'exception-paths-controlled',
+        'cxo-verification-complete',
+      ],
+      outputs: ['benefits-realization-attested', 'outcome-report-drafted'],
+      templateRefs: [],
+      preventsFailureModes: [9, 1],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+  ],
 };
