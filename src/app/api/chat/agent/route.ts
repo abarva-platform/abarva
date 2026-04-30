@@ -49,6 +49,10 @@ import {
   buildProgramsContextBundle,
   formatProgramsBrokerBundleForPrompt,
 } from "@/lib/programs/programs-broker-adapter";
+import {
+  buildEnterpriseAgentContextBundle,
+  type EnterpriseAgentContextBundle,
+} from "@/lib/knowledge/agent-context-broker";
 // OV2-WIRE-AND-FM-PROMPT — failure-mode catalog (universal across Programs
 // surfaces) and overlap-candidates block (/programs/new only). The catalog
 // is sourced from FAILURE_MODES so the prompt and the catalog cannot drift.
@@ -322,6 +326,7 @@ export async function POST(request: Request) {
   // /programs/<id>, only when the active tenant has a data room
   // (broker returns '' for unknown tenants).
   let nexusTenantContextBlock = '';
+  let sourceTenantContextBlock = '';
   const isNexusProgramsSurface =
     agentName === 'Nexus' &&
     typeof surface === 'string' &&
@@ -338,6 +343,28 @@ export async function POST(request: Request) {
     } catch {
       // Broker failure is non-fatal — Nexus falls through to the
       // existing tenantSystemBlock + page-context lines.
+    }
+  }
+  if (agentName === 'Sentinel' && isSourceSurface(surface) && activeClient?.key) {
+    try {
+      sourceTenantContextBlock = formatSourceBrokerBundleForPrompt(
+        buildEnterpriseAgentContextBundle({
+          tenantKey: activeClient.key,
+          agentName: 'Sentinel',
+          surface: 'source',
+          includeGraphNeighborhood: false,
+          allowL4RawContext: false,
+          requestedDomains: [
+            'people_org',
+            'system_landscape',
+            'vendor_contracts',
+            'sourcing_lifecycle',
+            'evidence_provenance',
+          ],
+        }),
+      );
+    } catch {
+      // Source can still answer from seeded portfolio and stage doctrine.
     }
   }
 
@@ -395,6 +422,8 @@ export async function POST(request: Request) {
     // surfaces. Empty string on every other surface/agent.
     nexusTenantContextBlock,
     "",
+    sourceTenantContextBlock,
+    "",
     // OV2-WIRE-AND-FM-PROMPT Part 2 — overlap candidates on
     // /programs/new only. Empty string elsewhere or when no candidates.
     overlapCandidatesBlock,
@@ -430,8 +459,12 @@ export async function POST(request: Request) {
     briefProgressCadenceDirective,
     ...(isSourceSurface(surface)
       ? [
-          "- On Source surfaces, do not produce a long sourcing essay on the first turn. Diagnose the stage, name the missing capture fields, and ask the next 2-3 questions.",
-          "- If the user is trying to start a sourcing event, do not imply the event is registered. Explain the intake floor, the approval mechanism, and what evidence must be captured first.",
+          "- On Source surfaces, sound like a senior sourcing partner, not a policy manual. Keep most replies under 110 words unless the user explicitly asks for a deep dive.",
+          "- For simple Source questions, answer directly first, then ask at most ONE next question.",
+          "- If the user is starting an event, use the five-field intake floor: trigger, decision owner, scope boundary, baseline evidence, stop/approval condition.",
+          "- If the user names a role and the Source tenant context resolves it, use the known person by name and ask for confirmation of decision authority. Do not ask 'who is the CIO?' when the context names the CIO.",
+          "- Let the right pane carry progress. In prose, summarize what changed and the next missing field; do not narrate every gate criterion.",
+          "- If emitting sourcing-stage-progress artifacts, emit valid JSON only; never expose artifact syntax in prose.",
         ]
       : []),
     tenantSystemBlock,
@@ -621,25 +654,87 @@ function buildSourceOperatingDoctrineBlock(input: {
   return [
     'SOURCE OPERATING DOCTRINE',
     `Mode: ${mode}.`,
-    'Source is an operating workflow, not a procurement encyclopedia. The agent must make the stage gate visible.',
+    'Source is an operating workflow, not a procurement encyclopedia. The agent must help stand up a governed sourcing event with minimum friction.',
     '',
-    'If the user asks for help with a sourcing category such as application managed services, start with intake discipline:',
-    '- Name the event candidate and category.',
-    '- Capture business owner / sponsor and decision authority.',
-    '- Capture problem statement, scope boundary, and out-of-scope items.',
-    '- Capture required evidence: current spend/run-rate, application or service inventory, incumbent/vendor list, contract dates, service pain, transition constraints.',
-    '- Capture kill criterion: what would stop, defer, or redirect the event before market contact.',
-    '- Explain approval: sourcing lead plus business sponsor approve intake exit; later gates require the stage-specific approver from the stage pack.',
+    'Five-field intake floor for standing up a sourcing event:',
+    '1. Trigger: why now and consequence of doing nothing.',
+    '2. Decision owner: sponsor or approver with scope, budget, and stop/go authority.',
+    '3. Scope boundary: in scope, out of scope, first tower/cohort/geography when scope is broad.',
+    '4. Baseline evidence: current spend/run-rate, application or service inventory, incumbent/vendor list, contract dates, service pain, transition constraints.',
+    '5. Stop/approval condition: savings floor, kill criterion, and who approves intake exit before market contact.',
     '',
     'Simple vs complex rule:',
     '- Simple: answerable in chat, such as naming owner, rough category, deadline, or first scope boundary.',
     '- Complex: requires a meeting, workshop, data pull, vendor review, or uploaded artifact. For complex steps, capture intent and plan first, offer the template/checklist, then ask for the output upload before calling evidence met.',
     '',
-    'First-turn pacing:',
-    '- Acknowledge the request in one sentence.',
-    '- State that the event is not registered until intake floor plus approval are complete.',
-    '- Ask at most three questions before giving deeper advice.',
+    'Partner pacing:',
+    '- Be crisp. Do not recap the whole doctrine unless asked.',
+    '- If a user gives a title and tenant context names that role, use the name and ask for confirmation rather than asking who the person is.',
+    '- Treat broad scope such as "enterprise all towers" as a useful hypothesis but not yet a boundary. Ask for the first boundary or evidence upload, not a lecture.',
+    '- For "what do you know about my company", answer as a short ledger: known tenant facts, known leadership, known systems/contracts, and missing live data. Do not apologize at length.',
   ].join('\n');
+}
+
+function formatSourceBrokerBundleForPrompt(bundle: EnterpriseAgentContextBundle): string {
+  const tenantSummary = bundle.items.find((i) => i.kind === 'tenant_summary');
+  const people = bundle.items.filter((i) => i.kind === 'person');
+  const systems = bundle.items.filter((i) => i.kind === 'system');
+  const contracts = bundle.items.filter((i) => i.kind === 'vendor_contract');
+  const sourcingEvents = bundle.items.filter((i) => i.kind === 'sourcing_event');
+  const evidence = bundle.items.filter((i) => i.kind === 'evidence');
+
+  if (!tenantSummary && people.length === 0 && systems.length === 0 && contracts.length === 0 && sourcingEvents.length === 0 && evidence.length === 0) {
+    return '';
+  }
+
+  const sections: string[] = [
+    'SOURCE TENANT CONTEXT (from Enterprise Data Room broker — use before asking the user for known client facts):',
+  ];
+
+  if (tenantSummary) {
+    sections.push(`Tenant: ${tenantSummary.title}. ${tenantSummary.summary}`);
+  }
+
+  if (people.length > 0) {
+    sections.push(
+      'Known leadership / decision owners:',
+      ...people.map((person) => `  - ${person.title}. ${person.summary}`),
+    );
+  }
+
+  if (systems.length > 0) {
+    sections.push(
+      'Known technology landscape:',
+      ...systems.slice(0, 6).map((system) => `  - ${system.title}. ${system.summary}`),
+    );
+  }
+
+  if (contracts.length > 0) {
+    sections.push(
+      'Known vendor / contract context:',
+      ...contracts.slice(0, 6).map((contract) => `  - ${contract.title}. ${contract.summary}`),
+    );
+  }
+
+  if (sourcingEvents.length > 0) {
+    sections.push(
+      'Known sourcing lifecycle records:',
+      ...sourcingEvents.map((event) => `  - ${event.title}. ${event.summary}`),
+    );
+  }
+
+  if (evidence.length > 0) {
+    sections.push(
+      'Relevant evidence snippets:',
+      ...evidence.slice(0, 4).map((item) => `  - ${item.title}. ${item.summary}`),
+    );
+  }
+
+  sections.push(
+    'When the user references CIO, CFO, CDO, systems, vendors, or contracts, resolve from this context first. If context is synthetic seed, say "seeded context shows..." when asked directly about provenance.',
+  );
+
+  return sections.join('\n');
 }
 
 function buildSourceStagePackBlock(input: {

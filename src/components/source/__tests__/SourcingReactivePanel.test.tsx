@@ -111,7 +111,7 @@ describe('SourcingReactivePanel', () => {
     const html = renderToStaticMarkup(createElement(SourcingReactivePanel, { artifacts: [] }));
 
     expect(html).toContain('Sentinel sourcing reasoning - live');
-    expect(html).toContain('Compare these vendors');
+    expect(html).toContain('Compare vendors');
     expect(html).toContain('Run BAFO check');
     expect(html).toContain('walkaway');
   });

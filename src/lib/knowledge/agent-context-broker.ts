@@ -26,6 +26,7 @@ export type EnterpriseContextItemKind =
   | 'evidence'
   | 'system'
   | 'vendor_contract'
+  | 'sourcing_event'
   | 'financial_metric'
   | 'graph_candidate'
   | 'policy_readiness';
@@ -269,6 +270,67 @@ function selectContextItems(
   }
 
   if (request.agentName === 'Sentinel') {
+    if (request.surface === 'source') {
+      items.push(...room.people.slice(0, 8).map((person) => ({
+        id: `ctx:${person.id}`,
+        kind: 'person' as const,
+        title: `${person.name} — ${person.role}`,
+        summary: [
+          `Org unit: ${person.orgUnit}`,
+          person.reportsToRole ? `Reports to: ${person.reportsToRole}` : null,
+          person.decisionRights.length > 0
+            ? `Decision rights: ${person.decisionRights.slice(0, 3).join('; ')}`
+            : null,
+          person.priorities.length > 0
+            ? `Priorities: ${person.priorities.slice(0, 3).join('; ')}`
+            : null,
+        ]
+          .filter(Boolean)
+          .join('. '),
+        tenantKey: room.tenantKey,
+        sourceBasis: person.sourceBasis,
+        dataClassification: 'synthetic' as const,
+        sensitivity: 'structured' as const,
+        provenanceIds: [person.id, ...person.sponsorsPrograms, ...person.ownsSystems],
+        linkedEvidence: [],
+      })));
+      items.push(...room.systems.slice(0, 8).map((system) => ({
+        id: `ctx:${system.id}`,
+        kind: 'system' as const,
+        title: system.name,
+        summary: `${system.vendor}; ${system.category}; owner ${system.itOwner}; annual spend ${system.annualSpendUsd}; expiry ${system.contractExpiry}; risk ${system.criticality}`,
+        tenantKey: room.tenantKey,
+        sourceBasis: system.sourceBasis,
+        dataClassification: 'synthetic' as const,
+        sensitivity: 'structured' as const,
+        provenanceIds: [system.id],
+        linkedEvidence: [],
+      })));
+      items.push(...room.vendorContracts.slice(0, 8).map((contract) => ({
+        id: `ctx:${contract.id}`,
+        kind: 'vendor_contract' as const,
+        title: `${contract.vendorName} - ${contract.product}`,
+        summary: `${contract.category}; risk ${contract.riskLevel}; ${contract.keyRisk}`,
+        tenantKey: room.tenantKey,
+        sourceBasis: contract.sourceBasis,
+        dataClassification: 'synthetic' as const,
+        sensitivity: 'structured' as const,
+        provenanceIds: [contract.id],
+        linkedEvidence: [],
+      })));
+      items.push(...room.sourcingEvents.slice(0, 4).map((event) => ({
+        id: `ctx:${event.id}`,
+        kind: 'sourcing_event' as const,
+        title: event.title,
+        summary: `${event.workType}; status ${event.status}; recommended vendor ${event.recommendedVendorId}; linked programs ${event.linkedProgramIds.join(', ') || 'none'}`,
+        tenantKey: room.tenantKey,
+        sourceBasis: event.sourceBasis,
+        dataClassification: 'synthetic' as const,
+        sensitivity: 'structured' as const,
+        provenanceIds: [event.id, ...event.linkedProgramIds, ...event.linkedArtifactIds],
+        linkedEvidence: [],
+      })));
+    }
     items.push(...room.evidence.slice(0, 8).map((evidence) => ({
       id: `ctx:${evidence.id}`,
       kind: 'evidence' as const,

@@ -481,6 +481,24 @@ export interface ExtractResult {
   remaining: string;
 }
 
+export function sanitizeArtifactDebugText(text: string): string {
+  return text
+    .replace(/\[\[artifact:[a-z-]+ parse-failed\]\]/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trimStart();
+}
+
+export function visibleArtifactPendingText(pending: string): string {
+  if (
+    pending.includes('[[artifact:') ||
+    pending.includes('[[/artifact') ||
+    isPartialOpenSentinel(pending)
+  ) {
+    return '';
+  }
+  return sanitizeArtifactDebugText(pending);
+}
+
 export function isKnownArtifactType(type: string): type is ArtifactType {
   return (
     type === 'brief-field' ||

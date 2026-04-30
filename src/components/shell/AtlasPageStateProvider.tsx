@@ -37,7 +37,12 @@ import { consumeOriginationHandoff } from '@/lib/shell/origination-handoff';
 // accumulated raw text — sentinels would surface as visible noise in
 // the chat thread, AND the reactive panel never received any
 // dispatches.
-import { extractArtifacts, type Artifact } from '@/lib/agent/artifacts';
+import {
+  extractArtifacts,
+  sanitizeArtifactDebugText,
+  visibleArtifactPendingText,
+  type Artifact,
+} from '@/lib/agent/artifacts';
 
 // ── Default surface-to-agent mapping ─────────────────────────────────────────
 
@@ -204,7 +209,7 @@ export function AtlasPageStateProvider({
           // Display the committed visible plus any in-flight buffer
           // (with sentinels still mid-stream); extractArtifacts will
           // re-clean on the next chunk.
-          setCurrentResponse(committedVisible + pendingBuffer);
+          setCurrentResponse(sanitizeArtifactDebugText(committedVisible) + visibleArtifactPendingText(pendingBuffer));
         }
 
         // Final flush — any closed artifact whose close arrived in the
@@ -214,7 +219,7 @@ export function AtlasPageStateProvider({
         if (pendingBuffer.length > 0) {
           const final = extractArtifacts(pendingBuffer);
           committedVisible += final.visibleText;
-          if (final.remaining.length > 0) committedVisible += final.remaining;
+          if (final.remaining.length > 0) committedVisible += visibleArtifactPendingText(final.remaining);
           dispatchNew(final.artifacts);
           pendingBuffer = '';
         }
@@ -223,7 +228,7 @@ export function AtlasPageStateProvider({
         const agentTurn: ChatTurn = {
           id: `agt-${Date.now()}`,
           role: 'agent',
-          text: committedVisible,
+          text: sanitizeArtifactDebugText(committedVisible),
           agentName: resolvedAgentName,
           timestamp: Date.now(),
         };
