@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { FilterPillStrip } from '@/components/shell/FilterPillStrip';
@@ -90,6 +90,7 @@ export function SourcePortfolioPage({ events, searchParams }: SourcePortfolioPag
   return (
     <AppShell
       surface="source"
+      agentName="Nexus"
       surfaceContext={{
         sourcePortfolioMode: true,
         sourceEventCount: eventsInView.length,
@@ -116,7 +117,7 @@ export function SourcePortfolioPage({ events, searchParams }: SourcePortfolioPag
             minHeight: 0,
             overflowY: 'auto',
             background: SHELL.PAPER,
-            padding: '20px 28px 28px',
+            padding: '10px 20px 24px',
           }}
         >
           <SourceCommandHeader eventsInView={eventsInView.length} events={eventsInView} />
@@ -129,6 +130,8 @@ export function SourcePortfolioPage({ events, searchParams }: SourcePortfolioPag
             artifacts={artifacts}
             onArtifact={handleArtifact}
           />
+
+          <SourceWorkDock />
 
           <SourceMissionPreview events={eventsInView} />
 
@@ -190,9 +193,9 @@ function SourceCommandHeader({
       style={{
         display: 'grid',
         gridTemplateColumns: 'minmax(0, 1fr) minmax(260px, auto)',
-        gap: 18,
-        alignItems: 'end',
-        marginBottom: 14,
+        gap: 14,
+        alignItems: 'center',
+        marginBottom: 10,
       }}
     >
       <div>
@@ -203,7 +206,7 @@ function SourceCommandHeader({
             letterSpacing: '0.18em',
             textTransform: 'uppercase',
             color: SHELL.INK_MUTED,
-            marginBottom: 5,
+            marginBottom: 3,
           }}
         >
           Source command center - {eventsInView} events in view
@@ -211,7 +214,7 @@ function SourceCommandHeader({
         <h1
           style={{
             fontFamily: SHELL.SERIF,
-            fontSize: 25,
+            fontSize: 22,
             fontWeight: 700,
             color: SHELL.INK,
             margin: 0,
@@ -223,23 +226,22 @@ function SourceCommandHeader({
         </h1>
         <p
           style={{
-            margin: '7px 0 0',
+            margin: '5px 0 0',
             maxWidth: 760,
             fontFamily: SHELL.SANS,
-            fontSize: 13.2,
-            lineHeight: 1.45,
+            fontSize: 12.4,
+            lineHeight: 1.35,
             color: SHELL.INK_SOFT,
           }}
         >
-          Source is the operating room for technology and IT sourcing: intake thesis, scope boundary,
-          evidence readiness, stage gates, vendor risk, commercial value, and owner action stay visible
-          before anyone opens an agent thread.
+          Source is the operating room for technology and IT sourcing: scope, evidence, gates, vendor risk,
+          value, and next action stay visible while Nexus runs the thread.
         </p>
       </div>
       <div
         style={{
           display: 'grid',
-          gap: 10,
+          gap: 7,
           justifyItems: 'end',
         }}
       >
@@ -253,9 +255,9 @@ function SourceCommandHeader({
             borderRadius: 999,
             background: SHELL.INK,
             color: SHELL.PAPER,
-            padding: '10px 16px',
+            padding: '8px 13px',
             fontFamily: SHELL.MONO,
-            fontSize: 10.5,
+            fontSize: 9.8,
             fontWeight: 800,
             letterSpacing: '0.08em',
             textTransform: 'uppercase',
@@ -301,9 +303,9 @@ function HeaderMetric({
         border: `1px solid ${SHELL.CARD_LINE}`,
         borderRadius: 10,
         background: SHELL.CARD_WHITE,
-        padding: '8px 9px',
+        padding: '6px 8px',
         display: 'grid',
-        gap: 3,
+        gap: 2,
       }}
     >
       <div
@@ -320,7 +322,7 @@ function HeaderMetric({
       <div
         style={{
           fontFamily: compact ? SHELL.SANS : SHELL.SERIF,
-          fontSize: compact ? 12 : 19,
+          fontSize: compact ? 11.2 : 17,
           fontWeight: 800,
           color: SHELL.INK,
           lineHeight: 1.05,
@@ -329,6 +331,38 @@ function HeaderMetric({
         {value}
       </div>
     </div>
+  );
+}
+
+function SourceWorkDock() {
+  const workItems = [
+    {
+      label: 'Attach evidence',
+      detail: 'Paperclip for files; evidence form for validated metadata.',
+    },
+    {
+      label: 'Generate artifact',
+      detail: 'Strategy memo, RFP pack, pricing workbook, BAFO brief.',
+    },
+    {
+      label: 'Run workshop',
+      detail: 'Agenda, capture template, decisions, actions, next step.',
+    },
+    {
+      label: 'Request approval',
+      detail: 'Steward blocks or advances only when gate evidence is met.',
+    },
+  ];
+
+  return (
+    <section aria-label="Source work dock" style={WORK_DOCK}>
+      {workItems.map((item) => (
+        <article key={item.label} style={WORK_DOCK_CARD}>
+          <div style={WORK_DOCK_LABEL}>{item.label}</div>
+          <p style={WORK_DOCK_COPY}>{item.detail}</p>
+        </article>
+      ))}
+    </section>
   );
 }
 
@@ -424,6 +458,38 @@ function SourceMissionPreview({ events }: { events: SourcingEventSummary[] }) {
     </section>
   );
 }
+
+const WORK_DOCK = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+  gap: 8,
+  marginBottom: 12,
+} satisfies CSSProperties;
+
+const WORK_DOCK_CARD = {
+  border: `1px solid ${SHELL.CARD_LINE}`,
+  borderRadius: 12,
+  background: SHELL.CARD_WHITE,
+  padding: '10px 11px',
+  minHeight: 0,
+} satisfies CSSProperties;
+
+const WORK_DOCK_LABEL = {
+  fontFamily: SHELL.MONO,
+  fontSize: 8.8,
+  letterSpacing: '0.12em',
+  textTransform: 'uppercase',
+  color: SHELL.INK_MUTED,
+  fontWeight: 800,
+} satisfies CSSProperties;
+
+const WORK_DOCK_COPY = {
+  margin: '5px 0 0',
+  fontFamily: SHELL.SANS,
+  fontSize: 12,
+  lineHeight: 1.35,
+  color: SHELL.INK_SOFT,
+} satisfies CSSProperties;
 
 function filterEvents(
   events: SourcingEventSummary[],

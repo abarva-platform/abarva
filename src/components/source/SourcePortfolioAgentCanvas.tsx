@@ -3,8 +3,8 @@
 import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import { AtlasDrawer } from '@/components/shell/AtlasDrawer';
-import { SourcePortfolioReactivePanel } from '@/components/source/SourcePortfolioReactivePanel';
-import type { Artifact } from '@/lib/agent/artifacts';
+import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
+import type { Artifact, SourcingStageProgressArtifact } from '@/lib/agent/artifacts';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourcingEventSummary } from '@/lib/source/types';
 import { formatUsd } from '@/lib/source/value-ledger';
@@ -53,30 +53,20 @@ export function SourcePortfolioAgentCanvas({
           quote={quote}
           surface="/source"
           onArtifact={onArtifact}
+          composerPlacement="afterHeader"
           emptyState={<SourcePortfolioPromptDeck events={events} />}
         />
       </div>
 
       <aside aria-label="Source reasoning and evidence pane" style={REASONING_COLUMN}>
-        <section style={REASONING_INTRO_CARD}>
-          <div style={EYEBROW}>Sentinel source reasoning - live</div>
-          <p style={INTRO_COPY}>
-            As the conversation runs, this pane materializes intake progress, evidence cautions, gate blockers,
-            commercial traps, and executive implications. It starts with the static Source doctrine so the user is
-            never staring at an empty rail.
-          </p>
-          <div style={METRIC_GRID}>
-            <ReasoningMetric label="Active" value={String(activeEvents)} />
-            <ReasoningMetric label="Blocked" value={String(blockedEvents)} />
-            <ReasoningMetric label="Value" value={formatUsd(valueAtStake)} />
-          </div>
-        </section>
-
-        <SourcePortfolioReactivePanel
+        <SourceFormationPanel
           events={events}
           activeStage={activeStage}
           activeStatus={activeStatus}
           artifacts={artifacts}
+          activeEvents={activeEvents}
+          blockedEvents={blockedEvents}
+          valueAtStake={valueAtStake}
         />
       </aside>
     </section>
@@ -84,69 +74,169 @@ export function SourcePortfolioAgentCanvas({
 }
 
 function SourcePortfolioPromptDeck({ events }: { events: SourcingEventSummary[] }) {
+  const pageState = useAtlasPageState();
   const amsEvent = events.find((event) =>
     `${event.name} ${event.archetype}`.toLowerCase().includes('ams')
     || `${event.name} ${event.archetype}`.toLowerCase().includes('managed services')
     || `${event.name}`.toLowerCase().includes('application')
   );
+  const choices = [
+    {
+      label: 'AMS outsourcing',
+      prompt: 'Create a Source event for AMS outsourcing. Ask me one question: what scope boundary must we lock first?',
+    },
+    {
+      label: 'Cloud or infrastructure',
+      prompt: 'Create a Source event for cloud or infrastructure sourcing. Ask me one question to define the trigger.',
+    },
+    {
+      label: 'Data / AI platform',
+      prompt: 'Create a Source event for a data or AI platform decision. Ask me one question to name the decision owner.',
+    },
+    {
+      label: 'Enterprise software',
+      prompt: 'Create a Source event for enterprise software selection. Ask me one question to capture baseline evidence.',
+    },
+    {
+      label: 'Something else',
+      prompt: 'Help me shape a different IT sourcing event. Ask me for the first missing fact only.',
+    },
+  ];
+
+  const sendChoice = (prompt: string) => {
+    pageState?.ask(prompt);
+  };
 
   return (
-    <div style={PROMPT_DECK}>
-      <div style={DARK_CARD}>
-        <div style={DARK_EYEBROW}>Nexus intake posture</div>
-        <p style={DARK_LEAD}>
-          I can help stand up a technology sourcing event or work an existing one. For a new event, I only need the
-          first five facts: trigger, decision owner, scope boundary, baseline evidence, and stop/approval condition.
+    <div style={CHOICE_DECK}>
+      <div style={CHOICE_HEADER}>
+        <div style={DARK_EYEBROW}>Start with one move</div>
+        <p style={CHOICE_LEAD}>
+          Pick a path. Nexus will keep it crisp: one question, then the readiness rail updates.
         </p>
-        <Link href="/source/new" style={DARK_ACTION}>
-          Create IT sourcing event
-        </Link>
       </div>
 
-      <div style={DARK_GRID}>
-        <PromptCard
-          label="1. Register event"
-          body="Capture trigger, named decision owner, scope boundary, baseline evidence, and stop/approval condition."
-        />
-        <PromptCard
-          label="2. Attach evidence"
-          body="Use the paperclip lane for inventories, contracts, pricing files, meeting notes, and vendor responses; Sentinel should not cite unparsed files."
-        />
-        <PromptCard
-          label="3. Generate artifacts"
-          body="Create the sourcing strategy memo, scope document, RFP package, pricing workbook, BAFO pack, and executive decision brief at the right gate."
-        />
-        <PromptCard
-          label="4. Run sessions"
-          body="Prepare sponsor 1:1s, scope workshops, vendor Q&A, evaluation meetings, BAFO prep, and selection reviews with expected outputs."
-        />
-        <PromptCard
-          label="5. Sync outcomes"
-          body="After each meeting or workshop, ingest notes, extract decisions/actions, update gate readiness, and brief the team on the next step."
-        />
-        <PromptCard
-          label="AMS starting kit"
-          body="For AMS, start with run-rate, app/service inventory, incumbents, renewal dates, service pain, tower boundaries, and transition constraints."
-        />
-        <PromptCard
-          label="Open seeded event"
-          body={
-            amsEvent
-              ? `${amsEvent.name} is available at ${amsEvent.currentStageLabel}.`
-              : 'No AMS seeded event is visible in this filter; reset filters or start a new intake.'
-          }
-        />
+      <div style={CHOICE_GRID}>
+        {choices.map((choice) => (
+          <button
+            key={choice.label}
+            type="button"
+            onClick={() => sendChoice(choice.prompt)}
+            disabled={!pageState || pageState.isStreaming}
+            style={{
+              ...CHOICE_BUTTON,
+              opacity: pageState?.isStreaming ? 0.55 : 1,
+              cursor: !pageState || pageState.isStreaming ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {choice.label}
+          </button>
+        ))}
+      </div>
+
+      <div style={CHOICE_FOOTER}>
+        <Link href="/source/new" style={DARK_ACTION}>
+          Open event form
+        </Link>
+        {amsEvent ? (
+          <Link href={`/source/events/${amsEvent.id}`} style={DARK_ACTION}>
+            Open seeded AMS
+          </Link>
+        ) : null}
       </div>
     </div>
   );
 }
 
-function PromptCard({ label, body }: { label: string; body: string }) {
+function SourceFormationPanel({
+  events,
+  activeStage,
+  activeStatus,
+  artifacts,
+  activeEvents,
+  blockedEvents,
+  valueAtStake,
+}: {
+  events: SourcingEventSummary[];
+  activeStage: string | null;
+  activeStatus: string | null;
+  artifacts: Artifact[];
+  activeEvents: number;
+  blockedEvents: number;
+  valueAtStake: number;
+}) {
+  const topEvent = selectTopEvent(events);
+  const progressCards = artifacts.filter(
+    (artifact): artifact is SourcingStageProgressArtifact => artifact.type === 'sourcing-stage-progress',
+  );
+  const readiness = Math.min(90, 35 + (progressCards.length * 15) + (topEvent ? 10 : 0));
+  const filterLabel = [activeStage, activeStatus].filter(Boolean).join(' / ') || 'all IT sourcing';
+  const knownRows = [
+    { label: 'Portfolio', value: `${events.length} events in view` },
+    { label: 'Top event', value: topEvent?.name ?? 'Not selected yet' },
+    { label: 'Category', value: topEvent?.archetype ?? 'IT sourcing only' },
+  ];
+  const missingRows = [
+    { label: 'Trigger', done: progressCards.some((artifact) => artifact.label.toLowerCase().includes('trigger')) },
+    { label: 'Decision owner', done: progressCards.some((artifact) => artifact.label.toLowerCase().includes('owner')) },
+    { label: 'Scope boundary', done: progressCards.some((artifact) => artifact.label.toLowerCase().includes('scope')) },
+    { label: 'Baseline evidence', done: progressCards.some((artifact) => artifact.label.toLowerCase().includes('evidence')) },
+    { label: 'Stop / approval', done: progressCards.some((artifact) => artifact.label.toLowerCase().includes('approval')) },
+  ];
+
   return (
-    <div style={DARK_PROMPT_CARD}>
-      <div style={DARK_EYEBROW}>{label}</div>
-      <div style={DARK_PROMPT_COPY}>{body}</div>
-    </div>
+    <section style={FORMATION_CARD} aria-label="Source event formation status">
+      <div style={FORMATION_HEADER}>
+        <div>
+          <div style={EYEBROW}>Event formation - live</div>
+          <h2 style={FORMATION_TITLE}>{readiness}% shaped</h2>
+        </div>
+        <div style={FORMATION_BADGE}>Right rail</div>
+      </div>
+      <div aria-hidden="true" style={PROGRESS_TRACK}>
+        <div style={{ ...PROGRESS_BAR, width: `${readiness}%` }} />
+      </div>
+      <p style={INTRO_COPY}>
+        As Nexus asks questions, this rail tracks the event shape: what is known, what is missing, and what
+        unlocks the next gate.
+      </p>
+
+      <div style={METRIC_GRID}>
+        <ReasoningMetric label="Active" value={String(activeEvents)} />
+        <ReasoningMetric label="Blocked" value={String(blockedEvents)} />
+        <ReasoningMetric label="Value" value={formatUsd(valueAtStake)} />
+      </div>
+
+      <div style={FORMATION_SECTION}>
+        <div style={FORMATION_SECTION_TITLE}>Known now</div>
+        {knownRows.map((row) => (
+          <div key={row.label} style={FORMATION_ROW}>
+            <span>{row.label}</span>
+            <strong>{row.value}</strong>
+          </div>
+        ))}
+      </div>
+
+      <div style={FORMATION_SECTION}>
+        <div style={FORMATION_SECTION_TITLE}>Still needed</div>
+        <div style={CHECK_GRID}>
+          {missingRows.map((row) => (
+            <span key={row.label} style={row.done ? CHECK_DONE : CHECK_TODO}>
+              {row.done ? 'Done:' : 'Todo:'} {row.label}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div style={NEXT_MOVE_CARD}>
+        <div style={FORMATION_SECTION_TITLE}>Next move</div>
+        <p style={NEXT_MOVE_COPY}>
+          {topEvent
+            ? `${topEvent.currentStageLabel}: ${topEvent.nextAction}.`
+            : `Pick a sourcing type for ${filterLabel}, then Nexus will ask for the first missing fact.`}
+        </p>
+      </div>
+    </section>
   );
 }
 
@@ -159,18 +249,26 @@ function ReasoningMetric({ label, value }: { label: string; value: string }) {
   );
 }
 
+function selectTopEvent(events: SourcingEventSummary[]): SourcingEventSummary | null {
+  return [...events].sort((left, right) => {
+    if (Number(right.isAtRisk) !== Number(left.isAtRisk)) return Number(right.isAtRisk) - Number(left.isAtRisk);
+    if (right.openAlerts !== left.openAlerts) return right.openAlerts - left.openAlerts;
+    return right.valueAtStakeUsd - left.valueAtStakeUsd;
+  })[0] ?? null;
+}
+
 const AGENT_CANVAS: CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'minmax(0, 1.7fr) minmax(min(100%, 360px), 1fr)',
-  gap: 16,
+  gap: 12,
   alignItems: 'stretch',
-  minHeight: 520,
-  marginBottom: 20,
+  minHeight: 430,
+  marginBottom: 12,
 };
 
 const CHAT_COLUMN: CSSProperties = {
   minWidth: 0,
-  minHeight: 520,
+  minHeight: 430,
   display: 'grid',
 };
 
@@ -180,13 +278,6 @@ const REASONING_COLUMN: CSSProperties = {
   display: 'grid',
   alignContent: 'start',
   gap: 10,
-};
-
-const REASONING_INTRO_CARD: CSSProperties = {
-  border: '1px dashed rgba(12, 26, 58, 0.18)',
-  borderRadius: 12,
-  background: SHELL.CARD_WHITE,
-  padding: '14px 16px',
 };
 
 const EYEBROW: CSSProperties = {
@@ -238,18 +329,18 @@ const METRIC_VALUE: CSSProperties = {
   fontWeight: 800,
 };
 
-const PROMPT_DECK: CSSProperties = {
+const CHOICE_DECK: CSSProperties = {
   width: '100%',
   display: 'grid',
-  gap: 10,
+  gap: 11,
   padding: '0 0 8px',
 };
 
-const DARK_CARD: CSSProperties = {
+const CHOICE_HEADER: CSSProperties = {
   border: '1px solid rgba(250,247,241,0.12)',
   borderRadius: 12,
   background: 'rgba(250,247,241,0.055)',
-  padding: '11px 12px',
+  padding: '10px 12px',
 };
 
 const DARK_EYEBROW: CSSProperties = {
@@ -261,10 +352,10 @@ const DARK_EYEBROW: CSSProperties = {
   fontWeight: 700,
 };
 
-const DARK_LEAD: CSSProperties = {
+const CHOICE_LEAD: CSSProperties = {
   margin: '6px 0 0',
   fontFamily: SHELL.SERIF,
-  fontSize: 14.5,
+  fontSize: 14,
   lineHeight: 1.36,
   color: 'rgba(250,247,241,0.88)',
 };
@@ -285,22 +376,141 @@ const DARK_ACTION: CSSProperties = {
   textDecoration: 'none',
 };
 
-const DARK_GRID: CSSProperties = {
+const CHOICE_GRID: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 145px), 1fr))',
+  gap: 8,
+};
+
+const CHOICE_BUTTON: CSSProperties = {
+  border: '1px solid rgba(250,247,241,0.10)',
+  borderRadius: 999,
+  padding: '9px 11px',
+  background: 'rgba(250,247,241,0.065)',
+  color: 'rgba(250,247,241,0.9)',
+  fontFamily: SHELL.MONO,
+  fontSize: 9.5,
+  fontWeight: 800,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+};
+
+const CHOICE_FOOTER: CSSProperties = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: 8,
+};
+
+const FORMATION_CARD: CSSProperties = {
+  border: '1px solid rgba(12, 26, 58, 0.12)',
+  borderRadius: 14,
+  background: SHELL.CARD_WHITE,
+  padding: '14px 15px',
+  display: 'grid',
+  gap: 11,
+  boxShadow: '0 18px 42px rgba(12,26,58,0.06)',
+};
+
+const FORMATION_HEADER: CSSProperties = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'flex-start',
+  gap: 12,
+};
+
+const FORMATION_TITLE: CSSProperties = {
+  margin: '4px 0 0',
+  fontFamily: SHELL.SERIF,
+  fontSize: 28,
+  lineHeight: 1,
+  color: SHELL.INK,
+};
+
+const FORMATION_BADGE: CSSProperties = {
+  border: '1px solid rgba(15,118,110,0.22)',
+  borderRadius: 999,
+  background: 'rgba(15,118,110,0.08)',
+  color: '#0F766E',
+  padding: '5px 8px',
+  fontFamily: SHELL.MONO,
+  fontSize: 8.5,
+  fontWeight: 800,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+};
+
+const PROGRESS_TRACK: CSSProperties = {
+  height: 7,
+  borderRadius: 999,
+  background: 'rgba(12,26,58,0.08)',
+  overflow: 'hidden',
+};
+
+const PROGRESS_BAR: CSSProperties = {
+  height: '100%',
+  borderRadius: 999,
+  background: 'linear-gradient(90deg, #0F766E 0%, #D97706 100%)',
+};
+
+const FORMATION_SECTION: CSSProperties = {
   display: 'grid',
   gap: 7,
 };
 
-const DARK_PROMPT_CARD: CSSProperties = {
-  border: '1px solid rgba(250,247,241,0.10)',
-  borderRadius: 10,
-  padding: '8px 10px',
-  background: 'rgba(250,247,241,0.035)',
+const FORMATION_SECTION_TITLE: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 8.5,
+  letterSpacing: '0.12em',
+  textTransform: 'uppercase',
+  color: SHELL.INK_MUTED,
+  fontWeight: 800,
 };
 
-const DARK_PROMPT_COPY: CSSProperties = {
-  marginTop: 3,
+const FORMATION_ROW: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '98px minmax(0, 1fr)',
+  gap: 8,
+  fontFamily: SHELL.SANS,
+  fontSize: 12.2,
+  lineHeight: 1.3,
+  color: SHELL.INK_SOFT,
+};
+
+const CHECK_GRID: CSSProperties = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: 6,
+};
+
+const CHECK_TODO: CSSProperties = {
+  border: '1px solid rgba(12,26,58,0.12)',
+  borderRadius: 999,
+  background: SHELL.PAPER_SOFT,
+  padding: '5px 8px',
   fontFamily: SHELL.SANS,
   fontSize: 11.8,
-  lineHeight: 1.34,
-  color: 'rgba(250,247,241,0.78)',
+  color: SHELL.INK_SOFT,
+};
+
+const CHECK_DONE: CSSProperties = {
+  ...CHECK_TODO,
+  border: '1px solid rgba(15,118,110,0.22)',
+  background: 'rgba(15,118,110,0.08)',
+  color: '#0F766E',
+  fontWeight: 800,
+};
+
+const NEXT_MOVE_CARD: CSSProperties = {
+  border: '1px solid rgba(217,119,6,0.22)',
+  borderRadius: 12,
+  background: 'rgba(217,119,6,0.08)',
+  padding: '10px 11px',
+};
+
+const NEXT_MOVE_COPY: CSSProperties = {
+  margin: '6px 0 0',
+  fontFamily: SHELL.SANS,
+  fontSize: 12.5,
+  lineHeight: 1.45,
+  color: SHELL.INK,
 };
