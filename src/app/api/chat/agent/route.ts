@@ -256,6 +256,7 @@ export async function POST(request: Request) {
     '/programs',
     '/home',
     '/intelligence',
+    '/tower',
   ]);
   const isProgramDetailSurface =
     typeof surface === 'string' &&
