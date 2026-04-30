@@ -1,36 +1,37 @@
 // OV2-2c · Tenant-admin approval queue · shared auth helpers
+// OV2-2d-RBAC · Migrated decide gate to the dedicated `tenant_admin` role helper.
 //
 // Centralises the auth + role-check posture used by GET /api/admin/programs/approvals
 // and POST /api/admin/programs/approvals/[requestId]. Two postures:
 //
 //   • requireAdminAuth() — read posture. Authenticated user with an
-//     active tenant. We do NOT block read on role today — see the
-//     RBAC posture note below.
+//     active tenant. We do NOT block read on role today — anyone who
+//     can see the /admin tree can VIEW the queue. The decide gate is
+//     stricter (see below).
 //
 //   • requireAdminDecide() — decide posture. Authenticated user with
-//     an active tenant AND a Clerk publicMetadata.role of 'admin' or
-//     a primary email on the platform-admin allowlist (mirrors the
-//     /admin layout gate). Decisions land in the audit trail (see
-//     decideApprovalRequest), so we err on the side of stricter
-//     gating here.
+//     an active tenant AND `tenant_admin` rights for that tenant
+//     (resolved by `requireTenantAdmin` in src/lib/auth/tenant-roles.ts).
+//     The platform-admin gate (Clerk `publicMetadata.role === 'admin'`
+//     OR primary email on the allowlist) implicitly satisfies
+//     `tenant_admin` for every tenant — see the role helper docs.
+//     Decisions land in the audit trail (see decideApprovalRequest),
+//     so we err on the side of stricter gating here.
 //
-// RBAC posture note (OV2-2c → OV2-2d-RBAC):
-//   The codebase today does not have a "tenant_admin" role distinct
-//   from "platform_admin". Until OV2-2d-RBAC introduces the dedicated
-//   role helper, we reuse the platform-admin gate from
-//   src/app/(maestro)/admin/layout.tsx for decide actions. Read access
-//   to the queue is restricted to authenticated users with an active
-//   tenant — anyone who can already see the /admin tree.
+// RBAC posture (post OV2-2d-RBAC):
+//   `tenant_admin` is now distinct from `platform_admin`. Per-tenant
+//   role assignment lives on Clerk `publicMetadata.tenantRoles[tenantKey]`.
+//   Until per-tenant assignments are populated, the platform-admin
+//   posture continues to satisfy decide actions on every tenant.
+//   See src/lib/auth/tenant-roles.ts for the metadata shape and the
+//   fallback rules.
 
-import { auth, currentUser } from '@clerk/nextjs/server';
+import { auth } from '@clerk/nextjs/server';
 import { getActiveClientRow } from '@/lib/active-client';
-
-// Mirrors src/app/(maestro)/admin/layout.tsx. When OV2-2d-RBAC ships
-// the proper tenant_admin role helper this list goes away.
-const ADMIN_EMAIL_ALLOWLIST: ReadonlySet<string> = new Set([
-  'anand+clerk_test@abarva.com',
-  'anand.sundaram@thesundaram.com',
-]);
+import {
+  TenantRoleError,
+  requireTenantAdmin,
+} from '@/lib/auth/tenant-roles';
 
 export interface AdminAuthCtx {
   userId: string;
@@ -54,8 +55,12 @@ export class AdminAuthError extends Error {
 
 /**
  * Read posture · authenticated user with an active tenant.
- * Returns the user's tenantKey and whether they qualify as admin
- * (callers can decide whether to gate further actions on this).
+ *
+ * Returns the user's tenantKey. The `isAdmin` flag is preserved on the
+ * return shape for backward compatibility, but the read endpoint no
+ * longer branches on it — any authenticated active-client member can
+ * VIEW the queue. To check decide-rights from a caller other than the
+ * route handler, use `requireTenantAdmin` directly.
  */
 export async function requireAdminAuth(): Promise<AdminAuthCtx> {
   const session = await auth();
@@ -67,16 +72,22 @@ export async function requireAdminAuth(): Promise<AdminAuthCtx> {
     throw new AdminAuthError(403, 'no_tenant');
   }
 
-  const user = await currentUser();
-  const role = (user?.publicMetadata?.role as string | undefined) ?? '';
-  const fallbackRole =
-    (user?.unsafeMetadata?.role as string | undefined) ??
-    (user?.publicMetadata?.legacyRole as string | undefined);
-  const primaryEmail = user?.primaryEmailAddress?.emailAddress?.toLowerCase();
-  const isAdmin =
-    role === 'admin' ||
-    fallbackRole === 'admin' ||
-    (!!primaryEmail && ADMIN_EMAIL_ALLOWLIST.has(primaryEmail));
+  // Probe the tenant-admin posture without throwing — `isAdmin` here
+  // is informational for callers that surface admin-only affordances.
+  let isAdmin = false;
+  try {
+    await requireTenantAdmin({
+      userId: session.userId,
+      tenantKey: client.key,
+    });
+    isAdmin = true;
+  } catch (err) {
+    if (err instanceof TenantRoleError) {
+      isAdmin = false;
+    } else {
+      throw err;
+    }
+  }
 
   return {
     userId: session.userId,
@@ -86,16 +97,40 @@ export async function requireAdminAuth(): Promise<AdminAuthCtx> {
 }
 
 /**
- * Decide posture · same as requireAdminAuth() but throws 403 unless
- * the user qualifies as admin (publicMetadata.role === 'admin' OR
- * platform-admin email allowlist).
+ * Decide posture · authenticated active-client member who is
+ * `tenant_admin` for their active tenant. Throws AdminAuthError(403,
+ * 'forbidden_admin_required') otherwise.
  */
 export async function requireAdminDecide(): Promise<AdminAuthCtx> {
-  const ctx = await requireAdminAuth();
-  if (!ctx.isAdmin) {
-    throw new AdminAuthError(403, 'forbidden_admin_required');
+  const session = await auth();
+  if (!session.userId) {
+    throw new AdminAuthError(401, 'unauthenticated');
   }
-  return ctx;
+  const client = await getActiveClientRow();
+  if (!client) {
+    throw new AdminAuthError(403, 'no_tenant');
+  }
+
+  try {
+    await requireTenantAdmin({
+      userId: session.userId,
+      tenantKey: client.key,
+    });
+  } catch (err) {
+    if (err instanceof TenantRoleError) {
+      if (err.status === 401) {
+        throw new AdminAuthError(401, 'unauthenticated');
+      }
+      throw new AdminAuthError(403, 'forbidden_admin_required');
+    }
+    throw err;
+  }
+
+  return {
+    userId: session.userId,
+    tenantKey: client.key,
+    isAdmin: true,
+  };
 }
 
 export function adminAuthErrorResponse(err: unknown): Response {
