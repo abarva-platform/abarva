@@ -32,12 +32,13 @@ describe('PhasePack · OV2-5-types compatibility', () => {
     }
   });
 
-  it('packs without authored steps have steps === undefined (P6 until later slices)', () => {
+  it('every authored pack now has steps (P0-P6 step doctrine complete)', () => {
     // OV2-P0-complete authored steps for P0; OV2-5-P1 authored steps for P1;
     // OV2-5-P2 authored steps for P2; OV2-5-P3 authored steps for P3;
-    // OV2-5-P4 authored steps for P4; OV2-5-P5 authored steps for P5. P6
-    // remains unauthored until OV2-5-P6 lands.
-    const PHASES_WITH_STEPS = new Set([0, 1, 2, 3, 4, 5]);
+    // OV2-5-P4 authored steps for P4; OV2-5-P5 authored steps for P5;
+    // OV2-5-P6 authored steps for P6 (this slice). The phase-pack step
+    // doctrine is now complete end-to-end across all 7 authored phases.
+    const PHASES_WITH_STEPS = new Set([0, 1, 2, 3, 4, 5, 6]);
     for (const p of listAuthoredPhases()) {
       const pack = getPhasePack(p);
       if (PHASES_WITH_STEPS.has(p)) {
@@ -115,10 +116,9 @@ describe('PhaseStep literal · OV2-5-types contract', () => {
 
 describe('PhasePack.steps · optional field', () => {
   // A synthetic minimal PhasePack-shaped literal used to exercise the steps
-  // optional field independently of any authored pack's evolution. The
-  // authored packs (P0..P5 today, P6 in a parallel slice) all have or will
-  // have a `steps` array, so spreading one of them would inherit `steps` and
-  // mask the `undefined` branch under test.
+  // optional field independently of any authored pack's evolution. All
+  // authored packs (P0..P6) now carry a `steps` array, so spreading one of
+  // them would inherit `steps` and mask the `undefined` branch under test.
   function buildSyntheticBase(): PhasePack {
     return {
       phase: 0,
