@@ -3,7 +3,12 @@
 // Stateless fallback — no history. Use AtlasPageStateProvider for multi-turn.
 
 import { useState, useCallback } from 'react';
-import { extractArtifacts, type Artifact } from '@/lib/agent/artifacts';
+import {
+  extractArtifacts,
+  sanitizeArtifactDebugText,
+  visibleArtifactPendingText,
+  type Artifact,
+} from '@/lib/agent/artifacts';
 
 interface UseAgentStreamOptions {
   surface: string; // 'programs' | 'intelligence' | 'tower' | 'source' | 'setup' | 'home'
@@ -86,21 +91,21 @@ export function useAgentStream({
             seenArtifacts.add(key);
             onArtifact(a);
           }
-          setResponse(committedVisible + pending);
+          setResponse(sanitizeArtifactDebugText(committedVisible) + visibleArtifactPendingText(pending));
         }
 
         // Flush any unclosed artifact tail when streaming ends.
         if (onArtifact && pending.length > 0) {
           const final = extractArtifacts(pending);
           committedVisible += final.visibleText;
-          if (final.remaining.length > 0) committedVisible += final.remaining;
+          if (final.remaining.length > 0) committedVisible += visibleArtifactPendingText(final.remaining);
           for (const a of final.artifacts) {
             const key = JSON.stringify(a);
             if (seenArtifacts.has(key)) continue;
             seenArtifacts.add(key);
             onArtifact(a);
           }
-          setResponse(committedVisible);
+          setResponse(sanitizeArtifactDebugText(committedVisible));
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Connection error');

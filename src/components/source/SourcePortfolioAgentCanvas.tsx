@@ -95,11 +95,11 @@ function SourcePortfolioPromptDeck({ events }: { events: SourcingEventSummary[] 
   const cards = [
     {
       label: 'Start an event',
-      body: 'Tell me the category, owner, problem, scope boundary, decision needed, and stop condition. I will not treat it as registered until intake approval is clear.',
+      body: 'Five things stand it up: trigger, decision owner, scope boundary, baseline evidence, and stop/approval condition.',
     },
     {
       label: 'Application managed services',
-      body: 'For AMS, I need application/service inventory, incumbent/vendor list, run-rate, contract dates, service pain, transition constraints, and approval owner.',
+      body: 'For AMS, bring run-rate, app/service inventory, incumbents, contract dates, service pain, and transition constraints.',
     },
     {
       label: 'Open seeded event',
@@ -140,8 +140,8 @@ function SourcePortfolioPromptDeck({ events }: { events: SourcingEventSummary[] 
             color: 'rgba(250,247,241,0.88)',
           }}
         >
-          I can help register a sourcing event, but first I will make the intake gate visible:
-          owner, problem, scope, evidence, kill criterion, and approval route.
+          I can help stand up a sourcing event without turning this into an RFP factory. We will first lock five fields:
+          trigger, owner, scope, baseline evidence, and stop/approval.
         </p>
       </div>
 

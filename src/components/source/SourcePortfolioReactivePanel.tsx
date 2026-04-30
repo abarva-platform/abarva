@@ -11,6 +11,7 @@ import type {
   GateEvaluationArtifact,
   PatternMatchArtifact,
   PhaseProgressArtifact,
+  SourcingStageProgressArtifact,
 } from '@/lib/agent/artifacts';
 import { buildLinkedProgramBadgeView } from '@/lib/source/linked-program-badge-view';
 import type { SourcingEventSummary } from '@/lib/source/types';
@@ -78,6 +79,7 @@ export function SourcePortfolioReactivePanel({
   const linkedProgram = topEvent ? buildLinkedProgramBadgeView(topEvent.id) : null;
   const visibleArtifacts = selectSourceArtifacts(artifacts);
   const visibleSourcingArtifacts = selectVisibleSourcingArtifacts(artifacts);
+  const sourcingProgress = artifacts.filter((artifact): artifact is SourcingStageProgressArtifact => artifact.type === 'sourcing-stage-progress');
   const filterLabel = [activeStage, activeStatus].filter(Boolean).join(' / ') || 'all source events';
 
   return (
@@ -125,6 +127,8 @@ export function SourcePortfolioReactivePanel({
         </Card>
       )}
 
+      <IntakeOperatingCard progress={sourcingProgress} />
+
       {topEvent ? (
         <Card kind="Walkaway signal">
           <StatusPill status={topEvent.isAtRisk ? 'theatre' : openAlerts > 0 ? 'soft' : 'strong'} />
@@ -166,6 +170,103 @@ export function SourcePortfolioReactivePanel({
         </Card>
       ) : null}
     </section>
+  );
+}
+
+function IntakeOperatingCard({ progress }: { progress: SourcingStageProgressArtifact[] }) {
+  const rows = [
+    {
+      key: 'trigger',
+      label: 'Trigger',
+      detail: 'Why now, consequence of no action.',
+      status: inferProgressStatus(progress, ['trigger', 'problem']),
+    },
+    {
+      key: 'owner',
+      label: 'Decision owner',
+      detail: 'Seeded Apex CIO: Thomas Reeves. Confirm stop/go authority.',
+      status: inferProgressStatus(progress, ['business-owner', 'sponsor', 'owner']),
+    },
+    {
+      key: 'scope',
+      label: 'Scope boundary',
+      detail: 'Enterprise/all towers is a hypothesis; name first boundary and exclusions.',
+      status: inferProgressStatus(progress, ['scope']),
+    },
+    {
+      key: 'baseline',
+      label: 'Baseline evidence',
+      detail: 'Run-rate, app/service inventory, incumbents, dates, pain, transition constraints.',
+      status: inferProgressStatus(progress, ['evidence', 'inventory', 'baseline']),
+    },
+    {
+      key: 'approval',
+      label: 'Stop + approval',
+      detail: 'Savings floor, kill criterion, sourcing lead + sponsor approval.',
+      status: inferProgressStatus(progress, ['kill', 'approval', 'stop']),
+    },
+  ];
+
+  return (
+    <Card kind="Event stand-up floor">
+      <div style={{ display: 'grid', gap: 8 }}>
+        {rows.map((row) => (
+          <div
+            key={row.key}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '90px minmax(0, 1fr) auto',
+              gap: 8,
+              alignItems: 'start',
+              borderTop: '1px solid rgba(17,24,39,0.07)',
+              paddingTop: 8,
+            }}
+          >
+            <div style={{ fontWeight: 800, fontSize: 12.5, color: SHELL.INK }}>{row.label}</div>
+            <p style={{ ...MUTED, lineHeight: 1.35 }}>{row.detail}</p>
+            <MiniStatus status={row.status} />
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function inferProgressStatus(
+  progress: SourcingStageProgressArtifact[],
+  needles: string[],
+): 'met' | 'unmet' | 'unknown' {
+  const hit = [...progress].reverse().find((item) => {
+    const haystack = `${item.evidenceItemId} ${item.label}`.toLowerCase();
+    return needles.some((needle) => haystack.includes(needle));
+  });
+  return hit?.status ?? 'unknown';
+}
+
+function MiniStatus({ status }: { status: 'met' | 'unmet' | 'unknown' }) {
+  const colors = {
+    met: { bg: 'rgba(15,118,110,0.10)', fg: '#0f766e', label: 'met' },
+    unmet: { bg: 'rgba(185,28,28,0.10)', fg: '#b91c1c', label: 'open' },
+    unknown: { bg: 'rgba(100,116,139,0.10)', fg: '#475569', label: 'check' },
+  }[status];
+
+  return (
+    <span
+      style={{
+        borderRadius: 999,
+        background: colors.bg,
+        color: colors.fg,
+        fontFamily: SHELL.MONO,
+        fontSize: 8.5,
+        fontWeight: 800,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        padding: '3px 6px',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {colors.label}
+    </span>
   );
 }
 
