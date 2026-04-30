@@ -88,6 +88,13 @@ export function SourcePortfolioPage({ events, searchParams }: SourcePortfolioPag
   return (
     <AppShell
       surface="source"
+      surfaceContext={{
+        sourcePortfolioMode: true,
+        sourceEventCount: eventsInView.length,
+        sourceActiveCount: eventsInView.filter((event) => event.status === 'active').length,
+        sourceAtRiskCount: eventsInView.filter((event) => event.isAtRisk || event.status === 'at_risk').length,
+        eventType: 'application managed services sourcing intake and portfolio triage',
+      }}
       topBarProps={{
         tenantName: 'Apex Retail Group',
         showLocked: true,

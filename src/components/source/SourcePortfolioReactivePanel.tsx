@@ -16,6 +16,7 @@ import { buildLinkedProgramBadgeView } from '@/lib/source/linked-program-badge-v
 import type { SourcingEventSummary } from '@/lib/source/types';
 import { formatUsd } from '@/lib/source/value-ledger';
 import { SHELL } from '@/lib/shell/shell-tokens';
+import { selectVisibleSourcingArtifacts, SourcingReactivePanel } from './SourcingReactivePanel';
 
 interface SourcePortfolioReactivePanelProps {
   events: SourcingEventSummary[];
@@ -76,6 +77,7 @@ export function SourcePortfolioReactivePanel({
   const topEvent = selectTopEvent(events);
   const linkedProgram = topEvent ? buildLinkedProgramBadgeView(topEvent.id) : null;
   const visibleArtifacts = selectSourceArtifacts(artifacts);
+  const visibleSourcingArtifacts = selectVisibleSourcingArtifacts(artifacts);
   const filterLabel = [activeStage, activeStatus].filter(Boolean).join(' / ') || 'all source events';
 
   return (
@@ -152,10 +154,14 @@ export function SourcePortfolioReactivePanel({
         <LiveArtifactCard key={`${artifact.type}-${index}`} artifact={artifact} />
       ))}
 
-      {visibleArtifacts.length === 0 ? (
+      {visibleSourcingArtifacts.length > 0 ? (
+        <SourcingReactivePanel artifacts={artifacts} />
+      ) : null}
+
+      {visibleArtifacts.length === 0 && visibleSourcingArtifacts.length === 0 ? (
         <Card kind="Try next">
           <p style={MUTED}>
-            Ask about source events at risk, BAFO readiness, or the walkaway for AMS Outsourcing 2026. Live Sentinel artifacts will stack here above the deterministic portfolio pulse.
+            Ask Sentinel to start an application managed services event. The next useful card should be intake progress: owner, problem, scope boundary, evidence, kill criterion, and approval route.
           </p>
         </Card>
       ) : null}

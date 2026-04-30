@@ -83,6 +83,7 @@ export function AtlasDrawer({
   composerPlacement = 'bottom',
 }: AtlasDrawerProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const threadScrollRef = useRef<HTMLDivElement>(null);
   const threadEndRef = useRef<HTMLDivElement>(null);
 
   // Shared AtlasPageState — same conversation as the RibbonSynthesis surface.
@@ -103,12 +104,17 @@ export function AtlasDrawer({
 
   const hasThread = conversation.length > 0 || isStreaming || !!response || !!error;
 
-  // Auto-scroll to latest turn whenever content changes. In embedded
-  // mode the panel is always visible, so the gate is just "should we
-  // scroll" = always.
+  // Auto-scroll to latest turn whenever content changes. Use the
+  // drawer's internal scroll container, not scrollIntoView(), because
+  // embedded agent canvases live inside scrollable product pages. A
+  // DOM-level scrollIntoView can pull the entire page down while a long
+  // response streams, which makes Source feel locked.
   useEffect(() => {
     if (embedded || isOpen) {
-      threadEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      const scroller = threadScrollRef.current;
+      if (scroller) {
+        scroller.scrollTop = scroller.scrollHeight;
+      }
     }
   }, [embedded, isOpen, conversation.length, response]);
 
@@ -431,6 +437,7 @@ export function AtlasDrawer({
 
         {/* ── Conversation thread ── */}
         <div
+          ref={threadScrollRef}
           style={{
             flex: 1,
             minHeight: 0,
