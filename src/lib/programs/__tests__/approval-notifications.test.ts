@@ -58,8 +58,7 @@ afterEach(() => {
 describe('resolveTenantAdminRecipients', () => {
   it('returns the platform-admin allowlist (RBAC fallback)', async () => {
     const recipients = await resolveTenantAdminRecipients('apex-retail');
-    expect(recipients).toContain('anand+clerk_test@abarva.com');
-    expect(recipients).toContain('anand.sundaram@thesundaram.com');
+    expect(recipients).toEqual(['anand.sundaram@thesundaram.com']);
   });
 });
 
@@ -73,18 +72,15 @@ describe('notifyApprovalSubmitted', () => {
 
     await notifyApprovalSubmitted(makeRequest());
 
-    // One send per platform-admin recipient (2 in the allowlist)
-    expect(sendEmailMock).toHaveBeenCalledTimes(2);
+    // One send per platform-admin recipient.
+    expect(sendEmailMock).toHaveBeenCalledTimes(1);
     const subjects = sendEmailMock.mock.calls.map((c) => c[0].subject);
     for (const s of subjects) {
       expect(s).toBe('New program brief queued for approval — Contact Center AI Refresh');
     }
     const recipients = sendEmailMock.mock.calls.map((c) => c[0].to);
     expect(recipients).toEqual(
-      expect.arrayContaining([
-        'anand+clerk_test@abarva.com',
-        'anand.sundaram@thesundaram.com',
-      ]),
+      ['anand.sundaram@thesundaram.com'],
     );
     const firstCall = sendEmailMock.mock.calls[0][0];
     expect(firstCall.metadata).toMatchObject({

@@ -210,7 +210,7 @@ describe('requireTenantAdmin', () => {
     mockCurrentUser.mockResolvedValue(
       makeUser({
         primaryEmailAddress: {
-          emailAddress: 'anand+clerk_test@abarva.com',
+          emailAddress: 'anand.sundaram@thesundaram.com',
         },
       }),
     );

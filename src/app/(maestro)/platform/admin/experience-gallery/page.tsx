@@ -7,7 +7,6 @@ import { ExperienceGallery } from '@/components/admin/ExperienceGallery';
 export const dynamic = 'force-dynamic';
 
 const ADMIN_EMAIL_ALLOWLIST = new Set([
-  'anand+clerk_test@abarva.com',
   'anand.sundaram@thesundaram.com',
 ]);
 

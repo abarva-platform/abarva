@@ -21,13 +21,6 @@ export function inferSessionRoleFromEmail(email: string | null | undefined): App
   const normalized = normalizeEmail(email);
   if (!normalized) return null;
 
-  if (
-    normalized.includes('anand+clerk_test@abarva.com') ||
-    normalized.includes('anand.sundaram@thesundaram.com')
-  ) {
-    return 'admin';
-  }
-
   if (normalized.includes('investor+clerk_test@abarva.com')) {
     return 'investor';
   }

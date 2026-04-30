@@ -48,7 +48,6 @@ export interface TenantRoleAssignment {
 // When a UI moves admin assignment off the Clerk dashboard, this list
 // stops being load-bearing.
 const PLATFORM_ADMIN_EMAIL_ALLOWLIST: ReadonlySet<string> = new Set([
-  'anand+clerk_test@abarva.com',
   'anand.sundaram@thesundaram.com',
 ]);
 

@@ -1,72 +1,54 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { auth, clerkClient } from '@clerk/nextjs/server'
 
 const DEMO_USERS = [
   {
-    email: 'af+clerk_test@abarva.com',
+    email: 'anand.sundaram@thesundaram.com',
     metadata: {
-      role: 'maestro',
-      clientId: 'arcturus',
-      clientName: 'Arcturus Financial Group',
-      defaultClientId: 'arcturus',
-      clientLocked: true,
-      preferredSolution: 'margin',
-    },
-  },
-  {
-    email: 'mh+clerk_test@abarva.com',
-    metadata: {
-      role: 'maestro',
+      role: 'client',
       clientId: 'meridian',
       clientName: 'Meridian Health System',
       defaultClientId: 'meridian',
       clientLocked: true,
-      preferredSolution: 'tech',
+      accountType: 'founder_pinned',
     },
   },
   {
-    email: 'apex+clerk_test@abarva.com',
+    email: 'demo-apexretail+clerk_test@abarva.com',
     metadata: {
-      role: 'maestro',
+      role: 'client',
       clientId: 'apexretail',
       clientName: 'Apex Retail Group',
       defaultClientId: 'apexretail',
       clientLocked: true,
-      preferredSolution: 'growth',
+      accountType: 'demo_existing',
     },
   },
   {
-    email: 'keystone+clerk_test@abarva.com',
+    email: 'demo-meridian+clerk_test@abarva.com',
     metadata: {
-      role: 'maestro',
-      clientId: 'keystone',
-      clientName: 'Keystone Energy Holdings',
-      defaultClientId: 'keystone',
+      role: 'client',
+      clientId: 'meridian',
+      clientName: 'Meridian Health System',
+      defaultClientId: 'meridian',
       clientLocked: true,
-      preferredSolution: 'grid',
+      accountType: 'demo_existing',
     },
   },
   {
-    email: 'investor+clerk_test@abarva.com',
+    email: 'demo-firstcapital+clerk_test@abarva.com',
     metadata: {
-      role: 'investor',
-      clientIds: ['meridian', 'arcturus', 'apexretail', 'keystone'],
-      defaultClientId: 'meridian',
-      clientLocked: false,
-    },
-  },
-  {
-    email: 'anand+clerk_test@abarva.com',
-    metadata: {
-      role: 'admin',
-      clientIds: ['meridian', 'arcturus', 'apexretail', 'keystone'],
-      defaultClientId: 'meridian',
-      clientLocked: false,
+      role: 'client',
+      clientId: 'arcturus',
+      clientName: 'First Capital',
+      defaultClientId: 'arcturus',
+      clientLocked: true,
+      accountType: 'demo_existing',
     },
   },
 ]
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     const { userId } = await auth()
     if (!userId) {
@@ -75,9 +57,13 @@ export async function POST(request: NextRequest) {
 
     const clerk = await clerkClient()
 
-    // Verify caller is admin
+    // Verify caller is either a platform admin or the founder account.
     const caller = await clerk.users.getUser(userId)
-    if (caller.publicMetadata?.role !== 'admin') {
+    const callerEmail = caller.emailAddresses.find((email) => email.id === caller.primaryEmailAddressId)?.emailAddress
+      ?? caller.emailAddresses[0]?.emailAddress
+      ?? null
+    const isFounder = callerEmail?.toLowerCase() === 'anand.sundaram@thesundaram.com'
+    if (caller.publicMetadata?.role !== 'admin' && !isFounder) {
       return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 })
     }
 

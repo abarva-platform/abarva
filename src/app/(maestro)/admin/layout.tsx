@@ -16,7 +16,6 @@ import { EditorialCanvas } from '@/components/admin/EditorialCanvas';
 import { AgentRail } from '@/components/admin/AgentRail';
 
 const ADMIN_EMAIL_ALLOWLIST: ReadonlySet<string> = new Set([
-  'anand+clerk_test@abarva.com',
   'anand.sundaram@thesundaram.com',
 ]);
 

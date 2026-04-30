@@ -1,145 +1,151 @@
 #!/usr/bin/env node
 /**
- * AbarVa — Create / reset demo users via Clerk Backend API
+ * AbarVa - create/reset the small pinned demo user set in Clerk.
  *
  * Run:
- *   CLERK_SECRET_KEY=sk_live_xxx node create-demo-users.mjs
+ *   CLERK_SECRET_KEY=sk_live_xxx DEMO_USER_PASSWORD='...' node scripts/create-demo-users.mjs
  *
- * Safe to re-run — existing accounts are skipped (not overwritten).
- * Active Clerk instance: boss-griffon-61.clerk.accounts.dev
- *
- * Live credentials (as of 2026-04-15):
- *
- *   Admin (all clients):
- *     anand+clerk_test@abarva.com        /  AbarVa2026!
- *     anand.sundaram@thesundaram.com     /  (personal — role patched to admin)
- *
- *   Investor:
- *     investor+clerk_test@abarva.com     /  Demo2026!
- *
- *   Arcturus Financial Group:
- *     af@abarva.com                      /  Demo2026!
- *
- *   Meridian Health System:
- *     mh+clerk_test@abarva.com           /  Demo2026!
+ * Safe to re-run: existing users are updated with the pinned tenant metadata.
+ * The founder account is not created by this script; if present, it is pinned
+ * to Meridian and no longer treated as a global demo admin.
  */
 
-const CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY
+const CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY;
+const DEMO_USER_PASSWORD = process.env.DEMO_USER_PASSWORD || 'Demo2026!';
 
 if (!CLERK_SECRET_KEY) {
-  console.error('ERROR: CLERK_SECRET_KEY not set')
-  console.error('Run: CLERK_SECRET_KEY=sk_live_xxx node create-demo-users.mjs')
-  process.exit(1)
+  console.error('ERROR: CLERK_SECRET_KEY not set');
+  process.exit(1);
 }
 
 const USERS = [
-
-  // ── ADMIN (Anand) ─────────────────────────────────────────────────────
   {
-    email:     'anand+clerk_test@abarva.com',
-    password:  'AbarVa2026!',
+    email: 'anand.sundaram@thesundaram.com',
+    password: null,
     firstName: 'Anand',
-    lastName:  'Sundaram',
-    metadata:  { role: 'admin', clientId: null },
+    lastName: 'Sundaram',
+    createIfMissing: false,
+    metadata: {
+      role: 'client',
+      clientId: 'meridian',
+      defaultClientId: 'meridian',
+      clientLocked: true,
+      clientName: 'Meridian Health System',
+      accountType: 'founder_pinned',
+    },
   },
-
-  // ── INVESTOR ──────────────────────────────────────────────────────────
   {
-    email:     'investor+clerk_test@abarva.com',
-    password:  'Demo2026!',
-    firstName: 'Investor',
-    lastName:  'Demo',
-    metadata:  { role: 'investor', clientId: null },
-  },
-
-  // ── ARCTURUS FINANCIAL GROUP ──────────────────────────────────────────
-  {
-    email:     'af@abarva.com',
-    password:  'Demo2026!',
-    firstName: 'Arcturus',
-    lastName:  'Demo',
-    metadata:  {
-      role:        'maestro',
-      clientId:    'arcturus',
-      clientName:  'Arcturus Financial Group',
+    email: 'demo-apexretail+clerk_test@abarva.com',
+    password: DEMO_USER_PASSWORD,
+    firstName: 'Apex',
+    lastName: 'Demo',
+    createIfMissing: true,
+    metadata: {
+      role: 'client',
+      clientId: 'apexretail',
+      defaultClientId: 'apexretail',
+      clientLocked: true,
+      clientName: 'Apex Retail Group',
       accountType: 'demo_existing',
     },
   },
-
-  // ── MERIDIAN HEALTH SYSTEM ────────────────────────────────────────────
   {
-    email:     'mh+clerk_test@abarva.com',
-    password:  'Demo2026!',
+    email: 'demo-meridian+clerk_test@abarva.com',
+    password: DEMO_USER_PASSWORD,
     firstName: 'Meridian',
-    lastName:  'Demo',
-    metadata:  {
-      role:        'maestro',
-      clientId:    'meridian',
-      clientName:  'Meridian Health System',
+    lastName: 'Demo',
+    createIfMissing: true,
+    metadata: {
+      role: 'client',
+      clientId: 'meridian',
+      defaultClientId: 'meridian',
+      clientLocked: true,
+      clientName: 'Meridian Health System',
       accountType: 'demo_existing',
     },
   },
-
-]
-
-async function createUser (user) {
-  const res = await fetch('https://api.clerk.com/v1/users', {
-    method:  'POST',
-    headers: {
-      'Authorization': `Bearer ${CLERK_SECRET_KEY}`,
-      'Content-Type':  'application/json',
+  {
+    email: 'demo-firstcapital+clerk_test@abarva.com',
+    password: DEMO_USER_PASSWORD,
+    firstName: 'First Capital',
+    lastName: 'Demo',
+    createIfMissing: true,
+    metadata: {
+      role: 'client',
+      clientId: 'arcturus',
+      defaultClientId: 'arcturus',
+      clientLocked: true,
+      clientName: 'First Capital',
+      accountType: 'demo_existing',
     },
+  },
+];
+
+async function clerk(path, options = {}) {
+  const res = await fetch(`https://api.clerk.com/v1${path}`, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${CLERK_SECRET_KEY}`,
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+    },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const message = data.errors?.[0]?.message || JSON.stringify(data);
+    throw new Error(message);
+  }
+  return data;
+}
+
+async function findUser(email) {
+  const params = new URLSearchParams({ email_address: email, limit: '1' });
+  const data = await clerk(`/users?${params.toString()}`);
+  return data.data?.[0] || null;
+}
+
+async function upsertUser(user) {
+  const existing = await findUser(user.email);
+  if (existing) {
+    await clerk(`/users/${existing.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ public_metadata: user.metadata }),
+    });
+    console.log(`updated ${user.email} -> ${user.metadata.clientId}`);
+    return;
+  }
+
+  if (!user.createIfMissing) {
+    console.log(`missing ${user.email}; skipped create`);
+    return;
+  }
+
+  await clerk('/users', {
+    method: 'POST',
     body: JSON.stringify({
-      email_address:   [user.email],
-      password:        user.password,
-      first_name:      user.firstName,
-      last_name:       user.lastName,
+      email_address: [user.email],
+      password: user.password,
+      first_name: user.firstName,
+      last_name: user.lastName,
       public_metadata: user.metadata,
     }),
-  })
-
-  const data = await res.json()
-
-  if (res.ok) {
-    console.log(`✓  ${user.email.padEnd(38)} → ${user.metadata.role}${user.metadata.clientId ? ' · ' + user.metadata.clientId : ''}`)
-    return { success: true }
-  } else {
-    if (data.errors?.[0]?.code === 'form_identifier_exists') {
-      console.log(`⚠  ${user.email.padEnd(38)} → already exists, skipped`)
-      return { success: true }
-    }
-    console.error(`✗  ${user.email.padEnd(38)} → FAILED: ${data.errors?.[0]?.message || JSON.stringify(data)}`)
-    return { success: false }
-  }
+  });
+  console.log(`created ${user.email} -> ${user.metadata.clientId}`);
 }
 
-async function main () {
-  console.log('\nAbarVa — Creating demo users\n')
-
+async function main() {
+  console.log('AbarVa - syncing pinned demo users');
   for (const user of USERS) {
-    await createUser(user)
-    await new Promise(r => setTimeout(r, 300))
+    await upsertUser(user);
+    await new Promise((resolve) => setTimeout(resolve, 250));
   }
-
-  console.log(`
-────────────────────────────────────────────────────────
-CREDENTIALS
-
-  Admin (access all clients):
-    anand+clerk_test@abarva.com          /  AbarVa2026!
-    anand.sundaram@thesundaram.com       /  (personal password)
-
-  Investor:
-    investor+clerk_test@abarva.com       /  Demo2026!
-
-  Arcturus Financial Group:
-    af@abarva.com                        /  Demo2026!
-
-  Meridian Health System:
-    mh+clerk_test@abarva.com             /  Demo2026!
-
-────────────────────────────────────────────────────────
-`)
+  console.log('Pinned login list:');
+  for (const user of USERS) {
+    console.log(`- ${user.email}: ${user.metadata.clientName} (${user.metadata.clientId})`);
+  }
 }
 
-main().catch(console.error)
+main().catch((error) => {
+  console.error(error.message || error);
+  process.exit(1);
+});
