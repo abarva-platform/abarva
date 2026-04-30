@@ -39,6 +39,43 @@
 
 export type PhaseNumber = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
+// ── Step decomposition · OV2-5-types ────────────────────────────────────────
+//
+// Adds the PhaseStep doctrine from
+// docs/build/PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md Part C.4.
+// A PhaseStep is the unit at which the agent decides what to do next:
+// simple steps are chat-resolvable, complex steps require off-platform work
+// (workshop / interview / baseline) gated by intent capture before and an
+// upload after. This slice adds the type only; the `steps` field on PhasePack
+// is optional so existing packs continue to type-check unchanged. Pack
+// content is authored in follow-on slices (one pack per slice).
+
+export type StepComplexity = 'simple' | 'complex';
+
+export type AgentStepRole =
+  | 'extract'
+  | 'validate'
+  | 'coach_workshop'
+  | 'coach_interview'
+  | 'coach_baseline'
+  | 'evaluate_evidence'
+  | 'request_approval'
+  | 'flag_anti_pattern'
+  | 'compose_artifact';
+
+export interface PhaseStep {
+  id: string;
+  label: string;
+  complexity: StepComplexity;
+  agentRole: AgentStepRole;
+  inputs: string[];
+  outputs: string[];
+  templateRefs: string[];
+  preventsFailureModes: number[];
+  intentCaptureRequired: boolean;
+  postMeetingUploadExpected: boolean;
+}
+
 /** A single piece of evidence that the phase produces or requires. */
 export interface PhaseEvidenceItem {
   /** Stable id, kebab-case. Referenced by anti-patterns and tools. */
@@ -114,4 +151,10 @@ export interface PhasePack {
   antiPatterns: PhaseAntiPattern[];
   coachingArc: PhaseCoachingArc;
   dependencies: PhaseDependencies;
+  /**
+   * Optional step decomposition. See OV2-5-types block above and design doc
+   * Part C.4. Optional because pack content is authored per-pack in follow-on
+   * slices; existing packs without `steps` remain valid.
+   */
+  steps?: PhaseStep[];
 }
