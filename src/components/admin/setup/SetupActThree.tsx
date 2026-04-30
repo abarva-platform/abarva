@@ -17,7 +17,8 @@
 import Link from 'next/link';
 
 import type { CapabilityGainEntry } from '@/lib/admin/setup-acts-registry';
-import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
+import { COLORS, RADIUS, SPACING } from '@/lib/design/design-tokens';
+import { SHELL } from '@/lib/shell/shell-tokens';
 
 import { SetupActHeader } from './SetupActOne';
 
@@ -31,8 +32,8 @@ export function SetupActThree({ gains }: SetupActThreeProps) {
     <section
       data-testid="admin-setup-act-three"
       style={{
-        background: COLORS.white,
-        border: `1px solid ${COLORS.ink}11`,
+        background: SHELL.CARD_WHITE,
+        border: `1px solid ${SHELL.CARD_LINE_SOFT}`,
         borderRadius: RADIUS.lg,
         padding: SPACING.xl,
         display: 'flex',
@@ -70,8 +71,8 @@ function GainCard({ gain }: { gain: CapabilityGainEntry }) {
     <li
       data-testid={`admin-setup-gain-${gain.id}`}
       style={{
-        background: COLORS.cream,
-        border: `1px solid ${COLORS.ink}11`,
+        background: SHELL.PAPER_SOFT,
+        border: `1px solid ${SHELL.CARD_LINE_SOFT}`,
         borderRadius: RADIUS.md,
         padding: SPACING.md,
         display: 'flex',
@@ -91,9 +92,9 @@ function GainCard({ gain }: { gain: CapabilityGainEntry }) {
         <p
           style={{
             margin: 0,
-            fontFamily: TYPOGRAPHY.serif,
+            fontFamily: SHELL.SERIF,
             fontSize: 18,
-            color: COLORS.ink,
+            color: SHELL.INK,
             lineHeight: 1.35,
           }}
         >
@@ -104,7 +105,7 @@ function GainCard({ gain }: { gain: CapabilityGainEntry }) {
           data-testid={`admin-setup-gain-cta-${gain.id}`}
           style={{
             color: COLORS.navy,
-            fontFamily: TYPOGRAPHY.sans,
+            fontFamily: SHELL.SANS,
             fontSize: 12,
             fontWeight: 600,
             textDecoration: 'none',
@@ -121,9 +122,9 @@ function GainCard({ gain }: { gain: CapabilityGainEntry }) {
       <p
         style={{
           margin: 0,
-          fontFamily: TYPOGRAPHY.mono,
+          fontFamily: SHELL.MONO,
           fontSize: 11,
-          color: `${COLORS.ink}99`,
+          color: SHELL.INK_MUTED,
         }}
       >
         Target: segment {gain.targetSegmentId} · {gain.targetSegmentName}
@@ -196,7 +197,7 @@ function Preview({
       <p
         style={{
           margin: 0,
-          fontFamily: TYPOGRAPHY.mono,
+          fontFamily: SHELL.MONO,
           fontSize: 10,
           letterSpacing: '0.1em',
           textTransform: 'uppercase',
@@ -209,10 +210,10 @@ function Preview({
       <p
         style={{
           margin: 0,
-          fontFamily: TYPOGRAPHY.serif,
+          fontFamily: SHELL.SERIF,
           fontSize: 14,
           lineHeight: 1.45,
-          color: COLORS.ink,
+          color: SHELL.INK,
         }}
       >
         {quote}

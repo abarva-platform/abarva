@@ -21,7 +21,8 @@ import type {
   SegmentReference,
 } from '@/lib/admin/setup-acts-registry';
 import type { SegmentRecordSummary } from '@/lib/admin/setup-data-broker';
-import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
+import { COLORS, RADIUS, SPACING } from '@/lib/design/design-tokens';
+import { SHELL } from '@/lib/shell/shell-tokens';
 import { EditorialCanvas } from '@/components/admin/EditorialCanvas';
 
 export interface SegmentDetailPageProps {
@@ -54,7 +55,7 @@ export function SegmentDetailPage({
           data-testid="admin-segment-breadcrumb"
           style={{
             color: COLORS.navy,
-            fontFamily: TYPOGRAPHY.sans,
+            fontFamily: SHELL.SANS,
             fontSize: 12,
             fontWeight: 600,
             textDecoration: 'none',
@@ -88,8 +89,8 @@ function RollupRibbon({
     <section
       data-testid="admin-segment-rollup"
       style={{
-        background: COLORS.white,
-        border: `1px solid ${COLORS.ink}11`,
+        background: SHELL.CARD_WHITE,
+        border: `1px solid ${SHELL.CARD_LINE_SOFT}`,
         borderRadius: RADIUS.lg,
         padding: SPACING.lg,
         display: 'flex',
@@ -157,11 +158,11 @@ function Stat({
       <p
         style={{
           margin: 0,
-          fontFamily: TYPOGRAPHY.sans,
+          fontFamily: SHELL.SANS,
           fontSize: 11,
           letterSpacing: '0.1em',
           textTransform: 'uppercase',
-          color: `${COLORS.ink}99`,
+          color: SHELL.INK_MUTED,
           fontWeight: 600,
         }}
       >
@@ -170,10 +171,10 @@ function Stat({
       <p
         style={{
           margin: 0,
-          fontFamily: TYPOGRAPHY.serif,
+          fontFamily: SHELL.SERIF,
           fontSize: 24,
           lineHeight: 1,
-          color: COLORS.ink,
+          color: SHELL.INK,
           fontWeight: 600,
           ...valueStyle,
         }}
@@ -198,7 +199,7 @@ function NotLoadedNotice({ reference }: { reference: SegmentReference }) {
       <p
         style={{
           margin: 0,
-          fontFamily: TYPOGRAPHY.sans,
+          fontFamily: SHELL.SANS,
           fontSize: 13,
           color: COLORS.amberInk,
           lineHeight: 1.5,
@@ -230,8 +231,8 @@ function RecordTable({
       <section
         data-testid="admin-segment-empty"
         style={{
-          background: COLORS.white,
-          border: `1px dashed ${COLORS.ink}33`,
+          background: SHELL.CARD_WHITE,
+          border: `1px dashed ${SHELL.CARD_LINE}`,
           borderRadius: RADIUS.lg,
           padding: SPACING.xl,
           textAlign: 'center',
@@ -240,14 +241,14 @@ function RecordTable({
         <p
           style={{
             margin: 0,
-            fontFamily: TYPOGRAPHY.serif,
+            fontFamily: SHELL.SERIF,
             fontSize: 18,
-            color: COLORS.ink,
+            color: SHELL.INK,
             lineHeight: 1.4,
           }}
         >
           No records loaded for{' '}
-          <span style={{ fontFamily: TYPOGRAPHY.mono, fontSize: 14 }}>
+          <span style={{ fontFamily: SHELL.MONO, fontSize: 14 }}>
             {reference.segmentKey}
           </span>{' '}
           yet.
@@ -255,9 +256,9 @@ function RecordTable({
         <p
           style={{
             margin: `${SPACING.sm} 0 0`,
-            fontFamily: TYPOGRAPHY.sans,
+            fontFamily: SHELL.SANS,
             fontSize: 13,
-            color: `${COLORS.ink}aa`,
+            color: SHELL.INK_SOFT,
           }}
         >
           Upload to this segment to start grounding the corpus.
@@ -270,8 +271,8 @@ function RecordTable({
     <section
       data-testid="admin-segment-records"
       style={{
-        background: COLORS.white,
-        border: `1px solid ${COLORS.ink}11`,
+        background: SHELL.CARD_WHITE,
+        border: `1px solid ${SHELL.CARD_LINE_SOFT}`,
         borderRadius: RADIUS.lg,
         padding: SPACING.lg,
         overflowX: 'auto',
@@ -280,7 +281,7 @@ function RecordTable({
       <h3
         style={{
           margin: `0 0 ${SPACING.md} 0`,
-          fontFamily: TYPOGRAPHY.sans,
+          fontFamily: SHELL.SANS,
           fontSize: 12,
           letterSpacing: '0.12em',
           textTransform: 'uppercase',
@@ -294,13 +295,13 @@ function RecordTable({
         style={{
           width: '100%',
           borderCollapse: 'collapse',
-          fontFamily: TYPOGRAPHY.sans,
+          fontFamily: SHELL.SANS,
           fontSize: 13,
-          color: COLORS.ink,
+          color: SHELL.INK,
         }}
       >
         <thead>
-          <tr style={{ borderBottom: `1px solid ${COLORS.ink}22` }}>
+          <tr style={{ borderBottom: `1px solid ${SHELL.CARD_LINE}` }}>
             <Th>Title</Th>
             <Th>Kind</Th>
             <Th>Source</Th>
@@ -327,11 +328,11 @@ function Th({ children }: { children: React.ReactNode }) {
       style={{
         padding: `${SPACING.xs} ${SPACING.sm}`,
         textAlign: 'left',
-        fontFamily: TYPOGRAPHY.sans,
+        fontFamily: SHELL.SANS,
         fontSize: 11,
         letterSpacing: '0.08em',
         textTransform: 'uppercase',
-        color: `${COLORS.ink}aa`,
+        color: SHELL.INK_MUTED,
         fontWeight: 600,
         whiteSpace: 'nowrap',
       }}
@@ -345,27 +346,27 @@ function RecordRow({ record }: { record: SegmentRecordSummary }) {
   return (
     <tr
       data-testid={`admin-segment-record-${record.recordId}`}
-      style={{ borderBottom: `1px solid ${COLORS.ink}0d` }}
+      style={{ borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}` }}
     >
       <td style={{ padding: `${SPACING.sm}`, maxWidth: 320 }}>
-        <p style={{ margin: 0, color: COLORS.ink, fontWeight: 500, lineHeight: 1.4 }}>
+        <p style={{ margin: 0, color: SHELL.INK, fontWeight: 500, lineHeight: 1.4 }}>
           {record.title}
         </p>
         <p
           style={{
             margin: `2px 0 0`,
-            fontFamily: TYPOGRAPHY.mono,
+            fontFamily: SHELL.MONO,
             fontSize: 10,
-            color: `${COLORS.ink}77`,
+            color: SHELL.INK_MUTED,
           }}
         >
           {record.recordId}
         </p>
       </td>
-      <td style={{ padding: `${SPACING.sm}`, fontFamily: TYPOGRAPHY.mono, fontSize: 11, color: `${COLORS.ink}99` }}>
+      <td style={{ padding: `${SPACING.sm}`, fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_MUTED }}>
         {record.recordKind}
       </td>
-      <td style={{ padding: `${SPACING.sm}`, fontFamily: TYPOGRAPHY.mono, fontSize: 11, color: `${COLORS.ink}99`, maxWidth: 220 }}>
+      <td style={{ padding: `${SPACING.sm}`, fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_MUTED, maxWidth: 220 }}>
         {record.sourceDoc}
       </td>
       <td style={{ padding: `${SPACING.sm}` }}>
@@ -374,12 +375,12 @@ function RecordRow({ record }: { record: SegmentRecordSummary }) {
       <td style={{ padding: `${SPACING.sm}` }}>
         <FreshnessPill state={record.freshnessState} />
       </td>
-      <td style={{ padding: `${SPACING.sm}`, fontFamily: TYPOGRAPHY.mono, fontSize: 11, color: `${COLORS.ink}99` }}>
+      <td style={{ padding: `${SPACING.sm}`, fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_MUTED }}>
         {record.confidence === null
           ? '—'
           : `${(record.confidence * 100).toFixed(0)}%`}
       </td>
-      <td style={{ padding: `${SPACING.sm}`, fontFamily: TYPOGRAPHY.mono, fontSize: 11, color: `${COLORS.ink}99`, whiteSpace: 'nowrap' }}>
+      <td style={{ padding: `${SPACING.sm}`, fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_MUTED, whiteSpace: 'nowrap' }}>
         {record.lastReviewed ?? '—'}
       </td>
     </tr>
@@ -397,7 +398,7 @@ function ClassificationPill({ classification }: { classification: string }) {
         background: tone.background,
         color: tone.text,
         borderRadius: RADIUS.pill,
-        fontFamily: TYPOGRAPHY.mono,
+        fontFamily: SHELL.MONO,
         fontSize: 10,
         fontWeight: 700,
         textTransform: 'uppercase',
@@ -420,7 +421,7 @@ function FreshnessPill({ state }: { state: string }) {
         background: tone.background,
         color: tone.text,
         borderRadius: RADIUS.pill,
-        fontFamily: TYPOGRAPHY.mono,
+        fontFamily: SHELL.MONO,
         fontSize: 10,
         fontWeight: 700,
         textTransform: 'uppercase',
@@ -437,13 +438,13 @@ function classificationTone(c: string): { background: string; text: string } {
     case 'public':
       return { background: COLORS.skyPale, text: COLORS.navy };
     case 'internal':
-      return { background: COLORS.cream, text: `${COLORS.ink}88` };
+      return { background: SHELL.GRAY_BG, text: SHELL.INK_SOFT };
     case 'confidential':
       return { background: COLORS.amberSoft, text: COLORS.amberInk };
     case 'restricted':
       return { background: COLORS.coralSoft, text: COLORS.coralInk };
     default:
-      return { background: COLORS.cream, text: `${COLORS.ink}88` };
+      return { background: SHELL.GRAY_BG, text: SHELL.INK_SOFT };
   }
 }
 
@@ -456,6 +457,6 @@ function freshnessTone(state: string): { background: string; text: string } {
     case 'stale':
       return { background: COLORS.coralSoft, text: COLORS.coralInk };
     default:
-      return { background: COLORS.cream, text: `${COLORS.ink}88` };
+      return { background: SHELL.GRAY_BG, text: SHELL.INK_SOFT };
   }
 }

@@ -13,7 +13,7 @@
 //
 // Shell Layout Spec v2 §5.1 · April 2026
 
-import { useRef, useEffect, type ReactNode } from 'react';
+import { useRef, useEffect, useState, type ReactNode } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { useAgentStream } from '@/hooks/useAgentStream';
 import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
@@ -85,6 +85,8 @@ export function AtlasDrawer({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const threadScrollRef = useRef<HTMLDivElement>(null);
   const threadEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingFiles, setPendingFiles] = useState<Array<{ name: string; size: number }>>([]);
 
   // Shared AtlasPageState — same conversation as the RibbonSynthesis surface.
   const pageState = useAtlasPageState();
@@ -129,10 +131,14 @@ export function AtlasDrawer({
     const el = textareaRef.current;
     if (!el) return;
     const text = el.value.trim();
-    if (!text || isStreaming) return;
-    ask(text);
+    if ((!text && pendingFiles.length === 0) || isStreaming) return;
+    const fileNote = pendingFiles.length > 0
+      ? `\n[Attached: ${pendingFiles.map(f => f.name).join(', ')}]`
+      : '';
+    ask((text + fileNote).trim());
     el.value = '';
     el.style.height = 'auto';
+    setPendingFiles([]);
   }
 
   const plainQuote = quote.replace(/<[^>]+>/g, '');
@@ -186,6 +192,59 @@ export function AtlasDrawer({
         zIndex: embedded ? 1 : undefined,
       }}
     >
+      {/* Attachment chips — shown above the pill when files are pending */}
+      {pendingFiles.length > 0 ? (
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 4,
+            marginBottom: 6,
+          }}
+        >
+          {pendingFiles.map((f, i) => (
+            <span
+              key={i}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                background: 'rgba(250,247,241,0.10)',
+                border: '1px solid rgba(250,247,241,0.20)',
+                borderRadius: 999,
+                padding: '3px 8px 3px 6px',
+                fontFamily: SHELL.MONO,
+                fontSize: 10,
+                color: 'rgba(250,247,241,0.75)',
+                maxWidth: 160,
+              }}
+            >
+              <span style={{ flexShrink: 0 }}>📎</span>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {f.name}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPendingFiles(prev => prev.filter((_, j) => j !== i))}
+                aria-label={`Remove ${f.name}`}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'rgba(250,247,241,0.40)',
+                  padding: 0,
+                  fontFamily: SHELL.MONO,
+                  fontSize: 11,
+                  lineHeight: 1,
+                  flexShrink: 0,
+                }}
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      ) : null}
       <div
         style={{
           background: 'rgba(250,247,241,0.08)',
@@ -198,6 +257,22 @@ export function AtlasDrawer({
           alignItems: 'flex-end',
         }}
       >
+        {/* Hidden file input — wired to the active 📎 paperclip button below */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          style={{ display: 'none' }}
+          onChange={(e) => {
+            const files = Array.from(e.target.files ?? []);
+            if (files.length === 0) return;
+            setPendingFiles(prev => [
+              ...prev,
+              ...files.map(f => ({ name: f.name, size: f.size })),
+            ]);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+          }}
+        />
         {showSourcePaperclip && (
           <button
             type="button"
@@ -265,6 +340,35 @@ export function AtlasDrawer({
             }
           }}
         />
+
+        {/* Paperclip button */}
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isStreaming}
+          aria-label="Attach file"
+          title="Attach file"
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: isStreaming ? 'default' : 'pointer',
+            color: 'rgba(250,247,241,0.40)',
+            fontSize: 14,
+            lineHeight: 1,
+            padding: '0 0 2px',
+            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 22,
+            height: 22,
+            transition: 'color 0.15s',
+          }}
+          onMouseEnter={e => { if (!isStreaming) (e.currentTarget as HTMLButtonElement).style.color = 'rgba(250,247,241,0.80)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(250,247,241,0.40)'; }}
+        >
+          📎
+        </button>
 
         {/* Send / spinner button */}
         <button

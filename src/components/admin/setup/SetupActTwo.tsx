@@ -22,7 +22,8 @@ import type {
   CapabilityDepthState,
   CapabilityNode,
 } from '@/lib/admin/setup-acts-registry';
-import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
+import { COLORS, RADIUS, SPACING } from '@/lib/design/design-tokens';
+import { SHELL } from '@/lib/shell/shell-tokens';
 
 import { SetupActHeader } from './SetupActOne';
 
@@ -35,8 +36,8 @@ export function SetupActTwo({ capabilities }: SetupActTwoProps) {
     <section
       data-testid="admin-setup-act-two"
       style={{
-        background: COLORS.white,
-        border: `1px solid ${COLORS.ink}11`,
+        background: SHELL.CARD_WHITE,
+        border: `1px solid ${SHELL.CARD_LINE_SOFT}`,
         borderRadius: RADIUS.lg,
         padding: SPACING.xl,
         display: 'flex',
@@ -54,9 +55,9 @@ export function SetupActTwo({ capabilities }: SetupActTwoProps) {
           data-testid="admin-setup-empty"
           style={{
             margin: 0,
-            fontFamily: TYPOGRAPHY.sans,
+            fontFamily: SHELL.SANS,
             fontSize: 14,
-            color: `${COLORS.ink}aa`,
+            color: SHELL.INK_SOFT,
             fontStyle: 'italic',
           }}
         >
@@ -91,7 +92,7 @@ function CapabilityCard({ capability }: { capability: CapabilityNode }) {
       role="listitem"
       data-testid={`admin-setup-capability-${capability.family}`}
       style={{
-        background: COLORS.cream,
+        background: SHELL.PAPER_SOFT,
         border: `1px solid ${tone.border}`,
         borderRadius: RADIUS.md,
         padding: SPACING.md,
@@ -111,9 +112,9 @@ function CapabilityCard({ capability }: { capability: CapabilityNode }) {
         <p
           style={{
             margin: 0,
-            fontFamily: TYPOGRAPHY.sans,
+            fontFamily: SHELL.SANS,
             fontSize: 15,
-            color: COLORS.ink,
+            color: SHELL.INK,
             fontWeight: 600,
             lineHeight: 1.35,
           }}
@@ -125,9 +126,9 @@ function CapabilityCard({ capability }: { capability: CapabilityNode }) {
       <p
         style={{
           margin: 0,
-          fontFamily: TYPOGRAPHY.mono,
+          fontFamily: SHELL.MONO,
           fontSize: 11,
-          color: `${COLORS.ink}99`,
+          color: SHELL.INK_MUTED,
         }}
       >
         {capability.label}
@@ -151,7 +152,7 @@ function CapabilityCard({ capability }: { capability: CapabilityNode }) {
               style={{
                 color: COLORS.navy,
                 textDecoration: 'none',
-                fontFamily: TYPOGRAPHY.sans,
+                fontFamily: SHELL.SANS,
                 fontSize: 13,
                 lineHeight: 1.5,
                 borderBottom: `1px dotted ${COLORS.navy}66`,
@@ -177,7 +178,7 @@ function DepthPill({ depthState }: { depthState: CapabilityDepthState }) {
         background: tone.background,
         color: tone.text,
         borderRadius: RADIUS.pill,
-        fontFamily: TYPOGRAPHY.mono,
+        fontFamily: SHELL.MONO,
         fontSize: 10,
         fontWeight: 700,
         textTransform: 'uppercase',
