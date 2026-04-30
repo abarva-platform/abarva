@@ -32,11 +32,15 @@ describe('PhasePack · OV2-5-types compatibility', () => {
     }
   });
 
-  it('packs without an authored steps field have steps === undefined', () => {
-    // This slice is type-only; no pack declares steps yet.
+  it('packs without authored steps have steps === undefined (P1-P6 until OV2-6b-rest)', () => {
+    // OV2-P0-complete authored steps for P0 only; P1-P6 remain unauthored.
     for (const p of listAuthoredPhases()) {
       const pack = getPhasePack(p);
-      expect(pack!.steps).toBeUndefined();
+      if (p === 0) {
+        expect(Array.isArray(pack!.steps)).toBe(true);
+      } else {
+        expect(pack!.steps).toBeUndefined();
+      }
     }
   });
 });
