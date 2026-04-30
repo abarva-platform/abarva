@@ -37,7 +37,6 @@ import { canonicalizeFromBody } from "@/lib/agent/surface";
 import { getPhasePack, formatPhasePackForPrompt } from "@/lib/programs/phase-packs";
 import {
   getStagePack,
-  listAuthoredStages,
   formatStagePackForPrompt,
 } from "@/lib/source/stage-packs";
 import { buildSourceLifecycleContract } from "@/lib/lifecycle-operating-system";
@@ -540,9 +539,19 @@ function buildSourceStagePackBlock(input: {
 
 function getStagePackForSourceStageKey(stageKey: string | undefined) {
   if (!stageKey) return null;
-  for (const stage of listAuthoredStages()) {
-    const pack = getStagePack(stage);
-    if (pack?.sourceStageKeys?.includes(stageKey as SourceStageKey)) return pack;
-  }
-  return null;
+  const stage = SOURCE_STAGE_KEY_TO_PACK_STAGE[stageKey as SourceStageKey];
+  return getStagePack(stage);
 }
+
+const SOURCE_STAGE_KEY_TO_PACK_STAGE: Partial<Record<SourceStageKey, number>> = {
+  intake: 0,
+  scope: 0,
+  sourcing_strategy: 1,
+  vendor_responses: 2,
+  rfp_rfi_package: 3,
+  evaluation: 4,
+  orals_bafo: 5,
+  selection: 6,
+  contract_mobilization: 6,
+  value_realization: 7,
+};
