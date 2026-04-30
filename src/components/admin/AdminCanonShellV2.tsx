@@ -3,19 +3,18 @@ import { SHELL } from '@/lib/shell/shell-tokens';
 import { AdminSidebar } from './AdminSidebar';
 import { AppShell } from '@/components/shell/AppShell';
 import { buildPortfolioAlerts } from '@/lib/reasoning/portfolio-alerts';
-import { getActiveClientRow } from '@/lib/active-client';
 
 export interface AdminCanonShellV2Props {
   children: ReactNode;
   agentRail: ReactNode;
+  /** Tenant name for the top bar. Server-component callers should resolve
+   *  via getActiveClientRow() and pass the name here. */
+  tenantName?: string;
 }
 
-export async function AdminCanonShellV2({ children, agentRail }: AdminCanonShellV2Props) {
+export function AdminCanonShellV2({ children, agentRail, tenantName = 'Apex Retail Group' }: AdminCanonShellV2Props) {
   const alerts = buildPortfolioAlerts();
   const reasoningAlertCount = alerts.filter((a) => a.severity === 'high').length;
-
-  const activeClient = await getActiveClientRow().catch(() => null);
-  const tenantName = activeClient?.name ?? 'Apex Retail Group';
 
   return (
     <AppShell
