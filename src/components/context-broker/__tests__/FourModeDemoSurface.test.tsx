@@ -29,6 +29,7 @@ function bundle(mode: ContextBundle['mode'], tenantKey: string | null): ContextB
     graphPaths: [],
     semanticChunks: [],
     corpusPatterns: [],
+    worldviewChunks: [],
     provenance: [],
     warnings: [],
     infoTags: [],

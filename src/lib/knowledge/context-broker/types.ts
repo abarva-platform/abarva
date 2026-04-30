@@ -109,6 +109,45 @@ export interface CorpusPatternHit {
 }
 
 /**
+ * Worldview chunk hit · INT-WV-2.
+ *
+ * Surfaced in `corpus` and `full` modes. Sourced from the
+ * `abarva-worldview-prod` Pinecone index (3072-dim,
+ * text-embedding-3-large) populated from
+ * `worldview/pinecone-ready/W*_pinecone.json` (Codex's PR #1252).
+ *
+ * The chunk text itself is NOT stored in Pinecone metadata — the
+ * canonical text lives in the bundle JSON in the repo. The hit
+ * carries enough metadata for the panel to render a one-line
+ * citation; full text retrieval (when needed) joins back via
+ * chunk_id against the source bundle.
+ */
+export interface WorldviewChunkHit {
+  /** worldview:W1:001 etc. */
+  chunkId: string;
+  /** W1 / W2 / W3 / W4 / W5. */
+  thesisId: string;
+  /** Long-form thesis title (when available). */
+  thesisTitle?: string;
+  /** Position within the thesis (1-based). */
+  chunkPosition?: number;
+  /** ≤12-word chunk title. */
+  chunkTitle?: string;
+  /** claim / evidence / counterargument / vendor-analysis / etc. */
+  chunkType?: string;
+  /** Similarity 0..1 from Pinecone cosine score. */
+  score: number;
+  /** Primary audience tag (cio / cfo / investor / consulting-partner / ...). */
+  primaryAudience?: string;
+  /** Tag set used for retrieval filtering. */
+  audienceTags?: string[];
+  /** Confidence in the chunk's claim. */
+  confidence?: number;
+  /** Whether the chunk is forward-looking (forecast). */
+  isForecast?: boolean;
+}
+
+/**
  * The unified retrieval result shape every surface and the demo
  * endpoint consume.
  *
@@ -131,6 +170,13 @@ export interface ContextBundle {
   semanticChunks: SemanticChunkHit[];
   /** Corpus pattern hits. Empty until CB-6 wires the pattern catalog. */
   corpusPatterns: CorpusPatternHit[];
+  /**
+   * Worldview chunk hits · INT-WV-2. Populated for `corpus` and `full`
+   * modes when the worldview Pinecone index is reachable; empty
+   * otherwise. The bundle ships an empty array (not undefined) so the
+   * panel can render an empty-state deterministically.
+   */
+  worldviewChunks: WorldviewChunkHit[];
   /** Per-source citation set — one entry per emitted fact / chunk / graph path / pattern. */
   provenance: ContextProvenance[];
   /** ISO timestamp of assembly. */

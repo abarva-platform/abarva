@@ -50,7 +50,9 @@ import {
   type ContextBundle,
   type ContextProvenance,
   type SemanticChunkHit,
+  type WorldviewChunkHit,
 } from './types';
+import { callWorldviewRetriever } from './worldview-retrieval';
 
 /** Public contract — what callers and tests pin against. */
 export interface ContextBroker {
@@ -76,6 +78,21 @@ const CLAMPS = {
 export const WARNING_VECTOR_PENDING =
   'Vector retrieval pending — using keyword-only chunk retrieval';
 export const WARNING_CORPUS_PENDING = 'Corpus retrieval pending CB-6.';
+/**
+ * INT-WV-2 · raised when the worldview Pinecone index can't be
+ * reached (no API key, network, index missing). The bundle still
+ * ships with `worldviewChunks: []`; this warning surfaces the gap
+ * so the panel renders the right empty-state copy.
+ */
+export const WARNING_WORLDVIEW_PENDING =
+  'Worldview retrieval pending — index unreachable.';
+
+/**
+ * INT-WV-2 · info tag emitted when worldview retrieval succeeds.
+ */
+export function worldviewRetrievalInfoTag(hits: number, topK: number): string {
+  return `Worldview retrieval via Pinecone (hits=${hits}, top-K=${topK}).`;
+}
 
 /**
  * Info-tag emitted when vector retrieval succeeds (CB-3). Embeds the
@@ -182,6 +199,7 @@ function emptyBundle(
   tenantKey: string | null,
   warnings: string[],
   infoTags: string[] = [],
+  worldviewChunks: WorldviewChunkHit[] = [],
 ): ContextBundle {
   return {
     query: input.query,
@@ -191,10 +209,51 @@ function emptyBundle(
     graphPaths: [],
     semanticChunks: [],
     corpusPatterns: [],
+    worldviewChunks,
     provenance: [],
     assembledAt: nowIso(),
     warnings,
     infoTags,
+  };
+}
+
+/**
+ * INT-WV-2 · embed the user query with text-embedding-3-large
+ * (3072-dim) so the worldview index can be queried. The shared
+ * `embedTexts` helper is hardcoded to text-embedding-3-small
+ * (1536-dim) for the tenant-context path; worldview needs the
+ * larger model. Returns null on failure (no key, network error)
+ * so the broker can fall back without throwing.
+ */
+async function embedQueryForWorldview(
+  query: string,
+  openaiClient: OpenAIEmbeddingsLike | undefined,
+): Promise<number[] | null> {
+  if (!openaiClient && !process.env.OPENAI_API_KEY) return null;
+  try {
+    const client =
+      openaiClient ??
+      (await (async () => {
+        const { default: OpenAI } = await import('openai');
+        return new OpenAI({ apiKey: process.env.OPENAI_API_KEY?.trim() }) as unknown as OpenAIEmbeddingsLike;
+      })());
+    const res = await client.embeddings.create({
+      model: 'text-embedding-3-large',
+      input: [query],
+    });
+    const v = res.data[0]?.embedding ?? [];
+    if (!Array.isArray(v) || v.length !== 3072) return null;
+    return v;
+  } catch {
+    return null;
+  }
+}
+
+function provenanceForWorldviewChunk(hit: WorldviewChunkHit): ContextProvenance {
+  return {
+    sourceClass: 'corpus',
+    sourceId: hit.chunkId,
+    confidence: hit.confidence,
   };
 }
 
@@ -227,10 +286,35 @@ export class DefaultContextBroker implements ContextBroker {
     }
 
     if (input.mode === 'corpus') {
-      // CB-6 wires the pattern catalog. Until then `corpus` mode
-      // returns an empty bundle but tags the gap so the panel renders
-      // the right empty-state copy.
-      return emptyBundle(input, null, [WARNING_CORPUS_PENDING]);
+      // INT-WV-2 · `corpus` mode now queries the worldview index.
+      // Pattern catalog is still pending (CB-6); when worldview is
+      // reachable we surface the worldview hits and skip the
+      // pattern-catalog warning since the user IS getting corpus
+      // content. When worldview itself is unreachable we tag both.
+      const worldviewResult = await this.queryWorldviewSafe(input.query);
+      const corpusWarnings: string[] = [];
+      const corpusInfoTags: string[] = [];
+      if (worldviewResult.reached) {
+        if (worldviewResult.hits.length > 0) {
+          corpusInfoTags.push(
+            worldviewRetrievalInfoTag(worldviewResult.hits.length, 6),
+          );
+        }
+        // Pattern catalog remains pending — distinct from worldview.
+        corpusWarnings.push(WARNING_CORPUS_PENDING);
+      } else {
+        corpusWarnings.push(WARNING_WORLDVIEW_PENDING);
+        corpusWarnings.push(WARNING_CORPUS_PENDING);
+      }
+      const bundle = emptyBundle(
+        input,
+        null,
+        corpusWarnings,
+        corpusInfoTags,
+        worldviewResult.hits,
+      );
+      bundle.provenance = worldviewResult.hits.map(provenanceForWorldviewChunk);
+      return bundle;
     }
 
     // tenant / full — both require a tenantKey.
@@ -326,10 +410,26 @@ export class DefaultContextBroker implements ContextBroker {
       infoTags.push(vectorRetrievalInfoTag(maxChunks));
     }
 
+    // ──────────────── Worldview chunks (full mode) ────────────────
+    // INT-WV-2 · in `full` mode, query the worldview index alongside
+    // the tenant retrieval. Pattern catalog is still pending (CB-6)
+    // so we only flag the catalog gap when worldview also fails to
+    // reach — otherwise corpus content IS being delivered, just from
+    // the worldview namespace rather than the pattern manifest.
+    let worldviewChunks: WorldviewChunkHit[] = [];
     if (input.mode === 'full') {
-      // CB-6 will compose corpus patterns into `full` mode. Until
-      // then, signal the gap so the panel renders the right copy.
-      warnings.push(WARNING_CORPUS_PENDING);
+      const worldviewResult = await this.queryWorldviewSafe(input.query);
+      worldviewChunks = worldviewResult.hits;
+      if (worldviewResult.reached) {
+        if (worldviewChunks.length > 0) {
+          infoTags.push(worldviewRetrievalInfoTag(worldviewChunks.length, 6));
+        }
+        // Pattern catalog still pending — distinct gap.
+        warnings.push(WARNING_CORPUS_PENDING);
+      } else {
+        warnings.push(WARNING_WORLDVIEW_PENDING);
+        warnings.push(WARNING_CORPUS_PENDING);
+      }
     }
 
     // ──────────────── Provenance ────────────────
@@ -337,6 +437,7 @@ export class DefaultContextBroker implements ContextBroker {
       ...facts.map(provenanceForFact),
       ...graphPaths.map(provenanceForNeighborhood),
       ...semanticChunks.map(provenanceForChunk),
+      ...worldviewChunks.map(provenanceForWorldviewChunk),
     ];
 
     return {
@@ -347,11 +448,26 @@ export class DefaultContextBroker implements ContextBroker {
       graphPaths,
       semanticChunks,
       corpusPatterns: [],
+      worldviewChunks,
       provenance,
       assembledAt: nowIso(),
       warnings,
       infoTags,
     };
+  }
+
+  /**
+   * INT-WV-2 · embed the query in 3072-dim and query the worldview
+   * Pinecone index. Returns `{ hits: [], reached: false }` on any
+   * failure (no key, embed fail, network, index missing) so the
+   * caller can surface the warning rather than throw.
+   */
+  private async queryWorldviewSafe(
+    query: string,
+  ): Promise<{ hits: WorldviewChunkHit[]; reached: boolean }> {
+    const queryVector = await embedQueryForWorldview(query, this.openaiClient);
+    if (!queryVector) return { hits: [], reached: false };
+    return callWorldviewRetriever({ queryVector });
   }
 }
 
