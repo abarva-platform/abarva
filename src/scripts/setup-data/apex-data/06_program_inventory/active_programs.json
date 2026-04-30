@@ -1,0 +1,245 @@
+{
+  "tenant_key": "apex-retail",
+  "last_updated": "2026-04-28",
+  "data_classification": "Internal",
+  "schema_version": "1.0",
+  "active_programs": [
+    {
+      "id": "apex-cdp-2026",
+      "name": "CDP Activation 2026",
+      "archetype_pattern_id": "PAT-PRG-CDP-001",
+      "sponsor_id": "person:apex:jennifer-park",
+      "sponsor_name": "Jennifer Park",
+      "sponsor_role": "Chief Marketing Officer",
+      "co_sponsor_id": "person:apex:lynne-stratham",
+      "co_sponsor_name": "Lynne Stratham",
+      "co_sponsor_role": "Chief Data Officer",
+      "program_lead_id": "person:apex:priya-iyer",
+      "program_lead_name": "Priya Iyer",
+      "program_lead_role": "VP Digital & E-commerce Technology",
+      "current_phase": 3,
+      "current_phase_name": "P3 Design",
+      "phase_entered": "2026-03-15",
+      "days_in_current_phase": 45,
+      "stated_business_case": "Activate unified customer identity and event data across owned channels to improve customer acquisition cost (target: -8%), conversion rate (target: +6%), and loyalty member contribution margin (target: +200bp). Replace Tealium-and-Klaviyo-and-CRM segmentation with single CDP-driven activation.",
+      "stated_target_metrics": [
+        {"metric": "Identity match rate", "current": "71%", "target": "87% by end of FY2026"},
+        {"metric": "Customer acquisition cost (digital)", "current": "$84", "target": "$77 by end of FY2027"},
+        {"metric": "E-commerce conversion rate (loyalty members)", "current": "4.2%", "target": "4.6% by end of FY2027"}
+      ],
+      "budget_approved_usd": 4800000,
+      "budget_consumed_usd": 1340000,
+      "budget_consumed_pct": 28,
+      "key_milestones": [
+        {"milestone": "P0 origination signed", "status": "complete", "date": "2026-01-22"},
+        {"milestone": "P1 Discovery complete", "status": "complete", "date": "2026-03-08"},
+        {"milestone": "P2 Synthesis charter signed", "status": "complete", "date": "2026-03-15"},
+        {"milestone": "P3 Design — vendor selection", "status": "in-flight", "due_date": "2026-06-30"},
+        {"milestone": "P3 Design — pilot scope", "status": "pending vendor selection", "due_date": "2026-07-15"},
+        {"milestone": "P4 Build — pilot live", "status": "pending", "due_date": "2026-11-30"}
+      ],
+      "vendor_relationships": [
+        {"vendor": "Treasure Data (incumbent eval)", "status": "in BAFO", "scope": "CDP platform"},
+        {"vendor": "Segment (alt eval)", "status": "in BAFO", "scope": "CDP platform"},
+        {"vendor": "ActionIQ (alt eval)", "status": "out (eliminated round 1)", "scope": "CDP platform"},
+        {"vendor": "mParticle (alt eval)", "status": "out (eliminated round 1)", "scope": "CDP platform"},
+        {"vendor": "Deloitte Digital", "status": "selected", "scope": "Implementation partner"}
+      ],
+      "risks": [
+        {"id": "risk-cdp-001", "name": "Identity match gap from legacy CRM", "severity": "high", "owner": "person:apex:james-wright", "mitigation": "Legacy CRM data extraction project planned in parallel"},
+        {"id": "risk-cdp-002", "name": "Marketing-vs-Privacy data classification gap", "severity": "high", "owner": "person:apex:rebecca-singh", "mitigation": "Klaviyo remediation Q2; PIA in progress"},
+        {"id": "risk-cdp-003", "name": "Renewal timing pressure on Tealium/Klaviyo", "severity": "medium", "owner": "person:apex:nathan-kohl", "mitigation": "Co-renewal date used as leverage in BAFO"}
+      ],
+      "blockers": [],
+      "contradictions_surfaced": [
+        {"id": "contradiction-cdp-001", "description": "CMO target growth scope conflicts with FY2026 cost-takeout posture", "status": "open", "owner": "person:apex:robert-vance"},
+        {"id": "contradiction-cdp-002", "description": "Vendor pricing assumes data volume at FY2025 levels; CDP usage will materially expand event volume", "status": "raised in BAFO", "owner": "person:apex:nathan-kohl"}
+      ],
+      "stakeholder_map": {
+        "champion": ["person:apex:jennifer-park", "person:apex:lynne-stratham", "person:apex:priya-iyer"],
+        "blocker_or_skeptic": ["person:apex:margaret-chen (cost discipline)"],
+        "neutral_watching": ["person:apex:carlos-rivera", "person:apex:sarah-whitfield", "person:apex:rebecca-singh"],
+        "operational_owner_post_launch": "person:apex:priya-iyer + martech ops"
+      },
+      "recent_decisions": [
+        {"date": "2026-04-22", "decision": "Treasure Data and Segment advance to BAFO; ActionIQ and mParticle eliminated", "rationale": "Treasure Data: highest fit on Apex's hybrid B2C+ retail use case; Segment: best Twilio ecosystem leverage. ActionIQ: weak event-stream architecture for Apex scale. mParticle: pricing model misaligned with usage profile."},
+        {"date": "2026-04-15", "decision": "Deloitte Digital selected as implementation partner", "rationale": "Pre-existing Apex relationship; vendor-agnostic CDP experience; competitive on rate"},
+        {"date": "2026-03-15", "decision": "Charter signed by sponsor; ARB attestation complete", "rationale": "P2 gate close"}
+      ]
+    },
+    {
+      "id": "apex-cc-ai-2026",
+      "name": "Contact Center AI 2026",
+      "archetype_pattern_id": "PAT-PRG-CC-AI-001",
+      "sponsor_id": "person:apex:jennifer-park",
+      "sponsor_name": "Jennifer Park",
+      "sponsor_role": "Chief Marketing Officer",
+      "co_sponsor_id": "person:apex:david-okonjo",
+      "co_sponsor_name": "David Okonjo",
+      "co_sponsor_role": "Chief Operating Officer",
+      "program_lead_id": "person:apex:priya-iyer",
+      "program_lead_name": "Priya Iyer",
+      "program_lead_role": "VP Digital & E-commerce Technology",
+      "current_phase": 1,
+      "current_phase_name": "P1 Discovery",
+      "phase_entered": "2026-04-01",
+      "days_in_current_phase": 28,
+      "stated_business_case": "Increase contact center containment from 28% to 40% via conversational AI for top intents; deploy agent-assist to reduce AHT by 1.5 minutes; improve CSAT from 4.1 to 4.4. Estimated savings: $1.8M/yr at full deployment.",
+      "stated_target_metrics": [
+        {"metric": "Contact center containment", "current": "28%", "target": "40% by end of FY2027"},
+        {"metric": "Average handle time", "current": "7.2 min", "target": "5.7 min by end of FY2027"},
+        {"metric": "CSAT", "current": "4.1", "target": "4.4 by end of FY2027"}
+      ],
+      "budget_approved_usd": 2400000,
+      "budget_consumed_usd": 320000,
+      "budget_consumed_pct": 13,
+      "key_milestones": [
+        {"milestone": "P0 origination signed", "status": "complete", "date": "2026-03-12"},
+        {"milestone": "P1 Discovery — intent inventory workshop", "status": "complete", "date": "2026-04-15"},
+        {"milestone": "P1 Discovery — containment baseline workshop", "status": "in-flight", "due_date": "2026-05-15"},
+        {"milestone": "P1 Discovery complete", "status": "pending", "due_date": "2026-06-15"},
+        {"milestone": "P2 Synthesis", "status": "pending", "due_date": "2026-08-31"}
+      ],
+      "vendor_relationships": [
+        {"vendor": "NICE CXone (incumbent)", "status": "evaluating extension scenario", "scope": "Voice + WFM"},
+        {"vendor": "Five9 (pilot)", "status": "active pilot", "scope": "Voice + AI"},
+        {"vendor": "Salesforce Einstein for Service (alt eval)", "status": "in evaluation", "scope": "Agent assist"}
+      ],
+      "risks": [
+        {"id": "risk-cc-001", "name": "Vendor lock-in concern (NICE incumbent)", "severity": "medium", "owner": "person:apex:nathan-kohl", "mitigation": "Genuine alternative evaluation; exit terms in any new contract"},
+        {"id": "risk-cc-002", "name": "WFM Lead skepticism on full automation", "severity": "medium", "owner": "person:apex:priya-iyer", "mitigation": "WFM Lead engaged as design partner in P1"},
+        {"id": "risk-cc-003", "name": "Containment baseline measurement quality", "severity": "high", "owner": "person:apex:james-wright", "mitigation": "Detailed measurement approach being designed"}
+      ],
+      "blockers": [],
+      "contradictions_surfaced": [
+        {"id": "contradiction-cc-001", "description": "Containment dashboard owned by IT shows different number than NICE CXone reports", "status": "investigating", "owner": "person:apex:james-wright"}
+      ],
+      "stakeholder_map": {
+        "champion": ["person:apex:jennifer-park", "person:apex:david-okonjo", "person:apex:priya-iyer"],
+        "blocker_or_skeptic": [],
+        "neutral_watching": ["person:apex:margaret-chen", "person:apex:rebecca-singh", "person:apex:michael-tanaka"],
+        "operational_owner_post_launch": "person:apex:priya-iyer + customer service ops"
+      },
+      "recent_decisions": [
+        {"date": "2026-04-15", "decision": "Top 12 call intents identified covering 73% of contact volume", "rationale": "Intent inventory workshop output"},
+        {"date": "2026-04-01", "decision": "P1 Discovery initiated", "rationale": "P0 gate close; sponsor 1:1 documented; charter seed approved"}
+      ]
+    },
+    {
+      "id": "apex-ams-consolidation-2026",
+      "name": "AMS Consolidation 2026",
+      "archetype_pattern_id": "PAT-PRG-AMS-CONSOLIDATION-001",
+      "sponsor_id": "person:apex:carlos-rivera",
+      "sponsor_name": "Carlos Rivera",
+      "sponsor_role": "Chief Information Officer",
+      "co_sponsor_id": "person:apex:margaret-chen",
+      "co_sponsor_name": "Margaret Chen",
+      "co_sponsor_role": "Chief Financial Officer",
+      "program_lead_id": "person:apex:diana-lopez",
+      "program_lead_name": "Diana Lopez",
+      "program_lead_role": "VP Application Services",
+      "current_phase": 2,
+      "current_phase_name": "P2 Synthesis",
+      "phase_entered": "2026-03-22",
+      "days_in_current_phase": 38,
+      "stated_business_case": "Consolidate AMS providers across 22 applications in merchandising and supply chain portfolios. Stated savings target: $2.2M annual run-rate by end of FY2027. Improved service levels via single accountable partner.",
+      "stated_target_metrics": [
+        {"metric": "AMS run-rate", "current": "$3.8M (in scope)", "target": "$1.6M by end of FY2027"},
+        {"metric": "P1 incidents — in-scope apps", "current": "Baseline being captured", "target": "30% reduction"},
+        {"metric": "Mean time to resolve — in-scope", "current": "6.2 hrs", "target": "4.0 hrs"}
+      ],
+      "budget_approved_usd": 3800000,
+      "budget_consumed_usd": 1140000,
+      "budget_consumed_pct": 30,
+      "key_milestones": [
+        {"milestone": "P0 origination signed", "status": "complete", "date": "2025-11-08"},
+        {"milestone": "P1 Discovery — per-app discovery", "status": "complete", "date": "2026-03-15"},
+        {"milestone": "P2 Synthesis — vendor BAFO", "status": "in-flight", "due_date": "2026-06-30"},
+        {"milestone": "P2 Synthesis — charter", "status": "pending BAFO", "due_date": "2026-07-15"},
+        {"milestone": "P3 Design — transition design", "status": "pending", "due_date": "2026-09-30"}
+      ],
+      "vendor_relationships": [
+        {"vendor": "Wipro (incumbent)", "status": "in BAFO", "scope": "AMS — extension or new model", "notes": "2023 attempted consolidation paused; relationship complex"},
+        {"vendor": "Infosys (alt)", "status": "in BAFO", "scope": "Full AMS"},
+        {"vendor": "TCS (alt)", "status": "in BAFO", "scope": "Full AMS"},
+        {"vendor": "Cognizant (alt)", "status": "out (eliminated round 1)", "scope": "Full AMS"}
+      ],
+      "risks": [
+        {"id": "risk-ams-001", "name": "Transition risk on legacy POS application", "severity": "high", "owner": "person:apex:diana-lopez", "mitigation": "Transition plan being co-authored with finalist vendors"},
+        {"id": "risk-ams-002", "name": "Repeat of 2023 scope creep", "severity": "high", "owner": "person:apex:daniel-okeke", "mitigation": "Hard scope freeze locked in P2 charter; 22 apps only"},
+        {"id": "risk-ams-003", "name": "COO skepticism", "severity": "medium", "owner": "person:apex:carlos-rivera", "mitigation": "Quarterly briefings; visible discipline"}
+      ],
+      "blockers": [],
+      "contradictions_surfaced": [
+        {"id": "contradiction-ams-001", "description": "Wipro run-rate quote anchored on 2023 BAFO floor; Apex pricing expectations have shifted with market", "status": "active negotiation", "owner": "person:apex:nathan-kohl"}
+      ],
+      "stakeholder_map": {
+        "champion": ["person:apex:carlos-rivera", "person:apex:margaret-chen", "person:apex:diana-lopez", "person:apex:nathan-kohl"],
+        "blocker_or_skeptic": ["person:apex:david-okonjo (memory of 2023)"],
+        "neutral_watching": ["person:apex:linda-mwangi", "person:apex:sarah-whitfield"],
+        "operational_owner_post_launch": "person:apex:diana-lopez"
+      },
+      "recent_decisions": [
+        {"date": "2026-04-12", "decision": "Cognizant eliminated; three vendors advance to BAFO", "rationale": "Cognizant pricing not competitive; capability fit weaker than three advancing"},
+        {"date": "2026-03-22", "decision": "P2 Synthesis entered", "rationale": "P1 gate close; per-application discovery completed"}
+      ]
+    },
+    {
+      "id": "apex-forecast-2026",
+      "name": "Demand Forecasting Modernization 2026",
+      "archetype_pattern_id": "PAT-PRG-FORECAST-001",
+      "sponsor_id": "person:apex:michael-tanaka",
+      "sponsor_name": "Michael Tanaka",
+      "sponsor_role": "Chief Supply Chain Officer",
+      "co_sponsor_id": "person:apex:angela-foster",
+      "co_sponsor_name": "Angela Foster",
+      "co_sponsor_role": "Chief Merchandising Officer",
+      "program_lead_id": "person:apex:james-wright",
+      "program_lead_name": "James Wright",
+      "program_lead_role": "VP Data Engineering & Platform",
+      "current_phase": 0,
+      "current_phase_name": "P0 Originate (closing)",
+      "phase_entered": "2026-04-01",
+      "days_in_current_phase": 28,
+      "stated_business_case": "Modernize demand forecasting accuracy from 28.4% MAPE to 18% MAPE at SKU-store-week granularity. Expected impact: inventory turn improvement from 3.6x to 4.0x in target product family. Estimated value: $4.2M annual margin lift.",
+      "stated_target_metrics": [
+        {"metric": "Forecast accuracy MAPE (SKU-store-week)", "current": "28.4%", "target": "18% by FY2028"},
+        {"metric": "Inventory turn — target product family", "current": "3.6x", "target": "4.0x"},
+        {"metric": "Stockout rate — target product family", "current": "4.2%", "target": "3.0%"}
+      ],
+      "budget_approved_usd": 1800000,
+      "budget_consumed_usd": 90000,
+      "budget_consumed_pct": 5,
+      "key_milestones": [
+        {"milestone": "P0 origination — sponsor 1:1", "status": "complete", "date": "2026-04-15"},
+        {"milestone": "P0 origination — first cohort decision", "status": "complete", "date": "2026-04-22"},
+        {"milestone": "P0 origination — submitted for IC approval", "status": "pending", "due_date": "2026-05-08"},
+        {"milestone": "P1 Discovery", "status": "pending IC", "due_date": "2026-09-15"}
+      ],
+      "vendor_relationships": [
+        {"vendor": "OVAA Solutions (incumbent)", "status": "evaluating extension or replacement", "scope": "Demand planning"},
+        {"vendor": "RELEX Solutions (alt eval)", "status": "early evaluation", "scope": "Demand planning + replenishment"},
+        {"vendor": "ToolsGroup (alt eval)", "status": "early evaluation", "scope": "Demand planning"},
+        {"vendor": "Internal build (Databricks)", "status": "evaluating as option", "scope": "ML-based forecast"}
+      ],
+      "risks": [
+        {"id": "risk-fc-001", "name": "First-cohort decision: granularity vs scope", "severity": "high", "owner": "person:apex:michael-tanaka", "mitigation": "Working through cohort definition with merchandising"},
+        {"id": "risk-fc-002", "name": "MAPE distribution may have structural bias", "severity": "medium", "owner": "person:apex:james-wright", "mitigation": "P1 will analyze distribution, not just average"}
+      ],
+      "blockers": [],
+      "contradictions_surfaced": [
+        {"id": "contradiction-fc-001", "description": "CSCO advocacy for full modernization conflicts with CFO FY2026 cost discipline; budget compromise reached but tension remains", "status": "open", "owner": "person:apex:robert-vance"}
+      ],
+      "stakeholder_map": {
+        "champion": ["person:apex:michael-tanaka", "person:apex:david-okonjo"],
+        "blocker_or_skeptic": ["person:apex:margaret-chen (timing)"],
+        "neutral_watching": ["person:apex:angela-foster (cautious; merchandising dependency)", "person:apex:carlos-rivera"],
+        "operational_owner_post_launch": "person:apex:michael-tanaka + supply chain analytics"
+      },
+      "recent_decisions": [
+        {"date": "2026-04-22", "decision": "First cohort: women's apparel core, SKU-store-week granularity", "rationale": "Single product family with sufficient transaction volume; merchandising cooperation high; promotional sensitivity present (good test of new system)"},
+        {"date": "2026-04-15", "decision": "Sponsor 1:1 documented; CSCO commitment confirmed", "rationale": "P0 sponsor step complete"}
+      ]
+    }
+  ]
+}

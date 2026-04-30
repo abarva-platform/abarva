@@ -1,0 +1,120 @@
+{
+  "tenant_key": "apex-retail",
+  "last_updated": "2026-04-25",
+  "data_classification": "Internal",
+  "industry_signals": [
+    {
+      "id": "sig:apex:001",
+      "title": "Specialty retail margin compression — sector-wide",
+      "type": "Market trend",
+      "summary": "Specialty retailers reporting 80-150bp YoY margin compression FY2025; drivers include digital marketing inflation, return logistics costs, e-commerce shipping, and markdown depth. Apex's 130bp compression is in the worst quartile of peer set.",
+      "sources": ["Public 10-K filings of peer set", "NRF Q4 FY2025 industry report", "JP Morgan retail equity research"],
+      "captured_date": "2026-03-25",
+      "relevance_to_programs": ["apex-cdp-2026 (CAC efficiency thesis)", "apex-forecast-2026 (markdown reduction thesis)"],
+      "confidence": 0.91
+    },
+    {
+      "id": "sig:apex:002",
+      "title": "Activist investors targeting mid-market specialty retailers",
+      "type": "Strategic / external",
+      "summary": "Multiple activist disclosures in mid-market specialty retail in last 6 months. Stoneridge Capital Partners disclosed Apex position February 2026 (4.8%). Pattern: pressure for cost discipline, board refresh, capital allocation discipline.",
+      "sources": ["13F filings", "WSJ retail coverage", "Stoneridge Capital partner letters (publicly available)"],
+      "captured_date": "2026-02-20",
+      "relevance_to_programs": ["All — affects FY2026 cost posture"],
+      "confidence": 0.95
+    },
+    {
+      "id": "sig:apex:003",
+      "title": "Customer Data Platform consolidation — Treasure Data acquisition rumor",
+      "type": "Vendor market",
+      "summary": "Industry chatter about Treasure Data potential acquisition by larger martech/data firm. Status unclear; not announced. Could affect long-term roadmap stability.",
+      "sources": ["Industry analyst conversations", "Vendor relationship discussions"],
+      "captured_date": "2026-04-08",
+      "relevance_to_programs": ["apex-cdp-2026 (vendor selection consideration)"],
+      "confidence": 0.45,
+      "caveats": "Rumor; not verified. Tracking; if announced, will affect BAFO."
+    },
+    {
+      "id": "sig:apex:004",
+      "title": "Cisco-Splunk integration roadmap clarification",
+      "type": "Vendor market",
+      "summary": "Cisco published Splunk integration roadmap February 2026. Continued investment in Splunk Cloud confirmed. Pricing model expected to transition to Cisco enterprise discount structure over 24-36 months.",
+      "sources": ["Cisco partner briefing", "Splunk 2026 roadmap webinar"],
+      "captured_date": "2026-02-12",
+      "relevance_to_programs": ["Splunk renewal August 2026"],
+      "confidence": 0.86
+    },
+    {
+      "id": "sig:apex:005",
+      "title": "Federal AI legislation (APRA) progress",
+      "type": "Regulatory",
+      "summary": "American Privacy Rights Act (APRA) advanced to House Energy and Commerce committee Q1 2026; bipartisan support but sectoral lobbying continues. Earliest passage 2027. Federal preemption of state privacy laws is the open question.",
+      "sources": ["Congressional records", "OneTrust regulatory tracking", "IAPP analysis"],
+      "captured_date": "2026-04-15",
+      "relevance_to_programs": ["Cross-program privacy impact"],
+      "confidence": 0.88
+    },
+    {
+      "id": "sig:apex:006",
+      "title": "FTC AI rulemaking proposed",
+      "type": "Regulatory",
+      "summary": "FTC announced proposed rulemaking on AI in commerce February 2026. Scope: deceptive AI practices, automated decisions affecting consumers, AI-assisted dark patterns. Comment period through July 2026.",
+      "sources": ["FTC Federal Register notice"],
+      "captured_date": "2026-02-28",
+      "relevance_to_programs": ["AI Governance Council policy review needed"],
+      "confidence": 0.92
+    },
+    {
+      "id": "sig:apex:007",
+      "title": "Generative AI in retail customer service — peer adoption signals",
+      "type": "Market trend",
+      "summary": "5 specialty retail peers announced gen AI customer service deployments in FY2026 Q1; reported containment improvements 8-15 percentage points. Mixed CSAT outcomes (some positive, some negative).",
+      "sources": ["Peer 10-K filings", "Industry analyst calls", "Vendor case studies (caveat: vendor-curated)"],
+      "captured_date": "2026-04-12",
+      "relevance_to_programs": ["apex-cc-ai-2026"],
+      "confidence": 0.74,
+      "caveats": "Vendor-curated case studies overstate consistency; actual range of outcomes wider than reported"
+    },
+    {
+      "id": "sig:apex:008",
+      "title": "Demand forecasting platform vendor consolidation — Blue Yonder + Microsoft",
+      "type": "Vendor market",
+      "summary": "Microsoft acquired Blue Yonder February 2026; integration roadmap announced. Implications for Apex's longlist (Blue Yonder is on the longlist for apex-forecast-2026).",
+      "sources": ["Microsoft / Blue Yonder press release"],
+      "captured_date": "2026-02-15",
+      "relevance_to_programs": ["apex-forecast-2026 (vendor evaluation)"],
+      "confidence": 0.97
+    },
+    {
+      "id": "sig:apex:009",
+      "title": "Retail e-commerce returns rates — industry-wide spike",
+      "type": "Market trend",
+      "summary": "Apparel return rates climbed industry-wide FY2025; average e-commerce apparel return rates now 22-28% (vs 18-22% prior). Drivers: changed customer expectations, free-return norms, fit/sizing AI under-deployed.",
+      "sources": ["NRF return rate study Q1 2026", "Optoro industry report"],
+      "captured_date": "2026-03-08",
+      "relevance_to_programs": ["apex-cc-ai-2026 (returns intent)", "Cross-program — returns reduction strategy"],
+      "confidence": 0.84
+    },
+    {
+      "id": "sig:apex:010",
+      "title": "Snowflake pricing model evolution",
+      "type": "Vendor market",
+      "summary": "Snowflake announced new commit tiers and Snowflake Cortex pricing structure February 2026. Apex's renewal in November 2026 will negotiate against new structure.",
+      "sources": ["Snowflake Investor Day February 2026", "Snowflake account briefing"],
+      "captured_date": "2026-03-05",
+      "relevance_to_programs": ["Snowflake renewal"],
+      "confidence": 0.94
+    }
+  ],
+  "peer_benchmarks": {
+    "ebitda_margin_specialty_retail_fy2025": "12.4% median (Apex 11.8%; below median)",
+    "ecommerce_revenue_share_specialty_retail_fy2025": "32% median (Apex 31%; in line)",
+    "it_spend_pct_revenue_specialty_retail": "3.4% median (Apex 3.6%; slightly above)",
+    "ams_run_rate_pct_total_it_specialty_retail": "16% median (Apex 17%; slightly above; consolidation likely brings to 12% by FY2027)",
+    "loyalty_member_share_revenue_specialty_retail": "63% median (Apex 71%; above median)",
+    "forecast_accuracy_mape_specialty_retail": "21% median at SKU-store-week (Apex 28.4%; below median; modernization rationale)",
+    "contact_center_containment_specialty_retail": "32% median (Apex 28%; below; CC AI rationale)",
+    "customer_acquisition_cost_digital_specialty_retail": "$72 median (Apex $84; above; margin pressure)",
+    "_source": "Peer set: 12 mid-market specialty retailers; data from public filings + industry studies; FY2025 unless noted"
+  }
+}

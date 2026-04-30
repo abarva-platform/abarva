@@ -1,0 +1,188 @@
+{
+  "tenant_key": "apex-retail",
+  "last_updated": "2026-04-22",
+  "data_classification": "Confidential",
+  "contracts": [
+    {
+      "vendor": "SAP",
+      "contract_type": "MSA + RISE Agreement",
+      "term": "5-year (2022-2027)",
+      "value_total_usd": 14200000,
+      "annual_value_usd": 2840000,
+      "renewal_date": "2027-03-31",
+      "key_clauses": {
+        "mfn": false,
+        "yoy_escalator_max": "3.5%",
+        "exit_assistance_period": "12 months",
+        "exit_assistance_pricing": "price-locked at then-current",
+        "data_export_rights": "industry-standard formats; cooperation required",
+        "audit_rights": "annual; SOC reports auto-shared",
+        "data_residency": "US (with explicit approval for offshore support)",
+        "ai_training_use": "no customer data in vendor model training",
+        "termination_for_convenience": "12 months notice + transition assistance",
+        "ip_terms": "standard SAP terms; Apex retains data rights"
+      }
+    },
+    {
+      "vendor": "Salesforce (Sales + Service)",
+      "contract_type": "MSA + Order Form",
+      "term": "3-year (2023-2026)",
+      "value_total_usd": 3720000,
+      "annual_value_usd": 1240000,
+      "renewal_date": "2026-09-15",
+      "key_clauses": {
+        "mfn": "limited (within Salesforce price book)",
+        "yoy_escalator_max": "5% (concern at renewal)",
+        "exit_assistance_period": "60 days (insufficient — to be improved at renewal)",
+        "exit_assistance_pricing": "at-list",
+        "data_export_rights": "API + bulk export",
+        "audit_rights": "annual SOC report",
+        "data_residency": "US",
+        "ai_training_use": "Einstein use case requires DPA addendum",
+        "termination_for_convenience": "12 months notice",
+        "ip_terms": "standard"
+      },
+      "renewal_open_issues": ["MFN scope expansion", "Escalator cap at 3.5%", "Exit assistance period to 12 months", "Einstein DPA"]
+    },
+    {
+      "vendor": "Salesforce Commerce",
+      "contract_type": "Order Form (under MSA)",
+      "term": "3-year (2023-2026)",
+      "annual_value_usd": 1810000,
+      "renewal_date": "2026-09-15",
+      "key_clauses": {
+        "mfn": false,
+        "yoy_escalator_max": "5%",
+        "exit_assistance_period": "60 days",
+        "data_export_rights": "API + bulk export",
+        "data_residency": "US",
+        "termination_for_convenience": "12 months notice"
+      }
+    },
+    {
+      "vendor": "Workday",
+      "contract_type": "MSA + Order Form",
+      "term": "5-year (2024-2029)",
+      "annual_value_usd": 1140000,
+      "renewal_date": "2026-12-31 (mid-term true-up)",
+      "key_clauses": {
+        "mfn": "yes (within retail vertical)",
+        "yoy_escalator_max": "3%",
+        "exit_assistance_period": "12 months",
+        "exit_assistance_pricing": "price-locked",
+        "data_export_rights": "comprehensive",
+        "data_residency": "US",
+        "ai_training_use": "Workday AI features require explicit opt-in",
+        "termination_for_convenience": "12 months notice + transition assistance"
+      }
+    },
+    {
+      "vendor": "AWS (EDP)",
+      "contract_type": "Enterprise Discount Program",
+      "term": "3-year (2024-2027)",
+      "annual_commit_usd": 4500000,
+      "renewal_date": "2027-06-30",
+      "key_clauses": {
+        "discount_tier": "tiered by commit + actual usage",
+        "burndown_rate": "98%+ of commit historically",
+        "mfn": "limited",
+        "data_export_rights": "standard AWS",
+        "data_residency": "US East (N. Virginia) + US West (Oregon)",
+        "ai_training_use": "Bedrock-specific terms apply"
+      }
+    },
+    {
+      "vendor": "Snowflake",
+      "contract_type": "MSA + Capacity Order",
+      "term": "3-year (2024-2027)",
+      "annual_value_usd": 1320000,
+      "renewal_date": "2026-11-30",
+      "key_clauses": {
+        "mfn": false,
+        "credit_consumption_model": "pre-paid + on-demand overage",
+        "yoy_escalator_max": "list price",
+        "data_export_rights": "comprehensive",
+        "data_residency": "US",
+        "ai_training_use": "Snowflake Cortex requires explicit opt-in",
+        "exit_assistance_period": "6 months"
+      },
+      "renewal_priorities": ["FinOps discipline", "Tier negotiation", "Volume commit optimization"]
+    },
+    {
+      "vendor": "Wipro AMS (current)",
+      "contract_type": "MSA + SOW",
+      "term": "3-year (2023-2026; was paused mid-term)",
+      "annual_value_usd": 3200000,
+      "renewal_date": "Multi-year — contract decision in 2026 BAFO",
+      "key_clauses": {
+        "mfn": false,
+        "yoy_escalator_max": "4%",
+        "exit_assistance_period": "12 months",
+        "exit_assistance_pricing": "price-locked",
+        "data_export_rights": "Apex retains all data and IP",
+        "audit_rights": "quarterly SLA reviews; annual financial audit",
+        "data_residency": "US + India (per app)",
+        "termination_for_convenience": "6 months notice + transition assistance"
+      },
+      "history_note": "Original 2023 consolidation contract paused before full activation; current scope is reduced; 2026 BAFO is decision point on renewal scope or replacement"
+    },
+    {
+      "vendor": "Oracle (POS + Merch)",
+      "contract_type": "License + Maintenance",
+      "term": "10-year (2017-2027) — ELA",
+      "annual_value_usd": 2400000,
+      "renewal_date": "2027-06-30",
+      "key_clauses": {
+        "mfn": false,
+        "maintenance_increase_max": "4% YoY",
+        "exit_assistance_period": "N/A — perpetual licenses",
+        "data_export_rights": "Apex owns data",
+        "audit_rights": "Oracle has audit rights",
+        "ip_terms": "perpetual license per system"
+      },
+      "renewal_strategy": "Significant negotiation expected at 2027 renewal; cloud migration evaluation in progress"
+    },
+    {
+      "vendor": "Klaviyo",
+      "contract_type": "Order Form (under MSA)",
+      "term": "Annual (auto-renew)",
+      "annual_value_usd": 420000,
+      "renewal_date": "2026-08-15",
+      "key_clauses": {
+        "mfn": false,
+        "yoy_escalator": "list price",
+        "exit_assistance_period": "30 days",
+        "data_export_rights": "API + CSV export",
+        "data_residency": "US",
+        "ai_training_use": "Klaviyo AI features require opt-in",
+        "termination_for_convenience": "30 days notice",
+        "dpa": "in place; remediation plan for classification gap in flight"
+      }
+    },
+    {
+      "vendor": "OneTrust",
+      "contract_type": "MSA + Order Form",
+      "term": "3-year (2024-2027)",
+      "annual_value_usd": 310000,
+      "renewal_date": "2026-11-30",
+      "key_clauses": {
+        "mfn": false,
+        "yoy_escalator_max": "4%",
+        "exit_assistance_period": "6 months",
+        "data_export_rights": "comprehensive",
+        "data_residency": "US",
+        "audit_rights": "annual"
+      }
+    }
+  ],
+  "contract_health_summary": {
+    "total_contracts": 28,
+    "contracts_in_this_export": 10,
+    "renewals_next_90_days": 4,
+    "renewals_next_180_days": 9,
+    "missing_exit_assistance_language": 3,
+    "weak_exit_assistance_period": 2,
+    "missing_ai_use_clauses": 4,
+    "note": "10 of 28 vendor contracts shown. Apex's standard contract template (updated 2025) includes strong exit assistance and AI-use clauses; legacy contracts predating template upgrade have gaps. Remediation policy: capture gaps at renewal."
+  }
+}

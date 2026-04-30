@@ -1,0 +1,181 @@
+{
+  "tenant_key": "apex-retail",
+  "last_updated": "2026-04-28",
+  "data_classification": "Internal",
+  "schema_version": "1.0",
+  "portfolio_risks": [
+    {
+      "id": "risk:apex:port:001",
+      "name": "FY2026 IT spend discipline vs transformation portfolio commitments",
+      "category": "Financial",
+      "severity": "High",
+      "owner": "person:apex:carlos-rivera",
+      "status": "Active monitoring",
+      "description": "Approved transformation portfolio commits $16M across 4 active programs in FY2026; CFO continuing pressure for additional cost takeout. Risk of mid-year reprioritization if margin trajectory underperforms.",
+      "mitigations": ["Monthly review with CFO", "Visible discipline on each program", "Defer-not-cancel posture for any pivot"],
+      "last_reviewed": "2026-04-25"
+    },
+    {
+      "id": "risk:apex:port:002",
+      "name": "Concentration of program leadership on Priya Iyer",
+      "category": "Resource / Talent",
+      "severity": "Medium",
+      "owner": "person:apex:carlos-rivera",
+      "status": "Active monitoring",
+      "description": "Priya Iyer is program lead on apex-cdp-2026 and apex-cc-ai-2026 simultaneously. Both are critical-path programs. Risk of overcommitment.",
+      "mitigations": ["Identify second program lead for one program by end of Q2", "Daily standup discipline"],
+      "last_reviewed": "2026-04-22"
+    },
+    {
+      "id": "risk:apex:port:003",
+      "name": "Vacant VP Store Technology role",
+      "category": "Resource / Talent",
+      "severity": "Medium",
+      "owner": "person:apex:carlos-rivera",
+      "status": "Mitigated by acting director",
+      "description": "Vacant since January 2026. Brandon Hayes (Acting Director) carrying the role. Impacts: store technology decisions slow; in-store activation Phase 2 of apex-cdp-2026 lacks senior champion.",
+      "mitigations": ["Recruitment in progress; target close Q3 FY2026", "Brandon Hayes briefed weekly on cross-program decisions"],
+      "last_reviewed": "2026-04-15"
+    },
+    {
+      "id": "risk:apex:port:004",
+      "name": "Stoneridge Capital Partners activist position",
+      "category": "Strategic / External",
+      "severity": "Medium",
+      "owner": "person:apex:robert-vance",
+      "status": "Active engagement",
+      "description": "4.8% position disclosed February 2026. Two private meetings; no public position shift. Watching for proxy implications at June 2026 annual meeting.",
+      "mitigations": ["Continued engagement", "FY2026 narrative discipline", "Board IR coordination"],
+      "last_reviewed": "2026-04-10"
+    },
+    {
+      "id": "risk:apex:port:005",
+      "name": "AMS-2023 history overhang on Wipro relationship",
+      "category": "Reputational / Vendor",
+      "severity": "Medium",
+      "owner": "person:apex:carlos-rivera",
+      "status": "Active during BAFO",
+      "description": "If Wipro wins the BAFO, the optic is re-engaging the same vendor whose previous attempt was paused. Must be defensible on objective criteria.",
+      "mitigations": ["BAFO criteria documented and weighted", "Decision rationale memo will be produced", "ARB attestation independent"],
+      "last_reviewed": "2026-04-25"
+    }
+  ],
+  "open_action_items_critical": [
+    {
+      "id": "action:apex:001",
+      "title": "Containment baseline measurement reconciliation",
+      "owner": "person:apex:james-wright",
+      "due": "2026-05-08",
+      "program": "apex-cc-ai-2026",
+      "status": "On track",
+      "description": "Reconcile NICE-reported and IT-dashboard-reported containment metrics. Blocking P1 gate close."
+    },
+    {
+      "id": "action:apex:002",
+      "title": "Klaviyo data classification gap remediation",
+      "owner": "person:apex:priya-iyer",
+      "due": "2026-06-30",
+      "program": "Cross-program",
+      "status": "On track",
+      "description": "Bring Klaviyo into compliance with Confidential data handling policy. Critical-path for CDP go-live."
+    },
+    {
+      "id": "action:apex:003",
+      "title": "AMS BAFO compression",
+      "owner": "person:apex:nathan-kohl",
+      "due": "2026-05-30",
+      "program": "apex-ams-consolidation-2026",
+      "status": "On track",
+      "description": "Lead three-vendor BAFO to final pricing and locked terms."
+    },
+    {
+      "id": "action:apex:004",
+      "title": "ARB conditions resolution — POS transition risk",
+      "owner": "person:apex:diana-lopez",
+      "due": "2026-09-30",
+      "program": "apex-ams-consolidation-2026",
+      "status": "Pending vendor selection",
+      "description": "Selected vendor must produce detailed POS transition plan with named technical resources experienced in Oracle Retail POS."
+    },
+    {
+      "id": "action:apex:005",
+      "title": "Realized-savings methodology document",
+      "owner": "Margaret Chen's office (Director FP&A)",
+      "due": "2026-06-30",
+      "program": "apex-ams-consolidation-2026",
+      "status": "Pending",
+      "description": "Authored methodology defining what counts as realized savings; required before P3 close."
+    },
+    {
+      "id": "action:apex:006",
+      "title": "Snowflake renewal FinOps strategy",
+      "owner": "person:apex:james-wright",
+      "due": "2026-09-30",
+      "program": "Cross-program",
+      "status": "On track",
+      "description": "Snowflake renewal in November 2026; FinOps review and commit strategy."
+    },
+    {
+      "id": "action:apex:007",
+      "title": "Splunk renewal alternatives evaluation",
+      "owner": "person:apex:kevin-harrison",
+      "due": "2026-07-31",
+      "program": "Security operations",
+      "status": "In flight",
+      "description": "Splunk August 2026 renewal; evaluate alternatives in light of Cisco acquisition and cost growth."
+    },
+    {
+      "id": "action:apex:008",
+      "title": "S&OP cadence ownership assignment",
+      "owner": "person:apex:michael-tanaka",
+      "due": "2026-06-15",
+      "program": "apex-forecast-2026",
+      "status": "Open",
+      "description": "Permanent owner needed for S&OP cadence before P1 design workshops can proceed."
+    }
+  ],
+  "open_decisions_pending": [
+    {
+      "id": "decision:apex:001",
+      "title": "CDP final selection — Treasure Data vs Segment",
+      "decision_authority": "Sponsor + Investment Committee",
+      "target_date": "2026-06-30",
+      "status": "Pending BAFO completion"
+    },
+    {
+      "id": "decision:apex:002",
+      "title": "AMS final selection — Wipro vs Infosys vs TCS",
+      "decision_authority": "Sponsor + Investment Committee",
+      "target_date": "2026-06-15",
+      "status": "Pending BAFO completion"
+    },
+    {
+      "id": "decision:apex:003",
+      "title": "CC AI architecture option selection (A vs B vs C)",
+      "decision_authority": "Sponsor + ARB + AI Governance Council",
+      "target_date": "2026-08-31",
+      "status": "Pending P2 Synthesis"
+    },
+    {
+      "id": "decision:apex:004",
+      "title": "Demand forecasting build-vs-buy",
+      "decision_authority": "Sponsor + ARB",
+      "target_date": "2026-12-31",
+      "status": "Pending P1 Discovery"
+    },
+    {
+      "id": "decision:apex:005",
+      "title": "Splunk continue vs replace",
+      "decision_authority": "CISO + CIO + CFO",
+      "target_date": "2026-07-31",
+      "status": "Pending alternatives evaluation"
+    },
+    {
+      "id": "decision:apex:006",
+      "title": "Tableau vs Power BI consolidation",
+      "decision_authority": "CDO + IT leadership",
+      "target_date": "2026-08-31",
+      "status": "Co-renewal date with Salesforce drives timeline"
+    }
+  ]
+}
