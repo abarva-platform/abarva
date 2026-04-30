@@ -177,6 +177,20 @@ const AGENT_VOICE: Record<string, string> = {
 };
 
 const DEFAULT_VOICE = "You are an AbarVa AI advisor. Be direct, specific, and actionable.";
+const DEFAULT_AGENT_RESPONSE_MAX_TOKENS = 2048;
+const PROGRAM_AGENT_RESPONSE_MAX_TOKENS = 4096;
+
+export function getAgentResponseTokenBudget(surface: string): number {
+  if (
+    surface === '/programs' ||
+    surface === '/programs/new' ||
+    surface.startsWith('/programs/')
+  ) {
+    return PROGRAM_AGENT_RESPONSE_MAX_TOKENS;
+  }
+
+  return DEFAULT_AGENT_RESPONSE_MAX_TOKENS;
+}
 
 export async function POST(request: Request) {
   const body = (await request.json()) as {
@@ -748,7 +762,7 @@ export async function POST(request: Request) {
         await runToolUseLoop({
           client: anthropicClient,
           model: "claude-sonnet-4-6",
-          maxTokens: 2048,
+          maxTokens: getAgentResponseTokenBudget(surface),
           system: systemPrompt,
           messages: [
             ...conversationHistory.slice(-10),

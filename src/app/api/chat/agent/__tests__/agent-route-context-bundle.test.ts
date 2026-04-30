@@ -91,6 +91,14 @@ describe('agent route · CB-6 context-bundle wiring', () => {
     expect(enqueueIdx).toBeLessThan(loopIdx);
   });
 
+  it('uses the expanded program-surface token budget for Nexus program turns', () => {
+    expect(source).toContain('const PROGRAM_AGENT_RESPONSE_MAX_TOKENS = 4096');
+    expect(source).toContain('function getAgentResponseTokenBudget(surface: string): number');
+    expect(source).toContain("surface === '/programs/new'");
+    expect(source).toContain("surface.startsWith('/programs/')");
+    expect(source).toContain('maxTokens: getAgentResponseTokenBudget(surface)');
+  });
+
   it('catches assembly errors so the stream still proceeds', () => {
     expect(source).toContain('context_bundle_assembly_failed');
   });
