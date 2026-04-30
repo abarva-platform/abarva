@@ -106,7 +106,6 @@ export function SourceEventAgentCanvas({
           >
             <SourceWorkingPane padding="0">
               <div style={{ display: 'grid', gap: 12, paddingRight: 2 }}>
-                <EventCanvasHeader event={event} />
                 <section aria-label="Agent-led Source event workspace" style={EVENT_AGENT_CANVAS}>
                   <div style={EVENT_CHAT_COLUMN}>
                     <AtlasDrawer
@@ -127,6 +126,7 @@ export function SourceEventAgentCanvas({
                     <SourcingReactivePanel artifacts={artifacts} />
                   </aside>
                 </section>
+                <EventCanvasHeader event={event} />
                 <section aria-label="Source event detailed workbench" style={DETAIL_WORKBENCH}>
                   {children}
                 </section>
