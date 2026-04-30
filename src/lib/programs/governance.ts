@@ -122,7 +122,7 @@ export async function evaluateGate(
   const charterRow = (deliverables as Array<{ deliverable_type_key: string; status: string }> | null ?? [])
     .find((d) => d.deliverable_type_key === 'charter');
   const designRow = (deliverables as Array<{ deliverable_type_key: string; status: string }> | null ?? [])
-    .find((d) => d.deliverable_type_key === 'design_spec' || d.deliverable_type_key === 'design');
+    .find((d) => d.deliverable_type_key === 'design_spec' || d.deliverable_type_key === 'design' || d.deliverable_type_key === 'design_brief');
   const outcomeRow = (deliverables as Array<{ deliverable_type_key: string; status: string }> | null ?? [])
     .find((d) => d.deliverable_type_key === 'outcome_report');
   const cxoInterviewModule = (modules as Array<{ module_key: string; status: string }> | null ?? [])

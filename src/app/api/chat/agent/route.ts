@@ -157,6 +157,12 @@ import "@/lib/agent/tools/intelligence/validateSynthesis";
 // Creates a DB row in source_events and emits a source-event-created
 // artifact + navigate-to for post-commit routing.
 import "@/lib/agent/tools/source/commitSourceEvent";
+// Lifecycle tools — satisfy hard/soft gate criteria so advance_phase
+// can proceed through the full P0→P6 crawl.
+import "@/lib/agent/tools/program/completeDeliverable";
+import "@/lib/agent/tools/program/completeModule";
+import "@/lib/agent/tools/program/assignSponsor";
+import "@/lib/agent/tools/program/completeProgram";
 
 // ── Agent voice map ────────────────────────────────────────────────────────────
 
