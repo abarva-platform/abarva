@@ -640,6 +640,243 @@ const MERIDIAN_CONTENT: SetupActsContent = {
   recentActivity: MERIDIAN_ACTIVITY,
 };
 
+// ── Arcturus / First Capital fixture (authored partial) ───────────────────────
+//
+// The First Capital demo account resolves to the `arcturus` client key.
+// This authored pack gives Steward a specific financial-services posture
+// even before a full tenant substrate is loaded. Keep richness as
+// `partial`: facts and capability guidance are authored, but record counts
+// should still come from live ingestion when the data plane is populated.
+
+const ARCTURUS_OPENER = `I see Arcturus Financial Group as the First Capital demo profile: a regulated financial-services tenant with retail banking, commercial lending, wealth, payments, and risk-operations work in scope. The setup posture is not blank anymore: the likely control plane is GLBA, FFIEC, OCC/FRB-style supervisory evidence, model-risk governance, third-party risk, SOX, PCI, and state privacy obligations. Steward should start by confirming three things before Intelligence or Programs makes firm claims: which legal entity owns the demo, which systems are authoritative for customer/account/product data, and which risk committee can approve AI-assisted sourcing or program decisions. Until live records are ingested, I will keep recommendations evidence-seeking rather than evidence-citing.`;
+
+const ARCTURUS_ACT_ONE_FACTS: ActOneFact[] = [
+  {
+    factType: 'enterprise',
+    label: 'ENTERPRISE',
+    value:
+      'Arcturus Financial Group · First Capital demo profile · Regulated financial services · retail banking, commercial lending, wealth, payments, and risk operations in scope',
+    sourceSegmentId: '01',
+    sourceSegmentName: 'Enterprise Profile',
+    lastReviewedDays: 0,
+  },
+  {
+    factType: 'priorities',
+    label: 'LIKELY PRIORITIES',
+    value:
+      'Risk-controlled growth · digital banking modernization · core-platform cost pressure · AI governance · third-party risk discipline · data lineage for customer, account, transaction, and product domains',
+    sourceSegmentId: '01',
+    sourceSegmentName: 'Enterprise Profile',
+    lastReviewedDays: 0,
+  },
+  {
+    factType: 'compliance',
+    label: 'REGULATORY POSTURE',
+    value:
+      'GLBA Safeguards Rule · FFIEC cyber and business-continuity expectations · OCC/FRB supervisory evidence patterns · SOX controls · PCI-DSS for card and payment workflows · model-risk governance for AI use cases',
+    sourceSegmentId: '12',
+    sourceSegmentName: 'Compliance and Regulatory',
+    lastReviewedDays: 0,
+  },
+  {
+    factType: 'systems',
+    label: 'SYSTEMS TO CONFIRM',
+    value:
+      'Core banking, loan origination, servicing, CRM, fraud/AML, data warehouse, IAM, payments, contact center, GL, and GRC systems need authoritative owner and data-classification records before citation-grade answers',
+    sourceSegmentId: '03',
+    sourceSegmentName: 'IT System Landscape',
+    lastReviewedDays: 0,
+  },
+  {
+    factType: 'kpis',
+    label: 'KPI BASELINE NEEDED',
+    value:
+      'Deposit growth, net interest margin, efficiency ratio, cost per account, digital adoption, fraud loss rate, complaint volume, loan cycle time, control findings, and third-party-risk aging should be loaded before outcome claims',
+    sourceSegmentId: '05',
+    sourceSegmentName: 'KPI Dictionary',
+    lastReviewedDays: 0,
+  },
+  {
+    factType: 'evidence',
+    label: 'EVIDENCE STANDARD',
+    value:
+      'Steward should require evidence from board/risk committee minutes, regulatory exam responses, control test results, vendor due-diligence packets, system inventories, contracts, and current-state process maps',
+    sourceSegmentId: '09',
+    sourceSegmentName: 'Evidence Ledger',
+    lastReviewedDays: 0,
+  },
+];
+
+const ARCTURUS_ACT_TWO_CAPABILITIES: CapabilityNode[] = [
+  {
+    id: 'cap.pattern-citations.arcturus',
+    family: 'pattern-citations',
+    label: '4 financial-services patterns ready for confirmation',
+    count: 4,
+    countNoun: 'candidate patterns to confirm with evidence',
+    depthState: 'partial',
+    groundingExamples: [
+      {
+        label: 'Core banking modernization — confirm current core, channels, integrations, and cutover posture',
+        href: '/intelligence/topics/core-banking-modernization',
+      },
+      {
+        label: 'AI governance in regulated operations — confirm model inventory, owner, validation, and committee cadence',
+        href: '/intelligence/topics/ai-governance',
+      },
+      {
+        label: 'Third-party risk and sourcing — confirm vendor tiering, SOC evidence, exit terms, and concentration exposure',
+        href: '/intelligence/topics/vendor-risk',
+      },
+    ],
+  },
+  {
+    id: 'cap.cross-program-signals.arcturus',
+    family: 'cross-program-signals',
+    label: 'Partial · cross-program signals need program inventory',
+    count: 0,
+    countNoun: 'live signals until programs load',
+    depthState: 'partial',
+    groundingExamples: [
+      {
+        label: 'Likely signal: AI governance must precede customer-facing AI or underwriting support',
+        href: '/admin/segments/14',
+      },
+      {
+        label: 'Likely signal: core-platform modernization and digital-channel changes share account-data dependencies',
+        href: '/admin/segments/14',
+      },
+      {
+        label: 'Likely signal: third-party risk evidence gates sourcing awards for critical financial systems',
+        href: '/admin/segments/14',
+      },
+    ],
+  },
+  {
+    id: 'cap.evidence-grounded-qa.arcturus',
+    family: 'evidence-grounded-qa',
+    label: 'Partial · evidence questions are guided, not yet cited',
+    count: 0,
+    countNoun: 'citation-grade tenant evidence items loaded',
+    depthState: 'partial',
+    groundingExamples: [
+      {
+        label: 'Upload regulatory exam response tracker before asking about compliance exposure',
+        href: '/admin/segments/09',
+      },
+      {
+        label: 'Upload vendor due-diligence packets before asking which provider carries the highest risk',
+        href: '/admin/segments/11',
+      },
+      {
+        label: 'Upload KPI dictionary before asking which modernization program has measurable value',
+        href: '/admin/segments/05',
+      },
+    ],
+  },
+  {
+    id: 'cap.outcome-measurement-readiness.arcturus',
+    family: 'outcome-measurement-readiness',
+    label: 'Missing · outcome measurement needs KPI and program baselines',
+    count: 0,
+    countNoun: 'program baselines confirmed',
+    depthState: 'missing',
+    groundingExamples: [
+      {
+        label: 'Efficiency ratio and run-rate technology spend need current-state values',
+        href: '/admin/segments/04',
+      },
+      {
+        label: 'Digital adoption and complaint-volume measures need source-system ownership',
+        href: '/admin/segments/05',
+      },
+      {
+        label: 'Program inventory must name sponsor, phase, budget, and exit criteria',
+        href: '/admin/segments/06',
+      },
+    ],
+  },
+];
+
+const ARCTURUS_ACT_THREE_GAINS: CapabilityGainEntry[] = [
+  {
+    id: 'gain.arcturus.enterprise-profile',
+    targetSegmentId: '01',
+    targetSegmentName: 'Enterprise Profile',
+    capabilityGained:
+      'Steward can anchor the financial-services tenant to legal entity, supervisory posture, and strategic priorities',
+    todayPreview:
+      '"I know this is the First Capital financial-services demo profile. I do not yet have the legal-entity map, regulator posture, revenue mix, or named board/risk committee cadence."',
+    afterPreview:
+      '"Enterprise profile loaded. Setup can distinguish retail bank, wealth, commercial lending, and payments obligations; Sentinel can separate fact from regulatory assumption."',
+    impactedPrograms: [],
+    rank: 1,
+  },
+  {
+    id: 'gain.arcturus.compliance',
+    targetSegmentId: '12',
+    targetSegmentName: 'Compliance and Regulatory',
+    capabilityGained:
+      'Steward can gate AI, sourcing, and program recommendations against financial-services control requirements',
+    todayPreview:
+      '"I can name likely frameworks: GLBA, FFIEC, SOX, PCI, privacy, model-risk governance. I cannot cite which controls are open or which owner is accountable."',
+    afterPreview:
+      '"Compliance posture loaded. Open control gaps, exam-response commitments, model-risk approvals, and vendor-risk evidence are tied to named owners and dates."',
+    impactedPrograms: [],
+    rank: 2,
+  },
+  {
+    id: 'gain.arcturus.system-landscape',
+    targetSegmentId: '03',
+    targetSegmentName: 'IT System Landscape',
+    capabilityGained:
+      'Atlas can reason about core banking, account, customer, payments, fraud, and GRC system dependencies',
+    todayPreview:
+      '"I can suggest which systems matter, but I cannot cite the authoritative source of customer, account, transaction, or risk data."',
+    afterPreview:
+      '"System landscape loaded. Core, CRM, data warehouse, fraud/AML, contact center, IAM, GL, and GRC dependencies can be traced to programs and vendors."',
+    impactedPrograms: [],
+    rank: 3,
+  },
+  {
+    id: 'gain.arcturus.program-inventory',
+    targetSegmentId: '06',
+    targetSegmentName: 'Program Inventory',
+    capabilityGained:
+      'Nexus can run financial-services transformation work through phase gates instead of treating the tenant as a blank demo',
+    todayPreview:
+      '"No active programs are loaded. I can coach setup, but I cannot evaluate gate readiness, sponsor alignment, or phase exit criteria."',
+    afterPreview:
+      '"Programs loaded. Nexus can assess sponsor, budget, phase, evidence, approval path, and cross-program dependencies for each active initiative."',
+    impactedPrograms: [],
+    rank: 4,
+  },
+];
+
+const ARCTURUS_ACTIVITY: SetupActivityEvent[] = [
+  {
+    actor: 'Steward',
+    what: 'Authored financial-services setup posture for the First Capital demo account',
+    timestamp: 'Today',
+  },
+  {
+    actor: 'Setup guidance',
+    what: 'Prioritized enterprise profile, compliance posture, system landscape, KPI dictionary, program inventory, evidence ledger, and vendor contracts',
+    timestamp: 'Today',
+  },
+];
+
+const ARCTURUS_CONTENT: SetupActsContent = {
+  tenantKey: 'arcturus',
+  tenantDisplayName: 'Arcturus Financial Group',
+  tenantDataRichness: 'partial',
+  sentinelOpener: ARCTURUS_OPENER,
+  actOneFacts: ARCTURUS_ACT_ONE_FACTS,
+  actTwoCapabilityNodes: ARCTURUS_ACT_TWO_CAPABILITIES,
+  actThreeGainEntries: ARCTURUS_ACT_THREE_GAINS,
+  recentActivity: ARCTURUS_ACTIVITY,
+};
+
 // ── Default sparse fixture (cold tenant) ──────────────────────────────────────
 
 const SPARSE_OPENER = `I don't know much about your enterprise yet. Start with these to give the platform something to reason about — every upload sharpens the next program decision.`;
@@ -725,6 +962,9 @@ export function getSetupActsContent(
   }
   if (tenantKey === 'meridian') {
     return MERIDIAN_CONTENT;
+  }
+  if (tenantKey === 'arcturus') {
+    return ARCTURUS_CONTENT;
   }
   const knownKey =
     tenantKey && tenantKey in TENANT_DISPLAY_NAMES
@@ -914,7 +1154,12 @@ export function getSetupSummaryCountsWithSnapshot(
     };
   }
   return {
-    totalRecords: content.tenantDataRichness === 'rich' ? 403 : null,
+    totalRecords:
+      content.tenantKey === 'apexretail'
+        ? 403
+        : content.tenantKey === 'meridian'
+          ? 714
+          : null,
     segmentsTracked: content.tenantDataRichness === 'rich' ? 14 : null,
     capabilitiesGrounded: groundedCount,
   };
@@ -933,7 +1178,12 @@ export function getSetupSummaryCounts(content: SetupActsContent): {
     (n) => n.depthState === 'grounded',
   ).length;
   return {
-    totalRecords: content.tenantDataRichness === 'rich' ? 403 : null,
+    totalRecords:
+      content.tenantKey === 'apexretail'
+        ? 403
+        : content.tenantKey === 'meridian'
+          ? 714
+          : null,
     segmentsTracked: content.tenantDataRichness === 'rich' ? 14 : null,
     capabilitiesGrounded: groundedCount,
   };

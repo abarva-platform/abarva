@@ -112,13 +112,13 @@ describe('Setup Acts registry — Apex (rich) fixture', () => {
 });
 
 describe('Setup Acts registry — sparse fallback', () => {
-  it('returns rich content for known rich tenants (apex, meridian)', () => {
+  it('returns authored content for known tenants', () => {
     expect(getSetupActsContent('apexretail').tenantDataRichness).toBe('rich');
     expect(getSetupActsContent('meridian').tenantDataRichness).toBe('rich');
+    expect(getSetupActsContent('arcturus').tenantDataRichness).toBe('partial');
   });
 
   it('returns sparse content for tenants without authored fixtures', () => {
-    expect(getSetupActsContent('arcturus').tenantDataRichness).toBe('sparse');
     expect(getSetupActsContent('keystone').tenantDataRichness).toBe('sparse');
   });
 
@@ -133,10 +133,6 @@ describe('Setup Acts registry — sparse fallback', () => {
     expect(content.actThreeGainEntries.length).toBeGreaterThanOrEqual(3);
   });
 
-  it('sparse content uses the cold-tenant opener', () => {
-    const content = getSetupActsContent('arcturus');
-    expect(content.sentinelOpener).toMatch(/don['’]t know/i);
-  });
 
   it('unknown tenant key returns sparse with safe display name', () => {
     const content = getSetupActsContent('not-a-real-tenant');
@@ -147,6 +143,43 @@ describe('Setup Acts registry — sparse fallback', () => {
   it('null tenant key returns sparse content', () => {
     const content = getSetupActsContent(null);
     expect(content.tenantDataRichness).toBe('sparse');
+  });
+});
+
+
+
+describe('Setup Acts registry — Arcturus / First Capital authored partial fixture', () => {
+  it('returns partial financial-services content for arcturus tenant key', () => {
+    const content = getSetupActsContent('arcturus');
+    expect(content.tenantDataRichness).toBe('partial');
+    expect(content.tenantDisplayName).toBe('Arcturus Financial Group');
+    expect(content.sentinelOpener).toMatch(/First Capital demo profile/);
+    expect(content.sentinelOpener).toMatch(/financial-services/i);
+  });
+
+  it('Arcturus Act 1 has financial-services facts and regulatory posture', () => {
+    const content = getSetupActsContent('arcturus');
+    expect(content.actOneFacts.length).toBeGreaterThanOrEqual(6);
+    expect(content.actOneFacts.some((fact) => fact.value.includes('GLBA'))).toBe(true);
+    expect(content.actOneFacts.some((fact) => fact.value.includes('FFIEC'))).toBe(true);
+    expect(content.actOneFacts.every((fact) => fact.sourceSegmentId.match(/^\d{2}$/))).toBe(true);
+  });
+
+  it('Arcturus Act 2 covers all capability families without claiming grounded tenant evidence', () => {
+    const content = getSetupActsContent('arcturus');
+    const families = new Set(content.actTwoCapabilityNodes.map((node) => node.family));
+    expect(families.size).toBe(4);
+    expect(content.actTwoCapabilityNodes.every((node) => node.depthState !== 'grounded')).toBe(true);
+  });
+
+  it('Arcturus Act 3 prioritizes foundational data uploads', () => {
+    const content = getSetupActsContent('arcturus');
+    expect(content.actThreeGainEntries.map((gain) => gain.targetSegmentId)).toEqual([
+      '01',
+      '12',
+      '03',
+      '06',
+    ]);
   });
 });
 
@@ -212,6 +245,10 @@ describe('Setup Acts registry — voice rules (no marketing language)', () => {
 
   it('Meridian content uses no banned marketing language', () => {
     checkAllText(getSetupActsContent('meridian'));
+  });
+
+  it('Arcturus content uses no banned marketing language', () => {
+    checkAllText(getSetupActsContent('arcturus'));
   });
 });
 
