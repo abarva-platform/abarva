@@ -13,6 +13,7 @@ import { FAILURE_MODES } from '@/lib/programs/failure-modes';
 import type { BriefOverlapMatch } from '@/lib/programs/origination-overlap';
 import type { AttachmentChipRef } from '@/lib/programs/attachments/types';
 import type { AttachmentTextPreview } from '@/lib/programs/attachments/extract-text';
+import type { EnterpriseAgentContextItem } from '@/lib/knowledge/agent-context-broker';
 
 const PROGRAMS_SURFACE_PREFIXES = ['/programs', '/demo/programs', '/tower'];
 
@@ -202,4 +203,159 @@ export function composeAttachmentContextBlock(
   }
 
   return lines.join('\n');
+}
+
+/**
+ * TD-7 · render the broker bundle's cross_program_signal items into a
+ * system-prompt block that the agent can use to emit grounded
+ * `cross-program-signal` artifacts. Surfaces the canonical signalId,
+ * title, programs list, severity, and recommendation per signal so the
+ * agent does not have to re-resolve any field — it copies them
+ * verbatim into the artifact JSON when the user's question makes the
+ * signal relevant.
+ *
+ * Constraint (TD-7 brief): the broker / mapper / adapter must not
+ * change. The mapper composes a deterministic `summary` of the form
+ * `Programs: <a>, <b>; severity <Sev>; <recommendation>` (any segment
+ * may be absent). This helper parses that summary back into structured
+ * fields. If the summary doesn't yield a programs array (malformed or
+ * empty), the entry is skipped so the prompt only carries actionable
+ * signals.
+ *
+ * Returns '' when there are no usable signals so the route's prompt
+ * filter strips the block cleanly.
+ */
+export function composeCrossProgramSignalsBlock(
+  signals: readonly EnterpriseAgentContextItem[],
+): string {
+  if (!signals || signals.length === 0) return '';
+
+  const parsed = signals
+    .filter((s) => s.kind === 'cross_program_signal')
+    .map(parseCrossProgramSignalItem)
+    .filter(
+      (
+        entry,
+      ): entry is {
+        signalId: string;
+        title: string;
+        programs: string[];
+        severity: string;
+        recommendation: string;
+      } => entry !== null,
+    );
+
+  if (parsed.length === 0) return '';
+
+  const lines: string[] = [
+    'CROSS-PROGRAM SIGNALS (this tenant has the following multi-program dependencies / conflicts; surface as `cross-program-signal` artifacts when relevant to the user\'s question):',
+    '',
+  ];
+
+  for (const entry of parsed) {
+    lines.push(
+      `  - signal-id: ${entry.signalId}`,
+      `    title: ${entry.title}`,
+      `    programs: ${entry.programs.join(', ')}`,
+      `    severity: ${entry.severity}`,
+      `    recommendation: ${entry.recommendation}`,
+      '',
+    );
+  }
+
+  lines.push(
+    'Use these canonical fields verbatim when emitting `cross-program-signal` artifacts. Do NOT invent signals; do NOT paraphrase severity or recommendation. Severity must be one of `low` / `medium` / `high` / `critical` (lowercase the catalog value if needed).',
+  );
+
+  return lines.join('\n');
+}
+
+/**
+ * Parse a single broker `cross_program_signal` context item back into the
+ * structured fields the mapper composed it from. Tightly coupled to
+ * `mapCrossProgramSignal` in `tenant-data/mapper.ts` — both modules read
+ * the same record shape but the broker boundary forbids the prompt
+ * helper from importing the mapper directly. Keep this in sync.
+ *
+ * Returns null when the summary cannot yield a programs array — the
+ * agent emission needs at least one program id, so a malformed item is
+ * dropped rather than surfaced as a half-empty signal.
+ */
+function parseCrossProgramSignalItem(
+  item: EnterpriseAgentContextItem,
+): {
+  signalId: string;
+  title: string;
+  programs: string[];
+  severity: string;
+  recommendation: string;
+} | null {
+  // The mapper namespaces context-item ids as `tenant-data:<recordId>`.
+  // Strip the prefix so the agent gets the canonical record id.
+  const signalId = item.id.startsWith('tenant-data:')
+    ? item.id.slice('tenant-data:'.length)
+    : item.id;
+  const title = item.title.trim();
+  if (signalId.length === 0 || title.length === 0) return null;
+
+  const segments = item.summary
+    .split(';')
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+
+  let programs: string[] = [];
+  let severity: string | null = null;
+  let recommendation: string | null = null;
+
+  for (const segment of segments) {
+    if (segment.startsWith('Programs:')) {
+      programs = segment
+        .slice('Programs:'.length)
+        .split(',')
+        .map((p) => p.trim())
+        .filter((p) => p.length > 0);
+    } else if (segment.toLowerCase().startsWith('severity ')) {
+      severity = segment.slice('severity '.length).trim().toLowerCase();
+    } else {
+      // The mapper places recommendation as the last unlabeled segment.
+      // First-wins so a future schema doesn't accidentally collapse two
+      // free-form segments into one.
+      if (recommendation === null) {
+        recommendation = segment;
+      }
+    }
+  }
+
+  if (programs.length === 0) return null;
+  if (!severity || !['low', 'medium', 'high', 'critical'].includes(severity)) {
+    // Default to 'medium' when severity is missing or non-canonical.
+    // The artifact parser still requires a closed-set value, so we
+    // normalize here rather than skip — the agent should still see the
+    // signal even if the upstream record under-specifies severity.
+    severity = 'medium';
+  }
+  if (!recommendation || recommendation.length === 0) {
+    return null;
+  }
+
+  return {
+    signalId,
+    title,
+    programs,
+    severity,
+    recommendation,
+  };
+}
+
+/**
+ * TD-7 · compose the cross-program-signals block iff the surface
+ * qualifies (Programs surfaces only). Empty string elsewhere so the
+ * route's prompt-array filter strips it cleanly.
+ */
+export function composeCrossProgramSignalsBlockForSurface(
+  surface: string | null | undefined,
+  signals: readonly EnterpriseAgentContextItem[],
+): string {
+  if (!isProgramsSurface(surface)) return '';
+  return composeCrossProgramSignalsBlock(signals);
 }

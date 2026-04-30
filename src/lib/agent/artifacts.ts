@@ -111,7 +111,16 @@ export type ArtifactType =
   // binary. The server-side compose helper stores the spec via
   // storeSpec() (lib/programs/exports/spec-cache.ts) and the agent
   // emits the returned id as the artifact's specId.
-  | 'deliverable-ready'; // {kind, format, title, exportUrl, programId, specId?}
+  | 'deliverable-ready' // {kind, format, title, exportUrl, programId, specId?}
+  // TD-7 · cross-program signal as a first-class artifact. Surfaces the
+  // multi-program dependency / conflict / shared-resource constraints the
+  // tenant-data layer carries (cross_program_signals records, mapped via
+  // TD-4 into broker bundle items of kind 'cross_program_signal'). The
+  // agent emits one of these proactively when reasoning surfaces a
+  // dependency relevant to the user's question on /programs/<id>. Design
+  // refs: PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md Part B.4 + E.5;
+  // TENANT_DATA_INTEGRATION_DESIGN.md §7.
+  | 'cross-program-signal'; // {signalId, title, programs[], severity, recommendation, sourceRecordId?}
 
 // ── Strongly-typed artifact payloads ──────────────────────────────────────────
 
@@ -501,6 +510,32 @@ export interface DeliverableReadyArtifact {
   specId?: string;
 }
 
+/**
+ * TD-7 · cross-program-signal artifact. Surfaces a tenant-data
+ * `cross_program_signal` (a multi-program dependency, conflict, or
+ * shared-resource constraint) as a first-class artifact card on
+ * /programs/<id>. The signal MUST be grounded in the broker bundle's
+ * cross_program_signal items — the agent does not invent these. The
+ * canonical fields (signalId, title, programs, severity, recommendation)
+ * mirror the persisted record so the panel can render and the rollup
+ * (design doc Part E.5) can aggregate by signalId without re-resolution.
+ */
+export interface CrossProgramSignalArtifact {
+  type: 'cross-program-signal';
+  /** Stable signal id from data_inventory_records.record_id (e.g. `cross_program_signals:xprog:apex:001`). */
+  signalId: string;
+  /** Human-readable title — e.g. "Priya Iyer leads two critical-path programs simultaneously". */
+  title: string;
+  /** Programs implicated. Array of program ids/codes (e.g. ['apex-cdp-2026', 'apex-cc-ai-2026']). */
+  programs: string[];
+  /** Severity drives the panel's left-edge stripe color. */
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  /** Concrete next move — what to do about the signal. */
+  recommendation: string;
+  /** Optional source-of-truth pointer back to the persisted layer (typically the same as signalId). */
+  sourceRecordId?: string;
+}
+
 export type Artifact =
   | BriefFieldArtifact
   | PatternMatchArtifact
@@ -528,7 +563,8 @@ export type Artifact =
   | OverlapAlertArtifact
   | FailureModeFlaggedArtifact
   | ContextBundleArtifact
-  | DeliverableReadyArtifact;
+  | DeliverableReadyArtifact
+  | CrossProgramSignalArtifact;
 
 // ── Parser ────────────────────────────────────────────────────────────────────
 //
@@ -603,7 +639,8 @@ export function isKnownArtifactType(type: string): type is ArtifactType {
     type === 'overlap-alert' ||
     type === 'failure-mode-flagged' ||
     type === 'context-bundle' ||
-    type === 'deliverable-ready'
+    type === 'deliverable-ready' ||
+    type === 'cross-program-signal'
   );
 }
 
@@ -1236,6 +1273,45 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
         specId,
       };
     }
+    case 'cross-program-signal': {
+      // TD-7 · cross-program-signal. Strict validation on every field
+      // because the artifact is meant to mirror the persisted record —
+      // a malformed payload should surface as parse-failed, not silently
+      // render a half-empty card. Severity is closed-set
+      // 'low'|'medium'|'high'|'critical'; programs must be a non-empty
+      // string array; signalId, title, and recommendation are non-empty
+      // strings.
+      const signalId = obj.signalId;
+      const title = obj.title;
+      const programsRaw = obj.programs;
+      const severity = obj.severity;
+      const recommendation = obj.recommendation;
+      if (typeof signalId !== 'string' || signalId.length === 0) return null;
+      if (typeof title !== 'string' || title.length === 0) return null;
+      if (
+        severity !== 'low' &&
+        severity !== 'medium' &&
+        severity !== 'high' &&
+        severity !== 'critical'
+      ) {
+        return null;
+      }
+      if (typeof recommendation !== 'string' || recommendation.length === 0) return null;
+      if (!Array.isArray(programsRaw)) return null;
+      const programs = programsRaw.filter(
+        (p): p is string => typeof p === 'string' && p.length > 0,
+      );
+      if (programs.length === 0) return null;
+      return {
+        type,
+        signalId,
+        title,
+        programs,
+        severity,
+        recommendation,
+        sourceRecordId: optionalString(obj.sourceRecordId),
+      };
+    }
   }
 }
 
@@ -1687,4 +1763,22 @@ a wrongly-flagged Phantom Sponsor will erode trust in the platform.
             "exportUrl": "/api/programs/<programId>/deliverables/<kind>/export",
             "programId": <program-id>, "specId"?: <cache-id>}
     Example:
-    [[artifact:deliverable-ready]]{"kind":"program-charter","format":"docx","title":"Apex CDP Activation 2026 — Charter v1","exportUrl":"/api/programs/APX-CDP-2026/deliverables/program-charter/export","programId":"APX-CDP-2026","specId":"a8f3e9c1-7d2b-4f6a-9c3e-1a2b3c4d5e6f"}[[/artifact]]`;
+    [[artifact:deliverable-ready]]{"kind":"program-charter","format":"docx","title":"Apex CDP Activation 2026 — Charter v1","exportUrl":"/api/programs/APX-CDP-2026/deliverables/program-charter/export","programId":"APX-CDP-2026","specId":"a8f3e9c1-7d2b-4f6a-9c3e-1a2b3c4d5e6f"}[[/artifact]]
+
+25. cross-program-signal — TD-7. Programs-side. Emit when reasoning
+    surfaces a dependency, conflict, or shared-resource constraint
+    across programs. The signal MUST be grounded in tenant data — the
+    broker bundle's CROSS-PROGRAM SIGNALS block lists the canonical
+    signals for this tenant. Use the canonical signalId, title,
+    programs list, severity, and recommendation from the bundle. Do
+    NOT invent signals; do NOT paraphrase severity or recommendation.
+    Surface PROACTIVELY when relevant to the user's question — the
+    panel renders a colored card with a severity-driven left-edge
+    stripe. Dedupe in the panel is by signalId, so re-emits upsert.
+    Shape: {"signalId": <stable-record-id>, "title": <signal title>,
+            "programs": [<program-id>],
+            "severity": "low"|"medium"|"high"|"critical",
+            "recommendation": <one-sentence next move>,
+            "sourceRecordId"?: <source pointer; usually = signalId>}
+    Example:
+    [[artifact:cross-program-signal]]{"signalId":"cross_program_signals:xprog:apex:001","title":"Priya Iyer leads two critical-path programs simultaneously","programs":["apex-cdp-2026","apex-cc-ai-2026"],"severity":"medium","recommendation":"Identify second program lead for one of the two programs by end of Q2 FY2026.","sourceRecordId":"cross_program_signals:xprog:apex:001"}[[/artifact]]`;

@@ -1207,3 +1207,74 @@ describe('extractArtifacts · deliverable-ready', () => {
     expect(r.visibleText).toContain('parse-failed');
   });
 });
+
+// TD-7 · cross-program-signal as first-class artifact.
+describe('extractArtifacts · cross-program-signal (TD-7)', () => {
+  it('parses a valid medium-severity signal', () => {
+    const r = extractArtifacts(
+      '[[artifact:cross-program-signal]]{"signalId":"cross_program_signals:xprog:apex:001","title":"Priya Iyer leads two critical-path programs simultaneously","programs":["apex-cdp-2026","apex-cc-ai-2026"],"severity":"medium","recommendation":"Identify second program lead for one of the two programs by end of Q2 FY2026.","sourceRecordId":"cross_program_signals:xprog:apex:001"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(1);
+    const a = r.artifacts[0];
+    expect(a.type).toBe('cross-program-signal');
+    if (a.type !== 'cross-program-signal') return;
+    expect(a.signalId).toBe('cross_program_signals:xprog:apex:001');
+    expect(a.title).toBe('Priya Iyer leads two critical-path programs simultaneously');
+    expect(a.programs).toEqual(['apex-cdp-2026', 'apex-cc-ai-2026']);
+    expect(a.severity).toBe('medium');
+    expect(a.recommendation).toContain('Identify second program lead');
+    expect(a.sourceRecordId).toBe('cross_program_signals:xprog:apex:001');
+  });
+
+  it('rejects unknown severity value', () => {
+    const r = extractArtifacts(
+      '[[artifact:cross-program-signal]]{"signalId":"x","title":"t","programs":["a","b"],"severity":"urgent","recommendation":"r"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('rejects empty programs array', () => {
+    const r = extractArtifacts(
+      '[[artifact:cross-program-signal]]{"signalId":"x","title":"t","programs":[],"severity":"high","recommendation":"r"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('rejects empty title', () => {
+    const r = extractArtifacts(
+      '[[artifact:cross-program-signal]]{"signalId":"x","title":"","programs":["a"],"severity":"low","recommendation":"r"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('rejects empty signalId', () => {
+    const r = extractArtifacts(
+      '[[artifact:cross-program-signal]]{"signalId":"","title":"t","programs":["a"],"severity":"low","recommendation":"r"}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('rejects empty recommendation (the artifact must be actionable)', () => {
+    const r = extractArtifacts(
+      '[[artifact:cross-program-signal]]{"signalId":"x","title":"t","programs":["a"],"severity":"high","recommendation":""}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(0);
+    expect(r.visibleText).toContain('parse-failed');
+  });
+
+  it('accepts critical severity as the most-severe tier', () => {
+    const r = extractArtifacts(
+      '[[artifact:cross-program-signal]]{"signalId":"x","title":"Vendor X concentration risk","programs":["meridian-prior-auth-2026","meridian-rcm-2026","meridian-clinical-doc-2026"],"severity":"critical","recommendation":"Pause RCM contract renewal pending vendor diversification."}[[/artifact]]',
+    );
+    expect(r.artifacts).toHaveLength(1);
+    const a = r.artifacts[0];
+    expect(a.type).toBe('cross-program-signal');
+    if (a.type !== 'cross-program-signal') return;
+    expect(a.severity).toBe('critical');
+    expect(a.programs).toHaveLength(3);
+  });
+});

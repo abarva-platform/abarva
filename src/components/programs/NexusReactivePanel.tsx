@@ -19,6 +19,7 @@ import type {
   AntiPatternFlagArtifact,
   Artifact,
   CrossProgramDependencyArtifact,
+  CrossProgramSignalArtifact,
   DeliverableReadyArtifact,
   EvidenceHighlightArtifact,
   FailureModeFlaggedArtifact,
@@ -588,6 +589,157 @@ function FailureModeFlaggedCard({ a }: { a: FailureModeFlaggedArtifact }) {
   );
 }
 
+// TD-7 · cross-program-signal card. Surfaces tenant-data
+// cross_program_signal records (multi-program dependency / conflict /
+// shared-resource constraint) emitted by the agent when reasoning on
+// /programs/<id>. Severity drives the left-edge stripe weight + tone:
+//   critical · 4px red
+//   high     · 3px orange
+//   medium   · 2px amber
+//   low      · 1px slate
+// Programs strip uses small mono chips with click-through to
+// /programs/<id> when the program-detail page exists. The
+// recommendation is rendered as italic prose so it reads as the next
+// move, not body copy. Design refs:
+// PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md Part B.4 + E.5;
+// TENANT_DATA_INTEGRATION_DESIGN.md §7.
+const CROSS_PROGRAM_SIGNAL_TONE: Record<
+  CrossProgramSignalArtifact['severity'],
+  { stripe: string; stripeWidth: number; signal: string; border: string }
+> = {
+  critical: {
+    stripe: '#b91c1c',
+    stripeWidth: 4,
+    signal: '#b91c1c',
+    border: 'rgba(220,38,38,0.32)',
+  },
+  high: {
+    stripe: '#c2410c',
+    stripeWidth: 3,
+    signal: '#c2410c',
+    border: 'rgba(217,119,6,0.36)',
+  },
+  medium: {
+    stripe: '#b45309',
+    stripeWidth: 2,
+    signal: '#b45309',
+    border: 'rgba(217,119,6,0.28)',
+  },
+  low: {
+    stripe: BrandColors.slate,
+    stripeWidth: 1,
+    signal: BrandColors.slate,
+    border: 'rgba(120,113,108,0.24)',
+  },
+};
+
+function CrossProgramSignalCard({ a }: { a: CrossProgramSignalArtifact }) {
+  const agentLabel = useContext(CardAgentLabelContext);
+  const tone = CROSS_PROGRAM_SIGNAL_TONE[a.severity];
+  return (
+    <div
+      data-testid="cross-program-signal-card"
+      data-severity={a.severity}
+      data-signal-id={a.signalId}
+      style={{
+        background: '#FFFFFF',
+        border: `1px solid ${tone.border}`,
+        borderLeft: `${tone.stripeWidth}px solid ${tone.stripe}`,
+        borderRadius: 8,
+        padding: '12px 14px',
+        boxShadow: '0 1px 2px rgba(12,26,58,0.04)',
+        fontFamily: BrandTypography.sans,
+        color: BrandColors.inkBlack,
+      }}
+    >
+      <div
+        style={{
+          fontFamily: BrandTypography.mono,
+          fontSize: 9.5,
+          letterSpacing: '0.10em',
+          textTransform: 'uppercase',
+          color: tone.signal,
+          fontWeight: 700,
+          marginBottom: 8,
+        }}
+      >
+        {agentLabel} · Cross-program signal · {a.severity.toUpperCase()}
+      </div>
+      <div
+        style={{
+          fontFamily: BrandTypography.serif,
+          fontSize: 15,
+          fontWeight: 400,
+          lineHeight: 1.3,
+          color: BrandColors.inkBlack,
+          marginBottom: 8,
+        }}
+      >
+        {a.title}
+      </div>
+      <div
+        data-testid="cross-program-signal-programs"
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          gap: 6,
+          marginBottom: 8,
+        }}
+      >
+        {a.programs.map((programId, idx) => (
+          <span
+            key={`${programId}-${idx}`}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              fontFamily: BrandTypography.mono,
+              fontSize: 11,
+              color: BrandColors.signalBlue,
+            }}
+          >
+            <a
+              href={`/programs/${programId}`}
+              style={{
+                color: BrandColors.signalBlue,
+                textDecoration: 'none',
+                fontWeight: 600,
+              }}
+            >
+              {programId}
+            </a>
+            {idx < a.programs.length - 1 ? (
+              <span style={{ color: BrandColors.stone }}>·</span>
+            ) : null}
+          </span>
+        ))}
+      </div>
+      <p
+        style={{
+          margin: 0,
+          fontSize: 12.5,
+          color: BrandColors.slate,
+          lineHeight: 1.55,
+          fontStyle: 'italic',
+        }}
+      >
+        {a.recommendation}
+      </p>
+      <div
+        style={{
+          fontFamily: BrandTypography.mono,
+          fontSize: 10,
+          color: BrandColors.stone,
+          marginTop: 8,
+        }}
+      >
+        {a.signalId}
+      </div>
+    </div>
+  );
+}
+
 function ProgramFocusCard({ a }: { a: ProgramFocusArtifact }) {
   return (
     <CardShell kind="Now reasoning about">
@@ -803,6 +955,11 @@ export function selectVisibleArtifacts(artifacts: Artifact[]): Artifact[] {
   // re-emission stacks a new chip and the panel reads as a deliverable
   // pile-on instead of "the charter is ready, click to download."
   const seenDeliverables = new Map<string, DeliverableReadyArtifact>();
+  // TD-7 · dedupe cross-program-signal by signalId. The agent may
+  // re-emit a signal across turns when the user circles back to the
+  // dependency; the panel should show ONE card per signalId — the
+  // latest emission wins, same upsert semantics as anti-pattern-flag.
+  const seenCrossProgramSignals = new Map<string, CrossProgramSignalArtifact>();
   const orderedNonDeduped: Artifact[] = [];
 
   for (const a of artifacts) {
@@ -820,6 +977,8 @@ export function selectVisibleArtifacts(artifacts: Artifact[]): Artifact[] {
       seenFailureModes.set(a.failureModeId, a);
     } else if (a.type === 'deliverable-ready') {
       seenDeliverables.set(`${a.kind}::${a.programId}`, a);
+    } else if (a.type === 'cross-program-signal') {
+      seenCrossProgramSignals.set(a.signalId, a);
     } else {
       orderedNonDeduped.push(a);
     }
@@ -843,6 +1002,7 @@ export function selectVisibleArtifacts(artifacts: Artifact[]): Artifact[] {
     ...seenPatterns.values(),
     ...failureModesOrdered,
     ...seenDeliverables.values(),
+    ...seenCrossProgramSignals.values(),
   ];
 
   return merged
@@ -858,7 +1018,8 @@ export function selectVisibleArtifacts(artifacts: Artifact[]): Artifact[] {
         a.type === 'anti-pattern-flag' ||
         a.type === 'question-resolved' ||
         a.type === 'failure-mode-flagged' ||
-        a.type === 'deliverable-ready',
+        a.type === 'deliverable-ready' ||
+        a.type === 'cross-program-signal',
     )
     .reverse();
 }
@@ -987,6 +1148,10 @@ export function NexusReactivePanel({
           case 'deliverable-ready':
             return (
               <DeliverableReadyCard key={`dr-${a.kind}-${a.programId}`} a={a} />
+            );
+          case 'cross-program-signal':
+            return (
+              <CrossProgramSignalCard key={`cps-${a.signalId}`} a={a} />
             );
           default:
             return null;

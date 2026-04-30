@@ -78,6 +78,7 @@ import {
   composeOverlapBlock,
   composeBriefProgressCadenceDirective,
   composeAttachmentContextBlock,
+  composeCrossProgramSignalsBlockForSurface,
   isProgramsSurface,
 } from "@/lib/programs/failure-mode-prompt";
 import {
@@ -389,6 +390,13 @@ export async function POST(request: Request) {
   // (broker returns '' for unknown tenants).
   let nexusTenantContextBlock = '';
   let sourceTenantContextBlock = '';
+  // TD-7 · cross-program-signal artifacts. The broker bundle's
+  // cross_program_signal items are surfaced as their own system-prompt
+  // block so the agent has the canonical signalId / title / programs /
+  // severity / recommendation to copy verbatim into a
+  // `cross-program-signal` artifact when the user's question makes the
+  // signal relevant. Empty string when the bundle has no signals.
+  let crossProgramSignalsBlock = '';
   const isNexusProgramsSurface =
     agentName === 'Nexus' &&
     typeof surface === 'string' &&
@@ -402,6 +410,10 @@ export async function POST(request: Request) {
         surface: 'programs',
       });
       nexusTenantContextBlock = formatProgramsBrokerBundleForPrompt(brokerBundle);
+      crossProgramSignalsBlock = composeCrossProgramSignalsBlockForSurface(
+        surface,
+        brokerBundle.items,
+      );
     } catch {
       // Broker failure is non-fatal — Nexus falls through to the
       // existing tenantSystemBlock + page-context lines.
@@ -507,6 +519,13 @@ export async function POST(request: Request) {
     // PR-R · tenant org-structure block for Nexus on /programs
     // surfaces. Empty string on every other surface/agent.
     nexusTenantContextBlock,
+    "",
+    // TD-7 · cross-program-signal block for Nexus on /programs surfaces.
+    // Lists the canonical multi-program dependency / conflict signals
+    // (sourced from the broker bundle's cross_program_signal items) so
+    // the agent can emit a `cross-program-signal` artifact grounded in
+    // tenant data when relevant. Empty string elsewhere.
+    crossProgramSignalsBlock,
     "",
     sourceTenantContextBlock,
     "",
