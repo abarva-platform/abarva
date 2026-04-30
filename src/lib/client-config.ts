@@ -76,7 +76,8 @@ export function inferClientKeyFromEmail(email: string | null | undefined): Clien
   if (
     normalized.includes('demo-meridian') ||
     normalized.includes('mh+clerk_test') ||
-    normalized.includes('meridian')
+    normalized.includes('meridian') ||
+    normalized.includes('thesundaram.com')
   ) {
     return 'meridian';
   }
