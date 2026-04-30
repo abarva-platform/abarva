@@ -486,4 +486,170 @@ export const P2_SYNTHESIS: PhasePack = {
       'Named dissenter — P3 stakeholder interviews must include them, not avoid them',
     ],
   },
+
+  // ── Step decomposition · OV2-5-P2 (design doc D.2.4) ─────────────────────
+  //
+  // 9 canonical P2 steps. The DAG threads two roots (options authoring and
+  // architecture review) through the synthesis workshop into the charter
+  // composition, sponsor defense, and ultimately the sign-off gate. Three
+  // steps produce intermediate artifacts (options table, charter draft,
+  // sponsor commitment evidence) rather than DoD ids; their `outputs` are
+  // empty arrays per the slice rule (no invented DoD ids), and downstream
+  // steps reference the intermediate artifact id in their `inputs` so the
+  // DAG remains legible.
+  //
+  // StepComplexity admits only 'simple' | 'complex'. Design doc rows tagged
+  // "medium" are encoded as 'simple' when the work is chat-resolvable
+  // (authoring a list, locking a criterion, engaging a dissenter via a
+  // single 1:1) and as 'complex' when off-platform multi-stakeholder work
+  // is required (workshop, architecture review, sponsor defense).
+  steps: [
+    // Authoring a static options list typically takes a turn or two; treated
+    // as simple. Output is intermediate (the options table feeds the
+    // workshop) so `outputs` is empty per slice rule. Downstream tradeoff
+    // workshop references the intermediate artifact `p2-options-table`.
+    {
+      id: 'p2-options-author',
+      label: 'Author the options-to-weigh list (≥3 options)',
+      complexity: 'simple',
+      agentRole: 'validate',
+      inputs: [],
+      outputs: [],
+      templateRefs: [],
+      preventsFailureModes: [2, 10],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+    {
+      id: 'p2-tradeoff-workshop',
+      label: 'Run the synthesis workshop comparing options',
+      complexity: 'complex',
+      agentRole: 'coach_workshop',
+      inputs: ['p2-options-table'],
+      outputs: ['synthesis-options-compared'],
+      templateRefs: [],
+      preventsFailureModes: [2],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+    // Architecture / data / security / privacy review is one of the two DAG
+    // roots — it can run in parallel with options authoring and the workshop
+    // and feeds the charter composition. `coach_workshop` is the dominant
+    // role even though the room contents differ from the tradeoff workshop.
+    {
+      id: 'p2-architecture-review',
+      label: 'Architecture / data / security / privacy review',
+      complexity: 'complex',
+      agentRole: 'coach_workshop',
+      inputs: [],
+      outputs: ['architecture-review-attested'],
+      templateRefs: [],
+      preventsFailureModes: [6],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+    // Composing the charter draft is chat-resolvable artifact authoring;
+    // treated as simple. Output is the charter draft (intermediate) — the
+    // signed charter is produced downstream by p2-charter-signoff. Tagged
+    // [2] because the charter encodes the problem definition; without it
+    // the program drifts back into slogan language (failure mode #2).
+    {
+      id: 'p2-charter-author',
+      label: 'Compose the program charter',
+      complexity: 'simple',
+      agentRole: 'compose_artifact',
+      inputs: [
+        'synthesis-options-compared',
+        'architecture-review-attested',
+        'kill-criterion-locked',
+        'succession-owner-named',
+      ],
+      outputs: [],
+      templateRefs: [],
+      preventsFailureModes: [2],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+    // Sponsor 1:1 to defend the recommended path against the 3-month-fear
+    // question. Complex (off-platform interview with intent capture and
+    // post-meeting upload). Output is sponsor commitment evidence
+    // (intermediate) consumed at sign-off; `outputs` is empty per slice
+    // rule.
+    {
+      id: 'p2-sponsor-defense',
+      label:
+        'Sponsor 1:1 — defend recommended path against 3-month-fear question',
+      complexity: 'complex',
+      agentRole: 'coach_interview',
+      inputs: ['p2-charter-draft'],
+      outputs: [],
+      templateRefs: [],
+      preventsFailureModes: [1],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+    // Locking a measurable kill criterion is chat-resolvable validation
+    // work; treated as simple. Authored alongside the charter so it can be
+    // referenced by p2-charter-author and p2-charter-signoff.
+    {
+      id: 'p2-kill-criterion',
+      label: 'Lock the kill criterion (specific and observable)',
+      complexity: 'simple',
+      agentRole: 'validate',
+      inputs: [],
+      outputs: ['kill-criterion-locked'],
+      templateRefs: [],
+      preventsFailureModes: [2, 10],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+    {
+      id: 'p2-succession-named',
+      label: 'Name a sponsor succession owner',
+      complexity: 'simple',
+      agentRole: 'extract',
+      inputs: [],
+      outputs: ['succession-owner-named'],
+      templateRefs: [],
+      preventsFailureModes: [1],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+    // Sponsor sign-off is the gate action — chat-resolvable approval
+    // request; the substantive work happened in p2-sponsor-defense. Tagged
+    // [1] because sponsor sign-off concretizes failure-mode #1 (sponsor
+    // commitment).
+    {
+      id: 'p2-charter-signoff',
+      label: 'Sponsor signs the charter',
+      complexity: 'simple',
+      agentRole: 'request_approval',
+      inputs: [
+        'synthesis-options-compared',
+        'architecture-review-attested',
+        'kill-criterion-locked',
+        'succession-owner-named',
+      ],
+      outputs: ['charter-signed-off'],
+      templateRefs: [],
+      preventsFailureModes: [1],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+    // Identifying and engaging at least one dissenter requires an
+    // off-platform 1:1 with its own intent capture and post-meeting
+    // upload — encoded as complex.
+    {
+      id: 'p2-dissenter-engaged',
+      label: 'Identify and engage at least one dissenter',
+      complexity: 'complex',
+      agentRole: 'coach_interview',
+      inputs: ['synthesis-options-compared'],
+      outputs: ['dissenter-named'],
+      templateRefs: [],
+      preventsFailureModes: [2, 10],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+  ],
 };

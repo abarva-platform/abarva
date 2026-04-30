@@ -32,10 +32,11 @@ describe('PhasePack · OV2-5-types compatibility', () => {
     }
   });
 
-  it('packs without authored steps have steps === undefined (P2-P6 until later slices)', () => {
-    // OV2-P0-complete authored steps for P0; OV2-5-P1 authored steps for P1.
-    // P2-P6 remain unauthored until OV2-5-P2..OV2-5-P6.
-    const PHASES_WITH_STEPS = new Set([0, 1]);
+  it('packs without authored steps have steps === undefined (P3-P6 until later slices)', () => {
+    // OV2-P0-complete authored steps for P0; OV2-5-P1 authored steps for P1;
+    // OV2-5-P2 authored steps for P2. P3-P6 remain unauthored until
+    // OV2-5-P3..OV2-5-P6.
+    const PHASES_WITH_STEPS = new Set([0, 1, 2]);
     for (const p of listAuthoredPhases()) {
       const pack = getPhasePack(p);
       if (PHASES_WITH_STEPS.has(p)) {
@@ -114,14 +115,16 @@ describe('PhaseStep literal · OV2-5-types contract', () => {
 describe('PhasePack.steps · optional field', () => {
   it('accepts a PhasePack literal with steps undefined', () => {
     // Build a minimal pack-shaped literal using one of the real packs as the
-    // base so we exercise the type without modifying authored content.
-    const base = getPhasePack(2)!;
+    // base so we exercise the type without modifying authored content. Use a
+    // pack that has not yet been step-authored (P3) so the spread does not
+    // carry an existing steps array; OV2-5-P2 added steps to the P2 pack.
+    const base = getPhasePack(3)!;
     const withoutSteps: PhasePack = { ...base };
     expect(withoutSteps.steps).toBeUndefined();
   });
 
   it('accepts a PhasePack literal with steps as an array', () => {
-    const base = getPhasePack(2)!;
+    const base = getPhasePack(3)!;
     const step: PhaseStep = {
       id: 'compose-charter-draft',
       label: 'Compose the charter draft',
