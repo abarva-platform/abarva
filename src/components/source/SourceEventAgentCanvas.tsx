@@ -118,6 +118,7 @@ export function SourceEventAgentCanvas({
                       quote={quote}
                       surface="/source"
                       onArtifact={handleArtifact}
+                      composerPlacement="afterHeader"
                       emptyState={<SourceEventPromptDeck event={event} />}
                     />
                   </div>
@@ -533,12 +534,12 @@ const EVENT_AGENT_CANVAS: CSSProperties = {
   gridTemplateColumns: 'minmax(0, 1.7fr) minmax(min(100%, 360px), 1fr)',
   gap: 14,
   alignItems: 'stretch',
-  minHeight: 524,
+  minHeight: 452,
 };
 
 const EVENT_CHAT_COLUMN: CSSProperties = {
   minWidth: 0,
-  minHeight: 524,
+  minHeight: 452,
   display: 'grid',
 };
 
