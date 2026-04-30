@@ -90,6 +90,8 @@ import { EvidenceTagChips } from '@/components/reasoning/EvidenceTagChips';
 import { EvidenceSuggestionsPanel } from '@/components/reasoning/EvidenceSuggestionsPanel';
 import { buildEvidenceSuggestions } from '@/lib/reasoning/evidence-suggestions';
 import { GateHistorySidebar } from '@/components/reasoning/GateHistorySidebar';
+import { Phase0Primer } from '@/components/programs/Phase0Primer';
+import type { ArchetypePrimer } from '@/lib/programs/archetype-primers';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -107,6 +109,13 @@ export interface ProgramDetailPageProps {
    * inputs by the timeline filter bar so they survive the GET round-trip.
    */
   preservedSearchParams?: Readonly<Record<string, string | undefined>>;
+  /**
+   * OV2-3b · Phase-0 archetype primer resolved server-side from the
+   * program's `patternId`. Rendered as a top-level page section above
+   * the AgentCanvas when the program is in P0; null when no primer is
+   * registered for the resolved patternId or the program is past P0.
+   */
+  phase0Primer?: ArchetypePrimer | null;
 }
 
 // ─── Gate pill ────────────────────────────────────────────────────────────────
@@ -3551,6 +3560,7 @@ export function ProgramDetailPage({
   view,
   timelineFilters,
   preservedSearchParams,
+  phase0Primer,
 }: ProgramDetailPageProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -4209,6 +4219,16 @@ export function ProgramDetailPage({
             </div>
           );
         })()}
+
+        {/* OV2-3b · Phase-0 archetype primer. Renders ABOVE the agent
+            canvas when (a) the program is in P0 and (b) a primer is
+            registered for the program's resolved patternId. Per design
+            doc Section D.0.6 the primer is the platform's voice at the
+            moment of approval — it should be visible by default, not
+            hidden behind a tab. Silent fallback when no primer matches. */}
+        {view.currentPhase === 0 && phase0Primer ? (
+          <Phase0Primer primer={phase0Primer} />
+        ) : null}
 
         {/* Surface 2 PR-F — agent-centric primary canvas. Chat with
             Nexus + reactive panel occupy the dominant viewport real
