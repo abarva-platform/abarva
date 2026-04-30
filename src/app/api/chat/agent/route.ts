@@ -52,6 +52,7 @@ import {
 import {
   buildEnterpriseAgentContextBundle,
   type EnterpriseAgentContextBundle,
+  type EnterpriseAgentName,
 } from "@/lib/knowledge/agent-context-broker";
 // OV2-WIRE-AND-FM-PROMPT — failure-mode catalog (universal across Programs
 // surfaces) and overlap-candidates block (/programs/new only). The catalog
@@ -354,7 +355,7 @@ export async function POST(request: Request) {
       sourceTenantContextBlock = formatSourceBrokerBundleForPrompt(
         buildEnterpriseAgentContextBundle({
           tenantKey: activeClient.key,
-          agentName,
+          agentName: normalizeEnterpriseAgentName(agentName),
           surface: 'source',
           includeGraphNeighborhood: false,
           allowL4RawContext: false,
@@ -579,6 +580,15 @@ export async function POST(request: Request) {
 
 function isSourceSurface(surface: string): boolean {
   return surface === '/source' || surface.startsWith('/source/');
+}
+
+function normalizeEnterpriseAgentName(agentName: string): EnterpriseAgentName {
+  return agentName === 'Nexus' ||
+    agentName === 'Sentinel' ||
+    agentName === 'Atlas' ||
+    agentName === 'Steward'
+    ? agentName
+    : 'Sentinel';
 }
 
 // OV2-WIRE-AND-FM-PROMPT Part 2 — brief-signal extractor. Reads the
