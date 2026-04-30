@@ -47,3 +47,14 @@ export {
   vectorRetrievalInfoTag,
   extractKeywords,
 } from './broker';
+
+// CB-4 · demo-endpoint request/response contract. Re-exported from
+// the package so client fetchers can type their calls without
+// reaching into the route file.
+export type {
+  ContextDemoRequest,
+  ContextDemoResponse,
+  ContextDemoErrorResponse,
+} from './demo-contract';
+
+export { CONTEXT_DEMO_QUERY_MAX_LENGTH } from './demo-contract';
