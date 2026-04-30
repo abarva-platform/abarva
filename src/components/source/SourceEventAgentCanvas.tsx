@@ -4,6 +4,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { useCallback, useState } from 'react';
 import { AppShell } from '@/components/shell/AppShell';
 import { AtlasDrawer } from '@/components/shell/AtlasDrawer';
+import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
 import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
 import { SourcingReactivePanel } from '@/components/source/SourcingReactivePanel';
 import { SourceLinkedProgramChip } from '@/components/source/LinkedProgramChip';
@@ -55,6 +56,7 @@ export function SourceEventAgentCanvas({
       surfaceContext={{
         eventId: event.id,
         eventName: event.name,
+        accountName: event.accountName,
         eventCode: event.code ?? '',
         eventType: event.archetype,
         currentStageKey: event.currentStageKey,
@@ -180,17 +182,41 @@ function EventAgentLead({
         <EventAgentCard
           agent="Atlas"
           role="Artifacts and executive decision"
-          detail={`Decision posture: ${event.nextDecision}. Generate the right HTML, Word, or Excel packet before review.`}
+          detail={`Decision posture: ${stripTrailingPeriod(event.nextDecision)}. Generate the right HTML, Word, or Excel packet before review.`}
         />
       </div>
 
       <div style={EVENT_ACTION_GRID} aria-label="Agent suggested stage actions">
-        <StageAction label="Define done" detail="Evidence, owner, approval, blocker, and exit criteria for this stage." />
-        <StageAction label="Attach evidence" detail="Inventory, contract, pricing, vendor response, meeting notes, or workshop output." />
-        <StageAction label="Generate packet" detail="HTML/Word/Excel-ready artifact for the current stage and review audience." />
-        <StageAction label="Prep next step" detail="Team guidance: meeting agenda, required inputs, roles, and expected outputs." />
-        <StageAction label="Run workshop" detail="Facilitation plan, prompts, capture template, and post-session validation." />
-        <StageAction label="Open gate path" detail="Who reviews, what can be waived, and what cannot move forward." />
+        <StageAction
+          label="Define done"
+          prompt={`Define done for ${event.name} at ${stageLabel}: evidence, owner, approval, blocker, and exit criteria.`}
+          detail="Evidence, owner, approval, blocker, and exit criteria for this stage."
+        />
+        <StageAction
+          label="Attach evidence"
+          prompt={`Tell me the evidence needed for ${event.name} at ${stageLabel}, including file types, citation rules, and what remains metadata-only.`}
+          detail="Inventory, contract, pricing, vendor response, meeting notes, or workshop output."
+        />
+        <StageAction
+          label="Generate packet"
+          prompt={`Prepare the packet outline for ${event.name} at ${stageLabel}: HTML brief, Word memo, Excel workbook, or meeting packet.`}
+          detail="HTML/Word/Excel-ready artifact for the current stage and review audience."
+        />
+        <StageAction
+          label="Prep next step"
+          prompt={`Prepare the team for the next Source step after ${stageLabel}: agenda, inputs, roles, and expected outputs.`}
+          detail="Team guidance: meeting agenda, required inputs, roles, and expected outputs."
+        />
+        <StageAction
+          label="Run workshop"
+          prompt={`Build a workshop kit for ${event.name}: agenda, roles, capture template, decisions needed, and post-session sync checklist.`}
+          detail="Facilitation plan, prompts, capture template, and post-session validation."
+        />
+        <StageAction
+          label="Open gate path"
+          prompt={`Show the gate path for ${event.name}: who reviews, what can be waived, what cannot advance, and the next blocker.`}
+          detail="Who reviews, what can be waived, and what cannot move forward."
+        />
       </div>
     </section>
   );
@@ -214,16 +240,31 @@ function EventAgentCard({
   );
 }
 
-function StageAction({ label, detail }: { label: string; detail: string }) {
+function StageAction({
+  label,
+  detail,
+  prompt,
+}: {
+  label: string;
+  detail: string;
+  prompt: string;
+}) {
+  const pageState = useAtlasPageState();
   return (
-    <div style={EVENT_ACTION_CARD}>
+    <button
+      type="button"
+      style={EVENT_ACTION_BUTTON}
+      onClick={() => pageState?.ask(prompt)}
+      aria-label={`Ask Sentinel: ${label}`}
+    >
       <div style={EVENT_ACTION_LABEL}>{label}</div>
       <div style={EVENT_ACTION_DETAIL}>{detail}</div>
-    </div>
+    </button>
   );
 }
 
 function SourceEventPromptDeck({ event }: { event: SourcingEventDetail }) {
+  const pageState = useAtlasPageState();
   const prompts = [
     {
       label: 'What good looks like',
@@ -295,14 +336,21 @@ function SourceEventPromptDeck({ event }: { event: SourcingEventDetail }) {
 
       <div style={{ display: 'grid', gap: 7 }}>
         {prompts.map((item) => (
-          <div
+          <button
+            type="button"
             key={item.label}
+            onClick={() => pageState?.ask(item.prompt)}
             style={{
+              appearance: 'none',
               border: `1px solid ${SHELL.CARD_LINE}`,
               borderRadius: 10,
               padding: '7px 10px',
               background: SHELL.PAPER_SOFT,
+              font: 'inherit',
+              textAlign: 'left',
+              cursor: 'pointer',
             }}
+            aria-label={`Ask Sentinel: ${item.label}`}
           >
             <div
               style={{
@@ -327,11 +375,15 @@ function SourceEventPromptDeck({ event }: { event: SourcingEventDetail }) {
             >
               {item.prompt}
             </div>
-          </div>
+          </button>
         ))}
       </div>
     </div>
   );
+}
+
+function stripTrailingPeriod(text: string | null | undefined): string {
+  return (text ?? '').trim().replace(/[.]+$/, '');
 }
 
 function EventCanvasHeader({ event }: { event: SourcingEventDetail }) {
@@ -595,6 +647,15 @@ const EVENT_ACTION_CARD: CSSProperties = {
   borderRadius: 12,
   background: SHELL.PAPER,
   padding: '8px 10px',
+};
+
+const EVENT_ACTION_BUTTON: CSSProperties = {
+  ...EVENT_ACTION_CARD,
+  appearance: 'none',
+  font: 'inherit',
+  textAlign: 'left',
+  cursor: 'pointer',
+  width: '100%',
 };
 
 const EVENT_ACTION_LABEL: CSSProperties = {
