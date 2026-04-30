@@ -55,6 +55,7 @@ export type {
   ContextDemoRequest,
   ContextDemoResponse,
   ContextDemoErrorResponse,
+  ContextDemoBundleSummary,
 } from './demo-contract';
 
 export { CONTEXT_DEMO_QUERY_MAX_LENGTH } from './demo-contract';
