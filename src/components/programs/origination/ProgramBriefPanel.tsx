@@ -63,6 +63,132 @@ export interface PatternMatchCard {
   typicalDurationMonths?: number;
 }
 
+export type ProgramSetupReadinessStatus = 'collecting' | 'review' | 'ready';
+
+export interface ProgramSetupReadinessItem {
+  id: keyof ProgramBriefDraft | 'overlapReview';
+  label: string;
+  status: 'complete' | 'missing' | 'review';
+  detail: string;
+}
+
+export interface ProgramSetupReadiness {
+  status: ProgramSetupReadinessStatus;
+  completedRequired: number;
+  totalRequired: number;
+  headline: string;
+  detail: string;
+  items: ProgramSetupReadinessItem[];
+}
+
+const REQUIRED_SETUP_FIELDS: Array<{
+  id: keyof ProgramBriefDraft;
+  label: string;
+  missingDetail: string;
+}> = [
+  {
+    id: 'programName',
+    label: 'Program name',
+    missingDetail: 'Name the initiative Steward should submit.',
+  },
+  {
+    id: 'problemStatement',
+    label: 'Problem statement',
+    missingDetail: 'Capture the business problem in plain language.',
+  },
+  {
+    id: 'targetOutcome',
+    label: 'Target outcome',
+    missingDetail: 'Define the measurable outcome or direction of travel.',
+  },
+  {
+    id: 'sponsor',
+    label: 'Executive sponsor',
+    missingDetail: 'Identify the accountable executive sponsor.',
+  },
+  {
+    id: 'lead',
+    label: 'Program lead',
+    missingDetail: 'Identify the day-to-day owner, or confirm sponsor = lead.',
+  },
+  {
+    id: 'classification',
+    label: 'Classification',
+    missingDetail: 'Classify the program so the right phase pack can attach.',
+  },
+];
+
+function hasValue(value: ProgramBriefDraft[keyof ProgramBriefDraft]): boolean {
+  if (Array.isArray(value)) return value.length > 0;
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+export function buildProgramSetupReadiness(
+  brief: ProgramBriefDraft,
+  overlapAlerts: OverlapAlertArtifact[] = [],
+): ProgramSetupReadiness {
+  const requiredItems: ProgramSetupReadinessItem[] = REQUIRED_SETUP_FIELDS.map((field) => {
+    const complete = hasValue(brief[field.id]);
+    return {
+      id: field.id,
+      label: field.label,
+      status: complete ? 'complete' : 'missing',
+      detail: complete ? 'Captured in the brief.' : field.missingDetail,
+    };
+  });
+
+  const completedRequired = requiredItems.filter((item) => item.status === 'complete').length;
+  const items = [...requiredItems];
+  if (overlapAlerts.length > 0) {
+    items.push({
+      id: 'overlapReview',
+      label: 'Portfolio overlap review',
+      status: 'review',
+      detail:
+        overlapAlerts.length === 1
+          ? 'Review the active overlap before submit.'
+          : `Review ${overlapAlerts.length} active overlaps before submit.`,
+    });
+  }
+
+  if (completedRequired < REQUIRED_SETUP_FIELDS.length) {
+    const remaining = REQUIRED_SETUP_FIELDS.length - completedRequired;
+    return {
+      status: 'collecting',
+      completedRequired,
+      totalRequired: REQUIRED_SETUP_FIELDS.length,
+      headline: 'Collecting setup inputs',
+      detail:
+        remaining === 1
+          ? 'One required item is still missing before Steward should submit.'
+          : `${remaining} required items are still missing before Steward should submit.`,
+      items,
+    };
+  }
+
+  if (overlapAlerts.length > 0) {
+    return {
+      status: 'review',
+      completedRequired,
+      totalRequired: REQUIRED_SETUP_FIELDS.length,
+      headline: 'Ready after overlap review',
+      detail:
+        'The brief has the required setup inputs. Reconcile overlap alerts before approving submission.',
+      items,
+    };
+  }
+
+  return {
+    status: 'ready',
+    completedRequired,
+    totalRequired: REQUIRED_SETUP_FIELDS.length,
+    headline: 'Ready to submit for approval',
+    detail:
+      'The brief has the minimum setup inputs for Steward to resolve people and submit the program.',
+    items,
+  };
+}
+
 interface BriefRowProps {
   label: string;
   value: string | null;
@@ -279,16 +405,188 @@ function BriefProgressCard({ progress }: { progress: BriefProgressArtifact }) {
   );
 }
 
+const OVERLAP_AMBER = '#B45309';
+const OVERLAP_AMBER_SOFT = 'rgba(180, 83, 9, 0.08)';
+const OVERLAP_AMBER_BORDER = 'rgba(180, 83, 9, 0.32)';
+
+function readinessColor(status: ProgramSetupReadinessStatus): string {
+  switch (status) {
+    case 'ready':
+      return BrandColors.signalBlue;
+    case 'review':
+      return OVERLAP_AMBER;
+    case 'collecting':
+      return BrandColors.stone;
+  }
+}
+
+function readinessSoftBackground(status: ProgramSetupReadinessStatus): string {
+  switch (status) {
+    case 'ready':
+      return `${BrandColors.signalBlue}0D`;
+    case 'review':
+      return OVERLAP_AMBER_SOFT;
+    case 'collecting':
+      return '#FFFFFF';
+  }
+}
+
+function readinessItemGlyph(status: ProgramSetupReadinessItem['status']): string {
+  switch (status) {
+    case 'complete':
+      return '✓';
+    case 'review':
+      return '!';
+    case 'missing':
+      return '○';
+  }
+}
+
+function SetupReadinessCard({ readiness }: { readiness: ProgramSetupReadiness }) {
+  const accent = readinessColor(readiness.status);
+  return (
+    <section
+      aria-label="Setup readiness"
+      style={{
+        background: readinessSoftBackground(readiness.status),
+        border: `1px solid ${
+          readiness.status === 'collecting' ? 'rgba(12,26,58,0.16)' : `${accent}55`
+        }`,
+        borderRadius: 8,
+        padding: '14px 16px',
+        boxShadow: '0 1px 3px rgba(12,26,58,0.04)',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          gap: 10,
+          marginBottom: 8,
+          flexWrap: 'wrap',
+        }}
+      >
+        <span
+          style={{
+            fontFamily: BrandTypography.mono,
+            fontSize: 10,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: accent,
+            fontWeight: 700,
+          }}
+        >
+          Setup readiness
+        </span>
+        <span
+          style={{
+            fontFamily: BrandTypography.mono,
+            fontSize: 11,
+            color: BrandColors.slate,
+            fontWeight: 600,
+          }}
+        >
+          {readiness.completedRequired} of {readiness.totalRequired} required
+        </span>
+      </div>
+      <h3
+        style={{
+          margin: '0 0 4px',
+          fontFamily: BrandTypography.serif,
+          fontSize: 17,
+          fontWeight: 500,
+          color: BrandColors.inkBlack,
+          lineHeight: 1.3,
+        }}
+      >
+        {readiness.headline}
+      </h3>
+      <p
+        style={{
+          margin: '0 0 10px',
+          fontFamily: BrandTypography.sans,
+          fontSize: 13,
+          color: BrandColors.slate,
+          lineHeight: 1.55,
+        }}
+      >
+        {readiness.detail}
+      </p>
+      <ul
+        style={{
+          margin: 0,
+          padding: 0,
+          listStyle: 'none',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        {readiness.items.map((item) => (
+          <li
+            key={item.id}
+            style={{
+              padding: '6px 0',
+              borderTop: `1px solid rgba(12,26,58,0.06)`,
+              display: 'grid',
+              gridTemplateColumns: '18px 1fr',
+              gap: 10,
+              alignItems: 'baseline',
+            }}
+          >
+            <span
+              aria-hidden
+              style={{
+                fontFamily: BrandTypography.mono,
+                fontSize: 12,
+                color:
+                  item.status === 'complete'
+                    ? BrandColors.signalBlue
+                    : item.status === 'review'
+                      ? OVERLAP_AMBER
+                      : BrandColors.stone,
+                fontWeight: 700,
+                lineHeight: 1.2,
+              }}
+            >
+              {readinessItemGlyph(item.status)}
+            </span>
+            <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span
+                style={{
+                  fontFamily: BrandTypography.sans,
+                  fontSize: 12,
+                  color: item.status === 'missing' ? BrandColors.stone : BrandColors.inkBlack,
+                  fontWeight: item.status === 'missing' ? 400 : 500,
+                  lineHeight: 1.4,
+                }}
+              >
+                {item.label}
+              </span>
+              <span
+                style={{
+                  fontFamily: BrandTypography.sans,
+                  fontSize: 12,
+                  color: BrandColors.slate,
+                  lineHeight: 1.45,
+                }}
+              >
+                {item.detail}
+              </span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 // ── OV2-1b · OverlapAlertCard ────────────────────────────────────────────────
 //
 // Amber alert-tone card. Re-uses the AbarVa amber tokens from the
 // abarva-theme palette (already in use by DeliverableEvidenceTracePanel
 // and ProgramSurface chips for the same warning semantic). The card is
 // a clickable Link to the existing program so the user can reconcile.
-
-const OVERLAP_AMBER = '#B45309';
-const OVERLAP_AMBER_SOFT = 'rgba(180, 83, 9, 0.08)';
-const OVERLAP_AMBER_BORDER = 'rgba(180, 83, 9, 0.32)';
 
 function overlapKindLabel(kind: OverlapAlertArtifact['overlapKind']): string {
   switch (kind) {
@@ -516,6 +814,7 @@ export function ProgramBriefPanel({
   overlapAlerts = [],
   registering = false,
 }: ProgramBriefPanelProps) {
+  const setupReadiness = buildProgramSetupReadiness(brief, overlapAlerts);
   return (
     <aside
       style={{
@@ -560,6 +859,8 @@ export function ProgramBriefPanel({
           {brief.programName ?? 'Untitled program'}
         </h2>
       </header>
+
+      <SetupReadinessCard readiness={setupReadiness} />
 
       {/* OV2-1b · Brief Progress sits at the top — user's "where am I?" anchor. */}
       {briefProgress ? <BriefProgressCard progress={briefProgress} /> : null}
