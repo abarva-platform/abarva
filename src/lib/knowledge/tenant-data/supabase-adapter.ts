@@ -1,6 +1,7 @@
 import 'server-only';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { TenantDataAdapter } from './adapter';
+import { GraphTraversal } from './graph-traversal';
 import type {
   ChunkEmbeddingStatus,
   ContextChunk,
@@ -28,9 +29,10 @@ import type {
  *   enterprise_context_chunks(tenant_key, chunk_id) — pending embeddings today
  *
  * Graph traversal (`listGraphNodes`, `listGraphEdgesForNode`,
- * `getGraphNeighborhood`, `pathBetween`) is intentionally NOT implemented
- * here — TD-3 owns the graph layer. The mapper from raw row → broker
- * context-item shape is TD-4. Broker integration is TD-5.
+ * `getGraphNeighborhood`, `pathBetween`) delegates to {@link GraphTraversal}
+ * (TD-3), which owns BFS over `enterprise_graph_nodes` + `_edges`. The
+ * mapper from raw row → broker context-item shape is TD-4. Broker
+ * integration is TD-5.
  *
  * Service-role reads bypass RLS. The migration ships a `service_role_all_*`
  * policy on every persisted table, so this is consistent with the migration.
@@ -257,7 +259,6 @@ function mapEvidenceRow(row: InventoryRecordRow): EvidenceRecord {
 
 // ── Adapter ────────────────────────────────────────────────────────────
 
-const TD_3_NOT_IMPLEMENTED = 'Graph traversal not yet implemented (TD-3 follow-on).';
 const TD_9_NOT_IMPLEMENTED = 'Vector retrieval not yet enabled (TD-9 follow-on).';
 
 const DEFAULT_RECORD_LIMIT = 50;
@@ -266,7 +267,14 @@ const DEFAULT_CHUNK_LIMIT = 50;
 const MAX_CHUNK_KEYWORD_LIMIT = 50;
 
 export class SupabaseTenantDataAdapter implements TenantDataAdapter {
-  constructor(private readonly client: SupabaseClient) {}
+  private readonly graphTraversal: GraphTraversal;
+
+  constructor(private readonly client: SupabaseClient) {
+    // GraphTraversal expects a `() => SupabaseClient` getter so tests can
+    // inject mocks per-call. We hand it the same service-role client used
+    // for record reads — one client, one tenant boundary, no drift.
+    this.graphTraversal = new GraphTraversal(() => this.client);
+  }
 
   async listSegments(tenantKey: string): Promise<SegmentRollup[]> {
     const { data, error } = await this.client
@@ -318,33 +326,33 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
     return mapRecordRow(data as unknown as InventoryRecordRow);
   }
 
-  listGraphNodes(_tenantKey: string, _kind?: GraphNodeKind): Promise<GraphNode[]> {
-    return Promise.reject(new Error(TD_3_NOT_IMPLEMENTED));
+  listGraphNodes(tenantKey: string, kind?: GraphNodeKind): Promise<GraphNode[]> {
+    return this.graphTraversal.listNodes(tenantKey, kind);
   }
 
   listGraphEdgesForNode(
-    _tenantKey: string,
-    _nodeId: string,
-    _direction?: 'outgoing' | 'incoming' | 'both',
+    tenantKey: string,
+    nodeId: string,
+    direction?: 'outgoing' | 'incoming' | 'both',
   ): Promise<GraphEdge[]> {
-    return Promise.reject(new Error(TD_3_NOT_IMPLEMENTED));
+    return this.graphTraversal.listEdgesForNode(tenantKey, nodeId, direction);
   }
 
   getGraphNeighborhood(
-    _tenantKey: string,
-    _rootId: string,
-    _opts?: { maxDepth?: number; edgeKinds?: string[] },
+    tenantKey: string,
+    rootId: string,
+    opts?: { maxDepth?: number; edgeKinds?: string[] },
   ): Promise<GraphNeighborhood> {
-    return Promise.reject(new Error(TD_3_NOT_IMPLEMENTED));
+    return this.graphTraversal.getNeighborhood(tenantKey, rootId, opts);
   }
 
   pathBetween(
-    _tenantKey: string,
-    _fromId: string,
-    _toId: string,
-    _maxDepth?: number,
+    tenantKey: string,
+    fromId: string,
+    toId: string,
+    maxDepth?: number,
   ): Promise<GraphPath | null> {
-    return Promise.reject(new Error(TD_3_NOT_IMPLEMENTED));
+    return this.graphTraversal.findPath(tenantKey, fromId, toId, maxDepth);
   }
 
   async listContextChunks(
