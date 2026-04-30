@@ -1,272 +1,31 @@
-// I1 · INT-IDX-LIBRARY — Server-component Intelligence pattern library index.
+// I1 · INT-1.3 reshape — J0 cold-landing as the canonical /intelligence surface.
 //
-// PR-INT-B reshape: the page leads with an agent-centric canvas
-// (Sentinel chat dominant + reactive knowledge pane). The static
-// pattern library table sits below inside a collapsible details
-// accordion — present but de-emphasized. Same layout pattern PR-F
-// established for /programs/[id].
+// Replaces the chat-dominant reshape from PR-INT-B/F. The page now leads
+// with the failure-mode card grid per
+// docs/build/intelligence/INT-1_DETAILED_DESIGN.md §4. The chat surface
+// preserved from PR-INT-B is no longer rendered on this page; INT-1.7
+// will host it at /intelligence/ask reachable from "Open Sentinel".
 //
-// Filter state remains URL-param-driven (searchParams.filter passed
-// as a prop from the route). The canvas is a client island; the
-// table is server-rendered.
+// Per the spine doc, this page is content-led not chat-led: the 10
+// failure-mode cards are the primary affordance; chat is secondary.
 
 import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
 import { SHELL } from '@/lib/shell/shell-tokens';
+import { J0FailureModeGrid } from '@/components/intelligence/J0FailureModeGrid';
 import {
-  filterIntelligencePatterns,
-  getIntelligenceLibraryFilterLabel,
-  INTELLIGENCE_INDEX_VIEW,
-  INTELLIGENCE_LIBRARY_FILTERS,
-  normalizeIntelligenceLibraryFilter,
-  type IntelligencePattern,
-} from '@/lib/intelligence/shell-intelligence-fixture';
-import { IntelligenceAgentCanvas } from '@/components/intelligence/IntelligenceAgentCanvas';
-import { IntelligenceFilterLinks } from '@/components/intelligence/IntelligenceFilterLinks';
+  CORPUS_VERSION,
+  J0_FAILURE_MODE_CARDS,
+  getTotalResearchAnchorCount,
+} from '@/lib/intelligence/j0-failure-mode-cards';
+import { getPatternManifestEntries } from '@/lib/intelligence/pattern-manifest';
 
-// ─── Tier badge ───────────────────────────────────────────────────────────────
+const HEADLINE = 'Why enterprise AI transformation fails — and how AbarVa prevents it.';
 
-function TierBadge({ tier }: { tier: IntelligencePattern['tier'] }) {
-  const map: Record<IntelligencePattern['tier'], { bg: string; text: string; label: string }> = {
-    T3: { bg: SHELL.MINT_BG, text: SHELL.MINT_TEXT, label: 'T3 · Use-case' },
-    T2: { bg: SHELL.PEACH_BG, text: SHELL.PEACH_TEXT, label: 'T2 · Capability' },
-    T1: { bg: SHELL.BLUE_BG, text: '#2a4a7a', label: 'T1 · Foundation' },
-  };
-  const m = map[tier];
-  return (
-    <span
-      style={{
-        display: 'inline-block',
-        padding: '2px 8px',
-        borderRadius: 999,
-        background: m.bg,
-        color: m.text,
-        fontFamily: SHELL.MONO,
-        fontSize: 9.5,
-        fontWeight: 600,
-        letterSpacing: '0.06em',
-        textTransform: 'uppercase',
-        lineHeight: 1.5,
-        whiteSpace: 'nowrap',
-      }}
-    >
-      {m.label}
-    </span>
-  );
-}
-
-// ─── Status pill ──────────────────────────────────────────────────────────────
-
-function StatusPill({ status }: { status: IntelligencePattern['status'] }) {
-  const map: Record<IntelligencePattern['status'], { bg: string; text: string; label: string }> = {
-    validated: { bg: SHELL.MINT_BG, text: SHELL.MINT_TEXT, label: 'Validated' },
-    emerging: { bg: SHELL.PEACH_BG, text: SHELL.PEACH_TEXT, label: 'Emerging' },
-    deprecated: { bg: SHELL.GRAY_BG, text: SHELL.GRAY_TEXT, label: 'Deprecated' },
-    'in-review': { bg: SHELL.BLUE_BG, text: '#2a4a7a', label: 'In review' },
-    candidate: { bg: SHELL.GRAY_BG, text: SHELL.GRAY_TEXT, label: 'Candidate' },
-  };
-  const m = map[status];
-  return (
-    <span
-      style={{
-        display: 'inline-block',
-        padding: '2px 8px',
-        borderRadius: 999,
-        background: m.bg,
-        color: m.text,
-        fontFamily: SHELL.SANS,
-        fontSize: 11,
-        fontWeight: 500,
-        lineHeight: 1.6,
-        whiteSpace: 'nowrap',
-      }}
-    >
-      {m.label}
-    </span>
-  );
-}
-
-// ─── Pattern row ──────────────────────────────────────────────────────────────
-
-function PatternRow({ pattern }: { pattern: IntelligencePattern }) {
-  const href = `/intelligence/${pattern.id.toLowerCase().replace('/', '-').replace('_', '-')}`;
-
-  return (
-    <Link
-      href={href}
-      style={{
-        display: 'grid',
-        gridTemplateColumns: '72px 1fr 120px 96px 72px 64px',
-        alignItems: 'center',
-        height: 48,
-        padding: '0 20px',
-        borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
-        textDecoration: 'none',
-        color: SHELL.INK,
-        gap: 8,
-      }}
-    >
-      {/* ID */}
-      <span
-        style={{
-          fontFamily: SHELL.MONO,
-          fontSize: 10,
-          color: SHELL.INK_MUTED,
-          letterSpacing: '0.06em',
-        }}
-      >
-        {pattern.id}
-        {pattern.id === 'T3-H01' && (
-          <span style={{ marginLeft: 4, color: SHELL.AMBER_DOT }}>★</span>
-        )}
-      </span>
-
-      {/* Name + description */}
-      <div style={{ minWidth: 0 }}>
-        <div
-          style={{
-            fontFamily: SHELL.SERIF,
-            fontSize: 14,
-            fontWeight: 700,
-            color: SHELL.INK,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            lineHeight: 1.2,
-          }}
-        >
-          {pattern.name}
-        </div>
-        <div
-          style={{
-            fontFamily: SHELL.SANS,
-            fontSize: 11,
-            fontStyle: 'italic',
-            color: SHELL.INK_MUTED,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            lineHeight: 1.2,
-            marginTop: 1,
-          }}
-        >
-          {pattern.description}
-        </div>
-      </div>
-
-      {/* Tier badge */}
-      <div>
-        <TierBadge tier={pattern.tier} />
-      </div>
-
-      {/* Status pill */}
-      <div>
-        <StatusPill status={pattern.status} />
-      </div>
-
-      {/* Programs count */}
-      <span
-        style={{
-          fontFamily: SHELL.MONO,
-          fontSize: 10,
-          color: SHELL.INK_MUTED,
-          letterSpacing: '0.04em',
-        }}
-      >
-        {pattern.usedInPrograms}p
-      </span>
-
-      {/* View link */}
-      <div>
-        <span
-          style={{
-            display: 'inline-block',
-            padding: '4px 10px',
-            borderRadius: 999,
-            border: `1px solid ${SHELL.INK}`,
-            background: 'transparent',
-            color: SHELL.INK,
-            fontFamily: SHELL.MONO,
-            fontSize: 10,
-            fontWeight: 500,
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            lineHeight: 1.4,
-            whiteSpace: 'nowrap',
-          }}
-        >
-          View
-        </span>
-      </div>
-    </Link>
-  );
-}
-
-// ─── Pattern table ────────────────────────────────────────────────────────────
-
-function PatternTable({ patterns }: { patterns: IntelligencePattern[] }) {
-  const colHeaderStyle: React.CSSProperties = {
-    fontFamily: SHELL.MONO,
-    fontSize: 9,
-    fontWeight: 700,
-    letterSpacing: '0.12em',
-    textTransform: 'uppercase',
-    color: SHELL.INK_MUTED,
-  };
-
-  return (
-    <div
-      style={{
-        borderRadius: 10,
-        background: SHELL.CARD_WHITE,
-        border: `1px solid ${SHELL.CARD_LINE}`,
-        overflow: 'hidden',
-      }}
-    >
-      {/* Column headers */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '72px 1fr 120px 96px 72px 64px',
-          padding: '7px 20px',
-          gap: 8,
-          background: SHELL.PAPER_SOFT,
-          borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
-        }}
-      >
-        <span style={colHeaderStyle}>ID</span>
-        <span style={colHeaderStyle}>Pattern</span>
-        <span style={colHeaderStyle}>Tier</span>
-        <span style={colHeaderStyle}>Status</span>
-        <span style={colHeaderStyle}>Programs</span>
-        <span style={colHeaderStyle}></span>
-      </div>
-
-      {/* Rows */}
-      {patterns.map((p) => (
-        <PatternRow key={p.id} pattern={p} />
-      ))}
-    </div>
-  );
-}
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
-interface IntelligenceIndexPageProps {
-  /** URL filter param — e.g. 'all', 'm', 't1', 't3', 'in-review'. */
-  filter?: string;
-}
-
-export function IntelligenceIndexPage({ filter }: IntelligenceIndexPageProps) {
-  const activeFilter = normalizeIntelligenceLibraryFilter(filter);
-  const allPatterns = INTELLIGENCE_INDEX_VIEW.patterns;
-  const filtered = filterIntelligencePatterns(allPatterns, activeFilter);
-  const activeFilterLabel = getIntelligenceLibraryFilterLabel(activeFilter);
-  const filterPills = INTELLIGENCE_LIBRARY_FILTERS.map((filter) => ({
-    ...filter,
-    active: activeFilter === filter.key,
-    count: filterIntelligencePatterns(allPatterns, filter.key).length,
-  }));
+export function IntelligenceIndexPage() {
+  const totalPatterns = getPatternManifestEntries().length;
+  const totalAnchors = getTotalResearchAnchorCount();
+  const totalCards = J0_FAILURE_MODE_CARDS.length;
 
   return (
     <AppShell
@@ -274,11 +33,9 @@ export function IntelligenceIndexPage({ filter }: IntelligenceIndexPageProps) {
       topBarProps={{
         tenantName: 'Apex Retail Group',
         showLocked: true,
-        context: 'Intelligence · Sentinel',
+        context: 'Intelligence · Why AI programs fail',
       }}
-      middleStrip={<IntelligenceFilterLinks pills={filterPills} />}
     >
-      {/* Single full-width column · canvas-dominant + collapsed library */}
       <div
         style={{
           flex: 1,
@@ -289,101 +46,113 @@ export function IntelligenceIndexPage({ filter }: IntelligenceIndexPageProps) {
         }}
       >
         <div
+          data-testid="intelligence-j0-page"
           style={{
             flex: 1,
             overflowY: 'auto',
             background: SHELL.PAPER,
-            padding: '24px 48px 32px',
+            padding: '32px 48px 48px',
+            maxWidth: 1280,
+            width: '100%',
+            margin: '0 auto',
+            boxSizing: 'border-box',
           }}
         >
-          {/* Page header — Sentinel-centric. The legacy "Pattern Library"
-              title shifted into the collapsed library accordion below;
-              the live page is now agent-centric so the header introduces
-              the librarian, not the table. */}
-          <div style={{ marginBottom: 12 }}>
-            <div
-              style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 9,
-                letterSpacing: '0.18em',
-                textTransform: 'uppercase',
-                color: SHELL.INK_MUTED,
-                marginBottom: 4,
-              }}
-            >
-              Sentinel · knowledge librarian · {filtered.length} pattern
-              {filtered.length !== 1 ? 's' : ''} indexed · {activeFilterLabel}
-            </div>
-            <h1
-              style={{
-                fontFamily: SHELL.SERIF,
-                fontSize: 22,
-                fontWeight: 700,
-                color: SHELL.INK,
-                margin: 0,
-                lineHeight: 1.2,
-                letterSpacing: '-0.01em',
-              }}
-            >
-              Ask Sentinel about the corpus
-            </h1>
-          </div>
-
-          {/* Sentinel agent canvas — chat dominant + reactive knowledge pane */}
-          <IntelligenceAgentCanvas quote={INTELLIGENCE_INDEX_VIEW.agentQuote} />
-
-          {/* Static corpus browser — collapsed by default */}
-          <details
-            data-testid="intelligence-library-legacy"
+          {/* Page header zone */}
+          <header
             style={{
-              marginBottom: 20,
-              border: `1px solid ${SHELL.CARD_LINE}`,
-              borderRadius: 10,
-              background: SHELL.PAPER,
+              display: 'grid',
+              gridTemplateColumns: '1fr auto',
+              gap: 16,
+              alignItems: 'flex-end',
+              marginBottom: 28,
             }}
           >
-            <summary
-              style={{
-                cursor: 'pointer',
-                padding: '12px 16px',
-                fontFamily: SHELL.MONO,
-                fontSize: 11,
-                letterSpacing: '0.10em',
-                textTransform: 'uppercase',
-                color: SHELL.GRAY_TEXT,
-                fontWeight: 700,
-                userSelect: 'none',
-              }}
-            >
-              Pattern library · {filtered.length} entries · direct browse
-            </summary>
-            <div style={{ padding: '8px 16px 16px' }}>
-              <PatternTable patterns={filtered} />
-              <div
+            <div>
+              <h1
+                data-testid="intelligence-j0-headline"
                 style={{
-                  marginTop: 16,
-                  paddingTop: 12,
-                  borderTop: `1px solid ${SHELL.CARD_LINE}`,
+                  fontFamily: SHELL.SERIF_DISPLAY,
+                  fontSize: 'clamp(24px, 3.2vw, 36px)',
+                  fontWeight: 400,
+                  color: SHELL.INK,
+                  margin: 0,
+                  lineHeight: 1.15,
+                  letterSpacing: '-0.015em',
+                  maxWidth: 720,
                 }}
               >
-                <Link
-                  href="/intelligence/solutions"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    fontFamily: SHELL.MONO,
-                    fontSize: 11,
-                    color: SHELL.INK_SOFT,
-                    textDecoration: 'none',
-                  }}
-                >
-                  <span>→</span>
-                  <span>Solution archetypes · end-to-end blueprints</span>
-                </Link>
-              </div>
+                {HEADLINE}
+              </h1>
+              <p
+                data-testid="intelligence-j0-subhead"
+                style={{
+                  fontFamily: SHELL.MONO,
+                  fontSize: 11,
+                  color: SHELL.INK_MUTED,
+                  margin: '12px 0 0',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                {totalCards} failure modes · {totalPatterns} patterns ·{' '}
+                {totalAnchors} research anchors · corpus {CORPUS_VERSION}
+              </p>
             </div>
-          </details>
+
+            <nav
+              aria-label="Intelligence affordances"
+              style={{
+                display: 'flex',
+                gap: 8,
+                flexWrap: 'wrap',
+                justifyContent: 'flex-end',
+              }}
+            >
+              <Link
+                href="/intelligence/topics"
+                data-testid="intelligence-j0-affordance-browse-topics"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '8px 12px',
+                  fontFamily: SHELL.SANS,
+                  fontSize: 13,
+                  color: SHELL.INK,
+                  background: 'transparent',
+                  border: `1px solid ${SHELL.CARD_LINE}`,
+                  borderRadius: 6,
+                  textDecoration: 'none',
+                }}
+              >
+                Browse topics →
+              </Link>
+              <Link
+                href="/intelligence/ask"
+                data-testid="intelligence-j0-affordance-open-sentinel"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '8px 12px',
+                  fontFamily: SHELL.SANS,
+                  fontSize: 13,
+                  color: SHELL.INK,
+                  background: 'transparent',
+                  border: `1px solid ${SHELL.CARD_LINE}`,
+                  borderRadius: 6,
+                  textDecoration: 'none',
+                }}
+              >
+                Open Sentinel →
+              </Link>
+            </nav>
+          </header>
+
+          {/* J0 failure-mode card grid — the primary content */}
+          <main>
+            <J0FailureModeGrid />
+          </main>
         </div>
       </div>
     </AppShell>
