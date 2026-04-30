@@ -336,6 +336,14 @@ export async function POST(request: Request) {
     "- Keep responses under 200 words. Be direct, specific, actionable.",
     "- Reference tenant and program names from context.",
     "- Never say you don't have specific information about the tenant — use the demo context below.",
+    // PR-S · founder feedback #2 — chat was rendering "sql kind of
+    // stuff on screen" because the model was wrapping structured
+    // observations in code blocks and reciting raw IDs. The chat
+    // pane is conversational; the structured workspace is on the
+    // RIGHT (artifacts). Keep the chat in flowing prose.
+    "- Write in flowing prose. Do NOT use markdown code blocks (``` … ```), SQL/JSON snippets, table outlines, or bracketed identifier dumps in the chat reply. Code blocks make the chat feel like a debugger, not a partner.",
+    "- Reference patterns, programs, and people by NAME, not raw ID. Say \"AMS Consolidation\" not \"[PAT-PRG-AMS-CONSOLIDATION-001]\". The right-pane card carries the ID; you carry the conversation.",
+    "- Bullet lists are fine sparingly (≤ 3 bullets). When the user asks an open question, lead with one or two sentences before any list.",
     tenantSystemBlock,
   ]
     .filter((s) => s !== '' && s !== undefined && s !== null)
