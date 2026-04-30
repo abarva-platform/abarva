@@ -304,3 +304,120 @@ export async function getSegmentRecordPage(
     records,
   };
 }
+
+// ── Cross-program signals (segment 14) view-model ────────────────────────────
+//
+// Surfaced as a dedicated panel at /admin/cross-program-signals.
+// Each signal is a row in the cross_program_signals partition of
+// `data_inventory_records`; the substantive fields live in
+// `record_payload` (a JSONB column).
+
+export type SignalSeverityBucket = 'high' | 'medium' | 'low' | 'unknown';
+
+export interface CrossProgramSignal {
+  recordId: string;
+  signalId: string;
+  title: string;
+  /** "shared_sme_overcommitment", "shared_system_dependency", etc. */
+  signalType: string;
+  /** Raw severity string from the substrate. */
+  severityRaw: string;
+  /** Bucketed severity for filtering / grouping. */
+  severityBucket: SignalSeverityBucket;
+  description: string;
+  recommendation: string;
+  status: string;
+  /** Program ids the signal touches. */
+  programs: string[];
+  raisedBy: string;
+  raisedDate: string | null;
+}
+
+interface SignalRow {
+  record_id: string;
+  title: string;
+  record_payload: {
+    id?: string;
+    type?: string;
+    severity?: string;
+    description?: string;
+    recommendation?: string;
+    status?: string;
+    programs?: string[];
+    raised_by?: string;
+    raised_date?: string;
+  } | null;
+}
+
+function bucketSeverity(raw: string | undefined): SignalSeverityBucket {
+  if (!raw) return 'unknown';
+  const normalized = raw.toLowerCase();
+  if (normalized.startsWith('high')) return 'high';
+  if (normalized.startsWith('medium')) return 'medium';
+  if (normalized.startsWith('low')) return 'low';
+  return 'unknown';
+}
+
+const SEVERITY_RANK: Record<SignalSeverityBucket, number> = {
+  high: 0,
+  medium: 1,
+  low: 2,
+  unknown: 3,
+};
+
+/**
+ * Read the cross-program signals (segment 14) for a tenant.
+ * Returns an empty list when the substrate is unreachable or the
+ * segment is unpopulated. Sorted by severity-bucket ascending
+ * (high first) then by raised_date descending (most recent first).
+ */
+export async function getCrossProgramSignals(
+  brokerTenantKey: string,
+): Promise<CrossProgramSignal[]> {
+  const sb = (() => {
+    try {
+      return getServerSupabase();
+    } catch {
+      return null;
+    }
+  })();
+  if (!sb) return [];
+
+  const { data, error } = await sb
+    .from('data_inventory_records')
+    .select('record_id, title, record_payload')
+    .eq('tenant_key', brokerTenantKey)
+    .eq('segment_id', 'cross_program_signals')
+    .order('record_id');
+
+  if (error || !data) return [];
+
+  const rows = data as SignalRow[];
+  const signals: CrossProgramSignal[] = rows.map((row) => {
+    const payload = row.record_payload ?? {};
+    const severityRaw = payload.severity ?? '';
+    return {
+      recordId: row.record_id,
+      signalId: payload.id ?? row.record_id,
+      title: row.title,
+      signalType: payload.type ?? 'unknown',
+      severityRaw,
+      severityBucket: bucketSeverity(severityRaw),
+      description: payload.description ?? '',
+      recommendation: payload.recommendation ?? '',
+      status: payload.status ?? '',
+      programs: Array.isArray(payload.programs) ? payload.programs : [],
+      raisedBy: payload.raised_by ?? '',
+      raisedDate: payload.raised_date ?? null,
+    };
+  });
+
+  return signals.sort((a, b) => {
+    const rankDiff = SEVERITY_RANK[a.severityBucket] - SEVERITY_RANK[b.severityBucket];
+    if (rankDiff !== 0) return rankDiff;
+    if (a.raisedDate && b.raisedDate) {
+      return b.raisedDate.localeCompare(a.raisedDate);
+    }
+    return 0;
+  });
+}

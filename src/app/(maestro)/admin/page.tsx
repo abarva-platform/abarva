@@ -15,14 +15,17 @@
  */
 
 import { getActiveClientKey } from '@/lib/active-client';
-import { clientKeyToBrokerTenantKey } from '@/lib/agent/tools/intelligence/_shared';
+import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import {
   formatRelativeTimestamp,
   getSetupActsContent,
   getSetupSummaryCountsWithSnapshot,
   mergeInventorySnapshot,
 } from '@/lib/admin/setup-acts-registry';
-import { getSetupInventorySnapshot } from '@/lib/admin/setup-data-broker';
+import {
+  getCrossProgramSignals,
+  getSetupInventorySnapshot,
+} from '@/lib/admin/setup-data-broker';
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { AgentRail } from '@/components/admin/AgentRail';
 import { SetupAdminLanding } from '@/components/admin/setup/SetupAdminLanding';
@@ -34,16 +37,22 @@ export const revalidate = 0;
 
 export default async function AdminOverviewPage() {
   const clientKey = await getActiveClientKey().catch(() => null);
-  const brokerTenantKey = clientKey ? clientKeyToBrokerTenantKey(clientKey) : null;
+  const brokerTenantKey = clientKey ? clientKeyToInventorySubstrateKey(clientKey) : null;
   const baseContent = getSetupActsContent(clientKey);
-  const snapshot = brokerTenantKey
-    ? await getSetupInventorySnapshot(brokerTenantKey).catch(() => null)
-    : null;
+  const [snapshot, signals] = brokerTenantKey
+    ? await Promise.all([
+        getSetupInventorySnapshot(brokerTenantKey).catch(() => null),
+        getCrossProgramSignals(brokerTenantKey).catch(() => []),
+      ])
+    : [null, []];
   const content = mergeInventorySnapshot(baseContent, snapshot);
   const counts = getSetupSummaryCountsWithSnapshot(content, snapshot);
   const lastIngestedRelative = snapshot?.lastIngestedAt
     ? formatRelativeTimestamp(snapshot.lastIngestedAt)
     : undefined;
+  const atlasHighSeverityCount = signals.filter((s) => s.severityBucket === 'high').length;
+  const programSegment = snapshot?.segments.find((s) => s.segmentId === 'program_inventory');
+  const complianceSegment = snapshot?.segments.find((s) => s.segmentId === 'compliance');
 
   return (
     <AdminCanonShellV2
@@ -62,6 +71,10 @@ export default async function AdminOverviewPage() {
         segmentsTracked={counts.segmentsTracked}
         capabilitiesGrounded={counts.capabilitiesGrounded}
         lastIngestedRelative={lastIngestedRelative}
+        atlasSignalCount={signals.length}
+        atlasHighSeverityCount={atlasHighSeverityCount}
+        nexusProgramCount={programSegment?.recordCount ?? 0}
+        stewardFindingCount={complianceSegment?.recordCount ?? 0}
       />
       <SetupLandingTelemetryBridge
         tenantKey={brokerTenantKey}

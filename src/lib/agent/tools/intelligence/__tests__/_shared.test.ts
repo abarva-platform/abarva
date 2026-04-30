@@ -1,5 +1,6 @@
 import {
   clientKeyToBrokerTenantKey,
+  clientKeyToInventorySubstrateKey,
   filterPatternsByScope,
   scorePatternsByKeyword,
   tokenize,
@@ -128,6 +129,13 @@ describe('clientKeyToBrokerTenantKey · PR-INT-G Apex tenant key split', () => {
     expect(clientKeyToBrokerTenantKey('meridian')).toBe('meridian');
     expect(clientKeyToBrokerTenantKey('arcturus')).toBe('arcturus');
     expect(clientKeyToBrokerTenantKey('keystone')).toBe('keystone');
+  });
+
+  it("substrate map: 'apexretail' → 'apex-retail' and 'meridian' → 'meridian-health'", () => {
+    expect(clientKeyToInventorySubstrateKey('apexretail')).toBe('apex-retail');
+    expect(clientKeyToInventorySubstrateKey('meridian')).toBe('meridian-health');
+    expect(clientKeyToInventorySubstrateKey('arcturus')).toBe('arcturus');
+    expect(clientKeyToInventorySubstrateKey('keystone')).toBe('keystone');
   });
 
   it('mapped tenant key resolves a non-blocked broker bundle for Apex', () => {
