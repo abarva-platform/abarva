@@ -85,6 +85,52 @@ describe('Source Nexus API stub contract', () => {
     expect(response.warnings).toContain('No model was called. Response is deterministic.');
   });
 
+  it('turns a concise IT sourcing intake prompt into minimum event facts', () => {
+    const response = createSourceNexusApiStubResponse({
+      eventId: SOURCE_GOLDEN_EVENT_IDS.dataAiModernization,
+      prompt: 'Technology application managed services outsourcing',
+      tenant,
+      user,
+    });
+
+    expect(response.ok).toBe(true);
+    expect(response.noModel).toBe(true);
+    expect(response.intakeGuidance).toMatchObject({
+      detectedIntent: 'it_sourcing_event_intake',
+      eventType: 'Technology application managed services outsourcing',
+    });
+    expect(response.intakeGuidance?.facts.map((fact) => fact.id)).toEqual([
+      'why-now',
+      'scope-boundary',
+      'value-target',
+      'baseline-owner',
+      'approval-owner',
+    ]);
+    expect(response.summary).toContain('event-specific gaps');
+    expect(response.summary).toContain('Why now');
+    expect(response.summary).toContain('Scope boundary');
+    expect(response.summary).toContain('Value/savings target');
+    expect(response.summary).toContain('Required baseline/data owner');
+    expect(response.summary).toContain('Approval owner');
+    expect(response.summary).not.toMatch(/\b(chatbot|ask me|happy to help|as an ai|company|leadership|executive sponsor|embedding_status|vector embeddings are live|parse-failed|\[\[artifact:)/i);
+    expect(response.summary.length).toBeLessThan(700);
+    expect(response.nexusSummary?.recommendedNextAction).toBe(
+      'Open Intake once the baseline/data owner and approval owner are named.',
+    );
+  });
+
+  it('keeps richer command-read prompts on the existing briefing path', () => {
+    const response = createSourceNexusApiStubResponse({
+      eventId: SOURCE_GOLDEN_EVENT_IDS.dataAiModernization,
+      prompt: 'Give me the Source command read.',
+      tenant,
+      user,
+    });
+
+    expect(response.intakeGuidance).toBeUndefined();
+    expect(response.summary).toContain('Briefing version source-multi-agent-briefing/v1');
+  });
+
   it('returns a deterministic failure for missing event id', () => {
     const response = createSourceNexusApiStubResponse({
       prompt: 'What is happening?',

@@ -65,6 +65,20 @@ export interface SourceNexusApiValidationSummary {
   remainingGaps: string[];
 }
 
+export interface SourceNexusIntakeFact {
+  id: string;
+  label: string;
+  prompt: string;
+}
+
+export interface SourceNexusIntakeGuidance {
+  detectedIntent: 'it_sourcing_event_intake';
+  eventType: string;
+  opening: string;
+  facts: SourceNexusIntakeFact[];
+  nextStep: string;
+}
+
 export interface SourceNexusApiStubError {
   code:
     | 'missing_event_id'
@@ -111,6 +125,7 @@ export interface SourceNexusApiStubResponse {
   defers: string[];
   cannotProceedReasons: string[];
   summary: string;
+  intakeGuidance?: SourceNexusIntakeGuidance;
   error?: SourceNexusApiStubError;
 }
 
@@ -184,6 +199,10 @@ export function createSourceNexusApiStubResponse(
   });
   const suggestedActions = getSourceMultiAgentSuggestedActions(multiAgentBriefing);
   const answerStatus = deriveAnswerStatus(contextResult.bundle, contextValidationReport, workflowValidationReport, multiAgentBriefing);
+  const intakeGuidance = maybeBuildIntakeGuidance(prompt);
+  const summary = intakeGuidance
+    ? formatIntakeGuidanceSummary(intakeGuidance)
+    : summarizeSourceMultiAgentBriefing(multiAgentBriefing);
 
   return {
     ok: answerStatus !== 'error',
@@ -207,11 +226,13 @@ export function createSourceNexusApiStubResponse(
     },
     multiAgentBriefing,
     nexusSummary: {
-      title: multiAgentBriefing.nexus.title,
-      summary: multiAgentBriefing.nexus.summary,
-      primaryFinding: multiAgentBriefing.nexus.primaryFinding,
-      recommendedNextAction: multiAgentBriefing.nexus.recommendedNextAction,
-      confidence: multiAgentBriefing.nexus.confidence,
+      title: intakeGuidance ? 'Event intake facts required' : multiAgentBriefing.nexus.title,
+      summary: intakeGuidance?.opening ?? multiAgentBriefing.nexus.summary,
+      primaryFinding: intakeGuidance
+        ? 'The event can be opened once the minimum facts are captured.'
+        : multiAgentBriefing.nexus.primaryFinding,
+      recommendedNextAction: intakeGuidance?.nextStep ?? multiAgentBriefing.nexus.recommendedNextAction,
+      confidence: intakeGuidance ? 'medium' : multiAgentBriefing.nexus.confidence,
     },
     suggestedActions,
     contextValidationSummary: summarizeContextValidation(contextValidationReport),
@@ -225,7 +246,8 @@ export function createSourceNexusApiStubResponse(
       ...multiAgentBriefing.nexus.cannotProceedReasons,
       ...multiAgentBriefing.steward.cannotProceedReasons,
     ],
-    summary: summarizeSourceMultiAgentBriefing(multiAgentBriefing),
+    summary,
+    intakeGuidance,
   };
 }
 
@@ -353,6 +375,63 @@ function createWarnings(
 
 function createRequestId(eventId: string, generatedAt: string): string {
   return `source-nexus-api-stub:${eventId}:${generatedAt}`;
+}
+
+function maybeBuildIntakeGuidance(prompt: string): SourceNexusIntakeGuidance | undefined {
+  if (!isConciseSourcingIntakePrompt(prompt)) return undefined;
+
+  return {
+    detectedIntent: 'it_sourcing_event_intake',
+    eventType: prompt,
+    opening: `To stand up "${prompt}", capture these event-specific gaps.`,
+    facts: [
+      {
+        id: 'why-now',
+        label: 'Why now',
+        prompt: 'Trigger, deadline, renewal date, risk, or savings mandate.',
+      },
+      {
+        id: 'scope-boundary',
+        label: 'Scope boundary',
+        prompt: 'In scope, out of scope, geographies, business units, and retained roles.',
+      },
+      {
+        id: 'value-target',
+        label: 'Value/savings target',
+        prompt: 'Target range, budget baseline, or commercial outcome to protect.',
+      },
+      {
+        id: 'baseline-owner',
+        label: 'Required baseline/data owner',
+        prompt: 'Owner for inventory, workload/ticket baseline, spend, contracts, and SLAs.',
+      },
+      {
+        id: 'approval-owner',
+        label: 'Approval owner',
+        prompt: 'Owner/forum for launch, scope, spend guardrails, and shortlist moves.',
+      },
+    ],
+    nextStep: 'Open Intake once the baseline/data owner and approval owner are named.',
+  };
+}
+
+function isConciseSourcingIntakePrompt(prompt: string): boolean {
+  const normalized = prompt.trim().toLowerCase();
+  if (!normalized) return false;
+  if (normalized.length > 120) return false;
+  if (/[?]/.test(normalized)) return false;
+  if (/\b(why|how|what|when|who|explain|summarize|compare|show|give|draft|generate|advance|readiness|blocker|next)\b/.test(normalized)) {
+    return false;
+  }
+  return /\b(application|managed services|outsourcing|technology|it|cloud|infrastructure|service desk|cyber|vendor|sourcing|procurement|rfp|rfi|ams)\b/.test(normalized);
+}
+
+function formatIntakeGuidanceSummary(guidance: SourceNexusIntakeGuidance): string {
+  return [
+    guidance.opening,
+    ...guidance.facts.map((fact, index) => `${index + 1}. ${fact.label}: ${fact.prompt}`),
+    guidance.nextStep,
+  ].join('\n');
 }
 
 function normalizeText(value: unknown): string | undefined {
