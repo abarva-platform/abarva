@@ -3,7 +3,7 @@ import 'server-only';
 // OV2-2a · Tenant-admin approval workflow · server lib
 //
 // Backs the `program_approval_requests` table introduced in migration
-// 20260430120000_program_approval_workflow.sql. See the design doc
+// 20260430120100_program_approval_workflow.sql. See the design doc
 // (docs/build/PROGRAMS_MODULE_FAILURE_MODE_DRIVEN_DESIGN.md §B.2,
 // §D.0.5, Part G) for the state-machine context.
 //
