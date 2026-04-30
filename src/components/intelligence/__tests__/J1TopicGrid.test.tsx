@@ -94,4 +94,27 @@ describe('J1TopicGrid', () => {
       'AI use case portfolio management'.length,
     );
   });
+
+  // ── INT-2.5 — accessibility shape locks ─────────────────────────────────────
+
+  it('cards are real <a> elements (semantic; works without JS)', () => {
+    render(<J1TopicGrid />);
+    const ids = [
+      'ai-use-case-portfolio-management',
+      'pilot-to-production-scaling',
+      'workflow-and-operating-model-change',
+    ];
+    for (const id of ids) {
+      const card = screen.getByTestId(`intelligence-j1-topic-card-${id}`);
+      expect(card.tagName.toLowerCase()).toBe('a');
+      expect(card.getAttribute('href')).toBe(`/intelligence/topics/${id}`);
+    }
+  });
+
+  it('grid uses CSS Grid that responsively collapses (auto-fit minmax)', () => {
+    render(<J1TopicGrid />);
+    const grid = screen.getByTestId('intelligence-j1-topics-grid');
+    const inlineStyle = grid.getAttribute('style') ?? '';
+    expect(inlineStyle).toMatch(/repeat\(auto-fit, minmax\(/);
+  });
 });

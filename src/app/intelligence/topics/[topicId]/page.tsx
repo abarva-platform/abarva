@@ -31,6 +31,10 @@ import {
   patternRouteFor,
 } from '@/lib/intelligence/pattern-manifest';
 import { J0_FAILURE_MODE_CARDS, slugifyEditorialName } from '@/lib/intelligence/j0-failure-mode-cards';
+import { J1TelemetryBridge } from '@/components/intelligence/J1TelemetryBridge';
+import { J1DeepDiveLoadedEmitter } from '@/components/intelligence/J1DeepDiveLoadedEmitter';
+import { J1TopicLink } from '@/components/intelligence/J1TopicLink';
+import { getActiveClientRow } from '@/lib/active-client';
 
 interface PageProps {
   params: Promise<{ topicId: string }>;
@@ -82,6 +86,12 @@ export default async function TopicDeepDivePage({ params }: PageProps) {
       return { mode, slug, editorialName: card.editorialName };
     })
     .filter(<T,>(v: T | null): v is T => v !== null);
+
+  // Tenant detection for telemetry — same pattern as J0 page.
+  const activeClient = await getActiveClientRow().catch(() => null);
+  const tenantKey = activeClient?.key ?? null;
+  const visitorType: 'cold' | 'authenticated' =
+    activeClient ? 'authenticated' : 'cold';
 
   return (
     <AppShell
@@ -138,7 +148,9 @@ export default async function TopicDeepDivePage({ params }: PageProps) {
               Topics
             </Link>
             <span style={{ margin: '0 8px' }}>·</span>
-            <span style={{ color: SHELL.INK_MUTED }}>{topic.title}</span>
+            <span aria-current="page" style={{ color: SHELL.INK_MUTED }}>
+              {topic.title}
+            </span>
           </nav>
 
           {/* Header */}
@@ -286,10 +298,12 @@ export default async function TopicDeepDivePage({ params }: PageProps) {
                 }}
               >
                 {patternEntries.map((pattern) => (
-                  <Link
+                  <J1TopicLink
                     key={pattern.id}
                     href={patternRouteFor(pattern.slug)}
-                    data-testid={`intelligence-j1-topic-pattern-card-${pattern.id}`}
+                    eventName="j1_topic_pattern_clicked"
+                    eventDetail={{ topic_id: topic.topicId, pattern_id: pattern.id }}
+                    testid={`intelligence-j1-topic-pattern-card-${pattern.id}`}
                     style={{
                       display: 'flex',
                       flexDirection: 'column',
@@ -341,7 +355,7 @@ export default async function TopicDeepDivePage({ params }: PageProps) {
                           : pattern.shortDescription}
                       </p>
                     )}
-                  </Link>
+                  </J1TopicLink>
                 ))}
               </div>
             </section>
@@ -371,10 +385,12 @@ export default async function TopicDeepDivePage({ params }: PageProps) {
                 }}
               >
                 {relatedFailureModes.map(({ mode, slug, editorialName }) => (
-                  <Link
+                  <J1TopicLink
                     key={mode.id}
                     href={`/intelligence/failure-modes/${slug}`}
-                    data-testid={`intelligence-j1-topic-failure-mode-link-${mode.id}`}
+                    eventName="j1_topic_failure_mode_clicked"
+                    eventDetail={{ topic_id: topic.topicId, failure_mode_id: mode.id }}
+                    testid={`intelligence-j1-topic-failure-mode-link-${mode.id}`}
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -400,7 +416,7 @@ export default async function TopicDeepDivePage({ params }: PageProps) {
                     </span>
                     <span style={{ fontWeight: 500 }}>{editorialName}</span>
                     <span style={{ color: SHELL.INK_MUTED }}>→</span>
-                  </Link>
+                  </J1TopicLink>
                 ))}
               </div>
             </section>
@@ -433,7 +449,10 @@ export default async function TopicDeepDivePage({ params }: PageProps) {
                       borderRadius: 999,
                       fontFamily: SHELL.SANS,
                       fontSize: 12,
-                      color: SHELL.INK_SOFT,
+                      // INT-2.5: bumped from INK_SOFT (#5b6c8a) to INK_MID
+                      // (#2a3a5e) for WCAG AA contrast on the GRAY_BG (#efece4)
+                      // background. INK_MID gives ~7:1; INK_SOFT was ~3.6:1.
+                      color: SHELL.INK_MID,
                     }}
                   >
                     {archetype}
@@ -455,9 +474,11 @@ export default async function TopicDeepDivePage({ params }: PageProps) {
               borderRadius: 10,
             }}
           >
-            <Link
+            <J1TopicLink
               href="/intelligence/ask"
-              data-testid="intelligence-j1-topic-ask-sentinel"
+              eventName="j1_topic_open_sentinel_clicked"
+              eventDetail={{ topic_id: topic.topicId }}
+              testid="intelligence-j1-topic-ask-sentinel"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -474,7 +495,7 @@ export default async function TopicDeepDivePage({ params }: PageProps) {
               }}
             >
               Ask Sentinel about this topic →
-            </Link>
+            </J1TopicLink>
             <Link
               href="/intelligence/topics"
               style={{
@@ -494,6 +515,14 @@ export default async function TopicDeepDivePage({ params }: PageProps) {
               ← All topics
             </Link>
           </aside>
+
+          {/* Telemetry: emit deep-dive load + bridge to PostHog. */}
+          <J1DeepDiveLoadedEmitter topicId={topic.topicId} />
+          <J1TelemetryBridge
+            tenantKey={tenantKey}
+            visitorType={visitorType}
+            surface="topic_deep_dive"
+          />
         </div>
       </div>
     </AppShell>

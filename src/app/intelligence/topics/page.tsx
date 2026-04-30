@@ -10,10 +10,12 @@ import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { J1TopicGrid } from '@/components/intelligence/J1TopicGrid';
+import { J1TelemetryBridge } from '@/components/intelligence/J1TelemetryBridge';
 import {
   J1_TOPICS,
   getTotalAssociatedPatternCount,
 } from '@/lib/intelligence/j1-topics';
+import { getActiveClientRow } from '@/lib/active-client';
 
 export const metadata = {
   title: 'Topics · Intelligence | AbarVa',
@@ -21,9 +23,15 @@ export const metadata = {
     'AI transformation topics — what enterprises grapple with, organized by AbarVa\'s point of view, not as a wiki.',
 };
 
-export default function IntelligenceTopicsPage() {
+export default async function IntelligenceTopicsPage() {
   const topicCount = J1_TOPICS.length;
   const patternCount = getTotalAssociatedPatternCount();
+
+  // Tenant detection for telemetry — same pattern as J0 page.
+  const activeClient = await getActiveClientRow().catch(() => null);
+  const tenantKey = activeClient?.key ?? null;
+  const visitorType: 'cold' | 'authenticated' =
+    activeClient ? 'authenticated' : 'cold';
 
   return (
     <AppShell
@@ -76,7 +84,9 @@ export default function IntelligenceTopicsPage() {
               ← Intelligence
             </Link>
             <span style={{ margin: '0 8px' }}>·</span>
-            <span style={{ color: SHELL.INK_MUTED }}>Topics</span>
+            <span aria-current="page" style={{ color: SHELL.INK_MUTED }}>
+              Topics
+            </span>
           </nav>
 
           {/* Page header */}
@@ -128,6 +138,14 @@ export default function IntelligenceTopicsPage() {
           <main>
             <J1TopicGrid />
           </main>
+
+          {/* Telemetry bridge — listens for J1 CustomEvents and forwards
+              them to PostHog. */}
+          <J1TelemetryBridge
+            tenantKey={tenantKey}
+            visitorType={visitorType}
+            surface="topics_grid"
+          />
         </div>
       </div>
     </AppShell>

@@ -29,6 +29,9 @@ import {
   getPatternManifestEntry,
   patternRouteFor,
 } from '@/lib/intelligence/pattern-manifest';
+import { J1TelemetryBridge } from '@/components/intelligence/J1TelemetryBridge';
+import { J1TopicLink } from '@/components/intelligence/J1TopicLink';
+import { getActiveClientRow } from '@/lib/active-client';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -71,6 +74,12 @@ export default async function FailureModePage({ params }: PageProps) {
   // INT-2.4: resolve related topics whose associatedFailureModeIds[]
   // includes this card's failureModeId.
   const relatedTopics = getTopicsByFailureModeId(card.failureModeId);
+
+  // INT-2.6: tenant detection for telemetry.
+  const activeClient = await getActiveClientRow().catch(() => null);
+  const tenantKey = activeClient?.key ?? null;
+  const visitorType: 'cold' | 'authenticated' =
+    activeClient ? 'authenticated' : 'cold';
 
   return (
     <AppShell
@@ -123,7 +132,10 @@ export default async function FailureModePage({ params }: PageProps) {
               ← Intelligence
             </Link>
             <span style={{ margin: '0 8px' }}>·</span>
-            <span style={{ color: SHELL.INK_MUTED }}>
+            <span
+              aria-current="page"
+              style={{ color: SHELL.INK_MUTED }}
+            >
               #{card.failureModeId} {canonical.name}
             </span>
           </nav>
@@ -470,10 +482,12 @@ export default async function FailureModePage({ params }: PageProps) {
                 }}
               >
                 {relatedTopics.map((topic) => (
-                  <Link
+                  <J1TopicLink
                     key={topic.topicId}
                     href={`/intelligence/topics/${topic.topicId}`}
-                    data-testid={`intelligence-j1-failure-mode-related-topic-${topic.topicId}`}
+                    eventName="j1_failure_mode_topic_clicked"
+                    eventDetail={{ failure_mode_id: card.failureModeId, topic_id: topic.topicId }}
+                    testid={`intelligence-j1-failure-mode-related-topic-${topic.topicId}`}
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -490,7 +504,7 @@ export default async function FailureModePage({ params }: PageProps) {
                   >
                     <span style={{ fontWeight: 500 }}>{topic.title}</span>
                     <span style={{ color: SHELL.INK_MUTED }}>→</span>
-                  </Link>
+                  </J1TopicLink>
                 ))}
               </div>
             </section>
@@ -548,6 +562,14 @@ export default async function FailureModePage({ params }: PageProps) {
               ← All failure modes
             </Link>
           </aside>
+
+          {/* Telemetry: bridge listens for j1_failure_mode_topic_clicked
+              dispatched by the related-topic chips above. */}
+          <J1TelemetryBridge
+            tenantKey={tenantKey}
+            visitorType={visitorType}
+            surface="failure_mode_page"
+          />
         </div>
       </div>
     </AppShell>
