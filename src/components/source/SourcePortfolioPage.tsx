@@ -121,10 +121,6 @@ export function SourcePortfolioPage({ events, searchParams }: SourcePortfolioPag
         >
           <SourceCommandHeader eventsInView={eventsInView.length} events={eventsInView} />
 
-          <SourceMissionPreview events={eventsInView} />
-
-          <SourcingEventTable events={eventsInView} variant="light" />
-
           <SourcePortfolioAgentCanvas
             quote={buildPortfolioQuote(eventsInView)}
             events={eventsInView}
@@ -132,8 +128,11 @@ export function SourcePortfolioPage({ events, searchParams }: SourcePortfolioPag
             activeStatus={activeStatus}
             artifacts={artifacts}
             onArtifact={handleArtifact}
-            heightCss="420px"
           />
+
+          <SourceMissionPreview events={eventsInView} />
+
+          <SourcingEventTable events={eventsInView} variant="light" />
 
           <details
             data-testid="source-portfolio-legacy"

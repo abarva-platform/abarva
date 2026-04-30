@@ -128,9 +128,9 @@ function SourceEventsEntryHeader({
               color: SHELL.INK_SOFT,
             }}
           >
-            Triage technology sourcing events by lifecycle, owner, stage gate, linked program, evidence posture,
-            commercial value, blocker, aging, and next action. The table is the primary workspace; the agent rail
-            only explains the current portfolio read.
+            Nexus leads the IT sourcing queue by naming the next sourcing move, the evidence behind it, and the gate
+            that could block it. The table is supporting evidence: lifecycle, owner, linked program, value exposure,
+            blocker, aging, and next action.
           </p>
         </div>
         <Link

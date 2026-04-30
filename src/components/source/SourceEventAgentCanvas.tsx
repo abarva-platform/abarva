@@ -3,12 +3,14 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { useCallback, useState } from 'react';
 import { AppShell } from '@/components/shell/AppShell';
+import { AtlasDrawer } from '@/components/shell/AtlasDrawer';
 import { SourceWorkingPane } from '@/components/source/SourceWorkingPane';
 import { SourcingReactivePanel } from '@/components/source/SourcingReactivePanel';
 import { SourceLinkedProgramChip } from '@/components/source/LinkedProgramChip';
 import type { Artifact } from '@/lib/agent/artifacts';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourcingEventDetail } from '@/lib/source/types';
+import { formatUsd } from '@/lib/source/value-ledger';
 
 interface SourceEventAgentCanvasProps {
   event: SourcingEventDetail;
@@ -16,6 +18,12 @@ interface SourceEventAgentCanvasProps {
   quote: string;
   children: ReactNode;
 }
+
+const SENTINEL_AGENT = {
+  initials: 'Sn',
+  name: 'Sentinel',
+  role: 'Sourcing Intelligence',
+} as const;
 
 export function SourceEventAgentCanvas({
   event,
@@ -89,7 +97,7 @@ export function SourceEventAgentCanvas({
           <div
             data-testid="source-event-workbench"
             style={{
-              flex: '1 1 760px',
+              flex: '1 1 100%',
               minHeight: 0,
               minWidth: 0,
             }}
@@ -97,63 +105,120 @@ export function SourceEventAgentCanvas({
             <SourceWorkingPane padding="0">
               <div style={{ display: 'grid', gap: 12, paddingRight: 2 }}>
                 <EventCanvasHeader event={event} />
-                {children}
+                <section aria-label="Agent-led Source event workspace" style={EVENT_AGENT_CANVAS}>
+                  <div style={EVENT_CHAT_COLUMN}>
+                    <AtlasDrawer
+                      embedded
+                      isOpen={true}
+                      onClose={() => {
+                        // Embedded Source event workspace stays visible; it is not a drawer overlay.
+                      }}
+                      agent={SENTINEL_AGENT}
+                      quote={quote}
+                      surface="/source"
+                      onArtifact={handleArtifact}
+                      emptyState={<SourceEventPromptDeck event={event} />}
+                    />
+                  </div>
+                  <aside aria-label="Live Source event reasoning pane" style={EVENT_REASONING_COLUMN}>
+                    <EventAgentLead event={event} quote={quote} />
+                    <SourcingReactivePanel artifacts={artifacts} />
+                  </aside>
+                </section>
+                <section aria-label="Source event detailed workbench" style={DETAIL_WORKBENCH}>
+                  {children}
+                </section>
               </div>
             </SourceWorkingPane>
           </div>
-
-          <aside
-            data-testid="source-event-agent-chat"
-            aria-label="Compact Source agent rail"
-            style={{
-              flex: '0 1 320px',
-              minWidth: 260,
-              position: 'sticky',
-              top: 12,
-              display: 'grid',
-              gap: 10,
-            }}
-          >
-            <CompactAgentRail event={event} quote={quote} artifacts={artifacts} />
-          </aside>
         </section>
       </main>
     </AppShell>
   );
 }
 
-function CompactAgentRail({
+function EventAgentLead({
   event,
   quote,
-  artifacts,
 }: {
   event: SourcingEventDetail;
   quote: string;
-  artifacts: Artifact[];
 }) {
+  const blockerCopy = event.blocker ?? 'No hard blocker recorded yet. Steward still needs evidence before the gate can be treated as clear.';
+  const stageLabel = event.currentStageLabel || 'Current stage';
+
   return (
-    <>
-      <section style={RAIL_CARD}>
-        <div style={RAIL_EYEBROW}>Agent rail</div>
-        <div style={RAIL_TITLE}>Nexus, Sentinel, Steward, Atlas</div>
-        <p style={RAIL_COPY}>{quote}</p>
-        <div style={RAIL_SIGNAL_GRID}>
-          <SignalPill label="Stage" value={event.currentStageLabel} />
-          <SignalPill label="Gate" value={event.blocker ? 'Blocked' : 'In review'} />
-          <SignalPill label="Next" value={event.nextAction} />
+    <section aria-label="Agent-led Source stage brief" style={EVENT_LEAD_CARD}>
+      <div style={EVENT_LEAD_HEADER}>
+        <div>
+          <div style={META_LABEL}>Agent-led stage brief</div>
+          <h2 style={EVENT_LEAD_TITLE}>Nexus is running {stageLabel}</h2>
         </div>
-      </section>
-      <SourceEventPromptDeck event={event} />
-      <SourcingReactivePanel artifacts={artifacts} />
-    </>
+        <div style={EVENT_LEAD_VALUE}>
+          <div style={META_LABEL}>Value at stake</div>
+          <div style={META_VALUE}>{formatUsd(event.valueAtStakeUsd)}</div>
+        </div>
+      </div>
+      <p style={EVENT_LEAD_COPY}>{quote}</p>
+
+      <div style={EVENT_AGENT_GRID} aria-label="Source agent responsibilities for this stage">
+        <EventAgentCard
+          agent="Nexus"
+          role="Workflow conductor"
+          detail={`${event.nextAction} Then prepare the team for the next gate with inputs, session plan, and output packet.`}
+        />
+        <EventAgentCard
+          agent="Steward"
+          role={event.blocker ? 'Gate / approval blocked' : 'Gate / approval in review'}
+          detail={`${blockerCopy} Waivers need explicit rationale; approvals are placeholders until the engine is wired.`}
+        />
+        <EventAgentCard
+          agent="Sentinel"
+          role="Evidence and files"
+          detail="Paperclip uploads, pasted notes, and vendor files must become validated evidence before they support recommendations."
+        />
+        <EventAgentCard
+          agent="Atlas"
+          role="Artifacts and executive decision"
+          detail={`Decision posture: ${event.nextDecision}. Generate the right HTML, Word, or Excel packet before review.`}
+        />
+      </div>
+
+      <div style={EVENT_ACTION_GRID} aria-label="Agent suggested stage actions">
+        <StageAction label="Define done" detail="Evidence, owner, approval, blocker, and exit criteria for this stage." />
+        <StageAction label="Attach evidence" detail="Inventory, contract, pricing, vendor response, meeting notes, or workshop output." />
+        <StageAction label="Generate packet" detail="HTML/Word/Excel-ready artifact for the current stage and review audience." />
+        <StageAction label="Prep next step" detail="Team guidance: meeting agenda, required inputs, roles, and expected outputs." />
+        <StageAction label="Run workshop" detail="Facilitation plan, prompts, capture template, and post-session validation." />
+        <StageAction label="Open gate path" detail="Who reviews, what can be waived, and what cannot move forward." />
+      </div>
+    </section>
   );
 }
 
-function SignalPill({ label, value }: { label: string; value: string }) {
+function EventAgentCard({
+  agent,
+  role,
+  detail,
+}: {
+  agent: string;
+  role: string;
+  detail: string;
+}) {
   return (
-    <div style={SIGNAL_PILL}>
-      <div style={SIGNAL_LABEL}>{label}</div>
-      <div style={SIGNAL_VALUE}>{value}</div>
+    <div style={EVENT_AGENT_CARD}>
+      <div style={EVENT_AGENT_NAME}>{agent}</div>
+      <div style={EVENT_AGENT_ROLE}>{role}</div>
+      <p style={EVENT_AGENT_COPY}>{detail}</p>
+    </div>
+  );
+}
+
+function StageAction({ label, detail }: { label: string; detail: string }) {
+  return (
+    <div style={EVENT_ACTION_CARD}>
+      <div style={EVENT_ACTION_LABEL}>{label}</div>
+      <div style={EVENT_ACTION_DETAIL}>{detail}</div>
     </div>
   );
 }
@@ -171,6 +236,18 @@ function SourceEventPromptDeck({ event }: { event: SourcingEventDetail }) {
     {
       label: 'Approval path',
       prompt: 'Who approves this gate, what packet do they review, and what waiver is allowed?',
+    },
+    {
+      label: 'Attach evidence',
+      prompt: 'Upload the file or paste notes; I will separate cited evidence from unvalidated attachment context.',
+    },
+    {
+      label: 'Generate packet',
+      prompt: 'Tell me the audience and format: HTML brief, Word memo, Excel pricing workbook, or meeting packet.',
+    },
+    {
+      label: 'Workshop mode',
+      prompt: 'Prepare the agenda, roles, capture template, decisions needed, and post-workshop sync checklist.',
     },
   ];
 
@@ -211,7 +288,8 @@ function SourceEventPromptDeck({ event }: { event: SourcingEventDetail }) {
             color: SHELL.INK,
           }}
         >
-          Keep guidance short: stage, blocker, next action, and the exact evidence needed before movement.
+          Keep guidance short: stage, blocker, next action, exact evidence, approval path, artifact packet, and next
+          meeting/workshop prep.
         </p>
       </div>
 
@@ -384,70 +462,6 @@ function getClientContextSnapshot(event: SourcingEventDetail): ClientContextSnap
   };
 }
 
-const RAIL_CARD: CSSProperties = {
-  border: '1px solid ' + SHELL.CARD_LINE,
-  borderRadius: 14,
-  background: SHELL.CARD_WHITE,
-  padding: '12px 13px',
-  display: 'grid',
-  gap: 9,
-};
-
-const RAIL_EYEBROW: CSSProperties = {
-  fontFamily: SHELL.MONO,
-  fontSize: 9,
-  letterSpacing: '0.14em',
-  textTransform: 'uppercase',
-  color: SHELL.INK_MUTED,
-  fontWeight: 700,
-};
-
-const RAIL_TITLE: CSSProperties = {
-  fontFamily: SHELL.SANS,
-  fontSize: 14,
-  lineHeight: 1.2,
-  color: SHELL.INK,
-  fontWeight: 800,
-};
-
-const RAIL_COPY: CSSProperties = {
-  margin: 0,
-  fontFamily: SHELL.SANS,
-  fontSize: 12,
-  lineHeight: 1.42,
-  color: SHELL.INK_MUTED,
-};
-
-const RAIL_SIGNAL_GRID: CSSProperties = {
-  display: 'grid',
-  gap: 7,
-};
-
-const SIGNAL_PILL: CSSProperties = {
-  border: '1px solid ' + SHELL.CARD_LINE,
-  borderRadius: 10,
-  background: SHELL.PAPER_SOFT,
-  padding: '7px 9px',
-};
-
-const SIGNAL_LABEL: CSSProperties = {
-  fontFamily: SHELL.MONO,
-  fontSize: 8.5,
-  letterSpacing: '0.1em',
-  textTransform: 'uppercase',
-  color: SHELL.INK_MUTED,
-  fontWeight: 700,
-};
-
-const SIGNAL_VALUE: CSSProperties = {
-  marginTop: 2,
-  fontFamily: SHELL.SANS,
-  fontSize: 11.5,
-  lineHeight: 1.3,
-  color: SHELL.INK,
-  fontWeight: 700,
-};
-
 const STANDALONE_BADGE: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
@@ -459,6 +473,142 @@ const STANDALONE_BADGE: CSSProperties = {
   fontSize: 9,
   letterSpacing: '0.1em',
   textTransform: 'uppercase',
+  color: SHELL.INK_MUTED,
+};
+
+const EVENT_AGENT_CANVAS: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'minmax(0, 1.7fr) minmax(min(100%, 360px), 1fr)',
+  gap: 14,
+  alignItems: 'stretch',
+  minHeight: 524,
+};
+
+const EVENT_CHAT_COLUMN: CSSProperties = {
+  minWidth: 0,
+  minHeight: 524,
+  display: 'grid',
+};
+
+const EVENT_REASONING_COLUMN: CSSProperties = {
+  minWidth: 0,
+  minHeight: 0,
+  display: 'grid',
+  alignContent: 'start',
+  gap: 10,
+};
+
+const DETAIL_WORKBENCH: CSSProperties = {
+  display: 'grid',
+  gap: 12,
+};
+
+const EVENT_LEAD_CARD: CSSProperties = {
+  border: '1px solid ' + SHELL.BLUE_LINE,
+  borderRadius: 16,
+  background: 'linear-gradient(135deg, ' + SHELL.CARD_WHITE + ' 0%, ' + SHELL.BLUE_BG + ' 100%)',
+  padding: '14px 15px',
+  display: 'grid',
+  gap: 11,
+  boxShadow: '0 16px 38px rgba(12, 26, 58, 0.06)',
+};
+
+const EVENT_LEAD_HEADER: CSSProperties = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'flex-start',
+  gap: 12,
+  flexWrap: 'wrap',
+};
+
+const EVENT_LEAD_TITLE: CSSProperties = {
+  margin: '4px 0 0',
+  fontFamily: SHELL.SERIF,
+  fontSize: 24,
+  lineHeight: 1.08,
+  color: SHELL.INK,
+  letterSpacing: '-0.02em',
+};
+
+const EVENT_LEAD_VALUE: CSSProperties = {
+  border: '1px solid ' + SHELL.CARD_LINE,
+  borderRadius: 12,
+  background: 'rgba(253, 251, 246, 0.82)',
+  padding: '8px 10px',
+  minWidth: 150,
+};
+
+const EVENT_LEAD_COPY: CSSProperties = {
+  margin: 0,
+  fontFamily: SHELL.SANS,
+  fontSize: 12.8,
+  lineHeight: 1.48,
+  color: SHELL.INK_SOFT,
+};
+
+const EVENT_AGENT_GRID: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 155px), 1fr))',
+  gap: 8,
+};
+
+const EVENT_AGENT_CARD: CSSProperties = {
+  border: '1px solid rgba(12, 26, 58, 0.08)',
+  borderRadius: 12,
+  background: 'rgba(253, 251, 246, 0.78)',
+  padding: '8px 9px',
+};
+
+const EVENT_AGENT_NAME: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 8.5,
+  letterSpacing: '0.12em',
+  textTransform: 'uppercase',
+  color: SHELL.INK_MUTED,
+  fontWeight: 800,
+};
+
+const EVENT_AGENT_ROLE: CSSProperties = {
+  marginTop: 3,
+  fontFamily: SHELL.SANS,
+  fontSize: 12.3,
+  color: SHELL.INK,
+  fontWeight: 800,
+};
+
+const EVENT_AGENT_COPY: CSSProperties = {
+  margin: '4px 0 0',
+  fontFamily: SHELL.SANS,
+  fontSize: 11.2,
+  lineHeight: 1.34,
+  color: SHELL.INK_MUTED,
+};
+
+const EVENT_ACTION_GRID: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 170px), 1fr))',
+  gap: 8,
+};
+
+const EVENT_ACTION_CARD: CSSProperties = {
+  border: '1px solid ' + SHELL.CARD_LINE,
+  borderRadius: 12,
+  background: SHELL.PAPER,
+  padding: '8px 10px',
+};
+
+const EVENT_ACTION_LABEL: CSSProperties = {
+  fontFamily: SHELL.SANS,
+  fontSize: 12.3,
+  color: SHELL.INK,
+  fontWeight: 800,
+};
+
+const EVENT_ACTION_DETAIL: CSSProperties = {
+  marginTop: 2,
+  fontFamily: SHELL.SANS,
+  fontSize: 11.2,
+  lineHeight: 1.28,
   color: SHELL.INK_MUTED,
 };
 
