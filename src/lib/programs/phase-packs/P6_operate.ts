@@ -266,4 +266,229 @@ export const P6_OPERATE: PhasePack = {
       'Renewal or retirement evidence packet for vendor, budget, and portfolio review cycles',
     ],
   },
+
+  // ── Step decomposition · OV2-5-P6 (design doc D.6.4) ─────────────────────
+  //
+  // 8 canonical P6 steps. P6 is the steady-state accountability phase: it
+  // prevents failure modes #9 (sustained measurement), #5 (sustained workflow
+  // change), #10 (sprawl by abandonment / re-tested expectations), and the
+  // platform's **learning loop** — the pattern-catalog harvest that lets the
+  // next program of this archetype start smarter. The harvest is the
+  // compounding mechanism that makes the platform more than a project tool.
+  //
+  // The DAG threads the P5 handoff into a fan-out: the standing-owner
+  // handoff runs first; quarterly-review establish builds on the named owner;
+  // quality-and-risk controls run in parallel from the handoff; vendor-renewal
+  // prep is parallel and time-triggered (90 days before contract). The first
+  // quarterly review consumes review-cadence + quality controls + the P5
+  // adoption baseline. Kill-or-expand consumes the first quarterly review's
+  // decision log. The pattern-catalog harvest consumes everything substantive
+  // and closes the loop.
+  //
+  // StepComplexity admits only 'simple' | 'complex'. Two design-doc steps are
+  // "medium" (quality-risk-controls is a continuous validation activity;
+  // vendor-renewal-prep is a time-triggered prep flag). Both are encoded as
+  // 'simple' per the slice rule, with a comment naming the design-doc
+  // complexity.
+  //
+  // Output rules: outputs MUST reference real DoD ids on this pack, or be the
+  // empty array for intermediate-artifact producers. The first quarterly
+  // review produces a decision log — an intermediate artifact that flows into
+  // kill-or-expand; downstream steps reference the intermediate artifact id
+  // `p6-first-quarterly-review-decision-log` in their `inputs` so the DAG
+  // stays legible:
+  //   • p6-first-quarterly-review → p6-first-quarterly-review-decision-log
+  //
+  // The harvest step (`p6-pattern-catalog-harvest`) is unique. Its real
+  // output is a write into the pattern catalog itself — outside the P6 DoD,
+  // because the DoD captures evidence that the *program* is governed, not
+  // evidence that the *platform* is learning. `outputs: []` is the correct
+  // encoding; the harvest's value is the cross-program compounding it
+  // produces. preventsFailureModes is tagged broadly [9, 10] because the
+  // learning loop is what keeps the next archetype-program from repeating
+  // the unrealistic-expectations and sustained-measurement failure modes
+  // that this program just survived.
+  steps: [
+    // Continuity step. Tagged [9] because the P5 outcome report and benefits
+    // attestation carry the signed baseline forward; without that ingestion,
+    // P6 measurement drifts away from the value case. No DoD id maps to a
+    // pure handoff-ingest, so outputs is empty; downstream steps reference
+    // the intermediate artifact `p6-handoff-ingest-confirmed` to keep the
+    // DAG legible.
+    {
+      id: 'p6-handoff-ingest',
+      label:
+        'Confirm P5 outcome report + benefits attestation carried into operate',
+      complexity: 'simple',
+      agentRole: 'extract',
+      inputs: [],
+      outputs: [],
+      templateRefs: [],
+      preventsFailureModes: [9],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+    // Complex coached interview with the named standing owner pair (business
+    // + technical). Off-platform handoff conversation captures explicit RACI,
+    // decision rights, escalation path, and budget/run-cost accountability.
+    // Output is `standing-owner-named` (hard DoD). Tagged [5] because
+    // ownership ambiguity is the dominant cause of sustained workflow-change
+    // decay after launch.
+    {
+      id: 'p6-standing-owner-handoff',
+      label:
+        'Identify and handoff to standing operating owner with explicit RACI',
+      complexity: 'complex',
+      agentRole: 'coach_interview',
+      inputs: ['p6-handoff-ingest-confirmed'],
+      outputs: ['standing-owner-named'],
+      templateRefs: [],
+      preventsFailureModes: [5],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+    // Complex workshop. Establishes the quarterly operating review cadence,
+    // attendees, metric pack, and decision-log owner; stands up the adoption
+    // drift dashboard. Outputs both `quarterly-operating-review-live` and
+    // `adoption-drift-dashboard` because a single workshop produces the
+    // governance artifact and the telemetry surface together. Tagged [9, 5]
+    // because sustained measurement and sustained workflow change are both
+    // protected by the cadence + drift dashboard pair.
+    {
+      id: 'p6-quarterly-review-establish',
+      label:
+        'Establish quarterly operating review cadence + dashboard + decision log',
+      complexity: 'complex',
+      agentRole: 'coach_workshop',
+      inputs: ['standing-owner-named'],
+      outputs: [
+        'quarterly-operating-review-live',
+        'adoption-drift-dashboard',
+      ],
+      templateRefs: [],
+      preventsFailureModes: [9, 5],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+    // Design doc D.6.4 marks quality-and-risk controls "medium" (continuous
+    // validation: model drift, bias, security posture, vendor SLA). Encoded
+    // as 'simple' per the slice rule — the agent role is `validate`, not a
+    // workshop. Runs in parallel from the handoff so quality controls go live
+    // before the first quarterly review. Output is the
+    // `quality-and-risk-controls-live` DoD. Tagged [6, 9] because late
+    // attention to governance/privacy/risk (#6) and inability to measure
+    // outcomes (#9) are the two failure modes the controls exist to prevent.
+    {
+      id: 'p6-quality-risk-controls-live',
+      label:
+        'Quality-and-risk controls operationalized (model drift, bias, security posture, vendor SLA)',
+      complexity: 'simple',
+      agentRole: 'validate',
+      inputs: ['p6-handoff-ingest-confirmed'],
+      outputs: ['quality-and-risk-controls-live'],
+      templateRefs: [],
+      preventsFailureModes: [6, 9],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+    // First quarterly operating review. Complex coached workshop executed
+    // against the signed P5 baseline + the new drift dashboard + quality
+    // controls. Produces an intermediate decision-log artifact that flows
+    // into the kill-or-expand decision; no DoD id maps to "first review
+    // executed" (the cadence DoD is satisfied by the establish step), so
+    // outputs is empty. Tagged [9, 10] because the first review is where
+    // sustained measurement either holds (preventing #9) or surfaces the
+    // unrealistic-expectations re-test (preventing #10).
+    {
+      id: 'p6-first-quarterly-review',
+      label:
+        'Execute the first quarterly operating review against the signed baseline',
+      complexity: 'complex',
+      agentRole: 'coach_workshop',
+      inputs: [
+        'quarterly-operating-review-live',
+        'adoption-drift-dashboard',
+        'quality-and-risk-controls-live',
+      ],
+      outputs: [],
+      templateRefs: [],
+      preventsFailureModes: [9, 10],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+    // Vendor renewal prep is time-triggered: 90 days before contract date the
+    // agent flags `vendor-renewal-amnesia` if the operating pack lacks
+    // utilization, value, and performance evidence. Design doc D.6.4 marks
+    // this "medium"; encoded as 'simple' per the slice rule because the
+    // agent role is `flag_anti_pattern` (chat-resolvable). Runs in parallel
+    // from the handoff. Output is `cost-and-vendor-review-ready`. Tagged
+    // [7, 10] because vendor / build-vs-buy strategy errors (#7) and use-
+    // case sprawl / unrealistic expansion (#10) are both surfaced by an
+    // unprepared renewal pack.
+    {
+      id: 'p6-vendor-renewal-prep',
+      label:
+        "Prep vendor renewal pack 90 days before contract date; flag 'vendor-renewal-amnesia'",
+      complexity: 'simple',
+      agentRole: 'flag_anti_pattern',
+      inputs: ['p6-handoff-ingest-confirmed'],
+      outputs: ['cost-and-vendor-review-ready'],
+      templateRefs: [],
+      preventsFailureModes: [7, 10],
+      intentCaptureRequired: false,
+      postMeetingUploadExpected: false,
+    },
+    // Complex coached interview with the standing owner + sponsor. Decides
+    // kill / expand / sustain based on the first quarterly review's decision
+    // log. Prevents the `dashboard-without-decision` anti-pattern. Output is
+    // `kill-or-expand-thresholds-owned` (DoD). Tagged [10, 9] because the
+    // kill/expand decision is where unrealistic expectations are explicitly
+    // re-tested (#10) and sustained measurement converts into a portfolio
+    // choice rather than ceremony (#9).
+    {
+      id: 'p6-kill-or-expand-decision',
+      label:
+        'Decide kill / expand / sustain based on quarterly evidence; prevents dashboard-without-decision',
+      complexity: 'complex',
+      agentRole: 'coach_interview',
+      inputs: ['p6-first-quarterly-review-decision-log'],
+      outputs: ['kill-or-expand-thresholds-owned'],
+      templateRefs: [],
+      preventsFailureModes: [10, 9],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+    // Pattern-catalog harvest — the platform's compounding mechanism. Closes
+    // the learning loop by writing refined failure-mode patterns, evidence
+    // templates, workshop guides, and baseline-capture techniques into the
+    // pattern catalog so the next archetype-program starts smarter. Its real
+    // output is a write to the pattern catalog itself, which is outside this
+    // pack's DoD (the DoD tracks program governance, not platform learning).
+    // outputs: [] is the correct encoding — no DoD id captures the harvest.
+    // The learning-loop concern is the platform's value-prop made visible;
+    // tagged [9, 10] as the broadest-applicable pair because the harvest is
+    // what keeps the next program of this archetype from repeating the
+    // sustained-measurement and unrealistic-expectations failure modes.
+    {
+      id: 'p6-pattern-catalog-harvest',
+      label:
+        'Harvest learnings into the pattern catalog so the next archetype-program starts smarter — closes the loop',
+      complexity: 'complex',
+      agentRole: 'compose_artifact',
+      inputs: [
+        'standing-owner-named',
+        'quarterly-operating-review-live',
+        'adoption-drift-dashboard',
+        'quality-and-risk-controls-live',
+        'cost-and-vendor-review-ready',
+        'kill-or-expand-thresholds-owned',
+        'p6-first-quarterly-review-decision-log',
+      ],
+      outputs: [],
+      templateRefs: [],
+      preventsFailureModes: [9, 10],
+      intentCaptureRequired: true,
+      postMeetingUploadExpected: true,
+    },
+  ],
 };
