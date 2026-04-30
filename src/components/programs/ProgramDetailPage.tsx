@@ -4227,7 +4227,13 @@ export function ProgramDetailPage({
             moment of approval — it should be visible by default, not
             hidden behind a tab. Silent fallback when no primer matches. */}
         {view.currentPhase === 0 && phase0Primer ? (
-          <Phase0Primer primer={phase0Primer} />
+          <Phase0Primer
+            primer={phase0Primer}
+            // OV2-3c · downloadable HTML brief endpoint. Wires the prop
+            // OV2-3b shipped behind, now that the renderer + API route
+            // are live.
+            downloadHref={`/api/programs/${encodeURIComponent(view.programId)}/primer-html`}
+          />
         ) : null}
 
         {/* Surface 2 PR-F — agent-centric primary canvas. Chat with
