@@ -36,7 +36,9 @@ export function AdminCanonShellV2({ children, agentRail, tenantName = 'Apex Reta
         data-admin-shell="canon-v2"
       >
         <AdminSidebar reasoningAlertCount={reasoningAlertCount} />
-        {children}
+        <div style={{ overflowY: 'auto', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+          {children}
+        </div>
         {agentRail}
       </div>
     </AppShell>
