@@ -3,6 +3,7 @@
 import { AtlasDrawer } from '@/components/shell/AtlasDrawer';
 import { SourcePortfolioReactivePanel } from '@/components/source/SourcePortfolioReactivePanel';
 import type { Artifact } from '@/lib/agent/artifacts';
+import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourcingEventSummary } from '@/lib/source/types';
 
 interface SourcePortfolioAgentCanvasProps {
@@ -61,6 +62,7 @@ export function SourcePortfolioAgentCanvas({
           quote={quote}
           surface="/source"
           onArtifact={onArtifact}
+          emptyState={<SourcePortfolioPromptDeck events={events} />}
         />
       </div>
 
@@ -81,5 +83,105 @@ export function SourcePortfolioAgentCanvas({
         />
       </aside>
     </section>
+  );
+}
+
+function SourcePortfolioPromptDeck({ events }: { events: SourcingEventSummary[] }) {
+  const amsEvent = events.find((event) =>
+    `${event.name} ${event.archetype}`.toLowerCase().includes('ams')
+    || `${event.name} ${event.archetype}`.toLowerCase().includes('managed services')
+  );
+
+  const cards = [
+    {
+      label: 'Start an event',
+      body: 'Tell me the category, owner, problem, scope boundary, decision needed, and stop condition. I will not treat it as registered until intake approval is clear.',
+    },
+    {
+      label: 'Application managed services',
+      body: 'For AMS, I need application/service inventory, incumbent/vendor list, run-rate, contract dates, service pain, transition constraints, and approval owner.',
+    },
+    {
+      label: 'Open seeded event',
+      body: amsEvent
+        ? `${amsEvent.name} is available as a seeded reference at ${amsEvent.currentStageLabel}.`
+        : 'No AMS seeded event is visible in this filter; reset filters or start a new intake.',
+    },
+  ];
+
+  return (
+    <div style={{ width: '100%', display: 'grid', gap: 10, padding: '0 0 8px' }}>
+      <div
+        style={{
+          border: '1px solid rgba(250,247,241,0.12)',
+          borderRadius: 12,
+          background: 'rgba(250,247,241,0.055)',
+          padding: '11px 12px',
+        }}
+      >
+        <div
+          style={{
+            fontFamily: SHELL.MONO,
+            fontSize: 8.5,
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            color: 'rgba(250,247,241,0.48)',
+            fontWeight: 700,
+          }}
+        >
+          Sentinel intake posture
+        </div>
+        <p
+          style={{
+            margin: '6px 0 0',
+            fontFamily: SHELL.SERIF,
+            fontSize: 14.5,
+            lineHeight: 1.36,
+            color: 'rgba(250,247,241,0.88)',
+          }}
+        >
+          I can help register a sourcing event, but first I will make the intake gate visible:
+          owner, problem, scope, evidence, kill criterion, and approval route.
+        </p>
+      </div>
+
+      <div style={{ display: 'grid', gap: 7 }}>
+        {cards.map((item) => (
+          <div
+            key={item.label}
+            style={{
+              border: '1px solid rgba(250,247,241,0.10)',
+              borderRadius: 10,
+              padding: '8px 10px',
+              background: 'rgba(250,247,241,0.035)',
+            }}
+          >
+            <div
+              style={{
+                fontFamily: SHELL.MONO,
+                fontSize: 8,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                color: 'rgba(250,247,241,0.40)',
+                fontWeight: 700,
+              }}
+            >
+              {item.label}
+            </div>
+            <div
+              style={{
+                marginTop: 3,
+                fontFamily: SHELL.SANS,
+                fontSize: 11.8,
+                lineHeight: 1.34,
+                color: 'rgba(250,247,241,0.78)',
+              }}
+            >
+              {item.body}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

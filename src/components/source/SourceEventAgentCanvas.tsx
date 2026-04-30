@@ -56,9 +56,13 @@ export function SourceEventAgentCanvas({
         eventId: event.id,
         eventName: event.name,
         eventCode: event.code ?? '',
+        eventType: event.archetype,
+        currentStageKey: event.currentStageKey,
         currentStage: event.currentStageLabel ?? '',
         blocker: event.blocker ?? null,
         valueAtStakeUsd: event.valueAtStakeUsd ?? null,
+        nextDecision: event.nextDecision,
+        nextAction: event.nextAction,
       }}
       topBarProps={{
         tenantName: event.accountName,
@@ -132,16 +136,16 @@ export function SourceEventAgentCanvas({
 function SourceEventPromptDeck({ event }: { event: SourcingEventDetail }) {
   const prompts = [
     {
-      label: 'Gate read',
-      prompt: `Can we advance ${event.name} past ${event.currentStageLabel}?`,
+      label: 'What good looks like',
+      prompt: `Define done for ${event.currentStageLabel}: evidence, owner, approvals, and what blocks advance.`,
     },
     {
-      label: 'Compare',
-      prompt: 'Compare the shortlisted vendors against the stage rubric.',
+      label: 'Capture plan',
+      prompt: 'Tell me which meetings, uploads, and templates are needed before this stage can clear.',
     },
     {
-      label: 'BAFO',
-      prompt: 'Run a BAFO check: walkaway credibility, holds, and sequence.',
+      label: 'Approval path',
+      prompt: 'Who approves this gate, what packet do they review, and what waiver is allowed?',
     },
   ];
 
@@ -183,7 +187,9 @@ function SourceEventPromptDeck({ event }: { event: SourcingEventDetail }) {
             color: 'rgba(250,247,241,0.88)',
           }}
         >
-          Ask Sentinel what decision is safe now, what evidence is missing, or what leverage to use next.
+          Ask Sentinel to run the stage like an operating workflow: define done, capture
+          evidence, separate chat-simple work from workshop/data-pull work, and make the
+          approval path explicit before any advance.
         </p>
       </div>
 

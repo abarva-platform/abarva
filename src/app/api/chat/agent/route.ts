@@ -35,6 +35,12 @@ import { canonicalizeFromBody } from "@/lib/agent/surface";
 // posture per phase arc — that complements the per-pattern knowledge
 // already wired in via demo-context.
 import { getPhasePack, formatPhasePackForPrompt } from "@/lib/programs/phase-packs";
+import {
+  getStagePack,
+  formatStagePackForPrompt,
+} from "@/lib/source/stage-packs";
+import { buildSourceLifecycleContract } from "@/lib/lifecycle-operating-system";
+import type { SourceStageKey } from "@/lib/source/types";
 // PR-R · broker bundle for Nexus on /programs surfaces — exposes
 // the tenant's executive bench + program inventory so Nexus can
 // reference real people/roles instead of inventing them. Closes
@@ -232,11 +238,24 @@ export async function POST(request: Request) {
   }
 
   const categoryPlaybook = retrieveCategoryContext(
-    (body.surfaceContext?.eventName as string) ?? '',
+    [
+      (body.surfaceContext?.eventName as string) ?? '',
+      (body.surfaceContext?.eventType as string) ?? '',
+      message,
+    ].join(' '),
     (body.surfaceContext?.eventType as string) ?? undefined,
   );
 
   const stagePlaybook = retrieveStageContext(stage);
+  const sourceStagePackBlock = buildSourceStagePackBlock({
+    surface,
+    sourceStageKey: typeof sc.currentStageKey === 'string' ? sc.currentStageKey : undefined,
+    eventName: typeof sc.eventName === 'string' ? sc.eventName : undefined,
+  });
+  const sourceOperatingDoctrineBlock = buildSourceOperatingDoctrineBlock({
+    surface,
+    hasEvent: Boolean(sc.eventName),
+  });
 
 
   // F0.2 Layer 0 — user context block, composed AFTER role/voice line
@@ -271,13 +290,14 @@ export async function POST(request: Request) {
     '/programs',
     '/home',
     '/intelligence',
+    '/source',
   ]);
   const isProgramDetailSurface =
     typeof surface === 'string' &&
     /^\/programs\/[^/]+$/.test(surface) &&
     surface !== '/programs/new';
   const artifactInstructions =
-    surfacesWithArtifactChannel.has(surface) || isProgramDetailSurface
+    surfacesWithArtifactChannel.has(surface) || isProgramDetailSurface || isSourceSurface(surface)
       ? ARTIFACT_CHANNEL_INSTRUCTIONS
       : '';
 
@@ -327,6 +347,10 @@ export async function POST(request: Request) {
     // Empty string for other surfaces / phases without a pack yet.
     phasePackBlock,
     "",
+    sourceOperatingDoctrineBlock,
+    "",
+    sourceStagePackBlock,
+    "",
     "Page context:",
     ...contextLines,
     categoryPlaybook ? `\nService category context:\n${categoryPlaybook}` : "",
@@ -344,6 +368,12 @@ export async function POST(request: Request) {
     "- Write in flowing prose. Do NOT use markdown code blocks (``` … ```), SQL/JSON snippets, table outlines, or bracketed identifier dumps in the chat reply. Code blocks make the chat feel like a debugger, not a partner.",
     "- Reference patterns, programs, and people by NAME, not raw ID. Say \"AMS Consolidation\" not \"[PAT-PRG-AMS-CONSOLIDATION-001]\". The right-pane card carries the ID; you carry the conversation.",
     "- Bullet lists are fine sparingly (≤ 3 bullets). When the user asks an open question, lead with one or two sentences before any list.",
+    ...(isSourceSurface(surface)
+      ? [
+          "- On Source surfaces, do not produce a long sourcing essay on the first turn. Diagnose the stage, name the missing capture fields, and ask the next 2-3 questions.",
+          "- If the user is trying to start a sourcing event, do not imply the event is registered. Explain the intake floor, the approval mechanism, and what evidence must be captured first.",
+        ]
+      : []),
     tenantSystemBlock,
   ]
     .filter((s) => s !== '' && s !== undefined && s !== null)
@@ -434,3 +464,94 @@ export async function POST(request: Request) {
     },
   });
 }
+
+function isSourceSurface(surface: string): boolean {
+  return surface === '/source' || surface.startsWith('/source/');
+}
+
+function buildSourceOperatingDoctrineBlock(input: {
+  surface: string;
+  hasEvent: boolean;
+}): string {
+  if (!isSourceSurface(input.surface)) return '';
+
+  const mode = input.hasEvent ? 'active event canvas' : 'portfolio intake canvas';
+
+  return [
+    'SOURCE OPERATING DOCTRINE',
+    `Mode: ${mode}.`,
+    'Source is an operating workflow, not a procurement encyclopedia. The agent must make the stage gate visible.',
+    '',
+    'If the user asks for help with a sourcing category such as application managed services, start with intake discipline:',
+    '- Name the event candidate and category.',
+    '- Capture business owner / sponsor and decision authority.',
+    '- Capture problem statement, scope boundary, and out-of-scope items.',
+    '- Capture required evidence: current spend/run-rate, application or service inventory, incumbent/vendor list, contract dates, service pain, transition constraints.',
+    '- Capture kill criterion: what would stop, defer, or redirect the event before market contact.',
+    '- Explain approval: sourcing lead plus business sponsor approve intake exit; later gates require the stage-specific approver from the stage pack.',
+    '',
+    'Simple vs complex rule:',
+    '- Simple: answerable in chat, such as naming owner, rough category, deadline, or first scope boundary.',
+    '- Complex: requires a meeting, workshop, data pull, vendor review, or uploaded artifact. For complex steps, capture intent and plan first, offer the template/checklist, then ask for the output upload before calling evidence met.',
+    '',
+    'First-turn pacing:',
+    '- Acknowledge the request in one sentence.',
+    '- State that the event is not registered until intake floor plus approval are complete.',
+    '- Ask at most three questions before giving deeper advice.',
+  ].join('\n');
+}
+
+function buildSourceStagePackBlock(input: {
+  surface: string;
+  sourceStageKey?: string;
+  eventName?: string;
+}): string {
+  if (!isSourceSurface(input.surface)) return '';
+
+  const pack = getStagePackForSourceStageKey(input.sourceStageKey)
+    ?? (input.eventName ? getStagePack(0) : getStagePack(0));
+  if (!pack) return '';
+
+  const lifecycle = buildSourceLifecycleContract(pack);
+  const lifecycleSummary = [
+    '### Lifecycle operating contract',
+    `What good looks like: ${lifecycle.outcome}`,
+    `Approval authority: ${lifecycle.approval.authority}.`,
+    `Approval decision: ${lifecycle.approval.decision}`,
+    `Blocker policy: ${lifecycle.approval.blockerPolicy}`,
+    'Step doctrine:',
+    ...lifecycle.steps.map((step) => {
+      const templates = step.templates.map((template) => template.title).join('; ');
+      const evidence = step.evidenceRequired.map((item) => item.label).join('; ');
+      return `- ${step.title} [${step.complexity}, ${step.agentWorkMode}]: ${step.intent} Templates: ${templates}. Evidence: ${evidence}.`;
+    }),
+    'Next-stage primer:',
+    `- ${lifecycle.nextPhasePrimer.readinessQuestion}`,
+    `- First move: ${lifecycle.nextPhasePrimer.suggestedFirstMove}`,
+  ].join('\n');
+
+  return [
+    formatStagePackForPrompt(pack),
+    '',
+    lifecycleSummary,
+  ].join('\n');
+}
+
+function getStagePackForSourceStageKey(stageKey: string | undefined) {
+  if (!stageKey) return null;
+  const stage = SOURCE_STAGE_KEY_TO_PACK_STAGE[stageKey as SourceStageKey];
+  return getStagePack(stage);
+}
+
+const SOURCE_STAGE_KEY_TO_PACK_STAGE: Partial<Record<SourceStageKey, number>> = {
+  intake: 0,
+  scope: 0,
+  sourcing_strategy: 1,
+  vendor_responses: 2,
+  rfp_rfi_package: 3,
+  evaluation: 4,
+  orals_bafo: 5,
+  selection: 6,
+  contract_mobilization: 6,
+  value_realization: 7,
+};
