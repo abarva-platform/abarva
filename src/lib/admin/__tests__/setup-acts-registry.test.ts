@@ -7,11 +7,15 @@
  */
 
 import {
+  formatRelativeTimestamp,
   getSetupActsContent,
   getSetupSummaryCounts,
-  type CapabilityNode,
-  type CapabilityGainEntry,
+  getSetupSummaryCountsWithSnapshot,
+  mergeInventorySnapshot,
   type ActOneFact,
+  type CapabilityGainEntry,
+  type CapabilityNode,
+  type SetupInventorySnapshot,
 } from '@/lib/admin/setup-acts-registry';
 
 describe('Setup Acts registry — Apex (rich) fixture', () => {
@@ -211,12 +215,138 @@ describe('Setup Acts registry — summary counts helper', () => {
     expect(counts.capabilitiesGrounded).toBeGreaterThan(0);
   });
 
+  it('rich-tenant fallback total reflects real Apex record count (403)', () => {
+    const content = getSetupActsContent('apexretail');
+    const counts = getSetupSummaryCounts(content);
+    expect(counts.totalRecords).toBe(403);
+    expect(counts.segmentsTracked).toBe(14);
+  });
+
   it('returns null counts for sparse tenant', () => {
     const content = getSetupActsContent('meridian');
     const counts = getSetupSummaryCounts(content);
     expect(counts.totalRecords).toBeNull();
     expect(counts.segmentsTracked).toBeNull();
     expect(counts.capabilitiesGrounded).toBe(0);
+  });
+});
+
+describe('Setup Acts registry — snapshot merge', () => {
+  function buildSnapshot(overrides: Partial<SetupInventorySnapshot> = {}): SetupInventorySnapshot {
+    return {
+      tenantKey: 'apex-retail',
+      segments: [
+        {
+          segmentId: 'enterprise_profile',
+          segmentName: 'Enterprise profile',
+          familyNumber: 1,
+          recordCount: 1,
+          coverageScore: 100,
+          staleCount: 0,
+          missingCount: 0,
+          healthState: 'complete',
+          lastReviewedAt: null,
+          lastIngestedAt: null,
+        },
+        {
+          segmentId: 'org_structure',
+          segmentName: 'Org structure',
+          familyNumber: 2,
+          recordCount: 36,
+          coverageScore: 72,
+          staleCount: 0,
+          missingCount: 14,
+          healthState: 'partial',
+          lastReviewedAt: null,
+          lastIngestedAt: null,
+        },
+      ],
+      totalRecords: 37,
+      totalChunks: 100,
+      totalNodes: 50,
+      totalEdges: 60,
+      recentActivity: [
+        {
+          actor: 'Import pipeline',
+          what: 'Imported segment org_structure',
+          timestampIso: '2026-04-29T12:00:00Z',
+        },
+      ],
+      lastIngestedAt: '2026-04-29T12:00:00Z',
+      ...overrides,
+    };
+  }
+
+  it('returns content untouched when snapshot is null', () => {
+    const content = getSetupActsContent('apexretail');
+    const merged = mergeInventorySnapshot(content, null);
+    expect(merged).toBe(content);
+  });
+
+  it('replaces recent activity when snapshot has events', () => {
+    const content = getSetupActsContent('apexretail');
+    const snapshot = buildSnapshot();
+    const merged = mergeInventorySnapshot(content, snapshot, new Date('2026-04-29T12:05:00Z'));
+    expect(merged.recentActivity.length).toBe(1);
+    expect(merged.recentActivity[0]?.actor).toBe('Import pipeline');
+  });
+
+  it('keeps authored activity when snapshot has no events', () => {
+    const content = getSetupActsContent('apexretail');
+    const snapshot = buildSnapshot({ recentActivity: [] });
+    const merged = mergeInventorySnapshot(content, snapshot);
+    expect(merged.recentActivity).toEqual(content.recentActivity);
+  });
+
+  it('promotes sparse tenant to rich when snapshot carries records', () => {
+    const content = getSetupActsContent('meridian');
+    expect(content.tenantDataRichness).toBe('sparse');
+    const snapshot = buildSnapshot({ tenantKey: 'meridian', totalRecords: 12 });
+    const merged = mergeInventorySnapshot(content, snapshot);
+    expect(merged.tenantDataRichness).toBe('rich');
+  });
+
+  it('summary counts prefer live snapshot totals over fixture fallback', () => {
+    const content = getSetupActsContent('apexretail');
+    const snapshot = buildSnapshot({ totalRecords: 999 });
+    const counts = getSetupSummaryCountsWithSnapshot(content, snapshot);
+    expect(counts.totalRecords).toBe(999);
+    expect(counts.segmentsTracked).toBe(2);
+  });
+
+  it('summary counts fall back to fixture totals when no snapshot', () => {
+    const content = getSetupActsContent('apexretail');
+    const counts = getSetupSummaryCountsWithSnapshot(content, null);
+    expect(counts.totalRecords).toBe(403);
+    expect(counts.segmentsTracked).toBe(14);
+  });
+});
+
+describe('formatRelativeTimestamp', () => {
+  const NOW = new Date('2026-04-29T12:00:00Z');
+
+  it('returns "Just now" for very recent events', () => {
+    expect(formatRelativeTimestamp('2026-04-29T11:59:50Z', NOW)).toBe('Just now');
+  });
+
+  it('returns minutes for sub-hour events', () => {
+    expect(formatRelativeTimestamp('2026-04-29T11:30:00Z', NOW)).toBe('30m ago');
+  });
+
+  it('returns hours for sub-day events', () => {
+    expect(formatRelativeTimestamp('2026-04-29T05:00:00Z', NOW)).toBe('7h ago');
+  });
+
+  it('returns days for sub-week events', () => {
+    expect(formatRelativeTimestamp('2026-04-26T12:00:00Z', NOW)).toBe('3 days ago');
+  });
+
+  it('returns weeks for older events', () => {
+    expect(formatRelativeTimestamp('2026-04-15T12:00:00Z', NOW)).toBe('2 weeks ago');
+  });
+
+  it('handles invalid timestamps gracefully', () => {
+    expect(formatRelativeTimestamp('not-a-date', NOW)).toBe('Recently');
   });
 });
 
