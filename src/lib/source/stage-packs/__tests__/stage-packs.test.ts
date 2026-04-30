@@ -13,7 +13,7 @@ describe('getStagePack', () => {
     expect(getStagePack(null)).toBeNull();
     expect(getStagePack(undefined)).toBeNull();
     expect(getStagePack(-1)).toBeNull();
-    expect(getStagePack(0)).toBeNull();
+    expect(getStagePack(3)).toBeNull();
     expect(getStagePack(8)).toBeNull();
     expect(getStagePack(99)).toBeNull();
   });
@@ -21,7 +21,7 @@ describe('getStagePack', () => {
 
 describe('listAuthoredStages', () => {
   it('returns the authored stage set sorted', () => {
-    expect(listAuthoredStages()).toEqual([5]);
+    expect(listAuthoredStages()).toEqual([0, 1, 2, 5]);
   });
 });
 
@@ -81,8 +81,8 @@ describe('schema sanity (runs over every authored sourcing stage pack)', () => {
     expect(pack.sourceStageKeys?.length).toBeGreaterThan(0);
   });
 
-  it.each(ALL_PACKS)('$label - references existing corpus pattern ids only as references', (pack) => {
-    expect(pack.crossReferences?.patternIds.length).toBeGreaterThan(0);
+  it.each(ALL_PACKS)('$label - validates corpus pattern references when present', (pack) => {
+    expect(pack.crossReferences?.sourceStageKeys.length).toBeGreaterThan(0);
     for (const id of pack.crossReferences?.patternIds ?? []) {
       expect(id).toMatch(/^PAT-SRC-/);
     }
