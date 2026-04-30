@@ -6,26 +6,39 @@
 // preserved from PR-INT-B is no longer rendered on this page; INT-1.7
 // will host it at /intelligence/ask reachable from "Open Sentinel".
 //
-// Per the spine doc, this page is content-led not chat-led: the 10
-// failure-mode cards are the primary affordance; chat is secondary.
+// INT-1.5 wires PostHog telemetry via J0TelemetryBridge — page-load,
+// card hovers/clicks, "Show all 10", and the two header affordance
+// clicks all forward to PostHog with no PII (tenant key only when
+// authenticated).
 
-import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { J0FailureModeGrid } from '@/components/intelligence/J0FailureModeGrid';
+import { J0AffordanceLink } from '@/components/intelligence/J0AffordanceLink';
+import { J0TelemetryBridge } from '@/components/intelligence/J0TelemetryBridge';
 import {
   CORPUS_VERSION,
   J0_FAILURE_MODE_CARDS,
   getTotalResearchAnchorCount,
 } from '@/lib/intelligence/j0-failure-mode-cards';
 import { getPatternManifestEntries } from '@/lib/intelligence/pattern-manifest';
+import { getActiveClientRow } from '@/lib/active-client';
 
 const HEADLINE = 'Why enterprise AI transformation fails — and how AbarVa prevents it.';
 
-export function IntelligenceIndexPage() {
+export async function IntelligenceIndexPage() {
   const totalPatterns = getPatternManifestEntries().length;
   const totalAnchors = getTotalResearchAnchorCount();
   const totalCards = J0_FAILURE_MODE_CARDS.length;
+
+  // Tenant detection for telemetry. Cold visitors get tenantKey=null +
+  // visitorType='cold'; authenticated users get the broker tenant key
+  // and visitorType='authenticated'. PostHog can segment on these.
+  // Failures here are non-fatal — we log nothing and pass null tenant.
+  const activeClient = await getActiveClientRow().catch(() => null);
+  const tenantKey = activeClient?.key ?? null;
+  const visitorType: 'cold' | 'authenticated' =
+    activeClient ? 'authenticated' : 'cold';
 
   return (
     <AppShell
@@ -108,9 +121,10 @@ export function IntelligenceIndexPage() {
                 justifyContent: 'flex-end',
               }}
             >
-              <Link
+              <J0AffordanceLink
                 href="/intelligence/topics"
-                data-testid="intelligence-j0-affordance-browse-topics"
+                affordance="browse_topics"
+                testid="intelligence-j0-affordance-browse-topics"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -126,10 +140,11 @@ export function IntelligenceIndexPage() {
                 }}
               >
                 Browse topics →
-              </Link>
-              <Link
+              </J0AffordanceLink>
+              <J0AffordanceLink
                 href="/intelligence/ask"
-                data-testid="intelligence-j0-affordance-open-sentinel"
+                affordance="open_sentinel"
+                testid="intelligence-j0-affordance-open-sentinel"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -145,7 +160,7 @@ export function IntelligenceIndexPage() {
                 }}
               >
                 Open Sentinel →
-              </Link>
+              </J0AffordanceLink>
             </nav>
           </header>
 
@@ -153,6 +168,17 @@ export function IntelligenceIndexPage() {
           <main>
             <J0FailureModeGrid />
           </main>
+
+          {/* Telemetry bridge — listens for J0 CustomEvents and forwards
+              them to PostHog. Mounted as a no-render client island so
+              the page itself stays an RSC. */}
+          <J0TelemetryBridge
+            tenantKey={tenantKey}
+            visitorType={visitorType}
+            corpusVersion={CORPUS_VERSION}
+            totalPatterns={totalPatterns}
+            totalResearchAnchors={totalAnchors}
+          />
         </div>
       </div>
     </AppShell>
