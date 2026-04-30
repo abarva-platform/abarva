@@ -8,10 +8,10 @@ const sourceCard = {
   background: SHELL.CARD_WHITE,
   border: '1px solid ' + SHELL.CARD_LINE,
   borderRadius: 10,
-  padding: '16px 18px',
+  padding: '12px 14px',
   display: 'flex',
   flexDirection: 'column' as const,
-  gap: 12,
+  gap: 10,
 };
 
 const sourceSectionLabel = {
@@ -59,15 +59,15 @@ export function SourceJourneyTracker({ stages, onSynthesisClick }: SourceJourney
             Current workflow position
           </div>
         </div>
-        <div style={{ ...sourceMuted, maxWidth: 360, color: SHELL.INK_MUTED }}>
+        <div style={{ ...sourceMuted, maxWidth: 340, color: SHELL.INK_MUTED, fontSize: 12 }}>
           Stages are read-only in this shell. Blocked and waiting states explain what Nexus needs before movement.
         </div>
       </div>
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: `repeat(${Math.max(stages.length, 1)}, minmax(120px, 1fr))`,
-          gap: 10,
+          gridTemplateColumns: `repeat(${Math.max(stages.length, 1)}, minmax(96px, 1fr))`,
+          gap: 8,
           overflowX: 'auto',
         }}
       >
@@ -77,21 +77,21 @@ export function SourceJourneyTracker({ stages, onSynthesisClick }: SourceJourney
             style={{
               border: '1px solid ' + stageBorder(stage),
               borderRadius: 12,
-              padding: '12px 13px',
+              padding: '8px 10px',
               background: stageBackground(stage),
-              minWidth: 120,
+              minWidth: 96,
               display: 'grid',
-              gap: 7,
+              gap: 5,
             }}
           >
-            <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>
+            <div style={{ fontFamily: SHELL.SANS, fontSize: 10.5, lineHeight: 1.25, color: SHELL.INK_MUTED }}>
               Step {index + 1}
             </div>
-            <div style={{ fontWeight: 800, color: SHELL.INK }}>{stage.label}</div>
+            <div style={{ fontSize: 12, lineHeight: 1.2, fontWeight: 800, color: SHELL.INK }}>{stage.label}</div>
             <div
               style={{
                 fontFamily: SHELL.MONO,
-                fontSize: '10px',
+                fontSize: '9px',
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
                 color: stageColor(stage),
@@ -100,7 +100,7 @@ export function SourceJourneyTracker({ stages, onSynthesisClick }: SourceJourney
               {getStageStateLabel(stage.status)}
             </div>
             {stage.gate.blocker ? (
-              <div style={{ ...sourceMuted, color: SHELL.RUST_TEXT, fontSize: '12px' }}>
+              <div style={{ ...sourceMuted, color: SHELL.RUST_TEXT, fontSize: '11px', lineHeight: 1.25 }}>
                 {stage.gate.blocker}
               </div>
             ) : null}

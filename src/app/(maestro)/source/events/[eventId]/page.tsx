@@ -148,6 +148,7 @@ export default async function SourceEventDetailPage({
         />
       }
     >
+      <NexusEngagementCanvas event={event} />
       <section
         aria-label="Sentinel event synthesis"
         style={{
@@ -245,7 +246,6 @@ export default async function SourceEventDetailPage({
           currentStageKey={event.currentStageKey}
         />
       </div>
-      <NexusEngagementCanvas event={event} />
       <PatternRecommendationChips
         eventName={event.name}
         eventType={event.archetype}

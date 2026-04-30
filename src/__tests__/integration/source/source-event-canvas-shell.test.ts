@@ -14,6 +14,12 @@ import {
 } from '@/lib/source';
 import type { SourceStageStatus, StageGateStatus, WorkflowStage } from '@/lib/source/types';
 
+jest.mock('next/navigation', () => ({
+  usePathname: () => '/source/events/evt-source-data-ai-si-selection',
+  useRouter: () => ({ push: jest.fn(), refresh: jest.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 type SourcingEvent = NonNullable<Awaited<ReturnType<typeof getSourcingEvent>>>;
 
 function buildOralsBafoEvent(event: SourcingEvent) {
@@ -118,9 +124,23 @@ describe('Source event canvas shell', () => {
     const html = renderToStaticMarkup(page);
 
     expect(html).toContain('Lead sourcing agent');
+    expect(html).toContain('Agent rail');
+    expect(html).toContain('Nexus, Sentinel, Steward, Atlas');
+    expect(html).toContain('Contextual prompts');
     expect(html).toContain('Nexus guidance');
     expect(html).toContain('Deterministic guidance only');
     expect(html).toContain('Scope stage workspace');
+  });
+
+  it('renders linked program context in the event header when the Source event is embedded', async () => {
+    const page = await SourceEventDetailPage({
+      params: Promise.resolve({ eventId: SOURCE_GOLDEN_EVENT_IDS.apexRetailAmsOutsourcing2026 }),
+    });
+    const html = renderToStaticMarkup(page);
+
+    expect(html).toContain('data-testid="source-linked-program-chip"');
+    expect(html).toContain('APX-CDP-2026');
+    expect(html).toContain('Source event canvas - IT sourcing workspace');
   });
 
   it('surfaces BAFO negotiation panel signals in event canvas when orals/BAFO is active', async () => {
