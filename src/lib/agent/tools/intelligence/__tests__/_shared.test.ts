@@ -1,9 +1,11 @@
 import {
+  clientKeyToBrokerTenantKey,
   filterPatternsByScope,
   scorePatternsByKeyword,
   tokenize,
   type PatternManifestEntry,
 } from '../_shared';
+import { buildSentinelContextBundle } from '@/lib/intelligence/sentinel-broker-adapter';
 import { getPatternManifestEntries } from '@/lib/intelligence/pattern-manifest';
 
 describe('tokenize', () => {
@@ -114,5 +116,38 @@ describe('filterPatternsByScope', () => {
   it('unknown scope passes through (defensive)', () => {
     const filtered = filterPatternsByScope(patterns, 'all');
     expect(filtered).toEqual(patterns);
+  });
+});
+
+describe('clientKeyToBrokerTenantKey · PR-INT-G Apex tenant key split', () => {
+  it("maps 'apexretail' (app ClientKey) to 'apex-retail' (broker tenant key)", () => {
+    expect(clientKeyToBrokerTenantKey('apexretail')).toBe('apex-retail');
+  });
+
+  it('passes other ClientKeys through unchanged (meridian, arcturus, keystone)', () => {
+    expect(clientKeyToBrokerTenantKey('meridian')).toBe('meridian');
+    expect(clientKeyToBrokerTenantKey('arcturus')).toBe('arcturus');
+    expect(clientKeyToBrokerTenantKey('keystone')).toBe('keystone');
+  });
+
+  it('mapped tenant key resolves a non-blocked broker bundle for Apex', () => {
+    // Regression guard: before the mapping, resolveSentinelTenant
+    // returned `'apexretail'` and the broker treated it as an unknown
+    // tenant. With the mapping, the broker finds the rich Apex data
+    // room and returns items + citations.
+    const blocked = buildSentinelContextBundle({ tenantKey: 'apexretail' });
+    expect(blocked.items).toHaveLength(0);
+    expect(blocked.blockedItems).toEqual(
+      expect.arrayContaining([expect.objectContaining({ reason: 'unknown_tenant' })]),
+    );
+
+    const mapped = buildSentinelContextBundle({
+      tenantKey: clientKeyToBrokerTenantKey('apexretail'),
+    });
+    expect(mapped.items.length).toBeGreaterThan(0);
+    expect(mapped.citations.length).toBeGreaterThan(0);
+    expect(
+      mapped.blockedItems.some((entry) => entry.reason === 'unknown_tenant'),
+    ).toBe(false);
   });
 });
