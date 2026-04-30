@@ -10,7 +10,13 @@ import {
 } from '../ProgramOriginationWorkspace';
 
 jest.mock('../StewardChat', () => ({
-  StewardChat: () => <section aria-label="Mock Steward chat" />,
+  StewardChat: ({ turns }: { turns: Array<{ text: string }> }) => (
+    <section aria-label="Mock Steward chat">
+      {turns.map((turn, index) => (
+        <p key={`${turn.text}-${index}`}>{turn.text}</p>
+      ))}
+    </section>
+  ),
 }));
 
 describe('ProgramOriginationWorkspace', () => {
@@ -50,6 +56,47 @@ describe('ProgramOriginationWorkspace', () => {
     expect(screen.getByText('Brief ready')).toBeTruthy();
     expect(screen.getByText('Submit for approval')).toBeTruthy();
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+  });
+
+  it('does not hydrate a stale origination draft from a previous page session', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        draft: {
+          state: {
+            sessionId: 'previous-session',
+            turns: [{ id: 'old-turn', role: 'user', text: 'Previous conversation' }],
+          },
+        },
+      }),
+    } as Response);
+    window.sessionStorage.setItem(
+      'abarva.program_origination.session:/programs/new',
+      'previous-session',
+    );
+
+    render(
+      <ProgramOriginationWorkspace
+        surface="/programs/new"
+        tenantName="Apex Retail Group"
+        initialTurns={[
+          {
+            id: 'cold-open-production',
+            role: 'assistant',
+            agentName: 'Steward',
+            text: 'Welcome.',
+          },
+        ]}
+      />,
+    );
+
+    await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+
+    expect(screen.getByText('Welcome.')).toBeTruthy();
+    expect(screen.queryByText('Previous conversation')).toBeNull();
+    expect(window.sessionStorage.getItem('abarva.program_origination.session:/programs/new')).not.toBe(
+      'previous-session',
+    );
   });
 });
 
