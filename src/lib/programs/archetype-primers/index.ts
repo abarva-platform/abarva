@@ -5,6 +5,7 @@ import { CONTACT_CENTER_AI_PRIMER } from './PAT-PRG-CC-AI-001';
 import { DEMAND_FORECASTING_PRIMER } from './PAT-PRG-DATA-FAB-001';
 import { M365_COPILOT_PRIMER } from './PAT-PRG-COPILOT-001';
 import { AI_CODING_PRIMER } from './PAT-PRG-AI-CODING-001';
+import { LOYALTY_AI_PRIMER } from './PAT-PRG-LOYALTY-001';
 import type { ArchetypePrimer } from './types';
 
 export { CDP_ACTIVATION_PRIMER } from './PAT-PRG-CDP-001';
@@ -12,6 +13,7 @@ export { CONTACT_CENTER_AI_PRIMER } from './PAT-PRG-CC-AI-001';
 export { DEMAND_FORECASTING_PRIMER } from './PAT-PRG-DATA-FAB-001';
 export { M365_COPILOT_PRIMER } from './PAT-PRG-COPILOT-001';
 export { AI_CODING_PRIMER } from './PAT-PRG-AI-CODING-001';
+export { LOYALTY_AI_PRIMER } from './PAT-PRG-LOYALTY-001';
 
 const PRIMERS: ReadonlyArray<ArchetypePrimer> = [
   CDP_ACTIVATION_PRIMER,
@@ -19,6 +21,7 @@ const PRIMERS: ReadonlyArray<ArchetypePrimer> = [
   DEMAND_FORECASTING_PRIMER,
   M365_COPILOT_PRIMER,
   AI_CODING_PRIMER,
+  LOYALTY_AI_PRIMER,
 ];
 
 export function getArchetypePrimer(patternId: string): ArchetypePrimer | null {
