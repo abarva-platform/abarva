@@ -21,6 +21,7 @@ import type {
 import {
   ProgramBriefPanel,
   EMPTY_BRIEF,
+  buildProgramSetupReadiness,
   type ProgramBriefDraft,
   type PatternMatchCard,
 } from './ProgramBriefPanel';
@@ -142,6 +143,159 @@ export function shouldHydrateOriginationDraft(
   return Boolean(currentSessionId && draftState?.sessionId === currentSessionId);
 }
 
+export type OperatorChecklistStatus = 'done' | 'active' | 'pending' | 'review';
+
+export interface OperatorChecklistItem {
+  id: 'tenant' | 'conversation' | 'brief' | 'submit';
+  label: string;
+  status: OperatorChecklistStatus;
+}
+
+export function buildOperatorChecklist(input: {
+  tenantName: string;
+  turns: ChatTurn[];
+  briefState: OriginationBriefState;
+}): OperatorChecklistItem[] {
+  const tenantConfirmed = input.tenantName.trim().length > 0;
+  const hasUserTurn = input.turns.some((turn) => turn.role === 'user');
+  const readiness = buildProgramSetupReadiness(
+    input.briefState.brief,
+    input.briefState.overlapAlerts,
+  );
+  const hasBriefSignals = Object.entries(input.briefState.brief).some(([key, value]) => {
+    if (key === 'crossProgramDependencies') return false;
+    return typeof value === 'string' && value.trim().length > 0;
+  });
+
+  return [
+    {
+      id: 'tenant',
+      label: 'Tenant confirmed',
+      status: tenantConfirmed ? 'done' : 'active',
+    },
+    {
+      id: 'conversation',
+      label: 'Setup conversation',
+      status: hasUserTurn ? 'done' : tenantConfirmed ? 'active' : 'pending',
+    },
+    {
+      id: 'brief',
+      label: 'Brief ready',
+      status:
+        readiness.status === 'ready'
+          ? 'done'
+          : readiness.status === 'review'
+            ? 'review'
+            : hasBriefSignals
+              ? 'active'
+              : 'pending',
+    },
+    {
+      id: 'submit',
+      label: 'Submit for approval',
+      status:
+        readiness.status === 'ready'
+          ? 'active'
+          : readiness.status === 'review'
+            ? 'review'
+            : 'pending',
+    },
+  ];
+}
+
+function checklistStatusLabel(status: OperatorChecklistStatus): string {
+  switch (status) {
+    case 'done':
+      return 'Done';
+    case 'active':
+      return 'Now';
+    case 'review':
+      return 'Review';
+    case 'pending':
+      return 'Next';
+  }
+}
+
+function checklistStatusColor(status: OperatorChecklistStatus): string {
+  switch (status) {
+    case 'done':
+      return BrandColors.signalBlue;
+    case 'active':
+      return BrandColors.inkBlack;
+    case 'review':
+      return '#B45309';
+    case 'pending':
+      return BrandColors.stone;
+  }
+}
+
+function OperatorChecklist({ items }: { items: OperatorChecklistItem[] }) {
+  return (
+    <section
+      aria-label="New program setup checklist"
+      style={{
+        display: 'flex',
+        gap: 8,
+        flexWrap: 'wrap',
+        marginTop: 8,
+      }}
+    >
+      {items.map((item, index) => {
+        const color = checklistStatusColor(item.status);
+        return (
+          <div
+            key={item.id}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 7,
+              padding: '6px 9px',
+              borderRadius: 999,
+              border: `1px solid ${item.status === 'active' ? 'rgba(12,26,58,0.24)' : 'rgba(12,26,58,0.12)'}`,
+              background: item.status === 'active' ? '#FFFFFF' : 'rgba(255,255,255,0.60)',
+              fontFamily: BrandTypography.sans,
+              fontSize: 12,
+              color: BrandColors.slate,
+            }}
+          >
+            <span
+              aria-hidden
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 18,
+                height: 18,
+                borderRadius: 999,
+                background: `${color}12`,
+                color,
+                fontFamily: BrandTypography.mono,
+                fontSize: 10,
+                fontWeight: 700,
+              }}
+            >
+              {index + 1}
+            </span>
+            <span style={{ color: BrandColors.inkBlack, fontWeight: 600 }}>{item.label}</span>
+            <span
+              style={{
+                fontFamily: BrandTypography.mono,
+                fontSize: 9,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color,
+                fontWeight: 700,
+              }}
+            >
+              {checklistStatusLabel(item.status)}
+            </span>
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
 export function ProgramOriginationWorkspace({
   surface,
   tenantName,
@@ -250,6 +404,8 @@ export function ProgramOriginationWorkspace({
     setTurns(next);
   }, []);
 
+  const operatorChecklist = buildOperatorChecklist({ tenantName, turns, briefState });
+
   return (
     <main
       style={{
@@ -337,6 +493,7 @@ export function ProgramOriginationWorkspace({
         >
           Tenant · {tenantName}
         </span>
+        <OperatorChecklist items={operatorChecklist} />
       </header>
 
       <div
