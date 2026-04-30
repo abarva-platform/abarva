@@ -69,6 +69,13 @@ interface ActivityEvent {
   at: string;
 }
 
+interface PhaseReasoningCard {
+  phase: number;
+  title: string;
+  detail: string;
+  count: number;
+}
+
 interface Props {
   engagement: EngagementRow;
   sponsor: PersonRow | null;
@@ -111,6 +118,7 @@ export function EngagementConsole({
   const [composerPlaceholder, setComposerPlaceholder] = useState('Your reply…');
   const [traceTurnId, setTraceTurnId] = useState<string | null>(null);
   const [stages, setStages] = useState<Array<{ label: string; detail?: string }>>([]);
+  const [phaseReasoningCard, setPhaseReasoningCard] = useState<PhaseReasoningCard | null>(null);
   const [composerFocused, setComposerFocused] = useState(false);
   const [sendPressed, setSendPressed] = useState(false);
   const [sendHovered, setSendHovered] = useState(false);
@@ -177,6 +185,7 @@ export function EngagementConsole({
     setChoicesForTurnId(null);
     setError(null);
     setStages([]);
+    setPhaseReasoningCard(null);
     setIsStreaming(true);
 
     const now = new Date().toISOString();
@@ -286,6 +295,24 @@ export function EngagementConsole({
               };
               setMessages((prev) => [...prev, openerTurn]);
             }
+          } else if (evt.type === 'deliverables_live_synced') {
+            const raw = evt as unknown as { count?: number };
+            const count = typeof raw.count === 'number' ? raw.count : 0;
+            setPhaseReasoningCard({
+              phase: engagement.current_phase,
+              title: `Phase ${engagement.current_phase} artifacts refreshed`,
+              detail: `${count} starter artifact${count === 1 ? '' : 's'} synced from the latest Nexus exchange.`,
+              count,
+            });
+            router.refresh();
+          } else if (evt.type === 'phase_reasoning') {
+            const raw = evt as unknown as { phase?: number; title?: string; detail?: string; count?: number };
+            setPhaseReasoningCard({
+              phase: typeof raw.phase === 'number' ? raw.phase : engagement.current_phase,
+              title: raw.title ?? `Phase ${engagement.current_phase} reasoning refreshed`,
+              detail: raw.detail ?? 'Nexus refreshed the right-pane reasoning state from this exchange.',
+              count: typeof raw.count === 'number' ? raw.count : 0,
+            });
           } else if (evt.type === 'choices') {
             const raw = evt as unknown as { choices?: Choice[] };
             if (Array.isArray(raw.choices) && raw.choices.length > 0) {
@@ -994,6 +1021,27 @@ export function EngagementConsole({
               </a>
             );
           })()}
+
+          {phaseReasoningCard && (
+            <div
+              style={{
+                background: 'rgba(155,109,255,0.08)',
+                border: '0.5px solid rgba(155,109,255,0.28)',
+                borderRadius: 10,
+                padding: 14,
+              }}
+            >
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: '#9B6DFF', textTransform: 'uppercase', marginBottom: 8 }}>
+                Live phase reasoning · P{phaseReasoningCard.phase}
+              </div>
+              <div style={{ color: '#F5F5F0', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>
+                {phaseReasoningCard.title}
+              </div>
+              <div style={{ color: 'rgba(245,245,240,0.72)', fontSize: 12, lineHeight: 1.5 }}>
+                {phaseReasoningCard.detail}
+              </div>
+            </div>
+          )}
 
           {/* Deliverables · links to browser */}
           <a

@@ -399,6 +399,15 @@ export async function POST(
             controller.enqueue(
               encoder.encode(JSON.stringify({ type: 'deliverables_live_synced', count: syncedArtifacts }) + '\n'),
             );
+            controller.enqueue(
+              encoder.encode(JSON.stringify({
+                type: 'phase_reasoning',
+                phase: engagement.current_phase,
+                title: `Phase ${engagement.current_phase} artifacts refreshed`,
+                detail: `${syncedArtifacts} starter artifact${syncedArtifacts === 1 ? '' : 's'} synced from the latest Nexus exchange.`,
+                count: syncedArtifacts,
+              }) + '\n'),
+            );
           }
         } catch (err) {
           console.error('[deliverables-live-sync]', err);
