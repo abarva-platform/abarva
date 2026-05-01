@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { auth, clerkClient } from '@clerk/nextjs/server'
 import { getServerSupabase } from '@/lib/supabase-server'
 
+const DEMO_PASSWORD = 'Demo2026!'
+
 const DEMO_USERS = [
   {
     email: 'anand.sundaram@thesundaram.com',
@@ -45,6 +47,51 @@ const DEMO_USERS = [
       defaultClientId: 'arcturus',
       clientLocked: true,
       accountType: 'demo_existing',
+    },
+  },
+  {
+    email: 'demo-apexretail-programs+clerk_test@abarva.com',
+    personGraphNodeId: 'person_demo_apexretail_programs',
+    metadata: {
+      role: 'client',
+      clientId: 'apexretail',
+      clientName: 'Apex Retail Group',
+      defaultClientId: 'apexretail',
+      clientLocked: true,
+      accountType: 'demo_program_user',
+      moduleAccess: ['programs'],
+      programScope: 'assigned_programs_only',
+      canCreatePrograms: true,
+    },
+  },
+  {
+    email: 'demo-meridian-programs+clerk_test@abarva.com',
+    personGraphNodeId: 'person_demo_meridian_programs',
+    metadata: {
+      role: 'client',
+      clientId: 'meridian',
+      clientName: 'Meridian Health System',
+      defaultClientId: 'meridian',
+      clientLocked: true,
+      accountType: 'demo_program_user',
+      moduleAccess: ['programs'],
+      programScope: 'assigned_programs_only',
+      canCreatePrograms: true,
+    },
+  },
+  {
+    email: 'demo-firstcapital-programs+clerk_test@abarva.com',
+    personGraphNodeId: 'person_demo_firstcapital_programs',
+    metadata: {
+      role: 'client',
+      clientId: 'arcturus',
+      clientName: 'First Capital',
+      defaultClientId: 'arcturus',
+      clientLocked: true,
+      accountType: 'demo_program_user',
+      moduleAccess: ['programs'],
+      programScope: 'assigned_programs_only',
+      canCreatePrograms: true,
     },
   },
   {
@@ -102,7 +149,6 @@ export async function POST() {
     }
 
     const clerk = await clerkClient()
-    const sb = getServerSupabase()
 
     // Verify caller is either a platform admin or the founder account.
     const caller = await clerk.users.getUser(userId)
@@ -114,6 +160,7 @@ export async function POST() {
       return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 })
     }
 
+    const sb = getServerSupabase()
     const results: { email: string; status: string; userId?: string; personId?: string | null }[] = []
 
     for (const demo of DEMO_USERS) {
@@ -127,30 +174,24 @@ export async function POST() {
             .maybeSingle()
           personId = (person as { id?: string } | null)?.id ?? null
         }
-        const metadata = personId
+        const publicMetadata = personId
           ? { ...demo.metadata, person_id: personId }
           : demo.metadata
+
         const list = await clerk.users.getUserList({ emailAddress: [demo.email] })
-        const user = list.data[0]
+        let user = list.data[0]
 
         if (!user) {
-          const created = await clerk.users.createUser({
+          user = await clerk.users.createUser({
             emailAddress: [demo.email],
-            password: 'Demo2026!',
-            skipPasswordChecks: true,
-            firstName: demo.email.split('@')[0].split('+')[0],
-            lastName: 'Demo',
-            publicMetadata: metadata,
+            password: DEMO_PASSWORD,
+            publicMetadata,
           })
-          results.push({ email: demo.email, status: 'created', userId: created.id, personId })
+          results.push({ email: demo.email, status: 'created', userId: user.id, personId })
           continue
         }
 
-        await clerk.users.updateUser(user.id, {
-          password: 'Demo2026!',
-          skipPasswordChecks: true,
-          publicMetadata: metadata,
-        })
+        await clerk.users.updateUser(user.id, { publicMetadata })
         results.push({ email: demo.email, status: 'updated', userId: user.id, personId })
       } catch (err: any) {
         results.push({ email: demo.email, status: `error: ${err.message}` })

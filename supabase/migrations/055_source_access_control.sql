@@ -1,4 +1,4 @@
--- Migration 053 · Source access control + source participant grants
+-- Migration 055 · Source access control + source participant grants
 --
 -- Mirrors the Programs access-control model for Sourcing while preserving
 -- the private data-plane rule: client_admin is scoped to one active client,
@@ -7,6 +7,7 @@
 BEGIN;
 
 ALTER TABLE person_client_memberships DROP CONSTRAINT IF EXISTS person_client_memberships_access_level_check;
+ALTER TABLE person_client_memberships DROP CONSTRAINT IF EXISTS person_client_memberships_client_pinned_access_level;
 
 UPDATE person_client_memberships
 SET access_level = 'client_admin'

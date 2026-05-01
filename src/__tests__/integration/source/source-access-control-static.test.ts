@@ -29,7 +29,7 @@ describe('Source access-control wiring', () => {
   });
 
   it('ships the Source participant schema needed for record-scoped users', () => {
-    const migration = read('supabase/migrations/053_source_access_control.sql');
+    const migration = read('supabase/migrations/055_source_access_control.sql');
 
     expect(migration).toContain('CREATE TABLE IF NOT EXISTS source_event_participants');
     expect(migration).toContain('source_access_level');
@@ -40,7 +40,7 @@ describe('Source access-control wiring', () => {
 
   it('seeds Source-only demo operators with Clerk metadata and no approval rights', () => {
     const seedRoute = read('src/app/api/admin/seed-clerk-metadata/route.ts');
-    const migration = read('supabase/migrations/055_source_demo_users.sql');
+    const migration = read('supabase/migrations/056_source_demo_users.sql');
 
     expect(seedRoute).toContain('demo-apexretail-source+clerk_test@abarva.com');
     expect(seedRoute).toContain('demo-meridian-source+clerk_test@abarva.com');

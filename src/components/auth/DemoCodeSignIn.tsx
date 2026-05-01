@@ -77,7 +77,7 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
     setError(null)
 
     if (!isDemoCodeEmail(normalizedEmail)) {
-      setError('This app sign-in is restricted to the three approved demo accounts listed below.')
+      setError('This app sign-in is restricted to the approved demo accounts listed below.')
       return
     }
 
@@ -146,7 +146,7 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
           Sign in with a test code
         </div>
         <div style={{ color: '#9AA5B1', fontSize: '14px', lineHeight: 1.5 }}>
-          Only the approved crawler/demo identities can sign in here. Continue with one of the emails below and use code{' '}
+          Only approved crawler/demo identities can sign in here. Continue with one of the emails below and use code{' '}
           <code>{DEMO_CODE_VALUE}</code>.
         </div>
         <div
