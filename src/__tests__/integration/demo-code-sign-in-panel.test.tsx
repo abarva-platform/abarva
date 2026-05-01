@@ -30,7 +30,7 @@ describe('DemoCodeSignIn', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
-    expect(screen.getByText(/restricted to the three approved demo accounts/i)).toBeTruthy();
+    expect(screen.getByText(/restricted to the approved demo accounts/i)).toBeTruthy();
   });
 
   it('renders the exact approved crawler accounts', () => {
@@ -39,5 +39,8 @@ describe('DemoCodeSignIn', () => {
     expect(screen.getByText('demo-apexretail+clerk_test@abarva.com')).toBeTruthy();
     expect(screen.getByText('demo-meridian+clerk_test@abarva.com')).toBeTruthy();
     expect(screen.getByText('demo-firstcapital+clerk_test@abarva.com')).toBeTruthy();
+    expect(screen.getByText('demo-apexretail-programs+clerk_test@abarva.com')).toBeTruthy();
+    expect(screen.getByText('demo-meridian-programs+clerk_test@abarva.com')).toBeTruthy();
+    expect(screen.getByText('demo-firstcapital-programs+clerk_test@abarva.com')).toBeTruthy();
   });
 });

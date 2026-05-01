@@ -89,4 +89,19 @@ describe('POST /api/auth/demo-code-sign-in', () => {
       expiresInSeconds: 300,
     });
   });
+
+  it('returns a sign-in ticket for a program-scoped demo account', async () => {
+    const { POST } = await import('@/app/api/auth/demo-code-sign-in/route');
+    const res = await POST(makeRequest({
+      email: 'demo-meridian-programs+clerk_test@abarva.com',
+      code: '424242',
+    }));
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({ ticket: 'ticket_demo_1' });
+    expect(getUserList).toHaveBeenCalledWith({
+      emailAddress: ['demo-meridian-programs+clerk_test@abarva.com'],
+      limit: 1,
+    });
+  });
 });
