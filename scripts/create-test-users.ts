@@ -44,6 +44,7 @@ interface ProvisionResult {
   signInTokenVerified: boolean;
   membershipsVerified: boolean;
   sponsorGrantVerified: boolean;
+  sourceGrantsVerified: boolean;
   publicOnlyVerified: boolean;
   investorAccessToken: string | null;
 }
@@ -163,7 +164,7 @@ async function syncMemberships(personId: string, spec: TestUserSpec, clientRows:
     (spec.memberships ?? []).map((membership) => {
       const client = clientRows.get(membership.clientKey);
       if (!client) throw new Error(`Unknown client key ${membership.clientKey}`);
-      return [client.id, membership.role];
+      return [client.id, membership];
     }),
   );
 
@@ -176,21 +177,33 @@ async function syncMemberships(personId: string, spec: TestUserSpec, clientRows:
   const existing = (existingRows as Array<{ id: string; client_id: string; role: ProvisioningMembershipRole }> | null) ?? [];
   const existingByClientId = new Map(existing.map((row) => [row.client_id, row]));
 
-  for (const [clientId, role] of expected) {
+  for (const [clientId, membership] of expected) {
     const row = existingByClientId.get(clientId);
+    const payload = {
+      role: membership.role,
+      access_level: membership.accessLevel ?? null,
+      financial_visibility: membership.financialVisibility ?? false,
+      can_admin_users: membership.canAdminUsers ?? false,
+      can_create_programs: membership.canCreatePrograms ?? false,
+      can_approve_gates: membership.canApproveGates ?? false,
+      can_create_source_events: membership.canCreateSourceEvents ?? false,
+      can_approve_source_stages: membership.canApproveSourceStages ?? false,
+      can_approve_award: membership.canApproveAward ?? false,
+      can_upload_source_artifacts: membership.canUploadSourceArtifacts ?? true,
+      can_generate_sourcing_artifacts: membership.canGenerateSourcingArtifacts ?? true,
+      can_publish_sourcing_artifacts: membership.canPublishSourcingArtifacts ?? false,
+    };
     if (!row) {
       const { error } = await sb.from('person_client_memberships').insert({
         person_id: personId,
         client_id: clientId,
-        role,
+        ...payload,
       });
       if (error) throw error;
       continue;
     }
-    if (row.role !== role) {
-      const { error } = await sb.from('person_client_memberships').update({ role }).eq('id', row.id);
-      if (error) throw error;
-    }
+    const { error } = await sb.from('person_client_memberships').update(payload).eq('id', row.id);
+    if (error) throw error;
   }
 
   const staleIds = existing.filter((row) => !expected.has(row.client_id)).map((row) => row.id);
@@ -254,6 +267,51 @@ async function ensureSponsorGrant(personId: string, personName: string, spec: Te
     notify_on: ['approval_needed', 'phase_gate'],
   });
   if (error) throw error;
+}
+
+async function syncSourceAssignments(personId: string, personName: string, spec: TestUserSpec, clientRows: Map<string, ClientRow>): Promise<void> {
+  const assignments = spec.sourceAssignments ?? [];
+  if (assignments.length === 0) return;
+
+  const sb = getSupabase();
+  for (const assignment of assignments) {
+    const client = clientRows.get(assignment.clientKey);
+    if (!client) throw new Error(`Missing client ${assignment.clientKey} for source grant`);
+
+    const { data: existingRows, error: existingError } = await sb
+      .from('source_event_participants')
+      .select('id')
+      .eq('client_key', assignment.clientKey)
+      .eq('source_event_id', assignment.sourceEventId)
+      .eq('user_id', personId);
+    if (existingError) throw existingError;
+
+    const payload = {
+      client_key: assignment.clientKey,
+      source_event_id: assignment.sourceEventId,
+      user_id: personId,
+      user_name: personName,
+      role: assignment.sourceAccessLevel === 'source_member' ? 'source contributor' : 'source viewer',
+      approval_authority: assignment.approvalAuthority ?? null,
+      source_access_level: assignment.sourceAccessLevel,
+      can_view_financial: assignment.canViewFinancial ?? false,
+      can_upload_source_artifacts: assignment.canUploadSourceArtifacts ?? true,
+      can_generate_sourcing_artifacts: assignment.canGenerateSourcingArtifacts ?? true,
+      can_publish_sourcing_artifacts: assignment.canPublishSourcingArtifacts ?? false,
+      can_approve_source_stages: assignment.canApproveSourceStages ?? false,
+      can_approve_award: assignment.canApproveAward ?? false,
+      notify_on: ['source_event_update', 'approval_needed'],
+    };
+
+    const existingId = ((existingRows as Array<{ id: string }> | null) ?? [])[0]?.id;
+    if (existingId) {
+      const { error } = await sb.from('source_event_participants').update(payload).eq('id', existingId);
+      if (error) throw error;
+      continue;
+    }
+    const { error } = await sb.from('source_event_participants').insert(payload);
+    if (error) throw error;
+  }
 }
 
 function mergeMetadata(existing: JsonRecord | null | undefined, next: JsonRecord): JsonRecord {
@@ -339,6 +397,7 @@ async function verifyProvisioning(
   let visibleClientKeys: string[] = [];
   let membershipsVerified = true;
   let sponsorGrantVerified = !spec.sponsorGrant;
+  let sourceGrantsVerified = (spec.sourceAssignments ?? []).length === 0;
   let publicOnlyVerified = spec.expectations.publicOnly;
 
   if (personId) {
@@ -374,6 +433,19 @@ async function verifyProvisioning(
       if (participantError) throw participantError;
       sponsorGrantVerified = Boolean(participant);
     }
+
+    if ((spec.sourceAssignments ?? []).length > 0) {
+      const { data: sourceRows, error: sourceRowsError } = await sb
+        .from('source_event_participants')
+        .select('client_key, source_event_id')
+        .eq('user_id', personId);
+      if (sourceRowsError) throw sourceRowsError;
+      const actual = new Set(((sourceRows as Array<{ client_key: string; source_event_id: string }> | null) ?? [])
+        .map((row) => `${row.client_key}:${row.source_event_id}`));
+      sourceGrantsVerified = (spec.sourceAssignments ?? []).every((assignment) =>
+        actual.has(`${assignment.clientKey}:${assignment.sourceEventId}`),
+      );
+    }
   } else {
     const { data: personRows, error } = await sb.from('persons').select('id').eq('email', spec.email);
     if (error) throw error;
@@ -382,6 +454,7 @@ async function verifyProvisioning(
       : publicOnlyVerified;
     membershipsVerified = ((personRows as Array<{ id: string }> | null) ?? []).length === 0;
     visibleClientKeys = [...spec.expectations.visibleClientKeys];
+    sourceGrantsVerified = (spec.sourceAssignments ?? []).length === 0;
   }
 
   return {
@@ -395,6 +468,7 @@ async function verifyProvisioning(
     signInTokenVerified: true,
     membershipsVerified,
     sponsorGrantVerified,
+    sourceGrantsVerified,
     publicOnlyVerified,
     investorAccessToken,
   };
@@ -429,6 +503,9 @@ async function provisionOne(
   if (personId && spec.sponsorGrant && spec.person) {
     await ensureSponsorGrant(personId, spec.person.name, spec, clientRows);
   }
+  if (personId && spec.sourceAssignments && spec.person) {
+    await syncSourceAssignments(personId, spec.person.name, spec, clientRows);
+  }
 
   if (!verify) {
     return {
@@ -442,6 +519,7 @@ async function provisionOne(
       signInTokenVerified: false,
       membershipsVerified: false,
       sponsorGrantVerified: !spec.sponsorGrant,
+      sourceGrantsVerified: (spec.sourceAssignments ?? []).length === 0,
       publicOnlyVerified: spec.expectations.publicOnly,
       investorAccessToken,
     };
@@ -491,7 +569,8 @@ async function main() {
     console.log(
       `• ${result.key} · ${result.email} · role=${result.role} · clients=${result.visibleClientKeys.join(',') || 'public-only'}`
         + ` · password=${result.passwordVerified ? 'ok' : 'skipped'}`
-        + ` · token=${result.signInTokenVerified ? 'ok' : 'skipped'}`,
+        + ` · token=${result.signInTokenVerified ? 'ok' : 'skipped'}`
+        + ` · source=${result.sourceGrantsVerified ? 'ok' : 'missing'}`,
     );
   }
 }

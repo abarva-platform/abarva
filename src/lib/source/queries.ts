@@ -17,6 +17,8 @@ import { getStageOverride } from './stage-overrides';
 import { SOURCE_LIFECYCLE_STATUS_LABELS, SOURCE_STAGE_LABELS } from './constants';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { getActiveClientRow } from '@/lib/active-client';
+import { requireTenancy } from '@/lib/auth/tenancy';
+import { allowedSourceEventIdsForUser, canReadSourceEvent } from '@/lib/auth/source-access-policy';
 
 // ── DB row type for source_events ─────────────────────────────────────────────
 
@@ -58,6 +60,10 @@ function generateEventCode(clientKey: string, eventName: string): string {
 }
 
 export async function getPendingSourceEvents(clientKey: string): Promise<SourceEventRow[]> {
+  const tenancy = await requireTenancy().catch(() => null);
+  const allowedIds = tenancy ? await allowedSourceEventIdsForUser(tenancy, clientKey).catch(() => []) : [];
+  if (allowedIds !== null && allowedIds.length === 0) return [];
+
   const supabase = getServerSupabase();
   const { data, error } = await supabase
     .from('source_events')
@@ -70,7 +76,8 @@ export async function getPendingSourceEvents(clientKey: string): Promise<SourceE
     console.error('[getPendingSourceEvents]', error.message);
     return [];
   }
-  return (data ?? []) as SourceEventRow[];
+  const rows = (data ?? []) as SourceEventRow[];
+  return allowedIds === null ? rows : rows.filter((event) => allowedIds.includes(event.id));
 }
 
 export async function createSourcingEvent(input: CreateSourcingEventInput): Promise<SourceEventRow> {
@@ -112,6 +119,9 @@ export async function listSourcingEvents(): Promise<SourcingEventSummary[]> {
   const activeClient = await getActiveClientRow().catch(() => null);
   if (!activeClient) return seedEvents;
 
+  const tenancy = await requireTenancy().catch(() => null);
+  const allowedIds = tenancy ? await allowedSourceEventIdsForUser(tenancy, activeClient.key).catch(() => []) : null;
+
   const supabase = getServerSupabase();
   const { data, error } = await supabase
     .from('source_events')
@@ -125,11 +135,18 @@ export async function listSourcingEvents(): Promise<SourcingEventSummary[]> {
     return seedEvents;
   }
 
-  const persisted = ((data as SourceEventRow[] | null) ?? []).map((row) =>
+  const persistedRows = ((data as SourceEventRow[] | null) ?? []);
+  const scopedPersistedRows = allowedIds === null
+    ? persistedRows
+    : persistedRows.filter((row) => allowedIds.includes(row.id));
+  const persisted = scopedPersistedRows.map((row) =>
     sourceEventRowToSummary(row, activeClient.name),
   );
   const persistedIds = new Set(persisted.map((event) => event.id));
-  return [...persisted, ...seedEvents.filter((event) => !persistedIds.has(event.id))];
+  const scopedSeedEvents = allowedIds === null
+    ? seedEvents
+    : seedEvents.filter((event) => allowedIds.includes(event.id));
+  return [...persisted, ...scopedSeedEvents.filter((event) => !persistedIds.has(event.id))];
 }
 
 function sourceEventRowToSummary(row: SourceEventRow, accountName: string): SourcingEventSummary {
@@ -191,6 +208,14 @@ function isSourceLifecycleStatus(value: string): value is SourcingEventSummary['
 }
 
 export async function getSourcingEvent(eventId: string): Promise<SourcingEventDetail | null> {
+  const [activeClient, tenancy] = await Promise.all([
+    getActiveClientRow().catch(() => null),
+    requireTenancy().catch(() => null),
+  ]);
+  if (activeClient && tenancy && !(await canReadSourceEvent(tenancy, activeClient.key, eventId).catch(() => false))) {
+    return null;
+  }
+
   const event = getSourceEventSeed(eventId);
   if (!event) return null;
   const override = getStageOverride(eventId);

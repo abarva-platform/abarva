@@ -1,5 +1,3 @@
-import type { UserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
-
 export interface RestrictedOutputPolicyLike {
   outputPolicy: {
     exactFinancialValues: boolean;
@@ -45,7 +43,7 @@ export function shouldSuppressFinancialLine(
   return FINANCIAL_KEYWORD_PATTERN.test(line) && (MONEY_TEST_PATTERN.test(line) || FINANCIAL_NUMERIC_TEST_PATTERN.test(line));
 }
 
-export function formatRestrictedOutputPolicyForPrompt(policy: UserProgramAccessPolicy | null | undefined): string {
+export function formatRestrictedOutputPolicyForPrompt(policy: RestrictedOutputPolicyLike | null | undefined): string {
   if (!policy || policy.outputPolicy.exactFinancialValues) return '';
   return [
     'RESTRICTED OUTPUT FIREWALL:',

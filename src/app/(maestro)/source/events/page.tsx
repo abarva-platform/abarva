@@ -12,8 +12,9 @@ import { listSourcingEvents, getPendingSourceEvents } from '@/lib/source/queries
 import { AMS_SOURCE_EVENT } from '@/lib/source/shell-source-fixture';
 import type { SourcingEventSummary } from '@/lib/source/types';
 import { formatUsd } from '@/lib/source/value-ledger';
-import { getCurrentPerson } from '@/lib/auth/maestro';
 import { getActiveClientRow } from '@/lib/active-client';
+import { requireTenancy } from '@/lib/auth/tenancy';
+import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,9 +26,14 @@ export default async function SourceEventsPage({
   const { stage, status } = await searchParams;
   const events = await listSourcingEvents();
 
-  const [person, activeClient] = await Promise.all([getCurrentPerson(), getActiveClientRow()]);
-  const isAdmin = person?.role === 'admin';
-  const pendingEvents = isAdmin && activeClient
+  const [activeClient, tenancy] = await Promise.all([
+    getActiveClientRow().catch(() => null),
+    requireTenancy().catch(() => null),
+  ]);
+  const sourceAccessPolicy = activeClient && tenancy
+    ? await loadUserSourceAccessPolicy(tenancy, { activeClientKey: activeClient.key }).catch(() => null)
+    : null;
+  const pendingEvents = sourceAccessPolicy?.canApproveSourceStages && activeClient
     ? await getPendingSourceEvents(activeClient.key)
     : [];
 
@@ -35,7 +41,7 @@ export default async function SourceEventsPage({
     <AppShell
       surface="source"
       topBarProps={{
-        tenantName: 'Apex Retail Group',
+        tenantName: activeClient?.name ?? 'AbarVa Client',
         showLocked: true,
         context: 'Source · Events portfolio',
       }}
@@ -65,7 +71,7 @@ export default async function SourceEventsPage({
           </SourceWorkingPane>
           <SentinelAgentColumn
             quote="Events portfolio command read: sort the IT sourcing queue by active pressure, weak evidence, blocked gates, and value exposure before opening a canvas."
-            agentContext="Sentinel · Source events portfolio · seeded Apex Retail facts"
+            agentContext="Sentinel · Source events portfolio · active-client scoped facts"
             actions={[
               { letter: 'A', text: 'Start IT sourcing event', detail: 'Open the deterministic create-event entry path' },
               { letter: 'B', text: 'Review BAFO events', detail: 'Sourcing events currently in Orals/BAFO stage' },

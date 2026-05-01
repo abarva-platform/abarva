@@ -94,6 +94,51 @@ const DEMO_USERS = [
       canCreatePrograms: true,
     },
   },
+  {
+    email: 'demo-apexretail-source+clerk_test@abarva.com',
+    personGraphNodeId: 'source_operator_apex_retail',
+    metadata: {
+      role: 'client',
+      clientId: 'apexretail',
+      clientName: 'Apex Retail Group',
+      defaultClientId: 'apexretail',
+      clientLocked: true,
+      accountType: 'demo_source_operator',
+      moduleAccess: ['source'],
+      sourceScope: 'assigned_source_events_only',
+      canCreateSourceEvents: true,
+    },
+  },
+  {
+    email: 'demo-meridian-source+clerk_test@abarva.com',
+    personGraphNodeId: 'source_operator_meridian_health',
+    metadata: {
+      role: 'client',
+      clientId: 'meridian',
+      clientName: 'Meridian Health System',
+      defaultClientId: 'meridian',
+      clientLocked: true,
+      accountType: 'demo_source_operator',
+      moduleAccess: ['source'],
+      sourceScope: 'assigned_source_events_only',
+      canCreateSourceEvents: true,
+    },
+  },
+  {
+    email: 'demo-firstcapital-source+clerk_test@abarva.com',
+    personGraphNodeId: 'source_operator_first_capital',
+    metadata: {
+      role: 'client',
+      clientId: 'arcturus',
+      clientName: 'First Capital',
+      defaultClientId: 'arcturus',
+      clientLocked: true,
+      accountType: 'demo_source_operator',
+      moduleAccess: ['source'],
+      sourceScope: 'assigned_source_events_only',
+      canCreateSourceEvents: true,
+    },
+  },
 ]
 
 export async function POST() {
