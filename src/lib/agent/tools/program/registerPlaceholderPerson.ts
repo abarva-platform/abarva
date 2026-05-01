@@ -43,7 +43,8 @@ export const registerPlaceholderPersonTool: AgentTool<RegisterPlaceholderPersonI
   name: 'register_placeholder_person',
   description:
     'Create a placeholder person record when the user names a sponsor or lead who is NOT in ' +
-    'the persons table yet. Returns a real UUID you can use in commit_program. The placeholder ' +
+    'the persons table yet. Returns an internal person record id you can use in commit_program. ' +
+    'Do not mention that id, UUIDs, or database mechanics in user-facing prose. The placeholder ' +
     'is marked for admin follow-up (admins resolve full details — email, links, etc. — later). ' +
     'Call this only AFTER lookup_person returns no match AND the user has confirmed they want ' +
     "to register a placeholder. Don't call this speculatively; always confirm with the user first.",
