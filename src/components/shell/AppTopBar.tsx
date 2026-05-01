@@ -1,4 +1,10 @@
+'use client';
+
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useClerk, useUser } from '@clerk/nextjs';
 import { SHELL } from '@/lib/shell/shell-tokens';
+import { clearActiveClientContext } from '@/lib/auth/client-context-storage';
 
 export interface AppTopBarProps {
   tenantName?: string;
@@ -13,6 +19,23 @@ export function AppTopBar({
   context,
   timeString,
 }: AppTopBarProps) {
+  const router = useRouter();
+  const { isLoaded, user } = useUser();
+  const { signOut } = useClerk();
+  const signedIn = isLoaded && Boolean(user);
+  const displayName = user?.fullName || user?.emailAddresses?.[0]?.emailAddress?.split('@')?.[0] || 'Demo';
+  const initials = displayName
+    .split(' ')
+    .map((name) => name[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+
+  function handleSignOut() {
+    clearActiveClientContext();
+    void signOut(() => router.push('/'));
+  }
+
   return (
     <div
       style={{
@@ -32,12 +55,14 @@ export function AppTopBar({
       {/* Left side */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
         {/* AbarVa logo */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/logo.svg"
-          alt="AbarVa"
-          style={{ height: 20, width: 'auto', display: 'block', flexShrink: 0 }}
-        />
+        <Link href="/home" aria-label="Go to Home" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo.svg"
+            alt="AbarVa"
+            style={{ height: 20, width: 'auto', display: 'block', flexShrink: 0 }}
+          />
+        </Link>
 
         {/* Divider */}
         <div
@@ -139,8 +164,66 @@ export function AppTopBar({
           </span>
         ) : null}
 
-        {/* Avatar */}
+        {signedIn ? (
+          <>
+            <span
+              title={displayName}
+              style={{
+                fontFamily: SHELL.SANS,
+                fontSize: 12,
+                color: SHELL.INK_SOFT,
+                maxWidth: 160,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {displayName}
+            </span>
+            <button
+              type="button"
+              onClick={handleSignOut}
+              style={{
+                border: `1px solid ${SHELL.CARD_LINE}`,
+                borderRadius: 999,
+                background: SHELL.CARD_WHITE,
+                color: SHELL.INK,
+                cursor: 'pointer',
+                fontFamily: SHELL.MONO,
+                fontSize: 9,
+                letterSpacing: '0.12em',
+                lineHeight: 1,
+                padding: '7px 10px',
+                textTransform: 'uppercase',
+              }}
+            >
+              Sign out
+            </button>
+          </>
+        ) : (
+          <Link
+            href="/sign-in"
+            style={{
+              border: `1px solid ${SHELL.CARD_LINE}`,
+              borderRadius: 999,
+              background: SHELL.CARD_WHITE,
+              color: SHELL.INK,
+              fontFamily: SHELL.MONO,
+              fontSize: 9,
+              fontWeight: 600,
+              letterSpacing: '0.12em',
+              lineHeight: 1,
+              padding: '7px 10px',
+              textDecoration: 'none',
+              textTransform: 'uppercase',
+            }}
+          >
+            Sign in
+          </Link>
+        )}
+
         <div
+          aria-hidden
           style={{
             width: 26,
             height: 26,
@@ -152,16 +235,8 @@ export function AppTopBar({
             flexShrink: 0,
           }}
         >
-          <span
-            style={{
-              fontFamily: SHELL.SANS,
-              fontSize: 11,
-              fontWeight: 600,
-              color: SHELL.INK,
-              lineHeight: 1,
-            }}
-          >
-            D
+          <span style={{ fontFamily: SHELL.SANS, fontSize: 11, fontWeight: 600, color: SHELL.INK, lineHeight: 1 }}>
+            {initials || 'D'}
           </span>
         </div>
       </div>

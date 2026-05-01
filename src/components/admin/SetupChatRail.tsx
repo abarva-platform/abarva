@@ -30,7 +30,8 @@ export function SetupChatRail() {
         agent={STEWARD_AGENT}
         quote={STEWARD_QUOTE}
         surface="setup"
-        composerPlacement="bottom"
+        composerPlacement="afterHeader"
+        conversationWindow={4}
       />
     </div>
   );
