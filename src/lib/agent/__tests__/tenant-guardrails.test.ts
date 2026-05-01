@@ -18,6 +18,19 @@ describe('tenant guardrails', () => {
     expect(formatCrossTenantWriteRefusal(intent!)).toContain('No record was created');
   });
 
+  it('blocks common Apex typo in cross-tenant write requests', () => {
+    const intent = detectCrossTenantWriteIntent({
+      activeClientKey: 'meridian',
+      activeClientName: 'Meridian Health System',
+      message: 'can you create a record for aopex retail with the Apex CIO',
+    });
+
+    expect(intent).toMatchObject({
+      activeClientKey: 'meridian',
+      requestedClientKey: 'apexretail',
+    });
+  });
+
   it('does not block same-tenant origination', () => {
     expect(
       detectCrossTenantWriteIntent({

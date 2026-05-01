@@ -46,6 +46,9 @@ Fixed in this branch:
   - `src/app/api/admin/users/provision/route.ts` can now send a Clerk invitation after writing the client-pinned app records.
   - The invite metadata pins the user to the active client, marks `moduleAccess: ['programs']`, sets `clientLocked: true`, carries `person_id`, and redirects to `/auth-redirect`.
   - `src/components/admin/ProgramUserProvisionForm.tsx` exposes a `Send Clerk invite email` control and reports invite sent/failed separately from app-side provisioning.
+- Cross-tenant write guard strengthened:
+  - `src/lib/agent/tenant-guardrails.ts` recognizes Apex Retail write requests even with the observed `aopex retail` typo.
+  - `src/app/api/chat/agent/__tests__/agent-route-context-bundle.test.ts` pins that `/api/chat/agent` short-circuits cross-tenant write requests before model/tool execution.
 - Server-side Programs route guard added:
   - `src/app/programs/page.tsx` now requires the signed-in user to have the `programs` product module before rendering.
 - Phase approval/advance route guards tightened:
@@ -66,10 +69,11 @@ Validation run after fixes:
 - `npx jest src/lib/programs/__tests__/evidence-ingestion.test.ts src/app/api/programs/__tests__/attachments-upload.smoke.test.ts src/lib/programs/__tests__/approval.test.ts src/lib/programs/__tests__/governance-gates.test.ts src/lib/agent/tools/__tests__/commitProgram.test.ts src/lib/agent/tools/__tests__/completeDeliverable.test.ts --runInBand` → 6 suites / 61 tests passed.
 - `npx jest --runTestsByPath src/app/api/admin/users/provision/__tests__/route.test.ts --runInBand` → 1 suite / 3 tests passed.
 - `npx jest src/lib/programs/phase-packs/__tests__ src/app/api/context/demo/__tests__/route.test.ts src/app/api/chat/agent/__tests__/agent-route-context-bundle.test.ts src/lib/auth/__tests__/program-access-policy.test.ts src/app/api/programs/__tests__/attachments-upload.smoke.test.ts --runInBand` → 15 suites / 263 tests passed.
-- Final focused regression command over phase packs, broker/demo/chat context, access policy, module access, upload smoke, evidence ingestion, approval/governance, program mutations, program tools, program API contracts, direct program create route, admin Users & Access, deliverable-complete route, and admin provisioning route -> 29 suites / 482 tests passed after Clerk invite handoff and create-program classification wiring.
+- Final focused regression command over phase packs, broker/demo/chat context, tenant guardrails, access policy, module access, upload smoke, evidence ingestion, approval/governance, program mutations, program tools, program API contracts, direct program create route, admin Users & Access, deliverable-complete route, and admin provisioning route -> 30 suites / 487 tests passed after Clerk invite handoff, create-program classification wiring, and cross-tenant guardrail strengthening.
 - Follow-up TypeScript pass caught the JSON upload contract mismatch; `src/lib/programs/attachments/mime.ts` now includes `application/json`, and the upload/evidence focused suite passes 2 suites / 11 tests.
 - Admin provisioning + invite focused tests pass: `npx jest src/app/api/admin/users/provision/__tests__/route.test.ts src/components/admin/__tests__/ProgramUserProvisionForm.test.tsx --runInBand` -> 2 suites / 6 tests passed.
 - Create-program classification regression tests pass: `npx jest src/lib/programs/__tests__/mutations-industry.test.ts src/__tests__/integration/programs/programs-create-route.test.ts --runInBand` -> 2 suites / 14 tests passed.
+- Tenant guardrail focused tests pass: `npx jest src/lib/agent/__tests__/tenant-guardrails.test.ts src/app/api/chat/agent/__tests__/agent-route-context-bundle.test.ts --runInBand` -> included in the final focused regression command.
 
 Validation caveat:
 
@@ -1243,7 +1247,7 @@ Status: PARTIAL / NOT DEPLOYED-SMOKED.
 Code evidence:
 
 - `src/app/api/context/demo/route.ts:300-311` rejects mismatched tenant retrieval with 403.
-- `src/app/api/chat/agent/route.ts:445-460` deterministically detects and refuses cross-tenant write intent before LLM streaming.
+- `src/app/api/chat/agent/route.ts:445-460` deterministically detects and refuses cross-tenant write intent before LLM streaming; tests cover the Apex Retail request and the observed `aopex retail` typo.
 - `src/lib/programs/queries.ts:85-95` filters portfolio by `client_id` and allowed program ids.
 - `src/lib/programs/queries.ts:100-111` filters program detail by `id` and `client_id`.
 
