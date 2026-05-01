@@ -4,6 +4,12 @@ Date: 2026-04-30
 Status: planned
 Scope: Source event document ingestion, context-aware artifact generation, AMS pricing intelligence, and approval-ready outputs
 
+Related canon:
+
+- `../platform-design/pattern-operating-model/11_CORPUS_CATEGORY_LEVERAGE_TABLE.md` defines which corpus categories agents should retrieve for Source workflow, pricing, evidence, and governance turns.
+- `../platform-design/pattern-operating-model/12_PATTERN_TO_VALUE_AND_AGENT_TRAINING_PLAYBOOK.md` defines how category retrieval converts to measurable client value and evaluator expectations.
+- `../platform-design/pattern-operating-model/13_CONTEXT_LAYER_AGENT_TRAINING_REPORT.md` defines the doctrine/industry/client/program/run-state context-pack model this Source ingestion slice should feed.
+
 ## 1. Purpose
 
 AbarVa Source must treat uploaded sourcing documents and generated artifacts as first-class knowledge objects, not file attachments sitting beside the workflow.

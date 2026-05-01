@@ -236,3 +236,16 @@ Agent context awareness is acceptable only when:
 - evidence-gated claims cannot be stated as fact without support
 - missing context triggers clarification, limited pattern guidance, or request for evidence
 - context quality and vanilla-response risk can be measured
+
+
+## Cross-Product Context Layer Alignment
+
+The Source context bundle must align to the five-layer context model in `../../platform-design/pattern-operating-model/13_CONTEXT_LAYER_AGENT_TRAINING_REPORT.md`:
+
+1. Doctrine layer: patterns, anti-patterns, decision frameworks, evidence templates.
+2. Industry layer: industry source systems, regulatory frames, solution architectures.
+3. Client layer: tenant strategy, architecture, governance, vendor estate.
+4. Program/event layer: lifecycle phase, active decisions, constraints, artifacts, evidence.
+5. Run-state layer: current-week status, RAID changes, KPI drift, gate readiness, upload parse state.
+
+Source must also follow `../../platform-design/pattern-operating-model/11_CORPUS_CATEGORY_LEVERAGE_TABLE.md`: Nexus does not retrieve every category evenly. It prioritizes workflow patterns, deliverable templates, decision frameworks, evidence templates, and relevant industry/vendor/regulatory overlays based on the turn intent.
