@@ -3,6 +3,7 @@ import { route } from './router';
 import { synthesizeStream } from './synthesizer';
 import { generateFollowups } from './followups';
 import { retrieveWorldview } from './retrievers/worldview';
+import { retrieveTenantTechnologySources } from '@/lib/knowledge/tenant-technology-context';
 import type { AskSource, IntentClassification, AskIntent } from './types';
 
 export type { AskIntent, AskSource, IntentClassification } from './types';
@@ -18,6 +19,7 @@ export interface AskEvent {
 
 export interface AskOptions {
   userContextBlock?: string;
+  tenantInventoryKey?: string | null;
 }
 
 export function atlasStakeholderConflictHandoff(query: string): string | null {
@@ -70,11 +72,16 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
     const classification = await classifyIntent(trimmed);
     yield { type: 'classified', classification };
 
-    const [routed, worldview] = await Promise.all([
+    const [tenantTechnology, routed, worldview] = await Promise.all([
+      retrieveTenantTechnologySources(opts.tenantInventoryKey, trimmed),
       route(classification.intent, classification.entities),
       retrieveWorldview(trimmed),
     ]);
-    const sources = [...routed.sources, ...worldview.sources].slice(0, 10);
+    const sources: AskSource[] = [
+      ...tenantTechnology,
+      ...routed.sources,
+      ...worldview.sources,
+    ].slice(0, 10);
     const averageConfidence = sources.length > 0
       ? sources.reduce((s, x) => s + (x.confidence ?? 0), 0) / sources.length
       : 0;

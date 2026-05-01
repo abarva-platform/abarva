@@ -19,6 +19,7 @@ import { getTenantSystemBlock } from "@/lib/agent/demo-context";
 // Query enterprise_context_chunks for live tenant context; fall back to
 // the hardcoded fixture when no persisted data is available.
 import { buildTenantContextBlock } from "@/lib/intelligence/persistence";
+import { buildTenantTechnologyContextBlock } from "@/lib/knowledge/tenant-technology-context";
 import { getActiveClientRow } from "@/lib/active-client";
 import { getUserContextPromptBlock } from "@/lib/agent/userContext";
 import { retrieveStageContext, retrieveCategoryContext } from "@/lib/intelligence/agent-retrieval";
@@ -411,6 +412,13 @@ export async function POST(request: Request) {
   const tenantSystemBlock =
     (await buildTenantContextBlock(tenantInventoryKey)) ??
     getTenantSystemBlock(effectiveClientKey);
+  const tenantTechnologyContextBlock =
+    agentName === 'Sentinel' && typeof surface === 'string' && surface.startsWith('/intelligence')
+      ? await buildTenantTechnologyContextBlock(tenantInventoryKey, message, {
+          tenantName: activeClient?.name ?? tenantName,
+          limit: 10,
+        })
+      : '';
 
   // Surface 1 PR2 / Surface 2 PR2 — artifact-channel instructions are
   // composed for surfaces that have a reactive workspace ready to
@@ -613,6 +621,8 @@ export async function POST(request: Request) {
     crossProgramSignalsBlock,
     "",
     sourceTenantContextBlock,
+    "",
+    tenantTechnologyContextBlock,
     "",
     sourceEventSeedBlock,
     "",

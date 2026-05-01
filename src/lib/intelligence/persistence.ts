@@ -26,11 +26,11 @@ import { getIntelSupabase } from './db/client';
 // Profile + org (static facts) precede program inventory (most
 // conversational) and IT landscape (vendor resolution context).
 const PRIORITY_SEGMENTS = [
-  '01_enterprise_profile',
-  '02_org_structure',
-  '06_program_inventory',
-  '03_it_landscape',
-  '14_cross_program_signals',
+  'enterprise_profile',
+  'org_structure',
+  'program_inventory',
+  'it_landscape',
+  'cross_program_signals',
 ];
 
 // Max chunks per segment. Keeps the assembled block under ~600 tokens
