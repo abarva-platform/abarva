@@ -7,7 +7,7 @@
  *
  *   1. The route IMPORTS the broker, mode-inference helpers, and
  *      `clientKeyToInventorySubstrateKey`.
- *   2. The route DEFINES `assembleContextBundleArtifact` and
+ *   2. The route DEFINES `assembleContextBundleForTurn` and
  *      `readClientSuppliedMode`.
  *   3. The route EMITS the artifact via the `[[artifact:context-bundle]]`
  *      sentinel grammar before `runToolUseLoop`.
@@ -72,7 +72,7 @@ describe('agent route · CB-6 context-bundle wiring', () => {
   });
 
   it('assembles the bundle and serializes it as a context-bundle artifact', () => {
-    expect(source).toContain('async function assembleContextBundleArtifact(');
+    expect(source).toContain('async function assembleContextBundleForTurn(');
     expect(source).toContain('await getContextBroker().assemble({');
     expect(source).toMatch(
       /\[\[artifact:context-bundle\]\]\$\{json\}\[\[\/artifact\]\]/,
@@ -121,24 +121,34 @@ describe('agent route · CB-6 context-bundle wiring', () => {
     expect(source).toContain('context_bundle_assembly_failed');
   });
 
+  it('injects a private-plane broker receipt into the prompt and suppresses legacy tenant block for private tenants', () => {
+    expect(source).toContain('PRIVATE DATA PLANE CONTEXT:');
+    expect(source).toContain('CONTEXT BROKER RECEIPT:');
+    expect(source).toContain('Private client facts:');
+    expect(source).toContain('Shared AbarVa corpus/worldview chunks:');
+    expect(source).toMatch(/const tenantSystemBlock =\s*privateDataPlane\s*\?/);
+    expect(source).toContain('isNexusProgramsSurface && activeClient?.key && !privateDataPlane');
+  });
+
   // CB-10 · graceful broker-throw fallback. Prior to CB-10 the route
   // returned `null` and silently skipped emitting the artifact, so the
   // panel could not distinguish "no retrieval needed" from "retrieval
   // errored." Now we always emit a placeholder generic bundle with the
   // failure as a warning.
   it('on broker throw, emits a placeholder generic bundle with a failure warning (CB-10)', () => {
-    // assembleContextBundleArtifact returns Promise<string> (no nullable union).
+    // assembleContextBundleForTurn returns a fallback bundle (no nullable union).
     expect(source).toMatch(
-      /async function assembleContextBundleArtifact\([\s\S]*?\): Promise<string>/,
+      /async function assembleContextBundleForTurn\([\s\S]*?\): Promise<import\("@\/lib\/knowledge\/context-broker"\)\.ContextBundle>/,
     );
     // Catch branch builds a placeholder bundle with mode 'generic'.
     expect(source).toContain("mode: 'generic' as const");
     // The placeholder warning copy explains the failure.
     expect(source).toContain('Context assembly failed:');
     expect(source).toContain('Answering without retrieved context.');
-    // The placeholder is also serialized via the same artifact envelope.
+    // The placeholder is serialized through the shared artifact helper.
+    expect(source).toContain('function serializeContextBundleArtifact(');
     expect(source).toMatch(
-      /\[\[artifact:context-bundle\]\]\$\{JSON\.stringify\(fallback\)\}\[\[\/artifact\]\]/,
+      /\[\[artifact:context-bundle\]\]\$\{json\}\[\[\/artifact\]\]/,
     );
   });
 });

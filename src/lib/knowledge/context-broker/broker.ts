@@ -33,6 +33,11 @@ import 'server-only';
  */
 
 import { getTenantDataAdapter } from '@/lib/knowledge/tenant-data';
+import {
+  getPrivateDataPlaneResource,
+  isPrivateVectorAvailable,
+  type PrivateDataPlaneResource,
+} from '@/lib/knowledge/private-data-plane/registry';
 import type { TenantDataAdapter } from '@/lib/knowledge/tenant-data';
 import type {
   ContextChunk,
@@ -49,6 +54,7 @@ import {
   type ContextAssembleInput,
   type ContextBundle,
   type ContextProvenance,
+  type GraphPath,
   type SemanticChunkHit,
   type WorldviewChunkHit,
 } from './types';
@@ -162,9 +168,16 @@ function isGraphCandidateId(recordId: string): boolean {
   return GRAPH_ID_PREFIXES.some((prefix) => recordId.startsWith(prefix));
 }
 
-function provenanceForFact(fact: TenantRecord): ContextProvenance {
+function sourceClassForTenant(resource: PrivateDataPlaneResource | null): ContextProvenance['sourceClass'] {
+  return resource ? 'private_client_data' : 'tenant_admin_upload';
+}
+
+function provenanceForFact(
+  fact: TenantRecord,
+  resource: PrivateDataPlaneResource | null,
+): ContextProvenance {
   return {
-    sourceClass: 'tenant_admin_upload',
+    sourceClass: sourceClassForTenant(resource),
     sourceId: fact.recordId,
     sourceDoc: fact.sourceBasis,
     confidence: fact.confidence,
@@ -172,9 +185,12 @@ function provenanceForFact(fact: TenantRecord): ContextProvenance {
   };
 }
 
-function provenanceForChunk(hit: SemanticChunkHit): ContextProvenance {
+function provenanceForChunk(
+  hit: SemanticChunkHit,
+  resource: PrivateDataPlaneResource | null,
+): ContextProvenance {
   return {
-    sourceClass: 'tenant_admin_upload',
+    sourceClass: sourceClassForTenant(resource),
     sourceId: hit.chunk.chunkId,
     sourceDoc: hit.chunk.sourceBasis,
     classification: hit.chunk.classification,
@@ -182,11 +198,12 @@ function provenanceForChunk(hit: SemanticChunkHit): ContextProvenance {
 }
 
 function provenanceForNeighborhood(
-  neighborhood: GraphNeighborhood,
+  neighborhood: GraphNeighborhood | GraphPath,
+  resource: PrivateDataPlaneResource | null,
 ): ContextProvenance {
   return {
-    sourceClass: 'tenant_admin_upload',
-    sourceId: neighborhood.rootId,
+    sourceClass: sourceClassForTenant(resource),
+    sourceId: graphRootId(neighborhood) ?? 'graph-path',
   };
 }
 
@@ -201,6 +218,7 @@ function emptyBundle(
   infoTags: string[] = [],
   worldviewChunks: WorldviewChunkHit[] = [],
 ): ContextBundle {
+  const resource = getPrivateDataPlaneResource(tenantKey);
   return {
     query: input.query,
     mode: input.mode,
@@ -214,6 +232,47 @@ function emptyBundle(
     assembledAt: nowIso(),
     warnings,
     infoTags,
+    retrievalTrace: buildRetrievalTrace({
+      tenantKey,
+      resource,
+      facts: [],
+      graphPaths: [],
+      semanticChunks: [],
+      worldviewChunks,
+    }),
+  };
+}
+
+function graphRootId(path: GraphNeighborhood | GraphPath): string | null {
+  if ('rootId' in path) return path.rootId;
+  return path.fromId ? `${path.fromId}->${path.toId}` : null;
+}
+
+function buildRetrievalTrace(args: {
+  tenantKey: string | null;
+  resource: PrivateDataPlaneResource | null;
+  facts: TenantRecord[];
+  graphPaths: Array<GraphNeighborhood | GraphPath>;
+  semanticChunks: SemanticChunkHit[];
+  worldviewChunks: WorldviewChunkHit[];
+}): NonNullable<ContextBundle['retrievalTrace']> {
+  const privateFactIds = args.facts.map((fact) => fact.recordId);
+  const privateChunkIds = args.semanticChunks.map((hit) => hit.chunk.chunkId);
+  const graphRootIds = args.graphPaths
+    .map(graphRootId)
+    .filter((id): id is string => Boolean(id));
+  const sharedCorpusIds = args.worldviewChunks.map((hit) => hit.chunkId);
+  return {
+    tenant_key: args.tenantKey,
+    data_plane_id: args.resource?.dataPlaneId ?? null,
+    schema: args.resource?.privateSchema ?? null,
+    pinecone_index: args.resource?.privatePineconeIndex ?? null,
+    vector_status: args.resource?.vectorStatus,
+    retrieved_private_ids: [...privateFactIds, ...privateChunkIds, ...graphRootIds],
+    shared_corpus_ids: sharedCorpusIds,
+    private_fact_ids: privateFactIds,
+    private_chunk_ids: privateChunkIds,
+    graph_root_ids: graphRootIds,
   };
 }
 
@@ -322,6 +381,7 @@ export class DefaultContextBroker implements ContextBroker {
       throw new MissingTenantKeyError(input.mode);
     }
     const tenantKey = input.tenantKey;
+    const privateResource = getPrivateDataPlaneResource(tenantKey);
 
     const warnings: string[] = [];
     // CB-10 · info-tags are success metadata about how retrieval ran
@@ -329,6 +389,18 @@ export class DefaultContextBroker implements ContextBroker {
     // from warnings so the panel can render them in a separate
     // slate-toned strip rather than the amber warnings strip.
     const infoTags: string[] = [];
+    if (privateResource) {
+      infoTags.push(
+        privateResource.privatePineconeIndex
+          ? `Private data plane ${privateResource.dataPlaneId}: schema=${privateResource.privateSchema}; pinecone=${privateResource.privatePineconeIndex}.`
+          : `Private data plane ${privateResource.dataPlaneId}: schema=${privateResource.privateSchema}; vector index unavailable (${privateResource.notes}).`,
+      );
+      if (!isPrivateVectorAvailable(privateResource)) {
+        warnings.push(
+          `Private vector retrieval unavailable for ${tenantKey}: ${privateResource.notes}`,
+        );
+      }
+    }
     const keywords = extractKeywords(input.query);
 
     // ──────────────── Facts ────────────────
@@ -434,9 +506,9 @@ export class DefaultContextBroker implements ContextBroker {
 
     // ──────────────── Provenance ────────────────
     const provenance: ContextProvenance[] = [
-      ...facts.map(provenanceForFact),
-      ...graphPaths.map(provenanceForNeighborhood),
-      ...semanticChunks.map(provenanceForChunk),
+      ...facts.map((fact) => provenanceForFact(fact, privateResource)),
+      ...graphPaths.map((path) => provenanceForNeighborhood(path, privateResource)),
+      ...semanticChunks.map((chunk) => provenanceForChunk(chunk, privateResource)),
       ...worldviewChunks.map(provenanceForWorldviewChunk),
     ];
 
@@ -453,6 +525,14 @@ export class DefaultContextBroker implements ContextBroker {
       assembledAt: nowIso(),
       warnings,
       infoTags,
+      retrievalTrace: buildRetrievalTrace({
+        tenantKey,
+        resource: privateResource,
+        facts,
+        graphPaths,
+        semanticChunks,
+        worldviewChunks,
+      }),
     };
   }
 

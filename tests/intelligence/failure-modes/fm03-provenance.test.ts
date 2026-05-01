@@ -49,6 +49,7 @@ describe('FM #3 — Provenance buried', () => {
     for (const p of bundle.provenance) {
       expect(p.sourceClass).toBeDefined();
       expect([
+        'private_client_data',
         'tenant_admin_upload',
         'corpus',
         'pattern_catalog',

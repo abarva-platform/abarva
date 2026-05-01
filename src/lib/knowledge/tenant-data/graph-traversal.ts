@@ -3,6 +3,7 @@ import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { getServerSupabase } from '@/lib/supabase-server';
+import { getPrivateDataPlaneResource } from '@/lib/knowledge/private-data-plane/registry';
 import type {
   GraphEdge,
   GraphEdgeKind,
@@ -129,6 +130,10 @@ function edgeKey(edge: GraphEdge): string {
 
 /** The Supabase getter we depend on. Defaulted; tests inject a mock. */
 export type SupabaseClientGetter = () => SupabaseClient;
+export type SupabaseTableResolver = (
+  tenantKey: string,
+  tableName: string,
+) => ReturnType<SupabaseClient['from']>;
 
 const defaultClientGetter: SupabaseClientGetter = () => getServerSupabase();
 
@@ -141,9 +146,27 @@ const defaultClientGetter: SupabaseClientGetter = () => getServerSupabase();
  */
 export class GraphTraversal {
   private readonly getClient: SupabaseClientGetter;
+  private readonly getTable?: SupabaseTableResolver;
 
-  constructor(getClient: SupabaseClientGetter = defaultClientGetter) {
+  constructor(
+    getClient: SupabaseClientGetter = defaultClientGetter,
+    getTable?: SupabaseTableResolver,
+  ) {
     this.getClient = getClient;
+    this.getTable = getTable;
+  }
+
+  private table(tenantKey: string, tableName: string): ReturnType<SupabaseClient['from']> {
+    if (this.getTable) return this.getTable(tenantKey, tableName);
+    const sb = this.getClient();
+    const resource = getPrivateDataPlaneResource(tenantKey);
+    const schemaClient =
+      resource?.privateSchema && typeof (sb as { schema?: unknown }).schema === 'function'
+        ? (sb as unknown as { schema(schemaName: string): SupabaseClient }).schema(
+            resource.privateSchema,
+          )
+        : sb;
+    return schemaClient.from(tableName);
   }
 
   /**
@@ -152,9 +175,7 @@ export class GraphTraversal {
    * a full scan.
    */
   async listNodes(tenantKey: string, kind?: GraphNodeKind): Promise<GraphNode[]> {
-    const sb = this.getClient();
-    let query = sb
-      .from('enterprise_graph_nodes')
+    let query = this.table(tenantKey, 'enterprise_graph_nodes')
       .select(NODE_COLUMNS)
       .eq('tenant_key', tenantKey)
       .limit(DEFAULT_NODE_LIST_LIMIT);
@@ -175,9 +196,7 @@ export class GraphTraversal {
     nodeId: string,
     direction: EdgeDirection = 'both',
   ): Promise<GraphEdge[]> {
-    const sb = this.getClient();
-    const base = sb
-      .from('enterprise_graph_edges')
+    const base = this.table(tenantKey, 'enterprise_graph_edges')
       .select(EDGE_COLUMNS)
       .eq('tenant_key', tenantKey);
 
@@ -219,12 +238,9 @@ export class GraphTraversal {
     const edgeKinds = opts?.edgeKinds;
     const edgeKindFilter = edgeKinds ? new Set(edgeKinds) : null;
 
-    const sb = this.getClient();
-
     // Fetch the root node. If it doesn't exist for this tenant, return an
     // empty neighborhood at depth 0.
-    const rootResult = await sb
-      .from('enterprise_graph_nodes')
+    const rootResult = await this.table(tenantKey, 'enterprise_graph_nodes')
       .select(NODE_COLUMNS)
       .eq('tenant_key', tenantKey)
       .eq('node_id', rootId)
@@ -252,8 +268,7 @@ export class GraphTraversal {
       }
 
       // Fetch every edge incident on the current frontier in one round-trip.
-      const edgeResult = await sb
-        .from('enterprise_graph_edges')
+      const edgeResult = await this.table(tenantKey, 'enterprise_graph_edges')
         .select(EDGE_COLUMNS)
         .eq('tenant_key', tenantKey)
         .or(
@@ -300,8 +315,7 @@ export class GraphTraversal {
 
       // Hydrate the new neighbor nodes in one round-trip.
       const neighborIds = Array.from(newNeighborIds);
-      const nodeResult = await sb
-        .from('enterprise_graph_nodes')
+      const nodeResult = await this.table(tenantKey, 'enterprise_graph_nodes')
         .select(NODE_COLUMNS)
         .eq('tenant_key', tenantKey)
         .in('node_id', neighborIds);
@@ -357,8 +371,6 @@ export class GraphTraversal {
     const requested = Math.max(1, Math.floor(maxDepth ?? DEFAULT_PATH_DEPTH));
     const cap = Math.min(requested, MAX_NEIGHBORHOOD_DEPTH);
 
-    const sb = this.getClient();
-
     const visited = new Set<string>([fromId]);
     /** parent[node] = [prevNode, edgeUsed] */
     const parent = new Map<string, { prev: string; edge: GraphEdge }>();
@@ -368,8 +380,7 @@ export class GraphTraversal {
     for (let depth = 0; depth < cap; depth += 1) {
       if (frontier.length === 0) break;
 
-      const edgeResult = await sb
-        .from('enterprise_graph_edges')
+      const edgeResult = await this.table(tenantKey, 'enterprise_graph_edges')
         .select(EDGE_COLUMNS)
         .eq('tenant_key', tenantKey)
         .or(

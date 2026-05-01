@@ -66,6 +66,7 @@ export type BrokerMode = 'generic' | 'corpus' | 'tenant' | 'full';
 export interface ContextProvenance {
   /** Source class — drives panel color coding + downstream filters. */
   sourceClass:
+    | 'private_client_data'
     | 'tenant_admin_upload'
     | 'corpus'
     | 'pattern_catalog'
@@ -197,6 +198,22 @@ export interface ContextBundle {
    * Always present (possibly empty) so the panel renders deterministically.
    */
   infoTags: string[];
+  /**
+   * Private-plane retrieval trace. Present on broker-built bundles so
+   * smoke tests and the right rail can prove which data plane was used.
+   */
+  retrievalTrace?: {
+    tenant_key: string | null;
+    data_plane_id: string | null;
+    schema: string | null;
+    pinecone_index: string | null;
+    vector_status?: string;
+    retrieved_private_ids: string[];
+    shared_corpus_ids: string[];
+    private_fact_ids: string[];
+    private_chunk_ids: string[];
+    graph_root_ids: string[];
+  };
 }
 
 /**

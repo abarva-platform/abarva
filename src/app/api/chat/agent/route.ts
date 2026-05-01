@@ -78,6 +78,7 @@ import {
 // `import type` so the broker's `'server-only'` directive
 // never traverses the client graph).
 import { getContextBroker } from "@/lib/knowledge/context-broker";
+import { getPrivateDataPlaneResource } from "@/lib/knowledge/private-data-plane/registry";
 import {
   inferModeForSurface,
   isBrokerMode,
@@ -428,9 +429,37 @@ export async function POST(request: Request) {
   const tenantInventoryKey = effectiveClientKey
     ? clientKeyToInventorySubstrateKey(effectiveClientKey)
     : null;
+  const brokerTenantKey = tenantInventoryKey;
+  const requestedMode = readClientSuppliedMode(surfaceContext);
+  const bundleMode =
+    requestedMode && isModeValidForAuth(requestedMode, brokerTenantKey)
+      ? requestedMode
+      : inferModeForSurface({ surface, tenantKey: brokerTenantKey });
+  const contextBundleForTurn = await assembleContextBundleForTurn({
+    query: message,
+    mode: bundleMode,
+    tenantKey: brokerTenantKey,
+  });
+  const contextBundleArtifact = serializeContextBundleArtifact(contextBundleForTurn);
+  const contextBundlePromptBlock = formatContextBundleReceiptForPrompt(contextBundleForTurn);
+  const privateDataPlane = getPrivateDataPlaneResource(tenantInventoryKey);
+  const privateDataPlaneBlock = privateDataPlane
+    ? [
+        'PRIVATE DATA PLANE CONTEXT:',
+        `- Tenant key: ${privateDataPlane.tenantKey}`,
+        `- Data plane id: ${privateDataPlane.dataPlaneId}`,
+        `- Private schema: ${privateDataPlane.privateSchema}`,
+        `- Private Pinecone index: ${privateDataPlane.privatePineconeIndex ?? 'not available'}`,
+        `- Vector status: ${privateDataPlane.vectorStatus}`,
+        `- Retrieval posture: ${privateDataPlane.status}. ${privateDataPlane.notes}`,
+        '- In your answer, distinguish private client facts from shared AbarVa corpus knowledge in natural language.',
+      ].join('\n')
+    : '';
   const tenantSystemBlock =
-    (await buildTenantContextBlock(tenantInventoryKey)) ??
-    getTenantSystemBlock(effectiveClientKey);
+    privateDataPlane
+      ? ''
+      : ((await buildTenantContextBlock(tenantInventoryKey)) ??
+          getTenantSystemBlock(effectiveClientKey));
   const tenantTechnologyContextBlock =
     agentName === 'Sentinel' && typeof surface === 'string' && surface.startsWith('/intelligence')
       ? await buildTenantTechnologyContextBlock(tenantInventoryKey, message, {
@@ -492,7 +521,7 @@ export async function POST(request: Request) {
     agentName === 'Nexus' &&
     typeof surface === 'string' &&
     (surface === '/programs' || isProgramDetailSurface);
-  if (isNexusProgramsSurface && activeClient?.key) {
+  if (isNexusProgramsSurface && activeClient?.key && !privateDataPlane) {
     try {
       const brokerBundle = buildProgramsContextBundle({
         tenantKey: clientKeyToBrokerTenantKey(activeClient.key),
@@ -643,6 +672,10 @@ export async function POST(request: Request) {
     "",
     tenantTechnologyContextBlock,
     "",
+    privateDataPlaneBlock,
+    "",
+    contextBundlePromptBlock,
+    "",
     sourceEventSeedBlock,
     "",
     // OV2-WIRE-AND-FM-PROMPT Part 2 — overlap candidates on
@@ -681,6 +714,7 @@ export async function POST(request: Request) {
     "- Reference tenant and program names from context.",
     "- Never say you don't have specific information about the tenant — use the demo context below.",
     "- TENANT SAFETY: the active tenant is locked. If the user asks to create, copy, sponsor, or submit a program for another tenant, refuse clearly, say no record was created, and tell them to switch/sign in to that tenant first. Never say you have another tenant's CIO or sponsor noted while operating inside the current tenant.",
+    "- CONTEXT SOURCE DISCIPLINE: when retrieval context is present, separate private client facts from shared AbarVa corpus/worldview knowledge. Say 'From the private client data...' for tenant-specific facts and 'From AbarVa's shared corpus...' for reusable doctrine. Never blur them.",
     "- CANVAS CONTINUITY: if the user wants to start, scope, or create a new program, do not navigate them to /programs/new. Continue in this same canvas: confirm the intent, collect sponsor, lead, target outcome, and timeline, use lookup_person/register_placeholder_person/commit_program when available, and only mention the program detail link after the brief is submitted.",
     ...(isProgramsSurface(surface)
       ? [
@@ -756,21 +790,6 @@ export async function POST(request: Request) {
   // are rendered. Failures are non-fatal: the route always streams
   // an answer, even if bundle assembly errored — the panel falls
   // through to its cold-start state.
-  const brokerTenantKey = effectiveClientKey
-    ? clientKeyToInventorySubstrateKey(effectiveClientKey)
-    : null;
-  const requestedMode = readClientSuppliedMode(surfaceContext);
-  const bundleMode =
-    requestedMode && isModeValidForAuth(requestedMode, brokerTenantKey)
-      ? requestedMode
-      : inferModeForSurface({ surface, tenantKey: brokerTenantKey });
-
-  const contextBundleArtifact = await assembleContextBundleArtifact({
-    query: message,
-    mode: bundleMode,
-    tenantKey: brokerTenantKey,
-  });
-
   const encoder = new TextEncoder();
   // F0.3 — buffer the streamed output for post-hoc validation. The
   // validator runs AFTER streaming completes; it never blocks the
@@ -908,19 +927,17 @@ function readPromptPhaseFromSurfaceContext(
  * was needed" from "retrieval errored." Prior to CB-10 the route
  * returned `null` and the panel fell through silently to cold-start.
  */
-async function assembleContextBundleArtifact(input: {
+async function assembleContextBundleForTurn(input: {
   query: string;
   mode: import("@/lib/knowledge/context-broker").BrokerMode;
   tenantKey: string | null;
-}): Promise<string> {
+}): Promise<import("@/lib/knowledge/context-broker").ContextBundle> {
   try {
-    const bundle = await getContextBroker().assemble({
+    return await getContextBroker().assemble({
       query: input.query,
       mode: input.mode,
       tenantKey: input.tenantKey ?? undefined,
     });
-    const json = JSON.stringify({ bundle });
-    return `[[artifact:context-bundle]]${json}[[/artifact]]`;
   } catch (err) {
     const reason = err instanceof Error ? err.message : String(err);
     console.warn('[chat/agent] context_bundle_assembly_failed', {
@@ -934,25 +951,81 @@ async function assembleContextBundleArtifact(input: {
     // the single-line empty path and the warning string carries the
     // failure detail. `tenantKey` is null on this branch — there is
     // no successfully-resolved tenant to attribute the bundle to.
-    const fallback = {
-      bundle: {
-        query: input.query,
-        mode: 'generic' as const,
-        tenantKey: null,
-        facts: [],
-        graphPaths: [],
-        semanticChunks: [],
-        corpusPatterns: [],
-        provenance: [],
-        warnings: [
-          `Context assembly failed: ${reason}. Answering without retrieved context.`,
-        ],
-        infoTags: [],
-        assembledAt: new Date().toISOString(),
+    return {
+      query: input.query,
+      mode: 'generic' as const,
+      tenantKey: null,
+      facts: [],
+      graphPaths: [],
+      semanticChunks: [],
+      corpusPatterns: [],
+      worldviewChunks: [],
+      provenance: [],
+      warnings: [
+        `Context assembly failed: ${reason}. Answering without retrieved context.`,
+      ],
+      infoTags: [],
+      retrievalTrace: {
+        tenant_key: null,
+        data_plane_id: null,
+        schema: null,
+        pinecone_index: null,
+        retrieved_private_ids: [],
+        shared_corpus_ids: [],
+        private_fact_ids: [],
+        private_chunk_ids: [],
+        graph_root_ids: [],
       },
+      assembledAt: new Date().toISOString(),
     };
-    return `[[artifact:context-bundle]]${JSON.stringify(fallback)}[[/artifact]]`;
   }
+}
+
+function serializeContextBundleArtifact(
+  bundle: import("@/lib/knowledge/context-broker").ContextBundle,
+): string {
+  const json = JSON.stringify({ bundle });
+  return `[[artifact:context-bundle]]${json}[[/artifact]]`;
+}
+
+function formatContextBundleReceiptForPrompt(
+  bundle: import("@/lib/knowledge/context-broker").ContextBundle,
+): string {
+  const trace = bundle.retrievalTrace;
+  if (!trace && bundle.facts.length === 0 && bundle.semanticChunks.length === 0) {
+    return '';
+  }
+  const privateIds = trace?.retrieved_private_ids.slice(0, 12) ?? [];
+  const sharedIds = trace?.shared_corpus_ids.slice(0, 12) ?? [];
+  const factLines = bundle.facts.slice(0, 6).map((fact) => {
+    const caveat = fact.caveat ? ` Caveat: ${fact.caveat}` : '';
+    return `  - ${fact.title} (${fact.recordId}).${caveat}`;
+  });
+  const chunkLines = bundle.semanticChunks.slice(0, 4).map((hit) => {
+    const text = hit.chunk.text.replace(/\s+/g, ' ').trim().slice(0, 240);
+    return `  - ${hit.chunk.chunkId}: ${text}`;
+  });
+  const worldviewLines = bundle.worldviewChunks.slice(0, 4).map((hit) => {
+    return `  - ${hit.chunkId}: ${hit.thesisTitle ?? hit.thesisId}${hit.chunkTitle ? ` / ${hit.chunkTitle}` : ''}`;
+  });
+  return [
+    'CONTEXT BROKER RECEIPT:',
+    `- Mode: ${bundle.mode}`,
+    `- Tenant key: ${trace?.tenant_key ?? bundle.tenantKey ?? 'none'}`,
+    `- Data plane id: ${trace?.data_plane_id ?? 'none'}`,
+    `- Private schema: ${trace?.schema ?? 'none'}`,
+    `- Private Pinecone index: ${trace?.pinecone_index ?? 'none'}`,
+    `- Private records/chunks retrieved: ${privateIds.length > 0 ? privateIds.join(', ') : 'none'}`,
+    `- Shared corpus chunks retrieved: ${sharedIds.length > 0 ? sharedIds.join(', ') : 'none'}`,
+    `- Warnings: ${bundle.warnings.length > 0 ? bundle.warnings.join(' | ') : 'none'}`,
+    factLines.length > 0 ? 'Private client facts:' : '',
+    ...factLines,
+    chunkLines.length > 0 ? 'Private client evidence chunks:' : '',
+    ...chunkLines,
+    worldviewLines.length > 0 ? 'Shared AbarVa corpus/worldview chunks:' : '',
+    ...worldviewLines,
+    'Use this receipt to ground the answer. Do not invent private facts not present in retrieved private ids or prompt context.',
+  ].filter(Boolean).join('\n');
 }
 
 function normalizeEnterpriseAgentName(agentName: string): EnterpriseAgentName {

@@ -2,8 +2,13 @@ import 'server-only';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import {
   getPineconeClient,
+  privateTenantPineconeIndexConfig,
   type PineconeClient,
 } from '@/lib/knowledge/context-broker/pinecone-client';
+import {
+  getPrivateDataPlaneResource,
+  isPrivateVectorAvailable,
+} from '@/lib/knowledge/private-data-plane/registry';
 import type { TenantDataAdapter } from './adapter';
 import { GraphTraversal } from './graph-traversal';
 import type {
@@ -272,9 +277,20 @@ const MAX_CHUNK_KEYWORD_LIMIT = 50;
 const DEFAULT_VECTOR_LIMIT = 10;
 const MAX_VECTOR_LIMIT = 50;
 
+function defaultPineconeClientForTenant(tenantKey?: string): PineconeClient | null {
+  const resource = getPrivateDataPlaneResource(tenantKey);
+  if (!resource) {
+    return getPineconeClient();
+  }
+  if (!isPrivateVectorAvailable(resource) || !resource.privatePineconeIndex) {
+    return null;
+  }
+  return getPineconeClient(privateTenantPineconeIndexConfig(resource.privatePineconeIndex));
+}
+
 export class SupabaseTenantDataAdapter implements TenantDataAdapter {
   private readonly graphTraversal: GraphTraversal;
-  private readonly pineconeClientFactory: () => PineconeClient | null;
+  private readonly pineconeClientFactory: (tenantKey?: string) => PineconeClient | null;
 
   constructor(
     private readonly client: SupabaseClient,
@@ -284,18 +300,31 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
      * `getPineconeClient()` so a missing PINECONE_API_KEY surfaces
      * only when `chunksByVector` is actually invoked.
      */
-    pineconeClientFactory: (() => PineconeClient | null) = getPineconeClient,
+    pineconeClientFactory: ((tenantKey?: string) => PineconeClient | null) = defaultPineconeClientForTenant,
   ) {
     // GraphTraversal expects a `() => SupabaseClient` getter so tests can
     // inject mocks per-call. We hand it the same service-role client used
     // for record reads — one client, one tenant boundary, no drift.
-    this.graphTraversal = new GraphTraversal(() => this.client);
+    this.graphTraversal = new GraphTraversal(
+      () => this.client,
+      (tenantKey, tableName) => this.table(tenantKey, tableName),
+    );
     this.pineconeClientFactory = pineconeClientFactory;
   }
 
+  private table(tenantKey: string, tableName: string) {
+    const resource = getPrivateDataPlaneResource(tenantKey);
+    const schemaClient =
+      resource?.privateSchema && typeof (this.client as { schema?: unknown }).schema === 'function'
+        ? (this.client as unknown as { schema(schemaName: string): SupabaseClient }).schema(
+            resource.privateSchema,
+          )
+        : this.client;
+    return schemaClient.from(tableName);
+  }
+
   async listSegments(tenantKey: string): Promise<SegmentRollup[]> {
-    const { data, error } = await this.client
-      .from('data_inventory_segments')
+    const { data, error } = await this.table(tenantKey, 'data_inventory_segments')
       .select(SEGMENT_COLUMNS)
       .eq('tenant_key', tenantKey);
     if (error) {
@@ -311,8 +340,7 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
     opts?: { limit?: number; recordKind?: string },
   ): Promise<TenantRecord[]> {
     const limit = Math.min(MAX_RECORD_LIMIT, Math.max(1, opts?.limit ?? DEFAULT_RECORD_LIMIT));
-    let query = this.client
-      .from('data_inventory_records')
+    let query = this.table(tenantKey, 'data_inventory_records')
       .select(RECORD_COLUMNS)
       .eq('tenant_key', tenantKey)
       .eq('segment_id', segmentId);
@@ -330,8 +358,7 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
   }
 
   async getRecord(tenantKey: string, recordId: string): Promise<TenantRecord | null> {
-    const { data, error } = await this.client
-      .from('data_inventory_records')
+    const { data, error } = await this.table(tenantKey, 'data_inventory_records')
       .select(RECORD_COLUMNS)
       .eq('tenant_key', tenantKey)
       .eq('record_id', recordId)
@@ -384,8 +411,7 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
       MAX_CHUNK_KEYWORD_LIMIT,
       Math.max(1, opts?.limit ?? DEFAULT_CHUNK_LIMIT),
     );
-    let query = this.client
-      .from('enterprise_context_chunks')
+    let query = this.table(tenantKey, 'enterprise_context_chunks')
       .select(CHUNK_COLUMNS)
       .eq('tenant_key', tenantKey);
     if (opts?.recordIds && opts.recordIds.length > 0) {
@@ -428,8 +454,7 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
       .filter((clause) => clause.endsWith('%%') === false)
       .join(',');
     if (orClause.length === 0) return [];
-    const { data, error } = await this.client
-      .from('enterprise_context_chunks')
+    const { data, error } = await this.table(tenantKey, 'enterprise_context_chunks')
       .select(CHUNK_COLUMNS)
       .eq('tenant_key', tenantKey)
       .or(orClause)
@@ -446,7 +471,7 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
     queryVector: number[],
     limit?: number,
   ): Promise<ContextChunk[]> {
-    const pinecone = this.pineconeClientFactory();
+    const pinecone = this.pineconeClientFactory(tenantKey);
     if (!pinecone) {
       throw new Error(PINECONE_NOT_CONFIGURED);
     }
@@ -466,8 +491,7 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
     // Bulk-fetch the chunks Postgres-side so the caller gets the
     // canonical `chunk_text` and provenance — Pinecone metadata is the
     // smallest possible subset by design (see pinecone-client.ts).
-    const { data, error } = await this.client
-      .from('enterprise_context_chunks')
+    const { data, error } = await this.table(tenantKey, 'enterprise_context_chunks')
       .select(CHUNK_COLUMNS)
       .eq('tenant_key', tenantKey)
       .in('chunk_id', ids);
@@ -492,8 +516,7 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
   }
 
   async getEvidence(tenantKey: string, evidenceId: string): Promise<EvidenceRecord | null> {
-    const { data, error } = await this.client
-      .from('data_inventory_records')
+    const { data, error } = await this.table(tenantKey, 'data_inventory_records')
       .select(RECORD_COLUMNS)
       .eq('tenant_key', tenantKey)
       .eq('segment_id', 'evidence_ledger')
@@ -509,8 +532,7 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
   }
 
   async hasPersistedData(tenantKey: string): Promise<boolean> {
-    const { data, error } = await this.client
-      .from('data_inventory_segments')
+    const { data, error } = await this.table(tenantKey, 'data_inventory_segments')
       .select('segment_id')
       .eq('tenant_key', tenantKey)
       .limit(1);

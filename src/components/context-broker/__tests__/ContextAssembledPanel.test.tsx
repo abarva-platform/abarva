@@ -240,6 +240,34 @@ describe('ContextAssembledPanel — sections', () => {
     ).toHaveTextContent('confidential');
   });
 
+  it('renders private data-plane retrieval trace fields', () => {
+    render(
+      <ContextAssembledPanel
+        bundle={bundle({
+          retrievalTrace: {
+            tenant_key: 'northstar-health',
+            data_plane_id: 'pdp:northstar-health:prod',
+            schema: 'client_northstar_health_private',
+            pinecone_index: null,
+            vector_status: 'blocked',
+            retrieved_private_ids: ['program:nh-prog-healthcare-data-analytics-modernization'],
+            shared_corpus_ids: ['worldview:W3:001'],
+            private_fact_ids: ['program:nh-prog-healthcare-data-analytics-modernization'],
+            private_chunk_ids: [],
+            graph_root_ids: [],
+          },
+        })}
+      />,
+    );
+    expect(screen.getByTestId('context-panel-retrieval-trace')).toBeInTheDocument();
+    expect(screen.getByTestId('context-panel-trace-tenant')).toHaveTextContent('northstar-health');
+    expect(screen.getByTestId('context-panel-trace-plane')).toHaveTextContent('pdp:northstar-health:prod');
+    expect(screen.getByTestId('context-panel-trace-schema')).toHaveTextContent('client_northstar_health_private');
+    expect(screen.getByTestId('context-panel-trace-index')).toHaveTextContent('none');
+    expect(screen.getByTestId('context-panel-trace-private-ids')).toHaveTextContent('program:nh-prog-healthcare-data-analytics-modernization');
+    expect(screen.getByTestId('context-panel-trace-shared-ids')).toHaveTextContent('worldview:W3:001');
+  });
+
   it("renders a 'keyword' label when chunk score is 0", () => {
     const c = chunk({}, 0);
     render(<ContextAssembledPanel bundle={bundle({ semanticChunks: [c] })} />);
