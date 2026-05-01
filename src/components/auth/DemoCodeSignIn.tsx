@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { DEMO_CODE_VALUE, isDemoCodeEmail } from '@/lib/auth/demo-code'
+import { DEMO_CODE_ALLOWED_EMAILS, DEMO_CODE_VALUE, isDemoCodeEmail } from '@/lib/auth/demo-code'
 
 interface Props {
   redirectUrl: string
@@ -77,7 +77,7 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
     setError(null)
 
     if (!isDemoCodeEmail(normalizedEmail)) {
-      setError('This quick path is only for +clerk_test demo accounts. Use the standard Clerk sign-in below for everything else.')
+      setError('This app sign-in is restricted to the three approved demo accounts listed below.')
       return
     }
 
@@ -119,9 +119,9 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'demo_sign_in_failed'
       if (message === 'invalid_demo_code') {
-        setError('That code was not accepted. Use 424242 for +clerk_test accounts.')
+        setError('That code was not accepted. Use 424242 for an approved demo account.')
       } else {
-        setError('Demo sign-in did not complete. You can retry here or use the standard Clerk form below.')
+        setError('Demo sign-in did not complete. Retry with one of the approved demo accounts below.')
       }
     } finally {
       setPending(false)
@@ -146,8 +146,44 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
           Sign in with a test code
         </div>
         <div style={{ color: '#9AA5B1', fontSize: '14px', lineHeight: 1.5 }}>
-          For demo accounts that end in <code>+clerk_test@abarva.com</code>, continue with email first and then use code{' '}
+          Only the approved crawler/demo identities can sign in here. Continue with one of the emails below and use code{' '}
           <code>{DEMO_CODE_VALUE}</code>.
+        </div>
+        <div
+          aria-label="Approved demo accounts"
+          style={{
+            display: 'grid',
+            gap: '6px',
+            border: '1px solid rgba(136, 152, 170, 0.18)',
+            borderRadius: '14px',
+            padding: '10px 12px',
+            background: 'rgba(255, 255, 255, 0.035)',
+          }}
+        >
+          {DEMO_CODE_ALLOWED_EMAILS.map((demoEmail) => (
+            <button
+              key={demoEmail}
+              type="button"
+              onClick={() => {
+                setEmail(demoEmail)
+                setStep('email')
+                setCode('')
+                setError(null)
+              }}
+              style={{
+                border: 0,
+                background: 'transparent',
+                color: '#CBD5E1',
+                fontFamily: 'JetBrains Mono, monospace',
+                fontSize: '11px',
+                textAlign: 'left',
+                padding: '3px 0',
+                cursor: 'pointer',
+              }}
+            >
+              {demoEmail}
+            </button>
+          ))}
         </div>
       </div>
 

@@ -11,6 +11,7 @@ import { clearActiveClientContext } from '@/lib/auth/client-context-storage';
 export interface AppRailProps {}
 
 const NAV_ITEMS = [
+  { key: 'home',         label: 'Home',     glyph: 'Hm', href: '/home' },
   { key: 'setup',        label: 'Setup',    glyph: 'St', href: '/admin' },
   { key: 'programs',     label: 'Programs', glyph: 'Pr', href: '/programs' },
   { key: 'source',       label: 'Source',   glyph: 'So', href: '/source' },
@@ -18,10 +19,11 @@ const NAV_ITEMS = [
   { key: 'tower',        label: 'Tower',    glyph: 'Tw', href: '/tower' },
 ] as const;
 
-type SurfaceKey = 'setup' | 'programs' | 'source' | 'intelligence' | 'tower';
+type SurfaceKey = 'home' | 'setup' | 'programs' | 'source' | 'intelligence' | 'tower';
 
 function detectSurface(pathname: string | null): SurfaceKey | null {
   if (!pathname) return null;
+  if (pathname === '/home' || pathname.startsWith('/home/') || pathname === '/dashboard' || pathname.startsWith('/dashboard/')) return 'home';
   if (pathname.startsWith('/programs')) return 'programs';
   if (pathname.startsWith('/intelligence')) return 'intelligence';
   if (pathname.startsWith('/tower')) return 'tower';
@@ -30,7 +32,7 @@ function detectSurface(pathname: string | null): SurfaceKey | null {
   return null;
 }
 
-export function AppRail(_props: AppRailProps) {
+export function AppRail() {
   const pathname = usePathname();
   const router = useRouter();
   const active = detectSurface(pathname);

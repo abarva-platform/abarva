@@ -47,6 +47,18 @@ describe('POST /api/auth/demo-code-sign-in', () => {
     expect(getUserList).not.toHaveBeenCalled();
   });
 
+  it('rejects unapproved +clerk_test email addresses', async () => {
+    const { POST } = await import('@/app/api/auth/demo-code-sign-in/route');
+    const res = await POST(makeRequest({
+      email: 'demo-keystone+clerk_test@abarva.com',
+      code: '424242',
+    }));
+
+    expect(res.status).toBe(403);
+    await expect(res.json()).resolves.toMatchObject({ error: 'unsupported_demo_account' });
+    expect(getUserList).not.toHaveBeenCalled();
+  });
+
   it('rejects an invalid demo code', async () => {
     const { POST } = await import('@/app/api/auth/demo-code-sign-in/route');
     const res = await POST(makeRequest({
