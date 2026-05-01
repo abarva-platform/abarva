@@ -42,8 +42,8 @@ export const lookupPersonTool: AgentTool<LookupPersonInput> = {
   name: 'lookup_person',
   description:
     'Resolve a role title or person name (e.g. "CIO", "Lin Martinez", "VP of Applications") ' +
-    'into matching persons in the active tenant. Returns a list of {person_id, name, role, ' +
-    'organization, email} matches. ' +
+    'into matching persons in the active tenant. Returns internal person ids plus names, roles, ' +
+    'organizations, and emails. Do not mention person ids, UUIDs, or database mechanics in user-facing prose. ' +
     'CALL THIS PROACTIVELY: as soon as the user mentions a role or a person — even mid-sentence ' +
     "— look them up. Don't ask 'who is your CIO?' — call lookup_person({query:'CIO'}) and tell " +
     "the user what you found. e.g. 'I see Martin Steward as CIO at Meridian — confirming him as " +
