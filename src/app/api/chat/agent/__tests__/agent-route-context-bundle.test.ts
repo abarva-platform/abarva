@@ -99,6 +99,10 @@ describe('agent route · CB-6 context-bundle wiring', () => {
     expect(source).toContain('maxTokens: getAgentResponseTokenBudget(surface)');
   });
 
+  it('canonicalizes the active client key before Programs broker lookup', () => {
+    expect(source).toContain('tenantKey: clientKeyToBrokerTenantKey(activeClient.key)');
+  });
+
   it('catches assembly errors so the stream still proceeds', () => {
     expect(source).toContain('context_bundle_assembly_failed');
   });

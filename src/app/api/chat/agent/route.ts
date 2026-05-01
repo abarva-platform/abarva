@@ -468,7 +468,7 @@ export async function POST(request: Request) {
   if (isNexusProgramsSurface && activeClient?.key) {
     try {
       const brokerBundle = buildProgramsContextBundle({
-        tenantKey: activeClient.key,
+        tenantKey: clientKeyToBrokerTenantKey(activeClient.key),
         programId: programId ?? undefined,
         agentName: 'Nexus',
         surface: 'programs',
