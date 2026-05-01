@@ -55,6 +55,15 @@ describe('DESROUTE3 admin shell enforcement', () => {
     expect(source).not.toContain('next-auth');
   });
 
+  it('allows only the approved demo accounts into Setup for demo walks', () => {
+    const source = read(adminLayout);
+    expect(source).toContain("'demo-apexretail+clerk_test@abarva.com'");
+    expect(source).toContain("'demo-meridian+clerk_test@abarva.com'");
+    expect(source).toContain("'demo-firstcapital+clerk_test@abarva.com'");
+    expect(source).not.toContain("'demo-keystone+clerk_test@abarva.com'");
+    expect(source).not.toContain("'demo-arcturus+clerk_test@abarva.com'");
+  });
+
   it('build-progress canonical page does not introduce new auth libraries', () => {
     const buildSource = read(buildProgressRoute);
     expect(buildSource).not.toContain('next-auth');

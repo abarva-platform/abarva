@@ -17,6 +17,11 @@ import { AgentRail } from '@/components/admin/AgentRail';
 
 const ADMIN_EMAIL_ALLOWLIST: ReadonlySet<string> = new Set([
   'anand.sundaram@thesundaram.com',
+  // The three locked demo accounts are the only non-founder identities allowed
+  // into Setup during demo walks. They remain tenant-pinned by clientId.
+  'demo-apexretail+clerk_test@abarva.com',
+  'demo-meridian+clerk_test@abarva.com',
+  'demo-firstcapital+clerk_test@abarva.com',
 ]);
 
 export const dynamic = 'force-dynamic';
