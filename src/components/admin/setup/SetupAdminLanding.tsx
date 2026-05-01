@@ -15,6 +15,7 @@ import type {
 import { COLORS, RADIUS, SPACING } from '@/lib/design/design-tokens';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { EditorialCanvas } from '@/components/admin/EditorialCanvas';
+import Link from 'next/link';
 
 import { SetupActOne } from './SetupActOne';
 import { SetupActThree } from './SetupActThree';
@@ -38,6 +39,8 @@ export interface SetupAdminLandingProps {
   nexusProgramCount: number;
   /** Steward agent: compliance findings count. */
   stewardFindingCount: number;
+  /** Tenant-admin queue: submitted program briefs waiting for approval. */
+  programApprovalPendingCount?: number;
 }
 
 function topGainEntries(gains: CapabilityGainEntry[]): CapabilityGainEntry[] {
@@ -155,6 +158,83 @@ function OrientationBanner({
   );
 }
 
+function ProgramApprovalQueueCallout({ pendingCount }: { pendingCount: number }) {
+  const hasPending = pendingCount > 0;
+  return (
+    <section
+      data-testid="program-approval-queue-callout"
+      style={{
+        background: hasPending ? SHELL.PAPER : COLORS.skyPale,
+        border: `1px solid ${hasPending ? COLORS.coralInk : COLORS.navy}33`,
+        borderRadius: RADIUS.lg,
+        padding: SPACING.lg,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: SPACING.lg,
+      }}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: SPACING.xs }}>
+        <p
+          style={{
+            margin: 0,
+            fontFamily: SHELL.MONO,
+            fontSize: 10,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: hasPending ? COLORS.coralInk : COLORS.navy,
+            fontWeight: 800,
+          }}
+        >
+          Nexus program approvals
+        </p>
+        <p
+          style={{
+            margin: 0,
+            fontFamily: SHELL.SERIF,
+            fontSize: 20,
+            color: SHELL.INK,
+            lineHeight: 1.25,
+          }}
+        >
+          {hasPending
+            ? `${pendingCount} program brief${pendingCount === 1 ? '' : 's'} waiting for Setup approval.`
+            : 'No program briefs are waiting for Setup approval.'}
+        </p>
+        <p
+          style={{
+            margin: 0,
+            fontFamily: SHELL.SANS,
+            fontSize: 13,
+            color: SHELL.INK_SOFT,
+            lineHeight: 1.5,
+          }}
+        >
+          New programs should not appear as active work until this queue approves the seed and unlocks Phase 0.
+        </p>
+      </div>
+      <Link
+        href="/admin/programs/approvals"
+        style={{
+          flex: '0 0 auto',
+          fontFamily: SHELL.MONO,
+          fontSize: 10,
+          letterSpacing: '0.10em',
+          textTransform: 'uppercase',
+          color: SHELL.INK,
+          textDecoration: 'none',
+          border: `1px solid ${SHELL.INK}`,
+          borderRadius: 999,
+          padding: '8px 12px',
+          background: SHELL.CARD_WHITE,
+        }}
+      >
+        Review queue →
+      </Link>
+    </section>
+  );
+}
+
 export function SetupAdminLanding({
   content,
   segmentRollups,
@@ -166,6 +246,7 @@ export function SetupAdminLanding({
   atlasHighSeverityCount,
   nexusProgramCount,
   stewardFindingCount,
+  programApprovalPendingCount = 0,
 }: SetupAdminLandingProps) {
   const isFirstTime =
     totalRecords === null ||
@@ -185,6 +266,7 @@ export function SetupAdminLanding({
         style={{ display: 'flex', flexDirection: 'column', gap: SPACING.xl }}
       >
         {isFirstTime && <OrientationBanner content={content} totalRecords={totalRecords} />}
+        <ProgramApprovalQueueCallout pendingCount={programApprovalPendingCount} />
         <SetupAgentStrip
           tenantDisplayName={content.tenantDisplayName}
           tenantRecords={totalRecords}

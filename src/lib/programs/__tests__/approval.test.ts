@@ -294,6 +294,14 @@ describe('decideApprovalRequest', () => {
         ['program_approval_requests', 'request_status', 'pending'],
       ]),
     );
+    expect(updateMock.mock.calls).toEqual(
+      expect.arrayContaining([
+        [
+          'engagements',
+          { lifecycle_state: 'approved', status: 'active', current_phase: 0 },
+        ],
+      ]),
+    );
   });
 
   it('rejects with rationale and persists the rationale', async () => {
@@ -322,6 +330,14 @@ describe('decideApprovalRequest', () => {
       request_status: 'rejected',
       decision_rationale: 'Out of scope for this quarter',
     });
+    expect(updateMock.mock.calls).toEqual(
+      expect.arrayContaining([
+        [
+          'engagements',
+          { lifecycle_state: 'rejected', status: 'draft' },
+        ],
+      ]),
+    );
   });
 
   it('throws when rejecting without rationale', async () => {

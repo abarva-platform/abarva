@@ -5,7 +5,17 @@ describe('program governance gate map', () => {
     const rule = findGateRule(0, 1);
 
     expect(rule).toBeTruthy();
-    expect(rule?.hard).toBe(false);
-    expect(rule?.checks.some((check) => check.key === 'sponsor_assigned')).toBe(true);
+    expect(rule?.hard).toBe(true);
+    expect(rule?.approverRole).toBe('sponsor');
+    expect(rule?.checks.map((check) => check.key)).toEqual(
+      expect.arrayContaining([
+        'program_seed_recorded',
+        'value_hypothesis_seed',
+        'sponsor_assigned',
+        'discovery_funding_envelope',
+        'initial_scope_boundary',
+        'evidence_family_selected',
+      ]),
+    );
   });
 });

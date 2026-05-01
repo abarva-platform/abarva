@@ -18,7 +18,9 @@ export interface EngagementPhaseData {
     id: string;
     name: string;
     status: string | null;
+    lifecycle_state: string | null;
     current_phase: number | null;
+    program_archetype: string | null;
     maestro_oversight_level: string | null;
     program_milestones: Array<{
       id: string;
@@ -79,7 +81,9 @@ export async function getEngagementWithPhaseData(
         id,
         name,
         status,
+        lifecycle_state,
         current_phase,
+        program_archetype,
         maestro_oversight_level,
         program_milestones(id, name, status, target_date, phase_number),
         program_risks(id, title, likelihood, impact, status, phase_number)

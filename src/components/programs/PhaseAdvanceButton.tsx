@@ -1,9 +1,7 @@
 'use client';
 
-// PhaseAdvanceButton — demo affordance to advance a program through its
-// phase sequence in one click. PATCHes the in-memory phase store via
-// /api/v1/programs/:programId/phase, then calls router.refresh() so the
-// server re-renders the detail page with the new phase.
+// PhaseAdvanceButton — lifecycle-aware affordance to request/perform a
+// phase transition through the same governance gate API the agent uses.
 //
 // Style: AbarVa palette only — ghost button, ink text, DM Sans.
 
@@ -16,6 +14,7 @@ import { SHELL } from '@/lib/shell/shell-tokens';
 interface PhaseAdvanceButtonProps {
   programId: string;
   currentPhase: ProgramPhaseId;
+  disabledReason?: string | null;
 }
 
 const WRAP: CSSProperties = {
@@ -84,10 +83,15 @@ function Spinner() {
   );
 }
 
-export function PhaseAdvanceButton({ programId, currentPhase }: PhaseAdvanceButtonProps) {
+export function PhaseAdvanceButton({
+  programId,
+  currentPhase,
+  disabledReason = null,
+}: PhaseAdvanceButtonProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const isFinal = currentPhase >= MAX_PHASE;
   const nextPhase = isFinal ? null : ((currentPhase + 1) as ProgramPhaseId);
@@ -98,14 +102,30 @@ export function PhaseAdvanceButton({ programId, currentPhase }: PhaseAdvanceButt
     if (nextPhase === null || loading) return;
     setLoading(true);
     setError(null);
+    setNotice(null);
     try {
-      const res = await fetch(`/api/v1/programs/${encodeURIComponent(programId)}/phase`, {
-        method: 'PATCH',
+      const res = await fetch(`/api/v1/programs/${encodeURIComponent(programId)}/advance`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phase: nextPhase }),
+        body: JSON.stringify({
+          toPhase: nextPhase,
+          snapshot: { requested_from: 'program_detail_phase_advance_button' },
+        }),
       });
+      const body = (await res.json().catch(() => ({}))) as {
+        detail?: string;
+        error?: string;
+        approvalId?: string;
+      };
+      if (res.status === 202 || body.error === 'approval_required') {
+        setNotice(
+          body.detail ??
+            `Phase P${currentPhase} exit approval submitted. Discovery unlocks after approval.`,
+        );
+        router.refresh();
+        return;
+      }
       if (!res.ok) {
-        const body = (await res.json()) as { detail?: string };
         setError(body.detail ?? 'Failed to advance phase');
         return;
       }
@@ -136,8 +156,9 @@ export function PhaseAdvanceButton({ programId, currentPhase }: PhaseAdvanceButt
       </span>
       <button
         type="button"
-        style={loading ? LOADING_BTN : BASE_BTN}
-        disabled={loading}
+        style={loading ? LOADING_BTN : disabledReason ? DISABLED_BTN : BASE_BTN}
+        disabled={loading || Boolean(disabledReason)}
+        title={disabledReason ?? undefined}
         onClick={() => { void handleAdvance(); }}
       >
         {loading && <Spinner />}
@@ -157,6 +178,18 @@ export function PhaseAdvanceButton({ programId, currentPhase }: PhaseAdvanceButt
           }}
         >
           {error}
+        </span>
+      )}
+      {!error && notice && (
+        <span
+          style={{
+            fontFamily: SHELL.SANS,
+            fontSize: 10,
+            color: SHELL.MINT_TEXT,
+            marginLeft: 4,
+          }}
+        >
+          {notice}
         </span>
       )}
     </div>

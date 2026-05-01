@@ -214,7 +214,9 @@ export async function submitForApproval(
  * request is not pending, or if a rejection is missing rationale.
  *
  * The DB trigger sync_engagement_lifecycle_on_decision flips the
- * engagement's lifecycle_state automatically when this completes.
+ * engagement's lifecycle_state automatically when this completes. We
+ * also update engagements here so the runtime status used by legacy
+ * portfolio surfaces stays in lockstep with the lifecycle state.
  */
 export async function decideApprovalRequest(
   input: DecideApprovalInput,
@@ -272,6 +274,23 @@ export async function decideApprovalRequest(
   }
 
   const request = rowToApprovalRequest(data as unknown as ApprovalRequestRow);
+
+  const engagementPatch =
+    request.requestStatus === 'approved'
+      ? { lifecycle_state: 'approved', status: 'active', current_phase: 0 }
+      : { lifecycle_state: 'rejected', status: 'draft' };
+  const { error: engagementError } = await sb
+    .from('engagements')
+    .update(engagementPatch)
+    .eq('id', request.programId);
+
+  if (engagementError) {
+    throw wrapDbError(
+      'decideApprovalRequest: failed to synchronize engagement lifecycle',
+      engagementError,
+      { input, programId: request.programId, engagementPatch },
+    );
+  }
 
   // OV2-2d-NOTIFY · fire-and-forget email to the requester. Email
   // failures must not block the approval workflow.

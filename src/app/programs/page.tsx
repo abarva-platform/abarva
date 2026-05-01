@@ -53,8 +53,18 @@ export default async function ProgramsPage() {
           const rawPhase = p.currentPhase ?? 0;
           const currentPhase = Math.max(0, Math.min(6, rawPhase)) as ProgramPhaseId;
           const phaseLabel = PHASE_LABEL_MAP[currentPhase];
-          const isIdle = p.status === 'idle';
-          const gateStatus = currentPhase === 0 ? ('pending' as const) : ('open' as const);
+          const lifecycleState = p.lifecycleState ?? (p.status === 'active' ? 'approved' : null);
+          const waitingForSetupApproval = lifecycleState === 'submitted_for_approval';
+          const approvedForP0 = lifecycleState === 'approved' && currentPhase === 0;
+          const isIdle = p.status === 'idle' || waitingForSetupApproval;
+          const gateStatus = waitingForSetupApproval ? ('pending' as const) : ('open' as const);
+          const lifecycleNote = waitingForSetupApproval
+            ? 'Submitted for Setup approval — Phase 0 locked'
+            : approvedForP0
+            ? 'Approved for Phase 0 — complete Origination criteria'
+            : currentPhase >= 1
+            ? `P${currentPhase} ${phaseLabel} · Active`
+            : 'Program created — initial setup in progress.';
 
           // If the DB program name matches a fixture program, update the fixture entry
           // to reflect the real DB phase (e.g. APX-CDP-2026 after gate approval to P3)
@@ -66,11 +76,7 @@ export default async function ProgramsPage() {
               currentPhase,
               phases: buildPhaseSlots(currentPhase),
               gateStatus,
-              nexusNote: isIdle
-                ? `P${currentPhase} ${phaseLabel} · Idle`
-                : currentPhase >= 1
-                ? `P${currentPhase} ${phaseLabel} · Active`
-                : existing.nexusNote,
+              nexusNote: lifecycleNote,
               lastActiveLabel: p.createdAt
                 ? new Date(p.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                 : existing.lastActiveLabel,
@@ -80,11 +86,6 @@ export default async function ProgramsPage() {
 
           // Otherwise append as a new row if not in fixture by ID
           if (!fixtureIds.has(p.id)) {
-            const nexusNote: string = isIdle
-              ? `P${currentPhase} ${phaseLabel} · Idle`
-              : currentPhase >= 1
-              ? `P${currentPhase} ${phaseLabel} · Active`
-              : 'Program created — initial setup in progress.';
             newPrograms.push({
               id: p.id,
               displayId: p.id.toUpperCase().slice(0, 12),
@@ -95,8 +96,8 @@ export default async function ProgramsPage() {
               lastActiveLabel: p.createdAt
                 ? new Date(p.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                 : 'Unknown',
-              nexusNote,
-              actionLabel: 'Continue' as const,
+              nexusNote: lifecycleNote,
+              actionLabel: waitingForSetupApproval ? ('Review' as const) : ('Continue' as const),
               isIdle,
             });
           }

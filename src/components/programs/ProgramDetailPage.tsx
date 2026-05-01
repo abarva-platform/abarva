@@ -3,6 +3,7 @@
 // SHELL-B — Program Detail Page adapted to AppShell.
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import type { Artifact as NexusArtifact } from '@/lib/agent/artifacts';
 // NexusReactivePanel renders inside AgentCanvas now; the import here is
 // no longer needed at the page level.
@@ -171,6 +172,67 @@ function GatePill({ status }: { status: ProgramDetailView['gateStatus'] }) {
     >
       {label}
     </span>
+  );
+}
+
+function LifecycleStateBanner({ view }: { view: ProgramDetailView }) {
+  const state = view.lifecycleState;
+  if (state !== 'submitted_for_approval' && !(state === 'approved' && view.currentPhase === 0)) {
+    return null;
+  }
+
+  const isPendingSetup = state === 'submitted_for_approval';
+  return (
+    <div
+      data-testid="program-lifecycle-state-banner"
+      style={{
+        margin: '14px 0 4px',
+        padding: '14px 16px',
+        borderRadius: 10,
+        border: `1px solid ${isPendingSetup ? SHELL.PEACH_LINE : SHELL.MINT_LINE}`,
+        background: isPendingSetup ? SHELL.PEACH_BG : SHELL.MINT_BG,
+        fontFamily: SHELL.SANS,
+        color: SHELL.INK,
+        lineHeight: 1.45,
+      }}
+    >
+      <div
+        style={{
+          fontFamily: SHELL.MONO,
+          fontSize: 10,
+          letterSpacing: '0.10em',
+          textTransform: 'uppercase',
+          color: isPendingSetup ? SHELL.PEACH_TEXT : SHELL.MINT_TEXT,
+          fontWeight: 800,
+          marginBottom: 6,
+        }}
+      >
+        {isPendingSetup ? 'Waiting on Setup approval' : 'Approved for Phase 0'}
+      </div>
+      <div style={{ fontSize: 13 }}>
+        {isPendingSetup
+          ? 'The program seed has been captured, but Phase 0 is locked until a tenant admin approves it in Setup. Nexus should preserve the draft and avoid pretending the program is active.'
+          : 'This program can now begin P0 Origination. Nexus should complete the P0 entry and exit criteria, generate/save the seed deliverables, and submit the P0 exit approval before Discovery unlocks.'}
+      </div>
+      {isPendingSetup && (
+        <Link
+          href="/admin/programs/approvals"
+          style={{
+            display: 'inline-block',
+            marginTop: 8,
+            fontFamily: SHELL.MONO,
+            fontSize: 10,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: SHELL.INK,
+            textDecoration: 'none',
+            borderBottom: `1px dashed ${SHELL.INK}`,
+          }}
+        >
+          Review in Setup approvals →
+        </Link>
+      )}
+    </div>
   );
 }
 
@@ -4094,6 +4156,11 @@ export function ProgramDetailPage({
             <PhaseAdvanceButton
               programId={view.programId}
               currentPhase={view.currentPhase}
+              disabledReason={
+                view.lifecycleState === 'submitted_for_approval'
+                  ? 'Setup approval is required before Phase 0 can start.'
+                  : null
+              }
             />
           </div>
           <h1
@@ -4140,6 +4207,7 @@ export function ProgramDetailPage({
               Full report →
             </a>
           </div>
+          <LifecycleStateBanner view={view} />
         </div>
 
         {/* REASON-30 — Inline lifecycle mini-graph (sits below the PhaseStrip

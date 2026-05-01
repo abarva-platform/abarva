@@ -10,7 +10,9 @@
 //   • Phase 5 entry — design approved
 //   • Phase 6 CXO verification — outcome attestation
 //
-// Soft gates: any other phase advance, lead can bypass with reason.
+// Soft gates: later phase advances can bypass with reason. P0 exit is
+// deliberately hard because it is where an idea becomes a funded
+// Discovery motion.
 
 import { getServerSupabase } from '@/lib/supabase-server';
 import type {
@@ -37,9 +39,14 @@ interface GateRule {
 
 const GATE_RULES: GateRule[] = [
   {
-    fromPhase: 0, toPhase: 1, hard: false, approverRole: 'contributor',
+    fromPhase: 0, toPhase: 1, hard: true, approverRole: 'sponsor',
     checks: [
-      { key: 'sponsor_assigned', describe: 'Sponsor assigned for Phase 0 exit', severity: 'soft' },
+      { key: 'program_seed_recorded', describe: 'Program seed recorded with classification', severity: 'hard' },
+      { key: 'value_hypothesis_seed', describe: 'Value hypothesis seed names problem and target outcome', severity: 'hard' },
+      { key: 'sponsor_assigned', describe: 'Sponsor candidate assigned for Phase 0 exit', severity: 'hard' },
+      { key: 'discovery_funding_envelope', describe: 'Discovery funding or capacity envelope stated', severity: 'soft' },
+      { key: 'initial_scope_boundary', describe: 'Initial scope boundary names the first cohort or use case', severity: 'soft' },
+      { key: 'evidence_family_selected', describe: 'Evidence family selected for Phase 1 Discovery', severity: 'soft' },
     ],
   },
   {
@@ -118,10 +125,16 @@ export async function evaluateGate(
   const sb = getServerSupabase();
 
   // Collect state signals
-  const [{ data: deliverables }, { data: modules }, { data: participants }] = await Promise.all([
+  const [{ data: deliverables }, { data: modules }, { data: participants }, { data: approvalRequests }] = await Promise.all([
     sb.from('deliverables_v2').select('id, deliverable_type_key, status').eq('engagement_id', programId),
     sb.from('program_modules').select('module_key, status').eq('engagement_id', programId),
     sb.from('engagement_participants').select('user_id, approval_authority').eq('engagement_id', programId),
+    sb
+      .from('program_approval_requests')
+      .select('request_status, brief_snapshot')
+      .eq('program_id', programId)
+      .order('created_at', { ascending: false })
+      .limit(1),
   ]);
 
   const charterRow = (deliverables as Array<{ deliverable_type_key: string; status: string }> | null ?? [])
@@ -136,11 +149,32 @@ export async function evaluateGate(
     .find((m) => m.module_key === 'cxo_verification');
   const hasSponsor = (participants as Array<{ approval_authority: string | null }> | null ?? [])
     .some((p) => p.approval_authority === 'sponsor');
+  const latestSeedBrief = ((approvalRequests as Array<{
+    request_status: string | null;
+    brief_snapshot: Record<string, unknown> | null;
+  }> | null) ?? [])[0]?.brief_snapshot ?? {};
+  const briefString = JSON.stringify(latestSeedBrief).toLowerCase();
 
   const failedChecks: GateCheck['failedChecks'] = [];
   for (const c of rule.checks) {
     let pass = false;
     switch (c.key) {
+      case 'program_seed_recorded':
+        pass =
+          Boolean(program.archetype) ||
+          typeof latestSeedBrief.matched_pattern_id === 'string' ||
+          typeof latestSeedBrief.classification === 'string' ||
+          typeof latestSeedBrief.function_code === 'string' ||
+          typeof latestSeedBrief.objective_code === 'string' ||
+          typeof latestSeedBrief.topic_code === 'string';
+        break;
+      case 'value_hypothesis_seed': {
+        const problem = latestSeedBrief.problem_statement ?? latestSeedBrief.problemStatement;
+        const target = latestSeedBrief.target_outcome ?? latestSeedBrief.targetOutcome;
+        pass = typeof problem === 'string' && problem.trim().length >= 12 &&
+          (typeof target === 'string' ? target.trim().length >= 8 : briefString.includes('target'));
+        break;
+      }
       case 'charter_drafted': pass = !!charterRow && charterRow.status !== null; break;
       case 'charter_signed_off': pass = charterRow?.status === 'signed_off'; break;
       case 'sponsor_assigned': pass = hasSponsor; break;
@@ -178,6 +212,23 @@ export async function evaluateGate(
         pass = benefits?.status === 'completed';
         break;
       }
+      case 'discovery_funding_envelope':
+        pass =
+          briefString.includes('timeline') ||
+          briefString.includes('funding') ||
+          briefString.includes('capacity') ||
+          briefString.includes('budget');
+        break;
+      case 'initial_scope_boundary':
+        pass =
+          briefString.includes('scope') ||
+          briefString.includes('cohort') ||
+          briefString.includes('internal teams') ||
+          briefString.includes('use case');
+        break;
+      case 'evidence_family_selected':
+        pass = Boolean(program.archetype) || briefString.includes('evidence') || briefString.includes('dora');
+        break;
       default: pass = false;
     }
     if (!pass) failedChecks.push({ check: c.key, reason: c.describe, severity: c.severity });
