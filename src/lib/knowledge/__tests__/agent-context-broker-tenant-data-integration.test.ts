@@ -185,6 +185,30 @@ function evidenceRecord(tenantKey: string, slug: string): TenantRecord {
   };
 }
 
+function systemRecord(
+  tenantKey: string,
+  slug: string,
+  title: string,
+): TenantRecord {
+  return {
+    tenantKey,
+    segmentId: 'it_landscape',
+    recordKind: 'systems_inventory',
+    recordId: `it_landscape:sys:${tenantKey}:${slug}`,
+    title,
+    sourceBasis: 'tenant_admin_upload',
+    classification: 'confidential',
+    payload: {
+      vendor: title.includes('Snowflake') ? 'Snowflake' : 'Tableau',
+      category: title.includes('Snowflake') ? 'Data Warehouse' : 'BI',
+      domain: title.includes('Snowflake') ? 'Data' : 'Analytics',
+      business_criticality: 'Critical',
+      owner_id: 'person:apex:james-wright',
+      renewal_date: '2026-11-30',
+    },
+  };
+}
+
 function apexSpec(): PersistedTenantSpec {
   return {
     tenantKey: 'apex-retail',
@@ -201,6 +225,10 @@ function apexSpec(): PersistedTenantSpec {
         crossProgramSignalRecord('apex-retail', '001'),
       ],
       evidence_ledger: [evidenceRecord('apex-retail', '001')],
+      it_landscape: [
+        systemRecord('apex-retail', 'snowflake', 'Snowflake Data Cloud'),
+        systemRecord('apex-retail', 'tableau', 'Tableau'),
+      ],
     },
   };
 }
@@ -310,6 +338,22 @@ describe('buildEnterpriseAgentContextBundleAsync — two-source consumer', () =>
 
     expect(bundle.warnings).toContain(TENANT_DATA_PERSISTED_WARNING);
     expect(bundle.warnings).not.toContain(TENANT_DATA_FIXTURE_WARNING);
+  });
+
+  it('includes persisted it_landscape systems for Sentinel on Intelligence', async () => {
+    fakeAdapter = makePersistedAdapter([apexSpec()]);
+
+    const bundle = await buildEnterpriseAgentContextBundleAsync({
+      tenantKey: 'apex-retail',
+      agentName: 'Sentinel',
+      surface: 'intelligence',
+    });
+
+    const systems = bundle.items.filter((item) => item.kind === 'system');
+    expect(systems.map((item) => item.title)).toEqual(
+      expect.arrayContaining(['Snowflake Data Cloud', 'Tableau']),
+    );
+    expect(systems.every((item) => item.id.startsWith('tenant-data:'))).toBe(true);
   });
 
   it('tags the bundle warnings with the fixture source basis when falling back', async () => {

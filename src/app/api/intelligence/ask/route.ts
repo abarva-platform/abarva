@@ -3,6 +3,7 @@ import { askIntelligence } from '@/lib/intelligence/ask';
 import { getCurrentPerson } from '@/lib/auth/maestro';
 import { getActiveClientRow } from '@/lib/active-client';
 import { assembleUserContextBlock } from '@/lib/agent/prompts/_shared/user-context';
+import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,11 +20,15 @@ export async function GET(req: NextRequest) {
   }
 
   let userContextBlock = '';
+  let tenantInventoryKey: string | null = null;
   try {
     const [person, client] = await Promise.all([
       getCurrentPerson(),
       getActiveClientRow().catch(() => null),
     ]);
+    tenantInventoryKey = client?.key
+      ? clientKeyToInventorySubstrateKey(client.key)
+      : null;
     if (person) {
       userContextBlock = await assembleUserContextBlock({
         personId: person.id,
@@ -39,7 +44,7 @@ export async function GET(req: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        for await (const event of askIntelligence(query, { userContextBlock })) {
+        for await (const event of askIntelligence(query, { userContextBlock, tenantInventoryKey })) {
           controller.enqueue(encoder.encode(JSON.stringify(event) + '\n'));
         }
       } catch (err) {

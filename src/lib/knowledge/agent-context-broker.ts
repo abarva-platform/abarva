@@ -606,11 +606,12 @@ async function selectPersistedContextItems(
       break;
     case 'Sentinel':
       // Sentinel is the librarian agent — corpus-wide retrieval and
-      // citation discipline. The persisted layer surfaces evidence
-      // claims and KPI definitions; deep graph-walking is out of scope
-      // for TD-5 (kept simple per the slice plan).
+      // citation discipline. Intelligence-surface questions often ask
+      // for current-state technology, so include it_landscape before
+      // falling back to doctrine/pattern-only answers.
       fetch('evidence_ledger', 8);
       fetch('kpi_dictionary', 6);
+      fetch('it_landscape', request.surface === 'intelligence' ? 8 : 4);
       break;
     case 'Atlas':
       // Atlas reasons over financial / system-landscape posture. KPI

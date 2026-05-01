@@ -1,3 +1,5 @@
+jest.mock('server-only', () => ({}));
+
 import { atlasStakeholderConflictHandoff } from '../index';
 import { sanitizeAskSynthesis } from '../synthesizer';
 
