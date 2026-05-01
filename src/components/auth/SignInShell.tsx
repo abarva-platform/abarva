@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect } from 'react'
-import { SignIn } from '@clerk/nextjs'
 import { clearActiveClientContext } from '@/lib/auth/client-context-storage'
 import { DemoCodeSignIn } from '@/components/auth/DemoCodeSignIn'
 
@@ -30,11 +29,22 @@ export function SignInShell({ redirectUrl }: Props) {
           width: '100%',
           display: 'grid',
           justifyItems: 'center',
-          gap: '20px',
+          gap: '14px',
         }}
       >
         <DemoCodeSignIn redirectUrl={redirectUrl} />
-        <SignIn key={redirectUrl} forceRedirectUrl={redirectUrl} />
+        <div
+          style={{
+            maxWidth: 420,
+            color: '#64748B',
+            fontSize: 12,
+            lineHeight: 1.5,
+            textAlign: 'center',
+          }}
+        >
+          App access is locked to the approved demo identities for this crawl window. Sign out clears the active
+          client binding before returning here.
+        </div>
       </div>
     </div>
   )
