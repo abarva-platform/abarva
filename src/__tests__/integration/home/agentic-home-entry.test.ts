@@ -154,4 +154,9 @@ describe('HOME1 · home page mounts HomeIndexPage', () => {
   it('renders <HomeIndexPage /> in the page tree', () => {
     expect(pageSource).toMatch(/<HomeIndexPage\b/);
   });
+
+  it('resolves the active client before mounting HomeIndexPage', () => {
+    expect(pageSource).toContain('getActiveClientRow');
+    expect(pageSource).toContain('activeTenantName={activeClient?.name');
+  });
 });

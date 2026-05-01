@@ -62,6 +62,12 @@ describe('HOME-POLISH · Peach urgency accent on gate-pending KPI', () => {
 });
 
 describe('HOME-POLISH · Middle strip presence', () => {
+  it('HomeIndexPage uses the resolved tenant name in AppShell', () => {
+    expect(componentSrc).toContain('activeTenantName');
+    expect(componentSrc).toContain('tenantName: activeTenantName');
+    expect(componentSrc).not.toContain('tenantName: v.tenant');
+  });
+
   it('HomeIndexPage passes a middleStrip prop to AppShell', () => {
     expect(componentSrc).toContain('middleStrip=');
   });

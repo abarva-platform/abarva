@@ -617,7 +617,15 @@ function ReasoningIntelligenceRow({ data }: { data: ReasoningDashboardSummary })
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
-export function HomeIndexPage({ reasoning }: { reasoning?: ReasoningDashboardSummary }) {
+export function HomeIndexPage({
+  activeTenantName,
+  hasTenantKey = false,
+  reasoning,
+}: {
+  activeTenantName: string;
+  hasTenantKey?: boolean;
+  reasoning?: ReasoningDashboardSummary;
+}) {
   const v = HOME_VIEW;
   const programsSectionRef = useRef<HTMLDivElement>(null);
 
@@ -643,11 +651,12 @@ export function HomeIndexPage({ reasoning }: { reasoning?: ReasoningDashboardSum
     <AppShell
       surface="home"
       topBarProps={{
-        tenantName: v.tenant,
+        tenantName: activeTenantName,
         showLocked: v.tenantLocked,
         context: 'Home',
         timeString: v.dateString,
       }}
+      hasTenantKey={hasTenantKey}
       middleStrip={
         <div
           data-testid="home-middle-strip"
