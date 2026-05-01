@@ -5,6 +5,7 @@ import { NextRequest } from 'next/server';
 import { getPendingApprovals, getProgramById } from '@/lib/programs/queries';
 import { requestFounderApproval } from '@/lib/programs/governance';
 import { requireTenancy, tenancyErrorResponse } from '../../_auth';
+import { canReadProgram, loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 import type { ApprovalAuthority, FounderApprovalRequestRow } from '@/lib/programs/types.db';
 
 export const runtime = 'nodejs';
@@ -14,6 +15,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ pro
   try {
     const { programId } = await params;
     const ctx = await requireTenancy();
+    if (!(await canReadProgram(ctx, programId))) {
+      return Response.json({ error: 'forbidden' }, { status: 403 });
+    }
     const approvals = await getPendingApprovals(ctx, programId);
     return Response.json({ approvals });
   } catch (err) {
@@ -27,6 +31,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   try {
     const { programId } = await params;
     const ctx = await requireTenancy();
+    const accessPolicy = await loadUserProgramAccessPolicy(ctx, { programId });
+    if (accessPolicy.programIdsAllowed !== null && !accessPolicy.programIdsAllowed.includes(programId)) {
+      return Response.json({ error: 'forbidden' }, { status: 403 });
+    }
     const body = (await req.json()) as {
       requestType?: FounderApprovalRequestRow['requestType'];
       headline?: string;

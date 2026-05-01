@@ -2316,7 +2316,7 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
     form.append('sessionId', `prog-${Date.now()}`);
 
     try {
-      const res = await fetch('/api/v1/nexus/upload', { method: 'POST', body: form });
+      const res = await fetch(`/api/programs/${encodeURIComponent(programId)}/attachments/upload`, { method: 'POST', body: form });
       if (!res.ok) {
         const msg = await res.text().catch(() => 'Upload failed');
         setUploadState(null);

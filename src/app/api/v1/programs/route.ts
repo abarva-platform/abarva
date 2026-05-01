@@ -11,6 +11,7 @@ import { logClassifierDecision } from '@/lib/programs/classifier';
 import { raiseMaestroFlag } from '@/lib/programs/governance';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { requireTenancy, tenancyErrorResponse } from './_auth';
+import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 import type {
   OriginSource,
   PatternClassifierMatch,
@@ -68,6 +69,13 @@ export async function POST(req: NextRequest) {
   let payload: CreateProgramPayload | null = null;
   try {
     const ctx = await requireTenancy();
+    const accessPolicy = await loadUserProgramAccessPolicy(ctx);
+    if (!accessPolicy.canCreatePrograms) {
+      return Response.json(
+        { error: 'forbidden', detail: 'can_create_programs permission is required.' },
+        { status: 403 },
+      );
+    }
     try {
       payload = (await req.json()) as CreateProgramPayload;
     } catch {

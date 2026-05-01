@@ -19,7 +19,7 @@ function aliasesForClient(key: ClientKey): string[] {
     ...(CLIENT_KEY_TO_DB_NAME[key] ?? []),
   ].filter((value): value is string => Boolean(value));
 
-  if (key === 'apexretail') labels.push('apex');
+  if (key === 'apexretail') labels.push('apex', 'aopex', 'aopex retail');
   if (key === 'arcturus') labels.push('first capital', 'firstcapital');
   if (key === 'meridian') labels.push('meridian health');
 

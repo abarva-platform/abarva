@@ -5,6 +5,8 @@
 import { NextRequest } from 'next/server';
 import { completeDeliverable } from '@/lib/programs/mutations';
 import { requireTenancy, tenancyErrorResponse } from '../../../_auth';
+import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
+import { sanitizeRestrictedFinancialText } from '@/lib/agent/restricted-output-policy';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -13,6 +15,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   try {
     const { programId } = await params;
     const ctx = await requireTenancy();
+    const accessPolicy = await loadUserProgramAccessPolicy(ctx, { programId });
+    if (!accessPolicy.canGenerateDeliverables) {
+      return Response.json(
+        { error: 'forbidden', detail: 'can_generate_deliverables permission is required.' },
+        { status: 403 },
+      );
+    }
     const body = (await req.json()) as {
       deliverableTypeKey?: string;
       title?: string;
@@ -32,7 +41,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
     const result = await completeDeliverable(ctx, programId, {
       deliverableTypeKey: body.deliverableTypeKey,
       title: body.title,
-      content: body.content,
+      content: body.content
+        ? sanitizeRestrictedFinancialText(body.content, accessPolicy)
+        : body.content,
       moduleKey: body.moduleKey,
       signOff: body.signOff !== false,
       structuredData: {

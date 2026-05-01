@@ -34,11 +34,11 @@ const PACKS_UNDER_TEST: readonly PackUnderTest[] = [
   { pack: P2_SYNTHESIS, expectedPrimaryFailureModes: [1, 2, 6, 10] },
   // D.3.1 — P3 Design prevents #5, #6, #7, #1 (confirmed).
   { pack: P3_DESIGN, expectedPrimaryFailureModes: [1, 5, 6, 7] },
-  // D.4.1 — P4 Build prevents #5, #8, #3 (operational).
+  // D.4.1 — P4 Execution Roadmap prevents #5, #8, #3 (operational).
   { pack: P4_BUILD, expectedPrimaryFailureModes: [3, 5, 8] },
-  // D.5.1 — P5 Activate prevents #5, #8, #9 (instrumentation).
+  // D.5.1 — P5 Approval & Mobilization prevents #5, #8, #9 (instrumentation).
   { pack: P5_ACTIVATE, expectedPrimaryFailureModes: [5, 8, 9] },
-  // D.6.1 — P6 Operate prevents #9 (sustained), #5 (sustained), #10 (re-tested).
+  // D.6.1 — P6 Tower Handoff prevents #9 (sustained), #5 (sustained), #10 (re-tested).
   { pack: P6_OPERATE, expectedPrimaryFailureModes: [5, 9, 10] },
 ] as const;
 

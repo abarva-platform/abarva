@@ -6,7 +6,7 @@
 // Programs module redesign Section B.4 (file uploads cross-cutting).
 //
 // Design notes:
-//   - Documents: PDF, .docx, .xlsx, .pptx, plain text, markdown, CSV.
+//   - Documents: PDF, .docx, .xlsx, .pptx, plain text, markdown, CSV, JSON.
 //   - Images: PNG, JPEG only (no SVG — XSS risk · no GIF — rarely useful
 //     for evidence).
 //   - Audio / Video: meeting recordings · MP3, M4A, MP4 only.
@@ -27,6 +27,7 @@ export const ATTACHMENT_MIME_ALLOWLIST = [
   'text/markdown',
   'text/plain',
   'text/csv',
+  'application/json',
   // Images
   'image/png',
   'image/jpeg',

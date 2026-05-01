@@ -11,6 +11,7 @@ import { ProgramsIndexPage } from '@/components/programs/ProgramsIndexPage';
 import { getProgramPortfolio } from '@/lib/programs/queries';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
+import { requireProductModule } from '@/lib/auth/server-module-access';
 import type { ProgramPhaseId, ProgramRow } from '@/lib/programs/programs-types';
 
 export const metadata = {
@@ -27,6 +28,7 @@ const PROGRAM_TENANT_BY_CLIENT_KEY: Record<ClientKey, ProgramsIndexTenant> = {
 };
 
 export default async function ProgramsPage() {
+  await requireProductModule('programs');
   const activeClient = await getActiveClientRow();
   const tenant = activeClient ? PROGRAM_TENANT_BY_CLIENT_KEY[activeClient.key] : 'apex-retail';
   const view = buildProgramsIndexView(tenant);

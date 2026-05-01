@@ -167,7 +167,7 @@ function inferAccessLevel(ctx: TenancyCtx, membership: ClientMembershipRow | nul
       ? 'program_member'
       : 'program_viewer';
   }
-  return 'client_admin';
+  return 'no_program_access';
 }
 
 export async function loadUserProgramAccessPolicy(

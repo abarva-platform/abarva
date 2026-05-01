@@ -50,6 +50,12 @@ jest.mock('@/lib/programs/queries', () => ({
   getProgramById: (...args: unknown[]) => getProgramByIdMock(...args),
 }));
 
+const loadUserProgramAccessPolicyMock = jest.fn();
+jest.mock('@/lib/auth/program-access-policy', () => ({
+  loadUserProgramAccessPolicy: (...args: unknown[]) =>
+    loadUserProgramAccessPolicyMock(...args),
+}));
+
 const recordAttachmentUploadMock = jest.fn();
 const buildStoragePathMock = jest.fn(
   ({
@@ -73,6 +79,43 @@ jest.mock('@/lib/programs/attachments', () => ({
     attachmentId: string;
     filename: string;
   }) => buildStoragePathMock(args),
+}));
+
+const recordProgramEvidenceMock = jest.fn();
+jest.mock('@/lib/programs/evidence-ingestion', () => ({
+  extractProgramEvidenceFromText: (args: { filename: string }) => ({
+    evidenceType: 'meeting_notes',
+    title: args.filename,
+    summary: 'Parsed evidence summary',
+    extractedText: 'Parsed text',
+    extractedStructured: {
+      decisions: [],
+      action_items: [],
+      risks: [],
+      baseline_candidates: [],
+      attendees: [],
+      parse_method: 'text-line-parser',
+      warnings: [],
+    },
+    confidence: 0.78,
+  }),
+  evidenceForUnsupportedAttachment: (args: { filename: string }) => ({
+    evidenceType: 'uploaded_artifact',
+    title: args.filename,
+    summary: 'Metadata-only evidence summary',
+    extractedText: null,
+    extractedStructured: {
+      decisions: [],
+      action_items: [],
+      risks: [],
+      baseline_candidates: [],
+      attendees: [],
+      parse_method: 'metadata-only',
+      warnings: [],
+    },
+    confidence: 0.4,
+  }),
+  recordProgramEvidence: (...args: unknown[]) => recordProgramEvidenceMock(...args),
 }));
 
 type UploadArgs = [string, unknown, unknown];
@@ -136,6 +179,9 @@ beforeEach(() => {
     archivedAt: null,
     deletedAt: null,
   });
+  loadUserProgramAccessPolicyMock.mockResolvedValue({
+    canUploadArtifacts: true,
+  });
   recordAttachmentUploadMock.mockImplementation(
     async (input: Record<string, unknown>) => ({
       id: 'att-1',
@@ -157,6 +203,7 @@ beforeEach(() => {
       deletedAt: null,
     }),
   );
+  recordProgramEvidenceMock.mockResolvedValue('evidence-1');
 });
 
 describe('POST /api/programs/[id]/attachments/upload', () => {
@@ -206,18 +253,32 @@ describe('POST /api/programs/[id]/attachments/upload', () => {
     expect(res.status).toBe(410);
   });
 
+  it('returns 403 when the user lacks upload rights', async () => {
+    loadUserProgramAccessPolicyMock.mockResolvedValue({
+      canUploadArtifacts: false,
+    });
+    const req = makeMultipartRequest('a.pdf', 'application/pdf', 100);
+    const res = await POST(req, PROGRAM_PARAMS);
+    expect(res.status).toBe(403);
+    expect(await res.json()).toMatchObject({ error: 'upload_not_permitted' });
+    expect(storageUploadMock).not.toHaveBeenCalled();
+  });
+
   it('returns 200 with the attachment record on success', async () => {
     const req = makeMultipartRequest('baseline.pdf', 'application/pdf', 1024);
     const res = await POST(req, PROGRAM_PARAMS);
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       attachment: { id: string; originalName: string; mimeType: string };
+      evidence: { id: string; status: string };
     };
     expect(body.attachment.id).toBe('att-1');
     expect(body.attachment.originalName).toBe('baseline.pdf');
     expect(body.attachment.mimeType).toBe('application/pdf');
+    expect(body.evidence).toEqual({ id: 'evidence-1', status: 'captured' });
     expect(storageUploadMock).toHaveBeenCalledTimes(1);
     expect(recordAttachmentUploadMock).toHaveBeenCalledTimes(1);
+    expect(recordProgramEvidenceMock).toHaveBeenCalledTimes(1);
   });
 
   it('cleans up the bucket object when metadata insert fails', async () => {

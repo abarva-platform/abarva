@@ -1,4 +1,4 @@
-import { resolveProgramIndustryCode } from '../mutations';
+import { resolveProgramClassificationCodes, resolveProgramIndustryCode } from '../mutations';
 
 describe('resolveProgramIndustryCode', () => {
   it('uses the explicit client industry code when present', () => {
@@ -38,5 +38,42 @@ describe('resolveProgramIndustryCode', () => {
         'industrial',
       ),
     ).toBe('INDUSTRIAL');
+  });
+});
+
+describe('resolveProgramClassificationCodes', () => {
+  it('classifies patient-facing growth programs as front-office growth', () => {
+    expect(
+      resolveProgramClassificationCodes({
+        name: 'Patient Digital Front Door',
+        useCase: 'Lift patient acquisition and portal conversion.',
+      }),
+    ).toEqual({
+      functionCode: 'FRONT_OFFICE',
+      objectiveCode: 'GROW',
+      topicCode: 'patient_digital_front_door',
+    });
+  });
+
+  it('classifies revenue cycle compliance programs as back-office control', () => {
+    expect(
+      resolveProgramClassificationCodes({
+        name: 'Revenue Cycle Governance Reset',
+        useCase: 'Control audit risk and compliance exposure in RCM.',
+      }),
+    ).toMatchObject({
+      functionCode: 'BACK_OFFICE',
+      objectiveCode: 'CONTROL',
+    });
+  });
+
+  it('uses an accepted pattern key as the topic code when present', () => {
+    expect(
+      resolveProgramClassificationCodes({
+        name: 'AI Assisted Engineering Productivity',
+        useCase: 'Improve internal SDLC DORA metrics.',
+        acceptedPatternKey: 'PAT-PRG-AI-CODING-001',
+      }).topicCode,
+    ).toBe('pat_prg_ai_coding_001');
   });
 });

@@ -12,6 +12,7 @@ const originateProgram = jest.fn();
 const logClassifierDecision = jest.fn();
 const raiseMaestroFlag = jest.fn();
 const buildProgramSummary = jest.fn();
+const loadUserProgramAccessPolicy = jest.fn();
 
 // Captured between tests
 let participantInserts: Array<Record<string, unknown>> = [];
@@ -84,6 +85,10 @@ jest.mock('@/lib/programs/governance', () => ({
   raiseMaestroFlag,
 }));
 
+jest.mock('@/lib/auth/program-access-policy', () => ({
+  loadUserProgramAccessPolicy,
+}));
+
 jest.mock('@/lib/supabase-server', () => ({
   getServerSupabase: () => ({
     from: (table: string) => makeQueryBuilder(table),
@@ -104,6 +109,7 @@ describe('POST /api/v1/programs', () => {
     participantInserts = [];
     for (const k of Object.keys(insertResponses)) delete insertResponses[k];
     requireTenancy.mockResolvedValue({ clientId: 'client_1', userId: 'person_1' });
+    loadUserProgramAccessPolicy.mockResolvedValue({ canCreatePrograms: true });
     originateProgram.mockResolvedValue({
       id: 'eng_new_1',
       clientId: 'client_1',
@@ -179,6 +185,22 @@ describe('POST /api/v1/programs', () => {
     expect(res.status).toBe(401);
     const body = (await res.json()) as { error: string };
     expect(body.error).toBe('unauthenticated');
+  });
+
+  it('returns 403 when the user cannot create programs', async () => {
+    loadUserProgramAccessPolicy.mockResolvedValueOnce({ canCreatePrograms: false });
+    const { POST } = await import('@/app/api/v1/programs/route');
+    const res = await POST(
+      makeRequest({
+        originationFormResult: { name: 'X', useCase: 'Y', sponsorPersonId: 'cto', leadPersonId: 'cto' },
+        originSource: 'user_initiated',
+      }),
+    );
+    expect(res.status).toBe(403);
+    const body = (await res.json()) as { error: string; detail: string };
+    expect(body.error).toBe('forbidden');
+    expect(body.detail).toMatch(/can_create_programs/);
+    expect(originateProgram).not.toHaveBeenCalled();
   });
 
   it('returns 500 with a friendly Steward-voice detail (not bare internal_error) when the DB layer throws', async () => {

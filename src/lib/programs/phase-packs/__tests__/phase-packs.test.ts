@@ -21,9 +21,9 @@ describe('getPhasePack', () => {
     expect(getPhasePack(0)?.label).toBe('P0 Originate');
     expect(getPhasePack(1)?.label).toBe('P1 Discovery');
     expect(getPhasePack(3)?.label).toBe('P3 Design');
-    expect(getPhasePack(4)?.label).toBe('P4 Build');
-    expect(getPhasePack(5)?.label).toBe('P5 Activate');
-    expect(getPhasePack(6)?.label).toBe('P6 Operate');
+    expect(getPhasePack(4)?.label).toBe('P4 Execution Roadmap');
+    expect(getPhasePack(5)?.label).toBe('P5 Approval & Mobilization');
+    expect(getPhasePack(6)?.label).toBe('P6 Tower Handoff');
   });
 
   it('returns null cleanly for null/undefined/out-of-range', () => {

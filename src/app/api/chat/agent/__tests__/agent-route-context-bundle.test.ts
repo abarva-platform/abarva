@@ -109,6 +109,17 @@ describe('agent route · CB-6 context-bundle wiring', () => {
     expect(source).toContain('use lookup_person/register_placeholder_person/commit_program when available');
   });
 
+  it('short-circuits cross-tenant program writes before model/tool execution', () => {
+    const guardIdx = source.indexOf('detectCrossTenantWriteIntent({');
+    const refusalIdx = source.indexOf('formatCrossTenantWriteRefusal(crossTenantWriteIntent)');
+    const loopIdx = source.indexOf('await runToolUseLoop({');
+    expect(guardIdx).toBeGreaterThan(-1);
+    expect(refusalIdx).toBeGreaterThan(guardIdx);
+    expect(refusalIdx).toBeLessThan(loopIdx);
+    expect(source).toContain('activeClientKey: activeClient?.key ?? null');
+    expect(source).toContain('activeClientName: activeClient?.name ?? tenantName');
+  });
+
   it('instructs Programs origination to ask one question and report record status clearly', () => {
     expect(source).toContain('PROGRAM ORIGINATION STYLE');
     expect(source).toContain('Ask at most ONE question per reply');
