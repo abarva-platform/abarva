@@ -138,4 +138,30 @@ describe('program access policy', () => {
     expect(policy.clientId).toBe('client-1');
     expect(policy.programIdsAllowed).toBeNull();
   });
+
+  it('treats source-only users as no program access', async () => {
+    setupRows({
+      person_client_memberships: {
+        role: 'client_viewer',
+        access_level: 'source_member',
+        financial_visibility: false,
+        can_create_programs: false,
+      },
+      engagement_participants: [],
+    });
+    const { loadUserProgramAccessPolicy, canReadProgram } = await import('../program-access-policy');
+    const ctx = {
+      clientId: 'client-1',
+      userId: '00000000-0000-4000-8000-000000000001',
+      role: 'client_viewer',
+    };
+
+    const policy = await loadUserProgramAccessPolicy(ctx);
+
+    expect(policy.accessLevel).toBe('no_program_access');
+    expect(policy.programScope).toBe('assigned_programs_only');
+    expect(policy.programIdsAllowed).toEqual([]);
+    expect(policy.canCreatePrograms).toBe(false);
+    await expect(canReadProgram(ctx, 'program-a')).resolves.toBe(false);
+  });
 });

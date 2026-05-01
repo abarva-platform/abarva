@@ -12,6 +12,7 @@ import type { Artifact } from '@/lib/agent/artifacts';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { HOME_VIEW } from '@/lib/home/shell-home-fixture';
 import type { ReasoningDashboardSummary } from '@/lib/reasoning/dashboard-summary';
+import type { ModuleAccessResult, ProductModule } from '@/lib/auth/module-access';
 
 // ─── Detail color helpers ───────────────────────────────────────────────────
 
@@ -98,6 +99,151 @@ function StatsCard({ label, value, detail, detailColor, urgent = false }: StatCa
       >
         {detail}
       </div>
+    </div>
+  );
+}
+
+interface WorkspaceCardProps {
+  title: string;
+  detail: string;
+  href: string;
+  eyebrow: string;
+  enabled: boolean;
+}
+
+function WorkspaceCard({ title, detail, href, eyebrow, enabled }: WorkspaceCardProps) {
+  const body = (
+    <div
+      style={{
+        background: enabled ? SHELL.CARD_WHITE : 'rgba(255,255,255,0.58)',
+        border: `1px solid ${enabled ? SHELL.CARD_LINE : 'rgba(12,26,58,0.08)'}`,
+        borderRadius: 10,
+        padding: '14px 16px',
+        minHeight: 104,
+        opacity: enabled ? 1 : 0.62,
+      }}
+    >
+      <div
+        style={{
+          fontFamily: SHELL.MONO,
+          fontSize: 9,
+          letterSpacing: '0.13em',
+          textTransform: 'uppercase',
+          color: enabled ? SHELL.INK_MUTED : SHELL.GRAY_TEXT,
+          marginBottom: 10,
+        }}
+      >
+        {eyebrow}
+      </div>
+      <div
+        style={{
+          fontFamily: SHELL.SERIF,
+          fontSize: 18,
+          fontWeight: 700,
+          color: SHELL.INK,
+          lineHeight: 1.18,
+          marginBottom: 6,
+        }}
+      >
+        {title}
+      </div>
+      <div
+        style={{
+          fontFamily: SHELL.SANS,
+          fontSize: 12,
+          color: SHELL.INK_SOFT,
+          lineHeight: 1.35,
+        }}
+      >
+        {detail}
+      </div>
+    </div>
+  );
+
+  if (!enabled) return body;
+  return (
+    <Link href={href} style={{ textDecoration: 'none', display: 'block' }}>
+      {body}
+    </Link>
+  );
+}
+
+function WorkspaceAccessStrip({
+  moduleAccess,
+}: {
+  moduleAccess: ModuleAccessResult;
+}) {
+  const canUse = (module: ProductModule) => moduleAccess.modules.includes(module);
+
+  return (
+    <div style={{ marginBottom: 24 }}>
+      <div
+        style={{
+          fontFamily: SHELL.MONO,
+          fontSize: 9,
+          color: SHELL.INK_MUTED,
+          textTransform: 'uppercase',
+          letterSpacing: '0.14em',
+          lineHeight: 1,
+          marginBottom: 10,
+        }}
+      >
+        Workspace access
+      </div>
+
+      {moduleAccess.noWorkspaceAssigned ? (
+        <div
+          style={{
+            background: SHELL.RUST_BG,
+            border: `1px solid ${SHELL.PEACH_LINE}`,
+            borderRadius: 10,
+            padding: '14px 16px',
+            fontFamily: SHELL.SANS,
+            fontSize: 13,
+            color: SHELL.RUST_TEXT,
+            lineHeight: 1.4,
+          }}
+        >
+          You are signed in, but no workspace has been assigned yet. A client admin can grant Programs, Source, Intelligence, or Tower access from Setup.
+        </div>
+      ) : (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+            gap: 12,
+          }}
+        >
+          <WorkspaceCard
+            eyebrow={canUse('programs') ? 'Enabled' : 'Not assigned'}
+            title="Programs"
+            detail={canUse('programs') ? 'Originate and run phase-gated transformation programs.' : 'Hidden until this user is granted Programs access.'}
+            href="/programs"
+            enabled={canUse('programs')}
+          />
+          <WorkspaceCard
+            eyebrow={canUse('source') ? 'Enabled' : 'Not assigned'}
+            title="Source"
+            detail={canUse('source') ? 'Run sourcing events and generate sourcing artifacts.' : 'Hidden until this user is granted Source access.'}
+            href="/source"
+            enabled={canUse('source')}
+          />
+          <WorkspaceCard
+            eyebrow={canUse('intelligence') ? 'Enabled' : 'Not assigned'}
+            title="Intelligence"
+            detail={canUse('intelligence') ? 'Ask tenant-grounded questions across patterns and context.' : 'Unavailable for this workspace.'}
+            href="/intelligence"
+            enabled={canUse('intelligence')}
+          />
+          <WorkspaceCard
+            eyebrow={canUse('tower') ? 'Enabled' : 'Not assigned'}
+            title="Tower"
+            detail={canUse('tower') ? 'Review portfolio pressure, execution telemetry, and risks.' : 'Unavailable for this workspace.'}
+            href="/tower"
+            enabled={canUse('tower')}
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -543,7 +689,7 @@ function ReasoningIntelligenceRow({ data }: { data: ReasoningDashboardSummary })
         }}
       >
         {/* 1 — Portfolio health */}
-        <Link href="/admin/reasoning/health" style={{ textDecoration: 'none', display: 'block' }}>
+        <Link href="/intelligence" style={{ textDecoration: 'none', display: 'block' }}>
           <div
             style={{
               background: SHELL.CARD_WHITE,
@@ -591,7 +737,7 @@ function ReasoningIntelligenceRow({ data }: { data: ReasoningDashboardSummary })
           detailColor={
             gatePassRatePct >= 75 ? SHELL.MINT_TEXT : gatePassRatePct >= 50 ? SHELL.AMBER_DOT : SHELL.RUST_TEXT
           }
-          href="/admin/reasoning/health"
+          href="/intelligence"
         />
 
         {/* 3 — Active alerts */}
@@ -600,7 +746,7 @@ function ReasoningIntelligenceRow({ data }: { data: ReasoningDashboardSummary })
           value={criticalAlertCount === 0 ? '—' : String(criticalAlertCount)}
           detail={alertDetail}
           detailColor={alertDetailColor}
-          href="/admin/reasoning/health"
+          href="/intelligence"
         />
 
         {/* 4 — Template coverage */}
@@ -609,7 +755,7 @@ function ReasoningIntelligenceRow({ data }: { data: ReasoningDashboardSummary })
           value={coveragePct}
           detail={`${coverage.covered}/${coverage.total} templates`}
           detailColor={SHELL.MINT_TEXT}
-          href="/admin/reasoning/coverage"
+          href="/intelligence"
         />
       </div>
     </div>
@@ -621,15 +767,23 @@ function ReasoningIntelligenceRow({ data }: { data: ReasoningDashboardSummary })
 export function HomeIndexPage({
   activeTenantName,
   hasTenantKey = false,
+  moduleAccess,
   reasoning,
   livePrograms = [],
 }: {
   activeTenantName: string;
   hasTenantKey?: boolean;
+  moduleAccess?: ModuleAccessResult;
   reasoning?: ReasoningDashboardSummary;
   livePrograms?: HomeProgramRow[];
 }) {
   const v = HOME_VIEW;
+  const resolvedModuleAccess = moduleAccess ?? {
+    modules: ['programs', 'source', 'intelligence', 'tower'] as ProductModule[],
+    explicit: false,
+    noWorkspaceAssigned: false,
+  };
+  const canUse = (module: ProductModule) => resolvedModuleAccess.modules.includes(module);
   const seenProgramIds = new Set<string>();
   const topPrograms = [...livePrograms, ...v.topPrograms]
     .filter((program) => {
@@ -744,7 +898,7 @@ export function HomeIndexPage({
               userSelect: 'none',
             }}
           >
-            Morning pulse · greeting · pressures · programs queue
+            Morning pulse · workspace access · assigned work
           </summary>
 
       {/* Work pane */}
@@ -754,7 +908,9 @@ export function HomeIndexPage({
           overflowY: 'auto',
           background: SHELL.PAPER_SOFT,
         }}
-      >
+        >
+        <WorkspaceAccessStrip moduleAccess={resolvedModuleAccess} />
+
         {/* Greeting header */}
         <h1
           style={{
@@ -782,7 +938,7 @@ export function HomeIndexPage({
         </p>
 
         {/* Reasoning intelligence row */}
-        {reasoning !== undefined && (
+        {reasoning !== undefined && canUse('intelligence') && (
           <ReasoningIntelligenceRow data={reasoning} />
         )}
 
@@ -809,18 +965,24 @@ export function HomeIndexPage({
           }}
         >
           {/* Left col: Active programs */}
-          <div ref={programsSectionRef} style={{ flex: 1.4, minWidth: 0 }}>
-            <SectionHeader title="Active programs" viewAllHref="/programs" />
-            {topPrograms.map((prog) => (
-              <ProgramRow key={prog.id ?? prog.href} {...prog} />
-            ))}
-          </div>
+          {canUse('programs') && (
+            <div ref={programsSectionRef} style={{ flex: 1.4, minWidth: 0 }}>
+              <SectionHeader title="Active programs" viewAllHref="/programs" />
+              {topPrograms.map((prog) => (
+                <ProgramRow key={prog.id ?? prog.href} {...prog} />
+              ))}
+            </div>
+          )}
 
           {/* Right col: Tower + Source */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <SectionHeader title="Tower pressure" viewAllHref="/tower" />
-            <TopPressureCard />
-            <SourceEventMini />
+            {canUse('tower') && (
+              <>
+                <SectionHeader title="Tower pressure" viewAllHref="/tower" />
+                <TopPressureCard />
+              </>
+            )}
+            {canUse('source') && <SourceEventMini />}
           </div>
         </div>
       </div>

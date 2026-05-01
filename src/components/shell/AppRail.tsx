@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useUser, useClerk } from '@clerk/nextjs';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { clearActiveClientContext } from '@/lib/auth/client-context-storage';
+import { resolveModuleAccess, type ProductModule } from '@/lib/auth/module-access';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface AppRailProps {}
@@ -39,6 +40,20 @@ export function AppRail() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { user } = useUser();
   const { signOut } = useClerk();
+  const email = user?.primaryEmailAddress?.emailAddress
+    ?? user?.emailAddresses?.[0]?.emailAddress
+    ?? null;
+  const moduleAccess = user
+    ? resolveModuleAccess({
+        role: user.publicMetadata?.role as string | undefined,
+        email,
+        publicMetadata: user.publicMetadata as Record<string, unknown> | null | undefined,
+      })
+    : { modules: [], explicit: false, noWorkspaceAssigned: true };
+  const canShow = (module: ProductModule) => moduleAccess.modules.includes(module);
+  const visibleNavItems = NAV_ITEMS.filter((item) =>
+    item.key === 'home' || canShow(item.key),
+  );
 
   const displayName = user?.fullName || user?.emailAddresses?.[0]?.emailAddress?.split('@')?.[0] || 'User';
   const initials = displayName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
@@ -68,7 +83,7 @@ export function AppRail() {
       </Link>
 
       {/* Nav items */}
-      {NAV_ITEMS.map((item) => {
+      {visibleNavItems.map((item) => {
         const isActive = active === item.key;
         return (
           <Link
@@ -184,13 +199,15 @@ export function AppRail() {
             <div style={{ padding: '6px 12px 8px', borderBottom: '1px solid rgba(12,26,58,0.08)', marginBottom: 4 }}>
               <div style={{ fontFamily: SHELL.SANS, fontSize: 11, fontWeight: 600, color: SHELL.INK }}>{displayName}</div>
             </div>
-            <Link
-              href="/admin"
-              onClick={() => setMenuOpen(false)}
-              style={{ display: 'block', padding: '7px 12px', textDecoration: 'none', fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK }}
-            >
-              Setup / Admin
-            </Link>
+            {canShow('setup') && (
+              <Link
+                href="/admin"
+                onClick={() => setMenuOpen(false)}
+                style={{ display: 'block', padding: '7px 12px', textDecoration: 'none', fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK }}
+              >
+                Setup / Admin
+              </Link>
+            )}
             <button
               onClick={() => {
                 setMenuOpen(false);
