@@ -50,6 +50,7 @@ export default async function ProgramDetailRoute({
 
   // Try real DB data first
   let dbData = null;
+  let activeClientName: string | null = null;
   // CB-8 · whether the session has a real tenant binding. Threaded
   // into AppShell so the 4-mode toggle can correctly disable
   // Tenant / Full when no tenant is bound — `tenantName` is a display
@@ -57,9 +58,10 @@ export default async function ProgramDetailRoute({
   let hasTenantKey = false;
   try {
     const user = await getCurrentUser();
-    if (user?.defaultClientId) {
+    if (user?.defaultClientId || user?.metadataClientKey) {
       hasTenantKey = true;
       const clientRow = await getActiveClientRow().catch(() => null);
+      activeClientName = clientRow?.name ?? null;
       dbData = await getEngagementWithPhaseData(id, clientRow?.id ?? null);
     }
   } catch {
@@ -93,6 +95,9 @@ export default async function ProgramDetailRoute({
 
     // Override key scalar fields with real data
     view.name = eng.name ?? view.name;
+    if (activeClientName) {
+      view.tenant = activeClientName;
+    }
     // currentPhase is already set correctly via resolvedCurrentPhase above.
     // Only fall back to the DB value when there is no in-memory demo override.
     if (memPhaseOverride === undefined && eng.current_phase !== null && eng.current_phase !== undefined) {

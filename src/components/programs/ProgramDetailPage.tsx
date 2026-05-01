@@ -3974,7 +3974,7 @@ export function ProgramDetailPage({
       stage={currentStage}
       surfaceContext={programSurfaceContext}
       topBarProps={{
-        tenantName: 'Apex Retail Group',
+        tenantName: view.tenant,
         showLocked: true,
         context: `${view.displayId} · P${view.viewingPhase} ${phaseLabel}`,
       }}
