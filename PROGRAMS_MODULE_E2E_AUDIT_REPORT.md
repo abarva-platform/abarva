@@ -35,6 +35,10 @@ Fixed in this branch:
 - Client-pinned Programs provisioning API added:
   - `src/app/api/admin/users/provision/route.ts` lets a client admin provision a Programs user, set access level, financial visibility, create/approve/upload/generate/publish flags, and assign program IDs.
   - The API verifies every assigned program belongs to the active client before inserting or updating `engagement_participants`; cross-client assignment attempts are returned as failed assignment results, not written.
+- Setup/Admin provisioning UI wired:
+  - `src/components/admin/ProgramUserProvisionForm.tsx` adds a live Programs provisioning form to `/admin/users-access?tab=invites`.
+  - `src/app/(maestro)/admin/users-access/page.tsx` now resolves the active client, loads client-scoped program options, and renders the form before the seeded invite list.
+  - The form posts to `/api/admin/users/provision`, refreshes after success, and warns when one or more program assignments fail.
 - Server-side Programs route guard added:
   - `src/app/programs/page.tsx` now requires the signed-in user to have the `programs` product module before rendering.
 - Phase approval/advance route guards tightened:
@@ -55,8 +59,9 @@ Validation run after fixes:
 - `npx jest src/lib/programs/__tests__/evidence-ingestion.test.ts src/app/api/programs/__tests__/attachments-upload.smoke.test.ts src/lib/programs/__tests__/approval.test.ts src/lib/programs/__tests__/governance-gates.test.ts src/lib/agent/tools/__tests__/commitProgram.test.ts src/lib/agent/tools/__tests__/completeDeliverable.test.ts --runInBand` → 6 suites / 61 tests passed.
 - `npx jest --runTestsByPath src/app/api/admin/users/provision/__tests__/route.test.ts --runInBand` → 1 suite / 3 tests passed.
 - `npx jest src/lib/programs/phase-packs/__tests__ src/app/api/context/demo/__tests__/route.test.ts src/app/api/chat/agent/__tests__/agent-route-context-bundle.test.ts src/lib/auth/__tests__/program-access-policy.test.ts src/app/api/programs/__tests__/attachments-upload.smoke.test.ts --runInBand` → 15 suites / 263 tests passed.
-- Final focused regression command over phase packs, broker/demo/chat context, access policy, upload smoke, evidence ingestion, approval/governance, program tools, program API contracts, deliverable-complete route, and admin provisioning route → 25 suites / 376 tests passed after the cross-client assignment and approval-route hardening.
+- Final focused regression command over phase packs, broker/demo/chat context, access policy, upload smoke, evidence ingestion, approval/governance, program tools, program API contracts, admin Users & Access, deliverable-complete route, and admin provisioning route -> 28 suites / 470 tests passed after Setup/Admin provisioning UI wiring.
 - Follow-up TypeScript pass caught the JSON upload contract mismatch; `src/lib/programs/attachments/mime.ts` now includes `application/json`, and the upload/evidence focused suite passes 2 suites / 11 tests.
+- Admin provisioning UI focused tests pass: `npx jest src/__tests__/integration/admin/admin11-users-access-depth.test.ts src/__tests__/integration/admin/admin-data3-users-access-wired.test.ts src/components/admin/__tests__/ProgramUserProvisionForm.test.tsx --runInBand` -> 3 suites / 94 tests passed.
 
 Validation caveat:
 
@@ -73,7 +78,7 @@ The critical failures are:
 
 - The corrected lifecycle was split across the codebase at audit start. This branch corrected the active P4/P5/P6 phase packs so Nexus now receives Execution Roadmap / Approval & Mobilization / Tower Handoff doctrine. Remaining lifecycle gaps are template, approval, tracking, and deployed-smoke gaps.
 - Program transactional state still writes to shared/public Supabase tables such as `engagements`, `program_modules`, `deliverables_v2`, and `program_approval_requests`; it does not write program state into private tenant schemas such as `client_meridian_health_private`.
-- Access provisioning now has a server API for client-pinned Programs users, including module-level capability flags and program assignment. The remaining gap is UI wiring from Setup/Admin plus Clerk invite handoff.
+- Access provisioning now has both server API and Setup/Admin UI for client-pinned Programs users, including module-level capability flags and program assignment. The remaining gap is Clerk invitation / identity activation handoff.
 - Document upload on the visible program detail page now calls the program attachment route and records a linked evidence row. Text/markdown/json/csv-style files produce structured signals; unsupported binary files produce metadata-only evidence. The remaining gap is rich PDF/XLSX/PPTX parsing into decisions, actions, tables, and baseline metrics.
 - Approval flow exists for P0 submission, but per-phase approval/gate workflow is fragmented: governance rules exist, a demo phase override route exists, founder/legacy approval paths exist, and no single evidence-based phase-approval workflow is proven from P1 through P6.
 - `program_audit_log` now has runtime writes for major program actions. Remaining gap: deployed verification plus fuller audit coverage for every minor field edit and export.
@@ -1358,9 +1363,9 @@ Pilot impact: no value-governance pilot without this.
 
 ## Wiring Gaps
 
-1. Admin provisioning UI / Clerk invite handoff incomplete
+1. Clerk invite / identity activation handoff incomplete
 Affected: Phase -1.
-Evidence: server API exists in `src/app/api/admin/users/provision/route.ts`, including client-scoped program assignment checks; Setup/Admin UI and Clerk invitation handoff remain incomplete.
+Evidence: server API exists in `src/app/api/admin/users/provision/route.ts`, including client-scoped program assignment checks; Setup/Admin UI exists in `src/components/admin/ProgramUserProvisionForm.tsx`; Clerk invitation handoff remains incomplete.
 Effort: medium.
 Pilot impact: no clean pilot onboarding.
 
@@ -1428,7 +1433,7 @@ Pilot impact: P3/P6 blocked.
 
 ## Access Control Gaps
 
-No-super-admin doctrine and unknown-user fallback are improved in code; primary create/upload/deliverable and approval-bypass paths now enforce permissions; remaining gaps are Setup/Admin UI, Clerk invite handoff, and full endpoint-by-endpoint publish/export enforcement.
+No-super-admin doctrine and unknown-user fallback are improved in code; primary create/upload/deliverable and approval-bypass paths now enforce permissions; Setup/Admin can provision Programs users; remaining gaps are Clerk invite handoff and full endpoint-by-endpoint publish/export enforcement.
 
 Effort: small-medium.
 Pilot impact: high.
@@ -1446,7 +1451,7 @@ Pilot impact: high.
 
 | Phase | Tier | Reason |
 | --- | --- | --- |
-| Access provisioning | Tier B | Server API now provisions client-pinned Programs users with module/program/financial rights; Setup UI and Clerk invite handoff still need wiring. |
+| Access provisioning | Tier B | Setup/Admin can now provision client-pinned Programs users with module/program/financial rights. Clerk invite/identity activation handoff still needs wiring. |
 | P0 Origination | Tier B | Agent submission and approval queue exist, create permission is enforced, and audit writes exist; private-schema posture and deployed smoke remain. |
 | P1 Discovery | Tier B/C | Doctrine exists and uploads now create evidence rows for parseable text artifacts; rich PDF/XLSX parsing, workshop validation, baseline schema, and gate approval remain incomplete. |
 | P2 Synthesis | Tier C | Charter deliverable can be saved, but promise contract, ARB attestation, sponsor defense, dissenter workflow, and gate approval are incomplete. |
@@ -1470,7 +1475,7 @@ Pilot impact: high.
 
 2. Provisioning
 
-- Server provisioning API now creates client-pinned Programs users with program assignments, financial visibility, upload/generate/publish/approve flags. Remaining work: Setup/Admin UI and Clerk invitation handoff.
+- Server provisioning API and Setup/Admin form now create client-pinned Programs users with program assignments, financial visibility, upload/generate/publish/approve flags. Remaining work: Clerk invitation/identity activation handoff.
 - Add tests for Programs-only, Source-only, dual, admin, unassigned.
 
 3. Lifecycle doctrine
@@ -1514,7 +1519,7 @@ Pilot impact: high.
 
 ## No-Pilot Blockers
 
-- Setup UI provisioning incomplete.
+- Clerk invitation/identity activation handoff incomplete.
 - Rich upload parsing/evidence pipeline incomplete for PDF/XLSX/PPTX.
 - Phase approval workflow incomplete.
 - No deployed end-to-end smoke.
@@ -1533,8 +1538,8 @@ Pilot impact: high.
 
 1. Provision Sarah as new Meridian program user.
 
-Today: partially passes in code.
-Needed: Setup UI and Clerk invitation handoff; the server API now writes `persons`, `person_client_memberships`, and optional `engagement_participants` with required Programs flags.
+Today: partially passes in code and UI.
+Needed: Clerk invitation/identity activation handoff; the Setup/Admin form now calls the server API, which writes `persons`, `person_client_memberships`, and optional `engagement_participants` with required Programs flags.
 
 2. Sarah signs in and lands on `/home`.
 

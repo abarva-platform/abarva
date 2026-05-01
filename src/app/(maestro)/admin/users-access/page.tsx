@@ -10,11 +10,16 @@ import { UsersAccessActionStrip } from '@/components/admin/UsersAccessActionStri
 import { UserListTable } from '@/components/admin/UserListTable';
 import { UserDetailDrawer } from '@/components/admin/UserDetailDrawer';
 import { InviteList } from '@/components/admin/InviteList';
+import { ProgramUserProvisionForm, type ProgramProvisionOption } from '@/components/admin/ProgramUserProvisionForm';
 import {
   buildUsersAccessPageView,
   findUsersAccessUser,
   resolveUsersAccessTab,
 } from '@/lib/admin/users-access-page-view';
+import { getActiveClientRow } from '@/lib/active-client';
+import { getCurrentUser } from '@/lib/auth/current-user';
+import { getProgramPortfolio } from '@/lib/programs/queries';
+import type { ClientKey } from '@/lib/client-config';
 
 export const metadata = {
   title: 'Users & Access | Nexus Admin',
@@ -22,12 +27,63 @@ export const metadata = {
 
 const BASE_URL = '/admin/users-access';
 
+const ADMIN_TENANT_SLUG_BY_CLIENT_KEY: Partial<Record<ClientKey, string>> = {
+  apexretail: 'apex-retail',
+  meridian: 'meridian',
+  arcturus: 'first-capital',
+  keystone: 'keystone',
+};
+
+const PHASE_LABELS: Record<number, string> = {
+  0: 'P0 Origination',
+  1: 'P1 Discovery',
+  2: 'P2 Synthesis',
+  3: 'P3 Solution Design',
+  4: 'P4 Execution Roadmap',
+  5: 'P5 Approval & Mobilization',
+  6: 'P6 Tower Handoff',
+};
+
+async function loadProvisionProgramOptions(): Promise<{
+  tenantName: string;
+  tenantSlug: string;
+  programs: ProgramProvisionOption[];
+}> {
+  const activeClient = await getActiveClientRow();
+  const tenantSlug = activeClient ? ADMIN_TENANT_SLUG_BY_CLIENT_KEY[activeClient.key] ?? 'apex-retail' : 'apex-retail';
+  const tenantName = activeClient?.name ?? 'Active client';
+  if (!activeClient) {
+    return { tenantName, tenantSlug, programs: [] };
+  }
+
+  try {
+    const user = await getCurrentUser();
+    const programs = await getProgramPortfolio({
+      clientId: activeClient.id,
+      userId: user?.personId ?? (user?.clerkUserId ? `clerk:${user.clerkUserId}` : 'admin-users-access'),
+      role: user?.primaryRole,
+    });
+    return {
+      tenantName,
+      tenantSlug,
+      programs: programs.map((program) => ({
+        id: program.id,
+        name: program.name,
+        phaseLabel: PHASE_LABELS[program.currentPhase ?? 0] ?? `P${program.currentPhase ?? 0}`,
+      })),
+    };
+  } catch {
+    return { tenantName, tenantSlug, programs: [] };
+  }
+}
+
 export default async function UsersAccessPage({
   searchParams,
 }: {
   searchParams?: Promise<{ tab?: string; user?: string }>;
 }) {
-  const view = await buildUsersAccessPageView();
+  const provision = await loadProvisionProgramOptions();
+  const view = await buildUsersAccessPageView(provision.tenantSlug);
   const resolved = searchParams ? await searchParams : undefined;
   const activeTab = resolveUsersAccessTab(resolved?.tab);
   const activeUser = findUsersAccessUser(view, resolved?.user);
@@ -245,7 +301,15 @@ export default async function UsersAccessPage({
             </section>
           )}
 
-          {activeTab === 'invites' && <InviteList invites={view.inviteList} />}
+          {activeTab === 'invites' && (
+            <>
+              <ProgramUserProvisionForm
+                tenantName={provision.tenantName}
+                programs={provision.programs}
+              />
+              <InviteList invites={view.inviteList} />
+            </>
+          )}
         </div>
       </EditorialCanvas>
     </AdminCanonShellV2>
