@@ -83,6 +83,7 @@ export interface ProgramDetailView {
   displayId: string;
   name: string;
   tenant: string;
+  lifecycleState?: string | null;
   currentPhase: ProgramPhaseId;
   viewingPhase: ProgramPhaseId;
   phases: ProgramPhaseSlot[];

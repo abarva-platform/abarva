@@ -8,6 +8,14 @@ import type { ArchetypeKey } from './types.ui';
 
 export type OriginSource = 'tower_triggered' | 'user_initiated' | 'intelligence_promoted';
 export type OversightLevel = 'full' | 'partial' | 'none';
+export type ProgramLifecycleState =
+  | 'draft'
+  | 'submitted_for_approval'
+  | 'approved'
+  | 'rejected'
+  | 'paused'
+  | 'canceled'
+  | 'completed';
 export type PromotionState = 'draft' | 'pilot' | 'mature' | 'deprecated';
 export type ModuleStatus = 'not_started' | 'in_progress' | 'blocked' | 'completed' | 'skipped';
 export type WorkItemType = 'workstream' | 'use_case' | 'solution' | 'execution_plan' | 'task';
@@ -47,6 +55,7 @@ export interface ProgramCore {
   originSource: OriginSource | null;
   originSourceRef: string | null;
   status: string | null;
+  lifecycleState: ProgramLifecycleState | null;
   currentPhase: number | null;
   currentModuleKey: string | null;
   maestroOversightLevel: OversightLevel | null;

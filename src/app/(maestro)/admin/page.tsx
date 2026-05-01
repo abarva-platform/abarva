@@ -32,6 +32,7 @@ import { SetupChatRail } from '@/components/admin/SetupChatRail';
 import { SetupAdminLanding } from '@/components/admin/setup/SetupAdminLanding';
 import { SetupLandingTelemetryBridge } from '@/components/admin/setup/SetupLandingTelemetryBridge';
 import { DataLandscapeTable } from '@/components/admin/setup/DataLandscapeTable';
+import { getApprovalQueueForTenant } from '@/lib/programs/approval';
 
 export const metadata = { title: 'Setup · AbarVa' };
 export const dynamic = 'force-dynamic';
@@ -44,13 +45,14 @@ export default async function AdminOverviewPage() {
   const clientKey = activeClient?.key ?? 'apexretail';
   const brokerTenantKey = clientKeyToInventorySubstrateKey(clientKey);
   const baseContent = getSetupActsContent(clientKey);
-  const [snapshot, signals, chunkStats] = brokerTenantKey
+  const [snapshot, signals, chunkStats, programApprovalQueue] = brokerTenantKey
     ? await Promise.all([
         getSetupInventorySnapshot(brokerTenantKey).catch(() => null),
         getCrossProgramSignals(brokerTenantKey).catch(() => []),
         getContextChunkStats(brokerTenantKey).catch(() => []),
+        getApprovalQueueForTenant(clientKey).catch(() => []),
       ])
-    : [null, [], []];
+    : [null, [], [], []];
   const content = mergeInventorySnapshot(baseContent, snapshot);
   const counts = getSetupSummaryCountsWithSnapshot(content, snapshot);
   const lastIngestedRelative = snapshot?.lastIngestedAt
@@ -73,6 +75,7 @@ export default async function AdminOverviewPage() {
         atlasHighSeverityCount={atlasHighSeverityCount}
         nexusProgramCount={programSegment?.recordCount ?? 0}
         stewardFindingCount={complianceSegment?.recordCount ?? 0}
+        programApprovalPendingCount={programApprovalQueue.length}
       />
       <DataLandscapeTable
         segments={snapshot?.segments ?? []}

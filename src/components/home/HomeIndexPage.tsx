@@ -104,7 +104,8 @@ function StatsCard({ label, value, detail, detailColor, urgent = false }: StatCa
 
 // ─── Program row ─────────────────────────────────────────────────────────────
 
-interface ProgramRow {
+export interface HomeProgramRow {
+  id?: string;
   displayId: string;
   name: string;
   phase: number;
@@ -113,7 +114,7 @@ interface ProgramRow {
   href: string;
 }
 
-function ProgramRow({ displayId, name, phase, phaseLabel, gateStatus, href }: ProgramRow) {
+function ProgramRow({ displayId, name, phase, phaseLabel, gateStatus, href }: HomeProgramRow) {
   return (
     <div
       style={{
@@ -621,12 +622,23 @@ export function HomeIndexPage({
   activeTenantName,
   hasTenantKey = false,
   reasoning,
+  livePrograms = [],
 }: {
   activeTenantName: string;
   hasTenantKey?: boolean;
   reasoning?: ReasoningDashboardSummary;
+  livePrograms?: HomeProgramRow[];
 }) {
   const v = HOME_VIEW;
+  const seenProgramIds = new Set<string>();
+  const topPrograms = [...livePrograms, ...v.topPrograms]
+    .filter((program) => {
+      const key = program.id ?? program.href;
+      if (seenProgramIds.has(key)) return false;
+      seenProgramIds.add(key);
+      return true;
+    })
+    .slice(0, 5);
   const programsSectionRef = useRef<HTMLDivElement>(null);
 
   // PR-J · live artifacts dispatched by the embedded Atlas chat. Same
@@ -799,8 +811,8 @@ export function HomeIndexPage({
           {/* Left col: Active programs */}
           <div ref={programsSectionRef} style={{ flex: 1.4, minWidth: 0 }}>
             <SectionHeader title="Active programs" viewAllHref="/programs" />
-            {v.topPrograms.map((prog) => (
-              <ProgramRow key={prog.id} {...prog} />
+            {topPrograms.map((prog) => (
+              <ProgramRow key={prog.id ?? prog.href} {...prog} />
             ))}
           </div>
 

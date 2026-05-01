@@ -95,6 +95,7 @@ export default async function ProgramDetailRoute({
 
     // Override key scalar fields with real data
     view.name = eng.name ?? view.name;
+    view.lifecycleState = eng.lifecycle_state ?? null;
     if (activeClientName) {
       view.tenant = activeClientName;
     }
@@ -152,6 +153,26 @@ export default async function ProgramDetailRoute({
       if (gateStatus !== null) {
         view.gateStatus = gateStatus;
       }
+    }
+
+    if (eng.lifecycle_state === 'submitted_for_approval') {
+      view.gateStatus = 'pending';
+      view.workbench = {
+        ...view.workbench,
+        prose:
+          'This program brief has been submitted to Setup for tenant-admin approval. ' +
+          'Phase 0 stays locked until the approval queue accepts the seed, sponsor, ' +
+          'lead, value hypothesis, and scope boundary.',
+      };
+    } else if (eng.lifecycle_state === 'approved' && view.currentPhase === 0) {
+      view.gateStatus = 'open';
+      view.workbench = {
+        ...view.workbench,
+        prose:
+          'This program is approved for P0 Origination. Nexus should now help complete ' +
+          'the P0 entry and exit criteria, generate the seed deliverables, and submit ' +
+          'the P0 exit approval before Discovery unlocks.',
+      };
     }
   }
 

@@ -8,6 +8,7 @@ import { getProgramById } from '@/lib/programs/queries';
 import { advancePhase } from '@/lib/programs/mutations';
 import { evaluateGate, requestFounderApproval } from '@/lib/programs/governance';
 import { requireTenancy, tenancyErrorResponse } from '../../_auth';
+import { getServerSupabase } from '@/lib/supabase-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -48,6 +49,25 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
         { error: 'approval_required', approvalId, gate, detail: 'Approval request created · re-send with approvalId once approved' },
         { status: 202 },
       );
+    }
+
+    if (gate.requiresApproval && body.approvalId) {
+      const sb = getServerSupabase();
+      const { data: approval, error: approvalError } = await sb
+        .from('founder_approval_requests')
+        .select('id, status, engagement_id')
+        .eq('id', body.approvalId)
+        .eq('engagement_id', programId)
+        .maybeSingle();
+      if (approvalError || !approval || approval.status !== 'approved') {
+        return Response.json(
+          {
+            error: 'approval_not_cleared',
+            detail: 'Phase gate approval must be approved before the phase can advance',
+          },
+          { status: 409 },
+        );
+      }
     }
 
     const result = await advancePhase(ctx, {

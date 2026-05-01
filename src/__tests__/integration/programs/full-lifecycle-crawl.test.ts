@@ -33,12 +33,15 @@ describe('Gate rule sequence · pure logic', () => {
   it('GATE_RULES covers all adjacent-phase transitions', async () => {
     const { findGateRule } = await import('@/lib/programs/governance');
 
-    // P0→P1 exists as a soft kickoff gate so approved programs can leave setup
-    // without tripping a no-rule blocker.
+    // P0→P1 is a hard sponsor gate: an approved seed can start P0, but
+    // Discovery does not unlock until P0 exit criteria are satisfied.
     const r01 = findGateRule(0, 1);
     expect(r01).not.toBeNull();
-    expect(r01!.hard).toBe(false);
-    expect(r01!.checks.some((c) => c.key === 'sponsor_assigned')).toBe(true);
+    expect(r01!.hard).toBe(true);
+    const r01HardKeys = r01!.checks.filter((c) => c.severity === 'hard').map((c) => c.key);
+    expect(r01HardKeys).toContain('program_seed_recorded');
+    expect(r01HardKeys).toContain('value_hypothesis_seed');
+    expect(r01HardKeys).toContain('sponsor_assigned');
 
     // P1→P2 exists but is soft-only
     const r12 = findGateRule(1, 2);
@@ -172,10 +175,10 @@ describeIfDb('Full lifecycle DB crawl · P0→P6', () => {
     expect((data as { lifecycle_state: string }).lifecycle_state).toBe('submitted_for_approval');
   });
 
-  it('Step 2 · Admin approves → lifecycle becomes active', async () => {
+  it('Step 2 · Admin approves → lifecycle becomes approved', async () => {
     const { error } = await sb
       .from('engagements')
-      .update({ lifecycle_state: 'active', status: 'active' })
+      .update({ lifecycle_state: 'approved', status: 'active' })
       .eq('id', programId);
 
     expect(error).toBeNull();
@@ -185,7 +188,7 @@ describeIfDb('Full lifecycle DB crawl · P0→P6', () => {
       .select('lifecycle_state')
       .eq('id', programId)
       .single();
-    expect((data as { lifecycle_state: string }).lifecycle_state).toBe('active');
+    expect((data as { lifecycle_state: string }).lifecycle_state).toBe('approved');
   });
 
   it('Step 3 · Advance P0→P1 (no gate rule)', async () => {

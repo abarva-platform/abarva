@@ -11,6 +11,7 @@ import type {
   OversightLevel,
   PhaseSnapshot,
   ProgramCore,
+  ProgramLifecycleState,
   ProgramMilestoneRow,
   ProgramModuleRow,
   ProgramRiskRow,
@@ -33,6 +34,7 @@ interface EngagementRow {
   origin_source: OriginSource | null;
   origin_source_ref: string | null;
   status: string | null;
+  lifecycle_state: ProgramLifecycleState | null;
   current_phase: number | null;
   current_module_key: string | null;
   maestro_oversight_level: OversightLevel | null;
@@ -55,6 +57,7 @@ function rowToProgram(r: EngagementRow): ProgramCore {
     originSource: r.origin_source,
     originSourceRef: r.origin_source_ref,
     status: r.status,
+    lifecycleState: r.lifecycle_state,
     currentPhase: r.current_phase,
     currentModuleKey: r.current_module_key,
     maestroOversightLevel: r.maestro_oversight_level,
@@ -78,7 +81,7 @@ export async function getProgramPortfolio(ctx: TenancyCtx, opts: { limit?: numbe
   const limit = opts.limit ?? 100;
   const { data, error } = await sb
     .from('engagements')
-    .select('id, client_id, name, program_archetype, origin_source, origin_source_ref, status, current_phase, current_module_key, maestro_oversight_level, founder_approval_required, phase_locked_at, phase_locked_by_user_id, data_residency_region, retention_policy_years, archived_at, deleted_at, created_at')
+    .select('id, client_id, name, program_archetype, origin_source, origin_source_ref, status, lifecycle_state, current_phase, current_module_key, maestro_oversight_level, founder_approval_required, phase_locked_at, phase_locked_by_user_id, data_residency_region, retention_policy_years, archived_at, deleted_at, created_at')
     .eq('client_id', ctx.clientId)
     .is('archived_at', null)
     .is('deleted_at', null)
@@ -93,7 +96,7 @@ export async function getProgramById(ctx: TenancyCtx, programId: string): Promis
   const sb = getServerSupabase();
   const { data, error } = await sb
     .from('engagements')
-    .select('id, client_id, name, program_archetype, origin_source, origin_source_ref, status, current_phase, current_module_key, maestro_oversight_level, founder_approval_required, phase_locked_at, phase_locked_by_user_id, data_residency_region, retention_policy_years, archived_at, deleted_at, created_at')
+    .select('id, client_id, name, program_archetype, origin_source, origin_source_ref, status, lifecycle_state, current_phase, current_module_key, maestro_oversight_level, founder_approval_required, phase_locked_at, phase_locked_by_user_id, data_residency_region, retention_policy_years, archived_at, deleted_at, created_at')
     .eq('id', programId)
     .eq('client_id', ctx.clientId)
     .maybeSingle();
