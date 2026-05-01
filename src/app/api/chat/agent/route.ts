@@ -26,6 +26,16 @@ import {
   formatCrossTenantWriteRefusal,
 } from "@/lib/agent/tenant-guardrails";
 import { getUserContextPromptBlock } from "@/lib/agent/userContext";
+import {
+  formatUserProgramAccessPolicyForPrompt,
+  loadUserProgramAccessPolicy,
+  type UserProgramAccessPolicy,
+} from "@/lib/auth/program-access-policy";
+import {
+  formatRestrictedOutputPolicyForPrompt,
+  sanitizeRestrictedFinancialText,
+  summarizeFinancialValueForPrompt,
+} from "@/lib/agent/restricted-output-policy";
 import { retrieveStageContext, retrieveCategoryContext } from "@/lib/intelligence/agent-retrieval";
 import { getRelevantTools } from "@/lib/agent/tools/registry";
 import { runToolUseLoop } from "@/lib/agent/streaming/toolUseLoop";
@@ -289,12 +299,20 @@ export async function POST(request: Request) {
   // Resolve active client row once here — used for tenant isolation in
   // getEngagementWithPhaseData calls below AND for the demo context block later.
   const activeClient = await getActiveClientRow().catch(() => null);
+  const tenancy = await requireTenancy().catch(() => null);
+  const userAccessPolicy = tenancy
+    ? await loadUserProgramAccessPolicy(tenancy, { programId }).catch(() => null)
+    : null;
+  const userAccessPolicyBlock = userAccessPolicy
+    ? formatUserProgramAccessPolicyForPrompt(userAccessPolicy)
+    : '';
+  const restrictedOutputPolicyBlock = formatRestrictedOutputPolicyForPrompt(userAccessPolicy);
 
   // If we have a programId, enrich with live DB data
   if (programId) {
     try {
-      await requireTenancy();
-      const programData = await getEngagementWithPhaseData(programId, activeClient?.id ?? null);
+      if (!tenancy) throw new Error('tenancy unavailable');
+      const programData = await getEngagementWithPhaseData(programId, activeClient?.id ?? null, tenancy);
       if (programData) {
         const { engagement, evidence, gateApprovals } = programData;
         const currentPhase = engagement.current_phase ?? 0;
@@ -338,7 +356,13 @@ export async function POST(request: Request) {
       `Active source event: ${sc.eventName} (${sc.eventCode ?? ''})`,
       sc.currentStage ? `Event current stage: ${sc.currentStage}` : '',
       sc.blocker ? `Active blocker on this event: ${sc.blocker}` : 'No active blockers recorded on this event.',
-      sc.valueAtStakeUsd ? `Contract value at stake: $${(Number(sc.valueAtStakeUsd) / 1_000_000).toFixed(1)}M` : '',
+      sc.valueAtStakeUsd
+        ? summarizeFinancialValueForPrompt(
+            'Contract value at stake',
+            `$${(Number(sc.valueAtStakeUsd) / 1_000_000).toFixed(1)}M`,
+            userAccessPolicy,
+          )
+        : '',
     ].filter(Boolean);
     contextLines.push(...eventContextLines);
   }
@@ -347,8 +371,8 @@ export async function POST(request: Request) {
   const linkedProgramId = (body.surfaceContext?.linkedProgramCode as string) ?? null;
   if (surface === 'source' && linkedProgramId && linkedProgramId !== programId) {
     try {
-      await requireTenancy();
-      const linkedData = await getEngagementWithPhaseData(linkedProgramId, activeClient?.id ?? null);
+      if (!tenancy) throw new Error('tenancy unavailable');
+      const linkedData = await getEngagementWithPhaseData(linkedProgramId, activeClient?.id ?? null, tenancy);
       if (linkedData) {
         const { engagement: linkedEng, evidence: linkedEv, gateApprovals: linkedGates } = linkedData;
         const linkedPhase = linkedEng.current_phase ?? 0;
@@ -440,8 +464,9 @@ export async function POST(request: Request) {
     mode: bundleMode,
     tenantKey: brokerTenantKey,
   });
-  const contextBundleArtifact = serializeContextBundleArtifact(contextBundleForTurn);
-  const contextBundlePromptBlock = formatContextBundleReceiptForPrompt(contextBundleForTurn);
+  const contextBundleForOutput = sanitizeContextBundleForOutput(contextBundleForTurn, userAccessPolicy);
+  const contextBundleArtifact = serializeContextBundleArtifact(contextBundleForOutput);
+  const contextBundlePromptBlock = formatContextBundleReceiptForPrompt(contextBundleForOutput, userAccessPolicy);
   const privateDataPlane = getPrivateDataPlaneResource(tenantInventoryKey);
   const privateDataPlaneBlock = privateDataPlane
     ? [
@@ -640,6 +665,10 @@ export async function POST(request: Request) {
     voiceLine,
     "",
     userContextBlock,
+    userAccessPolicyBlock,
+    "",
+    restrictedOutputPolicyBlock,
+    "",
     // OV2-WIRE-AND-FM-PROMPT Part 1 — universal failure-mode catalog
     // for Programs surfaces. Positioned AFTER user context (Layer 0)
     // and BEFORE four-layer reasoning so the agent always knows what
@@ -715,6 +744,7 @@ export async function POST(request: Request) {
     "- Never say you don't have specific information about the tenant — use the demo context below.",
     "- TENANT SAFETY: the active tenant is locked. If the user asks to create, copy, sponsor, or submit a program for another tenant, refuse clearly, say no record was created, and tell them to switch/sign in to that tenant first. Never say you have another tenant's CIO or sponsor noted while operating inside the current tenant.",
     "- CONTEXT SOURCE DISCIPLINE: when retrieval context is present, separate private client facts from shared AbarVa corpus/worldview knowledge. Say 'From the private client data...' for tenant-specific facts and 'From AbarVa's shared corpus...' for reusable doctrine. Never blur them.",
+    "- ACCESS DISCIPLINE: program visibility, approval rights, and financial visibility are hard control-plane rules from USER ACCESS POLICY. Do not claim the user can see, approve, publish, or create records unless that policy says so.",
     "- CANVAS CONTINUITY: if the user wants to start, scope, or create a new program, do not navigate them to /programs/new. Continue in this same canvas: confirm the intent, collect sponsor, lead, target outcome, and timeline, use lookup_person/register_placeholder_person/commit_program when available, and only mention the program detail link after the brief is submitted.",
     ...(isProgramsSurface(surface)
       ? [
@@ -725,6 +755,7 @@ export async function POST(request: Request) {
           "- During origination, emit `brief-progress` artifacts as fields become known so the right rail updates while the chat continues.",
           "- After commit_program succeeds, state clearly: 'Created record: <program name>. Status: submitted for approval. Program id: <engagement_id>. Open: /programs/<engagement_id>. Phase 0 unlocks after tenant-admin approval.'",
           "- If commit_program fails, do not send the user to admin as the first recovery. Name the missing platform field if known, retry only once when the field can be derived, and say 'I still have the brief in this conversation' instead of 'nothing is lost' unless a draft was persisted.",
+          "- If the user asks for exact financial details and their access policy says financial visibility is restricted, do not provide the values. Give a qualitative risk/readiness summary and say the exact values require finance/admin entitlement.",
         ]
       : []),
     // M-06 · voice drift filter — banned phrases surfaced in QA audit (2026-04-30).
@@ -804,8 +835,9 @@ export async function POST(request: Request) {
       // commit_program); loop-side writes are agent text deltas.
       const writer = {
         write(text: string) {
-          bufferedOutput += text;
-          controller.enqueue(encoder.encode(text));
+          const safeText = sanitizeRestrictedFinancialText(text, userAccessPolicy);
+          bufferedOutput += safeText;
+          controller.enqueue(encoder.encode(safeText));
         },
       };
       try {
@@ -836,6 +868,16 @@ export async function POST(request: Request) {
             surface,
             surfaceContext: body.surfaceContext,
             clientKey: activeClient?.key ?? undefined,
+            accessPolicy: userAccessPolicy
+              ? {
+                  accessLevel: userAccessPolicy.accessLevel,
+                  programIdsAllowed: userAccessPolicy.programIdsAllowed,
+                  canCreatePrograms: userAccessPolicy.canCreatePrograms,
+                  canApproveGates: userAccessPolicy.canApproveGates,
+                  canPublishDeliverables: userAccessPolicy.canPublishDeliverables,
+                  canViewFinancialData: userAccessPolicy.canViewFinancialData,
+                }
+              : undefined,
             writer,
           },
           writer,
@@ -988,8 +1030,90 @@ function serializeContextBundleArtifact(
   return `[[artifact:context-bundle]]${json}[[/artifact]]`;
 }
 
+function sanitizeContextBundleForOutput(
+  bundle: import("@/lib/knowledge/context-broker").ContextBundle,
+  accessPolicy?: UserProgramAccessPolicy | null,
+): import("@/lib/knowledge/context-broker").ContextBundle {
+  if (accessPolicy?.outputPolicy.exactFinancialValues) return bundle;
+  return {
+    ...bundle,
+    facts: bundle.facts.map((fact) => ({
+      ...fact,
+      title: sanitizeRestrictedFinancialText(fact.title, accessPolicy),
+      caveat: fact.caveat ? sanitizeRestrictedFinancialText(fact.caveat, accessPolicy) : fact.caveat,
+      payload: sanitizePayloadForOutput(fact.payload, accessPolicy),
+    })),
+    semanticChunks: bundle.semanticChunks.map((hit) => ({
+      ...hit,
+      chunk: {
+        ...hit.chunk,
+        text: sanitizeRestrictedFinancialText(hit.chunk.text, accessPolicy),
+      },
+    })),
+    graphPaths: bundle.graphPaths.map((path) => {
+      if ('nodes' in path) {
+        return {
+          ...path,
+          nodes: path.nodes.map((node) => ({
+            ...node,
+            title: sanitizeRestrictedFinancialText(node.title, accessPolicy),
+            payload: sanitizePayloadForOutput(node.payload, accessPolicy),
+          })),
+          edges: path.edges.map((edge) => ({
+            ...edge,
+            payload: edge.payload ? sanitizePayloadForOutput(edge.payload, accessPolicy) : edge.payload,
+          })),
+        };
+      }
+      return {
+        ...path,
+        edges: path.edges.map((edge) => ({
+          ...edge,
+          payload: edge.payload ? sanitizePayloadForOutput(edge.payload, accessPolicy) : edge.payload,
+        })),
+      };
+    }),
+    provenance: bundle.provenance.map((entry) => ({
+      ...entry,
+      sourceId: accessPolicy?.outputPolicy.restrictedSourceIds === false
+        ? sanitizeRestrictedFinancialText(entry.sourceId, accessPolicy)
+        : entry.sourceId,
+      sourceDoc: entry.sourceDoc ? sanitizeRestrictedFinancialText(entry.sourceDoc, accessPolicy) : entry.sourceDoc,
+    })),
+  };
+}
+
+function sanitizePayloadForOutput(
+  payload: Record<string, unknown>,
+  accessPolicy?: UserProgramAccessPolicy | null,
+): Record<string, unknown> {
+  if (accessPolicy?.outputPolicy.exactFinancialValues) return payload;
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(payload)) {
+    if (typeof value === 'string') {
+      out[key] = sanitizeRestrictedFinancialText(value, accessPolicy);
+    } else if (typeof value === 'number' && /(budget|spend|cost|revenue|margin|roi|npv|irr|payback|financial|amount|value)/i.test(key)) {
+      out[key] = '[restricted financial value]';
+    } else if (Array.isArray(value)) {
+      out[key] = value.map((item) =>
+        typeof item === 'string'
+          ? sanitizeRestrictedFinancialText(item, accessPolicy)
+          : item && typeof item === 'object'
+            ? sanitizePayloadForOutput(item as Record<string, unknown>, accessPolicy)
+            : item,
+      );
+    } else if (value && typeof value === 'object') {
+      out[key] = sanitizePayloadForOutput(value as Record<string, unknown>, accessPolicy);
+    } else {
+      out[key] = value;
+    }
+  }
+  return out;
+}
+
 function formatContextBundleReceiptForPrompt(
   bundle: import("@/lib/knowledge/context-broker").ContextBundle,
+  accessPolicy?: UserProgramAccessPolicy | null,
 ): string {
   const trace = bundle.retrievalTrace;
   if (!trace && bundle.facts.length === 0 && bundle.semanticChunks.length === 0) {
@@ -999,11 +1123,11 @@ function formatContextBundleReceiptForPrompt(
   const sharedIds = trace?.shared_corpus_ids.slice(0, 12) ?? [];
   const factLines = bundle.facts.slice(0, 6).map((fact) => {
     const caveat = fact.caveat ? ` Caveat: ${fact.caveat}` : '';
-    return `  - ${fact.title} (${fact.recordId}).${caveat}`;
+    return sanitizeRestrictedFinancialText(`  - ${fact.title} (${fact.recordId}).${caveat}`, accessPolicy);
   });
   const chunkLines = bundle.semanticChunks.slice(0, 4).map((hit) => {
     const text = hit.chunk.text.replace(/\s+/g, ' ').trim().slice(0, 240);
-    return `  - ${hit.chunk.chunkId}: ${text}`;
+    return sanitizeRestrictedFinancialText(`  - ${hit.chunk.chunkId}: ${text}`, accessPolicy);
   });
   const worldviewLines = bundle.worldviewChunks.slice(0, 4).map((hit) => {
     return `  - ${hit.chunkId}: ${hit.thesisTitle ?? hit.thesisId}${hit.chunkTitle ? ` / ${hit.chunkTitle}` : ''}`;

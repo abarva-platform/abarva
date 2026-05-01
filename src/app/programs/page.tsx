@@ -10,6 +10,7 @@ import { buildPhaseSlots, PHASE_LABEL_MAP } from '@/lib/programs/programs-fixtur
 import { ProgramsIndexPage } from '@/components/programs/ProgramsIndexPage';
 import { getProgramPortfolio } from '@/lib/programs/queries';
 import { getCurrentUser } from '@/lib/auth/current-user';
+import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 import type { ProgramPhaseId, ProgramRow } from '@/lib/programs/programs-types';
 
 export const metadata = {
@@ -29,6 +30,7 @@ export default async function ProgramsPage() {
   const activeClient = await getActiveClientRow();
   const tenant = activeClient ? PROGRAM_TENANT_BY_CLIENT_KEY[activeClient.key] : 'apex-retail';
   const view = buildProgramsIndexView(tenant);
+  let allowedProgramIds: Set<string> | null = null;
 
   // Try DB portfolio; merge only rows scoped to the active client UUID.
   try {
@@ -36,8 +38,11 @@ export default async function ProgramsPage() {
     if (activeClient) {
       const ctx = {
         clientId: activeClient.id,
-        userId: user?.personId ?? user?.clerkUserId ?? 'programs-page',
+        userId: user?.personId ?? (user?.clerkUserId ? `clerk:${user.clerkUserId}` : 'programs-page'),
+        role: user?.primaryRole,
       };
+      const policy = await loadUserProgramAccessPolicy(ctx);
+      allowedProgramIds = policy.programIdsAllowed ? new Set(policy.programIdsAllowed) : null;
       const dbPrograms = await getProgramPortfolio(ctx);
 
       if (dbPrograms && dbPrograms.length > 0) {
@@ -107,6 +112,14 @@ export default async function ProgramsPage() {
     }
   } catch {
     // Fall back to fixture-only view
+  }
+
+  if (allowedProgramIds) {
+    view.programs = view.programs.filter((program) =>
+      allowedProgramIds!.has(program.id) ||
+      allowedProgramIds!.has(program.displayId.toLowerCase()) ||
+      allowedProgramIds!.has(program.displayId),
+    );
   }
 
   return (

@@ -223,7 +223,7 @@ async function insertParticipant(input: {
 }): Promise<void> {
   const sb = getServerSupabase();
   const userName = await resolvePersonName(input.personId);
-  const { error } = await sb.from('engagement_participants').insert({
+  const basePayload = {
     engagement_id: input.programId,
     user_id: input.personId,
     user_name: userName,
@@ -231,7 +231,21 @@ async function insertParticipant(input: {
     notify_on: ['phase_gate', 'approval'],
     approval_authority: input.approvalAuthority,
     last_touchpoint_at: new Date().toISOString(),
+  };
+  const { error } = await sb.from('engagement_participants').insert({
+    ...basePayload,
+    program_access_level: 'program_member',
+    can_view_financial: false,
+    can_upload: true,
+    can_generate_deliverables: true,
+    can_publish_deliverables: input.approvalAuthority === 'sponsor',
+    can_approve_phase_gates: input.approvalAuthority === 'sponsor',
   });
+  if (error && /program_access_level|can_view_financial|can_upload|can_generate_deliverables|can_publish_deliverables|can_approve_phase_gates/i.test(error.message)) {
+    const { error: retryError } = await sb.from('engagement_participants').insert(basePayload);
+    if (retryError) throw retryError;
+    return;
+  }
   if (error) throw error;
 }
 
