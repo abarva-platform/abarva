@@ -348,7 +348,7 @@ describe('commit_program · OV2-2b approval-queue flow', () => {
       status: 'draft',
       current_phase: 0,
       program_archetype: 'workflow_automation',
-      origin_source: 'maestro_console',
+      origin_source: 'user_initiated',
     });
 
     // 2 · submitForApproval was called with the right inputs and a

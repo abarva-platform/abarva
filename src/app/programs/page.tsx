@@ -124,9 +124,13 @@ export default async function ProgramsPage() {
     );
   }
 
+  view.totalActive = view.programs.filter((program) => !program.isIdle).length;
+  view.gatesPending = view.programs.filter((program) => program.gateStatus === 'pending').length;
+  view.idleCount = view.programs.filter((program) => program.isIdle).length;
+
   return (
     <Suspense fallback={<div style={{ padding: 40, fontFamily: 'sans-serif' }}>Loading...</div>}>
-      <ProgramsIndexPage view={view} />
+      <ProgramsIndexPage view={view} hasTenantKey={Boolean(activeClient)} />
     </Suspense>
   );
 }
