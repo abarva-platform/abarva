@@ -2,6 +2,12 @@
 
 Status: canonical training and evaluation plan for using the AbarVa worldview corpus as strategic grounding in Sentinel, Nexus, Atlas, and Source conversations.
 
+> **See also:** `docs/build/SENTINEL_COMPREHENSIVE_TRAINING_MANUAL.md` — the
+> canonical Sentinel training manual covering tenant datasets,
+> retrieval routing, refusal doctrine, surface handoffs, evals,
+> telemetry, and curation. This worldview plan is the strategic
+> corpus-specific layer inside that broader manual.
+>
 > **See also:** `sentinel_worldview_training_addendum.md` — the
 > operational addendum that composes this plan with the shipped
 > voice doctrine (`AGENT_VOICE_SENTINEL.md`), the regression

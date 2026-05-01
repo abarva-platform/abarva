@@ -15,6 +15,7 @@ chat turn. The doctrine is loaded into the system prompt by
 `src/lib/agent/voice-doctrine/sentinel.ts`).
 
 Reads alongside:
+- `docs/build/SENTINEL_COMPREHENSIVE_TRAINING_MANUAL.md` (canonical training, retrieval, refusal, eval, and telemetry manual)
 - `docs/build/INTELLIGENCE_SURFACE_FAILURE_MODE_DRIVEN_DESIGN.md` (Part C.1)
 - `docs/build/CONTEXT_BROKER_DESIGN.md` (the bundle Sentinel cites from)
 - `docs/build/intelligence/CLAUDE_CODE_INTELLIGENCE_KICKOFF.md` (failure mode #4 — voice drift)
