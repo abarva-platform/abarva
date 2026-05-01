@@ -43,6 +43,7 @@ import type { InstanceHealth } from '@/lib/reasoning/instance-health';
 
 export interface ProgramsIndexPageProps {
   view: ProgramsIndexViewV2;
+  hasTenantKey?: boolean;
 }
 
 // ─── Health lookup ────────────────────────────────────────────────────────────
@@ -337,7 +338,7 @@ function ProgramsTable({ programs }: { programs: ProgramRow[] }) {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
-export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
+export function ProgramsIndexPage({ view, hasTenantKey = false }: ProgramsIndexPageProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -409,6 +410,7 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
         context: `Programs · ${view.totalActive} in flight`,
       }}
       middleStrip={<FilterPillStrip pills={filterPills} />}
+      hasTenantKey={hasTenantKey}
       onArtifact={handleNexusArtifact}
     >
       {/* PR-I · agent-centric primary canvas. Nexus + reactive panel
@@ -821,7 +823,7 @@ export function ProgramsIndexPage({ view }: ProgramsIndexPageProps) {
               letterSpacing: '0.06em',
             }}
           >
-            Deterministic seed · Apex Retail Group
+            Deterministic seed · {view.tenant}
           </div>
         </div>
       </div>

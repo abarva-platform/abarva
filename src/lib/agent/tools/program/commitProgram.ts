@@ -506,7 +506,10 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
           // the phase number.
           current_phase: 0,
           program_archetype: input.classification ?? null,
-          origin_source: 'maestro_console' as OriginSource,
+          // `engagements.origin_source` is guarded by a DB CHECK
+          // constraint; in-canvas Nexus origination is a user-initiated
+          // program seed, not a separate origin_source enum.
+          origin_source: 'user_initiated' as OriginSource,
           origin_source_ref: null,
           maestro_oversight_level: 'partial',
           founder_approval_required: false,
