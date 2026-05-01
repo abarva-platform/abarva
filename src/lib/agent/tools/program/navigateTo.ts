@@ -14,9 +14,9 @@
 //
 // Surfaces: every entry surface so any agent can navigate. The
 // surface filter still applies — Sentinel on /intelligence can
-// navigate to /programs/<id> via this tool, but Steward on
-// /programs/new is unaffected (Steward already has navigation via
-// the program-created sentinel pattern).
+// navigate to /programs/<id> via this tool. New-program origination is
+// intentionally NOT an auto-navigation trigger; it must stay in the
+// current canvas unless the user explicitly opens another page.
 
 import type { AgentTool, ToolResult } from '../registry';
 import { registerTool } from '../registry';
@@ -36,8 +36,9 @@ export const navigateToTool: AgentTool<NavigateToInput> = {
     'Navigate the user to a different page. ONLY call this when the user explicitly asks to be ' +
     'taken somewhere (e.g. "take me to /programs/new", "open the portfolio view", "let\'s go to ' +
     'the intelligence surface") OR when the current surface is genuinely wrong for their stated ' +
-    'intent (e.g. on /programs the user says they want to start a new program — redirect to ' +
-    '/programs/new). DO NOT call this tool when the user asks a question that can be answered ' +
+    'intent. DO NOT call this tool merely because the user wants to start, scope, or create a new ' +
+    'program; collect the setup details in the current canvas instead. DO NOT call this tool when ' +
+    'the user asks a question that can be answered ' +
     'in chat (e.g. "give me the discovery brief", "walk me through what I need for phase 2", ' +
     '"what are the entry criteria" — these are informational requests, not navigation requests; ' +
     'answer them in the conversation). ONLY use routes that are known to exist: /programs, ' +
@@ -90,6 +91,26 @@ export const navigateToTool: AgentTool<NavigateToInput> = {
         recovery:
           'Target must be a relative path starting with `/` (e.g. `/programs/apx-cdp-2026`). ' +
           'Tell the user what page you wanted to take them to and ask if that path is correct.',
+      };
+    }
+
+    // Founder UX rule: program origination must not eject the user
+    // from the current canvas. The agent may still navigate to an
+    // existing program detail page, but `/programs/new` is no longer a
+    // tool-driven auto-route from Home/Tower/Programs. Users can still
+    // open the page through normal UI links; the model cannot surprise
+    // them mid-conversation.
+    if (
+      target === '/programs/new' &&
+      ctx.surface !== '/programs/new' &&
+      ctx.surface !== '/demo/programs/new'
+    ) {
+      return {
+        success: false,
+        error: 'origination_canvas_continuity_required',
+        recovery:
+          'Do not navigate to /programs/new. Continue the program setup in the current canvas: ' +
+          'confirm the intent, collect sponsor/lead/outcome/timeline, and use the origination tools available on this surface.',
       };
     }
 

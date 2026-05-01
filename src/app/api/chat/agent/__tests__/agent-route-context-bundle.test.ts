@@ -103,6 +103,12 @@ describe('agent route · CB-6 context-bundle wiring', () => {
     expect(source).toContain('tenantKey: clientKeyToBrokerTenantKey(activeClient.key)');
   });
 
+  it('instructs agents to keep new-program setup in the same canvas', () => {
+    expect(source).toContain('CANVAS CONTINUITY');
+    expect(source).toContain('do not navigate them to /programs/new');
+    expect(source).toContain('use lookup_person/register_placeholder_person/commit_program when available');
+  });
+
   it('catches assembly errors so the stream still proceeds', () => {
     expect(source).toContain('context_bundle_assembly_failed');
   });

@@ -54,7 +54,9 @@
 // mechanism that makes "Registered ✅ but DB write failed" structurally
 // impossible.
 //
-// Per kickoff §4 F0.4: surfaces = ['/programs/new', '/demo/programs/new'].
+// Per canvas-continuity doctrine, origination can run in the main
+// portal canvas as well as the dedicated /programs/new page. Do not
+// force a route change just to submit the brief.
 
 import type { AgentTool, ToolResult } from '../registry';
 import { registerTool } from '../registry';
@@ -163,7 +165,7 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
     'Most small programs have one person owning both roles; do not stall the flow because the user ' +
     "hasn't explicitly named a lead. " +
     'If this returns failure, report the failure honestly with recovery options; do not announce success.',
-  surfaces: ['/programs/new', '/demo/programs/new'],
+  surfaces: ['/programs/new', '/demo/programs/new', '/home', '/programs'],
   input_schema: {
     type: 'object',
     properties: {
@@ -328,7 +330,9 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
         // StewardChat component watches for it specifically and
         // navigates to /programs/<id>. The wording is a hint to the
         // browser, not user-visible; renaming would break navigation.
-        ctx.writer?.write(`\n[[program-created:${row.id}]]`);
+        if (ctx.surface === '/programs/new' || ctx.surface === '/demo/programs/new') {
+          ctx.writer?.write(`\n[[program-created:${row.id}]]`);
+        }
         return {
           success: true,
           data: {
@@ -526,7 +530,9 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
     // sentinel is a navigation hint stripped client-side before
     // display; the user-visible message that Steward generates is
     // what carries the new "submitted for approval" semantics.
-    ctx.writer?.write(`\n[[program-created:${programId}]]`);
+    if (ctx.surface === '/programs/new' || ctx.surface === '/demo/programs/new') {
+      ctx.writer?.write(`\n[[program-created:${programId}]]`);
+    }
 
     return {
       success: true,
