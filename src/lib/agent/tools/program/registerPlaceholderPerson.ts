@@ -14,7 +14,9 @@
 // already on persons. Per-tenant scoping uses `organization` (string),
 // matching the pattern used by lookup_person.
 //
-// Per kickoff §4 surfaces filter: /programs/new and /demo/programs/new.
+// Per canvas-continuity doctrine, origination can run in the main
+// portal canvas as well as the dedicated /programs/new page. Do not
+// force a route change just to register a sponsor placeholder.
 
 import type { AgentTool, ToolResult } from '../registry';
 import { registerTool } from '../registry';
@@ -45,7 +47,7 @@ export const registerPlaceholderPersonTool: AgentTool<RegisterPlaceholderPersonI
     'is marked for admin follow-up (admins resolve full details — email, links, etc. — later). ' +
     'Call this only AFTER lookup_person returns no match AND the user has confirmed they want ' +
     "to register a placeholder. Don't call this speculatively; always confirm with the user first.",
-  surfaces: ['/programs/new', '/demo/programs/new'],
+  surfaces: ['/programs/new', '/demo/programs/new', '/home', '/programs'],
   input_schema: {
     type: 'object',
     properties: {

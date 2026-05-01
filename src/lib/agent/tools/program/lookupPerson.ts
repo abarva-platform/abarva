@@ -11,8 +11,9 @@
 // We match `persons.organization` against the active client's name
 // (case-insensitive partial), then narrow by role/name query.
 //
-// Per kickoff §4 surface filter: surfaces = ['/programs/new',
-// '/demo/programs/new']. Other surfaces will adopt as they ship.
+// Per canvas-continuity doctrine, origination can run in the main
+// portal canvas as well as the dedicated /programs/new page. Do not
+// force a route change just to resolve a sponsor.
 
 import type { AgentTool, ToolResult } from '../registry';
 import { registerTool } from '../registry';
@@ -54,7 +55,7 @@ export const lookupPersonTool: AgentTool<LookupPersonInput> = {
     'lookup_person calls (you can issue them in parallel). Never combine multiple names with ' +
     'commas — "Sarah Chen, CIO" as a single query will not match either; split into ' +
     '{query:"Sarah Chen"} and {query:"CIO"} as separate calls.',
-  surfaces: ['/programs/new', '/demo/programs/new'],
+  surfaces: ['/programs/new', '/demo/programs/new', '/home', '/programs'],
   input_schema: {
     type: 'object',
     properties: {

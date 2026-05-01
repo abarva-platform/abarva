@@ -462,6 +462,8 @@ export function AgentColumn({
             ref={textareaRef}
             rows={1}
             spellCheck
+            autoCorrect="on"
+            autoCapitalize="sentences"
             placeholder={placeholder}
             disabled={isStreaming}
             style={{

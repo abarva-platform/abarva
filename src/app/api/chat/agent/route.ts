@@ -137,11 +137,9 @@ import "@/lib/agent/tools/program/advancePhase";
 // so hard gates can read deliverables_v2 instead of chat-only prose.
 import "@/lib/agent/tools/program/completeDeliverable";
 // Surface 2 PR-Q — navigate_to tool. Registered for every entry
-// surface so any agent can take the user somewhere (e.g. Nexus on
-// /programs redirects new-program intent to /programs/new where
-// Steward owns origination). Closes founder feedback "[Nexus] does
-// not help me navigate to phase 1 ... I don't have a navigation
-// tool in my current session."
+// surface so any agent can take the user somewhere when explicitly
+// asked. It must NOT redirect new-program intent to /programs/new;
+// origination now stays in the current canvas.
 import "@/lib/agent/tools/program/navigateTo";
 // Surface 2 PR-INT-C — Sentinel tools for /intelligence surface.
 // search_patterns + pattern_neighborhood + evidence_lookup register
@@ -651,6 +649,7 @@ export async function POST(request: Request) {
     "- Keep responses under 200 words. Be direct, specific, actionable.",
     "- Reference tenant and program names from context.",
     "- Never say you don't have specific information about the tenant — use the demo context below.",
+    "- CANVAS CONTINUITY: if the user wants to start, scope, or create a new program, do not navigate them to /programs/new. Continue in this same canvas: confirm the intent, collect sponsor, lead, target outcome, and timeline, use lookup_person/register_placeholder_person/commit_program when available, and only mention the program detail link after the brief is submitted.",
     // M-06 · voice drift filter — banned phrases surfaced in QA audit (2026-04-30).
     // These phrases signal sycophancy or assistant-mode framing that undermines the
     // senior-practitioner voice. Absolute ban, no exceptions.

@@ -144,8 +144,16 @@ export function AtlasDrawer({
   const conversation = pageState?.conversation     ?? [];
 
   const hasThread = conversation.length > 0 || isStreaming || !!response || !!error;
+  const latestFirst = composerPlacement === 'afterHeader';
+  const renderedConversation = latestFirst ? [...conversation].reverse() : conversation;
 
-  // Auto-scroll to latest turn whenever content changes. Use the
+  // Keep the latest turn adjacent to the composer. In embedded
+  // "afterHeader" canvases the composer is at the top, so newest turns
+  // render first and the scroll anchor is the top of the thread. In
+  // bottom-composer drawers/rails, preserve the traditional bottom
+  // anchor.
+  //
+  // Use the
   // drawer's internal scroll container, not scrollIntoView(), because
   // embedded agent canvases live inside scrollable product pages. A
   // DOM-level scrollIntoView can pull the entire page down while a long
@@ -154,10 +162,10 @@ export function AtlasDrawer({
     if (embedded || isOpen) {
       const scroller = threadScrollRef.current;
       if (scroller) {
-        scroller.scrollTop = scroller.scrollHeight;
+        scroller.scrollTop = latestFirst ? 0 : scroller.scrollHeight;
       }
     }
-  }, [embedded, isOpen, conversation.length, response]);
+  }, [embedded, isOpen, conversation.length, response, latestFirst]);
 
   // Focus textarea when drawer opens. In embedded mode, focus on mount.
   useEffect(() => {
@@ -397,6 +405,8 @@ export function AtlasDrawer({
           ref={textareaRef}
           rows={1}
           spellCheck
+          autoCorrect="on"
+          autoCapitalize="sentences"
           placeholder={`Ask ${agent.name}…`}
           disabled={isStreaming}
           style={{
@@ -723,72 +733,26 @@ export function AtlasDrawer({
             </div>
           )}
 
-          {/* Completed turns. PR-K · turns with agentName === '__handoff__'
-              are rendered as a divider-style banner instead of a chat
-              bubble — they mark the moment commit_program landed and
-              the conversation transitioned from Steward (origination)
-              to the active program canvas. */}
-          {conversation.map((turn) =>
-            turn.agentName === '__handoff__' ? (
-              <DrawerHandoffMarker key={turn.id} text={turn.text} />
-            ) : (
-              <DrawerChatBubble
-                key={turn.id}
-                role={turn.role}
-                text={turn.text}
-                label={
-                  turn.role === 'user'
-                    ? 'You'
-                    : `${agent.initials} · ${turn.agentName}`
-                }
+          {latestFirst ? (
+            <>
+              <DrawerStreamingTurn
+                isVisible={isStreaming || !!response}
+                isStreaming={isStreaming}
+                response={response}
+                agent={agent}
               />
-            ),
-          )}
-
-          {/* In-flight streaming turn */}
-          {(isStreaming || response) && (
-            <div style={{ marginBottom: 12, flexShrink: 0 }}>
-              <div
-                style={{
-                  fontFamily: SHELL.MONO,
-                  fontSize: 8.5,
-                  color: 'rgba(250,247,241,0.28)',
-                  marginBottom: 4,
-                  letterSpacing: '0.08em',
-                }}
-              >
-                {agent.initials} · {agent.name}
-              </div>
-              <div
-                style={{
-                  fontFamily: SHELL.SANS,
-                  fontSize: 13,
-                  color: 'rgba(250,247,241,0.88)',
-                  lineHeight: 1.65,
-                }}
-              >
-                {isStreaming && !response ? (
-                  <span
-                    style={{
-                      color: 'rgba(250,247,241,0.35)',
-                      fontStyle: 'italic',
-                    }}
-                  >
-                    thinking…
-                  </span>
-                ) : (
-                  <>
-                    {/* Surface 2 PR1 — render through AgentMarkdown so
-                        Nexus's markdown (bold, tables, IDs, citation
-                        chips) renders properly instead of as raw text. */}
-                    <AgentMarkdown text={response} />
-                    {isStreaming && (
-                      <span style={{ opacity: 0.5, marginLeft: 1 }}>▊</span>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
+              <DrawerTurnList turns={renderedConversation} agent={agent} />
+            </>
+          ) : (
+            <>
+              <DrawerTurnList turns={renderedConversation} agent={agent} />
+              <DrawerStreamingTurn
+                isVisible={isStreaming || !!response}
+                isStreaming={isStreaming}
+                response={response}
+                agent={agent}
+              />
+            </>
           )}
 
           {/* Error */}
@@ -877,6 +841,99 @@ function DrawerHandoffMarker({ text }: { text: string }) {
         {text}
       </div>
       <div style={{ flex: 1, height: 1, background: 'rgba(250,247,241,0.18)' }} />
+    </div>
+  );
+}
+
+function DrawerTurnList({
+  turns,
+  agent,
+}: {
+  turns: Array<{ id: string; role: 'user' | 'agent'; text: string; agentName: string }>;
+  agent: { initials: string; name: string };
+}) {
+  return (
+    <>
+      {/* Completed turns. PR-K · turns with agentName === '__handoff__'
+          are rendered as a divider-style banner instead of a chat
+          bubble — they mark the moment commit_program landed and
+          the conversation transitioned from Steward (origination)
+          to the active program canvas. */}
+      {turns.map((turn) =>
+        turn.agentName === '__handoff__' ? (
+          <DrawerHandoffMarker key={turn.id} text={turn.text} />
+        ) : (
+          <DrawerChatBubble
+            key={turn.id}
+            role={turn.role}
+            text={turn.text}
+            label={
+              turn.role === 'user'
+                ? 'You'
+                : `${agent.initials} · ${turn.agentName}`
+            }
+          />
+        ),
+      )}
+    </>
+  );
+}
+
+function DrawerStreamingTurn({
+  isVisible,
+  isStreaming,
+  response,
+  agent,
+}: {
+  isVisible: boolean;
+  isStreaming: boolean;
+  response: string;
+  agent: { initials: string; name: string };
+}) {
+  if (!isVisible) return null;
+
+  return (
+    <div style={{ marginBottom: 12, flexShrink: 0 }}>
+      <div
+        style={{
+          fontFamily: SHELL.MONO,
+          fontSize: 8.5,
+          color: 'rgba(250,247,241,0.28)',
+          marginBottom: 4,
+          letterSpacing: '0.08em',
+        }}
+      >
+        {agent.initials} · {agent.name}
+      </div>
+      <div
+        style={{
+          fontFamily: SHELL.SANS,
+          fontSize: 13,
+          color: 'rgba(250,247,241,0.88)',
+          lineHeight: 1.65,
+        }}
+      >
+        {isStreaming && !response ? (
+          <span
+            style={{
+              color: 'rgba(250,247,241,0.35)',
+              fontStyle: 'italic',
+            }}
+          >
+            thinking…
+          </span>
+        ) : (
+          <>
+            {/* Surface 2 PR1 — render through AgentMarkdown so Nexus's
+                markdown (bold, tables, IDs, citation chips) renders
+                properly instead of as raw text. */}
+            <AgentMarkdown text={response} />
+            {isStreaming && (
+              <span style={{ opacity: 0.5, marginLeft: 1 }}>▊</span>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
