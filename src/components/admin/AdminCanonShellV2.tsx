@@ -28,8 +28,10 @@ export function AdminCanonShellV2({ children, agentRail, tenantName = 'Apex Reta
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '280px 1fr 320px',
+          gridTemplateColumns: '240px minmax(0, 1fr) minmax(360px, 28vw)',
           flex: 1,
+          minHeight: 0,
+          height: 'calc(100vh - 48px)',
           overflow: 'hidden',
           background: SHELL.PAPER,
         }}
@@ -39,7 +41,18 @@ export function AdminCanonShellV2({ children, agentRail, tenantName = 'Apex Reta
         <div style={{ overflowY: 'auto', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
           {children}
         </div>
-        {agentRail}
+        <aside
+          aria-label="Steward setup agent"
+          style={{
+            minWidth: 0,
+            minHeight: 0,
+            height: '100%',
+            overflow: 'hidden',
+            borderLeft: `1px solid ${SHELL.CARD_LINE_SOFT}`,
+          }}
+        >
+          {agentRail}
+        </aside>
       </div>
     </AppShell>
   );
