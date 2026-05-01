@@ -65,6 +65,70 @@ export const apexLeadership = {
       changeReadiness: "Low",
     },
     {
+      role: "Chief Procurement Officer",
+      name: "Evelyn Brooks",
+      tenureYears: 5,
+      publicStance:
+        "Apex has enough vendor relationships; the next phase is disciplined sourcing, vendor consolidation, and contract accountability.",
+      contradiction:
+        "Procurement is expected to govern SAP, AMS, WMS, o9, and store-technology spend, but intake still happens through email and executive side channels. Category strategy exists for merchandise vendors but is thin for IT and digital.",
+      privateReality:
+        "Strong commercial operator. Wants a cleaner intake model and more leverage with IT vendors before large renewals hit.",
+      keyQuote:
+        "If a technology decision changes operating margin, procurement needs to be in the room before the vendor demo, not after the executive favorite is picked.",
+      priorities: ["IT vendor governance", "AMS and SAP sourcing discipline", "contract value assurance"],
+      investmentAppetite: "Medium — supports spend when scope, owner, and value are explicit",
+      changeReadiness: "High",
+    },
+    {
+      role: "Director, IT Procurement",
+      name: "Maya Desai",
+      tenureYears: 3,
+      publicStance:
+        "Technology sourcing should use a consistent intake, evaluation, and award-readiness process across SAP, commerce, analytics, and store systems.",
+      contradiction:
+        "Apex has a central procurement function, but IT events still arrive late with vendor preferences already embedded.",
+      privateReality:
+        "Best day-to-day Source admin candidate. She can run sourcing events without exposing finance-only values to broader program teams.",
+      keyQuote:
+        "Give me the business outcome, architecture constraints, and decision criteria before the RFP goes out.",
+      priorities: ["source-event intake", "vendor response completeness", "award-readiness evidence"],
+      investmentAppetite: "N/A — process owner",
+      changeReadiness: "High",
+    },
+    {
+      role: "Director, Digital Product Delivery",
+      name: "Noah Patel",
+      tenureYears: 2,
+      publicStance:
+        "Digital programs need sharper handoffs from strategy into funded roadmaps, especially where commerce, loyalty, and CDP dependencies collide.",
+      contradiction:
+        "Digital delivery teams are asked to move faster while core data and integration decisions remain unresolved.",
+      privateReality:
+        "Useful Programs user persona: close enough to execution reality to provide evidence, senior enough to originate and manage a program journey.",
+      keyQuote:
+        "The problem is not idea volume. The problem is getting one idea cleanly through scope, evidence, roadmap, approval, and delivery handoff.",
+      priorities: ["program origination", "roadmap definition", "cross-functional dependency tracking"],
+      investmentAppetite: "N/A — program operator",
+      changeReadiness: "High",
+    },
+    {
+      role: "Director, Enterprise Data Products",
+      name: "Camila Torres",
+      tenureYears: 2,
+      publicStance:
+        "Personalization, forecasting, and inventory analytics need reusable data products, not one-off extracts for each vendor.",
+      contradiction:
+        "Segment, SAP, o9, and commerce data are each treated as project-specific feeds, so teams rebuild the same reconciliation logic.",
+      privateReality:
+        "Good new/unassigned Programs user candidate for testing a clean first-login state with permission to originate.",
+      keyQuote:
+        "If the data product is not owned, every AI use case becomes a custom integration project.",
+      priorities: ["data product ownership", "CDP activation", "analytics modernization"],
+      investmentAppetite: "N/A — program operator",
+      changeReadiness: "Medium-High",
+    },
+    {
       role: "CPO",
       name: "Lisa Chen",
       tenureYears: 6,

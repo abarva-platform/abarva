@@ -89,6 +89,9 @@ export const firstCapital = {
   leadership: {
     cto: { name: "James Okafor", tenure: "18 months", quote: "We have 14 years of technical debt and 2 years to fix it before SAP pulls our support. I need a decision on core banking by Q3." },
     cfo: { name: "Robert Martinez", tenure: "6 years", quote: "I am not writing a $180M check while we are at 68% cost-to-income. Show me the ROI or show me a cheaper path." },
+    cpo: { name: "Nadia Rahman", tenure: "5 years", quote: "The fastest path is not skipping procurement. The fastest path is making procurement evidence-based." },
+    itSourcingDirector: { name: "Ethan Brooks", tenure: "3 years", quote: "I need the business urgency, architecture constraints, and regulatory posture in the same evaluation packet." },
+    paymentsProgramDirector: { name: "Lena Ortiz", tenure: "4 years", quote: "We need one program record that survives the meeting cycle." },
     coo: { name: "Sandra Williams", tenure: "8 years", quote: "Every system we have implemented took twice as long and cost twice as much." },
     cmo: { name: "David Park", tenure: "2 years", quote: "We have 1.8 million digital customers and we show them yesterday's balances. That is not digital banking." },
   },
