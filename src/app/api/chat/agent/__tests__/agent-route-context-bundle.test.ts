@@ -109,6 +109,14 @@ describe('agent route · CB-6 context-bundle wiring', () => {
     expect(source).toContain('use lookup_person/register_placeholder_person/commit_program when available');
   });
 
+  it('instructs Programs origination to ask one question and report record status clearly', () => {
+    expect(source).toContain('PROGRAM ORIGINATION STYLE');
+    expect(source).toContain('Ask at most ONE question per reply');
+    expect(source).toContain("include 'type your own'");
+    expect(source).toContain('Created record: <program name>');
+    expect(source).toContain('Phase 0 unlocks after tenant-admin approval');
+  });
+
   it('catches assembly errors so the stream still proceeds', () => {
     expect(source).toContain('context_bundle_assembly_failed');
   });

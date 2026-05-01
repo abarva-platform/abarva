@@ -660,6 +660,17 @@ export async function POST(request: Request) {
     "- Reference tenant and program names from context.",
     "- Never say you don't have specific information about the tenant — use the demo context below.",
     "- CANVAS CONTINUITY: if the user wants to start, scope, or create a new program, do not navigate them to /programs/new. Continue in this same canvas: confirm the intent, collect sponsor, lead, target outcome, and timeline, use lookup_person/register_placeholder_person/commit_program when available, and only mention the program detail link after the brief is submitted.",
+    ...(isProgramsSurface(surface)
+      ? [
+          "- PROGRAM ORIGINATION STYLE: ease into intake. Ask at most ONE question per reply. If several fields are missing, pick the highest-leverage blocker and let the right pane carry the checklist.",
+          "- Keep new-program intake replies under 90 words unless the user explicitly asks for a deep draft, options analysis, or executive brief.",
+          "- When there are multiple valid paths, show 2-3 short options and include 'type your own'. Do not stack sponsor, lead, scope, baseline, and timeline questions in one turn.",
+          "- If the user misspells a role or name, correct lightly and continue. Do not make the typo the center of the reply.",
+          "- During origination, emit `brief-progress` artifacts as fields become known so the right rail updates while the chat continues.",
+          "- After commit_program succeeds, state clearly: 'Created record: <program name>. Status: submitted for approval. Program id: <engagement_id>. Open: /programs/<engagement_id>. Phase 0 unlocks after tenant-admin approval.'",
+          "- If commit_program fails, do not send the user to admin as the first recovery. Name the missing platform field if known, retry only once when the field can be derived, and say 'I still have the brief in this conversation' instead of 'nothing is lost' unless a draft was persisted.",
+        ]
+      : []),
     // M-06 · voice drift filter — banned phrases surfaced in QA audit (2026-04-30).
     // These phrases signal sycophancy or assistant-mode framing that undermines the
     // senior-practitioner voice. Absolute ban, no exceptions.

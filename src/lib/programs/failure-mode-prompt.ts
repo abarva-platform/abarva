@@ -160,15 +160,19 @@ export function composeOverlapBlock(matches: readonly BriefOverlapMatch[]): stri
  * One-line directive that nudges Steward to emit `brief-progress` on
  * every turn that captures or refines a brief field. The artifact-channel
  * instructions teach the *shape*; this teaches the *cadence*.
- * Empty string off `/programs/new`.
+ * Empty string off program-origination canvases.
  */
 export function composeBriefProgressCadenceDirective(
   surface: string | null | undefined,
 ): string {
-  if (surface !== '/programs/new' && surface !== '/demo/programs/new') {
+  if (
+    surface !== '/programs' &&
+    surface !== '/programs/new' &&
+    surface !== '/demo/programs/new'
+  ) {
     return '';
   }
-  return "- After every turn that captures or refines a brief field, emit a `brief-progress` artifact summarizing the 8-field state. The user's right pane only updates when you emit it.";
+  return "- After every turn that captures or refines a new-program brief field, emit a `brief-progress` artifact summarizing the 8-field state. The user's right pane only updates when you emit it.";
 }
 
 /**
