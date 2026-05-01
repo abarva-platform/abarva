@@ -121,6 +121,32 @@ describe('SetupAdminLanding', () => {
     expect(empties.length).toBeGreaterThanOrEqual(2);
   });
 
+  it('uses Act 3 gains to explain what setup data enables', () => {
+    const content = getSetupActsContent('keystone');
+    render(
+      <SetupAdminLanding
+        content={content}
+        segmentRollups={[]}
+        totalRecords={null}
+        segmentsTracked={null}
+        capabilitiesGrounded={0}
+        atlasSignalCount={0}
+        atlasHighSeverityCount={0}
+        nexusProgramCount={0}
+        stewardFindingCount={0}
+      />,
+    );
+
+    expect(screen.getByTestId('admin-setup-orientation-banner')).toHaveTextContent(
+      'Enterprise memory',
+    );
+    const priorityList = screen.getByTestId('admin-setup-orientation-priorities');
+    expect(priorityList).toHaveTextContent('Segment 1');
+    expect(priorityList).toHaveTextContent('Enterprise Profile');
+    expect(priorityList).toHaveTextContent('decision rights');
+    expect(priorityList.querySelectorAll('li')).toHaveLength(3);
+  });
+
   it('Act 3 ranks gain entries by rank ascending', () => {
     const content = getSetupActsContent('apexretail');
     render(

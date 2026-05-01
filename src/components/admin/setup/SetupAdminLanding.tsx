@@ -9,6 +9,7 @@
 
 import type {
   SetupActsContent,
+  CapabilityGainEntry,
   InventorySegmentRollup,
 } from '@/lib/admin/setup-acts-registry';
 import { COLORS, RADIUS, SPACING } from '@/lib/design/design-tokens';
@@ -39,7 +40,29 @@ export interface SetupAdminLandingProps {
   stewardFindingCount: number;
 }
 
-function OrientationBanner({ tenantDisplayName }: { tenantDisplayName: string }) {
+function topGainEntries(gains: CapabilityGainEntry[]): CapabilityGainEntry[] {
+  return gains
+    .slice()
+    .sort((a, b) => a.rank - b.rank)
+    .slice(0, 3);
+}
+
+function OrientationBanner({
+  content,
+  totalRecords,
+}: {
+  content: SetupActsContent;
+  totalRecords: number | null;
+}) {
+  const topGains = topGainEntries(content.actThreeGainEntries);
+  const hasAnyRecords = typeof totalRecords === 'number' && totalRecords > 0;
+  const headline = hasAnyRecords
+    ? 'Your enterprise memory has started. The next records decide what the agents can safely say.'
+    : 'Setup is where AbarVa learns your enterprise before any agent gives confident advice.';
+  const subcopy = hasAnyRecords
+    ? 'Each additional segment sharpens a different operating capability: citation discipline, decision rights, gate readiness, sourcing posture, or portfolio signals.'
+    : 'Every upload has a concrete consequence. Enterprise profile gives context. Org structure gives decision rights. KPIs give measurement. Evidence gives citations. Programs and signals give Nexus and Atlas something real to govern.';
+
   return (
     <section
       data-testid="admin-setup-orientation-banner"
@@ -64,7 +87,7 @@ function OrientationBanner({ tenantDisplayName }: { tenantDisplayName: string })
           fontWeight: 700,
         }}
       >
-        Getting started · {tenantDisplayName}
+        Enterprise memory · {content.tenantDisplayName}
       </p>
       <p
         style={{
@@ -76,7 +99,7 @@ function OrientationBanner({ tenantDisplayName }: { tenantDisplayName: string })
           fontWeight: 400,
         }}
       >
-        The corpus is empty — Sentinel has nothing to reason about yet.
+        {headline}
       </p>
       <p
         style={{
@@ -87,9 +110,10 @@ function OrientationBanner({ tenantDisplayName }: { tenantDisplayName: string })
           lineHeight: 1.6,
         }}
       >
-        Three moves that unlock the most reasoning power fastest:
+        {subcopy}
       </p>
       <ol
+        data-testid="admin-setup-orientation-priorities"
         style={{
           margin: 0,
           padding: '0 0 0 20px',
@@ -99,18 +123,23 @@ function OrientationBanner({ tenantDisplayName }: { tenantDisplayName: string })
           lineHeight: 1.8,
         }}
       >
-        <li>
-          <strong>Upload to segment 9 — Evidence &amp; Citations.</strong>{' '}
-          Sentinel uses this to ground every answer with source documents.
-        </li>
-        <li>
-          <strong>Upload to segment 1 — Program Inventory.</strong>{' '}
-          This tells Nexus which AI programs are live, planned, or stalled.
-        </li>
-        <li>
-          <strong>Upload to segment 14 — Cross-program signals.</strong>{' '}
-          Atlas uses this to detect contradictions across the portfolio.
-        </li>
+        {topGains.map((gain) => (
+          <li key={gain.id}>
+            <a
+              href={`/admin/segments/${gain.targetSegmentId}`}
+              style={{
+                color: SHELL.INK,
+                textDecorationColor: `${COLORS.navy}55`,
+                textUnderlineOffset: 3,
+              }}
+            >
+              <strong>
+                Segment {Number(gain.targetSegmentId)} — {gain.targetSegmentName}.
+              </strong>
+            </a>{' '}
+            {gain.capabilityGained}
+          </li>
+        ))}
       </ol>
       <p
         style={{
@@ -120,7 +149,7 @@ function OrientationBanner({ tenantDisplayName }: { tenantDisplayName: string })
           color: SHELL.INK_MUTED,
         }}
       >
-        Ask Steward in the right panel for guidance on any segment.
+        Ask Steward in the right panel which segment should come next for this tenant.
       </p>
     </section>
   );
@@ -139,7 +168,10 @@ export function SetupAdminLanding({
   stewardFindingCount,
 }: SetupAdminLandingProps) {
   const isFirstTime =
-    totalRecords === null || totalRecords === 0 || content.tenantDataRichness === 'sparse';
+    totalRecords === null ||
+    totalRecords === 0 ||
+    content.tenantDataRichness === 'sparse' ||
+    content.tenantDataRichness === 'partial';
 
   return (
     <EditorialCanvas
@@ -152,9 +184,7 @@ export function SetupAdminLanding({
         data-tenant-richness={content.tenantDataRichness}
         style={{ display: 'flex', flexDirection: 'column', gap: SPACING.xl }}
       >
-        {isFirstTime && (
-          <OrientationBanner tenantDisplayName={content.tenantDisplayName} />
-        )}
+        {isFirstTime && <OrientationBanner content={content} totalRecords={totalRecords} />}
         <SetupAgentStrip
           tenantDisplayName={content.tenantDisplayName}
           tenantRecords={totalRecords}
