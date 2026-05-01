@@ -93,6 +93,27 @@ export const apexRetail = {
         quote: "I am not writing a $180M check for SAP S4 HANA at 3.8% operating margin. Show me the ROI.",
       },
       {
+        role: "Chief Procurement Officer",
+        name: "Evelyn Brooks",
+        tenure: "5 years",
+        background: "Enterprise procurement leader — owns IT sourcing discipline, vendor consolidation, and contract value assurance",
+        quote: "Procurement needs to be in the room before the vendor demo, not after the executive favorite is picked.",
+      },
+      {
+        role: "Director, IT Procurement",
+        name: "Maya Desai",
+        tenure: "3 years",
+        background: "Technology sourcing operator — runs IT sourcing events and vendor response governance",
+        quote: "Give me the business outcome, architecture constraints, and decision criteria before the RFP goes out.",
+      },
+      {
+        role: "Director, Digital Product Delivery",
+        name: "Noah Patel",
+        tenure: "2 years",
+        background: "Digital program operator — translates commerce, loyalty, and data strategy into executable roadmap packages",
+        quote: "The problem is not idea volume. The problem is getting one idea cleanly through scope, evidence, roadmap, approval, and delivery handoff.",
+      },
+      {
         role: "COO",
         name: "Sandra Williams",
         tenure: "8 years",

@@ -351,6 +351,54 @@
       "vacancy_status": "Filled"
     },
     {
+      "id": "person:meridian:nina-patel",
+      "full_name": "Nina Patel",
+      "title": "Director, IT Procurement",
+      "scope": "shared",
+      "reports_to": "person:meridian:angela-brooks",
+      "tenure_in_role_years": 4,
+      "domain_ownership": [
+        "IT sourcing events",
+        "software renewals",
+        "vendor intake",
+        "commercial evaluation coordination"
+      ],
+      "prior_roles": [
+        "Healthcare procurement operations",
+        "Technology vendor management"
+      ],
+      "stated_priorities_fy2026": [
+        "standardize IT sourcing intake",
+        "reduce off-contract software buying",
+        "coordinate Source events with architecture and security reviewers"
+      ],
+      "vacancy_status": "Filled"
+    },
+    {
+      "id": "person:meridian:omar-rahman",
+      "full_name": "Omar Rahman",
+      "title": "Director, Vendor Management and Contracts",
+      "scope": "shared",
+      "reports_to": "person:meridian:angela-brooks",
+      "tenure_in_role_years": 5,
+      "domain_ownership": [
+        "vendor scorecards",
+        "contract clause inventory",
+        "renewal calendar",
+        "commercial risk follow-up"
+      ],
+      "prior_roles": [
+        "Healthcare vendor management",
+        "Managed-services contract operations"
+      ],
+      "stated_priorities_fy2026": [
+        "clean renewal calendar ownership",
+        "tighten BAA and AI/ML contract clause tracking",
+        "separate commercial recommendations from budget-sensitive values for non-finance users"
+      ],
+      "vacancy_status": "Filled"
+    },
+    {
       "id": "person:meridian:aiden-walsh",
       "full_name": "Dr. Aiden Walsh",
       "title": "Former CIO",

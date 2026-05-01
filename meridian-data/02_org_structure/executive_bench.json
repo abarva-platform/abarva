@@ -293,6 +293,30 @@
       "scope": "system"
     },
     {
+      "id": "person:meridian:angela-brooks",
+      "full_name": "Angela Brooks",
+      "title": "Chief Procurement Officer",
+      "role_scope": "system",
+      "reports_to": "person:meridian:david-park",
+      "tenure_in_role_years": 3,
+      "tenure_at_company_years": 6,
+      "prior_roles": [
+        "Healthcare supply chain leadership",
+        "Enterprise strategic sourcing leadership"
+      ],
+      "background_summary": "Angela Brooks owns enterprise procurement, strategic sourcing, supplier risk, and commercial discipline across IT, clinical, supply chain, and managed-services vendors. She is the right executive sponsor for Source governance, not the day-to-day operator.",
+      "stated_priorities_fy2026": [
+        "vendor consolidation",
+        "IT procurement governance",
+        "contract value assurance",
+        "supplier risk and BAA discipline"
+      ],
+      "known_political_positions": "Commercial discipline coalition; generally aligned with CFO, Legal, and CDIO when sourcing decisions affect transformation execution.",
+      "direct_reports_count": 5,
+      "escalation_authority_summary": "Approves sourcing governance and escalates high-risk commercial decisions to CFO, Legal, CDIO, or Executive Committee.",
+      "scope": "system"
+    },
+    {
       "id": "person:meridian:robert-chen",
       "full_name": "Dr. Robert Chen",
       "title": "Chief Nursing Officer",

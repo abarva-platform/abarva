@@ -115,6 +115,79 @@ export const firstCapitalLeadership: { executives: Executive[] } = {
       ],
     },
     {
+      role: "Chief Procurement Officer",
+      name: "Nadia Rahman",
+      tenure: "5 years",
+      background: "Financial-services procurement executive with deep experience in core banking, payments, and managed-services sourcing. Owns vendor governance, commercial controls, and enterprise sourcing policy.",
+      priorities: [
+        "Create a clean intake path for technology sourcing events",
+        "Reduce vendor risk across core banking, digital, and compliance platforms",
+        "Separate commercial evaluation evidence from finance-restricted values",
+        "Improve renewal discipline before FIS, Q2, Salesforce, and NICE decision windows",
+      ],
+      quotes: [
+        "Sourcing cannot just be a contract desk after the technology decision is already made.",
+        "If the business outcome, architecture constraints, and regulatory requirements are not clear, the RFP will only manufacture false confidence.",
+        "The fastest path is not skipping procurement. The fastest path is making procurement evidence-based.",
+      ],
+      aiStance: "Pragmatic. Supports AI-assisted sourcing and contract review when data controls, GLBA posture, and award governance are explicit.",
+      decisionStyle: "Structured and evidence-led. Lets business and technology own requirements, but insists on auditable decision criteria before vendor shortlisting.",
+      contradictions: [
+        {
+          publicPosition: "First Capital has disciplined vendor governance",
+          actualData: "Major technology decisions still route through fragmented executive sponsorship, with FedNow, Q2, Salesforce, and NICE each using different intake and evidence standards.",
+        },
+      ],
+    },
+    {
+      role: "Director, IT Sourcing",
+      name: "Ethan Brooks",
+      tenure: "3 years",
+      background: "Technology sourcing operator responsible for payments, core banking, CRM, and risk-system sourcing events. Works across CIO, CPO, Legal, Risk, and business sponsors.",
+      priorities: [
+        "Run consistent Source intake for technology events",
+        "Coordinate vendor response completeness checks",
+        "Capture award-readiness evidence before approvals",
+        "Keep restricted pricing details out of broad evaluator views"
+      ],
+      quotes: [
+        "I need the FedNow business urgency, FIS architecture constraints, and OCC risk posture in the same evaluation packet.",
+        "A clean sourcing event should reduce executive churn, not add a procurement tax.",
+      ],
+      aiStance: "Positive on AI-assisted sourcing if every recommendation cites source evidence and separates commercial sensitivity by role.",
+      decisionStyle: "Operational and detail-oriented. Good day-to-day Source admin candidate under the CPO.",
+      contradictions: [
+        {
+          publicPosition: "Technology sourcing events are standardized",
+          actualData: "Payments, digital banking, and AML events each use different scoring models and evidence expectations.",
+        },
+      ],
+    },
+    {
+      role: "Director, Payments Program Management",
+      name: "Lena Ortiz",
+      tenure: "4 years",
+      background: "Program delivery leader for payments modernization, FedNow readiness, and commercial banking technology dependencies.",
+      priorities: [
+        "Translate FedNow urgency into an executable program roadmap",
+        "Coordinate commercial banking, CIO, Risk, and vendor workstreams",
+        "Track gate evidence without exposing finance-restricted values",
+        "Prepare Tower handoff once execution starts outside AbarVa"
+      ],
+      quotes: [
+        "The business hears '90 days'; technology sees dependencies across FIS, fraud, treasury operations, and client communications.",
+        "We need one program record that survives the meeting cycle.",
+      ],
+      aiStance: "Strong user of AI-assisted program synthesis, especially for meeting notes, dependency tracking, and approval packets.",
+      decisionStyle: "Programmatic and pragmatic. Good Programs user candidate who should not need client-admin rights.",
+      contradictions: [
+        {
+          publicPosition: "FedNow is a single implementation program",
+          actualData: "The actual work spans payments architecture, fraud controls, commercial client readiness, risk review, and vendor contracting.",
+        },
+      ],
+    },
+    {
       role: "CRO",
       name: "James Park",
       tenure: "4 years",
