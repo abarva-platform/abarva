@@ -119,6 +119,11 @@ export function SourceEventAgentCanvas({
                       surface="/source"
                       onArtifact={handleArtifact}
                       composerPlacement="afterHeader"
+                      sourceUploadContext={{
+                        eventId: event.id,
+                        stageKey: event.currentStageKey,
+                        stageLabel: event.currentStageLabel,
+                      }}
                       emptyState={<SourceEventPromptDeck event={event} />}
                     />
                   </div>
