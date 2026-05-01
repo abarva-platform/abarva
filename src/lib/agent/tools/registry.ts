@@ -34,6 +34,15 @@ export interface ToolContext {
   surfaceContext?: Record<string, unknown>;
   /** Active client key (e.g. 'apexretail'). Used by tools that write to per-tenant tables. */
   clientKey?: string;
+  /** Server-computed entitlement envelope. Tools must treat this as advisory minimum policy and fail closed on writes when a required capability is false. */
+  accessPolicy?: {
+    accessLevel: string;
+    programIdsAllowed: string[] | null;
+    canCreatePrograms: boolean;
+    canApproveGates: boolean;
+    canPublishDeliverables: boolean;
+    canViewFinancialData: boolean;
+  };
   /**
    * Optional out-of-band sink to the response stream. Tool handlers that
    * need to surface a side-channel hint to the client (e.g. a navigation

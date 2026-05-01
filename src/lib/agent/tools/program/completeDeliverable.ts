@@ -9,6 +9,7 @@ import type { AgentTool, ToolResult } from '../registry';
 import { registerTool } from '../registry';
 import { requireTenancy, TenancyError } from '@/app/api/v1/programs/_auth';
 import { completeDeliverable } from '@/lib/programs/mutations';
+import { sanitizeRestrictedFinancialText } from '@/lib/agent/restricted-output-policy';
 
 interface CompleteDeliverableToolInput {
   program_id: string;
@@ -76,7 +77,7 @@ export const completeDeliverableTool: AgentTool<CompleteDeliverableToolInput> = 
     },
     required: ['program_id', 'deliverable_type_key', 'title'],
   },
-  handler: async (input): Promise<ToolResult> => {
+  handler: async (input, ctx): Promise<ToolResult> => {
     const deliverableTypeKey = input.deliverable_type_key?.trim();
     const title = input.title?.trim();
     if (!input.program_id?.trim()) {
@@ -124,7 +125,14 @@ export const completeDeliverableTool: AgentTool<CompleteDeliverableToolInput> = 
       const result = await completeDeliverable(tenancy, input.program_id, {
         deliverableTypeKey,
         title,
-        content: input.content,
+        content: input.content
+          ? sanitizeRestrictedFinancialText(
+              input.content,
+              ctx.accessPolicy
+                ? { outputPolicy: { exactFinancialValues: ctx.accessPolicy.canViewFinancialData } }
+                : null,
+            )
+          : input.content,
         moduleKey: input.module_key,
         signOff: input.sign_off !== false,
         structuredData: {

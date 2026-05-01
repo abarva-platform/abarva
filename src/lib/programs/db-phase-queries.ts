@@ -12,6 +12,8 @@
 //   phase_snapshots  : uses engagement_id + approval_status (from queries.ts)
 
 import { getServerSupabase } from '@/lib/supabase-server';
+import { canReadProgram } from '@/lib/auth/program-access-policy';
+import type { TenancyCtx } from '@/lib/programs/types.db';
 
 export interface EngagementPhaseData {
   engagement: {
@@ -70,8 +72,12 @@ export interface EngagementPhaseData {
 export async function getEngagementWithPhaseData(
   engagementId: string,
   clientUUID?: string | null,
+  tenancy?: TenancyCtx | null,
 ): Promise<EngagementPhaseData | null> {
   try {
+    if (tenancy && !(await canReadProgram(tenancy, engagementId))) {
+      return null;
+    }
     const supabase = getServerSupabase();
 
     // Core engagement with milestones and risks via FK relations

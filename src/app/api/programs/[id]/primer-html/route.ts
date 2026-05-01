@@ -46,11 +46,12 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ): Promise<Response> {
   let programId: string;
+  let tenancy: Awaited<ReturnType<typeof requireTenancy>> | null = null;
   try {
     const resolved = await params;
     programId = resolved.id;
     // Auth gate — 401 if no person, 403 if no client.
-    await requireTenancy();
+    tenancy = await requireTenancy();
   } catch (err) {
     try {
       return tenancyErrorResponse(err);
@@ -79,7 +80,7 @@ export async function GET(
     let dbExists = false;
     try {
       const clientRow = await getActiveClientRow().catch(() => null);
-      const db = await getEngagementWithPhaseData(programId, clientRow?.id ?? null);
+      const db = await getEngagementWithPhaseData(programId, clientRow?.id ?? null, tenancy);
       dbExists = db?.engagement != null;
     } catch {
       dbExists = false;

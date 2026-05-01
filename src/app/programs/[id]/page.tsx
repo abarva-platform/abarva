@@ -19,6 +19,7 @@
 
 import { buildProgramDetailView } from '@/lib/programs/programs-detail-view';
 import { ProgramDetailPage } from '@/components/programs/ProgramDetailPage';
+import { notFound } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { getActiveClientRow } from '@/lib/active-client';
 import { getEngagementWithPhaseData } from '@/lib/programs/db-phase-queries';
@@ -27,6 +28,8 @@ import { parseTimelineFiltersFromSearchParams } from '@/lib/reasoning/instance-e
 import { getPhaseOverride } from '@/lib/programs/phase-overrides';
 import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances';
 import { getArchetypePrimer } from '@/lib/programs/archetype-primers';
+import { APEX_PROGRAMS_FIXTURE } from '@/lib/programs/programs-fixture';
+import { MERIDIAN_PROGRAMS_FIXTURE } from '@/lib/programs/meridian-fixture';
 
 export const dynamic = 'force-dynamic';
 
@@ -62,10 +65,28 @@ export default async function ProgramDetailRoute({
       hasTenantKey = true;
       const clientRow = await getActiveClientRow().catch(() => null);
       activeClientName = clientRow?.name ?? null;
-      dbData = await getEngagementWithPhaseData(id, clientRow?.id ?? null);
+      dbData = await getEngagementWithPhaseData(
+        id,
+        clientRow?.id ?? null,
+        clientRow
+          ? {
+              clientId: clientRow.id,
+              userId: user.personId ?? (user.clerkUserId ? `clerk:${user.clerkUserId}` : 'program-detail-page'),
+              role: user.primaryRole,
+            }
+          : null,
+      );
     }
   } catch {
     // silently fall back to fixture
+  }
+
+  const fixtureTenantName = resolveFixtureTenantName(id);
+  if (!dbData && fixtureTenantName && activeClientName && fixtureTenantName !== activeClientName) {
+    notFound();
+  }
+  if (!dbData && !fixtureTenantName && hasTenantKey) {
+    notFound();
   }
 
   // Extract the DB currentPhase BEFORE building the view so we can pass it as
@@ -203,4 +224,10 @@ export default async function ProgramDetailRoute({
       hasTenantKey={hasTenantKey}
     />
   );
+}
+
+function resolveFixtureTenantName(programId: string): string | null {
+  if (APEX_PROGRAMS_FIXTURE.some((p) => p.id === programId)) return 'Apex Retail Group';
+  if (MERIDIAN_PROGRAMS_FIXTURE.some((p) => p.id === programId)) return 'Meridian Health System';
+  return null;
 }

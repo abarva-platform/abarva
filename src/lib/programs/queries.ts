@@ -3,6 +3,7 @@
 // exclusion. DB stays `engagements`.
 
 import { getServerSupabase } from '@/lib/supabase-server';
+import { allowedProgramIdsForUser, canReadProgram } from '@/lib/auth/program-access-policy';
 import type {
   FounderApprovalRequestRow,
   MaestroFlag,
@@ -79,20 +80,26 @@ export async function getProgramPortfolio(ctx: TenancyCtx, opts: { limit?: numbe
   assertTenancy(ctx);
   const sb = getServerSupabase();
   const limit = opts.limit ?? 100;
-  const { data, error } = await sb
+  const allowedProgramIds = await allowedProgramIdsForUser(ctx);
+  if (allowedProgramIds && allowedProgramIds.length === 0) return [];
+  let query = sb
     .from('engagements')
     .select('id, client_id, name, program_archetype, origin_source, origin_source_ref, status, lifecycle_state, current_phase, current_module_key, maestro_oversight_level, founder_approval_required, phase_locked_at, phase_locked_by_user_id, data_residency_region, retention_policy_years, archived_at, deleted_at, created_at')
     .eq('client_id', ctx.clientId)
     .is('archived_at', null)
     .is('deleted_at', null)
-    .order('created_at', { ascending: false })
-    .limit(limit);
+    .order('created_at', { ascending: false });
+  if (allowedProgramIds) {
+    query = query.in('id', allowedProgramIds);
+  }
+  const { data, error } = await query.limit(limit);
   if (error) throw error;
   return ((data as EngagementRow[] | null) ?? []).map(rowToProgram);
 }
 
 export async function getProgramById(ctx: TenancyCtx, programId: string): Promise<ProgramCore | null> {
   assertTenancy(ctx);
+  if (!(await canReadProgram(ctx, programId))) return null;
   const sb = getServerSupabase();
   const { data, error } = await sb
     .from('engagements')
@@ -104,8 +111,15 @@ export async function getProgramById(ctx: TenancyCtx, programId: string): Promis
   return data ? rowToProgram(data as EngagementRow) : null;
 }
 
+async function assertProgramReadable(ctx: TenancyCtx, programId: string): Promise<void> {
+  if (!(await canReadProgram(ctx, programId))) {
+    throw new Error(`[programs/queries] program ${programId} not accessible`);
+  }
+}
+
 export async function getModuleState(ctx: TenancyCtx, programId: string): Promise<ProgramModuleRow[]> {
   assertTenancy(ctx);
+  await assertProgramReadable(ctx, programId);
   const sb = getServerSupabase();
   const { data, error } = await sb
     .from('program_modules')
@@ -131,6 +145,7 @@ export async function getModuleState(ctx: TenancyCtx, programId: string): Promis
 
 export async function getWorkItems(ctx: TenancyCtx, programId: string): Promise<ProgramWorkItemRow[]> {
   assertTenancy(ctx);
+  await assertProgramReadable(ctx, programId);
   const sb = getServerSupabase();
   const { data, error } = await sb
     .from('program_work_items')
@@ -158,6 +173,7 @@ export async function getWorkItems(ctx: TenancyCtx, programId: string): Promise<
 
 export async function getMilestones(ctx: TenancyCtx, programId: string): Promise<ProgramMilestoneRow[]> {
   assertTenancy(ctx);
+  await assertProgramReadable(ctx, programId);
   const sb = getServerSupabase();
   const { data, error } = await sb
     .from('program_milestones')
@@ -181,6 +197,7 @@ export async function getMilestones(ctx: TenancyCtx, programId: string): Promise
 
 export async function getRisks(ctx: TenancyCtx, programId: string): Promise<ProgramRiskRow[]> {
   assertTenancy(ctx);
+  await assertProgramReadable(ctx, programId);
   const sb = getServerSupabase();
   const { data, error } = await sb
     .from('program_risks')
@@ -207,6 +224,7 @@ export async function getRisks(ctx: TenancyCtx, programId: string): Promise<Prog
 
 export async function getOpenMaestroFlags(ctx: TenancyCtx, programId: string): Promise<MaestroFlag[]> {
   assertTenancy(ctx);
+  await assertProgramReadable(ctx, programId);
   const sb = getServerSupabase();
   const { data, error } = await sb
     .from('maestro_oversight_flags')
@@ -233,6 +251,7 @@ export async function getOpenMaestroFlags(ctx: TenancyCtx, programId: string): P
 
 export async function getPendingApprovals(ctx: TenancyCtx, programId: string): Promise<FounderApprovalRequestRow[]> {
   assertTenancy(ctx);
+  await assertProgramReadable(ctx, programId);
   const sb = getServerSupabase();
   const { data, error } = await sb
     .from('founder_approval_requests')
@@ -260,6 +279,7 @@ export async function getPendingApprovals(ctx: TenancyCtx, programId: string): P
 
 export async function getPhaseSnapshots(ctx: TenancyCtx, programId: string, phaseNumber?: number): Promise<PhaseSnapshot[]> {
   assertTenancy(ctx);
+  await assertProgramReadable(ctx, programId);
   const sb = getServerSupabase();
   let q = sb.from('phase_snapshots').select('*').eq('engagement_id', programId);
   if (phaseNumber !== undefined) q = q.eq('phase_number', phaseNumber);

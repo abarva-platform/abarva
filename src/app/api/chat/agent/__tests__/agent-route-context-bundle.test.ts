@@ -130,6 +130,16 @@ describe('agent route · CB-6 context-bundle wiring', () => {
     expect(source).toContain('isNexusProgramsSurface && activeClient?.key && !privateDataPlane');
   });
 
+  it('injects user access policy and restricted financial output discipline', () => {
+    expect(source).toContain('loadUserProgramAccessPolicy');
+    expect(source).toContain('formatUserProgramAccessPolicyForPrompt');
+    expect(source).toContain('formatRestrictedOutputPolicyForPrompt');
+    expect(source).toContain('sanitizeRestrictedFinancialText');
+    expect(source).toContain('summarizeFinancialValueForPrompt');
+    expect(source).toContain('ACCESS DISCIPLINE');
+    expect(source).toContain('exact financial details');
+  });
+
   // CB-10 · graceful broker-throw fallback. Prior to CB-10 the route
   // returned `null` and silently skipped emitting the artifact, so the
   // panel could not distinguish "no retrieval needed" from "retrieval
