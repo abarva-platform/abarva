@@ -9,7 +9,7 @@ export type AgentRailState = 'active' | 'on_call' | 'advisory' | 'idle';
 
 export interface ProgramPhaseSlot {
   id: ProgramPhaseId;
-  label: string; // 'Originate' | 'Discovery' | 'Synthesis' | 'Design' | 'Build' | 'Activate' | 'Operate'
+  label: string; // 'Originate' | 'Discovery' | 'Synthesis' | 'Design' | 'Execution Roadmap' | 'Approval & Mobilization' | 'Tower Handoff'
   state: ProgramPhaseState;
   gateStatus?: 'open' | 'pending' | 'approved';
 }

@@ -33,14 +33,14 @@ export const CANONICAL_SIX_PHASES: ReadonlyArray<CanonicalPhase> = [
   {
     index: 2,
     key: 'charter',
-    label: 'Charter',
-    summary: 'Lock objectives, success criteria, and baseline data request.',
+    label: 'Discovery',
+    summary: 'Prove the problem, baseline current state, and capture source evidence.',
   },
   {
     index: 3,
     key: 'diagnose',
-    label: 'Diagnose',
-    summary: 'Surface findings, contradictions, and CXO interview capture.',
+    label: 'Synthesis',
+    summary: 'Convert findings and contradictions into a recommended strategic direction.',
   },
   {
     index: 4,
@@ -51,14 +51,14 @@ export const CANONICAL_SIX_PHASES: ReadonlyArray<CanonicalPhase> = [
   {
     index: 5,
     key: 'execute',
-    label: 'Execute',
-    summary: 'Implementation plan, build, integration, change management.',
+    label: 'Approval & Mobilization',
+    summary: 'Package business case, funding, readiness, change plan, and stakeholder approval.',
   },
   {
     index: 6,
     key: 'verify',
-    label: 'Verify',
-    summary: 'Outcome measurement, benefits realization, genome feedback.',
+    label: 'Tower Handoff',
+    summary: 'Define execution monitoring, data feeds, escalation thresholds, and benefits cadence.',
   },
 ];
 
@@ -73,12 +73,12 @@ export interface CanonicalGate {
 export const CANONICAL_FOUR_GATES: ReadonlyArray<CanonicalGate> = [
   {
     index: 1,
-    label: 'Charter signed by executive sponsor',
+    label: 'Discovery findings accepted by executive sponsor',
     exitsPhase: 'charter',
   },
   {
     index: 2,
-    label: 'CXO interview completed before findings publish',
+    label: 'Synthesis recommendation approved before design',
     exitsPhase: 'diagnose',
   },
   {
@@ -88,7 +88,7 @@ export const CANONICAL_FOUR_GATES: ReadonlyArray<CanonicalGate> = [
   },
   {
     index: 4,
-    label: 'CXO verification of realized outcomes before outcome-fee claim',
+    label: 'Tower monitoring contract accepted before external execution tracking',
     exitsPhase: 'verify',
   },
 ];
@@ -98,7 +98,7 @@ export const CANONICAL_FOUR_GATES: ReadonlyArray<CanonicalGate> = [
 /**
  * The seed runs five spec phases (Intake & Framing → Outcome &
  * Accountability) which map onto canonical phases 2–6. Canonical
- * phase 1 (Origination) is pre-charter framing not yet captured in
+ * phase 1 (Origination) is pre-discovery framing not yet captured in
  * the seed; programs in the seed never report Origination as their
  * current phase. Returns the canonical index a program is currently
  * sitting at.
@@ -108,15 +108,15 @@ export function mapSpecPhaseToCanonicalIndex(
 ): CanonicalPhase['index'] {
   switch (spec) {
     case 1:
-      return 2; // Charter
+      return 2; // Discovery
     case 2:
-      return 3; // Diagnose
+      return 3; // Synthesis
     case 3:
       return 4; // Design
     case 4:
-      return 5; // Execute
+      return 5; // Approval & Mobilization
     case 5:
-      return 6; // Verify
+      return 6; // Tower Handoff
   }
 }
 

@@ -7,7 +7,7 @@
 // buildProgramEvidenceMapWithIngestions.
 //
 // Mirror of src/components/source/AddEvidenceForm.tsx, adapted to the program
-// 7-phase lifecycle (P0 Originate → P6 Operate).
+// 7-phase lifecycle (P0 Originate → P6 Tower Handoff).
 //
 // Style: AbarVa palette only — paper card, ink text, ghost button.
 
@@ -141,9 +141,9 @@ const PHASE_OPTIONS: ReadonlyArray<{ value: number; label: string }> = [
   { value: 1, label: 'P1 · Discovery' },
   { value: 2, label: 'P2 · Synthesis' },
   { value: 3, label: 'P3 · Design' },
-  { value: 4, label: 'P4 · Build' },
-  { value: 5, label: 'P5 · Activate' },
-  { value: 6, label: 'P6 · Operate' },
+  { value: 4, label: 'P4 · Execution Roadmap' },
+  { value: 5, label: 'P5 · Approval & Mobilization' },
+  { value: 6, label: 'P6 · Tower Handoff' },
 ];
 
 export function AddProgramEvidenceForm({ instanceId, currentPhase }: AddProgramEvidenceFormProps) {

@@ -34,11 +34,12 @@ export type FlagSeverity = 'critical' | 'warning' | 'info';
 
 export const PHASE_LABELS: Record<number, string> = {
   0: 'Origination',
-  1: 'Charter',
-  2: 'Diagnose',
+  1: 'Discovery',
+  2: 'Synthesis',
   3: 'Design',
-  4: 'Execute',
-  5: 'Verify',
+  4: 'Execution Roadmap',
+  5: 'Approval & Mobilization',
+  6: 'Tower Handoff',
 };
 
 export interface TenancyCtx {

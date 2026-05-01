@@ -47,7 +47,7 @@ export interface GateApprovalDrawerView {
   toPhase: number;
   fromPhaseLabel: string;
   toPhaseLabel: string;
-  /** "P3 Design → P4 Build" */
+  /** "P3 Design → P4 Execution Roadmap" */
   transitionLabel: string;
   approvalPosture: GateApprovalPosture;
   /** Human-readable posture label for the status badge. */
@@ -145,7 +145,7 @@ function linkEvidence(
  * Returns null when:
  *  - gateStatus !== 'pending' (gate is not active for review)
  *  - phasePanel.gateCriteria is missing or empty
- *  - currentPhase >= 6 (Operate — no next phase)
+ *  - currentPhase >= 6 (Tower Handoff — no next phase)
  */
 export function buildGateApprovalDrawerView(
   view: ProgramDetailView,

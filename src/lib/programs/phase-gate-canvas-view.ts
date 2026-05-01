@@ -80,21 +80,21 @@ const CANONICAL_PHASES: readonly CanonicalPhase[] = [
   },
   {
     phaseId: 'build',
-    phaseLabel: 'Build',
+    phaseLabel: 'Execution Roadmap',
     order: 4,
-    shortSummary: 'Implement the solution with paired evidence and quality gates.',
+    shortSummary: 'Define workstreams, estimates, timeline, milestones, dependencies, RACI, risks, and execution success criteria.',
   },
   {
     phaseId: 'activate',
-    phaseLabel: 'Activate',
+    phaseLabel: 'Approval & Mobilization',
     order: 5,
-    shortSummary: 'Roll out, train operators, and validate value capture in-flight.',
+    shortSummary: 'Package business case, funding, stakeholder alignment, readiness, and change plan for approval.',
   },
   {
     phaseId: 'operate',
-    phaseLabel: 'Operate',
+    phaseLabel: 'Tower Handoff',
     order: 6,
-    shortSummary: 'Run, observe, and continually refine against the value contract.',
+    shortSummary: 'Set Tower monitoring metrics, data owners, cadence, escalation thresholds, and benefits tracking.',
   },
 ] as const;
 

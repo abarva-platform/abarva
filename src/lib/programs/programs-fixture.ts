@@ -22,9 +22,9 @@ export const PHASE_LABEL_MAP: Record<ProgramPhaseId, string> = {
   1: 'Discovery',
   2: 'Synthesis',
   3: 'Design',
-  4: 'Build',
-  5: 'Activate',
-  6: 'Operate',
+  4: 'Execution Roadmap',
+  5: 'Approval & Mobilization',
+  6: 'Tower Handoff',
 };
 
 // ─── Helper to build the 7-slot phase array for a given program ─────────────
@@ -59,7 +59,7 @@ export function buildPhaseSlots(
 
 // APX-CDP-2026 · Apex Retail CDP Activation  ← FLAGSHIP
 // P3 Design · Design gate cleared Apr 27 · Architecture sprint active
-// Build gate (P3→P4) pending: 2 of 5 criteria met · Vendor C contract in final review
+// Roadmap gate (P3→P4) pending: 2 of 5 criteria met · Vendor C contract in final review
 // Linked source: AMS Vendor Consolidation 2026 · Stage 7 BAFO
 const apxCdp2026: ProgramRow = {
   id: 'apx-cdp-2026',
@@ -69,16 +69,16 @@ const apxCdp2026: ProgramRow = {
   phases: buildPhaseSlots(3, { 4: 'pending' }),
   gateStatus: 'pending',
   lastActiveLabel: '2h ago',
-  nexusNote: 'P3 Design · Build gate 2 of 5 criteria met · Vendor C contract in final review',
+  nexusNote: 'P3 Design · Execution Roadmap gate 2 of 5 criteria met · Vendor C contract in final review',
   actionLabel: 'Continue',
   isIdle: false,
   linkedSourceEvent: 'SRC-AMS-2026 · AMS Vendor Consolidation 2026 · Stage 7 BAFO',
   linkedSourceEventHref: '/source/events/apex-retail-ams-outsourcing-2026',
-  linkedSourceEventState: 'Vendor C selected · Build gate dependency',
+  linkedSourceEventState: 'Vendor C selected · roadmap dependency',
 };
 
 // APX-CC-2026 · Contact Center AI Transformation
-// P4 Build · on track for Activate gate
+// P4 Execution Roadmap · on track for Approval & Mobilization gate
 const apxCc2026: ProgramRow = {
   id: 'apx-cc-2026',
   displayId: 'APX-CC-2026',
@@ -87,7 +87,7 @@ const apxCc2026: ProgramRow = {
   phases: buildPhaseSlots(4, { 4: 'open' }),
   gateStatus: 'open',
   lastActiveLabel: '4h ago',
-  nexusNote: 'Build artifacts 68% complete — on track for Activate gate',
+  nexusNote: 'Roadmap artifacts 68% complete — on track for Approval & Mobilization gate',
   actionLabel: 'Continue',
   isIdle: false,
 };
@@ -138,7 +138,7 @@ const apxMrc2025: ProgramRow = {
 };
 
 // APX-DFV2-2025 · Demand Forecasting AI v2
-// P6 Operate · steady state · Atlas monitoring
+// P6 Tower Handoff · execution monitoring active
 const apxDfv2: ProgramRow = {
   id: 'apx-dfv2-2025',
   displayId: 'APX-DFV2-2025',
@@ -147,7 +147,7 @@ const apxDfv2: ProgramRow = {
   phases: buildPhaseSlots(6),
   gateStatus: 'idle',
   lastActiveLabel: 'Mar 28',
-  nexusNote: 'Operating in steady state — Atlas outcome tracking active',
+  nexusNote: 'Tower handoff active — Atlas outcome tracking and execution monitoring staged',
   actionLabel: 'Review',
   isIdle: true,
 };
@@ -156,10 +156,10 @@ const apxDfv2: ProgramRow = {
 // Flagship first so APEX_PROGRAMS_FIXTURE[0] always resolves to APX-CDP-2026.
 
 export const APEX_PROGRAMS_FIXTURE: ProgramRow[] = [
-  apxCdp2026,   // flagship — P3 Design · Build gate pending (2/5 criteria)
-  apxCc2026,    // P4 Build · active
+  apxCdp2026,   // flagship — P3 Design · Execution Roadmap gate pending (2/5 criteria)
+  apxCc2026,    // P4 Execution Roadmap · active
   apxSap2026,   // P1 Discovery · active
   apxLpm2026,   // P2 Synthesis · active
   apxMrc2025,   // P3 Design · idle
-  apxDfv2,      // P6 Operate · steady state
+  apxDfv2,      // P6 Tower Handoff · execution monitoring
 ];

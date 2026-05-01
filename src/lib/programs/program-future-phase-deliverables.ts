@@ -1,6 +1,7 @@
 // PROG15 · Complete Future Phase Deliverables.
 //
-// Named, described seed entries for the Design / Build / Activate / Operate
+// Named, described seed entries for the Design / Execution Roadmap /
+// Approval & Mobilization / Tower Handoff
 // phases of the Apex Retail · CDP Activation program.
 //
 // Pure deterministic read model: determinism-safe (no time, random, fetch,
@@ -95,24 +96,24 @@ const FUTURE_PHASE_DELIVERABLES: ReadonlyArray<FuturePhaseDeliverable> = [
       'Stakeholder alignment on governance model pending Synthesis gate approval.',
     deterministicSeed: true,
   },
-  // Build phase
+  // Execution Roadmap phase
   {
-    id: 'build-implementation-backlog-sprint-plan',
-    title: 'Implementation Backlog and Sprint Plan',
+    id: 'roadmap-workstreams-estimates-milestones',
+    title: 'Execution Workstreams, Estimates, and Milestones',
     description:
-      'Prioritised delivery backlog with sprint structure, team capacity plan, and dependency map for CDP build phase.',
+      'Workstream structure, timeline, estimates, critical milestones, dependencies, RACI, risks, and execution success criteria for the external delivery phase.',
     phase: 'build',
     status: 'draft',
     evidenceState: 'missing',
     missingInput:
-      'Design gate approval required before backlog can be baselined.',
+      'Design gate approval required before the roadmap can be baselined.',
     deterministicSeed: true,
   },
   {
-    id: 'build-integration-migration-readiness-checklist',
-    title: 'Integration and Migration Readiness Checklist',
+    id: 'roadmap-dependency-and-readiness-checklist',
+    title: 'Roadmap Dependency and Readiness Checklist',
     description:
-      'Technical readiness assessment for all integration points, data migration plan, and pre-launch validation criteria.',
+      'Control-plane checklist for integration dependencies, data readiness, security/privacy requirements, vendor handoffs, and pre-execution validation criteria.',
     phase: 'build',
     status: 'draft',
     evidenceState: 'missing',
@@ -120,24 +121,24 @@ const FUTURE_PHASE_DELIVERABLES: ReadonlyArray<FuturePhaseDeliverable> = [
       'AMS vendor consolidation commercial decision needed to confirm integration scope.',
     deterministicSeed: true,
   },
-  // Activate phase
+  // Approval & Mobilization phase
   {
-    id: 'activate-adoption-enablement-plan',
-    title: 'Adoption and Enablement Plan',
+    id: 'approval-business-readiness-change-plan',
+    title: 'Business Readiness and Change Plan',
     description:
-      'Change management, training, and user enablement programme for CDP platform rollout across Apex Retail business units.',
+      'Change management, training, stakeholder alignment, business readiness, and communication plan required to secure mobilization approval.',
     phase: 'activate',
     status: 'draft',
     evidenceState: 'missing',
     missingInput:
-      'Build completion and pilot results required before enablement plan is finalised.',
+      'Execution roadmap approval required before readiness and change plan are finalized.',
     deterministicSeed: true,
   },
   {
-    id: 'activate-pilot-measurement-value-tracking-plan',
-    title: 'Pilot Measurement and Value Tracking Plan',
+    id: 'approval-business-case-funding-packet',
+    title: 'Business Case and Funding Packet',
     description:
-      'KPIs, measurement framework, and value tracking methodology for the pilot cohort. Feeds Value Ledger evidence.',
+      'Funding request, expected benefits, cost envelope, decision rights, approvals, and value tracking methodology for the approved execution program.',
     phase: 'activate',
     status: 'draft',
     evidenceState: 'missing',
@@ -145,28 +146,28 @@ const FUTURE_PHASE_DELIVERABLES: ReadonlyArray<FuturePhaseDeliverable> = [
       'Value hypothesis evidence baseline required from Synthesis phase.',
     deterministicSeed: true,
   },
-  // Operate phase
+  // Tower Handoff phase
   {
-    id: 'operate-run-state-governance-continuous-improvement',
-    title: 'Run-State Governance and Continuous Improvement Plan',
+    id: 'tower-monitoring-contract',
+    title: 'Tower Monitoring Contract',
     description:
-      'Operational governance cadence, SLA ownership, and continuous improvement framework for CDP in steady-state operation.',
+      'Monitoring metrics, data-feed owners, cadence, escalation thresholds, and value-tracking responsibilities for execution oversight in Tower.',
     phase: 'operate',
     status: 'draft',
     evidenceState: 'missing',
-    missingInput: 'Activate phase completion and pilot learnings required.',
+    missingInput: 'Mobilization approval and Tower metric plan required.',
     deterministicSeed: true,
   },
   {
-    id: 'operate-scale-roadmap-decision-log',
-    title: 'Scale Roadmap and Decision Log',
+    id: 'tower-execution-decision-log',
+    title: 'Execution Decision and Escalation Log',
     description:
-      'Forward-looking roadmap for CDP capability expansion, with decision log capturing key architectural and commercial choices made throughout the programme.',
+      'Decision and escalation log for weekly/monthly execution updates, milestone changes, risk movements, and benefits tracking.',
     phase: 'operate',
     status: 'draft',
     evidenceState: 'missing',
     missingInput:
-      'Operate phase outcomes and value realization evidence required.',
+      'Tower handoff acceptance and reporting cadence required.',
     deterministicSeed: true,
   },
 ];

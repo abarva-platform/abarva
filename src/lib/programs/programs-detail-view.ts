@@ -3,8 +3,8 @@
 // Builds the ProgramDetailView for a single program from deterministic fixtures.
 // Deterministic: no Date.now(), no random, no model calls.
 //
-// Phase model: the fixture uses 0–6 (Originate through Operate).
-// The ProgramJourneyRail displays phases 1–6 (Discovery through Operate).
+// Phase model: the fixture uses 0–6 (Originate through Tower Handoff).
+// The ProgramJourneyRail displays phases 1–6 (Discovery through Tower Handoff).
 // Phase 0 (Originate) is treated as a completed pre-condition and not shown
 // in the navigator.
 
@@ -111,51 +111,51 @@ const APX_SAP_2026_P1_WORKBENCH: ProgramWorkbenchContent = {
   ],
 };
 
-// ─── APX-CC-2026 specific workbench (P4 Build · Active — 68% Complete) ───────
+// ─── APX-CC-2026 specific workbench (P4 Execution Roadmap · Active — 68% Complete) ───────
 
 const APX_CC_2026_P4_WORKBENCH: ProgramWorkbenchContent = {
-  title: 'P4 Build · Active — 68% Complete',
+  title: 'P4 Execution Roadmap · Active — 68% Complete',
   prose:
-    'Build is on track. The NLP intent classifier is deployed to staging with 94% accuracy. CRM integration is passing all smoke tests. The remaining 32% covers IVR routing rules and the operator dashboard. Activate gate target is May 15.',
+    'Execution roadmap is taking shape. Nexus is packaging workstreams, estimate basis, milestone sequence, dependencies, readiness risks, and success criteria for approval. The remaining 32% covers IVR routing scope, operator dashboard dependency, and mobilization readiness.',
   actionsLabel: 'Nexus recommends',
   actions: [
     {
       letter: 'A',
       text: 'Complete IVR routing rules',
-      detail: 'Remaining build artifact — 2 sprints remaining',
+      detail: 'Remaining roadmap dependency — 2 sprints estimated',
     },
     {
       letter: 'B',
       text: 'Ship operator dashboard MVP',
-      detail: 'Required for Activate gate — UX review Apr 30',
+      detail: 'Required for Approval & Mobilization gate — UX review Apr 30',
     },
     {
       letter: 'C',
-      text: 'Schedule Activate gate review',
+      text: 'Schedule approval/mobilization review',
       detail: 'Sponsor + IT sign-off · target May 15',
     },
   ],
 };
 
-// ─── APX-CC-2026 specific workbench (P5 Activate — locked/pending from P4 Build) ──
+// ─── APX-CC-2026 specific workbench (P5 Approval & Mobilization — locked/pending from P4 Roadmap) ──
 
 const APX_CC_2026_P5_WORKBENCH: ProgramWorkbenchContent = {
-  title: 'P5 Activate · Activation Pending',
-  prose: 'P5 Activate is locked until Build gate clears. IVR migration and dashboard delivery are the remaining Build blockers. Once cleared, the Activate phase opens a 4-week launch runway with phased contact center rollout and early churn monitoring.',
+  title: 'P5 Approval & Mobilization · Pending',
+  prose: 'P5 Approval & Mobilization is locked until the execution roadmap gate clears. IVR migration scope and dashboard delivery plan are the remaining roadmap blockers. Once cleared, P5 packages the business case, funding ask, readiness plan, change plan, and sponsor approval.',
   actionsLabel: 'Unlock path',
   actions: [
-    { letter: 'A', text: 'Complete IVR migration', detail: 'Last Build blocker — 3 sprints remaining' },
-    { letter: 'B', text: 'Deliver supervisor dashboard', detail: 'Final build deliverable — UX review pending' },
-    { letter: 'C', text: 'Preview Activate launch plan', detail: 'Phased rollout: 200 agents in Week 1' },
+    { letter: 'A', text: 'Complete IVR migration scope', detail: 'Last roadmap blocker — 3 sprints estimated' },
+    { letter: 'B', text: 'Confirm supervisor dashboard plan', detail: 'Final roadmap dependency — UX review pending' },
+    { letter: 'C', text: 'Preview approval packet', detail: 'Business case, funding, readiness, and change plan' },
   ],
 };
 
-// ─── APX-DFV2-2025 specific workbench (P6 Operate — steady state, live) ──────
+// ─── APX-DFV2-2025 specific workbench (P6 Tower Handoff — monitoring active) ──────
 
 const APX_DFV2_P6_WORKBENCH: ProgramWorkbenchContent = {
-  title: 'P6 Operate · Steady State',
-  prose: 'Demand Forecasting v2 has been live since November 2025. Forecast accuracy is at 87% — 5pp above the 82% target. Inventory waste reduction is running $1.4M/yr against a $1.2M projection. Atlas is monitoring weekly model drift and seasonal retraining cycles.',
-  actionsLabel: 'Atlas monitors',
+  title: 'P6 Tower Handoff · Monitoring Active',
+  prose: 'Demand Forecasting v2 has a Tower monitoring contract in place. Forecast accuracy is at 87% — 5pp above the 82% target. Inventory waste reduction is running $1.4M/yr against a $1.2M projection. Tower/Atlas monitor weekly value movement, drift, and escalation thresholds.',
+  actionsLabel: 'Tower monitors',
   actions: [
     { letter: 'A', text: 'Review outcome actuals', detail: '$1.4M/yr savings vs $1.2M projection — 17% ahead' },
     { letter: 'B', text: 'Check model drift report', detail: 'Q2 retraining cycle due in 3 weeks' },
@@ -189,47 +189,47 @@ const APX_LPM_2026_P2_WORKBENCH: ProgramWorkbenchContent = {
   ],
 };
 
-// ─── Generic P5 Activate workbench — intentional locked/preview copy ─────────
+// ─── Generic P5 Approval & Mobilization workbench — intentional locked/preview copy ─────────
 // Shown when viewing P5 for any program that doesn't have a flagship override.
 // Covers both: a program at P4 peeking ahead, and a program at P1–P3 seeing P5.
 
 const GENERIC_P5_ACTIVATE_WORKBENCH: ProgramWorkbenchContent = {
-  title: 'P5 Activate · Preview',
+  title: 'P5 Approval & Mobilization · Preview',
   prose:
-    'Activate is the controlled rollout phase. When Build gate clears, the program enters a structured launch runway — typically 3–6 weeks covering phased rollout, change management, and early signal capture. Atlas begins tracking value realization metrics here. No action is required until P4 Build gate approval.',
+    'Approval & Mobilization packages the business case, funding ask, stakeholder alignment, readiness, change-management plan, governance model, and launch authority. No execution starts here; AbarVa prepares the approval packet for delivery outside the tool.',
   actionsLabel: 'Preview path',
   actions: [
     {
       letter: 'A',
-      text: 'Clear Build gate first',
-      detail: 'Activate unlocks automatically when all P4 gate criteria are met',
+      text: 'Clear roadmap gate first',
+      detail: 'Approval & Mobilization unlocks when all P4 roadmap criteria are met',
     },
     {
       letter: 'B',
-      text: 'Preview Activate criteria',
-      detail: 'Phased rollout plan, change management sign-off, early signal baseline',
+      text: 'Preview approval criteria',
+      detail: 'Business case, funding, sponsor alignment, readiness, and change sign-off',
     },
     {
       letter: 'C',
-      text: 'Prepare launch readiness',
-      detail: 'Stakeholder comms, training plan, and rollback criteria',
+      text: 'Prepare mobilization readiness',
+      detail: 'Stakeholder comms, training/change plan, governance, and escalation criteria',
     },
   ],
 };
 
-// ─── Generic P6 Operate workbench — intentional locked/preview copy ───────────
+// ─── Generic P6 Tower Handoff workbench — intentional locked/preview copy ───────────
 // Shown when viewing P6 for any program that doesn't have a flagship override.
 
 const GENERIC_P6_OPERATE_WORKBENCH: ProgramWorkbenchContent = {
-  title: 'P6 Operate · Preview',
+  title: 'P6 Tower Handoff · Preview',
   prose:
-    'Operate is the steady-state phase. When a program reaches Operate, Atlas tracks ongoing value realization, model performance (if applicable), and quarterly review cycles. Sentinel monitors for drift and risk signals. This phase has no defined end-gate — it continues until program retirement or material scope change.',
+    'Tower Handoff sets up execution monitoring for work that happens outside Programs. Nexus defines the metrics, milestone cadence, data feeds, owners, escalation thresholds, and benefits tracking contract Tower will use.',
   actionsLabel: 'Preview path',
   actions: [
     {
       letter: 'A',
-      text: 'Complete Activate phase first',
-      detail: 'Operate unlocks when Activate gate is approved and live signal is stable',
+      text: 'Complete mobilization approval first',
+      detail: 'Tower Handoff unlocks when P5 approval and monitoring prerequisites are cleared',
     },
     {
       letter: 'B',
@@ -299,7 +299,7 @@ const APX_CDP_2026_P2_WORKBENCH: ProgramWorkbenchContent = {
   ],
 };
 
-// ─── Meridian simulation workbench (P3 Design · Build gate pending) ──────────
+// ─── Meridian simulation workbench (P3 Design · Execution Roadmap gate pending) ──────────
 
 const MH_AGENTIC_CARE_DATA_ACCELERATOR_P3_WORKBENCH: ProgramWorkbenchContent = {
   title: 'P3 Design · Simulation Evidence Review',
@@ -352,12 +352,12 @@ function buildWorkbenchContent(
   if (programId === 'apx-lpm-2026' && viewingPhase === 2 && viewingPhaseState === 'current') {
     return APX_LPM_2026_P2_WORKBENCH;
   }
-  // Generic P5 Activate preview — for any program without a flagship P5 override.
+  // Generic P5 Approval & Mobilization preview — for any program without a flagship P5 override.
   // APX-CC-2026 has its own P5 workbench and is already handled above.
   if (viewingPhase === 5 && viewingPhaseState !== 'current') {
     return GENERIC_P5_ACTIVATE_WORKBENCH;
   }
-  // Generic P6 Operate preview — for any program without a flagship P6 override.
+  // Generic P6 Tower Handoff preview — for any program without a flagship P6 override.
   // APX-DFV2-2025 has its own P6 workbench and is already handled above.
   if (viewingPhase === 6 && viewingPhaseState !== 'current') {
     return GENERIC_P6_OPERATE_WORKBENCH;
@@ -471,16 +471,16 @@ function buildPhasePanel(
       ],
     };
   }
-  // APX-CC-2026 P5 gate — locked/pending view from P4 Build perspective
+  // APX-CC-2026 P5 gate — locked/pending view from P4 Execution Roadmap perspective
   if (programId === 'apx-cc-2026' && viewingPhase === 5) {
     return {
       gateCriteria: [
         { criterion: 'IVR migration complete', met: false },
         { criterion: 'Supervisor dashboard delivered', met: false },
         { criterion: 'Load test passed (500 concurrent)', met: false },
-        { criterion: 'Sponsor sign-off on Build gate', met: false },
+        { criterion: 'Sponsor sign-off on execution roadmap gate', met: false },
       ],
-      blockerNote: 'P5 Activate entry requires clearing the Build gate (P4). Two blockers remain: IVR migration and dashboard delivery.',
+      blockerNote: 'P5 Approval & Mobilization entry requires clearing the Execution Roadmap gate (P4). Two blockers remain: IVR migration scope and dashboard delivery plan.',
     };
   }
   // APX-DFV2-2025 P6 gate — steady state operating view
@@ -525,31 +525,31 @@ function buildPhasePanel(
       ],
     };
   }
-  // Generic P5 Activate phase panel — intentional locked/pending copy
+  // Generic P5 Approval & Mobilization phase panel — intentional locked/pending copy
   // APX-CC-2026 P5 is handled above; this covers all other programs.
   if (viewingPhase === 5 && viewingPhaseState !== 'current') {
     return {
       blockerNote:
-        'P5 Activate entry requires P4 Build gate approval. The gate criteria are managed in the active Build phase.',
+        'P5 Approval & Mobilization entry requires P4 Execution Roadmap gate approval. The gate criteria are managed in the active roadmap phase.',
       gateCriteria: [
-        { criterion: 'P4 Build gate formally approved', met: false },
-        { criterion: 'Activate launch plan reviewed by sponsor', met: false },
+        { criterion: 'P4 Execution Roadmap gate formally approved', met: false },
+        { criterion: 'Business case reviewed by sponsor', met: false },
         { criterion: 'Change management plan filed', met: false },
-        { criterion: 'Rollback criteria documented', met: false },
+        { criterion: 'Mobilization governance and escalation criteria documented', met: false },
       ],
     };
   }
-  // Generic P6 Operate phase panel — intentional locked/pending copy
+  // Generic P6 Tower Handoff phase panel — intentional locked/pending copy
   // APX-DFV2-2025 P6 is handled above; this covers all other programs.
   if (viewingPhase === 6 && viewingPhaseState !== 'current') {
     return {
       blockerNote:
-        'P6 Operate entry requires P5 Activate gate approval. Programs enter Operate once live signal is stable and value baseline is confirmed.',
+        'P6 Tower Handoff entry requires P5 Approval & Mobilization gate approval. Programs enter Tower Handoff once monitoring metrics, data feeds, owners, and escalation thresholds are ready.',
       gateCriteria: [
-        { criterion: 'P5 Activate gate formally approved', met: false },
-        { criterion: 'Live signal stable for 2+ weeks', met: false },
-        { criterion: 'Value baseline confirmed by Atlas', met: false },
-        { criterion: 'Operating runbook filed', met: false },
+        { criterion: 'P5 Approval & Mobilization gate formally approved', met: false },
+        { criterion: 'Tower monitoring metrics defined', met: false },
+        { criterion: 'Data-feed owners confirmed', met: false },
+        { criterion: 'Escalation thresholds filed', met: false },
       ],
     };
   }
@@ -600,7 +600,7 @@ function buildPhasePanel(
       ],
     };
   }
-  // APX-CDP-2026 P3 gate — Design phase active deliverables + Build gate criteria
+  // APX-CDP-2026 P3 gate — Design phase active deliverables + Execution Roadmap gate criteria
   if (programId === 'apx-cdp-2026' && viewingPhase === 3 && viewingPhaseState === 'current') {
     return {
       gateCriteria: [
@@ -608,7 +608,7 @@ function buildPhasePanel(
         { criterion: 'Data model approved by engineering lead', met: true },
         { criterion: 'Vendor integration contract signed (Vendor C)', met: false },
         { criterion: 'Privacy architecture signed off by Steward', met: false },
-        { criterion: 'Build brief scoped and sponsor-approved', met: false },
+        { criterion: 'Execution roadmap brief scoped and sponsor-approved', met: false },
       ],
       evidenceItems: [
         {

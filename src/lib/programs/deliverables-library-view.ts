@@ -59,9 +59,9 @@ const PHASE_LABELS: Record<DeliverablePhaseId, string> = {
   discovery: 'Discovery',
   synthesis: 'Synthesis',
   design: 'Design',
-  build: 'Build',
-  activate: 'Activate',
-  operate: 'Operate',
+  build: 'Execution Roadmap',
+  activate: 'Approval & Mobilization',
+  operate: 'Tower Handoff',
 };
 
 const VERSION_LABELS: Record<DeliverableVersionState, string> = {

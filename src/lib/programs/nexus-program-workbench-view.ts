@@ -137,9 +137,10 @@ const DEFAULT_TENANT_LABEL = 'Apex Retail';
 const DEFAULT_CURRENT_SPEC: SpecPhaseNumber = 2;
 
 // The seed model carries five spec phases (1-5). The workbench journey
-// shows six product-friendly phases. This map collapses the spec into
-// the workbench keys; "activate" is a transition phase between Build
-// (spec 4) and Operate (spec 5) that has no seed-side counterpart.
+// shows six product-friendly phases. Internal keys remain stable for
+// compatibility, while labels now reflect the Programs strategy-to-approval
+// control plane: P4 roadmaps execution, P5 packages approval/mobilization,
+// and P6 hands monitoring to Tower.
 const SPEC_TO_WORKBENCH_KEY: Record<SpecPhaseNumber, string> = {
   1: 'discovery',
   2: 'synthesis',
@@ -152,9 +153,9 @@ const PHASE_DEFINITIONS: ReadonlyArray<{ key: string; index: number; label: stri
   { key: 'discovery', index: 1, label: 'Discovery' },
   { key: 'synthesis', index: 2, label: 'Synthesis' },
   { key: 'design',    index: 3, label: 'Design'    },
-  { key: 'build',     index: 4, label: 'Build'     },
-  { key: 'activate',  index: 5, label: 'Activate'  },
-  { key: 'operate',   index: 6, label: 'Operate'   },
+  { key: 'build',     index: 4, label: 'Execution Roadmap' },
+  { key: 'activate',  index: 5, label: 'Approval & Mobilization' },
+  { key: 'operate',   index: 6, label: 'Tower Handoff' },
 ];
 
 function buildPhaseJourneyForCurrent(currentKey: string): NexusWorkbenchPhaseNode[] {
@@ -301,15 +302,15 @@ const PHASE_FOCUS_TEMPLATES: ReadonlyArray<NexusWorkbenchPhaseFocus> = [
   {
     key: 'build',
     brief:
-      'Build is locked behind the Design gate. Implementation plan, integration design, and change management are drafted but not authorized.',
-    cta: 'View readiness checklist',
-    contextUsed: ['Gate dependency', 'Implementation plan', 'Integration design', 'Change management'],
+      'Execution Roadmap is locked behind the Design gate. Nexus should define how execution will happen outside AbarVa: workstreams, estimates, timeline, critical milestones, dependencies, RACI, risks, and success criteria by execution phase.',
+    cta: 'View roadmap checklist',
+    contextUsed: ['Gate dependency', 'Execution roadmap', 'Design package', 'Change readiness'],
     confidenceLabel: 'Confidence: locked',
     blockerLabel: 'Blocker: Design gate not approved',
     suggestedActions: [
-      { label: 'View Build readiness checklist', description: 'Confirm what is required to authorize Build.' },
-      { label: 'Open implementation plan',       description: 'Inspect the drafted implementation plan.' },
-      { label: 'Inspect change management plan', description: 'Review the drafted change plan.' },
+      { label: 'View roadmap checklist', description: 'Confirm what is required to authorize roadmap creation.' },
+      { label: 'Open execution roadmap', description: 'Inspect drafted workstreams, estimates, timeline, milestones, dependencies, and risks.' },
+      { label: 'Inspect change readiness', description: 'Review readiness inputs that must carry into the approval package.' },
     ],
     agentHandoffs: [
       { agent: 'nexus',    label: 'Nexus',    state: 'active',  stateLabel: 'ACTIVE',  role: 'Orchestration lead' },
@@ -318,80 +319,80 @@ const PHASE_FOCUS_TEMPLATES: ReadonlyArray<NexusWorkbenchPhaseFocus> = [
       { agent: 'atlas',    label: 'Atlas',    state: 'partial', stateLabel: 'PARTIAL', role: 'Timeline at risk' },
     ],
     workshop: {
-      title: 'Build readiness review (locked)',
-      agenda: ['Walk implementation plan', 'Confirm capacity allocation', 'Inspect change-management plan'],
-      questions: ['Is capacity validated end-to-end?', 'Who owns each change-management workstream?'],
-      evidenceToCapture: ['Capacity sign-off', 'Sequencing plan', 'Risk register'],
-      attendees: ['Implementation lead', 'Change lead', 'Vendor lead'],
+      title: 'Execution roadmap workshop (locked)',
+      agenda: ['Walk target-state design', 'Define execution workstreams', 'Estimate timeline and capacity', 'Capture milestones and risks'],
+      questions: ['What are the execution phases?', 'What must be true before each phase starts?', 'Which milestones and risks decide go/no-go?'],
+      evidenceToCapture: ['Roadmap workstreams', 'Estimate basis', 'Milestone map', 'Risk register'],
+      attendees: ['Sponsor', 'Program Lead', 'Architecture Lead', 'Finance Partner', 'Change Lead'],
     },
     missingInputs: [
       { label: 'Design gate approval', state: 'open', sourceLabel: 'Gate registry' },
-      { label: 'Capacity allocation sign-off', state: 'in-progress', sourceLabel: 'Capacity plan' },
-      { label: 'Change-management plan', state: 'in-progress', sourceLabel: 'Change plan' },
+      { label: 'Roadmap estimate basis', state: 'in-progress', sourceLabel: 'Execution roadmap' },
+      { label: 'Execution success criteria', state: 'in-progress', sourceLabel: 'Roadmap package' },
     ],
   },
   {
     key: 'activate',
     brief:
-      'Activate is locked until Build delivery is confirmed. Cutover plan, training plan, and adoption playbook are pre-staged.',
-    cta: 'Pre-load activation plan',
-    contextUsed: ['Cutover plan', 'Training plan', 'Adoption playbook'],
+      'Approval & Mobilization is locked until the execution roadmap is complete. Nexus should package the business case, funding ask, sponsor alignment, readiness, change-management plan, governance model, and mobilization approval packet.',
+    cta: 'Pre-load approval packet',
+    contextUsed: ['Business case', 'Funding ask', 'Stakeholder alignment', 'Readiness plan'],
     confidenceLabel: 'Confidence: locked',
-    blockerLabel: 'Blocker: Build delivery not confirmed',
+    blockerLabel: 'Blocker: Execution roadmap not approved',
     suggestedActions: [
-      { label: 'Pre-load cutover plan',   description: 'Stage the cutover plan for Activate.' },
-      { label: 'Stage training plan',     description: 'Pre-load the training plan for Activate.' },
-      { label: 'Stage adoption playbook', description: 'Pre-load the adoption playbook.' },
+      { label: 'Pre-load approval packet', description: 'Stage business case, funding, readiness, and sponsor alignment artifacts.' },
+      { label: 'Stage change plan', description: 'Prepare business readiness, communications, training, and adoption plan.' },
+      { label: 'Stage governance model', description: 'Confirm decision rights, steering cadence, risk acceptance, and escalation path.' },
     ],
     agentHandoffs: [
       { agent: 'nexus',    label: 'Nexus',    state: 'active',  stateLabel: 'ACTIVE',  role: 'Orchestration lead' },
-      { agent: 'steward',  label: 'Steward',  state: 'partial', stateLabel: 'PARTIAL', role: 'Post-Build gate' },
-      { agent: 'sentinel', label: 'Sentinel', state: 'partial', stateLabel: 'PARTIAL', role: 'Adoption signals not yet wired' },
-      { agent: 'atlas',    label: 'Atlas',    state: 'partial', stateLabel: 'PARTIAL', role: 'Adoption risk staged' },
+      { agent: 'steward',  label: 'Steward',  state: 'partial', stateLabel: 'PARTIAL', role: 'Mobilization approval gate' },
+      { agent: 'sentinel', label: 'Sentinel', state: 'partial', stateLabel: 'PARTIAL', role: 'Approval risks not yet resolved' },
+      { agent: 'atlas',    label: 'Atlas',    state: 'partial', stateLabel: 'PARTIAL', role: 'Business case evidence staged' },
     ],
     workshop: {
-      title: 'Activation readiness preview (locked)',
-      agenda: ['Cutover plan walkthrough', 'Training rollout', 'Adoption playbook stress test'],
-      questions: ['Are training assets ready?', 'Where are adoption risks concentrated?'],
-      evidenceToCapture: ['Cutover sign-off', 'Training completion', 'Adoption signal wiring'],
-      attendees: ['Adoption lead', 'Training lead', 'Change lead'],
+      title: 'Approval and mobilization review (locked)',
+      agenda: ['Review business case', 'Confirm funding and capacity', 'Stress-test readiness and change plan', 'Capture sponsor decision conditions'],
+      questions: ['What decision is being requested?', 'What evidence defends funding?', 'What readiness gaps block mobilization?'],
+      evidenceToCapture: ['Business case', 'Funding approval memo', 'Stakeholder alignment log', 'Readiness and change plan'],
+      attendees: ['Sponsor', 'Finance Partner', 'Program Lead', 'Change Lead', 'Business Owner'],
     },
     missingInputs: [
-      { label: 'Build delivery confirmation', state: 'open', sourceLabel: 'Delivery log' },
-      { label: 'Cutover plan authorized', state: 'in-progress', sourceLabel: 'Cutover plan' },
-      { label: 'Training plan ready', state: 'in-progress', sourceLabel: 'Training plan' },
+      { label: 'Execution roadmap approved', state: 'open', sourceLabel: 'Roadmap gate' },
+      { label: 'Business case drafted', state: 'in-progress', sourceLabel: 'Approval packet' },
+      { label: 'Readiness and change plan', state: 'in-progress', sourceLabel: 'Change plan' },
     ],
   },
   {
     key: 'operate',
     brief:
-      'Operate confirms outcomes after Activate. Outcome KPIs, sponsor sign-off, and risk close-out are required to close the program.',
-    cta: 'Pre-load outcome KPIs',
-    contextUsed: ['Outcome KPIs', 'Sponsor pattern', 'Risk close-out'],
+      'Tower Handoff defines how execution will be monitored after mobilization. Nexus should not run execution here; it should create the monitoring contract, data feeds, milestone cadence, escalation thresholds, and benefits tracking model for Tower.',
+    cta: 'Pre-load Tower contract',
+    contextUsed: ['Tower metrics', 'Milestone cadence', 'Escalation thresholds', 'Benefits tracking'],
     confidenceLabel: 'Confidence: locked',
-    blockerLabel: 'Blocker: Activate cutover not complete',
+    blockerLabel: 'Blocker: Mobilization approval not complete',
     suggestedActions: [
-      { label: 'Pre-load outcome KPIs',  description: 'Stage outcome KPIs against the intake hypothesis.' },
-      { label: 'Draft sponsor sign-off', description: 'Stage the sponsor sign-off pattern for Operate.' },
-      { label: 'Inspect risk close-out', description: 'Review the planned risk close-out path.' },
+      { label: 'Pre-load Tower contract', description: 'Stage monitoring metrics, owners, cadence, and escalation thresholds.' },
+      { label: 'Draft data-feed map', description: 'Name source systems, file owners, update cadence, and quality caveats.' },
+      { label: 'Inspect benefits cadence', description: 'Review how Tower will track milestone and value movement.' },
     ],
     agentHandoffs: [
       { agent: 'nexus',    label: 'Nexus',    state: 'active',  stateLabel: 'ACTIVE',  role: 'Orchestration lead' },
-      { agent: 'steward',  label: 'Steward',  state: 'partial', stateLabel: 'PARTIAL', role: 'Close-out gate' },
-      { agent: 'sentinel', label: 'Sentinel', state: 'partial', stateLabel: 'PARTIAL', role: 'Outcome evidence pending' },
-      { agent: 'atlas',    label: 'Atlas',    state: 'partial', stateLabel: 'PARTIAL', role: 'Sponsor outcome staged' },
+      { agent: 'steward',  label: 'Steward',  state: 'partial', stateLabel: 'PARTIAL', role: 'Tower handoff gate' },
+      { agent: 'sentinel', label: 'Sentinel', state: 'partial', stateLabel: 'PARTIAL', role: 'Monitoring risks pending' },
+      { agent: 'atlas',    label: 'Atlas',    state: 'partial', stateLabel: 'PARTIAL', role: 'Execution signal model staged' },
     ],
     workshop: {
-      title: 'Outcome close-out preview (locked)',
-      agenda: ['Outcome KPI review', 'Sponsor sign-off pattern', 'Risk close-out walkthrough'],
-      questions: ['Which KPIs prove the realized outcome?', 'Who signs off and when?'],
-      evidenceToCapture: ['Outcome KPI evidence', 'Sponsor sign-off', 'Risk close-out memo'],
-      attendees: ['Sponsor', 'Value Office', 'Steward'],
+      title: 'Tower handoff review (locked)',
+      agenda: ['Confirm monitoring metrics', 'Map data feeds and owners', 'Set escalation thresholds', 'Define weekly/monthly reporting cadence'],
+      questions: ['What will Tower see every week?', 'Which signal triggers escalation?', 'Who owns data quality for each feed?'],
+      evidenceToCapture: ['Tower monitoring contract', 'Data feed map', 'Escalation rules', 'Benefits tracking cadence'],
+      attendees: ['Sponsor', 'Program Lead', 'Tower Owner', 'Data Owner', 'Value Office'],
     },
     missingInputs: [
-      { label: 'Activate cutover complete', state: 'open', sourceLabel: 'Cutover registry' },
-      { label: 'Outcome KPI measurement', state: 'open', sourceLabel: 'Outcome KPIs' },
-      { label: 'Sponsor sign-off pattern', state: 'in-progress', sourceLabel: 'Sponsor pattern' },
+      { label: 'Mobilization approval', state: 'open', sourceLabel: 'Approval packet' },
+      { label: 'Monitoring metric model', state: 'open', sourceLabel: 'Tower contract' },
+      { label: 'Data-feed owner map', state: 'in-progress', sourceLabel: 'Data feed map' },
     ],
   },
 ];
@@ -400,9 +401,9 @@ const EVIDENCE_COVERAGE: ReadonlyArray<NexusWorkbenchEvidenceSlice> = [
   { phaseKey: 'discovery', phaseLabel: 'Discovery', percentage: 36, tone: 'strong' },
   { phaseKey: 'synthesis', phaseLabel: 'Synthesis', percentage: 24, tone: 'partial' },
   { phaseKey: 'design',    phaseLabel: 'Design',    percentage: 18, tone: 'draft' },
-  { phaseKey: 'build',     phaseLabel: 'Build',     percentage: 12, tone: 'staged' },
-  { phaseKey: 'activate',  phaseLabel: 'Activate',  percentage: 6,  tone: 'staged' },
-  { phaseKey: 'operate',   phaseLabel: 'Operate',   percentage: 4,  tone: 'planned' },
+  { phaseKey: 'build',     phaseLabel: 'Execution Roadmap', percentage: 12, tone: 'staged' },
+  { phaseKey: 'activate',  phaseLabel: 'Approval & Mobilization', percentage: 6,  tone: 'staged' },
+  { phaseKey: 'operate',   phaseLabel: 'Tower Handoff', percentage: 4,  tone: 'planned' },
 ];
 
 // --- helpers -------------------------------------------------------------

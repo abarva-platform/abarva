@@ -13,10 +13,10 @@ export function ExecuteSurface(props: ExecuteSurfaceProps) {
       <div className="programs-card programs-section">
         <div className="programs-header-bar">
           <div>
-            <div className="programs-eyebrow">Phase 5 execute</div>
-            <div className="programs-name" style={{ fontSize: 28 }}>Operational delivery surface</div>
+            <div className="programs-eyebrow">Phase 5 approval & mobilization</div>
+            <div className="programs-name" style={{ fontSize: 28 }}>Mobilization control surface</div>
             <div className="programs-muted" style={{ marginTop: 8 }}>
-              Execute intentionally breaks the module-dashboard pattern. This tab set is seeded with the Phase 5 demo state from the spec.
+              Programs does not execute delivery work here. This surface packages the business case, readiness, risks, evidence, and milestone plan needed to approve execution outside AbarVa and hand monitoring to Tower.
             </div>
           </div>
           <div className="programs-metrics" style={{ minWidth: 320 }}>

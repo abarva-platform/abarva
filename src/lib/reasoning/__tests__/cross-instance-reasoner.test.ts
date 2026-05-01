@@ -70,17 +70,17 @@ describe('buildLinkedProgramChip — phase changes flow through', () => {
       ...APX_CDP_2026_INSTANCE,
       currentPhase: 4,
       phases: APX_CDP_2026_INSTANCE.phases.map((p) =>
-        p.phaseId === 4 ? { ...p, phaseLabel: 'Build' } : p,
+        p.phaseId === 4 ? { ...p, phaseLabel: 'Execution Roadmap' } : p,
       ),
     };
-    // Verify the phaseLabel for phase 4 is "Build" so the formatter would
-    // emit "P4 Build". This pins the labelling contract independent of fixture.
+    // Verify the phaseLabel for phase 4 is "Execution Roadmap" so the formatter
+    // emits "P4 Execution Roadmap". This pins the labelling contract independent of fixture.
     const phase4 = promoted.phases.find((p) => p.phaseId === 4);
-    expect(phase4?.phaseLabel).toBe('Build');
+    expect(phase4?.phaseLabel).toBe('Execution Roadmap');
   });
 });
 
-describe('buildLinkedProgramChip — APX-DFV2-2025 (P6 Operate, no blockers)', () => {
+describe('buildLinkedProgramChip — APX-DFV2-2025 (P6 Tower Handoff, no blockers)', () => {
   test('returns green status when no open blockers exist', () => {
     // APX-DFV2-2025 has flags: [], no linkedSourceEvents — should be clean.
     expect(APX_DFV2_INSTANCE.flags).toHaveLength(0);
@@ -89,7 +89,7 @@ describe('buildLinkedProgramChip — APX-DFV2-2025 (P6 Operate, no blockers)', (
     expect(chip.status).toBe('green');
     expect(chip.blockerLabel).toBeUndefined();
     expect(chip.phase).toBe(6);
-    expect(chip.phaseLabel).toBe('P6 Operate');
+    expect(chip.phaseLabel).toBe('P6 Tower Handoff');
   });
 });
 

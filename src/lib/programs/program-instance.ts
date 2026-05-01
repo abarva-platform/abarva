@@ -6,7 +6,7 @@
 // synthesis context building, and cross-instance cascade tracking.
 //
 // Mirrors the shape of SourceEventInstance in src/lib/source/source-event-instance.ts
-// but adapted to the 7-phase program lifecycle (P0 Originate → P6 Operate).
+// but adapted to the 7-phase program lifecycle (P0 Originate → P6 Tower Handoff).
 
 import type { LinkType } from '@/lib/reasoning';
 
@@ -16,7 +16,7 @@ export type ProgramPhaseStatus = 'done' | 'current' | 'pending' | 'locked';
 
 export interface ProgramPhaseState {
   phaseId: number;         // 0-6
-  phaseLabel: string;      // 'Originate' | 'Discovery' | ... | 'Operate'
+  phaseLabel: string;      // 'Originate' | 'Discovery' | ... | 'Tower Handoff'
   status: ProgramPhaseStatus;
   gateStatus: 'open' | 'pending' | 'approved' | 'na';
   enteredAt?: string;      // ISO date
