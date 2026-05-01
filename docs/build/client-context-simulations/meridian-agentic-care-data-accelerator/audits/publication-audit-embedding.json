@@ -1,0 +1,10 @@
+{
+  "run_mode": "live",
+  "chunks_embedded": 1026,
+  "model": "text-embedding-3-large",
+  "dim": 1024,
+  "prompt_tokens": 111130,
+  "estimated_embedding_cost_usd": 0.014447,
+  "cost_cap_usd": 500.0,
+  "generated_at": "2026-05-01T00:16:35Z"
+}

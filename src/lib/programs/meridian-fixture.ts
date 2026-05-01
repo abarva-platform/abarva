@@ -2,12 +2,30 @@
 // Deterministic: no Date.now(), no random, no model calls.
 //
 // Demo anchor:
-//   Tenant:   Meridian Analytics
-//   Programs: 2 active programs across 2 phases (Synthesis · Discovery)
-//   Flagship: MRD-CEI-2026 · Customer Experience Intelligence · P2 Synthesis
+//   Tenant:   Meridian Health System
+//   Programs: 3 active programs across 3 phases (Design · Synthesis · Discovery)
+//   Flagship: MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR · P3 Design
 
 import type { ProgramRow } from './programs-types';
 import { buildPhaseSlots } from './programs-fixture';
+
+// MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR · Agentic Care Data Accelerator
+// P3 Design · simulation-backed · Build gate pending
+const mhProgAgenticCareDataAccelerator: ProgramRow = {
+  id: 'mh-prog-agentic-care-data-accelerator',
+  displayId: 'MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR',
+  name: 'Agentic Care Data Accelerator',
+  currentPhase: 3,
+  phases: buildPhaseSlots(3, { 4: 'pending' }),
+  gateStatus: 'pending',
+  lastActiveLabel: 'live simulation',
+  nexusNote:
+    'P3 Design · evidence-backed simulation · control testing and rollback ownership still open',
+  actionLabel: 'Review',
+  isIdle: false,
+  linkedSourceEvent: 'Meridian simulation handoff · 5 source artifacts · 9 corpus entries',
+  linkedSourceEventState: 'Published to corpus index · not yet app-wired retrieval',
+};
 
 // MRD-CEI-2026 · Customer Experience Intelligence
 // P2 Synthesis · active · solution options under Sentinel analysis
@@ -40,9 +58,11 @@ const mrdDam2026: ProgramRow = {
 };
 
 // ─── Exported fixture array ──────────────────────────────────────────────────
-// Flagship first so MERIDIAN_PROGRAMS_FIXTURE[0] always resolves to MRD-CEI-2026.
+// Flagship first so MERIDIAN_PROGRAMS_FIXTURE[0] always resolves to the newest
+// simulation-backed Meridian program.
 
 export const MERIDIAN_PROGRAMS_FIXTURE: ProgramRow[] = [
-  mrdCei2026,  // P2 Synthesis · active
-  mrdDam2026,  // P1 Discovery · active
+  mhProgAgenticCareDataAccelerator, // P3 Design · simulation-backed · gated
+  mrdCei2026,                       // P2 Synthesis · active
+  mrdDam2026,                       // P1 Discovery · active
 ];

@@ -1,0 +1,24 @@
+{
+  "run_mode": "live",
+  "generated_at": "2026-05-01T00:16:46Z",
+  "pinecone_index": "abarva-knowledge-corpus-prod",
+  "pinecone_host": "https://nexus-knowledge-yxqevmb.svc.aped-4627-b74a.pinecone.io",
+  "counts_by_namespace": {
+    "cross-industry-patterns": 146,
+    "deliverable-templates": 32,
+    "industry-financial-services": 186,
+    "industry-healthcare": 206,
+    "industry-retail": 182,
+    "lifecycle-substrate": 238,
+    "vendor-implementations": 36
+  },
+  "upserted_by_namespace": {
+    "cross-industry-patterns": 146,
+    "deliverable-templates": 32,
+    "industry-financial-services": 186,
+    "industry-healthcare": 206,
+    "industry-retail": 182,
+    "lifecycle-substrate": 238,
+    "vendor-implementations": 36
+  }
+}
