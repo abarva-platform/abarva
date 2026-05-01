@@ -99,4 +99,43 @@ describe('program access policy', () => {
     expect(policy.canViewFinancialData).toBe(false);
     expect(policy.deniedDataClasses).toContain('restricted_financial');
   });
+
+  it('maps app-wide admin roles to client-pinned client_admin, never cross-client super admin', async () => {
+    setupRows({
+      person_client_memberships: null,
+      engagement_participants: [],
+    });
+    const { loadUserProgramAccessPolicy, formatUserProgramAccessPolicyForPrompt } = await import('../program-access-policy');
+    const policy = await loadUserProgramAccessPolicy({
+      clientId: 'client-1',
+      userId: '00000000-0000-4000-8000-000000000001',
+      role: 'admin',
+    });
+
+    expect(policy.accessLevel).toBe('client_admin');
+    expect(policy.programScope).toBe('all_client_programs');
+    expect(policy.programIdsAllowed).toBeNull();
+    expect(formatUserProgramAccessPolicyForPrompt(policy)).toContain('no cross-client admin role exists');
+  });
+
+  it('normalizes legacy abarva_super_admin memberships to client_admin within the active client', async () => {
+    setupRows({
+      person_client_memberships: {
+        role: 'maestro',
+        access_level: 'abarva_super_admin',
+        financial_visibility: false,
+      },
+      engagement_participants: [],
+    });
+    const { loadUserProgramAccessPolicy } = await import('../program-access-policy');
+    const policy = await loadUserProgramAccessPolicy({
+      clientId: 'client-1',
+      userId: '00000000-0000-4000-8000-000000000001',
+      role: 'maestro',
+    });
+
+    expect(policy.accessLevel).toBe('client_admin');
+    expect(policy.clientId).toBe('client-1');
+    expect(policy.programIdsAllowed).toBeNull();
+  });
 });
