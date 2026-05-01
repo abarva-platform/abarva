@@ -284,36 +284,34 @@ describe('Probe 4 · tenantKeyForProgramCode · program → tenant key', () => {
 // =====================================================================
 
 describe('Probe 5 · inferClientKeyFromEmail', () => {
-  it('infers meridian from canonical Meridian demo emails', () => {
-    expect(inferClientKeyFromEmail('demo-meridian+clerk_test@abarva.com')).toBe(
+  it('infers meridian from canonical Meridian client emails', () => {
+    expect(inferClientKeyFromEmail('elena.rivera@meridian-health.example.com')).toBe(
       'meridian',
     );
-    expect(inferClientKeyFromEmail('mh+clerk_test@abarva.com')).toBe('meridian');
+    expect(inferClientKeyFromEmail('nina.patel@meridian-health.example.com')).toBe('meridian');
   });
 
-  it('infers apexretail from canonical Apex Retail demo emails', () => {
-    expect(inferClientKeyFromEmail('demo-apexretail+clerk_test@abarva.com')).toBe(
+  it('infers apexretail from canonical Apex Retail client emails', () => {
+    expect(inferClientKeyFromEmail('noah.patel@apex-retail.example.com')).toBe(
       'apexretail',
     );
-    expect(inferClientKeyFromEmail('apex+clerk_test@abarva.com')).toBe('apexretail');
+    expect(inferClientKeyFromEmail('maya.desai@apex-retail.example.com')).toBe('apexretail');
     expect(inferClientKeyFromEmail('anand+apex@abarva.com')).toBe('apexretail');
   });
 
-  it('infers arcturus from canonical Arcturus and First Capital demo emails', () => {
-    expect(inferClientKeyFromEmail('demo-arcturus+clerk_test@abarva.com')).toBe(
+  it('infers arcturus from canonical First Capital client emails', () => {
+    expect(inferClientKeyFromEmail('lena.ortiz@firstcapital.example.com')).toBe(
       'arcturus',
     );
-    expect(inferClientKeyFromEmail('demo-firstcapital+clerk_test@abarva.com')).toBe(
+    expect(inferClientKeyFromEmail('ethan.brooks@firstcapital.example.com')).toBe(
       'arcturus',
     );
-    expect(inferClientKeyFromEmail('af+clerk_test@abarva.com')).toBe('arcturus');
+    expect(inferClientKeyFromEmail('rachel.kim@firstcapital.example.com')).toBe('arcturus');
   });
 
-  it('infers keystone from canonical Keystone demo emails', () => {
-    expect(inferClientKeyFromEmail('demo-keystone+clerk_test@abarva.com')).toBe(
-      'keystone',
-    );
-    expect(inferClientKeyFromEmail('ke+clerk_test@abarva.com')).toBe('keystone');
+  it('infers keystone from retired Keystone demo emails', () => {
+    expect(inferClientKeyFromEmail('retired-energy-demo@example.com')).toBeNull();
+    expect(inferClientKeyFromEmail('retired-energy-alias@example.com')).toBeNull();
   });
 
   it('returns null for unknown emails', () => {
@@ -324,7 +322,7 @@ describe('Probe 5 · inferClientKeyFromEmail', () => {
   });
 
   it('does not cross-bind a Meridian email to a non-Meridian tenant', () => {
-    expect(inferClientKeyFromEmail('demo-meridian+clerk_test@abarva.com')).not.toBe(
+    expect(inferClientKeyFromEmail('elena.rivera@meridian-health.example.com')).not.toBe(
       'apexretail',
     );
   });
@@ -361,17 +359,15 @@ describe('Probe 6 · session role inference', () => {
     expect(inferSessionRoleFromEmail('anand.sundaram@thesundaram.com')).toBeNull();
   });
 
-  it('infers investor only for the canonical investor email', () => {
-    expect(inferSessionRoleFromEmail('investor+clerk_test@abarva.com')).toBe(
-      'investor',
-    );
+  it('does not infer investor from retired investor emails', () => {
+    expect(inferSessionRoleFromEmail('investor+clerk_test@abarva.com')).toBeNull();
   });
 
-  it('infers client for canonical demo client emails', () => {
-    expect(inferSessionRoleFromEmail('demo-meridian+clerk_test@abarva.com')).toBe(
+  it('infers client for canonical client emails', () => {
+    expect(inferSessionRoleFromEmail('elena.rivera@meridian-health.example.com')).toBe(
       'client',
     );
-    expect(inferSessionRoleFromEmail('demo-apexretail+clerk_test@abarva.com')).toBe(
+    expect(inferSessionRoleFromEmail('noah.patel@apex-retail.example.com')).toBe(
       'client',
     );
     expect(inferSessionRoleFromEmail('anand+apex@abarva.com')).toBe('client');
@@ -383,15 +379,13 @@ describe('Probe 6 · session role inference', () => {
   });
 
   it('resolveSessionRole prefers an explicit role over email inference', () => {
-    expect(resolveSessionRole('admin', 'demo-meridian+clerk_test@abarva.com')).toBe(
+    expect(resolveSessionRole('admin', 'elena.rivera@meridian-health.example.com')).toBe(
       'admin',
     );
   });
 
   it('resolveSessionRole falls back to email when no role is supplied', () => {
-    expect(resolveSessionRole(null, 'investor+clerk_test@abarva.com')).toBe(
-      'investor',
-    );
+    expect(resolveSessionRole(null, 'investor+clerk_test@abarva.com')).toBeNull();
   });
 
   it('isLockedTenantRole is true for client and maestro, false for admin/investor/external', () => {
@@ -426,9 +420,9 @@ describe('Probe 7 · resolvePinnedSessionClientKey', () => {
   it('falls back to email inference when neither clientId nor default is set', () => {
     expect(
       resolvePinnedSessionClientKey({
-        email: 'demo-keystone+clerk_test@abarva.com',
+        email: 'ethan.brooks@firstcapital.example.com',
       }),
-    ).toBe('keystone');
+    ).toBe('arcturus');
   });
 
   it('explicit tenant email aliases override stale conflicting metadata', () => {
@@ -462,7 +456,7 @@ describe('Probe 8 · shouldStripUnauthorizedClientParam', () => {
     expect(
       shouldStripUnauthorizedClientParam(
         'client',
-        { email: 'demo-meridian+clerk_test@abarva.com' },
+        { email: 'elena.rivera@meridian-health.example.com' },
         'apexretail',
       ),
     ).toBe(true);
@@ -472,7 +466,7 @@ describe('Probe 8 · shouldStripUnauthorizedClientParam', () => {
     expect(
       shouldStripUnauthorizedClientParam(
         'client',
-        { email: 'demo-meridian+clerk_test@abarva.com' },
+        { email: 'elena.rivera@meridian-health.example.com' },
         'meridian',
       ),
     ).toBe(false);
@@ -492,7 +486,7 @@ describe('Probe 8 · shouldStripUnauthorizedClientParam', () => {
     expect(
       shouldStripUnauthorizedClientParam(
         'client',
-        { email: 'demo-meridian+clerk_test@abarva.com' },
+        { email: 'elena.rivera@meridian-health.example.com' },
         null,
       ),
     ).toBe(false);
@@ -540,7 +534,7 @@ describe('Probe 10 · End-to-end probe walk', () => {
     expect(tenant?.tenantKey).toBe('apexretail');
 
     // Step 2: the user's session resolves as a Meridian client.
-    const userEmail = 'demo-meridian+clerk_test@abarva.com';
+    const userEmail = 'elena.rivera@meridian-health.example.com';
     const role = resolveSessionRole(null, userEmail);
     expect(role).toBe('client');
     const pinnedKey = resolvePinnedSessionClientKey({ email: userEmail });
@@ -562,7 +556,7 @@ describe('Probe 10 · End-to-end probe walk', () => {
     const tenant = findTenantByRouteSlug('meridian-health');
     expect(tenant?.tenantKey).toBe('meridian');
 
-    const userEmail = 'demo-apexretail+clerk_test@abarva.com';
+    const userEmail = 'noah.patel@apex-retail.example.com';
     const pinnedKey = resolvePinnedSessionClientKey({ email: userEmail });
     expect(pinnedKey).toBe('apexretail');
 

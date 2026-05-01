@@ -4,9 +4,10 @@
 
 import { fireEvent, render, screen } from '@testing-library/react';
 import { DemoCodeSignIn } from '@/components/auth/DemoCodeSignIn';
+import { CANONICAL_AUTH_EMAILS } from '@/lib/auth/canonical-auth-roster';
 
 describe('DemoCodeSignIn', () => {
-  it('enables continue after entering a demo email and reveals the code step', async () => {
+  it('enables continue after entering a canonical client email and reveals the code step', async () => {
     render(<DemoCodeSignIn redirectUrl="/auth-redirect" />);
 
     const email = screen.getByPlaceholderText('Enter your email address');
@@ -14,7 +15,7 @@ describe('DemoCodeSignIn', () => {
 
     expect((button as HTMLButtonElement).disabled).toBe(true);
 
-    fireEvent.change(email, { target: { value: 'demo-meridian+clerk_test@abarva.com' } });
+    fireEvent.change(email, { target: { value: 'elena.rivera@meridian-health.example.com' } });
 
     expect((button as HTMLButtonElement).disabled).toBe(false);
     fireEvent.click(button);
@@ -22,7 +23,7 @@ describe('DemoCodeSignIn', () => {
     expect(await screen.findByLabelText('Email verification code')).toBeTruthy();
   });
 
-  it('shows the locked-account guidance for non-demo emails', () => {
+  it('shows the locked-account guidance for non-canonical emails', () => {
     render(<DemoCodeSignIn redirectUrl="/auth-redirect" />);
 
     fireEvent.change(screen.getByPlaceholderText('Enter your email address'), {
@@ -30,20 +31,14 @@ describe('DemoCodeSignIn', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
-    expect(screen.getByText(/restricted to the approved demo accounts/i)).toBeTruthy();
+    expect(screen.getByText(/restricted to the approved client test accounts/i)).toBeTruthy();
   });
 
-  it('renders the exact approved crawler accounts', () => {
+  it('renders the exact approved client test accounts', () => {
     render(<DemoCodeSignIn redirectUrl="/auth-redirect" />);
 
-    expect(screen.getByText('demo-apexretail+clerk_test@abarva.com')).toBeTruthy();
-    expect(screen.getByText('demo-meridian+clerk_test@abarva.com')).toBeTruthy();
-    expect(screen.getByText('demo-firstcapital+clerk_test@abarva.com')).toBeTruthy();
-    expect(screen.getByText('demo-apexretail-programs+clerk_test@abarva.com')).toBeTruthy();
-    expect(screen.getByText('demo-meridian-programs+clerk_test@abarva.com')).toBeTruthy();
-    expect(screen.getByText('demo-firstcapital-programs+clerk_test@abarva.com')).toBeTruthy();
-    expect(screen.getByText('demo-apexretail-source+clerk_test@abarva.com')).toBeTruthy();
-    expect(screen.getByText('demo-meridian-source+clerk_test@abarva.com')).toBeTruthy();
-    expect(screen.getByText('demo-firstcapital-source+clerk_test@abarva.com')).toBeTruthy();
+    for (const email of CANONICAL_AUTH_EMAILS) {
+      expect(screen.getByText(email)).toBeTruthy();
+    }
   });
 });

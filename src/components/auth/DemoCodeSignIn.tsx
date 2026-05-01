@@ -77,7 +77,7 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
     setError(null)
 
     if (!isDemoCodeEmail(normalizedEmail)) {
-      setError('This app sign-in is restricted to the approved demo accounts listed below.')
+      setError('This app sign-in is restricted to the approved client test accounts listed below.')
       return
     }
 
@@ -121,7 +121,7 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
       if (message === 'invalid_demo_code') {
         setError('That code was not accepted. Use 424242 for an approved demo account.')
       } else {
-        setError('Demo sign-in did not complete. Retry with one of the approved demo accounts below.')
+        setError('Client test sign-in did not complete. Retry with one of the approved client test accounts below.')
       }
     } finally {
       setPending(false)
@@ -140,17 +140,17 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
             color: '#14B8A6',
           }}
         >
-          Demo Access
+          Client Test Access
         </div>
         <div style={{ color: '#F5F7FB', fontSize: '22px', fontWeight: 700 }}>
-          Sign in with a test code
+          Sign in with a client test code
         </div>
         <div style={{ color: '#9AA5B1', fontSize: '14px', lineHeight: 1.5 }}>
-          Only approved crawler/demo identities can sign in here. Continue with one of the emails below and use code{' '}
+          Only approved client test accounts can sign in here. Continue with one of the emails below and use code{' '}
           <code>{DEMO_CODE_VALUE}</code>.
         </div>
         <div
-          aria-label="Approved demo accounts"
+          aria-label="Approved client test accounts"
           style={{
             display: 'grid',
             gap: '6px',

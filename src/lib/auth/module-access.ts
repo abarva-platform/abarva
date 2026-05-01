@@ -1,4 +1,5 @@
 import { resolveSessionRole, type AppSessionRole } from '@/lib/auth/access-routing';
+import { CANONICAL_CLIENT_ADMIN_EMAILS } from '@/lib/auth/canonical-auth-roster';
 
 export type ProductModule = 'setup' | 'programs' | 'source' | 'intelligence' | 'tower';
 
@@ -18,12 +19,7 @@ const DEFAULT_CLIENT_MODULES: ProductModule[] = ['programs', 'source', 'intellig
 const CLIENT_ADMIN_MODULES: ProductModule[] = ['setup', ...DEFAULT_CLIENT_MODULES];
 const COMMON_MODULES: ProductModule[] = ['intelligence', 'tower'];
 
-const SETUP_EMAIL_ALLOWLIST = new Set([
-  'anand.sundaram@thesundaram.com',
-  'demo-apexretail+clerk_test@abarva.com',
-  'demo-meridian+clerk_test@abarva.com',
-  'demo-firstcapital+clerk_test@abarva.com',
-]);
+const SETUP_EMAIL_ALLOWLIST = new Set<string>(CANONICAL_CLIENT_ADMIN_EMAILS);
 
 function normalizeEmail(email: string | null | undefined): string {
   return email?.trim().toLowerCase() ?? '';

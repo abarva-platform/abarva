@@ -16,17 +16,9 @@ function hasExplicitTenantAlias(email: string | null | undefined): boolean {
   const normalized = normalizeEmail(email);
   if (!normalized) return false;
   return (
-    normalized.includes('demo-meridian+clerk_test') ||
-    normalized.includes('demo-arcturus+clerk_test') ||
-    normalized.includes('demo-firstcapital+clerk_test') ||
-    normalized.includes('demo-apexretail+clerk_test') ||
-    normalized.includes('demo-keystone+clerk_test') ||
-    normalized.includes('demo-nexora+clerk_test') ||
-    normalized.includes('mh+clerk_test') ||
-    normalized.includes('af+clerk_test') ||
-    normalized.includes('apex+clerk_test') ||
-    normalized.includes('keystone+clerk_test') ||
-    normalized.includes('ke+clerk_test') ||
+    normalized.endsWith('@meridian-health.example.com') ||
+    normalized.endsWith('@apex-retail.example.com') ||
+    normalized.endsWith('@firstcapital.example.com') ||
     normalized.includes('+apex@abarva.com') ||
     normalized.includes('+meridian@abarva.com') ||
     normalized.includes('+firstcapital@abarva.com')
@@ -34,31 +26,18 @@ function hasExplicitTenantAlias(email: string | null | undefined): boolean {
 }
 
 export function isNewClientSetupEmail(email: string | null | undefined): boolean {
-  const normalized = normalizeEmail(email);
-  return normalized.includes('demo-new+clerk_test');
+  void email;
+  return false;
 }
 
 export function inferSessionRoleFromEmail(email: string | null | undefined): AppSessionRole {
   const normalized = normalizeEmail(email);
   if (!normalized) return null;
 
-  if (normalized.includes('investor+clerk_test@abarva.com')) {
-    return 'investor';
-  }
-
   if (
-    normalized.includes('demo-meridian+clerk_test') ||
-    normalized.includes('demo-arcturus+clerk_test') ||
-    normalized.includes('demo-firstcapital+clerk_test') ||
-    normalized.includes('demo-apexretail+clerk_test') ||
-    normalized.includes('demo-keystone+clerk_test') ||
-    normalized.includes('demo-nexora+clerk_test') ||
-    normalized.includes('demo-new+clerk_test') ||
-    normalized.includes('mh+clerk_test') ||
-    normalized.includes('af+clerk_test') ||
-    normalized.includes('apex+clerk_test') ||
-    normalized.includes('keystone+clerk_test') ||
-    normalized.includes('ke+clerk_test') ||
+    normalized.endsWith('@meridian-health.example.com') ||
+    normalized.endsWith('@apex-retail.example.com') ||
+    normalized.endsWith('@firstcapital.example.com') ||
     normalized.includes('+apex@abarva.com') ||
     normalized.includes('+meridian@abarva.com') ||
     normalized.includes('+firstcapital@abarva.com')

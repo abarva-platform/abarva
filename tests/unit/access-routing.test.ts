@@ -19,10 +19,10 @@ describe('access-routing', () => {
     expect(resolveSessionClientKey({ defaultClientId: 'keystone' })).toBe('keystone');
   });
 
-  test('falls back to email alias when client metadata is missing', () => {
-    expect(resolveSessionClientKey({ email: 'demo-apexretail+clerk_test@abarva.com' })).toBe('apexretail');
-    expect(resolveSessionClientKey({ email: 'demo-firstcapital+clerk_test@abarva.com' })).toBe('arcturus');
-    expect(resolveSessionClientKey({ email: 'demo-nexora+clerk_test@abarva.com' })).toBe('keystone');
+  test('falls back to canonical client email domain when client metadata is missing', () => {
+    expect(resolveSessionClientKey({ email: 'noah.patel@apex-retail.example.com' })).toBe('apexretail');
+    expect(resolveSessionClientKey({ email: 'lena.ortiz@firstcapital.example.com' })).toBe('arcturus');
+    expect(resolveSessionClientKey({ email: 'elena.rivera@meridian-health.example.com' })).toBe('meridian');
   });
 
   test('falls back to global default for invalid values', () => {
@@ -31,23 +31,24 @@ describe('access-routing', () => {
 
   test('strict pinned client resolver never falls back to the global default', () => {
     expect(resolvePinnedSessionClientKey({ clientId: 'unknown', defaultClientId: 'nope' })).toBeNull();
-    expect(resolvePinnedSessionClientKey({ email: 'demo-apexretail+clerk_test@abarva.com' })).toBe('apexretail');
+    expect(resolvePinnedSessionClientKey({ email: 'noah.patel@apex-retail.example.com' })).toBe('apexretail');
   });
 
-  test('infers roles for legacy demo logins', () => {
+  test('infers roles for canonical client logins only', () => {
     expect(inferSessionRoleFromEmail('anand+clerk_test@abarva.com')).toBeNull();
     expect(inferSessionRoleFromEmail('anand.sundaram@thesundaram.com')).toBeNull();
-    expect(inferSessionRoleFromEmail('investor+clerk_test@abarva.com')).toBe('investor');
-    expect(inferSessionRoleFromEmail('demo-meridian+clerk_test@abarva.com')).toBe('client');
-    expect(resolveSessionRole(undefined, 'demo-apexretail+clerk_test@abarva.com')).toBe('client');
+    expect(inferSessionRoleFromEmail('investor+clerk_test@abarva.com')).toBeNull();
+    expect(inferSessionRoleFromEmail('demo-meridian+clerk_test@abarva.com')).toBeNull();
+    expect(inferSessionRoleFromEmail('elena.rivera@meridian-health.example.com')).toBe('client');
+    expect(resolveSessionRole(undefined, 'noah.patel@apex-retail.example.com')).toBe('client');
   });
 
-  test('recognizes the new client setup alias', () => {
-    expect(isNewClientSetupEmail('demo-new+clerk_test@abarva.com')).toBe(true);
-    expect(resolvePostSignInPath(undefined, { email: 'demo-new+clerk_test@abarva.com' })).toBe('/tower/onboard');
+  test('does not recognize the retired new-client setup alias', () => {
+    expect(isNewClientSetupEmail('demo-new+clerk_test@abarva.com')).toBe(false);
+    expect(resolvePostSignInPath(undefined, { email: 'demo-new+clerk_test@abarva.com' })).toBe('/home?client=meridian');
   });
 
-  test('routes investors to investor surface', () => {
+  test('routes investors to investor surface when Clerk metadata says investor', () => {
     expect(resolvePostSignInPath('investor', { defaultClientId: 'keystone' })).toBe('/investor?client=keystone');
   });
 
@@ -57,12 +58,13 @@ describe('access-routing', () => {
 
   test('routes locked client users to their pinned client', () => {
     expect(resolvePostSignInPath('client', { clientId: 'meridian', defaultClientId: 'apexretail' })).toBe('/home?client=meridian');
-    expect(resolvePostSignInPath(undefined, { email: 'demo-apexretail+clerk_test@abarva.com' })).toBe('/home?client=apexretail');
+    expect(resolvePostSignInPath(undefined, { email: 'noah.patel@apex-retail.example.com' })).toBe('/home?client=apexretail');
   });
 
-  test('recognizes locked tenant roles from role or email alias', () => {
+  test('recognizes locked tenant roles from role or canonical email domain', () => {
     expect(isLockedTenantRole('client', null)).toBe(true);
-    expect(isLockedTenantRole(undefined, 'demo-keystone+clerk_test@abarva.com')).toBe(true);
+    expect(isLockedTenantRole(undefined, 'ethan.brooks@firstcapital.example.com')).toBe(true);
+    expect(isLockedTenantRole(undefined, 'demo-keystone+clerk_test@abarva.com')).toBe(false);
     expect(isLockedTenantRole(undefined, 'anand.sundaram@thesundaram.com')).toBe(false);
   });
 
@@ -70,14 +72,14 @@ describe('access-routing', () => {
     expect(
       shouldStripUnauthorizedClientParam(
         undefined,
-        { email: 'demo-apexretail+clerk_test@abarva.com' },
+        { email: 'noah.patel@apex-retail.example.com' },
         'meridian',
       ),
     ).toBe(true);
     expect(
       shouldStripUnauthorizedClientParam(
         undefined,
-        { email: 'demo-apexretail+clerk_test@abarva.com' },
+        { email: 'noah.patel@apex-retail.example.com' },
         'apexretail',
       ),
     ).toBe(false);

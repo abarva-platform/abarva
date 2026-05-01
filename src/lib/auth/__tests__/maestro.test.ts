@@ -4,10 +4,10 @@ import {
 } from '../maestro';
 
 describe('maestro person lookup helpers', () => {
-  it('adds canonical demo email candidates for +clerk_test aliases', () => {
-    expect(getEmailLookupCandidates('demo-apexretail+clerk_test@abarva.com')).toEqual([
-      'demo-apexretail+clerk_test@abarva.com',
-      'demo-apexretail@abarva.com',
+  it('adds canonical email candidates for plus aliases', () => {
+    expect(getEmailLookupCandidates('nina.patel+test@abarva.com')).toEqual([
+      'nina.patel+test@abarva.com',
+      'nina.patel@abarva.com',
     ]);
   });
 
@@ -15,7 +15,7 @@ describe('maestro person lookup helpers', () => {
     expect(
       personMatchesClerkEmail(
         { email: 'anand.sundaram@thesundaram.com' },
-        ['demo-apexretail+clerk_test@abarva.com', 'demo-apexretail@abarva.com'],
+        ['nina.patel+test@abarva.com', 'nina.patel@abarva.com'],
       ),
     ).toBe(false);
   });
@@ -24,7 +24,7 @@ describe('maestro person lookup helpers', () => {
     expect(
       personMatchesClerkEmail(
         { email: null },
-        ['demo-apexretail+clerk_test@abarva.com', 'demo-apexretail@abarva.com'],
+        ['nina.patel+test@abarva.com', 'nina.patel@abarva.com'],
       ),
     ).toBe(false);
   });
@@ -32,8 +32,8 @@ describe('maestro person lookup helpers', () => {
   it('accepts person_id rows whose email matches a Clerk email candidate', () => {
     expect(
       personMatchesClerkEmail(
-        { email: 'demo-apexretail@abarva.com' },
-        ['demo-apexretail+clerk_test@abarva.com', 'demo-apexretail@abarva.com'],
+        { email: 'nina.patel@abarva.com' },
+        ['nina.patel+test@abarva.com', 'nina.patel@abarva.com'],
       ),
     ).toBe(true);
   });

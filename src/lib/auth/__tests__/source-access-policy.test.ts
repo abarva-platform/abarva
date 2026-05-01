@@ -89,14 +89,14 @@ describe('source access policy', () => {
     expect(formatUserSourceAccessPolicyForPrompt(policy)).not.toContain('super_admin');
   });
 
-  it('treats pinned Clerk demo accounts as one-client client admins for Source', async () => {
+  it('treats canonical client admin accounts as one-client client admins for Source', async () => {
     setupRows({});
     const { loadUserSourceAccessPolicy } = await import('../source-access-policy');
     const policy = await loadUserSourceAccessPolicy({
       clientId: 'client-apex',
-      userId: 'clerk:user_demo',
+      userId: 'clerk:user_canonical',
       role: 'client_viewer',
-      email: 'demo-apexretail+clerk_test@abarva.com',
+      email: 'maya.desai@apex-retail.example.com',
     }, { activeClientKey: 'apexretail' });
 
     expect(policy.accessLevel).toBe('client_admin');
