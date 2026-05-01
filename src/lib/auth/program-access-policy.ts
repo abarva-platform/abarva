@@ -4,7 +4,6 @@ import { getServerSupabase } from '@/lib/supabase-server';
 import type { TenancyCtx } from '@/lib/programs/types.db';
 
 export type ClientAccessLevel =
-  | 'abarva_super_admin'
   | 'client_admin'
   | 'program_member'
   | 'program_viewer';
@@ -65,23 +64,21 @@ function isUuidLike(value: string): boolean {
 }
 
 function normalizeAccessLevel(value: string | null | undefined): ClientAccessLevel | null {
-  if (
-    value === 'abarva_super_admin' ||
-    value === 'client_admin' ||
-    value === 'program_member' ||
-    value === 'program_viewer'
-  ) {
+  if (value === 'abarva_super_admin') {
+    return 'client_admin';
+  }
+  if (value === 'client_admin' || value === 'program_member' || value === 'program_viewer') {
     return value;
   }
   return null;
 }
 
-function isGlobalAdminRole(role: string | null | undefined): boolean {
-  return role === 'maestro' || role === 'admin' || role === 'abarva_super_admin';
+function isClientAdminRole(role: string | null | undefined): boolean {
+  return role === 'maestro' || role === 'admin' || role === 'client_admin' || role === 'abarva_super_admin';
 }
 
 function isClientAdminPolicy(level: ClientAccessLevel): boolean {
-  return level === 'abarva_super_admin' || level === 'client_admin';
+  return level === 'client_admin';
 }
 
 function defaultDataClasses(canViewFinancialData: boolean): Pick<UserProgramAccessPolicy, 'allowedDataClasses' | 'deniedDataClasses'> {
@@ -159,8 +156,7 @@ async function loadProgramParticipants(ctx: TenancyCtx): Promise<ParticipantRow[
 function inferAccessLevel(ctx: TenancyCtx, membership: ClientMembershipRow | null, participants: ParticipantRow[]): ClientAccessLevel {
   const explicit = normalizeAccessLevel(membership?.access_level);
   if (explicit) return explicit;
-  if (isGlobalAdminRole(ctx.role)) return 'abarva_super_admin';
-  if (membership?.role === 'maestro') return 'client_admin';
+  if (isClientAdminRole(ctx.role) || isClientAdminRole(membership?.role)) return 'client_admin';
   if (participants.length > 0) {
     return participants.some((p) => p.program_access_level === 'program_member' || p.approval_authority === 'sponsor' || p.approval_authority === 'approver')
       ? 'program_member'
@@ -225,9 +221,10 @@ export async function canReadProgram(ctx: TenancyCtx, programId: string): Promis
 export function formatUserProgramAccessPolicyForPrompt(policy: UserProgramAccessPolicy): string {
   return [
     'USER ACCESS POLICY:',
-    `- Client role: ${policy.accessLevel}`,
+    `- Client role: ${policy.accessLevel} (client-pinned; no cross-client admin role exists)`,
+    `- Data-plane scope: exactly one active client (${policy.clientId})`,
     `- Program visibility: ${policy.programScope}`,
-    `- Allowed program ids: ${policy.programIdsAllowed === null ? 'all programs in active client' : policy.programIdsAllowed.join(', ') || 'none'}`,
+    `- Allowed program ids: ${policy.programIdsAllowed === null ? 'all programs in active client only' : policy.programIdsAllowed.join(', ') || 'none'}`,
     `- Financial visibility: ${policy.canViewFinancialData ? 'allowed' : 'restricted'}`,
     `- Can create programs: ${policy.canCreatePrograms ? 'yes' : 'no'}`,
     `- Can approve gates: ${policy.canApproveGates ? 'yes' : 'no'}`,
