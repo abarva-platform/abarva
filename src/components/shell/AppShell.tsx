@@ -57,7 +57,7 @@ export function AppShell({
   onArtifact,
   children,
 }: AppShellProps) {
-  const tenantName = topBarProps?.tenantName ?? 'Apex Retail Group';
+  const tenantName = topBarProps?.tenantName ?? 'AbarVa Client';
   return (
     <div
       style={{

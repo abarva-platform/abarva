@@ -14,7 +14,7 @@ export interface AppTopBarProps {
 }
 
 export function AppTopBar({
-  tenantName = 'Apex Retail Group',
+  tenantName = 'AbarVa Client',
   showLocked,
   context,
   timeString,
