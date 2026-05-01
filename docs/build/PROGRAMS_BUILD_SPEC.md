@@ -10,9 +10,11 @@ This document is the operational spec for the Programs module. It is written for
 
 ## §1 · Purpose & role
 
-Programs is the **Nexus-led execution surface** for AI and transformation initiatives. It is where a tenant's active work lives: phases, gates, evidence, handoffs, deliverables, contradictions, and the next best move. Programs is the place a sponsor or operator goes to advance a program, not merely observe it.
+Programs is the **Nexus-led strategy-to-approval surface** for AI and transformation initiatives. It is where a tenant shapes, proves, designs, roadmaps, packages, approves, and hands off a program for monitored execution. Programs owns phases, gates, evidence, handoffs, deliverables, contradictions, approvals, and the next best move.
 
-Programs is **not** the portfolio view. Tower handles portfolio capital allocation, pressure, and cross-program ROI. Programs is not the sourcing workspace either. Source handles vendor events, BAFO, scorecards, and commercial evidence. Programs sits between them: it absorbs evidence from Source and Intelligence, turns it into program progress, and exposes the execution state Tower needs.
+Programs is **not** the portfolio view. Tower handles portfolio capital allocation, pressure, cross-program ROI, and execution monitoring once the monitoring contract is accepted. Programs is not the sourcing workspace either. Source handles vendor events, BAFO, scorecards, and commercial evidence. Programs sits between them: it absorbs evidence from Source and Intelligence, turns it into an approved program package, and exposes the monitoring contract Tower needs.
+
+Programs is not where complex implementation is executed. The actual execution happens in client delivery systems, vendor PMOs, SI project plans, Jira, ServiceNow, Smartsheet, Epic/Workday plans, spreadsheets, and steering routines. Programs defines what execution should look like and hands monitoring to Tower.
 
 **Lead agent:** Nexus. The Programs register is operational-maestro, not portfolio CFO and not validator. Nexus on Programs sounds like, "here is the next move, here is the blocker, here is what unlocks the phase." That is distinct from Nexus on Tower, which is portfolio-level and comparative.
 
@@ -91,7 +93,7 @@ The module has **51 TypeScript data/read-model/helper files** under `src/lib/pro
 These are already real and should not be re-proposed as future work:
 
 - `src/lib/programs/programs-fixture.ts` now places `APX-CDP-2026` at **P3 Design**
-- `gateStatus: 'pending'` on the flagship program drives the visible **Build gate ribbon** at 2 of 5 criteria
+- `gateStatus: 'pending'` on the flagship program drives the visible **Execution Roadmap gate ribbon** at 2 of 5 criteria
 - `buildProgramDetailView` accepts `overrideCurrentPhase` for DB-backed phase override
 - `APX_CDP_2026_P3_WORKBENCH` exists in `src/lib/programs/programs-detail-view.ts`
 - P3 action C deep-links to `/intelligence/t3-h03` through the action `href` field
@@ -137,7 +139,7 @@ Nexus on Programs is not Sentinel and not Atlas. The voice rules are:
 
 Example:
 
-> "Build gate is pending on three remaining criteria: Vendor C contract, privacy sign-off, and build brief approval. Clear those and P4 opens cleanly."
+> "Execution Roadmap gate is pending on three remaining criteria: Vendor C contract, privacy sign-off, and roadmap brief approval. Clear those and P4 opens cleanly."
 
 ### Provenance contract
 
@@ -183,9 +185,9 @@ Programs currently maps to 20 `PRG-*` catalog entries from `pages.yaml`.
 | PRG-DTL-P1 | Program detail · Phase 1 Discovery | partial | P0 | pending |
 | PRG-DTL-P2 | Program detail · Phase 2 Synthesis | partial | P0 | matched + in-shell |
 | PRG-DTL-P3 | Program detail · Phase 3 Design | built | P0 | pending |
-| PRG-DTL-P4 | Program detail · Phase 4 Build | partial | P0 | pending |
-| PRG-DTL-P5 | Program detail · Phase 5 Activate | partial | P1 | pending |
-| PRG-DTL-P6 | Program detail · Phase 6 Operate | partial | P1 | pending |
+| PRG-DTL-P4 | Program detail · Phase 4 Execution Roadmap | partial | P0 | pending |
+| PRG-DTL-P5 | Program detail · Phase 5 Business Case & Mobilization Approval | partial | P1 | pending |
+| PRG-DTL-P6 | Program detail · Phase 6 Tower Handoff & Execution Monitoring Setup | partial | P1 | pending |
 | PRG-STA-GATE-PENDING | Gate review ribbon | built | P0 | pending |
 | PRG-MOD-GATE-APPROVE | Gate approval modal | built | P0 | pending |
 | PRG-MOD-CONTRADICTION | Contradiction modal | built | P1 | built |
@@ -217,7 +219,7 @@ Programs should ship in eight waves, `P0` through `P7`.
 | P1 | Route family convergence | all canonical routes + legacy wrappers | 500-800 lines | P0 | smoke must stay on canonical `/programs/**` |
 | P2 | Portfolio index states | PRG-IDX-DEFAULT, PRG-IDX-EMPTY, PRG-IDX-FILTERED | 300-500 lines | P1 | home-to-program navigation covered |
 | P3 | Detail core canonicalization | PRG-DTL-P1, P2, P3, P4 | 500-800 lines | P1 | flagship detail path hardened |
-| P4 | Future phases + origination | PRG-FLW-ORIGINATE, PRG-DTL-P5, PRG-DTL-P6 | 400-700 lines | P3 | no regression to flagship path |
+| P4 | Strategy roadmap + approval phases | PRG-FLW-ORIGINATE, PRG-DTL-P4, PRG-DTL-P5, PRG-DTL-P6 | 400-700 lines | P3 | no regression to flagship path |
 | P5 | Evidence + gate governance | gate ribbon, gate approve, evidence, contradiction, scorecard override | 400-700 lines | P3 | gate assertions expand |
 | P6 | Interaction states | file upload, handoff, suggested action, phase transition, custom action | 300-600 lines | P3 | action C deep-link becomes mandatory |
 | P7 | Cross-surface integration + legacy retirement | Source/Tower/Intelligence linkage, cleanup, final redirects | 400-700 lines | P4-P6 | full `P-SMOKE-CDP` must pass end-to-end |
@@ -282,7 +284,7 @@ Programs Nexus is phase-local and operator-facing:
 - Design: what unlocks build
 - Build: what blocks activation
 - Activate: what proves rollout readiness
-- Operate: what value is realized versus promised
+- Tower Handoff: what value will be monitored, by whom, through which cadence and escalation path
 
 Suggested actions should be navigational unless the working pane itself is the mutation surface.
 
@@ -335,7 +337,7 @@ Required navigation chain:
 2. confirm `APX-CDP-2026` is surfaced
 3. action A navigates to `/programs/apx-cdp-2026`
 4. detail page renders **P3 Design**
-5. Build gate ribbon is visible at **2 of 5**
+5. Execution Roadmap gate ribbon is visible at **2 of 5**
 6. action C opens the suggested-action flow and deep-links to `/intelligence/t3-h03`
 7. linked Source event chip resolves to `/source/events/apex-retail-ams-outsourcing-2026`
 8. return navigation resolves back into the canonical Programs path

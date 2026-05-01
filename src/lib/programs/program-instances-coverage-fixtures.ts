@@ -28,7 +28,7 @@ function buildPhaseStates(
   currentPhase: number,
   overrides?: Partial<Record<number, Partial<ProgramPhaseState>>>,
 ): ProgramPhaseState[] {
-  const PHASE_LABELS = ['Originate', 'Discovery', 'Synthesis', 'Design', 'Build', 'Activate', 'Operate'];
+  const PHASE_LABELS = ['Originate', 'Discovery', 'Synthesis', 'Design', 'Execution Roadmap', 'Approval & Mobilization', 'Tower Handoff'];
   const states: ProgramPhaseState[] = [];
 
   for (let i = 0; i <= 6; i++) {
@@ -104,7 +104,7 @@ export const APX_CDP_COVERAGE_2026_INSTANCE: ProgramInstance = {
     { id: 'cdp-cov-d-004', label: 'Use-Case Activation Backlog', phaseId: 3, status: 'in-progress', owner: 'Marketing Ops', dueDate: '2026-05-20' },
     { id: 'cdp-cov-d-005', label: 'Consent Uplift Plan', phaseId: 3, status: 'not-started' },
     { id: 'cdp-cov-d-006', label: 'Data Readiness Assessment', phaseId: 3, status: 'in-progress', owner: 'Data Engineering' },
-    { id: 'cdp-cov-d-007', label: 'Build Gate Package', phaseId: 3, status: 'not-started' },
+    { id: 'cdp-cov-d-007', label: 'Execution Roadmap Gate Package', phaseId: 3, status: 'not-started' },
   ],
 
   evidence: [

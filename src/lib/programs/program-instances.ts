@@ -15,7 +15,7 @@ function buildPhaseStates(
   currentPhase: number,
   overrides?: Partial<Record<number, Partial<ProgramPhaseState>>>,
 ): ProgramPhaseState[] {
-  const PHASE_LABELS = ['Originate', 'Discovery', 'Synthesis', 'Design', 'Build', 'Activate', 'Operate'];
+  const PHASE_LABELS = ['Originate', 'Discovery', 'Synthesis', 'Design', 'Execution Roadmap', 'Approval & Mobilization', 'Tower Handoff'];
   const states: ProgramPhaseState[] = [];
 
   for (let i = 0; i <= 6; i++) {
@@ -41,7 +41,7 @@ function buildPhaseStates(
 
 // ── APX-CDP-2026 · Apex Retail CDP Activation ────────────────────────────────
 // P3 Design · Design gate (P2 → P3) cleared Apr 27 2026
-// Build gate (P3 → P4) pending: 2 of 5 criteria met
+// Execution Roadmap gate (P3 → P4) pending: 2 of 5 criteria met
 // Linked source: AMS Vendor Consolidation 2026 · Stage 7 BAFO
 
 export const APX_CDP_2026_INSTANCE: ProgramInstance = {
@@ -72,7 +72,7 @@ export const APX_CDP_2026_INSTANCE: ProgramInstance = {
     { id: 'cdp-d-007', label: 'Vendor C Contract Review', phaseId: 3, status: 'in-progress', owner: 'Procurement', dueDate: '2026-05-10' },
     { id: 'cdp-d-008', label: 'Data Layer Scope (AMS dependency)', phaseId: 3, status: 'blocked', owner: 'Architecture' },
     { id: 'cdp-d-009', label: 'Security Assessment', phaseId: 3, status: 'not-started' },
-    { id: 'cdp-d-010', label: 'Build Gate Package', phaseId: 3, status: 'not-started' },
+    { id: 'cdp-d-010', label: 'Execution Roadmap Gate Package', phaseId: 3, status: 'not-started' },
   ],
 
   evidence: [
@@ -268,7 +268,7 @@ export const APX_SAP_2026_INSTANCE: ProgramInstance = {
 };
 
 // ── APX-DFV2-2025 · Demand Forecasting AI v2 ─────────────────────────────────
-// P6 Operate · steady state · Atlas outcome tracking active
+// P6 Tower Handoff · execution monitoring active
 
 export const APX_DFV2_INSTANCE: ProgramInstance = {
   id: 'APX-DFV2-2025',
@@ -286,8 +286,8 @@ export const APX_DFV2_INSTANCE: ProgramInstance = {
     1: { gateStatus: 'approved', gateEvidence: ['Discovery complete · Q2 2025'], enteredAt: '2025-03-01', exitedAt: '2025-04-30' },
     2: { gateStatus: 'approved', gateEvidence: ['Synthesis gate cleared · Q2 2025'], enteredAt: '2025-05-01', exitedAt: '2025-06-30' },
     3: { gateStatus: 'approved', gateEvidence: ['Design gate cleared · Q3 2025'], enteredAt: '2025-07-01', exitedAt: '2025-08-31' },
-    4: { gateStatus: 'approved', gateEvidence: ['Build complete · Q4 2025'], enteredAt: '2025-09-01', exitedAt: '2025-11-30' },
-    5: { gateStatus: 'approved', gateEvidence: ['Activate gate cleared · Dec 2025'], enteredAt: '2025-12-01', exitedAt: '2025-12-31' },
+    4: { gateStatus: 'approved', gateEvidence: ['Execution roadmap approved · Q4 2025'], enteredAt: '2025-09-01', exitedAt: '2025-11-30' },
+    5: { gateStatus: 'approved', gateEvidence: ['Approval & Mobilization gate cleared · Dec 2025'], enteredAt: '2025-12-01', exitedAt: '2025-12-31' },
     6: { gateStatus: 'na', enteredAt: '2026-01-01' },
   }),
 
@@ -349,7 +349,7 @@ export const APX_DFV2_INSTANCE: ProgramInstance = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── DEMO · APX-COPILOT-2026 · M365 Copilot Productivity Rollout ──────────────
-// Pattern PAT-PRG-COPILOT-001. Programme is mid-pilot at P4 Build with
+// Pattern PAT-PRG-COPILOT-001. Programme is in P4 Execution Roadmap with
 // oversharing baseline still open, vendor time-saved claim contested, and
 // adoption skewing to a heavy-user long tail.
 
@@ -542,7 +542,7 @@ export const APX_COPILOT_2026_INSTANCE: ProgramInstance = {
 };
 
 // ── DEMO · APX-CCAI-2026 · Contact Center AI Programme ───────────────────────
-// Pattern PAT-PRG-CC-AI-001. Programme is at P5 Activate with containment
+// Pattern PAT-PRG-CC-AI-001. Programme is at P5 Approval & Mobilization with containment
 // climbing but CSAT eroding, vendor benchmark claim contested, hallucination
 // incidents in pilot transcripts, and handoff context loss observed.
 
@@ -631,7 +631,7 @@ export const APX_CCAI_2026_INSTANCE: ProgramInstance = {
     },
     {
       id: 'ccai-d-006',
-      label: 'Operate Dashboard (containment + CSAT)',
+      label: 'Tower Monitoring Dashboard (containment + CSAT)',
       phaseId: 5,
       status: 'not-started',
     },

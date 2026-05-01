@@ -25,7 +25,7 @@ const APX_CDP_SOURCE_LINK: ProgramSourceLinkView = {
     'Application Management Services — Vendor Consolidation 2026',
   commercialReadinessState: 'vendor_c_selected',
   topCommercialBlocker:
-    'Vendor C integration contract in final review — required for the P3 to P4 Build gate',
+    'Vendor C integration contract in final review — required for the P3 to P4 Execution Roadmap gate',
   topBafoOpportunity:
     'Managed CDP layer reduces in-house build scope and anchors the P3 Design architecture sprint',
   deterministicSeedCaveat:

@@ -9,12 +9,13 @@
 //   - ProgramOriginationView → /programs/new        (origination flow)
 //
 // Phase model: 7-phase P0–P6 (Originate / Discovery / Synthesis / Design /
-// Build / Activate / Operate) per the shell wave canonical model.
+// Execution Roadmap / Approval & Mobilization / Tower Handoff) per the
+// Programs strategy-to-approval operating model.
 //
 // Demo anchor (CORR — aligned to pages.yaml §demo-data-baseline):
 //   Flagship: APX-CDP-2026 · Apex Retail CDP Activation · P3 Design
-//   Gate:     Design gate cleared Apr 27 · Build gate (P3→P4) pending 2/5 criteria
-//   Blockers: Vendor C contract · privacy architecture sign-off · build brief
+//   Gate:     Design gate cleared Apr 27 · Roadmap gate (P3→P4) pending 2/5 criteria
+//   Blockers: Vendor C contract · privacy architecture sign-off · roadmap brief
 //   Evidence: 100% (Design gate cleared)
 //   Source:   AMS Vendor Consolidation 2026 · Stage 7 BAFO · Vendor C selected
 //
@@ -37,16 +38,16 @@ import type {
 // ── Canonical phase model (7-phase P0–P6) ─────────────────────────────
 // Shell wave canonical lifecycle per PHASE_LABEL_MAP in programs-fixture.ts.
 // Hard gates at P1 entry (Discovery approved), P3 entry (Design approved),
-// P5 entry (Activate approved). Soft transitions on remaining phases.
+// P5 entry (Approval & Mobilization approved). Soft transitions on remaining phases.
 
 export const CANONICAL_SEVEN_PHASES = [
   { canonicalPhase: 0, name: 'Originate',  gateType: 'none' as const },
   { canonicalPhase: 1, name: 'Discovery',  gateType: 'hard' as const },
   { canonicalPhase: 2, name: 'Synthesis',  gateType: 'soft' as const },
   { canonicalPhase: 3, name: 'Design',     gateType: 'hard' as const },
-  { canonicalPhase: 4, name: 'Build',      gateType: 'soft' as const },
-  { canonicalPhase: 5, name: 'Activate',   gateType: 'hard' as const },
-  { canonicalPhase: 6, name: 'Operate',    gateType: 'none' as const },
+  { canonicalPhase: 4, name: 'Execution Roadmap', gateType: 'soft' as const },
+  { canonicalPhase: 5, name: 'Approval & Mobilization', gateType: 'hard' as const },
+  { canonicalPhase: 6, name: 'Tower Handoff', gateType: 'none' as const },
 ] as const;
 
 // Back-compat alias — remove after all consumers migrate to CANONICAL_SEVEN_PHASES
@@ -347,12 +348,12 @@ export function buildProgramsIndexView(tenant: ProgramsIndexTenant): ProgramsInd
       ? {
           title: 'Nexus Portfolio Workbench',
           prose:
-            'Six programs in flight across the Apex Retail portfolio. APX-CDP-2026 is the critical path — Design gate cleared Apr 27, now in P3 Design with Build gate 2 of 5 criteria met. Vendor C contract is the near-term blocker. APX-MRC-2025 has been idle 9 days; sponsor re-engagement recommended before the Q3 cadence review.',
+            'Six programs in flight across the Apex Retail portfolio. APX-CDP-2026 is the critical path — Design gate cleared Apr 27, now in P3 Design with Execution Roadmap gate 2 of 5 criteria met. Vendor C contract is the near-term blocker. APX-MRC-2025 has been idle 9 days; sponsor re-engagement recommended before the Q3 cadence review.',
           actionsLabel: 'Nexus recommends',
           actions: [
             {
               letter: 'A',
-              text: 'Advance APX-CDP-2026 Build gate',
+              text: 'Advance APX-CDP-2026 roadmap gate',
               detail: 'Close Vendor C contract · privacy architecture sign-off · build brief scoping',
             },
             {
@@ -362,8 +363,8 @@ export function buildProgramsIndexView(tenant: ProgramsIndexTenant): ProgramsInd
             },
             {
               letter: 'C',
-              text: 'Review APX-CC-2026 Build progress',
-              detail: 'Activate gate approaching — IVR migration critical path',
+              text: 'Review APX-CC-2026 roadmap progress',
+              detail: 'Approval & Mobilization gate approaching — IVR migration critical path',
             },
           ],
         }
@@ -414,7 +415,7 @@ export function buildProgramsIndexView(tenant: ProgramsIndexTenant): ProgramsInd
       name: 'Atlas',
       job:
         tenant === 'apex-retail'
-          ? 'APX-CC-2026 Activate brief ready · DFV2 steady state'
+          ? 'APX-CC-2026 approval brief ready · DFV2 Tower monitoring active'
           : `${tenantLabel} portfolio synthesis ready`,
       state: 'on_call',
     },

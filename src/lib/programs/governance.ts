@@ -4,11 +4,12 @@
 // an unresolved marker. Every check returns a GateCheck (shape in
 // types.ts). Approvals route through founder_approval_requests.
 //
-// Hard gates (per Packet 4 §4.5):
-//   • Phase 3 entry — charter signed_off
-//   • Phase 3 CXO interview — sponsor attested findings
-//   • Phase 5 entry — design approved
-//   • Phase 6 CXO verification — outcome attestation
+// Hard gates (per application-control-plane lifecycle):
+//   • P0 → P1 — approved seed can enter Discovery
+//   • P2 → P3 — sponsor-signed charter can enter Design
+//   • P3 → P4 — signed design can become an execution roadmap
+//   • P4 → P5 — roadmap package can become approval/mobilization package
+//   • P5 → P6 — funded, ready package can hand off monitoring to Tower
 //
 // Soft gates: later phase advances can bypass with reason. P0 exit is
 // deliberately hard because it is where an idea becomes a funded
@@ -54,6 +55,8 @@ const GATE_RULES: GateRule[] = [
     checks: [
       { key: 'charter_drafted', describe: 'Charter has draft content', severity: 'soft' },
       { key: 'sponsor_assigned', describe: 'Sponsor assigned', severity: 'soft' },
+      { key: 'discovery_notes_ingested', describe: 'Discovery notes or workshop logs ingested', severity: 'soft' },
+      { key: 'current_state_summary_drafted', describe: 'Current-state summary drafted from Discovery evidence', severity: 'soft' },
     ],
   },
   {
@@ -65,8 +68,10 @@ const GATE_RULES: GateRule[] = [
     ],
   },
   {
-    fromPhase: 3, toPhase: 4, hard: false, approverRole: 'approver',
+    fromPhase: 3, toPhase: 4, hard: true, approverRole: 'sponsor',
     checks: [
+      { key: 'design_approved', describe: 'Solution and operating-model design signed off', severity: 'hard' },
+      { key: 'requirements_design_outcome_trace', describe: 'Requirements-to-design-to-outcomes traceability captured', severity: 'hard' },
       { key: 'phase_3_findings_written', describe: 'Phase 3 findings written', severity: 'soft' },
       { key: 'cxo_interview_complete', describe: 'CXO interview completed', severity: 'soft' },
     ],
@@ -74,17 +79,22 @@ const GATE_RULES: GateRule[] = [
   {
     fromPhase: 4, toPhase: 5, hard: true, approverRole: 'sponsor',
     checks: [
-      { key: 'design_approved', describe: 'Design approved by sponsor', severity: 'hard' },
+      { key: 'execution_roadmap_drafted', describe: 'Execution roadmap drafted with workstreams, estimates, timeline, milestones, dependencies, RACI, and risks', severity: 'hard' },
+      { key: 'execution_milestones_defined', describe: 'Critical execution milestones defined', severity: 'hard' },
+      { key: 'execution_success_criteria_defined', describe: 'Success criteria defined by execution phase', severity: 'hard' },
+      { key: 'delivery_raci_named', describe: 'Delivery RACI names business, technology, vendor, finance, change, and Tower owners', severity: 'soft' },
       { key: 'vendor_selection_approved', describe: 'Vendor selection approved if applicable', severity: 'soft' },
-      { key: 'execution_plan_drafted', describe: 'Execution plan drafted', severity: 'soft' },
+      { key: 'tower_metric_plan_drafted', describe: 'Tower monitoring metric plan drafted', severity: 'soft' },
     ],
   },
   {
     fromPhase: 5, toPhase: 6, hard: true, approverRole: 'sponsor',
     checks: [
-      { key: 'outcome_report_drafted', describe: 'Outcome report drafted', severity: 'soft' },
-      { key: 'cxo_verification_complete', describe: 'CXO verification completed', severity: 'hard' },
-      { key: 'benefits_realization_attested', describe: 'Benefits realization attested', severity: 'hard' },
+      { key: 'business_case_approved', describe: 'Business case approved for funding and mobilization', severity: 'hard' },
+      { key: 'funding_approval_recorded', describe: 'Funding or capacity approval recorded', severity: 'hard' },
+      { key: 'sponsor_alignment_confirmed', describe: 'Sponsor and stakeholder alignment confirmed', severity: 'hard' },
+      { key: 'readiness_and_change_plan_signed_off', describe: 'Business readiness and change-management plan signed off', severity: 'hard' },
+      { key: 'tower_handoff_plan_accepted', describe: 'Tower handoff and execution monitoring setup accepted', severity: 'hard' },
     ],
   },
 ];
@@ -125,7 +135,7 @@ export async function evaluateGate(
   const sb = getServerSupabase();
 
   // Collect state signals
-  const [{ data: deliverables }, { data: modules }, { data: participants }, { data: approvalRequests }] = await Promise.all([
+  const [{ data: deliverables }, { data: modules }, { data: participants }, { data: approvalRequests }, { data: milestones }] = await Promise.all([
     sb.from('deliverables_v2').select('id, deliverable_type_key, status').eq('engagement_id', programId),
     sb.from('program_modules').select('module_key, status').eq('engagement_id', programId),
     sb.from('engagement_participants').select('user_id, approval_authority').eq('engagement_id', programId),
@@ -135,18 +145,29 @@ export async function evaluateGate(
       .eq('program_id', programId)
       .order('created_at', { ascending: false })
       .limit(1),
+    sb.from('program_milestones').select('id, name, status').eq('engagement_id', programId).limit(20),
   ]);
 
-  const charterRow = (deliverables as Array<{ deliverable_type_key: string; status: string }> | null ?? [])
+  const deliverableRows = (deliverables as Array<{ deliverable_type_key: string; status: string }> | null ?? []);
+  const moduleRows = (modules as Array<{ module_key: string; status: string }> | null ?? []);
+  const milestoneRows = (milestones as Array<{ id: string; name: string | null; status: string | null }> | null ?? []);
+  const findDeliverable = (...keys: string[]) => deliverableRows
+    .find((d) => keys.includes(d.deliverable_type_key));
+  const isSignedOff = (row: { status: string } | undefined) => row?.status === 'signed_off';
+  const isPresent = (row: { status: string } | undefined) => Boolean(row);
+  const moduleCompleted = (...keys: string[]) => moduleRows
+    .some((m) => keys.includes(m.module_key) && m.status === 'completed');
+
+  const charterRow = deliverableRows
     .find((d) => d.deliverable_type_key === 'charter');
-  const designRow = (deliverables as Array<{ deliverable_type_key: string; status: string }> | null ?? [])
-    .find((d) => d.deliverable_type_key === 'design_spec' || d.deliverable_type_key === 'design' || d.deliverable_type_key === 'design_brief');
-  const outcomeRow = (deliverables as Array<{ deliverable_type_key: string; status: string }> | null ?? [])
-    .find((d) => d.deliverable_type_key === 'outcome_report');
-  const cxoInterviewModule = (modules as Array<{ module_key: string; status: string }> | null ?? [])
+  const designRow = findDeliverable('design_spec', 'design', 'design_brief', 'solution_design', 'operating_model_design');
+  const executionRoadmapRow = findDeliverable('execution_roadmap', 'execution_plan', 'roadmap', 'mobilization_roadmap');
+  const requirementsTraceRow = findDeliverable('requirements_traceability', 'requirements_design_outcome_trace', 'traceability_matrix');
+  const businessCaseRow = findDeliverable('business_case', 'funding_business_case', 'approval_business_case');
+  const changePlanRow = findDeliverable('change_management_plan', 'business_readiness_plan', 'readiness_and_change_plan');
+  const towerHandoffRow = findDeliverable('tower_handoff_plan', 'execution_monitoring_plan', 'control_tower_handoff');
+  const cxoInterviewModule = moduleRows
     .find((m) => m.module_key === 'cxo_interview');
-  const cxoVerificationModule = (modules as Array<{ module_key: string; status: string }> | null ?? [])
-    .find((m) => m.module_key === 'cxo_verification');
   const hasSponsor = (participants as Array<{ approval_authority: string | null }> | null ?? [])
     .some((p) => p.approval_authority === 'sponsor');
   const latestSeedBrief = ((approvalRequests as Array<{
@@ -175,43 +196,65 @@ export async function evaluateGate(
           (typeof target === 'string' ? target.trim().length >= 8 : briefString.includes('target'));
         break;
       }
-      case 'charter_drafted': pass = !!charterRow && charterRow.status !== null; break;
-      case 'charter_signed_off': pass = charterRow?.status === 'signed_off'; break;
+      case 'charter_drafted': pass = Boolean(charterRow && charterRow.status !== null); break;
+      case 'charter_signed_off': pass = isSignedOff(charterRow); break;
       case 'sponsor_assigned': pass = hasSponsor; break;
       case 'baseline_captured': {
-        const baselineModule = (modules as Array<{ module_key: string; status: string }> | null ?? [])
-          .find((m) => m.module_key === 'baseline_capture' || m.module_key === 'baseline');
-        pass = baselineModule?.status === 'completed';
+        pass = moduleCompleted('baseline_capture', 'baseline') ||
+          isPresent(findDeliverable('baseline', 'baseline_metrics', 'value_baseline'));
         break;
       }
+      case 'discovery_notes_ingested':
+        pass = isPresent(findDeliverable('discovery_notes', 'meeting_notes', 'workshop_notes')) ||
+          moduleCompleted('discovery_notes_ingest', 'workshop_notes_ingest');
+        break;
+      case 'current_state_summary_drafted':
+        pass = isPresent(findDeliverable('current_state_summary', 'discovery_summary', 'current_state_assessment'));
+        break;
       case 'phase_3_findings_written': {
-        const findings = (modules as Array<{ module_key: string; status: string }> | null ?? [])
-          .find((m) => m.module_key === 'phase_3_findings' || m.module_key === 'findings');
-        pass = findings?.status === 'completed';
+        pass = moduleCompleted('phase_3_findings', 'findings') ||
+          isPresent(findDeliverable('phase_3_findings', 'design_findings'));
         break;
       }
       case 'cxo_interview_complete': pass = cxoInterviewModule?.status === 'completed'; break;
-      case 'design_approved': pass = designRow?.status === 'signed_off'; break;
+      case 'design_approved': pass = isSignedOff(designRow); break;
+      case 'requirements_design_outcome_trace': pass = isPresent(requirementsTraceRow); break;
       case 'vendor_selection_approved': {
-        const vendor = (deliverables as Array<{ deliverable_type_key: string; status: string }> | null ?? [])
-          .find((d) => d.deliverable_type_key === 'vendor_selection');
+        const vendor = findDeliverable('vendor_selection', 'source_award_recommendation');
         pass = !vendor || vendor.status === 'signed_off';
         break;
       }
       case 'execution_plan_drafted': {
-        const ep = (deliverables as Array<{ deliverable_type_key: string; status: string }> | null ?? [])
-          .find((d) => d.deliverable_type_key === 'execution_plan');
-        pass = !!ep;
+        pass = isPresent(executionRoadmapRow);
         break;
       }
-      case 'outcome_report_drafted': pass = !!outcomeRow; break;
-      case 'cxo_verification_complete': pass = cxoVerificationModule?.status === 'completed'; break;
-      case 'benefits_realization_attested': {
-        const benefits = (modules as Array<{ module_key: string; status: string }> | null ?? [])
-          .find((m) => m.module_key === 'benefits_realization');
-        pass = benefits?.status === 'completed';
+      case 'execution_roadmap_drafted': pass = isPresent(executionRoadmapRow); break;
+      case 'execution_milestones_defined':
+        pass = milestoneRows.length > 0 || briefString.includes('milestone');
         break;
-      }
+      case 'execution_success_criteria_defined':
+        pass = isPresent(findDeliverable('execution_success_criteria', 'execution_roadmap', 'success_criteria')) ||
+          briefString.includes('success criteria');
+        break;
+      case 'delivery_raci_named':
+        pass = isPresent(findDeliverable('delivery_raci', 'raci', 'operating_model')) ||
+          briefString.includes('raci');
+        break;
+      case 'tower_metric_plan_drafted':
+        pass = isPresent(findDeliverable('tower_metric_plan', 'execution_monitoring_plan', 'control_tower_metrics')) ||
+          briefString.includes('tower') || briefString.includes('monitoring');
+        break;
+      case 'business_case_approved': pass = isSignedOff(businessCaseRow); break;
+      case 'funding_approval_recorded':
+        pass = moduleCompleted('funding_approval', 'capacity_approval') ||
+          isSignedOff(findDeliverable('funding_approval', 'capacity_approval', 'approval_memo'));
+        break;
+      case 'sponsor_alignment_confirmed':
+        pass = moduleCompleted('sponsor_alignment', 'stakeholder_alignment') ||
+          isSignedOff(findDeliverable('stakeholder_alignment', 'sponsor_alignment'));
+        break;
+      case 'readiness_and_change_plan_signed_off': pass = isSignedOff(changePlanRow); break;
+      case 'tower_handoff_plan_accepted': pass = isSignedOff(towerHandoffRow); break;
       case 'discovery_funding_envelope':
         pass =
           briefString.includes('timeline') ||

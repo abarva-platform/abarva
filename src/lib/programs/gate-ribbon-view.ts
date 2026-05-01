@@ -19,7 +19,7 @@ export interface GateRibbonView {
   toPhase: ProgramPhaseId;
   fromPhaseLabel: string;
   toPhaseLabel: string;
-  /** Formatted "P3 Design → P4 Build" */
+  /** Formatted "P3 Design → P4 Execution Roadmap" */
   ribbonLabel: string;
   totalCriteria: number;
   metCriteria: number;
@@ -56,7 +56,7 @@ export function getPhaseLabel(phaseId: number): string {
  * Returns null when:
  * - `gateStatus` is not 'pending'
  * - `phasePanel.gateCriteria` is missing or empty
- * - `currentPhase` is 6 (Operate — no next phase)
+ * - `currentPhase` is 6 (Tower Handoff — no next phase)
  */
 export function buildGateRibbonView(
   view: ProgramDetailView,
@@ -125,7 +125,7 @@ export function getApprovalButtonLabel(ribbon: GateRibbonView): string {
 
 /**
  * Returns the Steward headline copy for the approval modal.
- * e.g. "Steward: P3 Design gate approval pending → P4 Build"
+ * e.g. "Steward: P3 Design gate approval pending → P4 Execution Roadmap"
  */
 export function getGateModalHeadline(ribbon: GateRibbonView): string {
   return `Steward: P${ribbon.fromPhase} ${ribbon.fromPhaseLabel} gate approval pending → P${ribbon.toPhase} ${ribbon.toPhaseLabel}`;

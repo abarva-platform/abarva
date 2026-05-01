@@ -5,7 +5,8 @@
  * No React. No network calls. No model calls. Deterministic seed output only.
  *
  * Phases follow the six-phase canonical lifecycle as used in the AbarVa program workflow.
- * The Labels here use the Wave 32 surface-facing names (discovery → operate)
+ * Internal keys remain stable for compatibility; labels use the strategy-to-approval
+ * control-plane names.
  * which map to the blueprint's interactive filter bar specification.
  */
 
@@ -45,9 +46,9 @@ const PHASE_LABEL_MAP: Record<ProgramPhase, string> = {
   discovery: 'Discovery',
   synthesis: 'Synthesis',
   design: 'Design',
-  build: 'Build',
-  activate: 'Activate',
-  operate: 'Operate',
+  build: 'Execution Roadmap',
+  activate: 'Approval & Mobilization',
+  operate: 'Tower Handoff',
 };
 
 const PHASE_DESCRIPTION_MAP: Record<ProgramPhase, string> = {
@@ -58,11 +59,11 @@ const PHASE_DESCRIPTION_MAP: Record<ProgramPhase, string> = {
   design:
     'Solution match, vendor evaluation, business case, and decision memo.',
   build:
-    'Implementation plan, platform build, integrations, and change management.',
+    'Workstreams, estimates, timeline, milestones, dependencies, RACI, risks, and execution success criteria.',
   activate:
-    'Go-live preparation, user onboarding, and activation readiness gate.',
+    'Business case, funding package, sponsor alignment, readiness, and change-management approval.',
   operate:
-    'Steady-state monitoring, value tracking, and continuous improvement.',
+    'Tower monitoring contract, data-feed ownership, escalation thresholds, and value tracking cadence.',
 };
 
 const DETERMINISTIC_CAVEAT =
@@ -72,16 +73,16 @@ const DETERMINISTIC_CAVEAT =
 // ---------------------------------------------------------------------------
 // Apex Retail deterministic programme counts per phase
 // (Apex Retail has 4 programs: Contact Center AI, CDP, Store Assoc Productivity, Demand Forecasting)
-// CDP is currently in Build phase. Others are distributed across earlier phases.
+// CDP is currently in Execution Roadmap phase. Others are distributed across earlier phases.
 // ---------------------------------------------------------------------------
 
 const APEX_RETAIL_PHASE_COUNTS: Record<ProgramPhase, number> = {
   discovery: 1,  // Demand Forecasting — early framing
   synthesis: 1,  // Store Associate Productivity — synthesis stage
   design: 1,     // Contact Center AI — design and vendor evaluation
-  build: 1,      // CDP — currently in Build phase (current phase)
-  activate: 0,   // None in activate yet
-  operate: 0,    // None in operate yet
+  build: 1,      // CDP — currently in Execution Roadmap phase (current phase)
+  activate: 0,   // None in Approval & Mobilization yet
+  operate: 0,    // None in Tower Handoff yet
 };
 
 // Meridian tenant has 2 programs (Intelligence demo tenant — thinner seed)

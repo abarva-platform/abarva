@@ -10,7 +10,7 @@ import type { ProgramRow } from './programs-types';
 import { buildPhaseSlots } from './programs-fixture';
 
 // MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR · Agentic Care Data Accelerator
-// P3 Design · simulation-backed · Build gate pending
+// P3 Design · simulation-backed · Execution Roadmap gate pending
 const mhProgAgenticCareDataAccelerator: ProgramRow = {
   id: 'mh-prog-agentic-care-data-accelerator',
   displayId: 'MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR',

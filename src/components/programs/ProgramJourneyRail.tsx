@@ -5,8 +5,8 @@
 // Pop via contrast only: active phase uses border+shadow+fill, NOT size change.
 //
 // Phase model: 6 canonical phases (indices 1-6):
-//   1 · Origination  2 · Charter  3 · Diagnose
-//   4 · Design       5 · Execute  6 · Verify
+//   1 · Origination  2 · Discovery  3 · Synthesis
+//   4 · Design       5 · Approval & Mobilization  6 · Tower Handoff
 //
 // Source of truth: CANONICAL_SIX_PHASES in
 //   src/lib/programs/programs-canonical-view.ts
@@ -17,9 +17,9 @@ import type { CSSProperties } from 'react';
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export interface ProgramPhaseSlot {
-  /** Canonical phase index 1-6 (Origination=1 … Verify=6). */
+  /** Canonical phase index 1-6 (Origination=1 … Tower Handoff=6). */
   id: 1 | 2 | 3 | 4 | 5 | 6;
-  /** Phase label — one of: 'Origination' | 'Charter' | 'Diagnose' | 'Design' | 'Execute' | 'Verify'. */
+  /** Phase label — one of: 'Origination' | 'Discovery' | 'Synthesis' | 'Design' | 'Approval & Mobilization' | 'Tower Handoff'. */
   label: string;
   state: 'done' | 'current' | 'pending' | 'locked';
   gateStatus?: 'open' | 'pending' | 'approved';
@@ -217,10 +217,13 @@ export function ProgramJourneyRail({
         };
 
         return (
-          <div key={slot.id} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
+          <div
+            key={slot.id}
+            role="listitem"
+            style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}
+          >
             <button
               type="button"
-              role="listitem"
               aria-label={`Phase ${slot.id}: ${slot.label}, ${stateLabel(slot.state)}${isViewing ? ', currently viewing' : ''}`}
               aria-pressed={isViewing}
               aria-disabled={slot.state === 'locked'}

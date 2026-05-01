@@ -4,7 +4,9 @@ Last updated: 2026-05-01
 
 ## North Star
 
-Nexus is not a chat assistant. Nexus is the program operating system for AbarVa's client engagement lifecycle.
+Nexus is not a chat assistant. Nexus is the strategy-to-approval operating system for AbarVa's client engagement lifecycle.
+
+Nexus does not execute complex implementations inside AbarVa. It shapes, proves, designs, roadmaps, packages, approves, and hands execution monitoring to Tower. Execution itself happens in the client's delivery systems, vendor PMOs, SI plans, Jira, ServiceNow, Smartsheet, Epic/Workday plans, spreadsheets, and steering routines.
 
 For every user interaction, Nexus must know five things before it sounds confident:
 
@@ -44,6 +46,7 @@ The canonical demo path is:
 8. User opens the program and completes P0 entry/exit criteria.
 9. Nexus submits P0 exit approval before Discovery unlocks.
 10. Only after approval should P1 become active.
+11. Later phases prepare execution and monitoring; they do not pretend to run implementation inside Programs.
 
 Any route change, page transition, or chat answer that loses the draft context breaks the contract.
 
@@ -132,27 +135,27 @@ Exit requires a signed design or equivalent deliverable.
 
 ## Phase 4 Doctrine
 
-P4 Build executes the design.
+P4 Execution Roadmap converts the approved solution and operating model into an executable roadmap.
 
-Nexus must track build blockers, dependency owners, test evidence, and change-management readiness. It should not treat vendor activity as proof of adoption.
+Nexus must define workstreams, estimates, timeline, critical milestones, dependencies, RACI, execution risks, and success criteria by execution phase. This is where the program becomes fundable and executable, but implementation still happens outside the tool.
 
-Exit requires execution evidence and an activation-ready plan.
+Nexus must generate the execution roadmap, cost/resource estimate, milestone plan, workstream plan, RACI, and execution risk register. Exit requires sponsor/finance agreement that the roadmap is complete enough to package for funding and mobilization approval.
 
 ## Phase 5 Doctrine
 
-P5 Activate proves the change is working in the business.
+P5 Business Case and Mobilization Approval packages the program for funding and launch authorization.
 
-Nexus must track adoption, outcome movement, support readiness, and benefit realization. It should challenge weak attribution.
+Nexus must assemble the business case, funding request, stakeholder alignment packet, business readiness assessment, change management plan, communications/training plan, governance cadence, risk acceptance package, and approval memo.
 
-Exit requires CXO verification and benefit attestation.
+Exit requires formal approval to mobilize execution outside AbarVa, with stakeholder alignment or dissent documented.
 
 ## Phase 6 Doctrine
 
-P6 Operate closes the program into steady-state ownership.
+P6 Tower Handoff and Execution Monitoring Setup defines how external execution will be monitored.
 
-Nexus must generate run-state ownership, monitoring cadence, residual-risk register, and lessons learned.
+Nexus must create the Tower monitoring contract: metrics, milestone reporting model, data feed requirements, weekly/monthly update cadence, risk thresholds, escalation rules, benefits tracking cadence, and handoff owners.
 
-Exit requires completion state, archived evidence, and clear steady-state owner.
+Exit requires Tower acceptance of the monitoring contract. Programs then becomes the strategy and approval archive; Tower monitors execution using weekly/monthly data.
 
 ## Response Quality Bar
 
@@ -167,6 +170,18 @@ Nexus answers should be:
 | Honest | Distinguish drafted, saved, submitted, approved, and failed. |
 | Generative | Offer to draft the needed artifact when enough context exists. |
 | Persistent | Save to DB when the user approves a lifecycle action. |
+
+## Phase Intelligence Table
+
+| Phase | Scope | Success criteria | High-level functionality | Deliverables | Entry criteria | Exit criteria |
+| --- | --- | --- | --- | --- | --- | --- |
+| P0 Origination | Shape messy idea into governed seed. | Sponsor, lead, value hypothesis, scope boundary, and classification are clear. | Guided chat, person resolution, seed creation, Setup approval. | Program seed brief, sponsor/lead map, value hypothesis. | User states intent or pressure. | Setup approval and P0 exit approval request path ready. |
+| P1 Discovery | Prove the problem and baseline current state. | Evidence, baseline, stakeholders, systems, and constraints are known. | Document upload, notes ingestion, discovery plan, interviews, evidence ledger. | Discovery plan, interview guide, current-state findings, baseline pack. | Approved P0 seed. | Sponsor accepts evidence-backed problem and baseline. |
+| P2 Strategic Synthesis | Convert evidence into recommendation. | Options, tradeoffs, contradictions, risks, and recommendation are explicit. | Evidence synthesis, pattern matching, options analysis, decision support. | Synthesis memo, options analysis, decision log, risk register. | Discovery evidence captured. | Sponsor/steering approves recommended direction. |
+| P3 Solution and Operating Model Design | Define target state and operating model. | Requirements, design, owners, controls, governance, and measures are connected. | Design artifact generation, workshops, traceability, design approval. | Target-state design, operating model, measurement model, governance model. | Approved strategic direction. | Sponsor approves solution and operating model. |
+| P4 Execution Roadmap | Define how execution will happen outside AbarVa. | Workstreams, estimates, timeline, milestones, dependencies, RACI, risks, and success criteria are complete. | Roadmap generation, estimating, milestone planning, RACI, roadmap workshop. | Execution roadmap, estimate, milestone plan, RACI, execution risk register. | Approved design. | Sponsor/finance agree roadmap is package-ready. |
+| P5 Business Case and Mobilization Approval | Secure funding, alignment, readiness, and launch authority. | Funding ask, business case, stakeholder alignment, readiness, change plan, governance, and approval are complete. | Business case generation, alignment mapping, readiness planning, approval routing, export. | Business case, funding request, readiness assessment, change plan, mobilization approval memo. | Roadmap complete. | Formal mobilization approval captured. |
+| P6 Tower Handoff and Execution Monitoring Setup | Define monitoring for external execution. | Metrics, milestones, cadence, data feeds, thresholds, and owners are accepted by Tower. | Monitoring contract, data feed mapping, escalation setup, benefits tracking cadence. | Tower monitoring contract, KPI model, data feed requirements, escalation rules. | Mobilization approval captured. | Tower handoff accepted. |
 
 ## Golden Test Path
 
@@ -187,4 +202,3 @@ The crawler must validate the path below before the program module is considered
 13. Complete P0 hard criteria.
 14. Submit P0 exit approval.
 15. Confirm P1 does not unlock until approval clears.
-
