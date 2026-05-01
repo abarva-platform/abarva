@@ -42,5 +42,8 @@ describe('DemoCodeSignIn', () => {
     expect(screen.getByText('demo-apexretail-programs+clerk_test@abarva.com')).toBeTruthy();
     expect(screen.getByText('demo-meridian-programs+clerk_test@abarva.com')).toBeTruthy();
     expect(screen.getByText('demo-firstcapital-programs+clerk_test@abarva.com')).toBeTruthy();
+    expect(screen.getByText('demo-apexretail-source+clerk_test@abarva.com')).toBeTruthy();
+    expect(screen.getByText('demo-meridian-source+clerk_test@abarva.com')).toBeTruthy();
+    expect(screen.getByText('demo-firstcapital-source+clerk_test@abarva.com')).toBeTruthy();
   });
 });
