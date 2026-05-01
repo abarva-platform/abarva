@@ -27,6 +27,45 @@ describe('selectVisibleArtifacts', () => {
     expect(out[0].type).toBe('pattern-match');
   });
 
+  it('keeps the latest brief-progress card so portfolio origination updates the rail', () => {
+    const input: Artifact[] = [
+      {
+        type: 'brief-progress',
+        fieldsTotal: 8,
+        fieldsFilled: 2,
+        fields: [
+          { id: 'program-name', label: 'Program name', status: 'filled', value: 'Draft A' },
+          { id: 'sponsor', label: 'Sponsor', status: 'filled', value: 'Sarah Chen' },
+        ],
+      },
+      {
+        type: 'brief-progress',
+        fieldsTotal: 8,
+        fieldsFilled: 5,
+        fields: [
+          {
+            id: 'program-name',
+            label: 'Program name',
+            status: 'filled',
+            value: 'AI-Assisted Engineering Productivity',
+          },
+          { id: 'sponsor', label: 'Sponsor', status: 'filled', value: 'Sarah Chen' },
+          { id: 'lead', label: 'Lead', status: 'filled', value: 'Rick Stewart' },
+          { id: 'target', label: 'Target', status: 'filled', value: '30% DORA uplift' },
+          { id: 'baseline', label: 'Baseline', status: 'filled', value: '$80M' },
+        ],
+      },
+    ];
+
+    const out = selectVisibleArtifacts(input);
+    expect(out).toHaveLength(1);
+    expect(out[0].type).toBe('brief-progress');
+    if (out[0].type === 'brief-progress') {
+      expect(out[0].fieldsFilled).toBe(5);
+      expect(out[0].fields[0].value).toBe('AI-Assisted Engineering Productivity');
+    }
+  });
+
   it('reverses the stream so most-recent renders first', () => {
     const input: Artifact[] = [
       { type: 'gate-evaluation', gate: 'first', status: 'unmet' },
@@ -279,6 +318,37 @@ describe('selectVisibleArtifacts', () => {
     const cdp = patterns.find((p) => p.patternId === 'PAT-PRG-CDP-001');
     expect(cdp?.summary).toBe('refined summary');
     expect(cdp?.successRatePct).toBe(78);
+  });
+});
+
+describe('NexusReactivePanel · brief-progress rendering', () => {
+  it('renders brief-progress as a right-rail card', () => {
+    const artifacts: Artifact[] = [
+      {
+        type: 'brief-progress',
+        fieldsTotal: 8,
+        fieldsFilled: 5,
+        fields: [
+          {
+            id: 'program-name',
+            label: 'Program name',
+            status: 'filled',
+            value: 'AI-Assisted Engineering Productivity',
+          },
+          { id: 'sponsor', label: 'Sponsor', status: 'filled', value: 'Sarah Chen' },
+          { id: 'lead', label: 'Lead', status: 'filled', value: 'Rick Stewart' },
+          { id: 'target', label: 'Target', status: 'filled', value: '30% DORA uplift' },
+          { id: 'timeline', label: 'Timeline', status: 'empty' },
+        ],
+      },
+    ];
+    const html = renderToStaticMarkup(
+      createElement(NexusReactivePanel, { artifacts }),
+    );
+    expect(html).toContain('Brief progress');
+    expect(html).toContain('5/8');
+    expect(html).toContain('AI-Assisted Engineering Productivity');
+    expect(html).toContain('Rick Stewart');
   });
 });
 

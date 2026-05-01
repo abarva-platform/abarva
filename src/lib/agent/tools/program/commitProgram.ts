@@ -85,6 +85,101 @@ interface CommitProgramInput {
   matched_pattern_id?: string;
 }
 
+interface CommitProgramClassification {
+  functionCode: 'FRONT_OFFICE' | 'MIDDLE_OFFICE' | 'BACK_OFFICE';
+  objectiveCode: 'GROW' | 'OPTIMISE' | 'CONTROL';
+  topicCode: string;
+}
+
+function slugifyTopicCode(value: string): string {
+  const slug = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 80);
+  return slug || 'program_origination';
+}
+
+function classifyCommitProgram(input: CommitProgramInput): CommitProgramClassification {
+  const text = [
+    input.program_name,
+    input.problem_statement,
+    input.target_outcome ?? '',
+    input.timeline ?? '',
+    input.classification ?? '',
+    input.matched_pattern_id ?? '',
+  ]
+    .join(' ')
+    .toLowerCase();
+
+  let functionCode: CommitProgramClassification['functionCode'] = 'MIDDLE_OFFICE';
+  if (
+    /\b(finance|financial close|hr|hcm|erp|procurement|supply chain|payroll|back[- ]office|revenue cycle|rcm)\b/.test(
+      text,
+    )
+  ) {
+    functionCode = 'BACK_OFFICE';
+  } else if (
+    /\b(customer|consumer|patient|member|sales|marketing|commerce|checkout|abandonment|store|portal|front door|front[- ]office)\b/.test(
+      text,
+    )
+  ) {
+    functionCode = 'FRONT_OFFICE';
+  } else if (
+    /\b(engineering|developer|sdlc|dora|application|platform|data|analytics|integration|cloud|digital|internal)\b/.test(
+      text,
+    )
+  ) {
+    functionCode = 'MIDDLE_OFFICE';
+  }
+
+  let objectiveCode: CommitProgramClassification['objectiveCode'] = 'OPTIMISE';
+  if (/\b(risk|control|compliance|governance|audit|security|regulatory|privacy)\b/.test(text)) {
+    objectiveCode = 'CONTROL';
+  } else if (/\b(growth|grow|revenue|acquisition|retention|conversion|market share)\b/.test(text)) {
+    objectiveCode = 'GROW';
+  }
+
+  return {
+    functionCode,
+    objectiveCode,
+    topicCode: slugifyTopicCode(input.program_name),
+  };
+}
+
+function briefProgressArtifact(input: {
+  form: OriginationForm;
+  classification: CommitProgramClassification;
+  input: CommitProgramInput;
+}): string {
+  const fields = [
+    { id: 'program-name', label: 'Program name', value: input.form.name },
+    { id: 'problem-statement', label: 'Problem statement', value: input.form.useCase },
+    { id: 'target-outcome', label: 'Target outcome', value: input.form.targetOutcome },
+    { id: 'timeline', label: 'Timeline', value: input.input.timeline ?? '' },
+    { id: 'sponsor', label: 'Sponsor', value: input.form.sponsorPersonId },
+    { id: 'lead', label: 'Lead', value: input.form.leadPersonId },
+    {
+      id: 'classification',
+      label: 'Classification',
+      value: input.input.classification ?? input.classification.functionCode,
+    },
+    { id: 'topic', label: 'Topic code', value: input.classification.topicCode },
+  ].map((field) => ({
+    id: field.id,
+    label: field.label,
+    status: field.value.trim() ? 'filled' : 'empty',
+    value: field.value.trim() || undefined,
+  }));
+
+  return `\n[[artifact:brief-progress]]${JSON.stringify({
+    fieldsTotal: fields.length,
+    fieldsFilled: fields.filter((field) => field.status === 'filled').length,
+    fields,
+  })}[[/artifact]]\n`;
+}
+
 /**
  * Best-effort cleanup: delete the just-inserted engagement so we never
  * leave a row in 'submitted_for_approval' without a matching approval
@@ -284,6 +379,7 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
       sponsorPersonId: input.sponsor_person_id,
       leadPersonId: input.lead_person_id ?? input.sponsor_person_id,
     };
+    const derivedClassification = classifyCommitProgram(input);
 
     // Idempotency guard: if a program with the same name was created
     // for this client in the last 5 minutes, return that one instead
@@ -341,6 +437,8 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
               (existingApproval as { id: string } | null)?.id ?? null,
             program_name: row.name,
             lifecycle_state: row.lifecycle_state ?? 'submitted_for_approval',
+            record_status: 'existing_recent_submission',
+            phase_access: 'phase_0_pending_tenant_admin_approval',
             redirect_to: `/programs/${row.id}`,
             surface: ctx.surface,
             idempotent_replay: true,
@@ -367,7 +465,11 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
         .insert({
           client_id: tenancy.clientId,
           industry_code: industryCode,
+          function_code: derivedClassification.functionCode,
+          objective_code: derivedClassification.objectiveCode,
+          topic_code: derivedClassification.topicCode,
           name: originationForm.name,
+          sponsor_person_id: originationForm.sponsorPersonId,
           // Legacy lifecycle: leave at 'draft' so old code paths that
           // still read `status` correctly see this program as not-yet-
           // running. New code paths read `lifecycle_state`.
@@ -420,6 +522,9 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
       problem_statement: originationForm.useCase,
       sponsor_person_id: originationForm.sponsorPersonId,
       lead_person_id: originationForm.leadPersonId,
+      function_code: derivedClassification.functionCode,
+      objective_code: derivedClassification.objectiveCode,
+      topic_code: derivedClassification.topicCode,
       classification: input.classification ?? null,
       matched_pattern_id: input.matched_pattern_id ?? null,
       submitted_from_surface: ctx.surface,
@@ -435,6 +540,13 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
     // ── Step 2 · submit for approval (transactional with rollback) ──
     let approvalRequestId: string;
     try {
+      ctx.writer?.write(
+        briefProgressArtifact({
+          form: originationForm,
+          classification: derivedClassification,
+          input,
+        }),
+      );
       const approval = await submitForApproval({
         tenantKey,
         programId,
@@ -541,6 +653,11 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
         approval_request_id: approvalRequestId,
         program_name: programName,
         lifecycle_state: 'submitted_for_approval',
+        record_status: 'created',
+        phase_access: 'phase_0_pending_tenant_admin_approval',
+        function_code: derivedClassification.functionCode,
+        objective_code: derivedClassification.objectiveCode,
+        topic_code: derivedClassification.topicCode,
         redirect_to: `/programs/${programId}`,
         surface: ctx.surface,
       },

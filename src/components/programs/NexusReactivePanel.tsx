@@ -18,6 +18,7 @@ import { createContext, useCallback, useContext, useMemo, useState } from 'react
 import type {
   AntiPatternFlagArtifact,
   Artifact,
+  BriefProgressArtifact,
   CrossProgramDependencyArtifact,
   CrossProgramSignalArtifact,
   DeliverableReadyArtifact,
@@ -271,6 +272,84 @@ function PatternMatchCardSmall({ a }: { a: PatternMatchArtifact }) {
           {a.summary}
         </p>
       </a>
+    </CardShell>
+  );
+}
+
+function BriefProgressCardSmall({ a }: { a: BriefProgressArtifact }) {
+  const pct = Math.round((a.fieldsFilled / a.fieldsTotal) * 100);
+  const visibleFields = a.fields.slice(0, 8);
+  return (
+    <CardShell kind="Program brief">
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: 10,
+          alignItems: 'baseline',
+          marginBottom: 8,
+        }}
+      >
+        <div style={{ fontWeight: 700, fontSize: 13.5 }}>
+          Brief progress
+        </div>
+        <div
+          style={{
+            fontFamily: BrandTypography.mono,
+            fontSize: 11,
+            color: BrandColors.signalBlue,
+            fontWeight: 700,
+          }}
+        >
+          {a.fieldsFilled}/{a.fieldsTotal}
+        </div>
+      </div>
+      <div
+        aria-label={`Brief progress ${pct}%`}
+        style={{
+          height: 6,
+          borderRadius: 999,
+          background: 'rgba(12,26,58,0.10)',
+          overflow: 'hidden',
+          marginBottom: 10,
+        }}
+      >
+        <div
+          style={{
+            width: `${pct}%`,
+            height: '100%',
+            background: BrandColors.signalBlue,
+          }}
+        />
+      </div>
+      <div style={{ display: 'grid', gap: 6 }}>
+        {visibleFields.map((field) => (
+          <div
+            key={field.id}
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: 8,
+              fontSize: 12,
+              color: BrandColors.slate,
+            }}
+          >
+            <span>{field.label}</span>
+            <span
+              style={{
+                color:
+                  field.status === 'filled'
+                    ? BrandColors.inkBlack
+                    : BrandColors.stone,
+                fontWeight: field.status === 'filled' ? 600 : 400,
+                textAlign: 'right',
+              }}
+            >
+              {field.status === 'filled' ? field.value ?? 'filled' : 'needed'}
+            </span>
+          </div>
+        ))}
+      </div>
     </CardShell>
   );
 }
@@ -928,9 +1007,10 @@ function DeliverableReadyCard({ a }: { a: DeliverableReadyArtifact }) {
  *
  * Behavior:
  *   - Phase-progress, anti-pattern-flag, question-resolved, pattern-match,
- *     failure-mode-flagged: dedupe by stable id, keep LATEST occurrence
- *     (so re-emits act as upserts). For failure-mode-flagged the stable
- *     id is `failureModeId` against the 10-failure-mode catalog.
+ *     brief-progress, failure-mode-flagged: dedupe by stable id, keep
+ *     LATEST occurrence (so re-emits act as upserts). For failure-mode-
+ *     flagged the stable id is `failureModeId` against the 10-failure-mode
+ *     catalog.
  *   - Brief-field and classification: dropped — Surface 1 territory.
  *   - Everything else: preserved in insertion order.
  *   - Final result is reversed (most recent first across the stream).
@@ -960,6 +1040,7 @@ export function selectVisibleArtifacts(artifacts: Artifact[]): Artifact[] {
   // dependency; the panel should show ONE card per signalId — the
   // latest emission wins, same upsert semantics as anti-pattern-flag.
   const seenCrossProgramSignals = new Map<string, CrossProgramSignalArtifact>();
+  let latestBriefProgress: BriefProgressArtifact | null = null;
   const orderedNonDeduped: Artifact[] = [];
 
   for (const a of artifacts) {
@@ -979,6 +1060,8 @@ export function selectVisibleArtifacts(artifacts: Artifact[]): Artifact[] {
       seenDeliverables.set(`${a.kind}::${a.programId}`, a);
     } else if (a.type === 'cross-program-signal') {
       seenCrossProgramSignals.set(a.signalId, a);
+    } else if (a.type === 'brief-progress') {
+      latestBriefProgress = a;
     } else {
       orderedNonDeduped.push(a);
     }
@@ -996,6 +1079,7 @@ export function selectVisibleArtifacts(artifacts: Artifact[]): Artifact[] {
 
   const merged: Artifact[] = [
     ...orderedNonDeduped,
+    ...(latestBriefProgress ? [latestBriefProgress] : []),
     ...seenProgress.values(),
     ...seenFlags.values(),
     ...seenQuestions.values(),
@@ -1014,6 +1098,7 @@ export function selectVisibleArtifacts(artifacts: Artifact[]): Artifact[] {
         a.type === 'pattern-match' ||
         a.type === 'cross-program-dependency' ||
         a.type === 'program-focus' ||
+        a.type === 'brief-progress' ||
         a.type === 'phase-progress' ||
         a.type === 'anti-pattern-flag' ||
         a.type === 'question-resolved' ||
@@ -1133,6 +1218,8 @@ export function NexusReactivePanel({
             return <PhaseRecommendationCard key={key} a={a} />;
           case 'pattern-match':
             return <PatternMatchCardSmall key={key} a={a} />;
+          case 'brief-progress':
+            return <BriefProgressCardSmall key="brief-progress" a={a} />;
           case 'cross-program-dependency':
             return <CrossProgramDependencyCard key={key} a={a} />;
           case 'program-focus':

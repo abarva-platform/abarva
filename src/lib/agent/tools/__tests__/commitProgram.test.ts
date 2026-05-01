@@ -313,6 +313,11 @@ describe('commit_program · OV2-2b approval-queue flow', () => {
     expect(result.data.engagement_id).toBe(ENGAGEMENT_UUID);
     expect(result.data.approval_request_id).toBe(APPROVAL_UUID);
     expect(result.data.lifecycle_state).toBe('submitted_for_approval');
+    expect(result.data.record_status).toBe('created');
+    expect(result.data.phase_access).toBe('phase_0_pending_tenant_admin_approval');
+    expect(result.data.function_code).toBe('FRONT_OFFICE');
+    expect(result.data.objective_code).toBe('GROW');
+    expect(result.data.topic_code).toBe('test_program');
     expect(result.data.redirect_to).toBe(`/programs/${ENGAGEMENT_UUID}`);
 
     // 1 · the engagement insert payload carries the new lifecycle state
@@ -323,7 +328,11 @@ describe('commit_program · OV2-2b approval-queue flow', () => {
     expect(engagementInsert!.insertedRow).toMatchObject({
       client_id: 'client_uuid_1',
       industry_code: 'RETAIL',
+      function_code: 'FRONT_OFFICE',
+      objective_code: 'GROW',
+      topic_code: 'test_program',
       name: 'Test Program',
+      sponsor_person_id: SPONSOR_UUID,
       lifecycle_state: 'submitted_for_approval',
       status: 'draft',
       current_phase: 0,
@@ -344,6 +353,9 @@ describe('commit_program · OV2-2b approval-queue flow', () => {
       target_outcome: 'Lift conversion 4 points',
       sponsor_person_id: SPONSOR_UUID,
       lead_person_id: LEAD_UUID,
+      function_code: 'FRONT_OFFICE',
+      objective_code: 'GROW',
+      topic_code: 'test_program',
       classification: 'workflow_automation',
       matched_pattern_id: 'PAT-PRG-CDP-001',
       submitted_from_surface: '/programs/new',
@@ -352,6 +364,46 @@ describe('commit_program · OV2-2b approval-queue flow', () => {
 
     // 3 · navigation sentinel still emitted for the client
     expect(writes.some((w) => w.includes('[[program-created:'))).toBe(true);
+    expect(writes.some((w) => w.includes('[[artifact:brief-progress]]'))).toBe(true);
+  });
+
+  it('derives middle-office optimization classification for internal engineering productivity programs', async () => {
+    stageHappyPath({
+      name: 'Meridian Health System',
+      industry_code: 'healthcare_idn',
+      key: 'meridian',
+    });
+    submitForApprovalMock.mockResolvedValue(makeApprovalRequest({ tenantKey: 'meridian' }));
+
+    const result = await commitProgramTool.handler(
+      {
+        program_name: 'AI-Assisted Engineering Productivity',
+        problem_statement:
+          'Internal full stack, digital, and data delivery is too expensive and slow.',
+        target_outcome:
+          '$80M baseline with 30% DORA productivity uplift and cost take-out by FY2026.',
+        sponsor_person_id: SPONSOR_UUID,
+        lead_person_id: LEAD_UUID,
+      },
+      makeCtx('/programs'),
+    );
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.data.function_code).toBe('MIDDLE_OFFICE');
+    expect(result.data.objective_code).toBe('OPTIMISE');
+    expect(result.data.topic_code).toBe('ai_assisted_engineering_productivity');
+
+    const engagementInsert = queryLog.find(
+      (q) => q.table === 'engagements' && q.insertedRow !== null,
+    );
+    expect(engagementInsert?.insertedRow).toMatchObject({
+      industry_code: 'HEALTHCARE_IDN',
+      function_code: 'MIDDLE_OFFICE',
+      objective_code: 'OPTIMISE',
+      topic_code: 'ai_assisted_engineering_productivity',
+      sponsor_person_id: SPONSOR_UUID,
+    });
   });
 
   it('falls back to the configured client industry code when the client row is missing one', async () => {
@@ -519,6 +571,8 @@ describe('commit_program · OV2-2b approval-queue flow', () => {
     expect(result.data.idempotent_replay).toBe(true);
     expect(result.data.engagement_id).toBe(ENGAGEMENT_UUID);
     expect(result.data.approval_request_id).toBe(APPROVAL_UUID);
+    expect(result.data.record_status).toBe('existing_recent_submission');
+    expect(result.data.phase_access).toBe('phase_0_pending_tenant_admin_approval');
     // submitForApproval is NOT called on replay — we already have one.
     expect(submitForApprovalMock).not.toHaveBeenCalled();
   });

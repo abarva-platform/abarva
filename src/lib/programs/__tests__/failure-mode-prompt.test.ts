@@ -285,20 +285,19 @@ describe('composeFailureModeDoctrineBlock (OV2-FM-DOCTRINE)', () => {
 });
 
 describe('composeBriefProgressCadenceDirective', () => {
-  it('returns the cadence line on /programs/new', () => {
+  it('returns the cadence line on program origination canvases', () => {
+    expect(composeBriefProgressCadenceDirective('/programs')).toContain(
+      'brief-progress',
+    );
     expect(composeBriefProgressCadenceDirective('/programs/new')).toContain(
       'brief-progress',
     );
-  });
-
-  it('returns the cadence line on /demo/programs/new', () => {
     expect(
       composeBriefProgressCadenceDirective('/demo/programs/new'),
     ).toContain('brief-progress');
   });
 
   it('returns empty string on every other surface', () => {
-    expect(composeBriefProgressCadenceDirective('/programs')).toBe('');
     expect(composeBriefProgressCadenceDirective('/programs/abc-123')).toBe('');
     expect(composeBriefProgressCadenceDirective('/intelligence')).toBe('');
     expect(composeBriefProgressCadenceDirective(null)).toBe('');
