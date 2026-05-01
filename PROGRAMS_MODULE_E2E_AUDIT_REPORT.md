@@ -19,6 +19,9 @@ Fixed in this branch:
 - Create permission enforcement added:
   - `src/lib/agent/tools/program/commitProgram.ts` now refuses `commit_program` when `canCreatePrograms` is false.
   - `src/app/api/v1/programs/route.ts` now returns 403 unless the user has `can_create_programs`.
+- Create-program required classification fields added:
+  - `src/lib/programs/mutations.ts` now derives and writes `function_code`, `objective_code`, and `topic_code` for the direct `/api/v1/programs` creation path.
+  - This closes the schema-constraint class of failures where a program creation request could reach `engagements.insert` without non-null classification fields.
 - Access-policy overgrant fixed:
   - `src/lib/auth/program-access-policy.ts` no longer defaults an unknown user with no membership/participants to `client_admin`; it returns `no_program_access`.
 - Financial sanitizer bypass reduced:
@@ -63,9 +66,10 @@ Validation run after fixes:
 - `npx jest src/lib/programs/__tests__/evidence-ingestion.test.ts src/app/api/programs/__tests__/attachments-upload.smoke.test.ts src/lib/programs/__tests__/approval.test.ts src/lib/programs/__tests__/governance-gates.test.ts src/lib/agent/tools/__tests__/commitProgram.test.ts src/lib/agent/tools/__tests__/completeDeliverable.test.ts --runInBand` → 6 suites / 61 tests passed.
 - `npx jest --runTestsByPath src/app/api/admin/users/provision/__tests__/route.test.ts --runInBand` → 1 suite / 3 tests passed.
 - `npx jest src/lib/programs/phase-packs/__tests__ src/app/api/context/demo/__tests__/route.test.ts src/app/api/chat/agent/__tests__/agent-route-context-bundle.test.ts src/lib/auth/__tests__/program-access-policy.test.ts src/app/api/programs/__tests__/attachments-upload.smoke.test.ts --runInBand` → 15 suites / 263 tests passed.
-- Final focused regression command over phase packs, broker/demo/chat context, access policy, module access, upload smoke, evidence ingestion, approval/governance, program tools, program API contracts, admin Users & Access, deliverable-complete route, and admin provisioning route -> 27 suites / 468 tests passed after Clerk invite handoff wiring.
+- Final focused regression command over phase packs, broker/demo/chat context, access policy, module access, upload smoke, evidence ingestion, approval/governance, program mutations, program tools, program API contracts, direct program create route, admin Users & Access, deliverable-complete route, and admin provisioning route -> 29 suites / 482 tests passed after Clerk invite handoff and create-program classification wiring.
 - Follow-up TypeScript pass caught the JSON upload contract mismatch; `src/lib/programs/attachments/mime.ts` now includes `application/json`, and the upload/evidence focused suite passes 2 suites / 11 tests.
 - Admin provisioning + invite focused tests pass: `npx jest src/app/api/admin/users/provision/__tests__/route.test.ts src/components/admin/__tests__/ProgramUserProvisionForm.test.tsx --runInBand` -> 2 suites / 6 tests passed.
+- Create-program classification regression tests pass: `npx jest src/lib/programs/__tests__/mutations-industry.test.ts src/__tests__/integration/programs/programs-create-route.test.ts --runInBand` -> 2 suites / 14 tests passed.
 
 Validation caveat:
 
@@ -161,14 +165,17 @@ Implemented policy:
 - `src/lib/programs/db-phase-queries.ts:72-99` applies `canReadProgram` and client filtering on program detail reads.
 - `src/app/programs/layout.tsx:9-11` calls `requireProductModule('programs')` before rendering Programs routes.
 
-Gaps:
+Closed in this branch:
 
-- `src/lib/auth/program-access-policy.ts:161-170` returns `client_admin` if no membership and no participants are found. That fallback can over-grant instead of defaulting to no program access.
-- `src/app/api/v1/programs/route.ts:67-105` does not cite or call `loadUserProgramAccessPolicy` or `canCreatePrograms` before program creation.
-- `src/lib/agent/tools/program/commitProgram.ts:349-384` resolves tenancy but does not enforce `canCreatePrograms` from `programAccessPolicy` in the handler.
+- `src/lib/auth/program-access-policy.ts` no longer returns `client_admin` when no membership and no participants are found; unknown users default to no Programs access.
+- `src/app/api/v1/programs/route.ts` now calls `loadUserProgramAccessPolicy` and returns 403 when `canCreatePrograms` is false.
+- `src/lib/agent/tools/program/commitProgram.ts` now enforces `canCreatePrograms` before attempting an engagement write.
+
+Remaining gap:
+
 - The audit did not find evidence that every Programs endpoint rejects cross-client requests with 403. Several reads return `null` / not found semantics rather than an explicit 403.
 
-Verdict: Read scoping is meaningfully implemented. Create/action enforcement is incomplete.
+Verdict: Read scoping and primary create/action enforcement are meaningfully implemented in code. Full all-endpoint 403 proof remains incomplete.
 
 ## 1.4 ContextBroker and Private Data Plane Retrieval
 
@@ -557,8 +564,8 @@ Verdict: PARTIAL.
 2. Good: classification uses private Meridian context and shared pattern corpus.
 3. Entry: trigger text captured.
 4. Exit: function/objective/topic codes and pattern id selected.
-5. Agent: `commit_program` calls `classifyCommitProgram(input)` and stores `function_code`, `objective_code`, `topic_code` in `src/lib/agent/tools/program/commitProgram.ts:396-404` and `:477-504`.
-6. DB: classification fields written to `engagements` in `src/lib/agent/tools/program/commitProgram.ts:480-484`.
+5. Agent: `commit_program` calls `classifyCommitProgram(input)` and stores `function_code`, `objective_code`, `topic_code`; the direct Programs API path uses `resolveProgramClassificationCodes(...)` in `src/lib/programs/mutations.ts`.
+6. DB: classification fields are written to `engagements` by both the agent `commit_program` tool and `originateProgram(...)`.
 7. Upload: no.
 8. Templates: no classification worksheet found.
 9. Meeting: no.

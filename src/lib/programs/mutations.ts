@@ -44,6 +44,60 @@ export function resolveProgramIndustryCode(
   ).toUpperCase();
 }
 
+export interface ProgramClassificationCodes {
+  functionCode: 'FRONT_OFFICE' | 'MIDDLE_OFFICE' | 'BACK_OFFICE';
+  objectiveCode: 'GROW' | 'OPTIMISE' | 'CONTROL';
+  topicCode: string;
+}
+
+function slugifyTopicCode(value: string): string {
+  const slug = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 80);
+  return slug || 'program_origination';
+}
+
+export function resolveProgramClassificationCodes(input: {
+  name: string;
+  useCase: string;
+  archetype?: string | null;
+  acceptedPatternKey?: string | null;
+}): ProgramClassificationCodes {
+  const text = [
+    input.name,
+    input.useCase,
+    input.archetype ?? '',
+    input.acceptedPatternKey ?? '',
+  ].join(' ').toLowerCase();
+
+  let functionCode: ProgramClassificationCodes['functionCode'] = 'MIDDLE_OFFICE';
+  if (
+    /\b(finance|financial close|hr|hcm|erp|procurement|supply chain|payroll|back[- ]office|revenue cycle|rcm)\b/.test(text)
+  ) {
+    functionCode = 'BACK_OFFICE';
+  } else if (
+    /\b(customer|consumer|patient|member|sales|marketing|commerce|checkout|abandonment|store|portal|front door|front[- ]office)\b/.test(text)
+  ) {
+    functionCode = 'FRONT_OFFICE';
+  }
+
+  let objectiveCode: ProgramClassificationCodes['objectiveCode'] = 'OPTIMISE';
+  if (/\b(risk|control|compliance|governance|audit|security|regulatory|privacy)\b/.test(text)) {
+    objectiveCode = 'CONTROL';
+  } else if (/\b(growth|grow|revenue|acquisition|retention|conversion|market share)\b/.test(text)) {
+    objectiveCode = 'GROW';
+  }
+
+  return {
+    functionCode,
+    objectiveCode,
+    topicCode: slugifyTopicCode(input.acceptedPatternKey || input.name),
+  };
+}
+
 async function resolveClientIndustryCode(clientId: string, fallback?: string | null): Promise<string> {
   const sb = getServerSupabase();
   const { data } = await sb
@@ -76,6 +130,12 @@ export async function originateProgram(ctx: TenancyCtx, input: OriginateProgramI
   assertTenancy(ctx);
   const sb = getServerSupabase();
   const industryCode = await resolveClientIndustryCode(ctx.clientId, input.industryHint);
+  const classificationCodes = resolveProgramClassificationCodes({
+    name: input.name,
+    useCase: input.useCase,
+    archetype: input.archetype,
+    acceptedPatternKey: input.acceptedPatternKey,
+  });
   // NOTE: engagements has no `created_by` column on the current schema —
   // creator attribution is captured in module_state_log (changed_by_user_id)
   // and downstream participant rows. Don't reintroduce a created_by write.
@@ -84,6 +144,9 @@ export async function originateProgram(ctx: TenancyCtx, input: OriginateProgramI
     .insert({
       client_id: ctx.clientId,
       industry_code: industryCode,
+      function_code: classificationCodes.functionCode,
+      objective_code: classificationCodes.objectiveCode,
+      topic_code: classificationCodes.topicCode,
       name: input.name,
       status: 'active',
       current_phase: 0,
