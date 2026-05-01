@@ -74,3 +74,17 @@ Agents must distinguish:
 
 If evidence is thin, the agent can use pattern guidance but must label it as such.
 
+
+
+## Category-Specific Retrieval Contract
+
+Agent pattern usage must follow the category leverage table in `11_CORPUS_CATEGORY_LEVERAGE_TABLE.md` and the training playbook in `12_PATTERN_TO_VALUE_AND_AGENT_TRAINING_PLAYBOOK.md`.
+
+Default emphasis by agent:
+
+- Nexus: `pattern`, `deliverable-template`, `decision-framework`, contextual `industry-source-system`, and `evidence-template`.
+- Sentinel: `industry-source-system`, `solution-architecture`, `vendor-implementation`, `regulatory-frame`, and `evidence-template`.
+- Atlas: `pattern`, `solution-architecture`, `vendor-implementation`, and cross-program `anti-pattern` recurrence.
+- Steward: `regulatory-frame`, `anti-pattern`, and `evidence-template`.
+
+Hard rule: if client or program context exists, doctrine-only answers are under-grounded. Agents must retrieve from doctrine, industry, client, program, and run-state layers according to the context layer model in `13_CONTEXT_LAYER_AGENT_TRAINING_REPORT.md`.
