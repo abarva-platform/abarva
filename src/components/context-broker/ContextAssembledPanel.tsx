@@ -63,6 +63,7 @@ const NEUTRAL_BORDER = `${COLORS.ink}33`;
 
 function sourceClassBorder(sourceClass: ContextProvenance['sourceClass'] | null): string {
   switch (sourceClass) {
+    case 'private_client_data':
     case 'tenant_admin_upload':
       return SAGE_GREEN;
     case 'corpus':
@@ -77,6 +78,8 @@ function sourceClassBorder(sourceClass: ContextProvenance['sourceClass'] | null)
 
 function sourceClassLabel(sourceClass: ContextProvenance['sourceClass'] | null): string {
   switch (sourceClass) {
+    case 'private_client_data':
+      return 'Private client data';
     case 'tenant_admin_upload':
       return 'Tenant data';
     case 'corpus':
@@ -209,6 +212,7 @@ export function ContextAssembledPanel({
     >
       <Header bundle={bundle} now={now} />
       {bundle.warnings.length > 0 ? <Warnings warnings={bundle.warnings} /> : null}
+      {bundle.retrievalTrace ? <RetrievalTrace trace={bundle.retrievalTrace} /> : null}
       <FactsSection
         facts={bundle.facts}
         provenanceById={provenanceById}
@@ -382,6 +386,56 @@ function InfoTags({ infoTags }: { infoTags: string[] }) {
         ))}
       </ul>
     </div>
+  );
+}
+
+function RetrievalTrace({
+  trace,
+}: {
+  trace: NonNullable<ContextBundle['retrievalTrace']>;
+}) {
+  const privateIds = trace.retrieved_private_ids.slice(0, 6);
+  const sharedIds = trace.shared_corpus_ids.slice(0, 6);
+  return (
+    <section
+      data-testid="context-panel-retrieval-trace"
+      style={{
+        border: `1px solid ${COLORS.ink}14`,
+        borderRadius: RADIUS.sm,
+        padding: SPACING.sm,
+        background: `${COLORS.cream}99`,
+      }}
+    >
+      <p style={sectionEyebrowStyle}>Retrieval trace</p>
+      <dl
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'auto 1fr',
+          gap: `${SPACING.xs} ${SPACING.sm}`,
+          margin: 0,
+          fontFamily: TYPOGRAPHY.mono,
+          fontSize: 10,
+          color: `${COLORS.ink}bb`,
+        }}
+      >
+        <dt>tenant_key</dt>
+        <dd data-testid="context-panel-trace-tenant" style={traceValueStyle}>{trace.tenant_key ?? 'none'}</dd>
+        <dt>data_plane_id</dt>
+        <dd data-testid="context-panel-trace-plane" style={traceValueStyle}>{trace.data_plane_id ?? 'none'}</dd>
+        <dt>schema</dt>
+        <dd data-testid="context-panel-trace-schema" style={traceValueStyle}>{trace.schema ?? 'none'}</dd>
+        <dt>pinecone_index</dt>
+        <dd data-testid="context-panel-trace-index" style={traceValueStyle}>{trace.pinecone_index ?? 'none'}</dd>
+        <dt>private_ids</dt>
+        <dd data-testid="context-panel-trace-private-ids" style={traceValueStyle}>
+          {privateIds.length > 0 ? privateIds.join(', ') : 'none'}
+        </dd>
+        <dt>shared_ids</dt>
+        <dd data-testid="context-panel-trace-shared-ids" style={traceValueStyle}>
+          {sharedIds.length > 0 ? sharedIds.join(', ') : 'none'}
+        </dd>
+      </dl>
+    </section>
   );
 }
 
@@ -1253,6 +1307,11 @@ const metaLineStyle: React.CSSProperties = {
   fontSize: 10,
   color: `${COLORS.ink}88`,
   marginTop: 2,
+};
+
+const traceValueStyle: React.CSSProperties = {
+  margin: 0,
+  overflowWrap: 'anywhere',
 };
 
 // CB-10 · per-recordKind detail row styles (kpi_metric, cross_program_signal).

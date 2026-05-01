@@ -129,6 +129,49 @@ function makeAdapter(): SupabaseTenantDataAdapter {
 // ── listSegments ──────────────────────────────────────────────────────
 
 describe('SupabaseTenantDataAdapter.listSegments', () => {
+  it('routes registered private-plane tenants through their private Supabase schema', async () => {
+    const schemaMock = jest.fn(() => ({ from: fromMock }));
+    stagedResults = [
+      {
+        data: [
+          {
+            tenant_key: 'northstar-health',
+            segment_id: 'program_inventory',
+            segment_name: 'Program inventory',
+            family_number: 6,
+            expected_baseline: { expected_record_count: 1 },
+            coverage_score: 100,
+            health_state: 'complete',
+            record_count: 1,
+            stale_count: 0,
+            missing_count: 0,
+            last_reviewed_at: null,
+            last_ingested_at: '2026-05-01T00:00:00Z',
+            provenance_summary: null,
+          },
+        ],
+        error: null,
+      },
+    ];
+    const adapter = new SupabaseTenantDataAdapter({
+      from: fromMock,
+      schema: schemaMock,
+    } as never);
+
+    const out = await adapter.listSegments('northstar-health');
+
+    expect(schemaMock).toHaveBeenCalledWith('client_northstar_health_private');
+    expect(out[0]).toMatchObject({
+      tenantKey: 'northstar-health',
+      segmentId: 'program_inventory',
+      recordCount: 1,
+    });
+    expect(calls[0].table).toBe('data_inventory_segments');
+    expect(calls[0].filters).toEqual([
+      { op: 'eq', column: 'tenant_key', value: 'northstar-health' },
+    ]);
+  });
+
   it('maps rows and translates health states to the contract union', async () => {
     stagedResults = [
       {

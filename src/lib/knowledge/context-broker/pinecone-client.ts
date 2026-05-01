@@ -96,6 +96,20 @@ export const PINECONE_INDEX_TENANT: PineconeIndexConfig = {
   mode: 'tenant',
 };
 
+/** Build a tenant-mode config for a client-owned private Pinecone index. */
+export function privateTenantPineconeIndexConfig(indexName: string): PineconeIndexConfig {
+  const name = indexName.trim();
+  if (!name) {
+    throw new Error('privateTenantPineconeIndexConfig requires a non-empty indexName');
+  }
+  return {
+    name,
+    dimension: 1536,
+    metric: 'cosine',
+    mode: 'tenant',
+  };
+}
+
 /** Shared worldview corpus index. WV-INGEST. */
 export const PINECONE_INDEX_WORLDVIEW: PineconeIndexConfig = {
   name: readWorldviewIndexName(),

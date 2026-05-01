@@ -361,6 +361,81 @@ describe('DefaultContextBroker.assemble — tenant mode', () => {
     }
   });
 
+  it('tags registered tenants with private-plane trace and private-client provenance', async () => {
+    const seedChunks: ContextChunk[] = [
+      makeChunk('chunk:apex:private:001', 'program:apex-cdp-2026'),
+    ];
+    const { broker } = makeBroker({
+      chunksByKeyword: jest.fn().mockResolvedValue(seedChunks),
+      getRecord: jest.fn().mockResolvedValue(makeRecord('program:apex-cdp-2026')),
+      getGraphNeighborhood: jest.fn().mockImplementation((_t: string, rootId: string) =>
+        Promise.resolve(makeNeighborhood(rootId))),
+    });
+
+    const bundle = await broker.assemble({
+      query: 'apex cdp sponsor',
+      mode: 'tenant',
+      tenantKey: 'apex-retail',
+    });
+
+    expect(bundle.retrievalTrace).toMatchObject({
+      tenant_key: 'apex-retail',
+      data_plane_id: 'pdp:apex-retail:prod',
+      schema: 'client_apex_retail_private',
+      pinecone_index: 'abarva-client-apex-retail-prod',
+    });
+    expect(bundle.retrievalTrace?.retrieved_private_ids).toEqual(
+      expect.arrayContaining(['program:apex-cdp-2026', 'chunk:apex:private:001']),
+    );
+    expect(bundle.provenance.map((p) => p.sourceClass)).toContain('private_client_data');
+  });
+
+  it('keeps Northstar on private DB retrieval when private Pinecone is blocked', async () => {
+    const northstarChunk: ContextChunk = {
+      tenantKey: 'northstar-health',
+      chunkId: 'chunk:northstar:analytics:001',
+      recordId: 'program:nh-prog-healthcare-data-analytics-modernization',
+      text: 'Northstar analytics modernization covers Epic, prior auth, coding accuracy, and value-based care.',
+      embeddingStatus: 'pending',
+      sourceBasis: 'private_data_plane_seed',
+      classification: 'confidential',
+    };
+    const northstarRecord: TenantRecord = {
+      tenantKey: 'northstar-health',
+      segmentId: 'program_inventory',
+      recordId: 'program:nh-prog-healthcare-data-analytics-modernization',
+      recordKind: 'program_record',
+      title: 'Healthcare Data Analytics Modernization for Agentic Care',
+      payload: {},
+      sourceBasis: 'private_data_plane_seed',
+      classification: 'confidential',
+      confidence: 0.9,
+    };
+    const { broker, adapter } = makeBroker({
+      chunksByKeyword: jest.fn().mockResolvedValue([northstarChunk]),
+      getRecord: jest.fn().mockResolvedValue(northstarRecord),
+    });
+
+    const bundle = await broker.assemble({
+      query: 'How should Northstar Health modernize analytics given Epic, prior authorization, coding accuracy, and value-based care?',
+      mode: 'tenant',
+      tenantKey: 'northstar-health',
+    });
+
+    expect(adapter.chunksByVector).toHaveBeenCalled();
+    expect(bundle.retrievalTrace).toMatchObject({
+      tenant_key: 'northstar-health',
+      data_plane_id: 'pdp:northstar-health:prod',
+      schema: 'client_northstar_health_private',
+      pinecone_index: null,
+      vector_status: 'blocked',
+    });
+    expect(bundle.warnings.join(' ')).toMatch(/Private vector retrieval unavailable/);
+    expect(bundle.semanticChunks.map((hit) => hit.chunk.chunkId)).toContain(
+      'chunk:northstar:analytics:001',
+    );
+  });
+
   it('skips graph traversal for records whose id has no graph prefix', async () => {
     const seedChunks: ContextChunk[] = [
       makeChunk('chunk:apex:kpi:001', 'kpi_dictionary:apex:001'),
