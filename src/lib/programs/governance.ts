@@ -23,6 +23,7 @@ import type {
   TenancyCtx,
 } from './types.db';
 import { getProgramById } from './queries';
+import { writeProgramAuditLogBestEffort } from './audit-log';
 
 function assertTenancy(ctx: TenancyCtx): void {
   if (!ctx?.clientId || !ctx?.userId) {
@@ -319,7 +320,17 @@ export async function requestFounderApproval(
     .select('id')
     .single();
   if (error) throw error;
-  return (data as { id: string }).id;
+  const approvalId = (data as { id: string }).id;
+  await writeProgramAuditLogBestEffort(ctx, {
+    programId,
+    engagementId: programId,
+    action: 'phase_approval_requested',
+    fromState: null,
+    toState: 'approval_pending',
+    rationale: input.headline,
+    evidenceRefs: [approvalId],
+  });
+  return approvalId;
 }
 
 export async function decideApproval(
@@ -330,7 +341,7 @@ export async function decideApproval(
 ): Promise<void> {
   assertTenancy(ctx);
   const sb = getServerSupabase();
-  const { error } = await sb
+  const { data, error } = await sb
     .from('founder_approval_requests')
     .update({
       status: decision,
@@ -339,8 +350,20 @@ export async function decideApproval(
       decided_at: new Date().toISOString(),
     })
     .eq('id', approvalId)
-    .eq('status', 'pending');
+    .eq('status', 'pending')
+    .select('id, engagement_id')
+    .single();
   if (error) throw error;
+  const programId = (data as { engagement_id?: string | null } | null)?.engagement_id ?? approvalId;
+  await writeProgramAuditLogBestEffort(ctx, {
+    programId,
+    engagementId: programId,
+    action: `phase_approval_${decision}`,
+    fromState: 'approval_pending',
+    toState: decision,
+    rationale: notes ?? null,
+    evidenceRefs: [approvalId],
+  });
 }
 
 /**

@@ -9,6 +9,7 @@ import { advancePhase } from '@/lib/programs/mutations';
 import { evaluateGate, requestFounderApproval } from '@/lib/programs/governance';
 import { requireTenancy, tenancyErrorResponse } from '../../_auth';
 import { getServerSupabase } from '@/lib/supabase-server';
+import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -17,6 +18,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   try {
     const { programId } = await params;
     const ctx = await requireTenancy();
+    const accessPolicy = await loadUserProgramAccessPolicy(ctx, { programId });
+    if (accessPolicy.programIdsAllowed !== null && !accessPolicy.programIdsAllowed.includes(programId)) {
+      return Response.json({ error: 'forbidden' }, { status: 403 });
+    }
     const body = (await req.json()) as { toPhase?: number; snapshot?: Record<string, unknown>; bypassGate?: boolean; approvalId?: string };
     if (typeof body?.toPhase !== 'number') {
       return Response.json({ error: 'bad_request', detail: 'toPhase required' }, { status: 400 });
@@ -48,6 +53,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
       return Response.json(
         { error: 'approval_required', approvalId, gate, detail: 'Approval request created · re-send with approvalId once approved' },
         { status: 202 },
+      );
+    }
+
+    if (body.bypassGate && !accessPolicy.canApproveGates && ctx.role !== 'founder') {
+      return Response.json(
+        { error: 'forbidden', detail: 'phase-gate approval permission is required to bypass a gate' },
+        { status: 403 },
       );
     }
 

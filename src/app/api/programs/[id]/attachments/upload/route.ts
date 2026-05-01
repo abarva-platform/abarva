@@ -43,6 +43,12 @@ import {
 import { requireTenancy, tenancyErrorResponse } from '@/app/api/v1/programs/_auth';
 import { clientKeyToBrokerTenantKey } from '@/lib/agent/tools/intelligence/_shared';
 import { getActiveClientRow } from '@/lib/active-client';
+import {
+  evidenceForUnsupportedAttachment,
+  extractProgramEvidenceFromText,
+  recordProgramEvidence,
+} from '@/lib/programs/evidence-ingestion';
+import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -107,6 +113,10 @@ export async function POST(
   }
   if (program.archivedAt || program.deletedAt) {
     return jsonError(410, 'archived_or_deleted');
+  }
+  const accessPolicy = await loadUserProgramAccessPolicy(ctx, { programId });
+  if (!accessPolicy.canUploadArtifacts) {
+    return jsonError(403, 'upload_not_permitted');
   }
 
   // Resolve broker-tenant key (apex-retail vs apexretail split). Storage
@@ -231,5 +241,45 @@ export async function POST(
     );
   }
 
-  return Response.json({ attachment: record }, { status: 200 });
+  let evidenceId: string | null = null;
+  let evidenceWarning: string | null = null;
+  try {
+    const textual =
+      mimeType === 'text/plain' ||
+      mimeType === 'text/markdown' ||
+      mimeType === 'text/csv' ||
+      mimeType === 'application/json';
+    const evidence = textual
+      ? extractProgramEvidenceFromText({
+          filename,
+          mimeType,
+          text: buffer.toString('utf-8'),
+        })
+      : evidenceForUnsupportedAttachment({ filename, mimeType });
+    evidenceId = await recordProgramEvidence(ctx, {
+      ...evidence,
+      tenantKey,
+      programId,
+      attachmentId: record.id,
+      phase: phase ?? null,
+      stepId: stepId ?? null,
+    });
+  } catch (err) {
+    evidenceWarning = err instanceof Error ? err.message : String(err);
+    console.error('[POST /api/programs/:id/attachments/upload] evidence_ingestion_failed', {
+      attachmentId: record.id,
+      programId,
+      message: evidenceWarning,
+    });
+  }
+
+  return Response.json(
+    {
+      attachment: record,
+      evidence: evidenceId
+        ? { id: evidenceId, status: 'captured' }
+        : { id: null, status: 'not_captured', warning: evidenceWarning },
+    },
+    { status: 200 },
+  );
 }

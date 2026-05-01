@@ -68,6 +68,7 @@ import { getServerSupabase } from '@/lib/supabase-server';
 import { getActiveClientRow } from '@/lib/active-client';
 import { CLIENT_KEY_TO_INDUSTRY_CODE } from '@/lib/client-config';
 import { markDraftCommitted } from '@/lib/programs/origination-drafts';
+import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 
 // Postgres UUID v4 format (also matches v1/v3/v5 — sufficient for input
 // validation before we attempt an `engagements.insert` that would
@@ -361,6 +362,16 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
         };
       }
       throw err;
+    }
+
+    const accessPolicy = await loadUserProgramAccessPolicy(tenancy).catch(() => null);
+    if (!accessPolicy?.canCreatePrograms) {
+      return {
+        success: false,
+        error: 'forbidden:can_create_programs_required',
+        recovery:
+          'Your Programs access does not allow creating new programs for this client. Ask a client admin to grant can_create_programs before I submit this brief.',
+      };
     }
 
     // Resolve the active client row again to recover the tenant_key

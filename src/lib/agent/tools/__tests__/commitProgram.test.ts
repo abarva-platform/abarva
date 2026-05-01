@@ -55,6 +55,13 @@ jest.mock('@/lib/active-client', () => ({
   getActiveClientRow: (...args: unknown[]) => getActiveClientRowMock(...args),
 }));
 
+const loadUserProgramAccessPolicyMock = jest.fn();
+jest.mock('@/lib/auth/program-access-policy', () => ({
+  __esModule: true,
+  loadUserProgramAccessPolicy: (...args: unknown[]) =>
+    loadUserProgramAccessPolicyMock(...args),
+}));
+
 const markDraftCommittedMock = jest.fn();
 jest.mock('@/lib/programs/origination-drafts', () => ({
   __esModule: true,
@@ -199,6 +206,10 @@ beforeEach(() => {
   submitForApprovalMock.mockReset();
   requireTenancyMock.mockReset();
   getActiveClientRowMock.mockReset();
+  loadUserProgramAccessPolicyMock.mockReset();
+  loadUserProgramAccessPolicyMock.mockResolvedValue({
+    canCreatePrograms: true,
+  });
   markDraftCommittedMock.mockReset();
   fromMock.mockClear();
   queryLog = [];
@@ -365,6 +376,34 @@ describe('commit_program · OV2-2b approval-queue flow', () => {
     // 3 · navigation sentinel still emitted for the client
     expect(writes.some((w) => w.includes('[[program-created:'))).toBe(true);
     expect(writes.some((w) => w.includes('[[artifact:brief-progress]]'))).toBe(true);
+  });
+
+  it('refuses to create a program when the user lacks canCreatePrograms', async () => {
+    requireTenancyMock.mockResolvedValue({
+      clientId: 'client_uuid_1',
+      userId: 'user_abc',
+      role: 'program_viewer',
+    });
+    loadUserProgramAccessPolicyMock.mockResolvedValue({
+      canCreatePrograms: false,
+    });
+
+    const result = await commitProgramTool.handler(
+      {
+        program_name: 'Unauthorized Program',
+        problem_statement: 'This should not be created.',
+        sponsor_person_id: SPONSOR_UUID,
+      },
+      makeCtx('/programs'),
+    );
+
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error).toBe('forbidden:can_create_programs_required');
+    expect(result.recovery).toMatch(/can_create_programs/);
+    expect(getActiveClientRowMock).not.toHaveBeenCalled();
+    expect(fromMock).not.toHaveBeenCalled();
+    expect(submitForApprovalMock).not.toHaveBeenCalled();
   });
 
   it('derives middle-office optimization classification for internal engineering productivity programs', async () => {

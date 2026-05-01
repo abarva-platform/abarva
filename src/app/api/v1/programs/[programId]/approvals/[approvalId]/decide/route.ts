@@ -3,6 +3,7 @@
 import { NextRequest } from 'next/server';
 import { decideApproval, hasAuthority } from '@/lib/programs/governance';
 import { requireTenancy, tenancyErrorResponse } from '../../../../_auth';
+import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -17,6 +18,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
     }
 
     // Enforce authority · only sponsors or founders can decide
+    const accessPolicy = await loadUserProgramAccessPolicy(ctx, { programId });
+    if (!accessPolicy.canApproveGates && ctx.role !== 'founder') {
+      return Response.json({ error: 'forbidden', detail: 'phase-gate approval permission required' }, { status: 403 });
+    }
     const sponsor = await hasAuthority(ctx, programId, 'sponsor');
     if (!sponsor && ctx.role !== 'founder') {
       return Response.json({ error: 'forbidden', detail: 'sponsor or founder authority required' }, { status: 403 });

@@ -19,6 +19,7 @@ import type {
 } from './types.db';
 import type { ArchetypeKey } from './types.ui';
 import { getProgramById } from './queries';
+import { writeProgramAuditLogBestEffort } from './audit-log';
 
 function assertTenancy(ctx: TenancyCtx): void {
   if (!ctx?.clientId || !ctx?.userId) {
@@ -99,6 +100,15 @@ export async function originateProgram(ctx: TenancyCtx, input: OriginateProgramI
   if (error) throw error;
 
   const programId = (data as { id: string }).id;
+  await writeProgramAuditLogBestEffort(ctx, {
+    programId,
+    engagementId: programId,
+    action: 'program_originated',
+    fromState: null,
+    toState: 'phase_0_seed_created',
+    rationale: input.useCase,
+    evidenceRefs: input.acceptedPatternKey ? [input.acceptedPatternKey] : [],
+  });
 
   // Record the pattern match event if a pattern was accepted
   if (input.acceptedPatternKey) {
@@ -184,6 +194,16 @@ export async function advancePhase(ctx: TenancyCtx, input: AdvancePhaseInput): P
     context_jsonb: { bypass_gate: !!input.bypassGate, approved_by: input.approvedByUserId ?? null },
   });
   if (logErr) throw logErr;
+
+  await writeProgramAuditLogBestEffort(ctx, {
+    programId: input.programId,
+    engagementId: input.programId,
+    action: 'program_phase_advanced',
+    fromState: `P${input.fromPhase}`,
+    toState: `P${input.toPhase}`,
+    rationale: input.bypassGate ? 'Phase advanced with gate bypass flag.' : 'Phase advanced after gate evaluation.',
+    evidenceRefs: [(snap as { id: string }).id],
+  });
 
   return { programId: input.programId, newPhase: input.toPhase, snapshotId: (snap as { id: string }).id };
 }
@@ -337,6 +357,16 @@ export async function completeDeliverable(
   });
   if (logErr) throw logErr;
 
+  await writeProgramAuditLogBestEffort(ctx, {
+    programId,
+    engagementId: programId,
+    action: input.signOff === false ? 'deliverable_drafted' : 'deliverable_signed_off',
+    fromState: existing ? 'existing_deliverable' : 'new_deliverable',
+    toState: input.signOff === false ? 'draft' : 'signed_off',
+    rationale: title,
+    evidenceRefs: [deliverableId, ...(versionId ? [versionId] : [])],
+  });
+
   return {
     deliverableId,
     versionId,
@@ -385,6 +415,16 @@ export async function setModuleStatus(
     notes: patch.notes ?? null,
   });
   if (logErr) throw logErr;
+
+  await writeProgramAuditLogBestEffort(ctx, {
+    programId,
+    engagementId: programId,
+    action: 'program_module_status_changed',
+    fromState: (current as { status: string } | null)?.status ?? null,
+    toState: status,
+    rationale: patch.notes ?? null,
+    evidenceRefs: [moduleKey],
+  });
 }
 
 export async function createMilestone(

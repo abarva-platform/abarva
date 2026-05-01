@@ -306,7 +306,7 @@ export const P3_DESIGN: PhasePack = {
       whatToFlag:
         'Tell the user P3 is being used to reopen P2. That may be necessary, but ' +
         'it is not free: the sponsor and architecture function must explicitly ' +
-        'approve the change before Build planning continues.',
+        'approve the change before execution-roadmap planning continues.',
       mitigation:
         'Create a dated design decision record with the changed assumption, why P2 ' +
         'was invalidated, sponsor/architecture approval, and impact to scope, KPI, ' +
@@ -320,11 +320,11 @@ export const P3_DESIGN: PhasePack = {
         'Architecture diagram has systems and arrows but no named interface owner, ' +
         'run owner, data owner, security reviewer, or escalation path.',
       whatToFlag:
-        'Surface that the design is not buildable. P4 will spend pilot time finding ' +
-        'owners instead of testing the capability.',
+        'Surface that the design is not roadmap-ready. P4 will spend planning time finding ' +
+        'owners instead of building the execution roadmap.',
       mitigation:
         'Force every component and integration to name builder, operator, approver, ' +
-        'data steward, and incident owner before Build starts.',
+        'data steward, and incident owner before the execution roadmap is approved.',
       preventsFailureModes: [4, 5],
     },
     {
@@ -335,8 +335,8 @@ export const P3_DESIGN: PhasePack = {
         'already high-performing, or already using the tool; no exclusion logic or ' +
         'generalisation risk is stated.',
       whatToFlag:
-        'Warn that P4 may prove adoption in the easiest population, not the target ' +
-        'population. That creates false confidence before Activate.',
+        'Warn that P4 may plan around the easiest population, not the target ' +
+        'population. That creates false confidence before approval and mobilization.',
       mitigation:
         'Require cohort rationale, matched control or comparison where relevant, ' +
         'and explicit limits on what the pilot result can generalise to.',
@@ -353,7 +353,7 @@ export const P3_DESIGN: PhasePack = {
         'P4, every stakeholder can reinterpret the same result to fit their politics.',
       mitigation:
         'Lock numeric thresholds, measurement source, comparison method, and pass/fail ' +
-        'decision rule in the Build gate package before pilot launch.',
+        'decision rule in the design package before roadmap planning starts.',
       preventsFailureModes: [8, 9],
     },
     {
@@ -364,7 +364,7 @@ export const P3_DESIGN: PhasePack = {
         'them; or the team says they are "not needed until rollout".',
       whatToFlag:
         'Surface that dissent has been deferred, not resolved. The person who loses ' +
-        'from the change will usually wait until Build evidence threatens their position.',
+        'from the change will usually wait until roadmap funding threatens their position.',
       mitigation:
         'Put the dissenter in the design review or record their objection and the ' +
         'sponsor decision that accepts or rejects it.',
@@ -393,34 +393,34 @@ export const P3_DESIGN: PhasePack = {
       'dissenter. Do not let the conversation drift into solution brainstorming ' +
       'until those inherited constraints are visible.',
     midPhase:
-      'Drive from diagram to buildability. Ask owner-by-owner, interface-by-interface, ' +
+      'Drive from diagram to roadmap-readiness. Ask owner-by-owner, interface-by-interface, ' +
       'cohort-by-cohort questions. Force success criteria to become numeric and ' +
       'traceable to the P2 baseline. Surface dissent and operating-model gaps while ' +
       'the design can still absorb them.',
     exit:
       'Switch to gate-locking posture. Verify findings and CXO interview, but do ' +
       'not confuse governance completion with readiness. Refuse to call P3 done if ' +
-      'Build would still need clarification on design, cohort, success criteria, ' +
-      'or stop rules.',
+      'Execution Roadmap would still need clarification on design, cohort, success criteria, ' +
+      'owners, assumptions, or stop rules.',
   },
 
   dependencies: {
     requiresFromPrior: [
       'P2 Synthesis: recommended target-state path with stated trade-offs - P3 designs against this, not around it',
-      'P2 Synthesis: architecture sketch with named reviewer - P3 expands it into build architecture',
-      'P2 Synthesis: baseline KPI with current value, source, and measurement method - P3 locks pilot criteria against it',
-      'P2 Synthesis: sponsor commitment, decision cadence, and succession owner - P3/P4 use these for design and pilot decisions',
-      'P2 Synthesis: scope boundary - P3 keeps investigation and pilot design inside it unless sponsor approves change',
-      'P2 Synthesis: kill criterion - P3 turns it into a pilot stop/re-baseline rule',
+      'P2 Synthesis: architecture sketch with named reviewer - P3 expands it into roadmap-ready architecture',
+      'P2 Synthesis: baseline KPI with current value, source, and measurement method - P3 locks roadmap success criteria against it',
+      'P2 Synthesis: sponsor commitment, decision cadence, and succession owner - P3/P4 use these for design and roadmap decisions',
+      'P2 Synthesis: scope boundary - P3 keeps investigation and execution-roadmap design inside it unless sponsor approves change',
+      'P2 Synthesis: kill criterion - P3 turns it into a roadmap stop/re-baseline rule',
       'P2 Synthesis: named dissenter - P3 must engage, record, or explicitly escalate their objection',
     ],
     producesForNext: [
-      'Detailed design signed off - P4 builds the pilot from this design rather than inventing during execution',
-      'Pilot cohort named with inclusion/exclusion logic - P4 executes against the named cohort and records generalisation limits',
-      'Success criteria locked against baseline KPI/source/method - P4 reports pass/fail without moving the finish line',
-      'Phase 3 findings written - P4 inherits accepted risks, open assumptions, and design decisions',
-      'CXO interview complete - P4 has sponsor acceptance of success, failure, and kill/re-baseline consequences',
-      'Operating ownership and support assumptions - P4 tests whether the design can be operated, not just configured',
+      'Detailed design signed off - P4 execution roadmap plans from this design rather than inventing during execution',
+      'Target cohort named with inclusion/exclusion logic - P4 execution roadmap plans phases around the named cohort and records generalisation limits',
+      'Success criteria locked against baseline KPI/source/method - P4 execution roadmap defines observable milestones without moving the finish line',
+      'Phase 3 findings written - P4 execution roadmap inherits accepted risks, open assumptions, and design decisions',
+      'CXO interview complete - P4 execution roadmap has sponsor acceptance of success, failure, and kill/re-baseline consequences',
+      'Operating ownership and support assumptions - P4 execution roadmap defines who can run the capability after approval',
     ],
   },
 

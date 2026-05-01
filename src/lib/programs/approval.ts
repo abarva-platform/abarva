@@ -23,6 +23,7 @@ import {
   notifyApprovalRejected,
   notifyApprovalSubmitted,
 } from '@/lib/programs/approval-notifications';
+import { writeProgramAuditLogBestEffort } from './audit-log';
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -196,6 +197,24 @@ export async function submitForApproval(
 
   const request = rowToApprovalRequest(data as unknown as ApprovalRequestRow);
 
+  await writeProgramAuditLogBestEffort(
+    {
+      clientId: '',
+      userId: input.requestedByUserId,
+      role: 'program_user',
+    },
+    {
+      tenantKey: input.tenantKey,
+      programId: input.programId,
+      engagementId: input.programId,
+      action: 'program_approval_submitted',
+      fromState: 'draft',
+      toState: 'submitted_for_approval',
+      rationale: 'Program brief submitted for tenant-admin approval.',
+      evidenceRefs: [],
+    },
+  );
+
   // OV2-2d-NOTIFY · fire-and-forget email to tenant admins. Email
   // failures must not block the approval workflow.
   void notifyApprovalSubmitted(request).catch((err: unknown) => {
@@ -292,6 +311,24 @@ export async function decideApprovalRequest(
     );
   }
 
+  await writeProgramAuditLogBestEffort(
+    {
+      clientId: '',
+      userId: input.decidedByUserId,
+      role: 'client_admin',
+    },
+    {
+      tenantKey: request.tenantKey,
+      programId: request.programId,
+      engagementId: request.programId,
+      action: `program_approval_${request.requestStatus}`,
+      fromState: 'submitted_for_approval',
+      toState: request.requestStatus === 'approved' ? 'approved' : 'rejected',
+      rationale: input.rationale?.trim() || null,
+      evidenceRefs: [request.id],
+    },
+  );
+
   // OV2-2d-NOTIFY · fire-and-forget email to the requester. Email
   // failures must not block the approval workflow.
   const notify =
@@ -354,7 +391,25 @@ export async function withdrawApprovalRequest(
     );
   }
 
-  return rowToApprovalRequest(data as unknown as ApprovalRequestRow);
+  const request = rowToApprovalRequest(data as unknown as ApprovalRequestRow);
+  await writeProgramAuditLogBestEffort(
+    {
+      clientId: '',
+      userId: requestedByUserId,
+      role: 'program_user',
+    },
+    {
+      tenantKey: request.tenantKey,
+      programId: request.programId,
+      engagementId: request.programId,
+      action: 'program_approval_withdrawn',
+      fromState: 'submitted_for_approval',
+      toState: 'draft',
+      rationale: 'Requester withdrew the pending program approval request.',
+      evidenceRefs: [request.id],
+    },
+  );
+  return request;
 }
 
 /**
