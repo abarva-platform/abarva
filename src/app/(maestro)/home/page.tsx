@@ -3,6 +3,7 @@ import { HomeIndexPage, type HomeProgramRow } from '@/components/home/HomeIndexP
 import { getActiveClientRow } from '@/lib/active-client';
 import { buildReasoningDashboardSummary } from '@/lib/reasoning/dashboard-summary';
 import { getCurrentUser } from '@/lib/auth/current-user';
+import { getCurrentModuleAccess } from '@/lib/auth/server-module-access';
 import { getProgramPortfolio } from '@/lib/programs/queries';
 import { PHASE_LABEL_MAP } from '@/lib/programs/programs-fixture';
 import type { ProgramPhaseId } from '@/lib/programs/programs-types';
@@ -13,10 +14,12 @@ export const revalidate = 0;
 
 export default async function HomePage() {
   const activeClient = await getActiveClientRow().catch(() => null);
+  const moduleAccess = await getCurrentModuleAccess();
   const reasoning = buildReasoningDashboardSummary();
   let livePrograms: HomeProgramRow[] = [];
+  const canUsePrograms = moduleAccess.access.modules.includes('programs');
 
-  if (activeClient) {
+  if (activeClient && canUsePrograms) {
     try {
       const user = await getCurrentUser();
       const programs = await getProgramPortfolio({
@@ -48,6 +51,7 @@ export default async function HomePage() {
     <HomeIndexPage
       activeTenantName={activeClient?.name ?? 'AbarVa Client'}
       hasTenantKey={Boolean(activeClient)}
+      moduleAccess={moduleAccess.access}
       reasoning={reasoning}
       livePrograms={livePrograms}
     />

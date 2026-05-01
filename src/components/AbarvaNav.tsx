@@ -5,6 +5,7 @@ import { useUser, useClerk } from '@clerk/nextjs'
 import { useRouter, usePathname } from 'next/navigation'
 import { resolveSessionRole } from '@/lib/auth/access-routing'
 import { clearActiveClientContext } from '@/lib/auth/client-context-storage'
+import { resolveModuleAccess, type ProductModule } from '@/lib/auth/module-access'
 import { useClientContext } from '@/lib/use-client-context'
 import { AbarvaWordmark } from './abarva/AbarVaWordmark'
 import { COLORS, FONT, TYPE, BORDER, SPACING, RADIUS } from '@/lib/design/abarva-theme'
@@ -39,12 +40,18 @@ function NavInner({ activePage, compact = false }: NavProps) {
   const router = useRouter()
   const pathname = usePathname() ?? ''
 
-  const { clientId, currentClient } = useClientContext()
+  const { currentClient } = useClientContext()
 
   const email = user?.primaryEmailAddress?.emailAddress
     ?? user?.emailAddresses?.[0]?.emailAddress
     ?? undefined
   const metaRole = resolveSessionRole(user?.publicMetadata?.role as string | undefined, email)
+  const moduleAccess = resolveModuleAccess({
+    role: user?.publicMetadata?.role as string | undefined,
+    email,
+    publicMetadata: user?.publicMetadata as Record<string, unknown> | null | undefined,
+  })
+  const canShow = (module: ProductModule) => moduleAccess.modules.includes(module)
 
   const signedIn    = isLoaded && !!user
   const displayName = user?.fullName || user?.emailAddresses?.[0]?.emailAddress?.split('@')?.[0] || 'User'
@@ -124,20 +131,19 @@ function NavInner({ activePage, compact = false }: NavProps) {
     </span>
   )
 
-  // Admin nav item — clickable for admin, hidden visually-only for non-admin via disabled state
+  // Admin nav item — shown only when setup access is granted.
   const adminNavItem = () => (
     <a
-      href={isAdmin ? '/admin' : undefined}
+      href="/admin"
       key="admin-nav"
       style={{
         fontSize: '15px',
-        fontWeight: isAdmin && adminActive ? 700 : 600,
+        fontWeight: adminActive ? 700 : 600,
         letterSpacing: '-0.01em',
-        color: isAdmin ? (adminActive ? NAVY : NAV_TEXT) : NAV_MUTE,
+        color: adminActive ? NAVY : NAV_TEXT,
         padding: '8px 20px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
-        borderBottom: isAdmin && adminActive ? `1px solid ${NAVY}` : '1px solid transparent',
-        pointerEvents: isAdmin ? 'auto' : 'none' as React.CSSProperties['pointerEvents'],
-        cursor: isAdmin ? 'pointer' : 'default',
+        borderBottom: adminActive ? `1px solid ${NAVY}` : '1px solid transparent',
+        cursor: 'pointer',
       }}
     >
       Admin
@@ -276,11 +282,11 @@ function NavInner({ activePage, compact = false }: NavProps) {
           <>
             {staticClientLabel()}
             {!compact && navLink('Home', '/home', homeActive)}
-            {!compact && navLink('Programs', '/engagements', engagementsActive)}
-            {!compact && navLink('Source', '/source', sourceActive)}
-            {!compact && navLink('Intelligence', intelligencePath, intelligenceActive)}
-            {!compact && navLink('Control Tower', '/tower', towerActive)}
-            {!compact && navLink('Platform', '/platform', platformActive)}
+            {!compact && canShow('programs') && navLink('Programs', '/programs', engagementsActive)}
+            {!compact && canShow('source') && navLink('Source', '/source', sourceActive)}
+            {!compact && canShow('intelligence') && navLink('Intelligence', intelligencePath, intelligenceActive)}
+            {!compact && canShow('tower') && navLink('Control Tower', '/tower', towerActive)}
+            {!compact && canShow('setup') && navLink('Platform', '/platform', platformActive)}
           </>
         )}
 
@@ -293,9 +299,10 @@ function NavInner({ activePage, compact = false }: NavProps) {
           <>
             {staticClientLabel()}
             {!compact && navLink('Home', '/home', homeActive)}
-            {!compact && navLink('Programs', '/engagements', engagementsActive)}
-            {!compact && navLink('Intelligence', intelligencePath, intelligenceActive)}
-            {!compact && navLink('Control Tower', '/tower', towerActive)}
+            {!compact && canShow('programs') && navLink('Programs', '/programs', engagementsActive)}
+            {!compact && canShow('source') && navLink('Source', '/source', sourceActive)}
+            {!compact && canShow('intelligence') && navLink('Intelligence', intelligencePath, intelligenceActive)}
+            {!compact && canShow('tower') && navLink('Control Tower', '/tower', towerActive)}
           </>
         )}
 
@@ -312,7 +319,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
         {/* ── Right side: Admin portal shortcut + user avatar ─── */}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: `${SPACING.xs}px` }}>
           {signedIn && (isAdmin || isInvestor) && navLink('Investor', '/investor', investorActive)}
-          {signedIn && isAdmin && adminNavItem()}
+          {signedIn && canShow('setup') && adminNavItem()}
           {/* ⌘K search hint */}
           {signedIn && (
             <span
@@ -369,7 +376,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
                       Maestro Workspace
                     </Link>
                   )}
-                  {isAdmin && (
+                  {canShow('setup') && (
                     <Link href="/platform" className="abarva-menu-item" style={{ display: 'block', padding: '9px 14px', textDecoration: 'none', fontFamily: SANS, fontSize: '13px', color: DROP_HEAD, borderRadius: '8px', margin: '0 4px' }}>
                       Platform
                     </Link>

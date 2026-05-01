@@ -6,7 +6,8 @@ import type { TenancyCtx } from '@/lib/programs/types.db';
 export type ClientAccessLevel =
   | 'client_admin'
   | 'program_member'
-  | 'program_viewer';
+  | 'program_viewer'
+  | 'no_program_access';
 
 export type DataAccessClass =
   | 'public'
@@ -70,6 +71,9 @@ function normalizeAccessLevel(value: string | null | undefined): ClientAccessLev
   if (value === 'client_admin' || value === 'program_member' || value === 'program_viewer') {
     return value;
   }
+  if (value === 'source_member' || value === 'source_viewer') {
+    return 'no_program_access';
+  }
   return null;
 }
 
@@ -105,19 +109,20 @@ function buildPolicy(args: {
   canPublishDeliverables?: boolean;
 }): UserProgramAccessPolicy {
   const admin = isClientAdminPolicy(args.accessLevel);
+  const none = args.accessLevel === 'no_program_access';
   const classes = defaultDataClasses(args.canViewFinancialData);
   return {
     userId: args.ctx.userId,
     clientId: args.ctx.clientId,
     accessLevel: args.accessLevel,
-    programScope: args.programIdsAllowed === null ? 'all_client_programs' : 'assigned_programs_only',
-    programIdsAllowed: args.programIdsAllowed,
-    canAdminUsers: args.canAdminUsers ?? admin,
-    canCreatePrograms: args.canCreatePrograms ?? admin,
-    canApproveGates: args.canApproveGates ?? admin,
-    canUploadArtifacts: args.canUploadArtifacts ?? true,
-    canGenerateDeliverables: args.canGenerateDeliverables ?? true,
-    canPublishDeliverables: args.canPublishDeliverables ?? admin,
+    programScope: none ? 'assigned_programs_only' : args.programIdsAllowed === null ? 'all_client_programs' : 'assigned_programs_only',
+    programIdsAllowed: none ? [] : args.programIdsAllowed,
+    canAdminUsers: none ? false : args.canAdminUsers ?? admin,
+    canCreatePrograms: none ? false : args.canCreatePrograms ?? admin,
+    canApproveGates: none ? false : args.canApproveGates ?? admin,
+    canUploadArtifacts: none ? false : args.canUploadArtifacts ?? true,
+    canGenerateDeliverables: none ? false : args.canGenerateDeliverables ?? true,
+    canPublishDeliverables: none ? false : args.canPublishDeliverables ?? admin,
     canViewFinancialData: args.canViewFinancialData,
     ...classes,
     outputPolicy: {
@@ -176,6 +181,7 @@ export async function loadUserProgramAccessPolicy(
 
   const accessLevel = inferAccessLevel(ctx, membership, participants);
   const admin = isClientAdminPolicy(accessLevel);
+  const none = accessLevel === 'no_program_access';
   const scopedParticipants = opts.programId
     ? participants.filter((p) => p.engagement_id === opts.programId)
     : participants;
@@ -183,7 +189,9 @@ export async function loadUserProgramAccessPolicy(
   const canViewFinancialData = Boolean(membership?.financial_visibility || participantFinancial);
   const explicitProgramScopedMembership =
     membership?.access_level === 'program_member' || membership?.access_level === 'program_viewer';
-  const programIdsAllowed = admin
+  const programIdsAllowed = none
+    ? []
+    : admin
     ? null
     : participants.length > 0
       ? Array.from(new Set(participants.map((p) => p.engagement_id)))
@@ -196,15 +204,17 @@ export async function loadUserProgramAccessPolicy(
     accessLevel,
     programIdsAllowed,
     canViewFinancialData,
-    canAdminUsers: Boolean(membership?.can_admin_users) || admin,
-    canCreatePrograms: Boolean(membership?.can_create_programs) || admin,
+    canAdminUsers: !none && (Boolean(membership?.can_admin_users) || admin),
+    canCreatePrograms: !none && (Boolean(membership?.can_create_programs) || admin),
     canApproveGates:
-      Boolean(membership?.can_approve_gates) ||
-      scopedParticipants.some((p) => p.can_approve_phase_gates === true || p.approval_authority === 'sponsor' || p.approval_authority === 'approver') ||
-      admin,
-    canUploadArtifacts: scopedParticipants.length === 0 || scopedParticipants.some((p) => p.can_upload !== false),
-    canGenerateDeliverables: scopedParticipants.length === 0 || scopedParticipants.some((p) => p.can_generate_deliverables !== false),
-    canPublishDeliverables: scopedParticipants.some((p) => p.can_publish_deliverables === true) || admin,
+      !none && (
+        Boolean(membership?.can_approve_gates) ||
+        scopedParticipants.some((p) => p.can_approve_phase_gates === true || p.approval_authority === 'sponsor' || p.approval_authority === 'approver') ||
+        admin
+      ),
+    canUploadArtifacts: !none && (scopedParticipants.length === 0 || scopedParticipants.some((p) => p.can_upload !== false)),
+    canGenerateDeliverables: !none && (scopedParticipants.length === 0 || scopedParticipants.some((p) => p.can_generate_deliverables !== false)),
+    canPublishDeliverables: !none && (scopedParticipants.some((p) => p.can_publish_deliverables === true) || admin),
   });
 }
 
