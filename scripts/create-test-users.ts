@@ -271,46 +271,198 @@ async function ensureSponsorGrant(personId: string, personName: string, spec: Te
 
 async function syncSourceAssignments(personId: string, personName: string, spec: TestUserSpec, clientRows: Map<string, ClientRow>): Promise<void> {
   const assignments = spec.sourceAssignments ?? [];
-  if (assignments.length === 0) return;
-
   const sb = getSupabase();
+  const expected = new Set<string>();
+
   for (const assignment of assignments) {
     const client = clientRows.get(assignment.clientKey);
     if (!client) throw new Error(`Missing client ${assignment.clientKey} for source grant`);
 
+    let sourceEventIds: string[] = [];
+    if (assignment.allExistingClientSourceEvents) {
+      const { data: sourceEvents, error: sourceEventsError } = await sb
+        .from('source_events')
+        .select('id')
+        .eq('client_key', assignment.clientKey)
+        .neq('lifecycle_state', 'archived');
+      if (sourceEventsError) throw sourceEventsError;
+      sourceEventIds = ((sourceEvents as Array<{ id: string }> | null) ?? []).map((row) => row.id);
+    } else if (assignment.sourceEventId) {
+      sourceEventIds = [assignment.sourceEventId];
+    }
+
+    for (const sourceEventId of sourceEventIds) {
+      expected.add(`${assignment.clientKey}:${sourceEventId}`);
+      const { data: existingRows, error: existingError } = await sb
+        .from('source_event_participants')
+        .select('id')
+        .eq('client_key', assignment.clientKey)
+        .eq('source_event_id', sourceEventId)
+        .eq('user_id', personId);
+      if (existingError) throw existingError;
+
+      const payload = {
+        client_key: assignment.clientKey,
+        source_event_id: sourceEventId,
+        user_id: personId,
+        user_name: personName,
+        role: assignment.sourceAccessLevel === 'source_member' ? 'source contributor' : 'source viewer',
+        approval_authority: assignment.approvalAuthority ?? null,
+        source_access_level: assignment.sourceAccessLevel,
+        can_view_financial: assignment.canViewFinancial ?? false,
+        can_upload_source_artifacts: assignment.canUploadSourceArtifacts ?? true,
+        can_generate_sourcing_artifacts: assignment.canGenerateSourcingArtifacts ?? true,
+        can_publish_sourcing_artifacts: assignment.canPublishSourcingArtifacts ?? false,
+        can_approve_source_stages: assignment.canApproveSourceStages ?? false,
+        can_approve_award: assignment.canApproveAward ?? false,
+        notify_on: ['source_event_update', 'approval_needed'],
+      };
+
+      const existingId = ((existingRows as Array<{ id: string }> | null) ?? [])[0]?.id;
+      if (existingId) {
+        const { error } = await sb.from('source_event_participants').update(payload).eq('id', existingId);
+        if (error) throw error;
+        continue;
+      }
+      const { error } = await sb.from('source_event_participants').insert(payload);
+      if (error) throw error;
+    }
+  }
+
+  const sourceClientKeys = new Set(
+    [
+      ...assignments.map((assignment) => assignment.clientKey),
+      ...(spec.memberships ?? [])
+        .filter((membership) => membership.accessLevel === 'source_member' || membership.accessLevel === 'source_viewer')
+        .map((membership) => membership.clientKey),
+    ],
+  );
+
+  for (const clientKey of sourceClientKeys) {
     const { data: existingRows, error: existingError } = await sb
       .from('source_event_participants')
-      .select('id')
-      .eq('client_key', assignment.clientKey)
-      .eq('source_event_id', assignment.sourceEventId)
+      .select('id, client_key, source_event_id')
+      .eq('client_key', clientKey)
       .eq('user_id', personId);
     if (existingError) throw existingError;
 
-    const payload = {
-      client_key: assignment.clientKey,
-      source_event_id: assignment.sourceEventId,
-      user_id: personId,
-      user_name: personName,
-      role: assignment.sourceAccessLevel === 'source_member' ? 'source contributor' : 'source viewer',
-      approval_authority: assignment.approvalAuthority ?? null,
-      source_access_level: assignment.sourceAccessLevel,
-      can_view_financial: assignment.canViewFinancial ?? false,
-      can_upload_source_artifacts: assignment.canUploadSourceArtifacts ?? true,
-      can_generate_sourcing_artifacts: assignment.canGenerateSourcingArtifacts ?? true,
-      can_publish_sourcing_artifacts: assignment.canPublishSourcingArtifacts ?? false,
-      can_approve_source_stages: assignment.canApproveSourceStages ?? false,
-      can_approve_award: assignment.canApproveAward ?? false,
-      notify_on: ['source_event_update', 'approval_needed'],
-    };
+    const staleIds = ((existingRows as Array<{ id: string; client_key: string; source_event_id: string }> | null) ?? [])
+      .filter((row) => !expected.has(`${row.client_key}:${row.source_event_id}`))
+      .map((row) => row.id);
 
-    const existingId = ((existingRows as Array<{ id: string }> | null) ?? [])[0]?.id;
-    if (existingId) {
-      const { error } = await sb.from('source_event_participants').update(payload).eq('id', existingId);
+    if (staleIds.length > 0) {
+      const { error } = await sb.from('source_event_participants').delete().in('id', staleIds);
       if (error) throw error;
-      continue;
     }
-    const { error } = await sb.from('source_event_participants').insert(payload);
-    if (error) throw error;
+  }
+}
+
+async function syncProgramAssignments(personId: string, personName: string, spec: TestUserSpec, clientRows: Map<string, ClientRow>): Promise<void> {
+  const assignments = spec.programAssignments ?? [];
+  const sb = getSupabase();
+  const expected = new Set<string>();
+
+  for (const assignment of assignments) {
+    const client = clientRows.get(assignment.clientKey);
+    if (!client) throw new Error(`Missing client ${assignment.clientKey} for program grant`);
+
+    let programs: Array<{ id: string; name: string }> = [];
+    if (assignment.allExistingClientPrograms) {
+      const { data, error } = await sb
+        .from('engagements')
+        .select('id, name')
+        .eq('client_id', client.id)
+        .is('archived_at', null)
+        .is('deleted_at', null);
+      if (error) throw error;
+      programs = (data as Array<{ id: string; name: string }> | null) ?? [];
+    } else if ((assignment.programNames ?? []).length > 0) {
+      const { data, error } = await sb
+        .from('engagements')
+        .select('id, name')
+        .eq('client_id', client.id)
+        .in('name', assignment.programNames ?? [])
+        .is('archived_at', null)
+        .is('deleted_at', null);
+      if (error) throw error;
+      programs = (data as Array<{ id: string; name: string }> | null) ?? [];
+    }
+
+    for (const program of programs) {
+      expected.add(program.id);
+      const { data: existingRows, error: existingError } = await sb
+        .from('engagement_participants')
+        .select('id')
+        .eq('engagement_id', program.id)
+        .eq('user_id', personId);
+      if (existingError) throw existingError;
+
+      const payload = {
+        engagement_id: program.id,
+        user_id: personId,
+        user_name: personName,
+        role: assignment.programAccessLevel === 'program_viewer' ? 'program_viewer' : 'program_owner',
+        notify_on: ['phase_gate', 'deliverable', 'risk'],
+        approval_authority: assignment.approvalAuthority ?? 'contributor',
+        program_access_level: assignment.programAccessLevel ?? 'program_member',
+        can_view_financial: assignment.canViewFinancial ?? false,
+        can_upload: assignment.canUpload ?? true,
+        can_generate_deliverables: assignment.canGenerateDeliverables ?? true,
+        can_publish_deliverables: assignment.canPublishDeliverables ?? false,
+        can_approve_phase_gates: assignment.canApprovePhaseGates ?? false,
+      };
+
+      const existingId = ((existingRows as Array<{ id: string }> | null) ?? [])[0]?.id;
+      if (existingId) {
+        const { error } = await sb.from('engagement_participants').update(payload).eq('id', existingId);
+        if (error) throw error;
+        continue;
+      }
+
+      const { error } = await sb.from('engagement_participants').insert(payload);
+      if (error) throw error;
+    }
+  }
+
+  const programClientKeys = new Set(
+    [
+      ...assignments.map((assignment) => assignment.clientKey),
+      ...(spec.memberships ?? [])
+        .filter((membership) => membership.accessLevel === 'program_member' || membership.accessLevel === 'program_viewer')
+        .map((membership) => membership.clientKey),
+    ],
+  );
+
+  for (const clientKey of programClientKeys) {
+    const client = clientRows.get(clientKey);
+    if (!client) continue;
+
+    const { data: programs, error: programsError } = await sb
+      .from('engagements')
+      .select('id')
+      .eq('client_id', client.id)
+      .is('archived_at', null)
+      .is('deleted_at', null);
+    if (programsError) throw programsError;
+
+    const programIds = ((programs as Array<{ id: string }> | null) ?? []).map((program) => program.id);
+    if (programIds.length === 0) continue;
+
+    const { data: existingRows, error: existingError } = await sb
+      .from('engagement_participants')
+      .select('id, engagement_id')
+      .eq('user_id', personId)
+      .in('engagement_id', programIds);
+    if (existingError) throw existingError;
+
+    const staleIds = ((existingRows as Array<{ id: string; engagement_id: string }> | null) ?? [])
+      .filter((row) => !expected.has(row.engagement_id))
+      .map((row) => row.id);
+
+    if (staleIds.length > 0) {
+      const { error } = await sb.from('engagement_participants').delete().in('id', staleIds);
+      if (error) throw error;
+    }
   }
 }
 
@@ -442,9 +594,24 @@ async function verifyProvisioning(
       if (sourceRowsError) throw sourceRowsError;
       const actual = new Set(((sourceRows as Array<{ client_key: string; source_event_id: string }> | null) ?? [])
         .map((row) => `${row.client_key}:${row.source_event_id}`));
-      sourceGrantsVerified = (spec.sourceAssignments ?? []).every((assignment) =>
-        actual.has(`${assignment.clientKey}:${assignment.sourceEventId}`),
-      );
+      sourceGrantsVerified = true;
+      for (const assignment of spec.sourceAssignments ?? []) {
+        if (assignment.allExistingClientSourceEvents) {
+          const { data: expectedEvents, error: expectedEventsError } = await sb
+            .from('source_events')
+            .select('id')
+            .eq('client_key', assignment.clientKey)
+            .neq('lifecycle_state', 'archived');
+          if (expectedEventsError) throw expectedEventsError;
+          for (const event of (expectedEvents as Array<{ id: string }> | null) ?? []) {
+            sourceGrantsVerified = sourceGrantsVerified && actual.has(`${assignment.clientKey}:${event.id}`);
+          }
+          continue;
+        }
+        if (assignment.sourceEventId) {
+          sourceGrantsVerified = sourceGrantsVerified && actual.has(`${assignment.clientKey}:${assignment.sourceEventId}`);
+        }
+      }
     }
   } else {
     const { data: personRows, error } = await sb.from('persons').select('id').eq('email', spec.email);
@@ -503,6 +670,9 @@ async function provisionOne(
   if (personId && spec.sponsorGrant && spec.person) {
     await ensureSponsorGrant(personId, spec.person.name, spec, clientRows);
   }
+  if (personId && spec.person) {
+    await syncProgramAssignments(personId, spec.person.name, spec, clientRows);
+  }
   if (personId && spec.sourceAssignments && spec.person) {
     await syncSourceAssignments(personId, spec.person.name, spec, clientRows);
   }
@@ -543,9 +713,9 @@ async function main() {
     generatedAt: new Date().toISOString(),
     baseUrl: process.env.BASE_URL ?? null,
     notes: [
-      'Jake uses the current single-token investor model. The token is stored in Clerk private metadata for the user.',
-      'Dara is intentionally provisioned without a persons row so she stays on public-only surfaces.',
-      'Mike is mapped to Meridian because no Fortune-40 composite tenant exists in the live client table.',
+      'Canonical roster only: one scoped client admin, three Programs users, and three Source users per active demo client.',
+      'All users are pinned to exactly one client. There is no cross-client or global super-admin identity in this roster.',
+      'Financial visibility defaults to false for every canonical user; exact financial output remains restricted unless a future explicit entitlement changes it.',
     ],
     results,
   };

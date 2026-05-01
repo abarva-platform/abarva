@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { CANONICAL_CLIENT_ADMIN_EMAILS } from '@/lib/auth/canonical-auth-roster';
 import { getServerSupabase } from '@/lib/supabase-server';
 import type { TenancyCtx } from '@/lib/programs/types.db';
 
@@ -74,13 +75,9 @@ function isUuidLike(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 }
 
-function isPinnedDemoClientEmail(email: string | null | undefined): boolean {
+function isCanonicalClientAdminEmail(email: string | null | undefined): boolean {
   const normalized = email?.trim().toLowerCase() ?? '';
-  return (
-    normalized === 'demo-apexretail+clerk_test@abarva.com' ||
-    normalized === 'demo-meridian+clerk_test@abarva.com' ||
-    normalized === 'demo-firstcapital+clerk_test@abarva.com'
-  );
+  return CANONICAL_CLIENT_ADMIN_EMAILS.includes(normalized as (typeof CANONICAL_CLIENT_ADMIN_EMAILS)[number]);
 }
 
 function normalizeSourceAccessLevel(value: string | null | undefined): SourceAccessLevel | null {
@@ -208,7 +205,7 @@ export async function loadUserSourceAccessPolicy(
   ctx: TenancyCtx,
   opts: { activeClientKey: string; sourceEventId?: string | null },
 ): Promise<UserSourceAccessPolicy> {
-  if (!isUuidLike(ctx.userId) && isPinnedDemoClientEmail(ctx.email)) {
+  if (!isUuidLike(ctx.userId) && isCanonicalClientAdminEmail(ctx.email)) {
     return buildPolicy({
       ctx,
       activeClientKey: opts.activeClientKey,

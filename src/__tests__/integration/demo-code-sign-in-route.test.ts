@@ -35,7 +35,7 @@ describe('POST /api/auth/demo-code-sign-in', () => {
     process.env.CLERK_SECRET_KEY = originalSecret;
   });
 
-  it('rejects non-demo email addresses', async () => {
+  it('rejects non-canonical email addresses', async () => {
     const { POST } = await import('@/app/api/auth/demo-code-sign-in/route');
     const res = await POST(makeRequest({
       email: 'real-user@abarva.com',
@@ -47,10 +47,10 @@ describe('POST /api/auth/demo-code-sign-in', () => {
     expect(getUserList).not.toHaveBeenCalled();
   });
 
-  it('rejects unapproved +clerk_test email addresses', async () => {
+  it('rejects old demo email addresses', async () => {
     const { POST } = await import('@/app/api/auth/demo-code-sign-in/route');
     const res = await POST(makeRequest({
-      email: 'demo-keystone+clerk_test@abarva.com',
+      email: 'demo-meridian+clerk_test@abarva.com',
       code: '424242',
     }));
 
@@ -62,7 +62,7 @@ describe('POST /api/auth/demo-code-sign-in', () => {
   it('rejects an invalid demo code', async () => {
     const { POST } = await import('@/app/api/auth/demo-code-sign-in/route');
     const res = await POST(makeRequest({
-      email: 'demo-meridian+clerk_test@abarva.com',
+      email: 'elena.rivera@meridian-health.example.com',
       code: '000000',
     }));
 
@@ -71,17 +71,17 @@ describe('POST /api/auth/demo-code-sign-in', () => {
     expect(getUserList).not.toHaveBeenCalled();
   });
 
-  it('returns a sign-in ticket for a supported demo account', async () => {
+  it('returns a sign-in ticket for a supported Programs account', async () => {
     const { POST } = await import('@/app/api/auth/demo-code-sign-in/route');
     const res = await POST(makeRequest({
-      email: 'demo-meridian+clerk_test@abarva.com',
+      email: 'elena.rivera@meridian-health.example.com',
       code: '424242',
     }));
 
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toMatchObject({ ticket: 'ticket_demo_1' });
     expect(getUserList).toHaveBeenCalledWith({
-      emailAddress: ['demo-meridian+clerk_test@abarva.com'],
+      emailAddress: ['elena.rivera@meridian-health.example.com'],
       limit: 1,
     });
     expect(createSignInToken).toHaveBeenCalledWith({
@@ -90,32 +90,17 @@ describe('POST /api/auth/demo-code-sign-in', () => {
     });
   });
 
-  it('returns a sign-in ticket for a program-scoped demo account', async () => {
+  it('returns a sign-in ticket for a supported Source account', async () => {
     const { POST } = await import('@/app/api/auth/demo-code-sign-in/route');
     const res = await POST(makeRequest({
-      email: 'demo-meridian-programs+clerk_test@abarva.com',
+      email: 'omar.rahman@meridian-health.example.com',
       code: '424242',
     }));
 
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toMatchObject({ ticket: 'ticket_demo_1' });
     expect(getUserList).toHaveBeenCalledWith({
-      emailAddress: ['demo-meridian-programs+clerk_test@abarva.com'],
-      limit: 1,
-    });
-  });
-
-  it('returns a sign-in ticket for a source-scoped demo account', async () => {
-    const { POST } = await import('@/app/api/auth/demo-code-sign-in/route');
-    const res = await POST(makeRequest({
-      email: 'demo-meridian-source+clerk_test@abarva.com',
-      code: '424242',
-    }));
-
-    expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toMatchObject({ ticket: 'ticket_demo_1' });
-    expect(getUserList).toHaveBeenCalledWith({
-      emailAddress: ['demo-meridian-source+clerk_test@abarva.com'],
+      emailAddress: ['omar.rahman@meridian-health.example.com'],
       limit: 1,
     });
   });

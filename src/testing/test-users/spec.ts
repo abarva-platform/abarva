@@ -8,9 +8,7 @@ export type ProvisioningAccessLevel =
   | 'source_member'
   | 'source_viewer';
 
-// Clerk rejects bare `.local` domains. We preserve the requested namespace
-// under a valid reserved suffix so the addresses remain clearly test-only.
-export const TEST_USER_EMAIL_SUFFIX = '@abarva-test.example.com';
+export type ProvisioningProductModule = 'setup' | 'programs' | 'source' | 'intelligence' | 'tower';
 
 export interface TestUserSpec {
   key: string;
@@ -43,13 +41,26 @@ export interface TestUserSpec {
     canGenerateSourcingArtifacts?: boolean;
     canPublishSourcingArtifacts?: boolean;
   }>;
+  programAssignments?: Array<{
+    clientKey: ProvisioningClientKey;
+    allExistingClientPrograms?: boolean;
+    programNames?: string[];
+    programAccessLevel?: 'program_member' | 'program_viewer';
+    approvalAuthority?: 'contributor' | 'reviewer' | 'approver' | 'sponsor';
+    canViewFinancial?: boolean;
+    canUpload?: boolean;
+    canGenerateDeliverables?: boolean;
+    canPublishDeliverables?: boolean;
+    canApprovePhaseGates?: boolean;
+  }>;
   sponsorGrant?: {
     programName: string;
     clientKey: ProvisioningClientKey;
   };
   sourceAssignments?: Array<{
     clientKey: ProvisioningClientKey;
-    sourceEventId: string;
+    sourceEventId?: string;
+    allExistingClientSourceEvents?: boolean;
     sourceAccessLevel: 'source_member' | 'source_viewer';
     approvalAuthority?: 'contributor' | 'reviewer' | 'approver' | 'award_approver';
     canViewFinancial?: boolean;
@@ -72,169 +83,108 @@ export interface TestUserSpec {
 
 export const TEST_USER_PASSWORD = 'AbarVaTest2026!';
 
-export const TEST_USER_SPECS: TestUserSpec[] = [
-  {
-    key: 'marcus-apex-cfo',
-    email: `marcus-apex-cfo-test${TEST_USER_EMAIL_SUFFIX}`,
+interface CanonicalClientFixture {
+  key: Exclude<ProvisioningClientKey, 'keystone'>;
+  clientId: Exclude<ProvisioningClientKey, 'keystone'>;
+  name: string;
+  emailDomain: string;
+  organization: string;
+}
+
+const CLIENTS = {
+  meridian: {
+    key: 'meridian',
+    clientId: 'meridian',
+    name: 'Meridian Health System',
+    emailDomain: 'meridian-health.example.com',
+    organization: 'Meridian Health System',
+  },
+  apexretail: {
+    key: 'apexretail',
+    clientId: 'apexretail',
+    name: 'Apex Retail Group',
+    emailDomain: 'apex-retail.example.com',
+    organization: 'Apex Retail Group',
+  },
+  arcturus: {
+    key: 'arcturus',
+    clientId: 'arcturus',
+    name: 'First Capital',
+    emailDomain: 'firstcapital.example.com',
+    organization: 'First Capital',
+  },
+} as const satisfies Record<string, CanonicalClientFixture>;
+
+function email(localPart: string, client: CanonicalClientFixture): string {
+  return `${localPart}@${client.emailDomain}`;
+}
+
+function metadata(args: {
+  client: CanonicalClientFixture;
+  personaKey: string;
+  moduleAccess: ProvisioningProductModule[];
+  scope: 'client_admin' | 'programs_assigned' | 'programs_unassigned_create' | 'source_assigned' | 'source_unassigned_create';
+}) {
+  return {
+    role: 'client',
+    clientId: args.client.clientId,
+    defaultClientId: args.client.clientId,
+    clientLocked: true,
+    clientName: args.client.name,
+    personaKey: args.personaKey,
+    moduleAccess: args.moduleAccess,
+    accessScope: args.scope,
+  };
+}
+
+function person(args: {
+  client: CanonicalClientFixture;
+  graphNodeId: string;
+  name: string;
+  role: string;
+  primaryRole?: ProvisioningMembershipRole;
+}) {
+  return {
+    graphNodeId: args.graphNodeId,
+    name: args.name,
+    role: args.role,
+    organization: args.client.organization,
+    primaryRole: args.primaryRole ?? 'client_viewer',
+  };
+}
+
+function adminUser(args: {
+  client: CanonicalClientFixture;
+  key: string;
+  localPart: string;
+  firstName: string;
+  lastName: string;
+  name: string;
+  role: string;
+  graphNodeId: string;
+}): TestUserSpec {
+  return {
+    key: args.key,
+    email: email(args.localPart, args.client),
     password: TEST_USER_PASSWORD,
-    firstName: 'Marcus',
-    lastName: 'T.',
+    firstName: args.firstName,
+    lastName: args.lastName,
     appRole: 'client',
-    publicMetadata: {
-      role: 'client',
-      clientId: 'apexretail',
-      defaultClientId: 'apexretail',
-      clientLocked: true,
-      clientName: 'Apex Retail Group',
-      personaKey: 'marcus-t-apex-cfo',
-    },
-    person: {
-      graphNodeId: 'test_person_marcus_apex_cfo',
-      name: 'Marcus T.',
-      role: 'CFO',
-      organization: 'Apex Retail Group',
-      primaryRole: 'client_viewer',
-    },
+    publicMetadata: metadata({
+      client: args.client,
+      personaKey: args.key,
+      moduleAccess: ['setup', 'programs', 'source', 'intelligence', 'tower'],
+      scope: 'client_admin',
+    }),
+    person: person({
+      client: args.client,
+      graphNodeId: args.graphNodeId,
+      name: args.name,
+      role: args.role,
+      primaryRole: 'maestro',
+    }),
     memberships: [{
-      clientKey: 'apexretail',
-      role: 'client_viewer',
-      accessLevel: 'source_member',
-      financialVisibility: false,
-      canCreateSourceEvents: true,
-      canUploadSourceArtifacts: true,
-      canGenerateSourcingArtifacts: true,
-    }],
-    sponsorGrant: {
-      programName: 'Morrison Owned Brand Margin Recovery',
-      clientKey: 'apexretail',
-    },
-    sourceAssignments: [{
-      clientKey: 'apexretail',
-      sourceEventId: 'apex-retail-ams-outsourcing-2026',
-      sourceAccessLevel: 'source_member',
-      approvalAuthority: 'contributor',
-      canViewFinancial: false,
-      canUploadSourceArtifacts: true,
-      canGenerateSourcingArtifacts: true,
-    }],
-    expectations: {
-      visibleClientKeys: ['apexretail'],
-      publicOnly: false,
-      canApprove: true,
-      canCreatePrograms: true,
-      canCreateSourceEvents: true,
-      canApproveSourceStages: false,
-      towerAccess: true,
-    },
-  },
-  {
-    key: 'dr-l-meridian-cmio',
-    email: `dr-l-meridian-cmio-test${TEST_USER_EMAIL_SUFFIX}`,
-    password: TEST_USER_PASSWORD,
-    firstName: 'Dr. L.',
-    lastName: 'Morales',
-    appRole: 'client',
-    publicMetadata: {
-      role: 'client',
-      clientId: 'meridian',
-      defaultClientId: 'meridian',
-      clientLocked: true,
-      clientName: 'Meridian Health System',
-      personaKey: 'dr-l-meridian-cmio',
-    },
-    person: {
-      graphNodeId: 'test_person_dr_l_meridian_cmio',
-      name: 'Dr. L. Morales',
-      role: 'CMIO',
-      organization: 'Meridian Health System',
-      primaryRole: 'client_viewer',
-    },
-    memberships: [{
-      clientKey: 'meridian',
-      role: 'client_viewer',
-      accessLevel: 'source_member',
-      financialVisibility: false,
-      canCreateSourceEvents: true,
-      canUploadSourceArtifacts: true,
-      canGenerateSourcingArtifacts: true,
-    }],
-    expectations: {
-      visibleClientKeys: ['meridian'],
-      publicOnly: false,
-      canApprove: false,
-      canCreatePrograms: true,
-      canCreateSourceEvents: true,
-      canApproveSourceStages: false,
-      towerAccess: true,
-    },
-  },
-  {
-    key: 'jake-anthology-analyst',
-    email: `jake-anthology-analyst-test${TEST_USER_EMAIL_SUFFIX}`,
-    password: TEST_USER_PASSWORD,
-    firstName: 'Jake',
-    lastName: 'Anthology',
-    appRole: 'investor',
-    publicMetadata: {
-      role: 'investor',
-      clientIds: ['meridian', 'arcturus', 'apexretail', 'keystone'],
-      defaultClientId: 'meridian',
-      clientLocked: false,
-      personaKey: 'jake-anthology-analyst',
-    },
-    expectations: {
-      visibleClientKeys: ['meridian', 'arcturus', 'apexretail', 'keystone'],
-      publicOnly: false,
-      canApprove: false,
-      canCreatePrograms: false,
-      towerAccess: true,
-    },
-  },
-  {
-    key: 'dara-platform-vp',
-    email: `dara-platform-vp-test${TEST_USER_EMAIL_SUFFIX}`,
-    password: TEST_USER_PASSWORD,
-    firstName: 'Dara',
-    lastName: 'Platform',
-    appRole: 'external',
-    publicMetadata: {
-      role: 'external',
-      personaKey: 'dara-platform-vp',
-      publicOnly: true,
-    },
-    expectations: {
-      visibleClientKeys: [],
-      publicOnly: true,
-      canApprove: false,
-      canCreatePrograms: false,
-      towerAccess: false,
-    },
-  },
-  {
-    key: 'mike-fortune40-cio',
-    email: `mike-fortune40-cio-test${TEST_USER_EMAIL_SUFFIX}`,
-    password: TEST_USER_PASSWORD,
-    firstName: 'Mike',
-    lastName: 'Fortune',
-    appRole: 'client',
-    publicMetadata: {
-      role: 'client',
-      clientId: 'meridian',
-      defaultClientId: 'meridian',
-      clientLocked: true,
-      clientName: 'Meridian Health System',
-      personaKey: 'mike-fortune40-cio',
-      scenario: 'fortune40-composite-fallback-meridian',
-    },
-    person: {
-      graphNodeId: 'test_person_mike_fortune40_cio',
-      name: 'Mike Fortune',
-      role: 'CIO',
-      organization: 'Meridian Health System',
-      primaryRole: 'client_viewer',
-    },
-    memberships: [{
-      clientKey: 'meridian',
+      clientKey: args.client.key,
       role: 'maestro',
       accessLevel: 'client_admin',
       financialVisibility: false,
@@ -244,10 +194,12 @@ export const TEST_USER_SPECS: TestUserSpec[] = [
       canCreateSourceEvents: true,
       canApproveSourceStages: true,
       canApproveAward: true,
+      canUploadSourceArtifacts: true,
+      canGenerateSourcingArtifacts: true,
       canPublishSourcingArtifacts: true,
     }],
     expectations: {
-      visibleClientKeys: ['meridian'],
+      visibleClientKeys: [args.client.key],
       publicOnly: false,
       canApprove: true,
       canCreatePrograms: true,
@@ -255,40 +207,134 @@ export const TEST_USER_SPECS: TestUserSpec[] = [
       canApproveSourceStages: true,
       towerAccess: true,
     },
-  },
-  {
-    key: 'rowan-firstcapital-source-lead',
-    email: `rowan-firstcapital-source-lead-test${TEST_USER_EMAIL_SUFFIX}`,
+  };
+}
+
+function programsUser(args: {
+  client: CanonicalClientFixture;
+  key: string;
+  localPart: string;
+  firstName: string;
+  lastName: string;
+  name: string;
+  role: string;
+  graphNodeId: string;
+  assignedExistingPrograms: boolean;
+}): TestUserSpec {
+  return {
+    key: args.key,
+    email: email(args.localPart, args.client),
     password: TEST_USER_PASSWORD,
-    firstName: 'Rowan',
-    lastName: 'Shah',
+    firstName: args.firstName,
+    lastName: args.lastName,
     appRole: 'client',
-    publicMetadata: {
-      role: 'client',
-      clientId: 'arcturus',
-      defaultClientId: 'arcturus',
-      clientLocked: true,
-      clientName: 'First Capital',
-      personaKey: 'rowan-firstcapital-source-lead',
-    },
-    person: {
-      graphNodeId: 'test_person_rowan_firstcapital_source_lead',
-      name: 'Rowan Shah',
-      role: 'Strategic Sourcing Lead',
-      organization: 'First Capital',
-      primaryRole: 'client_viewer',
-    },
+    publicMetadata: metadata({
+      client: args.client,
+      personaKey: args.key,
+      moduleAccess: ['programs', 'intelligence', 'tower'],
+      scope: args.assignedExistingPrograms ? 'programs_assigned' : 'programs_unassigned_create',
+    }),
+    person: person({
+      client: args.client,
+      graphNodeId: args.graphNodeId,
+      name: args.name,
+      role: args.role,
+    }),
     memberships: [{
-      clientKey: 'arcturus',
+      clientKey: args.client.key,
+      role: 'client_viewer',
+      accessLevel: 'program_member',
+      financialVisibility: false,
+      canAdminUsers: false,
+      canCreatePrograms: true,
+      canApproveGates: false,
+    }],
+    programAssignments: args.assignedExistingPrograms
+      ? [{
+        clientKey: args.client.key,
+        allExistingClientPrograms: true,
+        programAccessLevel: 'program_member',
+        approvalAuthority: 'contributor',
+        canViewFinancial: false,
+        canUpload: true,
+        canGenerateDeliverables: true,
+        canPublishDeliverables: false,
+        canApprovePhaseGates: false,
+      }]
+      : [],
+    expectations: {
+      visibleClientKeys: [args.client.key],
+      publicOnly: false,
+      canApprove: false,
+      canCreatePrograms: true,
+      canCreateSourceEvents: false,
+      canApproveSourceStages: false,
+      towerAccess: true,
+    },
+  };
+}
+
+function sourceUser(args: {
+  client: CanonicalClientFixture;
+  key: string;
+  localPart: string;
+  firstName: string;
+  lastName: string;
+  name: string;
+  role: string;
+  graphNodeId: string;
+  assignedExistingSourceEvents: boolean;
+}): TestUserSpec {
+  return {
+    key: args.key,
+    email: email(args.localPart, args.client),
+    password: TEST_USER_PASSWORD,
+    firstName: args.firstName,
+    lastName: args.lastName,
+    appRole: 'client',
+    publicMetadata: metadata({
+      client: args.client,
+      personaKey: args.key,
+      moduleAccess: ['source', 'intelligence', 'tower'],
+      scope: args.assignedExistingSourceEvents ? 'source_assigned' : 'source_unassigned_create',
+    }),
+    person: person({
+      client: args.client,
+      graphNodeId: args.graphNodeId,
+      name: args.name,
+      role: args.role,
+    }),
+    memberships: [{
+      clientKey: args.client.key,
       role: 'client_viewer',
       accessLevel: 'source_member',
       financialVisibility: false,
+      canAdminUsers: false,
+      canCreatePrograms: false,
+      canApproveGates: false,
       canCreateSourceEvents: true,
+      canApproveSourceStages: false,
+      canApproveAward: false,
       canUploadSourceArtifacts: true,
       canGenerateSourcingArtifacts: true,
+      canPublishSourcingArtifacts: false,
     }],
+    sourceAssignments: args.assignedExistingSourceEvents
+      ? [{
+        clientKey: args.client.key,
+        allExistingClientSourceEvents: true,
+        sourceAccessLevel: 'source_member',
+        approvalAuthority: 'contributor',
+        canViewFinancial: false,
+        canUploadSourceArtifacts: true,
+        canGenerateSourcingArtifacts: true,
+        canPublishSourcingArtifacts: false,
+        canApproveSourceStages: false,
+        canApproveAward: false,
+      }]
+      : [],
     expectations: {
-      visibleClientKeys: ['arcturus'],
+      visibleClientKeys: [args.client.key],
       publicOnly: false,
       canApprove: false,
       canCreatePrograms: false,
@@ -296,102 +342,238 @@ export const TEST_USER_SPECS: TestUserSpec[] = [
       canApproveSourceStages: false,
       towerAccess: true,
     },
-  },
-  {
-    key: 'sara-apex-source-operator',
-    email: `sara-apex-source-operator-test${TEST_USER_EMAIL_SUFFIX}`,
-    password: TEST_USER_PASSWORD,
-    firstName: 'Sara',
+  };
+}
+
+export const TEST_USER_SPECS: TestUserSpec[] = [
+  adminUser({
+    client: CLIENTS.meridian,
+    key: 'meridian-admin-nina-patel',
+    localPart: 'nina.patel',
+    firstName: 'Nina',
     lastName: 'Patel',
-    appRole: 'client',
-    publicMetadata: {
-      role: 'client',
-      clientId: 'apexretail',
-      defaultClientId: 'apexretail',
-      clientLocked: true,
-      clientName: 'Apex Retail Group',
-      personaKey: 'sara-apex-source-operator',
-      moduleAccess: ['source'],
-      sourceScope: 'assigned_source_events_only',
-      canCreateSourceEvents: true,
-    },
-    person: {
-      graphNodeId: 'test_person_sara_apex_source_operator',
-      name: 'Sara Patel',
-      role: 'Sourcing Operator',
-      organization: 'Apex Retail Group',
-      primaryRole: 'client_viewer',
-    },
-    memberships: [{
-      clientKey: 'apexretail',
-      role: 'client_viewer',
-      accessLevel: 'source_member',
-      financialVisibility: false,
-      canCreateSourceEvents: true,
-      canUploadSourceArtifacts: true,
-      canGenerateSourcingArtifacts: true,
-    }],
-    sourceAssignments: [{
-      clientKey: 'apexretail',
-      sourceEventId: 'apex-retail-ams-outsourcing-2026',
-      sourceAccessLevel: 'source_member',
-      approvalAuthority: 'contributor',
-      canViewFinancial: false,
-      canUploadSourceArtifacts: true,
-      canGenerateSourcingArtifacts: true,
-    }],
-    expectations: {
-      visibleClientKeys: ['apexretail'],
-      publicOnly: false,
-      canApprove: false,
-      canCreatePrograms: false,
-      canCreateSourceEvents: true,
-      canApproveSourceStages: false,
-      towerAccess: true,
-    },
-  },
-  {
-    key: 'noah-meridian-source-operator',
-    email: `noah-meridian-source-operator-test${TEST_USER_EMAIL_SUFFIX}`,
-    password: TEST_USER_PASSWORD,
+    name: 'Nina Patel',
+    role: 'Director, IT Procurement',
+    graphNodeId: 'person:meridian:nina-patel',
+  }),
+  programsUser({
+    client: CLIENTS.meridian,
+    key: 'meridian-programs-elena-rivera',
+    localPart: 'elena.rivera',
+    firstName: 'Elena',
+    lastName: 'Rivera',
+    name: 'Elena Rivera',
+    role: 'Director, Digital Product Management',
+    graphNodeId: 'person:meridian:elena-rivera',
+    assignedExistingPrograms: true,
+  }),
+  programsUser({
+    client: CLIENTS.meridian,
+    key: 'meridian-programs-caleb-nguyen',
+    localPart: 'caleb.nguyen',
+    firstName: 'Caleb',
+    lastName: 'Nguyen',
+    name: 'Caleb Nguyen',
+    role: 'Director, Clinical Product Operations',
+    graphNodeId: 'person:meridian:caleb-nguyen',
+    assignedExistingPrograms: true,
+  }),
+  programsUser({
+    client: CLIENTS.meridian,
+    key: 'meridian-programs-marcus-chen-unassigned',
+    localPart: 'marcus.chen',
+    firstName: 'Marcus',
+    lastName: 'Chen',
+    name: 'Marcus Chen',
+    role: 'VP, Data and Analytics',
+    graphNodeId: 'person:meridian:marcus-chen',
+    assignedExistingPrograms: false,
+  }),
+  sourceUser({
+    client: CLIENTS.meridian,
+    key: 'meridian-source-omar-rahman',
+    localPart: 'omar.rahman',
+    firstName: 'Omar',
+    lastName: 'Rahman',
+    name: 'Omar Rahman',
+    role: 'Director, Vendor Management and Contracts',
+    graphNodeId: 'person:meridian:omar-rahman',
+    assignedExistingSourceEvents: true,
+  }),
+  sourceUser({
+    client: CLIENTS.meridian,
+    key: 'meridian-source-david-henderson',
+    localPart: 'david.henderson',
+    firstName: 'David',
+    lastName: 'Henderson',
+    name: 'David Henderson',
+    role: 'Director, RCM Innovation',
+    graphNodeId: 'person:meridian:david-henderson',
+    assignedExistingSourceEvents: true,
+  }),
+  sourceUser({
+    client: CLIENTS.meridian,
+    key: 'meridian-source-rebecca-hollings-unassigned',
+    localPart: 'rebecca.hollings',
+    firstName: 'Rebecca',
+    lastName: 'Hollings',
+    name: 'Rebecca Hollings',
+    role: 'General Counsel',
+    graphNodeId: 'person:meridian:rebecca-hollings',
+    assignedExistingSourceEvents: false,
+  }),
+
+  adminUser({
+    client: CLIENTS.apexretail,
+    key: 'apex-admin-maya-desai',
+    localPart: 'maya.desai',
+    firstName: 'Maya',
+    lastName: 'Desai',
+    name: 'Maya Desai',
+    role: 'Director, IT Procurement',
+    graphNodeId: 'person:apexretail:maya-desai',
+  }),
+  programsUser({
+    client: CLIENTS.apexretail,
+    key: 'apex-programs-noah-patel',
+    localPart: 'noah.patel',
     firstName: 'Noah',
-    lastName: 'Reed',
-    appRole: 'client',
-    publicMetadata: {
-      role: 'client',
-      clientId: 'meridian',
-      defaultClientId: 'meridian',
-      clientLocked: true,
-      clientName: 'Meridian Health System',
-      personaKey: 'noah-meridian-source-operator',
-      moduleAccess: ['source'],
-      sourceScope: 'assigned_source_events_only',
-      canCreateSourceEvents: true,
-    },
-    person: {
-      graphNodeId: 'test_person_noah_meridian_source_operator',
-      name: 'Noah Reed',
-      role: 'Sourcing Operator',
-      organization: 'Meridian Health System',
-      primaryRole: 'client_viewer',
-    },
-    memberships: [{
-      clientKey: 'meridian',
-      role: 'client_viewer',
-      accessLevel: 'source_member',
-      financialVisibility: false,
-      canCreateSourceEvents: true,
-      canUploadSourceArtifacts: true,
-      canGenerateSourcingArtifacts: true,
-    }],
-    expectations: {
-      visibleClientKeys: ['meridian'],
-      publicOnly: false,
-      canApprove: false,
-      canCreatePrograms: false,
-      canCreateSourceEvents: true,
-      canApproveSourceStages: false,
-      towerAccess: true,
-    },
-  },
+    lastName: 'Patel',
+    name: 'Noah Patel',
+    role: 'Director, Digital Product Delivery',
+    graphNodeId: 'person:apexretail:noah-patel',
+    assignedExistingPrograms: true,
+  }),
+  programsUser({
+    client: CLIENTS.apexretail,
+    key: 'apex-programs-sofia-bennett',
+    localPart: 'sofia.bennett',
+    firstName: 'Sofia',
+    lastName: 'Bennett',
+    name: 'Sofia Bennett',
+    role: 'Director, Store Product Operations',
+    graphNodeId: 'person:apexretail:sofia-bennett',
+    assignedExistingPrograms: true,
+  }),
+  programsUser({
+    client: CLIENTS.apexretail,
+    key: 'apex-programs-camila-torres-unassigned',
+    localPart: 'camila.torres',
+    firstName: 'Camila',
+    lastName: 'Torres',
+    name: 'Camila Torres',
+    role: 'Director, Enterprise Data Products',
+    graphNodeId: 'person:apexretail:camila-torres',
+    assignedExistingPrograms: false,
+  }),
+  sourceUser({
+    client: CLIENTS.apexretail,
+    key: 'apex-source-evelyn-brooks',
+    localPart: 'evelyn.brooks',
+    firstName: 'Evelyn',
+    lastName: 'Brooks',
+    name: 'Evelyn Brooks',
+    role: 'Chief Procurement Officer',
+    graphNodeId: 'person:apexretail:evelyn-brooks',
+    assignedExistingSourceEvents: true,
+  }),
+  sourceUser({
+    client: CLIENTS.apexretail,
+    key: 'apex-source-david-kim',
+    localPart: 'david.kim',
+    firstName: 'David',
+    lastName: 'Kim',
+    name: 'David Kim',
+    role: 'SVP, Supply Chain',
+    graphNodeId: 'person:apexretail:david-kim',
+    assignedExistingSourceEvents: true,
+  }),
+  sourceUser({
+    client: CLIENTS.apexretail,
+    key: 'apex-source-priya-nair-unassigned',
+    localPart: 'priya.nair',
+    firstName: 'Priya',
+    lastName: 'Nair',
+    name: 'Priya Nair',
+    role: 'Chief Digital Officer',
+    graphNodeId: 'person:apexretail:priya-nair',
+    assignedExistingSourceEvents: false,
+  }),
+
+  adminUser({
+    client: CLIENTS.arcturus,
+    key: 'firstcapital-admin-ethan-brooks',
+    localPart: 'ethan.brooks',
+    firstName: 'Ethan',
+    lastName: 'Brooks',
+    name: 'Ethan Brooks',
+    role: 'Director, IT Sourcing',
+    graphNodeId: 'person:firstcapital:ethan-brooks',
+  }),
+  programsUser({
+    client: CLIENTS.arcturus,
+    key: 'firstcapital-programs-lena-ortiz',
+    localPart: 'lena.ortiz',
+    firstName: 'Lena',
+    lastName: 'Ortiz',
+    name: 'Lena Ortiz',
+    role: 'Director, Payments Program Management',
+    graphNodeId: 'person:firstcapital:lena-ortiz',
+    assignedExistingPrograms: true,
+  }),
+  programsUser({
+    client: CLIENTS.arcturus,
+    key: 'firstcapital-programs-rachel-kim',
+    localPart: 'rachel.kim',
+    firstName: 'Rachel',
+    lastName: 'Kim',
+    name: 'Rachel Kim',
+    role: 'Director, Digital Product Management',
+    graphNodeId: 'person:firstcapital:rachel-kim',
+    assignedExistingPrograms: true,
+  }),
+  programsUser({
+    client: CLIENTS.arcturus,
+    key: 'firstcapital-programs-priya-mehta-unassigned',
+    localPart: 'priya.mehta',
+    firstName: 'Priya',
+    lastName: 'Mehta',
+    name: 'Priya Mehta',
+    role: 'Chief Product Officer, Digital Banking',
+    graphNodeId: 'person:firstcapital:priya-mehta',
+    assignedExistingPrograms: false,
+  }),
+  sourceUser({
+    client: CLIENTS.arcturus,
+    key: 'firstcapital-source-nadia-rahman',
+    localPart: 'nadia.rahman',
+    firstName: 'Nadia',
+    lastName: 'Rahman',
+    name: 'Nadia Rahman',
+    role: 'Chief Procurement Officer',
+    graphNodeId: 'person:firstcapital:nadia-rahman',
+    assignedExistingSourceEvents: true,
+  }),
+  sourceUser({
+    client: CLIENTS.arcturus,
+    key: 'firstcapital-source-james-park',
+    localPart: 'james.park',
+    firstName: 'James',
+    lastName: 'Park',
+    name: 'James Park',
+    role: 'Chief Risk Officer',
+    graphNodeId: 'person:firstcapital:james-park',
+    assignedExistingSourceEvents: true,
+  }),
+  sourceUser({
+    client: CLIENTS.arcturus,
+    key: 'firstcapital-source-kevin-walsh-unassigned',
+    localPart: 'kevin.walsh',
+    firstName: 'Kevin',
+    lastName: 'Walsh',
+    name: 'Kevin Walsh',
+    role: 'Head of Commercial Banking',
+    graphNodeId: 'person:firstcapital:kevin-walsh',
+    assignedExistingSourceEvents: false,
+  }),
 ];

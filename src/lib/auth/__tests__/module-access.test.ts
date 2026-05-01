@@ -4,7 +4,7 @@ describe('module access resolver', () => {
   it('grants Programs-only operators Programs plus common context surfaces', () => {
     const access = resolveModuleAccess({
       role: 'client',
-      email: 'demo-meridian-programs+clerk_test@abarva.com',
+      email: 'elena.rivera@meridian-health.example.com',
       publicMetadata: { moduleAccess: ['programs'] },
     });
 
@@ -17,7 +17,7 @@ describe('module access resolver', () => {
   it('grants Source-only operators Source plus common context surfaces', () => {
     const access = resolveModuleAccess({
       role: 'client',
-      email: 'demo-meridian-source+clerk_test@abarva.com',
+      email: 'omar.rahman@meridian-health.example.com',
       publicMetadata: { moduleAccess: ['source'] },
     });
 
@@ -39,10 +39,10 @@ describe('module access resolver', () => {
     expect(access.noWorkspaceAssigned).toBe(true);
   });
 
-  it('keeps Setup limited to client-pinned admin/demo allowlist users', () => {
+  it('keeps Setup limited to client-pinned admin users', () => {
     const access = resolveModuleAccess({
       role: 'client',
-      email: 'demo-meridian+clerk_test@abarva.com',
+      email: 'nina.patel@meridian-health.example.com',
       publicMetadata: { moduleAccess: ['programs'] },
     });
 

@@ -84,9 +84,8 @@ export function inferClientKeyFromEmail(email: string | null | undefined): Clien
   if (!normalized) return null;
 
   if (
-    normalized.includes('demo-apexretail') ||
     normalized.includes('apexretail') ||
-    normalized.includes('apex+clerk_test') ||
+    normalized.includes('apex-retail') ||
     // Catches demo accounts like anand+apex@abarva.com where the
     // local-part suffix is "+apex" (no "retail"). The "+" anchor
     // prevents false matches on domains containing "apex".
@@ -97,8 +96,7 @@ export function inferClientKeyFromEmail(email: string | null | undefined): Clien
   }
 
   if (
-    normalized.includes('demo-meridian') ||
-    normalized.includes('mh+clerk_test') ||
+    normalized.includes('meridian-health') ||
     normalized.includes('meridian') ||
     normalized.includes('thesundaram.com')
   ) {
@@ -106,9 +104,6 @@ export function inferClientKeyFromEmail(email: string | null | undefined): Clien
   }
 
   if (
-    normalized.includes('demo-arcturus') ||
-    normalized.includes('demo-firstcapital') ||
-    normalized.includes('af+clerk_test') ||
     normalized.includes('arcturus') ||
     normalized.includes('firstcapital') ||
     normalized.includes('first-capital')
@@ -117,10 +112,6 @@ export function inferClientKeyFromEmail(email: string | null | undefined): Clien
   }
 
   if (
-    normalized.includes('demo-keystone') ||
-    normalized.includes('demo-nexora') ||
-    normalized.includes('keystone+clerk_test') ||
-    normalized.includes('ke+clerk_test') ||
     normalized.includes('nexora') ||
     normalized.includes('keystone')
   ) {

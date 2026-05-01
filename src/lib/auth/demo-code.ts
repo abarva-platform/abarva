@@ -1,16 +1,8 @@
+import { CANONICAL_AUTH_EMAILS } from '@/lib/auth/canonical-auth-roster';
+
 export const DEMO_CODE_VALUE = '424242';
 
-export const DEMO_CODE_ALLOWED_EMAILS = [
-  'demo-apexretail+clerk_test@abarva.com',
-  'demo-meridian+clerk_test@abarva.com',
-  'demo-firstcapital+clerk_test@abarva.com',
-  'demo-apexretail-programs+clerk_test@abarva.com',
-  'demo-meridian-programs+clerk_test@abarva.com',
-  'demo-firstcapital-programs+clerk_test@abarva.com',
-  'demo-apexretail-source+clerk_test@abarva.com',
-  'demo-meridian-source+clerk_test@abarva.com',
-  'demo-firstcapital-source+clerk_test@abarva.com',
-] as const;
+export const DEMO_CODE_ALLOWED_EMAILS = CANONICAL_AUTH_EMAILS;
 
 const DEMO_CODE_ALLOWED_EMAIL_SET = new Set<string>(DEMO_CODE_ALLOWED_EMAILS);
 
