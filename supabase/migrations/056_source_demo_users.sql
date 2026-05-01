@@ -61,7 +61,7 @@ upsert_people AS (
     name,
     role,
     organization,
-    'client_viewer',
+    'client_viewer'::user_role_type,
     'first_meeting',
     '{}'::jsonb,
     '{}'::jsonb,
@@ -73,19 +73,19 @@ upsert_people AS (
     name = EXCLUDED.name,
     role = EXCLUDED.role,
     organization = EXCLUDED.organization,
-    primary_role = 'client_viewer'
+    primary_role = 'client_viewer'::user_role_type
   RETURNING id, graph_node_id, email
 ),
 resolved_people AS (
   SELECT
-    p.id,
+    up.id,
     sp.email,
     sp.name,
     sp.client_key,
     sp.client_name,
     sp.seed_source_event_id
   FROM source_people sp
-  JOIN persons p ON p.email = sp.email
+  JOIN upsert_people up ON up.email = sp.email
 ),
 resolved_clients AS (
   SELECT rp.*, c.id AS client_id
@@ -112,7 +112,7 @@ membership_upsert AS (
   SELECT
     id,
     client_id,
-    'client_viewer',
+    'client_viewer'::user_role_type,
     'source_member',
     false,
     false,
