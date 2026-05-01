@@ -89,6 +89,7 @@ export function ProgramUserProvisionForm({ tenantName, programs }: ProgramUserPr
   const [canGenerateDeliverables, setCanGenerateDeliverables] = useState(true);
   const [canPublishDeliverables, setCanPublishDeliverables] = useState(false);
   const [financialVisibility, setFinancialVisibility] = useState(false);
+  const [sendInvite, setSendInvite] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -119,6 +120,7 @@ export function ProgramUserProvisionForm({ tenantName, programs }: ProgramUserPr
           canUploadArtifacts,
           canGenerateDeliverables,
           canPublishDeliverables,
+          sendInvite,
         }),
       });
       const body = await res.json().catch(() => ({}));
@@ -129,10 +131,16 @@ export function ProgramUserProvisionForm({ tenantName, programs }: ProgramUserPr
       const failedAssignments = Array.isArray(body.assignments)
         ? body.assignments.filter((item: { status?: string }) => item.status === 'failed')
         : [];
+      const invite = body?.invitation;
+      const inviteSuffix = invite?.status === 'sent'
+        ? ' Clerk invite sent.'
+        : invite?.status === 'failed'
+          ? ` Clerk invite failed: ${invite.detail ?? 'unknown error'}.`
+          : '';
       setResult(
         failedAssignments.length > 0
-          ? `User provisioned, but ${failedAssignments.length} program assignment failed. Check tenant scope.`
-          : `Provisioned ${body.email ?? email} for ${tenantName}.`,
+          ? `User provisioned, but ${failedAssignments.length} program assignment failed. Check tenant scope.${inviteSuffix}`
+          : `Provisioned ${body.email ?? email} for ${tenantName}.${inviteSuffix}`,
       );
       router.refresh();
     } catch (err) {
@@ -272,6 +280,7 @@ export function ProgramUserProvisionForm({ tenantName, programs }: ProgramUserPr
             <Checkbox checked={canApproveGates} onChange={setCanApproveGates} label="Can approve phase gates" />
             <Checkbox checked={canPublishDeliverables} onChange={setCanPublishDeliverables} label="Can publish deliverables" />
             <Checkbox checked={financialVisibility} onChange={setFinancialVisibility} label="Can see exact financial values" />
+            <Checkbox checked={sendInvite} onChange={setSendInvite} label="Send Clerk invite email" />
           </div>
         </div>
 

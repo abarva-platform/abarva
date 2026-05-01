@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clerkClient } from '@clerk/nextjs/server';
 
 import { requireTenancy, tenancyErrorResponse } from '@/app/api/v1/programs/_auth';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { writeProgramAuditLogBestEffort } from '@/lib/programs/audit-log';
+import { getActiveClientRow } from '@/lib/active-client';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -21,6 +23,7 @@ interface ProvisionUserBody {
   canUploadArtifacts?: unknown;
   canGenerateDeliverables?: unknown;
   canPublishDeliverables?: unknown;
+  sendInvite?: unknown;
 }
 
 interface ProgramAssignmentInput {
@@ -56,6 +59,12 @@ function normalizeProgramIds(value: unknown): string[] {
   return value
     .map((item) => stringValue(item))
     .filter((item): item is string => Boolean(item));
+}
+
+function getAppUrl(request: NextRequest): string {
+  const host = request.headers.get('host') ?? 'app.abarva.ai';
+  const proto = request.headers.get('x-forwarded-proto') ?? 'https';
+  return `${proto}://${host}`;
 }
 
 async function assignProgramParticipant(input: ProgramAssignmentInput): Promise<{
@@ -154,6 +163,7 @@ export async function POST(req: NextRequest) {
   const canUploadArtifacts = boolValue(body.canUploadArtifacts, true);
   const canGenerateDeliverables = boolValue(body.canGenerateDeliverables, true);
   const canPublishDeliverables = accessLevel === 'client_admin' || boolValue(body.canPublishDeliverables, false);
+  const sendInvite = boolValue(body.sendInvite, false);
 
   const sb = getServerSupabase();
 
@@ -229,6 +239,47 @@ export async function POST(req: NextRequest) {
     evidenceRefs: [personId, ...programIds],
   });
 
+  let invitation:
+    | { status: 'sent'; invitationId: string; email: string; clerkStatus?: string }
+    | { status: 'not_requested' }
+    | { status: 'failed'; detail: string } = { status: 'not_requested' };
+  if (sendInvite) {
+    try {
+      const client = await getActiveClientRow();
+      if (!client) throw new Error('active client not found');
+      const clerk = await clerkClient();
+      const invite = await clerk.invitations.createInvitation({
+        emailAddress: email,
+        publicMetadata: {
+          role: 'client',
+          clientId: client.key,
+          defaultClientId: client.key,
+          clientName: client.name,
+          clientLocked: true,
+          accountType: 'program_user_invited',
+          person_id: personId,
+          moduleAccess: ['programs'],
+          programScope: 'assigned_programs_only',
+          canCreatePrograms,
+          financialVisibility,
+        },
+        redirectUrl: `${getAppUrl(req)}/auth-redirect`,
+        notify: true,
+      });
+      invitation = {
+        status: 'sent',
+        invitationId: invite.id,
+        email: invite.emailAddress,
+        clerkStatus: invite.status,
+      };
+    } catch (err) {
+      invitation = {
+        status: 'failed',
+        detail: err instanceof Error ? err.message : 'invite failed',
+      };
+    }
+  }
+
   return NextResponse.json({
     ok: true,
     personId,
@@ -241,5 +292,6 @@ export async function POST(req: NextRequest) {
     canGenerateDeliverables,
     canPublishDeliverables,
     assignments: participantResults,
+    invitation,
   });
 }

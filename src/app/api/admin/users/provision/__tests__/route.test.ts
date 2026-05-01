@@ -27,6 +27,20 @@ jest.mock('@/lib/programs/audit-log', () => ({
   writeProgramAuditLogBestEffort: (...args: unknown[]) => writeProgramAuditLogBestEffortMock(...args),
 }));
 
+const createInvitationMock = jest.fn();
+jest.mock('@clerk/nextjs/server', () => ({
+  clerkClient: jest.fn(async () => ({
+    invitations: {
+      createInvitation: (...args: unknown[]) => createInvitationMock(...args),
+    },
+  })),
+}));
+
+const getActiveClientRowMock = jest.fn();
+jest.mock('@/lib/active-client', () => ({
+  getActiveClientRow: (...args: unknown[]) => getActiveClientRowMock(...args),
+}));
+
 interface QueryState {
   table: string;
   upsertPayload: Record<string, unknown> | null;
@@ -112,6 +126,8 @@ beforeEach(() => {
   requireTenancyMock.mockReset();
   loadUserProgramAccessPolicyMock.mockReset();
   writeProgramAuditLogBestEffortMock.mockReset();
+  createInvitationMock.mockReset();
+  getActiveClientRowMock.mockReset();
   requireTenancyMock.mockResolvedValue({
     clientId: 'client-1',
     userId: 'admin-1',
@@ -119,6 +135,17 @@ beforeEach(() => {
   });
   loadUserProgramAccessPolicyMock.mockResolvedValue({
     canAdminUsers: true,
+  });
+  getActiveClientRowMock.mockResolvedValue({
+    id: 'client-1',
+    key: 'meridian',
+    name: 'Meridian Health System',
+    industry_code: 'HEALTHCARE_IDN',
+  });
+  createInvitationMock.mockResolvedValue({
+    id: 'invite-1',
+    emailAddress: 'sarah.chen@northstar.example',
+    status: 'pending',
   });
   pendingResults.push({
     singleResult: { data: { id: 'person-1' }, error: null },
@@ -194,6 +221,46 @@ describe('POST /api/admin/users/provision', () => {
       can_generate_deliverables: true,
     });
     expect(writeProgramAuditLogBestEffortMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('can send a Clerk invite pinned to the active client and Programs module', async () => {
+    pendingResults.push({});
+
+    const res = await POST(request({
+      email: 'sarah.chen@northstar.example',
+      name: 'Sarah Chen',
+      accessLevel: 'program_member',
+      canCreatePrograms: true,
+      financialVisibility: false,
+      sendInvite: true,
+    }) as never);
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.invitation).toEqual({
+      status: 'sent',
+      invitationId: 'invite-1',
+      email: 'sarah.chen@northstar.example',
+      clerkStatus: 'pending',
+    });
+    expect(createInvitationMock).toHaveBeenCalledWith(expect.objectContaining({
+      emailAddress: 'sarah.chen@northstar.example',
+      redirectUrl: 'https://app.abarva.ai/auth-redirect',
+      notify: true,
+      publicMetadata: expect.objectContaining({
+        role: 'client',
+        clientId: 'meridian',
+        defaultClientId: 'meridian',
+        clientName: 'Meridian Health System',
+        clientLocked: true,
+        accountType: 'program_user_invited',
+        person_id: 'person-1',
+        moduleAccess: ['programs'],
+        programScope: 'assigned_programs_only',
+        canCreatePrograms: true,
+        financialVisibility: false,
+      }),
+    }));
   });
 
   it('does not assign a program outside the active client', async () => {
