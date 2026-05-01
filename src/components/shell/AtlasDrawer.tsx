@@ -66,6 +66,44 @@ export interface AtlasDrawerProps {
    */
   emptyState?: ReactNode;
   composerPlacement?: 'bottom' | 'afterHeader';
+  sourceUploadContext?: {
+    eventId: string;
+    stageKey: string;
+    stageLabel?: string;
+  };
+}
+
+type PendingDrawerFile = {
+  localId: string;
+  name: string;
+  size: number;
+  status: 'pending' | 'uploading' | 'registered' | 'failed';
+  artifactId?: string;
+  error?: string;
+};
+
+function statusGlyph(status: PendingDrawerFile['status']): string {
+  if (status === 'registered') return 'ok';
+  if (status === 'failed') return '!';
+  if (status === 'uploading') return '...';
+  return '+';
+}
+
+function statusLabel(status: PendingDrawerFile['status']): string {
+  if (status === 'registered') return 'registered';
+  if (status === 'failed') return 'failed';
+  if (status === 'uploading') return 'uploading';
+  return 'attached';
+}
+
+function formatPendingFileForPrompt(file: PendingDrawerFile): string {
+  if (file.status === 'registered' && file.artifactId) {
+    return `${file.name} registered as source_artifact ${file.artifactId}; parse/vector/graph pending`;
+  }
+  if (file.status === 'failed') {
+    return `${file.name} upload failed${file.error ? ` (${file.error})` : ''}`;
+  }
+  return `${file.name} ${statusLabel(file.status)}`;
 }
 
 // ── AtlasDrawer ───────────────────────────────────────────────────────────────
@@ -81,12 +119,13 @@ export function AtlasDrawer({
   embedded = false,
   emptyState,
   composerPlacement = 'bottom',
+  sourceUploadContext,
 }: AtlasDrawerProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const threadScrollRef = useRef<HTMLDivElement>(null);
   const threadEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [pendingFiles, setPendingFiles] = useState<Array<{ name: string; size: number }>>([]);
+  const [pendingFiles, setPendingFiles] = useState<PendingDrawerFile[]>([]);
 
   // Shared AtlasPageState — same conversation as the RibbonSynthesis surface.
   const pageState = useAtlasPageState();
@@ -133,7 +172,7 @@ export function AtlasDrawer({
     const text = el.value.trim();
     if ((!text && pendingFiles.length === 0) || isStreaming) return;
     const fileNote = pendingFiles.length > 0
-      ? `\n[Attached: ${pendingFiles.map(f => f.name).join(', ')}]`
+      ? `\n[Attached evidence: ${pendingFiles.map(formatPendingFileForPrompt).join('; ')}]`
       : '';
     ask((text + fileNote).trim());
     el.value = '';
@@ -144,6 +183,88 @@ export function AtlasDrawer({
   const plainQuote = quote.replace(/<[^>]+>/g, '');
   const showSourcePaperclip =
     surface === 'source' || surface === '/source' || Boolean(surface?.startsWith('/source/'));
+
+  async function uploadSourceFile(file: File, localId: string) {
+    if (!sourceUploadContext) return;
+
+    setPendingFiles(prev => prev.map(item => (
+      item.localId === localId ? { ...item, status: 'uploading' } : item
+    )));
+
+    const formData = new FormData();
+    formData.set('file', file);
+    formData.set('stageKey', sourceUploadContext.stageKey);
+
+    try {
+      const response = await fetch(
+        `/api/v1/source/${encodeURIComponent(sourceUploadContext.eventId)}/artifacts/upload`,
+        {
+          method: 'POST',
+          body: formData,
+        },
+      );
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok || !body?.artifact?.id) {
+        const detail = typeof body?.detail === 'string'
+          ? body.detail
+          : typeof body?.error === 'string'
+            ? body.error
+            : 'upload failed';
+        throw new Error(detail);
+      }
+
+      const artifact = body.artifact as {
+        id: string;
+        originalName: string;
+        parseStatus: string;
+        embeddingStatus: string;
+        graphStatus: string;
+        evidenceState: string;
+      };
+
+      setPendingFiles(prev => prev.map(item => (
+        item.localId === localId
+          ? {
+              ...item,
+              status: 'registered',
+              artifactId: artifact.id,
+              name: artifact.originalName || item.name,
+            }
+          : item
+      )));
+
+      onArtifact?.({
+        type: 'sourcing-stage-progress',
+        evidenceItemId: `source-artifact:${artifact.id}`,
+        label: `${artifact.originalName || file.name} uploaded`,
+        severity: 'soft',
+        status: 'met',
+        detail: `Registry receipt created for ${sourceUploadContext.stageLabel ?? sourceUploadContext.stageKey}. Parse ${artifact.parseStatus}; vector ${artifact.embeddingStatus}; graph ${artifact.graphStatus}. Evidence remains ${artifact.evidenceState} until parsed.`,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'upload failed';
+      setPendingFiles(prev => prev.map(item => (
+        item.localId === localId ? { ...item, status: 'failed', error: message } : item
+      )));
+    }
+  }
+
+  function handleFileSelection(files: File[]) {
+    if (files.length === 0) return;
+    const next = files.map((file, index) => ({
+      localId: `${Date.now()}-${index}-${file.name}`,
+      name: file.name,
+      size: file.size,
+      status: sourceUploadContext && showSourcePaperclip ? 'uploading' as const : 'pending' as const,
+    }));
+    setPendingFiles(prev => [...prev, ...next]);
+
+    if (sourceUploadContext && showSourcePaperclip) {
+      files.forEach((file, index) => {
+        void uploadSourceFile(file, next[index]?.localId ?? `${Date.now()}-${index}`);
+      });
+    }
+  }
 
   // Layout shape — embedded mode renders inline as part of the page
   // flow (no fixed positioning, no backdrop, no slide animation), so
@@ -204,7 +325,7 @@ export function AtlasDrawer({
         >
           {pendingFiles.map((f, i) => (
             <span
-              key={i}
+              key={f.localId}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -219,9 +340,12 @@ export function AtlasDrawer({
                 maxWidth: 160,
               }}
             >
-              <span style={{ flexShrink: 0 }}>📎</span>
+              <span style={{ flexShrink: 0 }}>{statusGlyph(f.status)}</span>
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {f.name}
+              </span>
+              <span style={{ color: 'rgba(250,247,241,0.45)', flexShrink: 0 }}>
+                {statusLabel(f.status)}
               </span>
               <button
                 type="button"
@@ -265,49 +389,10 @@ export function AtlasDrawer({
           style={{ display: 'none' }}
           onChange={(e) => {
             const files = Array.from(e.target.files ?? []);
-            if (files.length === 0) return;
-            setPendingFiles(prev => [
-              ...prev,
-              ...files.map(f => ({ name: f.name, size: f.size })),
-            ]);
+            handleFileSelection(files);
             if (fileInputRef.current) fileInputRef.current.value = '';
           }}
         />
-        {showSourcePaperclip && (
-          <button
-            type="button"
-            disabled
-            aria-disabled="true"
-            aria-label="Attach evidence file — metadata-only upload uses the evidence form below"
-            title="Attach evidence is metadata-only in this shell. Use the Add Evidence form below until chat upload runtime is wired."
-            style={{
-              width: 26,
-              height: 26,
-              borderRadius: '50%',
-              background: 'rgba(250,247,241,0.08)',
-              border: '1px solid rgba(250,247,241,0.18)',
-              color: 'rgba(250,247,241,0.45)',
-              cursor: 'not-allowed',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              padding: 0,
-              fontSize: 14,
-              lineHeight: 1,
-            }}
-          >
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
-              <path
-                d="M4.1 7.1 7.8 3.4a2 2 0 0 1 2.8 2.8L5.8 11a3 3 0 0 1-4.2-4.2l5-5"
-                stroke="currentColor"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-        )}
         <textarea
           ref={textareaRef}
           rows={1}
@@ -346,8 +431,8 @@ export function AtlasDrawer({
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isStreaming}
-          aria-label="Attach file"
-          title="Attach file"
+          aria-label={showSourcePaperclip ? 'Upload Source evidence file' : 'Attach file'}
+          title={showSourcePaperclip ? 'Upload Source evidence file' : 'Attach file'}
           style={{
             background: 'none',
             border: 'none',

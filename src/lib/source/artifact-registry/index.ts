@@ -52,6 +52,7 @@ export {
 } from './mime';
 
 export interface RegisterSourceArtifactInput {
+  artifactId?: string;
   tenantKey: string;
   sourceEventId: string;
   sourceEventRowId?: string;
@@ -215,6 +216,7 @@ export async function registerSourceArtifactUpload(
   const { data, error } = await supabase
     .from('source_artifacts')
     .insert({
+      ...(input.artifactId ? { id: input.artifactId } : {}),
       tenant_key: input.tenantKey,
       source_event_id: input.sourceEventId,
       source_event_row_id: input.sourceEventRowId ?? null,
