@@ -85,6 +85,7 @@ export type ArtifactType =
   | 'contract-clause' // {clauseId, title, currentLanguage?, recommendedLanguage, leverage, patternId?}
   | 'bafo-scoreboard' // {vendors[], dimensions[], scoresMatrix, notes?}
   | 'walkaway-signal' // {credibility, reasoning, recommendation}
+  | 'source-event-created' // {eventId, eventCode, eventName, lifecycleState, approvalAuthority, approvalUrl?}
   | 'sourcing-stage-progress' // {evidenceItemId, label, severity, status, detail?}
   | 'sourcing-stage-changed' // {eventId, fromStage, toStage, snapshotId?}
   // OV2-1a (founder feedback) · /programs/new right-pane content. Brief
@@ -399,6 +400,16 @@ export interface WalkawaySignalArtifact {
   recommendation: string;
 }
 
+export interface SourceEventCreatedArtifact {
+  type: 'source-event-created';
+  eventId: string;
+  eventCode: string;
+  eventName: string;
+  lifecycleState: 'waiting_on_client' | 'active' | 'archived' | string;
+  approvalAuthority: string;
+  approvalUrl?: string;
+}
+
 export interface SourcingStageProgressArtifact {
   type: 'sourcing-stage-progress';
   evidenceItemId: string;
@@ -557,6 +568,7 @@ export type Artifact =
   | ContractClauseArtifact
   | BafoScoreboardArtifact
   | WalkawaySignalArtifact
+  | SourceEventCreatedArtifact
   | SourcingStageProgressArtifact
   | SourcingStageChangedArtifact
   | BriefProgressArtifact
@@ -640,6 +652,7 @@ export function isKnownArtifactType(type: string): type is ArtifactType {
     type === 'contract-clause' ||
     type === 'bafo-scoreboard' ||
     type === 'walkaway-signal' ||
+    type === 'source-event-created' ||
     type === 'sourcing-stage-progress' ||
     type === 'sourcing-stage-changed' ||
     type === 'brief-progress' ||
@@ -1075,6 +1088,27 @@ function tryParseArtifact(type: string, json: string): Artifact | null {
       if (typeof reasoning !== 'string' || reasoning.length === 0) return null;
       if (typeof recommendation !== 'string' || recommendation.length === 0) return null;
       return { type, credibility, reasoning, recommendation };
+    }
+    case 'source-event-created': {
+      const eventId = obj.eventId;
+      const eventCode = obj.eventCode;
+      const eventName = obj.eventName;
+      const lifecycleState = obj.lifecycleState;
+      const approvalAuthority = obj.approvalAuthority;
+      if (typeof eventId !== 'string' || eventId.length === 0) return null;
+      if (typeof eventCode !== 'string' || eventCode.length === 0) return null;
+      if (typeof eventName !== 'string' || eventName.length === 0) return null;
+      if (typeof lifecycleState !== 'string' || lifecycleState.length === 0) return null;
+      if (typeof approvalAuthority !== 'string' || approvalAuthority.length === 0) return null;
+      return {
+        type,
+        eventId,
+        eventCode,
+        eventName,
+        lifecycleState,
+        approvalAuthority,
+        approvalUrl: optionalString(obj.approvalUrl),
+      };
     }
     case 'sourcing-stage-progress': {
       const evidenceItemId = obj.evidenceItemId;

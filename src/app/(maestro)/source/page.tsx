@@ -1,4 +1,5 @@
 import { SourcePortfolioPage } from '@/components/source/SourcePortfolioPage';
+import { getActiveClientRow } from '@/lib/active-client';
 import { listSourcingEvents } from '@/lib/source/queries';
 
 export const metadata = { title: 'Source · AbarVa' };
@@ -12,7 +13,17 @@ export default async function SourcePage({
 }: {
   searchParams: Promise<{ stage?: string; status?: string; demo?: string }>;
 }) {
-  const [events, params] = await Promise.all([listSourcingEvents(), searchParams]);
+  const [events, params, activeClient] = await Promise.all([
+    listSourcingEvents(),
+    searchParams,
+    getActiveClientRow().catch(() => null),
+  ]);
 
-  return <SourcePortfolioPage events={events} searchParams={params} />;
+  return (
+    <SourcePortfolioPage
+      events={events}
+      searchParams={params}
+      tenantName={activeClient?.name ?? 'AbarVa Client'}
+    />
+  );
 }

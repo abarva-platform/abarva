@@ -293,6 +293,10 @@ export function SourcingEventTable({
             {events.map((event) => {
               const reasoningData = computeEventReasoningData(event.id);
               const linkedProgram = buildLinkedProgramBadgeView(event.id);
+              const approvalQueueEvent = event.status === 'waiting_on_client'
+                && event.blocker?.toLowerCase().includes('tenant admin approval');
+              const openHref = approvalQueueEvent ? '/source/events' : `/source/events/${event.id}`;
+              const openLabel = approvalQueueEvent ? 'Review approval' : 'Open event';
               return (
               <tr key={event.id} style={{ background: lightMode ? LIGHT.row : 'transparent' }}>
                 <td style={tableCell}>
@@ -397,8 +401,8 @@ export function SourcingEventTable({
                 </td>
 
                 <td style={{ ...tableCell, textAlign: 'right' }}>
-                  <Link href={`/source/events/${event.id}`} style={lightMode ? LIGHT_ACTION_LINK : SOURCE_ACTION_LINK_PRIMARY}>
-                    Open event
+                  <Link href={openHref} style={lightMode ? LIGHT_ACTION_LINK : SOURCE_ACTION_LINK_PRIMARY}>
+                    {openLabel}
                   </Link>
                 </td>
               </tr>
