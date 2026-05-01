@@ -15,6 +15,7 @@ import { formatUsd } from '@/lib/source/value-ledger';
 
 interface SourcePortfolioPageProps {
   events: SourcingEventSummary[];
+  tenantName: string;
   searchParams: {
     stage?: string;
     status?: string;
@@ -34,7 +35,7 @@ const STATUS_FILTERS: Array<{ key: SourceLifecycleStatus; label: string }> = [
   { key: 'waiting_on_vendor', label: 'Waiting' },
 ];
 
-export function SourcePortfolioPage({ events, searchParams }: SourcePortfolioPageProps) {
+export function SourcePortfolioPage({ events, tenantName, searchParams }: SourcePortfolioPageProps) {
   const router = useRouter();
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const activeStage = searchParams.stage ?? null;
@@ -99,7 +100,7 @@ export function SourcePortfolioPage({ events, searchParams }: SourcePortfolioPag
         eventType: 'application managed services sourcing intake and portfolio triage',
       }}
       topBarProps={{
-        tenantName: 'Apex Retail Group',
+        tenantName,
         showLocked: true,
         context: `Source - ${eventsInView.length} events in view`,
       }}

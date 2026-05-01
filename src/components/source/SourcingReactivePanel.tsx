@@ -6,6 +6,7 @@ import type {
   BafoScoreboardArtifact,
   ContractClauseArtifact,
   PricingBenchmarkArtifact,
+  SourceEventCreatedArtifact,
   SourcingStageChangedArtifact,
   SourcingStageProgressArtifact,
   VendorCardArtifact,
@@ -23,6 +24,7 @@ type SourcingArtifact =
   | ContractClauseArtifact
   | BafoScoreboardArtifact
   | WalkawaySignalArtifact
+  | SourceEventCreatedArtifact
   | SourcingStageProgressArtifact
   | SourcingStageChangedArtifact;
 
@@ -242,6 +244,43 @@ function WalkawaySignalCard({ a }: { a: WalkawaySignalArtifact }) {
   );
 }
 
+function SourceEventCreatedCard({ a }: { a: SourceEventCreatedArtifact }) {
+  return (
+    <CardShell kind="Event registered">
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+        <span style={{ fontWeight: 700, fontSize: 14 }}>{a.eventName}</span>
+        <StatusPill label={a.lifecycleState.replace(/_/g, ' ')} tone="amber" />
+      </div>
+      <SmallMeta>{a.eventCode}</SmallMeta>
+      <BodyText>
+        Approval authority: {a.approvalAuthority}. The event is now in the Source operating queue; admin review must approve it before S1 market motion.
+      </BodyText>
+      {a.approvalUrl ? (
+        <a
+          href={a.approvalUrl}
+          style={{
+            marginTop: 10,
+            display: 'inline-flex',
+            width: 'fit-content',
+            borderRadius: 999,
+            padding: '6px 10px',
+            border: '1px solid rgba(12,26,58,0.16)',
+            color: BrandColors.inkBlack,
+            fontFamily: BrandTypography.mono,
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+            textDecoration: 'none',
+          }}
+        >
+          Open approval queue
+        </a>
+      ) : null}
+    </CardShell>
+  );
+}
+
 function SourcingStageProgressCard({ a }: { a: SourcingStageProgressArtifact }) {
   const tone = a.status === 'met' ? 'green' : a.status === 'unmet' ? 'amber' : 'neutral';
   return (
@@ -283,6 +322,8 @@ function stableSourcingArtifactKey(a: SourcingArtifact): string {
       return a.type;
     case 'walkaway-signal':
       return a.type;
+    case 'source-event-created':
+      return `${a.type}:${a.eventId}`;
     case 'sourcing-stage-progress':
       return `${a.type}:${a.evidenceItemId}`;
     case 'sourcing-stage-changed':
@@ -297,6 +338,7 @@ function isSourcingArtifact(a: Artifact): a is SourcingArtifact {
     a.type === 'contract-clause' ||
     a.type === 'bafo-scoreboard' ||
     a.type === 'walkaway-signal' ||
+    a.type === 'source-event-created' ||
     a.type === 'sourcing-stage-progress' ||
     a.type === 'sourcing-stage-changed'
   );
@@ -403,6 +445,8 @@ export function SourcingReactivePanel({ artifacts }: SourcingReactivePanelProps)
             return <BafoScoreboardCard key={key} a={artifact} />;
           case 'walkaway-signal':
             return <WalkawaySignalCard key={key} a={artifact} />;
+          case 'source-event-created':
+            return <SourceEventCreatedCard key={key} a={artifact} />;
           case 'sourcing-stage-progress':
             return <SourcingStageProgressCard key={key} a={artifact} />;
           case 'sourcing-stage-changed':

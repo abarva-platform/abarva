@@ -9,7 +9,7 @@ const source = fs.readFileSync(
 describe('AtlasDrawer · composer continuity', () => {
   it('keeps newest turns directly under top composers', () => {
     expect(source).toContain("const latestFirst = composerPlacement === 'afterHeader'");
-    expect(source).toContain('const renderedConversation = latestFirst ? [...conversation].reverse() : conversation');
+    expect(source).toContain('? [...visibleConversation].reverse()');
     expect(source).toContain('scroller.scrollTop = latestFirst ? 0 : scroller.scrollHeight');
   });
 

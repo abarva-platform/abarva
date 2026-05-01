@@ -71,6 +71,7 @@ export interface AtlasDrawerProps {
     stageKey: string;
     stageLabel?: string;
   };
+  conversationWindow?: number;
 }
 
 type PendingDrawerFile = {
@@ -120,6 +121,7 @@ export function AtlasDrawer({
   emptyState,
   composerPlacement = 'bottom',
   sourceUploadContext,
+  conversationWindow,
 }: AtlasDrawerProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const threadScrollRef = useRef<HTMLDivElement>(null);
@@ -144,8 +146,15 @@ export function AtlasDrawer({
   const conversation = pageState?.conversation     ?? [];
 
   const hasThread = conversation.length > 0 || isStreaming || !!response || !!error;
+  const visibleConversation =
+    typeof conversationWindow === 'number' && conversationWindow > 0
+      ? conversation.slice(-conversationWindow)
+      : conversation;
+  const hiddenTurnCount = Math.max(0, conversation.length - visibleConversation.length);
   const latestFirst = composerPlacement === 'afterHeader';
-  const renderedConversation = latestFirst ? [...conversation].reverse() : conversation;
+  const renderedConversation = latestFirst
+    ? [...visibleConversation].reverse()
+    : visibleConversation;
 
   // Keep the latest turn adjacent to the composer. In embedded
   // "afterHeader" canvases the composer is at the top, so newest turns
@@ -742,9 +751,11 @@ export function AtlasDrawer({
                 agent={agent}
               />
               <DrawerTurnList turns={renderedConversation} agent={agent} />
+              {hiddenTurnCount > 0 ? <DrawerHiddenTurnsMarker count={hiddenTurnCount} /> : null}
             </>
           ) : (
             <>
+              {hiddenTurnCount > 0 ? <DrawerHiddenTurnsMarker count={hiddenTurnCount} /> : null}
               <DrawerTurnList turns={renderedConversation} agent={agent} />
               <DrawerStreamingTurn
                 isVisible={isStreaming || !!response}
@@ -934,6 +945,25 @@ function DrawerStreamingTurn({
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+function DrawerHiddenTurnsMarker({ count }: { count: number }) {
+  return (
+    <div
+      style={{
+        margin: '2px 0 10px',
+        fontFamily: SHELL.MONO,
+        fontSize: 9,
+        letterSpacing: '0.10em',
+        textTransform: 'uppercase',
+        color: 'rgba(250,247,241,0.36)',
+        textAlign: 'center',
+        flexShrink: 0,
+      }}
+    >
+      {count} earlier turn{count === 1 ? '' : 's'} hidden to keep the live edge visible
     </div>
   );
 }

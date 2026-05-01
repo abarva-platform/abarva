@@ -7,7 +7,8 @@
 // and emits two artifacts:
 //   1. source-event-created — consumed by the reactive panel to
 //      refresh the events list and show a confirmation card.
-//   2. navigate-to — takes the user to the new event's detail page.
+//   2. navigate-to — returns the user to the portfolio so the newly
+//      persisted row is visible in the operating queue.
 //
 // Surfaces: /source (portfolio), /source-detail (single event page
 //   where the user might be refining an existing event's scope before
@@ -91,8 +92,18 @@ export const commitSourceEventTool: AgentTool<CommitSourceEventInput> = {
       });
 
       // Emit source-event-created artifact for the reactive panel.
+      const approvalAuthority =
+        'Tenant admin reviews the intake record; S0 exit is co-signed by the decision owner and sourcing lead.';
+
       ctx.writer?.write(
-        `\n[[artifact:source-event-created]]${JSON.stringify({ eventId: event.id, eventCode: event.event_code, eventName: event.event_name })}[[/artifact]]\n`,
+        `\n[[artifact:source-event-created]]${JSON.stringify({
+          eventId: event.id,
+          eventCode: event.event_code,
+          eventName: event.event_name,
+          lifecycleState: event.lifecycle_state,
+          approvalAuthority,
+          approvalUrl: '/source/events',
+        })}[[/artifact]]\n`,
       );
 
       // Navigate to the new event's detail page.
@@ -107,7 +118,9 @@ export const commitSourceEventTool: AgentTool<CommitSourceEventInput> = {
           event_code: event.event_code,
           event_name: event.event_name,
           lifecycle_state: event.lifecycle_state,
-          note: 'Event created and pending admin approval. Tell the user the event has been created and an admin needs to review it before it moves to active sourcing.',
+          approval_authority: approvalAuthority,
+          approval_queue_url: '/source/events',
+          note: 'Event created and pending tenant-admin approval. Tell the user the exact event code, that the record is visible in the Source operating queue and /source/events approval queue, and that S0 exit requires decision-owner plus sourcing-lead co-sign after admin approval.',
         },
       };
     } catch (err) {
