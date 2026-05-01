@@ -21,6 +21,10 @@ import { getTenantSystemBlock } from "@/lib/agent/demo-context";
 import { buildTenantContextBlock } from "@/lib/intelligence/persistence";
 import { buildTenantTechnologyContextBlock } from "@/lib/knowledge/tenant-technology-context";
 import { getActiveClientRow } from "@/lib/active-client";
+import {
+  detectCrossTenantWriteIntent,
+  formatCrossTenantWriteRefusal,
+} from "@/lib/agent/tenant-guardrails";
 import { getUserContextPromptBlock } from "@/lib/agent/userContext";
 import { retrieveStageContext, retrieveCategoryContext } from "@/lib/intelligence/agent-retrieval";
 import { getRelevantTools } from "@/lib/agent/tools/registry";
@@ -401,6 +405,23 @@ export async function POST(request: Request) {
     ? resolveSourceClientKey(surfaceContext)
     : null;
   const effectiveClientKey = sourceClientKey ?? activeClient?.key ?? null;
+  const crossTenantWriteIntent =
+    isProgramsSurface(surface) || surface === '/home'
+      ? detectCrossTenantWriteIntent({
+          message,
+          activeClientKey: activeClient?.key ?? null,
+          activeClientName: activeClient?.name ?? tenantName,
+        })
+      : null;
+  if (crossTenantWriteIntent) {
+    return new Response(formatCrossTenantWriteRefusal(crossTenantWriteIntent), {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-store',
+      },
+    });
+  }
   // TC-PERSISTENCE-INTEGRATION: resolve the inventory-substrate key (apex-retail
   // form) so we can query enterprise_context_chunks. Falls back to the hardcoded
   // fixture when no persisted chunks are available (pre-embed or unknown tenant).
@@ -659,6 +680,7 @@ export async function POST(request: Request) {
     "- Keep responses under 200 words. Be direct, specific, actionable.",
     "- Reference tenant and program names from context.",
     "- Never say you don't have specific information about the tenant — use the demo context below.",
+    "- TENANT SAFETY: the active tenant is locked. If the user asks to create, copy, sponsor, or submit a program for another tenant, refuse clearly, say no record was created, and tell them to switch/sign in to that tenant first. Never say you have another tenant's CIO or sponsor noted while operating inside the current tenant.",
     "- CANVAS CONTINUITY: if the user wants to start, scope, or create a new program, do not navigate them to /programs/new. Continue in this same canvas: confirm the intent, collect sponsor, lead, target outcome, and timeline, use lookup_person/register_placeholder_person/commit_program when available, and only mention the program detail link after the brief is submitted.",
     ...(isProgramsSurface(surface)
       ? [
