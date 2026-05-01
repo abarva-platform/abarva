@@ -317,6 +317,30 @@
       "scope": "system"
     },
     {
+      "id": "person:meridian:maya-iyer",
+      "full_name": "Maya Iyer",
+      "title": "Chief Product Officer, Digital Health",
+      "role_scope": "shared",
+      "reports_to": "person:meridian:anita-krishnamurthy",
+      "tenure_in_role_years": 1.5,
+      "tenure_at_company_years": 3,
+      "prior_roles": [
+        "Digital health product leadership",
+        "Consumer experience and care-navigation platform leadership"
+      ],
+      "background_summary": "Maya Iyer owns digital product strategy across patient access, care navigation, MyChart-adjacent experiences, plan-provider digital workflows, and product operating discipline. She sponsors product discovery quality, but director-level product leads run day-to-day Nexus programs.",
+      "stated_priorities_fy2026": [
+        "patient access product modernization",
+        "care-navigation product portfolio",
+        "product operating model",
+        "digital product evidence and adoption metrics"
+      ],
+      "known_political_positions": "Product-outcome coalition; bridges CDIO, clinical leadership, health-plan product, and operations when digital programs risk becoming pure technology work.",
+      "direct_reports_count": 4,
+      "escalation_authority_summary": "Escalates product strategy and customer-experience tradeoffs to CDIO, COO, CMIO, or Executive Committee; day-to-day program work routes through product directors.",
+      "scope": "shared"
+    },
+    {
       "id": "person:meridian:robert-chen",
       "full_name": "Dr. Robert Chen",
       "title": "Chief Nursing Officer",

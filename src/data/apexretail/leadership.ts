@@ -81,6 +81,22 @@ export const apexLeadership = {
       changeReadiness: "High",
     },
     {
+      role: "Chief Product and Experience Officer",
+      name: "Aria Shah",
+      tenureYears: 2,
+      publicStance:
+        "Apex needs a product operating model that connects commerce, loyalty, store associate tools, and personalization into one customer and employee experience roadmap.",
+      contradiction:
+        "Digital, store, and loyalty teams each run their own roadmap rituals. Product strategy exists in executive language, but product discovery evidence is inconsistent across programs.",
+      privateReality:
+        "Strong sponsor for Programs. She should approve product strategy and roadmap quality, while directors run day-to-day Nexus workflows.",
+      keyQuote:
+        "If a program cannot name the customer behavior it changes, it is not a product program yet.",
+      priorities: ["commerce experience", "loyalty activation", "store associate product strategy", "product operating model"],
+      investmentAppetite: "Medium-High when product metrics and operating owners are explicit",
+      changeReadiness: "High",
+    },
+    {
       role: "Director, IT Procurement",
       name: "Maya Desai",
       tenureYears: 3,
@@ -111,6 +127,22 @@ export const apexLeadership = {
       priorities: ["program origination", "roadmap definition", "cross-functional dependency tracking"],
       investmentAppetite: "N/A — program operator",
       changeReadiness: "High",
+    },
+    {
+      role: "Director, Store Product Operations",
+      name: "Sofia Bennett",
+      tenureYears: 4,
+      publicStance:
+        "Store product programs need sharper operating evidence before pilots scale across 1,240 stores.",
+      contradiction:
+        "Store-facing tools are often approved as technology deployments before store labor, training, and adoption constraints are understood.",
+      privateReality:
+        "Good Programs user candidate for store-associate and labor-optimization programs; not an admin, not a finance approver.",
+      keyQuote:
+        "A pilot is not evidence until we know which store behaviors changed and whether district managers can repeat it.",
+      priorities: ["store workflow evidence", "pilot-to-scale readiness", "training and adoption metrics"],
+      investmentAppetite: "N/A — program operator",
+      changeReadiness: "Medium-High",
     },
     {
       role: "Director, Enterprise Data Products",

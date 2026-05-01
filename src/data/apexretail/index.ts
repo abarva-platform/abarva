@@ -100,6 +100,13 @@ export const apexRetail = {
         quote: "Procurement needs to be in the room before the vendor demo, not after the executive favorite is picked.",
       },
       {
+        role: "Chief Product and Experience Officer",
+        name: "Aria Shah",
+        tenure: "2 years",
+        background: "Retail product and experience leader — owns commerce, loyalty, store associate experience, and product operating discipline",
+        quote: "If a program cannot name the customer behavior it changes, it is not a product program yet.",
+      },
+      {
         role: "Director, IT Procurement",
         name: "Maya Desai",
         tenure: "3 years",
@@ -112,6 +119,13 @@ export const apexRetail = {
         tenure: "2 years",
         background: "Digital program operator — translates commerce, loyalty, and data strategy into executable roadmap packages",
         quote: "The problem is not idea volume. The problem is getting one idea cleanly through scope, evidence, roadmap, approval, and delivery handoff.",
+      },
+      {
+        role: "Director, Store Product Operations",
+        name: "Sofia Bennett",
+        tenure: "4 years",
+        background: "Store product operator — owns pilot-to-scale evidence, adoption metrics, and store workflow readiness",
+        quote: "A pilot is not evidence until we know which store behaviors changed and whether district managers can repeat it.",
       },
       {
         role: "COO",
