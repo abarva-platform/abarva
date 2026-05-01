@@ -1,13 +1,14 @@
 // POST /api/v1/source/events/[eventId]/approve
 //
-// Admin-only endpoint: review and approve (or reject) a sourcing event
-// that was created via the commit_source_event tool. On approval the
-// event's lifecycle_state advances to 'active'; on rejection it moves
+// Client-scoped Source approval endpoint: review and approve (or reject)
+// a sourcing event created via the commit_source_event tool. On approval
+// the event's lifecycle_state advances to 'active'; on rejection it moves
 // to 'archived'. An approval record is written to source_event_approvals.
 
-import { requireTenancy, tenancyErrorResponse } from '@/app/api/v1/programs/_auth';
+import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { getServerSupabase } from '@/lib/supabase-server';
-import { getCurrentPerson } from '@/lib/auth/maestro';
+import { getActiveClientRow } from '@/lib/active-client';
+import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
 
 interface ApproveBody {
   action: 'approve' | 'reject';
@@ -20,16 +21,28 @@ export async function POST(
 ) {
   const { eventId } = await params;
 
+  let tenancy;
   try {
-    await requireTenancy();
+    tenancy = await requireTenancy();
   } catch (err) {
     return tenancyErrorResponse(err);
   }
 
-  const person = await getCurrentPerson();
-  if (!person) return Response.json({ error: 'unauthenticated' }, { status: 401 });
-  if (person.role !== 'admin') {
-    return Response.json({ error: 'forbidden', detail: 'Admin role required to approve sourcing events' }, { status: 403 });
+  const activeClient = await getActiveClientRow();
+  if (!activeClient) {
+    return Response.json({ error: 'no_client', detail: 'No active client for Source approval' }, { status: 403 });
+  }
+
+  const accessPolicy = await loadUserSourceAccessPolicy(tenancy, {
+    activeClientKey: activeClient.key,
+    sourceEventId: eventId,
+  }).catch(() => null);
+
+  if (!accessPolicy?.canApproveSourceStages) {
+    return Response.json({
+      error: 'forbidden_source_admin_required',
+      detail: 'Client admin or explicit Source stage approval rights are required to approve sourcing events.',
+    }, { status: 403 });
   }
 
   let body: ApproveBody;
@@ -48,8 +61,9 @@ export async function POST(
   // Fetch the event to check it exists and get current state
   const { data: event, error: fetchError } = await supabase
     .from('source_events')
-    .select('id, lifecycle_state, event_name, event_code')
+    .select('id, lifecycle_state, event_name, event_code, client_key')
     .eq('id', eventId)
+    .eq('client_key', activeClient.key)
     .single();
 
   if (fetchError || !event) {
@@ -63,7 +77,8 @@ export async function POST(
   const { error: updateError } = await supabase
     .from('source_events')
     .update({ lifecycle_state: toState })
-    .eq('id', eventId);
+    .eq('id', eventId)
+    .eq('client_key', activeClient.key);
 
   if (updateError) {
     return Response.json({ error: 'update_failed', detail: updateError.message }, { status: 500 });
@@ -75,7 +90,7 @@ export async function POST(
     .insert({
       event_id: eventId,
       action: body.action === 'approve' ? 'admin_review' : 'rejected',
-      approved_by_user_id: person.id,
+      approved_by_user_id: tenancy.userId,
       from_state: fromState,
       to_state: toState,
       notes: body.notes ?? null,

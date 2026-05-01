@@ -34,13 +34,19 @@ export interface ToolContext {
   surfaceContext?: Record<string, unknown>;
   /** Active client key (e.g. 'apexretail'). Used by tools that write to per-tenant tables. */
   clientKey?: string;
+  /** Authenticated user id from the tenancy resolver. May be a persons UUID or clerk:<id> fallback. */
+  userId?: string;
   /** Server-computed entitlement envelope. Tools must treat this as advisory minimum policy and fail closed on writes when a required capability is false. */
   accessPolicy?: {
     accessLevel: string;
     programIdsAllowed: string[] | null;
-    canCreatePrograms: boolean;
-    canApproveGates: boolean;
-    canPublishDeliverables: boolean;
+    canCreatePrograms?: boolean;
+    canCreateSourceEvents?: boolean;
+    canApproveGates?: boolean;
+    canApproveSourceStages?: boolean;
+    canApproveAward?: boolean;
+    canPublishDeliverables?: boolean;
+    canPublishSourcingArtifacts?: boolean;
     canViewFinancialData: boolean;
   };
   /**

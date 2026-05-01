@@ -46,6 +46,7 @@ export interface TenancyCtx {
   clientId: string;
   userId: string;
   role?: string;
+  email?: string | null;
 }
 
 export interface ProgramCore {

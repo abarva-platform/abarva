@@ -17,6 +17,7 @@
 import type { AgentTool, ToolResult } from '../registry';
 import { registerTool } from '../registry';
 import { createSourcingEvent } from '@/lib/source/queries';
+import { getServerSupabase } from '@/lib/supabase-server';
 
 interface CommitSourceEventInput {
   event_name: string;
@@ -73,6 +74,14 @@ export const commitSourceEventTool: AgentTool<CommitSourceEventInput> = {
     required: ['event_name', 'event_type', 'trigger_description'],
   },
   handler: async (input, ctx): Promise<ToolResult> => {
+    if (ctx.accessPolicy?.canCreateSourceEvents === false) {
+      return {
+        success: false,
+        error: 'source_access_denied',
+        recovery: 'Tell the user Sourcing create access is not granted for this client. No event was created.',
+      };
+    }
+
     if (!input.event_name?.trim()) {
       return { success: false, error: 'event_name is required', recovery: 'Ask the user for the event name.' };
     }
@@ -89,7 +98,32 @@ export const commitSourceEventTool: AgentTool<CommitSourceEventInput> = {
         scopeDescription: input.scope_description?.trim(),
         linkedProgramId: input.linked_program_id?.trim(),
         estimatedValueUsd: input.estimated_value_usd,
+        createdByUserId: ctx.userId,
       });
+
+      if (ctx.userId) {
+        const { error: participantError } = await getServerSupabase()
+          .from('source_event_participants')
+          .insert({
+            client_key: clientKey,
+            source_event_id: event.id,
+            source_event_row_id: event.id,
+            user_id: ctx.userId,
+            role: 'source creator',
+            approval_authority: 'contributor',
+            source_access_level: 'source_member',
+            can_view_financial: false,
+            can_upload_source_artifacts: true,
+            can_generate_sourcing_artifacts: true,
+            can_publish_sourcing_artifacts: false,
+            can_approve_source_stages: false,
+            can_approve_award: false,
+            notify_on: ['source_event_update', 'approval_needed'],
+          });
+        if (participantError && !/source_event_participants|schema cache|does not exist/i.test(participantError.message)) {
+          throw new Error(`source participant assignment failed: ${participantError.message}`);
+        }
+      }
 
       // Emit source-event-created artifact for the reactive panel.
       const approvalAuthority =

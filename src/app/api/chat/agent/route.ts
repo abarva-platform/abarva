@@ -32,9 +32,15 @@ import {
   type UserProgramAccessPolicy,
 } from "@/lib/auth/program-access-policy";
 import {
+  formatUserSourceAccessPolicyForPrompt,
+  loadUserSourceAccessPolicy,
+  type UserSourceAccessPolicy,
+} from "@/lib/auth/source-access-policy";
+import {
   formatRestrictedOutputPolicyForPrompt,
   sanitizeRestrictedFinancialText,
   summarizeFinancialValueForPrompt,
+  type RestrictedOutputPolicyLike,
 } from "@/lib/agent/restricted-output-policy";
 import { retrieveStageContext, retrieveCategoryContext } from "@/lib/intelligence/agent-retrieval";
 import { getRelevantTools } from "@/lib/agent/tools/registry";
@@ -300,12 +306,18 @@ export async function POST(request: Request) {
   // getEngagementWithPhaseData calls below AND for the demo context block later.
   const activeClient = await getActiveClientRow().catch(() => null);
   const tenancy = await requireTenancy().catch(() => null);
-  const userAccessPolicy = tenancy
+  const programAccessPolicy: UserProgramAccessPolicy | null = tenancy
     ? await loadUserProgramAccessPolicy(tenancy, { programId }).catch(() => null)
     : null;
-  const userAccessPolicyBlock = userAccessPolicy
-    ? formatUserProgramAccessPolicyForPrompt(userAccessPolicy)
-    : '';
+  const sourceAccessPolicy: UserSourceAccessPolicy | null = tenancy && activeClient && isSourceSurface(surface)
+    ? await loadUserSourceAccessPolicy(tenancy, { activeClientKey: activeClient.key }).catch(() => null)
+    : null;
+  const userAccessPolicy = sourceAccessPolicy ?? programAccessPolicy;
+  const userAccessPolicyBlock = sourceAccessPolicy
+    ? formatUserSourceAccessPolicyForPrompt(sourceAccessPolicy)
+    : programAccessPolicy
+      ? formatUserProgramAccessPolicyForPrompt(programAccessPolicy)
+      : '';
   const restrictedOutputPolicyBlock = formatRestrictedOutputPolicyForPrompt(userAccessPolicy);
 
   // If we have a programId, enrich with live DB data
@@ -868,16 +880,27 @@ export async function POST(request: Request) {
             surface,
             surfaceContext: body.surfaceContext,
             clientKey: activeClient?.key ?? undefined,
-            accessPolicy: userAccessPolicy
+            userId: tenancy?.userId,
+            accessPolicy: sourceAccessPolicy
               ? {
-                  accessLevel: userAccessPolicy.accessLevel,
-                  programIdsAllowed: userAccessPolicy.programIdsAllowed,
-                  canCreatePrograms: userAccessPolicy.canCreatePrograms,
-                  canApproveGates: userAccessPolicy.canApproveGates,
-                  canPublishDeliverables: userAccessPolicy.canPublishDeliverables,
-                  canViewFinancialData: userAccessPolicy.canViewFinancialData,
+                  accessLevel: sourceAccessPolicy.accessLevel,
+                  programIdsAllowed: null,
+                  canCreateSourceEvents: sourceAccessPolicy.canCreateSourceEvents,
+                  canApproveSourceStages: sourceAccessPolicy.canApproveSourceStages,
+                  canApproveAward: sourceAccessPolicy.canApproveAward,
+                  canPublishSourcingArtifacts: sourceAccessPolicy.canPublishSourcingArtifacts,
+                  canViewFinancialData: sourceAccessPolicy.canViewFinancialData,
                 }
-              : undefined,
+              : programAccessPolicy
+                ? {
+                    accessLevel: programAccessPolicy.accessLevel,
+                    programIdsAllowed: programAccessPolicy.programIdsAllowed,
+                    canCreatePrograms: programAccessPolicy.canCreatePrograms,
+                    canApproveGates: programAccessPolicy.canApproveGates,
+                    canPublishDeliverables: programAccessPolicy.canPublishDeliverables,
+                    canViewFinancialData: programAccessPolicy.canViewFinancialData,
+                  }
+                : undefined,
             writer,
           },
           writer,
@@ -1032,7 +1055,7 @@ function serializeContextBundleArtifact(
 
 function sanitizeContextBundleForOutput(
   bundle: import("@/lib/knowledge/context-broker").ContextBundle,
-  accessPolicy?: UserProgramAccessPolicy | null,
+  accessPolicy?: RestrictedOutputPolicyLike | null,
 ): import("@/lib/knowledge/context-broker").ContextBundle {
   if (accessPolicy?.outputPolicy.exactFinancialValues) return bundle;
   return {
@@ -1085,7 +1108,7 @@ function sanitizeContextBundleForOutput(
 
 function sanitizePayloadForOutput(
   payload: Record<string, unknown>,
-  accessPolicy?: UserProgramAccessPolicy | null,
+  accessPolicy?: RestrictedOutputPolicyLike | null,
 ): Record<string, unknown> {
   if (accessPolicy?.outputPolicy.exactFinancialValues) return payload;
   const out: Record<string, unknown> = {};
@@ -1113,7 +1136,7 @@ function sanitizePayloadForOutput(
 
 function formatContextBundleReceiptForPrompt(
   bundle: import("@/lib/knowledge/context-broker").ContextBundle,
-  accessPolicy?: UserProgramAccessPolicy | null,
+  accessPolicy?: RestrictedOutputPolicyLike | null,
 ): string {
   const trace = bundle.retrievalTrace;
   if (!trace && bundle.facts.length === 0 && bundle.semanticChunks.length === 0) {
