@@ -144,6 +144,22 @@ describe('extractArtifacts · sourcing artifacts', () => {
     expect(result.visibleText).toContain('[[artifact:vendor-card parse-failed]]');
     expect(result.visibleText).toContain('[[artifact:bafo-scoreboard parse-failed]]');
   });
+
+  it('parses source-event-created so Source can show approval authority', () => {
+    const result = extractArtifacts(
+      '[[artifact:source-event-created]]{"eventId":"src-evt-001","eventCode":"APEX-AMS-DATA-2026","eventName":"Apex AMS Outsourcing - Data Analytics Tower","lifecycleState":"waiting_on_client","approvalAuthority":"Tenant admin reviews the intake record; S0 exit is co-signed by the decision owner and sourcing lead.","approvalUrl":"/source/events"}[[/artifact]]',
+    );
+
+    expect(result.artifacts).toHaveLength(1);
+    expect(result.artifacts[0]).toMatchObject({
+      type: 'source-event-created',
+      eventId: 'src-evt-001',
+      eventCode: 'APEX-AMS-DATA-2026',
+      lifecycleState: 'waiting_on_client',
+      approvalAuthority: expect.stringContaining('Tenant admin'),
+      approvalUrl: '/source/events',
+    });
+  });
 });
 
 describe('extractArtifacts · streaming-chunk safety', () => {

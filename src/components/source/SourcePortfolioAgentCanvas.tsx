@@ -4,7 +4,7 @@ import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import { AtlasDrawer } from '@/components/shell/AtlasDrawer';
 import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
-import type { Artifact, SourcingStageProgressArtifact } from '@/lib/agent/artifacts';
+import type { Artifact, SourceEventCreatedArtifact, SourcingStageProgressArtifact } from '@/lib/agent/artifacts';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourcingEventSummary } from '@/lib/source/types';
 import { formatUsd } from '@/lib/source/value-ledger';
@@ -54,6 +54,7 @@ export function SourcePortfolioAgentCanvas({
           surface="/source"
           onArtifact={onArtifact}
           composerPlacement="afterHeader"
+          conversationWindow={8}
           emptyState={<SourcePortfolioPromptDeck events={events} />}
         />
       </div>
@@ -169,6 +170,9 @@ function SourceFormationPanel({
   const progressCards = artifacts.filter(
     (artifact): artifact is SourcingStageProgressArtifact => artifact.type === 'sourcing-stage-progress',
   );
+  const createdEvent = [...artifacts].reverse().find(
+    (artifact): artifact is SourceEventCreatedArtifact => artifact.type === 'source-event-created',
+  );
   const readiness = Math.min(90, 35 + (progressCards.length * 15) + (topEvent ? 10 : 0));
   const filterLabel = [activeStage, activeStatus].filter(Boolean).join(' / ') || 'all IT sourcing';
   const knownRows = [
@@ -231,10 +235,17 @@ function SourceFormationPanel({
       <div style={NEXT_MOVE_CARD}>
         <div style={FORMATION_SECTION_TITLE}>Next move</div>
         <p style={NEXT_MOVE_COPY}>
-          {topEvent
+          {createdEvent
+            ? `${createdEvent.eventCode}: tenant admin approval is next. Then decision owner and sourcing lead co-sign S0 exit.`
+            : topEvent
             ? `${topEvent.currentStageLabel}: ${topEvent.nextAction}.`
             : `Pick a sourcing type for ${filterLabel}, then Nexus will ask for the first missing fact.`}
         </p>
+        {createdEvent ? (
+          <a href={createdEvent.approvalUrl ?? '/source/events'} style={APPROVAL_LINK}>
+            Open approval queue
+          </a>
+        ) : null}
       </div>
     </section>
   );
@@ -263,12 +274,14 @@ const AGENT_CANVAS: CSSProperties = {
   gap: 12,
   alignItems: 'stretch',
   minHeight: 430,
+  height: 'min(590px, calc(100vh - 210px))',
   marginBottom: 12,
 };
 
 const CHAT_COLUMN: CSSProperties = {
   minWidth: 0,
   minHeight: 430,
+  height: '100%',
   display: 'grid',
 };
 
@@ -513,4 +526,21 @@ const NEXT_MOVE_COPY: CSSProperties = {
   fontSize: 12.5,
   lineHeight: 1.45,
   color: SHELL.INK,
+};
+
+const APPROVAL_LINK: CSSProperties = {
+  marginTop: 8,
+  display: 'inline-flex',
+  width: 'fit-content',
+  borderRadius: 999,
+  border: '1px solid rgba(12, 26, 58, 0.16)',
+  padding: '6px 10px',
+  fontFamily: SHELL.MONO,
+  fontSize: 9,
+  fontWeight: 800,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  color: SHELL.INK,
+  textDecoration: 'none',
+  background: 'rgba(253, 251, 246, 0.72)',
 };

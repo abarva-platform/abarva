@@ -682,6 +682,7 @@ export async function POST(request: Request) {
           "- If the user mistypes a title (for example CIKO when CIO is likely), correct lightly and continue; do not make the typo the center of the reply.",
           "- Let the right pane carry progress, gates, evidence, blockers, and next-step prep. In prose, summarize what changed and the one next missing field.",
           "- If emitting sourcing-stage-progress artifacts, emit valid JSON only; never expose artifact syntax in prose.",
+          "- When commit_source_event succeeds, do not vaguely say 'pending approval'. Name the event code, say it is visible in the Source operating queue and /source/events approval queue, and state: tenant admin approves the intake record; S0 exit is co-signed by the decision owner and sourcing lead.",
         ]
       : []),
     tenantSystemBlock,
