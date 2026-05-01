@@ -140,6 +140,30 @@ export const firstCapitalLeadership: { executives: Executive[] } = {
       ],
     },
     {
+      role: "Chief Product Officer, Digital Banking",
+      name: "Priya Mehta",
+      tenure: "2 years",
+      background: "Digital banking product executive recruited to connect account opening, mobile experience, payments, and customer servicing into one product portfolio. Works closely with the CDO, CIO, and retail/commercial banking leaders.",
+      priorities: [
+        "Build a product operating model for digital banking and payments",
+        "Convert FedNow, onboarding, and mobile-experience work into product roadmaps with measurable behavior change",
+        "Improve product discovery quality before funding requests",
+        "Tie customer experience metrics to program gates"
+      ],
+      quotes: [
+        "A digital banking program is not just a technology delivery plan. It has to change customer behavior, banker behavior, or both.",
+        "If we cannot explain the product metric, we are not ready for funding.",
+      ],
+      aiStance: "Positive on AI-assisted product discovery, customer-journey synthesis, and roadmap packaging when data lineage and compliance controls are visible.",
+      decisionStyle: "Product-led and metrics-oriented. Sponsors product quality, but expects directors to run program evidence, meeting capture, and roadmap detail.",
+      contradictions: [
+        {
+          publicPosition: "First Capital has a coordinated digital product roadmap",
+          actualData: "FedNow, account opening, mobile app, and CRM initiatives are still governed as separate technology or channel projects with inconsistent product evidence.",
+        },
+      ],
+    },
+    {
       role: "Director, IT Sourcing",
       name: "Ethan Brooks",
       tenure: "3 years",
@@ -184,6 +208,30 @@ export const firstCapitalLeadership: { executives: Executive[] } = {
         {
           publicPosition: "FedNow is a single implementation program",
           actualData: "The actual work spans payments architecture, fraud controls, commercial client readiness, risk review, and vendor contracting.",
+        },
+      ],
+    },
+    {
+      role: "Director, Digital Product Management",
+      name: "Rachel Kim",
+      tenure: "3 years",
+      background: "Digital product operator for account opening, mobile servicing, and customer onboarding. Owns product discovery artifacts and product-metric readiness for digital programs.",
+      priorities: [
+        "Turn account-opening and mobile-app pain into scoped program briefs",
+        "Capture product evidence before executive funding reviews",
+        "Coordinate customer journey, compliance, and technology dependencies",
+        "Keep exact financial assumptions restricted to finance-authorized users"
+      ],
+      quotes: [
+        "The customer journey and the core banking dependency have to be visible in the same artifact.",
+        "A product roadmap without baseline metrics is just a wish list.",
+      ],
+      aiStance: "Strong user of Nexus for product discovery, meeting notes, roadmap packaging, and approval preparation.",
+      decisionStyle: "Operator-level product manager. Ideal day-to-day Programs user, not an enterprise admin.",
+      contradictions: [
+        {
+          publicPosition: "Digital product discovery is mature",
+          actualData: "Product discovery artifacts exist unevenly; several technology programs have customer-experience claims without baseline journey metrics.",
         },
       ],
     },

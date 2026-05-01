@@ -399,6 +399,53 @@
       "vacancy_status": "Filled"
     },
     {
+      "id": "person:meridian:elena-rivera",
+      "full_name": "Elena Rivera",
+      "title": "Director, Digital Product Management",
+      "scope": "shared",
+      "reports_to": "person:meridian:maya-iyer",
+      "tenure_in_role_years": 3,
+      "domain_ownership": [
+        "patient access product roadmap",
+        "care-navigation product discovery",
+        "digital adoption evidence",
+        "product operating model ceremonies"
+      ],
+      "prior_roles": [
+        "Digital health product management",
+        "Provider access transformation"
+      ],
+      "stated_priorities_fy2026": [
+        "turn digital ideas into scoped product programs",
+        "standardize product discovery evidence",
+        "link adoption metrics to program approval packets"
+      ],
+      "vacancy_status": "Filled"
+    },
+    {
+      "id": "person:meridian:caleb-nguyen",
+      "full_name": "Caleb Nguyen",
+      "title": "Director, Clinical Product Operations",
+      "scope": "provider",
+      "reports_to": "person:meridian:maya-iyer",
+      "tenure_in_role_years": 2,
+      "domain_ownership": [
+        "clinical workflow product operations",
+        "physician-adoption evidence",
+        "clinical product rollout readiness"
+      ],
+      "prior_roles": [
+        "Clinical operations transformation",
+        "Digital product rollout leadership"
+      ],
+      "stated_priorities_fy2026": [
+        "separate clinical workflow needs from technology requests",
+        "capture adoption and readiness evidence before phase gates",
+        "coordinate product programs with CMIO governance"
+      ],
+      "vacancy_status": "Filled"
+    },
+    {
       "id": "person:meridian:aiden-walsh",
       "full_name": "Dr. Aiden Walsh",
       "title": "Former CIO",
