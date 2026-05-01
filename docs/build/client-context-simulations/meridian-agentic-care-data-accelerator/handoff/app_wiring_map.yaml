@@ -1,0 +1,45 @@
+wave_id: MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-WAVE-1
+client_id: MERIDIAN-HEALTH
+tenant_key_used_by_nexus:
+  value: meridian-health
+  status: unverified
+  note: Confirm in Nexus tenant registry before app-go-live claim.
+program_id: MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR
+lifecycle_phase: P3
+related_abarva_program_fixture:
+  status: instruction
+  instruction: Create or map program fixture for `MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR` in the app's program registry for tenant `meridian-health`.
+seed_pack_yaml: simulation/MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR/SIMULATION_SEED_PACK.yaml
+materialized_corpus_entries:
+  - PAT-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM
+  - ANT-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM
+  - SA-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM
+  - DEL-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM-V1
+  - DF-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM-V1
+  - EV-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM-V1
+  - SYS-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM
+  - VI-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM
+  - REG-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM
+corpus_entry_ids_expected_in_retrieval:
+  - PAT-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM
+  - SA-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM
+  - SYS-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM
+  - REG-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM
+  - EV-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM-V1
+pinecone_index_name: abarva-knowledge-corpus-prod
+embedding:
+  model: text-embedding-3-large
+  dimension: 1024
+namespaces_updated:
+  - cross-industry-patterns
+  - lifecycle-substrate
+  - deliverable-templates
+  - vendor-implementations
+  - industry-healthcare
+  - industry-financial-services
+  - industry-retail
+publication_audits:
+  embedding: phase4-output/publication-audit-embedding.json
+  upsert: phase4-output/publication-audit-upsert.json
+  indexes: phase3-output/publication-audit-indexes.json
+  manifests: phase4-output/publication-audit-manifests.json

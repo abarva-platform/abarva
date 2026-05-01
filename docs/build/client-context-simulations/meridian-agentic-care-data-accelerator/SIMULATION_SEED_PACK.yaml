@@ -1,0 +1,31 @@
+client_id: MERIDIAN-HEALTH
+industry: healthcare
+program_id: MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR
+lifecycle_phase: P3
+sourcing_stage: Evaluation
+active_failure_modes: [3, 6, 8]
+strategy_priorities:
+  - modernize data estate for agentic workflows
+  - improve care operations visibility
+  - reduce analytics cycle time
+artifacts:
+  - artifact_id: STRAT-CS-001
+    type: meeting-minutes
+    path: artifacts/01_strategy_and_current_state_minutes.md
+    date: 2026-04-22
+  - artifact_id: ARCH-WS-001
+    type: workshop-minutes
+    path: artifacts/02_architecture_workshop_minutes.md
+    date: 2026-04-24
+  - artifact_id: STEER-LOG-001
+    type: steering-log
+    path: artifacts/03_program_steering_decision_log.md
+    date: 2026-04-29
+  - artifact_id: ACTION-REG-001
+    type: action-register
+    path: artifacts/04_workshop_action_register.md
+    date: 2026-04-28
+  - artifact_id: SOLN-IN-001
+    type: solution-input-summary
+    path: artifacts/05_solution_input_summary.md
+    date: 2026-04-28

@@ -7,6 +7,7 @@ import {
   getProgramsIndexFilterSummary,
   normalizeProgramsIndexFilter,
 } from '@/lib/programs/programs-page-view';
+import { buildProgramDetailView } from '@/lib/programs/programs-detail-view';
 
 describe('Programs index linked-state and filters', () => {
   it('anchors APX-CDP-2026 as the linked Source flagship at P3 Design', () => {
@@ -32,10 +33,30 @@ describe('Programs index linked-state and filters', () => {
 
     expect(view.tenant).toBe('Meridian Health System');
     expect(view.phaseFilterTenantSlug).toBe('meridian-health');
-    expect(view.programs).toHaveLength(2);
-    expect(view.programs.every((program) => program.displayId.startsWith('MRD-'))).toBe(true);
+    expect(view.programs).toHaveLength(3);
+    expect(view.programs[0]).toMatchObject({
+      id: 'mh-prog-agentic-care-data-accelerator',
+      displayId: 'MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR',
+      name: 'Agentic Care Data Accelerator',
+      currentPhase: 3,
+      gateStatus: 'pending',
+    });
     expect(view.programs.some((program) => program.displayId.startsWith('APX-'))).toBe(false);
     expect(view.agentRail.map((agent) => agent.job).join(' ')).not.toContain('APX-');
+  });
+
+  it('builds the Meridian simulation detail fixture without Apex fallback copy', () => {
+    const view = buildProgramDetailView('mh-prog-agentic-care-data-accelerator');
+
+    expect(view.tenant).toBe('Meridian Health System');
+    expect(view.displayId).toBe('MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR');
+    expect(view.name).toBe('Agentic Care Data Accelerator');
+    expect(view.currentPhase).toBe(3);
+    expect(view.gateStatus).toBe('pending');
+    expect(view.workbench.title).toBe('P3 Design · Simulation Evidence Review');
+    expect(view.phasePanel.gateCriteria?.some((criterion) =>
+      criterion.criterion.includes('Live corpus IDs captured'),
+    )).toBe(true);
   });
 
   it('returns a fresh program array per tenant view build', () => {

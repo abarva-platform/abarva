@@ -1,0 +1,56 @@
+wave_id: MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-WAVE-1
+queries:
+  - id: VQ-001
+    user_question: "How should Meridian modernize Teradata with Epic context while reducing cutover risk?"
+    expected_retrieved_ids:
+      - PAT-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM
+      - SA-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM
+      - SYS-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM
+      - REG-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM
+  - id: VQ-002
+    user_question: "What anti-pattern signals indicate this program is rushing pilot-to-production?"
+    expected_retrieved_ids:
+      - ANT-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM
+      - EV-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM-V1
+  - id: VQ-003
+    user_question: "What evidence is required before go-live decision at this stage?"
+    expected_retrieved_ids:
+      - EV-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM-V1
+      - DEL-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM-V1
+      - REG-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM
+  - id: VQ-004
+    user_question: "Compare architecture and vendor options with compliance constraints for this program."
+    expected_retrieved_ids:
+      - SA-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM
+      - VI-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM
+      - DF-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM-V1
+      - REG-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM
+  - id: VQ-005
+    user_question: "What should be in this week’s steering packet and owner actions?"
+    expected_retrieved_ids:
+      - DEL-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM-V1
+      - EV-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM-V1
+      - PAT-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM
+  - id: VQ-006
+    user_question: "Where are we weak on governance and how do we close control gaps quickly?"
+    expected_retrieved_ids:
+      - REG-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM
+      - ANT-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM
+      - EV-MERIDIAN-HEALTH-MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-SIM-V1
+agent_behavior_expectations:
+  nexus:
+    - program-phase-aware recommendations tied to lifecycle P3 and active failure modes [3,6,8]
+    - produce action plan with owner/timeboxed next steps
+    - cite evidence requirements before recommending go-live actions
+  sentinel:
+    - synthesize strategy/current-state/workshop artifacts into architecture + risk narrative
+    - include cross-industry transfer note when relevant
+    - surface uncertainty where evidence gaps exist
+  atlas:
+    - identify cross-program signal patterns and systemic risk concentration
+    - compare this program against portfolio heuristics
+    - highlight reusable playbooks and dependencies
+  steward:
+    - enforce governance and control checks
+    - produce control-gap closure sequence with evidence checklist
+    - escalate when regulatory or audit evidence is insufficient

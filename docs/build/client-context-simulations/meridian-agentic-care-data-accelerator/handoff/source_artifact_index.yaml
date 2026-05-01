@@ -1,0 +1,18 @@
+wave_id: MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR-WAVE-1
+source_artifact_folder: simulation/MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR/artifacts
+artifacts:
+  - id: STRAT-CS-001
+    file: simulation/MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR/artifacts/01_strategy_and_current_state_minutes.md
+    type: meeting-minutes
+  - id: ARCH-WS-001
+    file: simulation/MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR/artifacts/02_architecture_workshop_minutes.md
+    type: workshop-minutes
+  - id: STEER-LOG-001
+    file: simulation/MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR/artifacts/03_program_steering_decision_log.md
+    type: steering-log
+  - id: ACTION-REG-001
+    file: simulation/MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR/artifacts/04_workshop_action_register.md
+    type: action-register
+  - id: SOLN-IN-001
+    file: simulation/MH-PROG-AGENTIC-CARE-DATA-ACCELERATOR/artifacts/05_solution_input_summary.md
+    type: solution-input-summary

@@ -1,0 +1,58 @@
+{
+  "suite_pass_ratio": 1.0,
+  "suite_pass_threshold": 0.95,
+  "suite_passed": true,
+  "tests": [
+    {
+      "id": "ST-001",
+      "agent": "sentinel",
+      "expected": [
+        "PAT-FM-03-DUAL-RUN-CUTOVER",
+        "SYS-HC-EPIC-CLARITY",
+        "SA-DF-LAKEHOUSE-AZURE",
+        "REG-US-FED-HIPAA-PRIVACY-RULE"
+      ],
+      "hits": [
+        "PAT-FM-03-DUAL-RUN-CUTOVER",
+        "SYS-HC-EPIC-CLARITY",
+        "SA-DF-LAKEHOUSE-AZURE",
+        "REG-US-FED-HIPAA-PRIVACY-RULE"
+      ],
+      "hit_ratio": 1.0,
+      "pass_threshold": 0.8,
+      "passed": true
+    },
+    {
+      "id": "ST-002",
+      "agent": "nexus",
+      "expected": [
+        "DEL-CHARTER-AI-PROGRAM-V1",
+        "EV-P1-BASELINE-METRIC-CAPTURE",
+        "DF-BUILD-VS-BUY-AI-COMPONENT"
+      ],
+      "hits": [
+        "DEL-CHARTER-AI-PROGRAM-V1",
+        "EV-P1-BASELINE-METRIC-CAPTURE",
+        "DF-BUILD-VS-BUY-AI-COMPONENT"
+      ],
+      "hit_ratio": 1.0,
+      "pass_threshold": 0.8,
+      "passed": true
+    },
+    {
+      "id": "ST-003",
+      "agent": "steward",
+      "expected": [
+        "REG-US-FED-HIPAA-PRIVACY-RULE",
+        "SYS-HC-EPIC-CLARITY"
+      ],
+      "hits": [
+        "REG-US-FED-HIPAA-PRIVACY-RULE",
+        "SYS-HC-EPIC-CLARITY"
+      ],
+      "hit_ratio": 1.0,
+      "pass_threshold": 0.8,
+      "passed": true
+    }
+  ]
+}

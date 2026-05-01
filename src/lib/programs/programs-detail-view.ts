@@ -1,6 +1,6 @@
 // programs-detail-view.ts — PROG-D
 //
-// Builds the ProgramDetailView for a single program from the Apex fixture.
+// Builds the ProgramDetailView for a single program from deterministic fixtures.
 // Deterministic: no Date.now(), no random, no model calls.
 //
 // Phase model: the fixture uses 0–6 (Originate through Operate).
@@ -13,6 +13,7 @@ import {
   PHASE_LABEL_MAP,
   buildPhaseSlots,
 } from './programs-fixture';
+import { MERIDIAN_PROGRAMS_FIXTURE } from './meridian-fixture';
 import type {
   ProgramAgentRailItem,
   ProgramDetailView,
@@ -298,6 +299,32 @@ const APX_CDP_2026_P2_WORKBENCH: ProgramWorkbenchContent = {
   ],
 };
 
+// ─── Meridian simulation workbench (P3 Design · Build gate pending) ──────────
+
+const MH_AGENTIC_CARE_DATA_ACCELERATOR_P3_WORKBENCH: ProgramWorkbenchContent = {
+  title: 'P3 Design · Simulation Evidence Review',
+  prose:
+    'The Meridian Agentic Care Data Accelerator is in Design with a live handoff package behind it: strategy minutes, architecture workshop notes, steering decisions, action register, solution inputs, and corpus publication audits. Nexus can safely use the deterministic fixture for navigation today, while Sentinel should still treat the published Pinecone index as not app-wired until live retrieved IDs are captured.',
+  actionsLabel: 'Nexus recommends',
+  actions: [
+    {
+      letter: 'A',
+      text: 'Review source artifact spine',
+      detail: '5 source artifacts · strategy, architecture, steering, actions, solution inputs',
+    },
+    {
+      letter: 'B',
+      text: 'Close Design gate evidence gaps',
+      detail: 'Control testing, rollback ownership, and PHI retrieval guardrails',
+    },
+    {
+      letter: 'C',
+      text: 'Run app-wiring validation pack',
+      detail: '6 query prompts · capture returned corpus IDs before claiming app-wired',
+    },
+  ],
+};
+
 // ─── Workbench content by phase state ────────────────────────────────────────
 
 function buildWorkbenchContent(
@@ -342,6 +369,13 @@ function buildWorkbenchContent(
   // Demo flagship override — P3 Design active view (post gate-approval)
   if (programId === 'apx-cdp-2026' && viewingPhase === 3 && viewingPhaseState === 'current') {
     return APX_CDP_2026_P3_WORKBENCH;
+  }
+  if (
+    programId === 'mh-prog-agentic-care-data-accelerator' &&
+    viewingPhase === 3 &&
+    viewingPhaseState === 'current'
+  ) {
+    return MH_AGENTIC_CARE_DATA_ACCELERATOR_P3_WORKBENCH;
   }
   switch (viewingPhaseState) {
     case 'done':
@@ -604,6 +638,56 @@ function buildPhasePanel(
       ],
     };
   }
+  // Meridian simulation P3 gate — source-backed but retrieval is not app-wired yet.
+  if (
+    programId === 'mh-prog-agentic-care-data-accelerator' &&
+    viewingPhase === 3 &&
+    viewingPhaseState === 'current'
+  ) {
+    return {
+      summary:
+        'P3 Design is evidence-backed by the Meridian simulation handoff. The corpus entries are published, but the app must still prove live retrieval against the validation query pack before this can be marked app-wired.',
+      gateCriteria: [
+        { criterion: 'Strategy/current-state minutes indexed in handoff', met: true },
+        { criterion: 'Architecture workshop minutes indexed in handoff', met: true },
+        { criterion: 'Steering decision log and action register captured', met: true },
+        { criterion: 'PHI retrieval guardrails validated in app query path', met: false },
+        { criterion: 'Live corpus IDs captured from app/API smoke test', met: false },
+      ],
+      evidenceItems: [
+        {
+          id: 'mh-acda-ev-1',
+          citation: 'Strategy and current-state minutes · Apr 2026',
+          source: 'Meridian simulation artifact',
+          excerpt:
+            'Meridian is balancing agentic workflow acceleration with PHI guardrails, legacy warehouse constraints, and business demand for faster care-operations analytics.',
+          confidence: 'high' as const,
+          provenanceNote:
+            'Repo handoff · docs/build/client-context-simulations/meridian-agentic-care-data-accelerator/artifacts/01_strategy_and_current_state_minutes.md',
+        },
+        {
+          id: 'mh-acda-ev-2',
+          citation: 'Architecture workshop minutes · Apr 2026',
+          source: 'Meridian simulation artifact',
+          excerpt:
+            'Epic Clarity/Caboodle, the legacy Teradata warehouse, and the Azure Databricks pilot create a dual-run migration path with explicit retrieval-control requirements.',
+          confidence: 'high' as const,
+          provenanceNote:
+            'Repo handoff · docs/build/client-context-simulations/meridian-agentic-care-data-accelerator/artifacts/02_architecture_workshop_minutes.md',
+        },
+        {
+          id: 'mh-acda-ev-3',
+          citation: 'Publication audit · Apr 2026',
+          source: 'Corpus publication audit',
+          excerpt:
+            'The simulation wave reports 148 corpus entries and 1026 vectors published, but remains marked published-not-app-wired until retrieval smoke evidence is captured.',
+          confidence: 'medium' as const,
+          provenanceNote:
+            'Repo audit · docs/build/client-context-simulations/meridian-agentic-care-data-accelerator/audits/',
+        },
+      ],
+    };
+  }
   switch (viewingPhaseState) {
     case 'done':
       return {
@@ -654,9 +738,22 @@ export function buildProgramDetailView(
   overrideCurrentPhase?: number,
 ): ProgramDetailView {
   // Look up program by id; fall back to APX-01 for demo safety
-  const program =
-    APEX_PROGRAMS_FIXTURE.find((p) => p.id === programId) ??
-    APEX_PROGRAMS_FIXTURE[0];
+  const apexProgram = APEX_PROGRAMS_FIXTURE.find((p) => p.id === programId);
+  const meridianProgram = MERIDIAN_PROGRAMS_FIXTURE.find((p) => p.id === programId);
+  const fixtureMatch =
+    apexProgram
+      ? {
+          program: apexProgram,
+          tenant: 'Apex Retail Group',
+        }
+      : meridianProgram
+      ? {
+          program: meridianProgram,
+          tenant: 'Meridian Health System',
+        }
+      : null;
+  const program = fixtureMatch?.program ?? APEX_PROGRAMS_FIXTURE[0];
+  const tenant = fixtureMatch?.tenant ?? 'Apex Retail Group';
 
   // If the caller provides an overrideCurrentPhase (e.g. from DB), use it.
   // This ensures the phase rail and workbench content reflect the real current phase,
@@ -696,7 +793,7 @@ export function buildProgramDetailView(
     programId: program.id,
     displayId: program.displayId,
     name: program.name,
-    tenant: 'Apex Retail Group',
+    tenant,
     currentPhase: clampedCurrent,
     viewingPhase,
     phases: railPhases,
