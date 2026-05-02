@@ -58,6 +58,7 @@ export const completeProgramTool: AgentTool<CompleteProgramInput> = {
       .from('engagements')
       .update({
         lifecycle_state: 'completed',
+        status: 'completed',
         current_phase: 6,
         updated_at: now,
       })
