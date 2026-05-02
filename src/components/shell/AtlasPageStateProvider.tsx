@@ -82,7 +82,14 @@ const DEFAULT_AGENT: Record<string, string> = {
   'setup-detail': 'Steward',
 };
 
-const AGENT_TURN_TIMEOUT_MS = 90_000;
+const DEFAULT_AGENT_TURN_TIMEOUT_MS = 90_000;
+const PROGRAMS_AGENT_TURN_TIMEOUT_MS = 210_000;
+
+function getAgentTurnTimeoutMs(surface: string): number {
+  return surface === 'programs' || surface === 'programs-detail' || surface.startsWith('/programs/')
+    ? PROGRAMS_AGENT_TURN_TIMEOUT_MS
+    : DEFAULT_AGENT_TURN_TIMEOUT_MS;
+}
 
 // ── Context ───────────────────────────────────────────────────────────────────
 
@@ -189,7 +196,7 @@ export function AtlasPageStateProvider({
       const timeoutId = window.setTimeout(() => {
         timedOut = true;
         ctrl.abort();
-      }, AGENT_TURN_TIMEOUT_MS);
+      }, getAgentTurnTimeoutMs(surface));
 
       const userTurn: ChatTurn = {
         id: `usr-${Date.now()}`,

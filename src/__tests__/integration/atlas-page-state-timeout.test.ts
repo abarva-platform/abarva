@@ -8,9 +8,15 @@ describe('AtlasPageStateProvider timeout recovery', () => {
       'utf8',
     );
 
-    expect(source).toContain('const AGENT_TURN_TIMEOUT_MS = 90_000');
+    expect(source).toContain('const DEFAULT_AGENT_TURN_TIMEOUT_MS = 90_000');
+    expect(source).toContain('const PROGRAMS_AGENT_TURN_TIMEOUT_MS = 210_000');
+    expect(source).toContain('function getAgentTurnTimeoutMs(surface: string): number');
+    expect(source).toContain("surface === 'programs'");
+    expect(source).toContain("surface === 'programs-detail'");
+    expect(source).toContain("surface.startsWith('/programs/')");
     expect(source).toContain('timedOut = true');
     expect(source).toContain('ctrl.abort()');
+    expect(source).toContain('getAgentTurnTimeoutMs(surface)');
     expect(source).toContain('Nexus response timed out. The turn was not completed; please retry or shorten the request.');
   });
 });
