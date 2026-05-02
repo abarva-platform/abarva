@@ -62,8 +62,15 @@ function collectSectionItems(lines: string[], headings: string[]): string[] {
   let inSection = false;
 
   for (const line of lines) {
+    const candidateHeading = line
+      .replace(/[:—-]\s*$/u, '')
+      .trim()
+      .toLowerCase();
     const headingMatch = normalizedHeadings.some((heading) =>
-      new RegExp(`^${heading}s?\\s*[:—-]?$`, 'i').test(line),
+      candidateHeading === heading ||
+      candidateHeading === `${heading}s` ||
+      candidateHeading.endsWith(` ${heading}`) ||
+      candidateHeading.endsWith(` ${heading}s`),
     );
 
     if (headingMatch) {
