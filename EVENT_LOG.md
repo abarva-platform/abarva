@@ -27,3 +27,12 @@
 - Fix summary: Home now gates Apex fixture content behind an Apex-only tenant check. Non-Apex tenants receive tenant-safe workspace copy, live tenant-scoped program rows only, restricted-financial copy, and no static Apex Tower/Source cards.
 - Regression: src/__tests__/integration/home-tenant-scope.test.ts pins the Apex-only fixture guard and non-Apex safe copy.
 - Validation: Focused Home tenant-scope Jest and ESLint passed locally.
+
+## 2026-05-02T11:02:00Z — programs-module-e2e-crawler
+
+- Workstream: Programs live E2E crawl / Meridian approval path.
+- Finding: Meridian user entered Setup/Admin from a Meridian program approval, but Setup chrome rendered Apex Retail Group because a stale active-client cookie could override explicit tenant-domain personas when Clerk role metadata was admin-ish.
+- Severity: SEV-1 tenant indicator mismatch on approval surface.
+- Fix summary: `getActiveClientKey()` now pins explicit tenant-domain identities to their inferred client before considering the active-client cookie. This enforces one-client sessions for real client personas even when role metadata is `admin`.
+- Regression: src/lib/__tests__/active-client.test.ts verifies `nina.patel@meridian-health.example.com` resolves to Meridian despite a stale Apex cookie.
+- Validation: Focused active-client Jest and ESLint passed locally.
