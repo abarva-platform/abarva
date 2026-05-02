@@ -143,11 +143,11 @@ const APEX_RETAIL_PORTFOLIO_PRESSURE_CARDS: TowerPressureCard[] = [
     lens: 'portfolio',
     label: 'Design Gate Cleared — Build Gate Next',
     pressureSummary:
-      'CDP Activation Design gate (P2→P3) approved Apr 27. Architecture sprint is active. Build gate (P3→P4) is the next milestone.',
+      'CDP Activation Design gate (P2→P3) approved Apr 27. Architecture sprint is active. Execution Roadmap gate (P3→P4) is the next milestone.',
     businessImpact:
-      'Vendor C confirmed as managed CDP layer — in-house build scope reduced ~40%. Build gate criteria must be met to proceed to P4.',
+      'Vendor C confirmed as managed CDP layer — in-house build scope reduced ~40%. Execution Roadmap gate criteria must be met to proceed to P4.',
     recommendedAction:
-      'Review Build gate criteria and assign accountable owners per deliverable for the architecture sprint.',
+      'Review Execution Roadmap gate criteria and assign accountable owners per deliverable for the architecture sprint.',
     deterministicSeed: true,
   },
 ];
@@ -162,7 +162,7 @@ const APEX_RETAIL_ADOPTION_SCORECARDS: TowerScorecard[] = [
     label: 'CDP Adoption Readiness',
     status: 'not_started',
     summary:
-      'CDP is in Build phase. Adoption readiness assessment has not begun. ' +
+      'CDP is in Execution Roadmap phase. Adoption readiness assessment has not begun. ' +
       'User onboarding plan and change management programme not yet initiated.',
     evidenceBasis: 'Deterministic Wave 2 seed — not live telemetry.',
     owner: 'Change Management Lead',
@@ -185,7 +185,7 @@ const APEX_RETAIL_ADOPTION_LENS_DETAIL: TowerLensDetail = {
   lensId: 'adoption',
   primaryQuestion: 'Is this organisation ready to adopt and use these AI programmes?',
   dataAvailable: [
-    'Programme phase tracking (CDP in Build phase)',
+    'Programme phase tracking (CDP in Execution Roadmap phase)',
     'Delivery team alignment status',
     'Workshop attendance records (stub)',
   ],
@@ -196,11 +196,11 @@ const APEX_RETAIL_ADOPTION_LENS_DETAIL: TowerLensDetail = {
     'Business readiness assessment',
   ],
   topSignal:
-    'CDP programme is approaching the Activate phase with no adoption readiness plan in place. ' +
+    'CDP programme is approaching the Approval / Mobilization phase with no adoption readiness plan in place. ' +
     'Change management programme not yet initiated.',
   nextAction:
     'Initiate adoption readiness assessment and appoint a change management lead before the ' +
-    'CDP Activate phase gate.',
+    'CDP Approval / Mobilization phase gate.',
   atlasRecommendation:
     'Atlas recommends: schedule an adoption readiness review before Phase 5 gate closes. ' +
     'Organisations that skip adoption planning at this stage face higher activation failure risk.',
@@ -256,12 +256,12 @@ const APEX_RETAIL_VALUE_LENS_DETAIL: TowerLensDetail = {
   ],
   topSignal:
     '$2.4M CDP value confirmed through Design gate approval. Architecture sprint active — value ' +
-    'measurement framework to be established during P3 before Build gate.',
+    'measurement framework to be established during P3 before Execution Roadmap gate.',
   nextAction:
     'Establish a value measurement framework and document the baseline in the evidence fabric ' +
-    'before the P3→P4 Build gate.',
+    'before the P3→P4 Execution Roadmap gate.',
   atlasRecommendation:
-    'Atlas recommends: do not proceed to the Activate phase without a confirmed value baseline. ' +
+    'Atlas recommends: do not proceed to the Approval / Mobilization phase without a confirmed value baseline. ' +
     'Programmes without baselines are significantly more likely to report value erosion post-activation.',
   lowContextDisclosure: null,
   deterministicSeed: true,

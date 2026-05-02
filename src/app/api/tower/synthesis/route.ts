@@ -15,6 +15,15 @@ import { registerSynthesisCache } from "@/lib/reasoning/synthesis-cache-registry
 import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
 import { getUserContextPromptBlock } from "@/lib/agent/userContext";
 import { FOUR_LAYER_REASONING_INSTRUCTIONS } from "@/lib/intelligence/synthesis/instructionLayer";
+import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
+import {
+  formatUserProgramAccessPolicyForPrompt,
+  loadUserProgramAccessPolicy,
+} from "@/lib/auth/program-access-policy";
+import {
+  formatRestrictedOutputPolicyForPrompt,
+  sanitizeRestrictedFinancialText,
+} from "@/lib/agent/restricted-output-policy";
 
 // Simple in-memory cache: key → text response
 // In production this would be Redis; for demo an in-process cache is sufficient.
@@ -35,13 +44,20 @@ Atlas voice register (from brand voice spec §9):
 
 Format: Plain prose, 100–150 words. No headers, no bullets, no markdown. Single paragraph.`;
 
-function buildAtlasSynthesisPrompt(userContextBlock: string): string {
+function buildAtlasSynthesisPrompt(
+  userContextBlock: string,
+  accessPolicyBlock: string,
+  restrictedOutputBlock: string,
+  demoContextBlock: string,
+): string {
   // F0.2 + F0.3 composition.
   return [
     ATLAS_SYNTHESIS_VOICE_AND_TASK,
     userContextBlock,
+    accessPolicyBlock,
+    restrictedOutputBlock,
     FOUR_LAYER_REASONING_INSTRUCTIONS,
-    AGENT_DEMO_SYSTEM_BLOCK,
+    demoContextBlock,
   ]
     .filter((s) => s && s.trim().length > 0)
     .join('\n\n');
@@ -71,6 +87,14 @@ export async function POST(request: Request) {
   // Tower has no body parameters — context is the whole portfolio. We still
   // read the request to honour the If-None-Match header for ETag short-circuit.
   const startedAt = Date.now();
+  let accessPolicy;
+  try {
+    const tenancy = await requireTenancy();
+    accessPolicy = await loadUserProgramAccessPolicy(tenancy);
+  } catch (err) {
+    return tenancyErrorResponse(err);
+  }
+
   const programInstances = APEX_RETAIL_PROGRAM_INSTANCES;
   const sourceEventInstances = SOURCE_EVENT_INSTANCES;
 
@@ -80,7 +104,8 @@ export async function POST(request: Request) {
 
   // Cache check
   const stateHash = towerStateHash(programInstances, sourceEventInstances);
-  const cacheKey = `tower:${stateHash}:atlas:v1`;
+  const policyCacheKey = accessPolicy.outputPolicy.exactFinancialValues ? 'finance' : 'restricted';
+  const cacheKey = `tower:${stateHash}:atlas:v2:${policyCacheKey}`;
   const etag = computeSynthesisEtag(cacheKey);
   const ifNoneMatch = request.headers.get('if-none-match');
   const cached = synthesisCache.get(cacheKey);
@@ -120,7 +145,7 @@ export async function POST(request: Request) {
       failureModeCount: ctx.failureModes.length,
       gateCount: ctx.gatesSummary.total,
     });
-    return new Response(cached, {
+    return new Response(sanitizeRestrictedFinancialText(cached, accessPolicy), {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
         ETag: etag,
@@ -181,11 +206,19 @@ export async function POST(request: Request) {
 
   // F0.2 Layer 0
   const userContextBlock = await getUserContextPromptBlock();
+  const accessPolicyBlock = formatUserProgramAccessPolicyForPrompt(accessPolicy);
+  const restrictedOutputBlock = formatRestrictedOutputPolicyForPrompt(accessPolicy);
+  const demoContextBlock = sanitizeRestrictedFinancialText(AGENT_DEMO_SYSTEM_BLOCK, accessPolicy);
 
   const stream = await client.messages.stream({
     model: "claude-sonnet-4-6",
     max_tokens: 350,
-    system: buildAtlasSynthesisPrompt(userContextBlock),
+    system: buildAtlasSynthesisPrompt(
+      userContextBlock,
+      accessPolicyBlock,
+      restrictedOutputBlock,
+      demoContextBlock,
+    ),
     messages: [{ role: "user", content: userMessage }],
   });
 
@@ -204,6 +237,31 @@ export async function POST(request: Request) {
     gateCount: ctx.gatesSummary.total,
   });
 
+  if (!accessPolicy.outputPolicy.exactFinancialValues) {
+    for await (const chunk of stream) {
+      if (
+        chunk.type === "content_block_delta" &&
+        chunk.delta.type === "text_delta"
+      ) {
+        accumulated += chunk.delta.text;
+      }
+    }
+    const safeText = sanitizeRestrictedFinancialText(accumulated, accessPolicy);
+    if (safeText) {
+      synthesisCache.set(cacheKey, safeText);
+      cacheCreatedAt.set(cacheKey, Date.now());
+    }
+    return new Response(safeText, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        ETag: etag,
+        "X-Cache": "MISS",
+        "X-Synthesis-Event-Id": event.id,
+        "X-Restricted-Output": "financial-values-redacted",
+      },
+    });
+  }
+
   const readable = new ReadableStream({
     async start(controller) {
       for await (const chunk of stream) {
@@ -217,7 +275,7 @@ export async function POST(request: Request) {
       }
       // Cache the full response after streaming completes
       if (accumulated) {
-        synthesisCache.set(cacheKey, accumulated);
+        synthesisCache.set(cacheKey, sanitizeRestrictedFinancialText(accumulated, accessPolicy));
         cacheCreatedAt.set(cacheKey, Date.now());
       }
       controller.close();

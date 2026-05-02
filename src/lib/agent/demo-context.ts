@@ -15,7 +15,7 @@
 
 export const ABARVA_PRODUCT_CONTEXT = `
 AbarVa is an AI program management platform. It guides enterprises through a 7-phase AI program lifecycle:
-  P0 Originate → P1 Discovery → P2 Synthesis → P3 Design → P4 Build → P5 Activate → P6 Operate
+  P0 Origination → P1 Discovery → P2 Synthesis → P3 Solution / Program Design → P4 Execution Roadmap → P5 Approval / Mobilization → P6 Tower Handoff
 
 Four specialist agents operate the platform:
   Nexus    — program orchestration (Programs surface). Runs workshops, tracks gates, surfaces blockers.
@@ -37,15 +37,15 @@ DEMO TENANT: Apex Retail Group (locked)
 PROGRAMS IN FLIGHT (6 total):
 1. APX-CDP-2026 | Apex Retail CDP Activation | P3 Design | FLAGSHIP
    - Design gate cleared Apr 27 2026 (all 5 criteria met, evidence 100%)
-   - Build gate (P3→P4) is the next milestone — currently 2 of 5 criteria met
-   - Open Build gate blockers: Vendor C integration contract (unsigned), privacy architecture sign-off, build brief scoping
+   - Execution Roadmap gate (P3→P4) is the next milestone — currently 2 of 5 criteria met
+   - Open Execution Roadmap gate blockers: Vendor C integration contract (unsigned), privacy architecture sign-off, roadmap scoping
    - Architecture sprint is active. Vendor C selected as managed CDP layer via AMS BAFO — reduces in-house build scope ~40%.
    - Patterns in use: T3-H01 Ambient AI in Retail, T3-H03 Unified Loyalty Intelligence (personalization layer)
 
-2. APX-CC-2026 | Contact Center AI Transformation | P4 Build
+2. APX-CC-2026 | Contact Center AI Transformation | P4 Execution Roadmap
    - Build 68% complete. NLP intent classifier deployed to staging (94% accuracy).
    - Remaining blockers: IVR routing rules, supervisor dashboard MVP
-   - Activate gate (P4→P5) target: May 15 2026
+   - Approval / Mobilization gate (P4→P5) target: May 15 2026
 
 3. APX-SAP-2026 | Store Associate Productivity AI | P1 Discovery
    - Early discovery phase. Field workflows still being mapped.
@@ -56,8 +56,8 @@ PROGRAMS IN FLIGHT (6 total):
 5. APX-MRC-2025 | Merchandise Replenishment AI | P3 Design | IDLE 9 days
    - Sponsor re-engagement required before Q3 cadence review.
 
-6. APX-DFV2-2025 | Demand Forecasting v2 | P6 Operate | STEADY STATE
-   - Live since Nov 2025. Forecast accuracy 87% (target 82%). Savings $1.4M/yr vs $1.2M projected.
+6. APX-DFV2-2025 | Demand Forecasting v2 | P6 Tower Handoff | STEADY STATE
+   - Live since Nov 2025. Forecast accuracy ahead of target. Restricted financial benefit exists and must be summarized qualitatively unless finance visibility is allowed.
 
 INTELLIGENCE PATTERNS (shell library):
 - T3-H01 | Ambient AI in Retail        | T3 Use-case | VALIDATED  | Used by 4 programs incl. APX-CDP-2026
@@ -67,11 +67,11 @@ INTELLIGENCE PATTERNS (shell library):
 - T2-C03 | Rules-Based Recommendations  | T2 Use-case | DEPRECATED | Superseded by T3-H01 / T3-H03
 
 ACTIVE TOWER PRESSURES:
-- AI Cloud Spend | HIGH severity | $2.4M actual vs $1.8M budget (+33% over)
+- AI Cloud Spend | HIGH severity | exact actual-vs-budget values restricted
   CDP personalization layer is a top LLM inference driver (+18% spike on deployment).
-  Highest-leverage action: negotiate rate card with primary provider (~$180K/yr recovery).
+  Highest-leverage action: negotiate rate card with primary provider for material run-rate recovery.
 - Vendor Risk | MEDIUM severity | AMS BAFO — Vendor C selected for APX-CDP-2026 CDP data layer
-  Integration contract is unsigned. Required criterion for P3→P4 Build gate.
+  Integration contract is unsigned. Required criterion for the P3→P4 Execution Roadmap gate.
 
 SOURCE EVENT:
 - AMS Vendor Consolidation 2026 | 10-stage tracker | Current stage: BAFO (Stage 7)

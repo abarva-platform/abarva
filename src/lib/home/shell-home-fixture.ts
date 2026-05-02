@@ -9,7 +9,7 @@ export const HOME_VIEW = {
   stats: [
     { label: 'Active programs', value: '6', detail: '1 in Design sprint', detailColor: 'mint' as const },
     { label: 'Open pressures', value: '2', detail: '1 high severity', detailColor: 'peach' as const },
-    { label: 'Evidence coverage', value: '100%', detail: 'CDP Build gate 2 of 5', detailColor: 'peach' as const, urgent: true },
+    { label: 'Evidence coverage', value: '100%', detail: 'CDP Execution Roadmap gate 2 of 5', detailColor: 'peach' as const, urgent: true },
     { label: 'Pattern library', value: '17', detail: '3 new this month', detailColor: 'mint' as const },
   ],
 
@@ -24,9 +24,9 @@ export const HOME_VIEW = {
   topPressure: {
     title: 'AI Cloud Spend',
     severity: 'high' as const,
-    heroStat: '$2.4M',
-    heroLabel: 'vs $1.8M budget · +33%',
-    atlasSentence: 'LLM inference is the top driver — a negotiated rate card would recover $180K annually.',
+    heroStat: 'Restricted',
+    heroLabel: 'over budget · exact values hidden',
+    atlasSentence: 'LLM inference is the top driver — a negotiated rate card would recover material run-rate value.',
     href: '/tower/pressures/twr-ai-cloud-spend',
   },
 
@@ -41,11 +41,11 @@ export const HOME_VIEW = {
   },
 
   // Agent voice (Nexus as home guide) — HOME-POLISH: tighter voice density
-  agentQuote: 'CDP Build gate waits on Vendor C contract. AI spend 33% over budget — rate card recovery available. AMS BAFO unblocked.',
+  agentQuote: 'CDP roadmap gate waits on Vendor C contract. AI spend is over budget — rate card recovery available. AMS BAFO unblocked.',
   agentContext: 'Nexus · Executive summary',
   actions: [
     { letter: 'A' as const, text: 'Review CDP architecture sprint', detail: 'P3 Design · Vendor C contract in final review' },
-    { letter: 'B' as const, text: 'Review AI Cloud Spend', detail: 'LLM rate card — $180K/yr recovery available' },
+    { letter: 'B' as const, text: 'Review AI Cloud Spend', detail: 'LLM rate card — material recovery available' },
     { letter: 'C' as const, text: 'Check AMS BAFO award status', detail: 'Unblocked · Vendor C integration contract' },
   ],
 };

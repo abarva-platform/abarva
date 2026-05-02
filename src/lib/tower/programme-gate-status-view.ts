@@ -94,7 +94,7 @@ const PROGRAMME_CARDS: ProgrammeGateStatusCard[] = [
     nextGate: {
       gateId: 'cdp-p4-build-gate',
       phase: 'P4',
-      label: 'P4 Build gate',
+      label: 'P4 Execution Roadmap gate',
       status: 'not_reached',
       gatingCondition: null,
       targetDate: 'June 2026',
