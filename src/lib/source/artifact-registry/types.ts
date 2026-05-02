@@ -18,6 +18,7 @@ export type SourceArtifactFamily =
   | 'workshop_output'
   | 'decision_brief'
   | 'transition_risk_register'
+  | 'value_ledger'
   | 'sourcing_strategy'
   | 'scope_document'
   | 'other';

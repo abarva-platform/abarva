@@ -73,6 +73,8 @@ describe('Source access-control wiring', () => {
     expect(route).toContain('loadUserSourceAccessPolicy');
     expect(route).toContain('canGenerateSourcingArtifacts');
     expect(route).toContain('registerSourceArtifactUpload');
+    expect(route).toContain("stageKey === 'value_realization'");
+    expect(route).toContain("'value_ledger'");
     expect(route).toContain("sourceOrigin: 'generated'");
     expect(route).toContain("sourceFormat: 'markdown'");
     expect(route).toContain("mimeType: GENERATED_MIME");

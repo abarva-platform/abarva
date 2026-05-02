@@ -81,6 +81,7 @@ function parseArtifactFamily(value: unknown, stageKey: SourceStageKey): SourceAr
   if (stageKey === 'orals_bafo') return 'bafo';
   if (stageKey === 'selection') return 'decision_brief';
   if (stageKey === 'contract_mobilization') return 'transition_risk_register';
+  if (stageKey === 'value_realization') return 'value_ledger';
   return 'other';
 }
 
@@ -296,6 +297,7 @@ const SOURCE_ARTIFACT_FAMILIES = new Set<SourceArtifactFamily>([
   'workshop_output',
   'decision_brief',
   'transition_risk_register',
+  'value_ledger',
   'sourcing_strategy',
   'scope_document',
   'other',
