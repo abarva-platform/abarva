@@ -271,6 +271,10 @@ describe('decideApprovalRequest', () => {
       request_status: 'approved',
       decided_by_user_id: 'admin_1',
       decided_at: '2026-04-29T11:00:00.000Z',
+      brief_snapshot: {
+        sponsor_person_id: 'sponsor_1',
+        lead_person_id: 'lead_1',
+      },
     });
     pendingResults.push({ singleResult: { data: updated, error: null } });
 
@@ -298,7 +302,13 @@ describe('decideApprovalRequest', () => {
       expect.arrayContaining([
         [
           'engagements',
-          { lifecycle_state: 'approved', status: 'active', current_phase: 0 },
+          {
+            lifecycle_state: 'approved',
+            status: 'active',
+            current_phase: 0,
+            sponsor_person_id: 'sponsor_1',
+            maestro_person_id: 'lead_1',
+          },
         ],
       ]),
     );

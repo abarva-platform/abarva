@@ -344,6 +344,7 @@ describe('commit_program · OV2-2b approval-queue flow', () => {
       topic_code: 'test_program',
       name: 'Test Program',
       sponsor_person_id: SPONSOR_UUID,
+      maestro_person_id: LEAD_UUID,
       lifecycle_state: 'submitted_for_approval',
       status: 'draft',
       current_phase: 0,

@@ -111,6 +111,16 @@ function rowToApprovalRequest(row: ApprovalRequestRow): ApprovalRequest {
   };
 }
 
+function readBriefUuid(
+  briefSnapshot: Record<string, unknown>,
+  key: string,
+): string | null {
+  const value = briefSnapshot[key];
+  return typeof value === 'string' && value.trim().length > 0
+    ? value.trim()
+    : null;
+}
+
 class ApprovalError extends Error {
   constructor(
     message: string,
@@ -294,9 +304,21 @@ export async function decideApprovalRequest(
 
   const request = rowToApprovalRequest(data as unknown as ApprovalRequestRow);
 
+  const sponsorPersonIdFromBrief = readBriefUuid(request.briefSnapshot, 'sponsor_person_id');
+  const leadPersonIdFromBrief = readBriefUuid(request.briefSnapshot, 'lead_person_id');
   const engagementPatch =
     request.requestStatus === 'approved'
-      ? { lifecycle_state: 'approved', status: 'active', current_phase: 0 }
+      ? {
+          lifecycle_state: 'approved',
+          status: 'active',
+          current_phase: 0,
+          ...(sponsorPersonIdFromBrief
+            ? { sponsor_person_id: sponsorPersonIdFromBrief }
+            : {}),
+          ...(leadPersonIdFromBrief
+            ? { maestro_person_id: leadPersonIdFromBrief }
+            : {}),
+        }
       : { lifecycle_state: 'rejected', status: 'draft' };
   const { error: engagementError } = await sb
     .from('engagements')

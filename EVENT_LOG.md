@@ -46,3 +46,13 @@
 - Fix summary: Program detail view-model phase clamping now preserves P0, phase slots include P0-P6, and ProgramJourneyRail accepts P0 as a first-class phase. Regression expectations were also refreshed to the locked lifecycle labels: P4 Execution Roadmap, P5 Approval & Mobilization, P6 Tower Handoff.
 - Regression: src/__tests__/integration/programs/gate-ribbon-view.test.ts pins newly approved DB-backed P0 programs to `currentPhase=0`, `viewingPhase=0`, P0 current / P1 pending rail state, and P0 workbench copy.
 - Validation: Focused Programs gate-ribbon Jest and scoped ESLint passed locally. Local `next build` is blocked in this /tmp worktree by the known Turbopack symlink-root panic; `npx tsc --noEmit` is blocked by pre-existing missing optional package type declarations (`react-markdown`, `remark-gfm`, `rehype-sanitize`, `resend`, `docx`).
+
+## 2026-05-02T11:32:00Z — programs-module-e2e-crawler
+
+- Workstream: Programs live E2E crawl / Meridian P0 continuity.
+- Finding: P0 Nexus correctly loaded the approved program but told the user no sponsor was recorded, and the engagement row had no `maestro_person_id` even though origination/approval preserved the sponsor and lead in the approval snapshot.
+- Severity: SEV-2 origination-to-P0 data continuity gap.
+- Fix branch: codex/programs-origination-people-continuity.
+- Fix summary: Program origination now writes `maestro_person_id` from the resolved lead, approval synchronization hydrates sponsor/lead person IDs from the brief snapshot, and Nexus program context injects sponsor/lead names and roles from the engagement row.
+- Regression: src/lib/agent/tools/__tests__/commitProgram.test.ts verifies the engagement insert carries `maestro_person_id`; src/lib/programs/__tests__/approval.test.ts verifies approve synchronization writes sponsor and lead IDs back to `engagements`.
+- Validation: Focused commitProgram + approval Jest and scoped ESLint passed locally.

@@ -499,6 +499,7 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
           topic_code: derivedClassification.topicCode,
           name: originationForm.name,
           sponsor_person_id: originationForm.sponsorPersonId,
+          maestro_person_id: originationForm.leadPersonId,
           // Legacy lifecycle: leave at 'draft' so old code paths that
           // still read `status` correctly see this program as not-yet-
           // running. New code paths read `lifecycle_state`.

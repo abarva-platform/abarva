@@ -350,6 +350,12 @@ export async function POST(request: Request) {
           viewedPhase !== null && viewedPhase !== currentPhase
             ? `Viewed phase canvas: P${viewedPhase} ${promptPhaseLabel}`
             : "",
+          engagement.sponsor
+            ? `Executive sponsor: ${engagement.sponsor.name}${engagement.sponsor.role ? ` (${engagement.sponsor.role})` : ""}`
+            : "Executive sponsor: not recorded on the engagement row",
+          engagement.lead
+            ? `Program lead: ${engagement.lead.name}${engagement.lead.role ? ` (${engagement.lead.role})` : ""}`
+            : "Program lead: not recorded on the engagement row",
           `Evidence items: ${evidence.length} uploaded`,
           `Gate approvals: ${latestGate}`,
         );
