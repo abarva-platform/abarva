@@ -27,6 +27,11 @@ import { CANONICAL_CLIENT_ADMIN_EMAILS } from '@/lib/auth/canonical-auth-roster'
 import { requireTenancy } from '@/lib/auth/tenancy';
 import { allowedSourceEventIdsForUser, canReadSourceEvent } from '@/lib/auth/source-access-policy';
 import { getClientOption, inferClientKeyFromEmail, isClientKey, type ClientKey } from '@/lib/client-config';
+import {
+  getSourceArtifactRegistryRecord,
+  type SourceArtifactApprovalState,
+  type SourceArtifactRegistryRecord,
+} from './artifact-registry';
 
 // ── DB row type for source_events ─────────────────────────────────────────────
 
@@ -506,8 +511,117 @@ function buildDataReadinessForRow(row: SourceEventRow): SourceDataReadinessItem[
   ];
 }
 
+function sourceArtifactStatusFromApprovalState(
+  approvalState: SourceArtifactApprovalState,
+): SourceArtifactSummary['status'] {
+  switch (approvalState) {
+    case 'approved':
+      return 'approved';
+    case 'locked':
+      return 'locked';
+    case 'in_review':
+      return 'needs_review';
+    case 'rejected':
+      return 'needs_inputs';
+    case 'draft':
+    default:
+      return 'draft';
+  }
+}
+
+function sourceArtifactKindFromRegistry(record: SourceArtifactRegistryRecord): SourceArtifactSummary['kind'] {
+  if (record.artifactKind === 'scorecard' || record.artifactFamily === 'scorecard') return 'scorecard';
+  if (record.artifactFamily === 'decision_brief') return 'decision_memo';
+  return 'artifact_packet';
+}
+
+function readableSourceArtifactTitle(record: SourceArtifactRegistryRecord): string {
+  const withoutExtension = record.originalName.replace(/\.[^.]+$/, '');
+  return withoutExtension.replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim() || record.artifactKind;
+}
+
+function splitSourceArtifactMarkdownSections(
+  content: string | null,
+  record: SourceArtifactRegistryRecord,
+): SourceArtifactDetail['sections'] {
+  if (!content?.trim()) {
+    return [
+      {
+        label: 'Registry receipt',
+        body: [
+          `Original file: ${record.originalName}`,
+          `Blob URI: ${record.blobUri}`,
+          `SHA-256: ${record.sha256}`,
+        ].join('\n'),
+      },
+    ];
+  }
+
+  const cleaned = content.trim();
+  const headingChunks = cleaned
+    .split(/\n(?=#{1,3}\s+)/)
+    .map((chunk) => chunk.trim())
+    .filter(Boolean);
+
+  const chunks = headingChunks.length > 1 ? headingChunks : [cleaned];
+  return chunks.slice(0, 8).map((chunk, index) => {
+    const [firstLine = '', ...rest] = chunk.split('\n');
+    const heading = firstLine.replace(/^#{1,6}\s*/, '').trim();
+    const hasHeading = /^#{1,6}\s+/.test(firstLine);
+    return {
+      label: hasHeading ? heading : index === 0 ? 'Artifact content' : `Artifact section ${index + 1}`,
+      body: (hasHeading ? rest.join('\n') : chunk).trim() || chunk,
+    };
+  });
+}
+
+async function readSourceArtifactBlobText(record: SourceArtifactRegistryRecord): Promise<string | null> {
+  if (!/text\/|markdown|json/i.test(record.mimeType)) return null;
+
+  const supabase = getServerSupabase();
+  const { data, error } = await supabase.storage.from('source-artifacts').download(record.blobUri);
+  if (error || !data) return null;
+
+  const text = await data.text();
+  return text.slice(0, 30_000);
+}
+
+async function sourceArtifactRegistryRecordToDetail(
+  record: SourceArtifactRegistryRecord,
+): Promise<SourceArtifactDetail> {
+  const content = await readSourceArtifactBlobText(record);
+  const sections = splitSourceArtifactMarkdownSections(content, record);
+  return {
+    id: record.id,
+    eventId: record.sourceEventId,
+    title: readableSourceArtifactTitle(record),
+    kind: sourceArtifactKindFromRegistry(record),
+    status: sourceArtifactStatusFromApprovalState(record.approvalState),
+    tier: record.parseStatus === 'parsed' ? 'rich' : 'outline',
+    summary:
+      content?.trim().slice(0, 600) ??
+      `${record.originalName} is registered in the Source artifact registry. Content preview is unavailable for this mime type.`,
+    sourceCount: sections.length,
+    updatedAt: record.updatedAt,
+    sections,
+    governanceNotes: [
+      `Origin: ${record.sourceOrigin}; format: ${record.sourceFormat}; classification: ${record.dataClassification}.`,
+      `Processing state: parse ${record.parseStatus}; embedding ${record.embeddingStatus}; graph ${record.graphStatus}; evidence ${record.evidenceState}.`,
+      `Approval state: ${record.approvalState}; version ${record.version}.`,
+      'This artifact is persisted, but parser/vector/graph completion is not implied unless the states above say complete.',
+    ],
+    patternLinks: [],
+  };
+}
+
 export async function getSourcingEventArtifact(eventId: string, artifactId: string): Promise<SourceArtifactDetail | null> {
-  return getSourceArtifactSeed(eventId, artifactId);
+  const seededArtifact = getSourceArtifactSeed(eventId, artifactId);
+  if (seededArtifact) return seededArtifact;
+
+  const registryRecord = await getSourceArtifactRegistryRecord(artifactId);
+  if (!registryRecord || registryRecord.sourceEventId !== eventId || registryRecord.deletedAt) return null;
+
+  return sourceArtifactRegistryRecordToDetail(registryRecord);
 }
 
 export async function getSourceValueLedger(): Promise<SourceValueLedgerSnapshot> {

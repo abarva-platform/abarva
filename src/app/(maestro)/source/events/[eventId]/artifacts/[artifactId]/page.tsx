@@ -21,6 +21,9 @@ export default async function SourceArtifactPage({
   ]);
   if (!event || !artifact) notFound();
 
+  const registryBackedArtifact = !artifact.id.startsWith('artifact-source-');
+  const provenanceSource = registryBackedArtifact ? 'source_artifacts registry' : 'deterministic_seed';
+
   return (
     <AppShell
       surface="source"
@@ -39,7 +42,7 @@ export default async function SourceArtifactPage({
       }
     >
       <SentinelAgentColumn
-        quote={`Artifact tier: ${artifact.tier ?? 'stub'}. Status: ${artifact.status.replaceAll('_', ' ')}. Provenance: deterministic_seed. Evidence chain: ${artifact.sections.length} entries.`}
+        quote={`Artifact tier: ${artifact.tier ?? 'stub'}. Status: ${artifact.status.replaceAll('_', ' ')}. Provenance: ${provenanceSource}. Evidence chain: ${artifact.sections.length} entries.`}
         agentContext={`Sentinel · ${artifact.title} · ${event.name}`}
         actions={[
           { letter: 'A', text: 'Show evidence', detail: 'Review evidence references for this artifact' },
@@ -51,7 +54,7 @@ export default async function SourceArtifactPage({
         <SourceArtifactDrawer
           artifact={artifact}
           provenance={{
-            createdFrom: 'deterministic_seed',
+            createdFrom: provenanceSource,
             storeKey: `source-artifact:${eventId}:${artifactId}`,
             freshness: artifact.updatedAt,
             evidenceLedgerEntryId: artifact.id,

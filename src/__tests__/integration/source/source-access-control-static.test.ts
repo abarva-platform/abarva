@@ -83,6 +83,23 @@ describe('Source access-control wiring', () => {
     expect(drawer).toContain('source-generated-artifact');
   });
 
+  it('opens persisted Source artifacts through the registry-backed detail route', () => {
+    const queries = read('src/lib/source/queries.ts');
+    const page = read('src/app/(maestro)/source/events/[eventId]/artifacts/[artifactId]/page.tsx');
+    const drawer = read('src/components/source/SourceArtifactDrawer.tsx');
+
+    expect(queries).toContain('getSourceArtifactRegistryRecord');
+    expect(queries).toContain('sourceArtifactRegistryRecordToDetail');
+    expect(queries).toContain("supabase.storage.from('source-artifacts').download");
+    expect(queries).toContain('registryRecord.sourceEventId !== eventId');
+    expect(queries).toContain('parser/vector/graph completion is not implied');
+
+    expect(page).toContain('source_artifacts registry');
+    expect(page).toContain('Provenance: ${provenanceSource}');
+    expect(drawer).toContain('Registered Source artifact');
+    expect(drawer).toContain('no completion is implied');
+  });
+
   it('lets persisted Source event detail fall back to canonical admin client identity when client rows are absent', () => {
     const queries = read('src/lib/source/queries.ts');
 
