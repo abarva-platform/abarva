@@ -99,6 +99,13 @@ describe('agent route · CB-6 context-bundle wiring', () => {
     expect(source).toContain('maxTokens: getAgentResponseTokenBudget(surface)');
   });
 
+  it('forces explicit Programs deliverable save requests through the persistence tool', () => {
+    expect(source).toContain('function shouldForceInitialDeliverableTool(');
+    expect(source).toContain("toolNames.has('complete_deliverable')");
+    expect(source).toContain("name: 'complete_deliverable'");
+    expect(source).toContain('initialToolChoice,');
+  });
+
   it('canonicalizes the active client key before Programs broker lookup', () => {
     expect(source).toContain('tenantKey: clientKeyToBrokerTenantKey(activeClient.key)');
   });

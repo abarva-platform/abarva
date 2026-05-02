@@ -54,6 +54,7 @@ export interface ToolUseLoopArgs {
   system: string;
   messages: ReadonlyArray<MessageParam>;
   tools: ReadonlyArray<AgentTool>;
+  initialToolChoice?: Anthropic.MessageStreamParams['tool_choice'];
   toolContext: ToolContext;
   writer: StreamWriter;
 }
@@ -104,6 +105,7 @@ export async function runToolUseLoop(args: ToolUseLoopArgs): Promise<ToolUseLoop
       system,
       messages,
       ...(anthropicTools.length > 0 ? { tools: anthropicTools } : {}),
+      ...(turn === 1 && args.initialToolChoice ? { tool_choice: args.initialToolChoice } : {}),
     };
 
     const stream = client.messages.stream(streamArgs);

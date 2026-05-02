@@ -204,6 +204,8 @@ const AGENT_VOICE: Record<string, string> = {
 const DEFAULT_VOICE = "You are an AbarVa AI advisor. Be direct, specific, and actionable.";
 const DEFAULT_AGENT_RESPONSE_MAX_TOKENS = 2048;
 const PROGRAM_AGENT_RESPONSE_MAX_TOKENS = 4096;
+const PROGRAM_DELIVERABLE_SAVE_RE = /\b(save|persist|sign\s*off|signed\s*off|complete|approve|submit)\b/i;
+const PROGRAM_DELIVERABLE_NOUN_RE = /\b(deliverable|artifact|charter|traceability|roadmap|business\s+case|approval\s+(packet|memo)|funding|readiness|change\s+plan|tower\s+handoff|workshop\s+guide|design\s+spec|discovery\s+synthesis)\b/i;
 
 export function getAgentResponseTokenBudget(surface: string): number {
   if (
@@ -215,6 +217,12 @@ export function getAgentResponseTokenBudget(surface: string): number {
   }
 
   return DEFAULT_AGENT_RESPONSE_MAX_TOKENS;
+}
+
+export function shouldForceInitialDeliverableTool(surface: string, message: string, toolNames: ReadonlySet<string>): boolean {
+  if (!isProgramsSurface(surface)) return false;
+  if (!toolNames.has('complete_deliverable')) return false;
+  return PROGRAM_DELIVERABLE_SAVE_RE.test(message) && PROGRAM_DELIVERABLE_NOUN_RE.test(message);
 }
 
 export async function POST(request: Request) {
@@ -847,6 +855,10 @@ export async function POST(request: Request) {
 
   const anthropicClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const tools = getRelevantTools(surface);
+  const toolNames = new Set(tools.map((tool) => tool.name));
+  const initialToolChoice = shouldForceInitialDeliverableTool(surface, message, toolNames)
+    ? { type: 'tool' as const, name: 'complete_deliverable' }
+    : undefined;
 
   // ── CB-6 · context-bundle assembly ──────────────────────────────────────────
   //
@@ -904,6 +916,7 @@ export async function POST(request: Request) {
             { role: "user", content: message },
           ],
           tools,
+          initialToolChoice,
           toolContext: {
             request,
             surface,
