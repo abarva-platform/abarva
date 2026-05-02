@@ -222,6 +222,43 @@ describe('evaluateGate', () => {
     expect(result.failedChecks.map((check) => check.check)).not.toContain('discovery_report_signed_off');
   });
 
+  it('accepts sponsor evidence inside a signed P0 origination brief for live-created programs', async () => {
+    getProgramByIdMock.mockResolvedValue({
+      id: 'program-1',
+      currentPhase: 0,
+      archetype: 'platform_modernization',
+    });
+    deliverablesFixture = [
+      { id: 'origination-brief', deliverable_type_key: 'origination_brief', status: 'signed_off' },
+    ];
+    participantsFixture = [];
+    approvalRequestsFixture = [];
+    deliverableVersionsFixture = [
+      {
+        content:
+          'P0 Origination Brief. Sponsor: Katherine Oshima. ' +
+          'Problem trigger: Epic, claims, coding, and prior-auth analytics are fragmented. ' +
+          'Value hypothesis: a governed analytics modernization will improve trusted delivery speed. ' +
+          'Scope boundary: prior authorization and coding quality first cohort. ' +
+          'P1 handoff: first evidence family is source-system inventory, data lineage, and analytics cycle time. ' +
+          'Discovery capacity envelope: four-week P1 discovery with sponsor cadence.',
+        structured_data: null,
+        generated_at: '2026-05-02T00:00:00.000Z',
+      },
+    ];
+
+    const result = await evaluateGate(
+      { clientId: 'client-1', userId: 'person-1' },
+      'program-1',
+      0,
+      1,
+    );
+
+    expect(result.failedChecks.map((check) => check.check)).not.toContain('sponsor_assigned');
+    expect(result.failedChecks.filter((check) => check.severity === 'hard')).toEqual([]);
+    expect(result.requiresApproval).toBe(true);
+  });
+
   it('blocks P0 to P1 when only the Setup approval snapshot exists', async () => {
     getProgramByIdMock.mockResolvedValue({
       id: 'program-1',

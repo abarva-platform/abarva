@@ -263,7 +263,18 @@ export async function evaluateGate(
       }
       case 'charter_drafted': pass = Boolean(charterRow && charterRow.status !== null); break;
       case 'charter_signed_off': pass = isSignedOff(charterRow); break;
-      case 'sponsor_assigned': pass = hasSponsor; break;
+      case 'sponsor_assigned':
+        pass =
+          hasSponsor ||
+          (
+            fromPhase === 0 &&
+            hasSignedOriginationBrief &&
+            (
+              briefString.includes('sponsor') ||
+              latestOriginationBriefText.includes('sponsor')
+            )
+          );
+        break;
       case 'discovery_report_signed_off':
         pass = isSignedOff(discoveryReportRow);
         break;
