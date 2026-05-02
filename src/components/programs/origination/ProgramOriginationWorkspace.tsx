@@ -12,6 +12,7 @@
 // the agent's reasoning as it happens.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { BrandColors, BrandTypography } from '@/lib/shell/brand-tokens';
 import type {
   Artifact,
@@ -229,6 +230,10 @@ function checklistStatusColor(status: OperatorChecklistStatus): string {
   }
 }
 
+function generateWorkspaceTurnId(): string {
+  return `turn_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
 function OperatorChecklist({ items }: { items: OperatorChecklistItem[] }) {
   return (
     <section
@@ -301,6 +306,7 @@ export function ProgramOriginationWorkspace({
   tenantName,
   initialTurns,
 }: ProgramOriginationWorkspaceProps) {
+  const router = useRouter();
   const [briefState, setBriefState] = useState<OriginationBriefState>(EMPTY_BRIEF_STATE);
   const [patternMatch, setPatternMatch] = useState<PatternMatchCard | null>(null);
   // Lift turns up so we can rehydrate from the saved draft on mount.
@@ -308,6 +314,8 @@ export function ProgramOriginationWorkspace({
   const [turns, setTurns] = useState<ChatTurn[]>(initialTurns);
   const [hydrated, setHydrated] = useState(false);
   const [draftSessionId, setDraftSessionId] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -405,6 +413,67 @@ export function ProgramOriginationWorkspace({
   const handleTurnsChange = useCallback((next: ChatTurn[]) => {
     setTurns(next);
   }, []);
+
+  const submitBriefForApproval = useCallback(async () => {
+    const brief = briefState.brief;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const res = await fetch('/api/programs/origination-submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          surface,
+          programName: brief.programName,
+          problemStatement: brief.problemStatement,
+          targetOutcome: brief.targetOutcome,
+          timeline: brief.timeline,
+          classification: brief.classification,
+          matchedPatternId: brief.matchedPatternId,
+          sponsor: brief.sponsor,
+          lead: brief.lead,
+        }),
+      });
+      const body = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        message?: string;
+        redirectTo?: string;
+        programName?: string;
+      };
+      if (!res.ok || !body.ok || !body.redirectTo) {
+        throw new Error(body.message ?? `Submission failed with status ${res.status}`);
+      }
+      const submittedProgramName = body.programName ?? brief.programName ?? 'this program';
+      setTurns((prev) => [
+        ...prev,
+        {
+          id: generateWorkspaceTurnId(),
+          role: 'assistant',
+          agentName: 'Steward',
+          text:
+            `${submittedProgramName} has been submitted for approval. ` +
+            'It is not active yet; a tenant admin must approve the brief before Phase 0 unlocks.',
+        },
+      ]);
+      router.push(body.redirectTo);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Submission failed.';
+      setSubmitError(message);
+      setTurns((prev) => [
+        ...prev,
+        {
+          id: generateWorkspaceTurnId(),
+          role: 'assistant',
+          agentName: 'Steward',
+          text:
+            `The direct approval submission failed: ${message}. ` +
+            'The brief is still visible on the right, so we can fix the blocker without re-entering the conversation.',
+        },
+      ]);
+    } finally {
+      setSubmitting(false);
+    }
+  }, [briefState.brief, router, surface]);
 
   const operatorChecklist = buildOperatorChecklist({ tenantName, turns, briefState });
 
@@ -530,6 +599,9 @@ export function ProgramOriginationWorkspace({
           brief={briefState.brief}
           briefProgress={briefState.briefProgress}
           overlapAlerts={briefState.overlapAlerts}
+          registering={submitting}
+          submitError={submitError}
+          onSubmitForApproval={submitBriefForApproval}
         />
       </div>
     </main>

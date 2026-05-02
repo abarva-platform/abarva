@@ -250,6 +250,9 @@ export interface ProgramBriefPanelProps {
   overlapAlerts?: OverlapAlertArtifact[];
   /** True once the user has confirmed and the registration tool is in flight. */
   registering?: boolean;
+  /** Deterministic submit action once the structured brief is complete. */
+  onSubmitForApproval?: () => void;
+  submitError?: string | null;
 }
 
 // ── OV2-1b · BriefProgressCard ───────────────────────────────────────────────
@@ -813,8 +816,11 @@ export function ProgramBriefPanel({
   briefProgress = null,
   overlapAlerts = [],
   registering = false,
+  onSubmitForApproval,
+  submitError = null,
 }: ProgramBriefPanelProps) {
   const setupReadiness = buildProgramSetupReadiness(brief, overlapAlerts);
+  const canSubmit = setupReadiness.status === 'ready' && Boolean(onSubmitForApproval);
   return (
     <aside
       style={{
@@ -917,8 +923,50 @@ export function ProgramBriefPanel({
           color: BrandColors.stone,
         }}
       >
+        {submitError ? (
+          <div
+            role="alert"
+            style={{
+              marginBottom: 10,
+              padding: '9px 10px',
+              borderRadius: 8,
+              border: `1px solid ${OVERLAP_AMBER_BORDER}`,
+              background: OVERLAP_AMBER_SOFT,
+              color: OVERLAP_AMBER,
+              fontFamily: BrandTypography.sans,
+              fontSize: 12,
+              lineHeight: 1.45,
+            }}
+          >
+            {submitError}
+          </div>
+        ) : null}
+        {canSubmit ? (
+          <button
+            type="button"
+            onClick={onSubmitForApproval}
+            disabled={registering}
+            style={{
+              width: '100%',
+              border: 'none',
+              borderRadius: 999,
+              background: registering ? BrandColors.stone : BrandColors.inkBlack,
+              color: '#FFFFFF',
+              padding: '11px 14px',
+              fontFamily: BrandTypography.mono,
+              fontSize: 11,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              fontWeight: 700,
+              cursor: registering ? 'wait' : 'pointer',
+              marginBottom: 10,
+            }}
+          >
+            {registering ? 'Submitting…' : 'Submit brief for approval'}
+          </button>
+        ) : null}
         {registering
-          ? 'Registering program… Steward will confirm once the API succeeds.'
+          ? 'Submitting directly to the approval queue. The program stays pending until an admin approves it.'
           : 'Brief assembles as Steward extracts each piece from your conversation.'}
       </footer>
     </aside>
