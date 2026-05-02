@@ -669,6 +669,10 @@ function NewPressureModal({ onClose }: NewPressureModalProps) {
 // ---------------------------------------------------------------------------
 
 interface TowerIndexPageProps {
+  /** Active tenant display name resolved server-side; Tower must not hardcode Apex across clients. */
+  tenantName?: string;
+  /** Surface context label for the top bar. */
+  context?: string;
   /**
    * REASON-29 — Provenance ribbon rendered below the streamed Atlas synthesis
    * quote inside AgentColumn's `provenanceSlot`. Built server-side from
@@ -700,7 +704,7 @@ interface TowerIndexPageProps {
 // embedded chat header is a follow-up. The prop is preserved on the
 // type for caller compatibility but unused in this render.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function TowerIndexPage({ provenanceSlot: _provenanceSlot, portfolioSummarySlot, cascadeGraphSlot, towerHandoffSlot }: TowerIndexPageProps = {}) {
+export function TowerIndexPage({ tenantName = 'AbarVa Client', context = 'Control Tower', provenanceSlot: _provenanceSlot, portfolioSummarySlot, cascadeGraphSlot, towerHandoffSlot }: TowerIndexPageProps = {}) {
   const [showNewPressure, setShowNewPressure] = useState(false);
   const [synthesisQuote, setSynthesisQuote] = useState(TOWER_INDEX_VIEW.agentQuote);
   const searchParams = useSearchParams();
@@ -742,9 +746,9 @@ export function TowerIndexPage({ provenanceSlot: _provenanceSlot, portfolioSumma
     <AppShell
       surface="tower"
       topBarProps={{
-        tenantName: 'Apex Retail Group',
+        tenantName,
         showLocked: true,
-        context: 'Control Tower · 3 active pressures',
+        context,
       }}
       middleStrip={<FilterPillStrip pills={filterPills} />}
       onArtifact={handleAtlasArtifact}

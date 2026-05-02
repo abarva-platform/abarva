@@ -30,6 +30,17 @@ describe("Setup AI Initiatives private plane", () => {
     }
   });
 
+  it("maps the legacy Arcturus app key to the First Capital setup initiative registry", () => {
+    const records = getSetupAiInitiatives("arcturus");
+    const summary = summarizeSetupAiInitiatives("arcturus", records);
+
+    expect(records).toHaveLength(5);
+    expect(records.every((record) => record.tenantKey === "first-capital")).toBe(
+      true,
+    );
+    expect(summary.tenantKey).toBe("first-capital");
+  });
+
   it("uses distinct private schemas and rejects unsafe identifiers", () => {
     const planes = listSetupAiInitiativesPrivatePlanes();
     expect(planes.map((plane) => plane.tenantKey).sort()).toEqual([
