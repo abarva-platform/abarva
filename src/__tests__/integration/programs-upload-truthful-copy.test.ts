@@ -23,4 +23,11 @@ describe('Programs upload panel truthful parsing copy', () => {
     expect(source).toContain('File captured · structured parsing pending');
     expect(source).toContain('Text, Markdown, CSV, and JSON are parsed immediately');
   });
+
+  it('lets users capture pasted workshop notes through the same evidence route', () => {
+    expect(source).toContain('Paste workshop notes');
+    expect(source).toContain('Capture pasted notes as evidence');
+    expect(source).toContain('pasted-workshop-notes-');
+    expect(source).toContain("new File([`${trimmed}\\n`], filename, { type: 'text/plain' })");
+  });
 });
