@@ -166,6 +166,8 @@ export function PhaseAdvanceButton({
         <span>
           {loading
             ? 'Advancing…'
+            : disabledReason
+            ? 'Complete current gate first'
             : `Advance to P${nextPhase}: ${nextLabel} →`}
         </span>
       </button>

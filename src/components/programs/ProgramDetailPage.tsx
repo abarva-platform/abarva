@@ -4376,6 +4376,8 @@ export function ProgramDetailPage({
                   ? 'Setup approval is required before Phase 0 can start.'
                   : view.lifecycleState === 'completed'
                   ? 'Program lifecycle is complete. Tower owns observation from here.'
+                  : view.lifecycleState === 'approved' && view.currentPhase === 0
+                  ? 'Complete and sign off the P0 seed artifacts before requesting Discovery.'
                   : null
               }
             />
