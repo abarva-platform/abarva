@@ -479,6 +479,26 @@ Append-only coordination log for active Codex sessions.
 - validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only.
 - next: commit, push, open PR, auto-merge after checks pass, wait for production deployment, then rerun Apex P1->P2 live.
 
+## 2026-05-02T18:45:00-05:00 - codex-intelligence-frontpage-vision
+
+- status: in-progress
+- branch: `codex/intelligence-frontpage-vision`
+- worktree: `/private/tmp/nexus-intelligence-front`
+- scope: restore `/intelligence` from chat-first proof surface to the locked Explore Layer: three substrates, two outcomes, seven submenus, Today canvas, and ambient Sentinel
+- locks: `intelligence-frontpage-vision-ui`
+- guardrail: no Programs files, no Source lifecycle/data/API files, and no private-plane schema changes
+
+## 2026-05-02T18:50:00-05:00 - codex-intelligence-frontpage-vision
+
+- status: validation-local-passed
+- shipped: `/intelligence` now leads with the locked Explore Layer: three substrate cards, two bet-level outcomes, seven submenu strip, Today pressure canvas, ambient Sentinel panel, by-function previews, scope boundary, and failure-mode anchors.
+- validation: focused Intelligence + shell Jest passed, 3 suites / 50 tests.
+- validation: targeted ESLint passed for `IntelligenceIndexPage`, `J0AffordanceLink`, and the updated Intelligence library test.
+- validation: `npx tsc --noEmit --pretty false` passed.
+- validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only.
+- lock: `intelligence-frontpage-vision-ui` marked completed in `ACTIVE_LOCKS.yaml`.
+- next: commit, push, open PR, and auto-merge after standard checks pass.
+
 ## 2026-05-02T19:02:00-05:00 - codex-programs-e2e-client-polish
 
 - status: live-fix-verified-and-e2e-continuing

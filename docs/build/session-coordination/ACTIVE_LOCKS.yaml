@@ -1,4 +1,4 @@
-updated_at: "2026-05-02T17:45:00-05:00"
+updated_at: "2026-05-02T18:50:00-05:00"
 
 locks:
   - owner: codex-source-e2e-crawler
@@ -198,3 +198,11 @@ locks:
     started_at: "2026-05-02T17:55:00-05:00"
     expires_at: "2026-05-02T23:30:00-05:00"
     note: Continues Programs functional E2E across clients plus narrow Atrium/agent polish. Avoids Source lifecycle/data/API files and knowledge-layer private-plane changes.
+
+  - owner: codex-intelligence-frontpage-vision
+    resource: intelligence-frontpage-vision-ui
+    status: completed
+    started_at: "2026-05-02T18:45:00-05:00"
+    expires_at: "2026-05-02T21:30:00-05:00"
+    note: Restores Intelligence landing hierarchy to Explore Layer front door: three substrates, two outcomes, seven submenus, Today canvas, and ambient Sentinel. Avoids Programs, Source lifecycle/data/API, and private-plane schema changes.
+    completed_at: "2026-05-02T18:50:00-05:00"
