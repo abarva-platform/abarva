@@ -183,3 +183,26 @@ Append-only coordination log for active Codex sessions.
 - pricing_upload_verified: uploaded Markdown pricing workbook; parser persisted pricing components but exposed a quality bug by also extracting heading/year numbers as amounts.
 - fix_started: branch `codex/source-pricing-parser-quality` changes text pricing extraction to require an explicit currency marker or magnitude suffix and adds regression coverage so year indexes/headings are not captured as commercial amounts.
 - validation: focused Source text-parser Jest, targeted ESLint, and TypeScript passed locally.
+
+## 2026-05-02T15:04:00-05:00 - codex-setup-ai-initiatives-foundation
+
+- status: in-progress
+- branch: `codex/setup-ai-initiatives-foundation`
+- worktree: `/private/tmp/nexus-setup-ai-initiatives`
+- scope: add Setup AI Initiatives private-plane substrate, API/Tower feed contract, demo tenant fixtures, and Setup-facing read surface without touching Source-owned files
+- sequencing_rationale: Tower needs an enterprise-wide initiative registry before its redesign can truthfully observe Programs, external initiatives, Copilot/vendor AI rollouts, and promoted moves; data/API/private-plane foundation comes before richer UI and Tower consumption
+- locks: `setup-ai-initiatives-private-schema`, `setup-ai-initiatives-api-contract`, `setup-ai-initiatives-fixtures`, `setup-ai-initiatives-setup-surface`
+- guardrail: Source API, lifecycle, stage, and data files remain untouched while Source crawler lock is active; Tower redesign remains deferred to the Intel/Tower lane
+
+## 2026-05-02T15:28:00-05:00 - codex-setup-ai-initiatives-foundation
+
+- status: validation-and-live-load-passed
+- migration_live: applied `20260502171000_private_setup_ai_initiatives.sql` only with `--force`; broader migration dry-run still shows unrelated historical pending migrations, so they were not run
+- live_seed: `npm run db:seed:setup-ai-initiatives` persisted 5 initiatives each for Apex Retail, Meridian Health, and First Capital
+- live_db_verification: private schemas `client_apex_retail_private`, `client_meridian_health_private`, and `client_first_capital_private` each contain 5 initiatives, 2 linked Programs, 1 at-risk initiative, 1 batch, and 5 audit events; public setup initiative tables do not exist
+- validation: focused Setup AI Initiatives and Tower-feed API Jest passed, 8 tests
+- validation: targeted ESLint passed for Setup AI Initiatives files, Setup page, API route, loader, admin sidebar/config, and tests
+- validation: `npx tsc --noEmit --pretty false` passed
+- validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning
+- next: open PR and auto-merge after standard checks pass
+

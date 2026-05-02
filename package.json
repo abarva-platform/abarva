@@ -86,7 +86,9 @@
     "embed:pending-chunks": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx src/scripts/embed-pending-chunks.ts",
     "ingest:worldview": "npx tsx src/scripts/ingest-worldview-chunks.ts",
     "db:seed:tenant-metrics:dry": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx src/scripts/setup-data/load-tenant-metric-fixtures.ts",
-    "db:seed:tenant-metrics": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx src/scripts/setup-data/load-tenant-metric-fixtures.ts --no-dry-run"
+    "db:seed:tenant-metrics": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx src/scripts/setup-data/load-tenant-metric-fixtures.ts --no-dry-run",
+    "db:seed:setup-ai-initiatives:dry": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx src/scripts/setup-data/load-setup-ai-initiative-fixtures.ts",
+    "db:seed:setup-ai-initiatives": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' npx tsx src/scripts/setup-data/load-setup-ai-initiative-fixtures.ts --no-dry-run"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.85.0",
