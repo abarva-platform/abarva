@@ -76,3 +76,13 @@
 - Fix summary: AtlasPageStateProvider now uses a surface-aware timeout budget: default agent turns stay at 90 seconds, while Programs surfaces get 210 seconds for legitimate phase deliverable generation and tool-persistence turns.
 - Regression: src/__tests__/integration/atlas-page-state-timeout.test.ts pins the default timeout, Programs timeout, and Programs surface matching.
 - Validation: Focused Atlas timeout Jest and scoped ESLint passed locally.
+
+## 2026-05-02T12:36:00Z — programs-module-e2e-crawler
+
+- Workstream: Programs live E2E crawl / P3 deliverable persistence contract.
+- Finding: Even after extending the Programs client timeout, P3 design-spec save still timed out because Nexus attempted to compose a large hidden `complete_deliverable` tool payload before streaming completion/progress to the user.
+- Severity: SEV-2 large-deliverable persistence design flaw.
+- Fix branch: codex/programs-bounded-deliverable-tools.
+- Fix summary: `complete_deliverable` now supports bounded `content_outline` arrays for large artifacts, caps the content schema at 6,000 characters, and the Nexus Programs prompt now explicitly prohibits huge hidden tool payloads. Nexus should persist concise executive-grade artifacts and summarize what was saved instead of silently composing a full consulting deck inside JSON.
+- Regression: src/lib/agent/tools/__tests__/completeDeliverable.test.ts verifies outline-to-markdown persistence; src/app/api/chat/agent/__tests__/agent-route-context-bundle.test.ts validates route prompt source still compiles under the updated doctrine.
+- Validation: Focused complete_deliverable + agent route Jest and scoped ESLint passed locally.

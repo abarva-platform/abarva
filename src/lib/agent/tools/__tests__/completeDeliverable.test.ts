@@ -116,6 +116,43 @@ describe('complete_deliverable tool', () => {
     );
   });
 
+  it('persists compact outline content for large deliverables', async () => {
+    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+    completeDeliverableMock.mockResolvedValue({
+      deliverableId: 'deliv-outline',
+      versionId: 'version-outline',
+      status: 'signed_off',
+    });
+
+    const result = await completeDeliverableTool.handler(
+      {
+        program_id: 'program-1',
+        deliverable_type_key: 'design_spec',
+        title: 'P3 Solution Design Spec',
+        content_outline: [
+          'Target architecture approved: Option B data fabric',
+          'PHI controls reviewed by InfoSec',
+          'P4 dependency: quantify timestamp reconciliation tolerance',
+        ],
+      },
+      makeCtx(),
+    );
+
+    expect(result.success).toBe(true);
+    expect(completeDeliverableMock).toHaveBeenCalledWith(
+      expect.anything(),
+      'program-1',
+      expect.objectContaining({
+        deliverableTypeKey: 'design_spec',
+        content:
+          '- Target architecture approved: Option B data fabric\n' +
+          '- PHI controls reviewed by InfoSec\n' +
+          '- P4 dependency: quantify timestamp reconciliation tolerance',
+        signOff: true,
+      }),
+    );
+  });
+
   it('allows P1 discovery artifacts that Nexus asks to save during live crawl', async () => {
     requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
     completeDeliverableMock.mockResolvedValue({
