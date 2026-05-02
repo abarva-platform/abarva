@@ -52,12 +52,13 @@ const GATE_RULES: GateRule[] = [
     ],
   },
   {
-    fromPhase: 1, toPhase: 2, hard: false, approverRole: 'contributor',
+    fromPhase: 1, toPhase: 2, hard: true, approverRole: 'sponsor',
     checks: [
-      { key: 'charter_drafted', describe: 'Charter has draft content', severity: 'soft' },
-      { key: 'sponsor_assigned', describe: 'Sponsor assigned', severity: 'soft' },
-      { key: 'discovery_notes_ingested', describe: 'Discovery notes or workshop logs ingested', severity: 'soft' },
-      { key: 'current_state_summary_drafted', describe: 'Current-state summary drafted from Discovery evidence', severity: 'soft' },
+      { key: 'discovery_report_signed_off', describe: 'Discovery synthesis report signed off', severity: 'hard' },
+      { key: 'discovery_notes_ingested', describe: 'Discovery notes or workshop logs ingested', severity: 'hard' },
+      { key: 'discovery_baseline_attested', describe: 'Baseline metrics are captured and attested, not merely planned', severity: 'hard' },
+      { key: 'discovery_stakeholders_named', describe: 'Stakeholder map names required human owners with no hard-owner gaps', severity: 'hard' },
+      { key: 'p2_readiness_cleared', describe: 'Discovery recommendation clears P2 without unresolved hard gaps', severity: 'hard' },
     ],
   },
   {
@@ -102,6 +103,17 @@ const GATE_RULES: GateRule[] = [
 
 export function findGateRule(fromPhase: number, toPhase: number): GateRule | null {
   return GATE_RULES.find((g) => g.fromPhase === fromPhase && g.toPhase === toPhase) ?? null;
+}
+
+async function hasProgramEvidence(programId: string, phase: number): Promise<boolean> {
+  const sb = getServerSupabase();
+  const { data } = await sb
+    .from('program_evidence_items')
+    .select('id')
+    .eq('program_id', programId)
+    .eq('phase', phase)
+    .limit(1);
+  return ((data as Array<{ id: string }> | null) ?? []).length > 0;
 }
 
 /**
@@ -149,7 +161,7 @@ export async function evaluateGate(
     sb.from('program_milestones').select('id, name, status').eq('engagement_id', programId).limit(20),
   ]);
 
-  const deliverableRows = (deliverables as Array<{ deliverable_type_key: string; status: string }> | null ?? []);
+  const deliverableRows = (deliverables as Array<{ id: string; deliverable_type_key: string; status: string }> | null ?? []);
   const moduleRows = (modules as Array<{ module_key: string; status: string }> | null ?? []);
   const milestoneRows = (milestones as Array<{ id: string; name: string | null; status: string | null }> | null ?? []);
   const findDeliverable = (...keys: string[]) => deliverableRows
@@ -165,6 +177,7 @@ export async function evaluateGate(
   const executionRoadmapRow = findDeliverable('execution_roadmap', 'execution_plan', 'roadmap', 'mobilization_roadmap');
   const requirementsTraceRow = findDeliverable('requirements_traceability', 'requirements_design_outcome_trace', 'traceability_matrix');
   const businessCaseRow = findDeliverable('business_case', 'funding_business_case', 'approval_business_case');
+  const discoveryReportRow = findDeliverable('discovery_report', 'discovery_synthesis', 'discovery_findings');
   const changePlanRow = findDeliverable('change_management_plan', 'business_readiness_plan', 'readiness_and_change_plan');
   const towerHandoffRow = findDeliverable('tower_handoff_plan', 'execution_monitoring_plan', 'control_tower_handoff');
   const cxoInterviewModule = moduleRows
@@ -176,6 +189,40 @@ export async function evaluateGate(
     brief_snapshot: Record<string, unknown> | null;
   }> | null) ?? [])[0]?.brief_snapshot ?? {};
   const briefString = JSON.stringify(latestSeedBrief).toLowerCase();
+
+  let latestDiscoveryReportText = '';
+  if (discoveryReportRow) {
+    const { data: discoveryVersions } = await sb
+      .from('deliverable_versions')
+      .select('content, structured_data, generated_at')
+      .eq('deliverable_id', (discoveryReportRow as { id?: string }).id)
+      .order('generated_at', { ascending: false })
+      .limit(1);
+    const latestDiscoveryVersion = ((discoveryVersions as Array<{
+      content: string | null;
+      structured_data: Record<string, unknown> | null;
+    }> | null) ?? [])[0];
+    latestDiscoveryReportText = [
+      latestDiscoveryVersion?.content ?? '',
+      latestDiscoveryVersion?.structured_data ? JSON.stringify(latestDiscoveryVersion.structured_data) : '',
+    ].join('\n').toLowerCase();
+  }
+
+  const discoveryReportHasHardGap =
+    /\bhard gaps?\b/.test(latestDiscoveryReportText) ||
+    /\bhard evidence gaps?\b/.test(latestDiscoveryReportText) ||
+    /\bdo not advance\b/.test(latestDiscoveryReportText) ||
+    /\bhold on\b/.test(latestDiscoveryReportText) ||
+    /\bnot yet (pulled|extracted|captured|named|confirmed|verified|attested)\b/.test(latestDiscoveryReportText) ||
+    /\bunverified\b/.test(latestDiscoveryReportText) ||
+    /\bto resolve within\b/.test(latestDiscoveryReportText);
+  const discoveryReportHasNamedOwnerGap =
+    /\b(technical|security|business|adoption)\s+owner:\s*not yet named\b/.test(latestDiscoveryReportText) ||
+    /\bowner names?\s*\([^)]*\)\s*(missing|unresolved|required)\b/.test(latestDiscoveryReportText);
+  const discoveryReportHasBaselineAttestation =
+    /\bbaseline\b/.test(latestDiscoveryReportText) &&
+    /\b(attested|owner attestation|captured|current state|source of record)\b/.test(latestDiscoveryReportText) &&
+    !discoveryReportHasHardGap;
 
   const failedChecks: GateCheck['failedChecks'] = [];
   for (const c of rule.checks) {
@@ -200,14 +247,33 @@ export async function evaluateGate(
       case 'charter_drafted': pass = Boolean(charterRow && charterRow.status !== null); break;
       case 'charter_signed_off': pass = isSignedOff(charterRow); break;
       case 'sponsor_assigned': pass = hasSponsor; break;
+      case 'discovery_report_signed_off':
+        pass = isSignedOff(discoveryReportRow);
+        break;
       case 'baseline_captured': {
         pass = moduleCompleted('baseline_capture', 'baseline') ||
           isPresent(findDeliverable('baseline', 'baseline_metrics', 'value_baseline'));
         break;
       }
+      case 'discovery_baseline_attested':
+        pass = discoveryReportHasBaselineAttestation ||
+          isSignedOff(findDeliverable('baseline', 'baseline_metrics', 'value_baseline'));
+        break;
+      case 'discovery_stakeholders_named':
+        pass = latestDiscoveryReportText.length > 0 &&
+          /\bstakeholder/.test(latestDiscoveryReportText) &&
+          !discoveryReportHasNamedOwnerGap &&
+          !discoveryReportHasHardGap;
+        break;
+      case 'p2_readiness_cleared':
+        pass = latestDiscoveryReportText.length > 0 &&
+          !discoveryReportHasHardGap &&
+          !/\bconditional proceed\b/.test(latestDiscoveryReportText);
+        break;
       case 'discovery_notes_ingested':
         pass = isPresent(findDeliverable('discovery_notes', 'meeting_notes', 'workshop_notes')) ||
-          moduleCompleted('discovery_notes_ingest', 'workshop_notes_ingest');
+          moduleCompleted('discovery_notes_ingest', 'workshop_notes_ingest') ||
+          (await hasProgramEvidence(programId, 1));
         break;
       case 'current_state_summary_drafted':
         pass = isPresent(findDeliverable('current_state_summary', 'discovery_summary', 'current_state_assessment'));
