@@ -1,7 +1,11 @@
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { CSSProperties } from 'react';
 import type { SourceValueLedgerSnapshot, ValueLedgerEntry, ValueConfidence } from '@/lib/source/types';
-import { formatUsd, getLedgerRollup } from '@/lib/source/value-ledger';
+import { getLedgerRollup } from '@/lib/source/value-ledger';
+import {
+  formatSourceFinancialValue,
+  redactSourceFinancialText,
+} from '@/lib/source/financial-display';
 
 type RowPerspective = 'projected' | 'committed' | 'measuring' | 'realized';
 
@@ -182,7 +186,13 @@ function buildAssumptions(snapshot: SourceValueLedgerSnapshot): string[] {
   return ['No detailed assumptions are seeded for current ledger entries.'];
 }
 
-export function SourceValueLedger({ snapshot }: { snapshot: SourceValueLedgerSnapshot }) {
+export function SourceValueLedger({
+  snapshot,
+  canViewFinancialValues = true,
+}: {
+  snapshot: SourceValueLedgerSnapshot;
+  canViewFinancialValues?: boolean;
+}) {
   const rollup = getLedgerRollup(snapshot);
   const { rows, projected, committed, measuring, realized } = deriveRows(snapshot);
   const assumptions = buildAssumptions(snapshot);
@@ -213,22 +223,32 @@ export function SourceValueLedger({ snapshot }: { snapshot: SourceValueLedgerSna
         <div style={SUMMARY_PANEL}>
           <article style={PANEL_CARD}>
             <div style={PERSPECTIVE_LABEL}>Projected</div>
-            <div style={VALUE_TEXT}>{formatUsd(rollup.projectedUsd)}</div>
+            <div style={VALUE_TEXT}>{formatSourceFinancialValue(rollup.projectedUsd, canViewFinancialValues)}</div>
             <div style={{ ...TEXT_SMALL, color: '#576074' }}>{projected.length} line items from seeded event contracts.</div>
           </article>
           <article style={PANEL_CARD}>
             <div style={PERSPECTIVE_LABEL}>Committed</div>
-            <div style={VALUE_TEXT}>{formatUsd(committed.reduce((sum, entry) => sum + entry.amountUsd, 0))}</div>
+            <div style={VALUE_TEXT}>
+              {formatSourceFinancialValue(
+                committed.reduce((sum, entry) => sum + entry.amountUsd, 0),
+                canViewFinancialValues,
+              )}
+            </div>
             <div style={{ ...TEXT_SMALL, color: '#576074' }}>Evidence-backed high-confidence line items.</div>
           </article>
           <article style={PANEL_CARD}>
             <div style={PERSPECTIVE_LABEL}>Measuring</div>
-            <div style={VALUE_TEXT}>{formatUsd(measuring.reduce((sum, entry) => sum + entry.amountUsd, 0))}</div>
+            <div style={VALUE_TEXT}>
+              {formatSourceFinancialValue(
+                measuring.reduce((sum, entry) => sum + entry.amountUsd, 0),
+                canViewFinancialValues,
+              )}
+            </div>
             <div style={{ ...TEXT_SMALL, color: '#576074' }}>{measuring.length} items not yet confirmed.</div>
           </article>
           <article style={PANEL_CARD}>
             <div style={PERSPECTIVE_LABEL}>Realized</div>
-            <div style={VALUE_TEXT}>{formatUsd(rollup.realizedUsd)}</div>
+            <div style={VALUE_TEXT}>{formatSourceFinancialValue(rollup.realizedUsd, canViewFinancialValues)}</div>
             <div style={{ ...TEXT_SMALL, color: '#576074' }}>{realized.length} realized entries with seeded status only.</div>
           </article>
         </div>
@@ -257,10 +277,14 @@ export function SourceValueLedger({ snapshot }: { snapshot: SourceValueLedgerSna
                     <td style={SOURCE_TABLE_CELL}>{row.entry.eventName}</td>
                     <td style={SOURCE_TABLE_CELL}>
                       <div style={{ fontWeight: 700 }}>{row.entry.label}</div>
-                      <div style={{ ...TEXT_SMALL, color: '#576074', marginTop: 4 }}>{row.entry.note}</div>
+                      <div style={{ ...TEXT_SMALL, color: '#576074', marginTop: 4 }}>
+                        {redactSourceFinancialText(row.entry.note, canViewFinancialValues)}
+                      </div>
                     </td>
                     <td style={SOURCE_TABLE_CELL}>{row.entry.stageKey ?? 'n/a'}</td>
-                    <td style={SOURCE_TABLE_CELL}>{formatUsd(row.entry.amountUsd)}</td>
+                    <td style={SOURCE_TABLE_CELL}>
+                      {formatSourceFinancialValue(row.entry.amountUsd, canViewFinancialValues)}
+                    </td>
                     <td style={SOURCE_TABLE_CELL}>{row.entry.evidenceCount}</td>
                     <td style={SOURCE_TABLE_CELL}>
                       <span style={{ color: confidenceColor(row.entry.confidence) }}>
@@ -309,12 +333,12 @@ export function SourceValueLedger({ snapshot }: { snapshot: SourceValueLedgerSna
             <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 8 }}>
               {assumptions.map((assumption, index) => (
                 <li key={`assumption-${index}`} style={TEXT_SMALL}>
-                  {assumption}
+                  {redactSourceFinancialText(assumption, canViewFinancialValues)}
                 </li>
               ))}
             </ul>
             <div style={{ ...TEXT_SMALL, color: '#9B5F17', marginTop: 8 }}>
-              Variance watch: {assumptionCount} assumption anchors, {formatUsd(totalLowConfidenceAmount)} currently in low-confidence posture.
+              Variance watch: {assumptionCount} assumption anchors, {formatSourceFinancialValue(totalLowConfidenceAmount, canViewFinancialValues)} currently in low-confidence posture.
             </div>
           </section>
 

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { CSSProperties } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourceAlertSeverity, SourceAlertStatus } from '@/lib/source/types';
-import { formatUsd } from '@/lib/source/value-ledger';
+import { formatSourceFinancialValue } from '@/lib/source/financial-display';
 
 export type SourceAlertEventContext = {
   name: string;
@@ -144,6 +144,7 @@ export function SourceAlertPanel({
   framed = true,
   eventContextById,
   variant = 'dark',
+  canViewFinancialValues = true,
 }: {
   alerts: SourceAlertPanelItem[];
   title?: string;
@@ -151,6 +152,7 @@ export function SourceAlertPanel({
   framed?: boolean;
   eventContextById?: Record<string, SourceAlertEventContext>;
   variant?: SourceAlertPanelVariant;
+  canViewFinancialValues?: boolean;
 }) {
   const lightMode = variant === 'light';
   const panelStyle: CSSProperties = lightMode
@@ -232,7 +234,7 @@ export function SourceAlertPanel({
                   ) : null}
                   <span style={{ ...TEXT_SMALL, color: textMuted }}>{eventContext.agingDays}d aging</span>
                   <span style={{ ...TEXT_SMALL, color: textMuted }}>
-                    {formatUsd(eventContext.valueAtStakeUsd)} exposed
+                    {formatSourceFinancialValue(eventContext.valueAtStakeUsd, canViewFinancialValues)} exposed
                   </span>
                 </div>
               ) : alert.owner ? (

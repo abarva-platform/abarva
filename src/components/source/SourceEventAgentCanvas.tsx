@@ -11,13 +11,18 @@ import { SourceLinkedProgramChip } from '@/components/source/LinkedProgramChip';
 import type { Artifact } from '@/lib/agent/artifacts';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourcingEventDetail } from '@/lib/source/types';
-import { formatUsd } from '@/lib/source/value-ledger';
+import {
+  RESTRICTED_SOURCE_FINANCIAL_DETAIL,
+  formatSourceFinancialValue,
+  redactSourceFinancialText,
+} from '@/lib/source/financial-display';
 
 interface SourceEventAgentCanvasProps {
   event: SourcingEventDetail;
   middleStrip: ReactNode;
   quote: string;
   children: ReactNode;
+  canViewFinancialValues?: boolean;
 }
 
 const SENTINEL_AGENT = {
@@ -31,8 +36,15 @@ export function SourceEventAgentCanvas({
   middleStrip,
   quote,
   children,
+  canViewFinancialValues = true,
 }: SourceEventAgentCanvasProps) {
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
+  const safeQuote = redactSourceFinancialText(quote, canViewFinancialValues);
+  const safeNextDecision = redactSourceFinancialText(event.nextDecision, canViewFinancialValues);
+  const safeNextAction = redactSourceFinancialText(event.nextAction, canViewFinancialValues);
+  const safeBlocker = event.blocker
+    ? redactSourceFinancialText(event.blocker, canViewFinancialValues)
+    : null;
 
   const handleArtifact = useCallback((artifact: Artifact) => {
     setArtifacts((previous) => {
@@ -61,10 +73,11 @@ export function SourceEventAgentCanvas({
         eventType: event.archetype,
         currentStageKey: event.currentStageKey,
         currentStage: event.currentStageLabel ?? '',
-        blocker: event.blocker ?? null,
-        valueAtStakeUsd: event.valueAtStakeUsd ?? null,
-        nextDecision: event.nextDecision,
-        nextAction: event.nextAction,
+        blocker: safeBlocker,
+        valueAtStakeUsd: canViewFinancialValues ? event.valueAtStakeUsd ?? null : null,
+        nextDecision: safeNextDecision,
+        nextAction: safeNextAction,
+        financialVisibility: canViewFinancialValues ? 'allowed' : 'restricted',
       }}
       topBarProps={{
         tenantName: event.accountName,
@@ -115,7 +128,7 @@ export function SourceEventAgentCanvas({
                         // Embedded Source event workspace stays visible; it is not a drawer overlay.
                       }}
                       agent={SENTINEL_AGENT}
-                      quote={quote}
+                      quote={safeQuote}
                       surface="/source"
                       onArtifact={handleArtifact}
                       composerPlacement="afterHeader"
@@ -128,11 +141,18 @@ export function SourceEventAgentCanvas({
                     />
                   </div>
                   <aside aria-label="Live Source event reasoning pane" style={EVENT_REASONING_COLUMN}>
-                    <EventAgentLead event={event} quote={quote} />
+                    <EventAgentLead
+                      event={event}
+                      quote={safeQuote}
+                      canViewFinancialValues={canViewFinancialValues}
+                    />
                     <SourcingReactivePanel artifacts={artifacts} />
                   </aside>
                 </section>
-                <EventCanvasHeader event={event} />
+                <EventCanvasHeader
+                  event={event}
+                  canViewFinancialValues={canViewFinancialValues}
+                />
                 <section aria-label="Source event detailed workbench" style={DETAIL_WORKBENCH}>
                   {children}
                 </section>
@@ -148,12 +168,18 @@ export function SourceEventAgentCanvas({
 function EventAgentLead({
   event,
   quote,
+  canViewFinancialValues,
 }: {
   event: SourcingEventDetail;
   quote: string;
+  canViewFinancialValues: boolean;
 }) {
-  const blockerCopy = event.blocker ?? 'No hard blocker recorded yet. Steward still needs evidence before the gate can be treated as clear.';
+  const blockerCopy = event.blocker
+    ? redactSourceFinancialText(event.blocker, canViewFinancialValues)
+    : 'No hard blocker recorded yet. Steward still needs evidence before the gate can be treated as clear.';
   const stageLabel = event.currentStageLabel || 'Current stage';
+  const nextAction = redactSourceFinancialText(event.nextAction, canViewFinancialValues);
+  const nextDecision = redactSourceFinancialText(event.nextDecision, canViewFinancialValues);
 
   return (
     <section aria-label="Agent-led Source stage brief" style={EVENT_LEAD_CARD}>
@@ -164,7 +190,12 @@ function EventAgentLead({
         </div>
         <div style={EVENT_LEAD_VALUE}>
           <div style={META_LABEL}>Value at stake</div>
-          <div style={META_VALUE}>{formatUsd(event.valueAtStakeUsd)}</div>
+          <div style={META_VALUE}>{formatSourceFinancialValue(event.valueAtStakeUsd, canViewFinancialValues)}</div>
+          {!canViewFinancialValues && (
+            <div style={{ ...EVENT_AGENT_COPY, margin: '3px 0 0', color: 'rgba(12,26,58,0.54)' }}>
+              {RESTRICTED_SOURCE_FINANCIAL_DETAIL}
+            </div>
+          )}
         </div>
       </div>
       <p style={EVENT_LEAD_COPY}>{quote}</p>
@@ -173,7 +204,7 @@ function EventAgentLead({
         <EventAgentCard
           agent="Nexus"
           role="Workflow conductor"
-          detail={`${event.nextAction} Then prepare the team for the next gate with inputs, session plan, and output packet.`}
+          detail={`${nextAction} Then prepare the team for the next gate with inputs, session plan, and output packet.`}
         />
         <EventAgentCard
           agent="Steward"
@@ -188,7 +219,7 @@ function EventAgentLead({
         <EventAgentCard
           agent="Atlas"
           role="Artifacts and executive decision"
-          detail={`Decision posture: ${stripTrailingPeriod(event.nextDecision)}. Generate the right HTML, Word, or Excel packet before review.`}
+          detail={`Decision posture: ${stripTrailingPeriod(nextDecision)}. Generate the right HTML, Word, or Excel packet before review.`}
         />
       </div>
 
@@ -392,9 +423,17 @@ function stripTrailingPeriod(text: string | null | undefined): string {
   return (text ?? '').trim().replace(/[.]+$/, '');
 }
 
-function EventCanvasHeader({ event }: { event: SourcingEventDetail }) {
+function EventCanvasHeader({
+  event,
+  canViewFinancialValues,
+}: {
+  event: SourcingEventDetail;
+  canViewFinancialValues: boolean;
+}) {
   const linkedProgramId = getLinkedProgramId(event);
   const clientContext = getClientContextSnapshot(event);
+  const synopsis = redactSourceFinancialText(event.synopsis, canViewFinancialValues);
+  const nextDecision = redactSourceFinancialText(event.nextDecision, canViewFinancialValues);
 
   return (
     <header
@@ -438,7 +477,7 @@ function EventCanvasHeader({ event }: { event: SourcingEventDetail }) {
               color: SHELL.INK_MUTED,
             }}
           >
-            {event.synopsis}
+            {synopsis}
           </p>
         </div>
         <div
@@ -454,7 +493,7 @@ function EventCanvasHeader({ event }: { event: SourcingEventDetail }) {
           <div style={META_LABEL}>Current stage</div>
           <div style={META_VALUE}>{event.currentStageLabel}</div>
           <div style={{ ...META_LABEL, marginTop: 7 }}>Next decision</div>
-          <div style={META_VALUE}>{event.nextDecision}</div>
+          <div style={META_VALUE}>{nextDecision}</div>
         </div>
       </div>
       {clientContext ? <ClientContextSnapshot snapshot={clientContext} /> : null}
