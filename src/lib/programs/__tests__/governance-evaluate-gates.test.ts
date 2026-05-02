@@ -259,6 +259,52 @@ describe('evaluateGate', () => {
     expect(result.requiresApproval).toBe(true);
   });
 
+  it('combines approved Setup brief and signed P0 seed text for the value-hypothesis gate', async () => {
+    getProgramByIdMock.mockResolvedValue({
+      id: 'program-1',
+      currentPhase: 0,
+      archetype: 'platform_modernization',
+    });
+    deliverablesFixture = [
+      { id: 'origination-brief', deliverable_type_key: 'origination_brief', status: 'signed_off' },
+    ];
+    participantsFixture = [];
+    approvalRequestsFixture = [
+      {
+        request_status: 'approved',
+        brief_snapshot: {
+          sponsor: 'Katherine Oshima',
+          problem_statement:
+            'Epic, claims, coding, prior-auth, and VBC analytics are fragmented.',
+          target_outcome:
+            'Improve trusted analytics delivery speed and quality.',
+        },
+      },
+    ];
+    deliverableVersionsFixture = [
+      {
+        content:
+          'Status: P0 seed signed off. Value hypothesis: governed analytics modernization improves trusted delivery speed. ' +
+          'First cohort: care coordination and revenue-cycle analytics. ' +
+          'Evidence family: source-system inventory, lineage baseline, and analytics cycle time. ' +
+          'Discovery capacity envelope: four-week P1 discovery.',
+        structured_data: null,
+        generated_at: '2026-05-02T00:00:00.000Z',
+      },
+    ];
+
+    const result = await evaluateGate(
+      { clientId: 'client-1', userId: 'person-1' },
+      'program-1',
+      0,
+      1,
+    );
+
+    expect(result.failedChecks.map((check) => check.check)).not.toContain('value_hypothesis_seed');
+    expect(result.failedChecks.filter((check) => check.severity === 'hard')).toEqual([]);
+    expect(result.requiresApproval).toBe(true);
+  });
+
   it('blocks P0 to P1 when only the Setup approval snapshot exists', async () => {
     getProgramByIdMock.mockResolvedValue({
       id: 'program-1',
