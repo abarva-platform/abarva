@@ -22,7 +22,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
     if (accessPolicy.programIdsAllowed !== null && !accessPolicy.programIdsAllowed.includes(programId)) {
       return Response.json({ error: 'forbidden' }, { status: 403 });
     }
-    const body = (await req.json()) as { toPhase?: number; snapshot?: Record<string, unknown>; bypassGate?: boolean; approvalId?: string };
+    const body = (await req.json()) as {
+      toPhase?: number;
+      snapshot?: Record<string, unknown>;
+      bypassGate?: boolean;
+      approvalId?: string;
+      selfApproveIfAuthorized?: boolean;
+    };
     if (typeof body?.toPhase !== 'number') {
       return Response.json({ error: 'bad_request', detail: 'toPhase required' }, { status: 400 });
     }
@@ -41,7 +47,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
       );
     }
 
-    if (gate.requiresApproval && !body.approvalId) {
+    const canSelfApproveGate =
+      body.selfApproveIfAuthorized === true &&
+      (accessPolicy.canApproveGates || ctx.role === 'founder');
+
+    if (gate.requiresApproval && !body.approvalId && !canSelfApproveGate) {
       // Create a pending founder approval request and return it
       const approvalId = await requestFounderApproval(ctx, programId, {
         requestType: 'phase_gate',
@@ -56,7 +66,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
       );
     }
 
-    if (body.bypassGate && !accessPolicy.canApproveGates && ctx.role !== 'founder') {
+    if ((body.bypassGate || canSelfApproveGate) && !accessPolicy.canApproveGates && ctx.role !== 'founder') {
       return Response.json(
         { error: 'forbidden', detail: 'phase-gate approval permission is required to bypass a gate' },
         { status: 403 },

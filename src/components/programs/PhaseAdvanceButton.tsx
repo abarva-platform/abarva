@@ -109,6 +109,7 @@ export function PhaseAdvanceButton({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           toPhase: nextPhase,
+          selfApproveIfAuthorized: true,
           snapshot: { requested_from: 'program_detail_phase_advance_button' },
         }),
       });
