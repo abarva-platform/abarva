@@ -355,3 +355,33 @@ Append-only coordination log for active Codex sessions.
 - validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only.
 - lock: `source-event-action-prompts-ui` marked completed in `ACTIVE_LOCKS.yaml`.
 - next: open PR and auto-merge after standard checks pass.
+
+## 2026-05-02T14:45:16-05:00 - codex-home-card-polish
+
+- status: in-progress
+- branch: `codex/home-card-polish`
+- worktree: `/private/tmp/nexus-home-card-polish`
+- scope: polish Home cockpit card/link affordances for Atrium maturity: keyboard focus visibility, hover rhythm, honest disabled-card semantics, and responsive card spacing
+- sequencing_rationale: shared top nav polish is merged; Home is the primary landing cockpit, so bringing card interaction quality up to the same standard improves every tester's first authenticated impression without touching any data-plane or Source lifecycle files.
+- locks: `home-cockpit-card-polish`
+- guardrail: no Source API, lifecycle, stage, or data files; no tenant metrics, auth roster, schema, or publication pipeline changes.
+
+## 2026-05-02T14:49:14-05:00 - codex-atrium-nav-polish
+
+- status: merged-and-deployed
+- pr: `#1453`
+- merge_commit: `60870e10afcc59acd23ef70154a71925457b5d9b`
+- production_status: Vercel `abarva` and `nexus` deployments completed successfully for the merge commit
+- validation: post-merge Typecheck + reasoning-layer tests passed
+
+## 2026-05-02T14:49:14-05:00 - codex-home-card-polish
+
+- status: validation-local-passed
+- shipped: Home workspace and reasoning cards now expose named destinations, keyboard-visible focus rings, touch-safe hover/focus rhythm, reduced-motion handling, and honest disabled-card semantics
+- validation: focused Home/shell Jest passed, 3 suites / 47 tests
+- validation: targeted ESLint passed for `HomeIndexPage` and Home contract test
+- validation: `npx tsc --noEmit --pretty false` passed
+- validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only
+- note: updated stale Home test copy from the retired `CDP build gate` phrase to the current `CDP Execution Roadmap gate` middle-strip copy
+- lock: `home-cockpit-card-polish` marked completed in `ACTIVE_LOCKS.yaml`
+- next: open PR and auto-merge after standard checks pass

@@ -114,6 +114,9 @@ interface WorkspaceCardProps {
 function WorkspaceCard({ title, detail, href, eyebrow, enabled }: WorkspaceCardProps) {
   const body = (
     <div
+      className="home-card-surface"
+      aria-disabled={enabled ? undefined : true}
+      data-enabled={enabled ? 'true' : 'false'}
       style={{
         background: enabled ? SHELL.CARD_WHITE : 'rgba(255,255,255,0.58)',
         border: `1px solid ${enabled ? SHELL.CARD_LINE : 'rgba(12,26,58,0.08)'}`,
@@ -162,7 +165,12 @@ function WorkspaceCard({ title, detail, href, eyebrow, enabled }: WorkspaceCardP
 
   if (!enabled) return body;
   return (
-    <Link href={href} style={{ textDecoration: 'none', display: 'block' }}>
+    <Link
+      className="home-card-link"
+      href={href}
+      aria-label={`Open ${title} workspace`}
+      style={{ textDecoration: 'none', display: 'block' }}
+    >
       {body}
     </Link>
   );
@@ -585,10 +593,14 @@ interface ReasoningCardProps {
 function ReasoningCard({ label, value, detail, detailColor, href }: ReasoningCardProps) {
   return (
     <Link
+      className="home-card-link"
       href={href}
+      aria-label={`Open Intelligence for ${label}`}
       style={{ textDecoration: 'none', display: 'block' }}
     >
       <div
+        className="home-card-surface"
+        data-enabled="true"
         style={{
           background: SHELL.CARD_WHITE,
           border: `1px solid ${SHELL.CARD_LINE}`,
@@ -689,8 +701,15 @@ function ReasoningIntelligenceRow({ data }: { data: ReasoningDashboardSummary })
         }}
       >
         {/* 1 — Portfolio health */}
-        <Link href="/intelligence" style={{ textDecoration: 'none', display: 'block' }}>
+        <Link
+          className="home-card-link"
+          href="/intelligence"
+          aria-label="Open Intelligence for portfolio health"
+          style={{ textDecoration: 'none', display: 'block' }}
+        >
           <div
+            className="home-card-surface"
+            data-enabled="true"
             style={{
               background: SHELL.CARD_WHITE,
               border: `1px solid ${SHELL.CARD_LINE}`,
@@ -869,6 +888,51 @@ export function HomeIndexPage({
       }
       onArtifact={handleAtlasArtifact}
     >
+      <style jsx global>{`
+        .home-card-link {
+          border-radius: 14px;
+          outline: none;
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        .home-card-link .home-card-surface,
+        .home-card-link {
+          transition:
+            border-color 160ms ease,
+            box-shadow 160ms ease,
+            transform 160ms ease,
+            background 160ms ease;
+        }
+
+        .home-card-link:hover .home-card-surface,
+        .home-card-link:hover {
+          border-color: rgba(12, 26, 58, 0.22) !important;
+          box-shadow: 0 16px 34px rgba(12, 26, 58, 0.08);
+          transform: translateY(-1px);
+        }
+
+        .home-card-link:focus-visible {
+          outline: 2px solid #0b4a91;
+          outline-offset: 4px;
+          box-shadow: 0 0 0 6px rgba(11, 74, 145, 0.14);
+        }
+
+        .home-card-surface[data-enabled="false"] {
+          cursor: not-allowed;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .home-card-link,
+          .home-card-link .home-card-surface {
+            transition: none;
+          }
+
+          .home-card-link:hover .home-card-surface,
+          .home-card-link:hover {
+            transform: none;
+          }
+        }
+      `}</style>
       {/* PR-J · agent-centric primary canvas. Atlas + reactive panel
           dominate the viewport; the legacy greeting + dashboard
           collapses into a details accordion below. AgentColumn (the
