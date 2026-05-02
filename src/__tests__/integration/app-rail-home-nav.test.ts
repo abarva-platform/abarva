@@ -1,21 +1,45 @@
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { readFileSync } from "fs";
+import { join } from "path";
 
-const appRailSource = readFileSync(
-  join(process.cwd(), 'src/components/shell/AppRail.tsx'),
-  'utf8',
+const appShellSource = readFileSync(
+  join(process.cwd(), "src/components/shell/AppShell.tsx"),
+  "utf8",
+);
+const appTopBarSource = readFileSync(
+  join(process.cwd(), "src/components/shell/AppTopBar.tsx"),
+  "utf8",
 );
 
-describe('AppRail navigation contract', () => {
-  it('exposes Home as a first-class authenticated app rail item', () => {
-    expect(appRailSource).toContain("{ key: 'home'");
-    expect(appRailSource).toContain("label: 'Home'");
-    expect(appRailSource).toContain("href: '/home'");
+describe("Cockpit shell navigation contract", () => {
+  it("defaults AppShell to the cockpit top-nav model and sunsets the old app rail by default", () => {
+    expect(appShellSource).toContain("showProductNav = true");
+    expect(appShellSource).toContain("showAppRail = false");
+    expect(appShellSource).toContain(
+      'gridTemplateColumns: showAppRail ? "76px 1fr" : "1fr"',
+    );
+    expect(appShellSource).toContain("showAppRail ? <AppRail /> : null");
   });
 
-  it('detects /home and /dashboard as the Home surface', () => {
-    expect(appRailSource).toContain("pathname === '/home'");
-    expect(appRailSource).toContain("pathname.startsWith('/home/')");
-    expect(appRailSource).toContain("pathname === '/dashboard'");
+  it("renders product/module navigation in AppTopBar", () => {
+    for (const label of [
+      "Home",
+      "Setup",
+      "Programs",
+      "Source",
+      "Intelligence",
+      "Tower",
+      "Learn",
+    ]) {
+      expect(appTopBarSource).toContain(`label: "${label}"`);
+    }
+    expect(appTopBarSource).toContain('href: "/admin"');
+    expect(appTopBarSource).toContain('href: "/learn"');
+    expect(appTopBarSource).toContain("resolveModuleAccess");
+  });
+
+  it("keeps top bar free of duplicated workspace clutter", () => {
+    expect(appTopBarSource).not.toContain("tenantName =");
+    expect(appTopBarSource).not.toContain("timeString ?");
+    expect(appTopBarSource).not.toContain("Home cockpit");
   });
 });
