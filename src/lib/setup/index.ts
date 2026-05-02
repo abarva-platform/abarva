@@ -20,6 +20,10 @@ export {
   listPersistedSetupAiInitiatives,
   persistSetupAiInitiatives,
 } from "./ai-initiatives-persistence";
+export {
+  looksLikeSetupAiInitiativesUpload,
+  parseSetupAiInitiativesCsv,
+} from "./ai-initiatives-upload";
 export type {
   SetupAiInitiativeArchetype,
   SetupAiInitiativeDirectionalSummary,
@@ -40,3 +44,7 @@ export type {
   SetupAiInitiativeReadResult,
   SetupAiInitiativeReadStatus,
 } from "./ai-initiatives-persistence";
+export type {
+  ParsedSetupAiInitiativesUpload,
+  SetupAiInitiativeUploadRejection,
+} from "./ai-initiatives-upload";

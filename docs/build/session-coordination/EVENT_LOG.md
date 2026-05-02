@@ -215,3 +215,23 @@ Append-only coordination log for active Codex sessions.
 - validation: `npx tsc --noEmit --pretty false` passed
 - validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning
 - next: open PR and auto-merge after standard checks pass
+
+## 2026-05-02T15:34:00-05:00 - codex-setup-ai-initiative-intake
+
+- status: in-progress
+- branch: `codex/setup-ai-initiative-intake`
+- worktree: `/private/tmp/nexus-setup-ai-initiative-intake`
+- scope: add day-1 CSV/POST intake for Setup AI Initiatives using the private-plane persistence already merged in PR #1441
+- sequencing_rationale: the registry is live-seeded, but customers also need onboarding-scale upload and API intake so Setup can mimic private client data-plane ingestion today
+- locks: `setup-ai-initiative-upload-parser`, `setup-ai-initiative-post-api`
+- guardrail: no Source API, lifecycle, stage, or data files touched
+
+## 2026-05-02T15:41:00-05:00 - codex-setup-ai-initiative-intake
+
+- status: validation-local-passed
+- shipped: CSV parser for Setup AI Initiative onboarding uploads, `POST /api/setup/initiatives` multipart/JSON intake, row-level accepted/rejected reporting, and financial-column upload guardrail
+- validation: focused Setup AI Initiatives fixture/parser/API Jest passed, 13 tests
+- validation: targeted ESLint passed for upload parser, setup index, API route, and POST tests
+- validation: `npx tsc --noEmit --pretty false` passed
+- validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning
+- next: open PR and auto-merge after standard checks pass
