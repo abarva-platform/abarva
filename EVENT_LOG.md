@@ -86,3 +86,8 @@
 - Fix summary: `complete_deliverable` now supports bounded `content_outline` arrays for large artifacts, caps the content schema at 6,000 characters, and the Nexus Programs prompt now explicitly prohibits huge hidden tool payloads. Nexus should persist concise executive-grade artifacts and summarize what was saved instead of silently composing a full consulting deck inside JSON.
 - Regression: src/lib/agent/tools/__tests__/completeDeliverable.test.ts verifies outline-to-markdown persistence; src/app/api/chat/agent/__tests__/agent-route-context-bundle.test.ts validates route prompt source still compiles under the updated doctrine.
 - Validation: Focused complete_deliverable + agent route Jest and scoped ESLint passed locally.
+
+## 2026-05-02T12:56:00Z — programs-module-e2e-crawler
+- Live P3 traceability retest exposed a silent non-write: Nexus answered "composing" but did not call complete_deliverable, and DB showed no requirements_traceability deliverable or phase advance.
+- Fix in progress: force explicit Programs deliverable save/sign-off requests through initial Anthropic tool_choice=complete_deliverable on the first tool-use-loop turn; subsequent turns can still call advance_phase naturally.
+- Added regression coverage for route forcing and tool-use-loop first-turn tool_choice wiring.
