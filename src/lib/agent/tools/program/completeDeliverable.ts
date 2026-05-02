@@ -16,6 +16,7 @@ interface CompleteDeliverableToolInput {
   deliverable_type_key: string;
   title: string;
   content?: string;
+  content_outline?: string[];
   module_key?: string;
   sign_off?: boolean;
   rationale?: string;
@@ -73,7 +74,9 @@ export const completeDeliverableTool: AgentTool<CompleteDeliverableToolInput> = 
     'P2 charter = charter, P3 solution design = design_spec, P3 requirements-to-design-to-outcomes trace = ' +
     'requirements_traceability, P4 roadmap = execution_roadmap, P5 funding package = business_case plus ' +
     'approval_memo or funding_approval, P5 alignment = stakeholder_alignment or sponsor_alignment, ' +
-    'P5 readiness = readiness_and_change_plan, P6 Tower setup = tower_handoff_plan.',
+    'P5 readiness = readiness_and_change_plan, P6 Tower setup = tower_handoff_plan. Keep the content payload ' +
+    'bounded: prefer content_outline for large artifacts, and keep content under 6,000 characters. Do not generate ' +
+    'a huge hidden tool payload.',
   surfaces: ['/programs/:id'],
   input_schema: {
     type: 'object',
@@ -96,7 +99,18 @@ export const completeDeliverableTool: AgentTool<CompleteDeliverableToolInput> = 
       },
       content: {
         type: 'string',
-        description: 'Artifact content to store as the latest deliverable version.',
+        maxLength: 6000,
+        description:
+          'Artifact content to store as the latest deliverable version. Keep this concise and bounded; ' +
+          'for large phase deliverables, store an executive-grade outline and key decisions here instead of full prose.',
+      },
+      content_outline: {
+        type: 'array',
+        items: { type: 'string' },
+        maxItems: 16,
+        description:
+          'Use this for large deliverables instead of a long content string. Each item is a short section heading, ' +
+          'decision, gate proof, risk, or required follow-up. The tool will persist a compact markdown document.',
       },
       module_key: {
         type: 'string',
@@ -158,12 +172,17 @@ export const completeDeliverableTool: AgentTool<CompleteDeliverableToolInput> = 
     }
 
     try {
+      const contentFromOutline =
+        !input.content && input.content_outline && input.content_outline.length > 0
+          ? input.content_outline.map((item) => `- ${item}`).join('\n')
+          : undefined;
+      const rawContent = input.content ?? contentFromOutline;
       const result = await completeDeliverable(tenancy, input.program_id, {
         deliverableTypeKey,
         title,
-        content: input.content
+        content: rawContent
           ? sanitizeRestrictedFinancialText(
-              input.content,
+              rawContent,
               ctx.accessPolicy
                 ? { outputPolicy: { exactFinancialValues: ctx.accessPolicy.canViewFinancialData } }
                 : null,
