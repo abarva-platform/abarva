@@ -112,6 +112,9 @@ const TENANT_ALIASES: Record<string, string> = {
   meridian: "meridian-health",
   meridianhealth: "meridian-health",
   "meridian-health": "meridian-health",
+  arcturus: "first-capital",
+  "arcturus-financial": "first-capital",
+  "arcturus-financial-group": "first-capital",
   firstcapital: "first-capital",
   "first-capital": "first-capital",
 };

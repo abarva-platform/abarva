@@ -17,6 +17,13 @@ describe('Tower P6 handoff panel', () => {
     expect(pageSource).toContain("query.in('id', policy.sourceEventIdsAllowed)");
     expect(pageSource).toContain('Source handoffs · Tower observation');
     expect(pageSource).toContain('data-testid=\"tower-source-handoff-panel\"');
+    expect(pageSource).toContain('listPersistedSetupAiInitiatives');
+    expect(pageSource).toContain('TowerSetupInitiativesPanel');
+    expect(pageSource).toContain('Setup initiatives · Tower feed');
+    expect(pageSource).toContain('data-testid=\"tower-setup-initiatives-panel\"');
+    expect(pageSource).toContain('Exact financial values withheld');
     expect(componentSource).toContain('towerHandoffSlot');
+    expect(componentSource).toContain("tenantName = 'AbarVa Client'");
+    expect(componentSource).not.toContain("tenantName: 'Apex Retail Group'");
   });
 });

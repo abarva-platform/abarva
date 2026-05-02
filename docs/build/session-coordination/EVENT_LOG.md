@@ -551,3 +551,25 @@ Append-only coordination log for active Codex sessions.
 - browser_note: unauthenticated local browser redirected to client-test sign-in; no demo email/code was entered without fresh action-time approval.
 - lock: `intelligence-native-submenu-canvas` marked completed in `ACTIVE_LOCKS.yaml`.
 - next: commit, push, open PR, and auto-merge after standard checks pass.
+
+## 2026-05-02T19:35:00-05:00 - codex-tower-setup-initiatives-bridge
+
+- status: in-progress
+- branch: `codex/tower-setup-initiatives-fix`
+- worktree: `/Users/anand/Projects/nexus-source-capability-e2e`
+- scope: narrow Tower fix from handoff briefs: render Setup AI Initiatives registry in Tower, make Tower chrome tenant-aware, and keep existing Programs P6 plus Source Transition/Value handoff panels visible.
+- guardrail: not starting the full queued Tower redesign; no Source lifecycle/data/API changes; no private-plane schema changes; preserve financial firewall with directional-only initiative summaries.
+
+## 2026-05-02T19:52:00-05:00 - codex-tower-setup-initiatives-bridge
+
+- status: validation-local-passed
+- shipped: Tower now renders a Setup AI Initiatives registry feed above Programs/Source handoffs, using the tenant-scoped private-plane read path when available and fixture fallback only when private rows are absent.
+- shipped: Tower chrome now receives the active tenant name from the server instead of hardcoding Apex Retail Group.
+- shipped: Setup AI Initiative tenant normalization now maps legacy `arcturus` app keys to the First Capital registry.
+- guardrail: full queued Tower redesign not started; existing Programs P6 and Source Transition/Value handoff panels preserved; exact financial values remain withheld in Tower initiative summaries.
+- validation: focused Tower/Setup Jest passed, 2 suites / 7 tests.
+- validation: targeted ESLint passed for touched Tower/Setup files.
+- validation: `npx tsc --noEmit --pretty false` passed.
+- validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only.
+- lock: `tower-setup-initiatives-bridge-ui` marked completed in `ACTIVE_LOCKS.yaml`.
+- next: commit, push, open PR, and auto-merge after standard checks pass.
