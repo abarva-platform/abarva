@@ -355,7 +355,7 @@ function selectSourceArtifacts(artifacts: Artifact[]): Artifact[] {
 function Card({ kind, children }: { kind: string; children: React.ReactNode }) {
   return (
     <article style={CARD}>
-      <div style={EYEBROW}>Sentinel - {kind}</div>
+      <div style={EYEBROW}>Nexus - {kind}</div>
       {children}
     </article>
   );

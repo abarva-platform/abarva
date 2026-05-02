@@ -42,6 +42,8 @@ describe('Source context-used and action-enforcement slices', () => {
     expect(html).toContain('Review at-risk events');
     expect(html).toContain('Ask Nexus (deferred)');
     expect(html).toContain('Submit (disabled until runtime)');
+    expect(html).toContain('Open a Source event to talk to Nexus. Portfolio Nexus runtime is deferred.');
+    expect(html).not.toContain('Open a Source event to talk to Sentinel');
   });
 
   it('renders event detail with deterministic context chips and 3 contextual choices', async () => {

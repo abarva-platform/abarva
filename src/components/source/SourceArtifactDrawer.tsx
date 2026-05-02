@@ -207,7 +207,7 @@ export function SourceArtifactDrawer({
                 id="artifact-custom-input"
                 type="text"
                 readOnly
-                placeholder="Ask Sentinel about this artifact, evidence chain, or source version..."
+                placeholder="Ask Nexus about this artifact, evidence chain, or source version..."
                 style={{
                   border: '1px solid ' + SHELL.BLUE_LINE,
                   borderRadius: 8,
