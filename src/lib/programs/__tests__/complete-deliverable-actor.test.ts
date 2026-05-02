@@ -49,6 +49,15 @@ function makeInsertOnlyBuilder(payloads: unknown[]) {
   };
 }
 
+function makeUpsertOnlyBuilder(payloads: unknown[]) {
+  return {
+    upsert: jest.fn((payload) => {
+      payloads.push(payload);
+      return { error: null };
+    }),
+  };
+}
+
 describe('completeDeliverable actor attribution', () => {
   beforeEach(() => {
     fromMock.mockReset();
@@ -59,11 +68,15 @@ describe('completeDeliverable actor attribution', () => {
   });
 
   it('uses the signed-in user as created_by and records Nexus as provenance', async () => {
+    const deliverableTypePayloads: unknown[] = [];
     const deliverablePayloads: unknown[] = [];
     const versionPayloads: unknown[] = [];
     const moduleLogPayloads: unknown[] = [];
 
     fromMock.mockImplementation((table: string) => {
+      if (table === 'deliverable_types') {
+        return makeUpsertOnlyBuilder(deliverableTypePayloads);
+      }
       if (table === 'deliverables_v2' && fromMock.mock.calls.filter(([t]) => t === 'deliverables_v2').length === 1) {
         return makeSelectMaybeSingleBuilder({ data: null, error: null });
       }
@@ -96,6 +109,13 @@ describe('completeDeliverable actor attribution', () => {
       },
     );
 
+    expect(deliverableTypePayloads[0]).toEqual(
+      expect.objectContaining({
+        type_key: 'origination_brief',
+        title: 'Origination Brief',
+        applicable_phases: [0],
+      }),
+    );
     expect(deliverablePayloads[0]).toEqual(
       expect.objectContaining({
         created_by: 'person-1',

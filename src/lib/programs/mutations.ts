@@ -327,6 +327,68 @@ export interface CompleteDeliverableInput {
   signOff?: boolean;
 }
 
+const LIFECYCLE_DELIVERABLE_PHASES: Record<string, number[]> = {
+  origination_brief: [0],
+  program_seed_brief: [0],
+  program_seed: [0],
+  discovery_report: [1],
+  current_state_summary: [1],
+  baseline: [1],
+  baseline_metrics: [1],
+  stakeholder_map: [1],
+  synthesis_options_memo: [2],
+  charter: [2],
+  design_spec: [3],
+  design: [3],
+  design_brief: [3],
+  requirements_traceability: [3],
+  execution_roadmap: [4],
+  execution_plan: [4],
+  business_case: [5],
+  approval_packet: [5],
+  approval_memo: [5],
+  funding_approval: [5],
+  sponsor_alignment: [5],
+  stakeholder_alignment: [5],
+  readiness_and_change_plan: [5],
+  change_management_plan: [5],
+  tower_handoff_plan: [6],
+  control_tower_handoff: [6],
+  execution_monitoring_plan: [6],
+  outcome_report: [6],
+};
+
+function titleizeDeliverableType(typeKey: string): string {
+  return typeKey
+    .split('_')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+async function ensureDeliverableType(sb: ReturnType<typeof getServerSupabase>, deliverableTypeKey: string): Promise<void> {
+  const { error } = await sb
+    .from('deliverable_types')
+    .upsert(
+      {
+        type_key: deliverableTypeKey,
+        title: titleizeDeliverableType(deliverableTypeKey),
+        description: `Lifecycle deliverable type used by Nexus for ${deliverableTypeKey}.`,
+        applicable_phases: LIFECYCLE_DELIVERABLE_PHASES[deliverableTypeKey] ?? [],
+        applicable_topics: [],
+        template_structure: { sections: [] },
+        required_data_inputs: {},
+        quality_rubric: {},
+        generation_prompt_template: null,
+        output_format: 'markdown',
+        version: 1,
+        maturity: 'pilot',
+      },
+      { onConflict: 'type_key', ignoreDuplicates: true },
+    );
+  if (error) throw error;
+}
+
 /**
  * Create/update a deliverable and optionally sign it off in one atomic
  * crawl-facing operation. This is intentionally stricter than the draft
@@ -347,6 +409,7 @@ export async function completeDeliverable(
 
   const sb = getServerSupabase();
   const now = new Date().toISOString();
+  await ensureDeliverableType(sb, deliverableTypeKey);
   const { data: existing, error: existingError } = await sb
     .from('deliverables_v2')
     .select('id, current_version')
