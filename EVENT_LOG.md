@@ -18,3 +18,12 @@
 - Fix summary: `/tower` now queries live `engagements` for active-client P6 programs, applies program assignment scoping via `loadUserProgramAccessPolicy`, and renders a visible `Tower handoffs · P6 active` panel above the legacy pressure accordion.
 - Regression: src/__tests__/integration/tower-p6-handoff-panel.test.ts pins tenant filtering, P6 filtering, assignment scoping, and the TowerIndexPage slot wiring.
 - Validation: Focused Tower handoff Jest and ESLint passed locally.
+
+## 2026-05-02T06:32:00Z — programs-module-e2e-crawler
+
+- Workstream: Programs live E2E crawl / Meridian preflight.
+- Finding: Meridian login landed on `/home` with Meridian tenant chrome but Apex-specific Home content (`CDP`, Vendor C, AMS BAFO, AI spend), creating a cross-tenant UI/content leak.
+- Severity: SEV-1 tenant-context leak in Home chrome/content.
+- Fix summary: Home now gates Apex fixture content behind an Apex-only tenant check. Non-Apex tenants receive tenant-safe workspace copy, live tenant-scoped program rows only, restricted-financial copy, and no static Apex Tower/Source cards.
+- Regression: src/__tests__/integration/home-tenant-scope.test.ts pins the Apex-only fixture guard and non-Apex safe copy.
+- Validation: Focused Home tenant-scope Jest and ESLint passed locally.
