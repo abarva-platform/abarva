@@ -182,6 +182,49 @@ describe('complete_deliverable tool', () => {
       }),
     );
   });
+
+  it('allows P2 synthesis artifacts without overloading design keys', async () => {
+    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+    completeDeliverableMock.mockResolvedValue({
+      deliverableId: 'deliv-p2',
+      versionId: 'version-p2',
+      status: 'signed_off',
+    });
+
+    for (const deliverableTypeKey of [
+      'synthesis_options_memo',
+      'charter',
+      'workshop_facilitator_guide',
+    ]) {
+      const result = await completeDeliverableTool.handler(
+        {
+          program_id: 'program-1',
+          deliverable_type_key: deliverableTypeKey,
+          title: `P2 ${deliverableTypeKey}`,
+          content: 'Accepted P2 artifact content',
+          sign_off: true,
+        },
+        makeCtx(),
+      );
+
+      expect(result.success).toBe(true);
+    }
+
+    expect(completeDeliverableMock).toHaveBeenCalledTimes(3);
+    expect(completeDeliverableMock).toHaveBeenNthCalledWith(
+      1,
+      expect.anything(),
+      'program-1',
+      expect.objectContaining({ deliverableTypeKey: 'synthesis_options_memo' }),
+    );
+    expect(completeDeliverableMock).toHaveBeenNthCalledWith(
+      3,
+      expect.anything(),
+      'program-1',
+      expect.objectContaining({ deliverableTypeKey: 'workshop_facilitator_guide' }),
+    );
+  });
+
   it('allows P3 requirements traceability as a separate gate artifact', async () => {
     requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
     completeDeliverableMock.mockResolvedValue({
