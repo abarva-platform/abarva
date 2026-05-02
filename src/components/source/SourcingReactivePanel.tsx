@@ -52,7 +52,7 @@ function CardShell({ kind, children }: { kind: string; children: ReactNode }) {
           marginBottom: 8,
         }}
       >
-        Sentinel - {kind}
+        Nexus - {kind}
       </div>
       {children}
     </div>
@@ -386,10 +386,10 @@ export function SourcingReactivePanel({ artifacts }: SourcingReactivePanelProps)
             fontWeight: 700,
           }}
         >
-          Sentinel sourcing reasoning - live
+          Nexus sourcing reasoning - live
         </div>
         <p style={{ margin: '2px 0 0', fontSize: 12.5, lineHeight: 1.45 }}>
-          Ask Sentinel to compare vendors, inspect clauses, benchmark pricing, or test walkaway leverage.
+          Ask Nexus to compare vendors, inspect clauses, benchmark pricing, or test walkaway leverage.
         </p>
         <p
           style={{
@@ -430,7 +430,7 @@ export function SourcingReactivePanel({ artifacts }: SourcingReactivePanelProps)
           fontWeight: 700,
         }}
       >
-        Sentinel sourcing reasoning - live
+        Nexus sourcing reasoning - live
       </header>
       {visible.map((artifact) => {
         const key = stableSourcingArtifactKey(artifact);

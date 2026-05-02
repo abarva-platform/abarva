@@ -385,3 +385,25 @@ Append-only coordination log for active Codex sessions.
 - note: updated stale Home test copy from the retired `CDP build gate` phrase to the current `CDP Execution Roadmap gate` middle-strip copy
 - lock: `home-cockpit-card-polish` marked completed in `ACTIVE_LOCKS.yaml`
 - next: open PR and auto-merge after standard checks pass
+
+## 2026-05-02T15:00:00-05:00 - codex-source-event-agent-identity-polish
+
+- status: in-progress
+- branch: `codex/source-event-agent-identity-polish`
+- worktree: `/Users/anand/Projects/nexus-source-capability-e2e`
+- scope: narrow Source event-canvas UI/copy polish to align visible agent identity, aria labels, and prompt language after Nexus action prompt work
+- sequencing_rationale: Source event actions now say Ask Nexus, but the event canvas still contains Sentinel-labeled drawer/aria copy; this small mismatch hurts agent-centric clarity without requiring data, lifecycle, or API changes.
+- locks: `source-event-agent-identity-ui`
+- guardrail: no Programs/Intelligence/Tower files and no Source persistence, gate, lifecycle, or data-plane logic
+
+## 2026-05-02T15:06:00-05:00 - codex-source-event-agent-identity-polish
+
+- status: validation-local-passed
+- shipped: Source event canvas now identifies the embedded agent surface as Nexus, updates event canvas aria copy, and aligns Sourcing reactive empty-state prompts/card labels from Sentinel to Nexus while preserving Sentinel as the evidence-specialist role in the stage brief.
+- validation: focused Source event canvas and Sourcing reactive panel Jest passed, 2 suites / 17 tests.
+- validation: full Source integration Jest passed, 70 suites / 753 tests.
+- validation: targeted ESLint passed for `SourceEventAgentCanvas`, `SourcingReactivePanel`, and updated Source tests.
+- validation: `npx tsc --noEmit --pretty false` passed.
+- validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only.
+- lock: `source-event-agent-identity-ui` marked completed in `ACTIVE_LOCKS.yaml`.
+- next: open PR and auto-merge after standard checks pass.

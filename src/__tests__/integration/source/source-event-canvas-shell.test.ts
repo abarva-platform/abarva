@@ -138,7 +138,7 @@ describe('Source event canvas shell', () => {
     });
     const html = renderToStaticMarkup(page);
 
-    expect(html).toContain('Sentinel source event canvas');
+    expect(html).toContain('Nexus source event canvas');
     expect(html).toContain('Agent-led Source event workspace');
     expect(html).toContain('Live Source event reasoning pane');
     expect(html).toContain('Contextual prompts');
@@ -146,6 +146,7 @@ describe('Source event canvas shell', () => {
     expect(html).toContain('Nexus guidance');
     expect(html).toContain('Deterministic guidance only');
     expect(html).toContain('Scope stage workspace');
+    expect(html).not.toContain('Sentinel source event canvas');
   });
 
   it('labels Source event action affordances as Nexus prompt actions', async () => {

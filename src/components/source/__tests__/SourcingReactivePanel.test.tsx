@@ -107,13 +107,15 @@ describe('selectVisibleSourcingArtifacts', () => {
 });
 
 describe('SourcingReactivePanel', () => {
-  it('renders Sentinel-specific empty-state prompts', () => {
+  it('renders Nexus-specific empty-state prompts', () => {
     const html = renderToStaticMarkup(createElement(SourcingReactivePanel, { artifacts: [] }));
 
-    expect(html).toContain('Sentinel sourcing reasoning - live');
+    expect(html).toContain('Nexus sourcing reasoning - live');
+    expect(html).toContain('Ask Nexus to compare vendors');
     expect(html).toContain('Compare vendors');
     expect(html).toContain('Run BAFO check');
     expect(html).toContain('walkaway');
+    expect(html).not.toContain('Ask Sentinel');
   });
 
   it('renders Sourcing cards without route wiring', () => {
