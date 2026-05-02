@@ -382,7 +382,9 @@ export async function completeDeliverable(
         title,
         status: input.signOff === false ? 'draft' : 'signed_off',
         current_version: 1,
-        created_by: 'nexus',
+        // Actor fields should identify the signed-in user/person. Nexus
+        // authorship is recorded in structured provenance below.
+        created_by: ctx.userId,
         signed_off_by: input.signOff === false ? null : ctx.userId,
         signed_off_at: input.signOff === false ? null : now,
       })
@@ -405,6 +407,7 @@ export async function completeDeliverable(
           ...(input.structuredData ?? {}),
           module_key: input.moduleKey ?? null,
           completed_by_tool: true,
+          generated_by_agent: 'Nexus',
           signed_off: input.signOff !== false,
         },
         quality_issues: input.provenanceMap ? { provenance_map: input.provenanceMap } : null,
