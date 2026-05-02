@@ -407,3 +407,24 @@ Append-only coordination log for active Codex sessions.
 - validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only.
 - lock: `source-event-agent-identity-ui` marked completed in `ACTIVE_LOCKS.yaml`.
 - next: open PR and auto-merge after standard checks pass.
+
+## 2026-05-02T17:16:00-05:00 - codex-source-portfolio-artifact-identity-polish
+
+- status: in-progress
+- branch: `codex/source-portfolio-artifact-identity-polish`
+- worktree: `/Users/anand/Projects/nexus-source-capability-e2e`
+- scope: narrow Source UI/copy polish to align remaining portfolio reactive card and artifact drawer prompt language to Nexus after event-canvas identity polish
+- locks: `source-portfolio-artifact-identity-ui`
+- guardrail: no Programs/Intelligence/Tower files and no Source lifecycle, persistence, gate, API, or data-plane logic
+
+## 2026-05-02T17:24:00-05:00 - codex-source-portfolio-artifact-identity-polish
+
+- status: validation-local-passed
+- shipped: Source portfolio reactive cards now use Nexus labels, and Source artifact drawer custom prompt copy now says Ask Nexus instead of Ask Sentinel.
+- validation: focused Source artifact drawer and portfolio reactive panel Jest passed, 2 suites / 13 tests.
+- validation: full Source integration Jest passed, 70 suites / 753 tests.
+- validation: targeted ESLint passed for `SourceArtifactDrawer`, `SourcePortfolioReactivePanel`, and updated Source tests.
+- validation: `npx tsc --noEmit --pretty false` passed.
+- validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only.
+- lock: `source-portfolio-artifact-identity-ui` marked completed in `ACTIVE_LOCKS.yaml`.
+- next: open PR and auto-merge after standard checks pass.
