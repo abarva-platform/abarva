@@ -119,3 +119,26 @@ Append-only coordination log for active Codex sessions.
 - validation: targeted `npm run lint -- ...` passed for metric corpus, tenant metric fixtures/upload parser, upload API, and tests
 - validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning
 - next: open PR and auto-merge after standard checks pass
+
+## 2026-05-02T14:15:00-05:00 - codex-tenant-metric-persistence
+
+- status: in-progress
+- branch: `codex/tenant-metric-persistence`
+- worktree: `/private/tmp/nexus-tenant-metrics-persistence`
+- handoff_digest: Setup AI Initiatives and Tower redesign briefs read; this slice stays on Setup Metrics/private data-plane substrate and defers Tower redesign until Intel stability criteria are met
+- scope: persist accepted Setup KPI uploads and demo current-state metric fixtures into tenant-private schemas; add isolation tests and loader script
+- sequencing_rationale: current-state KPI observations must be private-plane persisted before agents can truthfully claim client standing or Setup-uploaded KPI data is loaded
+- locks: `tenant-metric-private-plane-schema`, `setup-metric-upload-persistence`, `demo-tenant-kpi-loader`
+- guardrail: no Source API, Source lifecycle, Source stage, auth roster, or Tower redesign files touched in this slice
+
+## 2026-05-02T14:46:00-05:00 - codex-tenant-metric-persistence
+
+- status: validation-and-live-load-passed
+- migration_live: applied `20260502165000_private_tenant_metric_observations.sql` only; broader migration dry-run still shows unrelated historical pending migrations, so they were not run
+- live_seed: `npm run db:seed:tenant-metrics` persisted 12 observations each for Apex Retail, Meridian Health, and First Capital
+- live_db_verification: private schemas `client_apex_retail_private`, `client_meridian_health_private`, and `client_first_capital_private` each contain 12 metric observations, 1 measurement gap, 1 batch; `public.tenant_metric_observations` and `public.tenant_metric_upload_batches` do not exist
+- validation: focused tenant metric and upload-route Jest passed, 23 tests
+- validation: targeted ESLint passed for upload API, persistence helpers, private-plane registry, loader, and tests
+- validation: `npx tsc --noEmit --pretty false` passed
+- validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning
+- next: open PR and auto-merge after standard checks pass

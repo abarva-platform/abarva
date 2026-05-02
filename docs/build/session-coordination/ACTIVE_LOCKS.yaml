@@ -1,4 +1,4 @@
-updated_at: "2026-05-02T13:58:00-05:00"
+updated_at: "2026-05-02T14:46:00-05:00"
 
 locks:
   - owner: codex-source-e2e-crawler
@@ -46,3 +46,27 @@ locks:
     note: Adds CSV parsing to the existing Setup dataset upload API for metrics/KPI/current-state files.
 
     completed_at: "2026-05-02T13:58:00-05:00"
+
+  - owner: codex-tenant-metric-persistence
+    resource: tenant-metric-private-plane-schema
+    status: completed
+    started_at: "2026-05-02T14:15:00-05:00"
+    expires_at: "2026-05-02T18:00:00-05:00"
+    note: Adds per-client private-schema tables for current-state KPI observations and upload batches.
+    completed_at: "2026-05-02T14:46:00-05:00"
+
+  - owner: codex-tenant-metric-persistence
+    resource: setup-metric-upload-persistence
+    status: completed
+    started_at: "2026-05-02T14:15:00-05:00"
+    expires_at: "2026-05-02T18:00:00-05:00"
+    note: Persists accepted Setup metric/KPI CSV rows into the tenant private schema after parser acceptance.
+    completed_at: "2026-05-02T14:46:00-05:00"
+
+  - owner: codex-tenant-metric-persistence
+    resource: demo-tenant-kpi-loader
+    status: completed
+    started_at: "2026-05-02T14:15:00-05:00"
+    expires_at: "2026-05-02T18:00:00-05:00"
+    note: Adds idempotent loader for Apex, Meridian, and First Capital demo current-state KPI fixtures.
+    completed_at: "2026-05-02T14:46:00-05:00"
