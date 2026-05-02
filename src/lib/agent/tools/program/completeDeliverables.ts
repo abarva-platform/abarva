@@ -124,7 +124,7 @@ export const completeDeliverablesTool: AgentTool<CompleteDeliverablesToolInput> 
       throw err;
     }
 
-    const saved: Array<{ deliverable_id: string; version_id: string; deliverable_type_key: string; status: string }> = [];
+    const saved: Array<{ deliverable_id: string; version_id: string | null; deliverable_type_key: string; status: string }> = [];
     for (const deliverable of input.deliverables) {
       const deliverableTypeKey = deliverable.deliverable_type_key?.trim();
       const title = deliverable.title?.trim();
