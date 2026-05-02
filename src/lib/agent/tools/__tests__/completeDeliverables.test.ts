@@ -26,7 +26,11 @@ function makeCtx(surface = '/programs/test-program') {
   return {
     request: new Request('http://localhost/'),
     surface,
-    accessPolicy: { canViewFinancialData: false },
+    accessPolicy: {
+      accessLevel: 'program_user',
+      programIdsAllowed: null,
+      canViewFinancialData: false,
+    },
   };
 }
 
