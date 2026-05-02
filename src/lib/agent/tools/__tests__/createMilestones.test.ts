@@ -1,0 +1,162 @@
+/** create_milestones tool tests */
+
+const requireTenancyMock = jest.fn();
+jest.mock('@/app/api/v1/programs/_auth', () => {
+  class TenancyError extends Error {
+    constructor(public readonly code: 'unauthenticated' | 'no_client') {
+      super(code);
+    }
+  }
+  return {
+    __esModule: true,
+    requireTenancy: (...args: unknown[]) => requireTenancyMock(...args),
+    TenancyError,
+  };
+});
+
+const createMilestoneMock = jest.fn();
+jest.mock('@/lib/programs/mutations', () => ({
+  __esModule: true,
+  createMilestone: (...args: unknown[]) => createMilestoneMock(...args),
+}));
+
+const loadUserProgramAccessPolicyMock = jest.fn();
+jest.mock('@/lib/auth/program-access-policy', () => ({
+  __esModule: true,
+  loadUserProgramAccessPolicy: (...args: unknown[]) =>
+    loadUserProgramAccessPolicyMock(...args),
+}));
+
+import { createMilestonesTool } from '../program/createMilestones';
+
+const tenancy = {
+  clientId: 'client-1',
+  userId: 'person-1',
+  role: 'Director, IT Procurement',
+};
+
+function makeCtx(overrides: Record<string, unknown> = {}) {
+  return {
+    request: new Request('http://localhost/'),
+    surface: '/programs/program-1',
+    ...overrides,
+  };
+}
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  requireTenancyMock.mockResolvedValue(tenancy);
+  loadUserProgramAccessPolicyMock.mockResolvedValue({
+    programIdsAllowed: null,
+    canCreatePrograms: false,
+    canApproveGates: true,
+    canPublishDeliverables: false,
+    canViewFinancialData: false,
+  });
+  createMilestoneMock
+    .mockResolvedValueOnce('milestone-1')
+    .mockResolvedValueOnce('milestone-2');
+});
+
+describe('create_milestones tool', () => {
+  it('creates structured P4 milestone rows for a roadmap gate', async () => {
+    const result = await createMilestonesTool.handler(
+      {
+        program_id: 'program-1',
+        milestones: [
+          {
+            name: 'Tower-grain baseline confirmed',
+            description:
+              'Owner: Priya Iyer. Dependency: shadow IT supplement. Decision: proceed to BAFO. Evidence: asset registry.',
+            phase_number: 4,
+          },
+          {
+            name: 'BAFO vendor selected',
+            description:
+              'Owner: Maya Desai. Dependency: baseline confirmed. Decision: sponsor accepts scorecard.',
+            module_key: 'execution_roadmap',
+          },
+        ],
+      },
+      makeCtx(),
+    );
+
+    expect(result.success).toBe(true);
+    expect(createMilestoneMock).toHaveBeenCalledTimes(2);
+    expect(createMilestoneMock).toHaveBeenNthCalledWith(
+      1,
+      tenancy,
+      'program-1',
+      expect.objectContaining({
+        name: 'Tower-grain baseline confirmed',
+        phaseNumber: 4,
+        moduleKey: 'execution_roadmap',
+      }),
+    );
+    if (result.success) {
+      expect(result.data).toMatchObject({
+        program_id: 'program-1',
+        milestone_count: 2,
+      });
+    }
+  });
+
+  it('refuses milestone writes when the user has no write authority', async () => {
+    loadUserProgramAccessPolicyMock.mockResolvedValue({
+      programIdsAllowed: ['program-1'],
+      canCreatePrograms: false,
+      canApproveGates: false,
+      canPublishDeliverables: false,
+      canViewFinancialData: false,
+    });
+
+    const result = await createMilestonesTool.handler(
+      {
+        program_id: 'program-1',
+        milestones: [{ name: 'Milestone' }],
+      },
+      makeCtx(),
+    );
+
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe('milestone_write_forbidden');
+    expect(createMilestoneMock).not.toHaveBeenCalled();
+  });
+
+  it('uses route-provided access policy when present', async () => {
+    const result = await createMilestonesTool.handler(
+      {
+        program_id: 'program-1',
+        milestones: [{ name: 'Milestone' }],
+      },
+      makeCtx({
+        accessPolicy: {
+          accessLevel: 'client_admin',
+          programIdsAllowed: null,
+          canCreatePrograms: true,
+          canApproveGates: true,
+          canPublishDeliverables: true,
+          canViewFinancialData: false,
+        },
+      }),
+    );
+
+    expect(result.success).toBe(true);
+    expect(loadUserProgramAccessPolicyMock).not.toHaveBeenCalled();
+    expect(createMilestoneMock).toHaveBeenCalled();
+  });
+
+  it('rejects empty milestone batches before resolving tenancy', async () => {
+    const result = await createMilestonesTool.handler(
+      {
+        program_id: 'program-1',
+        milestones: [],
+      },
+      makeCtx(),
+    );
+
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error).toBe('milestones_required');
+    expect(requireTenancyMock).not.toHaveBeenCalled();
+  });
+});
