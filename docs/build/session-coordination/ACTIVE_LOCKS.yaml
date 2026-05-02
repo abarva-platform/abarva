@@ -1,4 +1,4 @@
-updated_at: "2026-05-02T11:04:48-05:00"
+updated_at: "2026-05-02T13:58:00-05:00"
 
 locks:
   - owner: codex-source-e2e-crawler
@@ -21,3 +21,28 @@ locks:
     started_at: "2026-05-02T11:04:48-05:00"
     expires_at: "2026-05-02T14:00:00-05:00"
     note: Adds PAT-MET schema, initial tier-1 records, validation, and corpus loader integration.
+
+  - owner: codex-knowledge-layer-metric-expansion
+    resource: metrics-corpus-tier1-expansion
+    status: completed
+    started_at: "2026-05-02T13:35:00-05:00"
+    expires_at: "2026-05-02T18:00:00-05:00"
+    note: Expands PAT-MET tier-1 records across retail, healthcare IDN, and financial services.
+    completed_at: "2026-05-02T13:58:00-05:00"
+
+  - owner: codex-knowledge-layer-metric-expansion
+    resource: tenant-reference-metrics-fixtures
+    status: completed
+    started_at: "2026-05-02T13:35:00-05:00"
+    expires_at: "2026-05-02T18:00:00-05:00"
+    note: Adds demo tenant current-state KPI observations and metric-gap views for Apex, Meridian, and First Capital.
+    completed_at: "2026-05-02T13:58:00-05:00"
+
+  - owner: codex-knowledge-layer-metric-expansion
+    resource: setup-metric-upload-parser
+    status: completed
+    started_at: "2026-05-02T13:35:00-05:00"
+    expires_at: "2026-05-02T18:00:00-05:00"
+    note: Adds CSV parsing to the existing Setup dataset upload API for metrics/KPI/current-state files.
+
+    completed_at: "2026-05-02T13:58:00-05:00"
