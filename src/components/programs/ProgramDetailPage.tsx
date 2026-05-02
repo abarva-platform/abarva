@@ -118,6 +118,12 @@ export interface ProgramDetailPageProps {
    */
   phase0Primer?: ArchetypePrimer | null;
   /**
+   * Durable cards derived server-side from the database. These seed the
+   * right rail before any new chat artifacts stream so phase receipts
+   * survive refresh and session resume.
+   */
+  initialNexusArtifacts?: NexusArtifact[];
+  /**
    * CB-8 · whether the session has a real tenant binding. Resolved
    * server-side from `getCurrentUser().defaultClientId`. Threaded into
    * AppShell so the 4-mode toggle can correctly disable Tenant / Full
@@ -3816,6 +3822,7 @@ export function ProgramDetailPage({
   timelineFilters,
   preservedSearchParams,
   phase0Primer,
+  initialNexusArtifacts = [],
   hasTenantKey = false,
 }: ProgramDetailPageProps) {
   const router = useRouter();
@@ -3873,7 +3880,17 @@ export function ProgramDetailPage({
   // existing static phase/gate/evidence regions. Subsequent PRs
   // progressively replace the static regions with reactive equivalents
   // driven by the same channel.
-  const [nexusArtifacts, setNexusArtifacts] = useState<NexusArtifact[]>([]);
+  const [nexusArtifacts, setNexusArtifacts] = useState<NexusArtifact[]>(initialNexusArtifacts);
+  useEffect(() => {
+    setNexusArtifacts((prev) => {
+      const merged = [...initialNexusArtifacts];
+      for (const artifact of prev) {
+        const key = JSON.stringify(artifact);
+        if (!merged.some((item) => JSON.stringify(item) === key)) merged.push(artifact);
+      }
+      return merged;
+    });
+  }, [initialNexusArtifacts]);
   const handleNexusArtifact = useCallback(
     (artifact: NexusArtifact) => {
       setNexusArtifacts((prev) => {

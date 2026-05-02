@@ -15,6 +15,7 @@ import { getActiveClientRow } from '@/lib/active-client';
 import { requireTenancy } from '@/lib/auth/tenancy';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
 import { formatSourceFinancialValue } from '@/lib/source/financial-display';
+import { canonicalClientDisplayName } from '@/lib/client-config';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,12 +37,15 @@ export default async function SourceEventsPage({
   const pendingEvents = sourceAccessPolicy?.canApproveSourceStages && activeClient
     ? await getPendingSourceEvents(activeClient.key)
     : [];
+  const activeClientDisplayName =
+    canonicalClientDisplayName({ key: activeClient?.key, name: activeClient?.name }) ??
+    'AbarVa Client';
 
   return (
     <AppShell
       surface="source"
       topBarProps={{
-        tenantName: activeClient?.name ?? 'AbarVa Client',
+        tenantName: activeClientDisplayName,
         showLocked: true,
         context: 'Source · Events portfolio',
       }}

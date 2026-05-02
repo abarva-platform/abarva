@@ -2,6 +2,8 @@ import {
   getRouteById,
   getRoutesBySurface,
 } from '@/lib/routes/registry';
+import fs from 'node:fs';
+import path from 'node:path';
 
 describe('Setup canonical route registry parity', () => {
   it('registers /admin as the canonical Setup operator entry', () => {
@@ -77,5 +79,15 @@ describe('Setup canonical route registry parity', () => {
     expect(adminRoutes).not.toContain('/platform/admin/connectors');
     expect(adminRoutes).not.toContain('/platform/admin/users');
     expect(adminRoutes).not.toContain('/platform/admin/audit');
+  });
+
+  it('keeps /setup as a thin compatibility bridge to the canonical /admin setup control plane', () => {
+    const source = fs.readFileSync(
+      path.join(process.cwd(), 'src/app/setup/page.tsx'),
+      'utf8',
+    );
+
+    expect(source).toContain("redirect('/admin')");
+    expect(source).not.toContain('AdminCanonShellV2');
   });
 });

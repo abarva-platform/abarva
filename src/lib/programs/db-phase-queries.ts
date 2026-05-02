@@ -52,6 +52,30 @@ export interface EngagementPhaseData {
     observed_at: string | null;
     created_at: string;
   }>;
+  programEvidenceItems: Array<{
+    id: string;
+    phase: number | null;
+    evidence_type: string;
+    title: string;
+    summary: string;
+    confidence: number | string | null;
+    created_at: string;
+  }>;
+  deliverables: Array<{
+    id: string;
+    deliverable_type_key: string;
+    title: string | null;
+    status: string | null;
+    updated_at: string | null;
+  }>;
+  auditLogs: Array<{
+    id: string;
+    action: string;
+    from_state: string | null;
+    to_state: string | null;
+    rationale: string | null;
+    created_at: string;
+  }>;
   gateApprovals: Array<{
     id: string;
     action: string;
@@ -163,9 +187,35 @@ export async function getEngagementWithPhaseData(
       .select('module_key, status')
       .eq('engagement_id', engagementId);
 
+    const [{ data: programEvidenceItems }, { data: deliverables }, { data: auditLogs }] =
+      await Promise.all([
+        supabase
+          .from('program_evidence_items')
+          .select('id, phase, evidence_type, title, summary, confidence, created_at')
+          .eq('program_id', engagementId)
+          .order('created_at', { ascending: false })
+          .limit(20),
+        supabase
+          .from('deliverables_v2')
+          .select('id, deliverable_type_key, title, status, updated_at')
+          .eq('engagement_id', engagementId)
+          .order('updated_at', { ascending: false })
+          .limit(20),
+        supabase
+          .from('program_audit_log')
+          .select('id, action, from_state, to_state, rationale, created_at')
+          .eq('engagement_id', engagementId)
+          .order('created_at', { ascending: false })
+          .limit(20),
+      ]);
+
     return {
       engagement: engagementRow,
       evidence: (evidence as EngagementPhaseData['evidence'] | null) ?? [],
+      programEvidenceItems:
+        (programEvidenceItems as EngagementPhaseData['programEvidenceItems'] | null) ?? [],
+      deliverables: (deliverables as EngagementPhaseData['deliverables'] | null) ?? [],
+      auditLogs: (auditLogs as EngagementPhaseData['auditLogs'] | null) ?? [],
       gateApprovals,
       modules: (modules as EngagementPhaseData['modules'] | null) ?? [],
     };

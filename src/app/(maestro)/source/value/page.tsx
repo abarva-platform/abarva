@@ -7,6 +7,7 @@ import { getActiveClientRow } from '@/lib/active-client';
 import { requireTenancy } from '@/lib/auth/tenancy';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
 import { redactSourceFinancialText } from '@/lib/source/financial-display';
+import { canonicalClientDisplayName } from '@/lib/client-config';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +21,9 @@ export default async function SourceValuePage() {
     ? await loadUserSourceAccessPolicy(tenancy, { activeClientKey: activeClient.key }).catch(() => null)
     : null;
   const canViewFinancialValues = sourceAccessPolicy?.canViewFinancialData === true;
+  const activeClientDisplayName =
+    canonicalClientDisplayName({ key: activeClient?.key, name: activeClient?.name }) ??
+    'AbarVa Client';
   const quote = redactSourceFinancialText(
     '$2.1M sourcing-attributed value confirmed · $890K asserted by vendors, pending audit. AMS contributes $1.4M of confirmed total.',
     canViewFinancialValues,
@@ -29,14 +33,14 @@ export default async function SourceValuePage() {
     <AppShell
       surface="source"
       topBarProps={{
-        tenantName: activeClient?.name ?? 'AbarVa Client',
+        tenantName: activeClientDisplayName,
         showLocked: true,
         context: 'Source · Value ledger',
       }}
     >
       <SentinelAgentColumn
         quote={quote}
-        agentContext={`Sentinel · Source value ledger · ${activeClient?.name ?? 'active client'}`}
+        agentContext={`Sentinel · Source value ledger · ${activeClientDisplayName}`}
         actions={[
           { letter: 'A', text: 'Show assumptions', detail: 'Value projections and their evidence basis' },
           { letter: 'B', text: 'Show evidence gaps', detail: 'Value claims missing audit confirmation' },

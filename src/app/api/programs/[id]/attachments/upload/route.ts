@@ -34,6 +34,7 @@ import {
   buildStoragePath,
   recordAttachmentUpload,
   type AttachmentRecord,
+  type AttachmentScanStatus,
 } from '@/lib/programs/attachments';
 import {
   isAllowedMimeType,
@@ -44,8 +45,7 @@ import { requireTenancy, tenancyErrorResponse } from '@/app/api/v1/programs/_aut
 import { clientKeyToBrokerTenantKey } from '@/lib/agent/tools/intelligence/_shared';
 import { getActiveClientRow } from '@/lib/active-client';
 import {
-  evidenceForUnsupportedAttachment,
-  extractProgramEvidenceFromText,
+  extractProgramEvidenceFromUploadBuffer,
   recordProgramEvidence,
 } from '@/lib/programs/evidence-ingestion';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
@@ -57,6 +57,15 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 const STORAGE_BUCKET = 'program-attachments';
+const SYNCHRONOUS_EVIDENCE_MIME_TYPES = new Set([
+  'text/plain',
+  'text/markdown',
+  'text/csv',
+  'application/json',
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+]);
 
 function jsonError(
   status: number,
@@ -215,6 +224,16 @@ export async function POST(
     return jsonError(500, 'storage_upload_failed', uploadError.message);
   }
 
+  const synchronousEvidence = SYNCHRONOUS_EVIDENCE_MIME_TYPES.has(mimeType);
+  const initialScanStatus: AttachmentScanStatus = synchronousEvidence ? 'skipped' : 'pending';
+  const initialScanFindings = synchronousEvidence
+    ? {
+        reason: 'synchronous_evidence_extraction_only',
+        detail:
+          'Evidence was extracted during upload; no malware scanner is wired in this synchronous path.',
+      }
+    : null;
+
   // Persist metadata. On failure, best-effort cleanup of the orphaned
   // bucket object so we don't leave dead bytes behind.
   let record: AttachmentRecord;
@@ -231,6 +250,8 @@ export async function POST(
       sizeBytes: file.size,
       sha256,
       storagePath,
+      scanStatus: initialScanStatus,
+      scanFindings: initialScanFindings,
     });
   } catch (err) {
     await sb.storage.from(STORAGE_BUCKET).remove([storagePath]).catch(() => undefined);
@@ -247,18 +268,11 @@ export async function POST(
   let evidenceParseMethod: string | null = null;
   let evidenceWarnings: string[] = [];
   try {
-    const textual =
-      mimeType === 'text/plain' ||
-      mimeType === 'text/markdown' ||
-      mimeType === 'text/csv' ||
-      mimeType === 'application/json';
-    const evidence = textual
-      ? extractProgramEvidenceFromText({
-          filename,
-          mimeType,
-          text: buffer.toString('utf-8'),
-        })
-      : evidenceForUnsupportedAttachment({ filename, mimeType });
+    const evidence = await extractProgramEvidenceFromUploadBuffer({
+      filename,
+      mimeType,
+      buffer,
+    });
     evidenceParseMethod = evidence.extractedStructured.parse_method;
     evidenceWarnings = evidence.extractedStructured.warnings;
     evidenceId = await recordProgramEvidence(ctx, {

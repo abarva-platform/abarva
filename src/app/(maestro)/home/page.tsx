@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
-import { HomeIndexPage, type HomeProgramRow } from '@/components/home/HomeIndexPage';
+import { HomeIndexPage } from '@/components/home/HomeIndexPage';
+import type { HomeProgramRow } from '@/components/home/HomeIndexPage';
 import { getActiveClientRow } from '@/lib/active-client';
 import { buildReasoningDashboardSummary } from '@/lib/reasoning/dashboard-summary';
 import { getCurrentUser } from '@/lib/auth/current-user';
@@ -7,6 +8,7 @@ import { getCurrentModuleAccess } from '@/lib/auth/server-module-access';
 import { getProgramPortfolio } from '@/lib/programs/queries';
 import { PHASE_LABEL_MAP } from '@/lib/programs/programs-fixture';
 import type { ProgramPhaseId } from '@/lib/programs/programs-types';
+import { canonicalClientDisplayName } from '@/lib/client-config';
 
 export const metadata: Metadata = { title: 'Home · AbarVa' };
 export const dynamic = 'force-dynamic';
@@ -14,6 +16,9 @@ export const revalidate = 0;
 
 export default async function HomePage() {
   const activeClient = await getActiveClientRow().catch(() => null);
+  const activeClientDisplayName =
+    canonicalClientDisplayName({ key: activeClient?.key, name: activeClient?.name }) ??
+    'AbarVa Client';
   const moduleAccess = await getCurrentModuleAccess();
   const reasoning = buildReasoningDashboardSummary();
   let livePrograms: HomeProgramRow[] = [];
@@ -49,7 +54,7 @@ export default async function HomePage() {
 
   return (
     <HomeIndexPage
-      activeTenantName={activeClient?.name ?? 'AbarVa Client'}
+      activeTenantName={activeClientDisplayName}
       hasTenantKey={Boolean(activeClient)}
       moduleAccess={moduleAccess.access}
       reasoning={reasoning}

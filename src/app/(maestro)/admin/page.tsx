@@ -33,6 +33,7 @@ import { SetupAdminLanding } from '@/components/admin/setup/SetupAdminLanding';
 import { SetupLandingTelemetryBridge } from '@/components/admin/setup/SetupLandingTelemetryBridge';
 import { DataLandscapeTable } from '@/components/admin/setup/DataLandscapeTable';
 import { getApprovalQueueForTenant } from '@/lib/programs/approval';
+import { canonicalClientDisplayName } from '@/lib/client-config';
 
 export const metadata = { title: 'Setup · AbarVa' };
 export const dynamic = 'force-dynamic';
@@ -40,6 +41,9 @@ export const revalidate = 0;
 
 export default async function AdminOverviewPage() {
   const activeClient = await getActiveClientRow().catch(() => null);
+  const activeClientDisplayName =
+    canonicalClientDisplayName({ key: activeClient?.key, name: activeClient?.name }) ??
+    'Apex Retail Group';
   // Fall back to apexretail so authored content always matches the top bar
   // (which also hard-codes Apex Retail Group when no row is found).
   const clientKey = activeClient?.key ?? 'apexretail';
@@ -63,7 +67,7 @@ export default async function AdminOverviewPage() {
   const complianceSegment = snapshot?.segments.find((s) => s.segmentId === 'compliance');
 
   return (
-    <AdminCanonShellV2 agentRail={<SetupChatRail />} tenantName={activeClient?.name ?? 'Apex Retail Group'}>
+    <AdminCanonShellV2 agentRail={<SetupChatRail />} tenantName={activeClientDisplayName}>
       <SetupAdminLanding
         content={content}
         segmentRollups={snapshot?.segments ?? []}

@@ -22,6 +22,20 @@ INSERT INTO deliverable_types (
 )
 VALUES
   (
+    'origination_brief',
+    'Origination Brief',
+    'P0 seed handoff artifact containing problem trigger, sponsor candidate, value hypothesis, scope boundary, classification, first evidence family, and Discovery stop condition.',
+    ARRAY[0],
+    ARRAY['analytics_modernization', 'ai_governance_implementation', 'vendor_consolidation_ai'],
+    '{"sections":[{"key":"trigger","title":"Trigger and Urgency","required":true},{"key":"value_hypothesis","title":"Value Hypothesis Seed","required":true},{"key":"sponsor","title":"Sponsor Candidate and Decision Rights","required":true},{"key":"scope_boundary","title":"Initial Scope Boundary","required":true},{"key":"classification","title":"Program Classification","required":true},{"key":"p1_handoff","title":"P1 Evidence Family and Stop Condition","required":true}]}'::jsonb,
+    '{"engagement":["program_trigger","sponsor_candidate","target_outcome","scope_boundary","classification","first_evidence_request"]}'::jsonb,
+    '{"dimensions":[{"name":"specificity","weight":30},{"name":"sponsor_authority","weight":25},{"name":"value_mechanism","weight":25},{"name":"p1_handoff_clarity","weight":20}]}'::jsonb,
+    'Draft the P0 origination brief. Make the seed concrete enough for Discovery: problem trigger, target cohort, value mechanism, sponsor candidate, classification, first evidence request, and stop condition. Do not present P0 as proof of the problem.',
+    'markdown',
+    1,
+    'pilot'
+  ),
+  (
     'approval_packet',
     'Approval Packet',
     'Funding and mobilization approval packet assembled for sponsor or executive review.',

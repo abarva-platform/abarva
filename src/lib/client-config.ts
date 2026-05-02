@@ -16,8 +16,8 @@ export const ALL_CLIENTS: ClientOption[] = [
   },
   {
     id: 'arcturus',
-    name: 'Arcturus Financial Group',
-    shortName: 'Arcturus Financial',
+    name: 'First Capital Financial',
+    shortName: 'First Capital',
     color: '#818CF8',
     vertical: 'Financial Services',
   },
@@ -77,6 +77,29 @@ export function isClientKey(value: string | null | undefined): value is ClientKe
 
 export function getClientOption(id: string | null | undefined): ClientOption {
   return ALL_CLIENTS.find((client) => client.id === id) ?? ALL_CLIENTS[0];
+}
+
+export function canonicalClientDisplayName(args: {
+  key?: string | null;
+  name?: string | null;
+}): string | null {
+  const key = args.key?.trim().toLowerCase();
+  const name = args.name?.trim();
+  const normalizedName = name?.toLowerCase();
+
+  if (
+    key === 'arcturus' ||
+    key === 'firstcapital' ||
+    key === 'first-capital' ||
+    normalizedName === 'arcturus financial group' ||
+    normalizedName === 'arcturus financial'
+  ) {
+    return 'First Capital Financial';
+  }
+
+  if (name) return name;
+  const option = getClientOption(args.key);
+  return option?.name ?? null;
 }
 
 export function inferClientKeyFromEmail(email: string | null | undefined): ClientKey | null {

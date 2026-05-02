@@ -23,6 +23,7 @@ import {
 } from '@/lib/admin/setup-acts-registry';
 import { getSegmentRecordPage } from '@/lib/admin/setup-data-broker';
 import { headers } from 'next/headers';
+import { canonicalClientDisplayName } from '@/lib/client-config';
 
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { SetupChatRail } from '@/components/admin/SetupChatRail';
@@ -49,6 +50,9 @@ export default async function AdminSegmentPage({ params }: PageProps) {
   if (!reference) notFound();
 
   const activeClient = await getActiveClientRow().catch(() => null);
+  const activeClientDisplayName =
+    canonicalClientDisplayName({ key: activeClient?.key, name: activeClient?.name }) ??
+    'Apex Retail Group';
   const clientKey = activeClient?.key ?? 'apexretail';
   const brokerTenantKey = clientKeyToInventorySubstrateKey(clientKey);
   const page = brokerTenantKey
@@ -62,7 +66,7 @@ export default async function AdminSegmentPage({ params }: PageProps) {
   const cameFromLanding = /\/admin(\/|\?|$)/.test(referer) && !/\/admin\/segments\//.test(referer);
 
   return (
-    <AdminCanonShellV2 agentRail={<SetupChatRail />} tenantName={activeClient?.name ?? 'Apex Retail Group'}>
+    <AdminCanonShellV2 agentRail={<SetupChatRail />} tenantName={activeClientDisplayName}>
       <SegmentDetailPage
         reference={reference}
         rollup={page?.rollup ?? null}

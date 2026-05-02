@@ -19,7 +19,7 @@ import {
 import { getActiveClientRow } from '@/lib/active-client';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { getProgramPortfolio } from '@/lib/programs/queries';
-import type { ClientKey } from '@/lib/client-config';
+import { canonicalClientDisplayName, type ClientKey } from '@/lib/client-config';
 
 export const metadata = {
   title: 'Users & Access | Nexus Admin',
@@ -51,7 +51,9 @@ async function loadProvisionProgramOptions(): Promise<{
 }> {
   const activeClient = await getActiveClientRow();
   const tenantSlug = activeClient ? ADMIN_TENANT_SLUG_BY_CLIENT_KEY[activeClient.key] ?? 'apex-retail' : 'apex-retail';
-  const tenantName = activeClient?.name ?? 'Active client';
+  const tenantName =
+    canonicalClientDisplayName({ key: activeClient?.key, name: activeClient?.name }) ??
+    'Active client';
   if (!activeClient) {
     return { tenantName, tenantSlug, programs: [] };
   }

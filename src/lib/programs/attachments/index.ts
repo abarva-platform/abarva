@@ -41,6 +41,8 @@ export interface CreateAttachmentInput {
   sizeBytes: number;
   sha256: string;
   storagePath: string;
+  scanStatus?: AttachmentScanStatus;
+  scanFindings?: Record<string, unknown> | null;
 }
 
 interface AttachmentRow {
@@ -65,6 +67,14 @@ interface AttachmentRow {
 
 const SELECT_COLUMNS =
   'id, tenant_key, program_id, phase, step_id, deliverable_id, original_name, storage_path, uploader_user_id, mime_type, size_bytes, sha256, scan_status, scan_findings, redaction_state, created_at, deleted_at';
+
+const VALID_SCAN_STATUSES = new Set<AttachmentScanStatus>([
+  'pending',
+  'clean',
+  'infected',
+  'errored',
+  'skipped',
+]);
 
 function rowToRecord(row: AttachmentRow): AttachmentRecord {
   const sizeBytes =
@@ -114,6 +124,9 @@ function validateInput(input: CreateAttachmentInput): void {
   ) {
     throw new Error(`[attachments] phase ${input.phase} must be an integer in [0,6]`);
   }
+  if (input.scanStatus && !VALID_SCAN_STATUSES.has(input.scanStatus)) {
+    throw new Error(`[attachments] scanStatus "${input.scanStatus}" is not valid`);
+  }
 }
 
 /**
@@ -122,7 +135,8 @@ function validateInput(input: CreateAttachmentInput): void {
  * for the actual storage upload (handled by the OV2-4b upload API).
  *
  * Returns the inserted row with defaults populated (`scan_status:
- * 'pending'`, `redaction_state: 'none'`, `created_at` server-side).
+ * 'pending'` unless explicitly supplied, `redaction_state: 'none'`,
+ * `created_at` server-side).
  */
 export async function recordAttachmentUpload(
   input: CreateAttachmentInput,
@@ -143,6 +157,12 @@ export async function recordAttachmentUpload(
       mime_type: input.mimeType,
       size_bytes: input.sizeBytes,
       sha256: input.sha256,
+      ...(input.scanStatus
+        ? {
+            scan_status: input.scanStatus,
+            scan_findings: input.scanFindings ?? null,
+          }
+        : {}),
     })
     .select(SELECT_COLUMNS)
     .single();

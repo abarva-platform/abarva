@@ -25,6 +25,8 @@ import {
 import {
   ALL_CLIENTS,
   DEFAULT_CLIENT_KEY,
+  canonicalClientDisplayName,
+  getClientOption,
   inferClientKeyFromEmail,
   industryCodeForClientName,
   isClientKey,
@@ -346,6 +348,29 @@ describe('Probe 5b · industryCodeForClientName', () => {
     expect(industryCodeForClientName('Unknown Client')).toBeNull();
     expect(industryCodeForClientName('')).toBeNull();
     expect(industryCodeForClientName(null)).toBeNull();
+  });
+});
+
+// =====================================================================
+// Probe 5c · First Capital display canonicalization
+// =====================================================================
+
+describe('Probe 5c · canonicalClientDisplayName', () => {
+  it('keeps the internal arcturus key compatible while rendering First Capital to users', () => {
+    expect(getClientOption('arcturus').name).toBe('First Capital Financial');
+    expect(canonicalClientDisplayName({ key: 'arcturus' })).toBe('First Capital Financial');
+    expect(
+      canonicalClientDisplayName({
+        key: 'arcturus',
+        name: 'Arcturus Financial Group',
+      }),
+    ).toBe('First Capital Financial');
+    expect(
+      canonicalClientDisplayName({
+        key: 'first-capital',
+        name: 'Arcturus Financial',
+      }),
+    ).toBe('First Capital Financial');
   });
 });
 
