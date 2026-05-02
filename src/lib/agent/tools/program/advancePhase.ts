@@ -59,6 +59,16 @@ interface AdvancePhaseInput {
   self_approve_if_authorized?: boolean;
 }
 
+function formatAdvanceError(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === 'string') return err;
+  try {
+    return JSON.stringify(err);
+  } catch {
+    return String(err);
+  }
+}
+
 export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
   name: 'advance_phase',
   description:
@@ -151,7 +161,7 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
     try {
       gate = await evaluateGate(tenancy, input.program_id, fromPhase, input.to_phase);
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
+      const message = formatAdvanceError(err);
       return {
         success: false,
         error: `gate_eval_failed: ${message}`,
@@ -271,7 +281,7 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
         },
       };
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
+      const message = formatAdvanceError(err);
       return {
         success: false,
         error: `advance_failed: ${message}`,
