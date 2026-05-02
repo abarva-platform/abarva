@@ -41,6 +41,19 @@ describe('Source access-control wiring', () => {
     expect(route).not.toContain('NextResponse.redirect');
   });
 
+  it('advances persisted Source events through the DB with client-scoped approval rights', () => {
+    const route = read('src/app/api/v1/source/[eventId]/stage/route.ts');
+
+    expect(route).toContain('loadUserSourceAccessPolicy');
+    expect(route).toContain('canApproveSourceStages');
+    expect(route).toContain(".from('source_events')");
+    expect(route).toContain(".update({");
+    expect(route).toContain('current_stage_key: stageKey');
+    expect(route).toContain("persisted: true");
+    expect(route).toContain('getSourceEventSeed');
+    expect(route).toContain('setStageOverride');
+  });
+
   it('ships the Source participant schema needed for record-scoped users', () => {
     const migration = read('supabase/migrations/20260501170000_source_access_control.sql');
 
