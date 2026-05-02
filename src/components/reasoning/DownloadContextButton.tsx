@@ -75,8 +75,8 @@ export function DownloadContextButton({ instanceId }: DownloadContextButtonProps
       type="button"
       onClick={handleDownload}
       disabled={state !== 'idle'}
-      title={`Download synthesis context for ${instanceId}`}
-      aria-label={`Download synthesis context JSON for ${instanceId}`}
+      title="Download synthesis context"
+      aria-label="Download synthesis context JSON"
       style={{
         display: 'inline-flex',
         alignItems: 'center',

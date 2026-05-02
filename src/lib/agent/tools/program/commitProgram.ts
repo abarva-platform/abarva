@@ -263,8 +263,9 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
     'tenant admin reviews the brief and either approves (program flips to `approved` and Phase 0 unlocks) ' +
     'or rejects (returns to draft with rationale). Returns the engagement id AND the approval request id. ' +
     'On success, tell the user — in your own words — that the brief has been submitted for approval, ' +
-    'name what happens next (a tenant admin will review and approve before Phase 0 unlocks), and let them ' +
-    'know they can navigate to /programs/<engagement_id> to see the approval-pending state. Do NOT say ' +
+    'name what happens next (a tenant admin will review and approve before Phase 0 unlocks), and say the ' +
+    'new program is visible in the Programs workspace. Do NOT mention raw program IDs, database IDs, UUIDs, ' +
+    'or /programs/<engagement_id> in chat prose. Do NOT say ' +
     '"the program is now active" or "registered" — the program is QUEUED, not running. ' +
     'Call this only after the user says yes to your "Shall I submit this for approval?" question — never ' +
     'speculatively. ' +
