@@ -172,3 +172,14 @@ Append-only coordination log for active Codex sessions.
 - gap_found: Tower handoff panel did not show the newly transitioned E2E events because Tower still filtered only legacy Source stage keys `contract_mobilization` and `value_realization`.
 - fix_started: branch `codex/source-tower-e2e-events` updates Tower handoff filtering to include canonical `transition` and `value` while preserving legacy aliases.
 - validation: focused Tower handoff Jest, targeted ESLint, and TypeScript passed locally.
+
+## 2026-05-02T13:20:00-05:00 - codex-source-e2e-crawler
+
+- status: source-artifact-and-pricing-parser-crawl
+- production_alias: `https://app.abarva.ai`
+- source_event_tested: Apex Retail `8f65a595-de2e-4d33-9f9a-9c1b6db67e51`
+- artifact_generate_verified: generated and persisted Source artifacts for `strategy`, `scope`, `rfp`, `pricing`, `executive_decision`, `transition`, and `value` using `/api/v1/source/:eventId/artifacts/generate`; generated artifacts persisted as markdown with parser/vector/graph states pending by design.
+- artifact_upload_verified: uploaded Markdown scope workshop notes using `/api/v1/source/:eventId/artifacts/upload`; parser created one chunk and structured facts for decision, action item, requirement, risk/gap, metric/baseline, and artifact summary.
+- pricing_upload_verified: uploaded Markdown pricing workbook; parser persisted pricing components but exposed a quality bug by also extracting heading/year numbers as amounts.
+- fix_started: branch `codex/source-pricing-parser-quality` changes text pricing extraction to require an explicit currency marker or magnitude suffix and adds regression coverage so year indexes/headings are not captured as commercial amounts.
+- validation: focused Source text-parser Jest, targeted ESLint, and TypeScript passed locally.
