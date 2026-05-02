@@ -23,6 +23,14 @@ export default async function SourceArtifactPage({
 
   const registryBackedArtifact = !artifact.id.startsWith('artifact-source-');
   const provenanceSource = registryBackedArtifact ? 'source_artifacts registry' : 'deterministic_seed';
+  const eventStageLabels = event.stages.map((stage) => stage.label);
+  const journeyStages = eventStageLabels.includes(event.currentStageLabel)
+    ? eventStageLabels
+    : AMS_SOURCE_EVENT.stages;
+  const activeJourneyStage =
+    event.currentStageLabel === 'Orals/BAFO' && journeyStages.includes('BAFO')
+      ? 'BAFO'
+      : event.currentStageLabel;
 
   return (
     <AppShell
@@ -34,8 +42,8 @@ export default async function SourceArtifactPage({
       }}
       middleStrip={
         <StageTrackerStrip
-          stages={AMS_SOURCE_EVENT.stages}
-          activeStage={event.currentStageLabel === 'Orals/BAFO' ? 'BAFO' : event.currentStageLabel}
+          stages={journeyStages}
+          activeStage={activeJourneyStage}
           variant="journey"
           personaLabel="Sourcing lead"
         />
