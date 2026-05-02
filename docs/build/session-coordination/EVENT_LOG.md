@@ -529,3 +529,25 @@ Append-only coordination log for active Codex sessions.
 - validation: targeted ESLint passed for `ProgramDetailPage` and the updated PROG20 subnav integration test.
 - validation: `npx tsc --noEmit --pretty false` passed.
 - next: run production build, PR, auto-merge after checks pass, wait for Vercel production deployment, then verify live deliverables/archive discoverability in the browser.
+
+## 2026-05-02T19:35:00-05:00 - codex-intelligence-native-submenus
+
+- status: in-progress
+- branch: `codex/intelligence-native-submenus`
+- worktree: `/private/tmp/nexus-intelligence-front`
+- scope: replace `/intelligence` submenu click-through links with native same-page tab/canvas rendering so Today, By function, Patterns, Vendors, Peer activity, My strategy, and Sessions do not route to legacy pages
+- locks: `intelligence-native-submenu-canvas`
+- guardrail: no Programs files, no Source lifecycle/data/API files, and no private-plane schema changes
+
+## 2026-05-02T19:42:00-05:00 - codex-intelligence-native-submenus
+
+- status: validation-local-passed
+- shipped: `/intelligence` submenus now render as native same-page tabs/buttons with a local canvas. Removed legacy submenu route targets from the front-page/native layer for By function, Patterns, Vendors, Peer activity, My strategy, Sessions, and Sentinel session focus.
+- validation: focused Intelligence native interaction + shell Jest passed, 4 suites / 54 tests.
+- validation: targeted ESLint passed for `IntelligenceIndexPage`, `IntelligenceNativeExploreLayer`, the native interaction test, and the updated Intelligence library test.
+- validation: `npx tsc --noEmit --pretty false` passed.
+- validation: source scan found no legacy submenu hrefs or `J0AffordanceLink` usage in `IntelligenceIndexPage` / `IntelligenceNativeExploreLayer`.
+- validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only.
+- browser_note: unauthenticated local browser redirected to client-test sign-in; no demo email/code was entered without fresh action-time approval.
+- lock: `intelligence-native-submenu-canvas` marked completed in `ACTIVE_LOCKS.yaml`.
+- next: commit, push, open PR, and auto-merge after standard checks pass.
