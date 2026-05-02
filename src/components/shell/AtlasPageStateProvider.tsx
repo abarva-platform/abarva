@@ -84,10 +84,13 @@ const DEFAULT_AGENT: Record<string, string> = {
 
 const DEFAULT_AGENT_TURN_TIMEOUT_MS = 90_000;
 const PROGRAMS_AGENT_TURN_TIMEOUT_MS = 210_000;
+const SOURCE_AGENT_TURN_TIMEOUT_MS = 210_000;
 
 function getAgentTurnTimeoutMs(surface: string): number {
   return surface === 'programs' || surface === 'programs-detail' || surface.startsWith('/programs/')
     ? PROGRAMS_AGENT_TURN_TIMEOUT_MS
+    : surface === 'source' || surface === 'source-detail' || surface.startsWith('/source')
+      ? SOURCE_AGENT_TURN_TIMEOUT_MS
     : DEFAULT_AGENT_TURN_TIMEOUT_MS;
 }
 
