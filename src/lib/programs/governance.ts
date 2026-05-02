@@ -209,6 +209,7 @@ export async function evaluateGate(
       latestOriginationVersion?.structured_data ? JSON.stringify(latestOriginationVersion.structured_data) : '',
     ].join('\n').toLowerCase();
   }
+  const p0SeedEvidenceText = [briefString, latestOriginationBriefText].join('\n');
 
   let latestDiscoveryReportText = '';
   if (discoveryReportRow) {
@@ -257,8 +258,8 @@ export async function evaluateGate(
       case 'value_hypothesis_seed': {
         pass =
           hasSignedOriginationBrief &&
-          /\b(problem|trigger|current pain|pain)\b/.test(latestOriginationBriefText) &&
-          /\b(value hypothesis|target outcome|outcome|mechanism)\b/.test(latestOriginationBriefText);
+          /\b(problem|problem_statement|trigger|current pain|pain)\b/.test(p0SeedEvidenceText) &&
+          /\b(value hypothesis|target_outcome|target outcome|outcome|mechanism)\b/.test(p0SeedEvidenceText);
         break;
       }
       case 'charter_drafted': pass = Boolean(charterRow && charterRow.status !== null); break;
@@ -271,7 +272,7 @@ export async function evaluateGate(
             hasSignedOriginationBrief &&
             (
               briefString.includes('sponsor') ||
-              latestOriginationBriefText.includes('sponsor')
+              p0SeedEvidenceText.includes('sponsor')
             )
           );
         break;
@@ -354,10 +355,10 @@ export async function evaluateGate(
           briefString.includes('funding') ||
           briefString.includes('capacity') ||
           briefString.includes('budget') ||
-          latestOriginationBriefText.includes('timeline') ||
-          latestOriginationBriefText.includes('funding') ||
-          latestOriginationBriefText.includes('capacity') ||
-          latestOriginationBriefText.includes('time box');
+          p0SeedEvidenceText.includes('timeline') ||
+          p0SeedEvidenceText.includes('funding') ||
+          p0SeedEvidenceText.includes('capacity') ||
+          p0SeedEvidenceText.includes('time box');
         break;
       case 'initial_scope_boundary':
         pass =
@@ -365,17 +366,17 @@ export async function evaluateGate(
           briefString.includes('cohort') ||
           briefString.includes('internal teams') ||
           briefString.includes('use case') ||
-          latestOriginationBriefText.includes('scope') ||
-          latestOriginationBriefText.includes('cohort') ||
-          latestOriginationBriefText.includes('use case');
+          p0SeedEvidenceText.includes('scope') ||
+          p0SeedEvidenceText.includes('cohort') ||
+          p0SeedEvidenceText.includes('use case');
         break;
       case 'evidence_family_selected':
         pass =
           Boolean(program.archetype) ||
           briefString.includes('evidence') ||
           briefString.includes('dora') ||
-          latestOriginationBriefText.includes('evidence family') ||
-          latestOriginationBriefText.includes('first evidence');
+          p0SeedEvidenceText.includes('evidence family') ||
+          p0SeedEvidenceText.includes('first evidence');
         break;
       default: pass = false;
     }
