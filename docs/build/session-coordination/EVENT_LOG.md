@@ -264,3 +264,24 @@ Append-only coordination log for active Codex sessions.
 - live_verification: Source 11-stage lifecycle crawl passed for Apex Retail, Meridian Health, and First Capital; Tower handoff and pricing parser fixes were rerun live after deployment
 - remaining_gaps_carried_forward: generated artifacts parser/vector/graph pending, evidence-gate hard enforcement not proven, binary parsing not proven, First Capital legacy `arcturus` persistence key, intermittent demo sign-in stall
 - lock: `source-module-e2e-crawler` marked completed in `ACTIVE_LOCKS.yaml`
+
+## 2026-05-02T16:03:00-05:00 - codex-source-atrium-polish
+
+- status: in-progress
+- branch: `codex/source-atrium-polish`
+- worktree: `/Users/anand/Projects/nexus-source-capability-e2e`
+- scope: narrow Source UI/UX polish for Atrium chrome consistency, typography rhythm, agent state clarity, responsive behavior, copy precision, and accessibility; no Source lifecycle/data/API changes
+- locks: `source-atrium-polish-ui`
+- guardrail: do not touch Programs/Intelligence/Tower ownership files or Source data-plane/gate logic; keep changes UI/test scoped unless validation requires otherwise
+
+## 2026-05-02T16:20:00-05:00 - codex-source-atrium-polish
+
+- status: validation-local-passed
+- shipped: Source work dock is now semantic Ask Nexus prompt actions instead of inert visual cards; Source formation rail now exposes artifact/evidence processing receipts so drafts are not confused with parsed, citeable, or approved evidence.
+- validation: focused Source dashboard smoke Jest passed, 5 tests.
+- validation: full Source integration Jest passed, 70 suites / 752 tests.
+- validation: targeted ESLint passed for `SourcePortfolioPage`, `SourcePortfolioAgentCanvas`, and Source dashboard route smoke test.
+- validation: `npx tsc --noEmit --pretty false` passed.
+- validation: `npm run build` passed with the existing `next.config.ts` NFT tracing warning only.
+- lock: `source-atrium-polish-ui` marked completed in `ACTIVE_LOCKS.yaml`.
+- next: open PR and auto-merge after standard checks pass.
