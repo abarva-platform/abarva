@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
 import { ProductDiagram } from "@/components/product/ProductDiagrams";
 import {
   PRODUCT_TAB_BY_KEY,
@@ -14,15 +20,46 @@ function normalizeHash(hash: string): ProductTabKey {
   return PRODUCT_TAB_BY_KEY.has(key) ? key : "architecture";
 }
 
+const AGENT_STATES = [
+  {
+    key: "ambient",
+    label: "Ambient",
+    title: "Atlas watches the operating picture.",
+    body: "Portfolio signals, tenant context, and corpus gaps stay close without interrupting the workspace.",
+  },
+  {
+    key: "engaged",
+    label: "Engaged",
+    title: "Atlas explains what changed.",
+    body: "The agent turns Product doctrine into route guidance, training prompts, and validation questions.",
+  },
+  {
+    key: "focus",
+    label: "Focus",
+    title: "Atlas helps convert intent into action.",
+    body: "An executive, operator, or client team can move from concept to Setup, Intelligence, Programs, Source, or Tower.",
+  },
+] as const;
+
+type AgentStateKey = (typeof AGENT_STATES)[number]["key"];
+
 export function ProductPage() {
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const [activeKey, setActiveKey] = useState<ProductTabKey>(() =>
     typeof window === "undefined"
       ? "architecture"
       : normalizeHash(window.location.hash),
   );
+  const [agentStateKey, setAgentStateKey] = useState<AgentStateKey>("ambient");
   const activeTab = useMemo(
     () => PRODUCT_TAB_BY_KEY.get(activeKey) ?? PRODUCT_TABS[0],
     [activeKey],
+  );
+  const activeAgentState = useMemo(
+    () =>
+      AGENT_STATES.find((state) => state.key === agentStateKey) ??
+      AGENT_STATES[0],
+    [agentStateKey],
   );
 
   useEffect(() => {
@@ -35,6 +72,27 @@ export function ProductPage() {
   function selectTab(key: ProductTabKey) {
     setActiveKey(key);
     window.history.replaceState(null, "", `#${key}`);
+  }
+
+  function handleTabKeyDown(
+    event: KeyboardEvent<HTMLButtonElement>,
+    index: number,
+  ) {
+    const lastIndex = PRODUCT_TABS.length - 1;
+    let nextIndex: number | null = null;
+
+    if (event.key === "ArrowRight")
+      nextIndex = index === lastIndex ? 0 : index + 1;
+    if (event.key === "ArrowLeft")
+      nextIndex = index === 0 ? lastIndex : index - 1;
+    if (event.key === "Home") nextIndex = 0;
+    if (event.key === "End") nextIndex = lastIndex;
+
+    if (nextIndex === null) return;
+    event.preventDefault();
+    const nextTab = PRODUCT_TABS[nextIndex];
+    selectTab(nextTab.key);
+    tabRefs.current[nextIndex]?.focus();
   }
 
   return (
@@ -129,7 +187,7 @@ export function ProductPage() {
           padding: 22px;
           background: #fffdf8;
           display: grid;
-          gap: 14px;
+          gap: 18px;
         }
 
         .product-page__hero-card-title {
@@ -146,6 +204,55 @@ export function ProductPage() {
           font-family: ${SHELL.SANS};
           font-size: 14px;
           line-height: 1.55;
+        }
+
+        .product-page__agent-state-card {
+          border: 1px solid ${SHELL.CARD_LINE};
+          border-radius: 18px;
+          background: linear-gradient(135deg, #f8f2e8 0%, #eef3e9 100%);
+          padding: 14px;
+          display: grid;
+          gap: 12px;
+        }
+
+        .product-page__agent-state-controls {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 6px;
+        }
+
+        .product-page__agent-state-button {
+          border: 1px solid transparent;
+          border-radius: 999px;
+          min-height: 30px;
+          background: rgba(255, 253, 248, 0.72);
+          color: ${SHELL.INK_SOFT};
+          font-family: ${SHELL.MONO};
+          font-size: 9px;
+          font-weight: 800;
+          letter-spacing: 0.11em;
+          text-transform: uppercase;
+          cursor: pointer;
+        }
+
+        .product-page__agent-state-button[aria-pressed="true"] {
+          border-color: rgba(12, 26, 58, 0.18);
+          background: ${SHELL.INK};
+          color: #fffdf8;
+        }
+
+        .product-page__agent-state-body {
+          display: grid;
+          gap: 5px;
+          min-height: 86px;
+        }
+
+        .product-page__agent-state-body strong {
+          font-family: ${SHELL.SERIF};
+          font-size: 24px;
+          line-height: 1.02;
+          letter-spacing: -0.035em;
+          color: ${SHELL.INK};
         }
 
         .product-page__tabs {
@@ -175,6 +282,16 @@ export function ProductPage() {
           font-weight: 720;
           letter-spacing: -0.02em;
           cursor: pointer;
+          transition:
+            background 160ms ease,
+            color 160ms ease,
+            box-shadow 160ms ease,
+            transform 160ms ease;
+        }
+
+        .product-page__tab:hover {
+          color: ${SHELL.INK};
+          background: rgba(237, 228, 213, 0.54);
         }
 
         .product-page__tab[aria-selected="true"] {
@@ -183,11 +300,18 @@ export function ProductPage() {
           box-shadow: inset 0 0 0 1px rgba(12, 26, 58, 0.08);
         }
 
+        .product-page__tab:focus-visible,
+        .product-page__agent-state-button:focus-visible {
+          outline: 2px solid ${SHELL.INK};
+          outline-offset: 3px;
+        }
+
         .product-page__content {
           display: grid;
           grid-template-columns: minmax(0, 0.88fr) minmax(360px, 1.12fr);
           gap: 24px;
           align-items: start;
+          scroll-margin-top: 88px;
         }
 
         .product-page__panel,
@@ -238,6 +362,16 @@ export function ProductPage() {
           border-radius: 16px;
           background: #fffdf8;
           padding: 16px;
+          transition:
+            transform 180ms ease,
+            box-shadow 180ms ease,
+            border-color 180ms ease;
+        }
+
+        .product-page__proof-card:hover {
+          border-color: rgba(12, 26, 58, 0.2);
+          box-shadow: 0 12px 30px rgba(12, 26, 58, 0.06);
+          transform: translateY(-1px);
         }
 
         .product-page__proof-card strong {
@@ -319,6 +453,17 @@ export function ProductPage() {
             grid-template-columns: 1fr;
           }
 
+          .product-page__tabs {
+            display: flex;
+            overflow-x: auto;
+            scrollbar-width: none;
+          }
+
+          .product-page__tab {
+            flex: 0 0 auto;
+            min-width: max-content;
+          }
+
           .product-page__diagram-card {
             position: static;
           }
@@ -335,11 +480,29 @@ export function ProductPage() {
 
           .product-page__tabs {
             position: static;
+            display: grid;
             grid-template-columns: 1fr;
+            overflow: visible;
           }
 
           .product-page__tab {
             text-align: left;
+            width: 100%;
+          }
+
+          .product-page__agent-state-controls {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .product-page__tab,
+          .product-page__proof-card {
+            transition: none;
+          }
+
+          .product-page__proof-card:hover {
+            transform: none;
           }
         }
       `}</style>
@@ -376,6 +539,35 @@ export function ProductPage() {
               layer matters, and how a program team should train agents through
               structured context instead of one-off prompts.
             </p>
+            <div
+              className="product-page__agent-state-card"
+              aria-label="Atlas agent state model"
+            >
+              <p className="product-page__mono">Atlas state model</p>
+              <div
+                className="product-page__agent-state-controls"
+                aria-label="Choose agent state"
+              >
+                {AGENT_STATES.map((state) => (
+                  <button
+                    key={state.key}
+                    type="button"
+                    className="product-page__agent-state-button"
+                    aria-pressed={agentStateKey === state.key}
+                    onClick={() => setAgentStateKey(state.key)}
+                  >
+                    {state.label}
+                  </button>
+                ))}
+              </div>
+              <div
+                className="product-page__agent-state-body"
+                aria-live="polite"
+              >
+                <strong>{activeAgentState.title}</strong>
+                <p>{activeAgentState.body}</p>
+              </div>
+            </div>
           </aside>
         </section>
 
@@ -384,16 +576,21 @@ export function ProductPage() {
           aria-label="Product explanation tabs"
           role="tablist"
         >
-          {PRODUCT_TABS.map((tab) => (
+          {PRODUCT_TABS.map((tab, index) => (
             <button
               key={tab.key}
               type="button"
               id={`${tab.key}-tab`}
               role="tab"
+              ref={(node) => {
+                tabRefs.current[index] = node;
+              }}
               className="product-page__tab"
               aria-selected={activeKey === tab.key}
               aria-controls={`${tab.key}-panel`}
+              tabIndex={activeKey === tab.key ? 0 : -1}
               onClick={() => selectTab(tab.key)}
+              onKeyDown={(event) => handleTabKeyDown(event, index)}
             >
               {tab.label}
             </button>

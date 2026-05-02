@@ -46,6 +46,18 @@ The new authenticated Product surface explains AbarVa as an enterprise AI operat
 | `src/__tests__/integration/product/product-page-contract.test.ts` | Product route, nav, shell, tab, and content guardrails.         |
 | `docs/build/PRODUCT_PAGE_DIAGRAM_GALLERY.md`                      | Diagram inventory and tab mapping.                              |
 
+## Polish Pass
+
+The Product page now carries the interaction details expected from an Atrium-native surface:
+
+| Detail            | Outcome                                                                                      |
+| ----------------- | -------------------------------------------------------------------------------------------- |
+| Keyboard tabs     | Arrow keys, Home, and End move across Product tabs with roving focus.                        |
+| Agent state model | The hero explains Atlas ambient, engaged, and focus states as a live, selectable pattern.    |
+| Responsive rhythm | Mid-size screens use horizontal tab scrolling; small screens use full-width stacked tabs.    |
+| Accessibility     | Focus-visible outlines, `role=tablist`, `role=tab`, `role=tabpanel`, and live updates exist. |
+| Motion discipline | Hover lift and tab transitions are disabled for users who prefer reduced motion.             |
+
 ## Remaining Notes
 
 This work creates the Product surface and protects it with source-level tests. Browser screenshots are still the next verification step after preview deployment because authenticated visual capture depends on a signed-in browser session.

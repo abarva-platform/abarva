@@ -265,6 +265,26 @@ Append-only coordination log for active Codex sessions.
 - remaining_gaps_carried_forward: generated artifacts parser/vector/graph pending, evidence-gate hard enforcement not proven, binary parsing not proven, First Capital legacy `arcturus` persistence key, intermittent demo sign-in stall
 - lock: `source-module-e2e-crawler` marked completed in `ACTIVE_LOCKS.yaml`
 
+## 2026-05-02T14:19:14-05:00 - codex-product-atrium-polish
+
+- status: in-progress
+- branch: `codex/product-atrium-polish`
+- worktree: `/private/tmp/nexus-product-polish`
+- scope: polish the authenticated Product surface for Atrium maturity: responsive tab rhythm, keyboard tab behavior, agent-state storytelling, copy precision, and regression coverage
+- sequencing_rationale: Product is live and unblocked; the next highest-leverage lane work is to make the new surface feel native to the cockpit rather than static marketing content, while leaving Source and data-plane files untouched.
+- locks: `product-atrium-polish`
+- guardrail: no Source API, lifecycle, stage, or data files; no client/demo tenant names, hyperscaler brand names, specific runtime stack names, investor language, pricing, time estimates, or screenshots on the Product page.
+
+## 2026-05-02T14:23:12-05:00 - codex-product-atrium-polish
+
+- status: validation-local-passed
+- shipped: Product keyboard tab navigation with roving focus, Atlas ambient/engaged/focus state card, responsive tab rhythm, focus-visible styling, reduced-motion handling, and Product report polish notes
+- validation: focused Product/nav/proxy/shell Jest passed, 44 tests
+- validation: targeted ESLint passed for Product page and Product contract test
+- validation: `npx tsc --noEmit --pretty false` passed
+- validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning
+- next: open PR and auto-merge after standard checks pass
+
 ## 2026-05-02T16:03:00-05:00 - codex-source-atrium-polish
 
 - status: in-progress
