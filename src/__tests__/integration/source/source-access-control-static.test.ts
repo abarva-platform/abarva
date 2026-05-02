@@ -28,6 +28,19 @@ describe('Source access-control wiring', () => {
     expect(route).not.toContain("person.role !== 'admin'");
   });
 
+  it('exposes Source event creation as a JSON API route guarded by Source create rights', () => {
+    const route = read('src/app/api/v1/source/events/route.ts');
+
+    expect(route).toContain('export async function POST');
+    expect(route).toContain('loadUserSourceAccessPolicy');
+    expect(route).toContain('canCreateSourceEvents');
+    expect(route).toContain('createSourcingEvent');
+    expect(route).toContain('source_event_participants');
+    expect(route).toContain('Response.json');
+    expect(route).not.toContain('redirect(');
+    expect(route).not.toContain('NextResponse.redirect');
+  });
+
   it('ships the Source participant schema needed for record-scoped users', () => {
     const migration = read('supabase/migrations/20260501170000_source_access_control.sql');
 
