@@ -70,6 +70,34 @@ describe('program evidence ingestion', () => {
     ]);
   });
 
+  it('extracts baseline and decision bullets from natural consulting headings', () => {
+    const evidence = extractProgramEvidenceFromText({
+      filename: 'P1 baseline attestation.txt',
+      mimeType: 'text/plain',
+      text: [
+        'Attendees: Ethan Brooks, Priya Mehta, Lena Ortiz',
+        'Sponsor decision:',
+        '- Priya Mehta approves PROCEED to P2 Synthesis once this addendum is saved.',
+        'Attested baseline metrics:',
+        '- Analytics request-to-insight cycle time: 21 business days current baseline.',
+        '- Data lineage completeness: 62% current baseline.',
+        'Risks:',
+        '- Model-risk evidence may be incomplete before charter.',
+      ].join('\n'),
+    });
+
+    expect(evidence.extractedStructured.decisions).toEqual([
+      'Priya Mehta approves PROCEED to P2 Synthesis once this addendum is saved.',
+    ]);
+    expect(evidence.extractedStructured.baseline_candidates).toEqual([
+      'Analytics request-to-insight cycle time: 21 business days current baseline.',
+      'Data lineage completeness: 62% current baseline.',
+    ]);
+    expect(evidence.extractedStructured.risks).toEqual([
+      'Model-risk evidence may be incomplete before charter.',
+    ]);
+  });
+
   it('creates metadata-only evidence for unsupported binary attachments', () => {
     const evidence = evidenceForUnsupportedAttachment({
       filename: 'architecture inventory.xlsx',
