@@ -91,3 +91,7 @@
 - Live P3 traceability retest exposed a silent non-write: Nexus answered "composing" but did not call complete_deliverable, and DB showed no requirements_traceability deliverable or phase advance.
 - Fix in progress: force explicit Programs deliverable save/sign-off requests through initial Anthropic tool_choice=complete_deliverable on the first tool-use-loop turn; subsequent turns can still call advance_phase naturally.
 - Added regression coverage for route forcing and tool-use-loop first-turn tool_choice wiring.
+
+## 2026-05-02T13:08:00Z — programs-module-e2e-crawler
+- PR #1403 deployed and live rerun passed the P3 traceability persistence/advance path: requirements_traceability signed off and program advanced to current_phase=4.
+- Follow-up doctrine defect found in live chat: Nexus said "P4 Build" after advancing, while the locked lifecycle label is P4 Execution Roadmap. Fix in progress to harden prompt/tool examples against old labels.

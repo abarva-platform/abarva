@@ -23,12 +23,12 @@
 //   Enterprise Data Room.
 //
 // Agent-driven flow:
-//   User: "Can we move to Build now?"
+//   User: "Can we move to Execution Roadmap now?"
 //   Nexus:
 //     → advance_phase({program_id, to_phase: 4})
 //     → tool evaluates gates, blocks with unmet criteria
 //     → Nexus emits gate-evaluation artifacts for each unmet criterion
-//     → "Holding on Build — privacy attestation pending. Want to push
+//     → "Holding on Execution Roadmap — privacy attestation pending. Want to push
 //        anyway with sponsor sign-off, or wait?"
 
 import type { AgentTool, ToolResult } from '../registry';
@@ -76,7 +76,7 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
     'gate_blocked_hard with the unmet criteria when hard-gate checks fail. When that happens, surface ' +
     'each unmet criterion to the user via gate-evaluation artifacts; do NOT announce success or ' +
     'pretend the advance happened. Only call this when the user has explicitly asked to advance ' +
-    '(e.g. "move to Build", "advance the phase"). Default bypass_gate to false; only set true ' +
+    '(e.g. "move to Execution Roadmap", "advance the phase"). Default bypass_gate to false; only set true ' +
     'when the user explicitly invokes a sponsor override and provides a rationale.',
   surfaces: ['/programs/:id'],
   input_schema: {
