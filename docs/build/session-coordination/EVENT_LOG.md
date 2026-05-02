@@ -59,6 +59,17 @@ Append-only coordination log for active Codex sessions.
 - validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning
 - next: open PR and auto-merge when standard checks pass
 
+## 2026-05-02T11:42:00-05:00 - codex-programs-e2e-crawl-closeout
+
+- status: functional-qa-complete-reports-generated
+- worktree: `/private/tmp/nexus-programs-private-plane-fix`
+- scope: live Programs/Strategic Moves E2E crawl across Meridian, Apex, and First Capital through P6 Tower handoff
+- production_verified: Meridian `51180b6b-e0b1-41e7-a83f-ed23af87e1dd`, Apex `8a65a9a8-d1f6-45ff-accc-d23797f410bd`, First Capital `6f2f57c8-f608-4aec-ac2b-0d3991d357d2` all reached `current_phase=6`, `lifecycle_state=completed`, `status=completed`
+- fixes_merged: PR #1419, #1421, #1422, #1424, #1425, #1428
+- latest_fix: PR #1428 baseline-fidelity doctrine merged at `1d8bc0fe78789bea37242cbdde643a4e25b3b2ac` and production deployed
+- reports: `docs/build/programs-e2e/PROGRAMS_E2E_FUNCTIONAL_TEST_REPORT.md`, `docs/build/programs-e2e/PROGRAMS_E2E_UX_ASSESSMENT_REPORT.md`, `docs/build/programs-e2e/PROGRAMS_E2E_FIX_LOG.md`
+- canonical_vision_package: reviewed; cosmetic Strategic Moves rename/Atrium work intentionally not started during functional QA closeout
+
 ## 2026-05-02T13:35:00-05:00 - codex-knowledge-layer-metric-expansion
 
 - status: in-progress
