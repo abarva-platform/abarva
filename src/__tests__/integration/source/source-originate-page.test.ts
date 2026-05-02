@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { createElement } from 'react';
+import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { SourceOriginatePage } from '@/components/source/SourceOriginatePage';
 
@@ -8,6 +9,10 @@ jest.mock('next/navigation', () => ({
   usePathname: () => '/source/new',
   useRouter: () => ({ push: jest.fn(), replace: jest.fn(), refresh: jest.fn(), prefetch: jest.fn() }),
   useSearchParams: () => new URLSearchParams(),
+}));
+
+jest.mock('@/components/shell/AppShell', () => ({
+  AppShell: ({ children }: { children: ReactNode }) => createElement('div', null, children),
 }));
 
 const SOURCE_FILE = resolve(
@@ -21,7 +26,11 @@ describe('SourceOriginatePage (SRC-FLW-INTAKE)', () => {
 
   beforeAll(() => {
     source = readFileSync(SOURCE_FILE, 'utf8');
-    html = renderToStaticMarkup(createElement(SourceOriginatePage));
+    html = renderToStaticMarkup(createElement(SourceOriginatePage, {
+      clientName: 'Apex Retail Group',
+      clientShortName: 'Apex Retail',
+      clientKey: 'apexretail',
+    }));
   });
 
   it("marks the file as a client component with 'use client'", () => {
@@ -56,13 +65,27 @@ describe('SourceOriginatePage (SRC-FLW-INTAKE)', () => {
     expect(html).toContain('Steward');
     expect(html).toContain('Sentinel');
     expect(html).toContain('Atlas');
-    expect(html).toContain('Start from Apex context, then fill the floor.');
+    expect(html).toContain('Start from Apex Retail context, then fill the floor.');
   });
 
-  it('keeps create behavior honest as draft-only', () => {
-    expect(html).toContain('No create mutation is wired on this route.');
-    expect(html).toContain('Review intake draft');
-    expect(html).not.toContain('Create sourcing event');
-    expect(html).not.toContain('event created');
+  it('wires intake submission to persisted Source event creation and approval', () => {
+    expect(source).toContain("fetch('/api/v1/source/events'");
+    expect(html).toContain('Create sourcing event');
+    expect(html).toContain('tenant-admin approval');
+    expect(html).not.toContain('No create mutation is wired on this route.');
+  });
+
+  it('does not hard-code Apex when rendering non-Apex tenants', () => {
+    const meridianHtml = renderToStaticMarkup(createElement(SourceOriginatePage, {
+      clientName: 'Meridian Health System',
+      clientShortName: 'Meridian Health',
+      clientKey: 'meridian',
+    }));
+
+    expect(meridianHtml).toContain('What Source already knows for Meridian Health');
+    expect(meridianHtml).toContain('Start from Meridian Health context, then fill the floor.');
+    expect(meridianHtml).toContain('Meridian Health context');
+    expect(meridianHtml).not.toContain('What Source already knows for Apex');
+    expect(meridianHtml).not.toContain('Start from Apex context');
   });
 });

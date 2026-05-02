@@ -6,6 +6,11 @@ import { AppShell } from '@/components/shell/AppShell';
 import { SHELL } from '@/lib/shell/shell-tokens';
 
 type IntakeFieldId = 'trigger' | 'decisionOwner' | 'scopeBoundary' | 'valueTarget' | 'baselineOwner';
+type SubmitState =
+  | { status: 'idle' }
+  | { status: 'submitting' }
+  | { status: 'success'; eventId: string; eventUrl: string; approvalAuthority: string }
+  | { status: 'error'; message: string };
 
 interface IntakeFieldDefinition {
   id: IntakeFieldId;
@@ -16,6 +21,12 @@ interface IntakeFieldDefinition {
 }
 
 type IntakeState = Record<IntakeFieldId, string>;
+
+interface SourceOriginatePageProps {
+  clientName?: string;
+  clientShortName?: string;
+  clientKey?: string;
+}
 
 const INTAKE_FIELDS: IntakeFieldDefinition[] = [
   {
@@ -77,6 +88,24 @@ const APEX_CONTEXT_FACTS = [
   ['Context chunks', '415, embedding_status=pending'],
   ['Known context', 'Org structure, IT landscape, KPI dictionary, programs, evidence ledger, vendor contracts, cross-program signals'],
 ];
+
+const CLIENT_CONTEXT_FACTS: Record<string, string[][]> = {
+  apexretail: APEX_CONTEXT_FACTS,
+  meridian: [
+    ['Segment rollups', '14'],
+    ['Data records', '698'],
+    ['Graph nodes / edges', '423 / 584'],
+    ['Context chunks', '715, private index loaded'],
+    ['Known context', 'Clinical operations, IT estate, vendor contracts, programs, evidence ledger, risk and value signals'],
+  ],
+  arcturus: [
+    ['Segment rollups', '14'],
+    ['Data records', 'First Capital seed pack pending app proof'],
+    ['Graph nodes / edges', 'Private-plane validation pending'],
+    ['Context chunks', 'Use available client context; do not assume full retrieval'],
+    ['Known context', 'Financial-services operating model, programs, vendor/risk context when available'],
+  ],
+};
 
 const AGENT_GUIDANCE = [
   {
@@ -253,26 +282,119 @@ function ScopeBoundaryList({ title, rows, tone }: { title: string; rows: string[
   );
 }
 
-export function SourceOriginatePage() {
+function inferEventType(scopeBoundary: string): 'managed_service' | 'software' | 'staffing' | 'infrastructure' | 'consulting' | 'other' {
+  const normalized = scopeBoundary.toLowerCase();
+  if (/\bams\b|managed service|managed services|outsourcing|run operation|application support/.test(normalized)) {
+    return 'managed_service';
+  }
+  if (/cloud|infrastructure|hosting|network|platform operations/.test(normalized)) return 'infrastructure';
+  if (/software|saas|license|enterprise application/.test(normalized)) return 'software';
+  if (/systems integrator|implementation|consulting|si partner/.test(normalized)) return 'consulting';
+  if (/staff augmentation|staffing|contractor|contingent/.test(normalized)) return 'staffing';
+  return 'other';
+}
+
+function extractEstimatedValue(valueTarget: string): number | undefined {
+  const normalized = valueTarget.toLowerCase().replace(/,/g, '');
+  const match = normalized.match(/\$?\s*(\d+(?:\.\d+)?)\s*(m|million|k|thousand)?/);
+  if (!match) return undefined;
+  const raw = Number(match[1]);
+  if (!Number.isFinite(raw)) return undefined;
+  const suffix = match[2];
+  if (suffix === 'm' || suffix === 'million') return Math.round(raw * 1_000_000);
+  if (suffix === 'k' || suffix === 'thousand') return Math.round(raw * 1_000);
+  return Math.round(raw);
+}
+
+function buildEventName(clientShortName: string, intake: IntakeState): string {
+  const scope = intake.scopeBoundary.trim();
+  if (/\bams\b|managed service|outsourcing/i.test(scope)) {
+    return `${clientShortName} AMS Sourcing Event`;
+  }
+  if (/prior.?authorization|prior auth/i.test(scope)) {
+    return `${clientShortName} Prior Authorization Automation Sourcing`;
+  }
+  if (/fraud/i.test(scope)) {
+    return `${clientShortName} Fraud Detection AI Sourcing`;
+  }
+  const firstClause = scope.split(/[.;\n]/)[0]?.trim();
+  return `${clientShortName} ${firstClause || 'Technology'} Sourcing Event`.slice(0, 120);
+}
+
+export function SourceOriginatePage({
+  clientName = 'Apex Retail Group',
+  clientShortName = 'Apex Retail',
+  clientKey = 'apexretail',
+}: SourceOriginatePageProps) {
   const [intake, setIntake] = useState<IntakeState>(initialIntakeState);
-  const [reviewed, setReviewed] = useState(false);
+  const [submitState, setSubmitState] = useState<SubmitState>({ status: 'idle' });
 
   const completedCount = useMemo(
     () => INTAKE_FIELDS.filter((field) => intake[field.id].trim().length > 0).length,
     [intake]
   );
   const intakeReady = completedCount === INTAKE_FIELDS.length;
+  const clientFacts = CLIENT_CONTEXT_FACTS[clientKey] ?? [
+    ['Known context', 'Client-scoped Source context available when loaded'],
+    ['Evidence posture', 'Do not assume retrieval until the event cites records'],
+  ];
 
   function patchIntake(fieldId: IntakeFieldId, value: string) {
-    setReviewed(false);
+    setSubmitState({ status: 'idle' });
     setIntake((current) => ({ ...current, [fieldId]: value }));
+  }
+
+  async function createEvent() {
+    if (!intakeReady || submitState.status === 'submitting') return;
+    setSubmitState({ status: 'submitting' });
+
+    const eventName = buildEventName(clientShortName, intake);
+    const response = await fetch('/api/v1/source/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        eventName,
+        eventType: inferEventType(intake.scopeBoundary),
+        triggerDescription: intake.trigger,
+        decisionOwner: intake.decisionOwner,
+        scopeDescription: [
+          `Scope boundary: ${intake.scopeBoundary}`,
+          `Value basis: ${intake.valueTarget}`,
+          `Baseline owner: ${intake.baselineOwner}`,
+        ].join('\n'),
+        estimatedValueUsd: extractEstimatedValue(intake.valueTarget),
+      }),
+    });
+
+    const payload = await response.json().catch(() => null) as null | {
+      event?: { id?: string };
+      eventUrl?: string;
+      approvalAuthority?: string;
+      detail?: string;
+      error?: string;
+    };
+
+    if (!response.ok || !payload?.event?.id) {
+      setSubmitState({
+        status: 'error',
+        message: payload?.detail ?? payload?.error ?? 'Source event creation failed.',
+      });
+      return;
+    }
+
+    setSubmitState({
+      status: 'success',
+      eventId: payload.event.id,
+      eventUrl: payload.eventUrl ?? `/source/events/${payload.event.id}`,
+      approvalAuthority: payload.approvalAuthority ?? 'Tenant admin approval required before Source motion begins.',
+    });
   }
 
   return (
     <AppShell
       surface="source"
       topBarProps={{
-        tenantName: 'Apex Retail Group',
+        tenantName: clientName,
         showLocked: true,
         context: 'Source · New IT sourcing intake',
       }}
@@ -331,7 +453,7 @@ export function SourceOriginatePage() {
                     Stand up a decision-grade technology sourcing event.
                   </h1>
                   <p style={{ fontFamily: SHELL.SANS, fontSize: 14, color: SHELL.INK_SOFT, lineHeight: 1.55, maxWidth: 760, margin: 0 }}>
-                    Source already has rich Apex tenant context. This intake asks only for the event-specific facts needed to stand up an IT sourcing event; it does not create a persisted event yet.
+                    Source uses {clientShortName} context where available, then asks only for the event-specific facts needed to stand up an IT sourcing event and submit it for admin approval.
                   </p>
                 </div>
                 <div
@@ -360,7 +482,7 @@ export function SourceOriginatePage() {
             <section style={{ ...sectionCard, padding: 22 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 18, flexWrap: 'wrap', marginBottom: 14 }}>
                 <div>
-                  <Eyebrow>What Source already knows for Apex</Eyebrow>
+                  <Eyebrow>What Source already knows for {clientShortName}</Eyebrow>
                   <div style={{ fontFamily: SHELL.SERIF, fontSize: 24, color: SHELL.INK, marginTop: 8 }}>
                     Do not start from a blank form.
                   </div>
@@ -381,7 +503,7 @@ export function SourceOriginatePage() {
                 </div>
               </div>
               <div style={{ display: 'grid', gap: 8 }}>
-                {APEX_CONTEXT_FACTS.map(([label, value]) => (
+                {clientFacts.map(([label, value]) => (
                   <div
                     key={label}
                     style={{
@@ -428,10 +550,10 @@ export function SourceOriginatePage() {
             <section style={{ ...sectionCard, padding: 18 }}>
               <Eyebrow>Nexus guidance</Eyebrow>
               <div style={{ fontFamily: SHELL.SERIF, fontSize: 22, color: SHELL.INK, margin: '10px 0 8px' }}>
-                Start from Apex context, then fill the floor.
+                Start from {clientShortName} context, then fill the floor.
               </div>
               <p style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK_SOFT, lineHeight: 1.5, margin: 0 }}>
-                Source can see Apex org structure, IT landscape, programs, evidence, contracts, and cross-program signals. Nexus still needs these five event-specific facts before moving to Strategy or Scope.
+                Source can use {clientShortName} org, IT, program, evidence, vendor, and risk context when it is loaded. Nexus still needs these five event-specific facts before moving to Strategy or Scope.
               </p>
               <div style={{ display: 'grid', gap: 8, marginTop: 14 }}>
                 {['Check IT category fit', 'Name missing intake fact', 'Prepare minimum data request'].map((choice) => (
@@ -462,45 +584,74 @@ export function SourceOriginatePage() {
             </section>
 
             <section style={{ ...sectionCard, padding: 18 }}>
-              <Eyebrow>Draft behavior</Eyebrow>
+              <Eyebrow>Create and approval</Eyebrow>
               <p style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK_SOFT, lineHeight: 1.5, margin: '10px 0 14px' }}>
-                No create mutation is wired on this route. The button below only reviews the draft in this browser session; it does not write to Source, generate an event ID, upload files, or notify a workflow engine.
+                When all five facts are captured, Nexus creates a persisted Source event and routes it to tenant-admin approval before sourcing motion begins.
               </p>
               <button
                 type="button"
-                onClick={() => setReviewed(true)}
+                onClick={createEvent}
+                disabled={!intakeReady || submitState.status === 'submitting'}
                 style={{
                   width: '100%',
                   border: 'none',
                   borderRadius: 10,
                   background: intakeReady ? SHELL.INK : SHELL.GRAY_BG,
                   color: intakeReady ? SHELL.PAPER : SHELL.GRAY_TEXT,
-                  cursor: 'pointer',
+                  cursor: intakeReady ? 'pointer' : 'not-allowed',
                   fontFamily: SHELL.MONO,
                   fontSize: 11,
                   letterSpacing: '0.06em',
                   padding: '12px 14px',
                 }}
               >
-                Review intake draft
+                {submitState.status === 'submitting' ? 'Creating event...' : 'Create sourcing event'}
               </button>
-              {reviewed && (
+              {submitState.status === 'success' && (
                 <div
                   style={{
                     marginTop: 12,
                     borderRadius: 10,
-                    border: `1px solid ${intakeReady ? SHELL.MINT_LINE : SHELL.PEACH_LINE}`,
-                    background: intakeReady ? SHELL.MINT_BG : SHELL.PEACH_BG,
+                    border: `1px solid ${SHELL.MINT_LINE}`,
+                    background: SHELL.MINT_BG,
                     padding: 12,
                     fontFamily: SHELL.SANS,
                     fontSize: 12,
                     lineHeight: 1.45,
-                    color: intakeReady ? SHELL.MINT_TEXT : SHELL.PEACH_TEXT,
+                    color: SHELL.MINT_TEXT,
                   }}
                 >
-                  {intakeReady
-                    ? 'Draft floor is complete. A future create flow can safely hand this to Strategy or Scope.'
-                    : 'Draft only: Steward would block event creation until all five intake facts are named.'}
+                  Event created and waiting on admin approval. {submitState.approvalAuthority}
+                  <a
+                    href={submitState.eventUrl}
+                    style={{
+                      display: 'block',
+                      marginTop: 10,
+                      color: SHELL.MINT_TEXT,
+                      fontFamily: SHELL.MONO,
+                      textDecoration: 'underline',
+                    }}
+                  >
+                    Open created event
+                  </a>
+                </div>
+              )}
+              {submitState.status === 'error' && (
+                <div
+                  role="alert"
+                  style={{
+                    marginTop: 12,
+                    borderRadius: 10,
+                    border: `1px solid ${SHELL.PEACH_LINE}`,
+                    background: SHELL.PEACH_BG,
+                    padding: 12,
+                    fontFamily: SHELL.SANS,
+                    fontSize: 12,
+                    lineHeight: 1.45,
+                    color: SHELL.PEACH_TEXT,
+                  }}
+                >
+                  {submitState.message}
                 </div>
               )}
               <a
