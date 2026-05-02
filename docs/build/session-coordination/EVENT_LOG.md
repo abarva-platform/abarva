@@ -334,3 +334,24 @@ Append-only coordination log for active Codex sessions.
 - validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only
 - lock: `atrium-top-nav-polish` marked completed in `ACTIVE_LOCKS.yaml`
 - next: open PR and auto-merge after standard checks pass
+
+## 2026-05-02T16:45:00-05:00 - codex-source-event-action-prompts
+
+- status: in-progress
+- branch: `codex/source-event-action-prompts`
+- worktree: `/Users/anand/Projects/nexus-source-capability-e2e`
+- scope: Source event-canvas action prompt polish only: Nexus labeling, disabled/streaming state, accessibility, and tests for stage action/prompt cards; no Source lifecycle/data/API changes
+- locks: `source-event-action-prompts-ui`
+- guardrail: no Programs/Intelligence/Tower files and no Source persistence, gate, lifecycle, or data-plane logic
+
+## 2026-05-02T17:00:00-05:00 - codex-source-event-action-prompts
+
+- status: validation-local-passed
+- shipped: Source event-canvas stage action cards and contextual prompt deck now announce Nexus, carry visible `Ask Nexus` prompt cues on stage actions, and disable during missing/streaming agent state instead of looking live while unavailable.
+- validation: focused Source event canvas/action Jest passed, 2 suites / 18 tests.
+- validation: full Source integration Jest passed, 70 suites / 753 tests.
+- validation: targeted ESLint passed for `SourceEventAgentCanvas` and updated Source event tests.
+- validation: `npx tsc --noEmit --pretty false` passed.
+- validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only.
+- lock: `source-event-action-prompts-ui` marked completed in `ACTIVE_LOCKS.yaml`.
+- next: open PR and auto-merge after standard checks pass.

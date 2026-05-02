@@ -287,13 +287,21 @@ function StageAction({
   prompt: string;
 }) {
   const pageState = useAtlasPageState();
+  const disabled = !pageState || pageState.isStreaming;
   return (
     <button
       type="button"
-      style={EVENT_ACTION_BUTTON}
+      style={{
+        ...EVENT_ACTION_BUTTON,
+        opacity: disabled ? 0.62 : 1,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+      }}
+      disabled={disabled}
       onClick={() => pageState?.ask(prompt)}
-      aria-label={`Ask Sentinel: ${label}`}
+      aria-label={`Ask Nexus: ${label}`}
+      data-testid={`source-stage-action-${label.toLowerCase().replaceAll(' ', '-')}`}
     >
+      <div style={EVENT_ACTION_PROMPT}>Ask Nexus</div>
       <div style={EVENT_ACTION_LABEL}>{label}</div>
       <div style={EVENT_ACTION_DETAIL}>{detail}</div>
     </button>
@@ -302,6 +310,7 @@ function StageAction({
 
 function SourceEventPromptDeck({ event }: { event: SourcingEventDetail }) {
   const pageState = useAtlasPageState();
+  const disabled = !pageState || pageState.isStreaming;
   const prompts = [
     {
       label: 'What good looks like',
@@ -376,6 +385,7 @@ function SourceEventPromptDeck({ event }: { event: SourcingEventDetail }) {
           <button
             type="button"
             key={item.label}
+            disabled={disabled}
             onClick={() => pageState?.ask(item.prompt)}
             style={{
               appearance: 'none',
@@ -385,9 +395,10 @@ function SourceEventPromptDeck({ event }: { event: SourcingEventDetail }) {
               background: SHELL.PAPER_SOFT,
               font: 'inherit',
               textAlign: 'left',
-              cursor: 'pointer',
+              cursor: disabled ? 'not-allowed' : 'pointer',
+              opacity: disabled ? 0.62 : 1,
             }}
-            aria-label={`Ask Sentinel: ${item.label}`}
+            aria-label={`Ask Nexus: ${item.label}`}
           >
             <div
               style={{
@@ -708,6 +719,16 @@ const EVENT_ACTION_LABEL: CSSProperties = {
   fontSize: 12.3,
   color: SHELL.INK,
   fontWeight: 800,
+};
+
+const EVENT_ACTION_PROMPT: CSSProperties = {
+  marginBottom: 4,
+  fontFamily: SHELL.MONO,
+  fontSize: 7.8,
+  letterSpacing: '0.13em',
+  textTransform: 'uppercase',
+  color: '#0F766E',
+  fontWeight: 900,
 };
 
 const EVENT_ACTION_DETAIL: CSSProperties = {
