@@ -14,6 +14,11 @@ const INTELLIGENCE_INDEX_PAGE_PATH = path.join(
   'src/components/intelligence/IntelligenceIndexPage.tsx',
 );
 
+const INTELLIGENCE_NATIVE_EXPLORE_LAYER_PATH = path.join(
+  ROOT,
+  'src/components/intelligence/IntelligenceNativeExploreLayer.tsx',
+);
+
 describe('Intelligence library foundation', () => {
   it('defines the canonical I1 filter strip from the catalog states', () => {
     expect(INTELLIGENCE_LIBRARY_FILTERS.map((filter) => filter.label)).toEqual([
@@ -75,9 +80,12 @@ describe('Intelligence library foundation', () => {
 
 describe('Intelligence landing front-page contract', () => {
   let source: string;
+  let nativeSource: string;
 
   beforeAll(() => {
     source = fs.readFileSync(INTELLIGENCE_INDEX_PAGE_PATH, 'utf8');
+    nativeSource = fs.readFileSync(INTELLIGENCE_NATIVE_EXPLORE_LAYER_PATH, 'utf8');
+    source = `${source}\n${nativeSource}`;
   });
 
   it('presents Intelligence as the Explore Layer for AI bets', () => {
@@ -114,12 +122,25 @@ describe('Intelligence landing front-page contract', () => {
     }
   });
 
-  it('keeps Sentinel ambient while the Today canvas leads', () => {
+  it('keeps Sentinel ambient while the native canvas leads', () => {
     expect(source).toContain('Sentinel');
     expect(source).toContain('Ambient - available');
-    expect(source).toContain('Today - default canvas');
-    expect(source).toContain('Canvas dominant');
+    expect(source).toContain("label: 'Today'");
+    expect(source).toContain('native canvas');
+    expect(source).toContain('Same-page');
     expect(source).not.toContain('heightCss=');
+  });
+
+  it('renders submenus as same-page tabs rather than legacy route links', () => {
+    expect(nativeSource).toContain("role=\"tablist\"");
+    expect(nativeSource).toContain("role=\"tab\"");
+    expect(nativeSource).toContain('setActiveTab');
+    expect(nativeSource).not.toContain("href: '/intelligence/topics'");
+    expect(nativeSource).not.toContain("href: '/intelligence/patterns'");
+    expect(nativeSource).not.toContain("href: '/source/patterns'");
+    expect(nativeSource).not.toContain("href: '/setup'");
+    expect(nativeSource).not.toContain("href: '/intelligence/ask'");
+    expect(nativeSource).not.toContain('<J0AffordanceLink');
   });
 
   it('keeps scope honest: Intelligence supports thinking but does not generate strategy', () => {

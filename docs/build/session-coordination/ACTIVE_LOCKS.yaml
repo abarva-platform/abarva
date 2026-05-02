@@ -214,3 +214,11 @@ locks:
     expires_at: "2026-05-02T22:30:00-05:00"
     note: Adds the narrow Tower bridge for Setup AI Initiatives registry visibility and tenant-aware Tower chrome. Preserves existing Programs/Source handoffs and does not start the full queued Tower redesign.
     completed_at: "2026-05-02T19:52:00-05:00"
+
+  - owner: codex-intelligence-native-submenus
+    resource: intelligence-native-submenu-canvas
+    status: completed
+    started_at: "2026-05-02T19:35:00-05:00"
+    expires_at: "2026-05-02T22:30:00-05:00"
+    note: Replaces Intelligence submenu route links with native same-page tab/canvas rendering. Avoids Programs, Source lifecycle/data/API, and private-plane schema changes.
+    completed_at: "2026-05-02T19:42:00-05:00"
