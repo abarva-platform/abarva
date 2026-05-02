@@ -116,6 +116,14 @@ describe('agent route · CB-6 context-bundle wiring', () => {
     expect(source).toContain('use lookup_person/register_placeholder_person/commit_program when available');
   });
 
+  it('locks the corrected P4-P6 lifecycle labels in the Nexus prompt', () => {
+    expect(source).toContain('LIFECYCLE LABEL DISCIPLINE');
+    expect(source).toContain("never call P4 'Build', P5 'Activate', or P6 'Operate'");
+    expect(source).toContain('P4 Execution Roadmap');
+    expect(source).toContain('P5 Approval & Mobilization');
+    expect(source).toContain('P6 Tower Handoff');
+  });
+
   it('short-circuits cross-tenant program writes before model/tool execution', () => {
     const guardIdx = source.indexOf('detectCrossTenantWriteIntent({');
     const refusalIdx = source.indexOf('formatCrossTenantWriteRefusal(crossTenantWriteIntent)');
