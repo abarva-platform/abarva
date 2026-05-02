@@ -35,6 +35,18 @@ describe('PROG20 · ProgramDetailPage · SubNavStrip integration', () => {
     const sectionType = "type SectionKey = 'overview' | 'gate' | 'evidence' | 'deliverables' | 'workshop' | 'actions' | 'decisions'";
     expect(source).toContain(sectionType);
   });
+
+  it('surfaces a visible phase archive quick nav above the collapsed detail record', () => {
+    expect(source).toContain('data-testid="program-phase-archive-quicknav"');
+    expect(source).toContain('PhaseArchiveQuickNav');
+    expect(source).toContain('openArchiveSection');
+  });
+
+  it('quick nav can open the deliverables archive section', () => {
+    expect(source).toContain("data-testid={`program-phase-archive-${item.key}`}");
+    expect(source).toContain("setArchiveOpen(true)");
+    expect(source).toContain("setActiveSection(section)");
+  });
 });
 
 describe('PROG20 · ProgramDetailPage · section tab keys', () => {

@@ -138,6 +138,8 @@ export interface ProgramDetailPageProps {
   hasTenantKey?: boolean;
 }
 
+type SectionKey = 'overview' | 'gate' | 'evidence' | 'deliverables' | 'workshop' | 'actions' | 'decisions';
+
 // ─── Gate pill ────────────────────────────────────────────────────────────────
 
 function GatePill({ status }: { status: ProgramDetailView['gateStatus'] }) {
@@ -250,6 +252,125 @@ function LifecycleStateBanner({ view }: { view: ProgramDetailView }) {
         </Link>
       )}
     </div>
+  );
+}
+
+function PhaseArchiveQuickNav({
+  activeSection,
+  onSelect,
+  deliverablesCount,
+  evidenceCount,
+  gateCount,
+  actionCount,
+}: {
+  activeSection: SectionKey;
+  onSelect: (section: SectionKey) => void;
+  deliverablesCount?: number;
+  evidenceCount?: number;
+  gateCount?: number;
+  actionCount: number;
+}) {
+  const items: Array<{ key: SectionKey; label: string; count?: number; emphasis?: boolean }> = [
+    { key: 'overview', label: 'Overview' },
+    { key: 'deliverables', label: 'Deliverables', count: deliverablesCount, emphasis: true },
+    { key: 'evidence', label: 'Evidence', count: evidenceCount },
+    { key: 'gate', label: 'Gate', count: gateCount },
+    { key: 'workshop', label: 'Workshop' },
+    { key: 'decisions', label: 'Decisions' },
+    { key: 'actions', label: 'Actions', count: actionCount },
+  ];
+
+  return (
+    <section
+      data-testid="program-phase-archive-quicknav"
+      aria-label="Phase archive quick navigation"
+      style={{
+        margin: '14px 0 18px',
+        padding: '12px 14px',
+        border: `1px solid ${SHELL.CARD_LINE}`,
+        borderRadius: 12,
+        background: SHELL.PAPER_DEEP,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        flexWrap: 'wrap',
+      }}
+    >
+      <div style={{ minWidth: 190, flex: '1 1 220px' }}>
+        <div
+          style={{
+            fontFamily: SHELL.MONO,
+            fontSize: 10,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: SHELL.INK_MUTED,
+            fontWeight: 800,
+            marginBottom: 3,
+          }}
+        >
+          Phase archive
+        </div>
+        <div style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK_SOFT, lineHeight: 1.45 }}>
+          Browse the record: deliverables, evidence, gate notes, workshop outputs, decisions, and next actions.
+        </div>
+      </div>
+      <div
+        role="group"
+        aria-label="Open phase archive section"
+        style={{
+          display: 'flex',
+          gap: 8,
+          flexWrap: 'wrap',
+          justifyContent: 'flex-end',
+        }}
+      >
+        {items.map((item) => {
+          const active = activeSection === item.key;
+          return (
+            <button
+              key={item.key}
+              type="button"
+              data-testid={`program-phase-archive-${item.key}`}
+              onClick={() => onSelect(item.key)}
+              aria-pressed={active}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                minHeight: 34,
+                padding: '7px 11px',
+                borderRadius: 999,
+                border: `1px solid ${active ? SHELL.INK : item.emphasis ? SHELL.PEACH_LINE : SHELL.CARD_LINE}`,
+                background: active ? SHELL.INK : item.emphasis ? SHELL.PEACH_BG : SHELL.PAPER,
+                color: active ? SHELL.PAPER : item.emphasis ? SHELL.PEACH_TEXT : SHELL.INK,
+                fontFamily: SHELL.MONO,
+                fontSize: 10,
+                fontWeight: 800,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+              }}
+            >
+              <span>{item.label}</span>
+              {typeof item.count === 'number' ? (
+                <span
+                  aria-label={`${item.count} ${item.label.toLowerCase()} items`}
+                  style={{
+                    minWidth: 18,
+                    padding: '1px 6px',
+                    borderRadius: 999,
+                    background: active ? 'rgba(255,255,255,0.18)' : SHELL.GRAY_BG,
+                    color: active ? SHELL.PAPER : SHELL.INK_MUTED,
+                  }}
+                >
+                  {item.count}
+                </span>
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
@@ -3547,89 +3668,6 @@ function MaestroNextActionComposer({
   );
 }
 
-// ─── CustomActionPanel (PRG-MOD-CUSTOM-ACTION) ──────────────────────────────���─
-
-interface CustomActionPanelProps {
-  placeholder?: string;
-  onSubmit: (text: string) => void;
-  onClose: () => void;
-}
-
-function CustomActionPanel({ placeholder, onSubmit, onClose }: CustomActionPanelProps) {
-  const [text, setText] = useState('');
-
-  const handleSubmit = () => {
-    const trimmed = text.trim();
-    if (!trimmed) return;
-    onSubmit(trimmed);
-  };
-
-  return (
-    <div
-      style={{
-        background: SHELL.INK_MID,
-        borderRadius: 8,
-        padding: '12px 14px',
-      }}
-    >
-      <textarea
-        rows={3}
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder={placeholder ?? 'Tell Nexus what to do...'}
-        style={{
-          background: 'rgba(255,255,255,0.08)',
-          border: '1px solid rgba(255,255,255,0.15)',
-          borderRadius: 6,
-          padding: '10px 12px',
-          color: SHELL.PAPER,
-          fontFamily: SHELL.SANS,
-          fontSize: 13,
-          width: '100%',
-          boxSizing: 'border-box',
-          resize: 'none',
-          outline: 'none',
-          lineHeight: 1.5,
-        }}
-      />
-      {/* Button row */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
-        <button
-          onClick={onClose}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            fontFamily: SHELL.MONO,
-            fontSize: 10,
-            color: 'rgba(250,247,241,0.5)',
-            padding: '5px 0',
-            letterSpacing: '0.06em',
-          }}
-        >
-          Cancel
-        </button>
-        <button
-          onClick={handleSubmit}
-          style={{
-            background: SHELL.PAPER,
-            color: SHELL.INK,
-            border: 'none',
-            borderRadius: 5,
-            cursor: 'pointer',
-            fontFamily: SHELL.MONO,
-            fontSize: 10,
-            padding: '5px 12px',
-            letterSpacing: '0.06em',
-          }}
-        >
-          Send to Nexus
-        </button>
-      </div>
-    </div>
-  );
-}
-
 // ─── PhaseTransitionOverlay (PRG-STA-PHASE-TRANSITION) ────────────────────────
 
 interface PhaseTransitionOverlayProps {
@@ -3871,10 +3909,6 @@ export function ProgramDetailPage({
   // PRG-STA-AGENT-HANDOFF state
   const [showHandoff, setShowHandoff] = useState(false);
 
-  // PRG-MOD-CUSTOM-ACTION state
-  const [showCustomAction, setShowCustomAction] = useState(false);
-  const [customActionSent, setCustomActionSent] = useState(false);
-
   // PRG-STA-PHASE-TRANSITION state
   const [showPhaseTransition, setShowPhaseTransition] = useState(false);
 
@@ -3926,8 +3960,14 @@ export function ProgramDetailPage({
   }, [view.workbench.prose]);
 
   // PROG20 — Section tab navigation
-  type SectionKey = 'overview' | 'gate' | 'evidence' | 'deliverables' | 'workshop' | 'actions' | 'decisions';
   const [activeSection, setActiveSection] = useState<SectionKey>('overview');
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const archiveDetailsRef = useRef<HTMLDetailsElement>(null);
+  const openArchiveSection = useCallback((section: SectionKey) => {
+    setArchiveOpen(true);
+    setActiveSection(section);
+    setTimeout(() => archiveDetailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+  }, []);
 
   const phaseLabel = PHASE_LABEL_MAP[view.viewingPhase] ?? `Phase ${view.viewingPhase}`;
   // PROG23 — linked source event context (deterministic, matches displayId casing)
@@ -3949,14 +3989,6 @@ export function ProgramDetailPage({
   const handlePhaseSelect = (id: PhaseStripSlot['id']) => {
     router.push(`/programs/${view.programId}?phase=${id}`, { scroll: false });
   };
-
-  // Cast actions for AgentColumn
-  const agentActions = view.workbench.actions.map((a) => ({
-    letter: a.letter as 'A' | 'B' | 'C',
-    text: a.text,
-    detail: a.detail,
-    href: a.href,
-  }));
 
   const handleActionClick = (letter: 'A' | 'B' | 'C') => {
     if (letter === 'A') {
@@ -4429,6 +4461,15 @@ export function ProgramDetailPage({
           <LifecycleStateBanner view={view} />
         </div>
 
+        <PhaseArchiveQuickNav
+          activeSection={activeSection}
+          onSelect={openArchiveSection}
+          deliverablesCount={view.phasePanel.deliverables?.length}
+          evidenceCount={view.phasePanel.evidenceItems?.length}
+          gateCount={view.phasePanel.gateCriteria?.length}
+          actionCount={view.workbench.actions.length}
+        />
+
         {/* REASON-30 — Inline lifecycle mini-graph (sits below the PhaseStrip
             in the AppShell middleStrip; complements but does not replace it) */}
         {lifecycleMiniGraph && (
@@ -4545,6 +4586,9 @@ export function ProgramDetailPage({
         />
 
         <details
+          ref={archiveDetailsRef}
+          open={archiveOpen}
+          onToggle={(event) => setArchiveOpen(event.currentTarget.open)}
           data-testid="program-details-legacy"
           style={{
             marginBottom: 20,

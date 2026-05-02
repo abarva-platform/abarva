@@ -516,3 +516,16 @@ Append-only coordination log for active Codex sessions.
 - fix: expanded P1 discovery hard-gap detection so explicit P2-entry/non-blocking follow-ups remain carried-forward risks without blocking P1->P2.
 - regression: added `does not block P1 to P2 on P2-entry soft follow-ups in the signed Discovery Report` to `src/lib/programs/__tests__/governance-evaluate-gates.test.ts`.
 - validation: focused governance gate Jest passed, 1 suite / 9 tests.
+
+## 2026-05-02T17:58:00-05:00 - codex-programs-phase-archive-affordance
+
+- status: local-validation-in-progress
+- branch: `codex/programs-phase-archive-affordance`
+- worktree: `/tmp/nexus-functional-backlog`
+- live_context: founder asked how to browse a program's phase details and deliverables from the detail view; screenshot showed deliverables hidden behind the collapsed legacy details area below the Nexus canvas.
+- fix: added a visible Phase archive quick navigation strip above the Nexus canvas that opens the program details archive and jumps directly to Overview, Deliverables, Evidence, Gate, Workshop, Decisions, or Actions.
+- regression: extended `src/__tests__/integration/programs/programs-detail-prog20-subnav.test.ts` to assert the quick nav exists and can open the deliverables archive section.
+- validation: focused ProgramDetailPage subnav Jest passed, 1 suite / 29 tests.
+- validation: targeted ESLint passed for `ProgramDetailPage` and the updated PROG20 subnav integration test.
+- validation: `npx tsc --noEmit --pretty false` passed.
+- next: run production build, PR, auto-merge after checks pass, wait for Vercel production deployment, then verify live deliverables/archive discoverability in the browser.
