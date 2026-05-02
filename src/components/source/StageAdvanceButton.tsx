@@ -102,18 +102,16 @@ export function StageAdvanceButton({
   async function handleAdvance() {
     if (!nextStageKey || loading) return;
     setError(null);
-    if (blockingGateCount > 0) {
-      setError(
-        `Cannot advance — ${blockingGateCount} hard gate${blockingGateCount === 1 ? '' : 's'} unmet for ${blockingGateLabel ?? nextStageLabel}. Review gate criteria below.`,
-      );
-      return;
-    }
     setLoading(true);
     try {
       const res = await fetch(`/api/v1/source/${encodeURIComponent(eventId)}/stage`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stageKey: nextStageKey }),
+        body: JSON.stringify({
+          stageKey: nextStageKey,
+          gateWarningCount: blockingGateCount,
+          gateWarningLabel: blockingGateLabel ?? nextStageLabel,
+        }),
       });
       if (!res.ok) {
         const body = (await res.json()) as { detail?: string };
@@ -156,6 +154,18 @@ export function StageAdvanceButton({
           {loading ? 'Advancing…' : `Advance stage → ${nextStageLabel}`}
         </span>
       </button>
+      {blockingGateCount > 0 && !error && (
+        <span
+          style={{
+            fontFamily: SHELL.SANS,
+            fontSize: 10,
+            color: '#8a5a00',
+            marginLeft: 4,
+          }}
+        >
+          Admin advance carries {blockingGateCount} hard-gate caveat{blockingGateCount === 1 ? '' : 's'}.
+        </span>
+      )}
       {error && (
         <span
           style={{
