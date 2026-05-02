@@ -162,6 +162,7 @@ import "@/lib/agent/tools/program/advancePhase";
 // Program crawl enablement — lets Nexus persist/sign off generated artifacts
 // so hard gates can read deliverables_v2 instead of chat-only prose.
 import "@/lib/agent/tools/program/completeDeliverable";
+import "@/lib/agent/tools/program/completeDeliverables";
 // Surface 2 PR-Q — navigate_to tool. Registered for every entry
 // surface so any agent can take the user somewhere when explicitly
 // asked. It must NOT redirect new-program intent to /programs/new;
@@ -206,6 +207,7 @@ const DEFAULT_AGENT_RESPONSE_MAX_TOKENS = 2048;
 const PROGRAM_AGENT_RESPONSE_MAX_TOKENS = 4096;
 const PROGRAM_DELIVERABLE_SAVE_RE = /\b(save|persist|sign\s*off|signed\s*off|complete|approve|submit)\b/i;
 const PROGRAM_DELIVERABLE_NOUN_RE = /\b(deliverable|artifact|charter|traceability|roadmap|business\s+case|approval\s+(packet|memo)|funding|readiness|change\s+plan|tower\s+handoff|workshop\s+guide|design\s+spec|discovery\s+synthesis)\b/i;
+const PROGRAM_MULTI_DELIVERABLE_RE = /\b(separate\s+signed\s+deliverables|type\s+keys|business_case|funding_approval|sponsor_alignment|readiness_and_change_plan|tower_handoff_plan)\b/i;
 
 export function getAgentResponseTokenBudget(surface: string): number {
   if (
@@ -219,10 +221,14 @@ export function getAgentResponseTokenBudget(surface: string): number {
   return DEFAULT_AGENT_RESPONSE_MAX_TOKENS;
 }
 
-export function shouldForceInitialDeliverableTool(surface: string, message: string, toolNames: ReadonlySet<string>): boolean {
+export function selectInitialDeliverableToolChoice(surface: string, message: string, toolNames: ReadonlySet<string>) {
   if (!isProgramsSurface(surface)) return false;
-  if (!toolNames.has('complete_deliverable')) return false;
-  return PROGRAM_DELIVERABLE_SAVE_RE.test(message) && PROGRAM_DELIVERABLE_NOUN_RE.test(message);
+  if (!PROGRAM_DELIVERABLE_SAVE_RE.test(message) || !PROGRAM_DELIVERABLE_NOUN_RE.test(message)) return false;
+  if (PROGRAM_MULTI_DELIVERABLE_RE.test(message) && toolNames.has('complete_deliverables')) {
+    return { type: 'tool' as const, name: 'complete_deliverables' };
+  }
+  if (toolNames.has('complete_deliverable')) return { type: 'tool' as const, name: 'complete_deliverable' };
+  return false;
 }
 
 export async function POST(request: Request) {
@@ -799,6 +805,7 @@ export async function POST(request: Request) {
           "- PHASE ADVANCE APPROVALS: if the user explicitly says a sponsor/admin approves a phase gate and USER ACCESS POLICY says 'Can approve gates: yes', call advance_phase with self_approve_if_authorized=true. If the policy does not grant approval rights, do not self-approve; create/request approval and say which approver must act.",
           "- LIFECYCLE LABEL DISCIPLINE: never call P4 'Build', P5 'Activate', or P6 'Operate'. The locked labels are P4 Execution Roadmap, P5 Approval & Mobilization, and P6 Tower Handoff. If you need to mention external execution, say execution happens outside AbarVa and P4 builds the executable roadmap only.",
           "- DELIVERABLE PERSISTENCE DISCIPLINE: for phase deliverables, do not generate a huge hidden complete_deliverable payload. Save bounded executive-grade content: either a concise markdown artifact under 6,000 characters or the tool's content_outline array with the key sections, decisions, gate proofs, risks, and follow-ups. Then summarize what was saved in chat. Never spend a turn silently composing a full consulting deck inside tool JSON.",
+          "- MULTI-ARTIFACT PACKAGE DISCIPLINE: if the user asks to save several deliverables in one phase package, use complete_deliverables once instead of calling complete_deliverable repeatedly. This is especially important for P5 Approval & Mobilization packages: business_case, funding_approval, sponsor_alignment, readiness_and_change_plan, and tower_handoff_plan.",
           "- P4 MILESTONE PERSISTENCE: when drafting an execution roadmap with critical milestones, save the roadmap deliverable and then call create_milestones so P4→P5 gate checks can read structured milestone rows. Do not rely on milestone prose inside the roadmap alone.",
           "- During origination, emit `brief-progress` artifacts as fields become known so the right rail updates while the chat continues.",
           "- BASELINE DISCIPLINE: if the user gives a value claim like '30% faster', 'better quality', 'cost takeout', or 'improve speed', do NOT treat the target outcome as complete until you ask what baseline proves it. Suggest 2-4 concrete metrics only when helpful, such as analytics cycle time, data-lineage completeness, prior-auth automation rate, coding accuracy, Epic/claims match rate, VBC measure latency, DORA lead time, deployment frequency, change-failure rate, or MTTR. Never invent current baseline numbers.",
@@ -857,9 +864,8 @@ export async function POST(request: Request) {
   const anthropicClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const tools = getRelevantTools(surface);
   const toolNames = new Set(tools.map((tool) => tool.name));
-  const initialToolChoice = shouldForceInitialDeliverableTool(surface, message, toolNames)
-    ? { type: 'tool' as const, name: 'complete_deliverable' }
-    : undefined;
+  const selectedInitialToolChoice = selectInitialDeliverableToolChoice(surface, message, toolNames);
+  const initialToolChoice = selectedInitialToolChoice || undefined;
 
   // ── CB-6 · context-bundle assembly ──────────────────────────────────────────
   //

@@ -100,10 +100,18 @@ describe('agent route · CB-6 context-bundle wiring', () => {
   });
 
   it('forces explicit Programs deliverable save requests through the persistence tool', () => {
-    expect(source).toContain('function shouldForceInitialDeliverableTool(');
+    expect(source).toContain('function selectInitialDeliverableToolChoice(');
     expect(source).toContain("toolNames.has('complete_deliverable')");
     expect(source).toContain("name: 'complete_deliverable'");
     expect(source).toContain('initialToolChoice,');
+  });
+
+  it('routes multi-deliverable phase packages through the batch persistence tool', () => {
+    expect(source).toContain('completeDeliverables');
+    expect(source).toContain('PROGRAM_MULTI_DELIVERABLE_RE');
+    expect(source).toContain("toolNames.has('complete_deliverables')");
+    expect(source).toContain("name: 'complete_deliverables'");
+    expect(source).toContain('MULTI-ARTIFACT PACKAGE DISCIPLINE');
   });
 
   it('canonicalizes the active client key before Programs broker lookup', () => {

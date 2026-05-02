@@ -22,7 +22,7 @@ interface CompleteDeliverableToolInput {
   rationale?: string;
 }
 
-const ALLOWED_DELIVERABLE_TYPES = new Set([
+export const ALLOWED_PROGRAM_DELIVERABLE_TYPES = new Set([
   'approval_memo',
   'approval_packet',
   'baseline',
@@ -137,12 +137,12 @@ export const completeDeliverableTool: AgentTool<CompleteDeliverableToolInput> = 
         recovery: 'I need the program id before I can persist a deliverable.',
       };
     }
-    if (!deliverableTypeKey || !ALLOWED_DELIVERABLE_TYPES.has(deliverableTypeKey)) {
+    if (!deliverableTypeKey || !ALLOWED_PROGRAM_DELIVERABLE_TYPES.has(deliverableTypeKey)) {
       return {
         success: false,
         error: 'unsupported_deliverable_type',
         recovery:
-          `Use one of: ${Array.from(ALLOWED_DELIVERABLE_TYPES).sort().join(', ')}. ` +
+          `Use one of: ${Array.from(ALLOWED_PROGRAM_DELIVERABLE_TYPES).sort().join(', ')}. ` +
           'If this is a different artifact, save it as an attachment or approval_packet first.',
       };
     }
