@@ -94,6 +94,13 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
   const role = resolveSessionRole(metadataRole, email)
   const requestedClientId = request.nextUrl.searchParams.get('client')
 
+  // /setup is a compatibility bridge for people who still use the old Setup
+  // URL. Redirect it before Clerk's catch-all protect path can rewrite it to a
+  // signed-out 404; /admin then owns the normal auth redirect if needed.
+  if (request.nextUrl.pathname === '/setup' || request.nextUrl.pathname.startsWith('/setup/')) {
+    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL('/admin', request.url)))
+  }
+
   if (
     authRequiredRoutes(request)
     && shouldStripUnauthorizedClientParam(

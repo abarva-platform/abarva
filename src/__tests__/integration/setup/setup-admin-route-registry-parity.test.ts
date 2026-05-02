@@ -82,12 +82,19 @@ describe('Setup canonical route registry parity', () => {
   });
 
   it('keeps /setup as a thin compatibility bridge to the canonical /admin setup control plane', () => {
-    const source = fs.readFileSync(
+    const setupPageSource = fs.readFileSync(
       path.join(process.cwd(), 'src/app/setup/page.tsx'),
       'utf8',
     );
+    const proxySource = fs.readFileSync(
+      path.join(process.cwd(), 'src/proxy.ts'),
+      'utf8',
+    );
 
-    expect(source).toContain("redirect('/admin')");
-    expect(source).not.toContain('AdminCanonShellV2');
+    expect(setupPageSource).toContain("redirect('/admin')");
+    expect(setupPageSource).not.toContain('AdminCanonShellV2');
+    expect(proxySource).toContain("request.nextUrl.pathname === '/setup'");
+    expect(proxySource).toContain("request.nextUrl.pathname.startsWith('/setup/')");
+    expect(proxySource).toContain("NextResponse.redirect(new URL('/admin', request.url))");
   });
 });
