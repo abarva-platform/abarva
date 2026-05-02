@@ -19,7 +19,6 @@ import {
   EMPTY_BRIEF_STATE,
   shouldHydrateOriginationDraft,
 } from '../ProgramOriginationWorkspace';
-import { EMPTY_BRIEF } from '../ProgramBriefPanel';
 import type {
   BriefProgressArtifact,
   OverlapAlertArtifact,
@@ -90,7 +89,7 @@ describe('applyArtifactToBrief', () => {
 
   // ── OV2-1b · meta artifact handling ────────────────────────────────────
 
-  it('OV2-1b · stores the latest brief-progress artifact (replace, not merge)', () => {
+  it('OV2-1b · stores the latest brief-progress artifact and mirrors known fields into the canonical brief', () => {
     const first: BriefProgressArtifact = {
       type: 'brief-progress',
       fieldsTotal: 8,
@@ -103,6 +102,8 @@ describe('applyArtifactToBrief', () => {
     };
     const afterFirst = applyArtifactToBrief(EMPTY_BRIEF_STATE, first);
     expect(afterFirst.briefProgress).toBe(first);
+    expect(afterFirst.brief.sponsor).toBe('Sarah Chen');
+    expect(afterFirst.brief.problemStatement).toBe('AMS spend up 22%');
 
     const second: BriefProgressArtifact = {
       type: 'brief-progress',
@@ -121,24 +122,35 @@ describe('applyArtifactToBrief', () => {
     // Latest replaces prior wholesale — no merging.
     expect(afterSecond.briefProgress?.fieldsFilled).toBe(5);
     expect(afterSecond.briefProgress?.fields).toHaveLength(5);
+    expect(afterSecond.brief.targetOutcome).toBeNull();
+    expect(afterSecond.brief.classification).toBe('CDP Activation');
+    expect(afterSecond.brief.timeline).toBe('2 quarters');
   });
 
-  it('OV2-1b · brief-progress at fieldsFilled === fieldsTotal is treated like any other emission', () => {
+  it('OV2-1b · complete brief-progress unlocks the canonical setup fields', () => {
     const complete: BriefProgressArtifact = {
       type: 'brief-progress',
-      fieldsTotal: 3,
-      fieldsFilled: 3,
+      fieldsTotal: 6,
+      fieldsFilled: 6,
       fields: [
+        { id: 'program-name', label: 'Program name', status: 'filled', value: 'AMS Renewal' },
         { id: 'sponsor', label: 'Sponsor', status: 'filled', value: 'Sarah Chen' },
+        { id: 'program-lead', label: 'Program lead', status: 'filled', value: 'Rick Stewart' },
         { id: 'problem', label: 'Problem', status: 'filled', value: 'AMS spend' },
         { id: 'outcome', label: 'Outcome', status: 'filled', value: 'Containment +15%' },
+        { id: 'classification', label: 'Classification', status: 'filled', value: 'AMS Consolidation' },
       ],
     };
     const out = applyArtifactToBrief(EMPTY_BRIEF_STATE, complete);
-    // The reducer doesn't apply special complete-state magic — UI may
-    // decide to render differently, but the slot is just the artifact.
     expect(out.briefProgress).toBe(complete);
-    expect(out.brief).toBe(EMPTY_BRIEF);
+    expect(out.brief).toMatchObject({
+      programName: 'AMS Renewal',
+      sponsor: 'Sarah Chen',
+      lead: 'Rick Stewart',
+      problemStatement: 'AMS spend',
+      targetOutcome: 'Containment +15%',
+      classification: 'AMS Consolidation',
+    });
     expect(out.overlapAlerts).toEqual([]);
   });
 

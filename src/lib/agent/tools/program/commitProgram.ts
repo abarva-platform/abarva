@@ -69,6 +69,7 @@ import { getActiveClientRow } from '@/lib/active-client';
 import { CLIENT_KEY_TO_INDUSTRY_CODE } from '@/lib/client-config';
 import { markDraftCommitted } from '@/lib/programs/origination-drafts';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
+import { normalizeProgramArchetype } from '@/lib/programs/archetype-normalization';
 
 // Postgres UUID v4 format (also matches v1/v3/v5 — sufficient for input
 // validation before we attempt an `engagements.insert` that would
@@ -153,14 +154,16 @@ function briefProgressArtifact(input: {
   form: OriginationForm;
   classification: CommitProgramClassification;
   input: CommitProgramInput;
+  sponsorName: string;
+  leadName: string;
 }): string {
   const fields = [
     { id: 'program-name', label: 'Program name', value: input.form.name },
     { id: 'problem-statement', label: 'Problem statement', value: input.form.useCase },
     { id: 'target-outcome', label: 'Target outcome', value: input.form.targetOutcome },
     { id: 'timeline', label: 'Timeline', value: input.input.timeline ?? '' },
-    { id: 'sponsor', label: 'Sponsor', value: input.form.sponsorPersonId },
-    { id: 'lead', label: 'Lead', value: input.form.leadPersonId },
+    { id: 'sponsor', label: 'Sponsor', value: input.sponsorName },
+    { id: 'lead', label: 'Lead', value: input.leadName },
     {
       id: 'classification',
       label: 'Classification',
@@ -405,6 +408,7 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
       leadPersonId: input.lead_person_id ?? input.sponsor_person_id,
     };
     const derivedClassification = classifyCommitProgram(input);
+    const programArchetype = normalizeProgramArchetype(input.classification);
 
     // Idempotency guard: if a program with the same name was created
     // for this client in the last 5 minutes, return that one instead
@@ -505,7 +509,7 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
           // The gate for "running vs. waiting" is lifecycle_state, not
           // the phase number.
           current_phase: 0,
-          program_archetype: input.classification ?? null,
+          program_archetype: programArchetype,
           // `engagements.origin_source` is guarded by a DB CHECK
           // constraint; in-canvas Nexus origination is a user-initiated
           // program seed, not a separate origin_source enum.
@@ -553,7 +557,7 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
       function_code: derivedClassification.functionCode,
       objective_code: derivedClassification.objectiveCode,
       topic_code: derivedClassification.topicCode,
-      classification: input.classification ?? null,
+      classification: programArchetype,
       matched_pattern_id: input.matched_pattern_id ?? null,
       submitted_from_surface: ctx.surface,
       submitted_at: new Date().toISOString(),
@@ -568,11 +572,18 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
     // ── Step 2 · submit for approval (transactional with rollback) ──
     let approvalRequestId: string;
     try {
+      const sponsorName = await resolvePersonName(originationForm.sponsorPersonId);
+      const leadName =
+        originationForm.leadPersonId === originationForm.sponsorPersonId
+          ? sponsorName
+          : await resolvePersonName(originationForm.leadPersonId);
       ctx.writer?.write(
         briefProgressArtifact({
           form: originationForm,
           classification: derivedClassification,
           input,
+          sponsorName,
+          leadName,
         }),
       );
       const approval = await submitForApproval({

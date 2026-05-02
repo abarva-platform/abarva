@@ -59,6 +59,57 @@ export const EMPTY_BRIEF_STATE: OriginationBriefState = {
   overlapAlerts: [],
 };
 
+function fieldValueFromProgress(
+  artifact: BriefProgressArtifact,
+  ids: string[],
+): string | null {
+  const wanted = new Set(ids);
+  const field = artifact.fields.find((candidate) => {
+    const id = candidate.id.toLowerCase().replace(/[_\s]+/g, '-');
+    const label = candidate.label.toLowerCase().replace(/[_\s]+/g, '-');
+    return wanted.has(id) || wanted.has(label);
+  });
+  if (field?.status === 'empty') return null;
+  const value = field?.value?.trim();
+  return value ? value : null;
+}
+
+function mergeBriefProgressIntoBrief(
+  brief: ProgramBriefDraft,
+  artifact: BriefProgressArtifact,
+): ProgramBriefDraft {
+  const patch: Partial<ProgramBriefDraft> = {};
+  const programName = fieldValueFromProgress(artifact, ['program-name', 'name']);
+  const problemStatement = fieldValueFromProgress(artifact, [
+    'problem-statement',
+    'problem',
+    'use-case',
+  ]);
+  const targetOutcome = fieldValueFromProgress(artifact, ['target-outcome', 'outcome']);
+  const timeline = fieldValueFromProgress(artifact, ['timeline']);
+  const classification = fieldValueFromProgress(artifact, [
+    'classification',
+    'archetype',
+    'program-archetype',
+  ]);
+  const sponsor = fieldValueFromProgress(artifact, [
+    'sponsor',
+    'executive-sponsor',
+    'sponsor-candidate',
+  ]);
+  const lead = fieldValueFromProgress(artifact, ['lead', 'program-lead']);
+
+  if (programName) patch.programName = programName;
+  if (problemStatement) patch.problemStatement = problemStatement;
+  if (targetOutcome) patch.targetOutcome = targetOutcome;
+  if (timeline) patch.timeline = timeline;
+  if (classification) patch.classification = classification;
+  if (sponsor) patch.sponsor = sponsor;
+  if (lead) patch.lead = lead;
+
+  return Object.keys(patch).length > 0 ? { ...brief, ...patch } : brief;
+}
+
 /**
  * Pure reducer for the origination brief state. Returns the next state
  * given an artifact emitted by Steward. Covers the origination-relevant
@@ -105,8 +156,14 @@ export function applyArtifactToBrief(
     case 'brief-progress':
       // OV2-1b · latest emission wins. Steward emits one per turn and
       // the artifact carries the full field-status snapshot, so there's
-      // nothing to merge.
-      return { ...state, briefProgress: artifact };
+      // nothing to merge at the card level. We do, however, mirror known
+      // fields into the canonical brief so the deterministic submit path
+      // unlocks from the same structured state the user sees.
+      return {
+        ...state,
+        brief: mergeBriefProgressIntoBrief(state.brief, artifact),
+        briefProgress: artifact,
+      };
     case 'overlap-alert': {
       // OV2-1b · dedupe-by-overlappingProgramId, latest emission wins.
       // Distinct program ids coexist. Mirrors the upsert pattern in
