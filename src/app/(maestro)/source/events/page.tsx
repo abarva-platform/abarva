@@ -11,10 +11,10 @@ import { buildLinkedProgramBadgeView } from '@/lib/source/linked-program-badge-v
 import { listSourcingEvents, getPendingSourceEvents } from '@/lib/source/queries';
 import { AMS_SOURCE_EVENT } from '@/lib/source/shell-source-fixture';
 import type { SourcingEventSummary } from '@/lib/source/types';
-import { formatUsd } from '@/lib/source/value-ledger';
 import { getActiveClientRow } from '@/lib/active-client';
 import { requireTenancy } from '@/lib/auth/tenancy';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
+import { formatSourceFinancialValue } from '@/lib/source/financial-display';
 
 export const dynamic = 'force-dynamic';
 
@@ -62,11 +62,15 @@ export default async function SourceEventsPage({
             {pendingEvents.length > 0 && (
               <AdminSourceEventApprovalQueue events={pendingEvents} />
             )}
-            <SourceEventsEntryHeader events={events} />
+            <SourceEventsEntryHeader
+              events={events}
+              canViewFinancialValues={sourceAccessPolicy?.canViewFinancialData === true}
+            />
             <SourceEventsPortfolio
               events={events}
               activeStage={stage ?? null}
               activeStatus={status ?? null}
+              canViewFinancialValues={sourceAccessPolicy?.canViewFinancialData === true}
             />
           </SourceWorkingPane>
           <SentinelAgentColumn
@@ -86,8 +90,10 @@ export default async function SourceEventsPage({
 
 function SourceEventsEntryHeader({
   events,
+  canViewFinancialValues = true,
 }: {
   events: SourcingEventSummary[];
+  canViewFinancialValues?: boolean;
 }) {
   const activeEvents = events.filter((event) => event.status === 'active').length;
   const waitingEvents = events.filter((event) => event.status.startsWith('waiting_on')).length;
@@ -189,7 +195,11 @@ function SourceEventsEntryHeader({
         <PortfolioMetric label="Waiting" value={String(waitingEvents)} detail="client, vendor, or owner hold" />
         <PortfolioMetric label="Blocked" value={String(blockedEvents)} detail="gate or evidence pressure visible" />
         <PortfolioMetric label="Linked programs" value={String(linkedEvents)} detail="deterministic program hints" />
-        <PortfolioMetric label="Value at stake" value={formatUsd(valueAtStake)} detail="seeded projected exposure" />
+        <PortfolioMetric
+          label="Value at stake"
+          value={formatSourceFinancialValue(valueAtStake, canViewFinancialValues)}
+          detail="seeded projected exposure"
+        />
       </div>
     </section>
   );

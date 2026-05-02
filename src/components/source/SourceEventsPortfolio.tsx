@@ -8,7 +8,10 @@ import type {
   SourceStageKey,
   SourcingEventSummary,
 } from '@/lib/source/types';
-import { formatUsd } from '@/lib/source/value-ledger';
+import {
+  formatSourceFinancialValue,
+  redactSourceFinancialText,
+} from '@/lib/source/financial-display';
 import { SourceAlertPanel } from './SourceAlertPanel';
 import { SourcingEventTable } from './SourcingEventTable';
 
@@ -173,12 +176,14 @@ type Props = {
   events: SourcingEventSummary[];
   activeStage: string | null;
   activeStatus: string | null;
+  canViewFinancialValues?: boolean;
 };
 
 export function SourceEventsPortfolio({
   events,
   activeStage,
   activeStatus,
+  canViewFinancialValues = true,
 }: Props) {
   const filteredEvents = events.filter((event) => {
     const matchesStage = !activeStage || event.currentStageKey === activeStage;
@@ -211,7 +216,7 @@ export function SourceEventsPortfolio({
         valueAtStakeUsd: event.valueAtStakeUsd,
         agingDays: event.agingDays,
         statusLabel: event.statusLabel,
-        blocker: event.blocker,
+        blocker: event.blocker ? redactSourceFinancialText(event.blocker, canViewFinancialValues) : null,
       },
     ]),
   );
@@ -228,9 +233,12 @@ export function SourceEventsPortfolio({
     id: `portfolio-${event.id}`,
     eventId: event.id,
     title: `${event.name} needs portfolio attention`,
-    detail: event.blocker
-      ? `${event.blocker}. Next action: ${event.nextAction}.`
-      : `${event.nextDecision}. Next action: ${event.nextAction}.`,
+    detail: redactSourceFinancialText(
+      event.blocker
+        ? `${event.blocker}. Next action: ${event.nextAction}.`
+        : `${event.nextDecision}. Next action: ${event.nextAction}.`,
+      canViewFinancialValues,
+    ),
     severity: event.isAtRisk ? 'critical' : event.openAlerts > 0 ? 'warning' : 'info',
     owner: event.owner,
     actionLabel: 'Open event',
@@ -263,7 +271,7 @@ export function SourceEventsPortfolio({
           />
           <ContextTile
             label="Value at stake"
-            value={formatUsd(valueAtStake)}
+            value={formatSourceFinancialValue(valueAtStake, canViewFinancialValues)}
             detail="Projected sourcing value in the filtered queue"
           />
         </div>
@@ -436,7 +444,11 @@ export function SourceEventsPortfolio({
       </section>
 
       {filteredEvents.length > 0 ? (
-        <SourcingEventTable events={filteredEvents} variant="light" />
+        <SourcingEventTable
+          events={filteredEvents}
+          variant="light"
+          canViewFinancialValues={canViewFinancialValues}
+        />
       ) : (
         <section style={SURFACE_CARD}>
           <div style={{ ...SOURCE_SECTION_LABEL, color: '#1B2B5C' }}>Event queue</div>
@@ -461,6 +473,7 @@ export function SourceEventsPortfolio({
           emptyLabel="No seeded attention items are open in the current filter view."
           eventContextById={eventContextById}
           variant="light"
+          canViewFinancialValues={canViewFinancialValues}
         />
 
         <section style={RAIL_CARD}>
@@ -472,15 +485,29 @@ export function SourceEventsPortfolio({
             />
             <MetricLine
               label="What matters?"
-              detail={topEvent ? `${topEvent.name} is the most exposed filtered event at ${formatUsd(topEvent.valueAtStakeUsd)}.` : 'No events are in the current filtered view.'}
+              detail={
+                topEvent
+                  ? `${topEvent.name} is the most exposed filtered event; exact value is ${
+                      canViewFinancialValues
+                        ? formatSourceFinancialValue(topEvent.valueAtStakeUsd, true)
+                        : 'restricted'
+                    }.`
+                  : 'No events are in the current filtered view.'
+              }
             />
             <MetricLine
               label="What is blocked?"
-              detail={topEvent?.blocker ?? 'Portfolio-level blockers are limited to seeded event summaries in this wave.'}
+              detail={redactSourceFinancialText(
+                topEvent?.blocker ?? 'Portfolio-level blockers are limited to seeded event summaries in this wave.',
+                canViewFinancialValues,
+              )}
             />
             <MetricLine
               label="Agent recommendation"
-              detail={topEvent ? topEvent.nextAction : 'Reset filters or return to the seeded queue to inspect an event.'}
+              detail={redactSourceFinancialText(
+                topEvent ? topEvent.nextAction : 'Reset filters or return to the seeded queue to inspect an event.',
+                canViewFinancialValues,
+              )}
             />
             <MetricLine
               label="Next action"

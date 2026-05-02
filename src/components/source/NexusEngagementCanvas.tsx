@@ -12,7 +12,6 @@ import {
   type SourceAgentMissionReport,
 } from '@/lib/source';
 import type { SourcingEventDetail } from '@/lib/source/types';
-import { formatUsd } from '@/lib/source/value-ledger';
 import { SourceActiveStageWorkspace } from './SourceActiveStageWorkspace';
 import { SourceAlertPanel } from './SourceAlertPanel';
 import { SourceJourneyTrackerClient } from './SourceJourneyTrackerClient';
@@ -23,6 +22,7 @@ import { SourceArtifactStatusStrip } from './SourceArtifactStatusStrip';
 import { PAT_SRC_AMS_001 } from '@/lib/intelligence/source-lifecycle-patterns';
 import { buildStageHandoffNarratives } from '@/lib/reasoning/stage-handoff-narrative';
 import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
+import { formatSourceFinancialValue } from '@/lib/source/financial-display';
 
 const EVENT_CANVAS_MISSION_GENERATED_AT = '2026-04-26T00:00:00.000Z';
 
@@ -65,7 +65,13 @@ const AMS_PATTERN_STAGE_MAP: Record<string, string> = Object.fromEntries(
 );
 const AMS_HANDOFF_NARRATIVES = buildStageHandoffNarratives(PAT_SRC_AMS_001);
 
-export function NexusEngagementCanvas({ event }: { event: SourcingEventDetail }) {
+export function NexusEngagementCanvas({
+  event,
+  canViewFinancialValues = true,
+}: {
+  event: SourcingEventDetail;
+  canViewFinancialValues?: boolean;
+}) {
   const missionReport = buildEventCanvasMissionReport(event);
   const missionPreviewMissions = getEventCanvasMissionPreviewMissions(missionReport);
   const stageGateReadiness = buildSourceStageGateReadiness({ event });
@@ -83,7 +89,11 @@ export function NexusEngagementCanvas({ event }: { event: SourcingEventDetail })
 
   return (
     <section style={CANVAS}>
-      <EventContextStrip event={event} missionReport={missionReport} />
+      <EventContextStrip
+        event={event}
+        missionReport={missionReport}
+        canViewFinancialValues={canViewFinancialValues}
+      />
       <div style={BODY_GRID}>
         <div style={{ display: 'grid', gap: 16, minWidth: 0 }}>
           <SourceJourneyTrackerClient
@@ -122,9 +132,11 @@ export function NexusEngagementCanvas({ event }: { event: SourcingEventDetail })
 function EventContextStrip({
   event,
   missionReport,
+  canViewFinancialValues,
 }: {
   event: SourcingEventDetail;
   missionReport: SourceAgentMissionReport;
+  canViewFinancialValues: boolean;
 }) {
   const contextItems = [
     { label: 'Account', value: event.accountName },
@@ -132,7 +144,10 @@ function EventContextStrip({
     { label: 'Rigor', value: event.rigor },
     { label: 'Owner', value: event.owner },
     { label: 'Current stage', value: event.currentStageLabel },
-    { label: 'Value at stake', value: formatUsd(event.valueAtStakeUsd) },
+    {
+      label: 'Value at stake',
+      value: formatSourceFinancialValue(event.valueAtStakeUsd, canViewFinancialValues),
+    },
     { label: 'Mission load', value: `${missionReport.missionCount} missions` },
     { label: 'Top action', value: event.nextAction || missionReport.recommendedNextAction },
   ];

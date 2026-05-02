@@ -11,7 +11,10 @@ import { SourcingEventTable } from '@/components/source/SourcingEventTable';
 import type { Artifact } from '@/lib/agent/artifacts';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourceLifecycleStatus, SourceStageKey, SourcingEventSummary } from '@/lib/source/types';
-import { formatUsd } from '@/lib/source/value-ledger';
+import {
+  formatSourceFinancialValue,
+  redactSourceFinancialText,
+} from '@/lib/source/financial-display';
 
 interface SourcePortfolioPageProps {
   events: SourcingEventSummary[];
@@ -21,6 +24,7 @@ interface SourcePortfolioPageProps {
     status?: string;
     demo?: string;
   };
+  canViewFinancialValues?: boolean;
 }
 
 const STAGE_FILTERS: Array<{ key: SourceStageKey; label: string }> = [
@@ -35,7 +39,12 @@ const STATUS_FILTERS: Array<{ key: SourceLifecycleStatus; label: string }> = [
   { key: 'waiting_on_vendor', label: 'Waiting' },
 ];
 
-export function SourcePortfolioPage({ events, tenantName, searchParams }: SourcePortfolioPageProps) {
+export function SourcePortfolioPage({
+  events,
+  tenantName,
+  searchParams,
+  canViewFinancialValues = true,
+}: SourcePortfolioPageProps) {
   const router = useRouter();
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const activeStage = searchParams.stage ?? null;
@@ -121,22 +130,34 @@ export function SourcePortfolioPage({ events, tenantName, searchParams }: Source
             padding: '10px 20px 24px',
           }}
         >
-          <SourceCommandHeader eventsInView={eventsInView.length} events={eventsInView} />
+          <SourceCommandHeader
+            eventsInView={eventsInView.length}
+            events={eventsInView}
+            canViewFinancialValues={canViewFinancialValues}
+          />
 
           <SourcePortfolioAgentCanvas
-            quote={buildPortfolioQuote(eventsInView)}
+            quote={redactSourceFinancialText(buildPortfolioQuote(eventsInView), canViewFinancialValues)}
             events={eventsInView}
             activeStage={activeStage}
             activeStatus={activeStatus}
             artifacts={artifacts}
             onArtifact={handleArtifact}
+            canViewFinancialValues={canViewFinancialValues}
           />
 
           <SourceWorkDock />
 
-          <SourceMissionPreview events={eventsInView} />
+          <SourceMissionPreview
+            events={eventsInView}
+            canViewFinancialValues={canViewFinancialValues}
+          />
 
-          <SourcingEventTable events={eventsInView} variant="light" />
+          <SourcingEventTable
+            events={eventsInView}
+            variant="light"
+            canViewFinancialValues={canViewFinancialValues}
+          />
 
           <details
             data-testid="source-portfolio-legacy"
@@ -167,6 +188,7 @@ export function SourcePortfolioPage({ events, tenantName, searchParams }: Source
                 events={events}
                 activeStage={activeStage}
                 activeStatus={activeStatus}
+                canViewFinancialValues={canViewFinancialValues}
               />
             </div>
           </details>
@@ -179,9 +201,11 @@ export function SourcePortfolioPage({ events, tenantName, searchParams }: Source
 function SourceCommandHeader({
   eventsInView,
   events,
+  canViewFinancialValues,
 }: {
   eventsInView: number;
   events: SourcingEventSummary[];
+  canViewFinancialValues: boolean;
 }) {
   const activeEvents = events.filter((event) => event.status === 'active').length;
   const waitingEvents = events.filter((event) => event.status.startsWith('waiting_on')).length;
@@ -282,7 +306,11 @@ function SourceCommandHeader({
           <HeaderMetric label="Active" value={String(activeEvents)} />
           <HeaderMetric label="Waiting" value={String(waitingEvents)} />
           <HeaderMetric label="At risk" value={String(atRiskEvents)} />
-          <HeaderMetric label="Value" value={formatUsd(valueAtStake)} compact />
+          <HeaderMetric
+            label="Value"
+            value={formatSourceFinancialValue(valueAtStake, canViewFinancialValues)}
+            compact
+          />
         </div>
       </div>
     </section>
@@ -367,8 +395,20 @@ function SourceWorkDock() {
   );
 }
 
-function SourceMissionPreview({ events }: { events: SourcingEventSummary[] }) {
+function SourceMissionPreview({
+  events,
+  canViewFinancialValues,
+}: {
+  events: SourcingEventSummary[];
+  canViewFinancialValues: boolean;
+}) {
   const topEvent = selectTopEvent(events);
+  const topEventPosture = topEvent
+    ? redactSourceFinancialText(
+        `${topEvent.currentStageLabel} · ${topEvent.statusLabel}. ${topEvent.blocker ?? topEvent.nextDecision} Next action: ${topEvent.nextAction}.`,
+        canViewFinancialValues,
+      )
+    : 'Reset filters or create a technology sourcing event with owner, scope, value basis, and evidence posture before starting workflow.';
 
   return (
     <section
@@ -425,9 +465,7 @@ function SourceMissionPreview({ events }: { events: SourcingEventSummary[] }) {
             color: SHELL.INK_SOFT,
           }}
         >
-          {topEvent
-            ? `${topEvent.currentStageLabel} · ${topEvent.statusLabel}. ${topEvent.blocker ?? topEvent.nextDecision} Next action: ${topEvent.nextAction}.`
-            : 'Reset filters or create a technology sourcing event with owner, scope, value basis, and evidence posture before starting workflow.'}
+          {topEventPosture}
         </p>
       </div>
       <div

@@ -19,6 +19,13 @@ import { buildInstanceEventTimeline } from '@/lib/reasoning/instance-event-timel
 import { parseTimelineFiltersFromSearchParams } from '@/lib/reasoning/instance-event-timeline-filters';
 import { deriveMissionsFromInstance } from '@/lib/reasoning/mission-derivation';
 import { getSourcingEvent } from '@/lib/source/queries';
+import { getActiveClientRow } from '@/lib/active-client';
+import { requireTenancy } from '@/lib/auth/tenancy';
+import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
+import {
+  redactSourcingEventDetailForDisplay,
+  redactSourceFinancialText,
+} from '@/lib/source/financial-display';
 import { AMS_SOURCE_EVENT } from '@/lib/source/shell-source-fixture';
 import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
 import { buildEvidenceMapWithIngestions } from '@/lib/source/source-event-instance';
@@ -49,6 +56,18 @@ export default async function SourceEventDetailPage({
   const sp = (await (searchParams ?? Promise.resolve({}))) ?? {};
   const event = await getSourcingEvent(eventId);
   if (!event) notFound();
+  const [activeClient, tenancy] = await Promise.all([
+    getActiveClientRow().catch(() => null),
+    requireTenancy().catch(() => null),
+  ]);
+  const sourceAccessPolicy = activeClient && tenancy
+    ? await loadUserSourceAccessPolicy(tenancy, {
+        activeClientKey: activeClient.key,
+        sourceEventId: event.id,
+      }).catch(() => null)
+    : null;
+  const canViewFinancialValues = sourceAccessPolicy?.canViewFinancialData === true;
+  const displayEvent = redactSourcingEventDetailForDisplay(event, canViewFinancialValues);
 
   // Decode URL-driven timeline filters (`?tlKind=…&tlSince=…&tlSearch=…`).
   const timelineFilters = parseTimelineFiltersFromSearchParams(sp);
@@ -140,20 +159,24 @@ export default async function SourceEventDetailPage({
     return top?.mitigations;
   })();
 
-  const sentinelQuote = `${event.name} at ${event.currentStageLabel}.${event.blocker ? ` Blocker: ${event.blocker}.` : ''}`;
-  const eventStageLabels = event.stages.map((stage) => stage.label);
-  const journeyStages = eventStageLabels.includes(event.currentStageLabel)
+  const sentinelQuote = redactSourceFinancialText(
+    `${event.name} at ${event.currentStageLabel}.${event.blocker ? ` Blocker: ${event.blocker}.` : ''}`,
+    canViewFinancialValues,
+  );
+  const eventStageLabels = displayEvent.stages.map((stage) => stage.label);
+  const journeyStages = eventStageLabels.includes(displayEvent.currentStageLabel)
     ? eventStageLabels
     : AMS_SOURCE_EVENT.stages;
   const activeJourneyStage =
-    event.currentStageLabel === 'Orals/BAFO' && journeyStages.includes('BAFO')
+    displayEvent.currentStageLabel === 'Orals/BAFO' && journeyStages.includes('BAFO')
       ? 'BAFO'
-      : event.currentStageLabel;
+      : displayEvent.currentStageLabel;
 
   return (
     <SourceEventAgentCanvas
-      event={event}
+      event={displayEvent}
       quote={sentinelQuote}
+      canViewFinancialValues={canViewFinancialValues}
       middleStrip={
         <StageTrackerStrip
           stages={journeyStages}
@@ -164,7 +187,10 @@ export default async function SourceEventDetailPage({
         />
       }
     >
-      <NexusEngagementCanvas event={event} />
+      <NexusEngagementCanvas
+        event={displayEvent}
+        canViewFinancialValues={canViewFinancialValues}
+      />
       <section
         aria-label="Sentinel event synthesis"
         style={{
@@ -265,8 +291,8 @@ export default async function SourceEventDetailPage({
         />
       </div>
       <PatternRecommendationChips
-        eventName={event.name}
-        eventType={event.archetype}
+        eventName={displayEvent.name}
+        eventType={displayEvent.archetype}
       />
       {matchedInstance && nextGateEvaluations.length > 0 && (
         <GateCriteriaPanel
@@ -314,8 +340,8 @@ export default async function SourceEventDetailPage({
       )}
       <SourceCommercialEventSection
         eventId={event.id}
-        eventName={event.name}
-        accountName={event.accountName}
+        eventName={displayEvent.name}
+        accountName={displayEvent.accountName}
       />
     </SourceEventAgentCanvas>
   );

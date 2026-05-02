@@ -7,7 +7,7 @@ import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
 import type { Artifact, SourceEventCreatedArtifact, SourcingStageProgressArtifact } from '@/lib/agent/artifacts';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourcingEventSummary } from '@/lib/source/types';
-import { formatUsd } from '@/lib/source/value-ledger';
+import { formatSourceFinancialValue } from '@/lib/source/financial-display';
 
 interface SourcePortfolioAgentCanvasProps {
   quote: string;
@@ -16,6 +16,7 @@ interface SourcePortfolioAgentCanvasProps {
   activeStatus: string | null;
   artifacts: Artifact[];
   onArtifact: (artifact: Artifact) => void;
+  canViewFinancialValues?: boolean;
 }
 
 const NEXUS_AGENT = {
@@ -31,6 +32,7 @@ export function SourcePortfolioAgentCanvas({
   activeStatus,
   artifacts,
   onArtifact,
+  canViewFinancialValues = true,
 }: SourcePortfolioAgentCanvasProps) {
   const activeEvents = events.filter((event) => event.status === 'active').length;
   const blockedEvents = events.filter((event) => event.isAtRisk || event.blocker).length;
@@ -68,6 +70,7 @@ export function SourcePortfolioAgentCanvas({
           activeEvents={activeEvents}
           blockedEvents={blockedEvents}
           valueAtStake={valueAtStake}
+          canViewFinancialValues={canViewFinancialValues}
         />
       </aside>
     </section>
@@ -157,6 +160,7 @@ function SourceFormationPanel({
   activeEvents,
   blockedEvents,
   valueAtStake,
+  canViewFinancialValues,
 }: {
   events: SourcingEventSummary[];
   activeStage: string | null;
@@ -165,6 +169,7 @@ function SourceFormationPanel({
   activeEvents: number;
   blockedEvents: number;
   valueAtStake: number;
+  canViewFinancialValues: boolean;
 }) {
   const topEvent = selectTopEvent(events);
   const progressCards = artifacts.filter(
@@ -208,7 +213,7 @@ function SourceFormationPanel({
       <div style={METRIC_GRID}>
         <ReasoningMetric label="Active" value={String(activeEvents)} />
         <ReasoningMetric label="Blocked" value={String(blockedEvents)} />
-        <ReasoningMetric label="Value" value={formatUsd(valueAtStake)} />
+        <ReasoningMetric label="Value" value={formatSourceFinancialValue(valueAtStake, canViewFinancialValues)} />
       </div>
 
       <div style={FORMATION_SECTION}>

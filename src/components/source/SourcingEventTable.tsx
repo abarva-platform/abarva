@@ -2,7 +2,10 @@ import Link from 'next/link';
 import type { CSSProperties } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import type { SourceRigorLevel, SourcingEventSummary } from '@/lib/source/types';
-import { formatUsd } from '@/lib/source/value-ledger';
+import {
+  formatSourceFinancialValue,
+  redactSourceFinancialText,
+} from '@/lib/source/financial-display';
 import { buildLinkedProgramBadgeView } from '@/lib/source/linked-program-badge-view';
 import { EventLifecycleStatusBadge } from './EventLifecycleStatusBadge';
 import { InstanceHealthBadge } from '@/components/_shared/InstanceHealthBadge';
@@ -224,9 +227,11 @@ function formatRigorLabel(rigor: SourceRigorLevel): string {
 export function SourcingEventTable({
   events,
   variant = 'dark',
+  canViewFinancialValues = true,
 }: {
   events: SourcingEventSummary[];
   variant?: SourcingEventTableVariant;
+  canViewFinancialValues?: boolean;
 }) {
   const lightMode = variant === 'light';
   const textPrimary = lightMode ? LIGHT.ink : SHELL.INK;
@@ -384,7 +389,7 @@ export function SourcingEventTable({
                     }}
                   >
                     <div style={{ fontFamily: SHELL.SERIF, fontSize: lightMode ? '24px' : '25px', color: textPrimary }}>
-                      {formatUsd(event.valueAtStakeUsd)}
+                      {formatSourceFinancialValue(event.valueAtStakeUsd, canViewFinancialValues)}
                     </div>
                     <div style={{ ...SOURCE_METRIC_DETAIL, color: textMuted }}>
                       {event.isAtRisk ? 'Exposed projected value' : 'Projected sourcing value'}
@@ -395,8 +400,12 @@ export function SourcingEventTable({
                 <td style={tableCell}>
                   <div style={{ display: 'grid', gap: 7, minWidth: 190 }}>
                     <div style={{ ...SOURCE_METRIC_DETAIL, color: textMuted }}>Recommended next move</div>
-                    <div style={{ color: textPrimary, fontWeight: 600 }}>{event.nextAction}</div>
-                    <div style={{ ...SOURCE_MUTED, maxWidth: 260, color: textMuted }}>{event.nextDecision}</div>
+                    <div style={{ color: textPrimary, fontWeight: 600 }}>
+                      {redactSourceFinancialText(event.nextAction, canViewFinancialValues)}
+                    </div>
+                    <div style={{ ...SOURCE_MUTED, maxWidth: 260, color: textMuted }}>
+                      {redactSourceFinancialText(event.nextDecision, canViewFinancialValues)}
+                    </div>
                   </div>
                 </td>
 

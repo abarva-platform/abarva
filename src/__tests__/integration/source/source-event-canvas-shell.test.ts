@@ -1,9 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createElement } from 'react';
+import type { ComponentProps } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import SourceEventDetailPage from '@/app/(maestro)/source/events/[eventId]/page';
 import { NexusEngagementCanvas } from '@/components/source/NexusEngagementCanvas';
+import { SourceEventAgentCanvas } from '@/components/source/SourceEventAgentCanvas';
 import {
   SOURCE_GOLDEN_EVENT_IDS,
   getSourcingEvent,
@@ -18,6 +20,19 @@ jest.mock('next/navigation', () => ({
   usePathname: () => '/source/events/evt-source-data-ai-si-selection',
   useRouter: () => ({ push: jest.fn(), refresh: jest.fn() }),
   useSearchParams: () => new URLSearchParams(),
+}));
+
+jest.mock('@clerk/nextjs', () => ({
+  useUser: () => ({
+    isLoaded: true,
+    user: {
+      primaryEmailAddress: { emailAddress: 'maya.desai@apex-retail.example.com' },
+      publicMetadata: { moduleAccess: ['setup', 'programs', 'source', 'intelligence', 'tower'] },
+      firstName: 'Maya',
+      lastName: 'Desai',
+    },
+  }),
+  useClerk: () => ({ signOut: jest.fn() }),
 }));
 
 type SourcingEvent = NonNullable<Awaited<ReturnType<typeof getSourcingEvent>>>;
@@ -131,6 +146,34 @@ describe('Source event canvas shell', () => {
     expect(html).toContain('Nexus guidance');
     expect(html).toContain('Deterministic guidance only');
     expect(html).toContain('Scope stage workspace');
+  });
+
+  it('redacts restricted financial values from the Source event shell and agent surface context', async () => {
+    const event = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.apexRetailAmsOutsourcing2026);
+    expect(event).toBeDefined();
+
+    const restrictedEvent = {
+      ...event!,
+      valueAtStakeUsd: 25_000_000,
+      nextDecision: 'Approve only if the $25M savings floor can be validated.',
+    };
+    const props: Omit<ComponentProps<typeof SourceEventAgentCanvas>, 'children'> = {
+      event: restrictedEvent,
+      quote: 'Apex AMS event has $25M value at stake.',
+      middleStrip: createElement('div'),
+      canViewFinancialValues: false,
+    };
+    const html = renderToStaticMarkup(createElement(
+      SourceEventAgentCanvas,
+      props,
+      createElement('div', null, 'restricted child'),
+    ));
+
+    expect(html).toContain('Restricted');
+    expect(html).toContain('[restricted financial value]');
+    expect(html).not.toContain('$25M');
+    expect(readFileSync(join(process.cwd(), 'src/components/source/SourceEventAgentCanvas.tsx'), 'utf8'))
+      .toContain('valueAtStakeUsd: canViewFinancialValues ? event.valueAtStakeUsd ?? null : null');
   });
 
   it('renders linked program context in the event header when the Source event is embedded', async () => {
