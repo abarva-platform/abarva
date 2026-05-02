@@ -498,3 +498,21 @@ Append-only coordination log for active Codex sessions.
 - validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only.
 - lock: `intelligence-frontpage-vision-ui` marked completed in `ACTIVE_LOCKS.yaml`.
 - next: commit, push, open PR, and auto-merge after standard checks pass.
+
+## 2026-05-02T19:02:00-05:00 - codex-programs-e2e-client-polish
+
+- status: live-fix-verified-and-e2e-continuing
+- merge: PR #1466 merged via GitHub API because local `main` is checked out in another worktree; merge commit `06310d9d8a6c7323970965c12a78503a21777b7b`.
+- deploy: `https://app.abarva.ai` production inspected as Ready on Vercel deployment `dpl_DVsY43tcn6TumgnbdKMmgemkfxsg`, created 2026-05-02 16:53:21 CDT.
+- live_verification: Apex program `Apex Intelligent Store Operations and Inventory Accuracy - E2E 2026-05-02` advanced P1->P2 after deploy; previous hard-gate error no longer reproduced.
+- live_progress: Apex P2 charter generated/signed and P2->P3 advanced live.
+- observed_polish_gap: reactive workbench can carry prior-phase cards after phase transition and one P2 card overstated missing numeric baseline despite P1 baseline capture; non-blocking but confusing.
+
+## 2026-05-02T19:22:00-05:00 - codex-programs-e2e-client-polish
+
+- status: blocker-found-local-fix-validating
+- live_failure: First Capital P1 Discovery Report was saved/signed and Nexus marked P2-entry follow-ups as soft/non-blocking, but the visible Advance to P2 button returned a hard-gate error and did not advance the phase.
+- root_cause: `evaluateGate` treated P2-entry soft follow-up language (`at P2 entry`, `before P2 scoping begins`, `not blocking advance`) and negated hard-gap language (`No unresolved hard gaps`) as current P1 hard failures.
+- fix: expanded P1 discovery hard-gap detection so explicit P2-entry/non-blocking follow-ups remain carried-forward risks without blocking P1->P2.
+- regression: added `does not block P1 to P2 on P2-entry soft follow-ups in the signed Discovery Report` to `src/lib/programs/__tests__/governance-evaluate-gates.test.ts`.
+- validation: focused governance gate Jest passed, 1 suite / 9 tests.

@@ -255,6 +255,44 @@ describe('evaluateGate', () => {
     expect(result.requiresApproval).toBe(true);
   });
 
+  it('does not block P1 to P2 on P2-entry soft follow-ups in the signed Discovery Report', async () => {
+    getProgramByIdMock.mockResolvedValue({
+      id: 'program-1',
+      currentPhase: 1,
+      archetype: 'digital_banking_risk_controls',
+    });
+    deliverablesFixture = [
+      { id: 'discovery-report', deliverable_type_key: 'discovery_report', status: 'signed_off' },
+    ];
+    evidenceFixture = [];
+    deliverableVersionsFixture = [
+      {
+        content:
+          'P1 Discovery Report. Attendees: Ethan Brooks sponsor, Lena Ortiz lead, ' +
+          'Rachel Singh fraud operations, Priya Mehta compliance, Nadia Torres model risk, James Liu data platform, and Kevin Walsh internal audit. ' +
+          'Workshop notes: digital onboarding, fraud, payments, KYC/AML, model-risk inventory, and audit evidence repository were mapped. ' +
+          'Baselines captured and owner attestation recorded. Source of record: First Capital risk-control intake log and workshop notes. ' +
+          'Stakeholder map names required human owners with no hard-owner gaps. ' +
+          'Contradiction: audit remediation urgency is high, but evidence lineage is scattered across control teams. ' +
+          'Two soft items outstanding — Kevin Walsh to confirm audit-finding register extract at P2 entry and Lena Ortiz to confirm system-level data access rights before P2 scoping begins. ' +
+          'These are flagged for P2 entry resolution, not blocking advance. No unresolved hard gaps. ' +
+          'P2 readiness recommendation: proceed to Synthesis.',
+        structured_data: null,
+        generated_at: '2026-05-02T00:00:00.000Z',
+      },
+    ];
+
+    const result = await evaluateGate(
+      { clientId: 'client-1', userId: 'person-1' },
+      'program-1',
+      1,
+      2,
+    );
+
+    expect(result.failedChecks.filter((check) => check.severity === 'hard')).toEqual([]);
+    expect(result.requiresApproval).toBe(true);
+  });
+
   it('accepts a signed P0 origination brief as the seed artifact without overloading discovery_report', async () => {
     getProgramByIdMock.mockResolvedValue({
       id: 'program-1',
