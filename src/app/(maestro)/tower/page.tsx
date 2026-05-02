@@ -15,6 +15,8 @@ import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { requireTenancy } from '@/lib/auth/tenancy';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
+import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
+import { getActiveClientRow } from '@/lib/active-client';
 
 export const metadata = { title: 'Control Tower · AbarVa' };
 
@@ -55,6 +57,47 @@ async function buildTowerHandoffPrograms() {
   }
 }
 
+async function buildTowerHandoffSourceEvents() {
+  try {
+    const tenancy = await requireTenancy();
+    const activeClient = await getActiveClientRow();
+    if (!activeClient || activeClient.id !== tenancy.clientId) return [];
+
+    const policy = await loadUserSourceAccessPolicy(tenancy, {
+      activeClientKey: activeClient.key,
+    });
+    if (policy.sourceScope === 'none') return [];
+
+    let query = getServerSupabase()
+      .from('source_events')
+      .select('id, event_code, event_name, current_stage_key, lifecycle_state, linked_program_id, updated_at')
+      .eq('client_key', activeClient.key)
+      .in('current_stage_key', ['contract_mobilization', 'value_realization'])
+      .order('updated_at', { ascending: false })
+      .limit(6);
+
+    if (policy.sourceEventIdsAllowed && policy.sourceEventIdsAllowed.length > 0) {
+      query = query.in('id', policy.sourceEventIdsAllowed);
+    } else if (policy.sourceEventIdsAllowed && policy.sourceEventIdsAllowed.length === 0) {
+      return [];
+    }
+
+    const { data, error } = await query;
+    if (error || !data) return [];
+    return data as Array<{
+      id: string;
+      event_code: string;
+      event_name: string;
+      current_stage_key: string;
+      lifecycle_state: string | null;
+      linked_program_id: string | null;
+      updated_at: string | null;
+    }>;
+  } catch {
+    return [];
+  }
+}
+
 function TowerHandoffProgramsPanel({ programs }: { programs: Awaited<ReturnType<typeof buildTowerHandoffPrograms>> }) {
   if (programs.length === 0) {
     return (
@@ -74,6 +117,43 @@ function TowerHandoffProgramsPanel({ programs }: { programs: Awaited<ReturnType<
             <div style={{ fontSize: 14, fontWeight: 700 }}>{program.name}</div>
             <div style={{ marginTop: 3, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#66715e' }}>
               {(program.graph_node_id ?? program.id).slice(0, 12)} · P6 Tower Handoff · {program.lifecycle_state ?? 'active'}
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function formatSourceTowerStage(stageKey: string): string {
+  if (stageKey === 'contract_mobilization') return 'Transition setup';
+  if (stageKey === 'value_realization') return 'Value monitoring';
+  return stageKey.replace(/_/g, ' ');
+}
+
+function TowerHandoffSourceEventsPanel({ events }: { events: Awaited<ReturnType<typeof buildTowerHandoffSourceEvents>> }) {
+  if (events.length === 0) {
+    return (
+      <div style={{ margin: '0 28px 16px', border: '1px solid #e5dfd2', borderRadius: 10, background: '#fffaf0', padding: '14px 16px' }}>
+        <div style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#8a735c', fontWeight: 700 }}>Source handoffs</div>
+        <div style={{ marginTop: 6, fontSize: 13, color: '#5b5148' }}>No transitioned Source events are visible for your current assignment.</div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ margin: '0 28px 16px', border: '1px solid #d6e1ea', borderRadius: 10, background: '#f5f9fc', padding: '14px 16px' }} data-testid="tower-source-handoff-panel">
+      <div style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#38556d', fontWeight: 700 }}>Source handoffs · Tower observation</div>
+      <div style={{ marginTop: 6, fontSize: 13, color: '#516272' }}>
+        Source events in Transition or Value now surface here so Atlas can observe KPI cadence, vendor onboarding, and realized-value drift.
+      </div>
+      <div style={{ display: 'grid', gap: 8, marginTop: 10 }}>
+        {events.map((event) => (
+          <a key={event.id} href={`/source/events/${event.id}`} style={{ display: 'block', textDecoration: 'none', color: '#111827', border: '1px solid #dce8f0', borderRadius: 8, background: '#ffffff', padding: '10px 12px' }}>
+            <div style={{ fontSize: 14, fontWeight: 700 }}>{event.event_name}</div>
+            <div style={{ marginTop: 3, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#5f7180' }}>
+              {event.event_code} · {formatSourceTowerStage(event.current_stage_key)} · {event.lifecycle_state ?? 'active'}
+              {event.linked_program_id ? ` · linked program ${event.linked_program_id}` : ''}
             </div>
           </a>
         ))}
@@ -103,6 +183,7 @@ export default async function TowerPage() {
   const portfolioAlerts = buildPortfolioAlerts();
 
   const towerHandoffPrograms = await buildTowerHandoffPrograms();
+  const towerHandoffSourceEvents = await buildTowerHandoffSourceEvents();
 
   return (
     <TowerIndexPage
@@ -123,7 +204,12 @@ export default async function TowerPage() {
       }
       portfolioSummarySlot={<TowerPortfolioSummaryStrip />}
       cascadeGraphSlot={<TowerPortfolioCascadeGraph />}
-      towerHandoffSlot={<TowerHandoffProgramsPanel programs={towerHandoffPrograms} />}
+      towerHandoffSlot={
+        <>
+          <TowerHandoffProgramsPanel programs={towerHandoffPrograms} />
+          <TowerHandoffSourceEventsPanel events={towerHandoffSourceEvents} />
+        </>
+      }
     />
   );
 }
