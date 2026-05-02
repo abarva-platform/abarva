@@ -143,6 +143,7 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps) {
 
   return (
     <header
+      className="app-top-bar"
       data-testid="app-top-bar"
       style={{
         minHeight: 58,
@@ -160,7 +161,45 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps) {
         boxShadow: "0 10px 28px rgba(12, 26, 58, 0.045)",
       }}
     >
+      <style jsx global>{`
+        @media (max-width: 720px) {
+          .app-top-bar {
+            min-height: 104px !important;
+            align-items: flex-start !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+            padding: 10px 16px 8px !important;
+          }
+
+          .app-top-bar__left {
+            flex: 1 1 100% !important;
+            width: 100% !important;
+            flex-wrap: wrap !important;
+            gap: 8px 14px !important;
+            padding-right: 190px !important;
+          }
+
+          .app-top-bar__nav {
+            order: 2 !important;
+            flex: 1 1 100% !important;
+            width: 100% !important;
+            margin-right: -190px !important;
+            padding-bottom: 2px !important;
+          }
+
+          .app-top-bar__account {
+            position: absolute !important;
+            right: 16px !important;
+            top: 12px !important;
+          }
+
+          .app-top-bar__account-name {
+            max-width: 92px !important;
+          }
+        }
+      `}</style>
       <div
+        className="app-top-bar__left"
         style={{ display: "flex", alignItems: "center", gap: 22, minWidth: 0 }}
       >
         <Link
@@ -184,6 +223,7 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps) {
 
         {navItems.length > 0 ? (
           <nav
+            className="app-top-bar__nav"
             aria-label="Product modules"
             style={{
               display: "flex",
@@ -241,6 +281,7 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps) {
       </div>
 
       <div
+        className="app-top-bar__account"
         style={{
           display: "flex",
           alignItems: "center",
@@ -279,6 +320,7 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps) {
                 {initials || "U"}
               </span>
               <span
+                className="app-top-bar__account-name"
                 style={{
                   fontFamily: SHELL.SANS,
                   fontSize: 13,
