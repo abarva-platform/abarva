@@ -49,6 +49,9 @@ export function inferSourceArtifactFamily(args: {
     return 'meeting_notes';
   }
   if (name.includes('workshop')) return 'workshop_output';
+  if (name.includes('value') || name.includes('kpi') || name.includes('realization') || name.includes('realisation')) {
+    return 'value_ledger';
+  }
   if (name.includes('strategy')) return 'sourcing_strategy';
   if (name.includes('scope')) return 'scope_document';
   if (name.includes('transition') || name.includes('risk')) return 'transition_risk_register';
@@ -66,6 +69,8 @@ export function inferSourceArtifactFamily(args: {
       return 'scope_document';
     case 'sourcing_strategy':
       return 'sourcing_strategy';
+    case 'value_realization':
+      return 'value_ledger';
     default:
       return 'other';
   }
@@ -83,6 +88,7 @@ function isSourceArtifactFamily(value: string | null | undefined): value is Sour
     value === 'workshop_output' ||
     value === 'decision_brief' ||
     value === 'transition_risk_register' ||
+    value === 'value_ledger' ||
     value === 'sourcing_strategy' ||
     value === 'scope_document' ||
     value === 'other'

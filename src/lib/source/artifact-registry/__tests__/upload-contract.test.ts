@@ -32,5 +32,13 @@ describe('Source artifact upload contract', () => {
       stageKey: 'scope',
       filename: 'unknown-upload.pdf',
     })).toBe('scope_document');
+    expect(inferSourceArtifactFamily({
+      stageKey: 'value_realization',
+      filename: 'unknown-upload.pdf',
+    })).toBe('value_ledger');
+    expect(inferSourceArtifactFamily({
+      stageKey: 'evaluation',
+      filename: 'value-kpi-ledger.xlsx',
+    })).toBe('value_ledger');
   });
 });
