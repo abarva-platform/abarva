@@ -36,3 +36,13 @@
 - Fix summary: `getActiveClientKey()` now pins explicit tenant-domain identities to their inferred client before considering the active-client cookie. This enforces one-client sessions for real client personas even when role metadata is `admin`.
 - Regression: src/lib/__tests__/active-client.test.ts verifies `nina.patel@meridian-health.example.com` resolves to Meridian despite a stale Apex cookie.
 - Validation: Focused active-client Jest and ESLint passed locally.
+
+## 2026-05-02T11:20:00Z — programs-module-e2e-crawler
+
+- Workstream: Programs live E2E crawl / Meridian Phase 0 unlock.
+- Finding: After Setup approved a newly originated Meridian program, the database correctly held `current_phase=0`, but the Programs detail page clamped P0 to P1 and hid the P0 slot, showing contradictory chrome (`P1 Discovery` plus `Approved for Phase 0`).
+- Severity: SEV-2 lifecycle-state UX/control-plane mismatch.
+- Fix branch: codex/programs-p0-phase-label.
+- Fix summary: Program detail view-model phase clamping now preserves P0, phase slots include P0-P6, and ProgramJourneyRail accepts P0 as a first-class phase. Regression expectations were also refreshed to the locked lifecycle labels: P4 Execution Roadmap, P5 Approval & Mobilization, P6 Tower Handoff.
+- Regression: src/__tests__/integration/programs/gate-ribbon-view.test.ts pins newly approved DB-backed P0 programs to `currentPhase=0`, `viewingPhase=0`, P0 current / P1 pending rail state, and P0 workbench copy.
+- Validation: Focused Programs gate-ribbon Jest and scoped ESLint passed locally. Local `next build` is blocked in this /tmp worktree by the known Turbopack symlink-root panic; `npx tsc --noEmit` is blocked by pre-existing missing optional package type declarations (`react-markdown`, `remark-gfm`, `rehype-sanitize`, `resend`, `docx`).
