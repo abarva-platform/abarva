@@ -43,6 +43,8 @@ beforeEach(() => {
   });
 });
 
+export {};
+
 describe('approval admin auth', () => {
   it('allows a DB-backed gate approver even without Clerk tenantRoles', async () => {
     mockLoadUserProgramAccessPolicy.mockResolvedValue({
