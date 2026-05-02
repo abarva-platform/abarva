@@ -118,6 +118,9 @@ export async function listSourcingEvents(): Promise<SourcingEventSummary[]> {
   const seedEvents = listSourceEventSeed();
   const activeClient = await getActiveClientRow().catch(() => null);
   if (!activeClient) return seedEvents;
+  const activeClientSeedEvents = seedEvents.filter((event) =>
+    seedEventMatchesClient(event, activeClient.key),
+  );
 
   const tenancy = await requireTenancy().catch(() => null);
   const allowedIds = tenancy ? await allowedSourceEventIdsForUser(tenancy, activeClient.key).catch(() => []) : null;
@@ -132,7 +135,7 @@ export async function listSourcingEvents(): Promise<SourcingEventSummary[]> {
 
   if (error) {
     console.error('[listSourcingEvents] source_events overlay failed', error.message);
-    return seedEvents;
+    return activeClientSeedEvents;
   }
 
   const persistedRows = ((data as SourceEventRow[] | null) ?? []);
@@ -144,9 +147,22 @@ export async function listSourcingEvents(): Promise<SourcingEventSummary[]> {
   );
   const persistedIds = new Set(persisted.map((event) => event.id));
   const scopedSeedEvents = allowedIds === null
-    ? seedEvents
-    : seedEvents.filter((event) => allowedIds.includes(event.id));
+    ? activeClientSeedEvents
+    : activeClientSeedEvents.filter((event) => allowedIds.includes(event.id));
   return [...persisted, ...scopedSeedEvents.filter((event) => !persistedIds.has(event.id))];
+}
+
+function seedEventMatchesClient(event: SourcingEventSummary, clientKey: string): boolean {
+  const accountName = event.accountName.trim().toLowerCase();
+
+  if (clientKey === 'apexretail') return accountName.includes('apex');
+  if (clientKey === 'meridian') return accountName.includes('meridian');
+  if (clientKey === 'arcturus') {
+    return accountName.includes('arcturus') || accountName.includes('first capital');
+  }
+  if (clientKey === 'keystone') return accountName.includes('keystone');
+
+  return false;
 }
 
 function sourceEventRowToSummary(row: SourceEventRow, accountName: string): SourcingEventSummary {
