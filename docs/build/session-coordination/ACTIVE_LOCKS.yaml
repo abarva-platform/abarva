@@ -1,4 +1,4 @@
-updated_at: "2026-05-02T15:28:00-05:00"
+updated_at: "2026-05-02T15:41:00-05:00"
 
 locks:
   - owner: codex-source-e2e-crawler
@@ -102,3 +102,19 @@ locks:
     expires_at: "2026-05-02T20:00:00-05:00"
     note: Adds Setup-facing read surface and submenu affordance for AI Initiatives.
     completed_at: "2026-05-02T15:28:00-05:00"
+
+  - owner: codex-setup-ai-initiative-intake
+    resource: setup-ai-initiative-upload-parser
+    status: completed
+    started_at: "2026-05-02T15:34:00-05:00"
+    expires_at: "2026-05-02T20:30:00-05:00"
+    note: Adds CSV parsing for Setup AI Initiative onboarding uploads.
+    completed_at: "2026-05-02T15:41:00-05:00"
+
+  - owner: codex-setup-ai-initiative-intake
+    resource: setup-ai-initiative-post-api
+    status: completed
+    started_at: "2026-05-02T15:34:00-05:00"
+    expires_at: "2026-05-02T20:30:00-05:00"
+    note: Adds tenant-scoped POST intake for Setup AI Initiatives into private schemas.
+    completed_at: "2026-05-02T15:41:00-05:00"
