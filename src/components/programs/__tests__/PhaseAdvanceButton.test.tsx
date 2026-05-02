@@ -42,4 +42,22 @@ describe('PhaseAdvanceButton', () => {
     });
     await waitFor(() => expect(mockRefresh).toHaveBeenCalled());
   });
+
+  it('shows a gate-completion label and does not call the API when disabled', () => {
+    render(
+      <PhaseAdvanceButton
+        programId="prog-1"
+        currentPhase={0}
+        disabledReason="Complete and sign off the P0 seed artifacts before requesting Discovery."
+      />,
+    );
+
+    const button = screen.getByRole('button', {
+      name: /complete current gate first/i,
+    });
+    expect((button as HTMLButtonElement).disabled).toBe(true);
+
+    fireEvent.click(button);
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
 });

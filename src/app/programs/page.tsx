@@ -68,7 +68,7 @@ export default async function ProgramsPage() {
           const isIdle = p.status === 'idle' || waitingForSetupApproval;
           const gateStatus = completed
             ? ('completed' as const)
-            : waitingForSetupApproval ? ('pending' as const) : ('open' as const);
+            : waitingForSetupApproval || approvedForP0 ? ('pending' as const) : ('open' as const);
           const lifecycleNote = waitingForSetupApproval
             ? 'Submitted for Setup approval — Phase 0 locked'
             : completed

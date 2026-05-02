@@ -228,7 +228,7 @@ export default async function ProgramDetailRoute({
           'the signed P6 tracking contract.',
       };
     } else if (eng.lifecycle_state === 'approved' && view.currentPhase === 0) {
-      view.gateStatus = 'open';
+      view.gateStatus = 'pending';
       view.workbench = {
         ...view.workbench,
         prose:
