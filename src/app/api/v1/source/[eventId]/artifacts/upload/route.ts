@@ -25,6 +25,10 @@ import {
   inferSourceArtifactFamily,
   sourceArtifactFormatFromMime,
 } from '@/lib/source/artifact-registry/upload-contract';
+import {
+  isSynchronouslyParseableSourceFormat,
+  parseSourceTextArtifact,
+} from '@/lib/source/artifact-registry/text-parser';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -199,7 +203,7 @@ export async function POST(request: Request, { params }: SourceUploadRouteContex
   }
 
   try {
-    const artifact = await registerSourceArtifactUpload({
+    let artifact = await registerSourceArtifactUpload({
       artifactId,
       tenantKey,
       sourceEventId: scope.eventId,
@@ -223,7 +227,27 @@ export async function POST(request: Request, { params }: SourceUploadRouteContex
       createdBy: tenancy.userId,
     });
 
-    return Response.json({ ok: true, artifact }, { status: 200 });
+    const parseWarnings: string[] = [];
+    if (isSynchronouslyParseableSourceFormat(artifact.sourceFormat)) {
+      try {
+        artifact = await parseSourceTextArtifact({
+          artifact,
+          text: buffer.toString('utf8'),
+        });
+      } catch (parseError) {
+        parseWarnings.push(parseError instanceof Error ? parseError.message : 'text parse failed');
+        console.error('[POST /api/v1/source/:eventId/artifacts/upload] text_parse_failed', {
+          artifactId: artifact.id,
+          sourceEventId: artifact.sourceEventId,
+          message: parseWarnings[0],
+        });
+      }
+    }
+
+    return Response.json(
+      { ok: true, artifact, ...(parseWarnings.length > 0 ? { parseWarnings } : {}) },
+      { status: 200 },
+    );
   } catch (error) {
     await sb.storage.from(STORAGE_BUCKET).remove([blobUri]).catch(() => undefined);
     console.error('[POST /api/v1/source/:eventId/artifacts/upload] metadata_insert_failed', error);
