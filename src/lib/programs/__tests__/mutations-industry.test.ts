@@ -1,4 +1,16 @@
-import { resolveProgramClassificationCodes, resolveProgramIndustryCode } from '../mutations';
+import {
+  buildEngagementGraphNodeId,
+  resolveProgramClassificationCodes,
+  resolveProgramIndustryCode,
+} from '../mutations';
+
+describe('buildEngagementGraphNodeId', () => {
+  it('creates a stable legacy-compatible engagement graph node prefix from the program name', () => {
+    expect(buildEngagementGraphNodeId('Healthcare Data Analytics Modernization')).toMatch(
+      /^eng_healthcare_data_analytics_modernization_[a-z0-9]+$/,
+    );
+  });
+});
 
 describe('resolveProgramIndustryCode', () => {
   it('uses the explicit client industry code when present', () => {
