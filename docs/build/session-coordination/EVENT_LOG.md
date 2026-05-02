@@ -305,3 +305,32 @@ Append-only coordination log for active Codex sessions.
 - validation: `npm run build` passed with the existing `next.config.ts` NFT tracing warning only.
 - lock: `source-atrium-polish-ui` marked completed in `ACTIVE_LOCKS.yaml`.
 - next: open PR and auto-merge after standard checks pass.
+
+## 2026-05-02T14:34:48-05:00 - codex-atrium-nav-polish
+
+- status: in-progress
+- branch: `codex/atrium-nav-polish`
+- worktree: `/private/tmp/nexus-atrium-nav-polish`
+- scope: polish shared authenticated top navigation for Atrium maturity: keyboard focus visibility, responsive scroll rhythm, compact account behavior, and regression coverage
+- sequencing_rationale: Product and Source polish are merged or isolated; the top nav is now the common cockpit contract, so a small shell-only accessibility/responsive pass improves every authenticated surface without touching data, lifecycle, or Source API files.
+- locks: `atrium-top-nav-polish`
+- guardrail: no Source API, lifecycle, stage, or data files; no tenant data, auth roster, metric schema, or publication pipeline changes.
+
+## 2026-05-02T14:37:18-05:00 - codex-product-atrium-polish
+
+- status: merged-and-deployed
+- pr: `#1450`
+- merge_commit: `29c5cc018aa687d051095d3a9a4fa1c1833c63eb`
+- production_status: Vercel `abarva` and `nexus` deployments completed successfully for the merge commit
+- note: post-merge Typecheck check run was superseded/cancelled after merge, but the PR gate and local validation passed before merge.
+
+## 2026-05-02T14:37:18-05:00 - codex-atrium-nav-polish
+
+- status: validation-local-passed
+- shipped: shared `AppTopBar` now has keyboard-visible focus rings for nav/account controls, touch-friendly horizontal scroll behavior, responsive nav/account width polish, compact sign-out affordance for narrow screens, and static shell contract coverage
+- validation: focused shell/nav Jest passed, 2 suites / 36 tests
+- validation: targeted ESLint passed for `AppTopBar` and shell nav contract test
+- validation: `npx tsc --noEmit --pretty false` passed
+- validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only
+- lock: `atrium-top-nav-polish` marked completed in `ACTIVE_LOCKS.yaml`
+- next: open PR and auto-merge after standard checks pass
