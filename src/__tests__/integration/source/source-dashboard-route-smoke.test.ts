@@ -82,9 +82,22 @@ describe('Source dashboard route smoke', () => {
     expect(componentSource).toContain('Create, run, and govern IT sourcing events');
     expect(componentSource).toContain('Nexus mission preview');
     expect(componentSource).toContain('Source is the operating room for technology and IT sourcing');
+    expect(componentSource).toContain('Ask Nexus');
+    expect(componentSource).toContain('Help me prepare a Source approval request');
     expect(tableSource).toContain('Program / Evidence');
     expect(tableSource).toContain('Evidence posture: seeded summary; open event for readiness rows.');
     expect(componentSource).not.toMatch(/fetch\(|openai|claude|anthropic/i);
+  });
+
+  it('keeps the Source Atrium rail honest about artifact processing state', () => {
+    const agentCanvasSource = readFileSync(
+      join(process.cwd(), 'src/components/source/SourcePortfolioAgentCanvas.tsx'),
+      'utf8',
+    );
+
+    expect(agentCanvasSource).toContain('Artifact and evidence state');
+    expect(agentCanvasSource).toContain('draft, parsed, citeable');
+    expect(agentCanvasSource).toContain('until parsing, citation, and approval state are explicit');
   });
 
   it('builds mission preview data deterministically from the seeded Source event', () => {

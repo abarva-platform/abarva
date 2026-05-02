@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
+import { useAtlasPageState } from '@/components/shell/AtlasPageStateProvider';
 import { FilterPillStrip } from '@/components/shell/FilterPillStrip';
 import { SourceEventsPortfolio } from '@/components/source/SourceEventsPortfolio';
 import { SourcePortfolioAgentCanvas } from '@/components/source/SourcePortfolioAgentCanvas';
@@ -365,32 +366,50 @@ function HeaderMetric({
 }
 
 function SourceWorkDock() {
+  const pageState = useAtlasPageState();
   const workItems = [
     {
       label: 'Attach evidence',
       detail: 'Paperclip for files; evidence form for validated metadata.',
+      prompt: 'Help me attach evidence for this Source portfolio. Ask one question to identify the evidence type and event.',
     },
     {
       label: 'Generate artifact',
       detail: 'Strategy memo, RFP pack, pricing workbook, BAFO brief.',
+      prompt: 'Help me generate the next Source artifact. Ask one question to choose the event and stage.',
     },
     {
       label: 'Run workshop',
       detail: 'Agenda, capture template, decisions, actions, next step.',
+      prompt: 'Help me run a sourcing workshop. Give me three agenda choices and ask which event this supports.',
     },
     {
       label: 'Request approval',
       detail: 'Steward blocks or advances only when gate evidence is met.',
+      prompt: 'Help me prepare a Source approval request. Ask one question to identify the gate and missing evidence.',
     },
   ];
 
   return (
     <section aria-label="Source work dock" style={WORK_DOCK}>
       {workItems.map((item) => (
-        <article key={item.label} style={WORK_DOCK_CARD}>
+        <button
+          key={item.label}
+          type="button"
+          data-testid={`source-work-dock-${item.label.toLowerCase().replaceAll(' ', '-')}`}
+          aria-label={`Ask Nexus: ${item.label}`}
+          disabled={!pageState || pageState.isStreaming}
+          onClick={() => pageState?.ask(item.prompt)}
+          style={{
+            ...WORK_DOCK_CARD,
+            opacity: pageState?.isStreaming ? 0.62 : 1,
+            cursor: !pageState || pageState.isStreaming ? 'not-allowed' : 'pointer',
+          }}
+        >
+          <div style={WORK_DOCK_PROMPT}>Ask Nexus</div>
           <div style={WORK_DOCK_LABEL}>{item.label}</div>
           <p style={WORK_DOCK_COPY}>{item.detail}</p>
-        </article>
+        </button>
       ))}
     </section>
   );
@@ -501,7 +520,7 @@ function SourceMissionPreview({
 
 const WORK_DOCK = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))',
   gap: 8,
   marginBottom: 12,
 } satisfies CSSProperties;
@@ -512,6 +531,18 @@ const WORK_DOCK_CARD = {
   background: SHELL.CARD_WHITE,
   padding: '10px 11px',
   minHeight: 0,
+  textAlign: 'left',
+  boxShadow: '0 1px 2px rgba(12,26,58,0.04)',
+} satisfies CSSProperties;
+
+const WORK_DOCK_PROMPT = {
+  fontFamily: SHELL.MONO,
+  fontSize: 7.8,
+  letterSpacing: '0.14em',
+  textTransform: 'uppercase',
+  color: '#0F766E',
+  fontWeight: 900,
+  marginBottom: 5,
 } satisfies CSSProperties;
 
 const WORK_DOCK_LABEL = {

@@ -206,8 +206,8 @@ function SourceFormationPanel({
         <div style={{ ...PROGRESS_BAR, width: `${readiness}%` }} />
       </div>
       <p style={INTRO_COPY}>
-        As Nexus asks questions, this rail tracks the event shape: what is known, what is missing, and what
-        unlocks the next gate.
+        As Nexus asks questions, this rail tracks the event shape, the next gate, and whether outputs are
+        draft, parsed, citeable, or still waiting on evidence.
       </p>
 
       <div style={METRIC_GRID}>
@@ -215,6 +215,8 @@ function SourceFormationPanel({
         <ReasoningMetric label="Blocked" value={String(blockedEvents)} />
         <ReasoningMetric label="Value" value={formatSourceFinancialValue(valueAtStake, canViewFinancialValues)} />
       </div>
+
+      <ArtifactStateReceipt artifacts={artifacts} />
 
       <div style={FORMATION_SECTION}>
         <div style={FORMATION_SECTION_TITLE}>Known now</div>
@@ -253,6 +255,38 @@ function SourceFormationPanel({
         ) : null}
       </div>
     </section>
+  );
+}
+
+function ArtifactStateReceipt({ artifacts }: { artifacts: Artifact[] }) {
+  const createdEvents = artifacts.filter((artifact) => artifact.type === 'source-event-created').length;
+  const stageProgress = artifacts.filter((artifact) => artifact.type === 'sourcing-stage-progress').length;
+  const otherArtifacts = Math.max(0, artifacts.length - createdEvents - stageProgress);
+  const stateLabel = artifacts.length > 0 ? 'Live receipts' : 'No receipts yet';
+
+  return (
+    <div style={RECEIPT_CARD} aria-label="Source artifact processing receipt">
+      <div style={FORMATION_SECTION_TITLE}>Artifact and evidence state</div>
+      <div style={RECEIPT_GRID}>
+        <ReceiptMetric label="Created" value={String(createdEvents)} />
+        <ReceiptMetric label="Progress" value={String(stageProgress)} />
+        <ReceiptMetric label="Other" value={String(otherArtifacts)} />
+      </div>
+      <p style={RECEIPT_COPY}>
+        {artifacts.length > 0
+          ? `${stateLabel}: visible cards are conversation receipts. Source still labels generated outputs as drafts until parsing, citation, and approval state are explicit.`
+          : 'Nothing has been created or parsed in this chat yet. When Nexus creates an event or stage card, the receipt appears here before it is treated as citeable evidence.'}
+      </p>
+    </div>
+  );
+}
+
+function ReceiptMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={RECEIPT_METRIC}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
   );
 }
 
@@ -473,6 +507,41 @@ const PROGRESS_BAR: CSSProperties = {
 const FORMATION_SECTION: CSSProperties = {
   display: 'grid',
   gap: 7,
+};
+
+const RECEIPT_CARD: CSSProperties = {
+  display: 'grid',
+  gap: 8,
+  border: '1px solid rgba(40,72,200,0.16)',
+  borderRadius: 12,
+  background: 'rgba(40,72,200,0.045)',
+  padding: '10px 11px',
+};
+
+const RECEIPT_GRID: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+  gap: 6,
+};
+
+const RECEIPT_METRIC: CSSProperties = {
+  display: 'grid',
+  gap: 2,
+  border: '1px solid rgba(40,72,200,0.12)',
+  borderRadius: 9,
+  background: 'rgba(255,255,255,0.72)',
+  padding: '6px 7px',
+  fontFamily: SHELL.SANS,
+  fontSize: 11.5,
+  color: SHELL.INK_SOFT,
+};
+
+const RECEIPT_COPY: CSSProperties = {
+  margin: 0,
+  fontFamily: SHELL.SANS,
+  fontSize: 12.1,
+  lineHeight: 1.42,
+  color: SHELL.INK_SOFT,
 };
 
 const FORMATION_SECTION_TITLE: CSSProperties = {

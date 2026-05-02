@@ -1,4 +1,4 @@
-updated_at: "2026-05-02T15:45:00-05:00"
+updated_at: "2026-05-02T16:20:00-05:00"
 
 locks:
   - owner: codex-source-e2e-crawler
@@ -127,3 +127,11 @@ locks:
     expires_at: "2026-05-02T18:30:00-05:00"
     note: Adds authenticated in-app Product route, top-nav item, Atrium tabs, conceptual diagrams, and reports. Avoids Source API, lifecycle, stage, and data files.
     completed_at: "2026-05-02T14:06:00-05:00"
+
+  - owner: codex-source-atrium-polish
+    resource: source-atrium-polish-ui
+    status: completed
+    started_at: "2026-05-02T16:03:00-05:00"
+    expires_at: "2026-05-02T20:00:00-05:00"
+    note: Narrow Source UI/UX polish for Atrium chrome consistency, typography rhythm, agent state clarity, responsive behavior, copy precision, and accessibility. No Source lifecycle/data/API changes.
+    completed_at: "2026-05-02T16:20:00-05:00"
