@@ -68,13 +68,13 @@ export const nullWorkingPaneShapeResolver: WorkingPaneShapeResolver = () => null
 
 /** Human label for Programs phases P0-P6. */
 export const PROGRAM_PHASE_LABELS: Record<string, string> = {
-  P0: 'Discovery',
-  P1: 'Assess',
-  P2: 'Design',
-  P3: 'Build',
-  P4: 'Test',
-  P5: 'Activate',
-  P6: 'Operate',
+  P0: 'Origination',
+  P1: 'Discovery',
+  P2: 'Synthesis',
+  P3: 'Design',
+  P4: 'Execution Roadmap',
+  P5: 'Approval & Mobilization',
+  P6: 'Tower Handoff',
 };
 
 /** Human label for Source event stages S1-S7. */
