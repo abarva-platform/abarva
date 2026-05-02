@@ -99,7 +99,24 @@ export function AgentCanvas({
   const showContextTab = isProgramsSurface(surface);
 
   return (
-    <section
+    <>
+      <style>{`
+        @media (max-width: 900px) {
+          .program-agent-canvas {
+            grid-template-columns: minmax(0, 1fr) !important;
+            height: auto !important;
+            min-height: 0 !important;
+          }
+          .program-agent-canvas__chat {
+            min-height: min(620px, calc(100svh - 160px)) !important;
+          }
+          .program-agent-canvas__rail {
+            min-height: min(520px, calc(100svh - 180px)) !important;
+          }
+        }
+      `}</style>
+      <section
+      className="program-agent-canvas"
       data-testid="program-agent-canvas"
       aria-label="Agent canvas"
       style={{
@@ -110,9 +127,10 @@ export function AgentCanvas({
         minHeight: 'min(420px, calc(100svh - 220px))',
         marginBottom: 20,
       }}
-    >
+      >
       {/* Left column — chat (embedded AtlasDrawer, no overlay). */}
       <div
+        className="program-agent-canvas__chat"
         style={{
           minHeight: 0,
           minWidth: 0,
@@ -140,6 +158,7 @@ export function AgentCanvas({
           reactive panel, preserving the legacy single-purpose right rail
           for /home, /intelligence, etc. */}
       <aside
+        className="program-agent-canvas__rail"
         aria-label={`${agent.name} reactive workbench`}
         style={{
           minHeight: 0,
@@ -171,7 +190,8 @@ export function AgentCanvas({
           </div>
         )}
       </aside>
-    </section>
+      </section>
+    </>
   );
 }
 

@@ -161,6 +161,30 @@ describe('AgentCanvas · CB-7', () => {
     });
   });
 
+  it('ships a responsive stack rule so narrow Program detail views keep chat usable', () => {
+    mockUseAtlasPageState.mockReturnValue(makePageState());
+    const { container } = render(
+      <AgentCanvas
+        surface="/programs/APX-CDP-2026"
+        programId="APX-CDP-2026"
+        agent={NEXUS_AGENT}
+        quote="Where are we?"
+        artifacts={[]}
+        onArtifact={() => {}}
+      />,
+    );
+    const canvas = screen.getByTestId('program-agent-canvas');
+    expect(canvas).toHaveClass('program-agent-canvas');
+    expect(container.querySelector('.program-agent-canvas__chat')).toBeInTheDocument();
+    expect(container.querySelector('.program-agent-canvas__rail')).toBeInTheDocument();
+    expect(container.querySelector('style')?.textContent).toContain(
+      '@media (max-width: 900px)',
+    );
+    expect(container.querySelector('style')?.textContent).toContain(
+      'grid-template-columns: minmax(0, 1fr)',
+    );
+  });
+
   it('does NOT render the rail tab strip on a non-Programs surface', () => {
     mockUseAtlasPageState.mockReturnValue(makePageState());
     render(
