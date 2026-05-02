@@ -30,13 +30,24 @@ jest.mock('@supabase/supabase-js', () => ({
   createClient: jest.fn(() => ({ from: fromMock })),
 }));
 
+jest.mock('pg', () => {
+  const query = jest.fn();
+  const Pool = jest.fn(() => ({ query }));
+  return { Pool, __mockPgQuery: query };
+});
+
 import { createClient } from '@supabase/supabase-js';
+import { Pool as mockPgPoolImport } from 'pg';
 
 import {
   SupabaseTenantDataAdapter,
   __resetSupabaseTenantDataAdapterForTests,
   getSupabaseTenantDataAdapter,
 } from '../supabase-adapter';
+
+const mockPgPool = mockPgPoolImport as unknown as jest.Mock;
+const mockPgQuery = (jest.requireMock('pg') as { __mockPgQuery: jest.Mock })
+  .__mockPgQuery;
 
 // ── Query-builder shim ────────────────────────────────────────────────
 //
@@ -118,8 +129,11 @@ beforeEach(() => {
   stagedResults = [];
   calls = [];
   fromMock.mockReset();
+  mockPgQuery.mockReset();
+  mockPgPool.mockClear();
   fromMock.mockImplementation((table: string) => makeBuilder(table) as never);
   __resetSupabaseTenantDataAdapterForTests();
+  delete process.env.DATABASE_URL;
 });
 
 function makeAdapter(): SupabaseTenantDataAdapter {
@@ -268,6 +282,45 @@ describe('SupabaseTenantDataAdapter.listSegments', () => {
     await expect(makeAdapter().listSegments('apex-retail')).rejects.toThrow(
       /listSegments failed for tenant 'apex-retail': connection refused/,
     );
+  });
+
+  it('falls back to server-only Postgres when a private schema is not exposed through PostgREST', async () => {
+    process.env.DATABASE_URL = 'postgres://user:pass@example.com:5432/db';
+    stagedResults = [{ data: null, error: { message: 'Invalid schema: client_apex_retail_private' } }];
+    mockPgQuery.mockResolvedValueOnce({
+      rows: [
+        {
+          tenant_key: 'apex-retail',
+          segment_id: 'program_inventory',
+          segment_name: 'Program inventory',
+          family_number: 6,
+          expected_baseline: { expected_record_count: 4 },
+          coverage_score: 100,
+          health_state: 'complete',
+          record_count: 4,
+          stale_count: 0,
+          missing_count: 0,
+          last_reviewed_at: null,
+          last_ingested_at: '2026-05-01T00:00:00Z',
+          provenance_summary: null,
+        },
+      ],
+    });
+
+    const out = await makeAdapter().listSegments('apex-retail');
+
+    expect(mockPgPool).toHaveBeenCalledWith(
+      expect.objectContaining({ connectionString: process.env.DATABASE_URL }),
+    );
+    expect(mockPgQuery).toHaveBeenCalledWith(
+      'select tenant_key, segment_id, segment_name, family_number, expected_baseline, coverage_score, health_state, record_count, stale_count, missing_count, last_reviewed_at, last_ingested_at, provenance_summary from "client_apex_retail_private"."data_inventory_segments" where tenant_key = $1',
+      ['apex-retail'],
+    );
+    expect(out[0]).toMatchObject({
+      tenantKey: 'apex-retail',
+      segmentId: 'program_inventory',
+      recordCount: 4,
+    });
   });
 
   it('returns [] when the table has no rows for the tenant', async () => {

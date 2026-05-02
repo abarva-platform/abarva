@@ -1,4 +1,5 @@
 import 'server-only';
+import { Pool, type QueryResultRow } from 'pg';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import {
   getPineconeClient,
@@ -276,6 +277,64 @@ const DEFAULT_CHUNK_LIMIT = 50;
 const MAX_CHUNK_KEYWORD_LIMIT = 50;
 const DEFAULT_VECTOR_LIMIT = 10;
 const MAX_VECTOR_LIMIT = 50;
+const PRIVATE_SCHEMA_INVALID_RE =
+  /invalid schema|schema .* does not exist|could not find .* schema/i;
+const IDENTIFIER_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+let cachedPrivatePgPool: Pool | null | undefined;
+
+function getPrivatePgPool(): Pool | null {
+  if (cachedPrivatePgPool !== undefined) return cachedPrivatePgPool;
+  const connectionString = process.env.DATABASE_URL?.trim();
+  if (!connectionString) {
+    cachedPrivatePgPool = null;
+    return cachedPrivatePgPool;
+  }
+  cachedPrivatePgPool = new Pool({
+    connectionString,
+    max: 2,
+    idleTimeoutMillis: 10_000,
+    connectionTimeoutMillis: 5_000,
+  });
+  return cachedPrivatePgPool;
+}
+
+function quoteIdent(identifier: string): string {
+  if (!IDENTIFIER_RE.test(identifier)) {
+    throw new Error(`Unsafe SQL identifier: ${identifier}`);
+  }
+  return `"${identifier}"`;
+}
+
+function privateSchemaForTenant(tenantKey: string): string | null {
+  return getPrivateDataPlaneResource(tenantKey)?.privateSchema ?? null;
+}
+
+function shouldUsePrivatePgFallback(tenantKey: string, message: string): boolean {
+  return Boolean(privateSchemaForTenant(tenantKey) && PRIVATE_SCHEMA_INVALID_RE.test(message));
+}
+
+async function queryPrivateRows<T extends QueryResultRow>(
+  tenantKey: string,
+  tableName: string,
+  columns: string,
+  whereSql: string[],
+  values: unknown[],
+  limit?: number,
+): Promise<T[]> {
+  const schema = privateSchemaForTenant(tenantKey);
+  const pool = getPrivatePgPool();
+  if (!schema || !pool) return [];
+  const tableRef = `${quoteIdent(schema)}.${quoteIdent(tableName)}`;
+  const boundedLimit = typeof limit === 'number' ? ` limit ${Math.trunc(limit)}` : '';
+  const sql = `select ${columns} from ${tableRef} where ${whereSql.join(' and ')}${boundedLimit}`;
+  const result = await pool.query<T>(sql, values);
+  return result.rows;
+}
+
+function ilikePattern(raw: string): string {
+  return `%${raw.replace(/[\\%_]/g, (ch) => `\\${ch}`)}%`;
+}
 
 function defaultPineconeClientForTenant(tenantKey?: string): PineconeClient | null {
   const resource = getPrivateDataPlaneResource(tenantKey);
@@ -328,6 +387,16 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
       .select(SEGMENT_COLUMNS)
       .eq('tenant_key', tenantKey);
     if (error) {
+      if (shouldUsePrivatePgFallback(tenantKey, error.message)) {
+        const rows = await queryPrivateRows<SegmentRollupRow>(
+          tenantKey,
+          'data_inventory_segments',
+          SEGMENT_COLUMNS,
+          ['tenant_key = $1'],
+          [tenantKey],
+        );
+        return rows.map(mapSegmentRow);
+      }
       throw new Error(`listSegments failed for tenant '${tenantKey}': ${error.message}`);
     }
     const rows = (data ?? []) as unknown as SegmentRollupRow[];
@@ -349,6 +418,23 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
     }
     const { data, error } = await query.limit(limit);
     if (error) {
+      if (shouldUsePrivatePgFallback(tenantKey, error.message)) {
+        const whereSql = ['tenant_key = $1', 'segment_id = $2'];
+        const values: unknown[] = [tenantKey, segmentId];
+        if (opts?.recordKind) {
+          whereSql.push(`record_kind = $${values.length + 1}`);
+          values.push(opts.recordKind);
+        }
+        const rows = await queryPrivateRows<InventoryRecordRow>(
+          tenantKey,
+          'data_inventory_records',
+          RECORD_COLUMNS,
+          whereSql,
+          values,
+          limit,
+        );
+        return rows.map(mapRecordRow);
+      }
       throw new Error(
         `listRecords failed for tenant '${tenantKey}', segment '${segmentId}': ${error.message}`,
       );
@@ -364,6 +450,17 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
       .eq('record_id', recordId)
       .maybeSingle();
     if (error) {
+      if (shouldUsePrivatePgFallback(tenantKey, error.message)) {
+        const rows = await queryPrivateRows<InventoryRecordRow>(
+          tenantKey,
+          'data_inventory_records',
+          RECORD_COLUMNS,
+          ['tenant_key = $1', 'record_id = $2'],
+          [tenantKey, recordId],
+          1,
+        );
+        return rows[0] ? mapRecordRow(rows[0]) : null;
+      }
       throw new Error(`getRecord failed for tenant '${tenantKey}', record '${recordId}': ${error.message}`);
     }
     if (!data) return null;
@@ -422,6 +519,27 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
     }
     const { data, error } = await query.limit(limit);
     if (error) {
+      if (shouldUsePrivatePgFallback(tenantKey, error.message)) {
+        const whereSql = ['tenant_key = $1'];
+        const values: unknown[] = [tenantKey];
+        if (opts?.recordIds && opts.recordIds.length > 0) {
+          whereSql.push(`source_record_id = any($${values.length + 1}::text[])`);
+          values.push(opts.recordIds);
+        }
+        if (opts?.embeddingStatus) {
+          whereSql.push(`embedding_status = $${values.length + 1}`);
+          values.push(opts.embeddingStatus);
+        }
+        const rows = await queryPrivateRows<ContextChunkRow>(
+          tenantKey,
+          'enterprise_context_chunks',
+          CHUNK_COLUMNS,
+          whereSql,
+          values,
+          limit,
+        );
+        return rows.map(mapChunkRow);
+      }
       throw new Error(`listContextChunks failed for tenant '${tenantKey}': ${error.message}`);
     }
     const rows = (data ?? []) as unknown as ContextChunkRow[];
@@ -460,6 +578,22 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
       .or(orClause)
       .limit(cap);
     if (error) {
+      if (shouldUsePrivatePgFallback(tenantKey, error.message)) {
+        const values: unknown[] = [tenantKey];
+        const clauses = cleaned.map((keyword) => {
+          values.push(ilikePattern(keyword));
+          return `chunk_text ilike $${values.length} escape '\\'`;
+        });
+        const rows = await queryPrivateRows<ContextChunkRow>(
+          tenantKey,
+          'enterprise_context_chunks',
+          CHUNK_COLUMNS,
+          ['tenant_key = $1', `(${clauses.join(' or ')})`],
+          values,
+          cap,
+        );
+        return rows.map(mapChunkRow);
+      }
       throw new Error(`chunksByKeyword failed for tenant '${tenantKey}': ${error.message}`);
     }
     const rows = (data ?? []) as unknown as ContextChunkRow[];
@@ -496,6 +630,26 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
       .eq('tenant_key', tenantKey)
       .in('chunk_id', ids);
     if (error) {
+      if (shouldUsePrivatePgFallback(tenantKey, error.message)) {
+        const rows = await queryPrivateRows<ContextChunkRow>(
+          tenantKey,
+          'enterprise_context_chunks',
+          CHUNK_COLUMNS,
+          ['tenant_key = $1', 'chunk_id = any($2::text[])'],
+          [tenantKey, ids],
+        );
+        const byId = new Map<string, ContextChunk>();
+        for (const row of rows) {
+          byId.set(row.chunk_id, mapChunkRow(row));
+        }
+        const out: ContextChunk[] = [];
+        for (const hit of hits) {
+          const chunk = byId.get(hit.id);
+          if (!chunk) continue;
+          out.push({ ...chunk, vectorScore: hit.score });
+        }
+        return out;
+      }
       throw new Error(`chunksByVector failed for tenant '${tenantKey}': ${error.message}`);
     }
     const rows = (data ?? []) as unknown as ContextChunkRow[];
@@ -523,6 +677,17 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
       .eq('record_id', evidenceId)
       .maybeSingle();
     if (error) {
+      if (shouldUsePrivatePgFallback(tenantKey, error.message)) {
+        const rows = await queryPrivateRows<InventoryRecordRow>(
+          tenantKey,
+          'data_inventory_records',
+          RECORD_COLUMNS,
+          ['tenant_key = $1', 'segment_id = $2', 'record_id = $3'],
+          [tenantKey, 'evidence_ledger', evidenceId],
+          1,
+        );
+        return rows[0] ? mapEvidenceRow(rows[0]) : null;
+      }
       throw new Error(
         `getEvidence failed for tenant '${tenantKey}', evidence '${evidenceId}': ${error.message}`,
       );
@@ -537,6 +702,17 @@ export class SupabaseTenantDataAdapter implements TenantDataAdapter {
       .eq('tenant_key', tenantKey)
       .limit(1);
     if (error) {
+      if (shouldUsePrivatePgFallback(tenantKey, error.message)) {
+        const rows = await queryPrivateRows<{ segment_id: string }>(
+          tenantKey,
+          'data_inventory_segments',
+          'segment_id',
+          ['tenant_key = $1'],
+          [tenantKey],
+          1,
+        );
+        return rows.length > 0;
+      }
       throw new Error(`hasPersistedData failed for tenant '${tenantKey}': ${error.message}`);
     }
     return (data?.length ?? 0) > 0;
@@ -575,4 +751,5 @@ export function getSupabaseTenantDataAdapter(): SupabaseTenantDataAdapter | null
 export function __resetSupabaseTenantDataAdapterForTests(): void {
   cachedClient = null;
   cachedAdapter = null;
+  cachedPrivatePgPool = undefined;
 }
