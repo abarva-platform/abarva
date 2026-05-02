@@ -4,7 +4,7 @@
 
 export type ProgramPhaseId = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 export type ProgramPhaseState = 'done' | 'current' | 'pending' | 'locked';
-export type ProgramGateStatus = 'open' | 'pending' | 'approved' | 'idle' | 'na';
+export type ProgramGateStatus = 'open' | 'pending' | 'approved' | 'completed' | 'idle' | 'na';
 export type AgentRailState = 'active' | 'on_call' | 'advisory' | 'idle';
 
 export interface ProgramPhaseSlot {
@@ -39,6 +39,7 @@ export interface ProgramRow {
   nexusNote: string;        // one-line Nexus annotation
   actionLabel: 'Continue' | 'Resume' | 'Review';
   isIdle: boolean;
+  isCompleted?: boolean;
   linkedSourceEvent?: string; // e.g. 'SRC-AMS-2026 · AMS Vendor Consolidation 2026 · Stage 7 BAFO'
   linkedSourceEventHref?: string; // canonical shell route, e.g. /source/events/apex-retail-ams-outsourcing-2026
   linkedSourceEventState?: string; // concise status shown on linked-state cards
