@@ -7,9 +7,11 @@ import { SOURCING_PATTERNS } from './seed-patterns-sourcing';
 import { MANUAL_SIGNALS } from './seed-signals-manual';
 import { SOLUTION_SEEDS } from './seed-solutions';
 import { CONTRADICTION_SEEDS } from './seed-contradictions';
+import { METRIC_RECORDS, validateMetricRecords } from './metric-records';
 import type { ContradictionSeed } from './seed-contradictions';
 import type { SignalSeed } from './seed-signals-manual';
 import type { SolutionSeed } from './seed-solutions';
+import type { MetricRecord } from './metric-records';
 import type { PatternDomain, PatternSeed, PatternTier } from './seed-types';
 import type { CorpusEntity, LoadedCorpus, LoaderConfig } from './types';
 
@@ -185,11 +187,13 @@ export function loadCorpus(config: LoaderConfig = {}): LoadedCorpus {
   const signals = config.signals ?? MANUAL_SIGNALS;
   const solutions = config.solutions ?? SOLUTION_SEEDS;
   const contradictions = config.contradictions ?? CONTRADICTION_SEEDS;
+  const metrics = config.metrics ?? METRIC_RECORDS;
 
   const patternsById = indexById('pattern', patterns);
   const signalsById = indexById('signal', signals);
   const solutionsById = indexById('solution', solutions);
   const contradictionsById = indexById('contradiction', contradictions);
+  const metricsById = indexById<MetricRecord>('metric', metrics);
 
   if (config.validate !== false) {
     assertGlobalUniqueIds([
@@ -197,9 +201,11 @@ export function loadCorpus(config: LoaderConfig = {}): LoadedCorpus {
       { entityType: 'signals', entities: signals },
       { entityType: 'solutions', entities: solutions },
       { entityType: 'contradictions', entities: contradictions },
+      { entityType: 'metrics', entities: metrics },
     ]);
     assertSolutionReferences(solutions, patternsById, signalsById);
     assertContradictionReferences(contradictions, patternsById);
+    validateMetricRecords(metrics);
   }
 
   return {
@@ -207,11 +213,13 @@ export function loadCorpus(config: LoaderConfig = {}): LoadedCorpus {
     signals,
     solutions,
     contradictions,
+    metrics,
     byId: buildGlobalIndex([
       { entities: patterns },
       { entities: signals },
       { entities: solutions },
       { entities: contradictions },
+      { entities: metrics },
     ]),
     byDomain: groupPatternsByDomain(patterns),
     byTier: groupPatternsByTier(patterns),
@@ -219,6 +227,7 @@ export function loadCorpus(config: LoaderConfig = {}): LoadedCorpus {
     signalsById,
     solutionsById,
     contradictionsById,
+    metricsById,
     loadedAt: config.loadedAt ?? new Date().toISOString(),
   };
 }

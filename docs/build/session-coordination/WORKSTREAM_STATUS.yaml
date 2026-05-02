@@ -1,0 +1,46 @@
+updated_at: "2026-05-02T11:04:48-05:00"
+coordination_protocol: active
+canonical_vision_package: docs/canonical-vision/2026-05-02
+
+workstreams:
+  programs_intelligence_lane:
+    owner: codex-programs-intelligence-lane
+    status: active
+    current_focus: Atrium chrome contract, Intelligence surface, Strategic Moves route label, cross-module submenu discipline
+    must_read:
+      - docs/canonical-vision/2026-05-02/INTELLIGENCE_CANONICAL_DESIGN_V2.html
+      - docs/canonical-vision/2026-05-02/ATRIUM_PATTERN_CROSS_MODULE_BRIEF.html
+      - docs/build/session-coordination/EVENT_LOG.md
+      - docs/build/session-coordination/ACTIVE_LOCKS.yaml
+
+  knowledge_layer_lane:
+    owner: codex-knowledge-layer
+    status: active
+    current_focus: PAT-MET metric corpus, gap-engine substrate, private data-plane retrieval compatibility
+    must_read:
+      - docs/canonical-vision/2026-05-02/METRICS_CORPUS_AUTHORING_BRIEF.html
+      - docs/build/session-coordination/EVENT_LOG.md
+      - docs/build/session-coordination/ACTIVE_LOCKS.yaml
+
+  sourcing_setup_lane:
+    owner: codex-sourcing-setup-lane
+    status: active
+    current_focus: Source capability crawler, Setup metric ingestion, cross-module private-plane grounding
+    must_read:
+      - docs/canonical-vision/2026-05-02/ATRIUM_PATTERN_CROSS_MODULE_BRIEF.html
+      - docs/build/session-coordination/EVENT_LOG.md
+      - docs/build/session-coordination/ACTIVE_LOCKS.yaml
+
+next_cross_lane_actions:
+  - id: CANON-V2-001
+    owner: programs_intelligence_lane
+    action: keep Atrium registry aligned to top nav, submenu strip, agent identity, and canvas behavior
+    evidence_required: registry tests plus route/browser smoke
+  - id: CANON-V2-002
+    owner: knowledge_layer_lane
+    action: expand PAT-MET tier-1 metric records from foundation slice toward 200-300 verified records
+    evidence_required: schema validation and corpus loader integration
+  - id: CANON-V2-003
+    owner: sourcing_setup_lane
+    action: add Setup Metrics ingestion path that maps tenant metrics to PAT-MET records
+    evidence_required: demo tenant metric mapping smoke

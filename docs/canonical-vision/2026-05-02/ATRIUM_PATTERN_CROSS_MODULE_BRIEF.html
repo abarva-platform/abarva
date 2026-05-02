@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AbarVa — Atrium Pattern Cross-Module Brief</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream: #fef6ed;
+  --cream-deep: #f7ecd9;
+  --cream-soft: #fbf3e4;
+  --paper: #fdfaf3;
+  --navy: #0a1628;
+  --navy-deep: #050d1c;
+  --navy-soft: #122039;
+  --ink: #14213a;
+  --ink-soft: #4a5266;
+  --ink-mute: #8a8d99;
+  --ink-line: rgba(20,33,58,0.10);
+  --ink-line-hi: rgba(20,33,58,0.18);
+  --blue: #2848c8;
+  --blue-soft: #5876dc;
+  --blue-bg: #eaeefa;
+  --copper: #b8632d;
+  --copper-bg: #f5e8db;
+  --sage: #5b7d4f;
+  --sage-bg: #e8efe2;
+  --crit: #b1331f;
+  --crit-bg: #f7e0db;
+  --plum: #6b3a6b;
+  --plum-bg: #efe1ef;
+  --teal: #2d7a82;
+  --teal-bg: #dceff1;
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --sans: 'Inter Tight', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; scroll-padding-top: 32px; }
+body {
+  font-family: var(--sans);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+.chrome { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }
+
+.toc {
+  background: var(--navy);
+  color: var(--cream);
+  padding: 32px 28px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  border-right: 1px solid rgba(255,255,255,0.08);
+}
+
+.toc__brand {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+.toc__brand span { color: var(--copper); }
+
+.toc__sub {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 28px;
+}
+
+.toc__title {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 600;
+  font-style: italic;
+  color: var(--cream);
+  line-height: 1.25;
+  margin-bottom: 6px;
+}
+
+.toc__subtitle {
+  font-size: 12.5px;
+  color: rgba(255,255,255,0.55);
+  margin-bottom: 22px;
+  line-height: 1.55;
+}
+
+.toc__divider { height: 1px; background: rgba(255,255,255,0.08); margin: 22px 0 18px; }
+
+.toc__label {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 12px;
+}
+
+.toc__list { list-style: none; display: flex; flex-direction: column; gap: 1px; }
+
+.toc__list a {
+  color: rgba(255,255,255,0.78);
+  font-size: 13px;
+  text-decoration: none;
+  padding: 7px 12px;
+  display: block;
+  border-left: 2px solid transparent;
+  transition: all 0.18s ease;
+  line-height: 1.4;
+}
+
+.toc__list a:hover {
+  color: var(--cream);
+  border-left-color: var(--copper);
+  background: rgba(255,255,255,0.04);
+}
+
+.toc__num {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: rgba(255,255,255,0.4);
+  margin-right: 10px;
+}
+
+.toc__status {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--copper);
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.toc__status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--copper);
+}
+
+.content { max-width: 920px; padding: 48px 56px 96px; background: var(--paper); }
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-bottom: 12px;
+}
+
+h1 {
+  font-family: var(--serif);
+  font-size: 46px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--ink);
+  margin-bottom: 18px;
+}
+h1 em { font-style: italic; font-weight: 500; color: var(--copper); }
+
+.lede {
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 500;
+  font-style: italic;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  margin-bottom: 28px;
+  max-width: 740px;
+}
+
+.metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-mute);
+  padding: 14px 0;
+  border-top: 1px solid var(--ink-line);
+  border-bottom: 1px solid var(--ink-line);
+  margin-bottom: 56px;
+}
+.metadata strong { color: var(--ink); font-weight: 600; margin-right: 5px; }
+
+section { margin-bottom: 64px; scroll-margin-top: 32px; }
+
+section h2 {
+  font-family: var(--serif);
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.014em;
+  line-height: 1.15;
+  color: var(--ink);
+  margin-bottom: 8px;
+  padding-top: 30px;
+  border-top: 1px solid var(--ink-line);
+}
+
+section h2 .num {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--copper);
+  letter-spacing: 0.06em;
+  margin-right: 12px;
+  display: inline-block;
+  background: var(--copper-bg);
+  padding: 4px 9px;
+  border-radius: 3px;
+  vertical-align: middle;
+}
+
+section h2 em { font-style: italic; font-weight: 500; color: var(--copper); }
+
+section h3 {
+  font-family: var(--serif);
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+  margin: 32px 0 12px;
+}
+
+section h4 {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 20px 0 8px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+section p { margin-bottom: 14px; max-width: 740px; }
+section p strong { color: var(--ink); font-weight: 600; }
+section p em { font-style: italic; color: var(--ink-soft); }
+
+.callout {
+  background: var(--cream-soft);
+  border: 1px solid var(--ink-line);
+  border-left: 3px solid var(--copper);
+  border-radius: 0 7px 7px 0;
+  padding: 16px 22px;
+  margin: 22px 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.callout--blue { border-left-color: var(--blue); background: var(--blue-bg); }
+.callout--sage { border-left-color: var(--sage); background: var(--sage-bg); }
+.callout--plum { border-left-color: var(--plum); background: var(--plum-bg); }
+.callout--teal { border-left-color: var(--teal); background: var(--teal-bg); }
+
+.callout__label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--copper);
+  margin-bottom: 5px;
+  display: block;
+}
+.callout--blue .callout__label { color: var(--blue); }
+.callout--sage .callout__label { color: var(--sage); }
+.callout--plum .callout__label { color: var(--plum); }
+.callout--teal .callout__label { color: var(--teal); }
+
+.kbd {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--cream-deep);
+  border: 1px solid var(--ink-line-hi);
+  padding: 1px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+ul, ol { margin: 12px 0 18px 22px; max-width: 740px; }
+li { margin-bottom: 8px; line-height: 1.6; }
+li strong { color: var(--ink); font-weight: 600; }
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 100%;
+  margin: 18px 0;
+  font-size: 13px;
+}
+
+th, td {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--ink-line);
+  vertical-align: top;
+  line-height: 1.5;
+}
+
+th {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  font-weight: 600;
+  background: var(--cream-soft);
+}
+
+.module-block {
+  margin: 32px 0;
+  padding: 28px 32px;
+  background: var(--cream-soft);
+  border: 1px solid var(--ink-line);
+  border-radius: 11px;
+}
+
+.module-block__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--ink-line-hi);
+}
+
+.module-block__name {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  color: var(--ink);
+}
+.module-block__name em { font-style: italic; font-weight: 500; color: var(--copper); }
+
+.module-block__agent {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--copper);
+  font-weight: 700;
+  background: var(--copper-bg);
+  padding: 4px 10px;
+  border-radius: 3px;
+}
+
+.spec-grid {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 12px 20px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  margin: 18px 0;
+}
+
+.spec-grid dt {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  font-weight: 600;
+  padding-top: 2px;
+}
+
+.spec-grid dd { color: var(--ink); }
+.spec-grid dd strong { color: var(--ink); font-weight: 600; }
+.spec-grid dd em { color: var(--ink-soft); font-style: italic; }
+
+.wire {
+  background: var(--paper);
+  border: 1px solid var(--ink-line);
+  border-radius: 7px;
+  padding: 16px 18px 14px;
+  margin: 16px 0;
+}
+
+.wire__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 10px;
+}
+
+.wire__title {
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.wire__meta {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+
+.wire__caption {
+  font-family: var(--serif);
+  font-size: 13px;
+  font-style: italic;
+  color: var(--ink-soft);
+  margin-top: 12px;
+  line-height: 1.55;
+  padding-top: 10px;
+  border-top: 1px solid var(--ink-line);
+}
+
+.wire svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: var(--paper);
+  border-radius: 4px;
+  border: 1px solid var(--ink-line);
+}
+
+.s-text { font-family: 'Inter Tight', sans-serif; font-size: 11px; fill: var(--ink); }
+.s-text-sm { font-family: 'Inter Tight', sans-serif; font-size: 10px; fill: var(--ink); }
+.s-text-tiny { font-family: 'Inter Tight', sans-serif; font-size: 9px; fill: var(--ink-soft); }
+.s-text-mono { font-family: 'JetBrains Mono', monospace; font-size: 9px; fill: var(--ink-mute); letter-spacing: 0.10em; text-transform: uppercase; }
+.s-text-mono-tiny { font-family: 'JetBrains Mono', monospace; font-size: 8px; fill: var(--ink-mute); letter-spacing: 0.08em; }
+.s-text-serif { font-family: 'Cormorant Garamond', serif; font-size: 13px; font-weight: 600; fill: var(--ink); }
+.s-text-cream { fill: var(--cream); }
+
+a.inline {
+  color: var(--blue);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(40,72,200,0.30);
+}
+a.inline:hover { border-color: var(--blue); }
+
+.codex-block {
+  background: var(--navy);
+  color: var(--cream);
+  border-radius: 9px;
+  padding: 26px 28px;
+  margin: 22px 0;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+}
+
+.codex-block__label {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--copper);
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+
+.codex-block strong { color: var(--cream); font-weight: 600; }
+
+.checklist { list-style: none; margin: 12px 0 18px 0; padding: 0; max-width: 740px; }
+.checklist li {
+  position: relative;
+  padding-left: 28px;
+  font-family: var(--sans);
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink);
+  margin-bottom: 9px;
+}
+.checklist li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--ink-line-hi);
+  border-radius: 3px;
+  background: var(--paper);
+}
+
+.footer {
+  background: var(--navy);
+  color: rgba(255,255,255,0.72);
+  padding: 28px 56px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.footer__brand {
+  font-family: var(--serif);
+  font-size: 14px;
+  font-style: italic;
+  color: var(--cream);
+  margin-bottom: 8px;
+}
+
+@media (max-width: 1100px) {
+  .chrome { grid-template-columns: 240px 1fr; }
+  .content { padding: 36px 32px 64px; }
+}
+
+@media (max-width: 768px) {
+  .chrome { grid-template-columns: 1fr; }
+  .toc { position: static; height: auto; }
+  .content { padding: 28px 24px 48px; }
+  h1 { font-size: 32px; }
+  .spec-grid { grid-template-columns: 1fr; gap: 4px 0; }
+  .spec-grid dt { padding-top: 8px; }
+}
+</style>
+</head>
+<body>
+
+<div class="chrome">
+
+  <aside class="toc">
+    <div class="toc__brand">Abar<span>Va</span></div>
+    <div class="toc__sub">Cross-module brief · Locked 2026-05-02</div>
+
+    <div class="toc__title">The Atrium pattern, applied to all six modules.</div>
+    <div class="toc__subtitle">One chrome. Six adaptations. Per-module submenus, agents, canvas content shapes.</div>
+
+    <div class="toc__divider"></div>
+
+    <div class="toc__label">Table of contents</div>
+    <ul class="toc__list">
+      <li><a href="#mission"><span class="toc__num">01</span>Mission &amp; principles</a></li>
+      <li><a href="#chrome"><span class="toc__num">02</span>The chrome — locked</a></li>
+      <li><a href="#variance"><span class="toc__num">03</span>What varies per module</a></li>
+      <li><a href="#home"><span class="toc__num">04</span>Home — Atlas</a></li>
+      <li><a href="#setup"><span class="toc__num">05</span>Setup — Steward</a></li>
+      <li><a href="#moves"><span class="toc__num">06</span>Strategic Moves — Nexus</a></li>
+      <li><a href="#source"><span class="toc__num">07</span>Source — Nexus</a></li>
+      <li><a href="#intel"><span class="toc__num">08</span>Intelligence — Sentinel</a></li>
+      <li><a href="#tower"><span class="toc__num">09</span>Tower — Atlas</a></li>
+      <li><a href="#crossmodule"><span class="toc__num">10</span>Cross-module behavior</a></li>
+      <li><a href="#delivery"><span class="toc__num">11</span>Delivery &amp; reporting</a></li>
+    </ul>
+
+    <div class="toc__status">Brief · Programs/Intel Codex</div>
+  </aside>
+
+  <main class="content">
+
+    <div class="eyebrow">AbarVa · Programs / Intelligence Codex · Cross-module brief</div>
+    <h1>The Atrium pattern, <em>applied to all six modules</em>.</h1>
+    <p class="lede">One chrome shared across Home, Setup, Strategic Moves, Source, Intelligence, and Tower. Each module specifies its own submenus, agent identity, and canvas content. The discipline of consistency is the platform's signature.</p>
+
+    <div class="metadata">
+      <span><strong>Status</strong> Locked, 2026-05-02</span>
+      <span><strong>Owner</strong> Programs / Intelligence Codex lane</span>
+      <span><strong>Companion</strong> Canonical V2 · Metrics Authoring Brief</span>
+    </div>
+
+    <div class="callout callout--plum">
+      <span class="callout__label">What this brief contains</span>
+      The cross-module application of the Atrium pattern. Per-module wireframes for all six modules. Per-module submenu specifications. Per-module agent voice doctrine. Cross-module navigation discipline. The Programs/Intelligence Codex's contract for chrome implementation across the platform.
+    </div>
+
+    <!-- Section 1 -->
+    <section id="mission">
+      <h2><span class="num">01</span>Mission &amp; <em>principles</em></h2>
+      <p>Implement the Atrium pattern as the unified chrome across all six platform modules. The chrome is invariant — same top nav, same submenu strip pattern, same agent zone with three states, same canvas. What varies per module: the submenu list, the agent identity and voice, the canvas content shape.</p>
+
+      <h3>Three principles that hold for every module</h3>
+      <ol>
+        <li><strong>Persistent zones.</strong> Top nav, submenu strip, agent zone, and canvas are always present. Their dimensions are locked.</li>
+        <li><strong>Context-driven canvas.</strong> Submenu click swaps canvas only. Agent state preserves across submenu navigation. Browser URL updates for deep-linking.</li>
+        <li><strong>Agent-mediated work.</strong> Each module has a designated agent. The agent's voice, role, and capabilities differ; the chrome behavior is identical.</li>
+      </ol>
+
+      <h3>Why consistency is itself the value</h3>
+      <p>An enterprise platform's hardest UX challenge is fluency across modules. Users move between strategic thinking (Intelligence), portfolio management (Strategic Moves), vendor commitment (Source), and portfolio observation (Tower) within a single session. Every module-switch that requires re-orienting costs cognitive energy. The Atrium pattern's discipline is that the user never re-orients. They learn the chrome once; every module reuses it.</p>
+
+      <p>The ambition is not "consistent enough." The ambition is <em>perfect</em> chrome consistency, with the variation expressed cleanly through submenu list, agent identity, and canvas content. When users say <em>"AbarVa just feels right to use"</em> — this is what they mean.</p>
+    </section>
+
+    <!-- Section 2 -->
+    <section id="chrome">
+      <h2><span class="num">02</span>The chrome — <em>locked</em></h2>
+      <p>The chrome is invariant across modules. These dimensions and behaviors are not negotiable per-module.</p>
+
+      <table>
+        <thead><tr><th>Element</th><th>Spec</th><th>Behavior</th></tr></thead>
+        <tbody>
+          <tr><td>Top nav</td><td>100% × 32px</td><td>AbarVa logo · tenant · six module names · user profile</td></tr>
+          <tr><td>Submenu strip</td><td>100% × 36px</td><td>Horizontal tabs; module's submenu list; click swaps canvas only</td></tr>
+          <tr><td>Agent zone (ambient)</td><td>200px wide</td><td>Agent name, status indicator, ambient brief, last reply, composer</td></tr>
+          <tr><td>Agent zone (engaged)</td><td>360px wide</td><td>Full conversation, suggestion chips, active composer</td></tr>
+          <tr><td>Agent zone (focus)</td><td>520px wide</td><td>Conversation as work surface; canvas reduced to reference panel</td></tr>
+          <tr><td>Canvas</td><td>Remainder</td><td>Selected submenu's content; reflows per agent state; receives published cards</td></tr>
+        </tbody>
+      </table>
+
+      <h3>State transitions (locked)</h3>
+      <ul>
+        <li><strong>Ambient → engaged:</strong> click composer, type, or agent surfaces substantive output. ~250ms ease.</li>
+        <li><strong>Engaged → ambient:</strong> 30s inactivity, or user clicks into canvas.</li>
+        <li><strong>Engaged → focus:</strong> explicit user action only — chevron or "enter focus" affordance. Never auto.</li>
+        <li><strong>Focus → engaged:</strong> click chevron or any submenu tab.</li>
+        <li><strong>Module switch:</strong> agent state preserved in background; returning restores prior conversation.</li>
+      </ul>
+    </section>
+
+    <!-- Section 3 -->
+    <section id="variance">
+      <h2><span class="num">03</span>What varies <em>per module</em></h2>
+
+      <table>
+        <thead><tr><th>Module</th><th>Agent</th><th>Submenu count</th><th>Canvas character</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Home</strong></td><td>Atlas</td><td>4</td><td>Personalized morning brief; cross-module surfacing</td></tr>
+          <tr><td><strong>Setup</strong></td><td>Steward</td><td>6</td><td>Foundation status; tenant metric ingestion; readiness</td></tr>
+          <tr><td><strong>Strategic Moves</strong></td><td>Nexus</td><td>5</td><td>Move registry; per-move lifecycle deep-dive</td></tr>
+          <tr><td><strong>Source</strong></td><td>Nexus</td><td>5</td><td>Sourcing event registry; per-event lifecycle deep-dive</td></tr>
+          <tr><td><strong>Intelligence</strong></td><td>Sentinel</td><td>7</td><td>Three substrates · two outcomes · gap engine</td></tr>
+          <tr><td><strong>Tower</strong></td><td>Atlas</td><td>6</td><td>Portfolio observation; cross-program synthesis</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Agent voice doctrine — at a glance</h3>
+      <ul>
+        <li><strong>Atlas</strong> — synthesizer voice. Cross-program. Looks across the portfolio, surfaces patterns, frames executive narratives. Used in Home and Tower.</li>
+        <li><strong>Steward</strong> — governance voice. Foundation health, compliance posture, tenant integrity. Calm, precise, accountable.</li>
+        <li><strong>Nexus</strong> — lifecycle voice. Knows the program and sourcing lifecycles intimately. Surfaces phase-appropriate work. Used in Strategic Moves and Source.</li>
+        <li><strong>Sentinel</strong> — strategic thinking partner. Senior-practitioner-grade synthesis. Three substrates and two outcomes. Used in Intelligence.</li>
+      </ul>
+    </section>
+
+    <!-- Section 4 - HOME -->
+    <section id="home">
+      <h2><span class="num">04</span>Home — <em>Atlas</em></h2>
+      <p>Personalized landing per entitlements. Atlas synthesizes the user's morning state across modules and surfaces what matters now.</p>
+
+      <div class="module-block">
+        <div class="module-block__head">
+          <div class="module-block__name">Home</div>
+          <div class="module-block__agent">Atlas · synthesizer</div>
+        </div>
+
+        <div class="wire">
+          <div class="wire__header">
+            <div class="wire__title">Home — ambient state</div>
+            <div class="wire__meta">Atlas brief · cross-module morning view</div>
+          </div>
+          <svg viewBox="0 0 800 360" xmlns="http://www.w3.org/2000/svg">
+            <rect x="40" y="20" width="720" height="32" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.10)" stroke-width="0.5"/>
+            <text x="56" y="40" class="s-text" style="font-weight: 600;">AbarVa</text>
+            <text x="135" y="40" class="s-text">Apex Retail</text>
+            <text x="240" y="40" class="s-text-mono" style="fill: #2848c8; font-weight: 700;">Home</text>
+            <line x1="232" y1="48" x2="278" y2="48" stroke="#2848c8" stroke-width="2"/>
+            <text x="290" y="40" class="s-text-mono">Setup</text>
+            <text x="340" y="40" class="s-text-mono">Moves</text>
+            <text x="390" y="40" class="s-text-mono">Source</text>
+            <text x="450" y="40" class="s-text-mono">Intel</text>
+            <text x="500" y="40" class="s-text-mono">Tower</text>
+            <text x="744" y="40" text-anchor="end" class="s-text">Nina P.</text>
+
+            <rect x="40" y="68" width="720" height="36" rx="4" fill="#f5e8db" stroke="rgba(184,99,45,0.30)" stroke-width="0.5"/>
+            <text x="68" y="90" class="s-text" style="fill: #b8632d; font-weight: 700;">Today</text>
+            <line x1="58" y1="100" x2="100" y2="100" stroke="#b8632d" stroke-width="2"/>
+            <text x="135" y="90" class="s-text">Calendar</text>
+            <text x="210" y="90" class="s-text">Inbox</text>
+            <text x="280" y="90" class="s-text">Recent activity</text>
+
+            <rect x="40" y="120" width="200" height="200" rx="6" fill="#0a1628"/>
+            <text x="140" y="148" text-anchor="middle" class="s-text-serif s-text-cream" style="font-size: 16px;">Atlas</text>
+            <text x="140" y="164" text-anchor="middle" class="s-text-mono" style="fill: rgba(255,255,255,0.5);">synthesizer</text>
+            <line x1="56" y1="180" x2="224" y2="180" stroke="rgba(255,255,255,0.12)" stroke-width="0.5"/>
+            <text x="140" y="200" text-anchor="middle" class="s-text" style="fill: rgba(255,255,255,0.78); font-style: italic;">Three things</text>
+            <text x="140" y="216" text-anchor="middle" class="s-text" style="fill: rgba(255,255,255,0.78); font-style: italic;">across your day</text>
+            <text x="140" y="246" text-anchor="middle" class="s-text-tiny" style="fill: rgba(255,255,255,0.55);">Vendor C signature</text>
+            <text x="140" y="262" text-anchor="middle" class="s-text-tiny" style="fill: rgba(255,255,255,0.55);">Warehouse BAFO</text>
+            <text x="140" y="278" text-anchor="middle" class="s-text-tiny" style="fill: rgba(255,255,255,0.55);">CDP win</text>
+            <rect x="56" y="290" width="168" height="22" rx="4" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.15)" stroke-width="0.5"/>
+            <text x="140" y="304" text-anchor="middle" class="s-text-mono" style="fill: rgba(255,255,255,0.5);">ask atlas</text>
+
+            <rect x="248" y="120" width="512" height="200" rx="6" fill="#fbf3e4" stroke="rgba(20,33,58,0.10)" stroke-width="0.5"/>
+            <text x="504" y="148" text-anchor="middle" class="s-text-serif" style="font-size: 17px;">Your morning brief</text>
+            <text x="504" y="166" text-anchor="middle" class="s-text-mono">Apex Retail · 2 May 2026</text>
+
+            <rect x="270" y="184" width="234" height="56" rx="4" fill="#fbf3e4" stroke="#b1331f" stroke-width="1"/>
+            <text x="280" y="200" class="s-text-mono" style="fill: #b1331f; font-weight: 700;">SOURCE · DECISION OWED</text>
+            <text x="280" y="218" class="s-text">Vendor C signature pending</text>
+            <text x="280" y="232" class="s-text-tiny">$11.4M · unblocks AMS-CDP-2026</text>
+
+            <rect x="514" y="184" width="234" height="56" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.18)" stroke-width="0.5"/>
+            <text x="524" y="200" class="s-text-mono">MOVES · BAFO FRIDAY</text>
+            <text x="524" y="218" class="s-text">Analytics Warehouse</text>
+            <text x="524" y="232" class="s-text-tiny">$8.2M · 4 finalists scoped</text>
+
+            <rect x="270" y="252" width="234" height="56" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.18)" stroke-width="0.5"/>
+            <text x="280" y="268" class="s-text-mono" style="fill: #5b7d4f;">TOWER · REALIZED VALUE</text>
+            <text x="280" y="286" class="s-text">CDP Activation crossed 50%</text>
+            <text x="280" y="300" class="s-text-tiny">+$3.1M annualized · v. promise</text>
+
+            <rect x="514" y="252" width="234" height="56" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.18)" stroke-width="0.5"/>
+            <text x="524" y="268" class="s-text-mono">INTEL · GAP THRESHOLD</text>
+            <text x="524" y="286" class="s-text">2 middle-office gaps crossed</text>
+            <text x="524" y="300" class="s-text-tiny">forecast accuracy · OSA</text>
+          </svg>
+          <p class="wire__caption">Atlas synthesizes across modules. The morning brief shows decision pressure (Source), upcoming events (Moves), realized value (Tower), and surfaced gaps (Intel) in one personalized view.</p>
+        </div>
+
+        <dl class="spec-grid">
+          <dt>Submenus</dt>
+          <dd><strong>Today · Calendar · Inbox · Recent activity.</strong> Today is default. Calendar is integration to user's calendar showing platform-relevant events. Inbox is mentions/handoffs/decisions awaiting user. Recent activity is the user's own recent platform actions.</dd>
+
+          <dt>Agent identity</dt>
+          <dd><strong>Atlas — the synthesizer.</strong> Atlas reads across all modules the user has access to. Synthesizes morning state. Surfaces what matters in plain language. Doesn't dive into module-specific work; for that, the user goes to the module and meets the module's agent.</dd>
+
+          <dt>Canvas content</dt>
+          <dd>Personalized brief composed from cross-module signals: decision pressure from Source, upcoming events from Moves and Source, realized value from Tower, surfaced gaps from Intelligence, recent significant activity. The composition logic respects entitlements — users without Source access don't see Source signals.</dd>
+
+          <dt>Atlas voice</dt>
+          <dd>Synthesizer voice. <em>"Three things matter today across your portfolio. Vendor C is one signature from unblocking AMS-CDP-2026. Analytics Warehouse BAFO is owed Friday. CDP Activation crossed 50% realized this week — the first move to do so this quarter."</em></dd>
+        </dl>
+      </div>
+    </section>
+
+    <!-- Section 5 - SETUP -->
+    <section id="setup">
+      <h2><span class="num">05</span>Setup — <em>Steward</em></h2>
+      <p>Foundation substrate. Tenant data, users, integrations, metrics, architecture. Steward owns governance and tenant integrity.</p>
+
+      <div class="module-block">
+        <div class="module-block__head">
+          <div class="module-block__name">Setup</div>
+          <div class="module-block__agent">Steward · governance</div>
+        </div>
+
+        <div class="wire">
+          <div class="wire__header">
+            <div class="wire__title">Setup — Metrics submenu active</div>
+            <div class="wire__meta">Tenant metric ingestion · gap engine substrate</div>
+          </div>
+          <svg viewBox="0 0 800 360" xmlns="http://www.w3.org/2000/svg">
+            <rect x="40" y="20" width="720" height="32" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.10)" stroke-width="0.5"/>
+            <text x="56" y="40" class="s-text" style="font-weight: 600;">AbarVa</text>
+            <text x="135" y="40" class="s-text">Apex Retail</text>
+            <text x="240" y="40" class="s-text-mono">Home</text>
+            <text x="290" y="40" class="s-text-mono" style="fill: #2848c8; font-weight: 700;">Setup</text>
+            <line x1="282" y1="48" x2="320" y2="48" stroke="#2848c8" stroke-width="2"/>
+            <text x="340" y="40" class="s-text-mono">Moves</text>
+            <text x="390" y="40" class="s-text-mono">Source</text>
+            <text x="450" y="40" class="s-text-mono">Intel</text>
+            <text x="500" y="40" class="s-text-mono">Tower</text>
+            <text x="744" y="40" text-anchor="end" class="s-text">Nina P.</text>
+
+            <rect x="40" y="68" width="720" height="36" rx="4" fill="#f5e8db" stroke="rgba(184,99,45,0.30)" stroke-width="0.5"/>
+            <text x="68" y="90" class="s-text">Overview</text>
+            <text x="148" y="90" class="s-text">Data trust</text>
+            <text x="225" y="90" class="s-text">Connectors</text>
+            <text x="310" y="90" class="s-text">Users</text>
+            <text x="365" y="90" class="s-text" style="fill: #b8632d; font-weight: 700;">Metrics</text>
+            <line x1="358" y1="100" x2="412" y2="100" stroke="#b8632d" stroke-width="2"/>
+            <text x="430" y="90" class="s-text">Architecture</text>
+
+            <rect x="40" y="120" width="200" height="200" rx="6" fill="#0a1628"/>
+            <text x="140" y="148" text-anchor="middle" class="s-text-serif s-text-cream" style="font-size: 16px;">Steward</text>
+            <text x="140" y="164" text-anchor="middle" class="s-text-mono" style="fill: rgba(255,255,255,0.5);">governance</text>
+            <line x1="56" y1="180" x2="224" y2="180" stroke="rgba(255,255,255,0.12)" stroke-width="0.5"/>
+            <text x="140" y="200" text-anchor="middle" class="s-text" style="fill: rgba(255,255,255,0.78); font-style: italic;">14 of 28</text>
+            <text x="140" y="216" text-anchor="middle" class="s-text" style="fill: rgba(255,255,255,0.78); font-style: italic;">tier-1 metrics</text>
+            <text x="140" y="232" text-anchor="middle" class="s-text" style="fill: rgba(255,255,255,0.78); font-style: italic;">mapped</text>
+            <text x="140" y="262" text-anchor="middle" class="s-text-tiny" style="fill: rgba(255,255,255,0.55);">Front: 5/8</text>
+            <text x="140" y="276" text-anchor="middle" class="s-text-tiny" style="fill: rgba(255,255,255,0.55);">Middle: 6/12</text>
+            <text x="140" y="290" text-anchor="middle" class="s-text-tiny" style="fill: rgba(255,255,255,0.55);">Back: 3/8</text>
+
+            <rect x="248" y="120" width="512" height="200" rx="6" fill="#fbf3e4" stroke="rgba(20,33,58,0.10)" stroke-width="0.5"/>
+            <text x="504" y="148" text-anchor="middle" class="s-text-serif" style="font-size: 17px;">Tenant metrics — current state</text>
+            <text x="504" y="166" text-anchor="middle" class="s-text-mono">14 mapped · 8 unmapped · 6 measurement gaps</text>
+
+            <rect x="270" y="184" width="478" height="40" rx="4" fill="#e8efe2" stroke="#5b7d4f" stroke-width="0.5"/>
+            <text x="280" y="200" class="s-text-mono" style="fill: #5b7d4f;">MAPPED · forecast_accuracy_sku_week</text>
+            <text x="280" y="216" class="s-text-tiny">Tenant: 73% · Source: BI dashboard, weekly · Last updated: 28 Apr</text>
+
+            <rect x="270" y="232" width="478" height="40" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.18)" stroke-width="0.5"/>
+            <text x="280" y="248" class="s-text-mono">UNMAPPED · markdown_effectiveness</text>
+            <text x="280" y="264" class="s-text-tiny">No tenant data. Map this metric →</text>
+
+            <rect x="270" y="280" width="478" height="32" rx="4" fill="#f7e0db" stroke="#b1331f" stroke-width="0.5"/>
+            <text x="280" y="296" class="s-text-mono" style="fill: #b1331f;">MEASUREMENT GAP · on_shelf_availability</text>
+            <text x="280" y="308" class="s-text-tiny">Critical metric · not measured at SKU-store-day grain. Foundation work needed.</text>
+          </svg>
+          <p class="wire__caption">Steward shows the tenant's metric coverage state. Mapped metrics show their tenant value and source. Unmapped offer a "map this metric" affordance. Measurement gaps flag critical metrics absent from the tenant's data.</p>
+        </div>
+
+        <dl class="spec-grid">
+          <dt>Submenus</dt>
+          <dd><strong>Overview · Data trust · Connectors · Users · Metrics · Architecture.</strong> Overview is foundation health summary. Data trust covers data quality, lineage, identity resolution. Connectors are integrations (POS, EHR, core banking, BI tools). Users is access control. <strong>Metrics is the new tenant metric ingestion surface — substrate for the gap engine.</strong> Architecture is technical configuration.</dd>
+
+          <dt>Agent identity</dt>
+          <dd><strong>Steward — the governance agent.</strong> Calm, precise, accountable. Knows what foundation is required for what move. Surfaces foundation gaps when relevant. Tracks data quality issues. Owns tenant integrity discipline.</dd>
+
+          <dt>Canvas content</dt>
+          <dd>Per-submenu surfaces: foundation status dashboard (Overview), data quality issues (Data trust), connector configuration (Connectors), user/role/entitlement management (Users), <strong>tenant metric mapping with gap-engine integration (Metrics)</strong>, technical architecture and platform configuration (Architecture).</dd>
+
+          <dt>Steward voice</dt>
+          <dd>Governance voice. <em>"You have 14 of 28 Tier-1 retail metrics mapped. Six of the unmapped are measurement gaps — critical metrics not currently in your data. The biggest gap-engine impact comes from mapping markdown_effectiveness next; your dashboard has it."</em></dd>
+        </dl>
+      </div>
+    </section>
+
+    <!-- Section 6 - STRATEGIC MOVES -->
+    <section id="moves">
+      <h2><span class="num">06</span>Strategic Moves — <em>Nexus</em></h2>
+      <p>The registry of bets. Each move runs the 6-phase lifecycle (P0–P6). Nexus knows the lifecycle intimately and surfaces phase-appropriate work.</p>
+
+      <div class="module-block">
+        <div class="module-block__head">
+          <div class="module-block__name">Strategic <em>Moves</em></div>
+          <div class="module-block__agent">Nexus · lifecycle</div>
+        </div>
+
+        <div class="wire">
+          <div class="wire__header">
+            <div class="wire__title">Strategic Moves — Portfolio submenu</div>
+            <div class="wire__meta">14 active moves · grouped by phase</div>
+          </div>
+          <svg viewBox="0 0 800 360" xmlns="http://www.w3.org/2000/svg">
+            <rect x="40" y="20" width="720" height="32" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.10)" stroke-width="0.5"/>
+            <text x="56" y="40" class="s-text" style="font-weight: 600;">AbarVa</text>
+            <text x="135" y="40" class="s-text">Apex Retail</text>
+            <text x="240" y="40" class="s-text-mono">Home</text>
+            <text x="290" y="40" class="s-text-mono">Setup</text>
+            <text x="340" y="40" class="s-text-mono" style="fill: #2848c8; font-weight: 700;">Moves</text>
+            <line x1="332" y1="48" x2="372" y2="48" stroke="#2848c8" stroke-width="2"/>
+            <text x="390" y="40" class="s-text-mono">Source</text>
+            <text x="450" y="40" class="s-text-mono">Intel</text>
+            <text x="500" y="40" class="s-text-mono">Tower</text>
+            <text x="744" y="40" text-anchor="end" class="s-text">Nina P.</text>
+
+            <rect x="40" y="68" width="720" height="36" rx="4" fill="#f5e8db" stroke="rgba(184,99,45,0.30)" stroke-width="0.5"/>
+            <text x="68" y="90" class="s-text" style="fill: #b8632d; font-weight: 700;">Portfolio</text>
+            <line x1="58" y1="100" x2="120" y2="100" stroke="#b8632d" stroke-width="2"/>
+            <text x="148" y="90" class="s-text">By phase</text>
+            <text x="225" y="90" class="s-text">Pending decisions</text>
+            <text x="345" y="90" class="s-text">Settled</text>
+            <text x="410" y="90" class="s-text">Calendar</text>
+
+            <rect x="40" y="120" width="200" height="200" rx="6" fill="#0a1628"/>
+            <text x="140" y="148" text-anchor="middle" class="s-text-serif s-text-cream" style="font-size: 16px;">Nexus</text>
+            <text x="140" y="164" text-anchor="middle" class="s-text-mono" style="fill: rgba(255,255,255,0.5);">lifecycle</text>
+            <line x1="56" y1="180" x2="224" y2="180" stroke="rgba(255,255,255,0.12)" stroke-width="0.5"/>
+            <text x="140" y="200" text-anchor="middle" class="s-text" style="fill: rgba(255,255,255,0.78); font-style: italic;">Two moves</text>
+            <text x="140" y="216" text-anchor="middle" class="s-text" style="fill: rgba(255,255,255,0.78); font-style: italic;">need attention</text>
+            <text x="140" y="246" text-anchor="middle" class="s-text-tiny" style="fill: rgba(255,255,255,0.55);">CDP at P3</text>
+            <text x="140" y="262" text-anchor="middle" class="s-text-tiny" style="fill: rgba(255,255,255,0.55);">Warehouse at P4</text>
+            <rect x="56" y="290" width="168" height="22" rx="4" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.15)" stroke-width="0.5"/>
+            <text x="140" y="304" text-anchor="middle" class="s-text-mono" style="fill: rgba(255,255,255,0.5);">ask nexus</text>
+
+            <rect x="248" y="120" width="512" height="200" rx="6" fill="#fbf3e4" stroke="rgba(20,33,58,0.10)" stroke-width="0.5"/>
+            <text x="504" y="148" text-anchor="middle" class="s-text-serif" style="font-size: 17px;">Active moves — 14</text>
+            <text x="504" y="166" text-anchor="middle" class="s-text-mono">P0: 2 · P1: 1 · P2: 3 · P3: 4 · P4: 2 · P5: 1 · P6 handoff: 1</text>
+
+            <rect x="270" y="184" width="234" height="56" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.18)" stroke-width="0.5"/>
+            <text x="280" y="200" class="s-text-mono" style="fill: #b8632d;">P3 SOLUTION DESIGN</text>
+            <text x="280" y="216" class="s-text">AMS-CDP-2026</text>
+            <text x="280" y="230" class="s-text-tiny">Sponsor: J. Reyes · Vendor C BAFO</text>
+
+            <rect x="514" y="184" width="234" height="56" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.18)" stroke-width="0.5"/>
+            <text x="524" y="200" class="s-text-mono" style="fill: #b8632d;">P4 EXECUTION ROADMAP</text>
+            <text x="524" y="216" class="s-text">Analytics Warehouse</text>
+            <text x="524" y="230" class="s-text-tiny">Sponsor: M. Chen · BAFO Friday</text>
+
+            <rect x="270" y="252" width="234" height="56" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.18)" stroke-width="0.5"/>
+            <text x="280" y="268" class="s-text-mono" style="fill: #5b7d4f;">P6 TOWER HANDOFF</text>
+            <text x="280" y="284" class="s-text">CDP Activation</text>
+            <text x="280" y="298" class="s-text-tiny">Sponsor: J. Reyes · 50% realized</text>
+
+            <rect x="514" y="252" width="234" height="56" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.18)" stroke-width="0.5"/>
+            <text x="524" y="268" class="s-text-mono">P0 ORIGINATION</text>
+            <text x="524" y="284" class="s-text">OSA gap remediation</text>
+            <text x="524" y="298" class="s-text-tiny">From Intel session · 2 May</text>
+          </svg>
+          <p class="wire__caption">Nexus surfaces the moves needing attention. Portfolio shows phase distribution. Each card carries phase, sponsor, and the most relevant context. Click → move's lifecycle deep-dive.</p>
+        </div>
+
+        <dl class="spec-grid">
+          <dt>Submenus</dt>
+          <dd><strong>Portfolio · By phase · Pending decisions · Settled · Calendar.</strong> Portfolio is registry default. By phase groups views per lifecycle phase. Pending decisions surfaces moves where user action is required. Settled is the archive of completed moves. Calendar shows time-bound move events (BAFOs, executive reviews, kill-criteria check-ins).</dd>
+
+          <dt>Agent identity</dt>
+          <dd><strong>Nexus — the lifecycle agent.</strong> Knows the program lifecycle (and the sourcing lifecycle) intimately. Surfaces phase-appropriate work. Notices when a move sits too long in a phase. Tracks evidence ledger completeness.</dd>
+
+          <dt>Canvas content</dt>
+          <dd>Per-submenu surfaces: registry list (Portfolio), phase-grouped views with phase-appropriate filters (By phase), decision queue (Pending decisions), settled moves archive (Settled), time-bound event calendar (Calendar). Click any move → opens move's deep-dive with full lifecycle visualization.</dd>
+
+          <dt>Nexus voice</dt>
+          <dd>Lifecycle voice. <em>"AMS-CDP-2026 has been at P3 Solution Design for 14 days. The lifecycle median for this archetype at this scale is 21 days. You're on pace, but Vendor C's BAFO needs to land within the next 7 days to keep you ahead of median."</em></dd>
+        </dl>
+      </div>
+    </section>
+
+    <!-- Section 7 - SOURCE -->
+    <section id="source">
+      <h2><span class="num">07</span>Source — <em>Nexus</em></h2>
+      <p>Sourcing event registry. 11-stage lifecycle (Strategy → Scope → RFP → Responses → Evaluation → Pricing → BAFO → Executive Decision → Selection → Transition → Value). Same Nexus agent as Strategic Moves; same lifecycle discipline applied to vendor commitment work.</p>
+
+      <div class="module-block">
+        <div class="module-block__head">
+          <div class="module-block__name">Source</div>
+          <div class="module-block__agent">Nexus · lifecycle</div>
+        </div>
+
+        <div class="wire">
+          <div class="wire__header">
+            <div class="wire__title">Source — Pipeline submenu</div>
+            <div class="wire__meta">8 active sourcing events · 11-stage lifecycle</div>
+          </div>
+          <svg viewBox="0 0 800 360" xmlns="http://www.w3.org/2000/svg">
+            <rect x="40" y="20" width="720" height="32" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.10)" stroke-width="0.5"/>
+            <text x="56" y="40" class="s-text" style="font-weight: 600;">AbarVa</text>
+            <text x="135" y="40" class="s-text">Apex Retail</text>
+            <text x="240" y="40" class="s-text-mono">Home</text>
+            <text x="290" y="40" class="s-text-mono">Setup</text>
+            <text x="340" y="40" class="s-text-mono">Moves</text>
+            <text x="390" y="40" class="s-text-mono" style="fill: #2848c8; font-weight: 700;">Source</text>
+            <line x1="382" y1="48" x2="424" y2="48" stroke="#2848c8" stroke-width="2"/>
+            <text x="450" y="40" class="s-text-mono">Intel</text>
+            <text x="500" y="40" class="s-text-mono">Tower</text>
+            <text x="744" y="40" text-anchor="end" class="s-text">Nina P.</text>
+
+            <rect x="40" y="68" width="720" height="36" rx="4" fill="#f5e8db" stroke="rgba(184,99,45,0.30)" stroke-width="0.5"/>
+            <text x="68" y="90" class="s-text" style="fill: #b8632d; font-weight: 700;">Pipeline</text>
+            <line x1="58" y1="100" x2="120" y2="100" stroke="#b8632d" stroke-width="2"/>
+            <text x="135" y="90" class="s-text">By stage</text>
+            <text x="205" y="90" class="s-text">Vendors</text>
+            <text x="270" y="90" class="s-text">Decisions</text>
+            <text x="345" y="90" class="s-text">Settled</text>
+
+            <rect x="40" y="120" width="200" height="200" rx="6" fill="#0a1628"/>
+            <text x="140" y="148" text-anchor="middle" class="s-text-serif s-text-cream" style="font-size: 16px;">Nexus</text>
+            <text x="140" y="164" text-anchor="middle" class="s-text-mono" style="fill: rgba(255,255,255,0.5);">sourcing</text>
+            <line x1="56" y1="180" x2="224" y2="180" stroke="rgba(255,255,255,0.12)" stroke-width="0.5"/>
+            <text x="140" y="200" text-anchor="middle" class="s-text" style="fill: rgba(255,255,255,0.78); font-style: italic;">One BAFO</text>
+            <text x="140" y="216" text-anchor="middle" class="s-text" style="fill: rgba(255,255,255,0.78); font-style: italic;">due Friday</text>
+            <text x="140" y="246" text-anchor="middle" class="s-text-tiny" style="fill: rgba(255,255,255,0.55);">Warehouse · 4 finalists</text>
+            <text x="140" y="262" text-anchor="middle" class="s-text-tiny" style="fill: rgba(255,255,255,0.55);">Vendor C signature pending</text>
+
+            <rect x="248" y="120" width="512" height="200" rx="6" fill="#fbf3e4" stroke="rgba(20,33,58,0.10)" stroke-width="0.5"/>
+            <text x="504" y="148" text-anchor="middle" class="s-text-serif" style="font-size: 17px;">Active sourcing events — 8</text>
+            <text x="504" y="166" text-anchor="middle" class="s-text-mono">11-stage lifecycle · linked to Strategic Moves</text>
+
+            <rect x="270" y="184" width="478" height="40" rx="4" fill="#f7e0db" stroke="#b1331f" stroke-width="1"/>
+            <text x="280" y="200" class="s-text-mono" style="fill: #b1331f;">SELECTION · BLOCKED</text>
+            <text x="280" y="216" class="s-text-tiny">Vendor C · CDP integration partner · linked AMS-CDP-2026 · awaiting signature</text>
+
+            <rect x="270" y="232" width="478" height="40" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.18)" stroke-width="0.5"/>
+            <text x="280" y="248" class="s-text-mono" style="fill: #b8632d;">BAFO · DUE FRIDAY</text>
+            <text x="280" y="264" class="s-text-tiny">Analytics Warehouse · 4 finalists · linked Analytics Warehouse move</text>
+
+            <rect x="270" y="280" width="478" height="32" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.18)" stroke-width="0.5"/>
+            <text x="280" y="296" class="s-text-mono">EVALUATION · IN FLIGHT</text>
+            <text x="280" y="308" class="s-text-tiny">Coding Quality &amp; CDI vendor · 6 vendors · scoring 2 of 6 complete</text>
+          </svg>
+          <p class="wire__caption">Source pipeline shows the active sourcing events with their stages. Cross-references to Strategic Moves are visible. Decision pressure is severity-coded.</p>
+        </div>
+
+        <dl class="spec-grid">
+          <dt>Submenus</dt>
+          <dd><strong>Pipeline · By stage · Vendors · Decisions · Settled.</strong> Pipeline is the active-events default. By stage groups events per lifecycle stage. Vendors is the vendor relationship registry — who you've evaluated, contracted with, are watching. Decisions is the executive decision queue. Settled is the archive of awarded/closed events.</dd>
+
+          <dt>Agent identity</dt>
+          <dd><strong>Nexus — same agent as Strategic Moves.</strong> Sourcing lifecycle is a sister lifecycle to the program lifecycle; one agent fluent in both. Cross-references between sourcing events and Strategic Moves are first-class.</dd>
+
+          <dt>Canvas content</dt>
+          <dd>Per-submenu surfaces: pipeline of active events (Pipeline), stage-grouped views (By stage), vendor relationships (Vendors), executive decision queue (Decisions), settled archive (Settled). Click any event → opens 11-stage lifecycle deep-dive.</dd>
+
+          <dt>Nexus voice (sourcing register)</dt>
+          <dd>Lifecycle voice tuned to vendor commitment work. <em>"Vendor C is at Selection but blocked on signature for 6 days. The cohort median for this size of contract from Selection to signed is 4 days. Worth surfacing to legal — usually a redlining issue at this point."</em></dd>
+        </dl>
+      </div>
+    </section>
+
+    <!-- Section 8 - INTELLIGENCE -->
+    <section id="intel">
+      <h2><span class="num">08</span>Intelligence — <em>Sentinel</em></h2>
+      <p>The explore layer. Three substrates × two outcomes × gap engine. Sentinel is senior-practitioner-grade strategic thinking partner. The full canonical specification lives in <span class="kbd">INTELLIGENCE_CANONICAL_DESIGN_V2.html</span>; this section captures Intelligence's place in the cross-module pattern.</p>
+
+      <div class="module-block">
+        <div class="module-block__head">
+          <div class="module-block__name">Intelligence</div>
+          <div class="module-block__agent">Sentinel · explore</div>
+        </div>
+
+        <div class="wire">
+          <div class="wire__header">
+            <div class="wire__title">Intelligence — By function submenu</div>
+            <div class="wire__meta">Industry views · gap engine overlay</div>
+          </div>
+          <svg viewBox="0 0 800 360" xmlns="http://www.w3.org/2000/svg">
+            <rect x="40" y="20" width="720" height="32" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.10)" stroke-width="0.5"/>
+            <text x="56" y="40" class="s-text" style="font-weight: 600;">AbarVa</text>
+            <text x="135" y="40" class="s-text">Apex Retail</text>
+            <text x="240" y="40" class="s-text-mono">Home</text>
+            <text x="290" y="40" class="s-text-mono">Setup</text>
+            <text x="340" y="40" class="s-text-mono">Moves</text>
+            <text x="390" y="40" class="s-text-mono">Source</text>
+            <text x="450" y="40" class="s-text-mono" style="fill: #2848c8; font-weight: 700;">Intel</text>
+            <line x1="442" y1="48" x2="478" y2="48" stroke="#2848c8" stroke-width="2"/>
+            <text x="500" y="40" class="s-text-mono">Tower</text>
+            <text x="744" y="40" text-anchor="end" class="s-text">Nina P.</text>
+
+            <rect x="40" y="68" width="720" height="36" rx="4" fill="#f5e8db" stroke="rgba(184,99,45,0.30)" stroke-width="0.5"/>
+            <text x="68" y="90" class="s-text">Today</text>
+            <text x="118" y="90" class="s-text" style="fill: #b8632d; font-weight: 700;">By function</text>
+            <line x1="112" y1="100" x2="190" y2="100" stroke="#b8632d" stroke-width="2"/>
+            <text x="210" y="90" class="s-text">Patterns</text>
+            <text x="272" y="90" class="s-text">Vendors</text>
+            <text x="335" y="90" class="s-text">Peer activity</text>
+            <text x="420" y="90" class="s-text">My strategy</text>
+            <text x="500" y="90" class="s-text">Sessions</text>
+
+            <rect x="40" y="120" width="200" height="200" rx="6" fill="#0a1628"/>
+            <text x="140" y="148" text-anchor="middle" class="s-text-serif s-text-cream" style="font-size: 16px;">Sentinel</text>
+            <text x="140" y="164" text-anchor="middle" class="s-text-mono" style="fill: rgba(255,255,255,0.5);">explore</text>
+            <line x1="56" y1="180" x2="224" y2="180" stroke="rgba(255,255,255,0.12)" stroke-width="0.5"/>
+            <text x="140" y="200" text-anchor="middle" class="s-text" style="fill: rgba(255,255,255,0.78); font-style: italic;">14 themes</text>
+            <text x="140" y="216" text-anchor="middle" class="s-text" style="fill: rgba(255,255,255,0.78); font-style: italic;">9 with gaps</text>
+            <text x="140" y="246" text-anchor="middle" class="s-text-tiny" style="fill: rgba(255,255,255,0.55);">Front: 4 gaps</text>
+            <text x="140" y="262" text-anchor="middle" class="s-text-tiny" style="fill: rgba(255,255,255,0.55);">Middle: 6 gaps</text>
+            <text x="140" y="278" text-anchor="middle" class="s-text-tiny" style="fill: rgba(255,255,255,0.55);">Back: 3 gaps</text>
+
+            <rect x="248" y="120" width="512" height="200" rx="6" fill="#fbf3e4" stroke="rgba(20,33,58,0.10)" stroke-width="0.5"/>
+            <text x="504" y="148" text-anchor="middle" class="s-text-serif" style="font-size: 17px;">Specialty retail — domain views</text>
+            <text x="504" y="166" text-anchor="middle" class="s-text-mono">Click any domain · gap density indicated</text>
+
+            <rect x="270" y="184" width="158" height="120" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.18)" stroke-width="0.5"/>
+            <text x="349" y="208" text-anchor="middle" class="s-text-serif" style="fill: #b8632d;">Front office</text>
+            <text x="349" y="226" text-anchor="middle" class="s-text-tiny">Customer &amp; channel</text>
+            <text x="349" y="252" text-anchor="middle" class="s-text-mono">5 themes · 187 patterns</text>
+            <rect x="290" y="270" width="118" height="20" rx="3" fill="#f7e0db" stroke="#b1331f" stroke-width="0.5"/>
+            <text x="349" y="284" text-anchor="middle" class="s-text-tiny" style="fill: #b1331f;">4 gaps · medium</text>
+
+            <rect x="436" y="184" width="158" height="120" rx="4" fill="#fbf3e4" stroke="#b1331f" stroke-width="1.5"/>
+            <text x="515" y="208" text-anchor="middle" class="s-text-serif" style="fill: #b8632d;">Middle office</text>
+            <text x="515" y="226" text-anchor="middle" class="s-text-tiny">Merch &amp; supply</text>
+            <text x="515" y="252" text-anchor="middle" class="s-text-mono">5 themes · 244 patterns</text>
+            <rect x="456" y="270" width="118" height="20" rx="3" fill="#f7e0db" stroke="#b1331f" stroke-width="1"/>
+            <text x="515" y="284" text-anchor="middle" class="s-text-tiny" style="fill: #b1331f; font-weight: 700;">6 gaps · HIGH</text>
+
+            <rect x="602" y="184" width="146" height="120" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.18)" stroke-width="0.5"/>
+            <text x="675" y="208" text-anchor="middle" class="s-text-serif" style="fill: #b8632d;">Back office</text>
+            <text x="675" y="226" text-anchor="middle" class="s-text-tiny">Finance &amp; ops</text>
+            <text x="675" y="252" text-anchor="middle" class="s-text-mono">4 themes · 153 patterns</text>
+            <rect x="620" y="270" width="110" height="20" rx="3" fill="#fbf3e4" stroke="#5b7d4f" stroke-width="0.5"/>
+            <text x="675" y="284" text-anchor="middle" class="s-text-tiny" style="fill: #5b7d4f;">3 gaps · low</text>
+          </svg>
+          <p class="wire__caption">By function shows three domain tiles — Front, Middle, Back office — with gap-density indicators per domain. Middle office is highlighted as highest-gap (6 gaps, HIGH severity) for this tenant. Click any tile → theme list with metric gaps overlaid.</p>
+        </div>
+
+        <dl class="spec-grid">
+          <dt>Submenus</dt>
+          <dd><strong>Today · By function · Patterns · Vendors · Peer activity · My strategy · Sessions.</strong> Specified in detail in canonical V2 doc.</dd>
+
+          <dt>Agent identity</dt>
+          <dd><strong>Sentinel — the explore agent.</strong> Senior-practitioner-grade strategic thinking partner. Reads the three substrates. Drives the two outcomes. Surfaces gaps. Publishes structured outputs to the canvas (pattern cards, move seeds, synthesis summaries, decision frames, foundation assessments, metric gap surfaces).</dd>
+
+          <dt>Canvas content</dt>
+          <dd>Per-submenu surfaces: morning brief (Today), industry domain views with gap overlay (By function), pattern catalog (Patterns), vendor landscape (Vendors), peer aggregate activity (Peer activity), uploaded strategy with empirical challenge (My strategy), persistent thinking sessions (Sessions).</dd>
+
+          <dt>Sentinel voice</dt>
+          <dd>Strategic thinking partner. <em>"Six middle-office gaps for your tenant — concentrated in demand &amp; replenishment. Forecast accuracy at 73% vs north-star 88-92%; OSA not measured at SKU-store-day grain. The corpus carries three move archetypes for closing this gap. Want me to scaffold one as a candidate Strategic Move?"</em></dd>
+        </dl>
+      </div>
+    </section>
+
+    <!-- Section 9 - TOWER -->
+    <section id="tower">
+      <h2><span class="num">09</span>Tower — <em>Atlas</em></h2>
+      <p>Portfolio observation layer. Once a move passes P6 Tower Handoff, execution happens externally. Tower observes the active portfolio, surfaces decision pressure, tracks realized value against structured promise contracts.</p>
+
+      <div class="module-block">
+        <div class="module-block__head">
+          <div class="module-block__name">Tower</div>
+          <div class="module-block__agent">Atlas · synthesizer</div>
+        </div>
+
+        <div class="wire">
+          <div class="wire__header">
+            <div class="wire__title">Tower — Pressures submenu</div>
+            <div class="wire__meta">Cross-portfolio decision pressure synthesis</div>
+          </div>
+          <svg viewBox="0 0 800 360" xmlns="http://www.w3.org/2000/svg">
+            <rect x="40" y="20" width="720" height="32" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.10)" stroke-width="0.5"/>
+            <text x="56" y="40" class="s-text" style="font-weight: 600;">AbarVa</text>
+            <text x="135" y="40" class="s-text">Apex Retail</text>
+            <text x="240" y="40" class="s-text-mono">Home</text>
+            <text x="290" y="40" class="s-text-mono">Setup</text>
+            <text x="340" y="40" class="s-text-mono">Moves</text>
+            <text x="390" y="40" class="s-text-mono">Source</text>
+            <text x="450" y="40" class="s-text-mono">Intel</text>
+            <text x="500" y="40" class="s-text-mono" style="fill: #2848c8; font-weight: 700;">Tower</text>
+            <line x1="492" y1="48" x2="528" y2="48" stroke="#2848c8" stroke-width="2"/>
+            <text x="744" y="40" text-anchor="end" class="s-text">Nina P.</text>
+
+            <rect x="40" y="68" width="720" height="36" rx="4" fill="#f5e8db" stroke="rgba(184,99,45,0.30)" stroke-width="0.5"/>
+            <text x="68" y="90" class="s-text" style="fill: #b8632d; font-weight: 700;">Pressures</text>
+            <line x1="58" y1="100" x2="125" y2="100" stroke="#b8632d" stroke-width="2"/>
+            <text x="148" y="90" class="s-text">Cascade</text>
+            <text x="218" y="90" class="s-text">Realized v committed</text>
+            <text x="345" y="90" class="s-text">Move grid</text>
+            <text x="425" y="90" class="s-text">Sourcing</text>
+            <text x="495" y="90" class="s-text">Handoffs</text>
+
+            <rect x="40" y="120" width="200" height="200" rx="6" fill="#0a1628"/>
+            <text x="140" y="148" text-anchor="middle" class="s-text-serif s-text-cream" style="font-size: 16px;">Atlas</text>
+            <text x="140" y="164" text-anchor="middle" class="s-text-mono" style="fill: rgba(255,255,255,0.5);">portfolio</text>
+            <line x1="56" y1="180" x2="224" y2="180" stroke="rgba(255,255,255,0.12)" stroke-width="0.5"/>
+            <text x="140" y="200" text-anchor="middle" class="s-text" style="fill: rgba(255,255,255,0.78); font-style: italic;">Three pressure</text>
+            <text x="140" y="216" text-anchor="middle" class="s-text" style="fill: rgba(255,255,255,0.78); font-style: italic;">cascades active</text>
+            <text x="140" y="246" text-anchor="middle" class="s-text-tiny" style="fill: rgba(255,255,255,0.55);">$32M total exposure</text>
+
+            <rect x="248" y="120" width="512" height="200" rx="6" fill="#fbf3e4" stroke="rgba(20,33,58,0.10)" stroke-width="0.5"/>
+            <text x="504" y="148" text-anchor="middle" class="s-text-serif" style="font-size: 17px;">Active decision pressures</text>
+            <text x="504" y="166" text-anchor="middle" class="s-text-mono">Cross-portfolio · ranked by leverage</text>
+
+            <rect x="270" y="184" width="478" height="40" rx="4" fill="#f7e0db" stroke="#b1331f" stroke-width="1.5"/>
+            <text x="280" y="200" class="s-text-mono" style="fill: #b1331f; font-weight: 700;">CASCADE · HIGH · $11.4M</text>
+            <text x="280" y="216" class="s-text-tiny">Vendor C signature → unblocks AMS-CDP-2026 → unblocks 4 downstream moves</text>
+
+            <rect x="270" y="232" width="478" height="40" rx="4" fill="#f5e8db" stroke="#b8632d" stroke-width="1"/>
+            <text x="280" y="248" class="s-text-mono" style="fill: #b8632d;">DECISION · MEDIUM · $8.2M</text>
+            <text x="280" y="264" class="s-text-tiny">Analytics Warehouse BAFO Friday · 4 finalists · linked 6 downstream moves</text>
+
+            <rect x="270" y="280" width="478" height="32" rx="4" fill="#e8efe2" stroke="#5b7d4f" stroke-width="0.5"/>
+            <text x="280" y="296" class="s-text-mono" style="fill: #5b7d4f;">REALIZED · WATCH · +$3.1M</text>
+            <text x="280" y="308" class="s-text-tiny">CDP Activation crossed 50% promise · first move this quarter to do so</text>
+          </svg>
+          <p class="wire__caption">Atlas synthesizes cross-portfolio pressure. Each card shows pressure type, severity, dollar impact, and the cascade context. Click → opens cascade graph or move/event lifecycle deep-dive.</p>
+        </div>
+
+        <dl class="spec-grid">
+          <dt>Submenus</dt>
+          <dd><strong>Pressures · Cascade · Realized v committed · Move grid · Sourcing · Handoffs.</strong> Pressures is default — what's owed and what cascades. Cascade is the explicit cross-program dependency graph. Realized v committed shows promise-vs-actual for active moves. Move grid is the full active portfolio with phase, value, status. Sourcing is the cross-portfolio sourcing pressure view. Handoffs is the recent P6 Tower Handoff archive.</dd>
+
+          <dt>Agent identity</dt>
+          <dd><strong>Atlas — same agent as Home.</strong> Synthesizer voice. Reads across the portfolio. Surfaces patterns and pressure. Doesn't dive into individual move execution; that's Nexus's domain.</dd>
+
+          <dt>Canvas content</dt>
+          <dd>Per-submenu surfaces: pressure synthesis (Pressures), cascade dependency graph (Cascade), realized-vs-committed value tracking (Realized v committed), full portfolio grid (Move grid), cross-portfolio sourcing pressure (Sourcing), recent handoffs archive (Handoffs).</dd>
+
+          <dt>Atlas voice (Tower register)</dt>
+          <dd>Synthesizer voice tuned to portfolio observation. <em>"Three pressure cascades active across $32M exposure. Vendor C is the highest-leverage unblock — one signature releases AMS-CDP-2026 and four downstream moves. Median time-to-signature for this contract size is 4 days; you're at 6."</em></dd>
+        </dl>
+      </div>
+    </section>
+
+    <!-- Section 10 - Cross-module behavior -->
+    <section id="crossmodule">
+      <h2><span class="num">10</span>Cross-module <em>behavior</em></h2>
+      <p>The chrome's discipline holds across module switches. The user moves through the platform fluidly without losing thread.</p>
+
+      <h3>State preservation across module navigation</h3>
+      <p>When the user switches modules, the previous module's agent state is preserved in background. Returning to that module restores the conversation in its prior state. This is the multi-module coherence that makes the platform feel like one tool, not six.</p>
+
+      <h4>Example flow</h4>
+      <p>Nina is in Intelligence working a thinking session about the OSA measurement gap. She switches to Strategic Moves to check whether the Analytics Warehouse move addresses this. She switches to Source to look at the BAFO situation. She switches back to Intelligence — her thinking session is still there, in the same state, mid-thought. <em>That</em> is the cross-module discipline.</p>
+
+      <h3>Cross-module references and handoffs</h3>
+      <p>Modules reference each other through structured links, not duplicate state. A Strategic Move's evidence ledger may reference an Intelligence session — clicking the reference opens that session in Intelligence. A sourcing event may reference a Strategic Move it's executing against — clicking opens the move. A Tower pressure card may reference both a sourcing event and a downstream move cascade — clicking opens whichever the user wants.</p>
+
+      <h3>Agent handoffs</h3>
+      <p>Sometimes work flows from one agent to another. Sentinel matures a candidate move and the user registers it — Sentinel hands off to Nexus at P0. The hand-off carries the conversation as evidence. Nexus picks up with full context. Atlas surfaces a pressure cascade — clicking opens the relevant move in Strategic Moves where Nexus takes over. Each agent owns its lifecycle but knows when to defer to another.</p>
+
+      <h3>What the codex needs to support</h3>
+      <ul class="checklist">
+        <li>Persistent agent state per (user, module) — not lost on module switch</li>
+        <li>Cross-module references rendered consistently with deep-link behavior</li>
+        <li>Agent handoff protocol — structured payload that one agent passes to another</li>
+        <li>Browser URL discipline that reflects module + submenu state</li>
+        <li>Entitlement-aware module list in top nav</li>
+        <li>Tenant-aware everything — pinned tenant context across all modules</li>
+      </ul>
+    </section>
+
+    <!-- Section 11 - Delivery -->
+    <section id="delivery">
+      <h2><span class="num">11</span>Delivery &amp; <em>reporting</em></h2>
+
+      <h3>Implementation sequence — your judgment</h3>
+      <p>The right sequence depends on what you find in the codebase, what locks are held by other lanes, and where the data-layer dependencies live. The lane decides. A few principles to ground the choice:</p>
+
+      <table>
+        <thead>
+          <tr><th>Principle</th><th>What it implies</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Chrome before content</strong></td>
+            <td>The Atrium chrome is the substrate for every module's surface. Build it first as a reusable framework; modules then specify their submenu list, agent identity, and canvas content against that framework.</td>
+          </tr>
+          <tr>
+            <td><strong>Prove the chrome on one module</strong></td>
+            <td>Before applying to all six modules, prove the chrome works correctly on one — most naturally Intelligence (where the design originated). Catch ergonomic issues there, then propagate.</td>
+          </tr>
+          <tr>
+            <td><strong>Migrate the active surfaces carefully</strong></td>
+            <td>Strategic Moves and Source have substantial existing surface area and may be subject to in-flight rebuild work by other lanes. If those rebuilds are in progress, defer Atrium application to those modules until rebuild completes — apply Atrium to greenfield modules first.</td>
+          </tr>
+          <tr>
+            <td><strong>Greenfield modules can ship first</strong></td>
+            <td>Setup's Metrics submenu is greenfield. Intelligence with the gap engine is largely greenfield. Home and Tower can be built on the chrome quickly. These have lower migration risk than Strategic Moves and Source.</td>
+          </tr>
+          <tr>
+            <td><strong>Parallelize independent work</strong></td>
+            <td>Chrome implementation, agent prompt library authoring, dynamic-canvas rendering layer, and module-specific submenu wiring are largely independent. Run them in parallel where they don't share locks.</td>
+          </tr>
+          <tr>
+            <td><strong>Sequence the dependent work</strong></td>
+            <td>Sentinel structured-output emissions need the canvas dynamic-publication rendering layer. Tower's portfolio observation needs Strategic Moves on Atrium. Home's cross-module synthesis needs other modules on Atrium. Sequence accordingly.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>Document your sequencing choice in the EVENT_LOG entry that opens your work. Two to four sentences explaining why you sequenced the way you did. The founder reads commit logs, not work plans — your reasoning lives in the log, not in a separate review document.</p>
+
+      <h3>Acceptance criteria</h3>
+      <ul class="checklist">
+        <li>Top nav, submenu strip, agent zone, canvas dimensions match locked spec across all six modules</li>
+        <li>Three agent states (ambient/engaged/focus) work consistently with smooth ~250ms transitions</li>
+        <li>Submenu navigation preserves agent state across all modules</li>
+        <li>Browser URL updates reflect module + submenu state for deep-linking</li>
+        <li>Cross-module navigation preserves prior agent states in background</li>
+        <li>Each module has its specified agent (Atlas/Steward/Nexus/Sentinel) with appropriate voice</li>
+        <li>Canvas dynamic publication works (pattern cards, move seeds, etc. surface from agent emissions)</li>
+        <li>Mobile responsive behavior degrades gracefully — chrome restructures cleanly at narrow widths</li>
+        <li>Entitlement-aware module list and submenu list — users only see what they're entitled to</li>
+        <li>Tenant context pinned across all modules — no leakage</li>
+      </ul>
+
+      <h3>Reporting</h3>
+      <div class="codex-block">
+        <div class="codex-block__label">Three reports when chrome implementation is complete</div>
+        <strong>ATRIUM_CHROME_IMPLEMENTATION_REPORT.md</strong><br/>
+        For each module, what's wired, with sample renders, with cross-module navigation traces.<br/><br/>
+        <strong>ATRIUM_AGENT_VOICE_LIBRARY.md</strong><br/>
+        Each agent's ambient/engaged/focus prompts per module-specific context, voice doctrine compliance, regression test outputs.<br/><br/>
+        <strong>ATRIUM_MIGRATION_TRACE.md</strong><br/>
+        For migrated modules (Strategic Moves, Source), the trace from old surface to new chrome — what changed, what preserved, what broke and how it was fixed.
+      </div>
+
+      <h3>Open questions worth surfacing if encountered</h3>
+      <p>The lane makes its own calls on these as they arise. Some may be obvious from the codebase; others may be genuine ambiguities. If a decision changes the platform's character meaningfully, surface it in the EVENT_LOG with your choice and reasoning rather than waiting for permission:</p>
+      <ul>
+        <li>Migration risk for Strategic Moves and Source — if these are mid-rebuild by other lanes, defer Atrium application until rebuild completes</li>
+        <li>Mobile responsive behavior — at what widths do chrome elements compress, restructure, or hide; the lane decides based on the platform's actual usage patterns</li>
+        <li>Agent state machine framework choice — pick what supports state preservation across modules cleanly with minimum new dependencies</li>
+        <li>Cross-module reference rendering — visual treatment for "this links to a move in Strategic Moves" type references; decide based on the chrome's existing semantics</li>
+      </ul>
+
+      <div class="callout callout--plum">
+        <span class="callout__label">Continuous execution discipline</span>
+        Auto-approve and merge work within the lane after standard checks pass — tests, linters, locks respected, EVENT_LOG updated. The founder reviews the running platform, not work plans. Surface blockers in EVENT_LOG with enough context for unblocking. Trust your judgment on sequencing; document your reasoning in commit messages.
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="footer">
+  <div class="footer__brand">AbarVa — bet-level operating system · the Atrium pattern</div>
+  Atrium pattern cross-module brief · locked 2026-05-02 · Programs/Intelligence Codex contract
+</footer>
+
+</body>
+</html>

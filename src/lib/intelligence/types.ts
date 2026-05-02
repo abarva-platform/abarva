@@ -6,6 +6,7 @@ import type { ContradictionSeed } from './seed-contradictions';
 import type { SignalSeed } from './seed-signals-manual';
 import type { SolutionSeed } from './seed-solutions';
 import type { PatternDomain, PatternSeed, PatternTier } from './seed-types';
+import type { MetricRecord } from './metric-records';
 
 export type NexusMode = 'research' | 'grounded' | 'pivot';
 export type NexusFormat =
@@ -313,13 +314,14 @@ export interface RetrievalPlan {
   tenancy: TenancyCtx;
 }
 
-export type CorpusEntity = PatternSeed | SignalSeed | SolutionSeed | ContradictionSeed;
+export type CorpusEntity = PatternSeed | SignalSeed | SolutionSeed | ContradictionSeed | MetricRecord;
 
 export interface LoadedCorpus {
   patterns: readonly PatternSeed[];
   signals: readonly SignalSeed[];
   solutions: readonly SolutionSeed[];
   contradictions: readonly ContradictionSeed[];
+  metrics: readonly MetricRecord[];
   byId: ReadonlyMap<string, CorpusEntity>;
   byDomain: ReadonlyMap<PatternDomain, readonly PatternSeed[]>;
   byTier: ReadonlyMap<PatternTier, readonly PatternSeed[]>;
@@ -327,6 +329,7 @@ export interface LoadedCorpus {
   signalsById: ReadonlyMap<string, SignalSeed>;
   solutionsById: ReadonlyMap<string, SolutionSeed>;
   contradictionsById: ReadonlyMap<string, ContradictionSeed>;
+  metricsById: ReadonlyMap<string, MetricRecord>;
   loadedAt: string;
 }
 
@@ -335,6 +338,7 @@ export interface LoaderConfig {
   signals?: readonly SignalSeed[];
   solutions?: readonly SolutionSeed[];
   contradictions?: readonly ContradictionSeed[];
+  metrics?: readonly MetricRecord[];
   validate?: boolean;
   loadedAt?: string;
 }

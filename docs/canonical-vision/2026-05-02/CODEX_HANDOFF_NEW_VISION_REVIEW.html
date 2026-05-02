@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AbarVa — Codex Execution Authorization: New Vision</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream: #fef6ed;
+  --cream-deep: #f7ecd9;
+  --cream-soft: #fbf3e4;
+  --paper: #fdfaf3;
+  --navy: #0a1628;
+  --navy-deep: #050d1c;
+  --navy-soft: #122039;
+  --ink: #14213a;
+  --ink-soft: #4a5266;
+  --ink-mute: #8a8d99;
+  --ink-line: rgba(20,33,58,0.10);
+  --ink-line-hi: rgba(20,33,58,0.18);
+  --blue: #2848c8;
+  --blue-soft: #5876dc;
+  --blue-bg: #eaeefa;
+  --copper: #b8632d;
+  --copper-bg: #f5e8db;
+  --sage: #5b7d4f;
+  --sage-bg: #e8efe2;
+  --crit: #b1331f;
+  --plum: #6b3a6b;
+  --plum-bg: #efe1ef;
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --sans: 'Inter Tight', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--sans);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 920px; margin: 0 auto; padding: 56px 56px 96px; }
+
+.banner {
+  background: var(--navy);
+  color: var(--cream);
+  padding: 36px 56px;
+  margin-bottom: 56px;
+}
+
+.banner__inner { max-width: 920px; margin: 0 auto; padding: 0; }
+
+.banner__brand {
+  font-family: var(--serif);
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+.banner__brand span { color: var(--blue-soft); }
+
+.banner__sub {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 22px;
+}
+
+.banner__title {
+  font-family: var(--serif);
+  font-size: 38px;
+  font-weight: 600;
+  letter-spacing: -0.018em;
+  line-height: 1.12;
+  color: var(--cream);
+  margin-bottom: 12px;
+}
+
+.banner__title em { font-style: italic; font-weight: 500; color: var(--blue-soft); }
+
+.banner__lede {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 500;
+  font-style: italic;
+  line-height: 1.45;
+  color: rgba(255,255,255,0.78);
+  max-width: 680px;
+}
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-bottom: 12px;
+}
+
+h2 {
+  font-family: var(--serif);
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: -0.014em;
+  line-height: 1.15;
+  color: var(--ink);
+  margin: 56px 0 16px;
+  padding-top: 28px;
+  border-top: 1px solid var(--ink-line);
+}
+
+h2 em { font-style: italic; font-weight: 500; color: var(--copper); }
+
+h3 {
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+  margin: 28px 0 10px;
+}
+
+p { margin-bottom: 14px; max-width: 740px; }
+p strong { color: var(--ink); font-weight: 600; }
+p em { font-style: italic; color: var(--ink-soft); }
+
+.callout {
+  background: var(--cream-soft);
+  border: 1px solid var(--ink-line);
+  border-left: 3px solid var(--copper);
+  border-radius: 0 7px 7px 0;
+  padding: 16px 22px;
+  margin: 22px 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.callout--blue { border-left-color: var(--blue); background: var(--blue-bg); }
+.callout--sage { border-left-color: var(--sage); background: var(--sage-bg); }
+.callout--plum { border-left-color: var(--plum); background: var(--plum-bg); }
+
+.callout__label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--copper);
+  margin-bottom: 5px;
+  display: block;
+}
+.callout--blue .callout__label { color: var(--blue); }
+.callout--sage .callout__label { color: var(--sage); }
+.callout--plum .callout__label { color: var(--plum); }
+
+.kbd {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--cream-deep);
+  border: 1px solid var(--ink-line-hi);
+  padding: 1px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+ul, ol { margin: 12px 0 18px 22px; max-width: 740px; }
+li { margin-bottom: 8px; line-height: 1.6; }
+li strong { color: var(--ink); font-weight: 600; }
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 740px;
+  margin: 18px 0;
+  font-size: 13.5px;
+}
+
+th, td {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--ink-line);
+  vertical-align: top;
+}
+
+th {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  font-weight: 600;
+  background: var(--cream-soft);
+}
+
+.docref-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 22px 0 28px;
+  max-width: 760px;
+}
+
+.docref {
+  background: var(--cream-soft);
+  border: 1px solid var(--ink-line);
+  border-radius: 8px;
+  padding: 18px 20px;
+  position: relative;
+  transition: all 0.18s ease;
+}
+
+.docref:hover {
+  background: var(--paper);
+  border-color: var(--blue);
+}
+
+.docref__badge {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--blue);
+  font-weight: 700;
+  margin-bottom: 6px;
+  background: var(--blue-bg);
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 3px;
+}
+
+.docref__badge--review { color: var(--copper); background: var(--copper-bg); }
+.docref__badge--new { color: var(--sage); background: var(--sage-bg); }
+
+.docref__title {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+  margin-bottom: 5px;
+  line-height: 1.25;
+}
+
+.docref__filename {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-mute);
+  letter-spacing: 0.04em;
+  margin-bottom: 10px;
+  word-break: break-word;
+}
+
+.docref__desc {
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+.changes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin: 22px 0;
+  max-width: 740px;
+}
+
+.change-card {
+  background: var(--cream-soft);
+  border: 1px solid var(--ink-line);
+  border-radius: 7px;
+  padding: 16px 18px;
+}
+
+.change-card__num {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--copper);
+  letter-spacing: 0.06em;
+  background: var(--copper-bg);
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  margin-bottom: 10px;
+}
+
+.change-card__title {
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 6px;
+  line-height: 1.25;
+}
+
+.change-card__desc {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+
+.checklist { list-style: none; margin: 12px 0 18px 0; padding: 0; max-width: 740px; }
+.checklist li {
+  position: relative;
+  padding-left: 28px;
+  font-family: var(--sans);
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink);
+  margin-bottom: 9px;
+}
+.checklist li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--ink-line-hi);
+  border-radius: 3px;
+  background: var(--paper);
+}
+
+.codex-block {
+  background: var(--navy);
+  color: var(--cream);
+  border-radius: 9px;
+  padding: 26px 32px;
+  margin: 24px 0;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+}
+
+.codex-block__label {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--blue-soft);
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+
+.codex-block strong { color: var(--cream); font-weight: 600; }
+
+a.inline {
+  color: var(--blue);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(40,72,200,0.30);
+  transition: border-color 0.16s ease;
+}
+a.inline:hover { border-color: var(--blue); }
+
+.lane-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+  margin: 22px 0;
+  max-width: 760px;
+}
+
+.lane {
+  background: var(--cream-soft);
+  border: 1px solid var(--ink-line);
+  border-radius: 7px;
+  padding: 18px 20px;
+}
+
+.lane__name {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--copper);
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.lane__title {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 8px;
+  line-height: 1.25;
+}
+
+.lane__role {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+
+.footer {
+  background: var(--navy);
+  color: rgba(255,255,255,0.72);
+  padding: 28px 56px;
+  margin-top: 80px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.footer__brand {
+  font-family: var(--serif);
+  font-size: 14px;
+  font-style: italic;
+  color: var(--cream);
+  margin-bottom: 8px;
+}
+
+@media (max-width: 768px) {
+  .wrap { padding: 36px 24px 64px; }
+  .banner { padding: 28px 24px; }
+  .banner__title { font-size: 28px; }
+  .docref-grid { grid-template-columns: 1fr; }
+  .changes-grid { grid-template-columns: 1fr; }
+  .lane-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="banner">
+  <div class="banner__inner">
+    <div class="banner__brand">Abar<span>Va</span></div>
+    <div class="banner__sub">Codex handoff · execution authorization · 2026-05-02</div>
+    <div class="banner__title">Read the new vision. <em>Then build it. Continuously.</em></div>
+    <div class="banner__lede">Three companion documents lock the platform's design direction. Your job: understand them fully, sequence the work using your own judgment, and execute. Auto-approve your own PRs. Run continuously. Surface only blockers.</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <p>This is the execution authorization for the Codex sessions running on AbarVa. The founder has just locked a substantively updated platform vision. <strong>You are authorized to execute against it continuously, sequencing the work using your own judgment.</strong> Read the documents fully. Understand the page-layer and data-layer dependencies. Make sequencing choices that respect those dependencies. Then build.</p>
+
+  <h2>What <em>changed</em> since the last lock</h2>
+  <p>Three meaningful shifts. Each has implications for code already written.</p>
+
+  <div class="changes-grid">
+    <div class="change-card">
+      <div class="change-card__num">CHANGE 01</div>
+      <div class="change-card__title">The chrome is named the Atrium pattern</div>
+      <div class="change-card__desc">No external reference. Our own design language. Top nav + horizontal submenu strip + agent zone (left, ambient by default) + canvas (right, dominant). Three agent states: ambient / engaged / focus. Submenu navigation preserves agent state.</div>
+    </div>
+    <div class="change-card">
+      <div class="change-card__num">CHANGE 02</div>
+      <div class="change-card__title">Atrium applies to all six modules</div>
+      <div class="change-card__desc">Home, Setup, Strategic Moves, Source, Intelligence, Tower — all use the same chrome. Each module specifies its own submenu list, agent (Atlas / Steward / Nexus / Sentinel), and canvas content. Cross-module navigation preserves prior agent state.</div>
+    </div>
+    <div class="change-card">
+      <div class="change-card__num">CHANGE 03</div>
+      <div class="change-card__title">Metrics-as-gap-engine</div>
+      <div class="change-card__desc">Critical metrics per industry / functional domain become corpus content. Tenant brings their metrics. Platform compares; surfaces quantitative gaps, measurement gaps, trajectory gaps. Gaps drive origination. Strategy ingestion ties to gap profile.</div>
+    </div>
+  </div>
+
+  <p>Detailed specifications for each change live in the companion documents below.</p>
+
+  <h2>The three <em>companion</em> documents to read</h2>
+
+  <div class="docref-grid">
+    <div class="docref">
+      <span class="docref__badge">Primary</span>
+      <div class="docref__title">Canonical Design V2</div>
+      <div class="docref__filename">INTELLIGENCE_CANONICAL_DESIGN_V2.html</div>
+      <div class="docref__desc">The lock document. Vision, architecture, Atrium pattern, three agent states, click-through behavior, the seven submenus, dynamic right-canvas, two outcomes, metrics &amp; gap engine, what ships first, pattern across modules.</div>
+    </div>
+    <div class="docref">
+      <span class="docref__badge docref__badge--review">Authoring brief</span>
+      <div class="docref__title">Metrics Corpus Authoring Brief</div>
+      <div class="docref__filename">METRICS_CORPUS_AUTHORING_BRIEF.html</div>
+      <div class="docref__desc">Per-industry, per-domain, per-theme metric specifications. Structured records, not prose. The Knowledge Layer Codex's authoring contract for ~300-600 metric records.</div>
+    </div>
+    <div class="docref">
+      <span class="docref__badge docref__badge--new">Cross-module</span>
+      <div class="docref__title">Atrium Pattern Cross-Module Brief</div>
+      <div class="docref__filename">ATRIUM_PATTERN_CROSS_MODULE_BRIEF.html</div>
+      <div class="docref__desc">Applying the chrome across all six modules. Per-module submenu specifications, per-module agent role, per-module canvas content shape. The Programs/Intelligence Codex's chrome extension contract.</div>
+    </div>
+  </div>
+
+  <div class="callout callout--blue">
+    <span class="callout__label">Reading order</span>
+    Canonical V2 first — it gives you the framing. Then your lane's primary brief (Metrics for content authoring; Cross-Module for chrome). Most lanes will read both because most work touches both layers. Internalize the spec before writing code that depends on it.
+  </div>
+
+  <h2>What we're <em>asking</em> of you</h2>
+
+  <p>This is an <strong>understand-then-execute</strong> phase. You are authorized to build continuously, with the discipline that you fully understand the spec and dependencies before writing code that affects them. Specifically:</p>
+
+  <ul class="checklist">
+    <li><strong>Read the canonical V2 carefully.</strong> Understand the Atrium pattern, the three agent states, the click-through discipline, the seven submenus, the metrics-as-gap-engine framing. Do not skim — the spec is dense for a reason.</li>
+    <li><strong>Read your lane's specific brief.</strong> Metrics brief for content authoring; Cross-Module brief for chrome implementation. Most lanes will need both as their work touches both layers.</li>
+    <li><strong>Walk the existing codebase to ground yourself.</strong> What's already aligned? What conflicts? What's missing entirely? You don't need to produce a separate review document — internalize the gaps and let them drive your sequencing.</li>
+    <li><strong>Make your own sequencing judgment.</strong> Decide what runs in parallel and what sequences. The decision should follow from page-layer vs. data-layer dependencies (chrome before content; data models before UI surfaces; corpus authoring can run async). Document your sequencing choice in your first commit message so the founder can see your reasoning, but don't wait for approval to begin.</li>
+    <li><strong>Auto-approve your own PRs within your lane.</strong> No external review gate for intra-lane work. Use the standard discipline — tests pass, linters pass, locks respected, EVENT_LOG updated — and merge.</li>
+    <li><strong>Run continuously.</strong> Don't pause for permission on intermediate decisions. Surface only true blockers (locks needing override, cross-lane conflicts you can't resolve, fundamental ambiguities the briefs don't cover).</li>
+    <li><strong>Coordinate cross-lane work via locks and EVENT_LOG, not via founder approval.</strong> If two lanes touch the same surface, the lock discipline arbitrates. If neither lane holds the lock and conflict arises, surface it.</li>
+  </ul>
+
+  <h2>The Codex <em>lanes</em> and their work</h2>
+
+  <p>The work splits naturally along three lanes. A single lane may cover multiple if capacity allows; multiple lanes may run in parallel where work is independent. The lane assignments below are <em>roles</em>, not <em>people</em> — pick up the lane work that fits the available capacity.</p>
+
+  <div class="lane-grid">
+    <div class="lane">
+      <div class="lane__name">Lane 01</div>
+      <div class="lane__title">Programs / Intelligence</div>
+      <div class="lane__role">Owns the chrome. Builds the Atrium pattern itself — top nav, submenu strip, agent zone with three states, canvas with dynamic publication. Implements the chrome across modules per the Cross-Module Brief.</div>
+    </div>
+    <div class="lane">
+      <div class="lane__name">Lane 02</div>
+      <div class="lane__title">Knowledge Layer</div>
+      <div class="lane__role">Owns the corpus. Authors content per the codex pipeline. Now also owns the metric corpus per the Metrics Authoring Brief — Tier-1 records first (200-300), then Tier-2 and Tier-3 as authoring matures.</div>
+    </div>
+    <div class="lane">
+      <div class="lane__name">Lane 03</div>
+      <div class="lane__title">Sourcing / Setup</div>
+      <div class="lane__role">Owns the cross-module touchpoints. Setup module's metric ingestion pipeline. Source module's Atrium implementation. Cross-references between Source events and Strategic Moves. Setup data view design for tenant metric capture.</div>
+    </div>
+  </div>
+
+  <h2>What's <em>locked</em> and not up for revision</h2>
+
+  <p>Some decisions are settled. Don't propose work that reopens them:</p>
+
+  <ul>
+    <li><strong>Bet-level focus.</strong> AbarVa is the bet-level operating system. We don't develop enterprise AI strategy; we operationalize it.</li>
+    <li><strong>Strategic Moves rename.</strong> External label is "Strategic Moves." Internal codebase still uses <span class="kbd">programs</span>. Don't refactor the codebase rename without explicit founder approval.</li>
+    <li><strong>Lifecycle phases P0–P6.</strong> P3 is "Solution Design." P4 is "Execution Roadmap." P5 is "Approval &amp; Mobilization." P6 is "Tower Handoff." These are locked.</li>
+    <li><strong>No super admin.</strong> Tenant isolation discipline holds. Every session pinned to one client.</li>
+    <li><strong>Financial firewall.</strong> Default false; redaction at output layer.</li>
+    <li><strong>Three substrates, two outcomes.</strong> No fourth substrate. No third outcome. Additions require founder approval.</li>
+    <li><strong>Seven Intelligence submenus.</strong> Today, By function, Patterns, Vendors, Peer activity, My strategy, Sessions. No eighth without founder approval.</li>
+    <li><strong>Strategy operationalization in scope; strategy generation out of scope.</strong> Don't propose a flagship "develop AI strategy" workflow.</li>
+  </ul>
+
+  <h2>What's <em>open</em> and we'd value your input on</h2>
+
+  <ul>
+    <li><strong>Migration sequence for the chrome.</strong> Implement Atrium for Intelligence first, then propagate? Or rebuild all six modules at once? Tradeoffs and risks.</li>
+    <li><strong>Metric ingestion mechanism.</strong> Manual entry? CSV upload? API integration to BI tools? What's first; what's later.</li>
+    <li><strong>Agent state machine implementation.</strong> Which framework choices best support the three states with smooth transitions and state preservation across modules?</li>
+    <li><strong>Sentinel structured-output emissions.</strong> Schema for <span class="kbd">{publish: 'pattern-card', ...}</span> et al. — your specific recommendations on the structured-output contract.</li>
+    <li><strong>Existing surface migration.</strong> The live Programs and Source surfaces have content already. How to migrate them to the Atrium pattern without losing in-flight work?</li>
+    <li><strong>Mobile responsive behavior.</strong> Atrium at narrow widths — how does the chrome reshape gracefully?</li>
+  </ul>
+
+  <h2>Coordination <em>protocol</em></h2>
+
+  <div class="codex-block">
+    <div class="codex-block__label">Session coordination — required steps before starting</div>
+    <strong>1.</strong> Read <span style="color: var(--blue-soft);">SESSION_COORDINATION.md</span> in <span style="color: var(--blue-soft);">docs/build/session-coordination/</span>.<br/><br/>
+    <strong>2.</strong> Append to <span style="color: var(--blue-soft);">EVENT_LOG.md</span>: "[Lane Name] beginning execution against canonical V2. Sequencing rationale: [your reasoning, 2-4 sentences]."<br/><br/>
+    <strong>3.</strong> Acquire locks on the surfaces and data models you'll modify in <span style="color: var(--blue-soft);">ACTIVE_LOCKS.yaml</span>. Use granular locks (e.g., <span style="color: var(--blue-soft);">intelligence-chrome</span>, <span style="color: var(--blue-soft);">metrics-corpus-retail</span>) so multiple lanes can work in parallel without colliding.<br/><br/>
+    <strong>4.</strong> Execute. Auto-approve your own PRs after the standard checks (tests pass, linters pass, locks respected). Merge as you complete units of work. Append to <span style="color: var(--blue-soft);">EVENT_LOG.md</span> on each meaningful merge.<br/><br/>
+    <strong>5.</strong> Surface blockers immediately. A blocker is: a lock conflict you can't resolve, a fundamental ambiguity in the brief, or a discovered constraint that invalidates a sequencing choice you made.
+  </div>
+
+  <h2>Sequencing principles for <em>your judgment</em></h2>
+
+  <p>You decide the sequence. The four documents don't prescribe an exact order because the right order depends on what you find when you walk the codebase. A few principles to ground your choice:</p>
+
+  <table>
+    <thead>
+      <tr><th>Principle</th><th>What it means in practice</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Data layer before page layer</strong></td>
+        <td>If a UI surface depends on a data model that doesn't exist yet, build the data model first. Don't ship UI that renders empty content.</td>
+      </tr>
+      <tr>
+        <td><strong>Chrome before content</strong></td>
+        <td>The Atrium chrome (top nav, submenu strip, agent zone, canvas) is the substrate for everything else. Build it first; the modules' specific submenus and content fill it.</td>
+      </tr>
+      <tr>
+        <td><strong>Corpus authoring runs async</strong></td>
+        <td>Metric record authoring doesn't block UI work. Author records continuously in the background while the chrome and surfaces ship. The first 50-100 Tier-1 records are enough to demo the gap engine; full corpus matures over time.</td>
+      </tr>
+      <tr>
+        <td><strong>Migration vs. greenfield</strong></td>
+        <td>Where existing surfaces (live Programs, live Source) need to evolve to Atrium, treat as careful migration with tests. Where new surfaces are needed (Setup Metrics submenu, Intelligence with gap engine), build greenfield. Don't conflate.</td>
+      </tr>
+      <tr>
+        <td><strong>Parallel where independent</strong></td>
+        <td>Chrome implementation, corpus authoring, agent prompt library, and migration of existing surfaces are largely independent. Run in parallel where dependencies allow.</td>
+      </tr>
+      <tr>
+        <td><strong>Sequential where dependent</strong></td>
+        <td>Sentinel's structured-output emissions need the canvas dynamic-publication rendering layer to exist first. Tower module needs Strategic Moves to be on Atrium first. Sequence accordingly.</td>
+      </tr>
+      <tr>
+        <td><strong>Demo tenants are the acceptance test</strong></td>
+        <td>Apex Retail, Meridian Health, First Capital. Each piece of work is "done" when it works for all three demo tenants without leakage or empty surfaces.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>Document your sequencing decisions in commit messages. The founder shouldn't need to review your plan before you start, but they should be able to read your commit log and understand why work shipped in the order it did.</p>
+
+  <h2>The <em>spirit</em> of the request</h2>
+
+  <p>The platform is real. The substrate is real. Three demo tenants are running. The Programs surface works. The agent framework works. The corpus pipeline produces content. <em>This isn't a rebuild — it's a coherent next evolution.</em></p>
+
+  <p>The Atrium pattern unifies surface chrome across modules. The metrics-as-gap-engine adds operational concreteness to the explore layer. Both are designed to land on top of substantial existing work, not to replace it.</p>
+
+  <p>Read carefully. Sequence thoughtfully. Build continuously. The founder trusts your judgment on sequencing; what they need is forward motion with the discipline the briefs encode.</p>
+
+  <div class="callout callout--sage">
+    <span class="callout__label">If you're stuck</span>
+    Surface the blocker in EVENT_LOG with enough context for the founder to unblock you. Don't pause silently — and don't guess. The founder would rather answer one specific question quickly than have you build against an assumption.
+  </div>
+
+  <h2>Acceptance for execution</h2>
+
+  <p>Execution is ongoing, not gated. Each milestone (chrome shipped, first 50 metric records locked, Intelligence module live, etc.) is acceptance-tested against the three demo tenants and merged. The founder reviews the running platform, not work plans. If something ships that needs revision, the lane revises in the next cycle.</p>
+
+  <p><strong>Run continuously. Auto-approve within your lane. Surface blockers. Trust your judgment.</strong></p>
+
+</div>
+
+<div class="footer">
+  <div class="footer__brand">AbarVa — bet-level operating system · the Atrium pattern</div>
+  Codex execution authorization · 2026-05-02 · Three companion documents form the canonical lock
+</div>
+
+</body>
+</html>

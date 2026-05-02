@@ -24,7 +24,6 @@ describe("Cockpit shell navigation contract", () => {
     for (const label of [
       "Home",
       "Setup",
-      "Programs",
       "Source",
       "Intelligence",
       "Tower",
@@ -32,9 +31,11 @@ describe("Cockpit shell navigation contract", () => {
     ]) {
       expect(appTopBarSource).toContain(`label: "${label}"`);
     }
+    expect(appTopBarSource).toContain('label: getAtriumProductNavLabel("programs")');
     expect(appTopBarSource).toContain('href: "/admin"');
     expect(appTopBarSource).toContain('href: "/learn"');
     expect(appTopBarSource).toContain("resolveModuleAccess");
+    expect(appTopBarSource).toContain("getAtriumProductNavLabel");
   });
 
   it("keeps top bar free of duplicated workspace clutter", () => {
