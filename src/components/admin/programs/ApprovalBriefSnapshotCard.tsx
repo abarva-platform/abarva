@@ -7,9 +7,13 @@
 // static card with no agent state).
 
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
+import {
+  safeApprovalPersonLabel,
+} from '@/lib/programs/approval-display';
 
 export interface ApprovalBriefSnapshotCardProps {
   briefSnapshot: Record<string, unknown>;
+  resolvePersonName?: (personId: string) => string | null;
 }
 
 interface FieldRow {
@@ -31,15 +35,57 @@ function pick(
   return null;
 }
 
-function buildFields(snapshot: Record<string, unknown>): FieldRow[] {
+function displayPersonField(
+  snapshot: Record<string, unknown>,
+  personIdKey: string,
+  fallbackKey: string,
+  placeholder: string,
+  resolvePersonName?: (personId: string) => string | null,
+): string | null {
+  const personId = pick(snapshot, personIdKey);
+  if (personId) {
+    const resolved = resolvePersonName?.(personId);
+    if (resolved) return resolved;
+  }
+
+  const fallbackValue = pick(snapshot, fallbackKey);
+  if (fallbackValue) {
+    return safeApprovalPersonLabel(fallbackValue, placeholder);
+  }
+
+  return personId ? safeApprovalPersonLabel(personId, placeholder) : null;
+}
+
+function buildFields(
+  snapshot: Record<string, unknown>,
+  resolvePersonName?: (personId: string) => string | null,
+): FieldRow[] {
   return [
     { label: 'Problem', value: pick(snapshot, 'problem_statement', 'problemStatement'), multiline: true },
     { label: 'Outcome', value: pick(snapshot, 'target_outcome', 'targetOutcome'), multiline: true },
     { label: 'Timeline', value: pick(snapshot, 'timeline') },
     { label: 'Classification', value: pick(snapshot, 'classification'), mono: true },
     { label: 'Matched pattern', value: pick(snapshot, 'matched_pattern_id', 'matchedPatternId'), mono: true },
-    { label: 'Sponsor', value: pick(snapshot, 'sponsor_person_id', 'sponsor'), mono: true },
-    { label: 'Lead', value: pick(snapshot, 'lead_person_id', 'lead'), mono: true },
+    {
+      label: 'Sponsor',
+      value: displayPersonField(
+        snapshot,
+        'sponsor_person_id',
+        'sponsor',
+        'Selected sponsor',
+        resolvePersonName,
+      ),
+    },
+    {
+      label: 'Lead',
+      value: displayPersonField(
+        snapshot,
+        'lead_person_id',
+        'lead',
+        'Selected lead',
+        resolvePersonName,
+      ),
+    },
     { label: 'Submitted from', value: pick(snapshot, 'submitted_from_surface', 'submittedFromSurface') },
   ];
 }
@@ -88,10 +134,11 @@ function FieldRowView({ row }: { row: FieldRow }) {
 
 export function ApprovalBriefSnapshotCard({
   briefSnapshot,
+  resolvePersonName,
 }: ApprovalBriefSnapshotCardProps) {
   const programName =
     pick(briefSnapshot, 'program_name', 'programName') ?? 'Untitled program';
-  const fields = buildFields(briefSnapshot);
+  const fields = buildFields(briefSnapshot, resolvePersonName);
 
   return (
     <section

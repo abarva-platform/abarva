@@ -16,6 +16,8 @@ import { getApprovalRequestById } from '@/lib/programs/approval';
 import { ApprovalBriefSnapshotCard } from '@/components/admin/programs/ApprovalBriefSnapshotCard';
 import { ApprovalDecisionPanel } from '@/components/admin/programs/ApprovalDecisionPanel';
 import { formatRelativeTime } from '@/components/admin/programs/ApprovalQueueTable';
+import { loadApprovalPersonDisplayMap } from '@/lib/programs/approval-person-resolver';
+import { safeApprovalActorLabel } from '@/lib/programs/approval-display';
 
 export const metadata = { title: 'Review Approval · Nexus Admin' };
 export const dynamic = 'force-dynamic';
@@ -66,6 +68,16 @@ export default async function AdminProgramApprovalDetailPage({ params }: PagePro
     'Untitled program';
 
   const alreadyDecided = request.requestStatus !== 'pending';
+  const sponsorId = pickString(request.briefSnapshot, 'sponsor_person_id');
+  const leadId = pickString(request.briefSnapshot, 'lead_person_id');
+  const personDisplay = await loadApprovalPersonDisplayMap([
+    request.requestedByUserId,
+    request.decidedByUserId,
+    sponsorId,
+    leadId,
+  ]);
+  const resolvePersonName = (personId: string) =>
+    personDisplay.get(personId) ?? null;
 
   return (
     <AdminCanonShellV2
@@ -83,7 +95,7 @@ export default async function AdminProgramApprovalDetailPage({ params }: PagePro
         subtitle={`Tenant ${client.key} · review the brief and decide.`}
       >
         <BackLink />
-        <RequestIdLine requestId={request.id} status={request.requestStatus} />
+        <RequestStatusLine status={request.requestStatus} />
         <div
           style={{
             display: 'grid',
@@ -92,16 +104,27 @@ export default async function AdminProgramApprovalDetailPage({ params }: PagePro
             alignItems: 'start',
           }}
         >
-          <ApprovalBriefSnapshotCard briefSnapshot={request.briefSnapshot} />
+          <ApprovalBriefSnapshotCard
+            briefSnapshot={request.briefSnapshot}
+            resolvePersonName={resolvePersonName}
+          />
           <ApprovalDecisionPanel
             requestId={request.id}
             alreadyDecided={alreadyDecided}
           />
         </div>
         <AuditTrailCard
-          requestedByUserId={request.requestedByUserId}
+          requestedByDisplayName={
+            personDisplay.get(request.requestedByUserId) ??
+            safeApprovalActorLabel(request.requestedByUserId)
+          }
           requestedAt={request.requestedAt}
-          decidedByUserId={request.decidedByUserId}
+          decidedByDisplayName={
+            request.decidedByUserId
+              ? personDisplay.get(request.decidedByUserId) ??
+                safeApprovalActorLabel(request.decidedByUserId)
+              : null
+          }
           decidedAt={request.decidedAt}
           decisionRationale={request.decisionRationale}
           status={request.requestStatus}
@@ -128,13 +151,7 @@ function BackLink() {
   );
 }
 
-function RequestIdLine({
-  requestId,
-  status,
-}: {
-  requestId: string;
-  status: string;
-}) {
+function RequestStatusLine({ status }: { status: string }) {
   return (
     <div
       style={{
@@ -146,7 +163,7 @@ function RequestIdLine({
         color: `${COLORS.ink}80`,
       }}
     >
-      <span>REQUEST · {requestId}</span>
+      <span>Approval request</span>
       <span aria-hidden="true">·</span>
       <span style={{ textTransform: 'uppercase', letterSpacing: '0.06em' }}>
         {status}
@@ -156,16 +173,16 @@ function RequestIdLine({
 }
 
 function AuditTrailCard({
-  requestedByUserId,
+  requestedByDisplayName,
   requestedAt,
-  decidedByUserId,
+  decidedByDisplayName,
   decidedAt,
   decisionRationale,
   status,
 }: {
-  requestedByUserId: string;
+  requestedByDisplayName: string;
   requestedAt: string;
-  decidedByUserId: string | null;
+  decidedByDisplayName: string | null;
   decidedAt: string | null;
   decisionRationale: string | null;
   status: string;
@@ -201,7 +218,7 @@ function AuditTrailCard({
       </div>
       <div>
         <span style={{ color: COLORS.ink, fontWeight: 600 }}>
-          {requestedByUserId}
+          {requestedByDisplayName}
         </span>{' '}
         submitted this brief{' '}
         <span title={requestedAt}>{formatRelativeTime(requestedAt)}</span>
@@ -210,10 +227,10 @@ function AuditTrailCard({
           {requestedAt}
         </span>
       </div>
-      {decidedByUserId && decidedAt ? (
+      {decidedByDisplayName && decidedAt ? (
         <div>
           <span style={{ color: COLORS.ink, fontWeight: 600 }}>
-            {decidedByUserId}
+            {decidedByDisplayName}
           </span>{' '}
           {status === 'approved' ? 'approved' : 'rejected'} this request{' '}
           <span title={decidedAt}>{formatRelativeTime(decidedAt)}</span>

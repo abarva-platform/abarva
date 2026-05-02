@@ -7,11 +7,17 @@
 import Link from 'next/link';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '@/lib/design/design-tokens';
 import type { ApprovalRequest } from '@/lib/programs/approval';
+import {
+  safeApprovalActorLabel,
+  safeApprovalPersonLabel,
+} from '@/lib/programs/approval-display';
 
 export interface ApprovalQueueTableProps {
   requests: ReadonlyArray<ApprovalRequest>;
   /** Optional resolver from userId → display name. */
   resolveUserName?: (userId: string) => string | null;
+  /** Optional resolver from personId → display name. */
+  resolvePersonName?: (personId: string) => string | null;
   /** Optional clock for relative-time formatting (test seam). */
   now?: Date;
 }
@@ -47,6 +53,7 @@ export function formatRelativeTime(iso: string, now: Date = new Date()): string 
 export function ApprovalQueueTable({
   requests,
   resolveUserName,
+  resolvePersonName,
   now,
 }: ApprovalQueueTableProps) {
   if (requests.length === 0) {
@@ -87,18 +94,23 @@ export function ApprovalQueueTable({
         const programName =
           pickString(req.briefSnapshot, 'program_name', 'programName') ??
           'Untitled program';
-        const sponsor = pickString(
+        const sponsorRaw = pickString(
           req.briefSnapshot,
           'sponsor_person_id',
           'sponsor',
         );
+        const sponsor =
+          (sponsorRaw && resolvePersonName
+            ? resolvePersonName(sponsorRaw)
+            : null) ??
+          safeApprovalPersonLabel(sponsorRaw, 'Selected sponsor');
         const classification = pickString(
           req.briefSnapshot,
           'classification',
         );
         const requesterDisplay =
           (resolveUserName ? resolveUserName(req.requestedByUserId) : null) ??
-          req.requestedByUserId;
+          safeApprovalActorLabel(req.requestedByUserId);
 
         return (
           <li
@@ -155,9 +167,10 @@ export function ApprovalQueueTable({
                       Sponsor{' '}
                       <span
                         style={{
-                          fontFamily: TYPOGRAPHY.mono,
-                          fontSize: 11,
+                          fontFamily: TYPOGRAPHY.sans,
+                          fontSize: 12,
                           color: COLORS.ink,
+                          fontWeight: 600,
                         }}
                       >
                         {sponsor}
