@@ -76,4 +76,10 @@ describe('PROG-P3 · ProgramDetailPage · module hygiene', () => {
     expect(source).not.toMatch(/['"]anthropic['"]/);
     expect(source).not.toMatch(/['"]openai['"]/);
   });
+
+  it('resets the ribbon synthesis quote when refreshed phase data changes', () => {
+    expect(source).toContain('useEffect(() => {');
+    expect(source).toContain('setSynthesisQuote(view.workbench.prose);');
+    expect(source).toContain('}, [view.workbench.prose]);');
+  });
 });
