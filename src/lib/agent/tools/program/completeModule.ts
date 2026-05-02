@@ -4,7 +4,8 @@
 // governance gate checks that require specific modules to be completed:
 //   - baseline_capture (soft gate for P2→P3)
 //   - cxo_interview (soft gate for P3→P4)
-//   - funding_approval / capacity_approval / sponsor_alignment (hard gates for P5→P6)
+//   - funding_approval / capacity_approval / sponsor_alignment activity tracking
+//     (P5→P6 gates still require signed deliverables_v2 artifacts)
 //   - cxo_verification / benefits_realization (legacy P5→P6 readiness modules)
 //   - phase_3_findings (soft gate for P3→P4)
 //
@@ -41,8 +42,9 @@ export const completeModuleTool: AgentTool<CompleteModuleInput> = {
   description:
     'Mark a program module as completed. Use this when the user confirms a key activity ' +
     'is done — e.g. baseline_capture after baselining metrics, cxo_interview after the CXO ' +
-    'session, funding_approval/capacity_approval and sponsor_alignment before advancing P5, ' +
-    'and cxo_verification and benefits_realization before closing out Phase 5. ' +
+    'session, or P5 approval/alignment activity tracking. Do not use this as a substitute for signed P5 ' +
+    'approval artifacts: P5→P6 requires complete_deliverable/complete_deliverables rows in deliverables_v2. ' +
+    'Use cxo_verification and benefits_realization only for legacy readiness tracking. ' +
     'Valid module_key values: baseline_capture, cxo_interview, phase_3_findings, ' +
     'funding_approval, capacity_approval, sponsor_alignment, stakeholder_alignment, ' +
     'cxo_verification, benefits_realization.',
