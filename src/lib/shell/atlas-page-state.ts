@@ -17,6 +17,7 @@ export type SurfaceId =
   | 'source-detail'
   | 'intelligence'
   | 'home'
+  | 'product'
   | 'setup'
   | 'setup-detail';
 

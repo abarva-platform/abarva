@@ -236,6 +236,26 @@ Append-only coordination log for active Codex sessions.
 - validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning
 - next: open PR and auto-merge after standard checks pass
 
+## 2026-05-02T13:53:03-05:00 - codex-product-page
+
+- status: in-progress
+- branch: `codex/product-page`
+- worktree: `/private/tmp/nexus-product-page`
+- scope: build authenticated in-app Product page, top-nav entry, five Atrium tabs, conceptual SVG diagram set, and founder-facing reports from `abarva-product-page-handoff-2026-05-02.zip`
+- sequencing_rationale: Product page is a shared app-chrome surface; nav/chrome wiring and route foundation come before copy polish and reports, while diagrams remain static/content-only so they do not block other data/API lanes.
+- locks: `product-page-2026`
+- guardrail: no Source API, lifecycle, stage, or data files; no customer/demo tenant names, hyperscaler brand names, specific runtime stack names, investor language, pricing, time estimates, or screenshots on the Product page.
+
+## 2026-05-02T14:06:00-05:00 - codex-product-page
+
+- status: validation-local-passed
+- shipped: authenticated `/product` route, signed-in Product top-nav item, legacy chrome bypass for Product and Learn, five Atrium product tabs, inline conceptual SVG diagrams, Product report, and diagram gallery
+- validation: focused Product/nav/proxy/shell Jest passed, 43 tests
+- validation: targeted ESLint passed for Product route, Product components, Product content, shared top bar/chrome/proxy, and Product contract test
+- validation: `npx tsc --noEmit --pretty false` passed
+- validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning
+- next: open PR and auto-merge after standard checks pass
+
 ## 2026-05-02T15:45:00-05:00 - codex-source-e2e-crawler
 
 - status: source-e2e-crawler-complete-lock-released

@@ -28,12 +28,16 @@ describe("Cockpit shell navigation contract", () => {
       "Intelligence",
       "Tower",
       "Learn",
+      "Product",
     ]) {
       expect(appTopBarSource).toContain(`label: "${label}"`);
     }
-    expect(appTopBarSource).toContain('label: getAtriumProductNavLabel("programs")');
+    expect(appTopBarSource).toContain(
+      'label: getAtriumProductNavLabel("programs")',
+    );
     expect(appTopBarSource).toContain('href: "/admin"');
     expect(appTopBarSource).toContain('href: "/learn"');
+    expect(appTopBarSource).toContain('href: "/product"');
     expect(appTopBarSource).toContain("resolveModuleAccess");
     expect(appTopBarSource).toContain("getAtriumProductNavLabel");
   });

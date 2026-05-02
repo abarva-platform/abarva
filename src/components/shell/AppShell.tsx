@@ -16,7 +16,8 @@ interface AppShellProps {
     | "source-detail"
     | "intelligence"
     | "tower"
-    | "home";
+    | "home"
+    | "product";
   /**
    * Workflow stage for stage-aware surfaces (Shell Layout Spec v2 §7).
    * P0-P6 for Programs phases, S1-S7 for Source event stages.

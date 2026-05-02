@@ -63,6 +63,7 @@ export const AUTH_REQUIRED_ROUTE_PATTERNS = [
   '/intelligence/ask(.*)',
   '/intelligence/validate(.*)',
   '/source(.*)',
+  '/product(.*)',
 ] as const
 
 const authRequiredRoutes = createRouteMatcher([...AUTH_REQUIRED_ROUTE_PATTERNS])

@@ -20,7 +20,7 @@ export interface AppTopBarProps {
 }
 
 type CockpitNavItem = {
-  key: "home" | ProductModule | "learn";
+  key: "home" | ProductModule | "learn" | "product";
   label: string;
   href: string;
   match: (pathname: string) => boolean;
@@ -95,6 +95,13 @@ const NAV_ITEMS: CockpitNavItem[] = [
     href: "/learn",
     match: (pathname) =>
       pathname === "/learn" || pathname.startsWith("/learn/"),
+  },
+  {
+    key: "product",
+    label: "Product",
+    href: "/product",
+    match: (pathname) =>
+      pathname === "/product" || pathname.startsWith("/product/"),
   },
 ];
 
