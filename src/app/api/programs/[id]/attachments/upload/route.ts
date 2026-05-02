@@ -243,6 +243,8 @@ export async function POST(
 
   let evidenceId: string | null = null;
   let evidenceWarning: string | null = null;
+  let evidenceParseMethod: string | null = null;
+  let evidenceWarnings: string[] = [];
   try {
     const textual =
       mimeType === 'text/plain' ||
@@ -256,6 +258,8 @@ export async function POST(
           text: buffer.toString('utf-8'),
         })
       : evidenceForUnsupportedAttachment({ filename, mimeType });
+    evidenceParseMethod = evidence.extractedStructured.parse_method;
+    evidenceWarnings = evidence.extractedStructured.warnings;
     evidenceId = await recordProgramEvidence(ctx, {
       ...evidence,
       tenantKey,
@@ -277,7 +281,12 @@ export async function POST(
     {
       attachment: record,
       evidence: evidenceId
-        ? { id: evidenceId, status: 'captured' }
+        ? {
+            id: evidenceId,
+            status: 'captured',
+            parseMethod: evidenceParseMethod,
+            warnings: evidenceWarnings,
+          }
         : { id: null, status: 'not_captured', warning: evidenceWarning },
     },
     { status: 200 },
