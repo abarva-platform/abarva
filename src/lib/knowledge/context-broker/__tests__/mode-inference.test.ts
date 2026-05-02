@@ -77,16 +77,22 @@ describe('inferModeForSurface · CB-6', () => {
   });
 
   describe('/source', () => {
-    it('returns "corpus" (sourcing is comparative)', () => {
+    it('returns "full" with tenantKey (sourcing needs tenant facts plus corpus patterns)', () => {
       expect(
         inferModeForSurface({ surface: '/source', tenantKey: 'apex-retail' }),
-      ).toBe('corpus');
+      ).toBe('full');
     });
 
-    it('returns "corpus" for nested source routes', () => {
+    it('returns "full" for nested source routes when tenantKey is present', () => {
       expect(
         inferModeForSurface({ surface: '/source/event-123', tenantKey: 'apex-retail' }),
-      ).toBe('corpus');
+      ).toBe('full');
+    });
+
+    it('returns "generic" for source without tenantKey', () => {
+      expect(
+        inferModeForSurface({ surface: '/source/event-123', tenantKey: null }),
+      ).toBe('generic');
     });
   });
 
