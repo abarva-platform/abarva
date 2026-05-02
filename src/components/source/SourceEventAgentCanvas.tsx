@@ -21,7 +21,7 @@ interface SourceEventAgentCanvasProps {
   event: SourcingEventDetail;
   middleStrip: ReactNode;
   quote: string;
-  children: ReactNode;
+  children?: ReactNode;
   canViewFinancialValues?: boolean;
 }
 

@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createElement } from 'react';
+import type { ComponentProps } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import SourceEventDetailPage from '@/app/(maestro)/source/events/[eventId]/page';
 import { NexusEngagementCanvas } from '@/components/source/NexusEngagementCanvas';
@@ -156,15 +157,16 @@ describe('Source event canvas shell', () => {
       valueAtStakeUsd: 25_000_000,
       nextDecision: 'Approve only if the $25M savings floor can be validated.',
     };
+    const props: Omit<ComponentProps<typeof SourceEventAgentCanvas>, 'children'> = {
+      event: restrictedEvent,
+      quote: 'Apex AMS event has $25M value at stake.',
+      middleStrip: createElement('div'),
+      canViewFinancialValues: false,
+    };
     const html = renderToStaticMarkup(createElement(
       SourceEventAgentCanvas,
-      {
-        event: restrictedEvent,
-        quote: 'Apex AMS event has $25M value at stake.',
-        middleStrip: createElement('div'),
-        canViewFinancialValues: false,
-        children: createElement('div', null, 'restricted child'),
-      },
+      props,
+      createElement('div', null, 'restricted child'),
     ));
 
     expect(html).toContain('Restricted');
