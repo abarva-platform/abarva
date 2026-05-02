@@ -130,6 +130,7 @@ describe('agent route · CB-6 context-bundle wiring', () => {
     expect(source).toContain('P4 Execution Roadmap');
     expect(source).toContain('P5 Approval & Mobilization');
     expect(source).toContain('P6 Tower Handoff');
+    expect(source).toContain('completion is a lifecycle_state write');
   });
 
   it('short-circuits cross-tenant program writes before model/tool execution', () => {
