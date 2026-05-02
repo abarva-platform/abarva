@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AbarVa — Metrics Corpus Authoring Brief</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream: #fef6ed;
+  --cream-deep: #f7ecd9;
+  --cream-soft: #fbf3e4;
+  --paper: #fdfaf3;
+  --navy: #0a1628;
+  --navy-deep: #050d1c;
+  --navy-soft: #122039;
+  --ink: #14213a;
+  --ink-soft: #4a5266;
+  --ink-mute: #8a8d99;
+  --ink-line: rgba(20,33,58,0.10);
+  --ink-line-hi: rgba(20,33,58,0.18);
+  --blue: #2848c8;
+  --blue-soft: #5876dc;
+  --blue-bg: #eaeefa;
+  --copper: #b8632d;
+  --copper-bg: #f5e8db;
+  --sage: #5b7d4f;
+  --sage-bg: #e8efe2;
+  --crit: #b1331f;
+  --crit-bg: #f7e0db;
+  --plum: #6b3a6b;
+  --plum-bg: #efe1ef;
+  --teal: #2d7a82;
+  --teal-bg: #dceff1;
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --sans: 'Inter Tight', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; scroll-padding-top: 32px; }
+body {
+  font-family: var(--sans);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+.chrome { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }
+
+.toc {
+  background: var(--navy);
+  color: var(--cream);
+  padding: 32px 28px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  border-right: 1px solid rgba(255,255,255,0.08);
+}
+
+.toc__brand {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+.toc__brand span { color: var(--teal); }
+
+.toc__sub {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 28px;
+}
+
+.toc__title {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 600;
+  font-style: italic;
+  color: var(--cream);
+  line-height: 1.25;
+  margin-bottom: 6px;
+}
+
+.toc__subtitle {
+  font-size: 12.5px;
+  color: rgba(255,255,255,0.55);
+  margin-bottom: 22px;
+  line-height: 1.55;
+}
+
+.toc__divider { height: 1px; background: rgba(255,255,255,0.08); margin: 22px 0 18px; }
+
+.toc__label {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 12px;
+}
+
+.toc__list { list-style: none; display: flex; flex-direction: column; gap: 1px; }
+
+.toc__list a {
+  color: rgba(255,255,255,0.78);
+  font-size: 13px;
+  text-decoration: none;
+  padding: 7px 12px;
+  display: block;
+  border-left: 2px solid transparent;
+  transition: all 0.18s ease;
+  line-height: 1.4;
+}
+
+.toc__list a:hover {
+  color: var(--cream);
+  border-left-color: var(--teal);
+  background: rgba(255,255,255,0.04);
+}
+
+.toc__num {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: rgba(255,255,255,0.4);
+  margin-right: 10px;
+}
+
+.toc__status {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.toc__status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--teal);
+}
+
+.content { max-width: 920px; padding: 48px 56px 96px; background: var(--paper); }
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-bottom: 12px;
+}
+
+h1 {
+  font-family: var(--serif);
+  font-size: 44px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.07;
+  color: var(--ink);
+  margin-bottom: 18px;
+}
+h1 em { font-style: italic; font-weight: 500; color: var(--teal); }
+
+.lede {
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 500;
+  font-style: italic;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  margin-bottom: 28px;
+  max-width: 740px;
+}
+
+.metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-mute);
+  padding: 14px 0;
+  border-top: 1px solid var(--ink-line);
+  border-bottom: 1px solid var(--ink-line);
+  margin-bottom: 56px;
+}
+.metadata strong { color: var(--ink); font-weight: 600; margin-right: 5px; }
+
+section { margin-bottom: 64px; scroll-margin-top: 32px; }
+
+section h2 {
+  font-family: var(--serif);
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.014em;
+  line-height: 1.15;
+  color: var(--ink);
+  margin-bottom: 8px;
+  padding-top: 30px;
+  border-top: 1px solid var(--ink-line);
+}
+
+section h2 .num {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--teal);
+  letter-spacing: 0.06em;
+  margin-right: 12px;
+  display: inline-block;
+  background: var(--teal-bg);
+  padding: 4px 9px;
+  border-radius: 3px;
+  vertical-align: middle;
+}
+
+section h2 em { font-style: italic; font-weight: 500; color: var(--teal); }
+
+section h3 {
+  font-family: var(--serif);
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+  margin: 32px 0 12px;
+}
+
+section h4 {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 20px 0 8px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+section p { margin-bottom: 14px; max-width: 740px; }
+section p strong { color: var(--ink); font-weight: 600; }
+section p em { font-style: italic; color: var(--ink-soft); }
+
+.callout {
+  background: var(--cream-soft);
+  border: 1px solid var(--ink-line);
+  border-left: 3px solid var(--copper);
+  border-radius: 0 7px 7px 0;
+  padding: 16px 22px;
+  margin: 22px 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.callout--blue { border-left-color: var(--blue); background: var(--blue-bg); }
+.callout--sage { border-left-color: var(--sage); background: var(--sage-bg); }
+.callout--plum { border-left-color: var(--plum); background: var(--plum-bg); }
+.callout--teal { border-left-color: var(--teal); background: var(--teal-bg); }
+
+.callout__label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--copper);
+  margin-bottom: 5px;
+  display: block;
+}
+.callout--blue .callout__label { color: var(--blue); }
+.callout--sage .callout__label { color: var(--sage); }
+.callout--plum .callout__label { color: var(--plum); }
+.callout--teal .callout__label { color: var(--teal); }
+
+.kbd {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--cream-deep);
+  border: 1px solid var(--ink-line-hi);
+  padding: 1px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+ul, ol { margin: 12px 0 18px 22px; max-width: 740px; }
+li { margin-bottom: 8px; line-height: 1.6; }
+li strong { color: var(--ink); font-weight: 600; }
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 100%;
+  margin: 18px 0;
+  font-size: 13px;
+}
+
+th, td {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--ink-line);
+  vertical-align: top;
+  line-height: 1.5;
+}
+
+th {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  font-weight: 600;
+  background: var(--cream-soft);
+}
+
+.metric-card {
+  background: var(--cream-soft);
+  border: 1px solid var(--ink-line);
+  border-radius: 9px;
+  padding: 22px 24px;
+  margin: 20px 0;
+}
+
+.metric-card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ink-line);
+}
+
+.metric-card__id {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  color: var(--teal);
+  background: var(--teal-bg);
+  padding: 3px 9px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+
+.metric-card__name {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+  flex: 1;
+}
+
+.metric-card__priority {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.metric-card__priority--critical { color: var(--crit); }
+.metric-card__priority--high { color: var(--copper); }
+.metric-card__priority--medium { color: var(--sage); }
+
+.metric-fields {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 10px 18px;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.metric-fields dt {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  font-weight: 600;
+  padding-top: 2px;
+}
+
+.metric-fields dd { color: var(--ink); }
+.metric-fields dd strong { color: var(--ink); font-weight: 600; }
+.metric-fields dd em { color: var(--ink-soft); font-style: italic; }
+
+.industry-block {
+  margin: 36px 0;
+  padding: 28px 32px;
+  background: var(--cream-soft);
+  border: 1px solid var(--ink-line);
+  border-radius: 11px;
+}
+
+.industry-block__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--ink-line-hi);
+}
+
+.industry-block__name {
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.industry-block__name em { font-style: italic; font-weight: 500; color: var(--teal); }
+
+.industry-block__meta {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+
+.domain-block {
+  margin: 24px 0;
+  padding-bottom: 16px;
+  border-bottom: 1px dashed var(--ink-line);
+}
+.domain-block:last-child { border-bottom: none; }
+
+.domain-block__head {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--copper);
+  margin-bottom: 6px;
+}
+
+.domain-block__title {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 14px;
+  letter-spacing: -0.005em;
+}
+
+.theme-row {
+  background: var(--paper);
+  border: 1px solid var(--ink-line);
+  border-radius: 5px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+}
+
+.theme-row__name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.theme-row__desc {
+  font-size: 12px;
+  color: var(--ink-soft);
+  line-height: 1.55;
+  margin-bottom: 6px;
+}
+
+.theme-row__metrics {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-mute);
+  letter-spacing: 0.04em;
+}
+
+.wire {
+  background: var(--cream-soft);
+  border: 1px solid var(--ink-line);
+  border-radius: 9px;
+  padding: 22px 24px 18px;
+  margin: 28px 0;
+}
+
+.wire__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 12px;
+}
+
+.wire__title {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.wire__meta {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+
+.wire__caption {
+  font-family: var(--serif);
+  font-size: 14px;
+  font-style: italic;
+  color: var(--ink-soft);
+  margin-top: 14px;
+  line-height: 1.55;
+  padding-top: 12px;
+  border-top: 1px solid var(--ink-line);
+}
+
+.wire svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: var(--paper);
+  border-radius: 5px;
+  border: 1px solid var(--ink-line);
+}
+
+.s-text { font-family: 'Inter Tight', sans-serif; font-size: 12px; fill: var(--ink); }
+.s-text-sm { font-family: 'Inter Tight', sans-serif; font-size: 11px; fill: var(--ink); }
+.s-text-tiny { font-family: 'Inter Tight', sans-serif; font-size: 10px; fill: var(--ink-soft); }
+.s-text-mono { font-family: 'JetBrains Mono', monospace; font-size: 9px; fill: var(--ink-mute); letter-spacing: 0.10em; text-transform: uppercase; }
+.s-text-serif { font-family: 'Cormorant Garamond', serif; font-size: 14px; font-weight: 600; fill: var(--ink); }
+.s-text-serif-lg { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 600; fill: var(--ink); }
+.s-text-cream { fill: var(--cream); }
+
+a.inline {
+  color: var(--blue);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(40,72,200,0.30);
+}
+a.inline:hover { border-color: var(--blue); }
+
+.codex-block {
+  background: var(--navy);
+  color: var(--cream);
+  border-radius: 9px;
+  padding: 26px 28px;
+  margin: 22px 0;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+}
+
+.codex-block__label {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+
+.codex-block strong { color: var(--cream); font-weight: 600; }
+
+.checklist { list-style: none; margin: 12px 0 18px 0; padding: 0; max-width: 740px; }
+.checklist li {
+  position: relative;
+  padding-left: 28px;
+  font-family: var(--sans);
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink);
+  margin-bottom: 9px;
+}
+.checklist li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--ink-line-hi);
+  border-radius: 3px;
+  background: var(--paper);
+}
+
+.footer {
+  background: var(--navy);
+  color: rgba(255,255,255,0.72);
+  padding: 28px 56px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.footer__brand {
+  font-family: var(--serif);
+  font-size: 14px;
+  font-style: italic;
+  color: var(--cream);
+  margin-bottom: 8px;
+}
+
+@media (max-width: 1100px) {
+  .chrome { grid-template-columns: 240px 1fr; }
+  .content { padding: 36px 32px 64px; }
+}
+
+@media (max-width: 768px) {
+  .chrome { grid-template-columns: 1fr; }
+  .toc { position: static; height: auto; }
+  .content { padding: 28px 24px 48px; }
+  h1 { font-size: 32px; }
+  .metric-fields { grid-template-columns: 1fr; gap: 4px 0; }
+  .metric-fields dt { padding-top: 8px; }
+}
+</style>
+</head>
+<body>
+
+<div class="chrome">
+
+  <aside class="toc">
+    <div class="toc__brand">Abar<span>Va</span></div>
+    <div class="toc__sub">Authoring brief · Locked 2026-05-02</div>
+
+    <div class="toc__title">Metrics corpus authoring brief.</div>
+    <div class="toc__subtitle">Per-industry, per-domain, per-theme metric specifications. Structured records, not prose.</div>
+
+    <div class="toc__divider"></div>
+
+    <div class="toc__label">Table of contents</div>
+    <ul class="toc__list">
+      <li><a href="#mission"><span class="toc__num">01</span>Mission &amp; scope</a></li>
+      <li><a href="#schema"><span class="toc__num">02</span>The metric record schema</a></li>
+      <li><a href="#example"><span class="toc__num">03</span>One worked example</a></li>
+      <li><a href="#authoring"><span class="toc__num">04</span>Authoring discipline</a></li>
+      <li><a href="#retail"><span class="toc__num">05</span>Specialty retail</a></li>
+      <li><a href="#healthcare"><span class="toc__num">06</span>Healthcare IDN</a></li>
+      <li><a href="#fs"><span class="toc__num">07</span>Financial services</a></li>
+      <li><a href="#patmet"><span class="toc__num">08</span>The PAT-MET pattern domain</a></li>
+      <li><a href="#delivery"><span class="toc__num">09</span>Delivery &amp; reporting</a></li>
+    </ul>
+
+    <div class="toc__status">Brief · Knowledge Layer Codex</div>
+  </aside>
+
+  <main class="content">
+
+    <div class="eyebrow">AbarVa · Knowledge Layer Codex · Authoring brief</div>
+    <h1>Metrics — the <em>gap engine's</em> substrate.</h1>
+    <p class="lede">For every industry, every functional domain, every theme — a structured set of metric records with north-star ranges, leader benchmarks, common floors, foundation requirements, vendor landscape, and pattern references. The corpus that makes the gap engine real.</p>
+
+    <div class="metadata">
+      <span><strong>Status</strong> Locked, 2026-05-02</span>
+      <span><strong>Owner</strong> Knowledge Layer Codex lane</span>
+      <span><strong>Companion</strong> Canonical Design V2 · Cross-Module Brief</span>
+    </div>
+
+    <div class="callout callout--teal">
+      <span class="callout__label">What this brief contains</span>
+      The structured contract for authoring 300-600 metric records across three industries (specialty retail, healthcare IDN, financial services) and three functional domains (front office, middle office, back office). The brief specifies the schema, the discipline, and the per-industry per-domain theme structure. The Knowledge Layer Codex authors content against this spec.
+    </div>
+
+    <!-- Section 1 -->
+    <section id="mission">
+      <h2><span class="num">01</span>Mission &amp; <em>scope</em></h2>
+      <p>Author the metric corpus that powers AbarVa's gap engine. For each of the three pilot industries, for each functional domain (front office, middle office, back office), for each theme within a domain, surface the critical metrics that determine whether AI investments in that theme succeed or fail.</p>
+      <p>Each metric becomes a structured record carrying its definition, why it matters, north-star range at peer scale, leader benchmark, common floor, trajectory signals, foundation requirements, vendor/tooling landscape, common failure modes, and pattern references. The platform's gap engine reads these records and compares them against tenant-current state to surface quantitative gaps, measurement gaps, and trajectory gaps.</p>
+
+      <h3>Scope numbers</h3>
+      <p>For each of three industries, the brief specifies 4-8 themes per domain, with 8-12 metrics per theme. That's 32-96 metrics per industry per domain × 3 domains × 3 industries — somewhere between <strong>288 and 864 records</strong>. Target: <strong>~500 records</strong> at meaningful depth in the first authoring pass. Tier-1 priority is 200-300 records covering the highest-priority metrics for the three demo tenants.</p>
+
+      <h3>Authoring sequence</h3>
+      <ul>
+        <li><strong>Tier 1 (priority).</strong> Top 8-12 metrics per domain per industry. ~200-300 records. Powers the bounded version of the gap engine that ships first.</li>
+        <li><strong>Tier 2.</strong> Remaining metrics for full theme coverage. ~200-300 more records. Ships against deeper corpus depth.</li>
+        <li><strong>Tier 3.</strong> Vendor-specific metric variants and edge cases. ~100-200 records. Ships as authoring matures.</li>
+      </ul>
+    </section>
+
+    <!-- Section 2 -->
+    <section id="schema">
+      <h2><span class="num">02</span>The metric record <em>schema</em></h2>
+      <p>Every metric in the corpus is a structured record with the following fields. The schema is locked; new fields require founder approval.</p>
+
+      <div class="wire">
+        <div class="wire__header">
+          <div class="wire__title">Metric record fields and their roles</div>
+          <div class="wire__meta">15 fields · structured taxonomy</div>
+        </div>
+        <svg viewBox="0 0 800 580" xmlns="http://www.w3.org/2000/svg">
+          <rect x="40" y="40" width="720" height="80" rx="9" fill="#dceff1" stroke="#2d7a82" stroke-width="0.5"/>
+          <text x="400" y="68" text-anchor="middle" class="s-text-serif-lg" style="fill: #2d7a82;">Identity &amp; placement</text>
+          <text x="60" y="92" class="s-text-mono" style="fill: #2d7a82;">metric_id</text>
+          <text x="160" y="92" class="s-text-tiny">PAT-MET-{nnn}</text>
+          <text x="280" y="92" class="s-text-mono" style="fill: #2d7a82;">name</text>
+          <text x="380" y="92" class="s-text-tiny">canonical metric name</text>
+          <text x="540" y="92" class="s-text-mono" style="fill: #2d7a82;">industry · domain · theme</text>
+          <text x="60" y="108" class="s-text-mono" style="fill: #2d7a82;">aliases</text>
+          <text x="160" y="108" class="s-text-tiny">common variants in tenant data</text>
+          <text x="400" y="108" class="s-text-mono" style="fill: #2d7a82;">priority_tier</text>
+          <text x="540" y="108" class="s-text-tiny">tier-1 / tier-2 / tier-3</text>
+
+          <rect x="40" y="140" width="720" height="120" rx="9" fill="#fbf3e4" stroke="#b8632d" stroke-width="0.5"/>
+          <text x="400" y="168" text-anchor="middle" class="s-text-serif-lg" style="fill: #b8632d;">Definition &amp; rationale</text>
+          <text x="60" y="192" class="s-text-mono" style="fill: #b8632d;">definition</text>
+          <text x="60" y="208" class="s-text-tiny">Industry-standard definition · how it's measured · units</text>
+          <text x="60" y="232" class="s-text-mono" style="fill: #b8632d;">why_it_matters</text>
+          <text x="60" y="248" class="s-text-tiny">Causal link to outcomes · why this metric is leading or lagging</text>
+
+          <rect x="40" y="280" width="720" height="120" rx="9" fill="#e8efe2" stroke="#5b7d4f" stroke-width="0.5"/>
+          <text x="400" y="308" text-anchor="middle" class="s-text-serif-lg" style="fill: #5b7d4f;">Benchmarks (north-star)</text>
+          <text x="60" y="332" class="s-text-mono" style="fill: #5b7d4f;">cohort</text>
+          <text x="160" y="332" class="s-text-tiny">peer cohort definition (industry + scale + shape)</text>
+          <text x="60" y="352" class="s-text-mono" style="fill: #5b7d4f;">leader_benchmark</text>
+          <text x="180" y="352" class="s-text-tiny">top quartile range</text>
+          <text x="380" y="352" class="s-text-mono" style="fill: #5b7d4f;">north_star_range</text>
+          <text x="540" y="352" class="s-text-tiny">aspirational target</text>
+          <text x="60" y="372" class="s-text-mono" style="fill: #5b7d4f;">common_floor</text>
+          <text x="180" y="372" class="s-text-tiny">where laggards sit</text>
+          <text x="380" y="372" class="s-text-mono" style="fill: #5b7d4f;">trajectory_signal</text>
+          <text x="540" y="372" class="s-text-tiny">peer leader YoY rate</text>
+          <text x="60" y="392" class="s-text-mono" style="fill: #5b7d4f;">refresh_cadence</text>
+          <text x="180" y="392" class="s-text-tiny">annual / semi-annual / quarterly</text>
+
+          <rect x="40" y="420" width="720" height="100" rx="9" fill="#f7e0db" stroke="#b1331f" stroke-width="0.5"/>
+          <text x="400" y="448" text-anchor="middle" class="s-text-serif-lg" style="fill: #b1331f;">Measurement &amp; failure</text>
+          <text x="60" y="472" class="s-text-mono" style="fill: #b1331f;">measurement_difficulty</text>
+          <text x="60" y="488" class="s-text-tiny">low / moderate / high · what's hard about getting this right</text>
+          <text x="60" y="504" class="s-text-mono" style="fill: #b1331f;">foundation_gaps</text>
+          <text x="200" y="504" class="s-text-tiny">data, lineage, identity, ops, governance prereqs</text>
+
+          <rect x="40" y="540" width="720" height="40" rx="9" fill="#efe1ef" stroke="#6b3a6b" stroke-width="0.5"/>
+          <text x="60" y="566" class="s-text-mono" style="fill: #6b3a6b;">vendors_relevant</text>
+          <text x="200" y="566" class="s-text-tiny">vendor records that ship this metric · with adjustment notes</text>
+          <text x="540" y="566" class="s-text-mono" style="fill: #6b3a6b;">pattern_refs</text>
+        </svg>
+        <p class="wire__caption">Each metric record carries identity, definition, benchmarks, measurement difficulty, foundation gaps, vendor landscape, and pattern references. Structured. Refreshable. Cross-referenced into the broader corpus.</p>
+      </div>
+
+      <h3>Field reference</h3>
+
+      <table>
+        <thead>
+          <tr><th>Field</th><th>Type</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="kbd">metric_id</span></td>
+            <td>string · PAT-MET-NNN</td>
+            <td>Unique pattern ID. Sequential within the PAT-MET-* domain.</td>
+          </tr>
+          <tr>
+            <td><span class="kbd">name</span></td>
+            <td>string</td>
+            <td>Canonical metric name as used in industry literature.</td>
+          </tr>
+          <tr>
+            <td><span class="kbd">aliases</span></td>
+            <td>string[]</td>
+            <td>Common variants tenant data may use. Powers the metric mapping logic.</td>
+          </tr>
+          <tr>
+            <td><span class="kbd">industry</span></td>
+            <td>enum</td>
+            <td>specialty_retail · healthcare_idn · financial_services. Multi-industry metrics carry multiple values.</td>
+          </tr>
+          <tr>
+            <td><span class="kbd">domain</span></td>
+            <td>enum</td>
+            <td>front_office · middle_office · back_office.</td>
+          </tr>
+          <tr>
+            <td><span class="kbd">theme</span></td>
+            <td>string</td>
+            <td>Theme within domain. E.g., for retail middle office: demand_forecasting, replenishment, price_promo.</td>
+          </tr>
+          <tr>
+            <td><span class="kbd">priority_tier</span></td>
+            <td>enum</td>
+            <td>tier_1 (top 8-12 per domain per industry) · tier_2 · tier_3.</td>
+          </tr>
+          <tr>
+            <td><span class="kbd">definition</span></td>
+            <td>string</td>
+            <td>2-3 sentence industry-standard definition with units and measurement window.</td>
+          </tr>
+          <tr>
+            <td><span class="kbd">why_it_matters</span></td>
+            <td>string</td>
+            <td>Causal link to outcomes. Why this metric leads or lags revenue, cost, risk, or quality.</td>
+          </tr>
+          <tr>
+            <td><span class="kbd">cohort</span></td>
+            <td>string</td>
+            <td>Peer cohort the benchmarks apply to. Industry + scale + shape (e.g., "specialty retail · $1-5B revenue · multi-channel").</td>
+          </tr>
+          <tr>
+            <td><span class="kbd">north_star_range</span></td>
+            <td>numeric range</td>
+            <td>Aspirational target band. The "what good looks like."</td>
+          </tr>
+          <tr>
+            <td><span class="kbd">leader_benchmark</span></td>
+            <td>numeric range</td>
+            <td>Top-quartile range observed in the cohort.</td>
+          </tr>
+          <tr>
+            <td><span class="kbd">common_floor</span></td>
+            <td>numeric range</td>
+            <td>Bottom-quartile range. Where laggards sit.</td>
+          </tr>
+          <tr>
+            <td><span class="kbd">trajectory_signal</span></td>
+            <td>string</td>
+            <td>Typical YoY rate of improvement at peer leaders.</td>
+          </tr>
+          <tr>
+            <td><span class="kbd">measurement_difficulty</span></td>
+            <td>enum + notes</td>
+            <td>low · moderate · high. What's hard about getting this right.</td>
+          </tr>
+          <tr>
+            <td><span class="kbd">foundation_gaps</span></td>
+            <td>string[]</td>
+            <td>Data, lineage, identity, ops, governance prerequisites that block measurement when absent.</td>
+          </tr>
+          <tr>
+            <td><span class="kbd">vendors_relevant</span></td>
+            <td>vendor_id[]</td>
+            <td>Vendor corpus records that ship this metric, with adjustment notes per vendor.</td>
+          </tr>
+          <tr>
+            <td><span class="kbd">pattern_refs</span></td>
+            <td>pattern_id[]</td>
+            <td>Cross-references to PAT-FM-*, PAT-DT-*, PAT-OPS-*, PAT-RV-* records relevant to closing or measuring this metric.</td>
+          </tr>
+          <tr>
+            <td><span class="kbd">refresh_cadence</span></td>
+            <td>enum</td>
+            <td>Annual · semi-annual · quarterly. How often this record's benchmarks need refresh.</td>
+          </tr>
+          <tr>
+            <td><span class="kbd">corpus_version</span></td>
+            <td>string</td>
+            <td>Version stamp of the record (semver). Tracks updates over time.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Section 3 -->
+    <section id="example">
+      <h2><span class="num">03</span>One worked <em>example</em></h2>
+      <p>One full record at depth, to anchor the pattern. The Knowledge Layer Codex authors all 300-500 records to this depth and discipline.</p>
+
+      <div class="metric-card">
+        <div class="metric-card__head">
+          <span class="metric-card__id">PAT-MET-014</span>
+          <span class="metric-card__name">Forecast accuracy at SKU-week</span>
+          <span class="metric-card__priority metric-card__priority--critical">Tier 1 · Critical</span>
+        </div>
+        <dl class="metric-fields">
+          <dt>Aliases</dt>
+          <dd>SKU forecast accuracy · SKU-level demand forecast accuracy · WMAPE at SKU-week</dd>
+
+          <dt>Industry · domain · theme</dt>
+          <dd><strong>specialty retail · middle office · demand forecasting</strong></dd>
+
+          <dt>Definition</dt>
+          <dd>The percentage accuracy of unit demand forecasts at SKU-week granularity, measured as <em>1 - WMAPE</em> (Weighted Mean Absolute Percentage Error) over a rolling 13-week horizon. Weighted by sales volume so high-velocity SKUs dominate the metric. Window: rolling quarter against forward-looking forecasts.</dd>
+
+          <dt>Why it matters</dt>
+          <dd>Forecast accuracy is the leading indicator for inventory turnover, on-shelf availability, markdown spend, and working capital. A 5-point improvement in SKU-week accuracy typically translates to 3-7% reduction in safety stock, 1-2pt improvement in OSA, and 8-15% reduction in markdown depth. It is the single most leveraged middle-office AI metric in specialty retail.</dd>
+
+          <dt>Cohort</dt>
+          <dd>Specialty retail · $1-5B annual revenue · multi-channel (store + e-commerce) · 5,000-50,000 active SKUs</dd>
+
+          <dt>North-star range</dt>
+          <dd><strong>88-92%</strong> (1 - WMAPE) at SKU-week, rolling quarter</dd>
+
+          <dt>Leader benchmark</dt>
+          <dd>83-88% · top-quartile peer cohort with mature demand sensing capabilities</dd>
+
+          <dt>Common floor</dt>
+          <dd>62-72% · bottom quartile · typical of organizations relying on legacy regression-based forecasting at category-week without SKU-week refinement</dd>
+
+          <dt>Trajectory signal</dt>
+          <dd>Peer leaders improving 1.5-3.0 points per year as they integrate demand sensing, weather signals, and marketing-event signals into the forecast pipeline. Laggards static or declining as SKU proliferation outpaces forecast capability.</dd>
+
+          <dt>Measurement difficulty</dt>
+          <dd><strong>Moderate.</strong> Requires clean SKU-week sales history, point-of-sale data integration, returns netting, and lift-aware adjustment for promotional and marketing events. Most retailers measure forecast accuracy at category-week or department-month, which masks the SKU-level signal that actually drives operational decisions.</dd>
+
+          <dt>Foundation gaps</dt>
+          <dd>
+            <strong>Data:</strong> POS data must reach the analytics warehouse at SKU-store-day grain. Lineage from POS → warehouse → BI must be auditable.<br/>
+            <strong>Identity:</strong> SKU master must be canonical and de-duplicated. Cross-channel SKU mapping (store SKU → e-commerce SKU) must be solved.<br/>
+            <strong>Ops:</strong> Forecast must update at least weekly to drive replenishment and allocation. Daily preferred for high-velocity SKUs.<br/>
+            <strong>Governance:</strong> Forecast accuracy must be reviewed at S&amp;OP cadence with explicit accountability for category management.
+          </dd>
+
+          <dt>Vendors relevant</dt>
+          <dd>
+            <strong>Blue Yonder Demand Planning</strong> — typical leader-range outcomes when properly tuned; vendor lock-in risk on data model. <em>(adjust for tenant: integration cost meaningful for non-BY supply chain estates)</em><br/>
+            <strong>o9 Solutions</strong> — strong integrated planning; reaches leader range in 12-18 months when implementation is disciplined<br/>
+            <strong>RELEX Solutions</strong> — specialty/grocery focus; strong on store-level demand sensing<br/>
+            <strong>SAS Demand Planning</strong> — established leader; reaches benchmark range; longer implementation cycles<br/>
+            <strong>Anaplan + custom forecasting</strong> — flexible but requires internal data science capability; outcomes vary widely
+          </dd>
+
+          <dt>Pattern refs</dt>
+          <dd>
+            <strong>PAT-FM-009</strong> — Inability to measure outcomes (when forecast accuracy isn't tracked at SKU-week, AI demand forecasting moves can't be validated)<br/>
+            <strong>PAT-DT-014</strong> — POS data integration gap<br/>
+            <strong>PAT-OPS-022</strong> — S&amp;OP cadence and accountability<br/>
+            <strong>PAT-RV-007</strong> — Forecast-to-OSA causal chain<br/>
+            <strong>PAT-VEN-031</strong> — Demand planning vendor evaluation framework
+          </dd>
+
+          <dt>Refresh cadence</dt>
+          <dd>Annual · benchmarks shift slowly as the cohort's overall maturity rises. Vendor entries refresh semi-annually as vendor product evolves.</dd>
+
+          <dt>Corpus version</dt>
+          <dd><span class="kbd">v1.0.0</span> · authored 2026-05-02</dd>
+        </dl>
+      </div>
+
+      <p>This is the depth and discipline expected for every Tier-1 metric. Tier-2 records can compress some fields (e.g., briefer vendor lists, shorter why_it_matters) but the schema is the same.</p>
+    </section>
+
+    <!-- Section 4 -->
+    <section id="authoring">
+      <h2><span class="num">04</span>Authoring <em>discipline</em></h2>
+      <p>Six rules the Knowledge Layer Codex follows when authoring metric records.</p>
+
+      <h3>Rule 1 — Industry-standard definitions over invented ones</h3>
+      <p>Every metric must use the canonical industry-standard definition. Forecast accuracy is <em>1 - WMAPE</em> at SKU-week, not "how close were we." On-shelf availability is <em>units available at SKU-store-day</em>, not "stock-out rate" (which is the inverse and measured differently). When industry conventions vary, name the convention; don't pick arbitrarily.</p>
+
+      <h3>Rule 2 — Cohort definitions that are specific</h3>
+      <p>Benchmarks only mean something for a defined cohort. "Retail" is too broad — a $50M boutique and a $5B specialty retailer have different north-stars for the same metric. Specify cohort as <em>industry + revenue scale + shape</em>. The platform's gap engine matches tenant scale to the right cohort's benchmarks.</p>
+
+      <h3>Rule 3 — North-star ranges, not point estimates</h3>
+      <p>"88-92%" reads as honest data. "90%" reads as fabricated certainty. Always cite ranges. Where the data is genuinely thin, say so in the field — <em>"north-star range based on 4-7 published case studies; treat as directional"</em> — rather than inventing precision.</p>
+
+      <h3>Rule 4 — Foundation gaps named explicitly</h3>
+      <p>If the metric requires data lineage that most enterprises lack, name it. If governance and ops cadence matter, say so. The foundation_gaps field is what powers the gap engine's measurement-gap detection. Vague entries here produce vague gap surfacing.</p>
+
+      <h3>Rule 5 — Vendor entries with adjustment notes</h3>
+      <p>Don't just list vendors. For each vendor in the metric record, include adjustment notes — when the vendor reaches the leader range, what conditions are required, what the implementation cost typically is, what the vendor lock-in risks are. The platform's vendor landscape submenu reads these.</p>
+
+      <h3>Rule 6 — Pattern references that connect</h3>
+      <p>Every metric must reference the broader corpus: PAT-FM-* failure modes that affect this metric, PAT-DT-* data/tech patterns required to measure it, PAT-OPS-* operating model patterns, PAT-RV-* realized value patterns. The pattern_refs field is what makes the corpus a graph, not a flat catalog.</p>
+
+      <div class="callout callout--blue">
+        <span class="callout__label">Authoring with an LLM as drafting partner</span>
+        Use Claude or GPT-5 as drafting partners for the first pass on each metric. Author with depth research first (industry articles, vendor case studies, peer disclosures, public benchmarks). Treat AI drafts as starting points; verify benchmarks against at least two independent sources before locking. Mark records as <span class="kbd">draft</span> until verified, <span class="kbd">verified</span> after independent confirmation, <span class="kbd">locked</span> after founder review.
+      </div>
+    </section>
+
+    <!-- Section 5 - Specialty Retail -->
+    <section id="retail">
+      <h2><span class="num">05</span>Specialty <em>retail</em> — domain &amp; theme map</h2>
+      <p>For specialty retail at $1-5B revenue, multi-channel. Three domains; 4-7 themes per domain; 8-12 metrics per theme. Tier-1 metrics listed below for the highest-priority themes; Tier-2 metrics follow.</p>
+
+      <div class="industry-block">
+        <div class="industry-block__head">
+          <div class="industry-block__name">Specialty <em>retail</em></div>
+          <div class="industry-block__meta">14 themes · ~120 metrics target</div>
+        </div>
+
+        <div class="domain-block">
+          <div class="domain-block__head">Front office</div>
+          <div class="domain-block__title">Customer &amp; channel</div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Customer data &amp; identity resolution</div>
+            <div class="theme-row__desc">Unified customer view across channels; identity resolution match rate; cross-channel attribution.</div>
+            <div class="theme-row__metrics">Tier-1 metrics: identity_resolution_match_rate · customer_360_completeness · cross_channel_attribution_coverage · customer_record_freshness</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Personalization &amp; activation</div>
+            <div class="theme-row__desc">Recommendation lift; segmentation precision; cross-channel activation reach.</div>
+            <div class="theme-row__metrics">Tier-1 metrics: recommendation_lift_aov · segmentation_precision · activation_reach_addressable · personalization_coverage_pct</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Channel optimization</div>
+            <div class="theme-row__desc">Cross-channel conversion; channel attribution; ROAS on paid media; first-party data leverage.</div>
+            <div class="theme-row__metrics">Tier-1 metrics: cross_channel_conversion_rate · roas_paid_media · first_party_data_addressability · channel_attribution_accuracy</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Loyalty &amp; retention</div>
+            <div class="theme-row__desc">Customer lifetime value; retention curve; loyalty program activation; churn prediction accuracy.</div>
+            <div class="theme-row__metrics">Tier-1 metrics: clv_active_customer · retention_12mo · loyalty_active_rate · churn_prediction_accuracy</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Returns &amp; service</div>
+            <div class="theme-row__desc">Return rate; service interaction efficiency; AI service deflection; CSAT trajectory.</div>
+            <div class="theme-row__metrics">Tier-2 metrics: return_rate · csat_trajectory · service_deflection_rate · first_contact_resolution</div>
+          </div>
+        </div>
+
+        <div class="domain-block">
+          <div class="domain-block__head">Middle office</div>
+          <div class="domain-block__title">Merchandising &amp; supply</div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Demand forecasting</div>
+            <div class="theme-row__desc">SKU-week forecast accuracy; demand sensing maturity; promotion lift modeling. <em>The flagship middle-office theme — see PAT-MET-014 worked example.</em></div>
+            <div class="theme-row__metrics">Tier-1: forecast_accuracy_sku_week · forecast_bias · promotion_lift_accuracy · new_item_forecast_accuracy</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Replenishment &amp; allocation</div>
+            <div class="theme-row__desc">Replenishment cycle time; allocation match to demand; safety-stock efficiency; cross-DC balancing.</div>
+            <div class="theme-row__metrics">Tier-1: replenishment_lead_time_variance · allocation_demand_match · safety_stock_days · inter_dc_balance_efficiency</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Inventory &amp; OSA</div>
+            <div class="theme-row__desc">On-shelf availability; inventory turnover; stock-out frequency; aged inventory exposure. <em>OSA is critical and frequently unmeasured.</em></div>
+            <div class="theme-row__metrics">Tier-1: on_shelf_availability_sku_store_day · inventory_turnover · stockout_lost_sales · aged_inventory_pct</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Price &amp; promo optimization</div>
+            <div class="theme-row__desc">Markdown effectiveness; promotion ROI; competitive price index; elasticity confidence.</div>
+            <div class="theme-row__metrics">Tier-1: markdown_effectiveness · promotion_roi · competitive_price_index · price_elasticity_confidence</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Store labor &amp; operations</div>
+            <div class="theme-row__desc">Labor scheduling accuracy; productivity; service-level adherence.</div>
+            <div class="theme-row__metrics">Tier-2: labor_schedule_accuracy · sales_per_labor_hour · service_sla_adherence · task_completion_rate</div>
+          </div>
+        </div>
+
+        <div class="domain-block">
+          <div class="domain-block__head">Back office</div>
+          <div class="domain-block__title">Finance &amp; operations</div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Working capital &amp; cash</div>
+            <div class="theme-row__desc">Days payable outstanding; days inventory outstanding; cash conversion cycle; working capital efficiency.</div>
+            <div class="theme-row__metrics">Tier-1: dpo · dio · cash_conversion_cycle · working_capital_pct_revenue</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">AP automation &amp; spend</div>
+            <div class="theme-row__desc">Invoice straight-through processing; spend categorization accuracy; rebate capture; touchless invoice rate.</div>
+            <div class="theme-row__metrics">Tier-1: invoice_stp_rate · touchless_invoice_pct · spend_categorization_accuracy · rebate_capture_rate</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Workforce &amp; talent</div>
+            <div class="theme-row__desc">Voluntary turnover; recruiting cycle time; productivity per FTE; AI-augmented productivity lift.</div>
+            <div class="theme-row__metrics">Tier-2: voluntary_turnover · recruiting_cycle_days · productivity_per_fte · ai_productivity_lift</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Finance close &amp; reporting</div>
+            <div class="theme-row__desc">Close cycle days; restatement risk; FP&amp;A cycle efficiency; reporting accuracy.</div>
+            <div class="theme-row__metrics">Tier-2: close_cycle_days · fp_and_a_cycle_efficiency · forecast_accuracy_finance · reporting_accuracy</div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 6 - Healthcare -->
+    <section id="healthcare">
+      <h2><span class="num">06</span>Healthcare <em>IDN</em> — domain &amp; theme map</h2>
+      <p>For integrated delivery networks at $2-10B revenue with employed physician group + hospital + ambulatory + post-acute mix. Three domains; themes specific to clinical, operational, financial intersections.</p>
+
+      <div class="industry-block">
+        <div class="industry-block__head">
+          <div class="industry-block__name">Healthcare <em>IDN</em></div>
+          <div class="industry-block__meta">14 themes · ~120 metrics target</div>
+        </div>
+
+        <div class="domain-block">
+          <div class="domain-block__head">Front office</div>
+          <div class="domain-block__title">Patient experience &amp; access</div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Digital front door &amp; access</div>
+            <div class="theme-row__desc">Time to third available appointment; digital check-in completion; portal active rate; new patient access rate.</div>
+            <div class="theme-row__metrics">Tier-1: time_to_third_available · digital_check_in_completion · portal_active_rate · new_patient_access_days</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Scheduling &amp; capacity</div>
+            <div class="theme-row__desc">Schedule fill rate; no-show rate; same-day cancellation rate; provider productivity.</div>
+            <div class="theme-row__metrics">Tier-1: schedule_fill_rate · no_show_rate · same_day_cancel_rate · provider_visits_per_day</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Virtual &amp; ambient care</div>
+            <div class="theme-row__desc">Telehealth volume share; virtual visit conversion; ambient documentation adoption; provider time saved.</div>
+            <div class="theme-row__metrics">Tier-1: telehealth_volume_share · ambient_doc_adoption · provider_time_saved_per_encounter · virtual_visit_csat</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Patient experience &amp; loyalty</div>
+            <div class="theme-row__desc">HCAHPS / Press Ganey scores; patient retention; net promoter score; complaint resolution time.</div>
+            <div class="theme-row__metrics">Tier-2: hcahps_score · patient_retention_24mo · nps · complaint_resolution_days</div>
+          </div>
+        </div>
+
+        <div class="domain-block">
+          <div class="domain-block__head">Middle office</div>
+          <div class="domain-block__title">Clinical AI</div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Ambient documentation</div>
+            <div class="theme-row__desc">Documentation time per encounter; pajama time reduction; provider satisfaction lift; documentation quality scores. <em>Highest realized-value clinical AI theme in 2026.</em></div>
+            <div class="theme-row__metrics">Tier-1: documentation_time_per_encounter · pajama_time_minutes · provider_satisfaction_burnout · doc_quality_score</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Clinical decision support</div>
+            <div class="theme-row__desc">Alert burden / fatigue; alert override rate; clinical guideline adherence; sepsis recognition time.</div>
+            <div class="theme-row__metrics">Tier-1: alert_override_rate · alert_acceptance_rate · cds_guideline_adherence · sepsis_recognition_time</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Prior authorization automation</div>
+            <div class="theme-row__desc">Prior auth turnaround; auto-approval rate; denial rate; physician submission burden.</div>
+            <div class="theme-row__metrics">Tier-1: prior_auth_tat_hours · pa_auto_approval_rate · pa_denial_rate · physician_pa_minutes_per_request</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Coding quality &amp; CDI</div>
+            <div class="theme-row__desc">CC/MCC capture rate; coder productivity; query rate; case-mix index accuracy.</div>
+            <div class="theme-row__metrics">Tier-1: cc_mcc_capture · coder_charts_per_hour · query_rate · cmi_accuracy</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Population health &amp; risk</div>
+            <div class="theme-row__desc">HCC capture rate; risk adjustment factor accuracy; care gap closure; readmission prediction accuracy.</div>
+            <div class="theme-row__metrics">Tier-2: hcc_capture · raf_accuracy · care_gap_closure_rate · readmit_prediction_auc</div>
+          </div>
+        </div>
+
+        <div class="domain-block">
+          <div class="domain-block__head">Back office</div>
+          <div class="domain-block__title">Revenue cycle &amp; operations</div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Claims &amp; denials management</div>
+            <div class="theme-row__desc">First-pass claim resolution; clean claim rate; denial rate; days to payment.</div>
+            <div class="theme-row__metrics">Tier-1: clean_claim_rate · first_pass_resolution · denial_rate · days_to_payment</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Revenue cycle automation</div>
+            <div class="theme-row__desc">Cost-to-collect; cash collection rate; AR days; touchless claim rate.</div>
+            <div class="theme-row__metrics">Tier-1: cost_to_collect · cash_collection_rate · ar_days · touchless_claim_pct</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Supply chain &amp; OR efficiency</div>
+            <div class="theme-row__desc">OR utilization; turnover time; supply cost per case; physician preference card variance.</div>
+            <div class="theme-row__metrics">Tier-2: or_utilization · or_turnover_minutes · supply_cost_per_case · pref_card_variance</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Workforce &amp; staffing</div>
+            <div class="theme-row__desc">Nurse turnover; agency labor pct; staffing-to-acuity match; overtime spend.</div>
+            <div class="theme-row__metrics">Tier-2: nurse_turnover · agency_labor_pct · staffing_acuity_match · overtime_pct_total_labor</div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 7 - Financial Services -->
+    <section id="fs">
+      <h2><span class="num">07</span>Financial <em>services</em> — domain &amp; theme map</h2>
+      <p>For mid-market commercial and consumer banking at $5-50B in assets. Themes span risk decisioning, regulatory operations, and customer experience.</p>
+
+      <div class="industry-block">
+        <div class="industry-block__head">
+          <div class="industry-block__name">Financial <em>services</em></div>
+          <div class="industry-block__meta">14 themes · ~120 metrics target</div>
+        </div>
+
+        <div class="domain-block">
+          <div class="domain-block__head">Front office</div>
+          <div class="domain-block__title">Customer &amp; channel</div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Digital banking experience</div>
+            <div class="theme-row__desc">Mobile app DAU/MAU; digital adoption rate; cross-channel session continuity; mobile NPS.</div>
+            <div class="theme-row__metrics">Tier-1: mobile_dau_mau · digital_adoption_rate · cross_channel_continuity · mobile_nps</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Conversational &amp; AI service</div>
+            <div class="theme-row__desc">AI deflection rate; first-contact resolution; conversational NPS; complaint rate.</div>
+            <div class="theme-row__metrics">Tier-1: ai_deflection_rate · first_contact_resolution · conversational_nps · complaint_rate_per_1000</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Advisor productivity</div>
+            <div class="theme-row__desc">AUM per advisor; advisor productivity lift from AI tooling; client meeting prep time; portfolio review cycle.</div>
+            <div class="theme-row__metrics">Tier-2: aum_per_advisor · ai_productivity_lift · client_prep_time_minutes · portfolio_review_cycle_days</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Origination &amp; onboarding</div>
+            <div class="theme-row__desc">Application abandonment; onboarding time; KYC straight-through processing; new account activation.</div>
+            <div class="theme-row__metrics">Tier-1: app_abandonment_rate · onboarding_time_days · kyc_stp_rate · new_account_activation_30d</div>
+          </div>
+        </div>
+
+        <div class="domain-block">
+          <div class="domain-block__head">Middle office</div>
+          <div class="domain-block__title">Risk &amp; decisioning</div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Credit decisioning</div>
+            <div class="theme-row__desc">Approval rate at constant risk; decision turnaround; model AUC; portfolio loss rate.</div>
+            <div class="theme-row__metrics">Tier-1: approval_rate_constant_risk · credit_decision_tat · credit_model_auc · portfolio_loss_rate</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Fraud detection</div>
+            <div class="theme-row__desc">True positive rate; false positive rate; fraud loss per dollar transacted; alert review time.</div>
+            <div class="theme-row__metrics">Tier-1: fraud_tpr · fraud_fpr · fraud_loss_per_dollar · alert_review_minutes</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">AML &amp; compliance</div>
+            <div class="theme-row__desc">SAR filing rate; alert disposition time; false positive rate; regulatory finding count.</div>
+            <div class="theme-row__metrics">Tier-1: sar_filing_per_alert · alert_disposition_time · aml_fpr · reg_finding_count</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Market &amp; counterparty risk</div>
+            <div class="theme-row__desc">VaR backtesting; risk model coverage; counterparty exposure accuracy; stress testing cycle.</div>
+            <div class="theme-row__metrics">Tier-2: var_backtest_breaches · risk_model_coverage · counterparty_exposure_acc · stress_test_cycle_days</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Model governance</div>
+            <div class="theme-row__desc">Models in inventory; model validation cycle; SR 11-7 compliance; model drift detection rate.</div>
+            <div class="theme-row__metrics">Tier-1: models_in_inventory · validation_cycle_days · sr_11_7_compliance · drift_detection_rate</div>
+          </div>
+        </div>
+
+        <div class="domain-block">
+          <div class="domain-block__head">Back office</div>
+          <div class="domain-block__title">Operations &amp; reporting</div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Operations automation</div>
+            <div class="theme-row__desc">Touchless transaction rate; exception handling time; operations cost per transaction; process cycle time.</div>
+            <div class="theme-row__metrics">Tier-1: touchless_transaction_rate · exception_handling_minutes · ops_cost_per_transaction · process_cycle_time</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Regulatory reporting</div>
+            <div class="theme-row__desc">Reporting accuracy; reporting cycle time; data quality score; audit finding count.</div>
+            <div class="theme-row__metrics">Tier-1: reg_reporting_accuracy · reg_reporting_cycle_days · reg_data_quality_score · reg_audit_findings</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Treasury &amp; finance close</div>
+            <div class="theme-row__desc">Close cycle days; reconciliation breaks; liquidity position accuracy; FP&amp;A forecast accuracy.</div>
+            <div class="theme-row__metrics">Tier-2: close_cycle_days · recon_breaks · liquidity_position_accuracy · fpa_forecast_accuracy</div>
+          </div>
+
+          <div class="theme-row">
+            <div class="theme-row__name">Workforce &amp; productivity</div>
+            <div class="theme-row__desc">FTE-per-asset productivity; agency labor exposure; AI-augmented productivity lift; voluntary turnover.</div>
+            <div class="theme-row__metrics">Tier-2: fte_per_billion_assets · agency_labor_exposure · ai_productivity_lift · voluntary_turnover</div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 8 -->
+    <section id="patmet">
+      <h2><span class="num">08</span>The <em>PAT-MET</em> pattern domain</h2>
+      <p>Each metric record lives at <span class="kbd">PAT-MET-NNN</span> within the corpus. The PAT-MET-* domain is itself a first-class corpus pattern domain alongside PAT-FM-*, PAT-PRG-*, PAT-AI-*, etc.</p>
+
+      <h3>How metrics connect to the broader corpus</h3>
+
+      <table>
+        <thead><tr><th>Pattern domain</th><th>Relationship to PAT-MET</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="kbd">PAT-FM-*</span> failure modes</td>
+            <td>Many failure modes (especially PAT-FM-009 inability-to-measure) reference specific metrics that, if absent, prevent measurement. Metric records reference back via pattern_refs.</td>
+          </tr>
+          <tr>
+            <td><span class="kbd">PAT-DT-*</span> data &amp; tech</td>
+            <td>Foundation gaps named in metric records map to PAT-DT-* records. The platform's foundation readiness workflow reads both.</td>
+          </tr>
+          <tr>
+            <td><span class="kbd">PAT-OPS-*</span> operating model</td>
+            <td>Operating cadence and accountability requirements named in metric records map to PAT-OPS-* records.</td>
+          </tr>
+          <tr>
+            <td><span class="kbd">PAT-VEN-*</span> vendor patterns</td>
+            <td>Vendor entries in metric records cross-reference vendor corpus records. Vendor records carry the metric capability claims; metric records carry the vendor adjustment notes.</td>
+          </tr>
+          <tr>
+            <td><span class="kbd">PAT-RV-*</span> realized value</td>
+            <td>Realized value patterns describe how a metric improvement translates to outcomes. PAT-MET → PAT-RV is a one-to-many relationship.</td>
+          </tr>
+          <tr>
+            <td><span class="kbd">PAT-XF-*</span> cross-industry transfer</td>
+            <td>Some metrics transfer across industries (e.g., AI productivity lift, voluntary turnover). Cross-industry transfer cases reference the source-industry metric record.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Numbering discipline</h3>
+      <p>PAT-MET-NNN where NNN is a global sequential number across all metrics regardless of industry. Numbers don't restart per industry. Reserved blocks: 001-200 retail, 201-400 healthcare, 401-600 financial services, 601-800 cross-industry, 801-999 reserved.</p>
+    </section>
+
+    <!-- Section 9 -->
+    <section id="delivery">
+      <h2><span class="num">09</span>Delivery &amp; <em>reporting</em></h2>
+
+      <h3>Authoring workflow</h3>
+      <ol>
+        <li>Read this brief plus Canonical Design V2 for context.</li>
+        <li>Take an industry × domain (e.g., specialty retail × middle office) and produce 8-12 Tier-1 metric records following the schema.</li>
+        <li>For each record, draft against the schema, verify benchmarks against at least two independent sources (industry reports, vendor case studies, peer disclosures, public benchmarks), mark as <span class="kbd">verified</span>.</li>
+        <li>Stage records in <span class="kbd">corpus/patterns/PAT-MET/</span> as YAML files (one per metric).</li>
+        <li>Run the corpus validation script to confirm schema compliance.</li>
+        <li>Auto-approve and merge batches (4-8 records per PR) once the standard checks pass — schema validation, benchmark sources cited, locks respected, EVENT_LOG updated. Records are marked <span class="kbd">verified</span> on merge; <span class="kbd">locked</span> status applies after a record has been retrieved by the platform without revision for 14 days, signaling stability.</li>
+      </ol>
+
+      <h3>Acceptance criteria</h3>
+      <ul class="checklist">
+        <li>Schema compliance: every field present, types correct</li>
+        <li>Cohort defined explicitly (industry + scale + shape)</li>
+        <li>Benchmarks as ranges, not points; cited sources where possible</li>
+        <li>Foundation gaps named explicitly and tied to PAT-DT-* / PAT-OPS-* records</li>
+        <li>Vendor entries with adjustment notes (not just lists)</li>
+        <li>Pattern refs connecting to broader corpus</li>
+        <li>Refresh cadence specified</li>
+      </ul>
+
+      <h3>Reporting</h3>
+      <div class="codex-block">
+        <div class="codex-block__label">Three reports when the authoring milestone is complete</div>
+        <strong>METRICS_CORPUS_AUTHORING_REPORT.md</strong><br/>
+        Coverage: industries × domains × themes covered. Records authored vs. target. Gaps remaining.<br/><br/>
+        <strong>METRICS_BENCHMARK_VERIFICATION_LOG.md</strong><br/>
+        For each benchmark, source(s) cited, verification confidence, refresh schedule established.<br/><br/>
+        <strong>METRICS_CORPUS_PIPELINE_INTEGRATION.md</strong><br/>
+        Records integrated into the codex pipeline, validation script outputs, samples of cross-references resolved.
+      </div>
+
+      <h3>Tier-1 milestone</h3>
+      <p>Tier-1 milestone is reached when 200-300 records are authored, verified, locked, integrated into the corpus, and indexed for retrieval. The bounded gap engine ships against this milestone. Tier-2 and Tier-3 follow as ongoing authoring work.</p>
+
+      <div class="callout callout--teal">
+        <span class="callout__label">Continuous authoring discipline</span>
+        Records flow from <span class="kbd">draft</span> → <span class="kbd">verified</span> → <span class="kbd">locked</span> automatically. <strong>Draft</strong> on first authoring; <strong>verified</strong> when sources are confirmed and merged; <strong>locked</strong> after 14 days of stable retrieval without revision. The platform retrieves <span class="kbd">verified</span> and <span class="kbd">locked</span> records by default. The lane authors continuously without external approval gates; the maturation discipline lives in the records themselves.
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="footer">
+  <div class="footer__brand">AbarVa — bet-level operating system · the Atrium pattern</div>
+  Metrics corpus authoring brief · locked 2026-05-02 · Knowledge Layer Codex contract
+</footer>
+
+</body>
+</html>

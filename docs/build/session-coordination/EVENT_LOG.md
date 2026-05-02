@@ -39,3 +39,22 @@ Append-only coordination log for active Codex sessions.
 - scope: Programs E2E crawler proved `lifecycle_state=completed` after P6, but `engagements.status` stayed `active`; complete_program should persist both completion signals.
 - files_touched: `src/lib/agent/tools/program/completeProgram.ts`, `src/lib/agent/tools/__tests__/completeProgram.test.ts`
 - validation: focused complete_program Jest and ESLint passed locally; deployment/rerun pending PR merge.
+
+## 2026-05-02T11:04:48-05:00 - codex-canonical-v2-foundation
+
+- status: started-execution-against-canonical-v2
+- branch: `codex/canonical-v2-foundation`
+- worktree: `/private/tmp/nexus-canonical-v2`
+- package: `/Users/anand/Downloads/abarva-canonical-vision-package-2026-05-02.zip`
+- sequencing_rationale: Data-layer contracts and chrome contracts should land before page-specific rewrites. The active Source crawler owns Source runtime files, so this slice avoids Source implementation and instead anchors the canonical docs, Atrium registry, Strategic Moves external label, and PAT-MET corpus foundation with tests. Setup metric ingestion and broader page migration can follow on top of these contracts.
+- locks: `atrium-contract-registry`, `metrics-corpus-foundation`
+- guardrail: no Source API, Source lifecycle, Source stage, private-plane DB cleanup, auth provisioning, or production write files touched in this slice
+
+## 2026-05-02T11:12:00-05:00 - codex-canonical-v2-foundation
+
+- status: validation-local-passed
+- validation: `npx jest src/lib/shell/__tests__/atrium-contract.test.ts src/lib/intelligence/__tests__/metric-records.test.ts src/__tests__/hygiene/shell-v2-mode-layout.test.ts src/__tests__/integration/app-rail-home-nav.test.ts src/__tests__/integration/shell-topbar-auth.test.ts src/__tests__/integration/design/app-shell-navigation-canon.test.ts --runInBand` passed, 62 tests
+- validation: `npm run lint -- src/components/shell/AppTopBar.tsx src/lib/shell/atrium-contract.ts src/lib/intelligence/metric-records.ts src/__tests__/integration/app-rail-home-nav.test.ts src/__tests__/integration/shell-topbar-auth.test.ts` passed
+- validation: `npx tsc --noEmit --pretty false` passed
+- validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning
+- next: open PR and auto-merge when standard checks pass

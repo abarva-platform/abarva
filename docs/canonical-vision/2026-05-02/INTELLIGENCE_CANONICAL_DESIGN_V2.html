@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AbarVa — Canonical Design V2 — The Atrium Pattern</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream: #fef6ed;
+  --cream-deep: #f7ecd9;
+  --cream-soft: #fbf3e4;
+  --paper: #fdfaf3;
+  --paper-warm: #f9f3e6;
+  --navy: #0a1628;
+  --navy-deep: #050d1c;
+  --navy-soft: #122039;
+  --ink: #14213a;
+  --ink-soft: #4a5266;
+  --ink-mute: #8a8d99;
+  --ink-line: rgba(20,33,58,0.10);
+  --ink-line-hi: rgba(20,33,58,0.18);
+  --blue: #2848c8;
+  --blue-soft: #5876dc;
+  --blue-bg: #eaeefa;
+  --copper: #b8632d;
+  --copper-soft: #d18555;
+  --copper-bg: #f5e8db;
+  --sage: #5b7d4f;
+  --sage-soft: #7a9c6e;
+  --sage-bg: #e8efe2;
+  --crit: #b1331f;
+  --crit-bg: #f7e0db;
+  --plum: #6b3a6b;
+  --plum-bg: #efe1ef;
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --sans: 'Inter Tight', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; scroll-padding-top: 40px; }
+body {
+  font-family: var(--sans);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Chrome */
+.chrome {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100vh;
+}
+
+.toc {
+  background: var(--navy);
+  color: var(--cream);
+  padding: 32px 28px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  border-right: 1px solid rgba(255,255,255,0.08);
+}
+
+.toc__brand {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+.toc__brand span { color: var(--blue-soft); }
+
+.toc__sub {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 28px;
+}
+
+.toc__title {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 600;
+  font-style: italic;
+  color: var(--cream);
+  line-height: 1.25;
+  margin-bottom: 6px;
+}
+
+.toc__subtitle {
+  font-size: 12.5px;
+  color: rgba(255,255,255,0.55);
+  margin-bottom: 22px;
+  line-height: 1.55;
+}
+
+.toc__divider { height: 1px; background: rgba(255,255,255,0.08); margin: 22px 0 18px; }
+
+.toc__label {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 12px;
+}
+
+.toc__list { list-style: none; display: flex; flex-direction: column; gap: 1px; }
+
+.toc__list a {
+  color: rgba(255,255,255,0.78);
+  font-size: 13px;
+  text-decoration: none;
+  padding: 7px 12px 7px 12px;
+  display: block;
+  border-left: 2px solid transparent;
+  transition: all 0.18s ease;
+  line-height: 1.4;
+}
+
+.toc__list a:hover {
+  color: var(--cream);
+  border-left-color: var(--blue-soft);
+  background: rgba(255,255,255,0.04);
+}
+
+.toc__num {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: rgba(255,255,255,0.4);
+  margin-right: 10px;
+}
+
+.toc__status {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sage-soft);
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.toc__status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--sage-soft);
+}
+
+.toc__version {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  margin-top: 10px;
+}
+
+.content { max-width: 920px; padding: 48px 56px 96px; background: var(--paper); }
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-bottom: 12px;
+}
+
+h1 {
+  font-family: var(--serif);
+  font-size: 46px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--ink);
+  margin-bottom: 18px;
+}
+
+h1 em { font-style: italic; font-weight: 500; color: var(--copper); }
+
+.lede {
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 500;
+  font-style: italic;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  margin-bottom: 28px;
+  max-width: 740px;
+}
+
+.metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-mute);
+  padding: 14px 0;
+  border-top: 1px solid var(--ink-line);
+  border-bottom: 1px solid var(--ink-line);
+  margin-bottom: 56px;
+}
+
+.metadata strong { color: var(--ink); font-weight: 600; margin-right: 5px; }
+
+section { margin-bottom: 64px; scroll-margin-top: 32px; }
+
+section h2 {
+  font-family: var(--serif);
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.014em;
+  line-height: 1.15;
+  color: var(--ink);
+  margin-bottom: 8px;
+  padding-top: 30px;
+  border-top: 1px solid var(--ink-line);
+}
+
+section h2 .num {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--copper);
+  letter-spacing: 0.06em;
+  vertical-align: middle;
+  margin-right: 12px;
+  display: inline-block;
+  background: var(--copper-bg);
+  padding: 4px 9px;
+  border-radius: 3px;
+}
+
+section h2 em { font-style: italic; font-weight: 500; color: var(--copper); }
+
+section h3 {
+  font-family: var(--serif);
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+  margin: 32px 0 12px;
+}
+
+section h4 {
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 24px 0 8px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+section p { margin-bottom: 14px; max-width: 740px; }
+section p strong { color: var(--ink); font-weight: 600; }
+section p em { font-style: italic; color: var(--ink-soft); }
+
+.callout {
+  background: var(--cream-soft);
+  border: 1px solid var(--ink-line);
+  border-left: 3px solid var(--copper);
+  border-radius: 0 7px 7px 0;
+  padding: 16px 22px;
+  margin: 22px 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.callout--blue { border-left-color: var(--blue); background: var(--blue-bg); }
+.callout--sage { border-left-color: var(--sage); background: var(--sage-bg); }
+.callout--plum { border-left-color: var(--plum); background: var(--plum-bg); }
+
+.callout__label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--copper);
+  margin-bottom: 5px;
+  display: block;
+}
+.callout--blue .callout__label { color: var(--blue); }
+.callout--sage .callout__label { color: var(--sage); }
+.callout--plum .callout__label { color: var(--plum); }
+
+.kbd {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--cream-deep);
+  border: 1px solid var(--ink-line-hi);
+  padding: 1px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+ul, ol { margin: 12px 0 18px 22px; max-width: 740px; }
+li { margin-bottom: 8px; line-height: 1.6; }
+li strong { color: var(--ink); font-weight: 600; }
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 740px;
+  margin: 18px 0;
+  font-size: 13.5px;
+}
+
+th, td {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--ink-line);
+  vertical-align: top;
+}
+
+th {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  font-weight: 600;
+  background: var(--cream-soft);
+}
+
+/* Wireframes */
+.wire {
+  background: var(--cream-soft);
+  border: 1px solid var(--ink-line);
+  border-radius: 9px;
+  padding: 22px 24px 18px;
+  margin: 28px 0;
+}
+
+.wire__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 12px;
+}
+
+.wire__title {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+}
+
+.wire__meta {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+
+.wire__caption {
+  font-family: var(--serif);
+  font-size: 14px;
+  font-style: italic;
+  color: var(--ink-soft);
+  margin-top: 14px;
+  line-height: 1.55;
+  padding-top: 12px;
+  border-top: 1px solid var(--ink-line);
+}
+
+.wire svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: var(--paper);
+  border-radius: 5px;
+  border: 1px solid var(--ink-line);
+}
+
+/* SVG semantic helpers (used inline via class= on SVG elements) */
+.s-bg-cream { fill: var(--cream); }
+.s-bg-soft { fill: var(--cream-soft); }
+.s-bg-navy { fill: var(--navy); }
+.s-bg-paper { fill: var(--paper); }
+.s-stroke-line { stroke: rgba(20,33,58,0.10); stroke-width: 0.5; fill: none; }
+.s-text { font-family: 'Inter Tight', sans-serif; font-size: 12px; fill: var(--ink); }
+.s-text-sm { font-family: 'Inter Tight', sans-serif; font-size: 11px; fill: var(--ink); }
+.s-text-tiny { font-family: 'Inter Tight', sans-serif; font-size: 10px; fill: var(--ink-soft); }
+.s-text-mono { font-family: 'JetBrains Mono', monospace; font-size: 9px; fill: var(--ink-mute); letter-spacing: 0.10em; text-transform: uppercase; }
+.s-text-mono-sm { font-family: 'JetBrains Mono', monospace; font-size: 9px; fill: var(--ink-mute); letter-spacing: 0.06em; }
+.s-text-serif { font-family: 'Cormorant Garamond', serif; font-size: 14px; font-weight: 600; fill: var(--ink); }
+.s-text-serif-lg { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 600; fill: var(--ink); letter-spacing: -0.005em; }
+.s-text-cream { fill: var(--cream); }
+.s-text-cream-mute { fill: rgba(255,255,255,0.55); }
+.s-text-copper { fill: var(--copper); }
+.s-text-blue { fill: var(--blue); }
+.s-text-sage { fill: var(--sage); }
+.s-text-crit { fill: var(--crit); }
+
+a.inline {
+  color: var(--blue);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(40,72,200,0.30);
+  transition: border-color 0.16s ease;
+}
+a.inline:hover { border-color: var(--blue); }
+
+.codex-block {
+  background: var(--navy);
+  color: var(--cream);
+  border-radius: 9px;
+  padding: 26px 28px;
+  margin: 22px 0;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+}
+
+.codex-block__label {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--blue-soft);
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+
+.codex-block strong { color: var(--cream); font-weight: 600; }
+
+.checklist { list-style: none; margin: 12px 0 18px 0; padding: 0; }
+.checklist li {
+  position: relative;
+  padding-left: 28px;
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink);
+  margin-bottom: 7px;
+}
+.checklist li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--ink-line-hi);
+  border-radius: 3px;
+  background: var(--paper);
+}
+
+.footer {
+  background: var(--navy);
+  color: rgba(255,255,255,0.72);
+  padding: 32px 56px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.footer__brand {
+  font-family: var(--serif);
+  font-size: 14px;
+  font-style: italic;
+  color: var(--cream);
+  margin-bottom: 8px;
+}
+
+.gap-row {
+  display: grid;
+  grid-template-columns: 200px 1fr 100px;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  background: var(--cream-soft);
+  border: 1px solid var(--ink-line);
+  border-radius: 5px;
+  margin-bottom: 6px;
+}
+.gap-row--high { border-left: 3px solid var(--crit); }
+.gap-row--med { border-left: 3px solid var(--copper); }
+.gap-row--low { border-left: 3px solid var(--sage); }
+
+.gap-row__name { font-size: 13px; font-weight: 500; color: var(--ink); }
+.gap-row__desc { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+.gap-row__delta { text-align: right; font-family: var(--mono); font-size: 12px; font-weight: 600; }
+
+@media (max-width: 1100px) {
+  .chrome { grid-template-columns: 240px 1fr; }
+  .toc { padding: 24px 22px; }
+  .content { padding: 36px 32px 64px; }
+}
+
+@media (max-width: 768px) {
+  .chrome { grid-template-columns: 1fr; }
+  .toc { position: static; height: auto; }
+  .content { padding: 28px 24px 48px; }
+  h1 { font-size: 32px; }
+  section h2 { font-size: 24px; }
+}
+</style>
+</head>
+<body>
+
+<div class="chrome">
+
+  <aside class="toc">
+    <div class="toc__brand">Abar<span>Va</span></div>
+    <div class="toc__sub">Canonical V2 · Locked 2026-05-02</div>
+
+    <div class="toc__title">The Atrium pattern, applied platform-wide.</div>
+    <div class="toc__subtitle">Bet-level operating system. Three substrates explored to produce two outcomes. Metrics as the gap engine.</div>
+
+    <div class="toc__divider"></div>
+
+    <div class="toc__label">Table of contents</div>
+    <ul class="toc__list">
+      <li><a href="#vision"><span class="toc__num">01</span>Vision in one paragraph</a></li>
+      <li><a href="#why"><span class="toc__num">02</span>Why this exists</a></li>
+      <li><a href="#architecture"><span class="toc__num">03</span>Platform architecture</a></li>
+      <li><a href="#explore"><span class="toc__num">04</span>Intelligence — the explore layer</a></li>
+      <li><a href="#atrium"><span class="toc__num">05</span>The Atrium pattern</a></li>
+      <li><a href="#states"><span class="toc__num">06</span>Three agent states</a></li>
+      <li><a href="#clickthrough"><span class="toc__num">07</span>Click-through behavior</a></li>
+      <li><a href="#submenus"><span class="toc__num">08</span>The seven submenus</a></li>
+      <li><a href="#dynamic"><span class="toc__num">09</span>Dynamic right-canvas</a></li>
+      <li><a href="#outcomes"><span class="toc__num">10</span>Two outcomes</a></li>
+      <li><a href="#metrics"><span class="toc__num">11</span>Metrics & gap engine</a></li>
+      <li><a href="#reality"><span class="toc__num">12</span>What ships first</a></li>
+      <li><a href="#crossmodule"><span class="toc__num">13</span>Pattern across modules</a></li>
+    </ul>
+
+    <div class="toc__status">Locked · Atrium · gap engine</div>
+    <div class="toc__version">V2 · supersedes V1</div>
+  </aside>
+
+  <main class="content">
+
+    <div class="eyebrow">AbarVa · canonical design specification · V2</div>
+    <h1>The <em>Atrium</em> pattern, applied platform-wide.</h1>
+    <p class="lede">Where users go to think, see, and decide before committing. Three substrates feed every interaction. Two outcomes flow from every session. The bet-level discipline is the spine; metrics are the gap engine.</p>
+
+    <div class="metadata">
+      <span><strong>Status</strong> Locked, 2026-05-02</span>
+      <span><strong>Audience</strong> Founder · Codex sessions · Engineering</span>
+      <span><strong>Supersedes</strong> V1 (2026-05-01)</span>
+    </div>
+
+    <div class="callout callout--plum">
+      <span class="callout__label">What changed in V2</span>
+      The chrome pattern is named <strong>the Atrium pattern</strong> as our own design language; no external reference. <strong>Metrics-as-gap-engine</strong> framing is integrated into the explore layer's value proposition. The pattern is declared as <strong>platform-wide chrome</strong> (Home, Setup, Strategic Moves, Source, Tower all use it). New section on metric ingestion and gap computation. <strong>Codex execution authorization is continuous</strong> — lanes auto-approve their own PRs and merges after standard checks; the founder reviews the running platform, not work plans. Existing locks unchanged.
+    </div>
+
+    <!-- Section 1 -->
+    <section id="vision">
+      <h2><span class="num">01</span>The <em>vision</em> in one paragraph</h2>
+      <p>AbarVa is the bet-level operating system for AI transformation. <strong>Strategic Moves</strong> is the registry of those bets; <strong>Source</strong> is where commitments get made on vendors and spend; <strong>Tower</strong> observes the portfolio's realized outcomes; <strong>Intelligence</strong> is the explore layer — where users go to think, see, and decide before committing.</p>
+      <p>Three substrates feed every Intelligence interaction: <em>what we know about you</em> (tenant context), <em>what patterns exist</em> (corpus), and <em>what the art of the possible looks like for you</em> (industry intelligence at peer scale, contextualized to your tenant). Two outcomes flow out of every Intelligence session: <strong>originate new bets</strong>, or <strong>validate existing ones</strong>. The 10 AI failure modes are the spine throughout.</p>
+      <p><strong>Metrics are the gap engine.</strong> Front, middle, and back office each have a defined set of critical metrics. The corpus carries north-star ranges at peer scale. The tenant brings their own metrics — or reveals their absence. The platform compares tenant-current to north-star, surfaces the gaps quantitatively where measurement exists, surfaces the measurement gaps where it doesn't, and references corpus patterns for closing each one. Strategy ingestion ties uploaded strategies to the gaps that matter most.</p>
+      <div class="callout callout--sage">
+        <span class="callout__label">The lock</span>
+        Bet-level operating system. Three substrates explored to produce two outcomes. Strategy operationalized, not generated. Metrics surface gaps; gaps drive origination and validation.
+      </div>
+    </section>
+
+    <!-- Section 2 -->
+    <section id="why">
+      <h2><span class="num">02</span>Why this exists — the empirical anchor</h2>
+      <p>Every serious analysis of AI failure — MIT Sloan, Gartner, McKinsey, BCG, federal program post-mortems — converges on the same patterns: sponsor disengagement, unclear success criteria, foundation gaps, talent gaps, operating-model resistance, governance blindness, vendor errors, pilot-to-production gaps, inability to measure outcomes, use-case sprawl.</p>
+      <p><strong>Failures happen at the bet level.</strong> Nobody writes post-mortems blaming the parent strategy document. Failures happen where commitments and money meet reality. The platform's defensible value concentrates at the bet level, where the actual problem lives. Intelligence's role is upstream: making sure the bets that get committed are the right ones, well-shaped, with foundations in place, against the right patterns and metrics.</p>
+      <p><em>Inability to measure outcomes</em> is one of the 10 failure modes. It is also, empirically, the single most common one. Programs ship; nobody knows whether they delivered. Promises are made; nobody settles them. Metrics-as-gap-engine is not a bonus capability — it is core to addressing the failure mode the corpus identifies most often.</p>
+      <p>McKinsey's February 2025 article reinforces this position. They name five challenges every enterprise must solve to capture the AI-in-strategy inflection: proprietary data ecosystems, signal-from-noise discipline, executive synthesis, process quality over insight quality, and platform-grade technology investment. AbarVa is built against those five challenges, applied to where the bets actually live.</p>
+    </section>
+
+    <!-- Section 3 -->
+    <section id="architecture">
+      <h2><span class="num">03</span>Platform architecture — where Intelligence sits</h2>
+      <p>The platform is layered. Setup is the substrate; Intelligence is the strategic thinking layer; Strategic Moves is the registry of committed bets; Source is where vendor and spend commitments get made; Tower observes the portfolio. Home is the personalized landing.</p>
+
+      <div class="wire">
+        <div class="wire__header">
+          <div class="wire__title">Layered architecture</div>
+          <div class="wire__meta">Six layers · Intelligence as the explore tier</div>
+        </div>
+        <svg viewBox="0 0 800 460" xmlns="http://www.w3.org/2000/svg">
+          <rect x="40" y="20" width="720" height="44" rx="6" fill="#fbf3e4" stroke="rgba(20,33,58,0.10)" stroke-width="0.5"/>
+          <text x="400" y="42" text-anchor="middle" class="s-text-serif">Home — personalized landing per entitlements</text>
+          <text x="400" y="56" text-anchor="middle" class="s-text-mono">Atlas brief · entitled module tiles</text>
+
+          <rect x="40" y="84" width="720" height="100" rx="9" fill="#fbf3e4" stroke="#b8632d" stroke-width="1.5"/>
+          <text x="60" y="106" class="s-text-serif" style="font-size: 17px;">Intelligence — the explore layer</text>
+          <text x="60" y="124" class="s-text-mono" style="fill: #b8632d;">Sentinel · three substrates · two outcomes · metric gap engine</text>
+          <text x="60" y="148" class="s-text" style="font-size: 12px;">• What we know about you  (tenant context)</text>
+          <text x="60" y="164" class="s-text" style="font-size: 12px;">• What patterns exist  (corpus)</text>
+          <text x="380" y="148" class="s-text" style="font-size: 12px;">• What art of the possible looks like  (industry intel)</text>
+          <text x="380" y="164" class="s-text" style="font-size: 12px;">→ Outcomes: originate new bets · validate existing bets</text>
+
+          <rect x="40" y="204" width="232" height="120" rx="6" fill="#fbf3e4" stroke="rgba(20,33,58,0.10)" stroke-width="0.5"/>
+          <text x="156" y="228" text-anchor="middle" class="s-text-serif">Strategic Moves</text>
+          <text x="156" y="246" text-anchor="middle" class="s-text-mono">Registry of bets</text>
+          <text x="156" y="270" text-anchor="middle" class="s-text" style="font-size: 11px;">P0 → P1 → P2 → P3 → P4</text>
+          <text x="156" y="288" text-anchor="middle" class="s-text" style="font-size: 11px;">→ P5 → P6 Tower handoff</text>
+          <text x="156" y="312" text-anchor="middle" class="s-text-mono">Nexus · move lifecycle</text>
+
+          <rect x="284" y="204" width="232" height="120" rx="6" fill="#fbf3e4" stroke="rgba(20,33,58,0.10)" stroke-width="0.5"/>
+          <text x="400" y="228" text-anchor="middle" class="s-text-serif">Source</text>
+          <text x="400" y="246" text-anchor="middle" class="s-text-mono">Commitments of spend</text>
+          <text x="400" y="270" text-anchor="middle" class="s-text" style="font-size: 11px;">11 stages · Strategy → Value</text>
+          <text x="400" y="288" text-anchor="middle" class="s-text" style="font-size: 11px;">RFP, BAFO, evaluation, transition</text>
+          <text x="400" y="312" text-anchor="middle" class="s-text-mono">Nexus · sourcing lifecycle</text>
+
+          <rect x="528" y="204" width="232" height="120" rx="6" fill="#fbf3e4" stroke="rgba(20,33,58,0.10)" stroke-width="0.5"/>
+          <text x="644" y="228" text-anchor="middle" class="s-text-serif">Tower</text>
+          <text x="644" y="246" text-anchor="middle" class="s-text-mono">Portfolio observation</text>
+          <text x="644" y="270" text-anchor="middle" class="s-text" style="font-size: 11px;">Realized vs. committed</text>
+          <text x="644" y="288" text-anchor="middle" class="s-text" style="font-size: 11px;">Pressure cards · cascade graph</text>
+          <text x="644" y="312" text-anchor="middle" class="s-text-mono">Atlas · cross-program synthesis</text>
+
+          <rect x="40" y="344" width="720" height="44" rx="6" fill="#fbf3e4" stroke="rgba(20,33,58,0.10)" stroke-width="0.5"/>
+          <text x="400" y="366" text-anchor="middle" class="s-text-serif">Setup / Foundation — datasets, users, entitlements, tenant metrics</text>
+          <text x="400" y="380" text-anchor="middle" class="s-text-mono">Steward · governance + compliance · metric ingestion</text>
+
+          <text x="400" y="420" text-anchor="middle" class="s-text-mono" style="letter-spacing: 0.14em;">Intelligence is one of two origination paths into Strategic Moves</text>
+          <text x="400" y="436" text-anchor="middle" class="s-text-mono" style="letter-spacing: 0.14em;">Direct registration is the other — both converge at P0</text>
+        </svg>
+        <p class="wire__caption">The platform is a layered operating system. Each layer has a distinct, defensible role. Intelligence sits above Strategic Moves and feeds it. Setup grounds everything — including the tenant's metric inventory that powers the gap engine.</p>
+      </div>
+    </section>
+
+    <!-- Section 4 -->
+    <section id="explore">
+      <h2><span class="num">04</span>Intelligence — the <em>explore</em> layer</h2>
+      <p>Intelligence is where users go to think. Three substrates feed every answer; two outcomes flow from every session; metrics are the connective tissue that makes the substrates concrete and the outcomes measurable.</p>
+
+      <h3>The three substrates</h3>
+      <p><strong>Substrate one — what we know about you (tenant context).</strong> Organization structure, IT landscape, financial profile, prior programs, change-failure record, existing bets, data inventory, uploaded strategy artifacts, and <em>the tenant's current metrics — or the absence of them</em>. Grounded in the private data plane.</p>
+      <p><strong>Substrate two — what patterns exist (corpus knowledge).</strong> Patterns, anti-patterns, solution architectures, decision frameworks, vendor implementations, regulatory frames. <em>And critical metrics per industry per functional domain, with north-star ranges at peer scale.</em> Anchored to the program lifecycle, sourcing lifecycle, and the 10 failure modes.</p>
+      <p><strong>Substrate three — what art of the possible looks like for you (industry intelligence).</strong> Industry intelligence views by functional domain (front office, middle office, back office). What's happening, what's measured, what good looks like, what failure looks like, where peers are leading and lagging. Contextualized to your tenant scale and shape.</p>
+
+      <div class="callout callout--blue">
+        <span class="callout__label">The metrics-as-gap-engine</span>
+        For each industry, each functional domain, each theme, the corpus carries critical metrics with their north-star ranges. The tenant brings their own metrics. The platform compares tenant-current to north-star, surfaces measurement gaps where the metric should exist but doesn't, and references corpus patterns for closing each gap. <em>This makes the explore layer concrete and operational, not just informational.</em>
+      </div>
+
+      <h3>The two outcomes</h3>
+      <p><strong>Originate new bets.</strong> When exploration matures into a clear candidate bet — often anchored on a specific gap — the user registers it as a Strategic Move with the Intelligence conversation attached as origination evidence.</p>
+      <p><strong>Validate existing bets.</strong> Existing Strategic Moves can be brought into Intelligence for foundation readiness, pre-mortem, pattern challenge, strategy alignment, or metric-grounded validation. Outputs flow back to the move's evidence ledger.</p>
+
+      <h3>What's explicitly out of scope</h3>
+      <ul>
+        <li>Structured AI Strategy Definition workflow that produces enterprise AI strategy from scratch</li>
+        <li>Strategy team replacement claims; the platform supports human strategy work, does not replace it</li>
+        <li>Quarterbacking executive offsites — that's human partner work</li>
+        <li>The four-mode answer toggle as a primary UI control (auto-selected by Sentinel; debug only)</li>
+      </ul>
+    </section>
+
+    <!-- Section 5 -->
+    <section id="atrium">
+      <h2><span class="num">05</span>The <em>Atrium</em> pattern</h2>
+      <p>The platform's screen pattern is <strong>the Atrium pattern</strong> — our design language for an AI-native operating system. An atrium is a central space in a building where light comes from above, work happens around it, multiple floors look in. Translated to AbarVa: the agent zone is the atrium-light cast on the canvas; the canvas is the work surface where the light falls; the submenus are the rooms you traverse; the navigation is the building's circulation.</p>
+
+      <div class="callout callout--plum">
+        <span class="callout__label">The pattern's three properties</span>
+        <strong>Persistent zones.</strong> Module nav, submenu strip, agent always available, canvas always primary.<br/>
+        <strong>Context-driven canvas.</strong> The canvas changes based on what the user is doing. Users don't navigate to a separate "chat" surface or "browse" surface — they stay in place; the canvas swaps.<br/>
+        <strong>Agent-mediated work.</strong> The agent is always there. Output materializes in the agent zone or, when substantial, expands into the canvas adjacent.
+      </div>
+
+      <h3>The chrome layout</h3>
+      <p>Two horizontal strips at the top (top nav + horizontal submenu). Two vertical zones below (agent + canvas). The agent strip on the left is ambient by default — narrow, persistent, present. The canvas on the right is dominant — where users actually operate. Submenus are horizontal tabs above the work area.</p>
+
+      <div class="wire">
+        <div class="wire__header">
+          <div class="wire__title">The Atrium chrome</div>
+          <div class="wire__meta">Top nav · submenu · agent + canvas</div>
+        </div>
+        <svg viewBox="0 0 800 360" xmlns="http://www.w3.org/2000/svg">
+          <rect x="40" y="20" width="720" height="32" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.10)" stroke-width="0.5"/>
+          <text x="56" y="40" class="s-text" style="font-weight: 600;">AbarVa</text>
+          <line x1="120" y1="28" x2="120" y2="44" stroke="rgba(20,33,58,0.18)" stroke-width="0.5"/>
+          <text x="135" y="40" class="s-text">Apex Retail</text>
+          <text x="240" y="40" class="s-text-mono">Home</text>
+          <text x="290" y="40" class="s-text-mono">Setup</text>
+          <text x="340" y="40" class="s-text-mono">Moves</text>
+          <text x="390" y="40" class="s-text-mono">Source</text>
+          <text x="450" y="40" class="s-text-mono" style="fill: #2848c8; font-weight: 700;">Intel</text>
+          <line x1="442" y1="48" x2="478" y2="48" stroke="#2848c8" stroke-width="2"/>
+          <text x="510" y="40" class="s-text-mono">Tower</text>
+          <text x="744" y="40" text-anchor="end" class="s-text">Nina P.</text>
+
+          <rect x="40" y="68" width="720" height="36" rx="4" fill="#f5e8db" stroke="rgba(184,99,45,0.30)" stroke-width="0.5"/>
+          <text x="68" y="90" class="s-text" style="fill: #b8632d; font-weight: 700;">Today</text>
+          <line x1="58" y1="100" x2="100" y2="100" stroke="#b8632d" stroke-width="2"/>
+          <text x="135" y="90" class="s-text">By function</text>
+          <text x="218" y="90" class="s-text">Patterns</text>
+          <text x="280" y="90" class="s-text">Vendors</text>
+          <text x="345" y="90" class="s-text">Peer activity</text>
+          <text x="430" y="90" class="s-text">My strategy</text>
+          <text x="510" y="90" class="s-text">Sessions</text>
+
+          <rect x="40" y="120" width="200" height="200" rx="6" fill="#0a1628"/>
+          <text x="140" y="148" text-anchor="middle" class="s-text-serif s-text-cream" style="font-size: 16px;">Sentinel</text>
+          <circle cx="220" cy="143" r="3" fill="#7a9c6e"/>
+          <text x="140" y="162" text-anchor="middle" class="s-text-mono" style="fill: rgba(255,255,255,0.5);">Live</text>
+          <line x1="56" y1="178" x2="224" y2="178" stroke="rgba(255,255,255,0.12)" stroke-width="0.5"/>
+          <text x="140" y="200" text-anchor="middle" class="s-text" style="fill: rgba(255,255,255,0.78); font-style: italic;">Three things matter</text>
+          <text x="140" y="216" text-anchor="middle" class="s-text" style="fill: rgba(255,255,255,0.78); font-style: italic;">today.</text>
+          <line x1="56" y1="282" x2="224" y2="282" stroke="rgba(255,255,255,0.12)" stroke-width="0.5"/>
+          <rect x="56" y="290" width="168" height="22" rx="4" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.15)" stroke-width="0.5"/>
+          <text x="140" y="304" text-anchor="middle" class="s-text-mono" style="fill: rgba(255,255,255,0.5);">ask sentinel</text>
+
+          <rect x="248" y="120" width="512" height="200" rx="6" fill="#fbf3e4" stroke="rgba(20,33,58,0.10)" stroke-width="0.5"/>
+          <text x="504" y="156" text-anchor="middle" class="s-text-serif-lg">Canvas — submenu content fills here</text>
+          <text x="504" y="178" text-anchor="middle" class="s-text-mono">Today's brief · pressure cards · pending decisions</text>
+          <line x1="280" y1="200" x2="730" y2="200" stroke="rgba(20,33,58,0.18)" stroke-width="0.5"/>
+          <rect x="280" y="216" width="138" height="60" rx="4" fill="#fbf3e4" stroke="#b1331f" stroke-width="1.5"/>
+          <text x="349" y="240" text-anchor="middle" class="s-text-mono" style="fill: #b1331f; font-weight: 700;">High</text>
+          <text x="349" y="260" text-anchor="middle" class="s-text-tiny">Vendor C</text>
+          <rect x="430" y="216" width="138" height="60" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.18)" stroke-width="0.5"/>
+          <text x="499" y="240" text-anchor="middle" class="s-text-mono">Medium</text>
+          <text x="499" y="260" text-anchor="middle" class="s-text-tiny">Warehouse BAFO</text>
+          <rect x="580" y="216" width="138" height="60" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.18)" stroke-width="0.5"/>
+          <text x="649" y="240" text-anchor="middle" class="s-text-mono" style="fill: #5b7d4f;">Watch</text>
+          <text x="649" y="260" text-anchor="middle" class="s-text-tiny">CDP win</text>
+        </svg>
+        <p class="wire__caption">Two horizontal strips at the top (top nav + submenu). Two vertical zones below (agent + canvas). The agent is ambient by default; the canvas is the dominant work surface.</p>
+      </div>
+
+      <h3>Locked dimensions</h3>
+      <table>
+        <thead><tr><th>Zone</th><th>Width at 1440px</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Top nav</td><td>100% · 32px tall</td><td>Module navigation, persistent</td></tr>
+          <tr><td>Submenu strip</td><td>100% · 36px tall</td><td>Horizontal tabs, click swaps canvas</td></tr>
+          <tr><td>Sentinel ambient</td><td>200px</td><td>Comfortable for two-line synthesis</td></tr>
+          <tr><td>Canvas (ambient)</td><td>~1240px</td><td>Dominant work surface</td></tr>
+        </tbody>
+      </table>
+
+      <p>The Atrium pattern is <em>platform-wide chrome</em>. It applies to all six modules — Home, Setup, Strategic Moves, Source, Intelligence, Tower. Each module specifies its own submenu list, agent (Atlas / Steward / Nexus / Sentinel), and canvas content shapes. See <a href="#crossmodule" class="inline">Section 13</a> for cross-module application.</p>
+    </section>
+
+    <!-- Section 6 -->
+    <section id="states">
+      <h2><span class="num">06</span>Three <em>states</em> of the agent zone</h2>
+      <p>The agent zone is elastic. Three states: ambient (~200px, default), engaged (~360px, active dialogue), focus (~520px, deep thinking session). Static layouts force every state into the same proportions; dynamic resize lets each be optimal.</p>
+
+      <div class="wire">
+        <div class="wire__header">
+          <div class="wire__title">State 1 — ambient (default)</div>
+          <div class="wire__meta">Sentinel ~200px · canvas ~85%</div>
+        </div>
+        <svg viewBox="0 0 800 220" xmlns="http://www.w3.org/2000/svg">
+          <rect x="40" y="20" width="720" height="28" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.10)" stroke-width="0.5"/>
+          <text x="60" y="38" class="s-text-mono">top nav</text>
+          <rect x="40" y="56" width="720" height="28" rx="4" fill="#f5e8db"/>
+          <text x="60" y="74" class="s-text-mono" style="fill: #b8632d;">submenu</text>
+          <rect x="40" y="92" width="180" height="120" rx="6" fill="#0a1628"/>
+          <text x="130" y="120" text-anchor="middle" class="s-text-serif s-text-cream" style="font-size: 15px;">Sentinel</text>
+          <text x="130" y="138" text-anchor="middle" class="s-text-mono" style="fill: rgba(255,255,255,0.5);">ambient</text>
+          <text x="130" y="166" text-anchor="middle" class="s-text-tiny" style="fill: rgba(255,255,255,0.78); font-style: italic;">brief</text>
+          <text x="130" y="180" text-anchor="middle" class="s-text-tiny" style="fill: rgba(255,255,255,0.78); font-style: italic;">last reply</text>
+          <rect x="50" y="190" width="160" height="14" rx="3" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.15)" stroke-width="0.5"/>
+          <rect x="228" y="92" width="532" height="120" rx="6" fill="#fbf3e4" stroke="rgba(20,33,58,0.10)" stroke-width="0.5"/>
+          <text x="494" y="125" text-anchor="middle" class="s-text-serif-lg">Canvas — dominant</text>
+          <text x="494" y="145" text-anchor="middle" class="s-text-mono">multi-column layout, full density</text>
+          <rect x="248" y="160" width="160" height="40" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.18)" stroke-width="0.5"/>
+          <rect x="416" y="160" width="160" height="40" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.18)" stroke-width="0.5"/>
+          <rect x="584" y="160" width="160" height="40" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.18)" stroke-width="0.5"/>
+        </svg>
+        <p class="wire__caption">Browsing the canvas. Sentinel is glanceable, available but not stealing focus.</p>
+      </div>
+
+      <div class="wire">
+        <div class="wire__header">
+          <div class="wire__title">State 2 — engaged (active dialogue)</div>
+          <div class="wire__meta">Sentinel ~360px · canvas reflows</div>
+        </div>
+        <svg viewBox="0 0 800 220" xmlns="http://www.w3.org/2000/svg">
+          <rect x="40" y="20" width="720" height="28" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.10)" stroke-width="0.5"/>
+          <rect x="40" y="56" width="720" height="28" rx="4" fill="#f5e8db"/>
+          <rect x="40" y="92" width="360" height="120" rx="6" fill="#0a1628"/>
+          <text x="220" y="118" text-anchor="middle" class="s-text-serif s-text-cream" style="font-size: 15px;">Sentinel — engaged</text>
+          <text x="220" y="134" text-anchor="middle" class="s-text-mono" style="fill: rgba(255,255,255,0.5);">full conversation</text>
+          <rect x="56" y="146" width="220" height="20" rx="4" fill="rgba(88,118,220,0.20)" stroke="rgba(88,118,220,0.40)" stroke-width="0.5"/>
+          <rect x="120" y="170" width="220" height="20" rx="4" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.12)" stroke-width="0.5"/>
+          <rect x="56" y="194" width="328" height="14" rx="3" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.15)" stroke-width="0.5"/>
+          <rect x="408" y="92" width="352" height="120" rx="6" fill="#f5e8db" stroke="rgba(184,99,45,0.30)" stroke-width="0.5"/>
+          <text x="584" y="120" text-anchor="middle" class="s-text-serif" style="font-size: 15px;">Canvas — reflowed</text>
+          <text x="584" y="138" text-anchor="middle" class="s-text-mono">single column, tighter density</text>
+          <rect x="424" y="156" width="320" height="22" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.18)" stroke-width="0.5"/>
+          <rect x="424" y="184" width="320" height="22" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.18)" stroke-width="0.5"/>
+        </svg>
+        <p class="wire__caption">Active dialogue. Sentinel grows; canvas reflows to single-column without losing content.</p>
+      </div>
+
+      <div class="wire">
+        <div class="wire__header">
+          <div class="wire__title">State 3 — focus (deep thinking session)</div>
+          <div class="wire__meta">Sentinel ~520px · canvas reference panel</div>
+        </div>
+        <svg viewBox="0 0 800 220" xmlns="http://www.w3.org/2000/svg">
+          <rect x="40" y="20" width="720" height="28" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.10)" stroke-width="0.5"/>
+          <rect x="40" y="56" width="720" height="28" rx="4" fill="#f5e8db"/>
+          <rect x="40" y="92" width="600" height="120" rx="6" fill="#0a1628"/>
+          <text x="340" y="118" text-anchor="middle" class="s-text-serif s-text-cream" style="font-size: 15px;">Sentinel — focus</text>
+          <text x="340" y="134" text-anchor="middle" class="s-text-mono" style="fill: rgba(255,255,255,0.5);">conversation is the work</text>
+          <rect x="56" y="146" width="440" height="22" rx="4" fill="rgba(88,118,220,0.20)" stroke="rgba(88,118,220,0.40)" stroke-width="0.5"/>
+          <rect x="160" y="172" width="440" height="22" rx="4" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.12)" stroke-width="0.5"/>
+          <rect x="648" y="92" width="112" height="120" rx="6" fill="#fbf3e4" stroke="rgba(20,33,58,0.10)" stroke-width="0.5"/>
+          <text x="704" y="118" text-anchor="middle" class="s-text-serif" style="font-size: 13px;">Reference</text>
+          <text x="704" y="138" text-anchor="middle" class="s-text-mono">PAT-FM-009</text>
+          <rect x="660" y="148" width="88" height="50" rx="4" fill="#fbf3e4" stroke="rgba(20,33,58,0.18)" stroke-width="0.5"/>
+        </svg>
+        <p class="wire__caption">Deep thinking. Sentinel dominates; canvas becomes a glanceable reference panel showing only the active artifact. Triggered explicitly only.</p>
+      </div>
+
+      <div class="callout">
+        <span class="callout__label">State transition triggers</span>
+        <strong>Ambient → engaged:</strong> user clicks composer, types, or Sentinel surfaces substantive output. Auto-back after 30s inactivity.<br/>
+        <strong>Engaged → focus:</strong> explicit user action only — chevron click or "enter thinking session." Never auto-triggered.<br/>
+        <strong>Any state → module switch:</strong> agent state preserved in background. Returning restores prior conversation.
+      </div>
+    </section>
+
+    <!-- Section 7 -->
+    <section id="clickthrough">
+      <h2><span class="num">07</span>Click-through behavior</h2>
+      <p>The Atrium pattern's whole value is in <em>what stays put when the user navigates</em>. Strategic thinking is multi-context work; the agent's state must persist across canvas navigation, the submenu's state must persist across agent engagement, and the conversation must never reset because the user clicked somewhere.</p>
+
+      <table>
+        <thead><tr><th>User action</th><th>What changes</th><th>What persists</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Click submenu tab</td>
+            <td>Active tab indicator moves; canvas swaps entirely</td>
+            <td>Top nav, Sentinel state (conversation, scroll, composer), agent zone width</td>
+          </tr>
+          <tr>
+            <td>Click agent composer / type</td>
+            <td>Sentinel expands ambient → engaged; canvas reflows</td>
+            <td>Top nav, submenu strip, canvas content (just reflowed)</td>
+          </tr>
+          <tr>
+            <td>Agent surfaces substantive output</td>
+            <td>Sentinel auto-expands; canvas may receive published cards</td>
+            <td>Submenu, prior canvas content (augmented, not replaced)</td>
+          </tr>
+          <tr>
+            <td>Click chevron / enter focus</td>
+            <td>Sentinel takes ~520px; canvas becomes ~100px reference panel</td>
+            <td>Submenu strip and top nav unchanged</td>
+          </tr>
+          <tr>
+            <td>Switch module (Intel → Moves)</td>
+            <td>Submenu strip replaced; canvas replaced; agent replaced</td>
+            <td>Prior agent state preserved in background; returning restores it</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>Browser URL updates on submenu navigation (e.g., <span class="kbd">/intel/patterns</span>) for shareable deep-linking.</p>
+    </section>
+
+    <!-- Section 8 -->
+    <section id="submenus">
+      <h2><span class="num">08</span>The seven <em>submenus</em></h2>
+
+      <h3>1. Today</h3>
+      <p><strong>Purpose:</strong> Sentinel's curated entry-state — what's worth your attention right now. Default landing.</p>
+      <p><strong>Canvas:</strong> Three pressure cards ranked by leverage (HIGH/MEDIUM/WATCH), pending-your-decision section, recent-activity section, top metric gaps surfaced from the gap engine.</p>
+      <p><strong>Sentinel ambient brief:</strong> Italic synthesis. <em>"Three things matter today. Vendor C is one signature from unblocking AMS-CDP-2026. Two metric gaps in middle office crossed your action threshold this week."</em></p>
+
+      <h3>2. By function</h3>
+      <p><strong>Purpose:</strong> Flagship explore-layer experience. Industry intelligence by functional domain, with metric gaps overlaid.</p>
+      <p><strong>Canvas:</strong> Three large domain tiles — Front office, Middle office, Back office — tenant-tailored to industry. Click → theme list at depth → deep-dive with corpus-grounded patterns and metric gap visualization.</p>
+      <p><strong>Tenant tailoring:</strong> Domain themes specific to the tenant's industry. Specialty retail middle office: demand forecasting, replenishment, price/promo, inventory allocation, store labor. Healthcare IDN middle office: ambient documentation, clinical decision support, prior auth, coding quality, population health. Financial services middle office: credit decisioning, fraud detection, AML compliance, market risk.</p>
+
+      <h3>3. Patterns</h3>
+      <p><strong>Purpose:</strong> Corpus pattern catalog. Browseable, filterable, deep-linkable.</p>
+      <p><strong>Canvas:</strong> Filter bar (archetype · failure mode · industry · function), pattern list with mono pattern IDs, click for deep-dive.</p>
+      <p><strong>Pattern domains:</strong> PAT-FM-* (failure modes), PAT-PRG-*, PAT-AI-*, PAT-DT-*, PAT-OPS-*, PAT-VEN-*, PAT-REG-*, PAT-IND-*, PAT-RV-*, PAT-XF-*, and <strong>PAT-MET-* (metrics — new)</strong>.</p>
+
+      <h3>4. Vendors</h3>
+      <p><strong>Purpose:</strong> Vendor landscape intelligence — who plays in what space, at what scale, with what realized outcomes.</p>
+      <p><strong>Canvas:</strong> Filter bar, vendor list, click for deep-dive showing typical pricing, contract patterns, integration patterns, common over-promises, settled outcomes archive.</p>
+
+      <h3>5. Peer activity</h3>
+      <p><strong>Purpose:</strong> What peers in your industry at your scale are doing — anonymized aggregate.</p>
+      <p><strong>Canvas:</strong> Activity feed at anonymized aggregate. <em>"4 of 14 specialty retailers at your scale started ambient documentation pilots in Q1."</em> Filter by domain, event type, pattern, time window.</p>
+
+      <h3>6. My strategy</h3>
+      <p><strong>Purpose:</strong> Where the customer's uploaded AI strategy lives, gets structured, links to registered moves, and gets compared to industry peer patterns AND to the metric gap profile.</p>
+      <p><strong>Canvas:</strong> If no strategy: empty-state with upload affordance. If uploaded: artifact summary, themes section with linked moves and alignment status, empirical challenge section (where strategy assumptions diverge from realized portfolio outcomes), comparative landscape section (where strategy aligns or diverges from peer patterns and from the gap engine's priorities).</p>
+
+      <h3>7. Sessions</h3>
+      <p><strong>Purpose:</strong> Persistent thinking sessions — multi-day strategic thinking that doesn't reset.</p>
+      <p><strong>Canvas:</strong> Session list with name, date, brief summary, candidate moves count, tags. Click to return to session in same state. Multi-user sessions shareable.</p>
+    </section>
+
+    <!-- Section 9 -->
+    <section id="dynamic">
+      <h2><span class="num">09</span>Dynamic <em>right-canvas</em> during chat</h2>
+      <p>The agent zone and the canvas are coupled when Sentinel is engaged in dialogue. Sentinel can publish content to the canvas dynamically based on relevance.</p>
+
+      <div class="wire">
+        <div class="wire__header">
+          <div class="wire__title">Sentinel publishes to canvas</div>
+          <div class="wire__meta">Pattern citation example</div>
+        </div>
+        <svg viewBox="0 0 800 280" xmlns="http://www.w3.org/2000/svg">
+          <rect x="40" y="20" width="720" height="22" rx="3" fill="#fbf3e4" stroke="rgba(20,33,58,0.10)" stroke-width="0.5"/>
+          <rect x="40" y="46" width="720" height="22" rx="3" fill="#f5e8db"/>
+          <text x="120" y="61" class="s-text-mono" style="fill: #b8632d; font-weight: 700;">By function</text>
+          <line x1="116" y1="66" x2="178" y2="66" stroke="#b8632d" stroke-width="2"/>
+
+          <rect x="40" y="76" width="380" height="180" rx="6" fill="#0a1628"/>
+          <text x="230" y="100" text-anchor="middle" class="s-text-serif s-text-cream" style="font-size: 14px;">Sentinel — engaged</text>
+          <rect x="56" y="116" width="280" height="22" rx="4" fill="rgba(88,118,220,0.20)" stroke="rgba(88,118,220,0.40)" stroke-width="0.5"/>
+          <text x="196" y="131" text-anchor="middle" class="s-text-cream" style="font-size: 10px;">CDP failures at peer scale?</text>
+          <rect x="124" y="146" width="280" height="22" rx="4" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.12)" stroke-width="0.5"/>
+          <text x="264" y="161" text-anchor="middle" class="s-text-cream" style="font-size: 10px;">Two captured — see PAT-FM-009</text>
+          <rect x="56" y="176" width="320" height="36" rx="4" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.12)" stroke-width="0.5"/>
+          <text x="216" y="190" text-anchor="middle" class="s-text-cream" style="font-size: 10px;">Both failed at kill-criteria stage —</text>
+          <text x="216" y="204" text-anchor="middle" class="s-text-cream" style="font-size: 10px;">vague metrics, no early stop.</text>
+          <rect x="56" y="222" width="328" height="22" rx="3" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.15)" stroke-width="0.5"/>
+
+          <rect x="428" y="76" width="332" height="180" rx="6" fill="#efe1ef" stroke="#6b3a6b" stroke-width="1"/>
+          <text x="594" y="100" text-anchor="middle" class="s-text-serif" style="fill: #6b3a6b;">Pattern catalog</text>
+          <rect x="448" y="114" width="296" height="40" rx="4" fill="#efe1ef" stroke="#6b3a6b" stroke-width="2"/>
+          <text x="464" y="132" class="s-text-mono" style="font-size: 9px; fill: #6b3a6b; font-weight: 700;">PAT-FM-009</text>
+          <text x="464" y="146" class="s-text" style="font-size: 11px; fill: #6b3a6b;">Inability to measure outcomes</text>
+          <rect x="448" y="162" width="296" height="22" rx="3" fill="#efe1ef" stroke="#6b3a6b" stroke-width="0.5"/>
+          <text x="464" y="176" class="s-text-mono" style="font-size: 9px; fill: #6b3a6b;">PAT-FM-001 · sponsor disengagement</text>
+          <rect x="448" y="190" width="296" height="22" rx="3" fill="#efe1ef" stroke="#6b3a6b" stroke-width="0.5"/>
+          <text x="464" y="204" class="s-text-mono" style="font-size: 9px; fill: #6b3a6b;">PAT-PRG-001 · second attempt</text>
+          <rect x="448" y="218" width="296" height="22" rx="3" fill="#efe1ef" stroke="#6b3a6b" stroke-width="0.5"/>
+          <text x="464" y="232" class="s-text-mono" style="font-size: 9px; fill: #6b3a6b;">PAT-MET-014 · forecast accuracy</text>
+
+          <line x1="384" y1="134" x2="448" y2="134" stroke="#6b3a6b" stroke-width="1.5" stroke-dasharray="4 4"/>
+          <text x="416" y="128" text-anchor="middle" class="s-text-mono" style="fill: #6b3a6b; font-size: 9px;">linked</text>
+        </svg>
+        <p class="wire__caption">Sentinel mentions PAT-FM-009 in conversation. Canvas highlights that pattern with a thicker border. Conversation and browsing reinforce each other.</p>
+      </div>
+
+      <h3>What Sentinel can publish to the canvas</h3>
+      <ul>
+        <li><strong>Pattern citations.</strong> Pattern surfaced; canvas highlights or surfaces snippet preview.</li>
+        <li><strong>Document links.</strong> Reference card with link, source citation, provenance stamp.</li>
+        <li><strong>Synthesis summaries.</strong> Multi-step synthesis as structured card with pinnable points.</li>
+        <li><strong>Candidate move scaffolds.</strong> Move-seed cards ready to register.</li>
+        <li><strong>Decision frames.</strong> Structured decision card with criteria, evidence, recommendation rationale.</li>
+        <li><strong>Foundation readiness assessments.</strong> Gaps, risks, recommendations as structured output.</li>
+        <li><strong>Strategy-to-bet alignment overlays.</strong> Comparison with structured callouts.</li>
+        <li><strong>Metric gap surfaces.</strong> Specific gap with tenant-current vs. north-star, with corpus pattern references for closing.</li>
+      </ul>
+    </section>
+
+    <!-- Section 10 -->
+    <section id="outcomes">
+      <h2><span class="num">10</span>Two <em>outcomes</em> — originate and validate</h2>
+
+      <h3>Origination flow</h3>
+      <ol>
+        <li><strong>Candidate identification.</strong> Sentinel summarizes problem, value hypothesis, target outcome, foundation considerations, relevant patterns, <strong>relevant metric gaps</strong>.</li>
+        <li><strong>Move scaffold.</strong> Canvas renders move-seed card with candidate populated.</li>
+        <li><strong>Confirmation.</strong> User reviews, edits, confirms.</li>
+        <li><strong>Registration.</strong> Strategic Move created in P0 with Intelligence session attached as evidence.</li>
+        <li><strong>Handoff.</strong> Nexus picks up at P0 with strategic context already loaded.</li>
+      </ol>
+
+      <h3>Validation flow</h3>
+      <ol>
+        <li><strong>Move selection.</strong> User selects registered move and chooses "validate in Intelligence."</li>
+        <li><strong>Context loading.</strong> Move's phase, archetype, promise contract, evidence ledger loaded.</li>
+        <li><strong>Validation type.</strong> Foundation Readiness · Pre-mortem · Pattern challenge · Strategy alignment · <strong>Metric grounding</strong> · Open exploration.</li>
+        <li><strong>Working session.</strong> Persistent session anchored to the move. Sentinel runs analysis.</li>
+        <li><strong>Outputs.</strong> Gaps identified, risks surfaced, recommendations made; outputs flow to evidence ledger.</li>
+        <li><strong>Decision.</strong> Accept · modify design · kill · escalate · originate remediation move (often a foundation-or-measurement-readiness move).</li>
+      </ol>
+    </section>
+
+    <!-- Section 11 - NEW -->
+    <section id="metrics">
+      <h2><span class="num">11</span>Metrics & the <em>gap engine</em></h2>
+      <p>Metrics are the connective tissue between corpus and tenant. The corpus carries critical metrics per industry per functional domain with north-star ranges at peer scale. The tenant brings their current metrics — or reveals their absence. The platform compares, surfaces gaps, and references corpus patterns for closing each one.</p>
+
+      <h3>The gap engine, conceptually</h3>
+
+      <div class="wire">
+        <div class="wire__header">
+          <div class="wire__title">The gap engine — three flows, three outputs</div>
+          <div class="wire__meta">Corpus + tenant → comparison → gaps</div>
+        </div>
+        <svg viewBox="0 0 800 380" xmlns="http://www.w3.org/2000/svg">
+          <rect x="40" y="40" width="220" height="100" rx="9" fill="#efe1ef" stroke="#6b3a6b" stroke-width="0.5"/>
+          <text x="150" y="68" text-anchor="middle" class="s-text-serif" style="fill: #6b3a6b;">Corpus metrics</text>
+          <text x="150" y="86" text-anchor="middle" class="s-text-mono" style="fill: #6b3a6b;">Per industry · per domain</text>
+          <text x="150" y="108" text-anchor="middle" class="s-text-tiny" style="fill: #6b3a6b;">North-star ranges</text>
+          <text x="150" y="124" text-anchor="middle" class="s-text-tiny" style="fill: #6b3a6b;">Leader benchmarks · floors</text>
+
+          <rect x="540" y="40" width="220" height="100" rx="9" fill="#eaeefa" stroke="#2848c8" stroke-width="0.5"/>
+          <text x="650" y="68" text-anchor="middle" class="s-text-serif" style="fill: #2848c8;">Tenant metrics</text>
+          <text x="650" y="86" text-anchor="middle" class="s-text-mono" style="fill: #2848c8;">From Setup ingestion</text>
+          <text x="650" y="108" text-anchor="middle" class="s-text-tiny" style="fill: #2848c8;">Current values · trajectories</text>
+          <text x="650" y="124" text-anchor="middle" class="s-text-tiny" style="fill: #2848c8;">Or absence flagged</text>
+
+          <line x1="260" y1="90" x2="540" y2="90" stroke="rgba(20,33,58,0.18)" stroke-width="0.5" stroke-dasharray="4 4"/>
+
+          <rect x="280" y="160" width="240" height="56" rx="9" fill="#0a1628"/>
+          <text x="400" y="184" text-anchor="middle" class="s-text-serif s-text-cream" style="font-size: 16px;">The gap engine</text>
+          <text x="400" y="202" text-anchor="middle" class="s-text-mono" style="fill: rgba(255,255,255,0.55);">Compares · maps · references</text>
+
+          <line x1="150" y1="140" x2="350" y2="158" stroke="rgba(20,33,58,0.30)" stroke-width="1" marker-end="url(#arrow1)"/>
+          <line x1="650" y1="140" x2="450" y2="158" stroke="rgba(20,33,58,0.30)" stroke-width="1" marker-end="url(#arrow1)"/>
+
+          <defs>
+            <marker id="arrow1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+          </defs>
+
+          <rect x="40" y="248" width="232" height="100" rx="6" fill="#f7e0db" stroke="#b1331f" stroke-width="0.5"/>
+          <text x="156" y="272" text-anchor="middle" class="s-text-serif" style="fill: #b1331f;">Quantitative gap</text>
+          <text x="156" y="290" text-anchor="middle" class="s-text-mono" style="fill: #b1331f;">Tenant has metric, falls short</text>
+          <text x="156" y="312" text-anchor="middle" class="s-text-tiny">Forecast accuracy 73% vs.</text>
+          <text x="156" y="328" text-anchor="middle" class="s-text-tiny">leader 88-92% (15-19 pt gap)</text>
+
+          <rect x="284" y="248" width="232" height="100" rx="6" fill="#f5e8db" stroke="#b8632d" stroke-width="0.5"/>
+          <text x="400" y="272" text-anchor="middle" class="s-text-serif" style="fill: #b8632d;">Measurement gap</text>
+          <text x="400" y="290" text-anchor="middle" class="s-text-mono" style="fill: #b8632d;">Critical metric absent</text>
+          <text x="400" y="312" text-anchor="middle" class="s-text-tiny">On-shelf availability not</text>
+          <text x="400" y="328" text-anchor="middle" class="s-text-tiny">measured at SKU-store-day</text>
+
+          <rect x="528" y="248" width="232" height="100" rx="6" fill="#e8efe2" stroke="#5b7d4f" stroke-width="0.5"/>
+          <text x="644" y="272" text-anchor="middle" class="s-text-serif" style="fill: #5b7d4f;">Trajectory gap</text>
+          <text x="644" y="290" text-anchor="middle" class="s-text-mono" style="fill: #5b7d4f;">Rate of improvement lags</text>
+          <text x="644" y="312" text-anchor="middle" class="s-text-tiny">Cost-to-serve improving 3%</text>
+          <text x="644" y="328" text-anchor="middle" class="s-text-tiny">YoY vs. peer leaders 6-8%</text>
+
+          <line x1="156" y1="216" x2="156" y2="246" stroke="rgba(20,33,58,0.30)" stroke-width="1" marker-end="url(#arrow1)"/>
+          <line x1="400" y1="216" x2="400" y2="246" stroke="rgba(20,33,58,0.30)" stroke-width="1" marker-end="url(#arrow1)"/>
+          <line x1="644" y1="216" x2="644" y2="246" stroke="rgba(20,33,58,0.30)" stroke-width="1" marker-end="url(#arrow1)"/>
+        </svg>
+        <p class="wire__caption">Two inputs (corpus metrics + tenant metrics) feed the gap engine, which produces three classes of gap: quantitative (where measurement exists but trails), measurement (where the metric should exist but doesn't), and trajectory (where rate of improvement lags peer leaders).</p>
+      </div>
+
+      <h3>What the user sees — the gap surface</h3>
+      <p>In the <strong>By function</strong> submenu, each domain tile shows a gap-density indicator. Click into a domain → theme list shows critical metrics with tenant gaps overlaid. Click a metric → deep-dive shows tenant-current value, north-star range, peer trajectory, and corpus pattern references for closing the gap.</p>
+
+      <div class="wire">
+        <div class="wire__header">
+          <div class="wire__title">Middle office metric gap surface — specialty retail</div>
+          <div class="wire__meta">Sample tenant view</div>
+        </div>
+        <div style="background: var(--paper); padding: 16px; border-radius: 5px; border: 1px solid var(--ink-line);">
+          <div style="font-family: var(--serif); font-size: 17px; font-weight: 600; margin-bottom: 4px;">Middle office — demand &amp; replenishment</div>
+          <div style="font-family: var(--mono); font-size: 10px; color: var(--ink-mute); letter-spacing: 0.10em; text-transform: uppercase; margin-bottom: 14px;">14 critical metrics · 6 high-priority gaps · $11-19M value at stake</div>
+          <div class="gap-row gap-row--high">
+            <div>
+              <div class="gap-row__name">Forecast accuracy at SKU-week</div>
+              <div class="gap-row__desc">Tenant: 73% · north-star: 88-92% · 15-19 pt gap</div>
+            </div>
+            <div style="font-family: var(--mono); font-size: 10px; color: var(--ink-mute);">PAT-MET-014 · 3 patterns</div>
+            <div class="gap-row__delta" style="color: var(--crit);">High</div>
+          </div>
+          <div class="gap-row gap-row--high">
+            <div>
+              <div class="gap-row__name">On-shelf availability — SKU/store/day</div>
+              <div class="gap-row__desc">Tenant: not measured · north-star metric · measurement gap</div>
+            </div>
+            <div style="font-family: var(--mono); font-size: 10px; color: var(--ink-mute);">PAT-MET-022 · 2 patterns</div>
+            <div class="gap-row__delta" style="color: var(--crit);">High</div>
+          </div>
+          <div class="gap-row gap-row--med">
+            <div>
+              <div class="gap-row__name">Markdown effectiveness</div>
+              <div class="gap-row__desc">Tenant: 64% · north-star: 75-82% · 11-18 pt gap</div>
+            </div>
+            <div style="font-family: var(--mono); font-size: 10px; color: var(--ink-mute);">PAT-MET-031 · 4 patterns</div>
+            <div class="gap-row__delta" style="color: var(--copper);">Medium</div>
+          </div>
+          <div class="gap-row gap-row--med">
+            <div>
+              <div class="gap-row__name">Inventory turnover</div>
+              <div class="gap-row__desc">Tenant: 4.2x · north-star: 5.5-6.8x · trajectory lagging</div>
+            </div>
+            <div style="font-family: var(--mono); font-size: 10px; color: var(--ink-mute);">PAT-MET-009 · 5 patterns</div>
+            <div class="gap-row__delta" style="color: var(--copper);">Medium</div>
+          </div>
+          <div class="gap-row gap-row--low">
+            <div>
+              <div class="gap-row__name">Replenishment lead-time variance</div>
+              <div class="gap-row__desc">Tenant: 2.8 days · north-star: 1.5-2.0 days · 0.8-1.3 day gap</div>
+            </div>
+            <div style="font-family: var(--mono); font-size: 10px; color: var(--ink-mute);">PAT-MET-018 · 2 patterns</div>
+            <div class="gap-row__delta" style="color: var(--sage);">Watch</div>
+          </div>
+        </div>
+        <p class="wire__caption">Each gap row is severity-coded by gap size relative to north-star. Pattern references show how many corpus patterns address the gap. Click a row → deep-dive with corpus references and origination handoff.</p>
+      </div>
+
+      <h3>Gap-driven origination</h3>
+      <p>When a user explores a metric gap, Sentinel can surface: <em>"This gap typically closes through three move archetypes — here are the three relevant to your situation. Want me to scaffold one as a candidate Strategic Move with this gap as anchor?"</em> The metric gap becomes a natural origination trigger, and the resulting move carries the gap into its P2 promise contract as a target metric.</p>
+
+      <h3>Strategy-to-gap alignment</h3>
+      <p>When a customer uploads their AI strategy, the platform compares the strategy's emphasis to the gap profile. Strategies that emphasize gaps the platform also identifies as high-priority get an "aligned with gap engine" annotation. Strategies that emphasize themes where the tenant has minimal gaps get a "consider re-balancing toward higher-leverage gaps" honest annotation.</p>
+
+      <h3>What the corpus needs to carry</h3>
+      <p>For metrics-as-gap-engine to work, the corpus carries structured records per metric: name, definition, why it matters, measurement difficulty, north-star range, common floor, leader benchmark, trajectory signal, common failure modes in measurement, foundation gaps preventing measurement, vendor/tooling landscape, realized-value patterns. <em>See <span class="kbd">METRICS_CORPUS_AUTHORING_BRIEF.html</span> for the full authoring specification.</em></p>
+    </section>
+
+    <!-- Section 12 -->
+    <section id="reality">
+      <h2><span class="num">12</span>What ships <em>first</em> vs. later</h2>
+
+      <h3>Ships first (bounded version)</h3>
+      <ul>
+        <li>Open thinking mode</li>
+        <li>Foundation Readiness as accessible workflow</li>
+        <li>Move origination from conversations</li>
+        <li>Persistent thinking sessions</li>
+        <li>Cross-portfolio reasoning across registered moves</li>
+        <li>Strategy ingestion (uses existing upload)</li>
+        <li>Today / Patterns / Sessions submenus with bounded content</li>
+        <li><strong>Tenant metric ingestion (manual entry plus CSV upload) for the top 20-30 metrics per industry</strong></li>
+        <li><strong>Gap computation for ingested metrics against tier-1 corpus metric records</strong></li>
+      </ul>
+
+      <h3>Ships against deeper corpus depth (full vision)</h3>
+      <ul>
+        <li>Browsable industry views by functional domain at depth — requires tier 2 corpus</li>
+        <li>Vendor landscape intelligence at depth — requires tier 3 vendor-specific content</li>
+        <li>Peer activity feed — requires cross-tenant aggregate computation infrastructure</li>
+        <li>Strategy ingestion's empirical challenge logic — requires accumulated realized-value data</li>
+        <li>Sentinel's dynamic canvas-publication capability at full coverage</li>
+        <li><strong>Full metric corpus (300-600 metric records across three industries)</strong></li>
+        <li><strong>Automated metric ingestion via integration to BI / data warehouse / KPI dashboards</strong></li>
+      </ul>
+
+      <h3>Future-state, explicitly out of scope</h3>
+      <ul>
+        <li>Structured AI Strategy Definition flagship workflow</li>
+        <li>Move Pre-mortem as guided structured workflow</li>
+        <li>Cross-Industry Transfer as guided structured workflow</li>
+        <li>Portfolio Health Check as guided structured workflow</li>
+      </ul>
+    </section>
+
+    <!-- Section 13 -->
+    <section id="crossmodule">
+      <h2><span class="num">13</span>Pattern application <em>across modules</em></h2>
+      <p>The Atrium pattern is platform-wide chrome. All six modules share the same top-nav, submenu strip, agent zone, and canvas structure. Each module specifies its own submenu list, agent identity, and canvas content. Detailed per-module specifications are in <span class="kbd">ATRIUM_PATTERN_CROSS_MODULE_BRIEF.html</span>.</p>
+
+      <table>
+        <thead><tr><th>Module</th><th>Agent</th><th>Submenu (sample)</th><th>Canvas character</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Home</strong></td>
+            <td>Atlas</td>
+            <td>Today · Calendar · Inbox · Recent activity</td>
+            <td>Personalized morning brief; cross-module surfacing</td>
+          </tr>
+          <tr>
+            <td><strong>Setup</strong></td>
+            <td>Steward</td>
+            <td>Overview · Data trust · Connectors · Users · Metrics · Architecture</td>
+            <td>Foundation status; tenant metric ingestion; readiness</td>
+          </tr>
+          <tr>
+            <td><strong>Strategic Moves</strong></td>
+            <td>Nexus</td>
+            <td>Portfolio · By phase · Pending decisions · Settled · Calendar</td>
+            <td>Move registry; per-move lifecycle deep-dive</td>
+          </tr>
+          <tr>
+            <td><strong>Source</strong></td>
+            <td>Nexus</td>
+            <td>Pipeline · By stage · Vendors · Decisions · Settled</td>
+            <td>Sourcing event registry; per-event lifecycle deep-dive</td>
+          </tr>
+          <tr>
+            <td><strong>Intelligence</strong></td>
+            <td>Sentinel</td>
+            <td>Today · By function · Patterns · Vendors · Peer activity · My strategy · Sessions</td>
+            <td>Three substrates · two outcomes · gap engine</td>
+          </tr>
+          <tr>
+            <td><strong>Tower</strong></td>
+            <td>Atlas</td>
+            <td>Pressures · Cascade · Realized vs committed · Move grid · Sourcing · Handoffs</td>
+            <td>Portfolio observation; cross-program synthesis</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>The pattern's discipline holds across all six. Persistent zones, context-driven canvas, agent-mediated work. Submenu clicks swap canvas; agent state preserves; cross-module navigation preserves prior agent state in background. The user moves through the platform fluidly without losing thread.</p>
+
+      <div class="callout callout--blue">
+        <span class="callout__label">Codex implication</span>
+        Implementing the Atrium pattern in one module requires building the chrome correctly once. After that, each additional module reuses the chrome and specifies its own submenu list, agent identity, and canvas content. The cost compounds favorably: the first module is the largest investment; every subsequent module is cheaper.
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="footer">
+  <div class="footer__brand">AbarVa — bet-level operating system · the Atrium pattern</div>
+  Canonical V2 · locked 2026-05-02 · Companion briefs: METRICS_CORPUS_AUTHORING_BRIEF · ATRIUM_PATTERN_CROSS_MODULE_BRIEF · CODEX_HANDOFF_NEW_VISION_REVIEW
+</footer>
+
+</body>
+</html>

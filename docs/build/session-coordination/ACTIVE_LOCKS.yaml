@@ -1,0 +1,23 @@
+updated_at: "2026-05-02T11:04:48-05:00"
+
+locks:
+  - owner: codex-source-e2e-crawler
+    resource: source-module-e2e-crawler
+    status: active
+    started_at: "2026-05-02T07:46:19-05:00"
+    expires_at: "2026-05-02T18:00:00-05:00"
+    note: Production Source capability crawler. Other lanes should avoid Source API, lifecycle, stage, and data files unless coordinating explicitly.
+
+  - owner: codex-canonical-v2-foundation
+    resource: atrium-contract-registry
+    status: active
+    started_at: "2026-05-02T11:04:48-05:00"
+    expires_at: "2026-05-02T14:00:00-05:00"
+    note: Adds code-level Atrium contract and top-nav label alignment from canonical V2.
+
+  - owner: codex-canonical-v2-foundation
+    resource: metrics-corpus-foundation
+    status: active
+    started_at: "2026-05-02T11:04:48-05:00"
+    expires_at: "2026-05-02T14:00:00-05:00"
+    note: Adds PAT-MET schema, initial tier-1 records, validation, and corpus loader integration.

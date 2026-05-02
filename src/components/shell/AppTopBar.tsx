@@ -9,6 +9,7 @@ import {
   resolveModuleAccess,
   type ProductModule,
 } from "@/lib/auth/module-access";
+import { getAtriumProductNavLabel } from "@/lib/shell/atrium-contract";
 
 export interface AppTopBarProps {
   tenantName?: string;
@@ -50,7 +51,7 @@ const NAV_ITEMS: CockpitNavItem[] = [
   },
   {
     key: "programs",
-    label: "Programs",
+    label: getAtriumProductNavLabel("programs"),
     href: "/programs",
     module: "programs",
     match: (pathname) =>
