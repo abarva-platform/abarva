@@ -18,7 +18,7 @@
 //   - kill criterion
 //   - named dissenter
 //
-// Exit output is the Build gate package: detailed design signed off, pilot
+// Exit output is the Execution Roadmap gate package: detailed design signed off, pilot
 // cohort named, success criteria locked, phase-3 findings written, and CXO
 // interview complete. A beautiful design without cohort and criteria is a
 // diagram. A named pilot without signed design is an experiment looking for
@@ -38,13 +38,13 @@ export const P3_DESIGN: PhasePack = {
   phase: 3,
   label: 'P3 Design',
   outcome:
-    'A Build gate package that converts the P2 recommendation into a buildable ' +
+    'An Execution Roadmap gate package that converts the P2 recommendation into a buildable ' +
     'pilot: detailed solution and integration design signed off by the right ' +
     'architecture and operating owners; pilot cohort named with inclusion and ' +
     'exclusion logic; success criteria locked against the P2 baseline KPI and ' +
     'measurement source; phase-3 findings written; CXO interview completed; and ' +
     'scope, kill criterion, sponsor commitment, and named dissenter carried ' +
-    'forward without being blurred. P3 is done when Build can start without ' +
+    'forward without being blurred. P3 is done when P4 can plan execution without ' +
     'asking what we are building, who we are piloting with, or what counts as a win.',
 
   definitionOfDone: [
@@ -83,7 +83,7 @@ export const P3_DESIGN: PhasePack = {
       label: 'Pilot cohort named with inclusion and exclusion logic',
       severity: 'hard',
       evaluationHint:
-        'Build gate package names the pilot cohort as real teams, stores, intents, ' +
+        'Execution Roadmap gate package names the pilot cohort as real teams, stores, intents, ' +
         'users, customers, or data domains, not a generic segment. It also states ' +
         'who is excluded and why, so P4 cannot cherry-pick success.',
       preventsFailureModes: [5, 8],
@@ -100,12 +100,12 @@ export const P3_DESIGN: PhasePack = {
     },
     {
       id: 'sponsor-commitment-confirmed',
-      label: 'Sponsor commitment and decision cadence confirmed for Build',
+      label: 'Sponsor commitment and decision cadence confirmed for Execution Roadmap',
       severity: 'hard',
       evaluationHint:
         'Design closeout records the sponsor cadence for P4, the decision forum, ' +
         'and the person with approval_authority="sponsor". If the sponsor is only ' +
-        'represented by a delegate, the Build start is politically exposed.',
+        'represented by a delegate, the Execution Roadmap start is politically exposed.',
       preventsFailureModes: [1],
     },
     {
@@ -134,7 +134,7 @@ export const P3_DESIGN: PhasePack = {
       evaluationHint:
         'Phase-3 findings or stakeholder log includes the P2 named dissenter, ' +
         'their objection, and resolution/escalation status. Absence is a signal ' +
-        'that political risk was deferred into Build.',
+        'that political risk was deferred into Execution Roadmap.',
       preventsFailureModes: [1, 5],
     },
     {
@@ -180,7 +180,7 @@ export const P3_DESIGN: PhasePack = {
           'For each major component, who builds it, who operates it after pilot, ' +
           'and who has approval authority if the design changes?',
         why:
-          'A design without ownership becomes a P4 handoff problem. Build needs ' +
+          'A design without ownership becomes a P4 handoff problem. P4 needs ' +
           'operators and approvers, not just boxes on a diagram.',
         expectedAnswerShape:
           'Component-by-component ownership table with builder, run owner, approver, ' +
@@ -216,9 +216,9 @@ export const P3_DESIGN: PhasePack = {
         id: 'design-tradeoff-frozen',
         text:
           'What design trade-off are we freezing now, and what evidence would ' +
-          'force us to reopen it during Build?',
+          'force us to reopen it during Execution Roadmap?',
         why:
-          'Build needs decision stability, but not denial. Naming the reopen ' +
+          'P4 needs decision stability, but not denial. Naming the reopen ' +
           'condition prevents every disagreement from becoming scope churn.',
         expectedAnswerShape:
           'A frozen decision, its rationale, and a measurable reopen trigger such ' +
@@ -242,7 +242,7 @@ export const P3_DESIGN: PhasePack = {
           'has authority to stop or re-baseline?',
         why:
           'The P2 kill criterion has to become an operational stop rule before ' +
-          'Build starts, otherwise schedule pressure will reinterpret failure as learning.',
+          'Execution Roadmap starts, otherwise schedule pressure will reinterpret failure as learning.',
         expectedAnswerShape:
           'Signal, threshold, data source, owner, and decision forum. Vague ' +
           'language like "we will review progress" is not enough.',
@@ -252,10 +252,10 @@ export const P3_DESIGN: PhasePack = {
         id: 'security-data-operating-gaps',
         text:
           'Which security, data, or operating-model gap is still open, and why is ' +
-          'it safe to enter Build with it open?',
+          'it safe to enter Execution Roadmap with it open?',
         why:
           'Soft gate does not mean no risk. If a gap remains, the user must name ' +
-          'the containment plan rather than bury it in Build assumptions.',
+          'the containment plan rather than bury it in Execution Roadmap assumptions.',
         preventsFailureModes: [5, 6],
       },
     ],
@@ -263,11 +263,11 @@ export const P3_DESIGN: PhasePack = {
       {
         id: 'build-start-without-clarification',
         text:
-          'Can the Build team start tomorrow without asking what to build, who to ' +
+          'Can the roadmap team start tomorrow without asking what to build, who to ' +
           'pilot with, or what counts as pass/fail?',
         why:
           'This is the practical P3 exit test. If any of those answers require a ' +
-          'new meeting, the Build gate package is incomplete.',
+          'new meeting, the Execution Roadmap gate package is incomplete.',
         preventsFailureModes: [5, 8],
       },
       {

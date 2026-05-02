@@ -145,4 +145,34 @@ describe('complete_deliverable tool', () => {
       }),
     );
   });
+
+  it('allows P3 requirements traceability as a separate gate artifact', async () => {
+    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+    completeDeliverableMock.mockResolvedValue({
+      deliverableId: 'deliv-4',
+      versionId: 'version-4',
+      status: 'signed_off',
+    });
+
+    const result = await completeDeliverableTool.handler(
+      {
+        program_id: 'program-1',
+        deliverable_type_key: 'requirements_traceability',
+        title: 'P3 Requirements Traceability Matrix',
+        content: 'Requirement | Design | Outcome | Owner | Evidence',
+        sign_off: true,
+      },
+      makeCtx(),
+    );
+
+    expect(result.success).toBe(true);
+    expect(completeDeliverableMock).toHaveBeenCalledWith(
+      expect.anything(),
+      'program-1',
+      expect.objectContaining({
+        deliverableTypeKey: 'requirements_traceability',
+        signOff: true,
+      }),
+    );
+  });
 });

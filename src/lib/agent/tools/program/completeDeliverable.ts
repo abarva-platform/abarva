@@ -61,7 +61,10 @@ export const completeDeliverableTool: AgentTool<CompleteDeliverableToolInput> = 
     'mark it signed_off so phase gates can read it. Use this only after the user has accepted the artifact ' +
     'or said to approve/sign off. Do not call it for rough drafts. If sign_off is omitted, default to true ' +
     'because this tool represents an explicit acceptance moment. For chat-only drafts, use ordinary prose or ' +
-    'the draft route instead.',
+    'the draft route instead. Use distinct deliverable_type_key values for distinct gate artifacts: ' +
+    'P2 charter = charter, P3 solution design = design_spec, P3 requirements-to-design-to-outcomes trace = ' +
+    'requirements_traceability, P4 roadmap = execution_roadmap, P5 funding package = approval_packet or ' +
+    'business_case, P6 Tower setup = tower_handoff_plan.',
   surfaces: ['/programs/:id'],
   input_schema: {
     type: 'object',
@@ -73,7 +76,9 @@ export const completeDeliverableTool: AgentTool<CompleteDeliverableToolInput> = 
       deliverable_type_key: {
         type: 'string',
         description:
-          'Deliverable key, e.g. charter, design_brief, design_spec, execution_plan, outcome_report, vendor_selection.',
+          'Deliverable key. Common lifecycle keys: discovery_report, stakeholder_map, charter, design_spec, ' +
+          'requirements_traceability, execution_roadmap, business_case, approval_packet, change_management_plan, ' +
+          'tower_handoff_plan, outcome_report, vendor_selection.',
       },
       title: {
         type: 'string',
