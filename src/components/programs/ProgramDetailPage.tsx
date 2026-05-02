@@ -94,6 +94,12 @@ import { GateHistorySidebar } from '@/components/reasoning/GateHistorySidebar';
 import { Phase0Primer } from '@/components/programs/Phase0Primer';
 import type { ArchetypePrimer } from '@/lib/programs/archetype-primers';
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isUuidLike(value: string) {
+  return UUID_PATTERN.test(value);
+}
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 export interface ProgramDetailPageProps {
@@ -3846,6 +3852,9 @@ export function ProgramDetailPage({
   const [maestroCustomText, setMaestroCustomText] = useState('');
   const [evidenceDrawerItem, setEvidenceDrawerItem] = useState<EvidenceItem | null>(null);
   const [contradictionItem, setContradictionItem] = useState<EvidenceItem | null>(null);
+  const isLiveDbProgram = isUuidLike(view.programId);
+  const programEyebrow = isLiveDbProgram ? 'Live program' : view.displayId;
+  const programSourceLabel = isLiveDbProgram ? 'Live DB record' : 'Deterministic seed';
 
   // PRG-STA-SUGGESTED-ACTION state
   const [suggestedAction, setSuggestedAction] = useState<{
@@ -4318,7 +4327,7 @@ export function ProgramDetailPage({
                 letterSpacing: '0.06em',
               }}
             >
-              {view.displayId}
+              {programEyebrow}
             </span>
             <GatePill status={view.gateStatus} />
             {headerHealth && <InstanceHealthBadge health={headerHealth} />}
@@ -4397,7 +4406,7 @@ export function ProgramDetailPage({
             }}
           >
             <span data-honest-disclaimer="programs-detail">
-              {view.displayId} · Deterministic seed
+              {programEyebrow} · {programSourceLabel}
             </span>
             <a
               href={`/programs/${view.programId}/report`}
