@@ -392,7 +392,18 @@ export function AtlasPageStateProvider({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [surface, tenantName, stage, resolvedAgentName, isStreaming, conversation, onArtifact, router, contextBundleMode],
+    [
+      surface,
+      tenantName,
+      stage,
+      surfaceContext,
+      resolvedAgentName,
+      isStreaming,
+      conversation,
+      onArtifact,
+      router,
+      contextBundleMode,
+    ],
   );
 
   const clearResponse = useCallback(() => {
