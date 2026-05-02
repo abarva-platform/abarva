@@ -58,3 +58,22 @@ Append-only coordination log for active Codex sessions.
 - validation: `npx tsc --noEmit --pretty false` passed
 - validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning
 - next: open PR and auto-merge when standard checks pass
+
+## 2026-05-02T13:35:00-05:00 - codex-knowledge-layer-metric-expansion
+
+- status: in-progress
+- branch: `codex/metric-corpus-expansion`
+- worktree: `/private/tmp/nexus-metric-corpus-expansion`
+- scope: expand PAT-MET corpus from 18 to full tier-1 catalog, add tenant current-state KPI fixtures, and wire Setup metric upload parsing without touching Source-owned runtime files
+- sequencing_rationale: metric corpus and tenant observations must exist before agents can explain current standing, benchmark gaps, or translate uploads into program/sourcing advice; Setup upload parsing is additive on the existing dataset endpoint
+- locks: `metrics-corpus-tier1-expansion`, `tenant-reference-metrics-fixtures`, `setup-metric-upload-parser`
+- guardrail: no Source API, lifecycle, stage, or private-plane cleanup files touched in this slice
+
+## 2026-05-02T13:58:00-05:00 - codex-knowledge-layer-metric-expansion
+
+- status: validation-local-passed
+- validation: `npx jest src/lib/intelligence/__tests__/metric-records.test.ts src/lib/intelligence/__tests__/tenant-metric-fixtures.test.ts src/lib/intelligence/__tests__/tenant-metric-upload.test.ts --runInBand` passed, 16 tests
+- validation: `npx tsc --noEmit --pretty false` passed
+- validation: targeted `npm run lint -- ...` passed for metric corpus, tenant metric fixtures/upload parser, upload API, and tests
+- validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning
+- next: open PR and auto-merge after standard checks pass
