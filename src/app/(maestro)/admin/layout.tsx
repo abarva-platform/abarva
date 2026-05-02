@@ -14,6 +14,8 @@ import { connection } from 'next/server';
 import { AdminCanonShellV2 } from '@/components/admin/AdminCanonShellV2';
 import { EditorialCanvas } from '@/components/admin/EditorialCanvas';
 import { AgentRail } from '@/components/admin/AgentRail';
+import { requireTenancy } from '@/lib/auth/tenancy';
+import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 
 const ADMIN_EMAIL_ALLOWLIST: ReadonlySet<string> = new Set([
   'anand.sundaram@thesundaram.com',
@@ -26,6 +28,16 @@ const ADMIN_EMAIL_ALLOWLIST: ReadonlySet<string> = new Set([
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+export async function hasTenantAdminAccess(): Promise<boolean> {
+  try {
+    const tenancy = await requireTenancy();
+    const policy = await loadUserProgramAccessPolicy(tenancy);
+    return policy.canAdminUsers === true;
+  } catch {
+    return false;
+  }
+}
 
 function AdminAccessDenied() {
   return (
@@ -62,12 +74,12 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     (user?.unsafeMetadata?.role as string | undefined)
     ?? (user?.publicMetadata?.legacyRole as string | undefined);
   const primaryEmail = user?.primaryEmailAddress?.emailAddress?.toLowerCase();
-  const isAdmin =
+  const isPlatformAdmin =
     role === 'admin'
     || fallbackRole === 'admin'
     || (!!primaryEmail && ADMIN_EMAIL_ALLOWLIST.has(primaryEmail));
 
-  if (!isAdmin) {
+  if (!isPlatformAdmin && !(await hasTenantAdminAccess())) {
     return <AdminAccessDenied />;
   }
 
