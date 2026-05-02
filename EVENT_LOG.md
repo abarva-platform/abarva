@@ -56,3 +56,13 @@
 - Fix summary: Program origination now writes `maestro_person_id` from the resolved lead, approval synchronization hydrates sponsor/lead person IDs from the brief snapshot, and Nexus program context injects sponsor/lead names and roles from the engagement row.
 - Regression: src/lib/agent/tools/__tests__/commitProgram.test.ts verifies the engagement insert carries `maestro_person_id`; src/lib/programs/__tests__/approval.test.ts verifies approve synchronization writes sponsor and lead IDs back to `engagements`.
 - Validation: Focused commitProgram + approval Jest and scoped ESLint passed locally.
+
+## 2026-05-02T11:48:00Z — programs-module-e2e-crawler
+
+- Workstream: Programs live E2E crawl / Meridian P1 evidence capture.
+- Finding: P1 pasted workshop notes were stored and parsed, but `program_attachments.phase` and `program_evidence_items.phase` were `null` because the upload route only honored an optional multipart `phase` field. The Programs chat upload path does not send that field.
+- Severity: SEV-2 phase evidence traceability gap.
+- Fix branch: codex/programs-evidence-phase-default.
+- Fix summary: Attachment upload now defaults missing multipart phase to the program's current phase while preserving explicit phase overrides. Attachment metadata and evidence ingestion receive the same effective phase.
+- Regression: src/app/api/programs/__tests__/attachments-upload.smoke.test.ts verifies omitted phase defaults to `program.currentPhase` and explicit multipart phase overrides it.
+- Validation: Focused attachments upload Jest and scoped ESLint passed locally.
