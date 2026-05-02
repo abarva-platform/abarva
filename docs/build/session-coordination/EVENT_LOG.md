@@ -428,3 +428,24 @@ Append-only coordination log for active Codex sessions.
 - validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only.
 - lock: `source-portfolio-artifact-identity-ui` marked completed in `ACTIVE_LOCKS.yaml`.
 - next: open PR and auto-merge after standard checks pass.
+
+## 2026-05-02T17:38:00-05:00 - codex-source-events-tooltip-nexus-polish
+
+- status: in-progress
+- branch: `codex/source-events-tooltip-nexus-polish`
+- worktree: `/Users/anand/Projects/nexus-source-capability-e2e`
+- scope: narrow Source events portfolio UI/copy polish to align the deferred submit tooltip with Nexus front-door language
+- locks: `source-events-tooltip-copy-ui`
+- guardrail: no Programs/Intelligence/Tower files and no Source lifecycle, persistence, gate, API, or data-plane logic
+
+## 2026-05-02T17:45:00-05:00 - codex-source-events-tooltip-nexus-polish
+
+- status: validation-local-passed
+- shipped: Source events portfolio disabled submit tooltip now directs users to talk to Nexus, aligning with the visible Ask Nexus composer and deferred runtime copy.
+- validation: focused Source context/action enforcement Jest passed, 1 suite / 6 tests.
+- validation: full Source integration Jest passed, 70 suites / 753 tests.
+- validation: targeted ESLint passed for `SourceEventsPortfolio` and Source context/action enforcement test.
+- validation: `npx tsc --noEmit --pretty false` passed.
+- validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only.
+- lock: `source-events-tooltip-copy-ui` marked completed in `ACTIVE_LOCKS.yaml`.
+- next: open PR and auto-merge after standard checks pass.
