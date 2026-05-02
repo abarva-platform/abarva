@@ -10,7 +10,7 @@ import { requireTenancy, tenancyErrorResponse } from '@/app/api/v1/_intel-auth';
 import { getActiveClientRow } from '@/lib/active-client';
 import { clientKeyToBrokerTenantKey } from '@/lib/agent/tools/intelligence/_shared';
 import { getServerSupabase } from '@/lib/supabase-server';
-import { SOURCE_STAGE_ORDER } from '@/lib/source/constants';
+import { normalizeSourceStageKey, SOURCE_STAGE_ORDER } from '@/lib/source/constants';
 import { getSourcingEvent, type SourceEventRow } from '@/lib/source/queries';
 import type { SourceStageKey } from '@/lib/source/types';
 import {
@@ -68,7 +68,8 @@ function parseDataClassification(raw: FormDataEntryValue | null): SourceDataClas
 function parseStageKey(raw: FormDataEntryValue | null): SourceStageKey | undefined {
   const value = parseOptionalString(raw);
   if (!value) return undefined;
-  if ((SOURCE_STAGE_ORDER as readonly string[]).includes(value)) return value as SourceStageKey;
+  const normalized = normalizeSourceStageKey(value);
+  if (normalized && (SOURCE_STAGE_ORDER as readonly string[]).includes(normalized)) return normalized;
   throw new Error(`stageKey must be canonical Source stage, got ${value}`);
 }
 
@@ -105,7 +106,7 @@ async function resolveSourceEventScope(args: {
     return {
       eventId: persisted.id,
       sourceEventRowId: persisted.id,
-      stageKey: args.requestedStageKey ?? (persisted.current_stage_key as SourceStageKey),
+      stageKey: args.requestedStageKey ?? normalizeSourceStageKey(persisted.current_stage_key) ?? 'strategy',
     };
   }
 

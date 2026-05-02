@@ -61,8 +61,8 @@ describe('SHELL5 source route shell control (Wave S1 — AppShell migration)', (
     expect(source.length).toBeGreaterThan(0);
   });
 
-  it('event detail route wires SentinelAgentColumn', () => {
+  it('event detail route wires the Source event agent canvas', () => {
     const source = read(sourceEventDetailRoute);
-    expect(source).toContain('SentinelAgentColumn');
+    expect(source).toContain('SourceEventAgentCanvas');
   });
 });

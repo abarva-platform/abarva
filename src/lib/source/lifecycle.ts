@@ -4,6 +4,7 @@ import {
   SOURCE_STAGE_ORDER,
   SOURCE_STAGE_STATE_LABELS,
   SOURCE_WAITING_LIFECYCLE_STATUSES,
+  normalizeSourceStageKey,
 } from './constants';
 import type {
   SourceLifecycleStatus,
@@ -45,5 +46,5 @@ export function summarizeJourney(event: SourcingEventDetail): string {
 }
 
 export function stageIndex(stageKey: SourceStageKey): number {
-  return SOURCE_STAGE_ORDER.indexOf(stageKey);
+  return SOURCE_STAGE_ORDER.indexOf(normalizeSourceStageKey(stageKey) ?? stageKey);
 }

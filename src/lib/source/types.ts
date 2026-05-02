@@ -23,14 +23,24 @@ export type SourceLifecycleStatus =
 export type SourcePriority = 'critical' | 'high' | 'medium' | 'low';
 
 export type SourceStageKey =
-  | 'intake'
+  | 'strategy'
   | 'scope'
+  | 'rfp'
+  | 'responses'
+  | 'evaluation'
+  | 'pricing'
+  | 'bafo'
+  | 'executive_decision'
+  | 'selection'
+  | 'transition'
+  | 'value'
+  // Legacy keys remain readable for persisted rows/artifacts created before
+  // the locked 11-stage lifecycle was normalized.
+  | 'intake'
   | 'sourcing_strategy'
   | 'rfp_rfi_package'
   | 'vendor_responses'
-  | 'evaluation'
   | 'orals_bafo'
-  | 'selection'
   | 'contract_mobilization'
   | 'value_realization';
 

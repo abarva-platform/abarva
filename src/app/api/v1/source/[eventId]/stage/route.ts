@@ -14,7 +14,7 @@ import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { setStageOverride } from '@/lib/source/stage-overrides';
 import { getSourceEventSeed } from '@/lib/source/mock-seed';
-import { SOURCE_STAGE_ORDER } from '@/lib/source/constants';
+import { isCanonicalSourceStageKey, SOURCE_STAGE_ORDER } from '@/lib/source/constants';
 import type { SourceStageKey } from '@/lib/source/types';
 import { inferClientKeyFromEmail, isClientKey } from '@/lib/client-config';
 
@@ -47,7 +47,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     const body = (await req.json()) as { stageKey?: unknown };
     const stageKey = body?.stageKey;
 
-    if (typeof stageKey !== 'string' || !(SOURCE_STAGE_ORDER as string[]).includes(stageKey)) {
+    if (!isCanonicalSourceStageKey(stageKey)) {
       return Response.json(
         {
           error: 'bad_request',
@@ -105,7 +105,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         .from('source_events')
         .update({
           current_stage_key: stageKey,
-          lifecycle_state: stageKey === 'value_realization' ? 'completed' : 'active',
+          lifecycle_state: stageKey === 'value' ? 'completed' : 'active',
           updated_at: new Date().toISOString(),
         })
         .eq('id', eventId)

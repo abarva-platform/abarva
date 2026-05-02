@@ -1,18 +1,21 @@
 import type { SourceStageGateReadiness, SourceStageGateReadinessInput, SourceStageGateReadinessItem, SourceStageGateState, SourceStageGateTransitionDefinition } from './source-stage-gate-types';
 import type { SourceStageKey } from './types';
+import { normalizeSourceStageKey, SOURCE_STAGE_LABELS } from './constants';
 
 const DEFAULT_GENERATED_AT = '2026-04-26T00:00:00.000Z';
 
 const TRANSITIONS: SourceStageGateTransitionDefinition[] = [
-  { id: 'gate-strategy-scope', from: 'sourcing_strategy', to: 'scope', label: 'Strategy -> Scope' },
-  { id: 'gate-scope-rfp', from: 'scope', to: 'rfp_rfi_package', label: 'Scope -> RFP' },
-  { id: 'gate-rfp-responses', from: 'rfp_rfi_package', to: 'vendor_responses', label: 'RFP -> Vendor Responses' },
-  { id: 'gate-responses-evaluation', from: 'vendor_responses', to: 'evaluation', label: 'Vendor Responses -> Evaluation' },
-  { id: 'gate-evaluation-bafo', from: 'evaluation', to: 'orals_bafo', label: 'Evaluation -> BAFO' },
-  { id: 'gate-bafo-selection', from: 'orals_bafo', to: 'selection', label: 'BAFO -> Selection' },
-  { id: 'gate-selection-transition', from: 'selection', to: 'contract_mobilization', label: 'Selection -> Transition' },
-  { id: 'gate-transition-value', from: 'contract_mobilization', to: 'value_realization', label: 'Transition -> Value Realization' },
-  { id: 'gate-value-closed', from: 'value_realization', to: 'closed', label: 'Value Realization -> Closed' },
+  { id: 'gate-strategy-scope', from: 'strategy', to: 'scope', label: 'Strategy -> Scope' },
+  { id: 'gate-scope-rfp', from: 'scope', to: 'rfp', label: 'Scope -> RFP' },
+  { id: 'gate-rfp-responses', from: 'rfp', to: 'responses', label: 'RFP -> Responses' },
+  { id: 'gate-responses-evaluation', from: 'responses', to: 'evaluation', label: 'Responses -> Evaluation' },
+  { id: 'gate-evaluation-pricing', from: 'evaluation', to: 'pricing', label: 'Evaluation -> Pricing' },
+  { id: 'gate-pricing-bafo', from: 'pricing', to: 'bafo', label: 'Pricing -> BAFO' },
+  { id: 'gate-bafo-executive-decision', from: 'bafo', to: 'executive_decision', label: 'BAFO -> Executive Decision' },
+  { id: 'gate-executive-decision-selection', from: 'executive_decision', to: 'selection', label: 'Executive Decision -> Selection' },
+  { id: 'gate-selection-transition', from: 'selection', to: 'transition', label: 'Selection -> Transition' },
+  { id: 'gate-transition-value', from: 'transition', to: 'value', label: 'Transition -> Value' },
+  { id: 'gate-value-closed', from: 'value', to: 'closed', label: 'Value -> Closed' },
 ];
 
 const REQUIRED_APPROVALS_BY_TRANSITION: Record<string, string[]> = {
@@ -20,8 +23,10 @@ const REQUIRED_APPROVALS_BY_TRANSITION: Record<string, string[]> = {
   'gate-scope-rfp': ['Business sponsor approval'],
   'gate-rfp-responses': ['Procurement release approval'],
   'gate-responses-evaluation': ['Evaluation governance checkpoint'],
-  'gate-evaluation-bafo': ['Steering alignment'],
-  'gate-bafo-selection': ['Executive review'],
+  'gate-evaluation-pricing': ['Evaluation governance checkpoint'],
+  'gate-pricing-bafo': ['Finance and commercial lead review'],
+  'gate-bafo-executive-decision': ['Steering alignment'],
+  'gate-executive-decision-selection': ['Executive review'],
   'gate-selection-transition': ['Contract and mobilization sign-off'],
   'gate-transition-value': ['Operations readiness review'],
   'gate-value-closed': ['Value office closure review'],
@@ -32,8 +37,10 @@ const EVIDENCE_GAP_BY_TRANSITION: Record<string, string> = {
   'gate-scope-rfp': 'Scope baseline must be validated for pricing-safe packaging.',
   'gate-rfp-responses': 'Response checklist cannot be finalized without template closure.',
   'gate-responses-evaluation': 'Comparability evidence gaps reduce evaluation confidence.',
-  'gate-evaluation-bafo': 'Commercial exception notes need evidence linkage before BAFO.',
-  'gate-bafo-selection': 'BAFO clarifications remain open for one or more vendors.',
+  'gate-evaluation-pricing': 'Scorecard rationale needs evidence linkage before commercial normalization.',
+  'gate-pricing-bafo': 'Pricing assumptions, exclusions, and TCO basis must be normalized before BAFO.',
+  'gate-bafo-executive-decision': 'BAFO clarifications remain open for one or more vendors.',
+  'gate-executive-decision-selection': 'Executive decision evidence is not fully captured for selection.',
   'gate-selection-transition': 'Transition owner split is not fully ratified.',
   'gate-transition-value': 'Value realization instrumentation is still partial.',
   'gate-value-closed': 'Sustained realized value evidence is not yet complete.',
@@ -41,7 +48,14 @@ const EVIDENCE_GAP_BY_TRANSITION: Record<string, string> = {
 
 export function buildSourceStageGateReadiness(input: SourceStageGateReadinessInput): SourceStageGateReadiness {
   const generatedAt = input.generatedAt ?? DEFAULT_GENERATED_AT;
-  const stageMap = new Map(input.event.stages.map((stage) => [stage.key, stage]));
+  const stageMap = new Map(input.event.stages.map((stage) => [
+    normalizeSourceStageKey(stage.key) ?? stage.key,
+    {
+      ...stage,
+      key: normalizeSourceStageKey(stage.key) ?? stage.key,
+      label: SOURCE_STAGE_LABELS[normalizeSourceStageKey(stage.key) ?? stage.key],
+    },
+  ]));
   const gates = TRANSITIONS.map((transition) => {
     const fromStage = stageMap.get(transition.from);
     const toStage = transition.to === 'closed' ? null : stageMap.get(transition.to);

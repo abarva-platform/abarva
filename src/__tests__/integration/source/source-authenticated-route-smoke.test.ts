@@ -2,9 +2,27 @@ import { readFileSync } from 'node:fs';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
-import SourceDashboardPage from '@/app/(maestro)/source/page';
 import SourceEventDetailPage from '@/app/(maestro)/source/events/[eventId]/page';
 import { SOURCE_GOLDEN_EVENT_IDS } from '@/lib/source';
+
+jest.mock('next/navigation', () => ({
+  usePathname: () => '/source/events/evt-source-data-ai-si-selection',
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn(), refresh: jest.fn(), prefetch: jest.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+}));
+
+jest.mock('@clerk/nextjs', () => ({
+  useUser: () => ({
+    isLoaded: true,
+    user: {
+      primaryEmailAddress: { emailAddress: 'maya.desai@apex-retail.example.com' },
+      publicMetadata: { moduleAccess: ['setup', 'programs', 'source', 'intelligence', 'tower'] },
+      firstName: 'Maya',
+      lastName: 'Desai',
+    },
+  }),
+  useClerk: () => ({ signOut: jest.fn() }),
+}));
 
 const sourceRouteFiles = [
   'src/app/(maestro)/source/page.tsx',

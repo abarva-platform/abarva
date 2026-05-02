@@ -63,26 +63,6 @@ const CURRENT_STAGE = 'BAFO'; // index 6
 const STEWARD_QUOTE =
   "AMS Vendor Consolidation 2026 is at Stage 7 BAFO. Three vendors submitted bids — Vendor B's SOC-2 report is outstanding, blocking full evaluation. Vendor A leads on total cost of ownership. Selection decision is linked to CDP scope confirmation in APX-CDP-2026.";
 
-const STEWARD_CONTEXT = 'Steward · AMS Vendor Consolidation 2026 · BAFO · Apr 27 2026';
-
-const STEWARD_ACTIONS = [
-  {
-    letter: 'A' as const,
-    text: 'Compare BAFO submissions',
-    detail: 'Full line-item comparison across Vendor A, B, C',
-  },
-  {
-    letter: 'B' as const,
-    text: 'Flag Vendor B blocker',
-    detail: 'SOC-2 Type II outstanding — escalate to procurement contact',
-  },
-  {
-    letter: 'C' as const,
-    text: 'Link to CDP program',
-    detail: 'Vendor selection affects CDP data architecture scope',
-  },
-];
-
 // ─── WorkPane tabs (SRC42 — 8-tab consolidated canvas) ───────────────────────
 
 type TabKey = 'summary' | 'pricing' | 'bafo' | 'risk' | 'readiness' | 'missions' | 'signals' | 'program' | 'transition' | 'award';
@@ -342,6 +322,12 @@ function MissionsTab() {
         instanceId={AMS_VENDOR_CONSOLIDATION_2026_INSTANCE.id}
         limit={3}
       />
+      <div
+        data-honest-disclaimer="source-missions"
+        style={{ fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.08em', lineHeight: 1.5 }}
+      >
+        Deterministic seed · Mission rows are fixture-backed gate hints for this shell. No live procurement write-back is implied.
+      </div>
     </div>
   );
 }

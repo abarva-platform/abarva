@@ -37,7 +37,7 @@ describe('Source persisted event row mapping', () => {
     expect(detail.id).toBe(baseRow.id);
     expect(detail.name).toBe(baseRow.event_name);
     expect(detail.stages.map((stage) => stage.key)).toEqual(SOURCE_STAGE_ORDER);
-    expect(detail.stages).toHaveLength(10);
+    expect(detail.stages).toHaveLength(11);
     expect(detail.stages.find((stage) => stage.key === 'scope')?.status).toBe('active');
     expect(detail.problemStatement).toContain('Second attempt');
     expect(detail.artifacts.some((artifact) => artifact.id.includes(baseRow.id))).toBe(true);

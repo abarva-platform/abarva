@@ -19,7 +19,12 @@ import type {
   WorkflowStage,
 } from './types';
 import { getStageOverride } from './stage-overrides';
-import { SOURCE_LIFECYCLE_STATUS_LABELS, SOURCE_STAGE_LABELS, SOURCE_STAGE_ORDER } from './constants';
+import {
+  normalizeSourceStageKey,
+  SOURCE_LIFECYCLE_STATUS_LABELS,
+  SOURCE_STAGE_LABELS,
+  SOURCE_STAGE_ORDER,
+} from './constants';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { getActiveClientRow } from '@/lib/active-client';
 import { getCurrentUser } from '@/lib/auth/current-user';
@@ -110,7 +115,7 @@ export async function createSourcingEvent(input: CreateSourcingEventInput): Prom
       linked_program_id: input.linkedProgramId || null,
       estimated_value_usd: input.estimatedValueUsd ?? null,
       created_by_user_id: input.createdByUserId || null,
-      current_stage_key: 'intake',
+      current_stage_key: 'strategy',
       lifecycle_state: 'waiting_on_client',
     })
     .select()
@@ -128,7 +133,7 @@ export async function getSourceDashboardData(): Promise<AbarvaSourceDashboardDat
 }
 
 export async function listSourcingEvents(): Promise<SourcingEventSummary[]> {
-  const seedEvents = listSourceEventSeed();
+  const seedEvents = listSourceEventSeed().map(normalizeSourcingEventSummaryStage);
   const activeClient = await getActiveClientRow().catch(() => null);
   if (!activeClient) return seedEvents;
   const activeClientSeedEvents = seedEvents.filter((event) =>
@@ -165,6 +170,15 @@ export async function listSourcingEvents(): Promise<SourcingEventSummary[]> {
   return [...persisted, ...scopedSeedEvents.filter((event) => !persistedIds.has(event.id))];
 }
 
+function normalizeSourcingEventSummaryStage(event: SourcingEventSummary): SourcingEventSummary {
+  const stageKey = normalizeSourceStageKey(event.currentStageKey) ?? event.currentStageKey;
+  return {
+    ...event,
+    currentStageKey: stageKey,
+    currentStageLabel: SOURCE_STAGE_LABELS[stageKey],
+  };
+}
+
 function seedEventMatchesClient(event: SourcingEventSummary, clientKey: string): boolean {
   const accountName = event.accountName.trim().toLowerCase();
 
@@ -179,7 +193,7 @@ function seedEventMatchesClient(event: SourcingEventSummary, clientKey: string):
 }
 
 export function sourceEventRowToSummary(row: SourceEventRow, accountName: string): SourcingEventSummary {
-  const stageKey = isSourceStageKey(row.current_stage_key) ? row.current_stage_key : 'intake';
+  const stageKey = normalizeSourceStageKey(row.current_stage_key) ?? 'strategy';
   const status = isSourceLifecycleStatus(row.lifecycle_state) ? row.lifecycle_state : 'waiting_on_client';
   const valueAtStakeUsd = row.estimated_value_usd ?? 0;
   const waitingForApproval = status === 'waiting_on_client';
@@ -259,10 +273,6 @@ function daysSince(isoDate: string): number {
   return Math.max(0, Math.floor((Date.now() - created) / 86_400_000));
 }
 
-function isSourceStageKey(value: string): value is SourceStageKey {
-  return value in SOURCE_STAGE_LABELS;
-}
-
 function isSourceLifecycleStatus(value: string): value is SourcingEventSummary['status'] {
   return value in SOURCE_LIFECYCLE_STATUS_LABELS;
 }
@@ -298,13 +308,66 @@ export async function getSourcingEvent(eventId: string): Promise<SourcingEventDe
   if (!event) return null;
   const override = getStageOverride(eventId);
   if (override) {
+    const normalizedOverride = normalizeSourceStageKey(override) ?? override;
     return {
-      ...event,
-      currentStageKey: override,
-      currentStageLabel: SOURCE_STAGE_LABELS[override],
+      ...normalizeSourcingEventDetailStages(event),
+      currentStageKey: normalizedOverride,
+      currentStageLabel: SOURCE_STAGE_LABELS[normalizedOverride],
     };
   }
-  return event;
+  return normalizeSourcingEventDetailStages(event);
+}
+
+function normalizeSourcingEventDetailStages(event: SourcingEventDetail): SourcingEventDetail {
+  const currentStageKey = normalizeSourceStageKey(event.currentStageKey) ?? event.currentStageKey;
+  const currentIndex = Math.max(0, SOURCE_STAGE_ORDER.indexOf(currentStageKey));
+  const existingByCanonical = new Map(
+    event.stages.map((stage) => [normalizeSourceStageKey(stage.key) ?? stage.key, stage]),
+  );
+
+  return {
+    ...event,
+    currentStageKey,
+    currentStageLabel: SOURCE_STAGE_LABELS[currentStageKey],
+    stages: SOURCE_STAGE_ORDER.map((stageKey, index) => {
+      const existing = existingByCanonical.get(stageKey);
+      const inferredStatus = index < currentIndex
+        ? 'complete'
+        : index === currentIndex
+          ? 'active'
+          : 'not_started';
+      return {
+        key: stageKey,
+        label: SOURCE_STAGE_LABELS[stageKey],
+        status: existing?.status ?? inferredStatus,
+        summary: existing?.summary ?? stageSummary(stageKey, {
+          id: event.id,
+          client_key: '',
+          event_code: event.code,
+          event_name: event.name,
+          event_type: event.archetype,
+          current_stage_key: stageKey,
+          lifecycle_state: event.status,
+          linked_program_id: null,
+          estimated_value_usd: event.valueAtStakeUsd,
+          trigger_description: event.problemStatement,
+          scope_description: event.synopsis,
+          decision_owner: event.owner,
+          created_by_user_id: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }),
+        gate: existing?.gate ?? {
+          id: `${event.id}:${stageKey}:gate`,
+          label: `${SOURCE_STAGE_LABELS[stageKey]} gate`,
+          status: index < currentIndex ? 'approved' : index === currentIndex ? 'ready' : 'not_started',
+          ownerRole: stageKey === 'value' ? 'Value owner' : 'Tenant admin',
+          requiredArtifacts: requiredArtifactsForStage(stageKey),
+          blocker: null,
+        },
+      };
+    }),
+  };
 }
 
 export function sourceEventRowToDetail(row: SourceEventRow, accountName: string): SourcingEventDetail {
@@ -362,7 +425,7 @@ export function sourceEventRowToDetail(row: SourceEventRow, accountName: string)
 
 function buildWorkflowStagesForRow(row: SourceEventRow): WorkflowStage[] {
   const currentIndex = Math.max(0, SOURCE_STAGE_ORDER.indexOf(
-    isSourceStageKey(row.current_stage_key) ? row.current_stage_key : 'intake',
+    normalizeSourceStageKey(row.current_stage_key) ?? 'strategy',
   ));
   const waitingForApproval = row.lifecycle_state === 'waiting_on_client';
 
@@ -378,7 +441,7 @@ function buildWorkflowStagesForRow(row: SourceEventRow): WorkflowStage[] {
         id: `${row.id}:${stageKey}:gate`,
         label: `${SOURCE_STAGE_LABELS[stageKey]} gate`,
         status: isPast ? 'approved' : isCurrent && waitingForApproval ? 'in_review' : isCurrent ? 'ready' : 'not_started',
-        ownerRole: stageKey === 'value_realization' ? 'Value owner' : 'Tenant admin',
+        ownerRole: stageKey === 'value' ? 'Value owner' : 'Tenant admin',
         requiredArtifacts: requiredArtifactsForStage(stageKey),
         blocker: isCurrent && waitingForApproval
           ? 'Tenant admin approval required before this Source event can proceed.'
@@ -393,14 +456,22 @@ function stageSummary(stageKey: SourceStageKey, row: SourceEventRow): string {
   const trigger = row.trigger_description || 'business trigger pending';
   const owner = row.decision_owner || 'decision owner pending';
   const summaries: Record<SourceStageKey, string> = {
-    intake: `Register trigger, owner, and first scope edge. Current trigger: ${trigger}.`,
+    strategy: `Register the sourcing event, classify the archetype, frame value, and name the approval path. Current trigger: ${trigger}.`,
     scope: `Shape the sourcing boundary and baseline evidence. Current scope: ${scope}.`,
-    sourcing_strategy: `Convert intake into sourcing strategy, value thesis, and route to market.`,
-    rfp_rfi_package: `Assemble RFP/RFI package, timeline, templates, and evaluation criteria.`,
-    vendor_responses: `Capture vendor submissions, Q&A, exceptions, and evidence attachments.`,
+    rfp: `Assemble the RFP package, pricing template, timeline, and evaluation criteria.`,
+    responses: `Capture vendor submissions, Q&A, exceptions, and evidence attachments.`,
     evaluation: `Score vendors against the approved framework and document rationale.`,
-    orals_bafo: `Run orals/BAFO prep, commercial traps, and negotiation asks.`,
+    pricing: `Normalize vendor pricing, TCO, assumptions, exclusions, and commercial traps.`,
+    bafo: `Run BAFO prep, negotiation asks, and assumption-locking.`,
+    executive_decision: `Prepare executive decision brief, tradeoffs, recommendation posture, and approval evidence for ${owner}.`,
     selection: `Prepare decision packet and selection recommendation for ${owner}.`,
+    transition: `Track contract, onboarding, transition, and Tower handoff setup.`,
+    value: `Measure realized value against the committed sourcing case.`,
+    intake: `Register the sourcing event, classify the archetype, frame value, and name the approval path. Current trigger: ${trigger}.`,
+    sourcing_strategy: `Register the sourcing event, classify the archetype, frame value, and name the approval path. Current trigger: ${trigger}.`,
+    rfp_rfi_package: `Assemble the RFP package, pricing template, timeline, and evaluation criteria.`,
+    vendor_responses: `Capture vendor submissions, Q&A, exceptions, and evidence attachments.`,
+    orals_bafo: `Run BAFO prep, negotiation asks, and assumption-locking.`,
     contract_mobilization: `Track contract, onboarding, transition, and Tower handoff setup.`,
     value_realization: `Measure realized value against the committed sourcing case.`,
   };
@@ -409,14 +480,22 @@ function stageSummary(stageKey: SourceStageKey, row: SourceEventRow): string {
 
 function requiredArtifactsForStage(stageKey: SourceStageKey): string[] {
   const artifacts: Record<SourceStageKey, string[]> = {
-    intake: ['Intake record', 'Decision owner', 'Scope boundary'],
+    strategy: ['Strategy record', 'Decision owner', 'Scope boundary', 'Approval route'],
     scope: ['Scope document', 'Baseline evidence', 'Stakeholder map'],
-    sourcing_strategy: ['Sourcing strategy memo', 'Vendor approach', 'Value hypothesis'],
-    rfp_rfi_package: ['RFP/RFI package', 'Pricing template', 'Evaluation criteria'],
-    vendor_responses: ['Vendor response register', 'Q&A log', 'Exception tracker'],
+    rfp: ['RFP package', 'Pricing template', 'Evaluation criteria'],
+    responses: ['Vendor response register', 'Q&A log', 'Exception tracker'],
     evaluation: ['Scorecard', 'Evaluator rationale', 'Shortlist recommendation'],
+    pricing: ['Pricing normalization workbook', 'TCO comparison', 'Commercial risk register'],
+    bafo: ['BAFO pack', 'Negotiation prep', 'Commercial risk register'],
+    executive_decision: ['Executive decision brief', 'Recommendation rationale', 'Approval record'],
+    selection: ['Selection memo', 'Vendor notification plan', 'Contract negotiation tracker'],
+    transition: ['Transition checklist', 'Contracting status', 'Tower handoff'],
+    value: ['Value ledger', 'KPI feed plan', 'Closeout criteria'],
+    intake: ['Strategy record', 'Decision owner', 'Scope boundary', 'Approval route'],
+    sourcing_strategy: ['Strategy record', 'Decision owner', 'Scope boundary', 'Approval route'],
+    rfp_rfi_package: ['RFP package', 'Pricing template', 'Evaluation criteria'],
+    vendor_responses: ['Vendor response register', 'Q&A log', 'Exception tracker'],
     orals_bafo: ['BAFO pack', 'Negotiation prep', 'Commercial risk register'],
-    selection: ['Executive decision brief', 'Selection memo', 'Approval record'],
     contract_mobilization: ['Transition checklist', 'Contracting status', 'Tower handoff'],
     value_realization: ['Value ledger', 'KPI feed plan', 'Closeout criteria'],
   };
@@ -424,11 +503,11 @@ function requiredArtifactsForStage(stageKey: SourceStageKey): string[] {
 }
 
 function buildArtifactsForRow(row: SourceEventRow): SourceArtifactSummary[] {
-  const stageKey = isSourceStageKey(row.current_stage_key) ? row.current_stage_key : 'intake';
+  const stageKey = normalizeSourceStageKey(row.current_stage_key) ?? 'strategy';
   return [
     {
-      id: `${row.id}:intake-record`,
-      title: 'Source intake record',
+      id: `${row.id}:strategy-record`,
+      title: 'Source strategy record',
       kind: 'charter',
       status: row.lifecycle_state === 'waiting_on_client' ? 'needs_review' : 'draft',
       tier: 'outline',
@@ -481,7 +560,7 @@ function buildValueLedgerForRow(row: SourceEventRow, kind: ValueLedgerEntry['kin
       eventName: row.event_name,
       kind,
       label: 'Projected sourcing value',
-      stageKey: isSourceStageKey(row.current_stage_key) ? row.current_stage_key : 'intake',
+      stageKey: normalizeSourceStageKey(row.current_stage_key) ?? 'strategy',
       amountUsd: row.estimated_value_usd,
       confidence: 'low',
       evidenceCount: 1,

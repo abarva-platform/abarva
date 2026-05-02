@@ -1611,8 +1611,16 @@ function getStagePackForSourceStageKey(stageKey: string | undefined) {
 }
 
 const SOURCE_STAGE_KEY_TO_PACK_STAGE: Partial<Record<SourceStageKey, number>> = {
+  strategy: 0,
   intake: 0,
   scope: 0,
+  rfp: 3,
+  responses: 2,
+  pricing: 4,
+  bafo: 5,
+  executive_decision: 6,
+  transition: 6,
+  value: 7,
   sourcing_strategy: 1,
   vendor_responses: 2,
   rfp_rfi_package: 3,
