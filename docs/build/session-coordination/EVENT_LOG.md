@@ -156,3 +156,19 @@ Append-only coordination log for active Codex sessions.
 - validation: targeted ESLint for touched Source lifecycle/API/UI/test files passed with zero errors.
 - validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only.
 - next: rebase against latest `origin/main`, open PR, auto-merge after checks, deploy, and rerun live Source 11-stage probe.
+
+## 2026-05-02T12:55:00-05:00 - codex-source-e2e-crawler
+
+- status: source-live-three-client-lifecycle-crawl-passed-with-tower-gap-found
+- production_alias: `https://app.abarva.ai`
+- production_deploy_verified_before_crawl: `dpl_Fo4vbVZzhdXm44AC7k4aD5o7X1w2`
+- live_events_created:
+  - Apex Retail: `8f65a595-de2e-4d33-9f9a-9c1b6db67e51` / `E2E-CRAWL-2026-05-02-apex-SRC-11-STAGE-20260502T174837Z`
+  - Meridian Health: `578391fd-e6ba-4c24-bcd0-4a4da48d9738` / `E2E-CRAWL-2026-05-02-meridian-SRC-11-STAGE-20260502T175105Z`
+  - First Capital: `bdef723e-968a-4510-acb4-78a8256cb183` / `E2E-CRAWL-2026-05-02-firstcapital-SRC-11-STAGE-20260502T175236Z`
+- verified: each client admin landed on Home, saw Source, created a real Source event, self-approved admin review, and advanced through canonical Source stages `strategy`, `scope`, `rfp`, `responses`, `evaluation`, `pricing`, `bafo`, `executive_decision`, `selection`, `transition`, `value`.
+- db_verification: all three events persisted with `current_stage_key=value`, `lifecycle_state=completed`, and one `source_event_approvals` row from `waiting_on_client` to `active`.
+- tenant_isolation: browser checks showed no cross-tenant leakage on Home, Source, final Source event, or Tower.
+- gap_found: Tower handoff panel did not show the newly transitioned E2E events because Tower still filtered only legacy Source stage keys `contract_mobilization` and `value_realization`.
+- fix_started: branch `codex/source-tower-e2e-events` updates Tower handoff filtering to include canonical `transition` and `value` while preserving legacy aliases.
+- validation: focused Tower handoff Jest, targeted ESLint, and TypeScript passed locally.

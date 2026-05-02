@@ -72,7 +72,7 @@ async function buildTowerHandoffSourceEvents() {
       .from('source_events')
       .select('id, event_code, event_name, current_stage_key, lifecycle_state, linked_program_id, updated_at')
       .eq('client_key', activeClient.key)
-      .in('current_stage_key', ['contract_mobilization', 'value_realization'])
+      .in('current_stage_key', ['transition', 'value', 'contract_mobilization', 'value_realization'])
       .order('updated_at', { ascending: false })
       .limit(6);
 
@@ -126,6 +126,8 @@ function TowerHandoffProgramsPanel({ programs }: { programs: Awaited<ReturnType<
 }
 
 function formatSourceTowerStage(stageKey: string): string {
+  if (stageKey === 'transition') return 'Transition setup';
+  if (stageKey === 'value') return 'Value monitoring';
   if (stageKey === 'contract_mobilization') return 'Transition setup';
   if (stageKey === 'value_realization') return 'Value monitoring';
   return stageKey.replace(/_/g, ' ');
