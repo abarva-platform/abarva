@@ -21,3 +21,12 @@ Append-only coordination log for active Codex sessions.
 - files_touched: `src/lib/programs/governance.ts`, `src/lib/agent/tools/program/completeModule.ts`, `supabase/migrations/20260502043000_program_lifecycle_deliverable_types.sql`, `src/lib/programs/__tests__/governance-evaluate-gates.test.ts`
 - live_db: additive idempotent seed applied for missing P5 deliverable types (`funding_approval`, `capacity_approval`, `approval_memo`, `sponsor_alignment`, `stakeholder_alignment`); `business_case` applicable phases updated to include P5.
 - validation: focused Programs/Nexus Jest and ESLint passed locally; deployment/rerun pending PR merge.
+
+## 2026-05-02T09:10:00-05:00 - codex-programs-e2e-p6-completion-fix
+
+- status: fix-in-progress
+- branch: `codex/programs-p6-completion-state`
+- worktree: `/private/tmp/nexus-programs-private-plane-fix`
+- scope: Programs E2E crawler proved P6 Tower handoff contract persisted, but `engagements.lifecycle_state` remained `approved`; Nexus treated already-at-P6 as complete instead of calling `complete_program`.
+- files_touched: `src/lib/agent/tools/program/completeProgram.ts`, `src/app/api/chat/agent/route.ts`, `src/lib/agent/tools/__tests__/completeProgram.test.ts`, `src/app/api/chat/agent/__tests__/agent-route-context-bundle.test.ts`
+- validation: focused Programs/Nexus Jest and ESLint passed locally; deployment/rerun pending PR merge.
