@@ -22,8 +22,11 @@ import { getStageOverride } from './stage-overrides';
 import { SOURCE_LIFECYCLE_STATUS_LABELS, SOURCE_STAGE_LABELS, SOURCE_STAGE_ORDER } from './constants';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { getActiveClientRow } from '@/lib/active-client';
+import { getCurrentUser } from '@/lib/auth/current-user';
+import { CANONICAL_CLIENT_ADMIN_EMAILS } from '@/lib/auth/canonical-auth-roster';
 import { requireTenancy } from '@/lib/auth/tenancy';
 import { allowedSourceEventIdsForUser, canReadSourceEvent } from '@/lib/auth/source-access-policy';
+import { getClientOption, inferClientKeyFromEmail, isClientKey, type ClientKey } from '@/lib/client-config';
 
 // ── DB row type for source_events ─────────────────────────────────────────────
 
@@ -222,6 +225,21 @@ async function getPersistedSourceEventRow(eventId: string, clientKey: string): P
   return (data as SourceEventRow | null) ?? null;
 }
 
+async function getCanonicalAdminClientFallback(): Promise<{ key: ClientKey; name: string } | null> {
+  const user = await getCurrentUser().catch(() => null);
+  const email = user?.email?.trim().toLowerCase() ?? '';
+  if (!CANONICAL_CLIENT_ADMIN_EMAILS.includes(email as (typeof CANONICAL_CLIENT_ADMIN_EMAILS)[number])) {
+    return null;
+  }
+
+  const key =
+    (isClientKey(user?.metadataClientKey) ? user.metadataClientKey : null) ??
+    inferClientKeyFromEmail(user?.email);
+
+  if (!key) return null;
+  return { key, name: getClientOption(key).name };
+}
+
 function formatSourceEventType(eventType: string): string {
   return eventType
     .split(/[_-]+/)
@@ -257,6 +275,17 @@ export async function getSourcingEvent(eventId: string): Promise<SourcingEventDe
     const persistedEvent = await getPersistedSourceEventRow(eventId, activeClient.key);
     if (persistedEvent) {
       return sourceEventRowToDetail(persistedEvent, activeClient.name);
+    }
+  } else {
+    // Some demo/private-plane tenants do not yet have a matching `clients`
+    // table row. Keep this fallback deliberately narrow: canonical client
+    // admins can open persisted rows for their own inferred client only.
+    const fallbackClient = await getCanonicalAdminClientFallback();
+    if (fallbackClient) {
+      const persistedEvent = await getPersistedSourceEventRow(eventId, fallbackClient.key);
+      if (persistedEvent) {
+        return sourceEventRowToDetail(persistedEvent, fallbackClient.name);
+      }
     }
   }
 

@@ -46,12 +46,25 @@ describe('Source access-control wiring', () => {
 
     expect(route).toContain('loadUserSourceAccessPolicy');
     expect(route).toContain('canApproveSourceStages');
+    expect(route).toContain('CANONICAL_CLIENT_ADMIN_EMAILS');
+    expect(route).toContain('inferClientKeyFromEmail');
+    expect(route).toContain('canonicalAdminFallbackAllowed');
     expect(route).toContain(".from('source_events')");
     expect(route).toContain(".update({");
     expect(route).toContain('current_stage_key: stageKey');
     expect(route).toContain("persisted: true");
     expect(route).toContain('getSourceEventSeed');
     expect(route).toContain('setStageOverride');
+  });
+
+  it('lets persisted Source event detail fall back to canonical admin client identity when client rows are absent', () => {
+    const queries = read('src/lib/source/queries.ts');
+
+    expect(queries).toContain('getCanonicalAdminClientFallback');
+    expect(queries).toContain('CANONICAL_CLIENT_ADMIN_EMAILS');
+    expect(queries).toContain('inferClientKeyFromEmail');
+    expect(queries).toContain('getPersistedSourceEventRow(eventId, fallbackClient.key)');
+    expect(queries).toContain('sourceEventRowToDetail(persistedEvent, fallbackClient.name)');
   });
 
   it('ships the Source participant schema needed for record-scoped users', () => {
