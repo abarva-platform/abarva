@@ -66,6 +66,23 @@ describe('Source access-control wiring', () => {
     expect(button).not.toContain('return;\\n    }\\n    setLoading(true)');
   });
 
+  it('persists generated Source packets through the protected artifact registry path', () => {
+    const route = read('src/app/api/v1/source/[eventId]/artifacts/generate/route.ts');
+    const drawer = read('src/components/shell/AtlasDrawer.tsx');
+
+    expect(route).toContain('loadUserSourceAccessPolicy');
+    expect(route).toContain('canGenerateSourcingArtifacts');
+    expect(route).toContain('registerSourceArtifactUpload');
+    expect(route).toContain("sourceOrigin: 'generated'");
+    expect(route).toContain("sourceFormat: 'markdown'");
+    expect(route).toContain("mimeType: GENERATED_MIME");
+    expect(route).toContain('source-artifacts');
+
+    expect(drawer).toContain('Save generated artifact');
+    expect(drawer).toContain('/artifacts/generate');
+    expect(drawer).toContain('source-generated-artifact');
+  });
+
   it('lets persisted Source event detail fall back to canonical admin client identity when client rows are absent', () => {
     const queries = read('src/lib/source/queries.ts');
 
