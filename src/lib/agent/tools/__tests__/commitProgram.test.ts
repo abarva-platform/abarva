@@ -337,12 +337,14 @@ describe('commit_program · OV2-2b approval-queue flow', () => {
     );
     expect(engagementInsert).toBeDefined();
     expect(engagementInsert!.insertedRow).toMatchObject({
+      graph_node_id: expect.stringMatching(/^eng_test_program_/),
       client_id: 'client_uuid_1',
       industry_code: 'RETAIL',
       function_code: 'FRONT_OFFICE',
       objective_code: 'GROW',
       topic_code: 'test_program',
       name: 'Test Program',
+      solution: 'Test Program',
       sponsor_person_id: SPONSOR_UUID,
       maestro_person_id: LEAD_UUID,
       lifecycle_state: 'submitted_for_approval',
@@ -438,10 +440,12 @@ describe('commit_program · OV2-2b approval-queue flow', () => {
       (q) => q.table === 'engagements' && q.insertedRow !== null,
     );
     expect(engagementInsert?.insertedRow).toMatchObject({
+      graph_node_id: expect.stringMatching(/^eng_ai_assisted_engineering_productivity_/),
       industry_code: 'HEALTHCARE_IDN',
       function_code: 'MIDDLE_OFFICE',
       objective_code: 'OPTIMISE',
       topic_code: 'ai_assisted_engineering_productivity',
+      solution: 'AI-Assisted Engineering Productivity',
       sponsor_person_id: SPONSOR_UUID,
     });
   });

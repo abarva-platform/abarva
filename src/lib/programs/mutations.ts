@@ -60,6 +60,11 @@ function slugifyTopicCode(value: string): string {
   return slug || 'program_origination';
 }
 
+export function buildEngagementGraphNodeId(name: string): string {
+  const slug = slugifyTopicCode(name).slice(0, 56);
+  return `eng_${slug}_${Date.now().toString(36)}`;
+}
+
 export function resolveProgramClassificationCodes(input: {
   name: string;
   useCase: string;
@@ -139,15 +144,21 @@ export async function originateProgram(ctx: TenancyCtx, input: OriginateProgramI
   // NOTE: engagements has no `created_by` column on the current schema —
   // creator attribution is captured in module_state_log (changed_by_user_id)
   // and downstream participant rows. Don't reintroduce a created_by write.
+  const graphNodeId = buildEngagementGraphNodeId(input.name);
   const { data, error } = await sb
     .from('engagements')
     .insert({
+      graph_node_id: graphNodeId,
       client_id: ctx.clientId,
       industry_code: industryCode,
       function_code: classificationCodes.functionCode,
       objective_code: classificationCodes.objectiveCode,
       topic_code: classificationCodes.topicCode,
       name: input.name,
+      // Legacy compatibility: the original engagement engine used `solution`
+      // as the required program label. Live DBs can still carry that NOT NULL
+      // constraint even though Programs now reads `name`.
+      solution: input.name,
       status: 'active',
       current_phase: 0,
       program_archetype: input.archetype,

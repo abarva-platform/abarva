@@ -9,6 +9,7 @@ import { submitForApproval } from '@/lib/programs/approval';
 import { markDraftCommitted } from '@/lib/programs/origination-drafts';
 import type { OriginSource } from '@/lib/programs/types.db';
 import { normalizeProgramArchetype } from '@/lib/programs/archetype-normalization';
+import { buildEngagementGraphNodeId } from '@/lib/programs/mutations';
 
 export interface SubmitOriginationBriefInput {
   surface: string;
@@ -332,16 +333,22 @@ export async function submitOriginationBrief(
   const industryCode = (
     activeClient.industry_code?.trim() || CLIENT_KEY_TO_INDUSTRY_CODE[activeClient.key]
   ).toUpperCase();
+  const graphNodeId = buildEngagementGraphNodeId(input.programName);
 
   const { data: inserted, error: insertError } = await sb
     .from('engagements')
     .insert({
+      graph_node_id: graphNodeId,
       client_id: tenancy.clientId,
       industry_code: industryCode,
       function_code: derived.functionCode,
       objective_code: derived.objectiveCode,
       topic_code: derived.topicCode,
       name: input.programName,
+      // Legacy compatibility: the original engagement engine used `solution`
+      // as the required display field. New Programs code reads `name`, but
+      // production schemas can still enforce `solution`.
+      solution: input.programName,
       sponsor_person_id: sponsor.id,
       maestro_person_id: lead.id,
       status: 'draft',
