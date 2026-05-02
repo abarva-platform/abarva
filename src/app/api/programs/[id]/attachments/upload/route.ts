@@ -172,6 +172,7 @@ export async function POST(
       err instanceof Error ? err.message : 'invalid phase',
     );
   }
+  const effectivePhase = phase ?? program.currentPhase ?? undefined;
   const stepId = parseOptionalString(formData.get('stepId'));
   const deliverableId = parseOptionalString(formData.get('deliverableId'));
 
@@ -221,7 +222,7 @@ export async function POST(
     record = await recordAttachmentUpload({
       tenantKey,
       programId,
-      phase,
+      phase: effectivePhase,
       stepId,
       deliverableId,
       originalName: filename,
@@ -265,7 +266,7 @@ export async function POST(
       tenantKey,
       programId,
       attachmentId: record.id,
-      phase: phase ?? null,
+      phase: effectivePhase ?? null,
       stepId: stepId ?? null,
     });
   } catch (err) {

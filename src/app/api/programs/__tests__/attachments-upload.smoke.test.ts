@@ -148,12 +148,16 @@ function makeMultipartRequest(
   filename: string,
   mime: string,
   bytes: number,
+  fields: Record<string, string> = {},
 ): Request {
   const fd = new FormData();
   fd.append(
     'file',
     new File([new Uint8Array(bytes)], filename, { type: mime }),
   );
+  for (const [key, value] of Object.entries(fields)) {
+    fd.append(key, value);
+  }
   return new Request('http://localhost/api/programs/eng-1/attachments/upload', {
     method: 'POST',
     body: fd,
@@ -176,6 +180,7 @@ beforeEach(() => {
   getProgramByIdMock.mockResolvedValue({
     id: PROGRAM_ID,
     clientId: 'c-1',
+    currentPhase: 1,
     archivedAt: null,
     deletedAt: null,
   });
@@ -289,6 +294,26 @@ describe('POST /api/programs/[id]/attachments/upload', () => {
     expect(storageUploadMock).toHaveBeenCalledTimes(1);
     expect(recordAttachmentUploadMock).toHaveBeenCalledTimes(1);
     expect(recordProgramEvidenceMock).toHaveBeenCalledTimes(1);
+    expect(recordAttachmentUploadMock.mock.calls[0][0]).toMatchObject({
+      phase: 1,
+    });
+    expect(recordProgramEvidenceMock.mock.calls[0][1]).toMatchObject({
+      phase: 1,
+    });
+  });
+
+  it('lets an explicit phase override the program current phase', async () => {
+    const req = makeMultipartRequest('design-notes.txt', 'text/plain', 128, {
+      phase: '2',
+    });
+    const res = await POST(req, PROGRAM_PARAMS);
+    expect(res.status).toBe(200);
+    expect(recordAttachmentUploadMock.mock.calls[0][0]).toMatchObject({
+      phase: 2,
+    });
+    expect(recordProgramEvidenceMock.mock.calls[0][1]).toMatchObject({
+      phase: 2,
+    });
   });
 
   it('reports text parsing metadata when the uploaded evidence was text-parsed', async () => {
