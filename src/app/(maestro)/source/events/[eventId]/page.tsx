@@ -141,6 +141,14 @@ export default async function SourceEventDetailPage({
   })();
 
   const sentinelQuote = `${event.name} at ${event.currentStageLabel}.${event.blocker ? ` Blocker: ${event.blocker}.` : ''}`;
+  const eventStageLabels = event.stages.map((stage) => stage.label);
+  const journeyStages = eventStageLabels.includes(event.currentStageLabel)
+    ? eventStageLabels
+    : AMS_SOURCE_EVENT.stages;
+  const activeJourneyStage =
+    event.currentStageLabel === 'Orals/BAFO' && journeyStages.includes('BAFO')
+      ? 'BAFO'
+      : event.currentStageLabel;
 
   return (
     <SourceEventAgentCanvas
@@ -148,8 +156,8 @@ export default async function SourceEventDetailPage({
       quote={sentinelQuote}
       middleStrip={
         <StageTrackerStrip
-          stages={AMS_SOURCE_EVENT.stages}
-          activeStage={event.currentStageLabel === 'Orals/BAFO' ? 'BAFO' : event.currentStageLabel}
+          stages={journeyStages}
+          activeStage={activeJourneyStage}
           stageStates={stageStates}
           variant="journey"
           personaLabel="Sourcing lead"

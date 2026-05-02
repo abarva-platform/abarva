@@ -135,8 +135,10 @@ export function SourceArtifactDrawer({
         <div style={CHIP_ROW} aria-label="Source artifact context chips">
           <span style={CHIP}>Artifact type: {artifact.kind}</span>
           <span style={CHIP}>Evidence entries: {artifact.sections.length}</span>
-          <span style={CHIP}>Seeded sections: {sectionCount}</span>
-          <span style={CHIP}>Confidence: seeded deterministic</span>
+          <span style={CHIP}>Sections: {sectionCount}</span>
+          <span style={CHIP}>
+            {isRegistryBacked ? 'Source: live persisted registry' : 'Confidence: seeded deterministic'}
+          </span>
         </div>
       </div>
 

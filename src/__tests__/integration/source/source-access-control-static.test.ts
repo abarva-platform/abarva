@@ -96,7 +96,10 @@ describe('Source access-control wiring', () => {
 
     expect(page).toContain('source_artifacts registry');
     expect(page).toContain('Provenance: ${provenanceSource}');
+    expect(page).toContain('journeyStages');
+    expect(page).toContain('activeJourneyStage');
     expect(drawer).toContain('Registered Source artifact');
+    expect(drawer).toContain('Source: live persisted registry');
     expect(drawer).toContain('no completion is implied');
   });
 
