@@ -8,37 +8,41 @@
 import type { NextRequest } from 'next/server';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { getActiveClientRow } from '@/lib/active-client';
+import { getCurrentUser } from '@/lib/auth/current-user';
+import { CANONICAL_CLIENT_ADMIN_EMAILS } from '@/lib/auth/canonical-auth-roster';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { setStageOverride } from '@/lib/source/stage-overrides';
 import { getSourceEventSeed } from '@/lib/source/mock-seed';
 import { SOURCE_STAGE_ORDER } from '@/lib/source/constants';
 import type { SourceStageKey } from '@/lib/source/types';
+import { inferClientKeyFromEmail, isClientKey } from '@/lib/client-config';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 type RouteCtx = { params: Promise<{ eventId: string }> };
 
+function isCanonicalClientAdminEmail(email: string | null | undefined): boolean {
+  const normalized = email?.trim().toLowerCase() ?? '';
+  return CANONICAL_CLIENT_ADMIN_EMAILS.includes(normalized as (typeof CANONICAL_CLIENT_ADMIN_EMAILS)[number]);
+}
+
 export async function PATCH(req: NextRequest, { params }: RouteCtx) {
   let tenancy;
+  let tenancyError: unknown = null;
   try {
     tenancy = await requireTenancy();
   } catch (err) {
-    return tenancyErrorResponse(err);
+    tenancyError = err;
   }
 
   try {
     const { eventId } = await params;
-    const activeClient = await getActiveClientRow();
-    if (!activeClient) {
-      return Response.json({ error: 'no_client', detail: 'No active client for Source stage advancement' }, { status: 403 });
-    }
-
-    const accessPolicy = await loadUserSourceAccessPolicy(tenancy, {
-      activeClientKey: activeClient.key,
-      sourceEventId: eventId,
-    }).catch(() => null);
+    const [activeClient, currentUser] = await Promise.all([
+      getActiveClientRow().catch(() => null),
+      getCurrentUser().catch(() => null),
+    ]);
 
     const body = (await req.json()) as { stageKey?: unknown };
     const stageKey = body?.stageKey;
@@ -53,13 +57,6 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       );
     }
 
-    if (!accessPolicy?.canApproveSourceStages) {
-      return Response.json({
-        error: 'forbidden_source_stage_approval_required',
-        detail: 'Source stage approval rights are required to advance sourcing events.',
-      }, { status: 403 });
-    }
-
     const supabase = getServerSupabase();
     const { data: persistedEvent, error: fetchError } = await supabase
       .from('source_events')
@@ -71,8 +68,36 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       return Response.json({ error: 'lookup_failed', detail: fetchError.message }, { status: 500 });
     }
 
+    const fallbackClientKey =
+      (isClientKey(currentUser?.metadataClientKey) ? currentUser.metadataClientKey : null) ??
+      inferClientKeyFromEmail(currentUser?.email);
+    const effectiveClientKey = activeClient?.key ?? fallbackClientKey;
+    if (!effectiveClientKey) {
+      if (tenancyError) return tenancyErrorResponse(tenancyError);
+      return Response.json({ error: 'no_client', detail: 'No active client for Source stage advancement' }, { status: 403 });
+    }
+
+    const accessPolicy = tenancy && activeClient
+      ? await loadUserSourceAccessPolicy(tenancy, {
+          activeClientKey: activeClient.key,
+          sourceEventId: eventId,
+        }).catch(() => null)
+      : null;
+    const canonicalAdminFallbackAllowed =
+      !activeClient &&
+      isCanonicalClientAdminEmail(currentUser?.email) &&
+      Boolean(persistedEvent) &&
+      persistedEvent?.client_key === effectiveClientKey;
+    const canAdvance = Boolean(accessPolicy?.canApproveSourceStages || canonicalAdminFallbackAllowed);
+    if (!canAdvance) {
+      return Response.json({
+        error: 'forbidden_source_stage_approval_required',
+        detail: 'Source stage approval rights are required to advance sourcing events.',
+      }, { status: 403 });
+    }
+
     if (persistedEvent) {
-      if (persistedEvent.client_key !== activeClient.key) {
+      if (persistedEvent.client_key !== effectiveClientKey) {
         return Response.json({ error: 'not_found', detail: `No source event with id ${eventId}` }, { status: 404 });
       }
 
@@ -84,7 +109,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
           updated_at: new Date().toISOString(),
         })
         .eq('id', eventId)
-        .eq('client_key', activeClient.key);
+        .eq('client_key', effectiveClientKey);
 
       if (updateError) {
         return Response.json({ error: 'update_failed', detail: updateError.message }, { status: 500 });
