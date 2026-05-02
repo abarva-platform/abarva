@@ -151,3 +151,11 @@ locks:
     expires_at: "2026-05-02T18:00:00-05:00"
     note: "Narrow shared AppTopBar polish for responsive nav rhythm, keyboard focus visibility, and compact account behavior. Avoids Source API, lifecycle, stage, and data files."
     completed_at: "2026-05-02T14:37:18-05:00"
+
+  - owner: codex-home-card-polish
+    resource: home-cockpit-card-polish
+    status: completed
+    started_at: "2026-05-02T14:45:16-05:00"
+    expires_at: "2026-05-02T18:30:00-05:00"
+    note: "Narrow Home cockpit card polish for keyboard focus visibility, link affordance, and responsive card rhythm. Avoids Source API, lifecycle, stage, and data files."
+    completed_at: "2026-05-02T14:49:14-05:00"

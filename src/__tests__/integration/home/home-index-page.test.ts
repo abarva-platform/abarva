@@ -76,11 +76,32 @@ describe('HOME-POLISH · Middle strip presence', () => {
     expect(componentSrc).toContain('data-testid="home-middle-strip"');
   });
 
-  it('middle strip contains the CDP build gate item', () => {
-    expect(componentSrc).toContain('CDP build gate');
+  it('middle strip contains the CDP execution roadmap gate item', () => {
+    expect(componentSrc).toContain('CDP Execution Roadmap gate');
   });
 
   it('middle strip contains the morning pulse label', () => {
     expect(componentSrc).toContain('Morning pulse');
+  });
+});
+
+describe('HOME-POLISH · card interaction accessibility', () => {
+  it('adds keyboard-visible focus treatment to Home cockpit cards', () => {
+    expect(componentSrc).toContain('home-card-link:focus-visible');
+    expect(componentSrc).toContain('outline: 2px solid #0b4a91');
+    expect(componentSrc).toContain('prefers-reduced-motion: reduce');
+  });
+
+  it('names workspace and Intelligence card destinations for assistive tech', () => {
+    expect(componentSrc).toContain('aria-label={`Open ${title} workspace`}');
+    expect(componentSrc).toContain('aria-label={`Open Intelligence for ${label}`}');
+    expect(componentSrc).toContain('aria-label="Open Intelligence for portfolio health"');
+  });
+
+  it('marks disabled module cards with an honest non-interactive surface state', () => {
+    expect(componentSrc).toContain('aria-disabled={enabled ? undefined : true}');
+    expect(componentSrc).toContain('data-enabled={enabled ?');
+    expect(componentSrc).toContain('.home-card-surface[data-enabled="false"]');
+    expect(componentSrc).toContain('cursor: not-allowed');
   });
 });
