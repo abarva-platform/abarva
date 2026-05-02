@@ -10,6 +10,7 @@ describe("Product page contract", () => {
   const pageSource = read("src/app/(maestro)/product/page.tsx");
   const topBarSource = read("src/components/shell/AppTopBar.tsx");
   const maestroChromeSource = read("src/components/chrome/MaestroChrome.tsx");
+  const productPageSource = read("src/components/product/ProductPage.tsx");
   const contentSource = read("src/lib/product/product-page-content.ts");
 
   it("is an authenticated AppShell surface, not a standalone marketing page", () => {
@@ -53,7 +54,22 @@ describe("Product page contract", () => {
     }
   });
 
+  it("supports mature Atrium interaction affordances", () => {
+    expect(productPageSource).toContain("handleTabKeyDown");
+    expect(productPageSource).toContain('event.key === "ArrowRight"');
+    expect(productPageSource).toContain('event.key === "ArrowLeft"');
+    expect(productPageSource).toContain('role="tablist"');
+    expect(productPageSource).toContain('role="tabpanel"');
+    expect(productPageSource).toContain(
+      "tabIndex={activeKey === tab.key ? 0 : -1}",
+    );
+    expect(productPageSource).toContain('aria-live="polite"');
+    expect(productPageSource).toContain("Atlas state model");
+    expect(productPageSource).toContain("prefers-reduced-motion: reduce");
+  });
+
   it("keeps page copy inside the handoff guardrails", () => {
+    const pageCopySource = `${contentSource}\n${productPageSource}`;
     const forbiddenPatterns = [
       /\bAzure\b/i,
       /\bAWS\b/i,
@@ -72,7 +88,7 @@ describe("Product page contract", () => {
     ];
 
     for (const pattern of forbiddenPatterns) {
-      expect(contentSource).not.toMatch(pattern);
+      expect(pageCopySource).not.toMatch(pattern);
     }
   });
 });

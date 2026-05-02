@@ -135,3 +135,11 @@ locks:
     expires_at: "2026-05-02T20:00:00-05:00"
     note: Narrow Source UI/UX polish for Atrium chrome consistency, typography rhythm, agent state clarity, responsive behavior, copy precision, and accessibility. No Source lifecycle/data/API changes.
     completed_at: "2026-05-02T16:20:00-05:00"
+
+  - owner: codex-product-atrium-polish
+    resource: product-atrium-polish
+    status: completed
+    started_at: "2026-05-02T14:19:14-05:00"
+    expires_at: "2026-05-02T16:30:00-05:00"
+    note: "Polishes Product/Atrium UX: responsive tab rhythm, keyboard/a11y behavior, agent-state explanation, and copy precision. Avoids Source API, lifecycle, stage, and data files."
+    completed_at: "2026-05-02T14:23:12-05:00"
