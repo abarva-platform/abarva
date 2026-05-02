@@ -112,6 +112,37 @@ describe('POST /api/v1/programs/[programId]/advance', () => {
     expect(mockRequestFounderApproval).toHaveBeenCalled();
     expect(mockAdvancePhase).not.toHaveBeenCalled();
   });
+
+  it('blocks hard gate failures even when the caller has self-approval rights', async () => {
+    mockLoadUserProgramAccessPolicy.mockResolvedValue({
+      programIdsAllowed: null,
+      canApproveGates: true,
+    });
+    mockEvaluateGate.mockResolvedValue({
+      failedChecks: [
+        {
+          check: 'program_seed_recorded',
+          reason: 'P0 seed artifact must be signed off',
+          severity: 'hard',
+        },
+      ],
+      requiresApproval: false,
+      approverRole: null,
+    });
+
+    const { POST } = await import('../route');
+    const res = await POST(
+      req({ toPhase: 1, selfApproveIfAuthorized: true }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(409);
+    await expect(res.json()).resolves.toMatchObject({
+      error: 'gate_blocked',
+    });
+    expect(mockRequestFounderApproval).not.toHaveBeenCalled();
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
 });
 
 export {};
