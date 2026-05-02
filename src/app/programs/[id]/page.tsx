@@ -228,13 +228,20 @@ export default async function ProgramDetailRoute({
           'the signed P6 tracking contract.',
       };
     } else if (eng.lifecycle_state === 'approved' && view.currentPhase === 0) {
-      view.gateStatus = 'pending';
+      const hasSignedP0Seed = dbData.deliverables.some(
+        (deliverable) =>
+          deliverableKeyAppliesToPhase(deliverable.deliverable_type_key, 0) &&
+          deliverable.status === 'signed_off',
+      );
+      view.gateStatus = hasSignedP0Seed ? 'open' : 'pending';
       view.workbench = {
         ...view.workbench,
         prose:
-          'This program is approved for P0 Origination. Nexus should now help complete ' +
-          'the P0 entry and exit criteria, generate the seed deliverables, and submit ' +
-          'the P0 exit approval before Discovery unlocks.',
+          hasSignedP0Seed
+            ? 'The P0 seed deliverable is signed off. Nexus can now run the P0 exit check and request Discovery.'
+            : 'This program is approved for P0 Origination. Nexus should now help complete ' +
+              'the P0 entry and exit criteria, generate the seed deliverables, and submit ' +
+              'the P0 exit approval before Discovery unlocks.',
       };
     }
   }
