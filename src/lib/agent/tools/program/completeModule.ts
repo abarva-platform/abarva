@@ -4,8 +4,8 @@
 // governance gate checks that require specific modules to be completed:
 //   - baseline_capture (soft gate for P2→P3)
 //   - cxo_interview (soft gate for P3→P4)
-//   - cxo_verification (hard gate for P5→P6)
-//   - benefits_realization (hard gate for P5→P6)
+//   - funding_approval / capacity_approval / sponsor_alignment (hard gates for P5→P6)
+//   - cxo_verification / benefits_realization (legacy P5→P6 readiness modules)
 //   - phase_3_findings (soft gate for P3→P4)
 //
 // The UNIQUE constraint is on (engagement_id, module_key) — we upsert to
@@ -28,6 +28,10 @@ const MODULE_PHASE_MAP: Record<string, number> = {
   baseline_capture: 2,
   cxo_interview: 3,
   phase_3_findings: 3,
+  funding_approval: 5,
+  capacity_approval: 5,
+  sponsor_alignment: 5,
+  stakeholder_alignment: 5,
   cxo_verification: 5,
   benefits_realization: 5,
 };
@@ -37,8 +41,10 @@ export const completeModuleTool: AgentTool<CompleteModuleInput> = {
   description:
     'Mark a program module as completed. Use this when the user confirms a key activity ' +
     'is done — e.g. baseline_capture after baselining metrics, cxo_interview after the CXO ' +
-    'session, cxo_verification and benefits_realization before closing out Phase 5. ' +
+    'session, funding_approval/capacity_approval and sponsor_alignment before advancing P5, ' +
+    'and cxo_verification and benefits_realization before closing out Phase 5. ' +
     'Valid module_key values: baseline_capture, cxo_interview, phase_3_findings, ' +
+    'funding_approval, capacity_approval, sponsor_alignment, stakeholder_alignment, ' +
     'cxo_verification, benefits_realization.',
   surfaces: ['/programs/:id'],
   input_schema: {
@@ -49,6 +55,7 @@ export const completeModuleTool: AgentTool<CompleteModuleInput> = {
         type: 'string',
         description:
           'Module key: baseline_capture | cxo_interview | phase_3_findings | ' +
+          'funding_approval | capacity_approval | sponsor_alignment | stakeholder_alignment | ' +
           'cxo_verification | benefits_realization',
       },
       module_name: { type: 'string', description: 'Human-readable module name (optional).' },

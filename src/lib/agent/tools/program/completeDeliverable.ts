@@ -22,12 +22,16 @@ interface CompleteDeliverableToolInput {
 }
 
 const ALLOWED_DELIVERABLE_TYPES = new Set([
+  'approval_memo',
   'approval_packet',
   'baseline',
   'baseline_metrics',
   'business_case',
+  'business_readiness_plan',
+  'capacity_approval',
   'charter',
   'change_management_plan',
+  'control_tower_handoff',
   'current_state_assessment',
   'current_state_summary',
   'design',
@@ -38,6 +42,8 @@ const ALLOWED_DELIVERABLE_TYPES = new Set([
   'discovery_summary',
   'execution_plan',
   'execution_roadmap',
+  'execution_monitoring_plan',
+  'funding_approval',
   'funding_business_case',
   'meeting_notes',
   'mobilization_roadmap',
@@ -46,6 +52,8 @@ const ALLOWED_DELIVERABLE_TYPES = new Set([
   'requirements_design_outcome_trace',
   'requirements_traceability',
   'risk_register',
+  'sponsor_alignment',
+  'stakeholder_alignment',
   'stakeholder_map',
   'tower_handoff_plan',
   'traceability_matrix',
@@ -63,8 +71,9 @@ export const completeDeliverableTool: AgentTool<CompleteDeliverableToolInput> = 
     'because this tool represents an explicit acceptance moment. For chat-only drafts, use ordinary prose or ' +
     'the draft route instead. Use distinct deliverable_type_key values for distinct gate artifacts: ' +
     'P2 charter = charter, P3 solution design = design_spec, P3 requirements-to-design-to-outcomes trace = ' +
-    'requirements_traceability, P4 roadmap = execution_roadmap, P5 funding package = approval_packet or ' +
-    'business_case, P6 Tower setup = tower_handoff_plan.',
+    'requirements_traceability, P4 roadmap = execution_roadmap, P5 funding package = business_case plus ' +
+    'approval_memo or funding_approval, P5 alignment = stakeholder_alignment or sponsor_alignment, ' +
+    'P5 readiness = readiness_and_change_plan, P6 Tower setup = tower_handoff_plan.',
   surfaces: ['/programs/:id'],
   input_schema: {
     type: 'object',
@@ -77,8 +86,9 @@ export const completeDeliverableTool: AgentTool<CompleteDeliverableToolInput> = 
         type: 'string',
         description:
           'Deliverable key. Common lifecycle keys: discovery_report, stakeholder_map, charter, design_spec, ' +
-          'requirements_traceability, execution_roadmap, business_case, approval_packet, change_management_plan, ' +
-          'tower_handoff_plan, outcome_report, vendor_selection.',
+          'requirements_traceability, execution_roadmap, business_case, approval_packet, approval_memo, ' +
+          'funding_approval, stakeholder_alignment, sponsor_alignment, change_management_plan, ' +
+          'readiness_and_change_plan, tower_handoff_plan, outcome_report, vendor_selection.',
       },
       title: {
         type: 'string',

@@ -174,4 +174,37 @@ describe('complete_deliverable tool', () => {
       }),
     );
   });
+
+  it('allows P5 gate artifacts required for approval and mobilization', async () => {
+    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+    completeDeliverableMock.mockResolvedValue({
+      deliverableId: 'deliv-5',
+      versionId: 'version-5',
+      status: 'signed_off',
+    });
+
+    for (const deliverableTypeKey of [
+      'business_case',
+      'approval_memo',
+      'funding_approval',
+      'stakeholder_alignment',
+      'readiness_and_change_plan',
+      'tower_handoff_plan',
+    ]) {
+      const result = await completeDeliverableTool.handler(
+        {
+          program_id: 'program-1',
+          deliverable_type_key: deliverableTypeKey,
+          title: `P5 ${deliverableTypeKey}`,
+          content: 'Accepted P5 package content',
+          sign_off: true,
+        },
+        makeCtx(),
+      );
+
+      expect(result.success).toBe(true);
+    }
+
+    expect(completeDeliverableMock).toHaveBeenCalledTimes(6);
+  });
 });
