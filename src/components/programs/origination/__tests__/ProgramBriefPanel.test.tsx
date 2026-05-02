@@ -15,7 +15,7 @@
  *     existing brief-field cards keep working).
  */
 
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import {
   buildProgramSetupReadiness,
   EMPTY_BRIEF,
@@ -89,6 +89,22 @@ describe('ProgramBriefPanel · OV2-1b meta cards', () => {
 
     expect(screen.getByText('Ready to submit for approval')).toBeTruthy();
     expect(screen.getByText('6 of 6 required')).toBeTruthy();
+  });
+
+  it('surfaces the deterministic submit button only when a ready brief has a submit handler', () => {
+    const onSubmit = jest.fn();
+    render(<ProgramBriefPanel brief={READY_BRIEF} onSubmitForApproval={onSubmit} />);
+
+    const button = screen.getByRole('button', { name: 'Submit brief for approval' });
+    fireEvent.click(button);
+
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not surface the deterministic submit button before readiness is complete', () => {
+    render(<ProgramBriefPanel brief={EMPTY_BRIEF} onSubmitForApproval={jest.fn()} />);
+
+    expect(screen.queryByRole('button', { name: 'Submit brief for approval' })).toBeNull();
   });
 
   it('moves setup-readiness into review state when portfolio overlaps exist', () => {
