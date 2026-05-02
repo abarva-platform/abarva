@@ -57,9 +57,14 @@ export async function getActiveClientKey(requestedClientId?: string | null): Pro
   const role = resolveSessionRole(session.role, session.email);
   const pinnedClientKey = resolvePinnedClientKey(session);
 
-  const isLockedRole = role === 'client' || role === 'maestro';
-  if (isLockedRole && pinnedClientKey) return pinnedClientKey;
+  // Real demo/client personas use tenant-specific email domains. Those
+  // identities must stay pinned to exactly one client even when Clerk metadata
+  // has an admin-ish role or an old active-client cookie exists from a prior
+  // session. Cookie-first resolution here produced Meridian users with Apex
+  // Setup chrome during the live Programs E2E crawl.
+  if (pinnedClientKey) return pinnedClientKey;
 
+  const isLockedRole = role === 'client' || role === 'maestro';
   if (isLockedRole && isClientKey(requestedClientId)) return requestedClientId;
 
   if (isLockedRole) {
