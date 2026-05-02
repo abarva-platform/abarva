@@ -229,17 +229,29 @@ export async function evaluateGate(
     ].join('\n').toLowerCase();
   }
 
+  const discoveryReportNamesFutureGateRisk =
+    /\bbefore p2 gate close\b/.test(latestDiscoveryReportText) ||
+    /\bbefore synthesis (?:wraps|closes)\b/.test(latestDiscoveryReportText) ||
+    /\bwill block p2[→-]p3\b/.test(latestDiscoveryReportText) ||
+    /\bbecomes a hard blocker at p2[→-]p3\b/.test(latestDiscoveryReportText) ||
+    /\bp2 architecture trade-?off\b/.test(latestDiscoveryReportText);
   const discoveryReportHasHardGap =
     /\bhard gaps?\b/.test(latestDiscoveryReportText) ||
     /\bhard evidence gaps?\b/.test(latestDiscoveryReportText) ||
     /\bdo not advance\b/.test(latestDiscoveryReportText) ||
     /\bhold on\b/.test(latestDiscoveryReportText) ||
-    /\bnot yet (pulled|extracted|captured|named|confirmed|verified|attested)\b/.test(latestDiscoveryReportText) ||
+    (
+      /\bnot yet (pulled|extracted|captured|named|confirmed|verified|attested)\b/.test(latestDiscoveryReportText) &&
+      !discoveryReportNamesFutureGateRisk
+    ) ||
     /\bunverified\b/.test(latestDiscoveryReportText) ||
     /\bto resolve within\b/.test(latestDiscoveryReportText);
   const discoveryReportHasNamedOwnerGap =
-    /\b(technical|security|business|adoption)\s+owner:\s*not yet named\b/.test(latestDiscoveryReportText) ||
-    /\bowner names?\s*\([^)]*\)\s*(missing|unresolved|required)\b/.test(latestDiscoveryReportText);
+    !discoveryReportNamesFutureGateRisk &&
+    (
+      /\b(technical|security|business|adoption)\s+owner:\s*not yet named\b/.test(latestDiscoveryReportText) ||
+      /\bowner names?\s*\([^)]*\)\s*(missing|unresolved|required)\b/.test(latestDiscoveryReportText)
+    );
   const discoveryReportHasBaselineAttestation =
     /\bbaselines?\b/.test(latestDiscoveryReportText) &&
     /\b(attested|owner attestation|captured|current state|source of record)\b/.test(latestDiscoveryReportText) &&

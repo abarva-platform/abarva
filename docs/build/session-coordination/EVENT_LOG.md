@@ -449,3 +449,32 @@ Append-only coordination log for active Codex sessions.
 - validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only.
 - lock: `source-events-tooltip-copy-ui` marked completed in `ACTIVE_LOCKS.yaml`.
 - next: open PR and auto-merge after standard checks pass.
+
+## 2026-05-02T17:55:00-05:00 - codex-programs-e2e-client-polish
+
+- status: in-progress
+- branch: `codex/programs-e2e-client-polish`
+- worktree: `/tmp/nexus-functional-backlog`
+- scope: continue live Programs P0-P6 functional proof across clients, fix blockers within Programs lane, and polish Atrium chrome/agent-state UX discovered during testing
+- live_evidence_so_far: Meridian program `Healthcare Data Analytics Modernization for Agentic Care - No Raw ID Smoke 2026-05-02` advanced P0→P6 and appears in Tower handoffs
+- locks: `programs-e2e-client-polish`
+- guardrail: no Source lifecycle/data/API changes and no knowledge-layer private-plane schema changes
+
+## 2026-05-02T18:35:00-05:00 - codex-programs-e2e-client-polish
+
+- status: blocker-found-local-fix-validating
+- live_failure: Apex P1 Discovery Report was saved/signed and right-pane gate cards showed P1 hard gates passing, but the visible Advance to P2 button returned a hard-gate error and did not create an approval or advance the phase.
+- root_cause: `evaluateGate` treated future-looking P2/P3 soft-risk language in a signed P1 Discovery Report (for example, security/compliance owner must be named before P2 gate close) as a current P1 hard gap.
+- fix: tightened P1 discovery hard-gap detection so explicitly future-phase soft risks remain carried-forward risks without blocking P1->P2.
+- regression: added `does not block P1 to P2 on future-looking P2 gate risks in the signed Discovery Report` to `src/lib/programs/__tests__/governance-evaluate-gates.test.ts`.
+- validation: focused governance gate Jest passed, 1 suite / 8 tests.
+
+## 2026-05-02T18:42:00-05:00 - codex-programs-e2e-client-polish
+
+- status: local-validation-passed
+- shipped: P1->P2 gate evaluator no longer blocks on future-phase soft risks carried in the P1 Discovery Report.
+- validation: focused governance gate Jest passed, 1 suite / 8 tests.
+- validation: targeted ESLint passed for `src/lib/programs/governance.ts` and `src/lib/programs/__tests__/governance-evaluate-gates.test.ts`.
+- validation: `npx tsc --noEmit --pretty false` passed.
+- validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only.
+- next: commit, push, open PR, auto-merge after checks pass, wait for production deployment, then rerun Apex P1->P2 live.
