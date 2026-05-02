@@ -12,6 +12,8 @@ const SHELL_SURFACE_PREFIXES = [
   '/tower',
   '/source',
   '/intelligence',
+  '/learn',
+  '/product',
 ] as const;
 
 export function MaestroChrome({ children }: { children: React.ReactNode }) {

@@ -167,7 +167,15 @@ describe("SHELL-V2 Rule 5 — cockpit shell uses a single top product nav", () =
   test("AppTopBar owns the authenticated product nav labels", () => {
     const content = read("components/shell/AppTopBar.tsx");
 
-    for (const label of ["Home", "Setup", "Source", "Intelligence", "Tower", "Learn"]) {
+    for (const label of [
+      "Home",
+      "Setup",
+      "Source",
+      "Intelligence",
+      "Tower",
+      "Learn",
+      "Product",
+    ]) {
       expect(content).toContain(`label: "${label}"`);
     }
     expect(content).toContain('label: getAtriumProductNavLabel("programs")');

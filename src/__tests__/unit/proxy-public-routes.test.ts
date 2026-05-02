@@ -17,7 +17,7 @@ describe('proxy public route patterns', () => {
   });
 
   it('keeps product workspaces auth-gated instead of public', () => {
-    for (const path of ['/admin', '/home', '/programs', '/source', '/tower']) {
+    for (const path of ['/admin', '/home', '/programs', '/source', '/tower', '/product']) {
       const request = new NextRequest(`https://app.abarva.ai${path}`);
       expect(isAuthRequiredRoute(request)).toBe(true);
       expect(isPublicRoute(request)).toBe(false);
