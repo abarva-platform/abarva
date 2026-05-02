@@ -3890,6 +3890,9 @@ export function ProgramDetailPage({
 
   // REASON-15 — live Nexus synthesis quote (streams from /api/programs/synthesis)
   const [synthesisQuote, setSynthesisQuote] = useState(view.workbench.prose);
+  useEffect(() => {
+    setSynthesisQuote(view.workbench.prose);
+  }, [view.workbench.prose]);
 
   // PROG20 — Section tab navigation
   type SectionKey = 'overview' | 'gate' | 'evidence' | 'deliverables' | 'workshop' | 'actions' | 'decisions';
