@@ -114,6 +114,13 @@ describe('agent route · CB-6 context-bundle wiring', () => {
     expect(source).toContain('MULTI-ARTIFACT PACKAGE DISCIPLINE');
   });
 
+  it('instructs Programs deliverables to preserve uploaded baseline values exactly', () => {
+    expect(source).toContain('BASELINE FIDELITY DISCIPLINE');
+    expect(source).toContain('preserve exact non-financial baseline values');
+    expect(source).toContain('latest uploaded/signed evidence as controlling');
+    expect(source).toContain('never invent operational metrics');
+  });
+
   it('canonicalizes the active client key before Programs broker lookup', () => {
     expect(source).toContain('tenantKey: clientKeyToBrokerTenantKey(activeClient.key)');
   });
