@@ -165,36 +165,37 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps) {
         @media (max-width: 720px) {
           .app-top-bar {
             min-height: 104px !important;
-            align-items: flex-start !important;
-            flex-wrap: wrap !important;
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) auto !important;
+            grid-template-areas:
+              "brand account"
+              "nav nav" !important;
+            align-items: center !important;
             gap: 8px !important;
             padding: 10px 16px 8px !important;
           }
 
           .app-top-bar__left {
-            flex: 1 1 100% !important;
-            width: 100% !important;
-            flex-wrap: wrap !important;
-            gap: 8px 14px !important;
-            padding-right: 190px !important;
+            display: contents !important;
+          }
+
+          .app-top-bar__brand {
+            grid-area: brand !important;
           }
 
           .app-top-bar__nav {
-            order: 2 !important;
-            flex: 1 1 100% !important;
+            grid-area: nav !important;
             width: 100% !important;
-            margin-right: -190px !important;
             padding-bottom: 2px !important;
           }
 
           .app-top-bar__account {
-            position: absolute !important;
-            right: 16px !important;
-            top: 12px !important;
+            grid-area: account !important;
+            position: static !important;
           }
 
           .app-top-bar__account-name {
-            max-width: 92px !important;
+            display: none !important;
           }
         }
       `}</style>
@@ -203,6 +204,7 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps) {
         style={{ display: "flex", alignItems: "center", gap: 22, minWidth: 0 }}
       >
         <Link
+          className="app-top-bar__brand"
           href="/home"
           aria-label="AbarVa Home"
           style={{
