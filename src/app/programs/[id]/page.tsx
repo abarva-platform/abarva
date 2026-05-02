@@ -185,6 +185,20 @@ export default async function ProgramDetailRoute({
           'Phase 0 stays locked until the approval queue accepts the seed, sponsor, ' +
           'lead, value hypothesis, and scope boundary.',
       };
+    } else if (eng.lifecycle_state === 'completed') {
+      view.gateStatus = 'completed';
+      view.phases = view.phases.map((slot) => ({
+        ...slot,
+        state: 'done',
+        gateStatus: 'approved',
+      }));
+      view.workbench = {
+        ...view.workbench,
+        prose:
+          'This program lifecycle is complete. Execution now happens outside AbarVa; ' +
+          'Tower observes status feeds, detects drift, and escalates decisions against ' +
+          'the signed P6 tracking contract.',
+      };
     } else if (eng.lifecycle_state === 'approved' && view.currentPhase === 0) {
       view.gateStatus = 'open';
       view.workbench = {

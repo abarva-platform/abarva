@@ -376,7 +376,7 @@ export function ProgramsIndexPage({ view, hasTenantKey = false }: ProgramsIndexP
       key: 'active',
       label: 'Active',
       active: activeFilter === 'active',
-      count: view.programs.filter((p) => !p.isIdle).length,
+      count: view.programs.filter((p) => !p.isIdle && !p.isCompleted).length,
       onClick: () => router.push(getProgramsIndexFilterHref('active'), { scroll: false }),
     },
     {

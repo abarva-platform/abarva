@@ -62,11 +62,16 @@ export default async function ProgramsPage() {
           const phaseLabel = PHASE_LABEL_MAP[currentPhase];
           const lifecycleState = p.lifecycleState ?? (p.status === 'active' ? 'approved' : null);
           const waitingForSetupApproval = lifecycleState === 'submitted_for_approval';
+          const completed = lifecycleState === 'completed' || p.status === 'completed';
           const approvedForP0 = lifecycleState === 'approved' && currentPhase === 0;
           const isIdle = p.status === 'idle' || waitingForSetupApproval;
-          const gateStatus = waitingForSetupApproval ? ('pending' as const) : ('open' as const);
+          const gateStatus = completed
+            ? ('completed' as const)
+            : waitingForSetupApproval ? ('pending' as const) : ('open' as const);
           const lifecycleNote = waitingForSetupApproval
             ? 'Submitted for Setup approval — Phase 0 locked'
+            : completed
+            ? `P${currentPhase} ${phaseLabel} · Completed — Tower observing`
             : approvedForP0
             ? 'Approved for Phase 0 — complete Origination criteria'
             : currentPhase >= 1
@@ -84,6 +89,7 @@ export default async function ProgramsPage() {
               phases: buildPhaseSlots(currentPhase),
               gateStatus,
               nexusNote: lifecycleNote,
+              isCompleted: completed,
               lastActiveLabel: p.createdAt
                 ? new Date(p.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                 : existing.lastActiveLabel,
@@ -106,6 +112,7 @@ export default async function ProgramsPage() {
               nexusNote: lifecycleNote,
               actionLabel: waitingForSetupApproval ? ('Review' as const) : ('Continue' as const),
               isIdle,
+              isCompleted: completed,
             });
           }
         }
@@ -124,7 +131,7 @@ export default async function ProgramsPage() {
     );
   }
 
-  view.totalActive = view.programs.filter((program) => !program.isIdle).length;
+  view.totalActive = view.programs.filter((program) => !program.isIdle && !program.isCompleted).length;
   view.gatesPending = view.programs.filter((program) => program.gateStatus === 'pending').length;
   view.idleCount = view.programs.filter((program) => program.isIdle).length;
 

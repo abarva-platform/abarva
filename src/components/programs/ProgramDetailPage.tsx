@@ -149,6 +149,11 @@ function GatePill({ status }: { status: ProgramDetailView['gateStatus'] }) {
       color = SHELL.MINT_TEXT;
       label = 'Gate Approved';
       break;
+    case 'completed':
+      bg = SHELL.MINT_BG;
+      color = SHELL.MINT_TEXT;
+      label = 'Completed';
+      break;
     default:
       bg = SHELL.GRAY_BG;
       color = SHELL.GRAY_TEXT;
@@ -4343,6 +4348,8 @@ export function ProgramDetailPage({
               disabledReason={
                 view.lifecycleState === 'submitted_for_approval'
                   ? 'Setup approval is required before Phase 0 can start.'
+                  : view.lifecycleState === 'completed'
+                  ? 'Program lifecycle is complete. Tower owns observation from here.'
                   : null
               }
             />

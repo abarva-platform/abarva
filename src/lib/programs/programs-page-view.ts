@@ -302,7 +302,7 @@ export function filterProgramRowsForIndex(
   programs: ReadonlyArray<ProgramRow>,
   filter: ProgramsIndexFilterKey,
 ): ProgramRow[] {
-  if (filter === 'active') return programs.filter((p) => !p.isIdle);
+  if (filter === 'active') return programs.filter((p) => !p.isIdle && !p.isCompleted);
   if (filter === 'idle') return programs.filter((p) => p.isIdle);
   if (filter === 'gated') return programs.filter((p) => p.gateStatus === 'pending');
   return [...programs];
