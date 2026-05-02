@@ -37,6 +37,7 @@ import { requireTenancy, TenancyError } from '@/app/api/v1/programs/_auth';
 import { advancePhase as advancePhaseMutation } from '@/lib/programs/mutations';
 import { evaluateGate, requestFounderApproval } from '@/lib/programs/governance';
 import { getProgramById } from '@/lib/programs/queries';
+import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 
 interface AdvancePhaseInput {
   /** Engagement id (or graph_node_id) of the program to advance. */
@@ -51,6 +52,11 @@ interface AdvancePhaseInput {
    * if the gate is hard-failing — bypass doesn't override hard fails.
    */
   bypass_gate?: boolean;
+  /**
+   * Test/admin flow only: when true, a caller with gate-approval rights can
+   * satisfy the sponsor approval requirement and advance in one write.
+   */
+  self_approve_if_authorized?: boolean;
 }
 
 export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
@@ -83,6 +89,13 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
         description:
           'Default false. Only set true when the user explicitly invokes a sponsor override; ' +
           'soft-fail bypass routes through founder approval if needed. Hard fails always block.',
+      },
+      self_approve_if_authorized: {
+        type: 'boolean',
+        description:
+          'Default false. Set true only when the signed-in user explicitly asks to self-approve ' +
+          'and has phase-gate approval rights. This is for admin/test approval flows; otherwise ' +
+          'the tool creates a sponsor approval request instead of advancing.',
       },
     },
     required: ['program_id', 'to_phase'],
@@ -162,7 +175,29 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
       };
     }
 
-    if (gate.requiresApproval && !input.bypass_gate) {
+    const accessPolicy = ctx.accessPolicy ?? await loadUserProgramAccessPolicy(tenancy, {
+      programId: input.program_id,
+    });
+    const canSelfApproveGate =
+      input.self_approve_if_authorized === true &&
+      (accessPolicy.canApproveGates === true || tenancy.role === 'founder');
+
+    const requestedApprovalOverride =
+      input.bypass_gate === true || input.self_approve_if_authorized === true;
+    if (
+      requestedApprovalOverride &&
+      accessPolicy.canApproveGates !== true &&
+      tenancy.role !== 'founder'
+    ) {
+      return {
+        success: false,
+        error: 'approval_permission_required',
+        recovery:
+          'This session does not have phase-gate approval rights. Ask a tenant admin or sponsor approver to approve the gate, then retry.',
+      };
+    }
+
+    if (gate.requiresApproval && !input.bypass_gate && !canSelfApproveGate) {
       // Create a sponsor-approval request via the existing flow rather
       // than silently advancing. The agent should communicate this
       // pending state to the user.
@@ -196,8 +231,16 @@ export const advancePhaseTool: AgentTool<AdvancePhaseInput> = {
         fromPhase,
         toPhase: input.to_phase,
         snapshot: input.rationale
-          ? { rationale: input.rationale, advancedAt: new Date().toISOString() }
-          : { advancedAt: new Date().toISOString() },
+          ? {
+              rationale: input.rationale,
+              advancedAt: new Date().toISOString(),
+              self_approved: canSelfApproveGate,
+            }
+          : {
+              advancedAt: new Date().toISOString(),
+              self_approved: canSelfApproveGate,
+            },
+        approvedByUserId: canSelfApproveGate ? tenancy.userId : undefined,
         bypassGate: !!input.bypass_gate,
       });
 
