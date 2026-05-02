@@ -74,6 +74,41 @@ describe('complete_deliverables tool', () => {
     );
   });
 
+  it('persists a P2 synthesis package with canonical artifact keys', async () => {
+    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+    completeDeliverableMock
+      .mockResolvedValueOnce({ deliverableId: 'options', versionId: 'v1', status: 'signed_off' })
+      .mockResolvedValueOnce({ deliverableId: 'charter', versionId: 'v2', status: 'signed_off' })
+      .mockResolvedValueOnce({ deliverableId: 'workshop', versionId: 'v3', status: 'signed_off' });
+
+    const result = await completeDeliverablesTool.handler(
+      {
+        program_id: 'program-1',
+        deliverables: [
+          { deliverable_type_key: 'synthesis_options_memo', title: 'Synthesis options memo', content_outline: ['Option A', 'Option B'] },
+          { deliverable_type_key: 'charter', title: 'Signed charter', content_outline: ['Promise contract'] },
+          { deliverable_type_key: 'workshop_facilitator_guide', title: 'Tradeoff workshop guide', content_outline: ['Agenda', 'Decision outputs'] },
+        ],
+      },
+      makeCtx(),
+    );
+
+    expect(result.success).toBe(true);
+    expect(completeDeliverableMock).toHaveBeenCalledTimes(3);
+    expect(completeDeliverableMock).toHaveBeenNthCalledWith(
+      1,
+      expect.anything(),
+      'program-1',
+      expect.objectContaining({ deliverableTypeKey: 'synthesis_options_memo' }),
+    );
+    expect(completeDeliverableMock).toHaveBeenNthCalledWith(
+      3,
+      expect.anything(),
+      'program-1',
+      expect.objectContaining({ deliverableTypeKey: 'workshop_facilitator_guide' }),
+    );
+  });
+
   it('rejects unsupported deliverables before writing', async () => {
     requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
 
