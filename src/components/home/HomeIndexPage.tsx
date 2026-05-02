@@ -784,8 +784,20 @@ export function HomeIndexPage({
     noWorkspaceAssigned: false,
   };
   const canUse = (module: ProductModule) => resolvedModuleAccess.modules.includes(module);
+  const isApexRetailTenant = /apex retail/i.test(activeTenantName);
+  const tenantSafeStats = isApexRetailTenant
+    ? v.stats
+    : [
+        { label: 'Visible programs', value: String(livePrograms.length), detail: 'scoped to this tenant', detailColor: 'mint' as const },
+        { label: 'Workspace access', value: String(resolvedModuleAccess.modules.length), detail: 'enabled modules', detailColor: 'mint' as const },
+        { label: 'Financial data', value: 'Restricted', detail: 'exact values hidden', detailColor: 'peach' as const, urgent: true },
+        { label: 'Tenant boundary', value: 'Locked', detail: activeTenantName, detailColor: 'mint' as const },
+      ];
+  const homeAgentQuote = isApexRetailTenant
+    ? v.agentQuote
+    : `${activeTenantName} is locked to this workspace. Your visible Programs, Source, Intelligence, and Tower surfaces are filtered by tenant and role; exact financial values stay restricted unless your access explicitly allows them.`;
   const seenProgramIds = new Set<string>();
-  const topPrograms = [...livePrograms, ...v.topPrograms]
+  const topPrograms = [...livePrograms, ...(isApexRetailTenant ? v.topPrograms : [])]
     .filter((program) => {
       const key = program.id ?? program.href;
       if (seenProgramIds.has(key)) return false;
@@ -838,10 +850,21 @@ export function HomeIndexPage({
             color: SHELL.INK_SOFT,
           }}
         >
-          <span>Morning pulse</span>
-          <span style={{ color: SHELL.PEACH_TEXT }}>CDP build gate 2 of 5</span>
-          <span>AI spend high severity</span>
-          <span>AMS at BAFO</span>
+          {isApexRetailTenant ? (
+            <>
+              <span>Morning pulse</span>
+              <span style={{ color: SHELL.PEACH_TEXT }}>CDP Execution Roadmap gate 2 of 5</span>
+              <span>AI spend high severity</span>
+              <span>AMS at BAFO</span>
+            </>
+          ) : (
+            <>
+              <span>Workspace ready</span>
+              <span style={{ color: SHELL.PEACH_TEXT }}>Financials restricted</span>
+              <span>Programs scoped</span>
+              <span>Assigned work only</span>
+            </>
+          )}
         </div>
       }
       onArtifact={handleAtlasArtifact}
@@ -870,7 +893,7 @@ export function HomeIndexPage({
           <AgentCanvas
             surface="/home"
             agent={{ initials: 'At', name: 'Atlas', role: 'Portfolio CIO of staff' }}
-            quote={v.agentQuote}
+            quote={homeAgentQuote}
             artifacts={atlasArtifacts}
             onArtifact={handleAtlasArtifact}
           />
@@ -923,7 +946,7 @@ export function HomeIndexPage({
             letterSpacing: '-0.01em',
           }}
         >
-          {v.greeting}
+          {isApexRetailTenant ? v.greeting : `Good morning, ${activeTenantName}.`}
         </h1>
         <p
           style={{
@@ -934,7 +957,7 @@ export function HomeIndexPage({
             lineHeight: 1.4,
           }}
         >
-          {v.subgreeting}
+          {isApexRetailTenant ? v.subgreeting : 'Here is your tenant-scoped workspace. Start with assigned programs or use Atlas for a portfolio read.'}
         </p>
 
         {/* Reasoning intelligence row */}
@@ -951,7 +974,7 @@ export function HomeIndexPage({
             marginBottom: 24,
           }}
         >
-          {v.stats.map((stat) => (
+          {tenantSafeStats.map((stat) => (
             <StatsCard key={stat.label} {...stat} />
           ))}
         </div>
@@ -976,13 +999,23 @@ export function HomeIndexPage({
 
           {/* Right col: Tower + Source */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            {canUse('tower') && (
+            {canUse('tower') && isApexRetailTenant && (
               <>
                 <SectionHeader title="Tower pressure" viewAllHref="/tower" />
                 <TopPressureCard />
               </>
             )}
-            {canUse('source') && <SourceEventMini />}
+            {canUse('source') && isApexRetailTenant && <SourceEventMini />}
+            {!isApexRetailTenant && (
+              <div style={{ border: `1px solid ${SHELL.CARD_LINE}`, borderRadius: 10, background: SHELL.PAPER, padding: 16 }}>
+                <div style={{ fontFamily: SHELL.MONO, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: SHELL.INK_MUTED, marginBottom: 8 }}>
+                  Tenant-safe home
+                </div>
+                <p style={{ fontFamily: SHELL.SANS, fontSize: 13, lineHeight: 1.5, color: SHELL.INK_SOFT, margin: 0 }}>
+                  Static Apex demo pressures are hidden for this client. Use Programs, Source, Intelligence, or Tower for live tenant-scoped work.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
