@@ -129,6 +129,10 @@ import {
   type AttachmentTextPreview,
 } from "@/lib/programs/attachments/extract-text";
 import {
+  formatProgramEvidenceForPrompt,
+  listProgramEvidenceForPrompt,
+} from "@/lib/programs/evidence-context";
+import {
   clientKeyToBrokerTenantKey,
   clientKeyToInventorySubstrateKey,
 } from "@/lib/agent/tools/intelligence/_shared";
@@ -466,6 +470,12 @@ export async function POST(request: Request) {
     ? clientKeyToInventorySubstrateKey(effectiveClientKey)
     : null;
   const brokerTenantKey = tenantInventoryKey;
+  const programEvidenceLedgerBlock =
+    programId && tenancy
+      ? await listProgramEvidenceForPrompt(tenancy, programId)
+          .then(formatProgramEvidenceForPrompt)
+          .catch(() => '')
+      : '';
   const requestedMode = readClientSuppliedMode(surfaceContext);
   const bundleMode =
     requestedMode && isModeValidForAuth(requestedMode, brokerTenantKey)
@@ -729,6 +739,11 @@ export async function POST(request: Request) {
     // tenant truth before user-supplied uploads) and BEFORE phase pack
     // / response guidelines. Empty string off Programs surfaces or when
     // no attachments are in flight.
+    programEvidenceLedgerBlock,
+    "",
+    // OV2-4c · in-turn attachment context. This covers attachments
+    // passed on the current chat turn; the evidence ledger above covers
+    // persisted uploads from earlier turns/sessions.
     attachmentContextBlock,
     "",
     // Wave 1 · inline files passed directly in the request body.
