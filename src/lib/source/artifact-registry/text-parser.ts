@@ -120,6 +120,11 @@ function extractPricingComponents(text: string): ExtractedPricingComponent[] {
     }
     let match: RegExpExecArray | null;
     while ((match = amountRe.exec(line)) !== null) {
+      const matchedAmountText = match[0] ?? '';
+      const hasCurrencyMarker = /\$|\bUSD\b/i.test(matchedAmountText);
+      const hasMagnitudeSuffix = Boolean(match[3]);
+      if (!hasCurrencyMarker && !hasMagnitudeSuffix) continue;
+
       const base = Number(match[1].replace(/,/g, '') + (match[2] ? `.${match[2]}` : ''));
       if (!Number.isFinite(base)) continue;
       const suffix = match[3]?.toLowerCase();

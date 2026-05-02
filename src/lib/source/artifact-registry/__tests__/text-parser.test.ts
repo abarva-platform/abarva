@@ -133,10 +133,40 @@ describe('Source text artifact parser', () => {
     const commitments = insertCaptures.find((c) => c.table === 'source_vendor_commitments')?.payload as Array<Record<string, unknown>>;
     expect(commitments).toHaveLength(2);
     const pricing = insertCaptures.find((c) => c.table === 'source_pricing_components')?.payload as Array<Record<string, unknown>>;
+    expect(pricing.map((row) => row.amount_usd).sort((a, b) => Number(a) - Number(b))).toEqual([85, 1_200_000]);
     expect(pricing).toEqual(expect.arrayContaining([
       expect.objectContaining({ component_key: 'PRICE-001', amount_usd: 1_200_000 }),
       expect.objectContaining({ amount_usd: 85, unit: 'hour' }),
     ]));
+  });
+
+  it('does not mistake headings or year indexes for pricing components', async () => {
+    await parseSourceTextArtifact({
+      artifact: {
+        ...baseArtifact,
+        stageKey: 'pricing',
+        artifactFamily: 'pricing_workbook',
+        artifactKind: 'pricing_upload',
+        originalName: 'pricing-normalization-workbook.md',
+      },
+      text: `# E2E Pricing Upload
+
+Pricing: Fixed monthly fee $250,000 per month for base AMS run.
+Pricing: Variable usage fee $95 per ticket above baseline.
+Cost: Transition credit $1.2m applied in year 1.
+Savings: Productivity glidepath target $4.5m annual run-rate by year 3.
+Rate: Offshore blended labor rate $42 per hour; onshore blended labor rate $135 per hour.`,
+    });
+
+    const pricing = insertCaptures.find((c) => c.table === 'source_pricing_components')?.payload as Array<Record<string, unknown>>;
+    expect(pricing.map((row) => row.amount_usd).sort((a, b) => Number(a) - Number(b))).toEqual([
+      42,
+      95,
+      135,
+      250_000,
+      1_200_000,
+      4_500_000,
+    ]);
   });
 
   it('marks empty text uploads as failed rather than inventing evidence', async () => {
