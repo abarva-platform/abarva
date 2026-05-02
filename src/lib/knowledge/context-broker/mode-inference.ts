@@ -13,7 +13,7 @@ import 'server-only';
  *   /programs/new      → 'tenant'  (origination uses tenant context only)
  *   /intelligence      → 'corpus'  (Sentinel pattern catalog dominates)
  *   /tower             → 'full'    (cross-program rollup)
- *   /source            → 'corpus'  (sourcing is comparative)
+ *   /source            → 'full'    (tenant sourcing facts + shared corpus)
  *   /home              → 'tenant' if tenantKey present, else 'generic'
  *   cold-start (no auth, no tenantKey) → 'generic'
  *
@@ -56,7 +56,8 @@ const HOME_PATTERN = /^\/home(\/.*)?$/;
  *   3. /tower (with tenant)                              → 'full'
  *      /tower (no tenant)                                → 'generic'
  *   4. /intelligence (any auth state)                    → 'corpus'
- *   5. /source       (any auth state)                    → 'corpus'
+ *   5. /source (with tenant)                             → 'full'
+ *      /source (no tenant)                               → 'generic'
  *   6. /home (with tenant) → 'tenant'; /home (no tenant) → 'generic'
  *   7. fallback: 'tenant' if tenantKey, else 'generic'
  */
@@ -84,7 +85,7 @@ export function inferModeForSurface(input: InferModeInput): BrokerMode {
   }
 
   if (SOURCE_DETAIL_PATTERN.test(surface)) {
-    return 'corpus';
+    return tenantKey ? 'full' : 'generic';
   }
 
   if (HOME_PATTERN.test(surface)) {
