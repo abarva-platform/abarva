@@ -66,3 +66,13 @@
 - Fix summary: Attachment upload now defaults missing multipart phase to the program's current phase while preserving explicit phase overrides. Attachment metadata and evidence ingestion receive the same effective phase.
 - Regression: src/app/api/programs/__tests__/attachments-upload.smoke.test.ts verifies omitted phase defaults to `program.currentPhase` and explicit multipart phase overrides it.
 - Validation: Focused attachments upload Jest and scoped ESLint passed locally.
+
+## 2026-05-02T12:18:00Z — programs-module-e2e-crawler
+
+- Workstream: Programs live E2E crawl / Meridian P3 design generation.
+- Finding: P3 target-state design generation produced a strong design package but the browser aborted the turn after 90 seconds, showing `Nexus response timed out` and preventing the user from trusting persistence/completion.
+- Severity: SEV-2 long-form deliverable completion gap.
+- Fix branch: codex/programs-agent-timeout-budget.
+- Fix summary: AtlasPageStateProvider now uses a surface-aware timeout budget: default agent turns stay at 90 seconds, while Programs surfaces get 210 seconds for legitimate phase deliverable generation and tool-persistence turns.
+- Regression: src/__tests__/integration/atlas-page-state-timeout.test.ts pins the default timeout, Programs timeout, and Programs surface matching.
+- Validation: Focused Atlas timeout Jest and scoped ESLint passed locally.
