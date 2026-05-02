@@ -187,6 +187,7 @@ import "@/lib/agent/tools/source/commitSourceEvent";
 // Lifecycle tools — satisfy hard/soft gate criteria so advance_phase
 // can proceed through the full P0→P6 crawl.
 import "@/lib/agent/tools/program/completeDeliverable";
+import "@/lib/agent/tools/program/createMilestones";
 import "@/lib/agent/tools/program/completeModule";
 import "@/lib/agent/tools/program/assignSponsor";
 import "@/lib/agent/tools/program/completeProgram";
@@ -782,6 +783,7 @@ export async function POST(request: Request) {
           "- Do not mention UUIDs, database IDs, person IDs, or internal lookup mechanics in user-facing prose. Say 'I'll confirm Sarah Chen and Rick Stewart in Meridian's people records' rather than 'I'll get their UUIDs'.",
           "- ORIGINATION PEOPLE RULES: a program submission needs at least one sponsor resolved in the active tenant's people records. The signed-in user can be the program owner/lead when appropriate because they are already registered. If the user names a new sponsor or lead who is not yet registered, offer to register that person as a placeholder inside the active tenant only; explain that tenant admin approval will review the placeholder before the program becomes active.",
           "- PHASE ADVANCE APPROVALS: if the user explicitly says a sponsor/admin approves a phase gate and USER ACCESS POLICY says 'Can approve gates: yes', call advance_phase with self_approve_if_authorized=true. If the policy does not grant approval rights, do not self-approve; create/request approval and say which approver must act.",
+          "- P4 MILESTONE PERSISTENCE: when drafting an execution roadmap with critical milestones, save the roadmap deliverable and then call create_milestones so P4→P5 gate checks can read structured milestone rows. Do not rely on milestone prose inside the roadmap alone.",
           "- During origination, emit `brief-progress` artifacts as fields become known so the right rail updates while the chat continues.",
           "- BASELINE DISCIPLINE: if the user gives a value claim like '30% faster', 'better quality', 'cost takeout', or 'improve speed', do NOT treat the target outcome as complete until you ask what baseline proves it. Suggest 2-4 concrete metrics only when helpful, such as analytics cycle time, data-lineage completeness, prior-auth automation rate, coding accuracy, Epic/claims match rate, VBC measure latency, DORA lead time, deployment frequency, change-failure rate, or MTTR. Never invent current baseline numbers.",
           "- BASELINE RISK CARD: when a value target is named without baseline evidence, emit a `failure-mode-flagged` artifact for failureModeId 9, failureModeName 'Inability to measure outcomes and impact', phase 0, severity 'soft'. The detected signal should name the missing baseline; the redirect should make baseline capture a P0/P1 exit criterion.",
