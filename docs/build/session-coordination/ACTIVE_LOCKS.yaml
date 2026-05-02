@@ -191,3 +191,10 @@ locks:
     expires_at: "2026-05-02T21:15:00-05:00"
     note: Aligns Source events portfolio disabled-submit tooltip to Nexus front-door language. No Source lifecycle, persistence, gate, or data-plane changes.
     completed_at: "2026-05-02T17:45:00-05:00"
+
+  - owner: codex-programs-e2e-client-polish
+    resource: programs-e2e-client-polish
+    status: active
+    started_at: "2026-05-02T17:55:00-05:00"
+    expires_at: "2026-05-02T23:30:00-05:00"
+    note: Continues Programs functional E2E across clients plus narrow Atrium/agent polish. Avoids Source lifecycle/data/API files and knowledge-layer private-plane changes.

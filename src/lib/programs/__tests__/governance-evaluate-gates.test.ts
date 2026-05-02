@@ -218,6 +218,43 @@ describe('evaluateGate', () => {
     expect(result.requiresApproval).toBe(true);
   });
 
+  it('does not block P1 to P2 on future-looking P2 gate risks in the signed Discovery Report', async () => {
+    getProgramByIdMock.mockResolvedValue({
+      id: 'program-1',
+      currentPhase: 1,
+      archetype: 'store_operations_analytics',
+    });
+    deliverablesFixture = [
+      { id: 'discovery-report', deliverable_type_key: 'discovery_report', status: 'signed_off' },
+    ];
+    evidenceFixture = [];
+    deliverableVersionsFixture = [
+      {
+        content:
+          'P1 Discovery Report. Attendees: Maya Desai sponsor, Noah Patel lead, ' +
+          'Sofia Bennett store operations, Camila Torres data products, and David Kim supply chain. ' +
+          'Workshop notes: POS/RMS/WMS lineage workshop captured inventory accuracy, replenishment exception cycle time, ' +
+          'digital substitution rate, store task SLA, and demand forecast override rate. ' +
+          'Baselines captured and owner attestation recorded. Source of record: POS/RMS/WMS lineage workshop and store operations intake log. ' +
+          'Stakeholder map names required owners. Contradiction: digital promise accuracy depends on near-real-time item availability, but Oracle RMS and WMS are batch-lagged. ' +
+          'Security/compliance owner not yet named; this is a soft gap at P1 but becomes a hard blocker at P2→P3 and must be named before P2 gate close. ' +
+          'P2 readiness recommendation: proceed to Synthesis.',
+        structured_data: null,
+        generated_at: '2026-05-02T00:00:00.000Z',
+      },
+    ];
+
+    const result = await evaluateGate(
+      { clientId: 'client-1', userId: 'person-1' },
+      'program-1',
+      1,
+      2,
+    );
+
+    expect(result.failedChecks.filter((check) => check.severity === 'hard')).toEqual([]);
+    expect(result.requiresApproval).toBe(true);
+  });
+
   it('accepts a signed P0 origination brief as the seed artifact without overloading discovery_report', async () => {
     getProgramByIdMock.mockResolvedValue({
       id: 'program-1',
