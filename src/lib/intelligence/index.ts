@@ -19,6 +19,17 @@ export {
   looksLikeTenantMetricUpload,
   parseTenantMetricCsv,
 } from "./tenant-metric-upload";
+export {
+  getTenantMetricPrivatePlane,
+  listTenantMetricPrivatePlanes,
+  quoteTenantMetricIdentifier,
+  tenantMetricTableRef,
+} from "./tenant-metric-private-plane";
+export {
+  buildTenantMetricPersistenceRows,
+  persistTenantMetricObservations,
+  persistTenantMetricUpload,
+} from "./tenant-metric-persistence";
 export type {
   GapClass,
   MetricDomain,
@@ -43,6 +54,13 @@ export type {
   ParsedTenantMetricUpload,
   TenantMetricUploadRejection,
 } from "./tenant-metric-upload";
+export type { TenantMetricPrivatePlane } from "./tenant-metric-private-plane";
+export type {
+  PersistTenantMetricObservationsInput,
+  TenantMetricPersistenceResult,
+  TenantMetricPersistenceRow,
+  TenantMetricPersistenceStatus,
+} from "./tenant-metric-persistence";
 export {
   SOURCE_LIFECYCLE_PATTERNS,
   PAT_SRC_AMS_001,

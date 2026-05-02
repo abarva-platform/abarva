@@ -4,6 +4,7 @@ import {
   looksLikeTenantMetricUpload,
   parseTenantMetricCsv,
 } from "@/lib/intelligence/tenant-metric-upload";
+import { persistTenantMetricUpload } from "@/lib/intelligence/tenant-metric-persistence";
 
 export async function POST(request: NextRequest) {
   let file: File | null = null;
@@ -32,6 +33,9 @@ export async function POST(request: NextRequest) {
   const today = new Date().toISOString().split("T")[0];
   let storageUrl: string | null = null;
   let metricIngestion: ReturnType<typeof parseTenantMetricCsv> | null = null;
+  let metricPersistence: Awaited<
+    ReturnType<typeof persistTenantMetricUpload>
+  > | null = null;
   const bytes = await file.arrayBuffer();
 
   if (looksLikeTenantMetricUpload(file.name, documentName)) {
@@ -83,6 +87,29 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  if (metricIngestion) {
+    try {
+      metricPersistence = await persistTenantMetricUpload({
+        clientId,
+        documentName,
+        fileName: file.name,
+        storageUrl,
+        parsed: metricIngestion,
+        uploadedBy: "Anand Sundaram · Admin",
+      });
+    } catch (error) {
+      return NextResponse.json(
+        {
+          error:
+            error instanceof Error
+              ? `Metric upload parsed but persistence failed: ${error.message}`
+              : "Metric upload parsed but persistence failed",
+        },
+        { status: 500 },
+      );
+    }
+  }
+
   return NextResponse.json({
     success: true,
     documentName,
@@ -101,6 +128,7 @@ export async function POST(request: NextRequest) {
             (observation) => observation.metricId,
           ),
           rejections: metricIngestion.rejected,
+          persistence: metricPersistence,
         }
       : null,
   });

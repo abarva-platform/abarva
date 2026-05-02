@@ -1,4 +1,4 @@
-import 'server-only';
+import "server-only";
 
 /**
  * Private data-plane registry.
@@ -12,8 +12,8 @@ import 'server-only';
  * plus the Northstar app-rewire map and validation query pack.
  */
 
-export type PrivateDataPlaneStatus = 'app_wired' | 'db_only' | 'blocked';
-export type PrivateVectorStatus = 'ready' | 'pending' | 'blocked';
+export type PrivateDataPlaneStatus = "app_wired" | "db_only" | "blocked";
+export type PrivateVectorStatus = "ready" | "pending" | "blocked";
 
 export interface PrivateDataPlaneResource {
   tenantKey: string;
@@ -31,51 +31,69 @@ export interface PrivateDataPlaneResource {
 }
 
 const PRIVATE_DATA_PLANES: Record<string, PrivateDataPlaneResource> = {
-  'apex-retail': {
-    tenantKey: 'apex-retail',
-    dataPlaneId: 'pdp:apex-retail:prod',
-    privateSchema: 'client_apex_retail_private',
-    privatePineconeIndex: 'abarva-client-apex-retail-prod',
-    vectorStatus: 'ready',
-    status: 'app_wired',
+  "apex-retail": {
+    tenantKey: "apex-retail",
+    dataPlaneId: "pdp:apex-retail:prod",
+    privateSchema: "client_apex_retail_private",
+    privatePineconeIndex: "abarva-client-apex-retail-prod",
+    vectorStatus: "ready",
+    status: "app_wired",
     vectorCount: 415,
-    notes: 'Private schema and private Pinecone index are available for app retrieval.',
+    notes:
+      "Private schema and private Pinecone index are available for app retrieval.",
   },
-  'meridian-health': {
-    tenantKey: 'meridian-health',
-    dataPlaneId: 'pdp:meridian-health:prod',
-    privateSchema: 'client_meridian_health_private',
-    privatePineconeIndex: 'abarva-client-meridian-health-prod',
-    vectorStatus: 'ready',
-    status: 'app_wired',
+  "meridian-health": {
+    tenantKey: "meridian-health",
+    dataPlaneId: "pdp:meridian-health:prod",
+    privateSchema: "client_meridian_health_private",
+    privatePineconeIndex: "abarva-client-meridian-health-prod",
+    vectorStatus: "ready",
+    status: "app_wired",
     vectorCount: 715,
-    notes: 'Private schema and private Pinecone index are available for app retrieval.',
+    notes:
+      "Private schema and private Pinecone index are available for app retrieval.",
   },
-  'northstar-health': {
-    tenantKey: 'northstar-health',
-    dataPlaneId: 'pdp:northstar-health:prod',
-    privateSchema: 'client_northstar_health_private',
+  "first-capital": {
+    tenantKey: "first-capital",
+    dataPlaneId: "pdp:first-capital:prod",
+    privateSchema: "client_first_capital_private",
+    privatePineconeIndex: "abarva-client-first-capital-prod",
+    vectorStatus: "pending",
+    status: "db_only",
+    notes:
+      "Private schema is available for Setup metric persistence; vector retrieval remains pending until the tenant index is provisioned.",
+  },
+  "northstar-health": {
+    tenantKey: "northstar-health",
+    dataPlaneId: "pdp:northstar-health:prod",
+    privateSchema: "client_northstar_health_private",
     privatePineconeIndex: null,
-    vectorStatus: 'blocked',
-    status: 'db_only',
+    vectorStatus: "blocked",
+    status: "db_only",
     recordCount: 61,
     chunkCount: 62,
     graphNodeCount: 26,
     graphEdgeCount: 31,
-    notes: 'Pinecone index blocked by 5-index cap; use private schema keyword/graph retrieval only until capacity is resolved.',
+    notes:
+      "Pinecone index blocked by 5-index cap; use private schema keyword/graph retrieval only until capacity is resolved.",
   },
 };
 
-export function normalizePrivateTenantKey(tenantKey: string | null | undefined): string | null {
+export function normalizePrivateTenantKey(
+  tenantKey: string | null | undefined,
+): string | null {
   const key = tenantKey?.trim();
   if (!key) return null;
   switch (key) {
-    case 'apexretail':
-      return 'apex-retail';
-    case 'meridian':
-      return 'meridian-health';
-    case 'northstar':
-      return 'northstar-health';
+    case "apexretail":
+      return "apex-retail";
+    case "meridian":
+      return "meridian-health";
+    case "firstcapital":
+    case "first-capital-bank":
+      return "first-capital";
+    case "northstar":
+      return "northstar-health";
     default:
       return key;
   }
@@ -93,6 +111,10 @@ export function listPrivateDataPlaneResources(): PrivateDataPlaneResource[] {
   return Object.values(PRIVATE_DATA_PLANES);
 }
 
-export function isPrivateVectorAvailable(resource: PrivateDataPlaneResource | null): boolean {
-  return Boolean(resource?.privatePineconeIndex && resource.vectorStatus === 'ready');
+export function isPrivateVectorAvailable(
+  resource: PrivateDataPlaneResource | null,
+): boolean {
+  return Boolean(
+    resource?.privatePineconeIndex && resource.vectorStatus === "ready",
+  );
 }
