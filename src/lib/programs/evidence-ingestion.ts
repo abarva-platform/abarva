@@ -56,6 +56,54 @@ function collectPrefixed(lines: string[], labels: string[]): string[] {
     .slice(0, 20);
 }
 
+function collectSectionItems(lines: string[], headings: string[]): string[] {
+  const normalizedHeadings = headings.map((heading) => heading.toLowerCase());
+  const items: string[] = [];
+  let inSection = false;
+
+  for (const line of lines) {
+    const headingMatch = normalizedHeadings.some((heading) =>
+      new RegExp(`^${heading}s?\\s*[:—-]?$`, 'i').test(line),
+    );
+
+    if (headingMatch) {
+      inSection = true;
+      continue;
+    }
+
+    // A new title-cased section boundary stops the current capture block.
+    if (inSection && /^[A-Z][A-Za-z /&-]{2,}\s*[:—-]\s*$/.test(line)) {
+      inSection = false;
+    }
+
+    if (!inSection) continue;
+
+    const cleaned = line
+      .replace(/^[-*•]\s*/u, '')
+      .replace(/^\d+[.)]\s*/u, '')
+      .trim();
+    if (cleaned) items.push(cleaned);
+    if (items.length >= 20) break;
+  }
+
+  return items;
+}
+
+function uniqueSignals(...groups: string[][]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const group of groups) {
+    for (const item of group) {
+      const key = item.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(item);
+      if (out.length >= 20) return out;
+    }
+  }
+  return out;
+}
+
 function classifyEvidenceType(filename: string, text: string): EvidenceType {
   const haystack = `${filename}\n${text}`.toLowerCase();
   if (/\b(attendees?|meeting|minutes?|notes?)\b/.test(haystack)) return 'meeting_notes';
@@ -87,10 +135,22 @@ export function extractProgramEvidenceFromText(args: {
   const normalized = args.text.replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
   const lines = normalizeLines(normalized);
   const evidenceType = classifyEvidenceType(args.filename, normalized);
-  const decisions = collectPrefixed(lines, ['decision', 'decided', 'approval']);
-  const actionItems = collectPrefixed(lines, ['action', 'action item', 'todo', 'owner']);
-  const risks = collectPrefixed(lines, ['risk', 'issue', 'blocker']);
-  const baselineCandidates = collectPrefixed(lines, ['baseline', 'metric', 'kpi', 'current state']);
+  const decisions = uniqueSignals(
+    collectPrefixed(lines, ['decision', 'decided', 'approval']),
+    collectSectionItems(lines, ['decision', 'decisions', 'approvals']),
+  );
+  const actionItems = uniqueSignals(
+    collectPrefixed(lines, ['action', 'action item', 'todo', 'owner']),
+    collectSectionItems(lines, ['action', 'actions', 'action items', 'todos', 'owners']),
+  );
+  const risks = uniqueSignals(
+    collectPrefixed(lines, ['risk', 'issue', 'blocker']),
+    collectSectionItems(lines, ['risk', 'risks', 'issues', 'blockers']),
+  );
+  const baselineCandidates = uniqueSignals(
+    collectPrefixed(lines, ['baseline', 'metric', 'kpi', 'current state']),
+    collectSectionItems(lines, ['baseline candidate', 'baseline candidates', 'metrics', 'kpis']),
+  );
   const attendees = inferAttendees(lines);
 
   const summary =

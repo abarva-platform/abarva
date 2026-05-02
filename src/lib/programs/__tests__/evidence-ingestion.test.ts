@@ -30,6 +30,46 @@ describe('program evidence ingestion', () => {
     expect(evidence.extractedStructured.parse_method).toBe('markdown-line-parser');
   });
 
+  it('extracts structured signals from section-based workshop notes', () => {
+    const evidence = extractProgramEvidenceFromText({
+      filename: 'P1 discovery workshop notes.txt',
+      mimeType: 'text/plain',
+      text: [
+        'Attendees: Ethan Brooks, Priya Mehta, Lena Ortiz',
+        'Decisions:',
+        '- Scope first cohort to digital banking product analytics.',
+        '- Do not include core replacement execution in this program.',
+        'Baseline candidates:',
+        '- Analytics request-to-insight cycle time.',
+        '- Payments/fraud signal latency.',
+        'Actions:',
+        '- Rachel Kim to provide analytics cycle-time and lineage extract.',
+        '- James Park to provide payments/fraud signal latency sample.',
+        'Risks:',
+        '- Program could drift into core replacement.',
+        '- Exact financial impact remains restricted.',
+      ].join('\n'),
+    });
+
+    expect(evidence.evidenceType).toBe('meeting_notes');
+    expect(evidence.extractedStructured.decisions).toEqual([
+      'Scope first cohort to digital banking product analytics.',
+      'Do not include core replacement execution in this program.',
+    ]);
+    expect(evidence.extractedStructured.baseline_candidates).toEqual([
+      'Analytics request-to-insight cycle time.',
+      'Payments/fraud signal latency.',
+    ]);
+    expect(evidence.extractedStructured.action_items).toEqual([
+      'Rachel Kim to provide analytics cycle-time and lineage extract.',
+      'James Park to provide payments/fraud signal latency sample.',
+    ]);
+    expect(evidence.extractedStructured.risks).toEqual([
+      'Program could drift into core replacement.',
+      'Exact financial impact remains restricted.',
+    ]);
+  });
+
   it('creates metadata-only evidence for unsupported binary attachments', () => {
     const evidence = evidenceForUnsupportedAttachment({
       filename: 'architecture inventory.xlsx',
