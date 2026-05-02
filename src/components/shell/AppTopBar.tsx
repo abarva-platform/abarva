@@ -1,200 +1,312 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useClerk, useUser } from '@clerk/nextjs';
-import { SHELL } from '@/lib/shell/shell-tokens';
-import { clearActiveClientContext } from '@/lib/auth/client-context-storage';
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useClerk, useUser } from "@clerk/nextjs";
+import { SHELL } from "@/lib/shell/shell-tokens";
+import { clearActiveClientContext } from "@/lib/auth/client-context-storage";
+import {
+  resolveModuleAccess,
+  type ProductModule,
+} from "@/lib/auth/module-access";
 
 export interface AppTopBarProps {
   tenantName?: string;
   showLocked?: boolean;
   context?: string;
   timeString?: string;
+  showProductNav?: boolean;
 }
 
-export function AppTopBar({
-  tenantName = 'AbarVa Client',
-  showLocked,
-  context,
-  timeString,
-}: AppTopBarProps) {
+type CockpitNavItem = {
+  key: "home" | ProductModule | "learn";
+  label: string;
+  href: string;
+  match: (pathname: string) => boolean;
+  module?: ProductModule;
+};
+
+const NAV_ITEMS: CockpitNavItem[] = [
+  {
+    key: "home",
+    label: "Home",
+    href: "/home",
+    match: (pathname) =>
+      pathname === "/" ||
+      pathname === "/home" ||
+      pathname.startsWith("/home/") ||
+      pathname === "/dashboard" ||
+      pathname.startsWith("/dashboard/"),
+  },
+  {
+    key: "setup",
+    label: "Setup",
+    href: "/admin",
+    module: "setup",
+    match: (pathname) =>
+      pathname.startsWith("/admin") ||
+      pathname.startsWith("/platform/admin") ||
+      pathname === "/platform",
+  },
+  {
+    key: "programs",
+    label: "Programs",
+    href: "/programs",
+    module: "programs",
+    match: (pathname) =>
+      pathname === "/programs" ||
+      pathname.startsWith("/programs/") ||
+      pathname === "/engagements" ||
+      pathname.startsWith("/engagements/") ||
+      (pathname.startsWith("/tenant/") && pathname.includes("/programs")),
+  },
+  {
+    key: "source",
+    label: "Source",
+    href: "/source",
+    module: "source",
+    match: (pathname) =>
+      pathname === "/source" || pathname.startsWith("/source/"),
+  },
+  {
+    key: "intelligence",
+    label: "Intelligence",
+    href: "/intelligence",
+    module: "intelligence",
+    match: (pathname) =>
+      pathname === "/intelligence" ||
+      pathname.startsWith("/intelligence/") ||
+      (pathname.startsWith("/tenant/") && pathname.includes("/intelligence")),
+  },
+  {
+    key: "tower",
+    label: "Tower",
+    href: "/tower",
+    module: "tower",
+    match: (pathname) =>
+      pathname === "/tower" ||
+      pathname.startsWith("/tower/") ||
+      (pathname.startsWith("/tenant/") && pathname.includes("/tower")),
+  },
+  {
+    key: "learn",
+    label: "Learn",
+    href: "/learn",
+    match: (pathname) =>
+      pathname === "/learn" || pathname.startsWith("/learn/"),
+  },
+];
+
+function getVisibleNavItems(
+  user: ReturnType<typeof useUser>["user"],
+): CockpitNavItem[] {
+  if (!user) return [];
+  const email =
+    user.primaryEmailAddress?.emailAddress ??
+    user.emailAddresses?.[0]?.emailAddress ??
+    null;
+  const moduleAccess = resolveModuleAccess({
+    role: user.publicMetadata?.role as string | undefined,
+    email,
+    publicMetadata: user.publicMetadata as
+      | Record<string, unknown>
+      | null
+      | undefined,
+  });
+  return NAV_ITEMS.filter(
+    (item) => !item.module || moduleAccess.modules.includes(item.module),
+  );
+}
+
+export function AppTopBar({ showProductNav = true }: AppTopBarProps) {
+  const pathname = usePathname() ?? "";
   const router = useRouter();
   const { isLoaded, user } = useUser();
   const { signOut } = useClerk();
   const signedIn = isLoaded && Boolean(user);
-  const displayName = user?.fullName || user?.emailAddresses?.[0]?.emailAddress?.split('@')?.[0] || 'Demo';
+  const displayName =
+    user?.fullName ||
+    user?.emailAddresses?.[0]?.emailAddress?.split("@")?.[0] ||
+    "User";
   const initials = displayName
-    .split(' ')
+    .split(" ")
     .map((name) => name[0])
-    .join('')
+    .join("")
     .slice(0, 2)
     .toUpperCase();
+  const navItems = showProductNav && signedIn ? getVisibleNavItems(user) : [];
 
   function handleSignOut() {
     clearActiveClientContext();
-    void signOut(() => router.push('/'));
+    void signOut(() => router.push("/"));
   }
 
   return (
-    <div
+    <header
+      data-testid="app-top-bar"
       style={{
-        height: 48,
-        background: SHELL.PAPER,
+        minHeight: 58,
+        background: "#FBFAF7",
         borderBottom: `1px solid ${SHELL.CARD_LINE_SOFT}`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 24px',
-        position: 'sticky',
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 18,
+        padding: "0 clamp(16px, 3vw, 34px)",
+        position: "sticky",
         top: 0,
-        zIndex: 10,
+        zIndex: 50,
         flexShrink: 0,
+        boxShadow: "0 10px 28px rgba(12, 26, 58, 0.045)",
       }}
     >
-      {/* Left side */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
-        {/* AbarVa logo */}
-        <Link href="/home" aria-label="Go to Home" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/logo.svg"
-            alt="AbarVa"
-            style={{ height: 20, width: 'auto', display: 'block', flexShrink: 0 }}
-          />
-        </Link>
-
-        {/* Divider */}
-        <div
+      <div
+        style={{ display: "flex", alignItems: "center", gap: 22, minWidth: 0 }}
+      >
+        <Link
+          href="/home"
+          aria-label="AbarVa Home"
           style={{
-            width: 1,
-            height: 16,
-            background: SHELL.CARD_LINE,
-            flexShrink: 0,
-          }}
-        />
-
-        {/* Tenant name — plain, no pill */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {/* Amber dot */}
-          <div
-            style={{
-              width: 5,
-              height: 5,
-              borderRadius: '50%',
-              background: SHELL.AMBER_DOT,
-              flexShrink: 0,
-            }}
-          />
-          <span
-            style={{
-              fontFamily: SHELL.SERIF,
-              fontSize: 14,
-              fontWeight: 600,
-              letterSpacing: '0.015em',
-              color: SHELL.INK,
-              lineHeight: 1,
-            }}
-          >
-            {tenantName}
-          </span>
-        </div>
-
-        {/* LOCKED pill */}
-        {showLocked ? (
-          <span
-            style={{
-              fontFamily: SHELL.MONO,
-              fontSize: 8.5,
-              letterSpacing: '0.16em',
-              textTransform: 'uppercase',
-              color: SHELL.INK,
-              padding: '3px 7px',
-              border: `1px solid ${SHELL.INK}`,
-              borderRadius: 3,
-              lineHeight: 1,
-            }}
-          >
-            Locked
-          </span>
-        ) : null}
-
-        {/* Context string */}
-        {context ? (
-          <span
-            style={{
-              fontFamily: SHELL.SANS,
-              fontSize: 13,
-              color: SHELL.INK_MID,
-            }}
-          >
-            {context}
-          </span>
-        ) : null}
-
-        {/* ⌘K hint */}
-        <span
-          style={{
-            fontFamily: SHELL.MONO,
-            fontSize: 9,
-            letterSpacing: '0.12em',
-            color: SHELL.INK_MUTED,
-            background: SHELL.GRAY_BG,
-            padding: '3px 7px',
-            borderRadius: 4,
+            display: "flex",
+            alignItems: "center",
+            textDecoration: "none",
+            color: SHELL.INK,
+            fontFamily: SHELL.SERIF,
+            fontSize: 24,
+            fontWeight: 700,
+            letterSpacing: "-0.03em",
+            lineHeight: 1,
+            whiteSpace: "nowrap",
           }}
         >
-          ⌘K
-        </span>
-      </div>
+          AbarVa
+        </Link>
 
-      {/* Right side */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-        {/* Time string */}
-        {timeString ? (
-          <span
+        {navItems.length > 0 ? (
+          <nav
+            aria-label="Product modules"
             style={{
-              fontFamily: SHELL.MONO,
-              fontSize: 11,
-              color: SHELL.INK_SOFT,
-              letterSpacing: '0.04em',
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+              minWidth: 0,
+              overflowX: "auto",
+              scrollbarWidth: "none",
             }}
           >
-            {timeString}
-          </span>
+            {navItems.map((item) => {
+              const active = item.match(pathname);
+              return (
+                <Link
+                  key={item.key}
+                  href={item.href}
+                  aria-current={active ? "page" : undefined}
+                  data-nav-key={item.key}
+                  style={{
+                    position: "relative",
+                    display: "flex",
+                    alignItems: "center",
+                    minHeight: 38,
+                    padding: "0 11px",
+                    borderRadius: 0,
+                    color: active ? SHELL.INK : SHELL.INK_SOFT,
+                    fontFamily: SHELL.SANS,
+                    fontSize: 14,
+                    fontWeight: active ? 700 : 560,
+                    letterSpacing: "-0.01em",
+                    textDecoration: "none",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {item.label}
+                  {active ? (
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        position: "absolute",
+                        left: 11,
+                        right: 11,
+                        bottom: 1,
+                        height: 2,
+                        borderRadius: 999,
+                        background: SHELL.INK,
+                      }}
+                    />
+                  ) : null}
+                </Link>
+              );
+            })}
+          </nav>
         ) : null}
+      </div>
 
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          flexShrink: 0,
+        }}
+      >
         {signedIn ? (
           <>
-            <span
+            <div
               title={displayName}
               style={{
-                fontFamily: SHELL.SANS,
-                fontSize: 12,
-                color: SHELL.INK_SOFT,
-                maxWidth: 160,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
+                display: "flex",
+                alignItems: "center",
+                gap: 9,
+                minWidth: 0,
               }}
             >
-              {displayName}
-            </span>
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: "50%",
+                  background: "#E8E2D8",
+                  color: SHELL.INK,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontFamily: SHELL.SANS,
+                  fontSize: 11,
+                  fontWeight: 800,
+                  lineHeight: 1,
+                }}
+              >
+                {initials || "U"}
+              </span>
+              <span
+                style={{
+                  fontFamily: SHELL.SANS,
+                  fontSize: 13,
+                  color: SHELL.INK,
+                  fontWeight: 600,
+                  maxWidth: 172,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {displayName}
+              </span>
+            </div>
             <button
               type="button"
               onClick={handleSignOut}
               style={{
                 border: `1px solid ${SHELL.CARD_LINE}`,
                 borderRadius: 999,
-                background: SHELL.CARD_WHITE,
+                background: "#FFFFFF",
                 color: SHELL.INK,
-                cursor: 'pointer',
-                fontFamily: SHELL.MONO,
-                fontSize: 9,
-                letterSpacing: '0.12em',
+                cursor: "pointer",
+                fontFamily: SHELL.SANS,
+                fontSize: 13,
+                fontWeight: 700,
                 lineHeight: 1,
-                padding: '7px 10px',
-                textTransform: 'uppercase',
+                padding: "8px 12px",
               }}
             >
               Sign out
@@ -206,40 +318,20 @@ export function AppTopBar({
             style={{
               border: `1px solid ${SHELL.CARD_LINE}`,
               borderRadius: 999,
-              background: SHELL.CARD_WHITE,
+              background: "#FFFFFF",
               color: SHELL.INK,
-              fontFamily: SHELL.MONO,
-              fontSize: 9,
-              fontWeight: 600,
-              letterSpacing: '0.12em',
+              fontFamily: SHELL.SANS,
+              fontSize: 13,
+              fontWeight: 700,
               lineHeight: 1,
-              padding: '7px 10px',
-              textDecoration: 'none',
-              textTransform: 'uppercase',
+              padding: "8px 12px",
+              textDecoration: "none",
             }}
           >
             Sign in
           </Link>
         )}
-
-        <div
-          aria-hidden
-          style={{
-            width: 26,
-            height: 26,
-            borderRadius: '50%',
-            background: '#c5b9d1',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          <span style={{ fontFamily: SHELL.SANS, fontSize: 11, fontWeight: 600, color: SHELL.INK, lineHeight: 1 }}>
-            {initials || 'D'}
-          </span>
-        </div>
       </div>
-    </div>
+    </header>
   );
 }

@@ -15,51 +15,53 @@
  * Shell Layout Spec v2 §3 · April 2026
  */
 
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { readFileSync } from "fs";
+import { join } from "path";
 
-const ROOT = join(process.cwd(), 'src');
+const ROOT = join(process.cwd(), "src");
 
 function read(rel: string): string {
-  return readFileSync(join(ROOT, rel), 'utf-8');
+  return readFileSync(join(ROOT, rel), "utf-8");
 }
 
 function hasImport(content: string, symbol: string): boolean {
-  return new RegExp(`import[^;]*['"][^'"]*${symbol}[^'"]*['"]`).test(content) ||
+  return (
+    new RegExp(`import[^;]*['"][^'"]*${symbol}[^'"]*['"]`).test(content) ||
     content.includes(`{ ${symbol} }`) ||
-    content.includes(`{ ${symbol},`);
+    content.includes(`{ ${symbol},`)
+  );
 }
 
 // ── Rule 1: no dual-chat surface ──────────────────────────────────────────────
 
-describe('SHELL-V2 Rule 1 — no dual-chat surface', () => {
+describe("SHELL-V2 Rule 1 — no dual-chat surface", () => {
   const surfaceFiles = [
-    'components/tower/TowerIndexPage.tsx',
-    'components/intelligence/IntelligenceIndexPage.tsx',
-    'components/home/HomeIndexPage.tsx',
-    'components/setup/SetupConnectorsPage.tsx',
-    'components/setup/SetupPoliciesPage.tsx',
-    'components/setup/SetupTenantPage.tsx',
-    'components/setup/SetupUsersPage.tsx',
-    'components/setup/SetupAuditPage.tsx',
-    'components/programs/ProgramsIndexPage.tsx',
-    'components/source/SourceIndexPage.tsx',
-    'components/programs/ProgramDetailPage.tsx',
-    'components/source/SourceEventDetailPage.tsx',
+    "components/tower/TowerIndexPage.tsx",
+    "components/intelligence/IntelligenceIndexPage.tsx",
+    "components/home/HomeIndexPage.tsx",
+    "components/setup/SetupConnectorsPage.tsx",
+    "components/setup/SetupPoliciesPage.tsx",
+    "components/setup/SetupTenantPage.tsx",
+    "components/setup/SetupUsersPage.tsx",
+    "components/setup/SetupAuditPage.tsx",
+    "components/programs/ProgramsIndexPage.tsx",
+    "components/source/SourceIndexPage.tsx",
+    "components/programs/ProgramDetailPage.tsx",
+    "components/source/SourceEventDetailPage.tsx",
   ];
 
   for (const file of surfaceFiles) {
     test(`${file} does not have both AgentColumn and AskAnythingBar`, () => {
       const content = read(file);
-      const hasAgentColumn = hasImport(content, 'AgentColumn');
-      const hasAskAnythingBar = hasImport(content, 'AskAnythingBar');
+      const hasAgentColumn = hasImport(content, "AgentColumn");
+      const hasAskAnythingBar = hasImport(content, "AskAnythingBar");
       const hasBoth = hasAgentColumn && hasAskAnythingBar;
 
       if (hasBoth) {
         throw new Error(
           `${file} imports both AgentColumn and AskAnythingBar. ` +
-          'Each surface must have exactly one chat entry point. ' +
-          'Mode A surfaces use AgentColumn; Mode B detail surfaces use AtlasDrawer.',
+            "Each surface must have exactly one chat entry point. " +
+            "Mode A surfaces use AgentColumn; Mode B detail surfaces use AtlasDrawer.",
         );
       }
     });
@@ -68,24 +70,24 @@ describe('SHELL-V2 Rule 1 — no dual-chat surface', () => {
 
 // ── Rule 2: Mode A index surfaces have no AskAnythingBar ──────────────────────
 
-describe('SHELL-V2 Rule 2 — Mode A surfaces have no AskAnythingBar', () => {
+describe("SHELL-V2 Rule 2 — Mode A surfaces have no AskAnythingBar", () => {
   const modeASurfaces = [
-    'components/tower/TowerIndexPage.tsx',
-    'components/intelligence/IntelligenceIndexPage.tsx',
-    'components/home/HomeIndexPage.tsx',
-    'components/setup/SetupConnectorsPage.tsx',
-    'components/setup/SetupPoliciesPage.tsx',
-    'components/programs/ProgramsIndexPage.tsx',
-    'components/source/SourceIndexPage.tsx',
+    "components/tower/TowerIndexPage.tsx",
+    "components/intelligence/IntelligenceIndexPage.tsx",
+    "components/home/HomeIndexPage.tsx",
+    "components/setup/SetupConnectorsPage.tsx",
+    "components/setup/SetupPoliciesPage.tsx",
+    "components/programs/ProgramsIndexPage.tsx",
+    "components/source/SourceIndexPage.tsx",
   ];
 
   for (const file of modeASurfaces) {
     test(`${file} does not import AskAnythingBar`, () => {
       const content = read(file);
-      if (hasImport(content, 'AskAnythingBar')) {
+      if (hasImport(content, "AskAnythingBar")) {
         throw new Error(
           `${file} imports AskAnythingBar but is a Mode A surface. ` +
-          'AgentColumn handles chat in Mode A — remove AskAnythingBar.',
+            "AgentColumn handles chat in Mode A — remove AskAnythingBar.",
         );
       }
     });
@@ -94,29 +96,29 @@ describe('SHELL-V2 Rule 2 — Mode A surfaces have no AskAnythingBar', () => {
 
 // ── Rule 3: Mode B detail surfaces use AtlasDrawer + RibbonSynthesis ─────────
 
-describe('SHELL-V2 Rule 3 — Mode B surfaces use AtlasDrawer + RibbonSynthesis', () => {
+describe("SHELL-V2 Rule 3 — Mode B surfaces use AtlasDrawer + RibbonSynthesis", () => {
   const modeBSurfaces = [
-    'components/programs/ProgramDetailPage.tsx',
-    'components/source/SourceEventDetailPage.tsx',
+    "components/programs/ProgramDetailPage.tsx",
+    "components/source/SourceEventDetailPage.tsx",
   ];
 
   for (const file of modeBSurfaces) {
     test(`${file} imports AtlasDrawer`, () => {
       const content = read(file);
-      if (!hasImport(content, 'AtlasDrawer')) {
+      if (!hasImport(content, "AtlasDrawer")) {
         throw new Error(
           `${file} is a Mode B surface but does not import AtlasDrawer. ` +
-          'Add AtlasDrawer per Shell Layout Spec v2 §5.1.',
+            "Add AtlasDrawer per Shell Layout Spec v2 §5.1.",
         );
       }
     });
 
     test(`${file} imports RibbonSynthesis`, () => {
       const content = read(file);
-      if (!hasImport(content, 'RibbonSynthesis')) {
+      if (!hasImport(content, "RibbonSynthesis")) {
         throw new Error(
           `${file} is a Mode B surface but does not import RibbonSynthesis. ` +
-          'Add RibbonSynthesis per Shell Layout Spec v2 §5.2.',
+            "Add RibbonSynthesis per Shell Layout Spec v2 §5.2.",
         );
       }
     });
@@ -125,29 +127,57 @@ describe('SHELL-V2 Rule 3 — Mode B surfaces use AtlasDrawer + RibbonSynthesis'
 
 // ── Rule 4: surface pages don't directly import AtlasPageStateProvider ────────
 
-describe('SHELL-V2 Rule 4 — surface pages do not directly import AtlasPageStateProvider', () => {
+describe("SHELL-V2 Rule 4 — surface pages do not directly import AtlasPageStateProvider", () => {
   const surfaceFiles = [
-    'components/tower/TowerIndexPage.tsx',
-    'components/intelligence/IntelligenceIndexPage.tsx',
-    'components/home/HomeIndexPage.tsx',
-    'components/programs/ProgramsIndexPage.tsx',
-    'components/programs/ProgramDetailPage.tsx',
-    'components/source/SourceIndexPage.tsx',
-    'components/source/SourceEventDetailPage.tsx',
+    "components/tower/TowerIndexPage.tsx",
+    "components/intelligence/IntelligenceIndexPage.tsx",
+    "components/home/HomeIndexPage.tsx",
+    "components/programs/ProgramsIndexPage.tsx",
+    "components/programs/ProgramDetailPage.tsx",
+    "components/source/SourceIndexPage.tsx",
+    "components/source/SourceEventDetailPage.tsx",
   ];
 
   for (const file of surfaceFiles) {
     test(`${file} does not directly import AtlasPageStateProvider (AppShell mounts it)`, () => {
       const content = read(file);
       // The hook (useAtlasPageState) is fine — just the Provider component itself
-      if (content.includes("import") && content.includes('AtlasPageStateProvider') &&
-          !content.includes('useAtlasPageState')) {
+      if (hasImport(content, "AtlasPageStateProvider")) {
         throw new Error(
           `${file} directly imports AtlasPageStateProvider. ` +
-          'AppShell mounts the provider — surface pages should only use ' +
-          'the useAtlasPageState() hook.',
+            "AppShell mounts the provider — surface pages should only use " +
+            "the useAtlasPageState() hook.",
         );
       }
     });
   }
+});
+
+// ── Rule 5: global cockpit nav is top-bar first ──────────────────────────────
+
+describe("SHELL-V2 Rule 5 — cockpit shell uses a single top product nav", () => {
+  test("AppShell does not render the legacy AppRail unless explicitly opted in", () => {
+    const content = read("components/shell/AppShell.tsx");
+
+    expect(content).toContain("showProductNav = true");
+    expect(content).toContain("showAppRail = false");
+    expect(content).toContain("showAppRail ? <AppRail /> : null");
+  });
+
+  test("AppTopBar owns the authenticated product nav labels", () => {
+    const content = read("components/shell/AppTopBar.tsx");
+
+    for (const label of [
+      "Home",
+      "Setup",
+      "Programs",
+      "Source",
+      "Intelligence",
+      "Tower",
+      "Learn",
+    ]) {
+      expect(content).toContain(`label: "${label}"`);
+    }
+    expect(content).toContain('aria-label="Product modules"');
+  });
 });

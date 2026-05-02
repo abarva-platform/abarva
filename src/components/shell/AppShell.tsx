@@ -1,13 +1,22 @@
-import type { ReactNode } from 'react';
-import { AppRail } from './AppRail';
-import { AppTopBar } from './AppTopBar';
-import { AppMiddleStrip } from './AppMiddleStrip';
+import type { ReactNode } from "react";
+import { AppRail } from "./AppRail";
+import { AppTopBar } from "./AppTopBar";
+import { AppMiddleStrip } from "./AppMiddleStrip";
 // GlobalSearchModal is mounted in the maestro layout for app-wide coverage.
-import { AtlasPageStateProvider } from './AtlasPageStateProvider';
-import type { SurfaceId, StageId } from '@/lib/shell/atlas-page-state';
+import { AtlasPageStateProvider } from "./AtlasPageStateProvider";
+import type { SurfaceId, StageId } from "@/lib/shell/atlas-page-state";
 
 interface AppShellProps {
-  surface?: 'setup' | 'setup-detail' | 'programs' | 'programs-detail' | 'source' | 'source-detail' | 'intelligence' | 'tower' | 'home';
+  surface?:
+    | "setup"
+    | "setup-detail"
+    | "programs"
+    | "programs-detail"
+    | "source"
+    | "source-detail"
+    | "intelligence"
+    | "tower"
+    | "home";
   /**
    * Workflow stage for stage-aware surfaces (Shell Layout Spec v2 §7).
    * P0-P6 for Programs phases, S1-S7 for Source event stages.
@@ -37,12 +46,18 @@ interface AppShellProps {
   agentName?: string;
   middleStrip?: ReactNode;
   /**
+   * Cockpit shell defaults: product/module navigation lives in the top bar.
+   * The old left app rail is retained only for explicit legacy opt-in.
+   */
+  showProductNav?: boolean;
+  showAppRail?: boolean;
+  /**
    * PR-L · structured-artifact dispatcher passed through to
    * AtlasPageStateProvider. Pages on /programs/<id> wire this to
    * update the reactive panel and trigger router.refresh() when the
    * agent emits a program-phase-changed artifact.
    */
-  onArtifact?: (artifact: import('@/lib/agent/artifacts').Artifact) => void;
+  onArtifact?: (artifact: import("@/lib/agent/artifacts").Artifact) => void;
   children: ReactNode;
 }
 
@@ -54,30 +69,32 @@ export function AppShell({
   hasTenantKey = false,
   agentName,
   middleStrip,
+  showProductNav = true,
+  showAppRail = false,
   onArtifact,
   children,
 }: AppShellProps) {
-  const tenantName = topBarProps?.tenantName ?? 'AbarVa Client';
+  const tenantName = topBarProps?.tenantName ?? "AbarVa Client";
   return (
     <div
       style={{
-        display: 'grid',
-        gridTemplateColumns: '76px 1fr',
-        minHeight: '100vh',
-        overflow: 'hidden',
+        display: "grid",
+        gridTemplateColumns: showAppRail ? "76px 1fr" : "1fr",
+        minHeight: "100vh",
+        overflow: "hidden",
       }}
     >
-      {/* Left rail */}
-      <AppRail />
+      {/* Legacy left rail: explicit opt-in only. Product nav belongs in AppTopBar. */}
+      {showAppRail ? <AppRail /> : null}
 
       {/* Right main column */}
       <div
         style={{
-          display: 'flex',
-          flexDirection: 'column',
+          display: "flex",
+          flexDirection: "column",
           flex: 1,
-          minHeight: '100vh',
-          overflow: 'hidden',
+          minHeight: "100vh",
+          overflow: "hidden",
         }}
       >
         <AppTopBar
@@ -85,17 +102,16 @@ export function AppShell({
           showLocked={topBarProps?.showLocked}
           context={topBarProps?.context}
           timeString={topBarProps?.timeString}
+          showProductNav={showProductNav}
         />
 
-        {middleStrip && (
-          <AppMiddleStrip>{middleStrip}</AppMiddleStrip>
-        )}
+        {middleStrip && <AppMiddleStrip>{middleStrip}</AppMiddleStrip>}
 
         {/* Body: fills remaining height — wrapped in AtlasPageStateProvider so
             every child (AgentColumn, AskAnythingBar, etc.) shares one Atlas
             state object. Shell Layout Spec v2 §6. */}
         <AtlasPageStateProvider
-          surface={(surface as SurfaceId) ?? 'home'}
+          surface={(surface as SurfaceId) ?? "home"}
           tenantName={tenantName}
           hasTenantKey={hasTenantKey}
           stage={stage ?? null}
@@ -106,9 +122,9 @@ export function AppShell({
           <div
             style={{
               flex: 1,
-              display: 'flex',
+              display: "flex",
               minHeight: 0,
-              overflow: 'hidden',
+              overflow: "hidden",
             }}
           >
             {children}
