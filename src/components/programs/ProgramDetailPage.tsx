@@ -4436,13 +4436,12 @@ export function ProgramDetailPage({
             navigator with per-chip synthesis triggers. Only rendered when the
             lifecycle pattern resolves to a full phase set. */}
         {lifecycleMiniGraph && view.phases.length > 0 && (() => {
-          // Build sorted stage list to map phase ordinal (1-6) → pattern stageId
+          // Build sorted stage list to map phase ordinal (P0-P6) → pattern stageId
           const sortedPatternStages = [...lifecycleMiniGraph.stages].sort(
             (a, b) => a.order - b.order,
           );
-          const handleSynthesisClick = (phaseId: 1 | 2 | 3 | 4 | 5 | 6) => {
-            // phase ids are 1-indexed; sortedPatternStages is 0-indexed
-            const stageId = sortedPatternStages[phaseId - 1]?.id;
+          const handleSynthesisClick = (phaseId: ProgramPhaseId) => {
+            const stageId = sortedPatternStages[phaseId]?.id;
             if (stageId) setOpenStageId(stageId);
           };
           const railPhases: ProgramPhaseSlot[] = view.phases.map((s) => ({

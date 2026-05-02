@@ -4,9 +4,10 @@
 // Status indicator + navigator — thin 36px chips on full, 4px segments on mini.
 // Pop via contrast only: active phase uses border+shadow+fill, NOT size change.
 //
-// Phase model: 6 canonical phases (indices 1-6):
-//   1 · Origination  2 · Discovery  3 · Synthesis
-//   4 · Design       5 · Approval & Mobilization  6 · Tower Handoff
+// Phase model: 7 canonical phases (indices 0-6):
+//   0 · Origination  1 · Discovery  2 · Synthesis
+//   3 · Design       4 · Execution Roadmap
+//   5 · Approval & Mobilization  6 · Tower Handoff
 //
 // Source of truth: CANONICAL_SIX_PHASES in
 //   src/lib/programs/programs-canonical-view.ts
@@ -17,8 +18,8 @@ import type { CSSProperties } from 'react';
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export interface ProgramPhaseSlot {
-  /** Canonical phase index 1-6 (Origination=1 … Tower Handoff=6). */
-  id: 1 | 2 | 3 | 4 | 5 | 6;
+  /** Canonical phase index 0-6 (Origination=0 … Tower Handoff=6). */
+  id: 0 | 1 | 2 | 3 | 4 | 5 | 6;
   /** Phase label — one of: 'Origination' | 'Discovery' | 'Synthesis' | 'Design' | 'Approval & Mobilization' | 'Tower Handoff'. */
   label: string;
   state: 'done' | 'current' | 'pending' | 'locked';
@@ -27,17 +28,17 @@ export interface ProgramPhaseSlot {
 
 export interface ProgramJourneyRailProps {
   phases: ProgramPhaseSlot[];
-  /** Canonical phase index (1-6) of the phase currently being viewed. */
-  viewingPhase: 1 | 2 | 3 | 4 | 5 | 6;
-  onPhaseSelect: (phase: 1 | 2 | 3 | 4 | 5 | 6) => void;
+  /** Canonical phase index (0-6) of the phase currently being viewed. */
+  viewingPhase: 0 | 1 | 2 | 3 | 4 | 5 | 6;
+  onPhaseSelect: (phase: 0 | 1 | 2 | 3 | 4 | 5 | 6) => void;
   variant?: 'full' | 'mini';   // 'full' = 36px chips, 'mini' = 4px segments
   /**
    * Optional callback fired when the user clicks "View synthesis →" on a
-   * phase chip. Receives the canonical phase id (1-6) so the caller can map
+   * phase chip. Receives the canonical phase id (0-6) so the caller can map
    * it to the appropriate LifecyclePatternSeed stage id.
    * Only rendered when variant === 'full'.
    */
-  onSynthesisClick?: (phaseId: 1 | 2 | 3 | 4 | 5 | 6) => void;
+  onSynthesisClick?: (phaseId: 0 | 1 | 2 | 3 | 4 | 5 | 6) => void;
 }
 
 // ─── Design tokens (inline — programs shell uses inline styles throughout) ──

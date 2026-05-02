@@ -16,12 +16,12 @@ import { buildProgramDetailView } from '@/lib/programs/programs-detail-view';
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
 function cdpView() {
-  // APX-CDP-2026 at P3 Design (pending gate to P4 Build)
+  // APX-CDP-2026 at P3 Design (pending gate to P4 Execution Roadmap)
   return buildProgramDetailView('apx-cdp-2026');
 }
 
 function ccView() {
-  // APX-CC-2026 at P4 Build (pending gate to P5 Activate)
+  // APX-CC-2026 at P4 Execution Roadmap (pending gate to P5 Approval & Mobilization)
   return buildProgramDetailView('apx-cc-2026');
 }
 
@@ -31,13 +31,13 @@ function sapView() {
 }
 
 function dfv2View() {
-  // APX-DFV2-2025 at P6 Operate (gateStatus: na — no next gate)
+  // APX-DFV2-2025 at P6 Tower Handoff (gateStatus: na — no next gate)
   return buildProgramDetailView('apx-dfv2-2025');
 }
 
-// ─── P-SMOKE-CDP: APX-CDP-2026 P3 Design → P4 Build ─────────────────────────
+// ─── P-SMOKE-CDP: APX-CDP-2026 P3 Design → P4 Execution Roadmap ─────────────────────────
 
-describe('P-SMOKE-CDP · APX-CDP-2026 gate ribbon (P3 Design → P4 Build)', () => {
+describe('P-SMOKE-CDP · APX-CDP-2026 gate ribbon (P3 Design → P4 Execution Roadmap)', () => {
   const view = cdpView();
   const ribbon = buildGateRibbonView(view);
 
@@ -49,7 +49,7 @@ describe('P-SMOKE-CDP · APX-CDP-2026 gate ribbon (P3 Design → P4 Build)', () 
     expect(ribbon!.fromPhase).toBe(3);
   });
 
-  it('toPhase is 4 (Build)', () => {
+  it('toPhase is 4 (Execution Roadmap)', () => {
     expect(ribbon!.toPhase).toBe(4);
   });
 
@@ -57,12 +57,12 @@ describe('P-SMOKE-CDP · APX-CDP-2026 gate ribbon (P3 Design → P4 Build)', () 
     expect(ribbon!.fromPhaseLabel).toBe('Design');
   });
 
-  it('toPhaseLabel is "Build"', () => {
-    expect(ribbon!.toPhaseLabel).toBe('Build');
+  it('toPhaseLabel is "Execution Roadmap"', () => {
+    expect(ribbon!.toPhaseLabel).toBe('Execution Roadmap');
   });
 
-  it('ribbonLabel is "P3 Design → P4 Build"', () => {
-    expect(ribbon!.ribbonLabel).toBe('P3 Design → P4 Build');
+  it('ribbonLabel is "P3 Design → P4 Execution Roadmap"', () => {
+    expect(ribbon!.ribbonLabel).toBe('P3 Design → P4 Execution Roadmap');
   });
 
   // ── ANCHOR: P-SMOKE-CDP gate state must stay "2 of 5" ──
@@ -118,10 +118,10 @@ describe('P-SMOKE-CDP · APX-CDP-2026 gate ribbon (P3 Design → P4 Build)', () 
     expect(getApprovalButtonLabel(ribbon!)).toBe('Approve with override');
   });
 
-  it('modal headline mentions Design and Build', () => {
+  it('modal headline mentions Design and Execution Roadmap', () => {
     const headline = getGateModalHeadline(ribbon!);
     expect(headline).toContain('Design');
-    expect(headline).toContain('Build');
+    expect(headline).toContain('Execution Roadmap');
     expect(headline).toContain('P3');
     expect(headline).toContain('P4');
   });
@@ -152,6 +152,25 @@ describe('GW-01 · APX-SAP-2026 P1 phase summary', () => {
     expect(view.phasePanel.summary).toContain('P1 Discovery is active');
     expect(view.phasePanel.summary).toContain('clear the next gate');
   });
+
+  it('keeps newly approved P0 programs in Originate instead of clamping them to P1', () => {
+    const view = buildProgramDetailView('new-program-from-db', undefined, 0);
+
+    expect(view.currentPhase).toBe(0);
+    expect(view.viewingPhase).toBe(0);
+    expect(view.phases[0]).toMatchObject({
+      id: 0,
+      label: 'Originate',
+      state: 'current',
+    });
+    expect(view.phases[1]).toMatchObject({
+      id: 1,
+      label: 'Discovery',
+      state: 'pending',
+    });
+    expect(view.workbench.title).toContain('P0 Originate');
+    expect(view.phasePanel.summary).toContain('P0 Originate is active');
+  });
 });
 
 // ─── APX-CC-2026 gate state is 'open' — ribbon returns null ──────────────────
@@ -168,11 +187,11 @@ describe('APX-CC-2026 gate state (gateStatus open — no ribbon)', () => {
   });
 });
 
-// ─── Synthetic P4→P5 gate (Build → Activate) ─────────────────────────────────
+// ─── Synthetic P4→P5 gate (Execution Roadmap → Approval & Mobilization) ─────
 // Uses CC's gate criteria shape with a synthetic gateStatus='pending' override
 // to verify the 6-criteria / 2-met ribbon logic independently of fixture state.
 
-describe('Synthetic P4 Build → P5 Activate ribbon (6 criteria, 2 met)', () => {
+describe('Synthetic P4 Execution Roadmap → P5 Approval & Mobilization ribbon (6 criteria, 2 met)', () => {
   const base = ccView();
   const syntheticPending = {
     ...base,
@@ -185,7 +204,7 @@ describe('Synthetic P4 Build → P5 Activate ribbon (6 criteria, 2 met)', () => 
         { criterion: 'IVR routing rules complete', met: false },
         { criterion: 'Operator dashboard MVP complete', met: false },
         { criterion: 'Load test passing at 2× peak traffic', met: false },
-        { criterion: 'Sponsor sign-off on Activate criteria', met: false },
+        { criterion: 'Sponsor sign-off on Approval & Mobilization criteria', met: false },
       ],
     },
   };
@@ -195,16 +214,16 @@ describe('Synthetic P4 Build → P5 Activate ribbon (6 criteria, 2 met)', () => 
     expect(ribbon).not.toBeNull();
   });
 
-  it('fromPhase is 4 (Build)', () => {
+  it('fromPhase is 4 (Execution Roadmap)', () => {
     expect(ribbon!.fromPhase).toBe(4);
   });
 
-  it('toPhase is 5 (Activate)', () => {
+  it('toPhase is 5 (Approval & Mobilization)', () => {
     expect(ribbon!.toPhase).toBe(5);
   });
 
-  it('ribbonLabel is "P4 Build → P5 Activate"', () => {
-    expect(ribbon!.ribbonLabel).toBe('P4 Build → P5 Activate');
+  it('ribbonLabel is "P4 Execution Roadmap → P5 Approval & Mobilization"', () => {
+    expect(ribbon!.ribbonLabel).toBe('P4 Execution Roadmap → P5 Approval & Mobilization');
   });
 
   it('totalCriteria is 6', () => {
@@ -236,7 +255,7 @@ describe('Synthetic P4 Build → P5 Activate ribbon (6 criteria, 2 met)', () => 
 
 describe('buildGateRibbonView · null cases', () => {
   it('returns null for gateStatus open (APX-CC-2026)', () => {
-    // APX-CC-2026 is at P4 Build with gateStatus 'open'
+    // APX-CC-2026 is at P4 Execution Roadmap with gateStatus 'open'
     expect(buildGateRibbonView(ccView())).toBeNull();
   });
 
@@ -259,7 +278,7 @@ describe('buildGateRibbonView · null cases', () => {
     expect(buildGateRibbonView(noPanel)).toBeNull();
   });
 
-  it('returns null for currentPhase 6 (Operate — no next gate)', () => {
+  it('returns null for currentPhase 6 (Tower Handoff — no next gate)', () => {
     const view = dfv2View();
     const atOperate = {
       ...view,
@@ -343,16 +362,16 @@ describe('getPhaseLabel', () => {
     expect(getPhaseLabel(3)).toBe('Design');
   });
 
-  it('returns "Build" for phase 4', () => {
-    expect(getPhaseLabel(4)).toBe('Build');
+  it('returns "Execution Roadmap" for phase 4', () => {
+    expect(getPhaseLabel(4)).toBe('Execution Roadmap');
   });
 
-  it('returns "Activate" for phase 5', () => {
-    expect(getPhaseLabel(5)).toBe('Activate');
+  it('returns "Approval & Mobilization" for phase 5', () => {
+    expect(getPhaseLabel(5)).toBe('Approval & Mobilization');
   });
 
-  it('returns "Operate" for phase 6', () => {
-    expect(getPhaseLabel(6)).toBe('Operate');
+  it('returns "Tower Handoff" for phase 6', () => {
+    expect(getPhaseLabel(6)).toBe('Tower Handoff');
   });
 
   it('returns a non-empty fallback for an unknown phase', () => {

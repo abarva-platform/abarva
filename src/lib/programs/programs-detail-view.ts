@@ -761,25 +761,20 @@ export function buildProgramDetailView(
   // and non-fixture programs (newly created).
   const effectiveCurrentPhase =
     overrideCurrentPhase !== undefined
-      ? Math.max(1, Math.min(6, overrideCurrentPhase))
+      ? Math.max(0, Math.min(6, overrideCurrentPhase))
       : program.currentPhase;
 
   // Rebuild phase slots using the effective current phase, or fall back to the
   // program fixture's slots if no override was given.
   const railPhases =
     overrideCurrentPhase !== undefined
-      ? buildPhaseSlots(effectiveCurrentPhase as ProgramPhaseId).filter(
-          (slot: ProgramPhaseSlot) => (slot.id as number) >= 1 && (slot.id as number) <= 6,
-        )
-      : program.phases.filter(
-          (slot): slot is ProgramPhaseSlot & { id: 1 | 2 | 3 | 4 | 5 | 6 } =>
-            slot.id >= 1 && slot.id <= 6,
-        );
+      ? buildPhaseSlots(effectiveCurrentPhase as ProgramPhaseId)
+      : program.phases;
 
-  // Resolve viewing phase: default to currentPhase, clamped to 1-6
-  const clampedCurrent = Math.max(1, Math.min(6, effectiveCurrentPhase)) as ProgramPhaseId;
+  // Resolve viewing phase: default to currentPhase, clamped to P0-P6.
+  const clampedCurrent = Math.max(0, Math.min(6, effectiveCurrentPhase)) as ProgramPhaseId;
   let viewingPhase: ProgramPhaseId;
-  if (requestedPhase !== undefined && requestedPhase >= 1 && requestedPhase <= 6) {
+  if (requestedPhase !== undefined && requestedPhase >= 0 && requestedPhase <= 6) {
     viewingPhase = requestedPhase as ProgramPhaseId;
   } else {
     viewingPhase = clampedCurrent;
