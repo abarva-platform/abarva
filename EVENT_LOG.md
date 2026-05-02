@@ -95,3 +95,8 @@
 ## 2026-05-02T13:08:00Z — programs-module-e2e-crawler
 - PR #1403 deployed and live rerun passed the P3 traceability persistence/advance path: requirements_traceability signed off and program advanced to current_phase=4.
 - Follow-up doctrine defect found in live chat: Nexus said "P4 Build" after advancing, while the locked lifecycle label is P4 Execution Roadmap. Fix in progress to harden prompt/tool examples against old labels.
+
+## 2026-05-02T13:24:00Z — programs-module-e2e-crawler
+- Live P5 package request timed out after partial writes. DB confirmed business_case, readiness_and_change_plan, and tower_handoff_plan were signed off, but funding_approval and sponsor_alignment did not land and program remained current_phase=5.
+- Root cause: P5 naturally requires multiple signed artifacts; one complete_deliverable call per artifact can exceed the Programs client timeout before gate evaluation.
+- Fix in progress: add complete_deliverables batch tool and route multi-deliverable package requests to it on the initial tool turn.
