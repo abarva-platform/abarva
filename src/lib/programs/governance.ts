@@ -247,12 +247,10 @@ export async function evaluateGate(
         break;
       case 'business_case_approved': pass = isSignedOff(businessCaseRow); break;
       case 'funding_approval_recorded':
-        pass = moduleCompleted('funding_approval', 'capacity_approval') ||
-          isSignedOff(findDeliverable('funding_approval', 'capacity_approval', 'approval_memo'));
+        pass = isSignedOff(findDeliverable('funding_approval', 'capacity_approval', 'approval_memo'));
         break;
       case 'sponsor_alignment_confirmed':
-        pass = moduleCompleted('sponsor_alignment', 'stakeholder_alignment') ||
-          isSignedOff(findDeliverable('stakeholder_alignment', 'sponsor_alignment'));
+        pass = isSignedOff(findDeliverable('stakeholder_alignment', 'sponsor_alignment'));
         break;
       case 'readiness_and_change_plan_signed_off': pass = isSignedOff(changePlanRow); break;
       case 'tower_handoff_plan_accepted': pass = isSignedOff(towerHandoffRow); break;
