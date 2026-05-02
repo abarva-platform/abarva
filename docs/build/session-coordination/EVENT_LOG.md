@@ -184,6 +184,16 @@ Append-only coordination log for active Codex sessions.
 - fix_started: branch `codex/source-pricing-parser-quality` changes text pricing extraction to require an explicit currency marker or magnitude suffix and adds regression coverage so year indexes/headings are not captured as commercial amounts.
 - validation: focused Source text-parser Jest, targeted ESLint, and TypeScript passed locally.
 
+## 2026-05-02T13:35:00-05:00 - codex-source-e2e-crawler
+
+- status: source-e2e-closeout-reports-written
+- reports:
+  - `docs/build/source-e2e/SOURCE_E2E_FUNCTIONAL_TEST_REPORT.md`
+  - `docs/build/source-e2e/SOURCE_E2E_UX_ASSESSMENT_REPORT.md`
+  - `docs/build/source-e2e/SOURCE_E2E_FIX_LOG.md`
+- production_reverification: Tower handoff fix verified live for Apex, Meridian, and First Capital; pricing parser fix verified live on Apex pricing upload with exactly six pricing components and no heading/year false positives.
+- remaining_gaps: generated artifacts parser/vector/graph pending, evidence-gate hard enforcement not proven, binary parsing not proven, First Capital legacy `arcturus` persistence key, intermittent demo sign-in stall.
+
 ## 2026-05-02T15:04:00-05:00 - codex-setup-ai-initiatives-foundation
 
 - status: in-progress
