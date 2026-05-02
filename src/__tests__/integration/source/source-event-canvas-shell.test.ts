@@ -142,10 +142,21 @@ describe('Source event canvas shell', () => {
     expect(html).toContain('Agent-led Source event workspace');
     expect(html).toContain('Live Source event reasoning pane');
     expect(html).toContain('Contextual prompts');
-    expect(html).toContain('Ask Sentinel: Capture plan');
+    expect(html).toContain('Ask Nexus: Capture plan');
     expect(html).toContain('Nexus guidance');
     expect(html).toContain('Deterministic guidance only');
     expect(html).toContain('Scope stage workspace');
+  });
+
+  it('labels Source event action affordances as Nexus prompt actions', async () => {
+    const page = await SourceEventDetailPage({
+      params: Promise.resolve({ eventId: SOURCE_GOLDEN_EVENT_IDS.dataAiModernization }),
+    });
+    const html = renderToStaticMarkup(page);
+
+    expect(html).toContain('Ask Nexus: Define done');
+    expect(html).toContain('source-stage-action-open-gate-path');
+    expect(html).not.toContain('Ask Sentinel:');
   });
 
   it('redacts restricted financial values from the Source event shell and agent surface context', async () => {
