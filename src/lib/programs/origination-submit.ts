@@ -8,6 +8,7 @@ import { getServerSupabase } from '@/lib/supabase-server';
 import { submitForApproval } from '@/lib/programs/approval';
 import { markDraftCommitted } from '@/lib/programs/origination-drafts';
 import type { OriginSource } from '@/lib/programs/types.db';
+import { normalizeProgramArchetype } from '@/lib/programs/archetype-normalization';
 
 export interface SubmitOriginationBriefInput {
   surface: string;
@@ -327,6 +328,7 @@ export async function submitOriginationBrief(
   }
 
   const derived = classifyBrief(input);
+  const programArchetype = normalizeProgramArchetype(input.classification);
   const industryCode = (
     activeClient.industry_code?.trim() || CLIENT_KEY_TO_INDUSTRY_CODE[activeClient.key]
   ).toUpperCase();
@@ -344,7 +346,7 @@ export async function submitOriginationBrief(
       status: 'draft',
       lifecycle_state: 'submitted_for_approval',
       current_phase: 0,
-      program_archetype: input.classification ?? null,
+      program_archetype: programArchetype,
       origin_source: 'user_initiated' as OriginSource,
       origin_source_ref: null,
       maestro_oversight_level: 'partial',
@@ -376,7 +378,7 @@ export async function submitOriginationBrief(
       function_code: derived.functionCode,
       objective_code: derived.objectiveCode,
       topic_code: derived.topicCode,
-      classification: input.classification ?? null,
+      classification: programArchetype,
       matched_pattern_id: input.matchedPatternId ?? null,
       submitted_from_surface: input.surface,
       submitted_at: new Date().toISOString(),
