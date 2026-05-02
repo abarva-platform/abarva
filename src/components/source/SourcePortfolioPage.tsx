@@ -28,9 +28,10 @@ interface SourcePortfolioPageProps {
 }
 
 const STAGE_FILTERS: Array<{ key: SourceStageKey; label: string }> = [
-  { key: 'orals_bafo', label: 'BAFO' },
+  { key: 'bafo', label: 'BAFO' },
+  { key: 'pricing', label: 'Pricing' },
   { key: 'evaluation', label: 'Evaluation' },
-  { key: 'vendor_responses', label: 'Responses' },
+  { key: 'responses', label: 'Responses' },
 ];
 
 const STATUS_FILTERS: Array<{ key: SourceLifecycleStatus; label: string }> = [

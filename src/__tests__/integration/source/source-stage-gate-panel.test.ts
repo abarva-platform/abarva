@@ -15,7 +15,7 @@ describe('Source stage gate panel', () => {
     expect(html).toContain('Current gate signal');
     expect(html).toContain('Gate transition table');
     expect(html).toContain('Strategy -&gt; Scope');
-    expect(html).toContain('Value Realization -&gt; Closed');
+    expect(html).toContain('Value -&gt; Closed');
     expect(html).toContain('Nexus next action');
   });
 

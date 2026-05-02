@@ -57,18 +57,30 @@ export function inferSourceArtifactFamily(args: {
   if (name.includes('transition') || name.includes('risk')) return 'transition_risk_register';
 
   switch (args.stageKey) {
-    case 'rfp_rfi_package':
-      return 'rfp';
-    case 'vendor_responses':
-      return 'proposal';
-    case 'orals_bafo':
-      return 'bafo';
-    case 'selection':
-      return 'decision_brief';
-    case 'scope':
-      return 'scope_document';
+    case 'strategy':
+    case 'intake':
     case 'sourcing_strategy':
       return 'sourcing_strategy';
+    case 'rfp':
+    case 'rfp_rfi_package':
+      return 'rfp';
+    case 'responses':
+    case 'vendor_responses':
+      return 'proposal';
+    case 'pricing':
+      return 'pricing_workbook';
+    case 'bafo':
+    case 'orals_bafo':
+      return 'bafo';
+    case 'executive_decision':
+    case 'selection':
+      return 'decision_brief';
+    case 'transition':
+    case 'contract_mobilization':
+      return 'transition_risk_register';
+    case 'scope':
+      return 'scope_document';
+    case 'value':
     case 'value_realization':
       return 'value_ledger';
     default:

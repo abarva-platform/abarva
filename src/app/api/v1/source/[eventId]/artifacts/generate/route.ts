@@ -12,7 +12,7 @@ import { getActiveClientRow } from '@/lib/active-client';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
 import { clientKeyToBrokerTenantKey } from '@/lib/agent/tools/intelligence/_shared';
 import { getServerSupabase } from '@/lib/supabase-server';
-import { SOURCE_STAGE_ORDER } from '@/lib/source/constants';
+import { normalizeSourceStageKey, SOURCE_STAGE_ORDER } from '@/lib/source/constants';
 import { getSourcingEvent, type SourceEventRow } from '@/lib/source/queries';
 import type { SourceStageKey } from '@/lib/source/types';
 import {
@@ -66,7 +66,8 @@ function parseRequiredString(value: unknown, field: string): string {
 function parseStageKey(value: unknown): SourceStageKey | undefined {
   const parsed = parseOptionalString(value);
   if (!parsed) return undefined;
-  if ((SOURCE_STAGE_ORDER as readonly string[]).includes(parsed)) return parsed as SourceStageKey;
+  const normalized = normalizeSourceStageKey(parsed);
+  if (normalized && (SOURCE_STAGE_ORDER as readonly string[]).includes(normalized)) return normalized;
   throw new Error(`stageKey must be canonical Source stage, got ${parsed}`);
 }
 
@@ -74,14 +75,15 @@ function parseArtifactFamily(value: unknown, stageKey: SourceStageKey): SourceAr
   const parsed = parseOptionalString(value);
   if (parsed && SOURCE_ARTIFACT_FAMILIES.has(parsed as SourceArtifactFamily)) return parsed as SourceArtifactFamily;
   if (stageKey === 'scope') return 'scope_document';
-  if (stageKey === 'sourcing_strategy') return 'sourcing_strategy';
-  if (stageKey === 'rfp_rfi_package') return 'rfp';
-  if (stageKey === 'vendor_responses') return 'proposal';
+  if (stageKey === 'strategy' || stageKey === 'sourcing_strategy' || stageKey === 'intake') return 'sourcing_strategy';
+  if (stageKey === 'rfp' || stageKey === 'rfp_rfi_package') return 'rfp';
+  if (stageKey === 'responses' || stageKey === 'vendor_responses') return 'proposal';
   if (stageKey === 'evaluation') return 'scorecard';
-  if (stageKey === 'orals_bafo') return 'bafo';
-  if (stageKey === 'selection') return 'decision_brief';
-  if (stageKey === 'contract_mobilization') return 'transition_risk_register';
-  if (stageKey === 'value_realization') return 'value_ledger';
+  if (stageKey === 'pricing') return 'pricing_workbook';
+  if (stageKey === 'bafo' || stageKey === 'orals_bafo') return 'bafo';
+  if (stageKey === 'executive_decision' || stageKey === 'selection') return 'decision_brief';
+  if (stageKey === 'transition' || stageKey === 'contract_mobilization') return 'transition_risk_register';
+  if (stageKey === 'value' || stageKey === 'value_realization') return 'value_ledger';
   return 'other';
 }
 
@@ -123,7 +125,7 @@ async function resolveSourceEventScope(args: {
     return {
       eventId: persisted.id,
       sourceEventRowId: persisted.id,
-      stageKey: args.requestedStageKey ?? (persisted.current_stage_key as SourceStageKey),
+      stageKey: args.requestedStageKey ?? normalizeSourceStageKey(persisted.current_stage_key) ?? 'strategy',
     };
   }
 

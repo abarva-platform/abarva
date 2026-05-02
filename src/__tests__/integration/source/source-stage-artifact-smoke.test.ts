@@ -19,7 +19,7 @@ describe('Source stage gate + artifact smoke coverage', () => {
 
     expect(readiness.generatedAt).toBe('2026-04-26T00:00:00.000Z');
     expect(artifactStrip.eventId).toBe(SOURCE_GOLDEN_EVENT_IDS.dataAiModernization);
-    expect(readiness.gates).toHaveLength(9);
+    expect(readiness.gates).toHaveLength(11);
     expect(artifactStrip.artifacts).toHaveLength(10);
   });
 

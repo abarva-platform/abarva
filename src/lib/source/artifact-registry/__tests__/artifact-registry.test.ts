@@ -8,13 +8,14 @@ import type {
   RegisterSourceArtifactInput,
   SourceArtifactRegistryRecord,
 } from '../index';
+import type { SourceStageKey } from '../../types';
 
 type Row = {
   id: string;
   tenant_key: string;
   source_event_id: string;
   source_event_row_id: string | null;
-  stage_key: 'orals_bafo';
+  stage_key: SourceStageKey;
   artifact_family: 'proposal';
   artifact_kind: string;
   source_origin: 'uploaded';
@@ -216,11 +217,21 @@ describe('registerSourceArtifactUpload', () => {
     ).rejects.toThrow(/sizeBytes/);
   });
 
-  it('rejects non-canonical Source stages', async () => {
+  it('accepts canonical 11-stage Source stages', async () => {
+    nextSingle = async () => ({ data: { ...baseRow, stage_key: 'bafo' }, error: null });
+    const rec = await registerSourceArtifactUpload({
+      ...baseInput,
+      stageKey: 'bafo',
+    });
+
+    expect(rec.stageKey).toBe('bafo');
+  });
+
+  it('rejects unsupported Source stages', async () => {
     await expect(
       registerSourceArtifactUpload({
         ...baseInput,
-        stageKey: 'bafo' as RegisterSourceArtifactInput['stageKey'],
+        stageKey: 'not_a_stage' as RegisterSourceArtifactInput['stageKey'],
       }),
     ).rejects.toThrow(/stageKey/);
   });

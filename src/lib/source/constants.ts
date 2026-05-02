@@ -19,30 +19,63 @@ export const SOURCE_ROUTE_LABELS: Record<SourceRouteKey, string> = {
 };
 
 export const SOURCE_STAGE_ORDER: SourceStageKey[] = [
-  'intake',
+  'strategy',
   'scope',
-  'sourcing_strategy',
-  'rfp_rfi_package',
-  'vendor_responses',
+  'rfp',
+  'responses',
   'evaluation',
-  'orals_bafo',
+  'pricing',
+  'bafo',
+  'executive_decision',
   'selection',
-  'contract_mobilization',
-  'value_realization',
+  'transition',
+  'value',
 ];
 
 export const SOURCE_STAGE_LABELS: Record<SourceStageKey, string> = {
-  intake: 'Intake',
+  strategy: 'Strategy',
   scope: 'Scope',
-  sourcing_strategy: 'Sourcing Strategy',
-  rfp_rfi_package: 'RFP/RFI Package',
-  vendor_responses: 'Vendor Responses',
+  rfp: 'RFP',
+  responses: 'Responses',
   evaluation: 'Evaluation',
-  orals_bafo: 'Orals/BAFO',
+  pricing: 'Pricing',
+  bafo: 'BAFO',
+  executive_decision: 'Executive Decision',
   selection: 'Selection',
-  contract_mobilization: 'Contract/Mobilization',
-  value_realization: 'Value Realization',
+  transition: 'Transition',
+  value: 'Value',
+  intake: 'Strategy',
+  sourcing_strategy: 'Strategy',
+  rfp_rfi_package: 'RFP',
+  vendor_responses: 'Responses',
+  orals_bafo: 'BAFO',
+  contract_mobilization: 'Transition',
+  value_realization: 'Value',
 };
+
+export const SOURCE_LEGACY_STAGE_ALIASES: Partial<Record<SourceStageKey | string, SourceStageKey>> = {
+  intake: 'strategy',
+  sourcing_strategy: 'strategy',
+  rfp_rfi_package: 'rfp',
+  vendor_responses: 'responses',
+  orals_bafo: 'bafo',
+  contract_mobilization: 'transition',
+  value_realization: 'value',
+};
+
+export function isSourceStageKey(value: unknown): value is SourceStageKey {
+  return typeof value === 'string' && value in SOURCE_STAGE_LABELS;
+}
+
+export function isCanonicalSourceStageKey(value: unknown): value is SourceStageKey {
+  return typeof value === 'string' && (SOURCE_STAGE_ORDER as readonly string[]).includes(value);
+}
+
+export function normalizeSourceStageKey(value: unknown): SourceStageKey | null {
+  if (typeof value !== 'string') return null;
+  if (isCanonicalSourceStageKey(value)) return value;
+  return SOURCE_LEGACY_STAGE_ALIASES[value] ?? null;
+}
 
 export const SOURCE_LIFECYCLE_STATUS_LABELS: Record<SourceLifecycleStatus, string> = {
   active: 'Active',

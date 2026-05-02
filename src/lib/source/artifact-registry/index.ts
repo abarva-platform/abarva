@@ -7,7 +7,7 @@
 import 'server-only';
 
 import { getServerSupabase } from '@/lib/supabase-server';
-import { SOURCE_STAGE_ORDER } from '../constants';
+import { isSourceStageKey } from '../constants';
 import type { SourceStageKey } from '../types';
 import {
   isAllowedSourceArtifactMimeType,
@@ -182,8 +182,8 @@ function rowToRecord(row: SourceArtifactRow): SourceArtifactRegistryRecord {
 }
 
 function assertSourceStageKey(stageKey: SourceStageKey): void {
-  if (!(SOURCE_STAGE_ORDER as readonly string[]).includes(stageKey)) {
-    throw new Error(`[source-artifacts] stageKey "${stageKey}" is not canonical`);
+  if (!isSourceStageKey(stageKey)) {
+    throw new Error(`[source-artifacts] stageKey "${stageKey}" is not supported`);
   }
 }
 

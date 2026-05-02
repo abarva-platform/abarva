@@ -9,6 +9,25 @@ import SourceValuePage from '@/app/(maestro)/source/value/page';
 import { getSourcingEvent, getSourcingEventArtifact } from '@/lib/source/queries';
 import { SOURCE_GOLDEN_EVENT_IDS } from '@/lib/source/constants';
 
+jest.mock('next/navigation', () => ({
+  usePathname: () => '/source/events/evt-source-data-ai-si-selection',
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn(), refresh: jest.fn(), prefetch: jest.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+}));
+
+jest.mock('@clerk/nextjs', () => ({
+  useUser: () => ({
+    isLoaded: true,
+    user: {
+      primaryEmailAddress: { emailAddress: 'maya.desai@apex-retail.example.com' },
+      publicMetadata: { moduleAccess: ['setup', 'programs', 'source', 'intelligence', 'tower'] },
+      firstName: 'Maya',
+      lastName: 'Desai',
+    },
+  }),
+  useClerk: () => ({ signOut: jest.fn() }),
+}));
+
 describe('Source context-used and action-enforcement slices', () => {
   it('renders /source/events with context and three-choice + custom behavior', async () => {
     const html = renderToStaticMarkup(
@@ -33,9 +52,11 @@ describe('Source context-used and action-enforcement slices', () => {
     );
 
     expect(html).toContain('Context used');
-    expect(html).toContain('Review Design gate blockers');
-    expect(html).toContain('Open Workshop 5 outcomes');
-    expect(html).toContain('Inspect deliverable evidence');
+    expect(html).toContain('Agent suggested stage actions');
+    expect(html).toContain('Define done');
+    expect(html).toContain('Attach evidence');
+    expect(html).toContain('Generate packet');
+    expect(html).toContain('Open gate path');
   });
 
   it('renders scorecard with required context and action shell', async () => {
@@ -45,7 +66,7 @@ describe('Source context-used and action-enforcement slices', () => {
       }),
     );
 
-    expect(html).toContain('Scorecard governance shell');
+    expect(html).toContain('Evaluation governance criteria');
     expect(html).toContain('Context used');
     expect(html).toContain('Review blockers');
     expect(html).toContain('Show evidence gaps');
@@ -54,10 +75,9 @@ describe('Source context-used and action-enforcement slices', () => {
   });
 
   it('renders artifact detail with context used and explicit artifact actions', async () => {
-    const event = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.apexRetailAmsOutsourcing2026);
+    const event = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.dataAiModernization);
     expect(event).toBeDefined();
-    const artifactId = event?.artifacts?.[0]?.id;
-    expect(artifactId).toBeDefined();
+    const artifactId = 'artifact-source-001-brief';
     if (!event || !artifactId) return;
 
     const artifact = await getSourcingEventArtifact(event.id, artifactId);

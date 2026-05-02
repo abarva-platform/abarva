@@ -142,3 +142,17 @@ Append-only coordination log for active Codex sessions.
 - validation: `npx tsc --noEmit --pretty false` passed
 - validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning
 - next: open PR and auto-merge after standard checks pass
+
+## 2026-05-02T12:26:00-05:00 - codex-source-e2e-crawler
+
+- status: source-11-stage-lifecycle-validation-local-passed
+- branch: `codex/source-11-stage-lifecycle`
+- worktree: `/Users/anand/Projects/nexus-source-capability-e2e`
+- scope: Normalize Source runtime from legacy 10-stage labels to locked 11-stage lifecycle (`Strategy`, `Scope`, `RFP`, `Responses`, `Evaluation`, `Pricing`, `BAFO`, `Executive Decision`, `Selection`, `Transition`, `Value`) while preserving read compatibility for legacy persisted stage keys.
+- files_touched: Source lifecycle/types/queries/gates/tooling, Source stage/artifact APIs, Source active workspace and portfolio filters, artifact registry stage validation/upload mapping, Source agent stage-pack mapping, Source deterministic tests, additive Supabase migration `20260502143000_source_11_stage_lifecycle.sql`.
+- validation: `npx jest src/__tests__/integration/source --runInBand --silent` passed, 70 suites / 751 tests.
+- validation: focused Source lifecycle/tooling/artifact registry Jest passed, 5 suites / 29 tests.
+- validation: `npx tsc --noEmit --pretty false` passed.
+- validation: targeted ESLint for touched Source lifecycle/API/UI/test files passed with zero errors.
+- validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only.
+- next: rebase against latest `origin/main`, open PR, auto-merge after checks, deploy, and rerun live Source 11-stage probe.

@@ -93,9 +93,10 @@ const CHIP_ROW: CSSProperties = {
 };
 
 const STAGE_LABELS: Array<{ key: SourceStageKey; label: string }> = [
-  { key: 'orals_bafo', label: 'BAFO' },
+  { key: 'bafo', label: 'BAFO' },
+  { key: 'pricing', label: 'Pricing' },
   { key: 'evaluation', label: 'Evaluation' },
-  { key: 'vendor_responses', label: 'Responses' },
+  { key: 'responses', label: 'Responses' },
   { key: 'selection', label: 'Selection' },
 ];
 
@@ -295,7 +296,7 @@ export function SourceEventsPortfolio({
             {buildBriefBody(filteredEvents, activeStage, activeStatus)}
           </p>
           <div style={{ marginTop: 12, ...CHIP_ROW }}>
-            <ChoiceChip href={buildChoiceHref({ stage: 'orals_bafo' })} label="Review BAFO events" />
+            <ChoiceChip href={buildChoiceHref({ stage: 'bafo' })} label="Review BAFO events" />
             <ChoiceChip href={buildChoiceHref({ stage: 'evaluation' })} label="Review evaluation queue" />
             <ChoiceChip href={buildChoiceHref({ status: 'at_risk' })} label="Review at-risk events" />
           </div>

@@ -10,7 +10,7 @@ const BLOCKED_EVENT_ID = 'evt-source-data-ai-si-selection';
 
 describe('source sourcing tools', () => {
   it('blocks advance when the target gate has hard unresolved blockers', async () => {
-    const result = await advanceSourcingStageTool({ eventId: BLOCKED_EVENT_ID, toStage: 1 });
+    const result = await advanceSourcingStageTool({ eventId: BLOCKED_EVENT_ID, toStage: 2 });
 
     expect(result.success).toBe(false);
     if (result.success) throw new Error('expected blocked advance');
@@ -25,7 +25,7 @@ describe('source sourcing tools', () => {
   it('can advance with explicit bypass and emits a refreshable stage artifact', async () => {
     const result = await advanceSourcingStageTool({
       eventId: EVENT_ID,
-      toStage: 7,
+      toStage: 10,
       bypassGate: true,
       rationale: 'Founder demo override',
     });
@@ -34,11 +34,11 @@ describe('source sourcing tools', () => {
     expect(result.artifacts[0]).toMatchObject({
       type: 'sourcing-stage-changed',
       eventId: EVENT_ID,
-      toStage: 7,
+      toStage: 10,
     });
 
     const event = await getSourcingEvent(EVENT_ID);
-    expect(event?.currentStageKey).toBe('value_realization');
+    expect(event?.currentStageKey).toBe('value');
   });
 
   it('compares vendors into vendor cards and a BAFO scoreboard', async () => {

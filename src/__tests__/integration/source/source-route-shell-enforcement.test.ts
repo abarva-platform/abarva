@@ -42,7 +42,7 @@ describe('DESROUTE4 source route shell enforcement (Wave S1 — AppShell)', () =
     expect(route).toContain('Ask at most ONE question in the chat reply');
     expect(route).toContain('Keep most Source replies under 75 words');
     expect(route).toContain("Never ask 'who is the CIO?' when context names the CIO");
-    expect(route).toContain('isSourceSurface(surface) && activeClient?.key');
+    expect(route).toContain('isSourceSurface(surface) && effectiveClientKey');
     expect(route).toContain('agentName: normalizeEnterpriseAgentName(agentName)');
     expect(route).not.toContain("agentName === 'Sentinel' && isSourceSurface(surface)");
   });

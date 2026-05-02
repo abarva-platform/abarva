@@ -31,34 +31,45 @@ export interface RunBafoCheckInput {
 }
 
 const STAGE_PACK_TO_SOURCE_KEY: Record<number, SourceStageKey> = {
-  0: 'intake',
-  1: 'sourcing_strategy',
-  2: 'evaluation',
-  3: 'rfp_rfi_package',
+  0: 'strategy',
+  1: 'scope',
+  2: 'rfp',
+  3: 'responses',
   4: 'evaluation',
-  5: 'orals_bafo',
-  6: 'contract_mobilization',
-  7: 'value_realization',
+  5: 'pricing',
+  6: 'bafo',
+  7: 'executive_decision',
+  8: 'selection',
+  9: 'transition',
+  10: 'value',
 };
 
 const SOURCE_KEY_TO_STAGE_PACK: Partial<Record<SourceStageKey, number>> = {
+  strategy: 0,
   intake: 0,
-  scope: 0,
-  sourcing_strategy: 1,
-  vendor_responses: 2,
-  rfp_rfi_package: 3,
+  sourcing_strategy: 0,
+  scope: 1,
+  rfp: 2,
+  rfp_rfi_package: 2,
+  responses: 3,
+  vendor_responses: 3,
   evaluation: 4,
-  orals_bafo: 5,
-  selection: 6,
-  contract_mobilization: 6,
-  value_realization: 7,
+  pricing: 5,
+  bafo: 6,
+  orals_bafo: 6,
+  executive_decision: 7,
+  selection: 8,
+  transition: 9,
+  contract_mobilization: 9,
+  value: 10,
+  value_realization: 10,
 };
 
 export async function advanceSourcingStageTool(
   input: AdvanceSourcingStageInput,
 ): Promise<SourcingToolResult> {
-  if (!Number.isInteger(input.toStage) || input.toStage < 0 || input.toStage > 7) {
-    return recover('invalid_to_stage', 'Target stage must be an integer from 0 to 7.');
+  if (!Number.isInteger(input.toStage) || input.toStage < 0 || input.toStage > 10) {
+    return recover('invalid_to_stage', 'Target stage must be an integer from 0 to 10.');
   }
 
   const event = await getSourcingEvent(input.eventId);

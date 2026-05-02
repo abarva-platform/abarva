@@ -3,6 +3,7 @@ import { getActiveStage, getStageStateLabel } from '@/lib/source/lifecycle';
 import {
   buildSourceDataReadinessProjectionFromAdminSetup,
   buildSourceBafoNegotiationPlan,
+  buildPricingComparisonViewModel,
   buildSourceVendorSelectionReadiness,
   buildSourceVendorResponseCompleteness,
   type SourceAgentMission,
@@ -16,6 +17,7 @@ import { SourceScopeStageWorkspace } from './SourceScopeStageWorkspace';
 import { SourceBafoNegotiationPanel } from './SourceBafoNegotiationPanel';
 import { SourceVendorSelectionReadinessPanel } from './SourceVendorSelectionReadinessPanel';
 import { SourceVendorResponseCompletenessPanel } from './SourceVendorResponseCompletenessPanel';
+import { SourcePricingComparisonPanel } from './SourcePricingComparisonPanel';
 
 const sourceCard = {
   background: SHELL.CARD_WHITE,
@@ -75,7 +77,7 @@ export function SourceActiveStageWorkspace({
     );
   }
 
-  if (activeStage.key === 'vendor_responses') {
+  if (activeStage.key === 'responses' || activeStage.key === 'vendor_responses') {
     return (
       <section style={{ ...sourceCard, background: SHELL.CARD_WHITE, border: '1px solid ' + SHELL.CARD_LINE }}>
         <div style={{ marginBottom: 10 }}>
@@ -95,11 +97,37 @@ export function SourceActiveStageWorkspace({
     );
   }
 
-  if (activeStage.key === 'orals_bafo') {
+  if (activeStage.key === 'pricing') {
+    const pricingView = buildPricingComparisonViewModel({
+      eventId: event.id,
+      eventName: event.name,
+      vendors: [
+        { vendorId: 'vendor-a', vendorName: 'Northbridge Services', totalQuotedCost: 1_000_000, currency: 'USD' },
+        { vendorId: 'vendor-b', vendorName: 'Ardent Managed Solutions', totalQuotedCost: 925_000, currency: 'USD' },
+        { vendorId: 'vendor-c', vendorName: 'Kestrel Technology Partners', totalQuotedCost: 1_080_000, currency: 'USD' },
+      ],
+    });
+
+    return (
+      <section style={{ ...sourceCard, background: SHELL.CARD_WHITE, border: '1px solid ' + SHELL.CARD_LINE }}>
+        <div style={{ marginBottom: 10 }}>
+          <div style={{ ...sourceSectionLabel, color: SHELL.INK_SOFT }}>Current-stage workspace</div>
+          <h4 style={{ margin: '4px 0 0', color: SHELL.INK }}>{event.currentStageLabel}</h4>
+          <div style={{ ...sourceMuted, color: SHELL.INK_MUTED }}>{activeStage.summary}</div>
+          <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, marginTop: 6, color: SHELL.PEACH_TEXT }}>
+            Gate status: {getStageStateLabel(activeStage.status)}
+          </div>
+        </div>
+        <SourcePricingComparisonPanel viewModel={pricingView} />
+      </section>
+    );
+  }
+
+  if (activeStage.key === 'bafo' || activeStage.key === 'orals_bafo') {
     const bafoPlan = buildSourceBafoNegotiationPlan({
       event: {
         ...event,
-        currentStageKey: 'orals_bafo',
+        currentStageKey: 'bafo',
       },
     });
 
@@ -120,11 +148,11 @@ export function SourceActiveStageWorkspace({
     );
   }
 
-  if (activeStage.key === 'selection') {
+  if (activeStage.key === 'executive_decision' || activeStage.key === 'selection') {
     const selectionReadiness = buildSourceVendorSelectionReadiness({
       event: {
         ...event,
-        currentStageKey: 'selection',
+        currentStageKey: activeStage.key,
       },
     });
 

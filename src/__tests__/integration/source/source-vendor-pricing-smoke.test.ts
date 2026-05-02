@@ -15,7 +15,7 @@ import {
 describe('Source vendor pricing smoke coverage', () => {
   it('surfaces vendor response completeness panel in the event canvas for vendor responses stage', async () => {
     const event = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.digitalAppBuild);
-    expect(event?.currentStageKey).toBe('vendor_responses');
+    expect(event?.currentStageKey).toBe('responses');
 
     const html = renderToStaticMarkup(createElement(NexusEngagementCanvas, { event: event! }));
 

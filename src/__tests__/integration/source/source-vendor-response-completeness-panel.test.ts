@@ -30,7 +30,7 @@ describe('Source vendor response completeness panel', () => {
   it('surfaces vendor response completeness in the event canvas at vendor responses stage', async () => {
     const event = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.digitalAppBuild);
     expect(event).toBeTruthy();
-    expect(event?.currentStageKey).toBe('vendor_responses');
+    expect(event?.currentStageKey).toBe('responses');
 
     const html = renderToStaticMarkup(createElement(NexusEngagementCanvas, { event: event! }));
 

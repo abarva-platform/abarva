@@ -23,13 +23,15 @@ describe('Source stage gate readiness model', () => {
     expect(readiness.gates.map((gate) => gate.transitionLabel)).toEqual([
       'Strategy -> Scope',
       'Scope -> RFP',
-      'RFP -> Vendor Responses',
-      'Vendor Responses -> Evaluation',
-      'Evaluation -> BAFO',
-      'BAFO -> Selection',
+      'RFP -> Responses',
+      'Responses -> Evaluation',
+      'Evaluation -> Pricing',
+      'Pricing -> BAFO',
+      'BAFO -> Executive Decision',
+      'Executive Decision -> Selection',
       'Selection -> Transition',
-      'Transition -> Value Realization',
-      'Value Realization -> Closed',
+      'Transition -> Value',
+      'Value -> Closed',
     ]);
 
     for (const gate of readiness.gates) {
@@ -56,7 +58,7 @@ describe('Source stage gate readiness model', () => {
     expect(markdown).toContain('# Source Stage Gate Readiness');
     expect(markdown).toContain('## Gate transitions');
     expect(markdown).toContain('Strategy -> Scope');
-    expect(markdown).toContain('Value Realization -> Closed');
+    expect(markdown).toContain('Value -> Closed');
   });
 
   it('keeps stage-gate model files free from model/upload/parsing imports', () => {
