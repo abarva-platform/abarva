@@ -270,15 +270,40 @@ describe('POST /api/programs/[id]/attachments/upload', () => {
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       attachment: { id: string; originalName: string; mimeType: string };
-      evidence: { id: string; status: string };
+      evidence: {
+        id: string;
+        status: string;
+        parseMethod: string;
+        warnings: string[];
+      };
     };
     expect(body.attachment.id).toBe('att-1');
     expect(body.attachment.originalName).toBe('baseline.pdf');
     expect(body.attachment.mimeType).toBe('application/pdf');
-    expect(body.evidence).toEqual({ id: 'evidence-1', status: 'captured' });
+    expect(body.evidence).toEqual({
+      id: 'evidence-1',
+      status: 'captured',
+      parseMethod: 'metadata-only',
+      warnings: [],
+    });
     expect(storageUploadMock).toHaveBeenCalledTimes(1);
     expect(recordAttachmentUploadMock).toHaveBeenCalledTimes(1);
     expect(recordProgramEvidenceMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports text parsing metadata when the uploaded evidence was text-parsed', async () => {
+    const req = makeMultipartRequest('workshop-notes.txt', 'text/plain', 1024);
+    const res = await POST(req, PROGRAM_PARAMS);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      evidence: { id: string; status: string; parseMethod: string; warnings: string[] };
+    };
+    expect(body.evidence).toEqual({
+      id: 'evidence-1',
+      status: 'captured',
+      parseMethod: 'text-line-parser',
+      warnings: [],
+    });
   });
 
   it('cleans up the bucket object when metadata insert fails', async () => {

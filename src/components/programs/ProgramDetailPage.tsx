@@ -2288,10 +2288,65 @@ interface FileUploadOverlayProps {
   onClose: () => void;
 }
 
+type UploadEvidenceResult =
+  | {
+      id: string;
+      status: 'captured';
+      parseMethod?: string | null;
+      warnings?: string[];
+    }
+  | {
+      id: null;
+      status: 'not_captured';
+      warning?: string | null;
+    };
+
+type UploadResponseBody = {
+  evidence?: UploadEvidenceResult;
+};
+
 function formatFileSize(bytes: number): string {
   return bytes < 1024 * 1024
     ? `${(bytes / 1024).toFixed(0)} KB`
     : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function getUploadStageMessage(uploadState: {
+  stage: 'uploading' | 'capturing' | 'done';
+  evidence?: UploadEvidenceResult | null;
+}): string {
+  if (uploadState.stage === 'uploading') return 'Uploading...';
+  if (uploadState.stage === 'capturing') return 'Nexus is capturing evidence...';
+  const evidence = uploadState.evidence;
+  if (evidence?.status === 'captured') {
+    return evidence.parseMethod === 'metadata-only'
+      ? 'File captured · structured parsing pending'
+      : 'Evidence captured · text parsed';
+  }
+  return 'File uploaded · evidence capture needs review';
+}
+
+function getUploadEvidenceChips(
+  evidence: UploadEvidenceResult | null | undefined,
+): Array<{ label: string; bg: string }> {
+  if (evidence?.status === 'captured') {
+    if (evidence.parseMethod === 'metadata-only') {
+      return [
+        { label: 'Attachment saved', bg: SHELL.BLUE_BG },
+        { label: 'Evidence shell captured', bg: SHELL.PEACH_BG },
+        { label: 'Structured parser pending', bg: SHELL.RUST_BG },
+      ];
+    }
+    return [
+      { label: 'Text evidence parsed', bg: SHELL.MINT_BG },
+      { label: 'Evidence item saved', bg: SHELL.BLUE_BG },
+      { label: `Parser: ${evidence.parseMethod ?? 'text parser'}`, bg: SHELL.PEACH_BG },
+    ];
+  }
+  return [
+    { label: 'Attachment saved', bg: SHELL.BLUE_BG },
+    { label: 'Evidence capture warning', bg: SHELL.RUST_BG },
+  ];
 }
 
 function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverlayProps) {
@@ -2299,7 +2354,8 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
   const [uploadState, setUploadState] = useState<{
     name: string;
     size: string;
-    stage: 'uploading' | 'parsing' | 'done';
+    stage: 'uploading' | 'capturing' | 'done';
+    evidence?: UploadEvidenceResult | null;
   } | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -2323,31 +2379,37 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
         setUploadError(msg || 'Upload failed');
         return;
       }
+      const body = (await res.json().catch(() => null)) as UploadResponseBody | null;
+      setUploadState((s) =>
+        s ? { ...s, stage: 'capturing', evidence: body?.evidence ?? null } : null,
+      );
+      setTimeout(() => {
+        setUploadState((s) => (s ? { ...s, stage: 'done' } : null));
+        toast({
+          type: 'success',
+          title: 'Evidence uploaded',
+          message:
+            body?.evidence?.status === 'captured' &&
+            body.evidence.parseMethod !== 'metadata-only'
+              ? 'File received · text evidence parsed'
+              : 'File received · evidence metadata captured',
+        });
+      }, 500);
     } catch {
       setUploadState(null);
       setUploadError('Upload failed — network error');
       return;
     }
-
-    setUploadState((s) => (s ? { ...s, stage: 'parsing' } : null));
-    setTimeout(() => {
-      setUploadState((s) => (s ? { ...s, stage: 'done' } : null));
-      toast({ type: 'success', title: 'Evidence uploaded', message: 'File received · ingestion in progress' });
-    }, 1000);
   };
 
   const progressPct =
     uploadState?.stage === 'uploading'
       ? 33
-      : uploadState?.stage === 'parsing'
+      : uploadState?.stage === 'capturing'
       ? 70
       : 100;
 
-  const insightChips: Array<{ label: string; bg: string }> = [
-    { label: 'Evidence candidate extracted', bg: SHELL.PEACH_BG },
-    { label: 'Gate-readiness reference detected', bg: SHELL.MINT_BG },
-    { label: 'Cross-surface citation available', bg: SHELL.BLUE_BG },
-  ];
+  const insightChips = getUploadEvidenceChips(uploadState?.evidence);
 
   return (
     <div
@@ -2423,7 +2485,7 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
         <input
           ref={fileInputRef}
           type="file"
-          accept=".pdf,.png,.jpg,.jpeg,.docx"
+          accept=".pdf,.docx,.xlsx,.pptx,.txt,.md,.csv,.json,.png,.jpg,.jpeg,.mp3,.m4a,.mp4"
           style={{ display: 'none' }}
           onChange={handleFileChange}
         />
@@ -2458,7 +2520,20 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
                   color: SHELL.INK_MUTED,
                 }}
               >
-                {programName} · click to browse · PDF, DOCX, PPTX up to 25MB
+                {programName} · click to browse · documents, images, text, CSV, JSON, audio/video up to 100MB
+              </div>
+              <div
+                style={{
+                  fontFamily: SHELL.SANS,
+                  fontSize: 11,
+                  color: SHELL.INK_MUTED,
+                  lineHeight: 1.45,
+                  marginTop: 10,
+                }}
+              >
+                Text, Markdown, CSV, and JSON are parsed immediately. PDF,
+                Office, image, and media files are captured with metadata for
+                follow-up parsing.
               </div>
             </div>
             {uploadError && (
@@ -2536,9 +2611,7 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
                   textTransform: 'uppercase',
                 }}
               >
-                {uploadState.stage === 'uploading' && 'Uploading...'}
-                {uploadState.stage === 'parsing' && 'Nexus is parsing document...'}
-                {uploadState.stage === 'done' && 'Document parsed · 3 insights extracted'}
+                {getUploadStageMessage(uploadState)}
               </span>
             </div>
 
@@ -2577,7 +2650,7 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
                     marginBottom: 10,
                   }}
                 >
-                  Extracted insights
+                  Evidence capture status
                 </div>
                 <div style={{ marginBottom: 20 }}>
                   {insightChips.map((chip) => (
@@ -2651,7 +2724,9 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
             lineHeight: 1.5,
           }}
         >
-          Documents are parsed for evidence and linked to {programName}. This is a deterministic extraction preview; Nexus highlights likely gate criteria without mutating the program record here.
+          Uploads are linked to {programName}. Text, Markdown, CSV, and JSON are
+          parsed into evidence synchronously; PDF, Office, image, and media files
+          are captured with metadata and flagged for follow-up parsing.
         </div>
       </div>
     </div>
