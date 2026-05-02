@@ -145,7 +145,6 @@ describe('complete_deliverable tool', () => {
       }),
     );
   });
-
   it('allows P3 requirements traceability as a separate gate artifact', async () => {
     requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
     completeDeliverableMock.mockResolvedValue({
