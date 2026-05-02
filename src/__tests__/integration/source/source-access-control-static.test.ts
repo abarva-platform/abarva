@@ -57,6 +57,15 @@ describe('Source access-control wiring', () => {
     expect(route).toContain('setStageOverride');
   });
 
+  it('keeps Source stage advancement server-authorized instead of client-blocking admin self-approval', () => {
+    const button = read('src/components/source/StageAdvanceButton.tsx');
+
+    expect(button).toContain('gateWarningCount: blockingGateCount');
+    expect(button).toContain('Admin advance carries');
+    expect(button).not.toContain('Cannot advance — ${blockingGateCount}');
+    expect(button).not.toContain('return;\\n    }\\n    setLoading(true)');
+  });
+
   it('lets persisted Source event detail fall back to canonical admin client identity when client rows are absent', () => {
     const queries = read('src/lib/source/queries.ts');
 
