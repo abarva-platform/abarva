@@ -82,6 +82,8 @@ const DEFAULT_AGENT: Record<string, string> = {
   'setup-detail': 'Steward',
 };
 
+const AGENT_TURN_TIMEOUT_MS = 90_000;
+
 // ── Context ───────────────────────────────────────────────────────────────────
 
 const AtlasPageStateContext = createContext<AtlasPageContextValue | null>(null);
@@ -183,6 +185,11 @@ export function AtlasPageStateProvider({
       abortRef.current?.abort();
       const ctrl = new AbortController();
       abortRef.current = ctrl;
+      let timedOut = false;
+      const timeoutId = window.setTimeout(() => {
+        timedOut = true;
+        ctrl.abort();
+      }, AGENT_TURN_TIMEOUT_MS);
 
       const userTurn: ChatTurn = {
         id: `usr-${Date.now()}`,
@@ -352,9 +359,14 @@ export function AtlasPageStateProvider({
         setConversation(prev => [...prev, agentTurn]);
         setCurrentResponse('');
       } catch (e) {
-        if ((e as Error).name === 'AbortError') return; // intentional cancel
+        if ((e as Error).name === 'AbortError' && !timedOut) return; // intentional cancel
+        if (timedOut) {
+          setError('Nexus response timed out. The turn was not completed; please retry or shorten the request.');
+          return;
+        }
         setError(e instanceof Error ? e.message : 'Connection error');
       } finally {
+        window.clearTimeout(timeoutId);
         setIsStreaming(false);
         // CB-6 · if the bundle artifact never arrived (broker errored,
         // stream aborted) clear the assembling flag so the panel stops

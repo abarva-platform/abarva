@@ -172,4 +172,27 @@ describe('advance_phase tool', () => {
     expect(loadUserProgramAccessPolicyMock).not.toHaveBeenCalled();
     expect(advancePhaseMutationMock).toHaveBeenCalled();
   });
+
+  it('serializes non-Error mutation failures instead of returning [object Object]', async () => {
+    advancePhaseMutationMock.mockRejectedValue({
+      code: '23514',
+      message: 'violates check constraint "engagements_current_phase_check"',
+    });
+
+    const result = await advancePhaseTool.handler(
+      {
+        program_id: 'program-1',
+        to_phase: 4,
+        self_approve_if_authorized: true,
+      },
+      makeCtx(),
+    );
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toContain('23514');
+      expect(result.error).toContain('engagements_current_phase_check');
+      expect(result.error).not.toContain('[object Object]');
+    }
+  });
 });

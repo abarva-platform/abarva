@@ -15,13 +15,13 @@ export const PRESSURE_AI_CLOUD_SPEND: PressureItem = {
   id: 'twr-ai-cloud-spend',
   title: 'AI Cloud Spend',
   severity: 'high',
-  heroStat: '$2.4M',
-  heroLabel: 'vs $1.8M budget',
-  delta: '+33%',
+  heroStat: 'Restricted',
+  heroLabel: 'over budget · exact values hidden',
+  delta: 'over plan',
   deltaDir: 'up',
   topDriver: 'LLM API inference spike · 3 new integrations launched in Q2',
   atlasSentence:
-    'Spend is 33% over budget; LLM inference is the top driver — a negotiated rate card with the primary provider would recover $180K annually.',
+    'Spend is over budget; LLM inference is the top driver — a negotiated rate card with the primary provider would recover material run-rate value.',
   status: 'active',
 };
 
@@ -93,7 +93,7 @@ export const PRESSURE_DETAIL_CUSTOMER_CHURN: PressureDetail = {
   agentContext: 'Atlas · Customer Churn Signal · watching',
   actions: [
     { letter: 'A' as const, text: 'Brief sponsor on churn trend', detail: 'Early signal — worth a 60-second update' },
-    { letter: 'B' as const, text: 'Link churn metric to CC-AI outcome model', detail: 'Atlas can track attribution from Build → Activate' },
+    { letter: 'B' as const, text: 'Link churn metric to CC-AI outcome model', detail: 'Atlas can track attribution from Execution Roadmap → Approval / Mobilization' },
     { letter: 'C' as const, text: 'Set churn alert threshold', detail: 'Watch at 8.5% · escalate at 9%' },
   ],
   timeline: [
@@ -109,18 +109,18 @@ export const PRESSURE_DETAIL_CUSTOMER_CHURN: PressureDetail = {
 export const PRESSURE_DETAIL_AI_CLOUD_SPEND: PressureDetail = {
   ...PRESSURE_AI_CLOUD_SPEND,
   agentQuote:
-    'LLM inference spend hit $2.4M against a $1.8M budget — 33% over. The spike is concentrated in the three Q2 integrations: CDP personalization, Contact Center NLP, and Demand Forecasting. A negotiated rate card with the primary provider is the single highest-leverage action — Atlas estimates $180K/yr recovery. No new model deployments should be approved until rate card is in place.',
+    'LLM inference spend is materially over budget. The spike is concentrated in the three Q2 integrations: CDP personalization, Contact Center NLP, and Demand Forecasting. A negotiated rate card with the primary provider is the single highest-leverage action. No new model deployments should be approved until rate card is in place.',
   agentContext: 'Atlas · AI Cloud Spend · high severity',
   actions: [
-    { letter: 'A' as const, text: 'Initiate rate card negotiation', detail: '$180K/yr recovery · primary LLM provider · 2-week lead' },
+    { letter: 'A' as const, text: 'Initiate rate card negotiation', detail: 'Material run-rate recovery · primary LLM provider · 2-week lead' },
     { letter: 'B' as const, text: 'Pause non-critical model deployments', detail: 'Hold until rate card signed — 3 pending requests' },
-    { letter: 'C' as const, text: 'Brief CFO on budget variance', detail: '$600K gap — needs executive visibility this week' },
+    { letter: 'C' as const, text: 'Brief CFO on budget variance', detail: 'Restricted budget gap — needs executive visibility this week' },
   ],
   timeline: [
     { date: 'Apr 27', event: 'AI Cloud Spend pressure escalated to high severity', actor: 'Atlas' },
     { date: 'Apr 20', event: 'CDP personalization layer deployed — inference volume spiked +18%', actor: 'Nexus' },
-    { date: 'Apr 10', event: 'Contact Center NLP promoted to staging — adds ~$42K/mo', actor: 'Nexus' },
-    { date: 'Mar 15', event: 'Cloud spend crossed $1.8M annual run-rate threshold', actor: 'Atlas' },
+    { date: 'Apr 10', event: 'Contact Center NLP promoted to staging — incremental inference load added', actor: 'Nexus' },
+    { date: 'Mar 15', event: 'Cloud spend crossed restricted annual run-rate threshold', actor: 'Atlas' },
     { date: 'Feb 28', event: 'LLM provider rate card renewal deferred to Q2', actor: 'David Chen' },
   ],
   relatedPrograms: [
@@ -142,13 +142,13 @@ export const PRESSURE_DETAIL_MAP: Record<string, PressureDetail> = {
 export const TOWER_INDEX_VIEW = {
   tenant: 'Apex Retail Group',
   agentQuote:
-    '3 active pressures. AI Cloud Spend is 33% over budget and needs a decision this week. Vendor Risk is creeping up but the AMS BAFO decision should resolve it. Churn is improving — Contact Center AI is the likely driver.',
+    '3 active pressures. AI Cloud Spend is over budget and needs a decision this week. Vendor Risk is creeping up but the AMS BAFO decision should resolve it. Churn is improving — Contact Center AI is the likely driver.',
   agentContext: 'Atlas · Control Tower · cross-program pressures',
   actions: [
     {
       letter: 'A' as const,
       text: 'Review AI Cloud Spend options',
-      detail: 'Path B: negotiate LLM rate card — $180K/yr recovery',
+      detail: 'Path B: negotiate LLM rate card — material run-rate recovery',
     },
     {
       letter: 'B' as const,

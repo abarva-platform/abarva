@@ -498,6 +498,40 @@ export async function createMilestone(
   assertTenancy(ctx);
   await assertProgramTenancy(ctx, programId);
   const sb = getServerSupabase();
+  const phaseNumber = input.phaseNumber ?? null;
+  const moduleKey = input.moduleKey ?? null;
+  let existingQuery = sb
+    .from('program_milestones')
+    .select('id')
+    .eq('engagement_id', programId)
+    .eq('name', input.name)
+    .order('created_at', { ascending: true })
+    .limit(1);
+
+  existingQuery = phaseNumber === null
+    ? existingQuery.is('phase_number', null)
+    : existingQuery.eq('phase_number', phaseNumber);
+  existingQuery = moduleKey === null
+    ? existingQuery.is('module_key', null)
+    : existingQuery.eq('module_key', moduleKey);
+
+  const { data: existing, error: existingError } = await existingQuery.maybeSingle();
+  if (existingError) throw existingError;
+  if (existing) {
+    const existingId = (existing as { id: string }).id;
+    const { error: updateError } = await sb
+      .from('program_milestones')
+      .update({
+        description: input.description ?? null,
+        target_date: input.targetDate ?? null,
+        owner_user_id: input.ownerUserId ?? null,
+      })
+      .eq('id', existingId)
+      .eq('engagement_id', programId);
+    if (updateError) throw updateError;
+    return existingId;
+  }
+
   const { data, error } = await sb
     .from('program_milestones')
     .insert({
@@ -506,8 +540,8 @@ export async function createMilestone(
       description: input.description ?? null,
       target_date: input.targetDate ?? null,
       status: 'upcoming',
-      phase_number: input.phaseNumber ?? null,
-      module_key: input.moduleKey ?? null,
+      phase_number: phaseNumber,
+      module_key: moduleKey,
       owner_user_id: input.ownerUserId ?? null,
     })
     .select('id')

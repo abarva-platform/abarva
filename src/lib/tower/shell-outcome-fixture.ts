@@ -35,7 +35,7 @@ export const OUTCOME_FIXTURE: ProgramOutcome[] = [
       { label: 'Customer lifetime value', projected: '+$42/customer', actual: '—', delta: 'Projected', deltaDir: 'neutral', phase: 3 },
       { label: 'Data platform cost reduction', projected: '–$280K/yr', actual: '—', delta: 'Projected', deltaDir: 'neutral', phase: 3 },
     ],
-    atlasNote: 'CDP projections are based on P3 Design business case. Actuals available post-Q1 2027 launch. Build gate approval is the near-term critical path.',
+    atlasNote: 'CDP projections are based on P3 Design business case. Actuals available post-Q1 2027 launch. Execution Roadmap gate approval is the near-term critical path.',
     href: '/programs/apx-cdp-2026',
   },
   {
@@ -43,7 +43,7 @@ export const OUTCOME_FIXTURE: ProgramOutcome[] = [
     displayId: 'APX-DFV2-2025',
     name: 'Demand Forecasting v2',
     phase: 6,
-    phaseLabel: 'Operate',
+    phaseLabel: 'Tower Handoff',
     launchDate: 'Nov 2025',
     status: 'tracking',
     metrics: [
@@ -79,7 +79,7 @@ export const OUTCOME_AGENT_VOICE = {
   agentContext: 'Atlas · Value Lens · outcome realization',
   actions: [
     { letter: 'A' as const, text: 'Review DFv2 steady-state metrics', detail: 'Full 12-month actuals vs baseline — audit-ready' },
-    { letter: 'B' as const, text: 'Validate CDP business case', detail: '$3.2M/yr projection — confirm model assumptions for Build gate' },
+    { letter: 'B' as const, text: 'Validate CDP business case', detail: 'Restricted projection — confirm model assumptions for Execution Roadmap gate' },
     { letter: 'C' as const, text: 'Update CC-AI outcome model', detail: 'NLP accuracy gain may lift handle time projection' },
   ],
 };

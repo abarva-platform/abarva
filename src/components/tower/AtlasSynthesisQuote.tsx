@@ -31,7 +31,7 @@ export function AtlasSynthesisQuote({ fallback, onLoaded }: AtlasSynthesisQuoteP
     fetchedRef.current = true;
 
     let accumulated = '';
-    const clientCacheKey = 'tower:tower';
+    const clientCacheKey = 'tower:tower:v2:restricted-safe';
     const cached = readSynthesisCache(clientCacheKey);
 
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };

@@ -496,7 +496,7 @@ export function ProgramScopePage() {
               {scope.gateStatus === 'cleared' ? 'Design gate cleared · Apr 27' : 'Gate pending'}
             </span>
 
-            {/* Build gate chip — always shown when in Design phase */}
+            {/* Execution Roadmap gate chip — always shown when in Design phase */}
             {scope.phase === 'P3 Design' && (
               <span
                 style={{
@@ -512,7 +512,7 @@ export function ProgramScopePage() {
                   flexShrink: 0,
                 }}
               >
-                Build gate · 2 of 5 criteria
+                Execution Roadmap gate · 2 of 5 criteria
               </span>
             )}
 

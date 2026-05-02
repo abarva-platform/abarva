@@ -29,6 +29,14 @@ function cleanDate(value: string | undefined): string | undefined {
   return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : undefined;
 }
 
+function milestoneBatchKey(milestone: CreateMilestoneInput): string {
+  return [
+    milestone.name.trim().toLowerCase(),
+    milestone.phase_number ?? 4,
+    milestone.module_key ?? 'execution_roadmap',
+  ].join('::');
+}
+
 export const createMilestonesTool: AgentTool<CreateMilestonesInput> = {
   name: 'create_milestones',
   description:
@@ -131,8 +139,17 @@ export const createMilestonesTool: AgentTool<CreateMilestonesInput> = {
       };
     }
 
-    const created: Array<{ milestone_id: string; name: string }> = [];
+    const dedupedMilestones: CreateMilestoneInput[] = [];
+    const seenMilestones = new Set<string>();
     for (const milestone of input.milestones) {
+      const key = milestoneBatchKey(milestone);
+      if (seenMilestones.has(key)) continue;
+      seenMilestones.add(key);
+      dedupedMilestones.push(milestone);
+    }
+
+    const created: Array<{ milestone_id: string; name: string }> = [];
+    for (const milestone of dedupedMilestones) {
       const name = milestone.name?.trim();
       if (!name) {
         return {

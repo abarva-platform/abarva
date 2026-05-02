@@ -73,7 +73,7 @@ export function buildAtlasExecutiveBriefView(tenantSlug: string): AtlasExecutive
         : 'Adoption signal not available for this tenant.',
       evidenceBasis: isRich ? 'Design gate approval evidence (Apr 27). Architecture sprint seed.' : null,
       businessImpact: isRich
-        ? 'Activation timeline depends on Build gate approval and adoption readiness plan completion during P3.'
+        ? 'Activation timeline depends on Execution Roadmap gate approval and adoption readiness plan completion during P3.'
         : 'Not applicable.',
       deterministicSeed: true,
     },
@@ -86,10 +86,10 @@ export function buildAtlasExecutiveBriefView(tenantSlug: string): AtlasExecutive
       deterministicSeed: true,
     },
     missingData: isRich
-      ? ['Confirmed value measurement framework', 'Build gate evidence package', 'Adoption readiness plan for P3→P4']
+      ? ['Confirmed value measurement framework', 'Execution Roadmap gate evidence package', 'Adoption readiness plan for P3→P4']
       : ['All programme data', 'All commercial data', 'All intelligence data'],
     recommendedExecutiveAction: isRich
-      ? 'Review architecture blueprint and confirm value measurement framework for Build gate. Initiate adoption readiness plan during P3 Design sprint — do not defer to P4.'
+      ? 'Review architecture blueprint and confirm value measurement framework for Execution Roadmap gate. Initiate adoption readiness plan during P3 Design sprint — do not defer to P4.'
       : 'Pilot Apex Retail for full Atlas executive experience.',
     commercialSignalNote: isRich
       ? 'AMS vendor consolidation (apex-retail-ams-outsourcing-2026) is the active commercial event linked to this programme. BAFO outcome is the critical commercial path item.'

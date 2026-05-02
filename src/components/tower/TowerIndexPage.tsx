@@ -272,8 +272,8 @@ interface ActivityRow {
 
 const ACTIVITY_ROWS: ActivityRow[] = [
   { ref: 'APX-CDP-2026', phase: 'Design phase', note: 'Architecture sprint active', when: '2h ago', href: '/tower/programs/apx-cdp-2026' },
-  { ref: 'APX-CC-2026', phase: 'Build phase', note: 'Activate gate approaching', when: '4h ago' },
-  { ref: 'APX-DFV2-2025', phase: 'Operate', note: 'steady state · Atlas monitoring', when: 'Mar 28' },
+  { ref: 'APX-CC-2026', phase: 'Execution Roadmap phase', note: 'Approval / Mobilization gate approaching', when: '4h ago' },
+  { ref: 'APX-DFV2-2025', phase: 'Tower Handoff', note: 'steady state · Atlas monitoring', when: 'Mar 28' },
 ];
 
 function ActivityStrip() {

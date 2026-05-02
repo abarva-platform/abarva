@@ -25,12 +25,12 @@ export const APX_CDP_SCOPE = {
   evidenceCoverage: 100,
 
   // Atlas agent voice
-  agentQuote: 'APX-CDP-2026 cleared the Design gate on Apr 27. Architecture sprint is now active. Vendor C confirmed as managed CDP layer — in-house build scope reduced ~40%. Build gate (P3→P4) readiness is the next milestone.',
+  agentQuote: 'APX-CDP-2026 cleared the Design gate on Apr 27. Architecture sprint is now active. Vendor C confirmed as managed CDP layer — in-house build scope reduced ~40%. Execution Roadmap gate (P3→P4) readiness is the next milestone.',
   agentContext: 'Atlas · APX-CDP-2026 · program-scope view',
   actions: [
     { letter: 'A' as const, text: 'Review architecture blueprint', detail: 'Vendor C managed CDP layer — scope confirmed' },
     { letter: 'B' as const, text: 'Check vendor contract status', detail: 'AMS BAFO selected Vendor C — contract execution in progress' },
-    { letter: 'C' as const, text: 'View Build gate criteria', detail: 'Next milestone: P3→P4 Build gate readiness' },
+    { letter: 'C' as const, text: 'View Execution Roadmap gate criteria', detail: 'Next milestone: P3→P4 Execution Roadmap gate readiness' },
   ],
 
   kpis: [
@@ -50,9 +50,9 @@ export const APX_CDP_SCOPE = {
     { phase: 'P1 Discovery', status: 'done', completedDate: 'Feb 14 2026' },
     { phase: 'P2 Synthesis', status: 'done', completedDate: 'Apr 27 2026' },
     { phase: 'P3 Design', status: 'current', startDate: 'Apr 27 2026', note: 'Architecture sprint active' },
-    { phase: 'P4 Build', status: 'locked', estDuration: '10 weeks' },
-    { phase: 'P5 Activate', status: 'locked', estDuration: '4 weeks' },
-    { phase: 'P6 Operate', status: 'locked', estDuration: 'ongoing' },
+    { phase: 'P4 Execution Roadmap', status: 'locked', estDuration: '10 weeks' },
+    { phase: 'P5 Approval / Mobilization', status: 'locked', estDuration: '4 weeks' },
+    { phase: 'P6 Tower Handoff', status: 'locked', estDuration: 'ongoing' },
   ],
 
   connectedPressures: [
@@ -63,7 +63,7 @@ export const APX_CDP_SCOPE = {
   activityLog: [
     { timestamp: 'Apr 27', actor: 'Steward', event: 'Design gate (P2→P3) approved by Steward' },
     { timestamp: 'Apr 27', actor: 'Nexus', event: 'Vendor C selected as managed CDP layer via AMS BAFO' },
-    { timestamp: 'Apr 27', actor: 'Atlas', event: 'Architecture sprint initiated — Build gate criteria shared' },
+    { timestamp: 'Apr 27', actor: 'Atlas', event: 'Architecture sprint initiated — Execution Roadmap gate criteria shared' },
     { timestamp: 'Apr 21', actor: 'Nexus', event: 'Design gate evaluation started' },
     { timestamp: 'Apr 14', actor: 'Nexus', event: 'P2 Synthesis entered — 6 workshops planned' },
   ],
