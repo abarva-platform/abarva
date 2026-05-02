@@ -749,19 +749,33 @@ export function AtlasDrawer({
                 isStreaming={isStreaming}
                 response={response}
                 agent={agent}
+                sourceUploadContext={sourceUploadContext}
+                onArtifact={onArtifact}
               />
-              <DrawerTurnList turns={renderedConversation} agent={agent} />
+              <DrawerTurnList
+                turns={renderedConversation}
+                agent={agent}
+                sourceUploadContext={sourceUploadContext}
+                onArtifact={onArtifact}
+              />
               {hiddenTurnCount > 0 ? <DrawerHiddenTurnsMarker count={hiddenTurnCount} /> : null}
             </>
           ) : (
             <>
               {hiddenTurnCount > 0 ? <DrawerHiddenTurnsMarker count={hiddenTurnCount} /> : null}
-              <DrawerTurnList turns={renderedConversation} agent={agent} />
+              <DrawerTurnList
+                turns={renderedConversation}
+                agent={agent}
+                sourceUploadContext={sourceUploadContext}
+                onArtifact={onArtifact}
+              />
               <DrawerStreamingTurn
                 isVisible={isStreaming || !!response}
                 isStreaming={isStreaming}
                 response={response}
                 agent={agent}
+                sourceUploadContext={sourceUploadContext}
+                onArtifact={onArtifact}
               />
             </>
           )}
@@ -859,9 +873,13 @@ function DrawerHandoffMarker({ text }: { text: string }) {
 function DrawerTurnList({
   turns,
   agent,
+  sourceUploadContext,
+  onArtifact,
 }: {
   turns: Array<{ id: string; role: 'user' | 'agent'; text: string; agentName: string }>;
   agent: { initials: string; name: string };
+  sourceUploadContext?: AtlasDrawerProps['sourceUploadContext'];
+  onArtifact?: (artifact: Artifact) => void;
 }) {
   return (
     <>
@@ -883,6 +901,8 @@ function DrawerTurnList({
                 ? 'You'
                 : `${agent.initials} · ${turn.agentName}`
             }
+            sourceUploadContext={sourceUploadContext}
+            onArtifact={onArtifact}
           />
         ),
       )}
@@ -895,11 +915,15 @@ function DrawerStreamingTurn({
   isStreaming,
   response,
   agent,
+  sourceUploadContext,
+  onArtifact,
 }: {
   isVisible: boolean;
   isStreaming: boolean;
   response: string;
   agent: { initials: string; name: string };
+  sourceUploadContext?: AtlasDrawerProps['sourceUploadContext'];
+  onArtifact?: (artifact: Artifact) => void;
 }) {
   if (!isVisible) return null;
 
@@ -942,6 +966,13 @@ function DrawerStreamingTurn({
             {isStreaming && (
               <span style={{ opacity: 0.5, marginLeft: 1 }}>▊</span>
             )}
+            {!isStreaming ? (
+              <GeneratedSourceArtifactSave
+                text={response}
+                sourceUploadContext={sourceUploadContext}
+                onArtifact={onArtifact}
+              />
+            ) : null}
           </>
         )}
       </div>
@@ -974,10 +1005,14 @@ function DrawerChatBubble({
   role,
   text,
   label,
+  sourceUploadContext,
+  onArtifact,
 }: {
   role: 'user' | 'agent';
   text: string;
   label: string;
+  sourceUploadContext?: AtlasDrawerProps['sourceUploadContext'];
+  onArtifact?: (artifact: Artifact) => void;
 }) {
   const isUser = role === 'user';
 
@@ -1029,7 +1064,128 @@ function DrawerChatBubble({
         }}
       >
         {isUser ? text : <AgentMarkdown text={stripArtifactsForDisplay(text)} />}
+        {!isUser ? (
+          <GeneratedSourceArtifactSave
+            text={stripArtifactsForDisplay(text)}
+            sourceUploadContext={sourceUploadContext}
+            onArtifact={onArtifact}
+          />
+        ) : null}
       </div>
+    </div>
+  );
+}
+
+function GeneratedSourceArtifactSave({
+  text,
+  sourceUploadContext,
+  onArtifact,
+}: {
+  text: string;
+  sourceUploadContext?: AtlasDrawerProps['sourceUploadContext'];
+  onArtifact?: (artifact: Artifact) => void;
+}) {
+  const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
+  const [message, setMessage] = useState<string | null>(null);
+  const cleaned = text.trim();
+
+  if (!sourceUploadContext || cleaned.length === 0) return null;
+
+  async function handleSave() {
+    if (!sourceUploadContext || status === 'saving') return;
+    setStatus('saving');
+    setMessage(null);
+    try {
+      const title = `${sourceUploadContext.stageLabel ?? sourceUploadContext.stageKey} generated packet`;
+      const response = await fetch(
+        `/api/v1/source/${encodeURIComponent(sourceUploadContext.eventId)}/artifacts/generate`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title,
+            content: cleaned,
+            stageKey: sourceUploadContext.stageKey,
+            artifactKind: 'agent_generated_packet',
+          }),
+        },
+      );
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok || !body?.artifact?.id) {
+        const detail = typeof body?.detail === 'string'
+          ? body.detail
+          : typeof body?.error === 'string'
+            ? body.error
+            : 'save failed';
+        throw new Error(detail);
+      }
+
+      const artifact = body.artifact as {
+        id: string;
+        originalName: string;
+        parseStatus: string;
+        embeddingStatus: string;
+        graphStatus: string;
+        evidenceState: string;
+      };
+
+      setStatus('saved');
+      setMessage('Saved to Source artifacts');
+      onArtifact?.({
+        type: 'sourcing-stage-progress',
+        evidenceItemId: `source-generated-artifact:${artifact.id}`,
+        label: `${artifact.originalName} saved`,
+        severity: 'soft',
+        status: 'met',
+        detail: `Generated artifact persisted for ${sourceUploadContext.stageLabel ?? sourceUploadContext.stageKey}. Parse ${artifact.parseStatus}; vector ${artifact.embeddingStatus}; graph ${artifact.graphStatus}. Evidence remains ${artifact.evidenceState} until parsed.`,
+      });
+    } catch (error) {
+      setStatus('failed');
+      setMessage(error instanceof Error ? error.message : 'Save failed');
+    }
+  }
+
+  return (
+    <div
+      style={{
+        marginTop: 10,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        flexWrap: 'wrap',
+      }}
+    >
+      <button
+        type="button"
+        onClick={handleSave}
+        disabled={status === 'saving' || status === 'saved'}
+        style={{
+          border: '1px solid rgba(250,247,241,0.24)',
+          borderRadius: 999,
+          background: status === 'saved' ? 'rgba(155,184,122,0.16)' : 'rgba(250,247,241,0.08)',
+          color: 'rgba(250,247,241,0.82)',
+          cursor: status === 'saving' || status === 'saved' ? 'default' : 'pointer',
+          fontFamily: SHELL.MONO,
+          fontSize: 9,
+          fontWeight: 700,
+          letterSpacing: '0.08em',
+          padding: '6px 9px',
+          textTransform: 'uppercase',
+        }}
+      >
+        {status === 'saving' ? 'Saving…' : status === 'saved' ? 'Saved artifact' : 'Save generated artifact'}
+      </button>
+      {message ? (
+        <span
+          style={{
+            color: status === 'failed' ? SHELL.PEACH_TEXT : 'rgba(250,247,241,0.48)',
+            fontFamily: SHELL.SANS,
+            fontSize: 10.5,
+          }}
+        >
+          {message}
+        </span>
+      ) : null}
     </div>
   );
 }
