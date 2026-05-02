@@ -139,6 +139,7 @@ describe('POST /api/v1/programs/[programId]/advance', () => {
     expect(res.status).toBe(409);
     await expect(res.json()).resolves.toMatchObject({
       error: 'gate_blocked',
+      detail: 'Hard-gate checks must pass before advance: P0 seed artifact must be signed off',
     });
     expect(mockRequestFounderApproval).not.toHaveBeenCalled();
     expect(mockAdvancePhase).not.toHaveBeenCalled();

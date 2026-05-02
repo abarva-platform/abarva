@@ -41,8 +41,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
     const hardFails = gate.failedChecks.filter((c) => c.severity === 'hard');
 
     if (hardFails.length > 0) {
+      const hardFailDetail = hardFails
+        .map((check) => check.reason || check.check)
+        .filter(Boolean)
+        .join('; ');
       return Response.json(
-        { error: 'gate_blocked', gate, detail: 'Hard-gate checks must pass before advance' },
+        {
+          error: 'gate_blocked',
+          gate,
+          detail: hardFailDetail
+            ? `Hard-gate checks must pass before advance: ${hardFailDetail}`
+            : 'Hard-gate checks must pass before advance',
+        },
         { status: 409 },
       );
     }

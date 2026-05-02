@@ -241,8 +241,13 @@ export async function evaluateGate(
     /\b(technical|security|business|adoption)\s+owner:\s*not yet named\b/.test(latestDiscoveryReportText) ||
     /\bowner names?\s*\([^)]*\)\s*(missing|unresolved|required)\b/.test(latestDiscoveryReportText);
   const discoveryReportHasBaselineAttestation =
-    /\bbaseline\b/.test(latestDiscoveryReportText) &&
+    /\bbaselines?\b/.test(latestDiscoveryReportText) &&
     /\b(attested|owner attestation|captured|current state|source of record)\b/.test(latestDiscoveryReportText) &&
+    !discoveryReportHasHardGap;
+  const discoveryReportHasWorkshopEvidence =
+    latestDiscoveryReportText.length > 0 &&
+    /\b(workshop|meeting notes|interview|attendees|source of record|owner attestation)\b/.test(latestDiscoveryReportText) &&
+    /\b(decision|baseline|contradiction|action item|stakeholder)\b/.test(latestDiscoveryReportText) &&
     !discoveryReportHasHardGap;
 
   const failedChecks: GateCheck['failedChecks'] = [];
@@ -302,7 +307,8 @@ export async function evaluateGate(
       case 'discovery_notes_ingested':
         pass = isPresent(findDeliverable('discovery_notes', 'meeting_notes', 'workshop_notes')) ||
           moduleCompleted('discovery_notes_ingest', 'workshop_notes_ingest') ||
-          (await hasProgramEvidence(programId, 1));
+          (await hasProgramEvidence(programId, 1)) ||
+          discoveryReportHasWorkshopEvidence;
         break;
       case 'current_state_summary_drafted':
         pass = isPresent(findDeliverable('current_state_summary', 'discovery_summary', 'current_state_assessment'));

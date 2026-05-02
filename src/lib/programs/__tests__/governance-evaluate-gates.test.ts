@@ -182,6 +182,42 @@ describe('evaluateGate', () => {
     expect(result.requiresApproval).toBe(false);
   });
 
+  it('accepts signed P1 Discovery Report content as ingested workshop evidence', async () => {
+    getProgramByIdMock.mockResolvedValue({
+      id: 'program-1',
+      currentPhase: 1,
+      archetype: 'analytics_modernization',
+    });
+    deliverablesFixture = [
+      { id: 'discovery-report', deliverable_type_key: 'discovery_report', status: 'signed_off' },
+    ];
+    evidenceFixture = [];
+    deliverableVersionsFixture = [
+      {
+        content:
+          'P1 Discovery Report. Attendees: Katherine Oshima sponsor, Marcus Chen data owner, ' +
+          'Linda Tran clinical informatics, Priya Nair revenue cycle, and Omar Haddad security. ' +
+          'Workshop notes: data discovery session mapped Epic, claims, coding, prior auth, and VBC feeds. ' +
+          'Baselines captured and owner attestation recorded. Source of record: Meridian analytics intake log and Epic/claims lineage workshop. ' +
+          'Stakeholder map names required owners. Contradiction: shadow SaaS tools bypass central lineage. ' +
+          'P2 readiness recommendation: proceed to Synthesis.',
+        structured_data: null,
+        generated_at: '2026-05-02T00:00:00.000Z',
+      },
+    ];
+
+    const result = await evaluateGate(
+      { clientId: 'client-1', userId: 'person-1' },
+      'program-1',
+      1,
+      2,
+    );
+
+    expect(result.failedChecks.map((check) => check.check)).not.toContain('discovery_notes_ingested');
+    expect(result.failedChecks.filter((check) => check.severity === 'hard')).toEqual([]);
+    expect(result.requiresApproval).toBe(true);
+  });
+
   it('accepts a signed P0 origination brief as the seed artifact without overloading discovery_report', async () => {
     getProgramByIdMock.mockResolvedValue({
       id: 'program-1',
