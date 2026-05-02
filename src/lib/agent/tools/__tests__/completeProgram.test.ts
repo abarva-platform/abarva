@@ -61,7 +61,11 @@ describe('complete_program tool', () => {
     );
 
     expect(result.success).toBe(true);
-    expect(updateMock).toHaveBeenCalledWith(expect.objectContaining({ lifecycle_state: 'completed', current_phase: 6 }));
+    expect(updateMock).toHaveBeenCalledWith(expect.objectContaining({
+      lifecycle_state: 'completed',
+      status: 'completed',
+      current_phase: 6,
+    }));
     expect(writeAuditMock).toHaveBeenCalledWith(
       { clientId: 'client-1', userId: 'person-1' },
       expect.objectContaining({

@@ -30,3 +30,12 @@ Append-only coordination log for active Codex sessions.
 - scope: Programs E2E crawler proved P6 Tower handoff contract persisted, but `engagements.lifecycle_state` remained `approved`; Nexus treated already-at-P6 as complete instead of calling `complete_program`.
 - files_touched: `src/lib/agent/tools/program/completeProgram.ts`, `src/app/api/chat/agent/route.ts`, `src/lib/agent/tools/__tests__/completeProgram.test.ts`, `src/app/api/chat/agent/__tests__/agent-route-context-bundle.test.ts`
 - validation: focused Programs/Nexus Jest and ESLint passed locally; deployment/rerun pending PR merge.
+
+## 2026-05-02T09:25:00-05:00 - codex-programs-e2e-completed-status-fix
+
+- status: fix-in-progress
+- branch: `codex/programs-complete-status`
+- worktree: `/private/tmp/nexus-programs-private-plane-fix`
+- scope: Programs E2E crawler proved `lifecycle_state=completed` after P6, but `engagements.status` stayed `active`; complete_program should persist both completion signals.
+- files_touched: `src/lib/agent/tools/program/completeProgram.ts`, `src/lib/agent/tools/__tests__/completeProgram.test.ts`
+- validation: focused complete_program Jest and ESLint passed locally; deployment/rerun pending PR merge.
