@@ -70,6 +70,7 @@ import { CLIENT_KEY_TO_INDUSTRY_CODE } from '@/lib/client-config';
 import { markDraftCommitted } from '@/lib/programs/origination-drafts';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 import { normalizeProgramArchetype } from '@/lib/programs/archetype-normalization';
+import { buildEngagementGraphNodeId } from '@/lib/programs/mutations';
 
 // Postgres UUID v4 format (also matches v1/v3/v5 — sufficient for input
 // validation before we attempt an `engagements.insert` that would
@@ -489,15 +490,21 @@ export const commitProgramTool: AgentTool<CommitProgramInput> = {
     let programId: string;
     let programName: string;
     try {
+      const graphNodeId = buildEngagementGraphNodeId(originationForm.name);
       const { data, error } = await sb
         .from('engagements')
         .insert({
+          graph_node_id: graphNodeId,
           client_id: tenancy.clientId,
           industry_code: industryCode,
           function_code: derivedClassification.functionCode,
           objective_code: derivedClassification.objectiveCode,
           topic_code: derivedClassification.topicCode,
           name: originationForm.name,
+          // Legacy compatibility: older live schemas still require `solution`
+          // from the original Engagement Engine. Programs reads `name`, but
+          // writing both keeps origination valid across migrated tenants.
+          solution: originationForm.name,
           sponsor_person_id: originationForm.sponsorPersonId,
           maestro_person_id: originationForm.leadPersonId,
           // Legacy lifecycle: leave at 'draft' so old code paths that
