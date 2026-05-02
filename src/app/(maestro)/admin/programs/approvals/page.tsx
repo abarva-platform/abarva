@@ -16,6 +16,7 @@ import { getActiveClientRow } from '@/lib/active-client';
 import { getApprovalQueueForTenant } from '@/lib/programs/approval';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { ApprovalQueueTable } from '@/components/admin/programs/ApprovalQueueTable';
+import { loadApprovalPersonDisplayMap } from '@/lib/programs/approval-person-resolver';
 
 export const metadata = { title: 'Program Approvals · Nexus Admin' };
 export const dynamic = 'force-dynamic';
@@ -23,6 +24,29 @@ export const revalidate = 0;
 
 interface DecidedRow {
   request_status: 'approved' | 'rejected';
+}
+
+function pickString(
+  snapshot: Record<string, unknown>,
+  ...keys: string[]
+): string | null {
+  for (const key of keys) {
+    const v = snapshot[key];
+    if (typeof v === 'string' && v.trim().length > 0) return v.trim();
+  }
+  return null;
+}
+
+function collectQueuePersonIds(
+  requests: Awaited<ReturnType<typeof getApprovalQueueForTenant>>,
+): string[] {
+  const ids: string[] = [];
+  for (const request of requests) {
+    ids.push(request.requestedByUserId);
+    const sponsorId = pickString(request.briefSnapshot, 'sponsor_person_id');
+    if (sponsorId) ids.push(sponsorId);
+  }
+  return ids;
 }
 
 async function getDecidedThisWeekCounts(
@@ -92,6 +116,9 @@ export default async function AdminProgramApprovalsPage() {
     }),
     getDecidedThisWeekCounts(tenantKey),
   ]);
+  const personDisplay = await loadApprovalPersonDisplayMap(
+    collectQueuePersonIds(requests),
+  );
 
   return (
     <AdminCanonShellV2
@@ -113,7 +140,11 @@ export default async function AdminProgramApprovalsPage() {
           approved={decided.approved}
           rejected={decided.rejected}
         />
-        <ApprovalQueueTable requests={requests} />
+        <ApprovalQueueTable
+          requests={requests}
+          resolveUserName={(userId) => personDisplay.get(userId) ?? null}
+          resolvePersonName={(personId) => personDisplay.get(personId) ?? null}
+        />
       </EditorialCanvas>
     </AdminCanonShellV2>
   );

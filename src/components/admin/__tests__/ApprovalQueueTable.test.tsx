@@ -7,7 +7,8 @@
  * Coverage:
  *   • Renders N rows for N pending requests
  *   • Renders empty state when no pending requests
- *   • Each row exposes program name + sponsor + classification + Review link
+ *   • Each row exposes program name + resolved sponsor + classification + Review link
+ *   • UUID-backed submitter/sponsor fields are not rendered as raw IDs
  *   • formatRelativeTime handles common buckets
  */
 
@@ -61,20 +62,52 @@ describe('ApprovalQueueTable', () => {
   });
 
   it('renders program name, sponsor, classification, and a Review link', () => {
+    const sponsorId = '2301b645-2031-4761-aa15-7a2a44225216';
     const req = fixture({
       id: 'req-x',
+      requestedByUserId: '99582958-3c75-447c-a7e5-d22d0ab5009a',
       briefSnapshot: {
         program_name: 'Meridian KYC AI',
-        sponsor_person_id: 'pers-sponsor-99',
+        sponsor_person_id: sponsorId,
         classification: 'AMS_CONSOLIDATION',
       },
     });
-    render(<ApprovalQueueTable requests={[req]} />);
+    render(
+      <ApprovalQueueTable
+        requests={[req]}
+        resolveUserName={(id) =>
+          id === req.requestedByUserId ? 'Nina Patel (Director)' : null
+        }
+        resolvePersonName={(id) =>
+          id === sponsorId ? 'Katherine Oshima (CIO)' : null
+        }
+      />,
+    );
     expect(screen.getByText('Meridian KYC AI')).toBeInTheDocument();
-    expect(screen.getByText('pers-sponsor-99')).toBeInTheDocument();
+    expect(screen.getByText('Nina Patel (Director)')).toBeInTheDocument();
+    expect(screen.getByText('Katherine Oshima (CIO)')).toBeInTheDocument();
+    expect(screen.queryByText(req.requestedByUserId)).not.toBeInTheDocument();
+    expect(screen.queryByText(sponsorId)).not.toBeInTheDocument();
     expect(screen.getByText('AMS_CONSOLIDATION')).toBeInTheDocument();
     const link = screen.getByRole('link', { name: /Review/i });
     expect(link).toHaveAttribute('href', '/admin/programs/approvals/req-x');
+  });
+
+  it('uses neutral labels instead of unresolved UUID submitter and sponsor values', () => {
+    const req = fixture({
+      requestedByUserId: '99582958-3c75-447c-a7e5-d22d0ab5009a',
+      briefSnapshot: {
+        program_name: 'Meridian Analytics Modernization',
+        sponsor_person_id: '2301b645-2031-4761-aa15-7a2a44225216',
+      },
+    });
+    render(<ApprovalQueueTable requests={[req]} />);
+    expect(screen.getByText('Registered user')).toBeInTheDocument();
+    expect(screen.getByText('Selected sponsor')).toBeInTheDocument();
+    expect(screen.queryByText(req.requestedByUserId)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(String(req.briefSnapshot.sponsor_person_id)),
+    ).not.toBeInTheDocument();
   });
 
   it('falls back to "Untitled program" when program_name is missing', () => {
