@@ -159,3 +159,11 @@ locks:
     expires_at: "2026-05-02T20:30:00-05:00"
     note: Source event-canvas action prompt polish: Nexus labeling, disabled streaming state, accessibility, and regression tests. No Source lifecycle/data/API changes.
     completed_at: "2026-05-02T17:00:00-05:00"
+
+  - owner: codex-home-card-polish
+    resource: home-cockpit-card-polish
+    status: completed
+    started_at: "2026-05-02T14:45:16-05:00"
+    expires_at: "2026-05-02T18:30:00-05:00"
+    note: "Narrow Home cockpit card polish for keyboard focus visibility, link affordance, and responsive card rhythm. Avoids Source API, lifecycle, stage, and data files."
+    completed_at: "2026-05-02T14:49:14-05:00"
