@@ -13,7 +13,7 @@ describe('Tower P6 handoff panel', () => {
     expect(pageSource).toContain('loadUserSourceAccessPolicy');
     expect(pageSource).toContain(".from('source_events')");
     expect(pageSource).toContain(".eq('client_key', activeClient.key)");
-    expect(pageSource).toContain("['contract_mobilization', 'value_realization']");
+    expect(pageSource).toContain("['transition', 'value', 'contract_mobilization', 'value_realization']");
     expect(pageSource).toContain("query.in('id', policy.sourceEventIdsAllowed)");
     expect(pageSource).toContain('Source handoffs · Tower observation');
     expect(pageSource).toContain('data-testid=\"tower-source-handoff-panel\"');
