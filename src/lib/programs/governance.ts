@@ -173,6 +173,7 @@ export async function evaluateGate(
 
   const charterRow = deliverableRows
     .find((d) => d.deliverable_type_key === 'charter');
+  const originationBriefRow = findDeliverable('origination_brief', 'program_seed_brief', 'program_seed');
   const designRow = findDeliverable('design_spec', 'design', 'design_brief', 'solution_design', 'operating_model_design');
   const executionRoadmapRow = findDeliverable('execution_roadmap', 'execution_plan', 'roadmap', 'mobilization_roadmap');
   const requirementsTraceRow = findDeliverable('requirements_traceability', 'requirements_design_outcome_trace', 'traceability_matrix');
@@ -189,6 +190,24 @@ export async function evaluateGate(
     brief_snapshot: Record<string, unknown> | null;
   }> | null) ?? [])[0]?.brief_snapshot ?? {};
   const briefString = JSON.stringify(latestSeedBrief).toLowerCase();
+
+  let latestOriginationBriefText = '';
+  if (originationBriefRow) {
+    const { data: originationVersions } = await sb
+      .from('deliverable_versions')
+      .select('content, structured_data, generated_at')
+      .eq('deliverable_id', (originationBriefRow as { id?: string }).id)
+      .order('generated_at', { ascending: false })
+      .limit(1);
+    const latestOriginationVersion = ((originationVersions as Array<{
+      content: string | null;
+      structured_data: Record<string, unknown> | null;
+    }> | null) ?? [])[0];
+    latestOriginationBriefText = [
+      latestOriginationVersion?.content ?? '',
+      latestOriginationVersion?.structured_data ? JSON.stringify(latestOriginationVersion.structured_data) : '',
+    ].join('\n').toLowerCase();
+  }
 
   let latestDiscoveryReportText = '';
   if (discoveryReportRow) {
@@ -230,6 +249,7 @@ export async function evaluateGate(
     switch (c.key) {
       case 'program_seed_recorded':
         pass =
+          isSignedOff(originationBriefRow) ||
           Boolean(program.archetype) ||
           typeof latestSeedBrief.matched_pattern_id === 'string' ||
           typeof latestSeedBrief.classification === 'string' ||
@@ -242,6 +262,11 @@ export async function evaluateGate(
         const target = latestSeedBrief.target_outcome ?? latestSeedBrief.targetOutcome;
         pass = typeof problem === 'string' && problem.trim().length >= 12 &&
           (typeof target === 'string' ? target.trim().length >= 8 : briefString.includes('target'));
+        if (!pass && isSignedOff(originationBriefRow)) {
+          pass =
+            /\b(problem|trigger|current pain|pain)\b/.test(latestOriginationBriefText) &&
+            /\b(value hypothesis|target outcome|outcome|mechanism)\b/.test(latestOriginationBriefText);
+        }
         break;
       }
       case 'charter_drafted': pass = Boolean(charterRow && charterRow.status !== null); break;
@@ -325,17 +350,29 @@ export async function evaluateGate(
           briefString.includes('timeline') ||
           briefString.includes('funding') ||
           briefString.includes('capacity') ||
-          briefString.includes('budget');
+          briefString.includes('budget') ||
+          latestOriginationBriefText.includes('timeline') ||
+          latestOriginationBriefText.includes('funding') ||
+          latestOriginationBriefText.includes('capacity') ||
+          latestOriginationBriefText.includes('time box');
         break;
       case 'initial_scope_boundary':
         pass =
           briefString.includes('scope') ||
           briefString.includes('cohort') ||
           briefString.includes('internal teams') ||
-          briefString.includes('use case');
+          briefString.includes('use case') ||
+          latestOriginationBriefText.includes('scope') ||
+          latestOriginationBriefText.includes('cohort') ||
+          latestOriginationBriefText.includes('use case');
         break;
       case 'evidence_family_selected':
-        pass = Boolean(program.archetype) || briefString.includes('evidence') || briefString.includes('dora');
+        pass =
+          Boolean(program.archetype) ||
+          briefString.includes('evidence') ||
+          briefString.includes('dora') ||
+          latestOriginationBriefText.includes('evidence family') ||
+          latestOriginationBriefText.includes('first evidence');
         break;
       default: pass = false;
     }

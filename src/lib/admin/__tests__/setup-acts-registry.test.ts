@@ -152,8 +152,8 @@ describe('Setup Acts registry — Arcturus / First Capital authored partial fixt
   it('returns partial financial-services content for arcturus tenant key', () => {
     const content = getSetupActsContent('arcturus');
     expect(content.tenantDataRichness).toBe('partial');
-    expect(content.tenantDisplayName).toBe('Arcturus Financial Group');
-    expect(content.sentinelOpener).toMatch(/First Capital demo profile/);
+    expect(content.tenantDisplayName).toBe('First Capital Financial');
+    expect(content.sentinelOpener).toMatch(/First Capital Financial/);
     expect(content.sentinelOpener).toMatch(/financial-services/i);
   });
 

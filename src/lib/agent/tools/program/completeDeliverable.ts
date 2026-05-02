@@ -49,6 +49,7 @@ export const ALLOWED_PROGRAM_DELIVERABLE_TYPES = new Set([
   'meeting_notes',
   'mobilization_roadmap',
   'outcome_report',
+  'origination_brief',
   'readiness_and_change_plan',
   'requirements_design_outcome_trace',
   'requirements_traceability',
@@ -73,7 +74,7 @@ export const completeDeliverableTool: AgentTool<CompleteDeliverableToolInput> = 
     'or said to approve/sign off. Do not call it for rough drafts. If sign_off is omitted, default to true ' +
     'because this tool represents an explicit acceptance moment. For chat-only drafts, use ordinary prose or ' +
     'the draft route instead. Use distinct deliverable_type_key values for distinct gate artifacts: ' +
-    'P2 synthesis options memo = synthesis_options_memo, P2 workshop guide = workshop_facilitator_guide, ' +
+    'P0 accepted seed brief = origination_brief, P2 synthesis options memo = synthesis_options_memo, P2 workshop guide = workshop_facilitator_guide, ' +
     'P2 charter = charter, P3 solution design = design_spec, P3 requirements-to-design-to-outcomes trace = ' +
     'requirements_traceability, P4 roadmap = execution_roadmap, P5 funding package = business_case plus ' +
     'approval_memo or funding_approval, P5 alignment = stakeholder_alignment or sponsor_alignment, ' +
@@ -92,7 +93,7 @@ export const completeDeliverableTool: AgentTool<CompleteDeliverableToolInput> = 
         type: 'string',
         description:
           'Deliverable key. Common lifecycle keys: discovery_report, stakeholder_map, charter, design_spec, ' +
-          'synthesis_options_memo, workshop_facilitator_guide, requirements_traceability, execution_roadmap, business_case, approval_packet, approval_memo, ' +
+          'origination_brief, synthesis_options_memo, workshop_facilitator_guide, requirements_traceability, execution_roadmap, business_case, approval_packet, approval_memo, ' +
           'funding_approval, stakeholder_alignment, sponsor_alignment, change_management_plan, ' +
           'readiness_and_change_plan, tower_handoff_plan, outcome_report, vendor_selection.',
       },

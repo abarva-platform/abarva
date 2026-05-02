@@ -40,6 +40,39 @@ beforeEach(() => {
 });
 
 describe('complete_deliverables tool', () => {
+  it('persists a P0 seed package with the canonical origination key', async () => {
+    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+    completeDeliverableMock.mockResolvedValueOnce({
+      deliverableId: 'origination',
+      versionId: 'v0',
+      status: 'signed_off',
+    });
+
+    const result = await completeDeliverablesTool.handler(
+      {
+        program_id: 'program-1',
+        deliverables: [
+          {
+            deliverable_type_key: 'origination_brief',
+            title: 'P0 Origination Brief',
+            content_outline: ['Problem trigger', 'Sponsor candidate', 'Value hypothesis', 'P1 evidence family'],
+          },
+        ],
+      },
+      makeCtx(),
+    );
+
+    expect(result.success).toBe(true);
+    expect(completeDeliverableMock).toHaveBeenCalledWith(
+      { clientId: 'client-1', userId: 'user-1' },
+      'program-1',
+      expect.objectContaining({
+        deliverableTypeKey: 'origination_brief',
+        signOff: true,
+      }),
+    );
+  });
+
   it('persists a P5 approval package in one batch', async () => {
     requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
     completeDeliverableMock

@@ -3,6 +3,7 @@ import { getActiveClientRow } from '@/lib/active-client';
 import { requireTenancy } from '@/lib/auth/tenancy';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
 import { listSourcingEvents } from '@/lib/source/queries';
+import { canonicalClientDisplayName } from '@/lib/client-config';
 
 export const metadata = { title: 'Source · AbarVa' };
 export const dynamic = 'force-dynamic';
@@ -24,12 +25,15 @@ export default async function SourcePage({
   const sourceAccessPolicy = activeClient && tenancy
     ? await loadUserSourceAccessPolicy(tenancy, { activeClientKey: activeClient.key }).catch(() => null)
     : null;
+  const activeClientDisplayName =
+    canonicalClientDisplayName({ key: activeClient?.key, name: activeClient?.name }) ??
+    'AbarVa Client';
 
   return (
     <SourcePortfolioPage
       events={events}
       searchParams={params}
-      tenantName={activeClient?.name ?? 'AbarVa Client'}
+      tenantName={activeClientDisplayName}
       canViewFinancialValues={sourceAccessPolicy?.canViewFinancialData === true}
     />
   );

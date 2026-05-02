@@ -1,6 +1,6 @@
 import { buildTowerViewModel } from '@/lib/tower/aggregate';
 import { getActiveClientKey, getActiveClientRow } from '@/lib/active-client';
-import { getClientOption } from '@/lib/client-config';
+import { canonicalClientDisplayName, getClientOption } from '@/lib/client-config';
 import { TowerPreviewShell } from '@/components/tower/TowerPreviewShell';
 
 export const dynamic = 'force-dynamic';
@@ -23,12 +23,15 @@ export default async function TowerPreviewPage({
   const activeClient = await getActiveClientRow(params.client);
   const vm = activeClient?.id ? await buildTowerViewModel(activeClient.id) : null;
   const clientOption = getClientOption(activeClientKey);
+  const activeClientDisplayName =
+    canonicalClientDisplayName({ key: activeClient?.key ?? activeClientKey, name: activeClient?.name }) ??
+    clientOption.name;
 
   return (
     <TowerPreviewShell
       vm={vm}
       clientId={activeClient?.id ?? clientOption.id}
-      clientName={activeClient?.name ?? clientOption.name}
+      clientName={activeClientDisplayName}
       currentPath="/tower"
     />
   );

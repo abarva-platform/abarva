@@ -640,7 +640,7 @@ const MERIDIAN_CONTENT: SetupActsContent = {
   recentActivity: MERIDIAN_ACTIVITY,
 };
 
-// ── Arcturus / First Capital fixture (authored partial) ───────────────────────
+// ── First Capital fixture (authored partial; internal key remains arcturus) ───
 //
 // The First Capital demo account resolves to the `arcturus` client key.
 // This authored pack gives Steward a specific financial-services posture
@@ -648,14 +648,14 @@ const MERIDIAN_CONTENT: SetupActsContent = {
 // `partial`: facts and capability guidance are authored, but record counts
 // should still come from live ingestion when the data plane is populated.
 
-const ARCTURUS_OPENER = `I see Arcturus Financial Group as the First Capital demo profile: a regulated financial-services tenant with retail banking, commercial lending, wealth, payments, and risk-operations work in scope. The setup posture is not blank anymore: the likely control plane is GLBA, FFIEC, OCC/FRB-style supervisory evidence, model-risk governance, third-party risk, SOX, PCI, and state privacy obligations. Steward should start by confirming three things before Intelligence or Programs makes firm claims: which legal entity owns the demo, which systems are authoritative for customer/account/product data, and which risk committee can approve AI-assisted sourcing or program decisions. Until live records are ingested, I will keep recommendations evidence-seeking rather than evidence-citing.`;
+const ARCTURUS_OPENER = `I see First Capital Financial as a regulated financial-services tenant with retail banking, commercial lending, wealth, payments, and risk-operations work in scope. The setup posture is not blank anymore: the likely control plane is GLBA, FFIEC, OCC/FRB-style supervisory evidence, model-risk governance, third-party risk, SOX, PCI, and state privacy obligations. Steward should start by confirming three things before Intelligence or Programs makes firm claims: which legal entity owns the demo, which systems are authoritative for customer/account/product data, and which risk committee can approve AI-assisted sourcing or program decisions. Until live records are ingested, I will keep recommendations evidence-seeking rather than evidence-citing.`;
 
 const ARCTURUS_ACT_ONE_FACTS: ActOneFact[] = [
   {
     factType: 'enterprise',
     label: 'ENTERPRISE',
     value:
-      'Arcturus Financial Group · First Capital demo profile · Regulated financial services · retail banking, commercial lending, wealth, payments, and risk operations in scope',
+      'First Capital Financial · Regulated financial services · retail banking, commercial lending, wealth, payments, and risk operations in scope',
     sourceSegmentId: '01',
     sourceSegmentName: 'Enterprise Profile',
     lastReviewedDays: 0,
@@ -868,7 +868,7 @@ const ARCTURUS_ACTIVITY: SetupActivityEvent[] = [
 
 const ARCTURUS_CONTENT: SetupActsContent = {
   tenantKey: 'arcturus',
-  tenantDisplayName: 'Arcturus Financial Group',
+  tenantDisplayName: 'First Capital Financial',
   tenantDataRichness: 'partial',
   sentinelOpener: ARCTURUS_OPENER,
   actOneFacts: ARCTURUS_ACT_ONE_FACTS,
@@ -943,7 +943,7 @@ function buildSparseContent(
 
 const TENANT_DISPLAY_NAMES: Record<ClientKey, string> = {
   meridian: 'Meridian Health System',
-  arcturus: 'Arcturus Financial Group',
+  arcturus: 'First Capital Financial',
   apexretail: 'Apex Retail Group',
   keystone: 'Keystone Energy Holdings',
 };

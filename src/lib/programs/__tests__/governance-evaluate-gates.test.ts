@@ -181,4 +181,44 @@ describe('evaluateGate', () => {
     );
     expect(result.requiresApproval).toBe(false);
   });
+
+  it('accepts a signed P0 origination brief as the seed artifact without overloading discovery_report', async () => {
+    getProgramByIdMock.mockResolvedValue({
+      id: 'program-1',
+      currentPhase: 0,
+      archetype: null,
+    });
+    deliverablesFixture = [
+      { id: 'origination-brief', deliverable_type_key: 'origination_brief', status: 'signed_off' },
+    ];
+    participantsFixture = [{ approval_authority: 'sponsor' }];
+    approvalRequestsFixture = [];
+    deliverableVersionsFixture = [
+      {
+        content:
+          'P0 Origination Brief. Problem trigger: Epic, claims, coding, and prior-auth analytics are fragmented. ' +
+          'Value hypothesis: a governed analytics modernization will improve trusted delivery speed through a shared evidence family. ' +
+          'Scope boundary: prior authorization and coding quality use case first. ' +
+          'P1 handoff: first evidence request is current-state analytics cycle time and data lineage completeness. ' +
+          'Discovery capacity time box: four-week P1 discovery.',
+        structured_data: null,
+        generated_at: '2026-05-02T00:00:00.000Z',
+      },
+    ];
+
+    const result = await evaluateGate(
+      { clientId: 'client-1', userId: 'person-1' },
+      'program-1',
+      0,
+      1,
+    );
+
+    expect(result.failedChecks).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ check: 'program_seed_recorded' }),
+        expect.objectContaining({ check: 'value_hypothesis_seed' }),
+      ]),
+    );
+    expect(result.failedChecks.map((check) => check.check)).not.toContain('discovery_report_signed_off');
+  });
 });

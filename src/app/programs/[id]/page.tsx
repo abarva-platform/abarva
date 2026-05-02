@@ -30,6 +30,8 @@ import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances'
 import { getArchetypePrimer } from '@/lib/programs/archetype-primers';
 import { APEX_PROGRAMS_FIXTURE } from '@/lib/programs/programs-fixture';
 import { MERIDIAN_PROGRAMS_FIXTURE } from '@/lib/programs/meridian-fixture';
+import type { Artifact } from '@/lib/agent/artifacts';
+import { canonicalClientDisplayName } from '@/lib/client-config';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,7 +66,10 @@ export default async function ProgramDetailRoute({
     if (user?.defaultClientId || user?.metadataClientKey) {
       hasTenantKey = true;
       const clientRow = await getActiveClientRow().catch(() => null);
-      activeClientName = clientRow?.name ?? null;
+      activeClientName = canonicalClientDisplayName({
+        key: clientRow?.key,
+        name: clientRow?.name,
+      });
       dbData = await getEngagementWithPhaseData(
         id,
         clientRow?.id ?? null,
@@ -155,6 +160,29 @@ export default async function ProgramDetailRoute({
       ];
     }
 
+    if (dbData.programEvidenceItems.length > 0) {
+      const currentPhaseEvidence: EvidenceItem[] = dbData.programEvidenceItems
+        .filter((e) => e.phase === null || e.phase === view.viewingPhase)
+        .slice(0, 8)
+        .map((e) => {
+          const confidenceValue = typeof e.confidence === 'string' ? Number(e.confidence) : e.confidence ?? 0.7;
+          const confidence: EvidenceItem['confidence'] =
+            confidenceValue >= 0.75 ? 'high' : confidenceValue < 0.55 ? 'low' : 'medium';
+          return {
+            id: e.id,
+            citation: `[Program evidence] ${e.evidence_type} · ${new Date(e.created_at).toLocaleDateString()}`,
+            source: e.title,
+            excerpt: e.summary.slice(0, 220),
+            confidence,
+            hasContradiction: false,
+          };
+        });
+      view.phasePanel.evidenceItems = [
+        ...(view.phasePanel.evidenceItems ?? []),
+        ...currentPhaseEvidence,
+      ];
+    }
+
     // Milestone count — logged for Sprint 1B full milestone UI
     const milestones = eng.program_milestones ?? [];
     if (milestones.length > 0) {
@@ -235,9 +263,99 @@ export default async function ProgramDetailRoute({
       timelineFilters={timelineFilters}
       preservedSearchParams={preservedSearchParams}
       phase0Primer={phase0Primer}
+      initialNexusArtifacts={buildDbBackedNexusArtifacts(dbData, view.viewingPhase)}
       hasTenantKey={hasTenantKey}
     />
   );
+}
+
+function buildDbBackedNexusArtifacts(
+  dbData: Awaited<ReturnType<typeof getEngagementWithPhaseData>>,
+  viewingPhase: number,
+): Artifact[] {
+  if (!dbData) return [];
+
+  const deliverablesForPhase = dbData.deliverables.filter((deliverable) =>
+    deliverableKeyAppliesToPhase(deliverable.deliverable_type_key, viewingPhase),
+  );
+  const signedDeliverables = deliverablesForPhase.filter((deliverable) => deliverable.status === 'signed_off');
+  const phaseEvidence = dbData.programEvidenceItems.filter((item) => item.phase === null || item.phase === viewingPhase);
+  const latestAudit = dbData.auditLogs[0];
+
+  const artifacts: Artifact[] = [];
+  if (deliverablesForPhase.length > 0) {
+    artifacts.push({
+      type: 'phase-progress',
+      evidenceItemId: `db-deliverables-p${viewingPhase}`,
+      label: `DB-backed P${viewingPhase} deliverables`,
+      severity: 'hard',
+      status: signedDeliverables.length > 0 ? 'met' : 'unknown',
+      detail: `${signedDeliverables.length}/${deliverablesForPhase.length} current-phase deliverables are signed off in deliverables_v2.`,
+    });
+  }
+
+  if (phaseEvidence.length > 0) {
+    artifacts.push({
+      type: 'phase-progress',
+      evidenceItemId: `db-evidence-p${viewingPhase}`,
+      label: `DB-backed P${viewingPhase} evidence`,
+      severity: 'soft',
+      status: 'met',
+      detail: `${phaseEvidence.length} program evidence item${phaseEvidence.length === 1 ? '' : 's'} available from program_evidence_items.`,
+    });
+  }
+
+  if (dbData.engagement.program_milestones.length > 0) {
+    const phaseMilestones = dbData.engagement.program_milestones.filter(
+      (milestone) => milestone.phase_number === null || milestone.phase_number === viewingPhase,
+    );
+    if (phaseMilestones.length > 0) {
+      artifacts.push({
+        type: 'phase-progress',
+        evidenceItemId: `db-milestones-p${viewingPhase}`,
+        label: `DB-backed P${viewingPhase} milestones`,
+        severity: viewingPhase === 4 ? 'hard' : 'soft',
+        status: 'met',
+        detail: `${phaseMilestones.length} milestone${phaseMilestones.length === 1 ? '' : 's'} recorded for this phase.`,
+      });
+    }
+  }
+
+  if (latestAudit) {
+    artifacts.push({
+      type: 'phase-progress',
+      evidenceItemId: 'db-latest-audit-receipt',
+      label: 'Latest durable audit receipt',
+      severity: 'soft',
+      status: 'met',
+      detail: `${latestAudit.action}${latestAudit.to_state ? ` → ${latestAudit.to_state}` : ''} recorded in program_audit_log.`,
+    });
+  }
+
+  return artifacts;
+}
+
+function deliverableKeyAppliesToPhase(key: string, phase: number): boolean {
+  if (phase === 0) return ['origination_brief', 'program_seed_brief', 'program_seed'].includes(key);
+  if (phase === 1) {
+    return [
+      'discovery_report',
+      'discovery_notes',
+      'discovery_summary',
+      'current_state_summary',
+      'baseline',
+      'baseline_metrics',
+      'meeting_notes',
+      'workshop_notes',
+      'stakeholder_map',
+    ].includes(key);
+  }
+  if (phase === 2) return ['charter', 'synthesis_options_memo', 'workshop_facilitator_guide', 'value_baseline'].includes(key);
+  if (phase === 3) return ['design_spec', 'design', 'design_brief', 'requirements_traceability', 'requirements_design_outcome_trace', 'traceability_matrix'].includes(key);
+  if (phase === 4) return ['execution_roadmap', 'execution_plan', 'mobilization_roadmap', 'requirements_traceability', 'requirements_design_outcome_trace', 'traceability_matrix'].includes(key);
+  if (phase === 5) return ['business_case', 'funding_business_case', 'approval_packet', 'approval_memo', 'funding_approval', 'capacity_approval', 'sponsor_alignment', 'stakeholder_alignment', 'readiness_and_change_plan', 'change_management_plan', 'business_readiness_plan'].includes(key);
+  if (phase === 6) return ['tower_handoff_plan', 'execution_monitoring_plan', 'control_tower_handoff', 'outcome_report'].includes(key);
+  return false;
 }
 
 function resolveFixtureTenantName(programId: string): string | null {

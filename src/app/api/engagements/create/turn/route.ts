@@ -12,6 +12,7 @@ import { syncPersonToGraph } from '@/lib/graph/mutations';
 import { getCurrentMaestro } from '@/lib/auth/maestro';
 import { logAudit } from '@/lib/audit/log';
 import { assignTopic } from '@/lib/topics/db';
+import { canonicalClientDisplayName } from '@/lib/client-config';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -47,10 +48,14 @@ export async function POST(req: NextRequest) {
     getAllPersons(),
     getActiveClientRow(),
   ]);
+  const activeClientDisplayName =
+    canonicalClientDisplayName({ key: activeClient?.key, name: activeClient?.name }) ??
+    activeClient?.name ??
+    null;
   // Scope sponsor candidates to the active client's organization when
   // we can identify one. Case-insensitive substring match handles the
   // 'Meridian Health' vs 'Meridian Health System' variance.
-  const activeOrgKeyword = activeClient?.name.split(/\s+/)[0]?.toLowerCase() ?? null;
+  const activeOrgKeyword = activeClientDisplayName?.split(/\s+/)[0]?.toLowerCase() ?? null;
   const scopedPersons = activeOrgKeyword
     ? persons.filter((p) => (p.organization ?? '').toLowerCase().includes(activeOrgKeyword))
     : persons;
@@ -82,7 +87,7 @@ export async function POST(req: NextRequest) {
     functions: FUNCTIONS,
     objectives: OBJECTIVES,
     activeClient: activeClient
-      ? { name: activeClient.name, industryCode: activeClient.industry_code }
+      ? { name: activeClientDisplayName ?? activeClient.name, industryCode: activeClient.industry_code }
       : null,
   });
 
@@ -93,7 +98,7 @@ export async function POST(req: NextRequest) {
         console.info('[program.create.start]', {
           messageCount: body.messages?.length ?? 0,
           activeClientId: activeClient?.id ?? null,
-          activeClientName: activeClient?.name ?? null,
+          activeClientName: activeClientDisplayName,
         });
         let full = '';
         for await (const delta of streamAgentTurn({ system, messages: body.messages! })) {
@@ -202,14 +207,14 @@ export async function POST(req: NextRequest) {
                 engagement: hydrated,
                 sponsor: sponsorSummary,
                 labels,
-                active_client: activeClient?.name ?? null,
+                active_client: activeClientDisplayName,
               }) + '\n',
             ),
           );
           console.info('[program.create.response_sent]', {
             id: hydrated.id,
             graph_node_id: hydrated.graph_node_id,
-            active_client: activeClient?.name ?? null,
+            active_client: activeClientDisplayName,
           });
 
           const sideEffects = await Promise.allSettled([

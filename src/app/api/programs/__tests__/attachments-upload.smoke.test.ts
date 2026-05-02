@@ -82,9 +82,13 @@ jest.mock('@/lib/programs/attachments', () => ({
 }));
 
 const recordProgramEvidenceMock = jest.fn();
-jest.mock('@/lib/programs/evidence-ingestion', () => ({
-  extractProgramEvidenceFromText: (args: { filename: string }) => ({
-    evidenceType: 'meeting_notes',
+const extractProgramEvidenceFromUploadBufferMock = jest.fn(
+  (args: { filename: string; mimeType: string }) => ({
+    evidenceType: args.mimeType === 'application/pdf'
+      ? 'uploaded_artifact'
+      : args.filename.includes('workshop')
+        ? 'workshop_output'
+        : 'meeting_notes',
     title: args.filename,
     summary: 'Parsed evidence summary',
     extractedText: 'Parsed text',
@@ -94,27 +98,23 @@ jest.mock('@/lib/programs/evidence-ingestion', () => ({
       risks: [],
       baseline_candidates: [],
       attendees: [],
-      parse_method: 'text-line-parser',
+      parse_method: args.mimeType === 'application/pdf'
+        ? 'pdf-parse'
+        : args.mimeType.includes('wordprocessingml')
+          ? 'docx-mammoth'
+          : args.mimeType.includes('spreadsheetml')
+            ? 'exceljs-xlsx'
+            : 'text-line-parser',
       warnings: [],
     },
     confidence: 0.78,
   }),
-  evidenceForUnsupportedAttachment: (args: { filename: string }) => ({
-    evidenceType: 'uploaded_artifact',
-    title: args.filename,
-    summary: 'Metadata-only evidence summary',
-    extractedText: null,
-    extractedStructured: {
-      decisions: [],
-      action_items: [],
-      risks: [],
-      baseline_candidates: [],
-      attendees: [],
-      parse_method: 'metadata-only',
-      warnings: [],
-    },
-    confidence: 0.4,
-  }),
+);
+jest.mock('@/lib/programs/evidence-ingestion', () => ({
+  extractProgramEvidenceFromUploadBuffer: (...args: unknown[]) =>
+    extractProgramEvidenceFromUploadBufferMock(
+      ...(args as [Parameters<typeof extractProgramEvidenceFromUploadBufferMock>[0]]),
+    ),
   recordProgramEvidence: (...args: unknown[]) => recordProgramEvidenceMock(...args),
 }));
 
@@ -201,8 +201,8 @@ beforeEach(() => {
       mimeType: input.mimeType,
       sizeBytes: input.sizeBytes,
       sha256: input.sha256,
-      scanStatus: 'pending',
-      scanFindings: null,
+      scanStatus: input.scanStatus ?? 'pending',
+      scanFindings: input.scanFindings ?? null,
       redactionState: 'none',
       createdAt: '2026-04-29T12:00:00Z',
       deletedAt: null,
@@ -288,7 +288,7 @@ describe('POST /api/programs/[id]/attachments/upload', () => {
     expect(body.evidence).toEqual({
       id: 'evidence-1',
       status: 'captured',
-      parseMethod: 'metadata-only',
+      parseMethod: 'pdf-parse',
       warnings: [],
     });
     expect(storageUploadMock).toHaveBeenCalledTimes(1);
@@ -296,6 +296,10 @@ describe('POST /api/programs/[id]/attachments/upload', () => {
     expect(recordProgramEvidenceMock).toHaveBeenCalledTimes(1);
     expect(recordAttachmentUploadMock.mock.calls[0][0]).toMatchObject({
       phase: 1,
+      scanStatus: 'skipped',
+      scanFindings: expect.objectContaining({
+        reason: 'synchronous_evidence_extraction_only',
+      }),
     });
     expect(recordProgramEvidenceMock.mock.calls[0][1]).toMatchObject({
       phase: 1,
@@ -321,13 +325,79 @@ describe('POST /api/programs/[id]/attachments/upload', () => {
     const res = await POST(req, PROGRAM_PARAMS);
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
+      attachment: { scanStatus: string; scanFindings: Record<string, unknown> | null };
       evidence: { id: string; status: string; parseMethod: string; warnings: string[] };
     };
+    expect(body.attachment.scanStatus).toBe('skipped');
+    expect(body.attachment.scanFindings).toMatchObject({
+      reason: 'synchronous_evidence_extraction_only',
+    });
     expect(body.evidence).toEqual({
       id: 'evidence-1',
       status: 'captured',
       parseMethod: 'text-line-parser',
       warnings: [],
+    });
+    expect(recordAttachmentUploadMock.mock.calls[0][0]).toMatchObject({
+      scanStatus: 'skipped',
+      scanFindings: expect.objectContaining({
+        reason: 'synchronous_evidence_extraction_only',
+      }),
+    });
+  });
+
+  it('captures DOCX uploads as structured program evidence', async () => {
+    const req = makeMultipartRequest(
+      'sponsor-workshop-notes.docx',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      1024,
+    );
+    const res = await POST(req, PROGRAM_PARAMS);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      attachment: { scanStatus: string };
+      evidence: { id: string; status: string; parseMethod: string };
+    };
+    expect(body.attachment.scanStatus).toBe('skipped');
+    expect(body.evidence).toMatchObject({
+      id: 'evidence-1',
+      status: 'captured',
+      parseMethod: 'docx-mammoth',
+    });
+    expect(extractProgramEvidenceFromUploadBufferMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        filename: 'sponsor-workshop-notes.docx',
+        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        buffer: expect.any(Buffer),
+      }),
+    );
+    expect(recordProgramEvidenceMock.mock.calls[0][1]).toMatchObject({
+      evidenceType: 'workshop_output',
+      attachmentId: 'att-1',
+    });
+  });
+
+  it('captures XLSX uploads as structured program evidence', async () => {
+    const req = makeMultipartRequest(
+      'baseline-workshop-output.xlsx',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      1024,
+    );
+    const res = await POST(req, PROGRAM_PARAMS);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      attachment: { scanStatus: string };
+      evidence: { id: string; status: string; parseMethod: string };
+    };
+    expect(body.attachment.scanStatus).toBe('skipped');
+    expect(body.evidence).toMatchObject({
+      id: 'evidence-1',
+      status: 'captured',
+      parseMethod: 'exceljs-xlsx',
+    });
+    expect(recordProgramEvidenceMock.mock.calls[0][1]).toMatchObject({
+      evidenceType: 'workshop_output',
+      attachmentId: 'att-1',
     });
   });
 

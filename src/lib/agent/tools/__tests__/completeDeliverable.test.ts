@@ -183,6 +183,37 @@ describe('complete_deliverable tool', () => {
     );
   });
 
+  it('allows the canonical P0 origination brief without using discovery_report', async () => {
+    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+    completeDeliverableMock.mockResolvedValue({
+      deliverableId: 'deliv-p0',
+      versionId: 'version-p0',
+      status: 'signed_off',
+    });
+
+    const result = await completeDeliverableTool.handler(
+      {
+        program_id: 'program-1',
+        deliverable_type_key: 'origination_brief',
+        title: 'P0 Origination Brief',
+        content:
+          'Accepted P0 seed with sponsor, value hypothesis, scope, classification, and first evidence request.',
+        sign_off: true,
+      },
+      makeCtx(),
+    );
+
+    expect(result.success).toBe(true);
+    expect(completeDeliverableMock).toHaveBeenCalledWith(
+      expect.anything(),
+      'program-1',
+      expect.objectContaining({
+        deliverableTypeKey: 'origination_brief',
+        signOff: true,
+      }),
+    );
+  });
+
   it('allows P2 synthesis artifacts without overloading design keys', async () => {
     requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
     completeDeliverableMock.mockResolvedValue({

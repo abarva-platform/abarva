@@ -41,7 +41,7 @@ export const completeDeliverablesTool: AgentTool<CompleteDeliverablesToolInput> 
     'Persist and optionally sign off several program deliverables in one batch. Use this for phase packages ' +
     'that require multiple artifacts in the same user-approved turn, especially P5 Approval & Mobilization ' +
     'packages with business_case, funding_approval, sponsor_alignment, readiness_and_change_plan, and ' +
-    'tower_handoff_plan. For P2 packages use synthesis_options_memo for options analysis, charter for the signed ' +
+    'tower_handoff_plan. For P0 seed packages use origination_brief. For P2 packages use synthesis_options_memo for options analysis, charter for the signed ' +
     'program charter, and workshop_facilitator_guide for workshop-running materials. Keep each artifact bounded: ' +
     'concise content under 6,000 characters or content_outline.',
   surfaces: ['/programs/:id'],
@@ -62,7 +62,7 @@ export const completeDeliverablesTool: AgentTool<CompleteDeliverablesToolInput> 
             deliverable_type_key: {
               type: 'string',
               description:
-                'Lifecycle deliverable type, e.g. synthesis_options_memo, charter, workshop_facilitator_guide, business_case, funding_approval, sponsor_alignment, readiness_and_change_plan, tower_handoff_plan.',
+                'Lifecycle deliverable type, e.g. origination_brief, synthesis_options_memo, charter, workshop_facilitator_guide, business_case, funding_approval, sponsor_alignment, readiness_and_change_plan, tower_handoff_plan.',
             },
             title: {
               type: 'string',

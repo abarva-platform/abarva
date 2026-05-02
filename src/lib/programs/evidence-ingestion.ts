@@ -38,6 +38,17 @@ export interface RecordProgramEvidenceInput extends ExtractedProgramEvidence {
 }
 
 const MAX_EXTRACTED_TEXT = 20_000;
+const TEXTUAL_MIME_TYPES = new Set([
+  'text/plain',
+  'text/markdown',
+  'text/csv',
+  'application/json',
+]);
+const DOCX_MIME =
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+const PDF_MIME = 'application/pdf';
+const XLSX_MIME =
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
 function normalizeLines(text: string): string[] {
   return text
@@ -113,8 +124,11 @@ function uniqueSignals(...groups: string[][]): string[] {
 
 function classifyEvidenceType(filename: string, text: string): EvidenceType {
   const haystack = `${filename}\n${text}`.toLowerCase();
+  if (/\b(workshop output|workshop artifact|whiteboard|breakout|facilitator)\b/.test(haystack)) {
+    return 'workshop_output';
+  }
   if (/\b(attendees?|meeting|minutes?|notes?)\b/.test(haystack)) return 'meeting_notes';
-  if (/\b(workshop|whiteboard|breakout|facilitator)\b/.test(haystack)) return 'workshop_output';
+  if (/\bworkshop\b/.test(haystack)) return 'workshop_output';
   if (/\b(baseline|current state|metric|dora|kpi)\b/.test(haystack)) return 'baseline_evidence';
   if (/\b(decision|approved|rejected|waived)\b/.test(haystack)) return 'decision_log';
   if (/\b(architecture|system inventory|application|integration|data flow)\b/.test(haystack)) return 'architecture_inventory';
@@ -180,6 +194,152 @@ export function extractProgramEvidenceFromText(args: {
     },
     confidence: normalized ? 0.78 : 0.3,
   };
+}
+
+function withParseMetadata(
+  evidence: ExtractedProgramEvidence,
+  parseMethod: string,
+  warnings: string[] = [],
+  confidence = evidence.confidence,
+): ExtractedProgramEvidence {
+  return {
+    ...evidence,
+    confidence,
+    extractedStructured: {
+      ...evidence.extractedStructured,
+      parse_method: parseMethod,
+      warnings,
+    },
+  };
+}
+
+function fallbackEvidenceWithWarning(args: {
+  filename: string;
+  mimeType: string;
+  warning: string;
+}): ExtractedProgramEvidence {
+  const fallback = evidenceForUnsupportedAttachment(args);
+  return {
+    ...fallback,
+    extractedStructured: {
+      ...fallback.extractedStructured,
+      warnings: [...fallback.extractedStructured.warnings, args.warning],
+    },
+  };
+}
+
+async function extractDocxText(buffer: Buffer): Promise<{ text: string; warnings: string[] }> {
+  const mammoth = await import('mammoth');
+  const result = await mammoth.extractRawText({ buffer });
+  const warnings = Array.isArray(result.messages)
+    ? result.messages
+        .map((msg) =>
+          msg && typeof msg === 'object' && 'message' in msg
+            ? (msg as { message?: unknown }).message
+            : null,
+        )
+        .filter((msg): msg is string => typeof msg === 'string')
+    : [];
+  return { text: result.value ?? '', warnings };
+}
+
+async function extractPdfText(buffer: Buffer): Promise<{ text: string; warnings: string[] }> {
+  const { PDFParse } = await import('pdf-parse');
+  const parser = new PDFParse({ data: new Uint8Array(buffer) });
+  try {
+    const result = await parser.getText();
+    return { text: result.text ?? '', warnings: [] };
+  } finally {
+    await parser.destroy().catch(() => undefined);
+  }
+}
+
+async function extractXlsxText(buffer: Buffer): Promise<{ text: string; warnings: string[] }> {
+  const ExcelJS = (await import('exceljs')).default;
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(buffer as unknown as ArrayBuffer);
+  const lines: string[] = [];
+  workbook.eachSheet((worksheet) => {
+    lines.push(`Worksheet: ${worksheet.name}`);
+    worksheet.eachRow((row) => {
+      const values = Array.isArray(row.values) ? row.values.slice(1) : [];
+      const line = values
+        .map((value) => {
+          if (value === null || value === undefined) return '';
+          if (typeof value === 'object') {
+            if ('text' in value && typeof value.text === 'string') return value.text;
+            if ('result' in value) return String(value.result ?? '');
+            return JSON.stringify(value);
+          }
+          return String(value);
+        })
+        .map((value) => value.trim())
+        .filter(Boolean)
+        .join(' | ');
+      if (line) lines.push(line);
+    });
+  });
+  return { text: lines.join('\n'), warnings: [] };
+}
+
+export async function extractProgramEvidenceFromUploadBuffer(args: {
+  filename: string;
+  mimeType: string;
+  buffer: Buffer;
+}): Promise<ExtractedProgramEvidence> {
+  if (TEXTUAL_MIME_TYPES.has(args.mimeType)) {
+    const method = args.mimeType === 'text/markdown'
+      ? 'markdown-line-parser'
+      : args.mimeType === 'text/csv'
+        ? 'csv-line-parser'
+        : args.mimeType === 'application/json'
+          ? 'json-line-parser'
+          : 'text-line-parser';
+    return withParseMetadata(
+      extractProgramEvidenceFromText({
+        filename: args.filename,
+        mimeType: args.mimeType,
+        text: args.buffer.toString('utf-8'),
+      }),
+      method,
+    );
+  }
+
+  const parser = (() => {
+    if (args.mimeType === DOCX_MIME) return { method: 'docx-mammoth', run: extractDocxText };
+    if (args.mimeType === PDF_MIME) return { method: 'pdf-parse', run: extractPdfText };
+    if (args.mimeType === XLSX_MIME) return { method: 'exceljs-xlsx', run: extractXlsxText };
+    return null;
+  })();
+
+  if (!parser) return evidenceForUnsupportedAttachment(args);
+
+  try {
+    const { text, warnings } = await parser.run(args.buffer);
+    if (!text.trim()) {
+      return fallbackEvidenceWithWarning({
+        filename: args.filename,
+        mimeType: args.mimeType,
+        warning: `${parser.method} returned no readable text.`,
+      });
+    }
+    return withParseMetadata(
+      extractProgramEvidenceFromText({
+        filename: args.filename,
+        mimeType: args.mimeType,
+        text,
+      }),
+      parser.method,
+      warnings,
+      0.72,
+    );
+  } catch (err) {
+    return fallbackEvidenceWithWarning({
+      filename: args.filename,
+      mimeType: args.mimeType,
+      warning: `${parser.method} failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
 }
 
 export function evidenceForUnsupportedAttachment(args: {

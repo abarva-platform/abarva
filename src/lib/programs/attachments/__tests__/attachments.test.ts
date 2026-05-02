@@ -266,6 +266,33 @@ describe('recordAttachmentUpload', () => {
     await recordAttachmentUpload(rest);
     expect(insertCaptures[0].payload.phase).toBeNull();
   });
+
+  it('can persist an explicit skipped scan status with findings for synchronously parsed text evidence', async () => {
+    nextSingle = async () => ({
+      data: {
+        ...baseRow,
+        mime_type: 'text/plain',
+        scan_status: 'skipped',
+        scan_findings: { reason: 'synchronous_text_parse_only' },
+      },
+      error: null,
+    });
+
+    const rec: AttachmentRecord = await recordAttachmentUpload({
+      ...baseInput,
+      originalName: 'workshop-notes.txt',
+      mimeType: 'text/plain',
+      scanStatus: 'skipped',
+      scanFindings: { reason: 'synchronous_text_parse_only' },
+    });
+
+    expect(insertCaptures[0].payload).toMatchObject({
+      scan_status: 'skipped',
+      scan_findings: { reason: 'synchronous_text_parse_only' },
+    });
+    expect(rec.scanStatus).toBe('skipped');
+    expect(rec.scanFindings).toEqual({ reason: 'synchronous_text_parse_only' });
+  });
 });
 
 describe('listAttachmentsForProgram', () => {

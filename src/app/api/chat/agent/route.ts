@@ -42,6 +42,7 @@ import {
   summarizeFinancialValueForPrompt,
   type RestrictedOutputPolicyLike,
 } from "@/lib/agent/restricted-output-policy";
+import { canonicalClientDisplayName } from "@/lib/client-config";
 import { retrieveStageContext, retrieveCategoryContext } from "@/lib/intelligence/agent-retrieval";
 import { getRelevantTools } from "@/lib/agent/tools/registry";
 import { runToolUseLoop } from "@/lib/agent/streaming/toolUseLoop";
@@ -257,7 +258,8 @@ export async function POST(request: Request) {
     });
   }
 
-  const tenantName          = body.tenantName ?? "Apex Retail Group";
+  const tenantName          =
+    canonicalClientDisplayName({ name: body.tenantName }) ?? "Apex Retail Group";
   const agentName           = body.agentName  ?? "Atlas";
   const stage               = body.stage      ?? null;
   // PR-G surface canonicalization. Two surface-key conventions exist
@@ -324,6 +326,8 @@ export async function POST(request: Request) {
   // Resolve active client row once here — used for tenant isolation in
   // getEngagementWithPhaseData calls below AND for the demo context block later.
   const activeClient = await getActiveClientRow().catch(() => null);
+  const activeClientDisplayName =
+    canonicalClientDisplayName({ key: activeClient?.key, name: activeClient?.name }) ?? tenantName;
   const tenancy = await requireTenancy().catch(() => null);
   const programAccessPolicy: UserProgramAccessPolicy | null = tenancy
     ? await loadUserProgramAccessPolicy(tenancy, { programId }).catch(() => null)
@@ -472,7 +476,7 @@ export async function POST(request: Request) {
       ? detectCrossTenantWriteIntent({
           message,
           activeClientKey: activeClient?.key ?? null,
-          activeClientName: activeClient?.name ?? tenantName,
+          activeClientName: activeClientDisplayName,
         })
       : null;
   if (crossTenantWriteIntent) {
@@ -531,7 +535,7 @@ export async function POST(request: Request) {
   const tenantTechnologyContextBlock =
     agentName === 'Sentinel' && typeof surface === 'string' && surface.startsWith('/intelligence')
       ? await buildTenantTechnologyContextBlock(tenantInventoryKey, message, {
-          tenantName: activeClient?.name ?? tenantName,
+          tenantName: activeClientDisplayName,
           limit: 10,
         })
       : '';
@@ -805,6 +809,7 @@ export async function POST(request: Request) {
           "- PHASE ADVANCE APPROVALS: if the user explicitly says a sponsor/admin approves a phase gate and USER ACCESS POLICY says 'Can approve gates: yes', call advance_phase with self_approve_if_authorized=true. If the policy does not grant approval rights, do not self-approve; create/request approval and say which approver must act.",
           "- LIFECYCLE LABEL DISCIPLINE: never call P4 'Build', P5 'Activate', or P6 'Operate'. The locked labels are P4 Execution Roadmap, P5 Approval & Mobilization, and P6 Tower Handoff. If you need to mention external execution, say execution happens outside AbarVa and P4 builds the executable roadmap only.",
           "- DELIVERABLE PERSISTENCE DISCIPLINE: for phase deliverables, do not generate a huge hidden complete_deliverable payload. Save bounded executive-grade content: either a concise markdown artifact under 6,000 characters or the tool's content_outline array with the key sections, decisions, gate proofs, risks, and follow-ups. Then summarize what was saved in chat. Never spend a turn silently composing a full consulting deck inside tool JSON.",
+          "- P0 DELIVERABLE KEY DISCIPLINE: when saving the accepted P0 seed, use deliverable_type_key='origination_brief'. Do not save a P0 seed, program brief, or origination package as discovery_report; discovery_report is reserved for P1 after current-state evidence is gathered.",
           "- BASELINE FIDELITY DISCIPLINE: when generating or saving deliverables, preserve exact non-financial baseline values, units, sources, grain, methods, owners, and dates from uploaded evidence or signed prior deliverables. Do not replace them with benchmark, peer, demo, or model-inferred numbers. If evidence conflicts, name the conflict and use the latest uploaded/signed evidence as controlling. If the value is missing, write 'missing' and ask for evidence; never invent operational metrics.",
           "- MULTI-ARTIFACT PACKAGE DISCIPLINE: if the user asks to save several deliverables in one phase package, use complete_deliverables once instead of calling complete_deliverable repeatedly. This is especially important for P5 Approval & Mobilization packages: business_case, funding_approval, sponsor_alignment, readiness_and_change_plan, and tower_handoff_plan.",
           "- P6 COMPLETION DISCIPLINE: if the user asks to complete P6 setup, close Tower Handoff, or finish the program after the Tower execution tracking contract is signed, call complete_program. Do not treat 'already at P6' as complete; completion is a lifecycle_state write.",

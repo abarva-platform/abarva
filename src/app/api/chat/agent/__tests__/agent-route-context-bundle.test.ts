@@ -148,7 +148,7 @@ describe('agent route · CB-6 context-bundle wiring', () => {
     expect(refusalIdx).toBeGreaterThan(guardIdx);
     expect(refusalIdx).toBeLessThan(loopIdx);
     expect(source).toContain('activeClientKey: activeClient?.key ?? null');
-    expect(source).toContain('activeClientName: activeClient?.name ?? tenantName');
+    expect(source).toContain('activeClientName: activeClientDisplayName');
   });
 
   it('instructs Programs origination to ask one question and report record status clearly', () => {
