@@ -52,10 +52,18 @@ export async function POST(request: Request) {
   const body = (await request.json()) as { programId?: string };
   const programId = body.programId ?? APX_CDP_2026_INSTANCE.id;
 
-  // Resolve instance from APEX_RETAIL_PROGRAM_INSTANCES; fallback to APX_CDP_2026_INSTANCE
+  // Resolve deterministic demo instances only. Do not fall back from an
+  // unknown live DB UUID to APX_CDP_2026_INSTANCE; that contaminates
+  // user-created programs with unrelated CDP/BAFO/Vendor C recommendations.
   const instance =
     APEX_RETAIL_PROGRAM_INSTANCES.find(i => i.id === programId) ??
-    APX_CDP_2026_INSTANCE;
+    (body.programId ? null : APX_CDP_2026_INSTANCE);
+  if (!instance) {
+    return Response.json(
+      { error: 'program_synthesis_not_available' },
+      { status: 404 },
+    );
+  }
 
   // Build context up-front so we can attach telemetry counts to both
   // cache-hit and cache-miss responses.
