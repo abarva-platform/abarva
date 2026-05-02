@@ -110,6 +110,7 @@ export function SourceArtifactDrawer({
   provenance?: ArtifactProvenance;
 }) {
   const sectionCount = artifact.sections.length;
+  const isRegistryBacked = provenance?.createdFrom === 'source_artifacts registry';
 
   return (
     <section style={sourceCard} data-testid="source-artifact-drawer">
@@ -220,7 +221,9 @@ export function SourceArtifactDrawer({
         </div>
       </div>
       <div style={{ ...CHIP, marginTop: 10, background: SHELL.CARD_WHITE, borderColor: SHELL.INK_MUTED }}>
-        Deterministic seeded artifact shell only. This page does not include upload, parsing, workflow automation, or approval runtime.
+        {isRegistryBacked
+          ? 'Registered Source artifact. Parser, vector, graph, evidence, and approval states are shown above; no completion is implied unless those states say complete.'
+          : 'Deterministic seeded artifact shell only. This page does not include upload, parsing, workflow automation, or approval runtime.'}
       </div>
     </section>
   );
