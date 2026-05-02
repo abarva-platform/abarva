@@ -1,5 +1,8 @@
 // OV2-2c · Tenant-admin approval queue · shared auth helpers
 // OV2-2d-RBAC · Migrated decide gate to the dedicated `tenant_admin` role helper.
+// 2026-05-01 E2E fix: approval decisions now honor the DB-backed tenant
+// program-access policy used by the /admin shell. The canonical user model is
+// person_client_memberships, not Clerk-only tenantRoles.
 //
 // Centralises the auth + role-check posture used by GET /api/admin/programs/approvals
 // and POST /api/admin/programs/approvals/[requestId]. Two postures:
@@ -28,10 +31,9 @@
 
 import { auth } from '@clerk/nextjs/server';
 import { getActiveClientRow } from '@/lib/active-client';
-import {
-  TenantRoleError,
-  requireTenantAdmin,
-} from '@/lib/auth/tenant-roles';
+import { requireTenancy, TenancyError } from '@/lib/auth/tenancy';
+import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
+import type { TenancyCtx } from '@/lib/programs/types.db';
 
 export interface AdminAuthCtx {
   userId: string;
@@ -53,6 +55,35 @@ export class AdminAuthError extends Error {
   }
 }
 
+async function resolveAdminAuthCtx(): Promise<AdminAuthCtx & { tenancy: TenancyCtx }> {
+  const session = await auth();
+  if (!session.userId) {
+    throw new AdminAuthError(401, 'unauthenticated');
+  }
+  const client = await getActiveClientRow();
+  if (!client) {
+    throw new AdminAuthError(403, 'no_tenant');
+  }
+
+  try {
+    const tenancy = await requireTenancy();
+    return {
+      userId: tenancy.userId,
+      tenantKey: client.key,
+      isAdmin: false,
+      tenancy,
+    };
+  } catch (err) {
+    if (err instanceof TenancyError) {
+      throw new AdminAuthError(
+        err.code === 'unauthenticated' ? 401 : 403,
+        err.code === 'unauthenticated' ? 'unauthenticated' : 'no_tenant',
+      );
+    }
+    throw err;
+  }
+}
+
 /**
  * Read posture · authenticated user with an active tenant.
  *
@@ -63,35 +94,24 @@ export class AdminAuthError extends Error {
  * route handler, use `requireTenantAdmin` directly.
  */
 export async function requireAdminAuth(): Promise<AdminAuthCtx> {
-  const session = await auth();
-  if (!session.userId) {
-    throw new AdminAuthError(401, 'unauthenticated');
-  }
-  const client = await getActiveClientRow();
-  if (!client) {
-    throw new AdminAuthError(403, 'no_tenant');
-  }
+  const ctx = await resolveAdminAuthCtx();
 
-  // Probe the tenant-admin posture without throwing — `isAdmin` here
+  // Probe the DB-backed admin posture without throwing — `isAdmin` here
   // is informational for callers that surface admin-only affordances.
   let isAdmin = false;
   try {
-    await requireTenantAdmin({
-      userId: session.userId,
-      tenantKey: client.key,
+    const policy = await loadUserProgramAccessPolicy({
+      ...ctx.tenancy,
+      userId: ctx.userId,
     });
-    isAdmin = true;
-  } catch (err) {
-    if (err instanceof TenantRoleError) {
-      isAdmin = false;
-    } else {
-      throw err;
-    }
+    isAdmin = policy.canAdminUsers === true || policy.canApproveGates === true;
+  } catch {
+    isAdmin = false;
   }
 
   return {
-    userId: session.userId,
-    tenantKey: client.key,
+    userId: ctx.userId,
+    tenantKey: ctx.tenantKey,
     isAdmin,
   };
 }
@@ -102,33 +122,15 @@ export async function requireAdminAuth(): Promise<AdminAuthCtx> {
  * 'forbidden_admin_required') otherwise.
  */
 export async function requireAdminDecide(): Promise<AdminAuthCtx> {
-  const session = await auth();
-  if (!session.userId) {
-    throw new AdminAuthError(401, 'unauthenticated');
-  }
-  const client = await getActiveClientRow();
-  if (!client) {
-    throw new AdminAuthError(403, 'no_tenant');
-  }
-
-  try {
-    await requireTenantAdmin({
-      userId: session.userId,
-      tenantKey: client.key,
-    });
-  } catch (err) {
-    if (err instanceof TenantRoleError) {
-      if (err.status === 401) {
-        throw new AdminAuthError(401, 'unauthenticated');
-      }
-      throw new AdminAuthError(403, 'forbidden_admin_required');
-    }
-    throw err;
+  const ctx = await resolveAdminAuthCtx();
+  const policy = await loadUserProgramAccessPolicy(ctx.tenancy);
+  if (policy.canAdminUsers !== true && policy.canApproveGates !== true) {
+    throw new AdminAuthError(403, 'forbidden_admin_required');
   }
 
   return {
-    userId: session.userId,
-    tenantKey: client.key,
+    userId: ctx.userId,
+    tenantKey: ctx.tenantKey,
     isAdmin: true,
   };
 }
