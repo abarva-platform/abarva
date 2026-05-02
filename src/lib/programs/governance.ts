@@ -174,6 +174,7 @@ export async function evaluateGate(
   const charterRow = deliverableRows
     .find((d) => d.deliverable_type_key === 'charter');
   const originationBriefRow = findDeliverable('origination_brief', 'program_seed_brief', 'program_seed');
+  const hasSignedOriginationBrief = isSignedOff(originationBriefRow);
   const designRow = findDeliverable('design_spec', 'design', 'design_brief', 'solution_design', 'operating_model_design');
   const executionRoadmapRow = findDeliverable('execution_roadmap', 'execution_plan', 'roadmap', 'mobilization_roadmap');
   const requirementsTraceRow = findDeliverable('requirements_traceability', 'requirements_design_outcome_trace', 'traceability_matrix');
@@ -248,25 +249,16 @@ export async function evaluateGate(
     let pass = false;
     switch (c.key) {
       case 'program_seed_recorded':
-        pass =
-          isSignedOff(originationBriefRow) ||
-          Boolean(program.archetype) ||
-          typeof latestSeedBrief.matched_pattern_id === 'string' ||
-          typeof latestSeedBrief.classification === 'string' ||
-          typeof latestSeedBrief.function_code === 'string' ||
-          typeof latestSeedBrief.objective_code === 'string' ||
-          typeof latestSeedBrief.topic_code === 'string';
+        // Initial Setup approval only unlocks P0. P0 -> P1 needs the
+        // actual P0 seed artifact signed off; otherwise the button can skip
+        // the Origination work Nexus just coached the user through.
+        pass = hasSignedOriginationBrief;
         break;
       case 'value_hypothesis_seed': {
-        const problem = latestSeedBrief.problem_statement ?? latestSeedBrief.problemStatement;
-        const target = latestSeedBrief.target_outcome ?? latestSeedBrief.targetOutcome;
-        pass = typeof problem === 'string' && problem.trim().length >= 12 &&
-          (typeof target === 'string' ? target.trim().length >= 8 : briefString.includes('target'));
-        if (!pass && isSignedOff(originationBriefRow)) {
-          pass =
-            /\b(problem|trigger|current pain|pain)\b/.test(latestOriginationBriefText) &&
-            /\b(value hypothesis|target outcome|outcome|mechanism)\b/.test(latestOriginationBriefText);
-        }
+        pass =
+          hasSignedOriginationBrief &&
+          /\b(problem|trigger|current pain|pain)\b/.test(latestOriginationBriefText) &&
+          /\b(value hypothesis|target outcome|outcome|mechanism)\b/.test(latestOriginationBriefText);
         break;
       }
       case 'charter_drafted': pass = Boolean(charterRow && charterRow.status !== null); break;

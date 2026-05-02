@@ -221,4 +221,49 @@ describe('evaluateGate', () => {
     );
     expect(result.failedChecks.map((check) => check.check)).not.toContain('discovery_report_signed_off');
   });
+
+  it('blocks P0 to P1 when only the Setup approval snapshot exists', async () => {
+    getProgramByIdMock.mockResolvedValue({
+      id: 'program-1',
+      currentPhase: 0,
+      archetype: 'platform_modernization',
+    });
+    deliverablesFixture = [];
+    participantsFixture = [{ approval_authority: 'sponsor' }];
+    approvalRequestsFixture = [
+      {
+        request_status: 'approved',
+        brief_snapshot: {
+          classification: 'platform_modernization',
+          problem_statement:
+            'Analytics delivery across Epic, claims, coding, prior auth, and VBC is fragmented.',
+          target_outcome:
+            '30% faster analytics delivery with better trust and quality.',
+        },
+      },
+    ];
+    deliverableVersionsFixture = [];
+
+    const result = await evaluateGate(
+      { clientId: 'client-1', userId: 'person-1' },
+      'program-1',
+      0,
+      1,
+    );
+
+    expect(result.pass).toBe(false);
+    expect(result.requiresApproval).toBe(false);
+    expect(result.failedChecks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          check: 'program_seed_recorded',
+          severity: 'hard',
+        }),
+        expect.objectContaining({
+          check: 'value_hypothesis_seed',
+          severity: 'hard',
+        }),
+      ]),
+    );
+  });
 });
