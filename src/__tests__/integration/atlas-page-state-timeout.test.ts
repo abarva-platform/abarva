@@ -19,4 +19,15 @@ describe('AtlasPageStateProvider timeout recovery', () => {
     expect(source).toContain('getAgentTurnTimeoutMs(surface)');
     expect(source).toContain('Nexus response timed out. The turn was not completed; please retry or shorten the request.');
   });
+
+  it('refreshes ask() when surfaceContext changes after stage navigation', () => {
+    const source = fs.readFileSync(
+      path.join(process.cwd(), 'src/components/shell/AtlasPageStateProvider.tsx'),
+      'utf8',
+    );
+
+    const dependencyMatch = source.match(/\[\s*surface,\s*tenantName,\s*stage,\s*surfaceContext,/);
+    expect(dependencyMatch).not.toBeNull();
+    expect(source).toContain('surfaceContext: mergedSurfaceContext');
+  });
 });
