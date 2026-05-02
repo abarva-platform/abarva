@@ -691,6 +691,8 @@ interface TowerIndexPageProps {
    * summary tiles for executive triage.
    */
   cascadeGraphSlot?: ReactNode;
+  /** Live P6 programs that have completed Nexus strategy-to-funding and are now in Tower monitoring setup. */
+  towerHandoffSlot?: ReactNode;
 }
 
 // PR-T · `provenanceSlot` was AgentColumn's audit-trail UI. AgentCanvas
@@ -698,7 +700,7 @@ interface TowerIndexPageProps {
 // embedded chat header is a follow-up. The prop is preserved on the
 // type for caller compatibility but unused in this render.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function TowerIndexPage({ provenanceSlot: _provenanceSlot, portfolioSummarySlot, cascadeGraphSlot }: TowerIndexPageProps = {}) {
+export function TowerIndexPage({ provenanceSlot: _provenanceSlot, portfolioSummarySlot, cascadeGraphSlot, towerHandoffSlot }: TowerIndexPageProps = {}) {
   const [showNewPressure, setShowNewPressure] = useState(false);
   const [synthesisQuote, setSynthesisQuote] = useState(TOWER_INDEX_VIEW.agentQuote);
   const searchParams = useSearchParams();
@@ -784,6 +786,8 @@ export function TowerIndexPage({ provenanceSlot: _provenanceSlot, portfolioSumma
             onLoaded={setSynthesisQuote}
           />
         </div>
+
+        {towerHandoffSlot}
 
         <details
           data-testid="tower-legacy-grid"
