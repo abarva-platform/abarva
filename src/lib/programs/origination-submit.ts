@@ -343,6 +343,7 @@ export async function submitOriginationBrief(
       topic_code: derived.topicCode,
       name: input.programName,
       sponsor_person_id: sponsor.id,
+      maestro_person_id: lead.id,
       status: 'draft',
       lifecycle_state: 'submitted_for_approval',
       current_phase: 0,

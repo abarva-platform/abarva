@@ -24,6 +24,10 @@ export interface EngagementPhaseData {
     current_phase: number | null;
     program_archetype: string | null;
     maestro_oversight_level: string | null;
+    sponsor_person_id: string | null;
+    maestro_person_id: string | null;
+    sponsor: { name: string; role: string | null } | null;
+    lead: { name: string; role: string | null } | null;
     program_milestones: Array<{
       id: string;
       name: string;
@@ -91,6 +95,8 @@ export async function getEngagementWithPhaseData(
         current_phase,
         program_archetype,
         maestro_oversight_level,
+        sponsor_person_id,
+        maestro_person_id,
         program_milestones(id, name, status, target_date, phase_number),
         program_risks(id, title, likelihood, impact, status, phase_number)
       `)
@@ -99,6 +105,29 @@ export async function getEngagementWithPhaseData(
     const { data: engagement, error: engError } = await query.single();
 
     if (engError || !engagement) return null;
+
+    const engagementRow = engagement as EngagementPhaseData['engagement'];
+    const personIds = [
+      engagementRow.sponsor_person_id,
+      engagementRow.maestro_person_id,
+    ].filter((value): value is string => Boolean(value));
+    let peopleById = new Map<string, { name: string; role: string | null }>();
+    if (personIds.length > 0) {
+      const { data: people } = await supabase
+        .from('persons')
+        .select('id, name, role')
+        .in('id', personIds);
+      peopleById = new Map(
+        ((people as Array<{ id: string; name: string; role: string | null }> | null) ?? [])
+          .map((person) => [person.id, { name: person.name, role: person.role }]),
+      );
+    }
+    engagementRow.sponsor = engagementRow.sponsor_person_id
+      ? peopleById.get(engagementRow.sponsor_person_id) ?? null
+      : null;
+    engagementRow.lead = engagementRow.maestro_person_id
+      ? peopleById.get(engagementRow.maestro_person_id) ?? null
+      : null;
 
     // Evidence linked by related_entity_id — this is the real schema shape
     const { data: evidence } = await supabase
@@ -135,7 +164,7 @@ export async function getEngagementWithPhaseData(
       .eq('engagement_id', engagementId);
 
     return {
-      engagement: engagement as EngagementPhaseData['engagement'],
+      engagement: engagementRow,
       evidence: (evidence as EngagementPhaseData['evidence'] | null) ?? [],
       gateApprovals,
       modules: (modules as EngagementPhaseData['modules'] | null) ?? [],
