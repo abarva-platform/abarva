@@ -2,21 +2,25 @@
 
 // J0AffordanceLink · INT-1.5
 //
-// Tiny client wrapper around next/link for the two J0 page-header
-// affordances ("Browse topics →" and "Open Sentinel →"). Captures
-// the click as a CustomEvent so J0TelemetryBridge can forward it
-// to PostHog. Keeps IntelligenceIndexPage as a server component.
+// Tiny client wrapper around next/link for J0 landing affordances.
+// Captures the click as a CustomEvent so J0TelemetryBridge can forward
+// it to PostHog. Keeps IntelligenceIndexPage as a server component.
 
-import { useState, useCallback, type ReactNode } from 'react';
+import {
+  useState,
+  useCallback,
+  type CSSProperties,
+  type ReactNode,
+} from 'react';
 import Link from 'next/link';
 
 export interface J0AffordanceLinkProps {
   href: string;
-  affordance: 'browse_topics' | 'open_sentinel';
-  testid: string;
+  affordance: string;
+  testid?: string;
   children: ReactNode;
   /** Pass-through inline style for layout. */
-  style?: React.CSSProperties;
+  style?: CSSProperties;
 }
 
 export function J0AffordanceLink({
