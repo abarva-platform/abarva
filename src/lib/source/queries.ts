@@ -7,14 +7,19 @@ import {
 } from './mock-seed';
 import type {
   AbarvaSourceDashboardData,
+  SourceAlert,
   SourceArtifactDetail,
+  SourceArtifactSummary,
+  SourceDataReadinessItem,
   SourceStageKey,
+  ValueLedgerEntry,
   SourceValueLedgerSnapshot,
   SourcingEventDetail,
   SourcingEventSummary,
+  WorkflowStage,
 } from './types';
 import { getStageOverride } from './stage-overrides';
-import { SOURCE_LIFECYCLE_STATUS_LABELS, SOURCE_STAGE_LABELS } from './constants';
+import { SOURCE_LIFECYCLE_STATUS_LABELS, SOURCE_STAGE_LABELS, SOURCE_STAGE_ORDER } from './constants';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { getActiveClientRow } from '@/lib/active-client';
 import { requireTenancy } from '@/lib/auth/tenancy';
@@ -165,7 +170,7 @@ function seedEventMatchesClient(event: SourcingEventSummary, clientKey: string):
   return false;
 }
 
-function sourceEventRowToSummary(row: SourceEventRow, accountName: string): SourcingEventSummary {
+export function sourceEventRowToSummary(row: SourceEventRow, accountName: string): SourcingEventSummary {
   const stageKey = isSourceStageKey(row.current_stage_key) ? row.current_stage_key : 'intake';
   const status = isSourceLifecycleStatus(row.lifecycle_state) ? row.lifecycle_state : 'waiting_on_client';
   const valueAtStakeUsd = row.estimated_value_usd ?? 0;
@@ -201,6 +206,22 @@ function sourceEventRowToSummary(row: SourceEventRow, accountName: string): Sour
   };
 }
 
+async function getPersistedSourceEventRow(eventId: string, clientKey: string): Promise<SourceEventRow | null> {
+  const { data, error } = await getServerSupabase()
+    .from('source_events')
+    .select('*')
+    .eq('id', eventId)
+    .eq('client_key', clientKey)
+    .maybeSingle();
+
+  if (error) {
+    console.error('[getPersistedSourceEventRow]', error.message);
+    return null;
+  }
+
+  return (data as SourceEventRow | null) ?? null;
+}
+
 function formatSourceEventType(eventType: string): string {
   return eventType
     .split(/[_-]+/)
@@ -232,6 +253,13 @@ export async function getSourcingEvent(eventId: string): Promise<SourcingEventDe
     return null;
   }
 
+  if (activeClient) {
+    const persistedEvent = await getPersistedSourceEventRow(eventId, activeClient.key);
+    if (persistedEvent) {
+      return sourceEventRowToDetail(persistedEvent, activeClient.name);
+    }
+  }
+
   const event = getSourceEventSeed(eventId);
   if (!event) return null;
   const override = getStageOverride(eventId);
@@ -243,6 +271,210 @@ export async function getSourcingEvent(eventId: string): Promise<SourcingEventDe
     };
   }
   return event;
+}
+
+export function sourceEventRowToDetail(row: SourceEventRow, accountName: string): SourcingEventDetail {
+  const summary = sourceEventRowToSummary(row, accountName);
+  const trigger = row.trigger_description || 'Trigger not captured yet.';
+  const scope = row.scope_description || 'Scope boundary not captured yet.';
+  const owner = row.decision_owner || 'Decision owner pending';
+
+  return {
+    ...summary,
+    synopsis: `${summary.name} is a persisted Source event for ${accountName}. Nexus is tracking intake, evidence, artifacts, approvals, and value from the live source_events row.`,
+    problemStatement: trigger,
+    stages: buildWorkflowStagesForRow(row),
+    alerts: buildAlertsForRow(row),
+    artifacts: buildArtifactsForRow(row),
+    scorecard: {
+      decisionOwner: owner,
+      reviewCadence: 'Stage-gate review at each Source transition.',
+      approvalState: summary.status === 'waiting_on_client' ? 'in_review' : 'default_generated',
+      criteria: [
+        {
+          id: `${row.id}:scope-boundary`,
+          label: 'Scope boundary named',
+          ownerRole: 'Sourcing lead',
+          required: true,
+          status: row.scope_description ? 'ready' : 'draft',
+          note: scope,
+        },
+        {
+          id: `${row.id}:decision-owner`,
+          label: 'Decision owner identified',
+          ownerRole: 'Tenant admin',
+          required: true,
+          status: row.decision_owner ? 'ready' : 'draft',
+          note: owner,
+        },
+        {
+          id: `${row.id}:business-trigger`,
+          label: 'Business trigger documented',
+          ownerRole: 'Nexus',
+          required: true,
+          status: row.trigger_description ? 'ready' : 'draft',
+          note: trigger,
+        },
+      ],
+    },
+    valueLedger: {
+      updatedAt: row.updated_at,
+      projected: buildValueLedgerForRow(row, 'projected'),
+      realized: buildValueLedgerForRow(row, 'realized'),
+    },
+    dataReadiness: buildDataReadinessForRow(row),
+  };
+}
+
+function buildWorkflowStagesForRow(row: SourceEventRow): WorkflowStage[] {
+  const currentIndex = Math.max(0, SOURCE_STAGE_ORDER.indexOf(
+    isSourceStageKey(row.current_stage_key) ? row.current_stage_key : 'intake',
+  ));
+  const waitingForApproval = row.lifecycle_state === 'waiting_on_client';
+
+  return SOURCE_STAGE_ORDER.map((stageKey, index) => {
+    const isCurrent = index === currentIndex;
+    const isPast = index < currentIndex;
+    return {
+      key: stageKey,
+      label: SOURCE_STAGE_LABELS[stageKey],
+      status: isCurrent && waitingForApproval ? 'needs_approval' : isCurrent ? 'active' : isPast ? 'complete' : 'not_started',
+      summary: stageSummary(stageKey, row),
+      gate: {
+        id: `${row.id}:${stageKey}:gate`,
+        label: `${SOURCE_STAGE_LABELS[stageKey]} gate`,
+        status: isPast ? 'approved' : isCurrent && waitingForApproval ? 'in_review' : isCurrent ? 'ready' : 'not_started',
+        ownerRole: stageKey === 'value_realization' ? 'Value owner' : 'Tenant admin',
+        requiredArtifacts: requiredArtifactsForStage(stageKey),
+        blocker: isCurrent && waitingForApproval
+          ? 'Tenant admin approval required before this Source event can proceed.'
+          : null,
+      },
+    };
+  });
+}
+
+function stageSummary(stageKey: SourceStageKey, row: SourceEventRow): string {
+  const scope = row.scope_description || 'scope boundary pending';
+  const trigger = row.trigger_description || 'business trigger pending';
+  const owner = row.decision_owner || 'decision owner pending';
+  const summaries: Record<SourceStageKey, string> = {
+    intake: `Register trigger, owner, and first scope edge. Current trigger: ${trigger}.`,
+    scope: `Shape the sourcing boundary and baseline evidence. Current scope: ${scope}.`,
+    sourcing_strategy: `Convert intake into sourcing strategy, value thesis, and route to market.`,
+    rfp_rfi_package: `Assemble RFP/RFI package, timeline, templates, and evaluation criteria.`,
+    vendor_responses: `Capture vendor submissions, Q&A, exceptions, and evidence attachments.`,
+    evaluation: `Score vendors against the approved framework and document rationale.`,
+    orals_bafo: `Run orals/BAFO prep, commercial traps, and negotiation asks.`,
+    selection: `Prepare decision packet and selection recommendation for ${owner}.`,
+    contract_mobilization: `Track contract, onboarding, transition, and Tower handoff setup.`,
+    value_realization: `Measure realized value against the committed sourcing case.`,
+  };
+  return summaries[stageKey];
+}
+
+function requiredArtifactsForStage(stageKey: SourceStageKey): string[] {
+  const artifacts: Record<SourceStageKey, string[]> = {
+    intake: ['Intake record', 'Decision owner', 'Scope boundary'],
+    scope: ['Scope document', 'Baseline evidence', 'Stakeholder map'],
+    sourcing_strategy: ['Sourcing strategy memo', 'Vendor approach', 'Value hypothesis'],
+    rfp_rfi_package: ['RFP/RFI package', 'Pricing template', 'Evaluation criteria'],
+    vendor_responses: ['Vendor response register', 'Q&A log', 'Exception tracker'],
+    evaluation: ['Scorecard', 'Evaluator rationale', 'Shortlist recommendation'],
+    orals_bafo: ['BAFO pack', 'Negotiation prep', 'Commercial risk register'],
+    selection: ['Executive decision brief', 'Selection memo', 'Approval record'],
+    contract_mobilization: ['Transition checklist', 'Contracting status', 'Tower handoff'],
+    value_realization: ['Value ledger', 'KPI feed plan', 'Closeout criteria'],
+  };
+  return artifacts[stageKey];
+}
+
+function buildArtifactsForRow(row: SourceEventRow): SourceArtifactSummary[] {
+  const stageKey = isSourceStageKey(row.current_stage_key) ? row.current_stage_key : 'intake';
+  return [
+    {
+      id: `${row.id}:intake-record`,
+      title: 'Source intake record',
+      kind: 'charter',
+      status: row.lifecycle_state === 'waiting_on_client' ? 'needs_review' : 'draft',
+      tier: 'outline',
+      summary: row.trigger_description || 'Trigger and business context are still being captured.',
+      sourceCount: [row.trigger_description, row.scope_description, row.decision_owner].filter(Boolean).length,
+      updatedAt: row.updated_at,
+    },
+    {
+      id: `${row.id}:${stageKey}:packet`,
+      title: `${SOURCE_STAGE_LABELS[stageKey]} working packet`,
+      kind: 'artifact_packet',
+      status: 'draft',
+      tier: 'stub',
+      summary: 'Generated from the persisted Source event spine; richer content appears as evidence and uploads are attached.',
+      sourceCount: 1,
+      updatedAt: row.updated_at,
+    },
+  ];
+}
+
+function buildAlertsForRow(row: SourceEventRow): SourceAlert[] {
+  const alerts: SourceAlert[] = [];
+  if (row.lifecycle_state === 'waiting_on_client') {
+    alerts.push({
+      id: `${row.id}:approval-needed`,
+      title: 'Admin approval needed',
+      detail: 'Tenant admin approval is required before the event becomes active.',
+      severity: 'warning',
+      status: 'open',
+    });
+  }
+  if (!row.scope_description) {
+    alerts.push({
+      id: `${row.id}:scope-gap`,
+      title: 'Scope boundary incomplete',
+      detail: 'Nexus needs the first application, tower, vendor, or service boundary before market work begins.',
+      severity: 'info',
+      status: 'open',
+    });
+  }
+  return alerts;
+}
+
+function buildValueLedgerForRow(row: SourceEventRow, kind: ValueLedgerEntry['kind']): ValueLedgerEntry[] {
+  if (kind === 'realized' || !row.estimated_value_usd) return [];
+  return [
+    {
+      id: `${row.id}:projected-value`,
+      eventId: row.id,
+      eventName: row.event_name,
+      kind,
+      label: 'Projected sourcing value',
+      stageKey: isSourceStageKey(row.current_stage_key) ? row.current_stage_key : 'intake',
+      amountUsd: row.estimated_value_usd,
+      confidence: 'low',
+      evidenceCount: 1,
+      note: 'Intake estimate only; exact financial output remains governed by user financial visibility.',
+    },
+  ];
+}
+
+function buildDataReadinessForRow(row: SourceEventRow): SourceDataReadinessItem[] {
+  return [
+    {
+      id: `${row.id}:baseline-evidence`,
+      category: 'Baseline evidence',
+      requirementLevel: 'required',
+      readinessState: row.scope_description ? 'Requested' : 'Missing',
+      evidenceUsability: row.scope_description ? 'available_not_validated' : 'not_available',
+      owner: row.decision_owner || 'Sourcing lead',
+      sourceSystemOrFile: 'Source intake',
+      lastUpdated: row.updated_at,
+      confidence: row.scope_description ? 'medium' : 'low',
+      workflowImpact: 'Baseline evidence determines whether Scope and RFP work can proceed with auditability.',
+      agentRecommendation: row.scope_description
+        ? 'Attach supporting inventory, contract, or workshop output to validate the stated scope.'
+        : 'Capture the first scope boundary and upload baseline evidence before vendor outreach.',
+      stewardAdminHandoffLabel: 'Evidence validation',
+    },
+  ];
 }
 
 export async function getSourcingEventArtifact(eventId: string, artifactId: string): Promise<SourceArtifactDetail | null> {
