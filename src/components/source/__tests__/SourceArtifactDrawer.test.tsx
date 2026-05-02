@@ -126,6 +126,14 @@ describe('SourceArtifactDrawer · shell', () => {
     );
     expect(html).toContain('Deterministic seeded artifact shell only');
   });
+
+  it('uses Nexus language for the disabled artifact prompt', () => {
+    const html = renderToStaticMarkup(
+      createElement(SourceArtifactDrawer, { artifact: BASE_ARTIFACT }),
+    );
+    expect(html).toContain('Ask Nexus about this artifact, evidence chain, or source version');
+    expect(html).not.toContain('Ask Sentinel about this artifact');
+  });
 });
 
 // ---------------------------------------------------------------------------
