@@ -2358,10 +2358,10 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
     evidence?: UploadEvidenceResult | null;
   } | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [pastedNotes, setPastedNotes] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const uploadFile = async (file: File) => {
     if (!file || uploadState) return;
 
     setUploadError(null);
@@ -2400,6 +2400,24 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
       setUploadError('Upload failed — network error');
       return;
     }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await uploadFile(file);
+  };
+
+  const handlePastedNotesCapture = async () => {
+    const trimmed = pastedNotes.trim();
+    if (uploadState) return;
+    if (trimmed.length < 20) {
+      setUploadError('Paste at least a few lines of notes before capturing evidence.');
+      return;
+    }
+    const filename = `pasted-workshop-notes-${new Date().toISOString().slice(0, 10)}.txt`;
+    const file = new File([`${trimmed}\n`], filename, { type: 'text/plain' });
+    await uploadFile(file);
   };
 
   const progressPct =
@@ -2548,6 +2566,94 @@ function FileUploadOverlay({ programName, programId, onClose }: FileUploadOverla
                 {uploadError}
               </div>
             )}
+            <div
+              style={{
+                margin: '24px',
+                borderTop: `1px solid ${SHELL.CARD_LINE}`,
+                paddingTop: 18,
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: SHELL.MONO,
+                  fontSize: 9,
+                  fontWeight: 700,
+                  letterSpacing: '0.14em',
+                  textTransform: 'uppercase',
+                  color: SHELL.INK_MUTED,
+                  marginBottom: 8,
+                }}
+              >
+                Paste workshop notes
+              </div>
+              <textarea
+                aria-label="Paste workshop notes"
+                value={pastedNotes}
+                onChange={(event) => setPastedNotes(event.target.value)}
+                placeholder="Paste meeting notes, workshop outputs, decisions, action items, risks, or baseline observations..."
+                style={{
+                  width: '100%',
+                  minHeight: 130,
+                  resize: 'vertical',
+                  border: `1px solid ${SHELL.CARD_LINE}`,
+                  borderRadius: 8,
+                  background: SHELL.CARD_WHITE,
+                  color: SHELL.INK,
+                  fontFamily: SHELL.SANS,
+                  fontSize: 12,
+                  lineHeight: 1.5,
+                  padding: 12,
+                  boxSizing: 'border-box',
+                  outline: 'none',
+                }}
+              />
+              <button
+                type="button"
+                onClick={handlePastedNotesCapture}
+                disabled={pastedNotes.trim().length < 20 || Boolean(uploadState)}
+                style={{
+                  marginTop: 10,
+                  width: '100%',
+                  fontFamily: SHELL.MONO,
+                  fontSize: 10,
+                  color:
+                    pastedNotes.trim().length >= 20 && !uploadState
+                      ? SHELL.PAPER
+                      : SHELL.GRAY_TEXT,
+                  background:
+                    pastedNotes.trim().length >= 20 && !uploadState
+                      ? SHELL.INK
+                      : SHELL.GRAY_BG,
+                  border: `1px solid ${
+                    pastedNotes.trim().length >= 20 && !uploadState
+                      ? SHELL.INK
+                      : SHELL.GRAY_LINE
+                  }`,
+                  borderRadius: 7,
+                  padding: '10px 12px',
+                  cursor:
+                    pastedNotes.trim().length >= 20 && !uploadState
+                      ? 'pointer'
+                      : 'not-allowed',
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Capture pasted notes as evidence
+              </button>
+              <div
+                style={{
+                  marginTop: 8,
+                  fontFamily: SHELL.SANS,
+                  fontSize: 11,
+                  color: SHELL.INK_MUTED,
+                  lineHeight: 1.45,
+                }}
+              >
+                Pasted notes are saved as a text attachment and parsed into the
+                evidence ledger immediately.
+              </div>
+            </div>
           </>
         ) : (
           <div style={{ padding: '24px 24px 0' }}>
