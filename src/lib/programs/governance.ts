@@ -231,13 +231,21 @@ export async function evaluateGate(
 
   const discoveryReportNamesFutureGateRisk =
     /\bbefore p2 gate close\b/.test(latestDiscoveryReportText) ||
+    /\bat p2 entry\b/.test(latestDiscoveryReportText) ||
+    /\bfor p2 entry resolution\b/.test(latestDiscoveryReportText) ||
+    /\bbefore p2 scoping begins\b/.test(latestDiscoveryReportText) ||
     /\bbefore synthesis (?:wraps|closes)\b/.test(latestDiscoveryReportText) ||
     /\bwill block p2[→-]p3\b/.test(latestDiscoveryReportText) ||
     /\bbecomes a hard blocker at p2[→-]p3\b/.test(latestDiscoveryReportText) ||
-    /\bp2 architecture trade-?off\b/.test(latestDiscoveryReportText);
+    /\bp2 architecture trade-?off\b/.test(latestDiscoveryReportText) ||
+    /\bnot blocking (?:advance|the gate|gate advancement)\b/.test(latestDiscoveryReportText) ||
+    /\bdoes not block (?:advance|the gate|gate advancement)\b/.test(latestDiscoveryReportText);
+  const discoveryReportExplicitlyClearsHardGaps =
+    /\b(?:no|zero)\s+(?:open\s+|unresolved\s+)?hard (?:evidence )?gaps?\b/.test(latestDiscoveryReportText) ||
+    /\bwithout\s+(?:open\s+|unresolved\s+)?hard (?:evidence )?gaps?\b/.test(latestDiscoveryReportText);
   const discoveryReportHasHardGap =
-    /\bhard gaps?\b/.test(latestDiscoveryReportText) ||
-    /\bhard evidence gaps?\b/.test(latestDiscoveryReportText) ||
+    (/\bhard gaps?\b/.test(latestDiscoveryReportText) && !discoveryReportExplicitlyClearsHardGaps) ||
+    (/\bhard evidence gaps?\b/.test(latestDiscoveryReportText) && !discoveryReportExplicitlyClearsHardGaps) ||
     /\bdo not advance\b/.test(latestDiscoveryReportText) ||
     /\bhold on\b/.test(latestDiscoveryReportText) ||
     (
