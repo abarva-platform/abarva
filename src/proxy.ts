@@ -39,12 +39,13 @@ const maestroRoutes = createRouteMatcher([
 // Routes that require any authenticated session. /admin(.*) still listed
 // because redirects run in edge routing but leaving the auth matcher is
 // belt-and-suspenders in case the redirect misses.
-const authRequiredRoutes = createRouteMatcher([
+export const AUTH_REQUIRED_ROUTE_PATTERNS = [
   '/admin(.*)',
   '/maestro(.*)',
   '/home(.*)',
   '/dashboard(.*)',
   '/engagements(.*)',
+  '/programs(.*)',
   '/engage/(.*)',
   '/users/(.*)',
   '/data(.*)',
@@ -62,7 +63,9 @@ const authRequiredRoutes = createRouteMatcher([
   '/intelligence/ask(.*)',
   '/intelligence/validate(.*)',
   '/source(.*)',
-])
+] as const
+
+const authRequiredRoutes = createRouteMatcher([...AUTH_REQUIRED_ROUTE_PATTERNS])
 
 function createSignInRedirect(request: NextRequest) {
   const url = new URL('/sign-in', request.url)
