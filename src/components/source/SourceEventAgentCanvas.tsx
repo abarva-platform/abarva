@@ -25,10 +25,10 @@ interface SourceEventAgentCanvasProps {
   canViewFinancialValues?: boolean;
 }
 
-const SENTINEL_AGENT = {
-  initials: 'Sn',
-  name: 'Sentinel',
-  role: 'Sourcing Intelligence',
+const NEXUS_EVENT_AGENT = {
+  initials: 'Nx',
+  name: 'Nexus',
+  role: 'Source Orchestrator',
 } as const;
 
 export function SourceEventAgentCanvas({
@@ -89,7 +89,7 @@ export function SourceEventAgentCanvas({
     >
       <main
         data-testid="source-event-agent-canvas"
-        aria-label="Sentinel source event canvas"
+        aria-label="Nexus source event canvas"
         style={{
           flex: 1,
           minWidth: 0,
@@ -127,7 +127,7 @@ export function SourceEventAgentCanvas({
                       onClose={() => {
                         // Embedded Source event workspace stays visible; it is not a drawer overlay.
                       }}
-                      agent={SENTINEL_AGENT}
+                      agent={NEXUS_EVENT_AGENT}
                       quote={safeQuote}
                       surface="/source"
                       onArtifact={handleArtifact}

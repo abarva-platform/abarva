@@ -167,3 +167,11 @@ locks:
     expires_at: "2026-05-02T18:30:00-05:00"
     note: "Narrow Home cockpit card polish for keyboard focus visibility, link affordance, and responsive card rhythm. Avoids Source API, lifecycle, stage, and data files."
     completed_at: "2026-05-02T14:49:14-05:00"
+
+  - owner: codex-source-event-agent-identity-polish
+    resource: source-event-agent-identity-ui
+    status: completed
+    started_at: "2026-05-02T15:00:00-05:00"
+    expires_at: "2026-05-02T20:45:00-05:00"
+    note: Aligns Source event-canvas visible agent identity, aria labels, and prompt copy after Nexus action polish. No Source lifecycle/data/API changes.
+    completed_at: "2026-05-02T15:06:00-05:00"
