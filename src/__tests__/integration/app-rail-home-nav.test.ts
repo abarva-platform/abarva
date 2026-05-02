@@ -42,6 +42,15 @@ describe("Cockpit shell navigation contract", () => {
     expect(appTopBarSource).toContain("getAtriumProductNavLabel");
   });
 
+  it("keeps top navigation keyboard-visible and responsive", () => {
+    expect(appTopBarSource).toContain("app-top-bar__nav-link:focus-visible");
+    expect(appTopBarSource).toContain("app-top-bar__sign-out:focus-visible");
+    expect(appTopBarSource).toContain("scroll-snap-type: x proximity");
+    expect(appTopBarSource).toContain("@media (max-width: 960px)");
+    expect(appTopBarSource).toContain("@media (max-width: 430px)");
+    expect(appTopBarSource).toContain('aria-label="Sign out"');
+  });
+
   it("keeps top bar free of duplicated workspace clutter", () => {
     expect(appTopBarSource).not.toContain("tenantName =");
     expect(appTopBarSource).not.toContain("timeString ?");

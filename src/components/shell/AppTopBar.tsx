@@ -206,6 +206,100 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps) {
             display: none !important;
           }
         }
+
+        .app-top-bar__nav {
+          -webkit-overflow-scrolling: touch;
+          scroll-snap-type: x proximity;
+        }
+
+        .app-top-bar__nav::-webkit-scrollbar {
+          display: none;
+        }
+
+        .app-top-bar__nav-link {
+          scroll-snap-align: center;
+          outline: none;
+          transition:
+            color 160ms ease,
+            background 160ms ease,
+            box-shadow 160ms ease,
+            transform 160ms ease;
+        }
+
+        .app-top-bar__nav-link:hover {
+          color: ${SHELL.INK} !important;
+          background: rgba(12, 26, 58, 0.045);
+        }
+
+        .app-top-bar__nav-link:focus-visible,
+        .app-top-bar__sign-out:focus-visible,
+        .app-top-bar__sign-in:focus-visible {
+          outline: 2px solid #0b4a91;
+          outline-offset: 3px;
+          box-shadow: 0 0 0 5px rgba(11, 74, 145, 0.14);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .app-top-bar__nav-link {
+            transition: none;
+          }
+        }
+
+        @media (max-width: 960px) {
+          .app-top-bar {
+            gap: 12px !important;
+            padding-inline: 18px !important;
+          }
+
+          .app-top-bar__left {
+            gap: 14px !important;
+          }
+
+          .app-top-bar__nav {
+            max-width: calc(100vw - 294px);
+            mask-image: linear-gradient(
+              90deg,
+              transparent 0,
+              #000 16px,
+              #000 calc(100% - 16px),
+              transparent 100%
+            );
+          }
+
+          .app-top-bar__account-name {
+            max-width: 112px !important;
+          }
+        }
+
+        @media (max-width: 720px) {
+          .app-top-bar__nav {
+            max-width: 100%;
+            mask-image: linear-gradient(
+              90deg,
+              #000 0,
+              #000 calc(100% - 22px),
+              transparent 100%
+            );
+          }
+        }
+
+        @media (max-width: 430px) {
+          .app-top-bar__sign-out-text {
+            display: none;
+          }
+
+          .app-top-bar__sign-out {
+            width: 34px;
+            height: 34px;
+            padding: 0 !important;
+          }
+
+          .app-top-bar__sign-out::before {
+            content: "Out";
+            font-size: 10px;
+            letter-spacing: 0.04em;
+          }
+        }
       `}</style>
       <div
         className="app-top-bar__left"
@@ -248,6 +342,7 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps) {
               const active = item.match(pathname);
               return (
                 <Link
+                  className="app-top-bar__nav-link"
                   key={item.key}
                   href={item.href}
                   aria-current={active ? "page" : undefined}
@@ -266,6 +361,7 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps) {
                     letterSpacing: "-0.01em",
                     textDecoration: "none",
                     whiteSpace: "nowrap",
+                    WebkitTapHighlightColor: "transparent",
                   }}
                 >
                   {item.label}
@@ -346,8 +442,10 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps) {
               </span>
             </div>
             <button
+              className="app-top-bar__sign-out"
               type="button"
               onClick={handleSignOut}
+              aria-label="Sign out"
               style={{
                 border: `1px solid ${SHELL.CARD_LINE}`,
                 borderRadius: 999,
@@ -361,11 +459,12 @@ export function AppTopBar({ showProductNav = true }: AppTopBarProps) {
                 padding: "8px 12px",
               }}
             >
-              Sign out
+              <span className="app-top-bar__sign-out-text">Sign out</span>
             </button>
           </>
         ) : (
           <Link
+            className="app-top-bar__sign-in"
             href="/sign-in"
             style={{
               border: `1px solid ${SHELL.CARD_LINE}`,
