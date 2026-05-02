@@ -115,4 +115,34 @@ describe('complete_deliverable tool', () => {
       expect.objectContaining({ signOff: false }),
     );
   });
+
+  it('allows P1 discovery artifacts that Nexus asks to save during live crawl', async () => {
+    requireTenancyMock.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+    completeDeliverableMock.mockResolvedValue({
+      deliverableId: 'deliv-3',
+      versionId: 'version-3',
+      status: 'draft',
+    });
+
+    const result = await completeDeliverableTool.handler(
+      {
+        program_id: 'program-1',
+        deliverable_type_key: 'stakeholder_map',
+        title: 'P1 Stakeholder Map',
+        content: 'Draft stakeholder map content',
+        sign_off: false,
+      },
+      makeCtx(),
+    );
+
+    expect(result.success).toBe(true);
+    expect(completeDeliverableMock).toHaveBeenCalledWith(
+      expect.anything(),
+      'program-1',
+      expect.objectContaining({
+        deliverableTypeKey: 'stakeholder_map',
+        signOff: false,
+      }),
+    );
+  });
 });
