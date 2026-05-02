@@ -1,4 +1,4 @@
-updated_at: "2026-05-02T17:24:00-05:00"
+updated_at: "2026-05-02T17:45:00-05:00"
 
 locks:
   - owner: codex-source-e2e-crawler
@@ -183,3 +183,11 @@ locks:
     expires_at: "2026-05-02T21:00:00-05:00"
     note: Aligns remaining Source portfolio reactive card and artifact drawer prompt language to Nexus. No Source lifecycle, persistence, gate, or data-plane changes.
     completed_at: "2026-05-02T17:24:00-05:00"
+
+  - owner: codex-source-events-tooltip-nexus-polish
+    resource: source-events-tooltip-copy-ui
+    status: completed
+    started_at: "2026-05-02T17:38:00-05:00"
+    expires_at: "2026-05-02T21:15:00-05:00"
+    note: Aligns Source events portfolio disabled-submit tooltip to Nexus front-door language. No Source lifecycle, persistence, gate, or data-plane changes.
+    completed_at: "2026-05-02T17:45:00-05:00"

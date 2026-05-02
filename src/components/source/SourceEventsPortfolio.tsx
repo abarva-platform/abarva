@@ -340,7 +340,7 @@ export function SourceEventsPortfolio({
                   type="button"
                   disabled
                   aria-disabled="true"
-                  title="Open a Source event to talk to Sentinel. Portfolio Nexus runtime is deferred."
+                  title="Open a Source event to talk to Nexus. Portfolio Nexus runtime is deferred."
                   style={{
                     ...SOURCE_ACTION_LINK_SECONDARY,
                     whiteSpace: 'nowrap',
