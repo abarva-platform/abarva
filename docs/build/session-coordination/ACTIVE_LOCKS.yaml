@@ -1,12 +1,13 @@
-updated_at: "2026-05-02T15:41:00-05:00"
+updated_at: "2026-05-02T15:45:00-05:00"
 
 locks:
   - owner: codex-source-e2e-crawler
     resource: source-module-e2e-crawler
-    status: active
+    status: completed
     started_at: "2026-05-02T07:46:19-05:00"
     expires_at: "2026-05-02T18:00:00-05:00"
     note: Production Source capability crawler. Other lanes should avoid Source API, lifecycle, stage, and data files unless coordinating explicitly.
+    completed_at: "2026-05-02T15:45:00-05:00"
 
   - owner: codex-canonical-v2-foundation
     resource: atrium-contract-registry
