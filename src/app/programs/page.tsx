@@ -12,6 +12,7 @@ import { getProgramPortfolio } from '@/lib/programs/queries';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 import { requireProductModule } from '@/lib/auth/server-module-access';
+import { getLiveProgramDisplayId } from '@/lib/programs/live-program-display';
 import type { ProgramPhaseId, ProgramRow } from '@/lib/programs/programs-types';
 
 export const metadata = {
@@ -101,7 +102,7 @@ export default async function ProgramsPage() {
           if (!fixtureIds.has(p.id)) {
             newPrograms.push({
               id: p.id,
-              displayId: p.id.toUpperCase().slice(0, 12),
+              displayId: getLiveProgramDisplayId(currentPhase),
               name: p.name,
               currentPhase,
               phases: buildPhaseSlots(currentPhase),

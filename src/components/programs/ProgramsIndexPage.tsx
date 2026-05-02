@@ -439,6 +439,7 @@ export function ProgramsIndexPage({ view, hasTenantKey = false }: ProgramsIndexP
         </div>
 
         <details
+          open
           data-testid="programs-index-legacy"
           style={{
             margin: '0 28px 28px',
