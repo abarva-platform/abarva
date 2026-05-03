@@ -12,6 +12,9 @@ const resolveMaestroFlag = jest.fn();
 const blockWorkItem = jest.fn();
 const markWorkItemNexusDrafted = jest.fn();
 const updateWorkItemStatus = jest.fn();
+const canReadProgram = jest.fn();
+const allowedProgramIdsForUser = jest.fn();
+const loadUserProgramAccessPolicy = jest.fn();
 
 jest.mock('@/app/api/v1/programs/_auth', () => ({
   requireTenancy,
@@ -23,6 +26,12 @@ jest.mock('@/app/api/v1/programs/_auth', () => ({
 jest.mock('@/lib/programs/queries', () => ({
   getProgramPortfolio,
   getProgramById,
+}));
+
+jest.mock('@/lib/auth/program-access-policy', () => ({
+  canReadProgram,
+  allowedProgramIdsForUser,
+  loadUserProgramAccessPolicy,
 }));
 
 jest.mock('@/lib/programs/transformers', () => ({
@@ -54,6 +63,18 @@ describe('Programs auth-mode pilot routes', () => {
     jest.clearAllMocks();
     requireTenancy.mockResolvedValue({ clientId: 'client_meridian', userId: 'person_1', role: 'sponsor' });
     getProgramsRouteSupabase.mockResolvedValue({ mode: 'service_role', supabase: { mocked: true } });
+    canReadProgram.mockResolvedValue(true);
+    allowedProgramIdsForUser.mockResolvedValue(null);
+    loadUserProgramAccessPolicy.mockResolvedValue({
+      tenantRole: 'tenant_member',
+      canCreatePrograms: true,
+      canApprovePrograms: true,
+      canApproveGates: true,
+      financialVisibility: false,
+      modules: [],
+      programIdsAllowed: null,
+      sourceEventIdsAllowed: null,
+    });
   });
 
   it('wraps portfolio GET with route-family auth mode', async () => {
@@ -97,6 +118,18 @@ describe('Programs tenant guard routes', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     requireTenancy.mockResolvedValue({ clientId: 'client_meridian', userId: 'person_1', role: 'sponsor' });
+    canReadProgram.mockResolvedValue(true);
+    allowedProgramIdsForUser.mockResolvedValue(null);
+    loadUserProgramAccessPolicy.mockResolvedValue({
+      tenantRole: 'tenant_member',
+      canCreatePrograms: true,
+      canApprovePrograms: true,
+      canApproveGates: true,
+      financialVisibility: false,
+      modules: [],
+      programIdsAllowed: null,
+      sourceEventIdsAllowed: null,
+    });
   });
 
   function makePost(body: unknown): NextRequest {

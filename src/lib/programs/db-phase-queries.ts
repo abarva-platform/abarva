@@ -131,7 +131,11 @@ export async function getEngagementWithPhaseData(
 
     if (engError || !engagement) return null;
 
-    const engagementRow = engagement as EngagementPhaseData['engagement'];
+    const engagementRow: EngagementPhaseData['engagement'] = {
+      ...(engagement as Omit<EngagementPhaseData['engagement'], 'sponsor' | 'lead'>),
+      sponsor: null,
+      lead: null,
+    };
     const personIds = [
       engagementRow.sponsor_person_id,
       engagementRow.maestro_person_id,
