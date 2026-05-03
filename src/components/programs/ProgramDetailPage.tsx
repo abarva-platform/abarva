@@ -230,8 +230,8 @@ function LifecycleStateBanner({ view }: { view: ProgramDetailView }) {
       </div>
       <div style={{ fontSize: 13 }}>
         {isPendingSetup
-          ? 'The program seed has been captured, but Phase 0 is locked until a tenant admin approves it in Setup. Nexus should preserve the draft and avoid pretending the program is active.'
-          : 'This program can now begin P0 Origination. Nexus should complete the P0 entry and exit criteria, generate/save the seed deliverables, and submit the P0 exit approval before Discovery unlocks.'}
+          ? 'The strategic move seed has been captured, but Phase 0 is locked until a tenant admin approves it in Setup. Nexus should preserve the draft and avoid pretending the move is active.'
+          : 'This strategic move can now begin P0 Origination. Nexus should complete the P0 entry and exit criteria, generate/save the seed outputs, and submit the P0 exit approval before Discovery unlocks.'}
       </div>
       {isPendingSetup && (
         <Link
@@ -272,7 +272,7 @@ function PhaseArchiveQuickNav({
 }) {
   const items: Array<{ key: SectionKey; label: string; count?: number; emphasis?: boolean }> = [
     { key: 'overview', label: 'Overview' },
-    { key: 'deliverables', label: 'Deliverables', count: deliverablesCount, emphasis: true },
+    { key: 'deliverables', label: 'Outputs', count: deliverablesCount, emphasis: true },
     { key: 'evidence', label: 'Evidence', count: evidenceCount },
     { key: 'gate', label: 'Gate', count: gateCount },
     { key: 'workshop', label: 'Workshop' },
@@ -283,24 +283,24 @@ function PhaseArchiveQuickNav({
   return (
     <section
       data-testid="program-phase-archive-quicknav"
-      aria-label="Phase archive quick navigation"
+      aria-label="Strategic move record quick navigation"
       style={{
-        margin: '14px 0 18px',
-        padding: '12px 14px',
-        border: `1px solid ${SHELL.CARD_LINE}`,
-        borderRadius: 12,
-        background: SHELL.PAPER_DEEP,
+        margin: '14px 0 10px',
+        padding: 0,
+        border: 'none',
+        borderRadius: 0,
+        background: 'transparent',
         display: 'flex',
         alignItems: 'center',
-        gap: 12,
+        gap: 14,
         flexWrap: 'wrap',
       }}
     >
-      <div style={{ minWidth: 190, flex: '1 1 220px' }}>
+      <div style={{ minWidth: 220, flex: '1 1 260px' }}>
         <div
           style={{
             fontFamily: SHELL.MONO,
-            fontSize: 10,
+            fontSize: 11,
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
             color: SHELL.INK_MUTED,
@@ -308,10 +308,10 @@ function PhaseArchiveQuickNav({
             marginBottom: 3,
           }}
         >
-          Phase archive
+          Strategic move record
         </div>
-        <div style={{ fontFamily: SHELL.SANS, fontSize: 12, color: SHELL.INK_SOFT, lineHeight: 1.45 }}>
-          Browse the record: deliverables, evidence, gate notes, workshop outputs, decisions, and next actions.
+        <div style={{ fontFamily: SHELL.SANS, fontSize: 14, color: SHELL.INK_SOFT, lineHeight: 1.4 }}>
+          Select one area; the readable record opens immediately below.
         </div>
       </div>
       <div
@@ -331,20 +331,21 @@ function PhaseArchiveQuickNav({
               key={item.key}
               type="button"
               data-testid={`program-phase-archive-${item.key}`}
+              aria-controls="program-record-browser"
               onClick={() => onSelect(item.key)}
               aria-pressed={active}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
-                minHeight: 34,
-                padding: '7px 11px',
+                minHeight: 44,
+                padding: '10px 15px',
                 borderRadius: 999,
                 border: `1px solid ${active ? SHELL.INK : item.emphasis ? SHELL.PEACH_LINE : SHELL.CARD_LINE}`,
                 background: active ? SHELL.INK : item.emphasis ? SHELL.PEACH_BG : SHELL.PAPER,
                 color: active ? SHELL.PAPER : item.emphasis ? SHELL.PEACH_TEXT : SHELL.INK,
                 fontFamily: SHELL.MONO,
-                fontSize: 10,
+                fontSize: 12,
                 fontWeight: 800,
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
@@ -369,6 +370,344 @@ function PhaseArchiveQuickNav({
             </button>
           );
         })}
+      </div>
+    </section>
+  );
+}
+
+function ProgramRecordBrowser({
+  view,
+  activeSection,
+  deliverablesCanvasView,
+  onOpenFullRecord,
+}: {
+  view: ProgramDetailView;
+  activeSection: SectionKey;
+  deliverablesCanvasView: DeliverablesCanvasView | null;
+  onOpenFullRecord: () => void;
+}) {
+  const phaseLabel = PHASE_LABEL_MAP[view.viewingPhase] ?? `Phase ${view.viewingPhase}`;
+  const deliverables = view.phasePanel.deliverables ?? [];
+  const evidenceItems = view.phasePanel.evidenceItems ?? [];
+  const gateCriteria = view.phasePanel.gateCriteria ?? [];
+  const completedDeliverables = deliverables.filter((item) => item.status === 'done').length;
+  const selectedLabel =
+    activeSection === 'deliverables'
+      ? 'Outputs'
+      : activeSection === 'evidence'
+      ? 'Evidence'
+      : activeSection === 'gate'
+      ? 'Gate'
+      : activeSection === 'workshop'
+      ? 'Workshop'
+      : activeSection === 'decisions'
+      ? 'Decisions'
+      : activeSection === 'actions'
+      ? 'Actions'
+      : 'Overview';
+
+  const metricStyle = {
+    border: `1px solid ${SHELL.CARD_LINE}`,
+    borderRadius: 12,
+    background: SHELL.PAPER,
+    padding: '12px 14px',
+    minWidth: 150,
+    flex: '1 1 150px',
+  } as const;
+
+  return (
+    <section
+      id="program-record-browser"
+      data-testid="program-record-browser"
+      aria-live="polite"
+      style={{
+        margin: '-6px 0 18px',
+        border: `1px solid ${SHELL.CARD_LINE}`,
+        borderRadius: 18,
+        background: SHELL.CARD_WHITE,
+        boxShadow: '0 12px 32px rgba(10, 20, 40, 0.06)',
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          padding: '18px 20px',
+          borderBottom: `1px solid ${SHELL.CARD_LINE}`,
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: 16,
+          flexWrap: 'wrap',
+        }}
+      >
+        <div style={{ minWidth: 260, flex: '1 1 420px' }}>
+          <div
+            style={{
+              fontFamily: SHELL.MONO,
+              fontSize: 11,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: SHELL.INK_MUTED,
+              fontWeight: 800,
+              marginBottom: 6,
+            }}
+          >
+            P{view.viewingPhase} · {phaseLabel} · {selectedLabel}
+          </div>
+          <h2
+            style={{
+              fontFamily: SHELL.SERIF,
+              fontSize: 26,
+              lineHeight: 1.2,
+              letterSpacing: '-0.01em',
+              margin: 0,
+              color: SHELL.INK,
+            }}
+          >
+            {selectedLabel === 'Overview' ? 'Move status and record' : `${selectedLabel} record`}
+          </h2>
+          <p
+            style={{
+              margin: '8px 0 0',
+              maxWidth: 760,
+              fontFamily: SHELL.SANS,
+              fontSize: 15,
+              lineHeight: 1.55,
+              color: SHELL.INK_SOFT,
+            }}
+          >
+            This is the working record for the selected phase of the strategic move. The detailed archive remains below,
+            but the status and outputs should be readable here first.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onOpenFullRecord}
+          style={{
+            alignSelf: 'flex-start',
+            minHeight: 42,
+            borderRadius: 999,
+            border: `1px solid ${SHELL.INK}`,
+            background: SHELL.INK,
+            color: SHELL.PAPER,
+            padding: '10px 16px',
+            fontFamily: SHELL.MONO,
+            fontSize: 11,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            fontWeight: 800,
+            cursor: 'pointer',
+          }}
+        >
+          Open detailed record below
+        </button>
+      </div>
+
+      <div style={{ padding: 20 }}>
+        {activeSection === 'overview' && (
+          <div data-testid="program-record-browser-overview">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+              <div style={metricStyle}>
+                <div style={{ fontFamily: SHELL.MONO, fontSize: 10, color: SHELL.INK_MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
+                  Gate
+                </div>
+                <div style={{ fontFamily: SHELL.SANS, fontSize: 18, color: SHELL.INK, fontWeight: 800 }}>
+                  {view.gateStatus}
+                </div>
+              </div>
+              <div style={metricStyle}>
+                <div style={{ fontFamily: SHELL.MONO, fontSize: 10, color: SHELL.INK_MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
+                  Outputs
+                </div>
+                <div style={{ fontFamily: SHELL.SANS, fontSize: 18, color: SHELL.INK, fontWeight: 800 }}>
+                  {completedDeliverables} / {deliverables.length || 0}
+                </div>
+              </div>
+              <div style={metricStyle}>
+                <div style={{ fontFamily: SHELL.MONO, fontSize: 10, color: SHELL.INK_MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
+                  Evidence
+                </div>
+                <div style={{ fontFamily: SHELL.SANS, fontSize: 18, color: SHELL.INK, fontWeight: 800 }}>
+                  {evidenceItems.length}
+                </div>
+              </div>
+            </div>
+            <div style={{ fontFamily: SHELL.SANS, fontSize: 15, lineHeight: 1.65, color: SHELL.INK }}>
+              {view.phasePanel.summary ?? `No phase summary logged for P${view.viewingPhase}.`}
+            </div>
+          </div>
+        )}
+
+        {activeSection === 'deliverables' && (
+          <div data-testid="program-record-browser-deliverables">
+            {deliverablesCanvasView ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 14 }}>
+                {deliverablesCanvasView.items.map((item, index) => {
+                  const tone =
+                    item.readiness === 'trustworthy'
+                      ? SHELL.MINT_TEXT
+                      : item.readiness === 'blocked'
+                      ? SHELL.RUST_TEXT
+                      : SHELL.PEACH_TEXT;
+                  return (
+                    <article
+                      key={`record-deliverable-${index}`}
+                      data-testid="program-record-browser-deliverable-card"
+                      style={{
+                        border: `1px solid ${SHELL.CARD_LINE}`,
+                        borderRadius: 14,
+                        background: SHELL.PAPER,
+                        padding: 16,
+                        minHeight: 150,
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+                        <h3
+                          style={{
+                            margin: 0,
+                            fontFamily: SHELL.SANS,
+                            fontSize: 17,
+                            lineHeight: 1.35,
+                            color: SHELL.INK,
+                          }}
+                        >
+                          {item.label}
+                        </h3>
+                        <span
+                          style={{
+                            borderRadius: 999,
+                            background: SHELL.PAPER_DEEP,
+                            border: `1px solid ${SHELL.CARD_LINE}`,
+                            color: tone,
+                            padding: '5px 9px',
+                            fontFamily: SHELL.MONO,
+                            fontSize: 10,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.08em',
+                            whiteSpace: 'nowrap',
+                            fontWeight: 800,
+                          }}
+                        >
+                          {item.readinessLabel}
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          marginTop: 12,
+                          fontFamily: SHELL.SANS,
+                          fontSize: 14,
+                          lineHeight: 1.55,
+                          color: SHELL.INK_SOFT,
+                        }}
+                      >
+                        <strong style={{ color: SHELL.INK }}>Next:</strong> {item.nextAction}
+                      </div>
+                      {item.evidenceCitations.length > 0 && (
+                        <div style={{ marginTop: 10, fontFamily: SHELL.SANS, fontSize: 13, lineHeight: 1.5, color: SHELL.INK_MUTED }}>
+                          Evidence: {item.evidenceCitations.join('; ')}
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <div style={{ fontFamily: SHELL.SANS, fontSize: 15, color: SHELL.INK_MUTED }}>
+                No outputs logged for P{view.viewingPhase}.
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeSection === 'gate' && (
+          <div data-testid="program-record-browser-gate" style={{ display: 'grid', gap: 10 }}>
+            {gateCriteria.length > 0 ? gateCriteria.map((criterion, index) => (
+              <div
+                key={`record-gate-${index}`}
+                style={{
+                  display: 'flex',
+                  gap: 12,
+                  alignItems: 'flex-start',
+                  padding: '13px 14px',
+                  border: `1px solid ${SHELL.CARD_LINE}`,
+                  borderRadius: 12,
+                  background: SHELL.PAPER,
+                  fontFamily: SHELL.SANS,
+                  fontSize: 15,
+                  lineHeight: 1.45,
+                  color: SHELL.INK,
+                }}
+              >
+                <span style={{ color: criterion.met ? SHELL.MINT_TEXT : SHELL.PEACH_TEXT, fontWeight: 900 }}>
+                  {criterion.met ? '●' : '○'}
+                </span>
+                <span>{criterion.criterion}</span>
+              </div>
+            )) : (
+              <div style={{ fontFamily: SHELL.SANS, fontSize: 15, color: SHELL.INK_MUTED }}>No gate criteria logged.</div>
+            )}
+          </div>
+        )}
+
+        {activeSection === 'evidence' && (
+          <div data-testid="program-record-browser-evidence" style={{ display: 'grid', gap: 12 }}>
+            {evidenceItems.length > 0 ? evidenceItems.slice(0, 4).map((item) => (
+              <article
+                key={item.id}
+                style={{
+                  border: `1px solid ${SHELL.CARD_LINE}`,
+                  borderRadius: 12,
+                  background: SHELL.PAPER,
+                  padding: 14,
+                }}
+              >
+                <div style={{ fontFamily: SHELL.MONO, fontSize: 10, color: SHELL.INK_MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
+                  {item.confidence} confidence · {item.source}
+                </div>
+                <div style={{ fontFamily: SHELL.SANS, fontSize: 15, color: SHELL.INK, lineHeight: 1.55 }}>
+                  {item.citation}
+                </div>
+                <div style={{ marginTop: 6, fontFamily: SHELL.SANS, fontSize: 14, color: SHELL.INK_SOFT, lineHeight: 1.5 }}>
+                  {item.excerpt}
+                </div>
+              </article>
+            )) : (
+              <div style={{ fontFamily: SHELL.SANS, fontSize: 15, color: SHELL.INK_MUTED }}>No evidence citations logged.</div>
+            )}
+          </div>
+        )}
+
+        {(activeSection === 'workshop' || activeSection === 'actions' || activeSection === 'decisions') && (
+          <div data-testid={`program-record-browser-${activeSection}`}>
+            <div style={{ fontFamily: SHELL.SANS, fontSize: 15, color: SHELL.INK, lineHeight: 1.6, marginBottom: 14 }}>
+              {activeSection === 'workshop'
+                ? view.workbench.prose
+                : activeSection === 'decisions'
+                ? 'Decision log is tracked in the full phase record below. Use this area to confirm sponsor decisions, waivers, and unresolved dissent before advancing.'
+                : view.workbench.actionsLabel}
+            </div>
+            {activeSection === 'actions' && (
+              <div style={{ display: 'grid', gap: 10 }}>
+                {view.workbench.actions.map((action) => (
+                  <div
+                    key={action.letter}
+                    style={{
+                      border: `1px solid ${SHELL.CARD_LINE}`,
+                      borderRadius: 12,
+                      padding: 14,
+                      background: SHELL.PAPER,
+                      fontFamily: SHELL.SANS,
+                      fontSize: 15,
+                      color: SHELL.INK,
+                    }}
+                  >
+                    <strong>{action.letter}.</strong> {action.text}
+                    <div style={{ marginTop: 4, color: SHELL.INK_MUTED, fontSize: 14 }}>{action.detail}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </section>
   );
@@ -1200,7 +1539,7 @@ function DeliverablesList({
           marginBottom: 8,
         }}
       >
-        Deliverables
+        Outputs
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {deliverables.map((d, i) => {
@@ -1277,17 +1616,17 @@ function DeliverablesCanvas({ canvasView }: { canvasView: DeliverablesCanvasView
   return (
     <div data-testid="deliverables-canvas">
       {/* Canvas header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: SHELL.INK_MUTED }}>
-          {canvasView.phaseLabel} Deliverables
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <div style={{ fontFamily: SHELL.MONO, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: SHELL.INK_MUTED, fontWeight: 800 }}>
+          {canvasView.phaseLabel} outputs
         </div>
-        <div style={{ fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.06em' }}>
+        <div style={{ fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_MUTED, letterSpacing: '0.06em' }}>
           {canvasView.canvasSummary}
         </div>
       </div>
 
       {/* Items */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {canvasView.items.map((item, i) => (
           <div
             key={`del-canvas-${i}`}
@@ -1295,31 +1634,31 @@ function DeliverablesCanvas({ canvasView }: { canvasView: DeliverablesCanvasView
             style={{
               background: SHELL.CARD_WHITE,
               border: `1px solid ${SHELL.CARD_LINE}`,
-              borderRadius: 8,
-              padding: '12px 14px',
+              borderRadius: 12,
+              padding: '16px 18px',
             }}
           >
             {/* Item header row */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 10 }}>
               <span
                 style={{
-                  width: 8,
-                  height: 8,
+                  width: 10,
+                  height: 10,
                   borderRadius: '50%',
                   background: readinessDot(item.readiness),
                   flexShrink: 0,
-                  marginTop: 4,
+                  marginTop: 6,
                 }}
               />
               <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK, lineHeight: 1.4, marginBottom: 3 }}>
+                <div style={{ fontFamily: SHELL.SANS, fontSize: 16, color: SHELL.INK, lineHeight: 1.35, marginBottom: 6, fontWeight: 700 }}>
                   {item.label}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: readinessDot(item.readiness) }}>
+                  <span style={{ fontFamily: SHELL.MONO, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: readinessDot(item.readiness), fontWeight: 800 }}>
                     {item.readinessLabel}
                   </span>
-                  <span style={{ fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.06em' }}>
+                  <span style={{ fontFamily: SHELL.MONO, fontSize: 11, color: SHELL.INK_MUTED, letterSpacing: '0.06em' }}>
                     · {item.status}
                   </span>
                 </div>
@@ -1328,12 +1667,12 @@ function DeliverablesCanvas({ canvasView }: { canvasView: DeliverablesCanvasView
 
             {/* Evidence citations */}
             {item.evidenceCitations.length > 0 && (
-              <div style={{ marginBottom: 8, paddingTop: 8, borderTop: `1px solid ${SHELL.CARD_LINE}` }}>
-                <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.08em', color: SHELL.INK_MUTED, marginBottom: 4 }}>
+              <div style={{ marginBottom: 10, paddingTop: 10, borderTop: `1px solid ${SHELL.CARD_LINE}` }}>
+                <div style={{ fontFamily: SHELL.MONO, fontSize: 10, letterSpacing: '0.08em', color: SHELL.INK_MUTED, marginBottom: 6, textTransform: 'uppercase', fontWeight: 800 }}>
                   Evidence
                 </div>
                 {item.evidenceCitations.map((cite, j) => (
-                  <div key={`cite-${j}`} style={{ fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.INK_SOFT, lineHeight: 1.4, marginBottom: 2 }}>
+                  <div key={`cite-${j}`} style={{ fontFamily: SHELL.SANS, fontSize: 14, color: SHELL.INK_SOFT, lineHeight: 1.5, marginBottom: 3 }}>
                     · {cite}
                   </div>
                 ))}
@@ -1342,12 +1681,12 @@ function DeliverablesCanvas({ canvasView }: { canvasView: DeliverablesCanvasView
 
             {/* Missing inputs */}
             {item.missingInputs.length > 0 && (
-              <div style={{ marginBottom: 8, paddingTop: 8, borderTop: `1px solid ${SHELL.CARD_LINE}` }}>
-                <div style={{ fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.08em', color: SHELL.INK_MUTED, marginBottom: 4 }}>
+              <div style={{ marginBottom: 10, paddingTop: 10, borderTop: `1px solid ${SHELL.CARD_LINE}` }}>
+                <div style={{ fontFamily: SHELL.MONO, fontSize: 10, letterSpacing: '0.08em', color: SHELL.INK_MUTED, marginBottom: 6, textTransform: 'uppercase', fontWeight: 800 }}>
                   Missing inputs
                 </div>
                 {item.missingInputs.map((input, j) => (
-                  <div key={`miss-${j}`} style={{ display: 'flex', gap: 6, fontFamily: SHELL.SANS, fontSize: 11, color: SHELL.PEACH_TEXT, lineHeight: 1.4, marginBottom: 2 }}>
+                  <div key={`miss-${j}`} style={{ display: 'flex', gap: 8, fontFamily: SHELL.SANS, fontSize: 14, color: SHELL.PEACH_TEXT, lineHeight: 1.45, marginBottom: 3 }}>
                     <span style={{ flexShrink: 0 }}>✗</span>
                     <span>{input}</span>
                   </div>
@@ -1356,22 +1695,22 @@ function DeliverablesCanvas({ canvasView }: { canvasView: DeliverablesCanvasView
             )}
 
             {/* Next action */}
-            <div style={{ marginBottom: 10, fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.08em' }}>
+            <div style={{ marginBottom: 12, fontFamily: SHELL.SANS, fontSize: 14, color: SHELL.INK_SOFT, lineHeight: 1.45 }}>
               Next: {item.nextAction}
             </div>
 
             {/* Disabled actions — rendered explicitly so testids appear as static strings */}
-            <div style={{ display: 'flex', gap: 8, paddingTop: 8, borderTop: `1px solid ${SHELL.CARD_LINE}` }}>
+            <div style={{ display: 'flex', gap: 10, paddingTop: 10, borderTop: `1px solid ${SHELL.CARD_LINE}` }}>
               {item.actions.find((a) => a.key === 'approve') && (
                 <button
                   data-testid="deliverable-approve-action"
                   disabled={true}
                   title={item.actions.find((a) => a.key === 'approve')!.reason}
                   style={{
-                    fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase',
+                    fontFamily: SHELL.MONO, fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase',
                     color: SHELL.INK_MUTED, background: SHELL.GRAY_BG,
-                    border: `1px solid ${SHELL.CARD_LINE}`, borderRadius: 4,
-                    padding: '5px 10px', cursor: 'not-allowed', opacity: 0.55,
+                    border: `1px solid ${SHELL.CARD_LINE}`, borderRadius: 7,
+                    padding: '8px 12px', cursor: 'not-allowed', opacity: 0.55,
                   }}
                 >
                   Approve
@@ -1383,10 +1722,10 @@ function DeliverablesCanvas({ canvasView }: { canvasView: DeliverablesCanvasView
                   disabled={true}
                   title={item.actions.find((a) => a.key === 'export')!.reason}
                   style={{
-                    fontFamily: SHELL.MONO, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase',
+                    fontFamily: SHELL.MONO, fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase',
                     color: SHELL.INK_MUTED, background: SHELL.GRAY_BG,
-                    border: `1px solid ${SHELL.CARD_LINE}`, borderRadius: 4,
-                    padding: '5px 10px', cursor: 'not-allowed', opacity: 0.55,
+                    border: `1px solid ${SHELL.CARD_LINE}`, borderRadius: 7,
+                    padding: '8px 12px', cursor: 'not-allowed', opacity: 0.55,
                   }}
                 >
                   Export
@@ -1401,7 +1740,7 @@ function DeliverablesCanvas({ canvasView }: { canvasView: DeliverablesCanvasView
       <div
         data-testid="deliverables-canvas-disclaimer"
         data-honest-disclaimer="deliverables-canvas"
-        style={{ marginTop: 16, fontFamily: SHELL.MONO, fontSize: 9, color: SHELL.INK_MUTED, letterSpacing: '0.08em', lineHeight: 1.5 }}
+        style={{ marginTop: 16, fontFamily: SHELL.MONO, fontSize: 10, color: SHELL.INK_MUTED, letterSpacing: '0.08em', lineHeight: 1.6 }}
       >
         {canvasView.honestDisclaimer}
       </div>
@@ -3880,7 +4219,7 @@ export function ProgramDetailPage({
   // PROG21 — Gate approval interaction drawer
   const [showGateApprovalDrawer, setShowGateApprovalDrawer] = useState(false);
   const gateApprovalDrawerView = buildGateApprovalDrawerView(view);
-  // PROG22 — Deliverables canvas polish
+  // PROG22 — Move outputs / deliverables canvas polish
   const deliverablesCanvasView = buildDeliverablesCanvasView(view);
   // PROG24 — Maestro next action composer
   const maestroActionView = buildMaestroNextActionView(view);
@@ -3891,7 +4230,7 @@ export function ProgramDetailPage({
   const [evidenceDrawerItem, setEvidenceDrawerItem] = useState<EvidenceItem | null>(null);
   const [contradictionItem, setContradictionItem] = useState<EvidenceItem | null>(null);
   const isLiveDbProgram = isUuidLike(view.programId);
-  const programEyebrow = isLiveDbProgram ? 'Live program' : view.displayId;
+  const programEyebrow = isLiveDbProgram ? 'Live strategic move' : view.displayId;
   const programSourceLabel = isLiveDbProgram ? 'Live DB record' : 'Deterministic seed';
 
   // PRG-STA-SUGGESTED-ACTION state
@@ -3966,6 +4305,9 @@ export function ProgramDetailPage({
   const openArchiveSection = useCallback((section: SectionKey) => {
     setArchiveOpen(true);
     setActiveSection(section);
+  }, []);
+  const revealFullArchive = useCallback(() => {
+    setArchiveOpen(true);
     setTimeout(() => archiveDetailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   }, []);
 
@@ -4470,6 +4812,13 @@ export function ProgramDetailPage({
           actionCount={view.workbench.actions.length}
         />
 
+        <ProgramRecordBrowser
+          view={view}
+          activeSection={activeSection}
+          deliverablesCanvasView={deliverablesCanvasView}
+          onOpenFullRecord={revealFullArchive}
+        />
+
         {/* REASON-30 — Inline lifecycle mini-graph (sits below the PhaseStrip
             in the AppShell middleStrip; complements but does not replace it) */}
         {lifecycleMiniGraph && (
@@ -4610,7 +4959,7 @@ export function ProgramDetailPage({
               userSelect: 'none',
             }}
           >
-            Program details · gate · evidence · deliverables · workshop
+            Move record · outputs · evidence · gate · workshop
           </summary>
           <div style={{ padding: '8px 16px 16px' }}>
 
@@ -4673,7 +5022,7 @@ export function ProgramDetailPage({
               { key: 'overview', label: 'Overview', active: activeSection === 'overview', onClick: () => setActiveSection('overview') },
               { key: 'gate', label: 'Gate', count: view.phasePanel.gateCriteria?.length, active: activeSection === 'gate', onClick: () => setActiveSection('gate') },
               { key: 'evidence', label: 'Evidence', count: view.phasePanel.evidenceItems?.length, active: activeSection === 'evidence', onClick: () => setActiveSection('evidence') },
-              { key: 'deliverables', label: 'Deliverables', count: view.phasePanel.deliverables?.length, active: activeSection === 'deliverables', onClick: () => setActiveSection('deliverables') },
+              { key: 'deliverables', label: 'Outputs', count: view.phasePanel.deliverables?.length, active: activeSection === 'deliverables', onClick: () => setActiveSection('deliverables') },
               { key: 'workshop', label: 'Workshop', active: activeSection === 'workshop', onClick: () => setActiveSection('workshop') },
               { key: 'actions', label: 'Actions', count: view.workbench.actions.length, active: activeSection === 'actions', onClick: () => setActiveSection('actions') },
               { key: 'decisions', label: 'Decisions', active: activeSection === 'decisions', onClick: () => setActiveSection('decisions') },
@@ -4982,7 +5331,7 @@ export function ProgramDetailPage({
           </div>
         )}
 
-        {/* ── Deliverables section ──────────────────────────────────── */}
+        {/* ── Outputs / deliverables section ─────────────────────────── */}
         {activeSection === 'deliverables' && (
           <div data-testid="program-section-deliverables">
             {deliverablesCanvasView ? (
@@ -4995,7 +5344,7 @@ export function ProgramDetailPage({
               </div>
             ) : (
               <div style={{ padding: '20px 0', fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK_MUTED }}>
-                No deliverables logged for P{view.viewingPhase}.
+                No outputs logged for P{view.viewingPhase}.
               </div>
             )}
           </div>
