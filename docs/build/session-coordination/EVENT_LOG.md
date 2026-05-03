@@ -672,3 +672,13 @@ Append-only coordination log for active Codex sessions.
 - tests: added `src/__tests__/integration/programs/programs-approval-flag-mutation-guards.test.ts` with four-case guard matrix per route; adjusted existing tenant-guard expectations to include injected supabase options.
 - validation: focused Jest passed (57/57), targeted ESLint clean, `npm run build` passed with existing `next.config.ts` NFT warning only.
 - next: open PR and merge after checks pass.
+
+## 2026-05-03T09:50:00-05:00 - codex/programs-phasea-pr4-nexus
+
+- status: local-validation-passed
+- branch: `codex/programs-phasea-pr4-nexus`
+- scope: Strategic Moves Phase A PR4 rollout for nexus mutation routes (`ask`, `draft`, `cxo-takeover`, `threads POST`).
+- changes: auth-mode plumbing via `getProgramsRouteSupabase('mutation')`; tenant pre-checks before route execution; `ask` thread ownership check now bound to route supabase.
+- tests: added `src/__tests__/integration/programs/programs-nexus-mutation-guards.test.ts` with full four-case guard matrix per route.
+- validation: focused Jest passed (73/73 across mutation guard suites), targeted ESLint clean, `npm run build` passed with existing `next.config.ts` NFT warning only.
+- next: open PR and merge after checks pass.

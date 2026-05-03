@@ -5,6 +5,8 @@ import { NextRequest } from 'next/server';
 import { createThread, listThreads } from '@/lib/programs/nexus';
 import { requireTenancy, tenancyErrorResponse } from '../../../_auth';
 import type { NexusThreadMode } from '@/lib/programs/types.db';
+import { getProgramById } from '@/lib/programs/queries';
+import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -30,6 +32,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   try {
     const { programId } = await params;
     const ctx = await requireTenancy();
+    const { supabase } = await getProgramsRouteSupabase('mutation');
+    const program = await getProgramById(ctx, programId, { supabase });
+    if (!program) return Response.json({ error: 'not_found' }, { status: 404 });
     const body = (await req.json()) as {
       mode?: NexusThreadMode;
       title?: string;

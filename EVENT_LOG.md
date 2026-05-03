@@ -120,3 +120,13 @@
 - Regression: Added `src/__tests__/integration/programs/programs-approval-flag-mutation-guards.test.ts` with four-test minimum per route (own-tenant pass, foreign-tenant 404, cross-tenant write denied, no-membership denied); updated existing tenant-guard test expectations for new helper signature.
 - Validation: Focused Jest passed (57 tests across mutation guard suites), targeted ESLint clean, `npm run build` passed (existing `next.config.ts` NFT warning unchanged).
 - Next: open PR for PR3 and merge after standard checks pass.
+
+## 2026-05-03T09:50:00-05:00 — codex/programs-phasea-pr4-nexus
+
+- Workstream: Strategic Moves Phase A hardening (PR4 nexus mutation routes).
+- Scope: Hardened `POST /nexus/ask`, `POST /nexus/draft`, `POST /nexus/cxo-takeover`, and `POST /nexus/threads`.
+- Fix summary: Added auth-mode plumbing via `getProgramsRouteSupabase('mutation')` and tenant-scoped pre-check (`getProgramById(..., { supabase })`) before nexus route logic.
+- Additional guard: `nexus/ask` thread-ownership validation now uses route-level supabase client to keep checks consistent with auth mode.
+- Regression: Added `src/__tests__/integration/programs/programs-nexus-mutation-guards.test.ts` with four-test minimum per route (own-tenant pass, foreign-tenant 404, cross-tenant write denied, no-membership denied).
+- Validation: Focused Jest passed (73 tests across guard suites), targeted ESLint clean, `npm run build` passed (existing `next.config.ts` NFT warning unchanged).
+- Next: open PR for PR4 and merge after standard checks pass.

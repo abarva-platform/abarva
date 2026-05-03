@@ -11,8 +11,10 @@ import { NextRequest } from 'next/server';
 import { getActiveClientRow } from '@/lib/active-client';
 import { runProgramsNexusTurn } from '@/lib/programs/nexus-free-text';
 import { assembleContext, createThread, touchThread } from '@/lib/programs/nexus';
-import { getServerSupabase } from '@/lib/supabase-server';
 import { requireTenancy, TenancyError } from '../../../_auth';
+import { getProgramById } from '@/lib/programs/queries';
+import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -41,9 +43,9 @@ async function validateThreadOwnership(args: {
   threadId: string;
   programId: string;
   userId: string;
+  supabase: SupabaseClient;
 }): Promise<boolean> {
-  const sb = getServerSupabase();
-  const { data, error } = await sb
+  const { data, error } = await args.supabase
     .from('program_threads')
     .select('id, engagement_id, user_id')
     .eq('id', args.threadId)
@@ -74,6 +76,11 @@ export async function POST(
   }
 
   const { programId } = await params;
+  const { supabase } = await getProgramsRouteSupabase('mutation');
+  const program = await getProgramById(ctx, programId, { supabase });
+  if (!program) {
+    return Response.json({ error: 'not_found' }, { status: 404 });
+  }
 
   let body: { query?: string; threadId?: string };
   try {
@@ -98,6 +105,7 @@ export async function POST(
       threadId,
       programId,
       userId: ctx.userId,
+      supabase,
     });
     if (!isOwnedThread) {
       return Response.json({ error: 'thread_not_found' }, { status: 404 });
