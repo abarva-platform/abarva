@@ -6,8 +6,8 @@ import { getPendingApprovals, getProgramById } from '@/lib/programs/queries';
 import { requestFounderApproval } from '@/lib/programs/governance';
 import { requireTenancy, tenancyErrorResponse } from '../../_auth';
 import { canReadProgram, loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
-import type { ApprovalAuthority, FounderApprovalRequestRow } from '@/lib/programs/types.db';
 import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
+import type { ApprovalAuthority, FounderApprovalRequestRow } from '@/lib/programs/types.db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -15,15 +15,16 @@ export const dynamic = 'force-dynamic';
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ programId: string }> }) {
   try {
     const { programId } = await params;
+    const { supabase } = await getProgramsRouteSupabase('program_read');
     const ctx = await requireTenancy();
-    const program = await getProgramById(ctx, programId);
+    const program = await getProgramById(ctx, programId, { supabase });
     if (!program) {
       return Response.json({ error: 'not_found' }, { status: 404 });
     }
     if (!(await canReadProgram(ctx, programId))) {
       return Response.json({ error: 'forbidden' }, { status: 403 });
     }
-    const approvals = await getPendingApprovals(ctx, programId);
+    const approvals = await getPendingApprovals(ctx, programId, { supabase });
     return Response.json({ approvals });
   } catch (err) {
     try { return tenancyErrorResponse(err); } catch {}

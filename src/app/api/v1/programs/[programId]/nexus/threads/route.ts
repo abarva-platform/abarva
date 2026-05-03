@@ -3,10 +3,10 @@
 
 import { NextRequest } from 'next/server';
 import { createThread, listThreads } from '@/lib/programs/nexus';
-import { requireTenancy, tenancyErrorResponse } from '../../../_auth';
-import type { NexusThreadMode } from '@/lib/programs/types.db';
 import { getProgramById } from '@/lib/programs/queries';
 import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
+import { requireTenancy, tenancyErrorResponse } from '../../../_auth';
+import type { NexusThreadMode } from '@/lib/programs/types.db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,7 +16,10 @@ const VALID_MODES: NexusThreadMode[] = ['side_panel', 'module_drafting', 'cxo_ta
 export async function GET(req: NextRequest, { params }: { params: Promise<{ programId: string }> }) {
   try {
     const { programId } = await params;
+    const { supabase } = await getProgramsRouteSupabase('program_read');
     const ctx = await requireTenancy();
+    const program = await getProgramById(ctx, programId, { supabase });
+    if (!program) return Response.json({ error: 'not_found' }, { status: 404 });
     const url = new URL(req.url);
     const modeParam = url.searchParams.get('mode') as NexusThreadMode | null;
     const threads = await listThreads(ctx, programId, modeParam ? { mode: modeParam } : {});

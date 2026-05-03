@@ -13,10 +13,11 @@ export const dynamic = 'force-dynamic';
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ programId: string }> }) {
   try {
     const { programId } = await params;
+    const { supabase } = await getProgramsRouteSupabase('program_read');
     const ctx = await requireTenancy();
-    const program = await getProgramById(ctx, programId);
+    const program = await getProgramById(ctx, programId, { supabase });
     if (!program) return Response.json({ error: 'not_found' }, { status: 404 });
-    const milestones = await getMilestones(ctx, programId);
+    const milestones = await getMilestones(ctx, programId, { supabase });
     return Response.json({ milestones });
   } catch (err) {
     try { return tenancyErrorResponse(err); } catch {}
