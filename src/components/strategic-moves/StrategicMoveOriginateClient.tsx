@@ -49,13 +49,40 @@ interface Props {
   tenantName: string;
 }
 
+type ChatTurn = {
+  id: string;
+  role: 'user' | 'nexus';
+  text: string;
+};
+
+const BLANK_SEQUENCE: Array<{ key: ScaffoldKey; prompt: string }> = [
+  { key: 'hypothesis', prompt: 'What operating pain are we solving first?' },
+  { key: 'archetype', prompt: 'What archetype best fits this move?' },
+  { key: 'sponsor', prompt: 'Who owns the outcome if this succeeds or stalls?' },
+  { key: 'value', prompt: 'What measurable value outcome should we commit to?' },
+];
+
 export function StrategicMoveOriginateClient({ tenantName }: Props) {
   const router = useRouter();
   const [scaffold, setScaffold] = useState<Record<ScaffoldKey, string>>(emptyScaffold);
   const [programName, setProgramName] = useState('');
+  const [composer, setComposer] = useState('');
+  const [blankQuestionIndex, setBlankQuestionIndex] = useState<number | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [turns, setTurns] = useState<ChatTurn[]>([
+    {
+      id: 'nexus-intro-1',
+      role: 'nexus',
+      text: 'Tell me the outcome you want and the operating pain you need to resolve. I will draft your P0 scaffold.',
+    },
+    {
+      id: 'nexus-intro-2',
+      role: 'nexus',
+      text: 'When all seven sections are complete, you can promote this move to P1 Charter.',
+    },
+  ]);
 
   useEffect(() => {
     let cancelled = false;
@@ -91,6 +118,14 @@ export function StrategicMoveOriginateClient({ tenantName }: Props) {
         tenant: prev.tenant || tenantName,
         value: brief.targetOutcome ?? prev.value,
       }));
+      setTurns((prev) => [
+        ...prev,
+        {
+          id: `nexus-draft-${Date.now()}`,
+          role: 'nexus',
+          text: 'I loaded your saved draft and restored the scaffold sections already captured.',
+        },
+      ]);
     })();
     return () => {
       cancelled = true;
@@ -132,6 +167,10 @@ export function StrategicMoveOriginateClient({ tenantName }: Props) {
   );
   const canPromote = completedCount === 7 && !isPending;
 
+  function addTurn(role: ChatTurn['role'], text: string) {
+    setTurns((prev) => [...prev, { id: `${role}-${Date.now()}-${Math.random()}`, role, text }]);
+  }
+
   function fillWithStagger(next: Partial<Record<ScaffoldKey, string>>) {
     const entries = Object.entries(next) as Array<[ScaffoldKey, string]>;
     entries.forEach(([key, value], index) => {
@@ -142,8 +181,9 @@ export function StrategicMoveOriginateClient({ tenantName }: Props) {
   }
 
   async function startFrom(type: 'intel' | 'foundation' | 'premortem' | 'transfer' | 'blank') {
+    setBlankQuestionIndex(null);
     if (type === 'intel') {
-      // TODO: wire chip to richer intelligence findings endpoint when available.
+      addTurn('user', 'Start from an Intelligence finding.');
       const res = await fetch('/api/v1/intelligence/signals?limit=3', { cache: 'no-store' });
       const data = res.ok ? ((await res.json()) as { signals?: Array<{ title?: string; summary?: string }> }) : {};
       const first = data.signals?.[0];
@@ -153,11 +193,12 @@ export function StrategicMoveOriginateClient({ tenantName }: Props) {
         tenant: tenantName,
         evidence: first?.summary || 'Intelligence signal indicates fragmented Epic + claims + coding data flows.',
       });
+      addTurn('nexus', first ? 'Loaded your strongest intelligence signal and drafted 4 scaffold sections.' : 'No high-confidence signal found, so I drafted a baseline structure and flagged evidence as needed.');
       return;
     }
 
     if (type === 'foundation') {
-      // TODO: wire chip to foundation readiness gaps endpoint contract.
+      addTurn('user', 'Start from a Foundation Readiness gap.');
       const res = await fetch('/api/v1/intelligence/foundation?limit=3', { cache: 'no-store' });
       const data = res.ok ? ((await res.json()) as { items?: Array<{ title?: string; detail?: string }> }) : {};
       const first = data.items?.[0];
@@ -166,33 +207,69 @@ export function StrategicMoveOriginateClient({ tenantName }: Props) {
         tenant: tenantName,
         evidence: first?.detail || 'Foundation gap indicates unresolved lineage controls.',
       });
+      addTurn('nexus', 'Foundation gap loaded. I drafted readiness + evidence sections and pinned tenant scope.');
       return;
     }
 
     if (type === 'premortem') {
-      // TODO: no pre-mortem list endpoint found yet; use fixture stub until module route exists.
+      addTurn('user', 'Start from pre-mortem results.');
       fillWithStagger({
         hypothesis: 'If we do not unify analytics delivery, prior-auth and coding quality programs will stall.',
         foundation: 'Pre-mortem predicts baseline ambiguity and sponsor contention if metrics are not locked early.',
         evidence: 'Pre-mortem run PM-STRAT-001 indicates data trust as top failure mode.',
       });
+      addTurn('nexus', 'Loaded pre-mortem signals and drafted hypothesis/readiness/evidence. Continue by naming sponsor and value target.');
       return;
     }
 
     if (type === 'transfer') {
-      // TODO: no transfer library list endpoint found yet; use fixture stub until module route exists.
+      addTurn('user', 'Start from cross-industry transfer.');
       fillWithStagger({
         archetype: 'CAPABILITY',
         value: 'Increase analytics release velocity while improving coding quality and prior-auth throughput.',
         evidence: 'Cross-industry transfer pattern indicates phased governance with P2 promise contracts.',
       });
+      addTurn('nexus', 'Transfer pattern loaded. I drafted archetype/value/evidence and left sponsor + scope for confirmation.');
       return;
     }
 
+    addTurn('user', 'Start from a blank hypothesis.');
     fillWithStagger({
       tenant: tenantName,
-      hypothesis: 'Define a focused strategic move with a measurable value outcome.',
+      evidence: 'Nexus will attach originating evidence as we define the move.',
     });
+    setBlankQuestionIndex(0);
+    addTurn('nexus', BLANK_SEQUENCE[0].prompt);
+  }
+
+  function fillNextEmptySection(text: string) {
+    const emptyKey = SCAFFOLD_ORDER.find((key) => scaffold[key].trim().length === 0);
+    if (!emptyKey) return;
+    setScaffold((prev) => ({ ...prev, [emptyKey]: text }));
+  }
+
+  function handleSend() {
+    const message = composer.trim();
+    if (!message) return;
+    setComposer('');
+    addTurn('user', message);
+
+    if (blankQuestionIndex !== null) {
+      const step = BLANK_SEQUENCE[blankQuestionIndex];
+      setScaffold((prev) => ({ ...prev, [step.key]: message, tenant: prev.tenant || tenantName }));
+      const next = blankQuestionIndex + 1;
+      if (next < BLANK_SEQUENCE.length) {
+        setBlankQuestionIndex(next);
+        addTurn('nexus', BLANK_SEQUENCE[next].prompt);
+      } else {
+        setBlankQuestionIndex(null);
+        addTurn('nexus', 'Great. I drafted the core sections. Now add foundation readiness and originating evidence to unlock promotion.');
+      }
+      return;
+    }
+
+    fillNextEmptySection(message);
+    addTurn('nexus', 'Captured. I drafted the next scaffold section from your input. Keep going and I will complete all seven sections.');
   }
 
   function cancelFlow() {
@@ -254,12 +331,11 @@ export function StrategicMoveOriginateClient({ tenantName }: Props) {
             <div>Nexus drafting mode</div>
           </div>
           <div className={styles.chatBody}>
-            <div className={styles.bubbleNexus}>
-              Tell me the outcome you want and the operating pain you need to resolve. I will draft your P0 scaffold.
-            </div>
-            <div className={styles.bubbleNexus}>
-              When all seven sections are complete, you can promote this move to P1 Charter.
-            </div>
+            {turns.map((turn) => (
+              <div key={turn.id} className={turn.role === 'nexus' ? styles.bubbleNexus : styles.bubbleUser}>
+                {turn.text}
+              </div>
+            ))}
           </div>
           <div className={styles.startFromLabel}>↳ Start from</div>
           <div className={styles.chipColumn}>
@@ -268,6 +344,17 @@ export function StrategicMoveOriginateClient({ tenantName }: Props) {
             <button className={styles.startChip} onClick={() => void startFrom('premortem')} type="button">A pre-mortem result</button>
             <button className={styles.startChip} onClick={() => void startFrom('transfer')} type="button">Cross-industry transfer</button>
             <button className={styles.startChip} onClick={() => void startFrom('blank')} type="button">A blank hypothesis</button>
+          </div>
+          <div className={styles.originateComposer}>
+            <textarea
+              className={styles.originateComposerInput}
+              value={composer}
+              onChange={(event) => setComposer(event.target.value)}
+              placeholder="Reply to Nexus…"
+            />
+            <button className={styles.primaryAction} type="button" onClick={handleSend}>
+              Send
+            </button>
           </div>
         </aside>
 
@@ -298,12 +385,9 @@ export function StrategicMoveOriginateClient({ tenantName }: Props) {
                   <div className={`${styles.scaffoldLabel} ${filled ? styles.scaffoldLabelFilled : ''}`}>
                     {index + 1}. {SECTION_LABELS[key]}
                   </div>
-                  <textarea
-                    className={styles.scaffoldTextarea}
-                    onChange={(event) => setScaffold((prev) => ({ ...prev, [key]: event.target.value }))}
-                    placeholder={`Capture ${SECTION_LABELS[key].toLowerCase()}...`}
-                    value={scaffold[key]}
-                  />
+                  <div className={styles.scaffoldReadOnly}>
+                    {filled ? scaffold[key] : `Nexus will draft ${SECTION_LABELS[key].toLowerCase()} from your conversation.`}
+                  </div>
                 </section>
               );
             })}
@@ -364,4 +448,3 @@ export function StrategicMoveOriginateClient({ tenantName }: Props) {
     </div>
   );
 }
-

@@ -48,6 +48,20 @@
   margin-bottom: 14px;
 }
 
+.editorialRibbon {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.editorialMetric {
+  background: #fff;
+  border: 1px solid var(--canon-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
 .ribbonCard {
   background: #fff;
   border: 1px solid var(--canon-border);
@@ -128,13 +142,14 @@
 }
 
 .toggleButton {
-  border: 1px solid var(--canon-border);
+  border: 1px solid var(--canon-border-strong);
   border-radius: 8px;
   background: #fff;
-  color: var(--canon-gray-700);
+  color: var(--canon-gray-800);
   font-size: 12px;
   padding: 7px 10px;
   cursor: pointer;
+  font-weight: 600;
 }
 
 .toggleButtonActive {
@@ -258,6 +273,31 @@
   border: 1px dashed var(--canon-border);
   border-radius: 10px;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.03) 1px, transparent 1px) 0 0 / 100% 25%;
+  overflow: hidden;
+}
+
+.scatterXAxis {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  font-family: var(--abarva-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--canon-gray-600);
+}
+
+.scatterYAxis {
+  position: absolute;
+  left: 8px;
+  top: 12px;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: var(--abarva-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--canon-gray-600);
 }
 
 .bubble {
@@ -268,24 +308,34 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: #0d1a34;
   text-decoration: none;
-  font-size: 9px;
-  font-weight: 600;
+  font-size: 10px;
+  font-weight: 700;
   letter-spacing: 0.04em;
   padding: 4px;
+  box-shadow: 0 4px 10px rgba(4, 16, 42, 0.12);
 }
 
 .bubbleGreen {
-  background: var(--canon-teal);
+  background: #7ce4bf;
 }
 
 .bubbleAmber {
-  background: var(--canon-amber);
+  background: #ffd58a;
 }
 
 .bubbleRed {
-  background: var(--canon-red);
+  background: #ffadad;
+}
+
+.bubbleTeal {
+  background: #90daf2;
+}
+
+.bubbleUnknown {
+  background: #f4f1ea;
+  border-style: dashed;
 }
 
 .detailShell {
@@ -552,6 +602,42 @@
   resize: vertical;
 }
 
+.scaffoldReadOnly {
+  min-height: 62px;
+  border: 1px dashed var(--canon-border);
+  border-radius: 8px;
+  padding: 9px 10px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--canon-gray-800);
+  background: #fffcf7;
+}
+
+.originateComposer {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px 14px 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.originateComposerInput {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 13px;
+  line-height: 1.4;
+  font-family: var(--abarva-sans);
+  padding: 9px 10px;
+  resize: vertical;
+}
+
+.originateComposerInput::placeholder {
+  color: rgba(255, 255, 255, 0.68);
+}
+
 .scaffoldFoot {
   margin-top: 10px;
   display: flex;
@@ -610,6 +696,10 @@
   }
 
   .ribbon {
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+  }
+
+  .editorialRibbon {
     grid-template-columns: repeat(2, minmax(120px, 1fr));
   }
 }

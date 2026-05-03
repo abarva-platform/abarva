@@ -8,7 +8,7 @@ import { clearActiveClientContext } from '@/lib/auth/client-context-storage'
 import { resolveModuleAccess, type ProductModule } from '@/lib/auth/module-access'
 import { useClientContext } from '@/lib/use-client-context'
 import { AbarvaWordmark } from './abarva/AbarVaWordmark'
-import { COLORS, FONT, TYPE, BORDER, SPACING, RADIUS } from '@/lib/design/abarva-theme'
+import { COLORS, FONT, BORDER, SPACING } from '@/lib/design/abarva-theme'
 
 const NAV_BG = COLORS.surface
 const NAV_BORD = COLORS.border
@@ -153,18 +153,18 @@ function NavInner({ activePage, compact = false }: NavProps) {
   // Static client label for all roles.
   const staticClientLabel = () => (
     <div
-      aria-label={`Current account ${currentClient.name}. Account switching is disabled.`}
+      aria-label={`Current tenant ${currentClient.name}.`}
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '10px',
-        border: `1px solid ${COLORS.border}`,
-        background: '#F5F3EE',
-        borderRadius: `${RADIUS.lg}px`,
-        padding: `${SPACING.xs}px ${SPACING.md}px`,
+        gap: '8px',
+        border: 'none',
+        background: 'transparent',
+        borderRadius: '0',
+        padding: '0',
         marginRight: '16px',
         boxSizing: 'border-box',
-        minWidth: '226px',
+        minWidth: '0',
       }}
     >
       <div
@@ -177,48 +177,21 @@ function NavInner({ activePage, compact = false }: NavProps) {
           flexShrink: 0,
         }}
       />
-      <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, lineHeight: 1.05 }}>
-        <span
-          style={{
-            fontFamily: TYPE.eyebrow.fontFamily,
-            fontSize: `${TYPE.eyebrow.fontSize}px`,
-            letterSpacing: TYPE.eyebrow.letterSpacing,
-            color: NAV_MUTE,
-            textTransform: TYPE.eyebrow.textTransform,
-            marginBottom: '2px',
-          }}
-        >
-          Account
-        </span>
-        <span
-          title={currentClient.name}
-          style={{
-            fontFamily: SANS,
-            fontSize: '12px',
-            fontWeight: 600,
-            color: NAV_TEXT,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            display: 'block',
-            maxWidth: '170px',
-          }}
-        >
-          {currentClient.name}
-        </span>
-      </div>
       <span
+        title={currentClient.name}
         style={{
-          marginLeft: 'auto',
-          fontFamily: MONO,
-          fontSize: '10px',
-          color: NAV_MUTE,
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
+          fontFamily: SANS,
+          fontSize: '14px',
+          fontWeight: 600,
+          color: NAV_TEXT,
           whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          display: 'block',
+          maxWidth: '220px',
         }}
       >
-        locked
+        {currentClient.name}
       </span>
     </div>
   )
@@ -355,7 +328,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '12px', fontWeight: 500, color: NAV_TEXT, fontFamily: SANS }}>{firstName}</div>
                   <div style={{ fontSize: '9px', color: NAVY, fontFamily: MONO }}>
-                    {isAdmin ? 'Admin' : isMaestro ? 'Maestro' : isInvestor ? 'Investor' : isClient ? 'Client' : isExternal ? 'External' : ''}
+                    {isAdmin ? 'Admin' : isMaestro ? 'Maestro' : isInvestor ? 'Investor' : isExternal ? 'External' : ''}
                   </div>
                 </div>
                 <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'rgba(27, 43, 92, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: NAVY, fontFamily: MONO, flexShrink: 0 }}>
@@ -368,7 +341,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
                   <div style={{ padding: '8px 14px 10px', borderBottom: `1px solid ${DROP_BORD}`, marginBottom: '4px' }}>
                     <div style={{ fontFamily: SANS, fontSize: '13px', color: DROP_HEAD, fontWeight: 600 }}>{displayName}</div>
                     <div style={{ fontFamily: MONO, fontSize: '9px', color: '#6B7280', marginTop: '2px' }}>
-                      {isAdmin ? 'Admin' : isMaestro ? 'Maestro' : isInvestor ? 'Investor' : isClient ? 'Client' : isExternal ? 'External' : ''}
+                      {isAdmin ? 'Admin' : isMaestro ? 'Maestro' : isInvestor ? 'Investor' : isExternal ? 'External' : ''}
                     </div>
                   </div>
                   {(isAdmin || isMaestro) && (
