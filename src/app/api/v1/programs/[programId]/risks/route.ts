@@ -2,7 +2,7 @@
 // POST /api/v1/programs/:programId/risks · create
 
 import { NextRequest } from 'next/server';
-import { getRisks } from '@/lib/programs/queries';
+import { getProgramById, getRisks } from '@/lib/programs/queries';
 import { createRisk } from '@/lib/programs/mutations';
 import { requireTenancy, tenancyErrorResponse } from '../../_auth';
 import type { RiskImpact, RiskLikelihood } from '@/lib/programs/types.db';
@@ -17,6 +17,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ pro
   try {
     const { programId } = await params;
     const ctx = await requireTenancy();
+    const program = await getProgramById(ctx, programId);
+    if (!program) return Response.json({ error: 'not_found' }, { status: 404 });
     const risks = await getRisks(ctx, programId);
     return Response.json({ risks });
   } catch (err) {
@@ -30,6 +32,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   try {
     const { programId } = await params;
     const ctx = await requireTenancy();
+    const program = await getProgramById(ctx, programId);
+    if (!program) return Response.json({ error: 'not_found' }, { status: 404 });
     const body = (await req.json()) as {
       title?: string;
       description?: string;

@@ -2,6 +2,7 @@
 // Returns counts, at-risk milestones, blocked >=48h work items, risk heatmap.
 
 import { getExecuteRollup } from '@/lib/programs/execute';
+import { getProgramById } from '@/lib/programs/queries';
 import { requireTenancy, tenancyErrorResponse } from '../../_auth';
 
 export const runtime = 'nodejs';
@@ -11,6 +12,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ program
   try {
     const { programId } = await params;
     const ctx = await requireTenancy();
+    const program = await getProgramById(ctx, programId);
+    if (!program) return Response.json({ error: 'not_found' }, { status: 404 });
     const rollup = await getExecuteRollup(ctx, programId);
     return Response.json({ rollup });
   } catch (err) {

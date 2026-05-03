@@ -113,6 +113,7 @@ export async function getEngagementWithPhaseData(
       .from('engagements')
       .select(`
         id,
+        client_id,
         name,
         status,
         lifecycle_state,
