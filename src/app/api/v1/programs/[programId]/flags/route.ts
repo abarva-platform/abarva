@@ -2,6 +2,7 @@
 
 import { NextRequest } from 'next/server';
 import { getOpenMaestroFlags, getProgramById } from '@/lib/programs/queries';
+import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
 import { requireTenancy, tenancyErrorResponse } from '../../_auth';
 
 export const runtime = 'nodejs';
@@ -10,10 +11,11 @@ export const dynamic = 'force-dynamic';
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ programId: string }> }) {
   try {
     const { programId } = await params;
+    const { supabase } = await getProgramsRouteSupabase('program_read');
     const ctx = await requireTenancy();
-    const program = await getProgramById(ctx, programId);
+    const program = await getProgramById(ctx, programId, { supabase });
     if (!program) return Response.json({ error: 'not_found' }, { status: 404 });
-    const flags = await getOpenMaestroFlags(ctx, programId);
+    const flags = await getOpenMaestroFlags(ctx, programId, { supabase });
     return Response.json({ flags });
   } catch (err) {
     try { return tenancyErrorResponse(err); } catch {}

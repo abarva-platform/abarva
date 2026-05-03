@@ -2,7 +2,7 @@
 // Returns ModuleState (view-model).
 
 import { getModuleState, getProgramById } from '@/lib/programs/queries';
-import { getServerSupabase } from '@/lib/supabase-server';
+import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
 import { requireTenancy, tenancyErrorResponse } from '../../../_auth';
 import type { ProgramModuleRow } from '@/lib/programs/types.db';
 import type { ModuleState } from '@/lib/programs/types.ui';
@@ -32,17 +32,17 @@ function mapStatus(
 export async function GET(_req: Request, { params }: { params: Promise<{ programId: string; key: string }> }) {
   try {
     const { programId, key } = await params;
+    const { supabase } = await getProgramsRouteSupabase('program_read');
     const ctx = await requireTenancy();
-    const program = await getProgramById(ctx, programId);
+    const program = await getProgramById(ctx, programId, { supabase });
     if (!program) return Response.json({ error: 'not_found' }, { status: 404 });
 
-    const modules = await getModuleState(ctx, programId);
+    const modules = await getModuleState(ctx, programId, { supabase });
     const moduleState = modules.find((m) => m.moduleKey === key);
     if (!moduleState) return Response.json({ error: 'module_not_found' }, { status: 404 });
 
     // Pull the active deliverable + latest version for provenance + draft content
-    const sb = getServerSupabase();
-    const { data: delivRow } = await sb
+    const { data: delivRow } = await supabase
       .from('deliverables_v2')
       .select('id, status, current_version, title, updated_at')
       .eq('engagement_id', programId)
@@ -54,7 +54,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ program
     let provenanceMap: Record<string, unknown> | null = null;
     let draftContent: string | null = null;
     if (deliverable) {
-      const { data: vRow } = await sb
+      const { data: vRow } = await supabase
         .from('deliverable_versions')
         .select('content, quality_issues, generated_at')
         .eq('deliverable_id', deliverable.id)
