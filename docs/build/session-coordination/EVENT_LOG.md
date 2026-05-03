@@ -662,3 +662,13 @@ Append-only coordination log for active Codex sessions.
 - tests: added `src/__tests__/integration/programs/programs-mutation-routes-tenant-guards.test.ts` covering own-tenant pass, foreign-tenant 404, cross-tenant write denied, and no-membership denied for each PR2 route.
 - validation: focused Jest passed (45/45), targeted ESLint clean, `npm run build` passed with existing `next.config.ts` NFT warning only.
 - next: open PR and merge after checks pass.
+
+## 2026-05-03T09:15:00-05:00 - codex/programs-phasea-pr3-approvals-flags
+
+- status: local-validation-passed
+- branch: `codex/programs-phasea-pr3-approvals-flags`
+- scope: Strategic Moves Phase A PR3 rollout for approvals and maestro flag mutation routes.
+- changes: tenant pre-check + 404 guard; auth-mode plumbing via `getProgramsRouteSupabase('mutation')`; governance mutations now accept supabase injection (`decideApproval`, `resolveMaestroFlag`).
+- tests: added `src/__tests__/integration/programs/programs-approval-flag-mutation-guards.test.ts` with four-case guard matrix per route; adjusted existing tenant-guard expectations to include injected supabase options.
+- validation: focused Jest passed (57/57), targeted ESLint clean, `npm run build` passed with existing `next.config.ts` NFT warning only.
+- next: open PR and merge after checks pass.

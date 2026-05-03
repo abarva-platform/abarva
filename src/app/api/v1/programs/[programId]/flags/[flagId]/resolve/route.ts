@@ -5,6 +5,7 @@ import { NextRequest } from 'next/server';
 import { resolveMaestroFlag } from '@/lib/programs/governance';
 import { getProgramById } from '@/lib/programs/queries';
 import { requireTenancy, tenancyErrorResponse } from '../../../../_auth';
+import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -13,7 +14,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   try {
     const { programId, flagId } = await params;
     const ctx = await requireTenancy();
-    const program = await getProgramById(ctx, programId);
+    const { supabase } = await getProgramsRouteSupabase('mutation');
+    const program = await getProgramById(ctx, programId, { supabase });
     if (!program) {
       return Response.json({ error: 'not_found' }, { status: 404 });
     }
@@ -21,7 +23,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
     if (!body?.resolutionNotes) {
       return Response.json({ error: 'bad_request', detail: 'resolutionNotes required' }, { status: 400 });
     }
-    const resolved = await resolveMaestroFlag(ctx, programId, flagId, body.resolutionNotes);
+    const resolved = await resolveMaestroFlag(ctx, programId, flagId, body.resolutionNotes, { supabase });
     if (!resolved) {
       return Response.json({ error: 'not_found' }, { status: 404 });
     }
