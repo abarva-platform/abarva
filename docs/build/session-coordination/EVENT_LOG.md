@@ -652,3 +652,13 @@ Append-only coordination log for active Codex sessions.
 - validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only.
 - validation_note: local browser route redirected to client-test sign-in, so no demo credentials/code were entered in this turn; production unauthenticated page was used to confirm the prior DOM state-change behavior.
 - next: run standard checks, commit, push, open PR, and auto-merge after checks pass.
+
+## 2026-05-03T08:40:00-05:00 - codex/programs-phasea-pr2-mutations
+
+- status: local-validation-passed
+- branch: `codex/programs-phasea-pr2-mutations`
+- scope: Strategic Moves Phase A PR2 rollout (mutation routes excluding nexus/approvals).
+- changes: tenant pre-check + 404 guard; auth-mode plumbing via `getProgramsRouteSupabase('mutation')`; mutation scoping with resource-id + engagement-id and explicit 404 on zero-row updates.
+- tests: added `src/__tests__/integration/programs/programs-mutation-routes-tenant-guards.test.ts` covering own-tenant pass, foreign-tenant 404, cross-tenant write denied, and no-membership denied for each PR2 route.
+- validation: focused Jest passed (45/45), targeted ESLint clean, `npm run build` passed with existing `next.config.ts` NFT warning only.
+- next: open PR and merge after checks pass.

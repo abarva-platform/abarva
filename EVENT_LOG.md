@@ -100,3 +100,13 @@
 - Live P5 package request timed out after partial writes. DB confirmed business_case, readiness_and_change_plan, and tower_handoff_plan were signed off, but funding_approval and sponsor_alignment did not land and program remained current_phase=5.
 - Root cause: P5 naturally requires multiple signed artifacts; one complete_deliverable call per artifact can exceed the Programs client timeout before gate evaluation.
 - Fix in progress: add complete_deliverables batch tool and route multi-deliverable package requests to it on the initial tool turn.
+
+## 2026-05-03T08:40:00-05:00 — codex/programs-phasea-pr2-mutations
+
+- Workstream: Strategic Moves Phase A hardening (PR2 mutation routes excluding nexus/approvals).
+- Scope: Added tenant guard + auth-mode plumbing to advance, milestones POST/PATCH, risks POST/PATCH, work-items POST/PATCH, module status, deliverable publish/sign-off.
+- Security hardening: Added resource-id+engagement-id scoped mutation handling that now returns `404` when no row matches (prevents false-positive success on cross-tenant/resource-mismatch writes).
+- Auth-mode plumbing: Added `mutation` route family in `programs-auth-mode-server` and routed all PR2 endpoints through `getProgramsRouteSupabase('mutation')`.
+- Tests: Added `src/__tests__/integration/programs/programs-mutation-routes-tenant-guards.test.ts` with four-test minimum per route (own-tenant pass, foreign-tenant 404, cross-tenant write denied, no-membership denied).
+- Validation: Focused Jest passed (45 tests), targeted ESLint clean, `npm run build` passed (existing `next.config.ts` NFT warning unchanged).
+- Next: open PR for PR2 and merge after standard checks pass.

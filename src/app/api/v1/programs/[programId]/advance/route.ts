@@ -8,8 +8,8 @@ import { getProgramById } from '@/lib/programs/queries';
 import { advancePhase } from '@/lib/programs/mutations';
 import { evaluateGate, requestFounderApproval } from '@/lib/programs/governance';
 import { requireTenancy, tenancyErrorResponse } from '../../_auth';
-import { getServerSupabase } from '@/lib/supabase-server';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
+import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -18,6 +18,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   try {
     const { programId } = await params;
     const ctx = await requireTenancy();
+    const { supabase } = await getProgramsRouteSupabase('mutation');
     const accessPolicy = await loadUserProgramAccessPolicy(ctx, { programId });
     if (accessPolicy.programIdsAllowed !== null && !accessPolicy.programIdsAllowed.includes(programId)) {
       return Response.json({ error: 'forbidden' }, { status: 403 });
@@ -33,11 +34,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
       return Response.json({ error: 'bad_request', detail: 'toPhase required' }, { status: 400 });
     }
 
-    const program = await getProgramById(ctx, programId);
+    const program = await getProgramById(ctx, programId, { supabase });
     if (!program) return Response.json({ error: 'not_found' }, { status: 404 });
     const fromPhase = program.currentPhase ?? 0;
 
-    const gate = await evaluateGate(ctx, programId, fromPhase, body.toPhase);
+    const gate = await evaluateGate(ctx, programId, fromPhase, body.toPhase, { supabase });
     const hardFails = gate.failedChecks.filter((c) => c.severity === 'hard');
 
     if (hardFails.length > 0) {
@@ -69,7 +70,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
         approverRole: gate.approverRole ?? 'sponsor',
         deadlineHours: 48,
         context: { from_phase: fromPhase, to_phase: body.toPhase, bypass_gate: !!body.bypassGate },
-      });
+      }, { supabase });
       return Response.json(
         { error: 'approval_required', approvalId, gate, detail: 'Approval request created · re-send with approvalId once approved' },
         { status: 202 },
@@ -84,8 +85,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
     }
 
     if (gate.requiresApproval && body.approvalId) {
-      const sb = getServerSupabase();
-      const { data: approval, error: approvalError } = await sb
+      const { data: approval, error: approvalError } = await supabase
         .from('founder_approval_requests')
         .select('id, status, engagement_id')
         .eq('id', body.approvalId)
@@ -109,7 +109,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
       snapshot: body.snapshot ?? {},
       approvedByUserId: ctx.userId,
       bypassGate: body.bypassGate,
-    });
+    }, { supabase });
 
     return Response.json({ ok: true, programId: result.programId, newPhase: result.newPhase, snapshotId: result.snapshotId });
   } catch (err) {

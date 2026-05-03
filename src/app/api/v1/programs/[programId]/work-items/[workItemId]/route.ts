@@ -8,6 +8,7 @@ import { blockWorkItem, markWorkItemNexusDrafted } from '@/lib/programs/execute'
 import { getProgramById } from '@/lib/programs/queries';
 import { requireTenancy, tenancyErrorResponse } from '../../../_auth';
 import type { WorkItemStatus } from '@/lib/programs/types.db';
+import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -18,7 +19,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ pr
   try {
     const { programId, workItemId } = await params;
     const ctx = await requireTenancy();
-    const program = await getProgramById(ctx, programId);
+    const { supabase } = await getProgramsRouteSupabase('mutation');
+    const program = await getProgramById(ctx, programId, { supabase });
     if (!program) {
       return Response.json({ error: 'not_found' }, { status: 404 });
     }
@@ -30,16 +32,19 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ pr
     };
 
     if (body?.block) {
-      await blockWorkItem(ctx, programId, workItemId, body.block.reason);
+      const blocked = await blockWorkItem(ctx, programId, workItemId, body.block.reason, { supabase });
+      if (!blocked) return Response.json({ error: 'not_found' }, { status: 404 });
     }
     if (body?.markNexusDrafted) {
-      await markWorkItemNexusDrafted(ctx, programId, workItemId, body.draftContext);
+      const marked = await markWorkItemNexusDrafted(ctx, programId, workItemId, body.draftContext, { supabase });
+      if (!marked) return Response.json({ error: 'not_found' }, { status: 404 });
     }
     if (body?.status) {
       if (!VALID.includes(body.status)) {
         return Response.json({ error: 'bad_request', detail: `status must be one of ${VALID.join(', ')}` }, { status: 400 });
       }
-      await updateWorkItemStatus(ctx, programId, workItemId, body.status);
+      const updated = await updateWorkItemStatus(ctx, programId, workItemId, body.status, { supabase });
+      if (!updated) return Response.json({ error: 'not_found' }, { status: 404 });
     }
     if (!body?.status && !body?.block && !body?.markNexusDrafted) {
       return Response.json({ error: 'bad_request', detail: 'nothing to update' }, { status: 400 });

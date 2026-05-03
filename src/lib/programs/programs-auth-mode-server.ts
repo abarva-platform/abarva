@@ -5,7 +5,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { getServerSupabase } from '@/lib/supabase-server';
 
 export type ProgramsAuthMode = 'service_role' | 'authenticated';
-export type ProgramsAuthRouteFamily = 'portfolio' | 'detail';
+export type ProgramsAuthRouteFamily = 'portfolio' | 'detail' | 'mutation';
 
 function normalizeProgramsAuthMode(raw: string | null | undefined): ProgramsAuthMode | null {
   const v = (raw ?? '').trim().toLowerCase();
