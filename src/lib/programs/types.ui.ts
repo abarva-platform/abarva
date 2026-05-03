@@ -437,6 +437,15 @@ export interface StrategicMove {
     verified: { amount: number; status: 'pending' | 'tracked' | 'final' } | null;
     assumptions: Record<string, unknown> | null;
   };
+  deliverables: Array<{
+    id: string;
+    typeKey: string;
+    title: string;
+    status: string;
+    updatedAt: string | null;
+    preview: string;
+    url: string;
+  }>;
   gateCriteria: Array<{ id: string; label: string; completed: boolean }>;
   recentActivity: Array<{ at: string; actor: string; action: string; summary: string }>;
   linkedEvidence: Array<{ id: string; anchor: string; summary: string; url: string }>;
