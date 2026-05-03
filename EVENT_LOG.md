@@ -150,3 +150,27 @@
 - Regression: included `src/__tests__/integration/programs/programs-read-routes-tenant-guards.test.ts` and verified compatibility with all Phase A guard suites.
 - Validation: Focused Jest passed (97 tests), targeted ESLint clean, `npm run build` passed (existing `next.config.ts` NFT warning unchanged).
 - Next: open clean PR replacing #1478 and merge after checks pass.
+
+## 2026-05-03T14:55:00-05:00 — codex/programs-phasea-pr1-read-routes-clean
+
+- Workstream: Strategic Moves implementation handoff (post-Phase-A substrate).
+- Scope shipped:
+  - Added schema migration `20260503113000_strategic_moves_schema_v02.sql`:
+    - nine `engagements` columns (problem/target/timeline/value fields)
+    - `engagements_current_phase_check` ceiling lift to `<= 7`
+    - `engagement_participants.person_id` add + two-pass backfill (user_id->email, user_name->name) + FK + index
+  - Added local dry-run artifact `docs/build/STRATEGIC_MOVES_PARTICIPANT_BACKFILL_DRY_RUN_2026-05-03.md` for unresolved-row staging validation handoff.
+  - Added Strategic Moves routes:
+    - `/strategic-moves`
+    - `/strategic-moves/[moveId]`
+    - `/strategic-moves/new`
+  - Added Strategic Moves UI components and canonical 3-view shell implementation (dashboard/detail/originate) from single design source file.
+  - Added user preference persistence endpoint: `GET/PUT /api/v1/users/me/preferences` backed by `tower_user_preferences.default_filters` (`strategic_moves.listView`, `strategic_moves.sort`).
+  - Added `src/lib/programs/phase-labels.ts` with locked P0..P7 label map.
+  - Added Strategic Move view-model + derivations (`getMoveStatus`, `deriveDisplayCode`, `deriveMapLabel`) and tenancy-scoped portfolio/detail wrappers in programs query layer.
+  - Extended origination draft allowlist to include `/strategic-moves/new`.
+- Validation:
+  - `npm run build` passed (existing unrelated Turbopack NFT warning unchanged)
+  - `npx eslint ...` passed for modified Strategic Moves files
+  - Jest: `phase-labels.test.ts` and `strategic-moves-transformers.test.ts` passed
+- PR: https://github.com/anandsundaram-hash/abarva/pull/1484 (open, checks running at log time).
