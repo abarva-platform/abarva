@@ -164,6 +164,7 @@ describe('Programs tenant guard routes', () => {
       'apr_foreign',
       'approved',
       'ok',
+      expect.objectContaining({ supabase: { mocked: true } }),
     );
     expect(res.status).toBe(404);
     await expect(res.json()).resolves.toEqual({ error: 'not_found' });
@@ -183,6 +184,7 @@ describe('Programs tenant guard routes', () => {
       'eng_1',
       'flag_foreign',
       'done',
+      expect.objectContaining({ supabase: { mocked: true } }),
     );
     expect(res.status).toBe(404);
     await expect(res.json()).resolves.toEqual({ error: 'not_found' });

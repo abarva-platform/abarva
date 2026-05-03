@@ -110,3 +110,13 @@
 - Tests: Added `src/__tests__/integration/programs/programs-mutation-routes-tenant-guards.test.ts` with four-test minimum per route (own-tenant pass, foreign-tenant 404, cross-tenant write denied, no-membership denied).
 - Validation: Focused Jest passed (45 tests), targeted ESLint clean, `npm run build` passed (existing `next.config.ts` NFT warning unchanged).
 - Next: open PR for PR2 and merge after standard checks pass.
+
+## 2026-05-03T09:15:00-05:00 — codex/programs-phasea-pr3-approvals-flags
+
+- Workstream: Strategic Moves Phase A hardening (PR3 approval + flag mutation routes).
+- Scope: Hardened `POST /approvals`, `POST /approvals/[approvalId]/decide`, and `POST /flags/[flagId]/resolve`.
+- Fix summary: Added tenant guard pre-checks with `getProgramById(..., { supabase })`, routed handlers through `getProgramsRouteSupabase('mutation')`, and passed auth-mode-aware supabase to governance mutation helpers.
+- Governance layer update: `decideApproval` and `resolveMaestroFlag` now accept optional `supabase` injection so route auth mode is honored end-to-end.
+- Regression: Added `src/__tests__/integration/programs/programs-approval-flag-mutation-guards.test.ts` with four-test minimum per route (own-tenant pass, foreign-tenant 404, cross-tenant write denied, no-membership denied); updated existing tenant-guard test expectations for new helper signature.
+- Validation: Focused Jest passed (57 tests across mutation guard suites), targeted ESLint clean, `npm run build` passed (existing `next.config.ts` NFT warning unchanged).
+- Next: open PR for PR3 and merge after standard checks pass.

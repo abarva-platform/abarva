@@ -5,6 +5,7 @@ import { decideApproval, hasAuthority } from '@/lib/programs/governance';
 import { getProgramById } from '@/lib/programs/queries';
 import { requireTenancy, tenancyErrorResponse } from '../../../../_auth';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
+import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -13,7 +14,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   try {
     const { programId, approvalId } = await params;
     const ctx = await requireTenancy();
-    const program = await getProgramById(ctx, programId);
+    const { supabase } = await getProgramsRouteSupabase('mutation');
+    const program = await getProgramById(ctx, programId, { supabase });
     if (!program) {
       return Response.json({ error: 'not_found' }, { status: 404 });
     }
@@ -27,12 +29,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
     if (!accessPolicy.canApproveGates && ctx.role !== 'founder') {
       return Response.json({ error: 'forbidden', detail: 'phase-gate approval permission required' }, { status: 403 });
     }
-    const sponsor = await hasAuthority(ctx, programId, 'sponsor');
+    const sponsor = await hasAuthority(ctx, programId, 'sponsor', { supabase });
     if (!sponsor && ctx.role !== 'founder') {
       return Response.json({ error: 'forbidden', detail: 'sponsor or founder authority required' }, { status: 403 });
     }
 
-    const decided = await decideApproval(ctx, programId, approvalId, body.decision, body.notes);
+    const decided = await decideApproval(ctx, programId, approvalId, body.decision, body.notes, { supabase });
     if (!decided) {
       return Response.json({ error: 'not_found' }, { status: 404 });
     }

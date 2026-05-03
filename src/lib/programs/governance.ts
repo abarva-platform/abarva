@@ -472,9 +472,10 @@ export async function decideApproval(
   approvalId: string,
   decision: 'approved' | 'denied',
   notes?: string,
+  opts: { supabase?: SupabaseClient } = {},
 ): Promise<boolean> {
   assertTenancy(ctx);
-  const sb = getServerSupabase();
+  const sb = opts.supabase ?? getServerSupabase();
   const { data, error } = await sb
     .from('founder_approval_requests')
     .update({
@@ -544,9 +545,10 @@ export async function resolveMaestroFlag(
   programId: string,
   flagId: string,
   resolutionNotes: string,
+  opts: { supabase?: SupabaseClient } = {},
 ): Promise<boolean> {
   assertTenancy(ctx);
-  const sb = getServerSupabase();
+  const sb = opts.supabase ?? getServerSupabase();
   const { data, error } = await sb
     .from('maestro_oversight_flags')
     .update({

@@ -7,6 +7,7 @@ import { requestFounderApproval } from '@/lib/programs/governance';
 import { requireTenancy, tenancyErrorResponse } from '../../_auth';
 import { canReadProgram, loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 import type { ApprovalAuthority, FounderApprovalRequestRow } from '@/lib/programs/types.db';
+import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -35,6 +36,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   try {
     const { programId } = await params;
     const ctx = await requireTenancy();
+    const { supabase } = await getProgramsRouteSupabase('mutation');
     const accessPolicy = await loadUserProgramAccessPolicy(ctx, { programId });
     if (accessPolicy.programIdsAllowed !== null && !accessPolicy.programIdsAllowed.includes(programId)) {
       return Response.json({ error: 'forbidden' }, { status: 403 });
@@ -50,7 +52,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
     if (!body?.requestType || !body?.headline) {
       return Response.json({ error: 'bad_request', detail: 'requestType + headline required' }, { status: 400 });
     }
-    const program = await getProgramById(ctx, programId);
+    const program = await getProgramById(ctx, programId, { supabase });
     if (!program) return Response.json({ error: 'not_found' }, { status: 404 });
 
     const approvalId = await requestFounderApproval(ctx, programId, {
@@ -60,7 +62,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
       approverUserId: body.approverUserId,
       approverRole: body.approverRole,
       deadlineHours: body.deadlineHours,
-    });
+    }, { supabase });
     return Response.json({ approvalId }, { status: 201 });
   } catch (err) {
     try { return tenancyErrorResponse(err); } catch {}
