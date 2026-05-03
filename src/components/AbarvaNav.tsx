@@ -80,6 +80,8 @@ function NavInner({ activePage, compact = false }: NavProps) {
   const engagementsActive  = pathname === '/engagements' || pathname.startsWith('/engagements/')
                               || pathname.startsWith('/engage/') || tenantProgramsActive || activePage === 'engagements'
   const sourceActive       = pathname === '/source' || pathname.startsWith('/source/') || activePage === 'source'
+  const strategicMovesActive = pathname === '/strategic-moves' || pathname.startsWith('/strategic-moves/')
+                              || activePage === 'strategic-moves'
   const intelligenceActive = pathname === '/intelligence' || pathname.startsWith('/intelligence/')
                               || tenantIntelligenceActive || activePage === 'intelligence'
   const towerActive        = pathname === '/tower' || pathname.startsWith('/tower/')
@@ -256,6 +258,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
             {staticClientLabel()}
             {!compact && navLink('Home', '/home', homeActive)}
             {!compact && canShow('programs') && navLink('Programs', '/programs', engagementsActive)}
+            {!compact && canShow('programs') && navLink('Strategic Moves', '/strategic-moves', strategicMovesActive)}
             {!compact && canShow('source') && navLink('Source', '/source', sourceActive)}
             {!compact && canShow('intelligence') && navLink('Intelligence', intelligencePath, intelligenceActive)}
             {!compact && canShow('tower') && navLink('Control Tower', '/tower', towerActive)}
@@ -273,6 +276,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
             {staticClientLabel()}
             {!compact && navLink('Home', '/home', homeActive)}
             {!compact && canShow('programs') && navLink('Programs', '/programs', engagementsActive)}
+            {!compact && canShow('programs') && navLink('Strategic Moves', '/strategic-moves', strategicMovesActive)}
             {!compact && canShow('source') && navLink('Source', '/source', sourceActive)}
             {!compact && canShow('intelligence') && navLink('Intelligence', intelligencePath, intelligenceActive)}
             {!compact && canShow('tower') && navLink('Control Tower', '/tower', towerActive)}

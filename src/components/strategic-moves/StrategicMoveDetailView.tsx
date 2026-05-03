@@ -6,6 +6,10 @@ interface Props {
   move: StrategicMove;
 }
 
+function formatRole(role: string): string {
+  return role.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 function actionLabel(statusKey: string, phaseLabel: string): string {
   if (statusKey === 'gate_blocked') return 'Open gate review';
   if (statusKey === 'awaiting_decision') return 'Prepare decision packet';
@@ -24,6 +28,12 @@ function actionHref(move: StrategicMove): string {
 export function StrategicMoveDetailView({ move }: Props) {
   return (
     <div className={styles.page}>
+      <div className={styles.backRow}>
+        <Link className={styles.backLink} href="/strategic-moves">
+          ← Back to Strategic Moves
+        </Link>
+      </div>
+
       <div className={styles.topbar}>
         <div>
           <div className={styles.eyebrow}>Strategic Move</div>
@@ -94,7 +104,7 @@ export function StrategicMoveDetailView({ move }: Props) {
                 </div>
                 {move.participants.slice(0, 4).map((participant) => (
                   <div className={styles.rowItem} key={participant.personId}>
-                    {participant.name} · {participant.role}
+                    {participant.name} · {formatRole(participant.role)}
                   </div>
                 ))}
               </div>
@@ -124,11 +134,11 @@ export function StrategicMoveDetailView({ move }: Props) {
               {move.deliverables.length === 0 ? (
                 <div className={styles.rowItem}>No deliverables captured yet.</div>
               ) : (
-                move.deliverables.slice(0, 10).map((deliverable) => (
+                move.deliverables.slice(0, 5).map((deliverable) => (
                   <details className={styles.rowItem} key={deliverable.id}>
                     <summary className={styles.deliverableSummary}>
                       <span>
-                        <strong>{deliverable.title}</strong> · {deliverable.typeKey}
+                        <strong>{deliverable.title}</strong>
                       </span>
                       <span className={styles.deliverableStatus}>{deliverable.status}</span>
                     </summary>
