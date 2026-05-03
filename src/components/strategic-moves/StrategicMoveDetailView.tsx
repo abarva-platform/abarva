@@ -14,6 +14,13 @@ function actionLabel(statusKey: string, phaseLabel: string): string {
   return 'Resume move';
 }
 
+function actionHref(move: StrategicMove): string {
+  if (move.status.key === 'gate_blocked') return `/strategic-moves/${move.id}?panel=gate`;
+  if (move.status.key === 'awaiting_decision') return '/admin/programs/approvals';
+  if (move.status.key === 'validated') return `/tower?move=${move.id}`;
+  return `/strategic-moves/${move.id}?phase=${move.currentPhase}`;
+}
+
 export function StrategicMoveDetailView({ move }: Props) {
   return (
     <div className={styles.page}>
@@ -54,9 +61,9 @@ export function StrategicMoveDetailView({ move }: Props) {
           </div>
 
           <div style={{ marginBottom: 10 }}>
-            <button className={styles.primaryAction} type="button">
+            <Link className={styles.primaryActionLink} href={actionHref(move)}>
               {actionLabel(move.status.key, move.phaseLabel)} <span>→</span>
-            </button>
+            </Link>
           </div>
 
           <div className={styles.section} style={{ marginBottom: 10 }}>
@@ -112,6 +119,30 @@ export function StrategicMoveDetailView({ move }: Props) {
           </div>
 
           <section className={styles.section} style={{ marginBottom: 10 }}>
+            <div className={styles.sectionTitle}>Deliverables</div>
+            <div className={styles.rowList}>
+              {move.deliverables.length === 0 ? (
+                <div className={styles.rowItem}>No deliverables captured yet.</div>
+              ) : (
+                move.deliverables.slice(0, 10).map((deliverable) => (
+                  <details className={styles.rowItem} key={deliverable.id}>
+                    <summary className={styles.deliverableSummary}>
+                      <span>
+                        <strong>{deliverable.title}</strong> · {deliverable.typeKey}
+                      </span>
+                      <span className={styles.deliverableStatus}>{deliverable.status}</span>
+                    </summary>
+                    <p className={styles.deliverablePreview}>{deliverable.preview}</p>
+                    <a className={styles.deliverableLink} href={deliverable.url} target="_blank" rel="noreferrer">
+                      Open module state →
+                    </a>
+                  </details>
+                ))
+              )}
+            </div>
+          </section>
+
+          <section className={styles.section} style={{ marginBottom: 10 }}>
             <div className={styles.sectionTitle}>{move.phaseLabel} · Gate Criteria</div>
             <div className={styles.rowList}>
               {move.gateCriteria.map((criterion) => (
@@ -156,4 +187,3 @@ export function StrategicMoveDetailView({ move }: Props) {
     </div>
   );
 }
-

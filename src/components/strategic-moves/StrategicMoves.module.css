@@ -335,6 +335,10 @@
   padding: 8px 10px;
 }
 
+.rowItem a {
+  color: inherit;
+}
+
 .primaryAction {
   display: inline-flex;
   align-items: center;
@@ -347,6 +351,61 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.primaryActionLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 8px;
+  background: var(--abarva-signal-blue);
+  color: #fff;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.primaryActionLink:hover {
+  filter: brightness(0.95);
+}
+
+.deliverableSummary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.deliverableStatus {
+  border-radius: 999px;
+  border: 1px solid var(--canon-border-strong);
+  padding: 2px 7px;
+  font-family: var(--abarva-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.deliverablePreview {
+  margin: 8px 0 0;
+  color: var(--canon-gray-700);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.deliverableLink {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--abarva-signal-blue);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.deliverableLink:hover {
+  text-decoration: underline;
 }
 
 .originateShell {

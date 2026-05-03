@@ -691,9 +691,9 @@ export async function getMoveStatus(
 }
 
 async function fetchLinkedEvidence(
+  sb: ReturnType<typeof getServerSupabase>,
   moveId: string,
 ): Promise<StrategicMove['linkedEvidence']> {
-  const sb = getServerSupabase();
   // Evidence binding convention for move-level retrieval:
   // related_entity_type='engagement' AND related_entity_id=<moveId>
   const { data } = await sb
@@ -711,13 +711,80 @@ async function fetchLinkedEvidence(
   }));
 }
 
+function compactDeliverablePreview(content: string | null | undefined): string {
+  if (!content) return 'No draft content captured yet.';
+  return content
+    .replace(/[#*_`>\-\[\]\(\)]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 220);
+}
+
+async function fetchMoveDeliverables(
+  sb: ReturnType<typeof getServerSupabase>,
+  moveId: string,
+): Promise<StrategicMove['deliverables']> {
+  const { data: deliverableRows } = await sb
+    .from('deliverables_v2')
+    .select('id, deliverable_type_key, title, status, current_version, updated_at')
+    .eq('engagement_id', moveId)
+    .order('updated_at', { ascending: false })
+    .limit(24);
+
+  const rows = (deliverableRows as Array<{
+    id: string;
+    deliverable_type_key: string;
+    title: string | null;
+    status: string | null;
+    current_version: number | null;
+    updated_at: string | null;
+  }> | null) ?? [];
+
+  if (rows.length === 0) return [];
+
+  const deliverableIds = rows.map((row) => row.id);
+  const { data: versionRows } = await sb
+    .from('deliverable_versions')
+    .select('deliverable_id, version, content, generated_at')
+    .in('deliverable_id', deliverableIds)
+    .order('generated_at', { ascending: false });
+
+  const versions = (versionRows as Array<{
+    deliverable_id: string;
+    version: number;
+    content: string | null;
+    generated_at: string | null;
+  }> | null) ?? [];
+
+  const versionByDeliverable = new Map<string, { content: string | null }>();
+  for (const row of versions) {
+    if (!versionByDeliverable.has(row.deliverable_id)) {
+      versionByDeliverable.set(row.deliverable_id, { content: row.content });
+    }
+  }
+
+  return rows.map((row) => {
+    const latest = versionByDeliverable.get(row.id);
+    const title = row.title?.trim() || row.deliverable_type_key.replace(/_/g, ' ');
+    return {
+      id: row.id,
+      typeKey: row.deliverable_type_key,
+      title,
+      status: row.status ?? 'draft',
+      updatedAt: row.updated_at,
+      preview: compactDeliverablePreview(latest?.content),
+      url: `/api/v1/programs/${moveId}/module/${encodeURIComponent(row.deliverable_type_key)}`,
+    };
+  });
+}
+
 export async function buildStrategicMove(
   ctx: TenancyCtx,
   move: ProgramCore,
   opts: { supabase?: ReturnType<typeof getServerSupabase> } = {},
 ): Promise<StrategicMove> {
   const sb = opts.supabase ?? getServerSupabase();
-  const [clientRow, peopleRows, activityRows, moduleRows, phaseSnapshots, linkedEvidence, moveStatus] = await Promise.all([
+  const [clientRow, peopleRows, activityRows, moduleRows, phaseSnapshots, linkedEvidence, deliverables, moveStatus] = await Promise.all([
     sb.from('clients').select('id, name, industry_code, slug').eq('id', move.clientId).maybeSingle(),
     sb
       .from('engagement_participants')
@@ -741,7 +808,8 @@ export async function buildStrategicMove(
       .eq('engagement_id', move.id)
       .order('created_at', { ascending: false })
       .limit(8),
-    fetchLinkedEvidence(move.id),
+    fetchLinkedEvidence(sb, move.id),
+    fetchMoveDeliverables(sb, move.id),
     getMoveStatus(ctx, move),
   ]);
 
@@ -884,6 +952,7 @@ export async function buildStrategicMove(
           : null,
       assumptions: move.valueAssumptions,
     },
+    deliverables,
     gateCriteria,
     recentActivity,
     linkedEvidence,
