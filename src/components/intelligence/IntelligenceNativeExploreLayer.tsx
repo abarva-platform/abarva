@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState, type ReactNode } from 'react';
+import { useCallback, useRef, useState, type ReactNode } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
 import { J0FailureModeGrid } from '@/components/intelligence/J0FailureModeGrid';
 import type { FailureModeNarrativeCard } from '@/lib/intelligence/j0-failure-mode-cards';
@@ -195,30 +195,49 @@ export function IntelligenceNativeExploreLayer({
   featuredPatternIds,
   totalFailureModes,
 }: IntelligenceNativeExploreLayerProps) {
+  const canvasRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<ExploreTabKey>('today');
   const active = SUBMENUS.find((tab) => tab.key === activeTab) ?? SUBMENUS[0];
 
-  const handleSelect = useCallback((tab: ExploreTab) => {
-    setActiveTab(tab.key);
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(
-        new CustomEvent('intelligence_native_submenu_selected', {
-          detail: { submenu: tab.key, label: tab.label },
-        }),
-      );
+  const focusCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || typeof window === 'undefined') return;
+
+    const focus = () => {
+      canvas.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      canvas.focus({ preventScroll: true });
+    };
+
+    if (typeof window.requestAnimationFrame === 'function') {
+      window.requestAnimationFrame(focus);
+    } else {
+      focus();
     }
   }, []);
 
+  const activateTab = useCallback(
+    (tab: ExploreTab, options: { focus?: boolean } = {}) => {
+      setActiveTab(tab.key);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('intelligence_native_submenu_selected', {
+            detail: { submenu: tab.key, label: tab.label },
+          }),
+        );
+      }
+      if (options.focus) focusCanvas();
+    },
+    [focusCanvas],
+  );
+
+  const handleSelect = useCallback((tab: ExploreTab) => {
+    activateTab(tab);
+  }, [activateTab]);
+
   const handleSentinelFocus = useCallback(() => {
-    setActiveTab('sessions');
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(
-        new CustomEvent('intelligence_native_submenu_selected', {
-          detail: { submenu: 'sessions', label: 'Sessions' },
-        }),
-      );
-    }
-  }, []);
+    const sessionsTab = SUBMENUS.find((tab) => tab.key === 'sessions');
+    if (sessionsTab) activateTab(sessionsTab, { focus: true });
+  }, [activateTab]);
 
   return (
     <>
@@ -324,11 +343,18 @@ export function IntelligenceNativeExploreLayer({
       >
         <SentinelAmbientPanel onFocus={handleSentinelFocus} />
         <div
+          ref={canvasRef}
           id="intelligence-native-canvas"
           role="tabpanel"
           aria-label={`${active.label} canvas`}
+          aria-live="polite"
+          tabIndex={-1}
           data-testid="intelligence-native-canvas"
-          style={{ minWidth: 0 }}
+          style={{
+            minWidth: 0,
+            outline: 'none',
+            scrollMarginTop: 24,
+          }}
         >
           <ActiveCanvas
             activeTab={activeTab}
@@ -706,6 +732,7 @@ function SentinelAmbientPanel({ onFocus }: { onFocus: () => void }) {
       <button
         type="button"
         onClick={onFocus}
+        aria-controls="intelligence-native-canvas"
         style={{
           marginTop: 18,
           display: 'flex',
@@ -723,8 +750,8 @@ function SentinelAmbientPanel({ onFocus }: { onFocus: () => void }) {
           cursor: 'pointer',
         }}
       >
-        Open session canvas
-        <span aria-hidden="true">same page</span>
+        Show Sessions canvas
+        <span aria-hidden="true">focus right pane</span>
       </button>
     </aside>
   );

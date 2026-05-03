@@ -573,3 +573,24 @@ Append-only coordination log for active Codex sessions.
 - validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only.
 - lock: `tower-setup-initiatives-bridge-ui` marked completed in `ACTIVE_LOCKS.yaml`.
 - next: commit, push, open PR, and auto-merge after standard checks pass.
+
+## 2026-05-02T20:05:00-05:00 - codex-intelligence-session-canvas-affordance
+
+- status: in-progress
+- branch: `codex/intelligence-session-canvas-affordance`
+- worktree: `/private/tmp/nexus-intelligence-front`
+- scope: fix the Intelligence Sentinel `Open session canvas` affordance so it visibly activates the native Sessions canvas instead of feeling inert.
+- locks: `intelligence-session-canvas-affordance-ui`
+- guardrail: no Programs files, no Source lifecycle/data/API files, no Tower files, and no private-plane schema changes.
+
+## 2026-05-02T20:08:00-05:00 - codex-intelligence-session-canvas-affordance
+
+- status: focused-validation-passed
+- shipped: Sentinel affordance copy changed to `Show Sessions canvas`; clicking now switches the Sessions tab, focuses the native right-pane canvas, scrolls it into view, and announces the tabpanel update with `aria-live="polite"`.
+- regression: strengthened `IntelligenceNativeExploreLayer.test.tsx` to assert the Sessions tab becomes selected and the Sessions canvas receives focus after the Sentinel affordance click.
+- validation: focused native Intelligence Jest passed, 1 suite / 1 test.
+- validation: focused Intelligence + shell Jest passed, 4 suites / 54 tests.
+- validation: targeted ESLint passed for `IntelligenceNativeExploreLayer` and its native interaction test.
+- validation: `npx tsc --noEmit --pretty false` passed.
+- validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only.
+- next: commit, push, open PR, and auto-merge after checks pass.

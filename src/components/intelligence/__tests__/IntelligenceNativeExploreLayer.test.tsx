@@ -3,13 +3,21 @@
  */
 
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import { IntelligenceNativeExploreLayer } from '../IntelligenceNativeExploreLayer';
 import { J0_FAILURE_MODE_CARDS } from '@/lib/intelligence/j0-failure-mode-cards';
 
 describe('IntelligenceNativeExploreLayer', () => {
-  it('switches submenu canvases in place without route links', () => {
+  beforeEach(() => {
+    Element.prototype.scrollIntoView = jest.fn();
+    window.requestAnimationFrame = (callback: FrameRequestCallback) => {
+      callback(0);
+      return 0;
+    };
+  });
+
+  it('switches submenu canvases in place without route links', async () => {
     render(
       <IntelligenceNativeExploreLayer
         featuredFailureModes={J0_FAILURE_MODE_CARDS.slice(0, 2)}
@@ -38,10 +46,16 @@ describe('IntelligenceNativeExploreLayer', () => {
       'Uploaded strategy artifacts become tenant context',
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /open session canvas/i }));
-    expect(screen.getByRole('tabpanel', { name: /sessions canvas/i })).toHaveTextContent(
+    fireEvent.click(screen.getByRole('button', { name: /show sessions canvas/i }));
+    const sessionsCanvas = screen.getByRole('tabpanel', { name: /sessions canvas/i });
+    expect(sessionsCanvas).toHaveTextContent(
       'Healthcare analytics modernization',
     );
+    expect(screen.getByRole('tab', { name: /sessions/i })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    await waitFor(() => expect(sessionsCanvas).toHaveFocus());
 
     expect(screen.queryByRole('link', { name: /by function/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /vendors/i })).not.toBeInTheDocument();
