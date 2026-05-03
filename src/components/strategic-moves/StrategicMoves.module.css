@@ -310,6 +310,7 @@
 .chatHead {
   padding: 14px 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  overflow-wrap: anywhere;
 }
 
 .chatBody {
@@ -490,6 +491,7 @@
   padding: 8px 16px 14px;
   display: grid;
   gap: 6px;
+  overflow-y: auto;
 }
 
 .startChip {
