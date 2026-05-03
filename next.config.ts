@@ -37,6 +37,16 @@ const nextConfig: NextConfig = {
     return [
       { source: '/dashboard', destination: '/home', permanent: true },
       { source: '/dashboard/:path*', destination: '/home/:path*', permanent: true },
+      // Strategic Moves is the canonical replacement for legacy Programs UI.
+      { source: '/moves', destination: '/strategic-moves', permanent: false },
+      { source: '/moves/:path*', destination: '/strategic-moves/:path*', permanent: false },
+      { source: '/programs', destination: '/strategic-moves', permanent: false },
+      { source: '/programs/new', destination: '/strategic-moves/new', permanent: false },
+      { source: '/programs/compare', destination: '/strategic-moves', permanent: false },
+      { source: '/programs/patterns', destination: '/strategic-moves', permanent: false },
+      { source: '/programs/:id/report', destination: '/strategic-moves/:id', permanent: false },
+      { source: '/programs/:id/:rest*', destination: '/strategic-moves/:id', permanent: false },
+      { source: '/programs/:id', destination: '/strategic-moves/:id', permanent: false },
       { source: '/data', destination: '/platform/data', permanent: true },
       { source: '/data/:path*', destination: '/platform/data/:path*', permanent: true },
       { source: '/users', destination: '/platform/users', permanent: true },
