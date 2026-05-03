@@ -125,10 +125,14 @@ async function assertProgramReadable(ctx: TenancyCtx, programId: string): Promis
   }
 }
 
-export async function getModuleState(ctx: TenancyCtx, programId: string): Promise<ProgramModuleRow[]> {
+export async function getModuleState(
+  ctx: TenancyCtx,
+  programId: string,
+  opts: { supabase?: SupabaseClient } = {},
+): Promise<ProgramModuleRow[]> {
   assertTenancy(ctx);
   await assertProgramReadable(ctx, programId);
-  const sb = getServerSupabase();
+  const sb = opts.supabase ?? getServerSupabase();
   const { data, error } = await sb
     .from('program_modules')
     .select('*')
@@ -151,10 +155,14 @@ export async function getModuleState(ctx: TenancyCtx, programId: string): Promis
   }));
 }
 
-export async function getWorkItems(ctx: TenancyCtx, programId: string): Promise<ProgramWorkItemRow[]> {
+export async function getWorkItems(
+  ctx: TenancyCtx,
+  programId: string,
+  opts: { supabase?: SupabaseClient } = {},
+): Promise<ProgramWorkItemRow[]> {
   assertTenancy(ctx);
   await assertProgramReadable(ctx, programId);
-  const sb = getServerSupabase();
+  const sb = opts.supabase ?? getServerSupabase();
   const { data, error } = await sb
     .from('program_work_items')
     .select('*')
@@ -179,10 +187,14 @@ export async function getWorkItems(ctx: TenancyCtx, programId: string): Promise<
   }));
 }
 
-export async function getMilestones(ctx: TenancyCtx, programId: string): Promise<ProgramMilestoneRow[]> {
+export async function getMilestones(
+  ctx: TenancyCtx,
+  programId: string,
+  opts: { supabase?: SupabaseClient } = {},
+): Promise<ProgramMilestoneRow[]> {
   assertTenancy(ctx);
   await assertProgramReadable(ctx, programId);
-  const sb = getServerSupabase();
+  const sb = opts.supabase ?? getServerSupabase();
   const { data, error } = await sb
     .from('program_milestones')
     .select('*')
@@ -203,10 +215,14 @@ export async function getMilestones(ctx: TenancyCtx, programId: string): Promise
   }));
 }
 
-export async function getRisks(ctx: TenancyCtx, programId: string): Promise<ProgramRiskRow[]> {
+export async function getRisks(
+  ctx: TenancyCtx,
+  programId: string,
+  opts: { supabase?: SupabaseClient } = {},
+): Promise<ProgramRiskRow[]> {
   assertTenancy(ctx);
   await assertProgramReadable(ctx, programId);
-  const sb = getServerSupabase();
+  const sb = opts.supabase ?? getServerSupabase();
   const { data, error } = await sb
     .from('program_risks')
     .select('*')
@@ -230,10 +246,14 @@ export async function getRisks(ctx: TenancyCtx, programId: string): Promise<Prog
   }));
 }
 
-export async function getOpenMaestroFlags(ctx: TenancyCtx, programId: string): Promise<MaestroFlag[]> {
+export async function getOpenMaestroFlags(
+  ctx: TenancyCtx,
+  programId: string,
+  opts: { supabase?: SupabaseClient } = {},
+): Promise<MaestroFlag[]> {
   assertTenancy(ctx);
   await assertProgramReadable(ctx, programId);
-  const sb = getServerSupabase();
+  const sb = opts.supabase ?? getServerSupabase();
   const { data, error } = await sb
     .from('maestro_oversight_flags')
     .select('*')
@@ -257,10 +277,14 @@ export async function getOpenMaestroFlags(ctx: TenancyCtx, programId: string): P
   }));
 }
 
-export async function getPendingApprovals(ctx: TenancyCtx, programId: string): Promise<FounderApprovalRequestRow[]> {
+export async function getPendingApprovals(
+  ctx: TenancyCtx,
+  programId: string,
+  opts: { supabase?: SupabaseClient } = {},
+): Promise<FounderApprovalRequestRow[]> {
   assertTenancy(ctx);
   await assertProgramReadable(ctx, programId);
-  const sb = getServerSupabase();
+  const sb = opts.supabase ?? getServerSupabase();
   const { data, error } = await sb
     .from('founder_approval_requests')
     .select('*')

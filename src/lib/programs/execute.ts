@@ -8,6 +8,7 @@
 // Packet 11.
 
 import { getServerSupabase } from '@/lib/supabase-server';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type {
   MilestoneStatus,
   ProgramMilestoneRow,
@@ -64,10 +65,19 @@ function daysAgo(iso: string | null): number | null {
  */
 export async function getExecuteRollup(ctx: TenancyCtx, programId: string): Promise<ExecuteRollup> {
   assertTenancy(ctx);
+  return getExecuteRollupWithClient(ctx, programId, getServerSupabase());
+}
+
+export async function getExecuteRollupWithClient(
+  ctx: TenancyCtx,
+  programId: string,
+  supabase: SupabaseClient,
+): Promise<ExecuteRollup> {
+  assertTenancy(ctx);
   const [milestones, workItems, risks] = await Promise.all([
-    getMilestones(ctx, programId),
-    getWorkItems(ctx, programId),
-    getRisks(ctx, programId),
+    getMilestones(ctx, programId, { supabase }),
+    getWorkItems(ctx, programId, { supabase }),
+    getRisks(ctx, programId, { supabase }),
   ]);
 
   const msByStatus: Record<MilestoneStatus, number> = {
@@ -120,8 +130,7 @@ export async function getExecuteRollup(ctx: TenancyCtx, programId: string): Prom
 
   const nexusDraftedWorkItems = workItems.filter((wi) => wi.metadata?.nexus_drafted === true).length;
 
-  const sb = getServerSupabase();
-  const { count: nexusDrafted } = await sb
+  const { count: nexusDrafted } = await supabase
     .from('deliverables_v2')
     .select('id', { count: 'exact', head: true })
     .eq('engagement_id', programId)

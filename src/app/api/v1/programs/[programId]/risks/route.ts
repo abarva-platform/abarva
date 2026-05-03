@@ -5,6 +5,7 @@ import { NextRequest } from 'next/server';
 import { getProgramById, getRisks } from '@/lib/programs/queries';
 import { createRisk } from '@/lib/programs/mutations';
 import { requireTenancy, tenancyErrorResponse } from '../../_auth';
+import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
 import type { RiskImpact, RiskLikelihood } from '@/lib/programs/types.db';
 
 export const runtime = 'nodejs';
@@ -16,10 +17,11 @@ const VALID_IMPACT: RiskImpact[] = ['low', 'medium', 'high'];
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ programId: string }> }) {
   try {
     const { programId } = await params;
+    const { supabase } = await getProgramsRouteSupabase('program_read');
     const ctx = await requireTenancy();
-    const program = await getProgramById(ctx, programId);
+    const program = await getProgramById(ctx, programId, { supabase });
     if (!program) return Response.json({ error: 'not_found' }, { status: 404 });
-    const risks = await getRisks(ctx, programId);
+    const risks = await getRisks(ctx, programId, { supabase });
     return Response.json({ risks });
   } catch (err) {
     try { return tenancyErrorResponse(err); } catch {}

@@ -5,6 +5,7 @@ import { NextRequest } from 'next/server';
 import { getProgramById, getWorkItems } from '@/lib/programs/queries';
 import { createWorkItem } from '@/lib/programs/mutations';
 import { requireTenancy, tenancyErrorResponse } from '../../_auth';
+import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
 import type { WorkItemType } from '@/lib/programs/types.db';
 
 export const runtime = 'nodejs';
@@ -15,10 +16,11 @@ const VALID_TYPES: WorkItemType[] = ['workstream', 'use_case', 'solution', 'exec
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ programId: string }> }) {
   try {
     const { programId } = await params;
+    const { supabase } = await getProgramsRouteSupabase('program_read');
     const ctx = await requireTenancy();
-    const program = await getProgramById(ctx, programId);
+    const program = await getProgramById(ctx, programId, { supabase });
     if (!program) return Response.json({ error: 'not_found' }, { status: 404 });
-    const items = await getWorkItems(ctx, programId);
+    const items = await getWorkItems(ctx, programId, { supabase });
     return Response.json({ workItems: items });
   } catch (err) {
     try { return tenancyErrorResponse(err); } catch {}
