@@ -13,11 +13,11 @@
 
 import { NextRequest } from 'next/server';
 import { classifyOrigination } from '@/lib/programs/classifier';
-import { getServerSupabase } from '@/lib/supabase-server';
 import { classifierMatchToViewModel } from '@/lib/programs/transformers';
 import { requireTenancy, TenancyError } from '../_auth';
 import type { ClassifierInput } from '@/lib/programs/types.db';
 import type { ArchetypeKey, OriginationForm } from '@/lib/programs/types.ui';
+import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -56,6 +56,7 @@ export async function POST(req: NextRequest) {
     entities: [],
     tenancy: ctx,
   };
+  const { supabase } = await getProgramsRouteSupabase('origination');
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -82,11 +83,10 @@ export async function POST(req: NextRequest) {
         });
 
         // Enrich matches with catalog data for view-model conversion
-        const sb = getServerSupabase();
         const keys = output.matches.map((m) => m.patternKey);
         const catalogByKey = new Map<string, Record<string, unknown>>();
         if (keys.length > 0) {
-          const { data: catalog } = await sb
+          const { data: catalog } = await supabase
             .from('engagement_topics')
             .select('topic_key, title, canonical_shape_json, deployment_count, successful_deployment_count')
             .in('topic_key', keys);
