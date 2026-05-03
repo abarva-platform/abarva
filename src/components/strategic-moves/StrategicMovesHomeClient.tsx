@@ -15,8 +15,14 @@ interface Props {
   initialSort: StrategicMovesSort;
 }
 
+function moveValueScore(move: StrategicMovePortfolio['moves'][number]): number | null {
+  if (move.valueAtStake.projected?.high !== undefined) return move.valueAtStake.projected.high;
+  if (move.valueAtStake.verified?.amount !== undefined) return move.valueAtStake.verified.amount;
+  return null;
+}
+
 function formatValueAtStake(amountUsd: number): string {
-  if (!Number.isFinite(amountUsd) || amountUsd <= 0) return '$0';
+  if (!Number.isFinite(amountUsd) || amountUsd <= 0) return '$—';
   if (amountUsd >= 1_000_000_000) return `$${(amountUsd / 1_000_000_000).toFixed(1)}B`;
   if (amountUsd >= 1_000_000) return `$${Math.round(amountUsd / 1_000_000)}M`;
   if (amountUsd >= 1_000) return `$${Math.round(amountUsd / 1_000)}K`;
@@ -73,6 +79,22 @@ export function StrategicMovesHomeClient({
     return copy;
   }, [portfolio.moves, sort]);
 
+  const mapStats = useMemo(() => {
+    const values = sortedMoves.map(moveValueScore).filter((v): v is number => v !== null);
+    const min = values.length ? Math.min(...values) : 0;
+    const max = values.length ? Math.max(...values) : 0;
+    return {
+      min,
+      max,
+      capturedCount: values.length,
+    };
+  }, [sortedMoves]);
+
+  const totalCapturedValue = useMemo(
+    () => sortedMoves.reduce((sum, move) => sum + (moveValueScore(move) ?? 0), 0),
+    [sortedMoves],
+  );
+
   return (
     <div className={styles.page}>
       <div className={styles.topbar}>
@@ -85,29 +107,31 @@ export function StrategicMovesHomeClient({
         </Link>
       </div>
 
-      <section className={styles.ribbon}>
-        <article className={styles.ribbonCard}>
-          <div className={styles.ribbonLabel}>All moves</div>
+      <section className={styles.editorialRibbon}>
+        <article className={styles.editorialMetric}>
           <div className={styles.ribbonValue}>{portfolio.counts.total}</div>
+          <div className={styles.ribbonLabel}>Moves</div>
         </article>
-        <article className={styles.ribbonCard}>
-          <div className={styles.ribbonLabel}>Need attention</div>
+        <article className={styles.editorialMetric}>
           <div className={styles.ribbonValue}>{portfolio.counts.needAttention}</div>
+          <div className={styles.ribbonLabel}>Need Attention</div>
         </article>
-        <article className={styles.ribbonCard}>
-          <div className={styles.ribbonLabel}>On track</div>
+        <article className={styles.editorialMetric}>
           <div className={styles.ribbonValue}>{portfolio.counts.onTrack}</div>
+          <div className={styles.ribbonLabel}>On Track</div>
         </article>
-        <article className={styles.ribbonCard}>
-          <div className={styles.ribbonLabel}>Value at stake</div>
-          <div className={styles.ribbonValue}>{formatValueAtStake(portfolio.totalValueAtStake.amount)}</div>
+        <article className={styles.editorialMetric}>
+          <div className={styles.ribbonValue}>{formatValueAtStake(totalCapturedValue)}</div>
+          <div className={styles.ribbonLabel}>At Stake</div>
         </article>
       </section>
 
       <section className={styles.attentionPanel}>
         <div className={styles.sectionTitle}>Need Attention</div>
         {portfolio.needAttentionMoves.length === 0 ? (
-          <div className={styles.attentionEmpty}>No immediate gate blockers or pending decisions.</div>
+          <div className={styles.attentionEmpty}>
+            No immediate gate blockers or pending decisions. Value captured for {mapStats.capturedCount} of {portfolio.counts.total} moves.
+          </div>
         ) : (
           <div className={styles.rowList}>
             {portfolio.needAttentionMoves.map((row) => (
@@ -223,17 +247,28 @@ export function StrategicMovesHomeClient({
 
         {listView === 'scatter' ? (
           <div className={styles.scatter}>
+            <div className={styles.scatterXAxis}>Phase progression →</div>
+            <div className={styles.scatterYAxis}>Value at stake</div>
             {sortedMoves.map((move, index) => {
-              const bubbleSize = Math.max(34, Math.min(82, (move.valueAtStake.projected?.high ?? 8) * 1.6));
+              const valueScore = moveValueScore(move);
+              const valueKnown = valueScore !== null;
+              const normalized =
+                valueKnown && mapStats.max > mapStats.min
+                  ? (valueScore - mapStats.min) / (mapStats.max - mapStats.min)
+                  : valueKnown
+                    ? 0.5
+                    : 0;
+              const bubbleSize = valueKnown ? Math.max(38, Math.min(86, 44 + normalized * 34)) : 36;
               const x = Math.min(92, 6 + move.currentPhase * 12);
-              const y = Math.max(8, 82 - ((move.valueAtStake.projected?.high ?? 6) / 60) * 72);
+              const y = valueKnown ? Math.max(14, 82 - normalized * 68) : 86;
               return (
                 <Link
                   key={move.id}
                   className={`${styles.bubble} ${
                     move.statusColor === 'red' ? styles.bubbleRed :
                     move.statusColor === 'amber' ? styles.bubbleAmber :
-                    styles.bubbleGreen
+                    move.statusColor === 'teal' ? styles.bubbleTeal :
+                    valueKnown ? styles.bubbleGreen : styles.bubbleUnknown
                   }`}
                   href={`/strategic-moves/${move.id}`}
                   style={{
