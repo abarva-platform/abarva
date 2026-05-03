@@ -629,3 +629,26 @@ Append-only coordination log for active Codex sessions.
 - validation: `npx tsc --noEmit --pretty false` passed.
 - validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only.
 - next: PR, auto-merge after checks pass, wait for Vercel production deployment, then browser-verify the in-place Strategic Move record and Outputs interaction live.
+
+## 2026-05-02T20:16:00-05:00 - codex-intelligence-session-feedback
+
+- status: in-progress
+- branch: `codex/intelligence-session-feedback`
+- worktree: `/private/tmp/nexus-intelligence-front`
+- live_repro: production `/intelligence` click changed the DOM to `Sessions - native canvas` and selected the Sessions tab, but the visual feedback was too subtle and could read as a dead click.
+- scope: make the Sentinel Sessions affordance visibly change page state with active button styling and a highlighted native Sessions workspace.
+- locks: `intelligence-session-canvas-feedback-ui`
+- guardrail: no Programs files, no Source lifecycle/data/API files, no Tower files, and no private-plane schema changes.
+
+## 2026-05-02T20:20:00-05:00 - codex-intelligence-session-feedback
+
+- status: local-validation-in-progress
+- shipped: Sentinel Sessions affordance now flips to `Sessions canvas is open`, sets `aria-pressed=true`, highlights the right-pane Sessions canvas, and renders an in-canvas `Sessions canvas is open` status banner.
+- regression: strengthened `IntelligenceNativeExploreLayer.test.tsx` to assert visible banner feedback and active button state after the Sessions affordance click.
+- validation: focused native Intelligence Jest passed, 1 suite / 1 test.
+- validation: focused Intelligence + shell Jest passed, 4 suites / 54 tests.
+- validation: targeted ESLint passed for `IntelligenceNativeExploreLayer` and its native interaction test.
+- validation: `npx tsc --noEmit --pretty false` passed.
+- validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only.
+- validation_note: local browser route redirected to client-test sign-in, so no demo credentials/code were entered in this turn; production unauthenticated page was used to confirm the prior DOM state-change behavior.
+- next: run standard checks, commit, push, open PR, and auto-merge after checks pass.

@@ -46,10 +46,21 @@ describe('IntelligenceNativeExploreLayer', () => {
       'Uploaded strategy artifacts become tenant context',
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /show sessions canvas/i }));
+    const sessionButton = screen.getByRole('button', { name: /show sessions canvas/i });
+    fireEvent.click(sessionButton);
     const sessionsCanvas = screen.getByRole('tabpanel', { name: /sessions canvas/i });
     expect(sessionsCanvas).toHaveTextContent(
       'Healthcare analytics modernization',
+    );
+    expect(screen.getByTestId('sessions-canvas-open-banner')).toHaveTextContent(
+      'Sessions canvas is open',
+    );
+    expect(screen.getByTestId('sentinel-session-canvas-button')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(screen.getByTestId('sentinel-session-canvas-button')).toHaveTextContent(
+      'Sessions canvas is open',
     );
     expect(screen.getByRole('tab', { name: /sessions/i })).toHaveAttribute(
       'aria-selected',

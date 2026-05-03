@@ -1,4 +1,4 @@
-updated_at: "2026-05-02T20:08:00-05:00"
+updated_at: "2026-05-02T20:20:00-05:00"
 
 locks:
   - owner: codex-source-e2e-crawler
@@ -237,3 +237,11 @@ locks:
     expires_at: "2026-05-02T22:45:00-05:00"
     note: Makes the Sentinel session affordance visibly activate, focus, and announce the native Sessions canvas. Avoids Programs, Source lifecycle/data/API, Tower, and private-plane schema changes.
     completed_at: "2026-05-02T20:08:00-05:00"
+
+  - owner: codex-intelligence-session-feedback
+    resource: intelligence-session-canvas-feedback-ui
+    status: completed
+    started_at: "2026-05-02T20:16:00-05:00"
+    expires_at: "2026-05-02T23:00:00-05:00"
+    note: Adds unmistakable visual feedback when the Sentinel Sessions affordance is clicked: active button state, highlighted Sessions canvas, and in-canvas status banner. Avoids Programs, Source lifecycle/data/API, Tower, and private-plane schema changes.
+    completed_at: "2026-05-02T20:20:00-05:00"
