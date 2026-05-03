@@ -15,6 +15,14 @@ interface Props {
   initialSort: StrategicMovesSort;
 }
 
+function formatValueAtStake(amountUsd: number): string {
+  if (!Number.isFinite(amountUsd) || amountUsd <= 0) return '$0';
+  if (amountUsd >= 1_000_000_000) return `$${(amountUsd / 1_000_000_000).toFixed(1)}B`;
+  if (amountUsd >= 1_000_000) return `$${Math.round(amountUsd / 1_000_000)}M`;
+  if (amountUsd >= 1_000) return `$${Math.round(amountUsd / 1_000)}K`;
+  return `$${Math.round(amountUsd).toLocaleString()}`;
+}
+
 function phaseNumber(value: string): number {
   const match = value.match(/^P(\d+)/);
   return match ? Number(match[1]) : 0;
@@ -92,10 +100,25 @@ export function StrategicMovesHomeClient({
         </article>
         <article className={styles.ribbonCard}>
           <div className={styles.ribbonLabel}>Value at stake</div>
-          <div className={styles.ribbonValue}>
-            ${Math.round(portfolio.totalValueAtStake.amount).toLocaleString()}M
-          </div>
+          <div className={styles.ribbonValue}>{formatValueAtStake(portfolio.totalValueAtStake.amount)}</div>
         </article>
+      </section>
+
+      <section className={styles.attentionPanel}>
+        <div className={styles.sectionTitle}>Need Attention</div>
+        {portfolio.needAttentionMoves.length === 0 ? (
+          <div className={styles.attentionEmpty}>No immediate gate blockers or pending decisions.</div>
+        ) : (
+          <div className={styles.rowList}>
+            {portfolio.needAttentionMoves.map((row) => (
+              <Link className={styles.attentionRow} key={row.id} href={`/strategic-moves/${row.id}`}>
+                <span className={styles.attentionCode}>{row.displayCode}</span>
+                <span>{row.statusText}</span>
+                <span className={styles.attentionLink}>Review →</span>
+              </Link>
+            ))}
+          </div>
+        )}
       </section>
 
       <div className={styles.toolbar}>
@@ -232,4 +255,3 @@ export function StrategicMovesHomeClient({
     </div>
   );
 }
-

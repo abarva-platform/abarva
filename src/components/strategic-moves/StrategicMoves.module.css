@@ -76,6 +76,52 @@
   margin-bottom: 12px;
 }
 
+.attentionPanel {
+  background: #fff;
+  border: 1px solid var(--canon-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.attentionEmpty {
+  border: 1px dashed var(--canon-border);
+  border-radius: 8px;
+  padding: 9px 10px;
+  color: var(--canon-gray-600);
+  font-size: 13px;
+}
+
+.attentionRow {
+  display: grid;
+  grid-template-columns: 140px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--canon-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.attentionRow:hover {
+  border-color: var(--canon-border-strong);
+}
+
+.attentionCode {
+  font-family: var(--abarva-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--canon-gray-600);
+}
+
+.attentionLink {
+  color: var(--abarva-signal-blue);
+  font-weight: 600;
+  font-size: 12px;
+}
+
 .toggleGroup {
   display: inline-flex;
   gap: 6px;
@@ -317,7 +363,7 @@
 
 .sectionTitle {
   font-family: var(--abarva-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--canon-gray-500);
@@ -333,6 +379,8 @@
   border: 1px solid var(--canon-border);
   border-radius: 8px;
   padding: 8px 10px;
+  font-size: 14px;
+  line-height: 1.45;
 }
 
 .rowItem a {
