@@ -209,7 +209,7 @@ export default async function ProgramDetailRoute({
       view.workbench = {
         ...view.workbench,
         prose:
-          'This program brief has been submitted to Setup for tenant-admin approval. ' +
+          'This strategic move brief has been submitted to Setup for tenant-admin approval. ' +
           'Phase 0 stays locked until the approval queue accepts the seed, sponsor, ' +
           'lead, value hypothesis, and scope boundary.',
       };
@@ -223,7 +223,7 @@ export default async function ProgramDetailRoute({
       view.workbench = {
         ...view.workbench,
         prose:
-          'This program lifecycle is complete. Execution now happens outside AbarVa; ' +
+          'This strategic move lifecycle is complete. Execution now happens outside AbarVa; ' +
           'Tower observes status feeds, detects drift, and escalates decisions against ' +
           'the signed P6 tracking contract.',
       };
@@ -239,7 +239,7 @@ export default async function ProgramDetailRoute({
         prose:
           hasSignedP0Seed
             ? 'The P0 seed deliverable is signed off. Nexus can now run the P0 exit check and request Discovery.'
-            : 'This program is approved for P0 Origination. Nexus should now help complete ' +
+            : 'This strategic move is approved for P0 Origination. Nexus should now help complete ' +
               'the P0 entry and exit criteria, generate the seed deliverables, and submit ' +
               'the P0 exit approval before Discovery unlocks.',
       };
@@ -308,7 +308,7 @@ function buildDbBackedNexusArtifacts(
       label: `DB-backed P${viewingPhase} evidence`,
       severity: 'soft',
       status: 'met',
-      detail: `${phaseEvidence.length} program evidence item${phaseEvidence.length === 1 ? '' : 's'} available from program_evidence_items.`,
+      detail: `${phaseEvidence.length} strategic move evidence item${phaseEvidence.length === 1 ? '' : 's'} available from program_evidence_items.`,
     });
   }
 

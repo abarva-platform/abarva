@@ -309,15 +309,15 @@ export function filterProgramRowsForIndex(
 }
 
 export function getProgramsIndexEmptyStateCopy(filter: ProgramsIndexFilterKey): string {
-  if (filter === 'idle') return 'No programs are currently idle.';
-  if (filter === 'active') return 'No programs are currently active.';
-  if (filter === 'gated') return 'No programs have pending gate reviews.';
-  return 'No programs are in the canonical portfolio yet.';
+  if (filter === 'idle') return 'No strategic moves are currently idle.';
+  if (filter === 'active') return 'No strategic moves are currently active.';
+  if (filter === 'gated') return 'No strategic moves have pending gate reviews.';
+  return 'No strategic moves are in this workspace yet.';
 }
 
 export function getProgramsIndexEmptyStateTitle(filter: ProgramsIndexFilterKey): string {
-  if (filter === 'all') return 'No programs yet';
-  return `No ${filter} programs`;
+  if (filter === 'all') return 'No strategic moves yet';
+  return `No ${filter} moves`;
 }
 
 export function getProgramsIndexFilterHref(filter: ProgramsIndexFilterKey): string {
@@ -330,8 +330,8 @@ export function getProgramsIndexFilterSummary(
   visibleCount: number,
   totalCount: number,
 ): string {
-  if (filter === 'all') return `${totalCount} programs shown`;
-  return `${visibleCount} of ${totalCount} programs shown · ${filter} filter`;
+  if (filter === 'all') return `${totalCount} moves shown`;
+  return `${visibleCount} of ${totalCount} moves shown · ${filter} filter`;
 }
 
 export function buildProgramsIndexView(tenant: ProgramsIndexTenant): ProgramsIndexViewV2 {
