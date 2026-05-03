@@ -53,6 +53,16 @@ export interface ProgramCore {
   id: string;
   clientId: string;
   name: string;
+  sponsorPersonId: string | null;
+  problemStatement: string | null;
+  targetOutcome: string | null;
+  timelineHorizon: string | null;
+  valueProjectedLowUsd: number | null;
+  valueProjectedHighUsd: number | null;
+  valueVerifiedUsd: number | null;
+  valueVerifiedStatus: 'pending' | 'tracked' | 'final' | null;
+  valueCurrency: string | null;
+  valueAssumptions: Record<string, unknown> | null;
   archetype: ArchetypeKey | null;
   originSource: OriginSource | null;
   originSourceRef: string | null;
@@ -69,6 +79,7 @@ export interface ProgramCore {
   archivedAt: string | null;
   deletedAt: string | null;
   createdAt: string;
+  updatedAt: string | null;
 }
 
 export interface ProgramModuleRow {

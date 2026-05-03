@@ -22,7 +22,7 @@ import {
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const ALLOWED_SURFACES = new Set(['/programs/new', '/demo/programs/new']);
+const ALLOWED_SURFACES = new Set(['/programs/new', '/demo/programs/new', '/strategic-moves/new']);
 
 function badRequest(detail: string): Response {
   return Response.json({ error: 'bad_request', detail }, { status: 400 });
