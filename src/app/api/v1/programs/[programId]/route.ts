@@ -4,15 +4,17 @@
 import { getProgramById } from '@/lib/programs/queries';
 import { buildProgramFullState } from '@/lib/programs/transformers';
 import { requireTenancy, tenancyErrorResponse } from '../_auth';
+import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET(_req: Request, { params }: { params: Promise<{ programId: string }> }) {
   try {
+    const { supabase } = await getProgramsRouteSupabase('detail');
     const { programId } = await params;
     const ctx = await requireTenancy();
-    const program = await getProgramById(ctx, programId);
+    const program = await getProgramById(ctx, programId, { supabase });
     if (!program) {
       return Response.json({ error: 'not_found' }, { status: 404 });
     }

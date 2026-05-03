@@ -2,7 +2,7 @@
 // POST /api/v1/programs/:programId/milestones · create
 
 import { NextRequest } from 'next/server';
-import { getMilestones } from '@/lib/programs/queries';
+import { getMilestones, getProgramById } from '@/lib/programs/queries';
 import { createMilestone } from '@/lib/programs/mutations';
 import { requireTenancy, tenancyErrorResponse } from '../../_auth';
 
@@ -13,6 +13,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ pro
   try {
     const { programId } = await params;
     const ctx = await requireTenancy();
+    const program = await getProgramById(ctx, programId);
+    if (!program) return Response.json({ error: 'not_found' }, { status: 404 });
     const milestones = await getMilestones(ctx, programId);
     return Response.json({ milestones });
   } catch (err) {
@@ -26,6 +28,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   try {
     const { programId } = await params;
     const ctx = await requireTenancy();
+    const program = await getProgramById(ctx, programId);
+    if (!program) return Response.json({ error: 'not_found' }, { status: 404 });
     const body = (await req.json()) as {
       name?: string;
       description?: string;

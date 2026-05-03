@@ -15,6 +15,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ pro
   try {
     const { programId } = await params;
     const ctx = await requireTenancy();
+    const program = await getProgramById(ctx, programId);
+    if (!program) {
+      return Response.json({ error: 'not_found' }, { status: 404 });
+    }
     if (!(await canReadProgram(ctx, programId))) {
       return Response.json({ error: 'forbidden' }, { status: 403 });
     }

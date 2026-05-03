@@ -4,6 +4,7 @@
 
 import { getServerSupabase } from '@/lib/supabase-server';
 import { allowedProgramIdsForUser, canReadProgram } from '@/lib/auth/program-access-policy';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type {
   FounderApprovalRequestRow,
   MaestroFlag,
@@ -76,9 +77,12 @@ function rowToProgram(r: EngagementRow): ProgramCore {
 /**
  * Program portfolio for a client — excludes archived + soft-deleted.
  */
-export async function getProgramPortfolio(ctx: TenancyCtx, opts: { limit?: number } = {}): Promise<ProgramCore[]> {
+export async function getProgramPortfolio(
+  ctx: TenancyCtx,
+  opts: { limit?: number; supabase?: SupabaseClient } = {},
+): Promise<ProgramCore[]> {
   assertTenancy(ctx);
-  const sb = getServerSupabase();
+  const sb = opts.supabase ?? getServerSupabase();
   const limit = opts.limit ?? 100;
   const allowedProgramIds = await allowedProgramIdsForUser(ctx);
   if (allowedProgramIds && allowedProgramIds.length === 0) return [];
@@ -97,10 +101,14 @@ export async function getProgramPortfolio(ctx: TenancyCtx, opts: { limit?: numbe
   return ((data as EngagementRow[] | null) ?? []).map(rowToProgram);
 }
 
-export async function getProgramById(ctx: TenancyCtx, programId: string): Promise<ProgramCore | null> {
+export async function getProgramById(
+  ctx: TenancyCtx,
+  programId: string,
+  opts: { supabase?: SupabaseClient } = {},
+): Promise<ProgramCore | null> {
   assertTenancy(ctx);
   if (!(await canReadProgram(ctx, programId))) return null;
-  const sb = getServerSupabase();
+  const sb = opts.supabase ?? getServerSupabase();
   const { data, error } = await sb
     .from('engagements')
     .select('id, client_id, name, program_archetype, origin_source, origin_source_ref, status, lifecycle_state, current_phase, current_module_key, maestro_oversight_level, founder_approval_required, phase_locked_at, phase_locked_by_user_id, data_residency_region, retention_policy_years, archived_at, deleted_at, created_at')

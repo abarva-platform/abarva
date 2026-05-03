@@ -9,6 +9,7 @@ import { setModuleStatus, createMilestone } from '@/lib/programs/mutations';
 import { buildProgramSummary } from '@/lib/programs/transformers';
 import { logClassifierDecision } from '@/lib/programs/classifier';
 import { raiseMaestroFlag } from '@/lib/programs/governance';
+import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { requireTenancy, tenancyErrorResponse } from './_auth';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
@@ -28,8 +29,9 @@ export const maxDuration = 30;
 
 export async function GET() {
   try {
+    const { supabase } = await getProgramsRouteSupabase('portfolio');
     const ctx = await requireTenancy();
-    const programs = await getProgramPortfolio(ctx, { limit: 100 });
+    const programs = await getProgramPortfolio(ctx, { limit: 100, supabase });
     const summaries: ProgramSummary[] = await Promise.all(programs.map(buildProgramSummary));
     return Response.json({ programs: summaries });
   } catch (err) {

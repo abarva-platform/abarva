@@ -2,6 +2,7 @@
 
 import { NextRequest } from 'next/server';
 import { decideApproval, hasAuthority } from '@/lib/programs/governance';
+import { getProgramById } from '@/lib/programs/queries';
 import { requireTenancy, tenancyErrorResponse } from '../../../../_auth';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 
@@ -12,6 +13,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   try {
     const { programId, approvalId } = await params;
     const ctx = await requireTenancy();
+    const program = await getProgramById(ctx, programId);
+    if (!program) {
+      return Response.json({ error: 'not_found' }, { status: 404 });
+    }
     const body = (await req.json()) as { decision?: 'approved' | 'denied'; notes?: string };
     if (body?.decision !== 'approved' && body?.decision !== 'denied') {
       return Response.json({ error: 'bad_request', detail: 'decision must be approved|denied' }, { status: 400 });
@@ -27,7 +32,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
       return Response.json({ error: 'forbidden', detail: 'sponsor or founder authority required' }, { status: 403 });
     }
 
-    await decideApproval(ctx, approvalId, body.decision, body.notes);
+    const decided = await decideApproval(ctx, programId, approvalId, body.decision, body.notes);
+    if (!decided) {
+      return Response.json({ error: 'not_found' }, { status: 404 });
+    }
     return Response.json({ ok: true, approvalId, decision: body.decision });
   } catch (err) {
     try { return tenancyErrorResponse(err); } catch {}

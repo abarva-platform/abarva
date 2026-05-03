@@ -5,6 +5,7 @@
 import { NextRequest } from 'next/server';
 import { updateWorkItemStatus } from '@/lib/programs/mutations';
 import { blockWorkItem, markWorkItemNexusDrafted } from '@/lib/programs/execute';
+import { getProgramById } from '@/lib/programs/queries';
 import { requireTenancy, tenancyErrorResponse } from '../../../_auth';
 import type { WorkItemStatus } from '@/lib/programs/types.db';
 
@@ -17,6 +18,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ pr
   try {
     const { programId, workItemId } = await params;
     const ctx = await requireTenancy();
+    const program = await getProgramById(ctx, programId);
+    if (!program) {
+      return Response.json({ error: 'not_found' }, { status: 404 });
+    }
     const body = (await req.json()) as {
       status?: WorkItemStatus;
       block?: { reason: string };

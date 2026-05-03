@@ -466,10 +466,11 @@ export async function requestFounderApproval(
 
 export async function decideApproval(
   ctx: TenancyCtx,
+  programId: string,
   approvalId: string,
   decision: 'approved' | 'denied',
   notes?: string,
-): Promise<void> {
+): Promise<boolean> {
   assertTenancy(ctx);
   const sb = getServerSupabase();
   const { data, error } = await sb
@@ -480,21 +481,24 @@ export async function decideApproval(
       decision_notes: notes ?? null,
       decided_at: new Date().toISOString(),
     })
+    .eq('engagement_id', programId)
     .eq('id', approvalId)
     .eq('status', 'pending')
     .select('id, engagement_id')
-    .single();
+    .maybeSingle();
   if (error) throw error;
-  const programId = (data as { engagement_id?: string | null } | null)?.engagement_id ?? approvalId;
+  if (!data) return false;
+  const resolvedProgramId = (data as { engagement_id?: string | null } | null)?.engagement_id ?? programId;
   await writeProgramAuditLogBestEffort(ctx, {
-    programId,
-    engagementId: programId,
+    programId: resolvedProgramId,
+    engagementId: resolvedProgramId,
     action: `phase_approval_${decision}`,
     fromState: 'approval_pending',
     toState: decision,
     rationale: notes ?? null,
     evidenceRefs: [approvalId],
   });
+  return true;
 }
 
 /**
@@ -535,20 +539,25 @@ export async function raiseMaestroFlag(
 
 export async function resolveMaestroFlag(
   ctx: TenancyCtx,
+  programId: string,
   flagId: string,
   resolutionNotes: string,
-): Promise<void> {
+): Promise<boolean> {
   assertTenancy(ctx);
   const sb = getServerSupabase();
-  const { error } = await sb
+  const { data, error } = await sb
     .from('maestro_oversight_flags')
     .update({
       resolved_at: new Date().toISOString(),
       resolved_by_user_id: ctx.userId,
       resolution_notes: resolutionNotes,
     })
-    .eq('id', flagId);
+    .eq('engagement_id', programId)
+    .eq('id', flagId)
+    .is('resolved_at', null)
+    .select('id');
   if (error) throw error;
+  return Array.isArray(data) && data.length > 0;
 }
 
 /**
