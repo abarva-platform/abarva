@@ -5,6 +5,7 @@
 
 import { getServerSupabase } from '@/lib/supabase-server';
 import { industryCodeForClientName } from '@/lib/client-config';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type {
   MilestoneStatus,
   ModuleStatus,
@@ -27,8 +28,12 @@ function assertTenancy(ctx: TenancyCtx): void {
   }
 }
 
-async function assertProgramTenancy(ctx: TenancyCtx, programId: string): Promise<void> {
-  const program = await getProgramById(ctx, programId);
+async function assertProgramTenancy(
+  ctx: TenancyCtx,
+  programId: string,
+  opts: { supabase?: SupabaseClient } = {},
+): Promise<void> {
+  const program = await getProgramById(ctx, programId, { supabase: opts.supabase });
   if (!program) throw new Error(`[programs/mutations] program ${programId} not accessible`);
 }
 
@@ -103,8 +108,12 @@ export function resolveProgramClassificationCodes(input: {
   };
 }
 
-async function resolveClientIndustryCode(clientId: string, fallback?: string | null): Promise<string> {
-  const sb = getServerSupabase();
+async function resolveClientIndustryCode(
+  clientId: string,
+  fallback?: string | null,
+  opts: { supabase?: SupabaseClient } = {},
+): Promise<string> {
+  const sb = opts.supabase ?? getServerSupabase();
   const { data } = await sb
     .from('clients')
     .select('name, industry_code')
@@ -131,10 +140,14 @@ export interface OriginateProgramInput {
   dataResidencyRegion?: string;
 }
 
-export async function originateProgram(ctx: TenancyCtx, input: OriginateProgramInput): Promise<ProgramCore> {
+export async function originateProgram(
+  ctx: TenancyCtx,
+  input: OriginateProgramInput,
+  opts: { supabase?: SupabaseClient } = {},
+): Promise<ProgramCore> {
   assertTenancy(ctx);
-  const sb = getServerSupabase();
-  const industryCode = await resolveClientIndustryCode(ctx.clientId, input.industryHint);
+  const sb = opts.supabase ?? getServerSupabase();
+  const industryCode = await resolveClientIndustryCode(ctx.clientId, input.industryHint, { supabase: sb });
   const classificationCodes = resolveProgramClassificationCodes({
     name: input.name,
     useCase: input.useCase,
@@ -211,7 +224,7 @@ export async function originateProgram(ctx: TenancyCtx, input: OriginateProgramI
   });
   if (logErr) throw logErr;
 
-  const program = await getProgramById(ctx, programId);
+  const program = await getProgramById(ctx, programId, { supabase: sb });
   if (!program) throw new Error('[originateProgram] created program not readable');
   return program;
 }
@@ -225,10 +238,14 @@ export interface AdvancePhaseInput {
   bypassGate?: boolean;
 }
 
-export async function advancePhase(ctx: TenancyCtx, input: AdvancePhaseInput): Promise<{ programId: string; newPhase: number; snapshotId: string }> {
+export async function advancePhase(
+  ctx: TenancyCtx,
+  input: AdvancePhaseInput,
+  opts: { supabase?: SupabaseClient } = {},
+): Promise<{ programId: string; newPhase: number; snapshotId: string }> {
   assertTenancy(ctx);
-  await assertProgramTenancy(ctx, input.programId);
-  const sb = getServerSupabase();
+  const sb = opts.supabase ?? getServerSupabase();
+  await assertProgramTenancy(ctx, input.programId, { supabase: sb });
 
   // Snapshot current phase
   const { data: snap, error: snapErr } = await sb
@@ -286,24 +303,37 @@ export async function advancePhase(ctx: TenancyCtx, input: AdvancePhaseInput): P
  * Publish a deliverable (flip draft → in_review). Uses existing
  * deliverables_v2 infra; this is a thin programs-facing wrapper.
  */
-export async function publishDeliverable(ctx: TenancyCtx, programId: string, deliverableId: string): Promise<void> {
+export async function publishDeliverable(
+  ctx: TenancyCtx,
+  programId: string,
+  deliverableId: string,
+  opts: { supabase?: SupabaseClient } = {},
+): Promise<boolean> {
   assertTenancy(ctx);
-  await assertProgramTenancy(ctx, programId);
-  const sb = getServerSupabase();
-  const { error } = await sb
+  const sb = opts.supabase ?? getServerSupabase();
+  await assertProgramTenancy(ctx, programId, { supabase: sb });
+  const { data, error } = await sb
     .from('deliverables_v2')
     .update({ status: 'in_review', updated_at: new Date().toISOString() })
     .eq('id', deliverableId)
     .eq('engagement_id', programId)
-    .eq('status', 'draft');
+    .eq('status', 'draft')
+    .select('id')
+    .maybeSingle();
   if (error) throw error;
+  return Boolean(data);
 }
 
-export async function signOffDeliverable(ctx: TenancyCtx, programId: string, deliverableId: string): Promise<void> {
+export async function signOffDeliverable(
+  ctx: TenancyCtx,
+  programId: string,
+  deliverableId: string,
+  opts: { supabase?: SupabaseClient } = {},
+): Promise<boolean> {
   assertTenancy(ctx);
-  await assertProgramTenancy(ctx, programId);
-  const sb = getServerSupabase();
-  const { error } = await sb
+  const sb = opts.supabase ?? getServerSupabase();
+  await assertProgramTenancy(ctx, programId, { supabase: sb });
+  const { data, error } = await sb
     .from('deliverables_v2')
     .update({
       status: 'signed_off',
@@ -313,8 +343,11 @@ export async function signOffDeliverable(ctx: TenancyCtx, programId: string, del
     })
     .eq('id', deliverableId)
     .eq('engagement_id', programId)
-    .eq('status', 'in_review');
+    .eq('status', 'in_review')
+    .select('id')
+    .maybeSingle();
   if (error) throw error;
+  return Boolean(data);
 }
 
 export interface CompleteDeliverableInput {
@@ -399,15 +432,16 @@ export async function completeDeliverable(
   ctx: TenancyCtx,
   programId: string,
   input: CompleteDeliverableInput,
+  opts: { supabase?: SupabaseClient } = {},
 ): Promise<{ deliverableId: string; versionId: string | null; status: 'draft' | 'signed_off' }> {
   assertTenancy(ctx);
-  await assertProgramTenancy(ctx, programId);
+  const sb = opts.supabase ?? getServerSupabase();
+  await assertProgramTenancy(ctx, programId, { supabase: sb });
   const deliverableTypeKey = input.deliverableTypeKey.trim();
   const title = input.title.trim();
   if (!deliverableTypeKey) throw new Error('[completeDeliverable] deliverableTypeKey is required');
   if (!title) throw new Error('[completeDeliverable] title is required');
 
-  const sb = getServerSupabase();
   const now = new Date().toISOString();
   await ensureDeliverableType(sb, deliverableTypeKey);
   const { data: existing, error: existingError } = await sb
@@ -520,10 +554,11 @@ export async function setModuleStatus(
   moduleKey: string,
   status: ModuleStatus,
   patch: { assignedUserId?: string; notes?: string } = {},
-): Promise<void> {
+  opts: { supabase?: SupabaseClient } = {},
+): Promise<boolean> {
   assertTenancy(ctx);
-  await assertProgramTenancy(ctx, programId);
-  const sb = getServerSupabase();
+  const sb = opts.supabase ?? getServerSupabase();
+  await assertProgramTenancy(ctx, programId, { supabase: sb });
 
   // Read current state for audit log
   const { data: current } = await sb
@@ -539,12 +574,15 @@ export async function setModuleStatus(
   if (status === 'completed') update.completed_at = now;
   if (patch.assignedUserId) update.assigned_user_id = patch.assignedUserId;
 
-  const { error } = await sb
+  const { data: updatedRow, error } = await sb
     .from('program_modules')
     .update(update)
     .eq('engagement_id', programId)
-    .eq('module_key', moduleKey);
+    .eq('module_key', moduleKey)
+    .select('id')
+    .maybeSingle();
   if (error) throw error;
+  if (!updatedRow) return false;
 
   const { error: logErr } = await sb.from('module_state_log').insert({
     engagement_id: programId,
@@ -565,16 +603,18 @@ export async function setModuleStatus(
     rationale: patch.notes ?? null,
     evidenceRefs: [moduleKey],
   });
+  return true;
 }
 
 export async function createMilestone(
   ctx: TenancyCtx,
   programId: string,
   input: { name: string; description?: string; targetDate?: string; phaseNumber?: number; moduleKey?: string; ownerUserId?: string },
+  opts: { supabase?: SupabaseClient } = {},
 ): Promise<string> {
   assertTenancy(ctx);
-  await assertProgramTenancy(ctx, programId);
-  const sb = getServerSupabase();
+  const sb = opts.supabase ?? getServerSupabase();
+  await assertProgramTenancy(ctx, programId, { supabase: sb });
   const phaseNumber = input.phaseNumber ?? null;
   const moduleKey = input.moduleKey ?? null;
   let existingQuery = sb
@@ -633,16 +673,20 @@ export async function updateMilestoneStatus(
   milestoneId: string,
   status: MilestoneStatus,
   actualDate?: string,
-): Promise<void> {
+  opts: { supabase?: SupabaseClient } = {},
+): Promise<boolean> {
   assertTenancy(ctx);
-  await assertProgramTenancy(ctx, programId);
-  const sb = getServerSupabase();
-  const { error } = await sb
+  const sb = opts.supabase ?? getServerSupabase();
+  await assertProgramTenancy(ctx, programId, { supabase: sb });
+  const { data, error } = await sb
     .from('program_milestones')
     .update({ status, actual_date: actualDate ?? null })
     .eq('id', milestoneId)
-    .eq('engagement_id', programId);
+    .eq('engagement_id', programId)
+    .select('id')
+    .maybeSingle();
   if (error) throw error;
+  return Boolean(data);
 }
 
 export async function createWorkItem(
@@ -659,10 +703,11 @@ export async function createWorkItem(
     phaseNumber?: number;
     dueDate?: string;
   },
+  opts: { supabase?: SupabaseClient } = {},
 ): Promise<string> {
   assertTenancy(ctx);
-  await assertProgramTenancy(ctx, programId);
-  const sb = getServerSupabase();
+  const sb = opts.supabase ?? getServerSupabase();
+  await assertProgramTenancy(ctx, programId, { supabase: sb });
   const { data, error } = await sb
     .from('program_work_items')
     .insert({
@@ -689,18 +734,22 @@ export async function updateWorkItemStatus(
   programId: string,
   workItemId: string,
   status: WorkItemStatus,
-): Promise<void> {
+  opts: { supabase?: SupabaseClient } = {},
+): Promise<boolean> {
   assertTenancy(ctx);
-  await assertProgramTenancy(ctx, programId);
-  const sb = getServerSupabase();
+  const sb = opts.supabase ?? getServerSupabase();
+  await assertProgramTenancy(ctx, programId, { supabase: sb });
   const update: Record<string, unknown> = { status };
   if (status === 'done') update.completed_at = new Date().toISOString();
-  const { error } = await sb
+  const { data, error } = await sb
     .from('program_work_items')
     .update(update)
     .eq('id', workItemId)
-    .eq('engagement_id', programId);
+    .eq('engagement_id', programId)
+    .select('id')
+    .maybeSingle();
   if (error) throw error;
+  return Boolean(data);
 }
 
 export async function createRisk(
@@ -716,10 +765,11 @@ export async function createRisk(
     phaseNumber?: number;
     moduleKey?: string;
   },
+  opts: { supabase?: SupabaseClient } = {},
 ): Promise<string> {
   assertTenancy(ctx);
-  await assertProgramTenancy(ctx, programId);
-  const sb = getServerSupabase();
+  const sb = opts.supabase ?? getServerSupabase();
+  await assertProgramTenancy(ctx, programId, { supabase: sb });
   const { data, error } = await sb
     .from('program_risks')
     .insert({

@@ -8,6 +8,7 @@
 // Packet 11.
 
 import { getServerSupabase } from '@/lib/supabase-server';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type {
   MilestoneStatus,
   ProgramMilestoneRow,
@@ -51,11 +52,6 @@ export interface ExecuteRollup {
     workItemCount: number;
     deliverableCount: number;
   };
-}
-
-function daysAgo(iso: string | null): number | null {
-  if (!iso) return null;
-  return (Date.now() - new Date(iso).getTime()) / 86_400_000;
 }
 
 /**
@@ -211,9 +207,15 @@ export async function escalateBlockedItems(ctx: TenancyCtx, programId: string): 
  * Mark a work item as blocked with a reason. Sets blocked_at inside
  * metadata_jsonb so escalateBlockedItems can pick it up later.
  */
-export async function blockWorkItem(ctx: TenancyCtx, programId: string, workItemId: string, reason: string): Promise<void> {
+export async function blockWorkItem(
+  ctx: TenancyCtx,
+  programId: string,
+  workItemId: string,
+  reason: string,
+  opts: { supabase?: SupabaseClient } = {},
+): Promise<boolean> {
   assertTenancy(ctx);
-  const sb = getServerSupabase();
+  const sb = opts.supabase ?? getServerSupabase();
   const { data: current } = await sb
     .from('program_work_items')
     .select('metadata_jsonb')
@@ -226,12 +228,15 @@ export async function blockWorkItem(ctx: TenancyCtx, programId: string, workItem
     blocked_reason: reason,
     blocked_by_user_id: ctx.userId,
   };
-  const { error } = await sb
+  const { data, error } = await sb
     .from('program_work_items')
     .update({ status: 'blocked', metadata_jsonb: nextMeta })
     .eq('id', workItemId)
-    .eq('engagement_id', programId);
+    .eq('engagement_id', programId)
+    .select('id')
+    .maybeSingle();
   if (error) throw error;
+  return Boolean(data);
 }
 
 /** Mark a work item as Nexus-drafted · sets metadata flag. */
@@ -240,9 +245,10 @@ export async function markWorkItemNexusDrafted(
   programId: string,
   workItemId: string,
   draftContext?: Record<string, unknown>,
-): Promise<void> {
+  opts: { supabase?: SupabaseClient } = {},
+): Promise<boolean> {
   assertTenancy(ctx);
-  const sb = getServerSupabase();
+  const sb = opts.supabase ?? getServerSupabase();
   const { data: current } = await sb
     .from('program_work_items')
     .select('metadata_jsonb')
@@ -255,12 +261,15 @@ export async function markWorkItemNexusDrafted(
     nexus_drafted_at: new Date().toISOString(),
     nexus_draft_context: draftContext ?? {},
   };
-  const { error } = await sb
+  const { data, error } = await sb
     .from('program_work_items')
     .update({ metadata_jsonb: nextMeta })
     .eq('id', workItemId)
-    .eq('engagement_id', programId);
+    .eq('engagement_id', programId)
+    .select('id')
+    .maybeSingle();
   if (error) throw error;
+  return Boolean(data);
 }
 
 /**

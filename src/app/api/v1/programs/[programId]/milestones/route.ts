@@ -5,6 +5,7 @@ import { NextRequest } from 'next/server';
 import { getMilestones, getProgramById } from '@/lib/programs/queries';
 import { createMilestone } from '@/lib/programs/mutations';
 import { requireTenancy, tenancyErrorResponse } from '../../_auth';
+import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -28,7 +29,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   try {
     const { programId } = await params;
     const ctx = await requireTenancy();
-    const program = await getProgramById(ctx, programId);
+    const { supabase } = await getProgramsRouteSupabase('mutation');
+    const program = await getProgramById(ctx, programId, { supabase });
     if (!program) return Response.json({ error: 'not_found' }, { status: 404 });
     const body = (await req.json()) as {
       name?: string;
@@ -48,7 +50,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
       phaseNumber: body.phaseNumber,
       moduleKey: body.moduleKey,
       ownerUserId: body.ownerUserId,
-    });
+    }, { supabase });
     return Response.json({ milestoneId: id }, { status: 201 });
   } catch (err) {
     try { return tenancyErrorResponse(err); } catch {}

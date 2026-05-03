@@ -3,6 +3,8 @@
 
 import { publishDeliverable } from '@/lib/programs/mutations';
 import { requireTenancy, tenancyErrorResponse } from '../../../../_auth';
+import { getProgramById } from '@/lib/programs/queries';
+import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -11,7 +13,11 @@ export async function POST(_req: Request, { params }: { params: Promise<{ progra
   try {
     const { programId, deliverableId } = await params;
     const ctx = await requireTenancy();
-    await publishDeliverable(ctx, programId, deliverableId);
+    const { supabase } = await getProgramsRouteSupabase('mutation');
+    const program = await getProgramById(ctx, programId, { supabase });
+    if (!program) return Response.json({ error: 'not_found' }, { status: 404 });
+    const published = await publishDeliverable(ctx, programId, deliverableId, { supabase });
+    if (!published) return Response.json({ error: 'not_found' }, { status: 404 });
     return Response.json({ ok: true, deliverableId, status: 'in_review' });
   } catch (err) {
     try { return tenancyErrorResponse(err); } catch {}

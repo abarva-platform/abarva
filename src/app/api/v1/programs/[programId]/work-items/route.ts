@@ -6,6 +6,7 @@ import { getProgramById, getWorkItems } from '@/lib/programs/queries';
 import { createWorkItem } from '@/lib/programs/mutations';
 import { requireTenancy, tenancyErrorResponse } from '../../_auth';
 import type { WorkItemType } from '@/lib/programs/types.db';
+import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -31,7 +32,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
   try {
     const { programId } = await params;
     const ctx = await requireTenancy();
-    const program = await getProgramById(ctx, programId);
+    const { supabase } = await getProgramsRouteSupabase('mutation');
+    const program = await getProgramById(ctx, programId, { supabase });
     if (!program) return Response.json({ error: 'not_found' }, { status: 404 });
     const body = (await req.json()) as {
       title?: string;
@@ -57,7 +59,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
       moduleKey: body.moduleKey,
       phaseNumber: body.phaseNumber,
       dueDate: body.dueDate,
-    });
+    }, { supabase });
     return Response.json({ workItemId: id }, { status: 201 });
   } catch (err) {
     try { return tenancyErrorResponse(err); } catch {}

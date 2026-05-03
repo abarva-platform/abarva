@@ -2,10 +2,10 @@
 // Body: { status?: RiskStatus, likelihood?, impact?, mitigationPlan? }
 
 import { NextRequest } from 'next/server';
-import { getServerSupabase } from '@/lib/supabase-server';
 import { requireTenancy, tenancyErrorResponse } from '../../../_auth';
 import { getProgramById } from '@/lib/programs/queries';
 import type { RiskImpact, RiskLikelihood, RiskStatus } from '@/lib/programs/types.db';
+import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -18,7 +18,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ pr
   try {
     const { programId, riskId } = await params;
     const ctx = await requireTenancy();
-    const program = await getProgramById(ctx, programId);
+    const { supabase } = await getProgramsRouteSupabase('mutation');
+    const program = await getProgramById(ctx, programId, { supabase });
     if (!program) return Response.json({ error: 'not_found' }, { status: 404 });
 
     const body = (await req.json()) as {
@@ -54,9 +55,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ pr
       return Response.json({ error: 'bad_request', detail: 'nothing to update' }, { status: 400 });
     }
 
-    const sb = getServerSupabase();
-    const { error } = await sb.from('program_risks').update(update).eq('id', riskId).eq('engagement_id', programId);
+    const { data, error } = await supabase
+      .from('program_risks')
+      .update(update)
+      .eq('id', riskId)
+      .eq('engagement_id', programId)
+      .select('id')
+      .maybeSingle();
     if (error) throw error;
+    if (!data) return Response.json({ error: 'not_found' }, { status: 404 });
     return Response.json({ ok: true, riskId });
   } catch (err) {
     try { return tenancyErrorResponse(err); } catch {}

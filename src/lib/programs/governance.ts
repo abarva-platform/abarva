@@ -16,6 +16,7 @@
 // Discovery motion.
 
 import { getServerSupabase } from '@/lib/supabase-server';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type {
   ApprovalAuthority,
   FounderApprovalRequestRow,
@@ -105,8 +106,7 @@ export function findGateRule(fromPhase: number, toPhase: number): GateRule | nul
   return GATE_RULES.find((g) => g.fromPhase === fromPhase && g.toPhase === toPhase) ?? null;
 }
 
-async function hasProgramEvidence(programId: string, phase: number): Promise<boolean> {
-  const sb = getServerSupabase();
+async function hasProgramEvidence(programId: string, phase: number, sb: SupabaseClient): Promise<boolean> {
   const { data } = await sb
     .from('program_evidence_items')
     .select('id')
@@ -126,6 +126,7 @@ export async function evaluateGate(
   programId: string,
   fromPhase: number,
   toPhase: number,
+  opts: { supabase?: SupabaseClient } = {},
 ): Promise<GateCheck> {
   assertTenancy(ctx);
   const rule = findGateRule(fromPhase, toPhase);
@@ -145,7 +146,7 @@ export async function evaluateGate(
     };
   }
 
-  const sb = getServerSupabase();
+  const sb = opts.supabase ?? getServerSupabase();
 
   // Collect state signals
   const [{ data: deliverables }, { data: modules }, { data: participants }, { data: approvalRequests }, { data: milestones }] = await Promise.all([
@@ -327,7 +328,7 @@ export async function evaluateGate(
       case 'discovery_notes_ingested':
         pass = isPresent(findDeliverable('discovery_notes', 'meeting_notes', 'workshop_notes')) ||
           moduleCompleted('discovery_notes_ingest', 'workshop_notes_ingest') ||
-          (await hasProgramEvidence(programId, 1)) ||
+          (await hasProgramEvidence(programId, 1, sb)) ||
           discoveryReportHasWorkshopEvidence;
         break;
       case 'current_state_summary_drafted':
@@ -429,9 +430,10 @@ export async function requestFounderApproval(
     approverRole?: ApprovalAuthority;
     deadlineHours?: number;
   },
+  opts: { supabase?: SupabaseClient } = {},
 ): Promise<string> {
   assertTenancy(ctx);
-  const sb = getServerSupabase();
+  const sb = opts.supabase ?? getServerSupabase();
   const deadline = input.deadlineHours
     ? new Date(Date.now() + input.deadlineHours * 3_600_000).toISOString()
     : null;
@@ -568,9 +570,10 @@ export async function hasAuthority(
   ctx: TenancyCtx,
   programId: string,
   required: ApprovalAuthority,
+  opts: { supabase?: SupabaseClient } = {},
 ): Promise<boolean> {
   assertTenancy(ctx);
-  const sb = getServerSupabase();
+  const sb = opts.supabase ?? getServerSupabase();
   const { data } = await sb
     .from('engagement_participants')
     .select('approval_authority')
