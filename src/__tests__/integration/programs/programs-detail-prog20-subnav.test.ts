@@ -36,16 +36,19 @@ describe('PROG20 · ProgramDetailPage · SubNavStrip integration', () => {
     expect(source).toContain(sectionType);
   });
 
-  it('surfaces a visible phase archive quick nav above the collapsed detail record', () => {
+  it('surfaces a visible strategic move record quick nav above the collapsed detail record', () => {
     expect(source).toContain('data-testid="program-phase-archive-quicknav"');
     expect(source).toContain('PhaseArchiveQuickNav');
     expect(source).toContain('openArchiveSection');
+    expect(source).toContain('Strategic move record');
   });
 
-  it('quick nav can open the deliverables archive section', () => {
+  it('quick nav changes the immediate readable record browser', () => {
     expect(source).toContain("data-testid={`program-phase-archive-${item.key}`}");
     expect(source).toContain("setArchiveOpen(true)");
     expect(source).toContain("setActiveSection(section)");
+    expect(source).toContain('data-testid="program-record-browser"');
+    expect(source).toContain('data-testid="program-record-browser-deliverables"');
   });
 });
 

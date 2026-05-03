@@ -519,7 +519,7 @@ Append-only coordination log for active Codex sessions.
 
 ## 2026-05-02T17:58:00-05:00 - codex-programs-phase-archive-affordance
 
-- status: local-validation-in-progress
+- status: local-validation-passed
 - branch: `codex/programs-phase-archive-affordance`
 - worktree: `/tmp/nexus-functional-backlog`
 - live_context: founder asked how to browse a program's phase details and deliverables from the detail view; screenshot showed deliverables hidden behind the collapsed legacy details area below the Nexus canvas.
@@ -615,3 +615,17 @@ Append-only coordination log for active Codex sessions.
 - validation: `npx tsc --noEmit --pretty false` passed.
 - validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only.
 - next: commit, push, open PR, and auto-merge after checks pass.
+
+## 2026-05-02T19:24:00-05:00 - codex-programs-record-browser
+
+- status: local-validation-passed
+- branch: `codex/programs-record-browser`
+- worktree: `/tmp/nexus-functional-backlog`
+- live_context: founder reported the Program detail page still felt cluttered, the deliverables click did not read as working, fonts were too small, and the Strategic Moves product language was not reflected in the detail view.
+- fix: reframed the detail affordance as a Strategic Move record, changed the immediate selectable area to show readable in-place status/output content above Nexus, retained the lower detailed archive for deeper review, and enlarged deliverable/output typography and action affordances.
+- regression: extended PROG20 subnav integration coverage to assert the immediate record browser and strategic-move language.
+- validation: focused ProgramDetailPage subnav + deliverables canvas Jest passed, 2 suites / 64 tests.
+- validation: targeted ESLint passed for `ProgramDetailPage` and updated Program detail tests.
+- validation: `npx tsc --noEmit --pretty false` passed.
+- validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only.
+- next: PR, auto-merge after checks pass, wait for Vercel production deployment, then browser-verify the in-place Strategic Move record and Outputs interaction live.
