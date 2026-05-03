@@ -222,6 +222,13 @@ locks:
     expires_at: "2026-05-02T22:30:00-05:00"
     note: Replaces Intelligence submenu route links with native same-page tab/canvas rendering. Avoids Programs, Source lifecycle/data/API, and private-plane schema changes.
     completed_at: "2026-05-02T19:42:00-05:00"
+  - owner: codex-tower-main-submenus
+    resource: tower-authenticated-submenu-ui
+    status: completed
+    started_at: "2026-05-02T19:10:00-05:00"
+    expires_at: "2026-05-02T22:30:00-05:00"
+    note: Wires existing Tower lens submenus into authenticated /tower. Avoids Source lifecycle/data/API and private-plane schema changes.
+    completed_at: "2026-05-02T19:16:00-05:00"
 
   - owner: codex-intelligence-session-canvas-affordance
     resource: intelligence-session-canvas-affordance-ui

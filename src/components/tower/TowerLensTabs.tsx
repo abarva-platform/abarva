@@ -21,7 +21,6 @@
 import Link from 'next/link';
 import {
   buildTowerLensTabsView,
-  TOWER_TABS,
   type TowerTabKey,
 } from '@/lib/tower/tower-lens-tabs-view';
 import {
@@ -98,6 +97,11 @@ interface TowerLensTabsProps {
   activeTab: TowerTabKey;
   /** Base URL for tab links (e.g. /tenant/apex-retail/tower) */
   baseUrl: string;
+  /**
+   * Authenticated /tower renders the lens tabs in the global workspace strip.
+   * Keep the content reusable without duplicating a second tab bar below Atlas.
+   */
+  showTabBar?: boolean;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -108,6 +112,7 @@ export function TowerLensTabs({
   tenant,
   activeTab,
   baseUrl,
+  showTabBar = true,
 }: TowerLensTabsProps) {
   const view = buildTowerLensTabsView(activeTab);
 
@@ -117,48 +122,49 @@ export function TowerLensTabs({
       data-active-tab={activeTab}
       style={{ fontFamily: 'DM Sans, sans-serif' }}
     >
-      {/* Tab bar */}
-      <nav
-        aria-label="Tower lens tabs"
-        style={{
-          display: 'flex',
-          gap: 2,
-          borderBottom: `1px solid ${C.border}`,
-          backgroundColor: C.card,
-          padding: '0 24px',
-        }}
-      >
-        {view.tabs.map((tab) => {
-          const isActive = tab.key === activeTab;
-          const href = tab.key === 'portfolio'
-            ? baseUrl
-            : `${baseUrl}?tab=${tab.key}`;
-          return (
-            <Link
-              key={tab.key}
-              href={href}
-              data-tab={tab.key}
-              data-active={String(isActive)}
-              aria-current={isActive ? 'page' : undefined}
-              title={tab.description}
-              style={{
-                padding: '10px 16px',
-                fontSize: 13,
-                fontWeight: isActive ? 600 : 400,
-                color: isActive ? C.navy : C.muted,
-                borderBottom: isActive
-                  ? `2px solid ${C.navy}`
-                  : '2px solid transparent',
-                textDecoration: 'none',
-                whiteSpace: 'nowrap',
-                letterSpacing: isActive ? '0.01em' : undefined,
-              }}
-            >
-              {tab.label}
-            </Link>
-          );
-        })}
-      </nav>
+      {showTabBar && (
+        <nav
+          aria-label="Tower lens tabs"
+          style={{
+            display: 'flex',
+            gap: 2,
+            borderBottom: `1px solid ${C.border}`,
+            backgroundColor: C.card,
+            padding: '0 24px',
+          }}
+        >
+          {view.tabs.map((tab) => {
+            const isActive = tab.key === activeTab;
+            const href = tab.key === 'portfolio'
+              ? baseUrl
+              : `${baseUrl}?tab=${tab.key}`;
+            return (
+              <Link
+                key={tab.key}
+                href={href}
+                data-tab={tab.key}
+                data-active={String(isActive)}
+                aria-current={isActive ? 'page' : undefined}
+                title={tab.description}
+                style={{
+                  padding: '10px 16px',
+                  fontSize: 13,
+                  fontWeight: isActive ? 600 : 400,
+                  color: isActive ? C.navy : C.muted,
+                  borderBottom: isActive
+                    ? `2px solid ${C.navy}`
+                    : '2px solid transparent',
+                  textDecoration: 'none',
+                  whiteSpace: 'nowrap',
+                  letterSpacing: isActive ? '0.01em' : undefined,
+                }}
+              >
+                {tab.label}
+              </Link>
+            );
+          })}
+        </nav>
+      )}
 
       {/* Content panel */}
       <div style={{ padding: '24px clamp(16px, 4vw, 40px)' }}>

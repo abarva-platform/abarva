@@ -22,7 +22,18 @@ describe('Tower P6 handoff panel', () => {
     expect(pageSource).toContain('Setup initiatives · Tower feed');
     expect(pageSource).toContain('data-testid=\"tower-setup-initiatives-panel\"');
     expect(pageSource).toContain('Exact financial values withheld');
+    expect(pageSource).toContain('TowerMainSubmenuStrip');
+    expect(pageSource).toContain('data-testid=\"tower-main-submenu\"');
+    expect(pageSource).toContain('data-testid=\"tower-main-lens-canvas\"');
+    expect(pageSource).toContain('resolveTowerTab');
+    expect(pageSource).toContain('showTabBar={false}');
+    expect(pageSource).toContain('Source commercial');
+    expect(pageSource).toContain('Value at risk');
+    expect(pageSource).toContain('Dependencies');
     expect(componentSource).toContain('towerHandoffSlot');
+    expect(componentSource).toContain('towerSubmenuSlot');
+    expect(componentSource).toContain('towerLensSlot');
+    expect(componentSource).toContain('middleStrip={towerSubmenuSlot ??');
     expect(componentSource).toContain("tenantName = 'AbarVa Client'");
     expect(componentSource).not.toContain("tenantName: 'Apex Retail Group'");
   });
