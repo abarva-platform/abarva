@@ -197,6 +197,7 @@ export function IntelligenceNativeExploreLayer({
 }: IntelligenceNativeExploreLayerProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<ExploreTabKey>('today');
+  const [sessionCanvasOpened, setSessionCanvasOpened] = useState(false);
   const active = SUBMENUS.find((tab) => tab.key === activeTab) ?? SUBMENUS[0];
 
   const focusCanvas = useCallback(() => {
@@ -218,6 +219,7 @@ export function IntelligenceNativeExploreLayer({
   const activateTab = useCallback(
     (tab: ExploreTab, options: { focus?: boolean } = {}) => {
       setActiveTab(tab.key);
+      setSessionCanvasOpened(tab.key === 'sessions');
       if (typeof window !== 'undefined') {
         window.dispatchEvent(
           new CustomEvent('intelligence_native_submenu_selected', {
@@ -341,7 +343,10 @@ export function IntelligenceNativeExploreLayer({
           marginBottom: 24,
         }}
       >
-        <SentinelAmbientPanel onFocus={handleSentinelFocus} />
+        <SentinelAmbientPanel
+          isSessionsActive={activeTab === 'sessions'}
+          onFocus={handleSentinelFocus}
+        />
         <div
           ref={canvasRef}
           id="intelligence-native-canvas"
@@ -359,6 +364,7 @@ export function IntelligenceNativeExploreLayer({
           <ActiveCanvas
             activeTab={activeTab}
             active={active}
+            sessionCanvasOpened={sessionCanvasOpened}
             featuredFailureModes={featuredFailureModes}
             featuredPatternIds={featuredPatternIds}
           />
@@ -432,22 +438,34 @@ export function IntelligenceNativeExploreLayer({
 function ActiveCanvas({
   activeTab,
   active,
+  sessionCanvasOpened,
   featuredFailureModes,
   featuredPatternIds,
 }: {
   activeTab: ExploreTabKey;
   active: ExploreTab;
+  sessionCanvasOpened: boolean;
   featuredFailureModes: ReadonlyArray<FailureModeNarrativeCard>;
   featuredPatternIds: readonly string[];
 }) {
+  const isSessionCanvas = activeTab === 'sessions';
+
   return (
     <div
+      data-testid="intelligence-active-canvas-card"
+      data-session-active={String(isSessionCanvas)}
       style={{
         minHeight: 330,
         borderRadius: 18,
-        border: `1px solid ${SHELL.CARD_LINE}`,
-        background: 'rgba(253,251,246,0.9)',
+        border: `1px solid ${isSessionCanvas ? SHELL.MINT_LINE : SHELL.CARD_LINE}`,
+        background: isSessionCanvas
+          ? 'linear-gradient(135deg, rgba(237,248,239,0.92), rgba(253,251,246,0.96))'
+          : 'rgba(253,251,246,0.9)',
+        boxShadow: isSessionCanvas
+          ? '0 18px 46px rgba(68, 117, 82, 0.18)'
+          : 'none',
         padding: 18,
+        transition: 'border-color 180ms ease, box-shadow 180ms ease, background 180ms ease',
       }}
     >
       <CanvasHeader active={active} />
@@ -462,7 +480,9 @@ function ActiveCanvas({
       {activeTab === 'vendors' && <VendorsCanvas />}
       {activeTab === 'peer-activity' && <PeerActivityCanvas />}
       {activeTab === 'my-strategy' && <MyStrategyCanvas />}
-      {activeTab === 'sessions' && <SessionsCanvas />}
+      {activeTab === 'sessions' && (
+        <SessionsCanvas openedFromSentinel={sessionCanvasOpened} />
+      )}
     </div>
   );
 }
@@ -598,18 +618,40 @@ function MyStrategyCanvas() {
   );
 }
 
-function SessionsCanvas() {
+function SessionsCanvas({ openedFromSentinel }: { openedFromSentinel: boolean }) {
   return (
-    <CardGrid>
-      {SESSION_CARDS.map((session) => (
-        <SimpleCanvasCard
-          key={session.title}
-          title={session.title}
-          body={session.body}
-          eyebrow="Persistent session"
-        />
-      ))}
-    </CardGrid>
+    <div style={{ display: 'grid', gap: 12 }}>
+      {openedFromSentinel && (
+        <div
+          data-testid="sessions-canvas-open-banner"
+          role="status"
+          style={{
+            borderRadius: 14,
+            border: `1px solid ${SHELL.MINT_LINE}`,
+            background: SHELL.MINT_BG,
+            color: SHELL.MINT_TEXT,
+            padding: 12,
+            fontFamily: SHELL.SANS,
+            fontSize: 13,
+            fontWeight: 700,
+            lineHeight: 1.35,
+          }}
+        >
+          Sessions canvas is open. Pick up a saved working thread or turn this
+          exploration into Strategic Move evidence.
+        </div>
+      )}
+      <CardGrid>
+        {SESSION_CARDS.map((session) => (
+          <SimpleCanvasCard
+            key={session.title}
+            title={session.title}
+            body={session.body}
+            eyebrow="Persistent session"
+          />
+        ))}
+      </CardGrid>
+    </div>
   );
 }
 
@@ -663,7 +705,13 @@ function PressureCard({ level, title, body }: { level: string; title: string; bo
   );
 }
 
-function SentinelAmbientPanel({ onFocus }: { onFocus: () => void }) {
+function SentinelAmbientPanel({
+  isSessionsActive,
+  onFocus,
+}: {
+  isSessionsActive: boolean;
+  onFocus: () => void;
+}) {
   return (
     <aside
       aria-label="Sentinel ambient brief"
@@ -733,6 +781,8 @@ function SentinelAmbientPanel({ onFocus }: { onFocus: () => void }) {
         type="button"
         onClick={onFocus}
         aria-controls="intelligence-native-canvas"
+        aria-pressed={isSessionsActive}
+        data-testid="sentinel-session-canvas-button"
         style={{
           marginTop: 18,
           display: 'flex',
@@ -740,9 +790,11 @@ function SentinelAmbientPanel({ onFocus }: { onFocus: () => void }) {
           justifyContent: 'space-between',
           gap: 12,
           borderRadius: 999,
-          border: '1px solid rgba(250,247,241,0.22)',
-          background: 'rgba(250,247,241,0.08)',
-          color: SHELL.CARD_WHITE,
+          border: isSessionsActive
+            ? `1px solid ${SHELL.MINT_LINE}`
+            : '1px solid rgba(250,247,241,0.22)',
+          background: isSessionsActive ? SHELL.MINT_BG : 'rgba(250,247,241,0.08)',
+          color: isSessionsActive ? SHELL.MINT_TEXT : SHELL.CARD_WHITE,
           padding: '11px 12px',
           fontFamily: SHELL.SANS,
           fontSize: 13,
@@ -750,8 +802,10 @@ function SentinelAmbientPanel({ onFocus }: { onFocus: () => void }) {
           cursor: 'pointer',
         }}
       >
-        Show Sessions canvas
-        <span aria-hidden="true">focus right pane</span>
+        {isSessionsActive ? 'Sessions canvas is open' : 'Show Sessions canvas'}
+        <span aria-hidden="true">
+          {isSessionsActive ? 'active' : 'focus right pane'}
+        </span>
       </button>
     </aside>
   );
