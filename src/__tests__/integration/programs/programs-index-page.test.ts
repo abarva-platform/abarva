@@ -24,7 +24,7 @@ describe('Programs index linked-state and filters', () => {
       '/source/events/apex-retail-ams-outsourcing-2026',
     );
     expect(flagship?.linkedSourceEventState).toBe(
-      'Vendor C selected · Build gate dependency',
+      'Vendor C selected · roadmap dependency',
     );
   });
 
@@ -103,22 +103,22 @@ describe('Programs index linked-state and filters', () => {
   });
 
   it('locks filter-specific empty-state copy', () => {
-    expect(getProgramsIndexEmptyStateTitle('all')).toBe('No programs yet');
-    expect(getProgramsIndexEmptyStateTitle('active')).toBe('No active programs');
-    expect(getProgramsIndexEmptyStateTitle('idle')).toBe('No idle programs');
-    expect(getProgramsIndexEmptyStateTitle('gated')).toBe('No gated programs');
+    expect(getProgramsIndexEmptyStateTitle('all')).toBe('No strategic moves yet');
+    expect(getProgramsIndexEmptyStateTitle('active')).toBe('No active moves');
+    expect(getProgramsIndexEmptyStateTitle('idle')).toBe('No idle moves');
+    expect(getProgramsIndexEmptyStateTitle('gated')).toBe('No gated moves');
 
     expect(getProgramsIndexEmptyStateCopy('all')).toBe(
-      'No programs are in the canonical portfolio yet.',
+      'No strategic moves are in this workspace yet.',
     );
     expect(getProgramsIndexEmptyStateCopy('active')).toBe(
-      'No programs are currently active.',
+      'No strategic moves are currently active.',
     );
     expect(getProgramsIndexEmptyStateCopy('idle')).toBe(
-      'No programs are currently idle.',
+      'No strategic moves are currently idle.',
     );
     expect(getProgramsIndexEmptyStateCopy('gated')).toBe(
-      'No programs have pending gate reviews.',
+      'No strategic moves have pending gate reviews.',
     );
   });
 
@@ -128,15 +128,15 @@ describe('Programs index linked-state and filters', () => {
     expect(getProgramsIndexFilterHref('idle')).toBe('/programs?filter=idle');
     expect(getProgramsIndexFilterHref('gated')).toBe('/programs?filter=gated');
 
-    expect(getProgramsIndexFilterSummary('all', 6, 6)).toBe('6 programs shown');
+    expect(getProgramsIndexFilterSummary('all', 6, 6)).toBe('6 moves shown');
     expect(getProgramsIndexFilterSummary('active', 4, 6)).toBe(
-      '4 of 6 programs shown · active filter',
+      '4 of 6 moves shown · active filter',
     );
     expect(getProgramsIndexFilterSummary('idle', 2, 6)).toBe(
-      '2 of 6 programs shown · idle filter',
+      '2 of 6 moves shown · idle filter',
     );
     expect(getProgramsIndexFilterSummary('gated', 1, 6)).toBe(
-      '1 of 6 programs shown · gated filter',
+      '1 of 6 moves shown · gated filter',
     );
   });
 });

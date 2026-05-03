@@ -1,6 +1,6 @@
 'use client';
 
-// PROG-P2 · Programs Index page — canonical shell alignment.
+// PROG-P2 · Strategic Moves index page — canonical shell alignment.
 // Catalog entries: PRG-IDX-DEFAULT, PRG-IDX-LINKED, PRG-IDX-EMPTY, PRG-IDX-FILTERED.
 // Server component passes ProgramsIndexView to this client island.
 // data-testid markers required for P-SMOKE-CDP assertions.
@@ -8,7 +8,7 @@
 // PR-I (Surface 2 master canvas) — adds an <AgentCanvas> at the top of
 // the page so /programs is agent-centric: Nexus chat dominant + reactive
 // portfolio panel. The legacy filter-pills / stats / programs-grid
-// content collapses into a "Programs portfolio · grid view" details
+// content collapses into a "Strategic Moves record · grid view" details
 // element below. AgentColumn is deprecated for this surface — chat
 // lives inside AgentCanvas now.
 
@@ -149,11 +149,17 @@ function GatePill({ status }: { status: ProgramRow['gateStatus'] }) {
   );
 }
 
-// ─── Program row ──────────────────────────────────────────────────────────────
+function formatMoveName(name: string): string {
+  return name.replace(/\bProgram:/g, 'Move:').replace(/\bprogram\b/gi, 'move');
+}
+
+// ─── Strategic move row ───────────────────────────────────────────────────────
 
 function ProgramTableRow({ row }: { row: ProgramRow }) {
   const actionHref = `/programs/${row.id}?phase=${row.currentPhase}`;
   const health = computeRowHealth(row);
+  const moveName = formatMoveName(row.name);
+  const moveNote = formatMoveName(row.nexusNote);
 
   return (
     <Link
@@ -213,7 +219,7 @@ function ProgramTableRow({ row }: { row: ProgramRow }) {
               minWidth: 0,
             }}
           >
-            {row.name}
+            {moveName}
           </span>
           {health && <InstanceHealthBadge health={health} />}
         </div>
@@ -230,7 +236,7 @@ function ProgramTableRow({ row }: { row: ProgramRow }) {
             marginTop: 1,
           }}
         >
-          {row.nexusNote}
+          {moveNote}
         </div>
       </div>
 
@@ -288,7 +294,7 @@ function ProgramTableRow({ row }: { row: ProgramRow }) {
   );
 }
 
-// ─── Programs table ───────────────────────────────────────────────────────────
+// ─── Strategic moves table ────────────────────────────────────────────────────
 
 function ProgramsTable({ programs }: { programs: ProgramRow[] }) {
   const colHeaderStyle = {
@@ -321,7 +327,7 @@ function ProgramsTable({ programs }: { programs: ProgramRow[] }) {
         }}
       >
         <span style={colHeaderStyle}>ID</span>
-        <span style={colHeaderStyle}>Program</span>
+        <span style={colHeaderStyle}>Move</span>
         <span style={colHeaderStyle}>Journey</span>
         <span style={colHeaderStyle}>Gate</span>
         <span style={colHeaderStyle}>Last active</span>
@@ -407,14 +413,14 @@ export function ProgramsIndexPage({ view, hasTenantKey = false }: ProgramsIndexP
       topBarProps={{
         tenantName: view.tenant,
         showLocked: true,
-        context: `Programs · ${view.totalActive} in flight`,
+        context: `Strategic Moves · ${view.totalActive} in flight`,
       }}
       middleStrip={<FilterPillStrip pills={filterPills} />}
       hasTenantKey={hasTenantKey}
       onArtifact={handleNexusArtifact}
     >
       {/* PR-I · agent-centric primary canvas. Nexus + reactive panel
-          dominate the viewport; the legacy stats / program grid
+          dominate the viewport; the legacy stats / move grid
           collapses into a details accordion below. AgentColumn (the
           legacy left-rail chat widget) is deprecated for this
           surface — chat lives inside AgentCanvas now. */}
@@ -431,7 +437,7 @@ export function ProgramsIndexPage({ view, hasTenantKey = false }: ProgramsIndexP
         <div style={{ padding: '20px 28px 0' }}>
           <AgentCanvas
             surface="/programs"
-            agent={{ initials: 'Nx', name: 'Nexus', role: 'Program Orchestrator' }}
+            agent={{ initials: 'Nx', name: 'Nexus', role: 'Move Orchestrator' }}
             quote={view.portfolioWorkbench.prose}
             artifacts={nexusArtifacts}
             onArtifact={handleNexusArtifact}
@@ -461,7 +467,7 @@ export function ProgramsIndexPage({ view, hasTenantKey = false }: ProgramsIndexP
               userSelect: 'none',
             }}
           >
-            Programs portfolio · grid view ({view.totalActive} active · {view.gatesPending} gated · {view.idleCount} idle)
+            Strategic Moves record · grid view ({view.totalActive} active · {view.gatesPending} gated · {view.idleCount} idle)
           </summary>
 
       {/* Work pane */}
@@ -506,7 +512,7 @@ export function ProgramsIndexPage({ view, hasTenantKey = false }: ProgramsIndexP
               letterSpacing: '0.10em',
             }}
           >
-            Compare programs →
+            Compare moves →
           </Link>
         </div>
 
@@ -645,7 +651,7 @@ export function ProgramsIndexPage({ view, hasTenantKey = false }: ProgramsIndexP
                   marginBottom: 4,
                 }}
               >
-                {flagship.displayId} is the flagship path through P3 Design
+                {flagship.displayId} is the flagship strategic move through P3 Design
               </div>
               <div
                 style={{
@@ -729,7 +735,7 @@ export function ProgramsIndexPage({ view, hasTenantKey = false }: ProgramsIndexP
             }}
           >
             <span style={{ fontSize: 15, lineHeight: 1, marginTop: -1 }}>+</span>
-            Originate program
+            Originate move
           </Link>
         </div>
 
@@ -788,7 +794,7 @@ export function ProgramsIndexPage({ view, hasTenantKey = false }: ProgramsIndexP
                 cursor: 'pointer',
               }}
             >
-              Show all programs
+              Show all moves
             </button>
           </div>
         ) : (
@@ -797,7 +803,7 @@ export function ProgramsIndexPage({ view, hasTenantKey = false }: ProgramsIndexP
           </div>
         )}
 
-        {/* Originate new program link */}
+        {/* Originate new move link */}
         <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${SHELL.CARD_LINE}` }}>
           <Link
             href="/programs/new"
@@ -812,7 +818,7 @@ export function ProgramsIndexPage({ view, hasTenantKey = false }: ProgramsIndexP
             }}
           >
             <span>+</span>
-            <span>Originate new program</span>
+            <span>Originate new move</span>
           </Link>
           <div
             data-honest-disclaimer="programs-index"

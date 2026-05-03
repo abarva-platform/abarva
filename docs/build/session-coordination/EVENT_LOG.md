@@ -630,6 +630,7 @@ Append-only coordination log for active Codex sessions.
 - validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only.
 - next: PR, auto-merge after checks pass, wait for Vercel production deployment, then browser-verify the in-place Strategic Move record and Outputs interaction live.
 
+
 ## 2026-05-02T20:16:00-05:00 - codex-intelligence-session-feedback
 
 - status: in-progress
@@ -652,3 +653,15 @@ Append-only coordination log for active Codex sessions.
 - validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only.
 - validation_note: local browser route redirected to client-test sign-in, so no demo credentials/code were entered in this turn; production unauthenticated page was used to confirm the prior DOM state-change behavior.
 - next: run standard checks, commit, push, open PR, and auto-merge after checks pass.
+
+## 2026-05-02T20:23:00-05:00 - codex-strategic-moves-language-polish
+
+- status: local-validation-passed
+- branch: `codex/strategic-moves-language-polish`
+- worktree: `/tmp/nexus-functional-backlog`
+- scope: finish the user-facing vocabulary shift from Programs/programs to Strategic Moves/moves on the index and detail chrome without renaming routes, APIs, or persistence objects.
+- fix: updated index context, summary header, table column, compare/originate CTAs, empty states, row display names, Nexus role label, detail lifecycle copy, gate/risk labels, and DB-backed workbench prose to use Strategic Moves / move language.
+- regression: updated Programs index regression expectations for move copy and corrected P4 doctrine wording from Build dependency to roadmap dependency.
+- validation: focused Strategic Moves index/detail Jest passed, 3 suites / 72 tests.
+- validation: targeted ESLint passed for touched Strategic Moves files and tests.
+- next: run typecheck/build, push PR, auto-merge after checks pass, wait for Vercel production deployment, then browser-verify the live index and detail vocabulary.
