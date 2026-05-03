@@ -196,7 +196,7 @@ export function StrategicMovesHomeClient({
                   }`}>
                     {move.status.text}
                   </span>
-                  <span>{move.phaseLabel}</span>
+                  <span className={styles.phaseTag}>{move.phaseLabel}</span>
                 </div>
                 <div className={styles.phaseRail}>
                   {Array.from({ length: 8 }).map((_, index) => (
@@ -226,7 +226,7 @@ export function StrategicMovesHomeClient({
                   {sortedMoves
                     .filter((move) => move.currentPhase === phase)
                     .map((move) => (
-                      <Link className={styles.card} key={move.id} href={`/strategic-moves/${move.id}`}>
+                      <Link className={`${styles.card} ${styles.kanbanCard}`} key={move.id} href={`/strategic-moves/${move.id}`}>
                         <div className={styles.eyebrow}>{move.displayCode}</div>
                         <div className={styles.cardTitle}>{move.name}</div>
                         <span className={`${styles.chip} ${
