@@ -21,6 +21,7 @@ import type {
   TenancyCtx,
 } from './types.db';
 import type { ArchetypeKey } from './types.ui';
+import type { StrategicMove, StrategicMovePortfolio } from './types.ui';
 
 function assertTenancy(ctx: TenancyCtx): void {
   if (!ctx?.clientId || !ctx?.userId) {
@@ -32,6 +33,16 @@ interface EngagementRow {
   id: string;
   client_id: string;
   name: string;
+  sponsor_person_id: string | null;
+  problem_statement: string | null;
+  target_outcome: string | null;
+  timeline_horizon: string | null;
+  value_projected_low_usd: number | null;
+  value_projected_high_usd: number | null;
+  value_verified_usd: number | null;
+  value_verified_status: 'pending' | 'tracked' | 'final' | null;
+  value_currency: string | null;
+  value_assumptions_jsonb: Record<string, unknown> | null;
   program_archetype: ArchetypeKey | null;
   origin_source: OriginSource | null;
   origin_source_ref: string | null;
@@ -48,6 +59,7 @@ interface EngagementRow {
   archived_at: string | null;
   deleted_at: string | null;
   created_at: string;
+  updated_at: string | null;
 }
 
 function rowToProgram(r: EngagementRow): ProgramCore {
@@ -55,6 +67,16 @@ function rowToProgram(r: EngagementRow): ProgramCore {
     id: r.id,
     clientId: r.client_id,
     name: r.name,
+    sponsorPersonId: r.sponsor_person_id,
+    problemStatement: r.problem_statement,
+    targetOutcome: r.target_outcome,
+    timelineHorizon: r.timeline_horizon,
+    valueProjectedLowUsd: r.value_projected_low_usd,
+    valueProjectedHighUsd: r.value_projected_high_usd,
+    valueVerifiedUsd: r.value_verified_usd,
+    valueVerifiedStatus: r.value_verified_status,
+    valueCurrency: r.value_currency,
+    valueAssumptions: r.value_assumptions_jsonb,
     archetype: r.program_archetype,
     originSource: r.origin_source,
     originSourceRef: r.origin_source_ref,
@@ -71,6 +93,7 @@ function rowToProgram(r: EngagementRow): ProgramCore {
     archivedAt: r.archived_at,
     deletedAt: r.deleted_at,
     createdAt: r.created_at,
+    updatedAt: r.updated_at,
   };
 }
 
@@ -88,7 +111,7 @@ export async function getProgramPortfolio(
   if (allowedProgramIds && allowedProgramIds.length === 0) return [];
   let query = sb
     .from('engagements')
-    .select('id, client_id, name, program_archetype, origin_source, origin_source_ref, status, lifecycle_state, current_phase, current_module_key, maestro_oversight_level, founder_approval_required, phase_locked_at, phase_locked_by_user_id, data_residency_region, retention_policy_years, archived_at, deleted_at, created_at')
+    .select('id, client_id, name, sponsor_person_id, problem_statement, target_outcome, timeline_horizon, value_projected_low_usd, value_projected_high_usd, value_verified_usd, value_verified_status, value_currency, value_assumptions_jsonb, program_archetype, origin_source, origin_source_ref, status, lifecycle_state, current_phase, current_module_key, maestro_oversight_level, founder_approval_required, phase_locked_at, phase_locked_by_user_id, data_residency_region, retention_policy_years, archived_at, deleted_at, created_at, updated_at')
     .eq('client_id', ctx.clientId)
     .is('archived_at', null)
     .is('deleted_at', null)
@@ -111,7 +134,7 @@ export async function getProgramById(
   const sb = opts.supabase ?? getServerSupabase();
   const { data, error } = await sb
     .from('engagements')
-    .select('id, client_id, name, program_archetype, origin_source, origin_source_ref, status, lifecycle_state, current_phase, current_module_key, maestro_oversight_level, founder_approval_required, phase_locked_at, phase_locked_by_user_id, data_residency_region, retention_policy_years, archived_at, deleted_at, created_at')
+    .select('id, client_id, name, sponsor_person_id, problem_statement, target_outcome, timeline_horizon, value_projected_low_usd, value_projected_high_usd, value_verified_usd, value_verified_status, value_currency, value_assumptions_jsonb, program_archetype, origin_source, origin_source_ref, status, lifecycle_state, current_phase, current_module_key, maestro_oversight_level, founder_approval_required, phase_locked_at, phase_locked_by_user_id, data_residency_region, retention_policy_years, archived_at, deleted_at, created_at, updated_at')
     .eq('id', programId)
     .eq('client_id', ctx.clientId)
     .maybeSingle();
@@ -328,4 +351,24 @@ export async function getPhaseSnapshots(ctx: TenancyCtx, programId: string, phas
     approvalStatus: r.approval_status as PhaseSnapshot['approvalStatus'],
     createdAt: r.created_at as string,
   }));
+}
+
+export async function getStrategicMovePortfolio(
+  ctx: TenancyCtx,
+  opts: { limit?: number; supabase?: SupabaseClient } = {},
+): Promise<StrategicMovePortfolio> {
+  const programs = await getProgramPortfolio(ctx, opts);
+  const { buildStrategicMovePortfolio } = await import('./transformers');
+  return buildStrategicMovePortfolio(ctx, programs, opts);
+}
+
+export async function getStrategicMoveById(
+  ctx: TenancyCtx,
+  moveId: string,
+  opts: { supabase?: SupabaseClient } = {},
+): Promise<StrategicMove | null> {
+  const program = await getProgramById(ctx, moveId, opts);
+  if (!program) return null;
+  const { buildStrategicMove } = await import('./transformers');
+  return buildStrategicMove(ctx, program, opts);
 }

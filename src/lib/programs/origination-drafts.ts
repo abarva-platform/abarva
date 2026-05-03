@@ -55,7 +55,7 @@ export interface OriginationDraftRow {
   updated_at: string;
 }
 
-const SURFACE_ALLOWLIST = new Set(['/programs/new', '/demo/programs/new']);
+const SURFACE_ALLOWLIST = new Set(['/programs/new', '/demo/programs/new', '/strategic-moves/new']);
 
 function assertSurface(surface: string): void {
   if (!SURFACE_ALLOWLIST.has(surface)) {

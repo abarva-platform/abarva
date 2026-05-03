@@ -409,3 +409,58 @@ export interface CreateProgramRequest {
     notes?: string;
   };
 }
+
+export type StrategicMoveStatusColor = 'red' | 'amber' | 'green' | 'teal';
+
+export interface StrategicMove {
+  id: string;
+  displayCode: string;
+  name: string;
+  tenant: {
+    id: string;
+    name: string;
+    industryCode: string | null;
+  };
+  archetype: string;
+  currentPhase: number;
+  phaseLabel: string;
+  status: {
+    key: string;
+    text: string;
+    description: string;
+  };
+  statusColor: StrategicMoveStatusColor;
+  sponsor: { id: string; name: string; role: string } | null;
+  participants: Array<{ personId: string; name: string; role: string }>;
+  valueAtStake: {
+    projected: { low: number; high: number; currency: string } | null;
+    verified: { amount: number; status: 'pending' | 'tracked' | 'final' } | null;
+    assumptions: Record<string, unknown> | null;
+  };
+  gateCriteria: Array<{ id: string; label: string; completed: boolean }>;
+  recentActivity: Array<{ at: string; actor: string; action: string; summary: string }>;
+  linkedEvidence: Array<{ id: string; anchor: string; summary: string; url: string }>;
+  mapLabel: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StrategicMovePortfolio {
+  moves: StrategicMove[];
+  counts: {
+    total: number;
+    needAttention: number;
+    onTrack: number;
+    gated: number;
+    idle: number;
+  };
+  totalValueAtStake: {
+    amount: number;
+    currency: string;
+  };
+  needAttentionMoves: Array<{
+    id: string;
+    displayCode: string;
+    statusText: string;
+  }>;
+}

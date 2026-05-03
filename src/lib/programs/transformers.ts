@@ -26,6 +26,8 @@ import type {
   PhaseState,
   ProgramFullState,
   ProgramSummary,
+  StrategicMove,
+  StrategicMovePortfolio,
   ProgramThread,
   ThreadRef,
   ViewerRole,
@@ -48,6 +50,7 @@ import {
   getWorkItems,
 } from './queries';
 import { PHASE_LABELS } from './types.db';
+import { getPhaseLabel } from './phase-labels';
 
 // ── Client name mapping ────────────────────────────────────────────────
 const KNOWN_CLIENT_NAMES = new Map<string, ProgramSummary['clientName']>([
@@ -443,7 +446,7 @@ export async function buildProgramFullState(ctx: TenancyCtx, program: ProgramCor
     },
     nexusPanel: buildNexusPanelDefault(program.id),
     moduleContent: {},
-    executeData: buildExecuteData(program.id, milestones, workItems, risks, deliverableSummaries),
+    executeData: buildExecuteData(program.id, milestones, workItems, risks),
   };
 }
 
@@ -517,7 +520,7 @@ function buildMetrics(milestones: ProgramMilestoneRow[], workItems: ProgramWorkI
   ];
 }
 
-function buildExecuteData(programId: string, milestones: ProgramMilestoneRow[], workItems: ProgramWorkItemRow[], risks: ProgramRiskRow[], deliverables: DeliverableSummary[]): ExecuteSurfaceProps {
+function buildExecuteData(programId: string, milestones: ProgramMilestoneRow[], workItems: ProgramWorkItemRow[], risks: ProgramRiskRow[]): ExecuteSurfaceProps {
   return {
     programId,
     activeTab: 'milestones',
@@ -565,5 +568,363 @@ function buildNexusPanelDefault(programId: string): NexusPanelProps {
     drafts: [],
     flags: [],
     sources: [],
+  };
+}
+
+export interface MoveStatus {
+  statusKey: string;
+  statusText: string;
+  statusDescription: string;
+  statusColor: StrategicMove['statusColor'];
+}
+
+function slugify(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function firstSegment(value: string): string {
+  const [segment] = slugify(value).split('-');
+  return (segment || 'MOVE').toUpperCase();
+}
+
+function formatArchetype(value: string | null): string {
+  if (!value) return 'UNCLASSIFIED';
+  return value
+    .split('_')
+    .map((part) => part.toUpperCase())
+    .join(' ');
+}
+
+export function deriveDisplayCode(
+  move: Pick<ProgramCore, 'name' | 'createdAt'>,
+  client: { industryCode: string | null; slug: string | null },
+): string {
+  const prefix = (client.industryCode?.trim() || client.slug?.toUpperCase().replace(/-/g, '') || 'MOVE').toUpperCase();
+  const segment = firstSegment(move.name);
+  const year = new Date(move.createdAt).getUTCFullYear();
+  return `${prefix}-${segment}-${year}`;
+}
+
+export function deriveMapLabel(move: Pick<ProgramCore, 'name'>): string {
+  const tokens = move.name
+    .split(/[^A-Za-z0-9]+/)
+    .map((token) => token.trim())
+    .filter(Boolean)
+    .filter((token) => !['for', 'and', 'the', 'of', 'to', 'in'].includes(token.toLowerCase()));
+  const label = tokens.slice(0, 4).map((token) => token[0]?.toUpperCase() ?? '').join('');
+  return label || 'MOVE';
+}
+
+export async function getMoveStatus(
+  ctx: TenancyCtx,
+  move: Pick<ProgramCore, 'id' | 'status' | 'lifecycleState' | 'currentPhase'>,
+): Promise<MoveStatus> {
+  const sb = getServerSupabase();
+  const [latestSnapshot, openFlags, pendingFounder, milestones] = await Promise.all([
+    sb
+      .from('phase_snapshots')
+      .select('approval_status, created_at')
+      .eq('engagement_id', move.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    getOpenMaestroFlags(ctx, move.id),
+    getPendingApprovals(ctx, move.id),
+    getMilestones(ctx, move.id),
+  ]);
+
+  const hasCriticalFlag = openFlags.some((flag) => flag.severity === 'critical');
+  if (hasCriticalFlag) {
+    return {
+      statusKey: 'gate_blocked',
+      statusText: 'GATE BLOCKED',
+      statusDescription: `${getPhaseLabel(move.currentPhase)} · critical oversight flag open`,
+      statusColor: 'red',
+    };
+  }
+
+  const approvalStatus = (latestSnapshot.data as { approval_status?: string } | null)?.approval_status ?? null;
+  if (move.lifecycleState === 'submitted_for_approval' || pendingFounder.length > 0 || approvalStatus === 'pending') {
+    return {
+      statusKey: 'awaiting_decision',
+      statusText: 'AWAITING DECISION',
+      statusDescription: `${getPhaseLabel(move.currentPhase)} · sponsor/founder decision pending`,
+      statusColor: 'amber',
+    };
+  }
+
+  const currentMilestone =
+    milestones.find((milestone) => milestone.status === 'at_risk' || milestone.status === 'upcoming') ??
+    milestones[0];
+  const milestoneNote = currentMilestone
+    ? `${currentMilestone.name} · ${currentMilestone.status}`
+    : 'No active milestones';
+
+  if (move.lifecycleState === 'completed') {
+    return {
+      statusKey: 'validated',
+      statusText: 'VALIDATED',
+      statusDescription: `${getPhaseLabel(move.currentPhase)} · ${milestoneNote}`,
+      statusColor: 'teal',
+    };
+  }
+
+  if (move.status === 'paused' || move.status === 'idle') {
+    return {
+      statusKey: 'idle',
+      statusText: 'IDLE',
+      statusDescription: `${getPhaseLabel(move.currentPhase)} · awaiting restart signal`,
+      statusColor: 'amber',
+    };
+  }
+
+  return {
+    statusKey: 'on_track',
+    statusText: 'ON TRACK',
+    statusDescription: `${getPhaseLabel(move.currentPhase)} · ${milestoneNote}`,
+    statusColor: 'green',
+  };
+}
+
+async function fetchLinkedEvidence(
+  moveId: string,
+): Promise<StrategicMove['linkedEvidence']> {
+  const sb = getServerSupabase();
+  // Evidence binding convention for move-level retrieval:
+  // related_entity_type='engagement' AND related_entity_id=<moveId>
+  const { data } = await sb
+    .from('evidence')
+    .select('id, summary')
+    .eq('related_entity_type', 'engagement')
+    .eq('related_entity_id', moveId)
+    .order('created_at', { ascending: false })
+    .limit(10);
+  return ((data as Array<{ id: string; summary: string | null }> | null) ?? []).map((row) => ({
+    id: row.id,
+    anchor: row.id,
+    summary: row.summary ?? 'Evidence item',
+    url: `/strategic-moves/${moveId}?evidence=${row.id}`,
+  }));
+}
+
+export async function buildStrategicMove(
+  ctx: TenancyCtx,
+  move: ProgramCore,
+  opts: { supabase?: ReturnType<typeof getServerSupabase> } = {},
+): Promise<StrategicMove> {
+  const sb = opts.supabase ?? getServerSupabase();
+  const [clientRow, peopleRows, activityRows, moduleRows, phaseSnapshots, linkedEvidence, moveStatus] = await Promise.all([
+    sb.from('clients').select('id, name, industry_code, slug').eq('id', move.clientId).maybeSingle(),
+    sb
+      .from('engagement_participants')
+      .select('person_id, user_id, role, approval_authority')
+      .eq('engagement_id', move.id),
+    sb
+      .from('program_audit_log')
+      .select('created_at, action, rationale, actor_user_id')
+      .eq('engagement_id', move.id)
+      .order('created_at', { ascending: false })
+      .limit(8),
+    sb
+      .from('module_state_log')
+      .select('created_at, module_key, new_state, changed_by_user_id')
+      .eq('engagement_id', move.id)
+      .order('created_at', { ascending: false })
+      .limit(8),
+    sb
+      .from('phase_snapshots')
+      .select('created_at, phase_number, approval_status')
+      .eq('engagement_id', move.id)
+      .order('created_at', { ascending: false })
+      .limit(8),
+    fetchLinkedEvidence(move.id),
+    getMoveStatus(ctx, move),
+  ]);
+
+  const participantRows = (peopleRows.data as Array<{
+    person_id: string | null;
+    user_id: string;
+    role: string | null;
+    approval_authority: string | null;
+  }> | null) ?? [];
+  const personIds = Array.from(
+    new Set(
+      participantRows
+        .map((row) => row.person_id || row.user_id)
+        .filter(Boolean),
+    ),
+  );
+  const { data: personData } = personIds.length
+    ? await sb.from('persons').select('id, name, role').in('id', personIds)
+    : { data: [] as Array<{ id: string; name: string | null; role: string | null }> };
+  const personMap = new Map<string, { name: string; role: string }>(
+    ((personData as Array<{ id: string; name: string | null; role: string | null }> | null) ?? []).map((row) => [
+      row.id,
+      { name: row.name ?? 'Unknown', role: row.role ?? 'Team member' },
+    ]),
+  );
+
+  const participants = participantRows.map((row) => {
+    const key = row.person_id || row.user_id;
+    const person = personMap.get(key) ?? { name: row.user_id, role: row.role ?? 'Team member' };
+    return {
+      personId: key,
+      name: person.name,
+      role: row.role ?? row.approval_authority ?? person.role,
+    };
+  });
+
+  const sponsorFromParticipants = participantRows.find((row) => row.approval_authority === 'sponsor');
+  const sponsorPersonId = move.sponsorPersonId || sponsorFromParticipants?.person_id || sponsorFromParticipants?.user_id || null;
+  const sponsorPerson = sponsorPersonId ? personMap.get(sponsorPersonId) : null;
+
+  const auditActivity = ((activityRows.data as Array<{
+    created_at: string;
+    action: string;
+    rationale: string | null;
+    actor_user_id: string | null;
+  }> | null) ?? []).map((row) => ({
+    at: row.created_at,
+    actor: row.actor_user_id && personMap.get(row.actor_user_id) ? personMap.get(row.actor_user_id)!.name : 'System',
+    action: row.action,
+    summary: row.rationale ?? row.action,
+  }));
+  const moduleActivity = ((moduleRows.data as Array<{
+    created_at: string;
+    module_key: string;
+    new_state: string;
+    changed_by_user_id: string | null;
+  }> | null) ?? []).map((row) => ({
+    at: row.created_at,
+    actor: row.changed_by_user_id && personMap.get(row.changed_by_user_id) ? personMap.get(row.changed_by_user_id)!.name : 'System',
+    action: `${row.module_key}:${row.new_state}`,
+    summary: `${row.module_key} moved to ${row.new_state}`,
+  }));
+  const snapshotActivity = ((phaseSnapshots.data as Array<{
+    created_at: string;
+    phase_number: number;
+    approval_status: string;
+  }> | null) ?? []).map((row) => ({
+    at: row.created_at,
+    actor: 'System',
+    action: `phase_snapshot:P${row.phase_number}`,
+    summary: `Phase snapshot ${row.approval_status}`,
+  }));
+  const recentActivity = [...auditActivity, ...moduleActivity, ...snapshotActivity]
+    .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
+    .slice(0, 12);
+
+  const phase = move.currentPhase ?? 0;
+  const gateCriteria: StrategicMove['gateCriteria'] = [
+    {
+      id: 'gate-evidence',
+      label: `${getPhaseLabel(phase)} gate evidence captured`,
+      completed: linkedEvidence.length > 0,
+    },
+    {
+      id: 'gate-decision',
+      label: 'Required approvals cleared',
+      completed: move.lifecycleState === 'approved' || move.lifecycleState === 'completed',
+    },
+    {
+      id: 'gate-oversight',
+      label: 'No unresolved critical oversight flags',
+      completed: moveStatus.statusKey !== 'gate_blocked',
+    },
+  ];
+
+  const client = (clientRow.data as { id: string; name: string; industry_code: string | null; slug: string | null } | null) ?? {
+    id: move.clientId,
+    name: 'Tenant',
+    industry_code: null,
+    slug: null,
+  };
+
+  return {
+    id: move.id,
+    displayCode: deriveDisplayCode(move, { industryCode: client.industry_code, slug: client.slug }),
+    name: move.name,
+    tenant: {
+      id: client.id,
+      name: client.name,
+      industryCode: client.industry_code,
+    },
+    archetype: formatArchetype(move.archetype),
+    currentPhase: phase,
+    phaseLabel: getPhaseLabel(phase),
+    status: {
+      key: moveStatus.statusKey,
+      text: moveStatus.statusText,
+      description: moveStatus.statusDescription,
+    },
+    statusColor: moveStatus.statusColor,
+    sponsor: sponsorPersonId && sponsorPerson
+      ? { id: sponsorPersonId, name: sponsorPerson.name, role: sponsorPerson.role }
+      : null,
+    participants,
+    valueAtStake: {
+      projected:
+        move.valueProjectedLowUsd !== null && move.valueProjectedHighUsd !== null
+          ? {
+              low: Number(move.valueProjectedLowUsd),
+              high: Number(move.valueProjectedHighUsd),
+              currency: move.valueCurrency ?? 'USD',
+            }
+          : null,
+      verified:
+        move.valueVerifiedUsd !== null && move.valueVerifiedStatus
+          ? {
+              amount: Number(move.valueVerifiedUsd),
+              status: move.valueVerifiedStatus,
+            }
+          : null,
+      assumptions: move.valueAssumptions,
+    },
+    gateCriteria,
+    recentActivity,
+    linkedEvidence,
+    mapLabel: deriveMapLabel(move),
+    createdAt: move.createdAt,
+    updatedAt: move.updatedAt ?? move.createdAt,
+  };
+}
+
+export async function buildStrategicMovePortfolio(
+  ctx: TenancyCtx,
+  programs: ProgramCore[],
+  opts: { supabase?: ReturnType<typeof getServerSupabase> } = {},
+): Promise<StrategicMovePortfolio> {
+  const moves = await Promise.all(programs.map((program) => buildStrategicMove(ctx, program, opts)));
+  const counts = {
+    total: moves.length,
+    needAttention: moves.filter((move) => move.status.key === 'gate_blocked' || move.status.key === 'awaiting_decision').length,
+    onTrack: moves.filter((move) => move.status.key === 'on_track').length,
+    gated: moves.filter((move) => move.status.key === 'gate_blocked').length,
+    idle: moves.filter((move) => move.status.key === 'idle').length,
+  };
+  const totalValue = moves.reduce((sum, move) => {
+    const projected = move.valueAtStake.projected;
+    if (!projected) return sum;
+    return sum + projected.high;
+  }, 0);
+  return {
+    moves,
+    counts,
+    totalValueAtStake: {
+      amount: totalValue,
+      currency: 'USD',
+    },
+    needAttentionMoves: moves
+      .filter((move) => move.status.key === 'gate_blocked' || move.status.key === 'awaiting_decision')
+      .slice(0, 5)
+      .map((move) => ({
+        id: move.id,
+        displayCode: move.displayCode,
+        statusText: move.status.text,
+      })),
   };
 }
