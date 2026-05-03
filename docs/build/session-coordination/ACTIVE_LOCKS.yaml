@@ -1,4 +1,4 @@
-updated_at: "2026-05-02T19:52:00-05:00"
+updated_at: "2026-05-02T20:08:00-05:00"
 
 locks:
   - owner: codex-source-e2e-crawler
@@ -229,3 +229,11 @@ locks:
     expires_at: "2026-05-02T22:30:00-05:00"
     note: Wires existing Tower lens submenus into authenticated /tower. Avoids Source lifecycle/data/API and private-plane schema changes.
     completed_at: "2026-05-02T19:16:00-05:00"
+
+  - owner: codex-intelligence-session-canvas-affordance
+    resource: intelligence-session-canvas-affordance-ui
+    status: completed
+    started_at: "2026-05-02T20:05:00-05:00"
+    expires_at: "2026-05-02T22:45:00-05:00"
+    note: Makes the Sentinel session affordance visibly activate, focus, and announce the native Sessions canvas. Avoids Programs, Source lifecycle/data/API, Tower, and private-plane schema changes.
+    completed_at: "2026-05-02T20:08:00-05:00"
