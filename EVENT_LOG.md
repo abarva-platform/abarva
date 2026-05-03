@@ -130,3 +130,13 @@
 - Regression: Added `src/__tests__/integration/programs/programs-nexus-mutation-guards.test.ts` with four-test minimum per route (own-tenant pass, foreign-tenant 404, cross-tenant write denied, no-membership denied).
 - Validation: Focused Jest passed (73 tests across guard suites), targeted ESLint clean, `npm run build` passed (existing `next.config.ts` NFT warning unchanged).
 - Next: open PR for PR4 and merge after standard checks pass.
+
+## 2026-05-03T10:25:00-05:00 — codex/programs-phasea-pr5-origination
+
+- Workstream: Strategic Moves Phase A hardening (PR5 origination routes).
+- Scope: Hardened `/api/v1/programs/originate` (POST), `/api/v1/programs/originate/from-thread` (POST), and `/api/v1/programs/patterns` (GET).
+- Fix summary: Added auth-mode plumbing via `getProgramsRouteSupabase('origination')` and removed direct `getServerSupabase()` usage in these routes.
+- Auth helper update: extended `ProgramsAuthRouteFamily` with `origination`; unit tests now verify origination mode default/override resolution.
+- Regression: Added `src/__tests__/integration/programs/programs-origination-routes-guards.test.ts` covering per-route guard expectations (valid flow, malformed/foreign scope denial, cross-tenant injection resilience, no-membership denial).
+- Validation: Focused Jest passed (89 tests across Phase A guard suites + auth-mode unit), targeted ESLint clean, `npm run build` passed (existing `next.config.ts` NFT warning unchanged).
+- Next: open PR for PR5 and merge after standard checks pass.

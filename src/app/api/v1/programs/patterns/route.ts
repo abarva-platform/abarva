@@ -4,9 +4,9 @@
 // Returns PatternLibraryItem[] (view-model from types.ts).
 
 import { NextRequest } from 'next/server';
-import { getServerSupabase } from '@/lib/supabase-server';
 import { requireTenancy, tenancyErrorResponse } from '../_auth';
 import type { ArchetypeKey, PatternLibraryItem } from '@/lib/programs/types.ui';
+import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,13 +16,13 @@ const CLIENT_VISIBLE_STATES = ['pilot', 'mature'] as const;
 export async function GET(req: NextRequest) {
   try {
     await requireTenancy(); // auth only · topics are shared across clients
+    const { supabase } = await getProgramsRouteSupabase('origination');
     const url = new URL(req.url);
     const archetypeFilter = url.searchParams.get('archetype') as ArchetypeKey | null;
     const industryFilter = url.searchParams.get('industry');
     const includeAll = url.searchParams.get('all') === '1'; // Maestro-only — add an auth check when admin endpoint lands
 
-    const sb = getServerSupabase();
-    let q = sb
+    let q = supabase
       .from('engagement_topics')
       .select('topic_key, title, tagline, industries, deployment_count, successful_deployment_count, promotion_state, canonical_shape_json, maturity_version')
       .order('successful_deployment_count', { ascending: false, nullsFirst: false });

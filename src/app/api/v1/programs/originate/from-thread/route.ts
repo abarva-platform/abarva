@@ -10,9 +10,9 @@
 import { NextRequest } from 'next/server';
 import { classifyOrigination } from '@/lib/programs/classifier';
 import { classifierMatchToViewModel } from '@/lib/programs/transformers';
-import { getServerSupabase } from '@/lib/supabase-server';
 import { requireTenancy, tenancyErrorResponse } from '../../_auth';
 import type { ArchetypeKey, OriginationForm, PatternMatch } from '@/lib/programs/types.ui';
+import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -33,13 +33,13 @@ interface TurnRow {
 export async function POST(req: NextRequest) {
   try {
     const ctx = await requireTenancy();
+    const { supabase } = await getProgramsRouteSupabase('origination');
     const body = (await req.json()) as { threadId?: string; sponsorPersonId?: string; leadPersonId?: string };
     if (!body?.threadId) {
       return Response.json({ error: 'bad_request', detail: 'threadId required' }, { status: 400 });
     }
 
-    const sb = getServerSupabase();
-    const { data: thread, error: tErr } = await sb
+    const { data: thread, error: tErr } = await supabase
       .from('intelligence_threads')
       .select('id, user_id, client_id, title')
       .eq('id', body.threadId)
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     if (!threadRow) return Response.json({ error: 'thread_not_found' }, { status: 404 });
 
     // Assemble use-case text from thread turns (last 5 user turns)
-    const { data: turns } = await sb
+    const { data: turns } = await supabase
       .from('intelligence_thread_turns')
       .select('role, payload_jsonb')
       .eq('thread_id', body.threadId)
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     const keys = output.matches.map((m) => m.patternKey);
     const catalogByKey = new Map<string, Record<string, unknown>>();
     if (keys.length > 0) {
-      const { data: catalog } = await sb
+      const { data: catalog } = await supabase
         .from('engagement_topics')
         .select('topic_key, title, canonical_shape_json, deployment_count, successful_deployment_count')
         .in('topic_key', keys);

@@ -682,3 +682,13 @@ Append-only coordination log for active Codex sessions.
 - tests: added `src/__tests__/integration/programs/programs-nexus-mutation-guards.test.ts` with full four-case guard matrix per route.
 - validation: focused Jest passed (73/73 across mutation guard suites), targeted ESLint clean, `npm run build` passed with existing `next.config.ts` NFT warning only.
 - next: open PR and merge after checks pass.
+
+## 2026-05-03T10:25:00-05:00 - codex/programs-phasea-pr5-origination
+
+- status: local-validation-passed
+- branch: `codex/programs-phasea-pr5-origination`
+- scope: Strategic Moves Phase A PR5 rollout for origination surfaces (`originate`, `originate/from-thread`, `patterns`).
+- changes: auth-mode plumbing via `getProgramsRouteSupabase('origination')`; removed direct server-supabase calls inside these routes; auth-mode route-family enum extended for origination.
+- tests: added `src/__tests__/integration/programs/programs-origination-routes-guards.test.ts`; updated `src/__tests__/unit/programs-auth-mode-server.test.ts` for origination family coverage.
+- validation: focused Jest passed (89/89 across guard suites), targeted ESLint clean, `npm run build` passed with existing `next.config.ts` NFT warning only.
+- next: open PR and merge after checks pass.

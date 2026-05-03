@@ -16,6 +16,7 @@ describe('resolveProgramsAuthMode', () => {
     delete process.env.PROGRAMS_AUTH_MODE_ROUTE_OVERRIDES;
     expect(resolveProgramsAuthMode('portfolio')).toBe('service_role');
     expect(resolveProgramsAuthMode('detail')).toBe('service_role');
+    expect(resolveProgramsAuthMode('origination')).toBe('service_role');
   });
 
   it('uses global PROGRAMS_AUTH_MODE when valid', () => {
@@ -23,13 +24,15 @@ describe('resolveProgramsAuthMode', () => {
     delete process.env.PROGRAMS_AUTH_MODE_ROUTE_OVERRIDES;
     expect(resolveProgramsAuthMode('portfolio')).toBe('authenticated');
     expect(resolveProgramsAuthMode('detail')).toBe('authenticated');
+    expect(resolveProgramsAuthMode('origination')).toBe('authenticated');
   });
 
   it('uses per-route override when provided', () => {
     process.env.PROGRAMS_AUTH_MODE = 'authenticated';
-    process.env.PROGRAMS_AUTH_MODE_ROUTE_OVERRIDES = 'portfolio=service_role,detail=authenticated';
+    process.env.PROGRAMS_AUTH_MODE_ROUTE_OVERRIDES = 'portfolio=service_role,detail=authenticated,origination=service_role';
     expect(resolveProgramsAuthMode('portfolio')).toBe('service_role');
     expect(resolveProgramsAuthMode('detail')).toBe('authenticated');
+    expect(resolveProgramsAuthMode('origination')).toBe('service_role');
   });
 
   it('ignores invalid tokens and falls back to default mode', () => {
