@@ -28,8 +28,19 @@ function makeSupabaseStub() {
     .mockResolvedValueOnce({ data: null, error: null });
   const limit = jest.fn(() => ({ maybeSingle }));
   const order = jest.fn(() => ({ limit, maybeSingle }));
-  const eq = jest.fn(() => ({ eq, order, maybeSingle }));
-  const select = jest.fn(() => ({ eq, order, limit, maybeSingle }));
+  type Chain = {
+    eq: jest.Mock;
+    order: jest.Mock;
+    limit: jest.Mock;
+    maybeSingle: jest.Mock;
+  };
+  const chain: Partial<Chain> = {};
+  const eq = jest.fn(() => chain);
+  chain.eq = eq;
+  chain.order = order;
+  chain.limit = limit;
+  chain.maybeSingle = maybeSingle;
+  const select = jest.fn(() => chain);
   const from = jest.fn(() => ({ select }));
   return { from };
 }
