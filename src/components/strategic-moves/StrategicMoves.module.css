@@ -290,9 +290,10 @@
 
 .detailShell {
   display: grid;
-  grid-template-columns: 420px 1fr;
+  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
   gap: 10px;
   min-height: 620px;
+  align-items: stretch;
 }
 
 .chatPane {
@@ -301,6 +302,9 @@
   color: #fff;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .chatHead {
@@ -313,26 +317,35 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .bubbleNexus {
   align-self: flex-start;
-  max-width: 75%;
+  max-width: min(100%, 330px);
   background: #f8f1e5;
   color: #1f2430;
   border-radius: 12px;
   padding: 10px 11px;
   font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .bubbleUser {
   align-self: flex-end;
-  max-width: 75%;
+  max-width: min(100%, 330px);
   background: #111;
   color: #fff;
   border-radius: 12px;
   padding: 10px 11px;
   font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .rightPane {
@@ -340,6 +353,7 @@
   border-radius: 12px;
   border: 1px solid var(--canon-border);
   padding: 14px;
+  min-width: 0;
 }
 
 .statusBanner {
@@ -587,6 +601,10 @@
   .detailShell,
   .originateShell {
     grid-template-columns: 1fr;
+  }
+
+  .chatPane {
+    min-height: 320px;
   }
 
   .ribbon {
