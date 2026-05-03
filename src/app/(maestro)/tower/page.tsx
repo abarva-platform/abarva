@@ -1,4 +1,6 @@
+import Link from 'next/link';
 import { TowerIndexPage } from '@/components/tower/TowerIndexPage';
+import { TowerLensTabs } from '@/components/tower/TowerLensTabs';
 import { TowerProvenanceRibbon } from '@/components/tower/TowerProvenanceRibbon';
 import { TowerTopPatternsTile } from '@/components/tower/TowerTopPatternsTile';
 import { TowerMissionQueue } from '@/components/tower/TowerMissionQueue';
@@ -12,11 +14,17 @@ import { buildPortfolioRiskRegister } from '@/lib/reasoning/risk-register';
 import { buildPortfolioAlerts } from '@/lib/reasoning/portfolio-alerts';
 import { APEX_RETAIL_PROGRAM_INSTANCES } from '@/lib/programs/program-instances';
 import { SOURCE_EVENT_INSTANCES } from '@/lib/source/source-event-instances';
+import { findTenantByRouteSlug } from '@/lib/deliverables/seed-route-resolver';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { requireTenancy } from '@/lib/auth/tenancy';
 import { loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
 import { getActiveClientRow } from '@/lib/active-client';
+import {
+  TOWER_TABS,
+  resolveTowerTab,
+  type TowerTabKey,
+} from '@/lib/tower/tower-lens-tabs-view';
 import {
   applySetupAiInitiativeFinancialFirewall,
   getSetupAiInitiatives,
@@ -27,6 +35,78 @@ import {
 } from '@/lib/setup';
 
 export const metadata = { title: 'Control Tower · AbarVa' };
+
+const TOWER_SUBMENU_LABELS: Record<TowerTabKey, string> = {
+  portfolio: 'Portfolio',
+  scorecards: 'Scorecards',
+  pressure: 'Pressure',
+  source_commercial: 'Source commercial',
+  decisions: 'Decisions',
+  value_at_risk: 'Value at risk',
+  executive_brief: 'Executive brief',
+  programme_gates: 'Gates',
+  reasoning_activity: 'Reasoning',
+  dependencies: 'Dependencies',
+};
+
+function TowerMainSubmenuStrip({ activeTab }: { activeTab: TowerTabKey }) {
+  return (
+    <nav
+      aria-label="Tower workspace submenu"
+      data-testid="tower-main-submenu"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        width: '100%',
+        overflowX: 'auto',
+        padding: '0 10px',
+      }}
+    >
+      <span
+        style={{
+          flex: '0 0 auto',
+          fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+          fontSize: 10,
+          letterSpacing: '0.16em',
+          textTransform: 'uppercase',
+          color: '#6b7280',
+          fontWeight: 700,
+        }}
+      >
+        Tower
+      </span>
+      {TOWER_TABS.map((tab) => {
+        const isActive = tab.key === activeTab;
+        return (
+          <Link
+            key={tab.key}
+            href={tab.key === 'portfolio' ? '/tower' : `/tower?tab=${tab.key}`}
+            aria-current={isActive ? 'page' : undefined}
+            title={tab.description}
+            data-testid={`tower-main-submenu-${tab.key}`}
+            style={{
+              flex: '0 0 auto',
+              border: '0',
+              borderBottom: `2px solid ${isActive ? '#0f1f4d' : 'transparent'}`,
+              background: 'transparent',
+              color: isActive ? '#0f1f4d' : '#4b5563',
+              fontFamily: 'var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif',
+              fontSize: 13,
+              fontWeight: isActive ? 700 : 560,
+              lineHeight: 1.2,
+              padding: '9px 2px 10px',
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {TOWER_SUBMENU_LABELS[tab.key]}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
 
 async function buildTowerHandoffPrograms() {
   try {
@@ -335,7 +415,11 @@ function TowerSetupInitiativesPanel({
   );
 }
 
-export default async function TowerPage() {
+export default async function TowerPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ tab?: string }>;
+}) {
   // REASON-29 — Build the portfolio-level Atlas SynthesisContext server-side so
   // the provenance ribbon can surface the inputs that grounded the streamed
   // Atlas synthesis quote (patterns cited, gate counts, blockers, cascades).
@@ -358,11 +442,17 @@ export default async function TowerPage() {
   const towerHandoffPrograms = await buildTowerHandoffPrograms();
   const towerHandoffSourceEvents = await buildTowerHandoffSourceEvents();
   const towerSetupInitiativesFeed = await buildTowerSetupInitiativesFeed();
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const activeTab = resolveTowerTab(resolvedSearchParams.tab);
+  const seedTenant =
+    findTenantByRouteSlug(towerSetupInitiativesFeed.tenantKey) ??
+    findTenantByRouteSlug('apexretail');
 
   return (
     <TowerIndexPage
       tenantName={towerSetupInitiativesFeed.tenantName}
-      context={`Control Tower · ${towerSetupInitiativesFeed.summary.total} initiatives observed`}
+      context={`Control Tower · ${TOWER_SUBMENU_LABELS[activeTab]} · ${towerSetupInitiativesFeed.summary.total} initiatives observed`}
+      towerSubmenuSlot={<TowerMainSubmenuStrip activeTab={activeTab} />}
       provenanceSlot={
         <>
           <PortfolioAlertsPanel alerts={portfolioAlerts} />
@@ -386,6 +476,28 @@ export default async function TowerPage() {
           <TowerHandoffProgramsPanel programs={towerHandoffPrograms} />
           <TowerHandoffSourceEventsPanel events={towerHandoffSourceEvents} />
         </>
+      }
+      towerLensSlot={
+        seedTenant ? (
+          <section
+            aria-label={`${TOWER_SUBMENU_LABELS[activeTab]} Tower lens`}
+            data-testid="tower-main-lens-canvas"
+            style={{
+              margin: '0 28px 16px',
+              border: '1px solid #e5dfd2',
+              borderRadius: 12,
+              background: '#ffffff',
+              overflow: 'hidden',
+            }}
+          >
+            <TowerLensTabs
+              tenant={seedTenant}
+              activeTab={activeTab}
+              baseUrl="/tower"
+              showTabBar={false}
+            />
+          </section>
+        ) : null
       }
     />
   );

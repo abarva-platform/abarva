@@ -697,14 +697,27 @@ interface TowerIndexPageProps {
   cascadeGraphSlot?: ReactNode;
   /** Live P6 programs that have completed Nexus strategy-to-funding and are now in Tower monitoring setup. */
   towerHandoffSlot?: ReactNode;
+  /** Authenticated Tower workspace submenu shown directly below the product nav. */
+  towerSubmenuSlot?: ReactNode;
+  /** Native lens canvas for the selected Tower submenu. */
+  towerLensSlot?: ReactNode;
 }
 
 // PR-T · `provenanceSlot` was AgentColumn's audit-trail UI. AgentCanvas
 // doesn't have a slot for it yet; threading provenance into the
 // embedded chat header is a follow-up. The prop is preserved on the
 // type for caller compatibility but unused in this render.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function TowerIndexPage({ tenantName = 'AbarVa Client', context = 'Control Tower', provenanceSlot: _provenanceSlot, portfolioSummarySlot, cascadeGraphSlot, towerHandoffSlot }: TowerIndexPageProps = {}) {
+export function TowerIndexPage({
+  tenantName = 'AbarVa Client',
+  context = 'Control Tower',
+  provenanceSlot: _provenanceSlot,
+  portfolioSummarySlot,
+  cascadeGraphSlot,
+  towerHandoffSlot,
+  towerSubmenuSlot,
+  towerLensSlot,
+}: TowerIndexPageProps = {}) {
+  void _provenanceSlot;
   const [showNewPressure, setShowNewPressure] = useState(false);
   const [synthesisQuote, setSynthesisQuote] = useState(TOWER_INDEX_VIEW.agentQuote);
   const searchParams = useSearchParams();
@@ -750,7 +763,7 @@ export function TowerIndexPage({ tenantName = 'AbarVa Client', context = 'Contro
         showLocked: true,
         context,
       }}
-      middleStrip={<FilterPillStrip pills={filterPills} />}
+      middleStrip={towerSubmenuSlot ?? <FilterPillStrip pills={filterPills} />}
       onArtifact={handleAtlasArtifact}
     >
       {/* PR-T · agent-centric primary canvas. Atlas + reactive panel
@@ -792,6 +805,8 @@ export function TowerIndexPage({ tenantName = 'AbarVa Client', context = 'Contro
         </div>
 
         {towerHandoffSlot}
+
+        {towerLensSlot}
 
         <details
           data-testid="tower-legacy-grid"

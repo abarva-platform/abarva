@@ -573,3 +573,24 @@ Append-only coordination log for active Codex sessions.
 - validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only.
 - lock: `tower-setup-initiatives-bridge-ui` marked completed in `ACTIVE_LOCKS.yaml`.
 - next: commit, push, open PR, and auto-merge after standard checks pass.
+
+## 2026-05-02T19:10:00-05:00 - codex-tower-main-submenus
+
+- status: in-progress
+- branch: `codex/tower-main-submenus`
+- worktree: `/Users/anand/Projects/nexus-source-capability-e2e`
+- issue: authenticated `/tower` lacked visible Tower submenus because Tower lens tabs were wired only on `/tenant/[tenantSlug]/tower`; previous Tower bridge added Setup initiatives feed but not the authenticated Tower workspace submenu.
+- scope: wire the existing Tower lens submenu and native lens canvas into `/tower` while preserving the Setup initiatives, Programs P6, and Source handoff panels.
+- guardrail: no Source lifecycle/data/API changes, no private-plane schema changes, no full Tower redesign beyond submenu/canvas wiring.
+
+## 2026-05-02T19:16:00-05:00 - codex-tower-main-submenus
+
+- status: validation-local-passed
+- shipped: authenticated `/tower` now renders a visible Tower workspace submenu in the Atrium middle strip: Portfolio, Scorecards, Pressure, Source commercial, Decisions, Value at risk, Executive brief, Gates, Reasoning, and Dependencies.
+- shipped: selected Tower submenu drives the existing Tower lens canvas on `/tower`; tenant-scoped Setup initiatives plus Programs/Source handoff panels remain visible.
+- validation: focused Tower Jest passed, 2 suites / 37 tests.
+- validation: targeted ESLint passed for touched Tower files and regression test.
+- validation: `npx tsc --noEmit --pretty false` passed.
+- validation: `npm run build` passed with existing `next.config.ts` NFT tracing warning only.
+- lock: `tower-authenticated-submenu-ui` marked completed in `ACTIVE_LOCKS.yaml`.
+- next: commit, push, open PR, auto-merge after checks pass, wait for Vercel production deployment.
