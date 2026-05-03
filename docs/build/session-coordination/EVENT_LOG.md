@@ -692,3 +692,13 @@ Append-only coordination log for active Codex sessions.
 - tests: added `src/__tests__/integration/programs/programs-origination-routes-guards.test.ts`; updated `src/__tests__/unit/programs-auth-mode-server.test.ts` for origination family coverage.
 - validation: focused Jest passed (89/89 across guard suites), targeted ESLint clean, `npm run build` passed with existing `next.config.ts` NFT warning only.
 - next: open PR and merge after checks pass.
+
+## 2026-05-03T11:05:00-05:00 - codex/programs-phasea-pr1-read-routes-clean
+
+- status: local-validation-passed
+- branch: `codex/programs-phasea-pr1-read-routes-clean`
+- context: original PR #1478 had stale history and could not merge cleanly; this branch replays the intended read-route hardening on top of current main.
+- scope: GET route tenant guards + `program_read` auth-mode plumbing for Strategic Moves read endpoints.
+- tests: `src/__tests__/integration/programs/programs-read-routes-tenant-guards.test.ts` plus full Phase A guard-suite rerun.
+- validation: focused Jest passed (97/97), targeted ESLint clean, `npm run build` passed with existing `next.config.ts` NFT warning only.
+- next: open replacement PR and merge; close/replace #1478.

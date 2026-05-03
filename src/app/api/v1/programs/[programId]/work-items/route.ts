@@ -7,7 +7,6 @@ import { createWorkItem } from '@/lib/programs/mutations';
 import { requireTenancy, tenancyErrorResponse } from '../../_auth';
 import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
 import type { WorkItemType } from '@/lib/programs/types.db';
-import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

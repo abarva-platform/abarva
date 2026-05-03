@@ -140,3 +140,13 @@
 - Regression: Added `src/__tests__/integration/programs/programs-origination-routes-guards.test.ts` covering per-route guard expectations (valid flow, malformed/foreign scope denial, cross-tenant injection resilience, no-membership denial).
 - Validation: Focused Jest passed (89 tests across Phase A guard suites + auth-mode unit), targeted ESLint clean, `npm run build` passed (existing `next.config.ts` NFT warning unchanged).
 - Next: open PR for PR5 and merge after standard checks pass.
+
+## 2026-05-03T11:05:00-05:00 — codex/programs-phasea-pr1-read-routes-clean
+
+- Workstream: Strategic Moves Phase A PR1 replacement (read-route hardening).
+- Background: Original PR #1478 became non-mergeable due stale/conflicting history; replayed the intended read-route commit onto current `main` as a clean branch.
+- Scope: Hardened read GET endpoints (`execute`, `flags`, `approvals`, `milestones`, `risks`, `work-items`, `module/[key]`, `nexus/threads GET`) with tenant pre-check + `404` contract and auth-mode plumbing.
+- Auth helper update: consolidated route families to include `program_read`, `mutation`, and `origination` together in `programs-auth-mode-server.ts`.
+- Regression: included `src/__tests__/integration/programs/programs-read-routes-tenant-guards.test.ts` and verified compatibility with all Phase A guard suites.
+- Validation: Focused Jest passed (97 tests), targeted ESLint clean, `npm run build` passed (existing `next.config.ts` NFT warning unchanged).
+- Next: open clean PR replacing #1478 and merge after checks pass.

@@ -8,7 +8,6 @@ import { requireTenancy, tenancyErrorResponse } from '../../_auth';
 import { canReadProgram, loadUserProgramAccessPolicy } from '@/lib/auth/program-access-policy';
 import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
 import type { ApprovalAuthority, FounderApprovalRequestRow } from '@/lib/programs/types.db';
-import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
