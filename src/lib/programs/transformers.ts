@@ -792,7 +792,7 @@ export async function buildStrategicMove(
       .eq('engagement_id', move.id),
     sb
       .from('program_audit_log')
-      .select('created_at, action, rationale, actor_user_id')
+      .select('created_at, action, rationale, actor_id')
       .eq('engagement_id', move.id)
       .order('created_at', { ascending: false })
       .limit(8),
@@ -854,10 +854,10 @@ export async function buildStrategicMove(
     created_at: string;
     action: string;
     rationale: string | null;
-    actor_user_id: string | null;
+    actor_id: string | null;
   }> | null) ?? []).map((row) => ({
     at: row.created_at,
-    actor: row.actor_user_id && personMap.get(row.actor_user_id) ? personMap.get(row.actor_user_id)!.name : 'System',
+    actor: row.actor_id && personMap.get(row.actor_id) ? personMap.get(row.actor_id)!.name : 'System',
     action: row.action,
     summary: row.rationale ?? row.action,
   }));
