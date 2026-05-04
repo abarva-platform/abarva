@@ -10,7 +10,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 Next.js 16.2.2 (App Router, Turbopack) + React 19 + Tailwind CSS 4 + Clerk auth + Supabase (Postgres) + Neo4j + Pinecone. See `package.json` for the full dependency list.
 
 ### Environment variables
-The app requires a `.env.local` file. The critical variable is `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` — it must be a structurally valid Clerk key (`pk_test_<base64-encoded-frontend-api>`) or the Clerk middleware will throw before any route renders. A stub key like `pk_test_Y2xlcmsuZXhhbXBsZS5kZXYk` passes the format check and lets the marketing homepage (`/`) and other public routes render, though authenticated routes (e.g. `/home`, `/tower`) will fail without real Clerk credentials. `CLERK_SECRET_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` can be set to placeholder strings for local dev without a live database.
+The app requires a `.env.local` file. Required secrets are injected as environment variables via the Cursor Secrets panel. On session start, generate `.env.local` from the environment:
+```bash
+node -e "const fs=require('fs'); const keys=['NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY','CLERK_SECRET_KEY','NEXT_PUBLIC_SUPABASE_URL','NEXT_PUBLIC_SUPABASE_ANON_KEY','SUPABASE_SERVICE_ROLE_KEY','DATABASE_URL']; fs.writeFileSync('.env.local', keys.filter(k=>process.env[k]).map(k=>k+'='+process.env[k]).join('\n')+'\n');"
+```
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` must be a structurally valid Clerk key (`pk_test_<base64>`) or the middleware throws before any route renders.
+- `DATABASE_URL` is only needed for migrations (`npm run db:migrate`) and seed scripts, not for the dev server itself.
+- The marketing homepage (`/`) is public; authenticated routes (`/home`, `/tower`, `/intelligence/ask`, `/engagements`) require real Clerk credentials and redirect to the Clerk-hosted sign-in at `*.accounts.dev`.
 
 ### Running the dev server
 `npm run dev` starts the Next.js Turbopack dev server on port 3000. See `README.md` for standard commands.
