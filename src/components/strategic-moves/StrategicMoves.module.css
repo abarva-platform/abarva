@@ -205,67 +205,6 @@
   color: var(--abarva-slate);
 }
 
-/* ─── Legacy classes (transitional)
-   Kept while subsequent commits in this PR refactor StrategicMoveDetailView
-   and StrategicMoveOriginateClient. Removed in the cleanup commit. */
-.phaseRail {
-  margin-top: 10px;
-  display: flex;
-  gap: 4px;
-}
-
-.phaseDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--canon-gray-300);
-}
-
-.phaseDotDone {
-  background: var(--canon-teal);
-}
-
-.phaseDotCurrent {
-  background: var(--abarva-ink-black);
-}
-
-.backRow {
-  margin-bottom: 8px;
-}
-
-.backLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid var(--canon-border);
-  border-radius: 8px;
-  padding: 7px 10px;
-  background: var(--canon-bg-surface);
-  color: var(--canon-gray-700);
-  font-family: var(--abarva-mono);
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  text-decoration: none;
-}
-
-.eyebrow {
-  font-family: var(--abarva-mono);
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--abarva-stone);
-  font-weight: 600;
-}
-
-.title {
-  margin: 4px 0 0;
-  font-family: var(--abarva-serif);
-  font-size: 26px;
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-}
 
 /* ─── Sort + view controls (lives inside .cardsHead) ─────────────── */
 .sortSelect {
@@ -621,12 +560,14 @@
   color: var(--abarva-ink-black);
 }
 
+/* ─── Scatter view (DEFERRED \u2014 inline SVG rebuild lands in a later PR
+   per audit J2). Tokens swapped to canonical names; layout unchanged. */
 .scatter {
   position: relative;
   min-height: 430px;
   border: 1px solid var(--canon-border);
   border-radius: 10px;
-  background: #f7f5f2;
+  background: var(--canon-gray-100);
   overflow: hidden;
   padding: 44px 28px 72px 54px;
 }
@@ -643,7 +584,7 @@
   font-size: 10px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #8b6830;
+  color: var(--abarva-signal-blue);
 }
 
 .scatterLegend span {
@@ -659,10 +600,10 @@
   display: inline-block;
 }
 
-.legendRed { background: #a32d2d; }
-.legendAmber { background: #ba7517; }
-.legendGreen { background: #1d9e75; }
-.legendTeal { background: #0066cc; }
+.legendRed { background: var(--canon-red); }
+.legendAmber { background: var(--canon-amber); }
+.legendGreen { background: var(--canon-teal); }
+.legendTeal { background: var(--abarva-signal-blue); }
 
 .scatterBands {
   position: absolute;
@@ -711,7 +652,7 @@
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.9);
   padding: 6px 10px;
-  color: #4c4a44;
+  color: var(--canon-gray-700);
   font-size: 11px;
   line-height: 1.35;
   z-index: 40;
@@ -725,7 +666,7 @@
   font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #232220;
+  color: var(--canon-gray-900);
 }
 
 .scatterYAxis {
@@ -738,7 +679,7 @@
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #8b6830;
+  color: var(--abarva-signal-blue);
 }
 
 .scatterYTicks {
@@ -753,7 +694,7 @@
   font-family: var(--abarva-mono);
   font-size: 10px;
   letter-spacing: 0.08em;
-  color: #101010;
+  color: var(--abarva-ink-black);
 }
 
 .scatterXTicks {
@@ -776,13 +717,13 @@
   font-family: var(--abarva-mono);
   font-size: 10px;
   letter-spacing: 0.11em;
-  color: #8b6830;
+  color: var(--abarva-signal-blue);
 }
 
 .scatterPhaseName {
   font-size: 12px;
   font-weight: 700;
-  color: #141413;
+  color: var(--abarva-ink-black);
 }
 
 .bubble {
@@ -793,7 +734,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #f9f9f8;
+  color: var(--canon-bg-cream);
   text-decoration: none;
   font-size: 11px;
   font-weight: 700;
@@ -804,25 +745,25 @@
 }
 
 .bubbleGreen {
-  background: #36a883;
+  background: var(--canon-teal);
 }
 
 .bubbleAmber {
-  background: #c88933;
+  background: var(--canon-amber);
 }
 
 .bubbleRed {
-  background: #ad3c3c;
+  background: var(--canon-red);
 }
 
 .bubbleTeal {
-  background: #2e74c7;
+  background: var(--abarva-signal-blue);
 }
 
 .bubbleUnknown {
-  background: #ebe7df;
+  background: var(--canon-gray-200);
   border-style: dashed;
-  color: #17243c;
+  color: var(--abarva-navy-ink);
 }
 
 .detailShell {
@@ -1474,55 +1415,6 @@
   opacity: 1;
 }
 
-/* ─── Legacy classes used by Originate (transitional, removed in cleanup) */
-.twoCol {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.section {
-  border: 1px solid var(--canon-border);
-  border-radius: 10px;
-  padding: 10px 12px;
-  background: var(--canon-bg-surface);
-}
-
-.sectionTitle {
-  font-family: var(--abarva-mono);
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--abarva-slate);
-  margin-bottom: 8px;
-}
-
-.rowList {
-  display: grid;
-  gap: 8px;
-}
-
-.rowItem {
-  border: 1px solid var(--canon-border);
-  border-radius: 8px;
-  padding: 8px 10px;
-  font-size: 14px;
-  line-height: 1.45;
-}
-
-.primaryAction {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  border: none;
-  border-radius: 8px;
-  background: var(--abarva-ink-black);
-  color: var(--canon-bg-cream);
-  padding: 9px 12px;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
 
 /* ─── Start-from block (lives at the bottom of originate chat pane) ─── */
 .startFromBlock {
@@ -1892,8 +1784,7 @@
 }
 
 @media (max-width: 1100px) {
-  .detailShell,
-  .originateShell {
+  .detailShell {
     grid-template-columns: 1fr;
   }
 
@@ -1902,10 +1793,20 @@
   }
 
   .ribbon {
-    grid-template-columns: repeat(2, minmax(120px, 1fr));
+    grid-template-columns: repeat(2, 1fr) auto;
+    grid-auto-rows: auto;
   }
 
-  .editorialRibbon {
-    grid-template-columns: repeat(2, minmax(120px, 1fr));
+  .ribbonSeg + .ribbonSeg::before {
+    display: none;
+  }
+
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .kanban {
+    grid-template-columns: repeat(4, 1fr);
+    overflow-x: auto;
   }
 }
