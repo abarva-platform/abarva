@@ -1,0 +1,103 @@
+# AbarVa — Cursor Rules
+
+## Visual reference (binding)
+
+The canonical visual reference for Strategic Moves and all derived
+surfaces (Maestro P1–P7, Detail, Originate, future Charter/Decision/
+Run) lives at `docs/design/strategic-moves/`:
+
+- `tokens.css` — single source of truth for colors, type, spacing,
+  radius, motion. Never introduce new tokens. Never adjust values.
+- `14-strategic-moves-home.html` — high-fidelity prototype of all
+  three views (#dashboard-view, #detail-view, #originate-view).
+  Pixel-match the layout when implementing.
+- `README.md` — implementation brief (acceptance checklist at end).
+- `INTEGRATION.md` — what to touch, what to leave alone, token
+  substitutions (especially the --gold → --abarva-signal-blue rule).
+
+## Token discipline (hard rule)
+
+- Use only tokens defined in `tokens.css` (brand or canon section).
+- The `--gold` value used in the prototype is NOT canonical. Replace
+  with `--abarva-signal-blue` per INTEGRATION.md mapping table.
+- No new colors, no new fonts, no new radius values, no gradients,
+  no decorative SVG icons, no emoji, no stock illustration.
+
+## Type ramp (hard rule)
+
+- Display headings: Fraunces 500/700 (--abarva-serif).
+- UI body: Inter 400/500/600 (--abarva-sans).
+- Mono eyebrows / labels / code: JetBrains Mono 600 (--abarva-mono),
+  uppercase, letter-spacing 0.12em.
+- Mono eyebrows are the most distinctive AbarVa typographic gesture.
+  Never replace with sans-serif uppercase.
+
+## Surface vocabulary (hard rule)
+
+Two surfaces, one brand:
+
+- Public/marketing/investor: paper background (#faf7f1), navy ink
+  (#0c1a3a), signal blue accent (#0066CC).
+- Authenticated app (this is where Strategic Moves lives): cream
+  background (--canon-bg-cream #f5f1eb), white surface cards, ink
+  text. Status colors (red/amber/teal) are semantic only, never
+  decorative.
+
+## Naming doctrine (hard rule)
+
+- External UI vocabulary: "Strategic Move" / "Move" / "your moves"
+- Internal substrate: `engagements` table, `program_*` mid-layer.
+  Database table renames are forbidden.
+- Browser URL routes user-facing: `/strategic-moves`,
+  `/strategic-moves/[moveId]`, `/strategic-moves/new`.
+- API routes stay at `/api/v1/programs/*`. Response field names like
+  `programId` stay. Code identifiers like `getProgramById` stay.
+- Rule: if a string is read by a user, rebrand. If read by a
+  developer, keep.
+
+## Phase labels (hard rule)
+
+Use the static lookup `src/lib/programs/phase-labels.ts` for all
+user-visible phase references:
+
+  0 → "P0 Originate"     4 → "P4 Build"
+  1 → "P1 Charter"       5 → "P5 Execute"
+  2 → "P2 Diagnose"      6 → "P6 Verify"
+  3 → "P3 Solution Design"  7 → "P7 Handoff"
+
+Never hard-code phase labels inline.
+
+## Component reuse (hard rule)
+
+The Phase Rail (`<PhaseRail current={n} totalPhases={8} />`) is
+shared across Detail, Originate, and all future phase surfaces.
+Build once at `src/components/strategic-moves/PhaseRail.tsx`,
+reuse everywhere. Do not inline.
+
+## Hard "do not" list
+
+- Do not ship the tweaks panel from the prototype to production.
+- Do not introduce the `--gold` token to `tokens.css`.
+- Do not use the signal-blue CTA color for in-app primary actions
+  (use ink-on-cream black). Signal blue is reserved for public
+  surfaces and one-per-page accents.
+- Do not gate edit rights on "participant on move" status. Any
+  tenant_member can edit any move (locked access decision).
+- Do not bypass app-layer tenant filters on Strategic Moves
+  routes — the simplified access model treats client_id scoping
+  as a hard wall.
+
+## PR creation workflow
+
+If `gh` CLI is not authenticated in the agent shell, do not run
+`gh pr create` or `gh pr merge` — they will fail. Instead:
+
+1. Push the branch via `git push origin <branch-name>`
+2. Output to the user:
+   - The exact branch name
+   - A suggested PR title (one line)
+   - A suggested PR description (markdown, ready to paste)
+3. Stop. The user creates and merges the PR via the GitHub UI.
+
+If `gh` CLI is authenticated (cloud agent with GH_TOKEN), `gh pr create`
+is fine. Either path is acceptable — just don't get stuck retrying.

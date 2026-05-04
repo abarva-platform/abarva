@@ -1,0 +1,213 @@
+/* AbarVa · Design Tokens
+ * Single source of truth for colors, type, spacing, and primitives across
+ * every preview in this design system.
+ *
+ * Source of record:
+ *   - brand-tokens.css (locked April 28, 2026) — primary brand vocabulary
+ *   - public-site-tokens.css — production /public site mapping
+ *   - abarva-canon.css — internal "design canon" used by /preview routes
+ *
+ * The two vocabularies coexist deliberately. See README "Two surfaces, one
+ * brand" for the rule on which to use where.
+ */
+
+/* ─────────────────────────────────────────────────────────────────────
+   1 · BRAND TOKENS (locked Apr 28, 2026)
+   These are the canonical brand colors and fonts. Marketing site, investor
+   deck, contracts, and any external surface MUST use these.
+   ───────────────────────────────────────────────────────────────────── */
+:root {
+  /* Primary brand */
+  --abarva-ink-black:    #000000;       /* Headlines, body, brand wordmark "Abar" */
+  --abarva-signal-blue:  #0066CC;       /* The "Va". CTAs, links, brand accent */
+  --abarva-paper:        #faf7f1;       /* Page background. Warm, off-white. */
+
+  /* Supporting palette */
+  --abarva-navy-ink:     #0c1a3a;       /* Dark sections, patterns library, depth */
+  --abarva-stone:        #888780;       /* Tertiary text, eyebrows on paper */
+  --abarva-slate:        #5F5E5A;       /* Body de-emphasis, captions */
+
+  /* Derived (production) */
+  --abarva-signal-blue-dark: #0052a3;   /* CTA hover */
+  --abarva-rule:         rgba(136, 135, 128, 0.25); /* Hairline rules on paper */
+  --abarva-rule-strong:  rgba(136, 135, 128, 0.5);
+  --abarva-rule-onnavy:  rgba(255, 255, 255, 0.08);
+
+  /* Typography (locked) */
+  --abarva-serif: Fraunces, Georgia, "Times New Roman", serif;
+  --abarva-sans:  Inter, -apple-system, system-ui, sans-serif;
+  --abarva-mono:  "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   2 · CANON TOKENS (internal app surfaces)
+   The "design canon" — used inside the authenticated app for Programs,
+   Control Tower, Deliverables, Pattern detail, and /preview routes. These
+   are the colors of the *work product*, not the brand. Teal/amber/red are
+   semantic (gate status, pressure, severity), not decorative.
+   ───────────────────────────────────────────────────────────────────── */
+:root {
+  /* Surfaces */
+  --canon-bg-dark:    #0a0a0b;          /* Authenticated navbar, decision-grade contrast */
+  --canon-bg-cream:   #f5f1eb;          /* App page background (a touch warmer than paper) */
+  --canon-bg-surface: #ffffff;          /* Cards, sections, deliverable content */
+
+  /* Semantic accent — gate / status / severity */
+  --canon-teal:       #1d9e75;          /* Pass · Active · Done · Validated */
+  --canon-teal-dark:  #0f6e56;
+  --canon-teal-light: #e1f5ee;
+  --canon-amber:      #ba7517;          /* Warn · Pressure · Watch */
+  --canon-amber-light:#faeeda;
+  --canon-red:        #a32d2d;          /* Fail · Critical · Contradiction */
+  --canon-red-light:  #fceded;
+
+  /* Neutral scale */
+  --canon-gray-900:   #2c2c2a;
+  --canon-gray-700:   #444441;
+  --canon-gray-500:   #5f5e5a;
+  --canon-gray-300:   #b4b2a9;
+  --canon-gray-200:   #d3d1c7;
+  --canon-gray-100:   #f1efe8;
+
+  --canon-border:        rgba(10, 10, 11, 0.12);
+  --canon-border-strong: rgba(10, 10, 11, 0.24);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   3 · TYPE SCALE
+   Both surfaces use Fraunces (display) / Inter (UI text) / JetBrains Mono
+   (eyebrow + label + code). Sizes below apply to both.
+   ───────────────────────────────────────────────────────────────────── */
+:root {
+  /* Display — Fraunces, optical-size aware. Set with clamp() at use site. */
+  --type-display-1:  clamp(48px, 6vw, 88px);   /* Hero — 1 per page */
+  --type-display-2:  clamp(36px, 4vw, 58px);   /* Section opener */
+  --type-display-3:  clamp(28px, 3vw, 40px);   /* Subhead */
+
+  /* Body — Inter */
+  --type-lead:    19px;   /* Lead paragraph after a heading */
+  --type-body:    16px;   /* Default reading size */
+  --type-small:   14px;   /* Dense UI, table cells */
+  --type-caption: 13px;   /* Captions, footnotes */
+
+  /* Mono eyebrow — JetBrains Mono, uppercase, 0.12em tracking */
+  --type-eyebrow:    11px;
+  --type-eyebrow-sm: 10px;
+
+  /* Line heights */
+  --lh-display: 1.05;
+  --lh-heading: 1.2;
+  --lh-prose:   1.6;
+  --lh-ui:      1.5;
+  --lh-tight:   1.3;
+
+  /* Letter spacing */
+  --ls-display: -0.025em;   /* tightens at large sizes */
+  --ls-heading: -0.02em;
+  --ls-body:    0;
+  --ls-eyebrow: 0.12em;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   4 · SPACING & RADIUS
+   ───────────────────────────────────────────────────────────────────── */
+:root {
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-7:  32px;
+  --space-8:  40px;
+  --space-9:  56px;
+  --space-10: 80px;
+  --space-11: 112px;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;        /* Buttons, chips, pressure cards */
+  --radius-lg: 8px;        /* Section cards, KPI cards */
+  --radius-xl: 12px;
+
+  --shadow-card: 0 1px 2px rgba(10, 10, 11, 0.04);
+  --shadow-pop:  0 8px 24px rgba(10, 10, 11, 0.08);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   5 · MOTION
+   ───────────────────────────────────────────────────────────────────── */
+:root {
+  --ease-out:  cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in:   cubic-bezier(0.55, 0, 0.68, 0);
+  --dur-fast:  120ms;
+  --dur-base:  200ms;
+  --dur-slow:  320ms;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   6 · BASE PRIMITIVES (opt-in via class — never in :where)
+   Apply .av-root to a section to inherit AbarVa typography defaults.
+   ───────────────────────────────────────────────────────────────────── */
+.av-root {
+  font-family: var(--abarva-sans);
+  font-size: var(--type-body);
+  line-height: var(--lh-prose);
+  color: var(--abarva-ink-black);
+  background: var(--abarva-paper);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.av-root.dark {
+  background: var(--abarva-navy-ink);
+  color: var(--abarva-paper);
+}
+.av-root.canon {
+  background: var(--canon-bg-cream);
+  color: var(--canon-gray-900);
+}
+
+/* Wordmark — type-set, NOT an SVG. Use this ONLY in app chrome where the
+   SVG isn't available. For all marketing/external surfaces, use the SVG. */
+.av-wordmark {
+  font-family: var(--abarva-serif);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  display: inline-flex;
+  align-items: baseline;
+}
+.av-wordmark .abar { color: var(--abarva-ink-black); }
+.av-wordmark .va   { color: var(--abarva-signal-blue); }
+.av-root.dark .av-wordmark .abar,
+.dark .av-wordmark .abar { color: var(--abarva-paper); }
+
+/* Mono eyebrow — the most distinctive AbarVa typographic gesture.
+   Never replace with sans-serif uppercase; the mono is the signature. */
+.av-eyebrow {
+  font-family: var(--abarva-mono);
+  font-size: var(--type-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--abarva-signal-blue);
+}
+.av-eyebrow.stone { color: var(--abarva-stone); }
+.av-eyebrow.teal  { color: var(--canon-teal); }
+.av-eyebrow.amber { color: var(--canon-amber); }
+.av-eyebrow.red   { color: var(--canon-red); }
+.av-eyebrow.paper { color: var(--abarva-paper); opacity: 0.7; }
+
+/* Display — large editorial headings, Fraunces */
+.av-display-1 { font-family: var(--abarva-serif); font-weight: 500; font-size: var(--type-display-1); line-height: var(--lh-display); letter-spacing: var(--ls-display); }
+.av-display-2 { font-family: var(--abarva-serif); font-weight: 500; font-size: var(--type-display-2); line-height: var(--lh-heading); letter-spacing: var(--ls-heading); }
+.av-display-3 { font-family: var(--abarva-serif); font-weight: 500; font-size: var(--type-display-3); line-height: var(--lh-heading); letter-spacing: var(--ls-heading); }
+
+/* Lede — the first paragraph after a display heading */
+.av-lede {
+  font-size: var(--type-lead);
+  line-height: var(--lh-prose);
+  color: var(--abarva-slate);
+  max-width: 60ch;
+  text-wrap: pretty;
+}
+.av-root.dark .av-lede { color: rgba(250, 247, 241, 0.7); }
