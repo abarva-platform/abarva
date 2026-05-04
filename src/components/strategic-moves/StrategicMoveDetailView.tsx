@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import styles from './StrategicMoves.module.css';
+import { PhaseRail } from './PhaseRail';
 import type { StrategicMove } from '@/lib/programs/types.ui';
 
 interface Props {
@@ -10,45 +11,26 @@ function formatRole(role: string): string {
   return role.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function actionLabel(statusKey: string, phaseLabel: string): string {
-  if (statusKey === 'gate_blocked') return 'Open gate review';
-  if (statusKey === 'awaiting_decision') return 'Prepare decision packet';
-  if (statusKey === 'on_track') return `Continue ${phaseLabel}`;
-  if (statusKey === 'validated') return 'Review verification';
-  return 'Resume move';
+function primaryAction(move: StrategicMove): { label: string; href: string } {
+  const { status, currentPhase, phaseLabel, id } = move;
+  if (status.key === 'gate_blocked') return { label: 'Open gate review', href: `/strategic-moves/${id}?panel=gate` };
+  if (status.key === 'awaiting_decision') return { label: 'Resolve decision', href: '/admin/programs/approvals' };
+  if (status.key === 'validated') return { label: 'Review verification', href: `/tower?move=${id}` };
+  return { label: `Continue ${phaseLabel}`, href: `/strategic-moves/${id}?phase=${currentPhase}` };
 }
 
-function actionHref(move: StrategicMove): string {
-  if (move.status.key === 'gate_blocked') return `/strategic-moves/${move.id}?panel=gate`;
-  if (move.status.key === 'awaiting_decision') return '/admin/programs/approvals';
-  if (move.status.key === 'validated') return `/tower?move=${move.id}`;
-  return `/strategic-moves/${move.id}?phase=${move.currentPhase}`;
+function secondaryAction(move: StrategicMove): { label: string; href: string } | null {
+  if (move.status.key === 'awaiting_decision') {
+    return { label: 'Reopen brief', href: `/strategic-moves/${move.id}?panel=brief` };
+  }
+  return null;
 }
 
 export function StrategicMoveDetailView({ move }: Props) {
+  const primary = primaryAction(move);
+  const secondary = secondaryAction(move);
   return (
     <div className={styles.page}>
-      <div className={styles.backRow}>
-        <Link className={styles.backLink} href="/strategic-moves">
-          ← Back to Strategic Moves
-        </Link>
-      </div>
-
-      <div className={styles.topbar}>
-        <div>
-          <div className={styles.eyebrow}>Strategic Move</div>
-          <h1 className={styles.title}>{move.name}</h1>
-        </div>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-          <Link className={styles.backLink} href="/strategic-moves">
-            ← Back
-          </Link>
-          <Link className={styles.newMove} href="/strategic-moves/new">
-            + New Move
-          </Link>
-        </div>
-      </div>
-
       <section className={styles.detailShell}>
         <aside className={styles.chatPane}>
           <div className={styles.chatHead}>
@@ -94,48 +76,52 @@ export function StrategicMoveDetailView({ move }: Props) {
         </aside>
 
         <article className={styles.rightPane}>
-          <div className={styles.detailHeadBlock}>
-            <div className={styles.detailBreadcrumb}>
-              <span>Strategic Moves</span>
-              <span>·</span>
-              <span>{move.tenant.name}</span>
-              <span>·</span>
-              <span>{move.displayCode}</span>
+          <div className={styles.detailHead}>
+            <div className={styles.detailHeadTop}>
+              <div className={styles.detailHeadLeft}>
+                <div className={styles.detailBreadcrumb}>
+                  <Link className={styles.detailCrumb} href="/strategic-moves">
+                    Strategic Moves
+                  </Link>
+                  <span aria-hidden>&rsaquo;</span>
+                  <span>{move.tenant.name}</span>
+                  <span aria-hidden>&rsaquo;</span>
+                  <span>{move.displayCode}</span>
+                </div>
+                <h1 className={styles.detailTitle}>{move.name}</h1>
+                <div className={styles.detailId}>
+                  {move.archetype} &middot; Sponsor: {(move.sponsor?.name ?? 'Unassigned').toUpperCase()}
+                </div>
+              </div>
+              <div className={styles.detailHeadActions}>
+                {secondary ? (
+                  <Link className={styles.btnGhost} href={secondary.href}>
+                    {secondary.label}
+                  </Link>
+                ) : null}
+                <Link className={styles.btnPhase} href={primary.href}>
+                  {primary.label} <span className={styles.btnArrow} aria-hidden>&rarr;</span>
+                </Link>
+              </div>
             </div>
-            <div className={styles.detailMetaLine}>
-              {move.archetype} · Sponsor: {move.sponsor?.name ?? 'Unassigned'}
-            </div>
+            <PhaseRail current={move.currentPhase} totalPhases={8} status={move.statusColor} />
           </div>
 
-          <div className={styles.statusBanner}>
-            <div className={styles.eyebrow}>{move.status.text}</div>
-            <div>{move.status.description}</div>
-          </div>
-
-          <div style={{ marginBottom: 10 }}>
-            <Link className={styles.primaryActionLink} href={actionHref(move)}>
-              {actionLabel(move.status.key, move.phaseLabel)} <span>→</span>
-            </Link>
-          </div>
-
-          <div className={styles.section} style={{ marginBottom: 10 }}>
-            <div className={styles.sectionTitle}>Phase Rail</div>
-            <div className={styles.phaseRail}>
-              {Array.from({ length: 8 }).map((_, index) => (
-                <span
-                  key={`phase-dot-${index}`}
-                  className={`${styles.phaseDot} ${
-                    index < move.currentPhase
-                      ? styles.phaseDotDone
-                      : index === move.currentPhase
-                        ? styles.phaseDotCurrent
-                        : ''
-                  }`}
-                  title={`P${index}`}
-                />
-              ))}
+          <div className={styles.detailBody}>
+            <div
+              className={`${styles.statusBanner} ${
+                move.statusColor === 'red' ? styles.statusBannerRed :
+                move.statusColor === 'amber' ? styles.statusBannerAmber :
+                move.statusColor === 'teal' ? styles.statusBannerTeal :
+                styles.statusBannerGreen
+              }`}
+            >
+              <span className={styles.statusBannerPulse} aria-hidden />
+              <div className={styles.statusBannerText}>
+                <div className={styles.statusBannerStatus}>{move.status.text}</div>
+                <div className={styles.statusBannerDesc}>{move.status.description}</div>
+              </div>
             </div>
-          </div>
 
           <div className={styles.twoCol} style={{ marginBottom: 10 }}>
             <section className={styles.section}>
@@ -233,12 +219,13 @@ export function StrategicMoveDetailView({ move }: Props) {
                     href={evidence.url}
                     key={evidence.id}
                   >
-                    <strong>{evidence.anchor}</strong> · {evidence.summary}
+                    <strong>{evidence.anchor}</strong> &middot; {evidence.summary}
                   </a>
                 ))
               )}
             </div>
           </section>
+          </div>
         </article>
       </section>
     </div>
