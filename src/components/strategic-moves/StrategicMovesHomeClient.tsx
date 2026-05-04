@@ -9,6 +9,17 @@ import type {
   StrategicMovesSort,
 } from '@/lib/programs/strategic-moves-preferences';
 
+const PHASE_AXIS: Array<{ code: string; name: string }> = [
+  { code: 'P0', name: 'Originate' },
+  { code: 'P1', name: 'Charter' },
+  { code: 'P2', name: 'Diagnose' },
+  { code: 'P3', name: 'Solution' },
+  { code: 'P4', name: 'Build' },
+  { code: 'P5', name: 'Execute' },
+  { code: 'P6', name: 'Verify' },
+  { code: 'P7', name: 'Handoff' },
+];
+
 interface Props {
   portfolio: StrategicMovePortfolio;
   initialListView: StrategicMovesListView;
@@ -94,6 +105,11 @@ export function StrategicMovesHomeClient({
     () => sortedMoves.reduce((sum, move) => sum + (moveValueScore(move) ?? 0), 0),
     [sortedMoves],
   );
+  const phaseCounts = useMemo(() => {
+    const counts: Record<number, number> = {};
+    for (const move of sortedMoves) counts[move.currentPhase] = (counts[move.currentPhase] ?? 0) + 1;
+    return counts;
+  }, [sortedMoves]);
 
   return (
     <div className={styles.page}>
@@ -226,17 +242,31 @@ export function StrategicMovesHomeClient({
                   {sortedMoves
                     .filter((move) => move.currentPhase === phase)
                     .map((move) => (
-                      <Link className={`${styles.card} ${styles.kanbanCard}`} key={move.id} href={`/strategic-moves/${move.id}`}>
+                      <Link
+                        className={`${styles.card} ${styles.kanbanCard} ${
+                          move.statusColor === 'red' ? styles.cardRed :
+                          move.statusColor === 'amber' ? styles.cardAmber :
+                          move.statusColor === 'teal' ? styles.cardTeal :
+                          styles.cardGreen
+                        }`}
+                        key={move.id}
+                        href={`/strategic-moves/${move.id}`}
+                      >
                         <div className={styles.eyebrow}>{move.displayCode}</div>
                         <div className={styles.cardTitle}>{move.name}</div>
-                        <span className={`${styles.chip} ${
-                          move.statusColor === 'red' ? styles.chipRed :
-                          move.statusColor === 'amber' ? styles.chipAmber :
-                          move.statusColor === 'teal' ? styles.chipTeal :
-                          styles.chipGreen
-                        }`}>
-                          {move.status.text}
-                        </span>
+                        <div className={styles.kanbanCardFoot}>
+                          <span className={`${styles.chip} ${
+                            move.statusColor === 'red' ? styles.chipRed :
+                            move.statusColor === 'amber' ? styles.chipAmber :
+                            move.statusColor === 'teal' ? styles.chipTeal :
+                            styles.chipGreen
+                          }`}>
+                            {move.status.text}
+                          </span>
+                          <span className={styles.kanbanValue}>
+                            {formatValueAtStake(move.valueAtStake.projected?.high ?? move.valueAtStake.verified?.amount ?? 0)}
+                          </span>
+                        </div>
                       </Link>
                     ))}
                 </div>
@@ -247,6 +277,22 @@ export function StrategicMovesHomeClient({
 
         {listView === 'scatter' ? (
           <div className={styles.scatter}>
+            <div className={styles.scatterLegend}>
+              <span><i className={`${styles.legendDot} ${styles.legendRed}`} />Needs attention</span>
+              <span><i className={`${styles.legendDot} ${styles.legendAmber}`} />Awaiting decision</span>
+              <span><i className={`${styles.legendDot} ${styles.legendGreen}`} />On track</span>
+              <span><i className={`${styles.legendDot} ${styles.legendTeal}`} />Healthy / early</span>
+            </div>
+            <div className={styles.scatterBands} aria-hidden>
+              {PHASE_AXIS.map((phase) => (
+                <div className={styles.scatterBand} key={`band-${phase.code}`} />
+              ))}
+            </div>
+            <div className={styles.scatterGrid} aria-hidden>
+              {[0, 1, 2, 3, 4, 5].map((tick) => (
+                <div className={styles.scatterGridLine} key={`grid-${tick}`} />
+              ))}
+            </div>
             {mapStats.capturedCount === 0 ? (
               <div className={styles.scatterNotice}>
                 Value-at-stake has not been captured yet for this portfolio.
@@ -255,7 +301,27 @@ export function StrategicMovesHomeClient({
             ) : null}
             <div className={styles.scatterXAxis}>Phase progression →</div>
             <div className={styles.scatterYAxis}>Value at stake</div>
+            <div className={styles.scatterYTicks} aria-hidden>
+              <span>$50M</span>
+              <span>$40M</span>
+              <span>$30M</span>
+              <span>$20M</span>
+              <span>$10M</span>
+              <span>$0M</span>
+            </div>
+            <div className={styles.scatterXTicks} aria-hidden>
+              {PHASE_AXIS.map((phase) => (
+                <div className={styles.scatterXTick} key={`phase-tick-${phase.code}`}>
+                  <span className={styles.scatterPhaseCode}>{phase.code}</span>
+                  <span className={styles.scatterPhaseName}>{phase.name}</span>
+                </div>
+              ))}
+            </div>
             {sortedMoves.map((move, index) => {
+              const phaseIndex = sortedMoves
+                .slice(0, index)
+                .filter((m) => m.currentPhase === move.currentPhase).length;
+              const phaseCount = Math.max(1, phaseCounts[move.currentPhase] ?? 1);
               const valueScore = moveValueScore(move);
               const valueKnown = valueScore !== null;
               const normalized =
@@ -265,7 +331,9 @@ export function StrategicMovesHomeClient({
                     ? 0.5
                     : 0;
               const bubbleSize = valueKnown ? Math.max(42, Math.min(92, 48 + normalized * 36)) : 52;
-              const x = Math.min(92, 6 + move.currentPhase * 12);
+              const xBase = 8 + move.currentPhase * 11.5;
+              const xSpread = phaseCount > 1 ? ((phaseIndex / (phaseCount - 1)) - 0.5) * 6.4 : 0;
+              const x = Math.min(94, Math.max(6, xBase + xSpread));
               const unknownJitter = ((index % 3) - 1) * 2.6;
               const y = valueKnown ? Math.max(14, 82 - normalized * 68) : Math.max(72, 82 + unknownJitter);
               return (

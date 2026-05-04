@@ -66,6 +66,19 @@ export function StrategicMoveDetailView({ move }: Props) {
         </aside>
 
         <article className={styles.rightPane}>
+          <div className={styles.detailHeadBlock}>
+            <div className={styles.detailBreadcrumb}>
+              <span>Strategic Moves</span>
+              <span>·</span>
+              <span>{move.tenant.name}</span>
+              <span>·</span>
+              <span>{move.displayCode}</span>
+            </div>
+            <div className={styles.detailMetaLine}>
+              {move.archetype} · Sponsor: {move.sponsor?.name ?? 'Unassigned'}
+            </div>
+          </div>
+
           <div className={styles.statusBanner}>
             <div className={styles.eyebrow}>{move.status.text}</div>
             <div>{move.status.description}</div>
