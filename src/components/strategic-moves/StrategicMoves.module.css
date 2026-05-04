@@ -788,8 +788,9 @@
 
 .detailShell {
   display: grid;
-  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
-  gap: 10px;
+  grid-template-columns: 460px minmax(0, 1fr);
+  gap: 20px;
+  height: calc(100vh - 220px);
   min-height: 620px;
   align-items: stretch;
 }
