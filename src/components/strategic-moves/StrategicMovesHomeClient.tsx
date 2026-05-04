@@ -1,13 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 import styles from './StrategicMoves.module.css';
 import type { StrategicMovePortfolio } from '@/lib/programs/types.ui';
 import type {
   StrategicMovesListView,
   StrategicMovesSort,
 } from '@/lib/programs/strategic-moves-preferences';
+
+/* Scatter view needs enough captured value data to be meaningful.
+ * Below this ratio the chart collapses to the "unknown lane" and the
+ * toggle option is disabled with a mono empty-state caption. */
+const SCATTER_VALUE_COVERAGE_THRESHOLD = 0.3;
 
 const PHASE_AXIS: Array<{ code: string; name: string }> = [
   { code: 'P0', name: 'Originate' },
@@ -22,6 +27,7 @@ const PHASE_AXIS: Array<{ code: string; name: string }> = [
 
 interface Props {
   portfolio: StrategicMovePortfolio;
+  initialListView: StrategicMovesListView;
   initialSort: StrategicMovesSort;
 }
 
@@ -54,9 +60,10 @@ function statusRank(value: string): number {
 
 export function StrategicMovesHomeClient({
   portfolio,
+  initialListView,
   initialSort,
 }: Props) {
-  const [listView, setListView] = useState<StrategicMovesListView>('kanban');
+  const [listView, setListView] = useState<StrategicMovesListView>(initialListView);
   const [sort, setSort] = useState<StrategicMovesSort>(initialSort);
   const [, startTransition] = useTransition();
 
@@ -99,6 +106,18 @@ export function StrategicMovesHomeClient({
       unknownCount: sortedMoves.length - values.length,
     };
   }, [sortedMoves]);
+
+  const scatterAvailable =
+    sortedMoves.length > 0 &&
+    mapStats.capturedCount / sortedMoves.length >= SCATTER_VALUE_COVERAGE_THRESHOLD;
+
+  useEffect(() => {
+    if (!scatterAvailable && listView === 'scatter') {
+      setListView('cards');
+      persist('cards', sort);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scatterAvailable]);
 
   const totalCapturedValue = useMemo(
     () => sortedMoves.reduce((sum, move) => sum + (moveValueScore(move) ?? 0), 0),
@@ -156,10 +175,32 @@ export function StrategicMovesHomeClient({
       ) : null}
 
       <div className={styles.mapTitleBlock}>
-        <h2 className={styles.mapTitleH2}>Portfolio map</h2>
-        <div className={styles.mapTitleSub}>
-          Phase × value at stake.{' '}
-          {portfolio.counts.total} {portfolio.counts.total === 1 ? 'move' : 'moves'} in flight.
+        <div className={styles.mapTitleRow}>
+          <div>
+            <h2 className={styles.mapTitleH2}>Portfolio map</h2>
+            <div className={styles.mapTitleSub}>
+              Phase × value at stake.{' '}
+              {portfolio.counts.total} {portfolio.counts.total === 1 ? 'move' : 'moves'} in flight.
+            </div>
+          </div>
+          <div className={styles.mapLegend} aria-label="Status legend">
+            <span className={styles.mapLegendItem}>
+              <i className={`${styles.legendDot} ${styles.legendRed}`} aria-hidden />
+              Needs attention
+            </span>
+            <span className={styles.mapLegendItem}>
+              <i className={`${styles.legendDot} ${styles.legendAmber}`} aria-hidden />
+              Awaiting decision
+            </span>
+            <span className={styles.mapLegendItem}>
+              <i className={`${styles.legendDot} ${styles.legendGreen}`} aria-hidden />
+              On track
+            </span>
+            <span className={styles.mapLegendItem}>
+              <i className={`${styles.legendDot} ${styles.legendTeal}`} aria-hidden />
+              Healthy / early
+            </span>
+          </div>
         </div>
       </div>
 
@@ -184,24 +225,44 @@ export function StrategicMovesHomeClient({
             <option value="name">Sort: Name</option>
           </select>
           <div className={styles.viewToggle} role="tablist">
-            {(['cards', 'kanban', 'scatter'] as const).map((mode) => (
-              <button
-                key={mode}
-                className={`${styles.viewToggleBtn} ${listView === mode ? styles.viewToggleBtnActive : ''}`}
-                onClick={() => {
-                  setListView(mode);
-                  persist(mode, sort);
-                }}
-                role="tab"
-                aria-selected={listView === mode}
-                type="button"
-              >
-                {mode}
-              </button>
-            ))}
+            {(['cards', 'kanban', 'scatter'] as const).map((mode) => {
+              const disabled = mode === 'scatter' && !scatterAvailable;
+              return (
+                <button
+                  key={mode}
+                  className={`${styles.viewToggleBtn} ${listView === mode ? styles.viewToggleBtnActive : ''} ${
+                    disabled ? styles.viewToggleBtnDisabled : ''
+                  }`}
+                  onClick={() => {
+                    if (disabled) return;
+                    setListView(mode);
+                    persist(mode, sort);
+                  }}
+                  role="tab"
+                  aria-selected={listView === mode}
+                  aria-disabled={disabled || undefined}
+                  disabled={disabled}
+                  title={
+                    disabled
+                      ? 'Value-at-stake not captured yet — scatter view disabled.'
+                      : undefined
+                  }
+                  type="button"
+                >
+                  {mode}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
+      {!scatterAvailable ? (
+        <div className={styles.scatterGateCaption}>
+          Scatter view requires value-at-stake on at least{' '}
+          {Math.round(SCATTER_VALUE_COVERAGE_THRESHOLD * 100)}% of moves. Currently{' '}
+          {mapStats.capturedCount}/{sortedMoves.length} captured.
+        </div>
+      ) : null}
 
       <section className={styles.canvas}>
         {listView === 'cards' ? (
@@ -296,12 +357,6 @@ export function StrategicMovesHomeClient({
 
         {listView === 'scatter' ? (
           <div className={styles.scatter}>
-            <div className={styles.scatterLegend}>
-              <span><i className={`${styles.legendDot} ${styles.legendRed}`} />Needs attention</span>
-              <span><i className={`${styles.legendDot} ${styles.legendAmber}`} />Awaiting decision</span>
-              <span><i className={`${styles.legendDot} ${styles.legendGreen}`} />On track</span>
-              <span><i className={`${styles.legendDot} ${styles.legendTeal}`} />Healthy / early</span>
-            </div>
             <div className={styles.scatterBands} aria-hidden>
               {PHASE_AXIS.map((phase) => (
                 <div className={styles.scatterBand} key={`band-${phase.code}`} />
