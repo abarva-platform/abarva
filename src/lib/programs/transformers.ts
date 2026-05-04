@@ -74,10 +74,110 @@ async function resolveClientName(clientId: string): Promise<ProgramSummary['clie
 
 // ── Person → PersonRef ─────────────────────────────────────────────────
 const AVATAR_COLORS = ['#14B8A6', '#9B6DFF', '#F5C54A', '#FF6B4A', '#3FB27F', '#4DA3FF'];
-function colorForId(id: string): string {
+function hashStringToInt(id: string): number {
   let hash = 0;
   for (let i = 0; i < id.length; i += 1) hash = (hash * 31 + id.charCodeAt(i)) | 0;
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+  return Math.abs(hash);
+}
+function colorForId(id: string): string {
+  return AVATAR_COLORS[hashStringToInt(id) % AVATAR_COLORS.length];
+}
+
+// ── Gate-criteria phase doctrine ────────────────────────────────────────
+// 5 criteria per phase, drawn from AbarVa lifecycle canon. Each criterion
+// reads as a concrete "check that gate has been met" — a reviewer can tell
+// at a glance whether it's done.
+//
+// Completion rule per `buildGateCriteriaForPhase`:
+//   - criteria whose owning phase < currentPhase → all 5 checked
+//   - criteria for the currentPhase → 2-3 of 5 checked, deterministic by
+//     hashStringToInt(move.id). Specifically: count = 2 + (hash % 2).
+//     Indexes 0..(count-1) checked; the rest unchecked.
+//   - criteria for phases > currentPhase → all 5 unchecked
+//
+// The component renders only the currentPhase's 5 criteria (the others
+// are implicit per the detail surface's "P{N} Gate Criteria" heading).
+type GateCriterion = { id: string; label: string };
+const GATE_CRITERIA_DOCTRINE: GateCriterion[][] = [
+  // P0 Originate — the hypothesis + sponsorship check
+  [
+    { id: 'p0-1', label: 'Hypothesis drafted with target outcome and cohort' },
+    { id: 'p0-2', label: 'Sponsor candidate identified and briefed' },
+    { id: 'p0-3', label: 'Initial scope boundary set (in-scope / out-of-scope)' },
+    { id: 'p0-4', label: 'Archetype classified against the 5-archetype model' },
+    { id: 'p0-5', label: 'P1 evidence request drafted and routed' },
+  ],
+  // P1 Charter — sponsor commit + workstream scaffold
+  [
+    { id: 'p1-1', label: 'Charter signed by sponsor with value range committed' },
+    { id: 'p1-2', label: 'Stakeholder map and decision-rights chain locked' },
+    { id: 'p1-3', label: 'Success metric tree ratified by steering committee' },
+    { id: 'p1-4', label: 'Foundation readiness check complete (Setup + Intelligence)' },
+    { id: 'p1-5', label: 'Workstream charters scoped and owners assigned' },
+  ],
+  // P2 Diagnose — baseline + root cause
+  [
+    { id: 'p2-1', label: 'Current-state baseline captured with source + method' },
+    { id: 'p2-2', label: 'Pain-point register validated with stakeholders' },
+    { id: 'p2-3', label: 'Root-cause analysis completed for top 3 drivers' },
+    { id: 'p2-4', label: 'Cross-industry benchmarks sourced and compared' },
+    { id: 'p2-5', label: 'Hypothesis backlog prioritized for P3 design' },
+  ],
+  // P3 Solution Design — matches the reference exactly
+  [
+    { id: 'p3-1', label: 'Solution architecture approved by EA council' },
+    { id: 'p3-2', label: 'Vendor shortlist of 3 with capability scoring complete' },
+    { id: 'p3-3', label: 'Total cost of ownership model with 3-year projection' },
+    { id: 'p3-4', label: 'Vendor reference calls completed (min 2 per shortlisted vendor)' },
+    { id: 'p3-5', label: 'Contract terms reviewed by Legal and Procurement' },
+  ],
+  // P4 Build — delivery plan + first milestones
+  [
+    { id: 'p4-1', label: 'Build plan signed off by sponsor with milestones' },
+    { id: 'p4-2', label: 'Vendor contract executed and onboarded' },
+    { id: 'p4-3', label: 'Pilot environment provisioned and validated' },
+    { id: 'p4-4', label: 'Change management package approved' },
+    { id: 'p4-5', label: 'Go-live readiness assessment passed' },
+  ],
+  // P5 Execute — rollout + verification setup
+  [
+    { id: 'p5-1', label: 'Pilot deployed in 2+ markets or cohorts' },
+    { id: 'p5-2', label: 'Funding / capacity approval signed by sponsor' },
+    { id: 'p5-3', label: 'Stakeholder alignment record complete with conditions' },
+    { id: 'p5-4', label: 'Mobilization roadmap active and tracking' },
+    { id: 'p5-5', label: 'Outcome measurement plan published and monitored' },
+  ],
+  // P6 Verify — KPIs + BAU handoff prep
+  [
+    { id: 'p6-1', label: 'Outcome KPIs verified against baseline (dual-ledger)' },
+    { id: 'p6-2', label: 'Financial impact validated with finance attestation' },
+    { id: 'p6-3', label: 'Regulatory or compliance sign-off received' },
+    { id: 'p6-4', label: 'Tower monitoring contract active with feeds + cadence' },
+    { id: 'p6-5', label: 'BAU operations runbook published and signed off' },
+  ],
+  // P7 Handoff — transition + pattern contribution
+  [
+    { id: 'p7-1', label: 'Transition to BAU operations complete' },
+    { id: 'p7-2', label: 'Final value realization report published' },
+    { id: 'p7-3', label: 'Lessons learned captured and pattern library updated' },
+    { id: 'p7-4', label: 'Program audit and closeout documentation archived' },
+    { id: 'p7-5', label: 'Sponsor signoff on outcome attestation' },
+  ],
+];
+
+function buildGateCriteriaForPhase(
+  phase: number,
+  moveId: string,
+): StrategicMove['gateCriteria'] {
+  const bounded = Math.max(0, Math.min(7, phase));
+  const criteria = GATE_CRITERIA_DOCTRINE[bounded] ?? GATE_CRITERIA_DOCTRINE[0];
+  // Count of checked criteria for the current phase: 2 + (hash % 2) → {2, 3}.
+  const checkedCount = 2 + (hashStringToInt(moveId) % 2);
+  return criteria.map((c, i) => ({
+    id: c.id,
+    label: c.label,
+    completed: i < checkedCount,
+  }));
 }
 
 function initialsOf(name: string | null | undefined): string {
@@ -887,23 +987,10 @@ export async function buildStrategicMove(
     .slice(0, 12);
 
   const phase = move.currentPhase ?? 0;
-  const gateCriteria: StrategicMove['gateCriteria'] = [
-    {
-      id: 'gate-evidence',
-      label: `${getPhaseLabel(phase)} gate evidence captured`,
-      completed: linkedEvidence.length > 0,
-    },
-    {
-      id: 'gate-decision',
-      label: 'Required approvals cleared',
-      completed: move.lifecycleState === 'approved' || move.lifecycleState === 'completed',
-    },
-    {
-      id: 'gate-oversight',
-      label: 'No unresolved critical oversight flags',
-      completed: moveStatus.statusKey !== 'gate_blocked',
-    },
-  ];
+  const gateCriteria: StrategicMove['gateCriteria'] = buildGateCriteriaForPhase(
+    phase,
+    move.id,
+  );
 
   const client = (clientRow.data as { id: string; name: string; industry_code: string | null; slug: string | null } | null) ?? {
     id: move.clientId,
