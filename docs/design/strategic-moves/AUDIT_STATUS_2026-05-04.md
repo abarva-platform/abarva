@@ -109,8 +109,10 @@ These weren't in the audit; they emerged during PR-3's shaping. Included here fo
 | Wave 1 — value-at-stake backfill | ✅ Done | PR-1504 — 50 demo moves stamped; $476M–$1.03B projected; single-statement reversal |
 | Wave 2 — archetype backfill | ✅ Done | PR-1505 migration A — 12 NULL rows classified via name heuristic |
 | Wave 2 — participants top-up | ✅ Done | PR-1505 migration B — +37 sponsors, +46 leads |
-| Wave 2 — milestones backfill | ⚠️ Needs replacement (PR-B) | PR-1505 migration C seeded 234 rows against a 6-step template that predates the archetype-specific templates locked 2026-05-04. PR-B replaces with stamped v2 rows |
-| Wave 2 — audit log activity stub | ⚠️ Needs extension (PR-B) | PR-1505 migration D seeded 306 rows but only with lifecycle transitions; `milestone_completed` and `sponsor_review_held` action types added in PR-B |
+| Wave 2 — milestones backfill | ✅ Done (v2) | PR-1505 migration C seeded 234 rows on a predated template; PR-B migration A replaced with 290 v2 rows per founder-locked archetype templates. See `STRATEGIC_MOVES_SUBSTRATE_V2_REPORT_2026-05-04.md` |
+| Wave 2 — audit log activity stub | ✅ Done (+addendum) | PR-1505 migration D seeded 306 lifecycle rows; PR-B migration B added 80 `milestone_completed` + 43 `sponsor_review_held` = 429 total audit rows on 50 demo moves |
+| Wave 2 — participants role mix | ✅ Done (+expansion) | PR-1505 added sponsor + lead (83 rows); PR-B migration C added steward + 0–2 team_members per archetype (101 rows); 50/50 moves now have steward, 45/50 have team_members |
+| Wave 2 — gate-criteria doctrine | ✅ Done (F7) | PR-B commit 1 replaced 3-synthetic criteria in `transformers.ts` with an 8-phase × 5-criterion doctrine; current phase shows 2–3 of 5 checked deterministically via `hashStringToInt(move.id)` |
 
 ---
 
