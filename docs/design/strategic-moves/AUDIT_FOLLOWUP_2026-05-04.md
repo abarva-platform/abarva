@@ -30,18 +30,15 @@ Format mirrors the original audit.
 
 ---
 
-## F3 — Mini phase rail on cards (audit #12) — product decision needed
+## F3 — Mini phase rail on cards (audit #12) — resolved
 
-- **Severity:** **Medium / deferred pending product call**
+- **Severity:** **Medium / resolved**
 - **Question:** Should home-view cards render a mini phase rail at the bottom?
-- **Reference HTML:** `docs/design/strategic-moves/14-strategic-moves-home.html` .cards view does NOT render a mini rail. (The rail only appears in detail view's header.)
-- **Earlier founder prompt (list in initial audit spec):** "card grid (Home) — 3-up grid, Fraunces 18/500 title, tenant + archetype mono eyebrow, status chip, **phase rail at bottom of each card**" — which does imply a mini rail.
-- **Conflict:** the reference HTML and the spec prose disagree.
-- **Current state:** No mini rail. `PhaseRail` component supports a `size="mini"` variant (built in PR-2 commit 1 for exactly this case but not wired in).
-- **Decision tree (pick one):**
-  - **(a)** Follow reference HTML → no rail on cards. Keep current behavior. Close this item.
-  - **(b)** Follow spec prose → add `<PhaseRail current={move.currentPhase} size="mini" showLabels={false} />` to each `.card`. One-line change per card; no migration.
-- **Status:** ❌ Open. Awaiting founder pick between (a) and (b).
+- **Reference HTML:** `docs/design/strategic-moves/14-strategic-moves-home.html` `.cards` view does NOT render a mini rail. The rail only appears in detail view's header.
+- **Earlier founder prompt (list in initial audit spec):** "card grid (Home) — 3-up grid, Fraunces 18/500 title, tenant + archetype mono eyebrow, status chip, **phase rail at bottom of each card**" — implied a mini rail.
+- **Conflict:** reference HTML and earlier spec prose disagree.
+- **Resolution 2026-05-04:** Follow reference HTML per `.cursorrules` hard rule: *"The HTML reference is canonical. Where it conflicts with current code, code changes — not the reference."* The earlier spec prose predated the canonical HTML. Cards render no rail. If this needs to change in the future, it's a one-line wire-up of the existing `<PhaseRail size="mini">` variant.
+- **Status:** ✅ Closed — follow reference, no rail on cards.
 
 ---
 
