@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './StrategicMoves.module.css';
+import { PhaseRail } from './PhaseRail';
 
 type ScaffoldKey =
   | 'hypothesis'
@@ -317,14 +318,20 @@ export function StrategicMoveOriginateClient({ tenantName }: Props) {
 
   return (
     <div className={styles.page}>
-      <div className={styles.topbar}>
-        <div>
-          <div className={styles.eyebrow}>Strategic Moves</div>
-          <h1 className={styles.title}>Originate new move</h1>
+      <div className={styles.originContextBar}>
+        <div className={styles.originContextLeft}>
+          <span className={styles.originBranch} aria-hidden>&#8627;</span>
+          <span className={styles.originLabel}>Originating new move</span>
+          <span className={styles.originDraftBadge}>
+            {programName.trim() ? programName.toUpperCase() : 'UNTITLED'} &middot; DRAFT
+          </span>
         </div>
+        <button className={styles.originCancel} onClick={cancelFlow} type="button">
+          &#10005; Cancel
+        </button>
       </div>
 
-      <section className={styles.originateShell}>
+      <section className={styles.detailShell}>
         <aside className={styles.chatPane}>
           <div className={styles.chatHead}>
             <div className={styles.eyebrow}>New Move · P0 Originate</div>
@@ -360,54 +367,72 @@ export function StrategicMoveOriginateClient({ tenantName }: Props) {
         </aside>
 
         <article className={styles.rightPane}>
-          <div className={styles.originContext}>
-            <div>
-              <div className={styles.eyebrow}>↳ Originating new move · draft</div>
-              <input
-                className={styles.scaffoldTextarea}
-                onChange={(event) => setProgramName(event.target.value)}
-                placeholder="Move name"
-                value={programName}
-              />
+          <div className={styles.detailHead}>
+            <div className={styles.detailHeadTop}>
+              <div className={styles.detailHeadLeft}>
+                <div className={styles.detailBreadcrumb}>
+                  <button
+                    className={styles.detailCrumb}
+                    onClick={cancelFlow}
+                    type="button"
+                  >
+                    Strategic Moves
+                  </button>
+                  <span aria-hidden>&rsaquo;</span>
+                  <span>{tenantName}</span>
+                  <span aria-hidden>&rsaquo;</span>
+                  <span>NEW</span>
+                </div>
+                <h1 className={styles.detailTitle}>Originate a strategic move</h1>
+                <div className={styles.detailId}>P0 Originate &middot; Drafting</div>
+              </div>
             </div>
-            <button className={styles.textButton} onClick={cancelFlow} type="button">
-              Cancel
-            </button>
+            <PhaseRail current={0} totalPhases={8} status="teal" />
           </div>
 
-          <div className={styles.scaffold}>
+          <div className={styles.scaffoldList}>
             {SCAFFOLD_ORDER.map((key, index) => {
               const filled = scaffold[key].trim().length > 0;
+              const num = String(index + 1).padStart(2, '0');
               return (
                 <section
                   className={`${styles.scaffoldRow} ${filled ? styles.scaffoldRowFilled : ''}`}
                   key={key}
                 >
-                  <div className={`${styles.scaffoldLabel} ${filled ? styles.scaffoldLabelFilled : ''}`}>
-                    {index + 1}. {SECTION_LABELS[key]}
+                  <div className={styles.scaffoldNum}>{num}</div>
+                  <div className={styles.scaffoldBody}>
+                    <div className={styles.scaffoldLabel}>{SECTION_LABELS[key]}</div>
+                    {filled ? (
+                      <div className={styles.scaffoldName}>{scaffold[key]}</div>
+                    ) : (
+                      <div className={styles.scaffoldEmpty}>
+                        Nexus will draft {SECTION_LABELS[key].toLowerCase()} from your conversation.
+                      </div>
+                    )}
                   </div>
-                  <div className={styles.scaffoldReadOnly}>
-                    {filled ? scaffold[key] : `Nexus will draft ${SECTION_LABELS[key].toLowerCase()} from your conversation.`}
-                  </div>
+                  <div className={styles.scaffoldIndicator} aria-hidden />
                 </section>
               );
             })}
           </div>
 
           <footer className={styles.scaffoldFoot}>
-            <div>{completedCount} of 7 sections complete</div>
             <button
-              className={`${styles.primaryAction} ${canPromote ? '' : styles.disabled}`}
+              className={styles.btnPromote}
               disabled={!canPromote}
               onClick={() => void promote()}
               type="button"
             >
-              Promote to P1 Charter →
+              <span>Promote to P1 Charter</span>
+              <span className={styles.btnPromoteArrow} aria-hidden>&rarr;</span>
             </button>
+            <div className={styles.promoteHelper}>
+              {completedCount === 7 ? 'Ready to promote' : `${completedCount} of 7 sections complete`}
+            </div>
+            {submitError ? (
+              <div className={styles.submitError}>{submitError}</div>
+            ) : null}
           </footer>
-          {submitError ? (
-            <div style={{ color: 'var(--canon-red)', marginTop: 8, fontSize: 13 }}>{submitError}</div>
-          ) : null}
         </article>
       </section>
 
