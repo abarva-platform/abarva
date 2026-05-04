@@ -247,6 +247,12 @@ export function StrategicMovesHomeClient({
 
         {listView === 'scatter' ? (
           <div className={styles.scatter}>
+            {mapStats.capturedCount === 0 ? (
+              <div className={styles.scatterNotice}>
+                Value-at-stake has not been captured yet for this portfolio.
+                Bubbles are pinned to the unknown-value lane until projected or verified values are entered.
+              </div>
+            ) : null}
             <div className={styles.scatterXAxis}>Phase progression →</div>
             <div className={styles.scatterYAxis}>Value at stake</div>
             {sortedMoves.map((move, index) => {
@@ -258,9 +264,10 @@ export function StrategicMovesHomeClient({
                   : valueKnown
                     ? 0.5
                     : 0;
-              const bubbleSize = valueKnown ? Math.max(38, Math.min(86, 44 + normalized * 34)) : 36;
+              const bubbleSize = valueKnown ? Math.max(42, Math.min(92, 48 + normalized * 36)) : 52;
               const x = Math.min(92, 6 + move.currentPhase * 12);
-              const y = valueKnown ? Math.max(14, 82 - normalized * 68) : 86;
+              const unknownJitter = ((index % 3) - 1) * 2.6;
+              const y = valueKnown ? Math.max(14, 82 - normalized * 68) : Math.max(72, 82 + unknownJitter);
               return (
                 <Link
                   key={move.id}

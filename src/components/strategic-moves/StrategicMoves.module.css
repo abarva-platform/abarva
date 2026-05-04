@@ -338,6 +338,21 @@
   overflow: hidden;
 }
 
+.scatterNotice {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  right: 12px;
+  border: 1px solid var(--canon-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 8px 10px;
+  color: var(--canon-gray-700);
+  font-size: 12px;
+  line-height: 1.35;
+  z-index: 40;
+}
+
 .scatterXAxis {
   position: absolute;
   right: 12px;
@@ -372,7 +387,7 @@
   justify-content: center;
   color: #0d1a34;
   text-decoration: none;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
   padding: 4px;
@@ -409,7 +424,7 @@
 }
 
 .chatPane {
-  background: var(--abarva-navy-ink);
+  background: linear-gradient(180deg, #121a2a 0%, #17233a 100%);
   border-radius: 12px;
   color: #fff;
   display: flex;
@@ -423,6 +438,20 @@
   padding: 14px 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   overflow-wrap: anywhere;
+  color: #f4f7ff;
+}
+
+.chatHead .eyebrow {
+  color: #9dc5ff;
+}
+
+.chatHead > div:last-child {
+  margin-top: 4px;
+  font-family: var(--abarva-serif);
+  font-size: 34px;
+  line-height: 1.06;
+  letter-spacing: -0.02em;
+  color: #ffffff;
 }
 
 .chatBody {
@@ -438,11 +467,11 @@
 .bubbleNexus {
   align-self: flex-start;
   max-width: min(100%, 330px);
-  background: #f8f1e5;
-  color: #1f2430;
+  background: rgba(255, 255, 255, 0.94);
+  color: #142037;
   border-radius: 12px;
   padding: 10px 11px;
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.45;
   overflow-wrap: anywhere;
   word-break: break-word;
@@ -451,11 +480,11 @@
 .bubbleUser {
   align-self: flex-end;
   max-width: min(100%, 330px);
-  background: #111;
+  background: #05080f;
   color: #fff;
   border-radius: 12px;
   padding: 10px 11px;
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.45;
   overflow-wrap: anywhere;
   word-break: break-word;

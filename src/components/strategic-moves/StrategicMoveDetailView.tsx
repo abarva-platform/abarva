@@ -134,7 +134,7 @@ export function StrategicMoveDetailView({ move }: Props) {
               {move.deliverables.length === 0 ? (
                 <div className={styles.rowItem}>No deliverables captured yet.</div>
               ) : (
-                move.deliverables.slice(0, 5).map((deliverable) => (
+                move.deliverables.slice(0, 3).map((deliverable) => (
                   <details className={styles.rowItem} key={deliverable.id}>
                     <summary className={styles.deliverableSummary}>
                       <span>
@@ -149,6 +149,11 @@ export function StrategicMoveDetailView({ move }: Props) {
                   </details>
                 ))
               )}
+              {move.deliverables.length > 3 ? (
+                <div className={styles.rowItem}>
+                  Showing 3 of {move.deliverables.length} deliverables.
+                </div>
+              ) : null}
             </div>
           </section>
 
