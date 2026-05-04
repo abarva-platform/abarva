@@ -71,6 +71,7 @@ export function StrategicMoveOriginateClient({ tenantName }: Props) {
   const [blankQuestionIndex, setBlankQuestionIndex] = useState<number | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [originEntry, setOriginEntry] = useState<'intel' | 'foundation' | 'premortem' | 'transfer' | 'blank' | null>(null);
   const [isPending, startTransition] = useTransition();
   const [turns, setTurns] = useState<ChatTurn[]>([
     {
@@ -183,6 +184,7 @@ export function StrategicMoveOriginateClient({ tenantName }: Props) {
 
   async function startFrom(type: 'intel' | 'foundation' | 'premortem' | 'transfer' | 'blank') {
     setBlankQuestionIndex(null);
+    setOriginEntry(type);
     if (type === 'intel') {
       addTurn('user', 'Start from an Intelligence finding.');
       const res = await fetch('/api/v1/intelligence/signals?limit=3', { cache: 'no-store' });
@@ -334,35 +336,80 @@ export function StrategicMoveOriginateClient({ tenantName }: Props) {
       <section className={styles.detailShell}>
         <aside className={styles.chatPane}>
           <div className={styles.chatHead}>
-            <div className={styles.eyebrow}>New Move · P0 Originate</div>
-            <div>Nexus drafting mode</div>
-            <div className={styles.chatSubhead}>I draft, you decide. Tell me the bet, or pick a starting point below.</div>
+            <div className={styles.agentRow}>
+              <div className={styles.agentAvatar} aria-hidden>&#10022;</div>
+              <div>
+                <div className={styles.agentName}>Nexus</div>
+                <div className={styles.agentStatus}>
+                  <span className={styles.agentStatusDot} aria-hidden />
+                  NEW MOVE &middot; P0 ORIGINATE
+                </div>
+              </div>
+            </div>
+            <div className={styles.chatSubhead}>
+              I draft, you decide. Tell me the bet &mdash; or pick a starting point below.
+            </div>
           </div>
-          <div className={styles.chatBody}>
+          <div className={styles.chatThread}>
             {turns.map((turn) => (
-              <div key={turn.id} className={turn.role === 'nexus' ? styles.bubbleNexus : styles.bubbleUser}>
+              <div
+                key={turn.id}
+                className={turn.role === 'nexus' ? styles.bubbleNexus : styles.bubbleUser}
+              >
                 {turn.text}
               </div>
             ))}
           </div>
-          <div className={styles.startFromLabel}>↳ Start from</div>
-          <div className={styles.chipColumn}>
-            <button className={styles.startChip} onClick={() => void startFrom('intel')} type="button">An Intelligence finding</button>
-            <button className={styles.startChip} onClick={() => void startFrom('foundation')} type="button">A Foundation Readiness gap</button>
-            <button className={styles.startChip} onClick={() => void startFrom('premortem')} type="button">A pre-mortem result</button>
-            <button className={styles.startChip} onClick={() => void startFrom('transfer')} type="button">Cross-industry transfer</button>
-            <button className={styles.startChip} onClick={() => void startFrom('blank')} type="button">A blank hypothesis</button>
+          <div className={styles.startFromBlock}>
+            <div className={styles.startFromLabel}>
+              <span aria-hidden>&#8627;</span> Start from
+            </div>
+            <div className={styles.startFromChips}>
+              {(
+                [
+                  { entry: 'intel' as const, label: 'An Intelligence finding' },
+                  { entry: 'foundation' as const, label: 'A Foundation Readiness gap' },
+                  { entry: 'premortem' as const, label: 'A pre-mortem result' },
+                  { entry: 'transfer' as const, label: 'Cross-industry transfer' },
+                  { entry: 'blank' as const, label: 'A blank hypothesis' },
+                ]
+              ).map(({ entry, label }) => (
+                <button
+                  key={entry}
+                  className={`${styles.startChip} ${originEntry !== null ? styles.startChipUsed : ''}`}
+                  onClick={() => void startFrom(entry)}
+                  type="button"
+                  disabled={originEntry !== null}
+                >
+                  <span>{label}</span>
+                  <span className={styles.startChipArrow} aria-hidden>&rarr;</span>
+                </button>
+              ))}
+            </div>
           </div>
-          <div className={styles.originateComposer}>
-            <textarea
-              className={styles.originateComposerInput}
-              value={composer}
-              onChange={(event) => setComposer(event.target.value)}
-              placeholder="Reply to Nexus…"
-            />
-            <button className={styles.primaryAction} type="button" onClick={handleSend}>
-              Send
-            </button>
+          <div className={styles.chatInput}>
+            <div className={styles.inputRow}>
+              <input
+                type="text"
+                value={composer}
+                onChange={(event) => setComposer(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    handleSend();
+                  }
+                }}
+                placeholder="Describe the outcome, tenant, and any signals\u2026"
+              />
+              <button
+                className={styles.sendBtn}
+                type="button"
+                onClick={handleSend}
+                aria-label="Send"
+              >
+                &#8593;
+              </button>
+            </div>
           </div>
         </aside>
 
