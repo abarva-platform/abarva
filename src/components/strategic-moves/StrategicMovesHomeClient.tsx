@@ -163,36 +163,43 @@ export function StrategicMovesHomeClient({
         </div>
       </div>
 
-      <div className={styles.toolbar}>
-        <div className={styles.toggleGroup}>
-          {(['scatter', 'cards', 'kanban'] as const).map((mode) => (
-            <button
-              key={mode}
-              className={`${styles.toggleButton} ${listView === mode ? styles.toggleButtonActive : ''}`}
-              onClick={() => {
-                setListView(mode);
-                persist(mode, sort);
-              }}
-              type="button"
-            >
-              {mode}
-            </button>
-          ))}
-        </div>
-        <div className={styles.toggleGroup}>
-          {(['value', 'phase', 'status', 'name'] as const).map((candidate) => (
-            <button
-              key={candidate}
-              className={`${styles.toggleButton} ${sort === candidate ? styles.toggleButtonActive : ''}`}
-              onClick={() => {
-                setSort(candidate);
-                persist(listView, candidate);
-              }}
-              type="button"
-            >
-              {candidate}
-            </button>
-          ))}
+      <div className={styles.cardsHead}>
+        <h2 className={styles.cardsHeadH2}>Strategic moves</h2>
+        <div className={styles.cardsHeadControls}>
+          <span className={styles.cardsHeadCount}>
+            {portfolio.counts.total} {portfolio.counts.total === 1 ? 'move' : 'moves'} · all tenants
+          </span>
+          <select
+            className={styles.sortSelect}
+            value={sort}
+            onChange={(event) => {
+              const next = event.target.value as typeof sort;
+              setSort(next);
+              persist(listView, next);
+            }}
+          >
+            <option value="value">Sort: Value</option>
+            <option value="phase">Sort: Phase</option>
+            <option value="status">Sort: Attention</option>
+            <option value="name">Sort: Name</option>
+          </select>
+          <div className={styles.viewToggle} role="tablist">
+            {(['cards', 'kanban', 'scatter'] as const).map((mode) => (
+              <button
+                key={mode}
+                className={`${styles.viewToggleBtn} ${listView === mode ? styles.viewToggleBtnActive : ''}`}
+                onClick={() => {
+                  setListView(mode);
+                  persist(mode, sort);
+                }}
+                role="tab"
+                aria-selected={listView === mode}
+                type="button"
+              >
+                {mode}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

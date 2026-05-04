@@ -267,100 +267,61 @@
   letter-spacing: -0.02em;
 }
 
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.attentionPanel {
-  background: #f6f2e8;
-  border: 1px solid var(--canon-border);
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin-bottom: 12px;
-}
-
-.attentionEmpty {
-  border: 0;
-  border-radius: 6px;
-  padding: 7px 4px;
-  color: #302f2b;
-  font-size: 15px;
-  line-height: 1.45;
-}
-
-.attentionRow {
-  display: grid;
-  grid-template-columns: 140px 1fr auto;
-  align-items: center;
-  gap: 8px;
+/* ─── Sort + view controls (lives inside .cardsHead) ─────────────── */
+.sortSelect {
+  background: var(--canon-bg-cream);
   border: 1px solid var(--canon-border);
   border-radius: 8px;
-  padding: 8px 10px;
-  text-decoration: none;
-  color: inherit;
-}
-
-.attentionRow:hover {
-  border-color: var(--canon-border-strong);
-}
-
-.attentionCode {
+  padding: 6px 10px;
   font-family: var(--abarva-mono);
   font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--canon-gray-600);
-}
-
-.attentionLink {
-  color: var(--abarva-signal-blue);
+  letter-spacing: 0.13em;
   font-weight: 600;
-  font-size: 12px;
+  color: var(--abarva-ink-black);
+  cursor: pointer;
+  text-transform: uppercase;
 }
 
-.toggleGroup {
+.sortSelect:hover {
+  border-color: var(--canon-border-strong);
+}
+
+.viewToggle {
   display: inline-flex;
-  gap: 6px;
-}
-
-.toggleButton {
+  background: var(--canon-bg-cream);
   border: 1px solid var(--canon-border);
   border-radius: 8px;
-  background: #f6f2e8;
-  color: var(--canon-gray-800);
-  font-size: 12px;
-  padding: 7px 11px;
-  cursor: pointer;
+  padding: 3px;
+}
+
+.viewToggleBtn {
+  background: transparent;
+  border: none;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-family: var(--abarva-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
   font-weight: 600;
-  position: relative;
-  transition: border-color 140ms ease, transform 140ms ease, box-shadow 140ms ease, color 140ms ease;
+  color: var(--abarva-slate);
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: background 150ms var(--ease-out), color 150ms var(--ease-out);
 }
 
-.toggleButton:hover {
-  border-color: var(--canon-border-strong);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(15, 22, 40, 0.08);
+.viewToggleBtn:hover:not(.viewToggleBtnActive) {
+  color: var(--abarva-ink-black);
 }
 
-.toggleButtonActive {
-  background: #111;
-  color: #fff;
-  border-color: #111;
-  box-shadow: none;
+.viewToggleBtnActive {
+  background: var(--abarva-ink-black);
+  color: var(--canon-bg-cream);
 }
 
-.toggleButtonActive::after {
-  display: none;
-}
-
+/* No surrounding card / wrapper background — cards layer directly on
+   the canon-bg-surface page background. */
 .canvas {
-  background: #f6f2e8;
-  border: 1px solid var(--canon-border);
-  border-radius: 12px;
-  padding: 14px;
+  display: block;
 }
 
 /* ─── Cards-head ───────────────────────────────────────────────── */
