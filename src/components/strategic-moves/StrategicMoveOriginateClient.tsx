@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { PhaseRail } from '@/components/strategic-moves/PhaseRail';
 import styles from './StrategicMoves.module.css';
 
 type ScaffoldKey =
@@ -373,6 +374,11 @@ export function StrategicMoveOriginateClient({ tenantName }: Props) {
             <button className={styles.textButton} onClick={cancelFlow} type="button">
               Cancel
             </button>
+          </div>
+
+          <div className={styles.section} style={{ marginBottom: 10 }}>
+            <div className={styles.sectionTitle}>Phase rail</div>
+            <PhaseRail current={0} />
           </div>
 
           <div className={styles.scaffold}>

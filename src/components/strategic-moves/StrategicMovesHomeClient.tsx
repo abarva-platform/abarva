@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState, useTransition } from 'react';
+import { PhaseRail } from '@/components/strategic-moves/PhaseRail';
 import styles from './StrategicMoves.module.css';
 import type { StrategicMovePortfolio } from '@/lib/programs/types.ui';
 import type {
@@ -22,7 +23,21 @@ const PHASE_AXIS: Array<{ code: string; name: string }> = [
 
 interface Props {
   portfolio: StrategicMovePortfolio;
+  initialListView: StrategicMovesListView;
   initialSort: StrategicMovesSort;
+}
+
+function labelView(mode: StrategicMovesListView): string {
+  if (mode === 'scatter') return 'Scatter';
+  if (mode === 'cards') return 'Cards';
+  return 'Kanban';
+}
+
+function labelSort(candidate: StrategicMovesSort): string {
+  if (candidate === 'value') return 'Value';
+  if (candidate === 'phase') return 'Phase';
+  if (candidate === 'status') return 'Status';
+  return 'Name';
 }
 
 function moveValueScore(move: StrategicMovePortfolio['moves'][number]): number | null {
@@ -54,9 +69,10 @@ function statusRank(value: string): number {
 
 export function StrategicMovesHomeClient({
   portfolio,
+  initialListView,
   initialSort,
 }: Props) {
-  const [listView, setListView] = useState<StrategicMovesListView>('kanban');
+  const [listView, setListView] = useState<StrategicMovesListView>(initialListView);
   const [sort, setSort] = useState<StrategicMovesSort>(initialSort);
   const [, startTransition] = useTransition();
 
@@ -122,23 +138,24 @@ export function StrategicMovesHomeClient({
         </Link>
       </div>
 
-      <section className={styles.editorialRibbon}>
-        <article className={styles.editorialMetric}>
-          <div className={styles.ribbonValue}>{portfolio.counts.total}</div>
-          <div className={styles.ribbonLabel}>Moves</div>
-        </article>
-        <article className={styles.editorialMetric}>
-          <div className={styles.ribbonValue}>{portfolio.counts.needAttention}</div>
-          <div className={styles.ribbonLabel}>Need Attention</div>
-        </article>
-        <article className={styles.editorialMetric}>
-          <div className={styles.ribbonValue}>{portfolio.counts.onTrack}</div>
-          <div className={styles.ribbonLabel}>On Track</div>
-        </article>
-        <article className={styles.editorialMetric}>
-          <div className={styles.ribbonValue}>{formatValueAtStake(totalCapturedValue)}</div>
-          <div className={styles.ribbonLabel}>At Stake</div>
-        </article>
+      <section className={styles.ribbonEditorial} aria-label="Portfolio summary">
+        <div className={styles.ribbonSeg}>
+          <span className={styles.ribbonSegNum}>{portfolio.counts.total}</span>
+          <span className={styles.ribbonSegLbl}>Moves</span>
+        </div>
+        <div className={`${styles.ribbonSeg} ${portfolio.counts.needAttention > 0 ? styles.ribbonSegAttn : ''}`}>
+          <span className={styles.ribbonSegNum}>{portfolio.counts.needAttention}</span>
+          <span className={styles.ribbonSegLbl}>Need attention</span>
+        </div>
+        <div className={styles.ribbonSeg}>
+          <span className={styles.ribbonSegNum}>{portfolio.counts.onTrack}</span>
+          <span className={styles.ribbonSegLbl}>On track</span>
+        </div>
+        <div className={styles.ribbonSeg}>
+          <span className={styles.ribbonSegNum}>{formatValueAtStake(totalCapturedValue)}</span>
+          <span className={styles.ribbonSegLbl}>At stake</span>
+        </div>
+        <div className={styles.ribbonMeta}>Live portfolio</div>
       </section>
 
       <section className={styles.attentionPanel}>
@@ -172,7 +189,7 @@ export function StrategicMovesHomeClient({
               }}
               type="button"
             >
-              {mode}
+              {labelView(mode)}
             </button>
           ))}
         </div>
@@ -187,11 +204,20 @@ export function StrategicMovesHomeClient({
               }}
               type="button"
             >
-              {candidate}
+              {labelSort(candidate)}
             </button>
           ))}
         </div>
       </div>
+
+      {listView === 'scatter' ? (
+        <div className={styles.mapTitleBlock}>
+          <h2 className={styles.mapTitle}>Portfolio map</h2>
+          <div className={styles.mapSub}>
+            Phase × value at stake. {portfolio.counts.total} move{portfolio.counts.total === 1 ? '' : 's'} in flight.
+          </div>
+        </div>
+      ) : null}
 
       <section className={styles.canvas}>
         {listView === 'cards' ? (
@@ -213,20 +239,7 @@ export function StrategicMovesHomeClient({
                   </span>
                   <span className={styles.phaseTag}>{move.phaseLabel}</span>
                 </div>
-                <div className={styles.phaseRail}>
-                  {Array.from({ length: 8 }).map((_, index) => (
-                    <span
-                      key={`${move.id}-phase-${index}`}
-                      className={`${styles.phaseDot} ${
-                        index < move.currentPhase
-                          ? styles.phaseDotDone
-                          : index === move.currentPhase
-                            ? styles.phaseDotCurrent
-                            : ''
-                      }`}
-                    />
-                  ))}
-                </div>
+                <PhaseRail current={move.currentPhase} />
               </Link>
             ))}
           </div>

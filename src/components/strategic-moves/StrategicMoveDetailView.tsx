@@ -1,9 +1,12 @@
 import Link from 'next/link';
+import { PhaseRail } from '@/components/strategic-moves/PhaseRail';
 import styles from './StrategicMoves.module.css';
 import type { StrategicMove } from '@/lib/programs/types.ui';
 
 interface Props {
   move: StrategicMove;
+  /** When false, awaiting-decision CTA stays on the move instead of linking to admin approvals. */
+  canOpenAdminApprovals?: boolean;
 }
 
 function formatRole(role: string): string {
@@ -18,14 +21,18 @@ function actionLabel(statusKey: string, phaseLabel: string): string {
   return 'Resume move';
 }
 
-function actionHref(move: StrategicMove): string {
+function actionHref(move: StrategicMove, canOpenAdminApprovals: boolean): string {
   if (move.status.key === 'gate_blocked') return `/strategic-moves/${move.id}?panel=gate`;
-  if (move.status.key === 'awaiting_decision') return '/admin/programs/approvals';
+  if (move.status.key === 'awaiting_decision') {
+    return canOpenAdminApprovals
+      ? '/admin/programs/approvals'
+      : `/strategic-moves/${move.id}?phase=${move.currentPhase}`;
+  }
   if (move.status.key === 'validated') return `/tower?move=${move.id}`;
   return `/strategic-moves/${move.id}?phase=${move.currentPhase}`;
 }
 
-export function StrategicMoveDetailView({ move }: Props) {
+export function StrategicMoveDetailView({ move, canOpenAdminApprovals = false }: Props) {
   return (
     <div className={styles.page}>
       <div className={styles.backRow}>
@@ -90,28 +97,14 @@ export function StrategicMoveDetailView({ move }: Props) {
           </div>
 
           <div style={{ marginBottom: 10 }}>
-            <Link className={styles.primaryActionLink} href={actionHref(move)}>
+            <Link className={styles.primaryActionLink} href={actionHref(move, canOpenAdminApprovals)}>
               {actionLabel(move.status.key, move.phaseLabel)} <span>→</span>
             </Link>
           </div>
 
           <div className={styles.section} style={{ marginBottom: 10 }}>
-            <div className={styles.sectionTitle}>Phase Rail</div>
-            <div className={styles.phaseRail}>
-              {Array.from({ length: 8 }).map((_, index) => (
-                <span
-                  key={`phase-dot-${index}`}
-                  className={`${styles.phaseDot} ${
-                    index < move.currentPhase
-                      ? styles.phaseDotDone
-                      : index === move.currentPhase
-                        ? styles.phaseDotCurrent
-                        : ''
-                  }`}
-                  title={`P${index}`}
-                />
-              ))}
-            </div>
+            <div className={styles.sectionTitle}>Phase rail</div>
+            <PhaseRail current={move.currentPhase} />
           </div>
 
           <div className={styles.twoCol} style={{ marginBottom: 10 }}>
